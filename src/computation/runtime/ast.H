@@ -49,170 +49,6 @@ namespace Runtime
     struct App;
     struct Trim;
 
-    struct Exp
-    {
-        using value_type = std::variant<
-            std::shared_ptr<const Int>,
-            std::shared_ptr<const Double>,
-            std::shared_ptr<const LogDouble>,
-            std::shared_ptr<const Char>,
-            std::shared_ptr<const String>,
-            std::shared_ptr<const Integer>,
-            std::shared_ptr<const Constructor>,
-            std::shared_ptr<const ObjectValue>,
-            std::shared_ptr<const IndexVar>,
-            std::shared_ptr<const GlobalVar>,
-            std::shared_ptr<const RegRef>,
-            std::shared_ptr<const Lambda>,
-            std::shared_ptr<const Let>,
-            std::shared_ptr<const Case>,
-            std::shared_ptr<const App>,
-            std::shared_ptr<const Trim>
-        >;
-
-        value_type value;
-
-        Exp() = default;
-        Exp(int);
-        Exp(double);
-        Exp(log_double_t);
-        Exp(bool);
-        Exp(char);
-        Exp(std::string);
-        Exp(const char*);
-        Exp(integer);
-        Exp(const Box<integer>&) = delete;
-        Exp(const Box<std::string>&) = delete;
-        Exp(const Object&);
-        Exp(const Object*);
-        Exp(object_ptr<const Object>);
-
-        template <DerivedFromObject T>
-        Exp(object_ptr<T> x):Exp(object_ptr<const Object>(std::move(x))) {}
-        Exp(Int);
-        Exp(Double);
-        Exp(LogDouble);
-        Exp(Char);
-        Exp(String);
-        Exp(Integer);
-        Exp(Constructor);
-        Exp(ObjectValue);
-        Exp(IndexVar);
-        Exp(GlobalVar);
-        Exp(RegRef);
-        Exp(Lambda);
-        Exp(Let);
-        Exp(Case);
-        Exp(App);
-        Exp(Trim);
-
-        bool empty() const
-        {
-            return std::visit([](const auto& ptr) { return not ptr; }, value);
-        }
-
-        explicit operator bool() const { return not empty(); }
-
-        template <typename T>
-        const T* to() const;
-
-        template <typename T>
-        bool is_a() const { return to<T>(); }
-
-        template <typename T>
-        bool is() const { return to<T>(); }
-
-        bool is_int() const { return is<Int>(); }
-        bool is_double() const { return is<Double>(); }
-        bool is_log_double() const { return is<LogDouble>(); }
-        bool is_char() const { return is<Char>(); }
-        bool is_string() const { return is<String>(); }
-        bool is_integer() const { return is<Integer>(); }
-        bool is_constructor() const { return is<Constructor>(); }
-        bool is_object_value() const { return is<ObjectValue>(); }
-
-        template <typename T>
-        const T& as() const
-        {
-            auto ptr = to<T>();
-            assert(ptr);
-            return *ptr;
-        }
-
-        bool is_atomic_value() const;
-        bool is_value() const;
-        bool is_whnf() const;
-        bool is_gcable_object_value() const;
-        int as_int() const;
-        double as_double() const;
-        log_double_t as_log_double() const;
-        char as_char() const;
-        const std::string& as_string() const;
-        const integer& as_integer() const;
-        const ConstructorTag& as_constructor() const;
-        std::string print() const;
-
-        const Exp& slot_ref(int i) const;
-
-        template <DerivedFromObject T>
-        const T& as_() const;
-
-        template <DerivedFromObject T>
-        const T& as_checked() const;
-
-        template <DerivedFromObject T>
-        object_ptr<const T> as_ptr_to() const;
-
-        template <typename T1, typename T2>
-        std::shared_ptr<const T2> poly_cast() const;
-
-        template <typename F>
-        decltype(auto) visit(F&& f) const
-        {
-            return std::visit([&](const auto& ptr) -> decltype(auto)
-            {
-                assert(ptr);
-                return std::forward<F>(f)(*ptr);
-            }, value);
-        }
-
-        template <class Archive>
-        void serialize(Archive& ar) { ar(value); }
-    };
-
-    bool operator==(const Exp&, const Exp&);
-
-    using RIntMap = Box<std::map<int, Exp>>;
-    using RPair = Box<std::pair<Exp, Exp>>;
-
-    struct RMaybe: public Box<std::optional<Exp>>
-    {
-        RMaybe() = default;
-
-        using Box<std::optional<Exp>>::Box;
-
-        RMaybe(Exp x):Box<std::optional<Exp>>(std::optional<Exp>(std::move(x))) {}
-
-        RMaybe* clone() const override { return new RMaybe(*this); }
-    };
-
-    struct RVector: public Box<std::vector<Exp>>
-    {
-        RVector() = default;
-
-        using Box<std::vector<Exp>>::Box;
-
-        RVector* clone() const override { return new RVector(*this); }
-
-        explicit RVector(const std::vector<double>&);
-        explicit RVector(const std::vector<int>&);
-        explicit RVector(const std::vector<char>&);
-
-        explicit operator std::vector<double>() const;
-        explicit operator std::vector<int>() const;
-        explicit operator std::vector<char>() const;
-    };
-
     struct Int
     {
         int value;
@@ -278,6 +114,250 @@ namespace Runtime
 
         template <class Archive>
         void serialize(Archive& ar) { ar(value); }
+    };
+
+    struct ObjectValue
+    {
+        object_ptr<const Object> value;
+
+        ObjectValue() = default;
+        ObjectValue(object_ptr<const Object> o):value(std::move(o))
+        {
+            assert(value->type() != type_constant::expression_type);
+            assert(value->type() != type_constant::constructor_type);
+            assert(not dynamic_pointer_cast<const Box<std::string>>(o));
+            assert(not dynamic_pointer_cast<const Box<integer>>(o));
+        }
+
+        bool operator==(const ObjectValue&) const;
+
+        template <class Archive>
+        void serialize(Archive&) const
+        {
+            throw std::runtime_error("Runtime::ObjectValue is not serializable");
+        }
+    };
+
+    struct IndexVar
+    {
+        int index = 0;
+
+        IndexVar() = default;
+        IndexVar(int i):index(i) {}
+
+        bool operator==(const IndexVar&) const = default;
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(index); }
+    };
+
+    struct RegRef
+    {
+        int target = 0;
+
+        RegRef() = default;
+        RegRef(int r):target(r) {}
+
+        bool operator==(const RegRef&) const = default;
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(target); }
+    };
+
+    template <typename T>
+    struct is_shared_exp_node: std::false_type {};
+
+    template <> struct is_shared_exp_node<String>: std::true_type {};
+    template <> struct is_shared_exp_node<Integer>: std::true_type {};
+    template <> struct is_shared_exp_node<Constructor>: std::true_type {};
+    template <> struct is_shared_exp_node<GlobalVar>: std::true_type {};
+    template <> struct is_shared_exp_node<Lambda>: std::true_type {};
+    template <> struct is_shared_exp_node<Let>: std::true_type {};
+    template <> struct is_shared_exp_node<Case>: std::true_type {};
+    template <> struct is_shared_exp_node<App>: std::true_type {};
+    template <> struct is_shared_exp_node<Trim>: std::true_type {};
+
+    template <typename T>
+    struct is_shared_exp_storage: std::false_type {};
+
+    template <typename T>
+    struct is_shared_exp_storage<std::shared_ptr<const T>>: std::true_type {};
+    
+    struct Exp
+    {
+        using value_type = std::variant<
+            std::monostate,
+            Int,
+            Double,
+            LogDouble,
+            Char,
+            ObjectValue,
+            IndexVar,
+            RegRef,
+            std::shared_ptr<const String>,
+            std::shared_ptr<const Integer>,
+            std::shared_ptr<const Constructor>,
+            std::shared_ptr<const GlobalVar>,
+            std::shared_ptr<const Lambda>,
+            std::shared_ptr<const Let>,
+            std::shared_ptr<const Case>,
+            std::shared_ptr<const App>,
+            std::shared_ptr<const Trim>
+        >;
+
+        value_type value;
+
+        Exp() = default;
+        Exp(int x):Exp(Int(x)) {}
+        Exp(double x):Exp(Double(x)) {}
+        Exp(log_double_t x):Exp(LogDouble(x)) {}
+        Exp(bool);
+        Exp(char x):Exp(Char(x)) {}
+        Exp(std::string);
+        Exp(const char*);
+        Exp(integer);
+        Exp(const Box<integer>&) = delete;
+        Exp(const Box<std::string>&) = delete;
+        Exp(const Object& x):Exp(const_ptr(x)) {}
+        Exp(const Object* x):Exp(object_ptr<const Object>(x)) {}
+        Exp(object_ptr<const Object> x):Exp(ObjectValue(std::move(x))) {}
+
+        template <DerivedFromObject T>
+        Exp(object_ptr<T> x):Exp(object_ptr<const Object>(std::move(x))) {}
+        Exp(Int node):value(std::move(node)) {}
+        Exp(Double node):value(std::move(node)) {}
+        Exp(LogDouble node):value(std::move(node)) {}
+        Exp(Char node):value(std::move(node)) {}
+        Exp(String);
+        Exp(Integer);
+        Exp(Constructor);
+        Exp(ObjectValue node):value(std::move(node)) {}
+        Exp(IndexVar node):value(std::move(node)) {}
+        Exp(RegRef node):value(std::move(node)) {}
+        Exp(GlobalVar);
+        Exp(Lambda);
+        Exp(Let);
+        Exp(Case);
+        Exp(App);
+        Exp(Trim);
+
+        bool empty() const
+        {
+            return std::holds_alternative<std::monostate>(value);
+        }
+
+        explicit operator bool() const { return not empty(); }
+
+        template <typename T>
+        const T* to() const;
+
+        template <typename T>
+        bool is_a() const { return to<T>(); }
+
+        template <typename T>
+        bool is() const { return to<T>(); }
+
+        bool is_int() const { return is<Int>(); }
+        bool is_double() const { return is<Double>(); }
+        bool is_log_double() const { return is<LogDouble>(); }
+        bool is_char() const { return is<Char>(); }
+        bool is_string() const { return is<String>(); }
+        bool is_integer() const { return is<Integer>(); }
+        bool is_constructor() const { return is<Constructor>(); }
+        bool is_object_value() const { return is<ObjectValue>(); }
+
+        template <typename T>
+        const T& as() const
+        {
+            auto ptr = to<T>();
+            assert(ptr);
+            return *ptr;
+        }
+
+        bool is_atomic_value() const;
+        bool is_value() const;
+        bool is_whnf() const;
+        bool is_gcable_object_value() const;
+        int as_int() const;
+        double as_double() const;
+        log_double_t as_log_double() const;
+        char as_char() const;
+        const std::string& as_string() const;
+        const integer& as_integer() const;
+        const ConstructorTag& as_constructor() const;
+        std::string print() const;
+
+        const Exp& slot_ref(int i) const;
+
+        template <DerivedFromObject T>
+        const T& as_() const;
+
+        template <DerivedFromObject T>
+        const T& as_checked() const;
+
+        template <DerivedFromObject T>
+        object_ptr<const T> as_ptr_to() const;
+
+        template <typename T1, typename T2>
+        std::shared_ptr<const T2> poly_cast() const;
+
+        template <typename F>
+        decltype(auto) visit(F&& f) const
+        {
+            return std::visit([&](const auto& node) -> decltype(auto)
+            {
+                using T = std::decay_t<decltype(node)>;
+
+                if constexpr (std::is_same_v<T, std::monostate>)
+                {
+                    std::abort();
+                    return std::forward<F>(f)(*static_cast<const Int*>(nullptr));
+                }
+                else if constexpr (is_shared_exp_storage<T>::value)
+                {
+                    assert(node);
+                    return std::forward<F>(f)(*node);
+                }
+                else
+                    return std::forward<F>(f)(node);
+            }, value);
+        }
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(value); }
+    };
+
+    bool operator==(const Exp&, const Exp&);
+
+    using RIntMap = Box<std::map<int, Exp>>;
+    using RPair = Box<std::pair<Exp, Exp>>;
+
+    struct RMaybe: public Box<std::optional<Exp>>
+    {
+        RMaybe() = default;
+
+        using Box<std::optional<Exp>>::Box;
+
+        RMaybe(Exp x):Box<std::optional<Exp>>(std::optional<Exp>(std::move(x))) {}
+
+        RMaybe* clone() const override { return new RMaybe(*this); }
+    };
+
+    struct RVector: public Box<std::vector<Exp>>
+    {
+        RVector() = default;
+
+        using Box<std::vector<Exp>>::Box;
+
+        RVector* clone() const override { return new RVector(*this); }
+
+        explicit RVector(const std::vector<double>&);
+        explicit RVector(const std::vector<int>&);
+        explicit RVector(const std::vector<char>&);
+
+        explicit operator std::vector<double>() const;
+        explicit operator std::vector<int>() const;
+        explicit operator std::vector<char>() const;
     };
 
     struct String
@@ -353,35 +433,6 @@ namespace Runtime
         void serialize(Archive& ar) { ar(value); }
     };
 
-
-    struct ObjectValue
-    {
-        object_ptr<const Object> value;
-
-        ObjectValue() = default;
-        ObjectValue(object_ptr<const Object> o):value(std::move(o))
-        {
-            assert(value->type() != type_constant::expression_type);
-            assert(value->type() != type_constant::constructor_type);
-            assert(not dynamic_pointer_cast<const Box<std::string>>(o));
-            assert(not dynamic_pointer_cast<const Box<integer>>(o));
-        }
-
-        bool operator==(const ObjectValue&) const;
-
-        template <class Archive>
-        void save(Archive&) const
-        {
-            throw std::runtime_error("Runtime::ObjectValue is not serializable");
-        }
-
-        template <class Archive>
-        void load(Archive&)
-        {
-            throw std::runtime_error("Runtime::ObjectValue is not serializable");
-        }
-    };
-
     template <DerivedFromObject T>
     const T& Exp::as_() const
     {
@@ -435,26 +486,17 @@ namespace Runtime
         }
         else
         {
-            if (std::holds_alternative<std::shared_ptr<const T>>(value))
-                return std::get<std::shared_ptr<const T>>(value).get();
+            if constexpr (is_shared_exp_node<T>::value)
+            {
+                if (auto ptr = std::get_if<std::shared_ptr<const T>>(&value))
+                    return ptr->get();
+                else
+                    return nullptr;
+            }
             else
-                return nullptr;
+                return std::get_if<T>(&value);
         }
     }
-
-
-    struct IndexVar
-    {
-        int index = 0;
-
-        IndexVar() = default;
-        IndexVar(int i):index(i) {}
-
-        bool operator==(const IndexVar&) const = default;
-
-        template <class Archive>
-        void serialize(Archive& ar) { ar(index); }
-    };
 
     struct GlobalVar
     {
@@ -468,19 +510,6 @@ namespace Runtime
 
         template <class Archive>
         void serialize(Archive& ar) { ar(name, index); }
-    };
-
-    struct RegRef
-    {
-        int target = 0;
-
-        RegRef() = default;
-        RegRef(int r):target(r) {}
-
-        bool operator==(const RegRef&) const = default;
-
-        template <class Archive>
-        void serialize(Archive& ar) { ar(target); }
     };
 
     struct Lambda

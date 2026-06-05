@@ -19,39 +19,22 @@ namespace Runtime
         template <typename T>
         Exp::value_type make_exp_value(T node)
         {
-            return std::shared_ptr<const T>(new T(std::move(node)));
+            if constexpr (is_shared_exp_node<T>::value)
+                return std::make_shared<const T>(std::move(node));
+            else
+                return node;
         }
 
-        Exp object_exp(object_ptr<const Object> x)
-        {
-            assert(not boost::dynamic_pointer_cast<const ::String>(x));
-            assert(not boost::dynamic_pointer_cast<const ::Integer>(x));
-            return ObjectValue(std::move(x));
-        }
     }
 
-    Exp::Exp(int x):Exp(Int(x)) {}
-    Exp::Exp(double x):Exp(Double(x)) {}
-    Exp::Exp(log_double_t x):Exp(LogDouble(x)) {}
     Exp::Exp(bool x):Exp(Constructor(x ? bool_true_name : bool_false_name, 0)) {}
-    Exp::Exp(char x):Exp(Char(x)) {}
     Exp::Exp(std::string x):Exp(String(std::move(x))) {}
     Exp::Exp(const char* x):Exp(String(x)) {}
     Exp::Exp(integer x):Exp(Integer(std::move(x))) {}
-    Exp::Exp(const Object& x):Exp(object_exp(const_ptr(x))) {}
-    Exp::Exp(const Object* x):Exp(object_exp(object_ptr<const Object>(x))) {}
-    Exp::Exp(object_ptr<const Object> x):Exp(object_exp(std::move(x))) {}
-    Exp::Exp(Int node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(Double node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(LogDouble node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(Char node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(String node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Integer node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Constructor node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(ObjectValue node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(IndexVar node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(GlobalVar node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(RegRef node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Lambda node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Let node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Case node):value(make_exp_value(std::move(node))) {}
@@ -141,11 +124,18 @@ namespace Runtime
 
         return std::visit([](const auto& a, const auto& b) -> bool
         {
-            using A = typename std::decay_t<decltype(a)>::element_type;
-            using B = typename std::decay_t<decltype(b)>::element_type;
+            using A = std::decay_t<decltype(a)>;
+            using B = std::decay_t<decltype(b)>;
 
             if constexpr (std::is_same_v<A, B>)
-                return *a == *b;
+            {
+                if constexpr (std::is_same_v<A, std::monostate>)
+                    return true;
+                else if constexpr (is_shared_exp_storage<A>::value)
+                    return *a == *b;
+                else
+                    return a == b;
+            }
             else
                 return false;
         }, x.value, y.value);
@@ -339,8 +329,8 @@ namespace Runtime
                           std::is_same_v<T, Integer> or
                           std::is_same_v<T, Constructor> or
                           std::is_same_v<T, ObjectValue> or
-                          std::is_same_v<T, GlobalVar> or
-                          std::is_same_v<T, RegRef>)
+                          std::is_same_v<T, RegRef> or
+                          std::is_same_v<T, GlobalVar>)
             {
                 return e;
             }
@@ -472,8 +462,8 @@ namespace Runtime
                    std::is_same_v<T, Constructor> or
                    std::is_same_v<T, ObjectValue> or
                    std::is_same_v<T, IndexVar> or
-                   std::is_same_v<T, GlobalVar> or
-                   std::is_same_v<T, RegRef>;
+                   std::is_same_v<T, RegRef> or
+                   std::is_same_v<T, GlobalVar>;
         });
     }
 
@@ -550,16 +540,16 @@ namespace Runtime
             {
                 return "#" + std::to_string(e.index);
             }
+            else if constexpr (std::is_same_v<T, RegRef>)
+            {
+                return "$" + std::to_string(e.target);
+            }
             else if constexpr (std::is_same_v<T, GlobalVar>)
             {
                 std::string s = e.name;
                 if (e.index != 0)
                     s += "#" + convertToString(e.index);
                 return s;
-            }
-            else if constexpr (std::is_same_v<T, RegRef>)
-            {
-                return "$" + std::to_string(e.target);
             }
             else if constexpr (std::is_same_v<T, Lambda>)
             {
@@ -686,13 +676,13 @@ namespace Runtime
             {
                 assert(e.index >= 0);
             }
-            else if constexpr (std::is_same_v<T, GlobalVar>)
-            {
-                assert(not e.name.empty());
-            }
             else if constexpr (std::is_same_v<T, RegRef>)
             {
                 assert(e.target > 0);
+            }
+            else if constexpr (std::is_same_v<T, GlobalVar>)
+            {
+                assert(not e.name.empty());
             }
             else if constexpr (std::is_same_v<T, Lambda>)
             {
