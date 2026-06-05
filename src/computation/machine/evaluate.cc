@@ -9,7 +9,6 @@
 #include "computation/preprocess.H"
 #include "computation/expression/expression.H"
 #include "computation/expression/let.H"
-#include "computation/expression/trim.H"
 #include "computation/expression/index_var.H"
 #include "computation/operations.H"
 

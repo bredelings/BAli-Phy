@@ -14,7 +14,6 @@
 #include "computation/expression/constructor.H"
 #include "computation/expression/expression.H" // for is_reglike( )
 #include "computation/expression/convert.H" // for to_core_exp( )
-#include "computation/expression/runtime_views.H"
 #include "computation/runtime/ast.H"
 #include "computation/runtime/trim.H"
 #include "computation/fresh_vars.H"
