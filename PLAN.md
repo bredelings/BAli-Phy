@@ -59,6 +59,13 @@ Completed so far:
 - Changed `deindexify(const closure&)` to return `Runtime::Exp`. Legacy display
   and diagnostic callers now call `Runtime::to_expression_ref(deindexify(...))`
   explicitly before entering expression-only transforms.
+- Migrated `context_ref`'s public evaluation API in `context.H` to runtime
+  values: `evaluate_*`, `perform_*`, `get_reg_value`,
+  `get_modifiable_value(s)`, `get_expression`, `evaluate_program`, and the
+  recursive evaluation helpers now return `Runtime::Exp` / `Runtime::RVector`
+  instead of `expression_ref` / `EVector`. The temporary `_code` duplicates for
+  these APIs were removed, and remaining legacy callers bridge explicitly with
+  `Runtime::to_expression_ref(...)` where needed.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Evaluation Core
@@ -73,11 +80,12 @@ compatibility layers.
 
 ## Evaluation-Facing API Hotspots
 
-1. `context_ref` still exposes legacy evaluation APIs returning
-   `expression_ref`: `evaluate_*`, `get_reg_value*`, `get_modifiable_value`,
-   `get_expression`, and `evaluate_program`. Runtime-returning `_code` methods
-   exist beside many of these, and several legacy wrappers now delegate through
-   closures/runtime code.
+1. `context_ref` no longer declares expression-returning evaluation APIs in
+   `context.H`. Its public evaluation methods now return `Runtime::Exp` or
+   `Runtime::RVector`, and the old `_code` disambiguators have been removed.
+   `context.cc` still contains explicit legacy bridges at display/debug
+   boundaries, but callers of the public API no longer receive
+   `expression_ref` from `context_ref`.
 
 2. `reg_heap` no longer has evaluator-facing APIs returning `expression_ref`
    except graph display/debug helpers. Program unsharing is side-effect only,
@@ -100,9 +108,9 @@ compatibility layers.
 
 The remaining `legacy_exp()` callers fall into a few buckets:
 
-1. Legacy `context_ref` wrappers return `expression_ref` by contract. These are
-   acceptable while the legacy API names remain, but new callers should use the
-   `_code` or closure-returning variants.
+1. `context_ref`'s public evaluation wrappers have moved to runtime returns.
+   Remaining context-side bridges to `expression_ref` are explicit calls to
+   `Runtime::to_expression_ref(...)` for display/debug formatting.
 
 2. Graph/debug display still intentionally builds expression-shaped output for
    labels. The easy graph-structure pieces in `show_graph.cc` have moved to
@@ -124,38 +132,82 @@ The remaining `legacy_exp()` callers fall into a few buckets:
 ## Caller Migration Hotspots
 
 1. `context_ptr` still has legacy callers. The internals are runtime-based, but
-   tree, parameter, MCMC, and SMC call sites should keep moving to
-   `value_code()`, `set_code()`, and `list_to_vector_code()`.
+   it still exposes legacy helpers in `param.H`: `value()`, `set_value()`,
+   `head()`, and `list_to_vector()`. Runtime alternatives exist for most of
+   these (`value_code()`, `set_code()`, `head_code()`,
+   `list_to_vector_code()`), so this is now the next evaluation-facing API
+   surface to shrink.
 
-2. SMC haplotype/panel/site arrays still flow through `EVector` /
-   `expression_ref` helper functions. They are good candidates for
-   runtime-oriented helper splits after the evaluation API wrappers are clearer.
+2. Builtin data structures still expose evaluated values as legacy containers.
+   Small candidates are `EMaybe` in Prelude/Range/Matrix and
+   `IntMap::restrictKeysToVector`, which still materializes an `EVector`
+   through an internal `makeEVector` operation. Larger candidates are
+   `Vector.cc`, `Distribution.cc`, `PopGen.cc`, and SMC helper paths.
 
-3. Some model/tree helpers still intentionally return `expression_ref`. These
-   should be split only where a runtime-native consumer exists; model generation
-   and display paths can stay legacy for now.
+3. SMC haplotype/panel/site arrays still flow through `EVector` /
+   `expression_ref` helper functions. Some call sites already use
+   `Runtime::Exp` for scalar evaluation, but many sequence/read/haplotype
+   helpers still accept `EVector`. These should move in focused groups after
+   the smaller vector/maybe fronts establish the pattern.
+
+4. Display/debug bridges remain explicit. `show_graph.cc`, `evaluate.cc`
+   diagnostics, and `closure::print()` still convert runtime code to
+   expression-shaped output. These are acceptable boundaries, but the remaining
+   graph-label helpers could be peeled further if we add runtime replacements
+   for substitution/untranslation/name simplification.
+
+5. Model/code generation remains intentionally expression-based. Occurrences
+   in `models/code-generation.*`, `models/logger.cc`, and parsed/model AST
+   utilities are outside the evaluator cleanup unless a runtime-native consumer
+   appears.
+
+## Current Scan
+
+Recent scan results:
+
+- `context.H` has no textual `expression_ref` declarations and no temporary
+  context `_code` APIs.
+- Evaluator-core reduction code still uses runtime expressions. Remaining
+  `expression_ref` in `evaluate.cc` is diagnostic/display plumbing.
+- `param.H` / `param.cc` is the main evaluation-adjacent header still exposing
+  legacy expression helpers through `context_ptr` and `param::ref()`.
+- `closure.H` still owns `legacy_exp()` and its expression cache. This is the
+  explicit compatibility bridge for display/debug output.
+- `runtime/ast` still contains conversion bridges:
+  `atomic_value(const expression_ref&)`, `e_op_value(const expression_ref&)`,
+  and `to_expression_ref(...)`.
+- `show_graph.cc` is partly runtime-native for graph structure, but label
+  rendering remains expression-based.
+- Large `EVector` surfaces remain in likelihood/substitution and several
+  builtins. These are evaluated-value containers, but they are broader than the
+  evaluator API itself and should be migrated incrementally.
 
 ## Next Steps
 
-1. Convert `context_ref` legacy APIs into thin wrappers over `_code` or
-   closure-returning APIs. The easy `evaluate_reg()` / `reg_is_modifiable()`
-   cases are done; remaining cases should be handled where lifetime and
-   reference-return behavior are clear. Rename to `_legacy` only if the churn is
-   modest; otherwise keep temporary suffix comments current.
+1. Clean up `context_ptr` in small pieces: migrate remaining callers of
+   `value()`, `set_value()`, `head()`, and `list_to_vector()` to runtime
+   variants, then remove or rename the legacy helpers.
 
-2. Keep graph display on legacy expression views unless/until there is a
-   runtime-native graph rendering path, because it intentionally prints
-   expression-shaped output.
+2. Add `Runtime::RMaybe` and migrate the small `EMaybe` builtin surface
+   (`Prelude`, `Range`, `Matrix`) to runtime-native optional values.
 
-3. Continue caller migration in focused batches: remaining `context_ptr`
-   callers, then small `EVector`/`EMaybe` fronts. `IntMap::restrictKeysToVector`
-   is now a concrete small `EVector` candidate; the large likelihood and SEV
-   APIs should wait until the runtime-vector boundary pattern is clearer.
+3. Convert `IntMap::restrictKeysToVector` / `makeEVector` to return
+   `Runtime::RVector`, with explicit legacy bridging only for callers that
+   still require `EVector`.
 
-4. Decide whether `Runtime::atomic_value()` / `Runtime::e_op_value()` should
+4. Continue SMC vector migration in narrow groups: replace
+   `context_ptr::list_to_vector()` uses with `list_to_vector_code()` and convert
+   helper signatures from `EVector` to `Runtime::RVector` where the helper only
+   needs scalar vector access.
+
+5. Decide whether `Runtime::atomic_value()` / `Runtime::e_op_value()` should
    move out of `runtime/ast` into an explicit legacy conversion module, or
    whether callers should first migrate away from expression_ref values.
 
-5. After each code batch, build `src/bali-phy/bali-phy` from
+6. Keep graph/display conversion boundaries explicit. Only peel more
+   `show_graph.cc` code if a runtime helper removes real conversion pressure
+   without duplicating the whole expression pretty-printer.
+
+7. After each code batch, build `src/bali-phy/bali-phy` from
    `../build/gcc-16-debug-O`, run the relevant focused tests, and commit
    logically separate changes with `jj`.
