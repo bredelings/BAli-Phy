@@ -1,6 +1,7 @@
 #include "tidy.H"
 #include <tuple>
 #include "util/string/join.H"
+#include "util/string/convert.H"
 #include "haskell/ids.H"
 
 using std::vector;

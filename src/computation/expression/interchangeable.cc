@@ -71,13 +71,6 @@ interchangeable::interchangeable():
     Operation(interchangeable_op, "interchangeable")
 {}
 
-bool is_interchangeable(const expression_ref& E)
-{
-    bool result = E.head().type() == type_constant::interchangeable_type;
-    assert(result == E.head().is_a<interchangeable>());
-    return result;
-}
-
 bool is_interchangeable(const Runtime::Exp& E)
 {
     const auto* app = E.to<Runtime::App>();

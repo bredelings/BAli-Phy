@@ -4,8 +4,6 @@
 #include <optional>
 #include "location.hh"
 
-#include "computation/expression/expression_ref.H"
-
 template <typename T>
 struct Unlocated
 {
@@ -40,10 +38,6 @@ public:
     }
 
     std::string print() const;
-
-//    expression_ref copy() const {
-//	return object_ptr<Located<T>>(clone());
-//    }
 
     const T& value() const {return obj;}
           T& value()       {return obj;}

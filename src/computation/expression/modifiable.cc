@@ -53,13 +53,6 @@ modifiable::modifiable():
     Operation(modifiable_op, "modifiable")
 {}
 
-bool is_modifiable(const expression_ref& E)
-{
-    bool result = E.head().type() == type_constant::modifiable_type;
-    assert(result == E.head().is_a<modifiable>());
-    return result;
-}
-
 bool is_modifiable(const Runtime::Exp& E)
 {
     const auto* app = E.to<Runtime::App>();

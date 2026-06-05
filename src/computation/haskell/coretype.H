@@ -7,9 +7,6 @@
 
 #include "util/cow-ptr.H"
 
-// Can we eliminate this?
-#include "computation/expression/expression_ref.H"
-
 #include <cereal/types/memory.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/variant.hpp>

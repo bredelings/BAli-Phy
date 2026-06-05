@@ -1243,19 +1243,6 @@ namespace substitution {
 
 
     object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch_toward_root(const expression_ref& nodeCLV,
-                                 const R::RVector& transition_P,
-                                 bool equilibrium = true)
-    {
-	if (auto LCB = nodeCLV.to<Likelihood_Cache_Branch>())
-	    return peel_leaf_branch_toward_root(*LCB, transition_P, equilibrium );
-	else if (auto SL = nodeCLV.to<SparseLikelihoods>())
-	    return peel_leaf_branch_toward_root(*SL, transition_P, equilibrium );
-	else
-	    throw myexception()<<"peel_leaf_branch_toward_root: leaf object not recognized!";
-    }
-
-    object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_toward_root(const R::Exp& nodeCLV,
                                  const R::RVector& transition_P,
                                  bool equilibrium = true)

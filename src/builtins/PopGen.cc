@@ -6,6 +6,7 @@
 #include <optional>
 #include "computation/machine/args.H"
 #include "util/io.H"
+#include "util/string/convert.H"
 #include "util/string/split.H"
 #include "util/string/strip.H"
 #include "util/log-level.H"
