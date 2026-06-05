@@ -35,7 +35,6 @@ enum class type_constant {
     let_type,
 
     operation_type,
-    let2_type,
     seq_type,
     join_type,
     case_type,

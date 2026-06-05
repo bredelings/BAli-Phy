@@ -1,11 +1,8 @@
 #ifndef OPERATIONS_H
 #define OPERATIONS_H
 
-#include <vector>
-#include <string>
 #include "util/myexception.H"
 #include "operation.H"
-#include "expression/expression_ref.H"
 
 class OperationArgs;
 
@@ -38,24 +35,5 @@ struct Case: public Operation
 };
 
 closure let_op(OperationArgs&);
-
-struct Let: public Operation
-{
-    virtual Let* clone() const {return new Let(*this);}
-
-    type_constant type() const {return type_constant::let2_type;}
-
-    std::string print() const;
-
-    std::vector<expression_ref> binds;
-
-    expression_ref body;
-
-    Let(const std::vector<expression_ref>& bs, const expression_ref& b)
-        :Operation(let_op, "let"),
-         binds(bs),
-         body(b)
-        {}
-};
 
 #endif

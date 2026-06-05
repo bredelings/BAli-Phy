@@ -10,7 +10,6 @@
 #include "expression/case.H"
 #include "expression/var.H"
 #include "expression/apply.H"
-#include "util/string/join.H"
 #include <type_traits>
 
 using std::vector;
@@ -41,14 +40,6 @@ using std::string;
 //       (b) Both seq and $ avoid evaluating the reg at this location.
 // Thus: seq and $ look up the relevant regs, while case examines Runtime::Case
 //       alternatives directly.
-
-string Let::print() const
-{
-    vector<string> bind_strings;
-    for(auto& bind: binds)
-        bind_strings.push_back(bind.print());
-    return "let {"+join(bind_strings,";")+"} in "+body.print();
-}
 
 using boost::dynamic_pointer_cast;
 
