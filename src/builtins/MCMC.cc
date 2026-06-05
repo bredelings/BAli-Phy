@@ -527,10 +527,10 @@ extern "C" closure builtin_function_scaleGroupsProposalRaw(OperationArgs& Args)
         if (log_verbose >= 3) std::cerr<<"\n\n  factor = "<<log(factor)<<"\n";
 
         for(auto& scale: scales)
-            scale.set_code( scale.value_code().as_double() * factor );
+            scale.set_value( scale.value().as_double() * factor );
 
         for(auto& branch_length: branch_lengths)
-            branch_length.set_code( branch_length.value_code().as_double() / factor );
+            branch_length.set_value( branch_length.value().as_double() / factor );
 
         ratio = pow(log_double_t(factor), (int)scales.size() - (int)branch_lengths.size() );
     }

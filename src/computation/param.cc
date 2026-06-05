@@ -135,14 +135,9 @@ context_ptr context_ptr::list_element(int index) const
     return L[0];
 }
 
-expression_ref context_ptr::value() const
+Runtime::Exp context_ptr::value() const
 {
     return result().head();
-}
-
-Runtime::Exp context_ptr::value_code() const
-{
-    return result().head_code();
 }
 
 EVector context_ptr::list_to_vector() const
@@ -154,7 +149,7 @@ EVector context_ptr::list_to_vector() const
     {
         assert(L.size() == 2);
 
-        vec->push_back(L[0].value());
+        vec->push_back(Runtime::to_expression_ref(L[0].value()));
 
         L = L[1];
     }
@@ -171,7 +166,7 @@ Runtime::RVector context_ptr::list_to_vector_code() const
     {
         assert(L.size() == 2);
 
-        vec.push_back(L[0].value_code());
+        vec.push_back(L[0].value());
 
         L = L[1];
     }
@@ -212,16 +207,7 @@ optional<context_ptr> context_ptr::modifiable() const
         return {};
 }
 
-void context_ptr::set_value(const expression_ref& v)
-{
-    auto m = modifiable();
-    if (not m)
-        throw myexception()<<"Trying to set the value of non-modifiable reg "<<get_reg();
-    int r = m->get_reg();
-    const_cast<context_ref&>(C).set_reg_value(r,Runtime::e_op_value(v));
-}
-
-void context_ptr::set_code(Runtime::Exp v)
+void context_ptr::set_value(Runtime::Exp v)
 {
     auto m = modifiable();
     if (not m)
@@ -255,12 +241,7 @@ int context_ptr::size() const
     return runtime_size(C.memory()->closure_at(r).get_code());
 }
 
-expression_ref context_ptr::head() const
-{
-    return Runtime::to_expression_ref(head_code());
-}
-
-Runtime::Exp context_ptr::head_code() const
+Runtime::Exp context_ptr::head() const
 {
     auto [_, r] = C.incremental_evaluate(reg);
     assert(r>0);

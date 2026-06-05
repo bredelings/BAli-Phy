@@ -23,23 +23,18 @@ class context_ptr
 public:
     context_ptr result() const;
     std::optional<context_ptr> modifiable() const;
-    void set_value(const expression_ref& v);
-    void set_code(Runtime::Exp v);
+    void set_value(Runtime::Exp v);
 
     void move_to_result();
     bool move_to_modifiable();
 
     int size() const;
     context_ptr operator[](int i) const;
-    // Temporary _code suffix: once the legacy expression_ref API is removed,
-    // these runtime-returning APIs should take the undecorated names.
-    Runtime::Exp head_code() const;
-    expression_ref head() const;
-    // Temporary _code suffix: see head_code().
-    Runtime::Exp value_code() const;
-    expression_ref value() const;
+    Runtime::Exp head() const;
+    Runtime::Exp value() const;
     context_ptr list_element(int i) const;
-    // Temporary _code suffix: see head_code().
+    // Temporary _code suffix: once the legacy EVector API is removed,
+    // this runtime-returning API should take the undecorated name.
     Runtime::RVector list_to_vector_code() const;
     EVector list_to_vector() const;
     std::vector<context_ptr> list_elements() const;

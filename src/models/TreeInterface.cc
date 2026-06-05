@@ -97,7 +97,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     assert(tree.size() == 6);
 
     auto edges_out_of_node = tree[0];
-    expression_ref tmp = edges_out_of_node.value();
+    expression_ref tmp = Runtime::to_expression_ref(edges_out_of_node.value());
     for(auto [node, _]: tmp.as_<IntMap>())
     {
         auto tmp = edges_out_of_node[node][1];
@@ -110,7 +110,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     }
 
     auto nodes_for_edge    = tree[1];
-    tmp = nodes_for_edge.value();
+    tmp = Runtime::to_expression_ref(nodes_for_edge.value());
     for(auto [edge, _]: tmp.as_<IntMap>())
     {
         auto info = nodes_for_edge[edge];
@@ -245,7 +245,7 @@ map<int,string> TreeInterface::labels() const
 
     auto labels_ref = context_ptr(get_const_context(), *get_tree_constants().labels_reg);
 
-    auto labels_map = labels_ref.value_code();
+    auto labels_map = labels_ref.value();
     assert(labels_map.is_a<IntMap>());
     
     map<int,string> labels;
@@ -264,7 +264,7 @@ std::optional<string> TreeInterface::label(int n) const
 
     auto labels_ref = context_ptr(get_const_context(), *get_tree_constants().labels_reg);
 
-    assert(labels_ref.value_code().is_a<IntMap>());
+    assert(labels_ref.value().is_a<IntMap>());
 
     auto label = labels_ref[n]; // Maybe Text
 
@@ -275,7 +275,7 @@ std::optional<string> TreeInterface::label(int n) const
     label = label[0];             // Text
     assert(label.size() == 1);     // Text CPPString
     label = label[0];
-    return label.value_code().as_string();
+    return label.value().as_string();
 }
 
 int TreeInterface::n_branches() const {
@@ -596,7 +596,7 @@ bool TreeInterface::away_from_root(int b) const
 
     auto away = context_ptr(C, array_reg);
 
-    return is_bool_true(away[b].value());
+    return has_constructor(away[b].value(), bool_true_name);
 }
 
 bool TreeInterface::toward_root(int b) const
@@ -650,7 +650,7 @@ double TreeInterface::branch_rate(int b) const
     {
         auto rates = context_ptr(get_const_context(), r);
 
-        rate *= rates[b].value_code().as_double();
+        rate *= rates[b].value().as_double();
     }
 
     return rate;
@@ -662,11 +662,11 @@ map<int,double> TreeInterface::branch_lengths() const
 
     auto branch_to_reg = context_ptr{get_const_context(), branch_durations_reg().value()};
 
-    auto length_regs = branch_to_reg.value_code();
+    auto length_regs = branch_to_reg.value();
 
     map<int,double> lengths;
     for(auto& [b,r]: length_regs.as_<IntMap>())
-        lengths.insert({b, branch_rate(b) * branch_to_reg[b].value_code().as_double()});
+        lengths.insert({b, branch_rate(b) * branch_to_reg[b].value().as_double()});
     return lengths;
 }
 
@@ -682,7 +682,7 @@ double TreeInterface::branch_length(int b) const
 
         auto lengths = context_ptr{get_const_context(), array_reg};
 
-        return lengths[b].value_code().as_double() * branch_rate(b);
+        return lengths[b].value().as_double() * branch_rate(b);
     }
     else if (has_node_times())
     {
@@ -739,7 +739,7 @@ double TreeInterface::node_time(int n) const
 
     auto times = context_ptr{get_const_context(), times_reg};
 
-    return times[n].value_code().as_double();
+    return times[n].value().as_double();
 }
 
 bool TreeInterface::can_set_node_time(int n) const
