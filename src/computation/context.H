@@ -173,10 +173,7 @@ public:
 
     int n_expressions() const;
 
-    expression_ref get_expression(int i) const;
-
-    // Temporary _code suffix: see evaluate_head_code().
-    Runtime::Exp get_expression_code(int i) const;
+    Runtime::Exp get_expression(int i) const;
 
     ProbDensity prior() const;
     ProbDensity likelihood() const;

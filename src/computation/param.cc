@@ -51,7 +51,7 @@ expression_ref param::ref(const context_ref& C) const
     if (reg)
         return reg_var(*reg);
     else if (head)
-        return C.get_expression(*head);
+        return Runtime::to_expression_ref(C.get_expression(*head));
     else
         return Runtime::to_expression_ref(*value);
 }

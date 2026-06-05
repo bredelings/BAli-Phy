@@ -549,13 +549,7 @@ int context_ref::n_expressions() const
     return heads().size();
 }
 
-expression_ref context_ref::get_expression(int i) const
-{
-    int H = heads()[i];
-    return reg_var(H);
-}
-
-Runtime::Exp context_ref::get_expression_code(int i) const
+Runtime::Exp context_ref::get_expression(int i) const
 {
     int H = heads()[i];
     return Runtime::RegRef(H);
@@ -741,7 +735,7 @@ std::ostream& operator<<(std::ostream& o, const context_ref& C)
 {
     for(int index = 0;index < C.n_expressions(); index++)
     {
-	o<<index<<" "<<C.get_expression(index);
+	o<<index<<" "<<Runtime::to_expression_ref(C.get_expression(index));
 	o<<"\n";
     }
     return o;
