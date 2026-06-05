@@ -205,7 +205,7 @@ const expression_ref& context_ref::evaluate_reg(int r) const
 {
     auto [r1, result] = memory()->incremental_evaluate_in_context(r, context_index);
 
-    return memory()->expression_at(result);
+    return memory()->closure_at(result).legacy_exp();
 }
 
 const Runtime::Exp& context_ref::evaluate_reg_code(int r) const
@@ -463,7 +463,7 @@ optional<int> context_ref::compute_expression_is_modifiable_reg(int index) const
 
 bool context_ref::reg_is_modifiable(int r) const
 {
-    return is_modifiable(memory()->expression_at(r));
+    return is_modifiable(memory()->closure_at(r).get_code());
 }
 
 EVector context_ref::get_modifiable_values(const std::vector<int>& indices) const
