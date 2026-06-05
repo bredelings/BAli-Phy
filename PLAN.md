@@ -50,6 +50,12 @@ Completed so far:
   check runtime constructors, `apply_op` reports runtime code for non-lambdas,
   and `reg_heap::set_C()` checks pinned runtime `RegRef`s without converting
   the closure to `expression_ref`.
+- Peeled off some `show_graph.cc` work: graph reachability now discovers
+  `GCObject` dependencies through `Runtime::ObjectValue`, graph/factor-graph
+  record detection and record edge extraction inspect `Runtime::Exp`, and
+  modifiable/small-constant decisions use runtime predicates. Label rendering
+  still uses legacy expression views where it intentionally formats
+  expression-shaped output.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Evaluation Core
@@ -74,9 +80,11 @@ compatibility layers.
    except graph display/debug helpers. Program unsharing is side-effect only,
    and `evaluate_program()` returns the resulting closure.
 
-3. Graph display remains a legacy-expression boundary, but it now calls
-   `closure::legacy_exp()` directly. There is no `reg_heap::expression_at()`
-   compatibility accessor anymore.
+3. Graph display remains partly a legacy-expression boundary. Graph structure
+   and simple predicates now inspect `Runtime::Exp`, but label rendering still
+   calls `closure::legacy_exp()` where it needs expression-shaped display
+   transforms. There is no `reg_heap::expression_at()` compatibility accessor
+   anymore.
 
 4. `closure::legacy_exp()` and `Runtime::to_expression_ref()` remain necessary
    adapters. Long term they should be used at parser/model-generation/display
@@ -93,9 +101,10 @@ The remaining `legacy_exp()` callers fall into a few buckets:
    acceptable while the legacy API names remain, but new callers should use the
    `_code` or closure-returning variants.
 
-2. Graph/debug display (`show_graph.cc` and debug-only graph-register logging)
-   intentionally builds expression-shaped output. These are legacy display
-   boundaries, not evaluator internals.
+2. Graph/debug display still intentionally builds expression-shaped output for
+   labels. The easy graph-structure pieces in `show_graph.cc` have moved to
+   runtime code; the remaining calls are in the dormant compact-expression
+   substitution path, `compact_graph_expression()`, and the two label builders.
 
 3. `closure::print()` and `deindexify(const closure&)` are expression-facing
    compatibility helpers. A runtime-native deindexify/substitution path would
