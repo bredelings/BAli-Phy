@@ -18,7 +18,6 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
-#include "computation/expression/indexify.H"
 #include "computation/runtime/ast.H"
 
 using std::string;
@@ -172,38 +171,6 @@ const Runtime::Exp& context_ref::evaluate_reg(int r) const
     auto [r1, result] = memory()->incremental_evaluate_in_context(r, context_index);
 
     return memory()->closure_at(result).get_code();
-}
-
-Runtime::Exp context_ref::recursive_evaluate_reg(int r) const
-{
-    closure C1 = memory()->lazy_evaluate(r, context_index);
-    Runtime::Exp E1 = deindexify(trim_unnormalize(C1));
-
-    if (E1.is_atomic_value())
-	return E1;
-
-    auto app = E1.to<Runtime::App>();
-    if (not app)
-        return E1;
-
-    vector<Runtime::Exp> args = app->args;
-    for(auto& arg: args)
-    {
-	if (auto index_var = arg.to<Runtime::IndexVar>())
-	{
-	    arg = recursive_evaluate_reg(index_var->index);
-	}
-	else if (auto reg_ref = arg.to<Runtime::RegRef>())
-	{
-	    arg = recursive_evaluate_reg(reg_ref->target);
-	}
-    }
-    return Runtime::App(app->head, std::move(args));
-}
-
-Runtime::Exp context_ref::recursive_evaluate_head(int i) const
-{
-    return recursive_evaluate_reg(get_compute_expression_reg(i));
 }
 
 int get_reps(double x)

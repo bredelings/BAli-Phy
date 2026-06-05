@@ -113,12 +113,6 @@ public:
     /// Evaluate a particular reg and return the value.
     const Runtime::Exp& evaluate_reg(int r) const;
 
-    /// Return a structure where all fields are evaluated and substituted.
-    Runtime::Exp recursive_evaluate_reg(int r) const;
-
-    /// Return a structure where all fields are evaluated and substituted.
-    Runtime::Exp recursive_evaluate_head(int r) const;
-
     /// Get the value of a modifiable - by its location in memory
     const Runtime::Exp& get_reg_value(int R) const;
 

@@ -118,29 +118,6 @@ namespace
         require(slot_ref->target == 20, "runtime slot RegRef target mismatch");
     }
 
-    void check_runtime_closure_deindexify()
-    {
-        closure C(Runtime::App(Runtime::FunctionApply{},
-                               {Runtime::IndexVar(1),
-                                Runtime::Lambda(Runtime::IndexVar(1))}),
-                  {10, 20});
-
-        auto E = deindexify(C);
-        auto app = E.to<Runtime::App>();
-        require(bool(app), "deindexify should preserve runtime App structure");
-        require(app->args.size() == 2, "deindexified App arg count mismatch");
-
-        auto first = app->args[0].to<Runtime::RegRef>();
-        require(bool(first), "deindexify should replace a free top-level IndexVar with a RegRef");
-        require(first->target == 10, "deindexified top-level RegRef target mismatch");
-
-        auto lambda = app->args[1].to<Runtime::Lambda>();
-        require(bool(lambda), "deindexify should preserve runtime Lambda structure");
-        auto lambda_body = lambda->body.to<Runtime::RegRef>();
-        require(bool(lambda_body), "deindexify should replace a free IndexVar under a lambda with a RegRef");
-        require(lambda_body->target == 20, "deindexified lambda body RegRef target mismatch");
-    }
-
     void check_shift_free_indices()
     {
         Runtime::Exp e = Runtime::Let({Runtime::IndexVar(1)},
@@ -235,9 +212,9 @@ namespace
         require(b.as_constructor().name() == true_con.name(), "runtime Constructor name mismatch");
         require(b.as_constructor().n_args() == true_con.n_args(), "runtime Constructor arity mismatch");
 
-        auto vector_value = Runtime::atomic_value(expression_ref(EVector(std::vector<int>{1, 2})));
+        auto vector_value = Runtime::atomic_value(expression_ref(R::RVector(std::vector<int>{1, 2})));
         require(vector_value.is_atomic_value(), "runtime ObjectValue should be atomic");
-        require(vector_value.as_<EVector>().size() == 2, "runtime ObjectValue value mismatch");
+        require(vector_value.as_<R::RVector>().size() == 2, "runtime ObjectValue value mismatch");
 
         auto pair = Runtime::e_op_value(expression_ref(constructor("Pair", 2), {expression_ref(1), expression_ref(::String("field"))}));
         require(pair.is_value(), "constructor applications should be runtime values");
@@ -359,6 +336,7 @@ namespace
         require(Runtime::Exp(Runtime::LogDouble(log_double_t(nan))) == Runtime::Exp(Runtime::LogDouble(log_double_t(nan))),
                 "Runtime::LogDouble NaNs should compare equal");
     }
+
 }
 
 int main(int argc, char** argv)
@@ -396,7 +374,6 @@ int main(int argc, char** argv)
     check_runtime_closure_trim();
     check_runtime_closure_trim_unnormalize();
     check_runtime_closure_slots();
-    check_runtime_closure_deindexify();
     check_shift_free_indices();
     check_lambda_peeling();
     check_deindexify_reg_refs();

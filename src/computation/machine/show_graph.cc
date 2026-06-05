@@ -42,7 +42,6 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
     return V;
 }
 
-
 expression_ref subst_reg_vars(const expression_ref& E, const map<int,expression_ref>& replace)
 {
     if (E.is_reg_var())
@@ -472,7 +471,6 @@ expression_ref untranslate_vars(const expression_ref& E, const map<string, int>&
     return untranslate_vars(E, get_register_names(ids));
 }
 
-
 void write_dot_graph(const reg_heap& C)
 {
     int t = C.get_root_token();
@@ -565,9 +563,9 @@ string reg_name(int R, const map<int,expression_ref>& replace)
     {
 	auto E = replace.at(R);
 	if (E.is_a<var>())
-	    name = replace.at(R).print();
+	    name = E.as_<var>().name;
 	else
-	    name = replace.at(R).print() + " " + name;;
+	    name = E.print() + " " + name;;
     }
     return name;
 }
@@ -592,7 +590,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
     {
 	auto E = replace.at(R);
 	if (E.is_a<var>())
-	    label += "/" + E.print();
+	    label += "/" + E.as_<var>().name;
     }
     label += ":";
 
@@ -659,7 +657,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
     }
     else
     {
-        expression_ref E = unlet(subst_reg_vars(Runtime::to_expression_ref(deindexify(trim_unnormalize(C[R]))), replace));
+        expression_ref E = unlet(subst_reg_vars(deindexify(trim_unnormalize(C[R])), replace));
 
         label += E.print();
         label = escape(wrap(label,40));
@@ -738,7 +736,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
             reg_name = constants.at(R2);
         label += reg_name;
 	
-        //      expression_ref E = unlet(untranslate_vars(Runtime::to_expression_ref(deindexify(trim_unnormalize(C[R]))), reg_names));
+        //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names));
         //      E = map_symbol_names(E, simplify);
         //      label += E.print();
         label = escape(wrap(label,40));
@@ -747,7 +745,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
         label="mod";
     else
     {
-        expression_ref E = unlet(untranslate_vars(untranslate_vars(Runtime::to_expression_ref(deindexify(trim_unnormalize(C[R]))), reg_names),constants));
+        expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names),constants));
 
         E = map_symbol_names(E, simplify);
 
