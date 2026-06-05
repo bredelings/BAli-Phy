@@ -174,34 +174,34 @@ const Runtime::Exp& context_ref::evaluate_reg(int r) const
     return memory()->closure_at(result).get_code();
 }
 
-expression_ref context_ref::recursive_evaluate_reg(int r) const
+Runtime::Exp context_ref::recursive_evaluate_reg(int r) const
 {
     closure C1 = memory()->lazy_evaluate(r, context_index);
-    expression_ref E1 = Runtime::to_expression_ref(deindexify(trim_unnormalize(C1)));
+    Runtime::Exp E1 = deindexify(trim_unnormalize(C1));
 
-    if (E1.is_atomic())
+    if (E1.is_atomic_value())
 	return E1;
 
-    unique_ptr<expression> E (new expression(E1.as_expression()));
+    auto app = E1.to<Runtime::App>();
+    if (not app)
+        return E1;
 
-    // Having finished with C, it is now safe to do evaluation.
-    for(auto& e: E->sub)
+    vector<Runtime::Exp> args = app->args;
+    for(auto& arg: args)
     {
-	if (e.is_index_var())
+	if (auto index_var = arg.to<Runtime::IndexVar>())
 	{
-	    int r = e.as_index_var();
-	    e = recursive_evaluate_reg(r);
+	    arg = recursive_evaluate_reg(index_var->index);
 	}
-	else if (e.is_reg_var())
+	else if (auto reg_ref = arg.to<Runtime::RegRef>())
 	{
-	    int r = e.as_reg_var();
-	    e = recursive_evaluate_reg(r);
+	    arg = recursive_evaluate_reg(reg_ref->target);
 	}
     }
-    return expression_ref(std::move(E));
+    return Runtime::App(app->head, std::move(args));
 }
 
-expression_ref context_ref::recursive_evaluate_head(int i) const
+Runtime::Exp context_ref::recursive_evaluate_head(int i) const
 {
     return recursive_evaluate_reg(get_compute_expression_reg(i));
 }
