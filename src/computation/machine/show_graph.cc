@@ -145,9 +145,9 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
 	assert(regs.is_marked(r));
 
 	const reg& R = regs.access(r);
-        if (auto& obj = R.C.legacy_exp(); is_gcable_type(obj.type()))
+        if (auto obj = R.C.get_code().to<Runtime::ObjectValue>(); obj and is_gcable_type(obj->value->type()))
         {
-            auto gco = convert<GCObject>(obj.ptr());
+            auto gco = convert<GCObject>(obj->value);
             gco->get_regs(tmp);
             for(int j: tmp)
                 visit_reg(j);
@@ -445,12 +445,13 @@ map<int,string> get_constants(const reg_heap& C, int t)
 
 	if (C[R].is_reg_ref()) continue;
 
-	if (is_modifiable(C[R].legacy_exp())) continue;
+        const auto& code = C[R].get_code();
+	if (is_modifiable(code)) continue;
 
-	if (C[R].legacy_exp().size() == 0)
+	if (code.is_atomic_value())
 	{
-	    string name = C[R].legacy_exp().print();
-	    if (C[R].legacy_exp().is_double())
+	    string name = code.print();
+	    if (code.is_double())
 	    {
 		if (name.find('.') != string::npos)
 		{
@@ -503,9 +504,48 @@ bool print_as_record(const expression_ref& E)
     return false;
 }
 
+bool print_as_record(const Runtime::Exp& E)
+{
+    if (E.to<IntMap>())
+        return true;
+
+    if (auto app = E.to<Runtime::App>())
+        return std::holds_alternative<Runtime::OperationApp>(app->head) or
+               std::holds_alternative<Runtime::ConstructorApp>(app->head);
+
+    return false;
+}
+
 bool print_as_record(const closure& c)
 {
-    return print_as_record(c.legacy_exp());
+    return print_as_record(c.get_code());
+}
+
+vector<int> record_targets(const closure& C)
+{
+    vector<int> targets;
+
+    if (auto app = C.get_code().to<Runtime::App>())
+    {
+        for(const auto& arg: app->args)
+        {
+            if (auto index_var = arg.to<Runtime::IndexVar>())
+            {
+                int index = index_var->index;
+                if (index < C.Env.size())
+                    targets.push_back(C.lookup_in_env(index));
+                else
+                    std::clog<<"closure has bad index in "<<C.get_code()<<std::endl;
+            }
+        }
+    }
+    else if (auto im = C.get_code().to<IntMap>())
+    {
+        for(auto& [_, R]: *im)
+            targets.push_back(R);
+    }
+
+    return targets;
 }
 
 bool contains(const string& s1, const string& s2)
@@ -556,26 +596,26 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
     }
     label += ":";
 
-    if (print_as_record(F))
+    if (print_as_record(CR.get_code()))
     {
         label = "<table border='0' cellborder='1' cellspacing='0'><tr><td>"+escape(label) + "</td>";
 
-        if (F.is_a<IntMap>())
+        if (CR.get_code().to<IntMap>())
             label += "<td>IntMap</td>";
         else
             label += "<td>"+escape(F.head().print())+"</td>";
-        if (F.is_expression())
+        if (auto app = CR.get_code().to<Runtime::App>())
 	{
-            for(const expression_ref& E: F.sub())
+            for(const auto& E: app->args)
             {
-                if (E.is_index_var())
+                if (auto index_var = E.to<Runtime::IndexVar>())
                 {
-                    int index = E.as_index_var();
+                    int index = index_var->index;
                     int R2 = -1;
                     if (index < CR.Env.size())
                         R2 = CR.lookup_in_env( index );
                     else
-                        std::clog<<"reg "<<R<<" has bad index in "<<CR.print()<<std::endl;
+                        std::clog<<"reg "<<R<<" has bad index in "<<CR.get_code()<<std::endl;
 	  
                     label += "<td port=\"r" +convertToString(R2)+"\">" + escape(reg_name(R2,replace)) + "</td>";
                 }
@@ -585,7 +625,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
                 }
             }
 	}
-        else if (auto im = F.to<IntMap>())
+        else if (auto im = CR.get_code().to<IntMap>())
         {
             for(auto& [key, R2]: *im)
                 label += "<td port=\"r" +convertToString(R2)+"\">" + std::to_string(key) + "&rarr;" + escape(reg_name(R2,replace)) + "</td>";
@@ -640,7 +680,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
     if (reg_names.count(R))
         label = "/" + reg_names.at(R) + ":";
 
-    if (print_as_record(F))
+    if (print_as_record(CR.get_code()))
     {
         label = "<table border='0' cellborder='1' cellspacing='0'><tr>";
 
@@ -652,13 +692,13 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
             head_name = head_name.substr(where+1);
 
         label += "<td>"+escape(head_name)+"</td>";
-        if (F.is_expression())
+        if (auto app = CR.get_code().to<Runtime::App>())
 	{
-            for(const expression_ref& E: F.sub())
+            for(const auto& E: app->args)
             {
-                if (E.is_index_var())
+                if (auto index_var = E.to<Runtime::IndexVar>())
                 {
-                    int index = E.as_index_var();
+                    int index = index_var->index;
                     int R2 = CR.lookup_in_env( index );
 
                     string reg_name = " ";
@@ -703,7 +743,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
         //      label += E.print();
         label = escape(wrap(label,40));
     }
-    else if (is_modifiable(F))
+    else if (is_modifiable(CR.get_code()))
         label="mod";
     else
     {
@@ -740,9 +780,9 @@ map<int,expression_ref> get_names_for_regs(const reg_heap& M)
 
     for(int r: regs)
     {
-	if (auto E = M.closure_at(r).legacy_exp(); is_WHNF(E) and E.size() == 0 and not E.is_a<GCObject>() and E.print().size() < 25)
+	if (auto E = M.closure_at(r).get_code(); E.is_atomic_value() and not E.to<GCObject>() and E.print().size() < 25)
 	{
-	    reg_to_expression.insert({r,E});
+	    reg_to_expression.insert({r,Runtime::to_expression_ref(E)});
 	}
 	else if (reg_to_var.contains(r))
 	{
@@ -776,10 +816,8 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 	o<<name<<" ";
 	o<<"[";
 
-	expression_ref F = C[R].legacy_exp();
-
-	bool print_record = print_as_record(F);
-        if (print_as_record(F))
+	bool print_record = print_as_record(C[R].get_code());
+        if (print_record)
             o<<"shape = plain, ";
 
         // node label = R/name: expression
@@ -803,27 +841,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 	// out-edges
 	if (print_record)
 	{
-            vector<int> targets;
-            if (F.is_expression())
-                for(const expression_ref& E: F.sub())
-                {
-                    if (E.is_index_var())
-                    {
-                        int index = E.as_index_var();
-                        if (index < C[R].Env.size())
-                        {
-                            int R2 = C[R].lookup_in_env( index );
-                            targets.push_back(R2);
-                        }
-                        else
-                            std::clog<<"reg "<<R<<" has bad index in "<<C[R].print()<<std::endl;
-                    }
-                }
-            else if (auto im = F.to<IntMap>())
-            {
-                for(auto& [_,R]: *im)
-                    targets.push_back(R);
-            }
+            vector<int> targets = record_targets(C[R]);
 
 	    for(int R2: targets)
 	    {
@@ -1024,7 +1042,7 @@ void context_ref::write_factor_graph(std::ostream& o) const
     for(int i=0;i<regs2.size();i++)
     {
         int r = regs2[i];
-        if (is_modifiable(M[r].legacy_exp())) continue;
+        if (is_modifiable(M[r].get_code())) continue;
         for(auto r2: M[r].Env)
         {
             r2 = M.follow_reg_ref(r2);
@@ -1044,30 +1062,21 @@ void context_ref::write_factor_graph(std::ostream& o) const
             if (reg_names.count(r) or constants.count(r)) continue;
         }
 
-        expression_ref F = M[r].legacy_exp();
         // node label = R/name: expression
 	string name = "r" + convertToString(r);
 
-        if (print_as_record(F))
+        bool print_record = print_as_record(M[r].get_code());
+        if (print_record)
             o<<"r"<<r<<"  [label=<"<<label_for_reg2(r,M,reg_names,constants,simplify)<<">,shape=plain]\n";
         else
             o<<"r"<<r<<"  [label=<"<<label_for_reg2(r,M,reg_names,constants,simplify)<<">]\n";
 
         // out-edges
-	if (print_as_record(F))
+	if (print_record)
 	{
-            vector<int> targets;
-            if (F.is_expression())
-                for(const expression_ref& E: F.sub())
-                {
-                    if (E.is_index_var())
-                    {
-                        int index = E.as_index_var();
-                        int r2 = M[r].lookup_in_env( index );
-                        r2 = M.follow_reg_ref(r2);
-                        targets.push_back(r2);
-                    }
-                }
+            vector<int> targets = record_targets(M[r]);
+            for(int& r2: targets)
+                r2 = M.follow_reg_ref(r2);
 
 	    for(int r2: targets)
 	    {
@@ -1086,7 +1095,7 @@ void context_ref::write_factor_graph(std::ostream& o) const
 	}
 	else
 	{
-            if (is_modifiable(M[r].legacy_exp())) continue;
+            if (is_modifiable(M[r].get_code())) continue;
 
 	    for(int r2: M[r].Env)
 	    {
