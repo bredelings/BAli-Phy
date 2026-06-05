@@ -57,7 +57,7 @@ public:
     std::optional<int> find_modifiable_reg(int r) const;
 
     /// Get SOME model modifiable values
-    EVector get_modifiable_values(const std::vector<int>&) const;
+    Runtime::RVector get_modifiable_values(const std::vector<int>&) const;
 
     const reg_heap& get_memory() const {return *memory();}
 
@@ -137,16 +137,10 @@ public:
     expression_ref recursive_evaluate_head(int r) const;
 
     /// Get the value of a modifiable - by its location in memory
-    const expression_ref& get_reg_value(int R) const;
-
-    // Temporary _code suffix: see evaluate_head_code().
-    const Runtime::Exp& get_reg_value_code(int R) const;
+    const Runtime::Exp& get_reg_value(int R) const;
 
     /// Get the value of a modifiable
-    const expression_ref& get_modifiable_value(int index) const;
-
-    // Temporary _code suffix: see evaluate_head_code().
-    const Runtime::Exp& get_modifiable_value_code(int index) const;
+    const Runtime::Exp& get_modifiable_value(int index) const;
 
     /// Update the value of a modifiable - by its location in memory
     void set_reg_value(int R, closure&&);

@@ -466,9 +466,9 @@ bool context_ref::reg_is_modifiable(int r) const
     return is_modifiable(memory()->closure_at(r).get_code());
 }
 
-EVector context_ref::get_modifiable_values(const std::vector<int>& indices) const
+Runtime::RVector context_ref::get_modifiable_values(const std::vector<int>& indices) const
 {
-    EVector values(indices.size());
+    Runtime::RVector values(indices.size());
 
     for(int i=0;i<values.size();i++)
 	values[i] = get_modifiable_value(indices[i]);
@@ -477,29 +477,16 @@ EVector context_ref::get_modifiable_values(const std::vector<int>& indices) cons
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-const expression_ref& context_ref::get_reg_value(int R) const
-{
-    return memory()->get_reg_value_in_context(R, context_index).legacy_exp();
-}
-
-const Runtime::Exp& context_ref::get_reg_value_code(int R) const
+const Runtime::Exp& context_ref::get_reg_value(int R) const
 {
     return memory()->get_reg_value_in_context(R, context_index).get_code();
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-const expression_ref& context_ref::get_modifiable_value(int R) const
+const Runtime::Exp& context_ref::get_modifiable_value(int R) const
 {
     if (auto M = find_modifiable_reg(R))
 	return get_reg_value(*M);
-    else
-	throw myexception()<<"Reg "<<R<<" isn't modifiable!\n  ["<<R<<"] = "<<memory()->closure_at(R).print();
-}
-
-const Runtime::Exp& context_ref::get_modifiable_value_code(int R) const
-{
-    if (auto M = find_modifiable_reg(R))
-	return get_reg_value_code(*M);
     else
 	throw myexception()<<"Reg "<<R<<" isn't modifiable!\n  ["<<R<<"] = "<<memory()->closure_at(R).print();
 }
