@@ -179,8 +179,7 @@ extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& letter_sequence = arg1.as_<R::RVector>();
 
-    auto result = object_ptr<String>(new String);
-    auto& text = *result;
+    std::string text;
 
     for(auto& letter: letter_sequence)
     {
@@ -188,5 +187,5 @@ extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
         text += a.lookup(l);
     }
 
-    return result;
+    return text;
 }

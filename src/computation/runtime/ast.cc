@@ -23,12 +23,9 @@ namespace Runtime
 
         Exp object_exp(object_ptr<const Object> x)
         {
-            if (auto s = boost::dynamic_pointer_cast<const ::String>(x))
-                return String(s->value());
-            else if (auto i = boost::dynamic_pointer_cast<const ::Integer>(x))
-                return Integer(i->value());
-            else
-                return ObjectValue(std::move(x));
+            assert(not boost::dynamic_pointer_cast<const ::String>(x));
+            assert(not boost::dynamic_pointer_cast<const ::Integer>(x));
+            return ObjectValue(std::move(x));
         }
     }
 

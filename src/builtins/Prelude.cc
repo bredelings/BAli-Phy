@@ -11,17 +11,6 @@ using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
 
-namespace
-{
-    string prelude_string(const R::Exp& E)
-    {
-        if (E.to<R::String>())
-            return E.as_string();
-        else
-            return E.as_<String>().value();
-    }
-}
-
 //*****************************************************//
 extern "C" R::Exp simple_function_truncate(vector<R::Exp>& args)
 {
@@ -350,18 +339,14 @@ extern "C" R::Exp simple_function_show_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
 
-    object_ptr<String> v (new String);
-    *v = std::to_string(x);
-    return v;
+    return std::to_string(x);
 }
 
 extern "C" R::Exp simple_function_show_integer(vector<R::Exp>& args)
 {
     integer x = get_arg(args).as_integer();
 
-    object_ptr<String> v(new String);
-    *v = x.str();
-    return v;
+    return x.str();
 }
 
 //defined in expression_ref.cc
@@ -371,25 +356,21 @@ extern "C" R::Exp simple_function_show_double(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_double();
 
-    object_ptr<String> v (new String(double_to_string(x)));
-
-    return v;
+    return double_to_string(x);
 }
 
 extern "C" R::Exp simple_function_show(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
   
-    object_ptr<String> v (new String);
-    *v = x.print();
-    return v;
+    return x.print();
 }
 
 #include "computation/machine/error_exception.H"
 
 extern "C" closure builtin_function_error(OperationArgs& Args)
 {
-    string message = prelude_string(Args.evaluate_slot_to_value(0));
+    string message = Args.evaluate_slot_to_value(0).as_string();
   
     throw error_exception(message);
 }

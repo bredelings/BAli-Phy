@@ -917,17 +917,17 @@ object_ptr<const Object> Empirical_Frequencies_Function(const alphabet& a, istre
     return object_ptr<const Object>(F);
 }
 
-object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, const String& filename)
+object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, const std::string& filename)
 {
-    checked_ifstream ifile(filename.value(), "empirical rate matrix file");
+    checked_ifstream ifile(filename, "empirical rate matrix file");
     return Empirical_Exchange_Function(a,ifile);
 }
 
 extern "C" closure builtin_function_empirical(OperationArgs& Args)
 {
     auto a = Args.evaluate_slot_to_value(0);
-    auto S = Args.evaluate_slot_to_value(1);
-    return Empirical_Exchange_Function(*a.as_<Alphabet>(), S.as_<String>());
+    auto S = Args.evaluate_slot_to_value(1).as_string();
+    return Empirical_Exchange_Function(*a.as_<Alphabet>(), S);
 }
 
 extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationArgs& Args)

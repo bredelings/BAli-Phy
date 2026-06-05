@@ -1393,7 +1393,7 @@ extern "C" closure builtin_function_jsonToTableLineRaw(OperationArgs& Args)
     for(auto& [key,j2]: j)
         line<<"   "<<key<<" = "<<j2;
 
-    return String(line.str());
+    return line.str();
 }
 
 extern "C" closure builtin_function_prior(OperationArgs& Args)

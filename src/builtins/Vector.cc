@@ -72,7 +72,7 @@ extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
     if (offset == 0 and length == s.size())
 	return {R::IndexVar(0),{Args.reg_for_slot(0)}};
     else
-	return {String(s.substr(offset,length))};
+	return {s.substr(offset,length)};
 }
 
 extern "C" R::Exp simple_function_vector_size(vector<R::Exp>& args)
@@ -126,17 +126,17 @@ extern "C" closure builtin_function_clist_to_string(OperationArgs& Args)
 {
     R::Exp xs = Args.evaluate_slot_to_value(0);
 
-    object_ptr<String> s (new String);
+    std::string s;
 
     for(; not is_clist_nil(xs); xs = clist_second(xs))
-        (*s) += clist_first(xs).as_char();
+        s += clist_first(xs).as_char();
 
     return s;
 }
 
 extern "C" closure builtin_function_emptyString(OperationArgs& /*Args*/)
 {
-    object_ptr<String> s (new String);
+    std::string s;
 
     return s;
 }
@@ -144,8 +144,7 @@ extern "C" closure builtin_function_emptyString(OperationArgs& /*Args*/)
 extern "C" closure builtin_function_showObject(OperationArgs& Args)
 {
     auto arg = Args.evaluate_slot_to_value(0);
-    String result = arg.print();
-    return result;
+    return arg.print();
 }
 
 extern "C" closure builtin_function_fromVectors(OperationArgs& Args)

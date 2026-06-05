@@ -12,17 +12,6 @@ using boost::dynamic_pointer_cast;
 using std::optional;
 using std::vector;
 
-namespace
-{
-    std::string modifiable_string(const R::Exp& E)
-    {
-        if (E.to<R::String>())
-            return E.as_string();
-        else
-            return E.as_<String>();
-    }
-}
-
 int force_slot_to_safe_reg(OperationArgs& Args, int slot)
 {
     // Force the slot so that we get a unique location for it.
@@ -80,7 +69,7 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
 {
     int r_from_var = Args.reg_for_slot(0);
     int r_to_dist  = Args.evaluate_slot_use(1);
-    std::string role = modifiable_string(Args.evaluate_slot_to_value(2));
+    std::string role = Args.evaluate_slot_to_value(2).as_string();
 
     R::Exp E = R::App(R::ConstructorApp("Effect.InEdge", 3),
                       {R::IndexVar(0), r_to_dist, role});
@@ -109,7 +98,7 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
 
 extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 {
-    std::string name = modifiable_string(Args.evaluate_slot_to_value(0));
+    std::string name = Args.evaluate_slot_to_value(0).as_string();
 
     int observation = Args.evaluate_slot_to_value(1).as_int();
 
@@ -133,7 +122,7 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
 {
     int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_prop = Args.reg_for_slot(1);
-    std::string property = modifiable_string(Args.evaluate_slot_to_value(2));
+    std::string property = Args.evaluate_slot_to_value(2).as_string();
 
     R::Exp E = R::App(R::ConstructorApp("Effect.DistProperty", 3),
                       {r_from_dist, property, R::IndexVar(0)});

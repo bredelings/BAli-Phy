@@ -8,17 +8,6 @@
 
 using namespace std;
 
-namespace
-{
-    string environment_string(const Runtime::Exp& E)
-    {
-        if (E.to<Runtime::String>())
-            return E.as_string();
-        else
-            return E.as_<String>().value();
-    }
-}
-
 extern "C" closure builtin_function_getArgs(OperationArgs& Args)
 {
     reg_heap& M = Args.memory();
@@ -32,7 +21,7 @@ extern "C" closure builtin_function_getArgs(OperationArgs& Args)
 
 extern "C" closure builtin_function_getEnvRaw(OperationArgs& Args)
 {
-    auto x = environment_string(Args.evaluate_slot_to_value(0));
+    auto x = Args.evaluate_slot_to_value(0).as_string();
 
-    return String(getenv(x.c_str()));
+    return std::string(getenv(x.c_str()));
 }

@@ -176,8 +176,7 @@ extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
 {
     // Serialize no long works with classes DERIVED from json::value.
     json::value j = Args.evaluate_slot_to_value(0).as_<Box<json::value>>();
-    String s = json::serialize(j,{.allow_infinity_and_nan=true});
-    return s;
+    return json::serialize(j,{.allow_infinity_and_nan=true});
 }
 
 extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
@@ -212,8 +211,7 @@ extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
 
     auto sample2 = MCON::atomize(MCON::unnest(sample), true);
 
-    object_ptr<String> result = new String(MCON::tsv_line(MCON::get_row(mapping, sample2)));
-    return result;
+    return MCON::tsv_line(MCON::get_row(mapping, sample2));
 }
 
 extern "C" closure builtin_function_encodeVectorPairIntIntRaw(OperationArgs& Args)
@@ -237,6 +235,5 @@ extern "C" closure builtin_function_encodeVectorPairIntIntRaw(OperationArgs& Arg
     }
     o<<"]";
 
-    object_ptr<String> result = new String(o.str());
-    return result;
+    return o.str();
 }

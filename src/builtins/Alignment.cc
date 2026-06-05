@@ -699,15 +699,12 @@ extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
     const auto& sequence = arg1.as_string();
 
-    // unshare
-    object_ptr<String> sequence2 = new String;
-    // make empty
-    sequence2->string::operator=("");
+    std::string sequence2;
     for(auto& c : columns)
     {
         int col = c.as_int();
         if (col < sequence.size())
-            (*sequence2) += sequence[col];
+            sequence2 += sequence[col];
     }
 
     return sequence2;
@@ -743,7 +740,7 @@ extern "C" closure builtin_function_sequence_name(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& s = arg0.as_checked<Box<sequence>>();
 
-    return new String(s.name);
+    return s.name;
 }
 
 extern "C" closure builtin_function_sequenceDataRaw(OperationArgs& Args)
@@ -751,7 +748,7 @@ extern "C" closure builtin_function_sequenceDataRaw(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& s = arg0.as_checked<Box<sequence>>();
 
-    return new String(s);
+    return std::string(s);
 }
 
 // This is the no-gaps version...
@@ -1264,7 +1261,7 @@ extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A = arg0.as_<Box<pairwise_alignment_t>>();
 
-    String s;
+    std::string s;
     for(int i=0;i<A.size();i++)
     {
         char c = ' ';

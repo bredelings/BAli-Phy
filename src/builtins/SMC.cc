@@ -950,7 +950,7 @@ extern "C" closure builtin_function_trace_to_trees(OperationArgs& Args)
         s<<"["<<length<<"](1:"<<height<<",2:"<<height<<");";
     }
 
-    return { String(s.str()) };
+    return s.str();
 }
 
 double li_stephens_2003_theta(int n)
