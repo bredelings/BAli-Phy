@@ -70,6 +70,16 @@ Completed so far:
   remaining legacy callers bridge explicitly with `Runtime::to_expression_ref(...)`
   where needed.
 - Added `TODO.md` to capture delayed cleanup work.
+- Added the first non-`expression_ref` inverse-preprocess transforms:
+  `Runtime::untranslate_vars(...)`, `runtime_deindexify(...)`, and
+  `runtime_unprepare_for_translation(...)`. These reverse runtime global
+  register translation, runtime trim normalization, and runtime de Bruijn
+  indexing back to `Core::Exp<>` without going through `expression_ref`.
+- Added runtime tests that start from Core, run the forward runtime preparation
+  path, reverse back to Core, and then re-run the forward path to check
+  normalized runtime equivalence. The tests also check the stage-level
+  `runtime_deindexify` / `runtime_indexify` round trip and builtin operation
+  recovery.
 
 ## Evaluation Core
 
@@ -122,7 +132,8 @@ The forward Core-to-runtime preprocessing pipeline is:
 The reverse pipeline should run in the opposite order, without routing through
 `expression_ref`:
 
-1. untranslate runtime register references back to runtime names where the
+1. `Runtime::untranslate_vars(...)`: untranslate runtime register references
+   back to runtime names where the
    register is known as a global identifier;
 2. `Runtime::trim_unnormalize(...)`;
 3. `runtime_deindexify(...)`, converting de Bruijn indexed `Runtime::Exp` back
@@ -237,9 +248,10 @@ Recent scan results:
    whether callers should first migrate away from expression_ref values.
 
 6. Implement the non-`expression_ref` inverse preprocess path in narrow pieces:
-   runtime untranslation of global registers, runtime trim unnormalization,
-   runtime-to-Core deindexing, and then any Core graph/let unnormalization that
-   is needed for display or diagnostics.
+   runtime untranslation of global registers, runtime trim unnormalization, and
+   runtime-to-Core deindexing are in place. The remaining inverse-preprocess
+   work is Core graph/let unnormalization and then migrating diagnostics to use
+   the Core-returning path where that improves the display boundary.
 
 7. Keep graph/display conversion boundaries explicit. Do not add runtime
    `unlet` / `subst_reg_vars` clones unless the project first defines a true
