@@ -97,8 +97,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     assert(tree.size() == 6);
 
     auto edges_out_of_node = tree[0];
-    expression_ref tmp = Runtime::to_expression_ref(edges_out_of_node.value());
-    for(auto [node, _]: tmp.as_<IntMap>())
+    for(auto [node, _]: edges_out_of_node.value().as_<IntMap>())
     {
         auto tmp = edges_out_of_node[node][1];
 
@@ -110,8 +109,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
     }
 
     auto nodes_for_edge    = tree[1];
-    tmp = Runtime::to_expression_ref(nodes_for_edge.value());
-    for(auto [edge, _]: tmp.as_<IntMap>())
+    for(auto [edge, _]: nodes_for_edge.value().as_<IntMap>())
     {
         auto info = nodes_for_edge[edge];
 
