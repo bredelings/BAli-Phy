@@ -30,11 +30,6 @@ namespace RuntimeView
         const let_exp* value = nullptr;
     };
 
-    struct IndexedLet
-    {
-        ::Let value;
-    };
-
     struct Case
     {
         expression_ref object;
@@ -88,14 +83,6 @@ namespace RuntimeView
     {
         if (is_let_expression(E))
             return Let{&E.as_<let_exp>()};
-
-        return {};
-    }
-
-    inline std::optional<IndexedLet> indexed_let(const expression_ref& E)
-    {
-        if (auto L = parse_indexed_let_expression(E))
-            return IndexedLet{*L};
 
         return {};
     }

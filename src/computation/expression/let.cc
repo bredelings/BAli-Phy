@@ -7,7 +7,6 @@
 #include "substitute.H"
 #include "modifiable.H"
 #include "constructor.H"
-#include "computation/operations.H"
 #include "util/range.H" // for reverse( )
 #include "util/string/join.H" // for join( )
 
@@ -46,11 +45,6 @@ string let_exp::print() const
     return "let " + print_cdecls(binds) + " in " + body.print();
 }
 
-Let indexed_let_expression(const vector<expression_ref>& bodies, const expression_ref& T)
-{
-    return Let(bodies, T);
-}
-
 expression_ref let_expression(const CDecls& decls, const expression_ref& T)
 {
     if (decls.size() == 0) return T;
@@ -69,15 +63,6 @@ expression_ref let_expression(const vector<CDecls>& decl_groups, const expressio
 bool is_let_expression(const expression_ref& E)
 {
     return (E.head().type() == type_constant::let_type);
-}
-
-std::optional<Let>
-parse_indexed_let_expression(const expression_ref& E)
-{
-    if (E.head().type() == type_constant::let2_type)
-        return E.as_<Let>();
-    else
-        return {};
 }
 
 int n_free_occurrences(const expression_ref& E1, const var& x)

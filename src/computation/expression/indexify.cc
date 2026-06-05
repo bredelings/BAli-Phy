@@ -1,18 +1,11 @@
 #include "indexify.H"
 #include "constructor.H"
 #include "var.H"
-#include "lambda.H"
-#include "let.H"
-#include "case.H"
-#include "index_var.H"
-#include "apply.H"
 #include "util/variant.H"
 #include "computation/haskell/Integer.H" // for Integer
 #include "computation/haskell/ids.H"
-#include "computation/expression/reg_var.H"
 #include "computation/runtime/ast.H"
 
-using std::pair;
 using std::vector;
 using std::string;
 
@@ -24,14 +17,6 @@ int find_index_backward(const vector<T>& v,const T& t)
 	if (v[L-i-1] == t)
 	    return i;
     return -1;
-}
-
-var get_named_var(int n)
-{
-    if (n<26) 
-	return var(string{char(97+n)});
-    else
-	return var(n-26);
 }
 
 bool is_global_var(const var& x)
@@ -178,113 +163,4 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E)
 {
     vector<Core::Var<>> variables;
     return runtime_indexify(E, variables);
-}
-
-/// Convert to using de Bruijn indices.
-expression_ref deindexify(const expression_ref& E, const vector<expression_ref>& variables)
-{
-    // Lambda expression - /\x.e
-    if (E.head().is_a<lambda2>())
-    {
-	vector<expression_ref> variables2 = variables;
-	var d = get_named_var(variables.size());
-	variables2.push_back(d);
-	return lambda_quantify(d,deindexify(E.sub()[0],variables2));
-    }
-
-    // Let expression
-    else if (auto L = parse_indexed_let_expression(E))
-    {
-	vector<expression_ref> variables2 = variables;
-
-        vector<pair<var,expression_ref>> decls;
-	for(auto& bind: L->binds)
-	{
-	    var d = get_named_var(variables2.size());
-	    decls.push_back({d, bind});
-	    variables2.push_back( d );
-	}
-
-	// Deindexify let-bound stmts only after list of variables has been extended.
-	for(auto& [x,rhs]: decls)
-	    rhs = deindexify(rhs, variables2);
-
-	auto body = deindexify(L->body, variables2);
-
-	return let_expression(decls, body);
-    }
-
-    // case expression
-    else if (auto C = parse_case_expression(E))
-    {
-        auto& [object, alts] = *C;
-
-        object = deindexify(object, variables);
-
-	for(auto& [pattern, body]: alts)
-	{
-	    assert(not pattern.size());
-	    // Make a new expression so we can add variables to the pattern if its a constructor
-
-	    // Find the number of arguments in the constructor
-	    int n_args = 0;
-	    if (pattern.head().is_a<constructor>())
-		n_args = pattern.head().as_<constructor>().n_args();
-
-	    // Add n_arg variables to the stack and to the pattern
-	    vector<expression_ref> variables2 = variables;
-	    for(int j=0;j<n_args;j++)
-	    {
-		var d = get_named_var(variables2.size());
-		variables2.push_back( d );
-		pattern = pattern + d;
-	    }
-
-#ifndef NDEBUG
-	    if(is_var(pattern))
-		assert(is_wildcard(pattern));
-#endif
-
-	    body = deindexify(body, variables2);
-	}
-
-	return make_case_expression(object, alts);
-    }
-
-    // Indexed Variable - This is assumed to be a free variable, so just shift it.
-    else if (E.is_index_var())
-    {
-        int index = E.as_index_var();
-        if (index >= variables.size())
-            return index_var(index - variables.size());
-
-        return variables[variables.size()-1 - index];
-    }
-    // Pinned runtime register references are already literal references.
-    else if (E.is_reg_var())
-        return E;
-    // Constant or 0-arg constructor
-    else if (is_literal_type(E.type()) or is_constructor(E))
-        return E;
-    else if (is_constructor_exp(E) or is_apply_exp(E) or E.head().is_a<Operation>())
-    {
-        // This handles (modifiable) with no arguments.
-        if (E.is_atomic())
-            return E;
-        else
-        {
-            object_ptr<expression> V = E.as_expression().clone();
-            for(int i=0;i<V->size();i++)
-                V->sub[i] = deindexify(V->sub[i], variables);
-            return V;
-        }
-    }
-
-    std::cerr<<"failing to deindexify expression "<<E<<"\n";
-    std::abort();
-}
-
-expression_ref deindexify(const expression_ref& E)
-{
-    return deindexify(E,vector<expression_ref>{});
 }

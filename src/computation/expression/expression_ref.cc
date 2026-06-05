@@ -179,14 +179,6 @@ string expression::print() const
 	    return result;
 	}
 
-	else if (auto L = parse_indexed_let_expression(*this))
-	{
-	    result = "let {";
-	    result += join(L->binds,"; ");
-	    result += "} in " + L->body.print();
-	    return result;
-	}
-
 	else if (head.is_a<Trim>())
 	{
 	    auto& V = sub[0].as_<Vector<int>>();
