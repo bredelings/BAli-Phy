@@ -6,6 +6,7 @@
 #include "computation/runtime/trim.H"
 #include "util/string/join.H" // for join( )
 #include <cstdlib>
+#include <type_traits>
 #include <utility>
 
 using std::vector;
@@ -20,6 +21,67 @@ namespace
         assert(0 <= i);
         assert(i < app->args.size());
         return app->args[i];
+    }
+
+    Runtime::Exp deindexify_code(const Runtime::Exp& E, const closure::Env_t& Env, int depth)
+    {
+        return E.visit([&](const auto& e) -> Runtime::Exp
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, Runtime::IndexVar>)
+            {
+                if (e.index < depth)
+                    return e;
+
+                int free_index = e.index - depth;
+                if (free_index < Env.size())
+                    return Runtime::RegRef(lookup_in_env(Env, free_index));
+                else
+                    return Runtime::IndexVar(e.index - Env.size());
+            }
+            else if constexpr (std::is_same_v<T, Runtime::Lambda>)
+            {
+                return Runtime::Lambda(deindexify_code(e.body, Env, depth + 1));
+            }
+            else if constexpr (std::is_same_v<T, Runtime::Let>)
+            {
+                int n = e.binds.size();
+                vector<Runtime::Exp> binds;
+                binds.reserve(n);
+                for(const auto& bind: e.binds)
+                    binds.push_back(deindexify_code(bind, Env, depth + n));
+
+                return Runtime::Let(std::move(binds), deindexify_code(e.body, Env, depth + n));
+            }
+            else if constexpr (std::is_same_v<T, Runtime::Case>)
+            {
+                vector<Runtime::Alt> alts;
+                alts.reserve(e.alts.size());
+                for(const auto& alt: e.alts)
+                {
+                    int n = Runtime::pattern_arity(alt.pattern);
+                    alts.push_back(Runtime::Alt(alt.pattern, deindexify_code(alt.body, Env, depth + n)));
+                }
+
+                return Runtime::Case(deindexify_code(e.object, Env, depth), std::move(alts));
+            }
+            else if constexpr (std::is_same_v<T, Runtime::App>)
+            {
+                vector<Runtime::Exp> args;
+                args.reserve(e.args.size());
+                for(const auto& arg: e.args)
+                    args.push_back(deindexify_code(arg, Env, depth));
+
+                return Runtime::App(e.head, std::move(args));
+            }
+            else if constexpr (std::is_same_v<T, Runtime::Trim>)
+            {
+                return deindexify_code(Runtime::trim_unnormalize(E), Env, depth);
+            }
+            else
+                return e;
+        });
     }
 }
 
@@ -130,13 +192,9 @@ closure get_trimmed(closure&& C)
     return std::move(C);
 }
 
-expression_ref deindexify(const closure& C)
+Runtime::Exp deindexify(const closure& C)
 {
-    vector<expression_ref> variables;
-    for(int R: C.Env)
-	variables.push_back(reg_var(R));
-  
-    return deindexify(C.legacy_exp(), variables);
+    return deindexify_code(C.get_code(), C.Env, 0);
 }
 
 closure trim_unnormalize(const closure& C)

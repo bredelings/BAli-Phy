@@ -218,7 +218,7 @@ const Runtime::Exp& context_ref::evaluate_reg_code(int r) const
 expression_ref context_ref::recursive_evaluate_reg(int r) const
 {
     closure C1 = memory()->lazy_evaluate(r, context_index);
-    expression_ref E1 = deindexify(trim_unnormalize(C1));
+    expression_ref E1 = Runtime::to_expression_ref(deindexify(trim_unnormalize(C1)));
 
     if (E1.is_atomic())
 	return E1;

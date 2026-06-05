@@ -659,7 +659,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,expression_ref>& re
     }
     else
     {
-        expression_ref E = unlet(subst_reg_vars(deindexify(trim_unnormalize(C[R])), replace));
+        expression_ref E = unlet(subst_reg_vars(Runtime::to_expression_ref(deindexify(trim_unnormalize(C[R]))), replace));
 
         label += E.print();
         label = escape(wrap(label,40));
@@ -738,7 +738,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
             reg_name = constants.at(R2);
         label += reg_name;
 	
-        //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names));
+        //      expression_ref E = unlet(untranslate_vars(Runtime::to_expression_ref(deindexify(trim_unnormalize(C[R]))), reg_names));
         //      E = map_symbol_names(E, simplify);
         //      label += E.print();
         label = escape(wrap(label,40));
@@ -747,7 +747,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
         label="mod";
     else
     {
-        expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C[R])), reg_names),constants));
+        expression_ref E = unlet(untranslate_vars(untranslate_vars(Runtime::to_expression_ref(deindexify(trim_unnormalize(C[R]))), reg_names),constants));
 
         E = map_symbol_names(E, simplify);
 

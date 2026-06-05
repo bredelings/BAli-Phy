@@ -118,6 +118,29 @@ namespace
         require(slot_ref->target == 20, "runtime slot RegRef target mismatch");
     }
 
+    void check_runtime_closure_deindexify()
+    {
+        closure C(Runtime::App(Runtime::FunctionApply{},
+                               {Runtime::IndexVar(1),
+                                Runtime::Lambda(Runtime::IndexVar(1))}),
+                  {10, 20});
+
+        auto E = deindexify(C);
+        auto app = E.to<Runtime::App>();
+        require(bool(app), "deindexify should preserve runtime App structure");
+        require(app->args.size() == 2, "deindexified App arg count mismatch");
+
+        auto first = app->args[0].to<Runtime::RegRef>();
+        require(bool(first), "deindexify should replace a free top-level IndexVar with a RegRef");
+        require(first->target == 10, "deindexified top-level RegRef target mismatch");
+
+        auto lambda = app->args[1].to<Runtime::Lambda>();
+        require(bool(lambda), "deindexify should preserve runtime Lambda structure");
+        auto lambda_body = lambda->body.to<Runtime::RegRef>();
+        require(bool(lambda_body), "deindexify should replace a free IndexVar under a lambda with a RegRef");
+        require(lambda_body->target == 20, "deindexified lambda body RegRef target mismatch");
+    }
+
     void check_shift_free_indices()
     {
         Runtime::Exp e = Runtime::Let({Runtime::IndexVar(1)},
@@ -373,6 +396,7 @@ int main(int argc, char** argv)
     check_runtime_closure_trim();
     check_runtime_closure_trim_unnormalize();
     check_runtime_closure_slots();
+    check_runtime_closure_deindexify();
     check_shift_free_indices();
     check_lambda_peeling();
     check_deindexify_reg_refs();
