@@ -32,9 +32,6 @@ public:
     Runtime::Exp head() const;
     Runtime::Exp value() const;
     context_ptr list_element(int i) const;
-    // Temporary _code suffix: once the legacy R::RVector API is removed,
-    // this runtime-returning API should take the undecorated name.
-    Runtime::RVector list_to_vector_code() const;
     R::RVector list_to_vector() const;
     std::vector<context_ptr> list_elements() const;
 

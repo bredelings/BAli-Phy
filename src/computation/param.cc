@@ -147,23 +147,6 @@ R::RVector context_ptr::list_to_vector() const
     return std::move(*vec);
 }
 
-Runtime::RVector context_ptr::list_to_vector_code() const
-{
-    Runtime::RVector vec;
-
-    context_ptr L = result();
-    while(L.size() > 0)
-    {
-        assert(L.size() == 2);
-
-        vec.push_back(L[0].value());
-
-        L = L[1];
-    }
-
-    return vec;
-}
-
 vector<context_ptr> context_ptr::list_elements() const
 {
     vector<context_ptr> elements;
