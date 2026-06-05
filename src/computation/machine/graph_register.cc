@@ -1773,12 +1773,10 @@ bool reg_heap::regs_maybe_different_value(int r1, int r2) const
 
     if (r1 == r2) return false;
 
-    auto& E1 = expression_at(r1);
-    auto& E2 = expression_at(r2);
+    const auto& E1 = closure_at(r1).get_code();
+    const auto& E2 = closure_at(r2).get_code();
 
-    if (E1.type() != E2.type()) return true;
-
-    if (E1.is_int() and E1.as_int() == E2.as_int())
+    if (E1.is_int() and E2.is_int() and E1.as_int() == E2.as_int())
     {
         assert(E1 == E2);
         return false;
