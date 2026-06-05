@@ -1333,7 +1333,7 @@ void reg_heap::unregister_out_edge(int r, int /* s */)
 void reg_heap::register_dist(int r, int s)
 {
     int r_dist = closure_at(r).runtime_reg_for_slot(0);
-//    int observation = expression_at(r).sub()[1].as_<String>();
+//    int observation = closure_at(r).legacy_exp().sub()[1].as_<String>();
     string name = closure_at(r).runtime_slot(2).as_string();
 
 //    assert(not dist_type.count(r_dist));
@@ -2679,7 +2679,7 @@ void reg_heap::check_used_regs() const
 
             // The used result should be referenced somewhere more root-ward
             // so that this result can be invalidated, and the used result won't be GC-ed.
-            // FIXME - nonlocal.  assert(is_modifiable(expression_at(R2)) or result_is_referenced(t,res2));
+            // FIXME - nonlocal.  assert(is_modifiable(closure_at(R2).get_code()) or result_is_referenced(t,res2));
         }
         for(int r2: regs[r1].forced_regs)
         {
@@ -2691,7 +2691,7 @@ void reg_heap::check_used_regs() const
 
             // The used result should be referenced somewhere more root-ward
             // so that this result can be invalidated, and the used result won't be GC-ed.
-            // FIXME - nonlocal.  assert(is_modifiable(expression_at(R2)) or result_is_referenced(t,res2));
+            // FIXME - nonlocal.  assert(is_modifiable(closure_at(R2).get_code()) or result_is_referenced(t,res2));
         }
     }
 
