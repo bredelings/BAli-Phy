@@ -912,7 +912,7 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     return result;
 }
 
-expression_ref reg_heap::evaluate_program(int c)
+const closure& reg_heap::evaluate_program(int c)
 {
     check_tokens();
 
@@ -920,8 +920,6 @@ expression_ref reg_heap::evaluate_program(int c)
         throw myexception()<<"No program has been set!";
 
     assert(get_prev_prog_token_for_context(c));
-
-    expression_ref result;
 
     // 1. If we can revert to a previously executed program instead of unmapping, then do that.
     int t = token_for_context(c);
@@ -939,8 +937,6 @@ expression_ref reg_heap::evaluate_program(int c)
         // Check that the program head is evaluated.
         int r = heads[*program_result_head];
         assert(reg_has_value(r));
-
-        result = value_for_precomputed_reg(r).legacy_exp();
     }
     else
     {
@@ -956,13 +952,6 @@ expression_ref reg_heap::evaluate_program(int c)
     do_pending_effect_registrations();
     assert(steps_pending_effect_unregistration.empty());
     assert(steps_pending_effect_registration.empty());
-
-    return result;
-}
-
-const closure& reg_heap::evaluate_program_closure(int c)
-{
-    evaluate_program(c);
 
     int r = heads[*program_result_head];
     assert(reg_has_value(r));
@@ -2854,12 +2843,7 @@ void reg_heap::clear_result(int r)
     prog_results[r] = non_computed_index;
 }
 
-const expression_ref& reg_heap::get_reg_value_in_context(int& R, int c)
-{
-    return get_reg_value_closure_in_context(R, c).legacy_exp();
-}
-
-const closure& reg_heap::get_reg_value_closure_in_context(int& R, int c)
+const closure& reg_heap::get_reg_value_in_context(int& R, int c)
 {
     total_get_reg_value++;
     if (reg_is_constant(R)) return closure_at(R);

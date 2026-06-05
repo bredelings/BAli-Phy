@@ -360,11 +360,7 @@ private:
     expression_ref unshare_and_evaluate_program(int c);
 
 public:
-    expression_ref evaluate_program(int c);
-
-    // Temporary _closure suffix: once expression_ref-returning evaluation APIs
-    // are removed, this should take the undecorated evaluate_program name.
-    const closure& evaluate_program_closure(int c);
+    const closure& evaluate_program(int c);
 
     /* ---- */
 
@@ -638,11 +634,7 @@ public:
 
     int token_for_context(int) const;
 
-    const expression_ref& get_reg_value_in_context(int& R, int c);
-
-    // Temporary _closure suffix: once expression_ref-returning value APIs are
-    // removed, this should take the undecorated get_reg_value_in_context name.
-    const closure& get_reg_value_closure_in_context(int& R, int c);
+    const closure& get_reg_value_in_context(int& R, int c);
 
 private:
     void interchange_regs_in_context_(int r1, int r2, int c);

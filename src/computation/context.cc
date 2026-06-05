@@ -479,12 +479,12 @@ EVector context_ref::get_modifiable_values(const std::vector<int>& indices) cons
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 const expression_ref& context_ref::get_reg_value(int R) const
 {
-    return memory()->get_reg_value_in_context(R, context_index);
+    return memory()->get_reg_value_in_context(R, context_index).legacy_exp();
 }
 
 const Runtime::Exp& context_ref::get_reg_value_code(int R) const
 {
-    return memory()->get_reg_value_closure_in_context(R, context_index).get_code();
+    return memory()->get_reg_value_in_context(R, context_index).get_code();
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
@@ -704,12 +704,12 @@ void context_ref::show_graph_for_root_token() const
 
 expression_ref context_ref::evaluate_program() const
 {
-    return memory()->evaluate_program(context_index);
+    return memory()->evaluate_program(context_index).legacy_exp();
 }
 
 const Runtime::Exp& context_ref::evaluate_program_code() const
 {
-    return memory()->evaluate_program_closure(context_index).get_code();
+    return memory()->evaluate_program(context_index).get_code();
 }
 
 
