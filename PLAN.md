@@ -16,8 +16,8 @@ legacy boundary".
 Completed so far:
 
 - Added temporary runtime-returning APIs on `context_ref`, `reg_heap`, and
-  `context_ptr`, using `_code` / `_closure` suffixes with comments that these
-  suffixes should be removed once legacy APIs go away.
+  `context_ptr`, using `_code` suffixes where legacy expression APIs still
+  occupy the original names.
 - Migrated obvious MCMC/SMC scalar evaluation callers to runtime values.
 - Removed `reg_heap::expression_at()` from the live evaluator loops in
   `src/computation/machine/evaluate.cc`.
@@ -28,8 +28,10 @@ Completed so far:
   `value_code()` / `set_code()`.
 - Added `Runtime::RVector` conversions analogous to `EVector`, and migrated SMC
   haplotype-index lists to `list_to_vector_code()`.
-- Made `reg_heap::get_reg_value_in_context()` a legacy wrapper around
-  `get_reg_value_closure_in_context()`.
+- Made `reg_heap::get_reg_value_in_context()` and
+  `reg_heap::evaluate_program()` return closures directly, with
+  `context_ref` legacy wrappers calling `legacy_exp()` at the API boundary.
+  This removed the temporary `*_closure` duplicate names.
 - Removed simple `context_ref` uses of `reg_heap::expression_at()` from
   `evaluate_reg()` and `reg_is_modifiable()`; these now use evaluated closures
   or runtime-code predicates directly.
@@ -53,10 +55,10 @@ compatibility layers.
    exist beside many of these, and several legacy wrappers now delegate through
    closures/runtime code.
 
-2. `reg_heap` still exposes legacy evaluation APIs returning `expression_ref`:
-   `evaluate_program`, `unshare_and_evaluate_program`, `unshare_regs2`, and
-   `get_reg_value_in_context`. Closure-returning alternatives exist for some
-   of these, and should become the implementation path.
+2. `reg_heap` still exposes legacy evaluation APIs returning `expression_ref`
+   in the program unsharing path: `unshare_and_evaluate_program` and
+   `unshare_regs2`. The simpler value/program APIs now return closures
+   directly.
 
 3. `reg_heap::expression_at()` remains as a compatibility accessor over
    `closure::legacy_exp()`. It is no longer in evaluator loops, and the simple
@@ -89,9 +91,9 @@ compatibility layers.
    `legacy_exp()` conversion to the wrapper edge.
 
 2. Add missing closure/runtime-returning variants for program unsharing paths
-   (`unshare_regs2`, `unshare_and_evaluate_program`) so `evaluate_program` can
-   become a legacy wrapper around a runtime-native implementation. Treat this
-   as the next larger evaluator-facing API batch.
+   (`unshare_regs2`, `unshare_and_evaluate_program`). Treat this as the next
+   larger evaluator-facing API batch because the returned value must remain
+   valid across reroot cleanup and token mutation.
 
 3. Convert `context_ref` legacy APIs into thin wrappers over `_code` or
    closure-returning APIs. The easy `evaluate_reg()` / `reg_is_modifiable()`
