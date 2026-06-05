@@ -139,7 +139,8 @@ add_free_variable_annotations(const Core::Exp<>& E)
     }
     else if (auto C = E.to_constant())
         return *C;
+    else if (auto runtime_only = E.to_runtimeOnly())
+        return FV::Exp(*runtime_only, {});
     else
         throw myexception()<<"add_free_variable_annotations: I don't recognize expression '"+ E.print() + "'";
 }
-

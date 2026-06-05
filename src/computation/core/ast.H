@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <optional>
+#include <stdexcept>
 #include <variant>
 #include <vector>
 #include <string>
@@ -42,6 +43,7 @@ namespace Core
     template <typename NoteV, typename NoteE> struct ConApp;
     template <typename NoteV, typename NoteE> struct BuiltinOp;
     struct Constant;
+    struct RuntimeOnly;
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Exp
@@ -56,7 +58,8 @@ namespace Core
 	    cow_ptr<Case<NoteV,NoteE>>,
 	    cow_ptr<ConApp<NoteV,NoteE>>,
 	    cow_ptr<BuiltinOp<NoteV,NoteE>>,
-	    cow_ptr<Constant>
+	    cow_ptr<Constant>,
+	    cow_ptr<RuntimeOnly>
 	>
 	exp_ptr;
 
@@ -217,6 +220,24 @@ namespace Core
 		return nullptr;
 	}
 
+	const RuntimeOnly* to_runtimeOnly() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 9)
+		return std::get<cow_ptr<RuntimeOnly>>(exp_ptr).get();
+	    else
+		return nullptr;
+	}
+
+	RuntimeOnly* to_runtimeOnly_modify()
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 9)
+		return std::get<cow_ptr<RuntimeOnly>>(exp_ptr).modify_ptr().get();
+	    else
+		return nullptr;
+	}
+
 	bool operator==(const Exp<NoteV,NoteE>& E2) const
 	{
             assert(not exp_ptr.valueless_by_exception());
@@ -240,6 +261,8 @@ namespace Core
 		return *b == *E2.to_builtinOp();
 	    else if (auto constant = to_constant())
 		return *constant == *E2.to_constant();
+	    else if (auto runtime_only = to_runtimeOnly())
+		return *runtime_only == *E2.to_runtimeOnly();
 	    else
 		std::abort();
 	}
@@ -269,6 +292,8 @@ namespace Core
 		return *b <=> *E2.to_builtinOp();
 	    else if (auto constant = to_constant())
 		return *constant <=> *E2.to_constant();
+	    else if (auto runtime_only = to_runtimeOnly())
+		return *runtime_only <=> *E2.to_runtimeOnly();
 	    else
 		std::abort();
 	}
@@ -315,6 +340,8 @@ namespace Core
 	Exp(const BuiltinOp<NoteV,NoteE>& b, const NoteE& n):exp_ptr( make_cow_ptr<BuiltinOp<NoteV,NoteE>>(b) ), note_(n) {}
 	Exp(const Constant& c):exp_ptr( make_cow_ptr<Constant>(c) ) {}
 	Exp(const Constant& c, const NoteE& n):exp_ptr( make_cow_ptr<Constant>(c) ), note_(n) {}
+	Exp(const RuntimeOnly& r):exp_ptr( make_cow_ptr<RuntimeOnly>(r) ) {}
+	Exp(const RuntimeOnly& r, const NoteE& n):exp_ptr( make_cow_ptr<RuntimeOnly>(r) ), note_(n) {}
 
 	~Exp() = default;
     };
@@ -717,6 +744,25 @@ namespace Core
 	}
     };
 
+    struct RuntimeOnly
+    {
+	std::string text;
+
+	std::string print() const {return text;}
+
+	std::strong_ordering operator<=>(const RuntimeOnly& v2) const = default;
+	bool operator==(const RuntimeOnly& v2) const = default;
+
+	template <class Archive>
+	void serialize(Archive&)
+	{
+	    throw std::runtime_error("Core::RuntimeOnly is not serializable");
+	}
+
+	RuntimeOnly() = default;
+	RuntimeOnly(const std::string& s):text(s) {}
+    };
+
     template <typename NoteV, typename NoteE>
     template <class Archive>
     void Exp<NoteV,NoteE>::serialize(Archive& ar)
@@ -738,6 +784,7 @@ namespace Core
 	else if (auto con = to_conApp()) return con->print();
 	else if (auto b = to_builtinOp()) return b->print();
 	else if (auto constant = to_constant()) return constant->print();
+	else if (auto runtime_only = to_runtimeOnly()) return runtime_only->print();
 	else std::abort();
     }
 

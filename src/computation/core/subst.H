@@ -73,6 +73,8 @@ Exp<NoteV, NoteE> subst(const subst_t<NoteV>& S, const Exp<NoteV,NoteE>& E)
     }
     else if (E.to_constant())
         return E;
+    else if (E.to_runtimeOnly())
+        return E;
 
     std::abort();
 }

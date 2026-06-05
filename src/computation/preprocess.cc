@@ -52,9 +52,9 @@ Core::Var<> env_reg_core_var(int r)
     return Core::Var<>("[" + std::to_string(r) + "]");
 }
 
-Core::Var<> runtime_only_core_var(const string& text)
+Core::Exp<> runtime_only_core_exp(const string& text)
 {
-    return Core::Var<>("@" + text);
+    return Core::RuntimeOnly{text};
 }
 
 Core::Constant runtime_constant_to_core(const Runtime::Exp& E)
@@ -183,16 +183,16 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
         return runtime_constant_to_core(E);
     }
     else if (E.to<Runtime::LogDouble>())
-        return runtime_only_core_var(E.print());
+        return runtime_only_core_exp(E.print());
     else if (auto e = E.to<Runtime::Constructor>())
     {
         if (e->value.n_args() != 0)
-            return runtime_only_core_var(E.print());
+            return runtime_only_core_exp(E.print());
 
         return Core::ConApp<>{e->value.name(), {}};
     }
     else if (auto e = E.to<Runtime::ObjectValue>())
-        return runtime_only_core_var(e->value ? e->value->print() : string{"null"});
+        return runtime_only_core_exp(e->value ? e->value->print() : string{"null"});
     else if (auto e = E.to<Runtime::IndexVar>())
     {
         if (e->index >= variables.size())
@@ -265,7 +265,7 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
         {
             if (args.size() < 2)
             {
-                Core::Exp<> result = runtime_only_core_var("apply");
+                Core::Exp<> result = runtime_only_core_exp("apply");
                 for(const auto& arg: args)
                     result = Core::Apply<>{result, arg};
                 return result;
@@ -285,7 +285,7 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
             auto op_head = std::get_if<Runtime::OperationApp>(&e->head);
             if (not op_head or not op_head->head or op_head->lib_name.empty() or op_head->func_name.empty() or op_head->call_conv.empty())
             {
-                Core::Exp<> result = runtime_only_core_var(op_head and op_head->head ? op_head->head->print() : string{"op"});
+                Core::Exp<> result = runtime_only_core_exp(op_head and op_head->head ? op_head->head->print() : string{"op"});
                 for(const auto& arg: args)
                     result = Core::Apply<>{result, arg};
                 return result;
@@ -299,7 +299,7 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
 
             if (not op)
             {
-                Core::Exp<> result = runtime_only_core_var(op_head->head->print());
+                Core::Exp<> result = runtime_only_core_exp(op_head->head->print());
                 for(const auto& arg: args)
                     result = Core::Apply<>{result, arg};
                 return result;
@@ -430,7 +430,7 @@ Core::Exp<> graph_normalize(FreshVarSource& source, const Core::Exp<>& E)
 {
     if (E.empty())
         return E;
-    else if (E.to_var() or E.to_constant())
+    else if (E.to_var() or E.to_constant() or E.to_runtimeOnly())
         return E;
     else if (auto L = E.to_lambda())
         return Core::Lambda<>{L->x, graph_normalize(source, L->body)};

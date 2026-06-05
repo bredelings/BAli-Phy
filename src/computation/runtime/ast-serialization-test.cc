@@ -257,8 +257,12 @@ namespace
 
         object_ptr<R::RVector> vec(new R::RVector(std::vector<int>{1, 2}));
         auto object_value = runtime_deindexify(Runtime::Exp(vec));
-        require(object_value.to_var() and object_value.to_var()->name.starts_with("@"),
-                "Runtime::ObjectValue should become a diagnostic Core variable");
+        require(object_value.to_runtimeOnly() and object_value.print() == vec->print(),
+                "Runtime::ObjectValue should become a RuntimeOnly Core diagnostic");
+
+        auto log_double = runtime_deindexify(Runtime::LogDouble(log_double_t(0.25)));
+        require(log_double.to_runtimeOnly() and log_double.print().ends_with("L#"),
+                "Runtime::LogDouble should become a RuntimeOnly Core diagnostic");
     }
 
     void check_runtime_atomic_values()

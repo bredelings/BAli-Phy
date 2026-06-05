@@ -168,6 +168,8 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
     }
     else if (auto C = E.to_constant())
         return runtime_atom_from_constant(*C);
+    else if (E.to_runtimeOnly())
+        throw myexception()<<"runtime_indexify: expression '"<<E<<"' is not representable as Runtime code.";
 
     std::abort();
 }

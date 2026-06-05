@@ -770,6 +770,8 @@ Core::Exp<> rename(const Core::Exp<>& E, const map<Core::Var<>,Core::Var<>>& sub
     // 8. Constant
     else if (E.to_constant())
         return E;
+    else if (E.to_runtimeOnly())
+        return E;
     else
         std::abort();
 }
