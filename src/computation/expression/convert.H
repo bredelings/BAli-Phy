@@ -4,14 +4,6 @@
 #include "computation/optimization/occurrence_info.H"
 #include "computation/optimization/set-levels.H"
 
-var to_var(const Core::Var<>& V);
-
-expression_ref to_expression_ref(const Core::Constant& C);
-
-//-----------------------------------------------------------------------
-
-std::optional<Core::Constant> to_core_constant(const expression_ref& E);
-
 //-----------------------------------------------------------------------
 
 Core::Var<> to_core_var(const Occ::Var& x);

@@ -4,7 +4,6 @@
 #include "float-out.H"
 #include "computation/module.H"
 #include "computation/core/func.H"  // for lambda_quantify( )
-#include "computation/expression/let.H"
 #include "util/set.H"
 
 #include "free-vars.H"
@@ -20,24 +19,6 @@ using std::string;
 using std::tuple;
 
 
-
-int get_level(const CDecls& decl_group)
-{
-    assert( not decl_group.empty() );
-    assert( decl_group[0].first.level );
-
-    auto level = *decl_group[0].first.level;
-
-#ifndef NDEBUG
-    for(int i=1; i<decl_group.size(); i++)
-    {
-        assert( decl_group[i].first.level );
-        assert( *decl_group[i].first.level == level );
-    }
-#endif
-
-    return level;
-}
 
 int get_level(const Levels::Decls& decl_group)
 {

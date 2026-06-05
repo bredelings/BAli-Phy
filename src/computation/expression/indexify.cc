@@ -1,6 +1,4 @@
 #include "indexify.H"
-#include "constructor.H"
-#include "var.H"
 #include "util/variant.H"
 #include "computation/haskell/Integer.H" // for Integer
 #include "computation/haskell/ids.H"

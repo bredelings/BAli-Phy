@@ -5,18 +5,12 @@
 #include "computation/preprocess.H"
 #include "computation/machine/graph_register.H"
 #include "computation/module.H"
-#include "operations.H"
-#include "computation/expression/let.H"
-#include "computation/expression/case.H"
-#include "computation/expression/var.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/indexify.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/expression.H" // for is_reglike( )
-#include "computation/expression/convert.H" // for to_core_exp( )
 #include "computation/runtime/ast.H"
 #include "computation/runtime/trim.H"
 #include "computation/fresh_vars.H"
+#include "computation/expression/indexify.H"
+#include "computation/expression/convert.H"
+#include "computation/operation.H"
 #include "haskell/ids.H"
 #include "util/variant.H"
 

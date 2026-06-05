@@ -1,5 +1,4 @@
 #include "convert.H"
-#include "computation/expression/var.H"
 #include "computation/haskell/Integer.H"
 #include "util/variant.H"
 
@@ -9,45 +8,6 @@ using std::set;
 using std::vector;
 using std::multiset;
 using std::string;
-
-//----------------------------------------------------------------------//
-
-var to_var(const Core::Var<>& V)
-{
-    return var(V.name, V.index, V.is_exported);
-}
-
-expression_ref to_expression_ref(const Core::Constant& C)
-{
-    if (auto c = to<char>(C.value))
-	return *c;
-    else if (auto i = to<int>(C.value))
-	return *i;
-    else if (auto i = to<integer_container>(C.value))
-	return Integer(i->i);
-    else if (auto d = to<double>(C.value))
-	return *d;
-    else if (auto s = to<std::string>(C.value))
-	return String(*s);
-    else
-	std::abort();
-}
-
-std::optional<Core::Constant> to_core_constant(const expression_ref& E)
-{
-    if (E.is_char())
-        return Core::Constant{{E.as_char()}};
-    else if (E.is_int())
-        return Core::Constant{{E.as_int()}};
-    else if (E.is_double())
-        return Core::Constant{{E.as_double()}};
-    else if (E.is_a<Integer>())
-        return Core::Constant{{integer_container(E.as_<Integer>())}};
-    else if (E.is_a<String>())
-        return Core::Constant{{E.as_<String>()}};
-    else
-	return {};
-}
 
 //------------------------------------------------------------------------------------------------------------
 
