@@ -1,4 +1,6 @@
 #include <iostream>
+#include <stdexcept>
+#include <type_traits>
 #include <unordered_map>
 #include "computation/preprocess.H"
 #include "computation/machine/graph_register.H"
@@ -28,6 +30,290 @@ using std::map;
 
 using std::cerr;
 using std::endl;
+
+namespace
+{
+
+Core::Var<> get_named_core_var(int n)
+{
+    if (n < 26)
+        return Core::Var<>(string{char('a' + n)});
+    else
+        return Core::Var<>("v" + std::to_string(n - 26));
+}
+
+Core::Constant runtime_constant_to_core(const Runtime::Exp& E)
+{
+    Core::Constant C;
+
+    if (auto x = E.to<Runtime::Int>())
+        C.value = x->value;
+    else if (auto x = E.to<Runtime::Double>())
+        C.value = double(x->value);
+    else if (auto x = E.to<Runtime::Char>())
+        C.value = x->value;
+    else if (auto x = E.to<Runtime::String>())
+        C.value = x->value;
+    else if (auto x = E.to<Runtime::Integer>())
+        C.value = integer_container(x->value);
+    else
+        throw std::runtime_error("Runtime expression is not a Core constant");
+
+    return C;
+}
+
+}
+
+namespace Runtime
+{
+    Exp untranslate_vars(const Exp& E, const map<int, string>& ids)
+    {
+        return E.visit([&](const auto& e) -> Exp
+        {
+            using T = std::decay_t<decltype(e)>;
+
+            if constexpr (std::is_same_v<T, RegRef>)
+            {
+                auto loc = ids.find(e.target);
+                if (loc != ids.end())
+                    return GlobalVar(var(loc->second));
+                else
+                    return E;
+            }
+            else if constexpr (std::is_same_v<T, Lambda>)
+            {
+                return Lambda(untranslate_vars(e.body, ids));
+            }
+            else if constexpr (std::is_same_v<T, Let>)
+            {
+                vector<Exp> binds;
+                binds.reserve(e.binds.size());
+                for(const auto& bind: e.binds)
+                    binds.push_back(untranslate_vars(bind, ids));
+
+                return Let(std::move(binds), untranslate_vars(e.body, ids));
+            }
+            else if constexpr (std::is_same_v<T, Case>)
+            {
+                vector<Alt> alts;
+                alts.reserve(e.alts.size());
+                for(const auto& alt: e.alts)
+                    alts.push_back(Alt(alt.pattern, untranslate_vars(alt.body, ids)));
+
+                return Case(untranslate_vars(e.object, ids), std::move(alts));
+            }
+            else if constexpr (std::is_same_v<T, App>)
+            {
+                vector<Exp> args;
+                args.reserve(e.args.size());
+                for(const auto& arg: e.args)
+                    args.push_back(untranslate_vars(arg, ids));
+
+                return App(e.head, std::move(args));
+            }
+            else if constexpr (std::is_same_v<T, Trim>)
+            {
+                return Trim(e.indices, untranslate_vars(e.body, ids));
+            }
+            else
+                return E;
+        });
+    }
+
+    Exp untranslate_vars(const Exp& E, const map<string, int>& ids)
+    {
+        map<int, string> reg_to_name;
+        for(const auto& [name, reg]: ids)
+            reg_to_name[reg] = name;
+
+        return untranslate_vars(E, reg_to_name);
+    }
+}
+
+namespace
+{
+
+Core::Pattern<> runtime_deindexify_pattern(const Runtime::Pattern& pattern, vector<Core::Var<>>& variables)
+{
+    return std::visit([&](const auto& p) -> Core::Pattern<>
+    {
+        using T = std::decay_t<decltype(p)>;
+
+        if constexpr (std::is_same_v<T, Runtime::WildcardPattern>)
+            return {};
+        else if constexpr (std::is_same_v<T, Runtime::ConstructorPattern>)
+        {
+            Core::Pattern<> pattern2;
+            pattern2.head = p.head.name();
+
+            for(int i = 0; i < p.head.n_args(); i++)
+            {
+                auto x = get_named_core_var(variables.size());
+                pattern2.args.push_back(x);
+                variables.push_back(x);
+            }
+
+            return pattern2;
+        }
+        else
+            std::abort();
+    }, pattern);
+}
+
+Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
+{
+    if (E.to<Runtime::Int>() or E.to<Runtime::Double>() or E.to<Runtime::Char>() or
+        E.to<Runtime::String>() or E.to<Runtime::Integer>())
+    {
+        return runtime_constant_to_core(E);
+    }
+    else if (E.to<Runtime::LogDouble>())
+        throw std::runtime_error("Cannot deindexify Runtime::LogDouble to Core");
+    else if (auto e = E.to<Runtime::Constructor>())
+    {
+        if (e->value.n_args() != 0)
+            throw std::runtime_error("Cannot deindexify non-nullary runtime constructor atom to Core");
+
+        return Core::ConApp<>{e->value.name(), {}};
+    }
+    else if (E.to<Runtime::ObjectValue>())
+        throw std::runtime_error("Cannot deindexify Runtime::ObjectValue to Core");
+    else if (auto e = E.to<Runtime::IndexVar>())
+    {
+        if (e->index >= variables.size())
+            throw std::runtime_error("Cannot deindexify free Runtime::IndexVar without a Core variable");
+
+        return Core::Exp<>(variables[variables.size() - 1 - e->index]);
+    }
+    else if (auto e = E.to<Runtime::GlobalVar>())
+    {
+        return Core::Var<>(e->name.name, e->name.index, {}, e->name.is_exported);
+    }
+    else if (E.to<Runtime::RegRef>())
+        throw std::runtime_error("Cannot deindexify Runtime::RegRef to Core; untranslate registers first");
+    else if (auto e = E.to<Runtime::Lambda>())
+    {
+        auto x = get_named_core_var(variables.size());
+        variables.push_back(x);
+        auto body = runtime_deindexify(e->body, variables);
+        variables.pop_back();
+
+        return Core::Lambda<>{x, body};
+    }
+    else if (auto e = E.to<Runtime::Let>())
+    {
+        Core::Decls<> decls;
+        decls.reserve(e->binds.size());
+
+        for(int i = 0; i < e->binds.size(); i++)
+        {
+            auto x = get_named_core_var(variables.size());
+            variables.push_back(x);
+            decls.push_back({x, {}});
+        }
+
+        for(int i = 0; i < e->binds.size(); i++)
+            decls[i].body = runtime_deindexify(e->binds[i], variables);
+
+        auto body = runtime_deindexify(e->body, variables);
+
+        for(int i = 0; i < e->binds.size(); i++)
+            variables.pop_back();
+
+        return Core::Let<>{decls, body};
+    }
+    else if (auto e = E.to<Runtime::Case>())
+    {
+        auto object = runtime_deindexify(e->object, variables);
+        vector<Core::Alt<>> alts;
+        alts.reserve(e->alts.size());
+
+        for(const auto& alt: e->alts)
+        {
+            auto old_size = variables.size();
+            auto pattern = runtime_deindexify_pattern(alt.pattern, variables);
+            auto body = runtime_deindexify(alt.body, variables);
+            variables.resize(old_size);
+            alts.push_back({pattern, body});
+        }
+
+        return Core::Case<>{object, std::move(alts)};
+    }
+    else if (auto e = E.to<Runtime::App>())
+    {
+        vector<Core::Exp<>> args;
+        args.reserve(e->args.size());
+        for(const auto& arg: e->args)
+            args.push_back(runtime_deindexify(arg, variables));
+
+        if (std::holds_alternative<Runtime::FunctionApply>(e->head))
+        {
+            if (args.size() < 2)
+                throw std::runtime_error("Cannot deindexify Runtime::FunctionApply with fewer than two arguments");
+
+            Core::Exp<> result = args[0];
+            for(int i = 1; i < args.size(); i++)
+                result = Core::Apply<>{result, args[i]};
+            return result;
+        }
+        else if (auto head = std::get_if<Runtime::ConstructorApp>(&e->head))
+        {
+            return Core::ConApp<>{head->head.name(), args};
+        }
+        else
+        {
+            auto op_head = std::get_if<Runtime::OperationApp>(&e->head);
+            if (not op_head or not op_head->head or op_head->lib_name.empty() or op_head->func_name.empty() or op_head->call_conv.empty())
+                throw std::runtime_error("Cannot deindexify runtime-only OperationApp to Core");
+
+            void* op = nullptr;
+            if (op_head->call_conv == "ecall")
+                op = reinterpret_cast<void*>(op_head->head->e_op);
+            else
+                op = reinterpret_cast<void*>(op_head->head->op);
+
+            if (not op)
+                throw std::runtime_error("Cannot deindexify OperationApp without an operation pointer");
+
+            return Core::BuiltinOp<>{op_head->lib_name, op_head->func_name, op_head->call_conv, args, op};
+        }
+    }
+    else if (E.to<Runtime::Trim>())
+    {
+        return runtime_deindexify(Runtime::trim_unnormalize(E), variables);
+    }
+    else
+        std::abort();
+}
+
+}
+
+Core::Exp<> runtime_deindexify(const Runtime::Exp& E, const vector<Core::Var<>>& variables)
+{
+    auto variables2 = variables;
+    return runtime_deindexify(E, variables2);
+}
+
+Core::Exp<> runtime_deindexify(const Runtime::Exp& E)
+{
+    return runtime_deindexify(E, vector<Core::Var<>>{});
+}
+
+Core::Exp<> runtime_unprepare_for_translation(const Runtime::Exp& E, const map<int, string>& ids)
+{
+    auto E2 = Runtime::untranslate_vars(E, ids);
+    E2 = Runtime::trim_unnormalize(E2);
+    return runtime_deindexify(E2);
+}
+
+Core::Exp<> runtime_unprepare_for_translation(const Runtime::Exp& E, const map<string, int>& ids)
+{
+    map<int, string> reg_to_name;
+    for(const auto& [name, reg]: ids)
+        reg_to_name[reg] = name;
+
+    return runtime_unprepare_for_translation(E, reg_to_name);
+}
 
 
 Core::Decls<> graph_normalize(FreshVarSource& source, Core::Decls<> decls);

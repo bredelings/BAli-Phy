@@ -1,5 +1,7 @@
 #include "computation/runtime/ast.H"
+#include "computation/runtime/trim.H"
 #include "computation/expression/indexify.H"
+#include "computation/preprocess.H"
 #include "computation/loader.H"
 #include "computation/machine/graph_register.H"
 #include "computation/module.H"
@@ -23,6 +25,27 @@ namespace
         Core::Constant c;
         c.value = x;
         return Core::Exp<>(c);
+    }
+
+    Core::Exp<> inverse_preprocess_test_core()
+    {
+        Core::Var<> x("x");
+        Core::Var<> y("y");
+        Core::Var<> p("p");
+        Core::Var<> q("q");
+
+        Core::Decls<> decls;
+        decls.push_back({y, Core::ConApp<>{ "Pair", {x, int_constant(3)} }});
+
+        Core::Pattern<> pair_pat;
+        pair_pat.head = "Pair";
+        pair_pat.args = {p, q};
+
+        Core::Alt<> pair_alt{pair_pat, Core::ConApp<>{ "Pair", {q, p} }};
+        Core::Alt<> wildcard_alt{{}, x};
+
+        Core::Exp<> body = Core::Let<>{decls, Core::Exp<>(Core::Case<>{y, {pair_alt, wildcard_alt}})};
+        return Core::Lambda<>{x, body};
     }
 
     closure runtime_only_test_operation(OperationArgs&)
@@ -177,6 +200,37 @@ namespace
         auto reg_ref = deindexify(Runtime::to_expression_ref(Runtime::RegRef(7)));
         require(reg_ref.is_reg_var(), "deindexify should preserve RegRef as reg_var");
         require(reg_ref.as_reg_var() == 7, "deindexified reg_var target mismatch");
+    }
+
+    void check_runtime_untranslate_vars()
+    {
+        Runtime::Exp translated = Runtime::apply(Runtime::RegRef(3),
+                                                 {Runtime::Trim({0}, Runtime::RegRef(4))});
+        auto un = Runtime::untranslate_vars(translated, std::map<int,std::string>{{3, "Test.f"}, {4, "Test.x"}});
+        auto untrimmed = Runtime::trim_unnormalize(un);
+        auto core = runtime_deindexify(untrimmed);
+        auto reindexed = runtime_indexify(core);
+
+        require(reindexed == untrimmed, "runtime untranslate/deindexify should round-trip through runtime_indexify");
+    }
+
+    void check_runtime_inverse_preprocess_round_trip()
+    {
+        auto original = inverse_preprocess_test_core();
+
+        FreshVarState fresh1;
+        auto prepared = runtime_prepare_for_translation(fresh1, original);
+
+        auto untrimmed = Runtime::trim_unnormalize(prepared);
+        auto deindexed = runtime_deindexify(untrimmed);
+        auto reindexed = runtime_indexify(deindexed);
+        require(reindexed == untrimmed, "runtime_deindexify should round-trip with runtime_indexify after trim_unnormalize");
+
+        auto recovered = runtime_unprepare_for_translation(prepared);
+
+        FreshVarState fresh2;
+        auto prepared_again = runtime_prepare_for_translation(fresh2, recovered);
+        require(prepared_again == prepared, "inverse preprocess final Core should prepare back to the same Runtime expression");
     }
 
     void check_runtime_atomic_values()
@@ -371,12 +425,18 @@ int main(int argc, char** argv)
 
     require(before_ref.print() == after_ref.print(), "Runtime AST serialization changed the expression");
 
+    auto recovered_builtin = runtime_unprepare_for_translation(before);
+    auto reindexed_builtin = runtime_indexify(recovered_builtin);
+    require(reindexed_builtin == before, "runtime builtin deindexify should round-trip through runtime_indexify");
+
     check_runtime_closure_trim();
     check_runtime_closure_trim_unnormalize();
     check_runtime_closure_slots();
     check_shift_free_indices();
     check_lambda_peeling();
     check_deindexify_reg_refs();
+    check_runtime_untranslate_vars();
+    check_runtime_inverse_preprocess_round_trip();
     check_runtime_atomic_values();
     check_runtime_vector_conversions();
     check_constructor_serialization();
