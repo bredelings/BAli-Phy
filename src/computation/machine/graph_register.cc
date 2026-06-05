@@ -1333,7 +1333,7 @@ void reg_heap::unregister_out_edge(int r, int /* s */)
 void reg_heap::register_dist(int r, int s)
 {
     int r_dist = closure_at(r).runtime_reg_for_slot(0);
-//    int observation = closure_at(r).legacy_exp().sub()[1].as_<String>();
+//    int observation = closure_at(r).get_code().as_<...>()[1].as_string();
     string name = closure_at(r).runtime_slot(2).as_string();
 
 //    assert(not dist_type.count(r_dist));
@@ -3190,7 +3190,7 @@ void reg_heap::allocate_identifiers_for_program()
 
 #ifdef DEBUG_OPTIMIZE
             std::cerr<<"     "<<x<<" := "<<body<<"\n\n";
-            std::cerr<<"     "<<x<<" := "<<preprocess_prepared(body).legacy_exp()<<"\n\n\n\n";
+            std::cerr<<"     "<<x<<" := "<<preprocess_prepared(body).print()<<"\n\n\n\n";
 #endif
 
             // load the body into the machine

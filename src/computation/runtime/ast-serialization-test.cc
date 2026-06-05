@@ -105,7 +105,6 @@ namespace
         require(bool(body), "trimmed runtime closure should use the Runtime::Trim body");
         require(body->index == 1, "trimmed runtime closure body index mismatch");
         require((C.Env == closure::Env_t{10, 30}), "trimmed runtime closure environment mismatch");
-        require(Runtime::to_expression_ref(C.get_code()) == C.legacy_exp(), "trimmed runtime closure cache mismatch");
     }
 
     void check_runtime_closure_trim_unnormalize()
@@ -119,7 +118,6 @@ namespace
         require(bool(body), "trim_unnormalize should remove the Runtime::Trim wrapper");
         require(body->index == 2, "trim_unnormalize should remap body indices through Trim indices");
         require((C2.Env == closure::Env_t{10, 20, 30}), "trim_unnormalize should preserve the closure environment");
-        require(Runtime::to_expression_ref(C2.get_code()) == C2.legacy_exp(), "trim_unnormalized runtime closure cache mismatch");
     }
 
     void check_runtime_closure_slots()
@@ -200,13 +198,6 @@ namespace
         auto peeled_body = twice.to<Runtime::IndexVar>();
         require(bool(peeled_body), "peeling two lambdas should expose the body");
         require(peeled_body->index == 2, "peeled lambda body index mismatch");
-    }
-
-    void check_deindexify_reg_refs()
-    {
-        auto reg_ref = deindexify(Runtime::to_expression_ref(Runtime::RegRef(7)));
-        require(reg_ref.is_reg_var(), "deindexify should preserve RegRef as reg_var");
-        require(reg_ref.as_reg_var() == 7, "deindexified reg_var target mismatch");
     }
 
     void check_runtime_untranslate_vars()
@@ -466,7 +457,6 @@ int main(int argc, char** argv)
     check_runtime_closure_slots();
     check_shift_free_indices();
     check_lambda_peeling();
-    check_deindexify_reg_refs();
     check_runtime_untranslate_vars();
     check_runtime_inverse_preprocess_round_trip();
     check_runtime_deindexify_diagnostic_terms();

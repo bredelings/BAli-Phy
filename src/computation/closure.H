@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include <optional>
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
@@ -14,8 +13,6 @@
 struct closure
 {
 private:
-    mutable std::optional<expression_ref> exp_cache = expression_ref{};
-
     /// The runtime expression
     Runtime::Exp code;
 
@@ -30,9 +27,6 @@ public:
     bool has_code() const { return not code.empty(); }
 
     const Runtime::Exp& get_code() const {return code; }
-
-    /// Legacy expression_ref view derived from code.
-    const expression_ref& legacy_exp() const;
 
     void set_code(Runtime::Exp e);
 
@@ -86,7 +80,6 @@ public:
 
     closure& operator=(const closure& C)
     {
-        exp_cache = C.exp_cache;
         code = C.code;
         Env = C.Env;
         return *this;
@@ -94,7 +87,6 @@ public:
 
     closure& operator=(closure&& C) noexcept
     {
-        exp_cache = std::move(C.exp_cache);
         code = std::move(C.code);
         Env = std::move(C.Env);
         return *this;
@@ -104,14 +96,12 @@ public:
     closure() = default;
 
     closure(const closure& C)
-        :exp_cache(C.exp_cache),
-         code(C.code),
+        :code(C.code),
          Env(C.Env)
     { }
 
     closure(closure&& C) noexcept
-        :exp_cache(std::move(C.exp_cache)),
-         code(std::move(C.code)),
+        :code(std::move(C.code)),
          Env(std::move(C.Env))
     { }
 
