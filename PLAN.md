@@ -45,6 +45,11 @@ Completed so far:
 - Removed the `Runtime::rpair_first/second(expression_ref)` overloads; legacy
   EVector callers now unpack `RPair` explicitly, while runtime callers use the
   `Runtime::Exp` overloads.
+- Audited `closure::legacy_exp()` callers and converted the easy evaluator-side
+  cases: lambda-as-object diagnostics now print runtime code, IORef assertions
+  check runtime constructors, `apply_op` reports runtime code for non-lambdas,
+  and `reg_heap::set_C()` checks pinned runtime `RegRef`s without converting
+  the closure to `expression_ref`.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Evaluation Core
@@ -80,6 +85,30 @@ compatibility layers.
    `expression_ref` because they bridge legacy literal/constructor values into
    runtime values.
 
+## `legacy_exp()` Audit
+
+The remaining `legacy_exp()` callers fall into a few buckets:
+
+1. Legacy `context_ref` wrappers return `expression_ref` by contract. These are
+   acceptable while the legacy API names remain, but new callers should use the
+   `_code` or closure-returning variants.
+
+2. Graph/debug display (`show_graph.cc` and debug-only graph-register logging)
+   intentionally builds expression-shaped output. These are legacy display
+   boundaries, not evaluator internals.
+
+3. `closure::print()` and `deindexify(const closure&)` are expression-facing
+   compatibility helpers. A runtime-native deindexify/substitution path would
+   be useful, but it is a separate feature rather than a mechanical replacement.
+
+4. Runtime serialization tests intentionally compare runtime code with the
+   cached legacy expression view.
+
+5. `IntMap::restrictKeysToVector` still uses an internal `makeEVector`
+   operation that materializes an `EVector`. This is a good candidate for a
+   focused `RVector` migration, but changing it should be considered together
+   with callers that expect the legacy vector representation.
+
 ## Caller Migration Hotspots
 
 1. `context_ptr` still has legacy callers. The internals are runtime-based, but
@@ -107,8 +136,9 @@ compatibility layers.
    expression-shaped output.
 
 3. Continue caller migration in focused batches: remaining `context_ptr`
-   callers, then SMC helper functions that still require `EVector` /
-   `expression_ref`.
+   callers, then small `EVector`/`EMaybe` fronts. `IntMap::restrictKeysToVector`
+   is now a concrete small `EVector` candidate; the large likelihood and SEV
+   APIs should wait until the runtime-vector boundary pattern is clearer.
 
 4. Decide whether `Runtime::atomic_value()` / `Runtime::e_op_value()` should
    move out of `runtime/ast` into an explicit legacy conversion module, or
