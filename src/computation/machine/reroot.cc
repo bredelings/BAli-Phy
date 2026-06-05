@@ -814,7 +814,7 @@ void reg_heap::mark_as_program_execution_token(int t)
         release_unreferenced_tips(*t3);
 }
 
-expression_ref reg_heap::unshare_regs2(int t)
+void reg_heap::unshare_regs2(int t)
 {
     // parent_token(t) should be the root.
     assert(is_root_token(parent_token(t)));
@@ -863,7 +863,7 @@ expression_ref reg_heap::unshare_regs2(int t)
     tokens[t2].flags.reset(0);    // unmark t2 a root-child for execution
 
     // 6. Get the program result.
-    auto result = lazy_evaluate2(heads[*program_result_head]).legacy_exp();
+    lazy_evaluate2(heads[*program_result_head]);
 
     // 7. Clear unshare_count_bit and remove no-effect override from delta-force-count
     cleanup_count_deltas_and_bits();
@@ -906,7 +906,6 @@ expression_ref reg_heap::unshare_regs2(int t)
     check_used_regs();
 #endif
 
-    return result;
 }
 
 void reg_heap::check_unshare_regs(int t)

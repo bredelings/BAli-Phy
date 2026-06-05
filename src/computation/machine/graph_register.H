@@ -357,7 +357,7 @@ private:
 
     int force_simple_set_path_to_PPET(int c);
 
-    expression_ref unshare_and_evaluate_program(int c);
+    void unshare_and_evaluate_program(int c);
 
 public:
     const closure& evaluate_program(int c);
@@ -764,7 +764,7 @@ public:
     void unregister_effects_for_bumped_steps();
     void mark_as_program_execution_token(int t);
     void check_force_counts() const;
-    expression_ref unshare_regs2(int t1);
+    void unshare_regs2(int t1);
 
     void check_unshare_regs(int t);
     void maybe_unshare_regs(int t1);

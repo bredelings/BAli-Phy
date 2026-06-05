@@ -869,7 +869,7 @@ int reg_heap::force_simple_set_path_to_PPET(int c)
 
 
 
-expression_ref reg_heap::unshare_and_evaluate_program(int c)
+void reg_heap::unshare_and_evaluate_program(int c)
 {
     // 1. Reroot to the PPET
     int t = token_for_context(c);
@@ -904,12 +904,11 @@ expression_ref reg_heap::unshare_and_evaluate_program(int c)
     tokens[t].utype = token_type::execute2;
 
     // 6. Unshare regs in the token.
-    auto result = unshare_regs2(t);
+    unshare_regs2(t);
 
     assert(get_prev_prog_token_for_context(c));
     assert(is_program_execution_token(*get_prev_prog_token_for_context(c)));
 
-    return result;
 }
 
 const closure& reg_heap::evaluate_program(int c)
