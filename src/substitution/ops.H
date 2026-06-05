@@ -3,7 +3,6 @@
 
 #include <utility>
 #include "util/matrix.H"
-#include "computation/expression/expression_ref.H"
 #include "substitution/cache.H"
 #include "computation/runtime/ast.H"
 #include <Eigen/Dense>

@@ -3,7 +3,6 @@
 
 #include <optional>
 #include <utility>
-#include "computation/expression/reg_var.H"
 #include "computation/context.H"
 #include "computation/runtime/ast.H"
 #include "util/bounds.H"
@@ -66,7 +65,6 @@ public:
     param() {}
     param(const param&) = default;
     param(const context_ptr& p):reg(p.get_reg()) {}
-    param(const reg_var& rv):reg(rv.target) {}
     param(int h)
         :head(h)
         {}

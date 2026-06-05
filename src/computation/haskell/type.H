@@ -9,7 +9,6 @@
 #include "computation/parser/located.H"
 
 // Can we eliminate this?
-#include "computation/expression/expression_ref.H"
 #include "coretype.H" // for Kind
 
 namespace Haskell

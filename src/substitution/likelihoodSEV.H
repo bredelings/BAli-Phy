@@ -4,7 +4,6 @@
 #include "util/matrix.H"
 #include "util/math/log-double.H"
 #include "substitution/cache.H"
-#include "computation/expression/expression_ref.H"
 #include "computation/runtime/ast.H"
 
 class data_partition;
