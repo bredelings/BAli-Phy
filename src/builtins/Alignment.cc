@@ -481,7 +481,7 @@ vector<int> site_pattern(const EVector& A, int c)
     vector<int> pattern(n);
     for(int j=0;j<n;j++)
     {
-        pattern[j] = R::rpair_second(A[j]).as_<EVector>()[c].as_int();
+        pattern[j] = A[j].as_<R::RPair>().second.as_<EVector>()[c].as_int();
     }
     return pattern;
 }
@@ -492,7 +492,7 @@ vector<int> site_pattern_var_nonvar(const EVector& A, int c)
     vector<int> pattern(n);
     for(int j=0;j<n;j++)
     {
-        int x = R::rpair_second(A[j]).as_<EVector>()[c].as_int();
+        int x = A[j].as_<R::RPair>().second.as_<EVector>()[c].as_int();
         if (x < 0)
             x = alphabet::gap;
         else
@@ -526,11 +526,11 @@ int add_column(column_map& M, const vector<int>& column, vector<vector<int>>& co
 
 tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const EVector& A)
 {
-    int L = R::rpair_second(A[0]).as_<EVector>().size();
+    int L = A[0].as_<R::RPair>().second.as_<EVector>().size();
 
     // Check that all the sequences have the same length
     for(int i=1;i<A.size();i++)
-	assert(L == R::rpair_second(A[i]).as_<EVector>().size());
+	assert(L == A[i].as_<R::RPair>().second.as_<EVector>().size());
 
     column_map M;
     vector<vector<int>> columns;
@@ -545,11 +545,11 @@ tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns(const 
 
 tuple<vector<vector<int>>,vector<int>,vector<int>> compress_site_patterns_var_nonvar(const EVector& A, const alphabet& /*a*/)
 {
-    int L = R::rpair_second(A[0]).as_<EVector>().size();
+    int L = A[0].as_<R::RPair>().second.as_<EVector>().size();
 
     // Check that all the sequences have the same length
     for(int i=1;i<A.size();i++)
-	assert(L == R::rpair_second(A[i]).as_<EVector>().size());
+	assert(L == A[i].as_<R::RPair>().second.as_<EVector>().size());
 
     column_map M;
     vector<vector<int>> columns;
@@ -577,7 +577,7 @@ EVector alignment_from_patterns(const EVector& old, const vector<vector<int>>& p
 	EVector row(L);
         for(int c=0;c<L;c++)
             row[c] = patterns[c][i];
-	const auto& name = R::rpair_first(old[i]).as_string();
+	const auto& name = old[i].as_<R::RPair>().first.as_string();
 	A[i] = R::RPair(name, row);
     }
 
@@ -736,8 +736,8 @@ extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args
     vector<sequence> sequences;
     for(auto& s: sequences_)
     {
-        const string& name = R::rpair_first(s).as_string();
-        const string& letters = R::rpair_second(s).as_string();
+        const string& name = s.as_<R::RPair>().first.as_string();
+        const string& letters = s.as_<R::RPair>().second.as_string();
         sequence S(name,"");
         S.string::operator=(letters);
         sequences.push_back(S);
@@ -916,8 +916,8 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
 
     for(int i=0;i<sites.size();i++)
     {
-        int site1 = R::rpair_first(sites[i]).as_int();
-        int site2 = R::rpair_second(sites[i]).as_int();
+        int site1 = sites[i].as_<R::RPair>().first.as_int();
+        int site2 = sites[i].as_<R::RPair>().second.as_int();
         for(int j=0;j<N;j++)
         {
             int nuc1 = A0(site1,j);

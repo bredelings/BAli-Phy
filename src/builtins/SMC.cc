@@ -946,8 +946,8 @@ extern "C" closure builtin_function_trace_to_trees(OperationArgs& Args)
 
     for(auto& epair: trace)
     {
-        auto height = R::rpair_first(epair).as_double();
-        auto length = R::rpair_second(epair).as_int();
+        auto height = epair.as_<R::RPair>().first.as_double();
+        auto length = epair.as_<R::RPair>().second.as_int();
         s<<"["<<length<<"](1:"<<height<<",2:"<<height<<");";
     }
 
@@ -1667,8 +1667,8 @@ log_double_t site_likelihood_for_reads01(int counts, int ref, int alt, double ws
 
 log_double_t site_likelihood_for_reads01(int counts, const expression_ref& reads, double wsaf, double error_rate, double c, double outlier_frac)
 {
-    int ref = R::rpair_first(reads).as_int();
-    int alt = R::rpair_second(reads).as_int();
+    int ref = reads.as_<R::RPair>().first.as_int();
+    int alt = reads.as_<R::RPair>().second.as_int();
 
     return site_likelihood_for_reads01(counts, ref, alt, wsaf, error_rate, c, outlier_frac);
 }
@@ -1831,8 +1831,8 @@ matrix<log_double_t> emission_pr(const vector<int>& K, const EVector& reads, con
             // Avoid out-of-bounds terms caused by rounding error.
             wsaf = std::max(0.0,std::min(1.0,wsaf));
 
-            int ref = R::rpair_first(reads[site]).as_int();
-            int alt = R::rpair_second(reads[site]).as_int();
+            int ref = reads[site].as_<R::RPair>().first.as_int();
+            int alt = reads[site].as_<R::RPair>().second.as_int();
             E(site, state) = site_likelihood_for_reads01(ref+alt, reads[site], wsaf, error_rate, concentration, outlier_frac);
         }
     }

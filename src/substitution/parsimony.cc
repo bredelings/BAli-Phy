@@ -283,8 +283,8 @@ peel_muts_fixed_A(const EVector& sequences,
 {
     int n_letters = cost.size1();
 
-    auto sequence = [&](int i) -> auto& { return R::rpair_first(sequences[i]).as_<EVector>(); };
-    auto mask = [&](int i) -> auto& { return R::rpair_second(sequences[i]).as_<Box<boost::dynamic_bitset<>>>(); };
+    auto sequence = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().first.as_<EVector>(); };
+    auto mask = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
     auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
 
     int n_branches_in = n_muts_.size();
@@ -368,8 +368,8 @@ int muts_root_fixed_A(const EVector& sequences,
 {
     int n_letters = costs.size1();
 
-    auto sequence = [&](int i) -> auto& { return R::rpair_first(sequences[i]).as_<EVector>(); };
-    auto mask = [&](int i) -> auto& { return R::rpair_second(sequences[i]).as_<Box<boost::dynamic_bitset<>>>(); };
+    auto sequence = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().first.as_<EVector>(); };
+    auto mask = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
     auto n_muts = [&](int i) -> auto& {return n_muts_[i].as_<ParsimonyCacheBranch>();};
 
     int n_branches_in = n_muts_.size();
