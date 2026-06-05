@@ -20,6 +20,7 @@ using std::ofstream;
 
 map<int,string> get_register_names(const map<string, int>& ids, bool allow_compiler_vars);
 vector<int> record_targets(const closure& C);
+std::optional<int> closure_ref_target(const closure& C);
 
 Core::Exp<> map_symbol_names(const Core::Exp<>& E, const std::map<string,string>& simplify)
 {
@@ -321,6 +322,9 @@ void reg_heap::find_all_regs_in_context_no_check(int, vector<int>& scan, vector<
 	for(int j: record_targets(R.C))
             visit_reg(j);
 
+        if (auto j = closure_ref_target(R.C))
+            visit_reg(*j);
+
 	// We can get dependencies on used regs that are not in the environment if we
 	// have merged steps.
 	for(int j: used_regs_for_reg(r))
@@ -574,6 +578,11 @@ vector<int> record_targets(const closure& C)
     return targets;
 }
 
+std::optional<int> closure_ref_target(const closure& C)
+{
+    return C.reg_for_ref_maybe();
+}
+
 bool contains(const string& s1, const string& s2)
 {
     for(int i=0;i+s2.size()<s1.size();i++)
@@ -616,6 +625,11 @@ struct GraphRef
     GraphRefKind kind;
 };
 
+string ref_name(const GraphRef& ref)
+{
+    return ref.kind == GraphRefKind::direct ? direct_ref_name(ref.reg) : env_ref_name(ref.reg);
+}
+
 std::optional<GraphRef> graph_ref_for_arg(const Runtime::Exp& E, const closure& CR)
 {
     if (auto index_var = E.to<Runtime::IndexVar>())
@@ -631,12 +645,22 @@ std::optional<GraphRef> graph_ref_for_arg(const Runtime::Exp& E, const closure& 
         return {};
 }
 
+string register_graph_ref_name(const GraphRef& ref, const map<int,Core::Exp<>>& replace)
+{
+    auto name = ref_name(ref);
+    auto loc = replace.find(ref.reg);
+    if (loc == replace.end())
+        return name;
+
+    return loc->second.print() + " " + name;
+}
+
 string render_register_graph_table_arg_cell(const Runtime::Exp& E, const closure& CR, const map<int,Core::Exp<>>& replace)
 {
     closure arg(E, CR.Env);
     if (auto ref = graph_ref_for_arg(E, CR))
     {
-        auto name = ref->kind == GraphRefKind::direct ? direct_ref_name(ref->reg) : env_ref_name(ref->reg);
+        auto name = register_graph_ref_name(*ref, replace);
         return "<td port=\"r" + convertToString(ref->reg) + "\">" + escape(name) + "</td>";
     }
 
@@ -655,6 +679,35 @@ map<int,Core::Exp<>> make_factor_graph_replacements(const map<int,string>& reg_n
     return replace;
 }
 
+std::optional<string> factor_graph_target_name(int R, const map<int,string>& reg_names,
+                                               const map<int,string>& constants,
+                                               const map<string,string>& simplify)
+{
+    if (constants.count(R))
+        return constants.at(R);
+    else if (reg_names.count(R))
+    {
+        string name = reg_names.at(R);
+        auto loc = simplify.find(name);
+        if (loc != simplify.end())
+            name = loc->second;
+        return name;
+    }
+    else
+        return {};
+}
+
+string factor_graph_ref_name(const GraphRef& ref, const map<int,string>& reg_names,
+                             const map<int,string>& constants,
+                             const map<string,string>& simplify)
+{
+    auto name = ref_name(ref);
+    if (auto target_name = factor_graph_target_name(ref.reg, reg_names, constants, simplify))
+        return *target_name + " " + name;
+    else
+        return name;
+}
+
 string render_factor_graph_table_arg_cell(const Runtime::Exp& E, const closure& CR,
                                           const map<int,string>& reg_names,
                                           const map<int,string>& constants,
@@ -663,7 +716,7 @@ string render_factor_graph_table_arg_cell(const Runtime::Exp& E, const closure& 
     closure arg(E, CR.Env);
     if (auto ref = graph_ref_for_arg(E, CR))
     {
-        auto name = ref->kind == GraphRefKind::direct ? direct_ref_name(ref->reg) : env_ref_name(ref->reg);
+        auto name = factor_graph_ref_name(*ref, reg_names, constants, simplify);
         return "<td port=\"r" + convertToString(ref->reg) + "\">" + escape(name) + "</td>";
     }
 
@@ -715,15 +768,16 @@ string label_for_reg(int R, const reg_heap& C, const map<int,Core::Exp<>>& repla
         else if (auto im = CR.get_code().to<IntMap>())
         {
             for(auto& [key, R2]: *im)
-                label += "<td port=\"r" +convertToString(R2)+"\">" + std::to_string(key) + "&rarr;" + escape(direct_ref_name(R2)) + "</td>";
+                label += "<td port=\"r" +convertToString(R2)+"\">" + std::to_string(key) + "&rarr;" + escape(register_graph_ref_name({R2, GraphRefKind::direct}, replace)) + "</td>";
         }
         label += "</tr></table>";
     }
     else if (CR.is_reg_ref())
     {
-        int R2 = C[R].reg_for_ref();
-
-        label += reg_name(R2, replace);
+        if (auto ref = graph_ref_for_arg(CR.get_code(), CR))
+            label += register_graph_ref_name(*ref, replace);
+        else
+            label += CR.get_code().print();
 
         label = escape(wrap(label,40));
     }
@@ -789,19 +843,10 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
     }
     else if (CR.is_reg_ref())
     {
-        int R2 = C[R].reg_for_ref();
-
-        string reg_name = " ";
-        if (reg_names.count(R2))
-        {
-            reg_name = reg_names.at(R2);
-            auto loc = simplify.find(reg_name);
-            if (loc != simplify.end())
-                reg_name = "<" + loc->second + ">";
-        }
-        else if (constants.count(R2))
-            reg_name = constants.at(R2);
-        label += reg_name;
+        if (auto ref = graph_ref_for_arg(CR.get_code(), CR))
+            label += factor_graph_ref_name(*ref, reg_names, constants, simplify);
+        else
+            label += CR.get_code().print();
 
         label = escape(wrap(label,40));
     }
@@ -921,6 +966,14 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 		    o<<name<<":r"<<R2<<" -> "<<name2<<";\n";
 		else
 		    o<<name<<":r"<<R2<<" -> "<<name2<<" [color=\"#007777\"];\n";
+	    }
+	}
+	else if (auto R2 = closure_ref_target(C[R]))
+	{
+	    if (C.reg_is_used(*R2) and (not replace.count(*R2) or C.reg_is_changeable(*R2)))
+	    {
+		string name2 = "n" + convertToString(*R2);
+		o<<name<<" -> "<<name2<<";\n";
 	    }
 	}
 	else
@@ -1105,6 +1158,7 @@ void context_ref::write_factor_graph(std::ostream& o) const
     {
         int r = regs2[i];
         if (is_modifiable(M[r].get_code())) continue;
+
         if (print_as_record(M[r].get_code()))
             for(auto r2: record_targets(M[r]))
             {
@@ -1115,6 +1169,16 @@ void context_ref::write_factor_graph(std::ostream& o) const
                     regs2.push_back(r2);
                 }
             }
+
+        if (auto r2 = closure_ref_target(M[r]))
+        {
+            *r2 = M.follow_reg_ref(*r2);
+            if (not regs2_set.count(*r2))
+            {
+                regs2_set.insert(*r2);
+                regs2.push_back(*r2);
+            }
+        }
 
         for(auto r2: M[r].Env)
         {
@@ -1164,6 +1228,15 @@ void context_ref::write_factor_graph(std::ostream& o) const
 		if (constants.count(r2) and not M.reg_is_changeable(r2)) continue;
 
                 o<<name2<<":s -> "<<name<<":r"<<r2<<";\n";
+	    }
+	}
+	else if (auto r2 = closure_ref_target(M[r]))
+	{
+	    *r2 = M.follow_reg_ref(*r2);
+	    if (M.reg_is_used(*r2) and not reg_names.count(*r2) and not constants.count(*r2))
+	    {
+		string name2 = "r" + convertToString(*r2);
+                o<<name2<<":s -> "<<name<<";\n";
 	    }
 	}
 	else
