@@ -18,10 +18,9 @@ class Parameters;
 struct tree_constants: public Object
 {
     // The tree
-    expression_ref tree_exp;
     std::map<int,param> parameters_for_tree_node;
     std::map<int,std::tuple<param,param>> parameters_for_tree_branch;
-    int n_leaves;
+    int n_leaves = 0;
 
     // Root info
     std::optional<int> roots_reg;
@@ -42,7 +41,6 @@ struct tree_constants: public Object
     tree_constants* clone() const {return new tree_constants(*this);}
 
     tree_constants(context_ref&, int tree_reg);
-    tree_constants(context_ref&, const expression_ref&);
 };
 
 class TreeInterface

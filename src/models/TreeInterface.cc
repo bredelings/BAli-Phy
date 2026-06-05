@@ -4,8 +4,6 @@
 #include "util/range.H"
 #include "util/set.H"
 #include "util/log-level.H"
-#include "computation/expression/reg_var.H"
-#include "computation/expression/list.H"
 #include "computation/haskell/ids.H"
 #include "computation/machine/graph_register.H"
 #include "computation/machine/gcobject.H"
@@ -26,15 +24,7 @@ using boost::dynamic_bitset;
 // Suppose I make a pointer: {memory, context_index, reg} === {context, tree_reg}
 // To deref a field, we would look up the reg, get the field, and evaluate.
 
-tree_constants::tree_constants(context_ref& C, const expression_ref& E)
-    :tree_constants(C, E.as_reg_var())
-{
-}
-
-
 tree_constants::tree_constants(context_ref& C, int tree_reg)
-    :tree_exp(reg_var(tree_reg)),
-     n_leaves(0)
 {
     auto tree = context_ptr(C, tree_reg);
 
@@ -799,7 +789,7 @@ context_ref& ModifiablesTreeInterface::get_context()
 
 ModifiablesTreeInterface::ModifiablesTreeInterface(context_ref& c, int tree_reg)
     :C(c),
-     TC(new tree_constants(c,reg_var(tree_reg)))
+     TC(new tree_constants(c,tree_reg))
 {
 }
 

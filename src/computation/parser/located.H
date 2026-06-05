@@ -41,9 +41,9 @@ public:
 
     std::string print() const;
 
-    expression_ref copy() const {
-	return object_ptr<Located<T>>(clone());
-    }
+//    expression_ref copy() const {
+//	return object_ptr<Located<T>>(clone());
+//    }
 
     const T& value() const {return obj;}
           T& value()       {return obj;}
