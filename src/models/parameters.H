@@ -37,7 +37,6 @@
 #include <vector>                                   // for vector
 #include "TreeInterface.H"                          // for TreeInterface
 #include "alignment/alignment.H"                    // for alignment
-#include "computation/expression/expression_ref.H"  // for expression_ref
 #include "computation/object.H"                     // for Object, intrusive...
 #include "computation/param.H"                      // for param
 #include "sequence/sequence.H"                      // for sequence

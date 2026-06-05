@@ -28,6 +28,7 @@
 #include "util/rng.H"
 #include "util/myexception.H"
 #include "probability/probability.H"
+#include "computation/expression/expression_ref.H"
 #include "util/mapping.H"
 #include "util/range.H"
 #include "dp/2way.H"
@@ -182,6 +183,132 @@ namespace indel
 	n_letters_ = 1+std::max(max(v1),max(v2));
     }
 }
+
+/// A generic insertion/deletion model
+class IndelModel
+{
+    bool in_training;
+    double heat;
+public: 
+
+    expression_ref get_modifiable_value(int) const {return 0;}
+    
+    virtual log_double_t prior() const = 0;
+
+    /// Probability that an alignment has a sequence with length 'i'
+    virtual log_double_t lengthp(int i) const=0;
+
+    /// Alignment distribution for a branch of time t
+    virtual indel::PairHMM get_branch_HMM(double t) const=0;
+
+    virtual void set_training(bool);
+
+    virtual bool is_training() const;
+
+    virtual void set_heat(double);
+
+    virtual double get_heat() const;
+
+    IndelModel();
+
+    virtual ~IndelModel();
+};
+
+class SimpleIndelModel : public IndelModel {
+protected:
+    void recalc();
+
+    /// The transition matrix with G2 state removed
+    indel::PairHMM Q1;
+
+    /// The transition matrix with G1 state removed
+    Matrix QE;
+
+public:
+    log_double_t prior() const;
+
+    log_double_t lengthp(int i) const;
+
+    indel::PairHMM get_branch_HMM(double t) const;
+
+    std::string name() const;
+
+    SimpleIndelModel();
+};
+
+
+class TKF1: public IndelModel 
+{
+    bool time_dependant;
+public:
+
+    log_double_t prior() const;
+  
+    log_double_t lengthp(int i) const;
+    indel::PairHMM get_branch_HMM(double t) const;
+
+    std::string name() const;
+
+    explicit TKF1(bool);
+};
+
+class TKF2: public IndelModel 
+{
+    bool time_dependant;
+public:
+
+    log_double_t prior() const;
+  
+    log_double_t lengthp(int i) const;
+    indel::PairHMM get_branch_HMM(double t) const;
+
+    std::string name() const;
+
+    explicit TKF2(bool);
+};
+
+/// A generic insertion/deletion model
+class TransducerIndelModel 
+{
+public: 
+
+    expression_ref get_modifiable_value(int) const {return 0;}
+    
+    virtual log_double_t prior() const = 0;
+
+    virtual Matrix root_chain() const =0;
+
+    /// Alignment distribution for a branch of time t
+    virtual indel::PairTransducer get_branch_Transducer(double t) const=0;
+
+    virtual int n_letters() const =0;
+};
+
+class TKF1_Transducer: public TransducerIndelModel
+{
+    bool time_dependent;
+public:
+    Matrix root_chain() const;
+
+    log_double_t prior() const;
+    indel::PairTransducer get_branch_Transducer(double t) const;
+    std::string name() const;
+    int n_letters() const {return 1;}
+    TKF1_Transducer(bool);
+};
+
+class FS_Transducer: public TransducerIndelModel
+{
+    bool time_dependent;
+public:
+    Matrix root_chain() const;
+
+    log_double_t prior() const;
+    indel::PairTransducer get_branch_Transducer(double t) const;
+    std::string name() const;
+    int n_letters() const {return 2;}
+    FS_Transducer(bool);
+};
 
 void IndelModel::set_training(bool b)
 {

@@ -10,7 +10,6 @@
 #include "graph_register.H"
 #include "computation/module.H"
 #include "computation/core/func.H"
-#include "computation/expression/var.H"
 #include "computation/expression/modifiable.H"
 #include "computation/expression/interchangeable.H"
 #include "computation/operations.H"
