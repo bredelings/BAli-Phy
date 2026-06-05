@@ -55,7 +55,7 @@ closure OperationArgs::evaluate_code_to_closure(const Runtime::Exp& E)
     if (auto r = reg_for_code(E))
         return evaluate_reg_to_closure(*r);
     else
-        return closure(E);
+        return E;
 }
 
 closure OperationArgs::evaluate_code_to_closure_(const Runtime::Exp& E)
@@ -63,7 +63,7 @@ closure OperationArgs::evaluate_code_to_closure_(const Runtime::Exp& E)
     if (auto r = reg_for_code(E))
         return evaluate_reg_to_closure_(*r);
     else
-        return closure(E);
+        return E;
 }
 
 optional<int> OperationArgs::evaluate_code_force(const Runtime::Exp& E)
