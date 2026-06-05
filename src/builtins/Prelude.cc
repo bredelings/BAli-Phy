@@ -419,25 +419,25 @@ extern "C" R::Exp simple_function_read_double(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_cNothing(vector<R::Exp>&)
 {
-    return EMaybe();
+    return R::RMaybe();
 }
 
 extern "C" R::Exp simple_function_cJust(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
-    return EMaybe(R::to_expression_ref(x));
+    return R::RMaybe(x);
 }
 
 extern "C" R::Exp simple_function_cIsJust(vector<R::Exp>& args)
 {
-    auto x = get_arg(args).as_<EMaybe>();
+    auto x = get_arg(args).as_<R::RMaybe>();
     return bool(x);
 }
 
 extern "C" R::Exp simple_function_cFromJust(vector<R::Exp>& args)
 {
-    auto maybe = get_arg(args).as_<EMaybe>();
-    return R::e_op_value(*maybe);
+    auto maybe = get_arg(args).as_<R::RMaybe>();
+    return *maybe;
 }
 
 struct HaskellException

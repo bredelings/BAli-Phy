@@ -320,13 +320,13 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
     for(int i=0;i<n;i++)
     {
         // symmetrizing may be ill-conditioned -- fail
-        if (not (pi[i]*n > 1.0e-13)) return {EMaybe()};
+        if (not (pi[i]*n > 1.0e-13)) return {R::RMaybe()};
 
         sqrt_pi[i] = sqrt(pi[i]);
         inverse_sqrt_pi[i] = 1.0/sqrt_pi[i];
 
         // fail if we see Inf, -Inf or Nan.
-        if (not std::isfinite(pi[i]) or not std::isfinite(inverse_sqrt_pi[i])) return {EMaybe()};
+        if (not std::isfinite(pi[i]) or not std::isfinite(inverse_sqrt_pi[i])) return {R::RMaybe()};
     }
 
     //--------------- Calculate eigensystem -----------------//
@@ -349,7 +349,7 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 		assert (Q(i,j) <= 0);
 #endif
             // fail if we see Inf, -Inf or Nan.
-            if (not std::isfinite(S(i,j))) return {EMaybe()};
+            if (not std::isfinite(S(i,j))) return {R::RMaybe()};
 	}
 
     //---------------- Compute eigensystem ------------------//
@@ -358,14 +358,14 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 
     object_ptr<Box<EigenValues>> eigensolver(new Box<EigenValues>(S2, ComputeEigenvectors));
     if (eigensolver->info() != Eigen::Success)
-        return {EMaybe()};
+        return {R::RMaybe()};
     else if (std::abs(eigensolver->eigenvalues().maxCoeff()) > 1.0e-9)
     {
         // The largest eigenvalue should be exactly 0.
-        return {EMaybe()};
+        return {R::RMaybe()};
     }
     else
-        return {EMaybe(eigensolver)};
+        return {R::RMaybe(eigensolver)};
 }
 
 extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
@@ -381,9 +381,9 @@ extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
     double error = positivize_and_renormalize_matrix(M);
 
     if (error > 1.0e-9)
-        return {EMaybe()};
+        return {R::RMaybe()};
     else
-        return {EMaybe(Mptr)};
+        return {R::RMaybe(Mptr)};
 }
 
 

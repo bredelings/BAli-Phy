@@ -184,6 +184,17 @@ namespace Runtime
     using RIntMap = Box<std::map<int, Exp>>;
     using RPair = Box<std::pair<Exp, Exp>>;
 
+    struct RMaybe: public Box<std::optional<Exp>>
+    {
+        RMaybe() = default;
+
+        using Box<std::optional<Exp>>::Box;
+
+        RMaybe(Exp x):Box<std::optional<Exp>>(std::optional<Exp>(std::move(x))) {}
+
+        RMaybe* clone() const override { return new RMaybe(*this); }
+    };
+
     struct RVector: public Box<std::vector<Exp>>
     {
         RVector() = default;
