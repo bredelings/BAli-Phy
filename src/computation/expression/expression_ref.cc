@@ -347,51 +347,6 @@ unique_ptr<expression> operator+(const expression& E1, const expression_ref& E2)
     return unique_ptr<expression>(E3);
 }
 
-EVector::operator vector<double>() const
-{
-    vector<double> v2(size());
-    for(int i=0;i<v2.size();i++)
-	v2[i] = (*this)[i].as_double();
-    return v2;
-}
-
-EVector::operator vector<int>() const
-{
-    vector<int> v2(size());
-    for(int i=0;i<v2.size();i++)
-	v2[i] = (*this)[i].as_int();
-    return v2;
-}
-
-EVector::operator vector<char>() const
-{
-    vector<char> v2(size());
-    for(int i=0;i<v2.size();i++)
-	v2[i] = (*this)[i].as_char();
-    return v2;
-}
-
-EVector::EVector(const vector<double>& v1)
-{
-    resize(v1.size());
-    for(int i=0;i<v1.size();i++)
-	(*this)[i] = v1[i];
-}
-
-EVector::EVector(const vector<int>& v1)
-{
-    resize(v1.size());
-    for(int i=0;i<v1.size();i++)
-	(*this)[i] = v1[i];
-}
-
-EVector::EVector(const vector<char>& v1)
-{
-    resize(v1.size());
-    for(int i=0;i<v1.size();i++)
-	(*this)[i] = v1[i];
-}
-
 int EPtree::count(const std::string& key) const
 {
     int c = 0;

@@ -31,20 +31,3 @@ expression_ref char_list(const string& s)
     return get_list(letters);
 }
 
-optional<EVector> list_to_evector(const expression_ref& E)
-{
-    EVector V;
-
-    expression_ref E2 = E;
-    while(has_constructor(E2,":"))
-    {
-	assert(E2.size() == 2);
-	V.push_back(E2.sub()[0]);
-	E2 = E2.sub()[1];
-    }
-    if (has_constructor(E2,"[]"))
-        return V;
-    else
-        return {};
-}
-

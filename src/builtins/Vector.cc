@@ -151,7 +151,7 @@ extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
 {
     // This doesn't distinguish between a 0x0, 2x0 or 2x0 matrix.
 
-    // If I really want something like the Haskell matrix, I could use an R::RVector of EVectors.
+    // If I really want something like the Haskell matrix, I could use an RVector of RVectors.
     // Then I could get a matrix of anything -- integers, doubles, log_doubles, etc.
 
     auto arg = Args.evaluate_slot_to_value(0);

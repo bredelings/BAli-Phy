@@ -418,7 +418,7 @@ extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
     return result;
 }
 
-closure makeEVector(OperationArgs& Args)
+closure makeRVector(OperationArgs& Args)
 {
     int n = Args.runtime_n_slots();
 
@@ -454,7 +454,7 @@ extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 
 	i++;
     }
-    result.set_code(Runtime::App(Runtime::OperationApp(std::make_shared<Operation>(makeEVector, "makeEVector")),
+    result.set_code(Runtime::App(Runtime::OperationApp(std::make_shared<Operation>(makeRVector, "makeRVector")),
                                  std::move(args)));
 
     return result;

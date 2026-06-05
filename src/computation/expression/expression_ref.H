@@ -431,24 +431,6 @@ inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
     return o<<E.print();
 }
 
-struct EVector: public Vector<expression_ref>
-{
-    // Workaround for GCC6
-    EVector() = default;
-
-    using Vector<expression_ref>::Vector;
-    
-    EVector* clone() const {return new EVector(*this);};
-
-    explicit EVector(const std::vector<double>& v);
-    explicit EVector(const std::vector<int>& v);
-    explicit EVector(const std::vector<char>& v);
-
-    explicit operator std::vector<double>() const;
-    explicit operator std::vector<int>() const;
-    explicit operator std::vector<char>() const;
-};
-
 typedef Box<std::optional<expression_ref>> EMaybe;
 
 struct EPtree: public Vector<std::pair<std::string,expression_ref>>
