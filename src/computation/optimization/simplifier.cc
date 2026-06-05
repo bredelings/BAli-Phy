@@ -53,6 +53,43 @@ using std::optional;
 using std::cerr;
 using std::endl;
 
+namespace
+{
+
+R::Exp runtime_exp_from_core_constant(const Core::Constant& C)
+{
+    if (auto c = to<char>(C.value))
+	return *c;
+    else if (auto i = to<int>(C.value))
+	return *i;
+    else if (auto i = to<integer_container>(C.value))
+	return R::Integer(i->i);
+    else if (auto d = to<double>(C.value))
+	return *d;
+    else if (auto s = to<std::string>(C.value))
+	return *s;
+    else
+	std::abort();
+}
+
+std::optional<Core::Constant> core_constant_from_runtime_exp(const R::Exp& E)
+{
+    if (auto c = E.to<R::Char>())
+        return Core::Constant{{c->value}};
+    else if (auto i = E.to<R::Int>())
+        return Core::Constant{{i->value}};
+    else if (auto d = E.to<R::Double>())
+        return Core::Constant{{double(d->value)}};
+    else if (auto i = E.to<R::Integer>())
+        return Core::Constant{{integer_container(i->value)}};
+    else if (auto s = E.to<R::String>())
+        return Core::Constant{{s->value}};
+    else
+	return {};
+}
+
+}
+
 int get_n_lambdas1(Occ::Exp E)
 {
     int n = 0;
@@ -1502,12 +1539,11 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
             int n = builtin->args.size();
             vector<R::Exp> op_args(n);
             for(int i=0;i<n;i++)
-                op_args[n-1-i] = R::atomic_value(to_expression_ref(*builtin2.args[i].to_constant()));
+                op_args[n-1-i] = runtime_exp_from_core_constant(*builtin2.args[i].to_constant());
 
             try
             {
-                auto result = R::to_expression_ref(f(op_args));
-                if (auto C = to_core_constant(result))
+                if (auto C = core_constant_from_runtime_exp(f(op_args)))
                 {
                     BB = *C;
                     // std::cerr<<"    "<<builtin2.print()<<" -> "<<BB.print()<<"\n";
