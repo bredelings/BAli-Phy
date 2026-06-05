@@ -39,6 +39,9 @@ Completed so far:
   reroot assertions with runtime-code predicates.
 - Reworked `regs_maybe_different_value()` to inspect `Runtime::Exp` directly
   while preserving its narrow equal-integer shortcut.
+- Changed the program unsharing helpers (`unshare_regs2` and
+  `unshare_and_evaluate_program`) to return `void`; `evaluate_program()` is now
+  the closure-returning API for program results.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Evaluation Core
@@ -59,10 +62,9 @@ compatibility layers.
    exist beside many of these, and several legacy wrappers now delegate through
    closures/runtime code.
 
-2. `reg_heap` still exposes legacy evaluation APIs returning `expression_ref`
-   in the program unsharing path: `unshare_and_evaluate_program` and
-   `unshare_regs2`. The simpler value/program APIs now return closures
-   directly.
+2. `reg_heap` no longer has evaluator-facing APIs returning `expression_ref`
+   except graph display/debug helpers. Program unsharing is side-effect only,
+   and `evaluate_program()` returns the resulting closure.
 
 3. `reg_heap::expression_at()` remains as a compatibility accessor over
    `closure::legacy_exp()`. It is no longer in evaluator loops, and the simple
@@ -90,29 +92,20 @@ compatibility layers.
 
 ## Next Steps
 
-1. Continue making legacy `reg_heap` APIs delegate to closure/runtime-returning
-   APIs where possible. This reduces duplicated evaluation code and confines
-   `legacy_exp()` conversion to the wrapper edge.
-
-2. Add missing closure/runtime-returning variants for program unsharing paths
-   (`unshare_regs2`, `unshare_and_evaluate_program`). Treat this as the next
-   larger evaluator-facing API batch because the returned value must remain
-   valid across reroot cleanup and token mutation.
-
-3. Convert `context_ref` legacy APIs into thin wrappers over `_code` or
+1. Convert `context_ref` legacy APIs into thin wrappers over `_code` or
    closure-returning APIs. The easy `evaluate_reg()` / `reg_is_modifiable()`
    cases are done; remaining cases should be handled where lifetime and
    reference-return behavior are clear. Rename to `_legacy` only if the churn is
    modest; otherwise keep temporary suffix comments current.
 
-4. Keep graph display on legacy expression views unless/until there is a
+2. Keep graph display on legacy expression views unless/until there is a
    runtime-native graph rendering path, because it intentionally prints
    expression-shaped output.
 
-5. Continue caller migration in focused batches: remaining `context_ptr`
+3. Continue caller migration in focused batches: remaining `context_ptr`
    callers, then SMC helper functions that still require `EVector` /
    `expression_ref`.
 
-6. After each code batch, build `src/bali-phy/bali-phy` from
+4. After each code batch, build `src/bali-phy/bali-phy` from
    `../build/gcc-16-debug-O`, run the relevant focused tests, and commit
    logically separate changes with `jj`.
