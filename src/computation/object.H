@@ -224,4 +224,8 @@ std::shared_ptr<T2> poly_convert(const object_ptr<const Object>& o)
 #endif
 }
 
+template <typename T>
+concept DerivedFromObject =
+    std::derived_from<std::remove_cvref_t<T>, Object>;
+
 #endif

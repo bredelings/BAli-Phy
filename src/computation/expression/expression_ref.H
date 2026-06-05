@@ -13,10 +13,6 @@
 #include "index_var.H"
 #include <concepts>
 
-template <typename T>
-concept DerivedFromObject =
-    std::derived_from<std::remove_cvref_t<T>, Object>;
-
 /// An S-expression: An Object, and possibly an array of Objects.
 struct expression;
 
