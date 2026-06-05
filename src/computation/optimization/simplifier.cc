@@ -4,7 +4,7 @@
 #include "util/set.H" // for add( )
 #include "util/variant.H" // for to<type>(val)
 #include "computation/operations.H"
-#include "computation/expression/convert.H" // for to_core(Occ::Exp)
+#include "computation/core/convert.H" // for to_core(Occ::Exp)
 #include "occurrence.H"
 #include "computation/module.H"
 #include "core/func.H"

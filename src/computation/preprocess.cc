@@ -9,7 +9,7 @@
 #include "computation/runtime/trim.H"
 #include "computation/fresh_vars.H"
 #include "computation/expression/indexify.H"
-#include "computation/expression/convert.H"
+#include "computation/core/convert.H"
 #include "computation/operation.H"
 #include "haskell/ids.H"
 #include "util/variant.H"

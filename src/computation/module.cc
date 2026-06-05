@@ -22,7 +22,7 @@
 #include "desugar/desugar.H"
 #include "typecheck/typecheck.H"
 #include "computation/loader.H"
-#include "expression/convert.H" // for load_builtins( )
+#include "core/convert.H" // for load_builtins( )
 #include "computation/optimization/simplifier.H"
 #include "computation/optimization/occurrence.H"
 #include "computation/optimization/float-out.H"

@@ -34,7 +34,7 @@ computation_sources = [
   'expression/tuple.cc','expression/list.cc',
   'expression/var.cc','expression/lambda.cc',
   'runtime/modifiable.cc', 'runtime/interchangeable.cc',
-  'expression/convert.cc',
+  'core/convert.cc',
   'expression/bool.cc',
   'expression/maybe.cc',
   'expression/do_block.cc',

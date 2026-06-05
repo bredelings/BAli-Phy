@@ -1,4 +1,4 @@
-#include "convert.H"
+#include "computation/core/convert.H"
 #include "computation/haskell/Integer.H"
 #include "util/variant.H"
 
@@ -49,7 +49,7 @@ Core::Let<> to_core_let(const Occ::Let& L)
     return {to_core(L.decls), to_core_exp(L.body)};
 }
 
-Core::Var<> core_patarg_to_expression_ref(const Occ::Var& V)
+Core::Var<> to_core_pattern_arg(const Occ::Var& V)
 {
     return to_core_var(V);
 }
@@ -60,7 +60,7 @@ Core::Pattern<> to_core_pattern(const Occ::Pattern& P)
         return {};
     else
     {
-	auto args = P.args | ranges::views::transform( core_patarg_to_expression_ref ) | ranges::to<vector>();
+	auto args = P.args | ranges::views::transform( to_core_pattern_arg ) | ranges::to<vector>();
 	return {P.head, args};
     }
 }
