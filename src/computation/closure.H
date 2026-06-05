@@ -42,19 +42,24 @@ public:
         return code.to<Runtime::IndexVar>() or code.to<Runtime::RegRef>();
     }
 
-    std::optional<int> reg_for_ref_maybe() const
+    std::optional<int> reg_for_code(const R::Exp& E) const
     {
-        if (auto index_var = code.to<Runtime::IndexVar>())
+        if (auto index_var = E.to<Runtime::IndexVar>())
         {
             if (index_var->index >= Env.size())
                 return {};
 
             return lookup_in_env(index_var->index);
         }
-        else if (auto reg_ref = code.to<Runtime::RegRef>())
+        else if (auto reg_ref = E.to<Runtime::RegRef>())
             return reg_ref->target;
         else
             return {};
+    }
+
+    std::optional<int> reg_for_ref_maybe() const
+    {
+        return reg_for_code(code);
     }
 
     int reg_for_ref() const

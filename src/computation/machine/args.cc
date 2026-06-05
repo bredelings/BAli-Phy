@@ -16,12 +16,7 @@ Runtime::Exp OperationArgs::slot(int slot_index) const
 
 optional<int> OperationArgs::reg_for_code(const Runtime::Exp& E) const
 {
-    if (auto reg_ref = E.to<Runtime::RegRef>())
-        return reg_ref->target;
-    else if (auto index_var = E.to<Runtime::IndexVar>())
-        return lookup_in_env(current_closure().Env, index_var->index);
-    else
-        return {};
+    return current_closure().reg_for_code(E);
 }
 
 int OperationArgs::n_args() const {return current_closure().n_slots();}
