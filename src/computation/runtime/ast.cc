@@ -2,17 +2,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <ostream>
-#include "computation/expression/apply.H"
-#include "computation/expression/bool.H"
-#include "computation/expression/case.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/index_var.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/let.H"
-#include "computation/expression/reg_var.H"
-#include "computation/expression/runtime_views.H"
-#include "computation/expression/trim.H"
-#include "computation/expression/var.H"
 #include "computation/haskell/Integer.H"
 #include "computation/haskell/ids.H"
 #include "computation/operation.H"
@@ -20,6 +9,9 @@
 #include "util/string/join.H"
 
 using std::vector;
+
+extern std::string bool_true_name;
+extern std::string bool_false_name;
 
 namespace Runtime
 {
@@ -329,54 +321,6 @@ namespace Runtime
         return *E2;
     }
 
-    Exp atomic_value(const expression_ref& E)
-    {
-        switch(E.type())
-        {
-        case type_constant::int_type:
-            return Int(E.as_int());
-        case type_constant::double_type:
-            return Double(E.as_double());
-        case type_constant::log_double_type:
-            return LogDouble(E.as_log_double());
-        case type_constant::char_type:
-            return Char(E.as_char());
-        case type_constant::constructor_type:
-            return Constructor(E.as_<constructor>());
-        default:
-            break;
-        }
-
-        if (const auto* s = E.to<::String>())
-            return String(s->value());
-
-        if (const auto* i = E.to<::Integer>())
-            return Integer(i->value());
-
-        if (E.is_object_type() and not E.is_expression())
-            return ObjectValue(E.ptr());
-
-        throw myexception()<<"Cannot convert non-atomic expression '"<<E<<"' to Runtime::Exp";
-    }
-
-    Exp e_op_value(const expression_ref& E)
-    {
-        if (E.is_expression() and E.head().is_a<constructor>())
-        {
-            const auto& head = E.head().as_<constructor>();
-            if (E.size() != head.n_args())
-                throw myexception()<<"Cannot convert partial constructor application '"<<E<<"' to Runtime::Exp";
-
-            vector<Exp> args;
-            for(const auto& arg: E.sub())
-                args.push_back(e_op_value(arg));
-
-            return App(ConstructorApp(head), std::move(args));
-        }
-
-        return atomic_value(E);
-    }
-
     const Exp& rpair_first(const Exp& E)
     {
         auto pair = E.to<RPair>();
@@ -490,21 +434,6 @@ namespace Runtime
         return OperationApp(operation_from_builtin(op, lib_name, func_name, call_conv), lib_name, func_name, call_conv);
     }
 
-    expression_ref to_expression_ref(const AppHead& head)
-    {
-        return std::visit([](const auto& h) -> expression_ref
-        {
-            using T = std::decay_t<decltype(h)>;
-
-            if constexpr (std::is_same_v<T, FunctionApply>)
-                return Apply();
-            else if constexpr (std::is_same_v<T, ConstructorApp>)
-                return h.head;
-            else if constexpr (std::is_same_v<T, OperationApp>)
-                return *h.head;
-        }, head);
-    }
-
     int pattern_arity(const Pattern& pattern)
     {
         return std::visit([](const auto& p) -> int
@@ -516,109 +445,6 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, ConstructorPattern>)
                 return p.head.n_args();
         }, pattern);
-    }
-
-    expression_ref to_expression_ref(const Pattern& pattern)
-    {
-        return std::visit([](const auto& p) -> expression_ref
-        {
-            using T = std::decay_t<decltype(p)>;
-
-            if constexpr (std::is_same_v<T, WildcardPattern>)
-                return var(-1);
-            else if constexpr (std::is_same_v<T, ConstructorPattern>)
-                return p.head;
-        }, pattern);
-    }
-
-    expression_ref to_expression_ref(const Exp& E)
-    {
-        return E.visit([](const auto& e) -> expression_ref
-        {
-            using T = std::decay_t<decltype(e)>;
-
-            if constexpr (std::is_same_v<T, Int>)
-            {
-                return e.value;
-            }
-            else if constexpr (std::is_same_v<T, Double>)
-            {
-                return double(e.value);
-            }
-            else if constexpr (std::is_same_v<T, LogDouble>)
-            {
-                return e.value;
-            }
-            else if constexpr (std::is_same_v<T, Char>)
-            {
-                return e.value;
-            }
-            else if constexpr (std::is_same_v<T, String>)
-            {
-                return ::String(e.value);
-            }
-            else if constexpr (std::is_same_v<T, Integer>)
-            {
-                return ::Integer(e.value);
-            }
-            else if constexpr (std::is_same_v<T, Constructor>)
-            {
-                return e.value;
-            }
-            else if constexpr (std::is_same_v<T, ObjectValue>)
-            {
-                return e.value;
-            }
-            else if constexpr (std::is_same_v<T, IndexVar>)
-            {
-                return index_var(e.index);
-            }
-            else if constexpr (std::is_same_v<T, GlobalVar>)
-            {
-                return e.name;
-            }
-            else if constexpr (std::is_same_v<T, RegRef>)
-            {
-                return reg_var(e.target);
-            }
-            else if constexpr (std::is_same_v<T, Lambda>)
-            {
-                return expression_ref(lambda2(), {to_expression_ref(e.body)});
-            }
-            else if constexpr (std::is_same_v<T, Let>)
-            {
-                vector<expression_ref> binds;
-                for(const auto& bind: e.binds)
-                    binds.push_back(to_expression_ref(bind));
-
-                return indexed_let_expression(binds, to_expression_ref(e.body));
-            }
-            else if constexpr (std::is_same_v<T, Case>)
-            {
-                Expression::CaseAlts alts;
-                for(const auto& alt: e.alts)
-                    alts.push_back({to_expression_ref(alt.pattern), to_expression_ref(alt.body)});
-
-                return make_case_expression(to_expression_ref(e.object), alts);
-            }
-            else if constexpr (std::is_same_v<T, App>)
-            {
-                vector<expression_ref> args;
-                for(const auto& arg: e.args)
-                    args.push_back(to_expression_ref(arg));
-
-                return expression_ref(to_expression_ref(e.head), args);
-            }
-            else if constexpr (std::is_same_v<T, Trim>)
-            {
-                expression* V = new expression(::Trim());
-                V->sub.push_back(Vector<int>(e.indices));
-                V->sub.push_back(to_expression_ref(e.body));
-                return V;
-            }
-            else
-                std::abort();
-        });
     }
 
     static std::string parenthesize_if(bool b, const std::string& s)

@@ -6,9 +6,13 @@
 #include <utility>
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
-#include "computation/expression/expression_ref.H"
-#include "computation/expression/bool.H"
+#include "computation/expression/index_var.H"
+#include "computation/expression/reg_var.H"
 #include "computation/runtime/ast.H"
+
+class expression_ref;
+extern std::string bool_true_name;
+extern std::string bool_false_name;
 
 struct closure
 {
@@ -109,7 +113,7 @@ public:
     closure(const expression_ref& e, const Env_t& E) = delete;
     closure(const expression_ref& e, std::initializer_list<int> E) = delete;
 
-    // Constructing from an expression_ref
+    // Constructing from runtime code.
     closure(Runtime::Exp e)
         :closure()
     {

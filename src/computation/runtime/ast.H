@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <iosfwd>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -19,7 +20,6 @@
 #define CEREAL_FUTURE_EXPERIMENTAL 1
 #include <cereal/archives/adapters.hpp>
 #include "computation/expression/constructor.H"
-#include "computation/expression/expression_ref.H"
 #include "computation/expression/var.H"
 #include "computation/haskell/Integer.H"
 #include "computation/haskell/integer_container.H"
@@ -676,8 +676,6 @@ namespace Runtime
 
     Exp apply(Exp, std::vector<Exp>);
     Exp apply_env_function(int, std::vector<Exp>);
-    Exp atomic_value(const expression_ref&);
-    Exp e_op_value(const expression_ref&);
     const Exp& rpair_first(const Exp&);
     const Exp& rpair_second(const Exp&);
     int count_lambdas(const Exp&);
@@ -687,10 +685,6 @@ namespace Runtime
     int pattern_arity(const Pattern&);
 
     OperationApp builtin_operation_app(void*, const std::string& lib_name, const std::string& func_name, const std::string& call_conv);
-
-    expression_ref to_expression_ref(const Exp&);
-    expression_ref to_expression_ref(const Pattern&);
-    expression_ref to_expression_ref(const AppHead&);
 
     std::string print(const Exp&);
     std::string print(const Pattern&);
