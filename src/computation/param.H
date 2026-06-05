@@ -3,7 +3,6 @@
 
 #include <optional>
 #include <utility>
-#include "computation/expression/expression_ref.H"
 #include "computation/expression/reg_var.H"
 #include "computation/context.H"
 #include "computation/runtime/ast.H"
@@ -74,7 +73,6 @@ public:
     param(int h)
         :head(h)
         {}
-    param(const expression_ref& v):value(Runtime::e_op_value(v)) {}
     param(Runtime::Exp v):value(std::move(v)) {}
 };
 
