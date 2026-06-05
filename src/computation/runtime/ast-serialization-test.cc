@@ -135,6 +135,13 @@ namespace
         require(C.runtime_reg_for_slot(1) == 20, "runtime slot 1 should resolve through the closure environment");
         require(C.runtime_reg_for_slot(2) == 30, "runtime RegRef slot should preserve its target");
 
+        require(closure(Runtime::IndexVar(1), {10, 20}).reg_for_ref_maybe() == 10,
+                "runtime closure IndexVar ref should resolve through the closure environment");
+        require(closure(Runtime::RegRef(30), {10, 20}).reg_for_ref_maybe() == 30,
+                "runtime closure RegRef should preserve its target");
+        require(not closure(Runtime::Int(1)).reg_for_ref_maybe(),
+                "non-reference runtime closure should not have a referenced reg");
+
         auto slot = C.runtime_slot(1);
         auto slot_ref = slot.to<Runtime::RegRef>();
         require(bool(slot_ref), "runtime IndexVar slot should become a RegRef");
