@@ -522,11 +522,6 @@ bool is_used_var(const Occ::Var& x)
     return (x.info.code_dup != amount_t::None);
 }
 
-bool is_used_var(const var& x)
-{
-    return (not x.is_wildcard() and x.code_dup != amount_t::None);
-}
-
 vector<Occ::Var> get_used_vars(const Occ::Pattern& pattern)
 {
     vector<Occ::Var> used;

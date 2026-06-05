@@ -38,18 +38,6 @@ Hs::Var FreshVarSource::add_mod_name(const Hs::Var& x) const
     return x2;
 }
 
-var FreshVarSource::get_fresh_var()
-{
-    return var( get_index() );
-}
-
-var FreshVarSource::get_fresh_var(const std::string& name)
-{
-    assert(not is_haskell_builtin_con_name(name));
-//    assert(name.empty() or not is_qualified_symbol(name));
-    return var(name, get_index() );
-}
-
 Core::Var<> FreshVarSource::get_fresh_core_var(const std::string& name)
 {
     assert(not is_haskell_builtin_con_name(name));
@@ -71,17 +59,6 @@ Levels::Var FreshVarSource::get_fresh_levels_var(const std::string& name)
     return Levels::Var(name, get_index());
 }
 
-var FreshVarSource::get_fresh_var(const std::string& name, bool qualified)
-{
-    assert(not is_haskell_builtin_con_name(name));
-    string name2 = add_suffix(get_unqualified_name(name), get_index() );
-
-    if (qualified)
-        name2 = qualified_name(name2);
-
-    return var(name2);
-}
-
 Core::Var<> FreshVarSource::get_fresh_core_var(const std::string& name, bool qualified)
 {
     assert(not is_haskell_builtin_con_name(name));
@@ -91,26 +68,6 @@ Core::Var<> FreshVarSource::get_fresh_core_var(const std::string& name, bool qua
         name2 = qualified_name(name2);
 
     return Core::Var<>(name2);
-}
-
-var FreshVarSource::get_fresh_var(const var& x)
-{
-//    assert(x.index >= 0);
-    assert(not x.is_exported);
-    assert(check_index(x.index));
-
-    return get_fresh_var( x.name );
-}
-
-var FreshVarSource::get_fresh_var_copy(var x)
-{
-//    assert(x.index >= 0);
-    assert(not x.is_exported);
-    assert(check_index(x.index));
-
-    x.index = get_index();
-
-    return x;
 }
 
 Occ::Var FreshVarSource::get_fresh_var_copy(Occ::Var x)
@@ -136,15 +93,6 @@ Hs::Var FreshVarSource::get_fresh_Var(const std::string& name, bool qualified)
 
 Hs::Var FreshVarSource::get_fresh_Var(const Hs::Var& x, bool qualified)
 {
-    return get_fresh_Var(x.name, qualified);
-}
-
-Hs::Var FreshVarSource::get_fresh_Var(const var& x, bool qualified)
-{
-//    assert(x.index >= 0);
-    assert(not x.is_exported);
-    assert(check_index(x.index));
-
     return get_fresh_Var(x.name, qualified);
 }
 
@@ -190,14 +138,6 @@ FreshVarSource::FreshVarSource(FreshVarState& s, const string& mn)
     :state(s), mod_name(mn)
 { }
 
-var make_var(const Hs::Var& v)
-{
-    assert(v.wrap.is_identity());
-    var v2(v.name);
-    
-    return v2;
-}
-
 Core::Var<> make_core_var(const Hs::Var& v)
 {
     assert(v.wrap.is_identity());
@@ -205,12 +145,3 @@ Core::Var<> make_core_var(const Hs::Var& v)
 
     return v2;
 }
-
-vector<var> make_vars(const vector<Hs::Var>& vs)
-{
-    vector<var> vs2;
-    for(auto& v: vs)
-        vs2.push_back(make_var(v));
-    return vs2;
-}
-

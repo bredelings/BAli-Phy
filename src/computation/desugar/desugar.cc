@@ -78,7 +78,6 @@ Hs::VarPattern make_VarPattern(const Core::Var<>& v)
 bool is_irrefutable_pat(const Module& m, const Hs::LPat& lpat)
 {
     auto& P = unloc(lpat);
-    assert(not P.head().is_a<var>());
     assert(not P.head().is_a<Hs::Var>());
 
     if (P.is_a<Hs::WildcardPattern>())

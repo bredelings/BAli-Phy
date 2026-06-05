@@ -26,7 +26,7 @@ extern "C" R::Exp simple_function_singleton(vector<R::Exp>& args)
     return s;
 }
 
-extern "C" R::Exp simple_function_empty(vector<R::Exp>& args)
+extern "C" R::Exp simple_function_empty(vector<R::Exp>&)
 {
     std::string s;
 

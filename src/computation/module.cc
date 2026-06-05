@@ -1373,17 +1373,6 @@ void Module::export_small_decls(const inliner_options& options, const Core::Decl
     }
 }
 
-vector<expression_ref> peel_lambdas(expression_ref& E)
-{
-    vector<expression_ref> args;
-    while(E.head().type() == type_constant::lambda_type)
-    {
-        args.push_back(E.sub()[0]);
-        E = E.sub()[1];
-    }
-    return args;
-}
-
 Core::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, Core::Decls<> decls)
 {
     if (not opts.optimize) return decls;
@@ -2083,24 +2072,6 @@ const_type_ptr Module::lookup_external_type(const std::string& type_name) const
         throw myexception()<<"Can't find external type '"<<type_name<<"' because module '"<<mod_name<<"' is not transitively imported.";
 
     return mod_iter->second->lookup_local_type(type_name);
-}
-
-void parse_combinator_application(const expression_ref& E, string& name, vector<expression_ref>& patterns)
-{
-    expression_ref E2 = E;
-
-    assert(E.head().is_a<Apply>());
-  
-    // 1. Find the head.  This should be a var or a var, not an apply.
-    auto x = E.sub()[0];
-    if (is_var(x))
-        name = x.as_<var>().name;
-    else
-        throw myexception()<<"Combinator definition '"<<E<<"' does not start with variable!";
-
-    // 2. Look through the arguments
-    for(int i=1;i<E.size();i++)
-        patterns.push_back(E.sub()[i]);
 }
 
 // Here we do only phase 1 -- we only parse the decls enough to

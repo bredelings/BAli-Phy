@@ -5,10 +5,10 @@
 #include <string>
 #include <optional>
 
-#include "computation/expression/var.H" // for var
 #include "computation/optimization/occurrence_info.H" // for Core::Var<>, Occ::Var
-#include "computation/haskell/haskell.H" // for Hs::Var, Hs::TypeVar
-#include "computation/haskell/coretype.H" // for Hs::Var, Hs::TypeVar
+#include "computation/haskell/var.H" // for Hs::Var
+#include "computation/haskell/type.H" // for Hs::TypeVar
+#include "computation/haskell/coretype.H" // for TypeVar
 
 #include "computation/optimization/set-levels.H" // for Levels::Var
 #include "core/ast.H"
@@ -61,21 +61,13 @@ class FreshVarSource
     std::optional<std::string> mod_name;
 
 public:
-    var get_fresh_var();
-
-    var get_fresh_var(const std::string& name);
-    var get_fresh_var(const std::string& name, bool qualified);
-    var get_fresh_var(const var& x);
-    var get_fresh_var_copy(var x);
     Occ::Var get_fresh_occ_var(const std::string& name);
     Levels::Var get_fresh_levels_var(const std::string& name);
     Occ::Var get_fresh_var_copy(Occ::Var x);
-    var get_fresh_var(const Hs::Var& x);
 
     std::string qualified_name(const std::string&) const;
     Hs::Var add_mod_name(const Hs::Var&) const;
     Hs::Var get_fresh_Var(const std::string& name, bool qualified);
-    Hs::Var get_fresh_Var(const var& x, bool qualified);
     Hs::Var get_fresh_Var(const Hs::Var& x, bool qualified);
 
     Core::Var<> get_fresh_core_var(const std::string& name);
@@ -96,10 +88,6 @@ public:
     FreshVarSource(FreshVarState& s, const std::string& mn);
 };
 
-var make_var(const Hs::Var& v);
-
 Core::Var<> make_core_var(const Hs::Var& v);
-
-std::vector<var> make_vars(const std::vector<Hs::Var>& vs);
 
 #endif
