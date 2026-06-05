@@ -106,7 +106,7 @@ Runtime::Exp OperationArgs::evaluate_slot_to_value(int slot)
     closure result = evaluate_slot_to_closure(slot);
 #ifndef NDEBUG
     if (result.get_code().to<Runtime::Lambda>())
-	throw myexception()<<"Evaluating lambda as object: "<<result.legacy_exp().print();
+	throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
 #endif
     return result.get_code();
 }
@@ -116,7 +116,7 @@ Runtime::Exp OperationArgs::evaluate_slot_to_value_(int slot)
     closure result = evaluate_slot_to_closure_(slot);
 #ifndef NDEBUG
     if (result.get_code().to<Runtime::Lambda>())
-	throw myexception()<<"Evaluating lambda as object: "<<result.legacy_exp().print();
+	throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
 #endif
     return result.get_code();
 }

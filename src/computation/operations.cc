@@ -84,7 +84,7 @@ closure apply_op(OperationArgs& Args)
     assert(C.has_code());
     int n_args_needed = Runtime::count_lambdas(C.get_code());
     if (n_args_needed == 0)
-	throw myexception()<<"Trying to apply non-lambda '"<<C.legacy_exp().head()<<"'";
+	throw myexception()<<"Trying to apply non-lambda '"<<C.get_code()<<"'";
     assert(n_args_needed >= 1);
     assert(n_args_given >= 1);
 

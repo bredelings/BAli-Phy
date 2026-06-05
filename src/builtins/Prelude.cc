@@ -498,7 +498,7 @@ extern "C" closure builtin_function_readIORef(OperationArgs& Args)
 {
     // 1. IORef
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.legacy_exp(),"Data.IORef.IORef"));
+    assert(has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
 
     return closure(Runtime::IndexVar(0), {C.Env[0]});
@@ -544,7 +544,7 @@ extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.legacy_exp(),"Data.IORef.IORef"));
+    assert(has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
 
     // 2. New value
@@ -570,7 +570,7 @@ extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.legacy_exp(),"Data.IORef.IORef"));
+    assert(has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
     int r_value = C.Env[0];
 
@@ -596,7 +596,7 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.legacy_exp(),"Data.IORef.IORef"));
+    assert(has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
     int r_value = C.Env[0];
 

@@ -2017,11 +2017,55 @@ void reg_heap::check_reg_vars_are_pinned(const expression_ref& E) const
         check_reg_vars_are_pinned(sub);
 }
 
+void reg_heap::check_reg_vars_are_pinned(const Runtime::Exp& E) const
+{
+    if (not E)
+        return;
+
+    E.visit([&](const auto& e)
+    {
+        using T = std::decay_t<decltype(e)>;
+
+        if constexpr (std::is_same_v<T, Runtime::RegRef>)
+        {
+            int r = e.target;
+            assert(regs.is_valid_address(r));
+            assert(regs.is_used(r));
+            assert(reg_is_pinned(r));
+        }
+        else if constexpr (std::is_same_v<T, Runtime::Lambda>)
+        {
+            check_reg_vars_are_pinned(e.body);
+        }
+        else if constexpr (std::is_same_v<T, Runtime::Let>)
+        {
+            for(const auto& bind: e.binds)
+                check_reg_vars_are_pinned(bind);
+            check_reg_vars_are_pinned(e.body);
+        }
+        else if constexpr (std::is_same_v<T, Runtime::Case>)
+        {
+            check_reg_vars_are_pinned(e.object);
+            for(const auto& alt: e.alts)
+                check_reg_vars_are_pinned(alt.body);
+        }
+        else if constexpr (std::is_same_v<T, Runtime::App>)
+        {
+            for(const auto& arg: e.args)
+                check_reg_vars_are_pinned(arg);
+        }
+        else if constexpr (std::is_same_v<T, Runtime::Trim>)
+        {
+            check_reg_vars_are_pinned(e.body);
+        }
+    });
+}
+
 void reg_heap::set_C(int R, closure&& C)
 {
     assert(C);
 #ifndef NDEBUG
-    check_reg_vars_are_pinned(C.legacy_exp());
+    check_reg_vars_are_pinned(C.get_code());
 #endif
     clear_C(R);
 
