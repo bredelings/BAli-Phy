@@ -107,6 +107,14 @@ Completed so far:
   `Runtime::e_op_value(expression_ref)`.
 - Removed the remaining temporary `context_ptr::list_to_vector_code()` suffix;
   callers now use the undecorated runtime-returning `list_to_vector()`.
+- Removed the dead expression-ref indexed-let compatibility layer:
+  `indexed_let_expression(...)`, `parse_indexed_let_expression(...)`, the old
+  expression-ref `deindexify(...)`, and expression-ref trim normalization
+  helpers. Runtime indexify/deindexify and runtime trim normalization remain.
+- Removed the old `Let : Operation` marker and `type_constant::let2_type`.
+  Runtime let reduction uses typed `Runtime::Let` and `let_op` directly.
+- Deleted the unused `expression/runtime_views.H` header and stale includes
+  that only supported the old expression-ref runtime-view layer.
 
 ## Evaluation Core
 
@@ -199,6 +207,11 @@ The remaining direct `expression_ref` appearances near evaluation are narrower:
    focused `RVector` migration, but changing it should be considered together
    with callers that expect the legacy vector representation.
 
+The old expression-ref indexed-let marker is no longer present. Similar marker
+cleanup candidates are now `Apply` as an operation object used to represent
+runtime function application heads, expression `lambda2`, expression `Trim`,
+and expression `constructor`.
+
 ## Caller Migration Hotspots
 
 1. `context_ptr` is now runtime-based at the API level: `value()`, `head()`,
@@ -247,6 +260,9 @@ Recent scan results:
 - `runtime/ast` no longer declares or defines expression-ref conversion shims.
 - `show_graph.cc` is runtime-native for graph structure and uses
   runtime-to-Core diagnostic deindexing for labels.
+- `let2_type` and the old `Let : Operation` object are gone.
+- Expression-ref trim/indexed-let/deindexify helpers that depended on `let2`
+  are gone. Runtime trim/indexify/deindexify is the active path.
 - Large `EVector` surfaces remain in likelihood/substitution and several
   builtins. These are evaluated-value containers, but they are broader than the
   evaluator API itself and should be migrated incrementally.
@@ -257,27 +273,38 @@ Recent scan results:
    `Runtime::RVector`, with explicit legacy bridging only for callers that
    still require `EVector`.
 
-2. Continue SMC vector migration in narrow groups: convert helper signatures
+2. Remove runtime leakage of old expression marker objects. First replace
+   `param.cc::runtime_head_code()` returning `Apply()` for
+   `Runtime::FunctionApply` with a runtime-native representation or remove the
+   caller need for a synthetic head value. Then replace `evaluate.cc`'s static
+   `Apply` object with direct use of `apply_op`.
+
+3. Split runtime constructors from expression constructors: change
+   `Runtime::Constructor`, `Runtime::ConstructorPattern`, and
+   `Runtime::ConstructorApp` to store a name and arity directly instead of the
+   expression-side `constructor` object.
+
+4. Continue SMC vector migration in narrow groups: convert helper signatures
    from `EVector` to `Runtime::RVector` where the helper only needs scalar
    vector access.
 
-3. Audit `TreeInterface` and `models/parameters` for remaining
+5. Audit `TreeInterface` and `models/parameters` for remaining
    evaluation-time `expression_ref` use. Keep model-generation inputs as
    expression-based, but avoid converting evaluated tree/model properties back
    through expression syntax.
 
-4. Continue the non-`expression_ref` inverse preprocess path in narrow pieces:
+6. Continue the non-`expression_ref` inverse preprocess path in narrow pieces:
    runtime untranslation of global registers, runtime trim unnormalization, and
    runtime-to-Core deindexing are in place. The remaining work is Core
    graph/let unnormalization and then migrating diagnostics to use the
    Core-shaped runtime deindexify path where that improves the display
    boundary.
 
-5. Keep graph/display conversion boundaries explicit. Do not add runtime
+7. Keep graph/display conversion boundaries explicit. Do not add runtime
    `unlet` / `subst_reg_vars` clones unless there is a concrete runtime-stage
    consumer. For display, prefer the existing runtime-to-Core deindexing path
    followed by Core transforms.
 
-6. After each code batch, build `src/bali-phy/bali-phy` from
+8. After each code batch, build `src/bali-phy/bali-phy` from
    `../build/gcc-16-debug-O`, run the relevant focused tests, and commit
    logically separate changes with `jj`.
