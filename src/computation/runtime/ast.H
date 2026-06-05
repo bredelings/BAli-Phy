@@ -152,6 +152,8 @@ namespace Runtime
         const ConstructorTag& as_constructor() const;
         std::string print() const;
 
+        const Exp& slot_ref(int i) const;
+
         template <DerivedFromObject T>
         const T& as_() const;
 
@@ -676,6 +678,12 @@ namespace Runtime
     void check_no_reg_refs(const Exp&);
     void check_translated(const Exp&);
 
+    inline const Exp& Exp::slot_ref(int i) const
+    {
+        auto app = to<Runtime::App>();
+        assert(app);
+        return app->args[i];
+    }
 }
 
 namespace R = Runtime;

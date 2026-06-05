@@ -9,18 +9,6 @@
 using std::vector;
 using std::string;
 
-namespace
-{
-    const Runtime::Exp& slot_ref(const Runtime::Exp& E, int i)
-    {
-        auto app = E.to<Runtime::App>();
-        assert(app);
-        assert(0 <= i);
-        assert(i < app->args.size());
-        return app->args[i];
-    }
-}
-
 void closure::set_code(Runtime::Exp c)
 {
     code = std::move(c);
@@ -54,7 +42,7 @@ int closure::n_slots() const
 
 Runtime::Exp closure::slot(int i) const
 {
-    const auto& E = slot_ref(code, i);
+    const auto& E = code.slot_ref(i);
 
     if (auto index_var = E.to<Runtime::IndexVar>())
         return Runtime::RegRef(lookup_in_env(index_var->index));
@@ -64,7 +52,7 @@ Runtime::Exp closure::slot(int i) const
 
 int closure::reg_for_slot(int i) const
 {
-    const auto& E = slot_ref(code, i);
+    const auto& E = code.slot_ref(i);
 
     if (auto index_var = E.to<Runtime::IndexVar>())
         return lookup_in_env(index_var->index);
