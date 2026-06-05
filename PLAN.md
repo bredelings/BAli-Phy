@@ -53,34 +53,32 @@ Completed so far:
 - Peeled off some `show_graph.cc` work: graph reachability now discovers
   `GCObject` dependencies through `Runtime::ObjectValue`, graph/factor-graph
   record detection and record edge extraction inspect `Runtime::Exp`, and
-  modifiable/small-constant decisions use runtime predicates. Active label
-  rendering now uses runtime display transforms; remaining legacy expression
-  views are confined to compact/dormant graph paths and expression-shaped head
-  formatting.
-- Changed `deindexify(const closure&)` to return `Runtime::Exp`. Legacy display
-  callers bridge explicitly when they need expression-shaped output; evaluator
-  diagnostics and active graph labels now stay in `Runtime::Exp`.
+  modifiable/small-constant decisions use runtime predicates. Label rendering
+  remains an expression/display boundary.
+- Restored `deindexify(const closure&)` to return `expression_ref` through the
+  expression-level `deindexify(...)`, with closure environment registers
+  supplied as `reg_var`s. The name should mean "undo indexify", not "resolve a
+  runtime closure environment".
+- Removed the unused `context_ref::recursive_evaluate_reg()` and
+  `recursive_evaluate_head()` helpers. They were the only non-display pressure
+  for the misleading runtime closure-env `deindexify` behavior.
 - Migrated `context_ref`'s public evaluation API in `context.H` to runtime
   values: `evaluate_*`, `perform_*`, `get_reg_value`,
-  `get_modifiable_value(s)`, `get_expression`, `evaluate_program`, and the
-  recursive evaluation helpers now return `Runtime::Exp` / `Runtime::RVector`
-  instead of `expression_ref` / `EVector`. The temporary `_code` duplicates for
-  these APIs were removed, and remaining legacy callers bridge explicitly with
-  `Runtime::to_expression_ref(...)` where needed.
+  `get_modifiable_value(s)`, `get_expression`, and `evaluate_program` now
+  return `Runtime::Exp` / `Runtime::RVector` instead of `expression_ref` /
+  `EVector`. The temporary `_code` duplicates for these APIs were removed, and
+  remaining legacy callers bridge explicitly with `Runtime::to_expression_ref(...)`
+  where needed.
 - Added `TODO.md` to capture delayed cleanup work.
-- Added runtime overloads for diagnostic/display transforms:
-  `untranslate_vars`, `subst_reg_vars`, `unlet`, and the adjacent
-  `map_symbol_names`. `evaluate.cc` exception formatting and active graph label
-  rendering now use these without converting through `expression_ref`.
-  Runtime `unlet()` implements the legacy single-use, non-recursive let
-  substitution behavior for indexed `Runtime::Let` bindings.
 
 ## Evaluation Core
 
 The core reduction paths in `evaluate.cc` now inspect `Runtime::Exp` directly.
-Evaluator exception formatting also remains runtime-native after
-`deindexify(...)`; the remaining `expression_ref` mention in that file is the
-dormant/debug `compact_graph_expression()` declaration.
+Evaluator exception formatting crosses to expression-level display transforms
+when it calls `deindexify(...)`, `untranslate_vars(...)`, and `unlet(...)`.
+That is intentional for now: these functions are named as inverses of Core /
+graph normalization passes, and the current implementations operate on
+expression syntax.
 
 This means the evaluator-core scope has shrunk. The remaining work is less
 about reduction mechanics and more about public evaluation APIs and legacy
@@ -99,11 +97,10 @@ compatibility layers.
    except graph display/debug helpers. Program unsharing is side-effect only,
    and `evaluate_program()` returns the resulting closure.
 
-3. Graph display remains partly a legacy-expression boundary, but the active
-   label paths now use runtime `untranslate_vars`, `subst_reg_vars`, `unlet`,
-   and `map_symbol_names`. Graph structure and simple predicates also inspect
-   `Runtime::Exp`. Remaining legacy graph helpers are dormant/compact display
-   paths and expression-shaped head formatting. There is no
+3. Graph display remains a legacy-expression boundary for label formatting.
+   Graph structure and simple predicates inspect `Runtime::Exp`, but
+   `untranslate_vars`, `subst_reg_vars`, `unlet`, and `map_symbol_names` remain
+   expression-level display transforms. There is no
    `reg_heap::expression_at()` compatibility accessor anymore.
 
 4. `closure::legacy_exp()` and `Runtime::to_expression_ref()` remain necessary
@@ -121,14 +118,14 @@ The remaining `legacy_exp()` callers fall into a few buckets:
    Remaining context-side bridges to `expression_ref` are explicit calls to
    `Runtime::to_expression_ref(...)` for display/debug formatting.
 
-2. Graph/debug display now keeps active label rendering runtime-native after
-   `deindexify(...)`. Remaining `legacy_exp()` / `expression_ref` uses are in
-   expression-shaped head formatting, the dormant compact-expression
-   substitution path, and `compact_graph_expression()`.
+2. Graph/debug display deliberately crosses to `expression_ref` for label
+   formatting after `deindexify(...)`. Runtime graph traversal and predicates
+   should stay runtime-native, but display cleanup should not redefine
+   `deindexify` as a closure environment resolver.
 
 3. `closure::print()` is still an expression-facing compatibility helper.
-   `deindexify(const closure&)` is now runtime-native; remaining expression
-   callers bridge explicitly with `Runtime::to_expression_ref(...)`.
+   `deindexify(const closure&)` is also an expression-facing compatibility
+   helper because it undoes `indexify` into named/register-variable syntax.
 
 4. Runtime serialization tests intentionally compare runtime code with the
    cached legacy expression view.
@@ -159,10 +156,9 @@ The remaining `legacy_exp()` callers fall into a few buckets:
    helpers still accept `EVector`. These should move in focused groups after
    the smaller vector/maybe fronts establish the pattern.
 
-4. Display/debug bridges remain explicit. `evaluate.cc` diagnostics and active
-   graph labels now avoid expression conversion, but `closure::print()`,
-   compact graph display, and some graph head formatting remain
-   expression-shaped compatibility boundaries.
+4. Display/debug bridges remain explicit. `evaluate.cc` diagnostics,
+   `closure::print()`, graph labels, compact graph display, and some graph head
+   formatting are expression-shaped compatibility boundaries.
 
 5. Model/code generation remains intentionally expression-based. Occurrences
    in `models/code-generation.*`, `models/logger.cc`, and parsed/model AST
@@ -175,9 +171,8 @@ Recent scan results:
 
 - `context.H` has no textual `expression_ref` declarations and no temporary
   context `_code` APIs.
-- Evaluator-core reduction code and exception formatting use runtime
-  expressions. Remaining `expression_ref` in `evaluate.cc` is dormant/debug
-  compact graph plumbing.
+- Evaluator-core reduction code uses runtime expressions. Exception formatting
+  intentionally crosses to expression-level display transforms.
 - `param.H` / `param.cc` is the main evaluation-adjacent header still exposing
   legacy expression helpers through `context_ptr` and `param::ref()`.
 - `closure.H` still owns `legacy_exp()` and its expression cache. This is the
@@ -185,9 +180,8 @@ Recent scan results:
 - `runtime/ast` still contains conversion bridges:
   `atomic_value(const expression_ref&)`, `e_op_value(const expression_ref&)`,
   and `to_expression_ref(...)`.
-- `show_graph.cc` is runtime-native for graph structure and active label
-  transforms. Remaining expression-based pieces are legacy compact graph
-  helpers and expression-shaped head formatting.
+- `show_graph.cc` is runtime-native for graph structure and predicates, but
+  expression-based for label formatting and compact display helpers.
 - Large `EVector` surfaces remain in likelihood/substitution and several
   builtins. These are evaluated-value containers, but they are broader than the
   evaluator API itself and should be migrated incrementally.
@@ -214,9 +208,10 @@ Recent scan results:
    move out of `runtime/ast` into an explicit legacy conversion module, or
    whether callers should first migrate away from expression_ref values.
 
-6. Keep graph/display conversion boundaries explicit. Only peel more
-   `show_graph.cc` code if a runtime helper removes real conversion pressure
-   without duplicating the whole expression pretty-printer.
+6. Keep graph/display conversion boundaries explicit. Do not add runtime
+   `unlet` / `untranslate_vars` / `subst_reg_vars` clones unless the project
+   first defines a true runtime-to-Core deindexing story; otherwise these names
+   should continue to refer to Core/expression normalization inverses.
 
 7. After each code batch, build `src/bali-phy/bali-phy` from
    `../build/gcc-16-debug-O`, run the relevant focused tests, and commit
