@@ -9,6 +9,9 @@
 using std::string;
 using std::vector;
 
+std::string bool_true_name  = "Data.Bool.True";
+std::string bool_false_name = "Data.Bool.False";
+
 bool is_tuple_name(const string& s)
 {
     if (s.size() < 3) return false;
@@ -302,5 +305,4 @@ string get_unqualified_name(const std::string& s)
     else
         return s;
 }
-
 

@@ -1,8 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
-#include "computation/expression/index_var.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/bool.H"
 #include "computation/operations.H"
 #include "util/string/convert.H"
 #include "computation/machine/graph_register.H"
@@ -451,7 +448,7 @@ extern "C" closure builtin_function_throw(OperationArgs& Args)
 
     throw HaskellException{r};
 
-    return constructor("()",0);
+    return closure(Runtime::Constructor("()", 0));
 }
 
 static void peel_closure_lambdas(closure& C, int n)
@@ -498,7 +495,7 @@ extern "C" closure builtin_function_readIORef(OperationArgs& Args)
 {
     // 1. IORef
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.get_code(),"Data.IORef.IORef"));
+    assert(Runtime::has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
 
     return closure(Runtime::IndexVar(0), {C.Env[0]});
@@ -544,7 +541,7 @@ extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.get_code(),"Data.IORef.IORef"));
+    assert(Runtime::has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
 
     // 2. New value
@@ -552,7 +549,7 @@ extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
 
     // 3. Write the IORef
     auto& M = Args.memory();
-    assert(has_constructor(M.closure_at(r_ioref).get_code(),"Data.IORef.IORef"));
+    assert(Runtime::has_constructor(M.closure_at(r_ioref).get_code(),"Data.IORef.IORef"));
     if (not M.reg_is_contingent(r_ioref))
     {
 	// The IORef is non-contingent, but the value is contingent!
@@ -562,7 +559,7 @@ extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
     C.Env[0] = r_value;
     M.set_C(r_ioref, std::move(C));
 
-    return constructor("()",0);
+    return closure(Runtime::Constructor("()", 0));
 }
 
 extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
@@ -570,7 +567,7 @@ extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.get_code(),"Data.IORef.IORef"));
+    assert(Runtime::has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
     int r_value = C.Env[0];
 
@@ -583,11 +580,11 @@ extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
 
     // 4. Write the IORef
     auto& M = Args.memory();
-    assert(has_constructor(M.closure_at(r_ioref).get_code(),"Data.IORef.IORef"));
+    assert(Runtime::has_constructor(M.closure_at(r_ioref).get_code(),"Data.IORef.IORef"));
     C.Env[0] = r_apply;
     M.set_C(r_ioref, std::move(C));
 
-    return constructor("()",0);
+    return closure(Runtime::Constructor("()", 0));
 }
 
 
@@ -596,7 +593,7 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
     auto C = Args.evaluate_slot_to_closure(0);
-    assert(has_constructor(C.get_code(),"Data.IORef.IORef"));
+    assert(Runtime::has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
     int r_value = C.Env[0];
 
@@ -609,14 +606,14 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
 
     // 4. Write the IORef
     auto& M = Args.memory();
-    assert(has_constructor(M.closure_at(r_ioref).get_code(),"Data.IORef.IORef"));
+    assert(Runtime::has_constructor(M.closure_at(r_ioref).get_code(),"Data.IORef.IORef"));
     C.Env[0] = r_apply;
     M.set_C(r_ioref, std::move(C));
 
     // Force
     r_apply = Args.evaluate_reg_force(r_apply);
 
-    return constructor("()",0);
+    return closure(Runtime::Constructor("()", 0));
 }
 
 

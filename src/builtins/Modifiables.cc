@@ -4,12 +4,8 @@
 #include "computation/operations.H"
 #include "util/myexception.H"
 #include "computation/machine/graph_register.H"
-#include "computation/expression/bool.H"
-#include "computation/expression/index_var.H"
-#include "computation/expression/reg_var.H"
 #include "computation/expression/modifiable.H"
 #include "computation/expression/interchangeable.H"
-#include "computation/expression/list.H"
 
 using boost::dynamic_pointer_cast;
 
@@ -54,7 +50,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
 
     Args.set_effect(r_effect);
 
-    return {index_var(0), {r_effect}};
+    return {R::IndexVar(0), {r_effect}};
 }
 
 extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
@@ -74,7 +70,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 
     Args.set_effect(r_effect);
 
-    return {index_var(0), {r_effect}};
+    return {R::IndexVar(0), {r_effect}};
 }
 
 // Q. How do we ensure that each call is unique?
@@ -93,7 +89,7 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
 
     Args.set_effect(r_effect);
 
-    return {index_var(0), {r_effect}};
+    return {R::IndexVar(0), {r_effect}};
 }
 
 extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
@@ -108,7 +104,7 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
 
     Args.set_effect(r_effect);
 
-    return {index_var(0), {r_effect}};
+    return {R::IndexVar(0), {r_effect}};
 }
 
 extern "C" closure builtin_function_register_dist(OperationArgs& Args)
@@ -130,7 +126,7 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 
     Args.set_effect(r_effect);
 
-    return {index_var(0),{r_effect}};
+    return {R::IndexVar(0),{r_effect}};
 }
 
 extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
@@ -146,7 +142,7 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
 
     Args.set_effect(r_effect);
 
-    return {index_var(0), {r_effect}};
+    return {R::IndexVar(0), {r_effect}};
 }
 
 extern "C" closure builtin_function_getProperties(OperationArgs& Args)
@@ -184,7 +180,7 @@ extern "C" closure builtin_function_getProperties(OperationArgs& Args)
     int r_properties_effect = it->second.at("properties");
     int r_properties = M.closure_at(r_properties_effect).Env[0];
 
-    return {index_var(0), {r_properties}};
+    return {R::IndexVar(0), {r_properties}};
 }
 
 extern "C" closure builtin_function_modifiable(OperationArgs& Args)
@@ -236,5 +232,5 @@ extern "C" closure builtin_function_withEffect(OperationArgs& Args)
 
     int R = Args.reg_for_slot(1);
 
-    return {index_var(0),{R}};
+    return {Runtime::IndexVar(0),{R}};
 }

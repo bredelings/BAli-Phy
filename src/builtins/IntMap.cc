@@ -1,8 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
-#include "computation/expression/index_var.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/bool.H"
 #include "computation/operation.H"
 #include "computation/runtime/ast.H"
 
@@ -70,7 +67,7 @@ extern "C" closure builtin_function_subscript(OperationArgs& Args)
 
     int result_reg = m[key];
 
-    return {index_var(0), {result_reg}};
+    return {R::IndexVar(0), {result_reg}};
 }
 
 extern "C" closure builtin_function_map(OperationArgs& Args)
@@ -508,7 +505,7 @@ extern "C" closure builtin_function_forceAll(OperationArgs& Args)
     for(auto& [_,r]: m)
 	Args.evaluate_reg_force(r);
 
-    return constructor("()", 0);
+    return closure(R::Constructor("()", 0));
 }
 
 extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)

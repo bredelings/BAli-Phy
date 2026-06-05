@@ -662,6 +662,7 @@ namespace Runtime
     Exp shift_free_indices(const Exp&, int amount, int depth = 0);
 
     int pattern_arity(const Pattern&);
+    bool has_constructor(const Exp&, const std::string&);
 
     OperationApp builtin_operation_app(void*, const std::string& lib_name, const std::string& func_name, const std::string& call_conv);
 

@@ -1131,12 +1131,12 @@ expression_ref error(const std::string& s)
 
 Con True()
 {
-    return {"Data.Bool.True", 0};
+    return {bool_true_name, 0};
 }
 
 Con False()
 {
-    return {"Data.Bool.False", 0};
+    return {bool_false_name, 0};
 }
 
 Con ConsCon()

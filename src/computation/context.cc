@@ -9,7 +9,6 @@
 #include "module.H"
 #include "computation/preprocess.H"
 #include "expression/modifiable.H"
-#include "expression/reg_var.H"
 #include "util/rng.H"
 #include "util/log-level.H"
 #include "util/permute.H"

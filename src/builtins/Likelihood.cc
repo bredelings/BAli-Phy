@@ -5,7 +5,6 @@
 #include "dp/2way.H"
 #include "substitution/ops.H"
 #include "substitution/likelihood.H"
-#include "computation/expression/bool.H"
 
 using std::vector;
 using std::pair;
@@ -322,4 +321,3 @@ extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Arg
 
     return sequence;
 }
-

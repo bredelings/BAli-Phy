@@ -2,7 +2,7 @@
 #include "computation/machine/args.H"
 #include "dp/2way.H"
 #include "imodel/imodel.H"
-#include "computation/expression/bool.H"
+#include "computation/haskell/ids.H"
 #include "computation/runtime/ast.H"
 #include <boost/dynamic_bitset.hpp>
 #include "sequence/doublets.H"
@@ -29,10 +29,7 @@ vector<int> alignment_row_counts(const alignment& A, int i, const vector<int>& c
 
 bool is_runtime_bool_true(const R::Exp& value)
 {
-    if (auto c = value.to<R::Constructor>())
-        return is_bool_true(c->value);
-
-    return false;
+    return R::has_constructor(value, bool_true_name);
 }
 
 object_ptr<R::RVector> runtime_vector_from_value(const R::Exp& value)

@@ -1,8 +1,6 @@
 #include "args.H"
 #include "graph_register.H"
 #include "effect.H"
-#include "computation/expression/lambda.H"
-#include "computation/expression/modifiable.H"
 
 using std::optional;
 

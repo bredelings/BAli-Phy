@@ -1,8 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
-#include "computation/expression/index_var.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/bool.H"
 
 #include "immer/set.hpp"
 

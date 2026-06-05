@@ -4,11 +4,6 @@
 #include "computation/runtime/ast.H"
 #include "math/exponential.H"
 #include "util/myexception.H"
-#include "expression/index_var.H"
-#include "expression/lambda.H"
-#include "expression/case.H"
-#include "expression/var.H"
-#include "expression/apply.H"
 #include <type_traits>
 
 using std::vector;

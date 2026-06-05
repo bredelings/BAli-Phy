@@ -1,8 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
-#include "computation/expression/index_var.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/bool.H"
 #include <filesystem>
 #include <fstream>
 #include "util/io.H"   // for portable_getline( ).
@@ -119,7 +116,7 @@ extern "C" closure builtin_function_hClose(OperationArgs& Args)
     if (auto fhandle = std::dynamic_pointer_cast<std::fstream>(handle))
         fhandle->close();
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 
@@ -148,7 +145,7 @@ extern "C" closure builtin_function_hPutChar(OperationArgs& Args)
 
     handle->put(c);
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 // Handle -> Char -> RealWorld -> ()
@@ -160,7 +157,7 @@ extern "C" closure builtin_function_hPutStrRaw(OperationArgs& Args)
 
     handle->write(data.c_str(), data.size());
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 // Handle -> RealWorld -> Char
@@ -215,7 +212,7 @@ extern "C" closure builtin_function_hFlush(OperationArgs& Args)
 
     handle->flush();
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 // Handle -> Int -> Integer -> RealWorld -> ()
@@ -241,7 +238,7 @@ extern "C" closure builtin_function_hSeekRaw(OperationArgs& Args)
         handle->seekp(pos, std::ios::end);
     }
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 // Handle -> RealWorld -> Integer
@@ -299,7 +296,7 @@ extern "C" closure builtin_function_createDirectoryRaw(OperationArgs& Args)
     if (not fs::create_directory(dirname))
         throw myexception()<<"createDirectory: directory "<<dirname<<" already exists.";
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 // FilePath -> IO FilePath
@@ -327,7 +324,7 @@ extern "C" closure builtin_function_setCurrentDirectory(OperationArgs& Args)
 
     fs::current_path(dirname);
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 // FilePath -> FilePath -> IO ()
@@ -338,7 +335,7 @@ extern "C" closure builtin_function_copyFileRaw(OperationArgs& Args)
 
     fs::copy(from_path, to_path);
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 // FilePath -> FilePath -> IO ()
@@ -351,7 +348,7 @@ extern "C" closure builtin_function_removeFileRaw(OperationArgs& Args)
 
     fs::remove(path);
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 // FilePath -> FilePath -> IO ()
@@ -365,7 +362,7 @@ extern "C" closure builtin_function_renameFileRaw(OperationArgs& Args)
 
     fs::rename(from_path, to_path);
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 // FilePath -> FilePath -> IO ()
@@ -376,7 +373,7 @@ extern "C" closure builtin_function_renamePathRaw(OperationArgs& Args)
 
     fs::rename(from_path, to_path);
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 // FilePath -> FilePath

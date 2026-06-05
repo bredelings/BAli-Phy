@@ -4,7 +4,6 @@
 #include "sequence/alphabet.H"
 #include "substitution/ops.H"
 #include "substitution/likelihoodSEV.H"
-#include "computation/expression/bool.H"
 
 using std::vector;
 using std::pair;

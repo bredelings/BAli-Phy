@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 
+extern std::string bool_true_name;
+extern std::string bool_false_name;
+
 std::string tuple_name(int n);
 int tuple_arity(const std::string&);
 bool is_tuple_name(const std::string&);

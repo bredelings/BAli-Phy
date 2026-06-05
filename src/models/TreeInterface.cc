@@ -4,10 +4,9 @@
 #include "util/range.H"
 #include "util/set.H"
 #include "util/log-level.H"
-#include "computation/expression/bool.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/list.H"
-#include "computation/expression/constructor.H"
+#include "computation/haskell/ids.H"
 #include "computation/machine/graph_register.H"
 #include "computation/machine/gcobject.H"
 
@@ -41,9 +40,9 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 
     //------------------------- Create the tree structure -----------------------//
 
-    while(not has_constructor(tree.head(), "Graph.Graph"))
+    while(not Runtime::has_constructor(tree.head(), "Graph.Graph"))
     {
-	if (has_constructor(tree.head(), "Graph.WithBranchLengths"))
+	if (Runtime::has_constructor(tree.head(), "Graph.WithBranchLengths"))
 	{
 	    // We assume that the path to the array isn't changeable... ???
 	    branch_durations_reg = tree[1].result().get_reg();
@@ -51,7 +50,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 	    tree = tree[0];
 	}
 
-	if (has_constructor(tree.head(), "Forest.WithNodeTimes"))
+	if (Runtime::has_constructor(tree.head(), "Forest.WithNodeTimes"))
 	{
 	    // We assume that the path to the array isn't changeable... ???
 	    node_times_reg = tree[1].result().get_reg();
@@ -59,7 +58,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 	    tree = tree[0];
 	}
 
-	if (has_constructor(tree.head(), "Forest.WithRoots"))
+	if (Runtime::has_constructor(tree.head(), "Forest.WithRoots"))
 	{
 	    assert(tree.size() == 3);
 
@@ -72,7 +71,7 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 	    tree = tree[0];
 	}
 
-	if (has_constructor(tree.head(), "Forest.WithBranchRates"))
+	if (Runtime::has_constructor(tree.head(), "Forest.WithBranchRates"))
 	{
 	    assert(tree.size() == 2);
 
@@ -82,18 +81,18 @@ tree_constants::tree_constants(context_ref& C, int tree_reg)
 	    tree = tree[0];
 	}
 
-	if (has_constructor(tree.head(), "Tree.Tree"))
+	if (Runtime::has_constructor(tree.head(), "Tree.Tree"))
 	{
 	    tree = tree[0];
 	}
 
-	if (has_constructor(tree.head(), "Forest.Forest"))
+	if (Runtime::has_constructor(tree.head(), "Forest.Forest"))
 	{
 	    tree = tree[0];
 	}
     }
 
-    assert(has_constructor(tree.head(),"Graph.Graph"));
+    assert(Runtime::has_constructor(tree.head(),"Graph.Graph"));
     assert(tree.size() == 6);
 
     auto edges_out_of_node = tree[0];
@@ -594,7 +593,7 @@ bool TreeInterface::away_from_root(int b) const
 
     auto away = context_ptr(C, array_reg);
 
-    return has_constructor(away[b].value(), bool_true_name);
+    return Runtime::has_constructor(away[b].value(), bool_true_name);
 }
 
 bool TreeInterface::toward_root(int b) const

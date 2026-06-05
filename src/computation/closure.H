@@ -6,14 +6,10 @@
 #include <utility>
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
-#include "computation/expression/constructor.H"
-#include "computation/expression/index_var.H"
-#include "computation/expression/reg_var.H"
+#include "computation/haskell/ids.H"
 #include "computation/runtime/ast.H"
 
 class expression_ref;
-extern std::string bool_true_name;
-extern std::string bool_false_name;
 
 struct closure
 {
@@ -163,16 +159,6 @@ public:
     closure(const Box<integer>& x):closure(Runtime::Integer(x)) {}
 
     closure(Box<integer>&& x):closure(Runtime::Integer(std::move(x))) {}
-
-    closure(constructor x):closure(Runtime::Constructor(x.name(), x.n_args())) {}
-
-    closure(const index_var& iv):closure(Runtime::IndexVar(iv.index)) {}
-
-    closure(const index_var& iv, const Env_t& E):closure(Runtime::IndexVar(iv.index), E) {}
-
-    closure(const index_var& iv, std::initializer_list<int> E):closure(Runtime::IndexVar(iv.index), E) {}
-
-    closure(const reg_var& rv):closure(Runtime::RegRef(rv.target)) {}
 
     // Constructing w/o an environment
     closure(Object* o)

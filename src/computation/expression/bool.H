@@ -1,14 +1,11 @@
 #include "expression_ref.H"
 #include "constructor.H"
+#include "computation/haskell/ids.H"
 
 namespace Runtime
 {
     struct ConstructorTag;
 }
-
-// These should be put somewhere more generic.
-extern std::string bool_true_name;
-extern std::string bool_false_name;
 
 extern expression_ref bool_true;
 extern expression_ref bool_false;

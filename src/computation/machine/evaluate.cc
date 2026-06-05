@@ -7,9 +7,6 @@
 #include "effect.H"
 #include "error_exception.H"
 #include "computation/preprocess.H"
-#include "computation/expression/expression.H"
-#include "computation/expression/let.H"
-#include "computation/expression/index_var.H"
 #include "computation/operations.H"
 
 using std::string;
@@ -463,7 +460,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 		set_C(r2, std::move(C2));
 
 		// Make the current reg into an index-var that points to it.
-		closure C1(index_var(0),{r2});
+		closure C1(Runtime::IndexVar(0),{r2});
 		set_C(r, std::move(C1));
 	    }
 
@@ -887,7 +884,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 		set_C(r2, std::move(C2));
 
 		// Make the current reg into an index-var that points to it.
-		closure C1(index_var(0),{r2});
+		closure C1(Runtime::IndexVar(0),{r2});
 		set_C(r, std::move(C1));
 	    }
         }
@@ -1259,7 +1256,7 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
 
             // If we point to r3 through an intermediate index_var chain, then change us to point to the end.
             if (was_index_var and r3 != r2)
-                set_C(r, closure(index_var(0),{r3}));
+                set_C(r, closure(Runtime::IndexVar(0),{r3}));
 
             return r3;
         }

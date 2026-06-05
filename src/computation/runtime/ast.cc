@@ -10,9 +10,6 @@
 
 using std::vector;
 
-extern std::string bool_true_name;
-extern std::string bool_false_name;
-
 namespace Runtime
 {
 
@@ -442,6 +439,19 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, ConstructorPattern>)
                 return p.head.n_args();
         }, pattern);
+    }
+
+    bool has_constructor(const Exp& E, const std::string& name)
+    {
+        if (const auto* c = E.to<Constructor>())
+            return c->value.name() == name;
+
+        const auto* app = E.to<App>();
+        if (not app)
+            return false;
+
+        const auto* c = std::get_if<ConstructorApp>(&app->head);
+        return c and c->head.name() == name;
     }
 
     static std::string parenthesize_if(bool b, const std::string& s)

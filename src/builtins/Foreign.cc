@@ -1,8 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
-#include "computation/expression/reg_var.H"
-#include "computation/expression/bool.H"
-#include "computation/expression/expression_ref.H"
+#include "computation/haskell/ids.H"
 #include "util/myexception.H"
 #include <algorithm>
 #include "util/json.hh"
@@ -77,10 +75,9 @@ json::value c_json(const R::Exp& E)
     // Bool
     else if (type == 4)
     {
-        auto c = J.to<R::Constructor>();
-        if (c and is_bool_true(c->value))
+        if (R::has_constructor(J, bool_true_name))
             return true;
-        else if (c and is_bool_false(c->value))
+        else if (R::has_constructor(J, bool_false_name))
             return false;
         else
             throw myexception()<<"Foreign:cjson: I don't understand bool '"<<J.print()<<"'";

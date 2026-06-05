@@ -11,8 +11,6 @@
 #include "computation/module.H"
 #include "computation/core/func.H"
 #include "computation/expression/var.H"
-#include "computation/expression/reg_var.H"
-#include "computation/expression/tuple.H"
 #include "computation/expression/modifiable.H"
 #include "computation/expression/interchangeable.H"
 #include "computation/operations.H"
@@ -435,7 +433,7 @@ void reg_heap::_register_effect_at_reg(int r, int s)
             std::cerr<<I->print()<<":   REGISTER!\n";
         register_interchangeable(*I, s);
     }
-    else if (has_constructor(E, "Effect.TransitionKernel"))
+    else if (Runtime::has_constructor(E, "Effect.TransitionKernel"))
     {
         double rate = closure_at(r).runtime_slot(0).as_double();
         int r_kernel = closure_at(r).runtime_reg_for_slot(1);
@@ -443,29 +441,29 @@ void reg_heap::_register_effect_at_reg(int r, int s)
             std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<",id="<<s<<"]: REGISTER!\n";
         register_transition_kernel(r, s);
     }
-    else if (has_constructor(E, "Effect.Logger"))
+    else if (Runtime::has_constructor(E, "Effect.Logger"))
     {
         int r_logger = closure_at(r).runtime_reg_for_slot(0);
         if (log_verbose >= 5)
             std::cerr<<"register_logger[logger="<<r_logger<<"]: REGISTER!\n";
         register_logger(r, s);
     }
-    else if (has_constructor(E, "Effect.InEdge"))
+    else if (Runtime::has_constructor(E, "Effect.InEdge"))
     {
         if (log_verbose >= 5) std::cerr<<E.print()<<": REGISTER!\n";
         register_in_edge(r, s);
     }
-    else if (has_constructor(E, "Effect.OutEdge"))
+    else if (Runtime::has_constructor(E, "Effect.OutEdge"))
     {
         if (log_verbose >= 5) std::cerr<<E.print()<<":  REGISTER!\n";
         register_out_edge(r, s);
     }
-    else if (has_constructor(E, "Effect.Dist"))
+    else if (Runtime::has_constructor(E, "Effect.Dist"))
     {
         if (log_verbose >= 5) std::cerr<<E.print()<<":  REGISTER!\n";
         register_dist(r, s);
     }
-    else if (has_constructor(E, "Effect.DistProperty"))
+    else if (Runtime::has_constructor(E, "Effect.DistProperty"))
     {
         if (log_verbose >= 5) std::cerr<<E.print()<<": REGISTER!\n";
         register_dist_property(r, s);
@@ -498,7 +496,7 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
             std::cerr<<I->print()<<":   UNREGISTER!\n";
         unregister_interchangeable(*I, s);
     }
-    else if (has_constructor(E, "Effect.TransitionKernel"))
+    else if (Runtime::has_constructor(E, "Effect.TransitionKernel"))
     {
         double rate = closure_at(r).runtime_slot(0).as_double();
         int r_kernel = closure_at(r).runtime_reg_for_slot(1);
@@ -506,29 +504,29 @@ void reg_heap::_unregister_effect_at_reg(int r, int s)
             std::cerr<<"register_transition_kernel[rate="<<rate<<",kernel="<<r_kernel<<",id="<<s<<"]: UNREGISTER!\n";
         unregister_transition_kernel(r, s);
     }
-    else if (has_constructor(E, "Effect.Logger"))
+    else if (Runtime::has_constructor(E, "Effect.Logger"))
     {
         int r_logger = closure_at(r).runtime_reg_for_slot(0);
         if (log_verbose >= 5)
             std::cerr<<"register_logger[logger="<<r_logger<<"]: UNREGISTER!\n";
         unregister_logger(r, s);
     }
-    else if (has_constructor(E, "Effect.InEdge"))
+    else if (Runtime::has_constructor(E, "Effect.InEdge"))
     {
         if (log_verbose >= 5)std::cerr<<E.print()<<": UNREGISTER!\n";
         unregister_in_edge(r, s);
     }
-    else if (has_constructor(E, "Effect.OutEdge"))
+    else if (Runtime::has_constructor(E, "Effect.OutEdge"))
     {
         if (log_verbose >= 5) std::cerr<<E.print()<<": UNREGISTER!\n";
         unregister_out_edge(r, s);
     }
-    else if (has_constructor(E, "Effect.Dist"))
+    else if (Runtime::has_constructor(E, "Effect.Dist"))
     {
         if (log_verbose >= 5) std::cerr<<E.print()<<": UNREGISTER!\n";
         unregister_dist(r, s);
     }
-    else if (has_constructor(E, "Effect.DistProperty"))
+    else if (Runtime::has_constructor(E, "Effect.DistProperty"))
     {
         if (log_verbose >= 5) std::cerr<<E.print()<<": UNREGISTER!\n";
         unregister_dist_property(r, s);
@@ -686,9 +684,9 @@ void reg_heap::first_evaluate_program(int r_prog, int r_log, int c)
     if (program_result_head or logging_head)
         throw myexception()<<"Trying first_evaluate_program for a second time!";
 
-    program_result_head = add_compute_closure(closure(index_var(0), {r_prog}));
+    program_result_head = add_compute_closure(closure(Runtime::IndexVar(0), {r_prog}));
 
-    logging_head = add_compute_closure(closure(index_var(0), {r_log}));
+    logging_head = add_compute_closure(closure(Runtime::IndexVar(0), {r_log}));
 
     assert(get_prev_prog_token_for_context(c));
 
@@ -1250,7 +1248,7 @@ void reg_heap::register_in_edge(int r, int /* s */)
     assert(not in_edges_to_this_dist.count(arg_name));
 
     // 2. Check that there is in fact a distribution at r_to_dist;
-    assert(has_constructor(closure_at(r_to_dist).get_code(), "Effect.Dist"));
+    assert(Runtime::has_constructor(closure_at(r_to_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(r_to_dist));
 
     // 3. Insert the edge.
@@ -1270,7 +1268,7 @@ void reg_heap::unregister_in_edge(int r, int /* s */)
     assert(in_edges_to_this_dist.count(arg_name));
 
     // 2. Check that there is in fact a distribution at to_reg?
-    assert(has_constructor(closure_at(r_to_dist).get_code(), "Effect.Dist"));
+    assert(Runtime::has_constructor(closure_at(r_to_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(r_to_dist));
 
     // 3. Erase the edge
@@ -1292,7 +1290,7 @@ void reg_heap::register_out_edge(int r, int /* s */)
     assert(not out_edges_to_var.count(r_to_var) or not out_edges_to_var.at(r_to_var).count(r_from_dist));
     
     // Check that there is in fact a distribution at I.to_reg.
-    assert(has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
+    assert(Runtime::has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(O.r_from_dist));
     assert(reg_is_constant(r_to_var) or (reg_is_changeable(r_to_var) and is_modifiable(closure_at(r_to_var).get_code())));
 
@@ -1314,7 +1312,7 @@ void reg_heap::unregister_out_edge(int r, int /* s */)
     assert(out_edges_to_var.count(r_to_var) and out_edges_to_var.at(r_to_var).count(r_from_dist));
 
     // Check that there is in fact a distribution at r_from_dist.
-    assert(has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
+    assert(Runtime::has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(r_from_dist));
 
     // Erase the edge
@@ -1347,7 +1345,7 @@ void reg_heap::unregister_dist(int r, int s)
 {
     int r_dist = closure_at(r).runtime_reg_for_slot(0);
 
-    assert(has_constructor(closure_at(r_dist).get_code(), "Effect.Dist"));
+    assert(Runtime::has_constructor(closure_at(r_dist).get_code(), "Effect.Dist"));
 //    assert(dist_type.count(r_dist));
 
     dist_type.erase(r_dist);
@@ -1364,7 +1362,7 @@ void reg_heap::register_dist_property(int r, int /* s */)
     // int r_to_prop   = closure_at(r).reg_for_slot(2);
 
     // Check that there is in fact a distribution at P.s_from_dist.
-    assert(has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
+    assert(Runtime::has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(r_from_dist));
 
     dist_properties[r_from_dist].insert({property, r});
@@ -1376,7 +1374,7 @@ void reg_heap::unregister_dist_property(int r, int /* s */)
     string property =  closure_at(r).runtime_slot(1).as_string();
 
     // Check that there is in fact a distribution at P.r_from_dist.
-    assert(has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
+    assert(Runtime::has_constructor(closure_at(r_from_dist).get_code(), "Effect.Dist"));
     // assert(dist_type.count(r_from_dist));
 
     auto& this_dist_properties = dist_properties.at(r_from_dist);

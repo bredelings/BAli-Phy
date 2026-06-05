@@ -5,10 +5,6 @@
 #include "util/matrix.H"
 #include "computation/machine/graph_register.H"
 #include "computation/machine/args.H"
-#include "computation/expression/reg_var.H"
-#include "computation/expression/index_var.H"
-#include "computation/expression/list.H"
-#include "computation/expression/constructor.H"
 
 using boost::dynamic_pointer_cast;
 using std::vector;
@@ -74,7 +70,7 @@ extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
     std::string s = Args.evaluate_slot_to_value(0).as_string();
 
     if (offset == 0 and length == s.size())
-	return {index_var(0),{Args.reg_for_slot(0)}};
+	return {R::IndexVar(0),{Args.reg_for_slot(0)}};
     else
 	return {String(s.substr(offset,length))};
 }
@@ -104,7 +100,7 @@ extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
         (*vvv)[i] = std::move(x);
     }
 
-    return constructor("()",0);
+    return closure(R::Constructor("()", 0));
 }
 
 extern "C" R::Exp simple_function_get_vector_index(vector<R::Exp>& args)
