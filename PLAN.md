@@ -35,6 +35,8 @@ Completed so far:
 - Removed simple `context_ref` uses of `reg_heap::expression_at()` from
   `evaluate_reg()` and `reg_is_modifiable()`; these now use evaluated closures
   or runtime-code predicates directly.
+- Replaced non-evaluator `expression_at()` uses in MCMC, Prelude IORef, and
+  reroot assertions with runtime-code predicates.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Evaluation Core
@@ -62,9 +64,9 @@ compatibility layers.
 
 3. `reg_heap::expression_at()` remains as a compatibility accessor over
    `closure::legacy_exp()`. It is no longer in evaluator loops, and the simple
-   `context_ref` call sites have been removed. Remaining uses are mostly
-   graph-register comparison/debug code, interchangeability assertions, graph
-   display naming, and the accessor itself.
+   `context_ref` and assertion/check call sites have been removed. Remaining
+   live uses are graph-register comparison/debug code, graph display naming,
+   and the accessor itself.
 
 4. `closure::legacy_exp()` and `Runtime::to_expression_ref()` remain necessary
    adapters. Long term they should be used at parser/model-generation/display
@@ -101,10 +103,10 @@ compatibility layers.
    reference-return behavior are clear. Rename to `_legacy` only if the churn is
    modest; otherwise keep temporary suffix comments current.
 
-4. Replace non-evaluator `expression_at()` uses when they are assertions,
-   comparisons, or internal checks rather than explicit legacy display/API
-   boundaries. Good small candidates are the interchangeability assertions in
-   MCMC/reroot code; graph display can stay legacy longer.
+4. Decide whether `regs_maybe_different_value()` should compare
+   `Runtime::Exp` directly or keep using legacy expression equality for now.
+   Graph display can stay legacy longer because it intentionally prints
+   expression-shaped output.
 
 5. Continue caller migration in focused batches: remaining `context_ptr`
    callers, then SMC helper functions that still require `EVector` /
