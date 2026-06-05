@@ -7,6 +7,7 @@
 #include "computation/program.H"
 #include "loader.H"
 #include "module.H"
+#include "computation/preprocess.H"
 #include "expression/modifiable.H"
 #include "expression/reg_var.H"
 #include "util/rng.H"
@@ -648,7 +649,7 @@ std::ostream& operator<<(std::ostream& o, const context_ref& C)
 {
     for(int index = 0;index < C.n_expressions(); index++)
     {
-	o<<index<<" "<<Runtime::to_expression_ref(C.get_expression(index));
+	o<<index<<" "<<runtime_deindexify(C.get_expression(index));
 	o<<"\n";
     }
     return o;
