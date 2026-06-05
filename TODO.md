@@ -2,9 +2,6 @@
 
 ## Runtime evaluation cleanup
 
-- Move runtime `is_modifiable(...)` and `is_interchangeable(...)` predicates out
-  of expression headers so evaluator, graph, and builtin code can ask runtime
-  predicate questions without including expression operation definitions.
 - Convert remaining SMC haplotype/panel/site list consumers from `EVector` /
   `expression_ref` helpers to `Runtime::RVector` in focused groups.
 - Keep any future bridge from runtime values back to `expression_ref` narrow,

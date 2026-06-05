@@ -68,16 +68,16 @@ Completed so far:
   `EVector`. The temporary `_code` duplicates for these APIs were removed.
 - Added `TODO.md` to capture delayed cleanup work.
 - Added the first non-`expression_ref` inverse-preprocess transforms:
-  `Runtime::untranslate_vars(...)`, `runtime_deindexify(...)`, and
-  `runtime_unprepare_for_translation(...)`. These reverse runtime global
+  `Runtime::untranslate_vars(...)`, `deindexify(...)`, and
+  `unprepare_for_translation(...)`. These reverse runtime global
   register translation, runtime trim normalization, and runtime de Bruijn
   indexing back to `Core::Exp<>` without going through `expression_ref`.
 - Added runtime tests that start from Core, run the forward runtime preparation
   path, reverse back to Core, and then re-run the forward path to check
   normalized runtime equivalence. The tests also check the stage-level
-  `runtime_deindexify` / `runtime_indexify` round trip and builtin operation
+  `deindexify` / `indexify` round trip and builtin operation
   recovery.
-- Made `runtime_deindexify(...)` useful for diagnostic output from open runtime
+- Made `deindexify(...)` useful for diagnostic output from open runtime
   closures as well as Core-origin expressions. Direct runtime `RegRef(r)` is
   represented as the Core variable `<r>`, a free closure `IndexVar` resolved
   through `Env` is represented as `[r]`, malformed free indices are represented
@@ -87,10 +87,10 @@ Completed so far:
   represented as real Core variables. Runtime-only display values now remain
   visibly non-serializable instead of pretending to be user variables.
 - Replaced `show_graph.cc`'s expression-ref display infrastructure with the
-  runtime-to-Core inverse path. Graph labels now use `runtime_deindexify(...)`,
+  runtime-to-Core inverse path. Graph labels now use `deindexify(...)`,
   `Core`-level `unlet(...)`, and diagnostic variable substitution.
 - Removed `closure::legacy_exp()` and its expression cache. `closure::print()`
-  now prints through `runtime_deindexify(...)`.
+  now prints through `deindexify(...)`.
 - Removed `param::ref(...)` and the expression-ref `param` constructor.
 - Converted `data_partition` CLV/alignment accessors and a `TreeInterface`
   `IntMap` scan to consume runtime values directly.
@@ -110,7 +110,8 @@ Completed so far:
 - Removed the dead expression-ref indexed-let compatibility layer:
   `indexed_let_expression(...)`, `parse_indexed_let_expression(...)`, the old
   expression-ref `deindexify(...)`, and expression-ref trim normalization
-  helpers. Runtime indexify/deindexify and runtime trim normalization remain.
+  helpers. Runtime-backed `indexify(...)` / `deindexify(...)` and runtime trim
+  normalization remain.
 - Removed the old `Let : Operation` marker and `type_constant::let2_type`.
   Runtime let reduction uses typed `Runtime::Let` and `let_op` directly.
 - Deleted the unused `expression/runtime_views.H` header and stale includes
@@ -128,11 +129,21 @@ Completed so far:
   `index_var`, `constructor`, Bool, list, or `expression_ref` values. Builtins
   now construct runtime closures with `Runtime::IndexVar` and
   `Runtime::Constructor` where applicable.
+- Removed temporary `runtime_` disambiguators where the old expression-ref
+  APIs no longer exist. The Core-to-runtime preprocess entry points are now
+  `prepare_for_translation(...)`, `indexify(...)`, `deindexify(...)`, and
+  `unprepare_for_translation(...)`; closure and operation-argument slot APIs
+  now use `n_slots()`, `slot(...)`, `reg_for_slot(...)`, `n_args()`, and
+  `reg_for_code(...)` directly.
+- Moved `modifiable` and `interchangeable` operation definitions and runtime
+  predicates from `computation/expression` to `computation/runtime`. Evaluator,
+  graph, and builtin code no longer include expression headers just to access
+  `is_modifiable(...)` or `is_interchangeable(...)`.
 
 ## Evaluation Core
 
 The core reduction paths in `evaluate.cc` now inspect `Runtime::Exp` directly.
-Evaluator exception formatting starts from `runtime_deindexify(...)` and then
+Evaluator exception formatting starts from `deindexify(...)` and then
 uses Core-shaped display transforms such as `untranslate_vars(...)` and
 `unlet(...)`. That is intentional for now: these functions are named as
 inverses of Core / graph normalization passes, and the current implementations
@@ -172,7 +183,7 @@ compatibility layers.
 The forward Core-to-runtime preprocessing pipeline is:
 
 1. `graph_normalize(...)`
-2. `runtime_indexify(...)`
+2. `indexify(...)`
 3. `Runtime::trim_normalize(...)`
 4. `capture_local_reg_refs(...)` / `translate_refs(...)`
 
@@ -183,14 +194,14 @@ The reverse pipeline should run in the opposite order, without routing through
    back to runtime names where the
    register is known as a global identifier;
 2. `Runtime::trim_unnormalize(...)`;
-3. `runtime_deindexify(...)`, converting de Bruijn indexed `Runtime::Exp` back
+3. `deindexify(...)`, converting de Bruijn indexed `Runtime::Exp` back
    to named `Core::Exp<>`;
 4. graph/let unnormalization only where it is genuinely the inverse of a Core
    normalization pass.
 
-`runtime_deindexify(...)` has two related uses. For runtime expressions that
+`deindexify(...)` has two related uses. For runtime expressions that
 actually came from Core preprocessing, stage-level tests should check round
-trips such as `runtime_deindexify(...)` followed by `runtime_indexify(...)`,
+trips such as `deindexify(...)` followed by `indexify(...)`,
 and final tests should compare normalized meaning rather than raw Core syntax.
 For open runtime closures, the same function produces Core-shaped diagnostic
 syntax rather than closed, re-compilable Core. This mirrors the old
@@ -275,7 +286,7 @@ Recent scan results:
   runtime-to-Core diagnostic deindexing for labels.
 - `let2_type` and the old `Let : Operation` object are gone.
 - Expression-ref trim/indexed-let/deindexify helpers that depended on `let2`
-  are gone. Runtime trim/indexify/deindexify is the active path.
+  are gone. Runtime-backed trim/indexify/deindexify is the active path.
 - Runtime constructors are split from expression constructors:
   `Runtime::Constructor`, `Runtime::ConstructorPattern`, and
   `Runtime::ConstructorApp` store `Runtime::ConstructorTag` name/arity data
@@ -287,52 +298,41 @@ Recent scan results:
   evaluator API itself and should be migrated incrementally.
 - Expression include pressure in evaluation-facing code is now narrower:
   `evaluate.cc`, `operations.cc`, `machine/args.cc`, and most builtin
-  implementation files no longer include expression headers. The remaining
-  scanned non-predicate expression includes are `param.H`'s public `reg_var`
-  constructor, `TreeInterface.cc`'s model/tree expression entry points, and
-  `Runtime::GlobalVar` / graph heap use of expression `var`.
-- `is_modifiable(...)` and `is_interchangeable(...)` are still declared in
-  expression headers even though evaluation code calls their runtime overloads.
-  This is now the main reason graph registration, rerooting, `context.cc`, and
-  some builtin code still include `expression/modifiable.H` or
-  `expression/interchangeable.H`.
+  implementation files no longer include expression headers. The
+  modifiable/interchangeable runtime operations have moved to `runtime/`. The
+  remaining scanned non-predicate expression includes are `param.H`'s public
+  `reg_var` constructor, `TreeInterface.cc`'s model/tree expression entry
+  points, and `Runtime::GlobalVar` / graph heap use of expression `var`.
 
 ## Next Steps
 
-1. Move the runtime predicates for modifiable/interchangeable values out of
-   `computation/expression` into an evaluation/runtime-facing header, while
-   keeping the expression constructors themselves in their current legacy
-   location. This should let `context.cc`, `graph_register.cc`, `reroot.cc`,
-   `show_graph.cc`, and some builtins stop including expression operation
-   headers just to ask runtime predicate questions.
-
-2. Convert `IntMap::restrictKeysToVector` / `makeEVector` to return
+1. Convert `IntMap::restrictKeysToVector` / `makeEVector` to return
    `Runtime::RVector`, with explicit legacy bridging only for callers that
    still require `EVector`.
 
-3. Remove runtime leakage of old expression marker objects. First replace
-   `param.cc::runtime_head_code()` returning `Apply()` for
+2. Remove runtime leakage of old expression marker objects. First replace
+   `param.cc::head_code()` returning `Apply()` for
    `Runtime::FunctionApply` with a runtime-native representation or remove the
    caller need for a synthetic head value. Then replace `evaluate.cc`'s static
    `Apply` object with direct use of `apply_op`.
 
-4. Evaluate whether expression-side `constructor` can stop deriving from
+3. Evaluate whether expression-side `constructor` can stop deriving from
    `Object`. This would block accidental constructor-as-object runtime
    conversions, but it is broader than the runtime split because
    `expression_ref` still represents parsed/legacy constructors as object heads.
    A viable change probably needs either a dedicated expression constructor node
    or a clearly named legacy wrapper.
 
-5. Continue SMC vector migration in narrow groups: convert helper signatures
+4. Continue SMC vector migration in narrow groups: convert helper signatures
    from `EVector` to `Runtime::RVector` where the helper only needs scalar
    vector access.
 
-6. Audit `TreeInterface` and `models/parameters` for remaining
+5. Audit `TreeInterface` and `models/parameters` for remaining
    evaluation-time `expression_ref` use. Keep model-generation inputs as
    expression-based, but avoid converting evaluated tree/model properties back
    through expression syntax.
 
-7. Continue the non-`expression_ref` inverse preprocess path in narrow pieces:
+6. Continue the non-`expression_ref` inverse preprocess path in narrow pieces:
    runtime untranslation of global registers, runtime trim unnormalization, and
    runtime-to-Core deindexing are in place. The remaining work is Core
    graph/let unnormalization and then migrating diagnostics to use the
