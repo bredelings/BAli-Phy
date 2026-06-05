@@ -80,6 +80,12 @@ Completed so far:
   normalized runtime equivalence. The tests also check the stage-level
   `runtime_deindexify` / `runtime_indexify` round trip and builtin operation
   recovery.
+- Made `runtime_deindexify(...)` useful for diagnostic output from open runtime
+  closures as well as Core-origin expressions. Direct runtime `RegRef(r)` is
+  represented as the Core variable `<r>`, a free closure `IndexVar` resolved
+  through `Env` is represented as `[r]`, malformed free indices are represented
+  as `[?i]`, and runtime-only values such as `ObjectValue` become Core
+  variables prefixed with `@`.
 
 ## Evaluation Core
 
@@ -141,13 +147,14 @@ The reverse pipeline should run in the opposite order, without routing through
 4. graph/let unnormalization only where it is genuinely the inverse of a Core
    normalization pass.
 
-Tests should check both stage-level round trips and the end-to-end result.
-Stage-level tests make binder and trim bugs easier to localize; final tests
-should compare normalized meaning, not raw Core syntax. A good final assertion
-is that re-running the forward runtime preparation on recovered Core produces
-the same runtime expression as the normalized original. Exact raw Core equality
-is only appropriate for deliberately normalized test inputs with predictable
-fresh names.
+`runtime_deindexify(...)` has two related uses. For runtime expressions that
+actually came from Core preprocessing, stage-level tests should check round
+trips such as `runtime_deindexify(...)` followed by `runtime_indexify(...)`,
+and final tests should compare normalized meaning rather than raw Core syntax.
+For open runtime closures, the same function produces Core-shaped diagnostic
+syntax rather than closed, re-compilable Core. This mirrors the old
+`expression_ref` display behavior, but uses synthetic `Core::Var` names instead
+of embedding untyped `index_var` / `reg_var` nodes.
 
 ## `legacy_exp()` Audit
 
@@ -249,9 +256,10 @@ Recent scan results:
 
 6. Implement the non-`expression_ref` inverse preprocess path in narrow pieces:
    runtime untranslation of global registers, runtime trim unnormalization, and
-   runtime-to-Core deindexing are in place. The remaining inverse-preprocess
-   work is Core graph/let unnormalization and then migrating diagnostics to use
-   the Core-returning path where that improves the display boundary.
+   runtime-to-Core deindexing are in place. The remaining work is Core
+   graph/let unnormalization and then migrating diagnostics to use the
+   Core-shaped runtime deindexify path where that improves the display
+   boundary.
 
 7. Keep graph/display conversion boundaries explicit. Do not add runtime
    `unlet` / `subst_reg_vars` clones unless the project first defines a true
