@@ -7,7 +7,6 @@
 #include "computation/program.H"
 #include "loader.H"
 #include "module.H"
-#include "expression/lambda.H" // for is_a<lambda2>
 #include "expression/modifiable.H"
 #include "expression/reg_var.H"
 #include "util/rng.H"
@@ -87,25 +86,13 @@ std::pair<int,int> context_ref::incremental_evaluate(int r) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-const expression_ref& context_ref::evaluate_head(int index) const
-{
-    return lazy_evaluate_head(index).legacy_exp();
-}
-
-const Runtime::Exp& context_ref::evaluate_head_code(int index) const
+const Runtime::Exp& context_ref::evaluate_head(int index) const
 {
     return lazy_evaluate_head(index).get_code();
 }
 
 /// Return the value of a particular index, computing it if necessary
-const expression_ref& context_ref::evaluate_head_unchangeable(int index) const
-{
-    int R = heads()[index];
-
-    return memory()->lazy_evaluate_unchangeable(R).legacy_exp();
-}
-
-const Runtime::Exp& context_ref::evaluate_head_unchangeable_code(int index) const
+const Runtime::Exp& context_ref::evaluate_head_unchangeable(int index) const
 {
     int R = heads()[index];
 
@@ -113,7 +100,7 @@ const Runtime::Exp& context_ref::evaluate_head_unchangeable_code(int index) cons
 }
 
 /// Return the value of a particular index, computing it if necessary
-const expression_ref& context_ref::perform_head(int index, bool ec) const
+const Runtime::Exp& context_ref::perform_head(int index, bool ec) const
 {
     int R = heads()[index];
 
@@ -144,29 +131,9 @@ const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) cons
     }
 }
 
-const expression_ref& context_ref::evaluate_expression_(closure&& C,bool ec) const
+const Runtime::Exp& context_ref::evaluate_expression_(closure&& C,bool ec) const
 {
-    const expression_ref& result = lazy_evaluate_expression_(std::move(C),ec).legacy_exp();
-#ifndef NDEBUG
-    if (result.head().is_a<lambda2>())
-	throw myexception()<<"Evaluating lambda as object: "<<result.print();
-#endif
-    return result;
-}
-
-const closure& context_ref::lazy_evaluate_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
-{
-    return lazy_evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
-}
-
-const expression_ref& context_ref::evaluate_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
-{
-    return evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
-}
-
-const Runtime::Exp& context_ref::evaluate_expression_code(Runtime::Exp E, closure::Env_t Env, bool ec) const
-{
-    const closure& result = lazy_evaluate_expression(std::move(E), std::move(Env), ec);
+    const closure& result = lazy_evaluate_expression_(std::move(C),ec);
 #ifndef NDEBUG
     if (result.get_code().to<Runtime::Lambda>())
 	throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
@@ -174,7 +141,17 @@ const Runtime::Exp& context_ref::evaluate_expression_code(Runtime::Exp E, closur
     return result.get_code();
 }
 
-const expression_ref& context_ref::perform_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
+const closure& context_ref::lazy_evaluate_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
+{
+    return lazy_evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
+}
+
+const Runtime::Exp& context_ref::evaluate_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
+{
+    return evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
+}
+
+const Runtime::Exp& context_ref::perform_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
 {
     int perform_io_reg = memory()->perform_io_reg();
 
@@ -190,25 +167,7 @@ const expression_ref& context_ref::perform_expression(Runtime::Exp E, closure::E
     return evaluate_expression(std::move(app), std::move(Env), ec);
 }
 
-const Runtime::Exp& context_ref::perform_expression_code(Runtime::Exp E, closure::Env_t Env, bool ec) const
-{
-    int perform_io_reg = memory()->perform_io_reg();
-
-    auto argument = Runtime::shift_free_indices(E, 1);
-    auto app = Runtime::Let({argument},
-                            Runtime::apply(Runtime::RegRef(perform_io_reg),
-                                           {Runtime::IndexVar(0)}));
-    return evaluate_expression_code(std::move(app), std::move(Env), ec);
-}
-
-const expression_ref& context_ref::evaluate_reg(int r) const
-{
-    auto [r1, result] = memory()->incremental_evaluate_in_context(r, context_index);
-
-    return memory()->closure_at(result).legacy_exp();
-}
-
-const Runtime::Exp& context_ref::evaluate_reg_code(int r) const
+const Runtime::Exp& context_ref::evaluate_reg(int r) const
 {
     auto [r1, result] = memory()->incremental_evaluate_in_context(r, context_index);
 

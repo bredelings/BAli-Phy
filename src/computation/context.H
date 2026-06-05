@@ -81,9 +81,7 @@ public:
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate_head(int index) const;
 
-    // Temporary _code suffix: once the legacy expression_ref API is removed,
-    // these runtime-returning APIs should take the undecorated names.
-    const Runtime::Exp& evaluate_head_code(int index) const;
+    const Runtime::Exp& evaluate_head(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate_reg(int& r) const;
@@ -92,43 +90,28 @@ public:
     std::pair<int,int> incremental_evaluate(int r) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const expression_ref& evaluate_head(int index) const;
+    const Runtime::Exp& evaluate_head_unchangeable(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const expression_ref& evaluate_head_unchangeable(int index) const;
-
-    // Temporary _code suffix: see evaluate_head_code().
-    const Runtime::Exp& evaluate_head_unchangeable_code(int index) const;
-
-    /// Return the value of a particular index, computing it if necessary
-    const expression_ref& perform_head(int index, bool ec = false) const;
+    const Runtime::Exp& perform_head(int index, bool ec = false) const;
 
     /// Return the value of a particular index, computing it if necessary
     const closure& lazy_evaluate_expression_(closure&&,bool=true) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const expression_ref& evaluate_expression_(closure&&,bool=true) const;
+    const Runtime::Exp& evaluate_expression_(closure&&,bool=true) const;
 
     /// Return the value of a runtime expression, computing it if necessary
     const closure& lazy_evaluate_expression(Runtime::Exp, closure::Env_t = {}, bool=true) const;
 
     /// Return the value of a runtime expression, computing it if necessary
-    const expression_ref& evaluate_expression(Runtime::Exp, closure::Env_t = {}, bool=true) const;
-
-    // Temporary _code suffix: see evaluate_head_code().
-    const Runtime::Exp& evaluate_expression_code(Runtime::Exp, closure::Env_t = {}, bool=true) const;
+    const Runtime::Exp& evaluate_expression(Runtime::Exp, closure::Env_t = {}, bool=true) const;
 
     /// Perform a runtime IO expression with an explicit closure environment.
-    const expression_ref& perform_expression(Runtime::Exp, closure::Env_t = {}, bool=false) const;
-
-    // Temporary _code suffix: see evaluate_head_code().
-    const Runtime::Exp& perform_expression_code(Runtime::Exp, closure::Env_t = {}, bool=false) const;
+    const Runtime::Exp& perform_expression(Runtime::Exp, closure::Env_t = {}, bool=false) const;
 
     /// Evaluate a particular reg and return the value.
-    const expression_ref& evaluate_reg(int r) const;
-
-    // Temporary _code suffix: see evaluate_head_code().
-    const Runtime::Exp& evaluate_reg_code(int r) const;
+    const Runtime::Exp& evaluate_reg(int r) const;
 
     /// Return a structure where all fields are evaluated and substituted.
     expression_ref recursive_evaluate_reg(int r) const;

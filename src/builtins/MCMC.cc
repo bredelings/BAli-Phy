@@ -109,7 +109,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     }
 
     //------------- 2. For t1, sample Is and sum over the Is ------------//
-    int t1 = C1.evaluate_reg_code(t_reg).as_int();
+    int t1 = C1.evaluate_reg(t_reg).as_int();
 
     // The sum is this multiplier times the probability of the current Is.
     auto multiplier1 = get_multiplier(C1, I_regs);
@@ -354,7 +354,7 @@ extern "C" closure builtin_function_sliceSampleRaw(OperationArgs& Args)
     int context_index = Args.evaluate_slot_to_value(2).as_int();
     context_ref C(M,context_index);
 
-    auto evaluate_slot = [&](int slot) -> const Runtime::Exp& {return C.evaluate_reg_code(Args.reg_for_slot(slot));};
+    auto evaluate_slot = [&](int slot) -> const Runtime::Exp& {return C.evaluate_reg(Args.reg_for_slot(slot));};
 
     // 0. x = reg to sample
     int x_reg = Args.reg_for_slot(0);
@@ -398,7 +398,7 @@ extern "C" closure builtin_function_sliceSampleIntegerRaw(OperationArgs& Args)
     int context_index = Args.evaluate_slot_to_value(2).as_int();
     context_ref C(M,context_index);
 
-    auto evaluate_slot = [&](int slot) -> const Runtime::Exp& {return C.evaluate_reg_code(Args.reg_for_slot(slot));};
+    auto evaluate_slot = [&](int slot) -> const Runtime::Exp& {return C.evaluate_reg(Args.reg_for_slot(slot));};
 
     // 0. x = reg to sample
     int x_reg = Args.reg_for_slot(0);
