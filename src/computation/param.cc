@@ -46,16 +46,6 @@ int runtime_size(const Runtime::Exp& E)
 }
 }
 
-expression_ref param::ref(const context_ref& C) const
-{
-    if (reg)
-        return reg_var(*reg);
-    else if (head)
-        return Runtime::to_expression_ref(C.get_expression(*head));
-    else
-        return Runtime::to_expression_ref(*value);
-}
-
 optional<int> param::is_modifiable(const context_ref& C) const
 {
     if (reg)

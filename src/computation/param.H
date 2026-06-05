@@ -58,8 +58,6 @@ class param
     std::optional<Runtime::Exp> value;
 
 public:
-    expression_ref ref(const context_ref& C) const;
-
     Runtime::Exp get_code(const context_ref& C) const;
     void set_code(context_ref& C, Runtime::Exp v) const;
 
