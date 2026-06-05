@@ -31,6 +31,18 @@ namespace Runtime
         {
             return std::shared_ptr<const T>(new T(std::move(node)));
         }
+
+        Exp object_exp(object_ptr<const Object> x)
+        {
+            if (auto s = boost::dynamic_pointer_cast<const ::String>(x))
+                return String(s->value());
+            else if (auto i = boost::dynamic_pointer_cast<const ::Integer>(x))
+                return Integer(i->value());
+            else if (auto c = boost::dynamic_pointer_cast<const constructor>(x))
+                return Constructor(*c);
+            else
+                return ObjectValue(std::move(x));
+        }
     }
 
     Exp::Exp(int x):Exp(Int(x)) {}
@@ -43,9 +55,9 @@ namespace Runtime
     Exp::Exp(integer x):Exp(Integer(std::move(x))) {}
     Exp::Exp(constructor x):Exp(Constructor(std::move(x))) {}
     Exp::Exp(const ::Integer& x):Exp(Integer(x.value())) {}
-    Exp::Exp(const Object& x):Exp(e_op_value(expression_ref(x))) {}
-    Exp::Exp(const Object* x):Exp(e_op_value(expression_ref(x))) {}
-    Exp::Exp(object_ptr<const Object> x):Exp(e_op_value(expression_ref(std::move(x)))) {}
+    Exp::Exp(const Object& x):Exp(object_exp(const_ptr(x))) {}
+    Exp::Exp(const Object* x):Exp(object_exp(object_ptr<const Object>(x))) {}
+    Exp::Exp(object_ptr<const Object> x):Exp(object_exp(std::move(x))) {}
     Exp::Exp(const ::String& x):Exp(String(x.value())) {}
     Exp::Exp(Int node):value(make_exp_value(std::move(node))) {}
     Exp::Exp(Double node):value(make_exp_value(std::move(node))) {}

@@ -258,42 +258,43 @@ namespace
 
     void check_runtime_atomic_values()
     {
-        auto i = Runtime::atomic_value(expression_ref(7));
+        Runtime::Exp i = 7;
         require(i.is_atomic_value(), "runtime Int should be atomic");
         require(i.as_int() == 7, "runtime Int value mismatch");
 
-        auto d = Runtime::atomic_value(expression_ref(2.5));
+        Runtime::Exp d = 2.5;
         require(d.is_atomic_value(), "runtime Double should be atomic");
         require(d.as_double() == 2.5, "runtime Double value mismatch");
 
         auto ld_value = log_double_t(0.25);
-        auto ld = Runtime::atomic_value(expression_ref(ld_value));
+        Runtime::Exp ld = ld_value;
         require(ld.is_atomic_value(), "runtime LogDouble should be atomic");
         require(ld.as_log_double() == ld_value, "runtime LogDouble value mismatch");
 
-        auto c = Runtime::atomic_value(expression_ref('x'));
+        Runtime::Exp c = 'x';
         require(c.is_atomic_value(), "runtime Char should be atomic");
         require(c.as_char() == 'x', "runtime Char value mismatch");
 
-        auto s = Runtime::atomic_value(expression_ref(::String("runtime")));
+        Runtime::Exp s = ::String("runtime");
         require(s.is_atomic_value(), "runtime String should be atomic");
         require(s.as_string() == "runtime", "runtime String value mismatch");
 
-        auto n = Runtime::atomic_value(expression_ref(::Integer(integer("12345678901234567890"))));
+        Runtime::Exp n = ::Integer(integer("12345678901234567890"));
         require(n.is_atomic_value(), "runtime Integer should be atomic");
         require(n.as_integer() == integer("12345678901234567890"), "runtime Integer value mismatch");
 
         constructor true_con("Data.Bool.True", 0);
-        auto b = Runtime::atomic_value(expression_ref(true_con));
+        Runtime::Exp b = true_con;
         require(b.is_atomic_value(), "runtime Constructor should be atomic");
         require(b.as_constructor().name() == true_con.name(), "runtime Constructor name mismatch");
         require(b.as_constructor().n_args() == true_con.n_args(), "runtime Constructor arity mismatch");
 
-        auto vector_value = Runtime::atomic_value(expression_ref(R::RVector(std::vector<int>{1, 2})));
+        Runtime::Exp vector_value = R::RVector(std::vector<int>{1, 2});
         require(vector_value.is_atomic_value(), "runtime ObjectValue should be atomic");
         require(vector_value.as_<R::RVector>().size() == 2, "runtime ObjectValue value mismatch");
 
-        auto pair = Runtime::e_op_value(expression_ref(constructor("Pair", 2), {expression_ref(1), expression_ref(::String("field"))}));
+        Runtime::Exp pair = Runtime::App(Runtime::ConstructorApp(constructor("Pair", 2)),
+                                         {Runtime::Exp(1), Runtime::Exp(::String("field"))});
         require(pair.is_value(), "constructor applications should be runtime values");
         auto app = pair.to<Runtime::App>();
         require(bool(app), "constructor application should convert to Runtime::App");
@@ -301,23 +302,6 @@ namespace
         require(app->args.size() == 2, "constructor application arity mismatch");
         require(app->args[0].as_int() == 1, "constructor application int field mismatch");
         require(app->args[1].as_string() == "field", "constructor application string field mismatch");
-        auto roundtrip = Runtime::to_expression_ref(pair);
-        require(roundtrip.head().is_a<constructor>(), "constructor application roundtrip head mismatch");
-        require(roundtrip.head().as_<constructor>().name() == "Pair", "constructor application roundtrip constructor name mismatch");
-        require(roundtrip.size() == 2, "constructor application roundtrip arity mismatch");
-        require(roundtrip.sub()[0].as_int() == 1, "constructor application roundtrip int field mismatch");
-        require(roundtrip.sub()[1].as_<::String>().value() == "field", "constructor application roundtrip string field mismatch");
-
-        bool rejected = false;
-        try
-        {
-            Runtime::atomic_value(expression_ref(var("f"), {expression_ref(1)}));
-        }
-        catch(const myexception&)
-        {
-            rejected = true;
-        }
-        require(rejected, "structured expressions should not convert to Runtime atomic values");
     }
 
     void check_runtime_vector_conversions()
@@ -443,10 +427,7 @@ int main(int argc, char** argv)
 
     Runtime::check_invariants(after);
 
-    auto before_ref = Runtime::to_expression_ref(before);
-    auto after_ref = Runtime::to_expression_ref(after);
-
-    require(before_ref.print() == after_ref.print(), "Runtime AST serialization changed the expression");
+    require(before == after, "Runtime AST serialization changed the expression");
 
     auto recovered_builtin = runtime_unprepare_for_translation(before);
     auto reindexed_builtin = runtime_indexify(recovered_builtin);
