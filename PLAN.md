@@ -56,6 +56,9 @@ Completed so far:
   modifiable/small-constant decisions use runtime predicates. Label rendering
   still uses legacy expression views where it intentionally formats
   expression-shaped output.
+- Changed `deindexify(const closure&)` to return `Runtime::Exp`. Legacy display
+  and diagnostic callers now call `Runtime::to_expression_ref(deindexify(...))`
+  explicitly before entering expression-only transforms.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Evaluation Core
@@ -106,9 +109,9 @@ The remaining `legacy_exp()` callers fall into a few buckets:
    runtime code; the remaining calls are in the dormant compact-expression
    substitution path, `compact_graph_expression()`, and the two label builders.
 
-3. `closure::print()` and `deindexify(const closure&)` are expression-facing
-   compatibility helpers. A runtime-native deindexify/substitution path would
-   be useful, but it is a separate feature rather than a mechanical replacement.
+3. `closure::print()` is still an expression-facing compatibility helper.
+   `deindexify(const closure&)` is now runtime-native; remaining expression
+   callers bridge explicitly with `Runtime::to_expression_ref(...)`.
 
 4. Runtime serialization tests intentionally compare runtime code with the
    cached legacy expression view.
