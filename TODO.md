@@ -2,16 +2,15 @@
 
 ## Runtime evaluation cleanup
 
-- Rename temporary runtime-returning APIs that end in `_code` once the legacy
-  `expression_ref` APIs are removed. The intended long-term names are the
-  undecorated API names.
-- Finish converting remaining `context_ptr` callers in tree, parameter, MCMC,
-  and SMC code to `value_code()`, `head_code()`, `set_code()`, and
-  `list_to_vector_code()`. The SMC haplotype/panel/site list consumers are the
-  largest remaining caller cluster; haplotype-index lists are already runtime
-  lists.
-- Keep `Runtime::to_expression_ref()` and `closure::legacy_exp()` only at
-  parser/model-generation/debug-display boundaries.
+- Move runtime `is_modifiable(...)` and `is_interchangeable(...)` predicates out
+  of expression headers so evaluator, graph, and builtin code can ask runtime
+  predicate questions without including expression operation definitions.
+- Convert remaining SMC haplotype/panel/site list consumers from `EVector` /
+  `expression_ref` helpers to `Runtime::RVector` in focused groups.
+- Keep any future bridge from runtime values back to `expression_ref` narrow,
+  locally named as legacy/debug/model-generation plumbing, and avoid recreating
+  broad shims like the removed `Runtime::to_expression_ref()` or
+  `closure::legacy_exp()`.
 - Keep `deindexify`, `unlet`, `untranslate_vars`, `subst_reg_vars`, and
   trim/graph unnormalization names aligned with their normalization inverses.
   Do not reuse these names for runtime closure-environment resolution.

@@ -115,6 +115,19 @@ Completed so far:
   Runtime let reduction uses typed `Runtime::Let` and `let_op` directly.
 - Deleted the unused `expression/runtime_views.H` header and stale includes
   that only supported the old expression-ref runtime-view layer.
+- Moved runtime-facing Bool constructor names (`bool_true_name` and
+  `bool_false_name`) out of `computation/expression` and into
+  `computation/haskell/ids.*`. Runtime Bool checks now refer to those symbols
+  instead of hard-coding `Data.Bool.True` / `Data.Bool.False`.
+- Added `Runtime::has_constructor(...)` and converted evaluation-facing
+  constructor checks in graph registration, Prelude IORef handling, JSON
+  conversion, alignment Bool conversion, and `TreeInterface` to use the runtime
+  helper directly.
+- Removed stale expression includes from the main evaluator/operation files and
+  from builtin implementation files that no longer construct expression
+  `index_var`, `constructor`, Bool, list, or `expression_ref` values. Builtins
+  now construct runtime closures with `Runtime::IndexVar` and
+  `Runtime::Constructor` where applicable.
 
 ## Evaluation Core
 
@@ -272,47 +285,65 @@ Recent scan results:
 - Large `EVector` surfaces remain in likelihood/substitution and several
   builtins. These are evaluated-value containers, but they are broader than the
   evaluator API itself and should be migrated incrementally.
+- Expression include pressure in evaluation-facing code is now narrower:
+  `evaluate.cc`, `operations.cc`, `machine/args.cc`, and most builtin
+  implementation files no longer include expression headers. The remaining
+  scanned non-predicate expression includes are `param.H`'s public `reg_var`
+  constructor, `TreeInterface.cc`'s model/tree expression entry points, and
+  `Runtime::GlobalVar` / graph heap use of expression `var`.
+- `is_modifiable(...)` and `is_interchangeable(...)` are still declared in
+  expression headers even though evaluation code calls their runtime overloads.
+  This is now the main reason graph registration, rerooting, `context.cc`, and
+  some builtin code still include `expression/modifiable.H` or
+  `expression/interchangeable.H`.
 
 ## Next Steps
 
-1. Convert `IntMap::restrictKeysToVector` / `makeEVector` to return
+1. Move the runtime predicates for modifiable/interchangeable values out of
+   `computation/expression` into an evaluation/runtime-facing header, while
+   keeping the expression constructors themselves in their current legacy
+   location. This should let `context.cc`, `graph_register.cc`, `reroot.cc`,
+   `show_graph.cc`, and some builtins stop including expression operation
+   headers just to ask runtime predicate questions.
+
+2. Convert `IntMap::restrictKeysToVector` / `makeEVector` to return
    `Runtime::RVector`, with explicit legacy bridging only for callers that
    still require `EVector`.
 
-2. Remove runtime leakage of old expression marker objects. First replace
+3. Remove runtime leakage of old expression marker objects. First replace
    `param.cc::runtime_head_code()` returning `Apply()` for
    `Runtime::FunctionApply` with a runtime-native representation or remove the
    caller need for a synthetic head value. Then replace `evaluate.cc`'s static
    `Apply` object with direct use of `apply_op`.
 
-3. Evaluate whether expression-side `constructor` can stop deriving from
+4. Evaluate whether expression-side `constructor` can stop deriving from
    `Object`. This would block accidental constructor-as-object runtime
    conversions, but it is broader than the runtime split because
    `expression_ref` still represents parsed/legacy constructors as object heads.
    A viable change probably needs either a dedicated expression constructor node
    or a clearly named legacy wrapper.
 
-4. Continue SMC vector migration in narrow groups: convert helper signatures
+5. Continue SMC vector migration in narrow groups: convert helper signatures
    from `EVector` to `Runtime::RVector` where the helper only needs scalar
    vector access.
 
-5. Audit `TreeInterface` and `models/parameters` for remaining
+6. Audit `TreeInterface` and `models/parameters` for remaining
    evaluation-time `expression_ref` use. Keep model-generation inputs as
    expression-based, but avoid converting evaluated tree/model properties back
    through expression syntax.
 
-6. Continue the non-`expression_ref` inverse preprocess path in narrow pieces:
+7. Continue the non-`expression_ref` inverse preprocess path in narrow pieces:
    runtime untranslation of global registers, runtime trim unnormalization, and
    runtime-to-Core deindexing are in place. The remaining work is Core
    graph/let unnormalization and then migrating diagnostics to use the
    Core-shaped runtime deindexify path where that improves the display
    boundary.
 
-7. Keep graph/display conversion boundaries explicit. Do not add runtime
+8. Keep graph/display conversion boundaries explicit. Do not add runtime
    `unlet` / `subst_reg_vars` clones unless there is a concrete runtime-stage
    consumer. For display, prefer the existing runtime-to-Core deindexing path
    followed by Core transforms.
 
-8. After each code batch, build `src/bali-phy/bali-phy` from
+9. After each code batch, build `src/bali-phy/bali-phy` from
    `../build/gcc-16-debug-O`, run the relevant focused tests, and commit
    logically separate changes with `jj`.

@@ -1,5 +1,6 @@
 #include "computation/object.H"
 #include "computation/operation.H"
+#include "computation/expression/reg_var.H"
 #include "computation/preprocess.H"
 #include "computation/runtime/trim.H"
 #include "util/string/join.H" // for join( )
