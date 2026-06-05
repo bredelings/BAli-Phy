@@ -1995,28 +1995,6 @@ void reg_heap::clear_call_for_reg(int R)
         clear_call( s );
 }
 
-void reg_heap::check_reg_vars_are_pinned(const expression_ref& E) const
-{
-    if (not E)
-        return;
-
-    if (E.is_reg_var())
-    {
-        int r = E.as_reg_var();
-        assert(regs.is_valid_address(r));
-        assert(regs.is_used(r));
-        assert(reg_is_pinned(r));
-        return;
-    }
-
-    if (not E.is_expression())
-        return;
-
-    check_reg_vars_are_pinned(E.head());
-    for(const auto& sub: E.sub())
-        check_reg_vars_are_pinned(sub);
-}
-
 void reg_heap::check_reg_vars_are_pinned(const Runtime::Exp& E) const
 {
     if (not E)

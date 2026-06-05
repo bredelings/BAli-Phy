@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <cstdint>
 #include "computation/object.H"
-#include "computation/expression/expression_ref.H"
 #include <utility>
 #include "computation/closure.H"
 #include "pool.H"
@@ -278,7 +277,6 @@ public:
     int allocate_reg_from_step(int s, closure&& C);
     void mark_reg_created_by_step(int r, int s);
     void mark_step_with_effect(int s);
-    void check_reg_vars_are_pinned(const expression_ref&) const;
     void check_reg_vars_are_pinned(const Runtime::Exp&) const;
 
     void get_roots(std::vector<int>&, bool keep_identifiers=true) const;
