@@ -119,12 +119,15 @@ compatibility layers.
    expression-level display transforms. There is no
    `reg_heap::expression_at()` compatibility accessor anymore.
 
-4. `closure::legacy_exp()` and `Runtime::to_expression_ref()` remain necessary
-   adapters. Long term they should be used at parser/model-generation/display
-   boundaries and by explicitly legacy APIs, not by runtime-native evaluation.
-   `Runtime::atomic_value()` and `Runtime::e_op_value()` still take
-   `expression_ref` because they bridge legacy literal/constructor values into
-   runtime values.
+4. `closure::legacy_exp()` and `Runtime::to_expression_ref()` remain temporary
+   adapters. The next strategy is removal-first: before moving compatibility
+   shims into a quarantine module, delete or disable them and fix the call
+   sites that still compile against them. Only keep a shim if a remaining
+   caller is genuinely parser/model-generation compatibility rather than an
+   evaluated-value path. `Runtime::atomic_value()` and
+   `Runtime::e_op_value()` still take `expression_ref` because they bridge
+   legacy literal/constructor values into runtime values, but those should also
+   be tested by removal rather than preserved by default.
 
 ## Inverse Preprocess Pipeline
 
@@ -250,11 +253,15 @@ Recent scan results:
    helper signatures from `EVector` to `Runtime::RVector` where the helper only
    needs scalar vector access.
 
-5. Decide whether `Runtime::atomic_value()` / `Runtime::e_op_value()` should
-   move out of `runtime/ast` into an explicit legacy conversion module, or
-   whether callers should first migrate away from expression_ref values.
+5. Remove `Runtime::to_expression_ref(...)`,
+   `Runtime::atomic_value(expression_ref)`, and
+   `Runtime::e_op_value(expression_ref)` only after deleting the evaluation
+   callers that still need them. The preferred workflow is to delete the
+   declarations/definitions in a scratch change, build, and convert the
+   resulting call sites. If parser/model-generation callers remain, restore the
+   smallest bridge with an explicitly legacy name.
 
-6. Implement the non-`expression_ref` inverse preprocess path in narrow pieces:
+6. Continue the non-`expression_ref` inverse preprocess path in narrow pieces:
    runtime untranslation of global registers, runtime trim unnormalization, and
    runtime-to-Core deindexing are in place. The remaining work is Core
    graph/let unnormalization and then migrating diagnostics to use the
