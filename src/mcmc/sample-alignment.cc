@@ -81,10 +81,10 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
     R::RVector LCN;
     if (auto lcn = P.get_node_CLV(n2))
     {
-        if (auto sparse = lcn.to<SparseLikelihoods>())
-            LCN.push_back(sparse->DenseLikelihoods());
-        else
-            LCN.push_back(R::e_op_value(lcn));
+	if (auto sparse = lcn.to<SparseLikelihoods>())
+	    LCN.push_back(sparse->DenseLikelihoods());
+	else
+	    LCN.push_back(lcn);
     }
 
     R::RVector LCB;
@@ -92,7 +92,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
     for(int b: t.branches_before(bb))
     {
 	LCB.push_back(P.cache(b));
-	A.push_back(R::e_op_value(P.get_pairwise_alignment_(b)));
+	A.push_back(P.get_pairwise_alignment_(b));
     }
 
     // Unlike with sample-tri, the order of characters at n2 is determined by the pairwise alignments.

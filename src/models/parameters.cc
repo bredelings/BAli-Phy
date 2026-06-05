@@ -135,11 +135,11 @@ bool data_partition::alignment_is_random() const
     return (bool)DPC().alignment_properties_reg;
 }
 
-expression_ref data_partition::get_node_CLV(int node) const
+R::Exp data_partition::get_node_CLV(int node) const
 {
     auto maybe_node_CLV = property(8)[node];
     if (maybe_node_CLV.size() > 0)
-	return Runtime::to_expression_ref(maybe_node_CLV[0].value());
+	return maybe_node_CLV[0].value();
     else
 	return {};
 }
@@ -244,10 +244,10 @@ void mutable_data_partition::set_pairwise_alignment(int b, const pairwise_alignm
     assert(get_pairwise_alignment(b) == get_pairwise_alignment(B).flipped());
 }
 
-expression_ref data_partition::get_pairwise_alignment_(int b) const
+R::Exp data_partition::get_pairwise_alignment_(int b) const
 {
     assert(likelihood_calculator() == 0);
-    return Runtime::to_expression_ref(alignment_property(3)[b].value());
+    return alignment_property(3)[b].value();
 }
 
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const

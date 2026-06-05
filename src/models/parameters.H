@@ -103,7 +103,7 @@ public:
     /// Cached Transition Probabilities
     object_ptr<const R::RVector> transition_P(int b) const;   // used only to force transition_Ps in sample-topology-SPR.cc [ SPR_search_attachment_points ]
   
-    expression_ref get_node_CLV(int i) const;   // used in substitution.cc [sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
+    R::Exp get_node_CLV(int i) const;   // used in substitution.cc [sample_subst_history], parsimony.cc [peel_muts_leaf_branch, accumulate_root_leaf]
 
     int n_base_models() const;                  // used in substitution.cc for get_column_likelihoods
 
@@ -130,7 +130,7 @@ public:
 
     int seqlength(int n) const;
 
-    expression_ref get_pairwise_alignment_(int b) const;
+    R::Exp get_pairwise_alignment_(int b) const;
 
     const pairwise_alignment_t& get_pairwise_alignment(int b) const;
 
