@@ -18,9 +18,13 @@ namespace Runtime
     Exp untranslate_vars(const Exp&, const std::map<std::string, int>&);
 }
 
+struct closure;
+
 Core::Exp<> runtime_deindexify(const Runtime::Exp&, const std::vector<Core::Var<>>&);
 
 Core::Exp<> runtime_deindexify(const Runtime::Exp&);
+
+Core::Exp<> runtime_deindexify(const closure&);
 
 Core::Exp<> runtime_unprepare_for_translation(const Runtime::Exp&, const std::map<int, std::string>& = {});
 

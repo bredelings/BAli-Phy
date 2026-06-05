@@ -233,6 +233,27 @@ namespace
         require(prepared_again == prepared, "inverse preprocess final Core should prepare back to the same Runtime expression");
     }
 
+    void check_runtime_deindexify_diagnostic_terms()
+    {
+        auto direct_reg = runtime_deindexify(Runtime::RegRef(7));
+        require(direct_reg.to_var() and direct_reg.to_var()->name == "<7>",
+                "direct Runtime::RegRef should become a diagnostic Core variable");
+
+        closure C(Runtime::IndexVar(0), {152});
+        auto env_reg = runtime_deindexify(C);
+        require(env_reg.to_var() and env_reg.to_var()->name == "[152]",
+                "closure Runtime::IndexVar should resolve through Env to a diagnostic Core variable");
+
+        auto free_index = runtime_deindexify(Runtime::IndexVar(0));
+        require(free_index.to_var() and free_index.to_var()->name == "[?0]",
+                "free Runtime::IndexVar should become a diagnostic fallback Core variable");
+
+        object_ptr<R::RVector> vec(new R::RVector(std::vector<int>{1, 2}));
+        auto object_value = runtime_deindexify(Runtime::Exp(vec));
+        require(object_value.to_var() and object_value.to_var()->name.starts_with("@"),
+                "Runtime::ObjectValue should become a diagnostic Core variable");
+    }
+
     void check_runtime_atomic_values()
     {
         auto i = Runtime::atomic_value(expression_ref(7));
@@ -437,6 +458,7 @@ int main(int argc, char** argv)
     check_deindexify_reg_refs();
     check_runtime_untranslate_vars();
     check_runtime_inverse_preprocess_round_trip();
+    check_runtime_deindexify_diagnostic_terms();
     check_runtime_atomic_values();
     check_runtime_vector_conversions();
     check_constructor_serialization();

@@ -42,6 +42,21 @@ Core::Var<> get_named_core_var(int n)
         return Core::Var<>("v" + std::to_string(n - 26));
 }
 
+Core::Var<> direct_reg_core_var(int r)
+{
+    return Core::Var<>("<" + std::to_string(r) + ">");
+}
+
+Core::Var<> env_reg_core_var(int r)
+{
+    return Core::Var<>("[" + std::to_string(r) + "]");
+}
+
+Core::Var<> runtime_only_core_var(const string& text)
+{
+    return Core::Var<>("@" + text);
+}
+
 Core::Constant runtime_constant_to_core(const Runtime::Exp& E)
 {
     Core::Constant C;
@@ -168,20 +183,20 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
         return runtime_constant_to_core(E);
     }
     else if (E.to<Runtime::LogDouble>())
-        throw std::runtime_error("Cannot deindexify Runtime::LogDouble to Core");
+        return runtime_only_core_var(E.print());
     else if (auto e = E.to<Runtime::Constructor>())
     {
         if (e->value.n_args() != 0)
-            throw std::runtime_error("Cannot deindexify non-nullary runtime constructor atom to Core");
+            return runtime_only_core_var(E.print());
 
         return Core::ConApp<>{e->value.name(), {}};
     }
-    else if (E.to<Runtime::ObjectValue>())
-        throw std::runtime_error("Cannot deindexify Runtime::ObjectValue to Core");
+    else if (auto e = E.to<Runtime::ObjectValue>())
+        return runtime_only_core_var(e->value ? e->value->print() : string{"null"});
     else if (auto e = E.to<Runtime::IndexVar>())
     {
         if (e->index >= variables.size())
-            throw std::runtime_error("Cannot deindexify free Runtime::IndexVar without a Core variable");
+            return Core::Var<>("[?" + std::to_string(e->index) + "]");
 
         return Core::Exp<>(variables[variables.size() - 1 - e->index]);
     }
@@ -189,8 +204,8 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
     {
         return Core::Var<>(e->name.name, e->name.index, {}, e->name.is_exported);
     }
-    else if (E.to<Runtime::RegRef>())
-        throw std::runtime_error("Cannot deindexify Runtime::RegRef to Core; untranslate registers first");
+    else if (auto e = E.to<Runtime::RegRef>())
+        return direct_reg_core_var(e->target);
     else if (auto e = E.to<Runtime::Lambda>())
     {
         auto x = get_named_core_var(variables.size());
@@ -249,7 +264,12 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
         if (std::holds_alternative<Runtime::FunctionApply>(e->head))
         {
             if (args.size() < 2)
-                throw std::runtime_error("Cannot deindexify Runtime::FunctionApply with fewer than two arguments");
+            {
+                Core::Exp<> result = runtime_only_core_var("apply");
+                for(const auto& arg: args)
+                    result = Core::Apply<>{result, arg};
+                return result;
+            }
 
             Core::Exp<> result = args[0];
             for(int i = 1; i < args.size(); i++)
@@ -264,7 +284,12 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
         {
             auto op_head = std::get_if<Runtime::OperationApp>(&e->head);
             if (not op_head or not op_head->head or op_head->lib_name.empty() or op_head->func_name.empty() or op_head->call_conv.empty())
-                throw std::runtime_error("Cannot deindexify runtime-only OperationApp to Core");
+            {
+                Core::Exp<> result = runtime_only_core_var(op_head and op_head->head ? op_head->head->print() : string{"op"});
+                for(const auto& arg: args)
+                    result = Core::Apply<>{result, arg};
+                return result;
+            }
 
             void* op = nullptr;
             if (op_head->call_conv == "ecall")
@@ -273,7 +298,12 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, vector<Core::Var<>>& varia
                 op = reinterpret_cast<void*>(op_head->head->op);
 
             if (not op)
-                throw std::runtime_error("Cannot deindexify OperationApp without an operation pointer");
+            {
+                Core::Exp<> result = runtime_only_core_var(op_head->head->print());
+                for(const auto& arg: args)
+                    result = Core::Apply<>{result, arg};
+                return result;
+            }
 
             return Core::BuiltinOp<>{op_head->lib_name, op_head->func_name, op_head->call_conv, args, op};
         }
@@ -297,6 +327,16 @@ Core::Exp<> runtime_deindexify(const Runtime::Exp& E, const vector<Core::Var<>>&
 Core::Exp<> runtime_deindexify(const Runtime::Exp& E)
 {
     return runtime_deindexify(E, vector<Core::Var<>>{});
+}
+
+Core::Exp<> runtime_deindexify(const closure& C)
+{
+    vector<Core::Var<>> variables;
+    variables.reserve(C.Env.size());
+    for(int r: C.Env)
+        variables.push_back(env_reg_core_var(r));
+
+    return runtime_deindexify(trim_unnormalize(C).get_code(), variables);
 }
 
 Core::Exp<> runtime_unprepare_for_translation(const Runtime::Exp& E, const map<int, string>& ids)
