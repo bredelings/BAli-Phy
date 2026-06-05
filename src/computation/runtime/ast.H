@@ -19,11 +19,11 @@
 #include <cereal/types/vector.hpp>
 #define CEREAL_FUTURE_EXPERIMENTAL 1
 #include <cereal/archives/adapters.hpp>
-#include "computation/expression/constructor.H"
 #include "computation/expression/var.H"
 #include "computation/haskell/Integer.H"
 #include "computation/haskell/integer_container.H"
 #include "computation/loader.H"
+#include "computation/object.H"
 #include "util/OrderedDouble.H"
 
 struct Operation;
@@ -38,6 +38,7 @@ namespace Runtime
     struct Char;
     struct String;
     struct Integer;
+    struct ConstructorTag;
     struct Constructor;
     struct ObjectValue;
     struct IndexVar;
@@ -81,7 +82,6 @@ namespace Runtime
         Exp(std::string);
         Exp(const char*);
         Exp(integer);
-        Exp(constructor);
         Exp(const ::Integer&);
         Exp(const Object&);
         Exp(const Object*);
@@ -150,7 +150,7 @@ namespace Runtime
         char as_char() const;
         const std::string& as_string() const;
         const integer& as_integer() const;
-        const constructor& as_constructor() const;
+        const ConstructorTag& as_constructor() const;
         std::string print() const;
 
         template <DerivedFromObject T>
@@ -317,34 +317,39 @@ namespace Runtime
         }
     };
 
+    struct ConstructorTag
+    {
+        std::string f_name = "()";
+        int arity = 0;
+
+        ConstructorTag() = default;
+        ConstructorTag(std::string n, int a):f_name(std::move(n)), arity(a) {}
+
+        const std::string& name() const { return f_name; }
+        int n_args() const { return arity; }
+        std::string print() const { return f_name; }
+
+        bool operator==(const ConstructorTag&) const = default;
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(f_name, arity); }
+    };
+
     struct Constructor
     {
-        constructor value;
+        ConstructorTag value;
 
-        Constructor():value("()", 0) {}
-        Constructor(constructor c):value(std::move(c)) {}
+        Constructor() = default;
+        Constructor(std::string name, int arity):value(std::move(name), arity) {}
+        Constructor(ConstructorTag c):value(std::move(c)) {}
 
         bool operator==(const Constructor& c) const
         {
-            return value.name() == c.value.name() and value.n_args() == c.value.n_args();
+            return value == c.value;
         }
 
         template <class Archive>
-        void save(Archive& ar) const
-        {
-            auto name = value.name();
-            auto arity = value.n_args();
-            ar(name, arity);
-        }
-
-        template <class Archive>
-        void load(Archive& ar)
-        {
-            std::string name;
-            int arity;
-            ar(name, arity);
-            value = constructor(name, arity);
-        }
+        void serialize(Archive& ar) { ar(value); }
     };
 
 
@@ -513,32 +518,19 @@ namespace Runtime
 
     struct ConstructorPattern
     {
-        constructor head;
+        ConstructorTag head;
 
-        ConstructorPattern():head("()", 0) {}
-        ConstructorPattern(constructor c):head(std::move(c)) {}
+        ConstructorPattern() = default;
+        ConstructorPattern(std::string name, int arity):head(std::move(name), arity) {}
+        ConstructorPattern(ConstructorTag c):head(std::move(c)) {}
 
         bool operator==(const ConstructorPattern& p) const
         {
-            return head.name() == p.head.name() and head.n_args() == p.head.n_args();
+            return head == p.head;
         }
 
         template <class Archive>
-        void save(Archive& ar) const
-        {
-            auto name = head.name();
-            auto arity = head.n_args();
-            ar(name, arity);
-        }
-
-        template <class Archive>
-        void load(Archive& ar)
-        {
-            std::string name;
-            int arity;
-            ar(name, arity);
-            head = constructor(name, arity);
-        }
+        void serialize(Archive& ar) { ar(head); }
     };
 
     // I might want to add literals here, especially a literal int pattern.
@@ -584,32 +576,19 @@ namespace Runtime
 
     struct ConstructorApp
     {
-        constructor head;
+        ConstructorTag head;
 
-        ConstructorApp():head("()", 0) {}
-        ConstructorApp(constructor c):head(std::move(c)) {}
+        ConstructorApp() = default;
+        ConstructorApp(std::string name, int arity):head(std::move(name), arity) {}
+        ConstructorApp(ConstructorTag c):head(std::move(c)) {}
 
         bool operator==(const ConstructorApp& app) const
         {
-            return head.name() == app.head.name() and head.n_args() == app.head.n_args();
+            return head == app.head;
         }
 
         template <class Archive>
-        void save(Archive& ar) const
-        {
-            auto name = head.name();
-            auto arity = head.n_args();
-            ar(name, arity);
-        }
-
-        template <class Archive>
-        void load(Archive& ar)
-        {
-            std::string name;
-            int arity;
-            ar(name, arity);
-            head = constructor(name, arity);
-        }
+        void serialize(Archive& ar) { ar(head); }
     };
 
     struct OperationApp

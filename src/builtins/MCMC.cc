@@ -31,7 +31,7 @@ extern "C" closure builtin_function_registerTransitionKernelRaw(OperationArgs& A
 
     int r_transition_kernel = Args.evaluate_reg_use(Args.reg_for_slot(1));
 
-    R::Exp E = R::App(R::ConstructorApp(constructor("Effect.TransitionKernel",2)),
+    R::Exp E = R::App(R::ConstructorApp("Effect.TransitionKernel", 2),
                       {rate, R::IndexVar(0)});
 
     int r_effect = Args.allocate(closure{std::move(E), {r_transition_kernel}});
@@ -45,7 +45,7 @@ extern "C" closure builtin_function_registerLogger(OperationArgs& Args)
 {
     int r_logger = Args.evaluate_reg_use(Args.reg_for_slot(0));
 
-    R::Exp E = R::App(R::ConstructorApp(constructor("Effect.Logger",2)),
+    R::Exp E = R::App(R::ConstructorApp("Effect.Logger", 2),
                       {R::IndexVar(0)});
 
     int r_effect = Args.allocate(closure{std::move(E), {r_logger}});

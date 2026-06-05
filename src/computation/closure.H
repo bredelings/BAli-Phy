@@ -6,6 +6,7 @@
 #include <utility>
 #include <boost/container/small_vector.hpp>
 #include "computation/object.H"
+#include "computation/expression/constructor.H"
 #include "computation/expression/index_var.H"
 #include "computation/expression/reg_var.H"
 #include "computation/runtime/ast.H"
@@ -149,7 +150,7 @@ public:
 
     template <typename T>
     requires std::same_as<std::remove_cvref_t<T>, bool>
-    closure(T x):closure(Runtime::Constructor(constructor(x?bool_true_name:bool_false_name,0))) {}
+    closure(T x):closure(Runtime::Constructor(x ? bool_true_name : bool_false_name, 0)) {}
 
     closure(std::string x):closure(Runtime::String(std::move(x))) {}
 
@@ -163,7 +164,7 @@ public:
 
     closure(Box<integer>&& x):closure(Runtime::Integer(std::move(x))) {}
 
-    closure(constructor x):closure(Runtime::Constructor(std::move(x))) {}
+    closure(constructor x):closure(Runtime::Constructor(x.name(), x.n_args())) {}
 
     closure(const index_var& iv):closure(Runtime::IndexVar(iv.index)) {}
 

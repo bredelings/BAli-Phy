@@ -283,17 +283,16 @@ namespace
         require(n.is_atomic_value(), "runtime Integer should be atomic");
         require(n.as_integer() == integer("12345678901234567890"), "runtime Integer value mismatch");
 
-        constructor true_con("Data.Bool.True", 0);
-        Runtime::Exp b = true_con;
+        Runtime::Exp b = Runtime::Constructor("Data.Bool.True", 0);
         require(b.is_atomic_value(), "runtime Constructor should be atomic");
-        require(b.as_constructor().name() == true_con.name(), "runtime Constructor name mismatch");
-        require(b.as_constructor().n_args() == true_con.n_args(), "runtime Constructor arity mismatch");
+        require(b.as_constructor().name() == "Data.Bool.True", "runtime Constructor name mismatch");
+        require(b.as_constructor().n_args() == 0, "runtime Constructor arity mismatch");
 
         Runtime::Exp vector_value = R::RVector(std::vector<int>{1, 2});
         require(vector_value.is_atomic_value(), "runtime ObjectValue should be atomic");
         require(vector_value.as_<R::RVector>().size() == 2, "runtime ObjectValue value mismatch");
 
-        Runtime::Exp pair = Runtime::App(Runtime::ConstructorApp(constructor("Pair", 2)),
+        Runtime::Exp pair = Runtime::App(Runtime::ConstructorApp("Pair", 2),
                                          {Runtime::Exp(1), Runtime::Exp(::String("field"))});
         require(pair.is_value(), "constructor applications should be runtime values");
         auto app = pair.to<Runtime::App>();
@@ -342,16 +341,14 @@ namespace
 
     void check_constructor_serialization()
     {
-        constructor c("Data.Bool.True", 0);
-
-        Runtime::Exp literal = Runtime::Constructor(c);
+        Runtime::Exp literal = Runtime::Constructor("Data.Bool.True", 0);
         check_archive_roundtrip(literal);
 
-        Runtime::Exp app = Runtime::App(Runtime::ConstructorApp(c), {});
+        Runtime::Exp app = Runtime::App(Runtime::ConstructorApp("Data.Bool.True", 0), {});
         check_archive_roundtrip(app);
 
-        Runtime::Exp case_ = Runtime::Case(Runtime::Constructor(c),
-                                           {Runtime::Alt(Runtime::ConstructorPattern(c),
+        Runtime::Exp case_ = Runtime::Case(Runtime::Constructor("Data.Bool.True", 0),
+                                           {Runtime::Alt(Runtime::ConstructorPattern("Data.Bool.True", 0),
                                                          Runtime::Int(1))});
         check_archive_roundtrip(case_);
     }
@@ -377,18 +374,18 @@ namespace
     void check_runtime_exp_equality()
     {
         Runtime::Exp e1 = Runtime::Let({Runtime::Int(1), Runtime::String("field")},
-                                       Runtime::App(Runtime::ConstructorApp(constructor("Pair", 2)),
+                                       Runtime::App(Runtime::ConstructorApp("Pair", 2),
                                                     {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
         Runtime::Exp e2 = Runtime::Let({Runtime::Int(1), Runtime::String("field")},
-                                       Runtime::App(Runtime::ConstructorApp(constructor("Pair", 2)),
+                                       Runtime::App(Runtime::ConstructorApp("Pair", 2),
                                                     {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
         Runtime::Exp e3 = Runtime::Let({Runtime::Int(2), Runtime::String("field")},
-                                       Runtime::App(Runtime::ConstructorApp(constructor("Pair", 2)),
+                                       Runtime::App(Runtime::ConstructorApp("Pair", 2),
                                                     {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
 
         require(e1 == e2, "matching Runtime::Exp trees should compare equal");
         require(not (e1 == e3), "different Runtime::Exp trees should not compare equal");
-        require(not (Runtime::Constructor(constructor("Pair", 2)) == Runtime::Constructor(constructor("Pair", 1))),
+        require(not (Runtime::Constructor("Pair", 2) == Runtime::Constructor("Pair", 1)),
                 "Runtime constructor equality should include arity");
 
         const double nan = std::numeric_limits<double>::quiet_NaN();

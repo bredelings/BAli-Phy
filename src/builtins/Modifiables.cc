@@ -86,7 +86,7 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
     int r_to_dist  = Args.evaluate_slot_use(1);
     String role = modifiable_string(Args.evaluate_slot_to_value(2));
 
-    R::Exp E = R::App(R::ConstructorApp(constructor("Effect.InEdge",3)),
+    R::Exp E = R::App(R::ConstructorApp("Effect.InEdge", 3),
                       {R::IndexVar(0), r_to_dist, role});
 
     int r_effect = Args.allocate(closure{std::move(E), {r_from_var}});
@@ -101,7 +101,7 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
     int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_var    = force_slot_to_safe_reg(Args,1);
 
-    R::Exp E = R::App(R::ConstructorApp(constructor("Effect.OutEdge",2)),
+    R::Exp E = R::App(R::ConstructorApp("Effect.OutEdge", 2),
                       {R::IndexVar(1), R::IndexVar(0)});
 
     int r_effect = Args.allocate(closure{std::move(E), {r_from_dist, r_to_var}});
@@ -122,7 +122,7 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
 
     int r_effect = Args.allocate_reg();
 
-    R::Exp E = R::App(R::ConstructorApp(constructor("Effect.Dist",3)),
+    R::Exp E = R::App(R::ConstructorApp("Effect.Dist", 3),
                       {R::IndexVar(0), observation, name});
 
     auto& M = Args.memory();
@@ -139,7 +139,7 @@ extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
     int r_to_prop = Args.reg_for_slot(1);
     String property = modifiable_string(Args.evaluate_slot_to_value(2));
 
-    R::Exp E = R::App(R::ConstructorApp(constructor("Effect.DistProperty",3)),
+    R::Exp E = R::App(R::ConstructorApp("Effect.DistProperty", 3),
                       {r_from_dist, property, R::IndexVar(0)});
 
     int r_effect = Args.allocate(closure{std::move(E), {r_to_prop}});

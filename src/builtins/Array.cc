@@ -1,7 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
 #include "computation/expression/index_var.H"
-#include "computation/expression/constructor.H"
 #include "computation/expression/bool.H"
 #include "computation/runtime/ast.H"
 
@@ -14,7 +13,7 @@ namespace
             throw myexception()<<"Expression is not an Array:   "<<C.get_code();
 
         auto constructor_app = std::get_if<Runtime::ConstructorApp>(&app->head);
-        if (not constructor_app or constructor_app->head.f_name != "Array")
+        if (not constructor_app or constructor_app->head.name() != "Array")
             throw myexception()<<"Expression is not an Array:   "<<C.get_code();
 
         return *app;
@@ -49,7 +48,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 	// Add the var to the environment
 	result.Env[i] = apply_reg;
     }
-    result.set_code(Runtime::App(Runtime::ConstructorApp(constructor("Array", n)), std::move(elements)));
+    result.set_code(Runtime::App(Runtime::ConstructorApp("Array", n), std::move(elements)));
   
     return result;
 }
@@ -107,7 +106,7 @@ extern "C" closure builtin_function_removeElement(OperationArgs& Args)
 	// Add the var to the environment
 	result.Env[i] = C.Env[j];
     }
-    result.set_code(Runtime::App(Runtime::ConstructorApp(constructor("Array", n-1)), std::move(elements)));
+    result.set_code(Runtime::App(Runtime::ConstructorApp("Array", n-1), std::move(elements)));
 
     return result;
 }

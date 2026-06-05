@@ -1,5 +1,4 @@
 #include "computation/param.H"
-#include "computation/expression/constructor.H"
 #include "computation/expression/reg_var.H"
 #include "computation/expression/var.H"
 #include "computation/expression/modifiable.H"
@@ -31,7 +30,7 @@ Runtime::Exp runtime_head_code(const Runtime::Exp& E)
         if constexpr (std::is_same_v<T, Runtime::FunctionApply>)
             return Apply();
         else if constexpr (std::is_same_v<T, Runtime::ConstructorApp>)
-            return head.head;
+            return Runtime::Constructor(head.head);
         else if constexpr (std::is_same_v<T, Runtime::OperationApp>)
             return *head.head;
     }, app->head);

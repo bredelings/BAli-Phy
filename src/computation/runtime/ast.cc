@@ -30,8 +30,6 @@ namespace Runtime
                 return String(s->value());
             else if (auto i = boost::dynamic_pointer_cast<const ::Integer>(x))
                 return Integer(i->value());
-            else if (auto c = boost::dynamic_pointer_cast<const constructor>(x))
-                return Constructor(*c);
             else
                 return ObjectValue(std::move(x));
         }
@@ -40,12 +38,11 @@ namespace Runtime
     Exp::Exp(int x):Exp(Int(x)) {}
     Exp::Exp(double x):Exp(Double(x)) {}
     Exp::Exp(log_double_t x):Exp(LogDouble(x)) {}
-    Exp::Exp(bool x):Exp(Constructor(constructor(x ? bool_true_name : bool_false_name, 0))) {}
+    Exp::Exp(bool x):Exp(Constructor(x ? bool_true_name : bool_false_name, 0)) {}
     Exp::Exp(char x):Exp(Char(x)) {}
     Exp::Exp(std::string x):Exp(String(std::move(x))) {}
     Exp::Exp(const char* x):Exp(String(x)) {}
     Exp::Exp(integer x):Exp(Integer(std::move(x))) {}
-    Exp::Exp(constructor x):Exp(Constructor(std::move(x))) {}
     Exp::Exp(const ::Integer& x):Exp(Integer(x.value())) {}
     Exp::Exp(const Object& x):Exp(object_exp(const_ptr(x))) {}
     Exp::Exp(const Object* x):Exp(object_exp(object_ptr<const Object>(x))) {}
@@ -275,7 +272,7 @@ namespace Runtime
         return as<Integer>().value;
     }
 
-    const constructor& Exp::as_constructor() const
+    const ConstructorTag& Exp::as_constructor() const
     {
         return as<Constructor>().value;
     }

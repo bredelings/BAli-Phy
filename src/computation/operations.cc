@@ -5,7 +5,6 @@
 #include "math/exponential.H"
 #include "util/myexception.H"
 #include "expression/index_var.H"
-#include "expression/constructor.H"
 #include "expression/lambda.H"
 #include "expression/case.H"
 #include "expression/var.H"
@@ -112,7 +111,7 @@ closure apply_op(OperationArgs& Args)
     }
 }
 
-static const constructor* constructor_value(const Runtime::Exp& E)
+static const Runtime::ConstructorTag* constructor_value(const Runtime::Exp& E)
 {
     if (auto c = E.to<Runtime::Constructor>())
         return &c->value;
@@ -148,7 +147,7 @@ static bool matches_pattern(const closure& object, const Runtime::Pattern& patte
             return true;
         else if constexpr (std::is_same_v<T, Runtime::ConstructorPattern>)
         {
-            const constructor* c = constructor_value(object.get_code());
+            const Runtime::ConstructorTag* c = constructor_value(object.get_code());
             return c and c->name() == p.head.name() and c->n_args() == p.head.n_args();
         }
     }, pattern);

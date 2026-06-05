@@ -118,7 +118,7 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
             }
             else
             {
-                pattern2 = Runtime::ConstructorPattern(constructor(*pattern.head, pattern.args.size()));
+                pattern2 = Runtime::ConstructorPattern(*pattern.head, pattern.args.size());
 
                 for(auto& arg: pattern.args)
                     variables.push_back(arg);
@@ -140,8 +140,7 @@ Runtime::Exp runtime_indexify(const Core::Exp<>& E, vector<Core::Var<>>& variabl
         for(auto& arg: C->args)
             args.push_back(runtime_indexify(arg, variables));
 
-        auto c = constructor(C->head, C->args.size());
-        return Runtime::App(Runtime::ConstructorApp(c), args);
+        return Runtime::App(Runtime::ConstructorApp(C->head, C->args.size()), args);
     }
     else if (auto B = E.to_builtinOp())
     {

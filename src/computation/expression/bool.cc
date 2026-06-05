@@ -1,4 +1,5 @@
 #include "bool.H"
+#include "computation/runtime/ast.H"
 #include "var.H"
 
 std::string bool_true_name  = "Data.Bool.True";
@@ -18,6 +19,21 @@ bool is_bool_false(const constructor& c)
 }
 
 bool is_bool(const constructor& c)
+{
+    return (is_bool_true(c) or is_bool_false(c));
+}
+
+bool is_bool_true(const Runtime::ConstructorTag& c)
+{
+    return c.name() == bool_true_name;
+}
+
+bool is_bool_false(const Runtime::ConstructorTag& c)
+{
+    return c.name() == bool_false_name;
+}
+
+bool is_bool(const Runtime::ConstructorTag& c)
 {
     return (is_bool_true(c) or is_bool_false(c));
 }
