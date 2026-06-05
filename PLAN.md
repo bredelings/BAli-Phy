@@ -110,6 +110,34 @@ compatibility layers.
    `expression_ref` because they bridge legacy literal/constructor values into
    runtime values.
 
+## Inverse Preprocess Pipeline
+
+The forward Core-to-runtime preprocessing pipeline is:
+
+1. `graph_normalize(...)`
+2. `runtime_indexify(...)`
+3. `Runtime::trim_normalize(...)`
+4. `capture_local_reg_refs(...)` / `translate_refs(...)`
+
+The reverse pipeline should run in the opposite order, without routing through
+`expression_ref`:
+
+1. untranslate runtime register references back to runtime names where the
+   register is known as a global identifier;
+2. `Runtime::trim_unnormalize(...)`;
+3. `runtime_deindexify(...)`, converting de Bruijn indexed `Runtime::Exp` back
+   to named `Core::Exp<>`;
+4. graph/let unnormalization only where it is genuinely the inverse of a Core
+   normalization pass.
+
+Tests should check both stage-level round trips and the end-to-end result.
+Stage-level tests make binder and trim bugs easier to localize; final tests
+should compare normalized meaning, not raw Core syntax. A good final assertion
+is that re-running the forward runtime preparation on recovered Core produces
+the same runtime expression as the normalized original. Exact raw Core equality
+is only appropriate for deliberately normalized test inputs with predictable
+fresh names.
+
 ## `legacy_exp()` Audit
 
 The remaining `legacy_exp()` callers fall into a few buckets:
@@ -208,11 +236,16 @@ Recent scan results:
    move out of `runtime/ast` into an explicit legacy conversion module, or
    whether callers should first migrate away from expression_ref values.
 
-6. Keep graph/display conversion boundaries explicit. Do not add runtime
-   `unlet` / `untranslate_vars` / `subst_reg_vars` clones unless the project
-   first defines a true runtime-to-Core deindexing story; otherwise these names
-   should continue to refer to Core/expression normalization inverses.
+6. Implement the non-`expression_ref` inverse preprocess path in narrow pieces:
+   runtime untranslation of global registers, runtime trim unnormalization,
+   runtime-to-Core deindexing, and then any Core graph/let unnormalization that
+   is needed for display or diagnostics.
 
-7. After each code batch, build `src/bali-phy/bali-phy` from
+7. Keep graph/display conversion boundaries explicit. Do not add runtime
+   `unlet` / `subst_reg_vars` clones unless the project first defines a true
+   runtime-to-Core deindexing story; otherwise these names should continue to
+   refer to Core/expression normalization inverses.
+
+8. After each code batch, build `src/bali-phy/bali-phy` from
    `../build/gcc-16-debug-O`, run the relevant focused tests, and commit
    logically separate changes with `jj`.
