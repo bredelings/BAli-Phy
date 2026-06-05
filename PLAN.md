@@ -37,6 +37,8 @@ Completed so far:
   or runtime-code predicates directly.
 - Replaced non-evaluator `expression_at()` uses in MCMC, Prelude IORef, and
   reroot assertions with runtime-code predicates.
+- Reworked `regs_maybe_different_value()` to inspect `Runtime::Exp` directly
+  while preserving its narrow equal-integer shortcut.
 - Added `TODO.md` to capture delayed cleanup work.
 
 ## Evaluation Core
@@ -64,9 +66,9 @@ compatibility layers.
 
 3. `reg_heap::expression_at()` remains as a compatibility accessor over
    `closure::legacy_exp()`. It is no longer in evaluator loops, and the simple
-   `context_ref` and assertion/check call sites have been removed. Remaining
-   live uses are graph-register comparison/debug code, graph display naming,
-   and the accessor itself.
+   `context_ref`, assertion/check, and graph-register comparison call sites
+   have been removed. The remaining live use is graph display naming; other
+   mentions are comments and the compatibility accessor itself.
 
 4. `closure::legacy_exp()` and `Runtime::to_expression_ref()` remain necessary
    adapters. Long term they should be used at parser/model-generation/display
@@ -103,9 +105,8 @@ compatibility layers.
    reference-return behavior are clear. Rename to `_legacy` only if the churn is
    modest; otherwise keep temporary suffix comments current.
 
-4. Decide whether `regs_maybe_different_value()` should compare
-   `Runtime::Exp` directly or keep using legacy expression equality for now.
-   Graph display can stay legacy longer because it intentionally prints
+4. Keep graph display on legacy expression views unless/until there is a
+   runtime-native graph rendering path, because it intentionally prints
    expression-shaped output.
 
 5. Continue caller migration in focused batches: remaining `context_ptr`
