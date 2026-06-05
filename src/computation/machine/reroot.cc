@@ -123,8 +123,8 @@ void reg_heap::reroot_at(int t)
         assert(prog_results[r1] > 0);
         assert(prog_results[r2] > 0);
 
-        assert(is_interchangeable(expression_at(r1)));
-        assert(is_interchangeable(expression_at(r2)));
+        assert(is_interchangeable(closure_at(r1).get_code()));
+        assert(is_interchangeable(closure_at(r2).get_code()));
 
         assert(step_exists_in_root(s1));
         assert(step_exists_in_root(s2));
@@ -968,4 +968,3 @@ void reg_heap::maybe_unshare_regs(int t)
     else if (not is_root_token(parent_token(t)) or not tokens[t].flags.test(0))
         check_unshare_regs(t);
 }
-

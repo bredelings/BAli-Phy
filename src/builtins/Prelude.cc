@@ -552,7 +552,7 @@ extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
 
     // 3. Write the IORef
     auto& M = Args.memory();
-    assert(has_constructor(M.expression_at(r_ioref),"Data.IORef.IORef"));
+    assert(has_constructor(M.closure_at(r_ioref).get_code(),"Data.IORef.IORef"));
     if (not M.reg_is_contingent(r_ioref))
     {
 	// The IORef is non-contingent, but the value is contingent!
@@ -583,7 +583,7 @@ extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
 
     // 4. Write the IORef
     auto& M = Args.memory();
-    assert(has_constructor(M.expression_at(r_ioref),"Data.IORef.IORef"));
+    assert(has_constructor(M.closure_at(r_ioref).get_code(),"Data.IORef.IORef"));
     C.Env[0] = r_apply;
     M.set_C(r_ioref, std::move(C));
 
@@ -609,7 +609,7 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
 
     // 4. Write the IORef
     auto& M = Args.memory();
-    assert(has_constructor(M.expression_at(r_ioref),"Data.IORef.IORef"));
+    assert(has_constructor(M.closure_at(r_ioref).get_code(),"Data.IORef.IORef"));
     C.Env[0] = r_apply;
     M.set_C(r_ioref, std::move(C));
 

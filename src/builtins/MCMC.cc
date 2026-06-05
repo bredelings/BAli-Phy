@@ -1213,7 +1213,7 @@ extern "C" closure builtin_function_registerInterchangeable(OperationArgs& Args)
 
     r_ix = M.follow_reg_ref_no_force(r_ix);
 
-    assert(M.expression_at(r_ix).head().is_a<interchangeable>());
+    assert(is_interchangeable(M.closure_at(r_ix).get_code()));
 
     // 3. Create the effect
     object_ptr<RegisterInterchangeable> e(new RegisterInterchangeable{id, r_ix});
