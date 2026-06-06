@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <iosfwd>
@@ -13,6 +14,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <boost/variant2/variant.hpp>
 #include <cereal/types/memory.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/variant.hpp>
@@ -31,6 +33,8 @@ struct Operation;
 
 namespace Runtime
 {
+    namespace exp_variant = boost::variant2;
+
     struct Exp;
 
     struct Int;
@@ -196,7 +200,7 @@ namespace Runtime
 
     struct Exp
     {
-        using value_type = std::variant<
+        using value_type = exp_variant::variant<
             std::monostate,
             Int,
             Double,
@@ -254,7 +258,7 @@ namespace Runtime
 
         bool empty() const
         {
-            return std::holds_alternative<std::monostate>(value);
+            return exp_variant::holds_alternative<std::monostate>(value);
         }
 
         void clear()
@@ -328,7 +332,7 @@ namespace Runtime
         template <typename F>
         decltype(auto) visit(F&& f) const
         {
-            return std::visit([&](const auto& node) -> decltype(auto)
+            return exp_variant::visit([&](const auto& node) -> decltype(auto)
             {
                 using T = std::decay_t<decltype(node)>;
 
@@ -348,7 +352,131 @@ namespace Runtime
         }
 
         template <class Archive>
-        void serialize(Archive& ar) { ar(value); }
+        void save(Archive& ar) const
+        {
+            auto index = std::uint32_t(value.index());
+            ar(index);
+
+            exp_variant::visit([&](const auto& node)
+            {
+                using T = std::decay_t<decltype(node)>;
+                if constexpr (not std::is_same_v<T, std::monostate>)
+                    ar(node);
+            }, value);
+        }
+
+        template <class Archive>
+        void load(Archive& ar)
+        {
+            std::uint32_t index;
+            ar(index);
+
+            switch(index)
+            {
+            case 0: {
+                value = std::monostate{};
+                break;
+            }
+            case 1: {
+                Int node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 2: {
+                Double node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 3: {
+                LogDouble node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 4: {
+                Char node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 5: {
+                ObjectValue node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 6: {
+                IndexVar node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 7: {
+                RegRef node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 8: {
+                ExpPtr<String> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 9: {
+                ExpPtr<Integer> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 10: {
+                ExpPtr<Constructor> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 11: {
+                ExpPtr<GlobalVar> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 12: {
+                ExpPtr<Lambda> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 13: {
+                ExpPtr<Let> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 14: {
+                ExpPtr<Case> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 15: {
+                ExpPtr<App> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 16: {
+                ExpPtr<Trim> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            default:
+                throw std::runtime_error("Invalid Runtime::Exp archive tag");
+            }
+        }
     };
 
     bool operator==(const Exp&, const Exp&);
@@ -512,13 +640,13 @@ namespace Runtime
         {
             if constexpr (is_boxed_exp_node<T>::value)
             {
-                if (auto ptr = std::get_if<ExpPtr<T>>(&value))
+                if (auto ptr = exp_variant::get_if<ExpPtr<T>>(&value))
                     return ptr->get();
                 else
                     return nullptr;
             }
             else
-                return std::get_if<T>(&value);
+                return exp_variant::get_if<T>(&value);
         }
     }
 
@@ -527,7 +655,7 @@ namespace Runtime
     {
         static_assert(is_boxed_exp_node<T>::value, "Exp::ptr_to<T>() requires a boxed runtime AST node");
 
-        if (auto ptr = std::get_if<ExpPtr<T>>(&value))
+        if (auto ptr = exp_variant::get_if<ExpPtr<T>>(&value))
             return *ptr;
         else
             return {};

@@ -100,7 +100,7 @@ namespace Runtime
         if (x.value.index() != y.value.index())
             return false;
 
-        return std::visit([](const auto& a, const auto& b) -> bool
+        return exp_variant::visit([](const auto& a, const auto& b) -> bool
         {
             using A = std::decay_t<decltype(a)>;
             using B = std::decay_t<decltype(b)>;
