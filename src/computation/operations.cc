@@ -290,10 +290,10 @@ closure let_op(OperationArgs& Args)
 
             // 2. Substitute the new heap vars for the var vars in expression T and in the bodies
             for(int i=0;i<n_binds;i++)
-                M.set_C(C.Env[start+i], get_trimmed(closure(runtime_let->binds[i], C.Env)));
+                M.set_C(C.Env[start+i], get_trimmed(runtime_let->binds[i], C.Env));
 
-            C.set_code(runtime_let->body);
-            do_trim(C);
+            assert(runtime_let->body.to<Runtime::Trim>());
+            C = get_trimmed(runtime_let->body, C.Env);
             continue;
         }
 
