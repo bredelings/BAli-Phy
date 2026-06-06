@@ -699,6 +699,41 @@ namespace Runtime
     inline Exp::Exp(App node):value(ExpPtr<App>(new App(std::move(node)))) {}
     inline Exp::Exp(Trim node):value(ExpPtr<Trim>(new Trim(std::move(node)))) {}
 
+    inline int Exp::as_int() const
+    {
+        return as<Int>().value;
+    }
+
+    inline double Exp::as_double() const
+    {
+        return as<Double>().value;
+    }
+
+    inline log_double_t Exp::as_log_double() const
+    {
+        return as<LogDouble>().value;
+    }
+
+    inline char Exp::as_char() const
+    {
+        return as<Char>().value;
+    }
+
+    inline const std::string& Exp::as_string() const
+    {
+        return as<String>().value;
+    }
+
+    inline const integer& Exp::as_integer() const
+    {
+        return as<Integer>().value;
+    }
+
+    inline const ConstructorTag& Exp::as_constructor() const
+    {
+        return as<Constructor>().value;
+    }
+
     Exp apply(Exp, std::vector<Exp>);
     Exp apply_env_function(int, std::vector<Exp>);
     const Exp& rpair_first(const Exp&);

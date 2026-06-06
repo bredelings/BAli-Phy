@@ -203,41 +203,6 @@ namespace Runtime
             return false;
     }
 
-    int Exp::as_int() const
-    {
-        return as<Int>().value;
-    }
-
-    double Exp::as_double() const
-    {
-        return as<Double>().value;
-    }
-
-    log_double_t Exp::as_log_double() const
-    {
-        return as<LogDouble>().value;
-    }
-
-    char Exp::as_char() const
-    {
-        return as<Char>().value;
-    }
-
-    const std::string& Exp::as_string() const
-    {
-        return as<String>().value;
-    }
-
-    const integer& Exp::as_integer() const
-    {
-        return as<Integer>().value;
-    }
-
-    const ConstructorTag& Exp::as_constructor() const
-    {
-        return as<Constructor>().value;
-    }
-
     Exp apply(Exp function, vector<Exp> args)
     {
         args.insert(args.begin(), std::move(function));
