@@ -16,7 +16,7 @@ void closure::set_code(Runtime::Exp c)
 
 void closure::clear()
 {
-    code = {};
+    code.clear();
     Env.clear();
 }
 

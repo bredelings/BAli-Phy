@@ -228,11 +228,35 @@ namespace
 
         return E;
     }
+
+    R::Exp evaluate_e_op_arg(OperationArgs& Args, const R::Exp& arg_ref)
+    {
+        if (auto reg_ref = arg_ref.to<R::RegRef>())
+        {
+            return canonical_e_op_value(Args.evaluate_reg_to_closure(reg_ref->target).get_code());
+        }
+        else if (auto index_var = arg_ref.to<R::IndexVar>())
+        {
+            // In theory r_arg could change if r_i initially points to an index_var.
+            int r_i = index_var->index;
+            int r_arg = lookup_in_env(Args.current_closure().Env, r_i);
+
+            return canonical_e_op_value(Args.evaluate_reg_to_closure(r_arg).get_code());
+        }
+        else if (is_eop_exp(arg_ref))
+        {
+            return evaluate_e_op(Args, arg_ref);
+        }
+        else
+        {
+            return canonical_e_op_value(arg_ref);
+        }
+    }
 }
 
 R::Exp evaluate_e_op(OperationArgs& Args, const R::Exp& E)
 {
-    auto app = E.to<R::App>();
+    auto app = E.ptr_to<R::App>();
     assert(app);
 
     auto op_app = std::get_if<R::OperationApp>(&app->head);
@@ -250,41 +274,25 @@ R::Exp evaluate_e_op(OperationArgs& Args, const R::Exp& E)
     int n_args = app->args.size();
     auto f = op_app->head->e_op;
 
-    // Reserve space for the n_args arguments.
-    e_value_stack.resize(initial_size + n_args);
+    vector<R::Exp> args;
+    args.reserve(n_args);
 
     // Evaluate the arguments in left-to-right order.
     for(int i=0;i<n_args;i++)
     {
         const auto& arg_ref = app->args[i];
-        R::Exp arg;
-        if (auto reg_ref = arg_ref.to<R::RegRef>())
-        {
-            arg = canonical_e_op_value(Args.evaluate_reg_to_closure(reg_ref->target).get_code());
-        }
-        else if (auto index_var = arg_ref.to<R::IndexVar>())
-        {
-            // In theory r_arg could change if r_i initially points to an index_var.
-            int r_i = index_var->index;
-            int r_arg = lookup_in_env(Args.current_closure().Env, r_i);
-
-            arg = canonical_e_op_value(Args.evaluate_reg_to_closure(r_arg).get_code());
-        }
-        else if (is_eop_exp(arg_ref))
-        {
-            arg = evaluate_e_op(Args, arg_ref);
-        }
-        else
-        {
-            arg = canonical_e_op_value(arg_ref);
-        }
+        R::Exp arg = evaluate_e_op_arg(Args, arg_ref);
 
         assert(arg.is_value());
-        e_value_stack[initial_size+n_args-1-i] = std::move(arg);
+        args.push_back(std::move(arg));
     }
 
-    // Any new args pushed only the stack by evaluating arguments should be popped before we get here.
-    assert(e_value_stack.size() == initial_size + n_args);
+    // Any args pushed on the stack by evaluating arguments should be popped before we get here.
+    assert(e_value_stack.size() == initial_size);
+
+    e_value_stack.reserve(initial_size + n_args);
+    for(auto arg = args.rbegin(); arg != args.rend(); ++arg)
+        e_value_stack.emplace_back(std::move(*arg));
 
     // Compute the result.
     R::Exp result = f(e_value_stack);

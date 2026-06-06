@@ -251,7 +251,15 @@ namespace Runtime
             return std::holds_alternative<std::monostate>(value);
         }
 
+        void clear()
+        {
+            value.emplace<std::monostate>();
+        }
+
         explicit operator bool() const { return not empty(); }
+
+        template <typename T, typename... Args>
+        void emplace(Args&&... args);
 
         template <typename T>
         const T* to() const;
@@ -714,6 +722,15 @@ namespace Runtime
     inline Exp::Exp(Case node):value(ExpPtr<Case>(new Case(std::move(node)))) {}
     inline Exp::Exp(App node):value(ExpPtr<App>(new App(std::move(node)))) {}
     inline Exp::Exp(Trim node):value(ExpPtr<Trim>(new Trim(std::move(node)))) {}
+
+    template <typename T, typename... Args>
+    inline void Exp::emplace(Args&&... args)
+    {
+        if constexpr (is_boxed_exp_node<T>::value)
+            value.emplace<ExpPtr<T>>(new T(std::forward<Args>(args)...));
+        else
+            value.emplace<T>(std::forward<Args>(args)...);
+    }
 
     inline int Exp::as_int() const
     {
