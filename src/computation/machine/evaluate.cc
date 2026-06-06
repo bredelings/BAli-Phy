@@ -212,28 +212,11 @@ namespace
         }, app->head);
     }
 
-    R::Exp canonical_e_op_value(const R::Exp& E)
-    {
-        if (auto app = E.to<R::App>())
-        {
-            if (not std::holds_alternative<R::ConstructorApp>(app->head))
-                return E;
-
-            vector<R::Exp> args;
-            for(const auto& arg: app->args)
-                args.push_back(canonical_e_op_value(arg));
-
-            return R::App(app->head, std::move(args));
-        }
-
-        return E;
-    }
-
     R::Exp evaluate_e_op_arg(OperationArgs& Args, const R::Exp& arg_ref)
     {
         if (auto reg_ref = arg_ref.to<R::RegRef>())
         {
-            return canonical_e_op_value(Args.evaluate_reg_to_closure(reg_ref->target).get_code());
+            return Args.evaluate_reg_to_closure(reg_ref->target).get_code();
         }
         else if (auto index_var = arg_ref.to<R::IndexVar>())
         {
@@ -241,7 +224,7 @@ namespace
             int r_i = index_var->index;
             int r_arg = lookup_in_env(Args.current_closure().Env, r_i);
 
-            return canonical_e_op_value(Args.evaluate_reg_to_closure(r_arg).get_code());
+            return Args.evaluate_reg_to_closure(r_arg).get_code();
         }
         else if (is_eop_exp(arg_ref))
         {
@@ -249,7 +232,7 @@ namespace
         }
         else
         {
-            return canonical_e_op_value(arg_ref);
+            return arg_ref;
         }
     }
 }
