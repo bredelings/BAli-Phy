@@ -24,6 +24,8 @@
 #include "computation/loader.H"
 #include "computation/object.H"
 #include "util/OrderedDouble.H"
+#include "util/cereal/intrusive_ptr.H"
+#include "util/intrusive-counted.H"
 
 struct Operation;
 
@@ -48,6 +50,9 @@ namespace Runtime
     struct Case;
     struct App;
     struct Trim;
+
+    template <typename T>
+    using ExpPtr = boost::intrusive_ptr<const T>;
 
     struct Int
     {
@@ -165,23 +170,23 @@ namespace Runtime
     };
 
     template <typename T>
-    struct is_shared_exp_node: std::false_type {};
+    struct is_boxed_exp_node: std::false_type {};
 
-    template <> struct is_shared_exp_node<String>: std::true_type {};
-    template <> struct is_shared_exp_node<Integer>: std::true_type {};
-    template <> struct is_shared_exp_node<Constructor>: std::true_type {};
-    template <> struct is_shared_exp_node<GlobalVar>: std::true_type {};
-    template <> struct is_shared_exp_node<Lambda>: std::true_type {};
-    template <> struct is_shared_exp_node<Let>: std::true_type {};
-    template <> struct is_shared_exp_node<Case>: std::true_type {};
-    template <> struct is_shared_exp_node<App>: std::true_type {};
-    template <> struct is_shared_exp_node<Trim>: std::true_type {};
-
-    template <typename T>
-    struct is_shared_exp_storage: std::false_type {};
+    template <> struct is_boxed_exp_node<String>: std::true_type {};
+    template <> struct is_boxed_exp_node<Integer>: std::true_type {};
+    template <> struct is_boxed_exp_node<Constructor>: std::true_type {};
+    template <> struct is_boxed_exp_node<GlobalVar>: std::true_type {};
+    template <> struct is_boxed_exp_node<Lambda>: std::true_type {};
+    template <> struct is_boxed_exp_node<Let>: std::true_type {};
+    template <> struct is_boxed_exp_node<Case>: std::true_type {};
+    template <> struct is_boxed_exp_node<App>: std::true_type {};
+    template <> struct is_boxed_exp_node<Trim>: std::true_type {};
 
     template <typename T>
-    struct is_shared_exp_storage<std::shared_ptr<const T>>: std::true_type {};
+    struct is_boxed_exp_storage: std::false_type {};
+
+    template <typename T>
+    struct is_boxed_exp_storage<ExpPtr<T>>: std::true_type {};
     
     struct Exp
     {
@@ -194,15 +199,15 @@ namespace Runtime
             ObjectValue,
             IndexVar,
             RegRef,
-            std::shared_ptr<const String>,
-            std::shared_ptr<const Integer>,
-            std::shared_ptr<const Constructor>,
-            std::shared_ptr<const GlobalVar>,
-            std::shared_ptr<const Lambda>,
-            std::shared_ptr<const Let>,
-            std::shared_ptr<const Case>,
-            std::shared_ptr<const App>,
-            std::shared_ptr<const Trim>
+            ExpPtr<String>,
+            ExpPtr<Integer>,
+            ExpPtr<Constructor>,
+            ExpPtr<GlobalVar>,
+            ExpPtr<Lambda>,
+            ExpPtr<Let>,
+            ExpPtr<Case>,
+            ExpPtr<App>,
+            ExpPtr<Trim>
         >;
 
         value_type value;
@@ -313,7 +318,7 @@ namespace Runtime
                     std::abort();
                     return std::forward<F>(f)(*static_cast<const Int*>(nullptr));
                 }
-                else if constexpr (is_shared_exp_storage<T>::value)
+                else if constexpr (is_boxed_exp_storage<T>::value)
                 {
                     assert(node);
                     return std::forward<F>(f)(*node);
@@ -360,7 +365,7 @@ namespace Runtime
         explicit operator std::vector<char>() const;
     };
 
-    struct String
+    struct String: intrusive_counted<String>
     {
         std::string value;
 
@@ -373,7 +378,7 @@ namespace Runtime
         void serialize(Archive& ar) { ar(value); }
     };
 
-    struct Integer
+    struct Integer: intrusive_counted<Integer>
     {
         integer value;
 
@@ -416,7 +421,7 @@ namespace Runtime
         void serialize(Archive& ar) { ar(f_name, arity); }
     };
 
-    struct Constructor
+    struct Constructor: intrusive_counted<Constructor>
     {
         ConstructorTag value;
 
@@ -486,9 +491,9 @@ namespace Runtime
         }
         else
         {
-            if constexpr (is_shared_exp_node<T>::value)
+            if constexpr (is_boxed_exp_node<T>::value)
             {
-                if (auto ptr = std::get_if<std::shared_ptr<const T>>(&value))
+                if (auto ptr = std::get_if<ExpPtr<T>>(&value))
                     return ptr->get();
                 else
                     return nullptr;
@@ -498,7 +503,7 @@ namespace Runtime
         }
     }
 
-    struct GlobalVar
+    struct GlobalVar: intrusive_counted<GlobalVar>
     {
         std::string name;
         int index = 0;
@@ -512,7 +517,7 @@ namespace Runtime
         void serialize(Archive& ar) { ar(name, index); }
     };
 
-    struct Lambda
+    struct Lambda: intrusive_counted<Lambda>
     {
         Exp body;
 
@@ -525,7 +530,7 @@ namespace Runtime
         void serialize(Archive& ar) { ar(body); }
     };
 
-    struct Let
+    struct Let: intrusive_counted<Let>
     {
         std::vector<Exp> binds;
         Exp body;
@@ -581,7 +586,7 @@ namespace Runtime
         void serialize(Archive& ar) { ar(pattern, body); }
     };
 
-    struct Case
+    struct Case: intrusive_counted<Case>
     {
         Exp object;
         std::vector<Alt> alts;
@@ -656,7 +661,7 @@ namespace Runtime
 
     using AppHead = std::variant<FunctionApply, ConstructorApp, OperationApp>;
 
-    struct App
+    struct App: intrusive_counted<App>
     {
         AppHead head;
         std::vector<Exp> args;
@@ -670,7 +675,7 @@ namespace Runtime
         void serialize(Archive& ar) { ar(head, args); }
     };
 
-    struct Trim
+    struct Trim: intrusive_counted<Trim>
     {
         std::vector<int> indices;
         Exp body;

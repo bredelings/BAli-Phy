@@ -319,7 +319,12 @@ int reg_heap::reg_for_id(const Runtime::GlobalVar& x)
 	    set_C(R, preprocess(code) );
 	}
 	else
-	    throw myexception()<<"Can't translate undefined identifier '"<<x<<"' in expression!";
+	{
+            auto name = x.name;
+            if (x.index != 0)
+                name += "#" + std::to_string(x.index);
+	    throw myexception()<<"Can't translate undefined identifier '"<<name<<"' in expression!";
+	}
     }
 
     return loc->second;

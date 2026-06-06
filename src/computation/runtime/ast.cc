@@ -19,8 +19,8 @@ namespace Runtime
         template <typename T>
         Exp::value_type make_exp_value(T node)
         {
-            if constexpr (is_shared_exp_node<T>::value)
-                return std::make_shared<const T>(std::move(node));
+            if constexpr (is_boxed_exp_node<T>::value)
+                return ExpPtr<T>(new T(std::move(node)));
             else
                 return node;
         }
@@ -131,7 +131,7 @@ namespace Runtime
             {
                 if constexpr (std::is_same_v<A, std::monostate>)
                     return true;
-                else if constexpr (is_shared_exp_storage<A>::value)
+                else if constexpr (is_boxed_exp_storage<A>::value)
                     return *a == *b;
                 else
                     return a == b;

@@ -353,6 +353,22 @@ namespace
         check_archive_roundtrip(case_);
     }
 
+    void check_intrusive_ptr_serialization_preserves_aliases()
+    {
+        Runtime::Exp shared = Runtime::String("shared");
+        Runtime::Exp before = Runtime::App(Runtime::ConstructorApp("Pair", 2), {shared, shared});
+
+        auto before_app = before.to<Runtime::App>();
+        require(before_app->args[0].to<Runtime::String>() == before_app->args[1].to<Runtime::String>(),
+                "test setup should share one boxed Runtime::String node");
+
+        auto after = archive_roundtrip(before);
+        auto after_app = after.to<Runtime::App>();
+        require(bool(after_app), "alias serialization test should round-trip to a Runtime::App");
+        require(after_app->args[0].to<Runtime::String>() == after_app->args[1].to<Runtime::String>(),
+                "Runtime intrusive pointer serialization should preserve aliases");
+    }
+
     void check_runtime_only_operation_app_serialization()
     {
         Runtime::Exp app = Runtime::App(Runtime::OperationApp(std::make_shared<Operation>(runtime_only_test_operation, "runtimeOnly")),
@@ -441,6 +457,7 @@ int main(int argc, char** argv)
     check_runtime_atomic_values();
     check_runtime_vector_conversions();
     check_constructor_serialization();
+    check_intrusive_ptr_serialization_preserves_aliases();
     check_runtime_only_operation_app_serialization();
     check_runtime_exp_equality();
 }
