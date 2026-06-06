@@ -7,7 +7,8 @@ using std::vector;
 
 extern "C" R::Exp simple_function_pack(vector<R::Exp>& args)
 {
-    auto etext = get_arg(args).as_<R::RVector>();
+    auto arg = get_arg(args);
+    const auto& etext = arg.as_<R::RVector>();
 
     std::string s;
     s.resize(etext.size());

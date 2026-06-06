@@ -4,8 +4,10 @@
 
 extern "C" closure builtin_function_get_bounds(OperationArgs& Args)
 {
-    auto L = Args.evaluate_slot_to_value(0).as_<R::RMaybe>();
-    auto U = Args.evaluate_slot_to_value(1).as_<R::RMaybe>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    const auto& L = arg0.as_<R::RMaybe>();
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    const auto& U = arg1.as_<R::RMaybe>();
 
     Box<bounds<double>> b;
 
@@ -19,8 +21,10 @@ extern "C" closure builtin_function_get_bounds(OperationArgs& Args)
 
 extern "C" closure builtin_function_get_integer_bounds(OperationArgs& Args)
 {
-    auto L = Args.evaluate_slot_to_value(0).as_<R::RMaybe>();
-    auto U = Args.evaluate_slot_to_value(1).as_<R::RMaybe>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    const auto& L = arg0.as_<R::RMaybe>();
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    const auto& U = arg1.as_<R::RMaybe>();
 
     Box<bounds<int>> b;
 

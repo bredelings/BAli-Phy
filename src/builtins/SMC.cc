@@ -939,7 +939,8 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 
 extern "C" closure builtin_function_trace_to_trees(OperationArgs& Args)
 {
-    auto trace = Args.evaluate_slot_to_value(0).as_<R::RVector>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    const auto& trace = arg0.as_<R::RVector>();
 
     std::ostringstream s;
 

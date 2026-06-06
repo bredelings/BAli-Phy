@@ -279,8 +279,10 @@ extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value(0).as_int();
-    auto ps = Args.evaluate_slot_to_value(1).as_<R::RVector>();
-    auto ks = Args.evaluate_slot_to_value(2).as_<R::RVector>();
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    const auto& ps = arg1.as_<R::RVector>();
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    const auto& ks = arg2.as_<R::RVector>();
 
     if (ps.size() != ks.size()) throw myexception()<<"multinomial_density: |ps| != |ks|";
 

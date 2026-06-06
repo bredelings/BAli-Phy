@@ -1286,7 +1286,8 @@ extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args
 // taxonAgesRaw :: R::RVector CPPString -> CPPString -> Int (0/1) -> R::RVector Double
 extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
 {
-    auto labels = Args.evaluate_slot_to_value(0).as_<R::RVector>();
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    const auto& labels = arg0.as_<R::RVector>();
     int n = labels.size();
 
     string pattern = Args.evaluate_slot_to_value(1).as_string();

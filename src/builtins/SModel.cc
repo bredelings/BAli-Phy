@@ -424,7 +424,7 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
     const Matrix& R1 = arg3.as_<Box<Matrix>>();
 
     auto arg4 = Args.evaluate_slot_to_value(4);
-    auto pi1 = arg4.as_<R::RVector>();
+    const auto& pi1 = arg4.as_<R::RVector>();
 
     // Compute the average rate at equilibrium for R1.
 //    double rate = 0;
@@ -1111,7 +1111,7 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto pi1 = arg1.as_<R::RVector>();
+    const auto& pi1 = arg1.as_<R::RVector>();
 
     int nuc_size = T.getNucleotides().size();
 
@@ -1119,13 +1119,13 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 	throw myexception()<<"f3x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto pi2 = arg2.as_<R::RVector>();
+    const auto& pi2 = arg2.as_<R::RVector>();
 
     if (pi2.size() != nuc_size)
 	throw myexception()<<"f3x4_frequencies:site 2:expected "<<nuc_size<<" frequencies, but got "<<pi2.size()<<"!";
 
     auto arg3 = Args.evaluate_slot_to_value(3);
-    auto pi3 = arg3.as_<R::RVector>();
+    const auto& pi3 = arg3.as_<R::RVector>();
 
     if (pi3.size() != nuc_size)
 	throw myexception()<<"f3x4_frequencies:site 3:expected "<<nuc_size<<" frequencies, but got "<<pi3.size()<<"!";
@@ -1158,7 +1158,7 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto pi1 = arg1.as_<R::RVector>();
+    const auto& pi1 = arg1.as_<R::RVector>();
 
     int nuc_size = D.getNucleotides().size();
 
@@ -1166,7 +1166,7 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
 	throw myexception()<<"f2x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto pi2 = arg2.as_<R::RVector>();
+    const auto& pi2 = arg2.as_<R::RVector>();
 
     if (pi2.size() != nuc_size)
 	throw myexception()<<"f2x4_frequencies:site 2:expected "<<nuc_size<<" frequencies, but got "<<pi2.size()<<"!";

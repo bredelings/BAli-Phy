@@ -408,13 +408,15 @@ extern "C" R::Exp simple_function_cJust(vector<R::Exp>& args)
 
 extern "C" R::Exp simple_function_cIsJust(vector<R::Exp>& args)
 {
-    auto x = get_arg(args).as_<R::RMaybe>();
+    auto arg = get_arg(args);
+    const auto& x = arg.as_<R::RMaybe>();
     return bool(x);
 }
 
 extern "C" R::Exp simple_function_cFromJust(vector<R::Exp>& args)
 {
-    auto maybe = get_arg(args).as_<R::RMaybe>();
+    auto arg = get_arg(args);
+    const auto& maybe = arg.as_<R::RMaybe>();
     return *maybe;
 }
 
