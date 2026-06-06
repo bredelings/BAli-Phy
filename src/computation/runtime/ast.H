@@ -449,7 +449,7 @@ namespace Runtime
         auto ptr = to<ObjectValue>();
         if (not ptr)
             throw std::runtime_error("Runtime value is not an ObjectValue");
-        return *convert<T>(ptr->value);
+        return *convert<T>(ptr->value.get());
     }
 
     template <DerivedFromObject T>
