@@ -157,10 +157,10 @@ static closure alts_op(OperationArgs& Args, const closure::Env_t& Env, const clo
 	throw myexception()<<"Case argument is a lambda in '"<<Runtime::print(Runtime::Exp(runtime_case))<<"'";
 #endif
 
-    closure result;
-    result.Env = Env;
+    const Runtime::Exp* result_code = nullptr;
+    closure::Env_t result_env = Env;
 
-    for(int i=0;i<L and not result;i++)
+    for(int i=0;i<L and not result_code;i++)
     {
         if (matches_pattern(object, runtime_case.alts[i].pattern))
         {
@@ -168,29 +168,28 @@ static closure alts_op(OperationArgs& Args, const closure::Env_t& Env, const clo
             if (auto object_constructor = constructor_value(object.get_code()))
                 assert(constructor_n_args(object.get_code()) == object_constructor->n_args());
 #endif	
-            result.set_code(runtime_case.alts[i].body);
+            result_code = &runtime_case.alts[i].body;
 
             int n_args = Runtime::pattern_arity(runtime_case.alts[i].pattern);
             for(int j=0;j<n_args;j++)
             {
                 auto field = object.slot(j);
                 if (auto reg_ref = field.to<Runtime::RegRef>())
-                    result.Env.push_back(reg_ref->target);
+                    result_env.push_back(reg_ref->target);
                 else
-                    result.Env.push_back(Args.allocate(closure(std::move(field))));
+                    result_env.push_back(Args.allocate(closure(std::move(field))));
             }
         }
     }
 
-    if (not result)
+    if (not result_code)
 #ifdef NDEBUG
 	throw myexception()<<"Case: object '"<<object.get_code()<<"' doesn't match any alternative";
 #else
         throw myexception()<<"Case: object '"<<object.get_code()<<"' doesn't match any alternative in '"<<Runtime::print(Runtime::Exp(runtime_case))<<"'";
 #endif
 
-    // Trim the result.
-    return get_trimmed(result);
+    return get_trimmed(*result_code, result_env);
 }
 
 bool is_seq(const Runtime::Case& C)
@@ -199,21 +198,16 @@ bool is_seq(const Runtime::Case& C)
 }
 
 // Should we do this transformation before runtime?
-closure seq_op(OperationArgs& Args, const Runtime::Case& runtime_case)
+closure seq_op(OperationArgs& Args, const Runtime::ExpPtr<Runtime::Case>& runtime_case)
 {
-    assert(is_seq(runtime_case));
-    Runtime::Exp runtime_body = runtime_case.alts[0].body;
+    assert(runtime_case);
+    assert(is_seq(*runtime_case));
 
     // Force x
-    Args.evaluate_code_force(runtime_case.object);
+    Args.evaluate_code_force(runtime_case->object);
 
-    // Get the current Env -- AFTER we force x, so GC can't invalidate it.
-    closure result;
-    result.Env = Args.current_closure().Env;
-    result.set_code(std::move(runtime_body));
-
-    // Trim the result.
-    return get_trimmed( std::move(result) );
+    // Get the current Env after forcing x, so GC cannot invalidate it.
+    return get_trimmed(runtime_case->alts[0].body, Args.current_closure().Env);
 }
 
 closure case_op(OperationArgs& Args)
@@ -228,7 +222,7 @@ closure case_op(OperationArgs& Args)
     // Handle case x of _ -> E = x `seq` E
     {
         if (is_seq(*runtime_case))
-            return seq_op(Args, *runtime_case);
+            return seq_op(Args, runtime_case);
     }
 
     const auto& in_object = runtime_case->object;

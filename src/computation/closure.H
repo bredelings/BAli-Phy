@@ -109,19 +109,19 @@ public:
 
     // Constructing from runtime code.
     closure(Runtime::Exp e)
-        :closure()
+        :code(std::move(e))
     {
-        set_code(std::move(e));
     }
 
     closure(Runtime::Exp e, const Env_t& E)
-	:closure(std::move(e))
+        :code(std::move(e)),
+         Env(E)
     {
-        Env = E;
     }
 
     closure(Runtime::Exp e, std::initializer_list<int> E)
-	:closure(std::move(e), Env_t(E))
+        :code(std::move(e)),
+         Env(E)
     { }
 
     // Builtin-type arguments
@@ -187,6 +187,8 @@ inline int closure::lookup_in_env(int i) const {return ::lookup_in_env(Env,i);}
 closure get_trimmed(const closure& C);
 
 closure get_trimmed(closure&& C);
+
+closure get_trimmed(const Runtime::Exp& code, const closure::Env_t& Env);
 
 void do_trim(closure& C);
 
