@@ -182,6 +182,12 @@ namespace Runtime
     template <> struct is_boxed_exp_node<App>: std::true_type {};
     template <> struct is_boxed_exp_node<Trim>: std::true_type {};
 
+    template <typename T, std::enable_if_t<is_boxed_exp_node<T>::value, int> = 0>
+    void intrusive_ptr_add_ref(const T*);
+
+    template <typename T, std::enable_if_t<is_boxed_exp_node<T>::value, int> = 0>
+    void intrusive_ptr_release(const T*);
+
     template <typename T>
     struct is_boxed_exp_storage: std::false_type {};
 
@@ -722,6 +728,18 @@ namespace Runtime
     inline Exp::Exp(Case node):value(ExpPtr<Case>(new Case(std::move(node)))) {}
     inline Exp::Exp(App node):value(ExpPtr<App>(new App(std::move(node)))) {}
     inline Exp::Exp(Trim node):value(ExpPtr<Trim>(new Trim(std::move(node)))) {}
+
+    template <typename T, std::enable_if_t<is_boxed_exp_node<T>::value, int>>
+    inline void intrusive_ptr_add_ref(const T* ptr)
+    {
+        ptr->add_intrusive_ref();
+    }
+
+    template <typename T, std::enable_if_t<is_boxed_exp_node<T>::value, int>>
+    inline void intrusive_ptr_release(const T* ptr)
+    {
+        ptr->release_intrusive_ref();
+    }
 
     template <typename T, typename... Args>
     inline void Exp::emplace(Args&&... args)
