@@ -225,13 +225,6 @@ namespace
 
             return R::App(app->head, std::move(args));
         }
-        else if (auto object_value = E.to<R::ObjectValue>())
-        {
-            if (auto s = dynamic_cast<const ::String*>(object_value->value.get()))
-                return R::String(s->value());
-            else if (auto i = dynamic_cast<const ::Integer*>(object_value->value.get()))
-                return R::Integer(i->value());
-        }
 
         return E;
     }
