@@ -14,32 +14,10 @@ using std::vector;
 namespace Runtime
 {
 
-    namespace
-    {
-        template <typename T>
-        Exp::value_type make_exp_value(T node)
-        {
-            if constexpr (is_boxed_exp_node<T>::value)
-                return ExpPtr<T>(new T(std::move(node)));
-            else
-                return node;
-        }
-
-    }
-
     Exp::Exp(bool x):Exp(Constructor(x ? bool_true_name : bool_false_name, 0)) {}
     Exp::Exp(std::string x):Exp(String(std::move(x))) {}
     Exp::Exp(const char* x):Exp(String(x)) {}
     Exp::Exp(integer x):Exp(Integer(std::move(x))) {}
-    Exp::Exp(String node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(Integer node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(Constructor node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(GlobalVar node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(Lambda node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(Let node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(Case node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(App node):value(make_exp_value(std::move(node))) {}
-    Exp::Exp(Trim node):value(make_exp_value(std::move(node))) {}
 
     bool ObjectValue::operator==(const ObjectValue& object_value) const
     {

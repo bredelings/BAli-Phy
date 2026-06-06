@@ -187,7 +187,7 @@ namespace Runtime
 
     template <typename T>
     struct is_boxed_exp_storage<ExpPtr<T>>: std::true_type {};
-    
+
     struct Exp
     {
         using value_type = std::variant<
@@ -688,6 +688,16 @@ namespace Runtime
         template <class Archive>
         void serialize(Archive& ar) { ar(indices, body); }
     };
+
+    inline Exp::Exp(String node):value(ExpPtr<String>(new String(std::move(node)))) {}
+    inline Exp::Exp(Integer node):value(ExpPtr<Integer>(new Integer(std::move(node)))) {}
+    inline Exp::Exp(Constructor node):value(ExpPtr<Constructor>(new Constructor(std::move(node)))) {}
+    inline Exp::Exp(GlobalVar node):value(ExpPtr<GlobalVar>(new GlobalVar(std::move(node)))) {}
+    inline Exp::Exp(Lambda node):value(ExpPtr<Lambda>(new Lambda(std::move(node)))) {}
+    inline Exp::Exp(Let node):value(ExpPtr<Let>(new Let(std::move(node)))) {}
+    inline Exp::Exp(Case node):value(ExpPtr<Case>(new Case(std::move(node)))) {}
+    inline Exp::Exp(App node):value(ExpPtr<App>(new App(std::move(node)))) {}
+    inline Exp::Exp(Trim node):value(ExpPtr<Trim>(new Trim(std::move(node)))) {}
 
     Exp apply(Exp, std::vector<Exp>);
     Exp apply_env_function(int, std::vector<Exp>);
