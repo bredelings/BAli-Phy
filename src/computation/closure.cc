@@ -62,44 +62,6 @@ int closure::reg_for_slot(int i) const
         std::abort();
 }
 
-closure get_trimmed(const closure& C)
-{
-    return get_trimmed(C.get_code(), C.Env);
-}
-
-void do_trim(closure& C)
-{
-    assert(C.has_code());
-
-    vector<int> keep;
-    if (const auto* trim = C.get_code().to<Runtime::Trim>())
-    {
-        keep = trim->indices;
-        C.set_code(trim->body);
-
-        assert(not C.get_code().to<Runtime::Trim>());
-    }
-    else
-        return;
-
-    // Since environments are indexed backwards
-    for(int i=0;i<keep.size();i++)
-    {
-        int k = keep[keep.size()-1-i];
-        C.Env[i] = C.lookup_in_env(k);
-    }
-    C.Env.resize(keep.size());
-
-
-}
-
-closure get_trimmed(closure&& C)
-{
-    do_trim(C);
-
-    return std::move(C);
-}
-
 closure get_trimmed(const Runtime::Exp& code, const closure::Env_t& Env)
 {
     assert(not code.empty());

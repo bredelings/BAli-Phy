@@ -96,9 +96,7 @@ namespace
 
     void check_runtime_closure_trim()
     {
-        closure C(Runtime::Trim({0, 2}, Runtime::IndexVar(1)), {10, 20, 30});
-
-        do_trim(C);
+        auto C = get_trimmed(Runtime::Trim({0, 2}, Runtime::IndexVar(1)), {10, 20, 30});
 
         require(C.has_code(), "trimmed runtime closure should preserve Runtime::Exp code");
         auto body = C.get_code().to<Runtime::IndexVar>();
