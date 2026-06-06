@@ -222,24 +222,23 @@ closure case_op(OperationArgs& Args)
     total_case_op++;
 
     assert(Args.current_closure().has_code());
-    auto runtime_case_ptr = Args.current_closure().get_code().to<Runtime::Case>();
-    assert(runtime_case_ptr);
-    Runtime::Case runtime_case = *runtime_case_ptr;
+    auto runtime_case = Args.current_closure().get_code().ptr_to<Runtime::Case>();
+    assert(runtime_case);
 
     // Handle case x of _ -> E = x `seq` E
     {
-        if (is_seq(runtime_case))
-            return seq_op(Args, runtime_case);
+        if (is_seq(*runtime_case))
+            return seq_op(Args, *runtime_case);
     }
 
-    const auto& in_object = runtime_case.object;
+    const auto& in_object = runtime_case->object;
 
     // Resizing of the memory can occur here, invalidating previously computed pointers
     // to closures.  The *index* within the memory shouldn't change, though.
     const closure object = is_eop_exp(in_object) ? closure(evaluate_e_op(Args, in_object)) : Args.evaluate_code_to_closure(in_object);
     closure::Env_t Env = Args.current_closure().Env;
 
-    return alts_op(Args, Env, object, runtime_case);
+    return alts_op(Args, Env, object, *runtime_case);
 }
 
 /*

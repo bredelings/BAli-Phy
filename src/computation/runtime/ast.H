@@ -256,6 +256,11 @@ namespace Runtime
         template <typename T>
         const T* to() const;
 
+        // For boxed runtime AST nodes. This keeps the node alive if evaluation
+        // replaces or moves the closure containing this Exp.
+        template <typename T>
+        ExpPtr<T> ptr_to() const;
+
         template <typename T>
         bool is_a() const { return to<T>(); }
 
@@ -501,6 +506,17 @@ namespace Runtime
             else
                 return std::get_if<T>(&value);
         }
+    }
+
+    template <typename T>
+    ExpPtr<T> Exp::ptr_to() const
+    {
+        static_assert(is_boxed_exp_node<T>::value, "Exp::ptr_to<T>() requires a boxed runtime AST node");
+
+        if (auto ptr = std::get_if<ExpPtr<T>>(&value))
+            return *ptr;
+        else
+            return {};
     }
 
     struct GlobalVar: intrusive_counted<GlobalVar>
