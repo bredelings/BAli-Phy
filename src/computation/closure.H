@@ -34,6 +34,8 @@ public:
 
     Runtime::Exp slot(int i) const;
 
+    const Runtime::Exp& slot_ref(int i) const { return code.slot_ref(i); }
+
     int reg_for_slot(int i) const;
 
     bool is_reg_ref() const

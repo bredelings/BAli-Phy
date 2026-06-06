@@ -39,6 +39,8 @@ public:
 
     Runtime::Exp slot(int slot_index) const;
 
+    const Runtime::Exp& slot_ref(int slot_index) const;
+
     std::optional<int> reg_for_code(const Runtime::Exp&) const;
 
     int reg_for_slot(int slot) const;

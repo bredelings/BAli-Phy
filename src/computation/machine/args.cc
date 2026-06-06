@@ -14,6 +14,11 @@ Runtime::Exp OperationArgs::slot(int slot_index) const
     return current_closure().slot(slot_index);
 }
 
+const Runtime::Exp& OperationArgs::slot_ref(int slot_index) const
+{
+    return current_closure().slot_ref(slot_index);
+}
+
 optional<int> OperationArgs::reg_for_code(const Runtime::Exp& E) const
 {
     return current_closure().reg_for_code(E);
@@ -37,12 +42,20 @@ const closure& OperationArgs::evaluate_reg_to_closure_(int r2)
 
 closure OperationArgs::evaluate_slot_to_closure(int slot_index)
 {
-    return evaluate_code_to_closure(slot(slot_index));
+    const auto& E = slot_ref(slot_index);
+    if (auto r = reg_for_code(E))
+        return evaluate_reg_to_closure(*r);
+    else
+        return E;
 }
 
 closure OperationArgs::evaluate_slot_to_closure_(int slot_index)
 {
-    return evaluate_code_to_closure_(slot(slot_index));
+    const auto& E = slot_ref(slot_index);
+    if (auto r = reg_for_code(E))
+        return evaluate_reg_to_closure_(*r);
+    else
+        return E;
 }
 
 closure OperationArgs::evaluate_code_to_closure(const Runtime::Exp& E)
@@ -89,22 +102,46 @@ int OperationArgs::evaluate_slot_use(int slot)
 
 Runtime::Exp OperationArgs::evaluate_slot_to_value(int slot)
 {
-    closure result = evaluate_slot_to_closure(slot);
+    const auto& E = slot_ref(slot);
+    if (auto r = reg_for_code(E))
+    {
+        const closure& result = evaluate_reg_to_closure(*r);
 #ifndef NDEBUG
-    if (result.get_code().to<Runtime::Lambda>())
-	throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
+        if (result.get_code().to<Runtime::Lambda>())
+            throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
 #endif
-    return result.get_code();
+        return result.get_code();
+    }
+    else
+    {
+#ifndef NDEBUG
+        if (E.to<Runtime::Lambda>())
+            throw myexception()<<"Evaluating lambda as object: "<<E.print();
+#endif
+        return E;
+    }
 }
 
 Runtime::Exp OperationArgs::evaluate_slot_to_value_(int slot)
 {
-    closure result = evaluate_slot_to_closure_(slot);
+    const auto& E = slot_ref(slot);
+    if (auto r = reg_for_code(E))
+    {
+        const closure& result = evaluate_reg_to_closure_(*r);
 #ifndef NDEBUG
-    if (result.get_code().to<Runtime::Lambda>())
-	throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
+        if (result.get_code().to<Runtime::Lambda>())
+            throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
 #endif
-    return result.get_code();
+        return result.get_code();
+    }
+    else
+    {
+#ifndef NDEBUG
+        if (E.to<Runtime::Lambda>())
+            throw myexception()<<"Evaluating lambda as object: "<<E.print();
+#endif
+        return E;
+    }
 }
 
 int OperationArgs::evaluate_reg_unchangeable(int r)
