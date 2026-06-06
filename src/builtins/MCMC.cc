@@ -323,7 +323,8 @@ extern "C" closure builtin_function_incDecMHRaw(OperationArgs& Args)
     if (log_verbose >= 3) std::cerr<<"\n\n[incDecMH] <"<<x_reg<<">\n";
 
     //------------- 1b. Get context index --------------
-    auto range = Args.evaluate_slot_to_value(1).as_<Bounds<int>>();
+    auto range_arg = Args.evaluate_slot_to_value(1);
+    const auto& range = range_arg.as_<Bounds<int>>();
 
     //------------- 1c. Get context index --------------
     int c1 = Args.evaluate_slot_to_value(2).as_int();

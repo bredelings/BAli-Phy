@@ -1878,7 +1878,7 @@ extern "C" closure builtin_function_emission_pr_for_reads01(OperationArgs& Args)
     R::RVector haplotypes = haplotypes_ptr.list_to_vector();
 
     // 4. weights = R::RVector Double
-    auto weights = evaluate_slot(C0, 4).as_<R::RVector>();
+    const auto& weights = evaluate_slot(C0, 4).as_<R::RVector>();
 
     // 5. error_rate = double
     double error_rate = evaluate_slot(C0, 5).as_double();
@@ -2017,7 +2017,7 @@ extern "C" closure builtin_function_propose_haplotypes_from_plaf(OperationArgs& 
     auto& frequencies = arg4.as_<R::RVector>();
 
     // 4. Mixture weights = R::RVector of double.
-    auto weights1 = evaluate_slot(C, 4).as_<R::RVector>();
+    const auto& weights1 = evaluate_slot(C, 4).as_<R::RVector>();
 
     // 5. reads = R::RVector of RPair of Int
     auto arg6 = evaluate_slot(C, 5);
@@ -2134,7 +2134,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
 
     // 5. Mixture weights = R::RVector of double.
     constexpr int weight_slot = 5;
-    auto weights1 = evaluate_slot(C0, weight_slot).as_<R::RVector>();
+    const auto& weights1 = evaluate_slot(C0, weight_slot).as_<R::RVector>();
 
     // 6. reads = R::RVector of RPair of Int
     auto arg6 = evaluate_slot(C0, 6);
@@ -2170,7 +2170,7 @@ extern "C" closure builtin_function_propose_weights_and_haplotypes_from_plaf(Ope
     if (N >= 2)
         w_ratio *= shift_laplace(C2, titre_regs[1], 0.125);
 
-    auto weights2 = evaluate_slot(C2, weight_slot).as_<R::RVector>();
+    const auto& weights2 = evaluate_slot(C2, weight_slot).as_<R::RVector>();
 
     //---------- Compute emission probabilities for the two weight vectors -----------//
 
@@ -2587,7 +2587,7 @@ extern "C" closure builtin_function_resample_haplotypes_from_panel(OperationArgs
     double miscopy_prob = evaluate_slot(C,6).as_double();
 
     // 7. Mixture weights = R::RVector of double.
-    auto weights = evaluate_slot(C, 7).as_<R::RVector>();
+    const auto& weights = evaluate_slot(C, 7).as_<R::RVector>();
 
     // 8. reads = R::RVector of RPair of Int
     auto arg6 = evaluate_slot(C, 8);
@@ -2674,7 +2674,7 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
 
     // 8. Mixture weights = R::RVector of double.
     constexpr int weight_slot = 8;
-    auto weights1 = evaluate_slot(C0, weight_slot).as_<R::RVector>();
+    const auto& weights1 = evaluate_slot(C0, weight_slot).as_<R::RVector>();
 
     // 9. reads = R::RVector of RPair of Int
     auto arg6 = evaluate_slot(C0, 9);
@@ -2716,7 +2716,7 @@ extern "C" closure builtin_function_resample_weights_and_haplotypes_from_panel(O
             w_ratio = propose_two_titres_constant_sum(C2, titre_regs[0], titre_regs[1]);
     }
 
-    auto weights2 = evaluate_slot(C2, weight_slot).as_<R::RVector>();
+    const auto& weights2 = evaluate_slot(C2, weight_slot).as_<R::RVector>();
 
     //---------- 4. Sum out haplotypes and resample -----------//
 

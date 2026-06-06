@@ -435,7 +435,7 @@ closure makeRVector(OperationArgs& Args)
 extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto map0 = arg0.as_<IntMap>();
+    const auto& map0 = arg0.as_<IntMap>();
 
     // The order for a specific keys object should remain unchanged.
     auto arg1 = Args.evaluate_slot_to_value(1);

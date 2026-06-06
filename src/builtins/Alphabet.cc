@@ -114,7 +114,7 @@ extern "C" closure builtin_function_mkCodons(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
     if (not arg1.is_a<Box<Genetic_Code>>())
 	throw myexception()<<"mkCodons: object "<<arg1.print()<<"is not a Genetic_Code object.";
-    auto code = arg1.as_<Box<Genetic_Code>>();
+    const auto& code = arg1.as_<Box<Genetic_Code>>();
 
     return Alphabet(new Codons(*nuc, AminoAcids(), code));
 }

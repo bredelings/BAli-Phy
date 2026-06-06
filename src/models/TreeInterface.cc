@@ -275,7 +275,8 @@ int TreeInterface::degree(int n) const {
 
 int TreeInterface::branch_out(int n, int i) const
 {
-    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context()).as_<IntSet>();
+    auto out_edges_code = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context());
+    const auto& out_edges = out_edges_code.as_<IntSet>();
     auto iter = out_edges.begin();
     for(int j=0;j<i;j++)
         iter++;
@@ -299,7 +300,8 @@ vector<int> TreeInterface::neighbors(int n) const {
 }
 
 vector<int> TreeInterface::branches_out(int n) const {
-    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context()).as_<IntSet>();
+    auto out_edges_code = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context());
+    const auto& out_edges = out_edges_code.as_<IntSet>();
     vector<int> branches;
     for(int b: out_edges)
 	branches.push_back(b);
@@ -316,7 +318,8 @@ vector<int> TreeInterface::branches_in(int n) const {
 void TreeInterface::append_branches_before(int b, vector<int>& branches) const
 {
     int n = source(b);
-    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context()).as_<IntSet>();
+    auto out_edges_code = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context());
+    const auto& out_edges = out_edges_code.as_<IntSet>();
     for(int b2: out_edges)
     {
 	if (b2 != b)
@@ -330,7 +333,8 @@ void TreeInterface::append_branches_after(int b, vector<int>& branches) const
     b = reverse(b);
   
     int n = source(b);
-    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context()).as_<IntSet>();
+    auto out_edges_code = get_tree_constants().parameters_for_tree_node.at(n).get_code(get_const_context());
+    const auto& out_edges = out_edges_code.as_<IntSet>();
     for(int b2: out_edges)
     {
 	if (b2 != b)
@@ -507,7 +511,8 @@ bool TreeInterface::is_internal_branch(int b) const {
 
 optional<int> TreeInterface::search_branch(int n1, int n2) const
 {
-    auto out_edges = get_tree_constants().parameters_for_tree_node.at(n1).get_code(get_const_context()).as_<IntSet>();
+    auto out_edges_code = get_tree_constants().parameters_for_tree_node.at(n1).get_code(get_const_context());
+    const auto& out_edges = out_edges_code.as_<IntSet>();
     for(int b: out_edges)
 	if (target(b) == n2) return b;
 
