@@ -8,6 +8,7 @@
 #include "error_exception.H"
 #include "computation/preprocess.H"
 #include "computation/operations.H"
+#include <boost/container/small_vector.hpp>
 
 using std::string;
 using std::vector;
@@ -257,7 +258,7 @@ R::Exp evaluate_e_op(OperationArgs& Args, const R::Exp& E)
     int n_args = app->args.size();
     auto f = op_app->head->e_op;
 
-    vector<R::Exp> args;
+    boost::container::small_vector<R::Exp, 8> args;
     args.reserve(n_args);
 
     // Evaluate the arguments in left-to-right order.
