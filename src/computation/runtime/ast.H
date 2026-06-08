@@ -779,12 +779,22 @@ namespace Runtime
         std::string call_conv;
         std::vector<Exp> args;
 
-        OperationApp(object_ptr<const Operation>);
-        OperationApp(object_ptr<const Operation>, std::vector<Exp>);
-        OperationApp(OperationApp, std::vector<Exp>);
-        OperationApp(object_ptr<const Operation>, std::string, std::string, std::string);
-        OperationApp(object_ptr<const Operation>, std::string, std::string, std::string, std::vector<Exp>);
-        OperationApp();
+        OperationApp() = default;
+        OperationApp(object_ptr<const Operation> op)
+            :head(std::move(op))
+        {}
+        OperationApp(object_ptr<const Operation> op, std::vector<Exp> as)
+            :head(std::move(op)), args(std::move(as))
+        {}
+        OperationApp(OperationApp app, std::vector<Exp> as)
+            :head(std::move(app.head)), lib_name(std::move(app.lib_name)), func_name(std::move(app.func_name)), call_conv(std::move(app.call_conv)), args(std::move(as))
+        {}
+        OperationApp(object_ptr<const Operation> op, std::string lib, std::string func, std::string conv)
+            :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv))
+        {}
+        OperationApp(object_ptr<const Operation> op, std::string lib, std::string func, std::string conv, std::vector<Exp> as)
+            :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv)), args(std::move(as))
+        {}
 
         bool operator==(const OperationApp&) const;
 
