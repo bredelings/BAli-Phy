@@ -12,7 +12,6 @@
 #include "list.H" // for char_list
 #include "bool.H"
 #include "do_block.H"
-#include "computation/operations.H"
 #include "computation/module.H"
 #include <set>
 #include <iterator>

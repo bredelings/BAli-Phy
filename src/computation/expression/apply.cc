@@ -1,7 +1,5 @@
 #include "apply.H"
 
-#include "computation/operations.H"
-
 using std::vector;
 
 expression_ref apply_expression(const expression_ref& R,const expression_ref& arg)

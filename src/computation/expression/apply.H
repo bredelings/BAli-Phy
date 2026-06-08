@@ -4,6 +4,15 @@
 #include "expression_ref.H"
 #include "var.H"
 
+struct Apply: public Object
+{
+    Apply* clone() const override {return new Apply(*this);}
+
+    type_constant type() const override {return type_constant::apply_type;}
+
+    std::string print() const override {return "@";}
+};
+
 // Single-arg version  (Is this a function at all?)";
 expression_ref apply(const expression_ref& E,const expression_ref& arg);
 
