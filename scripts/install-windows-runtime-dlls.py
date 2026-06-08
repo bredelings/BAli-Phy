@@ -60,20 +60,63 @@ def gcc_print_file_name(cxx, dll_name):
             f"failed to locate {dll_name} with {' '.join(cxx)}: {error.stderr.strip()}"
         ) from error
 
-    path = pathlib.Path(result.stdout.strip())
+    output = result.stdout.strip()
+    if not output:
+        return None
+
+    path = pathlib.Path(output)
     if path.name == dll_name and path.exists():
         return path
     if path.name == dll_name and str(path) == dll_name:
         return None
-    if path.exists():
+    if path.is_file():
         return path
+    return None
+
+
+def candidate_runtime_dirs(cxx):
+    dirs = []
+
+    for command in cxx:
+        command_path = pathlib.Path(command)
+        if command_path.parent != pathlib.Path(".") and command_path.parent.is_dir():
+            dirs.append(command_path.parent)
+
+        resolved = shutil.which(command)
+        if resolved:
+            dirs.append(pathlib.Path(resolved).parent)
+
+    dirs += path_entries()
+
+    seen = set()
+    result = []
+    for directory in dirs:
+        key = str(directory)
+        if key in seen:
+            continue
+        seen.add(key)
+        if directory.is_dir():
+            result.append(directory)
+    return result
+
+
+def find_runtime_dll(cxx, dll_name):
+    dll_path = gcc_print_file_name(cxx, dll_name)
+    if dll_path:
+        return dll_path
+
+    for directory in candidate_runtime_dirs(cxx):
+        dll_path = directory / dll_name
+        if dll_path.exists():
+            return dll_path
+
     return None
 
 
 def install_gcc_runtime_dlls(cxx, bindir):
     for dll_group in GCC_RUNTIME_GROUPS:
         for dll_name in dll_group:
-            dll_path = gcc_print_file_name(cxx, dll_name)
+            dll_path = find_runtime_dll(cxx, dll_name)
             if dll_path:
                 copy_dll(dll_path, bindir)
                 break
@@ -81,7 +124,7 @@ def install_gcc_runtime_dlls(cxx, bindir):
             raise RuntimeError(f"could not find any of: {', '.join(dll_group)}")
 
     for dll_name in OPTIONAL_GCC_RUNTIME_DLLS:
-        dll_path = gcc_print_file_name(cxx, dll_name)
+        dll_path = find_runtime_dll(cxx, dll_name)
         if dll_path:
             copy_dll(dll_path, bindir)
 
