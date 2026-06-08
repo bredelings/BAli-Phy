@@ -25,11 +25,10 @@
 #include "computation/haskell/integer_container.H"
 #include "computation/loader.H"
 #include "computation/object.H"
+#include "computation/operation.H"
 #include "util/OrderedDouble.H"
 #include "util/cereal/intrusive_ptr.H"
 #include "util/intrusive-counted.H"
-
-struct Operation;
 
 namespace Runtime
 {
@@ -766,7 +765,7 @@ namespace Runtime
         void serialize(Archive&) {}
     };
 
-    std::shared_ptr<const Operation> operation_from_builtin(void*, const std::string& lib_name, const std::string& func_name, const std::string& call_conv);
+    object_ptr<const Operation> operation_from_builtin(void*, const std::string& lib_name, const std::string& func_name, const std::string& call_conv);
 
     struct ConstructorApp
     {
@@ -787,13 +786,13 @@ namespace Runtime
 
     struct OperationApp
     {
-        std::shared_ptr<const Operation> head;
+        object_ptr<const Operation> head;
         std::string lib_name;
         std::string func_name;
         std::string call_conv;
 
-        OperationApp(std::shared_ptr<const Operation>);
-        OperationApp(std::shared_ptr<const Operation>, std::string, std::string, std::string);
+        OperationApp(object_ptr<const Operation>);
+        OperationApp(object_ptr<const Operation>, std::string, std::string, std::string);
         OperationApp();
 
         bool operator==(const OperationApp&) const;
@@ -945,5 +944,15 @@ namespace Runtime
 }
 
 namespace R = Runtime;
+
+inline bool is_eop_exp(const Runtime::Exp& E)
+{
+    auto app = E.to<Runtime::App>();
+    if (not app)
+        return false;
+
+    auto op = std::get_if<Runtime::OperationApp>(&app->head);
+    return op and op->head and op->head->e_op;
+}
 
 #endif

@@ -369,7 +369,7 @@ namespace
 
     void check_runtime_only_operation_app_serialization()
     {
-        Runtime::Exp app = Runtime::App(Runtime::OperationApp(std::make_shared<Operation>(runtime_only_test_operation, "runtimeOnly")),
+        Runtime::Exp app = Runtime::App(Runtime::OperationApp(new Operation(runtime_only_test_operation, "runtimeOnly")),
                                         {});
 
         bool threw = false;

@@ -41,7 +41,7 @@ closure interchangeable_op(OperationArgs& Args)
 	int x = Args.reg_for_slot(1);
 
 	// 2. Allocate a new reg i with closure (interchangeable)
-        int i = Args.allocate( {R::App{R::OperationApp(std::make_shared<interchangeable>()),{}}} );
+        int i = Args.allocate( {R::App{R::OperationApp(new interchangeable),{}}} );
 
 	// 3. Mark i changeable
 	M.mark_reg_changeable(i);
