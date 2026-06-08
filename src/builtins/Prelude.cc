@@ -501,7 +501,7 @@ extern "C" closure builtin_function_throw(OperationArgs& Args)
 
     throw HaskellException{r};
 
-    return closure(Runtime::Constructor("()", 0));
+    return closure(Runtime::ConstructorApp("()", 0, {}));
 }
 
 static void peel_closure_lambdas(closure& C, int n)
@@ -612,7 +612,7 @@ extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
     C.Env[0] = r_value;
     M.set_C(r_ioref, std::move(C));
 
-    return closure(Runtime::Constructor("()", 0));
+    return closure(Runtime::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
@@ -637,7 +637,7 @@ extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
     C.Env[0] = r_apply;
     M.set_C(r_ioref, std::move(C));
 
-    return closure(Runtime::Constructor("()", 0));
+    return closure(Runtime::ConstructorApp("()", 0, {}));
 }
 
 
@@ -666,7 +666,7 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
     // Force
     r_apply = Args.evaluate_reg_force(r_apply);
 
-    return closure(Runtime::Constructor("()", 0));
+    return closure(Runtime::ConstructorApp("()", 0, {}));
 }
 
 

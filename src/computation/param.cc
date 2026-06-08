@@ -18,7 +18,7 @@ Runtime::Exp head_code(const Runtime::Exp& E)
     if (E.to<Runtime::FunctionApp>())
         std::abort();
     else if (auto app = E.to<Runtime::ConstructorApp>())
-        return Runtime::Constructor(app->head);
+        return Runtime::ConstructorApp(app->head);
     else if (auto app = E.to<Runtime::OperationApp>())
         return *app->head;
     else

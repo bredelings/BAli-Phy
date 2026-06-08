@@ -28,9 +28,6 @@ bool has_constructor(const expression_ref& E, const string& s)
 
 bool has_constructor(const Runtime::Exp& E, const string& s)
 {
-    if (const auto* C = E.to<Runtime::Constructor>())
-        return C->value.name() == s;
-
     const auto* app = E.to<Runtime::ConstructorApp>();
     if (not app)
         return false;

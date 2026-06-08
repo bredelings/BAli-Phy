@@ -100,7 +100,7 @@ extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
         (*vvv)[i] = std::move(x);
     }
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" R::Exp simple_function_get_vector_index(vector<R::Exp>& args)

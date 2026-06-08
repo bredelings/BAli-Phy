@@ -43,7 +43,6 @@ namespace Runtime
     struct String;
     struct Integer;
     struct ConstructorTag;
-    struct Constructor;
     struct ObjectValue;
     struct IndexVar;
     struct GlobalVar;
@@ -179,7 +178,6 @@ namespace Runtime
 
     template <> struct is_boxed_exp_node<String>: std::true_type {};
     template <> struct is_boxed_exp_node<Integer>: std::true_type {};
-    template <> struct is_boxed_exp_node<Constructor>: std::true_type {};
     template <> struct is_boxed_exp_node<GlobalVar>: std::true_type {};
     template <> struct is_boxed_exp_node<Lambda>: std::true_type {};
     template <> struct is_boxed_exp_node<Let>: std::true_type {};
@@ -214,7 +212,6 @@ namespace Runtime
             RegRef,
             ExpPtr<String>,
             ExpPtr<Integer>,
-            ExpPtr<Constructor>,
             ExpPtr<GlobalVar>,
             ExpPtr<Lambda>,
             ExpPtr<Let>,
@@ -250,7 +247,6 @@ namespace Runtime
         Exp(Char node):value(std::move(node)) {}
         Exp(String);
         Exp(Integer);
-        Exp(Constructor);
         Exp(ObjectValue node):value(std::move(node)) {}
         Exp(IndexVar node):value(std::move(node)) {}
         Exp(RegRef node):value(std::move(node)) {}
@@ -298,7 +294,6 @@ namespace Runtime
         bool is_char() const { return is<Char>(); }
         bool is_string() const { return is<String>(); }
         bool is_integer() const { return is<Integer>(); }
-        bool is_constructor() const { return is<Constructor>(); }
         bool is_object_value() const { return is<ObjectValue>(); }
 
         template <typename T>
@@ -439,54 +434,48 @@ namespace Runtime
                 break;
             }
             case 10: {
-                ExpPtr<Constructor> node;
-                ar(node);
-                value = std::move(node);
-                break;
-            }
-            case 11: {
                 ExpPtr<GlobalVar> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 12: {
+            case 11: {
                 ExpPtr<Lambda> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 13: {
+            case 12: {
                 ExpPtr<Let> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 14: {
+            case 13: {
                 ExpPtr<Case> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 15: {
+            case 14: {
                 ExpPtr<FunctionApp> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 16: {
+            case 15: {
                 ExpPtr<ConstructorApp> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 17: {
+            case 16: {
                 ExpPtr<OperationApp> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 18: {
+            case 17: {
                 ExpPtr<Trim> node;
                 ar(node);
                 value = std::move(node);
@@ -585,23 +574,6 @@ namespace Runtime
 
         template <class Archive>
         void serialize(Archive& ar) { ar(f_name, arity); }
-    };
-
-    struct Constructor: intrusive_counted<Constructor>
-    {
-        ConstructorTag value;
-
-        Constructor() = default;
-        Constructor(std::string name, int arity):value(std::move(name), arity) {}
-        Constructor(ConstructorTag c):value(std::move(c)) {}
-
-        bool operator==(const Constructor& c) const
-        {
-            return value == c.value;
-        }
-
-        template <class Archive>
-        void serialize(Archive& ar) { ar(value); }
     };
 
     template <DerivedFromObject T>
@@ -864,7 +836,6 @@ namespace Runtime
 
     inline Exp::Exp(String node):value(ExpPtr<String>(new String(std::move(node)))) {}
     inline Exp::Exp(Integer node):value(ExpPtr<Integer>(new Integer(std::move(node)))) {}
-    inline Exp::Exp(Constructor node):value(ExpPtr<Constructor>(new Constructor(std::move(node)))) {}
     inline Exp::Exp(GlobalVar node):value(ExpPtr<GlobalVar>(new GlobalVar(std::move(node)))) {}
     inline Exp::Exp(Lambda node):value(ExpPtr<Lambda>(new Lambda(std::move(node)))) {}
     inline Exp::Exp(Let node):value(ExpPtr<Let>(new Let(std::move(node)))) {}
@@ -927,7 +898,7 @@ namespace Runtime
 
     inline const ConstructorTag& Exp::as_constructor() const
     {
-        return as<Constructor>().value;
+        return as<ConstructorApp>().head;
     }
 
     Exp apply(Exp, std::vector<Exp>);

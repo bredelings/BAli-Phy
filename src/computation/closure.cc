@@ -39,8 +39,6 @@ int closure::n_slots() const
         return app->args.size();
     else if (auto app = code.to<Runtime::OperationApp>())
         return app->args.size();
-    else if (code.to<Runtime::Case>())
-        return 1;
     else
         std::abort();
 }

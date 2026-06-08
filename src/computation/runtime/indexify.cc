@@ -242,13 +242,6 @@ Core::Exp<> deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
     }
     else if (E.to<Runtime::LogDouble>())
         return runtime_only_core_exp(E.print());
-    else if (auto e = E.to<Runtime::Constructor>())
-    {
-        if (e->value.n_args() != 0)
-            return runtime_only_core_exp(E.print());
-
-        return Core::ConApp<>{e->value.name(), {}};
-    }
     else if (auto e = E.to<Runtime::ObjectValue>())
         return runtime_only_core_exp(e->value ? e->value->print() : string{"null"});
     else if (auto e = E.to<Runtime::IndexVar>())

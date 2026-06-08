@@ -412,7 +412,7 @@ void reg_heap::unregister_effect_at_step(int s)
 void reg_heap::_register_effect_at_reg(int r, int s)
 {
     const auto& E = closure_at(r).get_code();
-    assert(E.to<effect>() or E.is_constructor() or E.to<Runtime::FunctionApp>() or E.to<Runtime::ConstructorApp>() or E.to<Runtime::OperationApp>());
+    assert(E.to<effect>() or E.to<Runtime::ConstructorApp>());
 
     if (const auto* P = E.to<::register_prior>())
     {
@@ -474,7 +474,7 @@ void reg_heap::_register_effect_at_reg(int r, int s)
 void reg_heap::_unregister_effect_at_reg(int r, int s)
 {
     const auto& E = closure_at(r).get_code();
-    assert(E.to<effect>() or E.is_constructor() or E.to<Runtime::FunctionApp>() or E.to<Runtime::ConstructorApp>() or E.to<Runtime::OperationApp>());
+    assert(E.to<effect>() or E.to<Runtime::ConstructorApp>());
 
     if (const auto* P = E.to<::register_prior>())
     {
