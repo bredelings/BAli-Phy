@@ -9,6 +9,7 @@
 #include "computation/preprocess.H"
 #include "computation/operations.H"
 #include <boost/container/small_vector.hpp>
+#include <type_traits>
 
 using std::string;
 using std::vector;
@@ -182,23 +183,29 @@ namespace
 
     o_operation_fn operation_for_reduction(const closure& C)
     {
-        if (C.get_code().to<R::Let>())
-            return let_op;
-
-        if (C.get_code().to<R::Case>())
-            return case_op;
-
-        if (C.get_code().to<R::FunctionApp>())
-            return apply_op;
-
-        if (auto app = C.get_code().to<R::OperationApp>())
+        return R::exp_variant::visit([](const auto& value) -> o_operation_fn
         {
-            assert(app->head);
-            assert(app->head->op);
-            return app->head->op;
-        }
+            using T = std::decay_t<decltype(value)>;
 
-        std::abort();
+            if constexpr (std::is_same_v<T, R::ExpPtr<R::Let>>)
+                return let_op;
+            else if constexpr (std::is_same_v<T, R::ExpPtr<R::Case>>)
+                return case_op;
+            else if constexpr (std::is_same_v<T, R::ExpPtr<R::FunctionApp>>)
+                return apply_op;
+            else if constexpr (std::is_same_v<T, R::ExpPtr<R::OperationApp>>)
+            {
+                assert(value);
+                assert(value->head);
+                assert(value->head->op);
+                return value->head->op;
+            }
+            else
+            {
+                std::abort();
+                return nullptr;
+            }
+        }, C.get_code().value);
     }
 
     R::Exp evaluate_e_op_arg(OperationArgs& Args, const R::Exp& arg_ref)
