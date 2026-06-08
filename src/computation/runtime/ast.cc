@@ -14,7 +14,7 @@ using std::vector;
 namespace Runtime
 {
 
-    Exp::Exp(bool x):Exp(Constructor(x ? bool_true_name : bool_false_name, 0)) {}
+    Exp::Exp(bool x):Exp(ConstructorApp(x ? bool_true_name : bool_false_name, 0, {})) {}
     Exp::Exp(std::string x):Exp(String(std::move(x))) {}
     Exp::Exp(const char* x):Exp(String(x)) {}
     Exp::Exp(integer x):Exp(Integer(std::move(x))) {}
@@ -124,14 +124,16 @@ namespace Runtime
         return visit([](const auto& e) -> bool
         {
             using T = std::decay_t<decltype(e)>;
-            return std::is_same_v<T, Int> or
-                   std::is_same_v<T, Double> or
-                   std::is_same_v<T, LogDouble> or
-                   std::is_same_v<T, Char> or
-                   std::is_same_v<T, String> or
-                   std::is_same_v<T, Integer> or
-                   std::is_same_v<T, Constructor> or
-                   std::is_same_v<T, ObjectValue>;
+            if constexpr (std::is_same_v<T, ConstructorApp>)
+                return e.args.empty();
+            else
+                return std::is_same_v<T, Int> or
+                       std::is_same_v<T, Double> or
+                       std::is_same_v<T, LogDouble> or
+                       std::is_same_v<T, Char> or
+                       std::is_same_v<T, String> or
+                       std::is_same_v<T, Integer> or
+                       std::is_same_v<T, ObjectValue>;
         });
     }
 
@@ -147,7 +149,6 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
-                          std::is_same_v<T, Constructor> or
                           std::is_same_v<T, ObjectValue>)
             {
                 return true;
@@ -177,7 +178,6 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
-                          std::is_same_v<T, Constructor> or
                           std::is_same_v<T, ObjectValue> or
                           std::is_same_v<T, Lambda>)
             {
@@ -267,7 +267,6 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
-                          std::is_same_v<T, Constructor> or
                           std::is_same_v<T, ObjectValue> or
                           std::is_same_v<T, RegRef> or
                           std::is_same_v<T, GlobalVar>)
@@ -400,9 +399,6 @@ namespace Runtime
 
     bool has_constructor(const Exp& E, const std::string& name)
     {
-        if (const auto* c = E.to<Constructor>())
-            return c->value.name() == name;
-
         if (const auto* app = E.to<ConstructorApp>())
             return app->head.name() == name;
         else
@@ -422,17 +418,19 @@ namespace Runtime
         return E.visit([](const auto& e) -> bool
         {
             using T = std::decay_t<decltype(e)>;
-            return std::is_same_v<T, Int> or
-                   std::is_same_v<T, Double> or
-                   std::is_same_v<T, LogDouble> or
-                   std::is_same_v<T, Char> or
-                   std::is_same_v<T, String> or
-                   std::is_same_v<T, Integer> or
-                   std::is_same_v<T, Constructor> or
-                   std::is_same_v<T, ObjectValue> or
-                   std::is_same_v<T, IndexVar> or
-                   std::is_same_v<T, RegRef> or
-                   std::is_same_v<T, GlobalVar>;
+            if constexpr (std::is_same_v<T, ConstructorApp>)
+                return e.args.empty();
+            else
+                return std::is_same_v<T, Int> or
+                       std::is_same_v<T, Double> or
+                       std::is_same_v<T, LogDouble> or
+                       std::is_same_v<T, Char> or
+                       std::is_same_v<T, String> or
+                       std::is_same_v<T, Integer> or
+                       std::is_same_v<T, ObjectValue> or
+                       std::is_same_v<T, IndexVar> or
+                       std::is_same_v<T, RegRef> or
+                       std::is_same_v<T, GlobalVar>;
         });
     }
 
@@ -487,10 +485,6 @@ namespace Runtime
             {
                 return e.value.str();
             }
-            else if constexpr (std::is_same_v<T, Constructor>)
-            {
-                return e.value.print();
-            }
             else if constexpr (std::is_same_v<T, ObjectValue>)
             {
                 return e.value->print();
@@ -543,6 +537,9 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, ConstructorApp>)
             {
+                if (e.args.empty())
+                    return e.head.print();
+
                 vector<std::string> args;
                 for(const auto& arg: e.args)
                     args.push_back(parenthesize_if(not prints_atomically(arg), print(arg)));
@@ -633,10 +630,6 @@ namespace Runtime
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer>)
             {
-            }
-            else if constexpr (std::is_same_v<T, Constructor>)
-            {
-                assert(e.value.n_args() >= 0);
             }
             else if constexpr (std::is_same_v<T, ObjectValue>)
             {

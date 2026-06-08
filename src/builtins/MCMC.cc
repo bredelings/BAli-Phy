@@ -135,7 +135,7 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     if (choice == 1)
 	C1 = C2;
     
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 // gibbs_sample_categorical x n pr
@@ -200,7 +200,7 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
     else
         C1.set_reg_value(*x_mod_reg, x2);
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)
@@ -269,7 +269,7 @@ extern "C" closure builtin_function_discreteUniformAvoidMHRaw(OperationArgs& Arg
     perform_MH_(M, c1, proposal);
 
     //------------- 4. Return () -----------------------
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 
@@ -340,7 +340,7 @@ extern "C" closure builtin_function_incDecMHRaw(OperationArgs& Args)
     if (log_verbose >= 3) std::cerr<<C1.get_logged_parameters()<<"\n";
 
     //------------- 4. Return () -----------------------
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 // slice_sample_real_random_variable x context state
@@ -384,7 +384,7 @@ extern "C" closure builtin_function_sliceSampleRaw(OperationArgs& Args)
 
     if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 // slice_sample_integer_random_variable x context state
@@ -426,7 +426,7 @@ extern "C" closure builtin_function_sliceSampleIntegerRaw(OperationArgs& Args)
     if (log_verbose >= 3) std::cerr<<C.get_logged_parameters()<<"\n";
     if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 // slice_sample_real_random_variable x context state
@@ -454,7 +454,7 @@ extern "C" closure builtin_function_scaleGroupsSliceRaw(OperationArgs& Args)
         if (auto m = scale.modifiable())
             r_scales.push_back(m->get_reg());
         else
-            return closure(R::Constructor("()", 0));
+            return closure(R::ConstructorApp("()", 0, {}));
     }
 
     vector<int> r_branch_lengths;
@@ -463,7 +463,7 @@ extern "C" closure builtin_function_scaleGroupsSliceRaw(OperationArgs& Args)
         if (auto m = branch_length.modifiable())
             r_branch_lengths.push_back(m->get_reg());
         else
-            return closure(R::Constructor("()", 0));
+            return closure(R::ConstructorApp("()", 0, {}));
     }
 
 
@@ -480,7 +480,7 @@ extern "C" closure builtin_function_scaleGroupsSliceRaw(OperationArgs& Args)
 
     if (log_verbose >= 3) std::cerr<<"   - Posterior evaluated "<<logp.count<<" times.\n";
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_scaleGroupsProposalRaw(OperationArgs& Args)
@@ -865,7 +865,7 @@ extern "C" closure builtin_function_walkTreeSampleAlignmentsRaw(OperationArgs& A
     walk_tree_sample_alignments(P,Stats);
     C1 = *P;
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_realignFromTipsRaw(OperationArgs& Args)
@@ -888,7 +888,7 @@ extern "C" closure builtin_function_realignFromTipsRaw(OperationArgs& Args)
     realign_from_tips(P,Stats);
     C1 = *P;
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 /// sample_node
@@ -913,7 +913,7 @@ extern "C" closure builtin_function_sampleSPRFlatRaw(OperationArgs& Args)
     sample_SPR_flat(P,Stats);
     C1 = *P;
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 
@@ -935,7 +935,7 @@ extern "C" closure builtin_function_sampleSPRNodesRaw(OperationArgs& Args)
     sample_SPR_nodes(P,Stats);
     C1 = *P;
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_sampleSPRAllRaw(OperationArgs& Args)
@@ -958,7 +958,7 @@ extern "C" closure builtin_function_sampleSPRAllRaw(OperationArgs& Args)
     sample_SPR_all(P,Stats);
     C1 = *P;
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 
@@ -980,7 +980,7 @@ extern "C" closure builtin_function_walkTreeSampleBranchLengthsRaw(OperationArgs
     walk_tree_sample_branch_lengths(P,Stats);
     C1 = *P;
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 
@@ -1002,7 +1002,7 @@ extern "C" closure builtin_function_walkTreeSampleNNIandBranchLengthsRaw(Operati
     walk_tree_sample_NNI_and_branch_lengths(P,Stats);
     C1 = *P;
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_walkTimeTreeSampleNNIandNodeTimesRaw(OperationArgs& Args)
@@ -1023,7 +1023,7 @@ extern "C" closure builtin_function_walkTimeTreeSampleNNIandNodeTimesRaw(Operati
     walk_time_tree_sample_NNI_and_node_times(P,Stats);
     C1 = *P;
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_walkTreeSampleNNIRaw(OperationArgs& Args)
@@ -1044,7 +1044,7 @@ extern "C" closure builtin_function_walkTreeSampleNNIRaw(OperationArgs& Args)
     walk_tree_sample_NNI(P,Stats);
     C1 = *P;
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_walkTreeSampleNNIandARaw(OperationArgs& Args)
@@ -1065,7 +1065,7 @@ extern "C" closure builtin_function_walkTreeSampleNNIandARaw(OperationArgs& Args
     walk_tree_sample_NNI_and_A(P,Stats);
     C1 = *P;
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 /// scale_scales_only (MH)
@@ -1121,7 +1121,7 @@ extern "C" closure builtin_function_setAtomicModifiableValueInContext(OperationA
 
     C.set_reg_value(*x_mod_reg, closure(std::move(value)));
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_copyContext(OperationArgs& Args)
@@ -1148,7 +1148,7 @@ extern "C" closure builtin_function_releaseContext(OperationArgs& Args)
 
     M.release_context(c);
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_switchToContext(OperationArgs& Args)
@@ -1163,7 +1163,7 @@ extern "C" closure builtin_function_switchToContext(OperationArgs& Args)
 
     M.switch_to_context(c1,c2);
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 
@@ -1295,7 +1295,7 @@ extern "C" closure builtin_function_interchangeEntriesRaw(OperationArgs& Args)
         }
     }
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_createContext(OperationArgs& Args)
@@ -1333,7 +1333,7 @@ extern "C" closure builtin_function_runMCMC(OperationArgs& Args)
 
     C.run_loggers(max_iterations);
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 // Really this should return a Text
@@ -1348,7 +1348,7 @@ extern "C" closure builtin_function_writeTraceGraph(OperationArgs& Args)
     C.evaluate_program();
     C.show_graph_for_root_token();
 
-    return closure(R::Constructor("()", 0));
+    return closure(R::ConstructorApp("()", 0, {}));
 }
 
 // These are defined in models/model.cc

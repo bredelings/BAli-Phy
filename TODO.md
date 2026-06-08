@@ -5,11 +5,6 @@
 * Put Trim into the AST
   * This would be simpler if we make a deindexify\_and\_trim.  Which _should_ be possible.
 
-* Replace shared_ptr in ObjectValue
-
-* Split App into FuncApp, ConApp, OpApp.
-  - Are we allowed to return ConApp from e_op?  I think we already do for BranchAlignment / NodeAlignment.
-
 ## Speed
 
  * How to handle the operator-constructing wrapper inside the evaluator?

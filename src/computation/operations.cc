@@ -108,9 +108,7 @@ closure apply_op(OperationArgs& Args)
 
 static const Runtime::ConstructorTag* constructor_value(const Runtime::Exp& E)
 {
-    if (auto c = E.to<Runtime::Constructor>())
-        return &c->value;
-    else if (auto app = E.to<Runtime::ConstructorApp>())
+    if (auto app = E.to<Runtime::ConstructorApp>())
         return &app->head;
 
     return nullptr;
@@ -118,9 +116,7 @@ static const Runtime::ConstructorTag* constructor_value(const Runtime::Exp& E)
 
 static int constructor_n_args(const Runtime::Exp& E)
 {
-    if (auto c = E.to<Runtime::Constructor>())
-        return c->value.n_args();
-    else if (auto app = E.to<Runtime::ConstructorApp>())
+    if (auto app = E.to<Runtime::ConstructorApp>())
         return app->args.size();
 
     std::abort();

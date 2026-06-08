@@ -31,7 +31,6 @@ Runtime::Exp reg_heap::capture_local_reg_refs(const Runtime::Exp& E, closure::En
                            std::is_same_v<T, Runtime::Char> or
                            std::is_same_v<T, Runtime::String> or
                            std::is_same_v<T, Runtime::Integer> or
-                           std::is_same_v<T, Runtime::Constructor> or
                            std::is_same_v<T, Runtime::IndexVar> or
                            std::is_same_v<T, Runtime::GlobalVar>)
         {
@@ -127,7 +126,6 @@ Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E, closure::Env_t& Env
                            std::is_same_v<T, Runtime::Char> or
                            std::is_same_v<T, Runtime::String> or
                            std::is_same_v<T, Runtime::Integer> or
-                           std::is_same_v<T, Runtime::Constructor> or
                            std::is_same_v<T, Runtime::IndexVar>)
         {
             return e;

@@ -145,7 +145,7 @@ public:
 
     template <typename T>
     requires std::same_as<std::remove_cvref_t<T>, bool>
-    closure(T x):closure(Runtime::Constructor(x ? bool_true_name : bool_false_name, 0)) {}
+    closure(T x):closure(Runtime::ConstructorApp(x ? bool_true_name : bool_false_name, 0, {})) {}
 
     closure(std::string x):closure(Runtime::String(std::move(x))) {}
 

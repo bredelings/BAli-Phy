@@ -73,8 +73,7 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
-                          std::is_same_v<T, ObjectValue> or
-                          std::is_same_v<T, Constructor>)
+                          std::is_same_v<T, ObjectValue>)
             {
                 return {};
             }
@@ -158,8 +157,7 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
-                          std::is_same_v<T, ObjectValue> or
-                          std::is_same_v<T, Constructor>)
+                          std::is_same_v<T, ObjectValue>)
             {
                 return E;
             }
@@ -273,8 +271,7 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
-                          std::is_same_v<T, ObjectValue> or
-                          std::is_same_v<T, Constructor>)
+                          std::is_same_v<T, ObjectValue>)
             {
                 return e;
             }
@@ -338,7 +335,6 @@ namespace Runtime
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
                           std::is_same_v<T, ObjectValue> or
-                          std::is_same_v<T, Constructor> or
                           std::is_same_v<T, IndexVar> or
                           std::is_same_v<T, GlobalVar> or
                           std::is_same_v<T, RegRef>)
