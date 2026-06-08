@@ -35,12 +35,34 @@ public:
     Runtime::Exp slot(int i) const;
 
     const Runtime::Exp& slot_ref(int i) const { return code.slot_ref(i); }
+    const Runtime::Exp& function_slot_ref(int i) const { return code.function_arg(i); }
+    const Runtime::Exp& constructor_slot_ref(int i) const { return code.constructor_arg(i); }
+    const Runtime::Exp& operation_slot_ref(int i) const { return code.operation_arg(i); }
+
+    Runtime::Exp function_slot(int i) const;
+    Runtime::Exp constructor_slot(int i) const;
+    Runtime::Exp operation_slot(int i) const;
 
     int reg_for_slot(int i) const;
+    int reg_for_function_slot(int i) const;
+    int reg_for_constructor_slot(int i) const;
+    int reg_for_operation_slot(int i) const;
+
+    int n_function_slots() const { return code.num_function_args(); }
+    int n_constructor_slots() const { return code.num_constructor_args(); }
+    int n_operation_slots() const { return code.num_operation_args(); }
 
     bool is_reg_ref() const
     {
         return code.to<Runtime::IndexVar>() or code.to<Runtime::RegRef>();
+    }
+
+    Runtime::Exp slot_for_code(const R::Exp& E) const
+    {
+        if (auto index_var = E.to<Runtime::IndexVar>())
+            return Runtime::RegRef(lookup_in_env(index_var->index));
+        else
+            return E;
     }
 
     std::optional<int> reg_for_code(const R::Exp& E) const

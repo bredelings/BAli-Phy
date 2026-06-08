@@ -318,6 +318,15 @@ namespace Runtime
         std::string print() const;
 
         const Exp& slot_ref(int i) const;
+        const std::vector<Exp>& function_args() const;
+        const std::vector<Exp>& constructor_args() const;
+        const std::vector<Exp>& operation_args() const;
+        const Exp& function_arg(int i) const;
+        const Exp& constructor_arg(int i) const;
+        const Exp& operation_arg(int i) const;
+        int num_function_args() const;
+        int num_constructor_args() const;
+        int num_operation_args() const;
 
         template <DerivedFromObject T>
         const T& as_() const;
@@ -943,6 +952,51 @@ namespace Runtime
             return app->args[i];
         else
             std::abort();
+    }
+
+    inline const std::vector<Exp>& Exp::function_args() const
+    {
+        return as<FunctionApp>().args;
+    }
+
+    inline const std::vector<Exp>& Exp::constructor_args() const
+    {
+        return as<ConstructorApp>().args;
+    }
+
+    inline const std::vector<Exp>& Exp::operation_args() const
+    {
+        return as<OperationApp>().args;
+    }
+
+    inline const Exp& Exp::function_arg(int i) const
+    {
+        return function_args()[i];
+    }
+
+    inline const Exp& Exp::constructor_arg(int i) const
+    {
+        return constructor_args()[i];
+    }
+
+    inline const Exp& Exp::operation_arg(int i) const
+    {
+        return operation_args()[i];
+    }
+
+    inline int Exp::num_function_args() const
+    {
+        return function_args().size();
+    }
+
+    inline int Exp::num_constructor_args() const
+    {
+        return constructor_args().size();
+    }
+
+    inline int Exp::num_operation_args() const
+    {
+        return operation_args().size();
     }
 }
 
