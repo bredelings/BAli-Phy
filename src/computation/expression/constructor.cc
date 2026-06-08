@@ -31,10 +31,9 @@ bool has_constructor(const Runtime::Exp& E, const string& s)
     if (const auto* C = E.to<Runtime::Constructor>())
         return C->value.name() == s;
 
-    const auto* app = E.to<Runtime::App>();
+    const auto* app = E.to<Runtime::ConstructorApp>();
     if (not app)
         return false;
 
-    const auto* C = std::get_if<Runtime::ConstructorApp>(&app->head);
-    return C and C->head.name() == s;
+    return app->head.name() == s;
 }

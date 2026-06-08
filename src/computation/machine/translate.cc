@@ -59,13 +59,29 @@ Runtime::Exp reg_heap::capture_local_reg_refs(const Runtime::Exp& E, closure::En
 
             return Runtime::Case(capture_local_reg_refs(e.object, Env, depth), alts);
         }
-        else if constexpr (std::is_same_v<T, Runtime::App>)
+        else if constexpr (std::is_same_v<T, Runtime::FunctionApp>)
         {
             vector<Runtime::Exp> args;
             for(const auto& arg: e.args)
                 args.push_back(capture_local_reg_refs(arg, Env, depth));
 
-            return Runtime::App(e.head, args);
+            return Runtime::FunctionApp(args);
+        }
+        else if constexpr (std::is_same_v<T, Runtime::ConstructorApp>)
+        {
+            vector<Runtime::Exp> args;
+            for(const auto& arg: e.args)
+                args.push_back(capture_local_reg_refs(arg, Env, depth));
+
+            return Runtime::ConstructorApp(e.head, args);
+        }
+        else if constexpr (std::is_same_v<T, Runtime::OperationApp>)
+        {
+            vector<Runtime::Exp> args;
+            for(const auto& arg: e.args)
+                args.push_back(capture_local_reg_refs(arg, Env, depth));
+
+            return Runtime::OperationApp(e.head, e.lib_name, e.func_name, e.call_conv, args);
         }
         else if constexpr (std::is_same_v<T, Runtime::Trim>)
         {
@@ -138,13 +154,29 @@ Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E, closure::Env_t& Env
 
             return Runtime::Case(translate_refs(e.object, Env, depth), alts);
         }
-        else if constexpr (std::is_same_v<T, Runtime::App>)
+        else if constexpr (std::is_same_v<T, Runtime::FunctionApp>)
         {
             vector<Runtime::Exp> args;
             for(const auto& arg: e.args)
                 args.push_back(translate_refs(arg, Env, depth));
 
-            return Runtime::App(e.head, args);
+            return Runtime::FunctionApp(args);
+        }
+        else if constexpr (std::is_same_v<T, Runtime::ConstructorApp>)
+        {
+            vector<Runtime::Exp> args;
+            for(const auto& arg: e.args)
+                args.push_back(translate_refs(arg, Env, depth));
+
+            return Runtime::ConstructorApp(e.head, args);
+        }
+        else if constexpr (std::is_same_v<T, Runtime::OperationApp>)
+        {
+            vector<Runtime::Exp> args;
+            for(const auto& arg: e.args)
+                args.push_back(translate_refs(arg, Env, depth));
+
+            return Runtime::OperationApp(e.head, e.lib_name, e.func_name, e.call_conv, args);
         }
         else if constexpr (std::is_same_v<T, Runtime::Trim>)
         {

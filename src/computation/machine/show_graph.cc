@@ -543,9 +543,8 @@ bool print_as_record(const Runtime::Exp& E)
     if (E.to<IntMap>())
         return true;
 
-    if (auto app = E.to<Runtime::App>())
-        return std::holds_alternative<Runtime::OperationApp>(app->head) or
-               std::holds_alternative<Runtime::ConstructorApp>(app->head);
+    if (E.to<Runtime::OperationApp>() or E.to<Runtime::ConstructorApp>())
+        return true;
 
     return false;
 }
@@ -555,13 +554,33 @@ bool print_as_record(const closure& c)
     return print_as_record(c.get_code());
 }
 
+const vector<Runtime::Exp>* record_app_args(const Runtime::Exp& E)
+{
+    if (auto app = E.to<Runtime::ConstructorApp>())
+        return &app->args;
+    else if (auto app = E.to<Runtime::OperationApp>())
+        return &app->args;
+    else
+        return nullptr;
+}
+
+string record_app_head_name(const Runtime::Exp& E)
+{
+    if (auto app = E.to<Runtime::ConstructorApp>())
+        return app->head.print();
+    else if (auto app = E.to<Runtime::OperationApp>())
+        return app->head->print();
+    else
+        return E.print();
+}
+
 vector<int> record_targets(const closure& C)
 {
     vector<int> targets;
 
-    if (auto app = C.get_code().to<Runtime::App>())
+    if (auto args = record_app_args(C.get_code()))
     {
-        for(const auto& arg: app->args)
+        for(const auto& arg: *args)
         {
             if (auto R2 = closure(arg, C.Env).reg_for_ref_maybe())
                 targets.push_back(*R2);
@@ -756,13 +775,13 @@ string label_for_reg(int R, const reg_heap& C, const map<int,Core::Exp<>>& repla
 
         if (CR.get_code().to<IntMap>())
             label += "<td>IntMap</td>";
-        else if (auto app = CR.get_code().to<Runtime::App>())
-            label += "<td>"+escape(Runtime::print(app->head))+"</td>";
+        else if (record_app_args(CR.get_code()))
+            label += "<td>"+escape(record_app_head_name(CR.get_code()))+"</td>";
         else
             label += "<td>"+escape(CR.get_code().print())+"</td>";
-        if (auto app = CR.get_code().to<Runtime::App>())
+        if (auto args = record_app_args(CR.get_code()))
 	{
-            for(const auto& E: app->args)
+            for(const auto& E: *args)
                 label += render_register_graph_table_arg_cell(E, CR, replace);
 	}
         else if (auto im = CR.get_code().to<IntMap>())
@@ -824,9 +843,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
     {
         label = "<table border='0' cellborder='1' cellspacing='0'><tr>";
 
-        string head_name = CR.get_code().print();
-        if (auto app = CR.get_code().to<Runtime::App>())
-            head_name = Runtime::print(app->head);
+        string head_name = record_app_head_name(CR.get_code());
 
         // Chop for module prefix in module:builtin
         int where = head_name.find(':');
@@ -834,9 +851,9 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
             head_name = head_name.substr(where+1);
 
         label += "<td>"+escape(head_name)+"</td>";
-        if (auto app = CR.get_code().to<Runtime::App>())
+        if (auto args = record_app_args(CR.get_code()))
 	{
-            for(const auto& E: app->args)
+            for(const auto& E: *args)
                 label += render_factor_graph_table_arg_cell(E, CR, reg_names, constants, simplify);
 	}
         label += "</tr></table>";

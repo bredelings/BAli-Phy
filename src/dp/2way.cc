@@ -461,9 +461,8 @@ matrix<int> construct(const TreeInterface& t, const vector<pairwise_alignment_t>
 
 const vector<R::Exp>& constructor_args(const R::Exp& a)
 {
-    auto app = a.to<R::App>();
+    auto app = a.to<R::ConstructorApp>();
     assert(app);
-    assert(std::holds_alternative<R::ConstructorApp>(app->head));
     return app->args;
 }
 

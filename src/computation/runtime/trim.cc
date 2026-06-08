@@ -46,6 +46,21 @@ namespace Runtime
         return v3;
     }
 
+    Exp rebuild_app(const FunctionApp&, vector<Exp> args)
+    {
+        return FunctionApp(std::move(args));
+    }
+
+    Exp rebuild_app(const ConstructorApp& app, vector<Exp> args)
+    {
+        return ConstructorApp(app.head, std::move(args));
+    }
+
+    Exp rebuild_app(const OperationApp& app, vector<Exp> args)
+    {
+        return OperationApp(app.head, app.lib_name, app.func_name, app.call_conv, std::move(args));
+    }
+
     vector<int> get_free_index_vars(const Exp& E)
     {
         return E.visit([](const auto& e) -> vector<int>
@@ -96,7 +111,9 @@ namespace Runtime
 
                 return vars;
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, FunctionApp> or
+                               std::is_same_v<T, ConstructorApp> or
+                               std::is_same_v<T, OperationApp>)
             {
                 vector<int> vars;
                 for(const auto& arg: e.args)
@@ -188,13 +205,15 @@ namespace Runtime
 
                 return Case(remap_free_indices(e.object, mapping, depth), alts);
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, FunctionApp> or
+                               std::is_same_v<T, ConstructorApp> or
+                               std::is_same_v<T, OperationApp>)
             {
                 vector<Exp> args;
                 for(const auto& arg: e.args)
                     args.push_back(remap_free_indices(arg, mapping, depth));
 
-                return App(e.head, args);
+                return rebuild_app(e, std::move(args));
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {
@@ -287,13 +306,15 @@ namespace Runtime
 
                 return Case(e.object, alts);
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, FunctionApp> or
+                               std::is_same_v<T, ConstructorApp> or
+                               std::is_same_v<T, OperationApp>)
             {
                 vector<Exp> args;
                 for(const auto& arg: e.args)
                     args.push_back(trim_normalize(arg));
 
-                return App(e.head, args);
+                return rebuild_app(e, std::move(args));
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {
@@ -344,13 +365,15 @@ namespace Runtime
 
                 return Case(e.object, alts);
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, FunctionApp> or
+                               std::is_same_v<T, ConstructorApp> or
+                               std::is_same_v<T, OperationApp>)
             {
                 vector<Exp> args;
                 for(const auto& arg: e.args)
                     args.push_back(trim_unnormalize(untrim(arg)));
 
-                return App(e.head, args);
+                return rebuild_app(e, std::move(args));
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {

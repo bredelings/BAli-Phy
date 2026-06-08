@@ -51,7 +51,9 @@ namespace Runtime
     struct Lambda;
     struct Let;
     struct Case;
-    struct App;
+    struct FunctionApp;
+    struct ConstructorApp;
+    struct OperationApp;
     struct Trim;
 
     template <typename T>
@@ -182,7 +184,9 @@ namespace Runtime
     template <> struct is_boxed_exp_node<Lambda>: std::true_type {};
     template <> struct is_boxed_exp_node<Let>: std::true_type {};
     template <> struct is_boxed_exp_node<Case>: std::true_type {};
-    template <> struct is_boxed_exp_node<App>: std::true_type {};
+    template <> struct is_boxed_exp_node<FunctionApp>: std::true_type {};
+    template <> struct is_boxed_exp_node<ConstructorApp>: std::true_type {};
+    template <> struct is_boxed_exp_node<OperationApp>: std::true_type {};
     template <> struct is_boxed_exp_node<Trim>: std::true_type {};
 
     template <typename T, std::enable_if_t<is_boxed_exp_node<T>::value, int> = 0>
@@ -215,7 +219,9 @@ namespace Runtime
             ExpPtr<Lambda>,
             ExpPtr<Let>,
             ExpPtr<Case>,
-            ExpPtr<App>,
+            ExpPtr<FunctionApp>,
+            ExpPtr<ConstructorApp>,
+            ExpPtr<OperationApp>,
             ExpPtr<Trim>
         >;
 
@@ -252,7 +258,9 @@ namespace Runtime
         Exp(Lambda);
         Exp(Let);
         Exp(Case);
-        Exp(App);
+        Exp(FunctionApp);
+        Exp(ConstructorApp);
+        Exp(OperationApp);
         Exp(Trim);
 
         bool empty() const
@@ -461,12 +469,24 @@ namespace Runtime
                 break;
             }
             case 15: {
-                ExpPtr<App> node;
+                ExpPtr<FunctionApp> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
             case 16: {
+                ExpPtr<ConstructorApp> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 17: {
+                ExpPtr<OperationApp> node;
+                ar(node);
+                value = std::move(node);
+                break;
+            }
+            case 18: {
                 ExpPtr<Trim> node;
                 ar(node);
                 value = std::move(node);
@@ -757,42 +777,41 @@ namespace Runtime
         void serialize(Archive& ar) { ar(object, alts); }
     };
 
-    struct FunctionApply
-    {
-        bool operator==(const FunctionApply&) const = default;
-
-        template <class Archive>
-        void serialize(Archive&) {}
-    };
-
     object_ptr<const Operation> operation_from_builtin(void*, const std::string& lib_name, const std::string& func_name, const std::string& call_conv);
 
-    struct ConstructorApp
+    struct ConstructorApp: intrusive_counted<ConstructorApp>
     {
         ConstructorTag head;
+        std::vector<Exp> args;
 
         ConstructorApp() = default;
         ConstructorApp(std::string name, int arity):head(std::move(name), arity) {}
+        ConstructorApp(std::string name, int arity, std::vector<Exp> as):head(std::move(name), arity), args(std::move(as)) {}
         ConstructorApp(ConstructorTag c):head(std::move(c)) {}
+        ConstructorApp(ConstructorTag c, std::vector<Exp> as):head(std::move(c)), args(std::move(as)) {}
 
         bool operator==(const ConstructorApp& app) const
         {
-            return head == app.head;
+            return head == app.head and args == app.args;
         }
 
         template <class Archive>
-        void serialize(Archive& ar) { ar(head); }
+        void serialize(Archive& ar) { ar(head, args); }
     };
 
-    struct OperationApp
+    struct OperationApp: intrusive_counted<OperationApp>
     {
         object_ptr<const Operation> head;
         std::string lib_name;
         std::string func_name;
         std::string call_conv;
+        std::vector<Exp> args;
 
         OperationApp(object_ptr<const Operation>);
+        OperationApp(object_ptr<const Operation>, std::vector<Exp>);
+        OperationApp(OperationApp, std::vector<Exp>);
         OperationApp(object_ptr<const Operation>, std::string, std::string, std::string);
+        OperationApp(object_ptr<const Operation>, std::string, std::string, std::string, std::vector<Exp>);
         OperationApp();
 
         bool operator==(const OperationApp&) const;
@@ -802,13 +821,13 @@ namespace Runtime
         {
             if (lib_name.empty() or func_name.empty() or call_conv.empty())
                 throw std::runtime_error("Runtime-only OperationApp is not serializable");
-            ar(lib_name, func_name, call_conv);
+            ar(lib_name, func_name, call_conv, args);
         }
 
         template <class Archive>
         void load(Archive& ar)
         {
-            ar(lib_name, func_name, call_conv);
+            ar(lib_name, func_name, call_conv, args);
 
             const module_loader& loader = get_user_data<const module_loader>(ar);
             void* op = loader.load_builtin_ptr(lib_name, func_name, call_conv);
@@ -816,20 +835,17 @@ namespace Runtime
         }
     };
 
-    using AppHead = std::variant<FunctionApply, ConstructorApp, OperationApp>;
-
-    struct App: intrusive_counted<App>
+    struct FunctionApp: intrusive_counted<FunctionApp>
     {
-        AppHead head;
         std::vector<Exp> args;
 
-        App() = default;
-        App(AppHead h, std::vector<Exp> as):head(std::move(h)), args(std::move(as)) {}
+        FunctionApp() = default;
+        FunctionApp(std::vector<Exp> as):args(std::move(as)) {}
 
-        bool operator==(const App&) const = default;
+        bool operator==(const FunctionApp&) const = default;
 
         template <class Archive>
-        void serialize(Archive& ar) { ar(head, args); }
+        void serialize(Archive& ar) { ar(args); }
     };
 
     struct Trim: intrusive_counted<Trim>
@@ -853,7 +869,9 @@ namespace Runtime
     inline Exp::Exp(Lambda node):value(ExpPtr<Lambda>(new Lambda(std::move(node)))) {}
     inline Exp::Exp(Let node):value(ExpPtr<Let>(new Let(std::move(node)))) {}
     inline Exp::Exp(Case node):value(ExpPtr<Case>(new Case(std::move(node)))) {}
-    inline Exp::Exp(App node):value(ExpPtr<App>(new App(std::move(node)))) {}
+    inline Exp::Exp(FunctionApp node):value(ExpPtr<FunctionApp>(new FunctionApp(std::move(node)))) {}
+    inline Exp::Exp(ConstructorApp node):value(ExpPtr<ConstructorApp>(new ConstructorApp(std::move(node)))) {}
+    inline Exp::Exp(OperationApp node):value(ExpPtr<OperationApp>(new OperationApp(std::move(node)))) {}
     inline Exp::Exp(Trim node):value(ExpPtr<Trim>(new Trim(std::move(node)))) {}
 
     template <typename T, std::enable_if_t<is_boxed_exp_node<T>::value, int>>
@@ -927,7 +945,6 @@ namespace Runtime
 
     std::string print(const Exp&);
     std::string print(const Pattern&);
-    std::string print(const AppHead&);
 
     std::ostream& operator<<(std::ostream&, const Exp&);
 
@@ -937,9 +954,14 @@ namespace Runtime
 
     inline const Exp& Exp::slot_ref(int i) const
     {
-        auto app = to<Runtime::App>();
-        assert(app);
-        return app->args[i];
+        if (auto app = to<Runtime::FunctionApp>())
+            return app->args[i];
+        else if (auto app = to<Runtime::ConstructorApp>())
+            return app->args[i];
+        else if (auto app = to<Runtime::OperationApp>())
+            return app->args[i];
+        else
+            std::abort();
     }
 }
 
@@ -947,12 +969,11 @@ namespace R = Runtime;
 
 inline bool is_eop_exp(const Runtime::Exp& E)
 {
-    auto app = E.to<Runtime::App>();
+    auto app = E.to<Runtime::OperationApp>();
     if (not app)
         return false;
 
-    auto op = std::get_if<Runtime::OperationApp>(&app->head);
-    return op and op->head and op->head->e_op;
+    return app->head and app->head->e_op;
 }
 
 #endif

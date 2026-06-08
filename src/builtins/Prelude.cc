@@ -466,8 +466,8 @@ extern "C" closure builtin_function_newIORef(OperationArgs& Args)
     // 1. Initial value
     int r = Args.reg_for_slot(0);
 
-    Runtime::Exp E = Runtime::App(Runtime::ConstructorApp("Data.IORef.IORef", 1),
-                                  {Runtime::IndexVar(0)});
+    Runtime::Exp E = Runtime::ConstructorApp("Data.IORef.IORef", 1,
+                                             {Runtime::IndexVar(0)});
 
     int r_ioref = Args.allocate(closure(std::move(E), {r}));
 

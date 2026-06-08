@@ -982,9 +982,9 @@ extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)
 
     object_ptr<Box<pairwise_alignment_t>> pairwise_alignment(new Box<pairwise_alignment_t>(vector<int>(root_length,A2::states::G1)));
 
-    return closure(R::Exp{R::App(R::ConstructorApp("NodeAlignment", 3),
-                                 {R::Int(source_node), R::ObjectValue(pairwise_alignment),
-                                  R::ObjectValue(branch_alignments)})});
+    return closure(R::Exp{R::ConstructorApp("NodeAlignment", 3,
+                                            {R::Int(source_node), R::ObjectValue(pairwise_alignment),
+                                             R::ObjectValue(branch_alignments)})});
 }
 
 extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
@@ -993,9 +993,9 @@ extern "C" closure builtin_function_mkBranchAlignment(OperationArgs& Args)
     auto pairwise_alignment = Args.evaluate_slot_to_value(1);
     auto branch_alignments = runtime_vector_from_value(Args.evaluate_slot_to_value(2));
 
-    return closure(R::Exp{R::App(R::ConstructorApp("BranchAlignment", 3),
-                                 {R::Int(target_node), std::move(pairwise_alignment),
-                                  R::ObjectValue(branch_alignments)})});
+    return closure(R::Exp{R::ConstructorApp("BranchAlignment", 3,
+                                            {R::Int(target_node), std::move(pairwise_alignment),
+                                             R::ObjectValue(branch_alignments)})});
 }
 
 extern "C" closure builtin_function_constructPositionSequencesRaw(OperationArgs& Args)
