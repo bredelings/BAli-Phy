@@ -76,7 +76,7 @@ Runtime::Exp indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
         auto head = indexify(A->head, variables);
         auto arg = indexify(A->arg, variables);
 
-        return Runtime::App(Runtime::FunctionApply{}, {head, arg});
+        return Runtime::FunctionApp({head, arg});
     }
     // Let expression
     else if (auto L = E.to_let())
@@ -136,7 +136,7 @@ Runtime::Exp indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
         for(auto& arg: C->args)
             args.push_back(indexify(arg, variables));
 
-        return Runtime::App(Runtime::ConstructorApp(C->head, C->args.size()), args);
+        return Runtime::ConstructorApp(C->head, C->args.size(), args);
     }
     else if (auto B = E.to_builtinOp())
     {
@@ -144,7 +144,7 @@ Runtime::Exp indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
         for(auto& arg: B->args)
             args.push_back(indexify(arg, variables));
 
-        return Runtime::App(Runtime::builtin_operation_app(B->op, B->lib_name, B->func_name, B->call_conv), args);
+        return Runtime::OperationApp(Runtime::builtin_operation_app(B->op, B->lib_name, B->func_name, B->call_conv), args);
     }
     else if (auto C = E.to_constant())
         return atom_from_constant(*C);
@@ -312,59 +312,65 @@ Core::Exp<> deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
 
         return Core::Case<>{object, std::move(alts)};
     }
-    else if (auto e = E.to<Runtime::App>())
+    else if (auto e = E.to<Runtime::FunctionApp>())
     {
         vector<Core::Exp<>> args;
         args.reserve(e->args.size());
         for(const auto& arg: e->args)
             args.push_back(deindexify(arg, variables));
 
-        if (std::holds_alternative<Runtime::FunctionApply>(e->head))
+        if (args.size() < 2)
         {
-            if (args.size() < 2)
-            {
-                Core::Exp<> result = runtime_only_core_exp("apply");
-                for(const auto& arg: args)
-                    result = Core::Apply<>{result, arg};
-                return result;
-            }
-
-            Core::Exp<> result = args[0];
-            for(int i = 1; i < args.size(); i++)
-                result = Core::Apply<>{result, args[i]};
+            Core::Exp<> result = runtime_only_core_exp("apply");
+            for(const auto& arg: args)
+                result = Core::Apply<>{result, arg};
             return result;
         }
-        else if (auto head = std::get_if<Runtime::ConstructorApp>(&e->head))
+
+        Core::Exp<> result = args[0];
+        for(int i = 1; i < args.size(); i++)
+            result = Core::Apply<>{result, args[i]};
+        return result;
+    }
+    else if (auto e = E.to<Runtime::ConstructorApp>())
+    {
+        vector<Core::Exp<>> args;
+        args.reserve(e->args.size());
+        for(const auto& arg: e->args)
+            args.push_back(deindexify(arg, variables));
+
+        return Core::ConApp<>{e->head.name(), args};
+    }
+    else if (auto e = E.to<Runtime::OperationApp>())
+    {
+        vector<Core::Exp<>> args;
+        args.reserve(e->args.size());
+        for(const auto& arg: e->args)
+            args.push_back(deindexify(arg, variables));
+
+        if (not e->head or e->lib_name.empty() or e->func_name.empty() or e->call_conv.empty())
         {
-            return Core::ConApp<>{head->head.name(), args};
+            Core::Exp<> result = runtime_only_core_exp(e->head ? e->head->print() : string{"op"});
+            for(const auto& arg: args)
+                result = Core::Apply<>{result, arg};
+            return result;
         }
+
+        void* op = nullptr;
+        if (e->call_conv == "ecall")
+            op = reinterpret_cast<void*>(e->head->e_op);
         else
+            op = reinterpret_cast<void*>(e->head->op);
+
+        if (not op)
         {
-            auto op_head = std::get_if<Runtime::OperationApp>(&e->head);
-            if (not op_head or not op_head->head or op_head->lib_name.empty() or op_head->func_name.empty() or op_head->call_conv.empty())
-            {
-                Core::Exp<> result = runtime_only_core_exp(op_head and op_head->head ? op_head->head->print() : string{"op"});
-                for(const auto& arg: args)
-                    result = Core::Apply<>{result, arg};
-                return result;
-            }
-
-            void* op = nullptr;
-            if (op_head->call_conv == "ecall")
-                op = reinterpret_cast<void*>(op_head->head->e_op);
-            else
-                op = reinterpret_cast<void*>(op_head->head->op);
-
-            if (not op)
-            {
-                Core::Exp<> result = runtime_only_core_exp(op_head->head->print());
-                for(const auto& arg: args)
-                    result = Core::Apply<>{result, arg};
-                return result;
-            }
-
-            return Core::BuiltinOp<>{op_head->lib_name, op_head->func_name, op_head->call_conv, args, op};
+            Core::Exp<> result = runtime_only_core_exp(e->head->print());
+            for(const auto& arg: args)
+                result = Core::Apply<>{result, arg};
+            return result;
         }
+
+        return Core::BuiltinOp<>{e->lib_name, e->func_name, e->call_conv, args, op};
     }
     else if (E.to<Runtime::Trim>())
     {

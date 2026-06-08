@@ -32,7 +32,7 @@ namespace Runtime
 
     bool OperationApp::operator==(const OperationApp& app) const
     {
-        if (lib_name != app.lib_name or func_name != app.func_name or call_conv != app.call_conv)
+        if (lib_name != app.lib_name or func_name != app.func_name or call_conv != app.call_conv or args != app.args)
             return false;
 
         if (head == app.head)
@@ -152,11 +152,8 @@ namespace Runtime
             {
                 return true;
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, ConstructorApp>)
             {
-                if (not std::holds_alternative<ConstructorApp>(e.head))
-                    return false;
-
                 for(const auto& arg: e.args)
                     if (not arg.is_value())
                         return false;
@@ -186,9 +183,9 @@ namespace Runtime
             {
                 return true;
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, ConstructorApp>)
             {
-                return std::holds_alternative<ConstructorApp>(e.head);
+                return true;
             }
             else
                 return false;
@@ -206,7 +203,7 @@ namespace Runtime
     Exp apply(Exp function, vector<Exp> args)
     {
         args.insert(args.begin(), std::move(function));
-        return App(FunctionApply{}, std::move(args));
+        return FunctionApp(std::move(args));
     }
 
     Exp apply_env_function(int function_index, vector<Exp> args)
@@ -217,7 +214,7 @@ namespace Runtime
         for(int i = int(args.size()) - 1; i >= 0; --i)
             app_args.push_back(IndexVar(i));
 
-        return Let(std::move(args), App(FunctionApply{}, std::move(app_args)));
+        return Let(std::move(args), FunctionApp(std::move(app_args)));
     }
 
     int count_lambdas(const Exp& E)
@@ -306,13 +303,29 @@ namespace Runtime
 
                 return Case(shift_free_indices(e.object, amount, depth), alts);
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, FunctionApp>)
             {
                 vector<Exp> args;
                 for(const auto& arg: e.args)
                     args.push_back(shift_free_indices(arg, amount, depth));
 
-                return App(e.head, args);
+                return FunctionApp(args);
+            }
+            else if constexpr (std::is_same_v<T, ConstructorApp>)
+            {
+                vector<Exp> args;
+                for(const auto& arg: e.args)
+                    args.push_back(shift_free_indices(arg, amount, depth));
+
+                return ConstructorApp(e.head, args);
+            }
+            else if constexpr (std::is_same_v<T, OperationApp>)
+            {
+                vector<Exp> args;
+                for(const auto& arg: e.args)
+                    args.push_back(shift_free_indices(arg, amount, depth));
+
+                return OperationApp(e.head, e.lib_name, e.func_name, e.call_conv, args);
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {
@@ -343,12 +356,27 @@ namespace Runtime
     {
     }
 
+    OperationApp::OperationApp(object_ptr<const Operation> op, vector<Exp> as)
+        :head(std::move(op)), args(std::move(as))
+    {
+    }
+
+    OperationApp::OperationApp(OperationApp app, vector<Exp> as)
+        :head(std::move(app.head)), lib_name(std::move(app.lib_name)), func_name(std::move(app.func_name)), call_conv(std::move(app.call_conv)), args(std::move(as))
+    {
+    }
+
     OperationApp::OperationApp()
     {
     }
 
     OperationApp::OperationApp(object_ptr<const Operation> op, std::string lib, std::string func, std::string conv)
         :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv))
+    {
+    }
+
+    OperationApp::OperationApp(object_ptr<const Operation> op, std::string lib, std::string func, std::string conv, vector<Exp> as)
+        :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv)), args(std::move(as))
     {
     }
 
@@ -375,12 +403,10 @@ namespace Runtime
         if (const auto* c = E.to<Constructor>())
             return c->value.name() == name;
 
-        const auto* app = E.to<App>();
-        if (not app)
+        if (const auto* app = E.to<ConstructorApp>())
+            return app->head.name() == name;
+        else
             return false;
-
-        const auto* c = std::get_if<ConstructorApp>(&app->head);
-        return c and c->head.name() == name;
     }
 
     static std::string parenthesize_if(bool b, const std::string& s)
@@ -423,19 +449,9 @@ namespace Runtime
         }, pattern);
     }
 
-    std::string print(const AppHead& head)
+    static std::string print_operation_head(const OperationApp& app)
     {
-        return std::visit([](const auto& h) -> std::string
-        {
-            using T = std::decay_t<decltype(h)>;
-
-            if constexpr (std::is_same_v<T, FunctionApply>)
-                return "@";
-            else if constexpr (std::is_same_v<T, ConstructorApp>)
-                return h.head.print();
-            else if constexpr (std::is_same_v<T, OperationApp>)
-                return h.head->print();
-        }, head);
+        return app.head->print();
     }
 
     std::string print(const Exp& E)
@@ -514,16 +530,32 @@ namespace Runtime
                 return "case " + parenthesize_if(not prints_atomically(e.object), print(e.object)) +
                        " of {" + join(alts, "; ") + "}";
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, FunctionApp>)
             {
                 vector<std::string> args;
                 for(const auto& arg: e.args)
                     args.push_back(parenthesize_if(not prints_atomically(arg), print(arg)));
 
-                if (std::holds_alternative<FunctionApply>(e.head) and args.size() >= 2)
+                if (args.size() >= 2)
                     return args[0] + " " + join(vector<std::string>(args.begin()+1, args.end()), " ");
                 else
-                    return print(e.head) + " " + join(args, " ");
+                    return "@ " + join(args, " ");
+            }
+            else if constexpr (std::is_same_v<T, ConstructorApp>)
+            {
+                vector<std::string> args;
+                for(const auto& arg: e.args)
+                    args.push_back(parenthesize_if(not prints_atomically(arg), print(arg)));
+
+                return e.head.print() + " " + join(args, " ");
+            }
+            else if constexpr (std::is_same_v<T, OperationApp>)
+            {
+                vector<std::string> args;
+                for(const auto& arg: e.args)
+                    args.push_back(parenthesize_if(not prints_atomically(arg), print(arg)));
+
+                return print_operation_head(e) + " " + join(args, " ");
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {
@@ -564,26 +596,24 @@ namespace Runtime
 #endif
     }
 
-    static void check_app_head_invariants(const AppHead& head, int n_args)
+    static void check_app_invariants(const FunctionApp& app)
     {
 #ifndef NDEBUG
-        std::visit([&](const auto& h)
-        {
-            using T = std::decay_t<decltype(h)>;
+        assert(app.args.size() >= 2);
+#endif
+    }
 
-            if constexpr (std::is_same_v<T, FunctionApply>)
-            {
-                assert(n_args >= 2);
-            }
-            else if constexpr (std::is_same_v<T, ConstructorApp>)
-            {
-                assert(h.head.n_args() == n_args);
-            }
-            else if constexpr (std::is_same_v<T, OperationApp>)
-            {
-                assert(n_args >= 0);
-            }
-        }, head);
+    static void check_app_invariants(const ConstructorApp& app)
+    {
+#ifndef NDEBUG
+        assert(app.head.n_args() == app.args.size());
+#endif
+    }
+
+    static void check_app_invariants(const OperationApp& app)
+    {
+#ifndef NDEBUG
+        assert(app.head);
 #endif
     }
 
@@ -646,9 +676,11 @@ namespace Runtime
                     check_invariants(alt.body);
                 }
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, FunctionApp> or
+                               std::is_same_v<T, ConstructorApp> or
+                               std::is_same_v<T, OperationApp>)
             {
-                check_app_head_invariants(e.head, e.args.size());
+                check_app_invariants(e);
                 for(const auto& arg: e.args)
                     check_invariants(arg);
             }
@@ -692,7 +724,9 @@ namespace Runtime
                 for(const auto& alt: e.alts)
                     check_no_reg_refs(alt.body);
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, FunctionApp> or
+                               std::is_same_v<T, ConstructorApp> or
+                               std::is_same_v<T, OperationApp>)
             {
                 for(const auto& arg: e.args)
                     check_no_reg_refs(arg);
@@ -734,7 +768,9 @@ namespace Runtime
                 for(const auto& alt: e.alts)
                     check_translated(alt.body);
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, FunctionApp> or
+                               std::is_same_v<T, ConstructorApp> or
+                               std::is_same_v<T, OperationApp>)
             {
                 for(const auto& arg: e.args)
                     check_translated(arg);

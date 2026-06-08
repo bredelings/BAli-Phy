@@ -16,7 +16,7 @@ closure modifiable_op(OperationArgs& Args)
         int x = Args.reg_for_slot(0);
 
         // 2. Allocate a new reg m with closure (modifiable).
-        int m = Args.allocate( {R::App{R::OperationApp(new modifiable),{}}} );
+        int m = Args.allocate( {R::OperationApp(new modifiable, {})} );
 
         // 3. Mark m changeable.
         M.mark_reg_changeable(m);
@@ -54,10 +54,9 @@ modifiable::modifiable():
 
 bool is_modifiable(const Runtime::Exp& E)
 {
-    const auto* app = E.to<Runtime::App>();
+    const auto* app = E.to<Runtime::OperationApp>();
     if (not app)
         return false;
 
-    const auto* op = std::get_if<Runtime::OperationApp>(&app->head);
-    return op and dynamic_cast<const modifiable*>(op->head.get());
+    return dynamic_cast<const modifiable*>(app->head.get());
 }

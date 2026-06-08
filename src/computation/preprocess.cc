@@ -59,14 +59,32 @@ namespace Runtime
 
                 return Case(untranslate_vars(e.object, ids), std::move(alts));
             }
-            else if constexpr (std::is_same_v<T, App>)
+            else if constexpr (std::is_same_v<T, FunctionApp>)
             {
                 vector<Exp> args;
                 args.reserve(e.args.size());
                 for(const auto& arg: e.args)
                     args.push_back(untranslate_vars(arg, ids));
 
-                return App(e.head, std::move(args));
+                return FunctionApp(std::move(args));
+            }
+            else if constexpr (std::is_same_v<T, ConstructorApp>)
+            {
+                vector<Exp> args;
+                args.reserve(e.args.size());
+                for(const auto& arg: e.args)
+                    args.push_back(untranslate_vars(arg, ids));
+
+                return ConstructorApp(e.head, std::move(args));
+            }
+            else if constexpr (std::is_same_v<T, OperationApp>)
+            {
+                vector<Exp> args;
+                args.reserve(e.args.size());
+                for(const auto& arg: e.args)
+                    args.push_back(untranslate_vars(arg, ids));
+
+                return OperationApp(e.head, e.lib_name, e.func_name, e.call_conv, std::move(args));
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {

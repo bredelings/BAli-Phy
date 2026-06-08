@@ -120,10 +120,9 @@ namespace
 
     void check_runtime_closure_slots()
     {
-        closure C(Runtime::App(Runtime::FunctionApply{},
-                               {Runtime::IndexVar(1),
-                                Runtime::IndexVar(0),
-                                Runtime::RegRef(30)}),
+        closure C(Runtime::FunctionApp({Runtime::IndexVar(1),
+                                        Runtime::IndexVar(0),
+                                        Runtime::RegRef(30)}),
                   {10, 20});
 
         require(C.n_slots() == 3, "runtime closure App slot count mismatch");
@@ -159,7 +158,7 @@ namespace
         require(bool(bind), "shifted Let bind should remain an IndexVar");
         require(bind->index == 2, "shifted Let bind index mismatch");
 
-        auto app = let->body.to<Runtime::App>();
+        auto app = let->body.to<Runtime::FunctionApp>();
         require(bool(app), "shifted Let body should remain an App");
         auto fn = app->args[0].to<Runtime::IndexVar>();
         auto bound_arg = app->args[1].to<Runtime::IndexVar>();
@@ -290,12 +289,11 @@ namespace
         require(vector_value.is_atomic_value(), "runtime ObjectValue should be atomic");
         require(vector_value.as_<R::RVector>().size() == 2, "runtime ObjectValue value mismatch");
 
-        Runtime::Exp pair = Runtime::App(Runtime::ConstructorApp("Pair", 2),
-                                         {Runtime::Exp(1), Runtime::Exp("field")});
+        Runtime::Exp pair = Runtime::ConstructorApp("Pair", 2,
+                                                    {Runtime::Exp(1), Runtime::Exp("field")});
         require(pair.is_value(), "constructor applications should be runtime values");
-        auto app = pair.to<Runtime::App>();
-        require(bool(app), "constructor application should convert to Runtime::App");
-        require(std::holds_alternative<Runtime::ConstructorApp>(app->head), "constructor application should use ConstructorApp");
+        auto app = pair.to<Runtime::ConstructorApp>();
+        require(bool(app), "constructor application should convert to Runtime::ConstructorApp");
         require(app->args.size() == 2, "constructor application arity mismatch");
         require(app->args[0].as_int() == 1, "constructor application int field mismatch");
         require(app->args[1].as_string() == "field", "constructor application string field mismatch");
@@ -342,7 +340,7 @@ namespace
         Runtime::Exp literal = Runtime::Constructor("Data.Bool.True", 0);
         check_archive_roundtrip(literal);
 
-        Runtime::Exp app = Runtime::App(Runtime::ConstructorApp("Data.Bool.True", 0), {});
+        Runtime::Exp app = Runtime::ConstructorApp("Data.Bool.True", 0, {});
         check_archive_roundtrip(app);
 
         Runtime::Exp case_ = Runtime::Case(Runtime::Constructor("Data.Bool.True", 0),
@@ -354,23 +352,23 @@ namespace
     void check_intrusive_ptr_serialization_preserves_aliases()
     {
         Runtime::Exp shared = Runtime::String("shared");
-        Runtime::Exp before = Runtime::App(Runtime::ConstructorApp("Pair", 2), {shared, shared});
+        Runtime::Exp before = Runtime::ConstructorApp("Pair", 2, {shared, shared});
 
-        auto before_app = before.to<Runtime::App>();
+        auto before_app = before.to<Runtime::ConstructorApp>();
         require(before_app->args[0].to<Runtime::String>() == before_app->args[1].to<Runtime::String>(),
                 "test setup should share one boxed Runtime::String node");
 
         auto after = archive_roundtrip(before);
-        auto after_app = after.to<Runtime::App>();
-        require(bool(after_app), "alias serialization test should round-trip to a Runtime::App");
+        auto after_app = after.to<Runtime::ConstructorApp>();
+        require(bool(after_app), "alias serialization test should round-trip to a Runtime::ConstructorApp");
         require(after_app->args[0].to<Runtime::String>() == after_app->args[1].to<Runtime::String>(),
                 "Runtime intrusive pointer serialization should preserve aliases");
     }
 
     void check_runtime_only_operation_app_serialization()
     {
-        Runtime::Exp app = Runtime::App(Runtime::OperationApp(new Operation(runtime_only_test_operation, "runtimeOnly")),
-                                        {});
+        Runtime::Exp app = Runtime::OperationApp(new Operation(runtime_only_test_operation, "runtimeOnly"),
+                                                 {});
 
         bool threw = false;
         try
@@ -388,14 +386,14 @@ namespace
     void check_runtime_exp_equality()
     {
         Runtime::Exp e1 = Runtime::Let({Runtime::Int(1), Runtime::String("field")},
-                                       Runtime::App(Runtime::ConstructorApp("Pair", 2),
-                                                    {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
+                                       Runtime::ConstructorApp("Pair", 2,
+                                                               {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
         Runtime::Exp e2 = Runtime::Let({Runtime::Int(1), Runtime::String("field")},
-                                       Runtime::App(Runtime::ConstructorApp("Pair", 2),
-                                                    {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
+                                       Runtime::ConstructorApp("Pair", 2,
+                                                               {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
         Runtime::Exp e3 = Runtime::Let({Runtime::Int(2), Runtime::String("field")},
-                                       Runtime::App(Runtime::ConstructorApp("Pair", 2),
-                                                    {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
+                                       Runtime::ConstructorApp("Pair", 2,
+                                                               {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
 
         require(e1 == e2, "matching Runtime::Exp trees should compare equal");
         require(not (e1 == e3), "different Runtime::Exp trees should not compare equal");

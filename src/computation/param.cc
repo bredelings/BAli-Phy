@@ -15,26 +15,23 @@ namespace
 {
 Runtime::Exp head_code(const Runtime::Exp& E)
 {
-    auto app = E.to<Runtime::App>();
-    if (not app)
+    if (E.to<Runtime::FunctionApp>())
+        std::abort();
+    else if (auto app = E.to<Runtime::ConstructorApp>())
+        return Runtime::Constructor(app->head);
+    else if (auto app = E.to<Runtime::OperationApp>())
+        return *app->head;
+    else
         return E;
-
-    return std::visit([](const auto& head) -> Runtime::Exp
-    {
-        using T = std::decay_t<decltype(head)>;
-
-        if constexpr (std::is_same_v<T, Runtime::FunctionApply>)
-            std::abort();
-        else if constexpr (std::is_same_v<T, Runtime::ConstructorApp>)
-            return Runtime::Constructor(head.head);
-        else if constexpr (std::is_same_v<T, Runtime::OperationApp>)
-            return *head.head;
-    }, app->head);
 }
 
 int n_slots(const Runtime::Exp& E)
 {
-    if (auto app = E.to<Runtime::App>())
+    if (auto app = E.to<Runtime::FunctionApp>())
+        return app->args.size();
+    else if (auto app = E.to<Runtime::ConstructorApp>())
+        return app->args.size();
+    else if (auto app = E.to<Runtime::OperationApp>())
         return app->args.size();
     else
         return 0;

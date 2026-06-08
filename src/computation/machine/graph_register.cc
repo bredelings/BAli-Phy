@@ -412,7 +412,7 @@ void reg_heap::unregister_effect_at_step(int s)
 void reg_heap::_register_effect_at_reg(int r, int s)
 {
     const auto& E = closure_at(r).get_code();
-    assert(E.to<effect>() or E.is_constructor() or E.to<Runtime::App>());
+    assert(E.to<effect>() or E.is_constructor() or E.to<Runtime::FunctionApp>() or E.to<Runtime::ConstructorApp>() or E.to<Runtime::OperationApp>());
 
     if (const auto* P = E.to<::register_prior>())
     {
@@ -474,7 +474,7 @@ void reg_heap::_register_effect_at_reg(int r, int s)
 void reg_heap::_unregister_effect_at_reg(int r, int s)
 {
     const auto& E = closure_at(r).get_code();
-    assert(E.to<effect>() or E.is_constructor() or E.to<Runtime::App>());
+    assert(E.to<effect>() or E.is_constructor() or E.to<Runtime::FunctionApp>() or E.to<Runtime::ConstructorApp>() or E.to<Runtime::OperationApp>());
 
     if (const auto* P = E.to<::register_prior>())
     {
@@ -2023,7 +2023,9 @@ void reg_heap::check_reg_vars_are_pinned(const Runtime::Exp& E) const
             for(const auto& alt: e.alts)
                 check_reg_vars_are_pinned(alt.body);
         }
-        else if constexpr (std::is_same_v<T, Runtime::App>)
+        else if constexpr (std::is_same_v<T, Runtime::FunctionApp> or
+                           std::is_same_v<T, Runtime::ConstructorApp> or
+                           std::is_same_v<T, Runtime::OperationApp>)
         {
             for(const auto& arg: e.args)
                 check_reg_vars_are_pinned(arg);

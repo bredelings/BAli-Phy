@@ -4,14 +4,13 @@
 
 namespace
 {
-    const Runtime::App& array_app(const closure& C)
+    const Runtime::ConstructorApp& array_app(const closure& C)
     {
-        auto app = C.get_code().to<Runtime::App>();
+        auto app = C.get_code().to<Runtime::ConstructorApp>();
         if (not app)
             throw myexception()<<"Expression is not an Array:   "<<C.get_code();
 
-        auto constructor_app = std::get_if<Runtime::ConstructorApp>(&app->head);
-        if (not constructor_app or constructor_app->head.name() != "Array")
+        if (app->head.name() != "Array")
             throw myexception()<<"Expression is not an Array:   "<<C.get_code();
 
         return *app;
@@ -46,7 +45,7 @@ extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 	// Add the var to the environment
 	result.Env[i] = apply_reg;
     }
-    result.set_code(Runtime::App(Runtime::ConstructorApp("Array", n), std::move(elements)));
+    result.set_code(Runtime::ConstructorApp("Array", n, std::move(elements)));
   
     return result;
 }
@@ -104,7 +103,7 @@ extern "C" closure builtin_function_removeElement(OperationArgs& Args)
 	// Add the var to the environment
 	result.Env[i] = C.Env[j];
     }
-    result.set_code(Runtime::App(Runtime::ConstructorApp("Array", n-1), std::move(elements)));
+    result.set_code(Runtime::ConstructorApp("Array", n-1, std::move(elements)));
 
     return result;
 }

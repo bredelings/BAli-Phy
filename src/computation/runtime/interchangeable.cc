@@ -41,7 +41,7 @@ closure interchangeable_op(OperationArgs& Args)
 	int x = Args.reg_for_slot(1);
 
 	// 2. Allocate a new reg i with closure (interchangeable)
-        int i = Args.allocate( {R::App{R::OperationApp(new interchangeable),{}}} );
+        int i = Args.allocate( {R::OperationApp(new interchangeable, {})} );
 
 	// 3. Mark i changeable
 	M.mark_reg_changeable(i);
@@ -72,10 +72,9 @@ interchangeable::interchangeable():
 
 bool is_interchangeable(const Runtime::Exp& E)
 {
-    const auto* app = E.to<Runtime::App>();
+    const auto* app = E.to<Runtime::OperationApp>();
     if (not app)
         return false;
 
-    const auto* op = std::get_if<Runtime::OperationApp>(&app->head);
-    return op and dynamic_cast<const interchangeable*>(op->head.get());
+    return dynamic_cast<const interchangeable*>(app->head.get());
 }

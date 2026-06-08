@@ -110,11 +110,8 @@ static const Runtime::ConstructorTag* constructor_value(const Runtime::Exp& E)
 {
     if (auto c = E.to<Runtime::Constructor>())
         return &c->value;
-    else if (auto app = E.to<Runtime::App>())
-    {
-        if (auto constructor_app = std::get_if<Runtime::ConstructorApp>(&app->head))
-            return &constructor_app->head;
-    }
+    else if (auto app = E.to<Runtime::ConstructorApp>())
+        return &app->head;
 
     return nullptr;
 }
@@ -123,11 +120,8 @@ static int constructor_n_args(const Runtime::Exp& E)
 {
     if (auto c = E.to<Runtime::Constructor>())
         return c->value.n_args();
-    else if (auto app = E.to<Runtime::App>())
-    {
-        if (std::holds_alternative<Runtime::ConstructorApp>(app->head))
-            return app->args.size();
-    }
+    else if (auto app = E.to<Runtime::ConstructorApp>())
+        return app->args.size();
 
     std::abort();
 }

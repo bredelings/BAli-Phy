@@ -33,7 +33,11 @@ int closure::n_slots() const
 {
     assert(has_code());
 
-    if (auto app = code.to<Runtime::App>())
+    if (auto app = code.to<Runtime::FunctionApp>())
+        return app->args.size();
+    else if (auto app = code.to<Runtime::ConstructorApp>())
+        return app->args.size();
+    else if (auto app = code.to<Runtime::OperationApp>())
         return app->args.size();
     else if (code.to<Runtime::Case>())
         return 1;

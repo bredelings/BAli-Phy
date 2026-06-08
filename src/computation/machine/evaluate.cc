@@ -188,29 +188,20 @@ namespace
         if (C.get_code().to<R::Case>())
             return case_op;
 
-        auto app = C.get_code().to<R::App>();
-        assert(app);
-
-        return std::visit([](const auto& head) -> o_operation_fn
+        if (C.get_code().to<R::FunctionApp>())
         {
-            using T = std::decay_t<decltype(head)>;
+            static const Apply apply;
+            return apply.op;
+        }
 
-            if constexpr (std::is_same_v<T, R::FunctionApply>)
-            {
-                static const Apply apply;
-                return apply.op;
-            }
-            else if constexpr (std::is_same_v<T, R::OperationApp>)
-            {
-                assert(head.head);
-                assert(head.head->op);
-                return head.head->op;
-            }
-            else
-            {
-                std::abort();
-            }
-        }, app->head);
+        if (auto app = C.get_code().to<R::OperationApp>())
+        {
+            assert(app->head);
+            assert(app->head->op);
+            return app->head->op;
+        }
+
+        std::abort();
     }
 
     R::Exp evaluate_e_op_arg(OperationArgs& Args, const R::Exp& arg_ref)
@@ -240,13 +231,10 @@ namespace
 
 R::Exp evaluate_e_op(OperationArgs& Args, const R::Exp& E)
 {
-    auto app = E.ptr_to<R::App>();
+    auto app = E.ptr_to<R::OperationApp>();
     assert(app);
-
-    auto op_app = std::get_if<R::OperationApp>(&app->head);
-    assert(op_app);
-    assert(op_app->head);
-    assert(op_app->head->e_op);
+    assert(app->head);
+    assert(app->head->e_op);
 
     int initial_size = e_value_stack.size();
 
@@ -256,7 +244,7 @@ R::Exp evaluate_e_op(OperationArgs& Args, const R::Exp& E)
     // If we could assume that closures that are currently being executed will not
     //   be modified, that would be helpful for writing simpler code I expect.
     int n_args = app->args.size();
-    auto f = op_app->head->e_op;
+    auto f = app->head->e_op;
 
     boost::container::small_vector<R::Exp, 8> args;
     args.reserve(n_args);
