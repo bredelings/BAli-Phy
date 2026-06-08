@@ -60,11 +60,13 @@ Runtime::Exp reg_heap::capture_local_reg_refs(const Runtime::Exp& E, closure::En
         }
         else if constexpr (std::is_same_v<T, Runtime::FunctionApp>)
         {
+            auto head = capture_local_reg_refs(e.head, Env, depth);
+
             vector<Runtime::Exp> args;
             for(const auto& arg: e.args)
                 args.push_back(capture_local_reg_refs(arg, Env, depth));
 
-            return Runtime::FunctionApp(args);
+            return Runtime::FunctionApp(head, args);
         }
         else if constexpr (std::is_same_v<T, Runtime::ConstructorApp>)
         {
@@ -154,11 +156,13 @@ Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E, closure::Env_t& Env
         }
         else if constexpr (std::is_same_v<T, Runtime::FunctionApp>)
         {
+            auto head = translate_refs(e.head, Env, depth);
+
             vector<Runtime::Exp> args;
             for(const auto& arg: e.args)
                 args.push_back(translate_refs(arg, Env, depth));
 
-            return Runtime::FunctionApp(args);
+            return Runtime::FunctionApp(head, args);
         }
         else if constexpr (std::is_same_v<T, Runtime::ConstructorApp>)
         {

@@ -46,9 +46,14 @@ namespace Runtime
         return v3;
     }
 
-    Exp rebuild_app(const FunctionApp&, vector<Exp> args)
+    Exp rebuild_app(const FunctionApp& app, vector<Exp> args)
     {
-        return FunctionApp(std::move(args));
+        return FunctionApp(app.head, std::move(args));
+    }
+
+    Exp rebuild_app(const FunctionApp&, Exp head, vector<Exp> args)
+    {
+        return FunctionApp(std::move(head), std::move(args));
     }
 
     Exp rebuild_app(const ConstructorApp& app, vector<Exp> args)
@@ -115,6 +120,8 @@ namespace Runtime
                                std::is_same_v<T, OperationApp>)
             {
                 vector<int> vars;
+                if constexpr (std::is_same_v<T, FunctionApp>)
+                    vars = get_free_index_vars(e.head);
                 for(const auto& arg: e.args)
                     vars = merge_vars(vars, get_free_index_vars(arg));
                 return vars;
@@ -211,7 +218,10 @@ namespace Runtime
                 for(const auto& arg: e.args)
                     args.push_back(remap_free_indices(arg, mapping, depth));
 
-                return rebuild_app(e, std::move(args));
+                if constexpr (std::is_same_v<T, FunctionApp>)
+                    return rebuild_app(e, remap_free_indices(e.head, mapping, depth), std::move(args));
+                else
+                    return rebuild_app(e, std::move(args));
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {
@@ -311,7 +321,10 @@ namespace Runtime
                 for(const auto& arg: e.args)
                     args.push_back(trim_normalize(arg));
 
-                return rebuild_app(e, std::move(args));
+                if constexpr (std::is_same_v<T, FunctionApp>)
+                    return rebuild_app(e, trim_normalize(e.head), std::move(args));
+                else
+                    return rebuild_app(e, std::move(args));
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {
@@ -369,7 +382,10 @@ namespace Runtime
                 for(const auto& arg: e.args)
                     args.push_back(trim_unnormalize(untrim(arg)));
 
-                return rebuild_app(e, std::move(args));
+                if constexpr (std::is_same_v<T, FunctionApp>)
+                    return rebuild_app(e, trim_unnormalize(untrim(e.head)), std::move(args));
+                else
+                    return rebuild_app(e, std::move(args));
             }
             else if constexpr (std::is_same_v<T, Trim>)
             {

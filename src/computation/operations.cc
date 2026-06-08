@@ -64,9 +64,9 @@ using boost::dynamic_pointer_cast;
 closure apply_op(OperationArgs& Args)
 {
     const closure& current = Args.current_closure();
-    int n_args_given = current.n_function_slots()-1;
+    int n_args_given = current.n_function_args();
 
-    const auto& head = current.function_slot_ref(0);
+    const auto& head = current.function_head_ref();
     auto head_reg = current.reg_for_code(head);
     assert(head_reg);
     closure C = Args.evaluate_reg_to_closure(*head_reg);
@@ -82,7 +82,7 @@ closure apply_op(OperationArgs& Args)
     C.set_code(Runtime::peel_lambdas(C.get_code(), n_args_applied));
     for(int i=0;i<n_args_applied;i++)
     {
-	int arg = Args.current_closure().reg_for_function_slot(i+1);
+	int arg = Args.current_closure().reg_for_function_arg(i);
 	C.Env.push_back(arg);
     }
 
@@ -97,7 +97,7 @@ closure apply_op(OperationArgs& Args)
 	closure::Env_t Env = {new_head_ref};
 	for(int i=n_args_needed;i<n_args_given;i++)
 	{
-	    int arg = Args.current_closure().reg_for_function_slot(i+1);
+	    int arg = Args.current_closure().reg_for_function_arg(i);
 	    Env.push_back(arg);
 	}
 

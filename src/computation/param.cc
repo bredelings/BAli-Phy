@@ -28,7 +28,7 @@ Runtime::Exp head_code(const Runtime::Exp& E)
 int n_slots(const Runtime::Exp& E)
 {
     if (auto app = E.to<Runtime::FunctionApp>())
-        return app->args.size();
+        return 1 + app->args.size();
     else if (auto app = E.to<Runtime::ConstructorApp>())
         return app->args.size();
     else if (auto app = E.to<Runtime::OperationApp>())

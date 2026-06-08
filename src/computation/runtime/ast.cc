@@ -202,19 +202,18 @@ namespace Runtime
 
     Exp apply(Exp function, vector<Exp> args)
     {
-        args.insert(args.begin(), std::move(function));
-        return FunctionApp(std::move(args));
+        return FunctionApp(std::move(function), std::move(args));
     }
 
     Exp apply_env_function(int function_index, vector<Exp> args)
     {
-        vector<Exp> app_args;
-        app_args.push_back(IndexVar(function_index + int(args.size())));
+        auto head = IndexVar(function_index + int(args.size()));
 
+        vector<Exp> app_args;
         for(int i = int(args.size()) - 1; i >= 0; --i)
             app_args.push_back(IndexVar(i));
 
-        return Let(std::move(args), FunctionApp(std::move(app_args)));
+        return Let(std::move(args), FunctionApp(std::move(head), std::move(app_args)));
     }
 
     int count_lambdas(const Exp& E)
@@ -304,11 +303,13 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, FunctionApp>)
             {
+                auto head = shift_free_indices(e.head, amount, depth);
+
                 vector<Exp> args;
                 for(const auto& arg: e.args)
                     args.push_back(shift_free_indices(arg, amount, depth));
 
-                return FunctionApp(args);
+                return FunctionApp(head, args);
             }
             else if constexpr (std::is_same_v<T, ConstructorApp>)
             {
@@ -498,6 +499,7 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, FunctionApp>)
             {
                 vector<std::string> args;
+                args.push_back(parenthesize_if(not prints_atomically(e.head), print(e.head)));
                 for(const auto& arg: e.args)
                     args.push_back(parenthesize_if(not prints_atomically(arg), print(arg)));
 
@@ -567,7 +569,8 @@ namespace Runtime
     static void check_app_invariants(const FunctionApp& app)
     {
 #ifndef NDEBUG
-        assert(app.args.size() >= 2);
+        assert(app.head);
+        assert(app.args.size() >= 1);
 #endif
     }
 
@@ -645,6 +648,8 @@ namespace Runtime
                                std::is_same_v<T, OperationApp>)
             {
                 check_app_invariants(e);
+                if constexpr (std::is_same_v<T, FunctionApp>)
+                    check_invariants(e.head);
                 for(const auto& arg: e.args)
                     check_invariants(arg);
             }
@@ -692,6 +697,8 @@ namespace Runtime
                                std::is_same_v<T, ConstructorApp> or
                                std::is_same_v<T, OperationApp>)
             {
+                if constexpr (std::is_same_v<T, FunctionApp>)
+                    check_no_reg_refs(e.head);
                 for(const auto& arg: e.args)
                     check_no_reg_refs(arg);
             }
@@ -736,6 +743,8 @@ namespace Runtime
                                std::is_same_v<T, ConstructorApp> or
                                std::is_same_v<T, OperationApp>)
             {
+                if constexpr (std::is_same_v<T, FunctionApp>)
+                    check_translated(e.head);
                 for(const auto& arg: e.args)
                     check_translated(arg);
             }

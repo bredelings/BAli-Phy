@@ -76,7 +76,7 @@ Runtime::Exp indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
         auto head = indexify(A->head, variables);
         auto arg = indexify(A->arg, variables);
 
-        return Runtime::FunctionApp({head, arg});
+        return Runtime::FunctionApp(head, {arg});
     }
     // Let expression
     else if (auto L = E.to_let())
@@ -307,22 +307,23 @@ Core::Exp<> deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
     }
     else if (auto e = E.to<Runtime::FunctionApp>())
     {
+        Core::Exp<> result = deindexify(e->head, variables);
+
         vector<Core::Exp<>> args;
         args.reserve(e->args.size());
         for(const auto& arg: e->args)
             args.push_back(deindexify(arg, variables));
 
-        if (args.size() < 2)
+        if (not e->head)
         {
-            Core::Exp<> result = runtime_only_core_exp("apply");
+            result = runtime_only_core_exp("apply");
             for(const auto& arg: args)
                 result = Core::Apply<>{result, arg};
             return result;
         }
 
-        Core::Exp<> result = args[0];
-        for(int i = 1; i < args.size(); i++)
-            result = Core::Apply<>{result, args[i]};
+        for(const auto& arg: args)
+            result = Core::Apply<>{result, arg};
         return result;
     }
     else if (auto e = E.to<Runtime::ConstructorApp>())

@@ -61,12 +61,14 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, FunctionApp>)
             {
+                auto head = untranslate_vars(e.head, ids);
+
                 vector<Exp> args;
                 args.reserve(e.args.size());
                 for(const auto& arg: e.args)
                     args.push_back(untranslate_vars(arg, ids));
 
-                return FunctionApp(std::move(args));
+                return FunctionApp(std::move(head), std::move(args));
             }
             else if constexpr (std::is_same_v<T, ConstructorApp>)
             {

@@ -120,9 +120,9 @@ namespace
 
     void check_runtime_closure_slots()
     {
-        closure C(Runtime::FunctionApp({Runtime::IndexVar(1),
-                                        Runtime::IndexVar(0),
-                                        Runtime::RegRef(30)}),
+        closure C(Runtime::FunctionApp(Runtime::IndexVar(1),
+                                        {Runtime::IndexVar(0),
+                                         Runtime::RegRef(30)}),
                   {10, 20});
 
         require(C.n_slots() == 3, "runtime closure App slot count mismatch");
@@ -160,9 +160,9 @@ namespace
 
         auto app = let->body.to<Runtime::FunctionApp>();
         require(bool(app), "shifted Let body should remain an App");
-        auto fn = app->args[0].to<Runtime::IndexVar>();
-        auto bound_arg = app->args[1].to<Runtime::IndexVar>();
-        auto reg_ref = app->args[2].to<Runtime::RegRef>();
+        auto fn = app->head.to<Runtime::IndexVar>();
+        auto bound_arg = app->args[0].to<Runtime::IndexVar>();
+        auto reg_ref = app->args[1].to<Runtime::RegRef>();
         require(bool(fn), "shifted App function should remain an IndexVar");
         require(bool(bound_arg), "bound App argument should remain an IndexVar");
         require(bool(reg_ref), "RegRef App argument should remain a RegRef");
