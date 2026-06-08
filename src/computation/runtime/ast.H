@@ -317,7 +317,6 @@ namespace Runtime
         const ConstructorTag& as_constructor() const;
         std::string print() const;
 
-        const Exp& slot_ref(int i) const;
         const std::vector<Exp>& function_args() const;
         const std::vector<Exp>& constructor_args() const;
         const std::vector<Exp>& operation_args() const;
@@ -943,23 +942,6 @@ namespace Runtime
     void check_invariants(const Exp&);
     void check_no_reg_refs(const Exp&);
     void check_translated(const Exp&);
-
-    inline const Exp& Exp::slot_ref(int i) const
-    {
-        if (auto app = to<Runtime::FunctionApp>())
-        {
-            if (i == 0)
-                return app->head;
-            else
-                return app->args[i-1];
-        }
-        else if (auto app = to<Runtime::ConstructorApp>())
-            return app->args[i];
-        else if (auto app = to<Runtime::OperationApp>())
-            return app->args[i];
-        else
-            std::abort();
-    }
 
     inline const std::vector<Exp>& Exp::function_args() const
     {

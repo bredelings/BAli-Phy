@@ -30,11 +30,6 @@ public:
 
     bool operator==(const closure& C2) const {return code == C2.code and Env == C2.Env;}
 
-    int n_slots() const;
-
-    Runtime::Exp slot(int i) const;
-
-    const Runtime::Exp& slot_ref(int i) const { return code.slot_ref(i); }
     const Runtime::Exp& function_head_ref() const { return code.function_head(); }
     const Runtime::Exp& function_arg_ref(int i) const { return code.function_arg(i); }
     const Runtime::Exp& constructor_slot_ref(int i) const { return code.constructor_arg(i); }
@@ -43,7 +38,6 @@ public:
     Runtime::Exp constructor_slot(int i) const;
     Runtime::Exp operation_slot(int i) const;
 
-    int reg_for_slot(int i) const;
     int reg_for_function_arg(int i) const;
     int reg_for_constructor_slot(int i) const;
     int reg_for_operation_slot(int i) const;
@@ -82,11 +76,6 @@ public:
     std::optional<int> reg_for_ref_maybe() const
     {
         return reg_for_code(code);
-    }
-
-    std::optional<int> reg_for_slot_maybe(int i) const
-    {
-        return reg_for_code(code.slot_ref(i));
     }
 
     int reg_for_ref() const
