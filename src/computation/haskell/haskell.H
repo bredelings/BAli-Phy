@@ -626,7 +626,7 @@ struct FamilyDecl: public Object
     Kind kind() const;
     bool has_kind_notes() const;
     bool is_type_family() const {return info == TypeFamily;}
-    bool is_data_family() const {return info == TypeFamily;}
+    bool is_data_family() const {return info == DataFamily;}
     bool is_open_type_family() const {return is_type_family() and not where_instances;}
     bool is_closed_type_family() const {return is_type_family() and where_instances;}
 
