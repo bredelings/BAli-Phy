@@ -5,7 +5,7 @@
 closure modifiable_op(OperationArgs& Args)
 {
     auto& C = Args.current_closure();
-    int n_args = C.n_slots();
+    int n_args = C.n_operation_slots();
 
     // Use the first argument as an initial value.
     if (n_args == 1)

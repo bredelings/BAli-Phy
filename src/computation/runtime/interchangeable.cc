@@ -30,7 +30,7 @@
 closure interchangeable_op(OperationArgs& Args)
 {
     auto& C = Args.current_closure();
-    int n_args = C.n_slots();
+    int n_args = C.n_operation_slots();
 
     if (n_args == 2)
     {
