@@ -165,6 +165,16 @@ const TypeFamInfo* TypeChecker::info_for_type_fam(const std::string& name) const
         return nullptr;
 }
 
+const DataFamInfo* TypeChecker::info_for_data_fam(const std::string& name) const
+{
+    auto T = this_mod().lookup_resolved_type(name);
+    assert(T);
+    if (auto F = T->is_data_fam())
+        return F->info.get();
+    else
+        return nullptr;
+}
+
 int TypeChecker::type_con_arity(const TypeCon& tc) const
 {
     auto T = this_mod().lookup_resolved_type(tc.name);
@@ -177,6 +187,11 @@ int TypeChecker::type_con_arity(const TypeCon& tc) const
 bool TypeChecker::type_con_is_type_fam(const TypeCon& tc) const
 {
     return info_for_type_fam(tc.name);
+}
+
+bool TypeChecker::type_con_is_data_fam(const TypeCon& tc) const
+{
+    return info_for_data_fam(tc.name);
 }
 
 bool TypeChecker::type_con_is_type_syn(const TypeCon& tc) const
@@ -234,6 +249,18 @@ std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_type_fam_ap
     auto& [tc,args] = *tcapp;
 
     if (type_con_is_type_fam(tc) and args.size() == type_con_arity(tc))
+        return tcapp;
+    else
+        return {};
+}
+
+std::optional<std::tuple<TypeCon,std::vector<Type>>> TypeChecker::is_data_fam_app(const Type& t) const
+{
+    auto tcapp = is_type_con_app(t);
+    if (not tcapp) return {};
+    auto& [tc,args] = *tcapp;
+
+    if (type_con_is_data_fam(tc) and args.size() == type_con_arity(tc))
         return tcapp;
     else
         return {};

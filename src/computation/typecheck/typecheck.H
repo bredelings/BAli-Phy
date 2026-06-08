@@ -98,6 +98,7 @@ public:
     const TypeSynonymInfo* info_for_type_synonym(const std::string& sname) const;
 
     const TypeFamInfo* info_for_type_fam(const std::string& fname) const;
+    const DataFamInfo* info_for_data_fam(const std::string& fname) const;
 
           DefaultEnv& default_env()       {return global_state->default_env;}
     const DefaultEnv& default_env() const {return global_state->default_env;}
@@ -169,12 +170,14 @@ public:
 
     // If we could cache this info on the TypeCon, then we could move these out of the class.
     bool type_con_is_type_fam(const TypeCon& tc) const;
+    bool type_con_is_data_fam(const TypeCon& tc) const;
     bool type_con_is_type_syn(const TypeCon& tc) const;
     bool type_con_is_type_class(const TypeCon& tc) const;
     bool type_con_must_be_saturated(const TypeCon& tc) const;
     int type_con_arity(const TypeCon& tc) const;
     std::optional<std::tuple<Type, Type>> is_type_app(Type t) const;
     std::optional<std::tuple<TypeCon,std::vector<Type>>> is_type_fam_app(const Type& t) const;
+    std::optional<std::tuple<TypeCon,std::vector<Type>>> is_data_fam_app(const Type& t) const;
     std::optional<std::tuple<TypeCon,std::vector<Type>>> is_type_class_app(const Type& t) const;
 
     bool same_type(const Type& t1, const Type& t2) const;
@@ -631,4 +634,3 @@ TypeChecker::maybe_implication_result(const std::vector<TypeVar>& tvs, const LIE
 }
 
 #endif
-

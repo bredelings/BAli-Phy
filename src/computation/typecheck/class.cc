@@ -299,13 +299,13 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
 {
     for(auto& [_,decl]: decls)
     {
-        if (auto type_fam_decl = decl.to<Hs::FamilyDecl>())
+        if (auto fam_decl = decl.to<Hs::FamilyDecl>())
         {
-            auto fam_name = unloc(type_fam_decl->con).name;
+            auto fam_name = unloc(fam_decl->con).name;
             auto fam_kind = this_mod().lookup_local_type(fam_name)->kind;
 
             auto kind = fam_kind;
-            auto& hs_args = type_fam_decl->args;
+            auto& hs_args = fam_decl->args;
             vector<TypeVar> args;
             for(auto& [loc,tv]: hs_args)
             {
@@ -314,14 +314,24 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
                 kind = rest;
             }
 
-            this_mod().lookup_local_type(fam_name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, fam_kind);
-
-            // Add instance equations for closed type families
-            if (type_fam_decl->where_instances)
+            if (fam_decl->is_type_family())
             {
-                for(auto& inst: *type_fam_decl->where_instances)
-                    check_add_type_instance(inst, {}, {});
-                this_mod().lookup_local_type(fam_name)->is_type_fam()->info->closed = true;
+                this_mod().lookup_local_type(fam_name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, fam_kind);
+
+                // Add instance equations for closed type families
+                if (fam_decl->where_instances)
+                {
+                    for(auto& inst: *fam_decl->where_instances)
+                        check_add_type_instance(inst, {}, {});
+                    this_mod().lookup_local_type(fam_name)->is_type_fam()->info->closed = true;
+                }
+            }
+            else if (fam_decl->is_data_family())
+            {
+                if (fam_decl->where_instances)
+                    record_error(fam_decl->con.loc, Note()<<"Data family '"<<fam_decl->con.print()<<"' cannot have type-family equations");
+
+                this_mod().lookup_local_type(fam_name)->is_data_fam()->info = std::make_shared<DataFamInfo>(args, fam_kind);
             }
         }
     }
