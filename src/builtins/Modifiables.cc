@@ -177,7 +177,7 @@ extern "C" closure builtin_function_modifiable(OperationArgs& Args)
     int r_value = Args.reg_for_slot(0);
 
     // Allocate a reg, and fill it with a modifiable of the correct index
-    return {R::App(R::OperationApp(std::make_shared<modifiable>()), {R::IndexVar(0)}), {r_value}};
+    return {R::App(R::OperationApp(new modifiable), {R::IndexVar(0)}), {r_value}};
 }
 
 
@@ -198,7 +198,7 @@ extern "C" closure builtin_function_modifiable_apply(OperationArgs& Args)
     int x_reg = Args.reg_for_slot(1);
 
     // Allocate a reg, and fill it with a modifiable of the correct index
-    return {R::App(R::OperationApp(std::make_shared<modifiable>()), {R::IndexVar(1), R::IndexVar(0)}), {f_reg, x_reg}};
+    return {R::App(R::OperationApp(new modifiable), {R::IndexVar(1), R::IndexVar(0)}), {f_reg, x_reg}};
 
 }
 
@@ -209,7 +209,7 @@ extern "C" closure builtin_function_interchangeable(OperationArgs& Args)
     int x_reg = Args.reg_for_slot(1);
 
     // Allocate a reg, and fill it with a modifiable of the correct index
-    return {R::App(R::OperationApp(std::make_shared<interchangeable>()), {R::IndexVar(1), R::IndexVar(0)}), {f_reg, x_reg}};
+    return {R::App(R::OperationApp(new interchangeable), {R::IndexVar(1), R::IndexVar(0)}), {f_reg, x_reg}};
 }
 
 

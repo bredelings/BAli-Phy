@@ -1,4 +1,5 @@
 #include "computation/object.H"
+#include "computation/closure.H"
 #include "computation/operation.H"
 #include "computation/preprocess.H"
 #include "computation/runtime/trim.H"

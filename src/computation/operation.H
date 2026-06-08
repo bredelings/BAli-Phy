@@ -3,14 +3,17 @@
 
 #include <vector>
 #include <string>
-#include <variant>
 
 #include "computation/object.H"
+#include "type_constant.H"
 
 class OperationArgs;
+struct closure;
 
-#include "closure.H"
-#include "type_constant.H"
+namespace Runtime
+{
+    struct Exp;
+}
 
 typedef closure (*o_operation_fn)(OperationArgs&);
 
@@ -67,13 +70,5 @@ std::string print_operator_expression(const std::vector<std::string>& arguments)
 
 std::string print_infix_expression(const std::vector<std::string>& arguments);
 
-inline bool is_eop_exp(const Runtime::Exp& E)
-{
-    auto app = E.to<Runtime::App>();
-    if (not app)
-        return false;
-
-    auto op = std::get_if<Runtime::OperationApp>(&app->head);
-    return op and op->head and op->head->e_op;
-}
+bool is_eop_exp(const Runtime::Exp& E);
 #endif

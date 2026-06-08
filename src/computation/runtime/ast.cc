@@ -328,17 +328,17 @@ namespace Runtime
         });
     }
 
-    std::shared_ptr<const Operation> operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
+    object_ptr<const Operation> operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
     {
         if (call_conv == "bpcall" or call_conv == "trcall")
-            return std::make_shared<Operation>((o_operation_fn)op, lib_name+":"+func_name);
+            return new Operation((o_operation_fn)op, lib_name+":"+func_name);
         else if (call_conv == "ecall")
-            return std::make_shared<Operation>((e_operation_fn)op, lib_name+":"+func_name);
+            return new Operation((e_operation_fn)op, lib_name+":"+func_name);
         else
             throw myexception()<<"Unrecognized calling convention '"<<call_conv<<"'";
     }
 
-    OperationApp::OperationApp(std::shared_ptr<const Operation> op)
+    OperationApp::OperationApp(object_ptr<const Operation> op)
         :head(std::move(op))
     {
     }
@@ -347,7 +347,7 @@ namespace Runtime
     {
     }
 
-    OperationApp::OperationApp(std::shared_ptr<const Operation> op, std::string lib, std::string func, std::string conv)
+    OperationApp::OperationApp(object_ptr<const Operation> op, std::string lib, std::string func, std::string conv)
         :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv))
     {
     }

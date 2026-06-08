@@ -455,7 +455,7 @@ extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 
 	i++;
     }
-    result.set_code(Runtime::App(Runtime::OperationApp(std::make_shared<Operation>(makeRVector, "makeRVector")),
+    result.set_code(Runtime::App(Runtime::OperationApp(new Operation(makeRVector, "makeRVector")),
                                  std::move(args)));
 
     return result;
