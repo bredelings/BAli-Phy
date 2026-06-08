@@ -35,20 +35,20 @@ public:
     Runtime::Exp slot(int i) const;
 
     const Runtime::Exp& slot_ref(int i) const { return code.slot_ref(i); }
-    const Runtime::Exp& function_slot_ref(int i) const { return code.function_arg(i); }
+    const Runtime::Exp& function_head_ref() const { return code.function_head(); }
+    const Runtime::Exp& function_arg_ref(int i) const { return code.function_arg(i); }
     const Runtime::Exp& constructor_slot_ref(int i) const { return code.constructor_arg(i); }
     const Runtime::Exp& operation_slot_ref(int i) const { return code.operation_arg(i); }
 
-    Runtime::Exp function_slot(int i) const;
     Runtime::Exp constructor_slot(int i) const;
     Runtime::Exp operation_slot(int i) const;
 
     int reg_for_slot(int i) const;
-    int reg_for_function_slot(int i) const;
+    int reg_for_function_arg(int i) const;
     int reg_for_constructor_slot(int i) const;
     int reg_for_operation_slot(int i) const;
 
-    int n_function_slots() const { return code.num_function_args(); }
+    int n_function_args() const { return code.num_function_args(); }
     int n_constructor_slots() const { return code.num_constructor_args(); }
     int n_operation_slots() const { return code.num_operation_args(); }
 

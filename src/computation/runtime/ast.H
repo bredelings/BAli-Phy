@@ -321,6 +321,7 @@ namespace Runtime
         const std::vector<Exp>& function_args() const;
         const std::vector<Exp>& constructor_args() const;
         const std::vector<Exp>& operation_args() const;
+        const Exp& function_head() const;
         const Exp& function_arg(int i) const;
         const Exp& constructor_arg(int i) const;
         const Exp& operation_arg(int i) const;
@@ -828,15 +829,16 @@ namespace Runtime
 
     struct FunctionApp: intrusive_counted<FunctionApp>
     {
+        Exp head;
         std::vector<Exp> args;
 
         FunctionApp() = default;
-        FunctionApp(std::vector<Exp> as):args(std::move(as)) {}
+        FunctionApp(Exp h, std::vector<Exp> as):head(std::move(h)), args(std::move(as)) {}
 
         bool operator==(const FunctionApp&) const = default;
 
         template <class Archive>
-        void serialize(Archive& ar) { ar(args); }
+        void serialize(Archive& ar) { ar(head, args); }
     };
 
     struct Trim: intrusive_counted<Trim>
@@ -945,7 +947,12 @@ namespace Runtime
     inline const Exp& Exp::slot_ref(int i) const
     {
         if (auto app = to<Runtime::FunctionApp>())
-            return app->args[i];
+        {
+            if (i == 0)
+                return app->head;
+            else
+                return app->args[i-1];
+        }
         else if (auto app = to<Runtime::ConstructorApp>())
             return app->args[i];
         else if (auto app = to<Runtime::OperationApp>())
@@ -967,6 +974,11 @@ namespace Runtime
     inline const std::vector<Exp>& Exp::operation_args() const
     {
         return as<OperationApp>().args;
+    }
+
+    inline const Exp& Exp::function_head() const
+    {
+        return as<FunctionApp>().head;
     }
 
     inline const Exp& Exp::function_arg(int i) const

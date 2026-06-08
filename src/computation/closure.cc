@@ -34,7 +34,7 @@ int closure::n_slots() const
     assert(has_code());
 
     if (auto app = code.to<Runtime::FunctionApp>())
-        return app->args.size();
+        return 1 + app->args.size();
     else if (auto app = code.to<Runtime::ConstructorApp>())
         return app->args.size();
     else if (auto app = code.to<Runtime::OperationApp>())
@@ -46,11 +46,6 @@ int closure::n_slots() const
 Runtime::Exp closure::slot(int i) const
 {
     return slot_for_code(code.slot_ref(i));
-}
-
-Runtime::Exp closure::function_slot(int i) const
-{
-    return slot_for_code(function_slot_ref(i));
 }
 
 Runtime::Exp closure::constructor_slot(int i) const
@@ -75,9 +70,9 @@ int closure::reg_for_slot(int i) const
         std::abort();
 }
 
-int closure::reg_for_function_slot(int i) const
+int closure::reg_for_function_arg(int i) const
 {
-    if (auto r = reg_for_code(function_slot_ref(i)))
+    if (auto r = reg_for_code(function_arg_ref(i)))
         return *r;
     else
         std::abort();
