@@ -763,8 +763,9 @@ SimplifierState::prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& ob
                     auto T = this_mod.lookup_resolved_type(*object_type);
                     assert(T);
                     auto D = T->is_data();
-                    assert(D);
-                    unseen_constructors = D->constructors;
+                    auto DF = T->is_data_fam();
+                    assert(D or DF);
+                    unseen_constructors = D ? D->constructors : DF->constructors;
                     assert(not unseen_constructors.empty());
                 }
             }

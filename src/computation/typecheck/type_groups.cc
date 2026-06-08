@@ -166,7 +166,7 @@ vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
             auto& instance_decl = decl.as_<Hs::InstanceDecl>();
             instance_decls.push_back({instance_decl, free_type_cons(instance_decl)});
         }
-        else if (decl.is_a<Hs::FamilyDecl>() or decl.is_a<Hs::TypeFamilyInstanceDecl>())
+        else if (decl.is_a<Hs::FamilyDecl>() or decl.is_a<Hs::TypeFamilyInstanceDecl>() or decl.is_a<Hs::DataFamilyInstanceDecl>())
         {
             // Don't do anything for these.
         }

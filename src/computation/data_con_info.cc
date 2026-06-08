@@ -35,7 +35,10 @@ int DataConInfo::arity() const
 
 Type DataConInfo::result_type() const
 {
-    return type_apply( data_type, uni_tvs );
+    if (constructor_result_type)
+        return *constructor_result_type;
+    else
+        return type_apply( data_type, uni_tvs );
 }
 
 Type DataConInfo::constructor_type() const
@@ -53,4 +56,3 @@ Type DataConInfo::constructor_type() const
 
     return type;
 }
-

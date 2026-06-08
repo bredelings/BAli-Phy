@@ -497,6 +497,10 @@ public:
 
     DataConEnv infer_type_for_data_type(const Hs::DataOrNewtypeDecl& data_decl);
 
+    DataConInfo infer_type_for_data_family_constructor(const Hs::LType& result_type, const std::vector<Hs::LTypeVar>& outer_tvs, const Hs::ConstructorDecl& constructor);
+
+    DataConEnv infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst);
+
     Hs::Decls infer_type_for_default_methods(const Hs::ClassDecl&);
 
     Hs::Binds infer_type_for_default_methods(const Hs::Decls&);

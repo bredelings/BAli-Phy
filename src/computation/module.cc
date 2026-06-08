@@ -1643,33 +1643,43 @@ Core::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
 {
     Core::Decls<> decls;
 
+    auto load_constructor = [&](const std::string& con_name)
+    {
+        auto info = lookup_resolved_symbol(con_name)->con_info;
+        assert(info);
+        auto exp = make_constructor(con_name, *info);
+        decls.push_back( Core::Decl<>{ Core::Var<>(con_name) , exp} );
+    };
+
     for(const auto& [_,decl]: topdecls)
     {
-        auto d = decl.to<Haskell::DataOrNewtypeDecl>();
-        if (not d) continue;
-
-        if (d->is_regular_decl())
+        if (auto d = decl.to<Haskell::DataOrNewtypeDecl>())
         {
-            for(const auto& constr: d->get_constructors())
+            if (d->is_regular_decl())
             {
-                auto con_name = unloc(*constr.con).name;
-                auto info = lookup_resolved_symbol(con_name)->con_info;
-                assert(info);
-                auto exp = make_constructor(con_name, *info);
-                decls.push_back( Core::Decl<>{ Core::Var<>(con_name) , exp} );
+                for(const auto& constr: d->get_constructors())
+                    load_constructor(unloc(*constr.con).name);
+            }
+            else if (d->is_gadt_decl())
+            {
+                for(const auto& cons_decl: d->get_gadt_constructors())
+                    for(auto& lcon_name: cons_decl.con_names)
+                        load_constructor(unloc(lcon_name));
             }
         }
-        else if (d->is_gadt_decl())
+        else if (auto d = decl.to<Haskell::DataFamilyInstanceDecl>())
         {
-            for(const auto& cons_decl: d->get_gadt_constructors())
-                for(auto& lcon_name: cons_decl.con_names)
-                {
-                    auto con_name = unloc(lcon_name);
-                    auto info = lookup_resolved_symbol(con_name)->con_info;
-                    assert(info);
-                    auto exp = make_constructor(con_name, *info);
-                    decls.push_back( Core::Decl<>{ Core::Var<>(con_name) , exp} );
-                }
+            if (d->rhs.is_regular_decl())
+            {
+                for(const auto& constr: d->rhs.get_constructors())
+                    load_constructor(unloc(*constr.con).name);
+            }
+            else if (d->rhs.is_gadt_decl())
+            {
+                for(const auto& cons_decl: d->rhs.get_gadt_constructors())
+                    for(auto& lcon_name: cons_decl.con_names)
+                        load_constructor(unloc(lcon_name));
+            }
         }
     }
     return decls;
@@ -1685,9 +1695,11 @@ bool Module::is_refutable_pattern(const Hs::LPat& lpat) const
         assert(C);
         auto T = lookup_resolved_type(*C->parent);
         assert(T);
-        auto D = T->is_data();
-        assert(D);
-        if (D->constructors.size() >= 2) return true;
+        const auto* data_info = T->is_data();
+        const auto* data_fam_info = T->is_data_fam();
+        assert(data_info or data_fam_info);
+        if (data_info and data_info->constructors.size() >= 2) return true;
+        if (data_fam_info and data_fam_info->constructors.size() >= 2) return true;
 
         // If any of the argument patterns are refutable, then this is refutable.
         for(auto& arg: con_pat->args)

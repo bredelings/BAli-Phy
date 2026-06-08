@@ -1,4 +1,5 @@
 #include "typecheck.H"
+#include "rename/rename.H"
 
 using std::vector;
 using std::set;
@@ -207,15 +208,106 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
     return types;
 }
 
+DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType& hs_result_type, const vector<Hs::LTypeVar>& outer_tvs, const Hs::ConstructorDecl& constructor)
+{
+    DataConInfo info;
+
+    auto hs_field_types = constructor.get_field_types();
+    for(auto& sfield_type: hs_field_types)
+    {
+        auto [field_type, strictness] = pop_strictness(sfield_type);
+        sfield_type = field_type;
+        info.field_strictness.push_back( strictness );
+    }
+
+    auto hs_con_type = Hs::function_type(hs_field_types, hs_result_type);
+    hs_con_type = Hs::add_constraints(constructor.context, hs_con_type);
+    hs_con_type = Hs::add_forall_vars(constructor.forall, hs_con_type);
+    hs_con_type = Hs::add_forall_vars(outer_tvs, hs_con_type);
+
+    auto con_type = check_type(hs_con_type);
+
+    auto [all_tvs, written_constraints, rho_type] = peel_top_gen(con_type);
+    auto [field_types, result_type] = arg_result_types(rho_type);
+
+    auto [result_head, result_args] = decompose_type_apps(result_type);
+    auto result_con = result_head.to<TypeCon>();
+    if (not result_con or not type_con_is_data_fam(*result_con))
+        record_error(Note()<<"Data family constructor result type '"<<result_type<<"' is not a data family application");
+    else
+        info.data_type = *result_con;
+
+    auto result_tvs = free_type_variables(result_type);
+    for(auto& tv: all_tvs)
+    {
+        if (result_tvs.count(tv))
+            info.uni_tvs.push_back(tv);
+        else
+            info.exi_tvs.push_back(tv);
+    }
+
+    info.written_constraints = written_constraints;
+    info.field_types = field_types;
+    info.constructor_result_type = result_type;
+
+    assert(info.field_strictness.size() == info.field_types.size());
+
+    return info;
+}
+
+DataConEnv TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst)
+{
+    push_note( Note()<<"In data family instance '"<<data_inst.print()<<"':" );
+    if (data_inst.con.loc) push_source_span(*data_inst.con.loc);
+
+    TypeCon data_family(unloc(data_inst.con).name);
+    auto data_fam_info = info_for_data_fam(data_family.name);
+    if (not data_fam_info)
+    {
+        record_error(Note()<<"No data family '"<<data_inst.con.print()<<"'");
+        if (data_inst.con.loc) pop_source_span();
+        pop_note();
+        return {};
+    }
+
+    if (data_inst.args.size() != data_fam_info->arity())
+        record_error(Note()<<"Data family takes "<<data_fam_info->arity()<<" arguments, but instance has "<<data_inst.args.size());
+
+    auto outer_tvs = free_type_variables(data_inst.args);
+    auto hs_result_type = Hs::type_apply(data_inst.con, data_inst.args);
+
+    DataConEnv types;
+    if (data_inst.rhs.is_regular_decl())
+    {
+        for(auto& constructor: data_inst.rhs.get_constructors())
+        {
+            auto con_name = unloc(*constructor.con).name;
+            DataConInfo info = infer_type_for_data_family_constructor(hs_result_type, outer_tvs, constructor);
+            types = types.insert({con_name, info});
+        }
+    }
+    else if (data_inst.rhs.is_gadt_decl())
+        record_error(Note()<<"GADT-style data family instances are not implemented yet");
+
+    if (data_inst.con.loc) pop_source_span();
+    pop_note();
+
+    return types;
+}
 
 void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
     for(auto& [_,decl]: decls)
     {
-        auto d = decl.to<Hs::DataOrNewtypeDecl>();
-        if (not d) continue;
+        DataConEnv con_infos;
+        if (auto d = decl.to<Hs::DataOrNewtypeDecl>())
+            con_infos = infer_type_for_data_type(*d);
+        else if (auto d = decl.to<Hs::DataFamilyInstanceDecl>())
+            con_infos = infer_type_for_data_family_instance(*d);
+        else
+            continue;
 
-        for(auto& [name,con_info]: infer_type_for_data_type(*d))
+        for(auto& [name,con_info]: con_infos)
         {
             auto C = this_mod().lookup_local_symbol(name);
             assert(C);
