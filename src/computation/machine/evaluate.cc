@@ -231,7 +231,7 @@ namespace
 
 R::Exp evaluate_e_op(OperationArgs& Args, const R::Exp& E)
 {
-    auto app = E.ptr_to<R::OperationApp>();
+    auto app = E.to<R::OperationApp>();
     assert(app);
     assert(app->head);
     assert(app->head->e_op);
