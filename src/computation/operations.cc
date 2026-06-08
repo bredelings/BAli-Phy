@@ -63,8 +63,13 @@ using boost::dynamic_pointer_cast;
 
 closure apply_op(OperationArgs& Args)
 {
-    closure C = Args.evaluate_slot_to_closure(0);
-    int n_args_given = Args.n_args()-1;
+    const closure& current = Args.current_closure();
+    int n_args_given = current.n_function_slots()-1;
+
+    const auto& head = current.function_slot_ref(0);
+    auto head_reg = current.reg_for_code(head);
+    assert(head_reg);
+    closure C = Args.evaluate_reg_to_closure(*head_reg);
 
     assert(C.has_code());
     int n_args_needed = Runtime::count_lambdas(C.get_code());
@@ -77,7 +82,7 @@ closure apply_op(OperationArgs& Args)
     C.set_code(Runtime::peel_lambdas(C.get_code(), n_args_applied));
     for(int i=0;i<n_args_applied;i++)
     {
-	int arg = Args.current_closure().reg_for_slot(i+1);
+	int arg = Args.current_closure().reg_for_function_slot(i+1);
 	C.Env.push_back(arg);
     }
 
@@ -92,7 +97,7 @@ closure apply_op(OperationArgs& Args)
 	closure::Env_t Env = {new_head_ref};
 	for(int i=n_args_needed;i<n_args_given;i++)
 	{
-	    int arg = Args.current_closure().reg_for_slot(i+1);
+	    int arg = Args.current_closure().reg_for_function_slot(i+1);
 	    Env.push_back(arg);
 	}
 
@@ -116,10 +121,7 @@ static const Runtime::ConstructorTag* constructor_value(const Runtime::Exp& E)
 
 static int constructor_n_args(const Runtime::Exp& E)
 {
-    if (auto app = E.to<Runtime::ConstructorApp>())
-        return app->args.size();
-
-    std::abort();
+    return E.num_constructor_args();
 }
 
 static bool matches_pattern(const closure& object, const Runtime::Pattern& pattern)
@@ -163,7 +165,7 @@ static closure alts_op(OperationArgs& Args, const closure::Env_t& Env, const clo
             int n_args = Runtime::pattern_arity(runtime_case.alts[i].pattern);
             for(int j=0;j<n_args;j++)
             {
-                auto field = object.slot(j);
+                auto field = object.constructor_slot(j);
                 if (auto reg_ref = field.to<Runtime::RegRef>())
                     result_env.push_back(reg_ref->target);
                 else

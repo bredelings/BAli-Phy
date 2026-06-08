@@ -6,17 +6,17 @@ using std::optional;
 
 int OperationArgs::reg_for_slot(int slot) const
 {
-    return current_closure().reg_for_slot(slot);
+    return current_closure().reg_for_operation_slot(slot);
 }
 
 Runtime::Exp OperationArgs::slot(int slot_index) const
 {
-    return current_closure().slot(slot_index);
+    return current_closure().operation_slot(slot_index);
 }
 
 const Runtime::Exp& OperationArgs::slot_ref(int slot_index) const
 {
-    return current_closure().slot_ref(slot_index);
+    return current_closure().operation_slot_ref(slot_index);
 }
 
 optional<int> OperationArgs::reg_for_code(const Runtime::Exp& E) const
@@ -24,7 +24,7 @@ optional<int> OperationArgs::reg_for_code(const Runtime::Exp& E) const
     return current_closure().reg_for_code(E);
 }
 
-int OperationArgs::n_args() const {return current_closure().n_slots();}
+int OperationArgs::n_args() const {return current_closure().n_operation_slots();}
 
 const closure& OperationArgs::evaluate_reg_to_closure(int r2)
 {

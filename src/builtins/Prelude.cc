@@ -621,7 +621,7 @@ extern "C" closure builtin_function_andThenST(OperationArgs& Args)
 {
     closure m = Args.evaluate_slot_to_closure(0);
 
-    int s_reg = Args.current_closure().reg_for_slot(2);
+    int s_reg = Args.current_closure().reg_for_operation_slot(2);
 
     peel_closure_lambdas(m, 1);
     m.Env.push_back(s_reg);
