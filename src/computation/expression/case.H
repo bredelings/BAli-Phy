@@ -7,6 +7,15 @@
 #include <tuple>
 #include "expression_ref.H"
 
+struct Case: public Object
+{
+    Case* clone() const override {return new Case(*this);}
+
+    type_constant type() const override {return type_constant::case_type;}
+
+    std::string print() const override {return "case";}
+};
+
 namespace Expression
 {
 

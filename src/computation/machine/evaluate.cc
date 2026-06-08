@@ -189,10 +189,7 @@ namespace
             return case_op;
 
         if (C.get_code().to<R::FunctionApp>())
-        {
-            static const Apply apply;
-            return apply.op;
-        }
+            return apply_op;
 
         if (auto app = C.get_code().to<R::OperationApp>())
         {
