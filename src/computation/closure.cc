@@ -29,25 +29,6 @@ string closure::print() const
     return result;
 }
 
-int closure::n_slots() const
-{
-    assert(has_code());
-
-    if (auto app = code.to<Runtime::FunctionApp>())
-        return 1 + app->args.size();
-    else if (auto app = code.to<Runtime::ConstructorApp>())
-        return app->args.size();
-    else if (auto app = code.to<Runtime::OperationApp>())
-        return app->args.size();
-    else
-        std::abort();
-}
-
-Runtime::Exp closure::slot(int i) const
-{
-    return slot_for_code(code.slot_ref(i));
-}
-
 Runtime::Exp closure::constructor_slot(int i) const
 {
     return slot_for_code(constructor_slot_ref(i));
@@ -56,18 +37,6 @@ Runtime::Exp closure::constructor_slot(int i) const
 Runtime::Exp closure::operation_slot(int i) const
 {
     return slot_for_code(operation_slot_ref(i));
-}
-
-int closure::reg_for_slot(int i) const
-{
-    const auto& E = code.slot_ref(i);
-
-    if (auto index_var = E.to<Runtime::IndexVar>())
-        return lookup_in_env(index_var->index);
-    else if (auto reg_ref = E.to<Runtime::RegRef>())
-        return reg_ref->target;
-    else
-        std::abort();
 }
 
 int closure::reg_for_function_arg(int i) const

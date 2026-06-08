@@ -212,7 +212,7 @@ typedef multi_index_container<
 
 void add_transition_kernel(const closure& e, int s, double t, set_tk_group& tk_groups)
 {
-    double rate = e.slot_ref(0).as_double();
+    double rate = e.constructor_slot_ref(0).as_double();
 
     // how many total
     int n_total = get_reps(rate);
@@ -333,7 +333,7 @@ void context_ref::perform_transition_kernel(int s)
 {
     auto& e = memory()->get_effect(s);
 
-    int r = e.reg_for_slot(1);
+    int r = e.reg_for_constructor_slot(1);
     assert(memory()->reg_is_constant(r));
 
     auto E = Runtime::apply_env_function(0, {Runtime::Int(get_context_index())});
@@ -367,7 +367,7 @@ void context_ref::perform_logger(int s, long iteration)
 {
     auto& e = memory()->get_effect(s);
 
-    int r = e.reg_for_slot(0);
+    int r = e.reg_for_constructor_slot(0);
     assert(memory()->reg_is_constant(r));
 
     auto E = Runtime::apply_env_function(0, {Runtime::Int(int(iteration)),

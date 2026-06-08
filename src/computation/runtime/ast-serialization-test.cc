@@ -125,10 +125,13 @@ namespace
                                          Runtime::RegRef(30)}),
                   {10, 20});
 
-        require(C.n_slots() == 3, "runtime closure App slot count mismatch");
-        require(C.reg_for_slot(0) == 10, "runtime slot 0 should resolve through the closure environment");
-        require(C.reg_for_slot(1) == 20, "runtime slot 1 should resolve through the closure environment");
-        require(C.reg_for_slot(2) == 30, "runtime RegRef slot should preserve its target");
+        require(C.n_function_args() == 2, "runtime closure function argument count mismatch");
+        require(C.reg_for_code(C.function_head_ref()) == 10,
+                "runtime function head should resolve through the closure environment");
+        require(C.reg_for_function_arg(0) == 20,
+                "runtime function argument should resolve through the closure environment");
+        require(C.reg_for_function_arg(1) == 30,
+                "runtime RegRef function argument should preserve its target");
 
         require(closure(Runtime::IndexVar(1), {10, 20}).reg_for_ref_maybe() == 10,
                 "runtime closure IndexVar ref should resolve through the closure environment");
@@ -137,10 +140,14 @@ namespace
         require(not closure(Runtime::Int(1)).reg_for_ref_maybe(),
                 "non-reference runtime closure should not have a referenced reg");
 
-        auto slot = C.slot(1);
+        closure C3(Runtime::ConstructorApp("Test.Pair", 2,
+                                           {Runtime::IndexVar(1),
+                                            Runtime::RegRef(30)}),
+                   {10, 20});
+        auto slot = C3.constructor_slot(0);
         auto slot_ref = slot.to<Runtime::RegRef>();
-        require(bool(slot_ref), "runtime IndexVar slot should become a RegRef");
-        require(slot_ref->target == 20, "runtime slot RegRef target mismatch");
+        require(bool(slot_ref), "runtime IndexVar constructor slot should become a RegRef");
+        require(slot_ref->target == 10, "runtime constructor slot RegRef target mismatch");
     }
 
     void check_shift_free_indices()

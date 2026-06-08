@@ -15,23 +15,15 @@ namespace
 {
 Runtime::Exp head_code(const Runtime::Exp& E)
 {
-    if (E.to<Runtime::FunctionApp>())
-        std::abort();
-    else if (auto app = E.to<Runtime::ConstructorApp>())
+    if (auto app = E.to<Runtime::ConstructorApp>())
         return Runtime::ConstructorApp(app->head);
-    else if (auto app = E.to<Runtime::OperationApp>())
-        return *app->head;
     else
         return E;
 }
 
-int n_slots(const Runtime::Exp& E)
+int n_constructor_slots(const Runtime::Exp& E)
 {
-    if (auto app = E.to<Runtime::FunctionApp>())
-        return 1 + app->args.size();
-    else if (auto app = E.to<Runtime::ConstructorApp>())
-        return app->args.size();
-    else if (auto app = E.to<Runtime::OperationApp>())
+    if (auto app = E.to<Runtime::ConstructorApp>())
         return app->args.size();
     else
         return 0;
@@ -87,7 +79,7 @@ context_ptr context_ptr::operator[](int i) const
     auto [_, r] = C.incremental_evaluate(reg);
     assert(r>0);
     auto& c = C.memory()->closure_at(r);
-    if (n_slots(c.get_code()) == 0)
+    if (n_constructor_slots(c.get_code()) == 0)
     {
         if (auto im = c.get_code().to<IntMap>())
             r = (*im)[i];
@@ -95,7 +87,7 @@ context_ptr context_ptr::operator[](int i) const
             std::abort();
     }
     else
-        r = c.reg_for_slot(i);
+        r = c.reg_for_constructor_slot(i);
     return {C, r};
 }
 
@@ -203,7 +195,7 @@ int context_ptr::size() const
 {
     auto [_, r] = C.incremental_evaluate(reg);
     assert(r>0);
-    return n_slots(C.memory()->closure_at(r).get_code());
+    return n_constructor_slots(C.memory()->closure_at(r).get_code());
 }
 
 Runtime::Exp context_ptr::head() const
