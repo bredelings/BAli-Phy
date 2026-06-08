@@ -126,9 +126,11 @@ struct type_info
 	template <class Archive> void serialize(Archive& ar) { ar(info);}
     };
     struct data_fam_info {
+        std::set<std::string> constructors;
+        std::set<std::string> fields;
 	std::shared_ptr<DataFamInfo> info;
 
-	template <class Archive> void serialize(Archive& ar) { ar(info);}
+	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields, info);}
     };
 
     bool is_type_other() const; // "->", but now also "~"

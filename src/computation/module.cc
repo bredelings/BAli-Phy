@@ -385,6 +385,49 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                             }
                         }
                     }
+                    else if (auto d = type->is_data_fam())
+                    {
+                        if (not s.subspec->names)
+                        {
+                            for(auto& constructor: d->constructors)
+			    {
+				auto name = get_unqualified_name(constructor);
+				if (m2_exported_values.contains(name))
+				    import_symbol(m2_exported_values.at( name ), modid, qualified);
+			    }
+                            for(auto& field: d->fields)
+			    {
+				auto name = get_unqualified_name(field);
+				if (m2_exported_values.contains(name))
+				    import_symbol(m2_exported_values.at( name ), modid, qualified);
+			    }
+                        }
+                        else
+                        {
+                            auto type_modid = get_module_name(type->name);
+                            for(auto& [loc,name]: *s.subspec->names)
+                            {
+                                if (is_haskell_conid(name) and not d->constructors.count(type_modid + "." + name))
+                                {
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data family `"<<id<<"`"));
+                                    continue;
+                                }
+                                if (is_haskell_varid(name) and not d->fields.count(type_modid + "." + name))
+                                {
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data family `"<<id<<"`"));
+                                    continue;
+                                }
+
+				if (not m2_exported_values.contains(name))
+				{
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` was not exported"));
+                                    continue;
+				}
+				    
+                                import_symbol(m2_exported_values.at(name), modid, qualified);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1231,6 +1274,13 @@ void Module::perform_exports()
                             for(auto& field: d->fields)
                                 export_symbol(lookup_symbol(field));
                         }
+                        else if (auto d = t->is_data_fam())
+                        {
+                            for(auto& constructor: d->constructors)
+                                export_symbol(lookup_symbol(constructor));
+                            for(auto& field: d->fields)
+                                export_symbol(lookup_symbol(field));
+                        }
                     }
                     else
                     {
@@ -1258,6 +1308,25 @@ void Module::perform_exports()
                                 if (is_haskell_varid(name) and not d->fields.count( qualified_name) )
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`") );
+                                    continue;
+                                }
+
+                                export_symbol(lookup_symbol(name));
+                            }
+                        }
+                        else if (auto d = t->is_data_fam())
+                        {
+                            for(auto& [loc,name]: *ex.subspec->names)
+                            {
+                                auto qualified_name = get_module_name(t->name) + "." + name;
+                                if (is_haskell_conid(name) and not d->constructors.count( qualified_name ))
+                                {
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data family `"<<id<<"`"));
+                                    continue;
+                                }
+                                if (is_haskell_varid(name) and not d->fields.count( qualified_name) )
+                                {
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data family `"<<id<<"`") );
                                     continue;
                                 }
 
@@ -2285,6 +2354,43 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 		def_type_family( unloc(TF->con).name, TF->arity() );
 	    else
 		def_data_family( unloc(TF->con).name, TF->arity() );
+        }
+        else if (auto data_inst = decl.to<Hs::DataFamilyInstanceDecl>())
+        {
+            auto family_name = unloc(data_inst->con).name;
+            auto family_type = lookup_local_type(qualify_local_name(family_name));
+            auto data_fam = family_type ? family_type->is_data_fam() : nullptr;
+
+            if (data_inst->rhs.is_regular_decl())
+            {
+                for(const auto& constr: data_inst->rhs.get_constructors())
+                {
+                    auto cname = unloc(*constr.con).name;
+                    def_constructor(cname, constr.arity(), family_name);
+                    if (data_fam)
+                        data_fam->constructors.insert( qualify_local_name(cname) );
+
+                    if (auto fields = to<Hs::FieldDecls>(constr.fields))
+                        for(auto& field_decl: fields->field_decls)
+                            for(auto& [loc,var]: field_decl.field_names)
+                            {
+                                if (data_fam)
+                                    data_fam->fields.insert( qualify_local_name(var.name) );
+                            }
+                }
+            }
+            else if (data_inst->rhs.is_gadt_decl())
+            {
+                for(const auto& cons_decl: data_inst->rhs.get_gadt_constructors())
+                    for(auto& con_name: cons_decl.con_names)
+                    {
+                        int arity = Hs::gen_type_arity( cons_decl.type );
+                        auto cname = unloc(con_name);
+                        def_constructor(cname, arity, family_name);
+                        if (data_fam)
+                            data_fam->constructors.insert( qualify_local_name(cname) );
+                    }
+            }
         }
     }
 }
