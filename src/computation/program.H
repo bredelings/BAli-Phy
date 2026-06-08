@@ -8,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <filesystem>
+#include "computation/object.H"
 #include "computation/fresh_vars.H"
 
 class module_loader;
@@ -15,6 +16,8 @@ class module_loader;
 class Module;
 
 class CompiledModule;
+
+class reg_heap;
 
 class Program: public std::vector<std::shared_ptr<CompiledModule>>
 {
@@ -62,10 +65,10 @@ public:
 
 std::map<std::string,std::string> get_simplified_names(const std::set<std::string>&);
 
-void execute_program(std::unique_ptr<Program> P);
+object_ptr<reg_heap> initialize_machine_from_program(std::unique_ptr<Program> P);
 
 std::unique_ptr<Program> load_program_from_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename);
 
-void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename);
+object_ptr<reg_heap> initialize_machine_from_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename);
 
 #endif

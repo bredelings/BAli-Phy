@@ -66,6 +66,7 @@ namespace mpi = boost::mpi;
 #include "computation/module.H"
 #include "computation/optimization/inliner.H" // for simple_size( )
 #include "computation/program.H"
+#include "computation/machine/graph_register.H"
 #include "models/A-T-prog.H" // for gen_model_program( )
 
 #include "computation/haskell/ids.H"
@@ -739,11 +740,12 @@ int main(int argc,char* argv[])
 
         block_signals();
 
+        auto R = initialize_machine_from_program( std::move(P) );
+
         start_work_time = chrono::system_clock::now();
         start_work_cpu_time = total_cpu_time();
 
-        // Run the program P
-        execute_program( std::move(P) );
+        R->run_main();
     }
     catch (std::bad_alloc&) 
     {

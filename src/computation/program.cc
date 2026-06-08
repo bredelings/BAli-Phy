@@ -437,7 +437,7 @@ map<string,string> get_simplified_names(const set<string>& names)
 }
 
 
-void execute_program(std::unique_ptr<Program> P)
+object_ptr<reg_heap> initialize_machine_from_program(std::unique_ptr<Program> P)
 {
     // Creating an object pointer initializes the refcount to 1.
     object_ptr<reg_heap> R(new reg_heap( std::move(P) ) );
@@ -445,7 +445,8 @@ void execute_program(std::unique_ptr<Program> P)
     R->program.reset();
     R->identifiers.clear();
 #endif
-    R->run_main();
+
+    return R;
 }
 
 std::unique_ptr<Program> load_program_from_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename)
@@ -455,7 +456,7 @@ std::unique_ptr<Program> load_program_from_file(const std::shared_ptr<module_loa
     return std::make_unique<Program>(L,vector{m});
 }
 
-void execute_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename)
+object_ptr<reg_heap> initialize_machine_from_file(const std::shared_ptr<module_loader>& L, const std::filesystem::path& filename)
 {
-    execute_program( load_program_from_file(L, filename) );
+    return initialize_machine_from_program( load_program_from_file(L, filename) );
 }
