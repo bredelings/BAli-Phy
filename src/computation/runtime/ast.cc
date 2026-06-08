@@ -350,35 +350,6 @@ namespace Runtime
             throw myexception()<<"Unrecognized calling convention '"<<call_conv<<"'";
     }
 
-    OperationApp::OperationApp(object_ptr<const Operation> op)
-        :head(std::move(op))
-    {
-    }
-
-    OperationApp::OperationApp(object_ptr<const Operation> op, vector<Exp> as)
-        :head(std::move(op)), args(std::move(as))
-    {
-    }
-
-    OperationApp::OperationApp(OperationApp app, vector<Exp> as)
-        :head(std::move(app.head)), lib_name(std::move(app.lib_name)), func_name(std::move(app.func_name)), call_conv(std::move(app.call_conv)), args(std::move(as))
-    {
-    }
-
-    OperationApp::OperationApp()
-    {
-    }
-
-    OperationApp::OperationApp(object_ptr<const Operation> op, std::string lib, std::string func, std::string conv)
-        :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv))
-    {
-    }
-
-    OperationApp::OperationApp(object_ptr<const Operation> op, std::string lib, std::string func, std::string conv, vector<Exp> as)
-        :head(std::move(op)), lib_name(std::move(lib)), func_name(std::move(func)), call_conv(std::move(conv)), args(std::move(as))
-    {
-    }
-
     OperationApp builtin_operation_app(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)
     {
         return OperationApp(operation_from_builtin(op, lib_name, func_name, call_conv), lib_name, func_name, call_conv);
