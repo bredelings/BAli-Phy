@@ -365,25 +365,33 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
     vector<pair<Type,std::string>> data_family_instance_heads;
 
+    auto get_data_family_instance_constructor_info = [&](const Hs::DataFamilyInstanceDecl& data_inst)
+    {
+        auto [new_con_infos, head] = infer_type_for_data_family_instance(data_inst);
+
+        if (head)
+        {
+            for(auto& [previous_head, previous_instance]: data_family_instance_heads)
+                if (maybe_unify(*head, previous_head))
+                    record_error(data_inst.con.loc, Note()<<"Data family instance '"<<data_inst.print()<<"' overlaps previous instance '"<<previous_instance<<"'");
+
+            data_family_instance_heads.push_back({*head, data_inst.print()});
+        }
+
+        return new_con_infos;
+    };
+
     for(auto& [_,decl]: decls)
     {
         DataConEnv con_infos;
         if (auto d = decl.to<Hs::DataOrNewtypeDecl>())
             con_infos = infer_type_for_data_type(*d);
         else if (auto d = decl.to<Hs::DataFamilyInstanceDecl>())
-        {
-            auto [new_con_infos, head] = infer_type_for_data_family_instance(*d);
-            con_infos = new_con_infos;
-
-            if (head)
-            {
-                for(auto& [previous_head, previous_instance]: data_family_instance_heads)
-                    if (maybe_unify(*head, previous_head))
-                        record_error(d->con.loc, Note()<<"Data family instance '"<<d->print()<<"' overlaps previous instance '"<<previous_instance<<"'");
-
-                data_family_instance_heads.push_back({*head, d->print()});
-            }
-        }
+            con_infos = get_data_family_instance_constructor_info(*d);
+        else if (auto i = decl.to<Hs::InstanceDecl>())
+            for(auto& d: i->data_inst_decls)
+                for(auto& [name, con_info]: get_data_family_instance_constructor_info(d))
+                    con_infos = con_infos.insert({name, con_info});
         else
             continue;
 

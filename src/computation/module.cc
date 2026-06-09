@@ -1651,6 +1651,21 @@ Core::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
         decls.push_back( Core::Decl<>{ Core::Var<>(con_name) , exp} );
     };
 
+    auto load_data_family_instance_constructors = [&](const Hs::DataFamilyInstanceDecl& d)
+    {
+        if (d.rhs.is_regular_decl())
+        {
+            for(const auto& constr: d.rhs.get_constructors())
+                load_constructor(unloc(*constr.con).name);
+        }
+        else if (d.rhs.is_gadt_decl())
+        {
+            for(const auto& cons_decl: d.rhs.get_gadt_constructors())
+                for(auto& lcon_name: cons_decl.con_names)
+                    load_constructor(unloc(lcon_name));
+        }
+    };
+
     for(const auto& [_,decl]: topdecls)
     {
         if (auto d = decl.to<Haskell::DataOrNewtypeDecl>())
@@ -1669,17 +1684,12 @@ Core::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
         }
         else if (auto d = decl.to<Haskell::DataFamilyInstanceDecl>())
         {
-            if (d->rhs.is_regular_decl())
-            {
-                for(const auto& constr: d->rhs.get_constructors())
-                    load_constructor(unloc(*constr.con).name);
-            }
-            else if (d->rhs.is_gadt_decl())
-            {
-                for(const auto& cons_decl: d->rhs.get_gadt_constructors())
-                    for(auto& lcon_name: cons_decl.con_names)
-                        load_constructor(unloc(lcon_name));
-            }
+            load_data_family_instance_constructors(*d);
+        }
+        else if (auto i = decl.to<Haskell::InstanceDecl>())
+        {
+            for(auto& d: i->data_inst_decls)
+                load_data_family_instance_constructors(d);
         }
     }
     return decls;
@@ -2288,6 +2298,44 @@ void Module::maybe_def_function(const string& var_name)
 
 void Module::add_local_symbols(const Hs::Decls& topdecls)
 {
+    auto add_data_family_instance_symbols = [&](const Hs::DataFamilyInstanceDecl& data_inst)
+    {
+        auto family_name = unloc(data_inst.con).name;
+        auto family_type = lookup_local_type(qualify_local_name(family_name));
+        auto data_fam = family_type ? family_type->is_data_fam() : nullptr;
+
+        if (data_inst.rhs.is_regular_decl())
+        {
+            for(const auto& constr: data_inst.rhs.get_constructors())
+            {
+                auto cname = unloc(*constr.con).name;
+                def_constructor(cname, constr.arity(), family_name);
+                if (data_fam)
+                    data_fam->constructors.insert( qualify_local_name(cname) );
+
+                if (auto fields = to<Hs::FieldDecls>(constr.fields))
+                    for(auto& field_decl: fields->field_decls)
+                        for(auto& [loc,var]: field_decl.field_names)
+                        {
+                            if (data_fam)
+                                data_fam->fields.insert( qualify_local_name(var.name) );
+                        }
+            }
+        }
+        else if (data_inst.rhs.is_gadt_decl())
+        {
+            for(const auto& cons_decl: data_inst.rhs.get_gadt_constructors())
+                for(auto& con_name: cons_decl.con_names)
+                {
+                    int arity = Hs::gen_type_arity( cons_decl.type );
+                    auto cname = unloc(con_name);
+                    def_constructor(cname, arity, family_name);
+                    if (data_fam)
+                        data_fam->constructors.insert( qualify_local_name(cname) );
+                }
+        }
+    };
+
     // 0. Get names that are being declared.
     for(const auto& [_,decl]: topdecls)
     {
@@ -2369,40 +2417,12 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         }
         else if (auto data_inst = decl.to<Hs::DataFamilyInstanceDecl>())
         {
-            auto family_name = unloc(data_inst->con).name;
-            auto family_type = lookup_local_type(qualify_local_name(family_name));
-            auto data_fam = family_type ? family_type->is_data_fam() : nullptr;
-
-            if (data_inst->rhs.is_regular_decl())
-            {
-                for(const auto& constr: data_inst->rhs.get_constructors())
-                {
-                    auto cname = unloc(*constr.con).name;
-                    def_constructor(cname, constr.arity(), family_name);
-                    if (data_fam)
-                        data_fam->constructors.insert( qualify_local_name(cname) );
-
-                    if (auto fields = to<Hs::FieldDecls>(constr.fields))
-                        for(auto& field_decl: fields->field_decls)
-                            for(auto& [loc,var]: field_decl.field_names)
-                            {
-                                if (data_fam)
-                                    data_fam->fields.insert( qualify_local_name(var.name) );
-                            }
-                }
-            }
-            else if (data_inst->rhs.is_gadt_decl())
-            {
-                for(const auto& cons_decl: data_inst->rhs.get_gadt_constructors())
-                    for(auto& con_name: cons_decl.con_names)
-                    {
-                        int arity = Hs::gen_type_arity( cons_decl.type );
-                        auto cname = unloc(con_name);
-                        def_constructor(cname, arity, family_name);
-                        if (data_fam)
-                            data_fam->constructors.insert( qualify_local_name(cname) );
-                    }
-            }
+            add_data_family_instance_symbols(*data_inst);
+        }
+        else if (auto inst = decl.to<Hs::InstanceDecl>())
+        {
+            for(auto& data_inst: inst->data_inst_decls)
+                add_data_family_instance_symbols(data_inst);
         }
     }
 }

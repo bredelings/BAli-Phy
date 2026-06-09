@@ -168,16 +168,12 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     for(auto& fam_decl: class_decl.fam_decls)
     {
         auto hs_fam_type = Hs::quantify(fam_decl.args, {}, Hs::type_apply(fam_decl.con, fam_decl.args));
-        auto fam_type = check_type(hs_fam_type);
-        auto [args, _, head] = peel_top_gen(fam_type);
-        
-        auto fname = unloc(fam_decl.con).name;
-        auto kind = this_mod().lookup_local_type(fname)->kind;
+        check_type(hs_fam_type);
 
         TypeCon con(unloc(fam_decl.con).name);
         if (fam_decl.is_type_family())
         {
-            this_mod().lookup_local_type(con.name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, kind, class_name);
+            assert(this_mod().lookup_local_type(con.name)->is_type_fam()->info);
             if (class_info.associated_type_families.count(con))
             {
                 record_error(hs_fam_type.loc, Note()<<"Trying to define type family '"<<con.print()<<"' twice");
@@ -190,7 +186,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
             if (fam_decl.where_instances)
                 record_error(fam_decl.con.loc, Note()<<"Data family '"<<fam_decl.con.print()<<"' cannot have type-family equations");
 
-            this_mod().lookup_local_type(con.name)->is_data_fam()->info = std::make_shared<DataFamInfo>(args, kind, class_name);
+            assert(this_mod().lookup_local_type(con.name)->is_data_fam()->info);
             if (class_info.associated_data_families.count(con))
             {
                 record_error(hs_fam_type.loc, Note()<<"Trying to define data family '"<<con.print()<<"' twice");
@@ -313,26 +309,51 @@ TypeChecker::get_type_synonyms(const Hs::Decls& decls)
 
 void TypeChecker::get_type_families(const Hs::Decls& decls)
 {
+    auto get_family_args = [&](const Hs::FamilyDecl& fam_decl)
+    {
+        auto fam_name = unloc(fam_decl.con).name;
+        auto kind = this_mod().lookup_local_type(fam_name)->kind;
+
+        vector<TypeVar> args;
+        for(auto& [loc,tv]: fam_decl.args)
+        {
+            auto [first,rest] = *is_gen_function_type(kind);
+            args.push_back(TypeVar(tv.name, first));
+            kind = rest;
+        }
+
+        return args;
+    };
+
+    auto get_family_kind = [&](const Hs::FamilyDecl& fam_decl)
+    {
+        auto fam_name = unloc(fam_decl.con).name;
+        return this_mod().lookup_local_type(fam_name)->kind;
+    };
+
+    auto get_type_family_info = [&](const Hs::FamilyDecl& fam_decl, const std::optional<std::string>& associated_class)
+    {
+        auto args = get_family_args(fam_decl);
+        auto fam_kind = get_family_kind(fam_decl);
+        return std::make_shared<TypeFamInfo>(args, fam_kind, associated_class);
+    };
+
+    auto get_data_family_info = [&](const Hs::FamilyDecl& fam_decl, const std::optional<std::string>& associated_class)
+    {
+        auto args = get_family_args(fam_decl);
+        auto fam_kind = get_family_kind(fam_decl);
+        return std::make_shared<DataFamInfo>(args, fam_kind, associated_class);
+    };
+
     for(auto& [_,decl]: decls)
     {
         if (auto fam_decl = decl.to<Hs::FamilyDecl>())
         {
             auto fam_name = unloc(fam_decl->con).name;
-            auto fam_kind = this_mod().lookup_local_type(fam_name)->kind;
-
-            auto kind = fam_kind;
-            auto& hs_args = fam_decl->args;
-            vector<TypeVar> args;
-            for(auto& [loc,tv]: hs_args)
-            {
-                auto [first,rest] = *is_gen_function_type(kind);
-                args.push_back(TypeVar(tv.name, first));
-                kind = rest;
-            }
 
             if (fam_decl->is_type_family())
             {
-                this_mod().lookup_local_type(fam_name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, fam_kind);
+                this_mod().lookup_local_type(fam_name)->is_type_fam()->info = get_type_family_info(*fam_decl, {});
 
                 // Add instance equations for closed type families
                 if (fam_decl->where_instances)
@@ -347,7 +368,24 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
                 if (fam_decl->where_instances)
                     record_error(fam_decl->con.loc, Note()<<"Data family '"<<fam_decl->con.print()<<"' cannot have type-family equations");
 
-                this_mod().lookup_local_type(fam_name)->is_data_fam()->info = std::make_shared<DataFamInfo>(args, fam_kind);
+                this_mod().lookup_local_type(fam_name)->is_data_fam()->info = get_data_family_info(*fam_decl, {});
+            }
+        }
+        else if (auto class_decl = decl.to<Hs::ClassDecl>())
+        {
+            auto class_name = unloc(class_decl->con).name;
+            for(auto& fam_decl: class_decl->fam_decls)
+            {
+                auto fam_name = unloc(fam_decl.con).name;
+                if (fam_decl.is_type_family())
+                    this_mod().lookup_local_type(fam_name)->is_type_fam()->info = get_type_family_info(fam_decl, class_name);
+                else if (fam_decl.is_data_family())
+                {
+                    if (fam_decl.where_instances)
+                        record_error(fam_decl.con.loc, Note()<<"Data family '"<<fam_decl.con.print()<<"' cannot have type-family equations");
+
+                    this_mod().lookup_local_type(fam_name)->is_data_fam()->info = get_data_family_info(fam_decl, class_name);
+                }
             }
         }
     }

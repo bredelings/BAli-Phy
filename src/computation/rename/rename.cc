@@ -113,24 +113,16 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
 {
     Hs::Decls decls2;
 
-    for(auto& [_,decl]: decls)
+    auto synthesize_for_constructors = [&](const Hs::ConstructorsDecl& constrs)
     {
-        const Hs::ConstructorsDecl* constrs = nullptr;
-        if (auto D = decl.to<Haskell::DataOrNewtypeDecl>(); D and D->is_regular_decl())
-            constrs = &D->get_constructors();
-        else if (auto D = decl.to<Haskell::DataFamilyInstanceDecl>(); D and D->rhs.is_regular_decl())
-            constrs = &D->rhs.get_constructors();
-        else
-            continue;
-
-        if (constrs->empty()) continue;
+        if (constrs.empty()) return;
 
         // field -> con -> pos
         map<string,map<string,int>> constructor_fields;
         // con -> arity
         map<string,int> arity;
 
-        for(auto& constr: *constrs)
+        for(auto& constr: constrs)
         {
             if (constr.is_record_constructor())
             {
@@ -175,6 +167,20 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
 
                 decls2.push_back({noloc,Haskell::ValueDecl({noloc,name}, lambda)});
             }
+        }
+    };
+
+    for(auto& [_,decl]: decls)
+    {
+        if (auto D = decl.to<Haskell::DataOrNewtypeDecl>(); D and D->is_regular_decl())
+            synthesize_for_constructors(D->get_constructors());
+        else if (auto D = decl.to<Haskell::DataFamilyInstanceDecl>(); D and D->rhs.is_regular_decl())
+            synthesize_for_constructors(D->rhs.get_constructors());
+        else if (auto I = decl.to<Haskell::InstanceDecl>())
+        {
+            for(auto& D: I->data_inst_decls)
+                if (D.rhs.is_regular_decl())
+                    synthesize_for_constructors(D.rhs.get_constructors());
         }
     }
     return decls2;
