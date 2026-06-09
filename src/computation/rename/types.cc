@@ -320,6 +320,8 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
     // 3. Rename type instance decls
     for(auto& type_inst_decl: I.type_inst_decls)
         type_inst_decl = rename(type_inst_decl);
+    for(auto& data_inst_decl: I.data_inst_decls)
+        data_inst_decl = rename(data_inst_decl);
 
     // 4. Get free tvs, constraints, and typecon and parameters
     auto [tvs, context, head] = Hs::peel_top_gen(I.polytype);

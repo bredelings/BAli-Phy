@@ -716,6 +716,7 @@ struct InstanceDecl: public Object
     LType polytype;
 
     std::vector<TypeFamilyInstanceDecl> type_inst_decls;
+    std::vector<DataFamilyInstanceDecl> data_inst_decls;
     Decls method_decls;
 
     InstanceDecl* clone() const { return new InstanceDecl(*this);}
@@ -724,10 +725,12 @@ struct InstanceDecl: public Object
     InstanceDecl(const std::optional<std::string>& o,
                  const LType& t,
                  const std::vector<TypeFamilyInstanceDecl>& tids,
+                 const std::vector<DataFamilyInstanceDecl>& dids,
                  const Decls& ds)
         :overlap_pragma(o),
          polytype(t),
          type_inst_decls(tids),
+         data_inst_decls(dids),
          method_decls(ds)
         {}
 };

@@ -7714,18 +7714,21 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
 Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& polytype, const optional<Located<Hs::Decls>>& decls)
 {
     std::vector<Hs::TypeFamilyInstanceDecl> type_inst_decls;
+    std::vector<Hs::DataFamilyInstanceDecl> data_inst_decls;
     Hs::Decls method_decls;
     if (decls)
         for(auto& [loc,decl]: unloc(*decls))
         {
             if (auto TI = decl.to<Hs::TypeFamilyInstanceDecl>())
                 type_inst_decls.push_back(*TI);
+            else if (auto DI = decl.to<Hs::DataFamilyInstanceDecl>())
+                data_inst_decls.push_back(*DI);
             else if (auto V = decl.to<Hs::ValueDecl>())
                 method_decls.push_back({loc,*V});
             else
                 throw myexception()<<"In declaration of instance "<<unloc(polytype).print()<<", I don't recognize declaration:\n   "<<decl.print();
         }
-    return {oprag, polytype, type_inst_decls, method_decls};
+    return {oprag, polytype, type_inst_decls, data_inst_decls, method_decls};
 }
 
 Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header,

@@ -670,6 +670,8 @@ string InstanceDecl::print() const
     vector<string> decls;
     for(auto& decl: type_inst_decls)
         decls.push_back(decl.print());
+    for(auto& decl: data_inst_decls)
+        decls.push_back(decl.print());
     for(auto& decl: method_decls)
         decls.push_back(decl.print());
 
