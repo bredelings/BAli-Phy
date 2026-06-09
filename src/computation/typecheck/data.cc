@@ -311,22 +311,11 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
         return {types, {}};
     }
 
-    if (data_fam_info->associated_class)
+    if (not check_family_instance_association(data_inst.con, data_fam_info->associated_class, associated_class, "data instance", "data family", false, false))
     {
-        if (not associated_class)
-        {
-            record_error(data_inst.con.loc, Note()<<"Can't declare non-associated data instance for data family '"<<data_inst.con.print()<<"' associated with class '"<<*data_fam_info->associated_class<<"'");
-            if (data_inst.con.loc) pop_source_span();
-            pop_note();
-            return {types, {}};
-        }
-        else if (*data_fam_info->associated_class != *associated_class)
-        {
-            record_error(data_inst.con.loc, Note()<<"Trying to declare data instance in class '"<<*associated_class<<"' for family '"<<data_inst.con.print()<<"' associated with class '"<<*data_fam_info->associated_class<<"'");
-            if (data_inst.con.loc) pop_source_span();
-            pop_note();
-            return {types, {}};
-        }
+        if (data_inst.con.loc) pop_source_span();
+        pop_note();
+        return {types, {}};
     }
 
     auto hs_result_type = Hs::type_apply(data_inst.con, data_inst.args);
@@ -334,16 +323,15 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
     if (not data_inst.rhs.context.empty())
         record_error(range(data_inst.rhs.context), Note()<<"Data family instance contexts are not supported; put constraints on individual constructors instead");
 
-    auto hs_instance_type = Hs::quantify(outer_tvs, data_inst.rhs.context, hs_result_type);
     int head_errors = num_errors();
-    auto [data_tvs, data_context, data_type] = peel_top_gen(check_type(hs_instance_type));
+    auto instance_head = check_family_instance_head(data_inst.con, data_inst.args, data_inst.forall, data_inst.rhs.context);
 
-    auto [result_head, result_args] = decompose_type_apps(data_type);
+    auto [result_head, result_args] = decompose_type_apps(instance_head.type);
     auto result_con = result_head.to<TypeCon>();
     if (not result_con or not type_con_is_data_fam(*result_con))
-        record_error(Note()<<"Data family instance head '"<<data_type<<"' is not a data family application");
+        record_error(Note()<<"Data family instance head '"<<instance_head.type<<"' is not a data family application");
     else if (*result_con != data_family)
-        record_error(Note()<<"Data family instance head '"<<data_type<<"' does not match data family '"<<data_family<<"'");
+        record_error(Note()<<"Data family instance head '"<<instance_head.type<<"' does not match data family '"<<data_family<<"'");
     else if (result_args.size() != data_fam_info->arity())
         record_error(Note()<<"Data family takes "<<data_fam_info->arity()<<" arguments, but instance has "<<result_args.size());
 
@@ -359,7 +347,7 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
         for(auto& constructor: data_inst.rhs.get_constructors())
         {
             auto con_name = unloc(*constructor.con).name;
-            DataConInfo info = infer_type_for_data_family_constructor(hs_result_type, outer_tvs, data_context, constructor);
+            DataConInfo info = infer_type_for_data_family_constructor(hs_result_type, outer_tvs, instance_head.context, constructor);
             types = types.insert({con_name, info});
         }
     }
@@ -367,7 +355,7 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
     {
         for(auto& constructor: data_inst.rhs.get_gadt_constructors())
         {
-            DataConInfo info = infer_type_for_gadt_data_family_constructor(data_type, data_family, data_context, constructor);
+            DataConInfo info = infer_type_for_gadt_data_family_constructor(instance_head.type, data_family, instance_head.context, constructor);
             for(auto& con_name: constructor.con_names)
                 types = types.insert({unloc(con_name), info});
         }
@@ -376,7 +364,7 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
     if (data_inst.con.loc) pop_source_span();
     pop_note();
 
-    return {types, data_type};
+    return {types, instance_head.type};
 }
 
 void TypeChecker::get_constructor_info(const Hs::Decls& decls)

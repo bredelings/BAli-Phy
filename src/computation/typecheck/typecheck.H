@@ -45,6 +45,20 @@ typedef std::map<TypeCon,Kind> KindSigEnv;
 // Can the instances be something like (Log Double)?  I suppose they could.
 typedef std::map<TypeCon,std::vector<Type>> DefaultEnv;
 
+struct FamilyInstanceHead
+{
+    std::vector<TypeVar> type_vars;
+    Context context;
+    Type type;
+    std::vector<Type> args;
+};
+
+struct TypeFamilyInstanceCheck
+{
+    FamilyInstanceHead head;
+    Type rhs;
+};
+
 struct global_tc_state
 {
     Module& this_mod; // for name lookups like Bool, Num, etc.
@@ -238,7 +252,7 @@ public:
 
     Type check_constraint(const Hs::LType&);
 
-    std::tuple<std::vector<TypeVar>, Type, Type> check_type_instance(const Hs::LType&, const Hs::LType&);
+    TypeFamilyInstanceCheck check_type_instance(const Hs::LType&, const Hs::LType&);
 
     Hs::Var find_prelude_var(std::string name) const;
 
@@ -534,6 +548,24 @@ public:
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
     void add_type_instance(const std::vector<TypeVar>& free_tvs, const Type& lhs, const Type& rhs);
+
+    bool check_family_instance_association(const Hs::LTypeCon& family_con,
+					   const std::optional<std::string>& family_associated_class,
+					   const std::optional<std::string>& instance_associated_class,
+					   const std::string& instance_name,
+					   const std::string& family_name,
+					   bool require_associated_family,
+					   bool indent_message);
+
+    FamilyInstanceHead check_family_instance_head(const Hs::LTypeCon& family_con,
+						  const std::vector<Hs::LType>& args,
+						  const std::optional<std::vector<Hs::LTypeVar>>& forall,
+						  const Hs::Context& context);
+
+    void check_associated_family_instance_args(const std::vector<Hs::LType>& hs_args,
+					       const std::vector<Type>& args,
+					       const std::vector<TypeVar>& family_args,
+					       const substitution_t& instance_subst);
 
     void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
 

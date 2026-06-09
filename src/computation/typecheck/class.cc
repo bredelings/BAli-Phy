@@ -232,12 +232,11 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         if (num_errors() > nerrors) continue;
 
         auto hs_lhs = Hs::type_apply(def_inst.con, def_inst.args);
-        auto [free_tvs, lhs, rhs] = check_type_instance(hs_lhs, def_inst.rhs);
-        auto [inst_con, inst_args] = decompose_type_apps(lhs);
+        auto type_inst = check_type_instance(hs_lhs, def_inst.rhs);
 
         // This type family has a default instance now.
         if (default_instance)
-            *default_instance = TypeFamilyInstanceDecl{tf_con, inst_args, rhs};
+            *default_instance = TypeFamilyInstanceDecl{tf_con, type_inst.head.args, type_inst.rhs};
 
         // Add the default type instance -- no need for variables to match the class.
         // check_add_type_instance(def_inst, unloc(class_decl.name), {});

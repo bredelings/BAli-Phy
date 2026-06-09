@@ -64,7 +64,7 @@ Hs::Binds TypeChecker::infer_type_for_default_methods(const Hs::Decls& decls)
     return default_method_decls;
 }
 
-std::tuple<std::vector<TypeVar>, Type, Type> TypeChecker::check_type_instance(const Hs::LType& hs_lhs, const Hs::LType& hs_rhs)
+TypeFamilyInstanceCheck TypeChecker::check_type_instance(const Hs::LType& hs_lhs, const Hs::LType& hs_rhs)
 {
     auto hs_free_tvs = free_type_variables(hs_lhs);
     auto hs_equality = Hs::make_equality_type(hs_lhs, hs_rhs);
@@ -77,8 +77,9 @@ std::tuple<std::vector<TypeVar>, Type, Type> TypeChecker::check_type_instance(co
     auto [core_sim, args] = decompose_type_apps(equality);
     auto lhs = args[0];
     auto rhs = args[1];
+    auto [head, family_args] = decompose_type_apps(lhs);
 
-    return {free_tvs, lhs, rhs};
+    return {{free_tvs, context, lhs, family_args}, rhs};
 }
 
 void TypeChecker::add_type_instance(const vector<TypeVar>& free_tvs, const Type& lhs, const Type& rhs)
@@ -93,6 +94,75 @@ void TypeChecker::add_type_instance(const vector<TypeVar>& free_tvs, const Type&
 
     this_mod().local_instances.insert( {dvar, *S.instance_info} );
     this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
+}
+
+bool TypeChecker::check_family_instance_association(const Hs::LTypeCon& family_con,
+						    const optional<string>& family_associated_class,
+						    const optional<string>& instance_associated_class,
+						    const string& instance_name,
+						    const string& family_name,
+						    bool require_associated_family,
+						    bool indent_message)
+{
+    auto prefix = indent_message ? "  " : "";
+
+    if (not family_associated_class)
+    {
+        if (require_associated_family)
+        {
+            auto family_display = family_name == "data family" ? "Data family" : "Type family";
+            record_error(family_con.loc, Note()<<prefix<<family_display<<" '"<<family_con.print()<<"' is not associated with a class");
+            return false;
+        }
+        return true;
+    }
+
+    if (not instance_associated_class)
+    {
+        record_error(family_con.loc, Note()<<prefix<<"Can't declare non-associated "<<instance_name<<" for "<<family_name<<" '"<<family_con.print()<<"' associated with class '"<<*family_associated_class<<"'");
+        return false;
+    }
+
+    if (*family_associated_class != *instance_associated_class)
+    {
+        record_error(family_con.loc, Note()<<prefix<<"Trying to declare "<<instance_name<<" in class '"<<*instance_associated_class<<"' for family '"<<family_con.print()<<"' associated with class '"<<*family_associated_class<<"'");
+        return false;
+    }
+
+    return true;
+}
+
+FamilyInstanceHead TypeChecker::check_family_instance_head(const Hs::LTypeCon& family_con,
+							   const vector<Hs::LType>& args,
+							   const optional<vector<Hs::LTypeVar>>& forall,
+							   const Hs::Context& context)
+{
+    auto hs_head = Hs::type_apply(family_con, args);
+    auto outer_tvs = forall ? *forall : free_type_variables(args);
+    auto hs_inst_type = Hs::quantify(outer_tvs, context, hs_head);
+    auto [type_vars, checked_context, checked_head] = peel_top_gen(check_type(hs_inst_type));
+    auto [head, checked_args] = decompose_type_apps(checked_head);
+
+    return {type_vars, checked_context, checked_head, checked_args};
+}
+
+void TypeChecker::check_associated_family_instance_args(const vector<Hs::LType>& hs_args,
+							const vector<Type>& args,
+							const vector<TypeVar>& family_args,
+							const substitution_t& instance_subst)
+{
+    for(int i=0; i<family_args.size(); i++)
+    {
+        auto fam_tv = family_args[i];
+        if (hs_args[i].loc) push_source_span(*hs_args[i].loc);
+        if (instance_subst.count(fam_tv))
+        {
+            auto expected = instance_subst.at(fam_tv);
+            if (not same_type(args[i], expected))
+                record_error(Note()<<"    argument '"<<hs_args[i]<<"' should match instance parameter '"<<expected<<"'");
+        }
+        if (hs_args[i].loc) pop_source_span();
+    }
 }
 
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
@@ -115,8 +185,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     }
 
     auto hs_lhs = Hs::type_apply(inst.con, inst.args);
-    auto [free_ltvs, lhs, rhs] = check_type_instance(hs_lhs, inst.rhs);
-    auto [_, inst_args] = decompose_type_apps(lhs);
+    auto type_inst = check_type_instance(hs_lhs, inst.rhs);
 
     // There CAN be multiple type instances for an associated type family, if they don't unify with each other.
     // We don't check if a class has only one instance, so I guess we allow this.
@@ -125,32 +194,15 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     // 2. Get the type family info
     auto tf_info = info_for_type_fam( tf_con.name );
 
+    if (not check_family_instance_association(inst.con, tf_info->associated_class, associated_class, "type instance", "type family", false, true))
+    {
+        pop_source_span();
+        pop_note();
+        return;
+    }
+
     if (tf_info->associated_class)
     {
-        // 3. Check for unassociated instances declared for associated classes
-        if (not associated_class)
-        {
-            push_source_span( *inst.con.loc );
-            record_error( Note() << "  Can't declare non-associated type instance for type family '"<<inst.con.print()<<"' associated with class '"
-                          <<(*tf_info->associated_class)<<"'");
-            pop_source_span();
-
-            pop_source_span();
-            pop_note();
-            return;
-        }
-
-        // 4. Check for instances associated with the wrong class
-        if (*tf_info->associated_class != *associated_class)
-        {
-            record_error(Note() << "  Trying to declare type instance in class '"<<*associated_class<<" for family '"<<inst.con.print()
-                         <<"' associated with class '"<<(*tf_info->associated_class)<<"'");
-
-            pop_source_span();
-            pop_note();
-            return;
-        }
-
         // 4.5. Check that the type family was given the right number of arguments.
         if (inst.args.size() != tf_info->args.size())
         {
@@ -163,18 +215,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         }
 
         // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
-        for(int i=0;i<tf_info->args.size();i++)
-        {
-            auto fam_tv = tf_info->args[i];
-            push_source_span( *inst.args[i].loc );
-            if (instance_subst.count(fam_tv))
-            {
-                auto expected = instance_subst.at(fam_tv);
-                if (not same_type( inst_args[i], expected))
-                    record_error( Note() << "    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'");
-            }
-            pop_source_span();
-        }
+        check_associated_family_instance_args(inst.args, type_inst.head.args, tf_info->args, instance_subst);
     }
 
     // 6. Check that the type family is not closed
@@ -200,7 +241,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
         return;
     }
 
-    add_type_instance(free_ltvs, lhs, rhs);
+    add_type_instance(type_inst.head.type_vars, type_inst.head.type, type_inst.rhs);
 
     pop_source_span();
     pop_note();
@@ -223,25 +264,8 @@ void TypeChecker::check_data_instance(const Hs::DataFamilyInstanceDecl& inst, co
     auto df_info = info_for_data_fam(df_con.name);
     assert(df_info);
 
-    if (not df_info->associated_class)
+    if (not check_family_instance_association(inst.con, df_info->associated_class, associated_class, "data instance", "data family", true, true))
     {
-        record_error(inst.con.loc, Note()<<"  Data family '"<<inst.con.print()<<"' is not associated with a class");
-        if (inst.con.loc) pop_source_span();
-        pop_note();
-        return;
-    }
-
-    if (not associated_class)
-    {
-        record_error(inst.con.loc, Note()<<"  Can't declare non-associated data instance for data family '"<<inst.con.print()<<"' associated with class '"<<*df_info->associated_class<<"'");
-        if (inst.con.loc) pop_source_span();
-        pop_note();
-        return;
-    }
-
-    if (*df_info->associated_class != *associated_class)
-    {
-        record_error(inst.con.loc, Note()<<"  Trying to declare data instance in class '"<<*associated_class<<"' for family '"<<inst.con.print()<<"' associated with class '"<<*df_info->associated_class<<"'");
         if (inst.con.loc) pop_source_span();
         pop_note();
         return;
@@ -257,24 +281,9 @@ void TypeChecker::check_data_instance(const Hs::DataFamilyInstanceDecl& inst, co
         return;
     }
 
-    auto hs_lhs = Hs::type_apply(inst.con, inst.args);
-    auto outer_tvs = inst.forall ? *inst.forall : free_type_variables(inst.args);
-    auto hs_inst_type = Hs::quantify(outer_tvs, {}, hs_lhs);
-    auto [data_tvs, data_context, data_type] = peel_top_gen(check_type(hs_inst_type));
-    auto [head, data_args] = decompose_type_apps(data_type);
+    auto head = check_family_instance_head(inst.con, inst.args, inst.forall, {});
 
-    for(int i=0; i<df_info->args.size(); i++)
-    {
-        auto fam_tv = df_info->args[i];
-        push_source_span(*inst.args[i].loc);
-        if (instance_subst.count(fam_tv))
-        {
-            auto expected = instance_subst.at(fam_tv);
-            if (not same_type(data_args[i], expected))
-                record_error(Note()<<"    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'");
-        }
-        pop_source_span();
-    }
+    check_associated_family_instance_args(inst.args, head.args, df_info->args, instance_subst);
 
     if (inst.con.loc) pop_source_span();
     pop_note();
