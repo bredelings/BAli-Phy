@@ -115,20 +115,22 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
 
     for(auto& [_,decl]: decls)
     {
-        if (not decl.is_a<Haskell::DataOrNewtypeDecl>()) continue;
-        auto D = decl.as_<Haskell::DataOrNewtypeDecl>();
+        const Hs::ConstructorsDecl* constrs = nullptr;
+        if (auto D = decl.to<Haskell::DataOrNewtypeDecl>(); D and D->is_regular_decl())
+            constrs = &D->get_constructors();
+        else if (auto D = decl.to<Haskell::DataFamilyInstanceDecl>(); D and D->rhs.is_regular_decl())
+            constrs = &D->rhs.get_constructors();
+        else
+            continue;
 
-        if (not D.is_regular_decl()) continue;
-
-        auto& constrs = D.get_constructors();
-        if (constrs.empty()) continue;
+        if (constrs->empty()) continue;
 
         // field -> con -> pos
         map<string,map<string,int>> constructor_fields;
         // con -> arity
         map<string,int> arity;
 
-        for(auto& constr: constrs)
+        for(auto& constr: *constrs)
         {
             if (constr.is_record_constructor())
             {
@@ -479,4 +481,3 @@ renamer_state::rename(const Hs::LExp& E, const bound_var_info& bound, const boun
         return E2;
     }
 }
-
