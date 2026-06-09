@@ -1,0 +1,7 @@
+[1mMain.hs:7.15:[1;31m error:[0m[1m
+   • Data family instance 'data instance Main.F Int = Main.MkInt Int' overlaps
+     previous instance 'data instance Main.F a = Main.MkAny a'
+  [1;34m|[0m
+[1;34m7[0m [1;34m| [0mdata instance [1;31mF[0m Int = MkInt Int
+  [1;34m|[0m               [1;31m^[0m
+
