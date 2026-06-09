@@ -206,6 +206,80 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     pop_note();
 }
 
+void TypeChecker::check_data_instance(const Hs::DataFamilyInstanceDecl& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
+{
+    push_note( Note()<<"In data instance '"<<inst.print()<<"':" );
+    if (inst.con.loc) push_source_span(*inst.con.loc);
+
+    TypeCon df_con(unloc(inst.con).name);
+    if (not type_con_is_data_fam(df_con))
+    {
+        record_error(inst.con.loc, Note()<<"  No data family '"<<inst.con.print()<<"'");
+        if (inst.con.loc) pop_source_span();
+        pop_note();
+        return;
+    }
+
+    auto df_info = info_for_data_fam(df_con.name);
+    assert(df_info);
+
+    if (not df_info->associated_class)
+    {
+        record_error(inst.con.loc, Note()<<"  Data family '"<<inst.con.print()<<"' is not associated with a class");
+        if (inst.con.loc) pop_source_span();
+        pop_note();
+        return;
+    }
+
+    if (not associated_class)
+    {
+        record_error(inst.con.loc, Note()<<"  Can't declare non-associated data instance for data family '"<<inst.con.print()<<"' associated with class '"<<*df_info->associated_class<<"'");
+        if (inst.con.loc) pop_source_span();
+        pop_note();
+        return;
+    }
+
+    if (*df_info->associated_class != *associated_class)
+    {
+        record_error(inst.con.loc, Note()<<"  Trying to declare data instance in class '"<<*associated_class<<"' for family '"<<inst.con.print()<<"' associated with class '"<<*df_info->associated_class<<"'");
+        if (inst.con.loc) pop_source_span();
+        pop_note();
+        return;
+    }
+
+    if (inst.args.size() != df_info->args.size())
+    {
+        push_source_span(*(inst.con.loc * range(inst.args)));
+        record_error(Note()<<"  Data family takes "<<df_info->args.size()<<" arguments, but was given "<<inst.args.size()<<".");
+        pop_source_span();
+        if (inst.con.loc) pop_source_span();
+        pop_note();
+        return;
+    }
+
+    auto hs_lhs = Hs::type_apply(inst.con, inst.args);
+    auto outer_tvs = inst.forall ? *inst.forall : free_type_variables(inst.args);
+    auto hs_inst_type = Hs::quantify(outer_tvs, {}, hs_lhs);
+    auto [data_tvs, data_context, data_type] = peel_top_gen(check_type(hs_inst_type));
+    auto [head, data_args] = decompose_type_apps(data_type);
+
+    for(int i=0; i<df_info->args.size(); i++)
+    {
+        auto fam_tv = df_info->args[i];
+        push_source_span(*inst.args[i].loc);
+        if (instance_subst.count(fam_tv))
+        {
+            auto expected = instance_subst.at(fam_tv);
+            if (not same_type(data_args[i], expected))
+                record_error(Note()<<"    argument '"<<inst.args[i]<<"' should match instance parameter '"<<expected<<"'");
+        }
+        pop_source_span();
+    }
+
+    if (inst.con.loc) pop_source_span();
+    pop_note();
+}
+
 void TypeChecker::default_type_instance(const TypeCon& tf_con,
 					const std::optional<TypeFamilyInstanceDecl>& maybe_default,
 					const substitution_t& instance_subst)
@@ -288,6 +362,9 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
         check_add_type_instance(inst, class_name, instance_subst);
 	defined_ats.insert(tf_con);
     }
+
+    for(auto& inst: inst_decl.data_inst_decls)
+        check_data_instance(inst, class_name, instance_subst);
 
     for(auto& [tf_con, maybe_default]: class_info.associated_type_families)
     {
@@ -829,4 +906,3 @@ bool TypeChecker::find_type_eq_instance(const Type& t1, const Type& t2)
 {
     return find_type_eq_instance_1way(t1,t2) or find_type_eq_instance_1way(t2,t1);
 }
-

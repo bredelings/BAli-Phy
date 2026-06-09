@@ -501,7 +501,7 @@ public:
 
     DataConInfo infer_type_for_gadt_data_family_constructor(const Type& instance_head, const TypeCon& data_family, const std::vector<Type>& top_constraints, const Hs::GADTConstructorDecl& constructor);
 
-    std::pair<DataConEnv,std::optional<Type>> infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst);
+    std::pair<DataConEnv,std::optional<Type>> infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst, const std::optional<std::string>& associated_class = {});
 
     Hs::Decls infer_type_for_default_methods(const Hs::ClassDecl&);
 
@@ -536,6 +536,8 @@ public:
     void add_type_instance(const std::vector<TypeVar>& free_tvs, const Type& lhs, const Type& rhs);
 
     void check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
+
+    void check_data_instance(const Hs::DataFamilyInstanceDecl& inst, const std::optional<std::string>& associated_class, const substitution_t& instance_subst);
 
     void default_type_instance(const TypeCon& tf_con,
 			       const std::optional<TypeFamilyInstanceDecl>& maybe_default,

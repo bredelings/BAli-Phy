@@ -295,7 +295,7 @@ DataConInfo TypeChecker::infer_type_for_gadt_data_family_constructor(const Type&
     return info;
 }
 
-pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst)
+pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst, const std::optional<std::string>& associated_class)
 {
     push_note( Note()<<"In data family instance '"<<data_inst.print()<<"':" );
     if (data_inst.con.loc) push_source_span(*data_inst.con.loc);
@@ -309,6 +309,24 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
         if (data_inst.con.loc) pop_source_span();
         pop_note();
         return {types, {}};
+    }
+
+    if (data_fam_info->associated_class)
+    {
+        if (not associated_class)
+        {
+            record_error(data_inst.con.loc, Note()<<"Can't declare non-associated data instance for data family '"<<data_inst.con.print()<<"' associated with class '"<<*data_fam_info->associated_class<<"'");
+            if (data_inst.con.loc) pop_source_span();
+            pop_note();
+            return {types, {}};
+        }
+        else if (*data_fam_info->associated_class != *associated_class)
+        {
+            record_error(data_inst.con.loc, Note()<<"Trying to declare data instance in class '"<<*associated_class<<"' for family '"<<data_inst.con.print()<<"' associated with class '"<<*data_fam_info->associated_class<<"'");
+            if (data_inst.con.loc) pop_source_span();
+            pop_note();
+            return {types, {}};
+        }
     }
 
     auto hs_result_type = Hs::type_apply(data_inst.con, data_inst.args);
@@ -365,9 +383,20 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
     vector<pair<Type,std::string>> data_family_instance_heads;
 
-    auto get_data_family_instance_constructor_info = [&](const Hs::DataFamilyInstanceDecl& data_inst)
+    auto instance_class_name = [](const Hs::InstanceDecl& instance_decl) -> std::optional<std::string>
     {
-        auto [new_con_infos, head] = infer_type_for_data_family_instance(data_inst);
+        auto [tvs, context, head] = Hs::peel_top_gen(instance_decl.polytype);
+        auto [class_head, args] = Hs::decompose_type_apps(head);
+        auto class_con = unloc(class_head).to<Hs::TypeCon>();
+        if (class_con)
+            return class_con->name;
+        else
+            return {};
+    };
+
+    auto get_data_family_instance_constructor_info = [&](const Hs::DataFamilyInstanceDecl& data_inst, const std::optional<std::string>& associated_class)
+    {
+        auto [new_con_infos, head] = infer_type_for_data_family_instance(data_inst, associated_class);
 
         if (head)
         {
@@ -387,11 +416,14 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
         if (auto d = decl.to<Hs::DataOrNewtypeDecl>())
             con_infos = infer_type_for_data_type(*d);
         else if (auto d = decl.to<Hs::DataFamilyInstanceDecl>())
-            con_infos = get_data_family_instance_constructor_info(*d);
+            con_infos = get_data_family_instance_constructor_info(*d, {});
         else if (auto i = decl.to<Hs::InstanceDecl>())
+        {
+            auto associated_class = instance_class_name(*i);
             for(auto& d: i->data_inst_decls)
-                for(auto& [name, con_info]: get_data_family_instance_constructor_info(d))
+                for(auto& [name, con_info]: get_data_family_instance_constructor_info(d, associated_class))
                     con_infos = con_infos.insert({name, con_info});
+        }
         else
             continue;
 
