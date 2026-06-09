@@ -59,6 +59,13 @@ struct TypeFamilyInstanceCheck
     Type rhs;
 };
 
+enum class Apartness
+{
+    Unifiable,
+    SurelyApart,
+    MaybeApart
+};
+
 struct global_tc_state
 {
     Module& this_mod; // for name lookups like Bool, Num, etc.
@@ -366,6 +373,8 @@ public:
     bsubstitution_t match(const Type& t1, const Type& t2, const myexception& e) const;
 
     bsubstitution_t match(const Type& t1, const Type& t2) const;
+
+    Apartness apartness(const Type& t1, const Type& t2) const;
     // end pure unifier.
     
     DataConInfo constructor_info(const Hs::Con&);

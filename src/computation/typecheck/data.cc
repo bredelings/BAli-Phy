@@ -376,8 +376,13 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
         if (head)
         {
             for(auto& [previous_head, previous_instance]: data_family_instance_heads)
-                if (maybe_unify(*head, previous_head))
+            {
+                auto instance_apartness = apartness(*head, previous_head);
+                if (instance_apartness == Apartness::Unifiable)
                     record_error(data_inst.con.loc, Note()<<"Data family instance '"<<data_inst.print()<<"' overlaps previous instance '"<<previous_instance<<"'");
+                else if (instance_apartness == Apartness::MaybeApart)
+                    record_error(data_inst.con.loc, Note()<<"Data family instance '"<<data_inst.print()<<"' is not surely apart from previous instance '"<<previous_instance<<"'");
+            }
 
             data_family_instance_heads.push_back({*head, data_inst.print()});
         }

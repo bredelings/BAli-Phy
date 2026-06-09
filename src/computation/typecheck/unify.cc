@@ -323,6 +323,76 @@ bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const
         return false;
 }
 
+Apartness combine_apartness(Apartness a1, Apartness a2)
+{
+    if (a1 == Apartness::SurelyApart or a2 == Apartness::SurelyApart)
+        return Apartness::SurelyApart;
+    else if (a1 == Apartness::MaybeApart or a2 == Apartness::MaybeApart)
+        return Apartness::MaybeApart;
+    else
+        return Apartness::Unifiable;
+}
+
+Apartness TypeChecker::apartness(const Type& t1, const Type& t2) const
+{
+    // This is intentionally conservative.  It is used to decide whether data
+    // family instance heads are disjoint, so MaybeApart is treated as an error
+    // by the caller.
+    if (maybe_unify(t1, t2))
+        return Apartness::Unifiable;
+
+    if (auto tt1 = filled_meta_type_var(t1))
+        return apartness(*tt1, t2);
+    else if (auto tt2 = filled_meta_type_var(t2))
+        return apartness(t1, *tt2);
+
+    if (auto s1 = expand_type_synonym(t1))
+        return apartness(*s1, t2);
+    else if (auto s2 = expand_type_synonym(t2))
+        return apartness(t1, *s2);
+
+    // A type family application may later reduce to the other type, so failure
+    // to unify now is not proof of apartness.
+    if (is_type_fam_app(t1) or is_type_fam_app(t2))
+        return Apartness::MaybeApart;
+
+    if (auto tv1 = t1.to<TypeVar>())
+        return occurs_check(*tv1, t2) ? Apartness::MaybeApart : Apartness::Unifiable;
+    else if (auto tv2 = t2.to<TypeVar>())
+        return occurs_check(*tv2, t1) ? Apartness::MaybeApart : Apartness::Unifiable;
+    else if (auto mtv1 = t1.to<MetaTypeVar>())
+        return occurs_check(*mtv1, t2) ? Apartness::MaybeApart : Apartness::Unifiable;
+    else if (auto mtv2 = t2.to<MetaTypeVar>())
+        return occurs_check(*mtv2, t1) ? Apartness::MaybeApart : Apartness::Unifiable;
+
+    if (auto tc1 = t1.to<TypeCon>(); tc1 and t2.is_a<TypeCon>())
+        return Apartness::SurelyApart;
+
+    if (auto app1 = t1.to<TypeApp>(); app1 and t2.is_a<TypeApp>())
+    {
+        auto& app2 = t2.as_<TypeApp>();
+        return combine_apartness(apartness(app1->head, app2.head),
+                                 apartness(app1->arg, app2.arg));
+    }
+
+    if (auto c1 = t1.to<ConstrainedType>(); c1 and t2.is_a<ConstrainedType>())
+    {
+        auto& c2 = t2.as_<ConstrainedType>();
+        if (c1->context.size() != c2.context.size())
+            return Apartness::SurelyApart;
+
+        auto result = Apartness::Unifiable;
+        for(int i=0;i<c1->context.size();i++)
+            result = combine_apartness(result, apartness(c1->context[i], c2.context[i]));
+        return combine_apartness(result, apartness(c1->type, c2.type));
+    }
+
+    if (t1.is_a<ForallType>() or t2.is_a<ForallType>())
+        return Apartness::MaybeApart;
+
+    return Apartness::SurelyApart;
+}
+
 bool TypeChecker::same_type_no_syns(const Type& t1, const Type& t2) const
 {
     return same_type(true, t1, t2);
