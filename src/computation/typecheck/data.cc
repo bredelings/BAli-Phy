@@ -256,6 +256,46 @@ DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType&
     return info;
 }
 
+DataConInfo TypeChecker::infer_type_for_gadt_data_family_constructor(const Type& instance_head, const TypeCon& data_family, const vector<Type>& top_constraints, const Hs::GADTConstructorDecl& constructor)
+{
+    DataConInfo info;
+
+    auto [hs_constructor_type, field_strictness] = pop_constructor_signature_strictness(constructor.type);
+    auto written_type = check_type(hs_constructor_type);
+
+    auto [written_tvs, written_constraints, rho_type] = peel_top_gen(written_type);
+    auto [field_types, result_type] = arg_result_types(rho_type);
+
+    auto [result_head, result_args] = decompose_type_apps(result_type);
+    auto result_con = result_head.to<TypeCon>();
+    if (not result_con or not type_con_is_data_fam(*result_con))
+        record_error(Note()<<"Data family constructor result type '"<<result_type<<"' is not a data family application");
+    else if (*result_con != data_family)
+        record_error(Note()<<"Data family constructor result type '"<<result_type<<"' does not match data family '"<<data_family<<"'");
+    else if (not maybe_unify(result_type, instance_head))
+        record_error(Note()<<"Data family constructor result type '"<<result_type<<"' does not match instance head '"<<instance_head<<"'");
+
+    auto result_tvs = free_type_variables(result_type);
+    for(auto& tv: written_tvs)
+    {
+        if (result_tvs.count(tv))
+            info.uni_tvs.push_back(tv);
+        else
+            info.exi_tvs.push_back(tv);
+    }
+
+    info.field_types = field_types;
+    info.field_strictness = field_strictness;
+    info.data_type = data_family;
+    info.written_constraints = written_constraints;
+    info.top_constraints = top_constraints;
+    info.constructor_result_type = result_type;
+
+    assert(info.field_strictness.size() == info.field_types.size());
+
+    return info;
+}
+
 pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst)
 {
     push_note( Note()<<"In data family instance '"<<data_inst.print()<<"':" );
@@ -304,7 +344,14 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
         }
     }
     else if (data_inst.rhs.is_gadt_decl())
-        record_error(Note()<<"GADT-style data family instances are not implemented yet");
+    {
+        for(auto& constructor: data_inst.rhs.get_gadt_constructors())
+        {
+            DataConInfo info = infer_type_for_gadt_data_family_constructor(data_type, data_family, data_context, constructor);
+            for(auto& con_name: constructor.con_names)
+                types = types.insert({unloc(con_name), info});
+        }
+    }
 
     if (data_inst.con.loc) pop_source_span();
     pop_note();
