@@ -75,65 +75,9 @@ Hs::VarPattern make_VarPattern(const Core::Var<>& v)
     return {{noloc,V}};
 }
 
-bool is_irrefutable_pat(const Module& m, const Hs::LPat& lpat)
+bool bind_pattern_can_fail(const Hs::PatQual& pq)
 {
-    auto& P = unloc(lpat);
-    assert(not P.head().is_a<Hs::Var>());
-
-    if (P.is_a<Hs::WildcardPattern>())
-	return true;
-    else if (P.is_a<Hs::VarPattern>())
-	return true;
-    else if (P.is_a<Hs::LazyPattern>())
-	return true;
-    else if (auto cp = P.to<Hs::ConPattern>())
-    {
-	auto& con_name = unloc(cp->head).name;
-	auto C = m.lookup_resolved_symbol(con_name);
-	string pattern_type = C->parent.value();
-	auto T = m.lookup_resolved_type(pattern_type);
-	auto D = T->is_data();
-	assert(D);
-	assert(not D->constructors.empty());
-	if (D->constructors.size() > 1) return false;
-
-	for(auto& arg: cp->args)
-	    if (not is_irrefutable_pat(m, arg))
-		return false;
-
-	return true;
-    }
-    else if (auto tp = P.to<Hs::TypedPattern>())
-    {
-	return is_irrefutable_pat(m, tp->pat);
-    }
-    else if (auto tp = P.to<Hs::TuplePattern>())
-    {
-	for(auto& arg: tp->elements)
-	    if (not is_irrefutable_pat(m, arg))
-		return false;
-
-	return true;
-    }
-    else if (P.is_a<Hs::ListPattern>())
-    {
-	return false;
-    }
-    else if (auto ap = P.to<Hs::AsPattern>())
-    {
-	return is_irrefutable_pat(m, ap->pattern);
-    }
-    else if (auto sp = P.to<Hs::StrictPattern>())
-    {
-	return is_irrefutable_pat(m, sp->pattern);
-    }
-    else if (P.is_a<Hs::LiteralPattern>())
-    {
-	return false;
-    }
-    else
-	std::abort();
-
+    return pq.bindpat_can_fail.value_or(true);
 }
 
 bool is_strict_desugared_binding_pattern(const Hs::LPat& lpat)
@@ -508,7 +452,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
             {
                 Hs::Var concatMap("Data.OldList.concatMap");
 		// [ e | p<-l, Q]  =  concatMap (\p -> [e | q ]) l
-                if (is_irrefutable_pat(m, PQ->bindpat))
+                if (not bind_pattern_can_fail(*PQ))
                 {
 		    // [ e | p<-l]  =  concatMap (\p -> [e]) l
 		    //              =  map (\p -> e) l
@@ -609,7 +553,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         {
             auto& PQ = first.as_<Hs::PatQual>();
 
-            if (is_irrefutable_pat(m, PQ.bindpat))
+            if (not bind_pattern_can_fail(PQ))
             {
                 expression_ref lambda = Hs::LambdaExp({PQ.bindpat}, {noloc,do_stmts});
                 result = noloc_apply({PQ.bindOp, unloc(PQ.exp), lambda});
@@ -617,17 +561,15 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
             else
             {
                 // let {ok bindpat = do_stmts; ok _ = fail} in e >>= ok
+                assert(PQ.failOp);
                 auto ok = get_fresh_Var("ok", false);
                 auto rule1 = Hs::MRule{ { PQ.bindpat }, Hs::SimpleRHS({noloc,do_stmts}) };
                 auto decl  = Hs::FunDecl({noloc,ok}, Hs::Matches{{rule1}});
-                if (PQ.failOp)
-                {
-                    Hs::Literal msg(Hs::String("Pattern match failed at '" +PQ.bindpat.print() + "'"));
-                    expression_ref fail = noloc_apply({*PQ.failOp, msg});
-                    auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
-                    auto rule2 = Hs::MRule{ { _ },          Hs::SimpleRHS({noloc, fail})};
-                    decl.matches.push_back(rule2);
-                }
+                Hs::Literal msg(Hs::String("Pattern match failed at '" +PQ.bindpat.print() + "'"));
+                expression_ref fail = noloc_apply({*PQ.failOp, msg});
+                auto _ = Hs::LPat{noloc, Hs::WildcardPattern()};
+                auto rule2 = Hs::MRule{ { _ },          Hs::SimpleRHS({noloc, fail})};
+                decl.matches.push_back(rule2);
 
                 expression_ref body = noloc_apply({PQ.bindOp, unloc(PQ.exp), ok});
                 result = Hs::LetExp({noloc,{{{{noloc,decl}}}}}, {noloc,body});

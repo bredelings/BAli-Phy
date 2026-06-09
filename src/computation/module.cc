@@ -1706,10 +1706,8 @@ bool Module::is_refutable_pattern(const Hs::LPat& lpat) const
         auto T = lookup_resolved_type(*C->parent);
         assert(T);
         const auto* data_info = T->is_data();
-        const auto* data_fam_info = T->is_data_fam();
-        assert(data_info or data_fam_info);
+        assert(data_info);
         if (data_info and data_info->constructors.size() >= 2) return true;
-        if (data_fam_info and data_fam_info->constructors.size() >= 2) return true;
 
         // If any of the argument patterns are refutable, then this is refutable.
         for(auto& arg: con_pat->args)
@@ -2298,25 +2296,36 @@ void Module::maybe_def_function(const string& var_name)
 
 void Module::add_local_symbols(const Hs::Decls& topdecls)
 {
+    int next_data_family_instance_id = 0;
+
     auto add_data_family_instance_symbols = [&](const Hs::DataFamilyInstanceDecl& data_inst)
     {
         auto family_name = unloc(data_inst.con).name;
         auto family_type = lookup_local_type(qualify_local_name(family_name));
         auto data_fam = family_type ? family_type->is_data_fam() : nullptr;
+        auto instance_type_name = "$data-family-instance$" + family_name + "$" + std::to_string(next_data_family_instance_id++);
+        type_info::data_info instance_info;
+
+        auto add_constructor = [&](const string& cname, int arity)
+        {
+            instance_info.constructors.insert(qualify_local_name(cname));
+            if (data_fam)
+                data_fam->constructors.insert(qualify_local_name(cname));
+            def_constructor(cname, arity, instance_type_name);
+        };
 
         if (data_inst.rhs.is_regular_decl())
         {
             for(const auto& constr: data_inst.rhs.get_constructors())
             {
                 auto cname = unloc(*constr.con).name;
-                def_constructor(cname, constr.arity(), family_name);
-                if (data_fam)
-                    data_fam->constructors.insert( qualify_local_name(cname) );
+                add_constructor(cname, constr.arity());
 
                 if (auto fields = to<Hs::FieldDecls>(constr.fields))
                     for(auto& field_decl: fields->field_decls)
                         for(auto& [loc,var]: field_decl.field_names)
                         {
+                            instance_info.fields.insert(qualify_local_name(var.name));
                             if (data_fam)
                                 data_fam->fields.insert( qualify_local_name(var.name) );
                         }
@@ -2329,11 +2338,11 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                 {
                     int arity = Hs::gen_type_arity( cons_decl.type );
                     auto cname = unloc(con_name);
-                    def_constructor(cname, arity, family_name);
-                    if (data_fam)
-                        data_fam->constructors.insert( qualify_local_name(cname) );
+                    add_constructor(cname, arity);
                 }
         }
+
+        add_type({qualify_local_name(instance_type_name), instance_info, {}, (int)instance_info.constructors.size(), /*kind*/ {}});
     };
 
     // 0. Get names that are being declared.

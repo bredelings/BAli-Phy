@@ -936,6 +936,7 @@ struct PatQual: public Object
 
     Hs::Var bindOp = {"Control.Monad.>>="};
     std::optional<Hs::Var> failOp = {{"Control.Monad.fail"}};
+    std::optional<bool> bindpat_can_fail;
 
     PatQual* clone() const { return new PatQual(*this);}
     std::string print() const;

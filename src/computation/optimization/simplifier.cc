@@ -751,7 +751,7 @@ SimplifierState::prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& ob
         //     FIXME: Can we just record the type in the Case object?
         if (pattern.is_con_pat())
         {
-	    // Get type and its constructors
+            // Get type and its constructors
             if (auto C = this_mod.lookup_resolved_symbol(*pattern.head))
             {
                 string pattern_type = *C->parent;
@@ -763,9 +763,8 @@ SimplifierState::prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& ob
                     auto T = this_mod.lookup_resolved_type(*object_type);
                     assert(T);
                     auto D = T->is_data();
-                    auto DF = T->is_data_fam();
-                    assert(D or DF);
-                    unseen_constructors = D ? D->constructors : DF->constructors;
+                    assert(D);
+                    unseen_constructors = D->constructors;
                     assert(not unseen_constructors.empty());
                 }
             }

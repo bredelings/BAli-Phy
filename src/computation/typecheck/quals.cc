@@ -48,6 +48,7 @@ TypeChecker::infer_qual_type(Located<Hs::Qual>& lqual)
         auto exp_type = inferRho(PQ.exp);
         local_value_env lve;
         auto pat_type= inferPat(lve, PQ.bindpat);
+        PQ.bindpat_can_fail = this_mod().is_refutable_pattern(PQ.bindpat);
 
         // type(pat) = type(exp)
         unify(list_type(pat_type), exp_type);
@@ -89,6 +90,7 @@ TypeChecker::infer_guard_type(Located<Hs::Qual>& lguard)
         auto body_type = inferRho(PQ.exp);
         local_value_env lve;
         checkPat(lve, PQ.bindpat, body_type);
+        PQ.bindpat_can_fail = this_mod().is_refutable_pattern(PQ.bindpat);
         guard = PQ;
 
         add_binders(lve);
@@ -150,9 +152,10 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
         // 3. Check pat
         local_value_env pat_binders;
         checkPat(pat_binders, PQ.bindpat, pat_type);
+        PQ.bindpat_can_fail = this_mod().is_refutable_pattern(PQ.bindpat);
 
         // 4. if pat is failable, also typecheck "fail".
-        if (this_mod().is_refutable_pattern(PQ.bindpat))
+        if (*PQ.bindpat_can_fail)
         {
             auto span = source_span_scope(pq->bindpat.loc);
             auto fail_op_type = inferRho(*PQ.failOp);
