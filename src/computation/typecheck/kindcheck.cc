@@ -135,9 +135,8 @@ Type kindchecker_state::kind_check_type_of_kind(const Hs::LType& t, const Kind& 
     t2 = zonk_kind_for_type(t2);
     if (not unify(kind, kind2))
     {
-        if (t.loc) type_checker.push_source_span(*t.loc);
+        auto span = type_checker.source_span_scope(t.loc);
         type_checker.record_error(Note()<<"Type "<<t2<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n");
-        if (t.loc) type_checker.pop_source_span();
     }
     return t2;
 }
@@ -210,20 +209,18 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
         }
         else if (auto a = is_function_type(kind1))
         {
-	    auto& [arg_kind, result_kind] = *a;
+            auto& [arg_kind, result_kind] = *a;
             if (not unify(arg_kind, kind2))
             {
-                if (ltype.loc) type_checker.push_source_span(*ltype.loc);
+                auto span = type_checker.source_span_scope(ltype.loc);
                 type_checker.record_error(Note()<<"In type '"<<t<<"', can't apply type ("<<tapp->head<<" :: "<<apply_substitution(kind1)<<") to type ("<<tapp->arg<<" :: "<<apply_substitution(kind2)<<")");
-                if (ltype.loc) type_checker.pop_source_span();
             }
             return {t2, result_kind};
         }
         else
         {
-            if (loc) type_checker.push_source_span(*loc);
+            auto span = type_checker.source_span_scope(loc);
             type_checker.record_error(Note()<<"Can't apply type "<<tapp->head<<" :: "<<kind1.print()<<" to type "<<tapp->arg<<".");
-            if (loc) type_checker.pop_source_span();
 
             return {t2, fresh_kind_var()};
         }
@@ -236,9 +233,8 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
             auto [c2,k2] = kind_check_type(hs_constraint);
             if (not unify(kind_constraint(), k2))
             {
-                if (ltype.loc) type_checker.push_source_span(*ltype.loc);
-		type_checker.record_error(Note()<<"Constraint '"<<hs_constraint.print()<<"' should be a Constraint, but has kind "<<k2.print());
-                if (ltype.loc) type_checker.pop_source_span();
+                auto span = type_checker.source_span_scope(ltype.loc);
+                type_checker.record_error(Note()<<"Constraint '"<<hs_constraint.print()<<"' should be a Constraint, but has kind "<<k2.print());
             }
             context.push_back(c2);
         }
@@ -287,16 +283,14 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
     }
     else if (auto st = t.to<Hs::StrictType>())
     {
-        if (ltype.loc) type_checker.push_source_span(*ltype.loc);
+        auto span = type_checker.source_span_scope(ltype.loc);
         type_checker.record_error(Note()<<"Internal strictness mark not allowed");
-        if (ltype.loc) type_checker.pop_source_span();
         return kind_check_type( st->type );
     }
     else if (auto lt = t.to<Hs::LazyType>())
     {
-        if (ltype.loc) type_checker.push_source_span(*ltype.loc);
+        auto span = type_checker.source_span_scope(ltype.loc);
         type_checker.record_error(Note()<<"Internal strictness mark not allowed");
-        if (ltype.loc) type_checker.pop_source_span();
         return kind_check_type( lt->type );
     }
 

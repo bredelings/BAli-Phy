@@ -41,9 +41,8 @@ void TypeChecker::record_error(cow_ptr<TypeCheckerContext> context, const Note& 
 
 void TypeChecker::record_error(const std::optional<yy::location>& loc, const Note& e)
 {
-    if (loc) push_source_span(*loc);
+    auto span = source_span_scope(loc);
     record_error(context(), e);
-    if (loc) pop_source_span();
 }
 
 void TypeChecker::record_error(const Note& e)
@@ -67,9 +66,8 @@ void TypeChecker::record_warning(cow_ptr<TypeCheckerContext> context, const Note
 
 void TypeChecker::record_warning(const std::optional<yy::location>& loc, const Note& e)
 {
-    if (loc) push_source_span(*loc);
+    auto span = source_span_scope(loc);
     record_warning(context(), e);
-    if (loc) pop_source_span();
 }
 
 void TypeChecker::record_warning(const Note& e)
@@ -394,4 +392,3 @@ void TypeChecker::check_wanteds(const WantedConstraints& wanteds)
 
     check_wanteds(tidy_state, implic_scopes, wanteds);
 }
-

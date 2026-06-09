@@ -401,20 +401,17 @@ void TypeChecker::get_tycon_info(const Hs::FamilyDecl& F)
         // Complain if the declaration has kind annotation
         if (F.has_kind_notes())
         {
-            push_note( Note() <<"In type family `"<<con.print()<<"`");
-            push_source_span(*F.con.loc);
+            auto note = note_scope( Note() <<"In type family `"<<con.print()<<"`");
+            auto span = source_span_scope(F.con.loc);
             record_error( Note() << "Kind annotations in declaration not allowed with a kind signature");
-            pop_source_span();
-            pop_note();
         }
 
         // Complain if kind signature allow to few arguments.
         if (num_args_for_kind(kind) < F.arity())
         {
-            push_source_span(*F.con.loc);
+            auto span = source_span_scope(F.con.loc);
             record_error( Note() << "Kind signature for type family `"<<con.print()<<"` only allows "<<num_args_for_kind(kind)<<", but declaration has "<<F.arity());
             kind = F.kind();
-            pop_source_span();
         }
     }
     auto T = this_mod().lookup_local_type(unloc(F.con).name);
@@ -434,14 +431,12 @@ void TypeChecker::get_kind_sigs(const Hs::Decls& type_decls)
             {
                 TypeCon tycon(unloc(hs_tycon).name);
 
-                push_source_span(*hs_tycon.loc);
+                auto span = source_span_scope(hs_tycon.loc);
 
                 if (kind_sigs().count(tycon))
                     record_error( Note()<<"Second kind signature for `"<<tycon.name<<"`" );
                 else
                     kind_sigs().insert({tycon,SK->kind});
-
-                pop_source_span();
             }
         }
     }
@@ -1038,7 +1033,7 @@ value_env add_constraints(const std::vector<Type>& preds, const value_env& env1)
 // OK, so this returns something of type exp_sigma
 Core::wrapper TypeChecker::checkSigma(Hs::LExp& E, const SigmaType& sigma_type)
 {
-    if (E.loc) push_source_span(*E.loc);
+    auto span = source_span_scope(E.loc);
 
     // 1. skolemize the type
     auto [wrap_gen, tvs, givens, rho_type] =
@@ -1047,8 +1042,6 @@ Core::wrapper TypeChecker::checkSigma(Hs::LExp& E, const SigmaType& sigma_type)
                           tcs2.tcRho(E, Check(rho_type));
                       }
             );
-
-    if (E.loc) pop_source_span();
 
     // 2. modify E, which is of type rho_type, to be of type sigma_type
     return wrap_gen;

@@ -26,7 +26,7 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
 
     for(auto& [loc,decl]: C.default_method_decls)
     {
-        if (loc) push_source_span( *loc );
+        auto span = source_span_scope(loc);
 
         auto FD = decl.as_<Hs::FunDecl>();
 	if (not class_info.default_methods.count(unloc(FD.v).name ))
@@ -40,8 +40,6 @@ Hs::Decls TypeChecker::infer_type_for_default_methods(const Hs::ClassDecl& C)
         auto sig_type = this_mod().lookup_resolved_symbol( unloc(FD.v).name )->type;
         auto decl2 = infer_type_for_single_fundecl_with_sig(FD, sig_type);
         decls_out.push_back({loc,decl2});
-
-        if (loc) pop_source_span();
     }
 
 //    std::cerr<<"Default method ops:\n";
@@ -297,8 +295,8 @@ std::optional<Core::Var<>>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     auto inst_loc = inst_decl.polytype.loc;
-    push_note( Note()<<"In instance '"<<unloc(inst_decl.polytype)<<"':" );
-    push_source_span( *inst_loc );
+    auto note = note_scope( Note()<<"In instance '"<<unloc(inst_decl.polytype)<<"':" );
+    auto span = source_span_scope( inst_loc );
 
     // 1. Kind-check the type and set the kinds for the type variables.
 
@@ -364,8 +362,6 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
-    pop_source_span();
-    pop_note();
     return dfun;
 }
 
@@ -435,24 +431,21 @@ map<Hs::Var, Hs::Matches> TypeChecker::get_instance_methods(const Hs::Decls& dec
         auto& fd = decl.as_<Hs::FunDecl>();
         auto& method = unloc(fd.v);
         string method_name = method.name;
+        auto span = source_span_scope(fd.v.loc);
 
-        if (fd.v.loc) push_source_span(*fd.v.loc);
         if (not members.count(method))
         {
             record_error( Note()<<"'"<<method_name<<"' is not a member of class '"<<class_name<<"'" );
-            if (fd.v.loc) pop_source_span();
             continue;
         }
 
         if (method_matches.count(method))
         {
             record_error( Note() <<"method '"<<method_name<<"' defined twice!" );
-            if (fd.v.loc) pop_source_span();
             continue;
         }
 
         method_matches.insert({method, fd.matches});
-        if (fd.v.loc) pop_source_span();
     }
 
     return method_matches;
@@ -494,8 +487,6 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_instance_method(
     const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst,
     const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info)
 {
-    // push_note( Note()<<"In method `"<<method_name<<"`:" );
-
     auto op = get_fresh_Var("i$"+method.name, true);
 
     // forall b. Ix b => a -> b -> b
@@ -542,7 +533,7 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_instance_method(
 pair<Hs::Decls, Core::Decl<>>
 TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::InstanceDecl& inst_decl)
 {
-    push_note( Note()<<"In instance `"<<inst_decl.polytype<<"`:" );
+    auto note = note_scope( Note()<<"In instance `"<<inst_decl.polytype<<"`:" );
 
     // 1. Get instance head and constraints (givens)
 
@@ -551,7 +542,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::Instanc
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
     auto inst_type = S->instance_info->type();
 
-    push_source_span(*inst_decl.polytype.loc);
+    auto span = source_span_scope(inst_decl.polytype.loc);
     // Instantiate it with rigid type variables.
     auto tc2 = copy_clear_wanteds(true);
     auto [wrap_gen, instance_tvs, givens, instance_head] = tc2.skolemize(inst_type, true);
@@ -571,15 +562,16 @@ TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::Instanc
     // 4. Construct superclasses (wanteds) from instance dictionaries (givens)
     //    For example in the instance Ord a => Ord [a] we need to construct Eq [a] as part of the dictionary.
     //    So we need to do Ord a => Eq [a]
-    push_note(Note()<<"Deriving superclass constraints for "<<instance_head.print());
     vector<Type> superclass_constraints = class_info.context;
     for(auto& superclass_constraint: superclass_constraints)
         superclass_constraint = apply_subst(subst, superclass_constraint);
 
     auto wanteds = preds_to_constraints(GivenOrigin(), Wanted, superclass_constraints);
-    auto decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
-
-    pop_note();
+    std::shared_ptr<const Core::Decls<>> decls_super;
+    {
+        auto superclass_note = note_scope(Note()<<"Deriving superclass constraints for "<<instance_head.print());
+        decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
+    }
 
     // 5. Superclass fields in the instance dictionary.
     Hs::Decls decls;
@@ -657,10 +649,6 @@ TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::Instanc
     //  so mark_exported_decls doesn't have it.
     // We could ask the module to give us a list of the symbols with type symbol_type_t::instance_superclass_selector and
     //  symbol_type_t::instance_superclass_selector.
-
-    pop_source_span();
-
-    pop_note();
 
     return {decls, {dfun, wrap_gen(dict)}};
 }

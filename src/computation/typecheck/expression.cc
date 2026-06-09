@@ -48,27 +48,21 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
     tcRho(App.head, fun_type);
 
     // 2. Check the argument type
-    if (App.arg.loc) push_source_span(*App.arg.loc);
-    auto [arg_type, result_type] = unify_function(fun_type.read_type(), AppOrigin{App});
-
-    // Check the argument according to its required type
-    App.arg_wrapper = checkSigma(App.arg, arg_type);
-
-    if (App.arg.loc) pop_source_span();
+    auto result_type = [&]() {
+        auto span = source_span_scope(App.arg.loc);
+        auto [arg_type, result_type] = unify_function(fun_type.read_type(), AppOrigin{App});
+        App.arg_wrapper = checkSigma(App.arg, arg_type);
+        return result_type;
+    }();
 
     // 3. Check the return type
     auto exp_loc = App.head.loc * App.arg.loc;
 
-    if (exp_loc) push_source_span(*exp_loc);
-
-    push_note( Note() << "In expression '"<< App.print()<<"':" );
-
-    // Convert the result to the expected time for the term
-    App.res_wrapper = instantiateSigma(AppOrigin(), result_type, exp_type);
-
-    if (exp_loc) pop_source_span();
-
-    pop_note();
+    {
+        auto span = source_span_scope(exp_loc);
+        auto note = note_scope( Note() << "In expression '"<< App.print()<<"':" );
+        App.res_wrapper = instantiateSigma(AppOrigin(), result_type, exp_type);
+    }
 }
 
 void TypeChecker::tcRho(Hs::LetExp& Let, const Expected& exp_type)
@@ -321,9 +315,8 @@ void TypeChecker::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
 
 void TypeChecker::tcRho(Located<Hs::Expression>& E, const Expected& exp_type)
 {
-    if (E.loc) push_source_span(*E.loc);
+    auto span = source_span_scope(E.loc);
     tcRho_(unloc(E), exp_type);
-    if (E.loc) pop_source_span();
 }
 
 void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
@@ -464,4 +457,3 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
     else
         throw note_exception()<<"type check expression: I don't recognize expression '"<<E<<"'";
 }
-

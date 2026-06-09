@@ -16,10 +16,11 @@ void TypeChecker::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int i)
     if (i < rhs.guards.size())
     {
         // Fig 25. GUARD
-        push_source_span(*rhs.guards[i].loc);
         auto state2 = copy_clear_wanteds();
-        state2.infer_guard_type(rhs.guards[i]);
-        pop_source_span();
+        {
+            auto span = state2.source_span_scope(rhs.guards[i].loc);
+            state2.infer_guard_type(rhs.guards[i]);
+        }
 
         state2.tcRho(rhs, exp_type, i+1);
 
@@ -27,9 +28,8 @@ void TypeChecker::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int i)
     }
     else
     {
-        if (rhs.body.loc) push_source_span(*rhs.body.loc);
+        auto span = source_span_scope(rhs.body.loc);
         tcRho(rhs.body, exp_type);
-        if (rhs.body.loc) pop_source_span();
     }
 }
 
@@ -49,7 +49,7 @@ void TypeChecker::tcRho(Hs::MultiGuardedRHS& rhs, const Expected& exp_type)
 
 void TypeChecker::tcMatch(const Hs::MatchContext& ctx, Hs::MRule& m, const vector<Expected>& pat_types, const Expected& result_type)
 {
-    push_note(Note()<<"In equation `"<<ctx.print()<<get_lines(m.print())[0]<<"`");
+    auto note = note_scope(Note()<<"In equation `"<<ctx.print()<<get_lines(m.print())[0]<<"`");
     assert(m.patterns.size() == pat_types.size());
 
     auto state2 = copy_clear_wanteds();
@@ -58,7 +58,6 @@ void TypeChecker::tcMatch(const Hs::MatchContext& ctx, Hs::MRule& m, const vecto
     state2.tcPats(penv, m.patterns, pat_types, {}, [&](auto& /*penv2*/, auto& tc) {tc.tcRho(m.rhs,result_type);});
 
     current_wanteds() += state2.current_wanteds();
-    pop_note();
 }
 
 void TypeChecker::tcMatches(const Hs::MatchContext& ctx, Hs::Matches& ms, const vector<Expected>& pat_types, const Expected& result_type)

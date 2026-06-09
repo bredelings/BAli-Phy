@@ -48,7 +48,7 @@ Hs::Binds TypeChecker::infer_type_for_binds_top(Hs::Binds binds)
 void TypeChecker::infer_type_for_binds(Hs::LBinds& lbinds, bool is_top_level)
 {
     auto& [loc, binds] = lbinds;
-    if (loc) push_source_span(*loc);
+    auto span = source_span_scope(loc);
 
     // FIXME - we're stripping locations off of the signatures here!
     // But when we create given constraints in infer_type_for_single_fundecl_with_sig => skolemize
@@ -70,7 +70,6 @@ void TypeChecker::infer_type_for_binds(Hs::LBinds& lbinds, bool is_top_level)
         decls = infer_type_for_decls(sigs2, decls, is_top_level);
 
     // FIXME: replace signature location with definition location
-    if (loc) pop_source_span();
 }
 
 value_env remove_sig_binders(value_env binder_env, const signature_env& signatures)
@@ -135,14 +134,12 @@ TypeChecker::infer_type_for_decls(const signature_env& signatures, const Hs::Dec
             else
                 std::abort();
         }
-        if (group.size() > 1) push_note(ec);
-        if (decls_loc) push_source_span(*decls_loc);
+        std::optional<NoteScope> note;
+        if (group.size() > 1) note.emplace(*this, ec);
+        auto span = source_span_scope(decls_loc);
 
         auto group_decls = infer_type_for_decls_group(signatures, group, is_top_level);
 
-        if (decls_loc) pop_source_span();
-        if (group.size() > 1) pop_note();
-        
         for(auto& decl: group_decls)
             decls2.push_back(decl);
     }
@@ -246,8 +243,6 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
 {
     // Q: Are we getting the monotype correct?
 
-    // push_note( Note()<<"In function `"<<FD.v.print()<<"`" );
-
     // 1. Make up a inner id.
     Hs::Var inner_id = get_fresh_Var(unloc(FD.v).name, false);
 
@@ -276,8 +271,6 @@ TypeChecker::infer_type_for_single_fundecl_with_sig(Hs::FunDecl FD, const Type& 
     Hs::BindInfo bind_info(unloc(FD.v), inner_id, monotype, polytype, wrap_gen * wrap_match);
 
     auto decl = mkGenBind( {}, {}, std::make_shared<Core::Decls<>>(), Hs::Decls({{noloc,FD}}), {{unloc(FD.v), bind_info}} );
-
-    // pop_note();
 
     return decl;
 }
@@ -335,13 +328,11 @@ void TypeChecker::infer_rhs_type(Hs::LDecl& ldecl, const Expected& rhs_type)
         auto FD = *fd;
 
         push_binder( IDType{ unloc(FD.v), mono_local_env().at(unloc(FD.v)).second } );
-        // push_note( Note()<<"In function `"<<unloc(FD.v).print()<<"`" );
         auto ctx = Hs::FunctionContext{unloc(FD.v).name};
 	//  FIXME: do something with wrap_match!
         auto wrap_match = tcMatchesFun( getArity(FD.matches), rhs_type, [&](const auto& arg_types, const auto& result_type) {return [&](auto& tc) {
             tc.tcMatches(ctx, FD.matches, arg_types, result_type);};}
                         );
-        // pop_note();
         pop_binder();
 
         decl = FD;
@@ -350,9 +341,8 @@ void TypeChecker::infer_rhs_type(Hs::LDecl& ldecl, const Expected& rhs_type)
     {
         auto PD = *pd;
 
-        push_note( Note()<<"In definition of `"<<unloc(PD.lhs).print()<<"`");
+        auto note = note_scope( Note()<<"In definition of `"<<unloc(PD.lhs).print()<<"`");
         tcRho(PD.rhs, rhs_type);
-        pop_note();
 
         decl = PD;
     }
@@ -363,7 +353,6 @@ void TypeChecker::infer_rhs_type(Hs::LDecl& ldecl, const Expected& rhs_type)
 tuple< map<Hs::Var, Hs::Var>, local_value_env >
 TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
 {
-    // push_note( Note()<<"In function `"<<unloc(FD.v).print()<<"`" );
     // Note: No signature for function, or we'd be in infer_type_for_single_fundecl_with_sig( )
 
     // Note: Since the LHS variables don't appear on the RHS, we don't need to create
@@ -397,14 +386,12 @@ TypeChecker::fd_mono_nonrec(Hs::FunDecl& FD)
     local_value_env mono_binder_env;
     mono_binder_env = mono_binder_env.insert({poly_id, fun_type.read_type()});
 
-    // pop_note();
-
     return tuple<map<Hs::Var,Hs::Var>,local_value_env>(mono_ids, mono_binder_env);
 }
 
 tuple< map<Hs::Var, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::PatDecl& PD)
 {
-    push_note( Note()<<"In definition of `"<<unloc(PD.lhs).print()<<"`");
+    auto note = note_scope( Note()<<"In definition of `"<<unloc(PD.lhs).print()<<"`");
     // Note: No signatures for lhs variables.
 
     // Note: Since the LHS variables don't appear on the RHS, we don't need to create
@@ -430,7 +417,6 @@ tuple< map<Hs::Var, Hs::Var>, local_value_env > TypeChecker::pd_mono_nonrec(Hs::
         mono_ids.insert({poly_id, mono_id});
     }
 
-    pop_note();
     return {mono_ids, mono_binder_env};
 }
 
@@ -891,4 +877,3 @@ TypeChecker::infer_type_for_decls_group(const signature_env& signatures, Hs::Dec
 
     return decls2;
 }
-

@@ -111,7 +111,7 @@ void TypeChecker::tcPats(local_value_env& penv,
 // Figure 24. Rules for patterns
 void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& exp_type, const signature_env& sigs, const tc_action<local_value_env&>& a)
 {
-    if (lpat.loc) push_source_span(*lpat.loc);
+    auto span = source_span_scope(lpat.loc);
 
     // TAUT-PAT
     auto& pat = unloc(lpat);
@@ -276,7 +276,6 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
     else
         throw note_exception()<<"Unrecognized pattern '"<<pat<<"'!";
 
-    if (lpat.loc) pop_source_span();
 }
 
 Type TypeChecker::inferPat(local_value_env& penv, Hs::LPat& pat, const signature_env& sigs)
@@ -385,4 +384,3 @@ rename_pattern_from_bindinfo(Hs::LPat lpat, const map<Hs::Var, Hs::BindInfo>& bi
 
     return lpat;
 }
-

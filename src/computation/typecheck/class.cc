@@ -56,7 +56,7 @@ Hs::Var unqualified(Hs::Var v)
 tuple<ClassInfo, Core::Decls<>>
 TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 {
-    push_note( Note()<<"In class '"<<TidyState().print(TypeCon(unloc(class_decl.con).name))<<"':" );
+    auto note = note_scope( Note()<<"In class '"<<TidyState().print(TypeCon(unloc(class_decl.con).name))<<"':" );
 
     // 1. construct the constraint that represent the class
     auto hs_class_constraint = Hs::type_apply(class_decl.con, class_decl.type_vars);
@@ -201,8 +201,6 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     {
         int nerrors = num_errors();
 
-        //push_note( Note()<<"In default instance '"<<def_inst.print()<<"':");
-
         TypeCon tf_con(unloc(def_inst.con).name);
         std::optional<TypeFamilyInstanceDecl>* default_instance = nullptr;
         auto default_iter = class_info.associated_type_families.find(tf_con);
@@ -241,10 +239,7 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         // Add the default type instance -- no need for variables to match the class.
         // check_add_type_instance(def_inst, unloc(class_decl.name), {});
 
-        // pop_note();
     }
-
-    pop_note();
     return {class_info, decls};
 }
 

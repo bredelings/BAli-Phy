@@ -297,8 +297,8 @@ DataConInfo TypeChecker::infer_type_for_gadt_data_family_constructor(const Type&
 
 pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst, const std::optional<std::string>& associated_class)
 {
-    push_note( Note()<<"In data family instance '"<<data_inst.print()<<"':" );
-    if (data_inst.con.loc) push_source_span(*data_inst.con.loc);
+    auto note = note_scope( Note()<<"In data family instance '"<<data_inst.print()<<"':" );
+    auto span = source_span_scope(data_inst.con.loc);
 
     DataConEnv types;
     TypeCon data_family(unloc(data_inst.con).name);
@@ -306,17 +306,11 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
     if (not data_fam_info)
     {
         record_error(Note()<<"No data family '"<<data_inst.con.print()<<"'");
-        if (data_inst.con.loc) pop_source_span();
-        pop_note();
         return {types, {}};
     }
 
     if (not check_family_instance_association(data_inst.con, data_fam_info->associated_class, associated_class, "data instance", "data family", false, false))
-    {
-        if (data_inst.con.loc) pop_source_span();
-        pop_note();
         return {types, {}};
-    }
 
     auto hs_result_type = Hs::type_apply(data_inst.con, data_inst.args);
     auto outer_tvs = data_inst.forall ? *data_inst.forall : free_type_variables(data_inst.args);
@@ -336,11 +330,7 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
         record_error(Note()<<"Data family takes "<<data_fam_info->arity()<<" arguments, but instance has "<<result_args.size());
 
     if (num_errors() > head_errors)
-    {
-        if (data_inst.con.loc) pop_source_span();
-        pop_note();
         return {types, {}};
-    }
 
     if (data_inst.rhs.is_regular_decl())
     {
@@ -360,9 +350,6 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
                 types = types.insert({unloc(con_name), info});
         }
     }
-
-    if (data_inst.con.loc) pop_source_span();
-    pop_note();
 
     return {types, instance_head.type};
 }
