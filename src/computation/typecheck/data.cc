@@ -256,11 +256,12 @@ DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType&
     return info;
 }
 
-DataConEnv TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst)
+pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst)
 {
     push_note( Note()<<"In data family instance '"<<data_inst.print()<<"':" );
     if (data_inst.con.loc) push_source_span(*data_inst.con.loc);
 
+    DataConEnv types;
     TypeCon data_family(unloc(data_inst.con).name);
     auto data_fam_info = info_for_data_fam(data_family.name);
     if (not data_fam_info)
@@ -268,7 +269,7 @@ DataConEnv TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamily
         record_error(Note()<<"No data family '"<<data_inst.con.print()<<"'");
         if (data_inst.con.loc) pop_source_span();
         pop_note();
-        return {};
+        return {types, {}};
     }
 
     auto hs_result_type = Hs::type_apply(data_inst.con, data_inst.args);
@@ -286,12 +287,11 @@ DataConEnv TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamily
     else if (result_args.size() != data_fam_info->arity())
         record_error(Note()<<"Data family takes "<<data_fam_info->arity()<<" arguments, but instance has "<<result_args.size());
 
-    DataConEnv types;
     if (num_errors() > head_errors)
     {
         if (data_inst.con.loc) pop_source_span();
         pop_note();
-        return types;
+        return {types, {}};
     }
 
     if (data_inst.rhs.is_regular_decl())
@@ -309,18 +309,32 @@ DataConEnv TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamily
     if (data_inst.con.loc) pop_source_span();
     pop_note();
 
-    return types;
+    return {types, data_type};
 }
 
 void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
+    vector<pair<Type,std::string>> data_family_instance_heads;
+
     for(auto& [_,decl]: decls)
     {
         DataConEnv con_infos;
         if (auto d = decl.to<Hs::DataOrNewtypeDecl>())
             con_infos = infer_type_for_data_type(*d);
         else if (auto d = decl.to<Hs::DataFamilyInstanceDecl>())
-            con_infos = infer_type_for_data_family_instance(*d);
+        {
+            auto [new_con_infos, head] = infer_type_for_data_family_instance(*d);
+            con_infos = new_con_infos;
+
+            if (head)
+            {
+                for(auto& [previous_head, previous_instance]: data_family_instance_heads)
+                    if (maybe_unify(*head, previous_head))
+                        record_error(d->con.loc, Note()<<"Data family instance '"<<d->print()<<"' overlaps previous instance '"<<previous_instance<<"'");
+
+                data_family_instance_heads.push_back({*head, d->print()});
+            }
+        }
         else
             continue;
 
