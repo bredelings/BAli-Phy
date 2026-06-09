@@ -1,0 +1,9 @@
+[1mMain.hs:5.15:[1;31m error:[0m[1m
+   • Data family constructor result type 'Main.F Int' does not match instance
+     head 'Main.F [a]'
+   • In data family instance 'data instance Main.F [a]
+     Main.MkBad :: Main.F Int':
+  [1;34m|[0m
+[1;34m5[0m [1;34m| [0mdata instance [1;31mF[0m [a] where
+  [1;34m|[0m               [1;31m^[0m
+
