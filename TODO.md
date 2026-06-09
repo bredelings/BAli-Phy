@@ -29,7 +29,14 @@
    - also EIntMap Int -- could implement a strict IntMap
 
 
-## Ease-of-use
+## Correctness/Completeness
 
+ * property newtype support
+ 
+ * record syntax
+ 
  * deriving Eq, Ord, ... ?
 
+ * data families
+ 
+ * downloading packages from hackage?
