@@ -115,6 +115,8 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
     // c. handle the context
     // The context should already be type-checked.
     // We should already have checked that it doesn't contain any unbound variables.
+    if (not data_decl.context.empty())
+        record_error(data_decl.con.loc, Note()<<"Data type contexts are not supported; put constraints on individual constructors instead");
 
     // d. construct the data type
 
@@ -125,9 +127,6 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
     auto [data_tvs, data_context, data_type] = peel_top_gen(check_type(hs_data_type));
 
     auto data_type_con = TypeCon(unloc(data_decl.con).name);
-
-    // Assume no "stupid theta".
-    assert(data_decl.context.empty());
 
     // e. Handle regular constructor terms (class variables ARE in scope)
     DataConEnv types;
@@ -314,6 +313,9 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
 
     auto hs_result_type = Hs::type_apply(data_inst.con, data_inst.args);
     auto outer_tvs = data_inst.forall ? *data_inst.forall : free_type_variables(data_inst.args);
+    if (not data_inst.rhs.context.empty())
+        record_error(Note()<<"Data family instance contexts are not supported; put constraints on individual constructors instead");
+
     auto hs_instance_type = Hs::quantify(outer_tvs, data_inst.rhs.context, hs_result_type);
     int head_errors = num_errors();
     auto [data_tvs, data_context, data_type] = peel_top_gen(check_type(hs_instance_type));
