@@ -1,0 +1,7 @@
+[1mMain.hs:6.7-14:[1;31m error:[0m[1m
+   • Data type contexts are not supported; put constraints on individual
+     constructors instead
+  [1;34m|[0m
+[1;34m6[0m [1;34m| [0mdata ([1;31mC a, D a[0m) => T a = MkT a
+  [1;34m|[0m       [1;31m^^^^^^^^[0m
+
