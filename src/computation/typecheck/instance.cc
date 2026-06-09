@@ -154,36 +154,32 @@ void TypeChecker::check_associated_family_instance_args(const vector<Hs::LType>&
     for(int i=0; i<family_args.size(); i++)
     {
         auto fam_tv = family_args[i];
-        if (hs_args[i].loc) push_source_span(*hs_args[i].loc);
+        auto span = source_span_scope(hs_args[i].loc);
         if (instance_subst.count(fam_tv))
         {
             auto expected = instance_subst.at(fam_tv);
             if (not same_type(args[i], expected))
                 record_error(Note()<<"    argument '"<<hs_args[i]<<"' should match instance parameter '"<<expected<<"'");
         }
-        if (hs_args[i].loc) pop_source_span();
     }
 }
 
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
-    push_note( Note()<<"In instance '"<<inst.print()<<"':" );
-    TypeCon tf_con(unloc(inst.con).name);
+    auto note = note_scope( Note()<<"In instance '"<<inst.print()<<"':" );
     auto inst_loc = *(inst.con.loc * range(inst.args) * inst.rhs.loc);
-    push_source_span( inst_loc );
+    auto span = source_span_scope( inst_loc );
 
     // 1. Check that the type family exists.
+    TypeCon tf_con(unloc(inst.con).name);
     if (not type_con_is_type_fam( tf_con ) )
     {
-        push_source_span( *inst.con.loc );
+        auto con_span = source_span_scope(inst.con.loc);
         record_error( Note()<<"  No type family '"<<inst.con.print()<<"'");
-        pop_source_span();
-
-        pop_source_span();
-        pop_note();
         return;
     }
 
+    // Check RHS -- move down next to add_type_instance??
     auto hs_lhs = Hs::type_apply(inst.con, inst.args);
     auto type_inst = check_type_instance(hs_lhs, inst.rhs);
 
@@ -194,99 +190,64 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     // 2. Get the type family info
     auto tf_info = info_for_type_fam( tf_con.name );
 
+    // 3. Check family association
     if (not check_family_instance_association(inst.con, tf_info->associated_class, associated_class, "type instance", "type family", false, true))
+        return;
+
+    // 4. Check the arity before comparing associated family arguments below.
+    if (inst.args.size() != tf_info->args.size())
     {
-        pop_source_span();
-        pop_note();
+        auto args_span = source_span_scope( *(inst.con.loc * range(inst.args)) );
+        record_error(Note() << "  Type family takes "<<tf_info->args.size()<<" arguments, but was given "<<inst.args.size()<<".");
         return;
     }
 
-    if (tf_info->associated_class)
-    {
-        // 4.5. Check that the type family was given the right number of arguments.
-        if (inst.args.size() != tf_info->args.size())
-        {
-            push_source_span( *(inst.con.loc * range(inst.args)) );
-            record_error(Note() << "  Type family takes "<<tf_info->args.size()<<" arguments, but was given "<<inst.args.size()<<".");
-            pop_source_span();
-            pop_source_span();
-            pop_note();
-            return;
-        }
-
-        // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
-        check_associated_family_instance_args(inst.args, type_inst.head.args, tf_info->args, instance_subst);
-    }
+    // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
+    check_associated_family_instance_args(inst.args, type_inst.head.args, tf_info->args, instance_subst);
 
     // 6. Check that the type family is not closed
     if (tf_info->closed)
     {
         record_error( Note() << "  Can't declare additional type instance for closed type family '"<<inst.con.print()<<"'");
-
-        pop_source_span();
-        pop_note();
-        return;
-    }
-
-
-    // 7. Check that the type instance has the right number of arguments
-    if (inst.args.size() != tf_info->args.size())
-    {
-        push_source_span( *range(inst.args) );
-        record_error( Note() << "    Expected "<<tf_info->args.size()<<" parameters, but got "<<inst.args.size());
-        pop_source_span();
-
-        pop_source_span();
-        pop_note();
         return;
     }
 
     add_type_instance(type_inst.head.type_vars, type_inst.head.type, type_inst.rhs);
-
-    pop_source_span();
-    pop_note();
 }
 
 void TypeChecker::check_data_instance(const Hs::DataFamilyInstanceDecl& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
-    push_note( Note()<<"In data instance '"<<inst.print()<<"':" );
-    if (inst.con.loc) push_source_span(*inst.con.loc);
+    auto note = note_scope( Note()<<"In data instance '"<<inst.print()<<"':" );
+    auto span = source_span_scope(inst.con.loc);
 
+    // 1. Check that the type family exists.
     TypeCon df_con(unloc(inst.con).name);
     if (not type_con_is_data_fam(df_con))
     {
         record_error(inst.con.loc, Note()<<"  No data family '"<<inst.con.print()<<"'");
-        if (inst.con.loc) pop_source_span();
-        pop_note();
         return;
     }
 
+    // 2. Get the data family info
     auto df_info = info_for_data_fam(df_con.name);
     assert(df_info);
 
+    // 3. Check family association
     if (not check_family_instance_association(inst.con, df_info->associated_class, associated_class, "data instance", "data family", true, true))
-    {
-        if (inst.con.loc) pop_source_span();
-        pop_note();
         return;
-    }
 
+    // 4. Check the arity before comparing associated family arguments below.
     if (inst.args.size() != df_info->args.size())
     {
-        push_source_span(*(inst.con.loc * range(inst.args)));
+        auto args_span = source_span_scope(*(inst.con.loc * range(inst.args)));
         record_error(Note()<<"  Data family takes "<<df_info->args.size()<<" arguments, but was given "<<inst.args.size()<<".");
-        pop_source_span();
-        if (inst.con.loc) pop_source_span();
-        pop_note();
         return;
     }
 
     auto head = check_family_instance_head(inst.con, inst.args, inst.forall, {});
 
+    // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
     check_associated_family_instance_args(inst.args, head.args, df_info->args, instance_subst);
-
-    if (inst.con.loc) pop_source_span();
-    pop_note();
 }
 
 void TypeChecker::default_type_instance(const TypeCon& tf_con,

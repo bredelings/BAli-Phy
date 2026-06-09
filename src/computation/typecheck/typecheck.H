@@ -161,9 +161,71 @@ public:
     void push_note(const Note& n) {local_state.modify()->push_note(n);}
     std::string print_note() const {return local_state->print_note();}
 
+    class NoteScope
+    {
+        TypeChecker& type_checker;
+        bool active = true;
+
+    public:
+        NoteScope(TypeChecker& tc, const Note& n):type_checker(tc) {type_checker.push_note(n);}
+        ~NoteScope() noexcept { if (active) type_checker.pop_note(); }
+
+        NoteScope(const NoteScope&) = delete;
+        NoteScope& operator=(const NoteScope&) = delete;
+
+        NoteScope(NoteScope&& other) noexcept
+            :type_checker(other.type_checker),
+             active(other.active)
+        {
+            other.active = false;
+        }
+
+        NoteScope& operator=(NoteScope&&) = delete;
+    };
+
+    [[nodiscard]] NoteScope note_scope(const Note& n) {return NoteScope(*this, n);}
+
     std::optional<yy::location> source_span() const {return local_state->source_span();}
     void push_source_span(const yy::location& loc) {local_state.modify()->push_source_span(loc);}
     void pop_source_span() {local_state.modify()->pop_source_span();}
+
+    class SourceSpanScope
+    {
+        TypeChecker& type_checker;
+        bool active = false;
+
+    public:
+        SourceSpanScope(TypeChecker& tc, const yy::location& loc)
+            :type_checker(tc),
+             active(true)
+        {
+            type_checker.push_source_span(loc);
+        }
+
+        SourceSpanScope(TypeChecker& tc, const std::optional<yy::location>& loc)
+            :type_checker(tc),
+             active(loc.has_value())
+        {
+            if (active) type_checker.push_source_span(*loc);
+        }
+
+        ~SourceSpanScope() noexcept { if (active) type_checker.pop_source_span(); }
+
+        SourceSpanScope(const SourceSpanScope&) = delete;
+        SourceSpanScope& operator=(const SourceSpanScope&) = delete;
+
+        SourceSpanScope(SourceSpanScope&& other) noexcept
+            :type_checker(other.type_checker),
+             active(other.active)
+        {
+            other.active = false;
+        }
+
+        SourceSpanScope& operator=(SourceSpanScope&&) = delete;
+    };
+
+    [[nodiscard]] SourceSpanScope source_span_scope(const yy::location& loc) {return SourceSpanScope(*this, loc);}
+    [[nodiscard]] SourceSpanScope source_span_scope(const std::optional<yy::location>& loc) {return SourceSpanScope(*this, loc);}
 
     void push_binder(const binder_info& binder) { local_state.modify()->push_binder(binder);}
     void pop_binder() {local_state.modify()->pop_binder();}
