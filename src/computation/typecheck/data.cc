@@ -116,7 +116,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
     // The context should already be type-checked.
     // We should already have checked that it doesn't contain any unbound variables.
     if (not data_decl.context.empty())
-        record_error(data_decl.con.loc, Note()<<"Data type contexts are not supported; put constraints on individual constructors instead");
+        record_error(range(data_decl.context), Note()<<"Data type contexts are not supported; put constraints on individual constructors instead");
 
     // d. construct the data type
 
@@ -314,7 +314,7 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
     auto hs_result_type = Hs::type_apply(data_inst.con, data_inst.args);
     auto outer_tvs = data_inst.forall ? *data_inst.forall : free_type_variables(data_inst.args);
     if (not data_inst.rhs.context.empty())
-        record_error(Note()<<"Data family instance contexts are not supported; put constraints on individual constructors instead");
+        record_error(range(data_inst.rhs.context), Note()<<"Data family instance contexts are not supported; put constraints on individual constructors instead");
 
     auto hs_instance_type = Hs::quantify(outer_tvs, data_inst.rhs.context, hs_result_type);
     int head_errors = num_errors();
