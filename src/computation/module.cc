@@ -2345,7 +2345,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 		if (fam_decl.is_type_family())
 		    def_type_family( unloc(fam_decl.con).name, fam_decl.arity() );
 		else
-		    throw myexception()<<"data families not handled";
+		    def_data_family( unloc(fam_decl.con).name, fam_decl.arity() );
 
             for(auto& sig_decl: Class->sig_decls)
                 for(auto& v: sig_decl.vars)

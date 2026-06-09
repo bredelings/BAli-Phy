@@ -164,24 +164,40 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         i++;
     }
 
-    // 6. Load associated type families
-    for(auto& type_fam_decl: class_decl.fam_decls)
+    // 6. Load associated type and data families
+    for(auto& fam_decl: class_decl.fam_decls)
     {
-        auto hs_type_fam_type = Hs::quantify(type_fam_decl.args, {}, Hs::type_apply(type_fam_decl.con, type_fam_decl.args));
-        auto type_fam_type = check_type(hs_type_fam_type);
-        auto [args, _, head] = peel_top_gen(type_fam_type);
+        auto hs_fam_type = Hs::quantify(fam_decl.args, {}, Hs::type_apply(fam_decl.con, fam_decl.args));
+        auto fam_type = check_type(hs_fam_type);
+        auto [args, _, head] = peel_top_gen(fam_type);
         
-        auto fname = unloc(type_fam_decl.con).name;
+        auto fname = unloc(fam_decl.con).name;
         auto kind = this_mod().lookup_local_type(fname)->kind;
 
-        TypeCon con(unloc(type_fam_decl.con).name);
-        this_mod().lookup_local_type(con.name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, kind, class_name);
-        if (class_info.associated_type_families.count(con))
+        TypeCon con(unloc(fam_decl.con).name);
+        if (fam_decl.is_type_family())
         {
-            record_error(hs_type_fam_type.loc, Note()<<"Trying to define type family '"<<con.print()<<"' twice");
-            continue;
+            this_mod().lookup_local_type(con.name)->is_type_fam()->info = std::make_shared<TypeFamInfo>(args, kind, class_name);
+            if (class_info.associated_type_families.count(con))
+            {
+                record_error(hs_fam_type.loc, Note()<<"Trying to define type family '"<<con.print()<<"' twice");
+                continue;
+            }
+            class_info.associated_type_families.insert({con,{}});
         }
-        class_info.associated_type_families.insert({con,{}});
+        else if (fam_decl.is_data_family())
+        {
+            if (fam_decl.where_instances)
+                record_error(fam_decl.con.loc, Note()<<"Data family '"<<fam_decl.con.print()<<"' cannot have type-family equations");
+
+            this_mod().lookup_local_type(con.name)->is_data_fam()->info = std::make_shared<DataFamInfo>(args, kind, class_name);
+            if (class_info.associated_data_families.count(con))
+            {
+                record_error(hs_fam_type.loc, Note()<<"Trying to define data family '"<<con.print()<<"' twice");
+                continue;
+            }
+            class_info.associated_data_families.insert(con);
+        }
     }
 
     // 7. Load default associated type family instances
