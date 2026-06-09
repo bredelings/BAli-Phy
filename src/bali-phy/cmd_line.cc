@@ -189,7 +189,7 @@ po::options_description general_options(int level)
 	    ("verbose,V",value<int>()->implicit_value(1),"Print extra output in case of error.");
     if (level >= 2)
 	general.add_options()
-	    ("package-path,P",value<string>(),"Directories to search for packages.")
+	    ("package-path,P",value<vector<string> >()->composing(),"Directories to search for packages.")
 	    ("set",value<vector<string> >()->composing(),"Set key=<value>");
     return general;
 }

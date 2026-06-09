@@ -14,9 +14,9 @@ The default list includes the following (in order) if they exist,
 where `$HOME` is the user's home directory, and  `<exe>` is the directory
 containing the `bali-phy` executable:
 
-You can supply additional directories to search by supply a colon-
-separated list of directories.  They are searched, in order, before
-the default list.
+You can supply additional directories to search by supplying a colon-
+separated list of directories, or by supplying this option more than
+once.  They are searched, in order, before the default list.
 
 Non-existant directories are pruned from the package-path. The
 package-path will be displayed if `--verbose` is given.

@@ -502,7 +502,9 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     {
         auto [main_filename, args_v] = extract_prog_args(args, argc, argv, "run");
         L->args = args_v;
-        P = load_program_from_file(L, main_filename);
+        auto main_module = L->load_module_from_file(main_filename);
+        L->set_user_source_root_for_file(main_filename, main_module->name);
+        P = std::make_unique<Program>(L, vector{main_module});
     }
     else if (args.count("print"))
     {
@@ -663,7 +665,10 @@ int main(int argc,char* argv[])
             if (is_haskell_module_name(module_name))
                 M = L->load_module(module_name);
             else
+            {
                 M = L->load_module_from_file(module_name);
+                L->set_user_source_root_for_file(module_name, M->name);
+            }
 
             Program P(L,{M});
             auto M2 = P.get_module(M->name);

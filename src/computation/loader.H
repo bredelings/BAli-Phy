@@ -18,6 +18,8 @@ class module_loader: public simplifier_options
 public:
     std::vector<std::filesystem::path> plugins_path;
 
+    std::optional<std::filesystem::path> user_source_root;
+
     std::optional<std::filesystem::path> cache_path;
 
     std::vector<std::string> args;
@@ -29,6 +31,7 @@ public:
     mutable std::map<std::tuple<std::string,std::string>, void*> cached_builtins;
 
     bool try_add_plugin_path(const std::filesystem::path& path);
+    void set_user_source_root_for_file(const std::filesystem::path& path, const std::string& module_name);
   
     std::optional<std::filesystem::path> cache_path_for_module(const std::string& modid) const;
     std::optional<std::filesystem::path> find_cached_module(const std::string& modid) const;

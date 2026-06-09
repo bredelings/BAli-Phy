@@ -1295,6 +1295,7 @@ gen_model_program(const boost::program_options::variables_map& args,
 
     // 3. Load the model module.
     auto model_module = L->load_module_from_file(model_filepath);
+    L->set_user_source_root_for_file(model_filepath, model_module->name);
     if (model_module->name == "Main")
         throw myexception()<<"The module name for the model file "<<model_filepath<<" may not be 'Main'\n";
 

@@ -54,8 +54,9 @@ vector<fs::path> get_package_paths(variables_map& args)
 
     // 1. First add the user-specified package paths
     if (args.count("package-path"))
-	for(const string& path: split(args["package-path"].as<string>(),':'))
-	    paths.push_back(path);
+        for(const string& path_string: args["package-path"].as<vector<string>>())
+            for(const string& path: split(path_string, ':'))
+                paths.push_back(path);
 
     // 2. Then add the user package directories
     if (auto p = get_user_lib_path())

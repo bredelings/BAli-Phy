@@ -57,8 +57,20 @@ fs::path module_loader::find_module(const string& modid) const
     {
 	fs::path path = get_relative_path_from_haskell_id(modid);
 	path.replace_extension(".hs");
-    
-	return find_file_in_path(plugins_path, "haskell"/path );
+
+        if (user_source_root)
+        {
+            auto user_module = *user_source_root / path;
+            if (fs::exists(user_module))
+                return user_module;
+        }
+
+        if (auto file = check_file_in_path(plugins_path, "haskell"/path))
+            return *file;
+
+        auto user_source_root_string = user_source_root ? user_source_root->string() : string();
+        throw myexception()<<"Couldn't find file "<<path<<" in user source root '"<<user_source_root_string
+                           <<"' or file "<<("haskell"/path)<<" in package path '"<<show_path(plugins_path)<<"'";
     }
     catch (myexception& e)
     {
@@ -139,6 +151,63 @@ fs::path pretty_module_path(const fs::path& filepath)
             return filepath.lexically_relative(hpath);
     }
     return filepath.filename();
+}
+
+vector<fs::path> path_components(const fs::path& path)
+{
+    vector<fs::path> components;
+    for(const auto& part: path)
+        components.push_back(part);
+    return components;
+}
+
+fs::path module_source_path_for_file(const fs::path& filename, const string& module_name)
+{
+    // The user source root is the directory that module-name imports are
+    // resolved relative to.  For a simple entry file like Main.hs, this is the
+    // file's parent directory, so sibling imports such as Helper resolve.
+    //
+    // If the entry file is already laid out according to its module name, e.g.
+    // src/Foo/Bar.hs containing module Foo.Bar, then the root should be src so
+    // imports such as Foo.Baz resolve to src/Foo/Baz.hs.
+    auto module_path = get_relative_path_from_haskell_id(module_name);
+    module_path.replace_extension(".hs");
+
+    auto source_path = filename.parent_path();
+    if (source_path.empty())
+        source_path = ".";
+
+    // If the file name does not even match the module leaf name, fall back to
+    // the file's parent directory.
+    if (filename.filename() != module_path.filename())
+        return source_path;
+
+    auto source_parts = path_components(source_path);
+    auto module_parts = path_components(module_path.parent_path());
+
+    if (module_parts.size() > source_parts.size())
+        return source_path;
+
+    // Strip the module directory suffix from the file's parent directory.
+    // src/Foo/Bar.hs + module Foo.Bar has source_path src/Foo and module
+    // parent Foo, yielding root src.
+    auto suffix_start = source_parts.size() - module_parts.size();
+    for(size_t i=0;i<module_parts.size();i++)
+        if (source_parts[suffix_start + i] != module_parts[i])
+            return source_path;
+
+    fs::path root;
+    for(size_t i=0;i<suffix_start;i++)
+        root /= source_parts[i];
+
+    return root.empty() ? fs::path(".") : root;
+}
+
+void module_loader::set_user_source_root_for_file(const fs::path& filename, const string& module_name)
+{
+    auto root = module_source_path_for_file(filename, module_name);
+    if (fs::exists(root))
+        user_source_root = root;
 }
 
 shared_ptr<Module> module_loader::load_module_from_file(const fs::path& filename) const
@@ -245,4 +314,3 @@ void* module_loader::load_builtin_ptr(const string& plugin_name, const string& s
 
     return cached_builtins.at(op);
 }
-
