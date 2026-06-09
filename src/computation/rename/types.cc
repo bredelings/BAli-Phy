@@ -476,9 +476,9 @@ Haskell::DataFamilyInstanceDecl renamer_state::rename(Haskell::DataFamilyInstanc
     for(auto& arg: DI.args)
         arg = rename_type(arg);
 
-    vector<Hs::LTypeVar> free_tvs = free_type_variables(DI.args);
+    vector<Hs::LTypeVar> outer_tvs = DI.forall ? *DI.forall : free_type_variables(DI.args);
 
-    DI.rhs = rename( DI.rhs, free_tvs );
+    DI.rhs = rename( DI.rhs, outer_tvs );
 
     return DI;
 }

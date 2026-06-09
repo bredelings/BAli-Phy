@@ -596,6 +596,7 @@ struct TypeFamilyInstanceDecl: public TypeFamilyInstanceEqn
 
 struct DataFamilyInstanceDecl: public Object
 {
+    std::optional<std::vector<LTypeVar>> forall;
     Located<TypeCon> con;
     std::vector<LType> args;
     DataDefn rhs;
@@ -603,6 +604,10 @@ struct DataFamilyInstanceDecl: public Object
     DataFamilyInstanceDecl* clone() const {return new DataFamilyInstanceDecl(*this);}
 
     std::string print() const;
+
+    DataFamilyInstanceDecl(const std::optional<std::vector<LTypeVar>>& tvs, const Located<TypeCon>& c, const std::vector<LType>& as, const DataDefn& d)
+	:forall(tvs), con(c), args(as), rhs(d)
+	{}
 
     DataFamilyInstanceDecl(const Located<TypeCon>& c, const std::vector<LType>& as, const DataDefn& d)
 	:con(c), args(as), rhs(d)

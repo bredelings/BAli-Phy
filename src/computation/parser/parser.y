@@ -701,13 +701,13 @@ inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ =
            {
 	       auto& [tvs,context,type] = $4;
 	       auto [con, args] = check_type_or_class_header2(type);
-	       $$ = {@$, Hs::DataFamilyInstanceDecl(con, args, Hs::DataDefn($1, {}, {}, $5))};
+	       $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), {}, $5))};
 	   }
 |          data_or_newtype "instance" capi_ctype datafam_inst_hdr opt_kind_sig gadt_constrlist maybe_derivings
            {
 	       auto& [tvs,context,type] = $4;
 	       auto [con, args] = check_type_or_class_header2(type);
-	       $$ = {@$, Hs::DataFamilyInstanceDecl(con, args, Hs::DataDefn($1, Hs::Context(), $5, $6))};
+	       $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), $5, $6))};
 	   }
 
 overlap_pragma: "{-# OVERLAPPABLE" "#-}"       { $$ = "OVERLAPPABLE"; }
@@ -778,14 +778,14 @@ at_decl_inst: "type" opt_instance ty_fam_inst_eqn             { $$ = {@$,Hs::Typ
               {
 		  auto& [tvs, context, type] = $4;
 		  auto [con, args] = check_type_or_class_header2(type);
-		  $$ = {@$, Hs::DataFamilyInstanceDecl(con, args, Hs::DataDefn($1, {}, {}, $5))};
+		  $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), {}, $5))};
 	      }
 
 |             data_or_newtype opt_instance capi_ctype datafam_inst_hdr opt_kind_sig gadt_constrlist maybe_derivings
               {
 		  auto& [tvs,context,type] = $4;
 		  auto [con, args] = check_type_or_class_header2(type);
-		  $$ = {@$, Hs::DataFamilyInstanceDecl(con, args, Hs::DataDefn($1, Hs::Context(), $5, $6))};
+		  $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), $5, $6))};
 	      }
 
 data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}

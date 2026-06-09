@@ -208,7 +208,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
     return types;
 }
 
-DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType& hs_result_type, const vector<Hs::LTypeVar>& outer_tvs, const Hs::ConstructorDecl& constructor)
+DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType& hs_result_type, const vector<Hs::LTypeVar>& outer_tvs, const vector<Type>& top_constraints, const Hs::ConstructorDecl& constructor)
 {
     DataConInfo info;
 
@@ -247,6 +247,7 @@ DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType&
     }
 
     info.written_constraints = written_constraints;
+    info.top_constraints = top_constraints;
     info.field_types = field_types;
     info.constructor_result_type = result_type;
 
@@ -270,19 +271,35 @@ DataConEnv TypeChecker::infer_type_for_data_family_instance(const Hs::DataFamily
         return {};
     }
 
-    if (data_inst.args.size() != data_fam_info->arity())
-        record_error(Note()<<"Data family takes "<<data_fam_info->arity()<<" arguments, but instance has "<<data_inst.args.size());
-
-    auto outer_tvs = free_type_variables(data_inst.args);
     auto hs_result_type = Hs::type_apply(data_inst.con, data_inst.args);
+    auto outer_tvs = data_inst.forall ? *data_inst.forall : free_type_variables(data_inst.args);
+    auto hs_instance_type = Hs::quantify(outer_tvs, data_inst.rhs.context, hs_result_type);
+    int head_errors = num_errors();
+    auto [data_tvs, data_context, data_type] = peel_top_gen(check_type(hs_instance_type));
+
+    auto [result_head, result_args] = decompose_type_apps(data_type);
+    auto result_con = result_head.to<TypeCon>();
+    if (not result_con or not type_con_is_data_fam(*result_con))
+        record_error(Note()<<"Data family instance head '"<<data_type<<"' is not a data family application");
+    else if (*result_con != data_family)
+        record_error(Note()<<"Data family instance head '"<<data_type<<"' does not match data family '"<<data_family<<"'");
+    else if (result_args.size() != data_fam_info->arity())
+        record_error(Note()<<"Data family takes "<<data_fam_info->arity()<<" arguments, but instance has "<<result_args.size());
 
     DataConEnv types;
+    if (num_errors() > head_errors)
+    {
+        if (data_inst.con.loc) pop_source_span();
+        pop_note();
+        return types;
+    }
+
     if (data_inst.rhs.is_regular_decl())
     {
         for(auto& constructor: data_inst.rhs.get_constructors())
         {
             auto con_name = unloc(*constructor.con).name;
-            DataConInfo info = infer_type_for_data_family_constructor(hs_result_type, outer_tvs, constructor);
+            DataConInfo info = infer_type_for_data_family_constructor(hs_result_type, outer_tvs, data_context, constructor);
             types = types.insert({con_name, info});
         }
     }

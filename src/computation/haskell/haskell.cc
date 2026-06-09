@@ -692,6 +692,15 @@ string DataFamilyInstanceDecl::print() const
 {
     std::ostringstream out;
     out<<rhs.data_or_newtype<<" instance ";
+    if (forall)
+    {
+        vector<string> binders;
+        for(auto& tv: *forall)
+            binders.push_back(tv.print());
+        out<<"forall "<<join(binders, " ")<<". ";
+    }
+    if (not rhs.context.empty())
+        out<<rhs.context.print()<<" => ";
     out<<con.print();
     for(auto& arg: args)
         out<<" "<<arg.print();
