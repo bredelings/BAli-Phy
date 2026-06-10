@@ -31,12 +31,10 @@
 
 ## Correctness/Completeness
 
- * property newtype support
+ * properly support newtype
  
  * record syntax
  
  * deriving Eq, Ord, ... ?
 
- * data families
- 
  * downloading packages from hackage?
