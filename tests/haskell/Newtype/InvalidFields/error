@@ -1,2 +1,6 @@
-bali-phy: Error! Loading module from file 'Main.hs':
-  newtype 'Bad' may only have 1 constructor with 1 field
+[1mMain.hs:3.15-17:[1;31m error:[0m[1m
+   • newtype 'Bad' must have exactly one constructor with exactly one field
+  [1;34m|[0m
+[1;34m3[0m [1;34m| [0mnewtype Bad = [1;31mBad[0m Int Int
+  [1;34m|[0m               [1;31m^^^[0m
+

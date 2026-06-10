@@ -17,6 +17,37 @@ using std::set;
 using std::optional;
 using std::map;
 
+namespace
+{
+    bool has_strictness_mark(const Hs::LType& ltype)
+    {
+        const auto& type = unloc(ltype);
+
+        if (type.is_a<Hs::StrictType>())
+            return true;
+        else if (auto lazy_type = type.to<Hs::LazyType>())
+            return has_strictness_mark(lazy_type->type);
+        else if (auto tuple_type = type.to<Hs::TupleType>())
+        {
+            for(const auto& element_type: tuple_type->element_types)
+                if (has_strictness_mark(element_type))
+                    return true;
+        }
+        else if (auto list_type = type.to<Hs::ListType>())
+            return has_strictness_mark(list_type->element_type);
+        else if (auto tapp = type.to<Hs::TypeApp>())
+            return has_strictness_mark(tapp->head) or has_strictness_mark(tapp->arg);
+        else if (auto constrained_type = type.to<Hs::ConstrainedType>())
+            return has_strictness_mark(constrained_type->type);
+        else if (auto forall_type = type.to<Hs::ForallType>())
+            return has_strictness_mark(forall_type->type);
+        else if (auto type_of_kind = type.to<Hs::TypeOfKind>())
+            return has_strictness_mark(type_of_kind->type);
+
+        return false;
+    }
+}
+
 void free_type_variables_(const vector<Hs::LType>& types, vector<Hs::LTypeVar>& tvs)
 {
     for(auto& type: types)
@@ -302,11 +333,52 @@ Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl, const vector<Hs:
     return decl;
 }
 
+void renamer_state::check_newtype_decl(const Hs::DataDefn& data_defn, const Hs::LTypeCon& con) const
+{
+    if (data_defn.data_or_newtype != Hs::DataOrNewtype::newtype)
+        return;
+
+    auto type_name = get_unqualified_name(unloc(con).name);
+    auto constructor_error = [&](const optional<yy::location>& loc) {
+        error(loc, Note()<<"newtype '"<<type_name<<"' must have exactly one constructor with exactly one field");
+    };
+    auto strict_error = [&](const Hs::LType& field_type) {
+        if (has_strictness_mark(field_type))
+            error(field_type.loc, Note()<<"newtype '"<<type_name<<"' constructor must not have a strictness annotation");
+    };
+
+    if (data_defn.is_regular_decl())
+    {
+        const auto& constructors = data_defn.get_constructors();
+        if (constructors.size() != 1 or constructors[0].arity() != 1)
+        {
+            optional<yy::location> loc = constructors.empty() ? con.loc : (*constructors[0].con).loc;
+            constructor_error(loc);
+            return;
+        }
+
+        strict_error(constructors[0].get_field_types()[0]);
+    }
+    else if (data_defn.is_gadt_decl())
+    {
+        const auto& constructors = data_defn.get_gadt_constructors();
+        if (constructors.size() != 1 or constructors[0].con_names.size() != 1 or Hs::gen_type_arity(constructors[0].type) != 1)
+        {
+            optional<yy::location> loc = constructors.empty() ? con.loc : constructors[0].type.loc;
+            constructor_error(loc);
+            return;
+        }
+
+        strict_error(constructors[0].type);
+    }
+}
+
 Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl)
 {
     qualify_name(unloc(decl.con).name);
 
     Hs::DataDefn& decl2 = decl;
+    check_newtype_decl(decl2, decl.con);
     decl2 = rename( decl2, decl.type_vars );
 
     return decl;
@@ -483,6 +555,7 @@ Haskell::DataFamilyInstanceDecl renamer_state::rename(Haskell::DataFamilyInstanc
 
     vector<Hs::LTypeVar> outer_tvs = DI.forall ? *DI.forall : free_type_variables(DI.args);
 
+    check_newtype_decl(DI.rhs, DI.con);
     DI.rhs = rename( DI.rhs, outer_tvs );
 
     return DI;

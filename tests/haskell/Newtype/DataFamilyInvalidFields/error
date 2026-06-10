@@ -1,0 +1,6 @@
+[1mMain.hs:5.26-29:[1;31m error:[0m[1m
+   • newtype 'F' must have exactly one constructor with exactly one field
+  [1;34m|[0m
+[1;34m5[0m [1;34m| [0mnewtype instance F Int = [1;31mBadF[0m Int Int
+  [1;34m|[0m                          [1;31m^^^^[0m
+
