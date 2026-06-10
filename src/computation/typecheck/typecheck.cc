@@ -1471,6 +1471,9 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
     // 6. Get types for value constructors  (CVE_T = constructor types)
     get_constructor_info(M.type_decls);
 
+    // 6b. Refine inferred type roles with source role annotations.
+    apply_source_role_annotations(M.type_decls);
+
     // 7. Get types and values for class method selectors and superclass selectors (CE_C  = class name -> class info)
     auto class_decls = infer_type_for_classes(M.type_decls);
 

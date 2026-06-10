@@ -712,6 +712,22 @@ string StandaloneDerivingDecl::print() const
     return result;
 }
 
+string RoleAnnotationDecl::print() const
+{
+    auto role_name = [](const optional<Role>& role) -> string
+    {
+        if (not role) return "_";
+        if (*role == Role::Nominal) return "nominal";
+        if (*role == Role::Representational) return "representational";
+        return "phantom";
+    };
+
+    vector<string> role_names;
+    for(auto& role: roles)
+        role_names.push_back(role_name(unloc(role)));
+    return "type role " + con.print() + " " + join(role_names, " ");
+}
+
 std::ostream& operator<<(std::ostream& o, DataOrNewtype d)
 {
     if (d == DataOrNewtype::data)
@@ -1111,7 +1127,7 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
         }
 	else if (auto b = decl.to<ForeignDecl>())
             foreign_decls.push_back(*b);
-        else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>() or decl.is_a<StandaloneDerivingDecl>())
+        else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>() or decl.is_a<StandaloneDerivingDecl>() or decl.is_a<RoleAnnotationDecl>())
             type_decls.push_back(ldecl);
         else if (decl.is_a<FamilyDecl>() or decl.is_a<TypeFamilyInstanceDecl>() or decl.is_a<DataFamilyInstanceDecl>())
             type_decls.push_back(ldecl);

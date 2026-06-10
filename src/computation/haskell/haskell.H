@@ -15,6 +15,7 @@
 #include "literal.H"
 #include "pattern.H"
 #include "type.H"
+#include "coretype.H"
 
 #include "computation/core/ast.H"
 #include "computation/core/wrap.H"
@@ -806,6 +807,20 @@ struct StandaloneDerivingDecl: public Object
         :strategy(s),
          polytype(t),
          via_type(v)
+        {}
+};
+
+struct RoleAnnotationDecl: public Object
+{
+    LTypeCon con;
+    std::vector<Located<std::optional<Role>>> roles;
+
+    RoleAnnotationDecl* clone() const { return new RoleAnnotationDecl(*this);}
+    std::string print() const;
+
+    RoleAnnotationDecl(const LTypeCon& c, const std::vector<Located<std::optional<Role>>>& rs)
+        :con(c),
+         roles(rs)
         {}
 };
 

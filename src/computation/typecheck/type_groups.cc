@@ -178,6 +178,10 @@ vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
         {
             // Standalone deriving does not define a type constructor in this group graph.
         }
+        else if (decl.is_a<Hs::RoleAnnotationDecl>())
+        {
+            // Source role annotations refine existing type constructors after role inference.
+        }
         else if (decl.is_a<Hs::FamilyDecl>() or decl.is_a<Hs::TypeFamilyInstanceDecl>() or decl.is_a<Hs::DataFamilyInstanceDecl>())
         {
             // Don't do anything for these.

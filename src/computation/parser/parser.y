@@ -380,6 +380,8 @@
 %type <std::vector<Hs::LType>> deriv_clause_types
 %type <Hs::DerivingStrategy> deriv_strategy_no_via
 %type <Hs::LType> deriv_strategy_via
+%type <Located<std::optional<Role>>> role
+%type <std::vector<Located<std::optional<Role>>>> roles maybe_roles
 
 %type <Located<expression_ref>> decl_no_th
 %type <Located<expression_ref>> decl
@@ -667,7 +669,6 @@ topdecl: cl_decl                               {$$ = $1;}
 |        standalone_kind_sig                   {$$ = $1;}
 |        inst_decl                             {$$ = $1;}
 |        stand_alone_deriving                  {$$ = $1;}
-/*|        role_annot */
 |        "default" opt_class "(" comma_types0 ")"        {$$ = {@$,Hs::DefaultDecl($2,$4)}; }
 |        "foreign" "import" call_conv STRING var "::" sigtypedoc  {$$ = {@$,Hs::ForeignDecl($3, $4, {@5,$5}, $7)};}
 /*
@@ -687,7 +688,8 @@ call_conv: "bpcall" {$$ = {@$,"bpcall"};}
 cl_decl: "class" tycl_hdr fds where_cls   {$$ = {@$,make_class_decl($2.first,$2.second,$3,$4)};}
 
 
-ty_decl: "type" type "=" ktype                                             {$$ = {@$, make_type_synonym($2,$4)};}
+ty_decl: "type" "role" oqtycon maybe_roles                                {$$ = {@$, Hs::RoleAnnotationDecl({@3, Hs::TypeCon($3)}, $4)};}
+|        "type" type "=" ktype                                             {$$ = {@$, make_type_synonym($2,$4)};}
 |        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = {@$, make_data_or_newtype($1, $3.first, $3.second,{},$4,$5)};}
 /* This is kind of a hack to allow `data X` */
 |        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = {@$, make_data_or_newtype($1, $3.first, $3.second, $4, $5, $6)};}
@@ -833,18 +835,29 @@ capi_ctype: "{-# CTYPE" STRING STRING "#-}"
 /* ------------- Stand-alone deriving ---------------------------- */
 
 /* ------------- Role annotations -------------------------------- */
-/*
-role_annot: "type" "role" oqtycon maybe_roles
+maybe_roles: %empty                            {$$ = {};}
+|            roles                             {$$ = $1;}
 
-maybe_roles: %empty
-|            roles
-
-roles:       role
-|            roles role
+roles:       role                              {$$ = {$1};}
+|            roles role                        {$$ = $1; $$.push_back($2);}
 
 role:        VARID
-|            "_"
+              {
+                  if ($1 == "nominal")
+                      $$ = {@$, Role::Nominal};
+                  else if ($1 == "representational")
+                      $$ = {@$, Role::Representational};
+                  else if ($1 == "phantom")
+                      $$ = {@$, Role::Phantom};
+                  else
+                  {
+                      drv.push_error_message(@1, "Unknown role `" + $1 + "`");
+                      YYERROR;
+                  }
+              }
+|            "_"                                {$$ = {@$, std::optional<Role>{}};}
 
+/*
 pattern_synonym_decl: "pattern" pattern_synonym_lhs "=" pat
 |                     "pattern" pattern_synonym_lhs "<-" pat
 |                     "pattern" pattern_synonym_lhs "<-" pat where_decls

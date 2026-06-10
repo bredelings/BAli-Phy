@@ -467,6 +467,12 @@ Haskell::StandaloneDerivingDecl renamer_state::rename(Haskell::StandaloneDerivin
     return D;
 }
 
+Haskell::RoleAnnotationDecl renamer_state::rename(Haskell::RoleAnnotationDecl D)
+{
+    D.con = rename_type(D.con);
+    return D;
+}
+
 Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 {
     qualify_name(unloc(C.con).name);
@@ -619,6 +625,8 @@ Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
         else if (auto I = decl.to<Hs::InstanceDecl>())
             decl = rename(*I);
         else if (auto D = decl.to<Hs::StandaloneDerivingDecl>())
+            decl = rename(*D);
+        else if (auto D = decl.to<Hs::RoleAnnotationDecl>())
             decl = rename(*D);
         else if (auto T = decl.to<Hs::TypeSynonymDecl>())
             decl = rename(*T);

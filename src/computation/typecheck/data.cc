@@ -7,9 +7,17 @@ using std::vector;
 using std::set;
 using std::pair;
 using std::map;
+using std::string;
 
 namespace
 {
+    string role_name(Role role)
+    {
+        if (role == Role::Nominal) return "nominal";
+        if (role == Role::Representational) return "representational";
+        return "phantom";
+    }
+
     Hs::LType gadt_constructor_result_type(Hs::LType type)
     {
         auto [stripped_type, _] = pop_constructor_signature_strictness(type);
@@ -390,6 +398,60 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
         T->roles = infer_roles_for_data_type(data_tvs, types);
 
     return types;
+}
+
+// Apply source role annotations, rejecting roles less restrictive than inference requires.
+void TypeChecker::apply_source_role_annotations(const Hs::Decls& decls)
+{
+    set<string> annotated_types;
+
+    for(auto& [_, decl]: decls)
+    {
+        auto role_annotation = decl.to<Hs::RoleAnnotationDecl>();
+        if (not role_annotation)
+            continue;
+
+        auto type_name = unloc(role_annotation->con).name;
+        if (annotated_types.contains(type_name))
+        {
+            record_error(role_annotation->con.loc, Note()<<"Duplicate role annotation for `"<<show_type_plain(TypeCon(type_name))<<"`");
+            continue;
+        }
+        annotated_types.insert(type_name);
+
+        auto type_info = this_mod().lookup_local_type(type_name);
+        if (not type_info)
+        {
+            record_error(role_annotation->con.loc, Note()<<"Role annotation for unknown type `"<<show_type_plain(TypeCon(type_name))<<"`");
+            continue;
+        }
+
+        int arity = type_info->arity ? *type_info->arity : type_info->roles.size();
+        if (role_annotation->roles.size() > arity)
+        {
+            record_error(role_annotation->con.loc, Note()<<"Role annotation for `"<<show_type_plain(TypeCon(type_name))<<"` gives "<<role_annotation->roles.size()<<" roles, but the type has "<<arity<<" parameters");
+            continue;
+        }
+
+        if (type_info->roles.size() < arity)
+            type_info->roles.resize(arity, Role::Nominal);
+
+        for(int i=0;i<role_annotation->roles.size();i++)
+        {
+            auto annotated_role = unloc(role_annotation->roles[i]);
+            if (not annotated_role)
+                continue;
+
+            auto inferred_role = type_info->roles[i];
+            if (static_cast<int>(*annotated_role) < static_cast<int>(inferred_role))
+            {
+                record_error(role_annotation->roles[i].loc, Note()<<"Role annotation for parameter "<<(i+1)<<" of `"<<show_type_plain(TypeCon(type_name))<<"` is "<<role_name(*annotated_role)<<", but inferred role is "<<role_name(inferred_role));
+                continue;
+            }
+
+            type_info->roles[i] = *annotated_role;
+        }
+    }
 }
 
 DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType& hs_result_type, const vector<Hs::LTypeVar>& outer_tvs, const vector<Type>& top_constraints, const Hs::ConstructorDecl& constructor)
