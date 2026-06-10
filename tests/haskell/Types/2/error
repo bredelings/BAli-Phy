@@ -15,7 +15,8 @@
   [1;34m|[0m                             [1;31m^^^[0m
 
 [1mMain.hs:9.35:[1;31m error:[0m[1m
-   • Could not derive '[1;32mNum t[0m'[1m arising from a use of '[1;36mfromInteger[0m[1m' at Main.hs:9.35
+   • Could not derive '[1;32mNum t[0m'[1m arising from a use of '[1;36mfromInteger[0m[1m' at
+     Main.hs:9.35
    • In equation `main  = do {System.IO.putStrLn Data.Function.$
      (Text.Show.show Data.Function.$ (Main.bar 2 3))`
   [1;34m|[0m

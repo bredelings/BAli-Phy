@@ -60,8 +60,11 @@ bool skip_ansi(const string& line, int& pos)
     if (pos+2 < line.size() and line[pos] == '\033' and line[pos+1] == '[')
     {
         // To be safer, we could skip [0..9;] and then if we find an m, skip that too.
-        pos = line.find(pos+2,'m');
-        if (pos == -1) pos = line.size();
+        auto end = line.find('m', pos+2);
+        if (end == string::npos)
+            pos = line.size();
+        else
+            pos = end + 1;
         return true;
     }
     else
