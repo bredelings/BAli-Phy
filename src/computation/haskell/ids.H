@@ -17,6 +17,9 @@ extern std::string ordering_gt_name;
 extern std::string bounded_class_name;
 extern std::string bounded_min_bound_name;
 extern std::string bounded_max_bound_name;
+extern std::string list_append_name;
+extern std::string show_class_name;
+extern std::string show_method_name;
 
 std::string tuple_name(int n);
 int tuple_arity(const std::string&);

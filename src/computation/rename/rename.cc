@@ -230,6 +230,11 @@ namespace
         return wired_con_exp(b ? bool_true_name : bool_false_name);
     }
 
+    Hs::LExp string_exp(const string& s)
+    {
+        return {noloc, Hs::Literal(Hs::String(s))};
+    }
+
     Hs::LExp eq_exp(const Hs::LExp& x, const Hs::LExp& y)
     {
         return Hs::apply(wired_var_exp(eq_method_name), {x, y});
@@ -238,6 +243,11 @@ namespace
     Hs::LExp and_exp(const Hs::LExp& x, const Hs::LExp& y)
     {
         return Hs::apply(wired_var_exp(bool_and_name), {x, y});
+    }
+
+    Hs::LExp append_exp(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return Hs::apply(wired_var_exp(list_append_name), {x, y});
     }
 
     Hs::LExp eq_all_exp(const vector<pair<Hs::LExp,Hs::LExp>>& fields)
@@ -289,6 +299,11 @@ namespace
     Hs::MRule binary_method_rule(const Hs::LPat& x, const Hs::LPat& y, const Hs::LExp& rhs)
     {
         return Hs::MRule({x, y}, Hs::SimpleRHS(rhs));
+    }
+
+    Hs::MRule unary_method_rule(const Hs::LPat& x, const Hs::LExp& rhs)
+    {
+        return Hs::MRule({x}, Hs::SimpleRHS(rhs));
     }
 
     Hs::LDecl derived_method_decl(const string& method_name, const Hs::Matches& matches)
@@ -439,6 +454,44 @@ namespace
 
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, bounded_class_name), {}, {}, methods);
     }
+
+    Hs::LExp show_exp(const Hs::LExp& x)
+    {
+        return Hs::apply(wired_var_exp(show_method_name), {x});
+    }
+
+    Hs::LExp append_all_exp(const vector<Hs::LExp>& parts)
+    {
+        assert(not parts.empty());
+
+        auto result = parts[0];
+        for(int i=1; i<parts.size(); i++)
+            result = append_exp(result, parts[i]);
+        return result;
+    }
+
+    Hs::LExp show_constructor_exp(const Hs::ConstructorDecl& constructor)
+    {
+        vector<Hs::LExp> parts = {string_exp(get_unqualified_name(unloc(*constructor.con).name))};
+        for(int i=0; i<constructor.arity(); i++)
+        {
+            parts.push_back(string_exp(" "));
+            parts.push_back(show_exp(local_var_exp("x$" + std::to_string(i))));
+        }
+        return append_all_exp(parts);
+    }
+
+    Hs::InstanceDecl derive_show_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    {
+        Hs::Matches show_matches;
+        for(const auto& constructor: data_decl.get_constructors())
+            show_matches.push_back(unary_method_rule(constructor_var_pattern(constructor, "x$"), show_constructor_exp(constructor)));
+
+        Hs::Decls methods;
+        methods.push_back(derived_method_decl(show_method_name, show_matches));
+
+        return Hs::InstanceDecl({}, stock_instance_type(data_decl, show_class_name), {}, {}, methods);
+    }
 }
 
 Hs::Decls synthesize_derived_instances(const Hs::Decls& decls)
@@ -468,6 +521,12 @@ Hs::Decls synthesize_derived_instances(const Hs::Decls& decls)
                     if (not data_decl->is_regular_decl() or data_decl->get_constructors().empty())
                         throw myexception()<<"deriving Bounded is only supported for regular data/newtype declarations with constructors";
                     instances.push_back({loc, derive_bounded_instance(*data_decl)});
+                }
+                else if (is_deriving_class(deriving, show_class_name))
+                {
+                    if (not data_decl->is_regular_decl())
+                        throw myexception()<<"deriving Show is only supported for regular data/newtype declarations";
+                    instances.push_back({loc, derive_show_instance(*data_decl)});
                 }
                 else
                     throw myexception()<<"deriving "<<deriving.print()<<" is not supported yet";

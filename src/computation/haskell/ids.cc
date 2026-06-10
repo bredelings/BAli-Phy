@@ -22,6 +22,9 @@ std::string ordering_gt_name = "Data.Ord.GT";
 std::string bounded_class_name = "Compiler.Enum.Bounded";
 std::string bounded_min_bound_name = "Compiler.Enum.minBound";
 std::string bounded_max_bound_name = "Compiler.Enum.maxBound";
+std::string list_append_name = "Data.OldList.++";
+std::string show_class_name = "Text.Show.Show";
+std::string show_method_name = "Text.Show.show";
 
 bool is_tuple_name(const string& s)
 {
