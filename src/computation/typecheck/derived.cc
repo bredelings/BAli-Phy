@@ -12,7 +12,7 @@ using std::optional;
 
 namespace
 {
-    using StockDeriver = Hs::InstanceDecl (*)(const Hs::DataOrNewtypeDecl&);
+    using StockDeriver = Hs::InstanceDecl (*)(const Hs::DataOrNewtypeDecl&, const std::optional<yy::location>&);
     using StockValidator = bool (*)(const Hs::DataOrNewtypeDecl&);
 
     struct StockDerivingSpec
@@ -181,9 +181,9 @@ namespace
         return Hs::MRule({x}, Hs::SimpleRHS(rhs));
     }
 
-    Hs::LDecl derived_method_decl(const string& method_name, const Hs::Matches& matches)
+    Hs::LDecl derived_method_decl(const std::optional<yy::location>& loc, const string& method_name, const Hs::Matches& matches)
     {
-        return {noloc, Hs::FunDecl({noloc,Hs::Var(get_unqualified_name(method_name))}, matches)};
+        return {loc, Hs::FunDecl({loc,Hs::Var(get_unqualified_name(method_name))}, matches)};
     }
 
     Hs::LExp case_exp(const Hs::LExp& object, const Hs::Alts& alts)
@@ -213,7 +213,7 @@ namespace
         return Hs::add_forall_vars(data_decl.type_vars, polytype);
     }
 
-    Hs::InstanceDecl derive_eq_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    Hs::InstanceDecl derive_eq_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
     {
         Hs::Matches eq_matches;
         for(const auto& constructor: data_decl.get_constructors())
@@ -231,7 +231,7 @@ namespace
         eq_matches.push_back(binary_method_rule(wildcard, wildcard, bool_exp(false)));
 
         Hs::Decls methods;
-        methods.push_back(derived_method_decl(eq_method_name, eq_matches));
+        methods.push_back(derived_method_decl(deriving_loc, eq_method_name, eq_matches));
 
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, eq_class_name), {}, {}, methods);
     }
@@ -316,7 +316,7 @@ namespace
         return compare_exp(constructor_tag_exp(data_decl, x), constructor_tag_exp(data_decl, y));
     }
 
-    Hs::InstanceDecl derive_ord_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    Hs::InstanceDecl derive_ord_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
     {
         Hs::Matches compare_matches;
         const auto& constructors = data_decl.get_constructors();
@@ -340,7 +340,7 @@ namespace
         }
 
         Hs::Decls methods;
-        methods.push_back(derived_method_decl(ord_compare_name, compare_matches));
+        methods.push_back(derived_method_decl(deriving_loc, ord_compare_name, compare_matches));
 
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, ord_class_name), {}, {}, methods);
     }
@@ -350,9 +350,9 @@ namespace
         return Hs::MRule({}, Hs::SimpleRHS(rhs));
     }
 
-    Hs::LDecl nullary_method_decl(const string& method_name, const Hs::LExp& rhs)
+    Hs::LDecl nullary_method_decl(const std::optional<yy::location>& loc, const string& method_name, const Hs::LExp& rhs)
     {
-        return derived_method_decl(method_name, {nullary_method_rule(rhs)});
+        return derived_method_decl(loc, method_name, {nullary_method_rule(rhs)});
     }
 
     Hs::LExp bounded_constructor_exp(const Hs::ConstructorDecl& constructor, const string& bound_method_name)
@@ -361,13 +361,13 @@ namespace
         return constructor_exp(constructor, args);
     }
 
-    Hs::InstanceDecl derive_bounded_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    Hs::InstanceDecl derive_bounded_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
     {
         const auto& constructors = data_decl.get_constructors();
 
         Hs::Decls methods;
-        methods.push_back(nullary_method_decl(bounded_min_bound_name, bounded_constructor_exp(constructors.front(), bounded_min_bound_name)));
-        methods.push_back(nullary_method_decl(bounded_max_bound_name, bounded_constructor_exp(constructors.back(), bounded_max_bound_name)));
+        methods.push_back(nullary_method_decl(deriving_loc, bounded_min_bound_name, bounded_constructor_exp(constructors.front(), bounded_min_bound_name)));
+        methods.push_back(nullary_method_decl(deriving_loc, bounded_max_bound_name, bounded_constructor_exp(constructors.back(), bounded_max_bound_name)));
 
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, bounded_class_name), {}, {}, methods);
     }
@@ -377,7 +377,7 @@ namespace
         return {noloc, Hs::LiteralPattern(Hs::Literal(Hs::BoxedInteger{integer(i)}))};
     }
 
-    Hs::InstanceDecl derive_enum_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    Hs::InstanceDecl derive_enum_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
     {
         const auto& constructors = data_decl.get_constructors();
         int max_tag = constructors.size() - 1;
@@ -424,12 +424,12 @@ namespace
                                                        Hs::SimpleRHS(map_to_enum(int_range_from_then_to(from_enum("x$"), from_enum("y$"), from_enum("z$"))))));
 
         Hs::Decls methods;
-        methods.push_back(derived_method_decl(enum_from_enum_name, from_enum_matches));
-        methods.push_back(derived_method_decl(enum_to_enum_name, to_enum_matches));
-        methods.push_back(derived_method_decl(enum_from_name, enum_from_matches));
-        methods.push_back(derived_method_decl(enum_from_to_name, enum_from_to_matches));
-        methods.push_back(derived_method_decl(enum_from_then_name, enum_from_then_matches));
-        methods.push_back(derived_method_decl(enum_from_then_to_name, enum_from_then_to_matches));
+        methods.push_back(derived_method_decl(deriving_loc, enum_from_enum_name, from_enum_matches));
+        methods.push_back(derived_method_decl(deriving_loc, enum_to_enum_name, to_enum_matches));
+        methods.push_back(derived_method_decl(deriving_loc, enum_from_name, enum_from_matches));
+        methods.push_back(derived_method_decl(deriving_loc, enum_from_to_name, enum_from_to_matches));
+        methods.push_back(derived_method_decl(deriving_loc, enum_from_then_name, enum_from_then_matches));
+        methods.push_back(derived_method_decl(deriving_loc, enum_from_then_to_name, enum_from_then_to_matches));
 
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, enum_class_name), {}, {}, methods);
     }
@@ -460,7 +460,7 @@ namespace
                       if_exp(greater_than_exp(x_tag, hi_tag), bool_exp(false), bool_exp(true)));
     }
 
-    Hs::InstanceDecl derive_ix_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    Hs::InstanceDecl derive_ix_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
     {
         const auto& constructors = data_decl.get_constructors();
         Hs::LPat bounds_pat = pair_pat(var_pat("lo$"), var_pat("hi$"));
@@ -490,10 +490,10 @@ namespace
                                                               size)));
 
         Hs::Decls methods;
-        methods.push_back(derived_method_decl(ix_range_name, range_matches));
-        methods.push_back(derived_method_decl(ix_index_name, index_matches));
-        methods.push_back(derived_method_decl(ix_in_range_name, in_range_matches));
-        methods.push_back(derived_method_decl(ix_range_size_name, range_size_matches));
+        methods.push_back(derived_method_decl(deriving_loc, ix_range_name, range_matches));
+        methods.push_back(derived_method_decl(deriving_loc, ix_index_name, index_matches));
+        methods.push_back(derived_method_decl(deriving_loc, ix_in_range_name, in_range_matches));
+        methods.push_back(derived_method_decl(deriving_loc, ix_range_size_name, range_size_matches));
 
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, ix_class_name), {}, {}, methods);
     }
@@ -544,7 +544,7 @@ namespace
         return show_paren_exp(greater_than_exp(local_var_exp("d$"), int_exp(10)), compose_all_exp(parts));
     }
 
-    Hs::InstanceDecl derive_show_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    Hs::InstanceDecl derive_show_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
     {
         Hs::Matches shows_prec_matches;
         for(const auto& constructor: data_decl.get_constructors())
@@ -554,7 +554,7 @@ namespace
         }
 
         Hs::Decls methods;
-        methods.push_back(derived_method_decl(show_shows_prec_name, shows_prec_matches));
+        methods.push_back(derived_method_decl(deriving_loc, show_shows_prec_name, shows_prec_matches));
 
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, show_class_name), {}, {}, methods);
     }
@@ -604,7 +604,7 @@ Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
 {
     Hs::Decls instances;
 
-    for(auto& [loc,decl]: decls)
+    for(auto& [_,decl]: decls)
     {
         if (auto data_decl = decl.to<Hs::DataOrNewtypeDecl>())
         {
@@ -624,7 +624,7 @@ Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
                     continue;
                 }
 
-                instances.push_back({loc, spec.derive(*data_decl)});
+                instances.push_back({deriving.loc, spec.derive(*data_decl, deriving.loc)});
             }
         }
         else if (auto data_inst = decl.to<Hs::DataFamilyInstanceDecl>())
