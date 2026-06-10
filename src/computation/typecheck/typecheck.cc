@@ -1477,6 +1477,11 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
     // 8. Get types and names for instances (pass 1)
     auto named_instances = infer_type_for_instances1(M.type_decls);
 
+    // 8b. Check derived instance contexts now that local instance headers are known.
+    check_derived_instances(M.type_decls);
+    show_messages(this_mod().file, std::cerr, messages());
+    exit_on_error(messages());
+
     // 9. Typecheck value decls
     auto value_decls = infer_type_for_binds_top(M.value_decls);
 

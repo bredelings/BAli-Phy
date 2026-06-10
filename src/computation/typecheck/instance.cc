@@ -12,6 +12,32 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
+namespace
+{
+    bool is_deriving_class(const Hs::LType& deriving, const string& class_name)
+    {
+        auto [head, args] = Hs::decompose_type_apps(deriving);
+        auto con = unloc(head).to<Hs::TypeCon>();
+        return con and get_unqualified_name(con->name) == class_name and args.empty();
+    }
+
+    Type class_constraint(const TypeCon& class_con, const Type& type)
+    {
+        return type_apply(class_con, vector<Type>{type});
+    }
+
+    bool is_allowed_derived_context_pred(const Type& pred, const set<TypeVar>& data_tvs)
+    {
+        auto [head, args] = decompose_type_apps(pred);
+        if (args.empty())
+            return false;
+
+        auto field_type = follow_meta_type_var(args.back());
+        auto tv = field_type.to<TypeVar>();
+        return tv and data_tvs.contains(*tv);
+    }
+}
+
 // TODO: maybe move some of the check_add_type_instance stuff to renaming?
 
 // TODO: change kind unification to use meta-variables.
@@ -393,6 +419,88 @@ TypeChecker::infer_type_for_instances1(const Hs::Decls& decls)
     }
 
     return named_instances;
+}
+
+// Return the first derived constraint that cannot be solved or floated into the instance context.
+optional<Type> TypeChecker::find_missing_derived_constraint(const Type& pred, const set<TypeVar>& data_tvs, vector<Type>& active)
+{
+    if (is_allowed_derived_context_pred(pred, data_tvs))
+        return {};
+
+    for(auto& active_pred: active)
+        if (active_pred == pred)
+            return {};
+
+    active.push_back(pred);
+
+    auto inst = lookup_instance(pred);
+    if (not inst)
+    {
+        active.pop_back();
+        return pred;
+    }
+
+    auto& [_, wanteds] = *inst;
+    for(auto& wanted: wanteds)
+    {
+        if (auto missing = find_missing_derived_constraint(wanted.pred, data_tvs, active))
+        {
+            active.pop_back();
+            return missing;
+        }
+    }
+
+    active.pop_back();
+    return {};
+}
+
+// Check stock-derived instances after pass 1 has registered local instance headers.
+void TypeChecker::check_derived_instances(const Hs::Decls& decls)
+{
+    for(auto& [_, decl]: decls)
+    {
+        auto data_decl = decl.to<Hs::DataOrNewtypeDecl>();
+        if (not data_decl or not data_decl->is_regular_decl())
+            continue;
+
+        for(auto& deriving: data_decl->derivings)
+        {
+            if (not is_deriving_class(deriving, "Eq"))
+                continue;
+
+            auto [deriving_head, deriving_args] = Hs::decompose_type_apps(deriving);
+            auto deriving_con = unloc(deriving_head).to<Hs::TypeCon>();
+            assert(deriving_con);
+            TypeCon eq_class(deriving_con->name);
+
+            for(const auto& constructor: data_decl->get_constructors())
+            {
+                auto con_name = unloc(*constructor.con).name;
+                auto con_info = this_mod().constructor_info(con_name);
+                if (not con_info)
+                    continue;
+
+                set<TypeVar> data_tvs(con_info->uni_tvs.begin(), con_info->uni_tvs.end());
+                auto hs_field_types = constructor.get_field_types();
+
+                for(int i=0; i<con_info->field_types.size(); i++)
+                {
+                    auto pred = class_constraint(eq_class, con_info->field_types[i]);
+                    vector<Type> active;
+                    auto missing = find_missing_derived_constraint(pred, data_tvs, active);
+                    if (not missing)
+                        continue;
+
+                    auto field_loc = i < hs_field_types.size() ? hs_field_types[i].loc : deriving.loc;
+                    auto span = source_span_scope(field_loc);
+                    TidyState tidy_state;
+                    auto instance_pred = class_constraint(eq_class, type_apply(TypeCon(unloc(data_decl->con).name), con_info->uni_tvs));
+                    auto note = note_scope(Note()<<"When deriving the instance for "<<show_type_plain(tidy_state, instance_pred));
+                    record_error(Note()<<"Could not deduce '"<<show_type_plain(tidy_state, *missing)<<"' arising from field "<<(i+1)<<" of constructor '"<<get_unqualified_name(con_name)<<"' (type '"<<show_type_plain(tidy_state, con_info->field_types[i])<<"')");
+                }
+            }
+        }
+    }
 }
 
 TypeCon get_class_for_constraint(const Type& constraint)

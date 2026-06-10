@@ -27,4 +27,7 @@ struct TidyState
     std::string print(const Type& name);
 };
 
+std::string show_type_plain(TidyState& tidy_state, const Type& type);
+std::string show_type_plain(const Type& type);
+
 #endif

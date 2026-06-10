@@ -600,6 +600,10 @@ public:
     std::vector< std::pair<Core::Var<>, Hs::InstanceDecl> >
     infer_type_for_instances1(const Hs::Decls& decls);
 
+    std::optional<Type> find_missing_derived_constraint(const Type& pred, const std::set<TypeVar>& data_tvs, std::vector<Type>& active);
+
+    void check_derived_instances(const Hs::Decls& decls);
+
     // Figure 12
     std::pair<Hs::Binds, Core::Decls<>>
     infer_type_for_instances2(const std::vector<std::pair<Core::Var<>, Hs::InstanceDecl>>& named_instances);

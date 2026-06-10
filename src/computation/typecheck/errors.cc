@@ -100,7 +100,7 @@ string print_unqualified_id(const Located<string>& ls)
 
 string show_type(TidyState& tidy_state, const Type& type, bool quotes=true)
 {
-    string result = bold_green(tidy_state.print(type));
+    string result = bold_green(show_type_plain(tidy_state, type));
     if (quotes)
         result = '\'' + result + '\'';
     result += ANSI::bold;

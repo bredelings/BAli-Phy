@@ -195,3 +195,14 @@ std::string TidyState::print(const Type& type)
 
     std::abort();
 }
+
+std::string show_type_plain(TidyState& tidy_state, const Type& type)
+{
+    return tidy_state.print(type);
+}
+
+std::string show_type_plain(const Type& type)
+{
+    TidyState tidy_state;
+    return show_type_plain(tidy_state, type);
+}
