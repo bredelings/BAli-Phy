@@ -95,8 +95,7 @@ instance Enum Double where
 -- This isn't a standard function -- I made it up..
 enumByFrom by from = from:enumByFrom by (from+by)
 
--- This isn't right for negative "by"
-enumByToFrom by to from | from <= to    = from:enumByToFrom by to (from+by)
-                        | otherwise     = []
-
+enumByToFrom by to from | by >= 0 && from <= to  = from:enumByToFrom by to (from+by)
+                        | by <  0 && from >= to  = from:enumByToFrom by to (from+by)
+                        | otherwise              = []
 

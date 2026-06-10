@@ -9,5 +9,6 @@ ok = fromEnum Red == 0
   && pred Green == Blue
   && [Red .. Green] == [Red, Blue, Green]
   && [Red, Blue .. Green] == [Red, Blue, Green]
+  && [Green, Blue .. Red] == [Green, Blue, Red]
 
 main = print (if ok then 1 else 0)
