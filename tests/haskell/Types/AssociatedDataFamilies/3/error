@@ -1,8 +1,6 @@
 [1mMain.hs:8.15:[1;31m error:[0m[1m
-   • Can't declare non-associated data instance for data family 'Main.D'
-     associated with class 'Main.C'
-   • In data family instance 'data instance Main.D Main.Tag = Main.MkD
-     Main.Tag':
+   • Can't declare non-associated data instance for data family 'D' associated
+     with class 'C'
   [1;34m|[0m
 [1;34m8[0m [1;34m| [0mdata instance [1;31mD[0m Tag = MkD Tag
   [1;34m|[0m               [1;31m^[0m

@@ -129,13 +129,15 @@ bool TypeChecker::check_family_instance_association(const Hs::LTypeCon& family_c
 						    bool indent_message)
 {
     auto prefix = indent_message ? "  " : "";
+    auto family_display_name = get_unqualified_name(unloc(family_con).name);
+    auto class_display_name = [](const string& name) {return get_unqualified_name(name);};
 
     if (not family_associated_class)
     {
         if (require_associated_family)
         {
             auto family_display = family_name == "data family" ? "Data family" : "Type family";
-            record_error(family_con.loc, Note()<<prefix<<family_display<<" '"<<family_con.print()<<"' is not associated with a class");
+            record_error(family_con.loc, Note()<<prefix<<family_display<<" '"<<family_display_name<<"' is not associated with a class");
             return false;
         }
         return true;
@@ -143,13 +145,13 @@ bool TypeChecker::check_family_instance_association(const Hs::LTypeCon& family_c
 
     if (not instance_associated_class)
     {
-        record_error(family_con.loc, Note()<<prefix<<"Can't declare non-associated "<<instance_name<<" for "<<family_name<<" '"<<family_con.print()<<"' associated with class '"<<*family_associated_class<<"'");
+        record_error(family_con.loc, Note()<<prefix<<"Can't declare non-associated "<<instance_name<<" for "<<family_name<<" '"<<family_display_name<<"' associated with class '"<<class_display_name(*family_associated_class)<<"'");
         return false;
     }
 
     if (*family_associated_class != *instance_associated_class)
     {
-        record_error(family_con.loc, Note()<<prefix<<"Trying to declare "<<instance_name<<" in class '"<<*instance_associated_class<<"' for family '"<<family_con.print()<<"' associated with class '"<<*family_associated_class<<"'");
+        record_error(family_con.loc, Note()<<prefix<<"Trying to declare "<<instance_name<<" in class '"<<class_display_name(*instance_associated_class)<<"' for family '"<<family_display_name<<"' associated with class '"<<class_display_name(*family_associated_class)<<"'");
         return false;
     }
 
@@ -190,7 +192,6 @@ void TypeChecker::check_associated_family_instance_args(const vector<Hs::LType>&
 
 void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
-    auto note = note_scope( Note()<<"In instance '"<<inst.print()<<"':" );
     auto inst_loc = *(inst.con.loc * range(inst.args) * inst.rhs.loc);
     auto span = source_span_scope( inst_loc );
 
@@ -218,6 +219,8 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     if (not check_family_instance_association(inst.con, tf_info->associated_class, associated_class, "type instance", "type family", false, true))
         return;
 
+    auto note = note_scope( Note()<<"In instance '"<<inst.print()<<"':" );
+
     // 4. Check the arity before comparing associated family arguments below.
     if (inst.args.size() != tf_info->args.size())
     {
@@ -241,7 +244,6 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
 void TypeChecker::check_data_instance(const Hs::DataFamilyInstanceDecl& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
 {
-    auto note = note_scope( Note()<<"In data instance '"<<inst.print()<<"':" );
     auto span = source_span_scope(inst.con.loc);
 
     // 1. Check that the type family exists.
@@ -259,6 +261,8 @@ void TypeChecker::check_data_instance(const Hs::DataFamilyInstanceDecl& inst, co
     // 3. Check family association
     if (not check_family_instance_association(inst.con, df_info->associated_class, associated_class, "data instance", "data family", true, true))
         return;
+
+    auto note = note_scope( Note()<<"In data instance '"<<inst.print()<<"':" );
 
     // 4. Check the arity before comparing associated family arguments below.
     if (inst.args.size() != df_info->args.size())
