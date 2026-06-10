@@ -1710,9 +1710,16 @@ bool Module::is_refutable_pattern(const Hs::LPat& lpat) const
     auto& [loc,pat] = lpat;
     if (auto con_pat = pat.to<Hs::ConPattern>())
     {
-        // If there's > 1 constructor this this if refutable.
         auto C = lookup_resolved_symbol(unloc(con_pat->head).name);
         assert(C);
+
+        if (C->con_info and C->con_info->is_newtype_constructor)
+        {
+            assert(con_pat->args.size() == 1);
+            return is_refutable_pattern(con_pat->args[0]);
+        }
+
+        // If there's > 1 constructor this this if refutable.
         auto T = lookup_resolved_type(*C->parent);
         assert(T);
         const auto* data_info = T->is_data();
