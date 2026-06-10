@@ -19,32 +19,34 @@ using std::map;
 
 namespace
 {
-    bool has_strictness_mark(const Hs::LType& ltype)
+    optional<yy::location> top_level_strictness_mark(const Hs::LType& ltype)
     {
         const auto& type = unloc(ltype);
 
-        if (type.is_a<Hs::StrictType>())
-            return true;
-        else if (auto lazy_type = type.to<Hs::LazyType>())
-            return has_strictness_mark(lazy_type->type);
-        else if (auto tuple_type = type.to<Hs::TupleType>())
-        {
-            for(const auto& element_type: tuple_type->element_types)
-                if (has_strictness_mark(element_type))
-                    return true;
-        }
-        else if (auto list_type = type.to<Hs::ListType>())
-            return has_strictness_mark(list_type->element_type);
-        else if (auto tapp = type.to<Hs::TypeApp>())
-            return has_strictness_mark(tapp->head) or has_strictness_mark(tapp->arg);
-        else if (auto constrained_type = type.to<Hs::ConstrainedType>())
-            return has_strictness_mark(constrained_type->type);
-        else if (auto forall_type = type.to<Hs::ForallType>())
-            return has_strictness_mark(forall_type->type);
-        else if (auto type_of_kind = type.to<Hs::TypeOfKind>())
-            return has_strictness_mark(type_of_kind->type);
+        if (type.is_a<Hs::StrictType>() or type.is_a<Hs::LazyType>())
+            return ltype.loc;
 
-        return false;
+        return {};
+    }
+
+    optional<yy::location> constructor_signature_field_strictness_mark(const Hs::LType& ltype)
+    {
+        const auto& type = unloc(ltype);
+
+        if (auto forall_type = type.to<Hs::ForallType>())
+            return constructor_signature_field_strictness_mark(forall_type->type);
+        else if (auto constrained_type = type.to<Hs::ConstrainedType>())
+            return constructor_signature_field_strictness_mark(constrained_type->type);
+        else if (auto function_type = Hs::is_function_type(ltype))
+        {
+            const auto& [field_type, result_type] = *function_type;
+            if (auto loc = top_level_strictness_mark(field_type))
+                return loc;
+
+            return constructor_signature_field_strictness_mark(result_type);
+        }
+
+        return {};
     }
 }
 
@@ -342,9 +344,9 @@ void renamer_state::check_newtype_decl(const Hs::DataDefn& data_defn, const Hs::
     auto constructor_error = [&](const optional<yy::location>& loc) {
         error(loc, Note()<<"newtype '"<<type_name<<"' must have exactly one constructor with exactly one field");
     };
-    auto strict_error = [&](const Hs::LType& field_type) {
-        if (has_strictness_mark(field_type))
-            error(field_type.loc, Note()<<"newtype '"<<type_name<<"' constructor must not have a strictness annotation");
+    auto strict_error = [&](const optional<yy::location>& loc) {
+        if (loc)
+            error(*loc, Note()<<"newtype '"<<type_name<<"' constructor must not have a strictness annotation");
     };
 
     if (data_defn.is_regular_decl())
@@ -357,7 +359,7 @@ void renamer_state::check_newtype_decl(const Hs::DataDefn& data_defn, const Hs::
             return;
         }
 
-        strict_error(constructors[0].get_field_types()[0]);
+        strict_error(top_level_strictness_mark(constructors[0].get_field_types()[0]));
     }
     else if (data_defn.is_gadt_decl())
     {
@@ -369,7 +371,7 @@ void renamer_state::check_newtype_decl(const Hs::DataDefn& data_defn, const Hs::
             return;
         }
 
-        strict_error(constructors[0].type);
+        strict_error(constructor_signature_field_strictness_mark(constructors[0].type));
     }
 }
 

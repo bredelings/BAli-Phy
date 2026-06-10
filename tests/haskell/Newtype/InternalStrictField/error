@@ -1,0 +1,5 @@
+[1mMain.hs:3.48-51:[1;31m error:[0m[1m
+   • Internal strictness mark not allowed
+  [1;34m|[0m
+[1;34m3[0m [1;34m| [0mnewtype InternalStrict = InternalStrict (Maybe [1;31m!Int[0m)
+  [1;34m|[0m                                                [1;31m^^^^[0m
