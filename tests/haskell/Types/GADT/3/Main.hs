@@ -1,4 +1,6 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs, NoImplicitPrelude #-}
+
+import Data.Eq
 
 data T a = Eq a => MkT a
 

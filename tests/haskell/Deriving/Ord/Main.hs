@@ -1,4 +1,9 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module Main where
+
+import Compiler.Num
+import Data.Ord
+import System.IO (print)
 
 data Color = Red | Blue | Green deriving Eq deriving Ord
 data Box a = Empty | Box a | Pair a a deriving Eq deriving Ord
@@ -12,4 +17,4 @@ ok = compare Red Red == EQ
   && Pair 1 2 < Pair 1 3
   && max Red Blue == Blue
 
-main = print (if ok then 1 else 0)
+main = print (if ok then (1 :: Int) else 0)

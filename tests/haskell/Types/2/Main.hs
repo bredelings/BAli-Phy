@@ -1,3 +1,10 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
+import Compiler.Num
+import Data.Function (($))
+import System.IO (putStrLn)
+import Text.Show (show)
+
 class Foo a where
     foo :: a -> a -> a
 

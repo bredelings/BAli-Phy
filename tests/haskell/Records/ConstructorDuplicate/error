@@ -1,6 +1,6 @@
-[1mMain.hs:5.20-24:[1;31m error:[0m[1m
+[1mMain.hs:9.20-24:[1;31m error:[0m[1m
    • Field 'x' appears more than once in record construction.
   [1;34m|[0m
-[1;34m5[0m [1;34m| [0mp = Point { x = 1, [1;31mx = 2[0m, y = 3 }
+[1;34m9[0m [1;34m| [0mp = Point { x = 1, [1;31mx = 2[0m, y = 3 }
   [1;34m|[0m                    [1;31m^^^^^[0m
 

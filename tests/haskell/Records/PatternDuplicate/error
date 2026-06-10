@@ -1,6 +1,6 @@
-[1mMain.hs:5.21-25:[1;31m error:[0m[1m
+[1mMain.hs:9.21-25:[1;31m error:[0m[1m
    • Field 'x' appears more than once in pattern 'Point {x = a,x = b}'.
   [1;34m|[0m
-[1;34m5[0m [1;34m| [0mbad (Point { x = a, [1;31mx = b[0m }) = a + b
+[1;34m9[0m [1;34m| [0mbad (Point { x = a, [1;31mx = b[0m }) = a + b
   [1;34m|[0m                     [1;31m^^^^^[0m
 

@@ -1,5 +1,8 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module Main where
+
+import Compiler.IO (IO(IO))
 
 newtype Strict = Strict !Int
 
-main = print 1
+main = IO (\s -> (s, ()))

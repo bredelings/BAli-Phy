@@ -1,4 +1,13 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
+import Compiler.Fractional
+import Compiler.Num
+import Compiler.RealFloat
+import Data.Function (($))
+import Data.List ((++))
 import Numeric.Log
+import System.IO (putStrLn)
+import Text.Show (show)
 
 x = 2_002.0_0e1_0 :: Double
 
@@ -10,7 +19,7 @@ main = do
   putStrLn $ "floatDigits x = " ++ (show $ floatDigits x)
   putStrLn $ "floatRange x = " ++ (show $ floatRange x)
   putStrLn $ "decodeFloat x = " ++ (show $ decodeFloat x)
-  putStrLn $ "encodeFloat 2 3 = " ++ (show $ encodeFloat 2 3)
+  putStrLn $ "encodeFloat 2 3 = " ++ (show $ (encodeFloat 2 3 :: Double))
   putStrLn $ "significand x = " ++ (show $ significand x)
   putStrLn $ "exponent x = " ++ (show $ exponent x)
   putStrLn $ "scaleFloat 2 x = " ++ (show $ scaleFloat 2 x)

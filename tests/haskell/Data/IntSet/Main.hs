@@ -1,4 +1,11 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
+import Compiler.Enum
+import Compiler.Num
 import Data.IntSet as I
+import Data.Function (($))
+import System.IO (putStrLn)
+import Text.Show (show)
 
 main = do
   let xs = [i | i <- [0..10]]

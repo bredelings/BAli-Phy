@@ -1,8 +1,12 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude, OverloadedStrings #-}
 
+import Compiler.Num
 import Data.Text (Text)
+import Data.Function (($))
 import Data.Semigroup
 import Data.JSON    
+import System.IO (putStrLn)
+import Text.Show (show)
     
 data Person = Person { name :: Text, age :: Int}
 

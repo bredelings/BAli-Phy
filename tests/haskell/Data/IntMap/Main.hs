@@ -1,5 +1,13 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
+import Compiler.Enum
+import Compiler.Num
 import Data.IntMap as I
 import qualified Data.IntSet as IS
+import Data.Function (($))
+import Data.Functor (fmap)
+import System.IO (putStrLn)
+import Text.Show (show)
 
 main = do
   let xs = [(i,i) | i <- [0..10]]

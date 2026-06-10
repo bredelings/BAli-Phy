@@ -1,4 +1,11 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module Main where
+
+import Compiler.Enum
+import Compiler.Num
+import Data.Eq
+import Text.Show
+import System.IO (print)
 
 data Color = Red | Blue | Green deriving Eq deriving Show deriving Enum
 
@@ -11,4 +18,4 @@ ok = fromEnum Red == 0
   && [Red, Blue .. Green] == [Red, Blue, Green]
   && [Green, Blue .. Red] == [Green, Blue, Red]
 
-main = print (if ok then 1 else 0)
+main = print (if ok then (1 :: Int) else 0)

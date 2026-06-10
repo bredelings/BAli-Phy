@@ -1,3 +1,11 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
+import Compiler.Num
+import Data.Bool
+import Data.Function (($))
+import System.IO (putStrLn)
+import Text.Show (show)
+
 data Expr a where
     EBool :: Bool -> Expr Bool
     EInt :: Int -> Expr Int

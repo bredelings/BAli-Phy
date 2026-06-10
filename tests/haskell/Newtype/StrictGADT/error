@@ -1,5 +1,6 @@
-[1mMain.hs:5.17-20:[1;31m error:[0m[1m
+[1mMain.hs:7.17-20:[1;31m error:[0m[1m
    • newtype 'StrictGADT' constructor must not have a strictness annotation
   [1;34m|[0m
-[1;34m5[0m [1;34m| [0m  StrictGADT :: [1;31m!Int[0m -> StrictGADT
+[1;34m7[0m [1;34m| [0m  StrictGADT :: [1;31m!Int[0m -> StrictGADT
   [1;34m|[0m                 [1;31m^^^^[0m
+

@@ -1,3 +1,11 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
+import Compiler.Fractional
+import Compiler.Num
+import Data.Function (($))
+import System.IO (putStrLn)
+import Text.Show (show)
+
 data F123 = F1 { f1,f2::Int, f3::Double} | F2 {f1::Int, f3::Double} | F3 {f2::Int} | F4
 
 main = do

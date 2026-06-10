@@ -1,5 +1,6 @@
-bali-phy: Error! [1mMain.hs:2.7-15:[1;31m error:[0m[1m
+bali-phy: Error! [1mMain.hs:7.7-15:[1;31m error:[0m[1m
    • pattern binding failed pattern match
   [1;34m|[0m
-[1;34m2[0m [1;34m| [0m  let [1;31m!(Just x)[0m = Nothing
+[1;34m7[0m [1;34m| [0m  let [1;31m!(Just x)[0m = Nothing
   [1;34m|[0m       [1;31m^^^^^^^^^[0m
+

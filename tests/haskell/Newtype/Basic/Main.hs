@@ -1,4 +1,15 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module Main where
+
+import Compiler.Error (error)
+import Compiler.Num
+import Data.Eq
+import Data.List (map)
+import Data.Maybe
+import Data.Ord
+import System.IO (print)
+
+undefined = error "undefined"
 
 newtype Age = Age Int deriving Eq deriving Ord
 newtype Box a = Box a deriving Eq
@@ -25,4 +36,4 @@ ok = Age 1 < Age 2
   && refutableList == [4]
   && userId ((UserId 3) { userId = 11 }) == 11
 
-main = print (if ok then 1 else 0)
+main = print (if ok then (1 :: Int) else 0)

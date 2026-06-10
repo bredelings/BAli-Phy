@@ -1,4 +1,13 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module Main where
+
+import Compiler.Error (error)
+import Compiler.Num
+import Data.Eq
+import Data.List (map)
+import System.IO (print)
+
+undefined = error "undefined"
 
 data family F a
 
@@ -12,4 +21,4 @@ ok = unF (MkF 5) == 5
   && map unF (map MkF [1,2]) == [1,2]
   && lazyMatch == 7
 
-main = print (if ok then 1 else 0)
+main = print (if ok then (1 :: Int) else 0)

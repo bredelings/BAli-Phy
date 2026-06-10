@@ -1,4 +1,8 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 module Main where
+
+import Text.Show
+import System.IO
 
 data Color = Red | Blue | Green deriving Show
 data Box a = Box a deriving Show

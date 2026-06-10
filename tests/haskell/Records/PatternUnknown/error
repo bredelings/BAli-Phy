@@ -1,6 +1,6 @@
-[1mMain.hs:5.14-18:[1;31m error:[0m[1m
+[1mMain.hs:9.14-18:[1;31m error:[0m[1m
    • Constructor 'Point' does not have field 'z'.
   [1;34m|[0m
-[1;34m5[0m [1;34m| [0mbad (Point { [1;31mz = a[0m }) = a
+[1;34m9[0m [1;34m| [0mbad (Point { [1;31mz = a[0m }) = a
   [1;34m|[0m              [1;31m^^^^^[0m
 

@@ -1,6 +1,6 @@
-[1mMain.hs:3.25-28:[1;31m error:[0m[1m
+[1mMain.hs:6.25-28:[1;31m error:[0m[1m
    • newtype 'Strict' constructor must not have a strictness annotation
   [1;34m|[0m
-[1;34m3[0m [1;34m| [0mnewtype Strict = Strict [1;31m!Int[0m
+[1;34m6[0m [1;34m| [0mnewtype Strict = Strict [1;31m!Int[0m
   [1;34m|[0m                         [1;31m^^^^[0m
 

@@ -1,6 +1,6 @@
-bali-phy: Error! [1mMain.hs:1.1:[1;31m error:[0m[1m
+bali-phy: Error! [1mMain.hs:10.1:[1;31m error:[0m[1m
    • pattern match failure in function
-  [1;34m|[0m
-[1;34m1[0m [1;34m| [0m[1;31mf[0m (Just x) = x
-  [1;34m|[0m [1;31m^[0m
+   [1;34m|[0m
+[1;34m10[0m [1;34m| [0m[1;31mf[0m (Just x) = x
+   [1;34m|[0m [1;31m^[0m
 
