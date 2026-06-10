@@ -89,10 +89,19 @@ instance Refl Int where
 
 newtype ReflAge = ReflAge Int deriving newtype Refl
 
+class Defaulted a where
+  defaulted :: a -> a
+  defaulted x = x
+
+instance Defaulted Int
+
+newtype DefaultedAge = DefaultedAge Int deriving newtype Defaulted
+
 unAge (Age x) = x
 unNewBox (NewBox (Box x)) = x
 unHigherAge (HigherAge x) = x
 unReflAge (ReflAge x) = x
+unDefaultedAge (DefaultedAge x) = x
 
 ok = unAge (twice (Age 21)) == 42
   && unNewBox (mapLike (\x -> x + 1) (NewBox (Box 41))) == 42
@@ -104,5 +113,6 @@ ok = unAge (twice (Age 21)) == 42
   && super (SuperAge 42) == 42
   && sub (SuperAge 41) == 42
   && unReflAge (refl (ReflAge 42)) == 42
+  && unDefaultedAge (defaulted (DefaultedAge 42)) == 42
 
 main = print (if ok then (1 :: Int) else 0)
