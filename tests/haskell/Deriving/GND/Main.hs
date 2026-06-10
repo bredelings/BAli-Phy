@@ -11,7 +11,7 @@ class Twice a where
 instance Twice Int where
   twice x = x + x
 
-newtype Age = Age Int deriving Twice
+newtype Age = Age Int deriving newtype Twice
 
 class MapLike f where
   mapLike :: (a -> b) -> f a -> f b
@@ -21,7 +21,7 @@ data Box a = Box a
 instance MapLike Box where
   mapLike f (Box x) = Box (f x)
 
-newtype NewBox a = NewBox (Box a) deriving MapLike
+newtype NewBox a = NewBox (Box a) deriving newtype MapLike
 
 class Offset tag a where
   offset :: tag -> a -> Int
@@ -29,7 +29,7 @@ class Offset tag a where
 instance Offset Int Int where
   offset tag x = tag + x
 
-newtype Count = Count Int deriving (Offset Int)
+newtype Count = Count Int deriving newtype (Offset Int)
 
 class Sized a where
   type SizeArg a
@@ -39,7 +39,7 @@ instance Sized Int where
   type SizeArg Int = Int
   sizeArg x = x
 
-newtype Size = Size Int deriving Sized
+newtype Size = Size Int deriving newtype Sized
 
 class Tagged tag a where
   type TaggedArg tag a
@@ -49,7 +49,9 @@ instance Tagged Int Int where
   type TaggedArg Int Int = Int
   taggedArg tag x = tag + x
 
-newtype TaggedCount = TaggedCount Int deriving (Tagged Int)
+newtype TaggedCount = TaggedCount Int deriving newtype (Tagged Int)
+
+data StockColor = StockRed | StockBlue deriving stock Eq
 
 unAge (Age x) = x
 unNewBox (NewBox (Box x)) = x
@@ -59,5 +61,6 @@ ok = unAge (twice (Age 21)) == 42
   && offset (1 :: Int) (Count 41) == 42
   && sizeArg (Size 42) == 42
   && taggedArg (1 :: Int) (TaggedCount 41) == 42
+  && StockRed == StockRed
 
 main = print (if ok then (1 :: Int) else 0)

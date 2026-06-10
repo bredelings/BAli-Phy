@@ -289,7 +289,11 @@ Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl, const vector<Hs:
         constraint = rename_type(constraint);
 
     for(auto& deriving: decl.derivings)
-        deriving = rename_type(deriving);
+    {
+        deriving.type = rename_type(deriving.type);
+        if (deriving.via_type)
+            deriving.via_type = rename_type(*deriving.via_type);
+    }
 
     if (decl.is_regular_decl())
     {

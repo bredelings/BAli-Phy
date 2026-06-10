@@ -78,6 +78,7 @@ driver::driver (const LanguageExtensions& exts)
     reserved_words = {
         {"_",{parser::token::TOK_UNDERSCORE,0}},
         {"as",{parser::token::TOK_AS,0}},
+        {"anyclass",{parser::token::TOK_ANYCLASS,0}},
         {"bpcall",{parser::token::TOK_BPCALL,0}},
         {"case",{parser::token::TOK_CASE,0}},
         {"class",{parser::token::TOK_CLASS,0}},
@@ -106,9 +107,11 @@ driver::driver (const LanguageExtensions& exts)
         {"then",{parser::token::TOK_THEN,0}},
         {"trcall",{parser::token::TOK_TRCALL,0}},
         {"type",{parser::token::TOK_TYPE,0}},
-        {"where",{parser::token::TOK_WHERE,0}},
         {"mdo", {parser::token::TOK_MDO,0}},
-        {"rec", {parser::token::TOK_REC,0}}
+        {"rec", {parser::token::TOK_REC,0}},
+        {"stock", {parser::token::TOK_STOCK,0}},
+        {"via", {parser::token::TOK_VIA,0}},
+        {"where",{parser::token::TOK_WHERE,0}}
     };
 
     tight_infix_reserved_symbols = {

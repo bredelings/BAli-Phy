@@ -1,0 +1,12 @@
+[1mMain.hs:7.30-34:[1;31m error:[0m[1m
+   • DeriveAnyClass is not supported yet
+  [1;34m|[0m
+[1;34m7[0m [1;34m| [0mdata T = T deriving anyclass [1;31mEmpty[0m
+  [1;34m|[0m                              [1;31m^^^^^[0m
+
+[1mMain.hs:9.26-30:[1;31m error:[0m[1m
+   • DerivingVia is not supported yet
+  [1;34m|[0m
+[1;34m9[0m [1;34m| [0mnewtype U = U T deriving [1;31mEmpty[0m via T
+  [1;34m|[0m                          [1;31m^^^^^[0m
+

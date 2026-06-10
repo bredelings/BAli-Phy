@@ -487,6 +487,26 @@ enum class DataOrNewtype {data,newtype};
 
 std::ostream& operator<<(std::ostream& o, DataOrNewtype);
 
+enum class DerivingStrategy {stock, anyclass, newtype, via};
+
+std::ostream& operator<<(std::ostream& o, DerivingStrategy);
+
+struct Deriving
+{
+    std::optional<DerivingStrategy> strategy;
+    LType type;
+    std::optional<LType> via_type;
+
+    std::string print() const;
+
+    Deriving() = default;
+    Deriving(const std::optional<DerivingStrategy>& s, const LType& t, const std::optional<LType>& v = {})
+        :strategy(s),
+         type(t),
+         via_type(v)
+        {}
+};
+
 struct DataDefn
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
@@ -499,7 +519,7 @@ struct DataDefn
     // Do we need a variant where this is absent?
     std::variant<std::monostate,ConstructorsDecl, GADTConstructorsDecl> constructors;
 
-    std::vector<LType> derivings;
+    std::vector<Deriving> derivings;
 
     bool is_empty_decl() const;
     bool is_regular_decl() const;
@@ -516,7 +536,7 @@ struct DataDefn
     DataDefn(DataOrNewtype dn,
 	    const Context& ct,
 	    const std::optional<Kind>& k,
-            const std::vector<LType>& ds = {})
+            const std::vector<Deriving>& ds = {})
         :data_or_newtype(dn),
          context(ct),
          kind_sig(k),
@@ -527,7 +547,7 @@ struct DataDefn
 	    const Context& ct,
 	    const std::optional<Kind>& k,
 	    const ConstructorsDecl& cs,
-            const std::vector<LType>& ds = {})
+            const std::vector<Deriving>& ds = {})
         :data_or_newtype(dn),
          context(ct),
          kind_sig(k),
@@ -539,7 +559,7 @@ struct DataDefn
 	     const Context& ct,
 	     const std::optional<Kind>& k,
 	     const GADTConstructorsDecl& gadt_cs,
-             const std::vector<LType>& ds = {})
+             const std::vector<Deriving>& ds = {})
         :data_or_newtype(dn),
          context(ct),
          kind_sig(k),

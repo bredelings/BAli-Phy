@@ -709,6 +709,32 @@ std::ostream& operator<<(std::ostream& o, DataOrNewtype d)
 	return (o<<"newtype");
 }
 
+std::ostream& operator<<(std::ostream& o, DerivingStrategy s)
+{
+    if (s == DerivingStrategy::stock)
+        return (o<<"stock");
+    else if (s == DerivingStrategy::anyclass)
+        return (o<<"anyclass");
+    else if (s == DerivingStrategy::newtype)
+        return (o<<"newtype");
+    else
+        return (o<<"via");
+}
+
+std::string Deriving::print() const
+{
+    std::string result;
+    if (strategy and *strategy != DerivingStrategy::via)
+        result += convertToString(*strategy) + " ";
+
+    result += type.print();
+
+    if (strategy and *strategy == DerivingStrategy::via and via_type)
+        result += " via " + via_type->print();
+
+    return result;
+}
+
 
 string DataFamilyInstanceDecl::print() const
 {

@@ -32,10 +32,10 @@
   Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
                                              const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs,
-                                             const std::vector<Hs::LType>& derivings);
+                                             const std::vector<Hs::Deriving>& derivings);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
                                              const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::GADTConstructorsDecl& constrs,
-                                             const std::vector<Hs::LType>& derivings);
+                                             const std::vector<Hs::Deriving>& derivings);
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const std::vector<Hs::FunDep>& fds, const std::optional<Located<Hs::Decls>>& decls);
   Hs::Context make_context(const Hs::LType& context);
   std::tuple<Located<Hs::TypeCon>, std::vector<Hs::LType>> check_type_or_class_header2(const Hs::LType& type);
@@ -373,10 +373,12 @@
 %type <std::vector<Hs::FieldDecl>> fielddecls
 %type <std::vector<Hs::FieldDecl>> fielddecls1
 %type <Hs::FieldDecl> fielddecl
-%type <std::vector<Hs::LType>> maybe_derivings
-%type <std::vector<Hs::LType>> derivings
-%type <std::vector<Hs::LType>> deriving
+%type <std::vector<Hs::Deriving>> maybe_derivings
+%type <std::vector<Hs::Deriving>> derivings
+%type <std::vector<Hs::Deriving>> deriving
 %type <std::vector<Hs::LType>> deriv_clause_types
+%type <Hs::DerivingStrategy> deriv_strategy_no_via
+%type <Hs::LType> deriv_strategy_via
 
 %type <Located<expression_ref>> decl_no_th
 %type <Located<expression_ref>> decl
@@ -718,11 +720,11 @@ overlap_pragma: "{-# OVERLAPPABLE" "#-}"       { $$ = "OVERLAPPABLE"; }
 |               "{-# INCOHERENT" "#-}"         { $$ = "INCOHERENT"; }
 |               %empty                         {}
    
-deriv_strategy_no_via: "stock"
-|                      "anyclass"
-|                      "newtype"
+deriv_strategy_no_via: "stock"      {$$ = Hs::DerivingStrategy::stock;}
+|                      "anyclass"   {$$ = Hs::DerivingStrategy::anyclass;}
+|                      "newtype"    {$$ = Hs::DerivingStrategy::newtype;}
 
-deriv_strategy_via: "via" type
+deriv_strategy_via: "via" type      {$$ = $2;}
 
 /*
 deriv_standalone_strategy: "stock"
@@ -1125,9 +1127,21 @@ maybe_derivings: %empty     {}
 derivings:       derivings deriving {$$ = $1; $$.insert($$.end(), $2.begin(), $2.end());}
 |                deriving           {$$ = $1;}
 
-deriving: "deriving" deriv_clause_types                         {$$ = $2;}
-|         "deriving" deriv_strategy_no_via deriv_clause_types    {$$ = $3;}
-|         "deriving" deriv_clause_types deriv_strategy_via       {$$ = $2;}
+deriving: "deriving" deriv_clause_types
+          {
+              for(auto& type: $2)
+                  $$.push_back(Hs::Deriving({}, type));
+          }
+|         "deriving" deriv_strategy_no_via deriv_clause_types
+          {
+              for(auto& type: $3)
+                  $$.push_back(Hs::Deriving($2, type));
+          }
+|         "deriving" deriv_clause_types deriv_strategy_via
+          {
+              for(auto& type: $2)
+                  $$.push_back(Hs::Deriving(Hs::DerivingStrategy::via, type, $3));
+          }
 
 deriv_clause_types: qtycondoc           {$$.push_back({@1,Hs::TypeCon($1)});}
 |                   "(" ")"             {}
@@ -1773,7 +1787,7 @@ Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Hs::LType& lhs_typ
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
                                            const Hs::LType& header, const std::optional<Hs::Kind>& k,
                                            const Hs::ConstructorsDecl& constrs,
-                                           const std::vector<Hs::LType>& derivings)
+                                           const std::vector<Hs::Deriving>& derivings)
 {
     auto [con, type_args] = check_type_or_class_header2(header);
     return {con, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs, derivings)};
@@ -1782,7 +1796,7 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
                                            const Hs::LType& header, const std::optional<Hs::Kind>& k,
                                            const Hs::GADTConstructorsDecl& constrs,
-                                           const std::vector<Hs::LType>& derivings)
+                                           const std::vector<Hs::Deriving>& derivings)
 {
     auto [con, type_args] = check_type_or_class_header2(header);
     return {con, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs, derivings)};

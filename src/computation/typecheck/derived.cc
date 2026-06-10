@@ -777,7 +777,7 @@ namespace
     }
 
     // Synthesize a GND instance header and leave method bodies for instance pass 2.
-    GeneralizedNewtypeDerivingResult derive_generalized_newtype_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::LType& deriving)
+    GeneralizedNewtypeDerivingResult derive_generalized_newtype_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::LType& deriving, bool explicit_newtype_strategy = false)
     {
         auto deriving_class = resolved_deriving_class(tc.this_mod(), deriving);
         if (not deriving_class)
@@ -788,7 +788,14 @@ namespace
             return {};
 
         if (data_decl.data_or_newtype != Hs::DataOrNewtype::newtype)
+        {
+            if (explicit_newtype_strategy)
+            {
+                tc.record_error(deriving.loc, Note()<<"deriving newtype is only supported for newtype declarations");
+                return {true, {}};
+            }
             return {};
+        }
 
         if (deriving_class->fixed_args.size() + 1 != class_info->type_vars.size())
         {
@@ -835,31 +842,66 @@ Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
         {
             for(auto& deriving: data_decl->derivings)
             {
-                auto derived_class = stock_deriving_class(this_mod(), deriving);
-                if (not derived_class)
+                if (deriving.strategy == Hs::DerivingStrategy::via)
                 {
-                    auto gnd = derive_generalized_newtype_instance(*this, *data_decl, deriving);
+                    record_error(deriving.type.loc, Note()<<"DerivingVia is not supported yet");
+                    continue;
+                }
+
+                if (deriving.strategy == Hs::DerivingStrategy::anyclass)
+                {
+                    record_error(deriving.type.loc, Note()<<"DeriveAnyClass is not supported yet");
+                    continue;
+                }
+
+                auto derive_stock = [&]() -> bool
+                {
+                    auto derived_class = stock_deriving_class(this_mod(), deriving.type);
+                    if (not derived_class)
+                        return false;
+
+                    const auto& spec = *derived_class->spec;
+                    if (not spec.validate(*data_decl))
+                    {
+                        record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                        return true;
+                    }
+
+                    instances.push_back({deriving.type.loc, spec.derive(*data_decl, deriving.type.loc)});
+                    return true;
+                };
+
+                if (deriving.strategy == Hs::DerivingStrategy::stock)
+                {
+                    if (not derive_stock())
+                        record_error(deriving.type.loc, Note()<<"stock deriving "<<deriving.type.print()<<" is not supported yet");
+                    continue;
+                }
+
+                if (deriving.strategy == Hs::DerivingStrategy::newtype)
+                {
+                    auto gnd = derive_generalized_newtype_instance(*this, *data_decl, deriving.type, true);
                     if (gnd.instance)
-                        instances.push_back({deriving.loc, *gnd.instance});
+                        instances.push_back({deriving.type.loc, *gnd.instance});
                     else if (not gnd.handled)
-                        record_error(deriving.loc, Note()<<"deriving "<<deriving.print()<<" is not supported yet");
+                        record_error(deriving.type.loc, Note()<<"newtype deriving "<<deriving.type.print()<<" is not supported yet");
                     continue;
                 }
 
-                const auto& spec = *derived_class->spec;
-                if (not spec.validate(*data_decl))
+                if (not derive_stock())
                 {
-                    record_error(deriving.loc, Note()<<spec.unsupported_message);
-                    continue;
+                    auto gnd = derive_generalized_newtype_instance(*this, *data_decl, deriving.type);
+                    if (gnd.instance)
+                        instances.push_back({deriving.type.loc, *gnd.instance});
+                    else if (not gnd.handled)
+                        record_error(deriving.type.loc, Note()<<"deriving "<<deriving.type.print()<<" is not supported yet");
                 }
-
-                instances.push_back({deriving.loc, spec.derive(*data_decl, deriving.loc)});
             }
         }
         else if (auto data_inst = decl.to<Hs::DataFamilyInstanceDecl>())
         {
             if (not data_inst->rhs.derivings.empty())
-                record_error(data_inst->rhs.derivings.front().loc, Note()<<"deriving clauses on data family instances are not supported yet");
+                record_error(data_inst->rhs.derivings.front().type.loc, Note()<<"deriving clauses on data family instances are not supported yet");
         }
     }
 
@@ -917,7 +959,10 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
 
         for(auto& deriving: data_decl->derivings)
         {
-            auto derived_class = stock_deriving_class(this_mod(), deriving);
+            if (deriving.strategy and deriving.strategy != Hs::DerivingStrategy::stock)
+                continue;
+
+            auto derived_class = stock_deriving_class(this_mod(), deriving.type);
             if (not derived_class or not derived_class->spec->needs_field_constraints)
                 continue;
 
@@ -938,7 +983,7 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
                     if (not missing)
                         continue;
 
-                    auto field_loc = (locs != source_field_locs.end() and i < locs->second.size()) ? locs->second[i] : deriving.loc;
+                    auto field_loc = (locs != source_field_locs.end() and i < locs->second.size()) ? locs->second[i] : deriving.type.loc;
                     auto span = source_span_scope(field_loc);
                     TidyState tidy_state;
                     auto instance_pred = class_constraint(derived_class->type_con, type_apply(TypeCon(unloc(data_decl->con).name), con_info->uni_tvs));
