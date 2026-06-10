@@ -14,7 +14,15 @@ using std::optional;
 
 namespace
 {
-    std::optional<TypeCon> stock_deriving_class(const Hs::LType& deriving)
+    enum class StockDerivingClass { Eq, Ord, Bounded, Enum, Ix, Show };
+
+    struct StockDerivingInfo
+    {
+        StockDerivingClass tag;
+        TypeCon type_con;
+    };
+
+    optional<StockDerivingInfo> stock_deriving_class(const Hs::LType& deriving)
     {
         auto [head, args] = Hs::decompose_type_apps(deriving);
         auto con = unloc(head).to<Hs::TypeCon>();
@@ -22,13 +30,29 @@ namespace
             return {};
 
         auto class_name = get_unqualified_name(con->name);
-        if (class_name == get_unqualified_name(eq_class_name)
-            or class_name == get_unqualified_name(ord_class_name)
-            or class_name == get_unqualified_name(bounded_class_name)
-            or class_name == get_unqualified_name(show_class_name))
-            return TypeCon(con->name);
+        auto type_con = TypeCon(con->name);
+        if (class_name == get_unqualified_name(eq_class_name))
+            return StockDerivingInfo{StockDerivingClass::Eq, type_con};
+        else if (class_name == get_unqualified_name(ord_class_name))
+            return StockDerivingInfo{StockDerivingClass::Ord, type_con};
+        else if (class_name == get_unqualified_name(bounded_class_name))
+            return StockDerivingInfo{StockDerivingClass::Bounded, type_con};
+        else if (class_name == get_unqualified_name(enum_class_name))
+            return StockDerivingInfo{StockDerivingClass::Enum, type_con};
+        else if (class_name == get_unqualified_name(ix_class_name))
+            return StockDerivingInfo{StockDerivingClass::Ix, type_con};
+        else if (class_name == get_unqualified_name(show_class_name))
+            return StockDerivingInfo{StockDerivingClass::Show, type_con};
         else
             return {};
+    }
+
+    bool stock_deriving_needs_field_constraints(StockDerivingClass tag)
+    {
+        return tag == StockDerivingClass::Eq
+            or tag == StockDerivingClass::Ord
+            or tag == StockDerivingClass::Bounded
+            or tag == StockDerivingClass::Show;
     }
 
     Type class_constraint(const TypeCon& class_con, const Type& type)
@@ -50,13 +74,6 @@ namespace
 
 namespace
 {
-    bool is_deriving_class(const Hs::LType& deriving, const string& class_name)
-    {
-        auto [head, args] = Hs::decompose_type_apps(deriving);
-        auto con = unloc(head).to<Hs::TypeCon>();
-        return con and con->name == class_name and args.empty();
-    }
-
     Hs::LType type_var_type(const Hs::LTypeVar& tv)
     {
         return {tv.loc, Hs::TypeVar(unloc(tv))};
@@ -565,50 +582,75 @@ Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
         {
             for(auto& deriving: data_decl->derivings)
             {
-                if (is_deriving_class(deriving, eq_class_name))
+                auto derived_class = stock_deriving_class(deriving);
+                if (not derived_class)
                 {
+                    record_error(deriving.loc, Note()<<"deriving "<<deriving.print()<<" is not supported yet");
+                    continue;
+                }
+
+                switch(derived_class->tag)
+                {
+                case StockDerivingClass::Eq:
                     if (not data_decl->is_regular_decl())
-                        throw myexception()<<"deriving Eq is only supported for regular data/newtype declarations";
+                    {
+                        record_error(deriving.loc, Note()<<"deriving Eq is only supported for regular data/newtype declarations");
+                        continue;
+                    }
                     instances.push_back({loc, derive_eq_instance(*data_decl)});
-                }
-                else if (is_deriving_class(deriving, ord_class_name))
-                {
+                    break;
+
+                case StockDerivingClass::Ord:
                     if (not data_decl->is_regular_decl())
-                        throw myexception()<<"deriving Ord is only supported for regular data/newtype declarations";
+                    {
+                        record_error(deriving.loc, Note()<<"deriving Ord is only supported for regular data/newtype declarations");
+                        continue;
+                    }
                     instances.push_back({loc, derive_ord_instance(*data_decl)});
-                }
-                else if (is_deriving_class(deriving, bounded_class_name))
-                {
+                    break;
+
+                case StockDerivingClass::Bounded:
                     if (not data_decl->is_regular_decl() or data_decl->get_constructors().empty())
-                        throw myexception()<<"deriving Bounded is only supported for regular data/newtype declarations with constructors";
+                    {
+                        record_error(deriving.loc, Note()<<"deriving Bounded is only supported for regular data/newtype declarations with constructors");
+                        continue;
+                    }
                     instances.push_back({loc, derive_bounded_instance(*data_decl)});
-                }
-                else if (is_deriving_class(deriving, enum_class_name))
-                {
+                    break;
+
+                case StockDerivingClass::Enum:
                     if (not data_decl->is_regular_decl() or data_decl->get_constructors().empty() or not has_only_nullary_constructors(*data_decl))
-                        throw myexception()<<"deriving Enum is only supported for regular data declarations with only nullary constructors";
+                    {
+                        record_error(deriving.loc, Note()<<"deriving Enum is only supported for regular data declarations with only nullary constructors");
+                        continue;
+                    }
                     instances.push_back({loc, derive_enum_instance(*data_decl)});
-                }
-                else if (is_deriving_class(deriving, ix_class_name))
-                {
+                    break;
+
+                case StockDerivingClass::Ix:
                     if (not data_decl->is_regular_decl() or data_decl->get_constructors().empty() or not has_only_nullary_constructors(*data_decl))
-                        throw myexception()<<"deriving Ix is only supported for regular data declarations with only nullary constructors";
+                    {
+                        record_error(deriving.loc, Note()<<"deriving Ix is only supported for regular data declarations with only nullary constructors");
+                        continue;
+                    }
                     instances.push_back({loc, derive_ix_instance(*data_decl)});
-                }
-                else if (is_deriving_class(deriving, show_class_name))
-                {
+                    break;
+
+                case StockDerivingClass::Show:
                     if (not data_decl->is_regular_decl())
-                        throw myexception()<<"deriving Show is only supported for regular data/newtype declarations";
+                    {
+                        record_error(deriving.loc, Note()<<"deriving Show is only supported for regular data/newtype declarations");
+                        continue;
+                    }
                     instances.push_back({loc, derive_show_instance(*data_decl)});
+                    break;
                 }
-                else
-                    throw myexception()<<"deriving "<<deriving.print()<<" is not supported yet";
             }
         }
         else if (auto data_inst = decl.to<Hs::DataFamilyInstanceDecl>())
         {
             if (not data_inst->rhs.derivings.empty())
-                throw myexception()<<"deriving clauses on data family instances are not supported yet";
+                record_error(data_inst->rhs.derivings.front().loc, Note()<<"deriving clauses on data family instances are not supported yet");
         }
     }
 
@@ -1049,7 +1091,7 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
         for(auto& deriving: data_decl->derivings)
         {
             auto derived_class = stock_deriving_class(deriving);
-            if (not derived_class)
+            if (not derived_class or not stock_deriving_needs_field_constraints(derived_class->tag))
                 continue;
 
             for(const auto& constructor: data_decl->get_constructors())
@@ -1064,7 +1106,7 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
 
                 for(int i=0; i<con_info->field_types.size(); i++)
                 {
-                    auto pred = class_constraint(*derived_class, con_info->field_types[i]);
+                    auto pred = class_constraint(derived_class->type_con, con_info->field_types[i]);
                     vector<Type> active;
                     auto missing = find_missing_derived_constraint(pred, data_tvs, active);
                     if (not missing)
@@ -1073,7 +1115,7 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
                     auto field_loc = i < hs_field_types.size() ? hs_field_types[i].loc : deriving.loc;
                     auto span = source_span_scope(field_loc);
                     TidyState tidy_state;
-                    auto instance_pred = class_constraint(*derived_class, type_apply(TypeCon(unloc(data_decl->con).name), con_info->uni_tvs));
+                    auto instance_pred = class_constraint(derived_class->type_con, type_apply(TypeCon(unloc(data_decl->con).name), con_info->uni_tvs));
                     auto note = note_scope(Note()<<"When deriving the instance for "<<show_type_plain(tidy_state, instance_pred));
                     record_error(Note()<<"Could not deduce '"<<show_type_plain(tidy_state, *missing)<<"' arising from field "<<(i+1)<<" of constructor '"<<get_unqualified_name(con_name)<<"' (type '"<<show_type_plain(tidy_state, con_info->field_types[i])<<"')");
                 }
