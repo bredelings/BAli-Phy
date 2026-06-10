@@ -200,29 +200,44 @@ namespace
         return {tv.loc, Hs::TypeVar(unloc(tv))};
     }
 
+    Hs::LType type_con_type(const Hs::LTypeCon& con, const vector<Hs::LType>& args)
+    {
+        return Hs::type_apply({con.loc, Hs::TypeCon(unloc(con).name)}, args);
+    }
+
     Hs::LType class_constraint(const string& class_name, const Hs::LType& type)
     {
         return Hs::type_apply({{noloc,Hs::TypeCon(class_name)}, type});
     }
 
-    Hs::LExp var_exp(const string& name)
+    Hs::LExp local_var_exp(const string& name)
     {
         return {noloc, Hs::Var(name)};
     }
 
+    Hs::LExp wired_var_exp(const string& name)
+    {
+        return {noloc, Hs::Var(name)};
+    }
+
+    Hs::LExp wired_con_exp(const string& name)
+    {
+        return {noloc, Hs::Con(name)};
+    }
+
     Hs::LExp bool_exp(bool b)
     {
-        return {noloc, Hs::Con(b ? bool_true_name : bool_false_name)};
+        return wired_con_exp(b ? bool_true_name : bool_false_name);
     }
 
     Hs::LExp eq_exp(const Hs::LExp& x, const Hs::LExp& y)
     {
-        return Hs::apply(var_exp(eq_method_name), {x, y});
+        return Hs::apply(wired_var_exp(eq_method_name), {x, y});
     }
 
     Hs::LExp and_exp(const Hs::LExp& x, const Hs::LExp& y)
     {
-        return Hs::apply(var_exp(bool_and_name), {x, y});
+        return Hs::apply(wired_var_exp(bool_and_name), {x, y});
     }
 
     Hs::LExp eq_all_exp(const vector<pair<Hs::LExp,Hs::LExp>>& fields)
@@ -256,12 +271,17 @@ namespace
         return {noloc, Hs::WildcardPattern()};
     }
 
-    Hs::MRule eq_method_rule(const Hs::LPat& x, const Hs::LPat& y, const Hs::LExp& rhs)
+    Hs::MRule binary_method_rule(const Hs::LPat& x, const Hs::LPat& y, const Hs::LExp& rhs)
     {
         return Hs::MRule({x, y}, Hs::SimpleRHS(rhs));
     }
 
-    Hs::InstanceDecl derive_eq_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    Hs::LDecl derived_method_decl(const string& method_name, const Hs::Matches& matches)
+    {
+        return {noloc, Hs::FunDecl({noloc,Hs::Var(get_unqualified_name(method_name))}, matches)};
+    }
+
+    Hs::LType stock_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name)
     {
         vector<Hs::LType> data_args;
         Hs::Context context = data_decl.context;
@@ -269,33 +289,36 @@ namespace
         {
             auto tv_type = type_var_type(tv);
             data_args.push_back(tv_type);
-            context.push_back(class_constraint(eq_class_name, tv_type));
+            context.push_back(class_constraint(class_name, tv_type));
         }
 
-        auto data_type = Hs::type_apply({data_decl.con.loc, Hs::TypeCon(unloc(data_decl.con).name)}, data_args);
-        auto instance_head = class_constraint(eq_class_name, data_type);
+        auto data_type = type_con_type(data_decl.con, data_args);
+        auto instance_head = class_constraint(class_name, data_type);
         Hs::LType polytype = context.empty() ? instance_head : Hs::LType{data_decl.con.loc, Hs::ConstrainedType(context, instance_head)};
-        polytype = Hs::add_forall_vars(data_decl.type_vars, polytype);
+        return Hs::add_forall_vars(data_decl.type_vars, polytype);
+    }
 
+    Hs::InstanceDecl derive_eq_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    {
         Hs::Matches eq_matches;
         for(const auto& constructor: data_decl.get_constructors())
         {
             vector<pair<Hs::LExp,Hs::LExp>> fields;
             for(int i=0; i<constructor.arity(); i++)
-                fields.push_back({var_exp("x$" + std::to_string(i)), var_exp("y$" + std::to_string(i))});
+                fields.push_back({local_var_exp("x$" + std::to_string(i)), local_var_exp("y$" + std::to_string(i))});
 
-            eq_matches.push_back(eq_method_rule(constructor_pattern(constructor, "x$"),
-                                                constructor_pattern(constructor, "y$"),
-                                                eq_all_exp(fields)));
+            eq_matches.push_back(binary_method_rule(constructor_pattern(constructor, "x$"),
+                                                    constructor_pattern(constructor, "y$"),
+                                                    eq_all_exp(fields)));
         }
 
         auto wildcard = wildcard_pat();
-        eq_matches.push_back(eq_method_rule(wildcard, wildcard, bool_exp(false)));
+        eq_matches.push_back(binary_method_rule(wildcard, wildcard, bool_exp(false)));
 
         Hs::Decls methods;
-        methods.push_back({noloc, Hs::FunDecl({noloc,Hs::Var(get_unqualified_name(eq_method_name))}, eq_matches)});
+        methods.push_back(derived_method_decl(eq_method_name, eq_matches));
 
-        return Hs::InstanceDecl({}, polytype, {}, {}, methods);
+        return Hs::InstanceDecl({}, stock_instance_type(data_decl, eq_class_name), {}, {}, methods);
     }
 }
 
