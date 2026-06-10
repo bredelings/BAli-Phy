@@ -1,0 +1,6 @@
+[1mMain.hs:8.21-22:[1;31m error:[0m[1m
+   • deriving Main.Eq is not supported yet
+  [1;34m|[0m
+[1;34m8[0m [1;34m| [0mdata T = T deriving [1;31mEq[0m
+  [1;34m|[0m                     [1;31m^^[0m
+

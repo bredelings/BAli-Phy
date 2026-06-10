@@ -22,26 +22,29 @@ namespace
         TypeCon type_con;
     };
 
-    optional<StockDerivingInfo> stock_deriving_class(const Hs::LType& deriving)
+    optional<StockDerivingInfo> stock_deriving_class(const Module& mod, const Hs::LType& deriving)
     {
         auto [head, args] = Hs::decompose_type_apps(deriving);
         auto con = unloc(head).to<Hs::TypeCon>();
         if (not con or not args.empty())
             return {};
 
-        auto class_name = get_unqualified_name(con->name);
-        auto type_con = TypeCon(con->name);
-        if (class_name == get_unqualified_name(eq_class_name))
+        auto type_info = mod.lookup_resolved_type(con->name);
+        if (not type_info)
+            return {};
+
+        auto type_con = TypeCon(type_info->name, type_info->kind);
+        if (type_info->name == eq_class_name)
             return StockDerivingInfo{StockDerivingClass::Eq, type_con};
-        else if (class_name == get_unqualified_name(ord_class_name))
+        else if (type_info->name == ord_class_name)
             return StockDerivingInfo{StockDerivingClass::Ord, type_con};
-        else if (class_name == get_unqualified_name(bounded_class_name))
+        else if (type_info->name == bounded_class_name)
             return StockDerivingInfo{StockDerivingClass::Bounded, type_con};
-        else if (class_name == get_unqualified_name(enum_class_name))
+        else if (type_info->name == enum_class_name)
             return StockDerivingInfo{StockDerivingClass::Enum, type_con};
-        else if (class_name == get_unqualified_name(ix_class_name))
+        else if (type_info->name == ix_class_name)
             return StockDerivingInfo{StockDerivingClass::Ix, type_con};
-        else if (class_name == get_unqualified_name(show_class_name))
+        else if (type_info->name == show_class_name)
             return StockDerivingInfo{StockDerivingClass::Show, type_con};
         else
             return {};
@@ -582,7 +585,7 @@ Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
         {
             for(auto& deriving: data_decl->derivings)
             {
-                auto derived_class = stock_deriving_class(deriving);
+                auto derived_class = stock_deriving_class(this_mod(), deriving);
                 if (not derived_class)
                 {
                     record_error(deriving.loc, Note()<<"deriving "<<deriving.print()<<" is not supported yet");
@@ -1090,7 +1093,7 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
 
         for(auto& deriving: data_decl->derivings)
         {
-            auto derived_class = stock_deriving_class(deriving);
+            auto derived_class = stock_deriving_class(this_mod(), deriving);
             if (not derived_class or not stock_deriving_needs_field_constraints(derived_class->tag))
                 continue;
 
