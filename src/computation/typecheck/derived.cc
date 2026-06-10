@@ -730,6 +730,23 @@ namespace
         return Hs::add_forall_vars(data_decl.type_vars, polytype);
     }
 
+    // Build the synthetic DerivingVia instance head C fixed... (T args...) with a C fixed... via context.
+    Hs::LType deriving_via_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name, const vector<Hs::LType>& fixed_args, const Hs::LType& via_type)
+    {
+        auto data_type = type_con_type(data_decl.con, type_var_types(data_decl.type_vars, data_decl.type_vars.size()));
+
+        Hs::Context context = data_decl.context;
+        auto via_constraint_args = fixed_args;
+        via_constraint_args.push_back(via_type);
+        context.push_back(class_constraint(class_name, via_constraint_args));
+
+        auto instance_args = fixed_args;
+        instance_args.push_back(data_type);
+        auto instance_head = class_constraint(class_name, instance_args);
+        Hs::LType polytype = Hs::LType{data_decl.con.loc, Hs::ConstrainedType(context, instance_head)};
+        return Hs::add_forall_vars(data_decl.type_vars, polytype);
+    }
+
     // Synthesize an empty anyclass instance and let ordinary instance checking handle defaults.
     optional<Hs::InstanceDecl> derive_anyclass_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::LType& deriving)
     {
@@ -862,6 +879,41 @@ namespace
         return {true, instance};
     }
 
+    // Synthesize a DerivingVia instance whose methods are coerced from the via dictionary.
+    optional<Hs::InstanceDecl> derive_via_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::Deriving& deriving)
+    {
+        if (not deriving.via_type)
+        {
+            tc.record_error(deriving.type.loc, Note()<<"DerivingVia requires a via type");
+            return {};
+        }
+
+        auto deriving_class = resolved_deriving_class(tc.this_mod(), deriving.type);
+        if (not deriving_class)
+            return {};
+
+        auto class_info = deriving_class->info->info;
+        if (not class_info)
+            return {};
+
+        if (deriving_class->fixed_args.size() + 1 != class_info->type_vars.size())
+        {
+            tc.record_error(deriving.type.loc, Note()<<"DerivingVia expects the deriving clause to leave exactly one class parameter for the data/newtype");
+            return {};
+        }
+
+        if (not class_info->associated_data_families.empty())
+        {
+            tc.record_error(deriving.type.loc, Note()<<"DerivingVia for classes with associated data families is not supported yet");
+            return {};
+        }
+
+        auto associated_type_instances = generalized_newtype_associated_type_instances(tc, data_decl, *class_info, deriving_class->fixed_args, *deriving.via_type, 0);
+        Hs::InstanceDecl instance({}, deriving_via_instance_type(data_decl, class_info->name, deriving_class->fixed_args, *deriving.via_type), associated_type_instances, {}, {});
+        instance.generalized_newtype_deriving = true;
+        return instance;
+    }
+
     // Override the inferred instance head when standalone deriving supplied an explicit context.
     void add_derived_instance(Hs::Decls& instances, const optional<yy::location>& loc, Hs::InstanceDecl instance, const optional<Hs::LType>& explicit_polytype)
     {
@@ -875,7 +927,10 @@ namespace
     {
         if (deriving.strategy == Hs::DerivingStrategy::via)
         {
-            tc.record_error(deriving.type.loc, Note()<<"DerivingVia is not supported yet");
+            if (auto instance = derive_via_instance(tc, data_decl, deriving))
+                add_derived_instance(instances, deriving.type.loc, *instance, explicit_polytype);
+            else
+                tc.record_error(deriving.type.loc, Note()<<"DerivingVia deriving "<<deriving.type.print()<<" is not supported yet");
             return;
         }
 
