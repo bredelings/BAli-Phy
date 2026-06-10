@@ -1,9 +1,12 @@
 #include "typecheck.H"
 #include "rename/rename.H"
 
+#include <functional>
+
 using std::vector;
 using std::set;
 using std::pair;
+using std::map;
 
 namespace
 {
@@ -86,6 +89,7 @@ namespace
         auto [tvs, context, rho_type] = Hs::peel_top_gen(constructor.type);
         return range(context);
     }
+
 }
 
 std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
@@ -191,6 +195,77 @@ DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, con
 
     K.pop_type_var_scope();
     return info;
+}
+
+// Infer the most permissive role for each data type parameter from its uses in constructors.
+vector<Role> TypeChecker::infer_roles_for_data_type(const vector<TypeVar>& data_tvs, const DataConEnv& constructors) const
+{
+    vector<Role> roles(data_tvs.size(), Role::Phantom);
+    map<TypeVar, int> tv_indices;
+    for(int i=0;i<data_tvs.size();i++)
+        tv_indices.insert({data_tvs[i], i});
+
+    // Raise a type parameter's role when it appears in a stricter context.
+    auto raise_role = [&](const TypeVar& tv, Role role)
+    {
+        auto index = tv_indices.find(tv);
+        if (index != tv_indices.end())
+            roles[index->second] = max_role(roles[index->second], role);
+    };
+
+    // Walk a type and mark data type parameters according to their ambient role.
+    std::function<void(Type,Role)> mark_type = [&](Type type, Role ambient)
+    {
+        type = follow_meta_type_var(type);
+        if (auto tv = type.to<TypeVar>())
+            raise_role(*tv, ambient);
+        else if (type.is_a<MetaTypeVar>() or type.is_a<TypeCon>())
+            return;
+        else if (auto syn = expand_type_synonym(type))
+            mark_type(*syn, ambient);
+        else if (auto con = type.to<ConstrainedType>())
+        {
+            for(auto& constraint: con->context)
+                mark_type(constraint, Role::Nominal);
+            mark_type(con->type, ambient);
+        }
+        else if (auto forall = type.to<ForallType>())
+        {
+            for(auto& tv: forall->type_var_binders)
+                mark_type(tv.kind, Role::Nominal);
+            mark_type(forall->type, ambient);
+        }
+        else if (auto tcapp = is_type_con_app(type))
+        {
+            auto& [tc, args] = *tcapp;
+            vector<Role> arg_roles(args.size(), Role::Nominal);
+
+            if (type_con_is_type_fam(tc))
+                arg_roles.assign(args.size(), Role::Nominal);
+            else if (auto T = this_mod().lookup_resolved_type(tc.name); T and T->roles.size() >= args.size())
+                arg_roles = T->roles;
+
+            for(int i=0;i<args.size();i++)
+                mark_type(args[i], combine_roles(ambient, arg_roles[i]));
+        }
+        else if (auto app = type.to<TypeApp>())
+        {
+            mark_type(app->head, ambient);
+            mark_type(app->arg, Role::Nominal);
+        }
+        else
+            std::abort();
+    };
+
+    for(auto& [name, info]: constructors)
+    {
+        for(auto& constraint: info.all_constraints())
+            mark_type(constraint, Role::Nominal);
+        for(auto& field_type: info.field_types)
+            mark_type(field_type, Role::Representational);
+    }
+
+    return roles;
 }
 
 DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& data_decl)
@@ -310,6 +385,9 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
                 types = types.insert({unloc(con_name), info});
         }
     }
+
+    if (auto T = this_mod().lookup_local_type(data_type_con.name))
+        T->roles = infer_roles_for_data_type(data_tvs, types);
 
     return types;
 }

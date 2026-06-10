@@ -1,0 +1,6 @@
+[1mMain.hs:14.7-12:[1;31m error:[0m[1m
+   • Couldn't match '[1;32mAge[0m'[1m with '[1;32mInt[0m'[1m
+   [1;34m|[0m
+[1;34m14[0m [1;34m| [0mbad = [1;31mcoerce[0m
+   [1;34m|[0m       [1;31m^^^^^^[0m
+

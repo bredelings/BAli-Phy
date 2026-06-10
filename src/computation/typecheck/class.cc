@@ -118,8 +118,8 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     // 4. Make global types for superclass extractors
     for(auto& superclass_constraint: class_info.context)
     {
-        // We don't reserve a field in the dictionary for equality superclasses.
-        if (is_equality_pred(superclass_constraint)) continue;
+        // We don't reserve a field in the dictionary for role-equality superclasses.
+        if (is_role_equality_pred(superclass_constraint)) continue;
 
         string cname1 = get_class_name_from_constraint(superclass_constraint);
         string cname2 = get_class_name_from_constraint(class_constraint);

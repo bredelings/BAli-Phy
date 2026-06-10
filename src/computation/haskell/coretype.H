@@ -304,11 +304,31 @@ struct TypeFamilyInstanceDecl
     }
 };
 
+enum class Role
+{
+    Phantom = 0,
+    Representational = 1,
+    Nominal = 2
+};
+
+Role max_role(Role role1, Role role2);
+
+Role combine_roles(Role ambient, Role arg_role);
+
+struct RoleEquality
+{
+    Role role;
+    Type lhs;
+    Type rhs;
+};
+
 Type function_type(const std::vector<Type>& arg_types, const Type& result_type);
 
 Type make_arrow_type(const Type& t1, const Type& t2);
 
 Type make_equality_pred(const Type& t1, const Type& t2);
+
+Type make_role_equality_pred(Role role, const Type& t1, const Type& t2);
 
 std::string parenthesize_type(Type t, bool parenthesize_type_app);
 
@@ -346,9 +366,13 @@ std::pair<std::vector<Type>,Type> arg_result_types(const Type&);
 
 std::optional<std::pair<Type,Type>> is_equality_pred(const Type& t);
 
+std::optional<RoleEquality> is_role_equality_pred(const Type& t);
+
 std::optional<std::tuple<Type,std::vector<Type>>> is_dictionary_pred(const Type& t);
 
 std::vector<Type> equality_preds(const std::vector<Type> constraints);
+
+std::vector<Type> role_equality_preds(const std::vector<Type> constraints);
 
 std::vector<Type> dictionary_preds(const std::vector<Type> constraints);
 

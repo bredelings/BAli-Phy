@@ -81,7 +81,7 @@ LIE equality_constraints(const LIE& lie1)
 
     for(auto& constraint: lie1)
     {
-        if (is_equality_pred(constraint.pred))
+        if (is_role_equality_pred(constraint.pred))
             lie2.push_back(constraint);
     }
 
@@ -91,7 +91,7 @@ LIE equality_constraints(const LIE& lie1)
 bool contains_equality_constraints(const LIE& constraints)
 {
     for(auto& constraint: constraints)
-        if (is_equality_pred(constraint.pred))
+        if (is_role_equality_pred(constraint.pred))
             return true;
     return false;
 }
@@ -224,5 +224,4 @@ LIE& operator+=(LIE& lie1, const LIE& lie2)
     lie1.insert(lie1.end(), lie2.begin(), lie2.end());
     return lie1;
 }
-
 

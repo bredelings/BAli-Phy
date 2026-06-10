@@ -1961,6 +1961,12 @@ const_symbol_ptr lookup_builtin_symbol(const std::string& name)
 
 const_type_ptr lookup_builtin_type(const std::string& name)
 {
+    // Attach role metadata to builtin type constructors that can appear in Coercible.
+    auto with_roles = [](type_info T, vector<Role> roles) {
+        T.roles = std::move(roles);
+        return const_type_ptr(new type_info(std::move(T)));
+    };
+
     if (name == "Char")
         return const_type_ptr(new type_info{"Char", type_info::data_info(), {}, 0, kind_type()});
     else if (name == "Double")
@@ -1974,21 +1980,21 @@ const_type_ptr lookup_builtin_type(const std::string& name)
         return const_type_ptr(new type_info{"()", type_info::data_info{{"()"},{}}, {}, 0, kind_type()});
     }
     else if (name == "[]")
-        return const_type_ptr(new type_info{"[]", type_info::data_info{{"[]",":"},{}}, {}, 1, make_n_args_kind(1)});
+        return with_roles(type_info{"[]", type_info::data_info{{"[]",":"},{}}, {}, 1, make_n_args_kind(1)}, {Role::Representational});
     else if (name == "->")
     {
-        return const_type_ptr(new type_info{"->", {}, {{right_fix,0}}, 2, make_n_args_kind(2)});
+        return with_roles(type_info{"->", {}, {{right_fix,0}}, 2, make_n_args_kind(2)}, {Role::Representational, Role::Representational});
     }
-    else if (name == "~")
+    else if (name == "~" or name == "~#" or name == "~R#" or name == "~P#")
     {
-        return const_type_ptr(new type_info{"~", {}, {}, 2, make_n_args_constraint_kind(2)});
+        return const_type_ptr(new type_info{name, {}, {}, 2, make_n_args_constraint_kind(2)});
     }
     // This doesn't include ()
     else if (is_tuple_name(name))
     {
         int n = tuple_arity(name);
 
-        return const_type_ptr(new type_info{name, type_info::data_info{{name},{}},{}, n, make_n_args_kind(n)});
+        return with_roles(type_info{name, type_info::data_info{{name},{}},{}, n, make_n_args_kind(n)}, vector<Role>(n, Role::Representational));
     }
     throw myexception()<<"Symbol 'name' is not a builtin (type) symbol.";
 }

@@ -148,6 +148,35 @@ Type make_equality_pred(const Type& t1, const Type& t2)
     return TypeApp(TypeApp(type_eq,t1),t2);
 }
 
+// Return the stricter of two roles, using Role's explicit weak-to-strong ordering.
+Role max_role(Role role1, Role role2)
+{
+    return static_cast<int>(role1) >= static_cast<int>(role2) ? role1 : role2;
+}
+
+// Compose an outer role with an argument role when decomposing a type application.
+Role combine_roles(Role ambient, Role arg_role)
+{
+    if (ambient == Role::Nominal) return Role::Nominal;
+    if (ambient == Role::Phantom) return Role::Phantom;
+    return arg_role;
+}
+
+// Build the internal predicate type for equality at the requested role.
+Type make_role_equality_pred(Role role, const Type& t1, const Type& t2)
+{
+    switch(role)
+    {
+    case Role::Nominal:
+        return make_equality_pred(t1, t2);
+    case Role::Representational:
+        return TypeApp(TypeApp(TypeCon("~R#"), t1), t2);
+    case Role::Phantom:
+        return TypeApp(TypeApp(TypeCon("~P#"), t1), t2);
+    }
+    std::abort();
+}
+
 Type function_type(const vector<Type>& arg_types, const Type& result_type)
 {
     Type ftype = result_type;
@@ -323,6 +352,16 @@ int type_arity(Type t)
 
 optional<pair<Type,Type>> is_equality_pred(const Type& t)
 {
+    auto eq = is_role_equality_pred(t);
+    if (eq and eq->role == Role::Nominal)
+        return {{eq->lhs, eq->rhs}};
+    else
+        return {};
+}
+
+// Recognize nominal, representational, phantom, and source-level Coercible predicates.
+optional<RoleEquality> is_role_equality_pred(const Type& t)
+{
     auto [head,args] = decompose_type_apps(t);
 
     if (args.size() != 2) return {};
@@ -330,19 +369,23 @@ optional<pair<Type,Type>> is_equality_pred(const Type& t)
     auto tc = head.to<TypeCon>();
     if (not tc) return {};
 
-    if (tc->name == "~")
-        return {{args[0],args[1]}};
+    if (tc->name == "~" or tc->name == "~#")
+        return RoleEquality{Role::Nominal, args[0], args[1]};
+    else if (tc->name == "~R#" or tc->name == coercible_class_name)
+        return RoleEquality{Role::Representational, args[0], args[1]};
+    else if (tc->name == "~P#")
+        return RoleEquality{Role::Phantom, args[0], args[1]};
     else
         return {};
 }
 
 optional<tuple<Type,vector<Type>>> is_dictionary_pred(const Type& t)
 {
-    // This should be mutually exclusive with is_equality_pred
+    // This should be mutually exclusive with is_role_equality_pred
     // if the kind of the predicate is Constraint
     auto [head,args] = decompose_type_apps(t);
 
-    if (auto tc = head.to<TypeCon>(); tc and tc->name == "~")
+    if (is_role_equality_pred(t))
         return {};
     else
         return {{head, args}};
@@ -365,6 +408,18 @@ std::vector<Type> equality_preds(const std::vector<Type> constraints)
 
     for(auto& constraint: constraints)
         if (is_equality_pred(constraint))
+            constraints2.push_back(constraint);
+
+    return constraints2;
+}
+
+// Keep constraints that are equality-like at any role.
+std::vector<Type> role_equality_preds(const std::vector<Type> constraints)
+{
+    vector<Type> constraints2;
+
+    for(auto& constraint: constraints)
+        if (is_role_equality_pred(constraint))
             constraints2.push_back(constraint);
 
     return constraints2;

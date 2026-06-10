@@ -7,6 +7,7 @@
 #include "util/mapping.H"
 #include "util/log-level.H"
 #include "computation/typecheck/kind.H"
+#include "computation/typecheck/env.H"
 #include "computation/optimization/occurrence.H"
 #include "computation/machine/graph_register.H"
 #include "util/assert.hh"
@@ -57,6 +58,47 @@ Core::Exp<> declare_seq_info(Module& m)
     return code;
 }
 
+// Declare Compiler.Prim.coerce as Core identity guarded by a Coercible constraint.
+Core::Exp<> declare_coerce_info(Module& m)
+{
+    // coerce = \x -> x.  The type checker, not Core, enforces representational equality.
+    auto x = Core::Var<>("x");
+
+    Core::Exp<> code = lambda_quantify({x}, Core::Exp<>(x));
+    auto [occ_code, _] = occurrence_analyzer(m, code);
+
+    TypeVar a("a", kind_type());
+    TypeVar b("b", kind_type());
+    Type constraint = type_apply(TypeCon(coercible_class_name), {Type(a), Type(b)});
+    Type type = ForallType({a,b}, ConstrainedType(Context({constraint}), make_arrow_type(a,b)));
+
+    auto coerce = symbol_info{"coerce", symbol_type_t::variable, {}, 1};
+    coerce.type = type;
+    coerce.unfolding = CoreUnfolding{occ_code, UnfoldWhen(), /* always_unfold */ true};
+
+    m.declare_symbol(coerce);
+
+    return code;
+}
+
+// Declare the synthetic Compiler.Prim.Coercible class used by the solver.
+void declare_coercible_info(Module& m)
+{
+    TypeVar a("a", kind_type());
+    TypeVar b("b", kind_type());
+
+    auto info = std::make_shared<ClassInfo>();
+    info->name = coercible_class_name;
+    info->type_vars = {a,b};
+
+    type_info::class_info class_info;
+    class_info.info = info;
+
+    type_info T{"Coercible", class_info, {}, 2, make_n_args_constraint_kind(2)};
+    T.roles = {Role::Nominal, Role::Nominal};
+    m.declare_type(T);
+}
+
 shared_ptr<CompiledModule> compiler_prim_module()
 {
     // 1. Create module Compiler.Prim
@@ -71,7 +113,12 @@ shared_ptr<CompiledModule> compiler_prim_module()
     auto seq_code = declare_seq_info(*m);
     value_decls.push_back({Core::Var<>("Compiler.Prim.seq"), seq_code});
 
-    // 4. Copy symbols to the for-export maps.
+    // 4. Add Coercible and coerce.
+    declare_coercible_info(*m);
+    auto coerce_code = declare_coerce_info(*m);
+    value_decls.push_back({Core::Var<>(coerce_name), coerce_code});
+
+    // 5. Copy symbols to the for-export maps.
     m->perform_exports();
     m->_cached_hash = "12345";
 

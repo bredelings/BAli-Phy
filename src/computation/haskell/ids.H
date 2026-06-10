@@ -38,6 +38,8 @@ extern std::string show_class_name;
 extern std::string show_shows_prec_name;
 extern std::string show_show_paren_name;
 extern std::string show_show_string_name;
+extern std::string coercible_class_name;
+extern std::string coerce_name;
 
 std::string tuple_name(int n);
 int tuple_arity(const std::string&);

@@ -724,10 +724,11 @@ bool TypeChecker::is_quantifiable_pred(const Type& pred, const set<TypeVar>& qtv
 {
     if (not intersects(free_type_variables(pred), qtvs)) return false;
 
-    if (auto eq = is_equality_pred(pred))
+    if (auto eq = is_role_equality_pred(pred))
     {
-        auto& [t1,t2] = *eq;
-        return (is_type_fam_app(t1) or is_type_fam_app(t2));
+        if (eq->role != Role::Nominal)
+            return true;
+        return (is_type_fam_app(eq->lhs) or is_type_fam_app(eq->rhs));
     }
     else
         return true;

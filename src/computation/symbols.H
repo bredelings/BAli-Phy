@@ -13,6 +13,7 @@
 #include <cereal/types/variant.hpp>
 #include <cereal/types/optional.hpp>
 #include <cereal/types/set.hpp>
+#include <cereal/types/vector.hpp>
 
 constexpr auto left_fix = Haskell::Fixity::infixl;
 constexpr auto right_fix = Haskell::Fixity::infixr;
@@ -153,7 +154,9 @@ struct type_info
     // Are we using this?
     Kind kind;
 
-    template <class Archive> void serialize(Archive& ar) { ar(name,info,fixity,arity,kind); }
+    std::vector<Role> roles = {};
+
+    template <class Archive> void serialize(Archive& ar) { ar(name,info,fixity,arity,kind,roles); }
 };
 
 bool operator==(const symbol_info& S1, const symbol_info& S2);

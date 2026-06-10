@@ -34,6 +34,7 @@ struct CanonicalDict
 struct CanonicalEquality
 {
     Constraint constraint;
+    Role role;
     Type t1;
     Type t2;
 
@@ -43,7 +44,7 @@ struct CanonicalEquality
     int level() const {return constraint.level();}
     std::string print() const;
 
-    CanonicalEquality(const Constraint& c, const Type& ta, const Type& tb):constraint(c),t1(ta),t2(tb) {}
+    CanonicalEquality(const Constraint& c, Role r, const Type& ta, const Type& tb):constraint(c),role(r),t1(ta),t2(tb) {}
 };
 
 struct Predicate: public std::variant<NonCanonical, CanonicalDict, CanonicalEquality>
@@ -134,23 +135,25 @@ struct Solver: public TypeChecker
     void unbreak_type_equality_cycles();
 
     std::optional<Predicate>
-    canonicalize_equality_var_tyfam(CanonicalEquality P);
+    canonicalize_equality_var_tyfam(CanonicalEquality E);
 
     std::optional<Predicate>
-    canonicalize_equality_lhs2(CanonicalEquality P);
+    canonicalize_equality_lhs2(CanonicalEquality E);
 
     std::optional<Predicate>
-    canonicalize_equality_lhs1(const CanonicalEquality& P);
+    canonicalize_equality_lhs1(const CanonicalEquality& E);
 
     std::optional<Predicate>
-    canonicalize_equality_lhs(const CanonicalEquality& P);
+    canonicalize_equality_lhs(const CanonicalEquality& E);
 
     std::optional<Predicate>
-    canonicalize_equality_type_apps(const Constraint& C, const Type&, const Type&, const Type&, const Type&);
+    canonicalize_equality_type_apps(const Constraint& C, Role, const Type&, const Type&, const Type&, const Type&);
     std::optional<Predicate>
-    canonicalize_equality_type_cons(const CanonicalEquality& P,
+    canonicalize_equality_type_cons(const CanonicalEquality& E,
                                     const TypeCon&, const std::vector<Type>&, const TypeCon&, const std::vector<Type>&);
-    std::optional<Predicate> canonicalize_equality(CanonicalEquality P);
+    std::optional<Predicate>
+    canonicalize_equality_newtype(const CanonicalEquality& E);
+    std::optional<Predicate> canonicalize_equality(CanonicalEquality E);
     std::optional<Predicate> canonicalize_dict(CanonicalDict P);
     std::optional<Predicate> canonicalize(Predicate& P);
 

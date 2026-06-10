@@ -43,6 +43,8 @@ std::string show_class_name = "Text.Show.Show";
 std::string show_shows_prec_name = "Text.Show.showsPrec";
 std::string show_show_paren_name = "Text.Show.showParen";
 std::string show_show_string_name = "Text.Show.showString";
+std::string coercible_class_name = "Compiler.Prim.Coercible";
+std::string coerce_name = "Compiler.Prim.coerce";
 
 bool is_tuple_name(const string& s)
 {
@@ -255,7 +257,7 @@ bool is_haskell_builtin_con_name(const std::string& s)
 
 bool is_haskell_builtin_type_name(const std::string& s)
 {
-    if (s == "()" or s == "[]" or s == "->" or s == "~" or is_tuple_name(s))
+    if (s == "()" or s == "[]" or s == "->" or s == "~" or s == "~#" or s == "~R#" or s == "~P#" or is_tuple_name(s))
         return true;
     else if (s == "Double" or s == "Int" or s == "Char" or s == "Integer")
         return true;

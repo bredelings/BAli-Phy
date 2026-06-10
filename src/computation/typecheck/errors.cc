@@ -349,10 +349,18 @@ void TypeChecker::check_wanteds(TidyState& tidy_state, vector<shared_ptr<Implica
     for(auto& wanted: deduplicate(wanteds.simple))
     {
         Notes notes;
-        if (auto eq = is_equality_pred(wanted.pred))
+        if (auto eq = is_role_equality_pred(wanted.pred); eq and eq->role == Role::Nominal)
         {
-            auto& [t1,t2] = *eq;
-            notes = check_eq_constraint(tidy_state, implic_scopes, wanted, t1, t2);
+            notes = check_eq_constraint(tidy_state, implic_scopes, wanted, eq->lhs, eq->rhs);
+        }
+        else if (auto eq = is_role_equality_pred(wanted.pred); eq and eq->role == Role::Representational)
+        {
+            Note e;
+            e<<"Could not coerce "<<show_type(tidy_state, eq->lhs)<<" to "<<show_type(tidy_state, eq->rhs);
+            e<<get_context(tidy_state, wanted, implic_scopes);
+            if (auto occ = to<OccurrenceOrigin>(wanted.origin))
+                e<<" arising from a use of '"<<cyan(print_unqualified_id(occ->name))<<ANSI::bold<<"'";
+            notes.push_back(e);
         }
         else
         {

@@ -27,6 +27,7 @@ Type Solver::rewrite_mtv(ConstraintFlavor flavor, const MetaTypeVar& mtv) const
 
         auto eq = to<CanonicalEquality>(inert);
         assert(eq);
+        if (eq->role != Role::Nominal) continue;
 
         auto uv1 = follow_meta_type_var(eq->t1).to<MetaTypeVar>();
         assert(uv1);
@@ -46,6 +47,7 @@ Type Solver::rewrite_tv(ConstraintFlavor flavor, const TypeVar& tv) const
 
         auto eq = to<CanonicalEquality>(inert);
         assert(eq);
+        if (eq->role != Role::Nominal) continue;
 
         auto tv1 = eq->t1.to<TypeVar>();
         assert(tv1);
@@ -104,6 +106,7 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
 
             auto eq = to<CanonicalEquality>(inert);
             assert(eq);
+            if (eq->role != Role::Nominal) continue;
 
             // FIXME: this doesn't handle forall types
             if (t == eq->t1) return eq->t2;

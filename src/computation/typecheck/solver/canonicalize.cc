@@ -9,22 +9,25 @@ using std::vector;
 using std::optional;
 using std::tuple;
 
+// Split equality between type applications into equality between heads and nominal arguments.
 std::optional<Predicate>
 Solver::canonicalize_equality_type_apps(const Constraint& C,
+                                        Role role,
                                         const Type& fun1, const Type& arg1, const Type& fun2, const Type& arg2)
 {
-    auto fun_constraint = make_equality_pred(fun1, fun2);
+    auto fun_constraint = make_role_equality_pred(role, fun1, fun2);
     auto fun_dvar = fresh_dvar(fun_constraint);
     work_list.push_back(NonCanonical({C.origin, C.flavor, fun_dvar, fun_constraint, C.tc_state}));
 
-    auto arg_constraint = make_equality_pred(arg1, arg2);
+    auto arg_constraint = make_role_equality_pred(Role::Nominal, arg1, arg2);
     auto arg_dvar = fresh_dvar(arg_constraint);
     work_list.push_back(NonCanonical({C.origin, C.flavor, arg_dvar, arg_constraint, C.tc_state}));
 
     return {};
 }
 
-std::optional<Predicate> Solver::canonicalize_equality_type_cons(const CanonicalEquality& P, const TypeCon& tc1, const vector<Type>& args1, const TypeCon& tc2, const vector<Type>& args2)
+// Decompose equality between saturated type constructors using their declared argument roles.
+std::optional<Predicate> Solver::canonicalize_equality_type_cons(const CanonicalEquality& E, const TypeCon& tc1, const vector<Type>& args1, const TypeCon& tc2, const vector<Type>& args2)
 {
     assert(not type_con_is_type_fam(tc1));
     assert(not type_con_is_type_fam(tc2));
@@ -34,18 +37,84 @@ std::optional<Predicate> Solver::canonicalize_equality_type_cons(const Canonical
     // if tc1 and tc2 and both non-type-family type cons...
     if (tc1 == tc2 and args1.size() == args2.size())
     {
+        vector<Role> roles(args1.size(), Role::Nominal);
+        if (E.role == Role::Representational)
+        {
+            if (auto T = this_mod().lookup_resolved_type(tc1.name); T and T->roles.size() >= args1.size())
+                roles = T->roles;
+            else
+                roles.assign(args1.size(), Role::Nominal);
+        }
+        else if (E.role == Role::Phantom)
+            roles.assign(args1.size(), Role::Phantom);
+
         // If we've gotten here, the heads are both injective, and might be equal.
         for(int i=0;i<args1.size();i++)
         {
-            auto constraint = make_equality_pred(args1[i], args2[i]);
+            auto constraint = make_role_equality_pred(combine_roles(E.role, roles[i]), args1[i], args2[i]);
             auto dvar = fresh_dvar(constraint);
-            work_list.push_back(NonCanonical({P.origin(), P.flavor(), dvar, constraint, P.constraint.tc_state}));
+            work_list.push_back(NonCanonical({E.origin(), E.flavor(), dvar, constraint, E.constraint.tc_state}));
         }
     }
     else
-        inerts.failed.push_back(P);
+    {
+        if (E.role == Role::Representational)
+            return canonicalize_equality_newtype(E);
+        inerts.failed.push_back(E);
+    }
 
     return {};
+}
+
+// Return the single field type that represents a saturated newtype application.
+std::optional<Type> TypeChecker::unwrap_newtype_type(const Type& type) const
+{
+    auto tcapp = is_type_con_app(type);
+    if (not tcapp) return {};
+
+    auto& [tc, args] = *tcapp;
+    auto T = this_mod().lookup_resolved_type(tc.name);
+    if (not T) return {};
+
+    auto data_info = T->is_data();
+    if (not data_info or data_info->constructors.size() != 1) return {};
+
+    auto C = this_mod().lookup_resolved_symbol(*data_info->constructors.begin());
+    if (not C or not C->con_info or not C->con_info->is_newtype_constructor) return {};
+
+    auto con_info = C->con_info;
+    if (con_info->field_types.size() != 1 or con_info->uni_tvs.size() != args.size()) return {};
+
+    substitution_t subst;
+    for(int i=0;i<args.size();i++)
+        subst = subst.insert({con_info->uni_tvs[i], args[i]});
+
+    return apply_subst(subst, con_info->field_types[0]);
+}
+
+// Rewrite representational equality by unwrapping one newtype layer from either side.
+std::optional<Predicate>
+Solver::canonicalize_equality_newtype(const CanonicalEquality& E)
+{
+    if (E.role != Role::Representational) return E;
+
+    if (auto t1 = unwrap_newtype_type(E.t1))
+    {
+        auto constraint = make_role_equality_pred(Role::Representational, *t1, E.t2);
+        auto dvar = fresh_dvar(constraint);
+        work_list.push_back(NonCanonical({E.origin(), E.flavor(), dvar, constraint, E.constraint.tc_state}));
+        return {};
+    }
+
+    if (auto t2 = unwrap_newtype_type(E.t2))
+    {
+        auto constraint = make_role_equality_pred(Role::Representational, E.t1, *t2);
+        auto dvar = fresh_dvar(constraint);
+        work_list.push_back(NonCanonical({E.origin(), E.flavor(), dvar, constraint, E.constraint.tc_state}));
+        return {};
+    }
+
+    return E;
 }
 
 bool Solver::is_rewritable_lhs(Type t) const
@@ -105,32 +174,32 @@ bool flip_type_vars(bool is_given, const Type& t1, const Type& t2)
 }
 
 std::optional<Predicate>
-Solver::canonicalize_equality_var_tyfam(CanonicalEquality P)
+Solver::canonicalize_equality_var_tyfam(CanonicalEquality E)
 {
-    assert(P.t1.is_a<TypeVar>() or P.t1.is_a<MetaTypeVar>());
-    assert(is_type_fam_app(P.t2));
+    assert(E.t1.is_a<TypeVar>() or E.t1.is_a<MetaTypeVar>());
+    assert(is_type_fam_app(E.t2));
 
     // If mtv1 -> tyfam is touchable and has no problems, do that.
-    auto mtv1 = P.t1.to<MetaTypeVar>();
-    if (mtv1 and is_touchable(*mtv1, P.t2))
+    auto mtv1 = E.t1.to<MetaTypeVar>();
+    if (mtv1 and is_touchable(*mtv1, E.t2))
     {
-        auto result = check_type_equality(P.t1, P.t2) & ~type_family_result;
+        auto result = check_type_equality(E.t1, E.t2) & ~type_family_result;
         if (result == ok_result)
-            return canonicalize_equality_lhs1(P);
+            return canonicalize_equality_lhs1(E);
     }
 
     // Otherwise prefer tyfam -> var
-    return canonicalize_equality_lhs1(P.flip());
+    return canonicalize_equality_lhs1(E.flip());
 }
 
 
 std::optional<Predicate>
-Solver::canonicalize_equality_lhs2(CanonicalEquality P)
+Solver::canonicalize_equality_lhs2(CanonicalEquality E)
 {
-    assert(is_rewritable_lhs(P.t1) and is_rewritable_lhs(P.t2));
+    assert(is_rewritable_lhs(E.t1) and is_rewritable_lhs(E.t2));
 
-    auto tfam1 = is_type_fam_app(P.t1);
-    auto tfam2 = is_type_fam_app(P.t2);
+    auto tfam1 = is_type_fam_app(E.t1);
+    auto tfam2 = is_type_fam_app(E.t2);
     
     if (tfam1 and tfam2)
     {
@@ -140,24 +209,24 @@ Solver::canonicalize_equality_lhs2(CanonicalEquality P)
         //    For example F a ~ F (F a) should be swapped.
 
         // Case 2: If we have F a = F (F a), then we want to flip.
-        bool flip_for_occurs = check_type_equality(P.t1, P.t2).test(occurs_definitely_bit)
-            and not check_type_equality(P.t2, P.t1).test(occurs_definitely_bit);
+        bool flip_for_occurs = check_type_equality(E.t1, E.t2).test(occurs_definitely_bit)
+            and not check_type_equality(E.t2, E.t1).test(occurs_definitely_bit);
 
         if (flip_for_occurs)
-            return canonicalize_equality_lhs1(P.flip());
+            return canonicalize_equality_lhs1(E.flip());
         else
-            return canonicalize_equality_lhs1(P);
+            return canonicalize_equality_lhs1(E);
     }
     else if (tfam1)
-        return canonicalize_equality_var_tyfam(P.flip());
+        return canonicalize_equality_var_tyfam(E.flip());
     else if (tfam2)
-        return canonicalize_equality_var_tyfam(P);
+        return canonicalize_equality_var_tyfam(E);
     else
     {
-        if (flip_type_vars(P.flavor() == Given, P.t1, P.t2))
-            return canonicalize_equality_lhs1(P.flip());
+        if (flip_type_vars(E.flavor() == Given, E.t1, E.t2))
+            return canonicalize_equality_lhs1(E.flip());
         else
-            return canonicalize_equality_lhs1(P);
+            return canonicalize_equality_lhs1(E);
     }
 }
 
@@ -222,7 +291,7 @@ Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
         std::abort();
 }
 
-std::optional<Type> Solver::maybe_break_type_equality_cycle(const CanonicalEquality& P, std::bitset<8> result)
+std::optional<Type> Solver::maybe_break_type_equality_cycle(const CanonicalEquality& E, std::bitset<8> result)
 {
     assert(result.any());
 
@@ -231,107 +300,121 @@ std::optional<Type> Solver::maybe_break_type_equality_cycle(const CanonicalEqual
 
     // 2. Don't do this if we have a wanted cosntraint without a touchable mtv
     bool should_break_cycle = true;
-    if (P.flavor() == Wanted)
+    if (E.flavor() == Wanted)
     {
         should_break_cycle = false;
-        auto lhs = follow_meta_type_var(P.t1);
-        if (auto mtv = lhs.to<MetaTypeVar>(); mtv and is_touchable(*mtv, P.t2))
+        auto lhs = follow_meta_type_var(E.t1);
+        if (auto mtv = lhs.to<MetaTypeVar>(); mtv and is_touchable(*mtv, E.t2))
             should_break_cycle = true;
     }
 
     if (not should_break_cycle) return {};
 
     // 3. Check that the equality does not come from a cycle breaking operation.
-    if (to<CycleBreakerOrigin>(P.constraint.origin)) return {};
+    if (to<CycleBreakerOrigin>(E.constraint.origin)) return {};
 
     // 4. Actually do the cycle breaking
-    return break_type_equality_cycle(P.constraint, P.t2);
+    return break_type_equality_cycle(E.constraint, E.t2);
 }
 
-std::optional<Predicate> Solver::canonicalize_equality_lhs1(const CanonicalEquality& P)
+std::optional<Predicate> Solver::canonicalize_equality_lhs1(const CanonicalEquality& E)
 {
-    assert(is_rewritable_lhs(P.t1));
+    assert(is_rewritable_lhs(E.t1));
 
-    auto result0 = check_type_equality(P.t1, P.t2);
+    auto result0 = check_type_equality(E.t1, E.t2);
 
     // Don't worry about type families here...
     auto result1 = result0;
     result1.reset(type_family_bit);
 
     if (result1 == ok_result)
-        return P;
+        return E;
 
-    if (auto new_rhs = maybe_break_type_equality_cycle(P, result1))
+    if (auto new_rhs = maybe_break_type_equality_cycle(E, result1))
     {
-        auto P2 = P;
-        P2.t2 = *new_rhs;
-        auto result2 = check_type_equality(P2.t1, P2.t2);
+        auto E2 = E;
+        E2.t2 = *new_rhs;
+        auto result2 = check_type_equality(E2.t1, E2.t2);
 
         if (has_occurs_check(result2))
         {
-            inerts.failed.push_back(P);
+            inerts.failed.push_back(E);
             return {};
         }
         else
-            return P2;
+            return E2;
     }
     else if (has_occurs_check(result1))
     {
-        inerts.failed.push_back(P);
+        inerts.failed.push_back(E);
         return {};
     }
     else
     {
-        inerts.irreducible.push_back(P);
+        inerts.irreducible.push_back(E);
         return {};
     }
 }
 
-std::optional<Predicate> Solver::canonicalize_equality_lhs(const CanonicalEquality& P)
+std::optional<Predicate> Solver::canonicalize_equality_lhs(const CanonicalEquality& E)
 {
-    if (is_rewritable_lhs(P.t2))
-        return canonicalize_equality_lhs2(P);
+    if (is_rewritable_lhs(E.t2))
+        return canonicalize_equality_lhs2(E);
     else
-        return canonicalize_equality_lhs1(P);
+        return canonicalize_equality_lhs1(E);
 
 }
 
 
-std::optional<Predicate> Solver::canonicalize_equality(CanonicalEquality P)
+std::optional<Predicate> Solver::canonicalize_equality(CanonicalEquality E)
 {
-    P.t1 = rewrite(P.flavor(), P.t1);
-    P.t2 = rewrite(P.flavor(), P.t2);
+    if (E.role == Role::Phantom)
+        return {};
 
-    P.t1 = follow_meta_type_var(P.t1);
-    P.t2 = follow_meta_type_var(P.t2);
+    E.t1 = rewrite(E.flavor(), E.t1);
+    E.t2 = rewrite(E.flavor(), E.t2);
+
+    E.t1 = follow_meta_type_var(E.t1);
+    E.t2 = follow_meta_type_var(E.t2);
 
     // 1. Check if the types are identical -- not looking through type synonyms
-    if (same_type_no_syns(P.t1, P.t2))
+    if (same_type_no_syns(E.t1, E.t2))
         return {}; // Solved!
 
     // 2. Check if we have two identical typecons with no arguments
     //    Right now, this is redundant with #1, but might not be if we start doing loops.
     //    Apparently this is a special case for handling nullary type synonyms before expansion.
-    auto tc1 = P.t1.to<TypeCon>();
-    auto tc2 = P.t2.to<TypeCon>();
+    auto tc1 = E.t1.to<TypeCon>();
+    auto tc2 = E.t2.to<TypeCon>();
     if (tc1 and tc2 and *tc1 == *tc2)
         return {}; // Solved!
 
     // 3. Look through type synonyms
-    while(auto s1 = expand_type_synonym(P.t1))
-        P.t1 = *s1;
-    while(auto s2 = expand_type_synonym(P.t2))
-        P.t2 = *s2;
+    while(auto s1 = expand_type_synonym(E.t1))
+        E.t1 = *s1;
+    while(auto s2 = expand_type_synonym(E.t2))
+        E.t2 = *s2;
 
     // 4. See if we have two tycons that aren't type family tycons
-    auto tcapp1 = is_type_con_app(P.t1);
-    auto tcapp2 = is_type_con_app(P.t2);
+    auto tcapp1 = is_type_con_app(E.t1);
+    auto tcapp2 = is_type_con_app(E.t2);
     if (tcapp1 and tcapp2)
     {
         auto& [tc1, args1] = *tcapp1;
         auto& [tc2, args2] = *tcapp2;
         if (not type_con_is_type_fam(tc1) and not type_con_is_type_fam(tc2))
-            return canonicalize_equality_type_cons(P, tc1, args1, tc2, args2);
+            return canonicalize_equality_type_cons(E, tc1, args1, tc2, args2);
+    }
+
+    if (E.role == Role::Representational)
+    {
+        if (auto unwrapped = canonicalize_equality_newtype(E))
+        {
+            if (not std::holds_alternative<CanonicalEquality>(*unwrapped))
+                return unwrapped;
+        }
+        else
+            return {};
     }
 
     // 5. If both are ForallType
@@ -340,26 +423,26 @@ std::optional<Predicate> Solver::canonicalize_equality(CanonicalEquality P)
 
 
     // 6. If both are type applications without type con heads
-    auto tapp1 = is_type_app(P.t1);
-    auto tapp2 = is_type_app(P.t2);
+    auto tapp1 = is_type_app(E.t1);
+    auto tapp2 = is_type_app(E.t2);
     if (tapp1 and tapp2)
     {
         auto& [fun1, arg1] = *tapp1;
         auto& [fun2, arg2] = *tapp2;
-        return canonicalize_equality_type_apps(P.constraint, fun1, arg1, fun2, arg2);
+        return canonicalize_equality_type_apps(E.constraint, E.role, fun1, arg1, fun2, arg2);
     }
 
     // the lhs & rhs should be rewritten by the time we get here.
     // but what if we substitute for a type synonym?
 
-    if (is_rewritable_lhs(P.t1))
-        return canonicalize_equality_lhs(P);
-    else if (is_rewritable_lhs(P.t2))
-        return canonicalize_equality_lhs(P.flip());
+    if (is_rewritable_lhs(E.t1))
+        return canonicalize_equality_lhs(E);
+    else if (is_rewritable_lhs(E.t2))
+        return canonicalize_equality_lhs(E.flip());
     else
     {
         // This should end up in inerts.irreducible?
-        return P;
+        return E;
     }
 
     std::abort();
@@ -379,10 +462,9 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
 {
     if (auto NC = to<NonCanonical>(P))
     {
-        if (auto eq = is_equality_pred(NC->constraint.pred))
+        if (auto eq = is_role_equality_pred(NC->constraint.pred))
         {
-            auto& [t1, t2] = *eq;
-            return canonicalize_equality({NC->constraint, t1, t2});
+            return canonicalize_equality({NC->constraint, eq->role, eq->lhs, eq->rhs});
         }
         else
         {
@@ -399,4 +481,3 @@ optional<Predicate> Solver::canonicalize(Predicate& P)
     else
         std::abort();
 }
-

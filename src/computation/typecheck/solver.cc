@@ -174,7 +174,7 @@ optional<Core::Decls<>> TypeChecker::entails_by_superclass(const Constraint& giv
 CanonicalEquality CanonicalEquality::flip() const
 {
     CanonicalEquality E = *this;
-    E.constraint.pred = make_equality_pred(t2,t1);
+    E.constraint.pred = make_role_equality_pred(role, t2, t1);
     std::swap(E.t1, E.t2);
     return E;
 }
@@ -266,7 +266,7 @@ std::optional<Reaction> Solver::top_react(const Predicate& P)
         // We don't use instances for givens.
         if (P.flavor() == Given) return {};
 
-        if (find_type_eq_instance(eq->t1, eq->t2))
+        if (eq->role == Role::Nominal and find_type_eq_instance(eq->t1, eq->t2))
             return ReactSuccess();
     }
     
@@ -472,7 +472,7 @@ bool Solver::can_rewrite(const Predicate& p1, const Predicate& p2) const
 
     // 2. Check if p1 can be used for rewriting.
     auto eq1 = to<CanonicalEquality>(p1);
-    if (not eq1 or not is_rewritable_lhs(eq1->t1)) return false;
+    if (not eq1 or eq1->role != Role::Nominal or not is_rewritable_lhs(eq1->t1)) return false;
 
     auto lhs = follow_meta_type_var(eq1->t1);
 
@@ -566,7 +566,7 @@ Core::Decls<> Solver::simplify(const LIE& givens, LIE& wanteds)
 
 
         // perform same-level substitutions
-        if (auto E = to<CanonicalEquality>(p); E and p.flavor() == Wanted)
+        if (auto E = to<CanonicalEquality>(p); E and E->role == Role::Nominal and p.flavor() == Wanted)
         {
             auto t1 = follow_meta_type_var(E->t1);
             if (auto mtv = t1.to<MetaTypeVar>())
