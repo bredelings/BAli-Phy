@@ -719,6 +719,37 @@ namespace
         return Hs::add_forall_vars(quantified_tvs, polytype);
     }
 
+    // Build an empty DeriveAnyClass instance head C fixed... (T args...).
+    Hs::LType anyclass_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name, const vector<Hs::LType>& fixed_args)
+    {
+        auto data_type = type_con_type(data_decl.con, type_var_types(data_decl.type_vars, data_decl.type_vars.size()));
+        auto instance_args = fixed_args;
+        instance_args.push_back(data_type);
+        auto instance_head = class_constraint(class_name, instance_args);
+        Hs::LType polytype = data_decl.context.empty() ? instance_head : Hs::LType{data_decl.con.loc, Hs::ConstrainedType(data_decl.context, instance_head)};
+        return Hs::add_forall_vars(data_decl.type_vars, polytype);
+    }
+
+    // Synthesize an empty anyclass instance and let ordinary instance checking handle defaults.
+    optional<Hs::InstanceDecl> derive_anyclass_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::LType& deriving)
+    {
+        auto deriving_class = resolved_deriving_class(tc.this_mod(), deriving);
+        if (not deriving_class)
+            return {};
+
+        auto class_info = deriving_class->info->info;
+        if (not class_info)
+            return {};
+
+        if (deriving_class->fixed_args.size() + 1 != class_info->type_vars.size())
+        {
+            tc.record_error(deriving.loc, Note()<<"DeriveAnyClass expects the deriving clause to leave exactly one class parameter for the data/newtype");
+            return {};
+        }
+
+        return Hs::InstanceDecl({}, anyclass_instance_type(data_decl, class_info->name, deriving_class->fixed_args), {}, {}, {});
+    }
+
     // Build the class-parameter substitution used by generated GND associated type instances.
     optional<Hs::LType> gnd_associated_family_arg(const vector<TypeVar>& class_tvs, const vector<Hs::LType>& fixed_args, const Hs::LType& data_type, const Hs::LType& rep_type, const TypeVar& tv, bool use_rep_type)
     {
@@ -850,7 +881,10 @@ namespace
 
         if (deriving.strategy == Hs::DerivingStrategy::anyclass)
         {
-            tc.record_error(deriving.type.loc, Note()<<"DeriveAnyClass is not supported yet");
+            if (auto instance = derive_anyclass_instance(tc, data_decl, deriving.type))
+                add_derived_instance(instances, deriving.type.loc, *instance, explicit_polytype);
+            else
+                tc.record_error(deriving.type.loc, Note()<<"DeriveAnyClass deriving "<<deriving.type.print()<<" is not supported yet");
             return;
         }
 
