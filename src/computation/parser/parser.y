@@ -39,6 +39,8 @@
   std::tuple<Located<Hs::TypeCon>, std::vector<Hs::LType>> check_type_or_class_header2(const Hs::LType& type);
 
   expression_ref yy_make_string(const std::string&);
+  Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& object, const std::string& field);
+  Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::string>& fields);
 }
 
 // The parsing context.
@@ -481,6 +483,7 @@
 %type <std::string> var
 %type <std::string> qvar
 %type <std::string> field
+%type <std::vector<std::string>> projection
 %type <std::string> qvarid
 %type <std::string> varid
 %type <std::string> qvarsym
@@ -1220,7 +1223,7 @@ aexp: qvar TIGHT_INFIX_AT aexp   {$$ = {@$, Hs::AsPattern({@1,Hs::Var($1)},$3)};
 
 /* EP */
 aexp1: aexp1 "{" fbinds "}"          { $$ = {@$,Hs::RecordExp{$1,$3}}; }
-|      aexp1 TIGHT_INFIX_DOT field   { }
+|      aexp1 TIGHT_INFIX_DOT field   { $$ = make_record_field_selection(@$, $1, $3); }
 |      aexp2                         { $$ = $1; }
 
 /* EP */
@@ -1229,7 +1232,7 @@ aexp2: qvar                   {$$ = {@$, Hs::Var($1)};}
 |      literal                {$$ = {@$, $1};}
 |      "(" texp ")"           {$$ = {@$, unloc($2)};}
 |      "(" tup_exprs ")"      {$$ = {@$, Hs::Tuple($2)};}
-|      "(" projection ")"     {}  // only possible with OverloadedRecordDot
+|      "(" projection ")"     {$$ = make_record_projection(@$, $2);}  // only possible with OverloadedRecordDot
 /*
 |      "(#" texp "#)"         {}
 |      "(#" tup_exprs "#)"    {}
@@ -1238,8 +1241,8 @@ aexp2: qvar                   {$$ = {@$, Hs::Var($1)};}
 |      "_"                    {$$ = {@$, Hs::WildcardPattern()};}
 /* Skip Template Haskell Extensions */
 
-projection: projection TIGHT_INFIX_DOT field
-|           PREFIX_DOT field
+projection: projection TIGHT_INFIX_DOT field  {$$ = $1; $$.push_back($3);}
+|           PREFIX_DOT field                  {$$.push_back($2);}
 
 /* ------------- Tuple expressions ------------------------------- */
 
@@ -1645,6 +1648,23 @@ pair<vector<Hs::LImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::
     }
     else
         return {imports, {}};
+}
+
+Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& object, const std::string& field)
+{
+    Hs::LExp selector = {loc, Hs::Var(field)};
+    return {loc, Hs::ApplyExp(selector, object)};
+}
+
+Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::string>& fields)
+{
+    Hs::LVar arg = {loc, Hs::Var("v$record_dot")};
+    Hs::LExp body = {loc, unloc(arg)};
+
+    for(const auto& field: fields)
+        body = make_record_field_selection(loc, body, field);
+
+    return {loc, Hs::LambdaExp({{loc, unloc(arg)}}, body)};
 }
 
 // See PostProcess.hs:checkTyClHdr

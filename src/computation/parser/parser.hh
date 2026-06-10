@@ -78,8 +78,10 @@
   std::tuple<Located<Hs::TypeCon>, std::vector<Hs::LType>> check_type_or_class_header2(const Hs::LType& type);
 
   expression_ref yy_make_string(const std::string&);
+  Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& object, const std::string& field);
+  Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::string>& fields);
 
-#line 83 "parser.hh"
+#line 85 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -219,7 +221,7 @@
 #endif
 
 namespace yy {
-#line 223 "parser.hh"
+#line 225 "parser.hh"
 
 
 
@@ -780,6 +782,9 @@ namespace yy {
       // ops
       // con_list
       char dummy67[sizeof (std::vector<Located<std::string>>)];
+
+      // projection
+      char dummy68[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -1799,6 +1804,10 @@ namespace yy {
         value.move< std::vector<Located<std::string>> > (std::move (that.value));
         break;
 
+      case symbol_kind::S_projection: // projection
+        value.move< std::vector<std::string> > (std::move (that.value));
+        break;
+
       default:
         break;
     }
@@ -2760,6 +2769,20 @@ namespace yy {
       {}
 #endif
 
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<std::string>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<std::string>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
       /// Destroy the symbol.
       ~basic_symbol ()
       {
@@ -3192,6 +3215,10 @@ switch (yykind)
       case symbol_kind::S_ops: // ops
       case symbol_kind::S_con_list: // con_list
         value.template destroy< std::vector<Located<std::string>> > ();
+        break;
+
+      case symbol_kind::S_projection: // projection
+        value.template destroy< std::vector<std::string> > ();
         break;
 
       default:
@@ -6416,6 +6443,10 @@ switch (yykind)
         value.copy< std::vector<Located<std::string>> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_projection: // projection
+        value.copy< std::vector<std::string> > (YY_MOVE (that.value));
+        break;
+
       default:
         break;
     }
@@ -6857,6 +6888,10 @@ switch (yykind)
         value.move< std::vector<Located<std::string>> > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_projection: // projection
+        value.move< std::vector<std::string> > (YY_MOVE (s.value));
+        break;
+
       default:
         break;
     }
@@ -6923,7 +6958,7 @@ switch (yykind)
 
 
 } // yy
-#line 6927 "parser.hh"
+#line 6962 "parser.hh"
 
 
 
