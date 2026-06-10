@@ -117,6 +117,23 @@ Solver::canonicalize_equality_newtype(const CanonicalEquality& E)
     return E;
 }
 
+// Decompose equality between forall types after opening both sides with shared binders.
+std::optional<Predicate> canonicalize_equality_foralls(Solver& solver, const CanonicalEquality& E, const ForallType& forall1, const ForallType& forall2)
+{
+    auto opened = solver.open_forall_pair(forall1, forall2);
+    if (not opened)
+    {
+        solver.inerts.failed.push_back(E);
+        return {};
+    }
+
+    auto [type1, type2] = *opened;
+    auto constraint = make_role_equality_pred(E.role, type1, type2);
+    auto dvar = solver.fresh_dvar(constraint);
+    solver.work_list.push_back(NonCanonical({E.origin(), E.flavor(), dvar, constraint, E.constraint.tc_state}));
+    return {};
+}
+
 bool Solver::is_rewritable_lhs(Type t) const
 {
     t = follow_meta_type_var(t);
@@ -418,8 +435,10 @@ std::optional<Predicate> Solver::canonicalize_equality(CanonicalEquality E)
     }
 
     // 5. If both are ForallType
-
-    // NOTE: missing!
+    auto forall1 = E.t1.to<ForallType>();
+    auto forall2 = E.t2.to<ForallType>();
+    if (forall1 and forall2)
+        return canonicalize_equality_foralls(*this, E, *forall1, *forall2);
 
 
     // 6. If both are type applications without type con heads

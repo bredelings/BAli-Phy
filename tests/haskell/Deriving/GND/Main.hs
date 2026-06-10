@@ -13,8 +13,20 @@ instance Twice Int where
 
 newtype Age = Age Int deriving Twice
 
+class MapLike f where
+  mapLike :: (a -> b) -> f a -> f b
+
+data Box a = Box a
+
+instance MapLike Box where
+  mapLike f (Box x) = Box (f x)
+
+newtype NewBox a = NewBox (Box a) deriving MapLike
+
 unAge (Age x) = x
+unNewBox (NewBox (Box x)) = x
 
 ok = unAge (twice (Age 21)) == 42
+  && unNewBox (mapLike (\x -> x + 1) (NewBox (Box 41))) == 42
 
 main = print (if ok then (1 :: Int) else 0)

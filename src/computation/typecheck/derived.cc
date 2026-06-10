@@ -109,6 +109,20 @@ namespace
         return Hs::type_apply({{noloc,Hs::TypeCon(class_name)}, type});
     }
 
+    bool is_type_var(const Hs::LType& type, const Hs::LTypeVar& tv)
+    {
+        auto type_var = unloc(type).to<Hs::TypeVar>();
+        return type_var and *type_var == unloc(tv);
+    }
+
+    vector<Hs::LType> type_var_types(const vector<Hs::LTypeVar>& tvs, int n)
+    {
+        vector<Hs::LType> types;
+        for(int i=0; i<n; i++)
+            types.push_back(type_var_type(tvs[i]));
+        return types;
+    }
+
     Hs::LExp local_var_exp(const string& name)
     {
         return {noloc, Hs::Var(name)};
@@ -650,20 +664,40 @@ namespace
         return data_decl.get_constructors()[0].get_field_types()[0];
     }
 
-    // Build the synthetic instance head C (T a...) with a C rep superclass-like context.
-    Hs::LType generalized_newtype_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name, const Hs::LType& rep_type)
+    // Drop trailing data variables from the representation type when they match exactly.
+    optional<Hs::LType> drop_eta_args(const Hs::LType& rep_type, const vector<Hs::LTypeVar>& data_tvs, int eta_arity)
     {
-        vector<Hs::LType> data_args;
-        Hs::Context context = data_decl.context;
-        for(auto& tv: data_decl.type_vars)
-            data_args.push_back(type_var_type(tv));
+        if (eta_arity == 0)
+            return rep_type;
 
+        auto [rep_head, rep_args] = Hs::decompose_type_apps(rep_type);
+        if (data_tvs.size() < eta_arity or rep_args.size() < eta_arity)
+            return {};
+
+        int first_dropped_data_tv = data_tvs.size() - eta_arity;
+        int first_dropped_rep_arg = rep_args.size() - eta_arity;
+        for(int i=0; i<eta_arity; i++)
+            if (not is_type_var(rep_args[first_dropped_rep_arg + i], data_tvs[first_dropped_data_tv + i]))
+                return {};
+
+        rep_args.resize(first_dropped_rep_arg);
+        return Hs::type_apply(rep_head, rep_args);
+    }
+
+    // Build the synthetic instance head C (T prefix...) with a C rep-prefix context.
+    Hs::LType generalized_newtype_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name, const Hs::LType& rep_type, int eta_arity)
+    {
+        int prefix_arity = data_decl.type_vars.size() - eta_arity;
+        auto data_args = type_var_types(data_decl.type_vars, prefix_arity);
+
+        Hs::Context context = data_decl.context;
         context.push_back(class_constraint(class_name, rep_type));
 
         auto data_type = type_con_type(data_decl.con, data_args);
         auto instance_head = class_constraint(class_name, data_type);
         Hs::LType polytype = Hs::LType{data_decl.con.loc, Hs::ConstrainedType(context, instance_head)};
-        return Hs::add_forall_vars(data_decl.type_vars, polytype);
+        vector<Hs::LTypeVar> quantified_tvs(data_decl.type_vars.begin(), data_decl.type_vars.begin() + prefix_arity);
+        return Hs::add_forall_vars(quantified_tvs, polytype);
     }
 
     // Synthesize a GND instance header and leave method bodies for instance pass 2.
@@ -699,7 +733,15 @@ namespace
             return {true, {}};
         }
 
-        Hs::InstanceDecl instance({}, generalized_newtype_instance_type(data_decl, class_info->name, *rep_type), {}, {}, {});
+        int eta_arity = num_args_for_kind(class_info->type_vars[0].kind);
+        auto eta_reduced_rep_type = drop_eta_args(*rep_type, data_decl.type_vars, eta_arity);
+        if (not eta_reduced_rep_type)
+        {
+            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving cannot eta-reduce the representation type to match the class argument kind");
+            return {true, {}};
+        }
+
+        Hs::InstanceDecl instance({}, generalized_newtype_instance_type(data_decl, class_info->name, *eta_reduced_rep_type, eta_arity), {}, {}, {});
         instance.generalized_newtype_deriving = true;
         return {true, instance};
     }

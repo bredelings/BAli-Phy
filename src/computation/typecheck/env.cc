@@ -195,7 +195,7 @@ std::tuple<RenameTyvarEnv2,TypeVar> rename_binder2_var(RenameTyvarEnv2 env, cons
     }
 
     env.left = extendVarEnv(env.left, tv1, tv_new);
-    env.right = extendVarEnv(env.right, tv1, tv_new);
+    env.right = extendVarEnv(env.right, tv2, tv_new);
     env.out_vars = extendVarSet(env.out_vars, tv_new);
 
     return {env, tv_new};

@@ -3,6 +3,38 @@
 
 using std::vector;
 
+bool same_forall_binder_kinds(const vector<TypeVar>& tvs1, const vector<TypeVar>& tvs2)
+{
+    if (tvs1.size() != tvs2.size())
+        return false;
+
+    for(int i=0; i<tvs1.size(); i++)
+        if (tvs1[i].kind != tvs2[i].kind)
+            return false;
+
+    return true;
+}
+
+// Open two forall types by replacing corresponding binders with shared fresh variables.
+std::optional<std::pair<Type, Type>> TypeChecker::open_forall_pair(const ForallType& forall1, const ForallType& forall2)
+{
+    if (not same_forall_binder_kinds(forall1.type_var_binders, forall2.type_var_binders))
+        return {};
+
+    substitution_t subst1;
+    substitution_t subst2;
+    for(int i=0; i<forall1.type_var_binders.size(); i++)
+    {
+        auto tv1 = forall1.type_var_binders[i];
+        auto tv2 = forall2.type_var_binders[i];
+        auto fresh_tv = fresh_rigid_type_var(tv1.name, tv1.kind);
+        subst1 = subst1.insert({tv1, fresh_tv});
+        subst2 = subst2.insert({tv2, fresh_tv});
+    }
+
+    return std::pair(apply_subst(subst1, forall1.type), apply_subst(subst2, forall2.type));
+}
+
 bool TypeChecker::occurs_check(const MetaTypeVar& tv, const Type& t) const
 {
     assert(not tv.filled());
@@ -450,7 +482,7 @@ bool TypeChecker::same_type(bool keep_syns, const RenameTyvarEnv2& env, const Ty
     auto forall2 = t2.to<ForallType>();
     if (forall1 and forall2)
     {
-        if (forall1->type_var_binders.size() != forall2->type_var_binders.size()) return false;
+        if (not same_forall_binder_kinds(forall1->type_var_binders, forall2->type_var_binders)) return false;
 
         auto env2 = rename_binders2(env, forall1->type_var_binders, forall2->type_var_binders);
         return same_type(keep_syns, env2, forall1->type, forall2->type);

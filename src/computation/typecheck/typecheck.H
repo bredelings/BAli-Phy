@@ -271,6 +271,8 @@ public:
     bool same_types(bool keep_syns, const std::vector<Type>& ts1, const std::vector<Type>& ts2) const;
     bool same_types(bool keep_syns, const RenameTyvarEnv2& env, const std::vector<Type>& ts1, const std::vector<Type>& ts2) const;
 
+    std::optional<std::pair<Type, Type>> open_forall_pair(const ForallType& forall1, const ForallType& forall2);
+
     bool has_errors() const;
     myexception note_exception() const;
 
