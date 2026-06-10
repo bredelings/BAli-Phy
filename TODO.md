@@ -2,13 +2,17 @@
 
 ## Runtime refactor
 
-* Put Trim into the AST
-  * This would be simpler if we make a deindexify\_and\_trim.  Which _should_ be possible.
+ * Put Trim into the AST
+   * This would be simpler if we make a deindexify\_and\_trim.  Which _should_ be possible.
 
-* Replace shared_ptr in ObjectValue
+ * Replace shared_ptr in ObjectValue -- this makes it slower?
 
-* Split App into FuncApp, ConApp, OpApp.
-  - Are we allowed to return ConApp from e_op?  I think we already do for BranchAlignment / NodeAlignment.
+ * Split App into FuncApp, ConApp, OpApp.
+   - Are we allowed to return ConApp from e_op?  I think we already do for BranchAlignment / NodeAlignment.
+
+## Refactor
+
+ * infer haskell types for bindings
 
 ## Speed
 
@@ -31,10 +35,19 @@
 
 ## Correctness/Completeness
 
- * properly support newtype
+ * record syntax -- still need record wildcards and several other rhings?
  
- * record syntax
+ * deriving instance (Eq a, Eq b) => Eq (a, b)
  
- * deriving Eq, Ord, ... ?
+ * deriving Ix, Enum, Bounded still not finished
 
+ * PolyKinds (i.e. forall k in kinds)
+ 
+ * DataKinds (i.e. using Bool as a Kind and 'True as a type)
+ 
+ * Implement Data.Vector
+ 
+ * Implement Data.Array correctly
+ 
  * downloading packages from hackage?
+ 

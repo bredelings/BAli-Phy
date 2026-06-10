@@ -3,8 +3,9 @@ module Data.Maybe where
 
 import Data.Bool
 import Data.Eq
+import Data.Ord
 
-data Maybe a = Just a | Nothing
+data Maybe a = Nothing | Just a deriving (Eq, Ord)
 
 maybe n _ Nothing  = n
 maybe _ f (Just x) = f x
@@ -35,9 +36,3 @@ mapMaybes _     [] = []
 mapMaybes f (x:xs) = let rs = mapMaybes f xs
                      in case f x of Nothing -> rs
                                     Just r  -> r:rs
-
-instance Eq a => Eq (Maybe a) where
-    Nothing == Nothing  =  True
-    Just x  == Just y   =  x==y
-    _       == _        =  False
-
