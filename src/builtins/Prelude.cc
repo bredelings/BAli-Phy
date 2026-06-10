@@ -7,6 +7,10 @@
 #include "computation/haskell/Integer.H"
 #include "computation/runtime/ast.H"
 
+#include <cerrno>
+#include <cstdlib>
+#include <limits>
+
 using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
@@ -393,6 +397,40 @@ extern "C" R::Exp simple_function_read_double(vector<R::Exp>& args)
 	return *d;
     else
 	throw myexception()<<"Cannot convert string '"<<s<<"' to double!";
+}
+
+extern "C" R::Exp simple_function_read_int_at(vector<R::Exp>& args)
+{
+    string s = get_arg(args).as_string();
+    int offset = get_arg(args).as_int();
+    if (offset < 0 or offset > s.size())
+        return R::RPair(0, -1);
+
+    const char* start = s.c_str() + offset;
+    char* end = nullptr;
+    errno = 0;
+    long value = std::strtol(start, &end, 10);
+    if (end == start or errno == ERANGE or value < std::numeric_limits<int>::min() or value > std::numeric_limits<int>::max())
+        return R::RPair(0, -1);
+
+    return R::RPair(int(value), offset + int(end - start));
+}
+
+extern "C" R::Exp simple_function_read_double_at(vector<R::Exp>& args)
+{
+    string s = get_arg(args).as_string();
+    int offset = get_arg(args).as_int();
+    if (offset < 0 or offset > s.size())
+        return R::RPair(0.0, -1);
+
+    const char* start = s.c_str() + offset;
+    char* end = nullptr;
+    errno = 0;
+    double value = std::strtod(start, &end);
+    if (end == start or errno == ERANGE)
+        return R::RPair(0.0, -1);
+
+    return R::RPair(value, offset + int(end - start));
 }
 
 extern "C" R::Exp simple_function_cNothing(vector<R::Exp>&)

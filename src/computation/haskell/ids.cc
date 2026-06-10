@@ -37,12 +37,17 @@ std::string ix_range_name = "Data.Ix.range";
 std::string ix_index_name = "Data.Ix.index";
 std::string ix_in_range_name = "Data.Ix.inRange";
 std::string ix_range_size_name = "Data.Ix.rangeSize";
+std::string list_append_name = "Data.OldList.++";
 std::string list_filter_name = "Data.OldList.filter";
 std::string list_map_name = "Data.OldList.map";
 std::string show_class_name = "Text.Show.Show";
 std::string show_shows_prec_name = "Text.Show.showsPrec";
 std::string show_show_paren_name = "Text.Show.showParen";
 std::string show_show_string_name = "Text.Show.showString";
+std::string read_class_name = "Text.Read.Read";
+std::string read_reads_prec_name = "Text.Read.readsPrec";
+std::string read_read_paren_name = "Text.Read.readParen";
+std::string read_read_constructor_name = "Text.Read.readConstructor";
 std::string coercible_class_name = "Compiler.Prim.Coercible";
 std::string coerce_name = "Compiler.Prim.coerce";
 

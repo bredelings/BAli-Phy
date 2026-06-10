@@ -65,6 +65,19 @@ namespace
         return true;
     }
 
+    // Accept only regular declarations whose constructors can be read as prefix tokens.
+    bool is_regular_data_decl_with_prefix_constructors(const Hs::DataOrNewtypeDecl& data_decl)
+    {
+        if (not data_decl.is_regular_decl())
+            return false;
+
+        for(const auto& constructor: data_decl.get_constructors())
+            if (not is_haskell_conid(get_unqualified_name(unloc(*constructor.con).name)))
+                return false;
+
+        return true;
+    }
+
     Type class_constraint(const TypeCon& class_con, const Type& type)
     {
         return type_apply(class_con, vector<Type>{type});
@@ -493,6 +506,11 @@ namespace
         return {noloc, Hs::Tuple({x, y})};
     }
 
+    Hs::LExp list_exp(const vector<Hs::LExp>& elements)
+    {
+        return {noloc, Hs::List(elements)};
+    }
+
     Hs::LExp ix_tag_exp(const Hs::DataOrNewtypeDecl& data_decl, const string& var_name)
     {
         return constructor_tag_exp(data_decl, local_var_exp(var_name));
@@ -608,6 +626,89 @@ namespace
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, show_class_name), {}, {}, methods);
     }
 
+    Hs::LExp lambda_exp(const Hs::LPats& pats, const Hs::LExp& body)
+    {
+        return {noloc, Hs::LambdaExp(pats, body)};
+    }
+
+    Hs::LExp append_exp(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return Hs::apply(wired_var_exp(list_append_name), {x, y});
+    }
+
+    // Concatenate generated parser result lists without requiring a shared helper in Text.Read.
+    Hs::LExp append_all_exp(const vector<Hs::LExp>& lists)
+    {
+        if (lists.empty())
+            return list_exp({});
+
+        auto result = lists.back();
+        for(int i=lists.size()-2; i>=0; i--)
+            result = append_exp(lists[i], result);
+        return result;
+    }
+
+    Hs::LQual pat_qual(const Hs::LPat& pattern, const Hs::LExp& exp)
+    {
+        return {noloc, Hs::PatQual(pattern, exp)};
+    }
+
+    Hs::LExp read_paren_exp(const Hs::LExp& condition, const Hs::LExp& parser, const Hs::LExp& input)
+    {
+        return Hs::apply(wired_var_exp(read_read_paren_name), {condition, parser, input});
+    }
+
+    Hs::LExp read_constructor_exp(const string& constructor_name, const Hs::LExp& input)
+    {
+        return Hs::apply(wired_var_exp(read_read_constructor_name), {string_exp(get_unqualified_name(constructor_name)), input});
+    }
+
+    Hs::LExp reads_prec_exp(int precedence, const Hs::LExp& input)
+    {
+        return Hs::apply(wired_var_exp(read_reads_prec_name), {int_exp(precedence), input});
+    }
+
+    // Parse one prefix constructor and its fields using the syntax emitted by derived Show.
+    Hs::LExp read_constructor_parser_exp(const Hs::ConstructorDecl& constructor)
+    {
+        vector<Hs::LQual> quals;
+        quals.push_back(pat_qual(pair_pat(wildcard_pat(), var_pat("r$0")),
+                                 read_constructor_exp(unloc(*constructor.con).name, local_var_exp("r$"))));
+
+        vector<Hs::LExp> constructor_args;
+        for(int i=0; i<constructor.arity(); i++)
+        {
+            auto field_var = "x$" + std::to_string(i);
+            auto next_rest_var = "r$" + std::to_string(i + 1);
+            constructor_args.push_back(local_var_exp(field_var));
+            quals.push_back(pat_qual(pair_pat(var_pat(field_var), var_pat(next_rest_var)),
+                                     reads_prec_exp(11, local_var_exp("r$" + std::to_string(i)))));
+        }
+
+        auto body = pair_exp(constructor_exp(constructor, constructor_args),
+                             local_var_exp("r$" + std::to_string(constructor.arity())));
+        return {noloc, Hs::ListComprehension(body, quals)};
+    }
+
+    // Synthesize readsPrec and let read use the class default.
+    Hs::InstanceDecl derive_read_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
+    {
+        vector<Hs::LExp> constructor_parsers;
+        for(const auto& constructor: data_decl.get_constructors())
+        {
+            auto parser = lambda_exp({var_pat("r$")}, read_constructor_parser_exp(constructor));
+            auto needs_parens = constructor.arity() == 0 ? bool_exp(false) : greater_than_exp(local_var_exp("d$"), int_exp(10));
+            constructor_parsers.push_back(read_paren_exp(needs_parens, parser, local_var_exp("s$")));
+        }
+
+        auto body = append_all_exp(constructor_parsers);
+
+        Hs::Decls methods;
+        methods.push_back(derived_method_decl(deriving_loc, read_reads_prec_name, {Hs::MRule({var_pat("d$"), var_pat("s$")}, Hs::SimpleRHS(body))}));
+
+        return Hs::InstanceDecl({}, stock_instance_type(data_decl, read_class_name), {}, {}, methods);
+    }
+
     const vector<StockDerivingSpec>& stock_deriving_specs()
     {
         static const vector<StockDerivingSpec> specs = {
@@ -623,6 +724,8 @@ namespace
              "deriving Ix is only supported for regular data declarations with only nullary constructors"},
             {show_class_name, true, derive_show_instance, is_regular_data_decl,
              "deriving Show is only supported for regular data/newtype declarations"},
+            {read_class_name, true, derive_read_instance, is_regular_data_decl_with_prefix_constructors,
+             "deriving Read is only supported for regular data/newtype declarations with prefix constructors"},
         };
 
         return specs;

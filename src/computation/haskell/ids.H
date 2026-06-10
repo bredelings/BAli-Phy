@@ -32,12 +32,17 @@ extern std::string ix_range_name;
 extern std::string ix_index_name;
 extern std::string ix_in_range_name;
 extern std::string ix_range_size_name;
+extern std::string list_append_name;
 extern std::string list_filter_name;
 extern std::string list_map_name;
 extern std::string show_class_name;
 extern std::string show_shows_prec_name;
 extern std::string show_show_paren_name;
 extern std::string show_show_string_name;
+extern std::string read_class_name;
+extern std::string read_reads_prec_name;
+extern std::string read_read_paren_name;
+extern std::string read_read_constructor_name;
 extern std::string coercible_class_name;
 extern std::string coerce_name;
 
