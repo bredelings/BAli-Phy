@@ -134,6 +134,28 @@ std::optional<Predicate> canonicalize_equality_foralls(Solver& solver, const Can
     return {};
 }
 
+// Decompose equality between constrained types into nominal context equality and body equality.
+std::optional<Predicate> canonicalize_equality_constrained(Solver& solver, const CanonicalEquality& E, const ConstrainedType& constrained1, const ConstrainedType& constrained2)
+{
+    if (constrained1.context.size() != constrained2.context.size())
+    {
+        solver.inerts.failed.push_back(E);
+        return {};
+    }
+
+    for(int i=0; i<constrained1.context.size(); i++)
+    {
+        auto constraint = make_role_equality_pred(Role::Nominal, constrained1.context[i], constrained2.context[i]);
+        auto dvar = solver.fresh_dvar(constraint);
+        solver.work_list.push_back(NonCanonical({E.origin(), E.flavor(), dvar, constraint, E.constraint.tc_state}));
+    }
+
+    auto constraint = make_role_equality_pred(E.role, constrained1.type, constrained2.type);
+    auto dvar = solver.fresh_dvar(constraint);
+    solver.work_list.push_back(NonCanonical({E.origin(), E.flavor(), dvar, constraint, E.constraint.tc_state}));
+    return {};
+}
+
 bool Solver::is_rewritable_lhs(Type t) const
 {
     t = follow_meta_type_var(t);
@@ -440,8 +462,13 @@ std::optional<Predicate> Solver::canonicalize_equality(CanonicalEquality E)
     if (forall1 and forall2)
         return canonicalize_equality_foralls(*this, E, *forall1, *forall2);
 
+    // 6. If both are ConstrainedType
+    auto constrained1 = E.t1.to<ConstrainedType>();
+    auto constrained2 = E.t2.to<ConstrainedType>();
+    if (constrained1 and constrained2)
+        return canonicalize_equality_constrained(*this, E, *constrained1, *constrained2);
 
-    // 6. If both are type applications without type con heads
+    // 7. If both are type applications without type con heads
     auto tapp1 = is_type_app(E.t1);
     auto tapp2 = is_type_app(E.t2);
     if (tapp1 and tapp2)

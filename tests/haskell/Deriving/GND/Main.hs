@@ -53,8 +53,23 @@ newtype TaggedCount = TaggedCount Int deriving newtype (Tagged Int)
 
 data StockColor = StockRed | StockBlue deriving stock Eq
 
+class Needs b where
+  need :: b -> Int
+
+instance Needs Int where
+  need x = x
+
+class Higher a where
+  higher :: forall b. Needs b => a -> b -> a
+
+instance Higher Int where
+  higher x y = x + need y
+
+newtype HigherAge = HigherAge Int deriving newtype Higher
+
 unAge (Age x) = x
 unNewBox (NewBox (Box x)) = x
+unHigherAge (HigherAge x) = x
 
 ok = unAge (twice (Age 21)) == 42
   && unNewBox (mapLike (\x -> x + 1) (NewBox (Box 41))) == 42
@@ -62,5 +77,6 @@ ok = unAge (twice (Age 21)) == 42
   && sizeArg (Size 42) == 42
   && taggedArg (1 :: Int) (TaggedCount 41) == 42
   && StockRed == StockRed
+  && unHigherAge (higher (HigherAge 40) (2 :: Int)) == 42
 
 main = print (if ok then (1 :: Int) else 0)
