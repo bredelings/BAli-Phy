@@ -363,8 +363,6 @@ void TypeChecker::check_wanteds(TidyState& tidy_state, vector<shared_ptr<Implica
 
             if (auto occ = to<OccurrenceOrigin>(wanted.origin))
                 e<<" arising from a use of '"<<cyan(print_unqualified_id(occ->name))<<ANSI::bold<<"'";
-            if (wanted.tc_state->source_span())
-                e<<" at "<<(*wanted.tc_state->source_span());
             notes.push_back(e);
         }
 
