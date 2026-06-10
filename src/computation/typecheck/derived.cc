@@ -719,6 +719,63 @@ namespace
         return Hs::add_forall_vars(quantified_tvs, polytype);
     }
 
+    // Build the class-parameter substitution used by generated GND associated type instances.
+    optional<Hs::LType> gnd_associated_family_arg(const vector<TypeVar>& class_tvs, const vector<Hs::LType>& fixed_args, const Hs::LType& data_type, const Hs::LType& rep_type, const TypeVar& tv, bool use_rep_type)
+    {
+        for(int i=0; i<class_tvs.size(); i++)
+        {
+            if (class_tvs[i] != tv)
+                continue;
+
+            if (i < fixed_args.size())
+                return fixed_args[i];
+
+            return use_rep_type ? rep_type : data_type;
+        }
+
+        return {};
+    }
+
+    // Synthesize associated type equations mapping the newtype argument to its representation.
+    vector<Hs::TypeFamilyInstanceDecl> generalized_newtype_associated_type_instances(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Hs::LType& rep_type, int eta_arity)
+    {
+        int prefix_arity = data_decl.type_vars.size() - eta_arity;
+        auto data_type = type_con_type(data_decl.con, type_var_types(data_decl.type_vars, prefix_arity));
+
+        vector<Hs::TypeFamilyInstanceDecl> type_instances;
+        for(auto& [tf_con, maybe_default]: class_info.associated_type_families)
+        {
+            auto tf_info = tc.info_for_type_fam(tf_con.name);
+            assert(tf_info);
+
+            vector<Hs::LType> lhs_args;
+            vector<Hs::LType> rhs_args;
+            for(auto& family_arg: tf_info->args)
+            {
+                auto lhs_arg = gnd_associated_family_arg(class_info.type_vars, fixed_args, data_type, rep_type, family_arg, false);
+                auto rhs_arg = gnd_associated_family_arg(class_info.type_vars, fixed_args, data_type, rep_type, family_arg, true);
+
+                if (lhs_arg and rhs_arg)
+                {
+                    lhs_args.push_back(*lhs_arg);
+                    rhs_args.push_back(*rhs_arg);
+                }
+                else
+                {
+                    auto arg = Hs::LType{noloc, Hs::TypeVar(family_arg.name)};
+                    lhs_args.push_back(arg);
+                    rhs_args.push_back(arg);
+                }
+            }
+
+            Hs::LTypeCon hs_tf_con{noloc, Hs::TypeCon(tf_con.name)};
+            auto rhs = Hs::type_apply(hs_tf_con, rhs_args);
+            type_instances.push_back(Hs::TypeFamilyInstanceDecl(hs_tf_con, lhs_args, rhs));
+        }
+
+        return type_instances;
+    }
+
     // Synthesize a GND instance header and leave method bodies for instance pass 2.
     GeneralizedNewtypeDerivingResult derive_generalized_newtype_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::LType& deriving)
     {
@@ -739,9 +796,9 @@ namespace
             return {true, {}};
         }
 
-        if (not class_info->associated_type_families.empty() or not class_info->associated_data_families.empty())
+        if (not class_info->associated_data_families.empty())
         {
-            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving for classes with associated families is not supported yet");
+            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving for classes with associated data families is not supported yet");
             return {true, {}};
         }
 
@@ -761,7 +818,8 @@ namespace
             return {true, {}};
         }
 
-        Hs::InstanceDecl instance({}, generalized_newtype_instance_type(data_decl, class_info->name, deriving_class->fixed_args, *eta_reduced_rep_type, eta_arity), {}, {}, {});
+        auto associated_type_instances = generalized_newtype_associated_type_instances(tc, data_decl, *class_info, deriving_class->fixed_args, *eta_reduced_rep_type, eta_arity);
+        Hs::InstanceDecl instance({}, generalized_newtype_instance_type(data_decl, class_info->name, deriving_class->fixed_args, *eta_reduced_rep_type, eta_arity), associated_type_instances, {}, {});
         instance.generalized_newtype_deriving = true;
         return {true, instance};
     }
