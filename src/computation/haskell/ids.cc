@@ -19,6 +19,9 @@ std::string ord_compare_name = "Data.Ord.compare";
 std::string ordering_lt_name = "Data.Ord.LT";
 std::string ordering_eq_name = "Data.Ord.EQ";
 std::string ordering_gt_name = "Data.Ord.GT";
+std::string bounded_class_name = "Compiler.Enum.Bounded";
+std::string bounded_min_bound_name = "Compiler.Enum.minBound";
+std::string bounded_max_bound_name = "Compiler.Enum.maxBound";
 
 bool is_tuple_name(const string& s)
 {

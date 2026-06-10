@@ -356,6 +356,11 @@ namespace
         return wired_con_exp(name);
     }
 
+    Hs::LExp constructor_exp(const Hs::ConstructorDecl& constructor, const vector<Hs::LExp>& args)
+    {
+        return Hs::apply({constructor.con->loc, Hs::Con(unloc(*constructor.con).name, constructor.arity())}, args);
+    }
+
     Hs::LPat ordering_pat(const string& name)
     {
         return con_pat(name, 0, {});
@@ -407,6 +412,33 @@ namespace
 
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, ord_class_name), {}, {}, methods);
     }
+
+    Hs::MRule nullary_method_rule(const Hs::LExp& rhs)
+    {
+        return Hs::MRule({}, Hs::SimpleRHS(rhs));
+    }
+
+    Hs::LDecl nullary_method_decl(const string& method_name, const Hs::LExp& rhs)
+    {
+        return derived_method_decl(method_name, {nullary_method_rule(rhs)});
+    }
+
+    Hs::LExp bounded_constructor_exp(const Hs::ConstructorDecl& constructor, const string& bound_method_name)
+    {
+        vector<Hs::LExp> args(constructor.arity(), wired_var_exp(bound_method_name));
+        return constructor_exp(constructor, args);
+    }
+
+    Hs::InstanceDecl derive_bounded_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    {
+        const auto& constructors = data_decl.get_constructors();
+
+        Hs::Decls methods;
+        methods.push_back(nullary_method_decl(bounded_min_bound_name, bounded_constructor_exp(constructors.front(), bounded_min_bound_name)));
+        methods.push_back(nullary_method_decl(bounded_max_bound_name, bounded_constructor_exp(constructors.back(), bounded_max_bound_name)));
+
+        return Hs::InstanceDecl({}, stock_instance_type(data_decl, bounded_class_name), {}, {}, methods);
+    }
 }
 
 Hs::Decls synthesize_derived_instances(const Hs::Decls& decls)
@@ -430,6 +462,12 @@ Hs::Decls synthesize_derived_instances(const Hs::Decls& decls)
                     if (not data_decl->is_regular_decl())
                         throw myexception()<<"deriving Ord is only supported for regular data/newtype declarations";
                     instances.push_back({loc, derive_ord_instance(*data_decl)});
+                }
+                else if (is_deriving_class(deriving, bounded_class_name))
+                {
+                    if (not data_decl->is_regular_decl() or data_decl->get_constructors().empty())
+                        throw myexception()<<"deriving Bounded is only supported for regular data/newtype declarations with constructors";
+                    instances.push_back({loc, derive_bounded_instance(*data_decl)});
                 }
                 else
                     throw myexception()<<"deriving "<<deriving.print()<<" is not supported yet";

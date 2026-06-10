@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-module Compiler.Enum (Enum(..),
+module Compiler.Enum (Bounded(..),
+                      Enum(..),
                       enumFrom,
                       enumFromThen,
                       enumFromTo,
@@ -97,6 +98,5 @@ enumByFrom by from = from:enumByFrom by (from+by)
 -- This isn't right for negative "by"
 enumByToFrom by to from | from <= to    = from:enumByToFrom by to (from+by)
                         | otherwise     = []
-
 
 
