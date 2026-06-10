@@ -22,7 +22,10 @@ namespace
             return {};
 
         auto class_name = get_unqualified_name(con->name);
-        if (class_name == get_unqualified_name(eq_class_name) or class_name == get_unqualified_name(ord_class_name))
+        if (class_name == get_unqualified_name(eq_class_name)
+            or class_name == get_unqualified_name(ord_class_name)
+            or class_name == get_unqualified_name(bounded_class_name)
+            or class_name == get_unqualified_name(show_class_name))
             return TypeCon(con->name);
         else
             return {};

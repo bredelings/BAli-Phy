@@ -1,0 +1,8 @@
+[1mMain.hs:4.16-18:[1;31m error:[0m[1m
+   • Could not deduce 'Show Foo' arising from field 2 of constructor 'T' (type
+     'Foo')
+   • When deriving the instance for Show (T a)
+  [1;34m|[0m
+[1;34m4[0m [1;34m| [0mdata T a = T a [1;31mFoo[0m deriving Show
+  [1;34m|[0m                [1;31m^^^[0m
+
