@@ -67,9 +67,32 @@ instance Higher Int where
 
 newtype HigherAge = HigherAge Int deriving newtype Higher
 
+class Super a where
+  super :: a -> Int
+
+instance Super Int where
+  super x = x
+
+class Super a => Sub a where
+  sub :: a -> Int
+
+instance Sub Int where
+  sub x = x + 1
+
+newtype SuperAge = SuperAge Int deriving newtype Super deriving newtype Sub
+
+class (a ~ a) => Refl a where
+  refl :: a -> a
+
+instance Refl Int where
+  refl x = x
+
+newtype ReflAge = ReflAge Int deriving newtype Refl
+
 unAge (Age x) = x
 unNewBox (NewBox (Box x)) = x
 unHigherAge (HigherAge x) = x
+unReflAge (ReflAge x) = x
 
 ok = unAge (twice (Age 21)) == 42
   && unNewBox (mapLike (\x -> x + 1) (NewBox (Box 41))) == 42
@@ -78,5 +101,8 @@ ok = unAge (twice (Age 21)) == 42
   && taggedArg (1 :: Int) (TaggedCount 41) == 42
   && StockRed == StockRed
   && unHigherAge (higher (HigherAge 40) (2 :: Int)) == 42
+  && super (SuperAge 42) == 42
+  && sub (SuperAge 41) == 42
+  && unReflAge (refl (ReflAge 42)) == 42
 
 main = print (if ok then (1 :: Int) else 0)
