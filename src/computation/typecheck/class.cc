@@ -205,10 +205,10 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         std::optional<TypeFamilyInstanceDecl>* default_instance = nullptr;
         auto default_iter = class_info.associated_type_families.find(tf_con);
         if (default_iter == class_info.associated_type_families.end())
-            record_error(def_inst.con.loc, Note()<<"Type family '"<<tf_con<<"' is not defined in class '"<<class_name<<"'");
+            record_error(def_inst.con.loc, Note()<<"Type family '"<<show_type_plain(tf_con)<<"' is not defined in class '"<<class_name<<"'");
         // An associated type family can have only one default instance.
         else if (default_iter->second)
-            record_error(def_inst.con.loc, Note()<<"Associated type family '"<<tf_con.print()<<"' may only have one default instance!");
+            record_error(def_inst.con.loc, Note()<<"Associated type family '"<<show_type_plain(tf_con)<<"' may only have one default instance!");
         else
             default_instance = &default_iter->second;
 

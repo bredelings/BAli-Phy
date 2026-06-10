@@ -1,5 +1,5 @@
 [1mMain.hs:6.10:[1;31m error:[0m[1m
-   • Associated type family 'Main.K' may only have one default instance!
+   • Associated type family 'K' may only have one default instance!
    • In class 'C':
   [1;34m|[0m
 [1;34m6[0m [1;34m| [0m    type [1;31mK[0m a a a = a

@@ -47,7 +47,7 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LVar& LV, const Expected& exp
         {
             auto [tvs, wanteds, monotype] = instantiate( PatOrigin(), sig_type);
             if (wanteds.size())
-                throw note_exception()<<"variable '"<<name<<"' cannot have constrained type '"<<sig_type<<"' due to monomorphism restriction";
+                throw note_exception()<<"variable '"<<name<<"' cannot have constrained type '"<<show_type_plain(sig_type)<<"' due to monomorphism restriction";
             type = monotype;
             fillInfer(type, *I);
         }

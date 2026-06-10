@@ -1,5 +1,5 @@
 [1mMain.hs:5.15-19:[1;31m error:[0m[1m
-   • Type Main.F Int has kind Type -> Type, but should have kind Type
+   • Type F Int has kind Type -> Type, but should have kind Type
    • In data family instance 'data instance Main.F Int = Main.MkF':
   [1;34m|[0m
 [1;34m5[0m [1;34m| [0mdata instance [1;31mF Int[0m = MkF

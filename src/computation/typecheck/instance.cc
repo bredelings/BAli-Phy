@@ -183,7 +183,7 @@ void TypeChecker::check_associated_family_instance_args(const vector<Hs::LType>&
         {
             auto expected = instance_subst.at(fam_tv);
             if (not same_type(args[i], expected))
-                record_error(Note()<<"    argument '"<<hs_args[i]<<"' should match instance parameter '"<<expected<<"'");
+                record_error(Note()<<"    argument '"<<hs_args[i]<<"' should match instance parameter '"<<show_type_plain(expected)<<"'");
         }
     }
 }
@@ -280,7 +280,7 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
 {
     if (not maybe_default)
     {
-	record_warning( Note() <<"No instance for associated type family "<<tf_con );
+	record_warning( Note() <<"No instance for associated type family "<<show_type_plain(tf_con) );
 	return;
     }
 
@@ -620,9 +620,9 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_instance_method(
     }
     else
     {
-        record_warning( Note() <<"instance "<<inst_type<<" is missing method '"<<method.name<<"'" );
+        record_warning( Note() <<"instance "<<show_type_plain(inst_type)<<" is missing method '"<<method.name<<"'" );
 
-        Hs::String msg("method `" + method.name + "` undefined in instance `" + inst_type.print() + "`");
+        Hs::String msg("method `" + method.name + "` undefined in instance `" + show_type_plain(inst_type) + "`");
         Hs::LVar error{noloc,Hs::Var("Compiler.Error.error")};
         FD = Hs::simple_decl({noloc,op}, Hs::apply(error,{{noloc,Hs::Literal(msg)}}));
     }
@@ -641,14 +641,13 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_instance_method(
 pair<Hs::Decls, Core::Decl<>>
 TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::InstanceDecl& inst_decl)
 {
-    auto note = note_scope( Note()<<"In instance `"<<inst_decl.polytype<<"`:" );
-
     // 1. Get instance head and constraints (givens)
 
     auto S = this_mod().lookup_local_symbol(dfun.name);
 
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
     auto inst_type = S->instance_info->type();
+    auto note = note_scope( Note()<<"In instance `"<<show_type_plain(inst_type)<<"`:" );
 
     auto span = source_span_scope(inst_decl.polytype.loc);
     // Instantiate it with rigid type variables.
@@ -677,7 +676,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::Instanc
     auto wanteds = preds_to_constraints(GivenOrigin(), Wanted, superclass_constraints);
     std::shared_ptr<const Core::Decls<>> decls_super;
     {
-        auto superclass_note = note_scope(Note()<<"Deriving superclass constraints for "<<instance_head.print());
+        auto superclass_note = note_scope(Note()<<"Deriving superclass constraints for "<<show_type_plain(instance_head));
         decls_super = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
     }
 
@@ -923,11 +922,12 @@ optional<pair<Core::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target_
     // FIXME: We really should print the instance LOCATIONS!
     if (surviving_instances.size() > 1)
     {
-        auto n = Note()<<"Too many matching instances for "<<target_pred<<":\n";
+        TidyState tidy_state;
+        auto n = Note()<<"Too many matching instances for "<<show_type_plain(tidy_state, target_pred)<<":\n";
         for(auto& [_,type1,type2,info]: surviving_instances)
 	{
 	    auto instance_head = type_apply(info.class_con, info.args);
-            n<<"  "<<remove_top_gen(instance_head)<<"\n";
+            n<<"  "<<show_type_plain(tidy_state, remove_top_gen(instance_head))<<"\n";
 	}
         record_error(n);
     }
@@ -938,8 +938,9 @@ optional<pair<Core::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target_
     {
         if (unifying_instance.incoherent) continue;
 
-        auto n = Note()<<"Predicate "<<target_pred<<" unifies, but does not match with instance "
-                       <<remove_top_gen(unifying_instance.type());
+        TidyState tidy_state;
+        auto n = Note()<<"Predicate "<<show_type_plain(tidy_state, target_pred)<<" unifies, but does not match with instance "
+                       <<show_type_plain(tidy_state, remove_top_gen(unifying_instance.type()));
         record_error(n);
     }
 

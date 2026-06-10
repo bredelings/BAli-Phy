@@ -161,7 +161,10 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             // 4. Check result type name
             auto [con, args] = decompose_type_apps(result_type);
             if (con != data_type_con)
-                throw myexception()<<"constructor result '"<<result_type<<"' doesn't match data type "<< data_type_con;
+            {
+                TidyState tidy_state;
+                throw myexception()<<"constructor result '"<<show_type_plain(tidy_state, result_type)<<"' doesn't match data type "<< show_type_plain(tidy_state, data_type_con);
+            }
 
             // Failure here would have triggered a kind error earlier.
             assert(args.size() == data_decl.type_vars.size());
@@ -232,7 +235,7 @@ DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType&
     auto [result_head, result_args] = decompose_type_apps(result_type);
     auto result_con = result_head.to<TypeCon>();
     if (not result_con or not type_con_is_data_fam(*result_con))
-        record_error(Note()<<"Data family constructor result type '"<<result_type<<"' is not a data family application");
+        record_error(Note()<<"Data family constructor result type '"<<show_type_plain(result_type)<<"' is not a data family application");
     else
         info.data_type = *result_con;
 
@@ -268,11 +271,17 @@ DataConInfo TypeChecker::infer_type_for_gadt_data_family_constructor(const Type&
     auto [result_head, result_args] = decompose_type_apps(result_type);
     auto result_con = result_head.to<TypeCon>();
     if (not result_con or not type_con_is_data_fam(*result_con))
-        record_error(Note()<<"Data family constructor result type '"<<result_type<<"' is not a data family application");
+        record_error(Note()<<"Data family constructor result type '"<<show_type_plain(result_type)<<"' is not a data family application");
     else if (*result_con != data_family)
-        record_error(Note()<<"Data family constructor result type '"<<result_type<<"' does not match data family '"<<data_family<<"'");
+    {
+        TidyState tidy_state;
+        record_error(Note()<<"Data family constructor result type '"<<show_type_plain(tidy_state, result_type)<<"' does not match data family '"<<show_type_plain(tidy_state, data_family)<<"'");
+    }
     else if (not maybe_unify(result_type, instance_head))
-        record_error(Note()<<"Data family constructor result type '"<<result_type<<"' does not match instance head '"<<instance_head<<"'");
+    {
+        TidyState tidy_state;
+        record_error(Note()<<"Data family constructor result type '"<<show_type_plain(tidy_state, result_type)<<"' does not match instance head '"<<show_type_plain(tidy_state, instance_head)<<"'");
+    }
 
     auto result_tvs = free_type_variables(result_type);
     for(auto& tv: written_tvs)
@@ -323,9 +332,12 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
     auto [result_head, result_args] = decompose_type_apps(instance_head.type);
     auto result_con = result_head.to<TypeCon>();
     if (not result_con or not type_con_is_data_fam(*result_con))
-        record_error(Note()<<"Data family instance head '"<<instance_head.type<<"' is not a data family application");
+        record_error(Note()<<"Data family instance head '"<<show_type_plain(instance_head.type)<<"' is not a data family application");
     else if (*result_con != data_family)
-        record_error(Note()<<"Data family instance head '"<<instance_head.type<<"' does not match data family '"<<data_family<<"'");
+    {
+        TidyState tidy_state;
+        record_error(Note()<<"Data family instance head '"<<show_type_plain(tidy_state, instance_head.type)<<"' does not match data family '"<<show_type_plain(tidy_state, data_family)<<"'");
+    }
     else if (result_args.size() != data_fam_info->arity())
         record_error(Note()<<"Data family takes "<<data_fam_info->arity()<<" arguments, but instance has "<<result_args.size());
 

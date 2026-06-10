@@ -136,7 +136,8 @@ Type kindchecker_state::kind_check_type_of_kind(const Hs::LType& t, const Kind& 
     if (not unify(kind, kind2))
     {
         auto span = type_checker.source_span_scope(t.loc);
-        type_checker.record_error(Note()<<"Type "<<t2<<" has kind "<<apply_substitution(kind2)<<", but should have kind "<<apply_substitution(kind)<<"\n");
+        TidyState tidy_state;
+        type_checker.record_error(Note()<<"Type "<<show_type_plain(tidy_state, t2)<<" has kind "<<show_type_plain(tidy_state, apply_substitution(kind2))<<", but should have kind "<<show_type_plain(tidy_state, apply_substitution(kind))<<"\n");
     }
     return t2;
 }
@@ -213,14 +214,15 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
             if (not unify(arg_kind, kind2))
             {
                 auto span = type_checker.source_span_scope(ltype.loc);
-                type_checker.record_error(Note()<<"In type '"<<t<<"', can't apply type ("<<tapp->head<<" :: "<<apply_substitution(kind1)<<") to type ("<<tapp->arg<<" :: "<<apply_substitution(kind2)<<")");
+                TidyState tidy_state;
+                type_checker.record_error(Note()<<"In type '"<<t<<"', can't apply type ("<<tapp->head<<" :: "<<show_type_plain(tidy_state, apply_substitution(kind1))<<") to type ("<<tapp->arg<<" :: "<<show_type_plain(tidy_state, apply_substitution(kind2))<<")");
             }
             return {t2, result_kind};
         }
         else
         {
             auto span = type_checker.source_span_scope(loc);
-            type_checker.record_error(Note()<<"Can't apply type "<<tapp->head<<" :: "<<kind1.print()<<" to type "<<tapp->arg<<".");
+            type_checker.record_error(Note()<<"Can't apply type "<<tapp->head<<" :: "<<show_type_plain(kind1)<<" to type "<<tapp->arg<<".");
 
             return {t2, fresh_kind_var()};
         }
@@ -234,7 +236,7 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
             if (not unify(kind_constraint(), k2))
             {
                 auto span = type_checker.source_span_scope(ltype.loc);
-                type_checker.record_error(Note()<<"Constraint '"<<hs_constraint.print()<<"' should be a Constraint, but has kind "<<k2.print());
+                type_checker.record_error(Note()<<"Constraint '"<<hs_constraint.print()<<"' should be a Constraint, but has kind "<<show_type_plain(k2));
             }
             context.push_back(c2);
         }

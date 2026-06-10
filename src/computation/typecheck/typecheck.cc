@@ -179,7 +179,7 @@ int TypeChecker::type_con_arity(const TypeCon& tc) const
 {
     auto T = this_mod().lookup_resolved_type(tc.name);
     if (not T)
-        throw note_exception()<<"Can't find type con '"<<tc<<"'";
+        throw note_exception()<<"Can't find type con '"<<show_type_plain(tc)<<"'";
     assert(T->arity);
     return (*T->arity);
 }
@@ -356,7 +356,7 @@ void TypeChecker::fillInfer(const Type& type, Infer& I)
 void TypeChecker::ensure_monotype(const Type& type)
 {
     if (not is_rho_type(type))
-        throw note_exception()<<"ensure_monotype: "<<type<<" is not a rho type!";
+        throw note_exception()<<"ensure_monotype: "<<show_type_plain(type)<<" is not a rho type!";
 
     if (true) // a tau type
         ;
@@ -535,7 +535,7 @@ ID get_full_class_name_from_constraint(const Type& constraint)
     if (auto tc = tycon.to<TypeCon>())
         return tc->name;
     else
-        throw myexception()<<"Can't get class name for constraint '"<<constraint<<"'";
+        throw myexception()<<"Can't get class name for constraint '"<<show_type_plain(constraint)<<"'";
 }
 
 ID get_class_name_from_constraint(const Type& constraint)
@@ -780,7 +780,7 @@ void TypeChecker::promote(Type type, int new_level)
     // check for skolem_escape
     if (max_level(type) > new_level)
     {
-        throw myexception(print_note())<<"skolem-escape in '"<<type<<"':\n  cannot promote to level "<<new_level<<" because of type variables on level "<<max_level(type);
+        throw myexception(print_note())<<"skolem-escape in '"<<show_type_plain(type)<<"':\n  cannot promote to level "<<new_level<<" because of type variables on level "<<max_level(type);
     }
 }
 
