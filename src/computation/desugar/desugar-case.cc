@@ -529,6 +529,19 @@ void desugar_state::clean_up_pattern(const Core::Var<>& x, equation_info_t& eqn)
 	pat1 = unloc(AP.pattern);
 	clean_up_pattern(x, eqn);
     }
+    // case x of NewtypeCon pat -> rhs  =>  case x of pat -> rhs
+    else if (auto CP = pat1.to<Hs::ConPattern>())
+    {
+        auto info = m.constructor_info(unloc(CP->head).name);
+        if (info and info->is_newtype_constructor)
+        {
+            assert(CP->args.size() == 1);
+            if (CP->ev_binds)
+                rhs.add_binding(*CP->ev_binds);
+            pat1 = unloc(CP->args[0]);
+            clean_up_pattern(x, eqn);
+        }
+    }
 }
 
 failable_expression desugar_state::match(const vector<Core::Var<>>& x, const vector<equation_info_t>& equations)

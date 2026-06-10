@@ -1628,6 +1628,13 @@ Core::Exp<> make_constructor(const std::string& con_name, const DataConInfo& inf
     auto args = make_vars<>(arity);
     auto args_exp = args | ranges::to<vector<Core::Exp<>>>;
 
+    if (info.is_newtype_constructor)
+    {
+        assert(info.arity() == 1);
+        assert(not args.empty());
+        return lambda_quantify(args, Core::Exp<>(args.back()));
+    }
+
     Core::Exp<> body = Core::ConApp<>{con_name, args_exp};
 
     // Force strict fields

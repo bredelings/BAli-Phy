@@ -15,6 +15,7 @@ struct DataConInfo
     std::vector<bool> field_strictness;
     TypeCon data_type;
     std::optional<Type> constructor_result_type;
+    bool is_newtype_constructor = false;
 
     std::vector<Type> all_constraints() const;
     std::vector<Type> dictionary_preds() const;
@@ -28,7 +29,7 @@ struct DataConInfo
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types, field_strictness, data_type, constructor_result_type);
+	ar(uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types, field_strictness, data_type, constructor_result_type, is_newtype_constructor);
     }
 };
 

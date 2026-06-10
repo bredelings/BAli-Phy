@@ -137,6 +137,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             auto con_name = unloc(*constructor.con).name;
             DataConInfo info = infer_type_for_constructor(data_decl.con, data_decl.type_vars, constructor);
             info.top_constraints = data_context;
+            info.is_newtype_constructor = data_decl.data_or_newtype == Hs::DataOrNewtype::newtype;
             types = types.insert({con_name, info});
         }
     }
@@ -201,6 +202,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             info.top_constraints = data_context;
             info.exi_tvs = exi_tvs_set | ranges::to<vector>();
             info.uni_tvs = u_tvs;
+            info.is_newtype_constructor = data_decl.data_or_newtype == Hs::DataOrNewtype::newtype;
             
             for(auto& con_name: data_cons_decl.con_names)
                 types = types.insert({unloc(con_name), info});
@@ -351,6 +353,7 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
         {
             auto con_name = unloc(*constructor.con).name;
             DataConInfo info = infer_type_for_data_family_constructor(hs_result_type, outer_tvs, instance_head.context, constructor);
+            info.is_newtype_constructor = data_inst.rhs.data_or_newtype == Hs::DataOrNewtype::newtype;
             types = types.insert({con_name, info});
         }
     }
@@ -359,6 +362,7 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
         for(auto& constructor: data_inst.rhs.get_gadt_constructors())
         {
             DataConInfo info = infer_type_for_gadt_data_family_constructor(instance_head.type, data_family, instance_head.context, constructor);
+            info.is_newtype_constructor = data_inst.rhs.data_or_newtype == Hs::DataOrNewtype::newtype;
             for(auto& con_name: constructor.con_names)
                 types = types.insert({unloc(con_name), info});
         }
