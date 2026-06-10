@@ -490,6 +490,36 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_superclass_entry(
     return {hs_decl, make_core_var(superclass_selector)};
 }
 
+// Find the representation class dictionary added to the synthetic GND context.
+optional<pair<Type, Core::Var<>>> find_gnd_representation_dictionary(const LIE& givens, const TypeCon& class_con)
+{
+    for(auto it = givens.rbegin(); it != givens.rend(); ++it)
+    {
+        auto [head, args] = decompose_type_apps(it->pred);
+        auto pred_class = head.to<TypeCon>();
+        if (pred_class and *pred_class == class_con and args.size() == 1)
+            return pair(args[0], it->ev_var);
+    }
+
+    return {};
+}
+
+// Find the dictionary selector for a class method, skipping superclass fields.
+optional<Hs::Var> class_method_selector(const ClassInfo& class_info, const Hs::Var& method)
+{
+    if (not class_info.members.count(method))
+        return {};
+
+    for(const auto& field_and_type: class_info.fields)
+    {
+        const auto& field = field_and_type.first;
+        if (get_unqualified_name(field.name) == method.name)
+            return field;
+    }
+
+    return {};
+}
+
 std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_instance_method(
     const Hs::Var& method, const Type& method_type,
     const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst,
@@ -528,6 +558,49 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_instance_method(
     }
 
     auto hs_decl = infer_type_for_single_fundecl_with_sig(*FD, op_type);
+
+    auto S = symbol_info(op.name, symbol_type_t::instance_method, {}, {}, {});
+    S.type = op_type;
+    this_mod().add_symbol(S);
+
+    return {hs_decl, make_core_var(op)};
+}
+
+// Generate a GND method by selecting the representation method under a representational equality wanted.
+std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_gnd_instance_method(
+    const Hs::Var& method, const Type& method_type,
+    const std::vector<TypeVar>& instance_tvs, const LIE& givens, const substitution_t& subst,
+    const ClassInfo& class_info, const TypeCon& class_con)
+{
+    auto op = get_fresh_Var("i$"+method.name, true);
+
+    auto representation = find_gnd_representation_dictionary(givens, class_con);
+    assert(representation);
+    auto [rep_type, rep_dict] = *representation;
+
+    Type inst_method_type = apply_subst(subst, remove_top_gen(method_type));
+
+    substitution_t rep_subst;
+    rep_subst = rep_subst.insert({class_info.type_vars[0], rep_type});
+    Type rep_method_type = apply_subst(rep_subst, remove_top_gen(method_type));
+
+    auto equality = make_role_equality_pred(Role::Representational, rep_method_type, inst_method_type);
+    auto wanteds = preds_to_constraints(TypeConvertOrigin(), Wanted, {equality});
+    auto ev_decls = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
+
+    auto selector = class_method_selector(class_info, method);
+    assert(selector);
+
+    auto inner_id = get_fresh_Var("gnd$"+method.name, false);
+    Core::Decls<> body_decls;
+    body_decls.push_back({make_core_var(inner_id), make_apply<>(Core::Exp<>(make_core_var(*selector)), vector<Core::Var<>>{rep_dict})});
+    std::shared_ptr<const Core::Decls<>> method_decls = std::make_shared<Core::Decls<>>(body_decls);
+
+    Type op_type = add_forall_vars(instance_tvs,add_constraints(preds_from_lie(givens), inst_method_type));
+
+    std::map<Hs::Var,Hs::BindInfo> bind_infos;
+    bind_infos.insert({op, Hs::BindInfo(op, inner_id, inst_method_type, op_type, Core::WrapId)});
+    auto hs_decl = Hs::GenBind(instance_tvs, dict_vars_from_lie(givens), {ev_decls, method_decls}, {}, bind_infos);
 
     auto S = symbol_info(op.name, symbol_type_t::instance_method, {}, {}, {});
     S.type = op_type;
@@ -597,14 +670,16 @@ TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::Instanc
 
 
     // 6. Method fields in the instance dictionary.
-    auto method_matches = get_instance_methods( inst_decl.method_decls, class_info.members, class_name );
+    auto method_matches = inst_decl.generalized_newtype_deriving
+        ? map<Hs::Var, Hs::Matches>{}
+        : get_instance_methods( inst_decl.method_decls, class_info.members, class_name );
 
     // OK, so lets say that we just do \idvar1 .. idvarn -> let ev_binds = entails( )
     for(const auto& [method, method_type]: class_info.members)
     {
-        auto [hs_decl, op] = type_check_instance_method(method, method_type,
-                                                        instance_tvs, givens, inst_type, subst,
-                                                        method_matches, class_info);
+        auto [hs_decl, op] = inst_decl.generalized_newtype_deriving
+            ? type_check_gnd_instance_method(method, method_type, instance_tvs, givens, subst, class_info, class_con)
+            : type_check_instance_method(method, method_type, instance_tvs, givens, inst_type, subst, method_matches, class_info);
 
         instance_sc_methods.push_back(op);
         decls.push_back({noloc,hs_decl});

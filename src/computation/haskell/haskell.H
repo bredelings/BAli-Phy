@@ -755,6 +755,8 @@ struct InstanceDecl: public Object
     std::vector<DataFamilyInstanceDecl> data_inst_decls;
     Decls method_decls;
 
+    bool generalized_newtype_deriving = false;
+
     InstanceDecl* clone() const { return new InstanceDecl(*this);}
     std::string print() const;
 

@@ -32,6 +32,12 @@ namespace
         TypeCon type_con;
     };
 
+    struct GeneralizedNewtypeDerivingResult
+    {
+        bool handled = false;
+        optional<Hs::InstanceDecl> instance;
+    };
+
     bool is_regular_data_decl(const Hs::DataOrNewtypeDecl& data_decl)
     {
         return data_decl.is_regular_decl();
@@ -616,6 +622,87 @@ namespace
 
         return {};
     }
+
+    // Resolve a simple deriving class name to the class metadata produced by renaming.
+    const type_info::class_info* resolved_deriving_class(const Module& mod, const Hs::LType& deriving)
+    {
+        auto [head, args] = Hs::decompose_type_apps(deriving);
+        auto con = unloc(head).to<Hs::TypeCon>();
+        if (not con or not args.empty())
+            return nullptr;
+
+        auto type_info = mod.lookup_resolved_type(con->name);
+        if (not type_info)
+            return nullptr;
+
+        return type_info->is_class();
+    }
+
+    // Return the single representation field type for regular one-field newtypes.
+    optional<Hs::LType> newtype_representation_type(const Hs::DataOrNewtypeDecl& data_decl)
+    {
+        if (data_decl.data_or_newtype != Hs::DataOrNewtype::newtype
+            or not data_decl.is_regular_decl()
+            or data_decl.get_constructors().size() != 1
+            or data_decl.get_constructors()[0].arity() != 1)
+            return {};
+
+        return data_decl.get_constructors()[0].get_field_types()[0];
+    }
+
+    // Build the synthetic instance head C (T a...) with a C rep superclass-like context.
+    Hs::LType generalized_newtype_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name, const Hs::LType& rep_type)
+    {
+        vector<Hs::LType> data_args;
+        Hs::Context context = data_decl.context;
+        for(auto& tv: data_decl.type_vars)
+            data_args.push_back(type_var_type(tv));
+
+        context.push_back(class_constraint(class_name, rep_type));
+
+        auto data_type = type_con_type(data_decl.con, data_args);
+        auto instance_head = class_constraint(class_name, data_type);
+        Hs::LType polytype = Hs::LType{data_decl.con.loc, Hs::ConstrainedType(context, instance_head)};
+        return Hs::add_forall_vars(data_decl.type_vars, polytype);
+    }
+
+    // Synthesize a GND instance header and leave method bodies for instance pass 2.
+    GeneralizedNewtypeDerivingResult derive_generalized_newtype_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::LType& deriving)
+    {
+        auto class_type_info = resolved_deriving_class(tc.this_mod(), deriving);
+        if (not class_type_info)
+            return {};
+
+        auto class_info = class_type_info->info;
+        if (not class_info)
+            return {};
+
+        if (data_decl.data_or_newtype != Hs::DataOrNewtype::newtype)
+            return {};
+
+        if (class_info->type_vars.size() != 1)
+        {
+            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving only supports single-parameter classes for now");
+            return {true, {}};
+        }
+
+        if (not class_info->associated_type_families.empty() or not class_info->associated_data_families.empty())
+        {
+            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving for classes with associated families is not supported yet");
+            return {true, {}};
+        }
+
+        auto rep_type = newtype_representation_type(data_decl);
+        if (not rep_type)
+        {
+            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving is only supported for newtype declarations with one field");
+            return {true, {}};
+        }
+
+        Hs::InstanceDecl instance({}, generalized_newtype_instance_type(data_decl, class_info->name, *rep_type), {}, {}, {});
+        instance.generalized_newtype_deriving = true;
+        return {true, instance};
+    }
 }
 
 Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
@@ -631,7 +718,11 @@ Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
                 auto derived_class = stock_deriving_class(this_mod(), deriving);
                 if (not derived_class)
                 {
-                    record_error(deriving.loc, Note()<<"deriving "<<deriving.print()<<" is not supported yet");
+                    auto gnd = derive_generalized_newtype_instance(*this, *data_decl, deriving);
+                    if (gnd.instance)
+                        instances.push_back({deriving.loc, *gnd.instance});
+                    else if (not gnd.handled)
+                        record_error(deriving.loc, Note()<<"deriving "<<deriving.print()<<" is not supported yet");
                     continue;
                 }
 
