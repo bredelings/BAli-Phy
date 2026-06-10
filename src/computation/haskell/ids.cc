@@ -16,15 +16,18 @@ std::string eq_class_name = "Data.Eq.Eq";
 std::string eq_method_name = "Data.Eq.==";
 std::string ord_class_name = "Data.Ord.Ord";
 std::string ord_compare_name = "Data.Ord.compare";
+std::string ord_greater_than_name = "Data.Ord.>";
 std::string ordering_lt_name = "Data.Ord.LT";
 std::string ordering_eq_name = "Data.Ord.EQ";
 std::string ordering_gt_name = "Data.Ord.GT";
 std::string bounded_class_name = "Compiler.Enum.Bounded";
 std::string bounded_min_bound_name = "Compiler.Enum.minBound";
 std::string bounded_max_bound_name = "Compiler.Enum.maxBound";
-std::string list_append_name = "Data.OldList.++";
+std::string function_compose_name = "Data.Function..";
 std::string show_class_name = "Text.Show.Show";
-std::string show_method_name = "Text.Show.show";
+std::string show_shows_prec_name = "Text.Show.showsPrec";
+std::string show_show_paren_name = "Text.Show.showParen";
+std::string show_show_string_name = "Text.Show.showString";
 
 bool is_tuple_name(const string& s)
 {

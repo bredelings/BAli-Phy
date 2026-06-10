@@ -235,6 +235,11 @@ namespace
         return {noloc, Hs::Literal(Hs::String(s))};
     }
 
+    Hs::LExp int_exp(int i)
+    {
+        return {noloc, Hs::Literal(Hs::Integer(integer(i)))};
+    }
+
     Hs::LExp eq_exp(const Hs::LExp& x, const Hs::LExp& y)
     {
         return Hs::apply(wired_var_exp(eq_method_name), {x, y});
@@ -243,11 +248,6 @@ namespace
     Hs::LExp and_exp(const Hs::LExp& x, const Hs::LExp& y)
     {
         return Hs::apply(wired_var_exp(bool_and_name), {x, y});
-    }
-
-    Hs::LExp append_exp(const Hs::LExp& x, const Hs::LExp& y)
-    {
-        return Hs::apply(wired_var_exp(list_append_name), {x, y});
     }
 
     Hs::LExp eq_all_exp(const vector<pair<Hs::LExp,Hs::LExp>>& fields)
@@ -299,11 +299,6 @@ namespace
     Hs::MRule binary_method_rule(const Hs::LPat& x, const Hs::LPat& y, const Hs::LExp& rhs)
     {
         return Hs::MRule({x, y}, Hs::SimpleRHS(rhs));
-    }
-
-    Hs::MRule unary_method_rule(const Hs::LPat& x, const Hs::LExp& rhs)
-    {
-        return Hs::MRule({x}, Hs::SimpleRHS(rhs));
     }
 
     Hs::LDecl derived_method_decl(const string& method_name, const Hs::Matches& matches)
@@ -364,6 +359,11 @@ namespace
     Hs::LExp compare_exp(const Hs::LExp& x, const Hs::LExp& y)
     {
         return Hs::apply(wired_var_exp(ord_compare_name), {x, y});
+    }
+
+    Hs::LExp greater_than_exp(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return Hs::apply(wired_var_exp(ord_greater_than_name), {x, y});
     }
 
     Hs::LExp ordering_exp(const string& name)
@@ -455,40 +455,63 @@ namespace
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, bounded_class_name), {}, {}, methods);
     }
 
-    Hs::LExp show_exp(const Hs::LExp& x)
+    Hs::LExp compose_exp(const Hs::LExp& f, const Hs::LExp& g)
     {
-        return Hs::apply(wired_var_exp(show_method_name), {x});
+        return Hs::apply(wired_var_exp(function_compose_name), {f, g});
     }
 
-    Hs::LExp append_all_exp(const vector<Hs::LExp>& parts)
+    Hs::LExp compose_all_exp(const vector<Hs::LExp>& parts)
     {
         assert(not parts.empty());
 
-        auto result = parts[0];
-        for(int i=1; i<parts.size(); i++)
-            result = append_exp(result, parts[i]);
+        auto result = parts.back();
+        for(int i=parts.size()-2; i>=0; i--)
+            result = compose_exp(parts[i], result);
         return result;
     }
 
-    Hs::LExp show_constructor_exp(const Hs::ConstructorDecl& constructor)
+    Hs::LExp show_string_exp(const string& s)
     {
-        vector<Hs::LExp> parts = {string_exp(get_unqualified_name(unloc(*constructor.con).name))};
+        return Hs::apply(wired_var_exp(show_show_string_name), {string_exp(s)});
+    }
+
+    Hs::LExp shows_prec_exp(int precedence, const Hs::LExp& x)
+    {
+        return Hs::apply(wired_var_exp(show_shows_prec_name), {int_exp(precedence), x});
+    }
+
+    Hs::LExp show_paren_exp(const Hs::LExp& condition, const Hs::LExp& body)
+    {
+        return Hs::apply(wired_var_exp(show_show_paren_name), {condition, body});
+    }
+
+    Hs::LExp shows_prec_constructor_exp(const Hs::ConstructorDecl& constructor)
+    {
+        auto con_name = get_unqualified_name(unloc(*constructor.con).name);
+        if (constructor.arity() == 0)
+            return show_string_exp(con_name);
+
+        vector<Hs::LExp> parts;
         for(int i=0; i<constructor.arity(); i++)
         {
-            parts.push_back(string_exp(" "));
-            parts.push_back(show_exp(local_var_exp("x$" + std::to_string(i))));
+            parts.push_back(show_string_exp(i == 0 ? con_name + " " : " "));
+            parts.push_back(shows_prec_exp(11, local_var_exp("x$" + std::to_string(i))));
         }
-        return append_all_exp(parts);
+
+        return show_paren_exp(greater_than_exp(local_var_exp("d$"), int_exp(10)), compose_all_exp(parts));
     }
 
     Hs::InstanceDecl derive_show_instance(const Hs::DataOrNewtypeDecl& data_decl)
     {
-        Hs::Matches show_matches;
+        Hs::Matches shows_prec_matches;
         for(const auto& constructor: data_decl.get_constructors())
-            show_matches.push_back(unary_method_rule(constructor_var_pattern(constructor, "x$"), show_constructor_exp(constructor)));
+        {
+            shows_prec_matches.push_back(Hs::MRule({var_pat("d$"), constructor_var_pattern(constructor, "x$")},
+                                                   Hs::SimpleRHS(shows_prec_constructor_exp(constructor))));
+        }
 
         Hs::Decls methods;
-        methods.push_back(derived_method_decl(show_method_name, show_matches));
+        methods.push_back(derived_method_decl(show_shows_prec_name, shows_prec_matches));
 
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, show_class_name), {}, {}, methods);
     }

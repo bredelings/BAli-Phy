@@ -8,3 +8,4 @@ main = do
   putStrLn (show Red)
   putStrLn (show (Box Blue))
   putStrLn (show (Pair Red (Box Blue)))
+  putStrLn (showsPrec 11 (Box Blue) "")
