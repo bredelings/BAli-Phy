@@ -20,6 +20,38 @@ using std::tuple;
 using std::optional;
 using std::shared_ptr;
 
+string get_context(TidyState& tidy_state, const Constraint& wanted, const vector<shared_ptr<Implication>>& implic_scopes);
+string show_type(TidyState& tidy_state, const Type& type, bool quotes=true);
+
+namespace
+{
+    string role_display_name(Role role)
+    {
+        if (role == Role::Nominal)
+            return "nominal";
+        else if (role == Role::Representational)
+            return "representational";
+        else
+            return "phantom";
+    }
+
+    optional<Note> gnd_method_coercion_error(TidyState& tidy_state, const Constraint& wanted, const RoleEquality& equality, const vector<shared_ptr<Implication>>& implic_scopes)
+    {
+        auto origin = to<GNDMethodOrigin>(wanted.origin);
+        if (not origin)
+            return {};
+
+        Note e;
+        e<<"Cannot derive method '"<<origin->method_name<<"' for class '"<<get_unqualified_name(origin->class_name)<<"' via newtype";
+        e<<" because a "<<role_display_name(equality.role)<<" role check failed";
+        e<<get_context(tidy_state, wanted, implic_scopes);
+        e<<" while comparing '"<<show_type(tidy_state, equality.lhs, false)<<"' with '"<<show_type(tidy_state, equality.rhs, false)<<"'";
+        e<<"\n  Representation method type: '"<<show_type(tidy_state, origin->representation_method_type, false)<<"'";
+        e<<"\n  Newtype method type: '"<<show_type(tidy_state, origin->newtype_method_type, false)<<"'";
+        return e;
+    }
+}
+
 int TypeChecker::num_errors()
 {
     return ::num_errors(messages());
@@ -98,7 +130,7 @@ string print_unqualified_id(const Located<string>& ls)
     return print_unqualified_id(unloc(ls));
 }
 
-string show_type(TidyState& tidy_state, const Type& type, bool quotes=true)
+string show_type(TidyState& tidy_state, const Type& type, bool quotes)
 {
     string result = bold_green(show_type_plain(tidy_state, type));
     if (quotes)
@@ -351,16 +383,24 @@ void TypeChecker::check_wanteds(TidyState& tidy_state, vector<shared_ptr<Implica
         Notes notes;
         if (auto eq = is_role_equality_pred(wanted.pred); eq and eq->role == Role::Nominal)
         {
-            notes = check_eq_constraint(tidy_state, implic_scopes, wanted, eq->lhs, eq->rhs);
+            if (auto gnd_error = gnd_method_coercion_error(tidy_state, wanted, *eq, implic_scopes))
+                notes.push_back(*gnd_error);
+            else
+                notes = check_eq_constraint(tidy_state, implic_scopes, wanted, eq->lhs, eq->rhs);
         }
         else if (auto eq = is_role_equality_pred(wanted.pred); eq and eq->role == Role::Representational)
         {
-            Note e;
-            e<<"Could not coerce "<<show_type(tidy_state, eq->lhs)<<" to "<<show_type(tidy_state, eq->rhs);
-            e<<get_context(tidy_state, wanted, implic_scopes);
-            if (auto occ = to<OccurrenceOrigin>(wanted.origin))
-                e<<" arising from a use of '"<<cyan(print_unqualified_id(occ->name))<<ANSI::bold<<"'";
-            notes.push_back(e);
+            if (auto gnd_error = gnd_method_coercion_error(tidy_state, wanted, *eq, implic_scopes))
+                notes.push_back(*gnd_error);
+            else
+            {
+                Note e;
+                e<<"Could not coerce "<<show_type(tidy_state, eq->lhs)<<" to "<<show_type(tidy_state, eq->rhs);
+                e<<get_context(tidy_state, wanted, implic_scopes);
+                if (auto occ = to<OccurrenceOrigin>(wanted.origin))
+                    e<<" arising from a use of '"<<cyan(print_unqualified_id(occ->name))<<ANSI::bold<<"'";
+                notes.push_back(e);
+            }
         }
         else
         {

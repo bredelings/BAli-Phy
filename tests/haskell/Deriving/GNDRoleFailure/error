@@ -1,0 +1,10 @@
+[1mMain.hs:14.9-11:[1;31m error:[0m[1m
+   • Cannot derive method 'bad' for class 'Bad' via newtype because a nominal
+     role check failed while comparing '[1;32mInt[0m[1m' with '[1;32mAge[0m[1m'
+       Representation method type: '[1;32mNominalBox Int -> NominalBox Int[0m[1m'
+       Newtype method type: '[1;32mNominalBox Age -> NominalBox Age[0m[1m'
+   • In instance `Bad Int => Bad Age`:
+   [1;34m|[0m
+[1;34m14[0m [1;34m| [0mnewtype [1;31mAge[0m = Age Int deriving newtype Bad
+   [1;34m|[0m         [1;31m^^^[0m
+

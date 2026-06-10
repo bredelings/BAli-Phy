@@ -45,6 +45,14 @@ struct TypeConvertOrigin
 {
 };
 
+struct GNDMethodOrigin
+{
+    std::string class_name;
+    std::string method_name;
+    Type representation_method_type;
+    Type newtype_method_type;
+};
+
 struct CycleBreakerOrigin
 {
     // Mention original origin
@@ -57,7 +65,7 @@ struct UnifyOrigin
 };
 
 
-typedef std::variant<std::monostate, OccurrenceOrigin, GivenOrigin, AppOrigin, InstanceOrigin, LeftSectionOrigin, PatOrigin, SuperclassOrigin, TypeConvertOrigin,CycleBreakerOrigin,UnifyOrigin> ConstraintOrigin;
+typedef std::variant<std::monostate, OccurrenceOrigin, GivenOrigin, AppOrigin, InstanceOrigin, LeftSectionOrigin, PatOrigin, SuperclassOrigin, TypeConvertOrigin,GNDMethodOrigin,CycleBreakerOrigin,UnifyOrigin> ConstraintOrigin;
 
 enum ConstraintFlavor { Wanted, Given };
 

@@ -597,7 +597,8 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_gnd_instance_method(
 
     // Core is untyped, so this wanted is the coercion proof gate; no Core wrapper is emitted.
     auto equality = make_role_equality_pred(Role::Representational, rep_method_type, inst_method_type);
-    auto wanteds = preds_to_constraints(TypeConvertOrigin(), Wanted, {equality});
+    auto origin = GNDMethodOrigin{class_info.name, method.name, rep_method_type, inst_method_type};
+    auto wanteds = preds_to_constraints(origin, Wanted, {equality});
     auto ev_decls = maybe_implication(instance_tvs, givens, [&](auto& tc) {tc.current_wanteds() = wanteds;});
 
     auto selector = class_method_selector(class_info, method);
