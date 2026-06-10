@@ -256,19 +256,34 @@ namespace
         return {noloc, Hs::VarPattern({noloc, Hs::Var(name)})};
     }
 
-    Hs::LPat constructor_pattern(const Hs::ConstructorDecl& constructor, const string& prefix)
+    Hs::LPat wildcard_pat()
     {
-        string con_name = unloc(*constructor.con).name;
+        return {noloc, Hs::WildcardPattern()};
+    }
+
+    Hs::LPat con_pat(const string& name, int arity, const Hs::LPats& args)
+    {
+        return {noloc, Hs::ConPattern({noloc, Hs::Con(name, arity)}, args)};
+    }
+
+    Hs::LPat constructor_pattern(const Hs::ConstructorDecl& constructor, const Hs::LPats& args)
+    {
+        return con_pat(unloc(*constructor.con).name, constructor.arity(), args);
+    }
+
+    Hs::LPat constructor_var_pattern(const Hs::ConstructorDecl& constructor, const string& prefix)
+    {
         Hs::LPats args;
         for(int i=0; i<constructor.arity(); i++)
             args.push_back(var_pat(prefix + std::to_string(i)));
 
-        return {noloc, Hs::ConPattern({constructor.con->loc, Hs::Con(con_name, constructor.arity())}, args)};
+        return constructor_pattern(constructor, args);
     }
 
-    Hs::LPat wildcard_pat()
+    Hs::LPat constructor_wildcard_pattern(const Hs::ConstructorDecl& constructor)
     {
-        return {noloc, Hs::WildcardPattern()};
+        Hs::LPats args(constructor.arity(), wildcard_pat());
+        return constructor_pattern(constructor, args);
     }
 
     Hs::MRule binary_method_rule(const Hs::LPat& x, const Hs::LPat& y, const Hs::LExp& rhs)
@@ -279,6 +294,16 @@ namespace
     Hs::LDecl derived_method_decl(const string& method_name, const Hs::Matches& matches)
     {
         return {noloc, Hs::FunDecl({noloc,Hs::Var(get_unqualified_name(method_name))}, matches)};
+    }
+
+    Hs::LExp case_exp(const Hs::LExp& object, const Hs::Alts& alts)
+    {
+        return {noloc, Hs::CaseExp(object, alts)};
+    }
+
+    Located<Hs::Alt> simple_alt(const Hs::LPat& pattern, const Hs::LExp& rhs)
+    {
+        return {noloc, Hs::Alt(pattern, Hs::SimpleRHS(rhs))};
     }
 
     Hs::LType stock_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name)
@@ -307,8 +332,8 @@ namespace
             for(int i=0; i<constructor.arity(); i++)
                 fields.push_back({local_var_exp("x$" + std::to_string(i)), local_var_exp("y$" + std::to_string(i))});
 
-            eq_matches.push_back(binary_method_rule(constructor_pattern(constructor, "x$"),
-                                                    constructor_pattern(constructor, "y$"),
+            eq_matches.push_back(binary_method_rule(constructor_var_pattern(constructor, "x$"),
+                                                    constructor_var_pattern(constructor, "y$"),
                                                     eq_all_exp(fields)));
         }
 
@@ -319,6 +344,66 @@ namespace
         methods.push_back(derived_method_decl(eq_method_name, eq_matches));
 
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, eq_class_name), {}, {}, methods);
+    }
+
+    Hs::LExp compare_exp(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return Hs::apply(wired_var_exp(ord_compare_name), {x, y});
+    }
+
+    Hs::LExp ordering_exp(const string& name)
+    {
+        return wired_con_exp(name);
+    }
+
+    Hs::LPat ordering_pat(const string& name)
+    {
+        return con_pat(name, 0, {});
+    }
+
+    Hs::LExp compare_all_exp(const vector<pair<Hs::LExp,Hs::LExp>>& fields)
+    {
+        auto result = ordering_exp(ordering_eq_name);
+
+        for(int i=fields.size()-1; i>=0; i--)
+        {
+            auto ord_var = "ord$" + std::to_string(i);
+            Hs::Alts alts;
+            alts.push_back(simple_alt(ordering_pat(ordering_eq_name), result));
+            alts.push_back(simple_alt(var_pat(ord_var), local_var_exp(ord_var)));
+            result = case_exp(compare_exp(fields[i].first, fields[i].second), alts);
+        }
+
+        return result;
+    }
+
+    Hs::InstanceDecl derive_ord_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    {
+        Hs::Matches compare_matches;
+        const auto& constructors = data_decl.get_constructors();
+
+        for(const auto& constructor: constructors)
+        {
+            vector<pair<Hs::LExp,Hs::LExp>> fields;
+            for(int i=0; i<constructor.arity(); i++)
+                fields.push_back({local_var_exp("x$" + std::to_string(i)), local_var_exp("y$" + std::to_string(i))});
+
+            compare_matches.push_back(binary_method_rule(constructor_var_pattern(constructor, "x$"),
+                                                         constructor_var_pattern(constructor, "y$"),
+                                                         compare_all_exp(fields)));
+        }
+
+        for(int i=0; i<constructors.size(); i++)
+            for(int j=0; j<constructors.size(); j++)
+                if (i != j)
+                    compare_matches.push_back(binary_method_rule(constructor_wildcard_pattern(constructors[i]),
+                                                                 constructor_wildcard_pattern(constructors[j]),
+                                                                 ordering_exp(i < j ? ordering_lt_name : ordering_gt_name)));
+
+        Hs::Decls methods;
+        methods.push_back(derived_method_decl(ord_compare_name, compare_matches));
+
+        return Hs::InstanceDecl({}, stock_instance_type(data_decl, ord_class_name), {}, {}, methods);
     }
 }
 
@@ -337,6 +422,12 @@ Hs::Decls synthesize_derived_instances(const Hs::Decls& decls)
                     if (not data_decl->is_regular_decl())
                         throw myexception()<<"deriving Eq is only supported for regular data/newtype declarations";
                     instances.push_back({loc, derive_eq_instance(*data_decl)});
+                }
+                else if (is_deriving_class(deriving, ord_class_name))
+                {
+                    if (not data_decl->is_regular_decl())
+                        throw myexception()<<"deriving Ord is only supported for regular data/newtype declarations";
+                    instances.push_back({loc, derive_ord_instance(*data_decl)});
                 }
                 else
                     throw myexception()<<"deriving "<<deriving.print()<<" is not supported yet";

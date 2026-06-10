@@ -14,6 +14,11 @@ std::string bool_false_name = "Data.Bool.False";
 std::string bool_and_name = "Data.Bool.&&";
 std::string eq_class_name = "Data.Eq.Eq";
 std::string eq_method_name = "Data.Eq.==";
+std::string ord_class_name = "Data.Ord.Ord";
+std::string ord_compare_name = "Data.Ord.compare";
+std::string ordering_lt_name = "Data.Ord.LT";
+std::string ordering_eq_name = "Data.Ord.EQ";
+std::string ordering_gt_name = "Data.Ord.GT";
 
 bool is_tuple_name(const string& s)
 {

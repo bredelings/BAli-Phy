@@ -9,6 +9,11 @@ extern std::string bool_false_name;
 extern std::string bool_and_name;
 extern std::string eq_class_name;
 extern std::string eq_method_name;
+extern std::string ord_class_name;
+extern std::string ord_compare_name;
+extern std::string ordering_lt_name;
+extern std::string ordering_eq_name;
+extern std::string ordering_gt_name;
 
 std::string tuple_name(int n);
 int tuple_arity(const std::string&);
