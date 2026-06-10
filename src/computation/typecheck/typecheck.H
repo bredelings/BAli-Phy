@@ -584,7 +584,7 @@ public:
 
     DataConInfo infer_type_for_data_family_constructor(const Hs::LType& result_type, const std::vector<Hs::LTypeVar>& outer_tvs, const std::vector<Type>& top_constraints, const Hs::ConstructorDecl& constructor);
 
-    DataConInfo infer_type_for_gadt_data_family_constructor(const Type& instance_head, const TypeCon& data_family, const std::vector<Type>& top_constraints, const Hs::GADTConstructorDecl& constructor);
+    DataConInfo infer_type_for_gadt_data_family_constructor(const Type& instance_head, const TypeCon& data_family, const std::vector<Type>& top_constraints, const Hs::GADTConstructorDecl& constructor, bool is_newtype);
 
     std::pair<DataConEnv,std::optional<Type>> infer_type_for_data_family_instance(const Hs::DataFamilyInstanceDecl& data_inst, const std::optional<std::string>& associated_class = {});
 

@@ -5,6 +5,89 @@ using std::vector;
 using std::set;
 using std::pair;
 
+namespace
+{
+    Hs::LType gadt_constructor_result_type(Hs::LType type)
+    {
+        auto [stripped_type, _] = pop_constructor_signature_strictness(type);
+        auto [tvs, context, rho_type] = Hs::peel_top_gen(stripped_type);
+
+        while(auto function_type = Hs::is_function_type(rho_type))
+            rho_type = function_type->second;
+
+        return rho_type;
+    }
+
+    std::pair<vector<Hs::LType>, Hs::LType> gadt_constructor_arg_result_types(Hs::LType type)
+    {
+        auto [stripped_type, _] = pop_constructor_signature_strictness(type);
+        auto [tvs, context, rho_type] = Hs::peel_top_gen(stripped_type);
+
+        vector<Hs::LType> args;
+        while(auto function_type = Hs::is_function_type(rho_type))
+        {
+            args.push_back(function_type->first);
+            rho_type = function_type->second;
+        }
+
+        return {args, rho_type};
+    }
+
+    std::optional<yy::location> find_type_var_loc(const Hs::LType& type, const TypeVar& tv)
+    {
+        const auto& hs_type = unloc(type);
+
+        if (auto hs_tv = hs_type.to<Hs::TypeVar>())
+        {
+            if (hs_tv->name == tv.name)
+                return type.loc;
+        }
+        else if (auto tuple_type = hs_type.to<Hs::TupleType>())
+        {
+            for(auto& element_type: tuple_type->element_types)
+                if (auto loc = find_type_var_loc(element_type, tv))
+                    return loc;
+        }
+        else if (auto list_type = hs_type.to<Hs::ListType>())
+            return find_type_var_loc(list_type->element_type, tv);
+        else if (auto tapp = hs_type.to<Hs::TypeApp>())
+        {
+            if (auto loc = find_type_var_loc(tapp->head, tv))
+                return loc;
+            return find_type_var_loc(tapp->arg, tv);
+        }
+        else if (auto constrained_type = hs_type.to<Hs::ConstrainedType>())
+        {
+            for(auto& constraint: constrained_type->context)
+                if (auto loc = find_type_var_loc(constraint, tv))
+                    return loc;
+            return find_type_var_loc(constrained_type->type, tv);
+        }
+        else if (auto forall_type = hs_type.to<Hs::ForallType>())
+            return find_type_var_loc(forall_type->type, tv);
+        else if (auto strict_type = hs_type.to<Hs::StrictType>())
+            return find_type_var_loc(strict_type->type, tv);
+        else if (auto lazy_type = hs_type.to<Hs::LazyType>())
+            return find_type_var_loc(lazy_type->type, tv);
+
+        return {};
+    }
+
+    std::optional<yy::location> find_type_var_loc(const vector<Hs::LType>& types, const TypeVar& tv)
+    {
+        for(auto& type: types)
+            if (auto loc = find_type_var_loc(type, tv))
+                return loc;
+        return {};
+    }
+
+    std::optional<yy::location> gadt_constructor_context_loc(const Hs::GADTConstructorDecl& constructor)
+    {
+        auto [tvs, context, rho_type] = Hs::peel_top_gen(constructor.type);
+        return range(context);
+    }
+}
+
 std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
 {
     bool strictness = false;
@@ -164,11 +247,15 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             if (con != data_type_con)
             {
                 TidyState tidy_state;
-                throw myexception()<<"constructor result '"<<show_type_plain(tidy_state, result_type)<<"' doesn't match data type "<< show_type_plain(tidy_state, data_type_con);
+                record_error(gadt_constructor_result_type(data_cons_decl.type).loc, Note()<<"Constructor result type '"<<show_type_plain(tidy_state, result_type)<<"' does not match data type '"<<show_type_plain(tidy_state, data_type_con)<<"'");
+                continue;
             }
 
-            // Failure here would have triggered a kind error earlier.
-            assert(args.size() == data_decl.type_vars.size());
+            if (args.size() != data_decl.type_vars.size())
+            {
+                record_error(gadt_constructor_result_type(data_cons_decl.type).loc, Note()<<"Constructor result type has "<<args.size()<<" arguments, but data type '"<<show_type_plain(data_type_con)<<"' has "<<data_decl.type_vars.size());
+                continue;
+            }
 
             // 5. Create equality constraints and universal vars
             vector<TypeVar> u_tvs;
@@ -193,6 +280,21 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             set<TypeVar> exi_tvs_set = written_tvs | ranges::to<set>;
             for(auto& u_tv: u_tvs)
                 exi_tvs_set.erase(u_tv);
+
+            if (data_decl.data_or_newtype == Hs::DataOrNewtype::newtype)
+            {
+                auto type_name = get_unqualified_name(unloc(data_decl.con).name);
+                if (not written_constraints.empty())
+                    record_error(gadt_constructor_context_loc(data_cons_decl), Note()<<"newtype '"<<type_name<<"' GADT constructor must not have a context");
+                if (not info.gadt_eq_constraints.empty())
+                    record_error(gadt_constructor_result_type(data_cons_decl.type).loc, Note()<<"newtype '"<<type_name<<"' GADT constructor result type must be the newtype head applied to its parameters");
+                if (not exi_tvs_set.empty())
+                {
+                    auto [hs_field_types, hs_result_type] = gadt_constructor_arg_result_types(data_cons_decl.type);
+                    auto loc = find_type_var_loc(hs_field_types, *exi_tvs_set.begin());
+                    record_error(loc ? loc : data_cons_decl.type.loc, Note()<<"newtype '"<<type_name<<"' GADT constructor must not have existential type variables");
+                }
+            }
 
             info.field_types = field_types;
             info.field_strictness = field_strictness;
@@ -260,7 +362,7 @@ DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType&
     return info;
 }
 
-DataConInfo TypeChecker::infer_type_for_gadt_data_family_constructor(const Type& instance_head, const TypeCon& data_family, const vector<Type>& top_constraints, const Hs::GADTConstructorDecl& constructor)
+DataConInfo TypeChecker::infer_type_for_gadt_data_family_constructor(const Type& instance_head, const TypeCon& data_family, const vector<Type>& top_constraints, const Hs::GADTConstructorDecl& constructor, bool is_newtype)
 {
     DataConInfo info;
 
@@ -282,7 +384,10 @@ DataConInfo TypeChecker::infer_type_for_gadt_data_family_constructor(const Type&
     else if (not maybe_unify(result_type, instance_head))
     {
         TidyState tidy_state;
-        record_error(Note()<<"Data family constructor result type '"<<show_type_plain(tidy_state, result_type)<<"' does not match instance head '"<<show_type_plain(tidy_state, instance_head)<<"'");
+        if (is_newtype)
+            record_error(gadt_constructor_result_type(constructor.type).loc, Note()<<"newtype '"<<get_unqualified_name(data_family.name)<<"' GADT constructor result type must be the instance head");
+        else
+            record_error(Note()<<"Data family constructor result type '"<<show_type_plain(tidy_state, result_type)<<"' does not match instance head '"<<show_type_plain(tidy_state, instance_head)<<"'");
     }
 
     auto result_tvs = free_type_variables(result_type);
@@ -292,6 +397,19 @@ DataConInfo TypeChecker::infer_type_for_gadt_data_family_constructor(const Type&
             info.uni_tvs.push_back(tv);
         else
             info.exi_tvs.push_back(tv);
+    }
+
+    if (is_newtype)
+    {
+        auto type_name = get_unqualified_name(data_family.name);
+        if (not written_constraints.empty())
+            record_error(gadt_constructor_context_loc(constructor), Note()<<"newtype '"<<type_name<<"' GADT constructor must not have a context");
+        if (not info.exi_tvs.empty())
+        {
+            auto [hs_field_types, hs_result_type] = gadt_constructor_arg_result_types(constructor.type);
+            auto loc = find_type_var_loc(hs_field_types, info.exi_tvs.front());
+            record_error(loc ? loc : constructor.type.loc, Note()<<"newtype '"<<type_name<<"' GADT constructor must not have existential type variables");
+        }
     }
 
     info.field_types = field_types;
@@ -361,7 +479,8 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
     {
         for(auto& constructor: data_inst.rhs.get_gadt_constructors())
         {
-            DataConInfo info = infer_type_for_gadt_data_family_constructor(instance_head.type, data_family, instance_head.context, constructor);
+            bool is_newtype = data_inst.rhs.data_or_newtype == Hs::DataOrNewtype::newtype;
+            DataConInfo info = infer_type_for_gadt_data_family_constructor(instance_head.type, data_family, instance_head.context, constructor, is_newtype);
             info.is_newtype_constructor = data_inst.rhs.data_or_newtype == Hs::DataOrNewtype::newtype;
             for(auto& con_name: constructor.con_names)
                 types = types.insert({unloc(con_name), info});

@@ -10,7 +10,7 @@ import System.IO (print)
 undefined = error "undefined"
 
 newtype Box a where
-  Box :: forall a. a -> Box a
+  Box :: forall b. b -> Box b
 
 unBox (Box x) = x
 

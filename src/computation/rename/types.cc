@@ -19,70 +19,6 @@ using std::map;
 
 namespace
 {
-    bool same_type_head_name(const Hs::LType& type, const Hs::LTypeCon& con)
-    {
-        auto tc = unloc(type).to<Hs::TypeCon>();
-        return tc and get_unqualified_name(tc->name) == get_unqualified_name(unloc(con).name);
-    }
-
-    bool same_unqualified_type(const Hs::LType& type1, const Hs::LType& type2)
-    {
-        const auto& t1 = unloc(type1);
-        const auto& t2 = unloc(type2);
-
-        if (auto tv1 = t1.to<Hs::TypeVar>())
-        {
-            auto tv2 = t2.to<Hs::TypeVar>();
-            return tv2 and tv1->name == tv2->name;
-        }
-        else if (auto tc1 = t1.to<Hs::TypeCon>())
-        {
-            auto tc2 = t2.to<Hs::TypeCon>();
-            return tc2 and get_unqualified_name(tc1->name) == get_unqualified_name(tc2->name);
-        }
-        else if (auto app1 = t1.to<Hs::TypeApp>())
-        {
-            auto app2 = t2.to<Hs::TypeApp>();
-            return app2 and same_unqualified_type(app1->head, app2->head) and same_unqualified_type(app1->arg, app2->arg);
-        }
-        else if (auto tuple1 = t1.to<Hs::TupleType>())
-        {
-            auto tuple2 = t2.to<Hs::TupleType>();
-            if (not tuple2 or tuple1->element_types.size() != tuple2->element_types.size())
-                return false;
-            for(int i=0;i<tuple1->element_types.size();i++)
-                if (not same_unqualified_type(tuple1->element_types[i], tuple2->element_types[i]))
-                    return false;
-            return true;
-        }
-        else if (auto list1 = t1.to<Hs::ListType>())
-        {
-            auto list2 = t2.to<Hs::ListType>();
-            return list2 and same_unqualified_type(list1->element_type, list2->element_type);
-        }
-
-        return false;
-    }
-
-    vector<Hs::LType> type_var_types(const vector<Hs::LTypeVar>& type_vars)
-    {
-        vector<Hs::LType> types;
-        for(auto& [loc, tv]: type_vars)
-            types.push_back({loc, Hs::TypeVar(tv)});
-        return types;
-    }
-
-    std::pair<vector<Hs::LType>, Hs::LType> constructor_arg_result_types(Hs::LType type)
-    {
-        vector<Hs::LType> args;
-        while(auto function_type = Hs::is_function_type(type))
-        {
-            args.push_back(function_type->first);
-            type = function_type->second;
-        }
-        return {args, type};
-    }
-
     optional<yy::location> top_level_strictness_mark(const Hs::LType& ltype)
     {
         const auto& type = unloc(ltype);
@@ -111,19 +47,6 @@ namespace
         }
 
         return {};
-    }
-
-    bool result_matches_newtype_head(const Hs::LType& result_type, const Hs::LTypeCon& con, const vector<Hs::LType>& expected_args)
-    {
-        auto [head, args] = Hs::decompose_type_apps(result_type);
-        if (not same_type_head_name(head, con) or args.size() != expected_args.size())
-            return false;
-
-        for(int i=0;i<args.size();i++)
-            if (not same_unqualified_type(args[i], expected_args[i]))
-                return false;
-
-        return true;
     }
 }
 
@@ -412,7 +335,7 @@ Haskell::DataDefn renamer_state::rename(Haskell::DataDefn decl, const vector<Hs:
     return decl;
 }
 
-void renamer_state::check_newtype_decl(const Hs::DataDefn& data_defn, const Hs::LTypeCon& con, const vector<Hs::LType>& expected_result_args) const
+void renamer_state::check_newtype_decl(const Hs::DataDefn& data_defn, const Hs::LTypeCon& con) const
 {
     if (data_defn.data_or_newtype != Hs::DataOrNewtype::newtype)
         return;
@@ -425,10 +348,6 @@ void renamer_state::check_newtype_decl(const Hs::DataDefn& data_defn, const Hs::
         if (loc)
             error(*loc, Note()<<"newtype '"<<type_name<<"' constructor must not have a strictness annotation");
     };
-    auto gadt_error = [&](const optional<yy::location>& loc, const string& message) {
-        error(loc, Note()<<"newtype '"<<type_name<<"' GADT constructor "<<message);
-    };
-
     if (data_defn.is_regular_decl())
     {
         const auto& constructors = data_defn.get_constructors();
@@ -453,19 +372,6 @@ void renamer_state::check_newtype_decl(const Hs::DataDefn& data_defn, const Hs::
 
         const auto& constructor_type = constructors[0].type;
         strict_error(constructor_signature_field_strictness_mark(constructor_type));
-
-        auto [tvs, context, rho_type] = Hs::peel_top_gen(constructor_type);
-        if (not context.empty())
-            gadt_error(range(context), "must not have a context");
-
-        auto [field_types, result_type] = constructor_arg_result_types(rho_type);
-        if (not result_matches_newtype_head(result_type, con, expected_result_args))
-            gadt_error(result_type.loc, "result type must be the newtype head applied to its parameters");
-
-        auto result_tvs = free_type_variables(result_type) | ranges::to<set>();
-        for(auto& field_tv: free_type_variables(field_types))
-            if (not result_tvs.count(field_tv))
-                gadt_error(field_tv.loc, "must not have existential type variables");
     }
 }
 
@@ -474,7 +380,7 @@ Haskell::DataOrNewtypeDecl renamer_state::rename(Haskell::DataOrNewtypeDecl decl
     qualify_name(unloc(decl.con).name);
 
     Hs::DataDefn& decl2 = decl;
-    check_newtype_decl(decl2, decl.con, type_var_types(decl.type_vars));
+    check_newtype_decl(decl2, decl.con);
     decl2 = rename( decl2, decl.type_vars );
 
     return decl;
@@ -648,11 +554,10 @@ Haskell::DataFamilyInstanceDecl renamer_state::rename(Haskell::DataFamilyInstanc
 
     vector<Hs::LTypeVar> outer_tvs = DI.forall ? *DI.forall : free_type_variables(DI.args);
 
-    check_newtype_decl(DI.rhs, DI.con, DI.args);
-
     for(auto& arg: DI.args)
         arg = rename_type(arg);
 
+    check_newtype_decl(DI.rhs, DI.con);
     DI.rhs = rename( DI.rhs, outer_tvs );
 
     return DI;

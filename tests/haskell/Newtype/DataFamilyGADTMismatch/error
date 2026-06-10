@@ -1,6 +1,6 @@
 [1mMain.hs:10.17-23:[1;31m error:[0m[1m
-   • newtype 'F' GADT constructor result type must be the newtype head applied
-     to its parameters
+   • newtype 'F' GADT constructor result type must be the instance head
+   • In data family instance 'F Int':
    [1;34m|[0m
 [1;34m10[0m [1;34m| [0m  MkF :: Int -> [1;31mF Other[0m
    [1;34m|[0m                 [1;31m^^^^^^^[0m

@@ -93,7 +93,7 @@ struct renamer_state
     Hs::TypeFamilyInstanceDecl rename(Hs::TypeFamilyInstanceDecl);
     Hs::TypeFamilyInstanceEqn rename(Hs::TypeFamilyInstanceEqn);
     Hs::KindSigDecl rename(Hs::KindSigDecl);
-    void check_newtype_decl(const Hs::DataDefn&, const Hs::LTypeCon&, const std::vector<Hs::LType>&) const;
+    void check_newtype_decl(const Hs::DataDefn&, const Hs::LTypeCon&) const;
     Hs::LTypeCon rename_type(Hs::LTypeCon);
     Hs::LType rename_type(Hs::LType);
     Hs::LType rename_and_quantify_type(Hs::LType, const std::vector<Hs::LTypeVar>& = {});
