@@ -499,6 +499,8 @@ struct DataDefn
     // Do we need a variant where this is absent?
     std::variant<std::monostate,ConstructorsDecl, GADTConstructorsDecl> constructors;
 
+    std::vector<LType> derivings;
+
     bool is_empty_decl() const;
     bool is_regular_decl() const;
     bool is_gadt_decl() const;
@@ -509,37 +511,40 @@ struct DataDefn
     const GADTConstructorsDecl& get_gadt_constructors() const;
           GADTConstructorsDecl& get_gadt_constructors();
 
-//  Instructors for deriving instances...
-//    std::optional<derivings> derivings;
-
     std::string print() const;
 
     DataDefn(DataOrNewtype dn,
 	    const Context& ct,
-	    const std::optional<Kind>& k)
+	    const std::optional<Kind>& k,
+            const std::vector<LType>& ds = {})
         :data_or_newtype(dn),
          context(ct),
-         kind_sig(k)
+         kind_sig(k),
+         derivings(ds)
         {}
 
     DataDefn(DataOrNewtype dn,
 	    const Context& ct,
 	    const std::optional<Kind>& k,
-	    const ConstructorsDecl& cs)
+	    const ConstructorsDecl& cs,
+            const std::vector<LType>& ds = {})
         :data_or_newtype(dn),
          context(ct),
          kind_sig(k),
-         constructors(cs)
+         constructors(cs),
+         derivings(ds)
         {}
 
     DataDefn(DataOrNewtype dn,
 	     const Context& ct,
 	     const std::optional<Kind>& k,
-	     const GADTConstructorsDecl& gadt_cs)
+	     const GADTConstructorsDecl& gadt_cs,
+             const std::vector<LType>& ds = {})
         :data_or_newtype(dn),
          context(ct),
          kind_sig(k),
-         constructors(gadt_cs)
+         constructors(gadt_cs),
+         derivings(ds)
         {}
 };
 

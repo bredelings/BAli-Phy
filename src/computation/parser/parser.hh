@@ -70,9 +70,11 @@
 				  const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
   Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
-                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
+                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs,
+                                             const std::vector<Hs::LType>& derivings);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
-                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::GADTConstructorsDecl& constrs);
+                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::GADTConstructorsDecl& constrs,
+                                             const std::vector<Hs::LType>& derivings);
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const std::vector<Hs::FunDep>& fds, const std::optional<Located<Hs::Decls>>& decls);
   Hs::Context make_context(const Hs::LType& context);
   std::tuple<Located<Hs::TypeCon>, std::vector<Hs::LType>> check_type_or_class_header2(const Hs::LType& type);
@@ -81,7 +83,7 @@
   Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& object, const std::string& field);
   Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::string>& fields);
 
-#line 85 "parser.hh"
+#line 87 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -221,7 +223,7 @@
 #endif
 
 namespace yy {
-#line 225 "parser.hh"
+#line 227 "parser.hh"
 
 
 
@@ -744,8 +746,13 @@ namespace yy {
 
       // sigtypes1
       // btype_no_ops
+      // deriv_types
       // comma_types0
       // comma_types1
+      // maybe_derivings
+      // derivings
+      // deriving
+      // deriv_clause_types
       char dummy60[sizeof (std::vector<Hs::LType>)];
 
       // sks_vars
@@ -1757,8 +1764,13 @@ namespace yy {
 
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
+      case symbol_kind::S_deriv_types: // deriv_types
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
+      case symbol_kind::S_maybe_derivings: // maybe_derivings
+      case symbol_kind::S_derivings: // derivings
+      case symbol_kind::S_deriving: // deriving
+      case symbol_kind::S_deriv_clause_types: // deriv_clause_types
         value.move< std::vector<Hs::LType> > (std::move (that.value));
         break;
 
@@ -3170,8 +3182,13 @@ switch (yykind)
 
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
+      case symbol_kind::S_deriv_types: // deriv_types
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
+      case symbol_kind::S_maybe_derivings: // maybe_derivings
+      case symbol_kind::S_derivings: // derivings
+      case symbol_kind::S_deriving: // deriving
+      case symbol_kind::S_deriv_clause_types: // deriv_clause_types
         value.template destroy< std::vector<Hs::LType> > ();
         break;
 
@@ -6396,8 +6413,13 @@ switch (yykind)
 
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
+      case symbol_kind::S_deriv_types: // deriv_types
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
+      case symbol_kind::S_maybe_derivings: // maybe_derivings
+      case symbol_kind::S_derivings: // derivings
+      case symbol_kind::S_deriving: // deriving
+      case symbol_kind::S_deriv_clause_types: // deriv_clause_types
         value.copy< std::vector<Hs::LType> > (YY_MOVE (that.value));
         break;
 
@@ -6841,8 +6863,13 @@ switch (yykind)
 
       case symbol_kind::S_sigtypes1: // sigtypes1
       case symbol_kind::S_btype_no_ops: // btype_no_ops
+      case symbol_kind::S_deriv_types: // deriv_types
       case symbol_kind::S_comma_types0: // comma_types0
       case symbol_kind::S_comma_types1: // comma_types1
+      case symbol_kind::S_maybe_derivings: // maybe_derivings
+      case symbol_kind::S_derivings: // derivings
+      case symbol_kind::S_deriving: // deriving
+      case symbol_kind::S_deriv_clause_types: // deriv_clause_types
         value.move< std::vector<Hs::LType> > (YY_MOVE (s.value));
         break;
 
@@ -6958,7 +6985,7 @@ switch (yykind)
 
 
 } // yy
-#line 6962 "parser.hh"
+#line 6989 "parser.hh"
 
 
 

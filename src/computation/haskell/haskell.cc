@@ -875,6 +875,14 @@ std::string DataDefn::print() const
 	    result += "\n" + get_gadt_constructors().print();
     }
 
+    if (not derivings.empty())
+    {
+        vector<string> ds;
+        for(auto& deriving: derivings)
+            ds.push_back(deriving.print());
+        result += " deriving (" + join(ds, ", ") + ")";
+    }
+
     return result;
 }
 

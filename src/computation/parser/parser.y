@@ -31,9 +31,11 @@
 				  const std::optional<std::vector<Hs::TypeFamilyInstanceEqn>>& eqns);
   Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Hs::LType& lhs_type, const Hs::LType& rhs_type);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
-                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs);
+                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::ConstructorsDecl& constrs,
+                                             const std::vector<Hs::LType>& derivings);
   Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context& context,
-                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::GADTConstructorsDecl& constrs);
+                                             const Hs::LType& header, const std::optional<Hs::Kind>&, const Hs::GADTConstructorsDecl& constrs,
+                                             const std::vector<Hs::LType>& derivings);
   Hs::ClassDecl make_class_decl(const Hs::Context& context, const Hs::LType& header, const std::vector<Hs::FunDep>& fds, const std::optional<Located<Hs::Decls>>& decls);
   Hs::Context make_context(const Hs::LType& context);
   std::tuple<Located<Hs::TypeCon>, std::vector<Hs::LType>> check_type_or_class_header2(const Hs::LType& type);
@@ -340,10 +342,8 @@
 %type <std::string> tyop
 %type <Hs::LType> atype_docs
 %type <Hs::LType> atype
+%type <std::vector<Hs::LType>> deriv_types
 %type <Hs::LType> inst_type
- /*
-%type <void> deriv_types
- */
 %type <std::vector<Hs::LType>> comma_types0
 %type <std::vector<Hs::LType>> comma_types1
  /*
@@ -373,11 +373,10 @@
 %type <std::vector<Hs::FieldDecl>> fielddecls
 %type <std::vector<Hs::FieldDecl>> fielddecls1
 %type <Hs::FieldDecl> fielddecl
- /*
-%type <void> maybe_derivings
-%type <void> derivings
-%type <void> deriv_clause_types
- */
+%type <std::vector<Hs::LType>> maybe_derivings
+%type <std::vector<Hs::LType>> derivings
+%type <std::vector<Hs::LType>> deriving
+%type <std::vector<Hs::LType>> deriv_clause_types
 
 %type <Located<expression_ref>> decl_no_th
 %type <Located<expression_ref>> decl
@@ -686,9 +685,9 @@ cl_decl: "class" tycl_hdr fds where_cls   {$$ = {@$,make_class_decl($2.first,$2.
 
 
 ty_decl: "type" type "=" ktype                                             {$$ = {@$, make_type_synonym($2,$4)};}
-|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = {@$, make_data_or_newtype($1, $3.first, $3.second,{},$4)};}
+|        data_or_newtype capi_ctype tycl_hdr constrs maybe_derivings       {$$ = {@$, make_data_or_newtype($1, $3.first, $3.second,{},$4,$5)};}
 /* This is kind of a hack to allow `data X` */
-|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = {@$, make_data_or_newtype($1, $3.first, $3.second, $4, $5)};}
+|        data_or_newtype capi_ctype tycl_hdr opt_kind_sig gadt_constrlist maybe_derivings {$$ = {@$, make_data_or_newtype($1, $3.first, $3.second, $4, $5, $6)};}
 |        "type" "family" type opt_tyfam_kind_sig opt_injective_info where_type_family     {$$ = {@$, make_family_decl(Hs::TypeFamily, $3, $4, $6)};}
 |        "data" "family" type opt_datafam_kind_sig                                        {$$ = {@$, make_family_decl(Hs::DataFamily, $3, $4, {})};}
 
@@ -704,13 +703,13 @@ inst_decl: "instance" overlap_pragma inst_type where_inst                  {$$ =
            {
 	       auto& [tvs,context,type] = $4;
 	       auto [con, args] = check_type_or_class_header2(type);
-	       $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), {}, $5))};
+	       $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), {}, $5, $6))};
 	   }
 |          data_or_newtype "instance" capi_ctype datafam_inst_hdr opt_kind_sig gadt_constrlist maybe_derivings
            {
 	       auto& [tvs,context,type] = $4;
 	       auto [con, args] = check_type_or_class_header2(type);
-	       $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), $5, $6))};
+	       $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), $5, $6, $7))};
 	   }
 
 overlap_pragma: "{-# OVERLAPPABLE" "#-}"       { $$ = "OVERLAPPABLE"; }
@@ -781,14 +780,14 @@ at_decl_inst: "type" opt_instance ty_fam_inst_eqn             { $$ = {@$,Hs::Typ
               {
 		  auto& [tvs, context, type] = $4;
 		  auto [con, args] = check_type_or_class_header2(type);
-		  $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), {}, $5))};
+		  $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), {}, $5, $6))};
 	      }
 
 |             data_or_newtype opt_instance capi_ctype datafam_inst_hdr opt_kind_sig gadt_constrlist maybe_derivings
               {
 		  auto& [tvs,context,type] = $4;
 		  auto [con, args] = check_type_or_class_header2(type);
-		  $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), $5, $6))};
+		  $$ = {@$, Hs::DataFamilyInstanceDecl(tvs, con, args, Hs::DataDefn($1, context ? unloc(*context) : Hs::Context(), $5, $6, $7))};
 	      }
 
 data_or_newtype: "data"    {$$=Hs::DataOrNewtype::data;}
@@ -1037,8 +1036,8 @@ atype: ntgtycon                        {$$ = {@$,Hs::TypeCon($1)};}
 
 inst_type: sigtype                     {$$ = $1;}
 
-deriv_types: typedoc
-|            typedoc "," deriv_types
+deriv_types: typedoc                   {$$.push_back($1);}
+|            typedoc "," deriv_types   {$$ = $3; $$.insert($$.begin(), $1);}
 
 comma_types0: comma_types1             {$$ = $1;}
 |             %empty                   { /* default construction OK */ }
@@ -1120,19 +1119,19 @@ fielddecls1: fielddecls1 "," fielddecl  {$$ = $1; $$.push_back($3);}
 
 fielddecl: sig_vars "::" ctype          {$$ = Hs::FieldDecl($1,$3);}
 
-maybe_derivings: %empty
-|                derivings
+maybe_derivings: %empty     {}
+|                derivings  {$$ = $1;}
 
-derivings:       derivings deriving
-|                deriving
+derivings:       derivings deriving {$$ = $1; $$.insert($$.end(), $2.begin(), $2.end());}
+|                deriving           {$$ = $1;}
 
-deriving: "deriving" deriv_clause_types
-|         "deriving" deriv_strategy_no_via deriv_clause_types
-|         "deriving" deriv_clause_types deriv_strategy_via
+deriving: "deriving" deriv_clause_types                         {$$ = $2;}
+|         "deriving" deriv_strategy_no_via deriv_clause_types    {$$ = $3;}
+|         "deriving" deriv_clause_types deriv_strategy_via       {$$ = $2;}
 
-deriv_clause_types: qtycondoc
-|                   "(" ")"
-|                   "(" deriv_types ")"
+deriv_clause_types: qtycondoc           {$$.push_back({@1,Hs::TypeCon($1)});}
+|                   "(" ")"             {}
+|                   "(" deriv_types ")" {$$ = $2;}
 
 
 /* ------------- Value definitions ------------------------------- */
@@ -1773,16 +1772,19 @@ Hs::TypeFamilyInstanceEqn make_type_family_instance_eqn(const Hs::LType& lhs_typ
 
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
                                            const Hs::LType& header, const std::optional<Hs::Kind>& k,
-                                           const Hs::ConstructorsDecl& constrs)
+                                           const Hs::ConstructorsDecl& constrs,
+                                           const std::vector<Hs::LType>& derivings)
 {
     auto [con, type_args] = check_type_or_class_header2(header);
     if (d_or_n == Hs::DataOrNewtype::newtype and constrs.size() != 1)
         throw myexception()<<"newtype '"<<con<<"' may only have 1 constructors with 1 field";
-    return {con, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs)};
+    return {con, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs, derivings)};
 }
 
 Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, const Hs::Context&  context,
-                                           const Hs::LType& header, const std::optional<Hs::Kind>& k, const Hs::GADTConstructorsDecl& constrs)
+                                           const Hs::LType& header, const std::optional<Hs::Kind>& k,
+                                           const Hs::GADTConstructorsDecl& constrs,
+                                           const std::vector<Hs::LType>& derivings)
 {
     auto [con, type_args] = check_type_or_class_header2(header);
     if (d_or_n == Hs::DataOrNewtype::newtype)
@@ -1791,7 +1793,7 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
             throw myexception()<<"newtype '"<<con<<"' may only have 1 constructors with 1 field";
     }
 
-    return {con, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs)};
+    return {con, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs, derivings)};
 }
 
 Hs::InstanceDecl make_instance_decl(const std::optional<std::string>& oprag, const Hs::LType& polytype, const optional<Located<Hs::Decls>>& decls)
