@@ -237,7 +237,7 @@ namespace
 
     Hs::LExp int_exp(int i)
     {
-        return {noloc, Hs::Literal(Hs::Integer(integer(i)))};
+        return {noloc, Hs::Literal(Hs::BoxedInteger{integer(i)})};
     }
 
     Hs::LExp eq_exp(const Hs::LExp& x, const Hs::LExp& y)
@@ -397,6 +397,25 @@ namespace
         return result;
     }
 
+    Hs::LExp constructor_tag_exp(const Hs::DataOrNewtypeDecl& data_decl, const Hs::LExp& value)
+    {
+        Hs::Alts alts;
+        const auto& constructors = data_decl.get_constructors();
+
+        for(int i=0; i<constructors.size(); i++)
+            alts.push_back(simple_alt(constructor_wildcard_pattern(constructors[i]), int_exp(i)));
+
+        return case_exp(value, alts);
+    }
+
+    Hs::LExp compare_constructor_tags_exp(const Hs::DataOrNewtypeDecl& data_decl, const Hs::LExp& x, const Hs::LExp& y)
+    {
+        // Preliminary source-level form of GHC's dataToTag#/tag layout idea:
+        // synthesize a case over constructors now, but keep this isolated so it
+        // can later become a shared helper or Core primitive known to the optimizer.
+        return compare_exp(constructor_tag_exp(data_decl, x), constructor_tag_exp(data_decl, y));
+    }
+
     Hs::InstanceDecl derive_ord_instance(const Hs::DataOrNewtypeDecl& data_decl)
     {
         Hs::Matches compare_matches;
@@ -413,14 +432,12 @@ namespace
                                                          compare_all_exp(fields)));
         }
 
-        // FIXME: This emits every cross-constructor comparison. A tag comparison
-        // would avoid O(n^2) generated equations for n constructors.
-        for(int i=0; i<constructors.size(); i++)
-            for(int j=0; j<constructors.size(); j++)
-                if (i != j)
-                    compare_matches.push_back(binary_method_rule(constructor_wildcard_pattern(constructors[i]),
-                                                                 constructor_wildcard_pattern(constructors[j]),
-                                                                 ordering_exp(i < j ? ordering_lt_name : ordering_gt_name)));
+        if (not constructors.empty())
+        {
+            compare_matches.push_back(binary_method_rule(var_pat("x$tag"),
+                                                         var_pat("y$tag"),
+                                                         compare_constructor_tags_exp(data_decl, local_var_exp("x$tag"), local_var_exp("y$tag"))));
+        }
 
         Hs::Decls methods;
         methods.push_back(derived_method_decl(ord_compare_name, compare_matches));
