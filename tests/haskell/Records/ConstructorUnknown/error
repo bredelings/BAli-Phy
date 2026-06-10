@@ -1,0 +1,12 @@
+[1mMain.hs:5.5-26:[1;31m error:[0m[1m
+   • Missing field 2 in record construction for constructor 'Point'.
+  [1;34m|[0m
+[1;34m5[0m [1;34m| [0mp = [1;31mPoint { x = 1, z = 2 }[0m
+  [1;34m|[0m     [1;31m^^^^^^^^^^^^^^^^^^^^^^[0m
+
+[1mMain.hs:5.20-24:[1;31m error:[0m[1m
+   • Constructor 'Point' does not have field 'z'.
+  [1;34m|[0m
+[1;34m5[0m [1;34m| [0mp = Point { x = 1, [1;31mz = 2[0m }
+  [1;34m|[0m                    [1;31m^^^^^[0m
+
