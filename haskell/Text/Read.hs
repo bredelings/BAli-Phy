@@ -36,14 +36,40 @@ readRawChar :: Char -> ReadS Bool
 readRawChar c (x:xs) = if x == c then [(True, xs)] else []
 readRawChar _ [] = []
 
-readConstructor :: [Char] -> ReadS Bool
-readConstructor con s = case stripPrefix con (skipSpaces s) of
-    Just rest -> if constructorBoundary rest then [(True, rest)] else []
+-- Minimal token splitting for derived Read; this is not a full Haskell lexer yet.
+readToken :: (Char -> Bool) -> [Char] -> ReadS Bool
+readToken boundary token s = case stripPrefix token (skipSpaces s) of
+    Just rest -> if tokenBoundary boundary rest then [(True, rest)] else []
     Nothing -> []
 
-constructorBoundary :: [Char] -> Bool
-constructorBoundary [] = True
-constructorBoundary (c:_) = not (isAlphaNum c || c == '_')
+tokenBoundary :: (Char -> Bool) -> [Char] -> Bool
+tokenBoundary _ [] = True
+tokenBoundary boundary (c:_) = not (boundary c)
+
+readConstructor :: [Char] -> ReadS Bool
+readConstructor = readToken isIdentTail
+
+readFieldName :: [Char] -> ReadS Bool
+readFieldName = readToken isIdentTail
+
+readInfixConstructor :: [Char] -> ReadS Bool
+readInfixConstructor = readToken isSymbolChar
+
+readPunctuation :: [Char] -> ReadS Bool
+readPunctuation = readToken noTokenTail
+
+noTokenTail :: Char -> Bool
+noTokenTail _ = False
+
+isIdentTail :: Char -> Bool
+isIdentTail c = isAlphaNum c || c == '_' || c == '\''
+
+isSymbolChar :: Char -> Bool
+isSymbolChar c =
+    c == '!' || c == '#' || c == '$' || c == '%' || c == '&' ||
+    c == '*' || c == '+' || c == '.' || c == '/' || c == '<' ||
+    c == '=' || c == '>' || c == '?' || c == '@' || c == '\\' ||
+    c == '^' || c == '|' || c == '-' || c == '~' || c == ':'
 
 readParen :: Bool -> ReadS a -> ReadS a
 readParen True p s =

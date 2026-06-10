@@ -48,6 +48,9 @@ std::string read_class_name = "Text.Read.Read";
 std::string read_reads_prec_name = "Text.Read.readsPrec";
 std::string read_read_paren_name = "Text.Read.readParen";
 std::string read_read_constructor_name = "Text.Read.readConstructor";
+std::string read_read_field_name = "Text.Read.readFieldName";
+std::string read_read_infix_constructor_name = "Text.Read.readInfixConstructor";
+std::string read_read_punctuation_name = "Text.Read.readPunctuation";
 std::string coercible_class_name = "Compiler.Prim.Coercible";
 std::string coerce_name = "Compiler.Prim.coerce";
 

@@ -65,14 +65,39 @@ namespace
         return true;
     }
 
-    // Accept only regular declarations whose constructors can be read as prefix tokens.
-    bool is_regular_data_decl_with_prefix_constructors(const Hs::DataOrNewtypeDecl& data_decl)
+    vector<string> record_field_names(const Hs::ConstructorDecl& constructor)
+    {
+        vector<string> names;
+        if (not constructor.is_record_constructor())
+            return names;
+
+        for(const auto& field_group: std::get<1>(constructor.fields).field_decls)
+            for(const auto& field_name: field_group.field_names)
+                names.push_back(unloc(field_name).name);
+
+        return names;
+    }
+
+    bool is_prefix_constructor(const Hs::ConstructorDecl& constructor)
+    {
+        return is_haskell_conid(get_unqualified_name(unloc(*constructor.con).name));
+    }
+
+    bool is_basic_infix_constructor(const Hs::ConstructorDecl& constructor)
+    {
+        return not constructor.is_record_constructor()
+            and constructor.arity() == 2
+            and is_haskell_consym(get_unqualified_name(unloc(*constructor.con).name));
+    }
+
+    // Accept the constructor forms for which derived Read currently emits parser code.
+    bool is_regular_data_decl_with_readable_constructors(const Hs::DataOrNewtypeDecl& data_decl)
     {
         if (not data_decl.is_regular_decl())
             return false;
 
         for(const auto& constructor: data_decl.get_constructors())
-            if (not is_haskell_conid(get_unqualified_name(unloc(*constructor.con).name)))
+            if (not is_prefix_constructor(constructor) and not is_basic_infix_constructor(constructor))
                 return false;
 
         return true;
@@ -595,9 +620,46 @@ namespace
         return Hs::apply(wired_var_exp(show_show_paren_name), {condition, body});
     }
 
+    Hs::LExp show_record_constructor_exp(const Hs::ConstructorDecl& constructor)
+    {
+        auto con_name = get_unqualified_name(unloc(*constructor.con).name);
+        auto field_names = record_field_names(constructor);
+
+        vector<Hs::LExp> parts;
+        parts.push_back(show_string_exp(con_name + " {"));
+        for(int i=0; i<field_names.size(); i++)
+        {
+            parts.push_back(show_string_exp((i == 0 ? "" : ", ") + get_unqualified_name(field_names[i]) + " = "));
+            parts.push_back(shows_prec_exp(0, local_var_exp("x$" + std::to_string(i))));
+        }
+        parts.push_back(show_string_exp("}"));
+
+        return compose_all_exp(parts);
+    }
+
+    Hs::LExp show_infix_constructor_exp(const Hs::ConstructorDecl& constructor)
+    {
+        auto con_name = get_unqualified_name(unloc(*constructor.con).name);
+        constexpr int infix_con_prec = 5;
+        constexpr int infix_con_operand_prec = infix_con_prec + 1;
+
+        // FIXME: This intentionally ignores fixity declarations.  We parse operands
+        // at the next higher precedence so nested infix constructors need parens
+        // until derived Read/Show can share a real fixity-aware expression parser.
+        auto body = compose_all_exp({shows_prec_exp(infix_con_operand_prec, local_var_exp("x$0")),
+                                     show_string_exp(" " + con_name + " "),
+                                     shows_prec_exp(infix_con_operand_prec, local_var_exp("x$1"))});
+        return show_paren_exp(greater_than_exp(local_var_exp("d$"), int_exp(infix_con_prec)), body);
+    }
+
     Hs::LExp shows_prec_constructor_exp(const Hs::ConstructorDecl& constructor)
     {
         auto con_name = get_unqualified_name(unloc(*constructor.con).name);
+        if (constructor.is_record_constructor())
+            return show_record_constructor_exp(constructor);
+        if (is_basic_infix_constructor(constructor))
+            return show_infix_constructor_exp(constructor);
+
         if (constructor.arity() == 0)
             return show_string_exp(con_name);
 
@@ -663,6 +725,21 @@ namespace
         return Hs::apply(wired_var_exp(read_read_constructor_name), {string_exp(get_unqualified_name(constructor_name)), input});
     }
 
+    Hs::LExp read_field_name_exp(const string& field_name, const Hs::LExp& input)
+    {
+        return Hs::apply(wired_var_exp(read_read_field_name), {string_exp(get_unqualified_name(field_name)), input});
+    }
+
+    Hs::LExp read_infix_constructor_exp(const string& constructor_name, const Hs::LExp& input)
+    {
+        return Hs::apply(wired_var_exp(read_read_infix_constructor_name), {string_exp(get_unqualified_name(constructor_name)), input});
+    }
+
+    Hs::LExp read_punctuation_exp(const string& punctuation, const Hs::LExp& input)
+    {
+        return Hs::apply(wired_var_exp(read_read_punctuation_name), {string_exp(punctuation), input});
+    }
+
     Hs::LExp reads_prec_exp(int precedence, const Hs::LExp& input)
     {
         return Hs::apply(wired_var_exp(read_reads_prec_name), {int_exp(precedence), input});
@@ -690,14 +767,90 @@ namespace
         return {noloc, Hs::ListComprehension(body, quals)};
     }
 
+    // Parse record fields in declaration order.  Later support should allow
+    // arbitrary order, reject duplicates, and report missing fields directly.
+    Hs::LExp read_record_constructor_parser_exp(const Hs::ConstructorDecl& constructor)
+    {
+        auto field_names = record_field_names(constructor);
+        vector<Hs::LQual> quals;
+        quals.push_back(pat_qual(pair_pat(wildcard_pat(), var_pat("r$0")),
+                                 read_constructor_exp(unloc(*constructor.con).name, local_var_exp("r$"))));
+        quals.push_back(pat_qual(pair_pat(wildcard_pat(), var_pat("r$1")),
+                                 read_punctuation_exp("{", local_var_exp("r$0"))));
+
+        vector<Hs::LExp> constructor_args;
+        int rest_index = 1;
+        for(int i=0; i<field_names.size(); i++)
+        {
+            auto field_var = "x$" + std::to_string(i);
+            constructor_args.push_back(local_var_exp(field_var));
+
+            int previous_rest = rest_index++;
+            quals.push_back(pat_qual(pair_pat(wildcard_pat(), var_pat("r$" + std::to_string(rest_index))),
+                                     read_field_name_exp(field_names[i], local_var_exp("r$" + std::to_string(previous_rest)))));
+
+            previous_rest = rest_index++;
+            quals.push_back(pat_qual(pair_pat(wildcard_pat(), var_pat("r$" + std::to_string(rest_index))),
+                                     read_punctuation_exp("=", local_var_exp("r$" + std::to_string(previous_rest)))));
+
+            previous_rest = rest_index++;
+            quals.push_back(pat_qual(pair_pat(var_pat(field_var), var_pat("r$" + std::to_string(rest_index))),
+                                     reads_prec_exp(0, local_var_exp("r$" + std::to_string(previous_rest)))));
+
+            if (i + 1 < field_names.size())
+            {
+                previous_rest = rest_index++;
+                quals.push_back(pat_qual(pair_pat(wildcard_pat(), var_pat("r$" + std::to_string(rest_index))),
+                                         read_punctuation_exp(",", local_var_exp("r$" + std::to_string(previous_rest)))));
+            }
+        }
+
+        int previous_rest = rest_index++;
+        quals.push_back(pat_qual(pair_pat(wildcard_pat(), var_pat("r$" + std::to_string(rest_index))),
+                                 read_punctuation_exp("}", local_var_exp("r$" + std::to_string(previous_rest)))));
+
+        auto body = pair_exp(constructor_exp(constructor, constructor_args),
+                             local_var_exp("r$" + std::to_string(rest_index)));
+        return {noloc, Hs::ListComprehension(body, quals)};
+    }
+
+    Hs::LExp read_infix_constructor_parser_exp(const Hs::ConstructorDecl& constructor)
+    {
+        constexpr int infix_con_prec = 5;
+        constexpr int infix_con_operand_prec = infix_con_prec + 1;
+
+        // FIXME: This mirrors the fixed-precedence derived Show form above.  A
+        // complete implementation should consult the actual constructor fixity.
+        vector<Hs::LQual> quals;
+        quals.push_back(pat_qual(pair_pat(var_pat("x$0"), var_pat("r$0")),
+                                 reads_prec_exp(infix_con_operand_prec, local_var_exp("r$"))));
+        quals.push_back(pat_qual(pair_pat(wildcard_pat(), var_pat("r$1")),
+                                 read_infix_constructor_exp(unloc(*constructor.con).name, local_var_exp("r$0"))));
+        quals.push_back(pat_qual(pair_pat(var_pat("x$1"), var_pat("r$2")),
+                                 reads_prec_exp(infix_con_operand_prec, local_var_exp("r$1"))));
+
+        auto body = pair_exp(constructor_exp(constructor, {local_var_exp("x$0"), local_var_exp("x$1")}),
+                             local_var_exp("r$2"));
+        return {noloc, Hs::ListComprehension(body, quals)};
+    }
+
     // Synthesize readsPrec and let read use the class default.
     Hs::InstanceDecl derive_read_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
     {
         vector<Hs::LExp> constructor_parsers;
         for(const auto& constructor: data_decl.get_constructors())
         {
-            auto parser = lambda_exp({var_pat("r$")}, read_constructor_parser_exp(constructor));
-            auto needs_parens = constructor.arity() == 0 ? bool_exp(false) : greater_than_exp(local_var_exp("d$"), int_exp(10));
+            Hs::LExp constructor_parser = constructor.is_record_constructor()
+                ? read_record_constructor_parser_exp(constructor)
+                : is_basic_infix_constructor(constructor)
+                    ? read_infix_constructor_parser_exp(constructor)
+                    : read_constructor_parser_exp(constructor);
+            auto parser = lambda_exp({var_pat("r$")}, constructor_parser);
+            auto needs_parens = is_basic_infix_constructor(constructor)
+                ? greater_than_exp(local_var_exp("d$"), int_exp(5))
+                : constructor.is_record_constructor() or constructor.arity() == 0
+                    ? bool_exp(false)
+                    : greater_than_exp(local_var_exp("d$"), int_exp(10));
             constructor_parsers.push_back(read_paren_exp(needs_parens, parser, local_var_exp("s$")));
         }
 
@@ -724,8 +877,8 @@ namespace
              "deriving Ix is only supported for regular data declarations with only nullary constructors"},
             {show_class_name, true, derive_show_instance, is_regular_data_decl,
              "deriving Show is only supported for regular data/newtype declarations"},
-            {read_class_name, true, derive_read_instance, is_regular_data_decl_with_prefix_constructors,
-             "deriving Read is only supported for regular data/newtype declarations with prefix constructors"},
+            {read_class_name, true, derive_read_instance, is_regular_data_decl_with_readable_constructors,
+             "deriving Read is only supported for regular data/newtype declarations with prefix, record, or binary infix constructors"},
         };
 
         return specs;

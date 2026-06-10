@@ -43,6 +43,9 @@ extern std::string read_class_name;
 extern std::string read_reads_prec_name;
 extern std::string read_read_paren_name;
 extern std::string read_read_constructor_name;
+extern std::string read_read_field_name;
+extern std::string read_read_infix_constructor_name;
+extern std::string read_read_punctuation_name;
 extern std::string coercible_class_name;
 extern std::string coerce_name;
 

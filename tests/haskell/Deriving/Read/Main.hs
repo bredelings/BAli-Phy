@@ -10,6 +10,9 @@ data Color = Red | Blue | Green deriving Eq deriving Read
 data Box a = Box a deriving Eq deriving Read
 data PairBox = PairBox Int Color Double deriving Eq deriving Read
 data Fancy = Fancy (Int, Color) [Int] [Char] Char deriving Eq deriving Read
+data Point = Point { pointX :: Int, pointColor :: Color } deriving Eq deriving Read
+infixr 5 :+:
+data Expr = Lit Int | Expr :+: Expr deriving Eq deriving Read
 newtype Age = Age Int deriving Eq deriving Read
 
 ok :: Bool
@@ -19,9 +22,14 @@ ok =
     read "(Box Green)" == Box Green &&
     read "PairBox 3 Green 4.5" == PairBox 3 Green 4.5 &&
     read "Fancy (1,Blue) [2,3] \"hi\" 'x'" == Fancy (1, Blue) [2,3] "hi" 'x' &&
+    read "Point {pointX = 7, pointColor = Blue}" == Point 7 Blue &&
+    read "Lit 1 :+: (Lit 2 :+: Lit 3)" == (Lit 1 :+: (Lit 2 :+: Lit 3)) &&
     read "Age 42" == Age 42 &&
-    case (readsPrec 0 "GreenBlue" :: [(Color, [Char])]) of
+    (case readInfixConstructor ":+:" ":++ Lit 2" of
         [] -> True
-        _ -> False
+        _ -> False) &&
+    (case (readsPrec 0 "GreenBlue" :: [(Color, [Char])]) of
+        [] -> True
+        _ -> False)
 
 main = putStrLn (if ok then "ok" else "bad")
