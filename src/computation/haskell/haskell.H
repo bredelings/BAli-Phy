@@ -299,6 +299,37 @@ struct RecordExp: public Object
     RecordExp(const LExp& e, const Located<FieldBindings>& fb): head(e), fbinds(fb) {}
 };
 
+struct PatternFieldBinding
+{
+    LVar field;
+    LPat pattern;
+
+    std::string print() const;
+
+    PatternFieldBinding() = default;
+    PatternFieldBinding(const LVar& lv, const LPat& lp):field(lv),pattern(lp) {}
+};
+
+struct PatternFieldBindings: public Object, std::vector<Located<PatternFieldBinding>>
+{
+    bool dotdot = false;
+
+    PatternFieldBindings* clone() const { return new PatternFieldBindings(*this);}
+    std::string print() const;
+};
+
+struct RecordPattern: public Object
+{
+    LCon head;
+    Located<PatternFieldBindings> fbinds;
+
+    RecordPattern* clone() const { return new RecordPattern(*this);}
+    std::string print() const;
+
+    RecordPattern() = default;
+    RecordPattern(const LCon& c, const Located<PatternFieldBindings>& fb): head(c), fbinds(fb) {}
+};
+
 // I think that these can originally be only
 // * FixityDecl
 // * TypeSigDecl

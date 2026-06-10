@@ -106,6 +106,8 @@ string parenthesize_pattern(const Pattern& p)
     bool add_parens = false;
     if (auto c = p.to<ConPattern>(); c and not c->args.empty())
         add_parens = true;
+    else if (p.is_a<RecordPattern>())
+        add_parens = true;
     else if (p.is_a<TypedPattern>())
         add_parens = true;
 
@@ -162,6 +164,13 @@ std::set<LVar> vars_in_pattern(const LPat& lpat)
 	return { v->var };
     else if (auto c = pat.to<ConPattern>())
         return vars_in_patterns(c->args);
+    else if (auto r = pat.to<RecordPattern>())
+    {
+        LPats field_patterns;
+        for(auto& field: unloc(r->fbinds))
+            field_patterns.push_back(unloc(field).pattern);
+        return vars_in_patterns(field_patterns);
+    }
     else if (auto tp = pat.to<TypedPattern>())
         return vars_in_pattern(tp->pat);
     else if (pat.is_a<LiteralPattern>())

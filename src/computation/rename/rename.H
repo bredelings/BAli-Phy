@@ -16,6 +16,12 @@ Hs::LPat unapply(Hs::LExp E);
 typedef std::set<std::string> bound_var_info;
 typedef std::set<std::string> bound_type_var_info;
 
+struct record_constructor_layout
+{
+    int arity = 0;
+    std::map<std::string,int> fields;
+};
+
 Located<expression_ref> desugar_infix(const Module& m, const std::vector<Located<expression_ref>>& T);
 Hs::LExp rename_infix(const Module& m, Hs::LExp E);
 Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R);
@@ -32,10 +38,14 @@ struct renamer_state
 
     mutable std::vector<Message> messages;
 
+    std::map<std::string, record_constructor_layout> record_constructor_layouts;
+
     void error(const Note& e) const;
     void error(const std::optional<yy::location>& loc, const Note& e) const;
     void warning(const Note& e) const;
     void warning(const std::optional<yy::location>& loc, const Note& e) const;
+
+    void record_record_layouts(const Hs::Decls&);
 
     void qualify_name(std::string& name) const;
     void qualify_name(Located<std::string>& name) const;

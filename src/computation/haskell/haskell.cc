@@ -388,6 +388,26 @@ string RecordExp::print() const
     return head.print() + " {" + fbinds.print() + "}";
 }
 
+string PatternFieldBinding::print() const
+{
+    return unloc(field).print() + " = " + pattern.print();
+}
+
+string PatternFieldBindings::print() const
+{
+    vector<string> ss;
+    for(auto& binding: *this)
+        ss.push_back(binding.print());
+    if (dotdot)
+        ss.push_back("..");
+    return join(ss, ",");
+}
+
+string RecordPattern::print() const
+{
+    return head.print() + " {" + fbinds.print() + "}";
+}
+
 string List::print() const
 {
     vector<string> parts;

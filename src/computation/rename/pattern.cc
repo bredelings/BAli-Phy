@@ -14,6 +14,20 @@ using std::optional;
 using std::pair;
 using std::set;
 
+namespace
+{
+    Hs::LPat record_field_pun_pattern(const Hs::LVar& field)
+    {
+        auto name = get_unqualified_name(unloc(field).name);
+        return {field.loc, Hs::VarPattern({field.loc, Hs::Var(name)})};
+    }
+
+    void add_field_layout_name(record_constructor_layout& layout, const string& field_name, int index)
+    {
+        layout.fields[field_name] = index;
+        layout.fields[get_unqualified_name(field_name)] = index;
+    }
+}
 
 // The issue here is to rewrite @ f x y -> f x y
 // so that f is actually the head.
@@ -68,6 +82,24 @@ Hs::LPat unapply(Hs::LExp LE)
 
         P = Hs::ConPattern({head.loc,*con}, pat_args);
     }
+    else if (auto r = E.to<Hs::RecordExp>())
+    {
+        auto con = unloc(r->head).to<Hs::Con>();
+        if (not con)
+            throw myexception()<<"In pattern `"<<E<<"`:\n    `"<<r->head<<"` is not a data constructor.";
+
+        Hs::PatternFieldBindings fbinds;
+        fbinds.dotdot = unloc(r->fbinds).dotdot;
+
+        for(auto& lfield: unloc(r->fbinds))
+        {
+            auto& field = unloc(lfield);
+            auto pattern = field.value ? unapply(*field.value) : record_field_pun_pattern(field.field);
+            fbinds.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern)});
+        }
+
+        P = Hs::RecordPattern({r->head.loc,*con}, {r->fbinds.loc, fbinds});
+    }
     else if (auto texp = E.to<Hs::TypedExp>())
     {
         Hs::TypedPattern TP;
@@ -90,6 +122,38 @@ Hs::LPat unapply(Hs::LExp LE)
     }
 
     return LP;
+}
+
+void renamer_state::record_record_layouts(const Hs::Decls& decls)
+{
+    auto record_constructor_layouts_for = [&](const Hs::ConstructorsDecl& constructors)
+    {
+        for(const auto& constructor: constructors)
+        {
+            if (not constructor.is_record_constructor())
+                continue;
+
+            record_constructor_layout layout;
+            layout.arity = constructor.arity();
+
+            int i = 0;
+            for(auto& field_group: std::get<1>(constructor.fields).field_decls)
+                for(auto& field_name: field_group.field_names)
+                    add_field_layout_name(layout, unloc(field_name).name, i++);
+
+            auto con_name = unloc(*constructor.con).name;
+            record_constructor_layouts[con_name] = layout;
+            record_constructor_layouts[get_unqualified_name(con_name)] = layout;
+        }
+    };
+
+    for(const auto& [_,decl]: decls)
+    {
+        if (auto D = decl.to<Hs::DataOrNewtypeDecl>(); D and D->is_regular_decl())
+            record_constructor_layouts_for(D->get_constructors());
+        else if (auto D = decl.to<Hs::DataFamilyInstanceDecl>(); D and D->rhs.is_regular_decl())
+            record_constructor_layouts_for(D->rhs.get_constructors());
+    }
 }
 
 bound_var_info renamer_state::rename_patterns(Hs::LPats& patterns, bool top)
@@ -207,6 +271,17 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
 
         // 11. Return the variables bound
         return find_vars_in_patterns(c->args, top);
+    }
+    else if (auto r = pat.to<Hs::RecordPattern>())
+    {
+        if (unloc(r->fbinds).dotdot)
+            error(lpat.loc, Note()<<"Record wildcards in patterns are not supported yet.");
+
+        Hs::LPats field_patterns;
+        for(const auto& field: unloc(r->fbinds))
+            field_patterns.push_back(unloc(field).pattern);
+
+        return find_vars_in_patterns(field_patterns, top);
     }
     else if (pat.is_a<Hs::LiteralPattern>())
         return {};
@@ -361,10 +436,83 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
         // 11. Return the variables bound
         return bound;
     }
+    else if (auto r = pat.to<Hs::RecordPattern>())
+    {
+        auto R = *r;
+
+        if (unloc(R.fbinds).dotdot)
+            error(lpat.loc, Note()<<"Record wildcards in patterns are not supported yet.");
+
+        bound_var_info bound;
+        bool overlap = false;
+        for(auto& field: unloc(R.fbinds))
+        {
+            auto bound_here = rename_pattern(unloc(field).pattern, top);
+            overlap = overlap or not disjoint_add(bound, bound_here);
+        }
+
+        if (overlap)
+            error(Note()<<"Pattern '"<<pat<<"' uses a variable twice!");
+
+        auto id = unloc(R.head).name;
+
+        if (not m.is_declared(id))
+            error(loc, Note()<<"Unknown id '"<<id<<"' used as constructor in pattern '"<<pat<<"'!");
+        else
+        {
+            try
+            {
+                auto S = m.lookup_symbol(id);
+                assert(S);
+                if (S->symbol_type != symbol_type_t::constructor)
+                    error(loc, Note()<<"Id '"<<id<<"' is not a constructor in pattern '"<<pat<<"'!");
+
+                unloc(R.head).name = S->name;
+                unloc(R.head).arity = *S->arity;
+
+                auto layout = record_constructor_layouts.find(S->name);
+                if (layout == record_constructor_layouts.end())
+                    layout = record_constructor_layouts.find(get_unqualified_name(S->name));
+
+                if (layout == record_constructor_layouts.end())
+                    error(loc, Note()<<"Constructor '"<<id<<"' is not a record constructor in pattern '"<<pat<<"'!");
+                else
+                {
+                    Hs::LPats args(layout->second.arity, {noloc,Hs::WildcardPattern()});
+                    set<int> used_fields;
+
+                    for(auto& field: unloc(R.fbinds))
+                    {
+                        auto field_name = unloc(unloc(field).field).name;
+                        auto pos = layout->second.fields.find(field_name);
+                        if (pos == layout->second.fields.end())
+                            pos = layout->second.fields.find(get_unqualified_name(field_name));
+
+                        if (pos == layout->second.fields.end())
+                            error(field.loc, Note()<<"Constructor '"<<id<<"' does not have field '"<<field_name<<"'.");
+                        else if (used_fields.count(pos->second))
+                            error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in pattern '"<<pat<<"'.");
+                        else
+                        {
+                            used_fields.insert(pos->second);
+                            args[pos->second] = unloc(field).pattern;
+                        }
+                    }
+
+                    pat = Hs::ConPattern(R.head, args);
+                }
+            }
+            catch (myexception& e)
+            {
+                error(loc, Note()<<e.what());
+            }
+        }
+
+        return bound;
+    }
     // 4. Handle literal values
     else if (pat.is_a<Hs::LiteralPattern>())
         return {};
     else
         throw myexception()<<"Unrecognized pattern '"<<pat<<"'!";
 }
-

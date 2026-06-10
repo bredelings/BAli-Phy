@@ -327,6 +327,15 @@ rename_pattern_from_bindinfo(Hs::LPat lpat, const map<Hs::Var, Hs::BindInfo>& bi
 
         pat = Con;
     }
+    else if (auto rec = pat.to<Hs::RecordPattern>())
+    {
+        auto Rec = *rec;
+
+        for(auto& field: unloc(Rec.fbinds))
+            unloc(field).pattern = rename_pattern_from_bindinfo(unloc(field).pattern, bind_info);
+
+        pat = Rec;
+    }
     // AS-PAT
     else if (auto ap = pat.to<Hs::AsPattern>())
     {

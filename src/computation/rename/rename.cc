@@ -228,6 +228,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
     renamer_state Rn(m);
 
     M.type_decls = Rn.rename_type_decls(M.type_decls);
+    Rn.record_record_layouts(M.type_decls);
 
     M.default_decls = Rn.rename_default_decls(M.default_decls);
 
