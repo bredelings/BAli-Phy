@@ -916,6 +916,9 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
     }
 
+    auto derived_instances = synthesize_derived_instances(M.type_decls);
+    M.type_decls.insert(M.type_decls.end(), derived_instances.begin(), derived_instances.end());
+
     // FIXME - merge with rename() below.
     // Currently this (1) translates field-decls into function declarations
     //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).

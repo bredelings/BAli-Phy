@@ -186,6 +186,145 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
     return decls2;
 }
 
+namespace
+{
+    bool is_deriving_class(const Hs::LType& deriving, const string& class_name)
+    {
+        auto [head, args] = Hs::decompose_type_apps(deriving);
+        auto con = unloc(head).to<Hs::TypeCon>();
+        return con and get_unqualified_name(con->name) == class_name and args.empty();
+    }
+
+    Hs::LType type_var_type(const Hs::LTypeVar& tv)
+    {
+        return {tv.loc, Hs::TypeVar(unloc(tv))};
+    }
+
+    Hs::LType class_constraint(const string& class_name, const Hs::LType& type)
+    {
+        return Hs::type_apply({{noloc,Hs::TypeCon(class_name)}, type});
+    }
+
+    Hs::LExp var_exp(const string& name)
+    {
+        return {noloc, Hs::Var(name)};
+    }
+
+    Hs::LExp con_exp(const string& name)
+    {
+        return {noloc, Hs::Con(name)};
+    }
+
+    Hs::LExp bool_exp(bool b)
+    {
+        return {noloc, Hs::Con(b ? "True" : "False")};
+    }
+
+    Hs::LExp eq_exp(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return Hs::apply(var_exp("=="), {x, y});
+    }
+
+    Hs::LExp and_exp(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return Hs::apply(var_exp("&&"), {x, y});
+    }
+
+    Hs::LExp eq_all_exp(const vector<pair<Hs::LExp,Hs::LExp>>& fields)
+    {
+        if (fields.empty())
+            return bool_exp(true);
+
+        auto result = eq_exp(fields[0].first, fields[0].second);
+        for(int i=1; i<fields.size(); i++)
+            result = and_exp(result, eq_exp(fields[i].first, fields[i].second));
+        return result;
+    }
+
+    Hs::LExp constructor_pattern_exp(const Hs::ConstructorDecl& constructor, const string& prefix)
+    {
+        string con_name = unloc(*constructor.con).name;
+        vector<Hs::LExp> args;
+        for(int i=0; i<constructor.arity(); i++)
+            args.push_back(var_exp(prefix + std::to_string(i)));
+
+        return Hs::apply(con_exp(con_name), args);
+    }
+
+    Hs::LExp eq_lhs(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return Hs::apply(var_exp("=="), {x, y});
+    }
+
+    Hs::LDecl eq_method_decl(const Hs::LExp& x, const Hs::LExp& y, const Hs::LExp& rhs)
+    {
+        return {noloc, Hs::ValueDecl(eq_lhs(x, y), unloc(rhs))};
+    }
+
+    Hs::InstanceDecl derive_eq_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    {
+        vector<Hs::LType> data_args;
+        Hs::Context context = data_decl.context;
+        for(auto& tv: data_decl.type_vars)
+        {
+            auto tv_type = type_var_type(tv);
+            data_args.push_back(tv_type);
+            context.push_back(class_constraint("Eq", tv_type));
+        }
+
+        auto data_type = Hs::type_apply({data_decl.con.loc, Hs::TypeCon(unloc(data_decl.con).name)}, data_args);
+        auto instance_head = class_constraint("Eq", data_type);
+        Hs::LType polytype = context.empty() ? instance_head : Hs::LType{data_decl.con.loc, Hs::ConstrainedType(context, instance_head)};
+
+        Hs::Decls methods;
+        for(const auto& constructor: data_decl.get_constructors())
+        {
+            vector<pair<Hs::LExp,Hs::LExp>> fields;
+            for(int i=0; i<constructor.arity(); i++)
+                fields.push_back({var_exp("x$" + std::to_string(i)), var_exp("y$" + std::to_string(i))});
+
+            methods.push_back(eq_method_decl(constructor_pattern_exp(constructor, "x$"),
+                                             constructor_pattern_exp(constructor, "y$"),
+                                             eq_all_exp(fields)));
+        }
+
+        auto wildcard = Hs::LExp{noloc, Hs::WildcardPattern()};
+        methods.push_back(eq_method_decl(wildcard, wildcard, bool_exp(false)));
+
+        return Hs::InstanceDecl({}, polytype, {}, {}, methods);
+    }
+}
+
+Hs::Decls synthesize_derived_instances(const Hs::Decls& decls)
+{
+    Hs::Decls instances;
+
+    for(auto& [loc,decl]: decls)
+    {
+        if (auto data_decl = decl.to<Hs::DataOrNewtypeDecl>())
+        {
+            for(auto& deriving: data_decl->derivings)
+            {
+                if (is_deriving_class(deriving, "Eq"))
+                {
+                    if (not data_decl->is_regular_decl())
+                        throw myexception()<<"deriving Eq is only supported for regular data/newtype declarations";
+                    instances.push_back({loc, derive_eq_instance(*data_decl)});
+                }
+                else
+                    throw myexception()<<"deriving "<<deriving.print()<<" is not supported yet";
+            }
+        }
+        else if (auto data_inst = decl.to<Hs::DataFamilyInstanceDecl>())
+        {
+            if (not data_inst->rhs.derivings.empty())
+                throw myexception()<<"deriving clauses on data family instances are not supported yet";
+        }
+    }
+
+    return instances;
+}
+
 // 1. The primary purpose of the rename pass is to convert identifiers to (possibly qualified) vars.
 
 // 2. Additionally, we also try and translate rec expressions to mfix expressions here.
