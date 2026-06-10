@@ -7,9 +7,11 @@ import System.IO
 data Color = Red | Blue | Green deriving Show
 data Box a = Box a deriving Show
 data Pair a b = Pair a b deriving Show
+data Fancy = Fancy (Int, Color) [Int] [Char] Char deriving Show
 
 main = do
   putStrLn (show Red)
   putStrLn (show (Box Blue))
   putStrLn (show (Pair Red (Box Blue)))
   putStrLn (showsPrec 11 (Box Blue) "")
+  putStrLn (show (Fancy (1, Blue) [2,3] "hi" 'x'))
