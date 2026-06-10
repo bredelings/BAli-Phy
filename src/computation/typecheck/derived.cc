@@ -2,10 +2,12 @@
 #include "haskell/ids.H"
 #include "tidy.H"
 
+#include <map>
 #include <set>
 
 using std::string;
 using std::vector;
+using std::map;
 using std::pair;
 using std::set;
 using std::optional;
@@ -65,6 +67,22 @@ namespace
         auto field_type = follow_meta_type_var(args.back());
         auto tv = field_type.to<TypeVar>();
         return tv and data_tvs.contains(*tv);
+    }
+
+    map<string, vector<optional<yy::location>>> source_field_locs_by_constructor(const Hs::DataOrNewtypeDecl& data_decl)
+    {
+        map<string, vector<optional<yy::location>>> field_locs;
+        if (not data_decl.is_regular_decl())
+            return field_locs;
+
+        for(const auto& constructor: data_decl.get_constructors())
+        {
+            auto con_name = unloc(*constructor.con).name;
+            for(const auto& field_type: constructor.get_field_types())
+                field_locs[con_name].push_back(field_type.loc);
+        }
+
+        return field_locs;
     }
 }
 
@@ -679,21 +697,27 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
         if (not data_decl or not data_decl->is_regular_decl())
             continue;
 
+        auto type_info = this_mod().lookup_resolved_type(unloc(data_decl->con).name);
+        auto data_info = type_info ? type_info->is_data() : nullptr;
+        if (not data_info)
+            continue;
+
+        auto source_field_locs = source_field_locs_by_constructor(*data_decl);
+
         for(auto& deriving: data_decl->derivings)
         {
             auto derived_class = stock_deriving_class(this_mod(), deriving);
             if (not derived_class or not derived_class->spec->needs_field_constraints)
                 continue;
 
-            for(const auto& constructor: data_decl->get_constructors())
+            for(const auto& con_name: data_info->constructors)
             {
-                auto con_name = unloc(*constructor.con).name;
                 auto con_info = this_mod().constructor_info(con_name);
                 if (not con_info)
                     continue;
 
                 set<TypeVar> data_tvs(con_info->uni_tvs.begin(), con_info->uni_tvs.end());
-                auto hs_field_types = constructor.get_field_types();
+                auto locs = source_field_locs.find(con_name);
 
                 for(int i=0; i<con_info->field_types.size(); i++)
                 {
@@ -703,7 +727,7 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
                     if (not missing)
                         continue;
 
-                    auto field_loc = i < hs_field_types.size() ? hs_field_types[i].loc : deriving.loc;
+                    auto field_loc = (locs != source_field_locs.end() and i < locs->second.size()) ? locs->second[i] : deriving.loc;
                     auto span = source_span_scope(field_loc);
                     TidyState tidy_state;
                     auto instance_pred = class_constraint(derived_class->type_con, type_apply(TypeCon(unloc(data_decl->con).name), con_info->uni_tvs));
