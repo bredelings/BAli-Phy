@@ -6,24 +6,7 @@ where
 
 import Data.Eq
 
-data Ordering = LT | EQ | GT
-
-instance Eq Ordering where
-    EQ == EQ = True
-    LT == LT = True
-    GT == GT = True
-    _  == _  = False
-
-instance Ord Ordering where
-    compare LT LT = EQ
-    compare LT _  = LT
-
-    compare EQ LT = GT
-    compare EQ EQ = EQ
-    compare EQ GT = LT
-
-    compare GT GT = EQ
-    compare GT _  = GT
+data Ordering = LT | EQ | GT deriving (Eq, Ord)
 
 infix 4 <, <=, >, >=
 
