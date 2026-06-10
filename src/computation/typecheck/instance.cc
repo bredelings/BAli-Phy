@@ -491,14 +491,22 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_superclass_entry(
 }
 
 // Find the representation class dictionary added to the synthetic GND context.
-optional<pair<Type, Core::Var<>>> find_gnd_representation_dictionary(const LIE& givens, const TypeCon& class_con)
+optional<pair<Type, Core::Var<>>> find_gnd_representation_dictionary(const TypeChecker& tc, const LIE& givens, const TypeCon& class_con, const vector<Type>& instance_args)
 {
     for(auto it = givens.rbegin(); it != givens.rend(); ++it)
     {
         auto [head, args] = decompose_type_apps(it->pred);
         auto pred_class = head.to<TypeCon>();
-        if (pred_class and *pred_class == class_con and args.size() == 1)
-            return pair(args[0], it->ev_var);
+        if (not pred_class or *pred_class != class_con or args.size() != instance_args.size())
+            continue;
+
+        bool fixed_args_match = true;
+        for(int i=0; i+1<args.size(); i++)
+            if (not tc.same_type(args[i], instance_args[i]))
+                fixed_args_match = false;
+
+        if (fixed_args_match)
+            return pair(args.back(), it->ev_var);
     }
 
     return {};
@@ -570,18 +578,21 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_instance_method(
 std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_gnd_instance_method(
     const Hs::Var& method, const Type& method_type,
     const std::vector<TypeVar>& instance_tvs, const LIE& givens, const substitution_t& subst,
-    const ClassInfo& class_info, const TypeCon& class_con)
+    const ClassInfo& class_info, const TypeCon& class_con, const vector<Type>& instance_args)
 {
     auto op = get_fresh_Var("i$"+method.name, true);
 
-    auto representation = find_gnd_representation_dictionary(givens, class_con);
+    auto representation = find_gnd_representation_dictionary(*this, givens, class_con, instance_args);
     assert(representation);
     auto [rep_type, rep_dict] = *representation;
 
     Type inst_method_type = apply_subst(subst, remove_top_gen(method_type));
 
     substitution_t rep_subst;
-    rep_subst = rep_subst.insert({class_info.type_vars[0], rep_type});
+    auto rep_args = instance_args;
+    rep_args.back() = rep_type;
+    for(int i=0; i<class_info.type_vars.size(); i++)
+        rep_subst = rep_subst.insert({class_info.type_vars[i], rep_args[i]});
     Type rep_method_type = apply_subst(rep_subst, remove_top_gen(method_type));
 
     auto equality = make_role_equality_pred(Role::Representational, rep_method_type, inst_method_type);
@@ -678,7 +689,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::Instanc
     for(const auto& [method, method_type]: class_info.members)
     {
         auto [hs_decl, op] = inst_decl.generalized_newtype_deriving
-            ? type_check_gnd_instance_method(method, method_type, instance_tvs, givens, subst, class_info, class_con)
+            ? type_check_gnd_instance_method(method, method_type, instance_tvs, givens, subst, class_info, class_con, instance_args)
             : type_check_instance_method(method, method_type, instance_tvs, givens, inst_type, subst, method_matches, class_info);
 
         instance_sc_methods.push_back(op);

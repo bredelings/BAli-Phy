@@ -627,7 +627,7 @@ public:
     type_check_instance_method(const Hs::Var& method, const Type& method_type, const std::vector<TypeVar>& instance_tvs, const LIE& givens, const Type& inst_type, const substitution_t& subst, const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info);
 
     std::tuple<Hs::Decl, Core::Var<>>
-    type_check_gnd_instance_method(const Hs::Var& method, const Type& method_type, const std::vector<TypeVar>& instance_tvs, const LIE& givens, const substitution_t& subst, const ClassInfo& class_info, const TypeCon& class_con);
+    type_check_gnd_instance_method(const Hs::Var& method, const Type& method_type, const std::vector<TypeVar>& instance_tvs, const LIE& givens, const substitution_t& subst, const ClassInfo& class_info, const TypeCon& class_con, const std::vector<Type>& instance_args);
 
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
