@@ -393,6 +393,8 @@ namespace
                                                          compare_all_exp(fields)));
         }
 
+        // FIXME: This emits every cross-constructor comparison. A tag comparison
+        // would avoid O(n^2) generated equations for n constructors.
         for(int i=0; i<constructors.size(); i++)
             for(int j=0; j<constructors.size(); j++)
                 if (i != j)
