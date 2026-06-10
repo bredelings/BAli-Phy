@@ -1832,6 +1832,7 @@ set<string> special_prelude_symbols =
     // These are all Prelude symbols used in desugaring.
     // Modid.name should be equivalent to Prelude.name.
     "Compiler.Error.error",
+    "Data.OldList.map",
     "Data.OldList.concatMap",
     "Control.Monad.fail",
     "Compiler.Enum.enumFrom",
@@ -1871,6 +1872,13 @@ const_symbol_ptr lookup_magic_symbol(const std::string& name)
         // forall a b.(a -> [b]) -> [a] -> [b]
         TypeVar b("b", kind_type());
         S->type = add_forall_vars({a}, make_arrow_type(make_arrow_type(a,list_type(b)), make_arrow_type(list_type(a),list_type(b))));
+    }
+    else if (name == "Data.OldList.map")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall a b.(a -> b) -> [a] -> [b]
+        TypeVar b("b", kind_type());
+        S->type = add_forall_vars({a,b}, make_arrow_type(make_arrow_type(a,b), make_arrow_type(list_type(a),list_type(b))));
     }
     else if (name == "Control.Monad.fail")
     {

@@ -301,6 +301,11 @@ namespace
         return Hs::MRule({x, y}, Hs::SimpleRHS(rhs));
     }
 
+    Hs::MRule unary_method_rule(const Hs::LPat& x, const Hs::LExp& rhs)
+    {
+        return Hs::MRule({x}, Hs::SimpleRHS(rhs));
+    }
+
     Hs::LDecl derived_method_decl(const string& method_name, const Hs::Matches& matches)
     {
         return {noloc, Hs::FunDecl({noloc,Hs::Var(get_unqualified_name(method_name))}, matches)};
@@ -359,6 +364,16 @@ namespace
     Hs::LExp compare_exp(const Hs::LExp& x, const Hs::LExp& y)
     {
         return Hs::apply(wired_var_exp(ord_compare_name), {x, y});
+    }
+
+    Hs::LExp error_exp(const string& message)
+    {
+        return Hs::apply(wired_var_exp(error_name), {string_exp(message)});
+    }
+
+    Hs::LExp if_exp(const Hs::LExp& condition, const Hs::LExp& true_branch, const Hs::LExp& false_branch)
+    {
+        return {noloc, Hs::IfExp(condition, true_branch, false_branch)};
     }
 
     Hs::LExp greater_than_exp(const Hs::LExp& x, const Hs::LExp& y)
@@ -472,6 +487,76 @@ namespace
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, bounded_class_name), {}, {}, methods);
     }
 
+    Hs::LPat int_pat(int i)
+    {
+        return {noloc, Hs::LiteralPattern(Hs::Literal(Hs::BoxedInteger{integer(i)}))};
+    }
+
+    bool has_only_nullary_constructors(const Hs::DataOrNewtypeDecl& data_decl)
+    {
+        for(const auto& constructor: data_decl.get_constructors())
+            if (constructor.arity() != 0)
+                return false;
+        return true;
+    }
+
+    Hs::InstanceDecl derive_enum_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    {
+        const auto& constructors = data_decl.get_constructors();
+        int max_tag = constructors.size() - 1;
+
+        Hs::Matches from_enum_matches;
+        Hs::Matches to_enum_matches;
+        for(int i=0; i<constructors.size(); i++)
+        {
+            from_enum_matches.push_back(unary_method_rule(constructor_pattern(constructors[i], {}), int_exp(i)));
+            to_enum_matches.push_back(unary_method_rule(int_pat(i), constructor_exp(constructors[i], {})));
+        }
+        to_enum_matches.push_back(unary_method_rule(wildcard_pat(), error_exp("toEnum: tag out of range")));
+
+        auto from_enum = [](const string& var_name) {
+            return Hs::apply(wired_var_exp(enum_from_enum_name), {local_var_exp(var_name)});
+        };
+
+        auto int_range_from_to = [&](const Hs::LExp& from, const Hs::LExp& to) {
+            return Hs::apply(wired_var_exp(enum_from_to_name), {from, to});
+        };
+
+        auto int_range_from_then_to = [&](const Hs::LExp& from, const Hs::LExp& next, const Hs::LExp& to) {
+            return Hs::apply(wired_var_exp(enum_from_then_to_name), {from, next, to});
+        };
+
+        auto map_to_enum = [](const Hs::LExp& tags) {
+            return Hs::apply(wired_var_exp(list_map_name), {wired_var_exp(enum_to_enum_name), tags});
+        };
+
+        Hs::Matches enum_from_matches;
+        enum_from_matches.push_back(unary_method_rule(var_pat("x$"), map_to_enum(int_range_from_to(from_enum("x$"), int_exp(max_tag)))));
+
+        Hs::Matches enum_from_to_matches;
+        enum_from_to_matches.push_back(binary_method_rule(var_pat("x$"), var_pat("y$"),
+                                                          map_to_enum(int_range_from_to(from_enum("x$"), from_enum("y$")))));
+
+        Hs::Matches enum_from_then_matches;
+        auto limit = if_exp(greater_than_exp(from_enum("y$"), from_enum("x$")), int_exp(max_tag), int_exp(0));
+        enum_from_then_matches.push_back(binary_method_rule(var_pat("x$"), var_pat("y$"),
+                                                            map_to_enum(int_range_from_then_to(from_enum("x$"), from_enum("y$"), limit))));
+
+        Hs::Matches enum_from_then_to_matches;
+        enum_from_then_to_matches.push_back(Hs::MRule({var_pat("x$"), var_pat("y$"), var_pat("z$")},
+                                                       Hs::SimpleRHS(map_to_enum(int_range_from_then_to(from_enum("x$"), from_enum("y$"), from_enum("z$"))))));
+
+        Hs::Decls methods;
+        methods.push_back(derived_method_decl(enum_from_enum_name, from_enum_matches));
+        methods.push_back(derived_method_decl(enum_to_enum_name, to_enum_matches));
+        methods.push_back(derived_method_decl(enum_from_name, enum_from_matches));
+        methods.push_back(derived_method_decl(enum_from_to_name, enum_from_to_matches));
+        methods.push_back(derived_method_decl(enum_from_then_name, enum_from_then_matches));
+        methods.push_back(derived_method_decl(enum_from_then_to_name, enum_from_then_to_matches));
+
+        return Hs::InstanceDecl({}, stock_instance_type(data_decl, enum_class_name), {}, {}, methods);
+    }
+
     Hs::LExp compose_exp(const Hs::LExp& f, const Hs::LExp& g)
     {
         return Hs::apply(wired_var_exp(function_compose_name), {f, g});
@@ -561,6 +646,12 @@ Hs::Decls synthesize_derived_instances(const Hs::Decls& decls)
                     if (not data_decl->is_regular_decl() or data_decl->get_constructors().empty())
                         throw myexception()<<"deriving Bounded is only supported for regular data/newtype declarations with constructors";
                     instances.push_back({loc, derive_bounded_instance(*data_decl)});
+                }
+                else if (is_deriving_class(deriving, enum_class_name))
+                {
+                    if (not data_decl->is_regular_decl() or data_decl->get_constructors().empty() or not has_only_nullary_constructors(*data_decl))
+                        throw myexception()<<"deriving Enum is only supported for regular data declarations with only nullary constructors";
+                    instances.push_back({loc, derive_enum_instance(*data_decl)});
                 }
                 else if (is_deriving_class(deriving, show_class_name))
                 {
