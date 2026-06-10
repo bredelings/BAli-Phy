@@ -1776,8 +1776,8 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
                                            const std::vector<Hs::LType>& derivings)
 {
     auto [con, type_args] = check_type_or_class_header2(header);
-    if (d_or_n == Hs::DataOrNewtype::newtype and constrs.size() != 1)
-        throw myexception()<<"newtype '"<<con<<"' may only have 1 constructors with 1 field";
+    if (d_or_n == Hs::DataOrNewtype::newtype and (constrs.size() != 1 or constrs[0].arity() != 1))
+        throw myexception()<<"newtype '"<<con<<"' may only have 1 constructor with 1 field";
     return {con, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs, derivings)};
 }
 
@@ -1789,8 +1789,8 @@ Hs::DataOrNewtypeDecl make_data_or_newtype(const Hs::DataOrNewtype& d_or_n, cons
     auto [con, type_args] = check_type_or_class_header2(header);
     if (d_or_n == Hs::DataOrNewtype::newtype)
     {
-        if (constrs.size() != 1 or constrs[0].con_names.size() != 1)
-            throw myexception()<<"newtype '"<<con<<"' may only have 1 constructors with 1 field";
+        if (constrs.size() != 1 or constrs[0].con_names.size() != 1 or Hs::gen_type_arity(constrs[0].type) != 1)
+            throw myexception()<<"newtype '"<<con<<"' may only have 1 constructor with 1 field";
     }
 
     return {con, check_all_type_vars(type_args), Hs::DataDefn(d_or_n, context, k, constrs, derivings)};
