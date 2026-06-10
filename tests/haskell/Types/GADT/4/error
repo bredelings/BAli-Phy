@@ -4,7 +4,6 @@
    • Relevant bindings:
        i :: [1;32mI a[0m[1m
        unI :: [1;32mSomeI -> m[0m[1m
-   • In equation `unI (Main.MkSomeI i)  = i`
   [1;34m|[0m
 [1;34m7[0m [1;34m| [0munI (MkSomeI i) = [1;31mi[0m
   [1;34m|[0m                   [1;31m^[0m
