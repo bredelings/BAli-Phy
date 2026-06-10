@@ -381,6 +381,16 @@ namespace
         return Hs::apply(wired_var_exp(ord_greater_than_name), {x, y});
     }
 
+    Hs::LExp subtract_exp(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return Hs::apply(wired_var_exp("Compiler.Num.-"), {x, y});
+    }
+
+    Hs::LExp add_exp(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return Hs::apply(wired_var_exp("Compiler.Num.+"), {x, y});
+    }
+
     Hs::LExp ordering_exp(const string& name)
     {
         return wired_con_exp(name);
@@ -557,6 +567,70 @@ namespace
         return Hs::InstanceDecl({}, stock_instance_type(data_decl, enum_class_name), {}, {}, methods);
     }
 
+    Hs::LPat pair_pat(const Hs::LPat& x, const Hs::LPat& y)
+    {
+        return {noloc, Hs::TuplePattern({x, y})};
+    }
+
+    Hs::LExp pair_exp(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return {noloc, Hs::Tuple({x, y})};
+    }
+
+    Hs::LExp ix_tag_exp(const Hs::DataOrNewtypeDecl& data_decl, const string& var_name)
+    {
+        return constructor_tag_exp(data_decl, local_var_exp(var_name));
+    }
+
+    Hs::LExp ix_in_range_exp(const Hs::DataOrNewtypeDecl& data_decl, const string& lo, const string& hi, const string& x)
+    {
+        auto lo_tag = ix_tag_exp(data_decl, lo);
+        auto hi_tag = ix_tag_exp(data_decl, hi);
+        auto x_tag = ix_tag_exp(data_decl, x);
+
+        return if_exp(greater_than_exp(lo_tag, x_tag),
+                      bool_exp(false),
+                      if_exp(greater_than_exp(x_tag, hi_tag), bool_exp(false), bool_exp(true)));
+    }
+
+    Hs::InstanceDecl derive_ix_instance(const Hs::DataOrNewtypeDecl& data_decl)
+    {
+        const auto& constructors = data_decl.get_constructors();
+        Hs::LPat bounds_pat = pair_pat(var_pat("lo$"), var_pat("hi$"));
+        Hs::LExp bounds_exp = pair_exp(local_var_exp("lo$"), local_var_exp("hi$"));
+
+        vector<Hs::LExp> constructor_exps;
+        for(const auto& constructor: constructors)
+            constructor_exps.push_back(constructor_exp(constructor, {}));
+        Hs::LExp all_constructors = {noloc, Hs::List(constructor_exps)};
+
+        Hs::Matches range_matches;
+        auto in_range_bounds = Hs::apply(wired_var_exp(ix_in_range_name), {bounds_exp});
+        range_matches.push_back(unary_method_rule(bounds_pat, Hs::apply(wired_var_exp(list_filter_name), {in_range_bounds, all_constructors})));
+
+        Hs::Matches index_matches;
+        index_matches.push_back(binary_method_rule(bounds_pat, var_pat("x$"),
+                                                   subtract_exp(ix_tag_exp(data_decl, "x$"), ix_tag_exp(data_decl, "lo$"))));
+
+        Hs::Matches in_range_matches;
+        in_range_matches.push_back(binary_method_rule(bounds_pat, var_pat("x$"), ix_in_range_exp(data_decl, "lo$", "hi$", "x$")));
+
+        Hs::Matches range_size_matches;
+        auto size = add_exp(subtract_exp(ix_tag_exp(data_decl, "hi$"), ix_tag_exp(data_decl, "lo$")), int_exp(1));
+        range_size_matches.push_back(unary_method_rule(bounds_pat,
+                                                       if_exp(greater_than_exp(ix_tag_exp(data_decl, "lo$"), ix_tag_exp(data_decl, "hi$")),
+                                                              int_exp(0),
+                                                              size)));
+
+        Hs::Decls methods;
+        methods.push_back(derived_method_decl(ix_range_name, range_matches));
+        methods.push_back(derived_method_decl(ix_index_name, index_matches));
+        methods.push_back(derived_method_decl(ix_in_range_name, in_range_matches));
+        methods.push_back(derived_method_decl(ix_range_size_name, range_size_matches));
+
+        return Hs::InstanceDecl({}, stock_instance_type(data_decl, ix_class_name), {}, {}, methods);
+    }
+
     Hs::LExp compose_exp(const Hs::LExp& f, const Hs::LExp& g)
     {
         return Hs::apply(wired_var_exp(function_compose_name), {f, g});
@@ -652,6 +726,12 @@ Hs::Decls synthesize_derived_instances(const Hs::Decls& decls)
                     if (not data_decl->is_regular_decl() or data_decl->get_constructors().empty() or not has_only_nullary_constructors(*data_decl))
                         throw myexception()<<"deriving Enum is only supported for regular data declarations with only nullary constructors";
                     instances.push_back({loc, derive_enum_instance(*data_decl)});
+                }
+                else if (is_deriving_class(deriving, ix_class_name))
+                {
+                    if (not data_decl->is_regular_decl() or data_decl->get_constructors().empty() or not has_only_nullary_constructors(*data_decl))
+                        throw myexception()<<"deriving Ix is only supported for regular data declarations with only nullary constructors";
+                    instances.push_back({loc, derive_ix_instance(*data_decl)});
                 }
                 else if (is_deriving_class(deriving, show_class_name))
                 {
