@@ -14,11 +14,18 @@ using std::optional;
 
 namespace
 {
-    bool is_deriving_class(const Hs::LType& deriving, const string& class_name)
+    std::optional<TypeCon> stock_deriving_class(const Hs::LType& deriving)
     {
         auto [head, args] = Hs::decompose_type_apps(deriving);
         auto con = unloc(head).to<Hs::TypeCon>();
-        return con and get_unqualified_name(con->name) == class_name and args.empty();
+        if (not con or not args.empty())
+            return {};
+
+        auto class_name = get_unqualified_name(con->name);
+        if (class_name == get_unqualified_name(eq_class_name) or class_name == get_unqualified_name(ord_class_name))
+            return TypeCon(con->name);
+        else
+            return {};
     }
 
     Type class_constraint(const TypeCon& class_con, const Type& type)
@@ -471,13 +478,9 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
 
         for(auto& deriving: data_decl->derivings)
         {
-            if (not is_deriving_class(deriving, "Eq"))
+            auto derived_class = stock_deriving_class(deriving);
+            if (not derived_class)
                 continue;
-
-            auto [deriving_head, deriving_args] = Hs::decompose_type_apps(deriving);
-            auto deriving_con = unloc(deriving_head).to<Hs::TypeCon>();
-            assert(deriving_con);
-            TypeCon eq_class(deriving_con->name);
 
             for(const auto& constructor: data_decl->get_constructors())
             {
@@ -491,7 +494,7 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
 
                 for(int i=0; i<con_info->field_types.size(); i++)
                 {
-                    auto pred = class_constraint(eq_class, con_info->field_types[i]);
+                    auto pred = class_constraint(*derived_class, con_info->field_types[i]);
                     vector<Type> active;
                     auto missing = find_missing_derived_constraint(pred, data_tvs, active);
                     if (not missing)
@@ -500,7 +503,7 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
                     auto field_loc = i < hs_field_types.size() ? hs_field_types[i].loc : deriving.loc;
                     auto span = source_span_scope(field_loc);
                     TidyState tidy_state;
-                    auto instance_pred = class_constraint(eq_class, type_apply(TypeCon(unloc(data_decl->con).name), con_info->uni_tvs));
+                    auto instance_pred = class_constraint(*derived_class, type_apply(TypeCon(unloc(data_decl->con).name), con_info->uni_tvs));
                     auto note = note_scope(Note()<<"When deriving the instance for "<<show_type_plain(tidy_state, instance_pred));
                     record_error(Note()<<"Could not deduce '"<<show_type_plain(tidy_state, *missing)<<"' arising from field "<<(i+1)<<" of constructor '"<<get_unqualified_name(con_name)<<"' (type '"<<show_type_plain(tidy_state, con_info->field_types[i])<<"')");
                 }
