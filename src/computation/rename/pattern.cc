@@ -27,6 +27,12 @@ namespace
         layout.fields[field_name] = index;
         layout.fields[get_unqualified_name(field_name)] = index;
     }
+
+    void add_field_constructor(std::map<string,set<string>>& constructors, const string& field_name, const string& con_name)
+    {
+        constructors[field_name].insert(con_name);
+        constructors[get_unqualified_name(field_name)].insert(con_name);
+    }
 }
 
 // The issue here is to rewrite @ f x y -> f x y
@@ -135,13 +141,16 @@ void renamer_state::record_record_layouts(const Hs::Decls& decls)
 
             record_constructor_layout layout;
             layout.arity = constructor.arity();
+            auto con_name = unloc(*constructor.con).name;
 
             int i = 0;
             for(auto& field_group: std::get<1>(constructor.fields).field_decls)
                 for(auto& field_name: field_group.field_names)
+                {
                     add_field_layout_name(layout, unloc(field_name).name, i++);
+                    add_field_constructor(record_field_constructors, unloc(field_name).name, con_name);
+                }
 
-            auto con_name = unloc(*constructor.con).name;
             record_constructor_layouts[con_name] = layout;
             record_constructor_layouts[get_unqualified_name(con_name)] = layout;
         }

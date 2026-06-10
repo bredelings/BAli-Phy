@@ -39,6 +39,7 @@ struct renamer_state
     mutable std::vector<Message> messages;
 
     std::map<std::string, record_constructor_layout> record_constructor_layouts;
+    std::map<std::string, std::set<std::string>> record_field_constructors;
 
     void error(const Note& e) const;
     void error(const std::optional<yy::location>& loc, const Note& e) const;
