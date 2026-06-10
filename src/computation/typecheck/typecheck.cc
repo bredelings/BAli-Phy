@@ -1474,6 +1474,9 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
     // 7. Get types and values for class method selectors and superclass selectors (CE_C  = class name -> class info)
     auto class_decls = infer_type_for_classes(M.type_decls);
 
+    auto derived_instances = synthesize_derived_instances(M.type_decls);
+    M.type_decls.insert(M.type_decls.end(), derived_instances.begin(), derived_instances.end());
+
     // 8. Get types and names for instances (pass 1)
     auto named_instances = infer_type_for_instances1(M.type_decls);
 

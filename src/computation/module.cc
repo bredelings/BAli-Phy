@@ -939,9 +939,6 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = MM->rename(opts, M);
 
-    auto derived_instances = synthesize_derived_instances(M.type_decls);
-    M.type_decls.insert(M.type_decls.end(), derived_instances.begin(), derived_instances.end());
-
     for(auto& fdecl: M.foreign_decls)
     {
         auto& call_conv = unloc(fdecl.call_conv);

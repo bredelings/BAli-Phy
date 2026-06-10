@@ -112,7 +112,6 @@ struct renamer_state
 };
 
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);
-Hs::Decls synthesize_derived_instances(const Hs::Decls& decls);
 
 Hs::Decls group_fundecls(const Hs::Decls& decls); // only value decls
 
