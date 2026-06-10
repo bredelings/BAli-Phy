@@ -1,7 +1,7 @@
 [1mMain.hs:10.12:[1;31m error:[0m[1m
-   •     argument 'Main.B' should match instance parameter 'A'
-   • In data instance 'data instance Main.D Main.B = Main.MkD Main.B':
-   • In instance 'Main.C Main.A':
+   • Argument 'B' should match instance parameter 'A'
+   • In data instance 'D B':
+   • In class instance 'C A':
    [1;34m|[0m
 [1;34m10[0m [1;34m| [0m    data D [1;31mB[0m = MkD B
    [1;34m|[0m            [1;31m^[0m

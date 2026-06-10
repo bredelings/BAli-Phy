@@ -185,7 +185,10 @@ void TypeChecker::check_associated_family_instance_args(const vector<Hs::LType>&
         {
             auto expected = instance_subst.at(fam_tv);
             if (not same_type(args[i], expected))
-                record_error(Note()<<"    argument '"<<hs_args[i]<<"' should match instance parameter '"<<show_type_plain(expected)<<"'");
+            {
+                TidyState tidy_state;
+                record_error(Note()<<"Argument '"<<show_type_plain(tidy_state, args[i])<<"' should match instance parameter '"<<show_type_plain(tidy_state, expected)<<"'");
+            }
         }
     }
 }
@@ -219,7 +222,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     if (not check_family_instance_association(inst.con, tf_info->associated_class, associated_class, "type instance", "type family", false, true))
         return;
 
-    auto note = note_scope( Note()<<"In instance '"<<inst.print()<<"':" );
+    auto note = note_scope( Note()<<"In type instance '"<<show_type_plain(type_inst.head.type)<<"':" );
 
     // 4. Check the arity before comparing associated family arguments below.
     if (inst.args.size() != tf_info->args.size())
@@ -262,8 +265,6 @@ void TypeChecker::check_data_instance(const Hs::DataFamilyInstanceDecl& inst, co
     if (not check_family_instance_association(inst.con, df_info->associated_class, associated_class, "data instance", "data family", true, true))
         return;
 
-    auto note = note_scope( Note()<<"In data instance '"<<inst.print()<<"':" );
-
     // 4. Check the arity before comparing associated family arguments below.
     if (inst.args.size() != df_info->args.size())
     {
@@ -273,6 +274,7 @@ void TypeChecker::check_data_instance(const Hs::DataFamilyInstanceDecl& inst, co
     }
 
     auto head = check_family_instance_head(inst.con, inst.args, inst.forall, {});
+    auto note = note_scope( Note()<<"In data instance '"<<show_type_plain(head.type)<<"':" );
 
     // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
     check_associated_family_instance_args(inst.args, head.args, df_info->args, instance_subst);
@@ -325,13 +327,13 @@ std::optional<Core::Var<>>
 TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
 {
     auto inst_loc = inst_decl.polytype.loc;
-    auto note = note_scope( Note()<<"In instance '"<<unloc(inst_decl.polytype)<<"':" );
     auto span = source_span_scope( inst_loc );
 
     // 1. Kind-check the type and set the kinds for the type variables.
 
     // FIXME: allow check_constraint to fail by returning an optional<Type>.
     auto polytype = check_constraint(inst_decl.polytype);
+    auto note = note_scope( Note()<<"In class instance '"<<show_type_plain(polytype)<<"':" );
 
     // 2. Get the free type variables, constraints, class_head and args
     auto [tvs, constraints, constraint] = peel_top_gen(polytype);
