@@ -1,0 +1,6 @@
+[1mMain.hs:12.19-22:[1;31m error:[0m[1m
+   • newtype 'N' must have exactly one constructor with exactly one field
+   [1;34m|[0m
+[1;34m12[0m [1;34m| [0m  newtype N Tag = [1;31mBadN[0m Tag Tag
+   [1;34m|[0m                   [1;31m^^^^[0m
+

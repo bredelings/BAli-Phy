@@ -1,0 +1,12 @@
+[1mMain.hs:8.10-13:[1;31m error:[0m[1m
+   • newtype 'Bad' GADT constructor must not have a context
+  [1;34m|[0m
+[1;34m8[0m [1;34m| [0m  Bad :: [1;31mEq a[0m => a -> Bad
+  [1;34m|[0m          [1;31m^^^^[0m
+
+[1mMain.hs:8.18:[1;31m error:[0m[1m
+   • newtype 'Bad' GADT constructor must not have existential type variables
+  [1;34m|[0m
+[1;34m8[0m [1;34m| [0m  Bad :: Eq a => [1;31ma[0m -> Bad
+  [1;34m|[0m                  [1;31m^[0m
+
