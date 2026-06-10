@@ -4,8 +4,12 @@ module Data.Either where
 import Data.Bool
 import Data.List  -- for foldr
 import Data.Eq
+import Data.Ord
+import Text.Read
+import Text.Show
 
 data Either a b = Left a | Right b
+  deriving ( Eq, Ord, Read, Show )
 
 either f g (Left  l) = f l
 either f g (Right r) = g r
@@ -28,8 +32,3 @@ fromRight r _         = r
 partitionEithers = foldr (either left right) ([], [])
     where left  a ~(l, r) = (a:l, r)
           right a ~(l, r) = (l, a:r)
-
-instance (Eq a, Eq b) => Eq (Either a b) where
-    Left  x == Left  y  =  x == y
-    Right x == Right y  =  x == y
-    _       == _        =  False
