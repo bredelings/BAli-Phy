@@ -13,6 +13,7 @@
 
 #include "computation/core/ast.H"
 #include "computation/core/wrap.H"
+#include "computation/haskell/ids.H"
 
 #include "var.H"
 #include "literal.H"
@@ -110,7 +111,7 @@ struct LiteralPattern: public Object
     bool operator==(const LiteralPattern&) const;
     bool operator==(const Object&) const override;
 
-    Hs::Var equalsOp = {"Data.Eq.=="};
+    Hs::Var equalsOp = {eq_method_name};
 
     LiteralPattern* clone() const override { return new LiteralPattern(*this);}
     std::string print() const override;

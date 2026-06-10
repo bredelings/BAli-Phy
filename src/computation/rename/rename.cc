@@ -192,7 +192,7 @@ namespace
     {
         auto [head, args] = Hs::decompose_type_apps(deriving);
         auto con = unloc(head).to<Hs::TypeCon>();
-        return con and get_unqualified_name(con->name) == class_name and args.empty();
+        return con and con->name == class_name and args.empty();
     }
 
     Hs::LType type_var_type(const Hs::LTypeVar& tv)
@@ -210,24 +210,19 @@ namespace
         return {noloc, Hs::Var(name)};
     }
 
-    Hs::LExp con_exp(const string& name)
-    {
-        return {noloc, Hs::Con(name)};
-    }
-
     Hs::LExp bool_exp(bool b)
     {
-        return {noloc, Hs::Con(b ? "True" : "False")};
+        return {noloc, Hs::Con(b ? bool_true_name : bool_false_name)};
     }
 
     Hs::LExp eq_exp(const Hs::LExp& x, const Hs::LExp& y)
     {
-        return Hs::apply(var_exp("=="), {x, y});
+        return Hs::apply(var_exp(eq_method_name), {x, y});
     }
 
     Hs::LExp and_exp(const Hs::LExp& x, const Hs::LExp& y)
     {
-        return Hs::apply(var_exp("&&"), {x, y});
+        return Hs::apply(var_exp(bool_and_name), {x, y});
     }
 
     Hs::LExp eq_all_exp(const vector<pair<Hs::LExp,Hs::LExp>>& fields)
@@ -241,24 +236,29 @@ namespace
         return result;
     }
 
-    Hs::LExp constructor_pattern_exp(const Hs::ConstructorDecl& constructor, const string& prefix)
+    Hs::LPat var_pat(const string& name)
+    {
+        return {noloc, Hs::VarPattern({noloc, Hs::Var(name)})};
+    }
+
+    Hs::LPat constructor_pattern(const Hs::ConstructorDecl& constructor, const string& prefix)
     {
         string con_name = unloc(*constructor.con).name;
-        vector<Hs::LExp> args;
+        Hs::LPats args;
         for(int i=0; i<constructor.arity(); i++)
-            args.push_back(var_exp(prefix + std::to_string(i)));
+            args.push_back(var_pat(prefix + std::to_string(i)));
 
-        return Hs::apply(con_exp(con_name), args);
+        return {noloc, Hs::ConPattern({constructor.con->loc, Hs::Con(con_name, constructor.arity())}, args)};
     }
 
-    Hs::LExp eq_lhs(const Hs::LExp& x, const Hs::LExp& y)
+    Hs::LPat wildcard_pat()
     {
-        return Hs::apply(var_exp("=="), {x, y});
+        return {noloc, Hs::WildcardPattern()};
     }
 
-    Hs::LDecl eq_method_decl(const Hs::LExp& x, const Hs::LExp& y, const Hs::LExp& rhs)
+    Hs::MRule eq_method_rule(const Hs::LPat& x, const Hs::LPat& y, const Hs::LExp& rhs)
     {
-        return {noloc, Hs::ValueDecl(eq_lhs(x, y), unloc(rhs))};
+        return Hs::MRule({x, y}, Hs::SimpleRHS(rhs));
     }
 
     Hs::InstanceDecl derive_eq_instance(const Hs::DataOrNewtypeDecl& data_decl)
@@ -269,27 +269,31 @@ namespace
         {
             auto tv_type = type_var_type(tv);
             data_args.push_back(tv_type);
-            context.push_back(class_constraint("Eq", tv_type));
+            context.push_back(class_constraint(eq_class_name, tv_type));
         }
 
         auto data_type = Hs::type_apply({data_decl.con.loc, Hs::TypeCon(unloc(data_decl.con).name)}, data_args);
-        auto instance_head = class_constraint("Eq", data_type);
+        auto instance_head = class_constraint(eq_class_name, data_type);
         Hs::LType polytype = context.empty() ? instance_head : Hs::LType{data_decl.con.loc, Hs::ConstrainedType(context, instance_head)};
+        polytype = Hs::add_forall_vars(data_decl.type_vars, polytype);
 
-        Hs::Decls methods;
+        Hs::Matches eq_matches;
         for(const auto& constructor: data_decl.get_constructors())
         {
             vector<pair<Hs::LExp,Hs::LExp>> fields;
             for(int i=0; i<constructor.arity(); i++)
                 fields.push_back({var_exp("x$" + std::to_string(i)), var_exp("y$" + std::to_string(i))});
 
-            methods.push_back(eq_method_decl(constructor_pattern_exp(constructor, "x$"),
-                                             constructor_pattern_exp(constructor, "y$"),
-                                             eq_all_exp(fields)));
+            eq_matches.push_back(eq_method_rule(constructor_pattern(constructor, "x$"),
+                                                constructor_pattern(constructor, "y$"),
+                                                eq_all_exp(fields)));
         }
 
-        auto wildcard = Hs::LExp{noloc, Hs::WildcardPattern()};
-        methods.push_back(eq_method_decl(wildcard, wildcard, bool_exp(false)));
+        auto wildcard = wildcard_pat();
+        eq_matches.push_back(eq_method_rule(wildcard, wildcard, bool_exp(false)));
+
+        Hs::Decls methods;
+        methods.push_back({noloc, Hs::FunDecl({noloc,Hs::Var(get_unqualified_name(eq_method_name))}, eq_matches)});
 
         return Hs::InstanceDecl({}, polytype, {}, {}, methods);
     }
@@ -305,7 +309,7 @@ Hs::Decls synthesize_derived_instances(const Hs::Decls& decls)
         {
             for(auto& deriving: data_decl->derivings)
             {
-                if (is_deriving_class(deriving, "Eq"))
+                if (is_deriving_class(deriving, eq_class_name))
                 {
                     if (not data_decl->is_regular_decl())
                         throw myexception()<<"deriving Eq is only supported for regular data/newtype declarations";
