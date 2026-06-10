@@ -14,6 +14,16 @@ using std::string;
 using std::vector;
 using std::pair;
 using std::set;
+using std::optional;
+
+namespace
+{
+    Hs::LExp record_field_pun_exp(const Hs::LVar& field)
+    {
+        auto name = get_unqualified_name(unloc(field).name);
+        return {field.loc, Hs::Var(name)};
+    }
+}
 
 Hs::LExp rename_infix(const Module& m, Hs::LExp LE)
 {
@@ -445,6 +455,88 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         TE.exp = rename(TE.exp, bound, free_vars);
         TE.type = rename_and_quantify_type(TE.type);
         E = TE;
+    }
+    else if (auto rec = E.to<Hs::RecordExp>())
+    {
+        auto Rec = *rec;
+        auto con = unloc(Rec.head).to<Hs::Con>();
+
+        if (not con)
+        {
+            error(loc, Note()<<"Record updates are not supported yet.");
+            Rec.head = rename(Rec.head, bound, free_vars);
+            for(auto& field: unloc(Rec.fbinds))
+                if (unloc(field).value)
+                    *unloc(field).value = rename(*unloc(field).value, bound, free_vars);
+            E = Rec;
+        }
+        else if (not m.is_declared(con->name))
+        {
+            error(Rec.head.loc, Note()<<"Data constructor `"<<con->name<<"` not in scope.");
+        }
+        else
+        {
+            try
+            {
+                auto S = m.lookup_symbol(con->name);
+                if (S->symbol_type != symbol_type_t::constructor)
+                    error(Rec.head.loc, Note()<<"Id '"<<con->name<<"' is not a constructor in record construction.");
+
+                auto Con = *con;
+                Con.name = S->name;
+                Con.arity = S->arity;
+
+                auto layout = record_constructor_layouts.find(S->name);
+                if (layout == record_constructor_layouts.end())
+                    layout = record_constructor_layouts.find(get_unqualified_name(S->name));
+
+                if (layout == record_constructor_layouts.end())
+                    error(Rec.head.loc, Note()<<"Constructor '"<<con->name<<"' is not a record constructor.");
+                else
+                {
+                    vector<optional<Hs::LExp>> fields(layout->second.arity);
+                    set<int> used_fields;
+
+                    if (unloc(Rec.fbinds).dotdot)
+                        error(Rec.fbinds.loc, Note()<<"Record wildcards in construction are not supported yet.");
+
+                    for(auto& field: unloc(Rec.fbinds))
+                    {
+                        auto field_name = unloc(unloc(field).field).name;
+                        auto pos = layout->second.fields.find(field_name);
+                        if (pos == layout->second.fields.end())
+                            pos = layout->second.fields.find(get_unqualified_name(field_name));
+
+                        if (pos == layout->second.fields.end())
+                            error(field.loc, Note()<<"Constructor '"<<con->name<<"' does not have field '"<<field_name<<"'.");
+                        else if (used_fields.count(pos->second))
+                            error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record construction.");
+                        else
+                        {
+                            used_fields.insert(pos->second);
+                            auto value = unloc(field).value ? *unloc(field).value : record_field_pun_exp(unloc(field).field);
+                            fields[pos->second] = rename(value, bound, free_vars);
+                        }
+                    }
+
+                    Hs::LExp head = {Rec.head.loc, Con};
+                    vector<Hs::LExp> args;
+                    for(int i=0; i<fields.size(); i++)
+                    {
+                        if (fields[i])
+                            args.push_back(*fields[i]);
+                        else
+                            error(loc, Note()<<"Missing field "<<i+1<<" in record construction for constructor '"<<con->name<<"'.");
+                    }
+
+                    E = unloc(Hs::apply(head, args));
+                }
+            }
+            catch (myexception& e)
+            {
+                error(loc, Note()<<e.what());
+            }
+        }
     }
     else if (auto c = E.to<Hs::CaseExp>())
     {
