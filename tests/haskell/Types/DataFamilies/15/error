@@ -1,1 +1,7 @@
-     apart from previous instance 'data instance Main.F Main.G a = Main.FG'
+[1mMain.hs:8.15:[1;31m error:[0m[1m
+   • Data family instance 'F Int' is not surely apart from previous instance
+     'F (G a)'
+  [1;34m|[0m
+[1;34m8[0m [1;34m| [0mdata instance [1;31mF[0m Int = FI
+  [1;34m|[0m               [1;31m^[0m
+

@@ -320,15 +320,15 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
     if (not check_family_instance_association(data_inst.con, data_fam_info->associated_class, associated_class, "data instance", "data family", false, false))
         return {types, {}};
 
-    auto note = note_scope( Note()<<"In data family instance '"<<data_inst.print()<<"':" );
-
     auto hs_result_type = Hs::type_apply(data_inst.con, data_inst.args);
     auto outer_tvs = data_inst.forall ? *data_inst.forall : free_type_variables(data_inst.args);
-    if (not data_inst.rhs.context.empty())
-        record_error(range(data_inst.rhs.context), Note()<<"Data family instance contexts are not supported; put constraints on individual constructors instead");
 
     int head_errors = num_errors();
     auto instance_head = check_family_instance_head(data_inst.con, data_inst.args, data_inst.forall, data_inst.rhs.context);
+    auto note = note_scope( Note()<<"In data family instance '"<<show_type_plain(instance_head.type)<<"':" );
+
+    if (not data_inst.rhs.context.empty())
+        record_error(range(data_inst.rhs.context), Note()<<"Data family instance contexts are not supported; put constraints on individual constructors instead");
 
     auto [result_head, result_args] = decompose_type_apps(instance_head.type);
     auto result_con = result_head.to<TypeCon>();
@@ -369,7 +369,7 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
 
 void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
-    vector<pair<Type,std::string>> data_family_instance_heads;
+    vector<Type> data_family_instance_heads;
 
     auto instance_class_name = [](const Hs::InstanceDecl& instance_decl) -> std::optional<std::string>
     {
@@ -388,16 +388,22 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 
         if (head)
         {
-            for(auto& [previous_head, previous_instance]: data_family_instance_heads)
+            for(auto& previous_head: data_family_instance_heads)
             {
                 auto instance_apartness = apartness(*head, previous_head);
                 if (instance_apartness == Apartness::Unifiable)
-                    record_error(data_inst.con.loc, Note()<<"Data family instance '"<<data_inst.print()<<"' overlaps previous instance '"<<previous_instance<<"'");
+                {
+                    TidyState tidy_state;
+                    record_error(data_inst.con.loc, Note()<<"Data family instance '"<<show_type_plain(tidy_state, *head)<<"' overlaps previous instance '"<<show_type_plain(tidy_state, previous_head)<<"'");
+                }
                 else if (instance_apartness == Apartness::MaybeApart)
-                    record_error(data_inst.con.loc, Note()<<"Data family instance '"<<data_inst.print()<<"' is not surely apart from previous instance '"<<previous_instance<<"'");
+                {
+                    TidyState tidy_state;
+                    record_error(data_inst.con.loc, Note()<<"Data family instance '"<<show_type_plain(tidy_state, *head)<<"' is not surely apart from previous instance '"<<show_type_plain(tidy_state, previous_head)<<"'");
+                }
             }
 
-            data_family_instance_heads.push_back({*head, data_inst.print()});
+            data_family_instance_heads.push_back(*head);
         }
 
         return new_con_infos;

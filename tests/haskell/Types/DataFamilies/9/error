@@ -1,8 +1,7 @@
 [1mMain.hs:9.25-36:[1;31m error:[0m[1m
    • Data family instance contexts are not supported; put constraints on
      individual constructors instead
-   • In data family instance 'data instance forall a. Main.Renderable a =>
-     Main.Component Main.Web = Main.MkComponent a':
+   • In data family instance 'Component Web':
   [1;34m|[0m
 [1;34m9[0m [1;34m| [0mdata instance forall a. [1;31mRenderable a[0m => Component Web = MkComponent a
   [1;34m|[0m                         [1;31m^^^^^^^^^^^^[0m
