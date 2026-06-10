@@ -262,6 +262,7 @@
 %type <Located<expression_ref>> cl_decl
 %type <Located<expression_ref>> ty_decl
 %type <Located<expression_ref>> inst_decl
+%type <Located<expression_ref>> stand_alone_deriving
 
 %type <Located<expression_ref>> standalone_kind_sig
 
@@ -665,7 +666,7 @@ topdecl: cl_decl                               {$$ = $1;}
 |        ty_decl                               {$$ = $1;}
 |        standalone_kind_sig                   {$$ = $1;}
 |        inst_decl                             {$$ = $1;}
-/*|        stand_alone_deriving */
+|        stand_alone_deriving                  {$$ = $1;}
 /*|        role_annot */
 |        "default" opt_class "(" comma_types0 ")"        {$$ = {@$,Hs::DefaultDecl($2,$4)}; }
 |        "foreign" "import" call_conv STRING var "::" sigtypedoc  {$$ = {@$,Hs::ForeignDecl($3, $4, {@5,$5}, $7)};}
@@ -726,12 +727,12 @@ deriv_strategy_no_via: "stock"      {$$ = Hs::DerivingStrategy::stock;}
 
 deriv_strategy_via: "via" type      {$$ = $2;}
 
-/*
-deriv_standalone_strategy: "stock"
-|                          "anyclass"
-|                          "newtype"
-|                          %empty
-*/
+stand_alone_deriving: "deriving" "instance" inst_type
+                             {$$ = {@$, Hs::StandaloneDerivingDecl({}, $3)};}
+|                     "deriving" deriv_strategy_no_via "instance" inst_type
+                             {$$ = {@$, Hs::StandaloneDerivingDecl($2, $4)};}
+|                     "deriving" deriv_strategy_via "instance" inst_type
+                             {$$ = {@$, Hs::StandaloneDerivingDecl(Hs::DerivingStrategy::via, $4, $2)};}
 
 /* Injective type families */
 

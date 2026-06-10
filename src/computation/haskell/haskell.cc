@@ -701,6 +701,17 @@ string InstanceDecl::print() const
     return result;
 }
 
+string StandaloneDerivingDecl::print() const
+{
+    string result = "deriving ";
+    if (strategy and *strategy != DerivingStrategy::via)
+        result += convertToString(*strategy) + " ";
+    else if (strategy and *strategy == DerivingStrategy::via and via_type)
+        result += "via " + via_type->print() + " ";
+    result += "instance " + polytype.print();
+    return result;
+}
+
 std::ostream& operator<<(std::ostream& o, DataOrNewtype d)
 {
     if (d == DataOrNewtype::data)
@@ -1100,7 +1111,7 @@ ModuleDecls::ModuleDecls(const Decls& topdecls)
         }
 	else if (auto b = decl.to<ForeignDecl>())
             foreign_decls.push_back(*b);
-        else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>())
+        else if (decl.is_a<ClassDecl>() or decl.is_a<TypeSynonymDecl>() or decl.is_a<DataOrNewtypeDecl>() or decl.is_a<InstanceDecl>() or decl.is_a<StandaloneDerivingDecl>())
             type_decls.push_back(ldecl);
         else if (decl.is_a<FamilyDecl>() or decl.is_a<TypeFamilyInstanceDecl>() or decl.is_a<DataFamilyInstanceDecl>())
             type_decls.push_back(ldecl);

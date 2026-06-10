@@ -459,6 +459,14 @@ Haskell::InstanceDecl renamer_state::rename(Haskell::InstanceDecl I)
     return I;
 }
 
+Haskell::StandaloneDerivingDecl renamer_state::rename(Haskell::StandaloneDerivingDecl D)
+{
+    D.polytype = rename_and_quantify_type(D.polytype);
+    if (D.via_type)
+        D.via_type = rename_type(*D.via_type);
+    return D;
+}
+
 Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 {
     qualify_name(unloc(C.con).name);
@@ -610,6 +618,8 @@ Haskell::Decls renamer_state::rename_type_decls(Haskell::Decls decls)
             decl = rename(*D);
         else if (auto I = decl.to<Hs::InstanceDecl>())
             decl = rename(*I);
+        else if (auto D = decl.to<Hs::StandaloneDerivingDecl>())
+            decl = rename(*D);
         else if (auto T = decl.to<Hs::TypeSynonymDecl>())
             decl = rename(*T);
         else if (auto TF = decl.to<Hs::FamilyDecl>())

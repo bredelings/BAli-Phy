@@ -127,6 +127,14 @@ set<string> free_type_cons(const Hs::InstanceDecl& instance_decl)
     return free_type_cons(instance_decl.polytype);;
 }
 
+set<string> free_type_cons(const Hs::StandaloneDerivingDecl& deriving_decl)
+{
+    auto tcons = free_type_cons(deriving_decl.polytype);
+    if (deriving_decl.via_type)
+        add(tcons, free_type_cons(*deriving_decl.via_type));
+    return tcons;
+}
+
 vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
 {
     // 1. Collection type and instance declarations
@@ -165,6 +173,10 @@ vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
         {
             auto& instance_decl = decl.as_<Hs::InstanceDecl>();
             instance_decls.push_back({instance_decl, free_type_cons(instance_decl)});
+        }
+        else if (decl.is_a<Hs::StandaloneDerivingDecl>())
+        {
+            // Standalone deriving does not define a type constructor in this group graph.
         }
         else if (decl.is_a<Hs::FamilyDecl>() or decl.is_a<Hs::TypeFamilyInstanceDecl>() or decl.is_a<Hs::DataFamilyInstanceDecl>())
         {

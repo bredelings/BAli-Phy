@@ -793,6 +793,22 @@ struct InstanceDecl: public Object
         {}
 };
 
+struct StandaloneDerivingDecl: public Object
+{
+    std::optional<DerivingStrategy> strategy;
+    LType polytype;
+    std::optional<LType> via_type;
+
+    StandaloneDerivingDecl* clone() const { return new StandaloneDerivingDecl(*this);}
+    std::string print() const;
+
+    StandaloneDerivingDecl(const std::optional<DerivingStrategy>& s, const LType& t, const std::optional<LType>& v = {})
+        :strategy(s),
+         polytype(t),
+         via_type(v)
+        {}
+};
+
 struct DefaultDecl: public Object
 {
     std::optional<Located<std::string>> maybe_class;
