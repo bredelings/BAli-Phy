@@ -114,10 +114,6 @@ Located<OpInfo> get_op_sym(const renamer_state& Rn, const Located<expression_ref
     return {O.loc, Rn.get_operator(name)};
 }
 
-// FIXME: "h:t!!0 = h" gives an error that says that the arity of ":" is wrong.
-// We get ":" "h" "!!" "t" 0 as a pattern...
-//   This seems to be a result of the hack in unapply
-
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
 Located<expression_ref> infix_parse(const OpLookup& get_op, const Located<OpInfo>& loc_op1, const Located<expression_ref>& E1, deque<Located<expression_ref>>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg)
 {

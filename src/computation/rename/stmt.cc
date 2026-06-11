@@ -49,10 +49,14 @@ bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_v
     }
     // 2. Construct the tuple and tuple pattern
     vector<Hs::LExp> vars;
+    Hs::LPats var_patterns;
     for(auto& var_name: rec_bound)
+    {
         vars.push_back({noloc,Hs::Var(var_name)});
+        var_patterns.push_back({noloc,Hs::VarPattern({noloc,Hs::Var(var_name)})});
+    }
     auto rec_tuple = Hs::tuple(vars);
-    auto rec_tuple_pattern = unapply({noloc,rec_tuple}); // This makes the tuple expression into a pattern
+    Hs::LPat rec_tuple_pattern = {noloc, Hs::tuple_pattern(var_patterns)};
 
     // 3. Construct the do stmt
     auto rec_return_stmt = Hs::apply({noloc,rec_return}, {{noloc,rec_tuple}});

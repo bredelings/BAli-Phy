@@ -16,7 +16,6 @@
 class Module;
 struct renamer_state;
 
-Hs::LPat unapply(Hs::LExp E);
 Hs::LPat parsed_expression_to_pattern(Hs::LExp E);
 
 typedef std::set<std::string> bound_var_info;
