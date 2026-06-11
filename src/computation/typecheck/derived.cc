@@ -228,6 +228,22 @@ namespace
         return type_var_type(hs_tv);
     }
 
+    optional<Hs::LType> semantic_type_to_hs_type(const Type& type);
+
+    // Convert semantic constraints back into parsed constraint syntax for synthetic instances.
+    optional<Hs::Context> semantic_context_to_hs_context(const Context& context)
+    {
+        Hs::Context hs_context;
+        for(auto& pred: context)
+        {
+            auto hs_pred = semantic_type_to_hs_type(pred);
+            if (not hs_pred)
+                return {};
+            hs_context.push_back(*hs_pred);
+        }
+        return hs_context;
+    }
+
     // Convert semantic type variables back into parsed type-variable binders for synthetic instances.
     vector<Hs::LTypeVar> hs_type_vars(const vector<TypeVar>& tvs, int n)
     {
@@ -252,20 +268,6 @@ namespace
         return Hs::type_apply({noloc,Hs::TypeCon(class_name)}, args);
     }
 
-    bool is_type_var(const Hs::LType& type, const Hs::LTypeVar& tv)
-    {
-        auto type_var = unloc(type).to<Hs::TypeVar>();
-        return type_var and *type_var == unloc(tv);
-    }
-
-    vector<Hs::LType> type_var_types(const vector<Hs::LTypeVar>& tvs, int n)
-    {
-        vector<Hs::LType> types;
-        for(int i=0; i<n; i++)
-            types.push_back(type_var_type(tvs[i]));
-        return types;
-    }
-
     // Convert semantic type variables back into parsed type arguments for synthetic instances.
     vector<Hs::LType> type_var_types(const vector<TypeVar>& tvs, int n)
     {
@@ -286,6 +288,62 @@ namespace
     Hs::Context source_context_for_target(const DerivingTarget& target)
     {
         return target.source_decl ? target.source_decl->context : Hs::Context{};
+    }
+
+    // Convert the subset of semantic types used in generated deriving code to parsed syntax.
+    optional<Hs::LType> semantic_type_to_hs_type(const Type& type)
+    {
+        auto type1 = follow_meta_type_var(type);
+        if (auto tv = type1.to<TypeVar>())
+            return type_var_type(*tv);
+        else if (auto tc = type1.to<TypeCon>())
+        {
+            Hs::TypeCon hs_tc(tc->name);
+            hs_tc.kind = tc->kind;
+            return Hs::LType{noloc, hs_tc};
+        }
+        else if (type1.is_a<TypeApp>())
+        {
+            auto [head, args] = decompose_type_apps(type1);
+            auto hs_head = semantic_type_to_hs_type(head);
+            if (not hs_head)
+                return {};
+
+            vector<Hs::LType> hs_args;
+            for(auto& arg: args)
+            {
+                auto hs_arg = semantic_type_to_hs_type(arg);
+                if (not hs_arg)
+                    return {};
+                hs_args.push_back(*hs_arg);
+            }
+
+            return Hs::type_apply(*hs_head, hs_args);
+        }
+        else if (auto forall_type = type1.to<ForallType>())
+        {
+            auto hs_body = semantic_type_to_hs_type(forall_type->type);
+            if (not hs_body)
+                return {};
+            return Hs::add_forall_vars(hs_type_vars(forall_type->type_var_binders, forall_type->type_var_binders.size()), *hs_body);
+        }
+        else if (auto constrained_type = type1.to<ConstrainedType>())
+        {
+            auto hs_context = semantic_context_to_hs_context(constrained_type->context);
+            auto hs_body = semantic_type_to_hs_type(constrained_type->type);
+            if (not hs_context or not hs_body)
+                return {};
+            return Hs::LType{noloc, Hs::ConstrainedType(*hs_context, *hs_body)};
+        }
+
+        return {};
+    }
+
+    // Convert the stored data/newtype context for generated instance heads.
+    optional<Hs::Context> semantic_data_context(const DerivingDataInfo& data_info)
+    {
+        assert(data_info.data.info);
+        return semantic_context_to_hs_context(data_info.data.info->context);
     }
 
     Hs::LExp local_var_exp(const string& name)
@@ -1079,55 +1137,65 @@ namespace
         return GeneralizedNewtypeDerivingClass{class_info, args};
     }
 
-    // Return the single representation field type for regular one-field newtypes.
-    optional<Hs::LType> newtype_representation_type(const Hs::DataOrNewtypeDecl& data_decl)
+    // Return the single semantic representation field type for one-constructor newtypes.
+    optional<Type> newtype_representation_type(TypeChecker& tc, const DerivingDataInfo& data_info)
     {
-        if (data_decl.data_or_newtype != Hs::DataOrNewtype::newtype
-            or not data_decl.is_regular_decl()
-            or data_decl.get_constructors().size() != 1
-            or data_decl.get_constructors()[0].arity() != 1)
+        if (not data_info.data.info
+            or data_info.data.info->data_or_newtype != Hs::DataOrNewtype::newtype
+            or deriving_constructors(data_info).size() != 1)
             return {};
 
-        return data_decl.get_constructors()[0].get_field_types()[0];
+        auto con_info = deriving_constructor_info(tc, deriving_constructors(data_info)[0]);
+        if (not con_info or con_info->field_types.size() != 1)
+            return {};
+
+        return con_info->field_types[0];
     }
 
     // Drop trailing data variables from the representation type when they match exactly.
-    optional<Hs::LType> drop_eta_args(const Hs::LType& rep_type, const vector<Hs::LTypeVar>& data_tvs, int eta_arity)
+    optional<Type> drop_eta_args(Type rep_type, const vector<TypeVar>& data_tvs, int eta_arity)
     {
         if (eta_arity == 0)
             return rep_type;
 
-        auto [rep_head, rep_args] = Hs::decompose_type_apps(rep_type);
+        auto [rep_head, rep_args] = decompose_type_apps(rep_type);
         if (data_tvs.size() < eta_arity or rep_args.size() < eta_arity)
             return {};
 
         int first_dropped_data_tv = data_tvs.size() - eta_arity;
         int first_dropped_rep_arg = rep_args.size() - eta_arity;
         for(int i=0; i<eta_arity; i++)
-            if (not is_type_var(rep_args[first_dropped_rep_arg + i], data_tvs[first_dropped_data_tv + i]))
+        {
+            auto rep_tv = follow_meta_type_var(rep_args[first_dropped_rep_arg + i]).to<TypeVar>();
+            if (not rep_tv or *rep_tv != data_tvs[first_dropped_data_tv + i])
                 return {};
+        }
 
         rep_args.resize(first_dropped_rep_arg);
-        return Hs::type_apply(rep_head, rep_args);
+        return type_apply(rep_head, rep_args);
     }
 
     // Build the synthetic instance head C fixed... (T prefix...) with a C fixed... rep-prefix context.
-    Hs::LType generalized_newtype_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name, const vector<Hs::LType>& fixed_args, const Hs::LType& rep_type, int eta_arity)
+    optional<Hs::LType> generalized_newtype_instance_type(const DerivingDataInfo& data_info, const string& class_name, const vector<Hs::LType>& fixed_args, const Type& rep_type, int eta_arity, const optional<yy::location>& loc)
     {
-        int prefix_arity = data_decl.type_vars.size() - eta_arity;
-        auto data_args = type_var_types(data_decl.type_vars, prefix_arity);
+        assert(data_info.data.info);
+        int prefix_arity = data_info.data.info->type_vars.size() - eta_arity;
 
-        Hs::Context context = data_decl.context;
+        auto hs_rep_type = semantic_type_to_hs_type(rep_type);
+        auto context = semantic_data_context(data_info);
+        if (not hs_rep_type or not context)
+            return {};
+
         auto rep_constraint_args = fixed_args;
-        rep_constraint_args.push_back(rep_type);
-        context.push_back(class_constraint(class_name, rep_constraint_args));
+        rep_constraint_args.push_back(*hs_rep_type);
+        context->push_back(class_constraint(class_name, rep_constraint_args));
 
-        auto data_type = type_con_type(data_decl.con, data_args);
+        auto data_type = derived_data_type(data_info, prefix_arity);
         auto instance_args = fixed_args;
         instance_args.push_back(data_type);
         auto instance_head = class_constraint(class_name, instance_args);
-        Hs::LType polytype = Hs::LType{data_decl.con.loc, Hs::ConstrainedType(context, instance_head)};
-        vector<Hs::LTypeVar> quantified_tvs(data_decl.type_vars.begin(), data_decl.type_vars.begin() + prefix_arity);
+        Hs::LType polytype = Hs::LType{loc, Hs::ConstrainedType(*context, instance_head)};
+        auto quantified_tvs = hs_type_vars(data_info.data.info->type_vars, prefix_arity);
         return Hs::add_forall_vars(quantified_tvs, polytype);
     }
 
@@ -1198,7 +1266,7 @@ namespace
     }
 
     // Synthesize associated type equations replacing the derived type argument with another type.
-    vector<Hs::TypeFamilyInstanceDecl> associated_type_instances_for_replacement(TypeChecker& tc, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Hs::LType& data_type, const Hs::LType& rep_type)
+    vector<Hs::TypeFamilyInstanceDecl> associated_type_instances_for_replacement(TypeChecker& tc, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Hs::LType& data_type, const Hs::LType& rep_type, const optional<yy::location>& loc)
     {
         vector<Hs::TypeFamilyInstanceDecl> type_instances;
         for(auto& [tf_con, maybe_default]: class_info.associated_type_families)
@@ -1226,8 +1294,9 @@ namespace
                 }
             }
 
-            Hs::LTypeCon hs_tf_con{noloc, Hs::TypeCon(tf_con.name)};
+            Hs::LTypeCon hs_tf_con{loc, Hs::TypeCon(tf_con.name)};
             auto rhs = Hs::type_apply(hs_tf_con, rhs_args);
+            rhs.loc = loc;
             type_instances.push_back(Hs::TypeFamilyInstanceDecl(hs_tf_con, lhs_args, rhs));
         }
 
@@ -1235,24 +1304,28 @@ namespace
     }
 
     // Synthesize associated type equations mapping the newtype argument to its representation.
-    vector<Hs::TypeFamilyInstanceDecl> generalized_newtype_associated_type_instances(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Hs::LType& rep_type, int eta_arity)
+    optional<vector<Hs::TypeFamilyInstanceDecl>> generalized_newtype_associated_type_instances(TypeChecker& tc, const DerivingDataInfo& data_info, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Type& rep_type, int eta_arity, const optional<yy::location>& loc)
     {
-        int prefix_arity = data_decl.type_vars.size() - eta_arity;
-        auto data_type = type_con_type(data_decl.con, type_var_types(data_decl.type_vars, prefix_arity));
-        return associated_type_instances_for_replacement(tc, class_info, fixed_args, data_type, rep_type);
+        assert(data_info.data.info);
+        int prefix_arity = data_info.data.info->type_vars.size() - eta_arity;
+        auto hs_rep_type = semantic_type_to_hs_type(rep_type);
+        if (not hs_rep_type)
+            return {};
+
+        auto data_type = derived_data_type(data_info, prefix_arity);
+        return associated_type_instances_for_replacement(tc, class_info, fixed_args, data_type, *hs_rep_type, loc);
     }
 
     // Synthesize associated type equations mapping the derived type argument to the via type.
-    vector<Hs::TypeFamilyInstanceDecl> deriving_via_associated_type_instances(TypeChecker& tc, const DerivingDataInfo& data_info, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Hs::LType& via_type)
+    vector<Hs::TypeFamilyInstanceDecl> deriving_via_associated_type_instances(TypeChecker& tc, const DerivingDataInfo& data_info, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Hs::LType& via_type, const optional<yy::location>& loc)
     {
         auto data_type = derived_data_type(data_info, data_info.data.info->type_vars.size());
-        return associated_type_instances_for_replacement(tc, class_info, fixed_args, data_type, via_type);
+        return associated_type_instances_for_replacement(tc, class_info, fixed_args, data_type, via_type, loc);
     }
 
     // Synthesize a GND instance header and leave method bodies for instance pass 2.
-    GeneralizedNewtypeDerivingResult derive_generalized_newtype_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::LType& deriving, bool explicit_newtype_strategy = false)
+    GeneralizedNewtypeDerivingResult derive_generalized_newtype_instance(TypeChecker& tc, const DerivingTarget& target, const Hs::LType& deriving, bool explicit_newtype_strategy = false)
     {
-        auto deriving_data = deriving_data_info_for_decl(tc, data_decl);
         auto deriving_class = resolved_deriving_class(tc.this_mod(), deriving);
         if (not deriving_class)
             return {};
@@ -1261,7 +1334,8 @@ namespace
         if (not class_info)
             return {};
 
-        bool is_newtype = deriving_data and deriving_data->data.info and deriving_data->data.info->data_or_newtype == Hs::DataOrNewtype::newtype;
+        const auto& deriving_data = target.data;
+        bool is_newtype = deriving_data.data.info and deriving_data.data.info->data_or_newtype == Hs::DataOrNewtype::newtype;
         if (not is_newtype)
         {
             if (explicit_newtype_strategy)
@@ -1284,7 +1358,7 @@ namespace
             return {true, {}};
         }
 
-        auto rep_type = newtype_representation_type(data_decl);
+        auto rep_type = newtype_representation_type(tc, deriving_data);
         if (not rep_type)
         {
             tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving is only supported for newtype declarations with one field");
@@ -1293,15 +1367,22 @@ namespace
 
         int newtype_param_index = deriving_class->fixed_args.size();
         int eta_arity = num_args_for_kind(class_info->type_vars[newtype_param_index].kind);
-        auto eta_reduced_rep_type = drop_eta_args(*rep_type, data_decl.type_vars, eta_arity);
+        auto eta_reduced_rep_type = drop_eta_args(*rep_type, deriving_data.data.info->type_vars, eta_arity);
         if (not eta_reduced_rep_type)
         {
             tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving cannot eta-reduce the representation type to match the class argument kind");
             return {true, {}};
         }
 
-        auto associated_type_instances = generalized_newtype_associated_type_instances(tc, data_decl, *class_info, deriving_class->fixed_args, *eta_reduced_rep_type, eta_arity);
-        Hs::InstanceDecl instance({}, generalized_newtype_instance_type(data_decl, class_info->name, deriving_class->fixed_args, *eta_reduced_rep_type, eta_arity), associated_type_instances, {}, {});
+        auto associated_type_instances = generalized_newtype_associated_type_instances(tc, deriving_data, *class_info, deriving_class->fixed_args, *eta_reduced_rep_type, eta_arity, deriving.loc);
+        auto instance_type = generalized_newtype_instance_type(deriving_data, class_info->name, deriving_class->fixed_args, *eta_reduced_rep_type, eta_arity, deriving.loc);
+        if (not associated_type_instances or not instance_type)
+        {
+            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving could not convert the semantic representation type into a generated instance");
+            return {true, {}};
+        }
+
+        Hs::InstanceDecl instance({}, *instance_type, *associated_type_instances, {}, {});
         instance.generalized_newtype_deriving = true;
         return {true, instance};
     }
@@ -1335,7 +1416,7 @@ namespace
             return {};
         }
 
-        auto associated_type_instances = deriving_via_associated_type_instances(tc, target.data, *class_info, deriving_class->fixed_args, *deriving.via_type);
+        auto associated_type_instances = deriving_via_associated_type_instances(tc, target.data, *class_info, deriving_class->fixed_args, *deriving.via_type, deriving.type.loc);
         Hs::InstanceDecl instance({}, deriving_via_instance_type(target, class_info->name, deriving_class->fixed_args, *deriving.via_type), associated_type_instances, {}, {});
         instance.generalized_newtype_deriving = true;
         return instance;
@@ -1467,7 +1548,7 @@ namespace
 
         if (deriving.strategy == Hs::DerivingStrategy::newtype)
         {
-            auto gnd = target.source_decl ? derive_generalized_newtype_instance(tc, *target.source_decl, deriving.type, true) : GeneralizedNewtypeDerivingResult{false, {}};
+            auto gnd = derive_generalized_newtype_instance(tc, target, deriving.type, true);
             if (gnd.instance)
                 add_derived_instance(instances, deriving.type.loc, *gnd.instance, target);
             else if (not gnd.handled)
@@ -1477,7 +1558,7 @@ namespace
 
         if (not derive_stock())
         {
-            auto gnd = target.source_decl ? derive_generalized_newtype_instance(tc, *target.source_decl, deriving.type) : GeneralizedNewtypeDerivingResult{false, {}};
+            auto gnd = derive_generalized_newtype_instance(tc, target, deriving.type);
             if (gnd.instance)
                 add_derived_instance(instances, deriving.type.loc, *gnd.instance, target);
             else if (not gnd.handled)
