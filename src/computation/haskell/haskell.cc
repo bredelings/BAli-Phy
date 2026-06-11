@@ -36,27 +36,6 @@ std::tuple<LExp, vector<LExp>> decompose_apps(const LExp& E)
         return {E,{}};
 }
 
-vector<LExp> flatten(const LExp& E)
-{
-    if (auto app = unloc(E).to<ApplyExp>())
-    {
-        auto terms = flatten(app->head);
-        terms.push_back(app->arg);
-        return terms;
-    }
-    else if (auto app = unloc(E).to<ParsedApp>())
-    {
-        if (app->terms.empty())
-            return {};
-        auto terms = flatten(app->terms[0]);
-        for(auto term = app->terms.begin() + 1; term != app->terms.end(); ++term)
-            terms.push_back(*term);
-        return terms;
-    }
-    else
-        return {E};
-}
-
 LExp apply(const std::vector<LExp>& terms)
 {
     auto exp = terms[0];
