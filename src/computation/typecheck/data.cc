@@ -8,9 +8,64 @@ using std::set;
 using std::pair;
 using std::map;
 using std::string;
+using std::optional;
 
 namespace
 {
+    // Flatten grouped record labels into constructor field order.
+    vector<string> field_decl_names(const Hs::FieldDecls& field_decls)
+    {
+        vector<string> names;
+        for(const auto& field_decl: field_decls.field_decls)
+            for(const auto& field_name: field_decl.field_names)
+                names.push_back(unloc(field_name).name);
+        return names;
+    }
+
+    // Expand grouped record field types to one type per field label.
+    vector<Hs::LType> field_decl_types(const Hs::FieldDecls& field_decls)
+    {
+        vector<Hs::LType> types;
+        for(const auto& field_decl: field_decls.field_decls)
+            for(int i=0; i<field_decl.field_names.size(); i++)
+                types.push_back(field_decl.type);
+        return types;
+    }
+
+    // Return ordered field labels for regular record constructors.
+    optional<vector<string>> constructor_field_names(const Hs::ConstructorDecl& constructor)
+    {
+        if (not constructor.is_record_constructor())
+            return {};
+
+        return field_decl_names(std::get<1>(constructor.fields));
+    }
+
+    // Extract labels from GADT record signatures like C :: { x :: A, y :: B } -> T.
+    optional<vector<string>> gadt_constructor_field_names(Hs::LType type)
+    {
+        auto [tvs, context, rho_type] = Hs::peel_top_gen(type);
+
+        optional<vector<string>> names;
+        while(auto function_type = Hs::is_function_type(rho_type))
+        {
+            auto arg_type = function_type->first;
+            if (auto field_decls = unloc(arg_type).to<Hs::FieldDecls>())
+            {
+                if (not names)
+                    names = vector<string>{};
+                auto arg_names = field_decl_names(*field_decls);
+                names->insert(names->end(), arg_names.begin(), arg_names.end());
+            }
+            else if (names)
+                return {};
+
+            rho_type = function_type->second;
+        }
+
+        return names;
+    }
+
     string role_name(Role role)
     {
         if (role == Role::Nominal) return "nominal";
@@ -20,7 +75,7 @@ namespace
 
     Hs::LType gadt_constructor_result_type(Hs::LType type)
     {
-        auto [stripped_type, _] = pop_constructor_signature_strictness(type);
+        auto [stripped_type, _] = pop_constructor_signature_strictness(expand_constructor_record_fields(type));
         auto [tvs, context, rho_type] = Hs::peel_top_gen(stripped_type);
 
         while(auto function_type = Hs::is_function_type(rho_type))
@@ -31,7 +86,7 @@ namespace
 
     std::pair<vector<Hs::LType>, Hs::LType> gadt_constructor_arg_result_types(Hs::LType type)
     {
-        auto [stripped_type, _] = pop_constructor_signature_strictness(type);
+        auto [stripped_type, _] = pop_constructor_signature_strictness(expand_constructor_record_fields(type));
         auto [tvs, context, rho_type] = Hs::peel_top_gen(stripped_type);
 
         vector<Hs::LType> args;
@@ -98,6 +153,29 @@ namespace
         return range(context);
     }
 
+}
+
+// Lower GADT record-field syntax into ordinary function arguments for checking.
+Hs::LType expand_constructor_record_fields(Hs::LType ltype)
+{
+    auto& [loc, type] = ltype;
+
+    if (auto forall_type = type.to<Hs::ForallType>())
+        return {loc, Hs::ForallType(forall_type->type_var_binders, expand_constructor_record_fields(forall_type->type))};
+
+    if (auto constrained_type = type.to<Hs::ConstrainedType>())
+        return {loc, Hs::ConstrainedType(constrained_type->context, expand_constructor_record_fields(constrained_type->type))};
+
+    if (auto function_type = Hs::is_function_type(ltype))
+    {
+        auto [arg_type, result_type] = *function_type;
+        auto expanded_result_type = expand_constructor_record_fields(result_type);
+        if (auto field_decls = unloc(arg_type).to<Hs::FieldDecls>())
+            return Hs::function_type(field_decl_types(*field_decls), expanded_result_type);
+        return Hs::make_arrow_type(arg_type, expanded_result_type);
+    }
+
+    return ltype;
 }
 
 std::pair<Hs::LType,bool> pop_strictness(Hs::LType ltype)
@@ -178,6 +256,7 @@ DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, con
     assert(is_kind_type(k));
 
     // 3. Record strictness marks
+    info.field_names = constructor_field_names(constructor);
     auto hs_field_types = constructor.get_field_types();
     for(auto& sfield_type: hs_field_types)
     {
@@ -200,6 +279,7 @@ DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, con
     info.field_types = field_types;
 
     assert(info.field_strictness.size() == info.field_types.size());
+    assert(not info.field_names or info.field_names->size() == info.field_types.size());
 
     K.pop_type_var_scope();
     return info;
@@ -296,11 +376,13 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
 
     // e. Handle regular constructor terms (class variables ARE in scope)
     DataConEnv types;
+    vector<string> constructors;
     if (data_decl.is_regular_decl())
     {
         for(auto& constructor: data_decl.get_constructors())
         {
             auto con_name = unloc(*constructor.con).name;
+            constructors.push_back(con_name);
             DataConInfo info = infer_type_for_constructor(data_decl.con, data_decl.type_vars, constructor);
             info.top_constraints = data_context;
             info.is_newtype_constructor = data_decl.data_or_newtype == Hs::DataOrNewtype::newtype;
@@ -316,7 +398,8 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             DataConInfo info;
 
             // 1. Kind-check and add foralls for free type vars.
-            auto [hs_constructor_type, field_strictness] = pop_constructor_signature_strictness(data_cons_decl.type);
+            info.field_names = gadt_constructor_field_names(data_cons_decl.type);
+            auto [hs_constructor_type, field_strictness] = pop_constructor_signature_strictness(expand_constructor_record_fields(data_cons_decl.type));
             auto written_type = check_type( hs_constructor_type );
 
             // 2. Extract tyvar, givens, and rho type.
@@ -382,6 +465,7 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             info.field_types = field_types;
             info.field_strictness = field_strictness;
             assert(info.field_strictness.size() == info.field_types.size());
+            assert(not info.field_names or info.field_names->size() == info.field_types.size());
             info.data_type = data_type_con;
             info.written_constraints = constraints;
             info.top_constraints = data_context;
@@ -390,12 +474,26 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             info.is_newtype_constructor = data_decl.data_or_newtype == Hs::DataOrNewtype::newtype;
             
             for(auto& con_name: data_cons_decl.con_names)
+            {
+                constructors.push_back(unloc(con_name));
                 types = types.insert({unloc(con_name), info});
+            }
         }
     }
 
     if (auto T = this_mod().lookup_local_type(data_type_con.name))
+    {
         T->roles = infer_roles_for_data_type(data_tvs, types);
+        if (auto data_info = T->is_data())
+        {
+            auto info = std::make_shared<DataInfo>();
+            info->name = data_type_con.name;
+            info->type_vars = data_tvs;
+            info->context = data_context;
+            info->constructors = constructors;
+            data_info->info = info;
+        }
+    }
 
     return types;
 }
@@ -458,6 +556,7 @@ DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType&
 {
     DataConInfo info;
 
+    info.field_names = constructor_field_names(constructor);
     auto hs_field_types = constructor.get_field_types();
     for(auto& sfield_type: hs_field_types)
     {
@@ -498,6 +597,7 @@ DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType&
     info.constructor_result_type = result_type;
 
     assert(info.field_strictness.size() == info.field_types.size());
+    assert(not info.field_names or info.field_names->size() == info.field_types.size());
 
     return info;
 }
@@ -506,7 +606,8 @@ DataConInfo TypeChecker::infer_type_for_gadt_data_family_constructor(const Type&
 {
     DataConInfo info;
 
-    auto [hs_constructor_type, field_strictness] = pop_constructor_signature_strictness(constructor.type);
+    info.field_names = gadt_constructor_field_names(constructor.type);
+    auto [hs_constructor_type, field_strictness] = pop_constructor_signature_strictness(expand_constructor_record_fields(constructor.type));
     auto written_type = check_type(hs_constructor_type);
 
     auto [written_tvs, written_constraints, rho_type] = peel_top_gen(written_type);
@@ -560,6 +661,7 @@ DataConInfo TypeChecker::infer_type_for_gadt_data_family_constructor(const Type&
     info.constructor_result_type = result_type;
 
     assert(info.field_strictness.size() == info.field_types.size());
+    assert(not info.field_names or info.field_names->size() == info.field_types.size());
 
     return info;
 }

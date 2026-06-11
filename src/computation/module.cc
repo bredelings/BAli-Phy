@@ -1983,10 +1983,10 @@ const_type_ptr lookup_builtin_type(const std::string& name)
         return const_type_ptr(new type_info{"Integer", type_info::data_info(), {}, 0, kind_type()});
     else if (name == "()")
     {
-        return const_type_ptr(new type_info{"()", type_info::data_info{{"()"},{}}, {}, 0, kind_type()});
+        return const_type_ptr(new type_info{"()", type_info::data_info{{"()"}, {}, nullptr}, {}, 0, kind_type()});
     }
     else if (name == "[]")
-        return with_roles(type_info{"[]", type_info::data_info{{"[]",":"},{}}, {}, 1, make_n_args_kind(1)}, {Role::Representational});
+        return with_roles(type_info{"[]", type_info::data_info{{"[]",":"}, {}, nullptr}, {}, 1, make_n_args_kind(1)}, {Role::Representational});
     else if (name == "->")
     {
         return with_roles(type_info{"->", {}, {{right_fix,0}}, 2, make_n_args_kind(2)}, {Role::Representational, Role::Representational});
@@ -2000,7 +2000,7 @@ const_type_ptr lookup_builtin_type(const std::string& name)
     {
         int n = tuple_arity(name);
 
-        return with_roles(type_info{name, type_info::data_info{{name},{}},{}, n, make_n_args_kind(n)}, vector<Role>(n, Role::Representational));
+        return with_roles(type_info{name, type_info::data_info{{name}, {}, nullptr},{}, n, make_n_args_kind(n)}, vector<Role>(n, Role::Representational));
     }
     throw myexception()<<"Symbol 'name' is not a builtin (type) symbol.";
 }

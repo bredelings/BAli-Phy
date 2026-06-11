@@ -442,10 +442,9 @@ void kindchecker_state::kind_check_data_type(Hs::DataOrNewtypeDecl& data_decl)
         // We should ensure that these types follow: forall univ_tvs. stupid_theta => forall ex_tvs. written_type
         for(auto& data_cons_decl: data_decl.get_gadt_constructors())
         {
-            // FIXME! Handle record fields: Con :: { field1, field2 :: Int } -> T Int
             // OK: Con :: T Int
             // OK: Con :: a -> b -> T Int
-            auto [constructor_type, _] = pop_constructor_signature_strictness(data_cons_decl.type);
+            auto [constructor_type, _] = pop_constructor_signature_strictness(expand_constructor_record_fields(data_cons_decl.type));
             kind_and_type_check_type(constructor_type);
         }
     }

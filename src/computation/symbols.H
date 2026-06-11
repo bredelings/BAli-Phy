@@ -93,6 +93,7 @@ private:
 };
 
 struct ClassInfo;
+struct DataInfo;
 struct TypeSynonymInfo;
 struct TypeFamInfo;
 struct DataFamInfo;
@@ -112,8 +113,9 @@ struct type_info
     {
         std::vector<std::string> constructors;
         std::set<std::string> fields;
+        std::shared_ptr<DataInfo> info;
 
-	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields);}
+	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields, info);}
     };
     struct type_syn_info
     {
@@ -136,6 +138,7 @@ struct type_info
 
     bool is_type_other() const; // "->", but now also "~"
     const data_info* is_data() const;
+          data_info* is_data();
     const class_info* is_class() const;
           class_info* is_class();
     const type_syn_info* is_type_syn() const;

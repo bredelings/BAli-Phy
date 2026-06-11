@@ -1,6 +1,8 @@
 #ifndef DATA_CON_INFO_H
 #define DATA_CON_INFO_H
 
+#include <optional>
+#include <string>
 #include <vector>
 #include "haskell/coretype.H"
 
@@ -12,6 +14,7 @@ struct DataConInfo
     std::vector<Type> written_constraints;
     std::vector<Type> gadt_eq_constraints;
     std::vector<Type> field_types;
+    std::optional<std::vector<std::string>> field_names;
     std::vector<bool> field_strictness;
     TypeCon data_type;
     std::optional<Type> constructor_result_type;
@@ -29,7 +32,7 @@ struct DataConInfo
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types, field_strictness, data_type, constructor_result_type, is_newtype_constructor);
+	ar(uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types, field_names, field_strictness, data_type, constructor_result_type, is_newtype_constructor);
     }
 };
 

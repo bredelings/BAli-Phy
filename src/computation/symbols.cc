@@ -46,6 +46,11 @@ const type_info::data_info* type_info::is_data() const
     return to<data_info>(info);
 }
 
+type_info::data_info* type_info::is_data()
+{
+    return to<data_info>(info);
+}
+
 const type_info::type_syn_info* type_info::is_type_syn() const
 {
     return to<type_syn_info>(info);
@@ -75,4 +80,3 @@ type_info::data_fam_info* type_info::is_data_fam()
 {
     return to<data_fam_info>(info);
 }
-

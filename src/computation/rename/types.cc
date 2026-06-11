@@ -107,6 +107,11 @@ void free_type_variables_(const Hs::LType& ltype, vector<Hs::LTypeVar>& tvs)
     {
         free_type_variables_(lazy_type->type, tvs);
     }
+    else if (auto field_decls = type.to<Hs::FieldDecls>())
+    {
+        for(auto& field_decl: field_decls->field_decls)
+            free_type_variables_(field_decl.type, tvs);
+    }
     else if (auto type_of_kind = type.to<Hs::TypeOfKind>())
     {
         // Extract the kind variables first.
@@ -115,7 +120,6 @@ void free_type_variables_(const Hs::LType& ltype, vector<Hs::LTypeVar>& tvs)
         // free_type_variables(type_of_kind->kind, tvs);
         free_type_variables_(type_of_kind->type, tvs);
     }
-    // FieldDecls actually this can't happen right now!
     else
         throw myexception()<<"free_type_vars: bad type "<<type.print()<<"!";
 }
@@ -262,6 +266,17 @@ Haskell::LType renamer_state::rename_type(Haskell::LType ltype)
         auto Lt = *lt;
         Lt.type = rename_type(Lt.type);
         type = Lt;
+    }
+    else if (auto fields = type.to<Hs::FieldDecls>())
+    {
+        auto Fields = *fields;
+        for(auto& field: Fields.field_decls)
+        {
+            for(auto& var: field.field_names)
+                qualify_name(unloc(var));
+            field.type = rename_type(field.type);
+        }
+        type = Fields;
     }
     else
         throw myexception()<<"rename_type: unrecognized type \""<<type.print()<<"\"";

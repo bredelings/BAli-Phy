@@ -61,6 +61,11 @@ set<string> free_type_cons(const Hs::LType& ltype)
     {
         return free_type_cons(lt->type);
     }
+    else if (auto field_decls = type.to<Hs::FieldDecls>())
+    {
+        for(auto& field_decl: field_decls->field_decls)
+            add(tcons, free_type_cons(field_decl.type));
+    }
     else
         throw myexception()<<"free_type_cons: can't handle Haskell type '"<<type.print()<<"'";
 

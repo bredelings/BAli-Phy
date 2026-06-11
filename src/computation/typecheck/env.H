@@ -107,6 +107,20 @@ typedef std::map<std::string, TypeSynonymInfo> TypeSynonymEnv;
 
 typedef immer::map<ID, DataConInfo> DataConEnv;
 
+struct DataInfo
+{
+    ID name;
+    std::vector<TypeVar> type_vars;
+    Context context;
+    std::vector<std::string> constructors;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(name, type_vars, context, constructors);
+    }
+};
+
 struct ClassInfo
 {
     ID name;

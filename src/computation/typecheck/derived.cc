@@ -14,7 +14,13 @@ using std::optional;
 
 namespace
 {
-    using StockDeriver = Hs::InstanceDecl (*)(const Hs::DataOrNewtypeDecl&, const std::optional<yy::location>&);
+    struct DerivingDataInfo
+    {
+        TypeCon type_con;
+        const type_info::data_info& data;
+    };
+
+    using StockDeriver = Hs::InstanceDecl (*)(TypeChecker&, const Hs::DataOrNewtypeDecl&, const DerivingDataInfo&, const std::optional<yy::location>&);
     using StockValidator = bool (*)(const Hs::DataOrNewtypeDecl&);
 
     struct StockDerivingSpec
@@ -49,19 +55,63 @@ namespace
         return data_decl.is_regular_decl();
     }
 
-    bool is_regular_data_decl_with_constructors(const Hs::DataOrNewtypeDecl& data_decl)
+    // Look up the semantic data metadata for a source declaration being derived.
+    optional<DerivingDataInfo> deriving_data_info_for_decl(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl)
     {
-        return data_decl.is_regular_decl() and not data_decl.get_constructors().empty();
+        auto T = tc.this_mod().lookup_resolved_type(unloc(data_decl.con).name);
+        auto data_info = T ? T->is_data() : nullptr;
+        if (not T or not data_info)
+            return {};
+
+        return DerivingDataInfo{TypeCon(T->name, T->kind), *data_info};
     }
 
-    bool has_only_nullary_constructors(const Hs::DataOrNewtypeDecl& data_decl)
+    optional<DataConInfo> deriving_constructor_info(TypeChecker& tc, const string& con_name)
     {
-        if (not data_decl.is_regular_decl() or data_decl.get_constructors().empty())
+        return tc.this_mod().constructor_info(con_name);
+    }
+
+    bool has_ordered_constructors(const DerivingDataInfo& data_info)
+    {
+        return data_info.data.info
+            ? not data_info.data.info->constructors.empty()
+            : not data_info.data.constructors.empty();
+    }
+
+    bool has_semantic_data_info(const DerivingDataInfo& data_info)
+    {
+        return bool(data_info.data.info);
+    }
+
+    const vector<string>& deriving_constructors(const DerivingDataInfo& data_info)
+    {
+        return data_info.data.info ? data_info.data.info->constructors : data_info.data.constructors;
+    }
+
+    // Check that every ordered constructor has registered constructor metadata.
+    bool has_constructor_infos(TypeChecker& tc, const DerivingDataInfo& data_info)
+    {
+        if (not has_ordered_constructors(data_info))
             return false;
 
-        for(const auto& constructor: data_decl.get_constructors())
-            if (constructor.arity() != 0)
+        for(const auto& con_name: deriving_constructors(data_info))
+            if (not deriving_constructor_info(tc, con_name))
                 return false;
+        return true;
+    }
+
+    // Check the semantic constructor list for Enum/Ix-style nullary-only deriving.
+    bool has_only_nullary_constructors(TypeChecker& tc, const DerivingDataInfo& data_info)
+    {
+        if (not has_ordered_constructors(data_info))
+            return false;
+
+        for(const auto& con_name: deriving_constructors(data_info))
+        {
+            auto con_info = deriving_constructor_info(tc, con_name);
+            if (not con_info or con_info->arity() != 0)
+                return false;
+        }
         return true;
     }
 
@@ -141,6 +191,19 @@ namespace
     Hs::LType type_var_type(const Hs::LTypeVar& tv)
     {
         return {tv.loc, Hs::TypeVar(unloc(tv))};
+    }
+
+    Hs::LTypeVar hs_type_var(const TypeVar& tv)
+    {
+        Hs::TypeVar hs_tv(tv.name, tv.kind);
+        hs_tv.index = tv.index;
+        return {noloc, hs_tv};
+    }
+
+    Hs::LType type_var_type(const TypeVar& tv)
+    {
+        auto hs_tv = hs_type_var(tv);
+        return type_var_type(hs_tv);
     }
 
     Hs::LType type_con_type(const Hs::LTypeCon& con, const vector<Hs::LType>& args)
@@ -243,6 +306,11 @@ namespace
         return con_pat(unloc(*constructor.con).name, constructor.arity(), args);
     }
 
+    Hs::LPat constructor_pattern(const string& con_name, int arity, const Hs::LPats& args)
+    {
+        return con_pat(con_name, arity, args);
+    }
+
     Hs::LPat constructor_var_pattern(const Hs::ConstructorDecl& constructor, const string& prefix)
     {
         Hs::LPats args;
@@ -252,10 +320,19 @@ namespace
         return constructor_pattern(constructor, args);
     }
 
-    Hs::LPat constructor_wildcard_pattern(const Hs::ConstructorDecl& constructor)
+    Hs::LPat constructor_var_pattern(const string& con_name, int arity, const string& prefix)
     {
-        Hs::LPats args(constructor.arity(), wildcard_pat());
-        return constructor_pattern(constructor, args);
+        Hs::LPats args;
+        for(int i=0; i<arity; i++)
+            args.push_back(var_pat(prefix + std::to_string(i)));
+
+        return constructor_pattern(con_name, arity, args);
+    }
+
+    Hs::LPat constructor_wildcard_pattern(const string& con_name, int arity)
+    {
+        Hs::LPats args(arity, wildcard_pat());
+        return constructor_pattern(con_name, arity, args);
     }
 
     Hs::MRule binary_method_rule(const Hs::LPat& x, const Hs::LPat& y, const Hs::LExp& rhs)
@@ -283,34 +360,58 @@ namespace
         return {noloc, Hs::Alt(pattern, Hs::SimpleRHS(rhs))};
     }
 
-    Hs::LType stock_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name)
+    Hs::LType stock_instance_type(const DerivingDataInfo& data_info, const string& class_name)
     {
+        assert(data_info.data.info);
+
         vector<Hs::LType> data_args;
-        Hs::Context context = data_decl.context;
-        for(auto& tv: data_decl.type_vars)
+        Hs::Context context;
+        vector<Hs::LTypeVar> type_vars;
+        for(auto& tv: data_info.data.info->type_vars)
         {
+            auto hs_tv = hs_type_var(tv);
             auto tv_type = type_var_type(tv);
+            type_vars.push_back(hs_tv);
             data_args.push_back(tv_type);
             context.push_back(class_constraint(class_name, tv_type));
         }
 
-        auto data_type = type_con_type(data_decl.con, data_args);
+        Hs::LTypeCon type_con{noloc, Hs::TypeCon(data_info.data.info->name)};
+        auto data_type = type_con_type(type_con, data_args);
         auto instance_head = class_constraint(class_name, data_type);
-        Hs::LType polytype = context.empty() ? instance_head : Hs::LType{data_decl.con.loc, Hs::ConstrainedType(context, instance_head)};
-        return Hs::add_forall_vars(data_decl.type_vars, polytype);
+        Hs::LType polytype = context.empty() ? instance_head : Hs::LType{noloc, Hs::ConstrainedType(context, instance_head)};
+        return Hs::add_forall_vars(type_vars, polytype);
     }
 
-    Hs::InstanceDecl derive_eq_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
+    Hs::LExp constructor_tag_exp(TypeChecker& tc, const DerivingDataInfo& data_info, const Hs::LExp& value)
+    {
+        Hs::Alts alts;
+        const auto& constructors = deriving_constructors(data_info);
+
+        for(int i=0; i<constructors.size(); i++)
+        {
+            auto con_info = deriving_constructor_info(tc, constructors[i]);
+            assert(con_info);
+            alts.push_back(simple_alt(constructor_wildcard_pattern(constructors[i], con_info->arity()), int_exp(i)));
+        }
+
+        return case_exp(value, alts);
+    }
+
+    Hs::InstanceDecl derive_eq_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl&, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
         Hs::Matches eq_matches;
-        for(const auto& constructor: data_decl.get_constructors())
+        for(const auto& constructor: deriving_constructors(data_info))
         {
+            auto con_info = deriving_constructor_info(tc, constructor);
+            assert(con_info);
+
             vector<pair<Hs::LExp,Hs::LExp>> fields;
-            for(int i=0; i<constructor.arity(); i++)
+            for(int i=0; i<con_info->arity(); i++)
                 fields.push_back({local_var_exp("x$" + std::to_string(i)), local_var_exp("y$" + std::to_string(i))});
 
-            eq_matches.push_back(binary_method_rule(constructor_var_pattern(constructor, "x$"),
-                                                    constructor_var_pattern(constructor, "y$"),
+            eq_matches.push_back(binary_method_rule(constructor_var_pattern(constructor, con_info->arity(), "x$"),
+                                                    constructor_var_pattern(constructor, con_info->arity(), "y$"),
                                                     eq_all_exp(fields)));
         }
 
@@ -320,7 +421,7 @@ namespace
         Hs::Decls methods;
         methods.push_back(derived_method_decl(deriving_loc, eq_method_name, eq_matches));
 
-        return Hs::InstanceDecl({}, stock_instance_type(data_decl, eq_class_name), {}, {}, methods);
+        return Hs::InstanceDecl({}, stock_instance_type(data_info, eq_class_name), {}, {}, methods);
     }
 
     Hs::LExp compare_exp(const Hs::LExp& x, const Hs::LExp& y)
@@ -363,6 +464,11 @@ namespace
         return Hs::apply({constructor.con->loc, Hs::Con(unloc(*constructor.con).name, constructor.arity())}, args);
     }
 
+    Hs::LExp constructor_exp(const string& con_name, int arity, const vector<Hs::LExp>& args)
+    {
+        return Hs::apply({noloc, Hs::Con(con_name, arity)}, args);
+    }
+
     Hs::LPat ordering_pat(const string& name)
     {
         return con_pat(name, 0, {});
@@ -384,38 +490,30 @@ namespace
         return result;
     }
 
-    Hs::LExp constructor_tag_exp(const Hs::DataOrNewtypeDecl& data_decl, const Hs::LExp& value)
-    {
-        Hs::Alts alts;
-        const auto& constructors = data_decl.get_constructors();
-
-        for(int i=0; i<constructors.size(); i++)
-            alts.push_back(simple_alt(constructor_wildcard_pattern(constructors[i]), int_exp(i)));
-
-        return case_exp(value, alts);
-    }
-
-    Hs::LExp compare_constructor_tags_exp(const Hs::DataOrNewtypeDecl& data_decl, const Hs::LExp& x, const Hs::LExp& y)
+    Hs::LExp compare_constructor_tags_exp(TypeChecker& tc, const DerivingDataInfo& data_info, const Hs::LExp& x, const Hs::LExp& y)
     {
         // Preliminary source-level form of GHC's dataToTag#/tag layout idea:
         // synthesize a case over constructors now, but keep this isolated so it
         // can later become a shared helper or Core primitive known to the optimizer.
-        return compare_exp(constructor_tag_exp(data_decl, x), constructor_tag_exp(data_decl, y));
+        return compare_exp(constructor_tag_exp(tc, data_info, x), constructor_tag_exp(tc, data_info, y));
     }
 
-    Hs::InstanceDecl derive_ord_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
+    Hs::InstanceDecl derive_ord_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl&, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
         Hs::Matches compare_matches;
-        const auto& constructors = data_decl.get_constructors();
+        const auto& constructors = deriving_constructors(data_info);
 
         for(const auto& constructor: constructors)
         {
+            auto con_info = deriving_constructor_info(tc, constructor);
+            assert(con_info);
+
             vector<pair<Hs::LExp,Hs::LExp>> fields;
-            for(int i=0; i<constructor.arity(); i++)
+            for(int i=0; i<con_info->arity(); i++)
                 fields.push_back({local_var_exp("x$" + std::to_string(i)), local_var_exp("y$" + std::to_string(i))});
 
-            compare_matches.push_back(binary_method_rule(constructor_var_pattern(constructor, "x$"),
-                                                         constructor_var_pattern(constructor, "y$"),
+            compare_matches.push_back(binary_method_rule(constructor_var_pattern(constructor, con_info->arity(), "x$"),
+                                                         constructor_var_pattern(constructor, con_info->arity(), "y$"),
                                                          compare_all_exp(fields)));
         }
 
@@ -423,13 +521,13 @@ namespace
         {
             compare_matches.push_back(binary_method_rule(var_pat("x$tag"),
                                                          var_pat("y$tag"),
-                                                         compare_constructor_tags_exp(data_decl, local_var_exp("x$tag"), local_var_exp("y$tag"))));
+                                                         compare_constructor_tags_exp(tc, data_info, local_var_exp("x$tag"), local_var_exp("y$tag"))));
         }
 
         Hs::Decls methods;
         methods.push_back(derived_method_decl(deriving_loc, ord_compare_name, compare_matches));
 
-        return Hs::InstanceDecl({}, stock_instance_type(data_decl, ord_class_name), {}, {}, methods);
+        return Hs::InstanceDecl({}, stock_instance_type(data_info, ord_class_name), {}, {}, methods);
     }
 
     Hs::MRule nullary_method_rule(const Hs::LExp& rhs)
@@ -442,21 +540,24 @@ namespace
         return derived_method_decl(loc, method_name, {nullary_method_rule(rhs)});
     }
 
-    Hs::LExp bounded_constructor_exp(const Hs::ConstructorDecl& constructor, const string& bound_method_name)
+    Hs::LExp bounded_constructor_exp(TypeChecker& tc, const string& con_name, const string& bound_method_name)
     {
-        vector<Hs::LExp> args(constructor.arity(), wired_var_exp(bound_method_name));
-        return constructor_exp(constructor, args);
+        auto con_info = deriving_constructor_info(tc, con_name);
+        assert(con_info);
+        vector<Hs::LExp> args(con_info->arity(), wired_var_exp(bound_method_name));
+        return constructor_exp(con_name, con_info->arity(), args);
     }
 
-    Hs::InstanceDecl derive_bounded_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
+    // Derive Bounded from ordered constructor metadata rather than source constructor order.
+    Hs::InstanceDecl derive_bounded_instance(TypeChecker& tc, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
-        const auto& constructors = data_decl.get_constructors();
+        const auto& constructors = deriving_constructors(data_info);
 
         Hs::Decls methods;
-        methods.push_back(nullary_method_decl(deriving_loc, bounded_min_bound_name, bounded_constructor_exp(constructors.front(), bounded_min_bound_name)));
-        methods.push_back(nullary_method_decl(deriving_loc, bounded_max_bound_name, bounded_constructor_exp(constructors.back(), bounded_max_bound_name)));
+        methods.push_back(nullary_method_decl(deriving_loc, bounded_min_bound_name, bounded_constructor_exp(tc, constructors.front(), bounded_min_bound_name)));
+        methods.push_back(nullary_method_decl(deriving_loc, bounded_max_bound_name, bounded_constructor_exp(tc, constructors.back(), bounded_max_bound_name)));
 
-        return Hs::InstanceDecl({}, stock_instance_type(data_decl, bounded_class_name), {}, {}, methods);
+        return Hs::InstanceDecl({}, stock_instance_type(data_info, bounded_class_name), {}, {}, methods);
     }
 
     Hs::LPat int_pat(int i)
@@ -464,17 +565,20 @@ namespace
         return {noloc, Hs::LiteralPattern(Hs::Literal(Hs::BoxedInteger{integer(i)}))};
     }
 
-    Hs::InstanceDecl derive_enum_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
+    // Derive Enum by assigning tags according to semantic constructor order.
+    Hs::InstanceDecl derive_enum_instance(TypeChecker& tc, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
-        const auto& constructors = data_decl.get_constructors();
+        const auto& constructors = deriving_constructors(data_info);
         int max_tag = constructors.size() - 1;
 
         Hs::Matches from_enum_matches;
         Hs::Matches to_enum_matches;
         for(int i=0; i<constructors.size(); i++)
         {
-            from_enum_matches.push_back(unary_method_rule(constructor_pattern(constructors[i], {}), int_exp(i)));
-            to_enum_matches.push_back(unary_method_rule(int_pat(i), constructor_exp(constructors[i], {})));
+            auto con_info = deriving_constructor_info(tc, constructors[i]);
+            assert(con_info);
+            from_enum_matches.push_back(unary_method_rule(constructor_pattern(constructors[i], con_info->arity(), {}), int_exp(i)));
+            to_enum_matches.push_back(unary_method_rule(int_pat(i), constructor_exp(constructors[i], con_info->arity(), {})));
         }
         to_enum_matches.push_back(unary_method_rule(wildcard_pat(), error_exp("toEnum: tag out of range")));
 
@@ -518,7 +622,7 @@ namespace
         methods.push_back(derived_method_decl(deriving_loc, enum_from_then_name, enum_from_then_matches));
         methods.push_back(derived_method_decl(deriving_loc, enum_from_then_to_name, enum_from_then_to_matches));
 
-        return Hs::InstanceDecl({}, stock_instance_type(data_decl, enum_class_name), {}, {}, methods);
+        return Hs::InstanceDecl({}, stock_instance_type(data_info, enum_class_name), {}, {}, methods);
     }
 
     Hs::LPat pair_pat(const Hs::LPat& x, const Hs::LPat& y)
@@ -536,31 +640,37 @@ namespace
         return {noloc, Hs::List(elements)};
     }
 
-    Hs::LExp ix_tag_exp(const Hs::DataOrNewtypeDecl& data_decl, const string& var_name)
+    Hs::LExp ix_tag_exp(TypeChecker& tc, const DerivingDataInfo& data_info, const string& var_name)
     {
-        return constructor_tag_exp(data_decl, local_var_exp(var_name));
+        return constructor_tag_exp(tc, data_info, local_var_exp(var_name));
     }
 
-    Hs::LExp ix_in_range_exp(const Hs::DataOrNewtypeDecl& data_decl, const string& lo, const string& hi, const string& x)
+    // Compare Ix bounds by semantic constructor tags.
+    Hs::LExp ix_in_range_exp(TypeChecker& tc, const DerivingDataInfo& data_info, const string& lo, const string& hi, const string& x)
     {
-        auto lo_tag = ix_tag_exp(data_decl, lo);
-        auto hi_tag = ix_tag_exp(data_decl, hi);
-        auto x_tag = ix_tag_exp(data_decl, x);
+        auto lo_tag = ix_tag_exp(tc, data_info, lo);
+        auto hi_tag = ix_tag_exp(tc, data_info, hi);
+        auto x_tag = ix_tag_exp(tc, data_info, x);
 
         return if_exp(greater_than_exp(lo_tag, x_tag),
                       bool_exp(false),
                       if_exp(greater_than_exp(x_tag, hi_tag), bool_exp(false), bool_exp(true)));
     }
 
-    Hs::InstanceDecl derive_ix_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
+    // Derive Ix for enumeration-like types using semantic constructor tags.
+    Hs::InstanceDecl derive_ix_instance(TypeChecker& tc, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
-        const auto& constructors = data_decl.get_constructors();
+        const auto& constructors = deriving_constructors(data_info);
         Hs::LPat bounds_pat = pair_pat(var_pat("lo$"), var_pat("hi$"));
         Hs::LExp bounds_exp = pair_exp(local_var_exp("lo$"), local_var_exp("hi$"));
 
         vector<Hs::LExp> constructor_exps;
         for(const auto& constructor: constructors)
-            constructor_exps.push_back(constructor_exp(constructor, {}));
+        {
+            auto con_info = deriving_constructor_info(tc, constructor);
+            assert(con_info);
+            constructor_exps.push_back(constructor_exp(constructor, con_info->arity(), {}));
+        }
         Hs::LExp all_constructors = {noloc, Hs::List(constructor_exps)};
 
         Hs::Matches range_matches;
@@ -569,15 +679,15 @@ namespace
 
         Hs::Matches index_matches;
         index_matches.push_back(binary_method_rule(bounds_pat, var_pat("x$"),
-                                                   subtract_exp(ix_tag_exp(data_decl, "x$"), ix_tag_exp(data_decl, "lo$"))));
+                                                   subtract_exp(ix_tag_exp(tc, data_info, "x$"), ix_tag_exp(tc, data_info, "lo$"))));
 
         Hs::Matches in_range_matches;
-        in_range_matches.push_back(binary_method_rule(bounds_pat, var_pat("x$"), ix_in_range_exp(data_decl, "lo$", "hi$", "x$")));
+        in_range_matches.push_back(binary_method_rule(bounds_pat, var_pat("x$"), ix_in_range_exp(tc, data_info, "lo$", "hi$", "x$")));
 
         Hs::Matches range_size_matches;
-        auto size = add_exp(subtract_exp(ix_tag_exp(data_decl, "hi$"), ix_tag_exp(data_decl, "lo$")), int_exp(1));
+        auto size = add_exp(subtract_exp(ix_tag_exp(tc, data_info, "hi$"), ix_tag_exp(tc, data_info, "lo$")), int_exp(1));
         range_size_matches.push_back(unary_method_rule(bounds_pat,
-                                                       if_exp(greater_than_exp(ix_tag_exp(data_decl, "lo$"), ix_tag_exp(data_decl, "hi$")),
+                                                       if_exp(greater_than_exp(ix_tag_exp(tc, data_info, "lo$"), ix_tag_exp(tc, data_info, "hi$")),
                                                               int_exp(0),
                                                               size)));
 
@@ -587,7 +697,7 @@ namespace
         methods.push_back(derived_method_decl(deriving_loc, ix_in_range_name, in_range_matches));
         methods.push_back(derived_method_decl(deriving_loc, ix_range_size_name, range_size_matches));
 
-        return Hs::InstanceDecl({}, stock_instance_type(data_decl, ix_class_name), {}, {}, methods);
+        return Hs::InstanceDecl({}, stock_instance_type(data_info, ix_class_name), {}, {}, methods);
     }
 
     Hs::LExp compose_exp(const Hs::LExp& f, const Hs::LExp& g)
@@ -673,7 +783,7 @@ namespace
         return show_paren_exp(greater_than_exp(local_var_exp("d$"), int_exp(10)), compose_all_exp(parts));
     }
 
-    Hs::InstanceDecl derive_show_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
+    Hs::InstanceDecl derive_show_instance(TypeChecker&, const Hs::DataOrNewtypeDecl& data_decl, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
         Hs::Matches shows_prec_matches;
         for(const auto& constructor: data_decl.get_constructors())
@@ -685,7 +795,7 @@ namespace
         Hs::Decls methods;
         methods.push_back(derived_method_decl(deriving_loc, show_shows_prec_name, shows_prec_matches));
 
-        return Hs::InstanceDecl({}, stock_instance_type(data_decl, show_class_name), {}, {}, methods);
+        return Hs::InstanceDecl({}, stock_instance_type(data_info, show_class_name), {}, {}, methods);
     }
 
     Hs::LExp lambda_exp(const Hs::LPats& pats, const Hs::LExp& body)
@@ -835,7 +945,7 @@ namespace
     }
 
     // Synthesize readsPrec and let read use the class default.
-    Hs::InstanceDecl derive_read_instance(const Hs::DataOrNewtypeDecl& data_decl, const std::optional<yy::location>& deriving_loc)
+    Hs::InstanceDecl derive_read_instance(TypeChecker&, const Hs::DataOrNewtypeDecl& data_decl, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
         vector<Hs::LExp> constructor_parsers;
         for(const auto& constructor: data_decl.get_constructors())
@@ -859,7 +969,7 @@ namespace
         Hs::Decls methods;
         methods.push_back(derived_method_decl(deriving_loc, read_reads_prec_name, {Hs::MRule({var_pat("d$"), var_pat("s$")}, Hs::SimpleRHS(body))}));
 
-        return Hs::InstanceDecl({}, stock_instance_type(data_decl, read_class_name), {}, {}, methods);
+        return Hs::InstanceDecl({}, stock_instance_type(data_info, read_class_name), {}, {}, methods);
     }
 
     const vector<StockDerivingSpec>& stock_deriving_specs()
@@ -869,11 +979,11 @@ namespace
              "deriving Eq is only supported for regular data/newtype declarations"},
             {ord_class_name, true, derive_ord_instance, is_regular_data_decl,
              "deriving Ord is only supported for regular data/newtype declarations"},
-            {bounded_class_name, true, derive_bounded_instance, is_regular_data_decl_with_constructors,
+            {bounded_class_name, true, nullptr, is_regular_data_decl,
              "deriving Bounded is only supported for regular data/newtype declarations with constructors"},
-            {enum_class_name, false, derive_enum_instance, has_only_nullary_constructors,
+            {enum_class_name, false, nullptr, is_regular_data_decl,
              "deriving Enum is only supported for regular data declarations with only nullary constructors"},
-            {ix_class_name, false, derive_ix_instance, has_only_nullary_constructors,
+            {ix_class_name, false, nullptr, is_regular_data_decl,
              "deriving Ix is only supported for regular data declarations with only nullary constructors"},
             {show_class_name, true, derive_show_instance, is_regular_data_decl,
              "deriving Show is only supported for regular data/newtype declarations"},
@@ -1206,13 +1316,58 @@ namespace
                 return false;
 
             const auto& spec = *derived_class->spec;
+
+            auto semantic_data = deriving_data_info_for_decl(tc, data_decl);
+            if (spec.class_name == bounded_class_name)
+            {
+                if (not data_decl.is_regular_decl() or not semantic_data or not has_semantic_data_info(*semantic_data) or not has_constructor_infos(tc, *semantic_data))
+                {
+                    tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                    return true;
+                }
+
+                add_derived_instance(instances, deriving.type.loc, derive_bounded_instance(tc, *semantic_data, deriving.type.loc), explicit_polytype);
+                return true;
+            }
+
+            if (spec.class_name == enum_class_name)
+            {
+                if (not data_decl.is_regular_decl() or not semantic_data or not has_semantic_data_info(*semantic_data) or not has_only_nullary_constructors(tc, *semantic_data))
+                {
+                    tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                    return true;
+                }
+
+                add_derived_instance(instances, deriving.type.loc, derive_enum_instance(tc, *semantic_data, deriving.type.loc), explicit_polytype);
+                return true;
+            }
+
+            if (spec.class_name == ix_class_name)
+            {
+                if (not data_decl.is_regular_decl() or not semantic_data or not has_semantic_data_info(*semantic_data) or not has_only_nullary_constructors(tc, *semantic_data))
+                {
+                    tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                    return true;
+                }
+
+                add_derived_instance(instances, deriving.type.loc, derive_ix_instance(tc, *semantic_data, deriving.type.loc), explicit_polytype);
+                return true;
+            }
+
             if (not spec.validate(data_decl))
             {
                 tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                 return true;
             }
 
-            add_derived_instance(instances, deriving.type.loc, spec.derive(data_decl, deriving.type.loc), explicit_polytype);
+            if (not semantic_data or not has_semantic_data_info(*semantic_data))
+            {
+                tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                return true;
+            }
+
+            assert(spec.derive);
+            add_derived_instance(instances, deriving.type.loc, spec.derive(tc, data_decl, *semantic_data, deriving.type.loc), explicit_polytype);
             return true;
         };
 
