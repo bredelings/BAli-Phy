@@ -16,8 +16,8 @@
 class Module;
 struct renamer_state;
 
-Hs::Binds disambiguate_parsed_binds(Hs::Binds);
-Hs::ModuleDecls disambiguate_parsed_module(Hs::ModuleDecls);
+Hs::Binds disambiguate_binds(Hs::Binds);
+Hs::ModuleDecls disambiguate_module(Hs::ModuleDecls);
 
 typedef std::set<std::string> bound_var_info;
 typedef std::set<std::string> bound_type_var_info;

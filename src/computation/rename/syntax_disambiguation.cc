@@ -19,17 +19,16 @@ using std::vector;
 
 Hs::Binds classify_value_decls(Hs::Binds);
 Hs::Decls classify_value_decls(Hs::Decls);
-Hs::LPat parsed_expression_to_pattern(Hs::LExp E);
-Hs::LExp parsed_expression_to_expression(Hs::LExp E);
+Hs::LPat disambiguate_pattern(Hs::LExp E);
+Hs::LExp disambiguate_expression(Hs::LExp E);
 
 namespace
 {
-    Hs::MultiGuardedRHS parsed_expression_rhs(Hs::MultiGuardedRHS rhs);
-    Hs::Matches parsed_expression_matches(Hs::Matches matches);
-    Hs::Decls parsed_expression_classified_decls(Hs::Decls decls);
-    Hs::Decls parsed_expression_decls(Hs::Decls decls);
-    Hs::Binds parsed_expression_binds(Hs::Binds binds);
-    Hs::LExp parsed_expression_stmt(Hs::LExp stmt);
+    Hs::MultiGuardedRHS disambiguate_rhs(Hs::MultiGuardedRHS rhs);
+    Hs::Matches disambiguate_matches(Hs::Matches matches);
+    Hs::Decls disambiguate_classified_decls(Hs::Decls decls);
+    Hs::Decls disambiguate_decls(Hs::Decls decls);
+    Hs::LExp disambiguate_stmt(Hs::LExp stmt);
 
     Hs::LPat record_field_pun_pattern(const Hs::LVar& field)
     {
@@ -38,20 +37,20 @@ namespace
     }
 
     // Convert expression-form record field values into expression-category syntax.
-    Located<Hs::FieldBindings> parsed_expression_field_bindings(Located<Hs::FieldBindings> fields)
+    Located<Hs::FieldBindings> disambiguate_field_bindings(Located<Hs::FieldBindings> fields)
     {
         for(auto& lfield: unloc(fields))
         {
             auto& field = unloc(lfield);
             if (field.value)
-                field.value = parsed_expression_to_expression(*field.value);
+                field.value = disambiguate_expression(*field.value);
         }
 
         return fields;
     }
 
     // Convert expression-form record fields into pattern-form record fields.
-    Hs::PatternFieldBindings parsed_pattern_field_bindings(const Hs::FieldBindings& fields)
+    Hs::PatternFieldBindings disambiguate_pattern_field_bindings(const Hs::FieldBindings& fields)
     {
         Hs::PatternFieldBindings pattern_fields;
         pattern_fields.dotdot = fields.dotdot;
@@ -61,7 +60,7 @@ namespace
             const auto& field = unloc(lfield);
             Hs::LPat pattern;
             if (field.value)
-                pattern = parsed_expression_to_pattern(*field.value);
+                pattern = disambiguate_pattern(*field.value);
             else
                 pattern = record_field_pun_pattern(field.field);
             pattern_fields.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern)});
@@ -82,34 +81,34 @@ namespace
     }
 
     // Convert parser-only expression syntax inside a statement.
-    Hs::LExp parsed_expression_stmt(Hs::LExp stmt)
+    Hs::LExp disambiguate_stmt(Hs::LExp stmt)
     {
         auto& S = unloc(stmt);
 
         if (auto sq = S.to<Hs::SimpleQual>())
         {
             auto Q = *sq;
-            Q.exp = parsed_expression_to_expression(Q.exp);
+            Q.exp = disambiguate_expression(Q.exp);
             return {stmt.loc, Q};
         }
         else if (auto pq = S.to<Hs::PatQual>())
         {
             auto Q = *pq;
-            Q.bindpat = parsed_expression_to_pattern(Q.bindpat);
-            Q.exp = parsed_expression_to_expression(Q.exp);
+            Q.bindpat = disambiguate_pattern(Q.bindpat);
+            Q.exp = disambiguate_expression(Q.exp);
             return {stmt.loc, Q};
         }
         else if (auto lq = S.to<Hs::LetQual>())
         {
             auto Q = *lq;
-            unloc(Q.binds) = parsed_expression_binds(unloc(Q.binds));
+            unloc(Q.binds) = disambiguate_binds(unloc(Q.binds));
             return {stmt.loc, Q};
         }
         else if (auto rec = S.to<Hs::RecStmt>())
         {
             auto R = *rec;
             for(auto& rec_stmt: R.stmts.stmts)
-                rec_stmt = parsed_expression_stmt(rec_stmt);
+                rec_stmt = disambiguate_stmt(rec_stmt);
             return {stmt.loc, R};
         }
         else
@@ -117,50 +116,50 @@ namespace
     }
 
     // Convert parser-only expression syntax inside a guarded RHS.
-    Hs::MultiGuardedRHS parsed_expression_rhs(Hs::MultiGuardedRHS rhs)
+    Hs::MultiGuardedRHS disambiguate_rhs(Hs::MultiGuardedRHS rhs)
     {
         if (rhs.decls)
-            unloc(*rhs.decls) = parsed_expression_binds(unloc(*rhs.decls));
+            unloc(*rhs.decls) = disambiguate_binds(unloc(*rhs.decls));
 
         for(auto& guarded_rhs: rhs.guarded_rhss)
         {
             for(auto& guard: guarded_rhs.guards)
-                guard = parsed_expression_stmt(guard);
-            guarded_rhs.body = parsed_expression_to_expression(guarded_rhs.body);
+                guard = disambiguate_stmt(guard);
+            guarded_rhs.body = disambiguate_expression(guarded_rhs.body);
         }
 
         return rhs;
     }
 
     // Convert parser-only expression syntax inside match patterns and bodies.
-    Hs::Matches parsed_expression_matches(Hs::Matches matches)
+    Hs::Matches disambiguate_matches(Hs::Matches matches)
     {
         for(auto& match: matches)
         {
             for(auto& pattern: match.patterns)
-                pattern = parsed_expression_to_pattern(pattern);
-            match.rhs = parsed_expression_rhs(match.rhs);
+                pattern = disambiguate_pattern(pattern);
+            match.rhs = disambiguate_rhs(match.rhs);
         }
 
         return matches;
     }
 
     // Convert parser-only expression syntax inside already-classified declarations.
-    Hs::Decls parsed_expression_classified_decls(Hs::Decls decls)
+    Hs::Decls disambiguate_classified_decls(Hs::Decls decls)
     {
         for(auto& [_, decl]: decls)
         {
             if (auto f = decl.to<Hs::FunDecl>())
             {
                 auto F = *f;
-                F.matches = parsed_expression_matches(F.matches);
+                F.matches = disambiguate_matches(F.matches);
                 decl = F;
             }
             else if (auto p = decl.to<Hs::PatDecl>())
             {
                 auto P = *p;
-                P.lhs = parsed_expression_to_pattern(P.lhs);
-                P.rhs = parsed_expression_rhs(P.rhs);
+                P.lhs = disambiguate_pattern(P.lhs);
+                P.rhs = disambiguate_rhs(P.rhs);
                 decl = P;
             }
             else if (decl.is_a<Hs::TypeSigDecl>() or decl.is_a<Hs::FixityDecl>() or
@@ -174,39 +173,26 @@ namespace
     }
 
     // Classify declarations and convert parser-only expression syntax inside them.
-    Hs::Decls parsed_expression_decls(Hs::Decls decls)
+    Hs::Decls disambiguate_decls(Hs::Decls decls)
     {
-        return parsed_expression_classified_decls(classify_value_decls(decls));
-    }
-
-    // Convert parser-only expression syntax inside local binding groups.
-    Hs::Binds parsed_expression_binds(Hs::Binds binds)
-    {
-        binds = classify_value_decls(binds);
-
-        for(auto& decls: binds)
-        {
-            decls = parsed_expression_classified_decls(decls);
-        }
-
-        return binds;
+        return disambiguate_classified_decls(classify_value_decls(decls));
     }
 
     // Classify parsed syntax inside type declarations that carry value bindings.
-    Hs::Decls parsed_expression_type_decls(Hs::Decls decls)
+    Hs::Decls disambiguate_type_decls(Hs::Decls decls)
     {
         for(auto& [_, decl]: decls)
         {
             if (auto c = decl.to<Hs::ClassDecl>())
             {
                 auto C = *c;
-                C.default_method_decls = parsed_expression_decls(C.default_method_decls);
+                C.default_method_decls = disambiguate_decls(C.default_method_decls);
                 decl = C;
             }
             else if (auto i = decl.to<Hs::InstanceDecl>())
             {
                 auto I = *i;
-                I.method_decls = parsed_expression_decls(I.method_decls);
+                I.method_decls = disambiguate_decls(I.method_decls);
                 decl = I;
             }
         }
@@ -238,27 +224,27 @@ namespace
                         vector<Hs::LExp> right_terms(I->terms.begin() + i + 1, I->terms.end());
 
                         Hs::LPats pats;
-                        pats.push_back(parsed_expression_to_pattern(make_infix_exp(left_terms)));
-                        pats.push_back(parsed_expression_to_pattern(make_infix_exp(right_terms)));
+                        pats.push_back(disambiguate_pattern(make_infix_exp(left_terms)));
+                        pats.push_back(disambiguate_pattern(make_infix_exp(right_terms)));
                         pats.insert(pats.end(), extra_args.begin(), extra_args.end());
                         return Hs::simple_fun_decl({I->terms[i].loc, *v}, pats, D.rhs);
                     }
                 }
 
-                return Hs::PatDecl(parsed_expression_to_pattern(lhs), D.rhs);
+                return Hs::PatDecl(disambiguate_pattern(lhs), D.rhs);
             }
             else if (E.is_a<Hs::ParsedApp>())
             {
                 auto [head,args] = Hs::decompose_apps(lhs);
                 Hs::LPats pats;
                 for(auto& arg: args)
-                    pats.push_back(parsed_expression_to_pattern(arg));
+                    pats.push_back(disambiguate_pattern(arg));
                 pats.insert(pats.end(), extra_args.begin(), extra_args.end());
 
                 if (auto v = unloc(head).to<Hs::Var>())
                     return Hs::simple_fun_decl({head.loc, *v}, pats, D.rhs);
                 else if (unloc(head).is_a<Hs::Con>())
-                    return Hs::PatDecl(parsed_expression_to_pattern(lhs), D.rhs);
+                    return Hs::PatDecl(disambiguate_pattern(lhs), D.rhs);
                 else
                     return self(self, head, pats);
             }
@@ -267,13 +253,13 @@ namespace
                 auto [head,args] = Hs::decompose_apps(lhs);
                 Hs::LPats pats;
                 for(auto& arg: args)
-                    pats.push_back(parsed_expression_to_pattern(arg));
+                    pats.push_back(disambiguate_pattern(arg));
                 pats.insert(pats.end(), extra_args.begin(), extra_args.end());
 
                 if (auto v = unloc(head).to<Hs::Var>())
                     return Hs::simple_fun_decl({head.loc, *v}, pats, D.rhs);
                 else if (unloc(head).is_a<Hs::Con>())
-                    return Hs::PatDecl(parsed_expression_to_pattern(lhs), D.rhs);
+                    return Hs::PatDecl(disambiguate_pattern(lhs), D.rhs);
                 else
                     return self(self, head, pats);
             }
@@ -285,7 +271,7 @@ namespace
                     return Hs::simple_fun_decl({lhs.loc, *v}, extra_args, D.rhs);
             }
             else
-                return Hs::PatDecl(parsed_expression_to_pattern(lhs), D.rhs);
+                return Hs::PatDecl(disambiguate_pattern(lhs), D.rhs);
         };
 
         return classify_lhs(classify_lhs, D.lhs, {});
@@ -302,21 +288,26 @@ namespace
 }
 
 // Recursively disambiguate parser-only syntax inside a binding collection.
-Hs::Binds disambiguate_parsed_binds(Hs::Binds binds)
+Hs::Binds disambiguate_binds(Hs::Binds binds)
 {
-    return parsed_expression_binds(binds);
+    binds = classify_value_decls(binds);
+
+    for(auto& decls: binds)
+        decls = disambiguate_classified_decls(decls);
+
+    return binds;
 }
 
 // Recursively disambiguate parser-only syntax inside a module before renaming.
-Hs::ModuleDecls disambiguate_parsed_module(Hs::ModuleDecls M)
+Hs::ModuleDecls disambiguate_module(Hs::ModuleDecls M)
 {
-    M.type_decls = parsed_expression_type_decls(M.type_decls);
-    M.value_decls = disambiguate_parsed_binds(M.value_decls);
+    M.type_decls = disambiguate_type_decls(M.type_decls);
+    M.value_decls = disambiguate_binds(M.value_decls);
     return M;
 }
 
-// Convert parser-only expression syntax into expression-category syntax without resolving fixity.
-Hs::LExp parsed_expression_to_expression(Hs::LExp lhs)
+// Disambiguate expression-category syntax without resolving fixity.
+Hs::LExp disambiguate_expression(Hs::LExp lhs)
 {
     auto& E = unloc(lhs);
 
@@ -325,7 +316,7 @@ Hs::LExp parsed_expression_to_expression(Hs::LExp lhs)
         auto terms = I->terms;
         for(int i=0; i<terms.size(); i++)
             if (is_infix_operand_term(terms, i))
-                terms[i] = parsed_expression_to_expression(terms[i]);
+                terms[i] = disambiguate_expression(terms[i]);
         return {lhs.loc, Hs::InfixExp(terms)};
     }
     else if (auto app = E.to<Hs::ParsedApp>())
@@ -338,21 +329,21 @@ Hs::LExp parsed_expression_to_expression(Hs::LExp lhs)
 
         vector<Hs::LExp> terms;
         for(auto& term: app->terms)
-            terms.push_back(parsed_expression_to_expression(term));
+            terms.push_back(disambiguate_expression(term));
         return Hs::apply(terms);
     }
     else if (auto app = E.to<Hs::ApplyExp>())
     {
         auto A = *app;
-        A.head = parsed_expression_to_expression(A.head);
-        A.arg = parsed_expression_to_expression(A.arg);
+        A.head = disambiguate_expression(A.head);
+        A.arg = disambiguate_expression(A.arg);
         return {lhs.loc, A};
     }
     else if (auto r = E.to<Hs::RecordSyntax>())
     {
         auto R = *r;
-        R.head = parsed_expression_to_expression(R.head);
-        R.fbinds = parsed_expression_field_bindings(R.fbinds);
+        R.head = disambiguate_expression(R.head);
+        R.fbinds = disambiguate_field_bindings(R.fbinds);
         if (auto con = unloc(R.head).to<Hs::Con>())
             return {lhs.loc, Hs::RecordCon({R.head.loc, *con}, R.fbinds)};
         else
@@ -361,124 +352,124 @@ Hs::LExp parsed_expression_to_expression(Hs::LExp lhs)
     else if (auto r = E.to<Hs::RecordCon>())
     {
         auto R = *r;
-        R.fbinds = parsed_expression_field_bindings(R.fbinds);
+        R.fbinds = disambiguate_field_bindings(R.fbinds);
         return {lhs.loc, R};
     }
     else if (auto r = E.to<Hs::RecordUpdate>())
     {
         auto R = *r;
-        R.object = parsed_expression_to_expression(R.object);
-        R.fbinds = parsed_expression_field_bindings(R.fbinds);
+        R.object = disambiguate_expression(R.object);
+        R.fbinds = disambiguate_field_bindings(R.fbinds);
         return {lhs.loc, R};
     }
     else if (auto l = E.to<Hs::List>())
     {
         auto L = *l;
         for(auto& element: L.elements)
-            element = parsed_expression_to_expression(element);
+            element = disambiguate_expression(element);
         return {lhs.loc, L};
     }
     else if (auto l = E.to<Hs::ListFrom>())
     {
         auto L = *l;
-        L.from = parsed_expression_to_expression(L.from);
+        L.from = disambiguate_expression(L.from);
         return {lhs.loc, L};
     }
     else if (auto l = E.to<Hs::ListFromThen>())
     {
         auto L = *l;
-        L.from = parsed_expression_to_expression(L.from);
-        L.then = parsed_expression_to_expression(L.then);
+        L.from = disambiguate_expression(L.from);
+        L.then = disambiguate_expression(L.then);
         return {lhs.loc, L};
     }
     else if (auto l = E.to<Hs::ListFromTo>())
     {
         auto L = *l;
-        L.from = parsed_expression_to_expression(L.from);
-        L.to = parsed_expression_to_expression(L.to);
+        L.from = disambiguate_expression(L.from);
+        L.to = disambiguate_expression(L.to);
         return {lhs.loc, L};
     }
     else if (auto l = E.to<Hs::ListFromThenTo>())
     {
         auto L = *l;
-        L.from = parsed_expression_to_expression(L.from);
-        L.then = parsed_expression_to_expression(L.then);
-        L.to = parsed_expression_to_expression(L.to);
+        L.from = disambiguate_expression(L.from);
+        L.then = disambiguate_expression(L.then);
+        L.to = disambiguate_expression(L.to);
         return {lhs.loc, L};
     }
     else if (auto l = E.to<Hs::ListComprehension>())
     {
         auto L = *l;
-        L.body = parsed_expression_to_expression(L.body);
+        L.body = disambiguate_expression(L.body);
         for(auto& qual: L.quals)
-            qual = parsed_expression_stmt(qual);
+            qual = disambiguate_stmt(qual);
         return {lhs.loc, L};
     }
     else if (auto s = E.to<Hs::LeftSection>())
     {
         auto S = *s;
-        S.l_arg = parsed_expression_to_expression(S.l_arg);
+        S.l_arg = disambiguate_expression(S.l_arg);
         return {lhs.loc, S};
     }
     else if (auto s = E.to<Hs::RightSection>())
     {
         auto S = *s;
-        S.r_arg = parsed_expression_to_expression(S.r_arg);
+        S.r_arg = disambiguate_expression(S.r_arg);
         return {lhs.loc, S};
     }
     else if (auto t = E.to<Hs::Tuple>())
     {
         auto T = *t;
         for(auto& element: T.elements)
-            element = parsed_expression_to_expression(element);
+            element = disambiguate_expression(element);
         return {lhs.loc, T};
     }
     else if (auto t = E.to<Hs::TypedExp>())
     {
         auto T = *t;
-        T.exp = parsed_expression_to_expression(T.exp);
+        T.exp = disambiguate_expression(T.exp);
         return {lhs.loc, T};
     }
     else if (auto c = E.to<Hs::CaseExp>())
     {
         auto C = *c;
-        C.object = parsed_expression_to_expression(C.object);
-        C.alts = parsed_expression_matches(C.alts);
+        C.object = disambiguate_expression(C.object);
+        C.alts = disambiguate_matches(C.alts);
         return {lhs.loc, C};
     }
     else if (auto l = E.to<Hs::LambdaExp>())
     {
         auto L = *l;
-        L.match = parsed_expression_matches({L.match})[0];
+        L.match = disambiguate_matches({L.match})[0];
         return {lhs.loc, L};
     }
     else if (auto l = E.to<Hs::LetExp>())
     {
         auto L = *l;
-        unloc(L.binds) = parsed_expression_binds(unloc(L.binds));
-        L.body = parsed_expression_to_expression(L.body);
+        unloc(L.binds) = disambiguate_binds(unloc(L.binds));
+        L.body = disambiguate_expression(L.body);
         return {lhs.loc, L};
     }
     else if (auto i = E.to<Hs::IfExp>())
     {
         auto I = *i;
-        I.condition = parsed_expression_to_expression(I.condition);
-        I.true_branch = parsed_expression_to_expression(I.true_branch);
-        I.false_branch = parsed_expression_to_expression(I.false_branch);
+        I.condition = disambiguate_expression(I.condition);
+        I.true_branch = disambiguate_expression(I.true_branch);
+        I.false_branch = disambiguate_expression(I.false_branch);
         return {lhs.loc, I};
     }
     else if (auto d = E.to<Hs::Do>())
     {
         auto D = *d;
         for(auto& stmt: D.stmts.stmts)
-            stmt = parsed_expression_stmt(stmt);
+            stmt = disambiguate_stmt(stmt);
         return {lhs.loc, D};
     }
     else if (auto d = E.to<Hs::MDo>())
     {
         auto D = *d;
         for(auto& stmt: D.stmts.stmts)
-            stmt = parsed_expression_stmt(stmt);
+            stmt = disambiguate_stmt(stmt);
         return {lhs.loc, D};
     }
     else if (E.is_a<Hs::Var>() or E.is_a<Hs::Con>() or E.is_a<Hs::Literal>() or
@@ -488,20 +479,20 @@ Hs::LExp parsed_expression_to_expression(Hs::LExp lhs)
         std::abort();
 }
 
-// Convert parsed expression-category syntax into pattern-category syntax without resolving fixity.
-Hs::LPat parsed_expression_to_pattern(Hs::LExp lhs)
+// Disambiguate pattern-category syntax without resolving fixity.
+Hs::LPat disambiguate_pattern(Hs::LExp lhs)
 {
     auto& E = unloc(lhs);
 
     if (auto I = E.to<Hs::InfixExp>())
     {
         if (I->terms.size() == 1)
-            return parsed_expression_to_pattern(I->terms[0]);
+            return disambiguate_pattern(I->terms[0]);
 
         auto terms = I->terms;
         for(int i=0; i<terms.size(); i++)
             if (is_infix_operand_term(terms, i))
-                terms[i] = parsed_expression_to_pattern(terms[i]);
+                terms[i] = disambiguate_pattern(terms[i]);
 
         return {lhs.loc, Hs::InfixPat(terms)};
     }
@@ -512,7 +503,7 @@ Hs::LPat parsed_expression_to_pattern(Hs::LExp lhs)
         {
             Hs::LPats pat_args;
             for(auto& arg: args)
-                pat_args.push_back(parsed_expression_to_pattern(arg));
+                pat_args.push_back(disambiguate_pattern(arg));
             return {lhs.loc, Hs::ConPattern({head.loc, *con}, pat_args)};
         }
 
@@ -526,7 +517,7 @@ Hs::LPat parsed_expression_to_pattern(Hs::LExp lhs)
         {
             Hs::LPats pat_args;
             for(auto& arg: args)
-                pat_args.push_back(parsed_expression_to_pattern(arg));
+                pat_args.push_back(disambiguate_pattern(arg));
             return {lhs.loc, Hs::ConPattern({head.loc, *con}, pat_args)};
         }
 
@@ -542,10 +533,10 @@ Hs::LPat parsed_expression_to_pattern(Hs::LExp lhs)
             return {lhs.loc, Hs::WildcardPattern()};
         }
 
-        return {lhs.loc, Hs::RecordPattern({r->head.loc, *con}, {r->fbinds.loc, parsed_pattern_field_bindings(unloc(r->fbinds))})};
+        return {lhs.loc, Hs::RecordPattern({r->head.loc, *con}, {r->fbinds.loc, disambiguate_pattern_field_bindings(unloc(r->fbinds))})};
     }
     else if (auto r = E.to<Hs::RecordCon>())
-        return {lhs.loc, Hs::RecordPattern(r->con, {r->fbinds.loc, parsed_pattern_field_bindings(unloc(r->fbinds))})};
+        return {lhs.loc, Hs::RecordPattern(r->con, {r->fbinds.loc, disambiguate_pattern_field_bindings(unloc(r->fbinds))})};
     else if (E.is_a<Hs::RecordUpdate>())
     {
         error(lhs.loc, Note()<<"Record update syntax '"<<lhs<<"' is not valid in a pattern.");
@@ -555,26 +546,26 @@ Hs::LPat parsed_expression_to_pattern(Hs::LExp lhs)
     {
         Hs::ListPattern P;
         for(auto& element: l->elements)
-            P.elements.push_back(parsed_expression_to_pattern(element));
+            P.elements.push_back(disambiguate_pattern(element));
         return {lhs.loc, P};
     }
     else if (auto t = E.to<Hs::Tuple>())
     {
         Hs::TuplePattern P;
         for(auto& element: t->elements)
-            P.elements.push_back(parsed_expression_to_pattern(element));
+            P.elements.push_back(disambiguate_pattern(element));
         return {lhs.loc, P};
     }
     else if (auto ap = E.to<Hs::AsPattern>())
-        return {lhs.loc, Hs::AsPattern(ap->var, parsed_expression_to_pattern(ap->pattern))};
+        return {lhs.loc, Hs::AsPattern(ap->var, disambiguate_pattern(ap->pattern))};
     else if (auto lp = E.to<Hs::LazyPattern>())
-        return {lhs.loc, Hs::LazyPattern(parsed_expression_to_pattern(lp->pattern))};
+        return {lhs.loc, Hs::LazyPattern(disambiguate_pattern(lp->pattern))};
     else if (auto sp = E.to<Hs::StrictPattern>())
-        return {lhs.loc, Hs::StrictPattern(parsed_expression_to_pattern(sp->pattern))};
+        return {lhs.loc, Hs::StrictPattern(disambiguate_pattern(sp->pattern))};
     else if (auto t = E.to<Hs::TypedExp>())
     {
         Hs::TypedPattern P;
-        P.pat = parsed_expression_to_pattern(t->exp);
+        P.pat = disambiguate_pattern(t->exp);
         P.type = t->type;
         return {lhs.loc, P};
     }

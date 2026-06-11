@@ -927,7 +927,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     // Disambiguate parsed syntax before adding local symbols.
     // This finds binders without resolving expression or pattern fixity.
-    M = disambiguate_parsed_module(M);
+    M = disambiguate_module(M);
 
     // We should be able to build these as we go, in rename!
     // We can merge them into a global symbol table (if we want) afterwards.
