@@ -282,22 +282,30 @@ struct FieldBindings: public Object, std::vector<Located<FieldBinding>>
     std::string print() const;
 };
 
-// This could be
-// * a record update    x {field = y} = case x of MkT a b c d e -> MkT a b y d e
-// * a constructor    MkT {field = y} = MkT u u y u u where u = ??
-// * a pattern        MkT {field = y} = MkT _ _ y _ _
-// Then there are ".." and named field puns...
+// Shared expression-side record field list for construction and update syntax.
 
-struct RecordExp: public Object
+struct RecordCon: public Object
 {
-    LExp head;
+    LCon con;
     Located<FieldBindings> fbinds;
 
-    RecordExp* clone() const { return new RecordExp(*this);}
+    RecordCon* clone() const { return new RecordCon(*this);}
     std::string print() const;
 
-    RecordExp() = default;
-    RecordExp(const LExp& e, const Located<FieldBindings>& fb): head(e), fbinds(fb) {}
+    RecordCon() = default;
+    RecordCon(const LCon& c, const Located<FieldBindings>& fb): con(c), fbinds(fb) {}
+};
+
+struct RecordUpdate: public Object
+{
+    LExp object;
+    Located<FieldBindings> fbinds;
+
+    RecordUpdate* clone() const { return new RecordUpdate(*this);}
+    std::string print() const;
+
+    RecordUpdate() = default;
+    RecordUpdate(const LExp& e, const Located<FieldBindings>& fb): object(e), fbinds(fb) {}
 };
 
 struct PatternFieldBinding

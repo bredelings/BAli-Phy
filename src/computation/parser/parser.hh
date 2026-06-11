@@ -81,9 +81,10 @@
 
   expression_ref yy_make_string(const std::string&);
   Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& object, const std::string& field);
+  Hs::LExp make_record_expression(const yy::location& loc, const Hs::LExp& head, const Located<Hs::FieldBindings>& fbinds);
   Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::string>& fields);
 
-#line 87 "parser.hh"
+#line 88 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -223,7 +224,7 @@
 #endif
 
 namespace yy {
-#line 227 "parser.hh"
+#line 228 "parser.hh"
 
 
 
@@ -7131,7 +7132,7 @@ switch (yykind)
 
 
 } // yy
-#line 7135 "parser.hh"
+#line 7136 "parser.hh"
 
 
 

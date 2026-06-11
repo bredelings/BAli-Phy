@@ -42,6 +42,7 @@
 
   expression_ref yy_make_string(const std::string&);
   Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& object, const std::string& field);
+  Hs::LExp make_record_expression(const yy::location& loc, const Hs::LExp& head, const Located<Hs::FieldBindings>& fbinds);
   Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::string>& fields);
 }
 
@@ -1249,7 +1250,7 @@ aexp: qvar TIGHT_INFIX_AT aexp   {$$ = {@$, Hs::AsPattern({@1,Hs::Var($1)},$3)};
 |     aexp1                      {$$ = $1;}
 
 /* EP */
-aexp1: aexp1 "{" fbinds "}"          { $$ = {@$,Hs::RecordExp{$1,$3}}; }
+aexp1: aexp1 "{" fbinds "}"          { $$ = make_record_expression(@$, $1, $3); }
 |      aexp1 TIGHT_INFIX_DOT field   { $$ = make_record_field_selection(@$, $1, $3); }
 |      aexp2                         { $$ = $1; }
 
@@ -1681,6 +1682,14 @@ Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& ob
 {
     Hs::LExp selector = {loc, Hs::Var(field)};
     return {loc, Hs::ApplyExp(selector, object)};
+}
+
+Hs::LExp make_record_expression(const yy::location& loc, const Hs::LExp& head, const Located<Hs::FieldBindings>& fbinds)
+{
+    if (auto con = unloc(head).to<Hs::Con>())
+        return {loc, Hs::RecordCon({head.loc, *con}, fbinds)};
+    else
+        return {loc, Hs::RecordUpdate(head, fbinds)};
 }
 
 Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::string>& fields)

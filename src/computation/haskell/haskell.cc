@@ -383,9 +383,14 @@ string FieldBindings::print() const
     return join(ss, ",");
 }
 
-string RecordExp::print() const
+string RecordCon::print() const
 {
-    return head.print() + " {" + fbinds.print() + "}";
+    return con.print() + " {" + fbinds.print() + "}";
+}
+
+string RecordUpdate::print() const
+{
+    return object.print() + " {" + fbinds.print() + "}";
 }
 
 string PatternFieldBinding::print() const

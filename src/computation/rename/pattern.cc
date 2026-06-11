@@ -123,12 +123,8 @@ Hs::LPat unapply(Hs::LExp LE)
 
         P = Hs::ConPattern({head.loc,*con}, pat_args);
     }
-    else if (auto r = E.to<Hs::RecordExp>())
+    else if (auto r = E.to<Hs::RecordCon>())
     {
-        auto con = unloc(r->head).to<Hs::Con>();
-        if (not con)
-            throw myexception()<<"In pattern `"<<E<<"`:\n    `"<<r->head<<"` is not a data constructor.";
-
         Hs::PatternFieldBindings fbinds;
         fbinds.dotdot = unloc(r->fbinds).dotdot;
 
@@ -139,7 +135,11 @@ Hs::LPat unapply(Hs::LExp LE)
             fbinds.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern)});
         }
 
-        P = Hs::RecordPattern({r->head.loc,*con}, {r->fbinds.loc, fbinds});
+        P = Hs::RecordPattern(r->con, {r->fbinds.loc, fbinds});
+    }
+    else if (E.is_a<Hs::RecordUpdate>())
+    {
+        throw myexception()<<"In pattern `"<<E<<"`:\n    record update syntax is not valid in a pattern.";
     }
     else if (auto texp = E.to<Hs::TypedExp>())
     {

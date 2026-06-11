@@ -218,10 +218,18 @@ Hs::LExp rename_infix(const Module& m, Hs::LExp LE)
         // Nothing to do for TE.type, since there are no type operators unless extensions are enabled.
         E = TE;
     }
-    else if (auto r = E.to<Hs::RecordExp>())
+    else if (auto r = E.to<Hs::RecordCon>())
     {
         auto R = *r;
-        R.head = rename_infix(m, R.head);
+        for(auto& field: unloc(R.fbinds))
+            if (unloc(field).value)
+                *unloc(field).value = rename_infix(m, *unloc(field).value);
+        E = R;
+    }
+    else if (auto r = E.to<Hs::RecordUpdate>())
+    {
+        auto R = *r;
+        R.object = rename_infix(m, R.object);
         for(auto& field: unloc(R.fbinds))
             if (unloc(field).value)
                 *unloc(field).value = rename_infix(m, *unloc(field).value);
@@ -472,98 +480,99 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         TE.type = rename_and_quantify_type(TE.type);
         E = TE;
     }
-    else if (auto rec = E.to<Hs::RecordExp>())
+    else if (auto rec = E.to<Hs::RecordUpdate>())
     {
         auto Rec = *rec;
-        auto con = unloc(Rec.head).to<Hs::Con>();
+        auto object = rename(Rec.object, bound, free_vars);
+        std::vector<std::pair<std::string,Hs::LExp>> updates;
+        optional<set<string>> constructors;
+        set<string> used_field_names;
 
-        if (not con)
+        if (unloc(Rec.fbinds).dotdot)
+            error(Rec.fbinds.loc, Note()<<"Record wildcards in updates are not implemented yet.");
+
+        for(auto& field: unloc(Rec.fbinds))
         {
-            auto object = rename(Rec.head, bound, free_vars);
-            std::vector<std::pair<std::string,Hs::LExp>> updates;
-            optional<set<string>> constructors;
-            set<string> used_field_names;
+            auto field_name = unloc(unloc(field).field).name;
+            auto field_key = get_unqualified_name(field_name);
+            if (used_field_names.count(field_key))
+                error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
+            used_field_names.insert(field_key);
 
-            if (unloc(Rec.fbinds).dotdot)
-                error(Rec.fbinds.loc, Note()<<"Record wildcards in updates are not implemented yet.");
+            auto field_constructors = record_field_constructors.find(field_name);
+            if (field_constructors == record_field_constructors.end())
+                field_constructors = record_field_constructors.find(field_key);
 
-            for(auto& field: unloc(Rec.fbinds))
-            {
-                auto field_name = unloc(unloc(field).field).name;
-                auto field_key = get_unqualified_name(field_name);
-                if (used_field_names.count(field_key))
-                    error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
-                used_field_names.insert(field_key);
-
-                auto field_constructors = record_field_constructors.find(field_name);
-                if (field_constructors == record_field_constructors.end())
-                    field_constructors = record_field_constructors.find(field_key);
-
-                if (field_constructors == record_field_constructors.end())
-                    error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
-                else
-                    constructors = intersect_record_constructors(constructors, field_constructors->second);
-
-                auto value = unloc(field).value ? *unloc(field).value : record_field_pun_exp(unloc(field).field);
-                updates.push_back({field_name, rename(value, bound, free_vars)});
-            }
-
-            if (not constructors or constructors->empty())
-                error(loc, Note()<<"No record constructor has all fields used in this update.");
+            if (field_constructors == record_field_constructors.end())
+                error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
             else
-            {
-                vector<Located<Hs::Alt>> alts;
-                for(const auto& con_name: *constructors)
-                {
-                    const auto& layout = record_constructor_layouts.at(con_name);
-                    Hs::LPats patterns;
-                    vector<Hs::LExp> args;
+                constructors = intersect_record_constructors(constructors, field_constructors->second);
 
-                    for(int i=0; i<layout.arity; i++)
-                    {
-                        auto var = record_update_binder(loc, con_name, i);
-                        Hs::LVar lvar = {loc, unloc(var).as_<Hs::Var>()};
-                        patterns.push_back({loc, Hs::VarPattern(lvar)});
-                        args.push_back(var);
-                    }
-
-                    for(const auto& [field_name, value]: updates)
-                    {
-                        auto pos = layout.fields.find(field_name);
-                        if (pos == layout.fields.end())
-                            pos = layout.fields.find(get_unqualified_name(field_name));
-                        assert(pos != layout.fields.end());
-                        args[pos->second] = value;
-                    }
-
-                    Hs::LCon head = {loc, Hs::Con(con_name, layout.arity)};
-                    Hs::LPat pattern = {loc, Hs::ConPattern(head, patterns)};
-                    auto rhs = Hs::SimpleRHS(Hs::apply({loc, unloc(head)}, args));
-                    alts.push_back({loc, Hs::Alt(pattern, rhs)});
-                }
-                E = Hs::CaseExp(object, Hs::Alts(alts));
-            }
+            auto value = unloc(field).value ? *unloc(field).value : record_field_pun_exp(unloc(field).field);
+            updates.push_back({field_name, rename(value, bound, free_vars)});
         }
-        else if (not m.is_declared(con->name))
+
+        if (not constructors or constructors->empty())
+            error(loc, Note()<<"No record constructor has all fields used in this update.");
+        else
         {
-            error(Rec.head.loc, Note()<<"Data constructor `"<<con->name<<"` not in scope.");
+            vector<Located<Hs::Alt>> alts;
+            for(const auto& con_name: *constructors)
+            {
+                const auto& layout = record_constructor_layouts.at(con_name);
+                Hs::LPats patterns;
+                vector<Hs::LExp> args;
+
+                for(int i=0; i<layout.arity; i++)
+                {
+                    auto var = record_update_binder(loc, con_name, i);
+                    Hs::LVar lvar = {loc, unloc(var).as_<Hs::Var>()};
+                    patterns.push_back({loc, Hs::VarPattern(lvar)});
+                    args.push_back(var);
+                }
+
+                for(const auto& [field_name, value]: updates)
+                {
+                    auto pos = layout.fields.find(field_name);
+                    if (pos == layout.fields.end())
+                        pos = layout.fields.find(get_unqualified_name(field_name));
+                    assert(pos != layout.fields.end());
+                    args[pos->second] = value;
+                }
+
+                Hs::LCon head = {loc, Hs::Con(con_name, layout.arity)};
+                Hs::LPat pattern = {loc, Hs::ConPattern(head, patterns)};
+                auto rhs = Hs::SimpleRHS(Hs::apply({loc, unloc(head)}, args));
+                alts.push_back({loc, Hs::Alt(pattern, rhs)});
+            }
+            E = Hs::CaseExp(object, Hs::Alts(alts));
+        }
+    }
+    else if (auto rec = E.to<Hs::RecordCon>())
+    {
+        auto Rec = *rec;
+        auto con = unloc(Rec.con);
+
+        if (not m.is_declared(con.name))
+        {
+            error(Rec.con.loc, Note()<<"Data constructor `"<<con.name<<"` not in scope.");
         }
         else
         {
             try
             {
-                auto S = m.lookup_symbol(con->name);
+                auto S = m.lookup_symbol(con.name);
                 if (S->symbol_type != symbol_type_t::constructor)
-                    error(Rec.head.loc, Note()<<"Id '"<<con->name<<"' is not a constructor in record construction.");
+                    error(Rec.con.loc, Note()<<"Id '"<<con.name<<"' is not a constructor in record construction.");
 
-                auto Con = *con;
+                auto Con = con;
                 Con.name = S->name;
                 Con.arity = S->arity;
 
                 auto layout = record_layout_for_constructor(S->name);
 
                 if (not layout)
-                    error(Rec.head.loc, Note()<<"Constructor '"<<con->name<<"' is not a record constructor.");
+                    error(Rec.con.loc, Note()<<"Constructor '"<<con.name<<"' is not a record constructor.");
                 else
                 {
                     vector<optional<Hs::LExp>> fields(layout->arity);
@@ -581,7 +590,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                             pos = layout->fields.find(get_unqualified_name(field_name));
 
                         if (pos == layout->fields.end())
-                            error(field.loc, Note()<<"Constructor '"<<con->name<<"' does not have field '"<<field_name<<"'.");
+                            error(field.loc, Note()<<"Constructor '"<<con.name<<"' does not have field '"<<field_name<<"'.");
                         else if (used_fields.count(pos->second))
                             error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record construction.");
                         else
@@ -592,14 +601,14 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                         }
                     }
 
-                    Hs::LExp head = {Rec.head.loc, Con};
+                    Hs::LExp head = {Rec.con.loc, Con};
                     vector<Hs::LExp> args;
                     for(int i=0; i<fields.size(); i++)
                     {
                         if (fields[i])
                             args.push_back(*fields[i]);
                         else if (not has_dotdot)
-                            error(loc, Note()<<"Missing field "<<i+1<<" in record construction for constructor '"<<con->name<<"'.");
+                            error(loc, Note()<<"Missing field "<<i+1<<" in record construction for constructor '"<<con.name<<"'.");
                     }
 
                     E = unloc(Hs::apply(head, args));
