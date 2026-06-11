@@ -24,9 +24,78 @@ using std::map;
 // A label CANNOT be shared by more than one type in scope.
 // Field names share the top level namespace with ordinary variables and class methods and must not conflict with other top level names in scope.
 
+namespace
+{
+    // Flatten grouped record labels into constructor field order.
+    vector<string> field_decl_names(const Hs::FieldDecls& field_decls)
+    {
+        vector<string> names;
+        for(const auto& field_decl: field_decls.field_decls)
+            for(const auto& field_name: field_decl.field_names)
+                names.push_back(unloc(field_name).name);
+        return names;
+    }
+
+    // Extract labels from GADT record signatures like C :: { x :: A } -> T.
+    optional<vector<string>> gadt_constructor_field_names(Hs::LType type)
+    {
+        auto [tvs, context, rho_type] = Hs::peel_top_gen(type);
+
+        optional<vector<string>> names;
+        while(auto function_type = Hs::is_function_type(rho_type))
+        {
+            auto arg_type = function_type->first;
+            if (auto field_decls = unloc(arg_type).to<Hs::FieldDecls>())
+            {
+                if (not names)
+                    names = vector<string>{};
+                auto arg_names = field_decl_names(*field_decls);
+                names->insert(names->end(), arg_names.begin(), arg_names.end());
+            }
+            else if (names)
+                return {};
+
+            rho_type = function_type->second;
+        }
+
+        return names;
+    }
+}
+
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
 {
     Hs::Decls decls2;
+
+    auto synthesize_from_fields = [&](const map<string,map<string,int>>& constructor_fields, const map<string,int>& arity)
+    {
+        if (not constructor_fields.empty())
+        {
+            for(auto& [field_name, constrs]: constructor_fields)
+            {
+                expression_ref name = Hs::Var(field_name);
+                vector<Located<Haskell::Alt>> alts;
+
+                for(auto& [ConName,pos]: constrs)
+                {
+                    int a = arity.at(ConName);
+                    Hs::LPats f(a, {noloc,Hs::WildcardPattern()});
+                    unloc(f[pos]) = Hs::VarPattern({noloc,Hs::Var(field_name)});
+
+                    Hs::LPat pattern = {noloc, Hs::ConPattern({noloc,Hs::Con(ConName,a)}, f)};
+                    auto rhs = Haskell::SimpleRHS({noloc, name});
+                    alts.push_back({noloc,{pattern,rhs}});
+                }
+                // I removed the {_ -> error("{name}: no match")} alternative, since error( ) generates a var( ).
+                // This could lead to worse error messages.
+
+                Hs::Var x("v$0"); // FIXME??
+                expression_ref body = Haskell::CaseExp({noloc,x},Haskell::Alts(alts));
+                expression_ref lambda = Haskell::LambdaExp({{noloc,x}},{noloc,body});
+
+                decls2.push_back({noloc,Haskell::ValueDecl({noloc,name}, lambda)});
+            }
+        }
+    };
 
     auto synthesize_for_constructors = [&](const Hs::ConstructorsDecl& constrs)
     {
@@ -56,46 +125,53 @@ Hs::Decls synthesize_field_accessors(const Hs::Decls& decls)
             }
         }
 
-        if (not arity.empty())
+        synthesize_from_fields(constructor_fields, arity);
+    };
+
+    auto synthesize_for_gadt_constructors = [&](const Hs::GADTConstructorsDecl& constrs)
+    {
+        if (constrs.empty()) return;
+
+        // field -> con -> pos
+        map<string,map<string,int>> constructor_fields;
+        // con -> arity
+        map<string,int> arity;
+
+        for(auto& constr: constrs)
         {
-            for(auto& [field_name, constrs]: constructor_fields)
+            auto field_names = gadt_constructor_field_names(constr.type);
+            if (not field_names)
+                continue;
+
+            for(auto& con_name: constr.con_names)
             {
-                expression_ref name = Hs::Var(field_name);
-                vector<Located<Haskell::Alt>> alts;
-
-                for(auto& [ConName,pos]: constrs)
-                {
-                    int a = arity[ConName];
-                    Hs::LPats f(a, {noloc,Hs::WildcardPattern()});
-                    unloc(f[pos]) = Hs::VarPattern({noloc,Hs::Var(field_name)});
-
-                    Hs::LPat pattern = {noloc, Hs::ConPattern({noloc,Hs::Con(ConName,a)}, f)};
-                    auto rhs = Haskell::SimpleRHS({noloc, name});
-                    alts.push_back({noloc,{pattern,rhs}});
-                }
-                // I removed the {_ -> error("{name}: no match")} alternative, since error( ) generates a var( ).
-                // This could lead to worse error messages.
-
-                Hs::Var x("v$0"); // FIXME??
-                expression_ref body = Haskell::CaseExp({noloc,x},Haskell::Alts(alts));
-                expression_ref lambda = Haskell::LambdaExp({{noloc,x}},{noloc,body});
-
-                decls2.push_back({noloc,Haskell::ValueDecl({noloc,name}, lambda)});
+                auto cname = unloc(con_name);
+                arity[cname] = field_names->size();
+                for(int i=0; i<field_names->size(); i++)
+                    constructor_fields[(*field_names)[i]][cname] = i;
             }
         }
+
+        synthesize_from_fields(constructor_fields, arity);
     };
 
     for(auto& [_,decl]: decls)
     {
         if (auto D = decl.to<Haskell::DataOrNewtypeDecl>(); D and D->is_regular_decl())
             synthesize_for_constructors(D->get_constructors());
+        else if (auto D = decl.to<Haskell::DataOrNewtypeDecl>(); D and D->is_gadt_decl())
+            synthesize_for_gadt_constructors(D->get_gadt_constructors());
         else if (auto D = decl.to<Haskell::DataFamilyInstanceDecl>(); D and D->rhs.is_regular_decl())
             synthesize_for_constructors(D->rhs.get_constructors());
+        else if (auto D = decl.to<Haskell::DataFamilyInstanceDecl>(); D and D->rhs.is_gadt_decl())
+            synthesize_for_gadt_constructors(D->rhs.get_gadt_constructors());
         else if (auto I = decl.to<Haskell::InstanceDecl>())
         {
             for(auto& D: I->data_inst_decls)
                 if (D.rhs.is_regular_decl())
                     synthesize_for_constructors(D.rhs.get_constructors());
+                else if (D.rhs.is_gadt_decl())
+                    synthesize_for_gadt_constructors(D.rhs.get_gadt_constructors());
         }
     }
     return decls2;

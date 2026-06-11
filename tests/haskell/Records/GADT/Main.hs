@@ -11,4 +11,7 @@ data Box a where
 readBox :: Box Int -> (Int, Int)
 readBox (Box { value = x, tag = n }) = (x, n)
 
-main = print (readBox (Box { tag = 7, value = 3 }))
+bumpTag :: Box Int -> Box Int
+bumpTag b = b { tag = tag b + 1 }
+
+main = print (readBox (bumpTag (Box { tag = 7, value = 3 })), value (Box { tag = 9, value = (4 :: Int) }))

@@ -2238,6 +2238,41 @@ const_type_ptr Module::lookup_external_type(const std::string& type_name) const
 
 namespace
 {
+    // Flatten grouped record labels into constructor field order.
+    vector<string> field_decl_names(const Hs::FieldDecls& field_decls)
+    {
+        vector<string> names;
+        for(const auto& field_decl: field_decls.field_decls)
+            for(const auto& field_name: field_decl.field_names)
+                names.push_back(unloc(field_name).name);
+        return names;
+    }
+
+    // Extract labels from GADT record signatures like C :: { x :: A } -> T.
+    optional<vector<string>> gadt_constructor_field_names(Hs::LType type)
+    {
+        auto [tvs, context, rho_type] = Hs::peel_top_gen(type);
+
+        optional<vector<string>> names;
+        while(auto function_type = Hs::is_function_type(rho_type))
+        {
+            auto arg_type = function_type->first;
+            if (auto field_decls = unloc(arg_type).to<Hs::FieldDecls>())
+            {
+                if (not names)
+                    names = vector<string>{};
+                auto arg_names = field_decl_names(*field_decls);
+                names->insert(names->end(), arg_names.begin(), arg_names.end());
+            }
+            else if (names)
+                return {};
+
+            rho_type = function_type->second;
+        }
+
+        return names;
+    }
+
     bool record_field_name_matches(const std::string& declared_field, const std::string& requested_field)
     {
         if (is_qualified_symbol(requested_field))
@@ -2464,12 +2499,24 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         else if (data_inst.rhs.is_gadt_decl())
         {
             for(const auto& cons_decl: data_inst.rhs.get_gadt_constructors())
-                for(auto& con_name: cons_decl.con_names)
+            {
+                auto field_names = gadt_constructor_field_names(cons_decl.type);
+                if (field_names)
+                    for(const auto& field_name: *field_names)
                     {
-                        int arity = Hs::gen_type_arity(expand_constructor_record_fields(cons_decl.type));
-                        auto cname = unloc(con_name);
-                        add_constructor(cname, arity);
+                        record_field_name(field_name, family_name);
+                        instance_info.fields.insert(qualify_local_name(field_name));
+                        if (data_fam)
+                            data_fam->fields.insert( qualify_local_name(field_name) );
                     }
+
+                for(auto& con_name: cons_decl.con_names)
+                {
+                    int arity = Hs::gen_type_arity(expand_constructor_record_fields(cons_decl.type));
+                    auto cname = unloc(con_name);
+                    add_constructor(cname, arity);
+                }
+            }
         }
 
         add_type({qualify_local_name(instance_type_name), instance_info, {}, (int)instance_info.constructors.size(), /*kind*/ {}});
@@ -2514,15 +2561,23 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             {
                 arity = data_decl->get_gadt_constructors().size();
                 for(const auto& cons_decl: data_decl->get_gadt_constructors())
+                {
+                    auto field_names = gadt_constructor_field_names(cons_decl.type);
+                    if (field_names)
+                        for(const auto& field_name: *field_names)
+                        {
+                            record_field_name(field_name, unloc(data_decl->con).name);
+                            info.fields.insert( qualify_local_name(field_name) );
+                        }
+
                     for(auto& con_name: cons_decl.con_names)
                     {
                         int arity = Hs::gen_type_arity(expand_constructor_record_fields(cons_decl.type));
                         auto cname = unloc(con_name);
                         def_constructor(cname, arity, unloc(data_decl->con).name);
                         info.constructors.push_back( qualify_local_name(cname) );
-
-                        // FIXME: handle GADT fielddecls Constr :: { name1 :: ArgType1, name2 :: ArgType2 } -> ResultType
                     }
+                }
             }
 
             def_ADT(unloc(data_decl->con).name, *arity, info);
