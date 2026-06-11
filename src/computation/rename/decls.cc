@@ -67,36 +67,270 @@ bool is_definitely_pattern(const Haskell::Expression& lhs)
     return false;
 }
 
+bool is_prefix_neg(const vector<Hs::LExp>& terms)
+{
+    return not terms.empty() and unloc(terms[0]).is_a<Hs::Neg>();
+}
+
+bool is_infix_operator_term(const vector<Hs::LExp>& terms, int index)
+{
+    if (is_prefix_neg(terms))
+        return index != 0 and index % 2 == 0;
+    else
+        return index % 2 == 1;
+}
+
+bool is_infix_operand_term(const vector<Hs::LExp>& terms, int index)
+{
+    return not unloc(terms[index]).is_a<Hs::Neg>() and not is_infix_operator_term(terms, index);
+}
+
+Hs::LExp make_infix_exp(const vector<Hs::LExp>& terms)
+{
+    assert(not terms.empty());
+    if (terms.size() == 1)
+        return terms[0];
+
+    auto loc = terms.front().loc;
+    for(const auto& term: terms)
+        loc = loc * term.loc;
+
+    return {loc, Hs::InfixExp(terms)};
+}
+
+Hs::LPat expression_to_pattern_category(Hs::LExp lhs);
+
+Hs::PatternFieldBindings pattern_field_bindings(const Hs::FieldBindings& fields)
+{
+    Hs::PatternFieldBindings pattern_fields;
+    pattern_fields.dotdot = fields.dotdot;
+
+    for(const auto& lfield: fields)
+    {
+        const auto& field = unloc(lfield);
+        Hs::LPat pattern;
+        if (field.value)
+            pattern = expression_to_pattern_category(*field.value);
+        else
+        {
+            auto name = get_unqualified_name(unloc(field.field).name);
+            pattern = {field.field.loc, Hs::VarPattern({field.field.loc, Hs::Var(name)})};
+        }
+        pattern_fields.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern)});
+    }
+
+    return pattern_fields;
+}
+
+Hs::LPat expression_to_pattern_category(Hs::LExp lhs)
+{
+    auto& E = unloc(lhs);
+
+    if (auto I = E.to<Hs::InfixExp>())
+    {
+        if (I->terms.size() == 1)
+            return expression_to_pattern_category(I->terms[0]);
+
+        auto terms = I->terms;
+        for(int i=0; i<terms.size(); i++)
+            if (is_infix_operand_term(terms, i))
+                terms[i] = expression_to_pattern_category(terms[i]);
+
+        return {lhs.loc, Hs::InfixPat(terms)};
+    }
+    else if (E.is_a<Hs::ParsedApp>())
+    {
+        auto [head,args] = Hs::decompose_apps(lhs);
+        if (auto con = unloc(head).to<Hs::Con>())
+        {
+            Hs::LPats pat_args;
+            for(auto& arg: args)
+                pat_args.push_back(expression_to_pattern_category(arg));
+            return {lhs.loc, Hs::ConPattern({head.loc, *con}, pat_args)};
+        }
+
+        error(lhs.loc, Note()<<"Function application '"<<lhs<<"' is not valid in a pattern unless its head is a constructor.");
+        return {lhs.loc, Hs::WildcardPattern()};
+    }
+    else if (E.is_a<Hs::ApplyExp>())
+    {
+        auto [head,args] = Hs::decompose_apps(lhs);
+        if (auto con = unloc(head).to<Hs::Con>())
+        {
+            Hs::LPats pat_args;
+            for(auto& arg: args)
+                pat_args.push_back(expression_to_pattern_category(arg));
+            return {lhs.loc, Hs::ConPattern({head.loc, *con}, pat_args)};
+        }
+
+        error(lhs.loc, Note()<<"Function application '"<<lhs<<"' is not valid in a pattern unless its head is a constructor.");
+        return {lhs.loc, Hs::WildcardPattern()};
+    }
+    else if (auto r = E.to<Hs::RecordSyntax>())
+    {
+        auto con = unloc(r->head).to<Hs::Con>();
+        if (not con)
+        {
+            error(lhs.loc, Note()<<"Record syntax '"<<lhs<<"' is not valid in a pattern unless its head is a constructor.");
+            return {lhs.loc, Hs::WildcardPattern()};
+        }
+
+        return {lhs.loc, Hs::RecordPattern({r->head.loc, *con}, {r->fbinds.loc, pattern_field_bindings(unloc(r->fbinds))})};
+    }
+    else if (auto r = E.to<Hs::RecordCon>())
+        return {lhs.loc, Hs::RecordPattern(r->con, {r->fbinds.loc, pattern_field_bindings(unloc(r->fbinds))})};
+    else if (E.is_a<Hs::RecordUpdate>())
+    {
+        error(lhs.loc, Note()<<"Record update syntax '"<<lhs<<"' is not valid in a pattern.");
+        return {lhs.loc, Hs::WildcardPattern()};
+    }
+    else if (auto l = E.to<Hs::List>())
+    {
+        Hs::ListPattern P;
+        for(auto& element: l->elements)
+            P.elements.push_back(expression_to_pattern_category(element));
+        return {lhs.loc, P};
+    }
+    else if (auto t = E.to<Hs::Tuple>())
+    {
+        Hs::TuplePattern P;
+        for(auto& element: t->elements)
+            P.elements.push_back(expression_to_pattern_category(element));
+        return {lhs.loc, P};
+    }
+    else if (auto ap = E.to<Hs::AsPattern>())
+        return {lhs.loc, Hs::AsPattern(ap->var, expression_to_pattern_category(ap->pattern))};
+    else if (auto lp = E.to<Hs::LazyPattern>())
+        return {lhs.loc, Hs::LazyPattern(expression_to_pattern_category(lp->pattern))};
+    else if (auto sp = E.to<Hs::StrictPattern>())
+        return {lhs.loc, Hs::StrictPattern(expression_to_pattern_category(sp->pattern))};
+    else if (auto t = E.to<Hs::TypedExp>())
+    {
+        Hs::TypedPattern P;
+        P.pat = expression_to_pattern_category(t->exp);
+        P.type = t->type;
+        return {lhs.loc, P};
+    }
+    else if (auto l = E.to<Hs::Literal>())
+        return {lhs.loc, Hs::LiteralPattern(*l)};
+    else if (auto c = E.to<Hs::Con>())
+        return {lhs.loc, Hs::ConPattern({lhs.loc, *c}, {})};
+    else if (auto v = E.to<Hs::Var>())
+        return {lhs.loc, Hs::VarPattern({lhs.loc, *v})};
+    else if (E.is_a<Hs::WildcardPattern>())
+        return {lhs.loc, Hs::WildcardPattern()};
+    else if (E.is_a<Hs::VarPattern>() or E.is_a<Hs::ConPattern>() or E.is_a<Hs::InfixPat>() or
+             E.is_a<Hs::LiteralPattern>() or E.is_a<Hs::ListPattern>() or E.is_a<Hs::TuplePattern>() or
+             E.is_a<Hs::RecordPattern>() or E.is_a<Hs::TypedPattern>())
+        return lhs;
+    else
+    {
+        error(lhs.loc, Note()<<"Expression '"<<lhs<<"' is not valid in a pattern.");
+        return {lhs.loc, Hs::WildcardPattern()};
+    }
+}
+
+expression_ref classify_value_decl(const Hs::ValueDecl& D)
+{
+    auto classify_lhs = [&](auto&& self, Hs::LExp lhs, Hs::LPats extra_args) -> expression_ref
+    {
+        auto& E = unloc(lhs);
+
+        if (auto I = E.to<Hs::InfixExp>())
+        {
+            if (I->terms.size() == 1)
+                return self(self, I->terms[0], extra_args);
+
+            for(int i=0; i<I->terms.size(); i++)
+            {
+                if (not is_infix_operator_term(I->terms, i))
+                    continue;
+
+                if (auto v = unloc(I->terms[i]).to<Hs::Var>())
+                {
+                    vector<Hs::LExp> left_terms(I->terms.begin(), I->terms.begin() + i);
+                    vector<Hs::LExp> right_terms(I->terms.begin() + i + 1, I->terms.end());
+
+                    Hs::LPats pats;
+                    pats.push_back(expression_to_pattern_category(make_infix_exp(left_terms)));
+                    pats.push_back(expression_to_pattern_category(make_infix_exp(right_terms)));
+                    pats.insert(pats.end(), extra_args.begin(), extra_args.end());
+                    return Hs::simple_fun_decl({I->terms[i].loc, *v}, pats, D.rhs);
+                }
+            }
+
+            return Hs::PatDecl(expression_to_pattern_category(lhs), D.rhs);
+        }
+        else if (E.is_a<Hs::ParsedApp>())
+        {
+            auto [head,args] = Hs::decompose_apps(lhs);
+            Hs::LPats pats;
+            for(auto& arg: args)
+                pats.push_back(expression_to_pattern_category(arg));
+            pats.insert(pats.end(), extra_args.begin(), extra_args.end());
+
+            if (auto v = unloc(head).to<Hs::Var>())
+                return Hs::simple_fun_decl({head.loc, *v}, pats, D.rhs);
+            else if (unloc(head).is_a<Hs::Con>())
+                return Hs::PatDecl(expression_to_pattern_category(lhs), D.rhs);
+            else
+                return self(self, head, pats);
+        }
+        else if (E.is_a<Hs::ApplyExp>())
+        {
+            auto [head,args] = Hs::decompose_apps(lhs);
+            Hs::LPats pats;
+            for(auto& arg: args)
+                pats.push_back(expression_to_pattern_category(arg));
+            pats.insert(pats.end(), extra_args.begin(), extra_args.end());
+
+            if (auto v = unloc(head).to<Hs::Var>())
+                return Hs::simple_fun_decl({head.loc, *v}, pats, D.rhs);
+            else if (unloc(head).is_a<Hs::Con>())
+                return Hs::PatDecl(expression_to_pattern_category(lhs), D.rhs);
+            else
+                return self(self, head, pats);
+        }
+        else if (auto v = E.to<Hs::Var>())
+        {
+            if (extra_args.empty())
+                return Hs::simple_decl({lhs.loc, *v}, D.rhs);
+            else
+                return Hs::simple_fun_decl({lhs.loc, *v}, extra_args, D.rhs);
+        }
+        else
+            return Hs::PatDecl(expression_to_pattern_category(lhs), D.rhs);
+    };
+
+    return classify_lhs(classify_lhs, D.lhs, {});
+}
+
+expression_ref classify_value_decl(const expression_ref& E)
+{
+    if (auto D = E.to<Hs::ValueDecl>())
+        return classify_value_decl(*D);
+    else
+        return E;
+}
+
 expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
 {
     if (E.is_a<Haskell::ValueDecl>())
     {
-        auto D = E.as_<Haskell::ValueDecl>();
-
-        auto lhs = rename_infix(m, D.lhs);
-        auto rhs = rename_infix(m, D.rhs);
-
-        if (auto v = unloc(lhs).to<Hs::Var>())
-            return Hs::simple_decl({lhs.loc,*v}, rhs);
-        else if (is_definitely_pattern(unloc(lhs)))
-            return Hs::PatDecl( unapply(lhs), rhs );
-        else if (unloc(lhs).is_a<Hs::ApplyExp>() or unloc(lhs).is_a<Hs::ParsedApp>())
-        {
-            auto [head,args] = Hs::decompose_apps(lhs);
-
-            if (unloc(head).is_a<Hs::Con>())
-                return Hs::PatDecl( unapply(lhs), rhs);
-
-            else if (auto v = unloc(head).to<Hs::Var>())
-            {
-                Hs::LPats pats;
-                for(auto& arg: args)
-                    pats.push_back( unapply(arg) );
-
-                return Hs::simple_fun_decl({head.loc, *v}, pats, rhs);
-            }
-        }
-        throw myexception()<<"I don't recognize this declaration:\n    "<<E.print();
+        return rename_infix_decl(m, classify_value_decl(E));
+    }
+    else if (auto D = E.to<Hs::PatDecl>())
+    {
+        auto D2 = *D;
+        D2.rhs = rename_infix(m, D2.rhs);
+        return D2;
+    }
+    else if (auto D = E.to<Hs::FunDecl>())
+    {
+        auto D2 = *D;
+        for(auto& match: D2.matches)
+            match.rhs = rename_infix(m, match.rhs);
+        return D2;
     }
     else if (E.is_a<Hs::TypeSigDecl>())
         return E;
@@ -236,17 +470,49 @@ Hs::Decls group_fundecls(const Haskell::Decls& decls)
     return decls2;
 }
 
-Haskell::Binds rename_infix(const Module& m, Haskell::Binds binds)
+bool needs_decl_grouping(const Hs::Decls& decls)
+{
+    for(const auto& [_, decl]: decls)
+        if (decl.is_a<Hs::ValueDecl>() or decl.is_a<Hs::TypeSigDecl>() or
+            decl.is_a<Hs::FixityDecl>() or decl.is_a<Hs::InlinePragma>())
+            return true;
+
+    return false;
+}
+
+Hs::Binds classify_value_decls(Hs::Binds binds)
 {
     assert(binds.size() == 1);
+
     for(auto& [_, e]: binds[0])
-        e = rename_infix_decl(m, e);
+        e = classify_value_decl(e);
 
     auto [type_sigs, inline_sigs, bind0] = group_decls(binds[0]);
 
-    binds.signatures = type_sigs;
-    binds.inline_sigs = inline_sigs;
+    binds.signatures.insert(type_sigs.begin(), type_sigs.end());
+    binds.inline_sigs.insert(inline_sigs.begin(), inline_sigs.end());
     binds[0] = bind0;
+
+    return binds;
+}
+
+Haskell::Binds rename_infix(const Module& m, Haskell::Binds binds)
+{
+    assert(binds.size() == 1);
+
+    bool needs_grouping = needs_decl_grouping(binds[0]);
+
+    for(auto& [_, e]: binds[0])
+        e = rename_infix_decl(m, e);
+
+    if (needs_grouping)
+    {
+        auto [type_sigs, inline_sigs, bind0] = group_decls(binds[0]);
+
+        binds.signatures.insert(type_sigs.begin(), type_sigs.end());
+        binds.inline_sigs.insert(inline_sigs.begin(), inline_sigs.end());
+        binds[0] = bind0;
+    }
 
     return binds;
 }

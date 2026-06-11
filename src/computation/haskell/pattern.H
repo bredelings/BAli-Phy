@@ -94,6 +94,16 @@ struct ConPattern: public Object
     ConPattern(const LCon& h, const LPats& as):head(h),args(as) {}
 };
 
+struct InfixPat: public Object
+{
+    std::vector<Located<expression_ref>> terms;
+
+    InfixPat* clone() const { return new InfixPat(*this);}
+    std::string print() const;
+
+    InfixPat() = default;
+    InfixPat(const std::vector<Located<expression_ref>>& ts): terms(ts) {}
+};
 
 struct TypedPattern: public Object
 {

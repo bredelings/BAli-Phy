@@ -108,6 +108,18 @@ Hs::LPat unapply(Hs::LExp LE)
         SP.pattern = unapply(SP.pattern);
         P = SP;
     }
+    else if (E.is_a<Hs::VarPattern>() or
+             E.is_a<Hs::ConPattern>() or
+             E.is_a<Hs::InfixPat>() or
+             E.is_a<Hs::LiteralPattern>() or
+             E.is_a<Hs::ListPattern>() or
+             E.is_a<Hs::TuplePattern>() or
+             E.is_a<Hs::RecordPattern>() or
+             E.is_a<Hs::TypedPattern>() or
+             E.is_a<Hs::WildcardPattern>())
+    {
+        P = E;
+    }
     else if (E.is_a<Hs::ParsedApp>())
     {
         auto [head, args] = Hs::decompose_apps(LE);
@@ -402,6 +414,14 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
         // 11. Return the variables bound
         return find_vars_in_patterns(c->args, top);
     }
+    else if (auto i = pat.to<Hs::InfixPat>())
+    {
+        Hs::LPats operands;
+        for(auto& term: i->terms)
+            if (not unloc(term).is_a<Hs::Var>() and not unloc(term).is_a<Hs::Con>() and not unloc(term).is_a<Hs::Neg>())
+                operands.push_back(term);
+        return find_vars_in_patterns(operands, top);
+    }
     else if (auto r = pat.to<Hs::RecordPattern>())
     {
         if (unloc(r->fbinds).dotdot)
@@ -565,6 +585,50 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 
         // 11. Return the variables bound
         return bound;
+    }
+    else if (auto i = pat.to<Hs::InfixPat>())
+    {
+        auto I = *i;
+        bool has_bad_operator = false;
+        for(int n=1; n<I.terms.size(); n += 2)
+        {
+            const auto& op = I.terms[n];
+            if (auto v = unloc(op).to<Hs::Var>())
+            {
+                error(op.loc, Note()<<"Variable operator '"<<v->name<<"' is not valid in a pattern.");
+                has_bad_operator = true;
+            }
+        }
+
+        if (has_bad_operator)
+        {
+            bound_var_info bound;
+            bool overlap = false;
+            for(auto& term: I.terms)
+            {
+                if (unloc(term).is_a<Hs::Var>() or unloc(term).is_a<Hs::Con>() or unloc(term).is_a<Hs::Neg>())
+                    continue;
+
+                auto bound_here = rename_pattern(term, top);
+                overlap = overlap or not disjoint_add(bound, bound_here);
+            }
+            if (overlap)
+                error(Note()<<"Pattern '"<<pat<<"' uses a variable twice!");
+            pat = Hs::WildcardPattern();
+            return bound;
+        }
+
+        try
+        {
+            lpat = unapply(desugar_infix(m, I.terms));
+            return rename_pattern(lpat, top);
+        }
+        catch (myexception& e)
+        {
+            error(loc, Note()<<e.what());
+            pat = Hs::WildcardPattern();
+            return {};
+        }
     }
     else if (auto r = pat.to<Hs::RecordPattern>())
     {

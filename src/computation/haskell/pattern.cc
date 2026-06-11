@@ -42,6 +42,14 @@ string ConPattern::print() const
     return join(ss, " ");
 }
 
+string InfixPat::print() const
+{
+    vector<string> parts;
+    for(auto& term: terms)
+        parts.push_back(term.print());
+    return join(parts, " ");
+}
+
 string TypedPattern::print() const
 {
     return pat.print() + " :: " + type.print();
@@ -106,6 +114,8 @@ string parenthesize_pattern(const Pattern& p)
     bool add_parens = false;
     if (auto c = p.to<ConPattern>(); c and not c->args.empty())
         add_parens = true;
+    else if (p.is_a<InfixPat>())
+        add_parens = true;
     else if (p.is_a<RecordPattern>())
         add_parens = true;
     else if (p.is_a<TypedPattern>())
@@ -164,6 +174,14 @@ std::set<LVar> vars_in_pattern(const LPat& lpat)
 	return { v->var };
     else if (auto c = pat.to<ConPattern>())
         return vars_in_patterns(c->args);
+    else if (auto i = pat.to<InfixPat>())
+    {
+        LPats operands;
+        for(auto& term: i->terms)
+            if (not unloc(term).is_a<Hs::Var>() and not unloc(term).is_a<Hs::Con>() and not unloc(term).is_a<Hs::Neg>())
+                operands.push_back(term);
+        return vars_in_patterns(operands);
+    }
     else if (auto r = pat.to<RecordPattern>())
     {
         LPats field_patterns;

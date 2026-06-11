@@ -28,6 +28,7 @@ Hs::LExp rename_infix(const Module& m, Hs::LExp E);
 Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R);
 Hs::Binds rename_infix(const Module& p, Hs::Binds);
 Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls);
+Hs::Binds classify_value_decls(Hs::Binds);
 
 expression_ref rename_infix_decl(const Module& m, const expression_ref& E);
 

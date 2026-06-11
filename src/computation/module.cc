@@ -925,12 +925,9 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
     }
 
-    // FIXME - merge with rename() below.
-    // Currently this (1) translates field-decls into function declarations
-    //                (2) rewrites @ f x y -> f x y (where f is the head) using unapply( ).
-    //                (3) rewrites infix expressions through desugar_infix( )
-    //                (4) merges adjacent function declaration lines into a Match.
-    M = ::rename_infix(*MM, M);
+    // Classify top-level value declarations before adding local symbols.
+    // This finds binders without resolving expression or pattern fixity.
+    M.value_decls = classify_value_decls(M.value_decls);
 
     // We should be able to build these as we go, in rename!
     // We can merge them into a global symbol table (if we want) afterwards.
@@ -943,6 +940,10 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     for(auto& f: M.foreign_decls)
         MM->def_function( unloc(f.function).name );
+
+    // FIXME - merge with rename() below.  This now runs after local symbol
+    // collection so infix handling can see locally declared values.
+    M = ::rename_infix(*MM, M);
 
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
