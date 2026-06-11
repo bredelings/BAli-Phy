@@ -489,7 +489,6 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             auto info = std::make_shared<DataInfo>();
             info->name = data_type_con.name;
             info->data_or_newtype = data_decl.data_or_newtype;
-            info->is_regular_decl = data_decl.is_regular_decl();
             info->type_vars = data_tvs;
             info->context = data_context;
             info->constructors = constructors;

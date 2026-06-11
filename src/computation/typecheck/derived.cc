@@ -78,11 +78,6 @@ namespace
         return bool(data_info.data.info);
     }
 
-    bool is_regular_data_info(TypeChecker&, const DerivingDataInfo& data_info)
-    {
-        return has_semantic_data_info(data_info) and data_info.data.info->is_regular_decl;
-    }
-
     const vector<string>& deriving_constructors(const DerivingDataInfo& data_info)
     {
         return data_info.data.info ? data_info.data.info->constructors : data_info.data.constructors;
@@ -113,16 +108,6 @@ namespace
                 return false;
         }
         return true;
-    }
-
-    bool is_regular_data_info_with_constructors(TypeChecker& tc, const DerivingDataInfo& data_info)
-    {
-        return is_regular_data_info(tc, data_info) and has_constructor_infos(tc, data_info);
-    }
-
-    bool is_regular_data_info_with_nullary_constructors(TypeChecker& tc, const DerivingDataInfo& data_info)
-    {
-        return is_regular_data_info(tc, data_info) and has_only_nullary_constructors(tc, data_info);
     }
 
     vector<string> record_field_names(const Hs::ConstructorDecl& constructor)
@@ -970,20 +955,20 @@ namespace
     const vector<StockDerivingSpec>& stock_deriving_specs()
     {
         static const vector<StockDerivingSpec> specs = {
-            {eq_class_name, true, derive_eq_instance, is_regular_data_info,
-             "deriving Eq is only supported for regular data/newtype declarations"},
-            {ord_class_name, true, derive_ord_instance, is_regular_data_info,
-             "deriving Ord is only supported for regular data/newtype declarations"},
-            {bounded_class_name, true, nullptr, is_regular_data_info_with_constructors,
-             "deriving Bounded is only supported for regular data/newtype declarations with constructors"},
-            {enum_class_name, false, nullptr, is_regular_data_info_with_nullary_constructors,
+            {eq_class_name, true, derive_eq_instance, has_constructor_infos,
+             "deriving Eq is only supported for data/newtype declarations with constructor metadata"},
+            {ord_class_name, true, derive_ord_instance, has_constructor_infos,
+             "deriving Ord is only supported for data/newtype declarations with constructor metadata"},
+            {bounded_class_name, true, nullptr, has_constructor_infos,
+             "deriving Bounded is only supported for data/newtype declarations with constructors"},
+            {enum_class_name, false, nullptr, has_only_nullary_constructors,
              "deriving Enum is only supported for regular data declarations with only nullary constructors"},
-            {ix_class_name, false, nullptr, is_regular_data_info_with_nullary_constructors,
+            {ix_class_name, false, nullptr, has_only_nullary_constructors,
              "deriving Ix is only supported for regular data declarations with only nullary constructors"},
-            {show_class_name, true, nullptr, is_regular_data_info,
-             "deriving Show is only supported for regular data/newtype declarations"},
-            {read_class_name, true, nullptr, is_regular_data_info,
-             "deriving Read is only supported for regular data/newtype declarations with prefix, record, or binary infix constructors"},
+            {show_class_name, true, nullptr, has_constructor_infos,
+             "deriving Show is only supported for data/newtype declarations with constructor metadata"},
+            {read_class_name, true, nullptr, has_constructor_infos,
+             "deriving Read is only supported for data/newtype declarations with prefix, record, or binary infix constructors"},
         };
 
         return specs;
@@ -1533,7 +1518,7 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
 
         auto type_info = this_mod().lookup_resolved_type(unloc(data_decl->con).name);
         auto data_info = type_info ? type_info->is_data() : nullptr;
-        if (not data_info or not data_info->info or not data_info->info->is_regular_decl)
+        if (not data_info or not data_info->info)
             continue;
 
         for(auto& deriving: data_decl->derivings)
@@ -1545,7 +1530,7 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
             if (not derived_class or not derived_class->spec->needs_field_constraints)
                 continue;
 
-            for(const auto& con_name: data_info->constructors)
+            for(const auto& con_name: data_info->info->constructors)
             {
                 auto con_info = this_mod().constructor_info(con_name);
                 if (not con_info)
