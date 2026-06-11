@@ -1,4 +1,5 @@
 #include "data_con_info.H"
+#include "haskell/ids.H"
 
 using std::vector;
 
@@ -31,6 +32,13 @@ int DataConInfo::dict_arity() const
 int DataConInfo::arity() const
 {
     return field_types.size();
+}
+
+bool DataConInfo::is_infix_constructor() const
+{
+    return not is_record_constructor()
+        and arity() == 2
+        and is_haskell_consym(get_unqualified_name(name));
 }
 
 Type DataConInfo::result_type() const

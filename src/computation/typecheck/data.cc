@@ -1,4 +1,5 @@
 #include "typecheck.H"
+#include "haskell/ids.H"
 #include "rename/rename.H"
 
 #include <functional>
@@ -230,6 +231,7 @@ std::pair<Hs::LType,vector<bool>> pop_constructor_signature_strictness(Hs::LType
 DataConInfo TypeChecker::infer_type_for_constructor(const Hs::LTypeCon& con, const vector<Hs::LTypeVar>& tvs, const Hs::ConstructorDecl& constructor)
 {
     DataConInfo info;
+    info.name = unloc(*constructor.con).name;
     info.data_type = TypeCon(unloc(con).name);
 
     // FIXME: So much duplicated code with kind_check_constructor!  Can we fix?
@@ -476,7 +478,9 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
             for(auto& con_name: data_cons_decl.con_names)
             {
                 constructors.push_back(unloc(con_name));
-                types = types.insert({unloc(con_name), info});
+                auto con_info = info;
+                con_info.name = unloc(con_name);
+                types = types.insert({unloc(con_name), con_info});
             }
         }
     }
@@ -556,6 +560,7 @@ void TypeChecker::apply_source_role_annotations(const Hs::Decls& decls)
 DataConInfo TypeChecker::infer_type_for_data_family_constructor(const Hs::LType& hs_result_type, const vector<Hs::LTypeVar>& outer_tvs, const vector<Type>& top_constraints, const Hs::ConstructorDecl& constructor)
 {
     DataConInfo info;
+    info.name = unloc(*constructor.con).name;
 
     info.field_names = constructor_field_names(constructor);
     auto hs_field_types = constructor.get_field_types();
@@ -726,7 +731,11 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
             DataConInfo info = infer_type_for_gadt_data_family_constructor(instance_head.type, data_family, instance_head.context, constructor, is_newtype);
             info.is_newtype_constructor = data_inst.rhs.data_or_newtype == Hs::DataOrNewtype::newtype;
             for(auto& con_name: constructor.con_names)
-                types = types.insert({unloc(con_name), info});
+            {
+                auto con_info = info;
+                con_info.name = unloc(con_name);
+                types = types.insert({unloc(con_name), con_info});
+            }
         }
     }
 
@@ -794,6 +803,7 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 
         for(auto& [name,con_info]: con_infos)
         {
+            assert(con_info.name == name);
             auto C = this_mod().lookup_local_symbol(name);
             assert(C);
             assert(not C->con_info);

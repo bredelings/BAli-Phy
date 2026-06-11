@@ -8,6 +8,7 @@
 
 struct DataConInfo
 {
+    std::string name;
     std::vector<TypeVar> uni_tvs;
     std::vector<TypeVar> exi_tvs;
     std::vector<Type> top_constraints; // The "stupid theta"
@@ -25,6 +26,8 @@ struct DataConInfo
     std::vector<Type> equality_preds() const;
     int dict_arity() const;
     int arity() const;
+    bool is_record_constructor() const { return field_names.has_value(); }
+    bool is_infix_constructor() const;
     Type result_type() const;
 
     Type constructor_type() const;
@@ -32,7 +35,7 @@ struct DataConInfo
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types, field_names, field_strictness, data_type, constructor_result_type, is_newtype_constructor);
+	ar(name, uni_tvs, exi_tvs, top_constraints, written_constraints, gadt_eq_constraints, field_types, field_names, field_strictness, data_type, constructor_result_type, is_newtype_constructor);
     }
 };
 

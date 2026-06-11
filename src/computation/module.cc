@@ -2097,6 +2097,7 @@ std::optional<DataConInfo> Module::constructor_info(const string& con_name) cons
     if (con_name == ":")
     {
         DataConInfo info;
+        info.name = ":";
         TypeVar a("a", kind_type());
         info.uni_tvs = { a };
         info.field_types = { a, list_type(a) };
@@ -2106,6 +2107,7 @@ std::optional<DataConInfo> Module::constructor_info(const string& con_name) cons
     else if (con_name == "[]")
     {
         DataConInfo info;
+        info.name = "[]";
         TypeVar a("a", kind_type());
         info.uni_tvs = { a };
         info.data_type = list_tycon();
@@ -2114,6 +2116,7 @@ std::optional<DataConInfo> Module::constructor_info(const string& con_name) cons
     else if (is_tuple_name(con_name) or con_name == "()")
     {
         DataConInfo info;
+        info.name = con_name;
         int n = tuple_arity(con_name);
         for(int i=0;i<n;i++)
         {
