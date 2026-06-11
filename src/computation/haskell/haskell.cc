@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 #include "haskell.H"
 #include "ids.H"
 #include "util/string/join.H"
@@ -23,11 +25,25 @@ std::tuple<LExp, vector<LExp>> decompose_apps(const LExp& E)
         std::get<1>(head_args).push_back(app->arg);
         return head_args;
     }
+    else if (unloc(E).is_a<ParsedApp>())
+    {
+        std::abort();
+    }
+    else
+        return {E,{}};
+}
+
+std::tuple<LExp, vector<LExp>> decompose_parsed_app(const LExp& E)
+{
+    if (unloc(E).is_a<ApplyExp>())
+    {
+        std::abort();
+    }
     else if (auto app = unloc(E).to<ParsedApp>())
     {
         if (app->terms.empty())
             return {E,{}};
-        auto head_args = decompose_apps(app->terms[0]);
+        auto head_args = decompose_parsed_app(app->terms[0]);
         for(auto term = app->terms.begin() + 1; term != app->terms.end(); ++term)
             std::get<1>(head_args).push_back(*term);
         return head_args;

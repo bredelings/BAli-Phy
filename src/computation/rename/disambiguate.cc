@@ -235,7 +235,7 @@ namespace
             }
             else if (E.is_a<Hs::ParsedApp>())
             {
-                auto [head,args] = Hs::decompose_apps(lhs);
+                auto [head,args] = Hs::decompose_parsed_app(lhs);
                 Hs::LPats pats;
                 for(auto& arg: args)
                     pats.push_back(disambiguate_pattern(arg));
@@ -463,7 +463,7 @@ Hs::LPat disambiguate_pattern(Hs::LExp lhs)
     }
     else if (E.is_a<Hs::ParsedApp>())
     {
-        auto [head,args] = Hs::decompose_apps(lhs);
+        auto [head,args] = Hs::decompose_parsed_app(lhs);
         if (auto con = unloc(head).to<Hs::Con>())
         {
             Hs::LPats pat_args;

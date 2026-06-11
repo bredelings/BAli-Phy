@@ -113,6 +113,8 @@ struct ParsedApp: public Object
 
 std::tuple<LExp,std::vector<LExp>> decompose_apps(const LExp&);
 
+std::tuple<LExp,std::vector<LExp>> decompose_parsed_app(const LExp&);
+
 //std::vector<LExp> flatten(const LExp&);
 
 LExp apply(const std::vector<LExp>& terms);
