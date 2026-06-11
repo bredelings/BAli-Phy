@@ -1,0 +1,8 @@
+[1mMain.hs:12.25-38:[1;31m error:[0m[1m
+   • Duplicate instance 'forall a. Eq a => Eq [a]'
+       Previous instance: 'forall a. Eq a => Eq [a]' from module Data.Eq
+   • In class instance 'forall a. Eq a => Eq [a]':
+   [1;34m|[0m
+[1;34m12[0m [1;34m| [0mderiving stock instance [1;31mEq a => Eq [a][0m
+   [1;34m|[0m                         [1;31m^^^^^^^^^^^^^^[0m
+

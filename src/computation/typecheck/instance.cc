@@ -12,6 +12,99 @@ using std::pair;
 using std::tuple;
 using std::optional;
 
+namespace
+{
+    // Return the class predicate part of an instance, ignoring its context.
+    Type instance_head(const InstanceInfo& info)
+    {
+        return type_apply(info.class_con, info.args);
+    }
+
+    // Check whether a more-specific instance may replace a less-specific one during lookup.
+    bool lookup_overlap_is_allowed(const InstanceInfo& less_specific, const InstanceInfo& more_specific)
+    {
+        return less_specific.overlappable or more_specific.overlapping or less_specific.incoherent or more_specific.incoherent;
+    }
+
+    // Check whether the overlap flags permit admitting this pair of instance heads.
+    bool instance_overlap_is_allowed(TypeChecker& tc, const InstanceInfo& existing, const Type& existing_head, const InstanceInfo& candidate, const Type& candidate_head)
+    {
+        if (existing.incoherent or candidate.incoherent)
+            return true;
+
+        if (tc.more_specific_than(existing_head, candidate_head))
+            return lookup_overlap_is_allowed(candidate, existing);
+
+        if (tc.more_specific_than(candidate_head, existing_head))
+            return lookup_overlap_is_allowed(existing, candidate);
+
+        return false;
+    }
+
+    // Print an instance signature with a fresh tidying state for this one type.
+    std::string show_instance_signature(const InstanceInfo& info)
+    {
+        TidyState tidy_state;
+        return show_type_plain(tidy_state, info.type());
+    }
+
+    // Compare instance heads up to type-variable renaming; contexts do not distinguish instances.
+    bool same_instance_head(TypeChecker& tc, const Type& head1, const Type& head2)
+    {
+        return tc.maybe_match(head1, head2) and tc.maybe_match(head2, head1);
+    }
+
+    // Reject duplicate/forbidden-overlap instances before adding a new dfun to the environment.
+    bool check_instance_can_be_added(TypeChecker& tc, const InstanceInfo& candidate_info)
+    {
+        auto candidate = tc.freshen(candidate_info);
+        auto candidate_head = instance_head(candidate);
+
+        auto check_env = [&](const InstanceEnv& instance_env, const std::optional<std::string>& module_name) -> bool
+        {
+            for(auto& [dfun, existing_info_]: instance_env)
+            {
+                if (existing_info_.class_con != candidate.class_con) continue;
+
+                auto existing = tc.freshen(existing_info_);
+                auto existing_head = instance_head(existing);
+
+                if (not tc.maybe_unify(existing_head, candidate_head))
+                    continue;
+
+                auto n = Note();
+                if (same_instance_head(tc, existing_head, candidate_head))
+                {
+                    n<<"Duplicate instance '"<<show_instance_signature(candidate_info)<<"'";
+                    n<<"\n  Previous instance: '"<<show_instance_signature(existing_info_)<<"'";
+                }
+                else if (not instance_overlap_is_allowed(tc, existing_info_, existing_head, candidate_info, candidate_head))
+                {
+                    n<<"Instance '"<<show_instance_signature(candidate_info)
+                     <<"' overlaps existing instance '"<<show_instance_signature(existing_info_)<<"'";
+                }
+                else
+                    continue;
+
+                if (module_name)
+                    n<<" from module "<<*module_name;
+                tc.record_error(n);
+                return false;
+            }
+            return true;
+        };
+
+        if (not check_env(tc.this_mod().local_instances, {}))
+            return false;
+
+        for(auto& [modid, mod]: tc.this_mod().transitively_imported_modules)
+            if (not check_env(mod->local_instances(), modid))
+                return false;
+
+        return true;
+    }
+}
+
 
 // TODO: maybe move some of the check_add_type_instance stuff to renaming?
 
@@ -364,8 +457,12 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
         inst_decl.overlap_pragma == "OVERLAPS" or
         incoherent;
 
+    InstanceInfo info{tvs, constraints, *class_con, args, incoherent, overlappable, overlapping};
+    if (not check_instance_can_be_added(*this, info))
+        return {};
+
     auto S = symbol_info(dfun.name, symbol_type_t::instance_dfun, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{tvs, constraints, *class_con, args, incoherent, overlappable, overlapping} );
+    S.instance_info = std::make_shared<InstanceInfo>( info );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
@@ -861,7 +958,7 @@ optional<pair<Core::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target_
 
             auto info = freshen(info_);
 
-            auto instance_head = type_apply(info.class_con, info.args);
+            auto instance_head = ::instance_head(info);
 
             if (auto subst = maybe_match(instance_head, target_pred))
             {
@@ -898,7 +995,7 @@ optional<pair<Core::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target_
 
             auto& [_3, _4, type_j, info_j] = matching_instances[j];
 
-            if (more_specific_than(type_j, type_i) and (info_i.overlappable or info_j.overlapping))
+            if (more_specific_than(type_j, type_i) and lookup_overlap_is_allowed(info_i, info_j))
                 keep = false;
         }
 
@@ -914,7 +1011,7 @@ optional<pair<Core::Exp<>,LIE>> TypeChecker::lookup_instance(const Type& target_
         auto n = Note()<<"Too many matching instances for "<<show_type_plain(tidy_state, target_pred)<<":\n";
         for(auto& [_,type1,type2,info]: surviving_instances)
 	{
-	    auto instance_head = type_apply(info.class_con, info.args);
+	    auto instance_head = ::instance_head(info);
             n<<"  "<<show_type_plain(tidy_state, remove_top_gen(instance_head))<<"\n";
 	}
         record_error(n);
