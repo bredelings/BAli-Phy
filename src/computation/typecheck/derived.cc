@@ -88,9 +88,11 @@ namespace
         return DerivingTarget{DerivingDataInfo{TypeCon(T->name, T->kind), T, *data_info}, explicit_polytype};
     }
 
-    optional<DataConInfo> deriving_constructor_info(TypeChecker& tc, const string& con_name)
+    DataConInfo deriving_constructor_info(TypeChecker& tc, const string& con_name)
     {
-        return tc.this_mod().constructor_info(con_name);
+        auto con_info = tc.this_mod().constructor_info(con_name);
+        assert(con_info);
+        return *con_info;
     }
 
     bool has_ordered_constructors(const DerivingDataInfo& data_info)
@@ -105,16 +107,10 @@ namespace
         return data_info.data.info->constructors;
     }
 
-    // Check that every ordered constructor has registered constructor metadata.
-    bool has_constructor_infos(TypeChecker& tc, const DerivingDataInfo& data_info)
+    // Check that a type has semantic constructors available for deriving.
+    bool has_constructor_infos(TypeChecker&, const DerivingDataInfo& data_info)
     {
-        if (not has_ordered_constructors(data_info))
-            return false;
-
-        for(const auto& con_name: deriving_constructors(data_info))
-            if (not deriving_constructor_info(tc, con_name))
-                return false;
-        return true;
+        return has_ordered_constructors(data_info);
     }
 
     // Check the semantic constructor list for Enum-style nullary-only deriving.
@@ -126,7 +122,7 @@ namespace
         for(const auto& con_name: deriving_constructors(data_info))
         {
             auto con_info = deriving_constructor_info(tc, con_name);
-            if (not con_info or con_info->arity() != 0)
+            if (con_info.arity() != 0)
                 return false;
         }
         return true;
@@ -139,7 +135,7 @@ namespace
             return false;
 
         auto con_info = deriving_constructor_info(tc, deriving_constructors(data_info).front());
-        return con_info and con_info->arity() > 0;
+        return con_info.arity() > 0;
     }
 
     // Accept the two Haskell 2010/GHC forms for derived Bounded: enums and products.
@@ -163,9 +159,7 @@ namespace
         for(const auto& con_name: deriving_constructors(data_info))
         {
             auto con_info = deriving_constructor_info(tc, con_name);
-            if (not con_info)
-                return "deriving Enum requires constructor metadata for '" + get_unqualified_name(con_name) + "'";
-            if (con_info->arity() != 0)
+            if (con_info.arity() != 0)
                 return "deriving Enum requires an enumeration type, but constructor '" + get_unqualified_name(con_name) + "' has fields";
         }
 
@@ -173,19 +167,12 @@ namespace
     }
 
     // Explain why a candidate type is not one of the Bounded-derivable shapes.
-    string bounded_deriving_error(TypeChecker& tc, const DerivingDataInfo& data_info)
+    string bounded_deriving_error(TypeChecker&, const DerivingDataInfo& data_info)
     {
         if (not has_ordered_constructors(data_info))
             return "deriving Bounded requires at least one constructor";
 
         const auto& constructors = deriving_constructors(data_info);
-        for(const auto& con_name: constructors)
-        {
-            auto con_info = deriving_constructor_info(tc, con_name);
-            if (not con_info)
-                return "deriving Bounded requires constructor metadata for '" + get_unqualified_name(con_name) + "'";
-        }
-
         if (constructors.size() == 1)
             return "deriving Bounded requires an enumeration type or a single-constructor product type";
 
@@ -201,10 +188,7 @@ namespace
         for(const auto& con_name: deriving_constructors(data_info))
         {
             auto con_info = deriving_constructor_info(tc, con_name);
-            if (not con_info)
-                return false;
-
-            if (not is_haskell_conid(get_unqualified_name(con_info->name)) and not con_info->is_infix_constructor())
+            if (not is_haskell_conid(get_unqualified_name(con_info.name)) and not con_info.is_infix_constructor())
                 return false;
         }
 
@@ -497,8 +481,7 @@ namespace
         for(int i=0; i<constructors.size(); i++)
         {
             auto con_info = deriving_constructor_info(tc, constructors[i]);
-            assert(con_info);
-            alts.push_back(simple_alt(constructor_wildcard_pattern(constructors[i], con_info->arity()), int_exp(i)));
+            alts.push_back(simple_alt(constructor_wildcard_pattern(constructors[i], con_info.arity()), int_exp(i)));
         }
 
         return case_exp(value, alts);
@@ -510,14 +493,13 @@ namespace
         for(const auto& constructor: deriving_constructors(data_info))
         {
             auto con_info = deriving_constructor_info(tc, constructor);
-            assert(con_info);
 
             vector<pair<Hs::LExp,Hs::LExp>> fields;
-            for(int i=0; i<con_info->arity(); i++)
+            for(int i=0; i<con_info.arity(); i++)
                 fields.push_back({local_var_exp("x$" + std::to_string(i)), local_var_exp("y$" + std::to_string(i))});
 
-            eq_matches.push_back(binary_method_rule(constructor_var_pattern(constructor, con_info->arity(), "x$"),
-                                                    constructor_var_pattern(constructor, con_info->arity(), "y$"),
+            eq_matches.push_back(binary_method_rule(constructor_var_pattern(constructor, con_info.arity(), "x$"),
+                                                    constructor_var_pattern(constructor, con_info.arity(), "y$"),
                                                     eq_all_exp(fields)));
         }
 
@@ -612,14 +594,13 @@ namespace
         for(const auto& constructor: constructors)
         {
             auto con_info = deriving_constructor_info(tc, constructor);
-            assert(con_info);
 
             vector<pair<Hs::LExp,Hs::LExp>> fields;
-            for(int i=0; i<con_info->arity(); i++)
+            for(int i=0; i<con_info.arity(); i++)
                 fields.push_back({local_var_exp("x$" + std::to_string(i)), local_var_exp("y$" + std::to_string(i))});
 
-            compare_matches.push_back(binary_method_rule(constructor_var_pattern(constructor, con_info->arity(), "x$"),
-                                                         constructor_var_pattern(constructor, con_info->arity(), "y$"),
+            compare_matches.push_back(binary_method_rule(constructor_var_pattern(constructor, con_info.arity(), "x$"),
+                                                         constructor_var_pattern(constructor, con_info.arity(), "y$"),
                                                          compare_all_exp(fields)));
         }
 
@@ -649,9 +630,8 @@ namespace
     Hs::LExp bounded_constructor_exp(TypeChecker& tc, const string& con_name, const string& bound_method_name)
     {
         auto con_info = deriving_constructor_info(tc, con_name);
-        assert(con_info);
-        vector<Hs::LExp> args(con_info->arity(), wired_var_exp(bound_method_name));
-        return constructor_exp(con_name, con_info->arity(), args);
+        vector<Hs::LExp> args(con_info.arity(), wired_var_exp(bound_method_name));
+        return constructor_exp(con_name, con_info.arity(), args);
     }
 
     // Derive Bounded from ordered constructor metadata rather than source constructor order.
@@ -682,9 +662,8 @@ namespace
         for(int i=0; i<constructors.size(); i++)
         {
             auto con_info = deriving_constructor_info(tc, constructors[i]);
-            assert(con_info);
-            from_enum_matches.push_back(unary_method_rule(constructor_pattern(constructors[i], con_info->arity(), {}), int_exp(i)));
-            to_enum_matches.push_back(unary_method_rule(int_pat(i), constructor_exp(constructors[i], con_info->arity(), {})));
+            from_enum_matches.push_back(unary_method_rule(constructor_pattern(constructors[i], con_info.arity(), {}), int_exp(i)));
+            to_enum_matches.push_back(unary_method_rule(int_pat(i), constructor_exp(constructors[i], con_info.arity(), {})));
         }
         to_enum_matches.push_back(unary_method_rule(wildcard_pat(), error_exp("toEnum: tag out of range")));
 
@@ -779,8 +758,7 @@ namespace
         for(const auto& constructor: constructors)
         {
             auto con_info = deriving_constructor_info(tc, constructor);
-            assert(con_info);
-            constructor_exps.push_back(constructor_exp(constructor, con_info->arity(), {}));
+            constructor_exps.push_back(constructor_exp(constructor, con_info.arity(), {}));
         }
         Hs::LExp all_constructors = {noloc, Hs::List(constructor_exps)};
 
@@ -928,8 +906,7 @@ namespace
         {
             assert(is_single_constructor_product(tc, data_info));
             auto con_info = deriving_constructor_info(tc, deriving_constructors(data_info).front());
-            assert(con_info);
-            methods = derive_product_ix_methods(*con_info, deriving_loc);
+            methods = derive_product_ix_methods(con_info, deriving_loc);
         }
 
         return Hs::InstanceDecl({}, stock_instance_type(data_info, ix_class_name), {}, {}, methods);
@@ -1025,10 +1002,9 @@ namespace
         for(const auto& constructor: deriving_constructors(data_info))
         {
             auto con_info = deriving_constructor_info(tc, constructor);
-            assert(con_info);
 
-            shows_prec_matches.push_back(Hs::MRule({var_pat("d$"), constructor_var_pattern(con_info->name, con_info->arity(), "x$")},
-                                                   Hs::SimpleRHS(shows_prec_constructor_exp(*con_info))));
+            shows_prec_matches.push_back(Hs::MRule({var_pat("d$"), constructor_var_pattern(con_info.name, con_info.arity(), "x$")},
+                                                   Hs::SimpleRHS(shows_prec_constructor_exp(con_info))));
         }
 
         Hs::Decls methods;
@@ -1186,17 +1162,16 @@ namespace
         for(const auto& constructor: deriving_constructors(data_info))
         {
             auto con_info = deriving_constructor_info(tc, constructor);
-            assert(con_info);
 
-            Hs::LExp constructor_parser = con_info->is_record_constructor()
-                ? read_record_constructor_parser_exp(*con_info)
-                : con_info->is_infix_constructor()
-                    ? read_infix_constructor_parser_exp(*con_info)
-                    : read_constructor_parser_exp(*con_info);
+            Hs::LExp constructor_parser = con_info.is_record_constructor()
+                ? read_record_constructor_parser_exp(con_info)
+                : con_info.is_infix_constructor()
+                    ? read_infix_constructor_parser_exp(con_info)
+                    : read_constructor_parser_exp(con_info);
             auto parser = lambda_exp({var_pat("r$")}, constructor_parser);
-            auto needs_parens = con_info->is_infix_constructor()
+            auto needs_parens = con_info.is_infix_constructor()
                 ? greater_than_exp(local_var_exp("d$"), int_exp(5))
-                : con_info->is_record_constructor() or con_info->arity() == 0
+                : con_info.is_record_constructor() or con_info.arity() == 0
                     ? bool_exp(false)
                     : greater_than_exp(local_var_exp("d$"), int_exp(10));
             constructor_parsers.push_back(read_paren_exp(needs_parens, parser, local_var_exp("s$")));
@@ -1290,10 +1265,10 @@ namespace
             return {};
 
         auto con_info = deriving_constructor_info(tc, deriving_constructors(data_info)[0]);
-        if (not con_info or con_info->field_types.size() != 1)
+        if (con_info.field_types.size() != 1)
             return {};
 
-        return con_info->field_types[0];
+        return con_info.field_types[0];
     }
 
     // Drop trailing data variables from the representation type when they match exactly.
@@ -1845,14 +1820,12 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
 
             for(const auto& con_name: data_info->info->constructors)
             {
-                auto con_info = this_mod().constructor_info(con_name);
-                if (not con_info)
-                    continue;
+                auto con_info = deriving_constructor_info(*this, con_name);
 
-                set<TypeVar> data_tvs(con_info->uni_tvs.begin(), con_info->uni_tvs.end());
-                for(int i=0; i<con_info->field_types.size(); i++)
+                set<TypeVar> data_tvs(con_info.uni_tvs.begin(), con_info.uni_tvs.end());
+                for(int i=0; i<con_info.field_types.size(); i++)
                 {
-                    auto pred = class_constraint(derived_class->type_con, con_info->field_types[i]);
+                    auto pred = class_constraint(derived_class->type_con, con_info.field_types[i]);
                     vector<Type> active;
                     auto missing = find_missing_derived_constraint(pred, data_tvs, active);
                     if (not missing)
@@ -1861,9 +1834,9 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
                     auto span = source_span_scope(deriving.type.loc);
                     TidyState tidy_state;
                     auto data_name = data_info->info ? data_info->info->name : unloc(data_decl->con).name;
-                    auto instance_pred = class_constraint(derived_class->type_con, type_apply(TypeCon(data_name), con_info->uni_tvs));
+                    auto instance_pred = class_constraint(derived_class->type_con, type_apply(TypeCon(data_name), con_info.uni_tvs));
                     auto note = note_scope(Note()<<"When deriving the instance for "<<show_type_plain(tidy_state, instance_pred));
-                    record_error(Note()<<"Could not deduce '"<<show_type_plain(tidy_state, *missing)<<"' arising from field "<<(i+1)<<" of constructor '"<<get_unqualified_name(con_name)<<"' (type '"<<show_type_plain(tidy_state, con_info->field_types[i])<<"')");
+                    record_error(Note()<<"Could not deduce '"<<show_type_plain(tidy_state, *missing)<<"' arising from field "<<(i+1)<<" of constructor '"<<get_unqualified_name(con_name)<<"' (type '"<<show_type_plain(tidy_state, con_info.field_types[i])<<"')");
                 }
             }
         }
