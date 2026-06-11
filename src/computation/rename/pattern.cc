@@ -284,7 +284,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
     else if (auto r = pat.to<Hs::RecordPattern>())
     {
         if (unloc(r->fbinds).dotdot)
-            error(lpat.loc, Note()<<"Record wildcards in patterns are not supported yet.");
+            error(lpat.loc, Note()<<"Record wildcards in patterns are not implemented yet.");
 
         Hs::LPats field_patterns;
         for(const auto& field: unloc(r->fbinds))
@@ -450,7 +450,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
         auto R = *r;
 
         if (unloc(R.fbinds).dotdot)
-            error(lpat.loc, Note()<<"Record wildcards in patterns are not supported yet.");
+            error(lpat.loc, Note()<<"Record wildcards in patterns are not implemented yet.");
 
         bound_var_info bound;
         bool overlap = false;

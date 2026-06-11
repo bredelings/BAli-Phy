@@ -485,7 +485,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
             set<string> used_field_names;
 
             if (unloc(Rec.fbinds).dotdot)
-                error(Rec.fbinds.loc, Note()<<"Record wildcards in updates are not supported yet.");
+                error(Rec.fbinds.loc, Note()<<"Record wildcards in updates are not implemented yet.");
 
             for(auto& field: unloc(Rec.fbinds))
             {
@@ -572,7 +572,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                     set<int> used_fields;
 
                     if (unloc(Rec.fbinds).dotdot)
-                        error(Rec.fbinds.loc, Note()<<"Record wildcards in construction are not supported yet.");
+                        error(Rec.fbinds.loc, Note()<<"Record wildcards in construction are not implemented yet.");
 
                     for(auto& field: unloc(Rec.fbinds))
                     {
