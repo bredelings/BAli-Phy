@@ -16,9 +16,8 @@
 class Module;
 struct renamer_state;
 
-Hs::LPat parsed_expression_to_pattern(Hs::LExp E);
-Hs::LExp parsed_expression_to_expression(Hs::LExp E);
 Hs::Binds disambiguate_parsed_binds(Hs::Binds);
+Hs::ModuleDecls disambiguate_parsed_module(Hs::ModuleDecls);
 
 typedef std::set<std::string> bound_var_info;
 typedef std::set<std::string> bound_type_var_info;
@@ -42,9 +41,6 @@ Hs::LPat desugar_pattern_infix(const renamer_state& Rn, const std::vector<Locate
 bool is_infix_operator_term(const std::vector<Hs::LExp>& terms, int index);
 bool is_infix_operand_term(const std::vector<Hs::LExp>& terms, int index);
 Hs::LExp make_infix_exp(const std::vector<Hs::LExp>& terms);
-Hs::Binds classify_value_decls(Hs::Binds);
-Hs::Decls classify_value_decls(Hs::Decls);
-
 bool disjoint_add(bound_var_info& bv1, const bound_var_info& bv2);
 
 struct renamer_state

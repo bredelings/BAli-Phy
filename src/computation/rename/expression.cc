@@ -49,8 +49,6 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
 
 Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<string>& free_vars)
 {
-    LE = parsed_expression_to_expression(LE);
-
     auto& E = unloc(LE);
     auto& loc = LE.loc;
 
@@ -263,15 +261,8 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         TE.type = rename_and_quantify_type(TE.type);
         E = TE;
     }
-    else if (auto rec = E.to<Hs::RecordSyntax>())
-    {
-        auto Rec = *rec;
-        if (auto con = unloc(Rec.head).to<Hs::Con>())
-            E = Hs::RecordCon({Rec.head.loc, *con}, Rec.fbinds);
-        else
-            E = Hs::RecordUpdate(Rec.head, Rec.fbinds);
-        return rename(LE, bound, free_vars);
-    }
+    else if (E.is_a<Hs::RecordSyntax>())
+        error(loc, Note()<<"Internal error: record syntax reached expression renaming.");
     else if (auto rec = E.to<Hs::RecordUpdate>())
     {
         auto Rec = *rec;

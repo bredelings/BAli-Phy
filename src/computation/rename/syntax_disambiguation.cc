@@ -17,10 +17,17 @@ using std::string;
 using std::tuple;
 using std::vector;
 
+Hs::Binds classify_value_decls(Hs::Binds);
+Hs::Decls classify_value_decls(Hs::Decls);
+Hs::LPat parsed_expression_to_pattern(Hs::LExp E);
+Hs::LExp parsed_expression_to_expression(Hs::LExp E);
+
 namespace
 {
     Hs::MultiGuardedRHS parsed_expression_rhs(Hs::MultiGuardedRHS rhs);
     Hs::Matches parsed_expression_matches(Hs::Matches matches);
+    Hs::Decls parsed_expression_classified_decls(Hs::Decls decls);
+    Hs::Decls parsed_expression_decls(Hs::Decls decls);
     Hs::Binds parsed_expression_binds(Hs::Binds binds);
     Hs::LExp parsed_expression_stmt(Hs::LExp stmt);
 
@@ -138,37 +145,73 @@ namespace
         return matches;
     }
 
-    // Convert parser-only expression syntax inside local declarations.
+    // Convert parser-only expression syntax inside already-classified declarations.
+    Hs::Decls parsed_expression_classified_decls(Hs::Decls decls)
+    {
+        for(auto& [_, decl]: decls)
+        {
+            if (auto f = decl.to<Hs::FunDecl>())
+            {
+                auto F = *f;
+                F.matches = parsed_expression_matches(F.matches);
+                decl = F;
+            }
+            else if (auto p = decl.to<Hs::PatDecl>())
+            {
+                auto P = *p;
+                P.lhs = parsed_expression_to_pattern(P.lhs);
+                P.rhs = parsed_expression_rhs(P.rhs);
+                decl = P;
+            }
+            else if (decl.is_a<Hs::TypeSigDecl>() or decl.is_a<Hs::FixityDecl>() or
+                     decl.is_a<Hs::InlinePragma>())
+            { }
+            else
+                std::abort();
+        }
+
+        return decls;
+    }
+
+    // Classify declarations and convert parser-only expression syntax inside them.
+    Hs::Decls parsed_expression_decls(Hs::Decls decls)
+    {
+        return parsed_expression_classified_decls(classify_value_decls(decls));
+    }
+
+    // Convert parser-only expression syntax inside local binding groups.
     Hs::Binds parsed_expression_binds(Hs::Binds binds)
     {
         binds = classify_value_decls(binds);
 
         for(auto& decls: binds)
         {
-            for(auto& [_, decl]: decls)
-            {
-                if (auto f = decl.to<Hs::FunDecl>())
-                {
-                    auto F = *f;
-                    F.matches = parsed_expression_matches(F.matches);
-                    decl = F;
-                }
-                else if (auto p = decl.to<Hs::PatDecl>())
-                {
-                    auto P = *p;
-                    P.lhs = parsed_expression_to_pattern(P.lhs);
-                    P.rhs = parsed_expression_rhs(P.rhs);
-                    decl = P;
-                }
-                else if (decl.is_a<Hs::TypeSigDecl>() or decl.is_a<Hs::FixityDecl>() or
-                         decl.is_a<Hs::InlinePragma>())
-                { }
-                else
-                    std::abort();
-            }
+            decls = parsed_expression_classified_decls(decls);
         }
 
         return binds;
+    }
+
+    // Classify parsed syntax inside type declarations that carry value bindings.
+    Hs::Decls parsed_expression_type_decls(Hs::Decls decls)
+    {
+        for(auto& [_, decl]: decls)
+        {
+            if (auto c = decl.to<Hs::ClassDecl>())
+            {
+                auto C = *c;
+                C.default_method_decls = parsed_expression_decls(C.default_method_decls);
+                decl = C;
+            }
+            else if (auto i = decl.to<Hs::InstanceDecl>())
+            {
+                auto I = *i;
+                I.method_decls = parsed_expression_decls(I.method_decls);
+                decl = I;
+            }
+        }
+
+        return decls;
     }
 
     // Decide whether a parsed value binding is a function declaration or pattern declaration.
@@ -264,6 +307,14 @@ Hs::Binds disambiguate_parsed_binds(Hs::Binds binds)
     return parsed_expression_binds(binds);
 }
 
+// Recursively disambiguate parser-only syntax inside a module before renaming.
+Hs::ModuleDecls disambiguate_parsed_module(Hs::ModuleDecls M)
+{
+    M.type_decls = parsed_expression_type_decls(M.type_decls);
+    M.value_decls = disambiguate_parsed_binds(M.value_decls);
+    return M;
+}
+
 // Convert parser-only expression syntax into expression-category syntax without resolving fixity.
 Hs::LExp parsed_expression_to_expression(Hs::LExp lhs)
 {
@@ -302,7 +353,10 @@ Hs::LExp parsed_expression_to_expression(Hs::LExp lhs)
         auto R = *r;
         R.head = parsed_expression_to_expression(R.head);
         R.fbinds = parsed_expression_field_bindings(R.fbinds);
-        return {lhs.loc, R};
+        if (auto con = unloc(R.head).to<Hs::Con>())
+            return {lhs.loc, Hs::RecordCon({R.head.loc, *con}, R.fbinds)};
+        else
+            return {lhs.loc, Hs::RecordUpdate(R.head, R.fbinds)};
     }
     else if (auto r = E.to<Hs::RecordCon>())
     {

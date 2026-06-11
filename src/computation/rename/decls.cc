@@ -391,7 +391,6 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
 bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
     assert(binds.size() == 1);
-    binds = classify_value_decls(binds);
 
     auto& decls = binds[0];
 

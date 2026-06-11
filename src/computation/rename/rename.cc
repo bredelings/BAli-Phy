@@ -192,7 +192,6 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
-            C.default_method_decls = classify_value_decls(C.default_method_decls);
             for(auto& [_,method_decl]: C.default_method_decls)
             {
                 if (auto pd = method_decl.to<Hs::PatDecl>())
@@ -211,7 +210,6 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto I = decl.as_<Haskell::InstanceDecl>();
-            I.method_decls = classify_value_decls(I.method_decls);
             for(auto& [_, method_decl]: I.method_decls)
             {
                 if (auto pd = method_decl.to<Hs::PatDecl>())
@@ -418,7 +416,6 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(Located<expression_ref>& l
     else if (stmt.is_a<Haskell::PatQual>())
     {
         auto PQ = stmt.as_<Haskell::PatQual>();
-        PQ.bindpat = parsed_expression_to_pattern(PQ.bindpat);
         auto bound = find_vars_in_pattern(PQ.bindpat);
         stmt = PQ;
         return bound;
@@ -426,7 +423,6 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(Located<expression_ref>& l
     else if (stmt.is_a<Haskell::LetQual>())
     {
         auto LQ = stmt.as_<Haskell::LetQual>();
-        unloc(LQ.binds) = classify_value_decls(unloc(LQ.binds));
         auto bound = find_bound_vars_in_decls(unloc(LQ.binds));
         stmt = LQ;
         return bound;

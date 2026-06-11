@@ -925,9 +925,9 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
     }
 
-    // Disambiguate parsed value syntax before adding local symbols.
+    // Disambiguate parsed syntax before adding local symbols.
     // This finds binders without resolving expression or pattern fixity.
-    M.value_decls = disambiguate_parsed_binds(M.value_decls);
+    M = disambiguate_parsed_module(M);
 
     // We should be able to build these as we go, in rename!
     // We can merge them into a global symbol table (if we want) afterwards.
