@@ -36,7 +36,7 @@ namespace
         bool needs_field_constraints;
         StockDeriver derive;
         StockValidator validate;
-        string unsupported_message;
+        string invalid_message;
     };
 
     struct StockDerivingInfo
@@ -132,7 +132,7 @@ namespace
         return true;
     }
 
-    // Check the single-constructor product case accepted by derived Ix.
+    // Check the single-constructor product case accepted by derived Bounded/Ix.
     bool is_single_constructor_product(TypeChecker& tc, const DerivingDataInfo& data_info)
     {
         if (not has_ordered_constructors(data_info) or deriving_constructors(data_info).size() != 1)
@@ -142,10 +142,54 @@ namespace
         return con_info and con_info->arity() > 0;
     }
 
+    // Accept the two Haskell 2010/GHC forms for derived Bounded: enums and products.
+    bool can_derive_bounded(TypeChecker& tc, const DerivingDataInfo& data_info)
+    {
+        return is_enumeration_type(tc, data_info) or is_single_constructor_product(tc, data_info);
+    }
+
     // Accept the two Haskell 2010/GHC forms for derived Ix: enums and products.
     bool can_derive_ix(TypeChecker& tc, const DerivingDataInfo& data_info)
     {
         return is_enumeration_type(tc, data_info) or is_single_constructor_product(tc, data_info);
+    }
+
+    // Explain why a candidate type is not an enumeration for derived Enum.
+    string enum_deriving_error(TypeChecker& tc, const DerivingDataInfo& data_info)
+    {
+        if (not has_ordered_constructors(data_info))
+            return "deriving Enum requires at least one constructor";
+
+        for(const auto& con_name: deriving_constructors(data_info))
+        {
+            auto con_info = deriving_constructor_info(tc, con_name);
+            if (not con_info)
+                return "deriving Enum requires constructor metadata for '" + get_unqualified_name(con_name) + "'";
+            if (con_info->arity() != 0)
+                return "deriving Enum requires an enumeration type, but constructor '" + get_unqualified_name(con_name) + "' has fields";
+        }
+
+        return "deriving Enum requires an enumeration type";
+    }
+
+    // Explain why a candidate type is not one of the Bounded-derivable shapes.
+    string bounded_deriving_error(TypeChecker& tc, const DerivingDataInfo& data_info)
+    {
+        if (not has_ordered_constructors(data_info))
+            return "deriving Bounded requires at least one constructor";
+
+        const auto& constructors = deriving_constructors(data_info);
+        for(const auto& con_name: constructors)
+        {
+            auto con_info = deriving_constructor_info(tc, con_name);
+            if (not con_info)
+                return "deriving Bounded requires constructor metadata for '" + get_unqualified_name(con_name) + "'";
+        }
+
+        if (constructors.size() == 1)
+            return "deriving Bounded requires an enumeration type or a single-constructor product type";
+
+        return "deriving Bounded for a type with multiple constructors requires every constructor to be nullary";
     }
 
     // Accept the constructor forms for which derived Read currently emits parser code.
@@ -1173,10 +1217,10 @@ namespace
              "deriving Eq is only supported for data/newtype declarations with constructor metadata"},
             {ord_class_name, true, derive_ord_instance, has_constructor_infos,
              "deriving Ord is only supported for data/newtype declarations with constructor metadata"},
-            {bounded_class_name, true, nullptr, has_constructor_infos,
-             "deriving Bounded is only supported for data/newtype declarations with constructors"},
+            {bounded_class_name, true, nullptr, can_derive_bounded,
+             "deriving Bounded requires an enumeration type or a single-constructor product type"},
             {enum_class_name, false, nullptr, is_enumeration_type,
-             "deriving Enum is only supported for regular data declarations with only nullary constructors"},
+             "deriving Enum requires an enumeration type"},
             {ix_class_name, true, nullptr, can_derive_ix,
              "deriving Ix requires an enumeration type or a single-constructor product type"},
             {show_class_name, true, nullptr, has_constructor_infos,
@@ -1206,6 +1250,16 @@ namespace
         }
 
         return {};
+    }
+
+    // Prefer class-specific stock deriving errors when a validator rejects a type.
+    string stock_deriving_error(TypeChecker& tc, const StockDerivingSpec& spec, const DerivingDataInfo& data_info)
+    {
+        if (spec.class_name == enum_class_name)
+            return enum_deriving_error(tc, data_info);
+        if (spec.class_name == bounded_class_name)
+            return bounded_deriving_error(tc, data_info);
+        return spec.invalid_message;
     }
 
     // Resolve a deriving class head to class metadata and any fixed leading arguments.
@@ -1575,13 +1629,18 @@ namespace
             auto& semantic_data = target.data;
             assert(semantic_data.data.info);
 
+            // Validate the semantic type shape before synthesizing stock methods.
+            auto validate_stock = [&]() {
+                if (spec.validate(tc, semantic_data))
+                    return true;
+                tc.record_error(deriving.type.loc, Note()<<stock_deriving_error(tc, spec, semantic_data));
+                return false;
+            };
+
             if (spec.class_name == bounded_class_name)
             {
-                if (not spec.validate(tc, semantic_data))
-                {
-                    tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                if (not validate_stock())
                     return true;
-                }
 
                 add_derived_instance(instances, deriving.type.loc, derive_bounded_instance(tc, semantic_data, deriving.type.loc), target);
                 return true;
@@ -1589,11 +1648,8 @@ namespace
 
             if (spec.class_name == enum_class_name)
             {
-                if (not spec.validate(tc, semantic_data))
-                {
-                    tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                if (not validate_stock())
                     return true;
-                }
 
                 add_derived_instance(instances, deriving.type.loc, derive_enum_instance(tc, semantic_data, deriving.type.loc), target);
                 return true;
@@ -1601,11 +1657,8 @@ namespace
 
             if (spec.class_name == ix_class_name)
             {
-                if (not spec.validate(tc, semantic_data))
-                {
-                    tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                if (not validate_stock())
                     return true;
-                }
 
                 add_derived_instance(instances, deriving.type.loc, derive_ix_instance(tc, semantic_data, deriving.type.loc), target);
                 return true;
@@ -1613,11 +1666,8 @@ namespace
 
             if (spec.class_name == show_class_name)
             {
-                if (not spec.validate(tc, semantic_data))
-                {
-                    tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                if (not validate_stock())
                     return true;
-                }
 
                 add_derived_instance(instances, deriving.type.loc, derive_show_instance(tc, semantic_data, deriving.type.loc), target);
                 return true;
@@ -1625,21 +1675,15 @@ namespace
 
             if (spec.class_name == read_class_name)
             {
-                if (not spec.validate(tc, semantic_data))
-                {
-                    tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                if (not validate_stock())
                     return true;
-                }
 
                 add_derived_instance(instances, deriving.type.loc, derive_read_instance(tc, semantic_data, deriving.type.loc), target);
                 return true;
             }
 
-            if (not spec.validate(tc, semantic_data))
-            {
-                tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+            if (not validate_stock())
                 return true;
-            }
 
             assert(spec.derive);
             add_derived_instance(instances, deriving.type.loc, spec.derive(tc, semantic_data, deriving.type.loc), target);
@@ -1793,6 +1837,10 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
 
             auto derived_class = stock_deriving_class(this_mod(), deriving.type);
             if (not derived_class or not derived_class->spec->needs_field_constraints)
+                continue;
+
+            auto semantic_data = DerivingDataInfo{TypeCon(type_info->name, type_info->kind), type_info, *data_info};
+            if (not derived_class->spec->validate(*this, semantic_data))
                 continue;
 
             for(const auto& con_name: data_info->info->constructors)

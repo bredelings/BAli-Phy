@@ -1,0 +1,6 @@
+[1mMain.hs:8.33-39:[1;31m error:[0m[1m
+   • deriving Bounded for a type with multiple constructors requires every
+     constructor to be nullary
+  [1;34m|[0m
+[1;34m8[0m [1;34m| [0mdata T = A Int | B Int deriving [1;31mBounded[0m
+  [1;34m|[0m                                 [1;31m^^^^^^^[0m
