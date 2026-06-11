@@ -117,8 +117,8 @@ namespace
         return true;
     }
 
-    // Check the semantic constructor list for Enum/Ix-style nullary-only deriving.
-    bool has_only_nullary_constructors(TypeChecker& tc, const DerivingDataInfo& data_info)
+    // Check the semantic constructor list for Enum-style nullary-only deriving.
+    bool is_enumeration_type(TypeChecker& tc, const DerivingDataInfo& data_info)
     {
         if (not has_ordered_constructors(data_info))
             return false;
@@ -130,6 +130,22 @@ namespace
                 return false;
         }
         return true;
+    }
+
+    // Check the single-constructor product case accepted by derived Ix.
+    bool is_single_constructor_product(TypeChecker& tc, const DerivingDataInfo& data_info)
+    {
+        if (not has_ordered_constructors(data_info) or deriving_constructors(data_info).size() != 1)
+            return false;
+
+        auto con_info = deriving_constructor_info(tc, deriving_constructors(data_info).front());
+        return con_info and con_info->arity() > 0;
+    }
+
+    // Accept the two Haskell 2010/GHC forms for derived Ix: enums and products.
+    bool can_derive_ix(TypeChecker& tc, const DerivingDataInfo& data_info)
+    {
+        return is_enumeration_type(tc, data_info) or is_single_constructor_product(tc, data_info);
     }
 
     // Accept the constructor forms for which derived Read currently emits parser code.
@@ -500,6 +516,11 @@ namespace
         return Hs::apply(wired_var_exp("Compiler.Num.+"), {x, y});
     }
 
+    Hs::LExp multiply_exp(const Hs::LExp& x, const Hs::LExp& y)
+    {
+        return Hs::apply(wired_var_exp("Compiler.Num.*"), {x, y});
+    }
+
     Hs::LExp ordering_exp(const string& name)
     {
         return wired_con_exp(name);
@@ -681,6 +702,11 @@ namespace
         return {noloc, Hs::List(elements)};
     }
 
+    Hs::LQual pat_qual(const Hs::LPat& pattern, const Hs::LExp& exp)
+    {
+        return {noloc, Hs::PatQual(pattern, exp)};
+    }
+
     Hs::LExp ix_tag_exp(TypeChecker& tc, const DerivingDataInfo& data_info, const string& var_name)
     {
         return constructor_tag_exp(tc, data_info, local_var_exp(var_name));
@@ -699,7 +725,7 @@ namespace
     }
 
     // Derive Ix for enumeration-like types using semantic constructor tags.
-    Hs::InstanceDecl derive_ix_instance(TypeChecker& tc, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
+    Hs::Decls derive_enum_ix_methods(TypeChecker& tc, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
         const auto& constructors = deriving_constructors(data_info);
         Hs::LPat bounds_pat = pair_pat(var_pat("lo$"), var_pat("hi$"));
@@ -737,6 +763,130 @@ namespace
         methods.push_back(derived_method_decl(deriving_loc, ix_index_name, index_matches));
         methods.push_back(derived_method_decl(deriving_loc, ix_in_range_name, in_range_matches));
         methods.push_back(derived_method_decl(deriving_loc, ix_range_size_name, range_size_matches));
+
+        return methods;
+    }
+
+    Hs::LExp ix_field_bounds_exp(int i)
+    {
+        auto suffix = std::to_string(i);
+        return pair_exp(local_var_exp("lo$" + suffix), local_var_exp("hi$" + suffix));
+    }
+
+    Hs::LExp ix_field_range_exp(int i)
+    {
+        return Hs::apply(wired_var_exp(ix_range_name), {ix_field_bounds_exp(i)});
+    }
+
+    Hs::LExp ix_field_index_exp(int i)
+    {
+        return Hs::apply(wired_var_exp(ix_index_name), {ix_field_bounds_exp(i), local_var_exp("x$" + std::to_string(i))});
+    }
+
+    Hs::LExp ix_field_in_range_exp(int i)
+    {
+        return Hs::apply(wired_var_exp(ix_in_range_name), {ix_field_bounds_exp(i), local_var_exp("x$" + std::to_string(i))});
+    }
+
+    Hs::LExp ix_field_range_size_exp(int i)
+    {
+        return Hs::apply(wired_var_exp(ix_range_size_name), {ix_field_bounds_exp(i)});
+    }
+
+    Hs::LExp product_exp(const vector<Hs::LExp>& terms)
+    {
+        if (terms.empty())
+            return int_exp(1);
+
+        auto result = terms[0];
+        for(int i=1; i<terms.size(); i++)
+            result = multiply_exp(result, terms[i]);
+        return result;
+    }
+
+    Hs::LExp and_all_exp(const vector<Hs::LExp>& terms)
+    {
+        if (terms.empty())
+            return bool_exp(true);
+
+        auto result = terms[0];
+        for(int i=1; i<terms.size(); i++)
+            result = and_exp(result, terms[i]);
+        return result;
+    }
+
+    // Compute row-major product indices, matching the standard tuple Ix instance.
+    Hs::LExp ix_product_index_exp(int arity)
+    {
+        assert(arity > 0);
+
+        auto result = ix_field_index_exp(arity - 1);
+        vector<Hs::LExp> suffix_sizes;
+        suffix_sizes.push_back(ix_field_range_size_exp(arity - 1));
+
+        for(int i=arity - 2; i>=0; i--)
+        {
+            result = add_exp(multiply_exp(ix_field_index_exp(i), product_exp(suffix_sizes)), result);
+            suffix_sizes.insert(suffix_sizes.begin(), ix_field_range_size_exp(i));
+        }
+
+        return result;
+    }
+
+    // Derive Ix for a single constructor product by delegating each field to Ix.
+    Hs::Decls derive_product_ix_methods(const DataConInfo& con_info, const std::optional<yy::location>& deriving_loc)
+    {
+        int arity = con_info.arity();
+        Hs::LPat bounds_pat = pair_pat(constructor_var_pattern(con_info.name, arity, "lo$"),
+                                       constructor_var_pattern(con_info.name, arity, "hi$"));
+        Hs::LPat value_pat = constructor_var_pattern(con_info.name, arity, "x$");
+
+        vector<Hs::LExp> value_fields;
+        vector<Hs::LQual> range_quals;
+        vector<Hs::LExp> in_range_fields;
+        vector<Hs::LExp> range_size_fields;
+        for(int i=0; i<arity; i++)
+        {
+            auto field_var = "x$" + std::to_string(i);
+            value_fields.push_back(local_var_exp(field_var));
+            range_quals.push_back(pat_qual(var_pat(field_var), ix_field_range_exp(i)));
+            in_range_fields.push_back(ix_field_in_range_exp(i));
+            range_size_fields.push_back(ix_field_range_size_exp(i));
+        }
+
+        Hs::Matches range_matches;
+        auto range_body = Hs::LExp{noloc, Hs::ListComprehension(constructor_exp(con_info.name, arity, value_fields), range_quals)};
+        range_matches.push_back(unary_method_rule(bounds_pat, range_body));
+
+        Hs::Matches index_matches;
+        index_matches.push_back(binary_method_rule(bounds_pat, value_pat, ix_product_index_exp(arity)));
+
+        Hs::Matches in_range_matches;
+        in_range_matches.push_back(binary_method_rule(bounds_pat, value_pat, and_all_exp(in_range_fields)));
+
+        Hs::Matches range_size_matches;
+        range_size_matches.push_back(unary_method_rule(bounds_pat, product_exp(range_size_fields)));
+
+        Hs::Decls methods;
+        methods.push_back(derived_method_decl(deriving_loc, ix_range_name, range_matches));
+        methods.push_back(derived_method_decl(deriving_loc, ix_index_name, index_matches));
+        methods.push_back(derived_method_decl(deriving_loc, ix_in_range_name, in_range_matches));
+        methods.push_back(derived_method_decl(deriving_loc, ix_range_size_name, range_size_matches));
+        return methods;
+    }
+
+    Hs::InstanceDecl derive_ix_instance(TypeChecker& tc, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
+    {
+        Hs::Decls methods;
+        if (is_enumeration_type(tc, data_info))
+            methods = derive_enum_ix_methods(tc, data_info, deriving_loc);
+        else
+        {
+            assert(is_single_constructor_product(tc, data_info));
+            auto con_info = deriving_constructor_info(tc, deriving_constructors(data_info).front());
+            assert(con_info);
+            methods = derive_product_ix_methods(*con_info, deriving_loc);
+        }
 
         return Hs::InstanceDecl({}, stock_instance_type(data_info, ix_class_name), {}, {}, methods);
     }
@@ -863,11 +1013,6 @@ namespace
         for(int i=lists.size()-2; i>=0; i--)
             result = append_exp(lists[i], result);
         return result;
-    }
-
-    Hs::LQual pat_qual(const Hs::LPat& pattern, const Hs::LExp& exp)
-    {
-        return {noloc, Hs::PatQual(pattern, exp)};
     }
 
     Hs::LExp read_paren_exp(const Hs::LExp& condition, const Hs::LExp& parser, const Hs::LExp& input)
@@ -1030,10 +1175,10 @@ namespace
              "deriving Ord is only supported for data/newtype declarations with constructor metadata"},
             {bounded_class_name, true, nullptr, has_constructor_infos,
              "deriving Bounded is only supported for data/newtype declarations with constructors"},
-            {enum_class_name, false, nullptr, has_only_nullary_constructors,
+            {enum_class_name, false, nullptr, is_enumeration_type,
              "deriving Enum is only supported for regular data declarations with only nullary constructors"},
-            {ix_class_name, false, nullptr, has_only_nullary_constructors,
-             "deriving Ix is only supported for regular data declarations with only nullary constructors"},
+            {ix_class_name, true, nullptr, can_derive_ix,
+             "deriving Ix requires an enumeration type or a single-constructor product type"},
             {show_class_name, true, nullptr, has_constructor_infos,
              "deriving Show is only supported for data/newtype declarations with constructor metadata"},
             {read_class_name, true, nullptr, has_readable_constructors,
