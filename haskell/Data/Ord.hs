@@ -47,18 +47,15 @@ instance Ord Integer where
 instance Ord Double where
     (<) = lessthan_double
 
-instance Ord a => Ord [a] where
-    compare []     []      = EQ
-    compare []     (_:_)   = LT
-    compare (_:_)  []      = GT
-    compare (x:xs) (y:ys)  = case compare x y of LT -> LT
-                                                 GT -> GT
-                                                 EQ -> compare xs ys
-    x < y = compare x y == LT
-    x > y = compare x y == GT
+deriving instance Ord Bool
 
-instance (Ord a, Ord b) => Ord (a,b) where
-    compare (x1,y1) (x2,y2) = let c1 = compare x1 x2
-                              in case c1 of
-                                   EQ -> compare y1 y2
-                                   _  -> c1
+deriving instance Ord a => Ord [a]
+
+deriving instance Ord ()
+
+deriving instance (Ord a, Ord b) => Ord (a, b)
+
+deriving instance (Ord a, Ord b, Ord c) => Ord (a, b, c)
+
+deriving instance (Ord a, Ord b, Ord c, Ord d) => Ord (a, b, c, d)
+
