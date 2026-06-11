@@ -407,23 +407,9 @@ namespace
         return {noloc, Hs::ConPattern({noloc, Hs::Con(name, arity)}, args)};
     }
 
-    Hs::LPat constructor_pattern(const Hs::ConstructorDecl& constructor, const Hs::LPats& args)
-    {
-        return con_pat(unloc(*constructor.con).name, constructor.arity(), args);
-    }
-
     Hs::LPat constructor_pattern(const string& con_name, int arity, const Hs::LPats& args)
     {
         return con_pat(con_name, arity, args);
-    }
-
-    Hs::LPat constructor_var_pattern(const Hs::ConstructorDecl& constructor, const string& prefix)
-    {
-        Hs::LPats args;
-        for(int i=0; i<constructor.arity(); i++)
-            args.push_back(var_pat(prefix + std::to_string(i)));
-
-        return constructor_pattern(constructor, args);
     }
 
     Hs::LPat constructor_var_pattern(const string& con_name, int arity, const string& prefix)
@@ -829,10 +815,11 @@ namespace
         return Hs::apply(wired_var_exp(show_show_paren_name), {condition, body});
     }
 
-    Hs::LExp show_record_constructor_exp(const Hs::ConstructorDecl& constructor)
+    Hs::LExp show_record_constructor_exp(const DataConInfo& constructor)
     {
-        auto con_name = get_unqualified_name(unloc(*constructor.con).name);
-        auto field_names = record_field_names(constructor);
+        auto con_name = get_unqualified_name(constructor.name);
+        assert(constructor.field_names);
+        auto& field_names = *constructor.field_names;
 
         vector<Hs::LExp> parts;
         parts.push_back(show_string_exp(con_name + " {"));
@@ -846,9 +833,9 @@ namespace
         return compose_all_exp(parts);
     }
 
-    Hs::LExp show_infix_constructor_exp(const Hs::ConstructorDecl& constructor)
+    Hs::LExp show_infix_constructor_exp(const DataConInfo& constructor)
     {
-        auto con_name = get_unqualified_name(unloc(*constructor.con).name);
+        auto con_name = get_unqualified_name(constructor.name);
         constexpr int infix_con_prec = 5;
         constexpr int infix_con_operand_prec = infix_con_prec + 1;
 
@@ -861,12 +848,12 @@ namespace
         return show_paren_exp(greater_than_exp(local_var_exp("d$"), int_exp(infix_con_prec)), body);
     }
 
-    Hs::LExp shows_prec_constructor_exp(const Hs::ConstructorDecl& constructor)
+    Hs::LExp shows_prec_constructor_exp(const DataConInfo& constructor)
     {
-        auto con_name = get_unqualified_name(unloc(*constructor.con).name);
+        auto con_name = get_unqualified_name(constructor.name);
         if (constructor.is_record_constructor())
             return show_record_constructor_exp(constructor);
-        if (is_basic_infix_constructor(constructor))
+        if (constructor.is_infix_constructor())
             return show_infix_constructor_exp(constructor);
 
         if (constructor.arity() == 0)
@@ -882,13 +869,16 @@ namespace
         return show_paren_exp(greater_than_exp(local_var_exp("d$"), int_exp(10)), compose_all_exp(parts));
     }
 
-    Hs::InstanceDecl derive_show_instance(TypeChecker&, const Hs::DataOrNewtypeDecl& data_decl, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
+    Hs::InstanceDecl derive_show_instance(TypeChecker& tc, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
         Hs::Matches shows_prec_matches;
-        for(const auto& constructor: data_decl.get_constructors())
+        for(const auto& constructor: deriving_constructors(data_info))
         {
-            shows_prec_matches.push_back(Hs::MRule({var_pat("d$"), constructor_var_pattern(constructor, "x$")},
-                                                   Hs::SimpleRHS(shows_prec_constructor_exp(constructor))));
+            auto con_info = deriving_constructor_info(tc, constructor);
+            assert(con_info);
+
+            shows_prec_matches.push_back(Hs::MRule({var_pat("d$"), constructor_var_pattern(con_info->name, con_info->arity(), "x$")},
+                                                   Hs::SimpleRHS(shows_prec_constructor_exp(*con_info))));
         }
 
         Hs::Decls methods;
@@ -1521,13 +1511,13 @@ namespace
 
             if (spec.class_name == show_class_name)
             {
-                if (not target.source_decl or not spec.validate(tc, semantic_data) or not target.source_decl->is_regular_decl())
+                if (not spec.validate(tc, semantic_data))
                 {
                     tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                     return true;
                 }
 
-                add_derived_instance(instances, deriving.type.loc, derive_show_instance(tc, *target.source_decl, semantic_data, deriving.type.loc), target);
+                add_derived_instance(instances, deriving.type.loc, derive_show_instance(tc, semantic_data, deriving.type.loc), target);
                 return true;
             }
 
