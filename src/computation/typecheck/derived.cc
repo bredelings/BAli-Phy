@@ -25,7 +25,6 @@ namespace
     {
         DerivingDataInfo data;
         optional<Hs::LType> explicit_polytype;
-        const Hs::DataOrNewtypeDecl* source_decl = nullptr;
     };
 
     using StockDeriver = Hs::InstanceDecl (*)(TypeChecker&, const DerivingDataInfo&, const std::optional<yy::location>&);
@@ -75,20 +74,7 @@ namespace
         if (not data_info)
             return {};
 
-        return DerivingTarget{*data_info, explicit_polytype, &data_decl};
-    }
-
-    // Find a local source declaration when a derivation still needs source syntax.
-    const Hs::DataOrNewtypeDecl* local_data_decl_for_type(const Hs::Decls& decls, const string& type_name)
-    {
-        for(auto& [_, decl]: decls)
-        {
-            auto data_decl = decl.to<Hs::DataOrNewtypeDecl>();
-            if (data_decl and unloc(data_decl->con).name == type_name)
-                return data_decl;
-        }
-
-        return nullptr;
+        return DerivingTarget{*data_info, explicit_polytype};
     }
 
     // Build a deriving target from resolved semantic type metadata.
@@ -99,8 +85,7 @@ namespace
         if (not T or not data_info)
             return {};
 
-        auto source_decl = local_data_decl_for_type(decls, target_con.name);
-        return DerivingTarget{DerivingDataInfo{TypeCon(T->name, T->kind), T, *data_info}, explicit_polytype, source_decl};
+        return DerivingTarget{DerivingDataInfo{TypeCon(T->name, T->kind), T, *data_info}, explicit_polytype};
     }
 
     optional<DataConInfo> deriving_constructor_info(TypeChecker& tc, const string& con_name)
