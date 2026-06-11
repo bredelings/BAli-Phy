@@ -327,19 +327,6 @@ Hs::LExp disambiguate_expression(Hs::LExp lhs)
         else
             return {lhs.loc, Hs::RecordUpdate(R.head, R.fbinds)};
     }
-    else if (auto r = E.to<Hs::RecordCon>())
-    {
-        auto R = *r;
-        R.fbinds = disambiguate_field_bindings(R.fbinds);
-        return {lhs.loc, R};
-    }
-    else if (auto r = E.to<Hs::RecordUpdate>())
-    {
-        auto R = *r;
-        R.object = disambiguate_expression(R.object);
-        R.fbinds = disambiguate_field_bindings(R.fbinds);
-        return {lhs.loc, R};
-    }
     else if (auto l = E.to<Hs::List>())
     {
         auto L = *l;
@@ -498,13 +485,6 @@ Hs::LPat disambiguate_pattern(Hs::LExp lhs)
         }
 
         return {lhs.loc, Hs::RecordPattern({r->head.loc, *con}, {r->fbinds.loc, disambiguate_pattern_field_bindings(unloc(r->fbinds))})};
-    }
-    else if (auto r = E.to<Hs::RecordCon>())
-        return {lhs.loc, Hs::RecordPattern(r->con, {r->fbinds.loc, disambiguate_pattern_field_bindings(unloc(r->fbinds))})};
-    else if (E.is_a<Hs::RecordUpdate>())
-    {
-        error(lhs.loc, Note()<<"Record update syntax '"<<lhs<<"' is not valid in a pattern.");
-        return {lhs.loc, Hs::WildcardPattern()};
     }
     else if (auto l = E.to<Hs::List>())
     {

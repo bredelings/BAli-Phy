@@ -261,8 +261,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         TE.type = rename_and_quantify_type(TE.type);
         E = TE;
     }
-    else if (E.is_a<Hs::RecordSyntax>())
-        error(loc, Note()<<"Internal error: record syntax reached expression renaming.");
     else if (auto rec = E.to<Hs::RecordUpdate>())
     {
         auto Rec = *rec;
