@@ -383,6 +383,11 @@ string FieldBindings::print() const
     return join(ss, ",");
 }
 
+string RecordSyntax::print() const
+{
+    return head.print() + " {" + fbinds.print() + "}";
+}
+
 string RecordCon::print() const
 {
     return con.print() + " {" + fbinds.print() + "}";

@@ -123,6 +123,24 @@ Hs::LPat unapply(Hs::LExp LE)
 
         P = Hs::ConPattern({head.loc,*con}, pat_args);
     }
+    else if (auto r = E.to<Hs::RecordSyntax>())
+    {
+        auto con = unloc(r->head).to<Hs::Con>();
+        if (not con)
+            throw myexception()<<"In pattern `"<<E<<"`:\n    `"<<r->head<<"` is not a data constructor.";
+
+        Hs::PatternFieldBindings fbinds;
+        fbinds.dotdot = unloc(r->fbinds).dotdot;
+
+        for(auto& lfield: unloc(r->fbinds))
+        {
+            auto& field = unloc(lfield);
+            auto pattern = field.value ? unapply(*field.value) : record_field_pun_pattern(field.field);
+            fbinds.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern)});
+        }
+
+        P = Hs::RecordPattern({r->head.loc, *con}, {r->fbinds.loc, fbinds});
+    }
     else if (auto r = E.to<Hs::RecordCon>())
     {
         Hs::PatternFieldBindings fbinds;

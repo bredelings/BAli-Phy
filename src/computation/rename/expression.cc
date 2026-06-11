@@ -218,6 +218,15 @@ Hs::LExp rename_infix(const Module& m, Hs::LExp LE)
         // Nothing to do for TE.type, since there are no type operators unless extensions are enabled.
         E = TE;
     }
+    else if (auto r = E.to<Hs::RecordSyntax>())
+    {
+        auto R = *r;
+        R.head = rename_infix(m, R.head);
+        for(auto& field: unloc(R.fbinds))
+            if (unloc(field).value)
+                *unloc(field).value = rename_infix(m, *unloc(field).value);
+        E = R;
+    }
     else if (auto r = E.to<Hs::RecordCon>())
     {
         auto R = *r;
@@ -479,6 +488,15 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         TE.exp = rename(TE.exp, bound, free_vars);
         TE.type = rename_and_quantify_type(TE.type);
         E = TE;
+    }
+    else if (auto rec = E.to<Hs::RecordSyntax>())
+    {
+        auto Rec = *rec;
+        if (auto con = unloc(Rec.head).to<Hs::Con>())
+            E = Hs::RecordCon({Rec.head.loc, *con}, Rec.fbinds);
+        else
+            E = Hs::RecordUpdate(Rec.head, Rec.fbinds);
+        return rename(LE, bound, free_vars);
     }
     else if (auto rec = E.to<Hs::RecordUpdate>())
     {

@@ -282,7 +282,21 @@ struct FieldBindings: public Object, std::vector<Located<FieldBinding>>
     std::string print() const;
 };
 
-// Shared expression-side record field list for construction and update syntax.
+// Parsed record braces before context decides construction, update, or pattern.
+
+struct RecordSyntax: public Object
+{
+    LExp head;
+    Located<FieldBindings> fbinds;
+
+    RecordSyntax* clone() const { return new RecordSyntax(*this);}
+    std::string print() const;
+
+    RecordSyntax() = default;
+    RecordSyntax(const LExp& e, const Located<FieldBindings>& fb): head(e), fbinds(fb) {}
+};
+
+// Shared expression-side record field list for classified construction/update syntax.
 
 struct RecordCon: public Object
 {

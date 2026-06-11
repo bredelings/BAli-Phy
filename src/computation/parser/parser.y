@@ -1686,10 +1686,7 @@ Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& ob
 
 Hs::LExp make_record_expression(const yy::location& loc, const Hs::LExp& head, const Located<Hs::FieldBindings>& fbinds)
 {
-    if (auto con = unloc(head).to<Hs::Con>())
-        return {loc, Hs::RecordCon({head.loc, *con}, fbinds)};
-    else
-        return {loc, Hs::RecordUpdate(head, fbinds)};
+    return {loc, Hs::RecordSyntax(head, fbinds)};
 }
 
 Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::string>& fields)
