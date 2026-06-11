@@ -258,6 +258,12 @@ namespace
     }
 }
 
+// Recursively disambiguate parser-only syntax inside a binding collection.
+Hs::Binds disambiguate_parsed_binds(Hs::Binds binds)
+{
+    return parsed_expression_binds(binds);
+}
+
 // Convert parser-only expression syntax into expression-category syntax without resolving fixity.
 Hs::LExp parsed_expression_to_expression(Hs::LExp lhs)
 {

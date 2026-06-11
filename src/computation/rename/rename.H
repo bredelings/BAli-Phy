@@ -18,6 +18,7 @@ struct renamer_state;
 
 Hs::LPat parsed_expression_to_pattern(Hs::LExp E);
 Hs::LExp parsed_expression_to_expression(Hs::LExp E);
+Hs::Binds disambiguate_parsed_binds(Hs::Binds);
 
 typedef std::set<std::string> bound_var_info;
 typedef std::set<std::string> bound_type_var_info;

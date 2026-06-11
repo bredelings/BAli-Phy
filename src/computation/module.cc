@@ -925,9 +925,9 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
     }
 
-    // Classify top-level value declarations before adding local symbols.
+    // Disambiguate parsed value syntax before adding local symbols.
     // This finds binders without resolving expression or pattern fixity.
-    M.value_decls = classify_value_decls(M.value_decls);
+    M.value_decls = disambiguate_parsed_binds(M.value_decls);
 
     // We should be able to build these as we go, in rename!
     // We can merge them into a global symbol table (if we want) afterwards.
