@@ -228,6 +228,15 @@ namespace
         return type_var_type(hs_tv);
     }
 
+    // Convert semantic type variables back into parsed type-variable binders for synthetic instances.
+    vector<Hs::LTypeVar> hs_type_vars(const vector<TypeVar>& tvs, int n)
+    {
+        vector<Hs::LTypeVar> hs_tvs;
+        for(int i=0; i<n; i++)
+            hs_tvs.push_back(hs_type_var(tvs[i]));
+        return hs_tvs;
+    }
+
     Hs::LType type_con_type(const Hs::LTypeCon& con, const vector<Hs::LType>& args)
     {
         return Hs::type_apply({con.loc, Hs::TypeCon(unloc(con).name)}, args);
@@ -255,6 +264,28 @@ namespace
         for(int i=0; i<n; i++)
             types.push_back(type_var_type(tvs[i]));
         return types;
+    }
+
+    // Convert semantic type variables back into parsed type arguments for synthetic instances.
+    vector<Hs::LType> type_var_types(const vector<TypeVar>& tvs, int n)
+    {
+        vector<Hs::LType> types;
+        for(int i=0; i<n; i++)
+            types.push_back(type_var_type(tvs[i]));
+        return types;
+    }
+
+    // Build the Haskell syntax for applying a derived data type to its first arity parameters.
+    Hs::LType derived_data_type(const DerivingDataInfo& data_info, int arity)
+    {
+        assert(data_info.data.info);
+        Hs::LTypeCon type_con{noloc, Hs::TypeCon(data_info.data.info->name)};
+        return type_con_type(type_con, type_var_types(data_info.data.info->type_vars, arity));
+    }
+
+    Hs::Context source_context_for_target(const DerivingTarget& target)
+    {
+        return target.source_decl ? target.source_decl->context : Hs::Context{};
     }
 
     Hs::LExp local_var_exp(const string& name)
@@ -1108,22 +1139,23 @@ namespace
     }
 
     // Build an empty DeriveAnyClass instance head C fixed... (T args...).
-    Hs::LType anyclass_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name, const vector<Hs::LType>& fixed_args)
+    Hs::LType anyclass_instance_type(const DerivingTarget& target, const string& class_name, const vector<Hs::LType>& fixed_args)
     {
-        auto data_type = type_con_type(data_decl.con, type_var_types(data_decl.type_vars, data_decl.type_vars.size()));
+        auto data_type = derived_data_type(target.data, target.data.data.info->type_vars.size());
         auto instance_args = fixed_args;
         instance_args.push_back(data_type);
         auto instance_head = class_constraint(class_name, instance_args);
-        Hs::LType polytype = data_decl.context.empty() ? instance_head : Hs::LType{data_decl.con.loc, Hs::ConstrainedType(data_decl.context, instance_head)};
-        return Hs::add_forall_vars(data_decl.type_vars, polytype);
+        auto context = source_context_for_target(target);
+        Hs::LType polytype = context.empty() ? instance_head : Hs::LType{noloc, Hs::ConstrainedType(context, instance_head)};
+        return Hs::add_forall_vars(hs_type_vars(target.data.data.info->type_vars, target.data.data.info->type_vars.size()), polytype);
     }
 
     // Build the synthetic DerivingVia instance head C fixed... (T args...) with a C fixed... via context.
-    Hs::LType deriving_via_instance_type(const Hs::DataOrNewtypeDecl& data_decl, const string& class_name, const vector<Hs::LType>& fixed_args, const Hs::LType& via_type)
+    Hs::LType deriving_via_instance_type(const DerivingTarget& target, const string& class_name, const vector<Hs::LType>& fixed_args, const Hs::LType& via_type)
     {
-        auto data_type = type_con_type(data_decl.con, type_var_types(data_decl.type_vars, data_decl.type_vars.size()));
+        auto data_type = derived_data_type(target.data, target.data.data.info->type_vars.size());
 
-        Hs::Context context = data_decl.context;
+        Hs::Context context = source_context_for_target(target);
         auto via_constraint_args = fixed_args;
         via_constraint_args.push_back(via_type);
         context.push_back(class_constraint(class_name, via_constraint_args));
@@ -1131,12 +1163,12 @@ namespace
         auto instance_args = fixed_args;
         instance_args.push_back(data_type);
         auto instance_head = class_constraint(class_name, instance_args);
-        Hs::LType polytype = Hs::LType{data_decl.con.loc, Hs::ConstrainedType(context, instance_head)};
-        return Hs::add_forall_vars(data_decl.type_vars, polytype);
+        Hs::LType polytype = Hs::LType{noloc, Hs::ConstrainedType(context, instance_head)};
+        return Hs::add_forall_vars(hs_type_vars(target.data.data.info->type_vars, target.data.data.info->type_vars.size()), polytype);
     }
 
     // Synthesize an empty anyclass instance and let ordinary instance checking handle defaults.
-    optional<Hs::InstanceDecl> derive_anyclass_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::LType& deriving)
+    optional<Hs::InstanceDecl> derive_anyclass_instance(TypeChecker& tc, const DerivingTarget& target, const Hs::LType& deriving)
     {
         auto deriving_class = resolved_deriving_class(tc.this_mod(), deriving);
         if (not deriving_class)
@@ -1152,7 +1184,7 @@ namespace
             return {};
         }
 
-        return Hs::InstanceDecl({}, anyclass_instance_type(data_decl, class_info->name, deriving_class->fixed_args), {}, {}, {});
+        return Hs::InstanceDecl({}, anyclass_instance_type(target, class_info->name, deriving_class->fixed_args), {}, {}, {});
     }
 
     // Build the class-parameter substitution used by generated GND associated type instances.
@@ -1172,12 +1204,9 @@ namespace
         return {};
     }
 
-    // Synthesize associated type equations mapping the newtype argument to its representation.
-    vector<Hs::TypeFamilyInstanceDecl> generalized_newtype_associated_type_instances(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Hs::LType& rep_type, int eta_arity)
+    // Synthesize associated type equations replacing the derived type argument with another type.
+    vector<Hs::TypeFamilyInstanceDecl> associated_type_instances_for_replacement(TypeChecker& tc, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Hs::LType& data_type, const Hs::LType& rep_type)
     {
-        int prefix_arity = data_decl.type_vars.size() - eta_arity;
-        auto data_type = type_con_type(data_decl.con, type_var_types(data_decl.type_vars, prefix_arity));
-
         vector<Hs::TypeFamilyInstanceDecl> type_instances;
         for(auto& [tf_con, maybe_default]: class_info.associated_type_families)
         {
@@ -1210,6 +1239,21 @@ namespace
         }
 
         return type_instances;
+    }
+
+    // Synthesize associated type equations mapping the newtype argument to its representation.
+    vector<Hs::TypeFamilyInstanceDecl> generalized_newtype_associated_type_instances(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Hs::LType& rep_type, int eta_arity)
+    {
+        int prefix_arity = data_decl.type_vars.size() - eta_arity;
+        auto data_type = type_con_type(data_decl.con, type_var_types(data_decl.type_vars, prefix_arity));
+        return associated_type_instances_for_replacement(tc, class_info, fixed_args, data_type, rep_type);
+    }
+
+    // Synthesize associated type equations mapping the derived type argument to the via type.
+    vector<Hs::TypeFamilyInstanceDecl> deriving_via_associated_type_instances(TypeChecker& tc, const DerivingDataInfo& data_info, const ClassInfo& class_info, const vector<Hs::LType>& fixed_args, const Hs::LType& via_type)
+    {
+        auto data_type = derived_data_type(data_info, data_info.data.info->type_vars.size());
+        return associated_type_instances_for_replacement(tc, class_info, fixed_args, data_type, via_type);
     }
 
     // Synthesize a GND instance header and leave method bodies for instance pass 2.
@@ -1270,7 +1314,7 @@ namespace
     }
 
     // Synthesize a DerivingVia instance whose methods are coerced from the via dictionary.
-    optional<Hs::InstanceDecl> derive_via_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::Deriving& deriving)
+    optional<Hs::InstanceDecl> derive_via_instance(TypeChecker& tc, const DerivingTarget& target, const Hs::Deriving& deriving)
     {
         if (not deriving.via_type)
         {
@@ -1298,8 +1342,8 @@ namespace
             return {};
         }
 
-        auto associated_type_instances = generalized_newtype_associated_type_instances(tc, data_decl, *class_info, deriving_class->fixed_args, *deriving.via_type, 0);
-        Hs::InstanceDecl instance({}, deriving_via_instance_type(data_decl, class_info->name, deriving_class->fixed_args, *deriving.via_type), associated_type_instances, {}, {});
+        auto associated_type_instances = deriving_via_associated_type_instances(tc, target.data, *class_info, deriving_class->fixed_args, *deriving.via_type);
+        Hs::InstanceDecl instance({}, deriving_via_instance_type(target, class_info->name, deriving_class->fixed_args, *deriving.via_type), associated_type_instances, {}, {});
         instance.generalized_newtype_deriving = true;
         return instance;
     }
@@ -1317,7 +1361,7 @@ namespace
     {
         if (deriving.strategy == Hs::DerivingStrategy::via)
         {
-            auto instance = target.source_decl ? derive_via_instance(tc, *target.source_decl, deriving) : optional<Hs::InstanceDecl>{};
+            auto instance = derive_via_instance(tc, target, deriving);
             if (instance)
                 add_derived_instance(instances, deriving.type.loc, *instance, target);
             else
@@ -1327,7 +1371,7 @@ namespace
 
         if (deriving.strategy == Hs::DerivingStrategy::anyclass)
         {
-            auto instance = target.source_decl ? derive_anyclass_instance(tc, *target.source_decl, deriving.type) : optional<Hs::InstanceDecl>{};
+            auto instance = derive_anyclass_instance(tc, target, deriving.type);
             if (instance)
                 add_derived_instance(instances, deriving.type.loc, *instance, target);
             else
