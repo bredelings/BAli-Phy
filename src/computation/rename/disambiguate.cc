@@ -248,21 +248,6 @@ namespace
                 else
                     return self(self, head, pats);
             }
-            else if (E.is_a<Hs::ApplyExp>())
-            {
-                auto [head,args] = Hs::decompose_apps(lhs);
-                Hs::LPats pats;
-                for(auto& arg: args)
-                    pats.push_back(disambiguate_pattern(arg));
-                pats.insert(pats.end(), extra_args.begin(), extra_args.end());
-
-                if (auto v = unloc(head).to<Hs::Var>())
-                    return Hs::simple_fun_decl({head.loc, *v}, pats, D.rhs);
-                else if (unloc(head).is_a<Hs::Con>())
-                    return Hs::PatDecl(disambiguate_pattern(lhs), D.rhs);
-                else
-                    return self(self, head, pats);
-            }
             else if (auto v = E.to<Hs::Var>())
             {
                 if (extra_args.empty())
@@ -331,13 +316,6 @@ Hs::LExp disambiguate_expression(Hs::LExp lhs)
         for(auto& term: app->terms)
             terms.push_back(disambiguate_expression(term));
         return Hs::apply(terms);
-    }
-    else if (auto app = E.to<Hs::ApplyExp>())
-    {
-        auto A = *app;
-        A.head = disambiguate_expression(A.head);
-        A.arg = disambiguate_expression(A.arg);
-        return {lhs.loc, A};
     }
     else if (auto r = E.to<Hs::RecordSyntax>())
     {
@@ -497,20 +475,6 @@ Hs::LPat disambiguate_pattern(Hs::LExp lhs)
         return {lhs.loc, Hs::InfixPat(terms)};
     }
     else if (E.is_a<Hs::ParsedApp>())
-    {
-        auto [head,args] = Hs::decompose_apps(lhs);
-        if (auto con = unloc(head).to<Hs::Con>())
-        {
-            Hs::LPats pat_args;
-            for(auto& arg: args)
-                pat_args.push_back(disambiguate_pattern(arg));
-            return {lhs.loc, Hs::ConPattern({head.loc, *con}, pat_args)};
-        }
-
-        error(lhs.loc, Note()<<"Function application '"<<lhs<<"' is not valid in a pattern unless its head is a constructor.");
-        return {lhs.loc, Hs::WildcardPattern()};
-    }
-    else if (E.is_a<Hs::ApplyExp>())
     {
         auto [head,args] = Hs::decompose_apps(lhs);
         if (auto con = unloc(head).to<Hs::Con>())

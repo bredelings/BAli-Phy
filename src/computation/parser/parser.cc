@@ -7915,7 +7915,7 @@ pair<vector<Hs::LImpDecl>, optional<Hs::Decls>> make_body(const std::vector<Hs::
 Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& object, const std::string& field)
 {
     Hs::LExp selector = {loc, Hs::Var(field)};
-    return {loc, Hs::ApplyExp(selector, object)};
+    return make_parsed_app(loc, selector, object);
 }
 
 Hs::LExp make_parsed_app(const yy::location& loc, const Hs::LExp& head, const Hs::LExp& arg)
