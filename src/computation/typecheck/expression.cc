@@ -1,6 +1,7 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 #include "match.H" // for tcMatchesFun
+#include "haskell/ids.H"
 
 using std::string;
 using std::vector;
@@ -10,6 +11,82 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
+namespace
+{
+    std::map<std::string,int> record_field_positions(const std::vector<std::string>& field_names)
+    {
+        std::map<std::string,int> positions;
+        for(int i=0; i<field_names.size(); i++)
+        {
+            positions[field_names[i]] = i;
+            positions[get_unqualified_name(field_names[i])] = i;
+        }
+        return positions;
+    }
+
+    Hs::LExp missing_record_field_exp(const std::optional<yy::location>& loc, const std::string& con_name, int field_index)
+    {
+        auto message = "Missing field " + std::to_string(field_index + 1) + " in record construction for constructor '" + get_unqualified_name(con_name) + "'";
+        Hs::LExp error = {loc, Hs::Var("Compiler.Error.error")};
+        Hs::LExp msg = {loc, Hs::Literal(Hs::String(message))};
+        return Hs::apply(error, {msg});
+    }
+
+    // Validate record construction fields and place them in constructor order.
+    Hs::LExp record_con_to_positional_app(TypeChecker& tc, Hs::RecordCon& Rec, const std::optional<yy::location>& record_loc)
+    {
+        auto con = unloc(Rec.con);
+        auto con_info = tc.constructor_info(con);
+
+        if (not con_info.field_names)
+        {
+            tc.record_error(Rec.con.loc, Note()<<"Constructor '"<<get_unqualified_name(con.name)<<"' is not a record constructor.");
+            return {Rec.con.loc, con};
+        }
+
+        auto positions = record_field_positions(*con_info.field_names);
+        vector<optional<Hs::LExp>> fields(con_info.field_names->size());
+        set<int> used_fields;
+
+        if (unloc(Rec.fbinds).dotdot)
+            tc.record_error(Rec.fbinds.loc, Note()<<"Record wildcards in construction are not implemented yet.");
+
+        for(auto& field: unloc(Rec.fbinds))
+        {
+            auto& f = unloc(field);
+            auto field_name = unloc(f.field).name;
+            auto pos = positions.find(field_name);
+            if (pos == positions.end())
+                pos = positions.find(get_unqualified_name(field_name));
+
+            if (pos == positions.end())
+                tc.record_error(field.loc, Note()<<"Constructor '"<<get_unqualified_name(con.name)<<"' does not have field '"<<field_name<<"'.");
+            else if (used_fields.count(pos->second))
+                tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record construction.");
+            else if (not f.value)
+                tc.record_error(field.loc, Note()<<"Field pun '"<<field_name<<"' was not expanded before typechecking.");
+            else
+            {
+                used_fields.insert(pos->second);
+                fields[pos->second] = *f.value;
+            }
+        }
+
+        vector<Hs::LExp> args;
+        for(int i=0; i<fields.size(); i++)
+        {
+            if (fields[i])
+                args.push_back(*fields[i]);
+            else
+            {
+                tc.record_error(record_loc, Note()<<"Missing field "<<i+1<<" in record construction for constructor '"<<get_unqualified_name(con.name)<<"'.");
+                args.push_back(missing_record_field_exp(record_loc, con.name, i));
+            }
+        }
+
+        return Hs::apply({Rec.con.loc, con}, args);
+    }
+}
 
 void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
 {
@@ -316,6 +393,14 @@ void TypeChecker::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
 void TypeChecker::tcRho(Located<Hs::Expression>& E, const Expected& exp_type)
 {
     auto span = source_span_scope(E.loc);
+    if (auto rec = unloc(E).to<Hs::RecordCon>())
+    {
+        auto Rec = *rec;
+        auto app = record_con_to_positional_app(*this, Rec, E.loc);
+        tcRho(app, exp_type);
+        unloc(E) = unloc(app);
+        return;
+    }
     tcRho_(unloc(E), exp_type);
 }
 
@@ -334,6 +419,14 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
         auto C = *con;
         tcRho(C, exp_type);
         E = C;
+    }
+    // RECORD CONSTRUCTION
+    else if (auto rec = E.to<Hs::RecordCon>())
+    {
+        auto Rec = *rec;
+        auto app = record_con_to_positional_app(*this, Rec, Rec.con.loc * Rec.fbinds.loc);
+        tcRho(app, exp_type);
+        E = unloc(app);
     }
     // APP
     else if (auto app = E.to<Hs::ApplyExp>())
