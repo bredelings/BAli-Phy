@@ -1348,10 +1348,10 @@ namespace
         return instance;
     }
 
-    // Override the inferred instance head when standalone deriving supplied an explicit context.
+    // Override standalone stock heads, but keep inferred contexts needed by coercive deriving.
     void add_derived_instance(Hs::Decls& instances, const optional<yy::location>& loc, Hs::InstanceDecl instance, const DerivingTarget& target)
     {
-        if (target.explicit_polytype)
+        if (target.explicit_polytype and not instance.generalized_newtype_deriving)
             instance.polytype = *target.explicit_polytype;
         instances.push_back({loc, instance});
     }
