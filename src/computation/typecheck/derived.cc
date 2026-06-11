@@ -20,6 +20,13 @@ namespace
         const type_info::data_info& data;
     };
 
+    struct DerivingTarget
+    {
+        DerivingDataInfo data;
+        optional<Hs::LType> explicit_polytype;
+        const Hs::DataOrNewtypeDecl* source_decl = nullptr;
+    };
+
     using StockDeriver = Hs::InstanceDecl (*)(TypeChecker&, const DerivingDataInfo&, const std::optional<yy::location>&);
     using StockValidator = bool (*)(TypeChecker&, const DerivingDataInfo&);
 
@@ -59,6 +66,15 @@ namespace
             return {};
 
         return DerivingDataInfo{TypeCon(T->name, T->kind), *data_info};
+    }
+
+    optional<DerivingTarget> deriving_target_for_decl(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const optional<Hs::LType>& explicit_polytype = {})
+    {
+        auto data_info = deriving_data_info_for_decl(tc, data_decl);
+        if (not data_info)
+            return {};
+
+        return DerivingTarget{*data_info, explicit_polytype, &data_decl};
     }
 
     optional<DataConInfo> deriving_constructor_info(TypeChecker& tc, const string& con_name)
@@ -1263,20 +1279,21 @@ namespace
     }
 
     // Override the inferred instance head when standalone deriving supplied an explicit context.
-    void add_derived_instance(Hs::Decls& instances, const optional<yy::location>& loc, Hs::InstanceDecl instance, const optional<Hs::LType>& explicit_polytype)
+    void add_derived_instance(Hs::Decls& instances, const optional<yy::location>& loc, Hs::InstanceDecl instance, const DerivingTarget& target)
     {
-        if (explicit_polytype)
-            instance.polytype = *explicit_polytype;
+        if (target.explicit_polytype)
+            instance.polytype = *target.explicit_polytype;
         instances.push_back({loc, instance});
     }
 
     // Dispatch one deriving clause through stock deriving or GND according to its strategy.
-    void synthesize_deriving_clause(TypeChecker& tc, Hs::Decls& instances, const Hs::DataOrNewtypeDecl& data_decl, const Hs::Deriving& deriving, const optional<Hs::LType>& explicit_polytype = {})
+    void synthesize_deriving_clause(TypeChecker& tc, Hs::Decls& instances, const DerivingTarget& target, const Hs::Deriving& deriving)
     {
         if (deriving.strategy == Hs::DerivingStrategy::via)
         {
-            if (auto instance = derive_via_instance(tc, data_decl, deriving))
-                add_derived_instance(instances, deriving.type.loc, *instance, explicit_polytype);
+            auto instance = target.source_decl ? derive_via_instance(tc, *target.source_decl, deriving) : optional<Hs::InstanceDecl>{};
+            if (instance)
+                add_derived_instance(instances, deriving.type.loc, *instance, target);
             else
                 tc.record_error(deriving.type.loc, Note()<<"DerivingVia deriving "<<deriving.type.print()<<" is not supported yet");
             return;
@@ -1284,8 +1301,9 @@ namespace
 
         if (deriving.strategy == Hs::DerivingStrategy::anyclass)
         {
-            if (auto instance = derive_anyclass_instance(tc, data_decl, deriving.type))
-                add_derived_instance(instances, deriving.type.loc, *instance, explicit_polytype);
+            auto instance = target.source_decl ? derive_anyclass_instance(tc, *target.source_decl, deriving.type) : optional<Hs::InstanceDecl>{};
+            if (instance)
+                add_derived_instance(instances, deriving.type.loc, *instance, target);
             else
                 tc.record_error(deriving.type.loc, Note()<<"DeriveAnyClass deriving "<<deriving.type.print()<<" is not supported yet");
             return;
@@ -1299,8 +1317,8 @@ namespace
 
             const auto& spec = *derived_class->spec;
 
-            auto semantic_data = deriving_data_info_for_decl(tc, data_decl);
-            if (not semantic_data or not has_semantic_data_info(*semantic_data))
+            auto& semantic_data = target.data;
+            if (not has_semantic_data_info(semantic_data))
             {
                 tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                 return true;
@@ -1308,72 +1326,72 @@ namespace
 
             if (spec.class_name == bounded_class_name)
             {
-                if (not spec.validate(tc, *semantic_data))
+                if (not spec.validate(tc, semantic_data))
                 {
                     tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                     return true;
                 }
 
-                add_derived_instance(instances, deriving.type.loc, derive_bounded_instance(tc, *semantic_data, deriving.type.loc), explicit_polytype);
+                add_derived_instance(instances, deriving.type.loc, derive_bounded_instance(tc, semantic_data, deriving.type.loc), target);
                 return true;
             }
 
             if (spec.class_name == enum_class_name)
             {
-                if (not spec.validate(tc, *semantic_data))
+                if (not spec.validate(tc, semantic_data))
                 {
                     tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                     return true;
                 }
 
-                add_derived_instance(instances, deriving.type.loc, derive_enum_instance(tc, *semantic_data, deriving.type.loc), explicit_polytype);
+                add_derived_instance(instances, deriving.type.loc, derive_enum_instance(tc, semantic_data, deriving.type.loc), target);
                 return true;
             }
 
             if (spec.class_name == ix_class_name)
             {
-                if (not spec.validate(tc, *semantic_data))
+                if (not spec.validate(tc, semantic_data))
                 {
                     tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                     return true;
                 }
 
-                add_derived_instance(instances, deriving.type.loc, derive_ix_instance(tc, *semantic_data, deriving.type.loc), explicit_polytype);
+                add_derived_instance(instances, deriving.type.loc, derive_ix_instance(tc, semantic_data, deriving.type.loc), target);
                 return true;
             }
 
             if (spec.class_name == show_class_name)
             {
-                if (not spec.validate(tc, *semantic_data) or not data_decl.is_regular_decl())
+                if (not target.source_decl or not spec.validate(tc, semantic_data) or not target.source_decl->is_regular_decl())
                 {
                     tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                     return true;
                 }
 
-                add_derived_instance(instances, deriving.type.loc, derive_show_instance(tc, data_decl, *semantic_data, deriving.type.loc), explicit_polytype);
+                add_derived_instance(instances, deriving.type.loc, derive_show_instance(tc, *target.source_decl, semantic_data, deriving.type.loc), target);
                 return true;
             }
 
             if (spec.class_name == read_class_name)
             {
-                if (not spec.validate(tc, *semantic_data) or not is_regular_data_decl_with_readable_constructors(data_decl))
+                if (not target.source_decl or not spec.validate(tc, semantic_data) or not is_regular_data_decl_with_readable_constructors(*target.source_decl))
                 {
                     tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                     return true;
                 }
 
-                add_derived_instance(instances, deriving.type.loc, derive_read_instance(tc, data_decl, *semantic_data, deriving.type.loc), explicit_polytype);
+                add_derived_instance(instances, deriving.type.loc, derive_read_instance(tc, *target.source_decl, semantic_data, deriving.type.loc), target);
                 return true;
             }
 
-            if (not spec.validate(tc, *semantic_data))
+            if (not spec.validate(tc, semantic_data))
             {
                 tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                 return true;
             }
 
             assert(spec.derive);
-            add_derived_instance(instances, deriving.type.loc, spec.derive(tc, *semantic_data, deriving.type.loc), explicit_polytype);
+            add_derived_instance(instances, deriving.type.loc, spec.derive(tc, semantic_data, deriving.type.loc), target);
             return true;
         };
 
@@ -1386,9 +1404,9 @@ namespace
 
         if (deriving.strategy == Hs::DerivingStrategy::newtype)
         {
-            auto gnd = derive_generalized_newtype_instance(tc, data_decl, deriving.type, true);
+            auto gnd = target.source_decl ? derive_generalized_newtype_instance(tc, *target.source_decl, deriving.type, true) : GeneralizedNewtypeDerivingResult{false, {}};
             if (gnd.instance)
-                add_derived_instance(instances, deriving.type.loc, *gnd.instance, explicit_polytype);
+                add_derived_instance(instances, deriving.type.loc, *gnd.instance, target);
             else if (not gnd.handled)
                 tc.record_error(deriving.type.loc, Note()<<"newtype deriving "<<deriving.type.print()<<" is not supported yet");
             return;
@@ -1396,16 +1414,16 @@ namespace
 
         if (not derive_stock())
         {
-            auto gnd = derive_generalized_newtype_instance(tc, data_decl, deriving.type);
+            auto gnd = target.source_decl ? derive_generalized_newtype_instance(tc, *target.source_decl, deriving.type) : GeneralizedNewtypeDerivingResult{false, {}};
             if (gnd.instance)
-                add_derived_instance(instances, deriving.type.loc, *gnd.instance, explicit_polytype);
+                add_derived_instance(instances, deriving.type.loc, *gnd.instance, target);
             else if (not gnd.handled)
                 tc.record_error(deriving.type.loc, Note()<<"deriving "<<deriving.type.print()<<" is not supported yet");
         }
     }
 
     // Convert a standalone deriving instance head into a deriving clause and its target type.
-    optional<pair<const Hs::DataOrNewtypeDecl*, Hs::Deriving>> standalone_deriving_target(TypeChecker& tc, const Hs::Decls& decls, const Hs::StandaloneDerivingDecl& standalone)
+    optional<pair<DerivingTarget, Hs::Deriving>> standalone_deriving_target(TypeChecker& tc, const Hs::Decls& decls, const Hs::StandaloneDerivingDecl& standalone)
     {
         auto peeled = Hs::peel_top_gen(standalone.polytype);
         auto instance_head = std::get<2>(peeled);
@@ -1432,8 +1450,12 @@ namespace
             auto data_decl = decl.to<Hs::DataOrNewtypeDecl>();
             if (data_decl and unloc(data_decl->con).name == target_con->name)
             {
+                auto target = deriving_target_for_decl(tc, *data_decl, standalone.polytype);
+                if (not target)
+                    return {};
+
                 Hs::Deriving deriving(standalone.strategy, Hs::type_apply(class_head, class_args), standalone.via_type);
-                return pair<const Hs::DataOrNewtypeDecl*, Hs::Deriving>{data_decl, deriving};
+                return pair<DerivingTarget, Hs::Deriving>{*target, deriving};
             }
         }
 
@@ -1451,17 +1473,16 @@ Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
         if (auto data_decl = decl.to<Hs::DataOrNewtypeDecl>())
         {
             for(auto& deriving: data_decl->derivings)
-                synthesize_deriving_clause(*this, instances, *data_decl, deriving);
+            {
+                if (auto target = deriving_target_for_decl(*this, *data_decl))
+                    synthesize_deriving_clause(*this, instances, *target, deriving);
+            }
         }
         else if (auto standalone = decl.to<Hs::StandaloneDerivingDecl>())
         {
             if (auto target = standalone_deriving_target(*this, decls, *standalone))
             {
-                auto context = std::get<1>(Hs::peel_top_gen(standalone->polytype));
-                optional<Hs::LType> explicit_polytype;
-                if (not context.empty())
-                    explicit_polytype = standalone->polytype;
-                synthesize_deriving_clause(*this, instances, *target->first, target->second, explicit_polytype);
+                synthesize_deriving_clause(*this, instances, target->first, target->second);
             }
         }
         else if (auto data_inst = decl.to<Hs::DataFamilyInstanceDecl>())
