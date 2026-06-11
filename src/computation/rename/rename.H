@@ -2,6 +2,7 @@
 #define RENAME_H
 
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include "computation/expression/expression_ref.H"
@@ -47,6 +48,7 @@ struct renamer_state
     void warning(const std::optional<yy::location>& loc, const Note& e) const;
 
     void record_record_layouts(const Hs::Decls&);
+    std::optional<record_constructor_layout> record_layout_for_constructor(const std::string&);
 
     void qualify_name(std::string& name) const;
     void qualify_name(Located<std::string>& name) const;

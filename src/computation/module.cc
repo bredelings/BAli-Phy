@@ -2130,7 +2130,7 @@ std::optional<DataConInfo> Module::constructor_info(const string& con_name) cons
 
     auto C = lookup_resolved_symbol(con_name);
 
-    if (not C) return {};
+    if (not C or not C->con_info) return {};
 
     return *C->con_info;
 }
@@ -2356,6 +2356,14 @@ void Module::maybe_def_function(const string& var_name)
 void Module::add_local_symbols(const Hs::Decls& topdecls)
 {
     int next_data_family_instance_id = 0;
+    map<string,string> record_field_owner;
+
+    auto record_field_name = [&](const string& field_name, const string& owner_name)
+    {
+        auto [iter, inserted] = record_field_owner.insert({field_name, owner_name});
+        if (not inserted and iter->second != owner_name)
+            throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<iter->second<<"' and data type '"<<owner_name<<"'. Duplicate record field labels are not implemented yet.";
+    };
 
     auto add_data_family_instance_symbols = [&](const Hs::DataFamilyInstanceDecl& data_inst)
     {
@@ -2384,6 +2392,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                     for(auto& field_decl: fields->field_decls)
                         for(auto& [loc,var]: field_decl.field_names)
                         {
+                            record_field_name(var.name, family_name);
                             instance_info.fields.insert(qualify_local_name(var.name));
                             if (data_fam)
                                 data_fam->fields.insert( qualify_local_name(var.name) );
@@ -2394,11 +2403,11 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         {
             for(const auto& cons_decl: data_inst.rhs.get_gadt_constructors())
                 for(auto& con_name: cons_decl.con_names)
-                {
-                    int arity = Hs::gen_type_arity( cons_decl.type );
-                    auto cname = unloc(con_name);
-                    add_constructor(cname, arity);
-                }
+                    {
+                        int arity = Hs::gen_type_arity(expand_constructor_record_fields(cons_decl.type));
+                        auto cname = unloc(con_name);
+                        add_constructor(cname, arity);
+                    }
         }
 
         add_type({qualify_local_name(instance_type_name), instance_info, {}, (int)instance_info.constructors.size(), /*kind*/ {}});
@@ -2433,7 +2442,10 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                     if (auto fields = to<Hs::FieldDecls>(constr.fields))
                         for(auto& field_decl: fields->field_decls)
                             for(auto& [loc,var]: field_decl.field_names)
+                            {
+                                record_field_name(var.name, unloc(data_decl->con).name);
                                 info.fields.insert( qualify_local_name(var.name) );
+                            }
                 }
             }
             else if (data_decl->is_gadt_decl())
@@ -2442,7 +2454,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                 for(const auto& cons_decl: data_decl->get_gadt_constructors())
                     for(auto& con_name: cons_decl.con_names)
                     {
-                        int arity = Hs::gen_type_arity( cons_decl.type );
+                        int arity = Hs::gen_type_arity(expand_constructor_record_fields(cons_decl.type));
                         auto cname = unloc(con_name);
                         def_constructor(cname, arity, unloc(data_decl->con).name);
                         info.constructors.push_back( qualify_local_name(cname) );

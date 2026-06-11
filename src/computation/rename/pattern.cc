@@ -33,6 +33,41 @@ namespace
         constructors[field_name].insert(con_name);
         constructors[get_unqualified_name(field_name)].insert(con_name);
     }
+
+    // Flatten grouped record labels into constructor field order.
+    vector<string> field_decl_names(const Hs::FieldDecls& field_decls)
+    {
+        vector<string> names;
+        for(const auto& field_decl: field_decls.field_decls)
+            for(const auto& field_name: field_decl.field_names)
+                names.push_back(unloc(field_name).name);
+        return names;
+    }
+
+    // Extract labels from GADT record signatures like C :: { x :: A } -> T.
+    optional<vector<string>> gadt_constructor_field_names(Hs::LType type)
+    {
+        auto [tvs, context, rho_type] = Hs::peel_top_gen(type);
+
+        optional<vector<string>> names;
+        while(auto function_type = Hs::is_function_type(rho_type))
+        {
+            auto arg_type = function_type->first;
+            if (auto field_decls = unloc(arg_type).to<Hs::FieldDecls>())
+            {
+                if (not names)
+                    names = vector<string>{};
+                auto arg_names = field_decl_names(*field_decls);
+                names->insert(names->end(), arg_names.begin(), arg_names.end());
+            }
+            else if (names)
+                return {};
+
+            rho_type = function_type->second;
+        }
+
+        return names;
+    }
 }
 
 // The issue here is to rewrite @ f x y -> f x y
@@ -156,13 +191,67 @@ void renamer_state::record_record_layouts(const Hs::Decls& decls)
         }
     };
 
+    auto gadt_record_constructor_layouts_for = [&](const Hs::GADTConstructorsDecl& constructors)
+    {
+        for(const auto& constructor: constructors)
+        {
+            auto field_names = gadt_constructor_field_names(constructor.type);
+            if (not field_names)
+                continue;
+
+            record_constructor_layout layout;
+            layout.arity = field_names->size();
+            for(int i=0; i<field_names->size(); i++)
+                add_field_layout_name(layout, (*field_names)[i], i);
+
+            for(const auto& con_name: constructor.con_names)
+            {
+                auto name = unloc(con_name);
+                for(const auto& field_name: *field_names)
+                    add_field_constructor(record_field_constructors, field_name, name);
+
+                record_constructor_layouts[name] = layout;
+                record_constructor_layouts[get_unqualified_name(name)] = layout;
+            }
+        }
+    };
+
     for(const auto& [_,decl]: decls)
     {
         if (auto D = decl.to<Hs::DataOrNewtypeDecl>(); D and D->is_regular_decl())
             record_constructor_layouts_for(D->get_constructors());
+        else if (auto D = decl.to<Hs::DataOrNewtypeDecl>(); D and D->is_gadt_decl())
+            gadt_record_constructor_layouts_for(D->get_gadt_constructors());
         else if (auto D = decl.to<Hs::DataFamilyInstanceDecl>(); D and D->rhs.is_regular_decl())
             record_constructor_layouts_for(D->rhs.get_constructors());
+        else if (auto D = decl.to<Hs::DataFamilyInstanceDecl>(); D and D->rhs.is_gadt_decl())
+            gadt_record_constructor_layouts_for(D->rhs.get_gadt_constructors());
     }
+}
+
+std::optional<record_constructor_layout> renamer_state::record_layout_for_constructor(const string& con_name)
+{
+    auto layout = record_constructor_layouts.find(con_name);
+    if (layout == record_constructor_layouts.end())
+        layout = record_constructor_layouts.find(get_unqualified_name(con_name));
+    if (layout != record_constructor_layouts.end())
+        return layout->second;
+
+    auto con_info = m.constructor_info(con_name);
+    if (not con_info or not con_info->field_names)
+        return {};
+
+    record_constructor_layout semantic_layout;
+    semantic_layout.arity = con_info->arity();
+    for(int i=0; i<con_info->field_names->size(); i++)
+        add_field_layout_name(semantic_layout, (*con_info->field_names)[i], i);
+
+    record_constructor_layouts[con_info->name] = semantic_layout;
+    record_constructor_layouts[get_unqualified_name(con_info->name)] = semantic_layout;
+    for(const auto& field_name: *con_info->field_names)
+        add_field_constructor(record_field_constructors, field_name, con_info->name);
+
+    return semantic_layout;
 }
 
 bound_var_info renamer_state::rename_patterns(Hs::LPats& patterns, bool top)
@@ -479,25 +568,23 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
                 unloc(R.head).name = S->name;
                 unloc(R.head).arity = *S->arity;
 
-                auto layout = record_constructor_layouts.find(S->name);
-                if (layout == record_constructor_layouts.end())
-                    layout = record_constructor_layouts.find(get_unqualified_name(S->name));
+                auto layout = record_layout_for_constructor(S->name);
 
-                if (layout == record_constructor_layouts.end())
+                if (not layout)
                     error(loc, Note()<<"Constructor '"<<id<<"' is not a record constructor in pattern '"<<pat<<"'!");
                 else
                 {
-                    Hs::LPats args(layout->second.arity, {noloc,Hs::WildcardPattern()});
+                    Hs::LPats args(layout->arity, {noloc,Hs::WildcardPattern()});
                     set<int> used_fields;
 
                     for(auto& field: unloc(R.fbinds))
                     {
                         auto field_name = unloc(unloc(field).field).name;
-                        auto pos = layout->second.fields.find(field_name);
-                        if (pos == layout->second.fields.end())
-                            pos = layout->second.fields.find(get_unqualified_name(field_name));
+                        auto pos = layout->fields.find(field_name);
+                        if (pos == layout->fields.end())
+                            pos = layout->fields.find(get_unqualified_name(field_name));
 
-                        if (pos == layout->second.fields.end())
+                        if (pos == layout->fields.end())
                             error(field.loc, Note()<<"Constructor '"<<id<<"' does not have field '"<<field_name<<"'.");
                         else if (used_fields.count(pos->second))
                             error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in pattern '"<<pat<<"'.");

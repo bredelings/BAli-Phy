@@ -560,28 +560,27 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                 Con.name = S->name;
                 Con.arity = S->arity;
 
-                auto layout = record_constructor_layouts.find(S->name);
-                if (layout == record_constructor_layouts.end())
-                    layout = record_constructor_layouts.find(get_unqualified_name(S->name));
+                auto layout = record_layout_for_constructor(S->name);
 
-                if (layout == record_constructor_layouts.end())
+                if (not layout)
                     error(Rec.head.loc, Note()<<"Constructor '"<<con->name<<"' is not a record constructor.");
                 else
                 {
-                    vector<optional<Hs::LExp>> fields(layout->second.arity);
+                    vector<optional<Hs::LExp>> fields(layout->arity);
                     set<int> used_fields;
+                    bool has_dotdot = unloc(Rec.fbinds).dotdot;
 
-                    if (unloc(Rec.fbinds).dotdot)
+                    if (has_dotdot)
                         error(Rec.fbinds.loc, Note()<<"Record wildcards in construction are not implemented yet.");
 
                     for(auto& field: unloc(Rec.fbinds))
                     {
                         auto field_name = unloc(unloc(field).field).name;
-                        auto pos = layout->second.fields.find(field_name);
-                        if (pos == layout->second.fields.end())
-                            pos = layout->second.fields.find(get_unqualified_name(field_name));
+                        auto pos = layout->fields.find(field_name);
+                        if (pos == layout->fields.end())
+                            pos = layout->fields.find(get_unqualified_name(field_name));
 
-                        if (pos == layout->second.fields.end())
+                        if (pos == layout->fields.end())
                             error(field.loc, Note()<<"Constructor '"<<con->name<<"' does not have field '"<<field_name<<"'.");
                         else if (used_fields.count(pos->second))
                             error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record construction.");
@@ -599,7 +598,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                     {
                         if (fields[i])
                             args.push_back(*fields[i]);
-                        else
+                        else if (not has_dotdot)
                             error(loc, Note()<<"Missing field "<<i+1<<" in record construction for constructor '"<<con->name<<"'.");
                     }
 
