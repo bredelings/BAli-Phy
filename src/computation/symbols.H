@@ -110,7 +110,7 @@ struct type_info
     };
     struct data_info
     {
-        std::set<std::string> constructors;
+        std::vector<std::string> constructors;
         std::set<std::string> fields;
 
 	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields);}

@@ -764,7 +764,7 @@ SimplifierState::prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& ob
                     assert(T);
                     auto D = T->is_data();
                     assert(D);
-                    unseen_constructors = D->constructors;
+                    unseen_constructors.insert(D->constructors.begin(), D->constructors.end());
                     assert(not unseen_constructors.empty());
                 }
             }

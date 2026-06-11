@@ -2,6 +2,7 @@
 #include <regex>
 #include <tuple>
 #include <fstream>
+#include <algorithm>
 #include "computation/module.H"
 #include "computation/preprocess.H"
 #include "util/myexception.H"
@@ -50,6 +51,14 @@ using std::string;
 using std::vector;
 using std::tuple;
 using std::shared_ptr;
+
+namespace
+{
+    bool contains_constructor(const vector<string>& constructors, const string& name)
+    {
+        return std::ranges::find(constructors, name) != constructors.end();
+    }
+}
 
 std::string Module::qualify_local_name(const std::string& n) const
 {
@@ -364,7 +373,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                             auto type_modid = get_module_name(type->name);
                             for(auto& [loc,name]: *s.subspec->names)
                             {
-                                if (is_haskell_conid(name) and not d->constructors.count(type_modid + "." + name))
+                                if (is_haskell_conid(name) and not contains_constructor(d->constructors, type_modid + "." + name))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
@@ -1300,7 +1309,7 @@ void Module::perform_exports()
                             for(auto& [loc,name]: *ex.subspec->names)
                             {
                                 auto qualified_name = get_module_name(t->name) + "." + name;
-                                if (is_haskell_conid(name) and not d->constructors.count( qualified_name ))
+                                if (is_haskell_conid(name) and not contains_constructor(d->constructors, qualified_name))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
@@ -2343,7 +2352,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 
         auto add_constructor = [&](const string& cname, int arity)
         {
-            instance_info.constructors.insert(qualify_local_name(cname));
+            instance_info.constructors.push_back(qualify_local_name(cname));
             if (data_fam)
                 data_fam->constructors.insert(qualify_local_name(cname));
             def_constructor(cname, arity, instance_type_name);
@@ -2405,7 +2414,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                 {
                     auto cname = unloc(*constr.con).name;
                     def_constructor(cname, constr.arity(), unloc(data_decl->con).name);
-                    info.constructors.insert( qualify_local_name(cname) );
+                    info.constructors.push_back( qualify_local_name(cname) );
                     if (auto fields = to<Hs::FieldDecls>(constr.fields))
                         for(auto& field_decl: fields->field_decls)
                             for(auto& [loc,var]: field_decl.field_names)
@@ -2421,7 +2430,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                         int arity = Hs::gen_type_arity( cons_decl.type );
                         auto cname = unloc(con_name);
                         def_constructor(cname, arity, unloc(data_decl->con).name);
-                        info.constructors.insert( qualify_local_name(cname) );
+                        info.constructors.push_back( qualify_local_name(cname) );
 
                         // FIXME: handle GADT fielddecls Constr :: { name1 :: ArgType1, name2 :: ArgType2 } -> ResultType
                     }
