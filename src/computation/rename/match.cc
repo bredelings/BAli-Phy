@@ -26,10 +26,17 @@ Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var
 
 Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, set<string>& free_vars)
 {
+    auto old_fixity_env = fixity_env;
     bound_var_info binders;
+    auto rhs_fixity_env = fixity_env;
 
     if (R.decls)
-        binders = rename_decls(unloc(*R.decls), bound, binders, free_vars);
+    {
+        rhs_fixity_env = add_fixities_from_decls(rhs_fixity_env, unloc(*R.decls)[0]);
+        binders = rename_decls(unloc(*R.decls), bound, binders, free_vars, rhs_fixity_env);
+    }
+
+    fixity_env = rhs_fixity_env;
 
     for(auto& guarded_rhs: R.guarded_rhss)
     {
@@ -39,6 +46,7 @@ Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var
         guarded_rhs.body = rename(guarded_rhs.body, bound, binders, free_vars);
     }
 
+    fixity_env = old_fixity_env;
     return R;
 }
 
@@ -48,6 +56,7 @@ Hs::MRule renamer_state::rename(Hs::MRule mrule, const bound_var_info& bound, se
 
     for(auto& arg: mrule.patterns)
     {
+        arg = expression_to_pattern_category(arg);
         auto new_binders = rename_pattern(arg);
         auto overlap = intersection(binders, new_binders);
         if (not overlap.empty())
@@ -70,4 +79,3 @@ Hs::Matches renamer_state::rename(Hs::Matches matches, const bound_var_info& bou
 
     return matches;
 }
-

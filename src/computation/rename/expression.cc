@@ -41,245 +41,6 @@ namespace
     }
 }
 
-Hs::LExp rename_infix(const Module& m, Hs::LExp LE)
-{
-    auto& E = unloc(LE);
-    if (E.is_a<Hs::List>())
-    {
-        auto L = E.as_<Hs::List>();
-        for(auto& element: L.elements)
-            element = rename_infix(m, element);
-        E = L;
-    }
-    else if (E.is_a<Hs::ListFrom>())
-    {
-        auto L = E.as_<Hs::ListFrom>();
-        L.from = rename_infix(m, L.from);
-        E = L;
-    }
-    else if (E.is_a<Hs::ListFromThen>())
-    {
-        auto L = E.as_<Hs::ListFromThen>();
-        L.from = rename_infix(m, L.from);
-        L.then = rename_infix(m, L.then);
-        E = L;
-    }
-    else if (E.is_a<Hs::ListFromTo>())
-    {
-        auto L = E.as_<Hs::ListFromTo>();
-        L.from = rename_infix(m, L.from);
-        L.to   = rename_infix(m, L.to);
-        E = L;
-    }
-    else if (E.is_a<Hs::ListFromThenTo>())
-    {
-        auto L = E.as_<Hs::ListFromThenTo>();
-        L.from = rename_infix(m, L.from);
-        L.then = rename_infix(m, L.then);
-        L.to   = rename_infix(m, L.to);
-        E = L;
-    }
-    else if (E.is_a<Hs::ListComprehension>())
-    {
-        auto L = E.as_<Hs::ListComprehension>();
-        L.body = rename_infix(m, L.body);
-        for(auto& qual: L.quals)
-            qual = rename_infix(m, qual);
-        E = L;
-    }
-    else if (E.is_a<Hs::LeftSection>())
-    {
-        auto S = E.as_<Hs::LeftSection>();
-        S.l_arg = rename_infix(m, S.l_arg);
-        E = S;
-    }
-    else if (E.is_a<Hs::RightSection>())
-    {
-        auto S = E.as_<Hs::RightSection>();
-        S.r_arg = rename_infix(m, S.r_arg);
-        E = S;
-    }
-    else if (E.is_a<Hs::Tuple>())
-    {
-        auto T = E.as_<Hs::Tuple>();
-        for(auto& element: T.elements)
-            element = rename_infix(m, element);
-        E = T;
-    }
-    else if (E.is_a<Hs::PatQual>())
-    {
-        auto PQ = E.as_<Hs::PatQual>();
-
-        PQ.bindpat = rename_infix(m, PQ.bindpat);
-        PQ.bindpat = unapply(PQ.bindpat);
-
-        PQ.exp = rename_infix(m, PQ.exp);
-
-        E = PQ;
-    }
-    else if (E.is_a<Hs::SimpleQual>())
-    {
-        auto SQ = E.as_<Hs::SimpleQual>();
-        SQ.exp = rename_infix(m, SQ.exp);
-        E = SQ;
-    }
-    else if (E.is_a<Hs::LetQual>())
-    {
-        auto LQ = E.as_<Hs::LetQual>();
-        unloc(LQ.binds) = rename_infix(m, unloc(LQ.binds));
-        E = LQ;
-    }
-    else if (E.is_a<Hs::AsPattern>())
-    {
-        auto& AP = E.as_<Hs::AsPattern>();
-        E = Hs::AsPattern(AP.var, rename_infix(m,AP.pattern));
-    }
-    else if (E.is_a<Hs::LazyPattern>())
-    {
-        auto LP = E.as_<Hs::LazyPattern>();
-        E = Hs::LazyPattern(rename_infix(m,LP.pattern));
-    }
-    else if (E.is_a<Hs::StrictPattern>())
-    {
-        auto SP = E.as_<Hs::StrictPattern>();
-        SP.pattern = rename_infix(m, SP.pattern);
-        E = SP;
-    }
-    else if (E.is_a<Hs::RecStmt>())
-    {
-        auto R = E.as_<Hs::RecStmt>();
-        for(auto& stmt: R.stmts.stmts)
-            stmt = rename_infix(m, stmt);
-        E = R;
-    }
-    else if (E.is_a<Hs::Do>())
-    {
-        auto D = E.as_<Hs::Do>();
-        for(auto& stmt: D.stmts.stmts)
-            stmt = rename_infix(m, stmt);
-        E = D;
-    }
-    else if (E.is_a<Hs::MDo>())
-    {
-        throw myexception()<<"mdo is not handled yet!";
-        auto D = E.as_<Hs::MDo>();
-        for(auto& stmt: D.stmts.stmts)
-            stmt = rename_infix(m, stmt);
-        E = D;
-    }
-    else if (E.is_a<Hs::LambdaExp>())
-    {
-        auto L = E.as_<Hs::LambdaExp>();
-        for(auto& pat: L.match.patterns)
-            pat = unapply(rename_infix(m, pat));
-        L.match.rhs = rename_infix(m, L.match.rhs);
-
-        E = L;
-    }
-    else if (E.is_a<Hs::LetExp>())
-    {
-        auto L = E.as_<Hs::LetExp>();
-
-        unloc(L.binds) = rename_infix(m, unloc(L.binds));
-        L.body  = rename_infix(m, L.body);
-
-        E = L;
-    }
-    else if (E.is_a<Hs::IfExp>())
-    {
-        auto I = E.as_<Hs::IfExp>();
-        I.condition = rename_infix(m, I.condition);
-        I.true_branch = rename_infix(m, I.true_branch);
-        I.false_branch = rename_infix(m, I.false_branch);
-        E = I;
-    }
-    else if (auto c = E.to<Hs::CaseExp>())
-    {
-        auto C = *c;
-
-        C.object = rename_infix(m, C.object);
-
-        for(auto& [patterns, rhs]: C.alts)
-        {
-            patterns[0] = rename_infix(m, patterns[0]);
-            patterns[0] = unapply(patterns[0]);
-            rhs = rename_infix(m, rhs);
-        }
-
-        E = C;
-    }
-    else if (E.is_a<Hs::Literal>())
-    {
-    }
-    else if (auto te = E.to<Hs::TypedExp>())
-    {
-        auto TE = *te;
-        TE.exp = rename_infix(m, TE.exp);
-        // Nothing to do for TE.type, since there are no type operators unless extensions are enabled.
-        E = TE;
-    }
-    else if (auto r = E.to<Hs::RecordSyntax>())
-    {
-        auto R = *r;
-        R.head = rename_infix(m, R.head);
-        for(auto& field: unloc(R.fbinds))
-            if (unloc(field).value)
-                *unloc(field).value = rename_infix(m, *unloc(field).value);
-        E = R;
-    }
-    else if (auto r = E.to<Hs::RecordCon>())
-    {
-        auto R = *r;
-        for(auto& field: unloc(R.fbinds))
-            if (unloc(field).value)
-                *unloc(field).value = rename_infix(m, *unloc(field).value);
-        E = R;
-    }
-    else if (auto r = E.to<Hs::RecordUpdate>())
-    {
-        auto R = *r;
-        R.object = rename_infix(m, R.object);
-        for(auto& field: unloc(R.fbinds))
-            if (unloc(field).value)
-                *unloc(field).value = rename_infix(m, *unloc(field).value);
-        E = R;
-    }
-    else if (auto I = E.to<Hs::InfixExp>())
-    {
-        auto terms = I->terms;
-        for(auto& term: terms)
-            term = rename_infix(m, term);
-	E = unloc(desugar_infix(m, terms));
-    }
-    else if (auto app = E.to<Hs::ParsedApp>())
-    {
-        auto App = *app;
-        for(auto& term: App.terms)
-            term = rename_infix(m, term);
-        E = App;
-    }
-    else if (auto app = E.to<Hs::ApplyExp>())
-    {
-        auto App = *app;
-
-        App.head = rename_infix(m, App.head);
-        App.arg  = rename_infix(m, App.arg );
-
-	E = App;
-    }
-    else if (E.is_a<Hs::WildcardPattern>())
-    {}
-    else if (E.is_a<Hs::Var>())
-    {}
-    else if (E.is_a<Hs::Con>())
-    {}
-    else if (E.head().is_a<Hs::Neg>())
-    {}
-    else
-        std::abort();
-    return LE;
-}
-
 Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set<string>& free_vars)
 {
     return unloc(rename({noloc, E}, bound, free_vars));
@@ -329,12 +90,14 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     else if (E.is_a<Hs::ListComprehension>())
     {
         auto L = E.as_<Hs::ListComprehension>();
+        auto old_fixity_env = fixity_env;
 
         bound_var_info binders;
         for(auto& qual: L.quals)
             add(binders, rename_stmt(qual, bound, binders, free_vars));
 
         L.body = rename(L.body, bound, binders, free_vars);
+        fixity_env = old_fixity_env;
         E = L;
     }
     else if (E.is_a<Hs::LeftSection>())
@@ -419,15 +182,18 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     }
     else if (E.is_a<Hs::RecStmt>())
     {
+        auto old_fixity_env = fixity_env;
         bound_var_info binders;
         auto R = E.as_<Hs::RecStmt>();
         for(auto& stmt: R.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
 
+        fixity_env = old_fixity_env;
         E = R;
     }
     else if (E.is_a<Hs::Do>())
     {
+        auto old_fixity_env = fixity_env;
         bound_var_info binders;
         auto D = E.as_<Hs::Do>();
         for(auto& stmt: D.stmts.stmts)
@@ -441,6 +207,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
             if (not unloc(last).is_a<Hs::SimpleQual>())
                 error(last.loc, Note()<<"Do block does not end in an expression.");
         }
+        fixity_env = old_fixity_env;
         E = D;
     }
     else if (E.is_a<Hs::MDo>())
@@ -483,10 +250,12 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         // Hmm... as a dumb segmentation, we could take all the stmts except the last one and put them in a giant rec...
         // FIXME: implement segmentation, and insert recs.
 
+        auto old_fixity_env = fixity_env;
         bound_var_info binders;
         auto MD = E.as_<Hs::MDo>();
         for(auto& stmt: MD.stmts.stmts)
             add(binders, rename_stmt(stmt, bound, binders, free_vars));
+        fixity_env = old_fixity_env;
         E = MD;
     }
     else if (auto te = E.to<Hs::TypedExp>())
@@ -664,8 +433,12 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     {
         auto L = E.as_<Hs::LetExp>();
 
-        auto binders = rename_decls(unloc(L.binds), bound, free_vars);
+        auto old_fixity_env = fixity_env;
+        auto let_fixity_env = add_fixities_from_decls(fixity_env, unloc(L.binds)[0]);
+        fixity_env = let_fixity_env;
+        auto binders = rename_decls(unloc(L.binds), bound, free_vars, let_fixity_env);
         L.body = rename(L.body, bound, binders, free_vars);
+        fixity_env = old_fixity_env;
 
         E = L;
     }
@@ -689,6 +462,19 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
             error(loc, Note()<<"Empty parsed application.");
         E = unloc(Hs::apply(app->terms));
         return rename(LE, bound, free_vars);
+    }
+    else if (auto I = E.to<Hs::InfixExp>())
+    {
+        try
+        {
+            LE = desugar_infix(*this, I->terms);
+            return rename(LE, bound, free_vars);
+        }
+        catch (myexception& e)
+        {
+            error(loc, Note()<<e.what());
+            E = Hs::Var("<infix-error>");
+        }
     }
     else if (auto app = E.to<Hs::ApplyExp>())
     {

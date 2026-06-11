@@ -209,6 +209,135 @@ Hs::LPat unapply(Hs::LExp LE)
     return LP;
 }
 
+// Convert expression-form record fields into pattern-form record fields.
+Hs::PatternFieldBindings pattern_field_bindings(const Hs::FieldBindings& fields)
+{
+    Hs::PatternFieldBindings pattern_fields;
+    pattern_fields.dotdot = fields.dotdot;
+
+    for(const auto& lfield: fields)
+    {
+        const auto& field = unloc(lfield);
+        Hs::LPat pattern;
+        if (field.value)
+            pattern = expression_to_pattern_category(*field.value);
+        else
+            pattern = record_field_pun_pattern(field.field);
+        pattern_fields.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern)});
+    }
+
+    return pattern_fields;
+}
+
+// Convert parsed expression-category syntax into pattern-category syntax without resolving fixity.
+Hs::LPat expression_to_pattern_category(Hs::LExp lhs)
+{
+    auto& E = unloc(lhs);
+
+    if (auto I = E.to<Hs::InfixExp>())
+    {
+        if (I->terms.size() == 1)
+            return expression_to_pattern_category(I->terms[0]);
+
+        auto terms = I->terms;
+        for(int i=0; i<terms.size(); i++)
+            if (is_infix_operand_term(terms, i))
+                terms[i] = expression_to_pattern_category(terms[i]);
+
+        return {lhs.loc, Hs::InfixPat(terms)};
+    }
+    else if (E.is_a<Hs::ParsedApp>())
+    {
+        auto [head,args] = Hs::decompose_apps(lhs);
+        if (auto con = unloc(head).to<Hs::Con>())
+        {
+            Hs::LPats pat_args;
+            for(auto& arg: args)
+                pat_args.push_back(expression_to_pattern_category(arg));
+            return {lhs.loc, Hs::ConPattern({head.loc, *con}, pat_args)};
+        }
+
+        error(lhs.loc, Note()<<"Function application '"<<lhs<<"' is not valid in a pattern unless its head is a constructor.");
+        return {lhs.loc, Hs::WildcardPattern()};
+    }
+    else if (E.is_a<Hs::ApplyExp>())
+    {
+        auto [head,args] = Hs::decompose_apps(lhs);
+        if (auto con = unloc(head).to<Hs::Con>())
+        {
+            Hs::LPats pat_args;
+            for(auto& arg: args)
+                pat_args.push_back(expression_to_pattern_category(arg));
+            return {lhs.loc, Hs::ConPattern({head.loc, *con}, pat_args)};
+        }
+
+        error(lhs.loc, Note()<<"Function application '"<<lhs<<"' is not valid in a pattern unless its head is a constructor.");
+        return {lhs.loc, Hs::WildcardPattern()};
+    }
+    else if (auto r = E.to<Hs::RecordSyntax>())
+    {
+        auto con = unloc(r->head).to<Hs::Con>();
+        if (not con)
+        {
+            error(lhs.loc, Note()<<"Record syntax '"<<lhs<<"' is not valid in a pattern unless its head is a constructor.");
+            return {lhs.loc, Hs::WildcardPattern()};
+        }
+
+        return {lhs.loc, Hs::RecordPattern({r->head.loc, *con}, {r->fbinds.loc, pattern_field_bindings(unloc(r->fbinds))})};
+    }
+    else if (auto r = E.to<Hs::RecordCon>())
+        return {lhs.loc, Hs::RecordPattern(r->con, {r->fbinds.loc, pattern_field_bindings(unloc(r->fbinds))})};
+    else if (E.is_a<Hs::RecordUpdate>())
+    {
+        error(lhs.loc, Note()<<"Record update syntax '"<<lhs<<"' is not valid in a pattern.");
+        return {lhs.loc, Hs::WildcardPattern()};
+    }
+    else if (auto l = E.to<Hs::List>())
+    {
+        Hs::ListPattern P;
+        for(auto& element: l->elements)
+            P.elements.push_back(expression_to_pattern_category(element));
+        return {lhs.loc, P};
+    }
+    else if (auto t = E.to<Hs::Tuple>())
+    {
+        Hs::TuplePattern P;
+        for(auto& element: t->elements)
+            P.elements.push_back(expression_to_pattern_category(element));
+        return {lhs.loc, P};
+    }
+    else if (auto ap = E.to<Hs::AsPattern>())
+        return {lhs.loc, Hs::AsPattern(ap->var, expression_to_pattern_category(ap->pattern))};
+    else if (auto lp = E.to<Hs::LazyPattern>())
+        return {lhs.loc, Hs::LazyPattern(expression_to_pattern_category(lp->pattern))};
+    else if (auto sp = E.to<Hs::StrictPattern>())
+        return {lhs.loc, Hs::StrictPattern(expression_to_pattern_category(sp->pattern))};
+    else if (auto t = E.to<Hs::TypedExp>())
+    {
+        Hs::TypedPattern P;
+        P.pat = expression_to_pattern_category(t->exp);
+        P.type = t->type;
+        return {lhs.loc, P};
+    }
+    else if (auto l = E.to<Hs::Literal>())
+        return {lhs.loc, Hs::LiteralPattern(*l)};
+    else if (auto c = E.to<Hs::Con>())
+        return {lhs.loc, Hs::ConPattern({lhs.loc, *c}, {})};
+    else if (auto v = E.to<Hs::Var>())
+        return {lhs.loc, Hs::VarPattern({lhs.loc, *v})};
+    else if (E.is_a<Hs::WildcardPattern>())
+        return {lhs.loc, Hs::WildcardPattern()};
+    else if (E.is_a<Hs::VarPattern>() or E.is_a<Hs::ConPattern>() or E.is_a<Hs::InfixPat>() or
+             E.is_a<Hs::LiteralPattern>() or E.is_a<Hs::ListPattern>() or E.is_a<Hs::TuplePattern>() or
+             E.is_a<Hs::RecordPattern>() or E.is_a<Hs::TypedPattern>())
+        return lhs;
+    else
+    {
+        error(lhs.loc, Note()<<"Expression '"<<lhs<<"' is not valid in a pattern.");
+        return {lhs.loc, Hs::WildcardPattern()};
+    }
+}
+
 void renamer_state::record_record_layouts(const Hs::Decls& decls)
 {
     auto record_constructor_layouts_for = [&](const Hs::ConstructorsDecl& constructors)
@@ -620,7 +749,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 
         try
         {
-            lpat = unapply(desugar_infix(m, I.terms));
+            lpat = desugar_pattern_infix(*this, I.terms);
             return rename_pattern(lpat, top);
         }
         catch (myexception& e)

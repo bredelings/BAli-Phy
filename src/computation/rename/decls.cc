@@ -68,175 +68,6 @@ bool is_definitely_pattern(const Haskell::Expression& lhs)
     return false;
 }
 
-// Detect the leading prefix-negation marker in an unresolved infix spine.
-bool is_prefix_neg(const vector<Hs::LExp>& terms)
-{
-    return not terms.empty() and unloc(terms[0]).is_a<Hs::Neg>();
-}
-
-// Return whether a spine term occupies an operator slot, accounting for prefix negation.
-bool is_infix_operator_term(const vector<Hs::LExp>& terms, int index)
-{
-    if (is_prefix_neg(terms))
-        return index != 0 and index % 2 == 0;
-    else
-        return index % 2 == 1;
-}
-
-// Return whether a spine term occupies an operand slot that should be pattern-classified.
-bool is_infix_operand_term(const vector<Hs::LExp>& terms, int index)
-{
-    return not unloc(terms[index]).is_a<Hs::Neg>() and not is_infix_operator_term(terms, index);
-}
-
-// Rebuild an unresolved infix expression from a slice of spine terms.
-Hs::LExp make_infix_exp(const vector<Hs::LExp>& terms)
-{
-    assert(not terms.empty());
-    if (terms.size() == 1)
-        return terms[0];
-
-    auto loc = terms.front().loc;
-    for(const auto& term: terms)
-        loc = loc * term.loc;
-
-    return {loc, Hs::InfixExp(terms)};
-}
-
-Hs::LPat expression_to_pattern_category(Hs::LExp lhs);
-
-// Convert expression-form record fields into pattern-form record fields.
-Hs::PatternFieldBindings pattern_field_bindings(const Hs::FieldBindings& fields)
-{
-    Hs::PatternFieldBindings pattern_fields;
-    pattern_fields.dotdot = fields.dotdot;
-
-    for(const auto& lfield: fields)
-    {
-        const auto& field = unloc(lfield);
-        Hs::LPat pattern;
-        if (field.value)
-            pattern = expression_to_pattern_category(*field.value);
-        else
-        {
-            auto name = get_unqualified_name(unloc(field.field).name);
-            pattern = {field.field.loc, Hs::VarPattern({field.field.loc, Hs::Var(name)})};
-        }
-        pattern_fields.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern)});
-    }
-
-    return pattern_fields;
-}
-
-// Convert parsed expression-category syntax into pattern-category syntax without resolving fixity.
-Hs::LPat expression_to_pattern_category(Hs::LExp lhs)
-{
-    auto& E = unloc(lhs);
-
-    if (auto I = E.to<Hs::InfixExp>())
-    {
-        if (I->terms.size() == 1)
-            return expression_to_pattern_category(I->terms[0]);
-
-        auto terms = I->terms;
-        for(int i=0; i<terms.size(); i++)
-            if (is_infix_operand_term(terms, i))
-                terms[i] = expression_to_pattern_category(terms[i]);
-
-        return {lhs.loc, Hs::InfixPat(terms)};
-    }
-    else if (E.is_a<Hs::ParsedApp>())
-    {
-        auto [head,args] = Hs::decompose_apps(lhs);
-        if (auto con = unloc(head).to<Hs::Con>())
-        {
-            Hs::LPats pat_args;
-            for(auto& arg: args)
-                pat_args.push_back(expression_to_pattern_category(arg));
-            return {lhs.loc, Hs::ConPattern({head.loc, *con}, pat_args)};
-        }
-
-        error(lhs.loc, Note()<<"Function application '"<<lhs<<"' is not valid in a pattern unless its head is a constructor.");
-        return {lhs.loc, Hs::WildcardPattern()};
-    }
-    else if (E.is_a<Hs::ApplyExp>())
-    {
-        auto [head,args] = Hs::decompose_apps(lhs);
-        if (auto con = unloc(head).to<Hs::Con>())
-        {
-            Hs::LPats pat_args;
-            for(auto& arg: args)
-                pat_args.push_back(expression_to_pattern_category(arg));
-            return {lhs.loc, Hs::ConPattern({head.loc, *con}, pat_args)};
-        }
-
-        error(lhs.loc, Note()<<"Function application '"<<lhs<<"' is not valid in a pattern unless its head is a constructor.");
-        return {lhs.loc, Hs::WildcardPattern()};
-    }
-    else if (auto r = E.to<Hs::RecordSyntax>())
-    {
-        auto con = unloc(r->head).to<Hs::Con>();
-        if (not con)
-        {
-            error(lhs.loc, Note()<<"Record syntax '"<<lhs<<"' is not valid in a pattern unless its head is a constructor.");
-            return {lhs.loc, Hs::WildcardPattern()};
-        }
-
-        return {lhs.loc, Hs::RecordPattern({r->head.loc, *con}, {r->fbinds.loc, pattern_field_bindings(unloc(r->fbinds))})};
-    }
-    else if (auto r = E.to<Hs::RecordCon>())
-        return {lhs.loc, Hs::RecordPattern(r->con, {r->fbinds.loc, pattern_field_bindings(unloc(r->fbinds))})};
-    else if (E.is_a<Hs::RecordUpdate>())
-    {
-        error(lhs.loc, Note()<<"Record update syntax '"<<lhs<<"' is not valid in a pattern.");
-        return {lhs.loc, Hs::WildcardPattern()};
-    }
-    else if (auto l = E.to<Hs::List>())
-    {
-        Hs::ListPattern P;
-        for(auto& element: l->elements)
-            P.elements.push_back(expression_to_pattern_category(element));
-        return {lhs.loc, P};
-    }
-    else if (auto t = E.to<Hs::Tuple>())
-    {
-        Hs::TuplePattern P;
-        for(auto& element: t->elements)
-            P.elements.push_back(expression_to_pattern_category(element));
-        return {lhs.loc, P};
-    }
-    else if (auto ap = E.to<Hs::AsPattern>())
-        return {lhs.loc, Hs::AsPattern(ap->var, expression_to_pattern_category(ap->pattern))};
-    else if (auto lp = E.to<Hs::LazyPattern>())
-        return {lhs.loc, Hs::LazyPattern(expression_to_pattern_category(lp->pattern))};
-    else if (auto sp = E.to<Hs::StrictPattern>())
-        return {lhs.loc, Hs::StrictPattern(expression_to_pattern_category(sp->pattern))};
-    else if (auto t = E.to<Hs::TypedExp>())
-    {
-        Hs::TypedPattern P;
-        P.pat = expression_to_pattern_category(t->exp);
-        P.type = t->type;
-        return {lhs.loc, P};
-    }
-    else if (auto l = E.to<Hs::Literal>())
-        return {lhs.loc, Hs::LiteralPattern(*l)};
-    else if (auto c = E.to<Hs::Con>())
-        return {lhs.loc, Hs::ConPattern({lhs.loc, *c}, {})};
-    else if (auto v = E.to<Hs::Var>())
-        return {lhs.loc, Hs::VarPattern({lhs.loc, *v})};
-    else if (E.is_a<Hs::WildcardPattern>())
-        return {lhs.loc, Hs::WildcardPattern()};
-    else if (E.is_a<Hs::VarPattern>() or E.is_a<Hs::ConPattern>() or E.is_a<Hs::InfixPat>() or
-             E.is_a<Hs::LiteralPattern>() or E.is_a<Hs::ListPattern>() or E.is_a<Hs::TuplePattern>() or
-             E.is_a<Hs::RecordPattern>() or E.is_a<Hs::TypedPattern>())
-        return lhs;
-    else
-    {
-        error(lhs.loc, Note()<<"Expression '"<<lhs<<"' is not valid in a pattern.");
-        return {lhs.loc, Hs::WildcardPattern()};
-    }
-}
-
 // Decide whether a parsed value binding is a function declaration or pattern declaration.
 expression_ref classify_value_decl(const Hs::ValueDecl& D)
 {
@@ -323,41 +154,6 @@ expression_ref classify_value_decl(const expression_ref& E)
         return E;
 }
 
-expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
-{
-    if (E.is_a<Haskell::ValueDecl>())
-    {
-        return rename_infix_decl(m, classify_value_decl(E));
-    }
-    else if (auto D = E.to<Hs::PatDecl>())
-    {
-        auto D2 = *D;
-        D2.rhs = rename_infix(m, D2.rhs);
-        return D2;
-    }
-    else if (auto D = E.to<Hs::FunDecl>())
-    {
-        auto D2 = *D;
-        for(auto& match: D2.matches)
-            match.rhs = rename_infix(m, match.rhs);
-        return D2;
-    }
-    else if (E.is_a<Hs::TypeSigDecl>())
-        return E;
-    else if (E.is_a<Hs::FixityDecl>())
-        return E;
-    else if (E.is_a<Hs::InlinePragma>())
-        return E;
-    else if (E.is_a<Hs::FamilyDecl>() or E.is_a<Hs::TypeFamilyInstanceDecl>())
-    {
-        // We get here for type family stuff inside of class declarations.
-        // Ignoring infix type names for now?
-        return E;
-    }
-    else
-        std::abort();
-}
-
 optional<Hs::LVar> fundecl_head(const expression_ref& decl)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
@@ -391,8 +187,8 @@ tuple<map<Hs::LVar,Hs::LType>, map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> gr
         }
         else if (decl.is_a<Hs::FixityDecl>())
         {
-            // FixityDecls should survive up to this point so that we can properly segment decls.
-            // But remove them here -> the type-checker shouldn't see them.
+            // Preserve local fixity declarations until rename_decls can extend the scoped fixity environment.
+            decls2.push_back({loc, decl});
         }
         else if (auto d = decl.to<Hs::PatDecl>())
         {
@@ -406,19 +202,23 @@ tuple<map<Hs::LVar,Hs::LType>, map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> gr
         else if (auto fvar = fundecl_head(decl))
         {
             Hs::Matches m;
+            int consumed_decls = 0;
             for(int j=i;j<decls.size();j++)
             {
                 auto [loc2,decl2] = decls[j];
                 if (fundecl_head(decl2) != fvar) break;
+                consumed_decls++;
 
                 loc = loc * loc2;
                 auto& FD = decl2.as_<Hs::FunDecl>();
 
-                assert(FD.matches.size() == 1);
-                m.push_back( FD.matches[0] );
+                for(const auto& match: FD.matches)
+                {
+                    m.push_back(match);
 
-                if (m.back().patterns.size() != m.front().patterns.size())
-                    error(loc2, Note()<<"Function '"<<*fvar<<"' has different numbers of arguments!");
+                    if (m.back().patterns.size() != m.front().patterns.size())
+                        error(loc2, Note()<<"Function '"<<*fvar<<"' has different numbers of arguments!");
+                }
             }
 
             if (m[0].patterns.empty() and m.size() != 1)
@@ -427,7 +227,7 @@ tuple<map<Hs::LVar,Hs::LType>, map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> gr
             decls2.push_back( {loc,Hs::FunDecl( *fvar, m )} );
 
             // skip the other bindings for this function
-            i += (m.size()-1);
+            i += (consumed_decls-1);
         }
         else
             std::abort();
@@ -450,19 +250,23 @@ Hs::Decls group_fundecls(const Haskell::Decls& decls)
         else if (auto fvar = fundecl_head(decl))
         {
             Hs::Matches m;
+            int consumed_decls = 0;
             for(int j=i;j<decls.size();j++)
             {
                 auto [loc2,decl2] = decls[j];
                 if (fundecl_head(decl2) != fvar) break;
+                consumed_decls++;
 
                 auto& FD = decl2.as_<Hs::FunDecl>();
                 loc = loc * loc2;
 
-                assert(FD.matches.size() == 1);
-                m.push_back( FD.matches[0] );
+                for(const auto& match: FD.matches)
+                {
+                    m.push_back(match);
 
-                if (m.back().patterns.size() != m.front().patterns.size())
-                    throw myexception()<<"Function '"<<*fvar<<"' has different numbers of arguments!";
+                    if (m.back().patterns.size() != m.front().patterns.size())
+                        throw myexception()<<"Function '"<<*fvar<<"' has different numbers of arguments!";
+                }
             }
 
             if (m[0].patterns.empty() and m.size() != 1)
@@ -471,7 +275,7 @@ Hs::Decls group_fundecls(const Haskell::Decls& decls)
             decls2.push_back( {loc, Hs::FunDecl( *fvar, m )} );
 
             // skip the other bindings for this function
-            i += (m.size()-1);
+            i += (consumed_decls-1);
         }
         else
             std::abort();
@@ -495,6 +299,9 @@ Hs::Binds classify_value_decls(Hs::Binds binds)
 {
     assert(binds.size() == 1);
 
+    if (not needs_decl_grouping(binds[0]))
+        return binds;
+
     for(auto& [_, e]: binds[0])
         e = classify_value_decl(e);
 
@@ -507,31 +314,22 @@ Hs::Binds classify_value_decls(Hs::Binds binds)
     return binds;
 }
 
-Haskell::Binds rename_infix(const Module& m, Haskell::Binds binds)
+// Classify value declarations in a declaration list that has no Binds-level signature maps.
+Hs::Decls classify_value_decls(Hs::Decls decls)
 {
-    assert(binds.size() == 1);
+    if (not needs_decl_grouping(decls))
+        return decls;
 
-    bool needs_grouping = needs_decl_grouping(binds[0]);
+    for(auto& [_, e]: decls)
+        e = classify_value_decl(e);
 
-    for(auto& [_, e]: binds[0])
-        e = rename_infix_decl(m, e);
-
-    if (needs_grouping)
-    {
-        auto [type_sigs, inline_sigs, bind0] = group_decls(binds[0]);
-
-        binds.signatures.insert(type_sigs.begin(), type_sigs.end());
-        binds.inline_sigs.insert(inline_sigs.begin(), inline_sigs.end());
-        binds[0] = bind0;
-    }
-
-    return binds;
+    return group_fundecls(decls);
 }
 
-bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top)
+bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, const fixity_env_t& env, bool top)
 {
     set<string> decls_free_vars;
-    auto new_binders = rename_decls(binds, plus(bound, binders), decls_free_vars, top);
+    auto new_binders = rename_decls(binds, plus(bound, binders), decls_free_vars, env, top);
     add(free_vars, minus(decls_free_vars, binders));
     return new_binders;
 }
@@ -765,10 +563,15 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
     return referenced_decls;
 }
 
-bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, set<string>& free_vars, bool top)
+bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, set<string>& free_vars, const fixity_env_t& env, bool top)
 {
     assert(binds.size() == 1);
+    binds = classify_value_decls(binds);
+
     auto& decls = binds[0];
+
+    fixity_env = env;
+    remove_fixity_decls(decls);
 
     auto binders = find_bound_vars_in_decls(decls, top);
 

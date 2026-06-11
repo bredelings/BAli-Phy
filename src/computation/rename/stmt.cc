@@ -38,8 +38,10 @@ bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_v
     auto rec_return = Hs::Var("return");
     auto mfix       = Hs::Var("mfix");
 
+    auto R = rec_stmt.as_<Hs::RecStmt>();
+
     bound_var_info rec_bound;
-    for(auto& stmt: rec_stmt.as_<Hs::RecStmt>().stmts.stmts)
+    for(auto& stmt: R.stmts.stmts)
     {
         bool overlap = not disjoint_add(rec_bound, find_bound_vars_in_stmt(stmt));
 	if (overlap)
@@ -54,7 +56,7 @@ bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_v
 
     // 3. Construct the do stmt
     auto rec_return_stmt = Hs::apply({noloc,rec_return}, {{noloc,rec_tuple}});
-    auto stmts = rec_stmt.as_<Haskell::RecStmt>().stmts.stmts;
+    auto stmts = R.stmts.stmts;
     stmts.push_back({noloc,Hs::SimpleQual(rec_return_stmt)});
     auto rec_do = Haskell::Do(Haskell::Stmts(stmts));
 
@@ -92,6 +94,7 @@ bound_var_info renamer_state::rename_stmt(Hs::LExp& lstmt, const bound_var_info&
     {
         auto PQ = stmt.as_<Haskell::PatQual>();
 	PQ.exp = rename(PQ.exp, bound, free_vars);
+	PQ.bindpat = expression_to_pattern_category(PQ.bindpat);
 	auto bound_vars = rename_pattern(PQ.bindpat);
         stmt = PQ;
 	return bound_vars;
@@ -99,7 +102,9 @@ bound_var_info renamer_state::rename_stmt(Hs::LExp& lstmt, const bound_var_info&
     else if (stmt.is_a<Haskell::LetQual>())
     {
         auto LQ = stmt.as_<Haskell::LetQual>();
-	auto bound_vars = rename_decls(unloc(LQ.binds), bound, {}, free_vars);
+        auto let_fixity_env = add_fixities_from_decls(fixity_env, unloc(LQ.binds)[0]);
+        fixity_env = let_fixity_env;
+	auto bound_vars = rename_decls(unloc(LQ.binds), bound, {}, free_vars, let_fixity_env);
 	stmt = LQ;
 	return bound_vars;
     }
@@ -110,4 +115,3 @@ bound_var_info renamer_state::rename_stmt(Hs::LExp& lstmt, const bound_var_info&
     else
 	std::abort();
 }
-

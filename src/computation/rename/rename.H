@@ -7,15 +7,19 @@
 #include <string>
 #include "computation/expression/expression_ref.H"
 #include "computation/haskell/haskell.H"
+#include "computation/symbols.H"
 #include "computation/optimization/simplifier_options.H"       // for simplifier options
 #include "computation/message.H"
 
 class Module;
+struct renamer_state;
 
 Hs::LPat unapply(Hs::LExp E);
+Hs::LPat expression_to_pattern_category(Hs::LExp E);
 
 typedef std::set<std::string> bound_var_info;
 typedef std::set<std::string> bound_type_var_info;
+typedef std::map<std::string, fixity_info> fixity_env_t;
 
 struct record_constructor_layout
 {
@@ -23,14 +27,13 @@ struct record_constructor_layout
     std::map<std::string,int> fields;
 };
 
-Located<expression_ref> desugar_infix(const Module& m, const std::vector<Located<expression_ref>>& T);
-Hs::LExp rename_infix(const Module& m, Hs::LExp E);
-Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R);
-Hs::Binds rename_infix(const Module& p, Hs::Binds);
-Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls);
+Located<expression_ref> desugar_infix(const renamer_state& Rn, const std::vector<Located<expression_ref>>& T);
+Hs::LPat desugar_pattern_infix(const renamer_state& Rn, const std::vector<Located<expression_ref>>& T);
+bool is_infix_operator_term(const std::vector<Hs::LExp>& terms, int index);
+bool is_infix_operand_term(const std::vector<Hs::LExp>& terms, int index);
+Hs::LExp make_infix_exp(const std::vector<Hs::LExp>& terms);
 Hs::Binds classify_value_decls(Hs::Binds);
-
-expression_ref rename_infix_decl(const Module& m, const expression_ref& E);
+Hs::Decls classify_value_decls(Hs::Decls);
 
 bool disjoint_add(bound_var_info& bv1, const bound_var_info& bv2);
 
@@ -42,6 +45,7 @@ struct renamer_state
 
     std::map<std::string, record_constructor_layout> record_constructor_layouts;
     std::map<std::string, std::set<std::string>> record_field_constructors;
+    fixity_env_t fixity_env;
 
     void error(const Note& e) const;
     void error(const std::optional<yy::location>& loc, const Note& e) const;
@@ -50,6 +54,8 @@ struct renamer_state
 
     void record_record_layouts(const Hs::Decls&);
     std::optional<record_constructor_layout> record_layout_for_constructor(const std::string&);
+    OpInfo get_operator(const std::string&) const;
+    fixity_env_t add_fixities_from_decls(fixity_env_t, const Hs::Decls&) const;
 
     void qualify_name(std::string& name) const;
     void qualify_name(Located<std::string>& name) const;
@@ -64,7 +70,7 @@ struct renamer_state
     bound_var_info find_vars_in_patterns(const Hs::LPats& pats, bool top = false);
     bound_var_info find_vars_in_pattern(const Hs::LPat& pat, bool top = false);
     // the pattern*2 versions are for AFTER rename, and don't check things.  They just report what they find.
-    bound_var_info find_bound_vars_in_stmt(const Located<expression_ref>& stmt);
+    bound_var_info find_bound_vars_in_stmt(Located<expression_ref>& stmt);
 
     // these all assume decls have been translated to FunDecl or PatDecl
     bound_var_info find_bound_vars_in_funpatdecl(const expression_ref& decl, bool top = false);
@@ -75,8 +81,8 @@ struct renamer_state
 
     std::vector<std::vector<int>> rename_grouped_decls(Hs::Decls& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
     void rename_signatures(std::map<Hs::LVar, Hs::LType>& signatures, std::map<Hs::LVar, Hs::inline_pragma_t>& inline_sigs, const bound_var_info& bound, bool top = false);
-    bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, bool top = false);
-    bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
+    bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, const fixity_env_t&, bool top = false);
+    bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, const fixity_env_t&, bool top = false);
     bound_var_info rename_rec_stmt(Hs::LExp& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
     bound_var_info rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
     bound_var_info rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
@@ -119,6 +125,7 @@ struct renamer_state
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);
 
 Hs::Decls group_fundecls(const Hs::Decls& decls); // only value decls
+void remove_fixity_decls(Hs::Decls& decls);
 
 // I think ghc returns a moduledecls AND a... class environment?
 Hs::ModuleDecls rename(const simplifier_options&, const Module& p, Hs::ModuleDecls);

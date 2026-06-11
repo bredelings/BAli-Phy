@@ -941,10 +941,6 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     for(auto& f: M.foreign_decls)
         MM->def_function( unloc(f.function).name );
 
-    // FIXME - merge with rename() below.  This now runs after local symbol
-    // collection so infix handling can see locally declared values.
-    M = ::rename_infix(*MM, M);
-
     // Currently we do "renaming" here.
     // That just means (1) qualifying top-level declarations and (2) desugaring rec statements.
     M = MM->rename(opts, M);

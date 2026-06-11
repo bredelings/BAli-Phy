@@ -3,6 +3,7 @@
 #include <set>
 #include <map>
 #include <optional>
+#include <algorithm>
 
 #include "rename.H"
 #include "haskell/ids.H"
@@ -18,92 +19,6 @@ using std::optional;
 using std::map;
 
 // So... let_exp is like Core, and Let is like STG.
-
-// -1. Can we group decls BEFORE we rename_lhs?
-//     * 
-
-// 0. Do we rename signature decls before we group, or do we reame signatures after we group?
-
-// 1. Go through and explicitly handle different expression types
-//    instead of using E.size() == 0.
-
-// 2. Ideally convert lambda expressions to lambda_exp and LambdaExp
-
-// 3. Ideally convert case expressions to case_exp and CaseExp
-
-// 4. convert module, imports, exports, etc.
-
-// 5. convert constructors and stuff
-
-// 6. Extract the type dependencies
-
-// 7. Divide into dependency groups
-
-// 8. Infer kinds for type variables.
-
-// A. pop size changes -- how to implement?
-
-// B. try some different data sets from skyline papers -- hcv2, bison, etc.
-
-Hs::MultiGuardedRHS rename_infix(const Module& m, Hs::MultiGuardedRHS R)
-{
-    for(auto& guarded_rhs: R.guarded_rhss)
-    {
-        for(auto& guard: guarded_rhs.guards)
-            guard = rename_infix(m, guard);
-
-        guarded_rhs.body = rename_infix(m, guarded_rhs.body);
-    }
-
-    if (R.decls)
-        unloc(*R.decls) = rename_infix(m, unloc(*R.decls));
-
-    return R;
-}
-
-
-Hs::ClassDecl rename_infix(const Module& m, Hs::ClassDecl C)
-{
-    // 1. Recursively fix-up infix expressions
-    for(auto& [_,e]: C.default_method_decls)
-        e = rename_infix_decl(m, e);
-
-    // 2. Group different parts of fundecls
-    C.default_method_decls = group_fundecls(C.default_method_decls);
-
-    // Don't create sigs map yet.
-    return C;
-}
-
-Hs::InstanceDecl rename_infix(const Module& m, Hs::InstanceDecl I)
-{
-    // 1. Recursively fix-up infix expressions
-    for(auto& [_,e]: I.method_decls)
-        e = rename_infix_decl(m, e);
-
-    // 2. Group different parts of fundecls
-    I.method_decls = group_fundecls(I.method_decls);
-
-    return I;
-}
-
-Hs::ModuleDecls rename_infix(const Module& m, Hs::ModuleDecls M)
-{
-    // 1. Handle value decls
-    M.value_decls = rename_infix(m, M.value_decls);
-
-    // default_decls aren't infix
-    for(auto& [_,type_decl]: M.type_decls)
-    {
-        // 2. Handle default method decls
-        if (auto C = type_decl.to<Haskell::ClassDecl>())
-            type_decl = rename_infix(m, *C);
-        // 3. Handle method decls
-        else if (auto I = type_decl.to<Haskell::InstanceDecl>())
-            type_decl = rename_infix(m, *I);
-    }
-    return M;
-}
 
 // A data declaration MAY use the same field label in multiple constructors as long as the typing of the field is the same in all cases after type synonym expansion.
 // A label CANNOT be shared by more than one type in scope.
@@ -267,7 +182,8 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
     }
 
     // 4. Rename value decls.
-    Rn.rename_decls(M.value_decls, bound_names, free_vars, true);
+    auto top_fixity_env = Rn.add_fixities_from_decls(Rn.fixity_env, M.value_decls[0]);
+    Rn.rename_decls(M.value_decls, bound_names, free_vars, top_fixity_env, true);
 
     // 5. Replace ids with dummies
     for(auto& [_,decl]: M.type_decls)
@@ -275,6 +191,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         if (decl.is_a<Haskell::ClassDecl>())
         {
             auto C = decl.as_<Haskell::ClassDecl>();
+            C.default_method_decls = classify_value_decls(C.default_method_decls);
             for(auto& [_,method_decl]: C.default_method_decls)
             {
                 if (auto pd = method_decl.to<Hs::PatDecl>())
@@ -293,6 +210,7 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         else if (decl.is_a<Haskell::InstanceDecl>())
         {
             auto I = decl.as_<Haskell::InstanceDecl>();
+            I.method_decls = classify_value_decls(I.method_decls);
             for(auto& [_, method_decl]: I.method_decls)
             {
                 if (auto pd = method_decl.to<Hs::PatDecl>())
@@ -401,9 +319,52 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& dec
     // qualified names.
     bound_var_info bound_names;
     for(auto& [_,decl]: decls)
+    {
+        if (decl.is_a<Hs::FixityDecl>())
+            continue;
         add(bound_names, find_bound_vars_in_funpatdecl(decl, top));
+    }
 
     return bound_names;
+}
+
+// Return a fixity environment extended with local fixity declarations.
+fixity_env_t renamer_state::add_fixities_from_decls(fixity_env_t env, const Hs::Decls& decls) const
+{
+    for(const auto& [loc, decl]: decls)
+    {
+        auto FD = decl.to<Hs::FixityDecl>();
+        if (not FD)
+            continue;
+
+        int precedence = FD->precedence ? *FD->precedence : 9;
+        if (precedence < 0 or precedence > 9)
+        {
+            error(loc, Note()<<"Precedence level "<<precedence<<" not allowed.");
+            continue;
+        }
+
+        for(const auto& name: FD->names)
+        {
+            auto op = unloc(name);
+            if (is_qualified_symbol(op))
+            {
+                error(name.loc, Note()<<"Trying to declare fixity of qualified symbol '"<<op<<"'.  Use its unqualified name.");
+                continue;
+            }
+            env[op] = fixity_info{FD->fixity, precedence};
+        }
+    }
+
+    return env;
+}
+
+// Remove local fixity declarations after they have been added to the scoped environment.
+void remove_fixity_decls(Hs::Decls& decls)
+{
+    decls.erase(std::remove_if(decls.begin(), decls.end(),
+                               [](const Located<expression_ref>& decl) { return unloc(decl).is_a<Hs::FixityDecl>(); }),
+                decls.end());
 }
 
 bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Binds& binds, bool top)
@@ -448,20 +409,26 @@ const set<string>& get_rhs_free_vars(const expression_ref& decl)
         std::abort();
 };
 
-bound_var_info renamer_state::find_bound_vars_in_stmt(const Located<expression_ref>& lstmt)
+bound_var_info renamer_state::find_bound_vars_in_stmt(Located<expression_ref>& lstmt)
 {
     auto& stmt = unloc(lstmt);
     if (stmt.is_a<Hs::SimpleQual>())
 	return {};
     else if (stmt.is_a<Haskell::PatQual>())
     {
-        auto& PQ = stmt.as_<Haskell::PatQual>();
-        return find_vars_in_pattern(PQ.bindpat);
+        auto PQ = stmt.as_<Haskell::PatQual>();
+        PQ.bindpat = expression_to_pattern_category(PQ.bindpat);
+        auto bound = find_vars_in_pattern(PQ.bindpat);
+        stmt = PQ;
+        return bound;
     }
     else if (stmt.is_a<Haskell::LetQual>())
     {
-        auto& LQ = stmt.as_<Haskell::LetQual>();
-        return find_bound_vars_in_decls(unloc(LQ.binds));
+        auto LQ = stmt.as_<Haskell::LetQual>();
+        unloc(LQ.binds) = classify_value_decls(unloc(LQ.binds));
+        auto bound = find_bound_vars_in_decls(unloc(LQ.binds));
+        stmt = LQ;
+        return bound;
     }
     else if (stmt.is_a<Haskell::RecStmt>())
         throw myexception()<<"find_bound_vars_in_stmt: should not have a rec stmt inside a rec stmt!";
