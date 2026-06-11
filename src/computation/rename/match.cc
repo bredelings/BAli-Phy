@@ -26,27 +26,23 @@ Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var
 
 Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, set<string>& free_vars)
 {
-    auto old_fixity_env = fixity_env;
+    auto rn = child();
     bound_var_info binders;
-    auto rhs_fixity_env = fixity_env;
 
     if (R.decls)
     {
-        rhs_fixity_env = add_fixities_from_decls(rhs_fixity_env, unloc(*R.decls)[0]);
-        binders = rename_decls(unloc(*R.decls), bound, binders, free_vars, rhs_fixity_env);
+        rn.fixity_env = rn.add_fixities_from_decls(rn.fixity_env, unloc(*R.decls)[0]);
+        binders = rn.rename_decls(unloc(*R.decls), bound, binders, free_vars);
     }
-
-    fixity_env = rhs_fixity_env;
 
     for(auto& guarded_rhs: R.guarded_rhss)
     {
         for(auto& guard: guarded_rhs.guards)
-            add(binders, rename_stmt(guard, bound, binders, free_vars));
+            add(binders, rn.rename_stmt(guard, bound, binders, free_vars));
 
-        guarded_rhs.body = rename(guarded_rhs.body, bound, binders, free_vars);
+        guarded_rhs.body = rn.rename(guarded_rhs.body, bound, binders, free_vars);
     }
 
-    fixity_env = old_fixity_env;
     return R;
 }
 

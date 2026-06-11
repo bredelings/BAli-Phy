@@ -182,8 +182,9 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
     }
 
     // 4. Rename value decls.
-    auto top_fixity_env = Rn.add_fixities_from_decls(Rn.fixity_env, M.value_decls[0]);
-    Rn.rename_decls(M.value_decls, bound_names, free_vars, top_fixity_env, true);
+    auto value_rn = Rn.child();
+    value_rn.fixity_env = value_rn.add_fixities_from_decls(value_rn.fixity_env, M.value_decls[0]);
+    value_rn.rename_decls(M.value_decls, bound_names, free_vars, true);
 
     // 5. Replace ids with dummies
     for(auto& [_,decl]: M.type_decls)
@@ -229,10 +230,10 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
     }
 
     // 6. Show warning and error messages.
-    show_messages(m.file, std::cerr, Rn.messages);
+    show_messages(m.file, std::cerr, Rn.messages());
 
     // 7. Quit if there were error messages.
-    exit_on_error(Rn.messages);
+    exit_on_error(Rn.messages());
 
     return M;
 }
@@ -240,22 +241,22 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
 
 void renamer_state::error(const Note& note) const
 {
-    messages.push_back({ErrorMsg, {}, {note}});
+    messages().push_back({ErrorMsg, {}, {note}});
 }
 
 void renamer_state::error(const optional<yy::location>& loc, const Note& note) const
 {
-    messages.push_back({ErrorMsg, loc, {note}});
+    messages().push_back({ErrorMsg, loc, {note}});
 }
 
 void renamer_state::warning(const Note& note) const
 {
-    messages.push_back({WarningMsg, {}, {note}});
+    messages().push_back({WarningMsg, {}, {note}});
 }
 
 void renamer_state::warning(const optional<yy::location>& loc, const Note& note) const
 {
-    messages.push_back({WarningMsg, loc, {note}});
+    messages().push_back({WarningMsg, loc, {note}});
 }
 
 void renamer_state::qualify_name(std::string& name) const

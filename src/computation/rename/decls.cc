@@ -326,10 +326,10 @@ Hs::Decls classify_value_decls(Hs::Decls decls)
     return group_fundecls(decls);
 }
 
-bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, const fixity_env_t& env, bool top)
+bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top)
 {
     set<string> decls_free_vars;
-    auto new_binders = rename_decls(binds, plus(bound, binders), decls_free_vars, env, top);
+    auto new_binders = rename_decls(binds, plus(bound, binders), decls_free_vars, top);
     add(free_vars, minus(decls_free_vars, binders));
     return new_binders;
 }
@@ -563,14 +563,13 @@ vector<vector<int>> renamer_state::rename_grouped_decls(Haskell::Decls& decls, c
     return referenced_decls;
 }
 
-bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, set<string>& free_vars, const fixity_env_t& env, bool top)
+bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, set<string>& free_vars, bool top)
 {
     assert(binds.size() == 1);
     binds = classify_value_decls(binds);
 
     auto& decls = binds[0];
 
-    fixity_env = env;
     remove_fixity_decls(decls);
 
     auto binders = find_bound_vars_in_decls(decls, top);

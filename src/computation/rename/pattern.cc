@@ -356,11 +356,11 @@ void renamer_state::record_record_layouts(const Hs::Decls& decls)
                 for(auto& field_name: field_group.field_names)
                 {
                     add_field_layout_name(layout, unloc(field_name).name, i++);
-                    add_field_constructor(record_field_constructors, unloc(field_name).name, con_name);
+                    add_field_constructor(record_field_constructors(), unloc(field_name).name, con_name);
                 }
 
-            record_constructor_layouts[con_name] = layout;
-            record_constructor_layouts[get_unqualified_name(con_name)] = layout;
+            record_constructor_layouts()[con_name] = layout;
+            record_constructor_layouts()[get_unqualified_name(con_name)] = layout;
         }
     };
 
@@ -381,10 +381,10 @@ void renamer_state::record_record_layouts(const Hs::Decls& decls)
             {
                 auto name = unloc(con_name);
                 for(const auto& field_name: *field_names)
-                    add_field_constructor(record_field_constructors, field_name, name);
+                    add_field_constructor(record_field_constructors(), field_name, name);
 
-                record_constructor_layouts[name] = layout;
-                record_constructor_layouts[get_unqualified_name(name)] = layout;
+                record_constructor_layouts()[name] = layout;
+                record_constructor_layouts()[get_unqualified_name(name)] = layout;
             }
         }
     };
@@ -404,10 +404,10 @@ void renamer_state::record_record_layouts(const Hs::Decls& decls)
 
 std::optional<record_constructor_layout> renamer_state::record_layout_for_constructor(const string& con_name)
 {
-    auto layout = record_constructor_layouts.find(con_name);
-    if (layout == record_constructor_layouts.end())
-        layout = record_constructor_layouts.find(get_unqualified_name(con_name));
-    if (layout != record_constructor_layouts.end())
+    auto layout = record_constructor_layouts().find(con_name);
+    if (layout == record_constructor_layouts().end())
+        layout = record_constructor_layouts().find(get_unqualified_name(con_name));
+    if (layout != record_constructor_layouts().end())
         return layout->second;
 
     auto con_info = m.constructor_info(con_name);
@@ -419,10 +419,10 @@ std::optional<record_constructor_layout> renamer_state::record_layout_for_constr
     for(int i=0; i<con_info->field_names->size(); i++)
         add_field_layout_name(semantic_layout, (*con_info->field_names)[i], i);
 
-    record_constructor_layouts[con_info->name] = semantic_layout;
-    record_constructor_layouts[get_unqualified_name(con_info->name)] = semantic_layout;
+    record_constructor_layouts()[con_info->name] = semantic_layout;
+    record_constructor_layouts()[get_unqualified_name(con_info->name)] = semantic_layout;
     for(const auto& field_name: *con_info->field_names)
-        add_field_constructor(record_field_constructors, field_name, con_info->name);
+        add_field_constructor(record_field_constructors(), field_name, con_info->name);
 
     return semantic_layout;
 }

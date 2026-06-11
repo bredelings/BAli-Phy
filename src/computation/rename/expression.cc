@@ -90,14 +90,13 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     else if (E.is_a<Hs::ListComprehension>())
     {
         auto L = E.as_<Hs::ListComprehension>();
-        auto old_fixity_env = fixity_env;
+        auto rn = child();
 
         bound_var_info binders;
         for(auto& qual: L.quals)
-            add(binders, rename_stmt(qual, bound, binders, free_vars));
+            add(binders, rn.rename_stmt(qual, bound, binders, free_vars));
 
-        L.body = rename(L.body, bound, binders, free_vars);
-        fixity_env = old_fixity_env;
+        L.body = rn.rename(L.body, bound, binders, free_vars);
         E = L;
     }
     else if (E.is_a<Hs::LeftSection>())
@@ -182,22 +181,21 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     }
     else if (E.is_a<Hs::RecStmt>())
     {
-        auto old_fixity_env = fixity_env;
+        auto rn = child();
         bound_var_info binders;
         auto R = E.as_<Hs::RecStmt>();
         for(auto& stmt: R.stmts.stmts)
-            add(binders, rename_stmt(stmt, bound, binders, free_vars));
+            add(binders, rn.rename_stmt(stmt, bound, binders, free_vars));
 
-        fixity_env = old_fixity_env;
         E = R;
     }
     else if (E.is_a<Hs::Do>())
     {
-        auto old_fixity_env = fixity_env;
+        auto rn = child();
         bound_var_info binders;
         auto D = E.as_<Hs::Do>();
         for(auto& stmt: D.stmts.stmts)
-            add(binders, rename_stmt(stmt, bound, binders, free_vars));
+            add(binders, rn.rename_stmt(stmt, bound, binders, free_vars));
 
         if (D.stmts.stmts.empty())
             error(loc, Note()<<"Empty do block.");
@@ -207,7 +205,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
             if (not unloc(last).is_a<Hs::SimpleQual>())
                 error(last.loc, Note()<<"Do block does not end in an expression.");
         }
-        fixity_env = old_fixity_env;
         E = D;
     }
     else if (E.is_a<Hs::MDo>())
@@ -250,12 +247,11 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         // Hmm... as a dumb segmentation, we could take all the stmts except the last one and put them in a giant rec...
         // FIXME: implement segmentation, and insert recs.
 
-        auto old_fixity_env = fixity_env;
+        auto rn = child();
         bound_var_info binders;
         auto MD = E.as_<Hs::MDo>();
         for(auto& stmt: MD.stmts.stmts)
-            add(binders, rename_stmt(stmt, bound, binders, free_vars));
-        fixity_env = old_fixity_env;
+            add(binders, rn.rename_stmt(stmt, bound, binders, free_vars));
         E = MD;
     }
     else if (auto te = E.to<Hs::TypedExp>())
@@ -293,11 +289,11 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                 error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
             used_field_names.insert(field_key);
 
-            auto field_constructors = record_field_constructors.find(field_name);
-            if (field_constructors == record_field_constructors.end())
-                field_constructors = record_field_constructors.find(field_key);
+            auto field_constructors = record_field_constructors().find(field_name);
+            if (field_constructors == record_field_constructors().end())
+                field_constructors = record_field_constructors().find(field_key);
 
-            if (field_constructors == record_field_constructors.end())
+            if (field_constructors == record_field_constructors().end())
                 error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
             else
                 constructors = intersect_record_constructors(constructors, field_constructors->second);
@@ -313,7 +309,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
             vector<Located<Hs::Alt>> alts;
             for(const auto& con_name: *constructors)
             {
-                const auto& layout = record_constructor_layouts.at(con_name);
+                const auto& layout = record_constructor_layouts().at(con_name);
                 Hs::LPats patterns;
                 vector<Hs::LExp> args;
 
@@ -433,12 +429,10 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     {
         auto L = E.as_<Hs::LetExp>();
 
-        auto old_fixity_env = fixity_env;
-        auto let_fixity_env = add_fixities_from_decls(fixity_env, unloc(L.binds)[0]);
-        fixity_env = let_fixity_env;
-        auto binders = rename_decls(unloc(L.binds), bound, free_vars, let_fixity_env);
-        L.body = rename(L.body, bound, binders, free_vars);
-        fixity_env = old_fixity_env;
+        auto rn = child();
+        rn.fixity_env = rn.add_fixities_from_decls(rn.fixity_env, unloc(L.binds)[0]);
+        auto binders = rn.rename_decls(unloc(L.binds), bound, free_vars);
+        L.body = rn.rename(L.body, bound, binders, free_vars);
 
         E = L;
     }

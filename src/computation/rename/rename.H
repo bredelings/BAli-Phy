@@ -2,6 +2,7 @@
 #define RENAME_H
 
 #include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -27,6 +28,13 @@ struct record_constructor_layout
     std::map<std::string,int> fields;
 };
 
+struct renamer_global_state
+{
+    mutable std::vector<Message> messages;
+    std::map<std::string, record_constructor_layout> record_constructor_layouts;
+    std::map<std::string, std::set<std::string>> record_field_constructors;
+};
+
 Located<expression_ref> desugar_infix(const renamer_state& Rn, const std::vector<Located<expression_ref>>& T);
 Hs::LPat desugar_pattern_infix(const renamer_state& Rn, const std::vector<Located<expression_ref>>& T);
 bool is_infix_operator_term(const std::vector<Hs::LExp>& terms, int index);
@@ -41,11 +49,15 @@ struct renamer_state
 {
     const Module& m;
 
-    mutable std::vector<Message> messages;
-
-    std::map<std::string, record_constructor_layout> record_constructor_layouts;
-    std::map<std::string, std::set<std::string>> record_field_constructors;
+    std::shared_ptr<renamer_global_state> global_state;
     fixity_env_t fixity_env;
+
+    // Create a child renamer that shares global diagnostics/metadata but copies local fixity state.
+    renamer_state child() const { return *this; }
+
+    std::vector<Message>& messages() const { return global_state->messages; }
+    std::map<std::string, record_constructor_layout>& record_constructor_layouts() const { return global_state->record_constructor_layouts; }
+    std::map<std::string, std::set<std::string>>& record_field_constructors() const { return global_state->record_field_constructors; }
 
     void error(const Note& e) const;
     void error(const std::optional<yy::location>& loc, const Note& e) const;
@@ -81,8 +93,8 @@ struct renamer_state
 
     std::vector<std::vector<int>> rename_grouped_decls(Hs::Decls& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
     void rename_signatures(std::map<Hs::LVar, Hs::LType>& signatures, std::map<Hs::LVar, Hs::inline_pragma_t>& inline_sigs, const bound_var_info& bound, bool top = false);
-    bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, const fixity_env_t&, bool top = false);
-    bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, const fixity_env_t&, bool top = false);
+    bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, bool top = false);
+    bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
     bound_var_info rename_rec_stmt(Hs::LExp& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
     bound_var_info rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
     bound_var_info rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
@@ -119,7 +131,7 @@ struct renamer_state
     std::pair<Hs::LExp,std::set<std::string>> rename(const Hs::LExp& E, const bound_var_info& bound);
     Hs::LExp rename(const Hs::LExp& E, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);
 
-    renamer_state(const Module& m_):m(m_) {}
+    renamer_state(const Module& m_):m(m_), global_state(std::make_shared<renamer_global_state>()) {}
 };
 
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);

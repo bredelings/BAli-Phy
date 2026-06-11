@@ -102,9 +102,8 @@ bound_var_info renamer_state::rename_stmt(Hs::LExp& lstmt, const bound_var_info&
     else if (stmt.is_a<Haskell::LetQual>())
     {
         auto LQ = stmt.as_<Haskell::LetQual>();
-        auto let_fixity_env = add_fixities_from_decls(fixity_env, unloc(LQ.binds)[0]);
-        fixity_env = let_fixity_env;
-	auto bound_vars = rename_decls(unloc(LQ.binds), bound, {}, free_vars, let_fixity_env);
+        fixity_env = add_fixities_from_decls(fixity_env, unloc(LQ.binds)[0]);
+	auto bound_vars = rename_decls(unloc(LQ.binds), bound, {}, free_vars);
 	stmt = LQ;
 	return bound_vars;
     }
