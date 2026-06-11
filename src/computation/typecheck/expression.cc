@@ -110,9 +110,6 @@ namespace
         set<string> used_field_names;
         vector<pair<string,Hs::LExp>> updates;
 
-        if (unloc(Rec.fbinds).dotdot)
-            tc.record_error(Rec.fbinds.loc, Note()<<"Record wildcards in updates are not implemented yet.");
-
         for(auto& field: unloc(Rec.fbinds))
         {
             auto& f = unloc(field);
@@ -166,6 +163,7 @@ namespace
                 auto positions = record_field_positions(*con_info->field_names);
                 vector<Hs::LExp> args;
                 Hs::LPats patterns;
+                set<int> updated_positions;
                 bool constructor_has_all_fields = true;
 
                 for(int i=0; i<con_info->arity(); i++)
@@ -185,6 +183,17 @@ namespace
                         break;
                     }
                     args[pos] = value;
+                    updated_positions.insert(pos);
+                }
+
+                if (unloc(Rec.fbinds).dotdot)
+                {
+                    for(int i=0; i<con_info->field_names->size(); i++)
+                    {
+                        const auto& field_name = (*con_info->field_names)[i];
+                        if (not updated_positions.count(i))
+                            args[i] = {record_loc, Hs::Var(get_unqualified_name(field_name))};
+                    }
                 }
 
                 if (not constructor_has_all_fields)
@@ -221,9 +230,6 @@ namespace
         vector<optional<Hs::LExp>> fields(con_info.field_names->size());
         set<int> used_fields;
 
-        if (unloc(Rec.fbinds).dotdot)
-            tc.record_error(Rec.fbinds.loc, Note()<<"Record wildcards in construction are not implemented yet.");
-
         for(auto& field: unloc(Rec.fbinds))
         {
             auto& f = unloc(field);
@@ -250,6 +256,8 @@ namespace
         {
             if (fields[i])
                 args.push_back(*fields[i]);
+            else if (unloc(Rec.fbinds).dotdot)
+                args.push_back({record_loc, Hs::Var(get_unqualified_name((*con_info.field_names)[i]))});
             else
             {
                 tc.record_error(record_loc, Note()<<"Missing field "<<i+1<<" in record construction for constructor '"<<get_unqualified_name(con.name)<<"'.");

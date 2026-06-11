@@ -252,9 +252,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         Rec.object = rename(Rec.object, bound, free_vars);
         set<string> used_field_names;
 
-        if (unloc(Rec.fbinds).dotdot)
-            error(Rec.fbinds.loc, Note()<<"Record wildcards in updates are not implemented yet.");
-
         for(auto& field: unloc(Rec.fbinds))
         {
             auto& f = unloc(field);
@@ -290,9 +287,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                 Con.name = S->name;
                 Con.arity = S->arity;
                 Rec.con = {Rec.con.loc, Con};
-
-                if (unloc(Rec.fbinds).dotdot)
-                    error(Rec.fbinds.loc, Note()<<"Record wildcards in construction are not implemented yet.");
 
                 for(auto& field: unloc(Rec.fbinds))
                 {
