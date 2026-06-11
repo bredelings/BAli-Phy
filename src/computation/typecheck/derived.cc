@@ -55,6 +55,13 @@ namespace
     {
         bool handled = false;
         optional<Hs::InstanceDecl> instance;
+        string message;
+    };
+
+    struct DerivedInstanceResult
+    {
+        optional<Hs::InstanceDecl> instance;
+        string message;
     };
 
     // Look up the semantic data metadata for a source declaration being derived.
@@ -1189,9 +1196,9 @@ namespace
     {
         static const vector<StockDerivingSpec> specs = {
             {eq_class_name, true, derive_eq_instance, has_constructor_infos,
-             "deriving Eq is only supported for data/newtype declarations with constructor metadata"},
+             "deriving Eq requires at least one constructor"},
             {ord_class_name, true, derive_ord_instance, has_constructor_infos,
-             "deriving Ord is only supported for data/newtype declarations with constructor metadata"},
+             "deriving Ord requires at least one constructor"},
             {bounded_class_name, true, nullptr, can_derive_bounded,
              "deriving Bounded requires an enumeration type or a single-constructor product type"},
             {enum_class_name, false, nullptr, is_enumeration_type,
@@ -1199,9 +1206,9 @@ namespace
             {ix_class_name, true, nullptr, can_derive_ix,
              "deriving Ix requires an enumeration type or a single-constructor product type"},
             {show_class_name, true, nullptr, has_constructor_infos,
-             "deriving Show is only supported for data/newtype declarations with constructor metadata"},
+             "deriving Show requires at least one constructor"},
             {read_class_name, true, nullptr, has_readable_constructors,
-             "deriving Read is only supported for data/newtype declarations with prefix, record, or binary infix constructors"},
+             "derived Read for this constructor syntax is not implemented yet"},
         };
 
         return specs;
@@ -1225,6 +1232,46 @@ namespace
         }
 
         return {};
+    }
+
+    string stock_class_names()
+    {
+        return "Eq, Ord, Bounded, Enum, Ix, Show, and Read";
+    }
+
+    string unresolved_deriving_class_error(const Module& mod, const Hs::LType& deriving, const string& strategy_name)
+    {
+        auto [head, args] = Hs::decompose_type_apps(deriving);
+        auto con = unloc(head).to<Hs::TypeCon>();
+        if (not con)
+            return strategy_name + " deriving requires a class name";
+
+        auto type_info = mod.lookup_resolved_type(con->name);
+        if (not type_info)
+            return "Class '" + get_unqualified_name(con->name) + "' is not in scope for " + strategy_name + " deriving";
+
+        if (not type_info->is_class())
+            return "'" + get_unqualified_name(type_info->name) + "' is not a class";
+
+        return {};
+    }
+
+    string stock_deriving_class_error(const Module& mod, const Hs::LType& deriving)
+    {
+        if (auto class_error = unresolved_deriving_class_error(mod, deriving, "stock"); not class_error.empty())
+            return class_error;
+
+        auto [head, args] = Hs::decompose_type_apps(deriving);
+        auto con = unloc(head).to<Hs::TypeCon>();
+        assert(con);
+        auto type_info = mod.lookup_resolved_type(con->name);
+        assert(type_info);
+
+        for(const auto& spec: stock_deriving_specs())
+            if (get_unqualified_name(type_info->name) == get_unqualified_name(spec.class_name))
+                return "Stock deriving for '" + type_info->name + "' is invalid; use the standard class '" + spec.class_name + "'";
+
+        return "Stock deriving for class '" + type_info->name + "' is not implemented yet; implemented stock classes are " + stock_class_names();
     }
 
     // Prefer class-specific stock deriving errors when a validator rejects a type.
@@ -1354,15 +1401,15 @@ namespace
     }
 
     // Synthesize an empty anyclass instance and let ordinary instance checking handle defaults.
-    optional<Hs::InstanceDecl> derive_anyclass_instance(TypeChecker& tc, const DerivingTarget& target, const Hs::LType& deriving)
+    DerivedInstanceResult derive_anyclass_instance(TypeChecker& tc, const DerivingTarget& target, const Hs::LType& deriving)
     {
         auto deriving_class = resolved_deriving_class(tc.this_mod(), deriving);
         if (not deriving_class)
-            return {};
+            return {{}, unresolved_deriving_class_error(tc.this_mod(), deriving, "DeriveAnyClass")};
 
         auto class_info = deriving_class->info->info;
         if (not class_info)
-            return {};
+            return {{}, "DeriveAnyClass requires class metadata for " + deriving.print()};
 
         if (deriving_class->fixed_args.size() + 1 != class_info->type_vars.size())
         {
@@ -1377,7 +1424,7 @@ namespace
             return {};
         }
 
-        return Hs::InstanceDecl({}, *instance_type, {}, {}, {});
+        return {Hs::InstanceDecl({}, *instance_type, {}, {}, {}), {}};
     }
 
     // Build the class-parameter substitution used by generated GND associated type instances.
@@ -1460,11 +1507,11 @@ namespace
     {
         auto deriving_class = resolved_deriving_class(tc.this_mod(), deriving);
         if (not deriving_class)
-            return {};
+            return {false, {}, unresolved_deriving_class_error(tc.this_mod(), deriving, "newtype")};
 
         auto class_info = deriving_class->info->info;
         if (not class_info)
-            return {};
+            return {false, {}, "newtype deriving requires class metadata for " + deriving.print()};
 
         const auto& deriving_data = target.data;
         assert(deriving_data.data.info);
@@ -1473,8 +1520,8 @@ namespace
         {
             if (explicit_newtype_strategy)
             {
-                tc.record_error(deriving.loc, Note()<<"deriving newtype is only supported for newtype declarations");
-                return {true, {}};
+                tc.record_error(deriving.loc, Note()<<"deriving newtype requires a newtype declaration");
+                return {true, {}, {}};
             }
             return {};
         }
@@ -1482,20 +1529,20 @@ namespace
         if (deriving_class->fixed_args.size() + 1 != class_info->type_vars.size())
         {
             tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving expects the deriving clause to leave exactly one class parameter for the newtype");
-            return {true, {}};
+            return {true, {}, {}};
         }
 
         if (not class_info->associated_data_families.empty())
         {
-            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving for classes with associated data families is not supported yet");
-            return {true, {}};
+            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving for classes with associated data families is not implemented yet");
+            return {true, {}, {}};
         }
 
         auto rep_type = newtype_representation_type(tc, deriving_data);
         if (not rep_type)
         {
-            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving is only supported for newtype declarations with one field");
-            return {true, {}};
+            tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving requires a newtype with exactly one representation field");
+            return {true, {}, {}};
         }
 
         int newtype_param_index = deriving_class->fixed_args.size();
@@ -1504,7 +1551,7 @@ namespace
         if (not eta_reduced_rep_type)
         {
             tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving cannot eta-reduce the representation type to match the class argument kind");
-            return {true, {}};
+            return {true, {}, {}};
         }
 
         auto associated_type_instances = generalized_newtype_associated_type_instances(tc, deriving_data, *class_info, deriving_class->fixed_args, *eta_reduced_rep_type, eta_arity, deriving.loc);
@@ -1512,16 +1559,16 @@ namespace
         if (not associated_type_instances or not instance_type)
         {
             tc.record_error(deriving.loc, Note()<<"GeneralizedNewtypeDeriving could not convert the semantic representation type into a generated instance");
-            return {true, {}};
+            return {true, {}, {}};
         }
 
         Hs::InstanceDecl instance({}, *instance_type, *associated_type_instances, {}, {});
         instance.generalized_newtype_deriving = true;
-        return {true, instance};
+        return {true, instance, {}};
     }
 
     // Synthesize a DerivingVia instance whose methods are coerced from the via dictionary.
-    optional<Hs::InstanceDecl> derive_via_instance(TypeChecker& tc, const DerivingTarget& target, const Hs::Deriving& deriving)
+    DerivedInstanceResult derive_via_instance(TypeChecker& tc, const DerivingTarget& target, const Hs::Deriving& deriving)
     {
         if (not deriving.via_type)
         {
@@ -1531,11 +1578,11 @@ namespace
 
         auto deriving_class = resolved_deriving_class(tc.this_mod(), deriving.type);
         if (not deriving_class)
-            return {};
+            return {{}, unresolved_deriving_class_error(tc.this_mod(), deriving.type, "DerivingVia")};
 
         auto class_info = deriving_class->info->info;
         if (not class_info)
-            return {};
+            return {{}, "DerivingVia requires class metadata for " + deriving.type.print()};
 
         if (deriving_class->fixed_args.size() + 1 != class_info->type_vars.size())
         {
@@ -1545,7 +1592,7 @@ namespace
 
         if (not class_info->associated_data_families.empty())
         {
-            tc.record_error(deriving.type.loc, Note()<<"DerivingVia for classes with associated data families is not supported yet");
+            tc.record_error(deriving.type.loc, Note()<<"DerivingVia for classes with associated data families is not implemented yet");
             return {};
         }
 
@@ -1559,7 +1606,7 @@ namespace
 
         Hs::InstanceDecl instance({}, *instance_type, associated_type_instances, {}, {});
         instance.generalized_newtype_deriving = true;
-        return instance;
+        return {instance, {}};
     }
 
     // Override standalone stock heads, but keep inferred contexts needed by coercive deriving.
@@ -1575,21 +1622,21 @@ namespace
     {
         if (deriving.strategy == Hs::DerivingStrategy::via)
         {
-            auto instance = derive_via_instance(tc, target, deriving);
-            if (instance)
-                add_derived_instance(instances, deriving.type.loc, *instance, target);
-            else
-                tc.record_error(deriving.type.loc, Note()<<"DerivingVia deriving "<<deriving.type.print()<<" is not supported yet");
+            auto result = derive_via_instance(tc, target, deriving);
+            if (result.instance)
+                add_derived_instance(instances, deriving.type.loc, *result.instance, target);
+            else if (not result.message.empty())
+                tc.record_error(deriving.type.loc, Note()<<result.message);
             return;
         }
 
         if (deriving.strategy == Hs::DerivingStrategy::anyclass)
         {
-            auto instance = derive_anyclass_instance(tc, target, deriving.type);
-            if (instance)
-                add_derived_instance(instances, deriving.type.loc, *instance, target);
-            else
-                tc.record_error(deriving.type.loc, Note()<<"DeriveAnyClass deriving "<<deriving.type.print()<<" is not supported yet");
+            auto result = derive_anyclass_instance(tc, target, deriving.type);
+            if (result.instance)
+                add_derived_instance(instances, deriving.type.loc, *result.instance, target);
+            else if (not result.message.empty())
+                tc.record_error(deriving.type.loc, Note()<<result.message);
             return;
         }
 
@@ -1668,7 +1715,7 @@ namespace
         if (deriving.strategy == Hs::DerivingStrategy::stock)
         {
             if (not derive_stock())
-                tc.record_error(deriving.type.loc, Note()<<"stock deriving "<<deriving.type.print()<<" is not supported yet");
+                tc.record_error(deriving.type.loc, Note()<<stock_deriving_class_error(tc.this_mod(), deriving.type));
             return;
         }
 
@@ -1677,8 +1724,8 @@ namespace
             auto gnd = derive_generalized_newtype_instance(tc, target, deriving.type, true);
             if (gnd.instance)
                 add_derived_instance(instances, deriving.type.loc, *gnd.instance, target);
-            else if (not gnd.handled)
-                tc.record_error(deriving.type.loc, Note()<<"newtype deriving "<<deriving.type.print()<<" is not supported yet");
+            else if (not gnd.handled and not gnd.message.empty())
+                tc.record_error(deriving.type.loc, Note()<<gnd.message);
             return;
         }
 
@@ -1687,8 +1734,10 @@ namespace
             auto gnd = derive_generalized_newtype_instance(tc, target, deriving.type);
             if (gnd.instance)
                 add_derived_instance(instances, deriving.type.loc, *gnd.instance, target);
+            else if (not gnd.handled and not gnd.message.empty())
+                tc.record_error(deriving.type.loc, Note()<<gnd.message);
             else if (not gnd.handled)
-                tc.record_error(deriving.type.loc, Note()<<"deriving "<<deriving.type.print()<<" is not supported yet");
+                tc.record_error(deriving.type.loc, Note()<<stock_deriving_class_error(tc.this_mod(), deriving.type));
         }
     }
 
@@ -1751,7 +1800,7 @@ Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
         else if (auto data_inst = decl.to<Hs::DataFamilyInstanceDecl>())
         {
             if (not data_inst->rhs.derivings.empty())
-                record_error(data_inst->rhs.derivings.front().type.loc, Note()<<"deriving clauses on data family instances are not supported yet");
+                record_error(data_inst->rhs.derivings.front().type.loc, Note()<<"deriving clauses on data family instances are not implemented yet");
         }
     }
 
