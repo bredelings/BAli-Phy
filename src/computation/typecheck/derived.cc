@@ -95,19 +95,14 @@ namespace
 
     bool has_ordered_constructors(const DerivingDataInfo& data_info)
     {
-        return data_info.data.info
-            ? not data_info.data.info->constructors.empty()
-            : not data_info.data.constructors.empty();
-    }
-
-    bool has_semantic_data_info(const DerivingDataInfo& data_info)
-    {
-        return bool(data_info.data.info);
+        assert(data_info.data.info);
+        return not data_info.data.info->constructors.empty();
     }
 
     const vector<string>& deriving_constructors(const DerivingDataInfo& data_info)
     {
-        return data_info.data.info ? data_info.data.info->constructors : data_info.data.constructors;
+        assert(data_info.data.info);
+        return data_info.data.info->constructors;
     }
 
     // Check that every ordered constructor has registered constructor metadata.
@@ -1090,8 +1085,8 @@ namespace
     // Return the single semantic representation field type for one-constructor newtypes.
     optional<Type> newtype_representation_type(TypeChecker& tc, const DerivingDataInfo& data_info)
     {
-        if (not data_info.data.info
-            or data_info.data.info->data_or_newtype != Hs::DataOrNewtype::newtype
+        assert(data_info.data.info);
+        if (data_info.data.info->data_or_newtype != Hs::DataOrNewtype::newtype
             or deriving_constructors(data_info).size() != 1)
             return {};
 
@@ -1298,7 +1293,8 @@ namespace
             return {};
 
         const auto& deriving_data = target.data;
-        bool is_newtype = deriving_data.data.info and deriving_data.data.info->data_or_newtype == Hs::DataOrNewtype::newtype;
+        assert(deriving_data.data.info);
+        bool is_newtype = deriving_data.data.info->data_or_newtype == Hs::DataOrNewtype::newtype;
         if (not is_newtype)
         {
             if (explicit_newtype_strategy)
@@ -1432,11 +1428,7 @@ namespace
             const auto& spec = *derived_class->spec;
 
             auto& semantic_data = target.data;
-            if (not has_semantic_data_info(semantic_data))
-            {
-                tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
-                return true;
-            }
+            assert(semantic_data.data.info);
 
             if (spec.class_name == bounded_class_name)
             {
