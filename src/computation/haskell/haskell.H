@@ -105,6 +105,17 @@ struct ApplyExp: public Object
     ApplyExp(const LExp& h, const LExp& a);
 };
 
+struct ParsedApp: public Object
+{
+    std::vector<LExp> terms;
+
+    ParsedApp* clone() const { return new ParsedApp(*this);}
+    std::string print() const;
+
+    ParsedApp() = default;
+    ParsedApp(const std::vector<LExp>& ts):terms(ts) {}
+};
+
 std::tuple<LExp,std::vector<LExp>> decompose_apps(const LExp&);
 
 std::vector<LExp> flatten(const LExp&);

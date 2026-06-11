@@ -80,7 +80,7 @@ expression_ref rename_infix_decl(const Module& m, const expression_ref& E)
             return Hs::simple_decl({lhs.loc,*v}, rhs);
         else if (is_definitely_pattern(unloc(lhs)))
             return Hs::PatDecl( unapply(lhs), rhs );
-        else if (unloc(lhs).is_a<Hs::ApplyExp>())
+        else if (unloc(lhs).is_a<Hs::ApplyExp>() or unloc(lhs).is_a<Hs::ParsedApp>())
         {
             auto [head,args] = Hs::decompose_apps(lhs);
 
@@ -505,4 +505,3 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
 
     return binders;
 }
-

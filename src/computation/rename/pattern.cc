@@ -108,6 +108,20 @@ Hs::LPat unapply(Hs::LExp LE)
         SP.pattern = unapply(SP.pattern);
         P = SP;
     }
+    else if (E.is_a<Hs::ParsedApp>())
+    {
+        auto [head, args] = Hs::decompose_apps(LE);
+
+        auto con = unloc(head).to<Hs::Con>();
+        if (not con)
+            throw myexception()<<"In pattern `"<<E<<"`:\n    `"<<head<<"` is not a data constructor.";
+
+        Hs::LPats pat_args;
+        for(auto& arg: args)
+            pat_args.push_back(unapply(arg));
+
+        P = Hs::ConPattern({head.loc,*con}, pat_args);
+    }
     else if (E.is_a<Hs::ApplyExp>())
     {
         auto [head, args] = Hs::decompose_apps(LE);

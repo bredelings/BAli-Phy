@@ -23,6 +23,15 @@ std::tuple<LExp, vector<LExp>> decompose_apps(const LExp& E)
         std::get<1>(head_args).push_back(app->arg);
         return head_args;
     }
+    else if (auto app = unloc(E).to<ParsedApp>())
+    {
+        if (app->terms.empty())
+            return {E,{}};
+        auto head_args = decompose_apps(app->terms[0]);
+        for(auto term = app->terms.begin() + 1; term != app->terms.end(); ++term)
+            std::get<1>(head_args).push_back(*term);
+        return head_args;
+    }
     else
         return {E,{}};
 }
@@ -33,6 +42,15 @@ vector<LExp> flatten(const LExp& E)
     {
         auto terms = flatten(app->head);
         terms.push_back(app->arg);
+        return terms;
+    }
+    else if (auto app = unloc(E).to<ParsedApp>())
+    {
+        if (app->terms.empty())
+            return {};
+        auto terms = flatten(app->terms[0]);
+        for(auto term = app->terms.begin() + 1; term != app->terms.end(); ++term)
+            terms.push_back(*term);
         return terms;
     }
     else
@@ -1082,6 +1100,15 @@ std::string ApplyExp::print() const
     for(auto& arg: args)
         ss.push_back( parenthesize_exp( unloc(arg) ) );
 
+    return join(ss, " ");
+}
+
+std::string ParsedApp::print() const
+{
+    // Print parsed application spines without lowering them to ApplyExp.
+    vector<string> ss;
+    for(auto& term: terms)
+        ss.push_back(parenthesize_exp(unloc(term)));
     return join(ss, " ");
 }
 

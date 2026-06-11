@@ -41,6 +41,7 @@
   std::tuple<Located<Hs::TypeCon>, std::vector<Hs::LType>> check_type_or_class_header2(const Hs::LType& type);
 
   expression_ref yy_make_string(const std::string&);
+  Hs::LExp make_parsed_app(const yy::location& loc, const Hs::LExp& head, const Hs::LExp& arg);
   Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& object, const std::string& field);
   Hs::LExp make_record_expression(const yy::location& loc, const Hs::LExp& head, const Located<Hs::FieldBindings>& fbinds);
   Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::string>& fields);
@@ -1229,7 +1230,7 @@ optSemi: ";"
 /* hpc_annot */
 
 /* EP */
-fexp: fexp aexp                  {$$ = {@$,Hs::ApplyExp($1, $2)};}
+fexp: fexp aexp                  {$$ = make_parsed_app(@$, $1, $2);}
 |     fexp PREFIX_AT atype       {}
 |     "static" aexp              {}
 |     aexp                       {$$ = $1;}
@@ -1682,6 +1683,18 @@ Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& ob
 {
     Hs::LExp selector = {loc, Hs::Var(field)};
     return {loc, Hs::ApplyExp(selector, object)};
+}
+
+Hs::LExp make_parsed_app(const yy::location& loc, const Hs::LExp& head, const Hs::LExp& arg)
+{
+    // Accumulate parser application syntax into one flat source spine.
+    std::vector<Hs::LExp> terms;
+    if (auto app = unloc(head).to<Hs::ParsedApp>())
+        terms = app->terms;
+    else
+        terms.push_back(head);
+    terms.push_back(arg);
+    return {loc, Hs::ParsedApp(terms)};
 }
 
 Hs::LExp make_record_expression(const yy::location& loc, const Hs::LExp& head, const Located<Hs::FieldBindings>& fbinds)

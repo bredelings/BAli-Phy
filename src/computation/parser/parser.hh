@@ -80,11 +80,12 @@
   std::tuple<Located<Hs::TypeCon>, std::vector<Hs::LType>> check_type_or_class_header2(const Hs::LType& type);
 
   expression_ref yy_make_string(const std::string&);
+  Hs::LExp make_parsed_app(const yy::location& loc, const Hs::LExp& head, const Hs::LExp& arg);
   Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& object, const std::string& field);
   Hs::LExp make_record_expression(const yy::location& loc, const Hs::LExp& head, const Located<Hs::FieldBindings>& fbinds);
   Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::string>& fields);
 
-#line 88 "parser.hh"
+#line 89 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -224,7 +225,7 @@
 #endif
 
 namespace yy {
-#line 228 "parser.hh"
+#line 229 "parser.hh"
 
 
 
@@ -7132,7 +7133,7 @@ switch (yykind)
 
 
 } // yy
-#line 7136 "parser.hh"
+#line 7137 "parser.hh"
 
 
 

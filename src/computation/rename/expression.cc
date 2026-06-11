@@ -251,6 +251,13 @@ Hs::LExp rename_infix(const Module& m, Hs::LExp LE)
             term = rename_infix(m, term);
 	E = unloc(desugar_infix(m, terms));
     }
+    else if (auto app = E.to<Hs::ParsedApp>())
+    {
+        auto App = *app;
+        for(auto& term: App.terms)
+            term = rename_infix(m, term);
+        E = App;
+    }
     else if (auto app = E.to<Hs::ApplyExp>())
     {
         auto App = *app;
@@ -676,6 +683,13 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     { }
     else if (E.is_a<Hs::Literal>())
     { }
+    else if (auto app = E.to<Hs::ParsedApp>())
+    {
+        if (app->terms.empty())
+            error(loc, Note()<<"Empty parsed application.");
+        E = unloc(Hs::apply(app->terms));
+        return rename(LE, bound, free_vars);
+    }
     else if (auto app = E.to<Hs::ApplyExp>())
     {
         auto App = *app;
