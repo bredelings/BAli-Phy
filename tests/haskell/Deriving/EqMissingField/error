@@ -1,8 +1,8 @@
-[1mMain.hs:8.16-18:[1;31m error:[0m[1m
+[1mMain.hs:8.29-30:[1;31m error:[0m[1m
    • Could not deduce 'Eq Foo' arising from field 2 of constructor 'T' (type
      'Foo')
    • When deriving the instance for Eq (T a)
   [1;34m|[0m
-[1;34m8[0m [1;34m| [0mdata T a = T a [1;31mFoo[0m deriving Eq
-  [1;34m|[0m                [1;31m^^^[0m
+[1;34m8[0m [1;34m| [0mdata T a = T a Foo deriving [1;31mEq[0m
+  [1;34m|[0m                             [1;31m^^[0m
 

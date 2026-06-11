@@ -1,8 +1,8 @@
-[1mMain.hs:8.16-18:[1;31m error:[0m[1m
+[1mMain.hs:8.29-35:[1;31m error:[0m[1m
    • Could not deduce 'Bounded Foo' arising from field 2 of constructor 'T'
      (type 'Foo')
    • When deriving the instance for Bounded (T a)
   [1;34m|[0m
-[1;34m8[0m [1;34m| [0mdata T a = T a [1;31mFoo[0m deriving Bounded
-  [1;34m|[0m                [1;31m^^^[0m
+[1;34m8[0m [1;34m| [0mdata T a = T a Foo deriving [1;31mBounded[0m
+  [1;34m|[0m                             [1;31m^^^^^^^[0m
 
