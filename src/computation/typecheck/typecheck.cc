@@ -915,7 +915,7 @@ std::optional<TypeCon> TypeChecker::find_tycon(const string& name) const
 
 Type TypeChecker::bool_type() const
 {
-    return find_prelude_tycon("Bool");
+    return TypeCon(bool_type_name);
 }
 
 Type TypeChecker::rational_type() const

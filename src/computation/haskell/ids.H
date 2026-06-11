@@ -7,6 +7,7 @@
 extern std::string bool_true_name;
 extern std::string bool_false_name;
 extern std::string bool_and_name;
+extern std::string bool_type_name;
 extern std::string error_name;
 extern std::string eq_class_name;
 extern std::string eq_method_name;

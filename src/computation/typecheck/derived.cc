@@ -78,7 +78,7 @@ namespace
     }
 
     // Build a deriving target from resolved semantic type metadata.
-    optional<DerivingTarget> deriving_target_for_type(TypeChecker& tc, const Hs::Decls& decls, const Hs::TypeCon& target_con, const optional<Hs::LType>& explicit_polytype = {})
+    optional<DerivingTarget> deriving_target_for_type(TypeChecker& tc, const Hs::TypeCon& target_con, const optional<Hs::LType>& explicit_polytype = {})
     {
         auto T = tc.this_mod().lookup_resolved_type(target_con.name);
         auto data_info = T ? T->is_data() : nullptr;
@@ -1537,7 +1537,7 @@ namespace
     }
 
     // Convert a standalone deriving instance head into a deriving clause and its target type.
-    optional<pair<DerivingTarget, Hs::Deriving>> standalone_deriving_target(TypeChecker& tc, const Hs::Decls& decls, const Hs::StandaloneDerivingDecl& standalone)
+    optional<pair<DerivingTarget, Hs::Deriving>> standalone_deriving_target(TypeChecker& tc, const Hs::StandaloneDerivingDecl& standalone)
     {
         auto peeled = Hs::peel_top_gen(standalone.polytype);
         auto instance_head = std::get<2>(peeled);
@@ -1559,7 +1559,7 @@ namespace
             return {};
         }
 
-        auto target = deriving_target_for_type(tc, decls, *target_con, standalone.polytype);
+        auto target = deriving_target_for_type(tc, *target_con, standalone.polytype);
         if (target)
         {
             Hs::Deriving deriving(standalone.strategy, Hs::type_apply(class_head, class_args), standalone.via_type);
@@ -1587,7 +1587,7 @@ Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
         }
         else if (auto standalone = decl.to<Hs::StandaloneDerivingDecl>())
         {
-            if (auto target = standalone_deriving_target(*this, decls, *standalone))
+            if (auto target = standalone_deriving_target(*this, *standalone))
             {
                 synthesize_deriving_clause(*this, instances, target->first, target->second);
             }

@@ -39,15 +39,21 @@ foreign import ecall "Prelude:" equals_double :: Double -> Double -> Bool
 instance Eq Double where
     (==) = equals_double
     
--- Eq [a]
-instance Eq a => Eq [a] where
-    []     == []     = True
-    (x:xs) == (y:ys) = (x == y) && (xs == ys)
-    _      == _      = False
+-- Eq Bool
+deriving instance Eq Bool
            
+-- Eq [a]
+deriving instance Eq a => Eq [a]
+           
+-- Eq ()
+deriving instance Eq ()
+
 -- Eq (a,b)
-deriving instance (Eq a, Eq b) => Eq (a,b)
+deriving instance (Eq a, Eq b) => Eq (a, b)
 
 -- Eq (a,b,c)
-instance (Eq a, Eq b, Eq c) => Eq (a, b ,c) where
-    (x1,y1,z1) == (x2,y2,z2) = (x1 == x2) && (y1 == y2) && (z1 == z2)
+deriving instance (Eq a, Eq b, Eq c) => Eq (a, b, c)
+
+-- Eq (a,b,c,d)
+deriving instance (Eq a, Eq b, Eq c, Eq d) => Eq (a, b, c, d)
+         

@@ -1905,7 +1905,7 @@ const_symbol_ptr lookup_magic_symbol(const std::string& name)
     {
         S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
         // forall a.(a -> Bool) -> [a] -> [a]
-        S->type = add_forall_vars({a}, make_arrow_type(make_arrow_type(a, TypeCon("Bool")), make_arrow_type(list_type(a),list_type(a))));
+        S->type = add_forall_vars({a}, make_arrow_type(make_arrow_type(a, TypeCon(bool_type_name)), make_arrow_type(list_type(a),list_type(a))));
     }
     else if (name == "Control.Monad.fail")
     {
