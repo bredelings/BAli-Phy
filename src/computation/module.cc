@@ -1967,6 +1967,15 @@ const_symbol_ptr lookup_builtin_symbol(const std::string& name)
 
 const_type_ptr lookup_builtin_type(const std::string& name)
 {
+    // Build semantic data metadata for builtin algebraic types.
+    auto builtin_data_info = [](const string& type_name, vector<string> constructors, vector<TypeVar> type_vars) {
+        auto info = std::make_shared<DataInfo>();
+        info->name = type_name;
+        info->type_vars = std::move(type_vars);
+        info->constructors = constructors;
+        return type_info::data_info{std::move(constructors), {}, info};
+    };
+
     // Attach role metadata to builtin type constructors that can appear in Coercible.
     auto with_roles = [](type_info T, vector<Role> roles) {
         T.roles = std::move(roles);
@@ -1983,10 +1992,10 @@ const_type_ptr lookup_builtin_type(const std::string& name)
         return const_type_ptr(new type_info{"Integer", type_info::data_info(), {}, 0, kind_type()});
     else if (name == "()")
     {
-        return const_type_ptr(new type_info{"()", type_info::data_info{{"()"}, {}, nullptr}, {}, 0, kind_type()});
+        return const_type_ptr(new type_info{"()", builtin_data_info("()", {"()"}, {}), {}, 0, kind_type()});
     }
     else if (name == "[]")
-        return with_roles(type_info{"[]", type_info::data_info{{"[]",":"}, {}, nullptr}, {}, 1, make_n_args_kind(1)}, {Role::Representational});
+        return with_roles(type_info{"[]", builtin_data_info("[]", {"[]",":"}, {TypeVar("a", kind_type())}), {}, 1, make_n_args_kind(1)}, {Role::Representational});
     else if (name == "->")
     {
         return with_roles(type_info{"->", {}, {{right_fix,0}}, 2, make_n_args_kind(2)}, {Role::Representational, Role::Representational});
@@ -1999,8 +2008,11 @@ const_type_ptr lookup_builtin_type(const std::string& name)
     else if (is_tuple_name(name))
     {
         int n = tuple_arity(name);
+        vector<TypeVar> type_vars;
+        for(int i=0; i<n; i++)
+            type_vars.push_back(TypeVar("a" + std::to_string(i), kind_type()));
 
-        return with_roles(type_info{name, type_info::data_info{{name}, {}, nullptr},{}, n, make_n_args_kind(n)}, vector<Role>(n, Role::Representational));
+        return with_roles(type_info{name, builtin_data_info(name, {name}, std::move(type_vars)), {}, n, make_n_args_kind(n)}, vector<Role>(n, Role::Representational));
     }
     throw myexception()<<"Symbol 'name' is not a builtin (type) symbol.";
 }

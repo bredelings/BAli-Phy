@@ -17,6 +17,7 @@ namespace
     struct DerivingDataInfo
     {
         TypeCon type_con;
+        const_type_ptr type_info;
         const type_info::data_info& data;
     };
 
@@ -65,7 +66,7 @@ namespace
         if (not T or not data_info)
             return {};
 
-        return DerivingDataInfo{TypeCon(T->name, T->kind), *data_info};
+        return DerivingDataInfo{TypeCon(T->name, T->kind), T, *data_info};
     }
 
     optional<DerivingTarget> deriving_target_for_decl(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const optional<Hs::LType>& explicit_polytype = {})
@@ -75,6 +76,31 @@ namespace
             return {};
 
         return DerivingTarget{*data_info, explicit_polytype, &data_decl};
+    }
+
+    // Find a local source declaration when a derivation still needs source syntax.
+    const Hs::DataOrNewtypeDecl* local_data_decl_for_type(const Hs::Decls& decls, const string& type_name)
+    {
+        for(auto& [_, decl]: decls)
+        {
+            auto data_decl = decl.to<Hs::DataOrNewtypeDecl>();
+            if (data_decl and unloc(data_decl->con).name == type_name)
+                return data_decl;
+        }
+
+        return nullptr;
+    }
+
+    // Build a deriving target from resolved semantic type metadata.
+    optional<DerivingTarget> deriving_target_for_type(TypeChecker& tc, const Hs::Decls& decls, const Hs::TypeCon& target_con, const optional<Hs::LType>& explicit_polytype = {})
+    {
+        auto T = tc.this_mod().lookup_resolved_type(target_con.name);
+        auto data_info = T ? T->is_data() : nullptr;
+        if (not T or not data_info)
+            return {};
+
+        auto source_decl = local_data_decl_for_type(decls, target_con.name);
+        return DerivingTarget{DerivingDataInfo{TypeCon(T->name, T->kind), T, *data_info}, explicit_polytype, source_decl};
     }
 
     optional<DataConInfo> deriving_constructor_info(TypeChecker& tc, const string& con_name)
@@ -1445,21 +1471,14 @@ namespace
             return {};
         }
 
-        for(auto& [_, decl]: decls)
+        auto target = deriving_target_for_type(tc, decls, *target_con, standalone.polytype);
+        if (target)
         {
-            auto data_decl = decl.to<Hs::DataOrNewtypeDecl>();
-            if (data_decl and unloc(data_decl->con).name == target_con->name)
-            {
-                auto target = deriving_target_for_decl(tc, *data_decl, standalone.polytype);
-                if (not target)
-                    return {};
-
-                Hs::Deriving deriving(standalone.strategy, Hs::type_apply(class_head, class_args), standalone.via_type);
-                return pair<DerivingTarget, Hs::Deriving>{*target, deriving};
-            }
+            Hs::Deriving deriving(standalone.strategy, Hs::type_apply(class_head, class_args), standalone.via_type);
+            return pair<DerivingTarget, Hs::Deriving>{*target, deriving};
         }
 
-        tc.record_error(target_head.loc, Note()<<"Standalone deriving target `"<<target_type.print()<<"` is not a local data/newtype declaration");
+        tc.record_error(target_head.loc, Note()<<"Standalone deriving target `"<<target_type.print()<<"` is not a data/newtype type");
         return {};
     }
 }
