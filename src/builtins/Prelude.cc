@@ -416,6 +416,38 @@ extern "C" R::Exp simple_function_read_int_at(vector<R::Exp>& args)
     return R::RPair(int(value), offset + int(end - start));
 }
 
+extern "C" R::Exp simple_function_read_integer_at(vector<R::Exp>& args)
+{
+    string s = get_arg(args).as_string();
+    int offset = get_arg(args).as_int();
+    if (offset < 0 or offset > s.size())
+        return R::RPair(R::Integer(integer(0)), -1);
+
+    int pos = offset;
+    bool negative = false;
+    if (pos < s.size() and (s[pos] == '-' or s[pos] == '+'))
+    {
+        negative = s[pos] == '-';
+        pos++;
+    }
+
+    if (pos == s.size() or s[pos] < '0' or s[pos] > '9')
+        return R::RPair(R::Integer(integer(0)), -1);
+
+    integer value = 0;
+    while(pos < s.size() and s[pos] >= '0' and s[pos] <= '9')
+    {
+        value *= 10;
+        value += s[pos] - '0';
+        pos++;
+    }
+
+    if (negative)
+        value = -value;
+
+    return R::RPair(R::Integer(value), pos);
+}
+
 extern "C" R::Exp simple_function_read_double_at(vector<R::Exp>& args)
 {
     string s = get_arg(args).as_string();

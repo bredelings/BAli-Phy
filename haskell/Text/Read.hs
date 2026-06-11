@@ -152,6 +152,13 @@ instance Read Int where
             (x, n) = pair_from_c p
         in if n < 0 then [] else [(x, drop n s1)]
 
+instance Read Integer where
+    readsPrec _ s =
+        let s1 = skipSpaces s
+            p = read_integer_at (list_to_string s1) 0
+            (x, n) = pair_from_c p
+        in if n < 0 then [] else [(x, drop n s1)]
+
 instance Read Double where
     readsPrec _ s =
         let s1 = skipSpaces s
@@ -204,4 +211,5 @@ instance Read a => Read [a] where
 foreign import ecall "Prelude:" read_int :: CPPString -> Int
 foreign import ecall "Prelude:" read_double :: CPPString -> Double
 foreign import ecall "Prelude:" read_int_at :: CPPString -> Int -> EPair Int Int
+foreign import ecall "Prelude:" read_integer_at :: CPPString -> Int -> EPair Integer Int
 foreign import ecall "Prelude:" read_double_at :: CPPString -> Int -> EPair Double Int
