@@ -285,11 +285,6 @@ namespace
         return type_con_type(type_con, type_var_types(data_info.data.info->type_vars, arity));
     }
 
-    Hs::Context source_context_for_target(const DerivingTarget& target)
-    {
-        return target.source_decl ? target.source_decl->context : Hs::Context{};
-    }
-
     // Convert the subset of semantic types used in generated deriving code to parsed syntax.
     optional<Hs::LType> semantic_type_to_hs_type(const Type& type)
     {
@@ -1200,31 +1195,37 @@ namespace
     }
 
     // Build an empty DeriveAnyClass instance head C fixed... (T args...).
-    Hs::LType anyclass_instance_type(const DerivingTarget& target, const string& class_name, const vector<Hs::LType>& fixed_args)
+    optional<Hs::LType> anyclass_instance_type(const DerivingTarget& target, const string& class_name, const vector<Hs::LType>& fixed_args)
     {
         auto data_type = derived_data_type(target.data, target.data.data.info->type_vars.size());
         auto instance_args = fixed_args;
         instance_args.push_back(data_type);
         auto instance_head = class_constraint(class_name, instance_args);
-        auto context = source_context_for_target(target);
-        Hs::LType polytype = context.empty() ? instance_head : Hs::LType{noloc, Hs::ConstrainedType(context, instance_head)};
+        auto context = semantic_data_context(target.data);
+        if (not context)
+            return {};
+
+        Hs::LType polytype = context->empty() ? instance_head : Hs::LType{noloc, Hs::ConstrainedType(*context, instance_head)};
         return Hs::add_forall_vars(hs_type_vars(target.data.data.info->type_vars, target.data.data.info->type_vars.size()), polytype);
     }
 
     // Build the synthetic DerivingVia instance head C fixed... (T args...) with a C fixed... via context.
-    Hs::LType deriving_via_instance_type(const DerivingTarget& target, const string& class_name, const vector<Hs::LType>& fixed_args, const Hs::LType& via_type)
+    optional<Hs::LType> deriving_via_instance_type(const DerivingTarget& target, const string& class_name, const vector<Hs::LType>& fixed_args, const Hs::LType& via_type)
     {
         auto data_type = derived_data_type(target.data, target.data.data.info->type_vars.size());
 
-        Hs::Context context = source_context_for_target(target);
+        auto context = semantic_data_context(target.data);
+        if (not context)
+            return {};
+
         auto via_constraint_args = fixed_args;
         via_constraint_args.push_back(via_type);
-        context.push_back(class_constraint(class_name, via_constraint_args));
+        context->push_back(class_constraint(class_name, via_constraint_args));
 
         auto instance_args = fixed_args;
         instance_args.push_back(data_type);
         auto instance_head = class_constraint(class_name, instance_args);
-        Hs::LType polytype = Hs::LType{noloc, Hs::ConstrainedType(context, instance_head)};
+        Hs::LType polytype = Hs::LType{noloc, Hs::ConstrainedType(*context, instance_head)};
         return Hs::add_forall_vars(hs_type_vars(target.data.data.info->type_vars, target.data.data.info->type_vars.size()), polytype);
     }
 
@@ -1245,7 +1246,14 @@ namespace
             return {};
         }
 
-        return Hs::InstanceDecl({}, anyclass_instance_type(target, class_info->name, deriving_class->fixed_args), {}, {}, {});
+        auto instance_type = anyclass_instance_type(target, class_info->name, deriving_class->fixed_args);
+        if (not instance_type)
+        {
+            tc.record_error(deriving.loc, Note()<<"DeriveAnyClass could not convert the semantic data context into a generated instance");
+            return {};
+        }
+
+        return Hs::InstanceDecl({}, *instance_type, {}, {}, {});
     }
 
     // Build the class-parameter substitution used by generated GND associated type instances.
@@ -1417,7 +1425,14 @@ namespace
         }
 
         auto associated_type_instances = deriving_via_associated_type_instances(tc, target.data, *class_info, deriving_class->fixed_args, *deriving.via_type, deriving.type.loc);
-        Hs::InstanceDecl instance({}, deriving_via_instance_type(target, class_info->name, deriving_class->fixed_args, *deriving.via_type), associated_type_instances, {}, {});
+        auto instance_type = deriving_via_instance_type(target, class_info->name, deriving_class->fixed_args, *deriving.via_type);
+        if (not instance_type)
+        {
+            tc.record_error(deriving.type.loc, Note()<<"DerivingVia could not convert the semantic data context into a generated instance");
+            return {};
+        }
+
+        Hs::InstanceDecl instance({}, *instance_type, associated_type_instances, {}, {});
         instance.generalized_newtype_deriving = true;
         return instance;
     }
