@@ -417,23 +417,16 @@ namespace
     {
         assert(data_info.data.info);
 
-        vector<Hs::LType> data_args;
         Hs::Context context;
-        vector<Hs::LTypeVar> type_vars;
         for(auto& tv: data_info.data.info->type_vars)
         {
-            auto hs_tv = hs_type_var(tv);
             auto tv_type = type_var_type(tv);
-            type_vars.push_back(hs_tv);
-            data_args.push_back(tv_type);
             context.push_back(class_constraint(class_name, tv_type));
         }
 
-        Hs::LTypeCon type_con{noloc, Hs::TypeCon(data_info.data.info->name)};
-        auto data_type = type_con_type(type_con, data_args);
-        auto instance_head = class_constraint(class_name, data_type);
+        auto instance_head = class_constraint(class_name, derived_data_type(data_info, data_info.data.info->type_vars.size()));
         Hs::LType polytype = context.empty() ? instance_head : Hs::LType{noloc, Hs::ConstrainedType(context, instance_head)};
-        return Hs::add_forall_vars(type_vars, polytype);
+        return Hs::add_forall_vars(hs_type_vars(data_info.data.info->type_vars, data_info.data.info->type_vars.size()), polytype);
     }
 
     Hs::LExp constructor_tag_exp(TypeChecker& tc, const DerivingDataInfo& data_info, const Hs::LExp& value)
