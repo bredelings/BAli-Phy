@@ -94,7 +94,7 @@ bound_var_info renamer_state::rename_stmt(Hs::LExp& lstmt, const bound_var_info&
     {
         auto PQ = stmt.as_<Haskell::PatQual>();
 	PQ.exp = rename(PQ.exp, bound, free_vars);
-	PQ.bindpat = expression_to_pattern_category(PQ.bindpat);
+	PQ.bindpat = parsed_expression_to_pattern(PQ.bindpat);
 	auto bound_vars = rename_pattern(PQ.bindpat);
         stmt = PQ;
 	return bound_vars;

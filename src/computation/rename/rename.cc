@@ -418,7 +418,7 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(Located<expression_ref>& l
     else if (stmt.is_a<Haskell::PatQual>())
     {
         auto PQ = stmt.as_<Haskell::PatQual>();
-        PQ.bindpat = expression_to_pattern_category(PQ.bindpat);
+        PQ.bindpat = parsed_expression_to_pattern(PQ.bindpat);
         auto bound = find_vars_in_pattern(PQ.bindpat);
         stmt = PQ;
         return bound;

@@ -15,6 +15,7 @@ computation_sources = [
   'parser/driver.cc', 'parser/lexer.cc', 'parser/parser.cc',
 
   'rename/rename.cc', 'rename/expression.cc', 'rename/pattern.cc',
+  'rename/syntax_disambiguation.cc',
   'rename/decls.cc', 'rename/stmt.cc', 'rename/match.cc',
   'rename/infix.cc', 'rename/types.cc',
 

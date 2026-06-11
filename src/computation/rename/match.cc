@@ -52,7 +52,7 @@ Hs::MRule renamer_state::rename(Hs::MRule mrule, const bound_var_info& bound, se
 
     for(auto& arg: mrule.patterns)
     {
-        arg = expression_to_pattern_category(arg);
+        arg = parsed_expression_to_pattern(arg);
         auto new_binders = rename_pattern(arg);
         auto overlap = intersection(binders, new_binders);
         if (not overlap.empty())

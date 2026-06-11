@@ -21,139 +21,6 @@ using std::optional;
 using std::map;
 using std::deque;
 
-/*
- * We probably want to move away from using dummies to represent patterns.
- * - Dummies can't represent e.g. irrefutable patterns.
- */
-
-// What would be involved in moving the renamer to a kind of phase 2?
-// How do we get the exported symbols before we do the desugaring that depends on imports?
-
-// rename_infix does:
-// (i) precedence handling for infix expressions
-// (ii) rewrites @ f x y -> f x y for decls
-// (iii) rewrites @ C x y -> C x y for patterns
-
-// Consider h:t !! y.  This can be h:(t!!y) or (h:t)!!y
-
-// We might have @ (infix x op y) z.  Infix handling will rewrite this to
-// @ (@ op x y) z.  We need to change this to (@ op x y z).
-// However, if we have @ (: x y) z, then we don't want to rewrite this to (: x y z).
-// What are the rules for well-formed patterns?
-// Only one op can be a non-constructor (in decl patterns), and that op needs to end up at the top level.
-
-// tuple<map<Hs::LVar,Hs::LType>, map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
-
-
-// Recognize syntax nodes that are already unambiguously pattern-category.
-bool is_definitely_pattern(const Haskell::Expression& lhs)
-{
-    if (lhs.is_a<Haskell::List>())
-        return true;
-    else if (lhs.is_a<Haskell::Tuple>())
-        return true;
-    else if (lhs.is_a<Haskell::AsPattern>())
-        return true;
-    else if (lhs.is_a<Haskell::LazyPattern>())
-        return true;
-    else if (lhs.is_a<Haskell::StrictPattern>())
-        return true;
-    else if (lhs.is_a<Haskell::ConPattern>())
-        return true;
-    else if (lhs.is_a<Haskell::VarPattern>())
-        return true;
-    else if (lhs.is_a<Haskell::LiteralPattern>())
-        return true;
-
-    return false;
-}
-
-// Decide whether a parsed value binding is a function declaration or pattern declaration.
-expression_ref classify_value_decl(const Hs::ValueDecl& D)
-{
-    // Classify the declaration LHS while carrying arguments peeled from nested applications.
-    auto classify_lhs = [&](auto&& self, Hs::LExp lhs, Hs::LPats extra_args) -> expression_ref
-    {
-        auto& E = unloc(lhs);
-
-        if (auto I = E.to<Hs::InfixExp>())
-        {
-            if (I->terms.size() == 1)
-                return self(self, I->terms[0], extra_args);
-
-            for(int i=0; i<I->terms.size(); i++)
-            {
-                if (not is_infix_operator_term(I->terms, i))
-                    continue;
-
-                if (auto v = unloc(I->terms[i]).to<Hs::Var>())
-                {
-                    vector<Hs::LExp> left_terms(I->terms.begin(), I->terms.begin() + i);
-                    vector<Hs::LExp> right_terms(I->terms.begin() + i + 1, I->terms.end());
-
-                    Hs::LPats pats;
-                    pats.push_back(expression_to_pattern_category(make_infix_exp(left_terms)));
-                    pats.push_back(expression_to_pattern_category(make_infix_exp(right_terms)));
-                    pats.insert(pats.end(), extra_args.begin(), extra_args.end());
-                    return Hs::simple_fun_decl({I->terms[i].loc, *v}, pats, D.rhs);
-                }
-            }
-
-            return Hs::PatDecl(expression_to_pattern_category(lhs), D.rhs);
-        }
-        else if (E.is_a<Hs::ParsedApp>())
-        {
-            auto [head,args] = Hs::decompose_apps(lhs);
-            Hs::LPats pats;
-            for(auto& arg: args)
-                pats.push_back(expression_to_pattern_category(arg));
-            pats.insert(pats.end(), extra_args.begin(), extra_args.end());
-
-            if (auto v = unloc(head).to<Hs::Var>())
-                return Hs::simple_fun_decl({head.loc, *v}, pats, D.rhs);
-            else if (unloc(head).is_a<Hs::Con>())
-                return Hs::PatDecl(expression_to_pattern_category(lhs), D.rhs);
-            else
-                return self(self, head, pats);
-        }
-        else if (E.is_a<Hs::ApplyExp>())
-        {
-            auto [head,args] = Hs::decompose_apps(lhs);
-            Hs::LPats pats;
-            for(auto& arg: args)
-                pats.push_back(expression_to_pattern_category(arg));
-            pats.insert(pats.end(), extra_args.begin(), extra_args.end());
-
-            if (auto v = unloc(head).to<Hs::Var>())
-                return Hs::simple_fun_decl({head.loc, *v}, pats, D.rhs);
-            else if (unloc(head).is_a<Hs::Con>())
-                return Hs::PatDecl(expression_to_pattern_category(lhs), D.rhs);
-            else
-                return self(self, head, pats);
-        }
-        else if (auto v = E.to<Hs::Var>())
-        {
-            if (extra_args.empty())
-                return Hs::simple_decl({lhs.loc, *v}, D.rhs);
-            else
-                return Hs::simple_fun_decl({lhs.loc, *v}, extra_args, D.rhs);
-        }
-        else
-            return Hs::PatDecl(expression_to_pattern_category(lhs), D.rhs);
-    };
-
-    return classify_lhs(classify_lhs, D.lhs, {});
-}
-
-// Classify a raw value declaration, leaving already-classified declarations unchanged.
-expression_ref classify_value_decl(const expression_ref& E)
-{
-    if (auto D = E.to<Hs::ValueDecl>())
-        return classify_value_decl(*D);
-    else
-        return E;
-}
-
 optional<Hs::LVar> fundecl_head(const expression_ref& decl)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
@@ -187,7 +54,7 @@ tuple<map<Hs::LVar,Hs::LType>, map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> gr
         }
         else if (decl.is_a<Hs::FixityDecl>())
         {
-            // Preserve local fixity declarations until rename_decls can extend the scoped fixity environment.
+            // Preserve local fixity declarations until the caller has extended the scoped fixity environment.
             decls2.push_back({loc, decl});
         }
         else if (auto d = decl.to<Hs::PatDecl>())
@@ -282,48 +149,6 @@ Hs::Decls group_fundecls(const Haskell::Decls& decls)
     }
 
     return decls2;
-}
-
-bool needs_decl_grouping(const Hs::Decls& decls)
-{
-    for(const auto& [_, decl]: decls)
-        if (decl.is_a<Hs::ValueDecl>() or decl.is_a<Hs::TypeSigDecl>() or
-            decl.is_a<Hs::FixityDecl>() or decl.is_a<Hs::InlinePragma>())
-            return true;
-
-    return false;
-}
-
-// Classify all value declarations and collect signatures before local symbol collection.
-Hs::Binds classify_value_decls(Hs::Binds binds)
-{
-    assert(binds.size() == 1);
-
-    if (not needs_decl_grouping(binds[0]))
-        return binds;
-
-    for(auto& [_, e]: binds[0])
-        e = classify_value_decl(e);
-
-    auto [type_sigs, inline_sigs, bind0] = group_decls(binds[0]);
-
-    binds.signatures.insert(type_sigs.begin(), type_sigs.end());
-    binds.inline_sigs.insert(inline_sigs.begin(), inline_sigs.end());
-    binds[0] = bind0;
-
-    return binds;
-}
-
-// Classify value declarations in a declaration list that has no Binds-level signature maps.
-Hs::Decls classify_value_decls(Hs::Decls decls)
-{
-    if (not needs_decl_grouping(decls))
-        return decls;
-
-    for(auto& [_, e]: decls)
-        e = classify_value_decl(e);
-
-    return group_fundecls(decls);
 }
 
 bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars, bool top)

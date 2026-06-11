@@ -6,6 +6,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <tuple>
 #include "computation/expression/expression_ref.H"
 #include "computation/haskell/haskell.H"
 #include "computation/symbols.H"
@@ -16,7 +17,7 @@ class Module;
 struct renamer_state;
 
 Hs::LPat unapply(Hs::LExp E);
-Hs::LPat expression_to_pattern_category(Hs::LExp E);
+Hs::LPat parsed_expression_to_pattern(Hs::LExp E);
 
 typedef std::set<std::string> bound_var_info;
 typedef std::set<std::string> bound_type_var_info;
@@ -137,6 +138,7 @@ struct renamer_state
 Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);
 
 Hs::Decls group_fundecls(const Hs::Decls& decls); // only value decls
+std::tuple<std::map<Hs::LVar,Hs::LType>, std::map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> group_decls(const Hs::Decls& decls);
 void remove_fixity_decls(Hs::Decls& decls);
 
 // I think ghc returns a moduledecls AND a... class environment?
