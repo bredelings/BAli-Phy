@@ -2236,6 +2236,54 @@ const_type_ptr Module::lookup_external_type(const std::string& type_name) const
     return mod_iter->second->lookup_local_type(type_name);
 }
 
+namespace
+{
+    bool record_field_name_matches(const std::string& declared_field, const std::string& requested_field)
+    {
+        if (is_qualified_symbol(requested_field))
+            return declared_field == requested_field;
+        return declared_field == requested_field or get_unqualified_name(declared_field) == get_unqualified_name(requested_field);
+    }
+
+    void add_record_field_constructors(std::set<std::string>& constructors, const std::map<std::string, type_ptr>& types, const std::string& field_name)
+    {
+        for(const auto& [_, type]: types)
+        {
+            if (auto data = type->is_data())
+            {
+                if (ranges::any_of(data->fields, [&](const auto& field) { return record_field_name_matches(field, field_name); }))
+                    constructors.insert(data->constructors.begin(), data->constructors.end());
+            }
+            else if (auto data_fam = type->is_data_fam())
+            {
+                if (ranges::any_of(data_fam->fields, [&](const auto& field) { return record_field_name_matches(field, field_name); }))
+                    constructors.insert(data_fam->constructors.begin(), data_fam->constructors.end());
+            }
+        }
+    }
+}
+
+std::set<std::string> Module::constructors_for_record_field(const std::string& field_name) const
+{
+    std::set<std::string> constructors;
+    add_record_field_constructors(constructors, types, field_name);
+    for(const auto& [_, mod]: transitively_imported_modules)
+    {
+        auto imported_constructors = mod->constructors_for_record_field(field_name);
+        constructors.insert(imported_constructors.begin(), imported_constructors.end());
+    }
+    return constructors;
+}
+
+std::set<std::string> CompiledModule::constructors_for_record_field(const std::string& field_name) const
+{
+    std::set<std::string> constructors;
+    add_record_field_constructors(constructors, types, field_name);
+    for(const auto& [_, mod]: transitively_imported_modules_)
+        add_record_field_constructors(constructors, mod->types, field_name);
+    return constructors;
+}
+
 // Here we do only phase 1 -- we only parse the decls enough to
 //   determine which is a variable, and which are e.g. constructors.
 // We can't determine function bodies at all, since we can't even handle op definitions

@@ -24,21 +24,6 @@ namespace
         return {field.loc, Hs::Var(name)};
     }
 
-    std::optional<std::set<std::string>> intersect_record_constructors(
-        const std::optional<std::set<std::string>>& constructors1,
-        const std::set<std::string>& constructors2)
-    {
-        if (constructors1)
-            return intersection(*constructors1, constructors2);
-        else
-            return constructors2;
-    }
-
-    Hs::LExp record_update_binder(const std::optional<yy::location>& loc, const std::string& con_name, int index)
-    {
-        auto name = "v$record_update$" + get_unqualified_name(con_name) + "$" + std::to_string(index);
-        return {loc, Hs::Var(name)};
-    }
 }
 
 Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set<string>& free_vars)
@@ -264,9 +249,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     else if (auto rec = E.to<Hs::RecordUpdate>())
     {
         auto Rec = *rec;
-        auto object = rename(Rec.object, bound, free_vars);
-        std::vector<std::pair<std::string,Hs::LExp>> updates;
-        optional<set<string>> constructors;
+        Rec.object = rename(Rec.object, bound, free_vars);
         set<string> used_field_names;
 
         if (unloc(Rec.fbinds).dotdot)
@@ -274,60 +257,17 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
 
         for(auto& field: unloc(Rec.fbinds))
         {
-            auto field_name = unloc(unloc(field).field).name;
+            auto& f = unloc(field);
+            auto field_name = unloc(f.field).name;
             auto field_key = get_unqualified_name(field_name);
             if (used_field_names.count(field_key))
                 error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
             used_field_names.insert(field_key);
 
-            auto field_constructors = record_field_constructors().find(field_name);
-            if (field_constructors == record_field_constructors().end())
-                field_constructors = record_field_constructors().find(field_key);
-
-            if (field_constructors == record_field_constructors().end())
-                error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
-            else
-                constructors = intersect_record_constructors(constructors, field_constructors->second);
-
-            auto value = unloc(field).value ? *unloc(field).value : record_field_pun_exp(unloc(field).field);
-            updates.push_back({field_name, rename(value, bound, free_vars)});
+            auto value = f.value ? *f.value : record_field_pun_exp(f.field);
+            f.value = rename(value, bound, free_vars);
         }
-
-        if (not constructors or constructors->empty())
-            error(loc, Note()<<"No record constructor has all fields used in this update.");
-        else
-        {
-            vector<Located<Hs::Alt>> alts;
-            for(const auto& con_name: *constructors)
-            {
-                const auto& layout = record_constructor_layouts().at(con_name);
-                Hs::LPats patterns;
-                vector<Hs::LExp> args;
-
-                for(int i=0; i<layout.arity; i++)
-                {
-                    auto var = record_update_binder(loc, con_name, i);
-                    Hs::LVar lvar = {loc, unloc(var).as_<Hs::Var>()};
-                    patterns.push_back({loc, Hs::VarPattern(lvar)});
-                    args.push_back(var);
-                }
-
-                for(const auto& [field_name, value]: updates)
-                {
-                    auto pos = layout.fields.find(field_name);
-                    if (pos == layout.fields.end())
-                        pos = layout.fields.find(get_unqualified_name(field_name));
-                    assert(pos != layout.fields.end());
-                    args[pos->second] = value;
-                }
-
-                Hs::LCon head = {loc, Hs::Con(con_name, layout.arity)};
-                Hs::LPat pattern = {loc, Hs::ConPattern(head, patterns)};
-                auto rhs = Hs::SimpleRHS(Hs::apply({loc, unloc(head)}, args));
-                alts.push_back({loc, Hs::Alt(pattern, rhs)});
-            }
-            E = Hs::CaseExp(object, Hs::Alts(alts));
-        }
+        E = Rec;
     }
     else if (auto rec = E.to<Hs::RecordCon>())
     {

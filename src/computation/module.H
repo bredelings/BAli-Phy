@@ -131,6 +131,8 @@ public:
 
     std::optional<DataConInfo> constructor_info(const std::string& n) const;
 
+    std::set<std::string> constructors_for_record_field(const std::string& field_name) const;
+
     /// Add a function
     void def_function(const std::string& name);
     /// Add a function
@@ -307,6 +309,8 @@ public:
     const_type_ptr lookup_local_type(const std::string& t) const;
 
     const_symbol_ptr lookup_symbol(const std::string&) const;
+
+    std::set<std::string> constructors_for_record_field(const std::string& field_name) const;
 
     void finish_value_decls( const Core::Decls<>& decls );
 

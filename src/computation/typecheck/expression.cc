@@ -32,6 +32,177 @@ namespace
         return Hs::apply(error, {msg});
     }
 
+    Hs::LExp record_update_binder(const std::optional<yy::location>& loc, const std::string& con_name, int index)
+    {
+        auto name = "v$record_update$" + get_unqualified_name(con_name) + "$" + std::to_string(index);
+        return {loc, Hs::Var(name)};
+    }
+
+    std::set<std::string> intersect_constructors(const std::set<std::string>& constructors1, const std::set<std::string>& constructors2)
+    {
+        std::set<std::string> constructors;
+        for(const auto& con: constructors1)
+            if (constructors2.count(con))
+                constructors.insert(con);
+        return constructors;
+    }
+
+    std::optional<std::set<std::string>> intersect_constructors(
+        const std::optional<std::set<std::string>>& constructors1,
+        const std::set<std::string>& constructors2)
+    {
+        if (constructors1)
+            return intersect_constructors(*constructors1, constructors2);
+        else
+            return constructors2;
+    }
+
+    bool record_field_position(const std::map<std::string,int>& positions, const std::string& field_name, int& position)
+    {
+        auto pos = positions.find(field_name);
+        if (pos == positions.end())
+            pos = positions.find(get_unqualified_name(field_name));
+        if (pos == positions.end())
+            return false;
+
+        position = pos->second;
+        return true;
+    }
+
+    // Return constructors for the concrete record type when the scrutinee type is already known.
+    std::optional<std::set<std::string>> constructors_for_record_type(TypeChecker& tc, const Type& type)
+    {
+        auto expanded_type = tc.expand_all_type_synonyms(follow_meta_type_var(type));
+        auto tcapp = is_type_con_app(expanded_type);
+        if (not tcapp)
+            return {};
+
+        auto& [tycon, _] = *tcapp;
+        auto type_info = tc.this_mod().lookup_resolved_type(tycon.name);
+        if (not type_info)
+            return std::set<std::string>{};
+
+        std::set<std::string> constructors;
+        if (auto data = type_info->is_data())
+            constructors.insert(data->constructors.begin(), data->constructors.end());
+        else if (auto data_fam = type_info->is_data_fam())
+            constructors.insert(data_fam->constructors.begin(), data_fam->constructors.end());
+        else
+            return std::set<std::string>{};
+
+        for(auto iter = constructors.begin(); iter != constructors.end(); )
+        {
+            auto con_info = tc.this_mod().constructor_info(*iter);
+            if (not con_info or not tc.maybe_unify(con_info->result_type(), expanded_type))
+                iter = constructors.erase(iter);
+            else
+                ++iter;
+        }
+
+        return constructors;
+    }
+
+    // Validate record update fields and expand the update into constructor-specific alternatives.
+    Hs::LExp record_update_to_case(TypeChecker& tc, Hs::RecordUpdate& Rec, const std::optional<yy::location>& record_loc)
+    {
+        auto object_type = tc.inferRho(Rec.object);
+        std::optional<std::set<std::string>> constructors;
+        set<string> used_field_names;
+        vector<pair<string,Hs::LExp>> updates;
+
+        if (unloc(Rec.fbinds).dotdot)
+            tc.record_error(Rec.fbinds.loc, Note()<<"Record wildcards in updates are not implemented yet.");
+
+        for(auto& field: unloc(Rec.fbinds))
+        {
+            auto& f = unloc(field);
+            auto field_name = unloc(f.field).name;
+            auto field_key = get_unqualified_name(field_name);
+            if (used_field_names.count(field_key))
+                tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
+            used_field_names.insert(field_key);
+
+            bool field_in_scope = false;
+            try
+            {
+                if (auto S = tc.this_mod().lookup_symbol(field_name))
+                {
+                    field_name = S->name;
+                    field_in_scope = true;
+                }
+            }
+            catch (myexception&)
+            {
+                tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
+            }
+
+            std::set<std::string> field_constructors;
+            if (field_in_scope)
+            {
+                field_constructors = tc.this_mod().constructors_for_record_field(field_name);
+                if (field_constructors.empty())
+                    tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
+            }
+            constructors = intersect_constructors(constructors, field_constructors);
+
+            if (not f.value)
+                tc.record_error(field.loc, Note()<<"Field pun '"<<field_name<<"' was not expanded before typechecking.");
+            else if (field_in_scope)
+                updates.push_back({field_name, *f.value});
+        }
+
+        if (auto type_constructors = constructors_for_record_type(tc, object_type))
+            constructors = intersect_constructors(constructors, *type_constructors);
+
+        vector<Located<Hs::Alt>> alts;
+        if (constructors)
+        {
+            for(const auto& con_name: *constructors)
+            {
+                auto con_info = tc.this_mod().constructor_info(con_name);
+                if (not con_info or not con_info->field_names)
+                    continue;
+
+                auto positions = record_field_positions(*con_info->field_names);
+                vector<Hs::LExp> args;
+                Hs::LPats patterns;
+                bool constructor_has_all_fields = true;
+
+                for(int i=0; i<con_info->arity(); i++)
+                {
+                    auto var = record_update_binder(record_loc, con_info->name, i);
+                    Hs::LVar lvar = {record_loc, unloc(var).as_<Hs::Var>()};
+                    patterns.push_back({record_loc, Hs::VarPattern(lvar)});
+                    args.push_back(var);
+                }
+
+                for(const auto& [field_name, value]: updates)
+                {
+                    int pos = 0;
+                    if (not record_field_position(positions, field_name, pos))
+                    {
+                        constructor_has_all_fields = false;
+                        break;
+                    }
+                    args[pos] = value;
+                }
+
+                if (not constructor_has_all_fields)
+                    continue;
+
+                Hs::LCon head = {record_loc, Hs::Con(con_info->name, con_info->arity())};
+                Hs::LPat pattern = {record_loc, Hs::ConPattern(head, patterns)};
+                auto rhs = Hs::SimpleRHS(Hs::apply({record_loc, unloc(head)}, args));
+                alts.push_back({record_loc, Hs::Alt(pattern, rhs)});
+            }
+        }
+
+        if (alts.empty())
+            tc.record_error(record_loc, Note()<<"No record constructor has all fields used in this update.");
+
+        return {record_loc, Hs::CaseExp(Rec.object, Hs::Alts(alts))};
+    }
+
     // Validate record construction fields and place them in constructor order.
     Hs::LExp record_con_to_positional_app(TypeChecker& tc, Hs::RecordCon& Rec, const std::optional<yy::location>& record_loc)
     {
@@ -403,6 +574,14 @@ void TypeChecker::tcRho(Located<Hs::Expression>& E, const Expected& exp_type)
         unloc(E) = unloc(app);
         return;
     }
+    else if (auto rec = unloc(E).to<Hs::RecordUpdate>())
+    {
+        auto Rec = *rec;
+        auto case_exp = record_update_to_case(*this, Rec, E.loc);
+        tcRho(case_exp, exp_type);
+        unloc(E) = unloc(case_exp);
+        return;
+    }
     tcRho_(unloc(E), exp_type);
 }
 
@@ -429,6 +608,14 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
         auto app = record_con_to_positional_app(*this, Rec, Rec.con.loc * Rec.fbinds.loc);
         tcRho(app, exp_type);
         E = unloc(app);
+    }
+    // RECORD UPDATE
+    else if (auto rec = E.to<Hs::RecordUpdate>())
+    {
+        auto Rec = *rec;
+        auto case_exp = record_update_to_case(*this, Rec, Rec.object.loc * Rec.fbinds.loc);
+        tcRho(case_exp, exp_type);
+        E = unloc(case_exp);
     }
     // APP
     else if (auto app = E.to<Hs::ApplyExp>())
