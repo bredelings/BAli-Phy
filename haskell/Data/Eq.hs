@@ -46,8 +46,7 @@ instance Eq a => Eq [a] where
     _      == _      = False
            
 -- Eq (a,b)
-instance (Eq a, Eq b) => Eq (a,b) where
-    (x1,y1) == (x2,y2) = (x1 == x2) && (y1 == y2)
+deriving instance (Eq a, Eq b) => Eq (a,b)
 
 -- Eq (a,b,c)
 instance (Eq a, Eq b, Eq c) => Eq (a, b ,c) where

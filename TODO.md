@@ -37,9 +37,13 @@
 
  * record syntax -- still need record wildcards and several other rhings?
  
- * deriving instance (Eq a, Eq b) => Eq (a, b)
+ * deriving:
  
- * deriving Ix, Enum, Bounded still not finished
+   - deriving instance (Eq a, Eq b) => Eq (a, b)
+ 
+   - deriving Ix, Enum, Bounded still not finished
+ 
+   - scan derive.cc to find all the "not implemented yet" messages.
 
  * PolyKinds (i.e. forall k in kinds)
  
