@@ -37,6 +37,8 @@ namespace
     {
         auto con = unloc(Rec.con);
         auto con_info = tc.constructor_info(con);
+        con.name = con_info.name;
+        con.arity = con_info.arity();
 
         if (not con_info.field_names)
         {

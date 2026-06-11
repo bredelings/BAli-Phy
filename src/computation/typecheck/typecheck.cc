@@ -1017,8 +1017,20 @@ DataConInfo TypeChecker::constructor_info(const Hs::Con& con)
 {
     if (auto info = this_mod().constructor_info(con.name))
         return *info;
+    else if (not is_qualified_symbol(con.name))
+    {
+        try
+        {
+            if (auto S = this_mod().lookup_symbol(con.name); S and S->con_info)
+                return *S->con_info;
+        }
+        catch (myexception&)
+        { }
+    }
     else
         throw note_exception()<<"Unrecognized constructor: "<<con.name;
+
+    throw note_exception()<<"Unrecognized constructor: "<<con.name;
 }
 
 

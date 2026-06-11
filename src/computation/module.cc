@@ -1711,15 +1711,18 @@ Core::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
 bool Module::is_refutable_pattern(const Hs::LPat& lpat) const
 {
     auto& [loc,pat] = lpat;
-    if (auto con_pat = pat.to<Hs::ConPattern>())
+    auto constructor_is_refutable = [&](const Hs::LCon& head, const Hs::LPats& args) -> bool
     {
-        auto C = lookup_resolved_symbol(unloc(con_pat->head).name);
-        assert(C);
+        auto C = lookup_resolved_symbol(unloc(head).name);
+        if (not C or not C->con_info)
+            return true;
 
         if (C->con_info and C->con_info->is_newtype_constructor)
         {
-            assert(con_pat->args.size() == 1);
-            return is_refutable_pattern(con_pat->args[0]);
+            if (args.size() == 1)
+                return is_refutable_pattern(args[0]);
+            else
+                return false;
         }
 
         // If there's > 1 constructor this this if refutable.
@@ -1730,11 +1733,23 @@ bool Module::is_refutable_pattern(const Hs::LPat& lpat) const
         if (data_info and data_info->constructors.size() >= 2) return true;
 
         // If any of the argument patterns are refutable, then this is refutable.
-        for(auto& arg: con_pat->args)
+        for(auto& arg: args)
             if (is_refutable_pattern(arg)) return true;
 
         // Otherwise it is irrefutable.
         return false;
+    };
+
+    if (auto con_pat = pat.to<Hs::ConPattern>())
+    {
+        return constructor_is_refutable(con_pat->head, con_pat->args);
+    }
+    else if (auto rec_pat = pat.to<Hs::RecordPattern>())
+    {
+        Hs::LPats field_patterns;
+        for(auto& field: unloc(rec_pat->fbinds))
+            field_patterns.push_back(unloc(field).pattern);
+        return constructor_is_refutable(rec_pat->head, field_patterns);
     }
     else if (auto tuple_pat = pat.to<Hs::TuplePattern>())
     {
@@ -2046,12 +2061,14 @@ const_symbol_ptr Module::lookup_resolved_symbol(const std::string& symbol_name) 
         return lookup_local_symbol(symbol_name);
 
     // 3. Handle external names
-    else if (auto result = lookup_external_symbol(symbol_name))
-        return result;
+    else if (is_qualified_symbol(symbol_name))
+    {
+        if (auto result = lookup_external_symbol(symbol_name))
+            return result;
+    }
 
     // 4. Handle magic symbols
-    else
-        return lookup_magic_symbol(symbol_name);
+    return lookup_magic_symbol(symbol_name);
 }
 
 const_symbol_ptr Module::lookup_local_symbol(const std::string& symbol_name) const

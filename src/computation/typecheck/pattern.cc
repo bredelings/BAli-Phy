@@ -1,5 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
+#include "haskell/ids.H"
 
 using std::tuple;
 using std::string;
@@ -8,6 +9,73 @@ using std::map;
 using std::set;
 using std::pair;
 using std::optional;
+
+namespace
+{
+    std::map<std::string,int> record_field_positions(const std::vector<std::string>& field_names)
+    {
+        std::map<std::string,int> positions;
+        for(int i=0; i<field_names.size(); i++)
+        {
+            positions[field_names[i]] = i;
+            positions[get_unqualified_name(field_names[i])] = i;
+        }
+        return positions;
+    }
+
+    // Validate record pattern fields and place them in constructor order.
+    std::tuple<Hs::LPat,Hs::LPats> record_pattern_to_con_pattern(TypeChecker& tc, const Hs::LPat& lpat, Hs::RecordPattern& Rec)
+    {
+        auto con = unloc(Rec.head);
+        auto pattern_text = get_unqualified_name(con.name) + " {" + Rec.fbinds.print() + "}";
+        auto con_info = tc.constructor_info(con);
+        unloc(Rec.head).name = con_info.name;
+        unloc(Rec.head).arity = con_info.arity();
+        Hs::LPats invalid_field_patterns;
+
+        if (not con_info.field_names)
+        {
+            tc.record_error(lpat.loc, Note()<<"Constructor '"<<get_unqualified_name(con.name)<<"' is not a record constructor in pattern '"<<pattern_text<<"'.");
+            for(auto& field: unloc(Rec.fbinds))
+                invalid_field_patterns.push_back(unloc(field).pattern);
+            return {{lpat.loc, Hs::WildcardPattern()}, invalid_field_patterns};
+        }
+
+        Hs::LPats args(con_info.field_names->size(), {noloc, Hs::WildcardPattern()});
+        auto positions = record_field_positions(*con_info.field_names);
+        set<int> used_fields;
+
+        if (unloc(Rec.fbinds).dotdot)
+            tc.record_error(lpat.loc, Note()<<"Record wildcards in patterns are not implemented yet.");
+
+        for(auto& field: unloc(Rec.fbinds))
+        {
+            auto& f = unloc(field);
+            auto field_name = unloc(f.field).name;
+            auto pos = positions.find(field_name);
+            if (pos == positions.end())
+                pos = positions.find(get_unqualified_name(field_name));
+
+            if (pos == positions.end())
+            {
+                tc.record_error(field.loc, Note()<<"Constructor '"<<get_unqualified_name(con.name)<<"' does not have field '"<<field_name<<"'.");
+                invalid_field_patterns.push_back(f.pattern);
+            }
+            else if (used_fields.count(pos->second))
+            {
+                tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in pattern '"<<pattern_text<<"'.");
+                invalid_field_patterns.push_back(f.pattern);
+            }
+            else
+            {
+                used_fields.insert(pos->second);
+                args[pos->second] = f.pattern;
+            }
+        }
+
+        return {{lpat.loc, Hs::ConPattern(Rec.head, args)}, invalid_field_patterns};
+    }
+}
 
 // Ensure that we can convert exp_type to pat_type, and get a wrapper proving it.
 Core::wrapper TypeChecker::instPatSigma(const SigmaType& pat_type, const Expected& exp_type)
@@ -168,6 +236,28 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
         unify( expTypeToType(exp_type), result_type );
 
         pat = Con;
+    }
+    // RECORD-PAT
+    else if (auto rec = pat.to<Hs::RecordPattern>())
+    {
+        auto Rec = *rec;
+        auto [con_pat, invalid_field_patterns] = record_pattern_to_con_pattern(*this, lpat, Rec);
+        if (invalid_field_patterns.empty())
+        {
+            lpat = con_pat;
+            tcPat(penv, lpat, exp_type, sigs, a);
+        }
+        else
+        {
+            vector<Expected> invalid_field_types;
+            for(int i=0; i<invalid_field_patterns.size(); i++)
+                invalid_field_types.push_back(newInfer());
+            tcPats(penv, invalid_field_patterns, invalid_field_types, sigs,
+                   [&](local_value_env& penv, TypeChecker& tc) {
+                       lpat = con_pat;
+                       tc.tcPat(penv, lpat, exp_type, sigs, a);
+                   });
+        }
     }
     // AS-PAT
     else if (auto ap = pat.to<Hs::AsPattern>())

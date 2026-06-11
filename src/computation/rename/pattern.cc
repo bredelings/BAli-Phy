@@ -518,36 +518,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 
                 unloc(R.head).name = S->name;
                 unloc(R.head).arity = *S->arity;
-
-                auto layout = record_layout_for_constructor(S->name);
-
-                if (not layout)
-                    error(loc, Note()<<"Constructor '"<<id<<"' is not a record constructor in pattern '"<<pat<<"'!");
-                else
-                {
-                    Hs::LPats args(layout->arity, {noloc,Hs::WildcardPattern()});
-                    set<int> used_fields;
-
-                    for(auto& field: unloc(R.fbinds))
-                    {
-                        auto field_name = unloc(unloc(field).field).name;
-                        auto pos = layout->fields.find(field_name);
-                        if (pos == layout->fields.end())
-                            pos = layout->fields.find(get_unqualified_name(field_name));
-
-                        if (pos == layout->fields.end())
-                            error(field.loc, Note()<<"Constructor '"<<id<<"' does not have field '"<<field_name<<"'.");
-                        else if (used_fields.count(pos->second))
-                            error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in pattern '"<<pat<<"'.");
-                        else
-                        {
-                            used_fields.insert(pos->second);
-                            args[pos->second] = unloc(field).pattern;
-                        }
-                    }
-
-                    pat = Hs::ConPattern(R.head, args);
-                }
+                pat = R;
             }
             catch (myexception& e)
             {
