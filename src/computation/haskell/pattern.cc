@@ -42,6 +42,7 @@ string ConPattern::print() const
     return join(ss, " ");
 }
 
+// Print an unresolved pattern infix spine in its source order.
 string InfixPat::print() const
 {
     vector<string> parts;

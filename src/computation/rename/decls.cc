@@ -45,6 +45,7 @@ using std::deque;
 // tuple<map<Hs::LVar,Hs::LType>, map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> group_decls(const Haskell::Decls& decls); // value decls, signature decls, and fixity decls
 
 
+// Recognize syntax nodes that are already unambiguously pattern-category.
 bool is_definitely_pattern(const Haskell::Expression& lhs)
 {
     if (lhs.is_a<Haskell::List>())
@@ -67,11 +68,13 @@ bool is_definitely_pattern(const Haskell::Expression& lhs)
     return false;
 }
 
+// Detect the leading prefix-negation marker in an unresolved infix spine.
 bool is_prefix_neg(const vector<Hs::LExp>& terms)
 {
     return not terms.empty() and unloc(terms[0]).is_a<Hs::Neg>();
 }
 
+// Return whether a spine term occupies an operator slot, accounting for prefix negation.
 bool is_infix_operator_term(const vector<Hs::LExp>& terms, int index)
 {
     if (is_prefix_neg(terms))
@@ -80,11 +83,13 @@ bool is_infix_operator_term(const vector<Hs::LExp>& terms, int index)
         return index % 2 == 1;
 }
 
+// Return whether a spine term occupies an operand slot that should be pattern-classified.
 bool is_infix_operand_term(const vector<Hs::LExp>& terms, int index)
 {
     return not unloc(terms[index]).is_a<Hs::Neg>() and not is_infix_operator_term(terms, index);
 }
 
+// Rebuild an unresolved infix expression from a slice of spine terms.
 Hs::LExp make_infix_exp(const vector<Hs::LExp>& terms)
 {
     assert(not terms.empty());
@@ -100,6 +105,7 @@ Hs::LExp make_infix_exp(const vector<Hs::LExp>& terms)
 
 Hs::LPat expression_to_pattern_category(Hs::LExp lhs);
 
+// Convert expression-form record fields into pattern-form record fields.
 Hs::PatternFieldBindings pattern_field_bindings(const Hs::FieldBindings& fields)
 {
     Hs::PatternFieldBindings pattern_fields;
@@ -122,6 +128,7 @@ Hs::PatternFieldBindings pattern_field_bindings(const Hs::FieldBindings& fields)
     return pattern_fields;
 }
 
+// Convert parsed expression-category syntax into pattern-category syntax without resolving fixity.
 Hs::LPat expression_to_pattern_category(Hs::LExp lhs)
 {
     auto& E = unloc(lhs);
@@ -230,8 +237,10 @@ Hs::LPat expression_to_pattern_category(Hs::LExp lhs)
     }
 }
 
+// Decide whether a parsed value binding is a function declaration or pattern declaration.
 expression_ref classify_value_decl(const Hs::ValueDecl& D)
 {
+    // Classify the declaration LHS while carrying arguments peeled from nested applications.
     auto classify_lhs = [&](auto&& self, Hs::LExp lhs, Hs::LPats extra_args) -> expression_ref
     {
         auto& E = unloc(lhs);
@@ -305,6 +314,7 @@ expression_ref classify_value_decl(const Hs::ValueDecl& D)
     return classify_lhs(classify_lhs, D.lhs, {});
 }
 
+// Classify a raw value declaration, leaving already-classified declarations unchanged.
 expression_ref classify_value_decl(const expression_ref& E)
 {
     if (auto D = E.to<Hs::ValueDecl>())
@@ -480,6 +490,7 @@ bool needs_decl_grouping(const Hs::Decls& decls)
     return false;
 }
 
+// Classify all value declarations and collect signatures before local symbol collection.
 Hs::Binds classify_value_decls(Hs::Binds binds)
 {
     assert(binds.size() == 1);
