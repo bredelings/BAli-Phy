@@ -23,17 +23,9 @@ typedef std::set<std::string> bound_var_info;
 typedef std::set<std::string> bound_type_var_info;
 typedef std::map<std::string, fixity_info> fixity_env_t;
 
-struct record_constructor_layout
-{
-    int arity = 0;
-    std::map<std::string,int> fields;
-};
-
 struct renamer_global_state
 {
     mutable std::vector<Message> messages;
-    std::map<std::string, record_constructor_layout> record_constructor_layouts;
-    std::map<std::string, std::set<std::string>> record_field_constructors;
 };
 
 Located<expression_ref> desugar_infix(const renamer_state& Rn, const std::vector<Located<expression_ref>>& T);
@@ -54,16 +46,12 @@ struct renamer_state
     renamer_state child() const { return *this; }
 
     std::vector<Message>& messages() const { return global_state->messages; }
-    std::map<std::string, record_constructor_layout>& record_constructor_layouts() const { return global_state->record_constructor_layouts; }
-    std::map<std::string, std::set<std::string>>& record_field_constructors() const { return global_state->record_field_constructors; }
 
     void error(const Note& e) const;
     void error(const std::optional<yy::location>& loc, const Note& e) const;
     void warning(const Note& e) const;
     void warning(const std::optional<yy::location>& loc, const Note& e) const;
 
-    void record_record_layouts(const Hs::Decls&);
-    std::optional<record_constructor_layout> record_layout_for_constructor(const std::string&);
     OpInfo get_operator(const std::string&) const;
     fixity_env_t add_fixities_from_decls(fixity_env_t, const Hs::Decls&) const;
 
