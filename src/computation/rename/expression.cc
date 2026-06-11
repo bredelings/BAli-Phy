@@ -49,6 +49,8 @@ Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set
 
 Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<string>& free_vars)
 {
+    LE = parsed_expression_to_expression(LE);
+
     auto& E = unloc(LE);
     auto& loc = LE.loc;
 
@@ -450,13 +452,8 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     { }
     else if (E.is_a<Hs::Literal>())
     { }
-    else if (auto app = E.to<Hs::ParsedApp>())
-    {
-        if (app->terms.empty())
-            error(loc, Note()<<"Empty parsed application.");
-        E = unloc(Hs::apply(app->terms));
-        return rename(LE, bound, free_vars);
-    }
+    else if (E.is_a<Hs::ParsedApp>())
+        error(loc, Note()<<"Internal error: parsed application reached expression renaming.");
     else if (auto I = E.to<Hs::InfixExp>())
     {
         try
