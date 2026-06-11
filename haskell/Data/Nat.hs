@@ -10,13 +10,8 @@ module Data.Nat (
 
 import Numeric.Natural
 
-data Nat = Z | S Nat
+data Nat = Z | S Nat deriving Eq
 
-
-instance Eq Nat where
-    Z     == Z      = True
-    (S m) == (S n)  = m == n
-    _     == _      = False
 
 instance Ord Nat where
     compare Z     Z     = EQ

@@ -14,7 +14,11 @@ import Data.Floating.Types
 {- We need to handle numbers that are > 1 in the following cases:
      1/2   (2 > 1)
      1-3*p (3 > 1)
-   So, we assume that IOdds z = 1 / Odds z -}
+   So, we assume that IOdds z = 1 / Odds z
+
+   FIXME: If we assumed that IOdds -z = 1/Odds z, then perhaps we
+   could use deriving Ord.
+-}
 
 -- We could keep track of HOW MANY zeros!
 -- ... | Zero Int | ...

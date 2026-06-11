@@ -4,7 +4,7 @@ module Data.Unique (
    hashUnique
  ) where
 
-data Unique = Unique Integer
+newtype Unique = Unique Integer deriving (Eq,Ord,Show,Read)
 
 nextUnique :: IORef Integer
 nextUnique = unsafePerformIO (newIORef 0)
@@ -14,9 +14,3 @@ newUnique = do
   return (Unique x')
 
 hashUnique (Unique i) = integerToInt i
-
-instance Eq Unique where
-    (Unique i) == (Unique j)  =  (i==j)
-
-instance Ord Unique where
-    (Unique i) < (Unique j)   = (i<j)

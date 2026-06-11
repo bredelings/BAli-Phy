@@ -2,7 +2,7 @@ module Numeric.Natural (Natural,
                         mkNatural)
     where
 
-data Natural = Natural Integer
+newtype Natural = Natural Integer deriving (Eq,Ord)
 
 mkNatural :: Integer -> Natural
 mkNatural n | n < 0      = error "mkNatural: negative number!"
@@ -33,18 +33,6 @@ instance Num Natural where
     signum _ = 1
 
     negate _ = error "negate @Natural"
-         
-instance Eq Natural where
-    (Natural m) == (Natural n) = m == n
-
-instance Ord Natural where
-    (Natural m) < (Natural n) = n < m
-    (Natural m) <= (Natural n) = n <= m
-    (Natural m) > (Natural n) = n > m
-    (Natural m) >= (Natural n) = n >= m
-
-    min (Natural m) (Natural n) = Natural (min m n)
-    max (Natural m) (Natural n) = Natural (max m n)
 
 instance Real Natural where
     toRational = toRational . toInteger

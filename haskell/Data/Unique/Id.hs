@@ -8,16 +8,7 @@ module Data.Unique.Id (
     idFromSupply
   ) where
 
-data Id = Id { hashedId :: Int }
-
-instance Eq Id where
-    Id x == Id y  =  x == y
-
-instance Ord Id where
-    Id x  < Id y  =  x  < y
-
-instance Show Id where
-    show (Id x) = "Id " ++ show x
+data Id = Id { hashedId :: Int } deriving (Eq, Ord, Read, Show)
 
 data IdSupply = IdSupply Char Int IdSupply IdSupply
 

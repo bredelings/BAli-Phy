@@ -37,14 +37,6 @@
 
  * record syntax -- still need record wildcards and several other rhings?
  
- * deriving:
- 
-   - deriving instance (Eq a, Eq b) => Eq (a, b)
- 
-   - deriving Ix, Enum, Bounded still not finished
- 
-   - scan derive.cc to find all the "not implemented yet" messages.
-
  * PolyKinds (i.e. forall k in kinds)
  
  * DataKinds (i.e. using Bool as a Kind and 'True as a type)

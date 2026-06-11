@@ -6,11 +6,11 @@ import Data.Bool
 import Data.List
 
 import Text.Show
+import Text.Read
 
-instance Show Bool where
-    show True = "True"
-    show False = "False"
+deriving instance Show Bool
+deriving instance Read Bool
 
-instance Show a => Show (Maybe a) where
-    show (Just x) = "Just "++show x
-    show Nothing = "Nothing"
+deriving instance Show a => Show (Maybe a)
+deriving instance Read a => Read (Maybe a)
+

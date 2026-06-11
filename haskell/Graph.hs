@@ -118,17 +118,11 @@ isSink g n = null (outEdges g n)
 
 class IsDirectedGraph g => IsDirectedAcyclicGraph g
 
-data Node = Node { nodeName :: Int, nodeOutEdges:: IntSet}
-
-instance Show Node where
-    show (Node name outEdges) = "Node{nodeName = " ++ show name ++ ", nodeOutEdges = " ++ show outEdges ++ "}"
+data Node = Node { nodeName :: Int, nodeOutEdges:: IntSet} deriving Show
 
 -- ideally eSourceNode and eTargetNode would be of type Node,
 --   and e_reverse would be of type Edge
-data Edge = Edge { eSourceNode, eTargetNode, edgeName :: Int }
-
-instance Show Edge where
-    show (Edge source target name) = "Edge{eSourceNode = " ++ show source ++ ", eTargetNode = " ++ show target ++ ", edgeName = " ++ show name ++ "}"
+data Edge = Edge { eSourceNode, eTargetNode, edgeName :: Int } deriving Show
 
 data Graph l = Graph {
       graphNodes :: IntMap Node,

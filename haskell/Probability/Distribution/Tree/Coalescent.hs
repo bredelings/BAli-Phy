@@ -62,13 +62,9 @@ merge cmp xs [] = xs
 merge cmp xxs@(x:xs) yys@(y:ys) | cmp x y   = x:merge cmp xs yys
                                 | otherwise = y:merge cmp xxs ys
 
-data CoalEvent = Leaf Int | Internal Int | RateShift Double
-nodeType tree node = if isLeafNode tree node then Leaf node else Internal node
+data CoalEvent = Leaf Int | Internal Int | RateShift Double deriving (Eq, Show)
 
-instance Show CoalEvent where
-    show (Leaf n ) = "Leaf " ++ show n
-    show (Internal n ) = "Internal " ++ show n
-    show (RateShift r ) = "RateShift " ++ show r
+nodeType tree node = if isLeafNode tree node then Leaf node else Internal node
 
 {- NOTE: On changeable sorting
 

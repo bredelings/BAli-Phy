@@ -5,7 +5,7 @@ import Foreign.Maybe
 
 data EigenSystem
 
-data NoDecompReason = NoDiagReason
+data NoDecompReason = NoDiagReason deriving Show
 
 data MatDecomp = NoDecomp (Maybe NoDecompReason) | RealEigenDecomp EigenSystem
 
@@ -14,9 +14,6 @@ foreign import bpcall "Matrix:" lExpRaw :: EigenSystem -> EVector Double -> Doub
 
 getEigensystem q pi = fromCMaybe $ getEigensystemRaw q pi
 lExp esystem pi factor = fromCMaybe $ lExpRaw esystem pi factor
-
-instance Show NoDecompReason where
-    show NoDiagReason = "NoDiagReason"
 
 instance Show MatDecomp where
     show (NoDecomp reason) = "NoDecomp " ++ show reason
