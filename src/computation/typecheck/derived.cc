@@ -20,8 +20,8 @@ namespace
         const type_info::data_info& data;
     };
 
-    using StockDeriver = Hs::InstanceDecl (*)(TypeChecker&, const Hs::DataOrNewtypeDecl&, const DerivingDataInfo&, const std::optional<yy::location>&);
-    using StockValidator = bool (*)(const Hs::DataOrNewtypeDecl&);
+    using StockDeriver = Hs::InstanceDecl (*)(TypeChecker&, const DerivingDataInfo&, const std::optional<yy::location>&);
+    using StockValidator = bool (*)(TypeChecker&, const DerivingDataInfo&);
 
     struct StockDerivingSpec
     {
@@ -50,11 +50,6 @@ namespace
         optional<Hs::InstanceDecl> instance;
     };
 
-    bool is_regular_data_decl(const Hs::DataOrNewtypeDecl& data_decl)
-    {
-        return data_decl.is_regular_decl();
-    }
-
     // Look up the semantic data metadata for a source declaration being derived.
     optional<DerivingDataInfo> deriving_data_info_for_decl(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl)
     {
@@ -81,6 +76,11 @@ namespace
     bool has_semantic_data_info(const DerivingDataInfo& data_info)
     {
         return bool(data_info.data.info);
+    }
+
+    bool is_regular_data_info(TypeChecker&, const DerivingDataInfo& data_info)
+    {
+        return has_semantic_data_info(data_info) and data_info.data.info->is_regular_decl;
     }
 
     const vector<string>& deriving_constructors(const DerivingDataInfo& data_info)
@@ -113,6 +113,16 @@ namespace
                 return false;
         }
         return true;
+    }
+
+    bool is_regular_data_info_with_constructors(TypeChecker& tc, const DerivingDataInfo& data_info)
+    {
+        return is_regular_data_info(tc, data_info) and has_constructor_infos(tc, data_info);
+    }
+
+    bool is_regular_data_info_with_nullary_constructors(TypeChecker& tc, const DerivingDataInfo& data_info)
+    {
+        return is_regular_data_info(tc, data_info) and has_only_nullary_constructors(tc, data_info);
     }
 
     vector<string> record_field_names(const Hs::ConstructorDecl& constructor)
@@ -169,21 +179,6 @@ namespace
         return tv and data_tvs.contains(*tv);
     }
 
-    map<string, vector<optional<yy::location>>> source_field_locs_by_constructor(const Hs::DataOrNewtypeDecl& data_decl)
-    {
-        map<string, vector<optional<yy::location>>> field_locs;
-        if (not data_decl.is_regular_decl())
-            return field_locs;
-
-        for(const auto& constructor: data_decl.get_constructors())
-        {
-            auto con_name = unloc(*constructor.con).name;
-            for(const auto& field_type: constructor.get_field_types())
-                field_locs[con_name].push_back(field_type.loc);
-        }
-
-        return field_locs;
-    }
 }
 
 namespace
@@ -398,7 +393,7 @@ namespace
         return case_exp(value, alts);
     }
 
-    Hs::InstanceDecl derive_eq_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl&, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
+    Hs::InstanceDecl derive_eq_instance(TypeChecker& tc, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
         Hs::Matches eq_matches;
         for(const auto& constructor: deriving_constructors(data_info))
@@ -498,7 +493,7 @@ namespace
         return compare_exp(constructor_tag_exp(tc, data_info, x), constructor_tag_exp(tc, data_info, y));
     }
 
-    Hs::InstanceDecl derive_ord_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl&, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
+    Hs::InstanceDecl derive_ord_instance(TypeChecker& tc, const DerivingDataInfo& data_info, const std::optional<yy::location>& deriving_loc)
     {
         Hs::Matches compare_matches;
         const auto& constructors = deriving_constructors(data_info);
@@ -975,19 +970,19 @@ namespace
     const vector<StockDerivingSpec>& stock_deriving_specs()
     {
         static const vector<StockDerivingSpec> specs = {
-            {eq_class_name, true, derive_eq_instance, is_regular_data_decl,
+            {eq_class_name, true, derive_eq_instance, is_regular_data_info,
              "deriving Eq is only supported for regular data/newtype declarations"},
-            {ord_class_name, true, derive_ord_instance, is_regular_data_decl,
+            {ord_class_name, true, derive_ord_instance, is_regular_data_info,
              "deriving Ord is only supported for regular data/newtype declarations"},
-            {bounded_class_name, true, nullptr, is_regular_data_decl,
+            {bounded_class_name, true, nullptr, is_regular_data_info_with_constructors,
              "deriving Bounded is only supported for regular data/newtype declarations with constructors"},
-            {enum_class_name, false, nullptr, is_regular_data_decl,
+            {enum_class_name, false, nullptr, is_regular_data_info_with_nullary_constructors,
              "deriving Enum is only supported for regular data declarations with only nullary constructors"},
-            {ix_class_name, false, nullptr, is_regular_data_decl,
+            {ix_class_name, false, nullptr, is_regular_data_info_with_nullary_constructors,
              "deriving Ix is only supported for regular data declarations with only nullary constructors"},
-            {show_class_name, true, derive_show_instance, is_regular_data_decl,
+            {show_class_name, true, nullptr, is_regular_data_info,
              "deriving Show is only supported for regular data/newtype declarations"},
-            {read_class_name, true, derive_read_instance, is_regular_data_decl_with_readable_constructors,
+            {read_class_name, true, nullptr, is_regular_data_info,
              "deriving Read is only supported for regular data/newtype declarations with prefix, record, or binary infix constructors"},
         };
 
@@ -1193,6 +1188,7 @@ namespace
     // Synthesize a GND instance header and leave method bodies for instance pass 2.
     GeneralizedNewtypeDerivingResult derive_generalized_newtype_instance(TypeChecker& tc, const Hs::DataOrNewtypeDecl& data_decl, const Hs::LType& deriving, bool explicit_newtype_strategy = false)
     {
+        auto deriving_data = deriving_data_info_for_decl(tc, data_decl);
         auto deriving_class = resolved_deriving_class(tc.this_mod(), deriving);
         if (not deriving_class)
             return {};
@@ -1201,7 +1197,8 @@ namespace
         if (not class_info)
             return {};
 
-        if (data_decl.data_or_newtype != Hs::DataOrNewtype::newtype)
+        bool is_newtype = deriving_data and deriving_data->data.info and deriving_data->data.info->data_or_newtype == Hs::DataOrNewtype::newtype;
+        if (not is_newtype)
         {
             if (explicit_newtype_strategy)
             {
@@ -1318,9 +1315,15 @@ namespace
             const auto& spec = *derived_class->spec;
 
             auto semantic_data = deriving_data_info_for_decl(tc, data_decl);
+            if (not semantic_data or not has_semantic_data_info(*semantic_data))
+            {
+                tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                return true;
+            }
+
             if (spec.class_name == bounded_class_name)
             {
-                if (not data_decl.is_regular_decl() or not semantic_data or not has_semantic_data_info(*semantic_data) or not has_constructor_infos(tc, *semantic_data))
+                if (not spec.validate(tc, *semantic_data))
                 {
                     tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                     return true;
@@ -1332,7 +1335,7 @@ namespace
 
             if (spec.class_name == enum_class_name)
             {
-                if (not data_decl.is_regular_decl() or not semantic_data or not has_semantic_data_info(*semantic_data) or not has_only_nullary_constructors(tc, *semantic_data))
+                if (not spec.validate(tc, *semantic_data))
                 {
                     tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                     return true;
@@ -1344,7 +1347,7 @@ namespace
 
             if (spec.class_name == ix_class_name)
             {
-                if (not data_decl.is_regular_decl() or not semantic_data or not has_semantic_data_info(*semantic_data) or not has_only_nullary_constructors(tc, *semantic_data))
+                if (not spec.validate(tc, *semantic_data))
                 {
                     tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                     return true;
@@ -1354,20 +1357,38 @@ namespace
                 return true;
             }
 
-            if (not spec.validate(data_decl))
+            if (spec.class_name == show_class_name)
             {
-                tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                if (not spec.validate(tc, *semantic_data) or not data_decl.is_regular_decl())
+                {
+                    tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                    return true;
+                }
+
+                add_derived_instance(instances, deriving.type.loc, derive_show_instance(tc, data_decl, *semantic_data, deriving.type.loc), explicit_polytype);
                 return true;
             }
 
-            if (not semantic_data or not has_semantic_data_info(*semantic_data))
+            if (spec.class_name == read_class_name)
+            {
+                if (not spec.validate(tc, *semantic_data) or not is_regular_data_decl_with_readable_constructors(data_decl))
+                {
+                    tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
+                    return true;
+                }
+
+                add_derived_instance(instances, deriving.type.loc, derive_read_instance(tc, data_decl, *semantic_data, deriving.type.loc), explicit_polytype);
+                return true;
+            }
+
+            if (not spec.validate(tc, *semantic_data))
             {
                 tc.record_error(deriving.type.loc, Note()<<spec.unsupported_message);
                 return true;
             }
 
             assert(spec.derive);
-            add_derived_instance(instances, deriving.type.loc, spec.derive(tc, data_decl, *semantic_data, deriving.type.loc), explicit_polytype);
+            add_derived_instance(instances, deriving.type.loc, spec.derive(tc, *semantic_data, deriving.type.loc), explicit_polytype);
             return true;
         };
 
@@ -1507,15 +1528,13 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
     for(auto& [_, decl]: decls)
     {
         auto data_decl = decl.to<Hs::DataOrNewtypeDecl>();
-        if (not data_decl or not data_decl->is_regular_decl())
+        if (not data_decl)
             continue;
 
         auto type_info = this_mod().lookup_resolved_type(unloc(data_decl->con).name);
         auto data_info = type_info ? type_info->is_data() : nullptr;
-        if (not data_info)
+        if (not data_info or not data_info->info or not data_info->info->is_regular_decl)
             continue;
-
-        auto source_field_locs = source_field_locs_by_constructor(*data_decl);
 
         for(auto& deriving: data_decl->derivings)
         {
@@ -1533,8 +1552,6 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
                     continue;
 
                 set<TypeVar> data_tvs(con_info->uni_tvs.begin(), con_info->uni_tvs.end());
-                auto locs = source_field_locs.find(con_name);
-
                 for(int i=0; i<con_info->field_types.size(); i++)
                 {
                     auto pred = class_constraint(derived_class->type_con, con_info->field_types[i]);
@@ -1543,10 +1560,10 @@ void TypeChecker::check_derived_instances(const Hs::Decls& decls)
                     if (not missing)
                         continue;
 
-                    auto field_loc = (locs != source_field_locs.end() and i < locs->second.size()) ? locs->second[i] : deriving.type.loc;
-                    auto span = source_span_scope(field_loc);
+                    auto span = source_span_scope(deriving.type.loc);
                     TidyState tidy_state;
-                    auto instance_pred = class_constraint(derived_class->type_con, type_apply(TypeCon(unloc(data_decl->con).name), con_info->uni_tvs));
+                    auto data_name = data_info->info ? data_info->info->name : unloc(data_decl->con).name;
+                    auto instance_pred = class_constraint(derived_class->type_con, type_apply(TypeCon(data_name), con_info->uni_tvs));
                     auto note = note_scope(Note()<<"When deriving the instance for "<<show_type_plain(tidy_state, instance_pred));
                     record_error(Note()<<"Could not deduce '"<<show_type_plain(tidy_state, *missing)<<"' arising from field "<<(i+1)<<" of constructor '"<<get_unqualified_name(con_name)<<"' (type '"<<show_type_plain(tidy_state, con_info->field_types[i])<<"')");
                 }

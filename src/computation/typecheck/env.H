@@ -110,6 +110,8 @@ typedef immer::map<ID, DataConInfo> DataConEnv;
 struct DataInfo
 {
     ID name;
+    Hs::DataOrNewtype data_or_newtype = Hs::DataOrNewtype::data;
+    bool is_regular_decl = false;
     std::vector<TypeVar> type_vars;
     Context context;
     std::vector<std::string> constructors;
@@ -117,7 +119,7 @@ struct DataInfo
     template <class Archive>
     void serialize(Archive& ar)
     {
-        ar(name, type_vars, context, constructors);
+        ar(name, data_or_newtype, is_regular_decl, type_vars, context, constructors);
     }
 };
 
