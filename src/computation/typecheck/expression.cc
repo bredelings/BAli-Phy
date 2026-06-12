@@ -19,6 +19,8 @@ namespace
 
     struct RecordFieldUpdate
     {
+        std::optional<yy::location> loc;
+        std::string field_name;
         std::vector<FieldInfo> candidates;
         Hs::LExp value;
     };
@@ -77,6 +79,52 @@ namespace
                 if (field.constructors[i] == con_name)
                     return field.positions[i];
         return {};
+    }
+
+    // Return parent record types for candidates still compatible with the selected constructors.
+    std::set<std::string> record_update_parent_types(const RecordFieldUpdate& update, const std::optional<std::set<std::string>>& constructors)
+    {
+        std::set<std::string> parent_types;
+        for(const auto& field: update.candidates)
+        {
+            if (constructors)
+            {
+                bool has_selected_constructor = false;
+                for(const auto& constructor: field.constructors)
+                    if (constructors->count(constructor))
+                        has_selected_constructor = true;
+                if (not has_selected_constructor)
+                    continue;
+            }
+            parent_types.insert(field.parent_type);
+        }
+        return parent_types;
+    }
+
+    // Report duplicate-label updates that still name multiple record types after filtering.
+    bool report_ambiguous_record_updates(TypeChecker& tc, const RecordUpdateInfo& info)
+    {
+        bool ambiguous = false;
+        for(const auto& update: info.updates)
+        {
+            auto parent_types = record_update_parent_types(update, info.constructors);
+            if (parent_types.size() <= 1)
+                continue;
+
+            ambiguous = true;
+            Note message;
+            message<<"Record update field '"<<update.field_name<<"' is ambiguous between record types ";
+            int i = 0;
+            for(const auto& parent_type: parent_types)
+            {
+                if (i++)
+                    message<<", ";
+                message<<get_unqualified_name(parent_type);
+            }
+            message<<"; add a type annotation or another field to disambiguate.";
+            tc.record_error(update.loc, message);
+        }
+        return ambiguous;
     }
 
     // Return constructors for the concrete record type when the scrutinee type is already known.
@@ -151,7 +199,7 @@ namespace
             if (not f.value)
                 tc.record_error(field.loc, Note()<<"Field pun '"<<field_name<<"' was not expanded before typechecking.");
             else if (not field_candidates.empty())
-                info.updates.push_back({field_candidates, *f.value});
+                info.updates.push_back({field.loc, field_name, field_candidates, *f.value});
         }
 
         return info;
@@ -196,6 +244,8 @@ namespace
 
         if (auto type_constructors = constructors_for_record_type(tc, object_type))
             update_info.constructors = intersect_constructors(update_info.constructors, *type_constructors);
+        if (report_ambiguous_record_updates(tc, update_info))
+            return {};
 
         vector<Located<Hs::Alt>> alts;
         if (update_info.constructors)

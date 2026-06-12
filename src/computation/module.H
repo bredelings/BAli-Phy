@@ -65,12 +65,14 @@ class Module
     std::map<std::string, symbol_ptr> symbols;
 
     std::multimap<std::string, const_symbol_ptr> aliases;
+    std::multimap<std::string, FieldInfo> field_aliases;
 
     std::map<std::string, type_ptr> types;
 
     std::multimap<std::string, const_type_ptr> type_aliases;
 
     std::map<std::string, const_symbol_ptr> exported_symbols_;
+    std::multimap<std::string, FieldInfo> exported_fields_;
 
     std::map<std::string, const_type_ptr> exported_types_;
 
@@ -113,6 +115,7 @@ public:
     std::vector<Hs::LImpDecl> imports() const;
 
     const std::map<std::string, const_symbol_ptr>& exported_symbols() const {return exported_symbols_;}
+    const std::multimap<std::string, FieldInfo>& exported_fields() const {return exported_fields_;}
 
     const std::map<std::string, const_type_ptr>& exported_types() const {return exported_types_;}
 
@@ -122,6 +125,7 @@ public:
     std::map<std::string, const_type_ptr> required_types() const;
 
     void export_symbol(const const_symbol_ptr& S);
+    void export_field(const FieldInfo& field);
 
     void export_type(const const_type_ptr& S);
 
@@ -176,6 +180,7 @@ public:
     void declare_type(const type_info&);
 
     void import_symbol(const const_symbol_ptr&, const std::string&, bool qualified);
+    void import_field(const FieldInfo&, const std::string&, bool qualified);
 
     void import_type(const const_type_ptr&, const std::string&, bool qualified);
 
@@ -249,6 +254,7 @@ class CompiledModule
     std::map<Core::Var<>, Runtime::Exp> prepared_value_decls;
 
     std::multimap<std::string, const_symbol_ptr> aliases;
+    std::multimap<std::string, FieldInfo> field_aliases;
 
     std::map<std::string, symbol_ptr> symbols;
 
@@ -257,6 +263,7 @@ class CompiledModule
     std::map<std::string, type_ptr> types;
 
     std::map<std::string, const_symbol_ptr> exported_symbols_;
+    std::multimap<std::string, FieldInfo> exported_fields_;
 
     std::map<std::string, const_type_ptr> exported_types_;
 
@@ -306,6 +313,7 @@ public:
     const EqInstanceEnv& local_eq_instances() const {return local_eq_instances_;}
 
     const std::map<std::string, const_symbol_ptr>& exported_symbols() const {return exported_symbols_;}
+    const std::multimap<std::string, FieldInfo>& exported_fields() const {return exported_fields_;}
 
     const std::map<std::string, const_type_ptr>& exported_types() const {return exported_types_;}
 
@@ -330,8 +338,8 @@ public:
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar( modid, dependencies_, prepared_value_decls, symbols, types, exported_symbols_, exported_types_ );
-        ar( aliases, type_aliases );
+	ar( modid, dependencies_, prepared_value_decls, symbols, types, exported_symbols_, exported_fields_, exported_types_ );
+        ar( aliases, field_aliases, type_aliases );
 	ar( language_extensions_, local_instances_, local_eq_instances_, fresh_var_state_ );
 	ar( all_inputs_hash_ );
 

@@ -227,6 +227,15 @@ void Module::import_symbol(const const_symbol_ptr& S, const string& modid, bool 
         add_alias(get_unqualified_name(S->name), S);
 }
 
+// Add qualified and, when allowed, unqualified aliases for an imported record field label.
+void Module::import_field(const FieldInfo& field, const string& modid, bool qualified)
+{
+    auto name = get_unqualified_name(field.name);
+    field_aliases.insert({modid + "." + name, field});
+    if (not qualified)
+        field_aliases.insert({name, field});
+}
+
 // Question: what if we import m1.s, which depends on an unimported m2.s?
 void Module::import_type(const const_type_ptr& T, const string& modid, bool qualified)
 {
@@ -275,13 +284,40 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     assert(modid != name);
 
     auto& m2_exported_values = M2->exported_symbols();
+    auto& m2_exported_fields = M2->exported_fields();
     auto& m2_exported_types = M2->exported_types();
+
+    // Import an exported field label only when it belongs to the imported type child list.
+    auto import_exported_field_for_type = [&](const type_info& type, const string& field_name)
+    {
+        bool imported = false;
+        for(const auto& field: record_fields_for_type(type))
+        {
+            auto name = get_unqualified_name(field.name);
+            if (name != field_name)
+                continue;
+
+            auto range = m2_exported_fields.equal_range(name);
+            for(auto i = range.first; i != range.second; ++i)
+            {
+                if (i->second.name == field.name and i->second.parent_type == field.parent_type)
+                {
+                    import_field(i->second, modid, qualified);
+                    imported = true;
+                }
+            }
+        }
+        return imported;
+    };
 
     // import modid
     if (not impdecl.impspec)
     {
         for(const auto& [_,S]: m2_exported_values)
             import_symbol(S, modid, qualified);
+
+        for(const auto& [_,field]: m2_exported_fields)
+            import_field(field, modid, qualified);
 
         for(const auto& [_,T]: m2_exported_types)
             import_type(T, modid, qualified);
@@ -367,6 +403,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                 auto name = get_unqualified_name(field.name);
                                 if (m2_exported_values.contains(name))
                                     import_symbol(m2_exported_values.at( name ), modid, qualified);
+                                import_exported_field_for_type(*type, name);
                             }
                         }
                         else
@@ -385,13 +422,22 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                     continue;
                                 }
 
-				if (not m2_exported_values.contains(name))
+				if (is_haskell_conid(name) and not m2_exported_values.contains(name))
 				{
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` was not exported"));
                                     continue;
 				}
-				    
-                                import_symbol(m2_exported_values.at(name), modid, qualified);
+
+                                if (is_haskell_conid(name))
+                                    import_symbol(m2_exported_values.at(name), modid, qualified);
+                                else
+                                {
+                                    auto imported_field = import_exported_field_for_type(*type, name);
+                                    if (m2_exported_values.contains(name))
+                                        import_symbol(m2_exported_values.at(name), modid, qualified);
+                                    else if (not imported_field)
+                                        messages.push_back( error(loc, Note()<<"`"<<name<<"` was not exported"));
+                                }
                             }
                         }
                     }
@@ -410,6 +456,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                 auto name = get_unqualified_name(field.name);
                                 if (m2_exported_values.contains(name))
                                     import_symbol(m2_exported_values.at( name ), modid, qualified);
+                                import_exported_field_for_type(*type, name);
                             }
                         }
                         else
@@ -428,13 +475,22 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                     continue;
                                 }
 
-				if (not m2_exported_values.contains(name))
+				if (is_haskell_conid(name) and not m2_exported_values.contains(name))
 				{
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` was not exported"));
                                     continue;
 				}
-				    
-                                import_symbol(m2_exported_values.at(name), modid, qualified);
+
+                                if (is_haskell_conid(name))
+                                    import_symbol(m2_exported_values.at(name), modid, qualified);
+                                else
+                                {
+                                    auto imported_field = import_exported_field_for_type(*type, name);
+                                    if (m2_exported_values.contains(name))
+                                        import_symbol(m2_exported_values.at(name), modid, qualified);
+                                    else if (not imported_field)
+                                        messages.push_back( error(loc, Note()<<"`"<<name<<"` was not exported"));
+                                }
                             }
                         }
                     }
@@ -452,6 +508,14 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
             if (contains_import(impdecl.impspec->imports, unqualified_name)) continue;
 
             import_symbol(S, modid, qualified);
+        }
+        for(const auto& [_,field]: m2_exported_fields)
+        {
+            auto unqualified_name = get_unqualified_name(field.name);
+
+            if (contains_import(impdecl.impspec->imports, unqualified_name)) continue;
+
+            import_field(field, modid, qualified);
         }
         for(const auto& [_,T]: m2_exported_types)
         {
@@ -1116,6 +1180,18 @@ void Module::export_symbol(const const_symbol_ptr& S)
         throw myexception()<<"attempting to export both '"<<exported_symbols_.at(uname)->name<<"' and '"<<S->name<<"', which have the same unqualified name!";
 }
 
+// Export a record field label independently of any ordinary selector binding.
+void Module::export_field(const FieldInfo& field)
+{
+    auto uname = get_unqualified_name(field.name);
+    auto range = exported_fields_.equal_range(uname);
+    for(auto i = range.first; i != range.second; ++i)
+        if (i->second.name == field.name and i->second.parent_type == field.parent_type)
+            return;
+
+    exported_fields_.insert({uname, field});
+}
+
 void Module::export_type(const const_type_ptr& T)
 {
     assert(is_qualified_symbol(T->name));
@@ -1220,7 +1296,13 @@ void Module::perform_exports()
 
     // Currently we just export the local symbols
     if (not module_AST.exports or module_AST.exports->size() == 0)
+    {
         export_module(name);
+        for(const auto& [_, type]: types)
+            if (is_local_qualified_name(type->name))
+                for(const auto& field: record_fields_for_type(*type))
+                    export_field(field);
+    }
     else
     {
         for(auto& [loc,ex]: *module_AST.exports)
@@ -1279,16 +1361,22 @@ void Module::perform_exports()
                             for(auto& constructor: d->constructors)
                                 export_symbol(lookup_symbol(constructor));
                             for(const auto& field: record_fields_for_type(*t))
+                            {
+                                export_field(field);
                                 if (auto selector = lookup_resolved_symbol(field.name))
                                     export_symbol(selector);
+                            }
                         }
                         else if (auto d = t->is_data_fam())
                         {
                             for(auto& constructor: d->constructors)
                                 export_symbol(lookup_symbol(constructor));
                             for(const auto& field: record_fields_for_type(*t))
+                            {
+                                export_field(field);
                                 if (auto selector = lookup_resolved_symbol(field.name))
                                     export_symbol(selector);
+                            }
                         }
                     }
                     else
@@ -1320,7 +1408,16 @@ void Module::perform_exports()
                                     continue;
                                 }
 
-                                export_symbol(lookup_symbol(name));
+                                if (is_haskell_conid(name))
+                                    export_symbol(lookup_symbol(name));
+                                else
+                                {
+                                    for(const auto& field: record_fields_for_type(*t))
+                                        if (record_utils::record_field_name_matches(field.name, name))
+                                            export_field(field);
+                                    if (auto selector = lookup_resolved_symbol(get_module_name(t->name) + "." + name))
+                                        export_symbol(selector);
+                                }
                             }
                         }
                         else if (auto d = t->is_data_fam())
@@ -1339,7 +1436,16 @@ void Module::perform_exports()
                                     continue;
                                 }
 
-                                export_symbol(lookup_symbol(name));
+                                if (is_haskell_conid(name))
+                                    export_symbol(lookup_symbol(name));
+                                else
+                                {
+                                    for(const auto& field: record_fields_for_type(*t))
+                                        if (record_utils::record_field_name_matches(field.name, name))
+                                            export_field(field);
+                                    if (auto selector = lookup_resolved_symbol(get_module_name(t->name) + "." + name))
+                                        export_symbol(selector);
+                                }
                             }
                         }
                     }
@@ -1355,9 +1461,11 @@ void Module::clear_symbol_table()
 {
     symbols.clear();
     aliases.clear();
+    field_aliases.clear();
     types.clear();
     type_aliases.clear();
     exported_symbols_.clear();
+    exported_fields_.clear();
     exported_types_.clear();
 
     transitively_imported_modules.clear();
@@ -2434,6 +2542,9 @@ std::vector<FieldInfo> Module::lookup_record_field_candidates(const std::string&
 {
     std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
     add_record_field_candidates_matching(candidates, types, field_name);
+    auto range = field_aliases.equal_range(field_name);
+    for(auto i = range.first; i != range.second; ++i)
+        merge_record_field_candidate(candidates, i->second);
 
     try
     {
@@ -2466,8 +2577,28 @@ std::optional<std::vector<std::string>> Module::record_field_names_for_construct
 
 std::vector<FieldInfo> CompiledModule::lookup_record_field_candidates(const std::string& field_name) const
 {
-    auto S = lookup_symbol(field_name);
-    return record_field_candidates_for_resolved_name(S->name);
+    std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
+    auto range = field_aliases.equal_range(field_name);
+    for(auto i = range.first; i != range.second; ++i)
+        merge_record_field_candidate(candidates, i->second);
+
+    try
+    {
+        auto S = lookup_symbol(field_name);
+        add_record_field_candidates(candidates, types, S->name);
+        for(const auto& [_, mod]: transitively_imported_modules_)
+            add_record_field_candidates(candidates, mod->record_field_candidates_for_resolved_name(S->name));
+    }
+    catch (myexception&)
+    {
+        if (candidates.empty())
+            throw;
+    }
+
+    std::vector<FieldInfo> fields;
+    for(auto& [_, field]: candidates)
+        fields.push_back(field);
+    return fields;
 }
 
 std::vector<FieldInfo> CompiledModule::record_field_candidates_for_resolved_name(const std::string& field_name) const
@@ -2999,6 +3130,8 @@ void CompiledModule::clear_symbol_table()
 
     exported_symbols_.clear();
 
+    exported_fields_.clear();
+
     exported_types_.clear();
 
     // language_extensions_ = keep
@@ -3036,9 +3169,13 @@ CompiledModule::CompiledModule(const std::shared_ptr<Module>& m)
 
     std::swap(exported_symbols_, m->exported_symbols_);
 
+    std::swap(exported_fields_, m->exported_fields_);
+
     std::swap(exported_types_, m->exported_types_);
 
     std::swap(aliases, m->aliases);
+
+    std::swap(field_aliases, m->field_aliases);
 
     std::swap(type_aliases, m->type_aliases);
 

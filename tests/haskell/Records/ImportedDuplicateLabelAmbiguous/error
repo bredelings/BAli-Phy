@@ -1,0 +1,2 @@
+   • Record update field 'shared' is ambiguous between record types A, B; add
+     a type annotation or another field to disambiguate.
