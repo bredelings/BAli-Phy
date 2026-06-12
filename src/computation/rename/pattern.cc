@@ -14,6 +14,7 @@ using std::set;
 namespace
 {
     using record_utils::record_field_pun_pattern;
+    using record_utils::resolve_record_field_name;
 
     // Report a disabled extension for record syntax handled during pattern renaming.
     void require_record_extension(const renamer_state& rn, const std::optional<yy::location>& loc, LangExt extension, const std::string& extension_name, const std::string& syntax)
@@ -49,7 +50,9 @@ namespace
                             continue;
 
                         Hs::LVar field_var = {*dotdot, Hs::Var(unqualified)};
-                        fields.fields.push_back({*dotdot, Hs::PatternFieldBinding(field_var, record_field_pun_pattern(field_var))});
+                        Hs::PatternFieldBinding binding(field_var, record_field_pun_pattern(field_var));
+                        binding.resolved_field = field_name;
+                        fields.fields.push_back({*dotdot, binding});
                     }
                 }
             }
@@ -428,6 +431,9 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 
                 unloc(R.head).name = S->name;
                 unloc(R.head).arity = *S->arity;
+                if (auto field_names = m.record_field_names_for_constructor(S->name))
+                    for(auto& field: unloc(R.fbinds).fields)
+                        unloc(field).resolved_field = resolve_record_field_name(*field_names, unloc(unloc(field).field).name);
                 pat = R;
             }
             catch (myexception& e)

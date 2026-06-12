@@ -17,8 +17,12 @@ namespace record_utils
     std::optional<std::vector<std::string>> constructor_field_names(const Hs::ConstructorDecl& constructor);
     std::optional<std::vector<std::string>> gadt_constructor_field_names(Hs::LType type);
 
+    // Map declared record fields to constructor argument positions.
     std::map<std::string,int> record_field_positions(const std::vector<std::string>& field_names);
+    // Test whether a source field spelling denotes a declared field.
     bool record_field_name_matches(const std::string& declared_field, const std::string& requested_field);
+    // Return the declared field name matched by a source field spelling, if any.
+    std::optional<std::string> resolve_record_field_name(const std::vector<std::string>& field_names, const std::string& requested_field);
 
     // Place source field bindings into constructor-field order and report invalid fields through callbacks.
     template<class Slot, class LocatedField, class GetSlot, class OnUnknown, class OnDuplicate, class OnMissingSlot>
@@ -37,22 +41,23 @@ namespace record_utils
         for(auto& field: fields)
         {
             auto& f = unloc(field);
-            auto field_name = unloc(f.field).name;
+            auto source_field_name = unloc(f.field).name;
+            auto field_name = f.resolved_field.value_or(source_field_name);
             auto pos = positions.find(field_name);
             if (pos == positions.end())
                 pos = positions.find(get_unqualified_name(field_name));
 
             if (pos == positions.end())
-                on_unknown(field, field_name);
+                on_unknown(field, source_field_name);
             else if (used_fields.count(pos->second))
-                on_duplicate(field, field_name);
+                on_duplicate(field, source_field_name);
             else if (auto slot = get_slot(field))
             {
                 used_fields.insert(pos->second);
                 ordered_fields[pos->second] = *slot;
             }
             else
-                on_missing_slot(field, field_name);
+                on_missing_slot(field, source_field_name);
         }
 
         return ordered_fields;

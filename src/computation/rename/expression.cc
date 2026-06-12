@@ -20,6 +20,7 @@ using std::optional;
 namespace
 {
     using record_utils::record_field_pun_exp;
+    using record_utils::resolve_record_field_name;
 
     // Report a disabled extension for record syntax handled during expression renaming.
     void require_record_extension(const renamer_state& rn, const std::optional<yy::location>& loc, LangExt extension, const std::string& extension_name, const std::string& syntax)
@@ -294,6 +295,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                 Con.name = S->name;
                 Con.arity = S->arity;
                 Rec.con = {Rec.con.loc, Con};
+                auto field_names = m.record_field_names_for_constructor(S->name);
 
                 if (unloc(Rec.fbinds).dotdot)
                     require_record_extension(*this, *unloc(Rec.fbinds).dotdot, LangExt::RecordWildCards, "RecordWildCards", "Record wildcard '..'");
@@ -301,6 +303,8 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                 for(auto& field: unloc(Rec.fbinds).fields)
                 {
                     auto& f = unloc(field);
+                    if (field_names)
+                        f.resolved_field = resolve_record_field_name(*field_names, unloc(f.field).name);
                     if (not f.value)
                         require_record_extension(*this, field.loc, LangExt::NamedFieldPuns, "NamedFieldPuns", "Record field pun");
                     auto value = f.value ? *f.value : record_field_pun_exp(f.field);

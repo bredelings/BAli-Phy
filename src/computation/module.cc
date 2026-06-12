@@ -2258,6 +2258,7 @@ namespace
         return fields;
     }
 
+    // Merge duplicate field metadata from local and imported sources by field/type identity.
     void merge_record_field_candidate(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const FieldInfo& field_info)
     {
         auto key = std::pair{field_info.name, field_info.parent_type};
@@ -2276,6 +2277,7 @@ namespace
         }
     }
 
+    // Add local field metadata entries that match an already resolved field name.
     void add_record_field_candidates(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const std::map<std::string, type_ptr>& types, const std::string& resolved_field_name)
     {
         for(const auto& [_, type]: types)
@@ -2284,6 +2286,7 @@ namespace
                     merge_record_field_candidate(candidates, field);
     }
 
+    // Add pre-collected field metadata entries to a candidate map.
     void add_record_field_candidates(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const std::vector<FieldInfo>& fields)
     {
         for(const auto& field: fields)
@@ -2311,6 +2314,7 @@ namespace
         }
     }
 
+    // Reconstruct constructor field order from local type metadata.
     std::optional<std::vector<std::string>> record_field_names_for_constructor(const std::map<std::string, type_ptr>& types, const std::string& constructor_name)
     {
         std::vector<std::optional<std::string>> field_names;
@@ -2327,6 +2331,7 @@ namespace
         return names;
     }
 
+    // Collect local and imported field metadata candidates for a resolved field name.
     template<class ImportedModules>
     std::vector<FieldInfo> record_field_candidates_for_resolved_name(
         const std::map<std::string, type_ptr>& types,
@@ -2347,6 +2352,7 @@ namespace
         return fields;
     }
 
+    // Find constructor field order locally first, then through imported modules.
     template<class ImportedModules>
     std::optional<std::vector<std::string>> record_field_names_for_constructor(
         const std::map<std::string, type_ptr>& types,

@@ -58,6 +58,7 @@ namespace record_utils
         return names;
     }
 
+    // Map declared record fields to constructor argument positions.
     std::map<std::string,int> record_field_positions(const std::vector<std::string>& field_names)
     {
         std::map<std::string,int> positions;
@@ -69,11 +70,21 @@ namespace record_utils
         return positions;
     }
 
+    // Test whether a source field spelling denotes a declared field.
     bool record_field_name_matches(const std::string& declared_field, const std::string& requested_field)
     {
         if (is_qualified_symbol(requested_field))
             return declared_field == requested_field;
         return declared_field == requested_field or get_unqualified_name(declared_field) == get_unqualified_name(requested_field);
+    }
+
+    // Return the declared field name matched by a source field spelling, if any.
+    std::optional<std::string> resolve_record_field_name(const std::vector<std::string>& field_names, const std::string& requested_field)
+    {
+        for(const auto& field_name: field_names)
+            if (record_field_name_matches(field_name, requested_field))
+                return field_name;
+        return {};
     }
 
     Hs::LPat record_field_pun_pattern(const Hs::LVar& field)

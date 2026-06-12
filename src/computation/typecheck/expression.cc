@@ -369,9 +369,9 @@ void TypeChecker::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
     tcCaseAlts(Case.alts, object_type, exp_type);
 }
 
+// Typecheck case alternatives after the scrutinee type has already been inferred.
 void TypeChecker::tcCaseAlts(Hs::Matches& alts, const Type& object_type, const Expected& exp_type)
 {
-    // The scrutinee has already been checked; this only checks alternatives against its type.
     tcMatches(Hs::CaseContext(), alts, {Check(object_type)}, exp_type);
 }
 

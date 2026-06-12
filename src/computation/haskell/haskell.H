@@ -277,6 +277,7 @@ struct FieldBinding: public Object
 {
     LVar field;
     std::optional<LExp> value;
+    std::optional<std::string> resolved_field;
 
     FieldBinding* clone() const { return new FieldBinding(*this);}
     std::string print() const;
@@ -364,6 +365,7 @@ struct PatternFieldBinding
     LVar field;
     LPat pattern;
     bool pun = false;
+    std::optional<std::string> resolved_field;
 
     std::string print() const;
 
