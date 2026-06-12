@@ -236,8 +236,9 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
         auto [con_pat, invalid_field_patterns] = record_pattern_to_con_pattern(*this, lpat, Rec);
         if (invalid_field_patterns.empty())
         {
-            lpat = con_pat;
-            tcPat(penv, lpat, exp_type, sigs, a);
+            tcPat(penv, con_pat, exp_type, sigs, a);
+            Rec.checked_pattern = std::make_shared<Hs::CheckedRecordPattern>(con_pat);
+            pat = Rec;
         }
         else
         {
@@ -246,8 +247,9 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
                 invalid_field_types.push_back(newInfer());
             tcPats(penv, invalid_field_patterns, invalid_field_types, sigs,
                    [&](local_value_env& penv, TypeChecker& tc) {
-                       lpat = con_pat;
-                       tc.tcPat(penv, lpat, exp_type, sigs, a);
+                       tc.tcPat(penv, con_pat, exp_type, sigs, a);
+                       Rec.checked_pattern = std::make_shared<Hs::CheckedRecordPattern>(con_pat);
+                       pat = Rec;
                    });
         }
     }

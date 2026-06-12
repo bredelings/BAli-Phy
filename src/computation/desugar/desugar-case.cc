@@ -498,6 +498,12 @@ void desugar_state::clean_up_pattern(const Core::Var<>& x, equation_info_t& eqn)
         pat1 = Hs::to_con_pat(*L);
     else if (auto T = pat1.to<Hs::TuplePattern>())
         pat1 = Hs::to_con_pat(*T);
+    else if (auto R = pat1.to<Hs::RecordPattern>())
+    {
+        if (not R->checked_pattern)
+            throw myexception()<<"desugar: record pattern was not checked before desugaring";
+        pat1 = unloc(R->checked_pattern->positional_pattern);
+    }
 
     // case x of y -> rhs  =>  case x of _ => let {y=x} in rhs
     if (auto v = pat1.to<Hs::VarPattern>())

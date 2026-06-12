@@ -315,6 +315,7 @@ using FieldBindings = RecordFieldBindings<FieldBinding>;
 
 struct CheckedRecordUpdate;
 struct CheckedRecordCon;
+struct CheckedRecordPattern;
 
 // Parsed record braces before context decides construction, update, or pattern.
 
@@ -377,6 +378,7 @@ struct RecordPattern: public Object
 {
     LCon head;
     Located<PatternFieldBindings> fbinds;
+    std::shared_ptr<CheckedRecordPattern> checked_pattern;
 
     RecordPattern* clone() const { return new RecordPattern(*this);}
     std::string print() const;
@@ -1285,6 +1287,14 @@ struct CheckedRecordCon
     LExp positional_app;
 
     explicit CheckedRecordCon(const LExp& app): positional_app(app) {}
+};
+
+struct CheckedRecordPattern
+{
+    // Typechecked positional constructor pattern; ConPattern carries GADT evidence.
+    LPat positional_pattern;
+
+    explicit CheckedRecordPattern(const LPat& pat): positional_pattern(pat) {}
 };
 
 struct LambdaExp: public Object
