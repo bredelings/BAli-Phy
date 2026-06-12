@@ -1279,14 +1279,16 @@ void Module::perform_exports()
                             for(auto& constructor: d->constructors)
                                 export_symbol(lookup_symbol(constructor));
                             for(const auto& field: record_fields_for_type(*t))
-                                export_symbol(lookup_symbol(field.name));
+                                if (auto selector = lookup_resolved_symbol(field.name))
+                                    export_symbol(selector);
                         }
                         else if (auto d = t->is_data_fam())
                         {
                             for(auto& constructor: d->constructors)
                                 export_symbol(lookup_symbol(constructor));
                             for(const auto& field: record_fields_for_type(*t))
-                                export_symbol(lookup_symbol(field.name));
+                                if (auto selector = lookup_resolved_symbol(field.name))
+                                    export_symbol(selector);
                         }
                     }
                     else
@@ -2286,6 +2288,15 @@ namespace
                     merge_record_field_candidate(candidates, field);
     }
 
+    // Add local field metadata entries that can be denoted by a source field name.
+    void add_record_field_candidates_matching(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const std::map<std::string, type_ptr>& types, const std::string& field_name)
+    {
+        for(const auto& [_, type]: types)
+            for(const auto& field: record_fields_for_type_info(*type))
+                if (record_field_name_matches(field.name, field_name))
+                    merge_record_field_candidate(candidates, field);
+    }
+
     // Add pre-collected field metadata entries to a candidate map.
     void add_record_field_candidates(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const std::vector<FieldInfo>& fields)
     {
@@ -2390,7 +2401,7 @@ bool Module::type_has_record_field(const type_info& type, const std::string& fie
 
 std::map<std::string, FieldInfo> Module::local_synthesizable_record_fields() const
 {
-    std::map<std::string, FieldInfo> fields;
+    std::map<std::string, std::map<std::pair<std::string,std::string>, FieldInfo>> fields_by_label;
     for(const auto& [type_name, type]: types)
     {
         if (not is_local_qualified_name(type_name))
@@ -2399,7 +2410,7 @@ std::map<std::string, FieldInfo> Module::local_synthesizable_record_fields() con
         if (auto data = type->is_data())
         {
             for(const auto& [_, field]: data->field_info)
-                fields.emplace(field.name, field);
+                merge_record_field_candidate(fields_by_label[field.name], field);
         }
         else if (auto data_fam = type->is_data_fam())
         {
@@ -2408,16 +2419,39 @@ std::map<std::string, FieldInfo> Module::local_synthesizable_record_fields() con
             // concrete data-instance metadata and use family metadata only as
             // a fallback until record selectors get a richer representation.
             for(const auto& [_, field]: data_fam->field_info)
-                fields.emplace(field.name, field);
+                merge_record_field_candidate(fields_by_label[field.name], field);
         }
     }
+
+    std::map<std::string, FieldInfo> fields;
+    for(auto& [field_name, fields_for_label]: fields_by_label)
+        if (fields_for_label.size() == 1)
+            fields.emplace(field_name, fields_for_label.begin()->second);
     return fields;
 }
 
 std::vector<FieldInfo> Module::lookup_record_field_candidates(const std::string& field_name) const
 {
-    auto S = lookup_symbol(field_name);
-    return record_field_candidates_for_resolved_name(S->name);
+    std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
+    add_record_field_candidates_matching(candidates, types, field_name);
+
+    try
+    {
+        auto S = lookup_symbol(field_name);
+        add_record_field_candidates(candidates, types, S->name);
+        for(const auto& [_, mod]: transitively_imported_modules)
+            add_record_field_candidates(candidates, mod->record_field_candidates_for_resolved_name(S->name));
+    }
+    catch (myexception&)
+    {
+        if (candidates.empty())
+            throw;
+    }
+
+    std::vector<FieldInfo> fields;
+    for(auto& [_, field]: candidates)
+        fields.push_back(field);
+    return fields;
 }
 
 std::vector<FieldInfo> Module::record_field_candidates_for_resolved_name(const std::string& field_name) const
@@ -2597,8 +2631,6 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             {
                 if (not language_extensions.has_extension(LangExt::DuplicateRecordFields))
                     throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<get_unqualified_name(*existing_owner)<<"' and data type '"<<get_unqualified_name(qualified_owner_name)<<"'. Enable DuplicateRecordFields to allow duplicate record labels.";
-                else
-                    throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<get_unqualified_name(*existing_owner)<<"' and data type '"<<get_unqualified_name(qualified_owner_name)<<"'. DuplicateRecordFields is recognized, but duplicate record label metadata is not implemented yet.";
             }
     };
 
