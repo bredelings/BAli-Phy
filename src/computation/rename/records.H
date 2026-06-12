@@ -4,6 +4,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "computation/haskell/haskell.H"
 #include "computation/haskell/extensions.H"
@@ -26,6 +27,15 @@ namespace record_rename
 
     // Resolve constructor-directed fields to their declared names when available.
     void resolve_constructor_field_identities(const renamer_state& rn, const std::string& constructor_name, Hs::FieldBindings& fields);
+
+    // Resolve constructor-directed pattern fields to their declared names when available.
+    void resolve_constructor_field_identities(const renamer_state& rn, const std::string& constructor_name, Hs::PatternFieldBindings& fields);
+
+    // Expand a pattern-side record pun after checking NamedFieldPuns.
+    void check_pattern_pun(const renamer_state& rn, const Located<Hs::PatternFieldBinding>& field);
+
+    // Compute pattern wildcard fields missing from the explicit field list.
+    std::vector<std::string> missing_pattern_wildcard_fields(const renamer_state& rn, const Hs::LCon& head, const Hs::PatternFieldBindings& fields);
 }
 
 #endif

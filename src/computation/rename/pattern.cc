@@ -2,6 +2,7 @@
 #include <set>
 
 #include "rename.H"
+#include "records.H"
 #include "haskell/ids.H"
 #include "computation/module.H"
 #include "computation/expression/apply.H"
@@ -14,14 +15,6 @@ using std::set;
 namespace
 {
     using record_utils::record_field_pun_pattern;
-    using record_utils::resolve_record_field_name;
-
-    // Report a disabled extension for record syntax handled during pattern renaming.
-    void require_record_extension(const renamer_state& rn, const std::optional<yy::location>& loc, LangExt extension, const std::string& extension_name, const std::string& syntax)
-    {
-        if (not rn.m.language_extensions.has_extension(extension))
-            rn.error(loc, Note()<<syntax<<" requires the "<<extension_name<<" extension.");
-    }
 
     // Expand a trailing pattern `..` into punned fields for this record constructor.
     Hs::PatternFieldBindings expand_record_pattern_wildcards(const renamer_state& rn, const Hs::LCon& head, Hs::PatternFieldBindings fields)
@@ -30,36 +23,12 @@ namespace
         if (not dotdot)
             return fields;
 
-        require_record_extension(rn, *dotdot, LangExt::RecordWildCards, "RecordWildCards", "Record wildcard '..'");
-
-        set<std::string> explicit_fields;
-        for(const auto& field: fields.fields)
-            explicit_fields.insert(get_unqualified_name(unloc(unloc(field).field).name));
-
-        try
+        for(const auto& field_name: record_rename::missing_pattern_wildcard_fields(rn, head, fields))
         {
-            auto S = rn.m.lookup_symbol(unloc(head).name);
-            if (S->symbol_type == symbol_type_t::constructor)
-            {
-                if (auto field_names = rn.m.record_field_names_for_constructor(S->name))
-                {
-                    for(const auto& field_name: *field_names)
-                    {
-                        auto unqualified = get_unqualified_name(field_name);
-                        if (explicit_fields.count(unqualified))
-                            continue;
-
-                        Hs::LVar field_var = {*dotdot, Hs::Var(unqualified)};
-                        Hs::PatternFieldBinding binding(field_var, record_field_pun_pattern(field_var));
-                        binding.resolved_field = field_name;
-                        fields.fields.push_back({*dotdot, binding});
-                    }
-                }
-            }
-        }
-        catch (myexception&)
-        {
-            // Normal constructor lookup below will report the underlying name error.
+            Hs::LVar field_var = {*dotdot, Hs::Var(get_unqualified_name(field_name))};
+            Hs::PatternFieldBinding binding(field_var, record_field_pun_pattern(field_var));
+            binding.resolved_field = field_name;
+            fields.fields.push_back({*dotdot, binding});
         }
 
         fields.dotdot.reset();
@@ -407,8 +376,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
         bool overlap = false;
         for(auto& field: unloc(R.fbinds).fields)
         {
-            if (unloc(field).pun)
-                require_record_extension(*this, field.loc, LangExt::NamedFieldPuns, "NamedFieldPuns", "Record field pun");
+            record_rename::check_pattern_pun(*this, field);
             auto bound_here = rename_pattern(unloc(field).pattern, top);
             overlap = overlap or not disjoint_add(bound, bound_here);
         }
@@ -431,9 +399,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 
                 unloc(R.head).name = S->name;
                 unloc(R.head).arity = *S->arity;
-                if (auto field_names = m.record_field_names_for_constructor(S->name))
-                    for(auto& field: unloc(R.fbinds).fields)
-                        unloc(field).resolved_field = resolve_record_field_name(*field_names, unloc(unloc(field).field).name);
+                record_rename::resolve_constructor_field_identities(*this, S->name, unloc(R.fbinds));
                 pat = R;
             }
             catch (myexception& e)

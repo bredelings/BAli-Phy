@@ -49,4 +49,59 @@ namespace record_rename
             binding.resolved_field = record_utils::resolve_record_field_name(*field_names, unloc(binding.field).name);
         }
     }
+
+    void resolve_constructor_field_identities(const renamer_state& rn, const std::string& constructor_name, Hs::PatternFieldBindings& fields)
+    {
+        auto field_names = rn.m.record_field_names_for_constructor(constructor_name);
+        if (not field_names)
+            return;
+
+        for(auto& field: fields.fields)
+        {
+            auto& binding = unloc(field);
+            binding.resolved_field = record_utils::resolve_record_field_name(*field_names, unloc(binding.field).name);
+        }
+    }
+
+    void check_pattern_pun(const renamer_state& rn, const Located<Hs::PatternFieldBinding>& field)
+    {
+        if (unloc(field).pun)
+            require_record_extension(rn, field.loc, LangExt::NamedFieldPuns, "NamedFieldPuns", "Record field pun");
+    }
+
+    std::vector<std::string> missing_pattern_wildcard_fields(const renamer_state& rn, const Hs::LCon& head, const Hs::PatternFieldBindings& fields)
+    {
+        if (not fields.dotdot)
+            return {};
+
+        require_record_extension(rn, *fields.dotdot, LangExt::RecordWildCards, "RecordWildCards", "Record wildcard '..'");
+
+        std::set<std::string> explicit_fields;
+        for(const auto& field: fields.fields)
+            explicit_fields.insert(get_unqualified_name(unloc(unloc(field).field).name));
+
+        std::vector<std::string> missing_fields;
+        try
+        {
+            auto S = rn.m.lookup_symbol(unloc(head).name);
+            if (S->symbol_type == symbol_type_t::constructor)
+            {
+                if (auto field_names = rn.m.record_field_names_for_constructor(S->name))
+                {
+                    for(const auto& field_name: *field_names)
+                    {
+                        auto unqualified = get_unqualified_name(field_name);
+                        if (not explicit_fields.count(unqualified))
+                            missing_fields.push_back(field_name);
+                    }
+                }
+            }
+        }
+        catch (myexception&)
+        {
+            // Normal constructor lookup below will report the underlying name error.
+        }
+
+        return missing_fields;
+    }
 }
