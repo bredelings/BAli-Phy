@@ -2286,12 +2286,24 @@ namespace
         {
             if (auto data = type->is_data())
             {
-                if (ranges::any_of(data->fields, [&](const auto& field) { return record_field_name_matches(field, field_name); }))
+                if (not data->field_info.empty())
+                {
+                    for(const auto& [declared_field, field_info]: data->field_info)
+                        if (record_field_name_matches(declared_field, field_name))
+                            constructors.insert(field_info.constructors.begin(), field_info.constructors.end());
+                }
+                else if (ranges::any_of(data->fields, [&](const auto& field) { return record_field_name_matches(field, field_name); }))
                     constructors.insert(data->constructors.begin(), data->constructors.end());
             }
             else if (auto data_fam = type->is_data_fam())
             {
-                if (ranges::any_of(data_fam->fields, [&](const auto& field) { return record_field_name_matches(field, field_name); }))
+                if (not data_fam->field_info.empty())
+                {
+                    for(const auto& [declared_field, field_info]: data_fam->field_info)
+                        if (record_field_name_matches(declared_field, field_name))
+                            constructors.insert(field_info.constructors.begin(), field_info.constructors.end());
+                }
+                else if (ranges::any_of(data_fam->fields, [&](const auto& field) { return record_field_name_matches(field, field_name); }))
                     constructors.insert(data_fam->constructors.begin(), data_fam->constructors.end());
             }
         }
