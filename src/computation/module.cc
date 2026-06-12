@@ -361,12 +361,12 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 				if (m2_exported_values.contains(name))
 				    import_symbol(m2_exported_values.at( name ), modid, qualified);
 			    }
-                            for(auto& field: d->fields)
-			    {
-				auto name = get_unqualified_name(field);
-				if (m2_exported_values.contains(name))
-				    import_symbol(m2_exported_values.at( name ), modid, qualified);
-			    }
+                            for(const auto& [_, field]: d->field_info)
+                            {
+                                auto name = get_unqualified_name(field.name);
+                                if (m2_exported_values.contains(name))
+                                    import_symbol(m2_exported_values.at( name ), modid, qualified);
+                            }
                         }
                         else
                         {
@@ -378,7 +378,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not d->fields.count(type_modid + "." + name))
+                                if (is_haskell_varid(name) and not ranges::any_of(d->field_info, [&](const auto& field) { return field.first == type_modid + "." + name or get_unqualified_name(field.first) == name; }))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`"));
                                     continue;
@@ -404,12 +404,12 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 				if (m2_exported_values.contains(name))
 				    import_symbol(m2_exported_values.at( name ), modid, qualified);
 			    }
-                            for(auto& field: d->fields)
-			    {
-				auto name = get_unqualified_name(field);
-				if (m2_exported_values.contains(name))
-				    import_symbol(m2_exported_values.at( name ), modid, qualified);
-			    }
+                            for(const auto& [_, field]: d->field_info)
+                            {
+                                auto name = get_unqualified_name(field.name);
+                                if (m2_exported_values.contains(name))
+                                    import_symbol(m2_exported_values.at( name ), modid, qualified);
+                            }
                         }
                         else
                         {
@@ -421,7 +421,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data family `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not d->fields.count(type_modid + "." + name))
+                                if (is_haskell_varid(name) and not ranges::any_of(d->field_info, [&](const auto& field) { return field.first == type_modid + "." + name or get_unqualified_name(field.first) == name; }))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data family `"<<id<<"`"));
                                     continue;
@@ -1277,15 +1277,15 @@ void Module::perform_exports()
                         {
                             for(auto& constructor: d->constructors)
                                 export_symbol(lookup_symbol(constructor));
-                            for(auto& field: d->fields)
-                                export_symbol(lookup_symbol(field));
+                            for(const auto& [_, field]: d->field_info)
+                                export_symbol(lookup_symbol(field.name));
                         }
                         else if (auto d = t->is_data_fam())
                         {
                             for(auto& constructor: d->constructors)
                                 export_symbol(lookup_symbol(constructor));
-                            for(auto& field: d->fields)
-                                export_symbol(lookup_symbol(field));
+                            for(const auto& [_, field]: d->field_info)
+                                export_symbol(lookup_symbol(field.name));
                         }
                     }
                     else
@@ -1311,7 +1311,7 @@ void Module::perform_exports()
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not d->fields.count( qualified_name) )
+                                if (is_haskell_varid(name) and not ranges::any_of(d->field_info, [&](const auto& field) { return field.first == qualified_name or get_unqualified_name(field.first) == name; }))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`") );
                                     continue;
@@ -1330,7 +1330,7 @@ void Module::perform_exports()
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data family `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not d->fields.count( qualified_name) )
+                                if (is_haskell_varid(name) and not ranges::any_of(d->field_info, [&](const auto& field) { return field.first == qualified_name or get_unqualified_name(field.first) == name; }))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data family `"<<id<<"`") );
                                     continue;
@@ -2286,25 +2286,15 @@ namespace
         {
             if (auto data = type->is_data())
             {
-                if (not data->field_info.empty())
-                {
-                    for(const auto& [declared_field, field_info]: data->field_info)
-                        if (record_field_name_matches(declared_field, field_name))
-                            constructors.insert(field_info.constructors.begin(), field_info.constructors.end());
-                }
-                else if (ranges::any_of(data->fields, [&](const auto& field) { return record_field_name_matches(field, field_name); }))
-                    constructors.insert(data->constructors.begin(), data->constructors.end());
+                for(const auto& [declared_field, field_info]: data->field_info)
+                    if (record_field_name_matches(declared_field, field_name))
+                        constructors.insert(field_info.constructors.begin(), field_info.constructors.end());
             }
             else if (auto data_fam = type->is_data_fam())
             {
-                if (not data_fam->field_info.empty())
-                {
-                    for(const auto& [declared_field, field_info]: data_fam->field_info)
-                        if (record_field_name_matches(declared_field, field_name))
-                            constructors.insert(field_info.constructors.begin(), field_info.constructors.end());
-                }
-                else if (ranges::any_of(data_fam->fields, [&](const auto& field) { return record_field_name_matches(field, field_name); }))
-                    constructors.insert(data_fam->constructors.begin(), data_fam->constructors.end());
+                for(const auto& [declared_field, field_info]: data_fam->field_info)
+                    if (record_field_name_matches(declared_field, field_name))
+                        constructors.insert(field_info.constructors.begin(), field_info.constructors.end());
             }
         }
     }
@@ -2465,13 +2455,32 @@ void Module::maybe_def_function(const string& var_name)
 void Module::add_local_symbols(const Hs::Decls& topdecls)
 {
     int next_data_family_instance_id = 0;
-    map<string,string> record_field_owner;
+    auto record_field_owner = [&](const string& field_name) -> optional<string>
+    {
+        for(const auto& [_, type]: types)
+        {
+            if (auto data = type->is_data())
+            {
+                for(const auto& [declared_field, field_info]: data->field_info)
+                    if (record_field_name_matches(declared_field, field_name))
+                        return field_info.parent_type;
+            }
+            else if (auto data_fam = type->is_data_fam())
+            {
+                for(const auto& [declared_field, field_info]: data_fam->field_info)
+                    if (record_field_name_matches(declared_field, field_name))
+                        return field_info.parent_type;
+            }
+        }
+        return {};
+    };
 
     auto record_field_name = [&](const string& field_name, const string& owner_name)
     {
-        auto [iter, inserted] = record_field_owner.insert({field_name, owner_name});
-        if (not inserted and iter->second != owner_name)
-            throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<iter->second<<"' and data type '"<<owner_name<<"'. Duplicate record field labels are not implemented yet.";
+        auto qualified_owner_name = qualify_local_name(owner_name);
+        if (auto existing_owner = record_field_owner(field_name))
+            if (*existing_owner != qualified_owner_name)
+                throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<*existing_owner<<"' and data type '"<<qualified_owner_name<<"'. Duplicate record field labels are not implemented yet.";
     };
 
     auto record_field_info = [&](auto& fields, const string& field_name, const string& owner_name, const string& constructor_name, int position)
@@ -2514,12 +2523,10 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                         for(auto& [loc,var]: field_decl.field_names)
                         {
                             record_field_name(var.name, family_name);
-                            instance_info.fields.insert(qualify_local_name(var.name));
-                            record_field_info(instance_info.field_info, var.name, instance_type_name, cname, field_index++);
+                            record_field_info(instance_info.field_info, var.name, family_name, cname, field_index);
                             if (data_fam)
-                                data_fam->fields.insert( qualify_local_name(var.name) );
-                            if (data_fam)
-                                record_field_info(data_fam->field_info, var.name, family_name, cname, field_index - 1);
+                                record_field_info(data_fam->field_info, var.name, family_name, cname, field_index);
+                            field_index++;
                         }
                 }
             }
@@ -2535,12 +2542,14 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                     for(const auto& field_name: *field_names)
                     {
                         record_field_name(field_name, family_name);
-                        instance_info.fields.insert(qualify_local_name(field_name));
-                        record_field_info(instance_info.field_info, field_name, instance_type_name, unloc(cons_decl.con_names.front()).name, field_index++);
-                        if (data_fam)
-                            data_fam->fields.insert( qualify_local_name(field_name) );
-                        if (data_fam)
-                            record_field_info(data_fam->field_info, field_name, family_name, unloc(cons_decl.con_names.front()).name, field_index - 1);
+                        for(const auto& con_name: cons_decl.con_names)
+                        {
+                            auto cname = unloc(con_name).name;
+                            record_field_info(instance_info.field_info, field_name, family_name, cname, field_index);
+                            if (data_fam)
+                                record_field_info(data_fam->field_info, field_name, family_name, cname, field_index);
+                        }
+                        field_index++;
                     }
                 }
 
@@ -2579,43 +2588,44 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                 arity = data_decl->get_constructors().size();
                 for(const auto& constr: data_decl->get_constructors())
                 {
-                auto cname = unloc(*constr.con).name;
-                def_constructor(cname, constr.arity(), unloc(data_decl->con).name);
-                info.constructors.push_back( qualify_local_name(cname) );
-                if (auto fields = to<Hs::FieldDecls>(constr.fields))
-                {
-                    int field_index = 0;
-                    for(auto& field_decl: fields->field_decls)
-                        for(auto& [loc,var]: field_decl.field_names)
-                        {
-                            record_field_name(var.name, unloc(data_decl->con).name);
-                            info.fields.insert( qualify_local_name(var.name) );
-                            record_field_info(info.field_info, var.name, unloc(data_decl->con).name, cname, field_index++);
-                        }
-                }
-            }
-        }
-        else if (data_decl->is_gadt_decl())
-        {
-            arity = data_decl->get_gadt_constructors().size();
-            for(const auto& cons_decl: data_decl->get_gadt_constructors())
-            {
-                auto field_names = gadt_constructor_field_names(cons_decl.type);
-                if (field_names)
-                {
-                    int field_index = 0;
-                    for(const auto& field_name: *field_names)
+                    auto cname = unloc(*constr.con).name;
+                    def_constructor(cname, constr.arity(), unloc(data_decl->con).name);
+                    info.constructors.push_back( qualify_local_name(cname) );
+                    if (auto fields = to<Hs::FieldDecls>(constr.fields))
                     {
-                        record_field_name(field_name, unloc(data_decl->con).name);
-                        info.fields.insert( qualify_local_name(field_name) );
-                        record_field_info(info.field_info, field_name, unloc(data_decl->con).name, unloc(cons_decl.con_names.front()).name, field_index++);
+                        int field_index = 0;
+                        for(auto& field_decl: fields->field_decls)
+                            for(auto& [loc,var]: field_decl.field_names)
+                            {
+                                record_field_name(var.name, unloc(data_decl->con).name);
+                                record_field_info(info.field_info, var.name, unloc(data_decl->con).name, cname, field_index);
+                                field_index++;
+                            }
                     }
                 }
-
-                for(auto& con_name: cons_decl.con_names)
+            }
+            else if (data_decl->is_gadt_decl())
+            {
+                arity = data_decl->get_gadt_constructors().size();
+                for(const auto& cons_decl: data_decl->get_gadt_constructors())
                 {
-                    int arity = Hs::gen_type_arity(expand_constructor_record_fields(cons_decl.type));
-                    auto cname = unloc(con_name);
+                    auto field_names = gadt_constructor_field_names(cons_decl.type);
+                    if (field_names)
+                    {
+                        int field_index = 0;
+                        for(const auto& field_name: *field_names)
+                        {
+                            record_field_name(field_name, unloc(data_decl->con).name);
+                            for(auto& con_name: cons_decl.con_names)
+                                record_field_info(info.field_info, field_name, unloc(data_decl->con).name, unloc(con_name).name, field_index);
+                            field_index++;
+                        }
+                    }
+
+                    for(auto& con_name: cons_decl.con_names)
+                    {
+                        int arity = Hs::gen_type_arity(expand_constructor_record_fields(cons_decl.type));
+                        auto cname = unloc(con_name);
                         def_constructor(cname, arity, unloc(data_decl->con).name);
                         info.constructors.push_back( qualify_local_name(cname) );
                     }

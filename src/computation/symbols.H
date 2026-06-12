@@ -129,11 +129,10 @@ struct type_info
     struct data_info
     {
         std::vector<std::string> constructors;
-        std::set<std::string> fields;
         std::map<std::string, FieldInfo> field_info;
         std::shared_ptr<DataInfo> info;
 
-	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields, field_info, info);}
+	template <class Archive> void serialize(Archive& ar) { ar(constructors, field_info, info);}
     };
     struct type_syn_info
     {
@@ -148,11 +147,10 @@ struct type_info
     };
     struct data_fam_info {
         std::set<std::string> constructors;
-        std::set<std::string> fields;
         std::map<std::string, FieldInfo> field_info;
 	std::shared_ptr<DataFamInfo> info;
 
-	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields, field_info, info);}
+	template <class Archive> void serialize(Archive& ar) { ar(constructors, field_info, info);}
     };
 
     bool is_type_other() const; // "->", but now also "~"
