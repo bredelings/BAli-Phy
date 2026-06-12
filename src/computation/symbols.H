@@ -77,13 +77,15 @@ enum class RecordSelectorCallability
 
 struct RecordSelectorInfo
 {
-    FieldInfo field;
+    // Resolved field identity; semantic field details are looked up from datatype metadata.
+    std::string field_name;
+    std::string parent_type;
     RecordSelectorCallability callability = RecordSelectorCallability::Callable;
 
     template <class Archive>
     void serialize(Archive& ar)
     {
-        ar(field, callability);
+        ar(field_name, parent_type, callability);
     }
 };
 
