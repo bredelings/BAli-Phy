@@ -9,6 +9,8 @@ using std::optional;
 map<string,LangExt> ext_to_bit =
 {
     {"DataKinds",                   {LangExt::DataKinds}},
+    {"DisambiguateRecordFields",    {LangExt::DisambiguateRecordFields}},
+    {"DuplicateRecordFields",       {LangExt::DuplicateRecordFields}}, // implies DisambiguateRecordFields
     {"EmptyDataDecls",              {LangExt::EmptyDataDecls}},
     {"ExistentialQuantification",   {LangExt::ExistentialQuantification}},
     {"ExtendedDefaultRules",        {LangExt::ExtendedDefaultRules}},
@@ -27,17 +29,21 @@ map<string,LangExt> ext_to_bit =
     {"MonoLocalBinds",              {LangExt::MonoLocalBinds}},
     {"MultiParamTypeClasses",       {LangExt::MultiParamTypeClasses}},
     {"NamedDefaults",               {LangExt::NamedDefaults}},
+    {"NamedFieldPuns",              {LangExt::NamedFieldPuns}},
     {"OverloadedRecordDot",         {LangExt::OverloadedRecordDot}},
+    {"OverloadedRecordUpdate",      {LangExt::OverloadedRecordUpdate}},
     {"OverloadedLists",             {LangExt::OverloadedLists}},
     {"OverloadedStrings",           {LangExt::OverloadedStrings}},
     {"Overlapping Instances",       {LangExt::OverlappingInstances}},  // DEPRECATED
     {"PolyKinds",                   {LangExt::PolyKinds}},
     {"RankNTypes",                  {LangExt::RankNTypes}},            // implies ExplicitForall
     {"RecursiveDo",                 {LangExt::RecursiveDo}},
+    {"RecordWildCards",             {LangExt::RecordWildCards}},        // implies DisambiguateRecordFields
     {"TypeFamilies",                {LangExt::TypeFamilies}},          // implies MonoLocalBinds
     {"TypeOperators",               {LangExt::TypeOperators}},
     {"ScopedTypeVariables",         {LangExt::ScopedTypeVariables}},
     {"StarIsType",                  {LangExt::StarIsType}},
+    {"TraditionalRecordSyntax",     {LangExt::TraditionalRecordSyntax}},
     {"UndecidableInstances",        {LangExt::UndecidableInstances}}
 };
 
@@ -49,7 +55,7 @@ set<LangExt> haskell98_extensions =
 //    LangExt::MonomorphismRestriction,
 //    LangExt::NPlusKPatterns,
 //    LangExt::DatatypeContexts,
-//    LangExt::TraditionalRecordSyntax,
+    LangExt::TraditionalRecordSyntax,
     LangExt::FieldSelectors,
 //    LangExt::NondecreasingIndentation
 //    LangExt::DeepSubsumption
@@ -63,7 +69,7 @@ set<LangExt> haskell2010_extensions =
 //    LangExt::MonomorphismRestriction,
 //    LangExt::NPlusKPatterns,
 //    LangExt::DatatypeContexts,
-//    LangExt::TraditionalRecordSyntax,
+    LangExt::TraditionalRecordSyntax,
 //    LangExt::EmptyDataDecls,
 //    LangExt::ForeignFunctionInterface,
     LangExt::FieldSelectors,
@@ -78,7 +84,7 @@ set<LangExt> ghc2021_extensions =
     LangExt::ImplicitPrelude,
 //    LangExt::StarIsType,
 //    LangExt::MonomorphismRestriction,
-//    LangExt::TraditionalRecordSyntax,
+    LangExt::TraditionalRecordSyntax,
 //    LangExt::EmptyDataDecls,
 //    LangExt::ForeignFunctionInterface,
 //    LangExt::PatternGuards,
@@ -128,6 +134,7 @@ set<LangExt> ghc2021_extensions =
 set<LangExt> default_extensions =
 {
     LangExt::ImplicitPrelude,
+    LangExt::TraditionalRecordSyntax,
     LangExt::FieldSelectors
 };
 
@@ -172,6 +179,12 @@ optional<Note> LanguageExtensions::set_option(const string& opt)
     // 3. Set the bit
     auto extension = ext_to_bit.at(ext);
     set_extension( extension, value );
+
+    if (value)
+    {
+        if (extension == LangExt::DuplicateRecordFields or extension == LangExt::RecordWildCards)
+            set_extension(LangExt::DisambiguateRecordFields);
+    }
 
     return {};
 }
