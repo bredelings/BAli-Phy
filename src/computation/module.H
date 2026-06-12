@@ -132,6 +132,9 @@ public:
 
     std::optional<DataConInfo> constructor_info(const std::string& n) const;
 
+    std::vector<FieldInfo> lookup_record_field_candidates(const std::string& field_name) const;
+    std::vector<FieldInfo> record_field_candidates_for_resolved_name(const std::string& field_name) const;
+
     std::set<std::string> constructors_for_record_field(const std::string& field_name) const;
 
     /// Add a function
@@ -310,6 +313,9 @@ public:
     const_type_ptr lookup_local_type(const std::string& t) const;
 
     const_symbol_ptr lookup_symbol(const std::string&) const;
+
+    std::vector<FieldInfo> lookup_record_field_candidates(const std::string& field_name) const;
+    std::vector<FieldInfo> record_field_candidates_for_resolved_name(const std::string& field_name) const;
 
     std::set<std::string> constructors_for_record_field(const std::string& field_name) const;
 

@@ -2242,6 +2242,49 @@ namespace
     using record_utils::gadt_constructor_field_names;
     using record_utils::record_field_name_matches;
 
+    void merge_record_field_candidate(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const FieldInfo& field_info)
+    {
+        auto key = std::pair{field_info.name, field_info.parent_type};
+        auto [iter, inserted] = candidates.insert({key, field_info});
+        if (inserted)
+            return;
+
+        for(int i=0; i<field_info.constructors.size(); i++)
+        {
+            const auto& constructor = field_info.constructors[i];
+            if (std::ranges::find(iter->second.constructors, constructor) != iter->second.constructors.end())
+                continue;
+
+            iter->second.constructors.push_back(constructor);
+            iter->second.positions.push_back(field_info.positions[i]);
+        }
+    }
+
+    void add_record_field_candidates(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const std::map<std::string, type_ptr>& types, const std::string& resolved_field_name)
+    {
+        for(const auto& [_, type]: types)
+        {
+            if (auto data = type->is_data())
+            {
+                auto field = data->field_info.find(resolved_field_name);
+                if (field != data->field_info.end())
+                    merge_record_field_candidate(candidates, field->second);
+            }
+            else if (auto data_fam = type->is_data_fam())
+            {
+                auto field = data_fam->field_info.find(resolved_field_name);
+                if (field != data_fam->field_info.end())
+                    merge_record_field_candidate(candidates, field->second);
+            }
+        }
+    }
+
+    void add_record_field_candidates(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const std::vector<FieldInfo>& fields)
+    {
+        for(const auto& field: fields)
+            merge_record_field_candidate(candidates, field);
+    }
+
     void add_record_field_constructors(std::set<std::string>& constructors, const std::map<std::string, type_ptr>& types, const std::string& field_name)
     {
         for(const auto& [_, type]: types)
@@ -2262,6 +2305,28 @@ namespace
     }
 }
 
+std::vector<FieldInfo> Module::lookup_record_field_candidates(const std::string& field_name) const
+{
+    auto S = lookup_symbol(field_name);
+    return record_field_candidates_for_resolved_name(S->name);
+}
+
+std::vector<FieldInfo> Module::record_field_candidates_for_resolved_name(const std::string& field_name) const
+{
+    std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
+    add_record_field_candidates(candidates, types, field_name);
+    for(const auto& [_, mod]: transitively_imported_modules)
+    {
+        auto imported_fields = mod->record_field_candidates_for_resolved_name(field_name);
+        add_record_field_candidates(candidates, imported_fields);
+    }
+
+    std::vector<FieldInfo> fields;
+    for(auto& [_, field]: candidates)
+        fields.push_back(field);
+    return fields;
+}
+
 std::set<std::string> Module::constructors_for_record_field(const std::string& field_name) const
 {
     std::set<std::string> constructors;
@@ -2272,6 +2337,28 @@ std::set<std::string> Module::constructors_for_record_field(const std::string& f
         constructors.insert(imported_constructors.begin(), imported_constructors.end());
     }
     return constructors;
+}
+
+std::vector<FieldInfo> CompiledModule::lookup_record_field_candidates(const std::string& field_name) const
+{
+    auto S = lookup_symbol(field_name);
+    return record_field_candidates_for_resolved_name(S->name);
+}
+
+std::vector<FieldInfo> CompiledModule::record_field_candidates_for_resolved_name(const std::string& field_name) const
+{
+    std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
+    add_record_field_candidates(candidates, types, field_name);
+    for(const auto& [_, mod]: transitively_imported_modules_)
+    {
+        auto imported_fields = mod->record_field_candidates_for_resolved_name(field_name);
+        add_record_field_candidates(candidates, imported_fields);
+    }
+
+    std::vector<FieldInfo> fields;
+    for(auto& [_, field]: candidates)
+        fields.push_back(field);
+    return fields;
 }
 
 std::set<std::string> CompiledModule::constructors_for_record_field(const std::string& field_name) const

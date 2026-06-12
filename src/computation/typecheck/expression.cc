@@ -16,6 +16,12 @@ namespace
 {
     using record_utils::record_field_positions;
 
+    struct RecordFieldUpdate
+    {
+        std::vector<FieldInfo> candidates;
+        Hs::LExp value;
+    };
+
     Hs::LExp missing_record_field_exp(const std::optional<yy::location>& loc, const std::string& con_name, int field_index)
     {
         auto message = "Missing field " + std::to_string(field_index + 1) + " in record construction for constructor '" + get_unqualified_name(con_name) + "'";
@@ -49,16 +55,21 @@ namespace
             return constructors2;
     }
 
-    bool record_field_position(const std::map<std::string,int>& positions, const std::string& field_name, int& position)
+    std::set<std::string> constructors_for_record_field_candidates(const std::vector<FieldInfo>& candidates)
     {
-        auto pos = positions.find(field_name);
-        if (pos == positions.end())
-            pos = positions.find(get_unqualified_name(field_name));
-        if (pos == positions.end())
-            return false;
+        std::set<std::string> constructors;
+        for(const auto& field: candidates)
+            constructors.insert(field.constructors.begin(), field.constructors.end());
+        return constructors;
+    }
 
-        position = pos->second;
-        return true;
+    std::optional<int> record_field_position_for_constructor(const std::vector<FieldInfo>& candidates, const std::string& con_name)
+    {
+        for(const auto& field: candidates)
+            for(int i=0; i<field.constructors.size(); i++)
+                if (field.constructors[i] == con_name)
+                    return field.positions[i];
+        return {};
     }
 
     // Return constructors for the concrete record type when the scrutinee type is already known.
@@ -100,7 +111,7 @@ namespace
         auto object_type = tc.inferRho(Rec.object);
         std::optional<std::set<std::string>> constructors;
         set<string> used_field_names;
-        vector<pair<string,Hs::LExp>> updates;
+        vector<RecordFieldUpdate> updates;
 
         for(auto& field: unloc(Rec.fbinds).fields)
         {
@@ -111,33 +122,31 @@ namespace
                 tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
             used_field_names.insert(field_key);
 
-            bool field_in_scope = false;
+            std::vector<FieldInfo> field_candidates;
+            bool lookup_failed = false;
             try
             {
-                if (auto S = tc.this_mod().lookup_symbol(field_name))
-                {
-                    field_name = S->name;
-                    field_in_scope = true;
-                }
+                field_candidates = tc.this_mod().lookup_record_field_candidates(field_name);
             }
-            catch (myexception&)
+            catch (myexception& e)
             {
-                tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
-            }
-
-            std::set<std::string> field_constructors;
-            if (field_in_scope)
-            {
-                field_constructors = tc.this_mod().constructors_for_record_field(field_name);
-                if (field_constructors.empty())
+                lookup_failed = true;
+                auto lookup_message = std::string(e.what());
+                if (lookup_message.find("ambiguous") != std::string::npos)
+                    tc.record_error(field.loc, Note()<<lookup_message);
+                else
                     tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
             }
+
+            auto field_constructors = constructors_for_record_field_candidates(field_candidates);
+            if (field_constructors.empty() and not lookup_failed)
+                tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
             constructors = intersect_constructors(constructors, field_constructors);
 
             if (not f.value)
                 tc.record_error(field.loc, Note()<<"Field pun '"<<field_name<<"' was not expanded before typechecking.");
-            else if (field_in_scope)
-                updates.push_back({field_name, *f.value});
+            else if (not field_candidates.empty())
+                updates.push_back({field_candidates, *f.value});
         }
 
         if (auto type_constructors = constructors_for_record_type(tc, object_type))
@@ -152,7 +161,6 @@ namespace
                 if (not con_info or not con_info->field_names)
                     continue;
 
-                auto positions = record_field_positions(*con_info->field_names);
                 vector<Hs::LExp> args;
                 Hs::LPats patterns;
                 set<int> updated_positions;
@@ -166,16 +174,16 @@ namespace
                     args.push_back(var);
                 }
 
-                for(const auto& [field_name, value]: updates)
+                for(const auto& update: updates)
                 {
-                    int pos = 0;
-                    if (not record_field_position(positions, field_name, pos))
+                    auto pos = record_field_position_for_constructor(update.candidates, con_info->name);
+                    if (not pos)
                     {
                         constructor_has_all_fields = false;
                         break;
                     }
-                    args[pos] = value;
-                    updated_positions.insert(pos);
+                    args[*pos] = update.value;
+                    updated_positions.insert(*pos);
                 }
 
                 if (unloc(Rec.fbinds).dotdot)
