@@ -2,6 +2,7 @@
 #define SYMBOLS_H
 
 #include <set>
+#include <map>
 #include <string>
 #include <optional>
 #include <variant>
@@ -13,6 +14,7 @@
 #include <cereal/types/variant.hpp>
 #include <cereal/types/optional.hpp>
 #include <cereal/types/set.hpp>
+#include <cereal/types/map.hpp>
 #include <cereal/types/vector.hpp>
 
 constexpr auto left_fix = Haskell::Fixity::infixl;
@@ -38,6 +40,21 @@ struct OpInfo
 {
     std::string name;
     fixity_info fixity;
+};
+
+struct FieldInfo
+{
+    std::string name;
+    std::string parent_type;
+    std::vector<std::string> constructors;
+    std::vector<int> positions;
+    Type field_type;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(name, parent_type, constructors, positions, field_type);
+    }
 };
 
 
@@ -113,9 +130,10 @@ struct type_info
     {
         std::vector<std::string> constructors;
         std::set<std::string> fields;
+        std::map<std::string, FieldInfo> field_info;
         std::shared_ptr<DataInfo> info;
 
-	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields, info);}
+	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields, field_info, info);}
     };
     struct type_syn_info
     {
@@ -131,9 +149,10 @@ struct type_info
     struct data_fam_info {
         std::set<std::string> constructors;
         std::set<std::string> fields;
+        std::map<std::string, FieldInfo> field_info;
 	std::shared_ptr<DataFamInfo> info;
 
-	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields, info);}
+	template <class Archive> void serialize(Archive& ar) { ar(constructors, fields, field_info, info);}
     };
 
     bool is_type_other() const; // "->", but now also "~"
