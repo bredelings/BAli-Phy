@@ -517,6 +517,12 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         E = c->wrap(E);
         return E;
     }
+    else if (auto rec = E.to<Hs::RecordCon>())
+    {
+        if (not rec->checked_con)
+            throw myexception()<<"desugar: record construction was not checked before desugaring";
+        return desugar(rec->checked_con->positional_app);
+    }
     else if (auto rec = E.to<Hs::RecordUpdate>())
     {
         if (not rec->checked_update)

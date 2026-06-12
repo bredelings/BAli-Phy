@@ -604,7 +604,8 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
         auto Rec = *rec;
         auto app = record_con_to_positional_app(*this, Rec, Rec.con.loc * Rec.fbinds.loc);
         tcRho(app, exp_type);
-        E = unloc(app);
+        Rec.checked_con = std::make_shared<Hs::CheckedRecordCon>(app);
+        E = Rec;
     }
     // RECORD UPDATE
     else if (auto rec = E.to<Hs::RecordUpdate>())

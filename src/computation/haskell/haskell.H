@@ -314,6 +314,7 @@ struct RecordFieldBindings: public Object
 using FieldBindings = RecordFieldBindings<FieldBinding>;
 
 struct CheckedRecordUpdate;
+struct CheckedRecordCon;
 
 // Parsed record braces before context decides construction, update, or pattern.
 
@@ -335,6 +336,7 @@ struct RecordCon: public Object
 {
     LCon con;
     Located<FieldBindings> fbinds;
+    std::shared_ptr<CheckedRecordCon> checked_con;
 
     RecordCon* clone() const { return new RecordCon(*this);}
     std::string print() const;
@@ -1275,6 +1277,14 @@ struct CheckedRecordUpdate
     Matches alts;
 
     CheckedRecordUpdate(const LExp& o, const Matches& as): object(o), alts(as) {}
+};
+
+struct CheckedRecordCon
+{
+    // Typechecked positional application; ApplyExp nodes carry argument/result wrappers.
+    LExp positional_app;
+
+    explicit CheckedRecordCon(const LExp& app): positional_app(app) {}
 };
 
 struct LambdaExp: public Object
