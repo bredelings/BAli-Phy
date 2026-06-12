@@ -3,9 +3,9 @@
 #include <set>
 
 #include "rename.H"
+#include "records.H"
 #include "haskell/ids.H"
 #include "computation/module.H"
-#include "computation/record_utils.H"
 #include "util/set.H"
 
 // We really should move apply expressions into the haskell ast.
@@ -16,19 +16,6 @@ using std::vector;
 using std::pair;
 using std::set;
 using std::optional;
-
-namespace
-{
-    using record_utils::record_field_pun_exp;
-    using record_utils::resolve_record_field_name;
-
-    // Report a disabled extension for record syntax handled during expression renaming.
-    void require_record_extension(const renamer_state& rn, const std::optional<yy::location>& loc, LangExt extension, const std::string& extension_name, const std::string& syntax)
-    {
-        if (not rn.m.language_extensions.has_extension(extension))
-            rn.error(loc, Note()<<syntax<<" requires the "<<extension_name<<" extension.");
-    }
-}
 
 Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set<string>& free_vars)
 {
@@ -254,23 +241,17 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     {
         auto Rec = *rec;
         Rec.object = rename(Rec.object, bound, free_vars);
-        if (unloc(Rec.fbinds).dotdot)
-            error(*unloc(Rec.fbinds).dotdot, Note()<<"Record wildcard '..' is not allowed in record updates.");
+        record_rename::reject_record_update_wildcard(*this, Rec.fbinds);
         set<string> used_field_names;
 
         for(auto& field: unloc(Rec.fbinds).fields)
         {
             auto& f = unloc(field);
             auto field_name = unloc(f.field).name;
-            auto field_key = get_unqualified_name(field_name);
-            if (used_field_names.count(field_key))
-                error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
-            used_field_names.insert(field_key);
+            record_rename::check_duplicate_field(*this, used_field_names, field.loc, field_name, "record update");
 
-            if (not f.value)
-                require_record_extension(*this, field.loc, LangExt::NamedFieldPuns, "NamedFieldPuns", "Record field pun");
-            auto value = f.value ? *f.value : record_field_pun_exp(f.field);
-            f.value = rename(value, bound, free_vars);
+            record_rename::expand_expression_pun(*this, field);
+            f.value = rename(*f.value, bound, free_vars);
         }
         E = Rec;
     }
@@ -295,20 +276,16 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                 Con.name = S->name;
                 Con.arity = S->arity;
                 Rec.con = {Rec.con.loc, Con};
-                auto field_names = m.record_field_names_for_constructor(S->name);
 
                 if (unloc(Rec.fbinds).dotdot)
-                    require_record_extension(*this, *unloc(Rec.fbinds).dotdot, LangExt::RecordWildCards, "RecordWildCards", "Record wildcard '..'");
+                    record_rename::require_record_extension(*this, *unloc(Rec.fbinds).dotdot, LangExt::RecordWildCards, "RecordWildCards", "Record wildcard '..'");
+                record_rename::resolve_constructor_field_identities(*this, S->name, unloc(Rec.fbinds));
 
                 for(auto& field: unloc(Rec.fbinds).fields)
                 {
                     auto& f = unloc(field);
-                    if (field_names)
-                        f.resolved_field = resolve_record_field_name(*field_names, unloc(f.field).name);
-                    if (not f.value)
-                        require_record_extension(*this, field.loc, LangExt::NamedFieldPuns, "NamedFieldPuns", "Record field pun");
-                    auto value = f.value ? *f.value : record_field_pun_exp(f.field);
-                    f.value = rename(value, bound, free_vars);
+                    record_rename::expand_expression_pun(*this, field);
+                    f.value = rename(*f.value, bound, free_vars);
                 }
 
                 E = Rec;
