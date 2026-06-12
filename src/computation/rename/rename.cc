@@ -63,26 +63,8 @@ namespace
 
 Hs::Decls synthesize_field_accessors(const Module& m)
 {
-    map<string, FieldInfo> fields;
     Hs::Decls decls;
-    for(const auto& [type_name, type]: m.types)
-    {
-        if (not m.is_local_qualified_name(type_name))
-            continue;
-
-        if (auto data = type->is_data())
-        {
-            for(const auto& [_, field]: data->field_info)
-                fields.emplace(field.name, field);
-        }
-        else if (auto data_fam = type->is_data_fam())
-        {
-            for(const auto& [_, field]: data_fam->field_info)
-                fields.emplace(field.name, field);
-        }
-    }
-
-    for(const auto& [_, field]: fields)
+    for(const auto& [_, field]: m.local_synthesizable_record_fields())
     {
         auto field_name = get_unqualified_name(field.name);
         decls.push_back({noloc, Haskell::ValueDecl({noloc, Hs::Var(field_name)}, synthesize_field_accessor(m, field))});

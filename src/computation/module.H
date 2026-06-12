@@ -55,7 +55,6 @@ std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>)
 class Module
 {
     friend class CompiledModule;
-    friend Hs::Decls synthesize_field_accessors(const Module&);
 
     // so that it can set _cached_sha
     friend std::shared_ptr<CompiledModule> compiler_prim_module();
@@ -131,6 +130,10 @@ public:
     void clear_symbol_table();
 
     std::optional<DataConInfo> constructor_info(const std::string& n) const;
+
+    std::vector<FieldInfo> record_fields_for_type(const type_info& type) const;
+    bool type_has_record_field(const type_info& type, const std::string& field_name) const;
+    std::map<std::string, FieldInfo> local_synthesizable_record_fields() const;
 
     std::vector<FieldInfo> lookup_record_field_candidates(const std::string& field_name) const;
     std::vector<FieldInfo> record_field_candidates_for_resolved_name(const std::string& field_name) const;

@@ -2242,6 +2242,22 @@ namespace
     using record_utils::gadt_constructor_field_names;
     using record_utils::record_field_name_matches;
 
+    std::vector<FieldInfo> record_fields_for_type_info(const type_info& type)
+    {
+        std::vector<FieldInfo> fields;
+        if (auto data = type.is_data())
+        {
+            for(const auto& [_, field]: data->field_info)
+                fields.push_back(field);
+        }
+        else if (auto data_fam = type.is_data_fam())
+        {
+            for(const auto& [_, field]: data_fam->field_info)
+                fields.push_back(field);
+        }
+        return fields;
+    }
+
     void merge_record_field_candidate(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const FieldInfo& field_info)
     {
         auto key = std::pair{field_info.name, field_info.parent_type};
@@ -2303,6 +2319,45 @@ namespace
             }
         }
     }
+}
+
+std::vector<FieldInfo> Module::record_fields_for_type(const type_info& type) const
+{
+    return record_fields_for_type_info(type);
+}
+
+bool Module::type_has_record_field(const type_info& type, const std::string& field_name) const
+{
+    for(const auto& field: record_fields_for_type(type))
+        if (record_field_name_matches(field.name, field_name))
+            return true;
+    return false;
+}
+
+std::map<std::string, FieldInfo> Module::local_synthesizable_record_fields() const
+{
+    std::map<std::string, FieldInfo> fields;
+    for(const auto& [type_name, type]: types)
+    {
+        if (not is_local_qualified_name(type_name))
+            continue;
+
+        if (auto data = type->is_data())
+        {
+            for(const auto& [_, field]: data->field_info)
+                fields.emplace(field.name, field);
+        }
+        else if (auto data_fam = type->is_data_fam())
+        {
+            // Field selectors are currently ordinary value bindings.  When
+            // shared family metadata would require overloaded selectors, keep
+            // concrete data-instance metadata and use family metadata only as
+            // a fallback until record selectors get a richer representation.
+            for(const auto& [_, field]: data_fam->field_info)
+                fields.emplace(field.name, field);
+        }
+    }
+    return fields;
 }
 
 std::vector<FieldInfo> Module::lookup_record_field_candidates(const std::string& field_name) const
