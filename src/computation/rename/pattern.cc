@@ -5,10 +5,55 @@
 #include "haskell/ids.H"
 #include "computation/module.H"
 #include "computation/expression/apply.H"
+#include "computation/record_utils.H"
 #include "util/set.H"
 
 using std::vector;
 using std::set;
+
+namespace
+{
+    using record_utils::record_field_pun_pattern;
+
+    // Expand a trailing pattern `..` into punned fields for this record constructor.
+    Hs::PatternFieldBindings expand_record_pattern_wildcards(const Module& m, const Hs::LCon& head, Hs::PatternFieldBindings fields)
+    {
+        auto dotdot = fields.dotdot;
+        if (not dotdot)
+            return fields;
+
+        set<std::string> explicit_fields;
+        for(const auto& field: fields.fields)
+            explicit_fields.insert(get_unqualified_name(unloc(unloc(field).field).name));
+
+        try
+        {
+            auto S = m.lookup_symbol(unloc(head).name);
+            if (S->symbol_type == symbol_type_t::constructor)
+            {
+                if (auto field_names = m.record_field_names_for_constructor(S->name))
+                {
+                    for(const auto& field_name: *field_names)
+                    {
+                        auto unqualified = get_unqualified_name(field_name);
+                        if (explicit_fields.count(unqualified))
+                            continue;
+
+                        Hs::LVar field_var = {*dotdot, Hs::Var(unqualified)};
+                        fields.fields.push_back({*dotdot, Hs::PatternFieldBinding(field_var, record_field_pun_pattern(field_var))});
+                    }
+                }
+            }
+        }
+        catch (myexception&)
+        {
+            // Normal constructor lookup below will report the underlying name error.
+        }
+
+        fields.dotdot.reset();
+        return fields;
+    }
+}
 
 bound_var_info renamer_state::rename_patterns(Hs::LPats& patterns, bool top)
 {
@@ -136,11 +181,10 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
     }
     else if (auto r = pat.to<Hs::RecordPattern>())
     {
-        if (unloc(r->fbinds).dotdot)
-            error(lpat.loc, Note()<<"Record wildcards in patterns are not implemented yet.");
+        auto fields = expand_record_pattern_wildcards(m, r->head, unloc(r->fbinds));
 
         Hs::LPats field_patterns;
-        for(const auto& field: unloc(r->fbinds).fields)
+        for(const auto& field: fields.fields)
             field_patterns.push_back(unloc(field).pattern);
 
         return find_vars_in_patterns(field_patterns, top);
@@ -345,9 +389,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
     else if (auto r = pat.to<Hs::RecordPattern>())
     {
         auto R = *r;
-
-        if (unloc(R.fbinds).dotdot)
-            error(lpat.loc, Note()<<"Record wildcards in patterns are not implemented yet.");
+        unloc(R.fbinds) = expand_record_pattern_wildcards(m, R.head, unloc(R.fbinds));
 
         bound_var_info bound;
         bool overlap = false;

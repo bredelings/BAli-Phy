@@ -2290,6 +2290,43 @@ namespace
             merge_record_field_candidate(candidates, field);
     }
 
+    // Reconstruct the declared field order for a resolved record constructor.
+    void add_record_field_names_for_constructor(std::vector<std::optional<std::string>>& field_names, const std::vector<FieldInfo>& fields, const std::string& constructor_name)
+    {
+        for(const auto& field: fields)
+        {
+            for(int i=0; i<field.constructors.size(); i++)
+            {
+                if (field.constructors[i] != constructor_name)
+                    continue;
+
+                auto position = field.positions[i];
+                if (position < 0)
+                    continue;
+
+                if (field_names.size() <= position)
+                    field_names.resize(position + 1);
+                field_names[position] = field.name;
+            }
+        }
+    }
+
+    std::optional<std::vector<std::string>> record_field_names_for_constructor(const std::map<std::string, type_ptr>& types, const std::string& constructor_name)
+    {
+        std::vector<std::optional<std::string>> field_names;
+        for(const auto& [_, type]: types)
+            add_record_field_names_for_constructor(field_names, record_fields_for_type_info(*type), constructor_name);
+
+        if (field_names.empty())
+            return {};
+
+        std::vector<std::string> names;
+        for(const auto& name: field_names)
+            if (name)
+                names.push_back(*name);
+        return names;
+    }
+
 }
 
 std::vector<FieldInfo> Module::record_fields_for_type(const type_info& type) const
@@ -2353,6 +2390,22 @@ std::vector<FieldInfo> Module::record_field_candidates_for_resolved_name(const s
     return fields;
 }
 
+std::optional<std::vector<std::string>> Module::record_field_names_for_constructor(const std::string& constructor_name) const
+{
+    auto fields = ::record_field_names_for_constructor(types, constructor_name);
+    if (fields)
+        return fields;
+
+    for(const auto& [_, mod]: transitively_imported_modules)
+    {
+        fields = mod->record_field_names_for_constructor(constructor_name);
+        if (fields)
+            return fields;
+    }
+
+    return {};
+}
+
 std::vector<FieldInfo> CompiledModule::lookup_record_field_candidates(const std::string& field_name) const
 {
     auto S = lookup_symbol(field_name);
@@ -2373,6 +2426,22 @@ std::vector<FieldInfo> CompiledModule::record_field_candidates_for_resolved_name
     for(auto& [_, field]: candidates)
         fields.push_back(field);
     return fields;
+}
+
+std::optional<std::vector<std::string>> CompiledModule::record_field_names_for_constructor(const std::string& constructor_name) const
+{
+    auto fields = ::record_field_names_for_constructor(types, constructor_name);
+    if (fields)
+        return fields;
+
+    for(const auto& [_, mod]: transitively_imported_modules_)
+    {
+        fields = mod->record_field_names_for_constructor(constructor_name);
+        if (fields)
+            return fields;
+    }
+
+    return {};
 }
 
 // Here we do only phase 1 -- we only parse the decls enough to

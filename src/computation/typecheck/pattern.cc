@@ -38,7 +38,7 @@ namespace
         set<int> used_fields;
 
         if (unloc(Rec.fbinds).dotdot)
-            tc.record_error(lpat.loc, Note()<<"Record wildcards in patterns are not implemented yet.");
+            tc.record_error(lpat.loc, Note()<<"Record wildcard in pattern was not expanded before typechecking.");
 
         for(auto& field: unloc(Rec.fbinds).fields)
         {
