@@ -1003,6 +1003,10 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym, def_type_family
     MM->add_local_symbols(M.value_decls[0]);
 
+    if (MM->language_extensions.has_extension(LangExt::FieldSelectors))
+        for(const auto& [_, field]: MM->local_synthesizable_record_fields())
+            MM->mark_record_selector(field);
+
     for(auto& f: M.foreign_decls)
         MM->def_function( unloc(f.function).name );
 
@@ -2750,6 +2754,22 @@ void Module::maybe_def_function(const string& var_name)
     }
     else
         def_function(var_name);
+}
+
+void Module::mark_record_selector(const FieldInfo& field)
+{
+    auto selector_name = get_unqualified_name(field.name);
+    auto qualified_selector_name = qualify_local_name(selector_name);
+    auto iter = symbols.find(qualified_selector_name);
+
+    if (iter == symbols.end())
+        throw myexception()<<"Could not mark record selector '"<<selector_name<<"' because it is not declared.";
+
+    auto& selector = *iter->second;
+    if (selector.symbol_type != symbol_type_t::variable)
+        throw myexception()<<"Could not mark record selector '"<<selector_name<<"' because it is not a value symbol.";
+
+    selector.record_selector = RecordSelectorInfo{field};
 }
 
 void Module::add_local_symbols(const Hs::Decls& topdecls)

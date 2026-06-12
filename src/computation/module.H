@@ -148,6 +148,9 @@ public:
     /// Add a function
     void maybe_def_function(const std::string& name);
 
+    /// Mark an already declared generated function as a record selector.
+    void mark_record_selector(const FieldInfo& field);
+
     /// Add a constructor
     void def_constructor(const std::string& name, int arity, const std::string& type_name);
 
