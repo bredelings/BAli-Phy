@@ -13,7 +13,7 @@ using std::optional;
 
 namespace
 {
-    using record_utils::record_field_positions;
+    using record_utils::order_record_field_bindings;
 
     // Validate record pattern fields and place them in constructor order.
     std::tuple<Hs::LPat,Hs::LPats> record_pattern_to_con_pattern(TypeChecker& tc, const Hs::LPat& lpat, Hs::RecordPattern& Rec)
@@ -33,37 +33,26 @@ namespace
             return {{lpat.loc, Hs::WildcardPattern()}, invalid_field_patterns};
         }
 
-        Hs::LPats args(con_info.field_names->size(), {noloc, Hs::WildcardPattern()});
-        auto positions = record_field_positions(*con_info.field_names);
-        set<int> used_fields;
-
         if (unloc(Rec.fbinds).dotdot)
             tc.record_error(lpat.loc, Note()<<"Record wildcard in pattern was not expanded before typechecking.");
 
-        for(auto& field: unloc(Rec.fbinds).fields)
-        {
-            auto& f = unloc(field);
-            auto field_name = unloc(f.field).name;
-            auto pos = positions.find(field_name);
-            if (pos == positions.end())
-                pos = positions.find(get_unqualified_name(field_name));
-
-            if (pos == positions.end())
-            {
+        auto ordered_args = order_record_field_bindings<Hs::LPat>(
+            *con_info.field_names,
+            unloc(Rec.fbinds).fields,
+            [](const auto& field) -> optional<Hs::LPat> { return unloc(field).pattern; },
+            [&](const auto& field, const auto& field_name) {
                 tc.record_error(field.loc, Note()<<"Constructor '"<<get_unqualified_name(con.name)<<"' does not have field '"<<field_name<<"'.");
-                invalid_field_patterns.push_back(f.pattern);
-            }
-            else if (used_fields.count(pos->second))
-            {
+                invalid_field_patterns.push_back(unloc(field).pattern);
+            },
+            [&](const auto& field, const auto& field_name) {
                 tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in pattern '"<<pattern_text<<"'.");
-                invalid_field_patterns.push_back(f.pattern);
-            }
-            else
-            {
-                used_fields.insert(pos->second);
-                args[pos->second] = f.pattern;
-            }
-        }
+                invalid_field_patterns.push_back(unloc(field).pattern);
+            },
+            [](const auto&, const auto&) {});
+
+        Hs::LPats args;
+        for(auto& arg: ordered_args)
+            args.push_back(arg.value_or(Hs::LPat{noloc, Hs::WildcardPattern()}));
 
         return {{lpat.loc, Hs::ConPattern(Rec.head, args)}, invalid_field_patterns};
     }

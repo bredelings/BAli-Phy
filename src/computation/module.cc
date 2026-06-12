@@ -2290,7 +2290,7 @@ namespace
             merge_record_field_candidate(candidates, field);
     }
 
-    // Reconstruct the declared field order for a resolved record constructor.
+    // Reconstruct the declared field order for a resolved record constructor from FieldInfo.
     void add_record_field_names_for_constructor(std::vector<std::optional<std::string>>& field_names, const std::vector<FieldInfo>& fields, const std::string& constructor_name)
     {
         for(const auto& field: fields)

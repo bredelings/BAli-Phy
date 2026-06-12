@@ -14,6 +14,7 @@ using std::tuple;
 
 namespace
 {
+    using record_utils::order_record_field_bindings;
     using record_utils::record_field_positions;
 
     struct RecordFieldUpdate
@@ -225,30 +226,19 @@ namespace
             return {Rec.con.loc, con};
         }
 
-        auto positions = record_field_positions(*con_info.field_names);
-        vector<optional<Hs::LExp>> fields(con_info.field_names->size());
-        set<int> used_fields;
-
-        for(auto& field: unloc(Rec.fbinds).fields)
-        {
-            auto& f = unloc(field);
-            auto field_name = unloc(f.field).name;
-            auto pos = positions.find(field_name);
-            if (pos == positions.end())
-                pos = positions.find(get_unqualified_name(field_name));
-
-            if (pos == positions.end())
+        auto fields = order_record_field_bindings<Hs::LExp>(
+            *con_info.field_names,
+            unloc(Rec.fbinds).fields,
+            [](const auto& field) { return unloc(field).value; },
+            [&](const auto& field, const auto& field_name) {
                 tc.record_error(field.loc, Note()<<"Constructor '"<<get_unqualified_name(con.name)<<"' does not have field '"<<field_name<<"'.");
-            else if (used_fields.count(pos->second))
+            },
+            [&](const auto& field, const auto& field_name) {
                 tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record construction.");
-            else if (not f.value)
+            },
+            [&](const auto& field, const auto& field_name) {
                 tc.record_error(field.loc, Note()<<"Field pun '"<<field_name<<"' was not expanded before typechecking.");
-            else
-            {
-                used_fields.insert(pos->second);
-                fields[pos->second] = *f.value;
-            }
-        }
+            });
 
         vector<Hs::LExp> args;
         for(int i=0; i<fields.size(); i++)
