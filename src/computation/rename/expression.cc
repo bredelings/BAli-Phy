@@ -255,7 +255,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         auto Rec = *rec;
         Rec.object = rename(Rec.object, bound, free_vars);
         if (unloc(Rec.fbinds).dotdot)
-            require_record_extension(*this, *unloc(Rec.fbinds).dotdot, LangExt::RecordWildCards, "RecordWildCards", "Record wildcard '..'");
+            error(*unloc(Rec.fbinds).dotdot, Note()<<"Record wildcard '..' is not allowed in record updates.");
         set<string> used_field_names;
 
         for(auto& field: unloc(Rec.fbinds).fields)

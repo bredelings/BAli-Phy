@@ -205,14 +205,16 @@ namespace
         return info;
     }
 
-    // Apply explicit and wildcard update fields to one constructor alternative.
+    // Apply explicit update fields to one constructor alternative.
     bool apply_record_update_to_constructor(
         const Hs::RecordUpdate& Rec,
         const DataConInfo& con_info,
         const std::vector<RecordFieldUpdate>& updates,
-        const std::optional<yy::location>& record_loc,
         std::vector<Hs::LExp>& args)
     {
+        if (unloc(Rec.fbinds).dotdot)
+            return false;
+
         set<int> updated_positions;
 
         for(const auto& update: updates)
@@ -222,16 +224,6 @@ namespace
                 return false;
             args[*pos] = update.value;
             updated_positions.insert(*pos);
-        }
-
-        if (unloc(Rec.fbinds).dotdot)
-        {
-            for(int i=0; i<con_info.field_names->size(); i++)
-            {
-                const auto& field_name = (*con_info.field_names)[i];
-                if (not updated_positions.count(i))
-                    args[i] = {record_loc, Hs::Var(get_unqualified_name(field_name))};
-            }
         }
 
         return true;
@@ -267,7 +259,7 @@ namespace
                     args.push_back(var);
                 }
 
-                if (not apply_record_update_to_constructor(Rec, *con_info, update_info.updates, record_loc, args))
+                if (not apply_record_update_to_constructor(Rec, *con_info, update_info.updates, args))
                     continue;
 
                 Hs::LCon head = {record_loc, Hs::Con(con_info->name, con_info->arity())};

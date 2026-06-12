@@ -7,8 +7,6 @@ import System.IO (print)
 
 data Point = Point { x :: Int, y :: Int, z :: Int }
 
-makePoint x y = Point { z = 3, .. }
+movePoint p x y = p { z = 9, .. }
 
-main = print ((x p1, y p1), z p1)
-  where
-    p1 = makePoint 1 2
+main = print (movePoint (Point 1 2 3) 4 5)
