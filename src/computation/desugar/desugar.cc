@@ -23,6 +23,18 @@ using std::deque;
 using std::pair;
 using std::tuple;
 
+namespace
+{
+    // Rebuild generated case matches from checked record-update alternatives.
+    Hs::Matches record_update_matches(const std::vector<Hs::CheckedRecordUpdateAlt>& alternatives)
+    {
+        Hs::Matches matches;
+        for(const auto& alt: alternatives)
+            matches.push_back(Hs::MRule({alt.checked_pattern}, Hs::SimpleRHS(alt.checked_rhs)));
+        return matches;
+    }
+}
+
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
 void desugared_decls::append(const desugared_decls& binds)
@@ -527,7 +539,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         if (not rec->checked_update)
             throw myexception()<<"desugar: record update was not checked before desugaring";
-        return desugar(Hs::CaseExp(rec->checked_update->object, rec->checked_update->alts));
+        return desugar(Hs::CaseExp(rec->checked_update->object, record_update_matches(rec->checked_update->alternatives)));
     }
     else if (E.is_a<Hs::Do>())
     {

@@ -1274,13 +1274,22 @@ struct Matches: public std::vector<MRule>
     using std::vector<MRule>::vector;
 };
 
+struct CheckedRecordUpdateAlt
+{
+    // Checked pattern/RHS for one generated record-update case alternative.
+    LPat checked_pattern;
+    LExp checked_rhs;
+
+    CheckedRecordUpdateAlt(const LPat& p, const LExp& r): checked_pattern(p), checked_rhs(r) {}
+};
+
 struct CheckedRecordUpdate
 {
-    // Typechecked case-shaped plan used by desugaring without replacing the source RecordUpdate node.
+    // Typechecked update plan used by desugaring without replacing the source RecordUpdate node.
     LExp object;
-    Matches alts;
+    std::vector<CheckedRecordUpdateAlt> alternatives;
 
-    CheckedRecordUpdate(const LExp& o, const Matches& as): object(o), alts(as) {}
+    CheckedRecordUpdate(const LExp& o, const std::vector<CheckedRecordUpdateAlt>& as): object(o), alternatives(as) {}
 };
 
 struct CheckedRecordCon

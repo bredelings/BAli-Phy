@@ -3,6 +3,7 @@
 #include "match.H" // for tcMatchesFun
 #include "haskell/ids.H"
 #include "computation/record_utils.H"
+#include <cassert>
 
 using std::string;
 using std::vector;
@@ -32,6 +33,7 @@ namespace
         bool valid = true;
     };
 
+    // Format the updated field names for diagnostics.
     std::string quoted_record_field_list(const std::vector<RecordFieldUpdate>& updates)
     {
         std::string fields;
@@ -42,6 +44,31 @@ namespace
             fields += "'" + updates[i].field_name + "'";
         }
         return fields;
+    }
+
+    // Rebuild generated case matches from the checked record-update alternatives.
+    Hs::Matches record_update_matches(const std::vector<Hs::CheckedRecordUpdateAlt>& alternatives)
+    {
+        Hs::Matches matches;
+        for(const auto& alt: alternatives)
+            matches.push_back(Hs::MRule({alt.checked_pattern}, Hs::SimpleRHS(alt.checked_rhs)));
+        return matches;
+    }
+
+    // Extract the checked pattern/RHS pairs after normal case-alternative typechecking.
+    std::vector<Hs::CheckedRecordUpdateAlt> checked_record_update_alternatives(
+        const Hs::Matches& checked_matches)
+    {
+        std::vector<Hs::CheckedRecordUpdateAlt> checked_alternatives;
+        for(const auto& match: checked_matches)
+        {
+            assert(match.patterns.size() == 1);
+            assert(match.rhs.guarded_rhss.size() == 1);
+            assert(match.rhs.guarded_rhss[0].guards.empty());
+            assert(not match.rhs.decls);
+            checked_alternatives.push_back({match.patterns[0], match.rhs.guarded_rhss[0].body});
+        }
+        return checked_alternatives;
     }
 
     Hs::LExp missing_record_field_exp(const std::optional<yy::location>& loc, const std::string& con_name, int field_index)
@@ -253,7 +280,7 @@ namespace
     }
 
     // Validate record update fields and expand the update into constructor-specific alternatives.
-    Hs::Matches record_update_alts(TypeChecker& tc, Hs::RecordUpdate& Rec, const Type& object_type, const std::optional<yy::location>& record_loc)
+    std::vector<Hs::CheckedRecordUpdateAlt> record_update_alternatives(TypeChecker& tc, Hs::RecordUpdate& Rec, const Type& object_type, const std::optional<yy::location>& record_loc)
     {
         auto update_info = collect_record_update_info(tc, Rec);
         if (not update_info.valid)
@@ -264,7 +291,7 @@ namespace
         if (report_ambiguous_record_updates(tc, update_info))
             return {};
 
-        vector<Located<Hs::Alt>> alts;
+        std::vector<Hs::CheckedRecordUpdateAlt> alternatives;
         if (update_info.constructors)
         {
             for(const auto& con_name: *update_info.constructors)
@@ -289,12 +316,12 @@ namespace
 
                 Hs::LCon head = {record_loc, Hs::Con(con_info->name, con_info->arity())};
                 Hs::LPat pattern = {record_loc, Hs::ConPattern(head, patterns)};
-                auto rhs = Hs::SimpleRHS(Hs::apply({record_loc, unloc(head)}, args));
-                alts.push_back({record_loc, Hs::Alt(pattern, rhs)});
+                auto rhs = Hs::apply({record_loc, unloc(head)}, args);
+                alternatives.push_back({pattern, rhs});
             }
         }
 
-        if (alts.empty())
+        if (alternatives.empty())
         {
             auto fields = quoted_record_field_list(update_info.updates);
             auto type_text = show_type_plain(object_type);
@@ -304,7 +331,7 @@ namespace
                 tc.record_error(record_loc, Note()<<"Empty record update.");
         }
 
-        return Hs::CaseExp(Rec.object, Hs::Alts(alts)).alts;
+        return alternatives;
     }
 
     // Validate record construction fields and place them in constructor order.
@@ -697,9 +724,12 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
     {
         auto Rec = *rec;
         auto object_type = inferRho(Rec.object);
-        auto alts = record_update_alts(*this, Rec, object_type, Rec.object.loc * Rec.fbinds.loc);
+        auto alternatives = record_update_alternatives(*this, Rec, object_type, Rec.object.loc * Rec.fbinds.loc);
+        auto alts = record_update_matches(alternatives);
         tcCaseAlts(alts, object_type, exp_type);
-        Rec.checked_update = std::make_shared<Hs::CheckedRecordUpdate>(Rec.object, alts);
+        Rec.checked_update = std::make_shared<Hs::CheckedRecordUpdate>(
+            Rec.object,
+            checked_record_update_alternatives(alts));
         E = Rec;
     }
     // APP
