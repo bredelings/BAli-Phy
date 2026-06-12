@@ -2368,6 +2368,13 @@ namespace
         return fields;
     }
 
+    FieldSelectorStatus merge_field_selector_status(FieldSelectorStatus status1, FieldSelectorStatus status2)
+    {
+        if (status1 == FieldSelectorStatus::SourceHidden or status2 == FieldSelectorStatus::SourceHidden)
+            return FieldSelectorStatus::SourceHidden;
+        return FieldSelectorStatus::SourceVisible;
+    }
+
     // Merge duplicate field metadata from local and imported sources by field/type identity.
     void merge_record_field_candidate(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const FieldInfo& field_info)
     {
@@ -2376,6 +2383,7 @@ namespace
         if (inserted)
             return;
 
+        iter->second.selector_status = merge_field_selector_status(iter->second.selector_status, field_info.selector_status);
         for(int i=0; i<field_info.constructors.size(); i++)
         {
             const auto& constructor = field_info.constructors[i];
@@ -2518,7 +2526,8 @@ std::map<std::string, FieldInfo> Module::local_synthesizable_record_fields() con
         if (auto data = type->is_data())
         {
             for(const auto& [_, field]: data->field_info)
-                merge_record_field_candidate(fields_by_label[field.name], field);
+                if (source_visible_selector(field))
+                    merge_record_field_candidate(fields_by_label[field.name], field);
         }
         else if (auto data_fam = type->is_data_fam())
         {
@@ -2527,7 +2536,8 @@ std::map<std::string, FieldInfo> Module::local_synthesizable_record_fields() con
             // concrete data-instance metadata and use family metadata only as
             // a fallback until record selectors get a richer representation.
             for(const auto& [_, field]: data_fam->field_info)
-                merge_record_field_candidate(fields_by_label[field.name], field);
+                if (source_visible_selector(field))
+                    merge_record_field_candidate(fields_by_label[field.name], field);
         }
     }
 
@@ -2771,6 +2781,9 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         auto& field = fields[qualified_field_name];
         field.name = qualified_field_name;
         field.parent_type = qualify_local_name(owner_name);
+        field.selector_status = language_extensions.has_extension(LangExt::FieldSelectors)
+            ? FieldSelectorStatus::SourceVisible
+            : FieldSelectorStatus::SourceHidden;
         field.constructors.push_back(qualify_local_name(constructor_name));
         field.positions.push_back(position);
     };
