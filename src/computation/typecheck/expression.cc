@@ -102,7 +102,7 @@ namespace
         set<string> used_field_names;
         vector<pair<string,Hs::LExp>> updates;
 
-        for(auto& field: unloc(Rec.fbinds))
+        for(auto& field: unloc(Rec.fbinds).fields)
         {
             auto& f = unloc(field);
             auto field_name = unloc(f.field).name;
@@ -222,7 +222,7 @@ namespace
         vector<optional<Hs::LExp>> fields(con_info.field_names->size());
         set<int> used_fields;
 
-        for(auto& field: unloc(Rec.fbinds))
+        for(auto& field: unloc(Rec.fbinds).fields)
         {
             auto& f = unloc(field);
             auto field_name = unloc(f.field).name;

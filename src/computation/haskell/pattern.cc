@@ -186,7 +186,7 @@ std::set<LVar> vars_in_pattern(const LPat& lpat)
     else if (auto r = pat.to<RecordPattern>())
     {
         LPats field_patterns;
-        for(auto& field: unloc(r->fbinds))
+        for(auto& field: unloc(r->fbinds).fields)
             field_patterns.push_back(unloc(field).pattern);
         return vars_in_patterns(field_patterns);
     }

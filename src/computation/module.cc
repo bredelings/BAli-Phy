@@ -1748,7 +1748,7 @@ bool Module::is_refutable_pattern(const Hs::LPat& lpat) const
     else if (auto rec_pat = pat.to<Hs::RecordPattern>())
     {
         Hs::LPats field_patterns;
-        for(auto& field: unloc(rec_pat->fbinds))
+        for(auto& field: unloc(rec_pat->fbinds).fields)
             field_patterns.push_back(unloc(field).pattern);
         return constructor_is_refutable(rec_pat->head, field_patterns);
     }

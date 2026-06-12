@@ -36,7 +36,7 @@ namespace
     // Convert expression-form record field values into expression-category syntax.
     Located<Hs::FieldBindings> disambiguate_field_bindings(Located<Hs::FieldBindings> fields)
     {
-        for(auto& lfield: unloc(fields))
+        for(auto& lfield: unloc(fields).fields)
         {
             auto& field = unloc(lfield);
             if (field.value)
@@ -52,7 +52,7 @@ namespace
         Hs::PatternFieldBindings pattern_fields;
         pattern_fields.dotdot = fields.dotdot;
 
-        for(const auto& lfield: fields)
+        for(const auto& lfield: fields.fields)
         {
             const auto& field = unloc(lfield);
             Hs::LPat pattern;
@@ -60,7 +60,7 @@ namespace
                 pattern = disambiguate_pattern(*field.value);
             else
                 pattern = record_field_pun_pattern(field.field);
-            pattern_fields.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern)});
+            pattern_fields.fields.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern)});
         }
 
         return pattern_fields;

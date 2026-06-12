@@ -2,7 +2,9 @@
 #define HASKELL_H
 
 #include <string>
+#include <optional>
 #include <utility>
+#include <vector>
 #include <variant>
 #include <map>
 #include <set>
@@ -282,13 +284,33 @@ struct FieldBinding: public Object
     FieldBinding(const LVar& lv, const LExp& le):field(lv),value(le) {}
 };
 
-struct FieldBindings: public Object, std::vector<Located<FieldBinding>>
+template<class Field>
+struct RecordFieldBindings: public Object
 {
-    bool dotdot = false;
+    std::vector<Located<Field>> fields;
+    std::optional<yy::location> dotdot;
 
-    FieldBindings* clone() const { return new FieldBindings(*this);}
-    std::string print() const;
+    RecordFieldBindings* clone() const { return new RecordFieldBindings(*this);}
+    std::string print() const
+    {
+        std::string result;
+        for(const auto& binding: fields)
+        {
+            if (not result.empty())
+                result += ",";
+            result += binding.print();
+        }
+        if (dotdot)
+        {
+            if (not result.empty())
+                result += ",";
+            result += "..";
+        }
+        return result;
+    }
 };
+
+using FieldBindings = RecordFieldBindings<FieldBinding>;
 
 // Parsed record braces before context decides construction, update, or pattern.
 
@@ -341,13 +363,7 @@ struct PatternFieldBinding
     PatternFieldBinding(const LVar& lv, const LPat& lp):field(lv),pattern(lp) {}
 };
 
-struct PatternFieldBindings: public Object, std::vector<Located<PatternFieldBinding>>
-{
-    bool dotdot = false;
-
-    PatternFieldBindings* clone() const { return new PatternFieldBindings(*this);}
-    std::string print() const;
-};
+using PatternFieldBindings = RecordFieldBindings<PatternFieldBinding>;
 
 struct RecordPattern: public Object
 {

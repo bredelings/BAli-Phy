@@ -1405,9 +1405,9 @@ qual: bindpat "<-" exp  {$$ = {@$, Hs::PatQual($1,$3)};}
 fbinds: fbinds1         {$$ = $1;}
 |       %empty          {}
 
-fbinds1: fbind "," fbinds1  {$$ = $3; unloc($$).insert(unloc($$).begin(), *$1); $$.loc = @$;}
-|        fbind              {unloc($$).push_back(*$1); $$.loc = @$;}
-|        ".."               {unloc($$).dotdot = true; $$.loc = @$;}
+fbinds1: fbind "," fbinds1  {$$ = $3; unloc($$).fields.insert(unloc($$).fields.begin(), *$1); $$.loc = @$;}
+|        fbind              {unloc($$).fields.push_back(*$1); $$.loc = @$;}
+|        ".."               {unloc($$).dotdot = @$; $$.loc = @$;}
 
 fbind: qvar "=" texp        {$$ = {{@$, Hs::FieldBinding({@$,Hs::Var($1)}, $3)}};}
 |      qvar                 {$$ = {{@$, Hs::FieldBinding({@$,Hs::Var($1)})}};}

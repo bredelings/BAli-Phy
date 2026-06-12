@@ -248,7 +248,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         Rec.object = rename(Rec.object, bound, free_vars);
         set<string> used_field_names;
 
-        for(auto& field: unloc(Rec.fbinds))
+        for(auto& field: unloc(Rec.fbinds).fields)
         {
             auto& f = unloc(field);
             auto field_name = unloc(f.field).name;
@@ -284,7 +284,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                 Con.arity = S->arity;
                 Rec.con = {Rec.con.loc, Con};
 
-                for(auto& field: unloc(Rec.fbinds))
+                for(auto& field: unloc(Rec.fbinds).fields)
                 {
                     auto& f = unloc(field);
                     auto value = f.value ? *f.value : record_field_pun_exp(f.field);

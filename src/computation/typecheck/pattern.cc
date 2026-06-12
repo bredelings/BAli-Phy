@@ -28,7 +28,7 @@ namespace
         if (not con_info.field_names)
         {
             tc.record_error(lpat.loc, Note()<<"Constructor '"<<get_unqualified_name(con.name)<<"' is not a record constructor in pattern '"<<pattern_text<<"'.");
-            for(auto& field: unloc(Rec.fbinds))
+            for(auto& field: unloc(Rec.fbinds).fields)
                 invalid_field_patterns.push_back(unloc(field).pattern);
             return {{lpat.loc, Hs::WildcardPattern()}, invalid_field_patterns};
         }
@@ -40,7 +40,7 @@ namespace
         if (unloc(Rec.fbinds).dotdot)
             tc.record_error(lpat.loc, Note()<<"Record wildcards in patterns are not implemented yet.");
 
-        for(auto& field: unloc(Rec.fbinds))
+        for(auto& field: unloc(Rec.fbinds).fields)
         {
             auto& f = unloc(field);
             auto field_name = unloc(f.field).name;
@@ -413,7 +413,7 @@ rename_pattern_from_bindinfo(Hs::LPat lpat, const map<Hs::Var, Hs::BindInfo>& bi
     {
         auto Rec = *rec;
 
-        for(auto& field: unloc(Rec.fbinds))
+        for(auto& field: unloc(Rec.fbinds).fields)
             unloc(field).pattern = rename_pattern_from_bindinfo(unloc(field).pattern, bind_info);
 
         pat = Rec;
