@@ -23,6 +23,12 @@ namespace
         Hs::LExp value;
     };
 
+    struct RecordUpdateInfo
+    {
+        std::optional<std::set<std::string>> constructors;
+        std::vector<RecordFieldUpdate> updates;
+    };
+
     Hs::LExp missing_record_field_exp(const std::optional<yy::location>& loc, const std::string& con_name, int field_index)
     {
         auto message = "Missing field " + std::to_string(field_index + 1) + " in record construction for constructor '" + get_unqualified_name(con_name) + "'";
@@ -106,12 +112,11 @@ namespace
         return constructors;
     }
 
-    // Validate record update fields and expand the update into constructor-specific alternatives.
-    Hs::Matches record_update_alts(TypeChecker& tc, Hs::RecordUpdate& Rec, const Type& object_type, const std::optional<yy::location>& record_loc)
+    // Resolve update field labels and collect the constructors that can contain all explicit fields.
+    RecordUpdateInfo collect_record_update_info(TypeChecker& tc, Hs::RecordUpdate& Rec)
     {
-        std::optional<std::set<std::string>> constructors;
+        RecordUpdateInfo info;
         set<string> used_field_names;
-        vector<RecordFieldUpdate> updates;
 
         for(auto& field: unloc(Rec.fbinds).fields)
         {
@@ -141,21 +146,61 @@ namespace
             auto field_constructors = constructors_for_record_field_candidates(field_candidates);
             if (field_constructors.empty() and not lookup_failed)
                 tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
-            constructors = intersect_constructors(constructors, field_constructors);
+            info.constructors = intersect_constructors(info.constructors, field_constructors);
 
             if (not f.value)
                 tc.record_error(field.loc, Note()<<"Field pun '"<<field_name<<"' was not expanded before typechecking.");
             else if (not field_candidates.empty())
-                updates.push_back({field_candidates, *f.value});
+                info.updates.push_back({field_candidates, *f.value});
         }
 
+        return info;
+    }
+
+    // Apply explicit and wildcard update fields to one constructor alternative.
+    bool apply_record_update_to_constructor(
+        const Hs::RecordUpdate& Rec,
+        const DataConInfo& con_info,
+        const std::vector<RecordFieldUpdate>& updates,
+        const std::optional<yy::location>& record_loc,
+        std::vector<Hs::LExp>& args)
+    {
+        set<int> updated_positions;
+
+        for(const auto& update: updates)
+        {
+            auto pos = record_field_position_for_constructor(update.candidates, con_info.name);
+            if (not pos)
+                return false;
+            args[*pos] = update.value;
+            updated_positions.insert(*pos);
+        }
+
+        if (unloc(Rec.fbinds).dotdot)
+        {
+            for(int i=0; i<con_info.field_names->size(); i++)
+            {
+                const auto& field_name = (*con_info.field_names)[i];
+                if (not updated_positions.count(i))
+                    args[i] = {record_loc, Hs::Var(get_unqualified_name(field_name))};
+            }
+        }
+
+        return true;
+    }
+
+    // Validate record update fields and expand the update into constructor-specific alternatives.
+    Hs::Matches record_update_alts(TypeChecker& tc, Hs::RecordUpdate& Rec, const Type& object_type, const std::optional<yy::location>& record_loc)
+    {
+        auto update_info = collect_record_update_info(tc, Rec);
+
         if (auto type_constructors = constructors_for_record_type(tc, object_type))
-            constructors = intersect_constructors(constructors, *type_constructors);
+            update_info.constructors = intersect_constructors(update_info.constructors, *type_constructors);
 
         vector<Located<Hs::Alt>> alts;
-        if (constructors)
+        if (update_info.constructors)
         {
-            for(const auto& con_name: *constructors)
+            for(const auto& con_name: *update_info.constructors)
             {
                 auto con_info = tc.this_mod().constructor_info(con_name);
                 if (not con_info or not con_info->field_names)
@@ -163,8 +208,6 @@ namespace
 
                 vector<Hs::LExp> args;
                 Hs::LPats patterns;
-                set<int> updated_positions;
-                bool constructor_has_all_fields = true;
 
                 for(int i=0; i<con_info->arity(); i++)
                 {
@@ -174,29 +217,7 @@ namespace
                     args.push_back(var);
                 }
 
-                for(const auto& update: updates)
-                {
-                    auto pos = record_field_position_for_constructor(update.candidates, con_info->name);
-                    if (not pos)
-                    {
-                        constructor_has_all_fields = false;
-                        break;
-                    }
-                    args[*pos] = update.value;
-                    updated_positions.insert(*pos);
-                }
-
-                if (unloc(Rec.fbinds).dotdot)
-                {
-                    for(int i=0; i<con_info->field_names->size(); i++)
-                    {
-                        const auto& field_name = (*con_info->field_names)[i];
-                        if (not updated_positions.count(i))
-                            args[i] = {record_loc, Hs::Var(get_unqualified_name(field_name))};
-                    }
-                }
-
-                if (not constructor_has_all_fields)
+                if (not apply_record_update_to_constructor(Rec, *con_info, update_info.updates, record_loc, args))
                     continue;
 
                 Hs::LCon head = {record_loc, Hs::Con(con_info->name, con_info->arity())};
