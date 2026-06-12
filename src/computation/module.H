@@ -138,8 +138,6 @@ public:
     std::vector<FieldInfo> lookup_record_field_candidates(const std::string& field_name) const;
     std::vector<FieldInfo> record_field_candidates_for_resolved_name(const std::string& field_name) const;
 
-    std::set<std::string> constructors_for_record_field(const std::string& field_name) const;
-
     /// Add a function
     void def_function(const std::string& name);
     /// Add a function
@@ -319,8 +317,6 @@ public:
 
     std::vector<FieldInfo> lookup_record_field_candidates(const std::string& field_name) const;
     std::vector<FieldInfo> record_field_candidates_for_resolved_name(const std::string& field_name) const;
-
-    std::set<std::string> constructors_for_record_field(const std::string& field_name) const;
 
     void finish_value_decls( const Core::Decls<>& decls );
 

@@ -362,7 +362,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 				if (m2_exported_values.contains(name))
 				    import_symbol(m2_exported_values.at( name ), modid, qualified);
 			    }
-                            for(const auto& [_, field]: d->field_info)
+                            for(const auto& field: record_fields_for_type(*type))
                             {
                                 auto name = get_unqualified_name(field.name);
                                 if (m2_exported_values.contains(name))
@@ -379,7 +379,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not ranges::any_of(d->field_info, [&](const auto& field) { return field.first == type_modid + "." + name or get_unqualified_name(field.first) == name; }))
+                                if (is_haskell_varid(name) and not type_has_record_field(*type, name))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`"));
                                     continue;
@@ -405,7 +405,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
 				if (m2_exported_values.contains(name))
 				    import_symbol(m2_exported_values.at( name ), modid, qualified);
 			    }
-                            for(const auto& [_, field]: d->field_info)
+                            for(const auto& field: record_fields_for_type(*type))
                             {
                                 auto name = get_unqualified_name(field.name);
                                 if (m2_exported_values.contains(name))
@@ -422,7 +422,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data family `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not ranges::any_of(d->field_info, [&](const auto& field) { return field.first == type_modid + "." + name or get_unqualified_name(field.first) == name; }))
+                                if (is_haskell_varid(name) and not type_has_record_field(*type, name))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data family `"<<id<<"`"));
                                     continue;
@@ -1278,14 +1278,14 @@ void Module::perform_exports()
                         {
                             for(auto& constructor: d->constructors)
                                 export_symbol(lookup_symbol(constructor));
-                            for(const auto& [_, field]: d->field_info)
+                            for(const auto& field: record_fields_for_type(*t))
                                 export_symbol(lookup_symbol(field.name));
                         }
                         else if (auto d = t->is_data_fam())
                         {
                             for(auto& constructor: d->constructors)
                                 export_symbol(lookup_symbol(constructor));
-                            for(const auto& [_, field]: d->field_info)
+                            for(const auto& field: record_fields_for_type(*t))
                                 export_symbol(lookup_symbol(field.name));
                         }
                     }
@@ -1312,7 +1312,7 @@ void Module::perform_exports()
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data type `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not ranges::any_of(d->field_info, [&](const auto& field) { return field.first == qualified_name or get_unqualified_name(field.first) == name; }))
+                                if (is_haskell_varid(name) and not type_has_record_field(*t, name))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data type `"<<id<<"`") );
                                     continue;
@@ -1331,7 +1331,7 @@ void Module::perform_exports()
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a constructor for data family `"<<id<<"`"));
                                     continue;
                                 }
-                                if (is_haskell_varid(name) and not ranges::any_of(d->field_info, [&](const auto& field) { return field.first == qualified_name or get_unqualified_name(field.first) == name; }))
+                                if (is_haskell_varid(name) and not type_has_record_field(*t, name))
                                 {
                                     messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a field for data family `"<<id<<"`") );
                                     continue;
@@ -2279,20 +2279,9 @@ namespace
     void add_record_field_candidates(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const std::map<std::string, type_ptr>& types, const std::string& resolved_field_name)
     {
         for(const auto& [_, type]: types)
-        {
-            if (auto data = type->is_data())
-            {
-                auto field = data->field_info.find(resolved_field_name);
-                if (field != data->field_info.end())
-                    merge_record_field_candidate(candidates, field->second);
-            }
-            else if (auto data_fam = type->is_data_fam())
-            {
-                auto field = data_fam->field_info.find(resolved_field_name);
-                if (field != data_fam->field_info.end())
-                    merge_record_field_candidate(candidates, field->second);
-            }
-        }
+            for(const auto& field: record_fields_for_type_info(*type))
+                if (field.name == resolved_field_name)
+                    merge_record_field_candidate(candidates, field);
     }
 
     void add_record_field_candidates(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const std::vector<FieldInfo>& fields)
@@ -2301,24 +2290,6 @@ namespace
             merge_record_field_candidate(candidates, field);
     }
 
-    void add_record_field_constructors(std::set<std::string>& constructors, const std::map<std::string, type_ptr>& types, const std::string& field_name)
-    {
-        for(const auto& [_, type]: types)
-        {
-            if (auto data = type->is_data())
-            {
-                for(const auto& [declared_field, field_info]: data->field_info)
-                    if (record_field_name_matches(declared_field, field_name))
-                        constructors.insert(field_info.constructors.begin(), field_info.constructors.end());
-            }
-            else if (auto data_fam = type->is_data_fam())
-            {
-                for(const auto& [declared_field, field_info]: data_fam->field_info)
-                    if (record_field_name_matches(declared_field, field_name))
-                        constructors.insert(field_info.constructors.begin(), field_info.constructors.end());
-            }
-        }
-    }
 }
 
 std::vector<FieldInfo> Module::record_fields_for_type(const type_info& type) const
@@ -2382,18 +2353,6 @@ std::vector<FieldInfo> Module::record_field_candidates_for_resolved_name(const s
     return fields;
 }
 
-std::set<std::string> Module::constructors_for_record_field(const std::string& field_name) const
-{
-    std::set<std::string> constructors;
-    add_record_field_constructors(constructors, types, field_name);
-    for(const auto& [_, mod]: transitively_imported_modules)
-    {
-        auto imported_constructors = mod->constructors_for_record_field(field_name);
-        constructors.insert(imported_constructors.begin(), imported_constructors.end());
-    }
-    return constructors;
-}
-
 std::vector<FieldInfo> CompiledModule::lookup_record_field_candidates(const std::string& field_name) const
 {
     auto S = lookup_symbol(field_name);
@@ -2414,15 +2373,6 @@ std::vector<FieldInfo> CompiledModule::record_field_candidates_for_resolved_name
     for(auto& [_, field]: candidates)
         fields.push_back(field);
     return fields;
-}
-
-std::set<std::string> CompiledModule::constructors_for_record_field(const std::string& field_name) const
-{
-    std::set<std::string> constructors;
-    add_record_field_constructors(constructors, types, field_name);
-    for(const auto& [_, mod]: transitively_imported_modules_)
-        add_record_field_constructors(constructors, mod->types, field_name);
-    return constructors;
 }
 
 // Here we do only phase 1 -- we only parse the decls enough to
@@ -2562,20 +2512,9 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
     auto record_field_owner = [&](const string& field_name) -> optional<string>
     {
         for(const auto& [_, type]: types)
-        {
-            if (auto data = type->is_data())
-            {
-                for(const auto& [declared_field, field_info]: data->field_info)
-                    if (record_field_name_matches(declared_field, field_name))
-                        return field_info.parent_type;
-            }
-            else if (auto data_fam = type->is_data_fam())
-            {
-                for(const auto& [declared_field, field_info]: data_fam->field_info)
-                    if (record_field_name_matches(declared_field, field_name))
-                        return field_info.parent_type;
-            }
-        }
+            for(const auto& field_info: record_fields_for_type_info(*type))
+                if (record_field_name_matches(field_info.name, field_name))
+                    return field_info.parent_type;
         return {};
     };
 
