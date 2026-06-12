@@ -396,7 +396,15 @@ void TypeChecker::tcRho(Hs::Var& x, const Expected& exp_type)
         sigma = *sigma_ptr;
     // x should be in the global type environment
     else if (auto S = this_mod().lookup_resolved_symbol(x.name))
-        sigma = S->type;
+    {
+        if (S->record_selector and S->record_selector->callability == RecordSelectorCallability::Naughty)
+        {
+            record_error(Note()<<"Cannot use record selector '"<<get_unqualified_name(x.name)<<"' as a function because its type would mention escaped type variables.");
+            sigma = fresh_meta_type_var(kind_type());
+        }
+        else
+            sigma = S->type;
+    }
     else
         throw note_exception()<<"infer_type: can't find type of variable '"<<x.print()<<"'";
 

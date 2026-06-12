@@ -106,6 +106,30 @@ namespace
         return range(context);
     }
 
+    // Decide if one constructor's field can contribute to a callable selector.
+    bool record_selector_field_is_naughty(const DataConInfo& con_info, int field_index)
+    {
+        auto ftvs = free_type_variables(con_info.field_types[field_index]);
+        for(const auto& tv: con_info.exi_tvs)
+            if (ftvs.count(tv))
+                return true;
+        return false;
+    }
+
+    // Find the position of a field in a constructor's checked record layout.
+    std::optional<int> record_selector_field_position(const DataConInfo& con_info, const std::string& field_name)
+    {
+        if (not con_info.field_names)
+            return {};
+
+        auto unqualified_field_name = get_unqualified_name(field_name);
+        for(int i=0; i<con_info.field_names->size(); ++i)
+            if (get_unqualified_name((*con_info.field_names)[i]) == unqualified_field_name)
+                return i;
+
+        return {};
+    }
+
 }
 
 // Lower GADT record-field syntax into ordinary function arguments for checking.
@@ -761,5 +785,55 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
             assert(not C->con_info);
             C->con_info = std::make_shared<DataConInfo>(con_info);
         }
+    }
+}
+
+void TypeChecker::classify_record_selectors()
+{
+    for(auto& selector: this_mod().local_record_selectors())
+    {
+        auto& info = *selector->record_selector;
+        auto type = this_mod().lookup_local_type(info.parent_type);
+        assert(type);
+
+        Type first_field_type;
+        Type first_result_type;
+        bool saw_field = false;
+        bool naughty = false;
+
+        for(const auto& field: this_mod().record_fields_for_type(*type))
+        {
+            if (field.name != info.field_name)
+                continue;
+
+            assert(field.constructors.size() == field.positions.size());
+            for(const auto& con_name: field.constructors)
+            {
+                auto con_info = this_mod().constructor_info(con_name);
+                assert(con_info);
+
+                auto field_index = record_selector_field_position(*con_info, info.field_name);
+                assert(field_index);
+
+                if (record_selector_field_is_naughty(*con_info, *field_index))
+                    naughty = true;
+
+                auto field_type = con_info->field_types[*field_index];
+                auto result_type = con_info->result_type();
+                if (not saw_field)
+                {
+                    first_field_type = field_type;
+                    first_result_type = result_type;
+                    saw_field = true;
+                }
+                else if (not same_type(first_field_type, field_type) or not same_type(first_result_type, result_type))
+                    naughty = true;
+            }
+        }
+
+        assert(saw_field);
+        info.callability = naughty ? RecordSelectorCallability::Naughty : RecordSelectorCallability::Callable;
+        if (naughty)
+            selector->type = TypeCon("()");
     }
 }

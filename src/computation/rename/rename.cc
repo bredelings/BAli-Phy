@@ -49,28 +49,41 @@ namespace
             Hs::LPats pats(arity, {noloc, Hs::WildcardPattern()});
             unloc(pats[position]) = Hs::VarPattern({noloc, Hs::Var(selector_name)});
 
-            Hs::LPat pattern = {noloc, Hs::ConPattern({noloc, Hs::Con(get_unqualified_name(constructor_name), arity)}, pats)};
+            Hs::LPat pattern = {noloc, Hs::ConPattern({noloc, Hs::Con(constructor_name, arity)}, pats)};
             auto rhs = Haskell::SimpleRHS({noloc, Hs::Var(selector_name)});
             alts.push_back({noloc, {pattern, rhs}});
         }
 
         Hs::Var arg("v$0");
+        Hs::LPat arg_pat = {noloc, Hs::VarPattern({noloc, arg})};
         expression_ref body = Haskell::CaseExp({noloc, arg}, Haskell::Alts(alts));
-        expression_ref lambda = Haskell::LambdaExp({{noloc, arg}}, {noloc, body});
+        expression_ref lambda = Haskell::LambdaExp({arg_pat}, {noloc, body});
         return lambda;
+    }
+
+    // Generate selector declarations after renaming, using already-qualified names.
+    Hs::Decls synthesize_field_accessors(const Module& m)
+    {
+        Hs::Decls decls;
+        for(const auto& [_, field]: m.local_synthesizable_record_fields())
+        {
+            auto selector = m.lookup_resolved_symbol(field.name);
+            assert(selector and selector->record_selector);
+            if (selector->record_selector->callability == RecordSelectorCallability::Naughty)
+                continue;
+
+            Hs::LVar lhs = {noloc, Hs::Var(field.name)};
+            auto rhs = Hs::LExp{noloc, synthesize_field_accessor(m, field)};
+            decls.push_back({noloc, Haskell::simple_decl(lhs, rhs)});
+        }
+
+        return decls;
     }
 }
 
-Hs::Decls synthesize_field_accessors(const Module& m)
+Hs::Decls synthesize_renamed_field_accessors(const Module& m)
 {
-    Hs::Decls decls;
-    for(const auto& [_, field]: m.local_synthesizable_record_fields())
-    {
-        auto field_name = get_unqualified_name(field.name);
-        decls.push_back({noloc, Haskell::ValueDecl({noloc, Hs::Var(field_name)}, synthesize_field_accessor(m, field))});
-    }
-
-    return decls;
+    return synthesize_field_accessors(m);
 }
 
 // 1. The primary purpose of the rename pass is to convert identifiers to (possibly qualified) vars.

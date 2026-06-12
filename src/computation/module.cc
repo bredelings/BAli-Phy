@@ -990,21 +990,15 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym, def_type_family
     MM->add_local_symbols(M.type_decls);
 
-    if (MM->language_extensions.has_extension(LangExt::FieldSelectors))
-    {
-        auto field_accessors = synthesize_field_accessors(*MM);
-        M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
-    }
+    for(const auto& [_, field]: MM->local_synthesizable_record_fields())
+        MM->def_record_selector(field);
 
     // Disambiguate parsed syntax after local type symbols are available, so
-    // synthetic selectors participate in the same classification pass.
+    // record field metadata is available for constructor-directed resolution.
     M = disambiguate_module(M);
 
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym, def_type_family
     MM->add_local_symbols(M.value_decls[0]);
-
-    for(const auto& [_, field]: MM->local_synthesizable_record_fields())
-        MM->mark_record_selector(field);
 
     for(auto& f: M.foreign_decls)
         MM->def_function( unloc(f.function).name );
@@ -2551,6 +2545,16 @@ std::map<std::string, FieldInfo> Module::local_synthesizable_record_fields() con
     return fields;
 }
 
+std::vector<symbol_ptr> Module::local_record_selectors()
+{
+    // Return local selector symbols whose callability is computed after constructor typechecking.
+    std::vector<symbol_ptr> selectors;
+    for(auto& [_, symbol]: symbols)
+        if (symbol->record_selector)
+            selectors.push_back(symbol);
+    return selectors;
+}
+
 std::vector<FieldInfo> Module::lookup_record_field_candidates(const std::string& field_name) const
 {
     std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
@@ -2769,6 +2773,13 @@ void Module::mark_record_selector(const FieldInfo& field)
         throw myexception()<<"Could not mark record selector '"<<selector_name<<"' because it is not a value symbol.";
 
     selector.record_selector = RecordSelectorInfo{field.name, field.parent_type};
+}
+
+void Module::def_record_selector(const FieldInfo& field)
+{
+    // Declare the selector name early while leaving its body to be generated after renaming.
+    def_function(get_unqualified_name(field.name));
+    mark_record_selector(field);
 }
 
 void Module::add_local_symbols(const Hs::Decls& topdecls)

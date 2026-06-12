@@ -312,6 +312,8 @@ public:
 
     void get_constructor_info(const Hs::Decls& decls);
 
+    void classify_record_selectors();
+
     const TypeSynonymInfo* maybe_find_type_synonym(const Type& type) const;
 
     std::optional<Type> expand_type_synonym(const Type& type) const;

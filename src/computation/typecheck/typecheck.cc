@@ -1,5 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
+#include "rename/rename.H"
 
 #include <set>
 
@@ -1482,6 +1483,16 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
 
     // 6. Get types for value constructors  (CVE_T = constructor types)
     get_constructor_info(M.type_decls);
+
+    // 6a. Record selectors need constructor metadata before we can decide if they are callable.
+    classify_record_selectors();
+    auto field_accessors = synthesize_renamed_field_accessors(this_mod());
+    if (not field_accessors.empty())
+    {
+        if (M.value_decls.empty())
+            M.value_decls.push_back({});
+        M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
+    }
 
     // 6b. Refine inferred type roles with source role annotations.
     apply_source_role_annotations(M.type_decls);

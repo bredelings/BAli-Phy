@@ -1,0 +1,2 @@
+   • Cannot use record selector 'value' as a function because its type would
+     mention escaped type variables.

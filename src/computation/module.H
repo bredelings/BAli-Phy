@@ -138,6 +138,7 @@ public:
     std::vector<FieldInfo> record_fields_for_type(const type_info& type) const;
     bool type_has_record_field(const type_info& type, const std::string& field_name) const;
     std::map<std::string, FieldInfo> local_synthesizable_record_fields() const;
+    std::vector<symbol_ptr> local_record_selectors();
 
     std::vector<FieldInfo> lookup_record_field_candidates(const std::string& field_name) const;
     std::vector<FieldInfo> record_field_candidates_for_resolved_name(const std::string& field_name) const;
@@ -150,6 +151,9 @@ public:
 
     /// Mark an already declared generated function as a record selector.
     void mark_record_selector(const FieldInfo& field);
+
+    /// Declare a generated record selector function and attach its field identity.
+    void def_record_selector(const FieldInfo& field);
 
     /// Add a constructor
     void def_constructor(const std::string& name, int arity, const std::string& type_name);
