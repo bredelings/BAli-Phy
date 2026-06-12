@@ -1,1 +1,2 @@
-   • No record constructor has all fields used in this update.
+   • No constructor for type 'Foreign' has all fields used in this update:
+     'x'.

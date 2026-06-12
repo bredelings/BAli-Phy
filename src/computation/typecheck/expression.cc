@@ -29,7 +29,20 @@ namespace
     {
         std::optional<std::set<std::string>> constructors;
         std::vector<RecordFieldUpdate> updates;
+        bool valid = true;
     };
+
+    std::string quoted_record_field_list(const std::vector<RecordFieldUpdate>& updates)
+    {
+        std::string fields;
+        for(int i=0; i<updates.size(); i++)
+        {
+            if (i)
+                fields += ", ";
+            fields += "'" + updates[i].field_name + "'";
+        }
+        return fields;
+    }
 
     Hs::LExp missing_record_field_exp(const std::optional<yy::location>& loc, const std::string& con_name, int field_index)
     {
@@ -172,7 +185,10 @@ namespace
             auto field_name = unloc(f.field).name;
             auto field_key = get_unqualified_name(field_name);
             if (used_field_names.count(field_key))
+            {
                 tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
+                info.valid = false;
+            }
             used_field_names.insert(field_key);
 
             std::vector<FieldInfo> field_candidates;
@@ -189,15 +205,22 @@ namespace
                     tc.record_error(field.loc, Note()<<lookup_message);
                 else
                     tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
+                info.valid = false;
             }
 
             auto field_constructors = constructors_for_record_field_candidates(field_candidates);
             if (field_constructors.empty() and not lookup_failed)
+            {
                 tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
+                info.valid = false;
+            }
             info.constructors = intersect_constructors(info.constructors, field_constructors);
 
             if (not f.value)
+            {
                 tc.record_error(field.loc, Note()<<"Field pun '"<<field_name<<"' was not expanded before typechecking.");
+                info.valid = false;
+            }
             else if (not field_candidates.empty())
                 info.updates.push_back({field.loc, field_name, field_candidates, *f.value});
         }
@@ -233,6 +256,8 @@ namespace
     Hs::Matches record_update_alts(TypeChecker& tc, Hs::RecordUpdate& Rec, const Type& object_type, const std::optional<yy::location>& record_loc)
     {
         auto update_info = collect_record_update_info(tc, Rec);
+        if (not update_info.valid)
+            return {};
 
         if (auto type_constructors = constructors_for_record_type(tc, object_type))
             update_info.constructors = intersect_constructors(update_info.constructors, *type_constructors);
@@ -270,7 +295,14 @@ namespace
         }
 
         if (alts.empty())
-            tc.record_error(record_loc, Note()<<"No record constructor has all fields used in this update.");
+        {
+            auto fields = quoted_record_field_list(update_info.updates);
+            auto type_text = show_type_plain(object_type);
+            if (not fields.empty())
+                tc.record_error(record_loc, Note()<<"No constructor for type '"<<type_text<<"' has all fields used in this update: "<<fields<<".");
+            else
+                tc.record_error(record_loc, Note()<<"Empty record update.");
+        }
 
         return Hs::CaseExp(Rec.object, Hs::Alts(alts)).alts;
     }

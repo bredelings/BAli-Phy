@@ -1,12 +1,1 @@
-[1mMain.hs:9.6-23:[1;31m error:[0m[1m
-   • No record constructor has all fields used in this update.
-  [1;34m|[0m
-[1;34m9[0m [1;34m| [0mp = ([1;31mPoint 1 2) { z = 3[0m }
-  [1;34m|[0m      [1;31m^^^^^^^^^^^^^^^^^^[0m
-
-[1mMain.hs:9.19-23:[1;31m error:[0m[1m
    • Record field 'z' not in scope for update.
-  [1;34m|[0m
-[1;34m9[0m [1;34m| [0mp = (Point 1 2) { [1;31mz = 3[0m }
-  [1;34m|[0m                   [1;31m^^^^^[0m
-
