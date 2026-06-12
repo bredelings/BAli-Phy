@@ -20,6 +20,13 @@ using std::optional;
 namespace
 {
     using record_utils::record_field_pun_exp;
+
+    // Report a disabled extension for record syntax handled during expression renaming.
+    void require_record_extension(const renamer_state& rn, const std::optional<yy::location>& loc, LangExt extension, const std::string& extension_name, const std::string& syntax)
+    {
+        if (not rn.m.language_extensions.has_extension(extension))
+            rn.error(loc, Note()<<syntax<<" requires the "<<extension_name<<" extension.");
+    }
 }
 
 Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set<string>& free_vars)
@@ -246,6 +253,8 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     {
         auto Rec = *rec;
         Rec.object = rename(Rec.object, bound, free_vars);
+        if (unloc(Rec.fbinds).dotdot)
+            require_record_extension(*this, *unloc(Rec.fbinds).dotdot, LangExt::RecordWildCards, "RecordWildCards", "Record wildcard '..'");
         set<string> used_field_names;
 
         for(auto& field: unloc(Rec.fbinds).fields)
@@ -257,6 +266,8 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                 error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
             used_field_names.insert(field_key);
 
+            if (not f.value)
+                require_record_extension(*this, field.loc, LangExt::NamedFieldPuns, "NamedFieldPuns", "Record field pun");
             auto value = f.value ? *f.value : record_field_pun_exp(f.field);
             f.value = rename(value, bound, free_vars);
         }
@@ -284,9 +295,14 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                 Con.arity = S->arity;
                 Rec.con = {Rec.con.loc, Con};
 
+                if (unloc(Rec.fbinds).dotdot)
+                    require_record_extension(*this, *unloc(Rec.fbinds).dotdot, LangExt::RecordWildCards, "RecordWildCards", "Record wildcard '..'");
+
                 for(auto& field: unloc(Rec.fbinds).fields)
                 {
                     auto& f = unloc(field);
+                    if (not f.value)
+                        require_record_extension(*this, field.loc, LangExt::NamedFieldPuns, "NamedFieldPuns", "Record field pun");
                     auto value = f.value ? *f.value : record_field_pun_exp(f.field);
                     f.value = rename(value, bound, free_vars);
                 }

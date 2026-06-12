@@ -56,11 +56,12 @@ namespace
         {
             const auto& field = unloc(lfield);
             Hs::LPat pattern;
+            bool pun = not field.value;
             if (field.value)
                 pattern = disambiguate_pattern(*field.value);
             else
                 pattern = record_field_pun_pattern(field.field);
-            pattern_fields.fields.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern)});
+            pattern_fields.fields.push_back({lfield.loc, Hs::PatternFieldBinding(field.field, pattern, pun)});
         }
 
         return pattern_fields;

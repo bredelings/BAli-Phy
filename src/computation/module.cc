@@ -2592,7 +2592,12 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         auto qualified_owner_name = qualify_local_name(owner_name);
         if (auto existing_owner = record_field_owner(field_name))
             if (*existing_owner != qualified_owner_name)
-                throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<get_unqualified_name(*existing_owner)<<"' and data type '"<<get_unqualified_name(qualified_owner_name)<<"'. Duplicate record field labels are not implemented yet.";
+            {
+                if (not language_extensions.has_extension(LangExt::DuplicateRecordFields))
+                    throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<get_unqualified_name(*existing_owner)<<"' and data type '"<<get_unqualified_name(qualified_owner_name)<<"'. Enable DuplicateRecordFields to allow duplicate record labels.";
+                else
+                    throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<get_unqualified_name(*existing_owner)<<"' and data type '"<<get_unqualified_name(qualified_owner_name)<<"'. DuplicateRecordFields is recognized, but duplicate record label metadata is not implemented yet.";
+            }
     };
 
     auto record_field_info = [&](auto& fields, const string& field_name, const string& owner_name, const string& constructor_name, int position)

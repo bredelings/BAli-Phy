@@ -1,1 +1,1 @@
-Record field 'shared' is declared for both data type 'A' and data type 'B'. Duplicate record field labels are not implemented yet.
+Record field 'shared' is declared for both data type 'A' and data type 'B'. Enable DuplicateRecordFields to allow duplicate record labels.

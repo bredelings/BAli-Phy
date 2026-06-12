@@ -356,11 +356,13 @@ struct PatternFieldBinding
 {
     LVar field;
     LPat pattern;
+    bool pun = false;
 
     std::string print() const;
 
     PatternFieldBinding() = default;
     PatternFieldBinding(const LVar& lv, const LPat& lp):field(lv),pattern(lp) {}
+    PatternFieldBinding(const LVar& lv, const LPat& lp, bool p):field(lv),pattern(lp),pun(p) {}
 };
 
 using PatternFieldBindings = RecordFieldBindings<PatternFieldBinding>;

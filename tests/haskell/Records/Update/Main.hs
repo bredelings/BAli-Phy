@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE NamedFieldPuns, NoImplicitPrelude #-}
 module Main where
 
 import Compiler.Num

@@ -15,12 +15,21 @@ namespace
 {
     using record_utils::record_field_pun_pattern;
 
+    // Report a disabled extension for record syntax handled during pattern renaming.
+    void require_record_extension(const renamer_state& rn, const std::optional<yy::location>& loc, LangExt extension, const std::string& extension_name, const std::string& syntax)
+    {
+        if (not rn.m.language_extensions.has_extension(extension))
+            rn.error(loc, Note()<<syntax<<" requires the "<<extension_name<<" extension.");
+    }
+
     // Expand a trailing pattern `..` into punned fields for this record constructor.
-    Hs::PatternFieldBindings expand_record_pattern_wildcards(const Module& m, const Hs::LCon& head, Hs::PatternFieldBindings fields)
+    Hs::PatternFieldBindings expand_record_pattern_wildcards(const renamer_state& rn, const Hs::LCon& head, Hs::PatternFieldBindings fields)
     {
         auto dotdot = fields.dotdot;
         if (not dotdot)
             return fields;
+
+        require_record_extension(rn, *dotdot, LangExt::RecordWildCards, "RecordWildCards", "Record wildcard '..'");
 
         set<std::string> explicit_fields;
         for(const auto& field: fields.fields)
@@ -28,10 +37,10 @@ namespace
 
         try
         {
-            auto S = m.lookup_symbol(unloc(head).name);
+            auto S = rn.m.lookup_symbol(unloc(head).name);
             if (S->symbol_type == symbol_type_t::constructor)
             {
-                if (auto field_names = m.record_field_names_for_constructor(S->name))
+                if (auto field_names = rn.m.record_field_names_for_constructor(S->name))
                 {
                     for(const auto& field_name: *field_names)
                     {
@@ -181,7 +190,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
     }
     else if (auto r = pat.to<Hs::RecordPattern>())
     {
-        auto fields = expand_record_pattern_wildcards(m, r->head, unloc(r->fbinds));
+        auto fields = expand_record_pattern_wildcards(*this, r->head, unloc(r->fbinds));
 
         Hs::LPats field_patterns;
         for(const auto& field: fields.fields)
@@ -389,12 +398,14 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
     else if (auto r = pat.to<Hs::RecordPattern>())
     {
         auto R = *r;
-        unloc(R.fbinds) = expand_record_pattern_wildcards(m, R.head, unloc(R.fbinds));
+        unloc(R.fbinds) = expand_record_pattern_wildcards(*this, R.head, unloc(R.fbinds));
 
         bound_var_info bound;
         bool overlap = false;
         for(auto& field: unloc(R.fbinds).fields)
         {
+            if (unloc(field).pun)
+                require_record_extension(*this, field.loc, LangExt::NamedFieldPuns, "NamedFieldPuns", "Record field pun");
             auto bound_here = rename_pattern(unloc(field).pattern, top);
             overlap = overlap or not disjoint_add(bound, bound_here);
         }
