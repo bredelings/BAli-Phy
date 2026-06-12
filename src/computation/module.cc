@@ -2462,6 +2462,16 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<iter->second<<"' and data type '"<<owner_name<<"'. Duplicate record field labels are not implemented yet.";
     };
 
+    auto record_field_info = [&](auto& fields, const string& field_name, const string& owner_name, const string& constructor_name, int position)
+    {
+        auto qualified_field_name = qualify_local_name(field_name);
+        auto& field = fields[qualified_field_name];
+        field.name = qualified_field_name;
+        field.parent_type = qualify_local_name(owner_name);
+        field.constructors.push_back(qualify_local_name(constructor_name));
+        field.positions.push_back(position);
+    };
+
     auto add_data_family_instance_symbols = [&](const Hs::DataFamilyInstanceDecl& data_inst)
     {
         auto family_name = unloc(data_inst.con).name;
@@ -2486,14 +2496,20 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                 add_constructor(cname, constr.arity());
 
                 if (auto fields = to<Hs::FieldDecls>(constr.fields))
+                {
+                    int field_index = 0;
                     for(auto& field_decl: fields->field_decls)
                         for(auto& [loc,var]: field_decl.field_names)
                         {
                             record_field_name(var.name, family_name);
                             instance_info.fields.insert(qualify_local_name(var.name));
+                            record_field_info(instance_info.field_info, var.name, instance_type_name, cname, field_index++);
                             if (data_fam)
                                 data_fam->fields.insert( qualify_local_name(var.name) );
+                            if (data_fam)
+                                record_field_info(data_fam->field_info, var.name, family_name, cname, field_index - 1);
                         }
+                }
             }
         }
         else if (data_inst.rhs.is_gadt_decl())
@@ -2502,13 +2518,19 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
             {
                 auto field_names = gadt_constructor_field_names(cons_decl.type);
                 if (field_names)
+                {
+                    int field_index = 0;
                     for(const auto& field_name: *field_names)
                     {
                         record_field_name(field_name, family_name);
                         instance_info.fields.insert(qualify_local_name(field_name));
+                        record_field_info(instance_info.field_info, field_name, instance_type_name, unloc(cons_decl.con_names.front()).name, field_index++);
                         if (data_fam)
                             data_fam->fields.insert( qualify_local_name(field_name) );
+                        if (data_fam)
+                            record_field_info(data_fam->field_info, field_name, family_name, unloc(cons_decl.con_names.front()).name, field_index - 1);
                     }
+                }
 
                 for(auto& con_name: cons_decl.con_names)
                 {
@@ -2545,35 +2567,43 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                 arity = data_decl->get_constructors().size();
                 for(const auto& constr: data_decl->get_constructors())
                 {
-                    auto cname = unloc(*constr.con).name;
-                    def_constructor(cname, constr.arity(), unloc(data_decl->con).name);
-                    info.constructors.push_back( qualify_local_name(cname) );
-                    if (auto fields = to<Hs::FieldDecls>(constr.fields))
-                        for(auto& field_decl: fields->field_decls)
-                            for(auto& [loc,var]: field_decl.field_names)
-                            {
-                                record_field_name(var.name, unloc(data_decl->con).name);
-                                info.fields.insert( qualify_local_name(var.name) );
-                            }
+                auto cname = unloc(*constr.con).name;
+                def_constructor(cname, constr.arity(), unloc(data_decl->con).name);
+                info.constructors.push_back( qualify_local_name(cname) );
+                if (auto fields = to<Hs::FieldDecls>(constr.fields))
+                {
+                    int field_index = 0;
+                    for(auto& field_decl: fields->field_decls)
+                        for(auto& [loc,var]: field_decl.field_names)
+                        {
+                            record_field_name(var.name, unloc(data_decl->con).name);
+                            info.fields.insert( qualify_local_name(var.name) );
+                            record_field_info(info.field_info, var.name, unloc(data_decl->con).name, cname, field_index++);
+                        }
                 }
             }
-            else if (data_decl->is_gadt_decl())
+        }
+        else if (data_decl->is_gadt_decl())
+        {
+            arity = data_decl->get_gadt_constructors().size();
+            for(const auto& cons_decl: data_decl->get_gadt_constructors())
             {
-                arity = data_decl->get_gadt_constructors().size();
-                for(const auto& cons_decl: data_decl->get_gadt_constructors())
+                auto field_names = gadt_constructor_field_names(cons_decl.type);
+                if (field_names)
                 {
-                    auto field_names = gadt_constructor_field_names(cons_decl.type);
-                    if (field_names)
-                        for(const auto& field_name: *field_names)
-                        {
-                            record_field_name(field_name, unloc(data_decl->con).name);
-                            info.fields.insert( qualify_local_name(field_name) );
-                        }
-
-                    for(auto& con_name: cons_decl.con_names)
+                    int field_index = 0;
+                    for(const auto& field_name: *field_names)
                     {
-                        int arity = Hs::gen_type_arity(expand_constructor_record_fields(cons_decl.type));
-                        auto cname = unloc(con_name);
+                        record_field_name(field_name, unloc(data_decl->con).name);
+                        info.fields.insert( qualify_local_name(field_name) );
+                        record_field_info(info.field_info, field_name, unloc(data_decl->con).name, unloc(cons_decl.con_names.front()).name, field_index++);
+                    }
+                }
+
+                for(auto& con_name: cons_decl.con_names)
+                {
+                    int arity = Hs::gen_type_arity(expand_constructor_record_fields(cons_decl.type));
+                    auto cname = unloc(con_name);
                         def_constructor(cname, arity, unloc(data_decl->con).name);
                         info.constructors.push_back( qualify_local_name(cname) );
                     }
