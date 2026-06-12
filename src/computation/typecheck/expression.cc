@@ -566,22 +566,6 @@ void TypeChecker::tcRho(Hs::ListFromThenTo& L, const Expected& exp_type)
 void TypeChecker::tcRho(Located<Hs::Expression>& E, const Expected& exp_type)
 {
     auto span = source_span_scope(E.loc);
-    if (auto rec = unloc(E).to<Hs::RecordCon>())
-    {
-        auto Rec = *rec;
-        auto app = record_con_to_positional_app(*this, Rec, E.loc);
-        tcRho(app, exp_type);
-        unloc(E) = unloc(app);
-        return;
-    }
-    else if (auto rec = unloc(E).to<Hs::RecordUpdate>())
-    {
-        auto Rec = *rec;
-        auto case_exp = record_update_to_case(*this, Rec, E.loc);
-        tcRho(case_exp, exp_type);
-        unloc(E) = unloc(case_exp);
-        return;
-    }
     tcRho_(unloc(E), exp_type);
 }
 
