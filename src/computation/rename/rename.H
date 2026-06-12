@@ -120,7 +120,7 @@ struct renamer_state
     renamer_state(const Module& m_):m(m_), global_state(std::make_shared<renamer_global_state>()) {}
 };
 
-Hs::Decls synthesize_field_accessors(const Hs::Decls& decls);
+Hs::Decls synthesize_field_accessors(const Module& m);
 
 Hs::Decls group_fundecls(const Hs::Decls& decls); // only value decls
 std::tuple<std::map<Hs::LVar,Hs::LType>, std::map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> group_decls(const Hs::Decls& decls);

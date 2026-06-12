@@ -1,6 +1,7 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 #include "haskell/ids.H"
+#include "computation/record_utils.H"
 
 using std::tuple;
 using std::string;
@@ -12,16 +13,7 @@ using std::optional;
 
 namespace
 {
-    std::map<std::string,int> record_field_positions(const std::vector<std::string>& field_names)
-    {
-        std::map<std::string,int> positions;
-        for(int i=0; i<field_names.size(); i++)
-        {
-            positions[field_names[i]] = i;
-            positions[get_unqualified_name(field_names[i])] = i;
-        }
-        return positions;
-    }
+    using record_utils::record_field_positions;
 
     // Validate record pattern fields and place them in constructor order.
     std::tuple<Hs::LPat,Hs::LPats> record_pattern_to_con_pattern(TypeChecker& tc, const Hs::LPat& lpat, Hs::RecordPattern& Rec)

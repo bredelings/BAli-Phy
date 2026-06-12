@@ -2,6 +2,7 @@
 #include "kindcheck.H"
 #include "match.H" // for tcMatchesFun
 #include "haskell/ids.H"
+#include "computation/record_utils.H"
 
 using std::string;
 using std::vector;
@@ -13,16 +14,7 @@ using std::tuple;
 
 namespace
 {
-    std::map<std::string,int> record_field_positions(const std::vector<std::string>& field_names)
-    {
-        std::map<std::string,int> positions;
-        for(int i=0; i<field_names.size(); i++)
-        {
-            positions[field_names[i]] = i;
-            positions[get_unqualified_name(field_names[i])] = i;
-        }
-        return positions;
-    }
+    using record_utils::record_field_positions;
 
     Hs::LExp missing_record_field_exp(const std::optional<yy::location>& loc, const std::string& con_name, int field_index)
     {

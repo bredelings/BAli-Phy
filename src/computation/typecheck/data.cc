@@ -1,6 +1,7 @@
 #include "typecheck.H"
 #include "haskell/ids.H"
 #include "rename/rename.H"
+#include "computation/record_utils.H"
 
 #include <functional>
 
@@ -13,59 +14,10 @@ using std::optional;
 
 namespace
 {
-    // Flatten grouped record labels into constructor field order.
-    vector<string> field_decl_names(const Hs::FieldDecls& field_decls)
-    {
-        vector<string> names;
-        for(const auto& field_decl: field_decls.field_decls)
-            for(const auto& field_name: field_decl.field_names)
-                names.push_back(unloc(field_name).name);
-        return names;
-    }
-
-    // Expand grouped record field types to one type per field label.
-    vector<Hs::LType> field_decl_types(const Hs::FieldDecls& field_decls)
-    {
-        vector<Hs::LType> types;
-        for(const auto& field_decl: field_decls.field_decls)
-            for(int i=0; i<field_decl.field_names.size(); i++)
-                types.push_back(field_decl.type);
-        return types;
-    }
-
-    // Return ordered field labels for regular record constructors.
-    optional<vector<string>> constructor_field_names(const Hs::ConstructorDecl& constructor)
-    {
-        if (not constructor.is_record_constructor())
-            return {};
-
-        return field_decl_names(std::get<1>(constructor.fields));
-    }
-
-    // Extract labels from GADT record signatures like C :: { x :: A, y :: B } -> T.
-    optional<vector<string>> gadt_constructor_field_names(Hs::LType type)
-    {
-        auto [tvs, context, rho_type] = Hs::peel_top_gen(type);
-
-        optional<vector<string>> names;
-        while(auto function_type = Hs::is_function_type(rho_type))
-        {
-            auto arg_type = function_type->first;
-            if (auto field_decls = unloc(arg_type).to<Hs::FieldDecls>())
-            {
-                if (not names)
-                    names = vector<string>{};
-                auto arg_names = field_decl_names(*field_decls);
-                names->insert(names->end(), arg_names.begin(), arg_names.end());
-            }
-            else if (names)
-                return {};
-
-            rho_type = function_type->second;
-        }
-
-        return names;
-    }
+    using record_utils::constructor_field_names;
+    using record_utils::field_decl_names;
+    using record_utils::field_decl_types;
+    using record_utils::gadt_constructor_field_names;
 
     string role_name(Role role)
     {

@@ -55,6 +55,7 @@ std::shared_ptr<CompiledModule> compile(const Program&, std::shared_ptr<Module>)
 class Module
 {
     friend class CompiledModule;
+    friend Hs::Decls synthesize_field_accessors(const Module&);
 
     // so that it can set _cached_sha
     friend std::shared_ptr<CompiledModule> compiler_prim_module();

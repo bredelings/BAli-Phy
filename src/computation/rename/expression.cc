@@ -5,6 +5,7 @@
 #include "rename.H"
 #include "haskell/ids.H"
 #include "computation/module.H"
+#include "computation/record_utils.H"
 #include "util/set.H"
 
 // We really should move apply expressions into the haskell ast.
@@ -18,12 +19,7 @@ using std::optional;
 
 namespace
 {
-    Hs::LExp record_field_pun_exp(const Hs::LVar& field)
-    {
-        auto name = get_unqualified_name(unloc(field).name);
-        return {field.loc, Hs::Var(name)};
-    }
-
+    using record_utils::record_field_pun_exp;
 }
 
 Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set<string>& free_vars)

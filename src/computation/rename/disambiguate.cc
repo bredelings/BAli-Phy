@@ -9,6 +9,7 @@
 
 #include "rename.H"
 #include "computation/expression/apply.H"
+#include "computation/record_utils.H"
 
 using std::map;
 using std::optional;
@@ -30,11 +31,7 @@ namespace
     Hs::Decls disambiguate_decls(Hs::Decls decls);
     Hs::LExp disambiguate_stmt(Hs::LExp stmt);
 
-    Hs::LPat record_field_pun_pattern(const Hs::LVar& field)
-    {
-        auto name = get_unqualified_name(unloc(field).name);
-        return {field.loc, Hs::VarPattern({field.loc, Hs::Var(name)})};
-    }
+    using record_utils::record_field_pun_pattern;
 
     // Convert expression-form record field values into expression-category syntax.
     Located<Hs::FieldBindings> disambiguate_field_bindings(Located<Hs::FieldBindings> fields)

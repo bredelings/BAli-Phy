@@ -4,6 +4,7 @@
 #include <fstream>
 #include <algorithm>
 #include "computation/module.H"
+#include "computation/record_utils.H"
 #include "computation/preprocess.H"
 #include "util/myexception.H"
 #include "util/variant.H"
@@ -919,21 +920,21 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     // Currently rename_infix has to handle UNresolved top-level names, because we do it BEFORE renaming.
     MM->declare_fixities(M);
 
-    if (MM->language_extensions.has_extension(LangExt::FieldSelectors))
-    {
-        auto field_accessors = synthesize_field_accessors(M.type_decls);
-        M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
-    }
-
-    // Disambiguate parsed syntax before adding local symbols.
-    // This finds binders without resolving expression or pattern fixity.
-    M = disambiguate_module(M);
-
     // We should be able to build these as we go, in rename!
     // We can merge them into a global symbol table (if we want) afterwards.
 
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym, def_type_family
     MM->add_local_symbols(M.type_decls);
+
+    if (MM->language_extensions.has_extension(LangExt::FieldSelectors))
+    {
+        auto field_accessors = synthesize_field_accessors(*MM);
+        M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
+    }
+
+    // Disambiguate parsed syntax after local type symbols are available, so
+    // synthetic selectors participate in the same classification pass.
+    M = disambiguate_module(M);
 
     // calls def_function, def_ADT, def_constructor, def_type_class, def_type_synonym, def_type_family
     MM->add_local_symbols(M.value_decls[0]);
@@ -2238,47 +2239,8 @@ const_type_ptr Module::lookup_external_type(const std::string& type_name) const
 
 namespace
 {
-    // Flatten grouped record labels into constructor field order.
-    vector<string> field_decl_names(const Hs::FieldDecls& field_decls)
-    {
-        vector<string> names;
-        for(const auto& field_decl: field_decls.field_decls)
-            for(const auto& field_name: field_decl.field_names)
-                names.push_back(unloc(field_name).name);
-        return names;
-    }
-
-    // Extract labels from GADT record signatures like C :: { x :: A } -> T.
-    optional<vector<string>> gadt_constructor_field_names(Hs::LType type)
-    {
-        auto [tvs, context, rho_type] = Hs::peel_top_gen(type);
-
-        optional<vector<string>> names;
-        while(auto function_type = Hs::is_function_type(rho_type))
-        {
-            auto arg_type = function_type->first;
-            if (auto field_decls = unloc(arg_type).to<Hs::FieldDecls>())
-            {
-                if (not names)
-                    names = vector<string>{};
-                auto arg_names = field_decl_names(*field_decls);
-                names->insert(names->end(), arg_names.begin(), arg_names.end());
-            }
-            else if (names)
-                return {};
-
-            rho_type = function_type->second;
-        }
-
-        return names;
-    }
-
-    bool record_field_name_matches(const std::string& declared_field, const std::string& requested_field)
-    {
-        if (is_qualified_symbol(requested_field))
-            return declared_field == requested_field;
-        return declared_field == requested_field or get_unqualified_name(declared_field) == get_unqualified_name(requested_field);
-    }
+    using record_utils::gadt_constructor_field_names;
+    using record_utils::record_field_name_matches;
 
     void add_record_field_constructors(std::set<std::string>& constructors, const std::map<std::string, type_ptr>& types, const std::string& field_name)
     {
@@ -2480,7 +2442,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
         auto qualified_owner_name = qualify_local_name(owner_name);
         if (auto existing_owner = record_field_owner(field_name))
             if (*existing_owner != qualified_owner_name)
-                throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<*existing_owner<<"' and data type '"<<qualified_owner_name<<"'. Duplicate record field labels are not implemented yet.";
+                throw myexception()<<"Record field '"<<field_name<<"' is declared for both data type '"<<get_unqualified_name(*existing_owner)<<"' and data type '"<<get_unqualified_name(qualified_owner_name)<<"'. Duplicate record field labels are not implemented yet.";
     };
 
     auto record_field_info = [&](auto& fields, const string& field_name, const string& owner_name, const string& constructor_name, int position)
@@ -2544,7 +2506,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                         record_field_name(field_name, family_name);
                         for(const auto& con_name: cons_decl.con_names)
                         {
-                            auto cname = unloc(con_name).name;
+                            auto cname = unloc(con_name);
                             record_field_info(instance_info.field_info, field_name, family_name, cname, field_index);
                             if (data_fam)
                                 record_field_info(data_fam->field_info, field_name, family_name, cname, field_index);
@@ -2617,7 +2579,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
                         {
                             record_field_name(field_name, unloc(data_decl->con).name);
                             for(auto& con_name: cons_decl.con_names)
-                                record_field_info(info.field_info, field_name, unloc(data_decl->con).name, unloc(con_name).name, field_index);
+                                record_field_info(info.field_info, field_name, unloc(data_decl->con).name, unloc(con_name), field_index);
                             field_index++;
                         }
                     }
