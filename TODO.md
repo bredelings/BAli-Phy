@@ -37,6 +37,16 @@
 
  * record syntax -- still need record wildcards and several other rhings?
  
+ * audit and improve RecursiveDo support
+ 
+ * audit and improve kind checking support
+ 
+ * audit and improve higher-rank support
+ 
+ * allow forall in inferred kinds
+   - allow user-written foralls
+   - local tycon generalization -- only when infering tycon kinds.
+
  * PolyKinds (i.e. forall k in kinds)
  
  * DataKinds (i.e. using Bool as a Kind and 'True as a type)
