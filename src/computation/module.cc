@@ -2327,6 +2327,46 @@ namespace
         return names;
     }
 
+    template<class ImportedModules>
+    std::vector<FieldInfo> record_field_candidates_for_resolved_name(
+        const std::map<std::string, type_ptr>& types,
+        const ImportedModules& imported_modules,
+        const std::string& field_name)
+    {
+        std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
+        add_record_field_candidates(candidates, types, field_name);
+        for(const auto& [_, mod]: imported_modules)
+        {
+            auto imported_fields = mod->record_field_candidates_for_resolved_name(field_name);
+            add_record_field_candidates(candidates, imported_fields);
+        }
+
+        std::vector<FieldInfo> fields;
+        for(auto& [_, field]: candidates)
+            fields.push_back(field);
+        return fields;
+    }
+
+    template<class ImportedModules>
+    std::optional<std::vector<std::string>> record_field_names_for_constructor(
+        const std::map<std::string, type_ptr>& types,
+        const ImportedModules& imported_modules,
+        const std::string& constructor_name)
+    {
+        auto fields = record_field_names_for_constructor(types, constructor_name);
+        if (fields)
+            return fields;
+
+        for(const auto& [_, mod]: imported_modules)
+        {
+            fields = mod->record_field_names_for_constructor(constructor_name);
+            if (fields)
+                return fields;
+        }
+
+        return {};
+    }
+
 }
 
 std::vector<FieldInfo> Module::record_fields_for_type(const type_info& type) const
@@ -2376,34 +2416,12 @@ std::vector<FieldInfo> Module::lookup_record_field_candidates(const std::string&
 
 std::vector<FieldInfo> Module::record_field_candidates_for_resolved_name(const std::string& field_name) const
 {
-    std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
-    add_record_field_candidates(candidates, types, field_name);
-    for(const auto& [_, mod]: transitively_imported_modules)
-    {
-        auto imported_fields = mod->record_field_candidates_for_resolved_name(field_name);
-        add_record_field_candidates(candidates, imported_fields);
-    }
-
-    std::vector<FieldInfo> fields;
-    for(auto& [_, field]: candidates)
-        fields.push_back(field);
-    return fields;
+    return ::record_field_candidates_for_resolved_name(types, transitively_imported_modules, field_name);
 }
 
 std::optional<std::vector<std::string>> Module::record_field_names_for_constructor(const std::string& constructor_name) const
 {
-    auto fields = ::record_field_names_for_constructor(types, constructor_name);
-    if (fields)
-        return fields;
-
-    for(const auto& [_, mod]: transitively_imported_modules)
-    {
-        fields = mod->record_field_names_for_constructor(constructor_name);
-        if (fields)
-            return fields;
-    }
-
-    return {};
+    return ::record_field_names_for_constructor(types, transitively_imported_modules, constructor_name);
 }
 
 std::vector<FieldInfo> CompiledModule::lookup_record_field_candidates(const std::string& field_name) const
@@ -2414,34 +2432,12 @@ std::vector<FieldInfo> CompiledModule::lookup_record_field_candidates(const std:
 
 std::vector<FieldInfo> CompiledModule::record_field_candidates_for_resolved_name(const std::string& field_name) const
 {
-    std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
-    add_record_field_candidates(candidates, types, field_name);
-    for(const auto& [_, mod]: transitively_imported_modules_)
-    {
-        auto imported_fields = mod->record_field_candidates_for_resolved_name(field_name);
-        add_record_field_candidates(candidates, imported_fields);
-    }
-
-    std::vector<FieldInfo> fields;
-    for(auto& [_, field]: candidates)
-        fields.push_back(field);
-    return fields;
+    return ::record_field_candidates_for_resolved_name(types, transitively_imported_modules_, field_name);
 }
 
 std::optional<std::vector<std::string>> CompiledModule::record_field_names_for_constructor(const std::string& constructor_name) const
 {
-    auto fields = ::record_field_names_for_constructor(types, constructor_name);
-    if (fields)
-        return fields;
-
-    for(const auto& [_, mod]: transitively_imported_modules_)
-    {
-        fields = mod->record_field_names_for_constructor(constructor_name);
-        if (fields)
-            return fields;
-    }
-
-    return {};
+    return ::record_field_names_for_constructor(types, transitively_imported_modules_, constructor_name);
 }
 
 // Here we do only phase 1 -- we only parse the decls enough to
