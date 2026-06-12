@@ -517,6 +517,12 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         E = c->wrap(E);
         return E;
     }
+    else if (auto rec = E.to<Hs::RecordUpdate>())
+    {
+        if (not rec->checked_update)
+            throw myexception()<<"desugar: record update was not checked before desugaring";
+        return desugar(Hs::CaseExp(rec->checked_update->object, rec->checked_update->alts));
+    }
     else if (E.is_a<Hs::Do>())
     {
         // FIXME! Do the rewrite after rename and immediately before typechecking.

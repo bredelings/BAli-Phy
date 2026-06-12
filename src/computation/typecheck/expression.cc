@@ -106,9 +106,8 @@ namespace
     }
 
     // Validate record update fields and expand the update into constructor-specific alternatives.
-    Hs::LExp record_update_to_case(TypeChecker& tc, Hs::RecordUpdate& Rec, const std::optional<yy::location>& record_loc)
+    Hs::Matches record_update_alts(TypeChecker& tc, Hs::RecordUpdate& Rec, const Type& object_type, const std::optional<yy::location>& record_loc)
     {
-        auto object_type = tc.inferRho(Rec.object);
         std::optional<std::set<std::string>> constructors;
         set<string> used_field_names;
         vector<RecordFieldUpdate> updates;
@@ -209,7 +208,7 @@ namespace
         if (alts.empty())
             tc.record_error(record_loc, Note()<<"No record constructor has all fields used in this update.");
 
-        return {record_loc, Hs::CaseExp(Rec.object, Hs::Alts(alts))};
+        return Hs::CaseExp(Rec.object, Hs::Alts(alts)).alts;
     }
 
     // Validate record construction fields and place them in constructor order.
@@ -356,7 +355,13 @@ void TypeChecker::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
     auto object_type = inferRho(Case.object);
 
     // 3. Check the alternatives
-    tcMatches(Hs::CaseContext(), Case.alts, {Check(object_type)}, exp_type);
+    tcCaseAlts(Case.alts, object_type, exp_type);
+}
+
+void TypeChecker::tcCaseAlts(Hs::Matches& alts, const Type& object_type, const Expected& exp_type)
+{
+    // The scrutinee has already been checked; this only checks alternatives against its type.
+    tcMatches(Hs::CaseContext(), alts, {Check(object_type)}, exp_type);
 }
 
 void TypeChecker::tcRho(Hs::List& L, const Expected& exp_type)
@@ -605,9 +610,11 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
     else if (auto rec = E.to<Hs::RecordUpdate>())
     {
         auto Rec = *rec;
-        auto case_exp = record_update_to_case(*this, Rec, Rec.object.loc * Rec.fbinds.loc);
-        tcRho(case_exp, exp_type);
-        E = unloc(case_exp);
+        auto object_type = inferRho(Rec.object);
+        auto alts = record_update_alts(*this, Rec, object_type, Rec.object.loc * Rec.fbinds.loc);
+        tcCaseAlts(alts, object_type, exp_type);
+        Rec.checked_update = std::make_shared<Hs::CheckedRecordUpdate>(Rec.object, alts);
+        E = Rec;
     }
     // APP
     else if (auto app = E.to<Hs::ApplyExp>())

@@ -493,6 +493,8 @@ public:
 
     void tcRho(Hs::CaseExp& Case, const Expected&);
 
+    void tcCaseAlts(Hs::Matches& alts, const Type& object_type, const Expected&);
+
     void tcRho(Hs::List& L, const Expected&);
 
     void tcRho(Hs::Tuple& T, const Expected&);

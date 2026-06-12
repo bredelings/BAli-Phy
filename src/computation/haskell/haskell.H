@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <tuple>
+#include <memory>
 #include "computation/object.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/parser/located.H"
@@ -312,6 +313,8 @@ struct RecordFieldBindings: public Object
 
 using FieldBindings = RecordFieldBindings<FieldBinding>;
 
+struct CheckedRecordUpdate;
+
 // Parsed record braces before context decides construction, update, or pattern.
 
 struct RecordSyntax: public Object
@@ -344,6 +347,7 @@ struct RecordUpdate: public Object
 {
     LExp object;
     Located<FieldBindings> fbinds;
+    std::shared_ptr<CheckedRecordUpdate> checked_update;
 
     RecordUpdate* clone() const { return new RecordUpdate(*this);}
     std::string print() const;
@@ -1262,6 +1266,15 @@ struct MRule
 struct Matches: public std::vector<MRule>
 {
     using std::vector<MRule>::vector;
+};
+
+struct CheckedRecordUpdate
+{
+    // Typechecked case-shaped plan used by desugaring without replacing the source RecordUpdate node.
+    LExp object;
+    Matches alts;
+
+    CheckedRecordUpdate(const LExp& o, const Matches& as): object(o), alts(as) {}
 };
 
 struct LambdaExp: public Object
