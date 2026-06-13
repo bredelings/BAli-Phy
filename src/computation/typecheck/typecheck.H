@@ -408,20 +408,20 @@ public:
 
     std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);
 
-    std::tuple<Core::wrapper, Type> instantiate_emit(const ConstraintOrigin& origin, const Type& t);
+    [[nodiscard]] std::tuple<Core::wrapper, Type> instantiate_emit(const ConstraintOrigin& origin, const Type& t);
 
-    Core::wrapper subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Expected& e2);
+    [[nodiscard]] Core::wrapper subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Expected& e2);
 
-    Core::wrapper subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Type& t2);
+    [[nodiscard]] Core::wrapper subsumptionCheck(const ConstraintOrigin& origin, const Type& t1, const Type& t2);
 
-    Core::wrapper instantiateSigma(const ConstraintOrigin& origin, const Type& t, const Expected& exp_rho);
+    [[nodiscard]] Core::wrapper instantiateSigma(const ConstraintOrigin& origin, const Type& t, const Expected& exp_rho);
 
-    std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type> skolemize(const Type& t, bool skolem);
+    [[nodiscard]] std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type> skolemize(const Type& t, bool skolem);
 
-    std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type> skolemize_and(const Type& t, const tc_action<Type>& nested_action);
+    [[nodiscard]] std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type> skolemize_and(const Type& t, const tc_action<Type>& nested_action);
 
     template <typename R>
-    std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type, R> skolemize_and_result(const Type& t, const tc_function<R, Type>& nested_action);
+    [[nodiscard]] std::tuple<Core::wrapper, std::vector<TypeVar>, LIE, Type, R> skolemize_and_result(const Type& t, const tc_function<R, Type>& nested_action);
 
     void tcRhoStmts(int i, std::vector<Located<Hs::Qual>>& stmts, const Expected& exp_type);
 
@@ -455,14 +455,14 @@ public:
 
     void checkPat(local_value_env& penv, Hs::LVar& lv, const SigmaType& exp_type, const signature_env& sigs);
 
-    Core::wrapper instPatSigma(const SigmaType& sigma_type, const Expected& exp_sigma_type);
+    [[nodiscard]] Core::wrapper instPatSigma(const SigmaType& sigma_type, const Expected& exp_sigma_type);
 
     std::tuple<Type, local_value_env>
     infer_lhs_type(Hs::LDecl& decl, const signature_env& sigs);
 
     void infer_rhs_type(Hs::LDecl& decl, const Expected& type);
 
-    Core::wrapper checkSigma(Hs::LExp& e, const SigmaType& sigma_type);
+    [[nodiscard]] Core::wrapper checkSigma(Hs::LExp& e, const SigmaType& sigma_type);
 
     template <typename T>
     void checkRho(T& t, const Type& exp_rho)
@@ -489,7 +489,7 @@ public:
 
     void tcRho(Hs::ApplyExp& app_exp, const Expected& E);
 
-    Core::wrapper tcRho(Hs::LambdaExp&, const Expected& E);
+    [[nodiscard]] Core::wrapper tcRho(Hs::LambdaExp&, const Expected& E);
 
     void tcRho(Hs::LetExp&, const Expected&);
 
@@ -534,13 +534,13 @@ public:
     void tcMatches(const Hs::MatchContext& ctx, Hs::Matches& m, const std::vector<Expected>& pat_types, const Expected& result_type);
 
     template <typename A>
-    Core::wrapper tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& fun_type, const A& a);
+    [[nodiscard]] Core::wrapper tcMatchesFunInfer(std::vector<Expected>& arg_types, int arity, const Expected& fun_type, const A& a);
 
     template <typename A>
-    Core::wrapper tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Type type, const A& a);
+    [[nodiscard]] Core::wrapper tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Type type, const A& a);
 
     template <typename A>
-    Core::wrapper tcMatchesFun(int arity, const Expected&, const A& a);
+    [[nodiscard]] Core::wrapper tcMatchesFun(int arity, const Expected&, const A& a);
 
     // Figures 13, 14, 15?
     Hs::Decls
