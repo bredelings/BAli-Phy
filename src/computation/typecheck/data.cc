@@ -106,12 +106,34 @@ namespace
         return range(context);
     }
 
+    // Apply simple GADT equality constraints to recover the constructor's written result shape.
+    Type refined_record_selector_type(const DataConInfo& con_info, Type type)
+    {
+        substitution_t subst;
+        for(const auto& constraint: con_info.gadt_eq_constraints)
+        {
+            auto eq = is_equality_pred(constraint);
+            if (not eq)
+                std::abort();
+
+            auto [lhs, rhs] = *eq;
+            if (auto tv = lhs.to<TypeVar>())
+                subst = subst.insert({*tv, rhs});
+            else if (auto tv = rhs.to<TypeVar>())
+                subst = subst.insert({*tv, lhs});
+            else
+                std::abort();
+        }
+        return apply_subst(subst, type);
+    }
+
     // Decide if one constructor's field can contribute to a callable selector.
-    bool record_selector_field_is_naughty(const DataConInfo& con_info, int field_index)
+    bool record_selector_field_is_naughty(const DataConInfo& con_info, int field_index, const Type& selector_arg_type)
     {
         auto ftvs = free_type_variables(con_info.field_types[field_index]);
+        auto result_tvs = free_type_variables(selector_arg_type);
         for(const auto& tv: con_info.exi_tvs)
-            if (ftvs.count(tv))
+            if (ftvs.count(tv) and not result_tvs.count(tv))
                 return true;
         return false;
     }
@@ -128,6 +150,37 @@ namespace
                 return i;
 
         return {};
+    }
+
+    // Keep selector forall binders in constructor order, with a stable fallback for unusual free variables.
+    std::vector<TypeVar> record_selector_type_vars(const DataConInfo& con_info, const Type& field_type, const Type& result_type)
+    {
+        auto free_tvs = free_type_variables(field_type);
+        add(free_tvs, free_type_variables(result_type));
+
+        std::vector<TypeVar> tvs;
+        auto add_tv = [&](const TypeVar& tv) {
+            if (free_tvs.erase(tv))
+                tvs.push_back(tv);
+        };
+
+        for(const auto& tv: con_info.uni_tvs)
+            add_tv(tv);
+        for(const auto& tv: con_info.exi_tvs)
+            add_tv(tv);
+        for(const auto& tv: free_tvs)
+            tvs.push_back(tv);
+
+        return tvs;
+    }
+
+    // Build the semantic type used to check a generated record selector body.
+    Type record_selector_type(const DataConInfo& con_info, int field_index)
+    {
+        auto field_type = refined_record_selector_type(con_info, con_info.field_types[field_index]);
+        auto result_type = refined_record_selector_type(con_info, con_info.result_type());
+        auto tvs = record_selector_type_vars(con_info, field_type, result_type);
+        return add_forall_vars(tvs, function_type({result_type}, field_type));
     }
 
 }
@@ -798,6 +851,7 @@ void TypeChecker::classify_record_selectors()
 
         Type first_field_type;
         Type first_result_type;
+        Type first_selector_type;
         bool saw_field = false;
         bool naughty = false;
 
@@ -815,15 +869,17 @@ void TypeChecker::classify_record_selectors()
                 auto field_index = record_selector_field_position(*con_info, info.field_name);
                 assert(field_index);
 
-                if (record_selector_field_is_naughty(*con_info, *field_index))
+                auto field_type = refined_record_selector_type(*con_info, con_info->field_types[*field_index]);
+                auto result_type = refined_record_selector_type(*con_info, con_info->result_type());
+
+                if (record_selector_field_is_naughty(*con_info, *field_index, result_type))
                     naughty = true;
 
-                auto field_type = con_info->field_types[*field_index];
-                auto result_type = con_info->result_type();
                 if (not saw_field)
                 {
                     first_field_type = field_type;
                     first_result_type = result_type;
+                    first_selector_type = record_selector_type(*con_info, *field_index);
                     saw_field = true;
                 }
                 else if (not same_type(first_field_type, field_type) or not same_type(first_result_type, result_type))
@@ -835,5 +891,7 @@ void TypeChecker::classify_record_selectors()
         info.callability = naughty ? RecordSelectorCallability::Naughty : RecordSelectorCallability::Callable;
         if (naughty)
             selector->type = TypeCon("()");
+        else
+            selector->type = first_selector_type;
     }
 }
