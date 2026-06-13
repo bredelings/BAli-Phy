@@ -15,8 +15,14 @@ type RealWorld = Int
 -- We effectively have (!RealWorld, a).  Currently we are doing this manually.
 -- We can't do         (!RealWorld, !a), as this would undermine unsafeInterleaveIO.
 
+{- In theory we could do
 
-data IO a = IO { runIO :: RealWorld -> (RealWorld,a) }
+      data IOPair a b = IOPair !a b
+
+   This actually works, but its about 2.6% slower in some cases.  -}
+
+
+newtype IO a = IO { runIO :: RealWorld -> (RealWorld,a) }
 
 instance Functor IO where
     fmap f x = IO (\state1 -> let (state2,   result) = runIO x state1
