@@ -224,7 +224,7 @@ desugared_decls desugar_state::desugar_decls(const Hs::Decls& v)
             auto equations = desugar_matches(fd->matches);
             auto otherwise = pattern_match_failure(fd->v.loc, "pattern match failure in function");
 
-            decls.decls.push_back( {fvar , def_function(equations, otherwise) } );
+            decls.decls.push_back( {fvar , fd->wrap(def_function(equations, otherwise)) } );
         }
         else if (auto gb = decl.to<Hs::GenBind>())
         {

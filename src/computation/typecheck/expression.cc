@@ -567,9 +567,9 @@ void TypeChecker::tcRho(Hs::LetExp& Let, const Expected& exp_type)
     current_wanteds() += state2.current_wanteds();
 }
 
-void TypeChecker::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
+Core::wrapper TypeChecker::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
 {
-    tcMatchesFun( getArity(Lam.match), exp_type, [&](const std::vector<Expected>& arg_types, const Expected& result_type){
+    return tcMatchesFun( getArity(Lam.match), exp_type, [&](const std::vector<Expected>& arg_types, const Expected& result_type){
         return [&](TypeChecker& tc) { tc.tcMatch(Hs::LambdaContext(), Lam.match, arg_types, result_type); }; }
         );
 }
@@ -864,8 +864,12 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
     else if (auto lam = E.to<Hs::LambdaExp>())
     {
         auto Lam = *lam;
-        tcRho(Lam, exp_type);
-        E = Lam;
+        auto wrap = tcRho(Lam, exp_type);
+        Hs::LExp checked = {noloc, Lam};
+        if (wrap.is_identity())
+            E = unloc(checked);
+        else
+            E = Hs::Wrap(checked, wrap);
     }
     // LET
     else if (auto let = E.to<Hs::LetExp>())

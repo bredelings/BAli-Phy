@@ -489,7 +489,7 @@ public:
 
     void tcRho(Hs::ApplyExp& app_exp, const Expected& E);
 
-    void tcRho(Hs::LambdaExp&, const Expected& E);
+    Core::wrapper tcRho(Hs::LambdaExp&, const Expected& E);
 
     void tcRho(Hs::LetExp&, const Expected&);
 

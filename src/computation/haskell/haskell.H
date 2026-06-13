@@ -1379,6 +1379,7 @@ struct FunDecl: public Object
 
     LVar v;
     Matches matches;
+    Core::wrapper wrap;
 
     // This holds vars discovered during renaming
     std::set<std::string> rhs_free_vars;

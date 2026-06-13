@@ -51,7 +51,14 @@ Core::wrapper TypeChecker::tcMatchesFunInfer(std::vector<Expected>& arg_types, i
 template <typename A>
 Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, int arity, Type type, const A& a)
 {
-    if (not is_rho_type(type))
+    if (arg_types.size() == arity)
+    {
+        // If the visible arity is satisfied, check the remaining result at the RHS boundary.
+        // This keeps nested forall/context wrappers under the already-matched arguments.
+        a(arg_types, Check(type))(*this);
+        return Core::WrapId;
+    }
+    else if (not is_rho_type(type))
     {
         auto [wrap_gen, tcs, givens, rho_type, wrap_match] =
             skolemize_and_result<Core::wrapper>
@@ -72,13 +79,6 @@ Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, i
 	// Q4: If we used the right wrappers, could we make it work?
 
         return wrap_gen * wrap_match;
-    }
-    else if (arg_types.size() == arity)
-    {
-        // If we got here, then the Check type had enough arguments.
-        // We don't need to construct a result type, we just need to check things.
-        a(arg_types, Check(type))(*this);
-        return Core::WrapId;
     }
     // look through type synonyms
     else if (auto type2 = expand_type_synonym(type))
