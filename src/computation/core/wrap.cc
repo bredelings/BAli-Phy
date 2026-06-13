@@ -3,6 +3,8 @@
 #include "core/func.H"
 #include "computation/fresh_vars.H"
 
+#include <atomic>
+
 using std::vector;
 
 namespace Core
@@ -146,6 +148,37 @@ namespace Core
             return WrapId;
         else
             return {WrapLambdaObj(args)};
+    }
+
+    struct WrapFunResultObj: public WrapObj
+    {
+        wrapper result_wrap;
+
+        WrapFunResultObj* clone() const {return new WrapFunResultObj(*this);}
+        Exp<> operator()(const Exp<>&) const;
+
+        WrapFunResultObj(const wrapper& w);
+    };
+
+    Exp<> WrapFunResultObj::operator()(const Exp<>& e) const
+    {
+        // Temporary: this is only GHC's result-wrapper half of WpFun.
+        // Add argument wrappers and thread a real fresh-name supply when we need contravariant wrapping.
+        static std::atomic<int> next_wrap_fun_var{-1};
+        auto arg = Var<>("wrap_fun_arg", next_wrap_fun_var--);
+        return lambda_quantify({arg}, result_wrap(Apply<>{e, arg}));
+    }
+
+    WrapFunResultObj::WrapFunResultObj(const wrapper& w)
+        :result_wrap(w)
+    {}
+
+    wrapper WrapFunResult(const wrapper& result_wrap)
+    {
+        if (result_wrap.is_identity())
+            return WrapId;
+        else
+            return {WrapFunResultObj(result_wrap)};
     }
     
     struct WrapCompose: public WrapObj

@@ -39,6 +39,7 @@ namespace Core
     wrapper WrapApply(const std::vector<Exp<>>& args);
     wrapper WrapApply(const std::vector<Var<>>& args);
     wrapper WrapLambda(const std::vector<Var<>>& args);
+    wrapper WrapFunResult(const wrapper& result_wrap);
 
     extern wrapper WrapId;
 };

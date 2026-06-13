@@ -90,7 +90,8 @@ Core::wrapper TypeChecker::tcMatchesFunCheck(std::vector<Expected>& arg_types, i
     {
         auto [arg_type, result_type] = *ftype;
         arg_types.push_back(Check(arg_type));
-        return tcMatchesFunCheck(arg_types, arity, result_type, a);
+        auto result_wrap = tcMatchesFunCheck(arg_types, arity, result_type, a);
+        return Core::WrapFunResult(result_wrap);
     }
     // look through filled MetaTypeVars
     else if (auto mtv = type.to<MetaTypeVar>())
