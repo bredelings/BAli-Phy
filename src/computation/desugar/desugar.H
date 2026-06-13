@@ -87,6 +87,7 @@ struct desugar_state: public FreshVarSource
 
     Core::Exp<> desugar(const Hs::Exp& E);
     Core::Exp<> desugar(const Hs::LExp& E);
+    Core::Exp<> desugar_record_update(const Hs::CheckedRecordUpdate& update);
     desugared_decls desugar_decls(const Haskell::Decls&);
     desugared_decls desugar_decls(const Haskell::Binds&);
 

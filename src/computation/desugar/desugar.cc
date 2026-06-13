@@ -23,18 +23,6 @@ using std::deque;
 using std::pair;
 using std::tuple;
 
-namespace
-{
-    // Rebuild generated case matches from checked record-update alternatives.
-    Hs::Matches record_update_matches(const std::vector<Hs::CheckedRecordUpdateAlt>& alternatives)
-    {
-        Hs::Matches matches;
-        for(const auto& alt: alternatives)
-            matches.push_back(Hs::MRule({alt.checked_pattern}, Hs::SimpleRHS(alt.checked_rhs)));
-        return matches;
-    }
-}
-
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
 void desugared_decls::append(const desugared_decls& binds)
@@ -373,6 +361,35 @@ Core::Exp<> desugar_state::desugar(const Hs::LExp& LE)
     return desugar(unloc(LE));
 }
 
+// Lower a checked record update directly from its semantic constructor-order plan.
+Core::Exp<> desugar_state::desugar_record_update(const Hs::CheckedRecordUpdate& update)
+{
+    auto object = desugar(update.object);
+
+    vector<expression_ref> patterns;
+    vector<failable_expression> bodies;
+    for(const auto& alt: update.alternatives)
+    {
+        auto constructor = unloc(alt.constructor);
+        assert(constructor.arity);
+        assert(*constructor.arity == alt.rhs_fields.size());
+        assert(alt.old_binders.size() == alt.rhs_fields.size());
+
+        vector<Core::Exp<>> args;
+        for(const auto& field: alt.rhs_fields)
+            args.push_back(desugar(field));
+
+        Core::Exp<> rhs = Core::Var<>(constructor.name);
+        rhs = constructor.wrap(rhs);
+        rhs = safe_apply(rhs, args);
+
+        patterns.push_back(unloc(alt.checked_pattern));
+        bodies.push_back(failable_expression(rhs));
+    }
+
+    return case_expression(object, patterns, bodies).result(pattern_match_failure(update.object.loc, "record update failed pattern match"));
+}
+
 Hs::Exp noloc_apply(const std::vector<Hs::Exp>& E)
 {
     assert(E.size());
@@ -539,7 +556,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         if (not rec->checked_update)
             throw myexception()<<"desugar: record update was not checked before desugaring";
-        return desugar(Hs::CaseExp(rec->checked_update->object, record_update_matches(rec->checked_update->alternatives)));
+        return desugar_record_update(*rec->checked_update);
     }
     else if (E.is_a<Hs::Do>())
     {
