@@ -1,5 +1,11 @@
 # TODOs
 
+## Infrastructure
+
+ * Complete native windows tests.
+ 
+   - Possibly we need to do something to make bp-analyze work.
+
 ## Runtime refactor
 
  * Put Trim into the AST
@@ -86,4 +92,6 @@
    
  * downloading packages from hackage?
  
-
+ * unboxed tuples?
+ 
+   - how do operations return multiple things?
