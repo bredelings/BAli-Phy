@@ -59,18 +59,38 @@ namespace
         return matches;
     }
 
-    // Extract the checked pattern/RHS pairs after normal case-alternative typechecking.
+    // Recover the checked constructor-order RHS field expressions when the RHS still has constructor-application shape.
+    std::pair<Hs::LCon, std::vector<Hs::LExp>> checked_record_update_rhs_fields(
+        const Hs::CheckedRecordUpdateAlt& alt,
+        const Hs::LExp& checked_rhs)
+    {
+        auto [head, args] = Hs::decompose_apps(checked_rhs);
+        if (auto con = unloc(head).to<Hs::Con>())
+            if (con->name == unloc(alt.constructor).name and args.size() == alt.rhs_fields.size())
+                return {{head.loc, *con}, args};
+        return {alt.constructor, alt.rhs_fields};
+    }
+
+    // Copy semantic update metadata and attach the checked pattern/RHS pairs after case-alternative typechecking.
     std::vector<Hs::CheckedRecordUpdateAlt> checked_record_update_alternatives(
+        const std::vector<Hs::CheckedRecordUpdateAlt>& alternatives,
         const Hs::Matches& checked_matches)
     {
+        assert(alternatives.size() == checked_matches.size());
+
         std::vector<Hs::CheckedRecordUpdateAlt> checked_alternatives;
-        for(const auto& match: checked_matches)
+        for(int i=0; i<checked_matches.size(); i++)
         {
+            const auto& alt = alternatives[i];
+            const auto& match = checked_matches[i];
             assert(match.patterns.size() == 1);
             assert(match.rhs.guarded_rhss.size() == 1);
             assert(match.rhs.guarded_rhss[0].guards.empty());
             assert(not match.rhs.decls);
-            checked_alternatives.push_back({match.patterns[0], match.rhs.guarded_rhss[0].body});
+
+            auto checked_rhs = match.rhs.guarded_rhss[0].body;
+            auto [checked_constructor, checked_fields] = checked_record_update_rhs_fields(alt, checked_rhs);
+            checked_alternatives.push_back({checked_constructor, alt.old_binders, checked_fields, match.patterns[0], checked_rhs});
         }
         return checked_alternatives;
     }
@@ -371,12 +391,14 @@ namespace
                     continue;
 
                 vector<Hs::LExp> args;
+                vector<Hs::LVar> old_binders;
                 Hs::LPats patterns;
 
                 for(int i=0; i<con_info->arity(); i++)
                 {
                     auto var = record_update_binder(record_loc, con_info->name, i);
                     Hs::LVar lvar = {record_loc, unloc(var).as_<Hs::Var>()};
+                    old_binders.push_back(lvar);
                     patterns.push_back({record_loc, Hs::VarPattern(lvar)});
                     args.push_back(var);
                 }
@@ -387,7 +409,7 @@ namespace
                 Hs::LCon head = {record_loc, Hs::Con(con_info->name, con_info->arity())};
                 Hs::LPat pattern = {record_loc, Hs::ConPattern(head, patterns)};
                 auto rhs = Hs::apply({record_loc, unloc(head)}, args);
-                alternatives.push_back({pattern, rhs});
+                alternatives.push_back({head, old_binders, args, pattern, rhs});
             }
         }
 
@@ -810,7 +832,7 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
         tcCaseAlts(alts, object_type, exp_type);
         Rec.checked_update = std::make_shared<Hs::CheckedRecordUpdate>(
             Rec.object,
-            checked_record_update_alternatives(alts));
+            checked_record_update_alternatives(alternatives, alts));
         E = Rec;
     }
     // APP

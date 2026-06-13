@@ -1276,11 +1276,16 @@ struct Matches: public std::vector<MRule>
 
 struct CheckedRecordUpdateAlt
 {
-    // Checked pattern/RHS for one generated record-update case alternative.
+    // Semantic constructor-order update plan plus the checked fallback syntax.
+    LCon constructor;
+    std::vector<LVar> old_binders;
+    std::vector<LExp> rhs_fields;
     LPat checked_pattern;
     LExp checked_rhs;
 
-    CheckedRecordUpdateAlt(const LPat& p, const LExp& r): checked_pattern(p), checked_rhs(r) {}
+    CheckedRecordUpdateAlt(const LCon& c, const std::vector<LVar>& bs, const std::vector<LExp>& fs, const LPat& p, const LExp& r)
+        :constructor(c), old_binders(bs), rhs_fields(fs), checked_pattern(p), checked_rhs(r)
+    {}
 };
 
 struct CheckedRecordUpdate
