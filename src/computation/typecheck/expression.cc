@@ -59,16 +59,28 @@ namespace
         return matches;
     }
 
-    // Recover the checked constructor-order RHS field expressions when the RHS still has constructor-application shape.
-    std::pair<Hs::LCon, std::vector<Hs::LExp>> checked_record_update_rhs_fields(
+    // Recover the checked constructor-order RHS application spine, including per-application wrappers.
+    std::pair<Hs::LCon, std::vector<Hs::CheckedRecordUpdateRhsApply>> checked_record_update_rhs_apps(
         const Hs::CheckedRecordUpdateAlt& alt,
         const Hs::LExp& checked_rhs)
     {
-        auto [head, args] = Hs::decompose_apps(checked_rhs);
+        Hs::LExp head = checked_rhs;
+        std::vector<Hs::CheckedRecordUpdateRhsApply> apps;
+        while(auto app = unloc(head).to<Hs::ApplyExp>())
+        {
+            apps.push_back({app->arg, app->arg_wrapper, app->res_wrapper});
+            head = app->head;
+        }
+        std::reverse(apps.begin(), apps.end());
+
         if (auto con = unloc(head).to<Hs::Con>())
-            if (con->name == unloc(alt.constructor).name and args.size() == alt.rhs_fields.size())
-                return {{head.loc, *con}, args};
-        return {alt.constructor, alt.rhs_fields};
+        {
+            assert(con->name == unloc(alt.constructor).name);
+            assert(apps.size() == alt.rhs_apps.size());
+            return {{head.loc, *con}, apps};
+        }
+
+        std::abort();
     }
 
     // Copy semantic update metadata and attach the checked pattern/RHS pairs after case-alternative typechecking.
@@ -89,8 +101,8 @@ namespace
             assert(not match.rhs.decls);
 
             auto checked_rhs = match.rhs.guarded_rhss[0].body;
-            auto [checked_constructor, checked_fields] = checked_record_update_rhs_fields(alt, checked_rhs);
-            checked_alternatives.push_back({checked_constructor, alt.old_binders, checked_fields, match.patterns[0], checked_rhs});
+            auto [checked_constructor, checked_apps] = checked_record_update_rhs_apps(alt, checked_rhs);
+            checked_alternatives.push_back({checked_constructor, alt.old_binders, checked_apps, match.patterns[0], checked_rhs});
         }
         return checked_alternatives;
     }
@@ -409,7 +421,10 @@ namespace
                 Hs::LCon head = {record_loc, Hs::Con(con_info->name, con_info->arity())};
                 Hs::LPat pattern = {record_loc, Hs::ConPattern(head, patterns)};
                 auto rhs = Hs::apply({record_loc, unloc(head)}, args);
-                alternatives.push_back({head, old_binders, args, pattern, rhs});
+                std::vector<Hs::CheckedRecordUpdateRhsApply> rhs_apps;
+                for(const auto& arg: args)
+                    rhs_apps.push_back({arg});
+                alternatives.push_back({head, old_binders, rhs_apps, pattern, rhs});
             }
         }
 

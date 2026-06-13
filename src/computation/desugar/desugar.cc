@@ -372,16 +372,18 @@ Core::Exp<> desugar_state::desugar_record_update(const Hs::CheckedRecordUpdate& 
     {
         auto constructor = unloc(alt.constructor);
         assert(constructor.arity);
-        assert(*constructor.arity == alt.rhs_fields.size());
-        assert(alt.old_binders.size() == alt.rhs_fields.size());
-
-        vector<Core::Exp<>> args;
-        for(const auto& field: alt.rhs_fields)
-            args.push_back(desugar(field));
+        assert(*constructor.arity == alt.rhs_apps.size());
+        assert(alt.old_binders.size() == alt.rhs_apps.size());
 
         Core::Exp<> rhs = Core::Var<>(constructor.name);
         rhs = constructor.wrap(rhs);
-        rhs = safe_apply(rhs, args);
+        for(const auto& app: alt.rhs_apps)
+        {
+            auto arg = desugar(app.arg);
+            arg = app.arg_wrapper(arg);
+            rhs = Core::Apply<>{rhs, arg};
+            rhs = app.res_wrapper(rhs);
+        }
 
         patterns.push_back(unloc(alt.checked_pattern));
         bodies.push_back(failable_expression(rhs));

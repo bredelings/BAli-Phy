@@ -1274,17 +1274,29 @@ struct Matches: public std::vector<MRule>
     using std::vector<MRule>::vector;
 };
 
+struct CheckedRecordUpdateRhsApply
+{
+    // One checked constructor-application step in the record update RHS.
+    LExp arg;
+    Core::wrapper arg_wrapper;
+    Core::wrapper res_wrapper;
+
+    CheckedRecordUpdateRhsApply(const LExp& a, Core::wrapper aw = {}, Core::wrapper rw = {})
+        :arg(a), arg_wrapper(aw), res_wrapper(rw)
+    {}
+};
+
 struct CheckedRecordUpdateAlt
 {
     // Semantic constructor-order update plan plus the checked fallback syntax.
     LCon constructor;
     std::vector<LVar> old_binders;
-    std::vector<LExp> rhs_fields;
+    std::vector<CheckedRecordUpdateRhsApply> rhs_apps;
     LPat checked_pattern;
     LExp checked_rhs;
 
-    CheckedRecordUpdateAlt(const LCon& c, const std::vector<LVar>& bs, const std::vector<LExp>& fs, const LPat& p, const LExp& r)
-        :constructor(c), old_binders(bs), rhs_fields(fs), checked_pattern(p), checked_rhs(r)
+    CheckedRecordUpdateAlt(const LCon& c, const std::vector<LVar>& bs, const std::vector<CheckedRecordUpdateRhsApply>& as, const LPat& p, const LExp& r)
+        :constructor(c), old_binders(bs), rhs_apps(as), checked_pattern(p), checked_rhs(r)
     {}
 };
 
