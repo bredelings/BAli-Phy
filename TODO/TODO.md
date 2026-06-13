@@ -11,16 +11,7 @@
  * Put Trim into the AST
    * This would be simpler if we make a deindexify\_and\_trim.  Which _should_ be possible.
 
- * Replace shared_ptr in ObjectValue -- this makes it slower?
-
- * Split App into FuncApp, ConApp, OpApp.
-   - Are we allowed to return ConApp from e_op?  I think we already do for BranchAlignment / NodeAlignment.
-
- * Redo the refactor-app branch, but without losing any speed.
-
-   - Check that generated Core doesn't change?
-
-## Refactor
+## Command-line UI / bindings
 
  * infer haskell types for bindings
 
@@ -42,14 +33,12 @@
    
    - for code that records USES and also does changeable reductions, maybe we can still directly execute some stuff
      instead of doing switch statements.
+     
+   - if each reg has only one interpreter (which requires merging incr_eval_1 / incr_eval_2) then JIT compilation would make more sense.
 
 ## Speed
 
- * How to handle the operator-constructing wrapper inside the evaluator?
- 
-   * This could become simpler if we split App into FuncApp / ConApp, OpApp above
-   
-   * Maybe a single hand-coded switch statement?
+ * Investigate using heapcheck
 
  * Replace Runtime::Exp with a hand-written discriminated union?
 
@@ -64,7 +53,7 @@
  * could I / should I introduce an actual ByteArray# for unboxed things with no destructures like Vector Double
 
 
-## Correctness/Completeness
+## Haskell correctness & completeness
 
  * audit and improve RecursiveDo support
  
