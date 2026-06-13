@@ -1,1 +1,0 @@
-Currently succeeds; updating a field whose type mentions an existential should be rejected.

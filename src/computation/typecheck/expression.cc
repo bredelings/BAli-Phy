@@ -121,6 +121,16 @@ namespace
         return {};
     }
 
+    // Test whether updating this constructor field would require naming an existential type.
+    bool record_update_field_mentions_existential(const DataConInfo& con_info, int field_index)
+    {
+        auto ftvs = free_type_variables(con_info.field_types[field_index]);
+        for(const auto& tv: con_info.exi_tvs)
+            if (ftvs.count(tv))
+                return true;
+        return false;
+    }
+
     // Return parent record types for candidates still compatible with the selected constructors.
     std::set<std::string> record_update_parent_types(const RecordFieldUpdate& update, const std::optional<std::set<std::string>>& constructors)
     {
@@ -257,10 +267,12 @@ namespace
 
     // Apply explicit update fields to one constructor alternative.
     bool apply_record_update_to_constructor(
+        TypeChecker& tc,
         const Hs::RecordUpdate& Rec,
         const DataConInfo& con_info,
         const std::vector<RecordFieldUpdate>& updates,
-        std::vector<Hs::LExp>& args)
+        std::vector<Hs::LExp>& args,
+        bool& invalid_update)
     {
         if (unloc(Rec.fbinds).dotdot)
             return false;
@@ -272,6 +284,12 @@ namespace
             auto pos = record_field_position_for_constructor(update.candidates, con_info.name);
             if (not pos)
                 return false;
+            if (record_update_field_mentions_existential(con_info, *pos))
+            {
+                tc.record_error(update.loc, Note()<<"Cannot update field '"<<update.field_name<<"' because its type mentions existential type variables.");
+                invalid_update = true;
+                return false;
+            }
             args[*pos] = update.value;
             updated_positions.insert(*pos);
         }
@@ -292,6 +310,7 @@ namespace
             return {};
 
         std::vector<Hs::CheckedRecordUpdateAlt> alternatives;
+        bool invalid_update = false;
         if (update_info.constructors)
         {
             for(const auto& con_name: *update_info.constructors)
@@ -311,7 +330,7 @@ namespace
                     args.push_back(var);
                 }
 
-                if (not apply_record_update_to_constructor(Rec, *con_info, update_info.updates, args))
+                if (not apply_record_update_to_constructor(tc, Rec, *con_info, update_info.updates, args, invalid_update))
                     continue;
 
                 Hs::LCon head = {record_loc, Hs::Con(con_info->name, con_info->arity())};
@@ -320,6 +339,9 @@ namespace
                 alternatives.push_back({pattern, rhs});
             }
         }
+
+        if (invalid_update)
+            return alternatives;
 
         if (alternatives.empty())
         {
