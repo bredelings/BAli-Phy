@@ -523,6 +523,8 @@ public:
 
     void tcRho(Hs::ListFromThenTo&, const Expected&);
 
+    void tcBody(Hs::LExp& body, const Expected&);
+
     void tcRho(Hs::GuardedRHS&, const Expected&, int i=0);
 
     void tcRho(Hs::MultiGuardedRHS&, const Expected&);

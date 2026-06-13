@@ -9,6 +9,18 @@ using std::pair;
 using std::optional;
 using std::tuple;
 
+// Check a match RHS expression, preserving sigma-result evidence as an explicit expression wrapper.
+void TypeChecker::tcBody(Hs::LExp& body, const Expected& exp_type)
+{
+    if (auto type = exp_type.read_type_maybe(); type and not is_rho_type(*type))
+    {
+        auto wrap = checkSigma(body, *type);
+        body = {body.loc, Hs::Wrap(body, wrap)};
+    }
+    else
+        tcRho(body, exp_type);
+}
+
 // Figure 25. Rules for match, mrule, and grhs
 void TypeChecker::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int i)
 {
@@ -28,7 +40,7 @@ void TypeChecker::tcRho(Hs::GuardedRHS& rhs, const Expected& exp_type, int i)
     else
     {
         auto span = source_span_scope(rhs.body.loc);
-        tcRho(rhs.body, exp_type);
+        tcBody(rhs.body, exp_type);
     }
 }
 

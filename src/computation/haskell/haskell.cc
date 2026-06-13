@@ -233,6 +233,11 @@ string TypedExp::print() const
     return exp.print() + " :: " + type.print();
 }
 
+string Wrap::print() const
+{
+    return exp.print();
+}
+
 string FixityDecl::print() const
 {
     string result;

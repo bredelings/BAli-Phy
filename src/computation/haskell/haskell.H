@@ -234,6 +234,18 @@ struct TypedExp: public Object
     TypedExp(const LExp& e, const LType& t): exp(e), type(t) {}
 };
 
+struct Wrap: public Object
+{
+    LExp exp;
+    Core::wrapper wrap;
+
+    Wrap* clone() const { return new Wrap(*this);}
+    std::string print() const;
+
+    Wrap() = default;
+    Wrap(const LExp& e, const Core::wrapper& w): exp(e), wrap(w) {}
+};
+
 struct TypeSigDecl: public Object
 {
     std::vector<LVar> vars;

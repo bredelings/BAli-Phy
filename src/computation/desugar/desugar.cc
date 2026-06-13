@@ -633,6 +633,10 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         return texp->wrap( desugar( texp->exp) );
     }
+    else if (auto wrap = E.to<Hs::Wrap>())
+    {
+        return wrap->wrap( desugar( wrap->exp ) );
+    }
     else if (E.is_a<Hs::LambdaExp>())
     {
         auto L = E.as_<Hs::LambdaExp>();
