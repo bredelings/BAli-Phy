@@ -55,7 +55,10 @@ namespace
     {
         Hs::Matches matches;
         for(const auto& alt: alternatives)
-            matches.push_back(Hs::MRule({alt.checked_pattern}, Hs::SimpleRHS(alt.checked_rhs)));
+        {
+            auto rhs = Hs::apply({alt.constructor.loc, unloc(alt.constructor)}, alt.rhs_apps | ranges::views::transform([](const auto& app) { return app.arg; }) | ranges::to<std::vector>);
+            matches.push_back(Hs::MRule({alt.checked_pattern}, Hs::SimpleRHS(rhs)));
+        }
         return matches;
     }
 
@@ -83,7 +86,7 @@ namespace
         std::abort();
     }
 
-    // Copy semantic update metadata and attach the checked pattern/RHS pairs after case-alternative typechecking.
+    // Copy semantic update metadata and replace its RHS applications with the checked application spine.
     std::vector<Hs::CheckedRecordUpdateAlt> checked_record_update_alternatives(
         const std::vector<Hs::CheckedRecordUpdateAlt>& alternatives,
         const Hs::Matches& checked_matches)
@@ -102,7 +105,7 @@ namespace
 
             auto checked_rhs = match.rhs.guarded_rhss[0].body;
             auto [checked_constructor, checked_apps] = checked_record_update_rhs_apps(alt, checked_rhs);
-            checked_alternatives.push_back({checked_constructor, alt.old_binders, checked_apps, match.patterns[0], checked_rhs});
+            checked_alternatives.push_back({checked_constructor, alt.old_binders, checked_apps, match.patterns[0]});
         }
         return checked_alternatives;
     }
@@ -424,7 +427,7 @@ namespace
                 std::vector<Hs::CheckedRecordUpdateRhsApply> rhs_apps;
                 for(const auto& arg: args)
                     rhs_apps.push_back({arg});
-                alternatives.push_back({head, old_binders, rhs_apps, pattern, rhs});
+                alternatives.push_back({head, old_binders, rhs_apps, pattern});
             }
         }
 

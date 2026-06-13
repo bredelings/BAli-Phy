@@ -1288,15 +1288,14 @@ struct CheckedRecordUpdateRhsApply
 
 struct CheckedRecordUpdateAlt
 {
-    // Semantic constructor-order update plan plus the checked fallback syntax.
+    // Semantic constructor-order update plan plus the checked pattern evidence.
     LCon constructor;
     std::vector<LVar> old_binders;
     std::vector<CheckedRecordUpdateRhsApply> rhs_apps;
     LPat checked_pattern;
-    LExp checked_rhs;
 
-    CheckedRecordUpdateAlt(const LCon& c, const std::vector<LVar>& bs, const std::vector<CheckedRecordUpdateRhsApply>& as, const LPat& p, const LExp& r)
-        :constructor(c), old_binders(bs), rhs_apps(as), checked_pattern(p), checked_rhs(r)
+    CheckedRecordUpdateAlt(const LCon& c, const std::vector<LVar>& bs, const std::vector<CheckedRecordUpdateRhsApply>& as, const LPat& p)
+        :constructor(c), old_binders(bs), rhs_apps(as), checked_pattern(p)
     {}
 };
 
