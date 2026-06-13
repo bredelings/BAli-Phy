@@ -10,9 +10,32 @@
  * Split App into FuncApp, ConApp, OpApp.
    - Are we allowed to return ConApp from e_op?  I think we already do for BranchAlignment / NodeAlignment.
 
+ * Redo the refactor-app branch, but without losing any speed.
+
+   - Check that generated Core doesn't change?
+
 ## Refactor
 
  * infer haskell types for bindings
+
+## Structural Problems
+
+ * stop using the C++ stack, so that we can have unlimited stack growth.
+ 
+ * implement ST so that we can actually code stuff that modified memory, such as creating vector<double>.
+
+   - we want to RECORD all uses/forces.
+   
+   - however we want to especifically avoid making any individual reduction something that can be redone.
+   
+ * JIT compilation 
+
+   - for code that either only records USES, we shouldn't need to return a result each time
+
+   - for code that also has no changeable nodes, things should be even simpler.
+   
+   - for code that records USES and also does changeable reductions, maybe we can still directly execute some stuff
+     instead of doing switch statements.
 
 ## Speed
 
@@ -22,7 +45,7 @@
    
    * Maybe a single hand-coded switch statement?
 
- * Replace Runtime::Exp with a hand-written discriminated union
+ * Replace Runtime::Exp with a hand-written discriminated union?
 
  * Delete the constructors that make an Object using clone?
  
@@ -31,17 +54,17 @@
    - also maybe, EPair Double Double
 
    - also EIntMap Int -- could implement a strict IntMap
+   
+ * could I / should I introduce an actual ByteArray# for unboxed things with no destructures like Vector Double
 
 
 ## Correctness/Completeness
 
- * record syntax -- still need record wildcards and several other rhings?
- 
  * audit and improve RecursiveDo support
  
- * audit and improve kind checking support
- 
  * audit and improve higher-rank support
+ 
+ * audit and improve kind checking support
  
  * allow forall in inferred kinds
    - allow user-written foralls
@@ -55,5 +78,12 @@
  
  * Implement Data.Array correctly
  
+ * Clean up error message printing
+
+   - record all the types so that we can jointly tidy them using an implicit tidy state, similar to constraint warnings
+   - use a text algebra similar to Wadlers.
+   - handle colors in the text algebra -- otherwise after we finish green text we don't know what to go back to.
+   
  * downloading packages from hackage?
  
+
