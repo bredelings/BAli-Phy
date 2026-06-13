@@ -1,0 +1,2 @@
+   • Record update may fail at runtime because constructor 'OnlyX' does not
+     contain all updated fields: 'y'.

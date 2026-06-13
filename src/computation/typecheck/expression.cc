@@ -23,13 +23,17 @@ namespace
         std::optional<yy::location> loc;
         std::string field_name;
         std::vector<FieldInfo> candidates;
+        std::set<std::string> constructors;
         Hs::LExp value;
     };
 
-    struct RecordUpdateInfo
+    struct RecordUpdateAnalysis
     {
-        std::optional<std::set<std::string>> constructors;
         std::vector<RecordFieldUpdate> updates;
+        std::optional<std::set<std::string>> field_selected_constructors;
+        std::optional<std::set<std::string>> type_constructors;
+        std::set<std::string> selected_constructors;
+        std::set<std::string> omitted_constructors;
         bool valid = true;
     };
 
@@ -122,42 +126,45 @@ namespace
     }
 
     // Test whether updating this constructor field would require naming an existential type.
-    bool record_update_field_mentions_existential(const DataConInfo& con_info, int field_index)
+    bool record_update_field_mentions_existential(TypeChecker& tc, const DataConInfo& con_info, int field_index)
     {
-        auto ftvs = free_type_variables(con_info.field_types[field_index]);
+        auto ftvs = free_type_variables(tc.expand_all_type_synonyms(con_info.field_types[field_index]));
+        auto result_tvs = free_type_variables(tc.expand_all_type_synonyms(con_info.result_type()));
+        for(const auto& constraint: con_info.gadt_eq_constraints)
+        {
+            auto constraint_tvs = free_type_variables(tc.expand_all_type_synonyms(constraint));
+            result_tvs.insert(constraint_tvs.begin(), constraint_tvs.end());
+        }
         for(const auto& tv: con_info.exi_tvs)
-            if (ftvs.count(tv))
+            if (ftvs.count(tv) and not result_tvs.count(tv))
                 return true;
         return false;
     }
 
     // Return parent record types for candidates still compatible with the selected constructors.
-    std::set<std::string> record_update_parent_types(const RecordFieldUpdate& update, const std::optional<std::set<std::string>>& constructors)
+    std::set<std::string> record_update_parent_types(const RecordFieldUpdate& update, const std::set<std::string>& constructors)
     {
         std::set<std::string> parent_types;
         for(const auto& field: update.candidates)
         {
-            if (constructors)
-            {
-                bool has_selected_constructor = false;
-                for(const auto& constructor: field.constructors)
-                    if (constructors->count(constructor))
-                        has_selected_constructor = true;
-                if (not has_selected_constructor)
-                    continue;
-            }
+            bool has_selected_constructor = false;
+            for(const auto& constructor: field.constructors)
+                if (constructors.count(constructor))
+                    has_selected_constructor = true;
+            if (not has_selected_constructor)
+                continue;
             parent_types.insert(field.parent_type);
         }
         return parent_types;
     }
 
     // Report duplicate-label updates that still name multiple record types after filtering.
-    bool report_ambiguous_record_updates(TypeChecker& tc, const RecordUpdateInfo& info)
+    bool report_ambiguous_record_updates(TypeChecker& tc, const RecordUpdateAnalysis& analysis)
     {
         bool ambiguous = false;
-        for(const auto& update: info.updates)
+        for(const auto& update: analysis.updates)
         {
-            auto parent_types = record_update_parent_types(update, info.constructors);
+            auto parent_types = record_update_parent_types(update, analysis.selected_constructors);
             if (parent_types.size() <= 1)
                 continue;
 
@@ -175,6 +182,35 @@ namespace
             tc.record_error(update.loc, message);
         }
         return ambiguous;
+    }
+
+    // Warn when an update intentionally omits constructors that lack one of the updated fields.
+    void warn_incomplete_record_update(TypeChecker& tc, const RecordUpdateAnalysis& analysis, const std::optional<yy::location>& record_loc)
+    {
+        if (analysis.omitted_constructors.empty() or analysis.updates.empty())
+            return;
+
+        Note message;
+        message<<"Record update may fail at runtime because ";
+        if (analysis.omitted_constructors.size() == 1)
+            message<<"constructor ";
+        else
+            message<<"constructors ";
+
+        int i = 0;
+        for(const auto& constructor: analysis.omitted_constructors)
+        {
+            if (i++)
+                message<<", ";
+            message<<"'"<<get_unqualified_name(constructor)<<"'";
+        }
+        message<<" ";
+        if (analysis.omitted_constructors.size() == 1)
+            message<<"does";
+        else
+            message<<"do";
+        message<<" not contain all updated fields: "<<quoted_record_field_list(analysis.updates)<<".";
+        tc.record_warning(record_loc, message);
     }
 
     // Return constructors for the concrete record type when the scrutinee type is already known.
@@ -210,10 +246,10 @@ namespace
         return constructors;
     }
 
-    // Resolve update field labels and collect the constructors that can contain all explicit fields.
-    RecordUpdateInfo collect_record_update_info(TypeChecker& tc, Hs::RecordUpdate& Rec)
+    // Resolve update fields and keep the constructor sets needed for validation and warnings.
+    RecordUpdateAnalysis analyze_record_update(TypeChecker& tc, Hs::RecordUpdate& Rec, const Type& object_type)
     {
-        RecordUpdateInfo info;
+        RecordUpdateAnalysis analysis;
         set<string> used_field_names;
 
         for(auto& field: unloc(Rec.fbinds).fields)
@@ -224,7 +260,7 @@ namespace
             if (used_field_names.count(field_key))
             {
                 tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
-                info.valid = false;
+                analysis.valid = false;
             }
             used_field_names.insert(field_key);
 
@@ -242,27 +278,42 @@ namespace
                     tc.record_error(field.loc, Note()<<lookup_message);
                 else
                     tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
-                info.valid = false;
+                analysis.valid = false;
             }
 
             auto field_constructors = constructors_for_record_field_candidates(field_candidates);
             if (field_constructors.empty() and not lookup_failed)
             {
                 tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
-                info.valid = false;
+                analysis.valid = false;
             }
-            info.constructors = intersect_constructors(info.constructors, field_constructors);
+            analysis.field_selected_constructors = intersect_constructors(analysis.field_selected_constructors, field_constructors);
 
             if (not f.value)
             {
                 tc.record_error(field.loc, Note()<<"Field pun '"<<field_name<<"' was not expanded before typechecking.");
-                info.valid = false;
+                analysis.valid = false;
             }
             else if (not field_candidates.empty())
-                info.updates.push_back({field.loc, field_name, field_candidates, *f.value});
+                analysis.updates.push_back({field.loc, field_name, field_candidates, field_constructors, *f.value});
         }
 
-        return info;
+        analysis.type_constructors = constructors_for_record_type(tc, object_type);
+        if (analysis.field_selected_constructors)
+            analysis.selected_constructors = *analysis.field_selected_constructors;
+
+        if (analysis.type_constructors)
+        {
+            analysis.selected_constructors = intersect_constructors(analysis.selected_constructors, *analysis.type_constructors);
+            if (analysis.valid and analysis.field_selected_constructors and not analysis.selected_constructors.empty())
+            {
+                for(const auto& constructor: *analysis.type_constructors)
+                    if (not analysis.selected_constructors.count(constructor))
+                        analysis.omitted_constructors.insert(constructor);
+            }
+        }
+
+        return analysis;
     }
 
     // Apply explicit update fields to one constructor alternative.
@@ -284,7 +335,7 @@ namespace
             auto pos = record_field_position_for_constructor(update.candidates, con_info.name);
             if (not pos)
                 return false;
-            if (record_update_field_mentions_existential(con_info, *pos))
+            if (record_update_field_mentions_existential(tc, con_info, *pos))
             {
                 tc.record_error(update.loc, Note()<<"Cannot update field '"<<update.field_name<<"' because its type mentions existential type variables.");
                 invalid_update = true;
@@ -300,20 +351,20 @@ namespace
     // Validate record update fields and expand the update into constructor-specific alternatives.
     std::vector<Hs::CheckedRecordUpdateAlt> record_update_alternatives(TypeChecker& tc, Hs::RecordUpdate& Rec, const Type& object_type, const std::optional<yy::location>& record_loc)
     {
-        auto update_info = collect_record_update_info(tc, Rec);
-        if (not update_info.valid)
+        auto analysis = analyze_record_update(tc, Rec, object_type);
+        if (not analysis.valid)
             return {};
 
-        if (auto type_constructors = constructors_for_record_type(tc, object_type))
-            update_info.constructors = intersect_constructors(update_info.constructors, *type_constructors);
-        if (report_ambiguous_record_updates(tc, update_info))
+        if (report_ambiguous_record_updates(tc, analysis))
             return {};
+
+        warn_incomplete_record_update(tc, analysis, record_loc);
 
         std::vector<Hs::CheckedRecordUpdateAlt> alternatives;
         bool invalid_update = false;
-        if (update_info.constructors)
+        if (analysis.field_selected_constructors)
         {
-            for(const auto& con_name: *update_info.constructors)
+            for(const auto& con_name: analysis.selected_constructors)
             {
                 auto con_info = tc.this_mod().constructor_info(con_name);
                 if (not con_info or not con_info->field_names)
@@ -330,7 +381,7 @@ namespace
                     args.push_back(var);
                 }
 
-                if (not apply_record_update_to_constructor(tc, Rec, *con_info, update_info.updates, args, invalid_update))
+                if (not apply_record_update_to_constructor(tc, Rec, *con_info, analysis.updates, args, invalid_update))
                     continue;
 
                 Hs::LCon head = {record_loc, Hs::Con(con_info->name, con_info->arity())};
@@ -345,7 +396,7 @@ namespace
 
         if (alternatives.empty())
         {
-            auto fields = quoted_record_field_list(update_info.updates);
+            auto fields = quoted_record_field_list(analysis.updates);
             auto type_text = show_type_plain(object_type);
             if (not fields.empty())
                 tc.record_error(record_loc, Note()<<"No constructor for type '"<<type_text<<"' has all fields used in this update: "<<fields<<".");
