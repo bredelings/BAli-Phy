@@ -313,6 +313,8 @@ public:
     void get_constructor_info(const Hs::Decls& decls);
 
     void classify_record_selectors();
+    void add_record_selectors_to_env();
+    Hs::Decls typecheck_generated_record_selectors();
 
     const TypeSynonymInfo* maybe_find_type_synonym(const Type& type) const;
 

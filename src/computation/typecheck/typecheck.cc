@@ -790,6 +790,44 @@ void TypeChecker::add_binders(const local_value_env& binders)
     poly_env() = plus_prefer_right( poly_env(), binders );
 }
 
+// Publish callable record selector types before checking source value bindings.
+void TypeChecker::add_record_selectors_to_env()
+{
+    global_value_env selector_types;
+    for(auto& selector: this_mod().local_record_selectors())
+    {
+        assert(selector->record_selector);
+        if (selector->record_selector->callability != RecordSelectorCallability::Callable)
+            continue;
+
+        assert(not selector->type.empty());
+        selector_types = selector_types.insert({Hs::Var(selector->name), selector->type});
+    }
+    add_binders(selector_types);
+}
+
+// Typecheck generated selector bodies after ordinary source value bindings.
+Hs::Decls TypeChecker::typecheck_generated_record_selectors()
+{
+    Hs::Decls checked_decls;
+    auto field_accessors = synthesize_renamed_field_accessors(this_mod());
+    for(auto& [loc, decl]: field_accessors)
+    {
+        auto fd = decl.to<Hs::FunDecl>();
+        assert(fd);
+
+        auto var = unloc(fd->v);
+        auto selector = this_mod().lookup_resolved_symbol(var.name);
+        assert(selector and selector->record_selector);
+        assert(selector->record_selector->callability == RecordSelectorCallability::Callable);
+        assert(not selector->type.empty());
+
+        auto checked_decl = infer_type_for_single_fundecl_with_sig(*fd, selector->type);
+        checked_decls.push_back({loc, checked_decl});
+    }
+    return checked_decls;
+}
+
 TypeChecker
 TypeChecker::copy_add_binders(const local_value_env& binders) const
 {
@@ -1486,13 +1524,7 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
 
     // 6a. Record selectors need constructor metadata before we can decide if they are callable.
     classify_record_selectors();
-    auto field_accessors = synthesize_renamed_field_accessors(this_mod());
-    if (not field_accessors.empty())
-    {
-        if (M.value_decls.empty())
-            M.value_decls.push_back({});
-        M.value_decls[0].insert(M.value_decls[0].end(), field_accessors.begin(), field_accessors.end());
-    }
+    add_record_selectors_to_env();
 
     // 6b. Refine inferred type roles with source role annotations.
     apply_source_role_annotations(M.type_decls);
@@ -1513,6 +1545,9 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
 
     // 9. Typecheck value decls
     auto value_decls = infer_type_for_binds_top(M.value_decls);
+    auto record_selector_decls = typecheck_generated_record_selectors();
+    if (not record_selector_decls.empty())
+        value_decls.push_back(record_selector_decls);
 
     // 10. Typecheck default methods
     auto dm_decls = infer_type_for_default_methods(M.type_decls);
