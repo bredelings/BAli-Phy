@@ -24,7 +24,7 @@
    - we want to RECORD all uses/forces.
    
    - however we want to especifically avoid making any individual reduction something that can be redone.
-   
+
  * JIT compilation 
 
    - for code that either only records USES, we shouldn't need to return a result each time

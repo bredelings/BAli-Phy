@@ -1,3 +1,24 @@
+# 4.3 (UNRELEASED)
+
+## Fixes
+- A variety of bug fixes.
+
+## Haskell
+
+- Implement `newtype`
+- Implement `deriving`
+- Implement records fully
+- Implement `LANGUAGE BangPatterns`
+- Fix `LANGUAGE RankNTypes`
+- Print usable error message for pattern-match errors.
+- Improve diagnostics
+- Correctly handle infix declarations.
+- Disentangle disambiguation and renaming
+
+## Runtime
+
+- Use typed AST for runtime code
+
 # 4.2 (May 27, 2026)
 
 ## Models
