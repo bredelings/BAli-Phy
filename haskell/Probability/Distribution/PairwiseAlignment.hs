@@ -1,3 +1,5 @@
+{-# LANGUAGE RecursiveDo #-}
+
 module Probability.Distribution.PairwiseAlignment where
 
 import IModel
@@ -6,7 +8,6 @@ import Bio.Alignment.Pairwise
 import Bio.Alignment
 import Tree
 import qualified Data.IntMap as IM
-import Control.Monad.Fix
 
 -- Deletion, insertion ,mean indel length, time starting sequence length
 foreign import bpcall "Alignment:" simulateLongIndelsGeometric :: Double -> Double -> Double -> Double -> Int -> IO PairwiseAlignment
@@ -32,14 +33,14 @@ instance Dist d => Dist (IndelsOnTree t d) where
 
 instance (IOSampleable d, Result d ~ PairwiseAlignment, HasRoot t, HasBranchLengths t) => IOSampleable (IndelsOnTree t d) where
     sampleIO (IndelsOnTree rtree distFn startLength) =
-        do { rec let lengths = getNodesSet rtree & IM.fromSet lengthForNode
-                     lengthForNode node  = case branchFromParent rtree node of
-                                             Nothing -> startLength
-                                             Just b -> pairwise_alignment_length2 (as IM.! b)
-                     alignmentForBranch b | towardRoot rtree b = return $ flip_alignment $ as IM.! (reverseEdge b)
-                                          | otherwise          = sampleIO $ distFn (branchLength rtree b) (lengths IM.! sourceNode rtree b)
-                 as <- lazySequence $ (getEdgesSet rtree & IM.fromSet alignmentForBranch)
-          ; return $ AlignmentOnTree rtree (numNodes rtree) lengths as}
+        mdo let lengths = getNodesSet rtree & IM.fromSet lengthForNode
+                lengthForNode node  = case branchFromParent rtree node of
+                                        Nothing -> startLength
+                                        Just b -> pairwise_alignment_length2 (as IM.! b)
+                alignmentForBranch b | towardRoot rtree b = return $ flip_alignment $ as IM.! (reverseEdge b)
+                                     | otherwise          = sampleIO $ distFn (branchLength rtree b) (lengths IM.! sourceNode rtree b)
+            as <- lazySequence $ (getEdgesSet rtree & IM.fromSet alignmentForBranch)
+            return $ AlignmentOnTree rtree (numNodes rtree) lengths as}
 
 
 {- Note: Could we sample from an IntMap dist instead of an IntMap (IO PairwiseAlignment) ?

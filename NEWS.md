@@ -10,6 +10,7 @@
 - Implement records fully
 - Implement `LANGUAGE BangPatterns`
 - Fix `LANGUAGE RankNTypes`
+- Fix `LANGUAGE RecursiveDo`
 - Print usable error message for pattern-match errors.
 - Improve diagnostics
 - Correctly handle infix declarations.

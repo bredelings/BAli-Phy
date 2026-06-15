@@ -4,7 +4,6 @@ module Model where
 import           Probability
 import           Tree
 import           Tree.Newick
-import           Control.Monad.Fix -- should be unneeded
 
 model = do
     tree <- prior $ uniformTopology 5

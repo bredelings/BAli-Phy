@@ -1,3 +1,5 @@
+{-# LANGUAGE RecursiveDo #-}
+
 module Probability.Distribution.PhyloCTMC.VariableA.Sample where
 
 import Probability.Random
@@ -6,8 +8,6 @@ import SModel
 import Bio.Alignment
 import Data.Matrix
 import qualified Data.IntMap as IntMap
-
-import Control.Monad.Fix -- for rec
 
 -- This is imported for both FixedA and VariableA, which is ugly.
 foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double -> IO VectorPairIntInt

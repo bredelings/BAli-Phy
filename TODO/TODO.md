@@ -55,8 +55,6 @@
 
 ## Haskell correctness & completeness
 
- * audit and improve RecursiveDo support
- 
  * audit and improve higher-rank support
  
  * audit and improve kind checking support
