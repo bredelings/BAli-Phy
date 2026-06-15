@@ -28,6 +28,22 @@ using std::map;
          * See ghc/compiler/rename/RnExpr.hs
          */
 
+void renamer_state::rename_rec_stmt_ops(Hs::RecStmt& R, const bound_var_info& bound, set<string>& free_vars)
+{
+    R.returnOp = Hs::Var("return");
+    R.mfixOp = Hs::Var("mfix");
+
+    set<string> op_free_vars;
+    auto return_op = rename({noloc, R.returnOp}, bound, op_free_vars);
+    add(free_vars, op_free_vars);
+    R.returnOp = unloc(return_op).as_<Hs::Var>();
+
+    op_free_vars.clear();
+    auto mfix_op = rename({noloc, R.mfixOp}, bound, op_free_vars);
+    add(free_vars, op_free_vars);
+    R.mfixOp = unloc(mfix_op).as_<Hs::Var>();
+}
+
 // Here we want to find all the variables bound by the list of stmts, and make sure that they don't overlap.
 // Getting the list of variables bound by a "rec" should return all the variables bound by the statements inside the rec.
 bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_var_info& bound, set<string>& free_vars)
@@ -47,18 +63,7 @@ bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_v
 	    throw myexception()<<"rec command '"<<rec_stmt<<"' uses a variable twice!";
     }
 
-    R.returnOp = Hs::Var("return");
-    R.mfixOp = Hs::Var("mfix");
-
-    set<string> op_free_vars;
-    auto return_op = rename({noloc, R.returnOp}, bound, op_free_vars);
-    add(free_vars, op_free_vars);
-    R.returnOp = unloc(return_op).as_<Hs::Var>();
-
-    op_free_vars.clear();
-    auto mfix_op = rename({noloc, R.mfixOp}, bound, op_free_vars);
-    add(free_vars, op_free_vars);
-    R.mfixOp = unloc(mfix_op).as_<Hs::Var>();
+    rename_rec_stmt_ops(R, bound, free_vars);
 
     auto rn = child();
     for(auto& stmt: R.stmts.stmts)

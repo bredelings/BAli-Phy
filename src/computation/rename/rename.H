@@ -81,6 +81,7 @@ struct renamer_state
     void rename_signatures(std::map<Hs::LVar, Hs::LType>& signatures, std::map<Hs::LVar, Hs::inline_pragma_t>& inline_sigs, const bound_var_info& bound, bool top = false);
     bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars, bool top = false);
     bound_var_info rename_decls(Hs::Binds& decls, const bound_var_info& bound, std::set<std::string>& free_vars, bool top = false);
+    void rename_rec_stmt_ops(Hs::RecStmt& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
     bound_var_info rename_rec_stmt(Hs::LExp& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
     bound_var_info rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, std::set<std::string>& free_vars);
     bound_var_info rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, const bound_var_info& binders, std::set<std::string>& free_vars);

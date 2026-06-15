@@ -17,6 +17,67 @@ using std::pair;
 using std::set;
 using std::optional;
 
+namespace
+{
+    struct mdo_stmt_info
+    {
+        Hs::LStmt stmt;
+        bound_var_info bound;
+        bound_var_info free;
+    };
+
+    struct mdo_segment
+    {
+        Hs::LStmt stmt;
+        bool generated_rec = false;
+    };
+
+    int dependency_end(const vector<mdo_stmt_info>& stmts, const bound_var_info& deps, int start)
+    {
+        int end = -1;
+        for(int i = start; i < stmts.size(); i++)
+        {
+            if (not intersection(deps, stmts[i].bound).empty())
+                end = i;
+        }
+        return end;
+    }
+
+    vector<mdo_segment> segment_mdo_stmts(const vector<mdo_stmt_info>& stmts)
+    {
+        vector<mdo_segment> segmented;
+
+        for(int i = 0; i < stmts.size();)
+        {
+            bound_var_info block_free = stmts[i].free;
+            int end = dependency_end(stmts, block_free, i);
+
+            if (end < i)
+            {
+                segmented.push_back({stmts[i].stmt});
+                i++;
+                continue;
+            }
+
+            for(int j = i; j <= end; j++)
+            {
+                add(block_free, stmts[j].free);
+                int new_end = dependency_end(stmts, block_free, i);
+                if (new_end > end)
+                    end = new_end;
+            }
+
+            vector<Hs::LStmt> rec_stmts;
+            for(int j = i; j <= end; j++)
+                rec_stmts.push_back(stmts[j].stmt);
+            segmented.push_back({{stmts[i].stmt.loc, Hs::RecStmt(Hs::Stmts(rec_stmts))}, true});
+            i = end + 1;
+        }
+
+        return segmented;
+    }
+}
+
 Hs::Exp renamer_state::rename(const Hs::Exp& E, const bound_var_info& bound, set<string>& free_vars)
 {
     return unloc(rename({noloc, E}, bound, free_vars));
@@ -188,50 +249,45 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         if (not m.language_extensions.has_extension(LangExt::RecursiveDo))
             error(loc, Note()<<"mdo expression requires the RecursiveDo extension.");
 
-            /*
-         * See "The mdo notation" in https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html
-         *
-         * "Like let and where bindings, name shadowing is not allowed within an mdo-expression or a rec-block"
-         *
-         * mdo { a <- getChar      ===> do { a <- getChar
-         *     ; b <- f a c                ; rec { b <- f a c
-         *     ; c <- f b a                ;     ; c <- f b a }
-         *     ; z <- h a b                ; z <- h a b
-         *     ; d <- g d e                ; rec { d <- g d e
-         *     ; e <- g a z                ;     ; e <- g a z }
-         *     ; putChar c }               ; putChar c }
-         */
-
-        /* So... you start the the last statement (e <- g a z) and then find the first statement that has an "e" in the
-           free vars of the rhs.  Thats a rec block, regardless of what anything else does, since you can reorder the stmts.
-           Then, presumably, you start with the last ungrouped statement, and continue the algorithm.
-
-           The statement itself could have an "e" in the rhs: e <- g a e.
-
-           If NO statement has a e in the rhs, then we move to the second-to-last stmt and continue the algorithm.
-
-           If a statement has e in the lhs, then no other stmts can have e in the lhs, because of the "name shadowing
-           not allowed" rule.
-         */
-
-        /*
-         * See ghc/compiler/rename/RnExpr.hs: Note [Segmenting mdo]
-         * What does rec {a;c  mean here?
-         *                b;d}
-         * I think it means rec {a;c;b;d}, but emphasizes that we have
-         * to issue all the stmts from the first recursive group a;c, before
-         * we issue any of the stmts from the second group b;d}.
-         */
-
-        // Hmm... as a dumb segmentation, we could take all the stmts except the last one and put them in a giant rec...
-        // FIXME: implement segmentation, and insert recs.
-
         auto rn = child();
-        bound_var_info binders;
         auto MD = E.as_<Hs::MDo>();
+        bound_var_info mdo_binders;
+
         for(auto& stmt: MD.stmts.stmts)
-            add(binders, rn.rename_stmt(stmt, bound, binders, free_vars));
-        E = MD;
+        {
+            bool overlap = not disjoint_add(mdo_binders, rn.find_bound_vars_in_stmt(stmt));
+            if (overlap)
+                throw myexception()<<"mdo expression '"<<MD<<"' uses a variable twice!";
+        }
+
+        vector<mdo_stmt_info> stmt_infos;
+        for(auto& stmt: MD.stmts.stmts)
+        {
+            set<string> stmt_free_vars;
+            auto stmt_binders = rn.rename_stmt(stmt, plus(bound, mdo_binders), stmt_free_vars);
+            add(free_vars, minus(stmt_free_vars, mdo_binders));
+            stmt_infos.push_back({stmt, stmt_binders, intersection(stmt_free_vars, mdo_binders)});
+        }
+
+        auto segments = segment_mdo_stmts(stmt_infos);
+        vector<Hs::LStmt> segmented_stmts;
+        for(auto& segment: segments)
+        {
+            if (segment.generated_rec)
+            {
+                auto R = unloc(segment.stmt).as_<Hs::RecStmt>();
+                rn.rename_rec_stmt_ops(R, plus(bound, mdo_binders), free_vars);
+                unloc(segment.stmt) = R;
+            }
+            segmented_stmts.push_back(segment.stmt);
+        }
+
+        if (segmented_stmts.empty())
+            error(loc, Note()<<"Empty mdo block.");
+        else if (not unloc(segmented_stmts.back()).is_a<Hs::SimpleQual>())
+            error(segmented_stmts.back().loc, Note()<<"MDo block does not end in an expression.");
+
+        E = Hs::Do(Hs::Stmts(segmented_stmts));
     }
     else if (auto te = E.to<Hs::TypedExp>())
     {

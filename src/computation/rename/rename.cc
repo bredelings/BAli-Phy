@@ -88,7 +88,9 @@ Hs::Decls synthesize_renamed_field_accessors(const Module& m)
 
 // 1. The primary purpose of the rename pass is to convert identifiers to (possibly qualified) vars.
 
-// 2. Additionally, we also try and translate rec expressions to mfix expressions here.
+// 2. Additionally, mdo expressions are segmented into ordinary do expressions
+// containing rec statements here.  Rec statements themselves are lowered after
+// typechecking.
 
 // We keep track of locally bound variables only so that we know when to avoid looking for a qualified symbol.
 typedef set<string> bound_var_info;
