@@ -1482,6 +1482,12 @@ Con TupleCon(int n);
 
 std::tuple<std::vector<LTypeVar>, std::vector<LType>, LType> peel_top_gen(LType t);
 
+std::set<LVar> vars_bound_in_decl(const Decl& decl);
+std::set<LVar> vars_bound_in_decls(const Decls& decls);
+std::set<LVar> vars_bound_in_binds(const Binds& binds);
+std::set<LVar> vars_bound_in_stmt(const LStmt& stmt);
+std::set<LVar> vars_bound_in_stmts(const Stmts& stmts);
+
 }
 
 #endif

@@ -13,6 +13,7 @@ using std::pair;
 using std::tuple;
 using std::vector;
 using std::optional;
+using std::set;
 
 namespace Haskell
 {
@@ -1229,6 +1230,62 @@ FunDecl simple_decl(const LVar& v, const LExp& E)
 FunDecl simple_decl(const LVar& v, const MultiGuardedRHS& E)
 {
     return simple_fun_decl(v,{},E);
+}
+
+set<LVar> vars_bound_in_decl(const Decl& decl)
+{
+    if (auto pd = decl.to<PatDecl>())
+        return vars_in_pattern(pd->lhs);
+    else if (auto fd = decl.to<FunDecl>())
+        return {{fd->v.loc, unloc(fd->v)}};
+    else if (auto gb = decl.to<GenBind>())
+    {
+        set<LVar> vars;
+        for(const auto& [name, _]: gb->bind_infos)
+            vars.insert({noloc, name});
+        return vars;
+    }
+    else
+        return {};
+}
+
+set<LVar> vars_bound_in_decls(const Decls& decls)
+{
+    set<LVar> vars;
+    for(const auto& [_, decl]: decls)
+        add(vars, vars_bound_in_decl(decl));
+    return vars;
+}
+
+set<LVar> vars_bound_in_binds(const Binds& binds)
+{
+    set<LVar> vars;
+    for(const auto& decls: binds)
+        add(vars, vars_bound_in_decls(decls));
+    return vars;
+}
+
+set<LVar> vars_bound_in_stmt(const LStmt& lstmt)
+{
+    auto& stmt = unloc(lstmt);
+    if (auto pq = stmt.to<PatQual>())
+        return vars_in_pattern(pq->bindpat);
+    else if (auto lq = stmt.to<LetQual>())
+        return vars_bound_in_binds(unloc(lq->binds));
+    else if (auto rec = stmt.to<RecStmt>())
+        return vars_bound_in_stmts(rec->stmts);
+    else if (stmt.is_a<SimpleQual>())
+        return {};
+    else
+        std::abort();
+}
+
+set<LVar> vars_bound_in_stmts(const Stmts& stmts)
+{
+    set<LVar> vars;
+    for(const auto& stmt: stmts.stmts)
+        add(vars, vars_bound_in_stmt(stmt));
+    return vars;
 }
 
 expression_ref error(const std::string& s)

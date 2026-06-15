@@ -25,40 +25,12 @@ using std::tuple;
 
 namespace
 {
-    void add_pattern_binder_names(set<string>& names, const Hs::LPat& pat)
+    vector<string> rec_stmt_binder_names(const Hs::RecStmt& R)
     {
-        for(const auto& var: Hs::vars_in_pattern(pat))
+        set<string> names;
+        for(const auto& var: Hs::vars_bound_in_stmts(R.stmts))
             names.insert(unloc(var).name);
-    }
-
-    void add_decl_binder_names(set<string>& names, const Hs::Decl& decl)
-    {
-        if (auto pd = decl.to<Hs::PatDecl>())
-            add_pattern_binder_names(names, pd->lhs);
-        else if (auto fd = decl.to<Hs::FunDecl>())
-            names.insert(unloc(fd->v).name);
-        else if (auto gb = decl.to<Hs::GenBind>())
-        {
-            for(const auto& [name, _]: gb->bind_infos)
-                names.insert(name.name);
-        }
-    }
-
-    void add_stmt_binder_names(set<string>& names, const Hs::LStmt& lstmt)
-    {
-        auto& stmt = unloc(lstmt);
-        if (auto pq = stmt.to<Hs::PatQual>())
-            add_pattern_binder_names(names, pq->bindpat);
-        else if (auto lq = stmt.to<Hs::LetQual>())
-        {
-            for(const auto& decls: unloc(lq->binds))
-                for(const auto& [_, decl]: decls)
-                    add_decl_binder_names(names, decl);
-        }
-        else if (stmt.is_a<Hs::SimpleQual>())
-            ;
-        else
-            std::abort();
+        return names | ranges::to<vector<string>>();
     }
 }
 
@@ -661,11 +633,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         else if (first.is_a<Hs::RecStmt>())
         {
             auto& R = first.as_<Hs::RecStmt>();
-            set<string> names_set;
-            for(auto& rec_stmt: R.stmts.stmts)
-                add_stmt_binder_names(names_set, rec_stmt);
-
-            vector<string> names = names_set | ranges::to<vector<string>>();
+            vector<string> names = rec_stmt_binder_names(R);
             vector<Hs::LExp> vars;
             Hs::LPats var_patterns;
             for(auto& name: names)

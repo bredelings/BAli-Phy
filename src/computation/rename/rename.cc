@@ -411,7 +411,14 @@ bound_var_info renamer_state::find_bound_vars_in_stmt(Located<expression_ref>& l
         return bound;
     }
     else if (stmt.is_a<Haskell::RecStmt>())
-        throw myexception()<<"find_bound_vars_in_stmt: should not have a rec stmt inside a rec stmt!";
+    {
+        auto R = stmt.as_<Haskell::RecStmt>();
+        bound_var_info bound;
+        for(auto& rec_stmt: R.stmts.stmts)
+            add(bound, find_bound_vars_in_stmt(rec_stmt));
+        stmt = R;
+        return bound;
+    }
     else
 	std::abort();
 }
