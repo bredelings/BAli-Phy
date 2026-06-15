@@ -185,6 +185,9 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     }
     else if (E.is_a<Hs::MDo>())
     {
+        if (not m.language_extensions.has_extension(LangExt::RecursiveDo))
+            error(loc, Note()<<"mdo expression requires the RecursiveDo extension.");
+
             /*
          * See "The mdo notation" in https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html
          *

@@ -35,6 +35,9 @@ bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_v
 {
     auto& rec_stmt = unloc(lrec_stmt);
 
+    if (not m.language_extensions.has_extension(LangExt::RecursiveDo))
+        error(lrec_stmt.loc, Note()<<"rec statement requires the RecursiveDo extension.");
+
     auto rec_return = Hs::Var("return");
     auto mfix       = Hs::Var("mfix");
 
