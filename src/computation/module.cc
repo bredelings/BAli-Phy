@@ -551,9 +551,17 @@ vector<Hs::LImpDecl> Module::imports() const
     return imports_list;
 }
 
-set<string> Module::dependencies() const
+set<string> Module::hidden_dependencies() const
 {
     set<string> modules;
+    if (language_extensions.has_extension(LangExt::RecursiveDo))
+        modules.insert(control_monad_fix_module_name);
+    return modules;
+}
+
+set<string> Module::dependencies() const
+{
+    set<string> modules = hidden_dependencies();
     for(auto& [loc,impdecl]: imports() )
         modules.insert( unloc(impdecl.modid) );
     return modules;
@@ -1153,6 +1161,17 @@ void Module::perform_imports(const Program& P)
 {
     for(auto& impdecl: imports() )
         import_module(P, impdecl);
+
+    for(const auto& module_name: hidden_dependencies())
+    {
+        // Hidden dependencies are semantic dependencies for compiler-generated
+        // names.  Do not call import_module(): that would add source aliases.
+        auto M2 = P.get_module(module_name);
+        fresh_var_state().after(M2->fresh_var_state());
+        transitively_imported_modules.insert({M2->name(), M2});
+        for(auto& [mod_name, mod]: M2->transitively_imported_modules())
+            transitively_imported_modules.insert({mod_name, mod});
+    }
 
     show_messages(file, std::cerr, messages);
     exit_on_error(messages);

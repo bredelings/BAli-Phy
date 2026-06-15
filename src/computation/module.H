@@ -112,6 +112,8 @@ public:
 
     std::set<std::string> dependencies() const;
 
+    std::set<std::string> hidden_dependencies() const;
+
     std::vector<Hs::LImpDecl> imports() const;
 
     const std::map<std::string, const_symbol_ptr>& exported_symbols() const {return exported_symbols_;}

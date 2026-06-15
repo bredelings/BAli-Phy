@@ -1,5 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
+#include "computation/haskell/ids.H"
 
 #include "computation/expression/apply.H"
 
@@ -273,6 +274,11 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
     else if (auto rec = stmt.to<Hs::RecStmt>())
     {
         auto R = *rec;
+        auto mfix_symbol = this_mod().lookup_resolved_symbol(mfix_name);
+        if (not mfix_symbol)
+            throw note_exception()<<"RecursiveDo requires hidden symbol '"<<mfix_name<<"'.";
+        R.mfixOp = Hs::Var(mfix_symbol->name);
+
         auto bindpat = Hs::LPat{noloc, Hs::tuple_pattern(rec_stmt_binder_pats(rec_stmt_binder_names(R)))};
         auto mfix_exp = rec_stmt_as_mfix_exp(R);
 

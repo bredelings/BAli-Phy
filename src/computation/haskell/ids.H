@@ -36,6 +36,8 @@ extern std::string ix_range_size_name;
 extern std::string list_append_name;
 extern std::string list_filter_name;
 extern std::string list_map_name;
+extern std::string control_monad_fix_module_name;
+extern std::string mfix_name;
 extern std::string show_class_name;
 extern std::string show_shows_prec_name;
 extern std::string show_show_paren_name;
