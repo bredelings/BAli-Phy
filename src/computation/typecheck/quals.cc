@@ -292,6 +292,7 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
         auto checked_pq = unloc(synthetic_stmts[0]).as_<Hs::PatQual>();
         R.bindOp = checked_pq.bindOp;
         copy_checked_rec_stmt_from_mfix_exp(R, checked_pq.exp);
+        R.checked_rec = std::make_shared<Hs::CheckedRecStmt>(synthetic_stmts[0]);
 
         for(int j = i+1; j < stmts.size(); j++)
             stmts[j] = synthetic_stmts[j-i];

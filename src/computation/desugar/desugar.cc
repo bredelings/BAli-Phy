@@ -1,7 +1,6 @@
 #include <range/v3/all.hpp>
 #include "computation/module.H"
 #include <deque>
-#include <set>
 #include <tuple>
 #include <utility>
 #include "util/io.H"
@@ -18,21 +17,9 @@ namespace views = ranges::views;
 
 using std::string;
 using std::vector;
-using std::set;
 using std::deque;
 using std::pair;
 using std::tuple;
-
-namespace
-{
-    vector<string> rec_stmt_binder_names(const Hs::RecStmt& R)
-    {
-        set<string> names;
-        for(const auto& var: Hs::vars_bound_in_stmts(R.stmts))
-            names.insert(unloc(var).name);
-        return names | ranges::to<vector<string>>();
-    }
-}
 
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
@@ -633,30 +620,9 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         else if (first.is_a<Hs::RecStmt>())
         {
             auto& R = first.as_<Hs::RecStmt>();
-            vector<string> names = rec_stmt_binder_names(R);
-            vector<Hs::LExp> vars;
-            Hs::LPats var_patterns;
-            for(auto& name: names)
-            {
-                vars.push_back({noloc, Hs::Var(name)});
-                var_patterns.push_back({noloc, Hs::VarPattern({noloc, Hs::Var(name)})});
-            }
-
-            auto rec_tuple = Hs::tuple(vars);
-            Hs::LPat rec_tuple_pattern = {noloc, Hs::tuple_pattern(var_patterns)};
-            auto rec_return_stmt = Hs::apply({noloc, R.returnOp}, {{noloc, rec_tuple}});
-            auto rec_stmts = R.stmts.stmts;
-            rec_stmts.push_back({noloc, Hs::SimpleQual(rec_return_stmt)});
-
-            expression_ref rec_do = Hs::Do(Hs::Stmts(rec_stmts));
-            expression_ref rec_lambda = Hs::LambdaExp({{noloc, Hs::LazyPattern(rec_tuple_pattern)}}, {noloc, rec_do});
-            expression_ref mfix_exp = unloc(Hs::apply({noloc, R.mfixOp}, {{noloc, rec_lambda}}));
-            auto rec_bind = Hs::PatQual(rec_tuple_pattern, {noloc, mfix_exp});
-            rec_bind.bindOp = R.bindOp;
-            rec_bind.failOp = {};
-            rec_bind.bindpat_can_fail = false;
-
-            stmts.insert(stmts.begin(), {noloc, rec_bind});
+            if (not R.checked_rec)
+                throw myexception()<<"Internal error: desugaring an un-typechecked rec statement.";
+            stmts.insert(stmts.begin(), R.checked_rec->mfix_bind_stmt);
             result = Hs::Do(Hs::Stmts(stmts));
         }
         // do {let decls ; rest} = let decls in do {stmts}

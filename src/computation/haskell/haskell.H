@@ -1102,12 +1102,20 @@ struct PatQual: public Object
     PatQual(const LPat &bp, const LExp& e): bindpat(bp), exp(e) {};
 };
 
+struct CheckedRecStmt
+{
+    LStmt mfix_bind_stmt;
+
+    explicit CheckedRecStmt(const LStmt& stmt): mfix_bind_stmt(stmt) {}
+};
+
 struct RecStmt: public Object
 {
     Stmts stmts;
     Hs::Var bindOp = {"Control.Monad.>>="};
     Hs::Var returnOp = {"Control.Monad.return"};
     Hs::Var mfixOp = {"Control.Monad.Fix.mfix"};
+    std::shared_ptr<CheckedRecStmt> checked_rec;
 
     RecStmt* clone() const {return new RecStmt(*this);}
     std::string print() const;
