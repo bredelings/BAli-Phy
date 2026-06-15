@@ -1,6 +1,8 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 
+#include "computation/expression/apply.H"
+
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;
@@ -12,6 +14,100 @@ using std::set;
 using std::pair;
 using std::optional;
 using std::tuple;
+
+namespace
+{
+    void add_pattern_binder_names(set<string>& names, const Hs::LPat& pat)
+    {
+        for(const auto& var: Hs::vars_in_pattern(pat))
+            names.insert(unloc(var).name);
+    }
+
+    void add_decl_binder_names(set<string>& names, const Hs::Decl& decl)
+    {
+        if (auto pd = decl.to<Hs::PatDecl>())
+            add_pattern_binder_names(names, pd->lhs);
+        else if (auto fd = decl.to<Hs::FunDecl>())
+            names.insert(unloc(fd->v).name);
+        else if (auto gb = decl.to<Hs::GenBind>())
+        {
+            for(const auto& [name, _]: gb->bind_infos)
+                names.insert(name.name);
+        }
+    }
+
+    void add_stmt_binder_names(set<string>& names, const Hs::LStmt& lstmt)
+    {
+        auto& stmt = unloc(lstmt);
+        if (auto pq = stmt.to<Hs::PatQual>())
+            add_pattern_binder_names(names, pq->bindpat);
+        else if (auto lq = stmt.to<Hs::LetQual>())
+        {
+            for(const auto& decls: unloc(lq->binds))
+                for(const auto& [_, decl]: decls)
+                    add_decl_binder_names(names, decl);
+        }
+        else if (stmt.is_a<Hs::SimpleQual>())
+            ;
+        else
+            std::abort();
+    }
+
+    vector<string> rec_stmt_binder_names(const Hs::RecStmt& R)
+    {
+        set<string> names;
+        for(auto& stmt: R.stmts.stmts)
+            add_stmt_binder_names(names, stmt);
+        return names | ranges::to<vector<string>>();
+    }
+
+    vector<Hs::LExp> rec_stmt_binder_exps(const vector<string>& names)
+    {
+        vector<Hs::LExp> vars;
+        for(auto& name: names)
+            vars.push_back({noloc, Hs::Var(name)});
+        return vars;
+    }
+
+    Hs::LPats rec_stmt_binder_pats(const vector<string>& names)
+    {
+        Hs::LPats pats;
+        for(auto& name: names)
+            pats.push_back({noloc, Hs::VarPattern({noloc, Hs::Var(name)})});
+        return pats;
+    }
+
+    Hs::LExp rec_stmt_as_mfix_exp(const Hs::RecStmt& R)
+    {
+        auto binder_names = rec_stmt_binder_names(R);
+        auto rec_tuple = Hs::tuple(rec_stmt_binder_exps(binder_names));
+        Hs::LPat rec_tuple_pattern = {noloc, Hs::tuple_pattern(rec_stmt_binder_pats(binder_names))};
+
+        auto rec_return_stmt = Hs::apply({noloc, R.returnOp}, {{noloc, rec_tuple}});
+        auto stmts = R.stmts.stmts;
+        stmts.push_back({noloc, Hs::SimpleQual(rec_return_stmt)});
+        auto rec_do = Haskell::Do(Haskell::Stmts(stmts));
+
+        expression_ref rec_lambda = Haskell::LambdaExp({{noloc, Haskell::LazyPattern(rec_tuple_pattern)}}, {noloc, rec_do});
+        return Hs::apply({noloc, R.mfixOp}, {{noloc, rec_lambda}});
+    }
+
+    void copy_checked_rec_stmt_from_mfix_exp(Hs::RecStmt& R, const Hs::LExp& mfix_exp)
+    {
+        auto app1 = unloc(mfix_exp).as_<Hs::ApplyExp>();
+        R.mfixOp = unloc(app1.head).as_<Hs::Var>();
+
+        auto lambda = unloc(app1.arg).as_<Hs::LambdaExp>();
+        auto rec_do = unloc(lambda.match.rhs.guarded_rhss[0].body).as_<Hs::Do>();
+        auto checked_stmts = rec_do.stmts.stmts;
+        auto return_stmt = unloc(checked_stmts.back()).as_<Hs::SimpleQual>();
+        auto return_app = unloc(return_stmt.exp).as_<Hs::ApplyExp>();
+
+        R.returnOp = unloc(return_app.head).as_<Hs::Var>();
+        checked_stmts.pop_back();
+        R.stmts = Hs::Stmts(checked_stmts);
+    }
+}
 
 // Figure 22. Rules for quals
 //
@@ -210,30 +306,33 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
 
         stmt = LQ;
     }
-    else if (stmt.to<Hs::RecStmt>())
+    else if (auto rec = stmt.to<Hs::RecStmt>())
     {
-        /*
-         * See "Recursive binding groups" in https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/recursive_do.html
-         *
-         * "Like let and where bindings, name shadowing is not allowed within an mdo-expression or a rec-block"
-         *
-         * As an example:           ===>
-         *   rec { b <- f a c              (b,c) <- mfix (\ ~(b,c) -> do { b <- f a c
-         *       ; c <- f b a }                                          ; c <- f b a
-         *                                                               ; return (b,c) } )
-         *
-         * See ghc/compiler/rename/RnExpr.hs
-         */
+        auto R = *rec;
+        auto bindpat = Hs::LPat{noloc, Hs::tuple_pattern(rec_stmt_binder_pats(rec_stmt_binder_names(R)))};
+        auto mfix_exp = rec_stmt_as_mfix_exp(R);
 
-        // currently we desugar rec stmts in rename.
+        auto synthetic_pq = Hs::PatQual(bindpat, mfix_exp);
+        synthetic_pq.bindOp = R.bindOp;
+        synthetic_pq.failOp = {};
+        synthetic_pq.bindpat_can_fail = false;
+        auto synthetic_stmt = Hs::LExp{stmts[i].loc, synthetic_pq};
 
-        // So... we would need to typecheck "return" and "mfix", in order to collect the dictionaries for them.
-        // We would need to typecheck the individual stmts, but with "return ((b,i,n,d,e,r,s)" as the magic last statement.
+        vector<Located<Hs::Qual>> synthetic_stmts;
+        synthetic_stmts.push_back(synthetic_stmt);
+        for(int j = i+1; j < stmts.size(); j++)
+            synthetic_stmts.push_back(stmts[j]);
 
-        // Then we'd have to typecheck mfix (\ ~(b,c) -> that)
-        // and all without actually constructing the expressions, I think, like how we decompose the application
-        // of (>>=) above...
-        std::abort();
+        tcRhoStmts(0, synthetic_stmts, expected_type);
+
+        auto checked_pq = unloc(synthetic_stmts[0]).as_<Hs::PatQual>();
+        R.bindOp = checked_pq.bindOp;
+        copy_checked_rec_stmt_from_mfix_exp(R, checked_pq.exp);
+
+        for(int j = i+1; j < stmts.size(); j++)
+            stmts[j] = synthetic_stmts[j-i];
+
+        stmt = R;
     }
     else
         std::abort();

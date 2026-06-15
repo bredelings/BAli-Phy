@@ -1105,7 +1105,9 @@ struct PatQual: public Object
 struct RecStmt: public Object
 {
     Stmts stmts;
-    std::optional<Hs::Var> mfixOp;
+    Hs::Var bindOp = {"Control.Monad.>>="};
+    Hs::Var returnOp = {"Control.Monad.return"};
+    Hs::Var mfixOp = {"Control.Monad.Fix.mfix"};
 
     RecStmt* clone() const {return new RecStmt(*this);}
     std::string print() const;

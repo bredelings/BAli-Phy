@@ -23,6 +23,45 @@ using std::deque;
 using std::pair;
 using std::tuple;
 
+namespace
+{
+    void add_pattern_binder_names(set<string>& names, const Hs::LPat& pat)
+    {
+        for(const auto& var: Hs::vars_in_pattern(pat))
+            names.insert(unloc(var).name);
+    }
+
+    void add_decl_binder_names(set<string>& names, const Hs::Decl& decl)
+    {
+        if (auto pd = decl.to<Hs::PatDecl>())
+            add_pattern_binder_names(names, pd->lhs);
+        else if (auto fd = decl.to<Hs::FunDecl>())
+            names.insert(unloc(fd->v).name);
+        else if (auto gb = decl.to<Hs::GenBind>())
+        {
+            for(const auto& [name, _]: gb->bind_infos)
+                names.insert(name.name);
+        }
+    }
+
+    void add_stmt_binder_names(set<string>& names, const Hs::LStmt& lstmt)
+    {
+        auto& stmt = unloc(lstmt);
+        if (auto pq = stmt.to<Hs::PatQual>())
+            add_pattern_binder_names(names, pq->bindpat);
+        else if (auto lq = stmt.to<Hs::LetQual>())
+        {
+            for(const auto& decls: unloc(lq->binds))
+                for(const auto& [_, decl]: decls)
+                    add_decl_binder_names(names, decl);
+        }
+        else if (stmt.is_a<Hs::SimpleQual>())
+            ;
+        else
+            std::abort();
+    }
+}
+
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
 void desugared_decls::append(const desugared_decls& binds)
@@ -617,6 +656,40 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
                 expression_ref body = noloc_apply({PQ.bindOp, unloc(PQ.exp), ok});
                 result = Hs::LetExp({noloc,{{{{noloc,decl}}}}}, {noloc,body});
             }
+        }
+        // do {rec rec_stmts ; rest} => do {tuple <- mfix (\~tuple -> do {rec_stmts; return tuple}); rest}
+        else if (first.is_a<Hs::RecStmt>())
+        {
+            auto& R = first.as_<Hs::RecStmt>();
+            set<string> names_set;
+            for(auto& rec_stmt: R.stmts.stmts)
+                add_stmt_binder_names(names_set, rec_stmt);
+
+            vector<string> names = names_set | ranges::to<vector<string>>();
+            vector<Hs::LExp> vars;
+            Hs::LPats var_patterns;
+            for(auto& name: names)
+            {
+                vars.push_back({noloc, Hs::Var(name)});
+                var_patterns.push_back({noloc, Hs::VarPattern({noloc, Hs::Var(name)})});
+            }
+
+            auto rec_tuple = Hs::tuple(vars);
+            Hs::LPat rec_tuple_pattern = {noloc, Hs::tuple_pattern(var_patterns)};
+            auto rec_return_stmt = Hs::apply({noloc, R.returnOp}, {{noloc, rec_tuple}});
+            auto rec_stmts = R.stmts.stmts;
+            rec_stmts.push_back({noloc, Hs::SimpleQual(rec_return_stmt)});
+
+            expression_ref rec_do = Hs::Do(Hs::Stmts(rec_stmts));
+            expression_ref rec_lambda = Hs::LambdaExp({{noloc, Hs::LazyPattern(rec_tuple_pattern)}}, {noloc, rec_do});
+            expression_ref mfix_exp = unloc(Hs::apply({noloc, R.mfixOp}, {{noloc, rec_lambda}}));
+            auto rec_bind = Hs::PatQual(rec_tuple_pattern, {noloc, mfix_exp});
+            rec_bind.bindOp = R.bindOp;
+            rec_bind.failOp = {};
+            rec_bind.bindpat_can_fail = false;
+
+            stmts.insert(stmts.begin(), {noloc, rec_bind});
+            result = Hs::Do(Hs::Stmts(stmts));
         }
         // do {let decls ; rest} = let decls in do {stmts}
         else if (first.is_a<Hs::LetQual>())

@@ -6,7 +6,6 @@
 
 #include "rename.H"
 #include "computation/module.H"
-#include "computation/expression/tuple.H" // for tuple_head( )
 #include "util/set.H"
 
 using std::string;
@@ -38,9 +37,6 @@ bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_v
     if (not m.language_extensions.has_extension(LangExt::RecursiveDo))
         error(lrec_stmt.loc, Note()<<"rec statement requires the RecursiveDo extension.");
 
-    auto rec_return = Hs::Var("return");
-    auto mfix       = Hs::Var("mfix");
-
     auto R = rec_stmt.as_<Hs::RecStmt>();
 
     bound_var_info rec_bound;
@@ -50,31 +46,26 @@ bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_v
 	if (overlap)
 	    throw myexception()<<"rec command '"<<rec_stmt<<"' uses a variable twice!";
     }
-    // 2. Construct the tuple and tuple pattern
-    vector<Hs::LExp> vars;
-    Hs::LPats var_patterns;
-    for(auto& var_name: rec_bound)
-    {
-        vars.push_back({noloc,Hs::Var(var_name)});
-        var_patterns.push_back({noloc,Hs::VarPattern({noloc,Hs::Var(var_name)})});
-    }
-    auto rec_tuple = Hs::tuple(vars);
-    Hs::LPat rec_tuple_pattern = {noloc, Hs::tuple_pattern(var_patterns)};
 
-    // 3. Construct the do stmt
-    auto rec_return_stmt = Hs::apply({noloc,rec_return}, {{noloc,rec_tuple}});
-    auto stmts = R.stmts.stmts;
-    stmts.push_back({noloc,Hs::SimpleQual(rec_return_stmt)});
-    auto rec_do = Haskell::Do(Haskell::Stmts(stmts));
+    R.returnOp = Hs::Var("return");
+    R.mfixOp = Hs::Var("mfix");
 
-    // 4. Construct the lambda function
-    expression_ref rec_lambda = Haskell::LambdaExp({{noloc,Haskell::LazyPattern(rec_tuple_pattern)}}, {noloc,rec_do});      // \ ~(b,c) -> do { ... }
+    set<string> op_free_vars;
+    auto return_op = rename({noloc, R.returnOp}, bound, op_free_vars);
+    add(free_vars, op_free_vars);
+    R.returnOp = unloc(return_op).as_<Hs::Var>();
 
-    // 5. Construct rec_tuple_pattern <- mfix rec_lambda
-    rec_stmt = Haskell::PatQual(rec_tuple_pattern, Hs::apply({noloc,mfix}, {{noloc,rec_lambda}}));
+    op_free_vars.clear();
+    auto mfix_op = rename({noloc, R.mfixOp}, bound, op_free_vars);
+    add(free_vars, op_free_vars);
+    R.mfixOp = unloc(mfix_op).as_<Hs::Var>();
 
-    // Combine the set of bound variables and rename our rewritten statement;
-    return rename_stmt(lrec_stmt, bound, rec_bound, free_vars);
+    auto rn = child();
+    for(auto& stmt: R.stmts.stmts)
+        rn.rename_stmt(stmt, bound, rec_bound, free_vars);
+
+    rec_stmt = R;
+    return rec_bound;
 }
 
 bound_var_info
