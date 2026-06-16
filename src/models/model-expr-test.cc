@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <optional>
+#include <set>
 #include <stdexcept>
 #include <string>
 
@@ -189,6 +190,104 @@ void test_malformed_ptree_rejections()
     expect_conversion_failure(ptree("get_state", {{"", ptree(1)}}));
 }
 
+ptree used_args(std::initializer_list<std::string> args)
+{
+    ptree result;
+    for(auto& arg: args)
+        result.children().push_back({"", ptree(arg)});
+    return result;
+}
+
+ptree ann(ptree value, ptree type, std::initializer_list<std::string> args = {})
+{
+    return ptree({
+        {"value", value},
+        {"type", type},
+        {"used_args", used_args(args)}
+    });
+}
+
+ptree arg_ann(ptree value, ptree type, std::initializer_list<std::string> args = {})
+{
+    auto result = ann(std::move(value), std::move(type), args);
+    result.children().push_back({"is_default_value", ptree(false)});
+    return result;
+}
+
+void expect_typed_round_trip(const ptree& p)
+{
+    auto expr = typed_model_expr_from_annotated_ptree(p);
+    auto p2 = annotated_ptree_from_typed_model_expr(expr);
+    assert(p2 == p);
+}
+
+void test_typed_scalar_round_trips()
+{
+    expect_typed_round_trip(ann(ptree(1), ptree("Int")));
+    expect_typed_round_trip(ann(ptree(1.5), ptree("Double")));
+    expect_typed_round_trip(ann(ptree(true), ptree("Bool")));
+    expect_typed_round_trip(ann(ptree("\"abc\""), ptree("String")));
+    expect_typed_round_trip(ann(ptree("x"), ptree("Int"), {"x"}));
+    expect_typed_round_trip(ann(ptree("@arg"), ptree("Double"), {"arg"}));
+    expect_typed_round_trip(ann(ptree("_"), ptree("a")));
+}
+
+void test_typed_argument_metadata_round_trip()
+{
+    auto arg_x = ann(ptree("x"), ptree("Double"), {"x"});
+    arg_x.children().push_back({"is_default_value", ptree(true)});
+    arg_x.children().push_back({"suppress_default", ptree(true)});
+
+    auto alphabet = ann(ptree("dna"), ptree("Alphabet"));
+    arg_x.children().push_back({"alphabet", alphabet});
+
+    auto arg_y = ann(ptree(2), ptree("Int"));
+    arg_y.children().push_back({"is_default_value", ptree(false)});
+
+    auto model = ann(ptree("f", {
+        {"x", arg_x},
+        {"", arg_y}
+    }), ptree("Model"), {"x"});
+    model.children().push_back({"no_log", ptree(true)});
+    model.children().push_back({"extract", ptree("all")});
+
+    expect_typed_round_trip(model);
+}
+
+void test_typed_collection_and_special_round_trips()
+{
+    expect_typed_round_trip(ann(ptree("List", {
+        {"", ann(ptree(1), ptree("Int"))},
+        {"", ann(ptree(2), ptree("Int"))}
+    }), ptree("List", {{"", ptree("Int")}})));
+
+    expect_typed_round_trip(ann(ptree("Tuple", {
+        {"", ann(ptree(1), ptree("Int"))},
+        {"", ann(ptree("\"two\""), ptree("String"))}
+    }), ptree("Tuple", {{"", ptree("Int")}, {"", ptree("String")}})));
+
+    expect_typed_round_trip(ann(ptree("sample", {
+        {"", ann(ptree("normal", {
+            {"", arg_ann(ptree(0), ptree("Double"))},
+            {"", arg_ann(ptree(1), ptree("Double"))}
+        }), ptree("Distribution", {{"", ptree("Double")}}))}
+    }), ptree("Double")));
+
+    expect_typed_round_trip(ann(ptree("!let", {
+        {"decls", ptree("!Decls", {{"x", ann(ptree(1), ptree("Int"))}})},
+        {"body", ann(ptree("x"), ptree("Int"), {"x"})}
+    }), ptree("Int"), {"x"}));
+
+    expect_typed_round_trip(ann(ptree("function", {
+        {"", ann(ptree("x"), ptree("Int"))},
+        {"", ann(ptree("x"), ptree("Int"), {"x"})}
+    }), ptree("Function", {{"", ptree("Int")}, {"", ptree("Int")}}), {"x"}));
+
+    expect_typed_round_trip(ann(ptree("get_state", {
+        {"", ann(ptree("tree"), ptree("String"))}
+    }), ptree("Tree")));
+}
+
 }
 
 int main()
@@ -201,4 +300,7 @@ int main()
     test_collection_round_trips();
     test_special_form_round_trips();
     test_malformed_ptree_rejections();
+    test_typed_scalar_round_trips();
+    test_typed_argument_metadata_round_trip();
+    test_typed_collection_and_special_round_trips();
 }
