@@ -102,6 +102,7 @@ libbaliphy_sources = [
   'models/TreeInterface.cc',
   'models/parameters.cc',
   'models/A-T-prog.cc',
+  'models/model-expr.cc',
 
   'models/rules.cc',
   'models/parse.cc',
