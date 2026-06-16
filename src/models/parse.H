@@ -2,6 +2,7 @@
 #define MODELS_PARSE_H
 
 #include <string>
+#include "models/model-expr-fwd.H"
 #include "util/ptree.H"
 
 class Rules;
@@ -16,6 +17,9 @@ std::string show_model_abbrev(const ptree p, int length);
 ptree parse_type(const std::string& s);
 ptree parse(const Rules& R, const std::string& s, const std::string& what);
 ptree parse_defs(const Rules& R, const std::string& s);
+
+UntypedModelExpr parse_model_expr(const Rules& R, const std::string& s, const std::string& what);
+ModelDecls<UntypedAnn> parse_model_decls(const Rules& R, const std::string& s);
 
 ptree add_sample(const ptree& p);
 ptree add_submodel(ptree term, const ptree& submodel);

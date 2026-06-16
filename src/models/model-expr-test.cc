@@ -1,5 +1,7 @@
 #include "models/model-expr.H"
 #include "models/model-expr-ptree.H"
+#include "models/parse.H"
+#include "models/rules.H"
 
 #include <cassert>
 #include <optional>
@@ -288,6 +290,19 @@ void test_typed_collection_and_special_round_trips()
     }), ptree("Tree")));
 }
 
+void test_parser_wrappers()
+{
+    Rules rules({});
+
+    auto expr = parse_model_expr(rules, "~normal(0, 1)", "test expression");
+    assert(is_sample(expr));
+
+    auto decls = parse_model_decls(rules, "x = 1; y = x");
+    assert(decls.size() == 2);
+    assert(decls[0].first == "x");
+    assert(decls[1].first == "y");
+}
+
 }
 
 int main()
@@ -303,4 +318,5 @@ int main()
     test_typed_scalar_round_trips();
     test_typed_argument_metadata_round_trip();
     test_typed_collection_and_special_round_trips();
+    test_parser_wrappers();
 }

@@ -2,11 +2,13 @@
 #include <vector>
 #include <list>
 #include "models/parse.H"
+#include "models/model-expr-ptree.H"
 #include "util/myexception.H"
+#include "util/string/convert.H"
 #include "util/string/join.H"
 #include "util/range.H" // for reverse( )
 #include "rules.H"
-#include "compile.H"
+#include "unification.H"
 #include "models/driver.hh"
 
 using std::vector;
@@ -289,6 +291,16 @@ ptree parse_defs(const Rules& R, const string& s)
 	ptree_map(f2, value);
 
     return defs;
+}
+
+UntypedModelExpr parse_model_expr(const Rules& R, const string& s, const string& what)
+{
+    return model_expr_from_ptree(parse(R, s, what));
+}
+
+ModelDecls<UntypedAnn> parse_model_decls(const Rules& R, const string& s)
+{
+    return model_decls_from_ptree(parse_defs(R, s));
 }
 
 optional<ptree> peel_sample(ptree p)

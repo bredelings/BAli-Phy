@@ -12,6 +12,7 @@
 #include <variant>
 #include <vector>
 
+#include "models/model-expr-fwd.H"
 #include "util/ptree.H"
 
 template<class T>
@@ -55,11 +56,6 @@ public:
     const T& get() const {return *value_;}
 };
 
-using UntypedAnn = std::monostate;
-
-template<class A>
-struct ModelExpr;
-
 template<class A>
 struct ModelArg
 {
@@ -71,9 +67,6 @@ struct ModelArg
 
     std::optional<Box<ModelExpr<A>>> alphabet;
 };
-
-template<class A>
-using ModelDecls = std::vector<std::pair<std::string, ModelExpr<A>>>;
 
 struct IntLiteral
 {
@@ -190,7 +183,6 @@ struct ModelExpr
     Node node;
 };
 
-using UntypedModelExpr = ModelExpr<UntypedAnn>;
 using TypedModelExpr = ModelExpr<ModelAnn>;
 using TypedModelDecls = ModelDecls<ModelAnn>;
 
