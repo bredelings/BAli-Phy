@@ -4,7 +4,9 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -192,6 +194,15 @@ using UntypedModelExpr = ModelExpr<UntypedAnn>;
 using TypedModelExpr = ModelExpr<ModelAnn>;
 using TypedModelDecls = ModelDecls<ModelAnn>;
 
+template<class... Ts>
+struct overloaded: Ts...
+{
+    using Ts::operator()...;
+};
+
+template<class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
+
 template<class A>
 ModelExpr<A> clone(const ModelExpr<A>& expr)
 {
@@ -208,6 +219,155 @@ template<class A>
 ModelDecls<A> clone(const ModelDecls<A>& decls)
 {
     return decls;
+}
+
+template<class A>
+bool is_call_named(const ModelExpr<A>& expr, std::string_view name)
+{
+    if (auto call = std::get_if<Call<A>>(&expr.node))
+        return call->function == name;
+    else
+        return false;
+}
+
+template<class A>
+bool is_list(const ModelExpr<A>& expr)
+{
+    return std::holds_alternative<List<A>>(expr.node);
+}
+
+template<class A>
+bool is_tuple(const ModelExpr<A>& expr)
+{
+    return std::holds_alternative<Tuple<A>>(expr.node);
+}
+
+template<class A>
+bool is_sample(const ModelExpr<A>& expr)
+{
+    return std::holds_alternative<Sample<A>>(expr.node);
+}
+
+template<class A>
+bool is_get_state(const ModelExpr<A>& expr)
+{
+    return std::holds_alternative<GetState>(expr.node);
+}
+
+template<class A, class F>
+void for_each_child(ModelExpr<A>& expr, F&& f)
+{
+    std::visit(overloaded{
+        [&](Call<A>& call)
+        {
+            for(auto& arg: call.args)
+            {
+                f(arg.value.get());
+                if (arg.alphabet)
+                    f(arg.alphabet->get());
+            }
+        },
+        [&](List<A>& list)
+        {
+            for(auto& element: list.elements)
+                f(element);
+        },
+        [&](Tuple<A>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                f(element);
+        },
+        [&](Let<A>& let)
+        {
+            for(auto& [name, value]: let.decls)
+                f(value);
+            f(let.body.get());
+        },
+        [&](Lambda<A>& lambda)
+        {
+            f(lambda.pattern.get());
+            f(lambda.body.get());
+        },
+        [&](Sample<A>& sample)
+        {
+            f(sample.dist.get());
+        },
+        [](auto&) {}
+    }, expr.node);
+}
+
+template<class A, class F>
+void for_each_child(const ModelExpr<A>& expr, F&& f)
+{
+    std::visit(overloaded{
+        [&](const Call<A>& call)
+        {
+            for(auto& arg: call.args)
+            {
+                f(arg.value.get());
+                if (arg.alphabet)
+                    f(arg.alphabet->get());
+            }
+        },
+        [&](const List<A>& list)
+        {
+            for(auto& element: list.elements)
+                f(element);
+        },
+        [&](const Tuple<A>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                f(element);
+        },
+        [&](const Let<A>& let)
+        {
+            for(auto& [name, value]: let.decls)
+                f(value);
+            f(let.body.get());
+        },
+        [&](const Lambda<A>& lambda)
+        {
+            f(lambda.pattern.get());
+            f(lambda.body.get());
+        },
+        [&](const Sample<A>& sample)
+        {
+            f(sample.dist.get());
+        },
+        [](const auto&) {}
+    }, expr.node);
+}
+
+template<class A>
+void check_invariants(const ModelExpr<A>& expr)
+{
+    if constexpr(std::is_same_v<A, ModelAnn>)
+    {
+        if (expr.ann.type.is_null())
+            throw std::logic_error("typed model expression has null type annotation");
+    }
+
+    std::visit(overloaded{
+        [](const Tuple<A>& tuple)
+        {
+            if (tuple.elements.size() < 2)
+                throw std::logic_error("model tuple must have at least two elements");
+        },
+        [](const MissingArg&)
+        {
+            throw std::logic_error("missing argument escaped parser compatibility code");
+        },
+        [](const auto&) {}
+    }, expr.node);
+
+    for_each_child(expr, [](const ModelExpr<A>& child) { check_invariants(child); });
+}
+
+template<class A>
+void check_invariants(const ModelDecls<A>& decls)
+{
+    for(auto& [name, expr]: decls)
+        check_invariants(expr);
 }
 
 #endif

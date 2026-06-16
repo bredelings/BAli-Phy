@@ -164,6 +164,14 @@ else
   test('runtime AST serialization', runtime_ast_serialization_test, args:[builtins_path, meson.project_source_root()])
 endif
 
+model_expr_test = executable('model-expr-test',
+                             'models/model-expr-test.cc',
+                             include_directories: [root_inc, libutil_inc],
+                             dependencies: [boost],
+                             link_with: [libbaliphy, libutil])
+
+test('model expression AST', model_expr_test)
+
 test('bali-phy version', baliphy, args:['--version'], is_parallel: false)
 test('bali-phy help', baliphy, args:['--help'], is_parallel: false)
 # When running on very slow autobuilders these tests could take a long time.
