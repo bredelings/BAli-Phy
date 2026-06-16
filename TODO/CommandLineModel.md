@@ -1,10 +1,13 @@
 # Command-Line Model AST
 
-Goal: introduce a structured `ModelExpr<A>` AST for command-line model
+Goal: introduce a structured `CM::Expr<A>` AST for command-line model
 expressions, with explicit node annotations and explicit argument-edge
 annotations.  Use it beside the current `ptree` pipeline first, then migrate
 typechecking, extraction, code generation, and `model_t`.  Keep type
 annotations as `ptree` initially; replace them later.
+
+The AST lives in namespace `CmdModel`; use the alias `CM` in signatures and
+implementation code when the shorter spelling improves readability.
 
 ## Phase 0: Inventory Current Invariants
 
@@ -42,18 +45,24 @@ Create:
 Core aliases:
 
 ```cpp
-using UntypedAnn = std::monostate;
+namespace CmdModel {
+
+using NoAnn = std::monostate;
 
 template<class A>
-struct ModelExpr;
+struct Expr;
 
 template<class A>
-struct ModelArg;
+struct Arg;
 
 template<class A>
-using ModelDecls = std::vector<std::pair<std::string, ModelExpr<A>>>;
+using Decls = std::vector<std::pair<std::string, Expr<A>>>;
 
-using UntypedModelExpr = ModelExpr<UntypedAnn>;
+using UntypedExpr = Expr<NoAnn>;
+
+}
+
+namespace CM = CmdModel;
 ```
 
 Use explicit node types:
@@ -77,34 +86,34 @@ Recursive nodes:
 template<class A>
 struct Call {
     std::string function;
-    std::vector<ModelArg<A>> args;
+    std::vector<Arg<A>> args;
 };
 
 template<class A>
 struct List {
-    std::vector<ModelExpr<A>> elements;
+    std::vector<Expr<A>> elements;
 };
 
 template<class A>
 struct Tuple {
-    std::vector<ModelExpr<A>> elements;
+    std::vector<Expr<A>> elements;
 };
 
 template<class A>
 struct Let {
-    ModelDecls<A> decls;
-    Box<ModelExpr<A>> body;
+    Decls<A> decls;
+    Box<Expr<A>> body;
 };
 
 template<class A>
 struct Lambda {
-    Box<ModelExpr<A>> pattern; // later replace with ModelPattern
-    Box<ModelExpr<A>> body;
+    Box<Expr<A>> pattern; // later replace with ModelPattern
+    Box<Expr<A>> body;
 };
 
 template<class A>
 struct Sample {
-    Box<ModelExpr<A>> dist;
+    Box<Expr<A>> dist;
 };
 ```
 
@@ -112,22 +121,22 @@ Argument-edge annotations:
 
 ```cpp
 template<class A>
-struct ModelArg {
+struct Arg {
     std::string name; // empty means positional
-    ModelExpr<A> value;
+    Expr<A> value;
 
     bool is_default_value = false;
     bool suppress_default = false;
 
     // Present when this argument has an alphabet expression.
-    std::optional<Box<ModelExpr<A>>> alphabet;
+    std::optional<Box<Expr<A>>> alphabet;
 };
 ```
 
 Node annotations:
 
 ```cpp
-struct ModelAnn {
+struct Ann {
     ptree type; // temporary; later ModelType or Haskell Type
     std::set<std::string> used_args;
 
@@ -135,15 +144,15 @@ struct ModelAnn {
     std::optional<std::string> extract;
 };
 
-using TypedModelExpr = ModelExpr<ModelAnn>;
-using TypedModelDecls = ModelDecls<ModelAnn>;
+using TypedExpr = Expr<Ann>;
+using TypedDecls = Decls<Ann>;
 ```
 
 Expression:
 
 ```cpp
 template<class A>
-struct ModelExpr {
+struct Expr {
     [[no_unique_address]] A ann;
 
     using Node = std::variant<
@@ -168,35 +177,35 @@ struct ModelExpr {
 };
 ```
 
-`Box<T>` should provide non-null owned-tree semantics for required recursive
+`CM::Box<T>` should provide non-null owned-tree semantics for required recursive
 children.  Prefer unique ownership plus copy support, either by:
 
 - a small local copyable box wrapper around `std::unique_ptr`, or
 - explicit clone/copy constructors for recursive fields.
 
-Use `std::optional<Box<T>>` for genuinely optional recursive fields, such as
-`ModelArg::alphabet`.
+Use `std::optional<CM::Box<T>>` for genuinely optional recursive fields, such
+as `CM::Arg::alphabet`.
 
 Avoid `std::shared_ptr` by default.  The model AST is an owned tree, not a
 graph, and extraction mutates subtrees.
 
 ## Phase 2: Add Copy, Move, And Clone Semantics
 
-Current `ptree` values are copied freely.  Decide early whether `ModelExpr` is
+Current `ptree` values are copied freely.  Decide early whether `CM::Expr` is
 copyable or move-only.
 
-Recommended: make it copyable by defining a local `Box<T>` that deep-copies, or
+Recommended: make it copyable by defining a local `CM::Box<T>` that deep-copies, or
 by adding explicit clone helpers:
 
 ```cpp
 template<class A>
-ModelExpr<A> clone(const ModelExpr<A>&);
+CM::Expr<A> clone(const CM::Expr<A>&);
 
 template<class A>
-ModelArg<A> clone(const ModelArg<A>&);
+CM::Arg<A> clone(const CM::Arg<A>&);
 
 template<class A>
-ModelDecls<A> clone(const ModelDecls<A>&);
+CM::Decls<A> clone(const CM::Decls<A>&);
 ```
 
 Add tests that copying a tree produces independent subtrees.
@@ -207,39 +216,39 @@ Add helpers so callers do not string-match node names:
 
 ```cpp
 template<class A>
-bool is_call_named(const ModelExpr<A>&, std::string_view);
+bool is_call_named(const CM::Expr<A>&, std::string_view);
 
 template<class A>
-bool is_list(const ModelExpr<A>&);
+bool is_list(const CM::Expr<A>&);
 
 template<class A>
-bool is_tuple(const ModelExpr<A>&);
+bool is_tuple(const CM::Expr<A>&);
 
 template<class A>
-bool is_sample(const ModelExpr<A>&);
+bool is_sample(const CM::Expr<A>&);
 
 template<class A>
-bool is_get_state(const ModelExpr<A>&);
+bool is_get_state(const CM::Expr<A>&);
 ```
 
 Traversal:
 
 ```cpp
 template<class A, class F>
-void for_each_child(ModelExpr<A>&, F&&);
+void for_each_child(CM::Expr<A>&, F&&);
 
 template<class A, class F>
-void for_each_child(const ModelExpr<A>&, F&&);
+void for_each_child(const CM::Expr<A>&, F&&);
 ```
 
 Invariant checks:
 
 ```cpp
 template<class A>
-void check_invariants(const ModelExpr<A>&);
+void check_invariants(const CM::Expr<A>&);
 
 template<class A>
-void check_invariants(const ModelDecls<A>&);
+void check_invariants(const CM::Decls<A>&);
 ```
 
 Initial invariants:
@@ -249,11 +258,11 @@ Initial invariants:
 - Let body is non-null by construction.
 - Lambda pattern and body are non-null by construction.
 - Sample dist is non-null by construction.
-- `ModelArg::alphabet`, if present, is non-null and structurally valid.
+- `CM::Arg::alphabet`, if present, is non-null and structurally valid.
 - `MissingArg` may appear only in parser/converter compatibility code and must
   be rejected before typechecking or code generation.
 - Typed expressions have valid `ann.type` after typechecking.
-- Argument-edge metadata lives on `ModelArg`, not hidden in expression nodes.
+- Argument-edge metadata lives on `CM::Arg`, not hidden in expression nodes.
 - No annotation-only metadata is hidden in expression nodes.
 
 Run invariant checks after conversion, typechecking, extraction, and before code
@@ -274,17 +283,17 @@ migration bridge and testing aid.
 Add:
 
 ```cpp
-UntypedModelExpr model_expr_from_ptree(const ptree&);
-ptree ptree_from_model_expr(const UntypedModelExpr&);
+CM::UntypedExpr model_expr_from_ptree(const ptree&);
+ptree ptree_from_model_expr(const CM::UntypedExpr&);
 
-ModelDecls<UntypedAnn> model_decls_from_ptree(const ptree&);
-ptree ptree_from_model_decls(const ModelDecls<UntypedAnn>&);
+CM::Decls<CM::NoAnn> model_decls_from_ptree(const ptree&);
+ptree ptree_from_model_decls(const CM::Decls<CM::NoAnn>&);
 
-TypedModelExpr typed_model_expr_from_annotated_ptree(const ptree&);
-ptree annotated_ptree_from_typed_model_expr(const TypedModelExpr&);
+CM::TypedExpr typed_model_expr_from_annotated_ptree(const ptree&);
+ptree annotated_ptree_from_typed_model_expr(const CM::TypedExpr&);
 
-TypedModelDecls typed_model_decls_from_annotated_ptree(const ptree&);
-ptree annotated_ptree_from_typed_model_decls(const TypedModelDecls&);
+CM::TypedDecls typed_model_decls_from_annotated_ptree(const ptree&);
+ptree annotated_ptree_from_typed_model_decls(const CM::TypedDecls&);
 ```
 
 Unannotated mapping:
@@ -326,11 +335,11 @@ Annotated mapping:
 
 Argument-edge mapping:
 
-- child key -> `ModelArg::name`
-- child value -> `ModelArg::value`
-- child value's old `"is_default_value"` -> `ModelArg::is_default_value`
-- child value's old `"suppress_default"` -> `ModelArg::suppress_default`
-- child value's old `"alphabet"` -> `ModelArg::alphabet`
+- child key -> `CM::Arg::name`
+- child value -> `CM::Arg::value`
+- child value's old `"is_default_value"` -> `CM::Arg::is_default_value`
+- child value's old `"suppress_default"` -> `CM::Arg::suppress_default`
+- child value's old `"alphabet"` -> `CM::Arg::alphabet`
 
 For list and tuple elements, consciously ignore old always-false edge metadata
 such as `is_default_value=false`; those are expression children, not function
@@ -367,8 +376,8 @@ Before changing behavior, add tests for:
 Test:
 
 ```text
-ptree -> ModelExpr -> ptree
-annotated ptree -> TypedModelExpr -> annotated ptree
+ptree -> CM::Expr -> ptree
+annotated ptree -> CM::TypedExpr -> annotated ptree
 ```
 
 Also test `unparse(...)`, `unparse_annotated(...)`, and generated-code parity
@@ -392,8 +401,8 @@ Keep existing `parse(...)`, `parse_defs(...)`, and parser grammar unchanged.
 Add:
 
 ```cpp
-UntypedModelExpr parse_model_expr(const Rules&, const std::string&, const std::string& what);
-ModelDecls<UntypedAnn> parse_model_decls(const Rules&, const std::string&);
+CM::UntypedExpr parse_model_expr(const Rules&, const std::string&, const std::string& what);
+CM::Decls<CM::NoAnn> parse_model_decls(const Rules&, const std::string&);
 ```
 
 Initially implement with conversion:
@@ -410,9 +419,9 @@ This lets new code use the structured AST while old callers still receive
 Add:
 
 ```cpp
-std::string unparse(const UntypedModelExpr&);
-std::string show_model(const UntypedModelExpr&);
-std::string unparse(const ModelDecls<UntypedAnn>&);
+std::string unparse(const CM::UntypedExpr&);
+std::string show_model(const CM::UntypedExpr&);
+std::string unparse(const CM::Decls<CM::NoAnn>&);
 ```
 
 Port behavior from current `unparse(ptree)` but use variants and typed nodes.
@@ -423,40 +432,40 @@ Keep existing `ptree` overloads.
 Add:
 
 ```cpp
-std::string unparse_annotated(const TypedModelExpr&);
-std::string show_model_annotated(const TypedModelExpr&);
+std::string unparse_annotated(const CM::TypedExpr&);
+std::string show_model_annotated(const CM::TypedExpr&);
 ```
 
 Use:
 
-- `ModelExpr::node` for expression structure.
-- `ModelAnn` for node-level flags.
-- `ModelArg` for default/alphabet/suppress metadata.
+- `CM::Expr::node` for expression structure.
+- `CM::Ann` for node-level flags.
+- `CM::Arg` for default/alphabet/suppress metadata.
 
 Keep existing `ptree` overloads.  During transition, they can convert to
-`TypedModelExpr` and delegate.
+`CM::TypedExpr` and delegate.
 
 ## Phase 9: Use Untyped AST In New Binding Inference
 
-Use `parse_model_expr(...)` and `UntypedModelExpr` in the new command-line
+Use `parse_model_expr(...)` and `CM::UntypedExpr` in the new command-line
 binding inference/audit path.
 
 This proves the AST in new code before replacing the existing compile pipeline.
 
-## Phase 10: Port Typechecker To Produce `TypedModelExpr`
+## Phase 10: Port Typechecker To Produce `CM::TypedExpr`
 
 Add new typechecker entry points:
 
 ```cpp
-TypedModelExpr typecheck_model_expr(
+CM::TypedExpr typecheck_model_expr(
     const TypecheckingState&,
     const ptree& required_type,
-    const UntypedModelExpr&
+    const CM::UntypedExpr&
 );
 
-TypedModelDecls typecheck_model_decls(
+CM::TypedDecls typecheck_model_decls(
     TypecheckingState&,
-    const ModelDecls<UntypedAnn>&
+    const CM::Decls<CM::NoAnn>&
 );
 ```
 
@@ -473,12 +482,12 @@ Port existing `typecheck_and_annotate_*` functions one at a time:
 
 Keep type representation unchanged:
 
-- `ModelAnn::type` is still `ptree`
+- `CM::Ann::type` is still `ptree`
 - `TypecheckingState` still stores `ptree` types
 - `equations` still uses `term_t = ptree`
 
 Typed nodes should be built with valid types immediately.  Avoid long-lived
-`TypedModelExpr` values with null `ann.type`; if construction needs staging, use
+`CM::TypedExpr` values with null `ann.type`; if construction needs staging, use
 short-lived local builders rather than partially typed AST nodes.
 
 Replace:
@@ -497,9 +506,9 @@ expr.ann.used_args
 For function arguments, set:
 
 ```cpp
-ModelArg::is_default_value
-ModelArg::alphabet
-ModelArg::suppress_default
+CM::Arg::is_default_value
+CM::Arg::alphabet
+CM::Arg::suppress_default
 ```
 
 Run invariant checks on the result.
@@ -515,8 +524,8 @@ void substitute_annotated(const equations&, ptree&);
 with:
 
 ```cpp
-void substitute_annotated(const equations&, TypedModelExpr&);
-void substitute_annotated(const equations&, TypedModelDecls&);
+void substitute_annotated(const equations&, CM::TypedExpr&);
+void substitute_annotated(const equations&, CM::TypedDecls&);
 ```
 
 This should mostly recurse through the AST and apply
@@ -532,20 +541,20 @@ Port extraction logic from `compile.cc`:
 - `extract_terms`
 - `pretty_model_t`
 
-Use `TypedModelExpr` and `ModelArg` metadata.
+Use `CM::TypedExpr` and `CM::Arg` metadata.
 
 Be careful: extraction mutates the tree.  Use value ownership and `clone(...)`
 where needed.  Avoid shared subtrees.
 
 Add tests for extracted pretty output.
 
-## Phase 13: Port Code Generation To Consume `TypedModelExpr`
+## Phase 13: Port Code Generation To Consume `CM::TypedExpr`
 
 Add typed overloads in `CodeGenState`:
 
 ```cpp
-translation_result_t get_model_as(const TypedModelExpr&) const;
-translation_result_t get_model_decls(const TypedModelDecls&);
+translation_result_t get_model_as(const CM::TypedExpr&) const;
+translation_result_t get_model_decls(const CM::TypedDecls&);
 ```
 
 Port:
@@ -592,7 +601,7 @@ Add representative generated-code golden tests, or at least compare
 - submodels
 
 Do not implement the typed code generation path by converting
-`TypedModelExpr` back to annotated `ptree` and calling the old codegen, except
+`CM::TypedExpr` back to annotated `ptree` and calling the old codegen, except
 as a temporary test oracle.  The typed overloads should be direct
 implementations so semantic drift is visible during parity testing.
 
@@ -603,10 +612,10 @@ Change `compile_model(...)`:
 1. `parse_model_expr(...)`
 2. `typecheck_model_expr(...)`
 3. `substitute_annotated(...)`
-4. code generation from `TypedModelExpr`
-5. return `model_t` storing `TypedModelExpr`
+4. code generation from `CM::TypedExpr`
+5. return `model_t` storing `CM::TypedExpr`
 
-Change `compile_decls(...)` similarly using `ModelDecls`.
+Change `compile_decls(...)` similarly using `CM::Decls`.
 
 Keep compatibility conversion only where an old API still needs annotated
 `ptree`.
@@ -617,7 +626,7 @@ Change model storage from annotated `ptree` to typed AST:
 
 ```cpp
 class model_t {
-    TypedModelExpr description;
+    CM::TypedExpr description;
     ...
 };
 ```
@@ -625,7 +634,7 @@ class model_t {
 For declarations, either:
 
 - introduce a separate declaration model type, or
-- use `std::variant<TypedModelExpr, TypedModelDecls>` if one class must store
+- use `std::variant<CM::TypedExpr, CM::TypedDecls>` if one class must store
   both.
 
 Update:
@@ -638,7 +647,7 @@ Update:
 
 ## Phase 16: Remove Annotated-`ptree` Main Path
 
-Once main compilation uses `TypedModelExpr`, remove or quarantine:
+Once main compilation uses `CM::TypedExpr`, remove or quarantine:
 
 - annotated-ptree codegen overloads
 - annotated-ptree extraction helpers
@@ -654,13 +663,13 @@ migrated.
 After the AST migration is stable, replace:
 
 ```cpp
-ptree ModelAnn::type;
+ptree CM::Ann::type;
 ```
 
 with:
 
 ```cpp
-ModelType ModelAnn::type;
+ModelType CM::Ann::type;
 ```
 
 or Haskell `Type`.
@@ -669,7 +678,7 @@ This should be much smaller because type annotations are now explicit fields.
 
 ## Phase 18: Introduce A Real Pattern AST Later
 
-`Lambda::pattern` can initially use `ModelExpr<A>` for compatibility, but
+`Lambda::pattern` can initially use `CM::Expr<A>` for compatibility, but
 patterns are not arbitrary expressions.  Later introduce:
 
 ```cpp
@@ -680,15 +689,15 @@ struct ModelPattern;
 or an unannotated `ModelPattern` if pattern annotations are not useful.
 
 Current patterns support variables and tuple/list-like structures.  Moving them
-out of `ModelExpr` will simplify lambda validation and typechecking.
+out of `CM::Expr` will simplify lambda validation and typechecking.
 
-## Phase 19: Make Parser Build `ModelExpr` Directly Later
+## Phase 19: Make Parser Build `CM::Expr` Directly Later
 
 Once converters are no longer central, update `parser.y` semantic values to
 build:
 
-- `UntypedModelExpr`
-- `ModelDecls<UntypedAnn>`
+- `CM::UntypedExpr`
+- `CM::Decls<CM::NoAnn>`
 
 directly instead of `ptree`.
 
@@ -702,21 +711,21 @@ This removes old expression encodings and conversion overhead.
 4. Parser wrappers.
 5. Untyped and typed pretty-printing.
 6. Use untyped AST in new binding inference/audit code.
-7. Typechecker produces `TypedModelExpr`.
+7. Typechecker produces `CM::TypedExpr`.
 8. Substitution and extraction helpers.
-9. Code generation consumes `TypedModelExpr`.
+9. Code generation consumes `CM::TypedExpr`.
 10. Switch compile path and `model_t`.
 11. Remove annotated-`ptree` main path.
-12. Replace `ModelAnn::type`.
+12. Replace `CM::Ann::type`.
 13. Introduce a real pattern AST.
 14. Make parser direct.
 
 ## Risk Notes
 
 - Code generation and extraction are highest risk.
-- Keep `ModelAnn::type = ptree` until the AST migration is complete.
+- Keep `CM::Ann::type = ptree` until the AST migration is complete.
 - Keep parser output unchanged initially.
-- Model argument metadata should live on `ModelArg`, not in node annotations.
+- Model argument metadata should live on `CM::Arg`, not in node annotations.
 - Avoid `shared_ptr` for tree ownership unless copyability proves too costly.
 - Quarantine compatibility converters so the migration does not stall with both
   representations everywhere.
