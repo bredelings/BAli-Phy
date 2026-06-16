@@ -15,11 +15,13 @@
 
  * infer haskell types for bindings
 
+ * use a real AST for the command-line language
+ 
 ## Structural Problems
 
  * stop using the C++ stack, so that we can have unlimited stack growth.
  
- * implement ST so that we can actually code stuff that modified memory, such as creating vector<double>.
+ * [implement ST](runST.md) so that we can actually code stuff that modifies memory, such as creating vector<double>.
 
    - we want to RECORD all uses/forces.
    
@@ -34,7 +36,7 @@
    - for code that records USES and also does changeable reductions, maybe we can still directly execute some stuff
      instead of doing switch statements.
      
-   - if each reg has only one interpreter (which requires merging incr_eval_1 / incr_eval_2) then JIT compilation would make more sense.
+   - if we [mark each reg with its interpreter](Interpreters.md) then JIT compilation would make more sense.
 
 ## Speed
 
@@ -81,4 +83,7 @@
  
  * unboxed tuples?
  
+   - I guess unboxed tuples could mainly be a way to return two things without allocating
+
    - how do operations return multiple things?
+   

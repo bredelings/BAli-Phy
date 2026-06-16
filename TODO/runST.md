@@ -43,27 +43,72 @@ not want to be able to replay part of the combined action.
 This suggests a different interpreter that always replaces the expression with
 its result, and never uses CALL edges.
 
-If, however, we USE / FORCE a cell that has not been allocated by this
-interpreter, then we want to revert to the interpreter that allocated the cell.
+The main wrinkle is that if we USE / FORCE a cell that has **not** been
+allocated by this interpreter, then we want to revert to the interpreter that
+allocated the cell.  Does that means that we would need to record the
+interpreter on each reg?  See [Marking each cell with its interpreter](Interpreters.md).
 
-### Recording the interpreter on cells are allocated under it?
+## Can runST cells leak out of a runST evaluation?
 
-I suppose if we start running a program under the unchangeable interpreter, then 
-also any cells that were allocated by the unchangeable interpreter should be
-allocated by that interpreter as well.
+In theory, the type system should guarantee that no cells marked with the runST
+interpreter should leak out of the evaluation of a runST calculation.
 
-If a cell is only evaluated by the interpreter that allocated it (with escape
-hatches to allow switching interpreters by allocating a new cell and marking it
-as having a different interpreter), then this means that we could actually JIT
-compile each cell to contain code for "run operation X under interpreter Y".
+However, what the type system actually guarantees is that nothing will leak out
+that mentions the state type `s`.  Suppose we have a calculation of type
+`ST [a]`.  It seems that probably the nodes for the `[a]` would be evaluated
+under the runST interpreter, and they WOULD leak out.
 
-The main wrinkle here is that for changeable cells we sometimes want to do
-`incremental_evaluate1`, and sometimes want to do `incremental_evaluate2`.
-That is, we sometimes want to evaluate changeable cells (i) without performing
-their effects and (ii) without updating force_counts. (Is that the only
-difference?)
+Hmm.. perhaps we mainly want just the `(>>=)` operation to be run under the
+special interpreter?  If we have something like
 
-### How it would work
+    makeString x y = do
+                       s <- allocateEmptyStringST
+                       writeStringST s x
+                       writeStringST s y
+                       return s
+
+then we want the three operations ending in ST to be glued to gether.
+
+However, if we have something like 
+
+    makeList x = do
+                   let s = (x:x+1:x+2:[])
+                   return s
+
+then we do not want the allocated list cells to be tagged with the runST
+interpreter.
+
+However, if we have
+
+    instance Monad (ST s) where
+        {-# INLINE (>>=)  #-}
+        (>>) = (*>)
+        (ST m) >>= k
+          = ST (\ s ->
+            case (m s) of { (# new_s, r #) ->
+            case (k r) of { ST k2 ->
+            (k2 new_s) }})
+
+then I think we want the `m s`, the `k2 new_s`, and possibly the `k r` to be
+evaluated using the runST interpreter, _even if they are let-allocated_.
+
+### How it used to work
+
+Previously, I think we use a `f \`join\` g` function that used f and evaluated to g
+The idea was that if either f or g is invalidated, then (join f g) is invalidated.
+We used this to implement `>>=` so that if any `>>=` in the whole computation was
+invalidated, then the top-level one was as well.
+
+This may have been combined with `reapply f x`, which allocates `f x` and also uses it,
+so that if `f x` is invalidated, we allocate a new `f x` and evaluate it from scratch.
+The idea might be that if we do `reapply runST x`, then if the top-level `runST x` gets
+invalidated, then the `reapply` is also invalidated, and we make a new `runST x` node
+and so the computation is rerun from scratch.
+
+That seems to validate the idea that only the `>>=` operation needs to be treated
+specially.
+
+### Current state
 
 Right now we have
 
@@ -79,7 +124,7 @@ Right now we have
                    x `seq` runST (g x) state2)
         unsafeInterleaveIO f = ST (\state -> (state, snd $ runST f state))
 
-I guess GHC has 
+GHC has 
 
     -- @'runST' (writeSTRef _|_ v >>= f) = _|_@
     newtype ST s a = ST (STRep s a)
@@ -94,14 +139,3 @@ I guess GHC has
             case (k r) of { ST k2 ->
             (k2 new_s) }})
 
-### How it used to work
-
-Previously, I think we use a `f \`join\` g` function that used f and evaluated to g
-
- - performed and used g
- - performed and used h
-
-The idea was that if either f or g is invalidated, then (join f g) is invalidated.
-
-This may have been combined with `reapply f x`, which allocates `f x` and also uses it,
-so that if `f x` is invalidated, we allocate a new `f x` and evaluate it from scratch.
