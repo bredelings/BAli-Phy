@@ -26,6 +26,12 @@ Capture invariants for:
 Decide which malformed shapes should be rejected by converters instead of
 preserved.
 
+Note: some malformed call-like shapes are not distinguishable after they have
+been represented as `ptree`.  For example, `ptree("sample", {})` is identical
+to the variable `sample`, not a zero-argument `sample` form.  Reject malformed
+special forms in converters when the malformed structure is representable, but
+handle unrepresentable zero-child special forms at the parser/grammar boundary.
+
 ## Phase 1: Define The AST
 
 Create:
@@ -251,7 +257,9 @@ Initial invariants:
 - No annotation-only metadata is hidden in expression nodes.
 
 Run invariant checks after conversion, typechecking, extraction, and before code
-generation.
+generation.  Use two boundaries deliberately: raw conversion may produce
+compatibility-only nodes such as `MissingArg`, but any pipeline invariant check
+after parser compatibility rewriting must reject them.
 
 ## Phase 4: Add Compatibility Converters
 
@@ -298,10 +306,15 @@ Unannotated mapping:
   - `"sample"` -> `Sample`
   - `"get_state"` -> `GetState`
 
-Reject malformed `get_state`, malformed `!let`, malformed `function`, and
-one-element tuples instead of preserving invalid shapes.  If `MissingArg` is
-needed during conversion, it must not survive into the typechecking or code
-generation pipeline.
+`get_state` is currently represented as `ptree("get_state", {{"",
+ptree(state_name)}})`: exactly one child, with a string-valued child expression
+containing the state name.
+
+Reject malformed `get_state`, malformed `!let`, malformed `function`,
+malformed `sample`, and one-element tuples instead of preserving invalid
+shapes, when those malformed shapes are representable in `ptree`.  If
+`MissingArg` is needed during conversion, it must not survive into the
+typechecking or code generation pipeline.
 
 Annotated mapping:
 
@@ -326,6 +339,10 @@ arguments with defaults.
 When converting back to annotated `ptree`, restore the old field layout exactly.
 
 ## Phase 5: Add Round-Trip And Invariant Tests
+
+Use the focused Meson test executable `src/model-expr-test` for these tests.
+This keeps AST/converter/typechecker/codegen parity checks close to
+`src/models` before the main `bali-phy` tests depend on the new representation.
 
 Before changing behavior, add tests for:
 
@@ -356,6 +373,17 @@ annotated ptree -> TypedModelExpr -> annotated ptree
 
 Also test `unparse(...)`, `unparse_annotated(...)`, and generated-code parity
 where structural equality is too strict.
+
+When running these tests in this development environment, use the out-of-source
+builds under `bali-phy/build/`, for example:
+
+```bash
+meson test -C build/gcc-16-debug-O 'model expression AST' --print-errorlogs
+```
+
+The configured compiler may use `ccache`; sandboxed test runs can fail if
+`ccache` cannot write to its cache.  That is an environment concern, not a test
+failure in the project.
 
 ## Phase 6: Add Parser Wrappers Without Replacing Parser
 
