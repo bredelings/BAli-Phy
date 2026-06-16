@@ -19,4 +19,9 @@ using ModelDecls = std::vector<std::pair<std::string, ModelExpr<A>>>;
 
 using UntypedModelExpr = ModelExpr<UntypedAnn>;
 
+struct ModelAnn;
+
+using TypedModelExpr = ModelExpr<ModelAnn>;
+using TypedModelDecls = ModelDecls<ModelAnn>;
+
 #endif

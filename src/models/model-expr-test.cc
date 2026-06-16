@@ -336,6 +336,50 @@ void test_untyped_pretty_printing()
     assert(show_model(model_expr_from_ptree(ptree("x"))) == "= x");
 }
 
+void expect_typed_unparse_parity(const ptree& p)
+{
+    auto expr = typed_model_expr_from_annotated_ptree(p);
+    assert(unparse_annotated(expr) == unparse_annotated(p));
+}
+
+void test_typed_pretty_printing()
+{
+    expect_typed_unparse_parity(ann(ptree(1), ptree("Int")));
+    expect_typed_unparse_parity(ann(ptree("\"abc\""), ptree("String")));
+    expect_typed_unparse_parity(ann(ptree("+", {
+        {"", arg_ann(ptree(1), ptree("Int"))},
+        {"", arg_ann(ptree(2), ptree("Int"))}
+    }), ptree("Int")));
+
+    expect_typed_unparse_parity(ann(ptree("List", {
+        {"", ann(ptree("Tuple", {
+            {"", ann(ptree("a"), ptree("Text"))},
+            {"", ann(ptree(1), ptree("Int"))}
+        }), ptree("Tuple", {{"", ptree("Text")}, {"", ptree("Int")}}))},
+        {"", ann(ptree("Tuple", {
+            {"", ann(ptree("b"), ptree("Text"))},
+            {"", ann(ptree(2), ptree("Int"))}
+        }), ptree("Tuple", {{"", ptree("Text")}, {"", ptree("Int")}}))}
+    }), ptree("List", {{"", ptree("Tuple")}})));
+
+    auto default_state = ann(ptree("get_state", {
+        {"", ann(ptree("alphabet"), ptree("String"))}
+    }), ptree("Alphabet"));
+    default_state.children().push_back({"is_default_value", ptree(true)});
+
+    auto suppressed = arg_ann(ptree(1), ptree("Int"));
+    suppressed.get_child("is_default_value") = ptree(true);
+    suppressed.children().push_back({"suppress_default", ptree(true)});
+
+    expect_typed_unparse_parity(ann(ptree("f", {
+        {"alphabet", default_state},
+        {"n", suppressed}
+    }), ptree("Model")));
+
+    auto sample = ann(ptree("sample", {{"", ann(ptree("normal"), ptree("Distribution", {{"", ptree("Double")}}))}}), ptree("Double"));
+    assert(show_model_annotated(typed_model_expr_from_annotated_ptree(sample)) == show_model_annotated(sample));
+}
+
 }
 
 int main()
@@ -353,4 +397,5 @@ int main()
     test_typed_collection_and_special_round_trips();
     test_parser_wrappers();
     test_untyped_pretty_printing();
+    test_typed_pretty_printing();
 }

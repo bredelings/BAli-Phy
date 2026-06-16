@@ -573,6 +573,158 @@ string unparse(const ptree& p, const Rules&)
     return unparse(p);
 }
 
+optional<TypedModelExpr> peel_sample_annotated(const TypedModelExpr& expr)
+{
+    if (auto sample = std::get_if<Sample<ModelAnn>>(&expr.node))
+        return sample->dist.get();
+    else if (auto let = std::get_if<Let<ModelAnn>>(&expr.node))
+    {
+        if (auto new_body = peel_sample_annotated(let->body.get()))
+        {
+            auto result = expr;
+            std::get<Let<ModelAnn>>(result.node).body = Box<TypedModelExpr>(*new_body);
+            return result;
+        }
+    }
+
+    return {};
+}
+
+string unparse_typed_decls(const TypedModelDecls& decls)
+{
+    vector<string> items;
+    for(auto& [name, value]: decls)
+        items.push_back(name + " " + show_model_annotated(value));
+    return join(items, "; ");
+}
+
+string unparse_annotated(const TypedModelExpr& expr)
+{
+    using namespace std::string_literals;
+
+    return std::visit(overloaded{
+        [](const IntLiteral& x) {return convertToString(x.value);},
+        [](const DoubleLiteral& x)
+        {
+            auto s = convertToString(x.value);
+            if (s.find('.') != string::npos)
+                while(s.size() > 3 and s.back() == '0')
+                    s.pop_back();
+            return s;
+        },
+        [](const BoolLiteral& x) {return convertToString(x.value);},
+        [](const StringLiteral& x) {return "\"" + x.value + "\"";},
+        [](const Var& x) {return x.name;},
+        [](const ArgRef& x) {return "@" + x.name;},
+        [](const Placeholder&) {return "_"s;},
+        [](const MissingArg&) {return "null"s;},
+        [](const GetState& x) {return "get_state(" + x.state_name + ")";},
+        [](const Let<ModelAnn>& x)
+        {
+            return unparse_annotated(x.body.get()) + " where {" + unparse_typed_decls(x.decls) + "}";
+        },
+        [](const Lambda<ModelAnn>& x)
+        {
+            return "|" + unparse_annotated(x.pattern.get()) + ":" + unparse_annotated(x.body.get()) + "|";
+        },
+        [](const List<ModelAnn>& x)
+        {
+            bool list_of_pairs = true;
+            vector<string> pairs;
+            for(auto& item: x.elements)
+            {
+                auto type = item.ann.type;
+                if (type.has_value<string>() and type.get_value<string>() == "Tuple" and type.children().size() == 2)
+                {
+                    auto tuple = std::get_if<Tuple<ModelAnn>>(&item.node);
+                    if (not tuple or tuple->elements.size() != 2)
+                    {
+                        list_of_pairs = false;
+                        break;
+                    }
+                    pairs.push_back(unparse_annotated(tuple->elements[0]) + ": " + unparse_annotated(tuple->elements[1]));
+                }
+                else
+                {
+                    list_of_pairs = false;
+                    break;
+                }
+            }
+            if (list_of_pairs)
+                return "{" + join(pairs, ", ") + "}";
+
+            vector<string> items;
+            for(auto& item: x.elements)
+                items.push_back(unparse_annotated(item));
+            return "[" + join(items, ", ") + "]";
+        },
+        [](const Tuple<ModelAnn>& x)
+        {
+            vector<string> items;
+            for(auto& item: x.elements)
+                items.push_back(unparse_annotated(item));
+            return "(" + join(items, ", ") + ")";
+        },
+        [](const Sample<ModelAnn>& x)
+        {
+            return "~" + unparse_annotated(x.dist.get());
+        },
+        [](const Call<ModelAnn>& x)
+        {
+            auto s = x.function;
+
+            if (s == "negate" and x.args.size())
+                return "-" + unparse_annotated(x.args.front().value.get());
+            else if (is_operator(s) and x.args.size() == 2)
+                return unparse_annotated(x.args[0].value.get()) + s + unparse_annotated(x.args[1].value.get());
+            else if (s == "intToDouble")
+            {
+                for(auto& arg: x.args)
+                    if (arg.name == "x")
+                        return unparse_annotated(arg.value.get());
+            }
+            else if ((s == "unit_mixture" or s == "multiMixtureModel"))
+            {
+                for(auto& arg: x.args)
+                    if (arg.name == "submodel")
+                        return unparse_annotated(arg.value.get());
+            }
+
+            vector<string> args;
+            optional<string> submodel;
+            bool positional = true;
+            for(auto& arg: x.args)
+            {
+                if (std::holds_alternative<MissingArg>(arg.value->node))
+                    positional = false;
+                else if (arg.name == "submodel")
+                {
+                    positional = false;
+                    assert(not submodel);
+                    submodel = unparse_annotated(arg.value.get());
+                }
+                else if (arg.is_default_value and std::holds_alternative<GetState>(arg.value->node))
+                    positional = false;
+                else if (arg.suppress_default and arg.is_default_value)
+                    positional = false;
+                else if (positional)
+                    args.push_back(unparse_annotated(arg.value.get()));
+                else if (auto arg2 = peel_sample_annotated(arg.value.get()))
+                    args.push_back(arg.name + "~" + unparse_annotated(*arg2));
+                else
+                    args.push_back(arg.name + "=" + unparse_annotated(arg.value.get()));
+            }
+            while (args.size() and args.back() == "")
+                args.pop_back();
+            if (not args.empty())
+                s = s + "(" + join(args, ", ") + ")";
+            if (submodel)
+                s = *submodel + " +> " + s;
+            return s;
+        }
+    }, expr.node);
+}
+
 string unparse_annotated(const ptree& ann)
 {
     using namespace std::string_literals;
@@ -748,6 +900,14 @@ string show_model(const UntypedModelExpr& p)
 
 
 string show_model_annotated(ptree p)
+{
+    if (auto q = peel_sample_annotated(p))
+	return "~ " + unparse_annotated(*q);
+    else
+	return "= " + unparse_annotated(p);
+}
+
+string show_model_annotated(const TypedModelExpr& p)
 {
     if (auto q = peel_sample_annotated(p))
 	return "~ " + unparse_annotated(*q);

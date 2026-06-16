@@ -183,9 +183,6 @@ struct ModelExpr
     Node node;
 };
 
-using TypedModelExpr = ModelExpr<ModelAnn>;
-using TypedModelDecls = ModelDecls<ModelAnn>;
-
 template<class... Ts>
 struct overloaded: Ts...
 {
