@@ -1,4 +1,5 @@
 #include "models/model-expr.H"
+#include "models/model-expr-ptree.H"
 
 #include <cassert>
 #include <optional>
@@ -95,6 +96,99 @@ void test_invariants()
     expect_invariant_failure(missing_arg);
 }
 
+void expect_round_trip(const ptree& p)
+{
+    auto expr = model_expr_from_ptree(p);
+    auto p2 = ptree_from_model_expr(expr);
+    assert(p2 == p);
+}
+
+void test_scalar_round_trips()
+{
+    expect_round_trip(ptree(1));
+    expect_round_trip(ptree(1.5));
+    expect_round_trip(ptree(true));
+    expect_round_trip(ptree("\"abc\""));
+    expect_round_trip(ptree("x"));
+    expect_round_trip(ptree("@arg"));
+    expect_round_trip(ptree("_"));
+    expect_round_trip(ptree());
+}
+
+void test_call_round_trips()
+{
+    expect_round_trip(ptree("f", {
+        {"", ptree("x")},
+        {"y", ptree(2)}
+    }));
+
+    expect_round_trip(ptree("+", {
+        {"", ptree(1)},
+        {"", ptree(2)}
+    }));
+}
+
+void test_collection_round_trips()
+{
+    expect_round_trip(ptree("List", {
+        {"", ptree(1)},
+        {"", ptree("x")}
+    }));
+
+    expect_round_trip(ptree("List", {
+        {"", ptree("Tuple", {{"", ptree("a")}, {"", ptree(1)}})},
+        {"", ptree("Tuple", {{"", ptree("b")}, {"", ptree(2)}})}
+    }));
+
+    expect_round_trip(ptree("Tuple", {
+        {"", ptree(1)},
+        {"", ptree("\"two\"")}
+    }));
+}
+
+void test_special_form_round_trips()
+{
+    expect_round_trip(ptree("sample", {
+        {"", ptree("normal", {{"", ptree(0)}, {"", ptree(1)}})}
+    }));
+
+    expect_round_trip(ptree("!let", {
+        {"decls", ptree("!Decls", {{"x", ptree(1)}})},
+        {"body", ptree("x")}
+    }));
+
+    expect_round_trip(ptree("function", {
+        {"", ptree("x")},
+        {"", ptree("+", {{"", ptree("x")}, {"", ptree(1)}})}
+    }));
+
+    expect_round_trip(ptree("get_state", {
+        {"", ptree("tree")}
+    }));
+}
+
+void expect_conversion_failure(const ptree& p)
+{
+    try
+    {
+        (void)model_expr_from_ptree(p);
+    }
+    catch (const std::logic_error&)
+    {
+        return;
+    }
+    assert(false);
+}
+
+void test_malformed_ptree_rejections()
+{
+    expect_conversion_failure(ptree("Tuple", {{"", ptree(1)}}));
+    expect_conversion_failure(ptree("!let", {{"decls", ptree("!Decls")}}));
+    expect_conversion_failure(ptree("function", {{"", ptree("x")}}));
+    expect_conversion_failure(ptree("sample", {{"", ptree("x")}, {"", ptree("y")}}));
+    expect_conversion_failure(ptree("get_state", {{"", ptree(1)}}));
+}
+
 }
 
 int main()
@@ -102,4 +196,9 @@ int main()
     test_copy_independence();
     test_accessors_and_traversal();
     test_invariants();
+    test_scalar_round_trips();
+    test_call_round_trips();
+    test_collection_round_trips();
+    test_special_form_round_trips();
+    test_malformed_ptree_rejections();
 }
