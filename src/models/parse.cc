@@ -16,6 +16,7 @@ using std::list;
 using std::string;
 using std::pair;
 using std::optional;
+using namespace CmdModel;
 
 
 // Turn an expression of the form head[arg1, arg2, ..., argn] -> {head, arg1, arg2, ..., argn}.
@@ -293,12 +294,12 @@ ptree parse_defs(const Rules& R, const string& s)
     return defs;
 }
 
-UntypedModelExpr parse_model_expr(const Rules& R, const string& s, const string& what)
+UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what)
 {
     return model_expr_from_ptree(parse(R, s, what));
 }
 
-ModelDecls<UntypedAnn> parse_model_decls(const Rules& R, const string& s)
+Decls<NoAnn> parse_model_decls(const Rules& R, const string& s)
 {
     return model_decls_from_ptree(parse_defs(R, s));
 }
@@ -441,16 +442,16 @@ string unparse(const ptree& p)
     return s;
 }
 
-optional<UntypedModelExpr> peel_sample(const UntypedModelExpr& expr)
+optional<UntypedExpr> peel_sample(const UntypedExpr& expr)
 {
-    if (auto sample = std::get_if<Sample<UntypedAnn>>(&expr.node))
+    if (auto sample = std::get_if<Sample<NoAnn>>(&expr.node))
         return sample->dist.get();
-    else if (auto let = std::get_if<Let<UntypedAnn>>(&expr.node))
+    else if (auto let = std::get_if<Let<NoAnn>>(&expr.node))
     {
         if (auto new_body = peel_sample(let->body.get()))
         {
             auto result = expr;
-            std::get<Let<UntypedAnn>>(result.node).body = Box<UntypedModelExpr>(*new_body);
+            std::get<Let<NoAnn>>(result.node).body = Box<UntypedExpr>(*new_body);
             return result;
         }
     }
@@ -458,7 +459,7 @@ optional<UntypedModelExpr> peel_sample(const UntypedModelExpr& expr)
     return {};
 }
 
-string unparse(const ModelDecls<UntypedAnn>& decls)
+string unparse(const Decls<NoAnn>& decls)
 {
     vector<string> items;
     for(auto& [name, value]: decls)
@@ -466,7 +467,7 @@ string unparse(const ModelDecls<UntypedAnn>& decls)
     return join(items, "; ");
 }
 
-string unparse(const UntypedModelExpr& expr)
+string unparse(const UntypedExpr& expr)
 {
     using namespace std::string_literals;
 
@@ -487,33 +488,33 @@ string unparse(const UntypedModelExpr& expr)
         [](const Placeholder&) {return "_"s;},
         [](const MissingArg&) {return "null"s;},
         [](const GetState& x) {return "get_state(" + x.state_name + ")";},
-        [](const List<UntypedAnn>& x)
+        [](const List<NoAnn>& x)
         {
             vector<string> items;
             for(auto& item: x.elements)
                 items.push_back(unparse(item));
             return "[" + join(items, ", ") + "]";
         },
-        [](const Tuple<UntypedAnn>& x)
+        [](const Tuple<NoAnn>& x)
         {
             vector<string> items;
             for(auto& item: x.elements)
                 items.push_back(unparse(item));
             return "(" + join(items, ", ") + ")";
         },
-        [](const Let<UntypedAnn>& x)
+        [](const Let<NoAnn>& x)
         {
             return unparse(x.body.get()) + " where {" + unparse(x.decls) + "}";
         },
-        [](const Lambda<UntypedAnn>& x)
+        [](const Lambda<NoAnn>& x)
         {
             return "|" + unparse(x.pattern.get()) + ":" + unparse(x.body.get()) + "|";
         },
-        [](const Sample<UntypedAnn>& x)
+        [](const Sample<NoAnn>& x)
         {
             return "~" + unparse(x.dist.get());
         },
-        [](const Call<UntypedAnn>& x)
+        [](const Call<NoAnn>& x)
         {
             auto s = x.function;
 
@@ -573,16 +574,16 @@ string unparse(const ptree& p, const Rules&)
     return unparse(p);
 }
 
-optional<TypedModelExpr> peel_sample_annotated(const TypedModelExpr& expr)
+optional<TypedExpr> peel_sample_annotated(const TypedExpr& expr)
 {
-    if (auto sample = std::get_if<Sample<ModelAnn>>(&expr.node))
+    if (auto sample = std::get_if<Sample<Ann>>(&expr.node))
         return sample->dist.get();
-    else if (auto let = std::get_if<Let<ModelAnn>>(&expr.node))
+    else if (auto let = std::get_if<Let<Ann>>(&expr.node))
     {
         if (auto new_body = peel_sample_annotated(let->body.get()))
         {
             auto result = expr;
-            std::get<Let<ModelAnn>>(result.node).body = Box<TypedModelExpr>(*new_body);
+            std::get<Let<Ann>>(result.node).body = Box<TypedExpr>(*new_body);
             return result;
         }
     }
@@ -590,7 +591,7 @@ optional<TypedModelExpr> peel_sample_annotated(const TypedModelExpr& expr)
     return {};
 }
 
-string unparse_typed_decls(const TypedModelDecls& decls)
+string unparse_typed_decls(const TypedDecls& decls)
 {
     vector<string> items;
     for(auto& [name, value]: decls)
@@ -598,7 +599,7 @@ string unparse_typed_decls(const TypedModelDecls& decls)
     return join(items, "; ");
 }
 
-string unparse_annotated(const TypedModelExpr& expr)
+string unparse_annotated(const TypedExpr& expr)
 {
     using namespace std::string_literals;
 
@@ -619,15 +620,15 @@ string unparse_annotated(const TypedModelExpr& expr)
         [](const Placeholder&) {return "_"s;},
         [](const MissingArg&) {return "null"s;},
         [](const GetState& x) {return "get_state(" + x.state_name + ")";},
-        [](const Let<ModelAnn>& x)
+        [](const Let<Ann>& x)
         {
             return unparse_annotated(x.body.get()) + " where {" + unparse_typed_decls(x.decls) + "}";
         },
-        [](const Lambda<ModelAnn>& x)
+        [](const Lambda<Ann>& x)
         {
             return "|" + unparse_annotated(x.pattern.get()) + ":" + unparse_annotated(x.body.get()) + "|";
         },
-        [](const List<ModelAnn>& x)
+        [](const List<Ann>& x)
         {
             bool list_of_pairs = true;
             vector<string> pairs;
@@ -636,7 +637,7 @@ string unparse_annotated(const TypedModelExpr& expr)
                 auto type = item.ann.type;
                 if (type.has_value<string>() and type.get_value<string>() == "Tuple" and type.children().size() == 2)
                 {
-                    auto tuple = std::get_if<Tuple<ModelAnn>>(&item.node);
+                    auto tuple = std::get_if<Tuple<Ann>>(&item.node);
                     if (not tuple or tuple->elements.size() != 2)
                     {
                         list_of_pairs = false;
@@ -658,18 +659,18 @@ string unparse_annotated(const TypedModelExpr& expr)
                 items.push_back(unparse_annotated(item));
             return "[" + join(items, ", ") + "]";
         },
-        [](const Tuple<ModelAnn>& x)
+        [](const Tuple<Ann>& x)
         {
             vector<string> items;
             for(auto& item: x.elements)
                 items.push_back(unparse_annotated(item));
             return "(" + join(items, ", ") + ")";
         },
-        [](const Sample<ModelAnn>& x)
+        [](const Sample<Ann>& x)
         {
             return "~" + unparse_annotated(x.dist.get());
         },
-        [](const Call<ModelAnn>& x)
+        [](const Call<Ann>& x)
         {
             auto s = x.function;
 
@@ -890,7 +891,7 @@ string show_model(ptree p)
 	return "= " + unparse(p);
 }
 
-string show_model(const UntypedModelExpr& p)
+string show_model(const UntypedExpr& p)
 {
     if (auto q = peel_sample(p))
 	return "~ " + unparse(*q);
@@ -907,7 +908,7 @@ string show_model_annotated(ptree p)
 	return "= " + unparse_annotated(p);
 }
 
-string show_model_annotated(const TypedModelExpr& p)
+string show_model_annotated(const TypedExpr& p)
 {
     if (auto q = peel_sample_annotated(p))
 	return "~ " + unparse_annotated(*q);

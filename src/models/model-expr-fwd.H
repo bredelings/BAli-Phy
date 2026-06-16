@@ -6,22 +6,29 @@
 #include <variant>
 #include <vector>
 
-using UntypedAnn = std::monostate;
+namespace CmdModel
+{
+
+using NoAnn = std::monostate;
 
 template<class A>
-struct ModelExpr;
+struct Expr;
 
 template<class A>
-struct ModelArg;
+struct Arg;
 
 template<class A>
-using ModelDecls = std::vector<std::pair<std::string, ModelExpr<A>>>;
+using Decls = std::vector<std::pair<std::string, Expr<A>>>;
 
-using UntypedModelExpr = ModelExpr<UntypedAnn>;
+using UntypedExpr = Expr<NoAnn>;
 
-struct ModelAnn;
+struct Ann;
 
-using TypedModelExpr = ModelExpr<ModelAnn>;
-using TypedModelDecls = ModelDecls<ModelAnn>;
+using TypedExpr = Expr<Ann>;
+using TypedDecls = Decls<Ann>;
+
+}
+
+namespace CM = CmdModel;
 
 #endif

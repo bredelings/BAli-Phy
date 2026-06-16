@@ -15,6 +15,9 @@
 #include "models/model-expr-fwd.H"
 #include "util/ptree.H"
 
+namespace CmdModel
+{
+
 template<class T>
 class Box
 {
@@ -57,15 +60,15 @@ public:
 };
 
 template<class A>
-struct ModelArg
+struct Arg
 {
     std::string name;
-    Box<ModelExpr<A>> value;
+    Box<Expr<A>> value;
 
     bool is_default_value = false;
     bool suppress_default = false;
 
-    std::optional<Box<ModelExpr<A>>> alphabet;
+    std::optional<Box<Expr<A>>> alphabet;
 };
 
 struct IntLiteral
@@ -113,42 +116,42 @@ template<class A>
 struct Call
 {
     std::string function;
-    std::vector<ModelArg<A>> args;
+    std::vector<Arg<A>> args;
 };
 
 template<class A>
 struct List
 {
-    std::vector<ModelExpr<A>> elements;
+    std::vector<Expr<A>> elements;
 };
 
 template<class A>
 struct Tuple
 {
-    std::vector<ModelExpr<A>> elements;
+    std::vector<Expr<A>> elements;
 };
 
 template<class A>
 struct Let
 {
-    ModelDecls<A> decls;
-    Box<ModelExpr<A>> body;
+    Decls<A> decls;
+    Box<Expr<A>> body;
 };
 
 template<class A>
 struct Lambda
 {
-    Box<ModelExpr<A>> pattern;
-    Box<ModelExpr<A>> body;
+    Box<Expr<A>> pattern;
+    Box<Expr<A>> body;
 };
 
 template<class A>
 struct Sample
 {
-    Box<ModelExpr<A>> dist;
+    Box<Expr<A>> dist;
 };
 
-struct ModelAnn
+struct Ann
 {
     ptree type;
     std::set<std::string> used_args;
@@ -158,7 +161,7 @@ struct ModelAnn
 };
 
 template<class A>
-struct ModelExpr
+struct Expr
 {
     [[no_unique_address]] A ann;
 
@@ -193,25 +196,25 @@ template<class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
 
 template<class A>
-ModelExpr<A> clone(const ModelExpr<A>& expr)
+Expr<A> clone(const Expr<A>& expr)
 {
     return expr;
 }
 
 template<class A>
-ModelArg<A> clone(const ModelArg<A>& arg)
+Arg<A> clone(const Arg<A>& arg)
 {
     return arg;
 }
 
 template<class A>
-ModelDecls<A> clone(const ModelDecls<A>& decls)
+Decls<A> clone(const Decls<A>& decls)
 {
     return decls;
 }
 
 template<class A>
-bool is_call_named(const ModelExpr<A>& expr, std::string_view name)
+bool is_call_named(const Expr<A>& expr, std::string_view name)
 {
     if (auto call = std::get_if<Call<A>>(&expr.node))
         return call->function == name;
@@ -220,31 +223,31 @@ bool is_call_named(const ModelExpr<A>& expr, std::string_view name)
 }
 
 template<class A>
-bool is_list(const ModelExpr<A>& expr)
+bool is_list(const Expr<A>& expr)
 {
     return std::holds_alternative<List<A>>(expr.node);
 }
 
 template<class A>
-bool is_tuple(const ModelExpr<A>& expr)
+bool is_tuple(const Expr<A>& expr)
 {
     return std::holds_alternative<Tuple<A>>(expr.node);
 }
 
 template<class A>
-bool is_sample(const ModelExpr<A>& expr)
+bool is_sample(const Expr<A>& expr)
 {
     return std::holds_alternative<Sample<A>>(expr.node);
 }
 
 template<class A>
-bool is_get_state(const ModelExpr<A>& expr)
+bool is_get_state(const Expr<A>& expr)
 {
     return std::holds_alternative<GetState>(expr.node);
 }
 
 template<class A, class F>
-void for_each_child(ModelExpr<A>& expr, F&& f)
+void for_each_child(Expr<A>& expr, F&& f)
 {
     std::visit(overloaded{
         [&](Call<A>& call)
@@ -286,7 +289,7 @@ void for_each_child(ModelExpr<A>& expr, F&& f)
 }
 
 template<class A, class F>
-void for_each_child(const ModelExpr<A>& expr, F&& f)
+void for_each_child(const Expr<A>& expr, F&& f)
 {
     std::visit(overloaded{
         [&](const Call<A>& call)
@@ -328,9 +331,9 @@ void for_each_child(const ModelExpr<A>& expr, F&& f)
 }
 
 template<class A>
-void check_invariants(const ModelExpr<A>& expr)
+void check_invariants(const Expr<A>& expr)
 {
-    if constexpr(std::is_same_v<A, ModelAnn>)
+    if constexpr(std::is_same_v<A, Ann>)
     {
         if (expr.ann.type.is_null())
             throw std::logic_error("typed model expression has null type annotation");
@@ -349,14 +352,16 @@ void check_invariants(const ModelExpr<A>& expr)
         [](const auto&) {}
     }, expr.node);
 
-    for_each_child(expr, [](const ModelExpr<A>& child) { check_invariants(child); });
+    for_each_child(expr, [](const Expr<A>& child) { check_invariants(child); });
 }
 
 template<class A>
-void check_invariants(const ModelDecls<A>& decls)
+void check_invariants(const Decls<A>& decls)
 {
     for(auto& [name, expr]: decls)
         check_invariants(expr);
+}
+
 }
 
 #endif

@@ -12,26 +12,28 @@
 namespace
 {
 
-UntypedModelExpr var_expr(const std::string& name)
+using namespace CmdModel;
+
+UntypedExpr var_expr(const std::string& name)
 {
-    return {UntypedAnn{}, Var{name}};
+    return {NoAnn{}, Var{name}};
 }
 
-UntypedModelExpr int_expr(int value)
+UntypedExpr int_expr(int value)
 {
-    return {UntypedAnn{}, IntLiteral{value}};
+    return {NoAnn{}, IntLiteral{value}};
 }
 
-ModelArg<UntypedAnn> positional_arg(UntypedModelExpr value)
+Arg<NoAnn> positional_arg(UntypedExpr value)
 {
-    return {"", Box<UntypedModelExpr>(std::move(value)), false, false, std::nullopt};
+    return {"", Box<UntypedExpr>(std::move(value)), false, false, std::nullopt};
 }
 
 void test_copy_independence()
 {
-    UntypedModelExpr original{
-        UntypedAnn{},
-        Call<UntypedAnn>{
+    UntypedExpr original{
+        NoAnn{},
+        Call<NoAnn>{
             "f",
             {positional_arg(var_expr("x"))}
         }
@@ -39,11 +41,11 @@ void test_copy_independence()
 
     auto copied = original;
 
-    auto& copied_call = std::get<Call<UntypedAnn>>(copied.node);
+    auto& copied_call = std::get<Call<NoAnn>>(copied.node);
     auto& copied_var = std::get<Var>(copied_call.args[0].value->node);
     copied_var.name = "y";
 
-    auto& original_call = std::get<Call<UntypedAnn>>(original.node);
+    auto& original_call = std::get<Call<NoAnn>>(original.node);
     auto& original_var = std::get<Var>(original_call.args[0].value->node);
 
     assert(original_var.name == "x");
@@ -52,20 +54,20 @@ void test_copy_independence()
 
 void test_accessors_and_traversal()
 {
-    UntypedModelExpr expr{
-        UntypedAnn{},
-        Sample<UntypedAnn>{Box<UntypedModelExpr>(var_expr("dist"))}
+    UntypedExpr expr{
+        NoAnn{},
+        Sample<NoAnn>{Box<UntypedExpr>(var_expr("dist"))}
     };
 
     assert(is_sample(expr));
     assert(not is_list(expr));
 
     int n_children = 0;
-    for_each_child(expr, [&](const UntypedModelExpr&) { n_children++; });
+    for_each_child(expr, [&](const UntypedExpr&) { n_children++; });
     assert(n_children == 1);
 }
 
-void expect_invariant_failure(const UntypedModelExpr& expr)
+void expect_invariant_failure(const UntypedExpr& expr)
 {
     try
     {
@@ -80,20 +82,20 @@ void expect_invariant_failure(const UntypedModelExpr& expr)
 
 void test_invariants()
 {
-    UntypedModelExpr tuple{
-        UntypedAnn{},
-        Tuple<UntypedAnn>{{int_expr(1), int_expr(2)}}
+    UntypedExpr tuple{
+        NoAnn{},
+        Tuple<NoAnn>{{int_expr(1), int_expr(2)}}
     };
     check_invariants(tuple);
 
-    UntypedModelExpr one_element_tuple{
-        UntypedAnn{},
-        Tuple<UntypedAnn>{{int_expr(1)}}
+    UntypedExpr one_element_tuple{
+        NoAnn{},
+        Tuple<NoAnn>{{int_expr(1)}}
     };
     expect_invariant_failure(one_element_tuple);
 
-    UntypedModelExpr missing_arg{
-        UntypedAnn{},
+    UntypedExpr missing_arg{
+        NoAnn{},
         MissingArg{}
     };
     expect_invariant_failure(missing_arg);

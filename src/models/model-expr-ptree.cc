@@ -6,6 +6,9 @@
 
 using std::string;
 
+namespace CmdModel
+{
+
 namespace
 {
 
@@ -30,37 +33,37 @@ void require_child_count(const ptree& p, int n, const string& name)
         throw std::logic_error("malformed model ptree for " + name);
 }
 
-UntypedModelExpr model_expr_from_string_ptree(const ptree& p)
+UntypedExpr model_expr_from_string_ptree(const ptree& p)
 {
     auto name = p.get_value<string>();
 
     if (p.children().empty())
     {
         if (name == "_")
-            return {UntypedAnn{}, Placeholder{}};
+            return {NoAnn{}, Placeholder{}};
         else if (not name.empty() and name[0] == '@')
-            return {UntypedAnn{}, ArgRef{name.substr(1)}};
+            return {NoAnn{}, ArgRef{name.substr(1)}};
         else if (is_quoted_string(name))
-            return {UntypedAnn{}, StringLiteral{strip_quotes(name)}};
+            return {NoAnn{}, StringLiteral{strip_quotes(name)}};
         else
-            return {UntypedAnn{}, Var{name}};
+            return {NoAnn{}, Var{name}};
     }
 
     if (name == "List")
     {
-        List<UntypedAnn> list;
+        List<NoAnn> list;
         for(auto& [key, value]: p.children())
             list.elements.push_back(model_expr_from_ptree(value));
-        return {UntypedAnn{}, std::move(list)};
+        return {NoAnn{}, std::move(list)};
     }
     else if (name == "Tuple")
     {
-        Tuple<UntypedAnn> tuple;
+        Tuple<NoAnn> tuple;
         for(auto& [key, value]: p.children())
             tuple.elements.push_back(model_expr_from_ptree(value));
         if (tuple.elements.size() < 2)
             throw std::logic_error("malformed model ptree for Tuple");
-        return {UntypedAnn{}, std::move(tuple)};
+        return {NoAnn{}, std::move(tuple)};
     }
     else if (name == "!let")
     {
@@ -69,20 +72,20 @@ UntypedModelExpr model_expr_from_string_ptree(const ptree& p)
 
         auto decls = model_decls_from_ptree(p.get_child("decls"));
         auto body = model_expr_from_ptree(p.get_child("body"));
-        return {UntypedAnn{}, Let<UntypedAnn>{std::move(decls), Box<UntypedModelExpr>(std::move(body))}};
+        return {NoAnn{}, Let<NoAnn>{std::move(decls), Box<UntypedExpr>(std::move(body))}};
     }
     else if (name == "function")
     {
         require_child_count(p, 2, "function");
         auto pattern = model_expr_from_ptree(p.children()[0].second);
         auto body = model_expr_from_ptree(p.children()[1].second);
-        return {UntypedAnn{}, Lambda<UntypedAnn>{Box<UntypedModelExpr>(std::move(pattern)), Box<UntypedModelExpr>(std::move(body))}};
+        return {NoAnn{}, Lambda<NoAnn>{Box<UntypedExpr>(std::move(pattern)), Box<UntypedExpr>(std::move(body))}};
     }
     else if (name == "sample")
     {
         require_child_count(p, 1, "sample");
         auto dist = model_expr_from_ptree(p.children()[0].second);
-        return {UntypedAnn{}, Sample<UntypedAnn>{Box<UntypedModelExpr>(std::move(dist))}};
+        return {NoAnn{}, Sample<NoAnn>{Box<UntypedExpr>(std::move(dist))}};
     }
     else if (name == "get_state")
     {
@@ -90,14 +93,14 @@ UntypedModelExpr model_expr_from_string_ptree(const ptree& p)
         auto& state = p.children()[0].second;
         if (not state.is_a<string>())
             throw std::logic_error("malformed model ptree for get_state");
-        return {UntypedAnn{}, GetState{state.get_value<string>()}};
+        return {NoAnn{}, GetState{state.get_value<string>()}};
     }
     else
     {
-        Call<UntypedAnn> call{name, {}};
+        Call<NoAnn> call{name, {}};
         for(auto& [key, value]: p.children())
-            call.args.push_back({key, Box<UntypedModelExpr>(model_expr_from_ptree(value)), false, false, std::nullopt});
-        return {UntypedAnn{}, std::move(call)};
+            call.args.push_back({key, Box<UntypedExpr>(model_expr_from_ptree(value)), false, false, std::nullopt});
+        return {NoAnn{}, std::move(call)};
     }
 }
 
@@ -118,9 +121,9 @@ ptree used_args_to_ptree(const std::set<string>& used_args)
     return result;
 }
 
-ModelAnn ann_from_ptree(const ptree& p)
+Ann ann_from_ptree(const ptree& p)
 {
-    ModelAnn ann;
+    Ann ann;
     ann.type = p.get_child("type");
     ann.used_args = used_args_from_ptree(p);
     ann.no_log = p.get("no_log", false);
@@ -129,7 +132,7 @@ ModelAnn ann_from_ptree(const ptree& p)
     return ann;
 }
 
-void add_ann_to_ptree(ptree& p, const ModelAnn& ann)
+void add_ann_to_ptree(ptree& p, const Ann& ann)
 {
     p.children().push_back({"type", ann.type});
     p.children().push_back({"used_args", used_args_to_ptree(ann.used_args)});
@@ -139,18 +142,18 @@ void add_ann_to_ptree(ptree& p, const ModelAnn& ann)
         p.children().push_back({"extract", ptree(*ann.extract)});
 }
 
-ModelArg<ModelAnn> typed_model_arg_from_annotated_ptree(const string& name, const ptree& p)
+Arg<Ann> typed_model_arg_from_annotated_ptree(const string& name, const ptree& p)
 {
     auto value = typed_model_expr_from_annotated_ptree(p);
-    ModelArg<ModelAnn> arg{name, Box<TypedModelExpr>(std::move(value)), false, false, std::nullopt};
+    Arg<Ann> arg{name, Box<TypedExpr>(std::move(value)), false, false, std::nullopt};
     arg.is_default_value = p.get("is_default_value", false);
     arg.suppress_default = p.get("suppress_default", false);
     if (auto alphabet = p.get_child_optional("alphabet"))
-        arg.alphabet = Box<TypedModelExpr>(typed_model_expr_from_annotated_ptree(*alphabet));
+        arg.alphabet = Box<TypedExpr>(typed_model_expr_from_annotated_ptree(*alphabet));
     return arg;
 }
 
-void add_arg_metadata(ptree& p, const ModelArg<ModelAnn>& arg)
+void add_arg_metadata(ptree& p, const Arg<Ann>& arg)
 {
     p.children().push_back({"is_default_value", ptree(arg.is_default_value)});
     if (arg.suppress_default)
@@ -159,7 +162,7 @@ void add_arg_metadata(ptree& p, const ModelArg<ModelAnn>& arg)
         p.children().push_back({"alphabet", annotated_ptree_from_typed_model_expr(arg.alphabet->get())});
 }
 
-TypedModelExpr typed_model_expr_from_value_ptree(ModelAnn ann, const ptree& value)
+TypedExpr typed_model_expr_from_value_ptree(Ann ann, const ptree& value)
 {
     if (value.is_null())
         return {std::move(ann), MissingArg{}};
@@ -188,14 +191,14 @@ TypedModelExpr typed_model_expr_from_value_ptree(ModelAnn ann, const ptree& valu
 
     if (name == "List")
     {
-        List<ModelAnn> list;
+        List<Ann> list;
         for(auto& [key, child]: value.children())
             list.elements.push_back(typed_model_expr_from_annotated_ptree(child));
         return {std::move(ann), std::move(list)};
     }
     else if (name == "Tuple")
     {
-        Tuple<ModelAnn> tuple;
+        Tuple<Ann> tuple;
         for(auto& [key, child]: value.children())
             tuple.elements.push_back(typed_model_expr_from_annotated_ptree(child));
         if (tuple.elements.size() < 2)
@@ -209,20 +212,20 @@ TypedModelExpr typed_model_expr_from_value_ptree(ModelAnn ann, const ptree& valu
 
         auto decls = typed_model_decls_from_annotated_ptree(value.get_child("decls"));
         auto body = typed_model_expr_from_annotated_ptree(value.get_child("body"));
-        return {std::move(ann), Let<ModelAnn>{std::move(decls), Box<TypedModelExpr>(std::move(body))}};
+        return {std::move(ann), Let<Ann>{std::move(decls), Box<TypedExpr>(std::move(body))}};
     }
     else if (name == "function")
     {
         require_child_count(value, 2, "function");
         auto pattern = typed_model_expr_from_annotated_ptree(value.children()[0].second);
         auto body = typed_model_expr_from_annotated_ptree(value.children()[1].second);
-        return {std::move(ann), Lambda<ModelAnn>{Box<TypedModelExpr>(std::move(pattern)), Box<TypedModelExpr>(std::move(body))}};
+        return {std::move(ann), Lambda<Ann>{Box<TypedExpr>(std::move(pattern)), Box<TypedExpr>(std::move(body))}};
     }
     else if (name == "sample")
     {
         require_child_count(value, 1, "sample");
         auto dist = typed_model_expr_from_annotated_ptree(value.children()[0].second);
-        return {std::move(ann), Sample<ModelAnn>{Box<TypedModelExpr>(std::move(dist))}};
+        return {std::move(ann), Sample<Ann>{Box<TypedExpr>(std::move(dist))}};
     }
     else if (name == "get_state")
     {
@@ -239,7 +242,7 @@ TypedModelExpr typed_model_expr_from_value_ptree(ModelAnn ann, const ptree& valu
     }
     else
     {
-        Call<ModelAnn> call{name, {}};
+        Call<Ann> call{name, {}};
         for(auto& [key, child]: value.children())
             call.args.push_back(typed_model_arg_from_annotated_ptree(key, child));
         return {std::move(ann), std::move(call)};
@@ -248,23 +251,23 @@ TypedModelExpr typed_model_expr_from_value_ptree(ModelAnn ann, const ptree& valu
 
 }
 
-UntypedModelExpr model_expr_from_ptree(const ptree& p)
+UntypedExpr model_expr_from_ptree(const ptree& p)
 {
     if (p.is_null())
-        return {UntypedAnn{}, MissingArg{}};
+        return {NoAnn{}, MissingArg{}};
     else if (p.is_a<int>())
-        return {UntypedAnn{}, IntLiteral{p.get_value<int>()}};
+        return {NoAnn{}, IntLiteral{p.get_value<int>()}};
     else if (p.is_a<double>())
-        return {UntypedAnn{}, DoubleLiteral{p.get_value<double>()}};
+        return {NoAnn{}, DoubleLiteral{p.get_value<double>()}};
     else if (p.is_a<bool>())
-        return {UntypedAnn{}, BoolLiteral{p.get_value<bool>()}};
+        return {NoAnn{}, BoolLiteral{p.get_value<bool>()}};
     else if (p.has_value<string>())
         return model_expr_from_string_ptree(p);
     else
         throw std::logic_error("malformed model ptree: non-string value has children");
 }
 
-ptree ptree_from_model_expr(const UntypedModelExpr& expr)
+ptree ptree_from_model_expr(const UntypedExpr& expr)
 {
     return std::visit(overloaded{
         [](const IntLiteral& x) -> ptree {return ptree(x.value);},
@@ -276,21 +279,21 @@ ptree ptree_from_model_expr(const UntypedModelExpr& expr)
         [](const Placeholder&) -> ptree {return ptree("_");},
         [](const MissingArg&) -> ptree {return ptree();},
         [](const GetState& x) -> ptree {return ptree("get_state", {{"", ptree(x.state_name)}});},
-        [](const Call<UntypedAnn>& x) -> ptree
+        [](const Call<NoAnn>& x) -> ptree
         {
             ptree result(x.function);
             for(auto& arg: x.args)
                 result.children().push_back({arg.name, ptree_from_model_expr(arg.value.get())});
             return result;
         },
-        [](const List<UntypedAnn>& x) -> ptree
+        [](const List<NoAnn>& x) -> ptree
         {
             ptree result("List");
             for(auto& element: x.elements)
                 result.children().push_back({"", ptree_from_model_expr(element)});
             return result;
         },
-        [](const Tuple<UntypedAnn>& x) -> ptree
+        [](const Tuple<NoAnn>& x) -> ptree
         {
             if (x.elements.size() < 2)
                 throw std::logic_error("cannot convert one-element model tuple to ptree");
@@ -299,39 +302,39 @@ ptree ptree_from_model_expr(const UntypedModelExpr& expr)
                 result.children().push_back({"", ptree_from_model_expr(element)});
             return result;
         },
-        [](const Let<UntypedAnn>& x) -> ptree
+        [](const Let<NoAnn>& x) -> ptree
         {
             return ptree("!let", {
                 {"decls", ptree_from_model_decls(x.decls)},
                 {"body", ptree_from_model_expr(x.body.get())}
             });
         },
-        [](const Lambda<UntypedAnn>& x) -> ptree
+        [](const Lambda<NoAnn>& x) -> ptree
         {
             return ptree("function", {
                 {"", ptree_from_model_expr(x.pattern.get())},
                 {"", ptree_from_model_expr(x.body.get())}
             });
         },
-        [](const Sample<UntypedAnn>& x) -> ptree
+        [](const Sample<NoAnn>& x) -> ptree
         {
             return ptree("sample", {{"", ptree_from_model_expr(x.dist.get())}});
         }
     }, expr.node);
 }
 
-ModelDecls<UntypedAnn> model_decls_from_ptree(const ptree& p)
+Decls<NoAnn> model_decls_from_ptree(const ptree& p)
 {
     if (not p.has_value<string>() or p.get_value<string>() != "!Decls")
         throw std::logic_error("malformed model ptree for declarations");
 
-    ModelDecls<UntypedAnn> decls;
+    Decls<NoAnn> decls;
     for(auto& [name, value]: p.children())
         decls.push_back({name, model_expr_from_ptree(value)});
     return decls;
 }
 
-ptree ptree_from_model_decls(const ModelDecls<UntypedAnn>& decls)
+ptree ptree_from_model_decls(const Decls<NoAnn>& decls)
 {
     ptree result("!Decls");
     for(auto& [name, value]: decls)
@@ -339,13 +342,13 @@ ptree ptree_from_model_decls(const ModelDecls<UntypedAnn>& decls)
     return result;
 }
 
-TypedModelExpr typed_model_expr_from_annotated_ptree(const ptree& p)
+TypedExpr typed_model_expr_from_annotated_ptree(const ptree& p)
 {
     auto ann = ann_from_ptree(p);
     return typed_model_expr_from_value_ptree(std::move(ann), p.get_child("value"));
 }
 
-ptree annotated_ptree_from_typed_model_expr(const TypedModelExpr& expr)
+ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
 {
     ptree value = std::visit(overloaded{
         [](const IntLiteral& x) -> ptree {return ptree(x.value);},
@@ -356,8 +359,8 @@ ptree annotated_ptree_from_typed_model_expr(const TypedModelExpr& expr)
         [](const ArgRef& x) -> ptree {return ptree("@" + x.name);},
         [](const Placeholder&) -> ptree {return ptree("_");},
         [](const MissingArg&) -> ptree {return ptree();},
-        [](const GetState& x) -> ptree {return ptree("get_state", {{"", annotated_ptree_from_typed_model_expr({ModelAnn{ptree("String"), {}, false, {}}, Var{x.state_name}})}});},
-        [](const Call<ModelAnn>& x) -> ptree
+        [](const GetState& x) -> ptree {return ptree("get_state", {{"", annotated_ptree_from_typed_model_expr({Ann{ptree("String"), {}, false, {}}, Var{x.state_name}})}});},
+        [](const Call<Ann>& x) -> ptree
         {
             ptree result(x.function);
             for(auto& arg: x.args)
@@ -368,14 +371,14 @@ ptree annotated_ptree_from_typed_model_expr(const TypedModelExpr& expr)
             }
             return result;
         },
-        [](const List<ModelAnn>& x) -> ptree
+        [](const List<Ann>& x) -> ptree
         {
             ptree result("List");
             for(auto& element: x.elements)
                 result.children().push_back({"", annotated_ptree_from_typed_model_expr(element)});
             return result;
         },
-        [](const Tuple<ModelAnn>& x) -> ptree
+        [](const Tuple<Ann>& x) -> ptree
         {
             if (x.elements.size() < 2)
                 throw std::logic_error("cannot convert one-element annotated model tuple to ptree");
@@ -384,21 +387,21 @@ ptree annotated_ptree_from_typed_model_expr(const TypedModelExpr& expr)
                 result.children().push_back({"", annotated_ptree_from_typed_model_expr(element)});
             return result;
         },
-        [](const Let<ModelAnn>& x) -> ptree
+        [](const Let<Ann>& x) -> ptree
         {
             return ptree("!let", {
                 {"decls", annotated_ptree_from_typed_model_decls(x.decls)},
                 {"body", annotated_ptree_from_typed_model_expr(x.body.get())}
             });
         },
-        [](const Lambda<ModelAnn>& x) -> ptree
+        [](const Lambda<Ann>& x) -> ptree
         {
             return ptree("function", {
                 {"", annotated_ptree_from_typed_model_expr(x.pattern.get())},
                 {"", annotated_ptree_from_typed_model_expr(x.body.get())}
             });
         },
-        [](const Sample<ModelAnn>& x) -> ptree
+        [](const Sample<Ann>& x) -> ptree
         {
             return ptree("sample", {{"", annotated_ptree_from_typed_model_expr(x.dist.get())}});
         }
@@ -409,21 +412,23 @@ ptree annotated_ptree_from_typed_model_expr(const TypedModelExpr& expr)
     return result;
 }
 
-TypedModelDecls typed_model_decls_from_annotated_ptree(const ptree& p)
+TypedDecls typed_model_decls_from_annotated_ptree(const ptree& p)
 {
     if (not p.has_value<string>() or p.get_value<string>() != "!Decls")
         throw std::logic_error("malformed annotated model ptree for declarations");
 
-    TypedModelDecls decls;
+    TypedDecls decls;
     for(auto& [name, value]: p.children())
         decls.push_back({name, typed_model_expr_from_annotated_ptree(value)});
     return decls;
 }
 
-ptree annotated_ptree_from_typed_model_decls(const TypedModelDecls& decls)
+ptree annotated_ptree_from_typed_model_decls(const TypedDecls& decls)
 {
     ptree result("!Decls");
     for(auto& [name, value]: decls)
         result.children().push_back({name, annotated_ptree_from_typed_model_expr(value)});
     return result;
+}
+
 }

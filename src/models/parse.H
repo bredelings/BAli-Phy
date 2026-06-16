@@ -8,23 +8,23 @@
 class Rules;
 
 std::string unparse(const ptree& p);
-std::string unparse(const UntypedModelExpr&);
-std::string unparse(const ModelDecls<UntypedAnn>&);
+std::string unparse(const CM::UntypedExpr&);
+std::string unparse(const CM::Decls<CM::NoAnn>&);
 std::string unparse_annotated(const ptree&);
-std::string unparse_annotated(const TypedModelExpr&);
+std::string unparse_annotated(const CM::TypedExpr&);
 std::string unparse_type(const ptree& p);
 std::string show_model(const ptree p);
-std::string show_model(const UntypedModelExpr&);
+std::string show_model(const CM::UntypedExpr&);
 std::string show_model_annotated(const ptree p);
-std::string show_model_annotated(const TypedModelExpr&);
+std::string show_model_annotated(const CM::TypedExpr&);
 std::string show_model_abbrev(const ptree p, int length);
 
 ptree parse_type(const std::string& s);
 ptree parse(const Rules& R, const std::string& s, const std::string& what);
 ptree parse_defs(const Rules& R, const std::string& s);
 
-UntypedModelExpr parse_model_expr(const Rules& R, const std::string& s, const std::string& what);
-ModelDecls<UntypedAnn> parse_model_decls(const Rules& R, const std::string& s);
+CM::UntypedExpr parse_model_expr(const Rules& R, const std::string& s, const std::string& what);
+CM::Decls<CM::NoAnn> parse_model_decls(const Rules& R, const std::string& s);
 
 ptree add_sample(const ptree& p);
 ptree add_submodel(ptree term, const ptree& submodel);
