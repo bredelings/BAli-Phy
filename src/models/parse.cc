@@ -441,6 +441,133 @@ string unparse(const ptree& p)
     return s;
 }
 
+optional<UntypedModelExpr> peel_sample(const UntypedModelExpr& expr)
+{
+    if (auto sample = std::get_if<Sample<UntypedAnn>>(&expr.node))
+        return sample->dist.get();
+    else if (auto let = std::get_if<Let<UntypedAnn>>(&expr.node))
+    {
+        if (auto new_body = peel_sample(let->body.get()))
+        {
+            auto result = expr;
+            std::get<Let<UntypedAnn>>(result.node).body = Box<UntypedModelExpr>(*new_body);
+            return result;
+        }
+    }
+
+    return {};
+}
+
+string unparse(const ModelDecls<UntypedAnn>& decls)
+{
+    vector<string> items;
+    for(auto& [name, value]: decls)
+        items.push_back(name + " = " + unparse(value));
+    return join(items, "; ");
+}
+
+string unparse(const UntypedModelExpr& expr)
+{
+    using namespace std::string_literals;
+
+    return std::visit(overloaded{
+        [](const IntLiteral& x) {return convertToString(x.value);},
+        [](const DoubleLiteral& x)
+        {
+            auto s = convertToString(x.value);
+            if (s.find('.') != string::npos)
+                while(s.size() > 3 and s.back() == '0')
+                    s.pop_back();
+            return s;
+        },
+        [](const BoolLiteral& x) {return convertToString(x.value);},
+        [](const StringLiteral& x) {return "\"" + x.value + "\"";},
+        [](const Var& x) {return x.name;},
+        [](const ArgRef& x) {return "@" + x.name;},
+        [](const Placeholder&) {return "_"s;},
+        [](const MissingArg&) {return "null"s;},
+        [](const GetState& x) {return "get_state(" + x.state_name + ")";},
+        [](const List<UntypedAnn>& x)
+        {
+            vector<string> items;
+            for(auto& item: x.elements)
+                items.push_back(unparse(item));
+            return "[" + join(items, ", ") + "]";
+        },
+        [](const Tuple<UntypedAnn>& x)
+        {
+            vector<string> items;
+            for(auto& item: x.elements)
+                items.push_back(unparse(item));
+            return "(" + join(items, ", ") + ")";
+        },
+        [](const Let<UntypedAnn>& x)
+        {
+            return unparse(x.body.get()) + " where {" + unparse(x.decls) + "}";
+        },
+        [](const Lambda<UntypedAnn>& x)
+        {
+            return "|" + unparse(x.pattern.get()) + ":" + unparse(x.body.get()) + "|";
+        },
+        [](const Sample<UntypedAnn>& x)
+        {
+            return "~" + unparse(x.dist.get());
+        },
+        [](const Call<UntypedAnn>& x)
+        {
+            auto s = x.function;
+
+            if (s == "negate" and x.args.size())
+                return "-" + unparse(x.args.front().value.get());
+            else if (is_operator(s) and x.args.size() == 2)
+                return unparse(x.args[0].value.get()) + s + unparse(x.args[1].value.get());
+            else if (s == "intToDouble")
+            {
+                for(auto& arg: x.args)
+                    if (arg.name == "x")
+                        return unparse(arg.value.get());
+            }
+            else if ((s == "unit_mixture" or s == "multiMixtureModel"))
+            {
+                for(auto& arg: x.args)
+                    if (arg.name == "submodel")
+                        return unparse(arg.value.get());
+            }
+
+            vector<string> args;
+            optional<string> submodel;
+            bool positional = true;
+            int pos = 0;
+            for(auto& arg: x.args)
+            {
+                if (std::holds_alternative<MissingArg>(arg.value->node))
+                    positional = false;
+                else if (arg.name == "submodel" and pos == 0)
+                {
+                    positional = false;
+                    assert(not submodel);
+                    submodel = unparse(arg.value.get());
+                }
+                else if (positional)
+                    args.push_back(unparse(arg.value.get()));
+                else if (auto arg2 = peel_sample(arg.value.get()))
+                    args.push_back(arg.name + "~" + unparse(*arg2));
+                else
+                    args.push_back(arg.name + "=" + unparse(arg.value.get()));
+
+                pos++;
+            }
+            while (args.size() and args.back() == "")
+                args.pop_back();
+            if (not args.empty())
+                s = s + "(" + join(args, ", ") + ")";
+            if (submodel)
+                s = *submodel + " +> " + s;
+            return s;
+        }
+    }, expr.node);
+}
+
 string unparse(const ptree& p, const Rules&)
 {
     return unparse(p);
@@ -604,6 +731,14 @@ string unparse_abbrev(ptree p, int length)
 }
 
 string show_model(ptree p)
+{
+    if (auto q = peel_sample(p))
+	return "~ " + unparse(*q);
+    else
+	return "= " + unparse(p);
+}
+
+string show_model(const UntypedModelExpr& p)
 {
     if (auto q = peel_sample(p))
 	return "~ " + unparse(*q);

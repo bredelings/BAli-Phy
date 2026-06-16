@@ -303,6 +303,39 @@ void test_parser_wrappers()
     assert(decls[1].first == "y");
 }
 
+void expect_unparse_parity(const ptree& p)
+{
+    auto expr = model_expr_from_ptree(p);
+    assert(unparse(expr) == unparse(p));
+}
+
+void test_untyped_pretty_printing()
+{
+    expect_unparse_parity(ptree(1));
+    expect_unparse_parity(ptree(1.5));
+    expect_unparse_parity(ptree(true));
+    expect_unparse_parity(ptree("\"abc\""));
+    expect_unparse_parity(ptree("x"));
+    expect_unparse_parity(ptree("f", {{"", ptree(1)}, {"", ptree("x")}}));
+    expect_unparse_parity(ptree("+", {{"", ptree(1)}, {"", ptree(2)}}));
+    expect_unparse_parity(ptree("sample", {{"", ptree("normal", {{"", ptree(0)}, {"", ptree(1)}})}}));
+
+    auto expr = model_expr_from_ptree(ptree("!let", {
+        {"decls", ptree("!Decls", {{"x", ptree(1)}})},
+        {"body", ptree("x")}
+    }));
+    assert(unparse(expr) == "x where {x = 1}");
+
+    auto decls = model_decls_from_ptree(ptree("!Decls", {
+        {"x", ptree(1)},
+        {"y", ptree("+", {{"", ptree("x")}, {"", ptree(1)}})}
+    }));
+    assert(unparse(decls) == "x = 1; y = x+1");
+
+    assert(show_model(model_expr_from_ptree(ptree("sample", {{"", ptree("normal")}}))) == "~ normal");
+    assert(show_model(model_expr_from_ptree(ptree("x"))) == "= x");
+}
+
 }
 
 int main()
@@ -319,4 +352,5 @@ int main()
     test_typed_argument_metadata_round_trip();
     test_typed_collection_and_special_round_trips();
     test_parser_wrappers();
+    test_untyped_pretty_printing();
 }

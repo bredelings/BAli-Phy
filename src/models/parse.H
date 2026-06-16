@@ -8,9 +8,12 @@
 class Rules;
 
 std::string unparse(const ptree& p);
+std::string unparse(const UntypedModelExpr&);
+std::string unparse(const ModelDecls<UntypedAnn>&);
 std::string unparse_annotated(const ptree&);
 std::string unparse_type(const ptree& p);
 std::string show_model(const ptree p);
+std::string show_model(const UntypedModelExpr&);
 std::string show_model_annotated(const ptree p);
 std::string show_model_abbrev(const ptree p, int length);
 
