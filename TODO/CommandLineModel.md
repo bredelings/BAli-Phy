@@ -123,7 +123,7 @@ Argument-edge annotations:
 template<class A>
 struct Arg {
     std::string name; // empty means positional
-    Expr<A> value;
+    Box<Expr<A>> value;
 
     bool is_default_value = false;
     bool suppress_default = false;
@@ -265,10 +265,10 @@ Initial invariants:
 - Argument-edge metadata lives on `CM::Arg`, not hidden in expression nodes.
 - No annotation-only metadata is hidden in expression nodes.
 
-Run invariant checks after conversion, typechecking, extraction, and before code
-generation.  Use two boundaries deliberately: raw conversion may produce
-compatibility-only nodes such as `MissingArg`, but any pipeline invariant check
-after parser compatibility rewriting must reject them.
+Run strict invariant checks after parser compatibility rewriting, typechecking,
+extraction, and before code generation.  Use two boundaries deliberately: raw
+conversion may produce compatibility-only nodes such as `MissingArg`, but any
+pipeline invariant check after parser compatibility rewriting must reject them.
 
 ## Phase 4: Add Compatibility Converters
 
@@ -452,9 +452,9 @@ binding inference/audit path.
 
 This proves the AST in new code before replacing the existing compile pipeline.
 
-## Phase 10: Port Typechecker To Produce `CM::TypedExpr`
+## Phase 10a: Add Compatibility Typechecker Wrappers
 
-Add new typechecker entry points:
+Add compatibility typechecker entry points:
 
 ```cpp
 CM::TypedExpr typecheck_model_expr(
@@ -468,6 +468,17 @@ CM::TypedDecls typecheck_model_decls(
     const CM::Decls<CM::NoAnn>&
 );
 ```
+
+These wrappers initially convert `CM::UntypedExpr` to `ptree`, call the current
+`TypecheckingState::typecheck_and_annotate(...)` implementation, then convert
+the annotated `ptree` result back to `CM::TypedExpr`.  Treat this as a bridge
+for tests and for future call-site migration, not as the final AST typechecker.
+
+Add parity tests that compare wrapper output against the existing annotated
+`ptree` typechecker for literals, variables, declarations, calls/defaults,
+alphabet expressions, `let`, lambda, list, tuple, and `get_state` cases.
+
+## Phase 10b: Port Typechecker To Build `CM::TypedExpr` Directly
 
 Port existing `typecheck_and_annotate_*` functions one at a time:
 
@@ -513,25 +524,27 @@ CM::Arg::suppress_default
 
 Run invariant checks on the result.
 
+Do not switch the main compile path to `typecheck_model_expr(...)` merely
+because the wrapper exists.  The compile path should wait until
+`typecheck_model_expr(...)` is a direct AST implementation and extraction and
+code generation have direct AST paths too.
+
 ## Phase 11: Port Substitution Helpers
 
-Replace:
-
-```cpp
-void substitute_annotated(const equations&, ptree&);
-```
-
-with:
+Add AST overloads:
 
 ```cpp
 void substitute_annotated(const equations&, CM::TypedExpr&);
 void substitute_annotated(const equations&, CM::TypedDecls&);
 ```
 
-This should mostly recurse through the AST and apply
+These should mostly recurse through the AST and apply
 `substitute(eqs, expr.ann.type)`.
 
-## Phase 12: Port Extraction Helpers
+Keep the annotated-`ptree` overload while the current compile path still needs
+it.  Remove or quarantine it only after the main annotated-`ptree` path is gone.
+
+## Phase 11b: Port Extraction Helpers
 
 Port extraction logic from `compile.cc`:
 
@@ -548,7 +561,7 @@ where needed.  Avoid shared subtrees.
 
 Add tests for extracted pretty output.
 
-## Phase 13: Port Code Generation To Consume `CM::TypedExpr`
+## Phase 12: Port Code Generation To Consume `CM::TypedExpr`
 
 Add typed overloads in `CodeGenState`:
 
@@ -605,7 +618,7 @@ Do not implement the typed code generation path by converting
 as a temporary test oracle.  The typed overloads should be direct
 implementations so semantic drift is visible during parity testing.
 
-## Phase 14: Switch Compile Path
+## Phase 13: Switch Compile Path
 
 Change `compile_model(...)`:
 
@@ -620,7 +633,10 @@ Change `compile_decls(...)` similarly using `CM::Decls`.
 Keep compatibility conversion only where an old API still needs annotated
 `ptree`.
 
-## Phase 15: Update `model_t` And `pretty_model_t`
+Do not use bridge implementations that convert `CM::TypedExpr` back to
+annotated `ptree` as the production path for this phase.
+
+## Phase 14: Update `model_t` And `pretty_model_t`
 
 Change model storage from annotated `ptree` to typed AST:
 
@@ -645,7 +661,7 @@ Update:
 - `show_extracted`
 - JSON pretty conversion
 
-## Phase 16: Remove Annotated-`ptree` Main Path
+## Phase 15: Remove Annotated-`ptree` Main Path
 
 Once main compilation uses `CM::TypedExpr`, remove or quarantine:
 
@@ -658,7 +674,7 @@ Once main compilation uses `CM::TypedExpr`, remove or quarantine:
 Keep conversion helpers only for tests/debugging until direct parser output is
 migrated.
 
-## Phase 17: Replace Annotation Type Later
+## Phase 16: Replace Annotation Type Later
 
 After the AST migration is stable, replace:
 
@@ -676,7 +692,7 @@ or Haskell `Type`.
 
 This should be much smaller because type annotations are now explicit fields.
 
-## Phase 18: Introduce A Real Pattern AST Later
+## Phase 17: Introduce A Real Pattern AST Later
 
 `Lambda::pattern` can initially use `CM::Expr<A>` for compatibility, but
 patterns are not arbitrary expressions.  Later introduce:
@@ -691,7 +707,7 @@ or an unannotated `ModelPattern` if pattern annotations are not useful.
 Current patterns support variables and tuple/list-like structures.  Moving them
 out of `CM::Expr` will simplify lambda validation and typechecking.
 
-## Phase 19: Make Parser Build `CM::Expr` Directly Later
+## Phase 18: Make Parser Build `CM::Expr` Directly Later
 
 Once converters are no longer central, update `parser.y` semantic values to
 build:
@@ -711,14 +727,16 @@ This removes old expression encodings and conversion overhead.
 4. Parser wrappers.
 5. Untyped and typed pretty-printing.
 6. Use untyped AST in new binding inference/audit code.
-7. Typechecker produces `CM::TypedExpr`.
-8. Substitution and extraction helpers.
-9. Code generation consumes `CM::TypedExpr`.
-10. Switch compile path and `model_t`.
-11. Remove annotated-`ptree` main path.
-12. Replace `CM::Ann::type`.
-13. Introduce a real pattern AST.
-14. Make parser direct.
+7. Compatibility typechecker wrappers and parity tests.
+8. Typechecker builds `CM::TypedExpr` directly.
+9. AST substitution overloads.
+10. Extraction helpers consume `CM::TypedExpr`.
+11. Code generation consumes `CM::TypedExpr`.
+12. Switch compile path and `model_t`.
+13. Remove annotated-`ptree` main path.
+14. Replace `CM::Ann::type`.
+15. Introduce a real pattern AST.
+16. Make parser direct.
 
 ## Risk Notes
 
