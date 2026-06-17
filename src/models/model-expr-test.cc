@@ -47,7 +47,7 @@ void test_model_type_ast()
     auto pair_type = tuple_type({int_type, type_t("Bool")});
     assert(unparse_type(pair_type) == "(Int,Bool)");
     assert(function_type(int_type, double_type) == parse_type("Int -> Double"));
-    assert(make_type_app("Distribution", double_type) == parse_type("Distribution<Double>"));
+    assert(CM::type_app("Distribution", double_type) == parse_type("Distribution<Double>"));
     assert(parse_type("a") == a_type);
     assert(type_atom("a#0") == fresh_type);
 
@@ -363,8 +363,8 @@ void test_typed_pretty_printing()
     }, type_t("Int"));
     assert(unparse_annotated(add) == "1+2");
 
-    auto pair_type = make_type_apps("Tuple", {type_t("Text"), type_t("Int")});
-    auto list_type = make_type_app("List", pair_type);
+    auto pair_type = CM::type_apps("Tuple", {type_t("Text"), type_t("Int")});
+    auto list_type = CM::type_app("List", pair_type);
     TypedExpr pairs{
         expr_ann(list_type),
         List<Ann>{{
@@ -384,7 +384,7 @@ void test_typed_pretty_printing()
 
     auto sample = typed_expr(
         type_t("Double"),
-        Sample<Ann>{typed_expr(make_type_app("Distribution", type_t("Double")), Var{"normal"})}
+        Sample<Ann>{typed_expr(CM::type_app("Distribution", type_t("Double")), Var{"normal"})}
     );
     assert(show_model_annotated(sample) == "~ normal");
 }
@@ -398,7 +398,7 @@ void test_typed_substitution()
     auto alphabet_type = type_t("alphabet#3");
 
     TypedExpr list_expr{
-        Ann{make_type_app("List", c), {}, false, {}},
+        Ann{CM::type_app("List", c), {}, false, {}},
         List<Ann>{{TypedExpr{Ann{c, {}, false, {}}, IntLiteral{1}}}}
     };
 
@@ -438,7 +438,7 @@ void test_typed_substitution()
     assert(require_arg_value(call.args[0]).ann.type == type_t("Int"));
     assert(call.args[0].alphabet);
     assert(call.args[0].alphabet->ann.type == type_t("Alphabet"));
-    assert(require_arg_value(call.args[1]).ann.type == make_type_app("List", type_t("String")));
+    assert(require_arg_value(call.args[1]).ann.type == CM::type_app("List", type_t("String")));
 
     auto& list = require_arg_value(call.args[1]).as<List<Ann>>();
     assert(list.elements[0].ann.type == type_t("String"));
@@ -482,11 +482,11 @@ void test_typecheck_exprs()
     expect_typecheck_expr(type_t("Int"), var_expr("x"), {{"x", type_t("Int")}});
     expect_typecheck_expr(type_t("Int"), int_expr(1));
     expect_typecheck_expr(
-        make_type_apps("List", {type_t("Int")}),
+        CM::type_apps("List", {type_t("Int")}),
         list_expr({int_expr(1), int_expr(2)})
     );
     expect_typecheck_expr(
-        make_type_apps("Tuple", {type_t("Int"), type_t("Bool")}),
+        CM::type_apps("Tuple", {type_t("Int"), type_t("Bool")}),
         tuple_expr({int_expr(1), bool_expr(true)})
     );
     expect_typecheck_expr(
@@ -500,13 +500,13 @@ void test_typecheck_exprs()
         let_expr({{"x", int_expr(1)}}, var_expr("x"))
     );
     expect_typecheck_expr(
-        make_type_apps("Function", {type_t("Int"), type_t("Int")}),
+        CM::type_apps("Function", {type_t("Int"), type_t("Int")}),
         lambda_expr(var_pattern("x"), var_expr("x"))
     );
     expect_typecheck_expr(
         type_t("Double"),
         call_expr("f", {positional_arg(int_expr(1))}),
-        {{"f", make_type_apps("Function", {type_t("Int"), type_t("Double")})}}
+        {{"f", CM::type_apps("Function", {type_t("Int"), type_t("Double")})}}
     );
 }
 
@@ -515,9 +515,9 @@ void test_typecheck_exprs()
 void test_typecheck_tuple_pattern_lambda()
 {
     Rules rules({});
-    auto required_type = make_type_apps(
+    auto required_type = CM::type_apps(
         "Function",
-        {make_type_apps("Tuple", {type_t("Int"), type_t("Bool")}), type_t("Int")}
+        {CM::type_apps("Tuple", {type_t("Int"), type_t("Bool")}), type_t("Int")}
     );
     auto model = lambda_expr(tuple_pattern({var_pattern("x"), var_pattern("flag")}), var_expr("x"));
 
@@ -552,7 +552,7 @@ void test_typecheck_variable_function_used_args()
         assert(typed.ann.used_args == expected);
     };
 
-    auto f_type = make_type_apps("Function", {type_t("Int"), type_t("Double")});
+    auto f_type = CM::type_apps("Function", {type_t("Int"), type_t("Double")});
     expect_used_args(
         call_expr("f", {positional_arg(arg_ref_expr("x"))}),
         {{"f", f_type}},
@@ -782,7 +782,7 @@ void test_typecheck_rule_calls()
         assert(tuple_pattern_model.type == type_t("Int"));
         expect_typecheck_expr(
             rules,
-            make_type_app("DiscreteDist", type_t("Int")),
+            CM::type_app("DiscreteDist", type_t("Int")),
             list_expr({
                 tuple_expr({int_expr(1), double_expr(0.25)}),
                 tuple_expr({int_expr(2), double_expr(0.75)})
@@ -790,27 +790,27 @@ void test_typecheck_rule_calls()
         );
         expect_typecheck_expr(
             rules,
-            make_type_app("Distribution", type_t("Int")),
+            CM::type_app("Distribution", type_t("Int")),
             var_expr("d"),
-            {{"d", make_type_app("DiscreteDist", type_t("Int"))}}
+            {{"d", CM::type_app("DiscreteDist", type_t("Int"))}}
         );
         expect_typecheck_expr(
             rules,
-            make_type_app("DiscreteDist", make_type_app("CTMC", type_t("AA"))),
+            CM::type_app("DiscreteDist", CM::type_app("CTMC", type_t("AA"))),
             var_expr("m"),
-            {{"m", make_type_app("CTMC", type_t("AA"))}}
+            {{"m", CM::type_app("CTMC", type_t("AA"))}}
         );
         expect_typecheck_expr(
             rules,
-            make_type_app("MultiMixtureModel", type_t("AA")),
+            CM::type_app("MultiMixtureModel", type_t("AA")),
             var_expr("m"),
-            {{"m", make_type_app("CTMC", type_t("AA"))}}
+            {{"m", CM::type_app("CTMC", type_t("AA"))}}
         );
         expect_typecheck_expr(
             rules,
-            make_type_app("CTMC", type_t("AA")),
+            CM::type_app("CTMC", type_t("AA")),
             var_expr("s"),
-            {{"s", make_type_app("ExchangeModel", type_t("AA"))}}
+            {{"s", CM::type_app("ExchangeModel", type_t("AA"))}}
         );
         test_typecheck_decls(rules);
     }
@@ -850,8 +850,8 @@ void test_typecheck_decls(const Rules& rules)
         {"xs", list_expr({int_expr(1), int_expr(2)})},
         {"pair", tuple_expr({var_expr("xs"), bool_expr(true)})}
     }, {
-        {"xs", make_type_app("List", type_t("Int"))},
-        {"pair", make_type_apps("Tuple", {make_type_app("List", type_t("Int")), type_t("Bool")})}
+        {"xs", CM::type_app("List", type_t("Int"))},
+        {"pair", CM::type_apps("Tuple", {CM::type_app("List", type_t("Int")), type_t("Bool")})}
     });
     expect_typed_decls({
         {"x", let_expr({{"y", int_expr(1)}}, var_expr("y"))}
@@ -878,7 +878,7 @@ void test_extraction()
     auto scalar = pretty_model_t(typed_expr(type_t("Int"), IntLiteral{1}));
     assert(scalar.show() == "1");
 
-    auto dist_type = make_type_app("Distribution", type_t("Double"));
+    auto dist_type = CM::type_app("Distribution", type_t("Double"));
     auto sampled_arg = typed_expr(
         type_t("Double"),
         Sample<Ann>{typed_expr(dist_type, Var{"normal"})}

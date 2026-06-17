@@ -99,12 +99,12 @@ string model_t::show_extracted() const
     return p.show_extracted();
 }
 
-model_t::model_t(CM::TypedExpr d, const set<string>& i, const type_t& t, const std::set<term_t>& s, const generated_code_t& c)
+model_t::model_t(CM::TypedExpr d, const set<string>& i, const type_t& t, const std::set<type_t>& s, const generated_code_t& c)
     :description(std::move(d)), imports(i), type(t), constraints(s), code(c)
 {
 }
 
-model_t::model_t(CM::TypedDecls d, const set<string>& i, const type_t& t, const std::set<term_t>& s, const generated_code_t& c)
+model_t::model_t(CM::TypedDecls d, const set<string>& i, const type_t& t, const std::set<type_t>& s, const generated_code_t& c)
     :description(std::move(d)), imports(i), type(t), constraints(s), code(c)
 {
 }
@@ -293,7 +293,7 @@ model_t compile_model(const Rules& R,
     substitute(TC2.eqs, required_type);
     substitute_annotated(TC2.eqs, typed_model);
 
-    set<term_t> constraints;
+    set<type_t> constraints;
     for(auto constraint: TC2.eqs.get_constraints())
     {
 	substitute(TC2.eqs, constraint);
@@ -371,7 +371,7 @@ model_t compile_decls(const Rules& R,
     for(auto& [var,value]: typed_decls)
 		substitute_annotated(TC.eqs, value);
 
-    set<term_t> constraints;
+    set<type_t> constraints;
     for(auto constraint: TC.eqs.get_constraints())
     {
 	substitute(TC.eqs, constraint);

@@ -6,23 +6,22 @@
 #include <map>
 #include "models/model-type.H"
 
-using term_t = CM::Type;
 using type_t = CM::Type;
 
 class equations
 {
-    std::vector<std::pair<term_t,term_t>> failed;
+    std::vector<std::pair<type_t,type_t>> failed;
 
     // Use a list here so that we can modify the list without invalidating iterators.
-    std::list<std::pair<std::set<std::string>,std::optional<term_t>>> values;
+    std::list<std::pair<std::set<std::string>,std::optional<type_t>>> values;
 
-    std::set<term_t> constraints;
+    std::set<type_t> constraints;
 
     bool has_record(const std::string& x) const;
 
-    std::list<std::pair<std::set<std::string>, std::optional<term_t>>>::const_iterator find_record(const std::string& x) const;
+    std::list<std::pair<std::set<std::string>, std::optional<type_t>>>::const_iterator find_record(const std::string& x) const;
 
-    std::list<std::pair<std::set<std::string>, std::optional<term_t>>>::iterator find_record(const std::string& x);
+    std::list<std::pair<std::set<std::string>, std::optional<type_t>>>::iterator find_record(const std::string& x);
 
     void remove_record_for(const std::string& x);
 
@@ -33,24 +32,24 @@ public:
 
     bool occurs_check() const;
 
-    friend void substitute(const equations& E, term_t& T);
+    friend void substitute(const equations& E, type_t& T);
 
-    std::optional<term_t> value_of_var(const std::string& x) const;
+    std::optional<type_t> value_of_var(const std::string& x) const;
 
-    bool add_condition(const std::string& x, const term_t& T);
+    bool add_condition(const std::string& x, const type_t& T);
     bool add_var_condition(const std::string& x, const std::string& y);
 
-    bool unify(const term_t& T, const term_t& U);
+    bool unify(const type_t& T, const type_t& U);
 
-    const std::list<std::pair<std::set<std::string>,std::optional<term_t>>>& get_values() const;
+    const std::list<std::pair<std::set<std::string>,std::optional<type_t>>>& get_values() const;
 
-    const std::set<term_t>& get_constraints() const;
+    const std::set<type_t>& get_constraints() const;
 
-    void add_constraint(const term_t&);
+    void add_constraint(const type_t&);
 
-    std::map<std::string,term_t> eliminate_variable(const std::string&);
+    std::map<std::string,type_t> eliminate_variable(const std::string&);
 
-    std::map<std::string,term_t> eliminate_except(const std::set<std::string>&);
+    std::map<std::string,type_t> eliminate_except(const std::set<std::string>&);
 
     std::set<std::string> referenced_vars() const;
 
@@ -60,32 +59,29 @@ public:
     equations() {};
 };
 
-// given two terms, what equations do we need to unify them?
-equations unify(const term_t& T1, const term_t& T2);
+// Given two types, what equations do we need to unify them?
+equations unify(const type_t& T1, const type_t& T2);
 
 
 struct FVSource
 {
     mutable int index = 0;
-    term_t get_fresh_type_var(const std::string& s) const
+    type_t get_fresh_type_var(const std::string& s) const
     {
         // Fresh type variables must remain recognizable by is_type_variable().
         const std::string prefix = (!s.empty() and s[0] >= 'a' and s[0] <= 'z') ? s : "t";
-        auto v = term_t(prefix + "#" + std::to_string(index++));
+        auto v = type_t(prefix + "#" + std::to_string(index++));
         assert(CM::is_type_variable(v));
         return v;
     }
 };
 
-std::map<std::string, term_t> alpha_rename(const std::set<std::string>& vars, const FVSource&);
+std::map<std::string, type_t> alpha_rename(const std::set<std::string>& vars, const FVSource&);
 
-void substitute(const equations& equations, term_t& T);
+void substitute(const equations& equations, type_t& T);
 
-void substitute(const std::map<std::string, term_t>& replace, term_t& T);
+void substitute(const std::map<std::string, type_t>& replace, type_t& T);
 
 equations operator&&(const equations& p1, const equations& p2);
-
-term_t make_type_app(const term_t& t1, const term_t& t2);
-term_t make_type_apps(term_t type, const std::vector<term_t>& args);
 
 #endif

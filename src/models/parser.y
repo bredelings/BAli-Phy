@@ -26,7 +26,6 @@
   class zz_driver;
 
   CM::UntypedExpr make_function(const std::vector<CM::UntypedPattern>& patterns, const CM::UntypedExpr& body);
-  CM::Type make_type_app(CM::Type type, const std::vector<CM::Type>& args);
   std::pair<std::string,CM::UntypedExpr> make_function_def(zz_driver&, const yy::location&, const CM::UntypedExpr& fncall, const CM::UntypedExpr& body);
 
 }
@@ -242,14 +241,14 @@ literal: STRING      {$$ = CM::UntypedExpr{CM::NoAnn{}, CM::StringLiteral{$1}};}
 /* -------------------------------------------------------------- */
 
 type: btype                             { $$ = $1; }
-|     btype "->" type                   { $$ = make_type_app("Function",{$1,$3});  }
+|     btype "->" type                   { $$ = CM::type_apps("Function",{$1,$3});  }
 
 btype: atype                            { $$ = $1; }
-|      atype "<" type_tup_args ">"      { $$ = make_type_app($1, $3); }
+|      atype "<" type_tup_args ">"      { $$ = CM::type_apps($1, $3); }
 
 atype: varid                            { $$ = CM::type_atom($1); }
 |      "(" type ")"                     { $$ = $2; }
-|      "(" type_tup_args "," type ")"   { $2.push_back($4); $$ = make_type_app(CM::type_con("Tuple"),$2); }
+|      "(" type_tup_args "," type ")"   { $2.push_back($4); $$ = CM::type_apps(CM::type_con("Tuple"),$2); }
 
 type_tup_args: type                     { $$.push_back($1);}
 |              type_tup_args "," type   { $$ = $1; $$.push_back($3);}
@@ -352,11 +351,6 @@ CM::UntypedExpr make_function(const vector<CM::UntypedPattern>& patterns, const 
         };
     }
     return f;
-}
-
-CM::Type make_type_app(CM::Type type, const vector<CM::Type>& args)
-{
-    return CM::type_apps(std::move(type), args);
 }
 
 // Converts a function-definition left-hand side into nested lambda binders,

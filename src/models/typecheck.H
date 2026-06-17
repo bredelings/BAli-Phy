@@ -19,7 +19,7 @@ struct TypecheckingState
     std::optional<std::map<std::string,type_t>> args;
     mutable equations eqs;
 
-    term_t get_fresh_type_var(const std::string& s) const { return fv_source->get_fresh_type_var(s);}
+    type_t get_fresh_type_var(const std::string& s) const { return fv_source->get_fresh_type_var(s);}
 
     TypecheckingState copy_no_equations() const;
     std::set<std::string> find_type_variables() const;

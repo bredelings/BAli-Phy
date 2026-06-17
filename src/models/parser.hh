@@ -62,7 +62,6 @@
   class zz_driver;
 
   CM::UntypedExpr make_function(const std::vector<CM::UntypedPattern>& patterns, const CM::UntypedExpr& body);
-  CM::Type make_type_app(CM::Type type, const std::vector<CM::Type>& args);
   std::pair<std::string,CM::UntypedExpr> make_function_def(zz_driver&, const yy::location&, const CM::UntypedExpr& fncall, const CM::UntypedExpr& body);
 
 

@@ -23,7 +23,7 @@ set<string> find_rule_type_vars(const Rule& rule)
     return vars;
 }
 
-Rule substitute_in_rule_types(const map<string,term_t>& renaming, Rule rule)
+Rule substitute_in_rule_types(const map<string,type_t>& renaming, Rule rule)
 {
     substitute(renaming, rule.result_type);
     for(auto& constraint: rule.constraints)
@@ -99,7 +99,7 @@ equations convertible_to(CM::UntypedExpr& model, const type_t& t1, type_t t2)
         if (head3 == "CTMC")
         {
             auto a = args3[0];
-            t2 = make_type_app("CTMC",a);
+            t2 = CM::type_app("CTMC",a);
 
             E = convertible_to(model,t1,t2);
             if (E)
@@ -108,7 +108,7 @@ equations convertible_to(CM::UntypedExpr& model, const type_t& t1, type_t t2)
         else
         {
             auto a = args2[0];
-            t2 = make_type_app("List", make_type_apps("Tuple",{a,"Double"}));
+            t2 = CM::type_app("List", CM::type_apps("Tuple",{a,"Double"}));
 
             E = convertible_to(model, t1, t2);
             if (E)
@@ -128,7 +128,7 @@ equations convertible_to(CM::UntypedExpr& model, const type_t& t1, type_t t2)
     else if (head2 == "MultiMixtureModel" and args2.size() == 1)
     {
         auto a = args2[0];
-        t2 = make_type_app("DiscreteDist",make_type_app("CTMC",a));
+        t2 = CM::type_app("DiscreteDist",CM::type_app("CTMC",a));
 
         E = convertible_to(model,t1,t2);
         if (E)
@@ -137,7 +137,7 @@ equations convertible_to(CM::UntypedExpr& model, const type_t& t1, type_t t2)
     else if (head2 == "CTMC" and args2.size() == 1)
     {
         auto a = args2[0];
-        t2 = make_type_app("ExchangeModel", a);
+        t2 = CM::type_app("ExchangeModel", a);
         E = convertible_to(model,t1,t2);
         if (E)
             model = conversion_call("f", "submodel", std::move(model));
@@ -474,7 +474,7 @@ optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, co
 
         auto a = TC.get_fresh_type_var("a");
         auto b = TC.get_fresh_type_var("b");
-        auto ftype = make_type_apps("Function", {a, b});
+        auto ftype = CM::type_apps("Function", {a, b});
         TC.eqs = TC.eqs && unify(result_type, ftype);
         if (not TC.eqs)
         {
@@ -513,7 +513,7 @@ optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const 
         return {};
 
     auto element_required_type = TC.get_fresh_type_var("a");
-    auto result_type = make_type_app("List", element_required_type);
+    auto result_type = CM::type_app("List", element_required_type);
     if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
         return typecheck_model_expr(TC, required_type, *converted);
 
@@ -544,7 +544,7 @@ optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const
     vector<type_t> element_required_types;
     for(int i=0; i<tuple->elements.size(); i++)
         element_required_types.push_back(TC.get_fresh_type_var("a"));
-    auto result_type = make_type_apps("Tuple", element_required_types);
+    auto result_type = CM::type_apps("Tuple", element_required_types);
 
     if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
         return typecheck_model_expr(TC, required_type, *converted);
@@ -622,7 +622,7 @@ optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, cons
         scope2.extend_scope(var, type);
 
     auto b = TC.get_fresh_type_var("b");
-    auto ftype = make_type_apps("Function", {a, b});
+    auto ftype = CM::type_apps("Function", {a, b});
     TC.eqs = TC.eqs && unify(ftype, required_type);
     if (not TC.eqs)
         throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
@@ -884,7 +884,7 @@ pair<type_t, map<string,type_t>> TypecheckingState::parse_pattern(const CM::Unty
                 var_to_type.insert({var_name,var_type});
             }
         }
-        auto type = make_type_apps("Tuple", element_types);
+        auto type = CM::type_apps("Tuple", element_types);
         return {type,var_to_type};
     }
     else

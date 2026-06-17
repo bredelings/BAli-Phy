@@ -82,22 +82,22 @@ void equations::remove_record_for(const std::string& x)
     std::abort();
 }
 
-const list<pair<set<string>,optional<term_t>>>& equations::get_values() const
+const list<pair<set<string>,optional<type_t>>>& equations::get_values() const
 {
     return values;
 }
 
-const set<term_t>& equations::get_constraints() const
+const set<type_t>& equations::get_constraints() const
 {
     return constraints;
 }
 
-void equations::add_constraint(const term_t& constraint)
+void equations::add_constraint(const type_t& constraint)
 {
     constraints.insert(constraint);
 }
 
-list<pair<set<string>,optional<term_t>>>::const_iterator equations::find_record(const std::string& x) const
+list<pair<set<string>,optional<type_t>>>::const_iterator equations::find_record(const std::string& x) const
 {
     for(auto it = values.begin(); it != values.end(); it++)
 	if (it->first.count(x))
@@ -106,7 +106,7 @@ list<pair<set<string>,optional<term_t>>>::const_iterator equations::find_record(
     std::abort();
 }
 
-list<pair<set<string>,optional<term_t>>>::iterator equations::find_record(const std::string& x)
+list<pair<set<string>,optional<type_t>>>::iterator equations::find_record(const std::string& x)
 {
     for(auto it = values.begin(); it != values.end(); it++)
 	if (it->first.count(x))
@@ -126,7 +126,7 @@ bool equations::occurs_check() const
 }
 
 
-bool equations::add_condition(const string& x, const term_t& T)
+bool equations::add_condition(const string& x, const type_t& T)
 {
     if (CM::is_wildcard(T)) return valid();
 
@@ -135,7 +135,7 @@ bool equations::add_condition(const string& x, const term_t& T)
 	// Occurs check.
 	auto fvs_T = find_variables_in_type(T);
 	if (fvs_T.count(x))
-            failed.push_back({term_t(x),T});
+            failed.push_back({type_t(x),T});
         else
             // Add x = T
             values.push_back({set<string>{x},T});
@@ -148,7 +148,7 @@ bool equations::add_condition(const string& x, const term_t& T)
 	    // Occurs check.
 	    auto fvs_T = find_variables_in_type(T);
 	    if (intersects(vars, fvs_T))
-                failed.push_back({term_t(x),T});
+                failed.push_back({type_t(x),T});
             else
                 // Set x = T
                 value = T;
@@ -182,7 +182,7 @@ bool equations::add_var_condition(const string& x, const string& y)
 	    // Occurs check.
 	    if (T and find_variables_in_type(*T).count(y))
 	    {
-                failed.push_back({term_t(x),term_t(y)});
+                failed.push_back({type_t(x),type_t(y)});
 		return valid();
 	    }
 
@@ -197,7 +197,7 @@ bool equations::add_var_condition(const string& x, const string& y)
 	// Occurs check.
 	if (T and find_variables_in_type(*T).count(x))
 	{
-            failed.push_back({term_t(x),term_t(y)});
+            failed.push_back({type_t(x),type_t(y)});
 	    return valid();
 	}
 
@@ -223,7 +223,7 @@ bool equations::add_var_condition(const string& x, const string& y)
 	// Do an occurs check.
 	if (xrec->second and intersects(xrec->first, find_variables_in_type(*xrec->second)))
 	{
-	    failed.push_back({term_t(x),term_t(y)});
+	    failed.push_back({type_t(x),type_t(y)});
 	    return valid();
 	}
 
@@ -247,7 +247,7 @@ bool equations::add_var_condition(const string& x, const string& y)
     return valid();
 }
 
-optional<term_t> equations::value_of_var(const string& x) const
+optional<type_t> equations::value_of_var(const string& x) const
 {
     if (has_record(x))
 	return find_record(x)->second;
@@ -255,9 +255,9 @@ optional<term_t> equations::value_of_var(const string& x) const
 	return {};
 }
 
-map<string,term_t> equations::eliminate_variable(const string& x)
+map<string,type_t> equations::eliminate_variable(const string& x)
 {
-    map<string,term_t>  S;
+    map<string,type_t>  S;
 
     if (not has_record(x)) return S;
 
@@ -278,7 +278,7 @@ map<string,term_t> equations::eliminate_variable(const string& x)
 	// If there's no term in the equation, there should at least be another variable
 	assert(not xrec->first.empty());
 	auto y = *xrec->first.begin();
-	S = {{x,term_t(y)}};
+	S = {{x,type_t(y)}};
     }
 
     // 4. remove the equation if it has no variables, or 1 variable and no term.
@@ -291,7 +291,7 @@ map<string,term_t> equations::eliminate_variable(const string& x)
 	    substitute(S, *equation.second);
 
     // 6. Apply the substitution to the constraints.
-    set<term_t> new_constraints;
+    set<type_t> new_constraints;
     for(auto& constraint: constraints)
     {
 	auto new_constraint = constraint;
@@ -309,9 +309,9 @@ map<string,term_t> equations::eliminate_variable(const string& x)
     return S;
 }
 
-map<string,term_t> equations::eliminate_except(const set<string>& keep)
+map<string,type_t> equations::eliminate_except(const set<string>& keep)
 {
-    map<string,term_t> S;
+    map<string,type_t> S;
 
     // Find the vars to eliminate
     set<string> eliminate = referenced_vars();
@@ -380,9 +380,9 @@ string remove_rv_suffix(const std::string& s)
 	return s;
 }
 
-map<string,term_t> alpha_rename(const set<string>& vars, const FVSource& fresh_var_state)
+map<string,type_t> alpha_rename(const set<string>& vars, const FVSource& fresh_var_state)
 {
-    map<string,term_t> replace;
+    map<string,type_t> replace;
     for(const auto& var: vars)
     {
 	auto new_var = fresh_var_state.get_fresh_type_var(remove_rv_suffix(var));
@@ -415,7 +415,7 @@ equations operator&&(const equations& E1, const equations& E2)
 }
 
 
-void substitute(const equations& E, term_t& T)
+void substitute(const equations& E, type_t& T)
 {
     if (CM::is_type_variable(T))
     {
@@ -428,7 +428,7 @@ void substitute(const equations& E, term_t& T)
 	else if (E.has_record(name))
 	{
 	    auto& [vars,_] = *E.find_record(name);
-	    T = term_t(*vars.begin());
+	    T = type_t(*vars.begin());
 	}
     }
     else
@@ -441,7 +441,7 @@ void substitute(const equations& E, term_t& T)
     }
 }
 
-void substitute(const map<string,term_t>& R, term_t& T)
+void substitute(const map<string,type_t>& R, type_t& T)
 {
     if (CM::is_type_variable(T))
     {
@@ -459,7 +459,7 @@ void substitute(const map<string,term_t>& R, term_t& T)
     }
 }
 
-bool equations::unify(const term_t& T1, const term_t& T2)
+bool equations::unify(const type_t& T1, const type_t& T2)
 {
     // 1. If either term is a wildcard, then we are done.
     if (CM::is_wildcard(T1) or CM::is_wildcard(T2))
@@ -489,19 +489,9 @@ bool equations::unify(const term_t& T1, const term_t& T2)
     return valid();
 }
 
-equations unify(const term_t& T1, const term_t& T2)
+equations unify(const type_t& T1, const type_t& T2)
 {
     equations E;
     E.unify(T1, T2);
     return E;
-}
-
-term_t make_type_app(const term_t& t1, const term_t& t2)
-{
-    return CM::type_app(t1, t2);
-}
-
-term_t make_type_apps(term_t type, const std::vector<term_t>& args)
-{
-    return CM::type_apps(std::move(type), args);
 }

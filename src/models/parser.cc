@@ -1306,7 +1306,7 @@ namespace zz {
 
   case 74: // type: btype "->" type
 #line 244 "parser.y"
-                                        { yylhs.value.as < CM::Type > () = make_type_app("Function",{yystack_[2].value.as < CM::Type > (),yystack_[0].value.as < CM::Type > ()});  }
+                                        { yylhs.value.as < CM::Type > () = CM::type_apps("Function",{yystack_[2].value.as < CM::Type > (),yystack_[0].value.as < CM::Type > ()});  }
 #line 1310 "parser.cc"
     break;
 
@@ -1318,7 +1318,7 @@ namespace zz {
 
   case 76: // btype: atype "<" type_tup_args ">"
 #line 247 "parser.y"
-                                        { yylhs.value.as < CM::Type > () = make_type_app(yystack_[3].value.as < CM::Type > (), yystack_[1].value.as < std::vector<CM::Type> > ()); }
+                                        { yylhs.value.as < CM::Type > () = CM::type_apps(yystack_[3].value.as < CM::Type > (), yystack_[1].value.as < std::vector<CM::Type> > ()); }
 #line 1322 "parser.cc"
     break;
 
@@ -1336,7 +1336,7 @@ namespace zz {
 
   case 79: // atype: "(" type_tup_args "," type ")"
 #line 251 "parser.y"
-                                        { yystack_[3].value.as < std::vector<CM::Type> > ().push_back(yystack_[1].value.as < CM::Type > ()); yylhs.value.as < CM::Type > () = make_type_app(CM::type_con("Tuple"),yystack_[3].value.as < std::vector<CM::Type> > ()); }
+                                        { yystack_[3].value.as < std::vector<CM::Type> > ().push_back(yystack_[1].value.as < CM::Type > ()); yylhs.value.as < CM::Type > () = CM::type_apps(CM::type_con("Tuple"),yystack_[3].value.as < std::vector<CM::Type> > ()); }
 #line 1340 "parser.cc"
     break;
 
@@ -2050,11 +2050,6 @@ CM::UntypedExpr make_function(const vector<CM::UntypedPattern>& patterns, const 
         };
     }
     return f;
-}
-
-CM::Type make_type_app(CM::Type type, const vector<CM::Type>& args)
-{
-    return CM::type_apps(std::move(type), args);
 }
 
 // Converts a function-definition left-hand side into nested lambda binders,

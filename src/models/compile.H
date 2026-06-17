@@ -8,7 +8,7 @@
 #include "computation/expression/expression_ref.H"  // for expression_ref
 #include "computation/expression/do_block.H"        // for do_block
 #include "sequence/alphabet.H"                      // for alphabet
-#include "unification.H"                            // for term_t
+#include "unification.H"                            // for type_t
 #include "util/json.hh"                             // for json
 #include "models/typecheck.H"
 #include "models/code-generation.H"
@@ -49,7 +49,7 @@ class model_t
 public:
     std::set<std::string> imports;
     type_t type;
-    std::set<term_t> constraints;
+    std::set<type_t> constraints;
     generated_code_t code;
     std::set<std::string> used_args;
 
@@ -63,8 +63,8 @@ public:
     std::string show_extracted() const;
 
     model_t() = default;
-    model_t(CM::TypedExpr,const std::set<std::string>&, const type_t&, const std::set<term_t>&, const generated_code_t&);
-    model_t(CM::TypedDecls,const std::set<std::string>&, const type_t&, const std::set<term_t>&, const generated_code_t&);
+    model_t(CM::TypedExpr,const std::set<std::string>&, const type_t&, const std::set<type_t>&, const generated_code_t&);
+    model_t(CM::TypedDecls,const std::set<std::string>&, const type_t&, const std::set<type_t>&, const generated_code_t&);
 };
 
 model_t compile_model(const Rules& R,
