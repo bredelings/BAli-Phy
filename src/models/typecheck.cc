@@ -207,6 +207,99 @@ ptree convert_to(const equations& eqs, ptree model, type_t type, type_t required
     return model;
 }
 
+// Builds the AST call node used by implicit type conversions, preserving the
+// same conversion function and argument names as the legacy ptree path.
+CM::UntypedExpr conversion_call(const string& function, const string& arg_name, CM::UntypedExpr model)
+{
+    return {
+        CM::NoAnn{},
+        CM::Call<CM::NoAnn>{
+            function,
+            {
+                CM::Arg<CM::NoAnn>{
+                    arg_name,
+                    CM::Box<CM::UntypedExpr>(std::move(model)),
+                    false,
+                    false,
+                    std::nullopt
+                }
+            }
+        }
+    };
+}
+
+// True if an implicit conversion can rewrite an AST expression of type t1 into
+// one compatible with t2, mutating model to the inserted conversion call.
+equations convertible_to(CM::UntypedExpr& model, const type_t& t1, type_t t2)
+{
+    auto E = unify(t1, t2);
+    if (E)
+        return E;
+
+    assert(not is_type_variable(t1) and not is_type_variable(t2));
+
+    auto [head2,args2] = get_type_apps(t2);
+
+    if (head2 == "Double")
+    {
+        t2 = ptree("Int");
+        E = convertible_to(model, t1, t2);
+        if (E)
+            model = conversion_call("intToDouble", "x", std::move(model));
+    }
+    else if (head2 == "DiscreteDist" and args2.size() == 1)
+    {
+        auto [head3,args3] = get_type_apps(args2[0]);
+        if (head3 == "CTMC")
+        {
+            auto a = args3[0];
+            t2 = make_type_app("CTMC",a);
+
+            E = convertible_to(model,t1,t2);
+            if (E)
+                model = conversion_call("unit_mixture", "submodel", std::move(model));
+        }
+        else
+        {
+            auto a = args2[0];
+            t2 = make_type_app("List", make_type_apps("Tuple",{a,"Double"}));
+
+            E = convertible_to(model, t1, t2);
+            if (E)
+                model = conversion_call("discrete", "pairs", std::move(model));
+        }
+    }
+    else if (head2 == "Distribution" and args2.size() == 1)
+    {
+        auto [head1,args1] = get_type_apps(t1);
+        if (head1 == "DiscreteDist" and args1.size() == 1)
+        {
+            E = convertible_to(model,args1[0],args2[0]);
+            if (E)
+                model = conversion_call("convertDiscrete", "x", std::move(model));
+        }
+    }
+    else if (head2 == "MultiMixtureModel" and args2.size() == 1)
+    {
+        auto a = args2[0];
+        t2 = make_type_app("DiscreteDist",make_type_app("CTMC",a));
+
+        E = convertible_to(model,t1,t2);
+        if (E)
+            model = conversion_call("multiMixtureModel", "submodel", std::move(model));
+    }
+    else if (head2 == "CTMC" and args2.size() == 1)
+    {
+        auto a = args2[0];
+        t2 = make_type_app("ExchangeModel", a);
+        E = convertible_to(model,t1,t2);
+        if (E)
+            model = conversion_call("f", "submodel", std::move(model));
+    }
+
+    return E;
+}
+
 optional<ptree> TypecheckingState::unify_or_convert(const ptree& model, const type_t& type, const type_t& required_type) const
 {
     auto tmp_eqs = eqs && unify(type, required_type);
@@ -217,6 +310,35 @@ optional<ptree> TypecheckingState::unify_or_convert(const ptree& model, const ty
     }
     else
 	return convert_to(eqs, model, type, required_type);
+}
+
+// Unifies an AST expression type with the required type, or returns an AST
+// conversion call that should be typechecked recursively.
+optional<CM::UntypedExpr> TypecheckingState::unify_or_convert_model_expr(const CM::UntypedExpr& model, const type_t& type, const type_t& required_type) const
+{
+    auto tmp_eqs = eqs && unify(type, required_type);
+    if (tmp_eqs)
+    {
+        eqs = tmp_eqs;
+        return {};
+    }
+
+    auto model2 = model;
+    auto type2 = type;
+    auto required_type2 = required_type;
+    substitute(eqs, type2);
+    substitute(eqs, required_type2);
+    if (not (eqs && convertible_to(model2, type2, required_type2)))
+    {
+        auto type_str = unparse_type(type2);
+        auto required_str = unparse_type(required_type2);
+        myexception e;
+        e << "Term '" << unparse(CM::ptree_from_model_expr(model)) << "' of type '" << type_str
+          << "' cannot be converted to type '" << required_str << "'";
+        throw e;
+    }
+
+    return model2;
 }
 
 TypecheckingState TypecheckingState::copy_no_equations() const
@@ -348,11 +470,14 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
 namespace
 {
 
+int typecheck_model_expr_fallback_count_ = 0;
+
 // Compatibility bridge: handles legacy shapes not yet represented by the
 // direct AST typechecker.  Remove once production typechecking has no
 // remaining annotated-ptree fallbacks.
 CM::TypedExpr typecheck_model_expr_via_ptree(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
+    typecheck_model_expr_fallback_count_++;
     auto model = CM::ptree_from_model_expr(expr);
     auto annotated = TC.typecheck_and_annotate(required_type, model);
     return CM::typed_model_expr_from_annotated_ptree(annotated);
@@ -369,37 +494,32 @@ optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, co
 {
     type_t result_type;
     CM::TypedExpr::Node node;
-    ptree model;
 
     if (auto literal = std::get_if<CM::IntLiteral>(&expr.node))
     {
         result_type = ptree("Int");
         node = *literal;
-        model = ptree(literal->value);
     }
     else if (auto literal = std::get_if<CM::DoubleLiteral>(&expr.node))
     {
         result_type = ptree("Double");
         node = *literal;
-        model = ptree(literal->value);
     }
     else if (auto literal = std::get_if<CM::BoolLiteral>(&expr.node))
     {
         result_type = ptree("Bool");
         node = *literal;
-        model = ptree(literal->value);
     }
     else if (auto literal = std::get_if<CM::StringLiteral>(&expr.node))
     {
         result_type = ptree("String");
         node = *literal;
-        model = ptree("\"" + literal->value + "\"");
     }
     else
         return {};
 
-    if (auto converted = TC.unify_or_convert(model, result_type, required_type))
-        return typecheck_model_expr(TC, required_type, CM::model_expr_from_ptree(*converted));
+    if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
+        return typecheck_model_expr(TC, required_type, *converted);
 
     return CM::TypedExpr{model_ann(result_type), std::move(node)};
 }
@@ -411,7 +531,6 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
     type_t result_type;
     set<string> used_args;
     CM::TypedExpr::Node node;
-    ptree model;
 
     if (auto var = std::get_if<CM::Var>(&expr.node))
     {
@@ -420,7 +539,6 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
             return {};
         result_type = *type;
         node = *var;
-        model = ptree(var->name);
     }
     else if (auto arg = std::get_if<CM::ArgRef>(&expr.node))
     {
@@ -430,15 +548,14 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
         result_type = *type;
         used_args = {arg->name};
         node = *arg;
-        model = ptree("@" + arg->name);
     }
     else
         return {};
 
     assert(not result_type.is_null());
 
-    if (auto converted = TC.unify_or_convert(model, result_type, required_type))
-        return typecheck_model_expr(TC, required_type, CM::model_expr_from_ptree(*converted));
+    if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
+        return typecheck_model_expr(TC, required_type, *converted);
 
     return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(node)};
 }
@@ -453,9 +570,8 @@ optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const 
 
     auto element_required_type = TC.get_fresh_type_var("a");
     auto result_type = make_type_app("List", element_required_type);
-    auto model = CM::ptree_from_model_expr(expr);
-    if (auto converted = TC.unify_or_convert(model, result_type, required_type))
-        return typecheck_model_expr(TC, required_type, CM::model_expr_from_ptree(*converted));
+    if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
+        return typecheck_model_expr(TC, required_type, *converted);
 
     substitute(TC.eqs, element_required_type);
 
@@ -486,9 +602,8 @@ optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const
         element_required_types.push_back(TC.get_fresh_type_var("a"));
     auto result_type = make_type_apps("Tuple", element_required_types);
 
-    auto model = CM::ptree_from_model_expr(expr);
-    if (auto converted = TC.unify_or_convert(model, result_type, required_type))
-        return typecheck_model_expr(TC, required_type, CM::model_expr_from_ptree(*converted));
+    if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
+        return typecheck_model_expr(TC, required_type, *converted);
 
     set<string> used_args;
     CM::Tuple<CM::Ann> typed_tuple;
@@ -607,8 +722,8 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
     auto result_type = rule.result_type;
 
     auto model = CM::ptree_from_model_expr(expr);
-    if (auto converted = TC.unify_or_convert(model, result_type, required_type))
-        return typecheck_model_expr(TC, required_type, CM::model_expr_from_ptree(*converted));
+    if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
+        return typecheck_model_expr(TC, required_type, *converted);
 
     for(const auto& constraint: rule.constraints)
         TC.eqs.add_constraint(constraint);
@@ -746,6 +861,20 @@ optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, cons
     };
 }
 
+}
+
+// Resets the test-visible count of AST expressions handled by the ptree
+// compatibility bridge.
+void reset_typecheck_model_expr_fallback_count()
+{
+    typecheck_model_expr_fallback_count_ = 0;
+}
+
+// Returns how many AST expressions have used the ptree compatibility bridge
+// since the last reset.
+int typecheck_model_expr_fallback_count()
+{
+    return typecheck_model_expr_fallback_count_;
 }
 
 // Dispatches AST expression typechecking to direct handlers, with a final

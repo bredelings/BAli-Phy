@@ -466,7 +466,9 @@ void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type
     auto untyped = model_expr_from_ptree(model);
 
     auto ast_TC = test_typechecker(rules, identifiers, state);
+    reset_typecheck_model_expr_fallback_count();
     auto typed = typecheck_model_expr(ast_TC, required_type, untyped);
+    auto fallback_count = typecheck_model_expr_fallback_count();
 
     auto ptree_TC = test_typechecker(rules, identifiers, state);
     auto expected = annotated_ptree_from_typed_model_expr(
@@ -479,6 +481,11 @@ void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type
         std::cerr<<"typecheck wrapper parity mismatch for "<<model.show(false)<<"\n";
         std::cerr<<"actual:\n"<<actual.show(false)<<"\n";
         std::cerr<<"expected:\n"<<expected.show(false)<<"\n";
+        assert(false);
+    }
+    if (fallback_count != 0)
+    {
+        std::cerr<<"typecheck fallback used "<<fallback_count<<" time(s) for "<<model.show(false)<<"\n";
         assert(false);
     }
 }
@@ -588,6 +595,70 @@ std::filesystem::path make_rule_fixture()
 })JSON";
     }
 
+    {
+        std::ofstream out(functions / "discrete.json");
+        out << R"JSON({
+    "name": "discrete",
+    "result_type": "DiscreteDist<a>",
+    "no_log": true,
+    "call": "Discrete(@pairs)",
+    "args": [
+        {"name": "pairs", "type": "List<(a,Double)>"}
+    ]
+})JSON";
+    }
+
+    {
+        std::ofstream out(functions / "convertDiscrete.json");
+        out << R"JSON({
+    "name": "convertDiscrete",
+    "result_type": "Distribution<a>",
+    "no_log": true,
+    "call": "@x",
+    "args": [
+        {"name": "x", "type": "DiscreteDist<a>"}
+    ]
+})JSON";
+    }
+
+    {
+        std::ofstream out(functions / "unit_mixture.json");
+        out << R"JSON({
+    "name": "unit_mixture",
+    "result_type": "DiscreteDist<CTMC<a>>",
+    "no_log": true,
+    "call": "unitMixture(@submodel)",
+    "args": [
+        {"name": "submodel", "type": "CTMC<a>"}
+    ]
+})JSON";
+    }
+
+    {
+        std::ofstream out(functions / "multiMixtureModel.json");
+        out << R"JSON({
+    "name": "multiMixtureModel",
+    "result_type": "MultiMixtureModel<a>",
+    "no_log": true,
+    "call": "SModel.mmm(@submodel)",
+    "args": [
+        {"name": "submodel", "type": "DiscreteDist<CTMC<a>>"}
+    ]
+})JSON";
+    }
+
+    {
+        std::ofstream out(functions / "f.json");
+        out << R"JSON({
+    "name": "f",
+    "result_type": "CTMC<a>",
+    "call": "SModel.plus_f(@submodel)",
+    "args": [
+        {"name": "submodel", "type": "ExchangeModel<a>"}
+    ]
+})JSON";
+    }
+
     return root;
 }
 
@@ -609,6 +680,38 @@ void test_typecheck_rule_wrapper_parity()
         expect_typecheck_expr_parity(rules, ptree("Double"), ptree("sample", {
             {"dist", ptree("normal", {{"mu", ptree(0)}, {"sigma", ptree(1)}})}
         }));
+        expect_typecheck_expr_parity(
+            rules,
+            make_type_app("DiscreteDist", ptree("Int")),
+            ptree("List", {
+                {"", ptree("Tuple", {{"", ptree(1)}, {"", ptree(0.25)}})},
+                {"", ptree("Tuple", {{"", ptree(2)}, {"", ptree(0.75)}})}
+            })
+        );
+        expect_typecheck_expr_parity(
+            rules,
+            make_type_app("Distribution", ptree("Int")),
+            ptree("d"),
+            {{"d", make_type_app("DiscreteDist", ptree("Int"))}}
+        );
+        expect_typecheck_expr_parity(
+            rules,
+            make_type_app("DiscreteDist", make_type_app("CTMC", ptree("AA"))),
+            ptree("m"),
+            {{"m", make_type_app("CTMC", ptree("AA"))}}
+        );
+        expect_typecheck_expr_parity(
+            rules,
+            make_type_app("MultiMixtureModel", ptree("AA")),
+            ptree("m"),
+            {{"m", make_type_app("CTMC", ptree("AA"))}}
+        );
+        expect_typecheck_expr_parity(
+            rules,
+            make_type_app("CTMC", ptree("AA")),
+            ptree("s"),
+            {{"s", make_type_app("ExchangeModel", ptree("AA"))}}
+        );
     }
     catch (...)
     {

@@ -44,6 +44,7 @@ struct TypecheckingState
     ptree typecheck_and_annotate_decls(const ptree& decls);
 
     std::optional<ptree> unify_or_convert(const ptree& model, const ptree& type, const ptree& required_type) const;
+    std::optional<CM::UntypedExpr> unify_or_convert_model_expr(const CM::UntypedExpr& model, const ptree& type, const ptree& required_type) const;
 
     TypecheckingState(const Rules& r, const std::shared_ptr<const FVSource>& fv, const std::map<std::string,ptree>& id = {}, const std::map<std::string,ptree>& st = {})
 	:R(r),fv_source(fv), identifiers(id), state(st)
@@ -57,4 +58,6 @@ void substitute_annotated(const equations&, CM::TypedExpr&);
 void substitute_annotated(const equations&, CM::TypedDecls&);
 CM::TypedExpr typecheck_model_expr(const TypecheckingState&, const ptree& required_type, const CM::UntypedExpr&);
 CM::TypedDecls typecheck_model_decls(TypecheckingState&, const CM::Decls<CM::NoAnn>&);
+void reset_typecheck_model_expr_fallback_count();
+int typecheck_model_expr_fallback_count();
 #endif
