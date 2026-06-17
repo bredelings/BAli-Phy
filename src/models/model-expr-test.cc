@@ -5,6 +5,8 @@
 #include "models/typecheck.H"
 
 #include <cassert>
+#include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <stdexcept>
@@ -445,6 +447,46 @@ void test_typed_substitution()
     assert(decls[0].second.ann.type == ptree("Int"));
 }
 
+TypecheckingState test_typechecker(const Rules& rules, const std::map<std::string,ptree>& identifiers = {})
+{
+    return TypecheckingState(rules, std::make_shared<FVSource>(), identifiers);
+}
+
+void expect_typecheck_expr_parity(const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {})
+{
+    Rules rules({});
+    auto untyped = model_expr_from_ptree(model);
+
+    auto ast_TC = test_typechecker(rules, identifiers);
+    auto typed = typecheck_model_expr(ast_TC, required_type, untyped);
+
+    auto ptree_TC = test_typechecker(rules, identifiers);
+    auto expected = ptree_TC.typecheck_and_annotate(required_type, model);
+
+    assert(annotated_ptree_from_typed_model_expr(typed) == expected);
+}
+
+void test_typecheck_expr_wrapper_parity()
+{
+    expect_typecheck_expr_parity(ptree("Int"), ptree("x"), {{"x", ptree("Int")}});
+    expect_typecheck_expr_parity(ptree("Int"), ptree(1));
+}
+
+void test_typecheck_decls_wrapper_parity()
+{
+    Rules rules({});
+    auto decls_ptree = ptree("!Decls", {{"x", ptree(1)}});
+    auto decls = model_decls_from_ptree(decls_ptree);
+
+    auto ast_TC = test_typechecker(rules);
+    auto typed = typecheck_model_decls(ast_TC, decls);
+
+    auto ptree_TC = test_typechecker(rules);
+    auto expected = ptree_TC.typecheck_and_annotate_decls(decls_ptree);
+
+    assert(annotated_ptree_from_typed_model_decls(typed) == expected);
+}
+
 }
 
 int main()
@@ -464,4 +506,6 @@ int main()
     test_untyped_pretty_printing();
     test_typed_pretty_printing();
     test_typed_substitution();
+    test_typecheck_expr_wrapper_parity();
+    test_typecheck_decls_wrapper_parity();
 }

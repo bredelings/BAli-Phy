@@ -1,5 +1,6 @@
 #include "typecheck.H"
 #include "parse.H"
+#include "models/model-expr-ptree.H"
 #include <vector>
 #include <set>
 #include "rules.H"
@@ -334,6 +335,20 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
         },
         [](auto&) {}
     }, expr.node);
+}
+
+CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    auto model = CM::ptree_from_model_expr(expr);
+    auto annotated = TC.typecheck_and_annotate(required_type, model);
+    return CM::typed_model_expr_from_annotated_ptree(annotated);
+}
+
+CM::TypedDecls typecheck_model_decls(TypecheckingState& TC, const CM::Decls<CM::NoAnn>& decls)
+{
+    auto model_decls = CM::ptree_from_model_decls(decls);
+    auto annotated_decls = TC.typecheck_and_annotate_decls(model_decls);
+    return CM::typed_model_decls_from_annotated_ptree(annotated_decls);
 }
 
 ptree TypecheckingState::typecheck_and_annotate_decls(const ptree& decls)

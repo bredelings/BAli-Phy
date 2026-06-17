@@ -55,4 +55,6 @@ term_t extract_value(const term_t& T);
 term_t valueize(const term_t& T);
 void substitute_annotated(const equations&, CM::TypedExpr&);
 void substitute_annotated(const equations&, CM::TypedDecls&);
+CM::TypedExpr typecheck_model_expr(const TypecheckingState&, const ptree& required_type, const CM::UntypedExpr&);
+CM::TypedDecls typecheck_model_decls(TypecheckingState&, const CM::Decls<CM::NoAnn>&);
 #endif
