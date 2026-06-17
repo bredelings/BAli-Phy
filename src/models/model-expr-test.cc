@@ -389,6 +389,8 @@ void test_typed_pretty_printing()
     assert(show_model_annotated(typed_model_expr_from_annotated_ptree(sample)) == show_model_annotated(sample));
 }
 
+// Checks that solved type equations are substituted through typed AST nodes,
+// argument edges, optional alphabets, and declarations.
 void test_typed_substitution()
 {
     auto a = ptree("a#0");
@@ -456,6 +458,8 @@ TypecheckingState test_typechecker(const Rules& rules, const std::map<std::strin
     return TypecheckingState(rules, std::make_shared<FVSource>(), identifiers, state);
 }
 
+// Compares AST typechecking with the normalized legacy annotated-ptree result
+// for one expression.
 void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
 {
     auto untyped = model_expr_from_ptree(model);
@@ -484,6 +488,8 @@ void expect_typecheck_expr_parity(const ptree& required_type, const ptree& model
     expect_typecheck_expr_parity(rules, required_type, model, identifiers, state);
 }
 
+// Exercises representative expression typechecking cases against the legacy
+// ptree typechecker oracle.
 void test_typecheck_expr_wrapper_parity()
 {
     expect_typecheck_expr_parity(ptree("Int"), ptree("x"), {{"x", ptree("Int")}});
@@ -515,11 +521,11 @@ void test_typecheck_expr_wrapper_parity()
     );
 }
 
+// Test workaround: Rules currently load only from binding files, so these
+// parity tests create a tiny temporary package.  Replace with an in-memory
+// Rules builder if the production loader grows one.
 std::filesystem::path make_rule_fixture()
 {
-    // Test workaround: Rules currently load only from binding files, so these
-    // parity tests create a tiny temporary package.  Replace with an in-memory
-    // Rules builder if the production loader grows one.
     auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
     auto root = std::filesystem::temp_directory_path() / ("bali-phy-model-expr-test-" + std::to_string(stamp));
     auto functions = root / "bindings" / "functions";
@@ -557,6 +563,8 @@ std::filesystem::path make_rule_fixture()
     return root;
 }
 
+// Verifies rule-backed calls, defaults, alphabets, and conversion calls against
+// a temporary binding-file fixture.
 void test_typecheck_rule_wrapper_parity()
 {
     auto root = make_rule_fixture();
@@ -579,9 +587,12 @@ void test_typecheck_rule_wrapper_parity()
     std::filesystem::remove_all(root);
 }
 
+// Exercises direct AST declaration typechecking against the normalized legacy
+// declaration typechecker output.
 void test_typecheck_decls_wrapper_parity()
 {
     Rules rules({});
+    // Compares one declaration block through the AST and legacy paths.
     auto expect_decls_parity = [&](const ptree& decls_ptree)
     {
         auto decls = model_decls_from_ptree(decls_ptree);

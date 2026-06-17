@@ -295,11 +295,15 @@ void substitute_annotated(const equations& eqs, CM::TypedDecls& decls)
         substitute_annotated(eqs, expr);
 }
 
+// Applies solved type equations throughout an annotated model AST.
+// This replaces the old annotated-ptree substitution path for AST users.
 void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
 {
     substitute(eqs, expr.ann.type);
 
     std::visit(CM::overloaded{
+        // Recurse through call argument values and optional argument
+        // alphabets, since both carry typed subexpressions.
         [&](CM::Call<CM::Ann>& call)
         {
             for(auto& arg: call.args)
@@ -309,21 +313,25 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
                     substitute_annotated(eqs, arg.alphabet->get());
             }
         },
+        // Recurse through list element annotations.
         [&](CM::List<CM::Ann>& list)
         {
             for(auto& element: list.elements)
                 substitute_annotated(eqs, element);
         },
+        // Recurse through tuple element annotations.
         [&](CM::Tuple<CM::Ann>& tuple)
         {
             for(auto& element: tuple.elements)
                 substitute_annotated(eqs, element);
         },
+        // Recurse through let declarations and body annotations.
         [&](CM::Let<CM::Ann>& let)
         {
             substitute_annotated(eqs, let.decls);
             substitute_annotated(eqs, let.body.get());
         },
+        // Recurse through lambda pattern and body annotations.
         [&](CM::Lambda<CM::Ann>& lambda)
         {
             substitute_annotated(eqs, lambda.pattern.get());
@@ -340,11 +348,11 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
 namespace
 {
 
+// Compatibility bridge: handles legacy shapes not yet represented by the
+// direct AST typechecker.  Remove once production typechecking has no
+// remaining annotated-ptree fallbacks.
 CM::TypedExpr typecheck_model_expr_via_ptree(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    // Compatibility bridge: handles legacy shapes not yet represented by the
-    // direct AST typechecker.  Remove once production typechecking has no
-    // remaining annotated-ptree fallbacks.
     auto model = CM::ptree_from_model_expr(expr);
     auto annotated = TC.typecheck_and_annotate(required_type, model);
     return CM::typed_model_expr_from_annotated_ptree(annotated);
@@ -355,6 +363,8 @@ CM::Ann model_ann(ptree type, set<string> used_args = {})
     return {std::move(type), std::move(used_args), false, {}};
 }
 
+// Typechecks scalar literal AST nodes directly, falling back through the
+// AST entry point if unification inserts a conversion call.
 optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     type_t result_type;
@@ -394,6 +404,8 @@ optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, co
     return CM::TypedExpr{model_ann(result_type), std::move(node)};
 }
 
+// Typechecks variable and argument-reference nodes against the current scope,
+// preserving used-argument tracking for @arg references.
 optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     type_t result_type;
@@ -431,6 +443,8 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
     return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(node)};
 }
 
+// Typechecks list elements against a fresh element type and returns a typed
+// list expression with the caller's required top-level annotation.
 optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     auto list = std::get_if<CM::List<CM::NoAnn>>(&expr.node);
@@ -459,6 +473,8 @@ optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const 
     return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_list)};
 }
 
+// Typechecks tuple elements against fresh slot types and returns a typed tuple
+// expression with the caller's required top-level annotation.
 optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     auto tuple = std::get_if<CM::Tuple<CM::NoAnn>>(&expr.node);
@@ -490,6 +506,8 @@ optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const
     return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_tuple)};
 }
 
+// Typechecks a get_state node by looking up the named state in the current
+// typechecking state and unifying it with the required type.
 optional<CM::TypedExpr> typecheck_model_get_state(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     auto get_state = std::get_if<CM::GetState>(&expr.node);
@@ -506,6 +524,8 @@ optional<CM::TypedExpr> typecheck_model_get_state(const TypecheckingState& TC, c
     return CM::TypedExpr{model_ann(required_type), *get_state};
 }
 
+// Typechecks let declarations in an extended scope, then typechecks the body
+// against the caller's required type.
 optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     auto let = std::get_if<CM::Let<CM::NoAnn>>(&expr.node);
@@ -528,6 +548,8 @@ optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const p
     };
 }
 
+// Typechecks a lambda by reusing the existing pattern parser for now, then
+// checking the body in the scope introduced by the pattern.
 optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     auto lambda = std::get_if<CM::Lambda<CM::NoAnn>>(&expr.node);
@@ -569,6 +591,8 @@ optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, cons
     };
 }
 
+// Typechecks rule-backed function calls, including defaults, alphabets,
+// used-argument propagation, and rule-level logging/extraction metadata.
 optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     auto call = std::get_if<CM::Call<CM::NoAnn>>(&expr.node);
@@ -688,6 +712,8 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
 
 }
 
+// Dispatches AST expression typechecking to direct handlers, with a final
+// compatibility fallback for legacy shapes not yet ported.
 CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     if (auto constant = typecheck_model_constant(TC, required_type, expr))
@@ -712,6 +738,8 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& req
         return typecheck_model_expr_via_ptree(TC, required_type, expr);
 }
 
+// Typechecks declarations in order, extending the scope with each fresh
+// declaration type before checking its expression.
 CM::TypedDecls typecheck_model_decls(TypecheckingState& TC, const CM::Decls<CM::NoAnn>& decls)
 {
     CM::TypedDecls decls2;
