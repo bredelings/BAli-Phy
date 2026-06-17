@@ -1,244 +1,251 @@
-# Command-Line Binding Types
+# Command-Line Model Types
 
-Goal: make Haskell inference an audit oracle for command-line bindings first,
-then use it to remove redundant binding annotations incrementally.  Do not
-rewrite `models/typecheck.cc` or solve constraints broadly until the audit path
-is proven.
+Goal: replace command-line model type terms represented as `ptree` with a native
+`CM::Type` AST, while preserving current behavior.  Haskell type inference is
+out of scope for this plan; see `CommandLineHaskellTypes.md` for that later
+work.
 
-## Milestone 1: Compiled Value Signature Lookup
+## Migration Rules
 
-Expose a small read-only API for looking up value signatures from compiled
-Haskell modules.
+- Every implementation batch after introducing `CM::Type` must either convert an
+  existing production API from `ptree` to `CM::Type` or delete obsolete `ptree`
+  type code.
+- Do not add converter-only tests.  Tests should exercise production APIs that
+  already use `CM::Type`.
+- Temporary `ptree` conversion helpers are allowed only at parser/JSON
+  boundaries.  Mark them with brief comments explaining why they exist and when
+  they can be removed.
+- Do not keep parallel helper APIs such as `get_type_apps_ptree()` beside
+  native helpers.  Convert the real API in place.
+- Remove old infrastructure as soon as the production path no longer needs it.
 
-Deliverables:
+## Phase 1: Native Type AST
 
-- Query value types by resolved or imported name.
-- Support `Prelude` as the default context when no binding imports are
-  specified.
-- Support modules listed in binding `"import"`.
-- Return Haskell `Type` and any quantified constraints already present in the
-  compiled signature.
+Add a native type representation, probably in `src/models/model-type.H`.
 
-Keep this separate from expression inference and instance lookup.
+Core representation:
 
-## Milestone 2: Shared Binding Call Lowering
+- `TypeCon{name}` for constructors like `Int`, `Double`, `Distribution`,
+  `Tuple`, and `Function`.
+- `TypeVar{name, id}` or equivalent for variables like `a` and `a#0`.
+- `TypeApp{head, arg}` for type application.
 
-Extract binding `call` lowering from code generation into a shared helper.
+Do not add Haskell-specific features yet.
 
-Current code path: `src/models/code-generation.cc`, `make_call(...)`.
+Required helpers:
 
-The shared helper must preserve:
+- `type_con("Int")`
+- fresh type-variable construction
+- `type_app(head, arg)`
+- `type_apps(head, args)`
+- `get_type_apps(type)`
+- `get_type_head(type)`
+- `list_type(t)`
+- `tuple_type({a,b,...})`
+- `function_type(a,b)`
 
-- `@arg` placeholder handling.
-- Qualified names like `SModel.mixture`.
-- Operators like `@x + @y`.
-- List and tuple constructors.
-- Current `@submodel` / `+>` special case.
-- Useful rule-name and arg-name error context.
+Add stable equality and ordering because current code stores types in `set`,
+`map`, and unification records.
 
-Both code generation and inference should use this same lowering path so they
-cannot silently disagree.
+Initial tests should cover construction/decomposition, equality/ordering, type
+variable recognition, nested list/tuple types, and function types.
 
-## Milestone 3: Binding Call Inference
+## Phase 2: Temporary Boundary Conversion
 
-Add inference for a binding call in a compiled-module context.
+Add temporary compatibility helpers:
 
-For each rule:
+```c++
+CM::Type type_from_ptree(const ptree&);
+ptree ptree_from_type(const CM::Type&);
+```
 
-1. Read binding imports, defaulting to `Prelude`.
-2. Create fresh local Haskell variables for each JSON arg name.
-3. Lower the `call` expression using the shared lowering helper.
-4. Infer the expression's result type.
-5. Extract inferred types for each `@arg`.
-6. Preserve inferred constraints as constraints, not solved facts.
+These should be used only where external syntax still enters as `ptree`, such
+as the existing parser type rules and JSON binding loading.  They should not
+become the main production path.
 
-Prototype bindings:
+Also add:
 
-- `_add`: `Num a => a -> a -> a`
-- `_eq`: `Eq a => a -> a -> Bool`
-- `pdf`: `Distribution a -> a -> Double`
-- `iid`: `Int -> Distribution a -> Distribution [a]`
-- `hky85`: imported symbol lookup plus model-specific constraints
+```c++
+std::string unparse_type(const CM::Type&);
+```
 
-## Milestone 4: Name Resolution Tests
+Tests should validate existing spellings such as `Int`, `a`, `a#0`,
+`List<Int>`, `(Int,Bool)`, `Distribution<Double>`, and
+`Function<Int,Double>`.
 
-Before comparing annotations, verify inference and generated Haskell resolve
-names the same way.
+## Phase 3: Port Unification
 
-Add tests for:
+Port `src/models/unification.H/cc` from `ptree` to `CM::Type` before changing
+`Rule` or `Ann` fields.  This avoids a long period where production code stores
+native types but repeatedly converts back to `ptree` for unification.
 
-- Unqualified Prelude names.
-- Qualified imported names.
-- Unqualified names from binding imports.
-- Symbolic operators.
-- Constructors.
-- Shadowing or ambiguity cases, if supported.
+Replace:
 
-This is critical: inferred types are only trustworthy if the inferred symbol is
-the same symbol code generation will emit.
+- `typedef ptree term_t`
+- `is_type_variable(const ptree&)`
+- `find_variables_in_type(const ptree&)`
+- `make_type_app(...)`
+- `make_type_apps(...)`
+- `get_type_apps(...)`
+- `get_type_head(...)`
 
-## Milestone 5: Annotation Comparison Audit Mode
+with native type operations using the same public API names where possible.
 
-Keep all existing JSON annotations required.
+Preserve current behavior:
 
-Add a developer/test-only audit mode:
+- occurs check
+- alpha renaming
+- fresh variable naming in diagnostics where visible
+- constraint storage
+- substitution behavior
 
-1. Infer each binding signature when possible.
-2. Compare inferred result type to JSON `result_type`.
-3. Compare inferred arg types to JSON arg `type`.
-4. Compare inferred constraints to JSON `constraints`.
-5. Report mismatches with rule name, arg name, declared type, inferred type,
-   and imports.
+Initially, constraints may remain type-shaped terms:
 
-Comparison must normalize:
+```c++
+using Constraint = CM::Type;
+```
 
-- Alpha-renamed type variables.
-- Qualified vs. unqualified known type constructors.
-- Syntactic list and tuple spelling differences.
-- Constraint ordering.
+Do not design Haskell class constraint semantics in this phase.
 
-No normal user-facing behavior should change in this milestone.
+## Phase 4: Switch Type Aliases
 
-## Milestone 6: Whole-Tree Signature Report
+After unification is native, switch the public aliases:
 
-Run audit mode across all `bindings/*.json`.
+- `type_t` in `rules.H`
+- `term_t` in `unification.H`
 
-Produce a report grouping bindings into:
+to use `CM::Type`.
 
-- Exact match.
-- Match after normalization.
-- Inferred extra constraints.
-- Declared extra constraints.
-- Ambiguous inference.
-- Unsupported inferred type shape.
-- Name-resolution problem.
-- Call-lowering unsupported syntax.
+This should deliberately expose compile errors in production code that still
+expects `ptree` type terms.  Fix those call sites by moving them to native type
+helpers, not by adding more bridges.
 
-This report becomes the migration map.  Do not remove annotations before this
-exists.
+## Phase 5: Convert Rules and Binding Loading
 
-## Milestone 7: Narrow Haskell-Type To Model-Type Bridge
+Convert these fields to native types:
 
-Add a compatibility bridge from inferred Haskell `Type` to the existing model
-`ptree` type language.
+- `Rule::result_type`
+- `RuleArg::type`
+- `Rule::constraints`
 
-Keep it intentionally narrow:
+JSON syntax remains unchanged.  `rules.cc` should parse JSON type strings into
+`CM::Type` at load time.  Once loaded, rules should not carry `ptree` types
+internally.
 
-- Type variables.
-- `Int`, `Double`, `Bool`, `String`.
-- `List`.
-- Tuples.
-- Common model constructors: `Distribution`, `DiscreteDist`, `CTMC`,
-  `ExchangeModel`, `MultiMixtureModel`, and alphabet/model types used in
-  bindings.
-- Simple class constraints represented as current model constraints.
+Tests should load representative binding JSON and verify rule result types,
+argument types, and constraints structurally.
 
-If an inferred type cannot round-trip through this bridge, require explicit JSON
-annotations for that binding.
+## Phase 6: Convert Expression Annotations
 
-Do not attempt to support arbitrary Haskell type families, higher-rank types, or
-complex qualified constraints here.
+Change:
 
-## Milestone 8: Optional Annotation Support
+```c++
+CM::Ann::type
+```
 
-Allow `result_type` and arg `type` to be omitted only when inference succeeds
-and the bridge can produce the existing model type representation.
+from `ptree` to `CM::Type`.
 
-Rules:
+Update:
 
-- If a JSON annotation is present, continue using it and audit against
-  inference.
-- If a JSON annotation is absent, fill `Rule::result_type` and `RuleArg::type`
-  from inferred types.
-- If inference fails or the bridge fails, emit a binding-definition error
-  requiring explicit annotation.
-- Constraints follow the same pattern: explicit if present, inferred if absent,
-  audit if both exist.
+- `model-expr.H`
+- `model-expr-test.cc`
+- annotated unparsing in `parse.cc`
+- `compile.cc`
+- `code-generation.cc`
+- `typecheck.cc`
 
-This keeps `src/models/typecheck.cc` mostly unchanged.
+Use native helper constructors in tests instead of `ptree("Int")` and related
+ad hoc type construction.
 
-## Milestone 9: Remove Simple Annotations
+## Phase 7: Port Typechecking
 
-Remove annotations only for bindings classified as exact match or
-match-after-normalization.
+Update `TypecheckingState` and model typechecking APIs to use native types:
 
-Suggested order:
+- `typecheck_model_expr`
+- `typecheck_model_decls`
+- `parse_pattern`
+- `unify_or_convert_model_expr`
+- `convertible_to`
+- `type_for_var`
+- `type_for_arg`
+- state variable types
 
-1. Simple Prelude-like functions: `_add`, `_sub`, `_mul`, `_eq`, `_lt`, `min`,
-   `max`.
-2. Constructors: `Nil`, `Cons`.
-3. Simple utility functions: `length`, `replicate`, `take`, `zip`.
-4. Simple distributions: `normal`, `gamma`, `uniform`, `iid`.
-5. More complex model bindings only after defaults and alphabet expressions are
-   confirmed stable.
+Replace direct `ptree("Int")`, `ptree("Tuple")`, etc. with native type
+constructors.
 
-Keep explicit annotations for ambiguous or intentionally model-specific
-bindings.
+Preserve existing behavior first:
 
-## Milestone 10: Instance Head Export
+- int-to-double conversion
+- discrete-to-distribution conversion
+- `CTMC`, `ExchangeModel`, and `MultiMixtureModel` conversions
+- tuple/list/function unification
+- current diagnostics where practical
 
-After optional annotations work, expose instance heads from compiled Haskell
-modules.
+## Phase 8: Port Code Generation and Compile Helpers
 
-Deliverables:
+Update type inspections and diagnostics in:
 
-- Query available instance signatures/heads by class.
-- Include imported/transitive module instances as Haskell typechecking would.
-- Do not expose instance bodies.
-- Add tests for `Num`, `Eq`, `Ord`, and domain classes such as `Nucleotides`,
-  `Triplets`, `Doublets`.
+- `compile.cc`
+- `compile.H`
+- `code-generation.cc`
+- `A-T-prog.cc` if needed
 
-This enables earlier diagnostics but is not required for initial annotation
-removal.
+Examples:
 
-## Milestone 11: Limited Instance-Aware Diagnostics
+- `is_loggable_type`
+- `generated_code_t::log_value`
+- pretty/extraction code
+- `unparse_type(...)` diagnostics
+- any code decomposing type applications
 
-Add early model-layer failures for concrete constraints only.
+After this phase, production model code should no longer need `ptree` for model
+types except at parser/JSON boundaries.
 
-Start with:
+## Phase 9: Convert Parser Type Rules
 
-- Accepted: `Num Double`, `Num Int`, `Eq Int`, `Ord Double`.
-- Rejected: `Num String`, `Ord (Distribution a)` when concrete enough.
-- Domain checks: `Nucleotides DNA`, `Triplets ...`, `Doublets ...`.
+Once native type APIs are stable, update `parser.y` so type grammar rules return
+`CM::Type` directly instead of `ptree`.
 
-Leave polymorphic constraints unresolved and allow Haskell compilation to handle
-remaining cases.
+Regenerate:
 
-## Milestone 12: Revisit Type Representation
+- `parser.cc`
+- `parser.hh`
 
-Only after the audit and optional annotations are working, decide whether to
-replace model `ptree` types with Haskell `Type`.
+Update:
 
-Use evidence from the audit:
+- `driver.cc`
+- `parse.H`
+- `parse_type(...)`
 
-- How many inferred signatures cannot bridge to `ptree`?
-- How often do constraints require real Haskell solving?
-- How much duplicate type logic remains?
-- Are model conversions still clearer in the current model type system?
+After this, remove parser-side `ptree -> Type` conversion if no other boundary
+needs it.
 
-Possible outcomes:
+## Phase 10: Remove Compatibility Code
 
-- Keep `ptree` and bridge inferred signatures.
-- Use Haskell `Type` only inside `Rule` signatures and constraints.
-- Gradually migrate `models/typecheck.cc` to Haskell `Type`.
-- Fully retire `models/unification.*` later.
+Delete temporary type conversion helpers once production code no longer needs
+them.
 
-## Testing Strategy
+Audit with searches such as:
 
-Add tests incrementally:
+```sh
+rg 'ptree\("Int"|ptree\("Double"|ptree\("Tuple"' src/models
+rg 'make_type_app|get_type_apps|get_type_head' src/models
+rg 'unparse_type\(const ptree|parse_type.*ptree' src/models
+rg 'type_from_ptree|ptree_from_type' src/models
+```
 
-- Value signature lookup tests.
-- Call lowering equivalence tests.
-- Binding inference tests.
-- Name resolution tests.
-- Annotation comparison tests.
-- Whole-tree audit test or script.
-- Optional annotation regression tests.
-- Later instance-head lookup tests.
+Remaining `ptree` uses should be unrelated to model types.
 
-## Implementation Principle
+## Validation
 
-Haskell inference should first be an internal checker for the binding database.
-Only after it agrees with current annotations should it become the source of
-missing annotations.  Constraint solving and model typechecker replacement are
-follow-up migrations, not prerequisites.
+Run focused checks after each implementation batch:
+
+```sh
+meson test -C ../build/gcc-16-debug-O "bali-phy:model expression AST" --print-errorlogs
+meson test -C ../build/gcc-16-debug-O "bali-phy:runtime AST serialization" --print-errorlogs
+meson test -C ../build/gcc-16-debug-O "bali-phy:bali-phy 5d +A 50" --print-errorlogs
+```
+
+When parser or rule loading changes, also run relevant parse tests through
+Meson if available and at least one command-line model smoke test that loads
+the binding database.
