@@ -20,10 +20,6 @@ std::string show_model_annotated(const CM::TypedExpr&);
 std::string show_model_abbrev(const ptree p, int length);
 
 ptree parse_type(const std::string& s);
-// Compatibility boundary: the grammar still returns ptree; prefer the CM
-// wrappers below for model code.
-ptree parse(const Rules& R, const std::string& s, const std::string& what);
-ptree parse_defs(const Rules& R, const std::string& s);
 
 CM::UntypedExpr parse_model_expr(const Rules& R, const std::string& s, const std::string& what);
 CM::Decls<CM::NoAnn> parse_model_decls(const Rules& R, const std::string& s);
@@ -31,11 +27,6 @@ CM::Decls<CM::NoAnn> parse_model_decls(const Rules& R, const std::string& s);
 ptree add_sample(const ptree& p);
 ptree add_submodel(ptree term, const ptree& submodel);
 
-// This assumes that any non-empty string is a variable, except the empty Tuple and empty List.
-bool is_nontype_variable(const ptree&);
-bool is_list(const ptree&);
 bool is_constant(const ptree&);
-bool is_tuple(const ptree&);
-bool is_function(const ptree&);
 
 #endif

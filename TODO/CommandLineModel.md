@@ -50,6 +50,10 @@ Recent migration milestones:
   back-conversions from typechecking.
 - Removed the unused expression-shaped `Rules::get_result_type(const ptree&)`
   API.
+- Moved positional-argument rewriting for command-line model expressions and
+  declarations from `ptree` traversal to `CM` traversal.
+- Removed the old `parse(const Rules&, ...) -> ptree` and
+  `parse_defs(const Rules&, ...) -> ptree` compatibility wrappers.
 
 ## Remaining `ptree` Roles
 
@@ -67,7 +71,6 @@ These uses are expected to remain for now:
 
 These uses should shrink next:
 
-- Raw parser entry points used outside parser compatibility wrappers.
 - Rule-load conversions from parser `ptree` to `CM`.
 - General converter use outside tests, parser wrappers, and explicitly marked
   compatibility boundaries.
@@ -83,61 +86,60 @@ unified:
 - Rule templates encode `submodel +> f` as a final `@submodel` argument.  Codegen
   preserves this as a compatibility behavior until bindings spell the operation
   explicitly.
-- Rule model/default/alphabet/template strings are still parsed by the legacy
-  parser and converted immediately to `CM` at rule-load time.  This boundary can
-  disappear once the parser builds `CM` directly.
+- Rule model/default/alphabet strings use the `CM` parser wrapper and normalize
+  positional arguments on `CM`.
+- Rule template strings are still parsed by the legacy parser and converted
+  immediately to `CM` at rule-load time.  This boundary can disappear once the
+  parser builds `CM` directly, or if rule templates get their own parser.
 
 ## Next Implementation Batch
 
-The next recommended chunk is to prepare for a direct parser output by making
-the remaining parser compatibility boundaries explicit and narrow.
+The next recommended chunk is one of the two larger representation changes that
+are now unblocked.
 
-1. Audit raw parser entry points.
+Option A: make parser output direct `CM`.
 
-   Search for:
+1. Update expression/declaration semantic values in `parser.y`.
 
-   ```text
-   parse_expression(
-   parse_defs(
-   parse(const Rules&
-   parse_defs(const Rules&
-   model_expr_from_ptree(
-   ptree_from_model_expr(
-   ```
-
-   Acceptable production uses should be only:
-
-   - parser wrappers in `parse.cc`
-   - rule-load conversion helpers in `rules.cc`
-   - converter implementation
-   - converter tests
-
-2. Replace or quarantine raw parser callers.
-
-   Higher-level model code should consume:
+   Build:
 
    ```cpp
-   CM::UntypedExpr parse_model_expr(const Rules&, const std::string&, const std::string&);
-   CM::Decls<CM::NoAnn> parse_model_decls(const Rules&, const std::string&);
+   CM::UntypedExpr
+   CM::Decls<CM::NoAnn>
    ```
 
-   Keep raw `ptree` parse helpers only at compatibility boundaries, with brief
-   comments saying they can be removed once `parser.y` builds `CM` directly.
+   directly for model expressions and declarations.  Keep type parser semantic
+   values as `ptree`.
 
-3. Reduce rule-load parser conversions.
+2. Keep a narrow compatibility wrapper if old callers still need `ptree`.
 
-   `rules.cc` currently has two intentional conversion helpers:
+   Any wrapper should be marked:
 
-   - `parse_rule_model_expr(...)`: model-language expression plus positional
-     rewriting.
-   - `parse_rule_template_expr(...)`: Haskell-ish rule template parsed by the
-     model parser.
+   ```cpp
+   // Compatibility boundary: old parser callers still ask for ptree.
+   // Remove once all parser users consume CM.
+   ```
 
-   Keep both for now, but audit whether either can call a `CM` parser wrapper
-   instead of open-coding `model_expr_from_ptree(...)`.  Do not merge them unless
-   the semantic difference is removed.
+3. Make `parse_model_expr(...)` and `parse_model_decls(...)` stop converting
+   from `ptree`; they should parse directly to `CM` and then run the existing
+   `CM` positional-argument normalization.
 
-4. Run focused tests after the batch.
+Option B: introduce a real pattern AST.
+
+1. Add a small pattern representation for lambda patterns.
+
+   Initial forms should be:
+
+   - variable pattern
+   - tuple pattern
+
+2. Replace `CM::Lambda::pattern` with the pattern representation, or introduce a
+   transition type if changing the field directly is too large.
+
+3. Update lambda typechecking and codegen to consume the pattern representation
+   instead of expression-shaped patterns.
+
+Run focused tests after either batch.
 
    Required:
 
@@ -145,31 +147,14 @@ the remaining parser compatibility boundaries explicit and narrow.
    timeout 120s meson test -C ../build/gcc-16-debug-O "bali-phy:model expression AST" --print-errorlogs
    timeout 120s meson test -C ../build/gcc-16-debug-O "bali-phy:runtime AST serialization" --print-errorlogs
    timeout 240s meson test -C ../build/gcc-16-debug-O "bali-phy:bali-phy 5d +A 50" --print-errorlogs
-   timeout 300s tests/run-tests.py run tests/parse /home/bredelings/Devel/bali-phy/build/gcc-16-debug-O/src/bali-phy/bali-phy --package-path=/home/bredelings/Devel/bali-phy/build/gcc-16-debug-O/src/builtins:/home/bredelings/Devel/bali-phy/jj --seed 1594303352
-   ```
-
-5. Commit as one statement.
-
-   Suggested message:
-
-   ```text
-   Tighten model parser ptree boundaries
+   timeout 300s bash -lc 'meson test -C ../build/gcc-16-debug-O --list | rg "^bali-phy:bali-phy testsuite parse/" | xargs -d "\n" meson test -C ../build/gcc-16-debug-O --print-errorlogs -j 8'
    ```
 
 ## Following Batch
 
-After parser boundaries are narrow, choose between these two larger steps:
-
-1. Make parser output direct `CM`.
-
-   Update `parser.y` semantic values to build `CM::UntypedExpr` and
-   `CM::Decls<CM::NoAnn>` directly.  Keep type parsing as `ptree`.
-
-2. Introduce a real pattern AST.
-
-   `CM::Lambda::pattern` still uses `CM::Expr<A>`.  Native lambda pattern
-   parsing is in place, so a small pattern AST can now replace expression-shaped
-   patterns without dragging old `ptree` behavior along.
+After either larger step, audit `model-expr-ptree` again.  Remaining uses should
+be limited to tests, explicit parser compatibility wrappers, and the rule
+template boundary.
 
 ## Later Work
 

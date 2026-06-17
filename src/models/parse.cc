@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <list>
 #include "models/parse.H"
 #include "models/model-expr-ptree.H"
 #include "util/myexception.H"
@@ -12,7 +11,6 @@
 #include "models/driver.hh"
 
 using std::vector;
-using std::list;
 using std::string;
 using std::pair;
 using std::optional;
@@ -88,224 +86,143 @@ ptree add_submodel(ptree term, const ptree& submodel)
     return term;
 }
 
-void ptree_map(std::function<void(ptree&)> f, ptree& p)
+// Converts parser-produced positional call arguments to rule keyword arguments
+// directly on the model AST.
+void handle_positional_args(UntypedExpr& expr, const Rules& R)
 {
-    std::function<void(ptree&)> f2;
+    std::visit(overloaded{
+        // Rewrites ordinary call arguments after first normalizing the argument
+        // subexpressions.
+        [&](Call<NoAnn>& call)
+        {
+            for(auto& arg: call.args)
+                if (arg.value)
+                    handle_positional_args(arg.value->get(), R);
 
-    // generate recursive lambda
-    f2 = [&f,&f2](ptree& q) {
-	for(auto& child: q.children())
-	    f2(child.second);
-	f(q);
-    };
+            if (call.args.empty())
+                return;
 
-    f2(p);
+            if (call.function == "Pair")
+            {
+                if (call.args.size() != 2)
+                    throw myexception()<<"Pair's must have two elements: "<<unparse(expr);
+
+                Tuple<NoAnn> tuple;
+                for(auto& arg: call.args)
+                {
+                    if (not arg.name.empty())
+                        throw myexception()<<"Tuple: entry '"<<arg.name<<"="<<unparse(require_arg_value(arg))<<"' must not have a variable name!";
+                    if (not arg.value)
+                        throw myexception()<<"Tuple element must have a value.";
+                    tuple.elements.push_back(std::move(arg.value->get()));
+                }
+                expr.node = std::move(tuple);
+                return;
+            }
+
+            if (not R.get_rule_for_func(call.function))
+            {
+                for(auto& arg: call.args)
+                    if (not arg.name.empty())
+                        throw myexception()<<"Named argument '"<<arg.name<<"' not allowed for function '"<<call.function<<"' with no rule.";
+                return;
+            }
+
+            auto rule = R.require_rule_for_func(call.function);
+            int i = 0;
+            bool seen_keyword = false;
+            vector<Arg<NoAnn>> args;
+
+            for(auto& arg: call.args)
+            {
+                auto arg2 = std::move(arg);
+                if (not arg2.name.empty())
+                    seen_keyword = true;
+                else if (seen_keyword)
+                    throw myexception()<<"Positional argument after keyword argument in '"<<unparse(expr)<<"'!";
+                else if (not arg2.value)
+                {
+                    i++;
+                    continue;
+                }
+                else
+                {
+                    auto keyword = get_keyword_for_positional_arg(rule, i);
+                    for(auto& existing: call.args)
+                        if (existing.name == keyword)
+                            throw myexception()<<"Trying to set value for "<<call.function<<"."<<keyword<<" both by position and by keyword: \n"<<unparse(expr);
+                    arg2.name = keyword;
+                }
+
+                if (arg2.name.empty())
+                    throw myexception()<<"No keyword in argument for "<<call.function<<"?";
+                args.push_back(std::move(arg2));
+                i++;
+            }
+
+            call.args = std::move(args);
+        },
+        // Recurses into list elements without rewriting the list node itself.
+        [&](List<NoAnn>& list)
+        {
+            for(auto& element: list.elements)
+                handle_positional_args(element, R);
+        },
+        // Recurses into tuple elements without rewriting the tuple node itself.
+        [&](Tuple<NoAnn>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                handle_positional_args(element, R);
+        },
+        // Recurses into declarations and the body without rewriting the let node
+        // itself.
+        [&](Let<NoAnn>& let)
+        {
+            for(auto& [name, value]: let.decls)
+                handle_positional_args(value, R);
+            handle_positional_args(let.body.get(), R);
+        },
+        // Recurses into the pattern and body without rewriting the lambda node
+        // itself.
+        [&](Lambda<NoAnn>& lambda)
+        {
+            handle_positional_args(lambda.pattern.get(), R);
+            handle_positional_args(lambda.body.get(), R);
+        },
+        // Recurses into the sampled distribution without rewriting the sample
+        // node itself.
+        [&](Sample<NoAnn>& sample)
+        {
+            handle_positional_args(sample.dist.get(), R);
+        },
+        [](auto&) {}
+    }, expr.node);
 }
 
-bool is_nontype_variable(const ptree& model)
+// Converts parser-produced positional call arguments in each declaration value
+// to rule keyword arguments directly on the model AST.
+void handle_positional_args(Decls<NoAnn>& decls, const Rules& R)
 {
-    if (not model.is_a<string>()) return false;
-
-    if (model.get_value<string>().empty()) return false;
-
-    if (model.get_value<string>() == "List") return false;
-
-    if (model.get_value<string>() == "Tuple") return false;
-
-    return true;
+    for(auto& [name, value]: decls)
+        handle_positional_args(value, R);
 }
 
-bool is_list(const ptree& model)
+// Parses one command-line model expression through the legacy grammar, then
+// normalizes positional arguments directly on the untyped model AST.
+UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what)
 {
-    if (not model.has_value<string>()) return false;
-
-    if (model.get_value<string>() != "List") return false;
-
-    for(int i=0;i<model.children().size();i++)
-    {
-        if (not model.children()[i].first.empty())
-            throw myexception()<<"List: entry "<<i+1<<" '"<<model.children()[i].first<<"="<<unparse(model.children()[i].second)<<"2 must not have a variable name!";
-    }
-
-    return true;
-}
-
-bool is_tuple(const ptree& model)
-{
-    if (not model.has_value<string>()) return false;
-
-    if (model.get_value<string>() != "Tuple") return false;
-
-    if (model.children().size() == 1)
-        throw myexception()<<"Tuple's of 1 element not allowed:\n  "<<model.show();
-
-    for(int i=0;i<model.children().size();i++)
-    {
-        if (not model.children()[i].first.empty())
-            throw myexception()<<"Tuple: entry "<<i+1<<" '"<<model.children()[i].first<<"="<<unparse(model.children()[i].second)<<"2 must not have a variable name!";
-    }
-
-    return true;
-}
-
-bool is_pattern(const ptree& model)
-{
-    if (is_nontype_variable(model)) return true;
-
-    if (is_list(model) or is_tuple(model))
-    {
-        for(auto& [_,value]: model.children())
-            if (not is_pattern(value)) return false;
-        return true;
-    }
-
-    return false;
-}
-
-bool is_function(const ptree& model)
-{
-    if (not model.has_value<string>()) return false;
-
-    if (model.get_value<string>() != "function") return false;
-
-    if (model.children().size() != 2)
-        throw myexception()<<"function: got "<<model.children().size()<<" arguments, 2 arguments required.\n  "<<model.show();
-
-    if (not model.children()[0].first.empty() or not is_pattern(model.children()[0].second))
-        throw myexception()<<"function: first argument must be a variable or pattern!\n  "<<model.show();
-    
-    if (not model.children()[1].first.empty())
-        throw myexception()<<"function: second argument must not have a variable name!\n  "<<model.show();
-
-    return true;
-}
-
-void handle_positional_args(ptree& model, const Rules& R)
-{
-    if (model.children().size() == 0) return;
-
-    assert(not model.is_null());
-    assert(not model.value_is_empty());
-
-    auto head = model.get_value<string>();
-
-    if (head == "!let") return;
-
-    if (head == "!Decls") return;
-
-    if (is_function(model)) return;
-
-    if (is_list(model)) return;
-
-
-    if (head == "Pair")
-    {
-        if (model.children().size() != 2)
-            throw myexception()<<"Pair's must have two elements: "<<unparse(model);
-
-        model.value = string("Tuple");
-        head = "Tuple";
-    }
-
-    if (is_tuple(model)) return;
-
-    if (head == "get_state")
-    {
-        if (model.children().size() != 1)
-	    throw myexception()<<"set_state: got "<<model.children().size()<<" arguments, 1 argument required.\n  "<<model.show();
-	if (not model.children()[0].first.empty() or not model.children()[0].second.is_a<string>())
-	    throw myexception()<<"set_state: first argument must be an unquoted state name!\n  "<<model.show();
-        return;
-    }
-
-    if (not R.get_rule_for_func(head))
-    {
-	for(auto& [arg_name,value]: model.children())
-	    if (not arg_name.empty())
-		throw myexception()<<"Named argument '"<<arg_name<<"' not allowed for function '"<<head<<"' with no rule.";
-	return;
-    }
-
-    auto rule = R.require_rule_for_func(head);
-
-    int i=0;
-    bool seen_keyword = false;
-
-    ptree model2(head);
-
-    for(auto& x: model.children())
-    {
-	pair<string,ptree> child = x;
-
-	if (not child.first.empty())
-	    seen_keyword = true;
-	else if (seen_keyword)
-	    throw myexception()<<"Positional argument after keyword argument in '"<<unparse(model)<<"'!";
-	// Empty positional arguments argument can later have their value specified by keyword, so we ignore them completely
-	else if (child.second.is_null())
-	{
-	    i++;
-	    continue;
-	}
-	else
-	{
-	    auto keyword = get_keyword_for_positional_arg(rule, i);
-
-	    if (model.count(keyword))
-		throw myexception()<<"Trying to set value for "<<head<<"."<<keyword<<" both by position and by keyword: \n"<<unparse(model);
-
-	    child.first = keyword;
-	}
-
-	// This shouldn't happen.
-	if (child.first.empty()) throw myexception()<<"No keyword in argument for "<<head<<"?";
-
-	model2.children().push_back(child);
-
-	i++;
-    }
-
-    std::swap(model, model2);
-}
-
-// Parse strings of the form head[args] + head[args] + ... + head[args]
-ptree parse(const Rules& R, const string& s, const string& what)
-{
-    // 1. Get the last head[args]
-    auto model = parse_expression(s, what);
-
-    // 2. Fill in keywords where they are not given
-    auto f2 = [&](ptree& p) {handle_positional_args(p,R);};
-    ptree_map(f2, model);
-
+    auto model = model_expr_from_ptree(parse_expression(s, what));
+    handle_positional_args(model, R);
     return model;
 }
 
-ptree parse_defs(const Rules& R, const string& s)
-{
-    // 1. Parse the decls
-    auto defs = parse_defs(s, "declarations");
-
-    // 2. Fill in default arguments
-    auto f2 = [&](ptree& p) {handle_positional_args(p,R);};
-    for(auto& [var,value]: defs.children())
-	ptree_map(f2, value);
-
-    return defs;
-}
-
-// Parses one command-line model expression and converts the normalized ptree to
-// the untyped model AST.
-UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what)
-{
-    return model_expr_from_ptree(parse(R, s, what));
-}
-
-// Parses command-line model declarations and converts the normalized ptree to
-// untyped AST declarations.
+// Parses command-line model declarations through the legacy grammar, then
+// normalizes positional arguments directly on untyped AST declarations.
 Decls<NoAnn> parse_model_decls(const Rules& R, const string& s)
 {
-    return model_decls_from_ptree(parse_defs(R, s));
+    auto decls = model_decls_from_ptree(parse_defs(s, "declarations"));
+    handle_positional_args(decls, R);
+    return decls;
 }
 
 optional<ptree> peel_sample(ptree p)
