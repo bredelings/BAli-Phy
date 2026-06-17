@@ -366,6 +366,8 @@ model_t compile_decls(const Rules& R,
 		      const vector<pair<string,ptree>>& scope,
 		      const map<string,pair<string,ptree>>& state)
 {
+    // Compatibility boundary: declarations still use the old ptree
+    // parse/typecheck path. Remove when compile_decls() switches to CM::Decls.
     // 1. Parse declarations and substitute any default values.
     auto decls = parse_defs(R, prog);
 

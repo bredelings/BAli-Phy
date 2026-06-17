@@ -497,16 +497,11 @@ these expression cases and `compile_model(...)` uses it in production.
 `compile_model(...)` still converts the typed AST back to annotated `ptree` at
 the extraction/code-generation boundary.
 
-The expression typechecker still has a bridge fallback:
-
-```cpp
-typecheck_model_expr_via_ptree(...)
-```
-
-Keep this fallback only while required for legacy shapes.  Conversion insertion
-now builds AST conversion calls directly for `intToDouble`, `discrete`,
-`unit_mixture`, `convertDiscrete`, `multiMixtureModel`, and `f`.  Tests should
-make fallback use visible for representative production-supported expressions.
+The expression typechecker no longer has a ptree bridge fallback.  Conversion
+insertion builds AST conversion calls directly for `intToDouble`, `discrete`,
+`unit_mixture`, `convertDiscrete`, `multiMixtureModel`, and `f`.  Placeholder
+and missing-argument AST nodes now fail with direct errors instead of escaping
+to old ptree behavior.
 
 Keep type representation unchanged:
 
@@ -545,18 +540,13 @@ The main `compile_model(...)` path has switched to `typecheck_model_expr(...)`
 incrementally: parsing and typechecking are AST-based, while extraction and
 code generation still consume annotated `ptree` through an explicit
 compatibility boundary.  Do not broaden this to `compile_decls(...)` until the
-remaining declaration and fallback risks are audited.
+remaining declaration risks are audited.
 
-## Phase 10c: Port Declaration Typechecking And Remove Typechecker Fallback
+## Phase 10c: Port Declaration Compile Path
 
-`typecheck_model_decls(...)` currently remains a bridge:
-
-```cpp
-CM::Decls<CM::NoAnn> -> ptree -> typecheck_and_annotate_decls(...) -> CM::TypedDecls
-```
-
-Port declaration typechecking directly so `CM::TypedDecls` are produced without
-converting through annotated `ptree`.
+`typecheck_model_decls(...)` is direct and produces `CM::TypedDecls` without
+converting through annotated `ptree`.  The production `compile_decls(...)`
+path still uses `parse_defs(...)` and `typecheck_and_annotate_decls(...)`.
 
 The direct declaration port should:
 
@@ -567,18 +557,15 @@ The direct declaration port should:
 - add parity tests for multiple declarations and references between
   declarations
 
-After direct declaration typechecking exists, audit every call to
-`typecheck_model_expr_via_ptree(...)`.  The conversion cases above should not
-need the fallback; remaining fallback use should identify unsupported legacy
-expression shapes or missing direct AST handlers.
+Before switching `compile_decls(...)`, expand declaration coverage for
+conversions, previous-declaration references, `let`, `sample`, defaults, and
+alphabet expressions where practical.
 
 The old `TypecheckingState::typecheck_and_annotate_*` functions cannot be
 removed until:
 
 - `compile_model(...)` and `compile_decls(...)` no longer call them
 - `typecheck_model_decls(...)` no longer calls `typecheck_and_annotate_decls(...)`
-- `typecheck_model_expr(...)` no longer falls back to
-  `typecheck_model_expr_via_ptree(...)` for production-supported expressions
 - extraction and code generation no longer require annotated `ptree`
 
 Current status: `compile_model(...)` no longer calls
@@ -698,7 +685,6 @@ Before the final direct-AST compile phase, verify explicitly that
 
 - `TypecheckingState::typecheck_and_annotate(...)`
 - `TypecheckingState::typecheck_and_annotate_decls(...)`
-- `typecheck_model_expr_via_ptree(...)` for production-supported models
 - annotated-`ptree` extraction or code generation
 
 ## Phase 14: Update `model_t` And `pretty_model_t`
@@ -795,7 +781,7 @@ This removes old expression encodings and conversion overhead.
 7. Compatibility typechecker wrappers and parity tests.
 8. Expression typechecker builds `CM::TypedExpr` directly.
 9. Declaration typechecker builds `CM::TypedDecls` directly.
-10. Remove production reliance on `typecheck_model_expr_via_ptree(...)`.
+10. Remove production reliance on expression typechecker compatibility.
 11. AST substitution overloads.
 12. Extraction helpers consume `CM::TypedExpr`.
 13. Code generation consumes `CM::TypedExpr`.
@@ -808,8 +794,8 @@ This removes old expression encodings and conversion overhead.
 ## Risk Notes
 
 - Code generation and extraction are highest risk.
-- Typechecking is not fully migrated until declarations and bridge fallback are
-  removed from the production path.
+- Typechecking is not fully migrated until declarations are removed from the
+  old production path.
 - Keep `CM::Ann::type = ptree` until the AST migration is complete.
 - Keep parser output unchanged initially.
 - Model argument metadata should live on `CM::Arg`, not in node annotations.
