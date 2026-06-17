@@ -99,7 +99,12 @@ UntypedExpr model_expr_from_string_ptree(const ptree& p)
     {
         Call<NoAnn> call{name, {}};
         for(auto& [key, value]: p.children())
-            call.args.push_back({key, Box<UntypedExpr>(model_expr_from_ptree(value)), false, false, std::nullopt});
+        {
+            std::optional<Box<UntypedExpr>> arg_value;
+            if (not value.is_null())
+                arg_value = Box<UntypedExpr>(model_expr_from_ptree(value));
+            call.args.push_back({key, std::move(arg_value), false, false, std::nullopt});
+        }
         return {NoAnn{}, std::move(call)};
     }
 }
@@ -144,8 +149,10 @@ void add_ann_to_ptree(ptree& p, const Ann& ann)
 
 Arg<Ann> typed_model_arg_from_annotated_ptree(const string& name, const ptree& p)
 {
-    auto value = typed_model_expr_from_annotated_ptree(p);
-    Arg<Ann> arg{name, Box<TypedExpr>(std::move(value)), false, false, std::nullopt};
+    std::optional<Box<TypedExpr>> value;
+    if (not p.is_null())
+        value = Box<TypedExpr>(typed_model_expr_from_annotated_ptree(p));
+    Arg<Ann> arg{name, std::move(value), false, false, std::nullopt};
     arg.is_default_value = p.get("is_default_value", false);
     arg.suppress_default = p.get("suppress_default", false);
     if (auto alphabet = p.get_child_optional("alphabet"))
@@ -165,7 +172,7 @@ void add_arg_metadata(ptree& p, const Arg<Ann>& arg)
 TypedExpr typed_model_expr_from_value_ptree(Ann ann, const ptree& value)
 {
     if (value.is_null())
-        return {std::move(ann), MissingArg{}};
+        throw std::logic_error("null annotated model ptree is not an expression");
     else if (value.is_a<int>())
         return {std::move(ann), IntLiteral{value.get_value<int>()}};
     else if (value.is_a<double>())
@@ -255,7 +262,7 @@ TypedExpr typed_model_expr_from_value_ptree(Ann ann, const ptree& value)
 UntypedExpr model_expr_from_ptree(const ptree& p)
 {
     if (p.is_null())
-        return {NoAnn{}, MissingArg{}};
+        throw std::logic_error("null model ptree is not an expression");
     else if (p.is_a<int>())
         return {NoAnn{}, IntLiteral{p.get_value<int>()}};
     else if (p.is_a<double>())
@@ -278,13 +285,17 @@ ptree ptree_from_model_expr(const UntypedExpr& expr)
         [](const Var& x) -> ptree {return ptree(x.name);},
         [](const ArgRef& x) -> ptree {return ptree("@" + x.name);},
         [](const Placeholder&) -> ptree {return ptree("_");},
-        [](const MissingArg&) -> ptree {return ptree();},
         [](const GetState& x) -> ptree {return ptree("get_state", {{"", ptree(x.state_name)}});},
         [](const Call<NoAnn>& x) -> ptree
         {
             ptree result(x.function);
             for(auto& arg: x.args)
-                result.children().push_back({arg.name, ptree_from_model_expr(arg.value.get())});
+            {
+                ptree value;
+                if (arg.value)
+                    value = ptree_from_model_expr(arg.value->get());
+                result.children().push_back({arg.name, value});
+            }
             return result;
         },
         [](const List<NoAnn>& x) -> ptree
@@ -359,15 +370,18 @@ ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
         [](const Var& x) -> ptree {return ptree(x.name);},
         [](const ArgRef& x) -> ptree {return ptree("@" + x.name);},
         [](const Placeholder&) -> ptree {return ptree("_");},
-        [](const MissingArg&) -> ptree {return ptree();},
         [](const GetState& x) -> ptree {return ptree("get_state", {{"", annotated_ptree_from_typed_model_expr({Ann{ptree("String"), {}, false, {}}, Var{x.state_name}})}});},
         [](const Call<Ann>& x) -> ptree
         {
             ptree result(x.function);
             for(auto& arg: x.args)
             {
-                auto value = annotated_ptree_from_typed_model_expr(arg.value.get());
-                add_arg_metadata(value, arg);
+                ptree value;
+                if (arg.value)
+                {
+                    value = annotated_ptree_from_typed_model_expr(arg.value->get());
+                    add_arg_metadata(value, arg);
+                }
                 result.children().push_back({arg.name, value});
             }
             return result;

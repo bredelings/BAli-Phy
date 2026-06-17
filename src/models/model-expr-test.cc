@@ -50,11 +50,11 @@ void test_copy_independence()
     auto copied = original;
 
     auto& copied_call = std::get<Call<NoAnn>>(copied.node);
-    auto& copied_var = std::get<Var>(copied_call.args[0].value->node);
+    auto& copied_var = std::get<Var>(require_arg_value(copied_call.args[0]).node);
     copied_var.name = "y";
 
     auto& original_call = std::get<Call<NoAnn>>(original.node);
-    auto& original_var = std::get<Var>(original_call.args[0].value->node);
+    auto& original_var = std::get<Var>(require_arg_value(original_call.args[0]).node);
 
     assert(original_var.name == "x");
     assert(copied_var.name == "y");
@@ -102,11 +102,6 @@ void test_invariants()
     };
     expect_invariant_failure(one_element_tuple);
 
-    UntypedExpr missing_arg{
-        NoAnn{},
-        MissingArg{}
-    };
-    expect_invariant_failure(missing_arg);
 }
 
 void expect_round_trip(const ptree& p)
@@ -114,6 +109,31 @@ void expect_round_trip(const ptree& p)
     auto expr = model_expr_from_ptree(p);
     auto p2 = ptree_from_model_expr(expr);
     assert(p2 == p);
+}
+
+// Verifies that a null ptree is not a model expression, while null call
+// arguments remain round-trippable absent values.
+void test_absent_argument_values()
+{
+    try
+    {
+        (void)model_expr_from_ptree(ptree());
+        assert(false);
+    }
+    catch(const std::logic_error&)
+    {}
+
+    auto expr = model_expr_from_ptree(ptree("f", {
+        {"x", ptree()},
+        {"y", ptree(2)}
+    }));
+    auto& call = std::get<Call<NoAnn>>(expr.node);
+    assert(not call.args[0].value);
+    assert(call.args[1].value);
+    assert(ptree_from_model_expr(expr) == ptree("f", {
+        {"x", ptree()},
+        {"y", ptree(2)}
+    }));
 }
 
 void test_scalar_round_trips()
@@ -125,13 +145,17 @@ void test_scalar_round_trips()
     expect_round_trip(ptree("x"));
     expect_round_trip(ptree("@arg"));
     expect_round_trip(ptree("_"));
-    expect_round_trip(ptree());
 }
 
 void test_call_round_trips()
 {
     expect_round_trip(ptree("f", {
         {"", ptree("x")},
+        {"y", ptree(2)}
+    }));
+
+    expect_round_trip(ptree("f", {
+        {"x", ptree()},
         {"y", ptree(2)}
     }));
 
@@ -437,12 +461,12 @@ void test_typed_substitution()
 
     assert(expr.ann.type == ptree("Double"));
     auto& call = std::get<Call<Ann>>(expr.node);
-    assert(call.args[0].value->ann.type == ptree("Int"));
+    assert(require_arg_value(call.args[0]).ann.type == ptree("Int"));
     assert(call.args[0].alphabet);
     assert(call.args[0].alphabet->get().ann.type == ptree("Alphabet"));
-    assert(call.args[1].value->ann.type == ptree("List", {{"", ptree("String")}}));
+    assert(require_arg_value(call.args[1]).ann.type == ptree("List", {{"", ptree("String")}}));
 
-    auto& list = std::get<List<Ann>>(call.args[1].value->node);
+    auto& list = std::get<List<Ann>>(require_arg_value(call.args[1]).node);
     assert(list.elements[0].ann.type == ptree("String"));
 
     TypedDecls decls{
@@ -548,7 +572,6 @@ void test_typecheck_direct_errors()
     };
 
     expect_error(ptree("Int"), CM::UntypedExpr{NoAnn{}, Placeholder{}}, "Placeholder '_'");
-    expect_error(ptree("Int"), CM::UntypedExpr{NoAnn{}, MissingArg{}}, "Missing argument placeholder");
     expect_error(ptree("Int"), model_expr_from_ptree(ptree("unknown", {{"", ptree(1)}})), "No direct typechecker");
 }
 
@@ -853,6 +876,7 @@ int main()
     test_copy_independence();
     test_accessors_and_traversal();
     test_invariants();
+    test_absent_argument_values();
     test_scalar_round_trips();
     test_call_round_trips();
     test_collection_round_trips();

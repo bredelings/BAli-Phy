@@ -486,7 +486,6 @@ string unparse(const UntypedExpr& expr)
         [](const Var& x) {return x.name;},
         [](const ArgRef& x) {return "@" + x.name;},
         [](const Placeholder&) {return "_"s;},
-        [](const MissingArg&) {return "null"s;},
         [](const GetState& x) {return "get_state(" + x.state_name + ")";},
         [](const List<NoAnn>& x)
         {
@@ -519,20 +518,20 @@ string unparse(const UntypedExpr& expr)
             auto s = x.function;
 
             if (s == "negate" and x.args.size())
-                return "-" + unparse(x.args.front().value.get());
+                return "-" + unparse(require_arg_value(x.args.front()));
             else if (is_operator(s) and x.args.size() == 2)
-                return unparse(x.args[0].value.get()) + s + unparse(x.args[1].value.get());
+                return unparse(require_arg_value(x.args[0])) + s + unparse(require_arg_value(x.args[1]));
             else if (s == "intToDouble")
             {
                 for(auto& arg: x.args)
                     if (arg.name == "x")
-                        return unparse(arg.value.get());
+                        return unparse(require_arg_value(arg));
             }
             else if ((s == "unit_mixture" or s == "multiMixtureModel"))
             {
                 for(auto& arg: x.args)
                     if (arg.name == "submodel")
-                        return unparse(arg.value.get());
+                        return unparse(require_arg_value(arg));
             }
 
             vector<string> args;
@@ -541,20 +540,20 @@ string unparse(const UntypedExpr& expr)
             int pos = 0;
             for(auto& arg: x.args)
             {
-                if (std::holds_alternative<MissingArg>(arg.value->node))
+                if (not arg.value)
                     positional = false;
                 else if (arg.name == "submodel" and pos == 0)
                 {
                     positional = false;
                     assert(not submodel);
-                    submodel = unparse(arg.value.get());
+                    submodel = unparse(arg.value->get());
                 }
                 else if (positional)
-                    args.push_back(unparse(arg.value.get()));
-                else if (auto arg2 = peel_sample(arg.value.get()))
+                    args.push_back(unparse(arg.value->get()));
+                else if (auto arg2 = peel_sample(arg.value->get()))
                     args.push_back(arg.name + "~" + unparse(*arg2));
                 else
-                    args.push_back(arg.name + "=" + unparse(arg.value.get()));
+                    args.push_back(arg.name + "=" + unparse(arg.value->get()));
 
                 pos++;
             }
@@ -618,7 +617,6 @@ string unparse_annotated(const TypedExpr& expr)
         [](const Var& x) {return x.name;},
         [](const ArgRef& x) {return "@" + x.name;},
         [](const Placeholder&) {return "_"s;},
-        [](const MissingArg&) {return "null"s;},
         [](const GetState& x) {return "get_state(" + x.state_name + ")";},
         [](const Let<Ann>& x)
         {
@@ -675,20 +673,20 @@ string unparse_annotated(const TypedExpr& expr)
             auto s = x.function;
 
             if (s == "negate" and x.args.size())
-                return "-" + unparse_annotated(x.args.front().value.get());
+                return "-" + unparse_annotated(require_arg_value(x.args.front()));
             else if (is_operator(s) and x.args.size() == 2)
-                return unparse_annotated(x.args[0].value.get()) + s + unparse_annotated(x.args[1].value.get());
+                return unparse_annotated(require_arg_value(x.args[0])) + s + unparse_annotated(require_arg_value(x.args[1]));
             else if (s == "intToDouble")
             {
                 for(auto& arg: x.args)
                     if (arg.name == "x")
-                        return unparse_annotated(arg.value.get());
+                        return unparse_annotated(require_arg_value(arg));
             }
             else if ((s == "unit_mixture" or s == "multiMixtureModel"))
             {
                 for(auto& arg: x.args)
                     if (arg.name == "submodel")
-                        return unparse_annotated(arg.value.get());
+                        return unparse_annotated(require_arg_value(arg));
             }
 
             vector<string> args;
@@ -696,24 +694,24 @@ string unparse_annotated(const TypedExpr& expr)
             bool positional = true;
             for(auto& arg: x.args)
             {
-                if (std::holds_alternative<MissingArg>(arg.value->node))
+                if (not arg.value)
                     positional = false;
                 else if (arg.name == "submodel")
                 {
                     positional = false;
                     assert(not submodel);
-                    submodel = unparse_annotated(arg.value.get());
+                    submodel = unparse_annotated(arg.value->get());
                 }
-                else if (arg.is_default_value and std::holds_alternative<GetState>(arg.value->node))
+                else if (arg.is_default_value and std::holds_alternative<GetState>(arg.value->get().node))
                     positional = false;
                 else if (arg.suppress_default and arg.is_default_value)
                     positional = false;
                 else if (positional)
-                    args.push_back(unparse_annotated(arg.value.get()));
-                else if (auto arg2 = peel_sample_annotated(arg.value.get()))
+                    args.push_back(unparse_annotated(arg.value->get()));
+                else if (auto arg2 = peel_sample_annotated(arg.value->get()))
                     args.push_back(arg.name + "~" + unparse_annotated(*arg2));
                 else
-                    args.push_back(arg.name + "=" + unparse_annotated(arg.value.get()));
+                    args.push_back(arg.name + "=" + unparse_annotated(arg.value->get()));
             }
             while (args.size() and args.back() == "")
                 args.pop_back();

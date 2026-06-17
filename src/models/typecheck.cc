@@ -430,7 +430,8 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
         {
             for(auto& arg: call.args)
             {
-                substitute_annotated(eqs, arg.value.get());
+                if (arg.value)
+                    substitute_annotated(eqs, arg.value->get());
                 if (arg.alphabet)
                     substitute_annotated(eqs, arg.alphabet->get());
             }
@@ -477,14 +478,12 @@ CM::Ann model_ann(ptree type, set<string> used_args = {})
 
 optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr);
 
-// Rejects parser and extraction placeholders before they can reach old ptree
-// compatibility behavior.
+// Rejects parser placeholders before they can reach old ptree compatibility
+// behavior.
 optional<CM::TypedExpr> typecheck_model_invalid_placeholder(const CM::UntypedExpr& expr)
 {
     if (std::holds_alternative<CM::Placeholder>(expr.node))
         throw myexception()<<"Placeholder '_' may only appear while parsing argument application.";
-    if (std::holds_alternative<CM::MissingArg>(expr.node))
-        throw myexception()<<"Missing argument placeholder cannot be typechecked as an expression.";
     return {};
 }
 
@@ -611,6 +610,8 @@ optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, co
     {
         if (not arg.name.empty())
             throw myexception()<<"Named arguments not allowed in functions that are variables";
+        if (not arg.value)
+            throw myexception()<<"Missing argument value in function variable application";
 
         auto a = TC.get_fresh_type_var("a");
         auto b = TC.get_fresh_type_var("b");
@@ -624,7 +625,7 @@ optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, co
                 throw myexception()<<"Supplying "<<call->args.size()<<" arguments to function '"<<call->function<<"', but it only takes "<<arity<<"!";
         }
 
-        auto arg2 = typecheck_model_expr(TC, a, arg.value.get());
+        auto arg2 = typecheck_model_expr(TC, a, arg.value->get());
         add(used_args, arg2.ann.used_args);
         typed_call.args.push_back({
             "",
@@ -823,7 +824,8 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
         arg_count[arg.name]++;
         if (arg_count[arg.name] > 1)
             throw myexception()<<"Supplied argument '"<<arg.name<<"' more than once in term:\n"<<model.show();
-        supplied_args[arg.name] = &arg;
+        if (arg.value)
+            supplied_args[arg.name] = &arg;
     }
 
     map<string,ptree> arg_env;
@@ -841,7 +843,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
         CM::UntypedExpr arg_value;
         bool is_default = false;
         if (auto supplied = supplied_args.find(arg_name); supplied != supplied_args.end())
-            arg_value = supplied->second->value.get();
+            arg_value = supplied->second->value->get();
         else if (argument.default_value)
         {
             is_default = true;
@@ -910,6 +912,8 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
     CM::Ann ann = model_ann(result_type, std::move(used_args));
     ann.no_log = rule.no_log;
     ann.extract = rule.extract;
+    for(const auto& arg: typed_call.args)
+        assert(arg.value);
     return CM::TypedExpr{std::move(ann), std::move(typed_call)};
 }
 
@@ -941,7 +945,7 @@ optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, cons
     assert(typed_call_expr);
     auto& typed_call = std::get<CM::Call<CM::Ann>>(typed_call_expr->node);
     assert(typed_call.args.size() == 1);
-    auto dist = std::move(typed_call.args[0].value.get());
+    auto dist = std::move(require_arg_value(typed_call.args[0]));
 
     return CM::TypedExpr{
         std::move(typed_call_expr->ann),

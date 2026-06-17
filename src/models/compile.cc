@@ -598,13 +598,6 @@ bool is_constant(const CM::TypedExpr& expr)
         or std::holds_alternative<CM::StringLiteral>(expr.node);
 }
 
-// Creates the placeholder left behind when extraction moves an argument out of
-// an AST call edge.
-CM::TypedExpr missing_like(const CM::TypedExpr& expr)
-{
-    return {CM::Ann{expr.ann.type, {}, false, {}}, CM::MissingArg{}};
-}
-
 }
 
 // Reports whether a typed AST term references one of the variables currently
@@ -620,7 +613,7 @@ bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
         [&](const CM::Call<CM::Ann>& call)
         {
             for(auto& arg: call.args)
-                if (bound(arg.value.get(), binders)) return true;
+                if (arg.value and bound(arg.value->get(), binders)) return true;
             return false;
         },
         // Checks whether any list element references a protected binder.
@@ -810,15 +803,15 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
         {
             auto name = func + ":" + arg.name;
 
-            if (do_extract(m, arg.value.get(), binders))
+            if (arg.value and do_extract(m, arg.value->get(), binders))
             {
-                auto extracted_value = std::move(arg.value.get());
-                arg.value = CM::Box<CM::TypedExpr>(missing_like(extracted_value));
+                auto extracted_value = std::move(arg.value->get());
+                arg.value = std::nullopt;
                 extracted_top.push_back({name, std::move(extracted_value)});
             }
-            else if (not std::holds_alternative<CM::MissingArg>(arg.value->node))
+            else if (arg.value)
             {
-                for(auto& [sub_name, sub_term]: extract_terms(arg.value.get(), binders))
+                for(auto& [sub_name, sub_term]: extract_terms(arg.value->get(), binders))
                 {
                     auto sup_name = name + "/" + sub_name;
                     if (sub_name.size() and sub_name[0] == '[')

@@ -75,13 +75,33 @@ template<class A>
 struct Arg
 {
     std::string name;
-    Box<Expr<A>> value;
+    std::optional<Box<Expr<A>>> value;
 
     bool is_default_value = false;
     bool suppress_default = false;
 
     std::optional<Box<Expr<A>>> alphabet;
 };
+
+// Returns the expression stored on an argument edge, and fails clearly if the
+// edge is only an absent-value placeholder.
+template<class A>
+Expr<A>& require_arg_value(Arg<A>& arg)
+{
+    if (not arg.value)
+        throw std::logic_error("model argument has no expression value");
+    return arg.value->get();
+}
+
+// Returns the expression stored on a const argument edge, and fails clearly if
+// the edge is only an absent-value placeholder.
+template<class A>
+const Expr<A>& require_arg_value(const Arg<A>& arg)
+{
+    if (not arg.value)
+        throw std::logic_error("model argument has no expression value");
+    return arg.value->get();
+}
 
 struct IntLiteral
 {
@@ -120,9 +140,6 @@ struct GetState
 {
     std::string state_name;
 };
-
-struct MissingArg
-{};
 
 template<class A>
 struct Call
@@ -188,7 +205,6 @@ struct Expr
         Var,
         ArgRef,
         Placeholder,
-        MissingArg,
         GetState,
         Call<A>,
         List<A>,
@@ -269,7 +285,8 @@ void for_each_child(Expr<A>& expr, F&& f)
         {
             for(auto& arg: call.args)
             {
-                f(arg.value.get());
+                if (arg.value)
+                    f(arg.value->get());
                 if (arg.alphabet)
                     f(arg.alphabet->get());
             }
@@ -311,7 +328,8 @@ void for_each_child(const Expr<A>& expr, F&& f)
         {
             for(auto& arg: call.args)
             {
-                f(arg.value.get());
+                if (arg.value)
+                    f(arg.value->get());
                 if (arg.alphabet)
                     f(arg.alphabet->get());
             }
@@ -359,10 +377,6 @@ void check_invariants(const Expr<A>& expr)
         {
             if (tuple.elements.size() < 2)
                 throw std::logic_error("model tuple must have at least two elements");
-        },
-        [](const MissingArg&)
-        {
-            throw std::logic_error("missing argument escaped parser compatibility code");
         },
         [](const auto&) {}
     }, expr.node);
