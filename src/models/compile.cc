@@ -293,8 +293,8 @@ model_t compile_model(const Rules& R,
     substitute(TC2.eqs, required_type);
     substitute_annotated(TC2.eqs, typed_model);
 
-    // Compatibility boundary: code generation still consumes annotated ptree.
-    // Remove when CodeGenState has complete CM::TypedExpr overloads.
+    // Compatibility boundary: model_t still stores annotated ptree for display
+    // and extraction. Codegen receives CM::TypedExpr directly below.
     auto model = CM::annotated_ptree_from_typed_model_expr(typed_model);
 
     set<ptree> constraints;
@@ -338,7 +338,7 @@ model_t compile_model(const Rules& R,
         lambda_vars.push_back(x);
     }
 
-    auto [code, imports, _lambda_vars, _vars] = code_gen_state.get_model_as(model);
+    auto [code, imports, _lambda_vars, _vars] = code_gen_state.get_model_as(typed_model);
 
     if (log_verbose >= 3)
         std::cout<<"full_model = "<<code.print()<<std::endl;
@@ -377,8 +377,8 @@ model_t compile_decls(const Rules& R,
     for(auto& [var,value]: typed_decls)
 		substitute_annotated(TC.eqs, value);
 
-    // Compatibility boundary: declaration code generation still consumes
-    // annotated ptree. Remove when CodeGenState has CM::TypedDecls overloads.
+    // Compatibility boundary: model_t still stores annotated ptree for display
+    // and extraction. Codegen receives CM::TypedDecls directly below.
     auto decls2 = CM::annotated_ptree_from_typed_model_decls(typed_decls);
 
     set<ptree> constraints;
@@ -405,7 +405,7 @@ model_t compile_decls(const Rules& R,
         lambda_vars.push_back(x);
     }
 
-    auto [code, imports, _1, _2] = code_gen_state.get_model_decls(decls2);
+    auto [code, imports, _1, _2] = code_gen_state.get_model_decls(typed_decls);
 
     if (log_verbose >= 3)
         std::cout<<"full_model = "<<code.print()<<std::endl;

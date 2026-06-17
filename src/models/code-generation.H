@@ -112,6 +112,7 @@ struct CodeGenState
     CodeGenState extend_scope(const std::string& var, const var_info_t& var_info) const;
     CodeGenState& extend_modify_scope(const std::string& var, const var_info_t& var_info);
 
+    translation_result_t get_model_decls(const CM::TypedDecls& decls);
     translation_result_t get_model_decls(const ptree& model);
     std::optional<translation_result_t> get_variable_model(const ptree& model) const;
     std::optional<translation_result_t> get_model_let(const ptree& model) const;
@@ -120,6 +121,7 @@ struct CodeGenState
     std::optional<translation_result_t> get_model_tuple(const ptree& model) const;
     std::optional<translation_result_t> get_model_state(const ptree& model) const;
     translation_result_t get_model_function(const ptree& model) const;
+    translation_result_t get_model_as(const CM::TypedExpr& model_rep) const;
     translation_result_t get_model_as(const ptree& model_rep) const;
 
     CodeGenState(const Rules& r):R(&r) {}

@@ -1,5 +1,6 @@
 #include "code-generation.H"
 
+#include "models/model-expr-ptree.H"
 #include "parse.H"                         // for is_constant( )
 #include "rules.H"                         // for Rules
 #include "util/set.H"                      // for add, plus, minus
@@ -502,6 +503,49 @@ translation_result_t CodeGenState::get_model_decls(const ptree& model)
 
 	// 4. Put x into the scope for the next decl.
 	extend_modify_scope(var_name, var_info);
+    }
+
+    result.haskell_vars = haskell_vars;
+
+    return result;
+}
+
+// Generates code for typed declarations without converting the declaration
+// container back to !Decls; expression bodies still use ptree codegen locally.
+translation_result_t CodeGenState::get_model_decls(const CM::TypedDecls& decls)
+{
+    translation_result_t result;
+
+    for(auto& [var_name, var_exp]: decls)
+    {
+        // Compatibility boundary: expression codegen is still annotated-ptree
+        // based. Remove this local fallback as get_model_as(CM::TypedExpr)
+        // grows native variant handlers.
+        auto var_exp_ptree = CM::annotated_ptree_from_typed_model_expr(var_exp);
+
+        var x = get_var(var_name);
+        var log_x = get_var("log_" + var_name);
+        bool x_is_random = is_random(var_exp_ptree);
+        var_info_t var_info(x, x_is_random);
+
+        // 1. Perform the variable expression
+        auto arg_result = get_model_as(var_exp);
+
+        if (arg_result.lambda_vars.size())
+            var_info.depends_on_lambda = true;
+
+        // 3. Construct code.
+        add(haskell_vars, arg_result.haskell_vars);
+        add(result.lambda_vars, arg_result.lambda_vars);
+
+        // (x, log_x) <- arg_result
+        perform_action_simplified(result, x, log_x, true, arg_result, var_name);
+        auto type = var_exp.ann.type;
+        if (x_is_random and is_loggable_type(type))
+            result.code.log_value(var_name, x, type);
+
+        // 4. Put x into the scope for the next decl.
+        extend_modify_scope(var_name, var_info);
     }
 
     result.haskell_vars = haskell_vars;
@@ -1153,4 +1197,30 @@ translation_result_t CodeGenState::get_model_as(const ptree& model_rep) const
 
     // 9. Functions
     return get_model_function(model_rep);
+}
+
+// Dispatches typed expressions by AST variant.  Each branch is still a local
+// compatibility fallback until its variant has native codegen.
+translation_result_t CodeGenState::get_model_as(const CM::TypedExpr& model_rep) const
+{
+    auto fallback = [&]() {
+        return get_model_as(CM::annotated_ptree_from_typed_model_expr(model_rep));
+    };
+
+    return std::visit(CM::overloaded{
+        [&](const CM::IntLiteral&) { return fallback(); },
+        [&](const CM::DoubleLiteral&) { return fallback(); },
+        [&](const CM::BoolLiteral&) { return fallback(); },
+        [&](const CM::StringLiteral&) { return fallback(); },
+        [&](const CM::Var&) { return fallback(); },
+        [&](const CM::ArgRef&) { return fallback(); },
+        [&](const CM::Placeholder&) { return fallback(); },
+        [&](const CM::GetState&) { return fallback(); },
+        [&](const CM::Call<CM::Ann>&) { return fallback(); },
+        [&](const CM::List<CM::Ann>&) { return fallback(); },
+        [&](const CM::Tuple<CM::Ann>&) { return fallback(); },
+        [&](const CM::Let<CM::Ann>&) { return fallback(); },
+        [&](const CM::Lambda<CM::Ann>&) { return fallback(); },
+        [&](const CM::Sample<CM::Ann>&) { return fallback(); }
+    }, model_rep.node);
 }
