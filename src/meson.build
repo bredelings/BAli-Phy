@@ -166,7 +166,6 @@ endif
 
 model_expr_test = executable('model-expr-test',
                              'models/model-expr-test.cc',
-                             'models/model-expr-ptree.cc',
                              include_directories: [root_inc, libutil_inc],
                              dependencies: [boost, libxxhash, eigen, libdl, math_dep, librange, immer, fmt, cereal],
                              link_with: [libbaliphy, libcomputation, libcommon, libmcon, libutil])

@@ -1,5 +1,4 @@
 #include "models/model-expr.H"
-#include "models/model-expr-ptree.H"
 #include "models/compile.H"
 #include "models/parse.H"
 #include "models/rules.H"
@@ -16,6 +15,8 @@
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace
 {
@@ -23,9 +24,15 @@ namespace
 using namespace CmdModel;
 
 // Builds a small untyped variable expression for AST unit tests.
-UntypedExpr var_expr(const std::string& name)
+UntypedExpr var_expr(std::string name)
 {
-    return {NoAnn{}, Var{name}};
+    return {NoAnn{}, Var{std::move(name)}};
+}
+
+// Builds a small untyped argument-reference expression for AST unit tests.
+UntypedExpr arg_ref_expr(std::string name)
+{
+    return {NoAnn{}, ArgRef{std::move(name)}};
 }
 
 // Builds a small untyped integer expression for AST unit tests.
@@ -34,10 +41,131 @@ UntypedExpr int_expr(int value)
     return {NoAnn{}, IntLiteral{value}};
 }
 
+// Builds a small untyped double expression for AST unit tests.
+UntypedExpr double_expr(double value)
+{
+    return {NoAnn{}, DoubleLiteral{value}};
+}
+
+// Builds a small untyped boolean expression for AST unit tests.
+UntypedExpr bool_expr(bool value)
+{
+    return {NoAnn{}, BoolLiteral{value}};
+}
+
+// Builds a small untyped string expression for AST unit tests.
+UntypedExpr string_expr(std::string value)
+{
+    return {NoAnn{}, StringLiteral{std::move(value)}};
+}
+
+// Builds a small untyped get_state expression for AST unit tests.
+UntypedExpr get_state_expr(std::string name)
+{
+    return {NoAnn{}, GetState{std::move(name)}};
+}
+
 // Wraps an untyped expression as a positional call argument.
 Arg<NoAnn> positional_arg(UntypedExpr value)
 {
     return {"", CmdModel::Box<UntypedExpr>(std::move(value)), false, false, std::nullopt};
+}
+
+// Wraps an untyped expression as a named call argument.
+Arg<NoAnn> named_arg(std::string name, UntypedExpr value)
+{
+    return {std::move(name), CmdModel::Box<UntypedExpr>(std::move(value)), false, false, std::nullopt};
+}
+
+// Builds an untyped call expression from a function name and argument edges.
+UntypedExpr call_expr(std::string function, std::vector<Arg<NoAnn>> args)
+{
+    return {NoAnn{}, Call<NoAnn>{std::move(function), std::move(args)}};
+}
+
+// Builds an untyped list expression from element expressions.
+UntypedExpr list_expr(std::vector<UntypedExpr> elements)
+{
+    return {NoAnn{}, List<NoAnn>{std::move(elements)}};
+}
+
+// Builds an untyped tuple expression from element expressions.
+UntypedExpr tuple_expr(std::vector<UntypedExpr> elements)
+{
+    return {NoAnn{}, Tuple<NoAnn>{std::move(elements)}};
+}
+
+// Builds an untyped let expression from declarations and a body expression.
+UntypedExpr let_expr(Decls<NoAnn> decls, UntypedExpr body)
+{
+    return {NoAnn{}, Let<NoAnn>{std::move(decls), CmdModel::Box<UntypedExpr>(std::move(body))}};
+}
+
+// Builds an untyped variable pattern for lambda tests.
+UntypedPattern var_pattern(std::string name)
+{
+    return {NoAnn{}, VarPattern{std::move(name)}};
+}
+
+// Builds an untyped tuple pattern for lambda tests.
+UntypedPattern tuple_pattern(std::vector<UntypedPattern> elements)
+{
+    return {NoAnn{}, TuplePattern<NoAnn>{std::move(elements)}};
+}
+
+// Builds an untyped lambda expression from a pattern and body expression.
+UntypedExpr lambda_expr(UntypedPattern pattern, UntypedExpr body)
+{
+    return {NoAnn{}, Lambda<NoAnn>{CmdModel::Box<UntypedPattern>(std::move(pattern)), CmdModel::Box<UntypedExpr>(std::move(body))}};
+}
+
+// Builds an untyped sample expression from a distribution expression.
+UntypedExpr sample_expr(UntypedExpr dist)
+{
+    return {NoAnn{}, Sample<NoAnn>{CmdModel::Box<UntypedExpr>(std::move(dist))}};
+}
+
+// Builds a typed model AST annotation with explicit metadata defaults.
+Ann expr_ann(ptree type, std::set<std::string> used_args = {}, bool no_log = false, std::optional<std::string> extract = {})
+{
+    return {std::move(type), std::move(used_args), no_log, std::move(extract)};
+}
+
+// Builds a typed expression from an annotation type and a concrete AST node.
+template<class Node>
+TypedExpr typed_expr(ptree type, Node node, std::set<std::string> used_args = {})
+{
+    return {expr_ann(std::move(type), std::move(used_args)), std::move(node)};
+}
+
+// Wraps a typed expression as a positional typed call argument.
+Arg<Ann> typed_positional_arg(TypedExpr value)
+{
+    return {"", CmdModel::Box<TypedExpr>(std::move(value)), false, false, std::nullopt};
+}
+
+// Wraps a typed expression as a named typed call argument with optional edge
+// metadata.
+Arg<Ann> typed_named_arg(std::string name, TypedExpr value, bool is_default = false, bool suppress_default = false, std::optional<TypedExpr> alphabet = {})
+{
+    std::optional<CmdModel::Box<TypedExpr>> alphabet_box;
+    if (alphabet)
+        alphabet_box = CmdModel::Box<TypedExpr>(std::move(*alphabet));
+
+    return {
+        std::move(name),
+        CmdModel::Box<TypedExpr>(std::move(value)),
+        is_default,
+        suppress_default,
+        std::move(alphabet_box)
+    };
+}
+
+// Builds a typed call expression from a function name, argument edges, and
+// annotation metadata.
+TypedExpr typed_call_expr(std::string function, std::vector<Arg<Ann>> args, ptree type, bool no_log = false, std::optional<std::string> extract = {})
+{
+    return {expr_ann(std::move(type), {}, no_log, std::move(extract)), Call<Ann>{std::move(function), std::move(args)}};
 }
 
 // Checks that copying recursive AST nodes performs deep copies of boxed
@@ -95,134 +223,12 @@ void expect_invariant_failure(const UntypedExpr& expr)
     assert(false);
 }
 
-// Exercises structural invariant checks that are independent of typechecking.
-void test_invariants()
-{
-    UntypedExpr tuple{
-        NoAnn{},
-        Tuple<NoAnn>{{int_expr(1), int_expr(2)}}
-    };
-    check_invariants(tuple);
-
-    UntypedExpr one_element_tuple{
-        NoAnn{},
-        Tuple<NoAnn>{{int_expr(1)}}
-    };
-    expect_invariant_failure(one_element_tuple);
-
-}
-
-// Requires one untyped ptree expression to survive AST conversion and back.
-void expect_round_trip(const ptree& p)
-{
-    auto expr = model_expr_from_ptree(p);
-    auto p2 = ptree_from_model_expr(expr);
-    assert(p2 == p);
-}
-
-// Verifies that a null ptree is not a model expression, while null call
-// arguments remain round-trippable absent values.
-void test_absent_argument_values()
+// Requires check_invariants() to reject one malformed untyped pattern.
+void expect_pattern_invariant_failure(const UntypedPattern& pattern)
 {
     try
     {
-        (void)model_expr_from_ptree(ptree());
-        assert(false);
-    }
-    catch(const std::logic_error&)
-    {}
-
-    auto expr = model_expr_from_ptree(ptree("f", {
-        {"x", ptree()},
-        {"y", ptree(2)}
-    }));
-    auto& call = std::get<Call<NoAnn>>(expr.node);
-    assert(not call.args[0].value);
-    assert(call.args[1].value);
-    assert(ptree_from_model_expr(expr) == ptree("f", {
-        {"x", ptree()},
-        {"y", ptree(2)}
-    }));
-}
-
-// Exercises untyped AST round trips for scalar literals and variable-like nodes.
-void test_scalar_round_trips()
-{
-    expect_round_trip(ptree(1));
-    expect_round_trip(ptree(1.5));
-    expect_round_trip(ptree(true));
-    expect_round_trip(ptree("\"abc\""));
-    expect_round_trip(ptree("x"));
-    expect_round_trip(ptree("@arg"));
-    expect_round_trip(ptree("_"));
-}
-
-// Exercises untyped AST round trips for ordinary and operator call nodes.
-void test_call_round_trips()
-{
-    expect_round_trip(ptree("f", {
-        {"", ptree("x")},
-        {"y", ptree(2)}
-    }));
-
-    expect_round_trip(ptree("f", {
-        {"x", ptree()},
-        {"y", ptree(2)}
-    }));
-
-    expect_round_trip(ptree("+", {
-        {"", ptree(1)},
-        {"", ptree(2)}
-    }));
-}
-
-// Exercises untyped AST round trips for list and tuple nodes.
-void test_collection_round_trips()
-{
-    expect_round_trip(ptree("List", {
-        {"", ptree(1)},
-        {"", ptree("x")}
-    }));
-
-    expect_round_trip(ptree("List", {
-        {"", ptree("Tuple", {{"", ptree("a")}, {"", ptree(1)}})},
-        {"", ptree("Tuple", {{"", ptree("b")}, {"", ptree(2)}})}
-    }));
-
-    expect_round_trip(ptree("Tuple", {
-        {"", ptree(1)},
-        {"", ptree("\"two\"")}
-    }));
-}
-
-// Exercises untyped AST round trips for let, lambda, sample, and get_state.
-void test_special_form_round_trips()
-{
-    expect_round_trip(ptree("sample", {
-        {"", ptree("normal", {{"", ptree(0)}, {"", ptree(1)}})}
-    }));
-
-    expect_round_trip(ptree("!let", {
-        {"decls", ptree("!Decls", {{"x", ptree(1)}})},
-        {"body", ptree("x")}
-    }));
-
-    expect_round_trip(ptree("function", {
-        {"", ptree("x")},
-        {"", ptree("+", {{"", ptree("x")}, {"", ptree(1)}})}
-    }));
-
-    expect_round_trip(ptree("get_state", {
-        {"", ptree("tree")}
-    }));
-}
-
-// Requires one malformed untyped ptree to fail AST conversion.
-void expect_conversion_failure(const ptree& p)
-{
-    try
-    {
-        (void)model_expr_from_ptree(p);
+        check_invariants(pattern);
     }
     catch (const std::logic_error&)
     {
@@ -231,122 +237,36 @@ void expect_conversion_failure(const ptree& p)
     assert(false);
 }
 
-// Checks malformed legacy ptree shapes are rejected by the AST converter.
-void test_malformed_ptree_rejections()
+// Exercises structural invariant checks that are independent of typechecking.
+void test_invariants()
 {
-    expect_conversion_failure(ptree("Tuple", {{"", ptree(1)}}));
-    expect_conversion_failure(ptree("!let", {{"decls", ptree("!Decls")}}));
-    expect_conversion_failure(ptree("function", {{"", ptree("x")}}));
-    expect_conversion_failure(ptree("sample", {{"", ptree("x")}, {"", ptree("y")}}));
-    expect_conversion_failure(ptree("get_state", {{"", ptree(1)}}));
+    check_invariants(tuple_expr({int_expr(1), int_expr(2)}));
+    expect_invariant_failure(tuple_expr({int_expr(1)}));
+
+    check_invariants(tuple_pattern({var_pattern("x"), var_pattern("y")}));
+    expect_pattern_invariant_failure(tuple_pattern({var_pattern("x")}));
 }
 
-// Builds a legacy used_args annotation ptree for typed round-trip tests.
-ptree used_args(std::initializer_list<std::string> args)
+// Verifies that absent call-argument values are represented on argument edges
+// without pretending to be expressions.
+void test_absent_argument_values()
 {
-    ptree result;
-    for(auto& arg: args)
-        result.children().push_back({"", ptree(arg)});
-    return result;
+    UntypedExpr expr{
+        NoAnn{},
+        Call<NoAnn>{
+            "f",
+            {
+                {"x", std::nullopt, false, false, std::nullopt},
+                named_arg("y", int_expr(2))
+            }
+        }
+    };
+    auto& call = std::get<Call<NoAnn>>(expr.node);
+    assert(not call.args[0].value);
+    assert(call.args[1].value);
 }
 
-// Builds a minimal annotated expression ptree for typed converter tests.
-ptree ann(ptree value, ptree type, std::initializer_list<std::string> args = {})
-{
-    return ptree({
-        {"value", value},
-        {"type", type},
-        {"used_args", used_args(args)}
-    });
-}
-
-// Builds a minimal annotated call-argument ptree for typed converter tests.
-ptree arg_ann(ptree value, ptree type, std::initializer_list<std::string> args = {})
-{
-    auto result = ann(std::move(value), std::move(type), args);
-    result.children().push_back({"is_default_value", ptree(false)});
-    return result;
-}
-
-// Requires one annotated ptree expression to survive typed AST conversion.
-void expect_typed_round_trip(const ptree& p)
-{
-    auto expr = typed_model_expr_from_annotated_ptree(p);
-    auto p2 = annotated_ptree_from_typed_model_expr(expr);
-    assert(p2 == p);
-}
-
-// Exercises typed AST round trips for scalar literals and variable-like nodes.
-void test_typed_scalar_round_trips()
-{
-    expect_typed_round_trip(ann(ptree(1), ptree("Int")));
-    expect_typed_round_trip(ann(ptree(1.5), ptree("Double")));
-    expect_typed_round_trip(ann(ptree(true), ptree("Bool")));
-    expect_typed_round_trip(ann(ptree("\"abc\""), ptree("String")));
-    expect_typed_round_trip(ann(ptree("x"), ptree("Int"), {"x"}));
-    expect_typed_round_trip(ann(ptree("@arg"), ptree("Double"), {"arg"}));
-    expect_typed_round_trip(ann(ptree("_"), ptree("a")));
-}
-
-// Checks that typed argument metadata survives conversion through the AST.
-void test_typed_argument_metadata_round_trip()
-{
-    auto arg_x = ann(ptree("x"), ptree("Double"), {"x"});
-    arg_x.children().push_back({"is_default_value", ptree(true)});
-    arg_x.children().push_back({"suppress_default", ptree(true)});
-
-    auto alphabet = ann(ptree("dna"), ptree("Alphabet"));
-    arg_x.children().push_back({"alphabet", alphabet});
-
-    auto arg_y = ann(ptree(2), ptree("Int"));
-    arg_y.children().push_back({"is_default_value", ptree(false)});
-
-    auto model = ann(ptree("f", {
-        {"x", arg_x},
-        {"", arg_y}
-    }), ptree("Model"), {"x"});
-    model.children().push_back({"no_log", ptree(true)});
-    model.children().push_back({"extract", ptree("all")});
-
-    expect_typed_round_trip(model);
-}
-
-// Exercises typed AST round trips for collections and model special forms.
-void test_typed_collection_and_special_round_trips()
-{
-    expect_typed_round_trip(ann(ptree("List", {
-        {"", ann(ptree(1), ptree("Int"))},
-        {"", ann(ptree(2), ptree("Int"))}
-    }), ptree("List", {{"", ptree("Int")}})));
-
-    expect_typed_round_trip(ann(ptree("Tuple", {
-        {"", ann(ptree(1), ptree("Int"))},
-        {"", ann(ptree("\"two\""), ptree("String"))}
-    }), ptree("Tuple", {{"", ptree("Int")}, {"", ptree("String")}})));
-
-    expect_typed_round_trip(ann(ptree("sample", {
-        {"dist", arg_ann(ptree("normal", {
-            {"", arg_ann(ptree(0), ptree("Double"))},
-            {"", arg_ann(ptree(1), ptree("Double"))}
-        }), ptree("Distribution", {{"", ptree("Double")}}))}
-    }), ptree("Double")));
-
-    expect_typed_round_trip(ann(ptree("!let", {
-        {"decls", ptree("!Decls", {{"x", ann(ptree(1), ptree("Int"))}})},
-        {"body", ann(ptree("x"), ptree("Int"), {"x"})}
-    }), ptree("Int"), {"x"}));
-
-    expect_typed_round_trip(ann(ptree("function", {
-        {"", ann(ptree("x"), ptree("Int"))},
-        {"", ann(ptree("x"), ptree("Int"), {"x"})}
-    }), ptree("Function", {{"", ptree("Int")}, {"", ptree("Int")}}), {"x"}));
-
-    expect_typed_round_trip(ann(ptree("get_state", {
-        {"", ann(ptree("tree"), ptree("String"))}
-    }), ptree("Tree")));
-}
-
-// Checks parser wrappers produce the same ASTs as direct ptree conversion.
+// Checks parser wrappers now return native model AST nodes.
 void test_parser_wrappers()
 {
     Rules rules({});
@@ -360,89 +280,72 @@ void test_parser_wrappers()
     assert(decls[1].first == "y");
 }
 
-// Requires untyped AST unparsing to match legacy ptree unparsing.
-void expect_unparse_parity(const ptree& p)
-{
-    auto expr = model_expr_from_ptree(p);
-    assert(unparse(expr) == unparse(p));
-}
-
-// Exercises untyped AST pretty-printing parity for representative syntax.
+// Exercises untyped AST pretty-printing for representative syntax.
 void test_untyped_pretty_printing()
 {
-    expect_unparse_parity(ptree(1));
-    expect_unparse_parity(ptree(1.5));
-    expect_unparse_parity(ptree(true));
-    expect_unparse_parity(ptree("\"abc\""));
-    expect_unparse_parity(ptree("x"));
-    expect_unparse_parity(ptree("f", {{"", ptree(1)}, {"", ptree("x")}}));
-    expect_unparse_parity(ptree("+", {{"", ptree(1)}, {"", ptree(2)}}));
-    expect_unparse_parity(ptree("sample", {{"", ptree("normal", {{"", ptree(0)}, {"", ptree(1)}})}}));
+    assert(unparse(int_expr(1)) == "1");
+    assert(unparse(double_expr(1.5)) == "1.5");
+    assert(unparse(bool_expr(true)) == "true");
+    assert(unparse(string_expr("abc")) == "\"abc\"");
+    assert(unparse(var_expr("x")) == "x");
+    assert(unparse(arg_ref_expr("arg")) == "@arg");
 
-    auto expr = model_expr_from_ptree(ptree("!let", {
-        {"decls", ptree("!Decls", {{"x", ptree(1)}})},
-        {"body", ptree("x")}
-    }));
+    assert(unparse(call_expr("f", {positional_arg(int_expr(1)), positional_arg(var_expr("x"))})) == "f(1, x)");
+    assert(unparse(call_expr("+", {positional_arg(int_expr(1)), positional_arg(int_expr(2))})) == "1+2");
+    assert(unparse(sample_expr(call_expr("normal", {positional_arg(int_expr(0)), positional_arg(int_expr(1))}))) == "~normal(0, 1)");
+
+    auto expr = let_expr({{"x", int_expr(1)}}, var_expr("x"));
     assert(unparse(expr) == "x where {x = 1}");
 
-    auto decls = model_decls_from_ptree(ptree("!Decls", {
-        {"x", ptree(1)},
-        {"y", ptree("+", {{"", ptree("x")}, {"", ptree(1)}})}
-    }));
+    Decls<NoAnn> decls{
+        {"x", int_expr(1)},
+        {"y", call_expr("+", {positional_arg(var_expr("x")), positional_arg(int_expr(1))})}
+    };
     assert(unparse(decls) == "x = 1; y = x+1");
 
-    assert(show_model(model_expr_from_ptree(ptree("sample", {{"", ptree("normal")}}))) == "~ normal");
-    assert(show_model(model_expr_from_ptree(ptree("x"))) == "= x");
+    assert(show_model(sample_expr(var_expr("normal"))) == "~ normal");
+    assert(show_model(var_expr("x")) == "= x");
 }
 
-// Requires typed AST unparsing to match legacy annotated-ptree unparsing.
-void expect_typed_unparse_parity(const ptree& p)
-{
-    auto expr = typed_model_expr_from_annotated_ptree(p);
-    assert(unparse_annotated(expr) == unparse_annotated(p));
-}
-
-// Exercises typed AST pretty-printing parity for representative syntax.
+// Exercises typed AST pretty-printing directly, without a ptree conversion
+// oracle.
 void test_typed_pretty_printing()
 {
-    expect_typed_unparse_parity(ann(ptree(1), ptree("Int")));
-    expect_typed_unparse_parity(ann(ptree("\"abc\""), ptree("String")));
-    expect_typed_unparse_parity(ann(ptree("+", {
-        {"", arg_ann(ptree(1), ptree("Int"))},
-        {"", arg_ann(ptree(2), ptree("Int"))}
-    }), ptree("Int")));
+    assert(unparse_annotated(typed_expr(ptree("Int"), IntLiteral{1})) == "1");
+    assert(unparse_annotated(typed_expr(ptree("String"), StringLiteral{"abc"})) == "\"abc\"");
 
-    expect_typed_unparse_parity(ann(ptree("List", {
-        {"", ann(ptree("Tuple", {
-            {"", ann(ptree("a"), ptree("Text"))},
-            {"", ann(ptree(1), ptree("Int"))}
-        }), ptree("Tuple", {{"", ptree("Text")}, {"", ptree("Int")}}))},
-        {"", ann(ptree("Tuple", {
-            {"", ann(ptree("b"), ptree("Text"))},
-            {"", ann(ptree(2), ptree("Int"))}
-        }), ptree("Tuple", {{"", ptree("Text")}, {"", ptree("Int")}}))}
-    }), ptree("List", {{"", ptree("Tuple")}})));
+    auto add = typed_call_expr("+", {
+        typed_positional_arg(typed_expr(ptree("Int"), IntLiteral{1})),
+        typed_positional_arg(typed_expr(ptree("Int"), IntLiteral{2}))
+    }, ptree("Int"));
+    assert(unparse_annotated(add) == "1+2");
 
-    auto default_state = ann(ptree("get_state", {
-        {"", ann(ptree("alphabet"), ptree("String"))}
-    }), ptree("Alphabet"));
-    default_state.children().push_back({"is_default_value", ptree(true)});
+    auto pair_type = make_type_apps("Tuple", {ptree("Text"), ptree("Int")});
+    auto list_type = make_type_app("List", pair_type);
+    TypedExpr pairs{
+        expr_ann(list_type),
+        List<Ann>{{
+            typed_expr(pair_type, Tuple<Ann>{{typed_expr(ptree("Text"), Var{"a"}), typed_expr(ptree("Int"), IntLiteral{1})}}),
+            typed_expr(pair_type, Tuple<Ann>{{typed_expr(ptree("Text"), Var{"b"}), typed_expr(ptree("Int"), IntLiteral{2})}})
+        }}
+    };
+    assert(unparse_annotated(pairs) == "[(a, 1), (b, 2)]");
 
-    auto suppressed = arg_ann(ptree(1), ptree("Int"));
-    suppressed.get_child("is_default_value") = ptree(true);
-    suppressed.children().push_back({"suppress_default", ptree(true)});
+    auto default_state = typed_expr(ptree("Alphabet"), GetState{"alphabet"});
+    auto hidden_default = typed_expr(ptree("Int"), IntLiteral{1});
+    auto call = typed_call_expr("f", {
+        typed_named_arg("alphabet", std::move(default_state), true),
+        typed_named_arg("n", std::move(hidden_default), true, true)
+    }, ptree("Model"));
+    assert(unparse_annotated(call) == "f");
 
-    expect_typed_unparse_parity(ann(ptree("f", {
-        {"alphabet", default_state},
-        {"n", suppressed}
-    }), ptree("Model")));
-
-    auto sample = ann(ptree("sample", {{"dist", arg_ann(ptree("normal"), ptree("Distribution", {{"", ptree("Double")}}))}}), ptree("Double"));
-    assert(show_model_annotated(typed_model_expr_from_annotated_ptree(sample)) == show_model_annotated(sample));
+    auto sample = typed_expr(
+        ptree("Double"),
+        Sample<Ann>{CmdModel::Box<TypedExpr>(typed_expr(make_type_app("Distribution", ptree("Double")), Var{"normal"}))}
+    );
+    assert(show_model_annotated(sample) == "~ normal");
 }
 
-// Checks that solved type equations are substituted through typed AST nodes,
-// argument edges, optional alphabets, and declarations.
 // Checks solved type equations propagate through typed AST annotations.
 void test_typed_substitution()
 {
@@ -512,72 +415,54 @@ TypecheckingState test_typechecker(const Rules& rules, const std::map<std::strin
     return TypecheckingState(rules, std::make_shared<FVSource>(), identifiers, state);
 }
 
-// Requires AST expression typechecking to produce an annotated tree that still
-// survives the legacy annotated-ptree conversion boundary used by tests.
-void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
+// Requires AST expression typechecking to produce a typed expression with the
+// requested top-level type after substituting solved equations.
+void expect_typecheck_expr(const Rules& rules, const ptree& required_type, const UntypedExpr& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
 {
-    auto untyped = model_expr_from_ptree(model);
-
-    auto ast_TC = test_typechecker(rules, identifiers, state);
-    auto typed = typecheck_model_expr(ast_TC, required_type, untyped);
-
-    auto expected = annotated_ptree_from_typed_model_expr(
-        typed_model_expr_from_annotated_ptree(annotated_ptree_from_typed_model_expr(typed))
-    );
-
-    auto actual = annotated_ptree_from_typed_model_expr(typed);
-    if (not (actual == expected))
-    {
-        std::cerr<<"typecheck wrapper parity mismatch for "<<model.show(false)<<"\n";
-        std::cerr<<"actual:\n"<<actual.show(false)<<"\n";
-        std::cerr<<"expected:\n"<<expected.show(false)<<"\n";
-        assert(false);
-    }
+    auto TC = test_typechecker(rules, identifiers, state);
+    auto typed = typecheck_model_expr(TC, required_type, model);
+    substitute_annotated(TC.eqs, typed);
+    assert(typed.ann.type == required_type);
 }
 
-// Requires AST expression typechecking parity using the standard test rules.
-void expect_typecheck_expr_parity(const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
+// Requires AST expression typechecking with the standard empty rule set.
+void expect_typecheck_expr(const ptree& required_type, const UntypedExpr& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
 {
     Rules rules({});
-    expect_typecheck_expr_parity(rules, required_type, model, identifiers, state);
+    expect_typecheck_expr(rules, required_type, model, identifiers, state);
 }
 
-// Exercises representative expression typechecking cases against the legacy
-// ptree typechecker oracle.
-// Exercises AST typechecker parity for constants, variables, collections, and
-// direct function-variable cases.
-void test_typecheck_expr_wrapper_parity()
+// Exercises direct AST typechecking for constants, variables, collections,
+// lambda patterns, state, lets, and function-variable calls.
+void test_typecheck_exprs()
 {
-    expect_typecheck_expr_parity(ptree("Int"), ptree("x"), {{"x", ptree("Int")}});
-    expect_typecheck_expr_parity(ptree("Int"), ptree(1));
-    expect_typecheck_expr_parity(
+    expect_typecheck_expr(ptree("Int"), var_expr("x"), {{"x", ptree("Int")}});
+    expect_typecheck_expr(ptree("Int"), int_expr(1));
+    expect_typecheck_expr(
         make_type_apps("List", {ptree("Int")}),
-        ptree("List", {{"", ptree(1)}, {"", ptree(2)}})
+        list_expr({int_expr(1), int_expr(2)})
     );
-    expect_typecheck_expr_parity(
+    expect_typecheck_expr(
         make_type_apps("Tuple", {ptree("Int"), ptree("Bool")}),
-        ptree("Tuple", {{"", ptree(1)}, {"", ptree(true)}})
+        tuple_expr({int_expr(1), bool_expr(true)})
     );
-    expect_typecheck_expr_parity(
+    expect_typecheck_expr(
         ptree("Alphabet"),
-        ptree("get_state", {{"", ptree("alphabet")}}),
+        get_state_expr("alphabet"),
         {},
         {{"alphabet", ptree("Alphabet")}}
     );
-    expect_typecheck_expr_parity(
+    expect_typecheck_expr(
         ptree("Int"),
-        ptree("!let", {
-            {"decls", ptree("!Decls", {{"x", ptree(1)}})},
-            {"body", ptree("x")}
-        })
+        let_expr({{"x", int_expr(1)}}, var_expr("x"))
     );
-    expect_typecheck_expr_parity(
+    expect_typecheck_expr(
         make_type_apps("Function", {ptree("Int"), ptree("Int")}),
-        ptree("function", {{"", ptree("x")}, {"", ptree("x")}})
+        lambda_expr(var_pattern("x"), var_expr("x"))
     );
-    expect_typecheck_expr_parity(
+    expect_typecheck_expr(
         ptree("Double"),
-        ptree("f", {{"", ptree(1)}}),
+        call_expr("f", {positional_arg(int_expr(1))}),
         {{"f", make_type_apps("Function", {ptree("Int"), ptree("Double")})}}
     );
 }
@@ -590,33 +475,32 @@ void test_typecheck_variable_function_used_args()
 
     // Typechecks one variable-function call and checks the exact used_args set
     // on the typed result.
-    auto expect_used_args = [&](const ptree& model, const std::map<std::string,ptree>& identifiers, const std::map<std::string,ptree>& args, const std::set<std::string>& expected)
+    auto expect_used_args = [&](const UntypedExpr& model, const std::map<std::string,ptree>& identifiers, const std::map<std::string,ptree>& args, const std::set<std::string>& expected)
     {
         auto TC = test_typechecker(rules, identifiers);
         TC.args = args;
-        auto typed = typecheck_model_expr(TC, ptree("Double"), model_expr_from_ptree(model));
+        auto typed = typecheck_model_expr(TC, ptree("Double"), model);
         assert(typed.ann.used_args == expected);
     };
 
     auto f_type = make_type_apps("Function", {ptree("Int"), ptree("Double")});
     expect_used_args(
-        ptree("f", {{"", ptree("@x")}}),
+        call_expr("f", {positional_arg(arg_ref_expr("x"))}),
         {{"f", f_type}},
         {{"x", ptree("Int")}},
         {"x"}
     );
 
     expect_used_args(
-        ptree("@f", {{"", ptree("@x")}}),
+        call_expr("@f", {positional_arg(arg_ref_expr("x"))}),
         {},
         {{"f", f_type}, {"x", ptree("Int")}},
         {"f", "x"}
     );
 }
 
-// Verifies expression typechecker failures that are intentionally clearer
-// than the old fallback-to-ptree behavior.
-// Checks direct AST typechecker diagnostics for unsupported expression cases.
+// Verifies expression typechecker failures that are intentionally clearer than
+// old fallback-to-ptree behavior.
 void test_typecheck_direct_errors()
 {
     Rules rules({});
@@ -638,12 +522,12 @@ void test_typecheck_direct_errors()
     };
 
     expect_error(ptree("Int"), CM::UntypedExpr{NoAnn{}, Placeholder{}}, "Placeholder '_'");
-    expect_error(ptree("Int"), model_expr_from_ptree(ptree("unknown", {{"", ptree(1)}})), "No direct typechecker");
+    expect_error(ptree("Int"), call_expr("unknown", {positional_arg(int_expr(1))}), "No direct typechecker");
 }
 
-// Test workaround: Rules currently load only from binding files, so these
-// parity tests create a tiny temporary package.  Replace with an in-memory
-// Rules builder if the production loader grows one.
+// Test workaround: Rules currently load only from binding files, so these tests
+// create a tiny temporary package.  Replace with an in-memory Rules builder if
+// the production loader grows one.
 std::filesystem::path make_rule_fixture()
 {
     auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
@@ -785,62 +669,61 @@ std::filesystem::path make_rule_fixture()
     return root;
 }
 
-void test_typecheck_decls_wrapper(const Rules& rules);
+void test_typecheck_decls(const Rules& rules);
 
-// Verifies rule-backed calls, defaults, alphabets, and conversion calls against
-// a temporary binding-file fixture.
-// Exercises AST rule-call typechecker parity for defaults, alphabets, and
-// conversion cases using the temporary binding fixture.
-void test_typecheck_rule_wrapper_parity()
+// Verifies rule-backed calls, defaults, alphabets, and conversion calls using
+// direct AST inputs and a temporary binding-file fixture.
+void test_typecheck_rule_calls()
 {
     auto root = make_rule_fixture();
     try
     {
         Rules rules({root});
-        expect_typecheck_expr_parity(
+        expect_typecheck_expr(
             rules,
             ptree("Int"),
-            ptree("fixture_model", {{"x", ptree(1)}, {"z", ptree(3)}}),
+            call_expr("fixture_model", {named_arg("x", int_expr(1)), named_arg("z", int_expr(3))}),
             {{"dna", ptree("Alphabet")}}
         );
-        expect_typecheck_expr_parity(rules, ptree("Double"), ptree(1));
-        expect_typecheck_expr_parity(rules, ptree("Int"), ptree("zero"));
-        expect_typecheck_expr_parity(rules, ptree("Double"), ptree("sample", {
-            {"dist", ptree("normal", {{"mu", ptree(0)}, {"sigma", ptree(1)}})}
-        }));
-        expect_typecheck_expr_parity(
+        expect_typecheck_expr(rules, ptree("Double"), int_expr(1));
+        expect_typecheck_expr(rules, ptree("Int"), var_expr("zero"));
+        expect_typecheck_expr(rules, ptree("Double"), sample_expr(call_expr("normal", {
+            named_arg("mu", int_expr(0)),
+            named_arg("sigma", int_expr(1))
+        })));
+        expect_typecheck_expr(
             rules,
             make_type_app("DiscreteDist", ptree("Int")),
-            ptree("List", {
-                {"", ptree("Tuple", {{"", ptree(1)}, {"", ptree(0.25)}})},
-                {"", ptree("Tuple", {{"", ptree(2)}, {"", ptree(0.75)}})}
+            list_expr({
+                tuple_expr({int_expr(1), double_expr(0.25)}),
+                tuple_expr({int_expr(2), double_expr(0.75)})
             })
         );
-        expect_typecheck_expr_parity(
+        expect_typecheck_expr(
             rules,
             make_type_app("Distribution", ptree("Int")),
-            ptree("d"),
+            var_expr("d"),
             {{"d", make_type_app("DiscreteDist", ptree("Int"))}}
         );
-        expect_typecheck_expr_parity(
+        expect_typecheck_expr(
             rules,
             make_type_app("DiscreteDist", make_type_app("CTMC", ptree("AA"))),
-            ptree("m"),
+            var_expr("m"),
             {{"m", make_type_app("CTMC", ptree("AA"))}}
         );
-        expect_typecheck_expr_parity(
+        expect_typecheck_expr(
             rules,
             make_type_app("MultiMixtureModel", ptree("AA")),
-            ptree("m"),
+            var_expr("m"),
             {{"m", make_type_app("CTMC", ptree("AA"))}}
         );
-        expect_typecheck_expr_parity(
+        expect_typecheck_expr(
             rules,
             make_type_app("CTMC", ptree("AA")),
-            ptree("s"),
+            var_expr("s"),
             {{"s", make_type_app("ExchangeModel", ptree("AA"))}}
         );
-        test_typecheck_decls_wrapper(rules);
+        test_typecheck_decls(rules);
     }
     catch (...)
     {
@@ -851,24 +734,16 @@ void test_typecheck_rule_wrapper_parity()
 }
 
 // Exercises declaration typechecking directly through the AST declaration path.
-void test_typecheck_decls_wrapper(const Rules& rules)
+void test_typecheck_decls(const Rules& rules)
 {
-    // Checks that a declaration block typechecks and round-trips through the
-    // codegen-facing annotated ptree conversion.
-    auto expect_typed_decls = [&](const ptree& decls_ptree, std::vector<std::pair<std::string,ptree>> expected)
+    // Checks that a declaration block typechecks to the expected declaration
+    // names and substituted top-level types.
+    auto expect_typed_decls = [&](const Decls<NoAnn>& decls, std::vector<std::pair<std::string,ptree>> expected)
     {
-        auto decls = model_decls_from_ptree(decls_ptree);
-
         auto ast_TC = test_typechecker(rules);
         auto typed = typecheck_model_decls(ast_TC, decls);
         substitute_annotated(ast_TC.eqs, typed);
 
-        auto actual = annotated_ptree_from_typed_model_decls(typed);
-        auto round_trip = annotated_ptree_from_typed_model_decls(
-            typed_model_decls_from_annotated_ptree(actual)
-        );
-
-        assert(actual == round_trip);
         assert(typed.size() == expected.size());
         for(std::size_t i = 0; i < expected.size(); i++)
         {
@@ -877,84 +752,72 @@ void test_typecheck_decls_wrapper(const Rules& rules)
         }
     };
 
-    expect_typed_decls(ptree("!Decls", {{"x", ptree(1)}}), {{"x", ptree("Int")}});
-    expect_typed_decls(ptree("!Decls", {
-        {"x", ptree(1)},
-        {"y", ptree("x")}
-    }), {{"x", ptree("Int")}, {"y", ptree("Int")}});
-    expect_typed_decls(ptree("!Decls", {
-        {"xs", ptree("List", {{"", ptree(1)}, {"", ptree(2)}})},
-        {"pair", ptree("Tuple", {{"", ptree("xs")}, {"", ptree(true)}})}
-    }), {
+    expect_typed_decls({{"x", int_expr(1)}}, {{"x", ptree("Int")}});
+    expect_typed_decls({
+        {"x", int_expr(1)},
+        {"y", var_expr("x")}
+    }, {{"x", ptree("Int")}, {"y", ptree("Int")}});
+    expect_typed_decls({
+        {"xs", list_expr({int_expr(1), int_expr(2)})},
+        {"pair", tuple_expr({var_expr("xs"), bool_expr(true)})}
+    }, {
         {"xs", make_type_app("List", ptree("Int"))},
         {"pair", make_type_apps("Tuple", {make_type_app("List", ptree("Int")), ptree("Bool")})}
     });
-    expect_typed_decls(ptree("!Decls", {
-        {"x", ptree("!let", {
-            {"decls", ptree("!Decls", {{"y", ptree(1)}})},
-            {"body", ptree("y")}
-        })}
-    }), {{"x", ptree("Int")}});
+    expect_typed_decls({
+        {"x", let_expr({{"y", int_expr(1)}}, var_expr("y"))}
+    }, {{"x", ptree("Int")}});
     if (rules.get_rule_for_func("intToDouble"))
     {
-        expect_typed_decls(ptree("!Decls", {
-            {"x", ptree("intToDouble", {{"x", ptree(1)}})}
-        }), {{"x", ptree("Double")}});
+        expect_typed_decls({
+            {"x", call_expr("intToDouble", {named_arg("x", int_expr(1))})}
+        }, {{"x", ptree("Double")}});
     }
 }
 
 // Exercises declaration typechecking for declarations that do not need
 // binding-file rules.
-void test_typecheck_decls_wrapper()
+void test_typecheck_decls()
 {
     Rules rules({});
-    test_typecheck_decls_wrapper(rules);
+    test_typecheck_decls(rules);
 }
 
-// Checks that typed pretty extraction is stable across explicit ptree
-// conversion, without keeping a separate ptree pretty implementation.
-void expect_extraction_parity(const ptree& model)
+// Checks that typed pretty extraction consumes direct typed AST expressions.
+void test_extraction()
 {
-    auto typed = typed_model_expr_from_annotated_ptree(model);
-    auto roundtrip = typed_model_expr_from_annotated_ptree(annotated_ptree_from_typed_model_expr(typed));
-    auto ast_pretty = pretty_model_t(typed);
-    auto roundtrip_pretty = pretty_model_t(roundtrip);
+    auto scalar = pretty_model_t(typed_expr(ptree("Int"), IntLiteral{1}));
+    assert(scalar.show() == "1");
 
-    assert(ast_pretty.show() == roundtrip_pretty.show());
-    assert(ast_pretty.show_main() == roundtrip_pretty.show_main());
-    assert(ast_pretty.show_extracted() == roundtrip_pretty.show_extracted());
-}
+    auto dist_type = make_type_app("Distribution", ptree("Double"));
+    auto sampled_arg = typed_expr(
+        ptree("Double"),
+        Sample<Ann>{CmdModel::Box<TypedExpr>(typed_expr(dist_type, Var{"normal"}))}
+    );
+    auto model = typed_call_expr("f", {typed_named_arg("x", sampled_arg)}, ptree("Model"));
+    auto pretty = pretty_model_t(model);
+    assert(pretty.show_main() == "f");
+    assert(pretty.show_extracted().find("f:x") != std::string::npos);
 
-// Exercises AST extraction for non-models, random args, no_log, extract=all,
-// lets, and argument-edge alphabet metadata.
-void test_extraction_parity()
-{
-    expect_extraction_parity(ann(ptree(1), ptree("Int")));
+    auto no_log = typed_call_expr("f", {typed_named_arg("x", sampled_arg)}, ptree("Model"), true);
+    auto pretty_no_log = pretty_model_t(no_log);
+    assert(pretty_no_log.show_extracted().empty());
 
-    auto sampled_arg = arg_ann(ptree("sample", {
-        {"dist", arg_ann(ptree("normal", {
-            {"", arg_ann(ptree(0), ptree("Double"))},
-            {"", arg_ann(ptree(1), ptree("Double"))}
-        }), make_type_app("Distribution", ptree("Double")))}
-    }), ptree("Double"));
-    expect_extraction_parity(ann(ptree("f", {{"x", sampled_arg}}), ptree("Model")));
+    auto extract_all = typed_call_expr("f", {typed_named_arg("x", typed_expr(ptree("Int"), IntLiteral{1}))}, ptree("Model"), false, "all");
+    auto pretty_extract_all = pretty_model_t(extract_all);
+    assert(pretty_extract_all.show_extracted().find("f:x") != std::string::npos);
 
-    auto no_log = ann(ptree("f", {{"x", sampled_arg}}), ptree("Model"));
-    no_log.children().push_back({"no_log", ptree(true)});
-    expect_extraction_parity(no_log);
-
-    auto extract_all = ann(ptree("f", {{"x", arg_ann(ptree(1), ptree("Int"))}}), ptree("Model"));
-    extract_all.children().push_back({"extract", ptree("all")});
-    expect_extraction_parity(extract_all);
-
-    expect_extraction_parity(ann(ptree("!let", {
-        {"decls", ptree("!Decls", {{"x", ann(ptree(1), ptree("Int"))}})},
-        {"body", ann(ptree("f", {{"x", sampled_arg}}), ptree("Model"))}
-    }), ptree("Model")));
-
-    auto arg_with_alphabet = arg_ann(ptree("x"), ptree("Int"), {"x"});
-    arg_with_alphabet.children().push_back({"alphabet", ann(ptree("dna"), ptree("Alphabet"))});
-    expect_extraction_parity(ann(ptree("f", {{"x", arg_with_alphabet}}), ptree("Model"), {"x"}));
+    auto with_alphabet = typed_call_expr("f", {
+        typed_named_arg(
+            "x",
+            typed_expr(ptree("Int"), Var{"x"}, {"x"}),
+            false,
+            false,
+            typed_expr(ptree("Alphabet"), Var{"dna"})
+        )
+    }, ptree("Model"));
+    auto pretty_with_alphabet = pretty_model_t(with_alphabet);
+    assert(pretty_with_alphabet.show_main() == "f(x)");
 }
 
 }
@@ -966,22 +829,14 @@ int main()
     test_accessors_and_traversal();
     test_invariants();
     test_absent_argument_values();
-    test_scalar_round_trips();
-    test_call_round_trips();
-    test_collection_round_trips();
-    test_special_form_round_trips();
-    test_malformed_ptree_rejections();
-    test_typed_scalar_round_trips();
-    test_typed_argument_metadata_round_trip();
-    test_typed_collection_and_special_round_trips();
     test_parser_wrappers();
     test_untyped_pretty_printing();
     test_typed_pretty_printing();
     test_typed_substitution();
-    test_typecheck_expr_wrapper_parity();
+    test_typecheck_exprs();
     test_typecheck_variable_function_used_args();
     test_typecheck_direct_errors();
-    test_typecheck_decls_wrapper();
-    test_typecheck_rule_wrapper_parity();
-    test_extraction_parity();
+    test_typecheck_decls();
+    test_typecheck_rule_calls();
+    test_extraction();
 }
