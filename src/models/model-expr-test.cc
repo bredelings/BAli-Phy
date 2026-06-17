@@ -510,16 +510,43 @@ void test_typecheck_expr_wrapper_parity()
 void test_typecheck_decls_wrapper_parity()
 {
     Rules rules({});
-    auto decls_ptree = ptree("!Decls", {{"x", ptree(1)}});
-    auto decls = model_decls_from_ptree(decls_ptree);
+    auto expect_decls_parity = [&](const ptree& decls_ptree)
+    {
+        auto decls = model_decls_from_ptree(decls_ptree);
 
-    auto ast_TC = test_typechecker(rules);
-    auto typed = typecheck_model_decls(ast_TC, decls);
+        auto ast_TC = test_typechecker(rules);
+        auto typed = typecheck_model_decls(ast_TC, decls);
 
-    auto ptree_TC = test_typechecker(rules);
-    auto expected = ptree_TC.typecheck_and_annotate_decls(decls_ptree);
+        auto ptree_TC = test_typechecker(rules);
+        auto expected = annotated_ptree_from_typed_model_decls(
+            typed_model_decls_from_annotated_ptree(ptree_TC.typecheck_and_annotate_decls(decls_ptree))
+        );
 
-    assert(annotated_ptree_from_typed_model_decls(typed) == expected);
+        auto actual = annotated_ptree_from_typed_model_decls(typed);
+        if (not (actual == expected))
+        {
+            std::cerr<<"typecheck decls parity mismatch for "<<decls_ptree.show(false)<<"\n";
+            std::cerr<<"actual:\n"<<actual.show(false)<<"\n";
+            std::cerr<<"expected:\n"<<expected.show(false)<<"\n";
+            assert(false);
+        }
+    };
+
+    expect_decls_parity(ptree("!Decls", {{"x", ptree(1)}}));
+    expect_decls_parity(ptree("!Decls", {
+        {"x", ptree(1)},
+        {"y", ptree("x")}
+    }));
+    expect_decls_parity(ptree("!Decls", {
+        {"xs", ptree("List", {{"", ptree(1)}, {"", ptree(2)}})},
+        {"pair", ptree("Tuple", {{"", ptree("xs")}, {"", ptree(true)}})}
+    }));
+    expect_decls_parity(ptree("!Decls", {
+        {"x", ptree("!let", {
+            {"decls", ptree("!Decls", {{"y", ptree(1)}})},
+            {"body", ptree("y")}
+        })}
+    }));
 }
 
 }

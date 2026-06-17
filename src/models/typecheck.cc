@@ -453,8 +453,7 @@ optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const 
         typed_list.elements.push_back(std::move(element2));
     }
 
-    substitute(TC.eqs, result_type);
-    return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(typed_list)};
+    return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_list)};
 }
 
 optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
@@ -485,8 +484,7 @@ optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const
         typed_tuple.elements.push_back(std::move(element2));
     }
 
-    substitute(TC.eqs, result_type);
-    return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(typed_tuple)};
+    return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_tuple)};
 }
 
 optional<CM::TypedExpr> typecheck_model_get_state(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
@@ -711,9 +709,22 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& req
 
 CM::TypedDecls typecheck_model_decls(TypecheckingState& TC, const CM::Decls<CM::NoAnn>& decls)
 {
-    auto model_decls = CM::ptree_from_model_decls(decls);
-    auto annotated_decls = TC.typecheck_and_annotate_decls(model_decls);
-    return CM::typed_model_decls_from_annotated_ptree(annotated_decls);
+    CM::TypedDecls decls2;
+
+    for(auto& [name, expr]: decls)
+    {
+        auto a = TC.get_fresh_type_var("a");
+        TC.extend_scope(name, a);
+        auto expr2 = typecheck_model_expr(TC, a, expr);
+        if (not TC.eqs)
+        {
+            substitute(TC.eqs, a);
+            throw myexception()<<"Expression '"<<unparse_annotated(CM::annotated_ptree_from_typed_model_expr(expr2))<<"' is not of required type "<<unparse_type(a)<<"!";
+        }
+        decls2.push_back({name, std::move(expr2)});
+    }
+
+    return decls2;
 }
 
 ptree TypecheckingState::typecheck_and_annotate_decls(const ptree& decls)
