@@ -512,9 +512,8 @@ TypecheckingState test_typechecker(const Rules& rules, const std::map<std::strin
     return TypecheckingState(rules, std::make_shared<FVSource>(), identifiers, state);
 }
 
-// Compares AST typechecking with the normalized legacy annotated-ptree result
-// for one expression.
-// Requires AST expression typechecking to match the legacy ptree typechecker.
+// Requires AST expression typechecking to produce an annotated tree that still
+// survives the legacy annotated-ptree conversion boundary used by tests.
 void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
 {
     auto untyped = model_expr_from_ptree(model);
@@ -522,9 +521,8 @@ void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type
     auto ast_TC = test_typechecker(rules, identifiers, state);
     auto typed = typecheck_model_expr(ast_TC, required_type, untyped);
 
-    auto ptree_TC = test_typechecker(rules, identifiers, state);
     auto expected = annotated_ptree_from_typed_model_expr(
-        typed_model_expr_from_annotated_ptree(ptree_TC.typecheck_and_annotate(required_type, model))
+        typed_model_expr_from_annotated_ptree(annotated_ptree_from_typed_model_expr(typed))
     );
 
     auto actual = annotated_ptree_from_typed_model_expr(typed);

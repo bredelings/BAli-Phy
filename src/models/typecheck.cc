@@ -34,36 +34,6 @@ Rule substitute_in_rule_types(const map<string,term_t>& renaming, Rule rule)
     return rule;
 }
 
-template <typename Substitution>
-void substitute_in_types(const Substitution& renaming, term_t& T)
-{
-    // maybe skip this if there is not child called "value"?
-    substitute(renaming, T.get_child("type") );
-    auto value = T.get_child("value");
-    for(auto& x: value.children())
-        substitute_in_types( renaming, x.second );
-}
-
-term_t extract_value(const term_t& T)
-{
-    auto value = T.get_child("value");
-    for(auto& x: value.children())
-        x.second = extract_value(x.second);
-    return value;
-}
-
-term_t valueize(const term_t& T)
-{
-    term_t t;
-    t.value = T.value;
-    for(auto& [key,value]: T.children())
-        t.children().push_back({key,valueize(value)});
-    term_t T2;
-    T2.children().push_back({"value",t});
-    T2.children().push_back({"is_default_value",ptree(false)});
-    return T2;
-}
-
 Rule substitute_in_rule_types(const equations& renaming, Rule rule)
 {
     substitute(renaming, rule.result_type);
@@ -198,7 +168,7 @@ optional<CM::UntypedExpr> TypecheckingState::unify_or_convert_model_expr(const C
         auto type_str = unparse_type(type2);
         auto required_str = unparse_type(required_type2);
         myexception e;
-        e << "Term '" << unparse(CM::ptree_from_model_expr(model)) << "' of type '" << type_str
+        e << "Term '" << unparse(model) << "' of type '" << type_str
           << "' cannot be converted to type '" << required_str << "'";
         throw e;
     }
@@ -255,25 +225,6 @@ TypecheckingState TypecheckingState::extended_scope(const string& var, const typ
     auto scope = *this;
     scope.extend_scope(var,type);
     return scope;
-}
-
-set<string> get_used_args(const ptree& model)
-{
-    set<string> used_args;
-    for(auto& [_,used_arg]: model.get_child("used_args").children())
-        used_args.insert(used_arg.get_value<string>());
-    return used_args;
-}
-
-void set_used_args(ptree& model, const set<string>& used_args)
-{
-    ptree p_used_args;
-    for(auto& used_arg: used_args)
-        p_used_args.children().push_back({"",ptree(used_arg)});
-    if (auto p = model.get_child_optional("used_args"))
-        *p = p_used_args;
-    else
-        model.children().push_back({"used_args",p_used_args});
 }
 
 // Applies solved type equations to every expression in a typed AST declaration
@@ -617,16 +568,15 @@ optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const p
     };
 }
 
-// Typechecks a lambda by reusing the existing ptree pattern parser for now,
-// then checking the body in the scope introduced by the pattern.
+// Typechecks a lambda by parsing the AST pattern natively, then checking the
+// body in the scope introduced by the pattern.
 optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     auto lambda = std::get_if<CM::Lambda<CM::NoAnn>>(&expr.node);
     if (not lambda)
         return {};
 
-    auto pattern = CM::ptree_from_model_expr(lambda->pattern.get());
-    auto [a, type_for_binder] = TC.parse_pattern(pattern);
+    auto [a, type_for_binder] = TC.parse_pattern(lambda->pattern.get());
 
     auto scope2 = TC;
     for(auto& [var,type]: type_for_binder)
@@ -675,7 +625,6 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
     auto rule = freshen_type_vars(*maybe_rule, *TC.fv_source);
     auto result_type = rule.result_type;
 
-    auto model = CM::ptree_from_model_expr(expr);
     if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
         return typecheck_model_expr(TC, required_type, *converted);
 
@@ -689,10 +638,10 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
     for(const auto& arg: call->args)
     {
         if (not maybe_get_arg(rule, arg.name))
-            throw myexception()<<"Function '"<<call->function<<"' has no argument '"<<arg.name<<"' in term:\n"<<model.show();
+            throw myexception()<<"Function '"<<call->function<<"' has no argument '"<<arg.name<<"' in term:\n"<<show_model(expr);
         arg_count[arg.name]++;
         if (arg_count[arg.name] > 1)
-            throw myexception()<<"Supplied argument '"<<arg.name<<"' more than once in term:\n"<<model.show();
+            throw myexception()<<"Supplied argument '"<<arg.name<<"' more than once in term:\n"<<show_model(expr);
         if (arg.value)
             supplied_args[arg.name] = &arg;
     }
@@ -849,7 +798,7 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& req
     else if (auto call = typecheck_model_call(TC, required_type, expr))
         return *call;
     else
-        throw myexception()<<"No direct typechecker for expression '"<<unparse(CM::ptree_from_model_expr(expr))<<"'.";
+        throw myexception()<<"No direct typechecker for expression '"<<unparse(expr)<<"'.";
 }
 
 // Typechecks declarations in order, extending the scope with each fresh
@@ -874,18 +823,20 @@ CM::TypedDecls typecheck_model_decls(TypecheckingState& TC, const CM::Decls<CM::
     return decls2;
 }
 
-pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const ptree& pattern) const
+// Parses lambda patterns from the model AST, assigning fresh types to binders
+// and rejecting expression forms that are not valid patterns.
+pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const CM::UntypedExpr& pattern) const
 {
-    if (is_nontype_variable(pattern))
+    if (auto var = std::get_if<CM::Var>(&pattern.node))
     {
         auto type = get_fresh_type_var("p");
-        return {type,{{string(pattern),type}}};
+        return {type, {{var->name, type}}};
     }
-    else if (is_tuple(pattern))
+    else if (auto tuple = std::get_if<CM::Tuple<CM::NoAnn>>(&pattern.node))
     {
         ptree type("Tuple");
         map<string,ptree> var_to_type;
-        for(auto& [_,value]: pattern.children())
+        for(auto& value: tuple->elements)
         {
             auto [slot_type, slot_vars] = parse_pattern(value);
             type.children().push_back(pair(string(""),slot_type));
@@ -899,15 +850,7 @@ pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const ptree& pat
         return {type,var_to_type};
     }
     else
-        std::abort();
-}
-
-// Compatibility boundary: legacy callers still ask for annotated ptree output.
-// Delete this wrapper when codegen and tests consume CM::TypedExpr directly.
-ptree TypecheckingState::typecheck_and_annotate(const ptree& required_type, const ptree& model) const
-{
-    auto typed = typecheck_model_expr(*this, required_type, CM::model_expr_from_ptree(model));
-    return CM::annotated_ptree_from_typed_model_expr(typed);
+        throw myexception()<<"Invalid lambda pattern '"<<unparse(pattern)<<"'.";
 }
 
 void TypecheckingState::add_states(const std::map<string,std::pair<std::string,ptree>>& state_info)

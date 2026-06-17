@@ -249,22 +249,6 @@ void generated_code_t::log_sub(const string& name, const var& log_var, const Log
     loggers.push_back(LogSub(name, log_var, ls));
 }
 
-void substitute_annotated(const equations& equations, ptree& model)
-{
-    if (model.has_value<string>() and model.get_value<string>() == "!Decls")
-    {
-	for(auto& [name,exp]: model.children())
-	    substitute_annotated(equations, exp);
-	return;
-    }
-
-    auto& type = model.get_child("type");
-    substitute(equations, type);
-
-    for(auto& [key, value]: model.get_child("value").children())
-        substitute_annotated(equations, value);
-}
-
 TypecheckingState makeTypechecker(const Rules& R,
 				  const vector<pair<string,ptree>>& scope,
 				  const map<string,pair<string,ptree>>& state)
@@ -324,7 +308,6 @@ model_t compile_model(const Rules& R,
         std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
         std::cout<<"equations: "<<TC.eqs.show()<<std::endl;
 
-	FIXME!  This crashes with decls --- model_rep = extract_value(model);
 	substitute(TC.eqs, model_rep);
         std::cout<<"structure = "<<show(model_rep)<<std::endl;
 
