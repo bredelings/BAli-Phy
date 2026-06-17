@@ -1022,36 +1022,10 @@ TypecheckingState::typecheck_and_annotate_let(const ptree& required_type, const 
 
     if (name != "!let") return {}; //let[m=E,F]
 
-    ptree decls = model.children()[0].second;
-    ptree body  = model.children()[1].second;
-
-    set<string> used_args;
-
-    // 1. Analyze the decls
-    auto scope2 = *this;
-    auto decls_ast = CM::model_decls_from_ptree(decls);
-    auto typed_decls = typecheck_model_decls(scope2, decls_ast);
-
-    // Compatibility boundary: the old ptree expression path still expects
-    // annotated !Decls here.  Delete this conversion with that path.
-    auto decls2 = CM::annotated_ptree_from_typed_model_decls(typed_decls);
-    for(auto& [name,exp]: decls2.children())
-	add(used_args, get_used_args(exp));
-
-    // 2. Analyze the body, forcing it to have the required type
-    auto body2 =  scope2.typecheck_and_annotate(required_type, body);
-    add(used_args, get_used_args(body2));
-
-    // Awkward preserved side effect: the old let path typechecks in a copied
-    // scope, then publishes that copy's equation state back to this object.
-    eqs = scope2.eqs;
-
-    // Create the new model tree with args in correct order
-    auto model2 = ptree("!let",{{"decls", decls2},{"body",body2}});
-    model2 = ptree({{"value",model2},{"type",required_type}});
-    set_used_args(model2, used_args);
-
-    return model2;
+    // Compatibility boundary: this old ptree entry point delegates the whole
+    // let to the AST typechecker, then converts back for legacy callers.
+    auto typed = typecheck_model_expr(*this, required_type, CM::model_expr_from_ptree(model));
+    return CM::annotated_ptree_from_typed_model_expr(typed);
 }
 
 pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const ptree& pattern) const
@@ -1092,50 +1066,10 @@ TypecheckingState::typecheck_and_annotate_lambda(const ptree& required_type, con
 
     if (name != "function") return {}; //function[x,F]
 
-    // OK, to parse a pattern, we need to
-    // - find all the variables
-    // - give each variable a type
-    // - construct a type for the whole thing
-    // This could return a pair<type,map<name,type_var>>
-    // - we need to enforce that variable names are not duplicated within the pattern.
-    ptree pattern  = model.children()[0].second;
-    ptree body_exp = model.children()[1].second;
-
-    // 0. Compute the type (a -> b) of the function.
-
-    // This generates fresh type variables and adds them to fv_state.
-    auto [a, type_for_binder] = parse_pattern(model.children()[0].second);
-
-    auto scope2 = *this;
-    for(auto& [var,type]: type_for_binder)
-        scope2.extend_scope(var, type);
-
-    auto b = get_fresh_type_var("b");
-
-    // 1. Unify required type with (a -> b)
-    auto ftype = make_type_apps("Function",{a,b});
-    eqs = eqs && unify(ftype, required_type);
-    if (not eqs)
-        throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
-
-    // 2. Analyze the body, forcing it to have type (b)
-    if (auto btype = eqs.value_of_var(b))
-        b = *btype;
-
-    auto body_exp2 =  scope2.typecheck_and_annotate(b, body_exp);
-    eqs = eqs && scope2.eqs;
-    auto used_args = get_used_args(body_exp2);
-    if (not eqs)
-        throw myexception()<<"Expression '"<<unparse(model)<<"' is not of required type "<<unparse_type(required_type)<<"!";
-
-    // 3. Create the new model tree with args in correct order
-    auto pattern2 = scope2.typecheck_and_annotate(a, pattern);
-    auto model2 = ptree("function",{{"",pattern2},{"",body_exp2}});
-
-    model2 = ptree({{"value",model2},{"type",required_type}});
-    set_used_args(model2, used_args);
-
-    return model2;
+    // Compatibility boundary: lambda typechecking now lives in the AST path,
+    // with this wrapper only preserving the old ptree API.
+    auto typed = typecheck_model_expr(*this, required_type, CM::model_expr_from_ptree(model));
+    return CM::annotated_ptree_from_typed_model_expr(typed);
 }
 
 optional<ptree>
@@ -1147,41 +1081,10 @@ TypecheckingState::typecheck_and_annotate_tuple(const ptree& required_type, cons
 
     if (name != "Tuple") return {}; //Tuple(x,y,z,...)
 
-    // 1. Unify required type with Tuple(a,b,c,...)
-
-    vector<ptree> element_types;
-    for(int i=0;i<model.children().size();i++)
-    {
-        auto a = get_fresh_type_var("a");
-        element_types.push_back(a);
-    }
-    auto tuple_type = make_type_apps("Tuple",element_types);
-
-    eqs = eqs && unify(tuple_type, required_type);
-    if (not eqs)
-        throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
-
-    // 2. Analyze the body, forcing it to have type (b)
-    set<string> used_args;
-    auto model2 = ptree("Tuple",{});
-    for(int i=0;i<model.children().size();i++)
-    {
-        auto element = array_index(model,i);
-        auto element_required_type = element_types[i];
-        substitute(eqs, element_required_type);
-        auto element2 =  typecheck_and_annotate(element_required_type, element);
-        add(used_args, get_used_args(element2));
-        if (not eqs)
-            throw myexception()<<"Expression '"<<unparse_annotated(element2)<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
-        element2.children().push_back({"is_default_value",ptree(false)}); // Do we need to add this annotation?
-        model2.children().push_back({"",element2});
-    }
-
-    // 3. Create the new model tree with args in correct order
-    model2 = ptree({{"value",model2},{"type",required_type}});
-    set_used_args(model2, used_args);
-
-    return model2;
+    // Compatibility boundary: tuple typechecking now lives in the AST path,
+    // with this wrapper only preserving the old ptree API.
+    auto typed = typecheck_model_expr(*this, required_type, CM::model_expr_from_ptree(model));
+    return CM::annotated_ptree_from_typed_model_expr(typed);
 }
 
 optional<ptree>
@@ -1193,32 +1096,10 @@ TypecheckingState::typecheck_and_annotate_list(const ptree& required_type, const
 
     if (name != "List") return {}; //List[x,y,z,...]
 
-    // 1. Unify required type or add conversion function.
-    auto a = get_fresh_type_var("a");
-    auto list_type = make_type_app("List",a);
-    if (auto model2 = unify_or_convert(model, list_type, required_type))
-	return typecheck_and_annotate(required_type, *model2);
-
-    // 2. Analyze the body, forcing it to have type (b)
-    set<string> used_args;
-    auto model2 = ptree("List",{});
-    for(auto& [_,element]: model.children())
-    {
-        auto element_required_type = a;
-        substitute(eqs, element_required_type);
-        auto element2 =  typecheck_and_annotate(element_required_type, element);
-        add(used_args, get_used_args(element2));
-        if (not eqs)
-            throw myexception()<<"Expression '"<<unparse_annotated(element2)<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
-        element2.children().push_back({"is_default_value",ptree(false)}); // Do we need to add this annotation?
-        model2.children().push_back({"",element2});
-    }
-
-    // 3. Create the new model tree with args in correct order
-    model2 = ptree({{"value",model2},{"type",required_type}});
-    set_used_args(model2, used_args);
-
-    return model2;
+    // Compatibility boundary: list typechecking now lives in the AST path,
+    // with this wrapper only preserving the old ptree API.
+    auto typed = typecheck_model_expr(*this, required_type, CM::model_expr_from_ptree(model));
+    return CM::annotated_ptree_from_typed_model_expr(typed);
 }
 
 optional<ptree>
@@ -1230,22 +1111,10 @@ TypecheckingState::typecheck_and_annotate_get_state(const ptree& required_type, 
 
     if (name != "get_state") return {}; // get_state[state_name]
 
-    string state_name = model.children()[0].second;
-    if (not state.count(state_name))
-        throw myexception()<<"translate: no state '"<<state_name<<"'!";
-    auto result_type = state.at(state_name);
-    eqs = eqs && unify(result_type, required_type);
-    if (not eqs)
-        throw myexception()<<"get_state: state '"<<state_name<<"' is of type '"<<unparse_type(result_type)<<"', not required type '"<<unparse_type(required_type)<<"'";
-
-    auto arg = ptree({{"value",ptree(state_name)},{"type","String"}});
-    // ARGH: arrays with ptree are really annoying.
-    auto model2 = ptree("get_state",{ {"",arg}});
-
-    model2 = ptree({{"value",model2},{"type",required_type}});
-    set_used_args(model2,{});
-
-    return model2;
+    // Compatibility boundary: get_state typechecking now lives in the AST
+    // path, with this wrapper only preserving the old ptree API.
+    auto typed = typecheck_model_expr(*this, required_type, CM::model_expr_from_ptree(model));
+    return CM::annotated_ptree_from_typed_model_expr(typed);
 }
 
 optional<ptree>
