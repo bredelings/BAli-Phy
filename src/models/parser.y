@@ -25,7 +25,7 @@
 
   class zz_driver;
 
-  CM::UntypedExpr make_function(const std::vector<std::string>& vars, const CM::UntypedExpr& body);
+  CM::UntypedExpr make_function(const std::vector<CM::UntypedPattern>& patterns, const CM::UntypedExpr& body);
   ptree make_type_app(ptree type, const std::vector<ptree>& args);
   std::pair<std::string,CM::UntypedExpr> make_function_def(zz_driver&, const yy::location&, const CM::UntypedExpr& fncall, const CM::UntypedExpr& body);
 
@@ -122,7 +122,9 @@ CM::UntypedExpr make_model_tuple(const std::vector<CM::UntypedExpr>& elements);
 %type <std::string> qvarid
 %type <std::string> varid
 
-%type <std::vector<std::string>> varids
+%type <CM::UntypedPattern> pattern
+%type <std::vector<CM::UntypedPattern>> patterns
+%type <std::vector<CM::UntypedPattern>> pattern_tup_args
 
 %type <CM::UntypedExpr> literal
 
@@ -170,7 +172,7 @@ term: qvarid                      { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Var{$1
 |     literal                     { $$ = $1; }
 |     "{" ditems "}"              { $$ = make_list($2); }
 |     "{" "}"                     { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::List<CM::NoAnn>{}}; }
-|    "|" varids ":" exp "|"       { $$ = make_function($2, $4);}
+|    "|" patterns ":" exp "|"     { $$ = make_function($2, $4);}
 |    "(" exp ")"                  { $$ = $2; }
 |     "-" term                    { $$ = make_call("negate", {{ "", CM::Box<CM::UntypedExpr>($2), false, false, std::nullopt }}); }
 |     term "+" term               { $$ = make_binary_call("+", $1, $3); }
@@ -191,8 +193,14 @@ term: qvarid                      { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Var{$1
 |     "_"                         { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Placeholder{}}; }
 
 
-varids: varid           { $$.push_back($1); }
-|       varids varid    { $$ = $1; $$.push_back($2); }
+patterns: pattern           { $$.push_back($1); }
+|         patterns pattern   { $$ = $1; $$.push_back($2); }
+
+pattern: varid                                      { $$ = CM::UntypedPattern{CM::NoAnn{}, CM::VarPattern{$1}}; }
+|        "(" pattern_tup_args "," pattern ")"       { $2.push_back($4); $$ = CM::UntypedPattern{CM::NoAnn{}, CM::TuplePattern<CM::NoAnn>{$2}}; }
+
+pattern_tup_args: pattern                           { $$.push_back($1);}
+|                pattern_tup_args "," pattern       { $$ = $1; $$.push_back($3);}
 
 fncall: qvarid "(" args ")"         { $$ = make_call($1,$3); }
 
@@ -331,13 +339,12 @@ CM::UntypedExpr make_sample(const CM::UntypedExpr& dist)
     return {CM::NoAnn{}, CM::Sample<CM::NoAnn>{CM::Box<CM::UntypedExpr>(dist)}};
 }
 
-// Builds nested unary lambda nodes for the parser's variable-only lambda syntax.
-CM::UntypedExpr make_function(const vector<string>& vars, const CM::UntypedExpr& body)
+// Builds nested unary lambda nodes for the parser's lambda syntax.
+CM::UntypedExpr make_function(const vector<CM::UntypedPattern>& patterns, const CM::UntypedExpr& body)
 {
     auto f = body;
-    for(auto& var: vars | views::reverse)
+    for(auto& pattern: patterns | views::reverse)
     {
-        CM::UntypedPattern pattern{CM::NoAnn{}, CM::VarPattern{var}};
         f = {
             CM::NoAnn{},
             CM::Lambda<CM::NoAnn>{
@@ -367,21 +374,21 @@ pair<string,CM::UntypedExpr> make_function_def(zz_driver& drv, const yy::locatio
     if (fname.find('.') != string::npos)
 	drv.push_error_message(l, "Function name cannot contain '.'");
 
-    vector<string> vars;
+    vector<CM::UntypedPattern> patterns;
     for(auto& arg: call->args)
     {
 	if (not arg.name.empty())
 	    drv.push_error_message(l, "Named arguments not allowed in function definitions");
 
         if (not arg.value)
-            drv.push_error_message(l, "Arguments in function definition must be variables");
+	    drv.push_error_message(l, "Arguments in function definition must be variables");
 	else if (auto var = std::get_if<CM::Var>(&arg.value->get().node))
-	    vars.push_back(var->name);
-        else
+	    patterns.push_back(CM::UntypedPattern{CM::NoAnn{}, CM::VarPattern{var->name}});
+	else
 	    drv.push_error_message(l, "Arguments in function definition must be variables");
     }
     
-    return {fname, make_function(vars, body)};
+    return {fname, make_function(patterns, body)};
 }
 
 // Replaces immediate placeholders in the callee argument list with one stacked

@@ -278,6 +278,13 @@ void test_parser_wrappers()
     assert(decls.size() == 2);
     assert(decls[0].first == "x");
     assert(decls[1].first == "y");
+
+    auto tuple_lambda = parse_model_expr(rules, "|(x,y):x|", "tuple-pattern lambda");
+    auto& lambda = std::get<Lambda<NoAnn>>(tuple_lambda.node);
+    auto& pattern = std::get<TuplePattern<NoAnn>>(lambda.pattern->node);
+    assert(pattern.elements.size() == 2);
+    assert(std::get<VarPattern>(pattern.elements[0].node).name == "x");
+    assert(std::get<VarPattern>(pattern.elements[1].node).name == "y");
 }
 
 // Exercises untyped AST pretty-printing for representative syntax.
@@ -728,6 +735,15 @@ void test_typecheck_rule_calls()
             "shadowing compile test"
         );
         assert(shadowed_rule_model.type == ptree("Int"));
+        auto tuple_pattern_model = compile_model(
+            rules,
+            test_typechecker(rules),
+            CodeGenState(rules),
+            ptree("Int"),
+            "f((1,2)) where {f = |(x,y):x|}",
+            "tuple-pattern shadowing compile test"
+        );
+        assert(tuple_pattern_model.type == ptree("Int"));
         expect_typecheck_expr(
             rules,
             make_type_app("DiscreteDist", ptree("Int")),
