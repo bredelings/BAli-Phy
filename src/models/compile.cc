@@ -62,34 +62,51 @@ using std::valarray;
 using std::shared_ptr;
 using boost::program_options::variables_map;
 
+// Returns the expression description for display paths, rejecting declaration
+// models because declarations are only used for generated code/imports today.
+const CM::TypedExpr& model_t::expression_description() const
+{
+    if (auto expr = std::get_if<CM::TypedExpr>(&description))
+        return *expr;
+    if (std::holds_alternative<CM::TypedDecls>(description))
+        throw myexception()<<"Cannot show declaration model as an expression.";
+    throw myexception()<<"Cannot show an empty model.";
+}
+
 string model_t::show(bool top) const
 {
+    const auto& expr = expression_description();
     if (top)
-        return show_model_annotated(description);
+        return show_model_annotated(expr);
     else
-        return unparse_annotated(description);
+        return unparse_annotated(expr);
 }
 
 string model_t::show_pretty(bool top) const
 {
-    auto p = pretty_model_t(description);
+    auto p = pretty_model_t(expression_description());
     return p.show(not top);
 }
 
 string model_t::show_main(bool top) const
 {
-    auto p = pretty_model_t(description);
+    auto p = pretty_model_t(expression_description());
     return p.show_main(top);
 }
 
 string model_t::show_extracted() const
 {
-    auto p = pretty_model_t(description);
+    auto p = pretty_model_t(expression_description());
     return p.show_extracted();
 }
 
-model_t::model_t(const ptree& d, const set<string>& i, const ptree&t, const std::set<term_t>& s, const generated_code_t& c)
-    :description(d), imports(i), type(t), constraints(s), code(c)
+model_t::model_t(CM::TypedExpr d, const set<string>& i, const ptree&t, const std::set<term_t>& s, const generated_code_t& c)
+    :description(std::move(d)), imports(i), type(t), constraints(s), code(c)
+{
+}
+
+model_t::model_t(CM::TypedDecls d, const set<string>& i, const ptree&t, const std::set<term_t>& s, const generated_code_t& c)
+    :description(std::move(d)), imports(i), type(t), constraints(s), code(c)
 {
 }
 
@@ -293,10 +310,6 @@ model_t compile_model(const Rules& R,
     substitute(TC2.eqs, required_type);
     substitute_annotated(TC2.eqs, typed_model);
 
-    // Compatibility boundary: model_t still stores annotated ptree for display
-    // and extraction. Codegen receives CM::TypedExpr directly below.
-    auto model = CM::annotated_ptree_from_typed_model_expr(typed_model);
-
     set<ptree> constraints;
     for(auto constraint: TC2.eqs.get_constraints())
     {
@@ -307,7 +320,7 @@ model_t compile_model(const Rules& R,
 /*
     if (log_verbose >= 2)
     {
-        std::cout<<"model = "<<unparse_annotated(model)<<std::endl;
+        std::cout<<"model = "<<unparse_annotated(typed_model)<<std::endl;
         std::cout<<"type = "<<unparse_type(required_type)<<std::endl;
         std::cout<<"equations: "<<TC.eqs.show()<<std::endl;
 
@@ -315,8 +328,7 @@ model_t compile_model(const Rules& R,
 	substitute(TC.eqs, model_rep);
         std::cout<<"structure = "<<show(model_rep)<<std::endl;
 
-        std::cout<<"annotated structure = "<<show(model)<<std::endl;
-        std::cout<<"pretty:\n"<<pretty_model_t(model).show()<<std::endl;
+        std::cout<<"pretty:\n"<<pretty_model_t(typed_model).show()<<std::endl;
         std::cout<<std::endl;
     }
 */
@@ -350,7 +362,7 @@ model_t compile_model(const Rules& R,
     for(auto& [var_name, x]: code.free_vars)
 	code.haskell_lambda_vars.push_back( x );
 
-    return model_t{model, imports, required_type, constraints, code};
+    return model_t{std::move(typed_model), imports, required_type, constraints, code};
 }
 
 /*
@@ -376,10 +388,6 @@ model_t compile_decls(const Rules& R,
     // mutable TC.eqs accumulated during declaration typechecking.
     for(auto& [var,value]: typed_decls)
 		substitute_annotated(TC.eqs, value);
-
-    // Compatibility boundary: model_t still stores annotated ptree for display
-    // and extraction. Codegen receives CM::TypedDecls directly below.
-    auto decls2 = CM::annotated_ptree_from_typed_model_decls(typed_decls);
 
     set<ptree> constraints;
     for(auto constraint: TC.eqs.get_constraints())
@@ -414,7 +422,7 @@ model_t compile_decls(const Rules& R,
     for(const string& state_name: code.used_states)
         code.haskell_lambda_vars.push_back( code_gen_state.state.at(state_name) );
 
-    return model_t{decls2, imports, {}, constraints, code};
+    return model_t{std::move(typed_decls), imports, {}, constraints, code};
 }
 
 
@@ -428,117 +436,6 @@ model_t compile_decls(const Rules& R,
 //    So, tn93[1,~log_normal[0,1]] becomes tn93 ; tn:kappa_pur=1 , tn:kappa_pyr ~ lognormal[0,1]
 
 // However, we would like gy94[pi=f1x4] to NOT pull out the pi, because f1x4 is ALSO a model.
-
-bool annotated_term_is_model(const ptree& term)
-{
-    if (term.get<string>("extract","none") == "all") return true;
-
-    auto value = term.get_child("value");
-
-    if (value.has_value<string>() and value.get_value<string>() == "List")
-    {
-        for(auto& [arg_name,arg_value]: term.get_child("value").children())
-            if (annotated_term_is_model(arg_value)) return true;
-    }
-
-    return false;
-}
-
-bool bound(const ptree& annotated_term, const set<string>& binders)
-{
-    assert(annotated_term.get_child_optional("value"));
-    auto& value = annotated_term.get_child("value");
-
-    // Handle constants
-    if (not  value.has_value<string>()) return false;
-
-    string func_name = value.get_value<string>();
-
-    if (func_name == "!let")
-    {
-	auto& decls = value.children()[0].second;
-	auto& body  = value.children()[1].second;
-
-        auto binders2 = binders;
-	for(auto& [var_name, _]: decls.children())
-            binders2.erase(var_name);
-
-        if (bound(body, binders2)) return true;
-
-	for(auto& [var_name, exp]: decls.children())
-	    if (bound(exp, binders2)) return true;
-    }
-    else if (func_name == "function")
-    {
-        string var_name = value.children()[0].second.get_child("value").get_value<string>();
-        auto binders2 = binders;
-        binders2.erase(var_name);
-
-        return bound(value.children()[1].second, binders2);
-    }
-    else
-    {
-        if (binders.count(func_name)) return true;
-
-        for(auto& [arg_name,arg_value]: value.children())
-            if (bound(arg_value, binders)) return true;
-    }
-
-    return false;
-}
-
-// Don't extract terms that
-// * contain function variables
-// * don't extract gamma::n if its an integer
-// Suppress gamma::a = getAlphabet
-// Some terms seem to have types like 'var5' so they always fail the check for
-//   extractable types.
-
-bool do_extract(const ptree& func, const ptree& arg, const set<string>& binders)
-{
-    // 1. Don't extract arguments to e.g. log[], add[], sub[], etc.
-    //    This is supposed to indicate things who arguments don't really have names?
-    if (func.get("no_log",false)) return false;
-
-    string func_name = func.get_child("value").get_value<string>();
-
-    assert(func_name != "!let");
-    assert(func_name != "function");
-
-    // 1d. Don't pull anything out of lists.
-    if (func_name == "List") return false;
-    // 1e. Don't pull anything out of tuples.
-    if (func_name == "Tuple") return false;
-
-    if (bound(arg, binders)) return false;
-
-    auto arg_value = arg.get_child("value");
-    string arg_type = unparse_type(arg.get_child("type"));
-
-    // 2. If this is a model, then extract non-random things that are not models.
-    if (annotated_term_is_model(func))
-    {
-        if (annotated_term_is_model(arg)) return false;
-
-        // FIXME - It would be nice if we could universally return true here.
-        //         But first, we need to handle - not extracting gamma::n
-        //                                      - suppressing gamma::a = getAlphabet
-        if (arg_type == "Int" or arg_type == "Double" or arg_type == "LogDouble")
-            return true;
-        if (arg_type == "List<Double>" or arg_type == "List<(String,Double)>")
-            return true;
-    }
-
-    if (not is_constant(arg_value))
-    {
-        auto arg_name = arg_value.get_value<string>();
-
-        // 3. Pull out random arguments
-        if (arg_name == "sample") return true;
-    }
-
-    return false;
-}
 
 // Returns true when a typed AST term represents a model-valued expression that
 // should protect model subterms from extraction.
@@ -700,80 +597,6 @@ bool do_extract(const CM::TypedExpr& func, const CM::TypedExpr& arg, const set<s
     return false;
 }
 
-// E = {type: T,value:{arg1:E,...argn:E}}
-
-// This only extracts from the top level...
-
-vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
-{
-    // move value's children out of the structure
-    ptree& value = m.get_child("value");
-
-    vector<pair<string,ptree>> extracted;
-    // 1. Let statements
-    if (value.has_value<string>() and value.get_value<string>() == "!let")
-    {
-        assert(value.children().size() == 2);
-	auto decls = value.children()[0].second;
-	auto body  = value.children()[1].second;
-
-        extracted = extract_terms(body, binders);
-        m = body;
-
-	for(auto& [var_name, exp]: decls.children())
-	    extracted.insert(extracted.begin(), pair<string,ptree>{var_name,exp});
-    }
-    // 2. Lambda functions
-    else if (value.has_value<string>() and value.get_value<string>() == "function")
-    {
-        string var_name = value.children()[0].second.get_child("value").get_value<string>();
-        auto binders2 = binders;
-        binders2.insert(var_name);
-
-        for(auto& [sub_name, sub_term]: extract_terms(value.children()[1].second, binders2))
-            extracted.emplace_back(sub_name, std::move(sub_term));
-    }
-    // 3. Function calls
-    else
-    {
-        vector<pair<string,ptree>> extracted_top;
-        int i=0;
-        // Walk each argument and determine if it should be pulled out
-        for(auto& [arg_name,arg_value]: value.children())
-        {
-            auto func = value.get_value<string>();
-            string name = func + ":" + arg_name;
-            if (func == "List" or func == "Tuple")
-            {
-                name = "["+std::to_string(++i)+"]";
-            }
-
-            // If we should pull out the argument then do so
-            if (do_extract(m, arg_value, binders))
-            {
-                ptree extracted_value;
-                std::swap(arg_value, extracted_value);
-                extracted_top.push_back({name, extracted_value});
-            }
-            // Otherwise look into the argument's value and try to pull things out
-            else if (not arg_value.is_null()) // for function[x=null,body=E]
-            {
-                for(auto& [sub_name,sub_term]: extract_terms(arg_value, binders))
-                {
-                    auto sup_name = name + "/" + sub_name;
-                    // Fuse subscripts like [1] into the name.
-                    if (sub_name.size() and sub_name[0] == '[')
-                        sup_name = name + sub_name;
-                    extracted.emplace_back(sup_name, std::move(sub_term));
-                }
-            }
-        }
-        std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
-    }
-
-    return extracted;
-}
-
 // Extracts terms from a typed AST expression in place and returns the extracted
 // terms with their display path names.
 vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<string>& binders)
@@ -897,53 +720,8 @@ string pretty_model_t::show(bool top) const
     return show_main(top) + show_extracted();
 }
 
-pretty_model_t::pretty_model_t(const ptree& m)
-    :main(m)
-{
-    // 1. Extract terms
-    for(auto& [name,term]: extract_terms(main, {}))
-    {
-        term_names.push_back(name);
-        terms.push_back(term);
-    }
-
-    term_names = short_parameter_names(term_names);
-}
-
-// Shows the extracted AST terms in the same indented form as pretty_model_t.
-string pretty_model_ast_t::show_extracted() const
-{
-    const int indent = 4;
-
-    string output;
-
-    for(int i=0; i<terms.size(); i++)
-    {
-        string t = string(indent,' ') + term_names[i] + " ";
-        string value = terms[i].show(false);
-        output += "\n" + t + indent_and_wrap(0, t.size() + 2, 10000, value);
-    }
-    return output;
-}
-
-// Shows the main AST model expression in top-level or nested form.
-string pretty_model_ast_t::show_main(bool top) const
-{
-    if (top)
-        return unparse_annotated(main);
-    else
-        return show_model_annotated(main);
-}
-
-// Shows the main AST expression followed by the extracted pretty-view terms.
-string pretty_model_ast_t::show(bool top) const
-{
-    return show_main(top) + show_extracted();
-}
-
-// Builds the pretty extracted view for a typed AST expression without changing
-// the production ptree-backed model_t path.
-pretty_model_ast_t::pretty_model_ast_t(const CM::TypedExpr& m)
+// Builds the pretty extracted view for a typed AST expression.
+pretty_model_t::pretty_model_t(const CM::TypedExpr& m)
     :main(m)
 {
     for(auto& [name,term]: extract_terms(main, {}))

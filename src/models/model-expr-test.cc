@@ -913,17 +913,18 @@ void test_typecheck_decls_wrapper()
     test_typecheck_decls_wrapper(rules);
 }
 
-// Compares the AST pretty extraction view against the legacy annotated-ptree
-// pretty extraction view for one annotated expression.
+// Checks that typed pretty extraction is stable across explicit ptree
+// conversion, without keeping a separate ptree pretty implementation.
 void expect_extraction_parity(const ptree& model)
 {
     auto typed = typed_model_expr_from_annotated_ptree(model);
-    auto ast_pretty = pretty_model_ast_t(typed);
-    auto ptree_pretty = pretty_model_t(model);
+    auto roundtrip = typed_model_expr_from_annotated_ptree(annotated_ptree_from_typed_model_expr(typed));
+    auto ast_pretty = pretty_model_t(typed);
+    auto roundtrip_pretty = pretty_model_t(roundtrip);
 
-    assert(ast_pretty.show() == ptree_pretty.show());
-    assert(ast_pretty.show_main() == ptree_pretty.show_main());
-    assert(ast_pretty.show_extracted() == ptree_pretty.show_extracted());
+    assert(ast_pretty.show() == roundtrip_pretty.show());
+    assert(ast_pretty.show_main() == roundtrip_pretty.show_main());
+    assert(ast_pretty.show_extracted() == roundtrip_pretty.show_extracted());
 }
 
 // Exercises AST extraction for non-models, random args, no_log, extract=all,

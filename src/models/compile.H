@@ -3,6 +3,7 @@
 #include <set>                                      // for set
 #include <string>                                   // for string
 #include <utility>                                  // for pair
+#include <variant>                                  // for variant
 #include <vector>                                   // for vector
 #include "computation/expression/expression_ref.H"  // for expression_ref
 #include "computation/expression/do_block.H"        // for do_block
@@ -18,7 +19,7 @@ class Rules;
 class pretty_model_t
 {
 public:
-    ptree main;
+    CM::TypedExpr main;
     std::vector<std::string> term_names;
     std::vector<pretty_model_t> terms;
 
@@ -26,21 +27,7 @@ public:
     std::string show_main(bool = true) const;
     std::string show_extracted() const;
 
-    pretty_model_t(const ptree& m);
-};
-
-class pretty_model_ast_t
-{
-public:
-    CM::TypedExpr main;
-    std::vector<std::string> term_names;
-    std::vector<pretty_model_ast_t> terms;
-
-    std::string show(bool = true) const;
-    std::string show_main(bool = true) const;
-    std::string show_extracted() const;
-
-    pretty_model_ast_t(const CM::TypedExpr& m);
+    pretty_model_t(const CM::TypedExpr& m);
 };
 
 bool annotated_term_is_model(const CM::TypedExpr&);
@@ -55,7 +42,11 @@ void maybe_log(std::vector<expression_ref>& logger_bits,
 
 class model_t
 {
-    ptree description;
+    using description_t = std::variant<std::monostate, CM::TypedExpr, CM::TypedDecls>;
+
+    description_t description;
+
+    const CM::TypedExpr& expression_description() const;
 public:
     std::set<std::string> imports;
     ptree type;
@@ -63,8 +54,8 @@ public:
     generated_code_t code;
     std::set<std::string> used_args;
 
-    bool empty() const {return description.children().empty();}
-    pretty_model_t pretty_model() const {return {description};};
+    bool empty() const {return std::holds_alternative<std::monostate>(description);}
+    pretty_model_t pretty_model() const {return {expression_description()};};
 
     std::string show(bool = true) const;
 
@@ -73,7 +64,8 @@ public:
     std::string show_extracted() const;
 
     model_t() = default;
-    model_t(const ptree&,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const generated_code_t&);
+    model_t(CM::TypedExpr,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const generated_code_t&);
+    model_t(CM::TypedDecls,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const generated_code_t&);
 };
 
 model_t compile_model(const Rules& R,
