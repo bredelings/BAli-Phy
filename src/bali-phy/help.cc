@@ -103,32 +103,30 @@ optional<string> get_authors(const Rule& rule)
 {
     if (not rule.docs.citation)
 	return {};
-    auto citation = *rule.docs.citation;
+    const auto& citation = *rule.docs.citation;
 
     vector<string> authors;
-    if (auto authors_ = citation.get_child_optional("author"))
-	for(auto& author: authors_->children())
-	    if (auto name = author.second.get_optional<string>("name"))
-	    {
-		auto names = split(*name,", ");
-		if (names.size() == 2)
-		{
-		    string ref = names[0];
-		    if (not names[1].empty())
-		    {
-			names[1] = string(1,names[1][0]) + '.';
-			if (authors.empty())
-			    ref = names[0] + ", " + names[1];
-			else
-			    ref = names[1] + " " +names[0];
-		    }
-		    authors.push_back(ref);
-		}
-		else
-		{
-		    authors.push_back(*name);
-		}
-	    }
+    for(auto& author: citation.authors)
+    {
+        auto names = split(author.name,", ");
+        if (names.size() == 2)
+        {
+            string ref = names[0];
+            if (not names[1].empty())
+            {
+                names[1] = string(1,names[1][0]) + '.';
+                if (authors.empty())
+                    ref = names[0] + ", " + names[1];
+                else
+                    ref = names[1] + " " +names[0];
+            }
+            authors.push_back(ref);
+        }
+        else
+        {
+            authors.push_back(author.name);
+        }
+    }
 
     if (authors.size())
     {
@@ -145,29 +143,27 @@ optional<string> get_citation(const Rule& rule, bool show_title)
 {
     if (not rule.docs.citation)
 	return {};
-    auto citation = *rule.docs.citation;
+    const auto& citation = *rule.docs.citation;
 
-    if (citation.is_a<string>())
-	return citation.get_value<string>();
+    if (citation.text)
+	return *citation.text;
 
     vector<string> cite;
-    auto title = citation.get_optional<string>("title");
-    auto year = citation.get_optional<string>("year");
     auto authors = get_authors(rule);
 
     if (authors)
 	cite.push_back(*authors);
-    if (year)
-	cite.push_back("("+*year+")");
+    if (citation.year)
+	cite.push_back("("+*citation.year+")");
 
-    if (authors or year)
+    if (authors or citation.year)
     {
 	string x = join(cite, " ");
 	cite.clear();
 	cite.push_back(x);
     }
-    if (title and show_title)
-	cite.push_back(*title);
+    if (citation.title and show_title)
+	cite.push_back(*citation.title);
 
     return join(cite,"\n");
 }
@@ -178,20 +174,14 @@ optional<string> get_citation_id(const Rule& rule, const string& idtype)
 {
     // 1. Check if there is a citation field.
     if (not rule.docs.citation) return {};
-    auto citation = *rule.docs.citation;
+    const auto& citation = *rule.docs.citation;
 
     // 2. Try to get the DOI
-    if (auto identifiers = citation.get_child_optional("identifier"))
+    for(auto& identifier: citation.identifiers)
     {
-	for(auto& identifier: identifiers->children())
-	{
-	    auto type = identifier.second.get_child_optional("type");
-	    if (not type or type->get_value<string>() != idtype) continue;
+        if (identifier.type != idtype) continue;
 
-	    auto id = identifier.second.get_child_optional("id");
-	    if (id)
-		return id->get_value<string>();
-	}
+        return identifier.id;
     }
     return {};
 }
@@ -200,23 +190,15 @@ optional<string> get_citation_url(const Rule& rule)
 {
     // 1. Check if there is a citation field.
     if (not rule.docs.citation) return {};
-    auto citation = *rule.docs.citation;
+    const auto& citation = *rule.docs.citation;
 
     // 2. Try to get the URL from the "link" field.
-    if (auto links = citation.get_child_optional("link"))
+    for(auto& link: citation.links)
     {
-	for(auto& link: links->children())
-	{
-	    auto url = link.second.get_child_optional("url");
-	    if (not url) continue;
-
-	    auto anchor = link.second.get_child_optional("anchor");
-	    if (anchor)
-		return url->get_value<string>()+"/#"+anchor->get_value<string>();
-	    else
-		return url->get_value<string>();
-	}
-	
+        if (link.anchor)
+            return link.url + "/#" + *link.anchor;
+        else
+            return link.url;
     }
 
     if (auto doi = get_citation_id(rule,"doi"))

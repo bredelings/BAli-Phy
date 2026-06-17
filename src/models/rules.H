@@ -8,7 +8,6 @@
 #include <vector>
 #include "models/model-expr.H"
 #include "models/model-type.H"
-#include "util/ptree.H"
 #include <filesystem>
 
 using ParsedType = CM::Type;
@@ -31,13 +30,40 @@ struct ComputedRule
     RuleModelExpr value;
 };
 
+struct RuleCitationAuthor
+{
+    std::string name;
+};
+
+struct RuleCitationIdentifier
+{
+    std::string type;
+    std::string id;
+};
+
+struct RuleCitationLink
+{
+    std::string url;
+    std::optional<std::string> anchor;
+};
+
+struct RuleCitation
+{
+    std::optional<std::string> text;
+    std::optional<std::string> title;
+    std::optional<std::string> year;
+    std::vector<RuleCitationAuthor> authors;
+    std::vector<RuleCitationIdentifier> identifiers;
+    std::vector<RuleCitationLink> links;
+};
+
 struct RuleDocs
 {
     std::optional<std::string> title;
     std::optional<std::string> description;
     std::vector<std::string> examples;
     std::vector<std::string> see;
-    std::optional<ptree> citation;
+    std::optional<RuleCitation> citation;
     std::vector<std::string> category;
 };
 
@@ -80,10 +106,6 @@ class Rules
     std::map<std::string,std::string> deprecated_synonyms;
 
     std::vector<std::filesystem::path> path_list;
-
-    std::map<std::string,ptree> raw_rules;
-
-    void add_rule_json(const std::filesystem::path&, const std::filesystem::path&);
 
 public:
     std::optional<Rule> get_rule_for_func(const std::string& s) const;

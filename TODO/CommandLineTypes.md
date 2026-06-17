@@ -26,9 +26,12 @@ The production command-line model path now uses `CM::Type` for model types:
 - There is no production `ptree -> CM::Type` converter.
 - `parse.cc` and `parse.H` no longer expose the obsolete `ptree` model display
   helpers.
+- Rule loading reads `boost::json` into a private `RawRule` boundary and then
+  converts directly to native `Rule` values.
+- Rule citations are stored as native `RuleCitation` data, not as `ptree`.
 
-`ptree` remains in nearby code for raw JSON rule loading, citations/docs, and
-the unrelated parameter-name trie in `path.cc`.
+`ptree` remains in nearby code for the unrelated help-topic tree in
+`src/bali-phy/help.cc` and the parameter-name trie in `path.cc`.
 
 ## Migration Rules
 
@@ -62,12 +65,14 @@ records, and constraints.
 
 ## Remaining Work
 
-1. Remove `ptree` from rule loading and documentation metadata.
-2. Consider whether the global `make_type_app(...)` / `make_type_apps(...)`
+1. Consider whether the global `make_type_app(...)` / `make_type_apps(...)`
    compatibility names should be renamed or moved into `CM` once call sites are
    easy to update.  They are native helpers now, not ptree bridges.
-3. Optionally replace the `path.cc` parameter-name trie with a small local node
+2. Optionally replace the `path.cc` parameter-name trie with a small local node
    struct.  This use is unrelated to model expressions and types.
+3. Optionally replace the help-topic tree in `src/bali-phy/help.cc` with a small
+   local node struct.  This use is unrelated to rule loading and model
+   expressions.
 4. After cleanup, audit with:
 
 ```sh
@@ -82,38 +87,15 @@ types, and rule loading.
 
 ## Rule Loader `ptree` Removal Plan
 
-The rule loader currently parses binding JSON with `boost::json`, converts it to
-`ptree`, then immediately reads fields from that `ptree` to construct native
-`Rule` values.  Replace that conversion boundary directly; do not add a second
-rule-loading path.
+Done.  The rule loader now parses binding JSON with `boost::json`, stores it
+temporarily as a private `RawRule`, and converts directly to native `Rule`
+values.  `json_to_ptree(...)`, `ptree` rule field helpers, and `ptree` citation
+storage have been removed.
 
-1. Keep rule-file parsing in `Rules::add_rule_json(...)`, but store raw rules as
-   `boost::json::object` or a small `RawRule` struct instead of `ptree`.
-   Preserve the existing behavior that injects the directory-derived
-   `"category"` array before storing the raw rule.
-2. Replace the `ptree` field helpers with JSON helpers used by the existing
-   loader:
-   - `required_string(object, key, rule_name)`
-   - `optional_string(object, key)`
-   - `string_array(object, key, rule_name)`
-   - `optional_array/object` validators where needed
-   These helpers should throw the same style of rule-name-qualified errors as
-   the current code.
-3. Convert `parse_constraints(...)`, `get_string_array(...)`, `get_imports(...)`,
-   `make_rule_stub(...)`, and `convert_rule(...)` to take the native JSON/raw
-   rule representation.  Continue to parse all type strings immediately into
-   `CM::Type` and all expression strings immediately into `CM::Expr`.
-4. Replace `RuleDocs::citation = optional<ptree>` with native documentation
-   data, not a new long-lived raw JSON wrapper.  A minimal native shape should
-   cover the schemas used by `help.cc`: string citations, authors with names,
-   title, year, identifiers with `type`/`id`, and links with `url`/`anchor`.
-5. Update `src/bali-phy/help.cc` to read the native citation data.  Once this
-   compiles, delete `json_to_ptree(...)` and remove `util/ptree.H` from
-   `rules.H` and `rules.cc`.
-6. Validate with the model-expression test, the runtime AST serialization test,
-   the `5d +A` test, and a Meson parse-test run.  Rule loading should also be
-   smoke-tested through a command that constructs `Rules` from the bindings
-   database, because most of the behavior being changed happens at startup.
+One temporary compatibility case remains in the new JSON loader:
+`optional_args_array(...)` treats `"args": ""` as an empty argument list because
+one existing binding file uses that spelling and the old `ptree` loader accepted
+it accidentally.  Remove that branch after fixing the binding file.
 
 ## Validation
 

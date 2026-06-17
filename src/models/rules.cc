@@ -19,6 +19,213 @@ using std::string;
 using std::optional;
 namespace fs = std::filesystem;
 
+namespace
+{
+
+struct RawRule
+{
+    string name;
+    json::object fields;
+};
+
+// Looks up a raw JSON field without creating it, so validation can distinguish
+// absent fields from fields with the wrong type.
+const json::value* maybe_field(const json::object& object, const string& key)
+{
+    return object.if_contains(key);
+}
+
+// Reads a required JSON string field and reports the rule currently being
+// loaded in type errors.
+string required_string(const json::object& object, const string& key, const string& rule_name)
+{
+    auto value = maybe_field(object, key);
+    if (not value or not value->is_string())
+        throw myexception()<<"In rules for '"<<rule_name<<"', "<<key<<" is not a string.";
+    return string(value->as_string());
+}
+
+// Reads an optional JSON string field and rejects non-string values, matching
+// the strict checks used for required string fields.
+optional<string> optional_string(const json::object& object, const string& key, const string& rule_name)
+{
+    auto value = maybe_field(object, key);
+    if (not value)
+        return {};
+    if (not value->is_string())
+        throw myexception()<<"In rules for '"<<rule_name<<"', "<<key<<" is not a string.";
+    return string(value->as_string());
+}
+
+// Reads a boolean field with a default while rejecting non-boolean JSON values.
+bool optional_bool(const json::object& object, const string& key, bool default_value, const string& rule_name)
+{
+    auto value = maybe_field(object, key);
+    if (not value)
+        return default_value;
+    if (not value->is_bool())
+        throw myexception()<<"In rules for '"<<rule_name<<"', "<<key<<" is not a boolean.";
+    return value->as_bool();
+}
+
+// Reads an optional array field and produces the rule-qualified error messages
+// used by the old ptree loader.
+const json::array* optional_array(const json::object& object, const string& key, const string& rule_name)
+{
+    auto value = maybe_field(object, key);
+    if (not value)
+        return nullptr;
+    if (not value->is_array())
+        throw myexception()<<"In rule for "<<rule_name<<": \""<<key<<"\" must be an array";
+    return &value->as_array();
+}
+
+// Compatibility note: one existing binding uses `"args": ""`, which the old
+// ptree loader treated as an empty argument list because scalar nodes have no
+// children.  Remove this case after fixing that binding file.
+const json::array* optional_args_array(const json::object& object, const string& rule_name)
+{
+    auto value = maybe_field(object, "args");
+    if (not value)
+        throw myexception()<<"In rule for "<<rule_name<<": \"args\" is missing";
+    if (value->is_array())
+        return &value->as_array();
+    if (value->is_string() and string(value->as_string()).empty())
+        return nullptr;
+    throw myexception()<<"In rule for "<<rule_name<<": \"args\" must be an array";
+}
+
+// Reads an optional array of strings from raw rule JSON.
+vector<string> string_array(const json::object& object, const string& key, const string& rule_name)
+{
+    vector<string> result;
+    if (auto array = optional_array(object, key, rule_name))
+    {
+        for(auto& value: *array)
+        {
+            if (not value.is_string())
+                throw myexception()<<"In rule for "<<rule_name<<": entry in \""<<key<<"\" is not a string";
+            result.push_back(string(value.as_string()));
+        }
+    }
+    return result;
+}
+
+// Reads an optional array of strings into a set for module imports.
+std::set<string> import_set(const json::object& object, const string& rule_name)
+{
+    auto imports = string_array(object, "import", rule_name);
+    return {imports.begin(), imports.end()};
+}
+
+// Converts raw type constraints into native command-line model types.  Bindings
+// currently use both a string and an array spelling for this field.
+vector<RuleConstraint> parse_constraints(const json::object& object, const string& rule_name)
+{
+    vector<RuleConstraint> constraints;
+    auto value = maybe_field(object, "constraints");
+    if (not value)
+        return constraints;
+    if (value->is_string())
+    {
+        constraints.push_back(parse_type(string(value->as_string())));
+        return constraints;
+    }
+    if (not value->is_array())
+        throw myexception()<<"In rule for "<<rule_name<<": \"constraints\" must be an array or string";
+
+    for(auto& constraint: value->as_array())
+    {
+        if (not constraint.is_string())
+            throw myexception()<<"In rule for "<<rule_name<<": entry in \"constraints\" is not a string";
+        constraints.push_back(parse_type(string(constraint.as_string())));
+    }
+    return constraints;
+}
+
+// Parses citation metadata into a native shape used by the help renderer.
+RuleCitation parse_citation(const json::value& value, const string& rule_name)
+{
+    RuleCitation citation;
+    if (value.is_string())
+    {
+        citation.text = string(value.as_string());
+        return citation;
+    }
+    if (not value.is_object())
+        throw myexception()<<"In rule for "<<rule_name<<": \"citation\" must be a string or an object";
+
+    const auto& object = value.as_object();
+    citation.title = optional_string(object, "title", rule_name);
+    citation.year = optional_string(object, "year", rule_name);
+
+    if (auto authors = optional_array(object, "author", rule_name))
+        for(auto& author_value: *authors)
+        {
+            if (not author_value.is_object())
+                throw myexception()<<"In rule for "<<rule_name<<": entry in \"author\" is not an object";
+            if (auto name = optional_string(author_value.as_object(), "name", rule_name))
+                citation.authors.push_back({*name});
+        }
+
+    if (auto identifiers = optional_array(object, "identifier", rule_name))
+        for(auto& identifier_value: *identifiers)
+        {
+            if (not identifier_value.is_object())
+                throw myexception()<<"In rule for "<<rule_name<<": entry in \"identifier\" is not an object";
+            const auto& identifier = identifier_value.as_object();
+            auto type = optional_string(identifier, "type", rule_name);
+            auto id = optional_string(identifier, "id", rule_name);
+            if (type and id)
+                citation.identifiers.push_back({*type, *id});
+        }
+
+    if (auto links = optional_array(object, "link", rule_name))
+        for(auto& link_value: *links)
+        {
+            if (not link_value.is_object())
+                throw myexception()<<"In rule for "<<rule_name<<": entry in \"link\" is not an object";
+            const auto& link = link_value.as_object();
+            if (auto url = optional_string(link, "url", rule_name))
+                citation.links.push_back({*url, optional_string(link, "anchor", rule_name)});
+        }
+
+    return citation;
+}
+
+// Loads one binding JSON file, injects its directory-derived category, and
+// returns raw rule data for the normal rule conversion step.
+RawRule load_rule_json(const fs::path& path, const fs::path& rel_path)
+{
+    checked_ifstream infile(path, "function file");
+
+    try {
+        json::value j;
+        infile>>j;
+        if (not j.is_object())
+            throw myexception()<<"Top-level JSON value is not an object.";
+
+        auto rule = j.as_object();
+        json::array category;
+        for(const auto& s: rel_path)
+            category.push_back(json::string(s.string()));
+        rule["category"] = category;
+
+        auto name = required_string(rule, "name", path.string());
+        return {name, std::move(rule)};
+    }
+    catch (const std::exception& e)
+    {
+        throw myexception()<<"Error parsing JSON function description "<<path<<"\n:  "<<e.what();
+    }
+    catch (...)
+    {
+        throw myexception()<<"Error parsing JSON function description "<<path<<"\n";
+    }
+}
+
+}
+
 // TODO: reject HKY+HKY -- reduce constraints.
 //       reject HKY model with amino acid data.
 //       reject M3[LG,F1x4]
@@ -111,17 +318,6 @@ namespace fs = std::filesystem;
 // TODO: find some way to run under the prior?
 // TODO: rewrite frequencies_prior..
 
-vector<RuleConstraint> parse_constraints(const ptree& cc)
-{
-    vector<RuleConstraint> constraints;
-    for(auto& c: cc.children())
-    {
-	string s = c.second.get_value<string>();
-	constraints.push_back(parse_type(s));
-    }
-    return constraints;
-}
-
 // Parses binding model expressions through the command-line model parser and
 // normalizes positional arguments over CmdModel.
 RuleModelExpr parse_rule_model_expr(const Rules& R, const string& text, const string& what)
@@ -136,41 +332,6 @@ RuleModelExpr parse_rule_template_expr(const string& text, const string& what)
     return parse_expression(text, what);
 }
 
-
-vector<string> get_string_array(const ptree& rule, const string& key, const string& rule_name)
-{
-    vector<string> result;
-    if (auto p = rule.get_child_optional(key))
-    {
-        if (not p->value_is_empty())
-            throw myexception()<<"In rule for "<<rule_name<<": \""<<key<<"\" must be an array";
-        for(auto& [_, x]: p->children())
-        {
-            if (not x.is_a<string>())
-                throw myexception()<<"In rule for "<<rule_name<<": entry in \""<<key<<"\" is not a string";
-            result.push_back(x.get_value<string>());
-        }
-    }
-    return result;
-}
-
-std::set<string> get_imports(const ptree& rule, const string& rule_name)
-{
-    std::set<string> result;
-    if (auto p = rule.get_child_optional("import"))
-    {
-        if (not p->value_is_empty())
-            throw myexception()<<"In rule for "<<rule_name<<": \"import\" must be an array";
-        for(auto& [_, x]: p->children())
-        {
-            if (not x.is_a<string>())
-                throw myexception()<<"In rule for "<<rule_name<<": entry in \"import\" is not a string";
-            result.insert(x.get_value<string>());
-        }
-    }
-    return result;
-}
-
 /* NOTE: convert_rule parses and processes strings.  It converts:
 
    - "result_type" -> type
@@ -182,112 +343,104 @@ std::set<string> get_imports(const ptree& rule, const string& rule_name)
    - "alphabet" -> expression -> fill in default values
    - "computed" -> expression
 */
-Rule convert_rule(const Rules& R, const string& name, const ptree& raw_rule)
+Rule convert_rule(const Rules& R, const RawRule& raw_rule)
 {
     Rule rule;
+    const auto& fields = raw_rule.fields;
+    const auto& name = raw_rule.name;
     rule.name = name;
 
     {
-	auto result_type = raw_rule.get_child("result_type");
-        if (not result_type.has_value<string>())
-            throw myexception()<<"In rules for '"<<name<<"', result_type is not a string.";
-	rule.result_type = parse_type(result_type.get_value<string>());
+        rule.result_type = parse_type(required_string(fields, "result_type", name));
     }
 
     {
-	ptree constraints;
-	if (auto constraints_ = raw_rule.get_child_optional("constraints"))
-            constraints = *constraints_;
-	rule.constraints = parse_constraints(constraints);
+        rule.constraints = parse_constraints(fields, name);
     }
 
     {
-	auto call = raw_rule.get_child("call");
-	rule.call = parse_rule_template_expr(call.get_value<string>(), name + ": call");
+        rule.call = parse_rule_template_expr(required_string(fields, "call", name), name + ": call");
     }
 
-    for(auto& [_,x]: raw_rule.get_child("args").children())
+    if (auto args = optional_args_array(fields, name))
     {
-        string arg_name = x.get_child("name").get_value<string>();
-        RuleArg arg;
-        arg.name = arg_name;
+        for(auto& x: *args)
+        {
+            if (not x.is_object())
+                throw myexception()<<"In rule for "<<name<<": entry in \"args\" is not an object";
+            const auto& arg_object = x.as_object();
+            string arg_name = required_string(arg_object, "name", name);
+            RuleArg arg;
+            arg.name = arg_name;
 
-	{
-	    auto arg_type = x.get_child("type");
+            {
+                arg.type = parse_type(required_string(arg_object, "type", name));
+            }
 
-	    if (not arg_type.has_value<string>())
-		throw myexception()<<"In rules for '"<<name<<"', type for argument '"<<arg_name<<"' is not a string.";
+            if (auto default_value = optional_string(arg_object, "default_value", name))
+                arg.default_value = parse_rule_model_expr(R, *default_value, name + ": default value for '"+arg_name+"'");
 
-	    arg.type = parse_type(arg_type.get_value<string>());
-	}
+            if (auto alphabet = optional_string(arg_object, "alphabet", name))
+                arg.alphabet = parse_rule_model_expr(R, *alphabet, name + ": alphabet for '"+arg_name+"'");
 
-	if (auto default_value = x.get_child_optional("default_value"))
-	{
-	    if (not default_value->has_value<string>())
-		throw myexception()<<"In rules for '"<<name<<"', default value for argument '"<<arg_name<<"' is not a string.";
+            arg.description = optional_string(arg_object, "description", name);
 
-	    arg.default_value = parse_rule_model_expr(R, default_value->get_value<string>(), name + ": default value for '"+arg_name+"'");
-	}
-
-	if (auto alphabet = x.get_child_optional("alphabet"))
-	{
-	    if (not alphabet->has_value<string>())
-		throw myexception()<<"In rules for '"<<name<<"', alphabet for argument '"<<arg_name<<"' is not a string.";
-
-	    arg.alphabet = parse_rule_model_expr(R, alphabet->get_value<string>(), name + ": alphabet for '"+arg_name+"'");
-	}
-
-        if (auto description = x.get_optional<string>("description"))
-            arg.description = *description;
-
-        rule.args.push_back(std::move(arg));
+            rule.args.push_back(std::move(arg));
+        }
     }
 
     // Handle optional element "computed".
-    if (auto computed = raw_rule.get_child_optional("computed"))
+    if (auto computed = optional_array(fields, "computed", name))
     {
-	for(auto& [_,x]: computed->children())
+	for(auto& x: *computed)
 	{
+            if (not x.is_object())
+                throw myexception()<<"In rule for "<<name<<": entry in \"computed\" is not an object";
+            const auto& computed_object = x.as_object();
             ComputedRule c;
-            c.name = x.get_child("name").get_value<string>();
-	    c.value = parse_rule_template_expr(x.get_child("value").get_value<string>(), name + ": computed value for '"+c.name+"'");
+            c.name = required_string(computed_object, "name", name);
+	    c.value = parse_rule_template_expr(required_string(computed_object, "value", name), name + ": computed value for '"+c.name+"'");
             rule.computed.push_back(std::move(c));
 	}
     }
 
-    rule.imports = get_imports(raw_rule, name);
-    rule.no_log = raw_rule.get("no_log", false);
-    rule.perform = raw_rule.get("perform", false);
-    if (auto extract = raw_rule.get_optional<string>("extract"))
-        rule.extract = *extract;
+    rule.imports = import_set(fields, name);
+    rule.no_log = optional_bool(fields, "no_log", false, name);
+    rule.perform = optional_bool(fields, "perform", false, name);
+    rule.extract = optional_string(fields, "extract", name);
 
-    rule.synonyms = get_string_array(raw_rule, "synonyms", name);
-    rule.deprecated_synonyms = get_string_array(raw_rule, "deprecated-synonyms", name);
+    rule.synonyms = string_array(fields, "synonyms", name);
+    rule.deprecated_synonyms = string_array(fields, "deprecated-synonyms", name);
 
-    if (auto title = raw_rule.get_optional<string>("title"))
-        rule.docs.title = *title;
-    if (auto description = raw_rule.get_optional<string>("description"))
-        rule.docs.description = *description;
-    rule.docs.examples = get_string_array(raw_rule, "examples", name);
-    rule.docs.see = get_string_array(raw_rule, "see", name);
-    if (auto citation = raw_rule.get_child_optional("citation"))
-        rule.docs.citation = *citation;
-    if (auto category = raw_rule.get_child_optional("category"))
-        for(auto& [_, x]: category->children())
-            rule.docs.category.push_back(x.get_value<string>());
+    rule.docs.title = optional_string(fields, "title", name);
+    rule.docs.description = optional_string(fields, "description", name);
+    rule.docs.examples = string_array(fields, "examples", name);
+    rule.docs.see = string_array(fields, "see", name);
+    if (auto citation = maybe_field(fields, "citation"))
+        rule.docs.citation = parse_citation(*citation, name);
+    rule.docs.category = string_array(fields, "category", name);
 
     return rule;
 }
 
-Rule make_rule_stub(const string& name, const ptree& raw_rule)
+// Builds a lightweight rule entry so default-value parsing can resolve local
+// rule names before the full rule conversion pass has run.
+Rule make_rule_stub(const RawRule& raw_rule)
 {
     Rule rule;
+    const auto& name = raw_rule.name;
+    const auto& fields = raw_rule.fields;
     rule.name = name;
-    for(auto& [_, x]: raw_rule.get_child("args").children())
+    if (auto args = optional_args_array(fields, name))
     {
-        RuleArg arg;
-        arg.name = x.get_child("name").get_value<string>();
-        rule.args.push_back(std::move(arg));
+        for(auto& x: *args)
+        {
+            if (not x.is_object())
+                throw myexception()<<"In rule for "<<name<<": entry in \"args\" is not an object";
+            RuleArg arg;
+            arg.name = required_string(x.as_object(), "name", name);
+            rule.args.push_back(std::move(arg));
+        }
     }
     return rule;
 }
@@ -385,113 +538,10 @@ string show_paths(const vector<fs::path>& paths)
     return join(spaths,":");
 }
 
-ptree json_to_ptree(const json::value& j)
-{
-    ptree p;
-    switch(j.kind())
-    {
-    case json::kind::null:
-	break;
-	// j.is_boolean()
-    case json::kind::bool_:
-	p = ptree(j.as_bool());
-	break;
-    case json::kind::uint64:
-	p = ptree((int)j.as_uint64());
-	break;
-    case json::kind::int64:
-    p = ptree((int)j.as_int64());
-	break;
-    case json::kind::double_:
-	p = ptree(j.as_double());
-	break;
-    case json::kind::string:
-	p = ptree(string(j.as_string()));
-	break;
-	// j.is_array()
-    case json::kind::array:
-	for(auto& x: j.as_array())
-	    p.children().push_back({"", json_to_ptree(x)});
-	break;
-    case json::kind::object:
-	for(auto& [key,value]: j.as_object())
-	    p.children().push_back({key, json_to_ptree(value)});
-	break;
-    default:
-	break;
-    }
-    return p;
-}
-
-void Rules::add_rule_json(const fs::path& path, const fs::path& rel_path)
-{
-    checked_ifstream infile(path, "function file");
-
-    ptree rule;
-    try {
-	json::value j;
-	infile>>j;
-	json::array category;
-	for(const auto& s:rel_path)
-	    category.push_back(json::string(s.string()));
-	j.as_object()["category"] = category;
-	rule = json_to_ptree(j);
-    }
-    catch (const std::exception& e)
-    {
-	throw myexception()<<"Error parsing JSON function description "<<path<<"\n:  "<<e.what();
-    }
-    catch (...)
-    {
-	throw myexception()<<"Error parsing JSON function description "<<path<<"\n";
-    }
-
-    string name = rule.get<string>("name");
-
-    if (raw_rules.count(name))
-	std::cerr<<"Warning: ignoring additional definition of function '"<<name<<"' from file '"<<path<<"'\n";
-    else
-	raw_rules[name] = rule;
-
-    if (auto syn = rule.get_child_optional("synonyms"))
-    {
-	if (not syn->value_is_empty())
-	    throw myexception()<<"In rule for "<<*rule.get_optional<string>("name")<<": \"synonyms\" must be an array";
-    }
-
-    if (auto syn = rule.get_child_optional("deprecated-synonyms"))
-    {
-	if (not syn->value_is_empty())
-	    throw myexception()<<"In rule for "<<*rule.get_optional<string>("name")<<": \"deprecated-synonyms\" must be an array";
-    }
-
-    if (auto synonyms = rule.get_child_optional("synonyms"))
-    {
-	for(auto& synonym_pair: synonyms->children())
-	{
-	    if (not synonym_pair.second.is_a<string>())
-		throw myexception()<<"Synonym for rule '"<<name<<"' is not a string!";
-	    auto synonym = (string)synonym_pair.second;
-	    if (not raw_rules.count(synonym) and not this->synonyms.count(synonym))
-		this->synonyms[synonym] = name;
-	}
-    }
-
-    if (auto synonyms = rule.get_child_optional("deprecated-synonyms"))
-    {
-	for(auto& synonym_pair: synonyms->children())
-	{
-	    if (not synonym_pair.second.is_a<string>())
-		throw myexception()<<"Deprecated synonym for rule '"<<name<<"' is not a string!";
-	    auto synonym = (string)synonym_pair.second;
-	    if (not raw_rules.count(synonym) and not this->synonyms.count(synonym) and not deprecated_synonyms.count(synonym))
-		deprecated_synonyms[synonym] = name;
-	}
-    }
-}
-
 Rules::Rules(const vector<fs::path>& pl)
 {
+    std::map<std::string, RawRule> raw_rules;
+
     // 1. Only keep paths that have a /functions/ subdir
     for(auto& path: pl)
     {
@@ -507,11 +557,27 @@ Rules::Rules(const vector<fs::path>& pl)
 
 	for(auto& dir_entry: fs::recursive_directory_iterator(path))
 	{
-		auto abs_path = dir_entry.path();
+	    auto abs_path = dir_entry.path();
 	    if (abs_path.extension() == ".json" and abs_path.filename().string()[0] != '.')
 	    {
 		auto rel_path = fs::relative(dir_entry.path(), path);
-		add_rule_json(abs_path, rel_path.parent_path());
+		auto raw_rule = load_rule_json(abs_path, rel_path.parent_path());
+		auto name = raw_rule.name;
+		auto synonyms = string_array(raw_rule.fields, "synonyms", name);
+		auto deprecated = string_array(raw_rule.fields, "deprecated-synonyms", name);
+
+		if (raw_rules.count(name))
+		    std::cerr<<"Warning: ignoring additional definition of function '"<<name<<"' from file '"<<abs_path<<"'\n";
+		else
+		    raw_rules[name] = std::move(raw_rule);
+
+		for(auto& synonym: synonyms)
+		    if (not raw_rules.count(synonym) and not this->synonyms.count(synonym))
+			this->synonyms[synonym] = name;
+
+		for(auto& synonym: deprecated)
+		    if (not raw_rules.count(synonym) and not this->synonyms.count(synonym) and not deprecated_synonyms.count(synonym))
+			deprecated_synonyms[synonym] = name;
 	    }
 	}
     }
@@ -519,9 +585,9 @@ Rules::Rules(const vector<fs::path>& pl)
     // 3. Seed the rules map so that parsing default values can still resolve
     // positional arguments for rules that have not been fully converted yet.
     for(auto& [name, raw_rule]: raw_rules)
-	rules[name] = make_rule_stub(name, raw_rule);
+	rules[name] = make_rule_stub(raw_rule);
 
     // 4. Convert the rules - FIXME: should we convert default args in a later step?
     for(auto& [name, raw_rule]: raw_rules)
-	rules[name] = convert_rule(*this, name, raw_rule);
+	rules[name] = convert_rule(*this, raw_rule);
 }
