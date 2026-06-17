@@ -92,10 +92,8 @@ temporarily as a private `RawRule`, and converts directly to native `Rule`
 values.  `json_to_ptree(...)`, `ptree` rule field helpers, and `ptree` citation
 storage have been removed.
 
-One temporary compatibility case remains in the new JSON loader:
-`optional_args_array(...)` treats `"args": ""` as an empty argument list because
-one existing binding file uses that spelling and the old `ptree` loader accepted
-it accidentally.  Remove that branch after fixing the binding file.
+The binding JSON files now use array spellings for `args` and `constraints`, so
+the loader rejects scalar spellings for those fields.
 
 ## Validation
 

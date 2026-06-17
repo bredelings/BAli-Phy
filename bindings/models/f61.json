@@ -2,7 +2,7 @@
     "name": "f61",
     "synonyms": [ "F61" ],
     "result_type": "List<(String,Double)>",
-    "constraints": "Triplets<a,b>",
+    "constraints": ["Triplets<a,b>"],
     "call": "id(@pi)",
     "args": [
         {

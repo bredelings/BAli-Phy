@@ -2,7 +2,7 @@
     "name": "f1x4",
     "synonyms": [ "F1x4" ],
     "result_type": "List<(String,Double)>",
-    "constraints": "Triplets<a,b>",
+    "constraints": ["Triplets<a,b>"],
     "call": "f1x4'_frequencies(@a,@pi)",
     "import": ["SModel"],
     "args": [

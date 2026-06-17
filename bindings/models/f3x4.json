@@ -2,7 +2,7 @@
     "name": "f3x4",
     "synonyms": [ "F3x4" ],
     "result_type": "List<(String,Double)>",
-    "constraints": "Triplets<a,b>",
+    "constraints": ["Triplets<a,b>"],
     "call": "f3x4'_frequencies(@a,@pi1,@pi2,@pi3)",
     "import": ["SModel"],
     "args": [

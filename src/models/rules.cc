@@ -68,8 +68,7 @@ bool optional_bool(const json::object& object, const string& key, bool default_v
     return value->as_bool();
 }
 
-// Reads an optional array field and produces the rule-qualified error messages
-// used by the old ptree loader.
+// Reads an optional array field and produces rule-qualified error messages.
 const json::array* optional_array(const json::object& object, const string& key, const string& rule_name)
 {
     auto value = maybe_field(object, key);
@@ -80,9 +79,6 @@ const json::array* optional_array(const json::object& object, const string& key,
     return &value->as_array();
 }
 
-// Compatibility note: one existing binding uses `"args": ""`, which the old
-// ptree loader treated as an empty argument list because scalar nodes have no
-// children.  Remove this case after fixing that binding file.
 const json::array* optional_args_array(const json::object& object, const string& rule_name)
 {
     auto value = maybe_field(object, "args");
@@ -90,8 +86,6 @@ const json::array* optional_args_array(const json::object& object, const string&
         throw myexception()<<"In rule for "<<rule_name<<": \"args\" is missing";
     if (value->is_array())
         return &value->as_array();
-    if (value->is_string() and string(value->as_string()).empty())
-        return nullptr;
     throw myexception()<<"In rule for "<<rule_name<<": \"args\" must be an array";
 }
 
@@ -118,21 +112,15 @@ std::set<string> import_set(const json::object& object, const string& rule_name)
     return {imports.begin(), imports.end()};
 }
 
-// Converts raw type constraints into native command-line model types.  Bindings
-// currently use both a string and an array spelling for this field.
+// Converts raw type constraint strings into native command-line model types.
 vector<RuleConstraint> parse_constraints(const json::object& object, const string& rule_name)
 {
     vector<RuleConstraint> constraints;
     auto value = maybe_field(object, "constraints");
     if (not value)
         return constraints;
-    if (value->is_string())
-    {
-        constraints.push_back(parse_type(string(value->as_string())));
-        return constraints;
-    }
     if (not value->is_array())
-        throw myexception()<<"In rule for "<<rule_name<<": \"constraints\" must be an array or string";
+        throw myexception()<<"In rule for "<<rule_name<<": \"constraints\" must be an array";
 
     for(auto& constraint: value->as_array())
     {
