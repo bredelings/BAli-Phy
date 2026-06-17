@@ -787,6 +787,8 @@ std::filesystem::path make_rule_fixture()
     return root;
 }
 
+void test_typecheck_decls_wrapper_parity(const Rules& rules);
+
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls against
 // a temporary binding-file fixture.
 // Exercises AST rule-call typechecker parity for defaults, alphabets, and
@@ -840,6 +842,7 @@ void test_typecheck_rule_wrapper_parity()
             ptree("s"),
             {{"s", make_type_app("ExchangeModel", ptree("AA"))}}
         );
+        test_typecheck_decls_wrapper_parity(rules);
     }
     catch (...)
     {
@@ -850,9 +853,8 @@ void test_typecheck_rule_wrapper_parity()
 }
 
 // Exercises declaration typechecking parity between AST and legacy ptree paths.
-void test_typecheck_decls_wrapper_parity()
+void test_typecheck_decls_wrapper_parity(const Rules& rules)
 {
-    Rules rules({});
     // Compares one declaration block through the AST and legacy paths.
     auto expect_decls_parity = [&](const ptree& decls_ptree)
     {
@@ -891,6 +893,20 @@ void test_typecheck_decls_wrapper_parity()
             {"body", ptree("y")}
         })}
     }));
+    if (rules.get_rule_for_func("intToDouble"))
+    {
+        expect_decls_parity(ptree("!Decls", {
+            {"x", ptree("intToDouble", {{"x", ptree(1)}})}
+        }));
+    }
+}
+
+// Exercises declaration typechecking parity for declarations that do not need
+// binding-file rules.
+void test_typecheck_decls_wrapper_parity()
+{
+    Rules rules({});
+    test_typecheck_decls_wrapper_parity(rules);
 }
 
 // Compares the AST pretty extraction view against the legacy annotated-ptree

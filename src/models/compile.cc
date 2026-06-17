@@ -366,16 +366,21 @@ model_t compile_decls(const Rules& R,
 		      const vector<pair<string,ptree>>& scope,
 		      const map<string,pair<string,ptree>>& state)
 {
-    // Compatibility boundary: declarations still use the old ptree
-    // parse/typecheck path. Remove when compile_decls() switches to CM::Decls.
     // 1. Parse declarations and substitute any default values.
-    auto decls = parse_defs(R, prog);
+    auto decls = parse_model_decls(R, prog);
 
     // 2. Typecheck.
-    auto decls2 = TC.typecheck_and_annotate_decls(decls);
+    auto typed_decls = typecheck_model_decls(TC, decls);
 
-    for(auto& [var,value]: decls2.children())
-	substitute_annotated(TC.eqs, value);
+    // Awkward preserved side effect: compile_decls() still relies on the shared
+    // mutable TC.eqs accumulated during declaration typechecking.
+    for(auto& [var,value]: typed_decls)
+		substitute_annotated(TC.eqs, value);
+
+    // Compatibility boundary: declaration code generation still consumes
+    // annotated ptree. Remove when CodeGenState has CM::TypedDecls overloads.
+    auto decls2 = CM::annotated_ptree_from_typed_model_decls(typed_decls);
+
     set<ptree> constraints;
     for(auto constraint: TC.eqs.get_constraints())
     {
