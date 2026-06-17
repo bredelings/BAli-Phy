@@ -386,7 +386,7 @@ optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, co
         return {};
 
     if (auto converted = TC.unify_or_convert(model, result_type, required_type))
-        return typecheck_model_expr_via_ptree(TC, required_type, CM::model_expr_from_ptree(*converted));
+        return typecheck_model_expr(TC, required_type, CM::model_expr_from_ptree(*converted));
 
     return CM::TypedExpr{model_ann(result_type), std::move(node)};
 }
@@ -423,7 +423,7 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
     assert(not result_type.is_null());
 
     if (auto converted = TC.unify_or_convert(model, result_type, required_type))
-        return typecheck_model_expr_via_ptree(TC, required_type, CM::model_expr_from_ptree(*converted));
+        return typecheck_model_expr(TC, required_type, CM::model_expr_from_ptree(*converted));
 
     return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(node)};
 }
@@ -438,7 +438,7 @@ optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const 
     auto result_type = make_type_app("List", element_required_type);
     auto model = CM::ptree_from_model_expr(expr);
     if (auto converted = TC.unify_or_convert(model, result_type, required_type))
-        return typecheck_model_expr_via_ptree(TC, required_type, CM::model_expr_from_ptree(*converted));
+        return typecheck_model_expr(TC, required_type, CM::model_expr_from_ptree(*converted));
 
     substitute(TC.eqs, element_required_type);
 
@@ -469,7 +469,7 @@ optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const
 
     auto model = CM::ptree_from_model_expr(expr);
     if (auto converted = TC.unify_or_convert(model, result_type, required_type))
-        return typecheck_model_expr_via_ptree(TC, required_type, CM::model_expr_from_ptree(*converted));
+        return typecheck_model_expr(TC, required_type, CM::model_expr_from_ptree(*converted));
 
     set<string> used_args;
     CM::Tuple<CM::Ann> typed_tuple;
@@ -581,7 +581,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
 
     auto model = CM::ptree_from_model_expr(expr);
     if (auto converted = TC.unify_or_convert(model, result_type, required_type))
-        return typecheck_model_expr_via_ptree(TC, required_type, CM::model_expr_from_ptree(*converted));
+        return typecheck_model_expr(TC, required_type, CM::model_expr_from_ptree(*converted));
 
     for(const auto& constraint: rule.constraints)
         TC.eqs.add_constraint(constraint);
