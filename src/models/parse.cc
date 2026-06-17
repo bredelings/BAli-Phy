@@ -1,4 +1,5 @@
 #include <iostream>
+#include <set>
 #include <vector>
 #include "models/parse.H"
 #include "util/myexception.H"
@@ -13,6 +14,7 @@ using std::vector;
 using std::string;
 using std::pair;
 using std::optional;
+using std::set;
 using namespace CmdModel;
 
 
@@ -86,8 +88,8 @@ ptree add_submodel(ptree term, const ptree& submodel)
 }
 
 // Converts parser-produced positional call arguments to rule keyword arguments
-// directly on the model AST.
-void handle_positional_args(UntypedExpr& expr, const Rules& R)
+// directly on the model AST, while preserving calls to local function binders.
+void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>& local_functions = {})
 {
     std::visit(overloaded{
         // Rewrites ordinary call arguments after first normalizing the argument
@@ -96,7 +98,7 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R)
         {
             for(auto& arg: call.args)
                 if (arg.value)
-                    handle_positional_args(arg.value->get(), R);
+                    handle_positional_args(arg.value->get(), R, local_functions);
 
             if (call.args.empty())
                 return;
@@ -118,6 +120,9 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R)
                 expr.node = std::move(tuple);
                 return;
             }
+
+            if (local_functions.count(call.function))
+                return;
 
             if (not R.get_rule_for_func(call.function))
             {
@@ -165,44 +170,52 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R)
         [&](List<NoAnn>& list)
         {
             for(auto& element: list.elements)
-                handle_positional_args(element, R);
+                handle_positional_args(element, R, local_functions);
         },
         // Recurses into tuple elements without rewriting the tuple node itself.
         [&](Tuple<NoAnn>& tuple)
         {
             for(auto& element: tuple.elements)
-                handle_positional_args(element, R);
+                handle_positional_args(element, R, local_functions);
         },
         // Recurses into declarations and the body without rewriting the let node
         // itself.
         [&](Let<NoAnn>& let)
         {
+            auto local_functions2 = local_functions;
             for(auto& [name, value]: let.decls)
-                handle_positional_args(value, R);
-            handle_positional_args(let.body.get(), R);
+            {
+                local_functions2.insert(name);
+                handle_positional_args(value, R, local_functions2);
+            }
+            handle_positional_args(let.body.get(), R, local_functions2);
         },
         // Recurses into the body without rewriting the lambda node itself.
         // Patterns contain no call arguments to normalize.
         [&](Lambda<NoAnn>& lambda)
         {
-            handle_positional_args(lambda.body.get(), R);
+            handle_positional_args(lambda.body.get(), R, local_functions);
         },
         // Recurses into the sampled distribution without rewriting the sample
         // node itself.
         [&](Sample<NoAnn>& sample)
         {
-            handle_positional_args(sample.dist.get(), R);
+            handle_positional_args(sample.dist.get(), R, local_functions);
         },
         [](auto&) {}
     }, expr.node);
 }
 
-// Converts parser-produced positional call arguments in each declaration value
-// to rule keyword arguments directly on the model AST.
+// Converts parser-produced positional call arguments in declaration values to
+// rule keyword arguments, while tracking earlier local declaration binders.
 void handle_positional_args(Decls<NoAnn>& decls, const Rules& R)
 {
+    set<string> local_functions;
     for(auto& [name, value]: decls)
-        handle_positional_args(value, R);
+    {
+        local_functions.insert(name);
+        handle_positional_args(value, R, local_functions);
+    }
 }
 
 // Parses one command-line model expression through the legacy grammar, then

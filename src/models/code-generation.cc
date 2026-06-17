@@ -1041,7 +1041,9 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
 // variable path according to the current rules and scope.
 translation_result_t CodeGenState::get_typed_model_call(const CM::Call<CM::Ann>& call) const
 {
-    if (R->get_rule_for_func(call.function))
+    if ((not call.function.empty() and call.function[0] == '@') or identifiers.count(call.function))
+        return get_typed_variable_call(call);
+    else if (R->get_rule_for_func(call.function))
         return get_typed_rule_call(call);
     else
         return get_typed_variable_call(call);

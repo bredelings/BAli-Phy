@@ -446,8 +446,6 @@ optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, co
     auto call = std::get_if<CM::Call<CM::NoAnn>>(&expr.node);
     if (not call)
         return {};
-    if (TC.R.get_rule_for_func(call->function))
-        return {};
 
     type_t result_type;
     set<string> used_args;

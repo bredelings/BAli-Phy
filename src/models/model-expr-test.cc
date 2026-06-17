@@ -717,6 +717,17 @@ void test_typecheck_rule_calls()
             named_arg("mu", int_expr(0)),
             named_arg("sigma", int_expr(1))
         })));
+        auto shadowed_rule_call = parse_model_expr(rules, "f(1) where {f = |x:x|}", "shadowing test");
+        expect_typecheck_expr(rules, ptree("Int"), shadowed_rule_call);
+        auto shadowed_rule_model = compile_model(
+            rules,
+            test_typechecker(rules),
+            CodeGenState(rules),
+            ptree("Int"),
+            "f(1) where {f = |x:x|}",
+            "shadowing compile test"
+        );
+        assert(shadowed_rule_model.type == ptree("Int"));
         expect_typecheck_expr(
             rules,
             make_type_app("DiscreteDist", ptree("Int")),
