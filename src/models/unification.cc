@@ -5,7 +5,6 @@
 #include "util/set.H"
 #include "util/string/join.H"
 #include "util/string/convert.H"
-#include "parse.H"
 
 using std::list;
 using std::vector;
@@ -14,11 +13,6 @@ using std::map;
 using std::set;
 using std::string;
 using std::optional;
-
-bool is_wildcard(const ptree& p)
-{
-    return p == "_";
-}
 
 /// Split a string of the form key=value into {key,value}
 string equations::show() const
@@ -134,14 +128,14 @@ bool equations::occurs_check() const
 
 bool equations::add_condition(const string& x, const term_t& T)
 {
-    if (is_wildcard(T)) return valid();
+    if (CM::is_wildcard(T)) return valid();
 
     if (not has_record(x))
     {
 	// Occurs check.
 	auto fvs_T = find_variables_in_type(T);
 	if (fvs_T.count(x))
-            failed.push_back({ptree(x),T});
+            failed.push_back({term_t(x),T});
         else
             // Add x = T
             values.push_back({set<string>{x},T});
@@ -154,7 +148,7 @@ bool equations::add_condition(const string& x, const term_t& T)
 	    // Occurs check.
 	    auto fvs_T = find_variables_in_type(T);
 	    if (intersects(vars, fvs_T))
-                failed.push_back({ptree(x),T});
+                failed.push_back({term_t(x),T});
             else
                 // Set x = T
                 value = T;
@@ -188,7 +182,7 @@ bool equations::add_var_condition(const string& x, const string& y)
 	    // Occurs check.
 	    if (T and find_variables_in_type(*T).count(y))
 	    {
-                failed.push_back({ptree(x),ptree(y)});
+                failed.push_back({term_t(x),term_t(y)});
 		return valid();
 	    }
 
@@ -203,7 +197,7 @@ bool equations::add_var_condition(const string& x, const string& y)
 	// Occurs check.
 	if (T and find_variables_in_type(*T).count(x))
 	{
-            failed.push_back({ptree(x),ptree(y)});
+            failed.push_back({term_t(x),term_t(y)});
 	    return valid();
 	}
 
@@ -229,7 +223,7 @@ bool equations::add_var_condition(const string& x, const string& y)
 	// Do an occurs check.
 	if (xrec->second and intersects(xrec->first, find_variables_in_type(*xrec->second)))
 	{
-	    failed.push_back({ptree(x),ptree(y)});
+	    failed.push_back({term_t(x),term_t(y)});
 	    return valid();
 	}
 
@@ -361,28 +355,6 @@ set<string> equations::referenced_vars() const
     return vars;
 }
 
-bool is_type_variable(const ptree& p)
-{
-    if (p.children().size()) return false;
-
-    if (not p.has_value<string>()) return false;
-
-    const string& s = p.get_value<string>();
-    char first_letter = s[0];
-    return (first_letter >= 97 and first_letter <= 122);
-}
-
-set<string> find_variables_in_type(const ptree& p)
-{
-    set<string> vars;
-    if (is_type_variable(p))
-	vars.insert(p.get_value<string>());
-    else
-	for(const auto& x: p.children())
-	    add(vars,find_variables_in_type(x.second));
-    return vars;
-}
-
 int find_unused_index(const set<string>& vars)
 {
     int index = 0;
@@ -445,66 +417,72 @@ equations operator&&(const equations& E1, const equations& E2)
 
 void substitute(const equations& E, term_t& T)
 {
-    if (is_type_variable(T))
+    if (CM::is_type_variable(T))
     {
-	string name = T.get_value<string>();
+	string name = T.as<CM::TypeVar>().name;
 	if (E.value_of_var(name))
 	{
-	    T = ptree(*E.value_of_var(name));
+	    T = *E.value_of_var(name);
 	    substitute(E, T);
 	}
 	else if (E.has_record(name))
 	{
 	    auto& [vars,_] = *E.find_record(name);
-	    T = ptree(*vars.begin());
+	    T = term_t(*vars.begin());
 	}
     }
     else
-	for(auto& child: T.children())
-	    substitute(E, child.second);
+    {
+        if (auto app = T.to<CM::TypeApp>())
+        {
+            substitute(E, app->head);
+            substitute(E, app->arg);
+        }
+    }
 }
 
 void substitute(const map<string,term_t>& R, term_t& T)
 {
-    if (is_type_variable(T))
+    if (CM::is_type_variable(T))
     {
-	string name = T.get_value<string>();
+	string name = T.as<CM::TypeVar>().name;
 	if (R.count(name))
 	    T = R.at(name);
     }
     else
-	for(auto& child: T.children())
-	    substitute(R, child.second);
+    {
+        if (auto app = T.to<CM::TypeApp>())
+        {
+            substitute(R, app->head);
+            substitute(R, app->arg);
+        }
+    }
 }
 
 bool equations::unify(const term_t& T1, const term_t& T2)
 {
     // 1. If either term is a wildcard, then we are done.
-    if (is_wildcard(T1) or is_wildcard(T2))
+    if (CM::is_wildcard(T1) or CM::is_wildcard(T2))
 	return valid();
 
-    else if (is_type_variable(T1))
+    else if (CM::is_type_variable(T1))
     {
 	// 2. var1 = var2
-	if (is_type_variable(T2))
-	    return add_var_condition(T1, T2);
+	if (CM::is_type_variable(T2))
+	    return add_var_condition(T1.as<CM::TypeVar>().name, T2.as<CM::TypeVar>().name);
 	// 3. var1 = T2
 	else
-	    return add_condition(T1, T2);
+	    return add_condition(T1.as<CM::TypeVar>().name, T2);
     }
-    else if (is_type_variable(T2))
+    else if (CM::is_type_variable(T2))
 	// 4. var2 = T1
-	return add_condition(T2, T1);
-    else if (T1.children().size() == 0)
+	return add_condition(T2.as<CM::TypeVar>().name, T1);
+    else if (auto app1 = T1.to<CM::TypeApp>(); app1 and T2.is<CM::TypeApp>())
     {
-	if (T2.children().size() != 0 or T1.value != T2.value)
-            failed.push_back({T1,T2});
+        auto app2 = T2.as<CM::TypeApp>();
+	unify(app1->head, app2.head) && unify(app1->arg, app2.arg);
     }
-    else if (T1.children().size() == 2 and T2.children().size() == 2)
-    {
-	unify(T1.children()[0].second, T2.children()[0].second) && unify(T1.children()[1].second, T2.children()[1].second);
-    }
-    else
+    else if (T1 != T2)
     {
         failed.push_back({T1,T2});
     }
@@ -518,38 +496,12 @@ equations unify(const term_t& T1, const term_t& T2)
     return E;
 }
 
-std::pair<term_t, std::vector<term_t>> get_type_apps(term_t type)
-{
-    std::vector<term_t> args;
-
-    while(type.children().size() > 0)
-    {
-	args.push_back(type.children()[1].second);
-	auto next = type.children()[0].second;
-	type = next;
-    }
-    std::reverse(args.begin(), args.end());
-
-    return {type, args};
-}
-
 term_t make_type_app(const term_t& t1, const term_t& t2)
 {
-    return ptree("@APP",{{"",t1},{"",t2}});
+    return CM::type_app(t1, t2);
 }
 
 term_t make_type_apps(term_t type, const std::vector<term_t>& args)
 {
-    for(auto& arg: args)
-    {
-	auto tmp = type;
-	type = make_type_app(tmp, arg);
-    }
-    return type;
-}
-
-ptree get_type_head(term_t type)
-{
-    auto [head,args] = get_type_apps(type);
-    return head;
+    return CM::type_apps(std::move(type), args);
 }

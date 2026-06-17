@@ -682,7 +682,7 @@ compute_logged_quantities(do_block& model,
     return sub_loggers;
 }
 
-bool is_reversible(const ptree& t)
+bool is_reversible(const type_t& t)
 {
     return true;
 
@@ -691,9 +691,15 @@ bool is_reversible(const ptree& t)
     else if (get_type_head(t) == "CTMC")
 	return false;
     else if (get_type_head(t) == "DiscreteDist")
-	return is_reversible(t.children()[0].second);
+    {
+        auto [head,args] = get_type_apps(t);
+	return is_reversible(args[0]);
+    }
     else if (get_type_head(t) == "MultiMixtureModel")
-	return is_reversible(t.children()[0].second);
+    {
+        auto [head,args] = get_type_apps(t);
+	return is_reversible(args[0]);
+    }
     else
 	throw myexception()<<"is_reversible: unrecognized type "<<unparse_type(t)<<"!";
 }

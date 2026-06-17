@@ -4,9 +4,10 @@
 #include <set>
 #include <list>
 #include <map>
-#include "util/ptree.H"
+#include "models/model-type.H"
 
-typedef ptree term_t;
+using term_t = CM::Type;
+using type_t = CM::Type;
 
 class equations
 {
@@ -62,8 +63,6 @@ public:
 // given two terms, what equations do we need to unify them?
 equations unify(const term_t& T1, const term_t& T2);
 
-std::set<std::string> find_variables_in_type(const term_t& p);
-bool is_type_variable(const ptree& p);
 
 struct FVSource
 {
@@ -73,7 +72,7 @@ struct FVSource
         // Fresh type variables must remain recognizable by is_type_variable().
         const std::string prefix = (!s.empty() and s[0] >= 'a' and s[0] <= 'z') ? s : "t";
         auto v = term_t(prefix + "#" + std::to_string(index++));
-        assert(is_type_variable(v));
+        assert(CM::is_type_variable(v));
         return v;
     }
 };
@@ -86,12 +85,7 @@ void substitute(const std::map<std::string, term_t>& replace, term_t& T);
 
 equations operator&&(const equations& p1, const equations& p2);
 
-bool is_wildcard(const ptree& p);
-
-std::pair<term_t, std::vector<term_t>> get_type_apps(term_t type);
 term_t make_type_app(const term_t& t1, const term_t& t2);
 term_t make_type_apps(term_t type, const std::vector<term_t>& args);
-
-ptree get_type_head(term_t type);
 
 #endif

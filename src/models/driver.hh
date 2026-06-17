@@ -6,7 +6,7 @@
 # include "parser.hh"
 # include "computation/message.H"
 # include "models/model-expr.H"
-# include "util/ptree.H"
+# include "models/model-type.H"
 
 // Tell Flex the lexer's prototype ...
 # define YY_DECL \
@@ -40,7 +40,7 @@ public:
 
     // Store the result for the selected parser start symbol.
     CM::UntypedExpr expression_result;
-    ptree type_result;
+    CM::Type type_result;
     CM::Decls<CM::NoAnn> defs_result;
     // Run the parser on file F.  Return 0 on success.
     int parse_file (const std::string& filename, int stok);
@@ -65,6 +65,6 @@ public:
 };
 
 CM::UntypedExpr parse_expression(const std::string&, const std::string&);
-ptree parse_type(const std::string&, const std::string&);
+CM::Type parse_type(const std::string&, const std::string&);
 CM::Decls<CM::NoAnn> parse_defs(const std::string&, const std::string&);
 #endif // ! DRIVER_HH

@@ -7,7 +7,6 @@
 #include <vector>                                   // for vector
 #include <optional>                                 // for optional
 #include <utility>                                  // for pair
-#include "util/ptree.H"                             // for ptree
 #include "models/typecheck.H"
 #include "computation/expression/var.H"             // for var
 #include "computation/expression/let.H"             // for CDecls
@@ -39,7 +38,7 @@ struct generated_code_t
 
     expression_ref generate() const;
 
-    void log_value(const std::string&, expression_ref, const ptree&);
+    void log_value(const std::string&, expression_ref, const type_t&);
     void log_sub(const std::string&, const var&, const Loggers&);
 
     expression_ref add_arguments(const expression_ref& E, const std::map<std::string,expression_ref>& state_values) const;

@@ -99,12 +99,12 @@ string model_t::show_extracted() const
     return p.show_extracted();
 }
 
-model_t::model_t(CM::TypedExpr d, const set<string>& i, const ptree&t, const std::set<term_t>& s, const generated_code_t& c)
+model_t::model_t(CM::TypedExpr d, const set<string>& i, const type_t& t, const std::set<term_t>& s, const generated_code_t& c)
     :description(std::move(d)), imports(i), type(t), constraints(s), code(c)
 {
 }
 
-model_t::model_t(CM::TypedDecls d, const set<string>& i, const ptree&t, const std::set<term_t>& s, const generated_code_t& c)
+model_t::model_t(CM::TypedDecls d, const set<string>& i, const type_t& t, const std::set<term_t>& s, const generated_code_t& c)
     :description(std::move(d)), imports(i), type(t), constraints(s), code(c)
 {
 }
@@ -249,16 +249,16 @@ void generated_code_t::log_sub(const string& name, const var& log_var, const Log
 }
 
 TypecheckingState makeTypechecker(const Rules& R,
-				  const vector<pair<string,ptree>>& scope,
-				  const map<string,pair<string,ptree>>& state)
+				  const vector<pair<string,type_t>>& scope,
+				  const map<string,pair<string,type_t>>& state)
 {
     auto fv_source = std::make_shared<FVSource>();
 
-    map<string,ptree> typed_scope;
+    map<string,type_t> typed_scope;
     for(auto& [name,type]: scope)
         typed_scope.insert({name, type});
 
-    map<string,ptree> typed_state;
+    map<string,type_t> typed_state;
     for(auto& [state_name,p]: state)
     {
         auto& [_, var_type] = p;
@@ -276,9 +276,9 @@ TypecheckingState makeTypechecker(const Rules& R,
 model_t compile_model(const Rules& R,
 		      const TypecheckingState& TC,
 		      CodeGenState code_gen_state,
-		      ptree required_type, const string& model_string, const string& what,
-		      const vector<pair<string,ptree>>& scope,
-		      const map<string,pair<string,ptree>>& state)
+		      type_t required_type, const string& model_string, const string& what,
+		      const vector<pair<string,type_t>>& scope,
+		      const map<string,pair<string,type_t>>& state)
 {
     // 1. Parse
     auto model_rep = parse_model_expr(R, model_string, what);
@@ -293,7 +293,7 @@ model_t compile_model(const Rules& R,
     substitute(TC2.eqs, required_type);
     substitute_annotated(TC2.eqs, typed_model);
 
-    set<ptree> constraints;
+    set<term_t> constraints;
     for(auto constraint: TC2.eqs.get_constraints())
     {
 	substitute(TC2.eqs, constraint);
@@ -357,8 +357,8 @@ model_t compile_decls(const Rules& R,
 		      TypecheckingState& TC,
 		      CodeGenState& code_gen_state,
 		      const string& prog,
-		      const vector<pair<string,ptree>>& scope,
-		      const map<string,pair<string,ptree>>& state)
+		      const vector<pair<string,type_t>>& scope,
+		      const map<string,pair<string,type_t>>& state)
 {
     // 1. Parse declarations and substitute any default values.
     auto decls = parse_model_decls(R, prog);
@@ -371,7 +371,7 @@ model_t compile_decls(const Rules& R,
     for(auto& [var,value]: typed_decls)
 		substitute_annotated(TC.eqs, value);
 
-    set<ptree> constraints;
+    set<term_t> constraints;
     for(auto constraint: TC.eqs.get_constraints())
     {
 	substitute(TC.eqs, constraint);

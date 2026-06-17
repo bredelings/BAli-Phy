@@ -372,20 +372,10 @@ string get_keyword_for_positional_arg(const Rule& rule, int i)
     return rule.keyword_for_positional_arg(i);
 }
 
-ptree get_type_for_arg(const Rule& rule, const string& arg)
+CM::Type get_type_for_arg(const Rule& rule, const string& arg)
 {
     return get_arg(rule,arg).type;
 }
-
-/*
-ptree get_type_for_arg(const string& func, const string& arg) const
-{
-    if (auto rule = get_rule_for_func(func))
-	return ::get_type_for_arg(*rule, arg);
-    else
-	return ptree("?");
-}
-*/
 
 string show_paths(const vector<fs::path>& paths)
 {

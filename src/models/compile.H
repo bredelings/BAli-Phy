@@ -8,9 +8,8 @@
 #include "computation/expression/expression_ref.H"  // for expression_ref
 #include "computation/expression/do_block.H"        // for do_block
 #include "sequence/alphabet.H"                      // for alphabet
-#include "unification.H"                            // for term_t, less
+#include "unification.H"                            // for term_t
 #include "util/json.hh"                             // for json
-#include "util/ptree.H"                             // for ptree
 #include "models/typecheck.H"
 #include "models/code-generation.H"
 
@@ -49,7 +48,7 @@ class model_t
     const CM::TypedExpr& expression_description() const;
 public:
     std::set<std::string> imports;
-    ptree type;
+    type_t type;
     std::set<term_t> constraints;
     generated_code_t code;
     std::set<std::string> used_args;
@@ -64,30 +63,30 @@ public:
     std::string show_extracted() const;
 
     model_t() = default;
-    model_t(CM::TypedExpr,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const generated_code_t&);
-    model_t(CM::TypedDecls,const std::set<std::string>&, const ptree&, const std::set<term_t>&, const generated_code_t&);
+    model_t(CM::TypedExpr,const std::set<std::string>&, const type_t&, const std::set<term_t>&, const generated_code_t&);
+    model_t(CM::TypedDecls,const std::set<std::string>&, const type_t&, const std::set<term_t>&, const generated_code_t&);
 };
 
 model_t compile_model(const Rules& R,
 		      const TypecheckingState& TC, CodeGenState code_gen_state,
-		      ptree required_type,
+		      type_t required_type,
 		      const std::string& model,
 		      const std::string& what,
-		      const std::vector<std::pair<std::string,ptree>>& = {},
-		      const std::map<std::string,std::pair<std::string,ptree>>& = {}
+		      const std::vector<std::pair<std::string,type_t>>& = {},
+		      const std::map<std::string,std::pair<std::string,type_t>>& = {}
     );
 
 model_t compile_decls(const Rules& R,
 		      TypecheckingState& TC, CodeGenState& code_gen_state,
 		      const std::string& decls,
-		      const std::vector<std::pair<std::string,ptree>>& scope,
-		      const std::map<std::string,std::pair<std::string,ptree>>& state);
+		      const std::vector<std::pair<std::string,type_t>>& scope,
+		      const std::map<std::string,std::pair<std::string,type_t>>& state);
 
 json::object convert_to_json(const pretty_model_t& m);
 
 TypecheckingState makeTypechecker(const Rules& R,
-				  const std::vector<std::pair<std::string,ptree>>& scope,
-				  const std::map<std::string,std::pair<std::string,ptree>>& state);
+				  const std::vector<std::pair<std::string,type_t>>& scope,
+				  const std::map<std::string,std::pair<std::string,type_t>>& state);
 
 std::string print_equals_function(expression_ref E);
 

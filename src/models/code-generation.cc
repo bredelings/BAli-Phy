@@ -1011,7 +1011,7 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
             auto x_var = scope2.get_var(x_name);
 
             auto& value = x.value;
-            auto x_type = ptree("unknown_type");
+            auto x_type = type_t("unknown_type");
             result.code.stmts.let(x_var, make_rule_template_expr(value, argument_environment));
 
             result.code.log_value(x_log_name, x_var, x_type);

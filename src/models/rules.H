@@ -7,12 +7,12 @@
 #include <set>
 #include <vector>
 #include "models/model-expr.H"
+#include "models/model-type.H"
 #include "util/ptree.H"
 #include <filesystem>
 
-using ParsedType = ptree;
-using RuleConstraint = ptree;
-using type_t = ptree;
+using ParsedType = CM::Type;
+using RuleConstraint = CM::Type;
 
 using RuleModelExpr = CM::UntypedExpr;
 
@@ -67,7 +67,7 @@ struct Rule
 const RuleArg& get_arg(const Rule& rule, const std::string& arg_name);
 const RuleArg* maybe_get_arg(const Rule& rule, const std::string& arg_name);
 
-type_t get_type_for_arg(const Rule& rule, const std::string& arg);
+CM::Type get_type_for_arg(const Rule& rule, const std::string& arg);
 
 std::string get_keyword_for_positional_arg(const Rule& rule, int i);
 

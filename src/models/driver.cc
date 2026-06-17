@@ -69,7 +69,7 @@ CM::UntypedExpr parse_expression(const string& content, const string& input_name
     return D.expression_result;
 }
 
-ptree parse_type(const string& content, const string& input_name)
+CM::Type parse_type(const string& content, const string& input_name)
 {
     zz_driver D;
     D.parse_string(content, input_name, 2);

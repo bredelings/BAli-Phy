@@ -103,6 +103,7 @@ libbaliphy_sources = [
   'models/parameters.cc',
   'models/A-T-prog.cc',
   'models/model-expr.cc',
+  'models/model-type.cc',
 
   'models/rules.cc',
   'models/parse.cc',

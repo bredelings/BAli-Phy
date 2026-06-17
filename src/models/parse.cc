@@ -1,6 +1,7 @@
 #include <iostream>
 #include <set>
 #include <vector>
+#include <algorithm>
 #include "models/parse.H"
 #include "util/myexception.H"
 #include "util/string/convert.H"
@@ -66,7 +67,7 @@ vector<string> split_args(string s)
     return args;
 }
 
-ptree parse_type(const string& s)
+CM::Type parse_type(const string& s)
 {
     return parse_type(s,"type");
 }
@@ -615,8 +616,8 @@ string unparse_annotated(const TypedExpr& expr)
             vector<string> pairs;
             for(auto& item: x.elements)
             {
-                auto type = item.ann.type;
-                if (type.has_value<string>() and type.get_value<string>() == "Tuple" and type.children().size() == 2)
+                auto [head, args] = get_type_apps(item.ann.type);
+                if (head == "Tuple" and args.size() == 2)
                 {
                     auto tuple = item.to<Tuple<Ann>>();
                     if (not tuple or tuple->elements.size() != 2)
@@ -714,7 +715,7 @@ string unparse_annotated(const ptree& ann)
 {
     using namespace std::string_literals;
 
-    term_t p = ann.get_child("value");
+    ptree p = ann.get_child("value");
 
     if (p.is_null())
 	return "null";
@@ -831,15 +832,24 @@ string unparse_annotated(const ptree& ann)
     return s;
 }
 
-string unparse_type(const ptree& p)
+// Temporary compatibility helper: old annotated-ptree display still stores
+// type annotations as ptree. Remove with the remaining annotated-ptree display.
+string unparse_ptree_type(const ptree& p)
 {
     if (p.is_null()) return "NOTYPE";
 
-    auto [head,args] = get_type_apps(p);
+    vector<ptree> args;
+    auto head = p;
+    while(head.children().size() > 0)
+    {
+        args.push_back(head.children()[1].second);
+        head = head.children()[0].second;
+    }
+    std::reverse(args.begin(), args.end());
 
     vector<string> sargs;
     for(const auto& arg: args)
-	sargs.push_back( unparse_type(arg) );
+	sargs.push_back( unparse_ptree_type(arg) );
 
     if (head == "Tuple")
 	return "("+join(sargs,",")+")";

@@ -54,7 +54,7 @@ Rule freshen_type_vars(Rule rule, const FVSource& fv_state)
 }
 
 // Builds the AST call node used by implicit type conversions, preserving the
-// same conversion function and argument names as the legacy ptree path.
+// same conversion function and argument names as the old model representation.
 CM::UntypedExpr conversion_call(const string& function, const string& arg_name, CM::UntypedExpr model)
 {
     return {
@@ -88,7 +88,7 @@ equations convertible_to(CM::UntypedExpr& model, const type_t& t1, type_t t2)
 
     if (head2 == "Double")
     {
-        t2 = ptree("Int");
+        t2 = "Int";
         E = convertible_to(model, t1, t2);
         if (E)
             model = conversion_call("intToDouble", "x", std::move(model));
@@ -194,7 +194,7 @@ set<string> TypecheckingState::find_type_variables() const
     return vars;
 }
 
-optional<ptree> TypecheckingState::type_for_var(const string& name) const
+optional<type_t> TypecheckingState::type_for_var(const string& name) const
 {
     if (identifiers.count(name))
         return identifiers.at(name);
@@ -202,7 +202,7 @@ optional<ptree> TypecheckingState::type_for_var(const string& name) const
         return {};
 }
 
-optional<ptree> TypecheckingState::type_for_arg(const string& name) const
+optional<type_t> TypecheckingState::type_for_arg(const string& name) const
 {
     if (not args)
         return {};
@@ -251,7 +251,7 @@ void substitute_annotated(const equations& eqs, CM::TypedPattern& pattern)
 }
 
 // Applies solved type equations throughout an annotated model AST.
-// This replaces the old annotated-ptree substitution path for AST users.
+// This keeps expression annotations consistent after unification.
 void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
 {
     substitute(eqs, expr.ann.type);
@@ -306,14 +306,14 @@ namespace
 {
 
 // Builds a typed model AST annotation with the common default metadata values.
-CM::Ann model_ann(ptree type, set<string> used_args = {})
+CM::Ann model_ann(type_t type, set<string> used_args = {})
 {
     return {std::move(type), std::move(used_args), false, {}};
 }
 
 // Assigns solved types to a lambda pattern after parse_pattern() has produced
 // the pattern type structure and unification has refined it.
-CM::TypedPattern typecheck_pattern(const TypecheckingState& TC, ptree required_type, const CM::UntypedPattern& pattern)
+CM::TypedPattern typecheck_pattern(const TypecheckingState& TC, type_t required_type, const CM::UntypedPattern& pattern)
 {
     substitute(TC.eqs, required_type);
 
@@ -337,7 +337,7 @@ CM::TypedPattern typecheck_pattern(const TypecheckingState& TC, ptree required_t
     });
 }
 
-optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr);
+optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr);
 
 // Rejects parser placeholders before they can reach old ptree compatibility
 // behavior.
@@ -350,29 +350,29 @@ optional<CM::TypedExpr> typecheck_model_invalid_placeholder(const CM::UntypedExp
 
 // Typechecks scalar literal AST nodes directly, falling back through the
 // AST entry point if unification inserts a conversion call.
-optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     type_t result_type;
     CM::TypedExpr::Node node;
 
     if (auto literal = expr.to<CM::IntLiteral>())
     {
-        result_type = ptree("Int");
+        result_type = "Int";
         node = *literal;
     }
     else if (auto literal = expr.to<CM::DoubleLiteral>())
     {
-        result_type = ptree("Double");
+        result_type = "Double";
         node = *literal;
     }
     else if (auto literal = expr.to<CM::BoolLiteral>())
     {
-        result_type = ptree("Bool");
+        result_type = "Bool";
         node = *literal;
     }
     else if (auto literal = expr.to<CM::StringLiteral>())
     {
-        result_type = ptree("String");
+        result_type = "String";
         node = *literal;
     }
     else
@@ -386,7 +386,7 @@ optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, co
 
 // Typechecks variable and argument-reference nodes against the current scope,
 // preserving used-argument tracking for @arg references.
-optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     type_t result_type;
     set<string> used_args;
@@ -422,7 +422,7 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
 
 // Typechecks a bare rule name as a zero-argument command when it is not a
 // scoped variable.
-optional<CM::TypedExpr> typecheck_model_nullary_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_nullary_call(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     auto var = expr.to<CM::Var>();
     if (not var)
@@ -441,7 +441,7 @@ optional<CM::TypedExpr> typecheck_model_nullary_call(const TypecheckingState& TC
 
 // Typechecks calls where the callee is a scoped function variable instead of a
 // rule-backed command.
-optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     auto call = expr.to<CM::Call<CM::NoAnn>>();
     if (not call)
@@ -506,7 +506,7 @@ optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, co
 
 // Typechecks list elements against a fresh element type and returns a typed
 // list expression with the caller's required top-level annotation.
-optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     auto list = expr.to<CM::List<CM::NoAnn>>();
     if (not list)
@@ -535,13 +535,13 @@ optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const 
 
 // Typechecks tuple elements against fresh slot types and returns a typed tuple
 // expression with the caller's required top-level annotation.
-optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     auto tuple = expr.to<CM::Tuple<CM::NoAnn>>();
     if (not tuple)
         return {};
 
-    vector<ptree> element_required_types;
+    vector<type_t> element_required_types;
     for(int i=0; i<tuple->elements.size(); i++)
         element_required_types.push_back(TC.get_fresh_type_var("a"));
     auto result_type = make_type_apps("Tuple", element_required_types);
@@ -567,7 +567,7 @@ optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const
 
 // Typechecks a get_state node by looking up the named state in the current
 // typechecking state and unifying it with the required type.
-optional<CM::TypedExpr> typecheck_model_get_state(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_get_state(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     auto get_state = expr.to<CM::GetState>();
     if (not get_state)
@@ -585,7 +585,7 @@ optional<CM::TypedExpr> typecheck_model_get_state(const TypecheckingState& TC, c
 
 // Typechecks let declarations in an extended scope, then typechecks the body
 // against the caller's required type.
-optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     auto let = expr.to<CM::Let<CM::NoAnn>>();
     if (not let)
@@ -609,7 +609,7 @@ optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const p
 
 // Typechecks a lambda by parsing the AST pattern natively, then checking the
 // body in the scope introduced by the pattern.
-optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     auto lambda = expr.to<CM::Lambda<CM::NoAnn>>();
     if (not lambda)
@@ -649,7 +649,7 @@ optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, cons
 
 // Typechecks rule-backed function calls, including defaults, alphabets,
 // used-argument propagation, and rule-level logging/extraction metadata.
-optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     auto call = expr.to<CM::Call<CM::NoAnn>>();
     if (not call)
@@ -683,7 +683,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
             supplied_args[arg.name] = &arg;
     }
 
-    map<string,ptree> arg_env;
+    map<string,type_t> arg_env;
     for(const auto& argument: rule.args)
         arg_env.insert({argument.name, argument.type});
 
@@ -770,7 +770,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
 
 // Typechecks sample sugar using the sample binding rule, then returns the
 // dedicated AST Sample node expected by extraction and pretty-printing.
-optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     auto sample = expr.to<CM::Sample<CM::NoAnn>>();
     if (not sample)
@@ -808,7 +808,7 @@ optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, cons
 
 // Dispatches AST expression typechecking to direct handlers and reports
 // unsupported nodes explicitly.
-CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
     if (auto invalid = typecheck_model_invalid_placeholder(expr))
         return *invalid;
@@ -862,7 +862,7 @@ CM::TypedDecls typecheck_model_decls(TypecheckingState& TC, const CM::Decls<CM::
 
 // Parses lambda patterns from the model AST, assigning fresh types to binders
 // and rejecting expression forms that are not valid patterns.
-pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const CM::UntypedPattern& pattern) const
+pair<type_t, map<string,type_t>> TypecheckingState::parse_pattern(const CM::UntypedPattern& pattern) const
 {
     if (auto var = pattern.to<CM::VarPattern>())
     {
@@ -871,8 +871,8 @@ pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const CM::Untype
     }
     else if (auto tuple = pattern.to<CM::TuplePattern<CM::NoAnn>>())
     {
-        vector<ptree> element_types;
-        map<string,ptree> var_to_type;
+        vector<type_t> element_types;
+        map<string,type_t> var_to_type;
         for(auto& value: tuple->elements)
         {
             auto [slot_type, slot_vars] = parse_pattern(value);
@@ -891,7 +891,7 @@ pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const CM::Untype
         throw myexception()<<"Invalid lambda pattern '"<<unparse(pattern)<<"'.";
 }
 
-void TypecheckingState::add_states(const std::map<string,std::pair<std::string,ptree>>& state_info)
+void TypecheckingState::add_states(const std::map<string,std::pair<std::string,type_t>>& state_info)
 {
     for(auto& [state_name,p]: state_info)
     {

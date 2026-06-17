@@ -226,6 +226,12 @@ namespace zz {
         value.YY_MOVE_OR_COPY< CM::Decls<CM::NoAnn> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_type: // type
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_atype: // atype
+        value.YY_MOVE_OR_COPY< CM::Type > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_fncall: // fncall
@@ -246,12 +252,6 @@ namespace zz {
         value.YY_MOVE_OR_COPY< int > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_type: // type
-      case symbol_kind::S_btype: // btype
-      case symbol_kind::S_atype: // atype
-        value.YY_MOVE_OR_COPY< ptree > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_def: // def
         value.YY_MOVE_OR_COPY< std::pair<std::string,CM::UntypedExpr> > (YY_MOVE (that.value));
         break;
@@ -270,6 +270,10 @@ namespace zz {
         value.YY_MOVE_OR_COPY< std::vector<CM::Arg<CM::NoAnn>> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.YY_MOVE_OR_COPY< std::vector<CM::Type> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_tup_args: // tup_args
         value.YY_MOVE_OR_COPY< std::vector<CM::UntypedExpr> > (YY_MOVE (that.value));
@@ -278,10 +282,6 @@ namespace zz {
       case symbol_kind::S_patterns: // patterns
       case symbol_kind::S_pattern_tup_args: // pattern_tup_args
         value.YY_MOVE_OR_COPY< std::vector<CM::UntypedPattern> > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_type_tup_args: // type_tup_args
-        value.YY_MOVE_OR_COPY< std::vector<ptree> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -307,6 +307,12 @@ namespace zz {
         value.move< CM::Decls<CM::NoAnn> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_type: // type
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_atype: // atype
+        value.move< CM::Type > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_fncall: // fncall
@@ -327,12 +333,6 @@ namespace zz {
         value.move< int > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_type: // type
-      case symbol_kind::S_btype: // btype
-      case symbol_kind::S_atype: // atype
-        value.move< ptree > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_def: // def
         value.move< std::pair<std::string,CM::UntypedExpr> > (YY_MOVE (that.value));
         break;
@@ -351,6 +351,10 @@ namespace zz {
         value.move< std::vector<CM::Arg<CM::NoAnn>> > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.move< std::vector<CM::Type> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_tup_args: // tup_args
         value.move< std::vector<CM::UntypedExpr> > (YY_MOVE (that.value));
@@ -359,10 +363,6 @@ namespace zz {
       case symbol_kind::S_patterns: // patterns
       case symbol_kind::S_pattern_tup_args: // pattern_tup_args
         value.move< std::vector<CM::UntypedPattern> > (YY_MOVE (that.value));
-        break;
-
-      case symbol_kind::S_type_tup_args: // type_tup_args
-        value.move< std::vector<ptree> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -388,6 +388,12 @@ namespace zz {
         value.copy< CM::Decls<CM::NoAnn> > (that.value);
         break;
 
+      case symbol_kind::S_type: // type
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_atype: // atype
+        value.copy< CM::Type > (that.value);
+        break;
+
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_fncall: // fncall
@@ -408,12 +414,6 @@ namespace zz {
         value.copy< int > (that.value);
         break;
 
-      case symbol_kind::S_type: // type
-      case symbol_kind::S_btype: // btype
-      case symbol_kind::S_atype: // atype
-        value.copy< ptree > (that.value);
-        break;
-
       case symbol_kind::S_def: // def
         value.copy< std::pair<std::string,CM::UntypedExpr> > (that.value);
         break;
@@ -432,6 +432,10 @@ namespace zz {
         value.copy< std::vector<CM::Arg<CM::NoAnn>> > (that.value);
         break;
 
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.copy< std::vector<CM::Type> > (that.value);
+        break;
+
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_tup_args: // tup_args
         value.copy< std::vector<CM::UntypedExpr> > (that.value);
@@ -440,10 +444,6 @@ namespace zz {
       case symbol_kind::S_patterns: // patterns
       case symbol_kind::S_pattern_tup_args: // pattern_tup_args
         value.copy< std::vector<CM::UntypedPattern> > (that.value);
-        break;
-
-      case symbol_kind::S_type_tup_args: // type_tup_args
-        value.copy< std::vector<ptree> > (that.value);
         break;
 
       default:
@@ -468,6 +468,12 @@ namespace zz {
         value.move< CM::Decls<CM::NoAnn> > (that.value);
         break;
 
+      case symbol_kind::S_type: // type
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_atype: // atype
+        value.move< CM::Type > (that.value);
+        break;
+
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_fncall: // fncall
@@ -488,12 +494,6 @@ namespace zz {
         value.move< int > (that.value);
         break;
 
-      case symbol_kind::S_type: // type
-      case symbol_kind::S_btype: // btype
-      case symbol_kind::S_atype: // atype
-        value.move< ptree > (that.value);
-        break;
-
       case symbol_kind::S_def: // def
         value.move< std::pair<std::string,CM::UntypedExpr> > (that.value);
         break;
@@ -512,6 +512,10 @@ namespace zz {
         value.move< std::vector<CM::Arg<CM::NoAnn>> > (that.value);
         break;
 
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.move< std::vector<CM::Type> > (that.value);
+        break;
+
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_tup_args: // tup_args
         value.move< std::vector<CM::UntypedExpr> > (that.value);
@@ -520,10 +524,6 @@ namespace zz {
       case symbol_kind::S_patterns: // patterns
       case symbol_kind::S_pattern_tup_args: // pattern_tup_args
         value.move< std::vector<CM::UntypedPattern> > (that.value);
-        break;
-
-      case symbol_kind::S_type_tup_args: // type_tup_args
-        value.move< std::vector<ptree> > (that.value);
         break;
 
       default:
@@ -793,6 +793,12 @@ namespace zz {
         yylhs.value.emplace< CM::Decls<CM::NoAnn> > ();
         break;
 
+      case symbol_kind::S_type: // type
+      case symbol_kind::S_btype: // btype
+      case symbol_kind::S_atype: // atype
+        yylhs.value.emplace< CM::Type > ();
+        break;
+
       case symbol_kind::S_exp: // exp
       case symbol_kind::S_term: // term
       case symbol_kind::S_fncall: // fncall
@@ -813,12 +819,6 @@ namespace zz {
         yylhs.value.emplace< int > ();
         break;
 
-      case symbol_kind::S_type: // type
-      case symbol_kind::S_btype: // btype
-      case symbol_kind::S_atype: // atype
-        yylhs.value.emplace< ptree > ();
-        break;
-
       case symbol_kind::S_def: // def
         yylhs.value.emplace< std::pair<std::string,CM::UntypedExpr> > ();
         break;
@@ -837,6 +837,10 @@ namespace zz {
         yylhs.value.emplace< std::vector<CM::Arg<CM::NoAnn>> > ();
         break;
 
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        yylhs.value.emplace< std::vector<CM::Type> > ();
+        break;
+
       case symbol_kind::S_ditems: // ditems
       case symbol_kind::S_tup_args: // tup_args
         yylhs.value.emplace< std::vector<CM::UntypedExpr> > ();
@@ -845,10 +849,6 @@ namespace zz {
       case symbol_kind::S_patterns: // patterns
       case symbol_kind::S_pattern_tup_args: // pattern_tup_args
         yylhs.value.emplace< std::vector<CM::UntypedPattern> > ();
-        break;
-
-      case symbol_kind::S_type_tup_args: // type_tup_args
-        yylhs.value.emplace< std::vector<ptree> > ();
         break;
 
       default:
@@ -879,7 +879,7 @@ namespace zz {
 
   case 3: // start: START_TYPE type
 #line 148 "parser.y"
-                       {drv.type_result = yystack_[0].value.as < ptree > ();}
+                       {drv.type_result = yystack_[0].value.as < CM::Type > ();}
 #line 884 "parser.cc"
     break;
 
@@ -1299,55 +1299,55 @@ namespace zz {
 
   case 73: // type: btype
 #line 243 "parser.y"
-                                        { yylhs.value.as < ptree > () = yystack_[0].value.as < ptree > (); }
+                                        { yylhs.value.as < CM::Type > () = yystack_[0].value.as < CM::Type > (); }
 #line 1304 "parser.cc"
     break;
 
   case 74: // type: btype "->" type
 #line 244 "parser.y"
-                                        { yylhs.value.as < ptree > () = make_type_app("Function",{yystack_[2].value.as < ptree > (),yystack_[0].value.as < ptree > ()});  }
+                                        { yylhs.value.as < CM::Type > () = make_type_app("Function",{yystack_[2].value.as < CM::Type > (),yystack_[0].value.as < CM::Type > ()});  }
 #line 1310 "parser.cc"
     break;
 
   case 75: // btype: atype
 #line 246 "parser.y"
-                                        { yylhs.value.as < ptree > () = yystack_[0].value.as < ptree > (); }
+                                        { yylhs.value.as < CM::Type > () = yystack_[0].value.as < CM::Type > (); }
 #line 1316 "parser.cc"
     break;
 
   case 76: // btype: atype "<" type_tup_args ">"
 #line 247 "parser.y"
-                                        { yylhs.value.as < ptree > () = make_type_app(yystack_[3].value.as < ptree > (), yystack_[1].value.as < std::vector<ptree> > ()); }
+                                        { yylhs.value.as < CM::Type > () = make_type_app(yystack_[3].value.as < CM::Type > (), yystack_[1].value.as < std::vector<CM::Type> > ()); }
 #line 1322 "parser.cc"
     break;
 
   case 77: // atype: varid
 #line 249 "parser.y"
-                                        { yylhs.value.as < ptree > () = ptree(yystack_[0].value.as < std::string > ()); }
+                                        { yylhs.value.as < CM::Type > () = CM::type_atom(yystack_[0].value.as < std::string > ()); }
 #line 1328 "parser.cc"
     break;
 
   case 78: // atype: "(" type ")"
 #line 250 "parser.y"
-                                        { yylhs.value.as < ptree > () = yystack_[1].value.as < ptree > (); }
+                                        { yylhs.value.as < CM::Type > () = yystack_[1].value.as < CM::Type > (); }
 #line 1334 "parser.cc"
     break;
 
   case 79: // atype: "(" type_tup_args "," type ")"
 #line 251 "parser.y"
-                                        { yystack_[3].value.as < std::vector<ptree> > ().push_back(yystack_[1].value.as < ptree > ()); yylhs.value.as < ptree > () = make_type_app(ptree("Tuple"),yystack_[3].value.as < std::vector<ptree> > ()); }
+                                        { yystack_[3].value.as < std::vector<CM::Type> > ().push_back(yystack_[1].value.as < CM::Type > ()); yylhs.value.as < CM::Type > () = make_type_app(CM::type_con("Tuple"),yystack_[3].value.as < std::vector<CM::Type> > ()); }
 #line 1340 "parser.cc"
     break;
 
   case 80: // type_tup_args: type
 #line 253 "parser.y"
-                                        { yylhs.value.as < std::vector<ptree> > ().push_back(yystack_[0].value.as < ptree > ());}
+                                        { yylhs.value.as < std::vector<CM::Type> > ().push_back(yystack_[0].value.as < CM::Type > ());}
 #line 1346 "parser.cc"
     break;
 
   case 81: // type_tup_args: type_tup_args "," type
 #line 254 "parser.y"
-                                        { yylhs.value.as < std::vector<ptree> > () = yystack_[2].value.as < std::vector<ptree> > (); yylhs.value.as < std::vector<ptree> > ().push_back(yystack_[0].value.as < ptree > ());}
+                                        { yylhs.value.as < std::vector<CM::Type> > () = yystack_[2].value.as < std::vector<CM::Type> > (); yylhs.value.as < std::vector<CM::Type> > ().push_back(yystack_[0].value.as < CM::Type > ());}
 #line 1352 "parser.cc"
     break;
 
@@ -2051,11 +2051,9 @@ CM::UntypedExpr make_function(const vector<CM::UntypedPattern>& patterns, const 
     return f;
 }
 
-ptree make_type_app(ptree type, const vector<ptree>& args)
+CM::Type make_type_app(CM::Type type, const vector<CM::Type>& args)
 {
-    for(auto& arg: args)
-	type = ptree("@APP",{{"",type},{"",arg}});
-    return type;
+    return CM::type_apps(std::move(type), args);
 }
 
 // Converts a function-definition left-hand side into nested lambda binders,

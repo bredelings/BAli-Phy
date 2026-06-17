@@ -18,7 +18,7 @@
   # include <vector>
   # include <tuple>
   # include "models/model-expr.H"
-  # include "util/ptree.H"
+  # include "models/model-type.H"
   # include "range/v3/all.hpp"
 
   namespace views = ranges::views;
@@ -26,7 +26,7 @@
   class zz_driver;
 
   CM::UntypedExpr make_function(const std::vector<CM::UntypedPattern>& patterns, const CM::UntypedExpr& body);
-  ptree make_type_app(ptree type, const std::vector<ptree>& args);
+  CM::Type make_type_app(CM::Type type, const std::vector<CM::Type>& args);
   std::pair<std::string,CM::UntypedExpr> make_function_def(zz_driver&, const yy::location&, const CM::UntypedExpr& fncall, const CM::UntypedExpr& body);
 
 }
@@ -114,10 +114,10 @@ CM::UntypedExpr make_model_tuple(const std::vector<CM::UntypedExpr>& elements);
 %type <CM::Decls<CM::NoAnn>> defs
 %type <std::vector<CM::UntypedExpr>> tup_args
 
-%type <ptree>       type
-%type <ptree>       atype
-%type <ptree>       btype
-%type <std::vector<ptree>> type_tup_args
+%type <CM::Type>       type
+%type <CM::Type>       atype
+%type <CM::Type>       btype
+%type <std::vector<CM::Type>> type_tup_args
 
 %type <std::string> qvarid
 %type <std::string> varid
@@ -246,9 +246,9 @@ type: btype                             { $$ = $1; }
 btype: atype                            { $$ = $1; }
 |      atype "<" type_tup_args ">"      { $$ = make_type_app($1, $3); }
 
-atype: varid                            { $$ = ptree($1); }
+atype: varid                            { $$ = CM::type_atom($1); }
 |      "(" type ")"                     { $$ = $2; }
-|      "(" type_tup_args "," type ")"   { $2.push_back($4); $$ = make_type_app(ptree("Tuple"),$2); }
+|      "(" type_tup_args "," type ")"   { $2.push_back($4); $$ = make_type_app(CM::type_con("Tuple"),$2); }
 
 type_tup_args: type                     { $$.push_back($1);}
 |              type_tup_args "," type   { $$ = $1; $$.push_back($3);}
@@ -353,11 +353,9 @@ CM::UntypedExpr make_function(const vector<CM::UntypedPattern>& patterns, const 
     return f;
 }
 
-ptree make_type_app(ptree type, const vector<ptree>& args)
+CM::Type make_type_app(CM::Type type, const vector<CM::Type>& args)
 {
-    for(auto& arg: args)
-	type = ptree("@APP",{{"",type},{"",arg}});
-    return type;
+    return CM::type_apps(std::move(type), args);
 }
 
 // Converts a function-definition left-hand side into nested lambda binders,

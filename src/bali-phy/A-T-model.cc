@@ -171,7 +171,7 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 vector<model_t>
 compile_imodels(const Rules& R, TypecheckingState TC, CodeGenState code_gen_state, const shared_items<string>& imodel_names_mapping)
 {
-    map<string,pair<string,ptree>> imodel_states = {{"topology",{"topology",parse_type("Topology")}}};
+    map<string,pair<string,type_t>> imodel_states = {{"topology",{"topology",parse_type("Topology")}}};
 
     TC.add_states(imodel_states);
 
@@ -544,7 +544,7 @@ bool can_share_imodel(const alphabet& a1, const alphabet& a2)
 
 model_t compile_smodel(const Rules& R, TypecheckingState TC, CodeGenState code_gen_state, const std::string& model, const string& what)
 {
-    map<string,pair<string,ptree>> smodel_states = {
+    map<string,pair<string,type_t>> smodel_states = {
         {"alphabet",{"alpha",parse_type("a")}},
         {"branch_categories",{"branch_categories",parse_type("List<Int>")}},
         {"tree",{"tree",parse_type("Tree<t>")}},
@@ -595,18 +595,18 @@ int get_num_models(const vector<optional<int>>& mapping)
     return n;
 }
 
-string get_alphabet_type(ptree type)
+string get_alphabet_type(type_t type)
 {
     auto [head,args] = get_type_apps(type);
 
     if (head == "MultiMixtureModel")
-	return get_type_head(args[0]);
+	return unparse_type(get_type_head(args[0]));
     else if (head == "DiscreteDist")
 	return get_alphabet_type(args[0]);
     else if (head == "CTMC")
-	return get_type_head(args[0]);
+	return unparse_type(get_type_head(args[0]));
     else
-	throw myexception()<<"get_alphabet_type: I don't understand type "<<type.show();
+	throw myexception()<<"get_alphabet_type: I don't understand type "<<unparse_type(type);
 }
 
 std::vector<string> get_default_alphabet_names(const shared_items<string>& smodel_names_mapping, const vector<model_t>& full_smodels, const shared_items<string>& alphabet_names_mapping)
@@ -670,9 +670,9 @@ std::vector<string> get_default_alphabet_names(const shared_items<string>& smode
             for(auto& constraint: constraints)
 	    {
 		auto [head,args] = get_type_apps(constraint);
-                if (head == "Triplets" and args[0] == alphabet_type)
+                if (head == "Triplets" and unparse_type(args[0]) == alphabet_type)
                     triplet_constraint = true;
-                if (head == "Doublets" and args[0] == alphabet_type)
+                if (head == "Doublets" and unparse_type(args[0]) == alphabet_type)
                     doublet_constraint = true;
 	    }
 
@@ -820,7 +820,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 
     // 3. --- Compile declarations
     model_t decls;
-    vector<pair<string,ptree>> extra_vars = {{"taxa",parse_type("List<Text>")}};
+    vector<pair<string,type_t>> extra_vars = {{"taxa",parse_type("List<Text>")}};
     if (fixed.count("topology"))
 	extra_vars.push_back({"topology",parse_type("Tree<Nothing>")});
 
@@ -911,7 +911,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         auto type = full_smodels[i].type;
 //      FIXME: Actually we need to look at constraints for Nucleotides<a>, Doublets<a,b>, Triplets<a,b>
 //      auto& constraints = full_smodels[i].constraints;
-        auto alphabet_type = type.children().begin()->second;
+        auto alphabet_type = get_alphabet_type(type);
 
         if (alphabet_type == "Codons" and not dynamic_cast<const Codons*>(&a))
             throw myexception()<<"Substitution model S"<<i+1<<" requires a codon alphabet, but sequences are '"<<a.name<<"'";;
@@ -971,7 +971,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 
     // 12. Default and compile tree model
     model_t tree_model;
-    ptree tree_type = parse_type("Tree<t>");
+    type_t tree_type = parse_type("Tree<t>");
     if (not fixed.count("tree"))
     {
         string M;
