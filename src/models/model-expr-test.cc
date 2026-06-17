@@ -5,6 +5,9 @@
 #include "models/typecheck.H"
 
 #include <cassert>
+#include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -453,9 +456,8 @@ TypecheckingState test_typechecker(const Rules& rules, const std::map<std::strin
     return TypecheckingState(rules, std::make_shared<FVSource>(), identifiers, state);
 }
 
-void expect_typecheck_expr_parity(const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
+void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
 {
-    Rules rules({});
     auto untyped = model_expr_from_ptree(model);
 
     auto ast_TC = test_typechecker(rules, identifiers, state);
@@ -474,6 +476,12 @@ void expect_typecheck_expr_parity(const ptree& required_type, const ptree& model
         std::cerr<<"expected:\n"<<expected.show(false)<<"\n";
         assert(false);
     }
+}
+
+void expect_typecheck_expr_parity(const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
+{
+    Rules rules({});
+    expect_typecheck_expr_parity(rules, required_type, model, identifiers, state);
 }
 
 void test_typecheck_expr_wrapper_parity()
@@ -505,6 +513,67 @@ void test_typecheck_expr_wrapper_parity()
         make_type_apps("Function", {ptree("Int"), ptree("Int")}),
         ptree("function", {{"", ptree("x")}, {"", ptree("x")}})
     );
+}
+
+std::filesystem::path make_rule_fixture()
+{
+    auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    auto root = std::filesystem::temp_directory_path() / ("bali-phy-model-expr-test-" + std::to_string(stamp));
+    auto functions = root / "bindings" / "functions";
+    std::filesystem::create_directories(functions);
+
+    {
+        std::ofstream out(functions / "fixture_model.json");
+        out << R"JSON({
+    "name": "fixture_model",
+    "result_type": "Int",
+    "no_log": true,
+    "extract": "all",
+    "call": "fixtureModel(@x,@y,@z)",
+    "args": [
+        {"name": "x", "type": "Int"},
+        {"name": "y", "type": "Int", "default_value": "2"},
+        {"name": "z", "type": "Int", "alphabet": "dna"}
+    ]
+})JSON";
+    }
+
+    {
+        std::ofstream out(functions / "intToDouble.json");
+        out << R"JSON({
+    "name": "intToDouble",
+    "result_type": "Double",
+    "no_log": true,
+    "call": "intToDouble(@x)",
+    "args": [
+        {"name": "x", "type": "Int"}
+    ]
+})JSON";
+    }
+
+    return root;
+}
+
+void test_typecheck_rule_wrapper_parity()
+{
+    auto root = make_rule_fixture();
+    try
+    {
+        Rules rules({root});
+        expect_typecheck_expr_parity(
+            rules,
+            ptree("Int"),
+            ptree("fixture_model", {{"x", ptree(1)}, {"z", ptree(3)}}),
+            {{"dna", ptree("Alphabet")}}
+        );
+        expect_typecheck_expr_parity(rules, ptree("Double"), ptree(1));
+    }
+    catch (...)
+    {
+        std::filesystem::remove_all(root);
+        throw;
+    }
+    std::filesystem::remove_all(root);
 }
 
 void test_typecheck_decls_wrapper_parity()
@@ -570,4 +639,5 @@ int main()
     test_typed_substitution();
     test_typecheck_expr_wrapper_parity();
     test_typecheck_decls_wrapper_parity();
+    test_typecheck_rule_wrapper_parity();
 }
