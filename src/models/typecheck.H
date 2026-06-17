@@ -41,8 +41,6 @@ struct TypecheckingState
 
     void add_states(const std::map<std::string,std::pair<std::string,ptree>>&);
 
-    ptree typecheck_and_annotate_decls(const ptree& decls);
-
     std::optional<ptree> unify_or_convert(const ptree& model, const ptree& type, const ptree& required_type) const;
     std::optional<CM::UntypedExpr> unify_or_convert_model_expr(const CM::UntypedExpr& model, const ptree& type, const ptree& required_type) const;
 

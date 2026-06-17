@@ -787,7 +787,7 @@ std::filesystem::path make_rule_fixture()
     return root;
 }
 
-void test_typecheck_decls_wrapper_parity(const Rules& rules);
+void test_typecheck_decls_wrapper(const Rules& rules);
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls against
 // a temporary binding-file fixture.
@@ -842,7 +842,7 @@ void test_typecheck_rule_wrapper_parity()
             ptree("s"),
             {{"s", make_type_app("ExchangeModel", ptree("AA"))}}
         );
-        test_typecheck_decls_wrapper_parity(rules);
+        test_typecheck_decls_wrapper(rules);
     }
     catch (...)
     {
@@ -852,61 +852,65 @@ void test_typecheck_rule_wrapper_parity()
     std::filesystem::remove_all(root);
 }
 
-// Exercises declaration typechecking parity between AST and legacy ptree paths.
-void test_typecheck_decls_wrapper_parity(const Rules& rules)
+// Exercises declaration typechecking directly through the AST declaration path.
+void test_typecheck_decls_wrapper(const Rules& rules)
 {
-    // Compares one declaration block through the AST and legacy paths.
-    auto expect_decls_parity = [&](const ptree& decls_ptree)
+    // Checks that a declaration block typechecks and round-trips through the
+    // codegen-facing annotated ptree conversion.
+    auto expect_typed_decls = [&](const ptree& decls_ptree, std::vector<std::pair<std::string,ptree>> expected)
     {
         auto decls = model_decls_from_ptree(decls_ptree);
 
         auto ast_TC = test_typechecker(rules);
         auto typed = typecheck_model_decls(ast_TC, decls);
-
-        auto ptree_TC = test_typechecker(rules);
-        auto expected = annotated_ptree_from_typed_model_decls(
-            typed_model_decls_from_annotated_ptree(ptree_TC.typecheck_and_annotate_decls(decls_ptree))
-        );
+        substitute_annotated(ast_TC.eqs, typed);
 
         auto actual = annotated_ptree_from_typed_model_decls(typed);
-        if (not (actual == expected))
+        auto round_trip = annotated_ptree_from_typed_model_decls(
+            typed_model_decls_from_annotated_ptree(actual)
+        );
+
+        assert(actual == round_trip);
+        assert(typed.size() == expected.size());
+        for(std::size_t i = 0; i < expected.size(); i++)
         {
-            std::cerr<<"typecheck decls parity mismatch for "<<decls_ptree.show(false)<<"\n";
-            std::cerr<<"actual:\n"<<actual.show(false)<<"\n";
-            std::cerr<<"expected:\n"<<expected.show(false)<<"\n";
-            assert(false);
+            assert(typed[i].first == expected[i].first);
+            assert(typed[i].second.ann.type == expected[i].second);
         }
     };
 
-    expect_decls_parity(ptree("!Decls", {{"x", ptree(1)}}));
-    expect_decls_parity(ptree("!Decls", {
+    expect_typed_decls(ptree("!Decls", {{"x", ptree(1)}}), {{"x", ptree("Int")}});
+    expect_typed_decls(ptree("!Decls", {
         {"x", ptree(1)},
         {"y", ptree("x")}
-    }));
-    expect_decls_parity(ptree("!Decls", {
+    }), {{"x", ptree("Int")}, {"y", ptree("Int")}});
+    expect_typed_decls(ptree("!Decls", {
         {"xs", ptree("List", {{"", ptree(1)}, {"", ptree(2)}})},
         {"pair", ptree("Tuple", {{"", ptree("xs")}, {"", ptree(true)}})}
-    }));
-    expect_decls_parity(ptree("!Decls", {
+    }), {
+        {"xs", make_type_app("List", ptree("Int"))},
+        {"pair", make_type_apps("Tuple", {make_type_app("List", ptree("Int")), ptree("Bool")})}
+    });
+    expect_typed_decls(ptree("!Decls", {
         {"x", ptree("!let", {
             {"decls", ptree("!Decls", {{"y", ptree(1)}})},
             {"body", ptree("y")}
         })}
-    }));
+    }), {{"x", ptree("Int")}});
     if (rules.get_rule_for_func("intToDouble"))
     {
-        expect_decls_parity(ptree("!Decls", {
+        expect_typed_decls(ptree("!Decls", {
             {"x", ptree("intToDouble", {{"x", ptree(1)}})}
-        }));
+        }), {{"x", ptree("Double")}});
     }
 }
 
-// Exercises declaration typechecking parity for declarations that do not need
+// Exercises declaration typechecking for declarations that do not need
 // binding-file rules.
-void test_typecheck_decls_wrapper_parity()
+void test_typecheck_decls_wrapper()
 {
     Rules rules({});
-    test_typecheck_decls_wrapper_parity(rules);
+    test_typecheck_decls_wrapper(rules);
 }
 
 // Compares the AST pretty extraction view against the legacy annotated-ptree
@@ -978,7 +982,7 @@ int main()
     test_typecheck_expr_wrapper_parity();
     test_typecheck_variable_function_used_args();
     test_typecheck_direct_errors();
-    test_typecheck_decls_wrapper_parity();
+    test_typecheck_decls_wrapper();
     test_typecheck_rule_wrapper_parity();
     test_extraction_parity();
 }

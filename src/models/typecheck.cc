@@ -1013,28 +1013,6 @@ CM::TypedDecls typecheck_model_decls(TypecheckingState& TC, const CM::Decls<CM::
     return decls2;
 }
 
-ptree TypecheckingState::typecheck_and_annotate_decls(const ptree& decls)
-{
-    set<string> used_args;
-    ptree decls2("!Decls");
-    
-    for(auto& [name, exp]: decls.children())
-    {
-	auto a = get_fresh_type_var("a");
-	extend_scope(name,a);
-	auto exp2 = typecheck_and_annotate(a, exp);
-	add(used_args, get_used_args(exp2));
-	if (not eqs)
-	{
-	    substitute(eqs,a);
-	    throw myexception()<<"Expression '"<<unparse_annotated(exp2)<<"' is not of required type "<<unparse_type(a)<<"!";
-	}
-	decls2.children().push_back({name,exp2});
-    }
-    return decls2;
-}
-
-
 optional<ptree>
 TypecheckingState::typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const
 {
@@ -1051,13 +1029,21 @@ TypecheckingState::typecheck_and_annotate_let(const ptree& required_type, const 
 
     // 1. Analyze the decls
     auto scope2 = *this;
-    auto decls2 = scope2.typecheck_and_annotate_decls(decls);
+    auto decls_ast = CM::model_decls_from_ptree(decls);
+    auto typed_decls = typecheck_model_decls(scope2, decls_ast);
+
+    // Compatibility boundary: the old ptree expression path still expects
+    // annotated !Decls here.  Delete this conversion with that path.
+    auto decls2 = CM::annotated_ptree_from_typed_model_decls(typed_decls);
     for(auto& [name,exp]: decls2.children())
 	add(used_args, get_used_args(exp));
 
     // 2. Analyze the body, forcing it to have the required type
     auto body2 =  scope2.typecheck_and_annotate(required_type, body);
     add(used_args, get_used_args(body2));
+
+    // Awkward preserved side effect: the old let path typechecks in a copied
+    // scope, then publishes that copy's equation state back to this object.
     eqs = scope2.eqs;
 
     // Create the new model tree with args in correct order
