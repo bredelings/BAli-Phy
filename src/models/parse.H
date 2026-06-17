@@ -2,7 +2,7 @@
 #define MODELS_PARSE_H
 
 #include <string>
-#include "models/model-expr-fwd.H"
+#include "models/model-expr.H"
 #include "util/ptree.H"
 
 class Rules;

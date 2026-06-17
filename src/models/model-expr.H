@@ -12,11 +12,23 @@
 #include <variant>
 #include <vector>
 
-#include "models/model-expr-fwd.H"
 #include "util/ptree.H"
 
 namespace CmdModel
 {
+
+using NoAnn = std::monostate;
+
+template<class A>
+struct Expr;
+
+template<class A>
+struct Arg;
+
+template<class A>
+using Decls = std::vector<std::pair<std::string, Expr<A>>>;
+
+using UntypedExpr = Expr<NoAnn>;
 
 template<class T>
 class Box
@@ -159,6 +171,9 @@ struct Ann
     bool no_log = false;
     std::optional<std::string> extract;
 };
+
+using TypedExpr = Expr<Ann>;
+using TypedDecls = Decls<Ann>;
 
 template<class A>
 struct Expr
@@ -363,5 +378,7 @@ void check_invariants(const Decls<A>& decls)
 }
 
 }
+
+namespace CM = CmdModel;
 
 #endif
