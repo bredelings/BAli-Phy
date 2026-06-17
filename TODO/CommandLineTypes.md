@@ -15,7 +15,8 @@ The production command-line model path now uses `CM::Type` for model types:
   - `TypeApp{head, arg}`
 - Recursive `TypeApp` nodes use the shared `CM::Box<T>` storage from
   `src/models/model-box.H`.
-- `term_t` and `type_t` are aliases for `CM::Type`.
+- `type_t` is the command-line model alias for `CM::Type`; the old `term_t`
+  alias has been removed.
 - `Rule::result_type`, `RuleArg::type`, and `Rule::constraints` are native
   types after JSON binding loading.
 - `CM::Ann::type` is native.
@@ -29,6 +30,9 @@ The production command-line model path now uses `CM::Type` for model types:
 - Rule loading reads `boost::json` into a private `RawRule` boundary and then
   converts directly to native `Rule` values.
 - Rule citations are stored as native `RuleCitation` data, not as `ptree`.
+- Type application call sites use `CM::type_app(...)` and
+  `CM::type_apps(...)` directly; the old global `make_type_app(...)` helper
+  names have been removed.
 
 `ptree` remains in nearby code for the unrelated help-topic tree in
 `src/bali-phy/help.cc` and the parameter-name trie in `path.cc`.
@@ -65,15 +69,12 @@ records, and constraints.
 
 ## Remaining Work
 
-1. Consider whether the global `make_type_app(...)` / `make_type_apps(...)`
-   compatibility names should be renamed or moved into `CM` once call sites are
-   easy to update.  They are native helpers now, not ptree bridges.
-2. Optionally replace the `path.cc` parameter-name trie with a small local node
+1. Optionally replace the `path.cc` parameter-name trie with a small local node
    struct.  This use is unrelated to model expressions and types.
-3. Optionally replace the help-topic tree in `src/bali-phy/help.cc` with a small
+2. Optionally replace the help-topic tree in `src/bali-phy/help.cc` with a small
    local node struct.  This use is unrelated to rule loading and model
    expressions.
-4. After cleanup, audit with:
+3. After cleanup, audit with:
 
 ```sh
 rg 'ptree\("Int"|ptree\("Double"|ptree\("Tuple"|ptree\("List"' src/models src/bali-phy
