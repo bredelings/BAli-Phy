@@ -5,6 +5,7 @@
 #include "models/typecheck.H"
 
 #include <cassert>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <optional>
@@ -447,29 +448,63 @@ void test_typed_substitution()
     assert(decls[0].second.ann.type == ptree("Int"));
 }
 
-TypecheckingState test_typechecker(const Rules& rules, const std::map<std::string,ptree>& identifiers = {})
+TypecheckingState test_typechecker(const Rules& rules, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
 {
-    return TypecheckingState(rules, std::make_shared<FVSource>(), identifiers);
+    return TypecheckingState(rules, std::make_shared<FVSource>(), identifiers, state);
 }
 
-void expect_typecheck_expr_parity(const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {})
+void expect_typecheck_expr_parity(const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
 {
     Rules rules({});
     auto untyped = model_expr_from_ptree(model);
 
-    auto ast_TC = test_typechecker(rules, identifiers);
+    auto ast_TC = test_typechecker(rules, identifiers, state);
     auto typed = typecheck_model_expr(ast_TC, required_type, untyped);
 
-    auto ptree_TC = test_typechecker(rules, identifiers);
-    auto expected = ptree_TC.typecheck_and_annotate(required_type, model);
+    auto ptree_TC = test_typechecker(rules, identifiers, state);
+    auto expected = annotated_ptree_from_typed_model_expr(
+        typed_model_expr_from_annotated_ptree(ptree_TC.typecheck_and_annotate(required_type, model))
+    );
 
-    assert(annotated_ptree_from_typed_model_expr(typed) == expected);
+    auto actual = annotated_ptree_from_typed_model_expr(typed);
+    if (not (actual == expected))
+    {
+        std::cerr<<"typecheck wrapper parity mismatch for "<<model.show(false)<<"\n";
+        std::cerr<<"actual:\n"<<actual.show(false)<<"\n";
+        std::cerr<<"expected:\n"<<expected.show(false)<<"\n";
+        assert(false);
+    }
 }
 
 void test_typecheck_expr_wrapper_parity()
 {
     expect_typecheck_expr_parity(ptree("Int"), ptree("x"), {{"x", ptree("Int")}});
     expect_typecheck_expr_parity(ptree("Int"), ptree(1));
+    expect_typecheck_expr_parity(
+        make_type_apps("List", {ptree("Int")}),
+        ptree("List", {{"", ptree(1)}, {"", ptree(2)}})
+    );
+    expect_typecheck_expr_parity(
+        make_type_apps("Tuple", {ptree("Int"), ptree("Bool")}),
+        ptree("Tuple", {{"", ptree(1)}, {"", ptree(true)}})
+    );
+    expect_typecheck_expr_parity(
+        ptree("Alphabet"),
+        ptree("get_state", {{"", ptree("alphabet")}}),
+        {},
+        {{"alphabet", ptree("Alphabet")}}
+    );
+    expect_typecheck_expr_parity(
+        ptree("Int"),
+        ptree("!let", {
+            {"decls", ptree("!Decls", {{"x", ptree(1)}})},
+            {"body", ptree("x")}
+        })
+    );
+    expect_typecheck_expr_parity(
+        make_type_apps("Function", {ptree("Int"), ptree("Int")}),
+        ptree("function", {{"", ptree("x")}, {"", ptree("x")}})
+    );
 }
 
 void test_typecheck_decls_wrapper_parity()
