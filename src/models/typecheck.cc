@@ -568,6 +568,123 @@ optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, cons
     };
 }
 
+optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    auto call = std::get_if<CM::Call<CM::NoAnn>>(&expr.node);
+    if (not call)
+        return {};
+
+    auto maybe_rule = TC.R.get_rule_for_func(call->function);
+    if (not maybe_rule)
+        return {};
+
+    auto rule = freshen_type_vars(*maybe_rule, *TC.fv_source);
+    auto result_type = rule.result_type;
+
+    auto model = CM::ptree_from_model_expr(expr);
+    if (auto converted = TC.unify_or_convert(model, result_type, required_type))
+        return typecheck_model_expr_via_ptree(TC, required_type, CM::model_expr_from_ptree(*converted));
+
+    for(const auto& constraint: rule.constraints)
+        TC.eqs.add_constraint(constraint);
+
+    rule = substitute_in_rule_types(TC.eqs, rule);
+
+    map<string,int> arg_count;
+    map<string,const CM::Arg<CM::NoAnn>*> supplied_args;
+    for(const auto& arg: call->args)
+    {
+        if (not maybe_get_arg(rule, arg.name))
+            throw myexception()<<"Function '"<<call->function<<"' has no argument '"<<arg.name<<"' in term:\n"<<model.show();
+        arg_count[arg.name]++;
+        if (arg_count[arg.name] > 1)
+            throw myexception()<<"Supplied argument '"<<arg.name<<"' more than once in term:\n"<<model.show();
+        supplied_args[arg.name] = &arg;
+    }
+
+    map<string,ptree> arg_env;
+    for(const auto& argument: rule.args)
+        arg_env.insert({argument.name, argument.type});
+
+    set<string> used_args;
+    CM::Call<CM::Ann> typed_call{rule.name, {}};
+    for(const auto& argument: rule.args)
+    {
+        auto arg_name = argument.name;
+        auto arg_required_type = argument.type;
+        substitute(TC.eqs, arg_required_type);
+
+        CM::UntypedExpr arg_value;
+        bool is_default = false;
+        if (auto supplied = supplied_args.find(arg_name); supplied != supplied_args.end())
+            arg_value = supplied->second->value.get();
+        else if (argument.default_value)
+        {
+            is_default = true;
+            arg_value = CM::model_expr_from_ptree(*argument.default_value);
+        }
+        else
+            throw myexception()<<"Command '"<<call->function<<"' missing required argument '"<<arg_name<<"'";
+
+        auto scope2 = TC;
+        if (is_default)
+            scope2.args = arg_env;
+
+        optional<CM::Box<CM::TypedExpr>> alphabet_value;
+        if (auto alphabet_expression = argument.alphabet)
+        {
+            auto scope3 = TC;
+            scope3.args = arg_env;
+            auto alphabet_required_type = TC.get_fresh_type_var("a");
+            CM::TypedExpr alphabet_value2;
+            try
+            {
+                alphabet_value2 = typecheck_model_expr(scope3, alphabet_required_type, CM::model_expr_from_ptree(*alphabet_expression));
+            }
+            catch(myexception& e)
+            {
+                e.prepend("In alphabet for argument '" + arg_name + "' of command '" + call->function + "': ");
+                throw;
+            }
+            TC.eqs = TC.eqs && scope3.eqs;
+            if (not TC.eqs)
+                throw myexception()<<"Expression '"<<unparse_annotated(CM::annotated_ptree_from_typed_model_expr(alphabet_value2))<<"' makes unification fail!";
+            scope2.state["alphabet"] = alphabet_value2.ann.type;
+            alphabet_value = CM::Box<CM::TypedExpr>(std::move(alphabet_value2));
+        }
+
+        CM::TypedExpr arg_value2;
+        try
+        {
+            arg_value2 = typecheck_model_expr(scope2, arg_required_type, arg_value);
+        }
+        catch(myexception& e)
+        {
+            e.prepend("In argument '" + arg_name + "' of command '" + call->function + "': ");
+            throw;
+        }
+        TC.eqs = TC.eqs && scope2.eqs;
+        if (not TC.eqs)
+            throw myexception()<<"Expression '"<<unparse_annotated(CM::annotated_ptree_from_typed_model_expr(arg_value2))<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+
+        if (not is_default)
+            add(used_args, arg_value2.ann.used_args);
+
+        typed_call.args.push_back({
+            arg_name,
+            CM::Box<CM::TypedExpr>(std::move(arg_value2)),
+            is_default,
+            false,
+            std::move(alphabet_value)
+        });
+    }
+
+    CM::Ann ann = model_ann(result_type, std::move(used_args));
+    ann.no_log = rule.no_log;
+    ann.extract = rule.extract;
+    return CM::TypedExpr{std::move(ann), std::move(typed_call)};
+}
+
 }
 
 CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
@@ -586,6 +703,8 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& req
         return *let;
     else if (auto lambda = typecheck_model_lambda(TC, required_type, expr))
         return *lambda;
+    else if (auto call = typecheck_model_call(TC, required_type, expr))
+        return *call;
     else
         return typecheck_model_expr_via_ptree(TC, required_type, expr);
 }
