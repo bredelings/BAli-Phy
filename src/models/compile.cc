@@ -425,7 +425,7 @@ bool annotated_term_is_model(const CM::TypedExpr& term)
 {
     if (term.ann.extract == "all") return true;
 
-    if (auto list = std::get_if<CM::List<CM::Ann>>(&term.node))
+    if (auto list = term.to<CM::List<CM::Ann>>())
         for(auto& element: list->elements)
             if (annotated_term_is_model(element)) return true;
 
@@ -439,7 +439,7 @@ namespace
 // bound-variable check.
 void erase_pattern_binders(const CM::TypedPattern& pattern, set<string>& binders)
 {
-    std::visit(CM::overloaded{
+    pattern.visit(CM::overloaded{
         [&](const CM::VarPattern& var)
         {
             binders.erase(var.name);
@@ -451,29 +451,29 @@ void erase_pattern_binders(const CM::TypedPattern& pattern, set<string>& binders
                 erase_pattern_binders(element, binders);
         },
         [](const auto&) {}
-    }, pattern.node);
+    });
 }
 
 // Returns a display name for extraction paths rooted at a typed AST node.
 string extract_node_name(const CM::TypedExpr& expr)
 {
-    return std::visit(CM::overloaded{
+    return expr.visit(CM::overloaded{
         [](const CM::Call<CM::Ann>& call) {return call.function;},
         [](const CM::List<CM::Ann>&) {return string("List");},
         [](const CM::Tuple<CM::Ann>&) {return string("Tuple");},
         [](const CM::Sample<CM::Ann>&) {return string("sample");},
         [](const auto&) {return string("");}
-    }, expr.node);
+    });
 }
 
 // Returns true for scalar constants, matching the ptree extractor's constant
 // check before looking for random sample arguments.
 bool is_constant(const CM::TypedExpr& expr)
 {
-    return std::holds_alternative<CM::IntLiteral>(expr.node)
-        or std::holds_alternative<CM::DoubleLiteral>(expr.node)
-        or std::holds_alternative<CM::BoolLiteral>(expr.node)
-        or std::holds_alternative<CM::StringLiteral>(expr.node);
+    return expr.is<CM::IntLiteral>()
+        or expr.is<CM::DoubleLiteral>()
+        or expr.is<CM::BoolLiteral>()
+        or expr.is<CM::StringLiteral>();
 }
 
 }
@@ -482,7 +482,7 @@ bool is_constant(const CM::TypedExpr& expr)
 // protected by extraction binders.
 bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
 {
-    return std::visit(CM::overloaded{
+    return annotated_term.visit(CM::overloaded{
         [&](const CM::Var& var)
         {
             return binders.count(var.name) != 0;
@@ -491,7 +491,7 @@ bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
         [&](const CM::Call<CM::Ann>& call)
         {
             for(auto& arg: call.args)
-                if (arg.value and bound(arg.value->get(), binders)) return true;
+                if (arg.value and bound(*arg.value, binders)) return true;
             return false;
         },
         // Checks whether any list element references a protected binder.
@@ -515,7 +515,7 @@ bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
             for(auto& [var_name, expr]: let.decls)
                 binders2.erase(var_name);
 
-            if (bound(let.body.get(), binders2)) return true;
+            if (bound(let.body, binders2)) return true;
 
             for(auto& [var_name, expr]: let.decls)
                 if (bound(expr, binders2)) return true;
@@ -525,19 +525,19 @@ bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
         [&](const CM::Lambda<CM::Ann>& lambda)
         {
             auto binders2 = binders;
-            erase_pattern_binders(lambda.pattern.get(), binders2);
-            return bound(lambda.body.get(), binders2);
+            erase_pattern_binders(lambda.pattern, binders2);
+            return bound(lambda.body, binders2);
         },
         // Checks the sampled distribution expression for protected binders.
         [&](const CM::Sample<CM::Ann>& sample)
         {
-            return bound(sample.dist.get(), binders);
+            return bound(sample.dist, binders);
         },
         [](const auto&)
         {
             return false;
         }
-    }, annotated_term.node);
+    });
 }
 
 // Decides whether one typed AST argument should be extracted from its parent
@@ -567,7 +567,7 @@ bool do_extract(const CM::TypedExpr& func, const CM::TypedExpr& arg, const set<s
             return true;
     }
 
-    if (not is_constant(arg) and std::holds_alternative<CM::Sample<CM::Ann>>(arg.node))
+    if (not is_constant(arg) and arg.is<CM::Sample<CM::Ann>>())
         return true;
 
     return false;
@@ -579,10 +579,10 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
 {
     vector<pair<string,CM::TypedExpr>> extracted;
 
-    if (auto let = std::get_if<CM::Let<CM::Ann>>(&m.node))
+    if (auto let = m.to<CM::Let<CM::Ann>>())
     {
         auto decls = std::move(let->decls);
-        auto body = std::move(let->body.get());
+        auto body = std::move(let->body);
 
         extracted = extract_terms(body, binders);
         m = std::move(body);
@@ -590,15 +590,15 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
         for(auto& [var_name, exp]: decls)
             extracted.insert(extracted.begin(), pair<string,CM::TypedExpr>{var_name, std::move(exp)});
     }
-    else if (auto lambda = std::get_if<CM::Lambda<CM::Ann>>(&m.node))
+    else if (auto lambda = m.to<CM::Lambda<CM::Ann>>())
     {
         auto binders2 = binders;
-        erase_pattern_binders(lambda->pattern.get(), binders2);
+        erase_pattern_binders(lambda->pattern, binders2);
 
-        for(auto& [sub_name, sub_term]: extract_terms(lambda->body.get(), binders2))
+        for(auto& [sub_name, sub_term]: extract_terms(lambda->body, binders2))
             extracted.emplace_back(sub_name, std::move(sub_term));
     }
-    else if (auto call = std::get_if<CM::Call<CM::Ann>>(&m.node))
+    else if (auto call = m.to<CM::Call<CM::Ann>>())
     {
         vector<pair<string,CM::TypedExpr>> extracted_top;
         auto func = extract_node_name(m);
@@ -607,15 +607,15 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
         {
             auto name = func + ":" + arg.name;
 
-            if (arg.value and do_extract(m, arg.value->get(), binders))
+            if (arg.value and do_extract(m, *arg.value, binders))
             {
-                auto extracted_value = std::move(arg.value->get());
+                auto extracted_value = std::move(*arg.value);
                 arg.value = std::nullopt;
                 extracted_top.push_back({name, std::move(extracted_value)});
             }
             else if (arg.value)
             {
-                for(auto& [sub_name, sub_term]: extract_terms(arg.value->get(), binders))
+                for(auto& [sub_name, sub_term]: extract_terms(*arg.value, binders))
                 {
                     auto sup_name = name + "/" + sub_name;
                     if (sub_name.size() and sub_name[0] == '[')
@@ -627,7 +627,7 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
 
         std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
     }
-    else if (auto list = std::get_if<CM::List<CM::Ann>>(&m.node))
+    else if (auto list = m.to<CM::List<CM::Ann>>())
     {
         int i = 0;
         for(auto& element: list->elements)
@@ -642,7 +642,7 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
             }
         }
     }
-    else if (auto tuple = std::get_if<CM::Tuple<CM::Ann>>(&m.node))
+    else if (auto tuple = m.to<CM::Tuple<CM::Ann>>())
     {
         int i = 0;
         for(auto& element: tuple->elements)
@@ -657,9 +657,9 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
             }
         }
     }
-    else if (auto sample = std::get_if<CM::Sample<CM::Ann>>(&m.node))
+    else if (auto sample = m.to<CM::Sample<CM::Ann>>())
     {
-        for(auto& [sub_name, sub_term]: extract_terms(sample->dist.get(), binders))
+        for(auto& [sub_name, sub_term]: extract_terms(sample->dist, binders))
             extracted.emplace_back("sample:/" + sub_name, std::move(sub_term));
     }
 

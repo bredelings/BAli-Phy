@@ -158,7 +158,7 @@ defs: %empty       { $$ = {}; }
 |     defs ";"     { $$ = $1; }
 
 exp: term                          { $$ = $1; }
-|    exp "where" "{" defs "}"      { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Let<CM::NoAnn>{$4, CM::Box<CM::UntypedExpr>($1)}}; }
+|    exp "where" "{" defs "}"      { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Let<CM::NoAnn>{$4, $1}}; }
 
 
 // See parse_no_submodel( )
@@ -174,7 +174,7 @@ term: qvarid                      { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Var{$1
 |     "{" "}"                     { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::List<CM::NoAnn>{}}; }
 |    "|" patterns ":" exp "|"     { $$ = make_function($2, $4);}
 |    "(" exp ")"                  { $$ = $2; }
-|     "-" term                    { $$ = make_call("negate", {{ "", CM::Box<CM::UntypedExpr>($2), false, false, std::nullopt }}); }
+|     "-" term                    { $$ = make_call("negate", {{ "", $2, false, false, std::nullopt }}); }
 |     term "+" term               { $$ = make_binary_call("+", $1, $3); }
 |     term "-" term               { $$ = make_binary_call("-", $1, $3); }
 |     term "*" term               { $$ = make_binary_call("*", $1, $3); }
@@ -212,9 +212,9 @@ ditem: exp ":" exp  { $$ = make_model_tuple({$1,$3}); }
 args: arg                 { $$.push_back($1); }
 |     args "," arg        { $$ = $1; $$.push_back($3); }
 
-arg: varid "=" exp { $$ = {$1,CM::Box<CM::UntypedExpr>($3),false,false,std::nullopt}; }
-|    varid "~" exp { $$ = {$1,CM::Box<CM::UntypedExpr>(make_sample($3)),false,false,std::nullopt}; }
-|    exp           { $$ = {"",CM::Box<CM::UntypedExpr>($1),false,false,std::nullopt}; }
+arg: varid "=" exp { $$ = {$1,$3,false,false,std::nullopt}; }
+|    varid "~" exp { $$ = {$1,make_sample($3),false,false,std::nullopt}; }
+|    exp           { $$ = {"",$1,false,false,std::nullopt}; }
 
 tup_args: exp               { $$.push_back($1);}
 |         tup_args "," exp  { $$ = $1; $$.push_back($3);}
@@ -275,7 +275,7 @@ zz::parser::error (const location_type& l, const std::string& m)
 // Builds one positional argument edge for parser-created calls.
 CM::Arg<CM::NoAnn> positional_arg(const CM::UntypedExpr& expr)
 {
-    return {"", CM::Box<CM::UntypedExpr>(expr), false, false, std::nullopt};
+    return {"", expr, false, false, std::nullopt};
 }
 
 // Builds one ordinary call expression, handling parser-level special forms that
@@ -288,10 +288,10 @@ CM::UntypedExpr make_call(const string& name, const vector<CM::Arg<CM::NoAnn>>& 
             throw myexception()<<"get_state: got "<<args.size()<<" arguments, 1 argument required.";
         if (not args[0].name.empty() or not args[0].value)
             throw myexception()<<"get_state: first argument must be an unquoted state name.";
-        auto& state = args[0].value->get();
-        if (auto var = std::get_if<CM::Var>(&state.node))
+        auto& state = *args[0].value;
+        if (auto var = state.to<CM::Var>())
             return {CM::NoAnn{}, CM::GetState{var->name}};
-        if (auto str = std::get_if<CM::StringLiteral>(&state.node))
+        if (auto str = state.to<CM::StringLiteral>())
             return {CM::NoAnn{}, CM::GetState{str->value}};
         throw myexception()<<"get_state: first argument must be an unquoted state name.";
     }
@@ -314,7 +314,7 @@ CM::UntypedExpr make_list(const vector<CM::Arg<CM::NoAnn>>& args)
     {
         if (not arg.value)
             throw myexception()<<"List element must have a value.";
-        list.elements.push_back(arg.value->get());
+        list.elements.push_back(*arg.value);
     }
     return {CM::NoAnn{}, std::move(list)};
 }
@@ -336,7 +336,7 @@ CM::UntypedExpr make_model_tuple(const vector<CM::UntypedExpr>& elements)
 // Builds one sample-sugar expression.
 CM::UntypedExpr make_sample(const CM::UntypedExpr& dist)
 {
-    return {CM::NoAnn{}, CM::Sample<CM::NoAnn>{CM::Box<CM::UntypedExpr>(dist)}};
+    return {CM::NoAnn{}, CM::Sample<CM::NoAnn>{dist}};
 }
 
 // Builds nested unary lambda nodes for the parser's lambda syntax.
@@ -347,10 +347,7 @@ CM::UntypedExpr make_function(const vector<CM::UntypedPattern>& patterns, const 
     {
         f = {
             CM::NoAnn{},
-            CM::Lambda<CM::NoAnn>{
-                CM::Box<CM::UntypedPattern>(std::move(pattern)),
-                CM::Box<CM::UntypedExpr>(std::move(f))
-            }
+            CM::Lambda<CM::NoAnn>{std::move(pattern), std::move(f)}
         };
     }
     return f;
@@ -367,7 +364,7 @@ ptree make_type_app(ptree type, const vector<ptree>& args)
 // reporting parser errors for non-variable argument patterns.
 pair<string,CM::UntypedExpr> make_function_def(zz_driver& drv, const yy::location& l, const CM::UntypedExpr& fncall, const CM::UntypedExpr& body)
 {
-    auto call = std::get_if<CM::Call<CM::NoAnn>>(&fncall.node);
+    auto call = fncall.to<CM::Call<CM::NoAnn>>();
     assert(call);
 
     auto fname = call->function;
@@ -382,7 +379,7 @@ pair<string,CM::UntypedExpr> make_function_def(zz_driver& drv, const yy::locatio
 
         if (not arg.value)
 	    drv.push_error_message(l, "Arguments in function definition must be variables");
-	else if (auto var = std::get_if<CM::Var>(&arg.value->get().node))
+	else if (auto var = arg.value->to<CM::Var>())
 	    patterns.push_back(CM::UntypedPattern{CM::NoAnn{}, CM::VarPattern{var->name}});
 	else
 	    drv.push_error_message(l, "Arguments in function definition must be variables");
@@ -398,10 +395,10 @@ int add_arg_placeholder(CM::Call<CM::NoAnn>& call, const CM::UntypedExpr& arg)
     int n_placeholders = 0;
     for(auto& call_arg: call.args)
     {
-        if (call_arg.value and std::holds_alternative<CM::Placeholder>(call_arg.value->get().node))
+        if (call_arg.value and call_arg.value->is<CM::Placeholder>())
         {
             n_placeholders++;
-            call_arg.value = CM::Box<CM::UntypedExpr>(arg);
+            call_arg.value = arg;
         }
     }
     return n_placeholders;
@@ -411,10 +408,10 @@ int add_arg_placeholder(CM::Call<CM::NoAnn>& call, const CM::UntypedExpr& arg)
 // replacement before falling back to prepending a positional argument.
 CM::UntypedExpr add_arg(CM::UntypedExpr arg, CM::UntypedExpr callee)
 {
-    if (auto var = std::get_if<CM::Var>(&callee.node))
+    if (auto var = callee.to<CM::Var>())
         callee = make_call(var->name, {});
 
-    auto call = std::get_if<CM::Call<CM::NoAnn>>(&callee.node);
+    auto call = callee.to<CM::Call<CM::NoAnn>>();
     if (not call)
         throw myexception()<<"Right side of +> must be a function call or function name.";
 

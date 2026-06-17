@@ -64,7 +64,7 @@ CM::UntypedExpr conversion_call(const string& function, const string& arg_name, 
             {
                 CM::Arg<CM::NoAnn>{
                     arg_name,
-                    CM::Box<CM::UntypedExpr>(std::move(model)),
+                    std::move(model),
                     false,
                     false,
                     std::nullopt
@@ -239,7 +239,7 @@ void substitute_annotated(const equations& eqs, CM::TypedPattern& pattern)
 {
     substitute(eqs, pattern.ann.type);
 
-    std::visit(CM::overloaded{
+    pattern.visit(CM::overloaded{
         // Recurse through tuple-pattern element annotations.
         [&](CM::TuplePattern<CM::Ann>& tuple)
         {
@@ -247,7 +247,7 @@ void substitute_annotated(const equations& eqs, CM::TypedPattern& pattern)
                 substitute_annotated(eqs, element);
         },
         [](auto&) {}
-    }, pattern.node);
+    });
 }
 
 // Applies solved type equations throughout an annotated model AST.
@@ -256,7 +256,7 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
 {
     substitute(eqs, expr.ann.type);
 
-    std::visit(CM::overloaded{
+    expr.visit(CM::overloaded{
         // Recurse through call argument values and optional argument
         // alphabets, since both carry typed subexpressions.
         [&](CM::Call<CM::Ann>& call)
@@ -264,9 +264,9 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
             for(auto& arg: call.args)
             {
                 if (arg.value)
-                    substitute_annotated(eqs, arg.value->get());
+                    substitute_annotated(eqs, *arg.value);
                 if (arg.alphabet)
-                    substitute_annotated(eqs, arg.alphabet->get());
+                    substitute_annotated(eqs, *arg.alphabet);
             }
         },
         // Recurse through list element annotations.
@@ -285,21 +285,21 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
         [&](CM::Let<CM::Ann>& let)
         {
             substitute_annotated(eqs, let.decls);
-            substitute_annotated(eqs, let.body.get());
+            substitute_annotated(eqs, let.body);
         },
         // Recurse through lambda pattern and body annotations.
         [&](CM::Lambda<CM::Ann>& lambda)
         {
-            substitute_annotated(eqs, lambda.pattern.get());
-            substitute_annotated(eqs, lambda.body.get());
+            substitute_annotated(eqs, lambda.pattern);
+            substitute_annotated(eqs, lambda.body);
         },
         // Recurse through the sampled distribution annotation.
         [&](CM::Sample<CM::Ann>& sample)
         {
-            substitute_annotated(eqs, sample.dist.get());
+            substitute_annotated(eqs, sample.dist);
         },
         [](auto&) {}
-    }, expr.node);
+    });
 }
 
 namespace
@@ -317,7 +317,7 @@ CM::TypedPattern typecheck_pattern(const TypecheckingState& TC, ptree required_t
 {
     substitute(TC.eqs, required_type);
 
-    return std::visit(CM::overloaded{
+    return pattern.visit(CM::overloaded{
         [&](const CM::VarPattern& var) -> CM::TypedPattern
         {
             return {model_ann(required_type), var};
@@ -334,7 +334,7 @@ CM::TypedPattern typecheck_pattern(const TypecheckingState& TC, ptree required_t
                 typed_tuple.elements.push_back(typecheck_pattern(TC, args[i], tuple.elements[i]));
             return {model_ann(required_type), std::move(typed_tuple)};
         }
-    }, pattern.node);
+    });
 }
 
 optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr);
@@ -343,7 +343,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
 // behavior.
 optional<CM::TypedExpr> typecheck_model_invalid_placeholder(const CM::UntypedExpr& expr)
 {
-    if (std::holds_alternative<CM::Placeholder>(expr.node))
+    if (expr.is<CM::Placeholder>())
         throw myexception()<<"Placeholder '_' may only appear while parsing argument application.";
     return {};
 }
@@ -355,22 +355,22 @@ optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, co
     type_t result_type;
     CM::TypedExpr::Node node;
 
-    if (auto literal = std::get_if<CM::IntLiteral>(&expr.node))
+    if (auto literal = expr.to<CM::IntLiteral>())
     {
         result_type = ptree("Int");
         node = *literal;
     }
-    else if (auto literal = std::get_if<CM::DoubleLiteral>(&expr.node))
+    else if (auto literal = expr.to<CM::DoubleLiteral>())
     {
         result_type = ptree("Double");
         node = *literal;
     }
-    else if (auto literal = std::get_if<CM::BoolLiteral>(&expr.node))
+    else if (auto literal = expr.to<CM::BoolLiteral>())
     {
         result_type = ptree("Bool");
         node = *literal;
     }
-    else if (auto literal = std::get_if<CM::StringLiteral>(&expr.node))
+    else if (auto literal = expr.to<CM::StringLiteral>())
     {
         result_type = ptree("String");
         node = *literal;
@@ -392,7 +392,7 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
     set<string> used_args;
     CM::TypedExpr::Node node;
 
-    if (auto var = std::get_if<CM::Var>(&expr.node))
+    if (auto var = expr.to<CM::Var>())
     {
         auto type = TC.type_for_var(var->name);
         if (not type)
@@ -400,7 +400,7 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
         result_type = *type;
         node = *var;
     }
-    else if (auto arg = std::get_if<CM::ArgRef>(&expr.node))
+    else if (auto arg = expr.to<CM::ArgRef>())
     {
         auto type = TC.type_for_arg(arg->name);
         if (not type)
@@ -424,7 +424,7 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
 // scoped variable.
 optional<CM::TypedExpr> typecheck_model_nullary_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    auto var = std::get_if<CM::Var>(&expr.node);
+    auto var = expr.to<CM::Var>();
     if (not var)
         return {};
     if (TC.type_for_var(var->name))
@@ -443,7 +443,7 @@ optional<CM::TypedExpr> typecheck_model_nullary_call(const TypecheckingState& TC
 // rule-backed command.
 optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    auto call = std::get_if<CM::Call<CM::NoAnn>>(&expr.node);
+    auto call = expr.to<CM::Call<CM::NoAnn>>();
     if (not call)
         return {};
 
@@ -484,11 +484,11 @@ optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, co
                 throw myexception()<<"Supplying "<<call->args.size()<<" arguments to function '"<<call->function<<"', but it only takes "<<arity<<"!";
         }
 
-        auto arg2 = typecheck_model_expr(TC, a, arg.value->get());
+        auto arg2 = typecheck_model_expr(TC, a, *arg.value);
         add(used_args, arg2.ann.used_args);
         typed_call.args.push_back({
             "",
-            CM::Box<CM::TypedExpr>(std::move(arg2)),
+            std::move(arg2),
             false,
             false,
             std::nullopt
@@ -508,7 +508,7 @@ optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, co
 // list expression with the caller's required top-level annotation.
 optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    auto list = std::get_if<CM::List<CM::NoAnn>>(&expr.node);
+    auto list = expr.to<CM::List<CM::NoAnn>>();
     if (not list)
         return {};
 
@@ -537,7 +537,7 @@ optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const 
 // expression with the caller's required top-level annotation.
 optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    auto tuple = std::get_if<CM::Tuple<CM::NoAnn>>(&expr.node);
+    auto tuple = expr.to<CM::Tuple<CM::NoAnn>>();
     if (not tuple)
         return {};
 
@@ -569,7 +569,7 @@ optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const
 // typechecking state and unifying it with the required type.
 optional<CM::TypedExpr> typecheck_model_get_state(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    auto get_state = std::get_if<CM::GetState>(&expr.node);
+    auto get_state = expr.to<CM::GetState>();
     if (not get_state)
         return {};
 
@@ -587,7 +587,7 @@ optional<CM::TypedExpr> typecheck_model_get_state(const TypecheckingState& TC, c
 // against the caller's required type.
 optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    auto let = std::get_if<CM::Let<CM::NoAnn>>(&expr.node);
+    auto let = expr.to<CM::Let<CM::NoAnn>>();
     if (not let)
         return {};
 
@@ -597,13 +597,13 @@ optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const p
     for(auto& [name, decl_expr]: decls2)
         add(used_args, decl_expr.ann.used_args);
 
-    auto body2 = typecheck_model_expr(scope2, required_type, let->body.get());
+    auto body2 = typecheck_model_expr(scope2, required_type, let->body);
     add(used_args, body2.ann.used_args);
     TC.eqs = scope2.eqs;
 
     return CM::TypedExpr{
         model_ann(required_type, std::move(used_args)),
-        CM::Let<CM::Ann>{std::move(decls2), CM::Box<CM::TypedExpr>(std::move(body2))}
+        CM::Let<CM::Ann>{std::move(decls2), std::move(body2)}
     };
 }
 
@@ -611,11 +611,11 @@ optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const p
 // body in the scope introduced by the pattern.
 optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    auto lambda = std::get_if<CM::Lambda<CM::NoAnn>>(&expr.node);
+    auto lambda = expr.to<CM::Lambda<CM::NoAnn>>();
     if (not lambda)
         return {};
 
-    auto [a, type_for_binder] = TC.parse_pattern(lambda->pattern.get());
+    auto [a, type_for_binder] = TC.parse_pattern(lambda->pattern);
 
     auto scope2 = TC;
     for(auto& [var,type]: type_for_binder)
@@ -629,20 +629,20 @@ optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, cons
 
     substitute(TC.eqs, b);
 
-    auto body2 = typecheck_model_expr(scope2, b, lambda->body.get());
+    auto body2 = typecheck_model_expr(scope2, b, lambda->body);
     TC.eqs = TC.eqs && scope2.eqs;
     auto used_args = body2.ann.used_args;
 
     substitute(TC.eqs, a);
 
-    auto pattern2 = typecheck_pattern(scope2, a, lambda->pattern.get());
+    auto pattern2 = typecheck_pattern(scope2, a, lambda->pattern);
     substitute(TC.eqs, ftype);
 
     return CM::TypedExpr{
         model_ann(ftype, std::move(used_args)),
         CM::Lambda<CM::Ann>{
-            CM::Box<CM::TypedPattern>(std::move(pattern2)),
-            CM::Box<CM::TypedExpr>(std::move(body2))
+            std::move(pattern2),
+            std::move(body2)
         }
     };
 }
@@ -651,7 +651,7 @@ optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, cons
 // used-argument propagation, and rule-level logging/extraction metadata.
 optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    auto call = std::get_if<CM::Call<CM::NoAnn>>(&expr.node);
+    auto call = expr.to<CM::Call<CM::NoAnn>>();
     if (not call)
         return {};
 
@@ -698,7 +698,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
         CM::UntypedExpr arg_value;
         bool is_default = false;
         if (auto supplied = supplied_args.find(arg_name); supplied != supplied_args.end())
-            arg_value = supplied->second->value->get();
+            arg_value = *supplied->second->value;
         else if (argument.default_value)
         {
             is_default = true;
@@ -711,7 +711,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
         if (is_default)
             scope2.args = arg_env;
 
-        optional<CM::Box<CM::TypedExpr>> alphabet_value;
+        optional<CM::TypedExpr> alphabet_value;
         if (auto alphabet_expression = argument.alphabet)
         {
             auto scope3 = TC;
@@ -731,7 +731,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
             if (not TC.eqs)
                 throw myexception()<<"Expression '"<<unparse_annotated(alphabet_value2)<<"' makes unification fail!";
             scope2.state["alphabet"] = alphabet_value2.ann.type;
-            alphabet_value = CM::Box<CM::TypedExpr>(std::move(alphabet_value2));
+            alphabet_value = std::move(alphabet_value2);
         }
 
         CM::TypedExpr arg_value2;
@@ -753,7 +753,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
 
         typed_call.args.push_back({
             arg_name,
-            CM::Box<CM::TypedExpr>(std::move(arg_value2)),
+            std::move(arg_value2),
             is_default,
             false,
             std::move(alphabet_value)
@@ -772,7 +772,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
 // dedicated AST Sample node expected by extraction and pretty-printing.
 optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    auto sample = std::get_if<CM::Sample<CM::NoAnn>>(&expr.node);
+    auto sample = expr.to<CM::Sample<CM::NoAnn>>();
     if (not sample)
         return {};
 
@@ -783,7 +783,7 @@ optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, cons
             {
                 CM::Arg<CM::NoAnn>{
                     "dist",
-                    CM::Box<CM::UntypedExpr>(sample->dist.get()),
+                    sample->dist,
                     false,
                     false,
                     std::nullopt
@@ -794,13 +794,13 @@ optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, cons
 
     auto typed_call_expr = typecheck_model_call(TC, required_type, sample_call);
     assert(typed_call_expr);
-    auto& typed_call = std::get<CM::Call<CM::Ann>>(typed_call_expr->node);
+    auto& typed_call = typed_call_expr->as<CM::Call<CM::Ann>>();
     assert(typed_call.args.size() == 1);
     auto dist = std::move(require_arg_value(typed_call.args[0]));
 
     return CM::TypedExpr{
         std::move(typed_call_expr->ann),
-        CM::Sample<CM::Ann>{CM::Box<CM::TypedExpr>(std::move(dist))}
+        CM::Sample<CM::Ann>{std::move(dist)}
     };
 }
 
@@ -864,12 +864,12 @@ CM::TypedDecls typecheck_model_decls(TypecheckingState& TC, const CM::Decls<CM::
 // and rejecting expression forms that are not valid patterns.
 pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const CM::UntypedPattern& pattern) const
 {
-    if (auto var = std::get_if<CM::VarPattern>(&pattern.node))
+    if (auto var = pattern.to<CM::VarPattern>())
     {
         auto type = get_fresh_type_var("p");
         return {type, {{var->name, type}}};
     }
-    else if (auto tuple = std::get_if<CM::TuplePattern<CM::NoAnn>>(&pattern.node))
+    else if (auto tuple = pattern.to<CM::TuplePattern<CM::NoAnn>>())
     {
         vector<ptree> element_types;
         map<string,ptree> var_to_type;

@@ -68,13 +68,13 @@ UntypedExpr get_state_expr(std::string name)
 // Wraps an untyped expression as a positional call argument.
 Arg<NoAnn> positional_arg(UntypedExpr value)
 {
-    return {"", CmdModel::Box<UntypedExpr>(std::move(value)), false, false, std::nullopt};
+    return {"", std::move(value), false, false, std::nullopt};
 }
 
 // Wraps an untyped expression as a named call argument.
 Arg<NoAnn> named_arg(std::string name, UntypedExpr value)
 {
-    return {std::move(name), CmdModel::Box<UntypedExpr>(std::move(value)), false, false, std::nullopt};
+    return {std::move(name), std::move(value), false, false, std::nullopt};
 }
 
 // Builds an untyped call expression from a function name and argument edges.
@@ -98,7 +98,7 @@ UntypedExpr tuple_expr(std::vector<UntypedExpr> elements)
 // Builds an untyped let expression from declarations and a body expression.
 UntypedExpr let_expr(Decls<NoAnn> decls, UntypedExpr body)
 {
-    return {NoAnn{}, Let<NoAnn>{std::move(decls), CmdModel::Box<UntypedExpr>(std::move(body))}};
+    return {NoAnn{}, Let<NoAnn>{std::move(decls), std::move(body)}};
 }
 
 // Builds an untyped variable pattern for lambda tests.
@@ -116,13 +116,13 @@ UntypedPattern tuple_pattern(std::vector<UntypedPattern> elements)
 // Builds an untyped lambda expression from a pattern and body expression.
 UntypedExpr lambda_expr(UntypedPattern pattern, UntypedExpr body)
 {
-    return {NoAnn{}, Lambda<NoAnn>{CmdModel::Box<UntypedPattern>(std::move(pattern)), CmdModel::Box<UntypedExpr>(std::move(body))}};
+    return {NoAnn{}, Lambda<NoAnn>{std::move(pattern), std::move(body)}};
 }
 
 // Builds an untyped sample expression from a distribution expression.
 UntypedExpr sample_expr(UntypedExpr dist)
 {
-    return {NoAnn{}, Sample<NoAnn>{CmdModel::Box<UntypedExpr>(std::move(dist))}};
+    return {NoAnn{}, Sample<NoAnn>{std::move(dist)}};
 }
 
 // Builds a typed model AST annotation with explicit metadata defaults.
@@ -141,23 +141,23 @@ TypedExpr typed_expr(ptree type, Node node, std::set<std::string> used_args = {}
 // Wraps a typed expression as a positional typed call argument.
 Arg<Ann> typed_positional_arg(TypedExpr value)
 {
-    return {"", CmdModel::Box<TypedExpr>(std::move(value)), false, false, std::nullopt};
+    return {"", std::move(value), false, false, std::nullopt};
 }
 
 // Wraps a typed expression as a named typed call argument with optional edge
 // metadata.
 Arg<Ann> typed_named_arg(std::string name, TypedExpr value, bool is_default = false, bool suppress_default = false, std::optional<TypedExpr> alphabet = {})
 {
-    std::optional<CmdModel::Box<TypedExpr>> alphabet_box;
+    std::optional<TypedExpr> alphabet_value;
     if (alphabet)
-        alphabet_box = CmdModel::Box<TypedExpr>(std::move(*alphabet));
+        alphabet_value = std::move(*alphabet);
 
     return {
         std::move(name),
-        CmdModel::Box<TypedExpr>(std::move(value)),
+        std::move(value),
         is_default,
         suppress_default,
-        std::move(alphabet_box)
+        std::move(alphabet_value)
     };
 }
 
@@ -182,12 +182,12 @@ void test_copy_independence()
 
     auto copied = original;
 
-    auto& copied_call = std::get<Call<NoAnn>>(copied.node);
-    auto& copied_var = std::get<Var>(require_arg_value(copied_call.args[0]).node);
+    auto& copied_call = copied.as<Call<NoAnn>>();
+    auto& copied_var = require_arg_value(copied_call.args[0]).as<Var>();
     copied_var.name = "y";
 
-    auto& original_call = std::get<Call<NoAnn>>(original.node);
-    auto& original_var = std::get<Var>(require_arg_value(original_call.args[0]).node);
+    auto& original_call = original.as<Call<NoAnn>>();
+    auto& original_var = require_arg_value(original_call.args[0]).as<Var>();
 
     assert(original_var.name == "x");
     assert(copied_var.name == "y");
@@ -198,7 +198,7 @@ void test_accessors_and_traversal()
 {
     UntypedExpr expr{
         NoAnn{},
-        Sample<NoAnn>{CmdModel::Box<UntypedExpr>(var_expr("dist"))}
+        Sample<NoAnn>{var_expr("dist")}
     };
 
     assert(is_sample(expr));
@@ -261,7 +261,7 @@ void test_absent_argument_values()
             }
         }
     };
-    auto& call = std::get<Call<NoAnn>>(expr.node);
+    auto& call = expr.as<Call<NoAnn>>();
     assert(not call.args[0].value);
     assert(call.args[1].value);
 }
@@ -280,11 +280,11 @@ void test_parser_wrappers()
     assert(decls[1].first == "y");
 
     auto tuple_lambda = parse_model_expr(rules, "|(x,y):x|", "tuple-pattern lambda");
-    auto& lambda = std::get<Lambda<NoAnn>>(tuple_lambda.node);
-    auto& pattern = std::get<TuplePattern<NoAnn>>(lambda.pattern->node);
+    auto& lambda = tuple_lambda.as<Lambda<NoAnn>>();
+    auto& pattern = lambda.pattern.as<TuplePattern<NoAnn>>();
     assert(pattern.elements.size() == 2);
-    assert(std::get<VarPattern>(pattern.elements[0].node).name == "x");
-    assert(std::get<VarPattern>(pattern.elements[1].node).name == "y");
+    assert(pattern.elements[0].as<VarPattern>().name == "x");
+    assert(pattern.elements[1].as<VarPattern>().name == "y");
 }
 
 // Exercises untyped AST pretty-printing for representative syntax.
@@ -348,7 +348,7 @@ void test_typed_pretty_printing()
 
     auto sample = typed_expr(
         ptree("Double"),
-        Sample<Ann>{CmdModel::Box<TypedExpr>(typed_expr(make_type_app("Distribution", ptree("Double")), Var{"normal"}))}
+        Sample<Ann>{typed_expr(make_type_app("Distribution", ptree("Double")), Var{"normal"})}
     );
     assert(show_model_annotated(sample) == "~ normal");
 }
@@ -373,14 +373,14 @@ void test_typed_substitution()
             {
                 Arg<Ann>{
                     "x",
-                    CmdModel::Box<TypedExpr>(TypedExpr{Ann{b, {}, false, {}}, Var{"x"}}),
+                    TypedExpr{Ann{b, {}, false, {}}, Var{"x"}},
                     false,
                     false,
-                    CmdModel::Box<TypedExpr>(TypedExpr{Ann{alphabet_type, {}, false, {}}, Var{"dna"}})
+                    TypedExpr{Ann{alphabet_type, {}, false, {}}, Var{"dna"}}
                 },
                 Arg<Ann>{
                     "items",
-                    CmdModel::Box<TypedExpr>(std::move(list_expr)),
+                    std::move(list_expr),
                     false,
                     false,
                     std::nullopt
@@ -398,13 +398,13 @@ void test_typed_substitution()
     substitute_annotated(eqs, expr);
 
     assert(expr.ann.type == ptree("Double"));
-    auto& call = std::get<Call<Ann>>(expr.node);
+    auto& call = expr.as<Call<Ann>>();
     assert(require_arg_value(call.args[0]).ann.type == ptree("Int"));
     assert(call.args[0].alphabet);
-    assert(call.args[0].alphabet->get().ann.type == ptree("Alphabet"));
+    assert(call.args[0].alphabet->ann.type == ptree("Alphabet"));
     assert(require_arg_value(call.args[1]).ann.type == ptree("List", {{"", ptree("String")}}));
 
-    auto& list = std::get<List<Ann>>(require_arg_value(call.args[1]).node);
+    auto& list = require_arg_value(call.args[1]).as<List<Ann>>();
     assert(list.elements[0].ann.type == ptree("String"));
 
     TypedDecls decls{
@@ -490,14 +490,14 @@ void test_typecheck_tuple_pattern_lambda()
     substitute_annotated(TC.eqs, typed);
 
     assert(typed.ann.type == required_type);
-    auto& lambda = std::get<Lambda<Ann>>(typed.node);
-    auto& pattern = std::get<TuplePattern<Ann>>(lambda.pattern->node);
+    auto& lambda = typed.as<Lambda<Ann>>();
+    auto& pattern = lambda.pattern.as<TuplePattern<Ann>>();
     assert(pattern.elements.size() == 2);
     assert(pattern.elements[0].ann.type == ptree("Int"));
     assert(pattern.elements[1].ann.type == ptree("Bool"));
-    assert(std::get<VarPattern>(pattern.elements[0].node).name == "x");
-    assert(std::get<VarPattern>(pattern.elements[1].node).name == "flag");
-    assert(lambda.body->ann.type == ptree("Int"));
+    assert(pattern.elements[0].as<VarPattern>().name == "x");
+    assert(pattern.elements[1].as<VarPattern>().name == "flag");
+    assert(lambda.body.ann.type == ptree("Int"));
 }
 
 // Checks that function-valued variables propagate used_args from positional
@@ -845,7 +845,7 @@ void test_extraction()
     auto dist_type = make_type_app("Distribution", ptree("Double"));
     auto sampled_arg = typed_expr(
         ptree("Double"),
-        Sample<Ann>{CmdModel::Box<TypedExpr>(typed_expr(dist_type, Var{"normal"}))}
+        Sample<Ann>{typed_expr(dist_type, Var{"normal"})}
     );
     auto model = typed_call_expr("f", {typed_named_arg("x", sampled_arg)}, ptree("Model"));
     auto pretty = pretty_model_t(model);

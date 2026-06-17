@@ -91,14 +91,14 @@ ptree add_submodel(ptree term, const ptree& submodel)
 // directly on the model AST, while preserving calls to local function binders.
 void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>& local_functions = {})
 {
-    std::visit(overloaded{
+    expr.visit(overloaded{
         // Rewrites ordinary call arguments after first normalizing the argument
         // subexpressions.
         [&](Call<NoAnn>& call)
         {
             for(auto& arg: call.args)
                 if (arg.value)
-                    handle_positional_args(arg.value->get(), R, local_functions);
+                    handle_positional_args(*arg.value, R, local_functions);
 
             if (call.args.empty())
                 return;
@@ -115,9 +115,9 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
                         throw myexception()<<"Tuple: entry '"<<arg.name<<"="<<unparse(require_arg_value(arg))<<"' must not have a variable name!";
                     if (not arg.value)
                         throw myexception()<<"Tuple element must have a value.";
-                    tuple.elements.push_back(std::move(arg.value->get()));
+                    tuple.elements.push_back(std::move(*arg.value));
                 }
-                expr.node = std::move(tuple);
+                expr.node = Box<Tuple<NoAnn>>(new Tuple<NoAnn>(std::move(tuple)));
                 return;
             }
 
@@ -188,22 +188,22 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
                 local_functions2.insert(name);
                 handle_positional_args(value, R, local_functions2);
             }
-            handle_positional_args(let.body.get(), R, local_functions2);
+            handle_positional_args(let.body, R, local_functions2);
         },
         // Recurses into the body without rewriting the lambda node itself.
         // Patterns contain no call arguments to normalize.
         [&](Lambda<NoAnn>& lambda)
         {
-            handle_positional_args(lambda.body.get(), R, local_functions);
+            handle_positional_args(lambda.body, R, local_functions);
         },
         // Recurses into the sampled distribution without rewriting the sample
         // node itself.
         [&](Sample<NoAnn>& sample)
         {
-            handle_positional_args(sample.dist.get(), R, local_functions);
+            handle_positional_args(sample.dist, R, local_functions);
         },
         [](auto&) {}
-    }, expr.node);
+    });
 }
 
 // Converts parser-produced positional call arguments in declaration values to
@@ -378,14 +378,14 @@ string unparse(const ptree& p)
 // surrounding let when the sampled body can be peeled.
 optional<UntypedExpr> peel_sample(const UntypedExpr& expr)
 {
-    if (auto sample = std::get_if<Sample<NoAnn>>(&expr.node))
-        return sample->dist.get();
-    else if (auto let = std::get_if<Let<NoAnn>>(&expr.node))
+    if (auto sample = expr.to<Sample<NoAnn>>())
+        return sample->dist;
+    else if (auto let = expr.to<Let<NoAnn>>())
     {
-        if (auto new_body = peel_sample(let->body.get()))
+        if (auto new_body = peel_sample(let->body))
         {
             auto result = expr;
-            std::get<Let<NoAnn>>(result.node).body = Box<UntypedExpr>(*new_body);
+            result.as<Let<NoAnn>>().body = *new_body;
             return result;
         }
     }
@@ -405,7 +405,7 @@ string unparse(const Decls<NoAnn>& decls)
 // Renders an untyped model pattern using the lambda-pattern syntax.
 string unparse(const UntypedPattern& pattern)
 {
-    return std::visit(overloaded{
+    return pattern.visit(overloaded{
         [](const VarPattern& x) {return x.name;},
         // Renders tuple patterns in the same parenthesized tuple syntax as
         // tuple expressions.
@@ -416,7 +416,7 @@ string unparse(const UntypedPattern& pattern)
                 items.push_back(unparse(item));
             return "(" + join(items, ", ") + ")";
         }
-    }, pattern.node);
+    });
 }
 
 // Renders an untyped model AST expression using the legacy command-line syntax.
@@ -424,7 +424,7 @@ string unparse(const UntypedExpr& expr)
 {
     using namespace std::string_literals;
 
-    return std::visit(overloaded{
+    return expr.visit(overloaded{
         [](const IntLiteral& x) {return convertToString(x.value);},
         // Renders doubles while trimming insignificant trailing zeroes.
         [](const DoubleLiteral& x)
@@ -459,15 +459,15 @@ string unparse(const UntypedExpr& expr)
         },
         [](const Let<NoAnn>& x)
         {
-            return unparse(x.body.get()) + " where {" + unparse(x.decls) + "}";
+            return unparse(x.body) + " where {" + unparse(x.decls) + "}";
         },
         [](const Lambda<NoAnn>& x)
         {
-            return "|" + unparse(x.pattern.get()) + ":" + unparse(x.body.get()) + "|";
+            return "|" + unparse(x.pattern) + ":" + unparse(x.body) + "|";
         },
         [](const Sample<NoAnn>& x)
         {
-            return "~" + unparse(x.dist.get());
+            return "~" + unparse(x.dist);
         },
         // Renders calls using legacy shorthand for operators, conversions,
         // submodels, samples, and named arguments.
@@ -504,14 +504,14 @@ string unparse(const UntypedExpr& expr)
                 {
                     positional = false;
                     assert(not submodel);
-                    submodel = unparse(arg.value->get());
+                    submodel = unparse(*arg.value);
                 }
                 else if (positional)
-                    args.push_back(unparse(arg.value->get()));
-                else if (auto arg2 = peel_sample(arg.value->get()))
+                    args.push_back(unparse(*arg.value));
+                else if (auto arg2 = peel_sample(*arg.value))
                     args.push_back(arg.name + "~" + unparse(*arg2));
                 else
-                    args.push_back(arg.name + "=" + unparse(arg.value->get()));
+                    args.push_back(arg.name + "=" + unparse(*arg.value));
 
                 pos++;
             }
@@ -523,7 +523,7 @@ string unparse(const UntypedExpr& expr)
                 s = *submodel + " +> " + s;
             return s;
         }
-    }, expr.node);
+    });
 }
 
 // Preserves the old unparse signature for callers that still pass Rules.
@@ -536,14 +536,14 @@ string unparse(const ptree& p, const Rules&)
 // surrounding let when the sampled body can be peeled.
 optional<TypedExpr> peel_sample_annotated(const TypedExpr& expr)
 {
-    if (auto sample = std::get_if<Sample<Ann>>(&expr.node))
-        return sample->dist.get();
-    else if (auto let = std::get_if<Let<Ann>>(&expr.node))
+    if (auto sample = expr.to<Sample<Ann>>())
+        return sample->dist;
+    else if (auto let = expr.to<Let<Ann>>())
     {
-        if (auto new_body = peel_sample_annotated(let->body.get()))
+        if (auto new_body = peel_sample_annotated(let->body))
         {
             auto result = expr;
-            std::get<Let<Ann>>(result.node).body = Box<TypedExpr>(*new_body);
+            result.as<Let<Ann>>().body = *new_body;
             return result;
         }
     }
@@ -563,7 +563,7 @@ string unparse_typed_decls(const TypedDecls& decls)
 // Renders a typed model pattern using the annotated lambda-pattern syntax.
 string unparse_annotated(const TypedPattern& pattern)
 {
-    return std::visit(overloaded{
+    return pattern.visit(overloaded{
         [](const VarPattern& x) {return x.name;},
         // Renders tuple patterns in the same parenthesized tuple syntax as
         // tuple expressions.
@@ -574,7 +574,7 @@ string unparse_annotated(const TypedPattern& pattern)
                 items.push_back(unparse_annotated(item));
             return "(" + join(items, ", ") + ")";
         }
-    }, pattern.node);
+    });
 }
 
 // Renders a typed model AST expression using the annotated command-line syntax.
@@ -582,7 +582,7 @@ string unparse_annotated(const TypedExpr& expr)
 {
     using namespace std::string_literals;
 
-    return std::visit(overloaded{
+    return expr.visit(overloaded{
         [](const IntLiteral& x) {return convertToString(x.value);},
         // Renders doubles while trimming insignificant trailing zeroes.
         [](const DoubleLiteral& x)
@@ -601,11 +601,11 @@ string unparse_annotated(const TypedExpr& expr)
         [](const GetState& x) {return "get_state(" + x.state_name + ")";},
         [](const Let<Ann>& x)
         {
-            return unparse_annotated(x.body.get()) + " where {" + unparse_typed_decls(x.decls) + "}";
+            return unparse_annotated(x.body) + " where {" + unparse_typed_decls(x.decls) + "}";
         },
         [](const Lambda<Ann>& x)
         {
-            return "|" + unparse_annotated(x.pattern.get()) + ":" + unparse_annotated(x.body.get()) + "|";
+            return "|" + unparse_annotated(x.pattern) + ":" + unparse_annotated(x.body) + "|";
         },
         // Renders typed lists, preserving the legacy map-like display for lists
         // of string/value pairs.
@@ -618,7 +618,7 @@ string unparse_annotated(const TypedExpr& expr)
                 auto type = item.ann.type;
                 if (type.has_value<string>() and type.get_value<string>() == "Tuple" and type.children().size() == 2)
                 {
-                    auto tuple = std::get_if<Tuple<Ann>>(&item.node);
+                    auto tuple = item.to<Tuple<Ann>>();
                     if (not tuple or tuple->elements.size() != 2)
                     {
                         list_of_pairs = false;
@@ -650,7 +650,7 @@ string unparse_annotated(const TypedExpr& expr)
         },
         [](const Sample<Ann>& x)
         {
-            return "~" + unparse_annotated(x.dist.get());
+            return "~" + unparse_annotated(x.dist);
         },
         // Renders typed calls using legacy shorthand for operators, conversions,
         // defaults, submodels, samples, and named arguments.
@@ -686,18 +686,18 @@ string unparse_annotated(const TypedExpr& expr)
                 {
                     positional = false;
                     assert(not submodel);
-                    submodel = unparse_annotated(arg.value->get());
+                    submodel = unparse_annotated(*arg.value);
                 }
-                else if (arg.is_default_value and std::holds_alternative<GetState>(arg.value->get().node))
+                else if (arg.is_default_value and arg.value->is<GetState>())
                     positional = false;
                 else if (arg.suppress_default and arg.is_default_value)
                     positional = false;
                 else if (positional)
-                    args.push_back(unparse_annotated(arg.value->get()));
-                else if (auto arg2 = peel_sample_annotated(arg.value->get()))
+                    args.push_back(unparse_annotated(*arg.value));
+                else if (auto arg2 = peel_sample_annotated(*arg.value))
                     args.push_back(arg.name + "~" + unparse_annotated(*arg2));
                 else
-                    args.push_back(arg.name + "=" + unparse_annotated(arg.value->get()));
+                    args.push_back(arg.name + "=" + unparse_annotated(*arg.value));
             }
             while (args.size() and args.back() == "")
                 args.pop_back();
@@ -707,7 +707,7 @@ string unparse_annotated(const TypedExpr& expr)
                 s = *submodel + " +> " + s;
             return s;
         }
-    }, expr.node);
+    });
 }
 
 string unparse_annotated(const ptree& ann)

@@ -154,12 +154,12 @@ expression_ref simplify_intToDouble(const expression_ref& E)
 optional<string> get_func_name(const CM::TypedExpr& model)
 {
     optional<string> func_name;
-    if (auto var = std::get_if<CM::Var>(&model.node))
+    if (auto var = model.to<CM::Var>())
         func_name = var->name;
-    else if (auto call = std::get_if<CM::Call<CM::Ann>>(&model.node))
+    else if (auto call = model.to<CM::Call<CM::Ann>>())
         func_name = call->function;
-    else if (auto lambda = std::get_if<CM::Lambda<CM::Ann>>(&model.node))
-        return get_func_name(lambda->body.get());
+    else if (auto lambda = model.to<CM::Lambda<CM::Ann>>())
+        return get_func_name(lambda->body);
     else
         return {};
 
@@ -186,7 +186,7 @@ expression_ref generated_code_t::add_arguments(const expression_ref& F, const st
 // including let-declared random variables visible in the current scope.
 bool CodeGenState::is_random(const CM::TypedExpr& model) const
 {
-    return std::visit(CM::overloaded{
+    return model.visit(CM::overloaded{
         [](const CM::IntLiteral&) { return false; },
         [](const CM::DoubleLiteral&) { return false; },
         [](const CM::BoolLiteral&) { return false; },
@@ -202,7 +202,7 @@ bool CodeGenState::is_random(const CM::TypedExpr& model) const
         {
             if (call.function == "sample") return true;
             for(auto& arg: call.args)
-                if (arg.value and is_random(arg.value->get())) return true;
+                if (arg.value and is_random(*arg.value)) return true;
             return false;
         },
         [&](const CM::List<CM::Ann>& list)
@@ -225,17 +225,17 @@ bool CodeGenState::is_random(const CM::TypedExpr& model) const
         },
         [&](const CM::Lambda<CM::Ann>& lambda)
         {
-            return is_random(lambda.body.get());
+            return is_random(lambda.body);
         },
         [](const CM::Sample<CM::Ann>&) { return true; }
-    }, model.node);
+    });
 }
 
 // Detects random expressions that still need parent logging; loggable function
 // calls are treated as having already logged their random children.
 bool CodeGenState::is_unlogged_random(const CM::TypedExpr& model) const
 {
-    return std::visit(CM::overloaded{
+    return model.visit(CM::overloaded{
         [](const CM::IntLiteral&) { return false; },
         [](const CM::DoubleLiteral&) { return false; },
         [](const CM::BoolLiteral&) { return false; },
@@ -249,7 +249,7 @@ bool CodeGenState::is_unlogged_random(const CM::TypedExpr& model) const
             if (call.function == "sample") return true;
             if (is_loggable_function(*R, call.function)) return false;
             for(auto& arg: call.args)
-                if (arg.value and is_unlogged_random(arg.value->get())) return true;
+                if (arg.value and is_unlogged_random(*arg.value)) return true;
             return false;
         },
         [&](const CM::List<CM::Ann>& list)
@@ -268,12 +268,12 @@ bool CodeGenState::is_unlogged_random(const CM::TypedExpr& model) const
         {
             for(auto& [_, expr]: let.decls)
                 if (is_unlogged_random(expr)) return true;
-            if (is_unlogged_random(let.body.get())) return true;
+            if (is_unlogged_random(let.body)) return true;
             return false;
         },
         [](const CM::Lambda<CM::Ann>&) { return false; },
         [](const CM::Sample<CM::Ann>&) { return true; }
-    }, model.node);
+    });
 }
 
 CodeGenState CodeGenState::extend_scope(const string& var, const var_info_t& var_info) const
@@ -372,9 +372,9 @@ expression_ref eta_reduce(expression_ref E)
 // Finds variable binders inside a typed lambda pattern.
 set<string> find_vars_in_pattern(const CM::TypedPattern& pattern)
 {
-    if (auto var = std::get_if<CM::VarPattern>(&pattern.node))
+    if (auto var = pattern.to<CM::VarPattern>())
         return {var->name};
-    else if (auto tuple = std::get_if<CM::TuplePattern<CM::Ann>>(&pattern.node))
+    else if (auto tuple = pattern.to<CM::TuplePattern<CM::Ann>>())
     {
         set<string> vars;
         for(auto& sub_pattern: tuple->elements)
@@ -396,7 +396,7 @@ set<string> find_vars_in_pattern(const CM::TypedPattern& pattern)
 // lambda_quantify(), preserving the old variable/tuple pattern codegen.
 expression_ref get_typed_pattern_expr(const CM::TypedPattern& pattern, const CodeGenState& scope)
 {
-    return std::visit(CM::overloaded{
+    return pattern.visit(CM::overloaded{
         [&](const CM::VarPattern& var) -> expression_ref
         {
             if (not scope.identifiers.count(var.name))
@@ -411,7 +411,7 @@ expression_ref get_typed_pattern_expr(const CM::TypedPattern& pattern, const Cod
                 elements.push_back(get_typed_pattern_expr(element, scope));
             return get_tuple(elements);
         }
-    }, pattern.node);
+    });
 }
 
 // Returns true for the legacy rule-template spelling of a trailing submodel
@@ -421,7 +421,7 @@ bool is_template_submodel_arg(const CM::Arg<CM::NoAnn>& arg)
     if (not arg.name.empty() or not arg.value)
         return false;
 
-    auto arg_ref = std::get_if<CM::ArgRef>(&arg.value->get().node);
+    auto arg_ref = arg.value->to<CM::ArgRef>();
     return arg_ref and arg_ref->name == "submodel";
 }
 
@@ -429,7 +429,7 @@ bool is_template_submodel_arg(const CM::Arg<CM::NoAnn>& arg)
 // code, preserving the old ptree template codegen behavior.
 expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,expression_ref>& simple_args)
 {
-    return std::visit(CM::overloaded{
+    return expr.visit(CM::overloaded{
         [](const CM::IntLiteral& x) -> expression_ref { return x.value; },
         [](const CM::DoubleLiteral& x) -> expression_ref { return x.value; },
         [](const CM::BoolLiteral& x) -> expression_ref { return x.value; },
@@ -463,7 +463,7 @@ expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
                 if (not arg.value)
                     throw myexception()<<"Missing arguments are not allowed in rule templates.";
 
-                auto arg_expr = make_rule_template_expr(arg.value->get(), simple_args);
+                auto arg_expr = make_rule_template_expr(*arg.value, simple_args);
                 // Compatibility behavior: rule templates encode `submodel +> f`
                 // as a final @submodel argument. Remove when bindings spell this directly.
                 if (i == call.args.size()-1 and is_template_submodel_arg(arg))
@@ -496,11 +496,11 @@ expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
         // nodes into one Haskell lambda expression.
         [&](const CM::Lambda<CM::NoAnn>& lambda) -> expression_ref
         {
-            auto pattern = std::get_if<CM::VarPattern>(&lambda.pattern.get().node);
+            auto pattern = lambda.pattern.to<CM::VarPattern>();
             if (not pattern)
                 throw myexception()<<"Only variable lambda patterns are allowed in rule templates.";
 
-            auto body = make_rule_template_expr(lambda.body.get(), simple_args);
+            auto body = make_rule_template_expr(lambda.body, simple_args);
             Hs::LPat p = {noloc, Hs::VarPattern({noloc,Hs::Var(pattern->name)})};
 
             if (auto L = body.to<Hs::LambdaExp>())
@@ -517,10 +517,10 @@ expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
         // sample(@dist) is parsed as Sample but means a Haskell sample call here.
         [&](const CM::Sample<CM::NoAnn>& sample) -> expression_ref
         {
-            auto dist = make_rule_template_expr(sample.dist.get(), simple_args);
+            auto dist = make_rule_template_expr(sample.dist, simple_args);
             return {var("sample"), dist};
         }
-    }, expr.node);
+    });
 }
 
 vector<bool> get_args_referenced(const vector<string>& arg_names, const vector<set<string>>& used_args_for_arg)
@@ -574,13 +574,13 @@ vector<int> get_args_order(const vector<string>& arg_names, const vector<set<str
 translation_result_t get_typed_constant_model(const CM::TypedExpr& expr)
 {
     translation_result_t result;
-    std::visit(CM::overloaded{
+    expr.visit(CM::overloaded{
         [&](const CM::IntLiteral& x) { result.code.E = x.value; },
         [&](const CM::DoubleLiteral& x) { result.code.E = x.value; },
         [&](const CM::BoolLiteral& x) { result.code.E = x.value; },
         [&](const CM::StringLiteral& x) { result.code.E = String(x.value); },
         [](const auto&) { std::abort(); }
-    }, expr.node);
+    });
     return result;
 }
 
@@ -590,7 +590,7 @@ translation_result_t CodeGenState::get_typed_variable_model(const CM::TypedExpr&
 {
     translation_result_t result;
 
-    if (auto arg_ref = std::get_if<CM::ArgRef>(&expr.node))
+    if (auto arg_ref = expr.to<CM::ArgRef>())
     {
         if (not arg_env)
             throw myexception()<<"Looking up argument '"<<arg_ref->name<<"' in an empty environment!";
@@ -601,7 +601,7 @@ translation_result_t CodeGenState::get_typed_variable_model(const CM::TypedExpr&
 
         result.code.E = env.code_for_arg.at(arg_ref->name);
     }
-    else if (auto var = std::get_if<CM::Var>(&expr.node))
+    else if (auto var = expr.to<CM::Var>())
     {
         if (not identifiers.count(var->name))
             throw myexception()<<"No variable '"<<var->name<<"' in scope!";
@@ -729,7 +729,7 @@ translation_result_t CodeGenState::get_typed_model_let(const CM::Let<CM::Ann>& l
 
     auto result = scope2.get_model_decls(let.decls);
 
-    auto body_result = scope2.get_model_as(let.body.get());
+    auto body_result = scope2.get_model_as(let.body);
 
     use_block(result, log_body, body_result, "body");
     result.code.E = body_result.code.E;
@@ -766,7 +766,7 @@ translation_result_t CodeGenState::get_typed_model_lambda(const CM::Lambda<CM::A
 {
     auto scope2 = *this;
 
-    auto var_names = find_vars_in_pattern(lambda.pattern.get());
+    auto var_names = find_vars_in_pattern(lambda.pattern);
 
     for(auto& var_name: var_names)
     {
@@ -783,13 +783,13 @@ translation_result_t CodeGenState::get_typed_model_lambda(const CM::Lambda<CM::A
         var_info_t var_info(x,false,true);
         scope2.extend_modify_scope(var_name, var_info);
     }
-    auto body_result = scope2.get_model_as(lambda.body.get());
+    auto body_result = scope2.get_model_as(lambda.body);
 
     for(auto& var_name: var_names)
         if (body_result.lambda_vars.count(var_name))
             body_result.lambda_vars.erase(var_name);
 
-    auto pattern2 = get_typed_pattern_expr(lambda.pattern.get(), scope2);
+    auto pattern2 = get_typed_pattern_expr(lambda.pattern, scope2);
     body_result.code.E = lambda_quantify(pattern2, body_result.code.E);
 
     body_result.code.E = eta_reduce(body_result.code.E);
@@ -913,7 +913,7 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
         if (arg.is_default_value)
             used_args_for_arg[i] = arg_expr.ann.used_args;
         if (arg.alphabet)
-            add(used_args_for_arg[i], arg.alphabet->get().ann.used_args);
+            add(used_args_for_arg[i], arg.alphabet->ann.used_args);
 
         auto var_name = arg_names[i];
         if (var_name == "submodel")
@@ -948,8 +948,8 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
         if (arg.alphabet)
         {
             string var_name = "alpha";
-            auto& alphabet_expr = arg.alphabet->get();
-            if (auto alphabet_var_expr = std::get_if<CM::Var>(&alphabet_expr.node); alphabet_var_expr and alphabet_var_expr->name == "getNucleotides")
+            auto& alphabet_expr = *arg.alphabet;
+            if (auto alphabet_var_expr = alphabet_expr.to<CM::Var>(); alphabet_var_expr and alphabet_var_expr->name == "getNucleotides")
                 var_name = "nucs";
             alphabet_var = scope2.get_var(var_name);
             log_alphabet = scope2.get_var("log_"+arg_names[i]+"_alpha");
@@ -1058,7 +1058,7 @@ translation_result_t CodeGenState::get_typed_model_sample(const CM::Sample<CM::A
         {
             CM::Arg<CM::Ann>{
                 "dist",
-                CM::Box<CM::TypedExpr>(sample.dist.get()),
+                sample.dist,
                 false,
                 false,
                 std::nullopt
@@ -1071,7 +1071,7 @@ translation_result_t CodeGenState::get_typed_model_sample(const CM::Sample<CM::A
 // Dispatches typed expressions by AST variant for native typed codegen.
 translation_result_t CodeGenState::get_model_as(const CM::TypedExpr& model_rep) const
 {
-    return std::visit(CM::overloaded{
+    return model_rep.visit(CM::overloaded{
         [&](const CM::IntLiteral&) { return get_typed_constant_model(model_rep); },
         [&](const CM::DoubleLiteral&) { return get_typed_constant_model(model_rep); },
         [&](const CM::BoolLiteral&) { return get_typed_constant_model(model_rep); },
@@ -1086,5 +1086,5 @@ translation_result_t CodeGenState::get_model_as(const CM::TypedExpr& model_rep) 
         [&](const CM::Let<CM::Ann>& let) { return get_typed_model_let(let); },
         [&](const CM::Lambda<CM::Ann>& lambda) { return get_typed_model_lambda(lambda); },
         [&](const CM::Sample<CM::Ann>& sample) { return get_typed_model_sample(sample); }
-    }, model_rep.node);
+    });
 }
