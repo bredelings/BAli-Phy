@@ -536,41 +536,29 @@ CM::Arg::suppress_default
 
 Run invariant checks on the result.
 
-The main `compile_model(...)` path has switched to `typecheck_model_expr(...)`
-incrementally: parsing and typechecking are AST-based, while extraction and
-code generation still consume annotated `ptree` through an explicit
-compatibility boundary.  Do not broaden this to `compile_decls(...)` until the
-remaining declaration risks are audited.
+The main `compile_model(...)` and `compile_decls(...)` paths both parse and
+typecheck through `CmdModel`.  After typechecking, they still convert typed AST
+back to annotated `ptree` for extraction, `model_t` display/debug storage, and
+code generation.
 
 ## Phase 10c: Port Declaration Compile Path
 
 `typecheck_model_decls(...)` is direct and produces `CM::TypedDecls` without
 converting through annotated `ptree`.  The production `compile_decls(...)`
-path still uses `parse_defs(...)` and `typecheck_and_annotate_decls(...)`.
+path now uses `parse_model_decls(...)` and `typecheck_model_decls(...)`.
 
-The direct declaration port should:
+The direct declaration path must continue to:
 
 - preserve declaration order and scope extension behavior
 - assign fresh type variables for declarations exactly as the old code does
 - accumulate `used_args` directly from `CM::Ann::used_args`
 - share the same `TypecheckingState::eqs` behavior as the old decl typechecker
-- add parity tests for multiple declarations and references between
-  declarations
 
-Before switching `compile_decls(...)`, expand declaration coverage for
-conversions, previous-declaration references, `let`, `sample`, defaults, and
-alphabet expressions where practical.
-
-The old `TypecheckingState::typecheck_and_annotate_*` functions cannot be
-removed until:
-
-- `compile_model(...)` and `compile_decls(...)` no longer call them
-- `typecheck_model_decls(...)` no longer calls `typecheck_and_annotate_decls(...)`
-- extraction and code generation no longer require annotated `ptree`
-
-Current status: `compile_model(...)` no longer calls
-`TypecheckingState::typecheck_and_annotate(...)`, but `compile_decls(...)`
-still calls `TypecheckingState::typecheck_and_annotate_decls(...)`.
+Current status: the old per-shape `TypecheckingState::typecheck_and_annotate_*`
+handlers have been removed.  `TypecheckingState::typecheck_and_annotate(...)`
+remains only as a legacy wrapper: it converts annotated-ptree API requests to
+the `CmdModel` AST typechecker, then converts the typed AST result back to
+annotated `ptree`.
 
 ## Phase 11: Port Substitution Helpers
 
@@ -604,28 +592,143 @@ where needed.  Avoid shared subtrees.
 
 Add tests for extracted pretty output.
 
-## Phase 12: Port Code Generation To Consume `CM::TypedExpr`
+## Phase 12: Move The Codegen Boundary To Typed AST
 
-Add typed overloads in `CodeGenState`:
+After typechecking, production code should keep using:
 
 ```cpp
-translation_result_t get_model_as(const CM::TypedExpr&) const;
-translation_result_t get_model_decls(const CM::TypedDecls&);
+CM::TypedExpr
+CM::TypedDecls
 ```
 
-Port:
+instead of converting back to annotated `ptree` before code generation.  Adding
+an AST overload is acceptable only if the next implementation step starts making
+that overload native.  Do not let whole-function wrappers become a long-lived
+parallel pipeline.
 
-- `is_random`
-- `is_unlogged_random`
-- `should_log`
-- `get_constant_model`
-- `get_variable_model`
-- `get_model_let`
-- `get_model_lambda`
-- `get_model_list`
-- `get_model_tuple`
-- `get_model_state`
-- `get_model_function`
+Add `CodeGenState` overloads with the same return types as the existing
+annotated-ptree entry points:
+
+```cpp
+CodeGenState::get_model_as(const CM::TypedExpr&);
+CodeGenState::get_model_decls(const CM::TypedDecls&);
+```
+
+The first implementation may be a temporary compatibility wrapper:
+
+```cpp
+// Compatibility boundary: codegen still consumes annotated ptree internally.
+// Remove once this overload is implemented directly over CM::TypedExpr.
+return get_model_as(CM::annotated_ptree_from_typed_model_expr(model));
+```
+
+and similarly for declarations.  Immediately switch production compile callers:
+
+- `compile_model(...)` should call `get_model_as(typed_model)`.
+- `compile_decls(...)` should call `get_model_decls(typed_decls)`.
+
+`model_t` may still store annotated `ptree` for display/debugging in this phase.
+That conversion should be separate from the value passed to code generation.
+
+Run after this boundary move:
+
+- `bali-phy:model expression AST`
+- `bali-phy:runtime AST serialization`
+- `bali-phy:bali-phy 5d +A 50`
+- full `tests/parse`
+
+## Phase 13: Make Declaration Codegen Native First
+
+Make `get_model_decls(const CM::TypedDecls&)` native for declaration traversal.
+It should iterate directly over:
+
+```cpp
+for (auto& [name, expr] : decls)
+    ...
+```
+
+instead of converting the declaration block to `ptree("!Decls", ...)`.
+
+If expression bodies still need old expression codegen temporarily, convert only
+the individual declaration expression at the leaf:
+
+```cpp
+auto expr_ptree = CM::annotated_ptree_from_typed_model_expr(expr);
+```
+
+This is still progress because the declaration container and production
+`compile_decls(...)` path no longer depend on `!Decls`.  Add a brief
+compatibility note at each local expression fallback, explaining that it exists
+only until expression codegen is AST-native.
+
+After this step, delete unused helpers that exist only to traverse annotated
+`!Decls`.
+
+## Phase 14: Make Expression Codegen Dispatch Native
+
+Make `get_model_as(const CM::TypedExpr&)` native at the dispatch level.  It
+should switch on:
+
+```cpp
+expr.node
+expr.ann
+```
+
+Temporary fallback is allowed only per unconverted variant, not as a
+whole-expression unconditional conversion.  For example:
+
+```cpp
+return std::visit(overloaded{
+    [&](const CM::IntLiteral&) { return get_constant_model(expr); },
+    [&](const CM::Call<CM::Ann>&) {
+        // Compatibility boundary: calls still use annotated ptree codegen.
+        // Remove after call codegen reads CM::Call and CM::Arg directly.
+        return get_model_as(CM::annotated_ptree_from_typed_model_expr(expr));
+    },
+    ...
+}, expr.node);
+```
+
+Each fallback branch must be:
+
+- local to a specific unconverted variant
+- commented as compatibility
+- deleted as soon as that variant is converted
+
+Audit after every batch:
+
+- Which production paths still call annotated-ptree codegen?
+- Which AST overload branches still fallback to annotated `ptree`?
+- Which annotated-ptree helpers are now unused and can be deleted?
+
+## Phase 15: Convert Expression Codegen Variants
+
+Convert variants in small batches.  Prefer variants with little codegen-specific
+metadata first:
+
+1. Literals, variables, and `get_state`.
+2. `List` and `Tuple`.
+3. `Let`, reusing native `CM::TypedDecls` declaration codegen.
+4. Ordinary rule-backed calls.
+5. `Sample` and `Lambda`, if they need special handling.
+
+For calls, read directly from:
+
+```cpp
+CM::Call<CM::Ann>
+CM::Arg<CM::Ann>
+```
+
+Preserve existing behavior for:
+
+- default arguments
+- suppressed defaults
+- alphabet expressions
+- extracted values
+- `no_log`
+- `used_args`
+- random/action-producing arguments
+- logging decisions
 
 Replace old accesses:
 
@@ -636,58 +739,45 @@ arg.get_child("is_default_value")
 arg.get_child_optional("alphabet")
 ```
 
-with:
+with direct AST access:
 
 ```cpp
-model.node
-arg.value.ann.type
+expr.node
+expr.ann.type
+arg.value
 arg.is_default_value
+arg.suppress_default
 arg.alphabet
 ```
 
-Add representative generated-code golden tests, or at least compare
-`generated_code_t::print()` before and after for models involving:
+After each variant batch, run focused model/codegen tests plus at least the
+`5d +A 50` test for meaningful production coverage.
 
-- defaults
-- random arguments
-- alphabet expressions
-- logging
-- let expressions
-- lambda expressions
-- submodels
+## Phase 16: Invert Or Remove Ptree Codegen Compatibility
 
-Do not implement the typed code generation path by converting
-`CM::TypedExpr` back to annotated `ptree` and calling the old codegen, except
-as a temporary test oracle.  The typed overloads should be direct
-implementations so semantic drift is visible during parity testing.
+Once AST codegen is native, old annotated-ptree overloads should either be
+deleted or inverted into wrappers:
 
-## Phase 13: Switch Compile Path
+```cpp
+// Compatibility boundary: old callers still pass annotated ptree.
+// Remove once all callers use CM::TypedExpr.
+return get_model_as(CM::typed_model_expr_from_annotated_ptree(model));
+```
 
-`compile_model(...)` currently performs:
+Production compile paths should use only:
 
-1. `parse_model_expr(...)`
-2. `typecheck_model_expr(...)`
-3. `substitute_annotated(...)`
-4. compatibility conversion to annotated `ptree`
-5. existing annotated-`ptree` extraction and code generation
+```cpp
+CM::TypedExpr
+CM::TypedDecls
+```
 
-Later, change `compile_decls(...)` similarly using `CM::Decls`.
+Keep annotated-ptree conversion only for:
 
-Keep compatibility conversion only where an old API still needs annotated
-`ptree`.
+- display/debug output
+- tests that intentionally exercise conversion
+- short-lived compatibility wrappers with explicit comments
 
-The current `CM::TypedExpr` back to annotated-`ptree` conversion is an explicit
-temporary production compatibility boundary.  Remove it once extraction,
-code generation, and `model_t` store/consume typed AST directly.
-
-Before the final direct-AST compile phase, verify explicitly that
-`compile_model(...)` and `compile_decls(...)` no longer depend on:
-
-- `TypecheckingState::typecheck_and_annotate(...)`
-- `TypecheckingState::typecheck_and_annotate_decls(...)`
-- annotated-`ptree` extraction or code generation
-
-## Phase 14: Update `model_t` And `pretty_model_t`
+## Phase 17: Update `model_t` And `pretty_model_t`
 
 Change model storage from annotated `ptree` to typed AST:
 
@@ -712,7 +802,7 @@ Update:
 - `show_extracted`
 - JSON pretty conversion
 
-## Phase 15: Remove Annotated-`ptree` Main Path
+## Phase 18: Remove Annotated-`ptree` Main Path
 
 Once main compilation uses `CM::TypedExpr`, remove or quarantine:
 
@@ -725,7 +815,7 @@ Once main compilation uses `CM::TypedExpr`, remove or quarantine:
 Keep conversion helpers only for tests/debugging until direct parser output is
 migrated.
 
-## Phase 16: Replace Annotation Type Later
+## Phase 19: Replace Annotation Type Later
 
 After the AST migration is stable, replace:
 
@@ -743,7 +833,7 @@ or Haskell `Type`.
 
 This should be much smaller because type annotations are now explicit fields.
 
-## Phase 17: Introduce A Real Pattern AST Later
+## Phase 20: Introduce A Real Pattern AST Later
 
 `Lambda::pattern` can initially use `CM::Expr<A>` for compatibility, but
 patterns are not arbitrary expressions.  Later introduce:
@@ -758,7 +848,7 @@ or an unannotated `ModelPattern` if pattern annotations are not useful.
 Current patterns support variables and tuple/list-like structures.  Moving them
 out of `CM::Expr` will simplify lambda validation and typechecking.
 
-## Phase 18: Make Parser Build `CM::Expr` Directly Later
+## Phase 21: Make Parser Build `CM::Expr` Directly Later
 
 Once converters are no longer central, update `parser.y` semantic values to
 build:
@@ -784,18 +874,22 @@ This removes old expression encodings and conversion overhead.
 10. Remove production reliance on expression typechecker compatibility.
 11. AST substitution overloads.
 12. Extraction helpers consume `CM::TypedExpr`.
-13. Code generation consumes `CM::TypedExpr`.
-14. Switch compile path and `model_t`.
-15. Remove annotated-`ptree` main path.
-16. Replace `CM::Ann::type`.
-17. Introduce a real pattern AST.
-18. Make parser direct.
+13. Move the codegen production boundary to `CM::TypedExpr` / `CM::TypedDecls`.
+14. Make declaration codegen native over `CM::TypedDecls`.
+15. Make expression codegen dispatch native over `CM::TypedExpr`.
+16. Convert expression codegen variants and delete fallback branches.
+17. Invert or remove annotated-ptree codegen compatibility.
+18. Update `model_t` and `pretty_model_t` to store/consume typed AST.
+19. Remove annotated-`ptree` main path.
+20. Replace `CM::Ann::type`.
+21. Introduce a real pattern AST.
+22. Make parser direct.
 
 ## Risk Notes
 
 - Code generation and extraction are highest risk.
-- Typechecking is not fully migrated until declarations are removed from the
-  old production path.
+- Adding AST overloads should move production call sites immediately; native
+  overload bodies should follow before adding more compatibility infrastructure.
 - Keep `CM::Ann::type = ptree` until the AST migration is complete.
 - Keep parser output unchanged initially.
 - Model argument metadata should live on `CM::Arg`, not in node annotations.
