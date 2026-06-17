@@ -152,21 +152,24 @@ expression_ref simplify_intToDouble(const expression_ref& E)
     return E;
 }
 
-optional<string> get_func_name(const ptree& model)
+// Extracts a Haskell-friendly function name from a typed model expression for
+// submodel argument variable naming.
+optional<string> get_func_name(const CM::TypedExpr& model)
 {
-    auto value = model.get_child("value");
-    if (not value.has_value<string>())
+    optional<string> func_name;
+    if (auto var = std::get_if<CM::Var>(&model.node))
+        func_name = var->name;
+    else if (auto call = std::get_if<CM::Call<CM::Ann>>(&model.node))
+        func_name = call->function;
+    else if (auto lambda = std::get_if<CM::Lambda<CM::Ann>>(&model.node))
+        return get_func_name(lambda->body.get());
+    else
         return {};
 
-    auto func_name = value.get_value<string>();
+    if (is_qualified_symbol(*func_name))
+        func_name = get_unqualified_name(*func_name);
 
-    if (func_name == "function")
-        return get_func_name(value.children()[1].second);
-
-    if (is_qualified_symbol(func_name))
-        func_name = get_unqualified_name(func_name);
-
-    if (is_haskell_id(func_name))
+    if (is_haskell_id(*func_name))
         return func_name;
     else
         return {};
@@ -241,21 +244,6 @@ bool CodeGenState::is_unlogged_random(const ptree& model_) const
     return false;
 }
 
-bool CodeGenState::should_log(const ptree& model_, const string& arg_name) const
-{
-    auto model = model_.get_child("value");
-
-    if (is_constant(model)) return false;
-
-    auto name = model.get_value<string>();
-
-    if (not is_loggable_function(*R, name)) return false;
-
-    auto arg = model.get_child(arg_name);
-
-    return is_unlogged_random(arg);
-}
-
 CodeGenState CodeGenState::extend_scope(const string& var, const var_info_t& var_info) const
 {
     auto scope = *this;
@@ -278,249 +266,23 @@ int get_index_for_arg_name(const Rule& rule, const string& arg_name)
     throw myexception()<<"No arg named '"<<arg_name<<"'";
 }
 
-expression_ref parse_constant(const ptree& model)
-{
-    if (model.value_is_empty())
-        throw myexception()<<"parse_constant( ): got a null value!";
-
-    if (model.is_a<int>()) return (int)model;
-    if (model.is_a<double>()) return (double)model;
-    if (model.is_a<bool>()) return (bool)model;
-    string name = model.get_value<string>();
-    if (name.size() > 2 and name[0] == '"' and name.back() =='"') return String(name.substr(1,name.size()-2));
-    return {};
-}
-
-optional<translation_result_t> get_constant_model(const ptree& model)
-{
-    auto model_rep = model.get_child("value");
-    if (expression_ref C = parse_constant(model_rep))
-    {
-        if (model_rep.children().size() != 0) throw myexception()<<"An constant cannot have arguments!\n  '"<<model_rep.show()<<"'";
-        translation_result_t result;
-        result.code.E = C;
-        return result;
-    }
-    else
-        return {};
-}
-
-optional<translation_result_t> CodeGenState::get_variable_model(const ptree& model) const
-{
-    auto model_rep = model.get_child("value");
-
-    if (not model_rep.has_value<string>()) return {};
-
-    auto name = model_rep.get_value<string>();
-
-    // 1. Translate the default arg or variable
-    translation_result_t result;
-    if (not name.empty() and name[0] == '@')
-    {
-	// Handle references to other arguments in default_value and alphabet
-        name = name.substr(1);
-        if (not arg_env)
-            throw myexception()<<"Looking up argument '"<<name<<"' in an empty environment!";
-
-        auto& env = *arg_env;
-        if (not env.code_for_arg.count(name))
-            throw myexception()<<env.func<<"."<<env.arg<<": can't find argument '"<<name<<"' referenced in default_value or alphabet";
-
-        expression_ref V = env.code_for_arg.at(name);
-
-        result.code.E = V;
-    }
-    else if (identifiers.count(name))
-    {
-	var_info_t var_info = identifiers.at(name);
-
-	if (var_info.depends_on_lambda)
-	    result.lambda_vars = {name};
-	result.code.free_vars.insert({name, var_info.x});
-
-	result.code.E = var_info.x;
-    }
-    else
-	return {};
-
-    auto scope2 = *this;
-
-    // 2. Handle argument arguments
-    int i=0;
-    for(auto& [arg_name, arg]: model_rep.children())
-    {
-	string var_name = name + "_" + std::to_string(i+1);
-	string log_name = name + ":" + std::to_string(i+1);
-
-	auto arg_model = scope2.get_model_as(arg);
-	auto arg_code = arg_model.code;
-
-	// Avoid re-using any haskell vars
-	add(scope2.haskell_vars, arg_model.haskell_vars);
-
-	// (x, logger) <- arg
-	var x = scope2.get_var(var_name);
-	var log_x = scope2.get_var("log_" + var_name);
-
-	auto type = arg.get_child("type");
-        bool do_log = is_unlogged_random(arg) and is_loggable_type(type) and arg_model.lambda_vars.empty();
-
-	// Emit x <- or x= fo the variable, or prepare to substitute for it
-	use_block(result, log_x, arg_model, log_name);
-	expression_ref applied_arg = arg_code.E;
-	if (arg_code.perform_function)
-	{
-	    applied_arg = log_x;
-	    result.code.stmts.perform(x, arg_code.E);
-	    assert(arg_model.lambda_vars.empty());
-	}
-	else if (do_log and not is_var(arg_code.E))
-	{
-	    applied_arg = log_x;
-	    result.code.stmts.let(x, arg_code.E);
-	    assert(arg_model.lambda_vars.empty());
-	}
-
-
-	// Log the value if we are saving it.
-	if (do_log) result.code.log_value(log_name, applied_arg, type);
-	
-	// Make the call expression
-	result.code.E = {result.code.E, applied_arg};
-
-	i++;
-    }
-
-    result.code.E = simplify_intToDouble(result.code.E);
-
-    add(result.haskell_vars, scope2.haskell_vars);
-
-    return result;
-}
-
-
-/*
- *
- * do
- *   pair_var <- var_body
- *   let var_name = fst pair_var
- *   pair_body <- let_body
- *   return (fst pair_body, [("let:var",(Nothing,[(var_name,pair_x)])),("let:body",(Nothing,snd pair_body))])
- */
-optional<translation_result_t> CodeGenState::get_model_let(const ptree& model) const
-{
-    auto scope2 = *this;
-
-    auto model_rep = model.get_child("value");
-    auto name = model_rep.get_value<string>();
-
-    // 1. If the phrase is not a let, then we are done.
-    if (name != "!let") return {};
-
-    auto [decls_name, decls   ] = model_rep.children()[0];
-    auto [body_name , body_exp] = model_rep.children()[1];
-
-    var body = scope2.get_var("body");
-    var log_body = scope2.get_var("log_body");
-
-    // Let-variables can be lifted out, so
-    // * we need to avoid prior haskell variables.
-    // * later code needs to avoid out haskell variables.
-
-    // 2. Generate code for the decls
-    auto result = scope2.get_model_decls(decls);
-
-    // 3. Generate code for the body -- with decl variables in scope
-    auto body_result = scope2.get_model_as(body_exp);
-
-    // 4. Append body result to decls result
-    use_block(result, log_body, body_result, "body");
-    result.code.E = body_result.code.E;
-    result.code.perform_function = body_result.code.perform_function;
-
-    vector<CDecls> decls_groups(1);
-    set<var> prev_free_vars;
-    for(auto& [x,E]: result.code.decls)
-    {
-	if (prev_free_vars.count(x))
-	{
-	    decls_groups.push_back({});
-	    prev_free_vars.clear();
-	}
-	decls_groups.back().push_back({x,E});
-	// Don't capture any references to x.
-	// Although since we uniquify the variables, that is unlikely to happen.
-	add(prev_free_vars, get_free_indices(E));
-	// Also don't define the same variable twice in the same declaration group.
-	prev_free_vars.insert(x);
-    }
-    result.code.E = let_expression(decls_groups, result.code.E);
-    result.code.decls.clear();
-
-    // 5. Declared variables are not in scope outside the let.
-    for(auto& [var_name,_]: decls.children())
-    {
-	result.code.free_vars.erase(var_name);
-	result.lambda_vars.erase(var_name);
-    }
-    
-    return result;
-}
-
-/*
- *
- * do
- *   pair_var1 <- var1_body
- *   let var1_name = fst pair_var1
- *   loggers = [("var_name",(Nothing,[(var_name,pair_x)]))]
- */
+// Compatibility boundary: old callers may still pass annotated ptree
+// declarations. Convert once at the boundary and use typed declaration codegen.
 translation_result_t CodeGenState::get_model_decls(const ptree& model)
 {
-    translation_result_t result;
-
-    for(auto& [var_name, var_exp]: model.children())
-    {
-	var x = get_var(var_name);
-	var log_x = get_var("log_" + var_name);
-	bool x_is_random = is_random(var_exp);
-	var_info_t var_info(x, x_is_random);
-
-	// 1. Perform the variable expression
-	auto arg_result = get_model_as(var_exp);
-
-	if (arg_result.lambda_vars.size())
-	    var_info.depends_on_lambda = true;
-
-	// 3. Construct code.
-	add(haskell_vars, arg_result.haskell_vars);
-	add(result.lambda_vars, arg_result.lambda_vars);
-
-	// (x, log_x) <- arg_result
-	perform_action_simplified(result, x, log_x, true, arg_result, var_name);
-	auto type = var_exp.get_child("type");
-	if (x_is_random and is_loggable_type(type))
-	    result.code.log_value(var_name, x, type);
-
-	// 4. Put x into the scope for the next decl.
-	extend_modify_scope(var_name, var_info);
-    }
-
-    result.haskell_vars = haskell_vars;
-
-    return result;
+    return get_model_decls(CM::typed_model_decls_from_annotated_ptree(model));
 }
 
 // Generates code for typed declarations without converting the declaration
-// container back to !Decls; expression bodies still use ptree codegen locally.
+// container or expression bodies through annotated ptree codegen.
 translation_result_t CodeGenState::get_model_decls(const CM::TypedDecls& decls)
 {
     translation_result_t result;
 
     for(auto& [var_name, var_exp]: decls)
     {
-        // Compatibility boundary: expression codegen is still annotated-ptree
-        // based. Remove this local fallback as get_model_as(CM::TypedExpr)
-        // grows native variant handlers.
+        // Compatibility boundary: random detection still reads annotated
+        // ptree. Remove when is_random() accepts CM::TypedExpr.
         auto var_exp_ptree = CM::annotated_ptree_from_typed_model_expr(var_exp);
 
         var x = get_var(var_name);
@@ -586,16 +348,16 @@ expression_ref eta_reduce(expression_ref E)
     return E;
 }
 
-set<string> find_vars_in_pattern(const ptree& pattern0)
+// Finds variable binders inside a typed lambda pattern, matching the old
+// variable/tuple pattern shapes accepted by the ptree path.
+set<string> find_vars_in_pattern(const CM::TypedExpr& pattern)
 {
-    auto pattern = pattern0.get_child("value");
-
-    if (is_nontype_variable(pattern))
-        return {string(pattern)};
-    else if (is_tuple(pattern))
+    if (auto var = std::get_if<CM::Var>(&pattern.node))
+        return {var->name};
+    else if (auto tuple = std::get_if<CM::Tuple<CM::Ann>>(&pattern.node))
     {
         set<string> vars;
-        for(auto& [_,sub_pattern]: pattern.children())
+        for(auto& sub_pattern: tuple->elements)
         {
             auto slot_vars = find_vars_in_pattern(sub_pattern);
             for(auto& var_name: slot_vars)
@@ -608,62 +370,6 @@ set<string> find_vars_in_pattern(const ptree& pattern0)
     }
     else
         std::abort();
-}
-
-
-optional<translation_result_t> CodeGenState::get_model_lambda(const ptree& model) const
-{
-    auto scope2 = *this;
-
-    auto model_rep = model.get_child("value");
-    auto name = model_rep.get_value<string>();
-
-    // 1. If the phrase is not a lambda, then we are done.
-    if (name != "function") return {};
-
-    // 2. Get the variable name and the body from the model
-    auto pattern = model_rep.children()[0].second;
-    auto var_names = find_vars_in_pattern(pattern);
-    auto body = scope2.get_var("lbody");
-    auto log_body = scope2.get_var("log_lbody");
-
-    ptree body_model = model_rep.children()[1].second;
-
-    // We don't have to worry about avoiding any haskell variables that correspond
-    // to scripting language variables with names that are lambda vars.
-    for(auto& var_name: var_names)
-    {
-	if (identifiers.count(var_name))
-	{
-	    auto x = identifiers.at(var_name).x;
-	    scope2.haskell_vars.erase(x);
-	}
-    }
-
-    // 3. Parse the body with the lambda variable in scope, and find the free variables.
-    for(auto& var_name: var_names)
-    {
-        auto x = scope2.get_var(var_name);
-        var_info_t var_info(x,false,true);
-        scope2.extend_modify_scope(var_name, var_info);
-    }
-    auto body_result = scope2.get_model_as(body_model);
-
-    // 4. Remove pattern variables from the lambda vars.
-    for(auto& var_name: var_names)
-        if (body_result.lambda_vars.count(var_name))
-            body_result.lambda_vars.erase(var_name);
-
-    // 5. Add the lambda in front of the expression
-    auto pattern2 = scope2.get_model_as(pattern);
-    body_result.code.E = lambda_quantify(pattern2.code.E, body_result.code.E);
-
-    // 6. Now eta-reduce E.  If E == (\x -> body x), we will get just E == body
-    body_result.code.E = eta_reduce(body_result.code.E);
-    for(auto& var_name: var_names)
-	body_result.code.free_vars.erase(var_name);
-
-    return body_result;
 }
 
 expression_ref make_call(const ptree& call, const map<string,expression_ref>& simple_args)
@@ -801,45 +507,106 @@ vector<int> get_args_order(const vector<string>& arg_names, const vector<set<str
 }
 
 
-// NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-optional<translation_result_t> CodeGenState::get_model_list(const ptree& model) const
+// Compatibility boundary: old callers may still pass annotated ptree
+// expressions. Convert once at the boundary and use typed expression codegen.
+translation_result_t CodeGenState::get_model_as(const ptree& model_rep) const
 {
-    auto scope2 = *this;
-    auto model_rep = model.get_child("value");
-    auto name = model_rep.get_value<string>();
+    return get_model_as(CM::typed_model_expr_from_annotated_ptree(model_rep));
+}
 
-    // 1. If the phrase is not a lambda, then we are done.
-    if (name != "List") return {};
+// Builds generated code for a typed literal expression without passing through
+// the annotated-ptree constant helper.
+translation_result_t get_typed_constant_model(const CM::TypedExpr& expr)
+{
+    translation_result_t result;
+    std::visit(CM::overloaded{
+        [&](const CM::IntLiteral& x) { result.code.E = x.value; },
+        [&](const CM::DoubleLiteral& x) { result.code.E = x.value; },
+        [&](const CM::BoolLiteral& x) { result.code.E = x.value; },
+        [&](const CM::StringLiteral& x) { result.code.E = String(x.value); },
+        [](const auto&) { std::abort(); }
+    }, expr.node);
+    return result;
+}
 
-    int N = model_rep.children().size();
-
+// Builds generated code for typed variables and @argument references, matching
+// the old scope and default-argument lookup behavior.
+translation_result_t CodeGenState::get_typed_variable_model(const CM::TypedExpr& expr) const
+{
     translation_result_t result;
 
-    // 2. Construct the names of the haskell variables for the arguments.
+    if (auto arg_ref = std::get_if<CM::ArgRef>(&expr.node))
+    {
+        if (not arg_env)
+            throw myexception()<<"Looking up argument '"<<arg_ref->name<<"' in an empty environment!";
+
+        auto& env = *arg_env;
+        if (not env.code_for_arg.count(arg_ref->name))
+            throw myexception()<<env.func<<"."<<env.arg<<": can't find argument '"<<arg_ref->name<<"' referenced in default_value or alphabet";
+
+        result.code.E = env.code_for_arg.at(arg_ref->name);
+    }
+    else if (auto var = std::get_if<CM::Var>(&expr.node))
+    {
+        if (not identifiers.count(var->name))
+            throw myexception()<<"No variable '"<<var->name<<"' in scope!";
+
+        auto var_info = identifiers.at(var->name);
+        if (var_info.depends_on_lambda)
+            result.lambda_vars = {var->name};
+        result.code.free_vars.insert({var->name, var_info.x});
+        result.code.E = var_info.x;
+    }
+    else
+        std::abort();
+
+    return result;
+}
+
+// Builds generated code for a typed get_state expression by looking up the
+// requested state variable in the current codegen state.
+translation_result_t CodeGenState::get_typed_model_state(const CM::GetState& get_state) const
+{
+    if (state.count(get_state.state_name))
+    {
+        auto x = state.at(get_state.state_name);
+        translation_result_t result;
+        result.code.E = x;
+        result.code.used_states = {get_state.state_name};
+        return result;
+    }
+    else
+        throw myexception()<<"No state '"<<get_state.state_name<<"'!";
+}
+
+// Generates code for a typed list by traversing CM elements directly while
+// preserving the old element logging and action sequencing behavior.
+translation_result_t CodeGenState::get_typed_model_list(const CM::List<CM::Ann>& list) const
+{
+    auto scope2 = *this;
+    int N = list.elements.size();
+
+    translation_result_t result;
     vector<expression_ref> argument_environment(N);
     for(int i=0; i<N; i++)
     {
-        // 3a. Compute vars for element
         string var_name = "_"+std::to_string(i+1);
         string log_name = "["+std::to_string(i+1)+"]";
 
         auto x = scope2.get_var(var_name);
         argument_environment[i] = x;
 
-        // 3b. Generate code for the list element
-        auto element = array_index(model_rep, i);
+        auto& element = list.elements[i];
         auto element_result = scope2.get_model_as(element);
-
-        // 3c. Avoid re-using any haskell vars.
         add(scope2.haskell_vars, element_result.haskell_vars);
 
-        // 3d. Include stmts and dependencies
         auto log_x = scope2.get_var("log"+var_name);
         use_block(result, log_x, element_result, log_name);
 
-        // 3e. Maybe emit code for the element.
-	auto type = element.get_child("type");
-        bool do_log = is_unlogged_random(element) and is_loggable_type(type);
+        // Compatibility boundary: random/logging predicates still inspect
+        // annotated ptree. Remove when they read CM::TypedExpr directly.
+        auto element_ptree = CM::annotated_ptree_from_typed_model_expr(element);
+        bool do_log = is_unlogged_random(element_ptree) and is_loggable_type(element.ann.type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         else if (do_log and not is_var(element_result.code.E))
@@ -847,59 +614,44 @@ optional<translation_result_t> CodeGenState::get_model_list(const ptree& model) 
         else
             argument_environment[i] = element_result.code.E;
 
-        // 3f. Maybe log the element.
         if (do_log)
-            result.code.log_value(log_name, argument_environment[i], type);
+            result.code.log_value(log_name, argument_environment[i], element.ann.type);
     }
 
-    // 4. Compute the call expression.
     result.code.E = get_list(argument_environment);
-
-    // 5. Make sure not to re-use any vars adding do this code.
     add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
 }
 
-// NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-optional<translation_result_t> CodeGenState::get_model_tuple(const ptree& model) const
+// Generates code for a typed tuple by traversing CM elements directly while
+// preserving the old element logging and action sequencing behavior.
+translation_result_t CodeGenState::get_typed_model_tuple(const CM::Tuple<CM::Ann>& tuple) const
 {
     auto scope2 = *this;
-    auto model_rep = model.get_child("value");
-    auto name = model_rep.get_value<string>();
-
-    // 1. If the phrase is not a tuple, then we are done.
-    if (name != "Tuple") return {};
-
-    int N = model_rep.children().size();
+    int N = tuple.elements.size();
 
     translation_result_t result;
-
-    // 2. Construct the names of the haskell variables for the arguments.
     vector<expression_ref> argument_environment(N);
     for(int i=0; i<N; i++)
     {
-        // 3a. Compute vars for element
         string var_name = "_"+std::to_string(i+1);
         string log_name = "["+std::to_string(i+1)+"]";
 
         auto x = scope2.get_var(var_name);
         argument_environment[i] = x;
 
-        // 3b. Generate code for the list element
-        auto element = array_index(model_rep, i);
+        auto& element = tuple.elements[i];
         auto element_result = scope2.get_model_as(element);
-
-        // 3c. Avoid re-using any haskell vars.
         add(scope2.haskell_vars, element_result.haskell_vars);
 
-        // 3d. Include stmts and dependencies
         auto log_x = scope2.get_var("log"+var_name);
         use_block(result, log_x, element_result, log_name);
 
-        // 3e. Maybe emit code for the element.
-	auto type = element.get_child("type");
-        bool do_log = is_unlogged_random(element) and is_loggable_type(type);
+        // Compatibility boundary: random/logging predicates still inspect
+        // annotated ptree. Remove when they read CM::TypedExpr directly.
+        auto element_ptree = CM::annotated_ptree_from_typed_model_expr(element);
+        bool do_log = is_unlogged_random(element_ptree) and is_loggable_type(element.ann.type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         else if (do_log and not is_var(element_result.code.E))
@@ -907,45 +659,206 @@ optional<translation_result_t> CodeGenState::get_model_tuple(const ptree& model)
         else
             argument_environment[i] = element_result.code.E;
 
-        // 3f. Maybe log the element.
         if (do_log)
-            result.code.log_value(log_name, argument_environment[i], type);
+            result.code.log_value(log_name, argument_environment[i], element.ann.type);
     }
 
-    // 4. Compute the call expression.
     result.code.E = get_tuple(argument_environment);
-
-    // 5. Make sure not to re-use any vars adding do this code.
     add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
 }
 
-// NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-translation_result_t CodeGenState::get_model_function(const ptree& model) const
+// Generates code for a typed let by using native typed declaration codegen and
+// then applying the same declaration grouping logic as the old ptree path.
+translation_result_t CodeGenState::get_typed_model_let(const CM::Let<CM::Ann>& let) const
 {
     auto scope2 = *this;
-    auto model_rep = model.get_child("value");
-    auto name = model_rep.get_value<string>();
+
+    var body = scope2.get_var("body");
+    var log_body = scope2.get_var("log_body");
+
+    auto result = scope2.get_model_decls(let.decls);
+
+    auto body_result = scope2.get_model_as(let.body.get());
+
+    use_block(result, log_body, body_result, "body");
+    result.code.E = body_result.code.E;
+    result.code.perform_function = body_result.code.perform_function;
+
+    vector<CDecls> decls_groups(1);
+    set<var> prev_free_vars;
+    for(auto& [x,E]: result.code.decls)
+    {
+        if (prev_free_vars.count(x))
+        {
+            decls_groups.push_back({});
+            prev_free_vars.clear();
+        }
+        decls_groups.back().push_back({x,E});
+        add(prev_free_vars, get_free_indices(E));
+        prev_free_vars.insert(x);
+    }
+    result.code.E = let_expression(decls_groups, result.code.E);
+    result.code.decls.clear();
+
+    for(auto& [var_name,_]: let.decls)
+    {
+        result.code.free_vars.erase(var_name);
+        result.lambda_vars.erase(var_name);
+    }
+
+    return result;
+}
+
+// Generates code for a typed lambda by extending scope with typed pattern
+// binders, then generating code for the typed body and pattern.
+translation_result_t CodeGenState::get_typed_model_lambda(const CM::Lambda<CM::Ann>& lambda) const
+{
+    auto scope2 = *this;
+
+    auto var_names = find_vars_in_pattern(lambda.pattern.get());
+
+    for(auto& var_name: var_names)
+    {
+        if (identifiers.count(var_name))
+        {
+            auto x = identifiers.at(var_name).x;
+            scope2.haskell_vars.erase(x);
+        }
+    }
+
+    for(auto& var_name: var_names)
+    {
+        auto x = scope2.get_var(var_name);
+        var_info_t var_info(x,false,true);
+        scope2.extend_modify_scope(var_name, var_info);
+    }
+    auto body_result = scope2.get_model_as(lambda.body.get());
+
+    for(auto& var_name: var_names)
+        if (body_result.lambda_vars.count(var_name))
+            body_result.lambda_vars.erase(var_name);
+
+    auto pattern2 = scope2.get_model_as(lambda.pattern.get());
+    body_result.code.E = lambda_quantify(pattern2.code.E, body_result.code.E);
+
+    body_result.code.E = eta_reduce(body_result.code.E);
+    for(auto& var_name: var_names)
+        body_result.code.free_vars.erase(var_name);
+
+    return body_result;
+}
+
+// Generates code for applying a function-valued variable or @argument to typed
+// positional arguments, matching the old variable-call codegen path.
+translation_result_t CodeGenState::get_typed_variable_call(const CM::Call<CM::Ann>& call) const
+{
+    translation_result_t result;
+    string name = call.function;
+    if (not name.empty() and name[0] == '@')
+    {
+        name = name.substr(1);
+        if (not arg_env)
+            throw myexception()<<"Looking up argument '"<<name<<"' in an empty environment!";
+
+        auto& env = *arg_env;
+        if (not env.code_for_arg.count(name))
+            throw myexception()<<env.func<<"."<<env.arg<<": can't find argument '"<<name<<"' referenced in default_value or alphabet";
+
+        result.code.E = env.code_for_arg.at(name);
+    }
+    else if (identifiers.count(name))
+    {
+        auto var_info = identifiers.at(name);
+        if (var_info.depends_on_lambda)
+            result.lambda_vars = {name};
+        result.code.free_vars.insert({name, var_info.x});
+        result.code.E = var_info.x;
+    }
+    else
+        throw myexception()<<"No variable or rule named '"<<call.function<<"' in scope!";
+
+    auto scope2 = *this;
+    int i=0;
+    for(auto& arg: call.args)
+    {
+        if (not arg.name.empty())
+            throw myexception()<<"Named arguments not allowed in functions that are variables";
+
+        string var_name = name + "_" + std::to_string(i+1);
+        string log_name = name + ":" + std::to_string(i+1);
+
+        auto& arg_expr = CM::require_arg_value(arg);
+        auto arg_model = scope2.get_model_as(arg_expr);
+        auto arg_code = arg_model.code;
+
+        add(scope2.haskell_vars, arg_model.haskell_vars);
+
+        var x = scope2.get_var(var_name);
+        var log_x = scope2.get_var("log_" + var_name);
+
+        // Compatibility boundary: unlogged-random detection still reads
+        // annotated ptree. Remove when it accepts CM::TypedExpr.
+        auto arg_ptree = CM::annotated_ptree_from_typed_model_expr(arg_expr);
+        bool do_log = is_unlogged_random(arg_ptree) and is_loggable_type(arg_expr.ann.type) and arg_model.lambda_vars.empty();
+
+        use_block(result, log_x, arg_model, log_name);
+        expression_ref applied_arg = arg_code.E;
+        if (arg_code.perform_function)
+        {
+            applied_arg = log_x;
+            result.code.stmts.perform(x, arg_code.E);
+            assert(arg_model.lambda_vars.empty());
+        }
+        else if (do_log and not is_var(arg_code.E))
+        {
+            applied_arg = log_x;
+            result.code.stmts.let(x, arg_code.E);
+            assert(arg_model.lambda_vars.empty());
+        }
+
+        if (do_log)
+            result.code.log_value(log_name, applied_arg, arg_expr.ann.type);
+
+        result.code.E = {result.code.E, applied_arg};
+
+        i++;
+    }
+
+    result.code.E = simplify_intToDouble(result.code.E);
+    add(result.haskell_vars, scope2.haskell_vars);
+
+    return result;
+}
+
+// Generates code for a typed rule-backed call, preserving the old argument
+// ordering, default/alphabet handling, logging, and computed-variable behavior.
+translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& call) const
+{
+    auto scope2 = *this;
+    auto name = call.function;
 
     translation_result_t result;
 
-    // 1. Get the rule for the function
     auto rule = R->get_rule_for_func(name);
     if (not rule) throw myexception()<<"No rule for '"<<name<<"'";
     result.imports = rule->imports;
 
     result.code.perform_function = rule->perform;
-    ptree call = rule->call;
+    ptree rule_call = rule->call;
     const auto& args = rule->args;
 
-    if (not is_haskell_qid(call.get_value<string>()) and
-        not is_haskell_qsym(call.get_value<string>()) and
-        not is_haskell_builtin_con_name(call.get_value<string>()) and
-        not starts_with(call.get_value<string>(),"@"))
-        throw myexception()<<"For rule '"<<name<<"', function '"<<call.get_value<string>()<<"' doesn't seem to be a valid haskell id or a valid argument reference.";
+    if (not is_haskell_qid(rule_call.get_value<string>()) and
+        not is_haskell_qsym(rule_call.get_value<string>()) and
+        not is_haskell_builtin_con_name(rule_call.get_value<string>()) and
+        not starts_with(rule_call.get_value<string>(),"@"))
+        throw myexception()<<"For rule '"<<name<<"', function '"<<rule_call.get_value<string>()<<"' doesn't seem to be a valid haskell id or a valid argument reference.";
 
-    // 2. Construct the names of the haskell variables for the arguments.
+    map<string,const CM::Arg<CM::Ann>*> typed_args;
+    for(auto& arg: call.args)
+        typed_args[arg.name] = &arg;
+
     vector<string> arg_names(args.size());
     map<string,expression_ref> argument_environment;
     vector<var> arg_vars;
@@ -954,67 +867,56 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
     for(int i=0;i<args.size();i++)
     {
         arg_names[i] = args[i].name;
+        auto& arg = *typed_args.at(arg_names[i]);
+        auto& arg_expr = CM::require_arg_value(arg);
 
-        auto arg = model_rep.get_child(arg_names[i]);
-        bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
-
-        // We only count references from the argument if its a default value.
-        if (is_default_value)
-            used_args_for_arg[i] = get_used_args(arg);
-        // However, the alphabet always references the current arguments.
-        if (auto alphabet_exp = arg.get_child_optional("alphabet"))
-            add(used_args_for_arg[i], get_used_args(*alphabet_exp));
+        if (arg.is_default_value)
+            used_args_for_arg[i] = arg_expr.ann.used_args;
+        if (arg.alphabet)
+            add(used_args_for_arg[i], arg.alphabet->get().ann.used_args);
 
         auto var_name = arg_names[i];
         if (var_name == "submodel")
-        {
-            auto arg = model_rep.get_child(arg_names[i]);
-            if (auto func_name = get_func_name(arg))
+            if (auto func_name = get_func_name(arg_expr))
                 var_name = (*func_name)+"_model";
-        }
         arg_vars.push_back(scope2.get_var(var_name));
         log_vars.push_back(scope2.get_var("log_"+var_name));
 
         argument_environment[arg_names[i]] = arg_vars.back();
     }
 
-    // 3.. Figure out which args are referenced from other args
     auto arg_referenced = get_args_referenced(arg_names, used_args_for_arg);
-
     auto arg_order = get_args_order(arg_names, used_args_for_arg);
 
-    // 4. Construct the alphabet for each argument, if there is one.
     vector<translation_result_t> arg_models(args.size());
-    vector<set<string>> arg_lambda_vars;
     vector<string> log_names(args.size());
 
-    // FIXME! There might be some problem where we reference alphabet vars like a_3
-    //        before we define them, in situations where we don't substitute.
     for(int i: arg_order)
     {
         log_names[i] = name + ":" + arg_names[i];
 
-        auto arg = model_rep.get_child(arg_names[i]);
+        auto& arg = *typed_args.at(arg_names[i]);
+        auto& arg_expr = CM::require_arg_value(arg);
 
         auto arg_scope = scope2;
-        bool is_default_value = arg.get_child("is_default_value").get_value<bool>();
-        if (is_default_value)
+        if (arg.is_default_value)
             arg_scope.arg_env = {{name,arg_names[i],argument_environment}};
 
-	optional<translation_result_t> alphabet_result;
-	optional<var> alphabet_var;
-	optional<var> log_alphabet;
-        if (auto alphabet_expression = arg.get_child_optional("alphabet"))
+        optional<translation_result_t> alphabet_result;
+        optional<var> alphabet_var;
+        optional<var> log_alphabet;
+        if (arg.alphabet)
         {
             string var_name = "alpha";
-            if (alphabet_expression->get_child("value").has_value<string>() and alphabet_expression->get_child("value").get_value<string>() == "getNucleotides")
+            auto& alphabet_expr = arg.alphabet->get();
+            if (auto alphabet_var_expr = std::get_if<CM::Var>(&alphabet_expr.node); alphabet_var_expr and alphabet_var_expr->name == "getNucleotides")
                 var_name = "nucs";
             alphabet_var = scope2.get_var(var_name);
             log_alphabet = scope2.get_var("log_"+arg_names[i]+"_alpha");
 
             auto alphabet_scope = scope2;
             alphabet_scope.arg_env = {{name,arg_names[i],argument_environment}};
-            alphabet_result = alphabet_scope.get_model_as(*alphabet_expression);
+            alphabet_result = alphabet_scope.get_model_as(alphabet_expr);
             add(arg_scope.haskell_vars, alphabet_result->haskell_vars);
             if (alphabet_result->lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
@@ -1025,89 +927,65 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
                 arg_scope.set_state("alphabet", *alphabet_var);
         }
 
-        // Generate code for the argument.
-        arg = model_rep.get_child(arg_names[i]);
-        arg_models[i] = arg_scope.get_model_as(arg);
+        arg_models[i] = arg_scope.get_model_as(arg_expr);
         add(arg_scope.haskell_vars, arg_models[i].haskell_vars);
 
-        // Only generate code for the argument argument if the argument does get_state(alphabet).
         if (arg_models[i].code.used_states.count("alphabet") and alphabet_result)
         {
             assert(not alphabet_result->code.has_loggers());
             assert(not alphabet_result->code.perform_function);
             use_block(result, *log_alphabet, *alphabet_result, log_names[i]+":alphabet");
 
-            var alphabet;
             if (not is_var(alphabet_result->code.E))
                 result.code.stmts.let(*alphabet_var, alphabet_result->code.E);
         }
 
-        // Move this to generate()
         if (result.code.perform_function and arg_models[i].lambda_vars.size())
             throw myexception()<<"Argument '"<<arg_names[i]<<"' of '"<<name<<"' contains a lambda variable: not allowed!";
 
-        // (x, logger) <- arg
         auto x = arg_vars[i];
         auto log_x = log_vars[i];
 
-	auto type = arg.get_child("type");
-        bool do_log = should_log(model, arg_names[i]) and is_loggable_type(type) and arg_models[i].lambda_vars.empty();
+        // Compatibility boundary: rule-call logging still uses the old
+        // unlogged-random predicate. Remove when it reads CM::TypedExpr.
+        auto arg_ptree = CM::annotated_ptree_from_typed_model_expr(arg_expr);
+        bool do_log = is_loggable_function(*R, name) and is_unlogged_random(arg_ptree) and is_loggable_type(arg_expr.ann.type) and arg_models[i].lambda_vars.empty();
 
-        // 6b. Emit x <- or x = for the variable, or prepare to substitute it.
         use_block(result, log_x, arg_models[i], log_names[i]);
         if (arg_models[i].code.perform_function)
             result.code.stmts.perform(x, arg_models[i].code.E);
         else if ((arg_referenced[i] or do_log) and not is_var(arg_models[i].code.E))
-        {
             result.code.stmts.let(x, arg_models[i].code.E);
-        }
-        else // Substitute for the expression
-        {
-            // FIXME: This assumes that the argument occurs in the call at most once!
+        else
             argument_environment[arg_names[i]] = arg_models[i].code.E;
 
-            // NOTE: if arg_models[i].lambda_vars isn't empty, then we need to note this in the argument_environment
-            // so that @arg references are known to depend on lambda vars.
-            // MAYBE: change code_for_arg< > to map<string,var_info_t>?
-
-            // NOTE: anything that references a lambda variable has to be in code.E, not code.stmts!
-        }
-
-        // 6c. Write the logger for the variable.
         if (do_log)
-	{
-            result.code.log_value(log_names[i], argument_environment[arg_names[i]], type);
-	}
+            result.code.log_value(log_names[i], argument_environment[arg_names[i]], arg_expr.ann.type);
 
-	add(scope2.haskell_vars, arg_scope.haskell_vars);
+        add(scope2.haskell_vars, arg_scope.haskell_vars);
     }
 
     if (not rule->computed.empty())
     {
-	for(auto& x: rule->computed)
-	{
-	    // A. Generate a unique haskell name for the computed variable
-	    auto x_name = x.name;
-	    auto x_log_name = name + ":" + x_name;
-	    auto x_var = scope2.get_var(x_name);
+        for(auto& x: rule->computed)
+        {
+            auto x_name = x.name;
+            auto x_log_name = name + ":" + x_name;
+            auto x_var = scope2.get_var(x_name);
 
-	    // B. Each computed variable can only reference earlier computed variables.
-	    auto& value = x.value;
-	    auto x_type = ptree("unknown_type");
-	    result.code.stmts.let(x_var, make_call(value, argument_environment));
+            auto& value = x.value;
+            auto x_type = ptree("unknown_type");
+            result.code.stmts.let(x_var, make_call(value, argument_environment));
 
-	    // C. Log the computed variable
-	    result.code.log_value(x_log_name, x_var, x_type);
+            result.code.log_value(x_log_name, x_var, x_type);
 
-            // D. Put this var into the argument environment
-	    argument_environment[x_name] = x_var;
-	}
+            argument_environment[x_name] = x_var;
+        }
     }
 
-    // 7. Compute the call expression.
     try
     {
-        result.code.E = make_call(call, argument_environment);
+        result.code.E = make_call(rule_call, argument_environment);
 
         result.code.E = simplify_intToDouble(result.code.E);
     }
@@ -1117,110 +995,57 @@ translation_result_t CodeGenState::get_model_function(const ptree& model) const
         throw;
     }
 
-    // 8. Make sure not to re-use any vars adding do this code.
     add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
 }
 
-// NOTE: To some extent, we construct the expression in the reverse order in which it is performed.
-optional<translation_result_t> CodeGenState::get_model_state(const ptree& model) const
+// Generates code for a typed call, choosing the rule-backed or function-valued
+// variable path according to the current rules and scope.
+translation_result_t CodeGenState::get_typed_model_call(const CM::Call<CM::Ann>& call) const
 {
-    auto model_rep = model.get_child("value");
-    auto name = model_rep.get_value<string>();
-
-    optional<string> state_name;
-    if (name == "get_state")
-    {
-        // How do we access the child here?
-        auto arg = model_rep.children()[0].second;
-        state_name = arg.get_child("value");
-    }
-
-    if (state_name)
-    {
-        if (state.count(*state_name))
-        {
-            auto x = state.at(*state_name);
-            translation_result_t result;
-            result.code.E = x;
-            result.code.used_states = {*state_name};
-            return result;
-        }
-        else
-            throw myexception()<<"No state '"<<*state_name<<"'!";
-    }
+    if (R->get_rule_for_func(call.function))
+        return get_typed_rule_call(call);
     else
-        return {};
+        return get_typed_variable_call(call);
 }
 
-translation_result_t CodeGenState::get_model_as(const ptree& model_rep) const
+// Generates code for typed sample sugar by reusing the rule-backed sample call
+// code path with the already typed distribution argument.
+translation_result_t CodeGenState::get_typed_model_sample(const CM::Sample<CM::Ann>& sample) const
 {
-    //  std::cout<<"model = "<<model<<std::endl;
-    //  auto result = parse(model);
-    //  std::cout<<result.get_value<string>()<<"\n";
-    //  write_info(std::cout, result);
-    //  std::cout<<std::endl;
-    //  ptree model_rep = parse(model);
-
-    // 1. Complain on empty expressions
-    if (model_rep.children().empty() and model_rep.value_is_empty())
-        throw myexception()<<"Can't construct model from from empty description!";
-
-    // 2. Handle constant expressions
-    else if (auto constant = get_constant_model(model_rep))
-        return *constant;
-
-    // 3. Handle variables
-    else if (auto variable = get_variable_model(model_rep))
-        return *variable;
-
-    // 4. Let expressions
-    else if (auto let = get_model_let(model_rep))
-        return *let;
-
-    // 5. Lambda expressions
-    else if (auto lambda = get_model_lambda(model_rep))
-        return *lambda;
-
-    // 6. get_state[state] expressions.
-    else if (auto list = get_model_list(model_rep))
-        return *list;
-
-    // 7. get_state[state] expressions.
-    else if (auto list = get_model_tuple(model_rep))
-        return *list;
-
-    // 8. get_state[state] expressions.
-    else if (auto state = get_model_state(model_rep))
-        return *state;
-
-    // 9. Functions
-    return get_model_function(model_rep);
+    CM::Call<CM::Ann> sample_call{
+        "sample",
+        {
+            CM::Arg<CM::Ann>{
+                "dist",
+                CM::Box<CM::TypedExpr>(sample.dist.get()),
+                false,
+                false,
+                std::nullopt
+            }
+        }
+    };
+    return get_typed_rule_call(sample_call);
 }
 
-// Dispatches typed expressions by AST variant.  Each branch is still a local
-// compatibility fallback until its variant has native codegen.
+// Dispatches typed expressions by AST variant for native typed codegen.
 translation_result_t CodeGenState::get_model_as(const CM::TypedExpr& model_rep) const
 {
-    auto fallback = [&]() {
-        return get_model_as(CM::annotated_ptree_from_typed_model_expr(model_rep));
-    };
-
     return std::visit(CM::overloaded{
-        [&](const CM::IntLiteral&) { return fallback(); },
-        [&](const CM::DoubleLiteral&) { return fallback(); },
-        [&](const CM::BoolLiteral&) { return fallback(); },
-        [&](const CM::StringLiteral&) { return fallback(); },
-        [&](const CM::Var&) { return fallback(); },
-        [&](const CM::ArgRef&) { return fallback(); },
-        [&](const CM::Placeholder&) { return fallback(); },
-        [&](const CM::GetState&) { return fallback(); },
-        [&](const CM::Call<CM::Ann>&) { return fallback(); },
-        [&](const CM::List<CM::Ann>&) { return fallback(); },
-        [&](const CM::Tuple<CM::Ann>&) { return fallback(); },
-        [&](const CM::Let<CM::Ann>&) { return fallback(); },
-        [&](const CM::Lambda<CM::Ann>&) { return fallback(); },
-        [&](const CM::Sample<CM::Ann>&) { return fallback(); }
+        [&](const CM::IntLiteral&) { return get_typed_constant_model(model_rep); },
+        [&](const CM::DoubleLiteral&) { return get_typed_constant_model(model_rep); },
+        [&](const CM::BoolLiteral&) { return get_typed_constant_model(model_rep); },
+        [&](const CM::StringLiteral&) { return get_typed_constant_model(model_rep); },
+        [&](const CM::Var&) { return get_typed_variable_model(model_rep); },
+        [&](const CM::ArgRef&) { return get_typed_variable_model(model_rep); },
+        [&](const CM::Placeholder&) -> translation_result_t { throw myexception()<<"Placeholder '_' cannot be code generated."; },
+        [&](const CM::GetState& get_state) { return get_typed_model_state(get_state); },
+        [&](const CM::Call<CM::Ann>& call) { return get_typed_model_call(call); },
+        [&](const CM::List<CM::Ann>& list) { return get_typed_model_list(list); },
+        [&](const CM::Tuple<CM::Ann>& tuple) { return get_typed_model_tuple(tuple); },
+        [&](const CM::Let<CM::Ann>& let) { return get_typed_model_let(let); },
+        [&](const CM::Lambda<CM::Ann>& lambda) { return get_typed_model_lambda(lambda); },
+        [&](const CM::Sample<CM::Ann>& sample) { return get_typed_model_sample(sample); }
     }, model_rep.node);
 }

@@ -88,7 +88,6 @@ struct CodeGenState
 
     bool is_random(const ptree&) const;
     bool is_unlogged_random(const ptree& model) const;
-    bool should_log(const ptree& model_, const std::string& arg_name) const;
 
     var get_var(std::string name)
     {
@@ -114,13 +113,16 @@ struct CodeGenState
 
     translation_result_t get_model_decls(const CM::TypedDecls& decls);
     translation_result_t get_model_decls(const ptree& model);
-    std::optional<translation_result_t> get_variable_model(const ptree& model) const;
-    std::optional<translation_result_t> get_model_let(const ptree& model) const;
-    std::optional<translation_result_t> get_model_lambda(const ptree& model) const;
-    std::optional<translation_result_t> get_model_list(const ptree& model) const;
-    std::optional<translation_result_t> get_model_tuple(const ptree& model) const;
-    std::optional<translation_result_t> get_model_state(const ptree& model) const;
-    translation_result_t get_model_function(const ptree& model) const;
+    translation_result_t get_typed_variable_model(const CM::TypedExpr& model) const;
+    translation_result_t get_typed_model_state(const CM::GetState& get_state) const;
+    translation_result_t get_typed_model_list(const CM::List<CM::Ann>& list) const;
+    translation_result_t get_typed_model_tuple(const CM::Tuple<CM::Ann>& tuple) const;
+    translation_result_t get_typed_model_let(const CM::Let<CM::Ann>& let) const;
+    translation_result_t get_typed_model_lambda(const CM::Lambda<CM::Ann>& lambda) const;
+    translation_result_t get_typed_variable_call(const CM::Call<CM::Ann>& call) const;
+    translation_result_t get_typed_rule_call(const CM::Call<CM::Ann>& call) const;
+    translation_result_t get_typed_model_call(const CM::Call<CM::Ann>& call) const;
+    translation_result_t get_typed_model_sample(const CM::Sample<CM::Ann>& sample) const;
     translation_result_t get_model_as(const CM::TypedExpr& model_rep) const;
     translation_result_t get_model_as(const ptree& model_rep) const;
 
