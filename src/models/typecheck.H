@@ -28,7 +28,7 @@ struct TypecheckingState
     std::optional<ptree> type_for_arg(const std::string& name) const;
     void extend_scope(const std::string& var, const ptree type);
     TypecheckingState extended_scope(const std::string& var, const ptree type) const;
-    std::pair<ptree, std::map<std::string,ptree>> parse_pattern(const CM::UntypedExpr& pattern) const;
+    std::pair<ptree, std::map<std::string,ptree>> parse_pattern(const CM::UntypedPattern& pattern) const;
 
     void add_states(const std::map<std::string,std::pair<std::string,ptree>>&);
 
@@ -40,6 +40,7 @@ struct TypecheckingState
 };
 
 void substitute_annotated(const equations&, CM::TypedExpr&);
+void substitute_annotated(const equations&, CM::TypedPattern&);
 void substitute_annotated(const equations&, CM::TypedDecls&);
 CM::TypedExpr typecheck_model_expr(const TypecheckingState&, const ptree& required_type, const CM::UntypedExpr&);
 CM::TypedDecls typecheck_model_decls(TypecheckingState&, const CM::Decls<CM::NoAnn>&);

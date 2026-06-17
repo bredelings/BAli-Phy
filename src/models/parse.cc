@@ -182,11 +182,10 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R)
                 handle_positional_args(value, R);
             handle_positional_args(let.body.get(), R);
         },
-        // Recurses into the pattern and body without rewriting the lambda node
-        // itself.
+        // Recurses into the body without rewriting the lambda node itself.
+        // Patterns contain no call arguments to normalize.
         [&](Lambda<NoAnn>& lambda)
         {
-            handle_positional_args(lambda.pattern.get(), R);
             handle_positional_args(lambda.body.get(), R);
         },
         // Recurses into the sampled distribution without rewriting the sample
@@ -391,6 +390,23 @@ string unparse(const Decls<NoAnn>& decls)
     return join(items, "; ");
 }
 
+// Renders an untyped model pattern using the lambda-pattern syntax.
+string unparse(const UntypedPattern& pattern)
+{
+    return std::visit(overloaded{
+        [](const VarPattern& x) {return x.name;},
+        // Renders tuple patterns in the same parenthesized tuple syntax as
+        // tuple expressions.
+        [](const TuplePattern<NoAnn>& x)
+        {
+            vector<string> items;
+            for(auto& item: x.elements)
+                items.push_back(unparse(item));
+            return "(" + join(items, ", ") + ")";
+        }
+    }, pattern.node);
+}
+
 // Renders an untyped model AST expression using the legacy command-line syntax.
 string unparse(const UntypedExpr& expr)
 {
@@ -530,6 +546,23 @@ string unparse_typed_decls(const TypedDecls& decls)
     for(auto& [name, value]: decls)
         items.push_back(name + " " + show_model_annotated(value));
     return join(items, "; ");
+}
+
+// Renders a typed model pattern using the annotated lambda-pattern syntax.
+string unparse_annotated(const TypedPattern& pattern)
+{
+    return std::visit(overloaded{
+        [](const VarPattern& x) {return x.name;},
+        // Renders tuple patterns in the same parenthesized tuple syntax as
+        // tuple expressions.
+        [](const TuplePattern<Ann>& x)
+        {
+            vector<string> items;
+            for(auto& item: x.elements)
+                items.push_back(unparse_annotated(item));
+            return "(" + join(items, ", ") + ")";
+        }
+    }, pattern.node);
 }
 
 // Renders a typed model AST expression using the annotated command-line syntax.

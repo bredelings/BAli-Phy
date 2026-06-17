@@ -9,9 +9,11 @@ class Rules;
 
 std::string unparse(const ptree& p);
 std::string unparse(const CM::UntypedExpr&);
+std::string unparse(const CM::UntypedPattern&);
 std::string unparse(const CM::Decls<CM::NoAnn>&);
 std::string unparse_annotated(const ptree&);
 std::string unparse_annotated(const CM::TypedExpr&);
+std::string unparse_annotated(const CM::TypedPattern&);
 std::string unparse_type(const ptree& p);
 std::string show_model(const ptree p);
 std::string show_model(const CM::UntypedExpr&);

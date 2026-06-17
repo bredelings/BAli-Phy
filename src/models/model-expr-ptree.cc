@@ -37,6 +37,37 @@ void require_child_count(const ptree& p, int n, const string& name)
         throw std::logic_error("malformed model ptree for " + name);
 }
 
+// Converts the subset of legacy model ptree accepted in lambda-pattern
+// position into the dedicated pattern AST.
+UntypedPattern pattern_from_ptree(const ptree& p)
+{
+    if (not p.has_value<string>())
+        throw std::logic_error("malformed model ptree for lambda pattern");
+
+    auto name = p.get_value<string>();
+    if (p.children().empty())
+    {
+        if (name.empty() or name == "_" or name[0] == '@' or is_quoted_string(name))
+            throw std::logic_error("malformed model ptree for lambda pattern");
+        return {NoAnn{}, VarPattern{name}};
+    }
+    else if (name == "Tuple")
+    {
+        TuplePattern<NoAnn> tuple;
+        for(auto& [key, value]: p.children())
+        {
+            if (not key.empty())
+                throw std::logic_error("malformed model ptree for tuple pattern");
+            tuple.elements.push_back(pattern_from_ptree(value));
+        }
+        if (tuple.elements.size() < 2)
+            throw std::logic_error("malformed model ptree for Tuple pattern");
+        return {NoAnn{}, std::move(tuple)};
+    }
+    else
+        throw std::logic_error("malformed model ptree for lambda pattern");
+}
+
 // Converts a string-valued model ptree into the corresponding untyped AST node,
 // handling special forms before falling back to ordinary calls.
 UntypedExpr model_expr_from_string_ptree(const ptree& p)
@@ -83,9 +114,9 @@ UntypedExpr model_expr_from_string_ptree(const ptree& p)
     else if (name == "function")
     {
         require_child_count(p, 2, "function");
-        auto pattern = model_expr_from_ptree(p.children()[0].second);
+        auto pattern = pattern_from_ptree(p.children()[0].second);
         auto body = model_expr_from_ptree(p.children()[1].second);
-        return {NoAnn{}, Lambda<NoAnn>{Box<UntypedExpr>(std::move(pattern)), Box<UntypedExpr>(std::move(body))}};
+        return {NoAnn{}, Lambda<NoAnn>{Box<UntypedPattern>(std::move(pattern)), Box<UntypedExpr>(std::move(body))}};
     }
     else if (name == "sample")
     {
@@ -144,6 +175,39 @@ Ann ann_from_ptree(const ptree& p)
     if (auto extract = p.get_optional<string>("extract"))
         ann.extract = *extract;
     return ann;
+}
+
+// Converts an annotated legacy lambda-pattern ptree into a typed pattern node
+// with the annotation carried on the old expression-shaped pattern.
+TypedPattern typed_pattern_from_annotated_ptree(const ptree& p)
+{
+    auto ann = ann_from_ptree(p);
+    auto& value = p.get_child("value");
+    if (not value.has_value<string>())
+        throw std::logic_error("malformed annotated model ptree for lambda pattern");
+
+    auto name = value.get_value<string>();
+    if (value.children().empty())
+    {
+        if (name.empty() or name == "_" or name[0] == '@' or is_quoted_string(name))
+            throw std::logic_error("malformed annotated model ptree for lambda pattern");
+        return {std::move(ann), VarPattern{name}};
+    }
+    else if (name == "Tuple")
+    {
+        TuplePattern<Ann> tuple;
+        for(auto& [key, child]: value.children())
+        {
+            if (not key.empty())
+                throw std::logic_error("malformed annotated model ptree for tuple pattern");
+            tuple.elements.push_back(typed_pattern_from_annotated_ptree(child));
+        }
+        if (tuple.elements.size() < 2)
+            throw std::logic_error("malformed annotated model ptree for Tuple pattern");
+        return {std::move(ann), std::move(tuple)};
+    }
+    else
+        throw std::logic_error("malformed annotated model ptree for lambda pattern");
 }
 
 // Writes typed AST annotation metadata back onto an annotated ptree.
@@ -239,9 +303,9 @@ TypedExpr typed_model_expr_from_value_ptree(Ann ann, const ptree& value)
     else if (name == "function")
     {
         require_child_count(value, 2, "function");
-        auto pattern = typed_model_expr_from_annotated_ptree(value.children()[0].second);
+        auto pattern = typed_pattern_from_annotated_ptree(value.children()[0].second);
         auto body = typed_model_expr_from_annotated_ptree(value.children()[1].second);
-        return {std::move(ann), Lambda<Ann>{Box<TypedExpr>(std::move(pattern)), Box<TypedExpr>(std::move(body))}};
+        return {std::move(ann), Lambda<Ann>{Box<TypedPattern>(std::move(pattern)), Box<TypedExpr>(std::move(body))}};
     }
     else if (name == "sample")
     {
@@ -289,6 +353,24 @@ UntypedExpr model_expr_from_ptree(const ptree& p)
         return model_expr_from_string_ptree(p);
     else
         throw std::logic_error("malformed model ptree: non-string value has children");
+}
+
+// Converts an untyped pattern AST back into the legacy expression-shaped ptree
+// used at parser compatibility boundaries.
+ptree ptree_from_pattern(const UntypedPattern& pattern)
+{
+    return std::visit(overloaded{
+        [](const VarPattern& x) -> ptree {return ptree(x.name);},
+        [](const TuplePattern<NoAnn>& x) -> ptree
+        {
+            if (x.elements.size() < 2)
+                throw std::logic_error("cannot convert one-element model tuple pattern to ptree");
+            ptree result("Tuple");
+            for(auto& element: x.elements)
+                result.children().push_back({"", ptree_from_pattern(element)});
+            return result;
+        }
+    }, pattern.node);
 }
 
 // Converts an untyped model AST expression back into the legacy ptree shape.
@@ -347,7 +429,7 @@ ptree ptree_from_model_expr(const UntypedExpr& expr)
         [](const Lambda<NoAnn>& x) -> ptree
         {
             return ptree("function", {
-                {"", ptree_from_model_expr(x.pattern.get())},
+                {"", ptree_from_pattern(x.pattern.get())},
                 {"", ptree_from_model_expr(x.body.get())}
             });
         },
@@ -385,6 +467,28 @@ TypedExpr typed_model_expr_from_annotated_ptree(const ptree& p)
 {
     auto ann = ann_from_ptree(p);
     return typed_model_expr_from_value_ptree(std::move(ann), p.get_child("value"));
+}
+
+// Converts a typed pattern AST back into the annotated expression-shaped ptree
+// used at remaining compatibility boundaries.
+ptree annotated_ptree_from_typed_pattern(const TypedPattern& pattern)
+{
+    ptree value = std::visit(overloaded{
+        [](const VarPattern& x) -> ptree {return ptree(x.name);},
+        [](const TuplePattern<Ann>& x) -> ptree
+        {
+            if (x.elements.size() < 2)
+                throw std::logic_error("cannot convert one-element annotated tuple pattern to ptree");
+            ptree result("Tuple");
+            for(auto& element: x.elements)
+                result.children().push_back({"", annotated_ptree_from_typed_pattern(element)});
+            return result;
+        }
+    }, pattern.node);
+
+    ptree result({{"value", value}});
+    add_ann_to_ptree(result, pattern.ann);
+    return result;
 }
 
 // Converts a typed AST expression back into the annotated ptree shape consumed
@@ -447,7 +551,7 @@ ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
         [](const Lambda<Ann>& x) -> ptree
         {
             return ptree("function", {
-                {"", annotated_ptree_from_typed_model_expr(x.pattern.get())},
+                {"", annotated_ptree_from_typed_pattern(x.pattern.get())},
                 {"", annotated_ptree_from_typed_model_expr(x.body.get())}
             });
         },

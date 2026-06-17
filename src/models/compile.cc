@@ -438,21 +438,15 @@ namespace
 
 // Removes lambda pattern variables from the binder set used by extraction's
 // bound-variable check.
-void erase_pattern_binders(const CM::TypedExpr& pattern, set<string>& binders)
+void erase_pattern_binders(const CM::TypedPattern& pattern, set<string>& binders)
 {
     std::visit(CM::overloaded{
-        [&](const CM::Var& var)
+        [&](const CM::VarPattern& var)
         {
             binders.erase(var.name);
         },
-        // Removes binders that appear inside list-shaped lambda patterns.
-        [&](const CM::List<CM::Ann>& list)
-        {
-            for(auto& element: list.elements)
-                erase_pattern_binders(element, binders);
-        },
         // Removes binders that appear inside tuple-shaped lambda patterns.
-        [&](const CM::Tuple<CM::Ann>& tuple)
+        [&](const CM::TuplePattern<CM::Ann>& tuple)
         {
             for(auto& element: tuple.elements)
                 erase_pattern_binders(element, binders);

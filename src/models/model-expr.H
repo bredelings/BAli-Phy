@@ -23,6 +23,9 @@ template<class A>
 struct Expr;
 
 template<class A>
+struct Pattern;
+
+template<class A>
 struct Arg;
 
 template<class A>
@@ -141,6 +144,42 @@ struct GetState
     std::string state_name;
 };
 
+struct Ann
+{
+    ptree type;
+    std::set<std::string> used_args;
+
+    bool no_log = false;
+    std::optional<std::string> extract;
+};
+
+struct VarPattern
+{
+    std::string name;
+};
+
+template<class A>
+struct TuplePattern
+{
+    std::vector<Pattern<A>> elements;
+};
+
+template<class A>
+struct Pattern
+{
+    [[no_unique_address]] A ann;
+
+    using Node = std::variant<
+        VarPattern,
+        TuplePattern<A>
+    >;
+
+    Node node;
+};
+
+using UntypedPattern = Pattern<NoAnn>;
+using TypedPattern = Pattern<Ann>;
+
 template<class A>
 struct Call
 {
@@ -170,7 +209,7 @@ struct Let
 template<class A>
 struct Lambda
 {
-    Box<Expr<A>> pattern;
+    Box<Pattern<A>> pattern;
     Box<Expr<A>> body;
 };
 
@@ -178,15 +217,6 @@ template<class A>
 struct Sample
 {
     Box<Expr<A>> dist;
-};
-
-struct Ann
-{
-    ptree type;
-    std::set<std::string> used_args;
-
-    bool no_log = false;
-    std::optional<std::string> extract;
 };
 
 using TypedExpr = Expr<Ann>;
@@ -225,6 +255,13 @@ struct overloaded: Ts...
 
 template<class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
+
+// Returns an owning copy of a model pattern.
+template<class A>
+Pattern<A> clone(const Pattern<A>& pattern)
+{
+    return pattern;
+}
 
 // Returns an owning copy of a model expression.
 template<class A>
@@ -285,6 +322,36 @@ bool is_get_state(const Expr<A>& expr)
     return std::holds_alternative<GetState>(expr.node);
 }
 
+// Applies a visitor to each mutable child pattern stored under this pattern.
+template<class A, class F>
+void for_each_child(Pattern<A>& pattern, F&& f)
+{
+    std::visit(overloaded{
+        // Visits each mutable tuple-pattern element.
+        [&](TuplePattern<A>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                f(element);
+        },
+        [](auto&) {}
+    }, pattern.node);
+}
+
+// Applies a visitor to each const child pattern stored under this pattern.
+template<class A, class F>
+void for_each_child(const Pattern<A>& pattern, F&& f)
+{
+    std::visit(overloaded{
+        // Visits each const tuple-pattern element.
+        [&](const TuplePattern<A>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                f(element);
+        },
+        [](const auto&) {}
+    }, pattern.node);
+}
+
 // Applies a visitor to each mutable child expression stored under this node,
 // including argument alphabets but skipping absent argument values.
 template<class A, class F>
@@ -322,10 +389,10 @@ void for_each_child(Expr<A>& expr, F&& f)
                 f(value);
             f(let.body.get());
         },
-        // Visits both the lambda pattern and the lambda body.
+        // Visits the lambda body.  Lambda patterns are traversed by the
+        // pattern helpers because they are not expressions.
         [&](Lambda<A>& lambda)
         {
-            f(lambda.pattern.get());
             f(lambda.body.get());
         },
         // Visits the sampled distribution expression.
@@ -374,10 +441,10 @@ void for_each_child(const Expr<A>& expr, F&& f)
                 f(value);
             f(let.body.get());
         },
-        // Visits both the const lambda pattern and the lambda body.
+        // Visits the const lambda body.  Lambda patterns are traversed by the
+        // pattern helpers because they are not expressions.
         [&](const Lambda<A>& lambda)
         {
-            f(lambda.pattern.get());
             f(lambda.body.get());
         },
         // Visits the const sampled distribution expression.
@@ -387,6 +454,31 @@ void for_each_child(const Expr<A>& expr, F&& f)
         },
         [](const auto&) {}
     }, expr.node);
+}
+
+// Checks structural invariants expected by the model pattern AST and recurses
+// into nested subpatterns.
+template<class A>
+void check_invariants(const Pattern<A>& pattern)
+{
+    if constexpr(std::is_same_v<A, Ann>)
+    {
+        if (pattern.ann.type.is_null())
+            throw std::logic_error("typed model pattern has null type annotation");
+    }
+
+    std::visit(overloaded{
+        // Rejects tuple patterns that cannot be represented in the command-line
+        // tuple syntax.
+        [](const TuplePattern<A>& tuple)
+        {
+            if (tuple.elements.size() < 2)
+                throw std::logic_error("model tuple pattern must have at least two elements");
+        },
+        [](const auto&) {}
+    }, pattern.node);
+
+    for_each_child(pattern, [](const Pattern<A>& child) { check_invariants(child); });
 }
 
 // Checks structural invariants expected by the model AST and recurses into
@@ -407,6 +499,12 @@ void check_invariants(const Expr<A>& expr)
         {
             if (tuple.elements.size() < 2)
                 throw std::logic_error("model tuple must have at least two elements");
+        },
+        // Checks the lambda pattern separately because it is not an expression
+        // child.
+        [](const Lambda<A>& lambda)
+        {
+            check_invariants(lambda.pattern.get());
         },
         [](const auto&) {}
     }, expr.node);

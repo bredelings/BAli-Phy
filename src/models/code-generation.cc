@@ -369,13 +369,12 @@ expression_ref eta_reduce(expression_ref E)
     return E;
 }
 
-// Finds variable binders inside a typed lambda pattern, matching the old
-// variable/tuple pattern shapes accepted by the ptree path.
-set<string> find_vars_in_pattern(const CM::TypedExpr& pattern)
+// Finds variable binders inside a typed lambda pattern.
+set<string> find_vars_in_pattern(const CM::TypedPattern& pattern)
 {
-    if (auto var = std::get_if<CM::Var>(&pattern.node))
+    if (auto var = std::get_if<CM::VarPattern>(&pattern.node))
         return {var->name};
-    else if (auto tuple = std::get_if<CM::Tuple<CM::Ann>>(&pattern.node))
+    else if (auto tuple = std::get_if<CM::TuplePattern<CM::Ann>>(&pattern.node))
     {
         set<string> vars;
         for(auto& sub_pattern: tuple->elements)
@@ -391,6 +390,28 @@ set<string> find_vars_in_pattern(const CM::TypedExpr& pattern)
     }
     else
         std::abort();
+}
+
+// Converts a typed lambda pattern into the expression_ref shape expected by
+// lambda_quantify(), preserving the old variable/tuple pattern codegen.
+expression_ref get_typed_pattern_expr(const CM::TypedPattern& pattern, const CodeGenState& scope)
+{
+    return std::visit(CM::overloaded{
+        [&](const CM::VarPattern& var) -> expression_ref
+        {
+            if (not scope.identifiers.count(var.name))
+                throw myexception()<<"No variable '"<<var.name<<"' in scope!";
+            return scope.identifiers.at(var.name).x;
+        },
+        // Converts tuple-pattern elements to a tuple expression of binders.
+        [&](const CM::TuplePattern<CM::Ann>& tuple) -> expression_ref
+        {
+            vector<expression_ref> elements;
+            for(auto& element: tuple.elements)
+                elements.push_back(get_typed_pattern_expr(element, scope));
+            return get_tuple(elements);
+        }
+    }, pattern.node);
 }
 
 // Returns true for the legacy rule-template spelling of a trailing submodel
@@ -475,7 +496,7 @@ expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
         // nodes into one Haskell lambda expression.
         [&](const CM::Lambda<CM::NoAnn>& lambda) -> expression_ref
         {
-            auto pattern = std::get_if<CM::Var>(&lambda.pattern.get().node);
+            auto pattern = std::get_if<CM::VarPattern>(&lambda.pattern.get().node);
             if (not pattern)
                 throw myexception()<<"Only variable lambda patterns are allowed in rule templates.";
 
@@ -768,8 +789,8 @@ translation_result_t CodeGenState::get_typed_model_lambda(const CM::Lambda<CM::A
         if (body_result.lambda_vars.count(var_name))
             body_result.lambda_vars.erase(var_name);
 
-    auto pattern2 = scope2.get_model_as(lambda.pattern.get());
-    body_result.code.E = lambda_quantify(pattern2.code.E, body_result.code.E);
+    auto pattern2 = get_typed_pattern_expr(lambda.pattern.get(), scope2);
+    body_result.code.E = lambda_quantify(pattern2, body_result.code.E);
 
     body_result.code.E = eta_reduce(body_result.code.E);
     for(auto& var_name: var_names)

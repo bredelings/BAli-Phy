@@ -235,6 +235,22 @@ void substitute_annotated(const equations& eqs, CM::TypedDecls& decls)
         substitute_annotated(eqs, expr);
 }
 
+// Applies solved type equations throughout an annotated model pattern.
+void substitute_annotated(const equations& eqs, CM::TypedPattern& pattern)
+{
+    substitute(eqs, pattern.ann.type);
+
+    std::visit(CM::overloaded{
+        // Recurse through tuple-pattern element annotations.
+        [&](CM::TuplePattern<CM::Ann>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                substitute_annotated(eqs, element);
+        },
+        [](auto&) {}
+    }, pattern.node);
+}
+
 // Applies solved type equations throughout an annotated model AST.
 // This replaces the old annotated-ptree substitution path for AST users.
 void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
@@ -294,6 +310,32 @@ namespace
 CM::Ann model_ann(ptree type, set<string> used_args = {})
 {
     return {std::move(type), std::move(used_args), false, {}};
+}
+
+// Assigns solved types to a lambda pattern after parse_pattern() has produced
+// the pattern type structure and unification has refined it.
+CM::TypedPattern typecheck_pattern(const TypecheckingState& TC, ptree required_type, const CM::UntypedPattern& pattern)
+{
+    substitute(TC.eqs, required_type);
+
+    return std::visit(CM::overloaded{
+        [&](const CM::VarPattern& var) -> CM::TypedPattern
+        {
+            return {model_ann(required_type), var};
+        },
+        // Assigns each tuple-pattern slot the corresponding tuple type.
+        [&](const CM::TuplePattern<CM::NoAnn>& tuple) -> CM::TypedPattern
+        {
+            auto [head, args] = get_type_apps(required_type);
+            if (head != "Tuple" or args.size() != tuple.elements.size())
+                throw myexception()<<"Tuple pattern '"<<unparse(pattern)<<"' has incompatible type "<<unparse_type(required_type)<<"!";
+
+            CM::TuplePattern<CM::Ann> typed_tuple;
+            for(int i=0; i<tuple.elements.size(); i++)
+                typed_tuple.elements.push_back(typecheck_pattern(TC, args[i], tuple.elements[i]));
+            return {model_ann(required_type), std::move(typed_tuple)};
+        }
+    }, pattern.node);
 }
 
 optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr);
@@ -598,13 +640,13 @@ optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, cons
     if (auto atype = TC.eqs.value_of_var(a))
         a = *atype;
 
-    auto pattern2 = typecheck_model_expr(scope2, a, lambda->pattern.get());
+    auto pattern2 = typecheck_pattern(scope2, a, lambda->pattern.get());
     substitute(TC.eqs, ftype);
 
     return CM::TypedExpr{
         model_ann(ftype, std::move(used_args)),
         CM::Lambda<CM::Ann>{
-            CM::Box<CM::TypedExpr>(std::move(pattern2)),
+            CM::Box<CM::TypedPattern>(std::move(pattern2)),
             CM::Box<CM::TypedExpr>(std::move(body2))
         }
     };
@@ -825,14 +867,14 @@ CM::TypedDecls typecheck_model_decls(TypecheckingState& TC, const CM::Decls<CM::
 
 // Parses lambda patterns from the model AST, assigning fresh types to binders
 // and rejecting expression forms that are not valid patterns.
-pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const CM::UntypedExpr& pattern) const
+pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const CM::UntypedPattern& pattern) const
 {
-    if (auto var = std::get_if<CM::Var>(&pattern.node))
+    if (auto var = std::get_if<CM::VarPattern>(&pattern.node))
     {
         auto type = get_fresh_type_var("p");
         return {type, {{var->name, type}}};
     }
-    else if (auto tuple = std::get_if<CM::Tuple<CM::NoAnn>>(&pattern.node))
+    else if (auto tuple = std::get_if<CM::TuplePattern<CM::NoAnn>>(&pattern.node))
     {
         ptree type("Tuple");
         map<string,ptree> var_to_type;
