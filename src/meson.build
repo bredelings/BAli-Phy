@@ -103,7 +103,6 @@ libbaliphy_sources = [
   'models/parameters.cc',
   'models/A-T-prog.cc',
   'models/model-expr.cc',
-  'models/model-expr-ptree.cc',
 
   'models/rules.cc',
   'models/parse.cc',
@@ -167,6 +166,7 @@ endif
 
 model_expr_test = executable('model-expr-test',
                              'models/model-expr-test.cc',
+                             'models/model-expr-ptree.cc',
                              include_directories: [root_inc, libutil_inc],
                              dependencies: [boost, libxxhash, eigen, libdl, math_dep, librange, immer, fmt, cereal],
                              link_with: [libbaliphy, libcomputation, libcommon, libmcon, libutil])

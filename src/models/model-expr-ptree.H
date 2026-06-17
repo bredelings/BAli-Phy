@@ -7,6 +7,8 @@
 namespace CmdModel
 {
 
+// Test compatibility boundary: legacy ptree converters are retained for
+// round-trip/parity tests. Remove when those tests use native CM fixtures.
 UntypedExpr model_expr_from_ptree(const ptree&);
 ptree ptree_from_model_expr(const UntypedExpr&);
 

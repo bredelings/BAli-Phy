@@ -37,7 +37,6 @@
 #include "util/myexception.H"
 #include "models/rules.H"
 #include "models/parse.H"
-#include "models/model-expr-ptree.H"
 #include "models/path.H"
 #include "computation/module.H"
 #include "computation/expression/expression_ref.H"

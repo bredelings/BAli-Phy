@@ -1,6 +1,5 @@
 #include "typecheck.H"
 #include "parse.H"
-#include "models/model-expr-ptree.H"
 #include <vector>
 #include <set>
 #include "rules.H"
@@ -529,7 +528,7 @@ optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const 
         auto element2 = typecheck_model_expr(TC, element_required_type, element);
         add(used_args, element2.ann.used_args);
         if (not TC.eqs)
-            throw myexception()<<"Expression '"<<unparse_annotated(CM::annotated_ptree_from_typed_model_expr(element2))<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
+            throw myexception()<<"Expression '"<<unparse_annotated(element2)<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
         typed_list.elements.push_back(std::move(element2));
     }
 
@@ -561,7 +560,7 @@ optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const
         auto element2 = typecheck_model_expr(TC, element_required_type, tuple->elements[i]);
         add(used_args, element2.ann.used_args);
         if (not TC.eqs)
-            throw myexception()<<"Expression '"<<unparse_annotated(CM::annotated_ptree_from_typed_model_expr(element2))<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
+            throw myexception()<<"Expression '"<<unparse_annotated(element2)<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
         typed_tuple.elements.push_back(std::move(element2));
     }
 
@@ -734,7 +733,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
             }
             TC.eqs = TC.eqs && scope3.eqs;
             if (not TC.eqs)
-                throw myexception()<<"Expression '"<<unparse_annotated(CM::annotated_ptree_from_typed_model_expr(alphabet_value2))<<"' makes unification fail!";
+                throw myexception()<<"Expression '"<<unparse_annotated(alphabet_value2)<<"' makes unification fail!";
             scope2.state["alphabet"] = alphabet_value2.ann.type;
             alphabet_value = CM::Box<CM::TypedExpr>(std::move(alphabet_value2));
         }
@@ -751,7 +750,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
         }
         TC.eqs = TC.eqs && scope2.eqs;
         if (not TC.eqs)
-            throw myexception()<<"Expression '"<<unparse_annotated(CM::annotated_ptree_from_typed_model_expr(arg_value2))<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
+            throw myexception()<<"Expression '"<<unparse_annotated(arg_value2)<<"' is not of required type "<<unparse_type(arg_required_type)<<"!";
 
         if (not is_default)
             add(used_args, arg_value2.ann.used_args);
@@ -857,7 +856,7 @@ CM::TypedDecls typecheck_model_decls(TypecheckingState& TC, const CM::Decls<CM::
         if (not TC.eqs)
         {
             substitute(TC.eqs, a);
-            throw myexception()<<"Expression '"<<unparse_annotated(CM::annotated_ptree_from_typed_model_expr(expr2))<<"' is not of required type "<<unparse_type(a)<<"!";
+            throw myexception()<<"Expression '"<<unparse_annotated(expr2)<<"' is not of required type "<<unparse_type(a)<<"!";
         }
         decls2.push_back({name, std::move(expr2)});
     }
