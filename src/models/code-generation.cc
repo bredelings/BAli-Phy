@@ -6,7 +6,6 @@
 #include "util/graph.H"                    // for make_graph( )
 #include "computation/haskell/haskell.H"   // for Hs::LExp
 #include "computation/haskell/ids.H"       // for haskell_qid
-#include "util/string/pred.H"              // for starts_with
 #include "util/string/join.H"              // for join( )
 #include "computation/expression/let.H"
 #include "computation/expression/bool.H"
@@ -394,93 +393,113 @@ set<string> find_vars_in_pattern(const CM::TypedExpr& pattern)
         std::abort();
 }
 
-expression_ref make_call(const ptree& call, const map<string,expression_ref>& simple_args)
+// Returns true for the legacy rule-template spelling of a trailing submodel
+// argument that should be compiled as `submodel +> f`.
+bool is_template_submodel_arg(const CM::Arg<CM::NoAnn>& arg)
 {
-    if (call.is_null())
-        throw myexception()<<"Can't construct expression from null value:\n"<<call.show()<<"\n";
-    if (not call.children().empty() and not call.has_value<string>())
-        throw myexception()<<"Call should not have arguments:\n"<<call.show()<<"\n";
+    if (not arg.name.empty() or not arg.value)
+        return false;
 
-    if (call.is_a<bool>())
-        return {bool(call)};
-    else if (call.is_a<int>())
-        return {int(call)};
-    else if (call.is_a<double>())
-        return {double(call)};
-    assert(call.has_value<string>());
-    auto name = call.get_value<string>();
-    assert(name != "!let");
-    expression_ref E;
+    auto arg_ref = std::get_if<CM::ArgRef>(&arg.value->get().node);
+    return arg_ref and arg_ref->name == "submodel";
+}
 
-    // Process expression
-    if (name == "function")
-    {
-        auto body = make_call(call.children()[1].second, simple_args);
-        auto x = call.children()[0].second.get_value<string>();
-
-        Hs::LVar v = {noloc, Hs::Var(x)};
-        Hs::LPat p = {noloc, Hs::VarPattern({noloc,Hs::Var(x)})};
-
-        if (auto L = body.to<Hs::LambdaExp>())
+// Converts a rule call/computed template from CmdModel to Haskell expression
+// code, preserving the old ptree template codegen behavior.
+expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,expression_ref>& simple_args)
+{
+    return std::visit(CM::overloaded{
+        [](const CM::IntLiteral& x) -> expression_ref { return x.value; },
+        [](const CM::DoubleLiteral& x) -> expression_ref { return x.value; },
+        [](const CM::BoolLiteral& x) -> expression_ref { return x.value; },
+        [](const CM::StringLiteral& x) -> expression_ref { return String(x.value); },
+        [](const CM::Var& x) -> expression_ref { return var(x.name); },
+        // Looks up a rule-template argument reference in the already generated
+        // argument environment.
+        [&](const CM::ArgRef& x) -> expression_ref
         {
-            auto LE = *L;
-            auto& pats = LE.match.patterns;
-            pats.insert(pats.begin(), p);
-            return LE;
-        }
-        else
+            try
+            {
+                return simple_args.at(x.name);
+            }
+            catch(...)
+            {
+                throw myexception()<<"cannot find argument '"<<x.name<<"'";
+            }
+        },
+        [](const CM::Placeholder&) -> expression_ref { throw myexception()<<"Placeholder is not allowed in rule templates."; },
+        [](const CM::GetState&) -> expression_ref { throw myexception()<<"get_state is not allowed in rule templates."; },
+        // Compiles a rule-template call as Haskell application, preserving the
+        // legacy final-submodel rewrite.
+        [&](const CM::Call<CM::NoAnn>& call) -> expression_ref
         {
-            return Hs::LambdaExp({p}, {noloc, body});
+            expression_ref E = var(call.function);
+            for(int i=0;i<call.args.size();i++)
+            {
+                auto& arg = call.args[i];
+                if (not arg.name.empty())
+                    throw myexception()<<"Named arguments are not allowed in rule templates.";
+                if (not arg.value)
+                    throw myexception()<<"Missing arguments are not allowed in rule templates.";
+
+                auto arg_expr = make_rule_template_expr(arg.value->get(), simple_args);
+                // Compatibility behavior: rule templates encode `submodel +> f`
+                // as a final @submodel argument. Remove when bindings spell this directly.
+                if (i == call.args.size()-1 and is_template_submodel_arg(arg))
+                    E = {var("+>"), arg_expr, E};
+                else
+                    E = {E, arg_expr};
+            }
+            return E;
+        },
+        // Compiles a rule-template list by translating each element into a
+        // located Haskell expression.
+        [&](const CM::List<CM::NoAnn>& list) -> expression_ref
+        {
+            vector<Hs::LExp> located_args;
+            for(auto& element: list.elements)
+                located_args.push_back({noloc, make_rule_template_expr(element, simple_args)});
+            return Hs::List(located_args);
+        },
+        // Compiles a rule-template tuple by translating each element into a
+        // located Haskell expression.
+        [&](const CM::Tuple<CM::NoAnn>& tuple) -> expression_ref
+        {
+            vector<Hs::LExp> located_args;
+            for(auto& element: tuple.elements)
+                located_args.push_back({noloc, make_rule_template_expr(element, simple_args)});
+            return Hs::Tuple(located_args);
+        },
+        [](const CM::Let<CM::NoAnn>&) -> expression_ref { throw myexception()<<"let expressions are not allowed in rule templates."; },
+        // Preserves the old template lambda support by folding adjacent lambda
+        // nodes into one Haskell lambda expression.
+        [&](const CM::Lambda<CM::NoAnn>& lambda) -> expression_ref
+        {
+            auto pattern = std::get_if<CM::Var>(&lambda.pattern.get().node);
+            if (not pattern)
+                throw myexception()<<"Only variable lambda patterns are allowed in rule templates.";
+
+            auto body = make_rule_template_expr(lambda.body.get(), simple_args);
+            Hs::LPat p = {noloc, Hs::VarPattern({noloc,Hs::Var(pattern->name)})};
+
+            if (auto L = body.to<Hs::LambdaExp>())
+            {
+                auto LE = *L;
+                auto& pats = LE.match.patterns;
+                pats.insert(pats.begin(), p);
+                return LE;
+            }
+            else
+                return Hs::LambdaExp({p}, {noloc, body});
+        },
+        // Compatibility behavior: rule templates share the model parser, so
+        // sample(@dist) is parsed as Sample but means a Haskell sample call here.
+        [&](const CM::Sample<CM::NoAnn>& sample) -> expression_ref
+        {
+            auto dist = make_rule_template_expr(sample.dist.get(), simple_args);
+            return {var("sample"), dist};
         }
-    }
-
-    // Process arguments;
-    vector<expression_ref> args;
-    for(int i=0;i<call.children().size();i++)
-	args.push_back(make_call(call.children()[i].second, simple_args));
-
-    if (name == "List")
-    {
-	vector<Hs::LExp> located_args;
-	for(auto& arg: args)
-	    located_args.push_back({noloc,arg});
-	E = Hs::List(located_args);
-    }
-    else if (name == "Tuple")
-    {
-	vector<Hs::LExp> located_args;
-	for(auto& arg: args)
-	    located_args.push_back({noloc,arg});
-	E = Hs::Tuple(located_args);
-    }
-    else
-    {
-	// FIXME! Here is where we are assuming that unqualified ids are arg_var_NAME variables.
-	if (name[0] == '@')
-	{
-	    name = name.substr(1);
-	    try
-	    {
-		E = simple_args.at(name);
-	    }
-	    catch(...)
-	    {
-		throw myexception()<<"cannot find argument '"<<name<<"'";
-	    }
-	}
-	else
-	    E = var(name);
-
-	for(int i=0;i<call.children().size();i++)
-	{
-	    if (i == call.children().size()-1 and call.children()[i].second == "@submodel")
-		E = {var("+>"), args[i], E};
-	    else
-		E = {E, args[i]};
-	}
-    }	
-
-    return E;
+    }, expr.node);
 }
 
 vector<bool> get_args_referenced(const vector<string>& arg_names, const vector<set<string>>& used_args_for_arg)
@@ -852,14 +871,8 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
     result.imports = rule->imports;
 
     result.code.perform_function = rule->perform;
-    ptree rule_call = rule->call;
+    const auto& rule_call = rule->call;
     const auto& args = rule->args;
-
-    if (not is_haskell_qid(rule_call.get_value<string>()) and
-        not is_haskell_qsym(rule_call.get_value<string>()) and
-        not is_haskell_builtin_con_name(rule_call.get_value<string>()) and
-        not starts_with(rule_call.get_value<string>(),"@"))
-        throw myexception()<<"For rule '"<<name<<"', function '"<<rule_call.get_value<string>()<<"' doesn't seem to be a valid haskell id or a valid argument reference.";
 
     map<string,const CM::Arg<CM::Ann>*> typed_args;
     for(auto& arg: call.args)
@@ -978,7 +991,7 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
 
             auto& value = x.value;
             auto x_type = ptree("unknown_type");
-            result.code.stmts.let(x_var, make_call(value, argument_environment));
+            result.code.stmts.let(x_var, make_rule_template_expr(value, argument_environment));
 
             result.code.log_value(x_log_name, x_var, x_type);
 
@@ -988,7 +1001,7 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
 
     try
     {
-        result.code.E = make_call(rule_call, argument_environment);
+        result.code.E = make_rule_template_expr(rule_call, argument_environment);
 
         result.code.E = simplify_intToDouble(result.code.E);
     }

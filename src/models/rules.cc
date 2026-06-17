@@ -123,21 +123,18 @@ vector<RuleConstraint> parse_constraints(const ptree& cc)
     return constraints;
 }
 
-ptree parse_value(ptree call)
-{
-    auto s = call.get_value<string>();
-    if (s == "[]")
-	return ptree("[]");
-    else
-	// parse_type still uses [].  its not just for types.
-	return parse_expression(call.get_value<string>(),"call");
-}
-
 // Parses a binding-file model expression with legacy positional rewriting, then
 // stores it as CmdModel so later stages do not convert on every use.
 RuleModelExpr parse_rule_model_expr(const Rules& R, const string& text, const string& what)
 {
     return CM::model_expr_from_ptree(parse(R, text, what));
+}
+
+// Parses a binding-file rule template and stores it as CmdModel so codegen does
+// not need the legacy ptree representation for calls or computed expressions.
+RuleModelExpr parse_rule_template_expr(const string& text, const string& what)
+{
+    return CM::model_expr_from_ptree(parse_expression(text, what));
 }
 
 
@@ -207,7 +204,7 @@ Rule convert_rule(const Rules& R, const string& name, const ptree& raw_rule)
 
     {
 	auto call = raw_rule.get_child("call");
-	rule.call = parse_value(call);
+	rule.call = parse_rule_template_expr(call.get_value<string>(), name + ": call");
     }
 
     for(auto& [_,x]: raw_rule.get_child("args").children())
@@ -254,7 +251,7 @@ Rule convert_rule(const Rules& R, const string& name, const ptree& raw_rule)
 	{
             ComputedRule c;
             c.name = x.get_child("name").get_value<string>();
-	    c.value = parse_value(x.get_child("value"));
+	    c.value = parse_rule_template_expr(x.get_child("value").get_value<string>(), name + ": computed value for '"+c.name+"'");
             rule.computed.push_back(std::move(c));
 	}
     }

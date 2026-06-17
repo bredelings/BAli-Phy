@@ -14,10 +14,7 @@ using ParsedType = ptree;
 using RuleConstraint = ptree;
 using type_t = ptree;
 
-// Temporary split: rule model expressions use CmdModel, while rule call and
-// computed templates still use ptree until template codegen is migrated.
 using RuleModelExpr = CM::UntypedExpr;
-using RuleTemplateExpr = ptree;
 
 struct RuleArg
 {
@@ -31,7 +28,7 @@ struct RuleArg
 struct ComputedRule
 {
     std::string name;
-    RuleTemplateExpr value;
+    RuleModelExpr value;
 };
 
 struct RuleDocs
@@ -49,7 +46,7 @@ struct Rule
     std::string name;
     ParsedType result_type;
     std::vector<RuleConstraint> constraints;
-    RuleTemplateExpr call;
+    RuleModelExpr call;
     std::vector<RuleArg> args;
     std::set<std::string> imports;
     bool no_log = false;
