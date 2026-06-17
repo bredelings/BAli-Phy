@@ -710,6 +710,42 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
     return CM::TypedExpr{std::move(ann), std::move(typed_call)};
 }
 
+// Typechecks sample sugar using the sample binding rule, then returns the
+// dedicated AST Sample node expected by extraction and pretty-printing.
+optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    auto sample = std::get_if<CM::Sample<CM::NoAnn>>(&expr.node);
+    if (not sample)
+        return {};
+
+    CM::UntypedExpr sample_call{
+        CM::NoAnn{},
+        CM::Call<CM::NoAnn>{
+            "sample",
+            {
+                CM::Arg<CM::NoAnn>{
+                    "dist",
+                    CM::Box<CM::UntypedExpr>(sample->dist.get()),
+                    false,
+                    false,
+                    std::nullopt
+                }
+            }
+        }
+    };
+
+    auto typed_call_expr = typecheck_model_call(TC, required_type, sample_call);
+    assert(typed_call_expr);
+    auto& typed_call = std::get<CM::Call<CM::Ann>>(typed_call_expr->node);
+    assert(typed_call.args.size() == 1);
+    auto dist = std::move(typed_call.args[0].value.get());
+
+    return CM::TypedExpr{
+        std::move(typed_call_expr->ann),
+        CM::Sample<CM::Ann>{CM::Box<CM::TypedExpr>(std::move(dist))}
+    };
+}
+
 }
 
 // Dispatches AST expression typechecking to direct handlers, with a final
@@ -730,6 +766,8 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& req
         return *let;
     else if (auto lambda = typecheck_model_lambda(TC, required_type, expr))
         return *lambda;
+    else if (auto sample = typecheck_model_sample(TC, required_type, expr))
+        return *sample;
     else if (auto call = typecheck_model_call(TC, required_type, expr))
         return *call;
     else

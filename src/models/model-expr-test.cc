@@ -279,7 +279,7 @@ void test_typed_collection_and_special_round_trips()
     }), ptree("Tuple", {{"", ptree("Int")}, {"", ptree("String")}})));
 
     expect_typed_round_trip(ann(ptree("sample", {
-        {"", ann(ptree("normal", {
+        {"dist", arg_ann(ptree("normal", {
             {"", arg_ann(ptree(0), ptree("Double"))},
             {"", arg_ann(ptree(1), ptree("Double"))}
         }), ptree("Distribution", {{"", ptree("Double")}}))}
@@ -386,7 +386,7 @@ void test_typed_pretty_printing()
         {"n", suppressed}
     }), ptree("Model")));
 
-    auto sample = ann(ptree("sample", {{"", ann(ptree("normal"), ptree("Distribution", {{"", ptree("Double")}}))}}), ptree("Double"));
+    auto sample = ann(ptree("sample", {{"dist", arg_ann(ptree("normal"), ptree("Distribution", {{"", ptree("Double")}}))}}), ptree("Double"));
     assert(show_model_annotated(typed_model_expr_from_annotated_ptree(sample)) == show_model_annotated(sample));
 }
 
@@ -561,6 +561,33 @@ std::filesystem::path make_rule_fixture()
 })JSON";
     }
 
+    {
+        std::ofstream out(functions / "sample.json");
+        out << R"JSON({
+    "name": "sample",
+    "result_type": "a",
+    "perform": true,
+    "no_log": true,
+    "call": "sample(@dist)",
+    "args": [
+        {"name": "dist", "type": "Distribution<a>"}
+    ]
+})JSON";
+    }
+
+    {
+        std::ofstream out(functions / "normal.json");
+        out << R"JSON({
+    "name": "normal",
+    "result_type": "Distribution<Double>",
+    "call": "normal(@mu,@sigma)",
+    "args": [
+        {"name": "mu", "type": "Double"},
+        {"name": "sigma", "type": "Double"}
+    ]
+})JSON";
+    }
+
     return root;
 }
 
@@ -579,6 +606,9 @@ void test_typecheck_rule_wrapper_parity()
             {{"dna", ptree("Alphabet")}}
         );
         expect_typecheck_expr_parity(rules, ptree("Double"), ptree(1));
+        expect_typecheck_expr_parity(rules, ptree("Double"), ptree("sample", {
+            {"dist", ptree("normal", {{"mu", ptree(0)}, {"sigma", ptree(1)}})}
+        }));
     }
     catch (...)
     {
@@ -653,7 +683,7 @@ void test_extraction_parity()
     expect_extraction_parity(ann(ptree(1), ptree("Int")));
 
     auto sampled_arg = arg_ann(ptree("sample", {
-        {"", ann(ptree("normal", {
+        {"dist", arg_ann(ptree("normal", {
             {"", arg_ann(ptree(0), ptree("Double"))},
             {"", arg_ann(ptree(1), ptree("Double"))}
         }), make_type_app("Distribution", ptree("Double")))}

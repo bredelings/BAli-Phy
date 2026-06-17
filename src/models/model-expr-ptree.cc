@@ -224,7 +224,8 @@ TypedExpr typed_model_expr_from_value_ptree(Ann ann, const ptree& value)
     else if (name == "sample")
     {
         require_child_count(value, 1, "sample");
-        auto dist = typed_model_expr_from_annotated_ptree(value.children()[0].second);
+        auto& dist_value = value.count("dist") ? value.get_child("dist") : value.children()[0].second;
+        auto dist = typed_model_expr_from_annotated_ptree(dist_value);
         return {std::move(ann), Sample<Ann>{Box<TypedExpr>(std::move(dist))}};
     }
     else if (name == "get_state")
@@ -401,9 +402,13 @@ ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
                 {"", annotated_ptree_from_typed_model_expr(x.body.get())}
             });
         },
+        // Emits the codegen-facing sample rule shape, including argument
+        // metadata that is not stored on the dedicated AST Sample node.
         [](const Sample<Ann>& x) -> ptree
         {
-            return ptree("sample", {{"", annotated_ptree_from_typed_model_expr(x.dist.get())}});
+            auto dist = annotated_ptree_from_typed_model_expr(x.dist.get());
+            dist.children().push_back({"is_default_value", ptree(false)});
+            return ptree("sample", {{"dist", dist}});
         }
     }, expr.node);
 
