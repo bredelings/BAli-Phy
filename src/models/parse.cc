@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include "models/parse.H"
-#include "models/model-expr-ptree.H"
 #include "util/myexception.H"
 #include "util/string/convert.H"
 #include "util/string/join.H"
@@ -210,7 +209,7 @@ void handle_positional_args(Decls<NoAnn>& decls, const Rules& R)
 // normalizes positional arguments directly on the untyped model AST.
 UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what)
 {
-    auto model = model_expr_from_ptree(parse_expression(s, what));
+    auto model = parse_expression(s, what);
     handle_positional_args(model, R);
     return model;
 }
@@ -219,7 +218,7 @@ UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what
 // normalizes positional arguments directly on untyped AST declarations.
 Decls<NoAnn> parse_model_decls(const Rules& R, const string& s)
 {
-    auto decls = model_decls_from_ptree(parse_defs(s, "declarations"));
+    auto decls = parse_defs(s, "declarations");
     handle_positional_args(decls, R);
     return decls;
 }
@@ -911,35 +910,4 @@ bool is_constant(const ptree& model)
     string name = model.get_value<string>();
 
     return (name.size()>=2 and name[0] == '"' and name.back() == '"');
-}
-
-int add_arg_placeholder(ptree& p1, const ptree& arg)
-{
-    int n_placeholders = 0;
-
-    for(auto& [key,value]: p1.children())
-    {
-	if (value == "_")
-	{
-	    n_placeholders++;
-	    value = arg;
-	}
-    }
-
-    return n_placeholders;
-}
-
-
-ptree add_arg(const ptree& p1, const ptree& p2)
-{
-    ptree p3 = p2;
-
-    int n_placeholders = add_arg_placeholder(p3, p1);
-    if (n_placeholders > 1)
-	throw myexception()<<"Placeholder '_' may only occur once.";
-
-    if (n_placeholders == 0)
-	p3.children().insert(p3.children().begin(), {"",p1});
-
-    return p3;
 }

@@ -6,8 +6,7 @@
 #include "util/io.H"
 #include "util/json.hh"
 #include "models/compile.H"
-#include "models/model-expr-ptree.H"
-#include "models/parse.H" // for parse( )
+#include "models/parse.H"
 #include "models/driver.hh" // for parse_expression( )
 
 #include "computation/module.H"
@@ -123,18 +122,18 @@ vector<RuleConstraint> parse_constraints(const ptree& cc)
     return constraints;
 }
 
-// Compatibility boundary: binding model expressions still parse through ptree
-// for positional rewriting, then convert once to CmdModel at rule-load time.
+// Parses binding model expressions through the command-line model parser and
+// normalizes positional arguments over CmdModel.
 RuleModelExpr parse_rule_model_expr(const Rules& R, const string& text, const string& what)
 {
     return parse_model_expr(R, text, what);
 }
 
-// Compatibility boundary: rule templates still share the ptree model parser,
-// then convert once to CmdModel for codegen.
+// Compatibility boundary: rule templates still share the model parser syntax.
+// Remove when templates get their own parser or spelling.
 RuleModelExpr parse_rule_template_expr(const string& text, const string& what)
 {
-    return CM::model_expr_from_ptree(parse_expression(text, what));
+    return parse_expression(text, what);
 }
 
 

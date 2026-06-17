@@ -5,6 +5,7 @@
 # include <set>
 # include "parser.hh"
 # include "computation/message.H"
+# include "models/model-expr.H"
 # include "util/ptree.H"
 
 // Tell Flex the lexer's prototype ...
@@ -37,8 +38,10 @@ public:
     void push_error_message(const location_type& loc, const std::string& err);
     void pop_error_message();
 
-    // Store the result
-    ptree result;
+    // Store the result for the selected parser start symbol.
+    CM::UntypedExpr expression_result;
+    ptree type_result;
+    CM::Decls<CM::NoAnn> defs_result;
     // Run the parser on file F.  Return 0 on success.
     int parse_file (const std::string& filename, int stok);
     int parse_string (const std::string& content, const std::string& input_name, int stok);
@@ -61,8 +64,7 @@ public:
     bool check_closing_token() {return prec_close_count > 0;}
 };
 
-ptree parse_expression(const std::string&, const std::string&);
+CM::UntypedExpr parse_expression(const std::string&, const std::string&);
 ptree parse_type(const std::string&, const std::string&);
-ptree parse_defs(const std::string&, const std::string&);
+CM::Decls<CM::NoAnn> parse_defs(const std::string&, const std::string&);
 #endif // ! DRIVER_HH
-

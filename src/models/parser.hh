@@ -53,6 +53,7 @@
   # include <iostream>
   # include <vector>
   # include <tuple>
+  # include "models/model-expr.H"
   # include "util/ptree.H"
   # include "range/v3/all.hpp"
 
@@ -60,12 +61,12 @@
 
   class zz_driver;
 
-  ptree make_function(const std::vector<std::string>& vars, const ptree& body);
+  CM::UntypedExpr make_function(const std::vector<std::string>& vars, const CM::UntypedExpr& body);
   ptree make_type_app(ptree type, const std::vector<ptree>& args);
-  std::pair<std::string,ptree> make_function_def(zz_driver&, const yy::location&, const ptree& fncall, const ptree& body);
+  std::pair<std::string,CM::UntypedExpr> make_function_def(zz_driver&, const yy::location&, const CM::UntypedExpr& fncall, const CM::UntypedExpr& body);
 
 
-#line 69 "parser.hh"
+#line 70 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -214,7 +215,7 @@
 
 #line 6 "parser.y"
 namespace zz {
-#line 218 "parser.hh"
+#line 219 "parser.hh"
 
 
 
@@ -433,26 +434,32 @@ namespace zz {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
-      // "FLOAT"
-      char dummy1[sizeof (double)];
-
-      // "INTEGER"
-      char dummy2[sizeof (int)];
+      // arg
+      char dummy1[sizeof (CM::Arg<CM::NoAnn>)];
 
       // defs
+      char dummy2[sizeof (CM::Decls<CM::NoAnn>)];
+
       // exp
       // term
       // fncall
       // ditem
       // literal
+      char dummy3[sizeof (CM::UntypedExpr)];
+
+      // "FLOAT"
+      char dummy4[sizeof (double)];
+
+      // "INTEGER"
+      char dummy5[sizeof (int)];
+
       // type
       // btype
       // atype
-      char dummy3[sizeof (ptree)];
+      char dummy6[sizeof (ptree)];
 
       // def
-      // arg
-      char dummy4[sizeof (std::pair<std::string,ptree>)];
+      char dummy7[sizeof (std::pair<std::string,CM::UntypedExpr>)];
 
       // "VARID"
       // "VARSYM"
@@ -461,18 +468,20 @@ namespace zz {
       // "STRING"
       // qvarid
       // varid
-      char dummy5[sizeof (std::string)];
+      char dummy8[sizeof (std::string)];
 
-      // type_tup_args
-      char dummy6[sizeof (std::vector<ptree>)];
+      // args
+      char dummy9[sizeof (std::vector<CM::Arg<CM::NoAnn>>)];
 
       // ditems
-      // args
       // tup_args
-      char dummy7[sizeof (std::vector<std::pair<std::string,ptree>>)];
+      char dummy10[sizeof (std::vector<CM::UntypedExpr>)];
+
+      // type_tup_args
+      char dummy11[sizeof (std::vector<ptree>)];
 
       // varids
-      char dummy8[sizeof (std::vector<std::string>)];
+      char dummy12[sizeof (std::vector<std::string>)];
     };
 
     /// The size of the largest semantic type.
@@ -682,6 +691,22 @@ namespace zz {
       {
         switch (this->kind ())
     {
+      case symbol_kind::S_arg: // arg
+        value.move< CM::Arg<CM::NoAnn> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_defs: // defs
+        value.move< CM::Decls<CM::NoAnn> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_exp: // exp
+      case symbol_kind::S_term: // term
+      case symbol_kind::S_fncall: // fncall
+      case symbol_kind::S_ditem: // ditem
+      case symbol_kind::S_literal: // literal
+        value.move< CM::UntypedExpr > (std::move (that.value));
+        break;
+
       case symbol_kind::S_FLOAT: // "FLOAT"
         value.move< double > (std::move (that.value));
         break;
@@ -690,12 +715,6 @@ namespace zz {
         value.move< int > (std::move (that.value));
         break;
 
-      case symbol_kind::S_defs: // defs
-      case symbol_kind::S_exp: // exp
-      case symbol_kind::S_term: // term
-      case symbol_kind::S_fncall: // fncall
-      case symbol_kind::S_ditem: // ditem
-      case symbol_kind::S_literal: // literal
       case symbol_kind::S_type: // type
       case symbol_kind::S_btype: // btype
       case symbol_kind::S_atype: // atype
@@ -703,8 +722,7 @@ namespace zz {
         break;
 
       case symbol_kind::S_def: // def
-      case symbol_kind::S_arg: // arg
-        value.move< std::pair<std::string,ptree> > (std::move (that.value));
+        value.move< std::pair<std::string,CM::UntypedExpr> > (std::move (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -717,14 +735,17 @@ namespace zz {
         value.move< std::string > (std::move (that.value));
         break;
 
-      case symbol_kind::S_type_tup_args: // type_tup_args
-        value.move< std::vector<ptree> > (std::move (that.value));
+      case symbol_kind::S_args: // args
+        value.move< std::vector<CM::Arg<CM::NoAnn>> > (std::move (that.value));
         break;
 
       case symbol_kind::S_ditems: // ditems
-      case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
-        value.move< std::vector<std::pair<std::string,ptree>> > (std::move (that.value));
+        value.move< std::vector<CM::UntypedExpr> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.move< std::vector<ptree> > (std::move (that.value));
         break;
 
       case symbol_kind::S_varids: // varids
@@ -750,6 +771,48 @@ namespace zz {
 #else
       basic_symbol (typename Base::kind_type t, const location_type& l)
         : Base (t)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, CM::Arg<CM::NoAnn>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const CM::Arg<CM::NoAnn>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, CM::Decls<CM::NoAnn>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const CM::Decls<CM::NoAnn>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, CM::UntypedExpr&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const CM::UntypedExpr& v, const location_type& l)
+        : Base (t)
+        , value (v)
         , location (l)
       {}
 #endif
@@ -797,13 +860,13 @@ namespace zz {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::pair<std::string,ptree>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::pair<std::string,CM::UntypedExpr>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::pair<std::string,ptree>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::pair<std::string,CM::UntypedExpr>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -825,13 +888,13 @@ namespace zz {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<ptree>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::vector<CM::Arg<CM::NoAnn>>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::vector<ptree>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::vector<CM::Arg<CM::NoAnn>>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -839,13 +902,27 @@ namespace zz {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, std::vector<std::pair<std::string,ptree>>&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, std::vector<CM::UntypedExpr>&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const std::vector<std::pair<std::string,ptree>>& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const std::vector<CM::UntypedExpr>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<ptree>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<ptree>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -890,6 +967,22 @@ namespace zz {
         // Value type destructor.
 switch (yykind)
     {
+      case symbol_kind::S_arg: // arg
+        value.template destroy< CM::Arg<CM::NoAnn> > ();
+        break;
+
+      case symbol_kind::S_defs: // defs
+        value.template destroy< CM::Decls<CM::NoAnn> > ();
+        break;
+
+      case symbol_kind::S_exp: // exp
+      case symbol_kind::S_term: // term
+      case symbol_kind::S_fncall: // fncall
+      case symbol_kind::S_ditem: // ditem
+      case symbol_kind::S_literal: // literal
+        value.template destroy< CM::UntypedExpr > ();
+        break;
+
       case symbol_kind::S_FLOAT: // "FLOAT"
         value.template destroy< double > ();
         break;
@@ -898,12 +991,6 @@ switch (yykind)
         value.template destroy< int > ();
         break;
 
-      case symbol_kind::S_defs: // defs
-      case symbol_kind::S_exp: // exp
-      case symbol_kind::S_term: // term
-      case symbol_kind::S_fncall: // fncall
-      case symbol_kind::S_ditem: // ditem
-      case symbol_kind::S_literal: // literal
       case symbol_kind::S_type: // type
       case symbol_kind::S_btype: // btype
       case symbol_kind::S_atype: // atype
@@ -911,8 +998,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_def: // def
-      case symbol_kind::S_arg: // arg
-        value.template destroy< std::pair<std::string,ptree> > ();
+        value.template destroy< std::pair<std::string,CM::UntypedExpr> > ();
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -925,14 +1011,17 @@ switch (yykind)
         value.template destroy< std::string > ();
         break;
 
-      case symbol_kind::S_type_tup_args: // type_tup_args
-        value.template destroy< std::vector<ptree> > ();
+      case symbol_kind::S_args: // args
+        value.template destroy< std::vector<CM::Arg<CM::NoAnn>> > ();
         break;
 
       case symbol_kind::S_ditems: // ditems
-      case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
-        value.template destroy< std::vector<std::pair<std::string,ptree>> > ();
+        value.template destroy< std::vector<CM::UntypedExpr> > ();
+        break;
+
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.template destroy< std::vector<ptree> > ();
         break;
 
       case symbol_kind::S_varids: // varids
@@ -2173,6 +2262,22 @@ switch (yykind)
   {
     switch (this->kind ())
     {
+      case symbol_kind::S_arg: // arg
+        value.copy< CM::Arg<CM::NoAnn> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_defs: // defs
+        value.copy< CM::Decls<CM::NoAnn> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_exp: // exp
+      case symbol_kind::S_term: // term
+      case symbol_kind::S_fncall: // fncall
+      case symbol_kind::S_ditem: // ditem
+      case symbol_kind::S_literal: // literal
+        value.copy< CM::UntypedExpr > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_FLOAT: // "FLOAT"
         value.copy< double > (YY_MOVE (that.value));
         break;
@@ -2181,12 +2286,6 @@ switch (yykind)
         value.copy< int > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_defs: // defs
-      case symbol_kind::S_exp: // exp
-      case symbol_kind::S_term: // term
-      case symbol_kind::S_fncall: // fncall
-      case symbol_kind::S_ditem: // ditem
-      case symbol_kind::S_literal: // literal
       case symbol_kind::S_type: // type
       case symbol_kind::S_btype: // btype
       case symbol_kind::S_atype: // atype
@@ -2194,8 +2293,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_def: // def
-      case symbol_kind::S_arg: // arg
-        value.copy< std::pair<std::string,ptree> > (YY_MOVE (that.value));
+        value.copy< std::pair<std::string,CM::UntypedExpr> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -2208,14 +2306,17 @@ switch (yykind)
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_type_tup_args: // type_tup_args
-        value.copy< std::vector<ptree> > (YY_MOVE (that.value));
+      case symbol_kind::S_args: // args
+        value.copy< std::vector<CM::Arg<CM::NoAnn>> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_ditems: // ditems
-      case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
-        value.copy< std::vector<std::pair<std::string,ptree>> > (YY_MOVE (that.value));
+        value.copy< std::vector<CM::UntypedExpr> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.copy< std::vector<ptree> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_varids: // varids
@@ -2253,6 +2354,22 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
+      case symbol_kind::S_arg: // arg
+        value.move< CM::Arg<CM::NoAnn> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_defs: // defs
+        value.move< CM::Decls<CM::NoAnn> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_exp: // exp
+      case symbol_kind::S_term: // term
+      case symbol_kind::S_fncall: // fncall
+      case symbol_kind::S_ditem: // ditem
+      case symbol_kind::S_literal: // literal
+        value.move< CM::UntypedExpr > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_FLOAT: // "FLOAT"
         value.move< double > (YY_MOVE (s.value));
         break;
@@ -2261,12 +2378,6 @@ switch (yykind)
         value.move< int > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_defs: // defs
-      case symbol_kind::S_exp: // exp
-      case symbol_kind::S_term: // term
-      case symbol_kind::S_fncall: // fncall
-      case symbol_kind::S_ditem: // ditem
-      case symbol_kind::S_literal: // literal
       case symbol_kind::S_type: // type
       case symbol_kind::S_btype: // btype
       case symbol_kind::S_atype: // atype
@@ -2274,8 +2385,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_def: // def
-      case symbol_kind::S_arg: // arg
-        value.move< std::pair<std::string,ptree> > (YY_MOVE (s.value));
+        value.move< std::pair<std::string,CM::UntypedExpr> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_VARID: // "VARID"
@@ -2288,14 +2398,17 @@ switch (yykind)
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_type_tup_args: // type_tup_args
-        value.move< std::vector<ptree> > (YY_MOVE (s.value));
+      case symbol_kind::S_args: // args
+        value.move< std::vector<CM::Arg<CM::NoAnn>> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_ditems: // ditems
-      case symbol_kind::S_args: // args
       case symbol_kind::S_tup_args: // tup_args
-        value.move< std::vector<std::pair<std::string,ptree>> > (YY_MOVE (s.value));
+        value.move< std::vector<CM::UntypedExpr> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_type_tup_args: // type_tup_args
+        value.move< std::vector<ptree> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_varids: // varids
@@ -2369,7 +2482,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 2373 "parser.hh"
+#line 2486 "parser.hh"
 
 
 

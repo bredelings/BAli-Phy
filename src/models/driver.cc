@@ -62,25 +62,25 @@ zz_driver::parse_string (const string& file_contents, const std::string &input_n
   return res;
 }
 
-ptree parse_expression(const string& content, const string& input_name)
+CM::UntypedExpr parse_expression(const string& content, const string& input_name)
 {
     zz_driver D;
     D.parse_string(content, input_name, 1);
-    return D.result;
+    return D.expression_result;
 }
 
 ptree parse_type(const string& content, const string& input_name)
 {
     zz_driver D;
     D.parse_string(content, input_name, 2);
-    return D.result;
+    return D.type_result;
 }
 
-ptree parse_defs(const string& content, const string& input_name)
+CM::Decls<CM::NoAnn> parse_defs(const string& content, const string& input_name)
 {
     zz_driver D;
     D.parse_string(content, input_name, 3);
-    return D.result;
+    return D.defs_result;
 }
 
 int zz_driver::get_start_token()
