@@ -505,6 +505,69 @@ optional<CM::TypedExpr> typecheck_model_get_state(const TypecheckingState& TC, c
     return CM::TypedExpr{model_ann(required_type), *get_state};
 }
 
+optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    auto let = std::get_if<CM::Let<CM::NoAnn>>(&expr.node);
+    if (not let)
+        return {};
+
+    set<string> used_args;
+    auto scope2 = TC;
+    auto decls2 = typecheck_model_decls(scope2, let->decls);
+    for(auto& [name, decl_expr]: decls2)
+        add(used_args, decl_expr.ann.used_args);
+
+    auto body2 = typecheck_model_expr(scope2, required_type, let->body.get());
+    add(used_args, body2.ann.used_args);
+    TC.eqs = scope2.eqs;
+
+    return CM::TypedExpr{
+        model_ann(required_type, std::move(used_args)),
+        CM::Let<CM::Ann>{std::move(decls2), CM::Box<CM::TypedExpr>(std::move(body2))}
+    };
+}
+
+optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    auto lambda = std::get_if<CM::Lambda<CM::NoAnn>>(&expr.node);
+    if (not lambda)
+        return {};
+
+    auto pattern = CM::ptree_from_model_expr(lambda->pattern.get());
+    auto [a, type_for_binder] = TC.parse_pattern(pattern);
+
+    auto scope2 = TC;
+    for(auto& [var,type]: type_for_binder)
+        scope2.extend_scope(var, type);
+
+    auto b = TC.get_fresh_type_var("b");
+    auto ftype = make_type_apps("Function", {a, b});
+    TC.eqs = TC.eqs && unify(ftype, required_type);
+    if (not TC.eqs)
+        throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
+
+    if (auto btype = TC.eqs.value_of_var(b))
+        b = *btype;
+
+    auto body2 = typecheck_model_expr(scope2, b, lambda->body.get());
+    TC.eqs = TC.eqs && scope2.eqs;
+    auto used_args = body2.ann.used_args;
+
+    if (auto atype = TC.eqs.value_of_var(a))
+        a = *atype;
+
+    auto pattern2 = typecheck_model_expr(scope2, a, lambda->pattern.get());
+    substitute(TC.eqs, ftype);
+
+    return CM::TypedExpr{
+        model_ann(ftype, std::move(used_args)),
+        CM::Lambda<CM::Ann>{
+            CM::Box<CM::TypedExpr>(std::move(pattern2)),
+            CM::Box<CM::TypedExpr>(std::move(body2))
+        }
+    };
+}
+
 }
 
 CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
@@ -519,6 +582,10 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& req
         return *tuple;
     else if (auto get_state = typecheck_model_get_state(TC, required_type, expr))
         return *get_state;
+    else if (auto let = typecheck_model_let(TC, required_type, expr))
+        return *let;
+    else if (auto lambda = typecheck_model_lambda(TC, required_type, expr))
+        return *lambda;
     else
         return typecheck_model_expr_via_ptree(TC, required_type, expr);
 }
