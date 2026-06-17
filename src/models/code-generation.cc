@@ -1,7 +1,5 @@
 #include "code-generation.H"
 
-#include "models/model-expr-ptree.H"
-#include "parse.H"                         // for is_constant( )
 #include "rules.H"                         // for Rules
 #include "util/set.H"                      // for add, plus, minus
 #include "util/log-level.H"                // for log_verbose
@@ -185,63 +183,98 @@ expression_ref generated_code_t::add_arguments(const expression_ref& F, const st
     return E;
 }
 
-bool CodeGenState::is_random(const ptree& model_) const
+// Detects whether a typed model expression contains a random expression,
+// including let-declared random variables visible in the current scope.
+bool CodeGenState::is_random(const CM::TypedExpr& model) const
 {
-    auto model = model_.get_child("value");
-
-    if (is_constant(model)) return false;
-
-    auto name = model.get_value<string>();
-
-    // 1. If this function is random, then yes.
-    if (name == "sample") return true;
-
-    // 2. If this is a random variable, then yes.
-    if (not model.children().size() and model.is_a<string>())
-        if (identifiers.count(name) and identifiers.at(name).is_random) return true;
-
-    // 3. Otherwise check if children are random and unlogged
-    if (name == "!let")
-    {
-	for (auto& [var,exp]: model.children()[0].second.children())
-	    if (is_random(exp))
-		return true;
-    }
-    else
-    {
-	for(const auto& [arg,exp]: model.children())
-	    if (is_random(exp))
-		return true;
-    }
-
-    return false;
+    return std::visit(CM::overloaded{
+        [](const CM::IntLiteral&) { return false; },
+        [](const CM::DoubleLiteral&) { return false; },
+        [](const CM::BoolLiteral&) { return false; },
+        [](const CM::StringLiteral&) { return false; },
+        [&](const CM::Var& var)
+        {
+            return identifiers.count(var.name) and identifiers.at(var.name).is_random;
+        },
+        [](const CM::ArgRef&) { return false; },
+        [](const CM::Placeholder&) { return false; },
+        [&](const CM::GetState&) { return false; },
+        [&](const CM::Call<CM::Ann>& call)
+        {
+            if (call.function == "sample") return true;
+            for(auto& arg: call.args)
+                if (arg.value and is_random(arg.value->get())) return true;
+            return false;
+        },
+        [&](const CM::List<CM::Ann>& list)
+        {
+            for(auto& element: list.elements)
+                if (is_random(element)) return true;
+            return false;
+        },
+        [&](const CM::Tuple<CM::Ann>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                if (is_random(element)) return true;
+            return false;
+        },
+        [&](const CM::Let<CM::Ann>& let)
+        {
+            for(auto& [_, expr]: let.decls)
+                if (is_random(expr)) return true;
+            return false;
+        },
+        [&](const CM::Lambda<CM::Ann>& lambda)
+        {
+            return is_random(lambda.body.get());
+        },
+        [](const CM::Sample<CM::Ann>&) { return true; }
+    }, model.node);
 }
 
-bool CodeGenState::is_unlogged_random(const ptree& model_) const
+// Detects random expressions that still need parent logging; loggable function
+// calls are treated as having already logged their random children.
+bool CodeGenState::is_unlogged_random(const CM::TypedExpr& model) const
 {
-    auto model = model_.get_child("value");
-
-    if (is_constant(model)) return false;
-
-    auto name = model.get_value<string>();
-
-    // 1. If this function is random, then yes.
-    if (name == "sample") return true;
-
-    // Don't treat let-declared random variables as unlogged.
-    // 2. If this is a random variable, then yes.
-    // if (not model.size() and model.is_a<string>())
-    //    if (scope.identifiers.count(name) and scope.identifiers.at(name).is_random) return true;
-
-    // 3. If this function is loggable then any random children have already been logged.
-    if (is_loggable_function(*R, name)) return false;
-
-    // 4. Otherwise check if children are random and unlogged
-    for(const auto& [_,child]: model.children())
-        if (is_unlogged_random(child))
-            return true;
-
-    return false;
+    return std::visit(CM::overloaded{
+        [](const CM::IntLiteral&) { return false; },
+        [](const CM::DoubleLiteral&) { return false; },
+        [](const CM::BoolLiteral&) { return false; },
+        [](const CM::StringLiteral&) { return false; },
+        [](const CM::Var&) { return false; },
+        [](const CM::ArgRef&) { return false; },
+        [](const CM::Placeholder&) { return false; },
+        [](const CM::GetState&) { return false; },
+        [&](const CM::Call<CM::Ann>& call)
+        {
+            if (call.function == "sample") return true;
+            if (is_loggable_function(*R, call.function)) return false;
+            for(auto& arg: call.args)
+                if (arg.value and is_unlogged_random(arg.value->get())) return true;
+            return false;
+        },
+        [&](const CM::List<CM::Ann>& list)
+        {
+            for(auto& element: list.elements)
+                if (is_unlogged_random(element)) return true;
+            return false;
+        },
+        [&](const CM::Tuple<CM::Ann>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                if (is_unlogged_random(element)) return true;
+            return false;
+        },
+        [&](const CM::Let<CM::Ann>& let)
+        {
+            for(auto& [_, expr]: let.decls)
+                if (is_unlogged_random(expr)) return true;
+            if (is_unlogged_random(let.body.get())) return true;
+            return false;
+        },
+        [](const CM::Lambda<CM::Ann>&) { return false; },
+        [](const CM::Sample<CM::Ann>&) { return true; }
+    }, model.node);
 }
 
 CodeGenState CodeGenState::extend_scope(const string& var, const var_info_t& var_info) const
@@ -266,13 +299,6 @@ int get_index_for_arg_name(const Rule& rule, const string& arg_name)
     throw myexception()<<"No arg named '"<<arg_name<<"'";
 }
 
-// Compatibility boundary: old callers may still pass annotated ptree
-// declarations. Convert once at the boundary and use typed declaration codegen.
-translation_result_t CodeGenState::get_model_decls(const ptree& model)
-{
-    return get_model_decls(CM::typed_model_decls_from_annotated_ptree(model));
-}
-
 // Generates code for typed declarations without converting the declaration
 // container or expression bodies through annotated ptree codegen.
 translation_result_t CodeGenState::get_model_decls(const CM::TypedDecls& decls)
@@ -281,13 +307,9 @@ translation_result_t CodeGenState::get_model_decls(const CM::TypedDecls& decls)
 
     for(auto& [var_name, var_exp]: decls)
     {
-        // Compatibility boundary: random detection still reads annotated
-        // ptree. Remove when is_random() accepts CM::TypedExpr.
-        auto var_exp_ptree = CM::annotated_ptree_from_typed_model_expr(var_exp);
-
         var x = get_var(var_name);
         var log_x = get_var("log_" + var_name);
-        bool x_is_random = is_random(var_exp_ptree);
+        bool x_is_random = is_random(var_exp);
         var_info_t var_info(x, x_is_random);
 
         // 1. Perform the variable expression
@@ -507,13 +529,6 @@ vector<int> get_args_order(const vector<string>& arg_names, const vector<set<str
 }
 
 
-// Compatibility boundary: old callers may still pass annotated ptree
-// expressions. Convert once at the boundary and use typed expression codegen.
-translation_result_t CodeGenState::get_model_as(const ptree& model_rep) const
-{
-    return get_model_as(CM::typed_model_expr_from_annotated_ptree(model_rep));
-}
-
 // Builds generated code for a typed literal expression without passing through
 // the annotated-ptree constant helper.
 translation_result_t get_typed_constant_model(const CM::TypedExpr& expr)
@@ -603,10 +618,7 @@ translation_result_t CodeGenState::get_typed_model_list(const CM::List<CM::Ann>&
         auto log_x = scope2.get_var("log"+var_name);
         use_block(result, log_x, element_result, log_name);
 
-        // Compatibility boundary: random/logging predicates still inspect
-        // annotated ptree. Remove when they read CM::TypedExpr directly.
-        auto element_ptree = CM::annotated_ptree_from_typed_model_expr(element);
-        bool do_log = is_unlogged_random(element_ptree) and is_loggable_type(element.ann.type);
+        bool do_log = is_unlogged_random(element) and is_loggable_type(element.ann.type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         else if (do_log and not is_var(element_result.code.E))
@@ -648,10 +660,7 @@ translation_result_t CodeGenState::get_typed_model_tuple(const CM::Tuple<CM::Ann
         auto log_x = scope2.get_var("log"+var_name);
         use_block(result, log_x, element_result, log_name);
 
-        // Compatibility boundary: random/logging predicates still inspect
-        // annotated ptree. Remove when they read CM::TypedExpr directly.
-        auto element_ptree = CM::annotated_ptree_from_typed_model_expr(element);
-        bool do_log = is_unlogged_random(element_ptree) and is_loggable_type(element.ann.type);
+        bool do_log = is_unlogged_random(element) and is_loggable_type(element.ann.type);
         if (element_result.code.perform_function)
             result.code.stmts.perform(x, element_result.code.E);
         else if (do_log and not is_var(element_result.code.E))
@@ -798,10 +807,7 @@ translation_result_t CodeGenState::get_typed_variable_call(const CM::Call<CM::An
         var x = scope2.get_var(var_name);
         var log_x = scope2.get_var("log_" + var_name);
 
-        // Compatibility boundary: unlogged-random detection still reads
-        // annotated ptree. Remove when it accepts CM::TypedExpr.
-        auto arg_ptree = CM::annotated_ptree_from_typed_model_expr(arg_expr);
-        bool do_log = is_unlogged_random(arg_ptree) and is_loggable_type(arg_expr.ann.type) and arg_model.lambda_vars.empty();
+        bool do_log = is_unlogged_random(arg_expr) and is_loggable_type(arg_expr.ann.type) and arg_model.lambda_vars.empty();
 
         use_block(result, log_x, arg_model, log_name);
         expression_ref applied_arg = arg_code.E;
@@ -946,10 +952,7 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
         auto x = arg_vars[i];
         auto log_x = log_vars[i];
 
-        // Compatibility boundary: rule-call logging still uses the old
-        // unlogged-random predicate. Remove when it reads CM::TypedExpr.
-        auto arg_ptree = CM::annotated_ptree_from_typed_model_expr(arg_expr);
-        bool do_log = is_loggable_function(*R, name) and is_unlogged_random(arg_ptree) and is_loggable_type(arg_expr.ann.type) and arg_models[i].lambda_vars.empty();
+        bool do_log = is_loggable_function(*R, name) and is_unlogged_random(arg_expr) and is_loggable_type(arg_expr.ann.type) and arg_models[i].lambda_vars.empty();
 
         use_block(result, log_x, arg_models[i], log_names[i]);
         if (arg_models[i].code.perform_function)

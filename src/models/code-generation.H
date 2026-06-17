@@ -86,8 +86,8 @@ struct CodeGenState
     std::optional<arg_env_t> arg_env;
     std::map<std::string, var> state;
 
-    bool is_random(const ptree&) const;
-    bool is_unlogged_random(const ptree& model) const;
+    bool is_random(const CM::TypedExpr&) const;
+    bool is_unlogged_random(const CM::TypedExpr& model) const;
 
     var get_var(std::string name)
     {
@@ -112,7 +112,6 @@ struct CodeGenState
     CodeGenState& extend_modify_scope(const std::string& var, const var_info_t& var_info);
 
     translation_result_t get_model_decls(const CM::TypedDecls& decls);
-    translation_result_t get_model_decls(const ptree& model);
     translation_result_t get_typed_variable_model(const CM::TypedExpr& model) const;
     translation_result_t get_typed_model_state(const CM::GetState& get_state) const;
     translation_result_t get_typed_model_list(const CM::List<CM::Ann>& list) const;
@@ -124,7 +123,6 @@ struct CodeGenState
     translation_result_t get_typed_model_call(const CM::Call<CM::Ann>& call) const;
     translation_result_t get_typed_model_sample(const CM::Sample<CM::Ann>& sample) const;
     translation_result_t get_model_as(const CM::TypedExpr& model_rep) const;
-    translation_result_t get_model_as(const ptree& model_rep) const;
 
     CodeGenState(const Rules& r):R(&r) {}
 };
