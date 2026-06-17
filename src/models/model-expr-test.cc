@@ -584,6 +584,38 @@ void test_typecheck_expr_wrapper_parity()
     );
 }
 
+// Checks that function-valued variables propagate used_args from positional
+// arguments, including when the callee is itself an @arg reference.
+void test_typecheck_variable_function_used_args()
+{
+    Rules rules({});
+
+    // Typechecks one variable-function call and checks the exact used_args set
+    // on the typed result.
+    auto expect_used_args = [&](const ptree& model, const std::map<std::string,ptree>& identifiers, const std::map<std::string,ptree>& args, const std::set<std::string>& expected)
+    {
+        auto TC = test_typechecker(rules, identifiers);
+        TC.args = args;
+        auto typed = typecheck_model_expr(TC, ptree("Double"), model_expr_from_ptree(model));
+        assert(typed.ann.used_args == expected);
+    };
+
+    auto f_type = make_type_apps("Function", {ptree("Int"), ptree("Double")});
+    expect_used_args(
+        ptree("f", {{"", ptree("@x")}}),
+        {{"f", f_type}},
+        {{"x", ptree("Int")}},
+        {"x"}
+    );
+
+    expect_used_args(
+        ptree("@f", {{"", ptree("@x")}}),
+        {},
+        {{"f", f_type}, {"x", ptree("Int")}},
+        {"f", "x"}
+    );
+}
+
 // Verifies expression typechecker failures that are intentionally clearer
 // than the old fallback-to-ptree behavior.
 // Checks direct AST typechecker diagnostics for unsupported expression cases.
@@ -928,6 +960,7 @@ int main()
     test_typed_pretty_printing();
     test_typed_substitution();
     test_typecheck_expr_wrapper_parity();
+    test_typecheck_variable_function_used_args();
     test_typecheck_direct_errors();
     test_typecheck_decls_wrapper_parity();
     test_typecheck_rule_wrapper_parity();
