@@ -493,10 +493,9 @@ one case at a time:
 - function calls
 
 Current status: `typecheck_model_expr(...)` now has direct AST handlers for
-these expression cases, but it is not yet the production typechecker.  It is
-used by tests and recursively by the new AST handlers.  The production compile
-path still calls `TypecheckingState::typecheck_and_annotate(...)` through the
-annotated-`ptree` pipeline.
+these expression cases and `compile_model(...)` uses it in production.
+`compile_model(...)` still converts the typed AST back to annotated `ptree` at
+the extraction/code-generation boundary.
 
 The expression typechecker still has a bridge fallback:
 
@@ -504,9 +503,10 @@ The expression typechecker still has a bridge fallback:
 typecheck_model_expr_via_ptree(...)
 ```
 
-Keep this fallback only while required for conversion cases and legacy shapes.
-Every remaining fallback use should either be ported directly or documented as
-an intentionally unsupported/legacy shape before the compile path switches.
+Keep this fallback only while required for legacy shapes.  Conversion insertion
+now builds AST conversion calls directly for `intToDouble`, `discrete`,
+`unit_mixture`, `convertDiscrete`, `multiMixtureModel`, and `f`.  Tests should
+make fallback use visible for representative production-supported expressions.
 
 Keep type representation unchanged:
 
@@ -541,11 +541,11 @@ CM::Arg::suppress_default
 
 Run invariant checks on the result.
 
-Do not switch the main compile path to `typecheck_model_expr(...)` merely
-because most expression cases have direct handlers.  The compile path should
-wait until declaration typechecking, extraction, and code generation have
-direct AST paths too, and until production no longer relies on bridge fallback
-conversion through annotated `ptree`.
+The main `compile_model(...)` path has switched to `typecheck_model_expr(...)`
+incrementally: parsing and typechecking are AST-based, while extraction and
+code generation still consume annotated `ptree` through an explicit
+compatibility boundary.  Do not broaden this to `compile_decls(...)` until the
+remaining declaration and fallback risks are audited.
 
 ## Phase 10c: Port Declaration Typechecking And Remove Typechecker Fallback
 
@@ -568,9 +568,9 @@ The direct declaration port should:
   declarations
 
 After direct declaration typechecking exists, audit every call to
-`typecheck_model_expr_via_ptree(...)`.  Conversion fallback for inserted
-conversion functions, such as `intToDouble`, may require direct AST support for
-conversion nodes before the fallback can be removed completely.
+`typecheck_model_expr_via_ptree(...)`.  The conversion cases above should not
+need the fallback; remaining fallback use should identify unsupported legacy
+expression shapes or missing direct AST handlers.
 
 The old `TypecheckingState::typecheck_and_annotate_*` functions cannot be
 removed until:
@@ -580,6 +580,10 @@ removed until:
 - `typecheck_model_expr(...)` no longer falls back to
   `typecheck_model_expr_via_ptree(...)` for production-supported expressions
 - extraction and code generation no longer require annotated `ptree`
+
+Current status: `compile_model(...)` no longer calls
+`TypecheckingState::typecheck_and_annotate(...)`, but `compile_decls(...)`
+still calls `TypecheckingState::typecheck_and_annotate_decls(...)`.
 
 ## Phase 11: Port Substitution Helpers
 
@@ -672,24 +676,25 @@ implementations so semantic drift is visible during parity testing.
 
 ## Phase 13: Switch Compile Path
 
-Change `compile_model(...)`:
+`compile_model(...)` currently performs:
 
 1. `parse_model_expr(...)`
 2. `typecheck_model_expr(...)`
 3. `substitute_annotated(...)`
-4. code generation from `CM::TypedExpr`
-5. return `model_t` storing `CM::TypedExpr`
+4. compatibility conversion to annotated `ptree`
+5. existing annotated-`ptree` extraction and code generation
 
-Change `compile_decls(...)` similarly using `CM::Decls`.
+Later, change `compile_decls(...)` similarly using `CM::Decls`.
 
 Keep compatibility conversion only where an old API still needs annotated
 `ptree`.
 
-Do not use bridge implementations that convert `CM::TypedExpr` back to
-annotated `ptree` as the production path for this phase.
+The current `CM::TypedExpr` back to annotated-`ptree` conversion is an explicit
+temporary production compatibility boundary.  Remove it once extraction,
+code generation, and `model_t` store/consume typed AST directly.
 
-Before this phase, verify explicitly that `compile_model(...)` and
-`compile_decls(...)` no longer depend on:
+Before the final direct-AST compile phase, verify explicitly that
+`compile_model(...)` and `compile_decls(...)` no longer depend on:
 
 - `TypecheckingState::typecheck_and_annotate(...)`
 - `TypecheckingState::typecheck_and_annotate_decls(...)`
