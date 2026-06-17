@@ -28,20 +28,11 @@ struct TypecheckingState
     std::optional<ptree> type_for_arg(const std::string& name) const;
     void extend_scope(const std::string& var, const ptree type);
     TypecheckingState extended_scope(const std::string& var, const ptree type) const;
-    std::optional<ptree> typecheck_and_annotate_let(const ptree& required_type, const ptree& model) const;
-    std::optional<ptree> typecheck_and_annotate_lambda(const ptree& required_type, const ptree& model) const;
-    std::optional<ptree> typecheck_and_annotate_tuple(const ptree& required_type, const ptree& model) const;
-    std::optional<ptree> typecheck_and_annotate_list(const ptree& required_type, const ptree& model) const;
-    std::optional<ptree> typecheck_and_annotate_get_state(const ptree& required_type, const ptree& model) const;
-    std::optional<ptree> typecheck_and_annotate_var(const ptree& required_type, const ptree& model) const;
-    std::optional<ptree> typecheck_and_annotate_constant(const ptree& required_type, const ptree& model) const;
-    ptree typecheck_and_annotate_function(const ptree& required_type, const ptree& model) const;
     ptree typecheck_and_annotate(const ptree& required_type, const ptree& model) const;
     std::pair<ptree, std::map<std::string,ptree>> parse_pattern(const ptree& pattern) const;
 
     void add_states(const std::map<std::string,std::pair<std::string,ptree>>&);
 
-    std::optional<ptree> unify_or_convert(const ptree& model, const ptree& type, const ptree& required_type) const;
     std::optional<CM::UntypedExpr> unify_or_convert_model_expr(const CM::UntypedExpr& model, const ptree& type, const ptree& required_type) const;
 
     TypecheckingState(const Rules& r, const std::shared_ptr<const FVSource>& fv, const std::map<std::string,ptree>& id = {}, const std::map<std::string,ptree>& st = {})
