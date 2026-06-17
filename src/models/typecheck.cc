@@ -428,6 +428,83 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
     return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(node)};
 }
 
+optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    auto list = std::get_if<CM::List<CM::NoAnn>>(&expr.node);
+    if (not list)
+        return {};
+
+    auto element_required_type = TC.get_fresh_type_var("a");
+    auto result_type = make_type_app("List", element_required_type);
+    auto model = CM::ptree_from_model_expr(expr);
+    if (auto converted = TC.unify_or_convert(model, result_type, required_type))
+        return typecheck_model_expr_via_ptree(TC, required_type, CM::model_expr_from_ptree(*converted));
+
+    substitute(TC.eqs, element_required_type);
+
+    set<string> used_args;
+    CM::List<CM::Ann> typed_list;
+    for(auto& element: list->elements)
+    {
+        auto element2 = typecheck_model_expr(TC, element_required_type, element);
+        add(used_args, element2.ann.used_args);
+        if (not TC.eqs)
+            throw myexception()<<"Expression '"<<unparse_annotated(CM::annotated_ptree_from_typed_model_expr(element2))<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
+        typed_list.elements.push_back(std::move(element2));
+    }
+
+    substitute(TC.eqs, result_type);
+    return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(typed_list)};
+}
+
+optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    auto tuple = std::get_if<CM::Tuple<CM::NoAnn>>(&expr.node);
+    if (not tuple)
+        return {};
+
+    vector<ptree> element_required_types;
+    for(int i=0; i<tuple->elements.size(); i++)
+        element_required_types.push_back(TC.get_fresh_type_var("a"));
+    auto result_type = make_type_apps("Tuple", element_required_types);
+
+    auto model = CM::ptree_from_model_expr(expr);
+    if (auto converted = TC.unify_or_convert(model, result_type, required_type))
+        return typecheck_model_expr_via_ptree(TC, required_type, CM::model_expr_from_ptree(*converted));
+
+    set<string> used_args;
+    CM::Tuple<CM::Ann> typed_tuple;
+    for(int i=0; i<tuple->elements.size(); i++)
+    {
+        auto element_required_type = element_required_types[i];
+        substitute(TC.eqs, element_required_type);
+        auto element2 = typecheck_model_expr(TC, element_required_type, tuple->elements[i]);
+        add(used_args, element2.ann.used_args);
+        if (not TC.eqs)
+            throw myexception()<<"Expression '"<<unparse_annotated(CM::annotated_ptree_from_typed_model_expr(element2))<<"' is not of required type "<<unparse_type(element_required_type)<<"!";
+        typed_tuple.elements.push_back(std::move(element2));
+    }
+
+    substitute(TC.eqs, result_type);
+    return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(typed_tuple)};
+}
+
+optional<CM::TypedExpr> typecheck_model_get_state(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    auto get_state = std::get_if<CM::GetState>(&expr.node);
+    if (not get_state)
+        return {};
+
+    if (not TC.state.count(get_state->state_name))
+        throw myexception()<<"translate: no state '"<<get_state->state_name<<"'!";
+    auto result_type = TC.state.at(get_state->state_name);
+    TC.eqs = TC.eqs && unify(result_type, required_type);
+    if (not TC.eqs)
+        throw myexception()<<"get_state: state '"<<get_state->state_name<<"' is of type '"<<unparse_type(result_type)<<"', not required type '"<<unparse_type(required_type)<<"'";
+
+    return CM::TypedExpr{model_ann(required_type), *get_state};
+}
+
 }
 
 CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
@@ -436,6 +513,12 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& req
         return *constant;
     else if (auto var = typecheck_model_var(TC, required_type, expr))
         return *var;
+    else if (auto list = typecheck_model_list(TC, required_type, expr))
+        return *list;
+    else if (auto tuple = typecheck_model_tuple(TC, required_type, expr))
+        return *tuple;
+    else if (auto get_state = typecheck_model_get_state(TC, required_type, expr))
+        return *get_state;
     else
         return typecheck_model_expr_via_ptree(TC, required_type, expr);
 }
