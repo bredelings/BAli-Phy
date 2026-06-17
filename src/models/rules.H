@@ -6,27 +6,32 @@
 #include <optional>
 #include <set>
 #include <vector>
+#include "models/model-expr.H"
 #include "util/ptree.H"
 #include <filesystem>
 
 using ParsedType = ptree;
-using ParsedExpr = ptree;
 using RuleConstraint = ptree;
 using type_t = ptree;
+
+// Temporary split: rule model expressions use CmdModel, while rule call and
+// computed templates still use ptree until template codegen is migrated.
+using RuleModelExpr = CM::UntypedExpr;
+using RuleTemplateExpr = ptree;
 
 struct RuleArg
 {
     std::string name;
     ParsedType type;
-    std::optional<ParsedExpr> default_value;
-    std::optional<ParsedExpr> alphabet;
+    std::optional<RuleModelExpr> default_value;
+    std::optional<RuleModelExpr> alphabet;
     std::optional<std::string> description;
 };
 
 struct ComputedRule
 {
     std::string name;
-    ParsedExpr value;
+    RuleTemplateExpr value;
 };
 
 struct RuleDocs
@@ -44,7 +49,7 @@ struct Rule
     std::string name;
     ParsedType result_type;
     std::vector<RuleConstraint> constraints;
-    ParsedExpr call;
+    RuleTemplateExpr call;
     std::vector<RuleArg> args;
     std::set<std::string> imports;
     bool no_log = false;

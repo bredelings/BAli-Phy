@@ -6,6 +6,7 @@
 #include "util/io.H"
 #include "util/json.hh"
 #include "models/compile.H"
+#include "models/model-expr-ptree.H"
 #include "models/parse.H" // for is_constant( )
 #include "models/driver.hh" // for parse_expression( )
 
@@ -132,6 +133,13 @@ ptree parse_value(ptree call)
 	return parse_expression(call.get_value<string>(),"call");
 }
 
+// Parses a binding-file model expression with legacy positional rewriting, then
+// stores it as CmdModel so later stages do not convert on every use.
+RuleModelExpr parse_rule_model_expr(const Rules& R, const string& text, const string& what)
+{
+    return CM::model_expr_from_ptree(parse(R, text, what));
+}
+
 
 vector<string> get_string_array(const ptree& rule, const string& key, const string& rule_name)
 {
@@ -222,7 +230,7 @@ Rule convert_rule(const Rules& R, const string& name, const ptree& raw_rule)
 	    if (not default_value->has_value<string>())
 		throw myexception()<<"In rules for '"<<name<<"', default value for argument '"<<arg_name<<"' is not a string.";
 
-	    arg.default_value = parse(R, default_value->get_value<string>(), name + ": default value for '"+arg_name+"'");
+	    arg.default_value = parse_rule_model_expr(R, default_value->get_value<string>(), name + ": default value for '"+arg_name+"'");
 	}
 
 	if (auto alphabet = x.get_child_optional("alphabet"))
@@ -230,7 +238,7 @@ Rule convert_rule(const Rules& R, const string& name, const ptree& raw_rule)
 	    if (not alphabet->has_value<string>())
 		throw myexception()<<"In rules for '"<<name<<"', alphabet for argument '"<<arg_name<<"' is not a string.";
 
-	    arg.alphabet = parse(R, alphabet->get_value<string>(), name + ": alphabet for '"+arg_name+"'");
+	    arg.alphabet = parse_rule_model_expr(R, alphabet->get_value<string>(), name + ": alphabet for '"+arg_name+"'");
 	}
 
         if (auto description = x.get_optional<string>("description"))

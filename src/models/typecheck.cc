@@ -716,9 +716,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
         else if (argument.default_value)
         {
             is_default = true;
-            // Compatibility boundary: rule defaults are still stored as ptree
-            // by Rules. Remove once bindings parse directly to CM::UntypedExpr.
-            arg_value = CM::model_expr_from_ptree(*argument.default_value);
+            arg_value = *argument.default_value;
         }
         else
             throw myexception()<<"Command '"<<call->function<<"' missing required argument '"<<arg_name<<"'";
@@ -736,9 +734,7 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
             CM::TypedExpr alphabet_value2;
             try
             {
-                // Compatibility boundary: rule alphabets are still stored as
-                // ptree by Rules, then converted before AST checking.
-                alphabet_value2 = typecheck_model_expr(scope3, alphabet_required_type, CM::model_expr_from_ptree(*alphabet_expression));
+                alphabet_value2 = typecheck_model_expr(scope3, alphabet_required_type, *alphabet_expression);
             }
             catch(myexception& e)
             {
