@@ -517,6 +517,9 @@ void test_typecheck_expr_wrapper_parity()
 
 std::filesystem::path make_rule_fixture()
 {
+    // Test workaround: Rules currently load only from binding files, so these
+    // parity tests create a tiny temporary package.  Replace with an in-memory
+    // Rules builder if the production loader grows one.
     auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
     auto root = std::filesystem::temp_directory_path() / ("bali-phy-model-expr-test-" + std::to_string(stamp));
     auto functions = root / "bindings" / "functions";

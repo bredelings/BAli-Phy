@@ -342,6 +342,9 @@ namespace
 
 CM::TypedExpr typecheck_model_expr_via_ptree(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
+    // Compatibility bridge: handles legacy shapes not yet represented by the
+    // direct AST typechecker.  Remove once production typechecking has no
+    // remaining annotated-ptree fallbacks.
     auto model = CM::ptree_from_model_expr(expr);
     auto annotated = TC.typecheck_and_annotate(required_type, model);
     return CM::typed_model_expr_from_annotated_ptree(annotated);
@@ -704,6 +707,8 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& req
     else if (auto call = typecheck_model_call(TC, required_type, expr))
         return *call;
     else
+        // Compatibility fallback for legacy ptree-era expression shapes.
+        // Each production-supported fallback should be ported or documented.
         return typecheck_model_expr_via_ptree(TC, required_type, expr);
 }
 
