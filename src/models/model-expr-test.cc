@@ -2,6 +2,7 @@
 #include "models/model-expr-ptree.H"
 #include "models/parse.H"
 #include "models/rules.H"
+#include "models/typecheck.H"
 
 #include <cassert>
 #include <optional>
@@ -382,6 +383,68 @@ void test_typed_pretty_printing()
     assert(show_model_annotated(typed_model_expr_from_annotated_ptree(sample)) == show_model_annotated(sample));
 }
 
+void test_typed_substitution()
+{
+    auto a = ptree("a#0");
+    auto b = ptree("b#1");
+    auto c = ptree("c#2");
+    auto alphabet_type = ptree("alphabet#3");
+
+    TypedExpr list_expr{
+        Ann{ptree("List", {{"", c}}), {}, false, {}},
+        List<Ann>{{TypedExpr{Ann{c, {}, false, {}}, IntLiteral{1}}}}
+    };
+
+    TypedExpr expr{
+        Ann{a, {}, false, {}},
+        Call<Ann>{
+            "f",
+            {
+                Arg<Ann>{
+                    "x",
+                    Box<TypedExpr>(TypedExpr{Ann{b, {}, false, {}}, Var{"x"}}),
+                    false,
+                    false,
+                    Box<TypedExpr>(TypedExpr{Ann{alphabet_type, {}, false, {}}, Var{"dna"}})
+                },
+                Arg<Ann>{
+                    "items",
+                    Box<TypedExpr>(std::move(list_expr)),
+                    false,
+                    false,
+                    std::nullopt
+                }
+            }
+        }
+    };
+
+    auto eqs = unify(a, ptree("Double"))
+             && unify(b, ptree("Int"))
+             && unify(c, ptree("String"))
+             && unify(alphabet_type, ptree("Alphabet"));
+    assert(eqs);
+
+    substitute_annotated(eqs, expr);
+
+    assert(expr.ann.type == ptree("Double"));
+    auto& call = std::get<Call<Ann>>(expr.node);
+    assert(call.args[0].value->ann.type == ptree("Int"));
+    assert(call.args[0].alphabet);
+    assert(call.args[0].alphabet->get().ann.type == ptree("Alphabet"));
+    assert(call.args[1].value->ann.type == ptree("List", {{"", ptree("String")}}));
+
+    auto& list = std::get<List<Ann>>(call.args[1].value->node);
+    assert(list.elements[0].ann.type == ptree("String"));
+
+    TypedDecls decls{
+        {"x", TypedExpr{Ann{ptree("decl#4"), {}, false, {}}, Var{"x"}}}
+    };
+    auto decl_eqs = unify(ptree("decl#4"), ptree("Int"));
+    assert(decl_eqs);
+    substitute_annotated(decl_eqs, decls);
+    assert(decls[0].second.ann.type == ptree("Int"));
+}
+
 }
 
 int main()
@@ -400,4 +463,5 @@ int main()
     test_parser_wrappers();
     test_untyped_pretty_printing();
     test_typed_pretty_printing();
+    test_typed_substitution();
 }

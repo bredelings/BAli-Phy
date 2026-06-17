@@ -6,6 +6,7 @@
 #include <utility>
 #include <memory>
 #include "unification.H"
+#include "models/model-expr.H"
 #include "util/ptree.H"
 
 class Rules;
@@ -52,4 +53,6 @@ struct TypecheckingState
 std::set<std::string> get_used_args(const ptree& model);
 term_t extract_value(const term_t& T);
 term_t valueize(const term_t& T);
+void substitute_annotated(const equations&, CM::TypedExpr&);
+void substitute_annotated(const equations&, CM::TypedDecls&);
 #endif

@@ -288,6 +288,54 @@ void set_used_args(ptree& model, const set<string>& used_args)
         model.children().push_back({"used_args",p_used_args});
 }
 
+void substitute_annotated(const equations& eqs, CM::TypedDecls& decls)
+{
+    for(auto& [name, expr]: decls)
+        substitute_annotated(eqs, expr);
+}
+
+void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
+{
+    substitute(eqs, expr.ann.type);
+
+    std::visit(CM::overloaded{
+        [&](CM::Call<CM::Ann>& call)
+        {
+            for(auto& arg: call.args)
+            {
+                substitute_annotated(eqs, arg.value.get());
+                if (arg.alphabet)
+                    substitute_annotated(eqs, arg.alphabet->get());
+            }
+        },
+        [&](CM::List<CM::Ann>& list)
+        {
+            for(auto& element: list.elements)
+                substitute_annotated(eqs, element);
+        },
+        [&](CM::Tuple<CM::Ann>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                substitute_annotated(eqs, element);
+        },
+        [&](CM::Let<CM::Ann>& let)
+        {
+            substitute_annotated(eqs, let.decls);
+            substitute_annotated(eqs, let.body.get());
+        },
+        [&](CM::Lambda<CM::Ann>& lambda)
+        {
+            substitute_annotated(eqs, lambda.pattern.get());
+            substitute_annotated(eqs, lambda.body.get());
+        },
+        [&](CM::Sample<CM::Ann>& sample)
+        {
+            substitute_annotated(eqs, sample.dist.get());
+        },
+        [](auto&) {}
+    }, expr.node);
+}
+
 ptree TypecheckingState::typecheck_and_annotate_decls(const ptree& decls)
 {
     set<string> used_args;
