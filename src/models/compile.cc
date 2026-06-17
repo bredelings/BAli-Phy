@@ -37,6 +37,7 @@
 #include "util/myexception.H"
 #include "models/rules.H"
 #include "models/parse.H"
+#include "models/model-expr-ptree.H"
 #include "models/path.H"
 #include "computation/module.H"
 #include "computation/expression/expression_ref.H"
@@ -280,17 +281,21 @@ model_t compile_model(const Rules& R,
 		      const map<string,pair<string,ptree>>& state)
 {
     // 1. Parse
-    auto model_rep = parse(R, model_string, what);
+    auto model_rep = parse_model_expr(R, model_string, what);
 //    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
     // 2. Typecheck
     auto TC2 = TC;
     for(auto& [name,type]: scope)
         TC2.identifiers.insert({name, type});
-    auto model = TC2.typecheck_and_annotate(required_type, model_rep);
+    auto typed_model = typecheck_model_expr(TC2, required_type, model_rep);
 
     substitute(TC2.eqs, required_type);
-    substitute_annotated(TC2.eqs, model);
+    substitute_annotated(TC2.eqs, typed_model);
+
+    // Compatibility boundary: code generation still consumes annotated ptree.
+    // Remove when CodeGenState has complete CM::TypedExpr overloads.
+    auto model = CM::annotated_ptree_from_typed_model_expr(typed_model);
 
     set<ptree> constraints;
     for(auto constraint: TC2.eqs.get_constraints())
