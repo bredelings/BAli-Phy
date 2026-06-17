@@ -629,15 +629,13 @@ optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, cons
     if (not TC.eqs)
         throw myexception()<<"Supplying a function, but expected '"<<unparse_type(required_type)<<"!";
 
-    if (auto btype = TC.eqs.value_of_var(b))
-        b = *btype;
+    substitute(TC.eqs, b);
 
     auto body2 = typecheck_model_expr(scope2, b, lambda->body.get());
     TC.eqs = TC.eqs && scope2.eqs;
     auto used_args = body2.ann.used_args;
 
-    if (auto atype = TC.eqs.value_of_var(a))
-        a = *atype;
+    substitute(TC.eqs, a);
 
     auto pattern2 = typecheck_pattern(scope2, a, lambda->pattern.get());
     substitute(TC.eqs, ftype);
@@ -875,12 +873,12 @@ pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const CM::Untype
     }
     else if (auto tuple = std::get_if<CM::TuplePattern<CM::NoAnn>>(&pattern.node))
     {
-        ptree type("Tuple");
+        vector<ptree> element_types;
         map<string,ptree> var_to_type;
         for(auto& value: tuple->elements)
         {
             auto [slot_type, slot_vars] = parse_pattern(value);
-            type.children().push_back(pair(string(""),slot_type));
+            element_types.push_back(slot_type);
             for(auto& [var_name,var_type]: slot_vars)
             {
                 if (var_to_type.count(var_name))
@@ -888,6 +886,7 @@ pair<ptree, map<string,ptree>> TypecheckingState::parse_pattern(const CM::Untype
                 var_to_type.insert({var_name,var_type});
             }
         }
+        auto type = make_type_apps("Tuple", element_types);
         return {type,var_to_type};
     }
     else

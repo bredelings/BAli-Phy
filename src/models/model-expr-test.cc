@@ -467,6 +467,32 @@ void test_typecheck_exprs()
     );
 }
 
+// Checks that tuple-pattern lambda typechecking solves the structured argument
+// type and annotates each pattern slot with its concrete type.
+void test_typecheck_tuple_pattern_lambda()
+{
+    Rules rules({});
+    auto required_type = make_type_apps(
+        "Function",
+        {make_type_apps("Tuple", {ptree("Int"), ptree("Bool")}), ptree("Int")}
+    );
+    auto model = lambda_expr(tuple_pattern({var_pattern("x"), var_pattern("flag")}), var_expr("x"));
+
+    auto TC = test_typechecker(rules);
+    auto typed = typecheck_model_expr(TC, required_type, model);
+    substitute_annotated(TC.eqs, typed);
+
+    assert(typed.ann.type == required_type);
+    auto& lambda = std::get<Lambda<Ann>>(typed.node);
+    auto& pattern = std::get<TuplePattern<Ann>>(lambda.pattern->node);
+    assert(pattern.elements.size() == 2);
+    assert(pattern.elements[0].ann.type == ptree("Int"));
+    assert(pattern.elements[1].ann.type == ptree("Bool"));
+    assert(std::get<VarPattern>(pattern.elements[0].node).name == "x");
+    assert(std::get<VarPattern>(pattern.elements[1].node).name == "flag");
+    assert(lambda.body->ann.type == ptree("Int"));
+}
+
 // Checks that function-valued variables propagate used_args from positional
 // arguments, including when the callee is itself an @arg reference.
 void test_typecheck_variable_function_used_args()
@@ -834,6 +860,7 @@ int main()
     test_typed_pretty_printing();
     test_typed_substitution();
     test_typecheck_exprs();
+    test_typecheck_tuple_pattern_lambda();
     test_typecheck_variable_function_used_args();
     test_typecheck_direct_errors();
     test_typecheck_decls();
