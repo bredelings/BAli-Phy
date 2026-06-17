@@ -20,6 +20,8 @@ std::string show_model_annotated(const CM::TypedExpr&);
 std::string show_model_abbrev(const ptree p, int length);
 
 ptree parse_type(const std::string& s);
+// Compatibility boundary: the grammar still returns ptree; prefer the CM
+// wrappers below for model code.
 ptree parse(const Rules& R, const std::string& s, const std::string& what);
 ptree parse_defs(const Rules& R, const std::string& s);
 

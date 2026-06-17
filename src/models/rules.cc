@@ -7,7 +7,7 @@
 #include "util/json.hh"
 #include "models/compile.H"
 #include "models/model-expr-ptree.H"
-#include "models/parse.H" // for is_constant( )
+#include "models/parse.H" // for parse( )
 #include "models/driver.hh" // for parse_expression( )
 
 #include "computation/module.H"
@@ -123,15 +123,15 @@ vector<RuleConstraint> parse_constraints(const ptree& cc)
     return constraints;
 }
 
-// Parses a binding-file model expression with legacy positional rewriting, then
-// stores it as CmdModel so later stages do not convert on every use.
+// Compatibility boundary: binding model expressions still parse through ptree
+// for positional rewriting, then convert once to CmdModel at rule-load time.
 RuleModelExpr parse_rule_model_expr(const Rules& R, const string& text, const string& what)
 {
-    return CM::model_expr_from_ptree(parse(R, text, what));
+    return parse_model_expr(R, text, what);
 }
 
-// Parses a binding-file rule template and stores it as CmdModel so codegen does
-// not need the legacy ptree representation for calls or computed expressions.
+// Compatibility boundary: rule templates still share the ptree model parser,
+// then convert once to CmdModel for codegen.
 RuleModelExpr parse_rule_template_expr(const string& text, const string& what)
 {
     return CM::model_expr_from_ptree(parse_expression(text, what));
@@ -387,24 +387,6 @@ ptree get_type_for_arg(const string& func, const string& arg) const
 	return ptree("?");
 }
 */
-
-ptree Rules::get_result_type(const ptree& model_rep) const
-{
-    if (model_rep.is_a<int>())
-	return ptree("Int");
-    else if (model_rep.is_a<double>())
-	return ptree("Double");
-    else if (model_rep.is_a<bool>())
-	return ptree("Bool");
-    else if (model_rep.is_a<string>() and is_constant(model_rep))
-	return ptree("String");
-
-    if (auto rule = get_rule_for_func(model_rep.get_value<string>()))
-	return rule->result_type;
-    else
-	return ptree("?");
-}
-
 
 string show_paths(const vector<fs::path>& paths)
 {

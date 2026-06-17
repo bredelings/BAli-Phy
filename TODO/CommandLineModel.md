@@ -46,6 +46,10 @@ Recent migration milestones:
 - Removed `model_t` annotated-`ptree` storage.
 - Removed the `RuleTemplateExpr` split.
 - Removed old `make_call(const ptree&, ...)` rule-template codegen.
+- Removed obsolete annotated-`ptree` typechecking wrappers and expression
+  back-conversions from typechecking.
+- Removed the unused expression-shaped `Rules::get_result_type(const ptree&)`
+  API.
 
 ## Remaining `ptree` Roles
 
@@ -63,10 +67,10 @@ These uses are expected to remain for now:
 
 These uses should shrink next:
 
-- Compatibility wrappers that accept or return annotated model-expression
-  `ptree`.
-- Back-conversions from `CM::Expr` to `ptree` inside typechecking.
 - Raw parser entry points used outside parser compatibility wrappers.
+- Rule-load conversions from parser `ptree` to `CM`.
+- General converter use outside tests, parser wrappers, and explicitly marked
+  compatibility boundaries.
 
 ## Temporary Compatibility Notes
 
@@ -85,53 +89,55 @@ unified:
 
 ## Next Implementation Batch
 
-This is the next recommended chunk.  It should make real progress by removing
-production expression back-conversions instead of adding parallel paths.
+The next recommended chunk is to prepare for a direct parser output by making
+the remaining parser compatibility boundaries explicit and narrow.
 
-1. Audit annotated-`ptree` wrappers.
+1. Audit raw parser entry points.
 
    Search for:
 
    ```text
-   typecheck_and_annotate
-   substitute_annotated(ptree
-   get_used_args(ptree
-   set_used_args(ptree
-   typed_model_expr_from_annotated_ptree
-   annotated_ptree_from_typed_model_expr
+   parse_expression(
+   parse_defs(
+   parse(const Rules&
+   parse_defs(const Rules&
+   model_expr_from_ptree(
+   ptree_from_model_expr(
    ```
 
-   For each occurrence, classify it as:
+   Acceptable production uses should be only:
 
-   - required parser/converter/test compatibility
-   - obsolete production wrapper
-   - old API wrapper that can be inverted to call `CM` code
+   - parser wrappers in `parse.cc`
+   - rule-load conversion helpers in `rules.cc`
+   - converter implementation
+   - converter tests
 
-2. Delete or invert obsolete annotated-`ptree` wrappers.
+2. Replace or quarantine raw parser callers.
 
-   If a wrapper has no production caller, delete it.  If a wrapper exists only
-   for old callers, keep it as a narrow compatibility wrapper around `CM` and
-   add a brief comment explaining who still calls it and what removes it.
+   Higher-level model code should consume:
 
-3. Remove `ptree_from_model_expr(...)` from call typechecking.
+   ```cpp
+   CM::UntypedExpr parse_model_expr(const Rules&, const std::string&, const std::string&);
+   CM::Decls<CM::NoAnn> parse_model_decls(const Rules&, const std::string&);
+   ```
 
-   `typecheck_model_call(...)` should not convert the current expression back to
-   `ptree` just to produce error text or drive old helper logic.  Replace those
-   uses with direct `CM` handling or `unparse(expr)`.
+   Keep raw `ptree` parse helpers only at compatibility boundaries, with brief
+   comments saying they can be removed once `parser.y` builds `CM` directly.
 
-4. Make lambda pattern parsing native.
+3. Reduce rule-load parser conversions.
 
-   `typecheck_model_lambda(...)` currently converts the lambda pattern to
-   `ptree` and calls `parse_pattern(const ptree&)`.  Add a direct
-   `parse_pattern(const CM::UntypedExpr&)` helper, or a narrow pattern helper,
-   that supports the same pattern forms currently accepted:
+   `rules.cc` currently has two intentional conversion helpers:
 
-   - variables
-   - tuple patterns
+   - `parse_rule_model_expr(...)`: model-language expression plus positional
+     rewriting.
+   - `parse_rule_template_expr(...)`: Haskell-ish rule template parsed by the
+     model parser.
 
-   Reject unsupported expression nodes with clear errors.
+   Keep both for now, but audit whether either can call a `CM` parser wrapper
+   instead of open-coding `model_expr_from_ptree(...)`.  Do not merge them unless
+   the semantic difference is removed.
 
-5. Run focused tests after the batch.
+4. Run focused tests after the batch.
 
    Required:
 
@@ -142,50 +148,28 @@ production expression back-conversions instead of adding parallel paths.
    timeout 300s tests/run-tests.py run tests/parse /home/bredelings/Devel/bali-phy/build/gcc-16-debug-O/src/bali-phy/bali-phy --package-path=/home/bredelings/Devel/bali-phy/build/gcc-16-debug-O/src/builtins:/home/bredelings/Devel/bali-phy/jj --seed 1594303352
    ```
 
-6. Commit as one statement.
+5. Commit as one statement.
 
    Suggested message:
 
    ```text
-   Remove typechecking ptree expression fallbacks
+   Tighten model parser ptree boundaries
    ```
 
 ## Following Batch
 
-After the immediate batch, tighten parser and rule boundaries.
+After parser boundaries are narrow, choose between these two larger steps:
 
-1. Add AST overloads for rule result-type queries.
+1. Make parser output direct `CM`.
 
-   Replace expression-shaped APIs such as:
+   Update `parser.y` semantic values to build `CM::UntypedExpr` and
+   `CM::Decls<CM::NoAnn>` directly.  Keep type parsing as `ptree`.
 
-   ```cpp
-   Rules::get_result_type(const ptree& model_rep)
-   ```
+2. Introduce a real pattern AST.
 
-   with direct `CM` logic, or remove the API if typechecking can compute the
-   result directly.
-
-2. Restrict raw parser entry points.
-
-   Higher-level model code should consume:
-
-   ```cpp
-   CM::UntypedExpr parse_model_expr(const Rules&, const std::string&, const std::string&);
-   CM::Decls<CM::NoAnn> parse_model_decls(const Rules&, const std::string&);
-   CM::UntypedExpr parse_rule_template_expr(...);
-   ```
-
-   Keep `parse_expression(...)` and `parse_defs(...)` localized to the parser
-   compatibility layer, rule loading, and converter tests.
-
-3. Audit remaining `model_expr_from_ptree(...)` and `ptree_from_model_expr(...)`.
-
-   Acceptable remaining uses should be only:
-
-   - parser wrappers
-   - rule-load conversion boundary
-   - conversion tests
-   - old compatibility API wrappers with comments
+   `CM::Lambda::pattern` still uses `CM::Expr<A>`.  Native lambda pattern
+   parsing is in place, so a small pattern AST can now replace expression-shaped
+   patterns without dragging old `ptree` behavior along.
 
 ## Later Work
 

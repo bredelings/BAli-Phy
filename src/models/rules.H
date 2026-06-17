@@ -92,8 +92,6 @@ public:
 
     Rule require_rule_for_func(const std::string& s) const;
 
-    type_t get_result_type(const ptree& func) const;
-
     Rules(const std::vector<std::filesystem::path>& path_list);
 };
 
