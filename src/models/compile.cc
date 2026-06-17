@@ -528,6 +528,173 @@ bool do_extract(const ptree& func, const ptree& arg, const set<string>& binders)
     return false;
 }
 
+// Returns true when a typed AST term represents a model-valued expression that
+// should protect model subterms from extraction.
+bool annotated_term_is_model(const CM::TypedExpr& term)
+{
+    if (term.ann.extract == "all") return true;
+
+    if (auto list = std::get_if<CM::List<CM::Ann>>(&term.node))
+        for(auto& element: list->elements)
+            if (annotated_term_is_model(element)) return true;
+
+    return false;
+}
+
+namespace
+{
+
+// Removes lambda pattern variables from the binder set used by extraction's
+// bound-variable check.
+void erase_pattern_binders(const CM::TypedExpr& pattern, set<string>& binders)
+{
+    std::visit(CM::overloaded{
+        [&](const CM::Var& var)
+        {
+            binders.erase(var.name);
+        },
+        // Removes binders that appear inside list-shaped lambda patterns.
+        [&](const CM::List<CM::Ann>& list)
+        {
+            for(auto& element: list.elements)
+                erase_pattern_binders(element, binders);
+        },
+        // Removes binders that appear inside tuple-shaped lambda patterns.
+        [&](const CM::Tuple<CM::Ann>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                erase_pattern_binders(element, binders);
+        },
+        [](const auto&) {}
+    }, pattern.node);
+}
+
+// Returns a display name for extraction paths rooted at a typed AST node.
+string extract_node_name(const CM::TypedExpr& expr)
+{
+    return std::visit(CM::overloaded{
+        [](const CM::Call<CM::Ann>& call) {return call.function;},
+        [](const CM::List<CM::Ann>&) {return string("List");},
+        [](const CM::Tuple<CM::Ann>&) {return string("Tuple");},
+        [](const CM::Sample<CM::Ann>&) {return string("sample");},
+        [](const auto&) {return string("");}
+    }, expr.node);
+}
+
+// Returns true for scalar constants, matching the ptree extractor's constant
+// check before looking for random sample arguments.
+bool is_constant(const CM::TypedExpr& expr)
+{
+    return std::holds_alternative<CM::IntLiteral>(expr.node)
+        or std::holds_alternative<CM::DoubleLiteral>(expr.node)
+        or std::holds_alternative<CM::BoolLiteral>(expr.node)
+        or std::holds_alternative<CM::StringLiteral>(expr.node);
+}
+
+// Creates the placeholder left behind when extraction moves an argument out of
+// an AST call edge.
+CM::TypedExpr missing_like(const CM::TypedExpr& expr)
+{
+    return {CM::Ann{expr.ann.type, {}, false, {}}, CM::MissingArg{}};
+}
+
+}
+
+// Reports whether a typed AST term references one of the variables currently
+// protected by extraction binders.
+bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
+{
+    return std::visit(CM::overloaded{
+        [&](const CM::Var& var)
+        {
+            return binders.count(var.name) != 0;
+        },
+        // Checks whether any call argument references a protected binder.
+        [&](const CM::Call<CM::Ann>& call)
+        {
+            for(auto& arg: call.args)
+                if (bound(arg.value.get(), binders)) return true;
+            return false;
+        },
+        // Checks whether any list element references a protected binder.
+        [&](const CM::List<CM::Ann>& list)
+        {
+            for(auto& element: list.elements)
+                if (bound(element, binders)) return true;
+            return false;
+        },
+        // Checks whether any tuple element references a protected binder.
+        [&](const CM::Tuple<CM::Ann>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                if (bound(element, binders)) return true;
+            return false;
+        },
+        // Checks let body and declarations while respecting shadowed binders.
+        [&](const CM::Let<CM::Ann>& let)
+        {
+            auto binders2 = binders;
+            for(auto& [var_name, expr]: let.decls)
+                binders2.erase(var_name);
+
+            if (bound(let.body.get(), binders2)) return true;
+
+            for(auto& [var_name, expr]: let.decls)
+                if (bound(expr, binders2)) return true;
+            return false;
+        },
+        // Checks a lambda body after removing binders introduced by its pattern.
+        [&](const CM::Lambda<CM::Ann>& lambda)
+        {
+            auto binders2 = binders;
+            erase_pattern_binders(lambda.pattern.get(), binders2);
+            return bound(lambda.body.get(), binders2);
+        },
+        // Checks the sampled distribution expression for protected binders.
+        [&](const CM::Sample<CM::Ann>& sample)
+        {
+            return bound(sample.dist.get(), binders);
+        },
+        [](const auto&)
+        {
+            return false;
+        }
+    }, annotated_term.node);
+}
+
+// Decides whether one typed AST argument should be extracted from its parent
+// function, preserving the old ptree extraction policy.
+bool do_extract(const CM::TypedExpr& func, const CM::TypedExpr& arg, const set<string>& binders)
+{
+    if (func.ann.no_log) return false;
+
+    auto func_name = extract_node_name(func);
+    assert(func_name != "!let");
+    assert(func_name != "function");
+
+    if (func_name == "List") return false;
+    if (func_name == "Tuple") return false;
+
+    if (bound(arg, binders)) return false;
+
+    auto arg_type = unparse_type(arg.ann.type);
+
+    if (annotated_term_is_model(func))
+    {
+        if (annotated_term_is_model(arg)) return false;
+
+        if (arg_type == "Int" or arg_type == "Double" or arg_type == "LogDouble")
+            return true;
+        if (arg_type == "List<Double>" or arg_type == "List<(String,Double)>")
+            return true;
+    }
+
+    if (not is_constant(arg) and std::holds_alternative<CM::Sample<CM::Ann>>(arg.node))
+        return true;
+
+    return false;
+}
+
 // E = {type: T,value:{arg1:E,...argn:E}}
 
 // This only extracts from the top level...
@@ -602,6 +769,99 @@ vector<pair<string, ptree>> extract_terms(ptree& m, const set<string>& binders)
     return extracted;
 }
 
+// Extracts terms from a typed AST expression in place and returns the extracted
+// terms with their display path names.
+vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<string>& binders)
+{
+    vector<pair<string,CM::TypedExpr>> extracted;
+
+    if (auto let = std::get_if<CM::Let<CM::Ann>>(&m.node))
+    {
+        auto decls = std::move(let->decls);
+        auto body = std::move(let->body.get());
+
+        extracted = extract_terms(body, binders);
+        m = std::move(body);
+
+        for(auto& [var_name, exp]: decls)
+            extracted.insert(extracted.begin(), pair<string,CM::TypedExpr>{var_name, std::move(exp)});
+    }
+    else if (auto lambda = std::get_if<CM::Lambda<CM::Ann>>(&m.node))
+    {
+        auto binders2 = binders;
+        erase_pattern_binders(lambda->pattern.get(), binders2);
+
+        for(auto& [sub_name, sub_term]: extract_terms(lambda->body.get(), binders2))
+            extracted.emplace_back(sub_name, std::move(sub_term));
+    }
+    else if (auto call = std::get_if<CM::Call<CM::Ann>>(&m.node))
+    {
+        vector<pair<string,CM::TypedExpr>> extracted_top;
+        auto func = extract_node_name(m);
+
+        for(auto& arg: call->args)
+        {
+            auto name = func + ":" + arg.name;
+
+            if (do_extract(m, arg.value.get(), binders))
+            {
+                auto extracted_value = std::move(arg.value.get());
+                arg.value = CM::Box<CM::TypedExpr>(missing_like(extracted_value));
+                extracted_top.push_back({name, std::move(extracted_value)});
+            }
+            else if (not std::holds_alternative<CM::MissingArg>(arg.value->node))
+            {
+                for(auto& [sub_name, sub_term]: extract_terms(arg.value.get(), binders))
+                {
+                    auto sup_name = name + "/" + sub_name;
+                    if (sub_name.size() and sub_name[0] == '[')
+                        sup_name = name + sub_name;
+                    extracted.emplace_back(sup_name, std::move(sub_term));
+                }
+            }
+        }
+
+        std::move(extracted_top.begin(), extracted_top.end(), std::back_inserter(extracted));
+    }
+    else if (auto list = std::get_if<CM::List<CM::Ann>>(&m.node))
+    {
+        int i = 0;
+        for(auto& element: list->elements)
+        {
+            auto name = "[" + std::to_string(++i) + "]";
+            for(auto& [sub_name, sub_term]: extract_terms(element, binders))
+            {
+                auto sup_name = name + "/" + sub_name;
+                if (sub_name.size() and sub_name[0] == '[')
+                    sup_name = name + sub_name;
+                extracted.emplace_back(sup_name, std::move(sub_term));
+            }
+        }
+    }
+    else if (auto tuple = std::get_if<CM::Tuple<CM::Ann>>(&m.node))
+    {
+        int i = 0;
+        for(auto& element: tuple->elements)
+        {
+            auto name = "[" + std::to_string(++i) + "]";
+            for(auto& [sub_name, sub_term]: extract_terms(element, binders))
+            {
+                auto sup_name = name + "/" + sub_name;
+                if (sub_name.size() and sub_name[0] == '[')
+                    sup_name = name + sub_name;
+                extracted.emplace_back(sup_name, std::move(sub_term));
+            }
+        }
+    }
+    else if (auto sample = std::get_if<CM::Sample<CM::Ann>>(&m.node))
+    {
+        for(auto& [sub_name, sub_term]: extract_terms(sample->dist.get(), binders))
+            extracted.emplace_back("sample:/" + sub_name, std::move(sub_term));
+    }
+
+    return extracted;
+}
+
 #include "util/text.H"
 
 string pretty_model_t::show_extracted() const
@@ -636,6 +896,50 @@ pretty_model_t::pretty_model_t(const ptree& m)
     :main(m)
 {
     // 1. Extract terms
+    for(auto& [name,term]: extract_terms(main, {}))
+    {
+        term_names.push_back(name);
+        terms.push_back(term);
+    }
+
+    term_names = short_parameter_names(term_names);
+}
+
+// Shows the extracted AST terms in the same indented form as pretty_model_t.
+string pretty_model_ast_t::show_extracted() const
+{
+    const int indent = 4;
+
+    string output;
+
+    for(int i=0; i<terms.size(); i++)
+    {
+        string t = string(indent,' ') + term_names[i] + " ";
+        string value = terms[i].show(false);
+        output += "\n" + t + indent_and_wrap(0, t.size() + 2, 10000, value);
+    }
+    return output;
+}
+
+// Shows the main AST model expression in top-level or nested form.
+string pretty_model_ast_t::show_main(bool top) const
+{
+    if (top)
+        return unparse_annotated(main);
+    else
+        return show_model_annotated(main);
+}
+
+string pretty_model_ast_t::show(bool top) const
+{
+    return show_main(top) + show_extracted();
+}
+
+// Builds the pretty extracted view for a typed AST expression without changing
+// the production ptree-backed model_t path.
+pretty_model_ast_t::pretty_model_ast_t(const CM::TypedExpr& m)
+    :main(m)
+{
     for(auto& [name,term]: extract_terms(main, {}))
     {
         term_names.push_back(name);

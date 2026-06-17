@@ -1,5 +1,6 @@
 #include "models/model-expr.H"
 #include "models/model-expr-ptree.H"
+#include "models/compile.H"
 #include "models/parse.H"
 #include "models/rules.H"
 #include "models/typecheck.H"
@@ -33,7 +34,7 @@ UntypedExpr int_expr(int value)
 
 Arg<NoAnn> positional_arg(UntypedExpr value)
 {
-    return {"", Box<UntypedExpr>(std::move(value)), false, false, std::nullopt};
+    return {"", CmdModel::Box<UntypedExpr>(std::move(value)), false, false, std::nullopt};
 }
 
 void test_copy_independence()
@@ -63,7 +64,7 @@ void test_accessors_and_traversal()
 {
     UntypedExpr expr{
         NoAnn{},
-        Sample<NoAnn>{Box<UntypedExpr>(var_expr("dist"))}
+        Sample<NoAnn>{CmdModel::Box<UntypedExpr>(var_expr("dist"))}
     };
 
     assert(is_sample(expr));
@@ -410,14 +411,14 @@ void test_typed_substitution()
             {
                 Arg<Ann>{
                     "x",
-                    Box<TypedExpr>(TypedExpr{Ann{b, {}, false, {}}, Var{"x"}}),
+                    CmdModel::Box<TypedExpr>(TypedExpr{Ann{b, {}, false, {}}, Var{"x"}}),
                     false,
                     false,
-                    Box<TypedExpr>(TypedExpr{Ann{alphabet_type, {}, false, {}}, Var{"dna"}})
+                    CmdModel::Box<TypedExpr>(TypedExpr{Ann{alphabet_type, {}, false, {}}, Var{"dna"}})
                 },
                 Arg<Ann>{
                     "items",
-                    Box<TypedExpr>(std::move(list_expr)),
+                    CmdModel::Box<TypedExpr>(std::move(list_expr)),
                     false,
                     false,
                     std::nullopt
@@ -632,6 +633,51 @@ void test_typecheck_decls_wrapper_parity()
     }));
 }
 
+// Compares the AST pretty extraction view against the legacy annotated-ptree
+// pretty extraction view for one annotated expression.
+void expect_extraction_parity(const ptree& model)
+{
+    auto typed = typed_model_expr_from_annotated_ptree(model);
+    auto ast_pretty = pretty_model_ast_t(typed);
+    auto ptree_pretty = pretty_model_t(model);
+
+    assert(ast_pretty.show() == ptree_pretty.show());
+    assert(ast_pretty.show_main() == ptree_pretty.show_main());
+    assert(ast_pretty.show_extracted() == ptree_pretty.show_extracted());
+}
+
+// Exercises AST extraction for non-models, random args, no_log, extract=all,
+// lets, and argument-edge alphabet metadata.
+void test_extraction_parity()
+{
+    expect_extraction_parity(ann(ptree(1), ptree("Int")));
+
+    auto sampled_arg = arg_ann(ptree("sample", {
+        {"", ann(ptree("normal", {
+            {"", arg_ann(ptree(0), ptree("Double"))},
+            {"", arg_ann(ptree(1), ptree("Double"))}
+        }), make_type_app("Distribution", ptree("Double")))}
+    }), ptree("Double"));
+    expect_extraction_parity(ann(ptree("f", {{"x", sampled_arg}}), ptree("Model")));
+
+    auto no_log = ann(ptree("f", {{"x", sampled_arg}}), ptree("Model"));
+    no_log.children().push_back({"no_log", ptree(true)});
+    expect_extraction_parity(no_log);
+
+    auto extract_all = ann(ptree("f", {{"x", arg_ann(ptree(1), ptree("Int"))}}), ptree("Model"));
+    extract_all.children().push_back({"extract", ptree("all")});
+    expect_extraction_parity(extract_all);
+
+    expect_extraction_parity(ann(ptree("!let", {
+        {"decls", ptree("!Decls", {{"x", ann(ptree(1), ptree("Int"))}})},
+        {"body", ann(ptree("f", {{"x", sampled_arg}}), ptree("Model"))}
+    }), ptree("Model")));
+
+    auto arg_with_alphabet = arg_ann(ptree("x"), ptree("Int"), {"x"});
+    arg_with_alphabet.children().push_back({"alphabet", ann(ptree("dna"), ptree("Alphabet"))});
+    expect_extraction_parity(ann(ptree("f", {{"x", arg_with_alphabet}}), ptree("Model"), {"x"}));
+}
+
 }
 
 int main()
@@ -654,4 +700,5 @@ int main()
     test_typecheck_expr_wrapper_parity();
     test_typecheck_decls_wrapper_parity();
     test_typecheck_rule_wrapper_parity();
+    test_extraction_parity();
 }

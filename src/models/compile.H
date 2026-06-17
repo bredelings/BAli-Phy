@@ -29,6 +29,25 @@ public:
     pretty_model_t(const ptree& m);
 };
 
+class pretty_model_ast_t
+{
+public:
+    CM::TypedExpr main;
+    std::vector<std::string> term_names;
+    std::vector<pretty_model_ast_t> terms;
+
+    std::string show(bool = true) const;
+    std::string show_main(bool = true) const;
+    std::string show_extracted() const;
+
+    pretty_model_ast_t(const CM::TypedExpr& m);
+};
+
+bool annotated_term_is_model(const CM::TypedExpr&);
+bool bound(const CM::TypedExpr&, const std::set<std::string>&);
+bool do_extract(const CM::TypedExpr&, const CM::TypedExpr&, const std::set<std::string>&);
+std::vector<std::pair<std::string, CM::TypedExpr>> extract_terms(CM::TypedExpr&, const std::set<std::string>&);
+
 void maybe_log(std::vector<expression_ref>& logger_bits,
                const std::string& name,
                const expression_ref& value,
