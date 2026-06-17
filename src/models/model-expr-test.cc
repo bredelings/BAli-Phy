@@ -466,9 +466,7 @@ void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type
     auto untyped = model_expr_from_ptree(model);
 
     auto ast_TC = test_typechecker(rules, identifiers, state);
-    reset_typecheck_model_expr_fallback_count();
     auto typed = typecheck_model_expr(ast_TC, required_type, untyped);
-    auto fallback_count = typecheck_model_expr_fallback_count();
 
     auto ptree_TC = test_typechecker(rules, identifiers, state);
     auto expected = annotated_ptree_from_typed_model_expr(
@@ -481,11 +479,6 @@ void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type
         std::cerr<<"typecheck wrapper parity mismatch for "<<model.show(false)<<"\n";
         std::cerr<<"actual:\n"<<actual.show(false)<<"\n";
         std::cerr<<"expected:\n"<<expected.show(false)<<"\n";
-        assert(false);
-    }
-    if (fallback_count != 0)
-    {
-        std::cerr<<"typecheck fallback used "<<fallback_count<<" time(s) for "<<model.show(false)<<"\n";
         assert(false);
     }
 }
@@ -527,6 +520,36 @@ void test_typecheck_expr_wrapper_parity()
         make_type_apps("Function", {ptree("Int"), ptree("Int")}),
         ptree("function", {{"", ptree("x")}, {"", ptree("x")}})
     );
+    expect_typecheck_expr_parity(
+        ptree("Double"),
+        ptree("f", {{"", ptree(1)}}),
+        {{"f", make_type_apps("Function", {ptree("Int"), ptree("Double")})}}
+    );
+}
+
+// Verifies expression typechecker failures that are intentionally clearer
+// than the old fallback-to-ptree behavior.
+void test_typecheck_direct_errors()
+{
+    Rules rules({});
+    auto expect_error = [&](const ptree& required_type, const CM::UntypedExpr& expr, const std::string& message)
+    {
+        auto TC = test_typechecker(rules);
+        try
+        {
+            (void)typecheck_model_expr(TC, required_type, expr);
+        }
+        catch(const std::exception& e)
+        {
+            assert(std::string(e.what()).find(message) != std::string::npos);
+            return;
+        }
+        assert(false);
+    };
+
+    expect_error(ptree("Int"), CM::UntypedExpr{NoAnn{}, Placeholder{}}, "Placeholder '_'");
+    expect_error(ptree("Int"), CM::UntypedExpr{NoAnn{}, MissingArg{}}, "Missing argument placeholder");
+    expect_error(ptree("Int"), model_expr_from_ptree(ptree("unknown", {{"", ptree(1)}})), "No direct typechecker");
 }
 
 // Test workaround: Rules currently load only from binding files, so these
@@ -565,6 +588,17 @@ std::filesystem::path make_rule_fixture()
     "args": [
         {"name": "x", "type": "Int"}
     ]
+})JSON";
+    }
+
+    {
+        std::ofstream out(functions / "zero.json");
+        out << R"JSON({
+    "name": "zero",
+    "result_type": "Int",
+    "no_log": true,
+    "call": "zero",
+    "args": []
 })JSON";
     }
 
@@ -677,6 +711,7 @@ void test_typecheck_rule_wrapper_parity()
             {{"dna", ptree("Alphabet")}}
         );
         expect_typecheck_expr_parity(rules, ptree("Double"), ptree(1));
+        expect_typecheck_expr_parity(rules, ptree("Int"), ptree("zero"));
         expect_typecheck_expr_parity(rules, ptree("Double"), ptree("sample", {
             {"dist", ptree("normal", {{"mu", ptree(0)}, {"sigma", ptree(1)}})}
         }));
@@ -831,6 +866,7 @@ int main()
     test_typed_pretty_printing();
     test_typed_substitution();
     test_typecheck_expr_wrapper_parity();
+    test_typecheck_direct_errors();
     test_typecheck_decls_wrapper_parity();
     test_typecheck_rule_wrapper_parity();
     test_extraction_parity();

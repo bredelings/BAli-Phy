@@ -58,6 +58,4 @@ void substitute_annotated(const equations&, CM::TypedExpr&);
 void substitute_annotated(const equations&, CM::TypedDecls&);
 CM::TypedExpr typecheck_model_expr(const TypecheckingState&, const ptree& required_type, const CM::UntypedExpr&);
 CM::TypedDecls typecheck_model_decls(TypecheckingState&, const CM::Decls<CM::NoAnn>&);
-void reset_typecheck_model_expr_fallback_count();
-int typecheck_model_expr_fallback_count();
 #endif

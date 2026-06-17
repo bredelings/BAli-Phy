@@ -470,22 +470,22 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
 namespace
 {
 
-int typecheck_model_expr_fallback_count_ = 0;
-
-// Compatibility bridge: handles legacy shapes not yet represented by the
-// direct AST typechecker.  Remove once production typechecking has no
-// remaining annotated-ptree fallbacks.
-CM::TypedExpr typecheck_model_expr_via_ptree(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
-{
-    typecheck_model_expr_fallback_count_++;
-    auto model = CM::ptree_from_model_expr(expr);
-    auto annotated = TC.typecheck_and_annotate(required_type, model);
-    return CM::typed_model_expr_from_annotated_ptree(annotated);
-}
-
 CM::Ann model_ann(ptree type, set<string> used_args = {})
 {
     return {std::move(type), std::move(used_args), false, {}};
+}
+
+optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr);
+
+// Rejects parser and extraction placeholders before they can reach old ptree
+// compatibility behavior.
+optional<CM::TypedExpr> typecheck_model_invalid_placeholder(const CM::UntypedExpr& expr)
+{
+    if (std::holds_alternative<CM::Placeholder>(expr.node))
+        throw myexception()<<"Placeholder '_' may only appear while parsing argument application.";
+    if (std::holds_alternative<CM::MissingArg>(expr.node))
+        throw myexception()<<"Missing argument placeholder cannot be typechecked as an expression.";
+    return {};
 }
 
 // Typechecks scalar literal AST nodes directly, falling back through the
@@ -558,6 +558,90 @@ optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const p
         return typecheck_model_expr(TC, required_type, *converted);
 
     return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(node)};
+}
+
+// Typechecks a bare rule name as a zero-argument command when it is not a
+// scoped variable.
+optional<CM::TypedExpr> typecheck_model_nullary_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    auto var = std::get_if<CM::Var>(&expr.node);
+    if (not var)
+        return {};
+    if (TC.type_for_var(var->name))
+        return {};
+    if (not TC.R.get_rule_for_func(var->name))
+        return {};
+
+    CM::UntypedExpr call{
+        CM::NoAnn{},
+        CM::Call<CM::NoAnn>{var->name, {}}
+    };
+    return typecheck_model_call(TC, required_type, call);
+}
+
+// Typechecks calls where the callee is a scoped function variable instead of a
+// rule-backed command.
+optional<CM::TypedExpr> typecheck_model_var_call(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    auto call = std::get_if<CM::Call<CM::NoAnn>>(&expr.node);
+    if (not call)
+        return {};
+    if (TC.R.get_rule_for_func(call->function))
+        return {};
+
+    type_t result_type;
+    set<string> used_args;
+    if (not call->function.empty() and call->function[0] == '@')
+    {
+        auto arg_name = call->function.substr(1);
+        auto type = TC.type_for_arg(arg_name);
+        if (not type)
+            return {};
+        result_type = *type;
+        used_args = {arg_name};
+    }
+    else if (auto type = TC.type_for_var(call->function))
+        result_type = *type;
+    else
+        return {};
+
+    CM::Call<CM::Ann> typed_call{call->function, {}};
+    int arity = 0;
+    for(auto& arg: call->args)
+    {
+        if (not arg.name.empty())
+            throw myexception()<<"Named arguments not allowed in functions that are variables";
+
+        auto a = TC.get_fresh_type_var("a");
+        auto b = TC.get_fresh_type_var("b");
+        auto ftype = make_type_apps("Function", {a, b});
+        TC.eqs = TC.eqs && unify(result_type, ftype);
+        if (not TC.eqs)
+        {
+            if (arity == 0)
+                throw myexception()<<"Treating non-function variable '"<<call->function<<"' as function!";
+            else
+                throw myexception()<<"Supplying "<<call->args.size()<<" arguments to function '"<<call->function<<"', but it only takes "<<arity<<"!";
+        }
+
+        auto arg2 = typecheck_model_expr(TC, a, arg.value.get());
+        add(used_args, arg2.ann.used_args);
+        typed_call.args.push_back({
+            "",
+            CM::Box<CM::TypedExpr>(std::move(arg2)),
+            false,
+            false,
+            std::nullopt
+        });
+
+        result_type = b;
+        arity++;
+    }
+
+    if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
+        return typecheck_model_expr(TC, required_type, *converted);
+
+    return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(typed_call)};
 }
 
 // Typechecks list elements against a fresh element type and returns a typed
@@ -663,8 +747,8 @@ optional<CM::TypedExpr> typecheck_model_let(const TypecheckingState& TC, const p
     };
 }
 
-// Typechecks a lambda by reusing the existing pattern parser for now, then
-// checking the body in the scope introduced by the pattern.
+// Typechecks a lambda by reusing the existing ptree pattern parser for now,
+// then checking the body in the scope introduced by the pattern.
 optional<CM::TypedExpr> typecheck_model_lambda(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     auto lambda = std::get_if<CM::Lambda<CM::NoAnn>>(&expr.node);
@@ -761,6 +845,8 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
         else if (argument.default_value)
         {
             is_default = true;
+            // Compatibility boundary: rule defaults are still stored as ptree
+            // by Rules. Remove once bindings parse directly to CM::UntypedExpr.
             arg_value = CM::model_expr_from_ptree(*argument.default_value);
         }
         else
@@ -779,6 +865,8 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
             CM::TypedExpr alphabet_value2;
             try
             {
+                // Compatibility boundary: rule alphabets are still stored as
+                // ptree by Rules, then converted before AST checking.
                 alphabet_value2 = typecheck_model_expr(scope3, alphabet_required_type, CM::model_expr_from_ptree(*alphabet_expression));
             }
             catch(myexception& e)
@@ -863,28 +951,20 @@ optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, cons
 
 }
 
-// Resets the test-visible count of AST expressions handled by the ptree
-// compatibility bridge.
-void reset_typecheck_model_expr_fallback_count()
-{
-    typecheck_model_expr_fallback_count_ = 0;
-}
-
-// Returns how many AST expressions have used the ptree compatibility bridge
-// since the last reset.
-int typecheck_model_expr_fallback_count()
-{
-    return typecheck_model_expr_fallback_count_;
-}
-
-// Dispatches AST expression typechecking to direct handlers, with a final
-// compatibility fallback for legacy shapes not yet ported.
+// Dispatches AST expression typechecking to direct handlers and reports
+// unsupported nodes explicitly.
 CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
-    if (auto constant = typecheck_model_constant(TC, required_type, expr))
+    if (auto invalid = typecheck_model_invalid_placeholder(expr))
+        return *invalid;
+    else if (auto constant = typecheck_model_constant(TC, required_type, expr))
         return *constant;
     else if (auto var = typecheck_model_var(TC, required_type, expr))
         return *var;
+    else if (auto nullary_call = typecheck_model_nullary_call(TC, required_type, expr))
+        return *nullary_call;
+    else if (auto var_call = typecheck_model_var_call(TC, required_type, expr))
+        return *var_call;
     else if (auto list = typecheck_model_list(TC, required_type, expr))
         return *list;
     else if (auto tuple = typecheck_model_tuple(TC, required_type, expr))
@@ -900,9 +980,7 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& req
     else if (auto call = typecheck_model_call(TC, required_type, expr))
         return *call;
     else
-        // Compatibility fallback for legacy ptree-era expression shapes.
-        // Each production-supported fallback should be ported or documented.
-        return typecheck_model_expr_via_ptree(TC, required_type, expr);
+        throw myexception()<<"No direct typechecker for expression '"<<unparse(CM::ptree_from_model_expr(expr))<<"'.";
 }
 
 // Typechecks declarations in order, extending the scope with each fresh
