@@ -1,12 +1,10 @@
 #include <iostream>
 #include <set>
 #include <vector>
-#include <algorithm>
 #include "models/parse.H"
 #include "util/myexception.H"
 #include "util/string/convert.H"
 #include "util/string/join.H"
-#include "util/range.H" // for reverse( )
 #include "rules.H"
 #include "unification.H"
 #include "models/driver.hh"
@@ -70,22 +68,6 @@ vector<string> split_args(string s)
 CM::Type parse_type(const string& s)
 {
     return parse_type(s,"type");
-}
-
-ptree add_sample(const ptree& p)
-{
-    ptree p2("sample");
-    p2.children().push_back({"",p});
-    return p2;
-}
-
-ptree add_submodel(ptree term, const ptree& submodel)
-{
-    if (term.count("submodel"))
-        throw myexception()<<"Trying to specify a submodel with '+' when submodel already specified by keyword!";
-
-    term.children().push_back({"submodel", submodel});
-    return term;
 }
 
 // Converts parser-produced positional call arguments to rule keyword arguments
@@ -237,142 +219,9 @@ Decls<NoAnn> parse_model_decls(const Rules& R, const string& s)
     return decls;
 }
 
-optional<ptree> peel_sample(ptree p)
-{
-    if (p.has_value<string>() and p.get_value<string>() == "sample")
-	return p.children()[0].second;
-    else if (p.has_value<string>() and p.get_value<string>() == "!let")
-    {
-        if (auto new_body = peel_sample(p.children()[1].second))
-        {
-            p.children()[1].second = *new_body;
-            return p;
-        }
-    }
-
-    return {};
-}
-
-optional<ptree> peel_sample_annotated(ptree p)
-{
-    auto& v = p.get_child("value");
-    if (v.has_value<string>() and v.get_value<string>() == "sample")
-	return v.children()[0].second;
-    else if (v.has_value<string>() and v.get_value<string>() == "!let")
-    {
-        if (auto new_body = peel_sample_annotated(v.children()[1].second))
-        {
-            v.children()[1].second = *new_body;
-            return p;
-        }
-    }
-
-    return {};
-}
-
 bool is_operator(const string& s)
 {
     return (s == "+" or s == "-" or s == "*" or s == "/");
-}
-
-// To properly parenthesize infix expressions, we could ... pass in a context argument
-// that says when they are the left or right argument of an infix operator?
-
-string unparse(const ptree& p)
-{
-    using namespace std::string_literals;
-
-    if (p.is_null())
-	return "null";
-    if (p.is_a<int>())
-	return convertToString(p.get_value<int>());
-    else if (p.is_a<double>())
-    {
-	auto s = convertToString(p.get_value<double>());
-	if (s.find('.') != std::string::npos)
-	    while(s.size() > 3 and s.back() == '0')
-		s.pop_back();
-	return s;
-    }
-    else if (p.is_a<bool>())
-	return convertToString(p.get_value<bool>());
-    else if (p.is_a<string>() and is_constant(p))
-	return p.get_value<string>();
-
-    assert(p.has_value<string>());
-    string s = p.get_value<string>();
-    if (s == "!let")
-    {
-	string name = p.children()[0].first;
-	return name+show_model(p.children()[0].second)+";"+unparse(p.children()[1].second);
-    }
-    else if (s == "function")
-    {
-	string name = unparse(p.children()[0].second);
-	return "|"+name+":"+unparse(p.children()[1].second)+"|";
-    }
-    else if (s == "List")
-    {
-        vector<string> items;
-        for(auto& [_,item]: p.children())
-            items.push_back(unparse(item));
-        return "[" + join(items,", ") + "]";
-    }
-    else if (s == "Tuple")
-    {
-        vector<string> items;
-        for(auto& [_,item]: p.children())
-            items.push_back(unparse(item));
-        return "(" + join(items,", ") + ")";
-    }
-    else if (s == "sample")
-	return "~" + unparse(p.children().begin()->second);
-    else if (s == "negate")
-	return "-" + unparse(p.children().begin()->second);
-    else if (is_operator(s) and p.children().size() == 2)
-    {
-	// sometimes we might need parenthesis, right?
-        return unparse(p.children()[0].second) + s + unparse(p.children()[1].second);
-    }
-
-    else if (s == "intToDouble")
-	return unparse(p.get_child("x"));
-    else if (s == "unit_mixture" or s == "multiMixtureModel")
-	if (auto child = p.get_child_optional("submodel"))
-	    return unparse(*child);
-    vector<string> args;
-    optional<string> submodel;
-    bool positional = true;
-    int pos = 0;
-    for(const auto& [arg_name, arg]: p.children())
-    {
-	if (arg.is_null())
-            positional = false;
-
-	// Don't print submodel arguments: move out to submodel + <this>
-	else if (arg_name == "submodel" and pos == 0)
-	{
-            positional = false;
-	    assert(not submodel);
-	    submodel = unparse(arg);
-	}
-	else if (positional)
-	    args.push_back( unparse(arg) );
-        else if (auto arg2 = peel_sample(arg))
-            args.push_back( arg_name + "~" + unparse(*arg2));
-        else
-            args.push_back( arg_name + "=" + unparse(arg));
-
-	pos++;
-	// With annotations, we don't print get_state[state_name] if its a default value.
-    }
-    while (args.size() and args.back() == "")
-	args.pop_back();
-    if (not args.empty())
-	s = s + "(" + join(args,", ") + ")";
-    if (submodel)
-	s = *submodel + " +> " + s;
-    return s;
 }
 
 // Removes leading sample sugar from an untyped AST expression, preserving a
@@ -525,12 +374,6 @@ string unparse(const UntypedExpr& expr)
             return s;
         }
     });
-}
-
-// Preserves the old unparse signature for callers that still pass Rules.
-string unparse(const ptree& p, const Rules&)
-{
-    return unparse(p);
 }
 
 // Removes leading sample sugar from a typed AST expression, preserving a
@@ -711,180 +554,6 @@ string unparse_annotated(const TypedExpr& expr)
     });
 }
 
-string unparse_annotated(const ptree& ann)
-{
-    using namespace std::string_literals;
-
-    ptree p = ann.get_child("value");
-
-    if (p.is_null())
-	return "null";
-    if (p.is_a<int>())
-	return convertToString(p.get_value<int>());
-    else if (p.is_a<double>())
-    {
-	auto s = convertToString(p.get_value<double>());
-	if (s.find('.') != std::string::npos)
-	    while(s.size() > 3 and s.back() == '0')
-		s.pop_back();
-	return s;
-    }
-    else if (p.is_a<bool>())
-	return convertToString(p.get_value<bool>());
-    else if (p.is_a<string>() and is_constant(p))
-	return p.get_value<string>();
-
-    string s = p.get_value<string>();
-    if (s == "!let")
-    {
-        vector<string> decls;
-        for(auto& [name, value]: p.children()[0].second.children())
-            decls.push_back(name + " " + show_model_annotated(value));
-        return unparse_annotated(p.children()[1].second) + " where {" + join(decls, "; ") + "}";
-    }
-    else if (s == "function")
-    {
-	return "|"+unparse_annotated(p.children()[0].second)+":"+unparse_annotated(p.children()[1].second)+"|";
-    }
-    else if (s == "List")
-    {
-        bool list_of_pairs = true;
-        vector<string> pairs;
-        for(auto& [_,item]: p.children())
-        {
-            auto type = item.get_child("type");
-            if (type.get_value<string>() == "Tuple" and type.children().size() == 2)
-            {
-                auto value = item.get_child("value");
-                pairs.push_back(unparse_annotated(value.children()[0].second)+": "+unparse_annotated(value.children()[1].second));
-            }
-            else
-            {
-                list_of_pairs = false;
-                break;
-            }
-        }
-        if (list_of_pairs)
-        {
-            return "{" + join(pairs,", ") + "}";
-        }
-
-        vector<string> items;
-        for(auto& [_,item]: p.children())
-            items.push_back(unparse_annotated(item));
-        return "[" + join(items,", ") + "]";
-    }
-    else if (s == "Tuple")
-    {
-        vector<string> items;
-        for(auto& [_,item]: p.children())
-            items.push_back(unparse_annotated(item));
-        return "(" + join(items,", ") + ")";
-    }
-    else if (s == "sample")
-	return "~" + unparse_annotated(p.children().begin()->second);
-    else if (s == "negate")
-	return "-" + unparse_annotated(p.children().begin()->second);
-    else if (is_operator(s) and p.children().size() == 2)
-    {
-	// sometimes we might need parenthesis, right?
-        return unparse_annotated(p.children()[0].second) + s + unparse_annotated(p.children()[1].second);
-    }
-
-    else if (s == "intToDouble")
-	return unparse_annotated(p.get_child("x"));
-    else if (s == "unit_mixture" or s == "multiMixtureModel")
-	if (auto child = p.get_child_optional("submodel"))
-	    return unparse_annotated(*child);
-    vector<string> args;
-    optional<string> submodel;
-    bool positional = true;
-    for(const auto& [arg_name, arg]: p.children())
-    {
-	if (arg.is_null())
-            positional = false;
-
-	// Don't print submodel arguments: move out to submodel + <this>
-	else if (arg_name == "submodel")
-	{
-            positional = false;
-	    assert(not submodel);
-	    submodel = unparse_annotated(arg);
-	}
-
-	else if (arg.get_child("value").has_value<string>() and arg.get_child("value").get_value<string>() == "get_state" and arg.get_child("is_default_value") == true)
-            positional = false;
-	else if (auto suppress = arg.get_child_optional("suppress_default"); suppress and (*suppress == true) and arg.get_child("is_default_value") == true)
-            positional = false;
-	else if (positional)
-	    args.push_back( unparse_annotated(arg) );
-        else if (auto arg2 = peel_sample_annotated(arg))
-            args.push_back( arg_name + "~" + unparse_annotated(*arg2));
-        else
-            args.push_back( arg_name + "=" + unparse_annotated(arg));
-    }
-    while (args.size() and args.back() == "")
-	args.pop_back();
-    if (not args.empty())
-	s = s + "(" + join(args,", ") + ")";
-    if (submodel)
-	s = *submodel + " +> " + s;
-    return s;
-}
-
-// Temporary compatibility helper: old annotated-ptree display still stores
-// type annotations as ptree. Remove with the remaining annotated-ptree display.
-string unparse_ptree_type(const ptree& p)
-{
-    if (p.is_null()) return "NOTYPE";
-
-    vector<ptree> args;
-    auto head = p;
-    while(head.children().size() > 0)
-    {
-        args.push_back(head.children()[1].second);
-        head = head.children()[0].second;
-    }
-    std::reverse(args.begin(), args.end());
-
-    vector<string> sargs;
-    for(const auto& arg: args)
-	sargs.push_back( unparse_ptree_type(arg) );
-
-    if (head == "Tuple")
-	return "("+join(sargs,",")+")";
-    else if (head == "Function")
-    {
-	assert(sargs.size() == 2);
-
-	return sargs[0] + " -> " + sargs[1];
-    }
-    else if (not args.empty())
-	return head.get_value<string>() + "<" + join(sargs,',') + ">";
-    else
-	return head;
-}
-
-string unparse_abbrev(ptree p, int length)
-{
-    string output = unparse(p);
-    if (output.size() > length)
-    {
-	output = convertToString(p.value);
-	if (p.children().size())
-	    output += "(..)";
-    }
-    return output;
-}
-
-string show_model(ptree p)
-{
-    if (auto q = peel_sample(p))
-	return "~ " + unparse(*q);
-    else
-	return "= " + unparse(p);
-}
-
 // Shows an untyped AST expression as an assignment or sampled model shorthand.
 string show_model(const UntypedExpr& p)
 {
@@ -894,15 +563,6 @@ string show_model(const UntypedExpr& p)
 	return "= " + unparse(p);
 }
 
-
-string show_model_annotated(ptree p)
-{
-    if (auto q = peel_sample_annotated(p))
-	return "~ " + unparse_annotated(*q);
-    else
-	return "= " + unparse_annotated(p);
-}
-
 // Shows a typed AST expression as an assignment or sampled model shorthand.
 string show_model_annotated(const TypedExpr& p)
 {
@@ -910,27 +570,4 @@ string show_model_annotated(const TypedExpr& p)
 	return "~ " + unparse_annotated(*q);
     else
 	return "= " + unparse_annotated(p);
-}
-
-
-string show_model_abbrev(ptree p, int length)
-{
-    if (auto q = peel_sample(p))
-	return "~ " + unparse_abbrev(*q, length-2);
-    else
-	return "= " + unparse_abbrev( p, length-2);
-}
-
-bool is_constant(const ptree& model)
-{
-    if (model.value_is_empty())
-	throw myexception()<<"is_constant( ): got a null value!";
-
-    if (model.is_a<int>() or model.is_a<double>() or model.is_a<bool>()) return true;
-
-    assert(model.has_value<string>());
-
-    string name = model.get_value<string>();
-
-    return (name.size()>=2 and name[0] == '"' and name.back() == '"');
 }

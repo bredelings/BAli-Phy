@@ -42,6 +42,7 @@
 %code {
 # include "driver.hh"
 # include "parse.H"
+# include "util/myexception.H"
 
 CM::UntypedExpr add_arg(CM::UntypedExpr p1, CM::UntypedExpr p2);
 CM::UntypedExpr make_binary_call(const std::string& name, const CM::UntypedExpr& lhs, const CM::UntypedExpr& rhs);
