@@ -930,6 +930,7 @@ string pretty_model_ast_t::show_main(bool top) const
         return show_model_annotated(main);
 }
 
+// Shows the main AST expression followed by the extracted pretty-view terms.
 string pretty_model_ast_t::show(bool top) const
 {
     return show_main(top) + show_extracted();

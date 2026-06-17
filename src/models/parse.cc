@@ -294,11 +294,15 @@ ptree parse_defs(const Rules& R, const string& s)
     return defs;
 }
 
+// Parses one command-line model expression and converts the normalized ptree to
+// the untyped model AST.
 UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what)
 {
     return model_expr_from_ptree(parse(R, s, what));
 }
 
+// Parses command-line model declarations and converts the normalized ptree to
+// untyped AST declarations.
 Decls<NoAnn> parse_model_decls(const Rules& R, const string& s)
 {
     return model_decls_from_ptree(parse_defs(R, s));
@@ -442,6 +446,8 @@ string unparse(const ptree& p)
     return s;
 }
 
+// Removes leading sample sugar from an untyped AST expression, preserving a
+// surrounding let when the sampled body can be peeled.
 optional<UntypedExpr> peel_sample(const UntypedExpr& expr)
 {
     if (auto sample = std::get_if<Sample<NoAnn>>(&expr.node))
@@ -459,6 +465,7 @@ optional<UntypedExpr> peel_sample(const UntypedExpr& expr)
     return {};
 }
 
+// Renders untyped AST declarations in the same compact form as legacy decls.
 string unparse(const Decls<NoAnn>& decls)
 {
     vector<string> items;
@@ -467,12 +474,14 @@ string unparse(const Decls<NoAnn>& decls)
     return join(items, "; ");
 }
 
+// Renders an untyped model AST expression using the legacy command-line syntax.
 string unparse(const UntypedExpr& expr)
 {
     using namespace std::string_literals;
 
     return std::visit(overloaded{
         [](const IntLiteral& x) {return convertToString(x.value);},
+        // Renders doubles while trimming insignificant trailing zeroes.
         [](const DoubleLiteral& x)
         {
             auto s = convertToString(x.value);
@@ -487,6 +496,7 @@ string unparse(const UntypedExpr& expr)
         [](const ArgRef& x) {return "@" + x.name;},
         [](const Placeholder&) {return "_"s;},
         [](const GetState& x) {return "get_state(" + x.state_name + ")";},
+        // Renders list elements in command-line bracket syntax.
         [](const List<NoAnn>& x)
         {
             vector<string> items;
@@ -494,6 +504,7 @@ string unparse(const UntypedExpr& expr)
                 items.push_back(unparse(item));
             return "[" + join(items, ", ") + "]";
         },
+        // Renders tuple elements in command-line parenthesized syntax.
         [](const Tuple<NoAnn>& x)
         {
             vector<string> items;
@@ -513,6 +524,8 @@ string unparse(const UntypedExpr& expr)
         {
             return "~" + unparse(x.dist.get());
         },
+        // Renders calls using legacy shorthand for operators, conversions,
+        // submodels, samples, and named arguments.
         [](const Call<NoAnn>& x)
         {
             auto s = x.function;
@@ -568,11 +581,14 @@ string unparse(const UntypedExpr& expr)
     }, expr.node);
 }
 
+// Preserves the old unparse signature for callers that still pass Rules.
 string unparse(const ptree& p, const Rules&)
 {
     return unparse(p);
 }
 
+// Removes leading sample sugar from a typed AST expression, preserving a
+// surrounding let when the sampled body can be peeled.
 optional<TypedExpr> peel_sample_annotated(const TypedExpr& expr)
 {
     if (auto sample = std::get_if<Sample<Ann>>(&expr.node))
@@ -590,6 +606,7 @@ optional<TypedExpr> peel_sample_annotated(const TypedExpr& expr)
     return {};
 }
 
+// Renders typed AST declarations using the annotated model display form.
 string unparse_typed_decls(const TypedDecls& decls)
 {
     vector<string> items;
@@ -598,12 +615,14 @@ string unparse_typed_decls(const TypedDecls& decls)
     return join(items, "; ");
 }
 
+// Renders a typed model AST expression using the annotated command-line syntax.
 string unparse_annotated(const TypedExpr& expr)
 {
     using namespace std::string_literals;
 
     return std::visit(overloaded{
         [](const IntLiteral& x) {return convertToString(x.value);},
+        // Renders doubles while trimming insignificant trailing zeroes.
         [](const DoubleLiteral& x)
         {
             auto s = convertToString(x.value);
@@ -626,6 +645,8 @@ string unparse_annotated(const TypedExpr& expr)
         {
             return "|" + unparse_annotated(x.pattern.get()) + ":" + unparse_annotated(x.body.get()) + "|";
         },
+        // Renders typed lists, preserving the legacy map-like display for lists
+        // of string/value pairs.
         [](const List<Ann>& x)
         {
             bool list_of_pairs = true;
@@ -657,6 +678,7 @@ string unparse_annotated(const TypedExpr& expr)
                 items.push_back(unparse_annotated(item));
             return "[" + join(items, ", ") + "]";
         },
+        // Renders typed tuple elements in command-line parenthesized syntax.
         [](const Tuple<Ann>& x)
         {
             vector<string> items;
@@ -668,6 +690,8 @@ string unparse_annotated(const TypedExpr& expr)
         {
             return "~" + unparse_annotated(x.dist.get());
         },
+        // Renders typed calls using legacy shorthand for operators, conversions,
+        // defaults, submodels, samples, and named arguments.
         [](const Call<Ann>& x)
         {
             auto s = x.function;
@@ -889,6 +913,7 @@ string show_model(ptree p)
 	return "= " + unparse(p);
 }
 
+// Shows an untyped AST expression as an assignment or sampled model shorthand.
 string show_model(const UntypedExpr& p)
 {
     if (auto q = peel_sample(p))
@@ -906,6 +931,7 @@ string show_model_annotated(ptree p)
 	return "= " + unparse_annotated(p);
 }
 
+// Shows a typed AST expression as an assignment or sampled model shorthand.
 string show_model_annotated(const TypedExpr& p)
 {
     if (auto q = peel_sample_annotated(p))

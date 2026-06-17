@@ -22,21 +22,26 @@ namespace
 
 using namespace CmdModel;
 
+// Builds a small untyped variable expression for AST unit tests.
 UntypedExpr var_expr(const std::string& name)
 {
     return {NoAnn{}, Var{name}};
 }
 
+// Builds a small untyped integer expression for AST unit tests.
 UntypedExpr int_expr(int value)
 {
     return {NoAnn{}, IntLiteral{value}};
 }
 
+// Wraps an untyped expression as a positional call argument.
 Arg<NoAnn> positional_arg(UntypedExpr value)
 {
     return {"", CmdModel::Box<UntypedExpr>(std::move(value)), false, false, std::nullopt};
 }
 
+// Checks that copying recursive AST nodes performs deep copies of boxed
+// children rather than sharing nested expression storage.
 void test_copy_independence()
 {
     UntypedExpr original{
@@ -60,6 +65,7 @@ void test_copy_independence()
     assert(copied_var.name == "y");
 }
 
+// Checks basic node predicates and child traversal for a simple sample node.
 void test_accessors_and_traversal()
 {
     UntypedExpr expr{
@@ -75,6 +81,7 @@ void test_accessors_and_traversal()
     assert(n_children == 1);
 }
 
+// Requires check_invariants() to reject one malformed untyped expression.
 void expect_invariant_failure(const UntypedExpr& expr)
 {
     try
@@ -88,6 +95,7 @@ void expect_invariant_failure(const UntypedExpr& expr)
     assert(false);
 }
 
+// Exercises structural invariant checks that are independent of typechecking.
 void test_invariants()
 {
     UntypedExpr tuple{
@@ -104,6 +112,7 @@ void test_invariants()
 
 }
 
+// Requires one untyped ptree expression to survive AST conversion and back.
 void expect_round_trip(const ptree& p)
 {
     auto expr = model_expr_from_ptree(p);
@@ -136,6 +145,7 @@ void test_absent_argument_values()
     }));
 }
 
+// Exercises untyped AST round trips for scalar literals and variable-like nodes.
 void test_scalar_round_trips()
 {
     expect_round_trip(ptree(1));
@@ -147,6 +157,7 @@ void test_scalar_round_trips()
     expect_round_trip(ptree("_"));
 }
 
+// Exercises untyped AST round trips for ordinary and operator call nodes.
 void test_call_round_trips()
 {
     expect_round_trip(ptree("f", {
@@ -165,6 +176,7 @@ void test_call_round_trips()
     }));
 }
 
+// Exercises untyped AST round trips for list and tuple nodes.
 void test_collection_round_trips()
 {
     expect_round_trip(ptree("List", {
@@ -183,6 +195,7 @@ void test_collection_round_trips()
     }));
 }
 
+// Exercises untyped AST round trips for let, lambda, sample, and get_state.
 void test_special_form_round_trips()
 {
     expect_round_trip(ptree("sample", {
@@ -204,6 +217,7 @@ void test_special_form_round_trips()
     }));
 }
 
+// Requires one malformed untyped ptree to fail AST conversion.
 void expect_conversion_failure(const ptree& p)
 {
     try
@@ -217,6 +231,7 @@ void expect_conversion_failure(const ptree& p)
     assert(false);
 }
 
+// Checks malformed legacy ptree shapes are rejected by the AST converter.
 void test_malformed_ptree_rejections()
 {
     expect_conversion_failure(ptree("Tuple", {{"", ptree(1)}}));
@@ -226,6 +241,7 @@ void test_malformed_ptree_rejections()
     expect_conversion_failure(ptree("get_state", {{"", ptree(1)}}));
 }
 
+// Builds a legacy used_args annotation ptree for typed round-trip tests.
 ptree used_args(std::initializer_list<std::string> args)
 {
     ptree result;
@@ -234,6 +250,7 @@ ptree used_args(std::initializer_list<std::string> args)
     return result;
 }
 
+// Builds a minimal annotated expression ptree for typed converter tests.
 ptree ann(ptree value, ptree type, std::initializer_list<std::string> args = {})
 {
     return ptree({
@@ -243,6 +260,7 @@ ptree ann(ptree value, ptree type, std::initializer_list<std::string> args = {})
     });
 }
 
+// Builds a minimal annotated call-argument ptree for typed converter tests.
 ptree arg_ann(ptree value, ptree type, std::initializer_list<std::string> args = {})
 {
     auto result = ann(std::move(value), std::move(type), args);
@@ -250,6 +268,7 @@ ptree arg_ann(ptree value, ptree type, std::initializer_list<std::string> args =
     return result;
 }
 
+// Requires one annotated ptree expression to survive typed AST conversion.
 void expect_typed_round_trip(const ptree& p)
 {
     auto expr = typed_model_expr_from_annotated_ptree(p);
@@ -257,6 +276,7 @@ void expect_typed_round_trip(const ptree& p)
     assert(p2 == p);
 }
 
+// Exercises typed AST round trips for scalar literals and variable-like nodes.
 void test_typed_scalar_round_trips()
 {
     expect_typed_round_trip(ann(ptree(1), ptree("Int")));
@@ -268,6 +288,7 @@ void test_typed_scalar_round_trips()
     expect_typed_round_trip(ann(ptree("_"), ptree("a")));
 }
 
+// Checks that typed argument metadata survives conversion through the AST.
 void test_typed_argument_metadata_round_trip()
 {
     auto arg_x = ann(ptree("x"), ptree("Double"), {"x"});
@@ -290,6 +311,7 @@ void test_typed_argument_metadata_round_trip()
     expect_typed_round_trip(model);
 }
 
+// Exercises typed AST round trips for collections and model special forms.
 void test_typed_collection_and_special_round_trips()
 {
     expect_typed_round_trip(ann(ptree("List", {
@@ -324,6 +346,7 @@ void test_typed_collection_and_special_round_trips()
     }), ptree("Tree")));
 }
 
+// Checks parser wrappers produce the same ASTs as direct ptree conversion.
 void test_parser_wrappers()
 {
     Rules rules({});
@@ -337,12 +360,14 @@ void test_parser_wrappers()
     assert(decls[1].first == "y");
 }
 
+// Requires untyped AST unparsing to match legacy ptree unparsing.
 void expect_unparse_parity(const ptree& p)
 {
     auto expr = model_expr_from_ptree(p);
     assert(unparse(expr) == unparse(p));
 }
 
+// Exercises untyped AST pretty-printing parity for representative syntax.
 void test_untyped_pretty_printing()
 {
     expect_unparse_parity(ptree(1));
@@ -370,12 +395,14 @@ void test_untyped_pretty_printing()
     assert(show_model(model_expr_from_ptree(ptree("x"))) == "= x");
 }
 
+// Requires typed AST unparsing to match legacy annotated-ptree unparsing.
 void expect_typed_unparse_parity(const ptree& p)
 {
     auto expr = typed_model_expr_from_annotated_ptree(p);
     assert(unparse_annotated(expr) == unparse_annotated(p));
 }
 
+// Exercises typed AST pretty-printing parity for representative syntax.
 void test_typed_pretty_printing()
 {
     expect_typed_unparse_parity(ann(ptree(1), ptree("Int")));
@@ -416,6 +443,7 @@ void test_typed_pretty_printing()
 
 // Checks that solved type equations are substituted through typed AST nodes,
 // argument edges, optional alphabets, and declarations.
+// Checks solved type equations propagate through typed AST annotations.
 void test_typed_substitution()
 {
     auto a = ptree("a#0");
@@ -478,6 +506,7 @@ void test_typed_substitution()
     assert(decls[0].second.ann.type == ptree("Int"));
 }
 
+// Builds a TypecheckingState fixture with optional identifiers and state vars.
 TypecheckingState test_typechecker(const Rules& rules, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
 {
     return TypecheckingState(rules, std::make_shared<FVSource>(), identifiers, state);
@@ -485,6 +514,7 @@ TypecheckingState test_typechecker(const Rules& rules, const std::map<std::strin
 
 // Compares AST typechecking with the normalized legacy annotated-ptree result
 // for one expression.
+// Requires AST expression typechecking to match the legacy ptree typechecker.
 void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
 {
     auto untyped = model_expr_from_ptree(model);
@@ -507,6 +537,7 @@ void expect_typecheck_expr_parity(const Rules& rules, const ptree& required_type
     }
 }
 
+// Requires AST expression typechecking parity using the standard test rules.
 void expect_typecheck_expr_parity(const ptree& required_type, const ptree& model, const std::map<std::string,ptree>& identifiers = {}, const std::map<std::string,ptree>& state = {})
 {
     Rules rules({});
@@ -515,6 +546,8 @@ void expect_typecheck_expr_parity(const ptree& required_type, const ptree& model
 
 // Exercises representative expression typechecking cases against the legacy
 // ptree typechecker oracle.
+// Exercises AST typechecker parity for constants, variables, collections, and
+// direct function-variable cases.
 void test_typecheck_expr_wrapper_parity()
 {
     expect_typecheck_expr_parity(ptree("Int"), ptree("x"), {{"x", ptree("Int")}});
@@ -553,9 +586,12 @@ void test_typecheck_expr_wrapper_parity()
 
 // Verifies expression typechecker failures that are intentionally clearer
 // than the old fallback-to-ptree behavior.
+// Checks direct AST typechecker diagnostics for unsupported expression cases.
 void test_typecheck_direct_errors()
 {
     Rules rules({});
+    // Checks that one direct AST typecheck attempt fails with the expected
+    // diagnostic fragment.
     auto expect_error = [&](const ptree& required_type, const CM::UntypedExpr& expr, const std::string& message)
     {
         auto TC = test_typechecker(rules);
@@ -721,6 +757,8 @@ std::filesystem::path make_rule_fixture()
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls against
 // a temporary binding-file fixture.
+// Exercises AST rule-call typechecker parity for defaults, alphabets, and
+// conversion cases using the temporary binding fixture.
 void test_typecheck_rule_wrapper_parity()
 {
     auto root = make_rule_fixture();
@@ -779,8 +817,7 @@ void test_typecheck_rule_wrapper_parity()
     std::filesystem::remove_all(root);
 }
 
-// Exercises direct AST declaration typechecking against the normalized legacy
-// declaration typechecker output.
+// Exercises declaration typechecking parity between AST and legacy ptree paths.
 void test_typecheck_decls_wrapper_parity()
 {
     Rules rules({});
@@ -871,6 +908,7 @@ void test_extraction_parity()
 
 }
 
+// Runs the focused model AST regression checks in a deterministic order.
 int main()
 {
     test_copy_independence();

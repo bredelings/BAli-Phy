@@ -226,24 +226,28 @@ struct overloaded: Ts...
 template<class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
 
+// Returns an owning copy of a model expression.
 template<class A>
 Expr<A> clone(const Expr<A>& expr)
 {
     return expr;
 }
 
+// Returns an owning copy of a call argument edge.
 template<class A>
 Arg<A> clone(const Arg<A>& arg)
 {
     return arg;
 }
 
+// Returns an owning copy of a model declaration list.
 template<class A>
 Decls<A> clone(const Decls<A>& decls)
 {
     return decls;
 }
 
+// Reports whether an expression is a call to the requested function name.
 template<class A>
 bool is_call_named(const Expr<A>& expr, std::string_view name)
 {
@@ -253,34 +257,42 @@ bool is_call_named(const Expr<A>& expr, std::string_view name)
         return false;
 }
 
+// Reports whether an expression is a list node.
 template<class A>
 bool is_list(const Expr<A>& expr)
 {
     return std::holds_alternative<List<A>>(expr.node);
 }
 
+// Reports whether an expression is a tuple node.
 template<class A>
 bool is_tuple(const Expr<A>& expr)
 {
     return std::holds_alternative<Tuple<A>>(expr.node);
 }
 
+// Reports whether an expression is a sample node.
 template<class A>
 bool is_sample(const Expr<A>& expr)
 {
     return std::holds_alternative<Sample<A>>(expr.node);
 }
 
+// Reports whether an expression is a get_state node.
 template<class A>
 bool is_get_state(const Expr<A>& expr)
 {
     return std::holds_alternative<GetState>(expr.node);
 }
 
+// Applies a visitor to each mutable child expression stored under this node,
+// including argument alphabets but skipping absent argument values.
 template<class A, class F>
 void for_each_child(Expr<A>& expr, F&& f)
 {
     std::visit(overloaded{
+        // Visits call argument values and alphabet metadata stored on argument
+        // edges.
         [&](Call<A>& call)
         {
             for(auto& arg: call.args)
@@ -291,27 +303,32 @@ void for_each_child(Expr<A>& expr, F&& f)
                     f(arg.alphabet->get());
             }
         },
+        // Visits each mutable list element.
         [&](List<A>& list)
         {
             for(auto& element: list.elements)
                 f(element);
         },
+        // Visits each mutable tuple element.
         [&](Tuple<A>& tuple)
         {
             for(auto& element: tuple.elements)
                 f(element);
         },
+        // Visits let declarations before the let body.
         [&](Let<A>& let)
         {
             for(auto& [name, value]: let.decls)
                 f(value);
             f(let.body.get());
         },
+        // Visits both the lambda pattern and the lambda body.
         [&](Lambda<A>& lambda)
         {
             f(lambda.pattern.get());
             f(lambda.body.get());
         },
+        // Visits the sampled distribution expression.
         [&](Sample<A>& sample)
         {
             f(sample.dist.get());
@@ -320,10 +337,14 @@ void for_each_child(Expr<A>& expr, F&& f)
     }, expr.node);
 }
 
+// Applies a visitor to each const child expression stored under this node,
+// including argument alphabets but skipping absent argument values.
 template<class A, class F>
 void for_each_child(const Expr<A>& expr, F&& f)
 {
     std::visit(overloaded{
+        // Visits call argument values and alphabet metadata stored on const
+        // argument edges.
         [&](const Call<A>& call)
         {
             for(auto& arg: call.args)
@@ -334,27 +355,32 @@ void for_each_child(const Expr<A>& expr, F&& f)
                     f(arg.alphabet->get());
             }
         },
+        // Visits each const list element.
         [&](const List<A>& list)
         {
             for(auto& element: list.elements)
                 f(element);
         },
+        // Visits each const tuple element.
         [&](const Tuple<A>& tuple)
         {
             for(auto& element: tuple.elements)
                 f(element);
         },
+        // Visits const let declarations before the let body.
         [&](const Let<A>& let)
         {
             for(auto& [name, value]: let.decls)
                 f(value);
             f(let.body.get());
         },
+        // Visits both the const lambda pattern and the lambda body.
         [&](const Lambda<A>& lambda)
         {
             f(lambda.pattern.get());
             f(lambda.body.get());
         },
+        // Visits the const sampled distribution expression.
         [&](const Sample<A>& sample)
         {
             f(sample.dist.get());
@@ -363,6 +389,8 @@ void for_each_child(const Expr<A>& expr, F&& f)
     }, expr.node);
 }
 
+// Checks structural invariants expected by the model AST and recurses into
+// children that are real expressions.
 template<class A>
 void check_invariants(const Expr<A>& expr)
 {
@@ -373,6 +401,8 @@ void check_invariants(const Expr<A>& expr)
     }
 
     std::visit(overloaded{
+        // Rejects tuple nodes that cannot be represented in the legacy model
+        // syntax.
         [](const Tuple<A>& tuple)
         {
             if (tuple.elements.size() < 2)
@@ -384,6 +414,7 @@ void check_invariants(const Expr<A>& expr)
     for_each_child(expr, [](const Expr<A>& child) { check_invariants(child); });
 }
 
+// Checks structural invariants for each expression in a declaration list.
 template<class A>
 void check_invariants(const Decls<A>& decls)
 {

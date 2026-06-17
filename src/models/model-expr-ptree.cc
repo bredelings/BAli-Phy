@@ -12,27 +12,33 @@ namespace CmdModel
 namespace
 {
 
+// Reports whether a ptree string value carries model-string quote markers.
 bool is_quoted_string(const string& s)
 {
     return s.size() >= 2 and s.front() == '"' and s.back() == '"';
 }
 
+// Removes the surrounding model-string quote markers from a ptree value.
 string strip_quotes(const string& s)
 {
     return s.substr(1, s.size() - 2);
 }
 
+// Adds model-string quote markers before storing a string literal in ptree.
 string add_quotes(const string& s)
 {
     return "\"" + s + "\"";
 }
 
+// Verifies that a special-form ptree has exactly the expected arity.
 void require_child_count(const ptree& p, int n, const string& name)
 {
     if (p.children().size() != n)
         throw std::logic_error("malformed model ptree for " + name);
 }
 
+// Converts a string-valued model ptree into the corresponding untyped AST node,
+// handling special forms before falling back to ordinary calls.
 UntypedExpr model_expr_from_string_ptree(const ptree& p)
 {
     auto name = p.get_value<string>();
@@ -109,6 +115,7 @@ UntypedExpr model_expr_from_string_ptree(const ptree& p)
     }
 }
 
+// Reads the optional used_args annotation set from an annotated ptree.
 std::set<string> used_args_from_ptree(const ptree& p)
 {
     std::set<string> used_args;
@@ -118,6 +125,7 @@ std::set<string> used_args_from_ptree(const ptree& p)
     return used_args;
 }
 
+// Serializes an annotation used_args set into the legacy ptree shape.
 ptree used_args_to_ptree(const std::set<string>& used_args)
 {
     ptree result;
@@ -126,6 +134,7 @@ ptree used_args_to_ptree(const std::set<string>& used_args)
     return result;
 }
 
+// Builds a typed AST annotation from the metadata fields on an annotated ptree.
 Ann ann_from_ptree(const ptree& p)
 {
     Ann ann;
@@ -137,6 +146,7 @@ Ann ann_from_ptree(const ptree& p)
     return ann;
 }
 
+// Writes typed AST annotation metadata back onto an annotated ptree.
 void add_ann_to_ptree(ptree& p, const Ann& ann)
 {
     p.children().push_back({"type", ann.type});
@@ -147,6 +157,8 @@ void add_ann_to_ptree(ptree& p, const Ann& ann)
         p.children().push_back({"extract", ptree(*ann.extract)});
 }
 
+// Converts one annotated ptree argument edge, preserving absent values and
+// argument metadata such as defaults and alphabets.
 Arg<Ann> typed_model_arg_from_annotated_ptree(const string& name, const ptree& p)
 {
     std::optional<Box<TypedExpr>> value;
@@ -160,6 +172,7 @@ Arg<Ann> typed_model_arg_from_annotated_ptree(const string& name, const ptree& p
     return arg;
 }
 
+// Writes typed call-argument metadata onto a non-null annotated argument ptree.
 void add_arg_metadata(ptree& p, const Arg<Ann>& arg)
 {
     p.children().push_back({"is_default_value", ptree(arg.is_default_value)});
@@ -169,6 +182,8 @@ void add_arg_metadata(ptree& p, const Arg<Ann>& arg)
         p.children().push_back({"alphabet", annotated_ptree_from_typed_model_expr(arg.alphabet->get())});
 }
 
+// Converts the value child of an annotated ptree into a typed AST expression,
+// combining it with the annotation already read from the parent.
 TypedExpr typed_model_expr_from_value_ptree(Ann ann, const ptree& value)
 {
     if (value.is_null())
@@ -259,6 +274,7 @@ TypedExpr typed_model_expr_from_value_ptree(Ann ann, const ptree& value)
 
 }
 
+// Converts a legacy untyped model ptree into the explicit model AST.
 UntypedExpr model_expr_from_ptree(const ptree& p)
 {
     if (p.is_null())
@@ -275,6 +291,7 @@ UntypedExpr model_expr_from_ptree(const ptree& p)
         throw std::logic_error("malformed model ptree: non-string value has children");
 }
 
+// Converts an untyped model AST expression back into the legacy ptree shape.
 ptree ptree_from_model_expr(const UntypedExpr& expr)
 {
     return std::visit(overloaded{
@@ -286,6 +303,8 @@ ptree ptree_from_model_expr(const UntypedExpr& expr)
         [](const ArgRef& x) -> ptree {return ptree("@" + x.name);},
         [](const Placeholder&) -> ptree {return ptree("_");},
         [](const GetState& x) -> ptree {return ptree("get_state", {{"", ptree(x.state_name)}});},
+        // Converts an untyped AST call, preserving absent argument values as
+        // null ptree children.
         [](const Call<NoAnn>& x) -> ptree
         {
             ptree result(x.function);
@@ -298,6 +317,7 @@ ptree ptree_from_model_expr(const UntypedExpr& expr)
             }
             return result;
         },
+        // Converts each untyped list element to its positional ptree child.
         [](const List<NoAnn>& x) -> ptree
         {
             ptree result("List");
@@ -305,6 +325,7 @@ ptree ptree_from_model_expr(const UntypedExpr& expr)
                 result.children().push_back({"", ptree_from_model_expr(element)});
             return result;
         },
+        // Converts each untyped tuple element after checking tuple arity.
         [](const Tuple<NoAnn>& x) -> ptree
         {
             if (x.elements.size() < 2)
@@ -314,6 +335,7 @@ ptree ptree_from_model_expr(const UntypedExpr& expr)
                 result.children().push_back({"", ptree_from_model_expr(element)});
             return result;
         },
+        // Converts an untyped let expression to the legacy !let shape.
         [](const Let<NoAnn>& x) -> ptree
         {
             return ptree("!let", {
@@ -321,6 +343,7 @@ ptree ptree_from_model_expr(const UntypedExpr& expr)
                 {"body", ptree_from_model_expr(x.body.get())}
             });
         },
+        // Converts an untyped lambda to the legacy function shape.
         [](const Lambda<NoAnn>& x) -> ptree
         {
             return ptree("function", {
@@ -328,6 +351,7 @@ ptree ptree_from_model_expr(const UntypedExpr& expr)
                 {"", ptree_from_model_expr(x.body.get())}
             });
         },
+        // Converts an untyped sample node to the legacy sample call shape.
         [](const Sample<NoAnn>& x) -> ptree
         {
             return ptree("sample", {{"", ptree_from_model_expr(x.dist.get())}});
@@ -335,6 +359,7 @@ ptree ptree_from_model_expr(const UntypedExpr& expr)
     }, expr.node);
 }
 
+// Converts a legacy !Decls ptree into untyped AST declarations.
 Decls<NoAnn> model_decls_from_ptree(const ptree& p)
 {
     if (not p.has_value<string>() or p.get_value<string>() != "!Decls")
@@ -346,6 +371,7 @@ Decls<NoAnn> model_decls_from_ptree(const ptree& p)
     return decls;
 }
 
+// Converts untyped AST declarations back into the legacy !Decls ptree shape.
 ptree ptree_from_model_decls(const Decls<NoAnn>& decls)
 {
     ptree result("!Decls");
@@ -354,12 +380,15 @@ ptree ptree_from_model_decls(const Decls<NoAnn>& decls)
     return result;
 }
 
+// Converts a full annotated ptree expression into a typed AST expression.
 TypedExpr typed_model_expr_from_annotated_ptree(const ptree& p)
 {
     auto ann = ann_from_ptree(p);
     return typed_model_expr_from_value_ptree(std::move(ann), p.get_child("value"));
 }
 
+// Converts a typed AST expression back into the annotated ptree shape consumed
+// by legacy code generation and pretty-printing.
 ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
 {
     ptree value = std::visit(overloaded{
@@ -371,6 +400,8 @@ ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
         [](const ArgRef& x) -> ptree {return ptree("@" + x.name);},
         [](const Placeholder&) -> ptree {return ptree("_");},
         [](const GetState& x) -> ptree {return ptree("get_state", {{"", annotated_ptree_from_typed_model_expr({Ann{ptree("String"), {}, false, {}}, Var{x.state_name}})}});},
+        // Converts a typed AST call, preserving argument metadata and absent
+        // argument values.
         [](const Call<Ann>& x) -> ptree
         {
             ptree result(x.function);
@@ -386,6 +417,7 @@ ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
             }
             return result;
         },
+        // Converts each typed list element to its annotated positional child.
         [](const List<Ann>& x) -> ptree
         {
             ptree result("List");
@@ -393,6 +425,7 @@ ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
                 result.children().push_back({"", annotated_ptree_from_typed_model_expr(element)});
             return result;
         },
+        // Converts each typed tuple element after checking tuple arity.
         [](const Tuple<Ann>& x) -> ptree
         {
             if (x.elements.size() < 2)
@@ -402,6 +435,7 @@ ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
                 result.children().push_back({"", annotated_ptree_from_typed_model_expr(element)});
             return result;
         },
+        // Converts a typed let expression to the annotated !let shape.
         [](const Let<Ann>& x) -> ptree
         {
             return ptree("!let", {
@@ -409,6 +443,7 @@ ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
                 {"body", annotated_ptree_from_typed_model_expr(x.body.get())}
             });
         },
+        // Converts a typed lambda to the annotated function shape.
         [](const Lambda<Ann>& x) -> ptree
         {
             return ptree("function", {
@@ -431,6 +466,7 @@ ptree annotated_ptree_from_typed_model_expr(const TypedExpr& expr)
     return result;
 }
 
+// Converts a legacy annotated !Decls ptree into typed AST declarations.
 TypedDecls typed_model_decls_from_annotated_ptree(const ptree& p)
 {
     if (not p.has_value<string>() or p.get_value<string>() != "!Decls")
@@ -442,6 +478,7 @@ TypedDecls typed_model_decls_from_annotated_ptree(const ptree& p)
     return decls;
 }
 
+// Converts typed AST declarations back into the annotated !Decls ptree shape.
 ptree annotated_ptree_from_typed_model_decls(const TypedDecls& decls)
 {
     ptree result("!Decls");

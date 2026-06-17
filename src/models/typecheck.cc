@@ -411,6 +411,8 @@ void set_used_args(ptree& model, const set<string>& used_args)
         model.children().push_back({"used_args",p_used_args});
 }
 
+// Applies solved type equations to every expression in a typed AST declaration
+// list.
 void substitute_annotated(const equations& eqs, CM::TypedDecls& decls)
 {
     for(auto& [name, expr]: decls)
@@ -460,6 +462,7 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
             substitute_annotated(eqs, lambda.pattern.get());
             substitute_annotated(eqs, lambda.body.get());
         },
+        // Recurse through the sampled distribution annotation.
         [&](CM::Sample<CM::Ann>& sample)
         {
             substitute_annotated(eqs, sample.dist.get());
@@ -471,6 +474,7 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
 namespace
 {
 
+// Builds a typed model AST annotation with the common default metadata values.
 CM::Ann model_ann(ptree type, set<string> used_args = {})
 {
     return {std::move(type), std::move(used_args), false, {}};
