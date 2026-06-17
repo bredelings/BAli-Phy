@@ -337,11 +337,107 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
     }, expr.node);
 }
 
-CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+namespace
+{
+
+CM::TypedExpr typecheck_model_expr_via_ptree(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
 {
     auto model = CM::ptree_from_model_expr(expr);
     auto annotated = TC.typecheck_and_annotate(required_type, model);
     return CM::typed_model_expr_from_annotated_ptree(annotated);
+}
+
+CM::Ann model_ann(ptree type, set<string> used_args = {})
+{
+    return {std::move(type), std::move(used_args), false, {}};
+}
+
+optional<CM::TypedExpr> typecheck_model_constant(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    type_t result_type;
+    CM::TypedExpr::Node node;
+    ptree model;
+
+    if (auto literal = std::get_if<CM::IntLiteral>(&expr.node))
+    {
+        result_type = ptree("Int");
+        node = *literal;
+        model = ptree(literal->value);
+    }
+    else if (auto literal = std::get_if<CM::DoubleLiteral>(&expr.node))
+    {
+        result_type = ptree("Double");
+        node = *literal;
+        model = ptree(literal->value);
+    }
+    else if (auto literal = std::get_if<CM::BoolLiteral>(&expr.node))
+    {
+        result_type = ptree("Bool");
+        node = *literal;
+        model = ptree(literal->value);
+    }
+    else if (auto literal = std::get_if<CM::StringLiteral>(&expr.node))
+    {
+        result_type = ptree("String");
+        node = *literal;
+        model = ptree("\"" + literal->value + "\"");
+    }
+    else
+        return {};
+
+    if (auto converted = TC.unify_or_convert(model, result_type, required_type))
+        return typecheck_model_expr_via_ptree(TC, required_type, CM::model_expr_from_ptree(*converted));
+
+    return CM::TypedExpr{model_ann(result_type), std::move(node)};
+}
+
+optional<CM::TypedExpr> typecheck_model_var(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    type_t result_type;
+    set<string> used_args;
+    CM::TypedExpr::Node node;
+    ptree model;
+
+    if (auto var = std::get_if<CM::Var>(&expr.node))
+    {
+        auto type = TC.type_for_var(var->name);
+        if (not type)
+            return {};
+        result_type = *type;
+        node = *var;
+        model = ptree(var->name);
+    }
+    else if (auto arg = std::get_if<CM::ArgRef>(&expr.node))
+    {
+        auto type = TC.type_for_arg(arg->name);
+        if (not type)
+            throw myexception()<<"can't find argument '@"<<arg->name<<"'";
+        result_type = *type;
+        used_args = {arg->name};
+        node = *arg;
+        model = ptree("@" + arg->name);
+    }
+    else
+        return {};
+
+    assert(not result_type.is_null());
+
+    if (auto converted = TC.unify_or_convert(model, result_type, required_type))
+        return typecheck_model_expr_via_ptree(TC, required_type, CM::model_expr_from_ptree(*converted));
+
+    return CM::TypedExpr{model_ann(result_type, std::move(used_args)), std::move(node)};
+}
+
+}
+
+CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const ptree& required_type, const CM::UntypedExpr& expr)
+{
+    if (auto constant = typecheck_model_constant(TC, required_type, expr))
+        return *constant;
+    else if (auto var = typecheck_model_var(TC, required_type, expr))
+        return *var;
+    else
+        return typecheck_model_expr_via_ptree(TC, required_type, expr);
 }
 
 CM::TypedDecls typecheck_model_decls(TypecheckingState& TC, const CM::Decls<CM::NoAnn>& decls)
