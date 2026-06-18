@@ -6,6 +6,27 @@ inference is stable.  Keep explicit JSON signatures as a permanent override.
 Do not replace `models/typecheck.cc` or `models/unification.*` until inferred
 binding signatures are proven useful.
 
+## Current Status
+
+Initial infrastructure is in place:
+
+- Binding JSON signature modes are validated before type conversion.
+- Mixed signatures are rejected, and inferred-mode JSON is recognized but still
+  rejected before normal rule conversion.
+- Haskell binding import contexts are compiled as synthetic import-only modules:
+  `module_loader -> synthetic import modules -> one Program -> CompiledModule contexts`.
+- Rule-template lowering is shared with code generation and records referenced
+  `@arg` names.
+- A semantic value-signature lookup API returns compiled `Type`, `TypeVar`, and
+  constraint data.
+- Focused tests check name-resolution parity for representative template heads.
+- Test-only rule-call inference can infer simple call templates by using the
+  compiled import context and lower-level Haskell declaration inference.
+
+Inferred bindings are not usable in normal model typechecking yet.  That still
+requires the Haskell `Type` to `CM::Type` bridge, annotation comparison/audit
+mode, and optional annotation support.
+
 ## Signature Modes
 
 Every binding JSON file has exactly one signature mode:
