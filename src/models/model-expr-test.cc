@@ -3,6 +3,7 @@
 #include "models/haskell-binding-contexts.H"
 #include "models/haskell-signature-lookup.H"
 #include "models/parse.H"
+#include "models/rule-call-inference.H"
 #include "models/rule-template.H"
 #include "models/rules.H"
 #include "models/typecheck.H"
@@ -975,6 +976,69 @@ void test_name_resolution_parity(const std::vector<std::filesystem::path>& packa
     );
 }
 
+// Constructs a minimal Rule object for call-inference tests, avoiding full
+// binding-file loading when only the call template and arg names matter.
+Rule make_call_inference_rule(std::string name, UntypedExpr call, std::vector<std::string> arg_names, std::set<std::string> imports = {})
+{
+    Rule rule;
+    rule.name = std::move(name);
+    rule.call = std::move(call);
+    rule.imports = std::move(imports);
+    for(auto& arg_name: arg_names)
+    {
+        RuleArg arg;
+        arg.name = std::move(arg_name);
+        rule.args.push_back(std::move(arg));
+    }
+    return rule;
+}
+
+// Exercises call-only Haskell inference for simple binding templates without
+// using inferred JSON mode in normal rule loading.
+void test_rule_call_inference(const std::vector<std::filesystem::path>& package_paths)
+{
+    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
+    auto contexts = HaskellBindingContexts::build(loader, {{}});
+
+    auto plus = make_call_inference_rule(
+        "plus",
+        call_expr("+", {positional_arg(arg_ref_expr("x")), positional_arg(arg_ref_expr("y"))}),
+        {"x", "y"}
+    );
+    auto plus_signature = infer_rule_call_signature(contexts, plus);
+    assert(plus_signature.arg_types.size() == 2);
+    assert(not plus_signature.constraints.empty());
+
+    auto length = make_call_inference_rule(
+        "length",
+        call_expr("length", {positional_arg(arg_ref_expr("xs"))}),
+        {"xs"}
+    );
+    auto length_signature = infer_rule_call_signature(contexts, length);
+    assert(length_signature.result_type.print().find("Int") != std::string::npos);
+
+    auto zip = make_call_inference_rule(
+        "zip",
+        call_expr("zip", {positional_arg(arg_ref_expr("xs")), positional_arg(arg_ref_expr("ys"))}),
+        {"xs", "ys"}
+    );
+    auto zip_signature = infer_rule_call_signature(contexts, zip);
+    assert(zip_signature.arg_types.size() == 2);
+    assert(not zip_signature.result_type.print().empty());
+
+    auto absent = make_call_inference_rule("absent", arg_ref_expr("x"), {"x", "y"});
+    try
+    {
+        (void)infer_rule_call_signature(contexts, absent);
+    }
+    catch(const std::exception& e)
+    {
+        assert(std::string(e.what()).find("absent from call template") != std::string::npos);
+        return;
+    }
+    assert(false);
+}
+
 void test_typecheck_decls(const Rules& rules);
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls using
@@ -1169,6 +1233,7 @@ int main(int argc, char* argv[])
     {
         test_haskell_binding_contexts({argv[1], argv[2]});
         test_name_resolution_parity({argv[1], argv[2]});
+        test_rule_call_inference({argv[1], argv[2]});
     }
     test_rule_template_lowering();
     test_typecheck_decls();

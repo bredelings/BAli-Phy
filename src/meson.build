@@ -107,6 +107,7 @@ libbaliphy_sources = [
 
   'models/haskell-binding-contexts.cc',
   'models/haskell-signature-lookup.cc',
+  'models/rule-call-inference.cc',
   'models/rule-template.cc',
   'models/rules.cc',
   'models/parse.cc',
