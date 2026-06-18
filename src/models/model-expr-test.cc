@@ -1,6 +1,7 @@
 #include "models/model-expr.H"
 #include "models/compile.H"
 #include "models/haskell-binding-contexts.H"
+#include "models/haskell-signature-lookup.H"
 #include "models/parse.H"
 #include "models/rule-template.H"
 #include "models/rules.H"
@@ -847,10 +848,27 @@ void test_haskell_binding_contexts(const std::vector<std::filesystem::path>& pac
     assert(contexts.context_count() == 2);
     auto prelude_context = contexts.context_for(prelude_imports);
     assert(prelude_context->lookup_symbol("length"));
+    auto length_signature = lookup_value_signature(contexts, prelude_imports, "length");
+    assert(not length_signature.resolved_name.empty());
+    assert(length_signature.type.print().find("Int") != std::string::npos);
 
     auto data_list_context = contexts.context_for(data_list_imports);
     assert(data_list_context->lookup_symbol("sort"));
     assert(data_list_context->lookup_symbol("Data.List.sort"));
+    auto sort_signature = lookup_value_signature(contexts, data_list_imports, "sort");
+    assert(sort_signature.resolved_name.find("sort") != std::string::npos);
+    assert(not sort_signature.quantified_vars.empty());
+
+    try
+    {
+        (void)lookup_value_signature(contexts, prelude_imports, "definitely_missing_value");
+    }
+    catch(const std::exception& e)
+    {
+        assert(std::string(e.what()).find("not declared") != std::string::npos);
+        return;
+    }
+    assert(false);
 }
 
 // Requires one rule-template lowering attempt to fail with a diagnostic
