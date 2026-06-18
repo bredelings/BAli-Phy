@@ -1,8 +1,11 @@
 #include "models/model-expr.H"
 #include "models/compile.H"
+#include "models/haskell-binding-contexts.H"
 #include "models/parse.H"
 #include "models/rules.H"
 #include "models/typecheck.H"
+#include "computation/loader.H"
+#include "computation/module.H"
 
 #include <cassert>
 #include <chrono>
@@ -44,7 +47,7 @@ void test_model_type_ast()
     assert(list_args.size() == 1);
     assert(list_args[0] == int_type);
 
-    auto pair_type = tuple_type({int_type, type_t("Bool")});
+    auto pair_type = CM::tuple_type({int_type, type_t("Bool")});
     assert(unparse_type(pair_type) == "(Int,Bool)");
     assert(function_type(int_type, double_type) == parse_type("Int -> Double"));
     assert(CM::type_app("Distribution", double_type) == parse_type("Distribution<Double>"));
@@ -830,6 +833,24 @@ void test_signature_mode_validation()
 })JSON", "\"constraints\" must be an array");
 }
 
+// Verifies that binding import sets are compiled into reusable Haskell context
+// modules, with empty imports normalized to Prelude.
+void test_haskell_binding_contexts(const std::vector<std::filesystem::path>& package_paths)
+{
+    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
+    BindingImportSet prelude_imports;
+    BindingImportSet data_list_imports{{"Data.List"}};
+    auto contexts = HaskellBindingContexts::build(loader, {prelude_imports, data_list_imports, prelude_imports});
+
+    assert(contexts.context_count() == 2);
+    auto prelude_context = contexts.context_for(prelude_imports);
+    assert(prelude_context->lookup_symbol("length"));
+
+    auto data_list_context = contexts.context_for(data_list_imports);
+    assert(data_list_context->lookup_symbol("sort"));
+    assert(data_list_context->lookup_symbol("Data.List.sort"));
+}
+
 void test_typecheck_decls(const Rules& rules);
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls using
@@ -1004,7 +1025,7 @@ void test_extraction()
 }
 
 // Runs the focused model AST regression checks in a deterministic order.
-int main()
+int main(int argc, char* argv[])
 {
     test_model_type_ast();
     test_copy_independence();
@@ -1020,6 +1041,8 @@ int main()
     test_typecheck_variable_function_used_args();
     test_typecheck_direct_errors();
     test_signature_mode_validation();
+    if (argc >= 3)
+        test_haskell_binding_contexts({argv[1], argv[2]});
     test_typecheck_decls();
     test_typecheck_rule_calls();
     test_extraction();

@@ -105,6 +105,7 @@ libbaliphy_sources = [
   'models/model-expr.cc',
   'models/model-type.cc',
 
+  'models/haskell-binding-contexts.cc',
   'models/rules.cc',
   'models/parse.cc',
   'models/driver.cc',
@@ -169,9 +170,10 @@ model_expr_test = executable('model-expr-test',
                              'models/model-expr-test.cc',
                              include_directories: [root_inc, libutil_inc],
                              dependencies: [boost, libxxhash, eigen, libdl, math_dep, librange, immer, fmt, cereal],
-                             link_with: [libbaliphy, libcomputation, libcommon, libmcon, libutil])
+                             link_with: [libbaliphy, libcomputation, libcommon, libmcon, libutil],
+                             export_dynamic: true)
 
-test('model expression AST', model_expr_test)
+test('model expression AST', model_expr_test, args:[builtins_path, meson.project_source_root()])
 
 test('bali-phy version', baliphy, args:['--version'], is_parallel: false)
 test('bali-phy help', baliphy, args:['--help'], is_parallel: false)
