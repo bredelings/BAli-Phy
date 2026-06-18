@@ -2,8 +2,10 @@
 #include "models/compile.H"
 #include "models/haskell-binding-contexts.H"
 #include "models/parse.H"
+#include "models/rule-template.H"
 #include "models/rules.H"
 #include "models/typecheck.H"
+#include "computation/expression/var.H"
 #include "computation/loader.H"
 #include "computation/module.H"
 
@@ -851,6 +853,56 @@ void test_haskell_binding_contexts(const std::vector<std::filesystem::path>& pac
     assert(data_list_context->lookup_symbol("Data.List.sort"));
 }
 
+// Requires one rule-template lowering attempt to fail with a diagnostic
+// fragment, covering syntax that templates intentionally reject.
+void expect_rule_template_error(const UntypedExpr& expr, const std::string& message)
+{
+    try
+    {
+        (void)lower_rule_template_expr(expr, {});
+    }
+    catch(const std::exception& e)
+    {
+        assert(std::string(e.what()).find(message) != std::string::npos);
+        return;
+    }
+    assert(false);
+}
+
+// Exercises shared rule-template lowering and verifies that @arg references are
+// collected with the same recursion used for Haskell expression generation.
+void test_rule_template_lowering()
+{
+    std::map<std::string, expression_ref> args{
+        {"x", var("x")},
+        {"y", var("y")},
+        {"dist", var("dist")},
+        {"submodel", var("submodel")}
+    };
+
+    auto lowered = lower_rule_template_expr(
+        call_expr("f", {positional_arg(arg_ref_expr("x")), positional_arg(list_expr({arg_ref_expr("y")}))}),
+        args
+    );
+    assert(lowered.referenced_args == std::set<std::string>({"x", "y"}));
+
+    auto sample = lower_rule_template_expr(sample_expr(arg_ref_expr("dist")), args);
+    assert(sample.referenced_args == std::set<std::string>({"dist"}));
+
+    auto submodel = lower_rule_template_expr(
+        call_expr("SModel.plus_f", {positional_arg(arg_ref_expr("submodel"))}),
+        args
+    );
+    assert(submodel.referenced_args == std::set<std::string>({"submodel"}));
+    assert(submodel.expr.print().find("+>") != std::string::npos);
+
+    expect_rule_template_error(call_expr("f", {named_arg("x", int_expr(1))}), "Named arguments");
+    expect_rule_template_error(UntypedExpr{NoAnn{}, Call<NoAnn>{"f", {{"", std::nullopt, false, false, std::nullopt}}}}, "Missing arguments");
+    expect_rule_template_error(UntypedExpr{NoAnn{}, Placeholder{}}, "Placeholder");
+    expect_rule_template_error(get_state_expr("alphabet"), "get_state");
+    expect_rule_template_error(lambda_expr(tuple_pattern({var_pattern("x"), var_pattern("y")}), var_expr("x")), "Only variable lambda patterns");
+}
+
 void test_typecheck_decls(const Rules& rules);
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls using
@@ -1043,6 +1095,7 @@ int main(int argc, char* argv[])
     test_signature_mode_validation();
     if (argc >= 3)
         test_haskell_binding_contexts({argv[1], argv[2]});
+    test_rule_template_lowering();
     test_typecheck_decls();
     test_typecheck_rule_calls();
     test_extraction();

@@ -106,6 +106,7 @@ libbaliphy_sources = [
   'models/model-type.cc',
 
   'models/haskell-binding-contexts.cc',
+  'models/rule-template.cc',
   'models/rules.cc',
   'models/parse.cc',
   'models/driver.cc',
