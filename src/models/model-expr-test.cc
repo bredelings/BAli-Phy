@@ -738,6 +738,98 @@ std::filesystem::path make_rule_fixture()
     return root;
 }
 
+// Creates a temporary package with one binding JSON file for loader validation
+// tests that do not need the larger rule fixture.
+std::filesystem::path make_single_rule_fixture(const std::string& json_text)
+{
+    auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    auto root = std::filesystem::temp_directory_path() / ("bali-phy-rule-mode-test-" + std::to_string(stamp));
+    auto functions = root / "bindings" / "functions";
+    std::filesystem::create_directories(functions);
+
+    std::ofstream out(functions / "test_rule.json");
+    out << json_text;
+    return root;
+}
+
+// Requires loading one temporary binding to fail with a diagnostic fragment,
+// keeping signature-mode validation tests independent of full model typing.
+void expect_rule_loader_error(const std::string& json_text, const std::string& message)
+{
+    auto root = make_single_rule_fixture(json_text);
+    try
+    {
+        Rules rules({root});
+    }
+    catch(const std::exception& e)
+    {
+        assert(std::string(e.what()).find(message) != std::string::npos);
+        return;
+    }
+    assert(false);
+}
+
+// Verifies that binding JSON signatures are either fully explicit or fully
+// inferred, and that inferred mode is still rejected before rule conversion.
+void test_signature_mode_validation()
+{
+    {
+        auto root = make_single_rule_fixture(R"JSON({
+    "name": "explicit_rule",
+    "result_type": "Int",
+    "call": "explicitRule(@x)",
+    "args": [
+        {"name": "x", "type": "Int"}
+    ]
+})JSON");
+        Rules rules({root});
+        assert(rules.get_rule_for_func("explicit_rule"));
+    }
+
+    expect_rule_loader_error(R"JSON({
+    "name": "inferred_rule",
+    "call": "inferredRule(@x)",
+    "args": [
+        {"name": "x"}
+    ]
+})JSON", "inferred signature mode requires Haskell signature inference");
+
+    expect_rule_loader_error(R"JSON({
+    "name": "missing_result_type",
+    "call": "missingResultType(@x)",
+    "args": [
+        {"name": "x", "type": "Int"}
+    ]
+})JSON", "mixed signature mode");
+
+    expect_rule_loader_error(R"JSON({
+    "name": "missing_arg_type",
+    "result_type": "Int",
+    "call": "missingArgType(@x)",
+    "args": [
+        {"name": "x"}
+    ]
+})JSON", "mixed signature mode");
+
+    expect_rule_loader_error(R"JSON({
+    "name": "inferred_with_constraints",
+    "constraints": ["Num<a>"],
+    "call": "inferredWithConstraints(@x)",
+    "args": [
+        {"name": "x"}
+    ]
+})JSON", "mixed signature mode");
+
+    expect_rule_loader_error(R"JSON({
+    "name": "malformed_constraints",
+    "constraints": "Num<a>",
+    "call": "malformedConstraints(@x)",
+    "args": [
+        {"name": "x"}
+    ]
+})JSON", "\"constraints\" must be an array");
+}
+
 void test_typecheck_decls(const Rules& rules);
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls using
@@ -927,6 +1019,7 @@ int main()
     test_typecheck_tuple_pattern_lambda();
     test_typecheck_variable_function_used_args();
     test_typecheck_direct_errors();
+    test_signature_mode_validation();
     test_typecheck_decls();
     test_typecheck_rule_calls();
     test_extraction();

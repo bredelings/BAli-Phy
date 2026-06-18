@@ -28,6 +28,12 @@ struct RawRule
     json::object fields;
 };
 
+enum class RuleSignatureMode
+{
+    Explicit,
+    Inferred
+};
+
 // Looks up a raw JSON field without creating it, so validation can distinguish
 // absent fields from fields with the wrong type.
 const json::value* maybe_field(const json::object& object, const string& key)
@@ -87,6 +93,78 @@ const json::array* optional_args_array(const json::object& object, const string&
     if (value->is_array())
         return &value->as_array();
     throw myexception()<<"In rule for "<<rule_name<<": \"args\" must be an array";
+}
+
+// Checks the raw constraints field before signature-mode validation so malformed
+// JSON keeps the existing field-specific error instead of becoming a mixed-mode error.
+void validate_constraints_field(const json::object& object, const string& rule_name)
+{
+    auto value = maybe_field(object, "constraints");
+    if (value and not value->is_array())
+        throw myexception()<<"In rule for "<<rule_name<<": \"constraints\" must be an array";
+}
+
+// Classifies a raw binding signature without converting type strings, enforcing
+// the explicit/inferred split before partially typed rules can enter conversion.
+RuleSignatureMode classify_signature_mode(const json::object& object, const string& rule_name)
+{
+    validate_constraints_field(object, rule_name);
+
+    bool has_result_type = maybe_field(object, "result_type");
+    bool has_constraints = maybe_field(object, "constraints");
+    bool any_arg_has_type = false;
+    bool any_arg_omits_type = false;
+    vector<string> args_with_type;
+    vector<string> args_without_type;
+
+    auto args = optional_args_array(object, rule_name);
+    for(auto& value: *args)
+    {
+        if (not value.is_object())
+            throw myexception()<<"In rule for "<<rule_name<<": entry in \"args\" is not an object";
+        const auto& arg_object = value.as_object();
+        auto arg_name = optional_string(arg_object, "name", rule_name).value_or("<unnamed>");
+        if (maybe_field(arg_object, "type"))
+        {
+            any_arg_has_type = true;
+            args_with_type.push_back(arg_name);
+        }
+        else
+        {
+            any_arg_omits_type = true;
+            args_without_type.push_back(arg_name);
+        }
+    }
+
+    if (has_result_type and not any_arg_omits_type)
+        return RuleSignatureMode::Explicit;
+
+    if (not has_result_type and not any_arg_has_type and not has_constraints)
+        return RuleSignatureMode::Inferred;
+
+    myexception error;
+    error<<"In rule for "<<rule_name<<": mixed signature mode; ";
+    if (has_result_type)
+        error<<"\"result_type\" is present";
+    else
+        error<<"\"result_type\" is absent";
+    if (has_constraints)
+        error<<", \"constraints\" is present";
+    if (not args_with_type.empty())
+        error<<", args with \"type\": "<<join(args_with_type, ", ");
+    if (not args_without_type.empty())
+        error<<", args without \"type\": "<<join(args_without_type, ", ");
+    error<<". Use either a full explicit signature or omit all signature fields for inferred mode.";
+    throw error;
+}
+
+// Rejects inferred-mode bindings until the Haskell inference path is connected
+// to rule loading, keeping normal callers from seeing unresolved signatures.
+void validate_signature_mode_enabled(const RawRule& raw_rule)
+{
+    auto mode = classify_signature_mode(raw_rule.fields, raw_rule.name);
+    if (mode == RuleSignatureMode::Inferred)
+        throw myexception()<<"In rule for "<<raw_rule.name<<": inferred signature mode requires Haskell signature inference, which is not enabled yet";
 }
 
 // Reads an optional array of strings from raw rule JSON.
@@ -573,9 +651,14 @@ Rules::Rules(const vector<fs::path>& pl)
     // 3. Seed the rules map so that parsing default values can still resolve
     // positional arguments for rules that have not been fully converted yet.
     for(auto& [name, raw_rule]: raw_rules)
+        validate_signature_mode_enabled(raw_rule);
+
+    // 4. Seed the rules map so that parsing default values can still resolve
+    // positional arguments for rules that have not been fully converted yet.
+    for(auto& [name, raw_rule]: raw_rules)
 	rules[name] = make_rule_stub(raw_rule);
 
-    // 4. Convert the rules - FIXME: should we convert default args in a later step?
+    // 5. Convert the rules - FIXME: should we convert default args in a later step?
     for(auto& [name, raw_rule]: raw_rules)
 	rules[name] = convert_rule(*this, raw_rule);
 }
