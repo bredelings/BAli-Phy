@@ -921,6 +921,60 @@ void test_rule_template_lowering()
     expect_rule_template_error(lambda_expr(tuple_pattern({var_pattern("x"), var_pattern("y")}), var_expr("x")), "Only variable lambda patterns");
 }
 
+// Checks that a rule-template head spelling can be lowered and then found in
+// the compiled import context that inference will use.
+void expect_template_head_resolves(const HaskellBindingContexts& contexts, const BindingImportSet& imports, const std::string& function_name, UntypedExpr expr)
+{
+    std::map<std::string, expression_ref> args{{"x", var("x")}, {"y", var("y")}};
+    auto lowered = lower_rule_template_expr(expr, args);
+    assert(not lowered.expr.print().empty());
+
+    auto signature = lookup_value_signature(contexts, imports, function_name);
+    assert(not signature.resolved_name.empty());
+}
+
+// Provides early name-resolution parity checks between rule-template lowering
+// and compiled Haskell import contexts before annotation comparison exists.
+void test_name_resolution_parity(const std::vector<std::filesystem::path>& package_paths)
+{
+    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
+    BindingImportSet prelude_imports;
+    BindingImportSet data_list_imports{{"Data.List"}};
+    BindingImportSet data_maybe_imports{{"Data.Maybe"}};
+    auto contexts = HaskellBindingContexts::build(loader, {prelude_imports, data_list_imports, data_maybe_imports});
+
+    expect_template_head_resolves(
+        contexts,
+        prelude_imports,
+        "length",
+        call_expr("length", {positional_arg(arg_ref_expr("x"))})
+    );
+    expect_template_head_resolves(
+        contexts,
+        prelude_imports,
+        "+",
+        call_expr("+", {positional_arg(arg_ref_expr("x")), positional_arg(arg_ref_expr("y"))})
+    );
+    expect_template_head_resolves(
+        contexts,
+        data_list_imports,
+        "sort",
+        call_expr("sort", {positional_arg(arg_ref_expr("x"))})
+    );
+    expect_template_head_resolves(
+        contexts,
+        data_list_imports,
+        "Data.List.sort",
+        call_expr("Data.List.sort", {positional_arg(arg_ref_expr("x"))})
+    );
+    expect_template_head_resolves(
+        contexts,
+        data_maybe_imports,
+        "Just",
+        call_expr("Just", {positional_arg(arg_ref_expr("x"))})
+    );
+}
+
 void test_typecheck_decls(const Rules& rules);
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls using
@@ -1112,7 +1166,10 @@ int main(int argc, char* argv[])
     test_typecheck_direct_errors();
     test_signature_mode_validation();
     if (argc >= 3)
+    {
         test_haskell_binding_contexts({argv[1], argv[2]});
+        test_name_resolution_parity({argv[1], argv[2]});
+    }
     test_rule_template_lowering();
     test_typecheck_decls();
     test_typecheck_rule_calls();
