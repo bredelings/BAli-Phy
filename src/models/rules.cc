@@ -273,9 +273,6 @@ Rule make_inference_skeleton(const RawRule& raw_rule)
 // signature stored on Rule objects.
 RuleSignature bridge_inferred_signature(const Rule& skeleton, const InferredRuleSignature& inferred)
 {
-    if (not inferred.constraints.empty())
-        throw myexception()<<"In rule for "<<skeleton.name<<": inferred class constraints are not supported yet; keep this rule explicitly annotated";
-
     HaskellTypeBridgeState bridge_state;
     RuleSignature signature;
     signature.result_type = bridge_haskell_type_to_model_type(inferred.result_type, bridge_state);
@@ -287,6 +284,8 @@ RuleSignature bridge_inferred_signature(const Rule& skeleton, const InferredRule
             throw myexception()<<"In rule for "<<skeleton.name<<": no inferred type for argument '"<<arg.name<<"'";
         signature.arg_types.insert({arg.name, bridge_haskell_type_to_model_type(type->second, bridge_state)});
     }
+    for(const auto& constraint: inferred.constraints)
+        signature.constraints.push_back(bridge_haskell_constraint_to_model_constraint(constraint, bridge_state));
     return signature;
 }
 

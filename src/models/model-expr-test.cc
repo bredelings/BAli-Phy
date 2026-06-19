@@ -1104,6 +1104,33 @@ void test_inferred_take_rule_loading(const std::vector<std::filesystem::path>& p
     expect_typecheck_expr(rules, CM::list_type(type_t("Int")), expr);
 }
 
+// Checks loader-aware Rules inference for a constrained equality template
+// before converting the real == binding JSON.
+void test_inferred_eq_fixture_rule_loading(const std::vector<std::filesystem::path>& package_paths)
+{
+    auto root = make_single_rule_fixture(R"JSON({
+    "name": "fixture_eq",
+    "no_log": true,
+    "call": "@x == @y",
+    "args": [
+        {"name": "x"},
+        {"name": "y"}
+    ]
+})JSON");
+
+    auto paths = package_paths;
+    paths.push_back(root);
+    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, paths);
+    Rules rules(paths, loader);
+
+    auto rule = rules.require_rule_for_func("fixture_eq");
+    assert(rule.result_type == type_t("Bool"));
+    assert(rule.require_arg("x").type == type_t("a"));
+    assert(rule.require_arg("y").type == type_t("a"));
+    assert(rule.constraints.size() == 1);
+    assert(rule.constraints[0] == CM::type_app("Eq", type_t("a")));
+}
+
 void test_typecheck_decls(const Rules& rules);
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls using
@@ -1302,6 +1329,7 @@ int main(int argc, char* argv[])
         test_name_resolution_parity({argv[1], argv[2]});
         test_rule_call_inference({argv[1], argv[2]});
         test_inferred_take_rule_loading({argv[1], argv[2]});
+        test_inferred_eq_fixture_rule_loading({argv[1], argv[2]});
     }
     test_rule_template_lowering();
     test_typecheck_decls();
