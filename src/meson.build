@@ -174,7 +174,7 @@ model_expr_test = executable('model-expr-test',
                              'models/model-expr-test.cc',
                              include_directories: [root_inc, libutil_inc],
                              dependencies: [boost, libxxhash, eigen, libdl, math_dep, librange, immer, fmt, cereal],
-                             link_with: [libbaliphy, libcomputation, libcommon, libmcon, libutil],
+                             link_whole: [libutil, libmcon, libcommon, libcomputation, libbaliphy],
                              export_dynamic: true)
 
 test('model expression AST', model_expr_test, args:[builtins_path, meson.project_source_root()], timeout: 120)
