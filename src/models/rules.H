@@ -27,6 +27,15 @@ struct RuleHaskellSignature
     std::vector<Type> constraints;
 };
 
+struct RuleHaskellCallAnalysis
+{
+    std::vector<std::string> resolved_symbols;
+    std::set<std::string> referenced_args;
+    std::optional<RuleHaskellSignature> inferred_call_signature;
+    std::optional<std::string> resolution_error;
+    std::optional<std::string> inference_error;
+};
+
 struct RuleArg
 {
     std::string name;
@@ -85,6 +94,7 @@ struct Rule
     ParsedType result_type;
     std::vector<RuleConstraint> constraints;
     std::optional<RuleHaskellSignature> haskell_signature;
+    std::optional<RuleHaskellCallAnalysis> haskell_call_analysis;
     RuleModelExpr call;
     std::vector<RuleArg> args;
     std::set<std::string> imports;

@@ -41,6 +41,7 @@ struct RuleSignature
     vector<RuleConstraint> constraints;
     map<string, ParsedType> arg_types;
     optional<RuleHaskellSignature> haskell_signature;
+    optional<RuleHaskellCallAnalysis> haskell_call_analysis;
 };
 
 enum class RuleSignatureMode
@@ -495,6 +496,7 @@ Rule convert_rule(const Rules& R, const RawRule& raw_rule, const RuleSignature& 
     rule.result_type = signature.result_type;
     rule.constraints = signature.constraints;
     rule.haskell_signature = signature.haskell_signature;
+    rule.haskell_call_analysis = signature.haskell_call_analysis;
 
     {
         rule.call = parse_rule_template_expr(required_string(fields, "call", name), name + ": call");
