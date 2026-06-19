@@ -973,15 +973,15 @@ void test_rule_template_lowering()
 
 // Builds a minimal inference request so inference tests do not need a full
 // binding file fixture or a partially initialized Rule.
-RuleInferenceInput make_test_rule_inference_input(std::string name, UntypedExpr call, std::vector<std::string> arg_names, std::set<std::string> imports = {})
+RuleCallAnalysisInput make_test_rule_call_analysis_input(std::string name, UntypedExpr call, std::vector<std::string> arg_names, std::set<std::string> imports = {})
 {
-    RuleInferenceInput input;
+    RuleCallAnalysisInput input;
     input.name = std::move(name);
     input.imports = std::move(imports);
     input.call = std::move(call);
     for(auto& arg_name: arg_names)
     {
-        RuleInferenceArg arg;
+        RuleCallAnalysisArg arg;
         arg.name = std::move(arg_name);
         input.args.push_back(std::move(arg));
     }
@@ -992,7 +992,7 @@ RuleInferenceInput make_test_rule_inference_input(std::string name, UntypedExpr 
 // same compiled symbol returned by direct value-signature lookup.
 void expect_template_head_resolves(const HaskellBindingContexts& contexts, const BindingImportSet& imports, const std::string& function_name, UntypedExpr expr, std::vector<std::string> arg_names)
 {
-    auto input = make_test_rule_inference_input("resolution_fixture", std::move(expr), std::move(arg_names), imports.modules);
+    auto input = make_test_rule_call_analysis_input("resolution_fixture", std::move(expr), std::move(arg_names), imports.modules);
     auto signature = lookup_value_signature(contexts, imports, function_name);
     auto resolution = resolve_rule_call_template(contexts, input);
     std::set<std::string> resolved_symbols(resolution.resolved_symbols.begin(), resolution.resolved_symbols.end());
@@ -1003,7 +1003,7 @@ void expect_template_head_resolves(const HaskellBindingContexts& contexts, const
 // fragment from the same conversion path used by full inference.
 void expect_template_resolution_error(const HaskellBindingContexts& contexts, const BindingImportSet& imports, UntypedExpr expr, std::vector<std::string> arg_names, const std::string& message)
 {
-    auto input = make_test_rule_inference_input("resolution_fixture", std::move(expr), std::move(arg_names), imports.modules);
+    auto input = make_test_rule_call_analysis_input("resolution_fixture", std::move(expr), std::move(arg_names), imports.modules);
     try
     {
         (void)resolve_rule_call_template(contexts, input);
@@ -1084,7 +1084,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
     auto contexts = HaskellBindingContexts::build(loader, {{}});
 
-    auto plus = make_test_rule_inference_input(
+    auto plus = make_test_rule_call_analysis_input(
         "plus",
         call_expr("+", {positional_arg(arg_ref_expr("x")), positional_arg(arg_ref_expr("y"))}),
         {"x", "y"}
@@ -1093,7 +1093,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(plus_signature.arg_types.size() == 2);
     assert(not plus_signature.constraints.empty());
 
-    auto length = make_test_rule_inference_input(
+    auto length = make_test_rule_call_analysis_input(
         "length",
         call_expr("length", {positional_arg(arg_ref_expr("xs"))}),
         {"xs"}
@@ -1101,7 +1101,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     auto length_signature = infer_rule_call_signature(contexts, length);
     assert(length_signature.result_type.print().find("Int") != std::string::npos);
 
-    auto zip = make_test_rule_inference_input(
+    auto zip = make_test_rule_call_analysis_input(
         "zip",
         call_expr("zip", {positional_arg(arg_ref_expr("xs")), positional_arg(arg_ref_expr("ys"))}),
         {"xs", "ys"}
@@ -1110,7 +1110,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(zip_signature.arg_types.size() == 2);
     assert(not zip_signature.result_type.print().empty());
 
-    auto map_id = make_test_rule_inference_input(
+    auto map_id = make_test_rule_call_analysis_input(
         "map_id",
         call_expr("map", {positional_arg(lambda_expr(var_pattern("x"), var_expr("x"))), positional_arg(arg_ref_expr("xs"))}),
         {"xs"}
@@ -1120,7 +1120,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(bridge_haskell_type_to_model_type(map_id_signature.result_type, map_bridge_state) == CM::list_type(type_t("a")));
     assert(bridge_haskell_type_to_model_type(map_id_signature.arg_types.at("xs"), map_bridge_state) == CM::list_type(type_t("a")));
 
-    auto absent = make_test_rule_inference_input("absent", arg_ref_expr("x"), {"x", "y"});
+    auto absent = make_test_rule_call_analysis_input("absent", arg_ref_expr("x"), {"x", "y"});
     try
     {
         (void)infer_rule_call_signature(contexts, absent);

@@ -11,18 +11,18 @@
 #include "models/haskell-binding-contexts.H"
 #include "models/model-expr.H"
 
-struct RuleInferenceArg
+struct RuleCallAnalysisArg
 {
     std::string name;
     std::optional<std::string> default_value_source;
     std::optional<std::string> alphabet_source;
 };
 
-struct RuleInferenceInput
+struct RuleCallAnalysisInput
 {
     std::string name;
     CM::UntypedExpr call;
-    std::vector<RuleInferenceArg> args;
+    std::vector<RuleCallAnalysisArg> args;
     std::set<std::string> imports;
 };
 
@@ -39,8 +39,8 @@ struct RuleCallResolution
     std::vector<std::string> resolved_symbols;
 };
 
-RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts&, const RuleInferenceInput&);
+RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts&, const RuleCallAnalysisInput&);
 
-InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts&, const RuleInferenceInput&);
+InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts&, const RuleCallAnalysisInput&);
 
 #endif

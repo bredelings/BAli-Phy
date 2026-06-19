@@ -246,9 +246,9 @@ RuleSignature parse_explicit_signature(const json::object& object, const string&
 
 // Builds the narrow request object used by Haskell call-template signature
 // inference, without constructing a partially initialized Rule.
-RuleInferenceInput make_rule_inference_input(const RawRule& raw_rule)
+RuleCallAnalysisInput make_rule_call_analysis_input(const RawRule& raw_rule)
 {
-    RuleInferenceInput input;
+    RuleCallAnalysisInput input;
     const auto& name = raw_rule.name;
     const auto& fields = raw_rule.fields;
     input.name = name;
@@ -261,7 +261,7 @@ RuleInferenceInput make_rule_inference_input(const RawRule& raw_rule)
         if (not x.is_object())
             throw myexception()<<"In rule for "<<name<<": entry in \"args\" is not an object";
         const auto& arg_object = x.as_object();
-        RuleInferenceArg arg;
+        RuleCallAnalysisArg arg;
         arg.name = required_string(arg_object, "name", name);
         arg.default_value_source = optional_string(arg_object, "default_value", name);
         arg.alphabet_source = optional_string(arg_object, "alphabet", name);
@@ -272,7 +272,7 @@ RuleInferenceInput make_rule_inference_input(const RawRule& raw_rule)
 
 // Converts an inferred semantic Haskell signature into the concrete model
 // signature stored on Rule objects, retaining the semantic signature as source data.
-RuleSignature bridge_inferred_signature(const RuleInferenceInput& input, const InferredRuleSignature& inferred)
+RuleSignature bridge_inferred_signature(const RuleCallAnalysisInput& input, const InferredRuleSignature& inferred)
 {
     HaskellTypeBridgeState bridge_state;
     seed_haskell_type_bridge_vars(bridge_state, inferred.quantified_vars);
@@ -598,7 +598,7 @@ Rule make_rule_stub(const RawRule& raw_rule)
 std::map<std::string, RuleSignature> resolve_rule_signatures(const map<std::string, RawRule>& raw_rules, const std::shared_ptr<module_loader>& loader)
 {
     std::map<std::string, RuleSignature> signatures;
-    std::map<std::string, RuleInferenceInput> inference_inputs;
+    std::map<std::string, RuleCallAnalysisInput> analysis_inputs;
     vector<BindingImportSet> import_sets;
 
     for(auto& [name, raw_rule]: raw_rules)
@@ -608,20 +608,20 @@ std::map<std::string, RuleSignature> resolve_rule_signatures(const map<std::stri
             signatures.insert({name, parse_explicit_signature(raw_rule.fields, raw_rule.name)});
         else
         {
-            auto input = make_rule_inference_input(raw_rule);
+            auto input = make_rule_call_analysis_input(raw_rule);
             import_sets.push_back({input.imports});
-            inference_inputs.insert({name, std::move(input)});
+            analysis_inputs.insert({name, std::move(input)});
         }
     }
 
-    if (inference_inputs.empty())
+    if (analysis_inputs.empty())
         return signatures;
 
     if (not loader)
         throw myexception()<<"Inferred signature mode requires a Haskell module loader";
 
     auto contexts = HaskellBindingContexts::build(loader, import_sets);
-    for(auto& [name, input]: inference_inputs)
+    for(auto& [name, input]: analysis_inputs)
     {
         InferredRuleSignature inferred;
         try
