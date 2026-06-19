@@ -962,7 +962,7 @@ void test_rule_template_lowering()
         args
     );
     assert(submodel.referenced_args == std::set<std::string>({"submodel"}));
-    assert(submodel.expr.print().find("+>") != std::string::npos);
+    assert(unloc(submodel.expr).print().find("+>") != std::string::npos);
 
     expect_rule_template_error(call_expr("f", {named_arg("x", int_expr(1))}), "Named arguments");
     expect_rule_template_error(UntypedExpr{NoAnn{}, Call<NoAnn>{"f", {{"", std::nullopt, false, false, std::nullopt}}}}, "Missing arguments");

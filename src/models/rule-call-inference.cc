@@ -149,7 +149,7 @@ void require_all_args_referenced(const RuleInferenceInput& rule, const set<strin
 
 // Builds a mutable import context and infers one synthetic function declaration.
 // This avoids re-running parser disambiguation on already-lowered template ASTs.
-Type infer_rule_function_type(const HaskellBindingContexts& contexts, const RuleInferenceInput& rule, const expression_ref& lowered_call, const map<string, string>& arg_vars)
+Type infer_rule_function_type(const HaskellBindingContexts& contexts, const RuleInferenceInput& rule, const Haskell::LExp& lowered_call, const map<string, string>& arg_vars)
 {
     const string module_name = "BindingInfer.Rule.Main";
     const BindingImportSet imports{rule.imports};
@@ -166,7 +166,9 @@ Type infer_rule_function_type(const HaskellBindingContexts& contexts, const Rule
 
     Haskell::Decls declarations;
     declarations.recursive = false;
-    Haskell::LExp body = {noloc, convert_template_apps_for_typecheck(lowered_call, *inference_module, local_vars)};
+    // Temporary conversion: lowering now builds Hs::ApplyExp, but global
+    // resolution still lives in this pass until inference-mode lowering owns it.
+    Haskell::LExp body = {lowered_call.loc, convert_template_apps_for_typecheck(unloc(lowered_call), *inference_module, local_vars)};
     declarations.push_back({noloc, Haskell::simple_fun_decl(function, patterns, body)});
 
     inference_module->add_local_symbols(declarations);
@@ -200,7 +202,7 @@ RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& cont
         local_vars.insert(arg_var);
 
     RuleCallResolution resolution;
-    (void)convert_template_apps_for_typecheck(lowered.expr, *inference_module, local_vars, &resolution.resolved_symbols);
+    (void)convert_template_apps_for_typecheck(unloc(lowered.expr), *inference_module, local_vars, &resolution.resolved_symbols);
     return resolution;
 }
 

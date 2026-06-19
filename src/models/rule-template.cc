@@ -27,37 +27,57 @@ bool is_template_submodel_arg(const CM::Arg<CM::NoAnn>& arg)
     return arg_ref and arg_ref->name == "submodel";
 }
 
+// Wraps a synthetic Haskell expression with no source location, since binding
+// templates are parsed from model JSON rather than Haskell source files.
+Hs::LExp hs_exp(expression_ref expr)
+{
+    return {noloc, std::move(expr)};
+}
+
+// Builds an unresolved variable inside a located Haskell expression. Inference
+// resolves these in a temporary later pass until resolution moves into lowering.
+Hs::LExp hs_var(const string& name)
+{
+    return hs_exp(var(name));
+}
+
+// Builds one synthetic Haskell application node with no source location.
+Hs::LExp hs_apply(const Hs::LExp& head, const Hs::LExp& arg)
+{
+    return hs_exp(Hs::ApplyExp(head, arg));
+}
+
 // Converts a rule call/computed template from CmdModel to Haskell expression
 // code and records every @arg reference seen while lowering.
-expression_ref lower_rule_template_expr_impl(const CM::UntypedExpr& expr, const map<string,expression_ref>& simple_args, set<string>& referenced_args)
+Hs::LExp lower_rule_template_expr_impl(const CM::UntypedExpr& expr, const map<string,expression_ref>& simple_args, set<string>& referenced_args)
 {
     return expr.visit(CM::overloaded{
-        [](const CM::IntLiteral& x) -> expression_ref { return x.value; },
-        [](const CM::DoubleLiteral& x) -> expression_ref { return x.value; },
-        [](const CM::BoolLiteral& x) -> expression_ref { return x.value; },
-        [](const CM::StringLiteral& x) -> expression_ref { return String(x.value); },
-        [](const CM::Var& x) -> expression_ref { return var(x.name); },
+        [](const CM::IntLiteral& x) -> Hs::LExp { return hs_exp(x.value); },
+        [](const CM::DoubleLiteral& x) -> Hs::LExp { return hs_exp(x.value); },
+        [](const CM::BoolLiteral& x) -> Hs::LExp { return hs_exp(x.value); },
+        [](const CM::StringLiteral& x) -> Hs::LExp { return hs_exp(String(x.value)); },
+        [](const CM::Var& x) -> Hs::LExp { return hs_var(x.name); },
         // Looks up a rule-template argument reference in the already generated
         // argument environment.
-        [&](const CM::ArgRef& x) -> expression_ref
+        [&](const CM::ArgRef& x) -> Hs::LExp
         {
             referenced_args.insert(x.name);
             try
             {
-                return simple_args.at(x.name);
+                return hs_exp(simple_args.at(x.name));
             }
             catch(...)
             {
                 throw myexception()<<"cannot find argument '"<<x.name<<"'";
             }
         },
-        [](const CM::Placeholder&) -> expression_ref { throw myexception()<<"Placeholder is not allowed in rule templates."; },
-        [](const CM::GetState&) -> expression_ref { throw myexception()<<"get_state is not allowed in rule templates."; },
-        // Compiles a rule-template call as Haskell application, preserving the
-        // legacy final-submodel rewrite.
-        [&](const CM::Call<CM::NoAnn>& call) -> expression_ref
+        [](const CM::Placeholder&) -> Hs::LExp { throw myexception()<<"Placeholder is not allowed in rule templates."; },
+        [](const CM::GetState&) -> Hs::LExp { throw myexception()<<"get_state is not allowed in rule templates."; },
+        // Compiles a rule-template call as Haskell ApplyExp nodes, preserving
+        // the legacy final-submodel rewrite.
+        [&](const CM::Call<CM::NoAnn>& call) -> Hs::LExp
         {
-            expression_ref E = var(call.function);
+            Hs::LExp E = hs_var(call.function);
             for(int i=0;i<call.args.size();i++)
             {
                 auto& arg = call.args[i];
@@ -70,34 +90,34 @@ expression_ref lower_rule_template_expr_impl(const CM::UntypedExpr& expr, const 
                 // Compatibility behavior: rule templates encode `submodel +> f`
                 // as a final @submodel argument. Remove when bindings spell this directly.
                 if (i == call.args.size()-1 and is_template_submodel_arg(arg))
-                    E = {var("+>"), arg_expr, E};
+                    E = hs_apply(hs_apply(hs_var("+>"), arg_expr), E);
                 else
-                    E = {E, arg_expr};
+                    E = hs_apply(E, arg_expr);
             }
             return E;
         },
         // Compiles a rule-template list by translating each element into a
         // located Haskell expression.
-        [&](const CM::List<CM::NoAnn>& list) -> expression_ref
+        [&](const CM::List<CM::NoAnn>& list) -> Hs::LExp
         {
             vector<Hs::LExp> located_args;
             for(auto& element: list.elements)
-                located_args.push_back({noloc, lower_rule_template_expr_impl(element, simple_args, referenced_args)});
-            return Hs::List(located_args);
+                located_args.push_back(lower_rule_template_expr_impl(element, simple_args, referenced_args));
+            return hs_exp(Hs::List(located_args));
         },
         // Compiles a rule-template tuple by translating each element into a
         // located Haskell expression.
-        [&](const CM::Tuple<CM::NoAnn>& tuple) -> expression_ref
+        [&](const CM::Tuple<CM::NoAnn>& tuple) -> Hs::LExp
         {
             vector<Hs::LExp> located_args;
             for(auto& element: tuple.elements)
-                located_args.push_back({noloc, lower_rule_template_expr_impl(element, simple_args, referenced_args)});
-            return Hs::Tuple(located_args);
+                located_args.push_back(lower_rule_template_expr_impl(element, simple_args, referenced_args));
+            return hs_exp(Hs::Tuple(located_args));
         },
-        [](const CM::Let<CM::NoAnn>&) -> expression_ref { throw myexception()<<"let expressions are not allowed in rule templates."; },
+        [](const CM::Let<CM::NoAnn>&) -> Hs::LExp { throw myexception()<<"let expressions are not allowed in rule templates."; },
         // Preserves the old template lambda support by folding adjacent lambda
         // nodes into one Haskell lambda expression.
-        [&](const CM::Lambda<CM::NoAnn>& lambda) -> expression_ref
+        [&](const CM::Lambda<CM::NoAnn>& lambda) -> Hs::LExp
         {
             auto pattern = lambda.pattern.to<CM::VarPattern>();
             if (not pattern)
@@ -106,22 +126,22 @@ expression_ref lower_rule_template_expr_impl(const CM::UntypedExpr& expr, const 
             auto body = lower_rule_template_expr_impl(lambda.body, simple_args, referenced_args);
             Hs::LPat p = {noloc, Hs::VarPattern({noloc,Hs::Var(pattern->name)})};
 
-            if (auto L = body.to<Hs::LambdaExp>())
+            if (auto L = unloc(body).to<Hs::LambdaExp>())
             {
                 auto LE = *L;
                 auto& pats = LE.match.patterns;
                 pats.insert(pats.begin(), p);
-                return LE;
+                return hs_exp(LE);
             }
             else
-                return Hs::LambdaExp({p}, {noloc, body});
+                return hs_exp(Hs::LambdaExp({p}, body));
         },
         // Compatibility behavior: rule templates share the model parser, so
         // sample(@dist) is parsed as Sample but means a Haskell sample call here.
-        [&](const CM::Sample<CM::NoAnn>& sample) -> expression_ref
+        [&](const CM::Sample<CM::NoAnn>& sample) -> Hs::LExp
         {
             auto dist = lower_rule_template_expr_impl(sample.dist, simple_args, referenced_args);
-            return {var("sample"), dist};
+            return hs_apply(hs_var("sample"), dist);
         }
     });
 }
@@ -137,9 +157,9 @@ RuleTemplateLoweringResult lower_rule_template_expr(const CM::UntypedExpr& expr,
     return result;
 }
 
-// Compatibility wrapper for existing codegen call sites that only need the
-// lowered expression. Remove once all callers consume RuleTemplateLoweringResult.
+// Compatibility wrapper: current codegen consumes expression_ref directly.
+// Remove once codegen carries located Haskell expressions through this boundary.
 expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<string, expression_ref>& simple_args)
 {
-    return lower_rule_template_expr(expr, simple_args).expr;
+    return unloc(lower_rule_template_expr(expr, simple_args).expr);
 }

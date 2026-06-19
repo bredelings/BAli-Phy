@@ -6,11 +6,12 @@
 #include <string>
 
 #include "computation/expression/expression_ref.H"
+#include "computation/haskell/haskell.H"
 #include "models/model-expr.H"
 
 struct RuleTemplateLoweringResult
 {
-    expression_ref expr;
+    Haskell::LExp expr;
     std::set<std::string> referenced_args;
 };
 
