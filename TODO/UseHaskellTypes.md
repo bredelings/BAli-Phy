@@ -30,6 +30,8 @@ enough audit data.
   quantified `TypeVar`s, result and arg `Type`s, and Haskell constraints.
 - The current `CM::Type` and model-constraint fields are compatibility views
   derived from retained Haskell signatures for the existing model typechecker.
+- Retained Haskell constraints are not yet used as a general model-time
+  constraint solver; that is a later migration step.
 - Loader diagnostics distinguish Haskell inference failures from
   Haskell-to-`CM::Type` bridge failures.
 - Explicit-rule-style analysis can resolve and infer calls such as `length` and
@@ -147,7 +149,35 @@ After these checks, retain the semantic Haskell signature and populate the
 legacy `Rule::result_type`, `RuleArg::type`, and `Rule::constraints` fields for
 the current model typechecker.
 
-### 4. Remove Simple Annotations
+### 4. Constraint-Aware Model Typechecking
+
+Eventually, the model typechecker should use retained Haskell constraints, not
+just store or bridge them.  Rule application should instantiate a rule's
+semantic Haskell predicates with the model expression's inferred types, collect
+the resulting obligations, and check concrete obligations against compiled
+Haskell instance information before generated Haskell is run.
+
+For example, an expression such as `hky85 + hky85` should fail during
+command-line model typechecking because `(+)` requires `Num Markov`, and there
+is no such instance.  The error should report the operator/rule, the unsatisfied
+class predicate, the concrete type, and the import context used for instance
+lookup.
+
+This stage should:
+
+- Reuse retained `RuleHaskellSignature` constraints for both explicit-audited
+  and inferred rules.
+- Substitute model type variables into Haskell predicates at each rule
+  application.
+- Discharge concrete predicates using compiled instance heads from the relevant
+  Haskell import context.
+- Reject unsatisfied concrete constraints before code generation or Haskell
+  execution.
+- Preserve residual polymorphic constraints only where the surrounding
+  expression can still generalize them.
+- Keep model-language coercions separate from Haskell class solving.
+
+### 5. Remove Simple Annotations
 
 Remove annotations only for bindings classified as exact match or match after
 normalization.  Prefer this order:
@@ -163,20 +193,20 @@ normalization.  Prefer this order:
 Keep explicit annotations for ambiguous bindings, absent args, and bindings
 whose command-line interface intentionally differs from the raw Haskell type.
 
-### 5. Retire Remaining Lowering Compatibility
+### 6. Retire Remaining Lowering Compatibility
 
 Code generation still has a marked compatibility wrapper that unwraps located
 Haskell template expressions for older call sites.  Teach codegen to carry
 located expressions directly, then remove the wrapper.
 
-### 6. Instance-Aware Diagnostics
+### 7. Instance-Aware Diagnostics
 
 After optional annotations work, expose imported instance heads from compiled
 modules for diagnostics.  Start with `Num`, `Eq`, `Ord`, and domain classes such
-as `Nucleotides`, `Triplets`, and `Doublets`.  Use this only for diagnostics at
-first; do not expose instance bodies.
+as `Nucleotides`, `Triplets`, and `Doublets`.  Use instance heads first for
+diagnostics and concrete constraint rejection; do not expose instance bodies.
 
-### 7. Preserve Model-Language Coercions
+### 8. Preserve Model-Language Coercions
 
 Keep model-language conversion insertion separate from Haskell signature
 inference.  Existing inserted calls such as `intToDouble`, `discrete`,
@@ -186,14 +216,14 @@ command-line language conveniences, not ordinary Haskell unification.
 Do not remove `convertible_to()` until an equivalent model coercion layer exists
 for Haskell-backed types.
 
-### 8. Revisit Type Representation
+### 9. Revisit Type Representation
 
 Only after audit mode and optional annotations are working, decide whether to
 replace `CM::Type` in the model typechecker.  Use audit data to decide whether
 to keep the bridge, store Haskell `Type` only on `Rule`, gradually migrate
 `models/typecheck.cc`, or eventually retire `models/unification.*`.
 
-### 9. Infer From Defaults And Alphabets
+### 10. Infer From Defaults And Alphabets
 
 After call-only inference is stable, consider using `default_value` and
 `alphabet` expressions to constrain otherwise absent or underconstrained args.
@@ -203,8 +233,9 @@ This is optional; explicit JSON signatures remain the fallback.
 
 Add coverage incrementally for signature modes, compiled value lookup, shared
 template lowering, binding inference, name-resolution parity, bridge behavior,
-annotation audit/reporting, optional annotations, instance diagnostics, and code
-generation paths such as `5d +A`.
+annotation audit/reporting, optional annotations, concrete unsatisfied
+constraints such as `hky85 + hky85`, instance diagnostics, and code generation
+paths such as `5d +A`.
 
 ## Implementation Principle
 
