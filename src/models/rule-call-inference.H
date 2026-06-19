@@ -35,11 +35,6 @@ struct InferredRuleSignature
     std::vector<Type> constraints;
 };
 
-struct RuleCallResolution
-{
-    std::vector<std::string> resolved_symbols;
-};
-
 struct RuleCallAnalysis
 {
     std::optional<Haskell::LExp> resolved_call;
@@ -53,8 +48,6 @@ struct RuleCallAnalysis
 RuleCallAnalysis analyze_rule_call(const HaskellBindingContexts&, const RuleCallAnalysisInput&);
 
 RuleCallAnalysis analyze_rule_call_resolution(const HaskellBindingContexts&, const RuleCallAnalysisInput&);
-
-RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts&, const RuleCallAnalysisInput&);
 
 InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts&, const RuleCallAnalysisInput&);
 

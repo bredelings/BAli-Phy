@@ -1021,8 +1021,9 @@ void expect_template_head_resolves(const HaskellBindingContexts& contexts, const
 {
     auto input = make_test_rule_call_analysis_input("resolution_fixture", std::move(expr), std::move(arg_names), imports.modules);
     auto signature = lookup_value_signature(contexts, imports, function_name);
-    auto resolution = resolve_rule_call_template(contexts, input);
-    std::set<std::string> resolved_symbols(resolution.resolved_symbols.begin(), resolution.resolved_symbols.end());
+    auto analysis = analyze_rule_call_resolution(contexts, input);
+    assert(not analysis.resolution_error);
+    std::set<std::string> resolved_symbols(analysis.resolved_symbols.begin(), analysis.resolved_symbols.end());
     assert(resolved_symbols.count(signature.resolved_name));
 }
 
@@ -1031,16 +1032,9 @@ void expect_template_head_resolves(const HaskellBindingContexts& contexts, const
 void expect_template_resolution_error(const HaskellBindingContexts& contexts, const BindingImportSet& imports, UntypedExpr expr, std::vector<std::string> arg_names, const std::string& message)
 {
     auto input = make_test_rule_call_analysis_input("resolution_fixture", std::move(expr), std::move(arg_names), imports.modules);
-    try
-    {
-        (void)resolve_rule_call_template(contexts, input);
-    }
-    catch(const std::exception& e)
-    {
-        assert(std::string(e.what()).find(message) != std::string::npos);
-        return;
-    }
-    assert(false);
+    auto analysis = analyze_rule_call_resolution(contexts, input);
+    assert(analysis.resolution_error);
+    assert(analysis.resolution_error->find(message) != std::string::npos);
 }
 
 // Provides early name-resolution parity checks between rule-template lowering

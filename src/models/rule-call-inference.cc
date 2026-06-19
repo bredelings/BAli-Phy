@@ -205,18 +205,6 @@ RuleCallAnalysis analyze_rule_call_resolution(const HaskellBindingContexts& cont
     return analyze_rule_call_impl(contexts, rule, false);
 }
 
-// Resolves the globals used by the lowered rule template through the same
-// inference-mode lowering used by full Haskell type inference.
-RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& contexts, const RuleCallAnalysisInput& rule)
-{
-    auto analysis = analyze_rule_call_resolution(contexts, rule);
-    if (analysis.resolution_error)
-        throw myexception()<<*analysis.resolution_error;
-
-    RuleCallResolution resolution{std::move(analysis.resolved_symbols)};
-    return resolution;
-}
-
 // Infers one rule call by compiling a synthetic function and reading its
 // generalized semantic Haskell type.
 InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts& contexts, const RuleCallAnalysisInput& rule)
