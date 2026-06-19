@@ -18,7 +18,8 @@ Initial infrastructure and end-to-end inferred bindings are in place:
   `@arg` names.
 - A semantic value-signature lookup API returns compiled `Type`, `TypeVar`, and
   constraint data.
-- Focused tests check name-resolution parity for representative template heads.
+- Focused tests begin checking name-resolution parity for representative
+  template heads.
 - Rule-call inference lowers a binding call template into a synthetic Haskell
   function declaration, runs the existing `TypeChecker` declaration inference
   path in a compiled import context, and reads generalized semantic `Type`
@@ -39,6 +40,187 @@ tests and simple callers that do not have a Haskell module loader.  Broader
 constraints, defaults, alphabets, and broad annotation removal still require
 follow-up work.
 
+## Architecture Cleanup Plan
+
+The inferred `take` and `==` bindings prove that the inference path can work,
+but they also expose several design problems that should be corrected before
+removing more annotations.
+
+### 1. Preserve Semantic Haskell Signatures
+
+Problem: inferred semantic Haskell signatures are immediately collapsed into
+legacy `CM::Type` fields.  This makes the current model typechecker happy, but
+it throws away the qualified Haskell predicates that should become the long-term
+source of truth.
+
+Plan:
+
+- Add a durable rule signature field, probably
+  `std::optional<RuleHaskellSignature> Rule::haskell_signature`.
+- Store semantic `Type` values for the result, each JSON arg, and each inferred
+  constraint.
+- Populate this field only for inferred rules at first; explicit JSON rules can
+  remain legacy-only until audit mode records inferred counterparts for them.
+- Continue filling `Rule::result_type`, `RuleArg::type`, and
+  `Rule::constraints` from the legacy `CM::Type` bridge so existing model
+  typechecking behavior does not change.
+- Add tests that loader-aware `Rules` retains semantic signatures for `take` and
+  `==`, including the original Haskell class predicate for `==`.
+
+Done when: inferred rules keep their Haskell `Type` and constraint data after
+`Rules` construction, and the legacy `CM::Type` view is explicitly a derived
+compatibility view.
+
+### 2. Make Constraint Bridging A Compatibility Boundary
+
+Problem: the narrow constraint bridge currently looks like the inference design
+itself, because it maps selected Haskell classes such as `Data.Eq.Eq` directly
+to model constraints such as `Eq<a>`.
+
+Plan:
+
+- Treat Haskell predicates stored in `Rule::haskell_signature` as authoritative
+  for inferred bindings.
+- Use `bridge_haskell_constraint_to_model_constraint(...)` only while deriving
+  the legacy `Rule::constraints` view.
+- Keep the bridge intentionally narrow until the model typechecker can consume
+  Haskell predicates or a generic class-reference representation.
+- Add a brief code note at the bridge call site explaining that the bridge is a
+  compatibility output for the current model typechecker.
+
+Done when: code and tests make it clear that `Data.Eq.Eq a` is retained, and
+`Eq<a>` is only the compatibility representation used by current model typing.
+
+### 3. Strengthen Name-Resolution Parity Tests
+
+Problem: current parity tests lower a template and separately look up an
+expected name, but they do not prove that the lowered expression used by
+inference resolved the same symbol.
+
+Plan:
+
+- Expose a small inspection helper from the inference path, or a test-only
+  wrapper around it, that lowers a rule template in an import context and
+  returns the resolved global symbols it used.
+- Compare those resolved names against `lookup_value_signature(...).resolved_name`.
+- Cover unqualified Prelude names, symbolic operators, qualified imports,
+  unqualified names from explicit binding imports, constructors, and an
+  ambiguity/error case.
+- Keep the helper tied to the same conversion path used by
+  `infer_rule_call_signature(...)`; do not add a separate name-resolution
+  implementation just for tests.
+
+Done when: a test fails if inference would typecheck a different Haskell symbol
+than the one the binding template appears to name.
+
+### 4. Use Or Demote Value Signature Lookup
+
+Problem: `lookup_value_signature(...)` is public model-layer infrastructure, but
+it is currently only used by tests.  That risks becoming parallel infrastructure
+beside the real inference path.
+
+Plan:
+
+- Keep `lookup_value_signature(...)` as the canonical read-only compiled-symbol
+  lookup API.
+- Use it in the strengthened parity tests described above.
+- Later, use it in annotation audit diagnostics when reporting declared versus
+  imported Haskell signatures.
+- If audit work later chooses a different lookup API, move this helper into the
+  test file instead of leaving it as unused production infrastructure.
+
+Done when: the helper has a clear role in parity/audit code, or it is no longer
+part of production sources.
+
+### 5. Fix The Second-Pass Inference Conversion
+
+Problem: rule-template lowering is shared with code generation, but inference
+then walks the lowered expression and resolves globals again.  That conversion
+must not invent different scoping semantics.
+
+Plan:
+
+- Keep the current shared lowering for now; do not redesign it before the bug
+  surface is pinned down.
+- Teach the inference conversion to track local binders introduced by
+  `Hs::LambdaExp` before resolving `var` nodes as globals.
+- Add a regression test for an inferred rule template containing a lambda with a
+  variable binder.
+- If tuple-pattern or more complex lambda inference is not supported yet, add an
+  xfail test for the unsupported shape before broadening support.
+- After the narrow fix, consider returning a more typed lowering result for
+  inference, such as a Haskell expression plus referenced args plus local binder
+  metadata.
+
+Done when: lambda-bound variables in inferred templates are not looked up as
+imported globals, and tests cover that behavior.
+
+### 6. Move Synthetic Inference Modules Into The Context Abstraction
+
+Problem: `HaskellBindingContexts` compiles import-set context modules, but
+`rule-call-inference.cc` still constructs a separate per-rule synthetic module
+and only calls `context_for(...)` as a guard/cache check.
+
+Plan:
+
+- Add a narrow API to `HaskellBindingContexts`, for example
+  `make_imported_module(imports, module_name, source_text, decls)` or
+  `make_rule_inference_module(imports, module_name, source_text)`.
+- The API should normalize imports, require the compiled import context, build
+  the synthetic `Module`, and call `perform_imports(program())`.
+- Update `infer_rule_function_type(...)` to use this API instead of constructing
+  and importing the module directly.
+- Keep typechecking in `rule-call-inference.cc`; only module/import ownership
+  moves into `HaskellBindingContexts`.
+- Later interface generation for import sets or inferred rule modules should use
+  this same abstraction.
+
+Done when: there is one owner for import normalization and synthetic
+module-import setup, and per-rule inference modules are no longer ad hoc
+siblings of the compiled contexts.
+
+### 7. Update Audit And Documentation Around The New Boundary
+
+Problem: the written milestone list still reads partly as if inference should
+collapse to `CM::Type` and then proceed.  The more durable design is:
+
+```text
+compiled import-set context
+  -> synthetic rule inference module
+  -> semantic Haskell signature retained on Rule
+  -> legacy CM::Type compatibility view for current model typechecking
+```
+
+Plan:
+
+- Update audit mode to compare both semantic Haskell signatures and bridged
+  legacy signatures.
+- Report bridge failures as compatibility failures, not as Haskell inference
+  failures.
+- Report constraint differences using the retained Haskell predicates when
+  possible.
+- Keep explicit JSON signatures as the permanent override when the command-line
+  interface intentionally differs from the raw Haskell type.
+
+Done when: audit reports distinguish inference, semantic signature retention,
+and legacy compatibility bridging.
+
+## Suggested Smaller Next Batch
+
+Do not try to address the whole cleanup plan in one implementation batch.  A
+good next slice is:
+
+1. Add `Rule::haskell_signature` for inferred rules.
+2. Populate it from `InferredRuleSignature` before legacy bridging.
+3. Keep existing `Rule::result_type`, arg types, and constraints behavior
+   unchanged.
+4. Add tests that `take` and `==` retain semantic Haskell signatures after
+   loader-aware `Rules` construction.
+5. Add or update code notes so the `CM::Type` constraint bridge is clearly a
+   compatibility output.
+6. Leave context-owned inference modules and lambda-scope conversion fixes for
+   separate follow-up batches.
+
 ## Signature Modes
 
 Every binding JSON file has exactly one signature mode:
@@ -57,7 +239,7 @@ defaults, alphabets, docs, and other metadata.  Only the signature is inferred.
 Add rule-loader validation before converting rule types:
 
 - Accept explicit mode.
-- Accept inferred mode only behind a developer feature flag at first.
+- Accept inferred mode only through loader-aware `Rules` construction at first.
 - Reject mixed mode with a rule-qualified error message.
 - Treat `constraints` as optional only in explicit mode.
 
@@ -177,12 +359,17 @@ Keep it intentionally narrow:
 If an inferred type cannot round-trip through this bridge, require explicit
 JSON annotations for that binding.
 
+The retained semantic Haskell signature is the source of truth for inferred
+rules.  The `CM::Type` bridge only derives the compatibility view consumed by
+the current model typechecker.
+
 Do not try to bridge arbitrary type families, higher-rank types, complex
 qualified constraints, or kind-polymorphic signatures in this phase.
 
 ## Milestone 7: Annotation Comparison Audit Mode
 
-Keep all existing JSON annotations required.
+For bindings that still carry explicit JSON annotations, keep those annotations
+required while audit mode is introduced.
 
 Add a developer/test-only audit mode:
 
@@ -201,7 +388,9 @@ Comparison must normalize:
 - Constraint ordering.
 - Solver-simplified residual predicates.
 
-No normal user-facing behavior should change in this milestone.
+No normal user-facing behavior should change in this milestone, apart from
+prototype bindings that have already been deliberately converted to inferred
+mode.
 
 ## Milestone 8: Whole-Tree Signature Report
 
@@ -220,7 +409,9 @@ Produce a report grouping bindings into:
 - Name-resolution problem.
 - Call-lowering unsupported syntax.
 
-This report is the migration map.  Do not remove annotations before it exists.
+This report is the broad migration map.  Do not remove large groups of
+annotations before it exists; prototype inferred bindings may remain as focused
+end-to-end checks.
 
 ## Milestone 9: Optional Annotation Support
 
@@ -234,8 +425,9 @@ Enable inferred mode for bindings that pass all checks:
 - No ambiguous Haskell type remains after simplification/generalization.
 - The template uses only supported lowering syntax.
 
-Populate `Rule::result_type`, `RuleArg::type`, and `Rule::constraints` from
-the inferred and bridged signature before `models/typecheck.cc` sees the rule.
+Retain the semantic Haskell signature on the rule, then populate
+`Rule::result_type`, `RuleArg::type`, and `Rule::constraints` from the bridged
+compatibility signature before `models/typecheck.cc` sees the rule.
 
 Defaults and alphabets are still parsed and typechecked after the rule
 signature is resolved, as they are today.
