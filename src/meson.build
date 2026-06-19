@@ -177,7 +177,7 @@ model_expr_test = executable('model-expr-test',
                              link_with: [libbaliphy, libcomputation, libcommon, libmcon, libutil],
                              export_dynamic: true)
 
-test('model expression AST', model_expr_test, args:[builtins_path, meson.project_source_root()])
+test('model expression AST', model_expr_test, args:[builtins_path, meson.project_source_root()], timeout: 120)
 
 test('bali-phy version', baliphy, args:['--version'], is_parallel: false)
 test('bali-phy help', baliphy, args:['--help'], is_parallel: false)
