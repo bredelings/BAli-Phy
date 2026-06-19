@@ -18,19 +18,26 @@ Initial infrastructure and end-to-end inferred bindings are in place:
   `HaskellBindingContexts`, so import normalization and `perform_imports(...)`
   setup have one owner.
 - Rule-template lowering is shared with code generation and records referenced
-  `@arg` names.
+  `@arg` names.  It now builds located Haskell expressions and `Hs::ApplyExp`
+  nodes directly; a marked compatibility wrapper still unwraps the result for
+  current code-generation call sites.
 - A semantic value-signature lookup API returns compiled `Type`, `TypeVar`, and
   constraint data, and serves as the read-only compiled-symbol oracle for
   parity tests.
 - Focused tests compare rule-inference name resolution with direct
   value-signature lookup for representative Prelude names, symbolic operators,
   explicit imports, qualified names, constructors, and missing globals.
-- Rule-call inference lowers a binding call template into a synthetic Haskell
-  function declaration, runs the existing `TypeChecker` declaration inference
-  path in a compiled import context, and reads generalized semantic `Type`
-  values from `poly_env()`.
-- The inference conversion tracks lambda-bound locals when resolving globals in
-  lowered templates.
+- Rule-call inference uses a dedicated `RuleInferenceInput` instead of partially
+  initialized `Rule` objects.
+- Rule-call inference lowers a binding call template in inference mode, resolving
+  globals and lambda locals during shared template lowering, then builds a
+  synthetic Haskell function declaration, runs the existing `TypeChecker`
+  declaration inference path in a compiled import context, and reads generalized
+  semantic `Type` values from `poly_env()`.
+- Inferred semantic signatures retain their quantified `TypeVar`s as well as
+  result, argument, and constraint `Type` values.
+- Loader diagnostics now distinguish Haskell inference failures from
+  Haskell-to-`CM::Type` compatibility bridge failures.
 - A narrow semantic Haskell `Type` to `CM::Type` bridge supports variables,
   `Int`, `Double`, `Bool`, lists, tuples, and function arrows.
 - A narrow semantic Haskell constraint bridge supports unary `Eq`, `Ord`, and
@@ -82,8 +89,8 @@ Done when: inferred rules keep their Haskell `Type` and constraint data after
 `Rules` construction, and the legacy `CM::Type` view is explicitly a derived
 compatibility view.
 
-Status: implemented for inferred rules.  Explicit JSON rules can gain audited
-Haskell signatures later.
+Status: implemented for inferred rules, including retained quantified
+variables.  Explicit JSON rules can gain audited Haskell signatures later.
 
 ### 2. Make Constraint Bridging A Compatibility Boundary
 
@@ -178,8 +185,10 @@ Plan:
 Done when: lambda-bound variables in inferred templates are not looked up as
 imported globals, and tests cover that behavior.
 
-Status: implemented for lowered `Hs::LambdaExp` binders used by rule-template
-inference.
+Status: implemented by making rule-template lowering produce located Haskell
+applications directly and by moving inference name resolution, including lambda
+locals, into the shared lowering path.  The old second-pass inference conversion
+has been removed.
 
 ### 6. Move Synthetic Inference Modules Into The Context Abstraction
 
@@ -232,21 +241,45 @@ Plan:
 Done when: audit reports distinguish inference, semantic signature retention,
 and legacy compatibility bridging.
 
+Status: partially implemented for rule loading: inference failures and
+Haskell-to-model compatibility bridge failures now report separate stages.
+Whole-tree audit comparison is still future work.
+
+### 8. Remove Partial Rule Inference Inputs
+
+Problem: inference previously accepted skeletal `Rule` objects that were missing
+the final types and metadata normally expected on `Rule`.
+
+Status: implemented with `RuleInferenceInput`, which carries only the rule name,
+call template, import set, and argument metadata needed by signature inference.
+The current call-only inference path still rejects defaults and alphabets with a
+temporary limitation note.
+
+### 9. Keep Synthetic Inference Source Useful
+
+Problem: synthetic inference module text used to say `infer_rule = <rule name>`,
+while the actual declaration was built separately as AST.
+
+Status: improved.  Synthetic module source now mirrors the generated inference
+function shape and synthetic argument names.  The AST declaration remains the
+source of behavior.
+
 ## Suggested Next Cleanup Batch
 
-Name-resolution observability is now in place.  The next useful cleanup slice
-should address the audit/reporting boundary without blocking annotation
-removal:
+Name-resolution observability and load-time bridge diagnostics are now in place.
+The next useful cleanup slice should either retire the remaining codegen
+compatibility wrapper around located Haskell template expressions, or start the
+explicit-annotation audit report:
 
-1. Add an audit result shape that distinguishes Haskell inference failures,
-   retained semantic signature differences, and legacy `CM::Type` bridge
-   failures.
-2. Report bridge failures as compatibility failures instead of Haskell
-   inference failures.
-3. Compare retained Haskell predicates separately from bridged model
-   constraints for one or two explicit rules.
-4. Convert another small binding only after its call shape is covered by the
-   stronger resolution tests and the compatibility bridge remains narrow.
+1. Audit/reporting option: add an audit result shape that compares explicit JSON
+   signatures against retained Haskell signatures and the bridged legacy view.
+2. Audit/reporting option: compare retained Haskell predicates separately from
+   bridged model constraints for one or two explicit rules.
+3. Lowering/codegen option: teach codegen call sites to carry located Haskell
+   expressions directly and remove `make_rule_template_expr(...)`.
+4. Annotation-removal option: convert another small binding only after its call
+   shape is covered by the stronger resolution tests and the compatibility
+   bridge remains narrow.
 
 ## Signature Modes
 
