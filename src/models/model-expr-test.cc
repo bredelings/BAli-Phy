@@ -2,6 +2,7 @@
 #include "models/compile.H"
 #include "models/haskell-binding-contexts.H"
 #include "models/haskell-signature-lookup.H"
+#include "models/haskell-type-to-model-type.H"
 #include "models/parse.H"
 #include "models/rule-call-inference.H"
 #include "models/rule-template.H"
@@ -10,6 +11,7 @@
 #include "computation/expression/var.H"
 #include "computation/loader.H"
 #include "computation/module.H"
+#include "computation/typecheck/kind.H"
 
 #include <cassert>
 #include <chrono>
@@ -64,6 +66,33 @@ void test_model_type_ast()
 
     auto vars = find_variables_in_type(function_type(a_type, list_type(type_t("b#1"))));
     assert(vars == std::set<std::string>({"a", "b#1"}));
+}
+
+// Verifies the narrow semantic Haskell Type to command-line model Type bridge,
+// including stable shared variable names across separate type pieces.
+void test_haskell_type_to_model_type_bridge()
+{
+    ::TypeVar z("z", kind_type());
+    ::TypeVar y("y", kind_type());
+
+    HaskellTypeBridgeState state;
+    assert(bridge_haskell_type_to_model_type(::list_type(z), state) == CM::list_type(type_t("a")));
+    assert(bridge_haskell_type_to_model_type(::tuple_type(std::vector<::Type>{y, z}), state) == CM::tuple_type({type_t("b"), type_t("a")}));
+    assert(bridge_haskell_type_to_model_type(::int_type()) == type_t("Int"));
+    assert(bridge_haskell_type_to_model_type(::double_type()) == type_t("Double"));
+    assert(bridge_haskell_type_to_model_type(::TypeCon("Data.Bool.Bool")) == type_t("Bool"));
+    assert(bridge_haskell_type_to_model_type(make_arrow_type(::TypeCon("Int"), ::TypeCon("Double"))) == CM::function_type(type_t("Int"), type_t("Double")));
+
+    try
+    {
+        (void)bridge_haskell_type_to_model_type(::TypeCon("Unsupported.Type"));
+    }
+    catch(const std::exception& e)
+    {
+        assert(std::string(e.what()).find("unsupported Haskell type") != std::string::npos);
+        return;
+    }
+    assert(false);
 }
 
 // Builds a small untyped variable expression for AST unit tests.
@@ -1216,6 +1245,7 @@ void test_extraction()
 int main(int argc, char* argv[])
 {
     test_model_type_ast();
+    test_haskell_type_to_model_type_bridge();
     test_copy_independence();
     test_accessors_and_traversal();
     test_invariants();
