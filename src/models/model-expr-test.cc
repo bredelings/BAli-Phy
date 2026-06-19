@@ -1133,6 +1133,34 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(false);
 }
 
+// Loads an inferred rule whose Haskell signature is valid but outside the
+// current model bridge, so diagnostics identify the compatibility stage.
+void test_inferred_signature_bridge_failure(const std::vector<std::filesystem::path>& package_paths)
+{
+    auto root = make_single_rule_fixture(R"JSON({
+    "name": "fixture_length",
+    "no_log": true,
+    "call": "length(@xs)",
+    "args": [
+        {"name": "xs"}
+    ]
+})JSON");
+
+    auto paths = package_paths;
+    paths.push_back(root);
+    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, paths);
+    try
+    {
+        Rules rules(paths, loader);
+    }
+    catch(const std::exception& e)
+    {
+        assert(std::string(e.what()).find("Haskell-to-model compatibility bridge failed") != std::string::npos);
+        return;
+    }
+    assert(false);
+}
+
 // Verifies that a retained semantic Haskell signature still derives the legacy
 // model signature fields consumed by the current model typechecker.
 void assert_haskell_signature_bridges_to_rule(const Rule& rule)
@@ -1462,6 +1490,7 @@ int main(int argc, char* argv[])
         test_haskell_binding_contexts({argv[1], argv[2]});
         test_name_resolution_parity({argv[1], argv[2]});
         test_rule_call_inference({argv[1], argv[2]});
+        test_inferred_signature_bridge_failure({argv[1], argv[2]});
         test_inferred_take_rule_loading({argv[1], argv[2]});
         test_inferred_list_utility_rule_loading({argv[1], argv[2]});
         test_inferred_eq_fixture_rule_loading({argv[1], argv[2]});

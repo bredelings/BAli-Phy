@@ -622,8 +622,24 @@ std::map<std::string, RuleSignature> resolve_rule_signatures(const map<std::stri
     auto contexts = HaskellBindingContexts::build(loader, import_sets);
     for(auto& [name, input]: inference_inputs)
     {
-        auto inferred = infer_rule_call_signature(contexts, input);
-        signatures.insert({name, bridge_inferred_signature(input, inferred)});
+        InferredRuleSignature inferred;
+        try
+        {
+            inferred = infer_rule_call_signature(contexts, input);
+        }
+        catch(const std::exception& e)
+        {
+            throw myexception()<<"In rule for "<<input.name<<": Haskell signature inference failed: "<<e.what();
+        }
+
+        try
+        {
+            signatures.insert({name, bridge_inferred_signature(input, inferred)});
+        }
+        catch(const std::exception& e)
+        {
+            throw myexception()<<"In rule for "<<input.name<<": Haskell-to-model compatibility bridge failed: "<<e.what();
+        }
     }
     return signatures;
 }
