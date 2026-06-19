@@ -37,6 +37,8 @@ enough audit data.
 - Explicit-rule-style analysis can resolve and infer calls such as `length` and
   `Data.List.sort` without requiring the narrow `CM::Type` bridge to accept the
   inferred constraints.
+- Explicit signatures currently act as overrides; a future experiment should
+  typecheck call expressions against those declared types instead.
 
 The compatibility constructor `Rules(package_paths)` remains explicit-only for
 tests and simple callers without a Haskell module loader.
@@ -149,7 +151,58 @@ After these checks, retain the semantic Haskell signature and populate the
 legacy `Rule::result_type`, `RuleArg::type`, and `Rule::constraints` fields for
 the current model typechecker.
 
-### 4. Constraint-Aware Model Typechecking
+### 4. Typecheck Calls Under Explicit Signatures
+
+Explicit signatures should not have to mean "trust JSON and ignore the Haskell
+call type."  A future experiment should translate an explicit JSON signature
+into an expected Haskell function type, typecheck the lowered `call` expression
+under that expected type, and report whether the Haskell call really supports
+the declared command-line interface.
+
+This differs from pure inference:
+
+- Inference asks, "what type does this call have?"
+- Expected-type checking asks, "can this call be used at this declared type?"
+
+This matters for rules whose explicit command-line type is narrower than the
+raw Haskell type, such as `length :: List<a> -> Int` versus the inferred
+`Foldable t => t a -> Int`.  It also gives explicit rules a path to Haskell
+name resolution, predicate retention, and audit diagnostics without making
+their signatures optional.
+
+The experiment should:
+
+- Build the same synthetic imported module used by `RuleCallAnalysis`.
+- Convert explicit result and arg types into an expected Haskell function type
+  when possible.
+- Typecheck the lowered call against that expected type rather than only
+  reading the unconstrained inferred type.
+- Keep the explicit JSON signature as the command-line interface while storing
+  any Haskell predicates needed to justify that interface.
+- Report cases where the JSON signature cannot be translated, the call does not
+  fit the expected type, or the required predicates cannot yet be represented.
+
+### 5. Preserve Arbitrary Haskell Constraints
+
+Long term, rule signatures should be able to retain arbitrary Haskell
+constraints instead of only the small set that can be bridged to current model
+constraints.  The model bridge can remain narrow, but the semantic
+`RuleHaskellSignature` should preserve predicates so generated Haskell,
+diagnostics, and future constraint solving can see the same obligations the
+Haskell typechecker derived.
+
+This should allow predicates to pass through even when the model layer cannot
+interpret them yet.  Concrete predicates that the model layer understands can be
+checked early; opaque or polymorphic predicates can remain as residual Haskell
+obligations until a later solver or the generated Haskell program handles them.
+
+Type families and associated types are unresolved.  Until there is evidence
+from audit data and the Haskell typechecker API, treat type-family applications
+as opaque residual structure unless they can be normalized in the compiled
+import context.  Do not design the first constraint pass around full type-family
+reduction.
+
+### 6. Constraint-Aware Model Typechecking
 
 Eventually, the model typechecker should use retained Haskell constraints, not
 just store or bridge them.  Rule application should instantiate a rule's
@@ -177,7 +230,7 @@ This stage should:
   expression can still generalize them.
 - Keep model-language coercions separate from Haskell class solving.
 
-### 5. Remove Simple Annotations
+### 7. Remove Simple Annotations
 
 Remove annotations only for bindings classified as exact match or match after
 normalization.  Prefer this order:
@@ -193,20 +246,20 @@ normalization.  Prefer this order:
 Keep explicit annotations for ambiguous bindings, absent args, and bindings
 whose command-line interface intentionally differs from the raw Haskell type.
 
-### 6. Retire Remaining Lowering Compatibility
+### 8. Retire Remaining Lowering Compatibility
 
 Code generation still has a marked compatibility wrapper that unwraps located
 Haskell template expressions for older call sites.  Teach codegen to carry
 located expressions directly, then remove the wrapper.
 
-### 7. Instance-Aware Diagnostics
+### 9. Instance-Aware Diagnostics
 
 After optional annotations work, expose imported instance heads from compiled
 modules for diagnostics.  Start with `Num`, `Eq`, `Ord`, and domain classes such
 as `Nucleotides`, `Triplets`, and `Doublets`.  Use instance heads first for
 diagnostics and concrete constraint rejection; do not expose instance bodies.
 
-### 8. Preserve Model-Language Coercions
+### 10. Preserve Model-Language Coercions
 
 Keep model-language conversion insertion separate from Haskell signature
 inference.  Existing inserted calls such as `intToDouble`, `discrete`,
@@ -216,14 +269,14 @@ command-line language conveniences, not ordinary Haskell unification.
 Do not remove `convertible_to()` until an equivalent model coercion layer exists
 for Haskell-backed types.
 
-### 9. Revisit Type Representation
+### 11. Revisit Type Representation
 
 Only after audit mode and optional annotations are working, decide whether to
 replace `CM::Type` in the model typechecker.  Use audit data to decide whether
 to keep the bridge, store Haskell `Type` only on `Rule`, gradually migrate
 `models/typecheck.cc`, or eventually retire `models/unification.*`.
 
-### 10. Infer From Defaults And Alphabets
+### 12. Infer From Defaults And Alphabets
 
 After call-only inference is stable, consider using `default_value` and
 `alphabet` expressions to constrain otherwise absent or underconstrained args.
@@ -233,9 +286,10 @@ This is optional; explicit JSON signatures remain the fallback.
 
 Add coverage incrementally for signature modes, compiled value lookup, shared
 template lowering, binding inference, name-resolution parity, bridge behavior,
-annotation audit/reporting, optional annotations, concrete unsatisfied
-constraints such as `hky85 + hky85`, instance diagnostics, and code generation
-paths such as `5d +A`.
+annotation audit/reporting, explicit-call expected-type checking, arbitrary
+constraint retention, optional annotations, concrete unsatisfied constraints
+such as `hky85 + hky85`, instance diagnostics, and code generation paths such
+as `5d +A`.
 
 ## Implementation Principle
 
