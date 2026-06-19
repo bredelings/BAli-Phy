@@ -8,11 +8,10 @@ binding signatures are proven useful.
 
 ## Current Status
 
-Initial infrastructure is in place:
+Initial infrastructure and one end-to-end inferred binding are in place:
 
 - Binding JSON signature modes are validated before type conversion.
-- Mixed signatures are rejected, and inferred-mode JSON is recognized but still
-  rejected before normal rule conversion.
+- Mixed signatures are rejected.
 - Haskell binding import contexts are compiled as synthetic import-only modules:
   `module_loader -> synthetic import modules -> one Program -> CompiledModule contexts`.
 - Rule-template lowering is shared with code generation and records referenced
@@ -20,12 +19,21 @@ Initial infrastructure is in place:
 - A semantic value-signature lookup API returns compiled `Type`, `TypeVar`, and
   constraint data.
 - Focused tests check name-resolution parity for representative template heads.
-- Test-only rule-call inference can infer simple call templates by using the
-  compiled import context and lower-level Haskell declaration inference.
+- Rule-call inference lowers a binding call template into a synthetic Haskell
+  function declaration, runs the existing `TypeChecker` declaration inference
+  path in a compiled import context, and reads generalized semantic `Type`
+  values from `poly_env()`.
+- A narrow semantic Haskell `Type` to `CM::Type` bridge supports variables,
+  `Int`, `Double`, `Bool`, lists, tuples, and function arrows.
+- Loader-aware `Rules(package_paths, module_loader)` can resolve inferred
+  signatures before the existing model typechecker sees a rule.
+- `bindings/functions/take.json` now omits redundant signature fields and gets
+  `Int -> List<a> -> List<a>` from Haskell inference.
 
-Inferred bindings are not usable in normal model typechecking yet.  That still
-requires the Haskell `Type` to `CM::Type` bridge, annotation comparison/audit
-mode, and optional annotation support.
+The compatibility constructor `Rules(package_paths)` remains explicit-only for
+tests and simple callers that do not have a Haskell module loader.  Class
+constraints, defaults, alphabets, and broad annotation removal still require
+follow-up work.
 
 ## Signature Modes
 
@@ -98,9 +106,13 @@ For each rule:
 1. Read binding imports, defaulting to `Prelude`.
 2. Create fresh local Haskell variables for each JSON arg name.
 3. Lower the `call` expression using the shared rule-template lowering helper.
-4. Typecheck the lowered expression against a fresh result metavariable.
-5. Extract inferred types for each `@arg`.
-6. Simplify, zonk, and generalize residual constraints.
+4. Create a synthetic Haskell function declaration such as
+   `infer_rule arg_x = length arg_x`.
+5. Use `TypeChecker::infer_type_for_decls_group(...)` to infer and generalize
+   that declaration in the compiled import context.
+6. Read the generalized semantic `Type` from `poly_env()`.
+7. Peel `forall` binders and constraints, then split function arrows into
+   result and arg types.
 
 Do not store live `MetaTypeVar`s or solver evidence in `Rule` objects.
 
@@ -111,14 +123,17 @@ in this milestone.
 
 Prototype bindings should be simple:
 
-- `_add`: `Num a => a -> a -> a`
-- `_eq`: `Eq a => a -> a -> Bool`
-- `pdf`: `Distribution a -> a -> Double`
-- `iid`: `Int -> Distribution a -> Distribution [a]`
-- `length`, `replicate`, `take`, `zip`
+- `take`: `Int -> [a] -> [a]`
+- `replicate`: `Int -> a -> [a]`
+- `zip`: `[a] -> [b] -> [(a,b)]`
+- later, after constraint bridging: `_add`, `_eq`, `length`
 
 Keep bindings with defaults, alphabets, or domain-specific latent constraints
 explicit until the audit data says they are safe.
+
+`length` currently remains explicit because its Haskell type is inferred as
+`Foldable t => t a -> Int`, while the command-line rule intentionally exposes
+the narrower model type `List<a> -> Int`.
 
 ## Milestone 5: Name Resolution Parity Tests
 
