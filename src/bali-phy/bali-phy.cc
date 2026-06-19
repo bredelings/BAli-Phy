@@ -462,7 +462,7 @@ expression_ref get_alphabet_expression_from_args(const variables_map& args)
 std::unique_ptr<Program> print_program(variables_map& args, const shared_ptr<module_loader>& L)
 {
     const string mstring = args["print"].as<string>();
-    Rules R(get_package_paths(args));
+    Rules R(get_package_paths(args), L);
     auto TC = makeTypechecker(R, {}, {{"alphabet",{"alphabet","b"}}});
     model_t print = compile_model(R, TC, CodeGenState(R), "a", mstring, "print expression", {}, {{"alphabet",{"alphabet","b"}}});
 
@@ -513,7 +513,7 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     else if (args.count("align"))
     {
         // Change this into a pointer.
-        Rules R(get_package_paths(args));
+        Rules R(get_package_paths(args), L);
         auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
         update(info, j);
         P = std::move(prog);

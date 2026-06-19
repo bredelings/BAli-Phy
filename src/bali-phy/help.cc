@@ -3,6 +3,7 @@
 #include <regex>
 #include <list>
 #include <filesystem>
+#include <memory>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string.hpp>
 #include "cmd_line.H"
@@ -13,6 +14,7 @@
 #include "util/io.H"
 #include "util/io/optional.H"
 #include "version.H"
+#include "computation/loader.H"
 #include "models/rules.H"
 #include "models/parse.H"
 #include "util/text.H"
@@ -386,8 +388,12 @@ ptree load_help_files(const std::vector<fs::path>& package_paths)
 	    }
     }
 
+    // Compatibility note: help runs during command-line parsing before the
+    // normal module loader exists.  Remove this once help runs after setup.
+    auto loader = std::make_shared<module_loader>(get_cache_path(), package_paths);
+
     // 2. Load help from JSON files in the bindings/ directory
-    Rules R(package_paths);
+    Rules R(package_paths, loader);
     for(auto& [_,rule]: R.get_rules())
     {
 	vector<string> category = rule.docs.category;
