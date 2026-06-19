@@ -7,6 +7,7 @@
 #include <set>
 #include <vector>
 #include <memory>
+#include "computation/haskell/coretype.H"
 #include "models/model-expr.H"
 #include "models/model-type.H"
 #include <filesystem>
@@ -17,6 +18,13 @@ using ParsedType = CM::Type;
 using RuleConstraint = CM::Type;
 
 using RuleModelExpr = CM::UntypedExpr;
+
+struct RuleHaskellSignature
+{
+    Type result_type;
+    std::map<std::string, Type> arg_types;
+    std::vector<Type> constraints;
+};
 
 struct RuleArg
 {
@@ -75,6 +83,7 @@ struct Rule
     std::string name;
     ParsedType result_type;
     std::vector<RuleConstraint> constraints;
+    std::optional<RuleHaskellSignature> haskell_signature;
     RuleModelExpr call;
     std::vector<RuleArg> args;
     std::set<std::string> imports;

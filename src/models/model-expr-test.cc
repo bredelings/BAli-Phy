@@ -9,6 +9,7 @@
 #include "models/rules.H"
 #include "models/typecheck.H"
 #include "computation/expression/var.H"
+#include "computation/haskell/ids.H"
 #include "computation/loader.H"
 #include "computation/module.H"
 #include "computation/typecheck/kind.H"
@@ -1088,7 +1089,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
 }
 
 // Loads the real package through loader-aware Rules and checks that the
-// inferred take binding is usable by the existing model typechecker.
+// inferred take binding retains Haskell types and remains usable by model typing.
 void test_inferred_take_rule_loading(const std::vector<std::filesystem::path>& package_paths)
 {
     auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
@@ -1099,6 +1100,13 @@ void test_inferred_take_rule_loading(const std::vector<std::filesystem::path>& p
     assert(take.require_arg("n").type == type_t("Int"));
     assert(take.require_arg("xs").type == CM::list_type(type_t("a")));
     assert(take.constraints.empty());
+    assert(take.haskell_signature);
+    const auto& take_haskell = *take.haskell_signature;
+    assert(take_haskell.constraints.empty());
+    HaskellTypeBridgeState take_bridge_state;
+    assert(bridge_haskell_type_to_model_type(take_haskell.result_type, take_bridge_state) == take.result_type);
+    assert(bridge_haskell_type_to_model_type(take_haskell.arg_types.at("n"), take_bridge_state) == take.require_arg("n").type);
+    assert(bridge_haskell_type_to_model_type(take_haskell.arg_types.at("xs"), take_bridge_state) == take.require_arg("xs").type);
 
     auto expr = parse_model_expr(rules, "take(2,[1,2,3])", "inferred take rule");
     expect_typecheck_expr(rules, CM::list_type(type_t("Int")), expr);
@@ -1129,10 +1137,11 @@ void test_inferred_eq_fixture_rule_loading(const std::vector<std::filesystem::pa
     assert(rule.require_arg("y").type == type_t("a"));
     assert(rule.constraints.size() == 1);
     assert(rule.constraints[0] == CM::type_app("Eq", type_t("a")));
+    assert(rule.haskell_signature);
 }
 
 // Loads the real package after converting == to inferred mode, then checks that
-// the model typechecker receives the inferred Eq constraint.
+// both retained Haskell predicates and bridged model constraints are present.
 void test_inferred_eq_rule_loading(const std::vector<std::filesystem::path>& package_paths)
 {
     auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
@@ -1144,6 +1153,22 @@ void test_inferred_eq_rule_loading(const std::vector<std::filesystem::path>& pac
     assert(rule.require_arg("y").type == type_t("a"));
     assert(rule.constraints.size() == 1);
     assert(rule.constraints[0] == CM::type_app("Eq", type_t("a")));
+    assert(rule.haskell_signature);
+    const auto& eq_haskell = *rule.haskell_signature;
+    assert(eq_haskell.constraints.size() == 1);
+    auto dictionary = is_dictionary_pred(eq_haskell.constraints[0]);
+    assert(dictionary);
+    auto& [class_head, class_args] = *dictionary;
+    auto class_con = class_head.to<::TypeCon>();
+    assert(class_con);
+    assert(class_con->name == eq_class_name);
+    assert(class_args.size() == 1);
+
+    HaskellTypeBridgeState eq_bridge_state;
+    assert(bridge_haskell_type_to_model_type(eq_haskell.result_type, eq_bridge_state) == rule.result_type);
+    assert(bridge_haskell_type_to_model_type(eq_haskell.arg_types.at("x"), eq_bridge_state) == rule.require_arg("x").type);
+    assert(bridge_haskell_type_to_model_type(eq_haskell.arg_types.at("y"), eq_bridge_state) == rule.require_arg("y").type);
+    assert(bridge_haskell_constraint_to_model_constraint(eq_haskell.constraints[0], eq_bridge_state) == rule.constraints[0]);
 
     auto expr = call_expr("==", {named_arg("x", int_expr(1)), named_arg("y", int_expr(2))});
     auto TC = test_typechecker(rules);

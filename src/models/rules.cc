@@ -40,6 +40,7 @@ struct RuleSignature
     ParsedType result_type;
     vector<RuleConstraint> constraints;
     map<string, ParsedType> arg_types;
+    optional<RuleHaskellSignature> haskell_signature;
 };
 
 enum class RuleSignatureMode
@@ -270,11 +271,12 @@ Rule make_inference_skeleton(const RawRule& raw_rule)
 }
 
 // Converts an inferred semantic Haskell signature into the concrete model
-// signature stored on Rule objects.
+// signature stored on Rule objects, retaining the semantic signature as source data.
 RuleSignature bridge_inferred_signature(const Rule& skeleton, const InferredRuleSignature& inferred)
 {
     HaskellTypeBridgeState bridge_state;
     RuleSignature signature;
+    signature.haskell_signature = RuleHaskellSignature{inferred.result_type, inferred.arg_types, inferred.constraints};
     signature.result_type = bridge_haskell_type_to_model_type(inferred.result_type, bridge_state);
 
     for(const auto& arg: skeleton.args)
@@ -284,6 +286,8 @@ RuleSignature bridge_inferred_signature(const Rule& skeleton, const InferredRule
             throw myexception()<<"In rule for "<<skeleton.name<<": no inferred type for argument '"<<arg.name<<"'";
         signature.arg_types.insert({arg.name, bridge_haskell_type_to_model_type(type->second, bridge_state)});
     }
+    // Compatibility output: inferred Haskell predicates are retained above, while
+    // the current model typechecker still consumes CM::Type constraints.
     for(const auto& constraint: inferred.constraints)
         signature.constraints.push_back(bridge_haskell_constraint_to_model_constraint(constraint, bridge_state));
     return signature;
@@ -498,6 +502,7 @@ Rule convert_rule(const Rules& R, const RawRule& raw_rule, const RuleSignature& 
 
     rule.result_type = signature.result_type;
     rule.constraints = signature.constraints;
+    rule.haskell_signature = signature.haskell_signature;
 
     {
         rule.call = parse_rule_template_expr(required_string(fields, "call", name), name + ": call");
