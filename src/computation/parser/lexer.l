@@ -626,7 +626,7 @@ yy::parser::symbol_type driver::new_layout_context(const yy::parser::location_ty
     if (auto layout_context = get_context())
     {
 	int prev_offset = layout_context->offset;
-	if ((strict and prev_offset > offset) or
+	if ((strict and prev_offset >= offset) or
 	    ((not strict) and prev_offset >= offset))
 	{
 //	    std::cerr<<"   - Going to layout_left"<<std::endl;

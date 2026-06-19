@@ -365,6 +365,7 @@
 %type <Hs::Kind> kind
 
 %type <Hs::GADTConstructorsDecl> gadt_constrlist
+%type <Hs::GADTConstructorsDecl> gadt_constrs0
 %type <Hs::GADTConstructorsDecl> gadt_constrs
 %type <Hs::GADTConstructorDecl> gadt_constr
 
@@ -1102,9 +1103,12 @@ kind: ctype  {$$ = type_to_kind($1);}
 
 /* ------------- Datatype declarations --------------------------- */
 
-gadt_constrlist: "where" "{" gadt_constrs "}"        {$$ = $3;}
-|                "where" VOCURLY gadt_constrs close  {$$ = $3;}
+gadt_constrlist: "where" "{" gadt_constrs0 "}"       {$$ = $3;}
+|                "where" VOCURLY gadt_constrs0 close {$$ = $3;}
 |                %empty                              {$$ = {};}
+
+gadt_constrs0: gadt_constrs                          {$$=$1;}
+|             %empty                                 {$$={};}
 
 gadt_constrs: gadt_constrs ";" gadt_constr           {$$=$1; $$.push_back($3);}
 |             gadt_constr                            {$$.push_back($1);}
