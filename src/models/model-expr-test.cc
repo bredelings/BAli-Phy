@@ -806,7 +806,7 @@ void expect_rule_loader_error(const std::string& json_text, const std::string& m
 }
 
 // Verifies that binding JSON signatures are either fully explicit or fully
-// inferred, and that inferred mode is still rejected before rule conversion.
+// inferred, and that the compatibility constructor rejects inferred rules.
 void test_signature_mode_validation()
 {
     {
@@ -828,7 +828,7 @@ void test_signature_mode_validation()
     "args": [
         {"name": "x"}
     ]
-})JSON", "inferred signature mode requires Haskell signature inference");
+})JSON", "inferred signature mode requires loader-aware Haskell signature inference");
 
     expect_rule_loader_error(R"JSON({
     "name": "missing_result_type",
@@ -1068,6 +1068,23 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(false);
 }
 
+// Loads the real package through loader-aware Rules and checks that the
+// inferred take binding is usable by the existing model typechecker.
+void test_inferred_take_rule_loading(const std::vector<std::filesystem::path>& package_paths)
+{
+    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
+    Rules rules(package_paths, loader);
+
+    auto take = rules.require_rule_for_func("take");
+    assert(take.result_type == CM::list_type(type_t("a")));
+    assert(take.require_arg("n").type == type_t("Int"));
+    assert(take.require_arg("xs").type == CM::list_type(type_t("a")));
+    assert(take.constraints.empty());
+
+    auto expr = parse_model_expr(rules, "take(2,[1,2,3])", "inferred take rule");
+    expect_typecheck_expr(rules, CM::list_type(type_t("Int")), expr);
+}
+
 void test_typecheck_decls(const Rules& rules);
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls using
@@ -1264,6 +1281,7 @@ int main(int argc, char* argv[])
         test_haskell_binding_contexts({argv[1], argv[2]});
         test_name_resolution_parity({argv[1], argv[2]});
         test_rule_call_inference({argv[1], argv[2]});
+        test_inferred_take_rule_loading({argv[1], argv[2]});
     }
     test_rule_template_lowering();
     test_typecheck_decls();

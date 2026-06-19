@@ -1,16 +1,13 @@
 {
     "name": "take",
-    "result_type": "List<a>",
     "no_log": true,
     "call": "take(@n,@xs)",
     "args": [
         {
-            "name": "n",
-            "type": "Int"
+            "name": "n"
         },
         {
-            "name": "xs",
-            "type": "List<a>"
+            "name": "xs"
         }
     ]
 }
