@@ -27,13 +27,23 @@ Initial infrastructure and end-to-end inferred bindings are in place:
 - Focused tests compare rule-inference name resolution with direct
   value-signature lookup for representative Prelude names, symbolic operators,
   explicit imports, qualified names, constructors, and missing globals.
-- Rule-call inference uses a dedicated `RuleInferenceInput` instead of partially
-  initialized `Rule` objects.
-- Rule-call inference lowers a binding call template in inference mode, resolving
-  globals and lambda locals during shared template lowering, then builds a
-  synthetic Haskell function declaration, runs the existing `TypeChecker`
-  declaration inference path in a compiled import context, and reads generalized
-  semantic `Type` values from `poly_env()`.
+- Rule-call analysis uses a dedicated `RuleCallAnalysisInput` instead of
+  partially initialized `Rule` objects.
+- `RuleCallAnalysis` is the shared boundary for explicit and inferred rules:
+  it lowers a binding call template in inference mode, records the resolved
+  Haskell expression, referenced `@arg` names, resolved Haskell symbols, an
+  optional semantic signature, and separate resolution/inference errors.
+- Strict inferred-mode loading is now a wrapper around rule-call analysis: it
+  requires call-only inference inputs, checks that every declared arg was
+  referenced, and then derives the legacy compatibility signature.
+- Explicit-rule-style tests can now resolve and infer calls such as `length`
+  and `Data.List.sort` without requiring the narrow `CM::Type` bridge to
+  accept the inferred constraints.
+- Rule-call analysis lowers a binding call template in inference mode, resolving
+  globals and lambda locals during shared template lowering, then optionally
+  builds a synthetic Haskell function declaration, runs the existing
+  `TypeChecker` declaration inference path in a compiled import context, and
+  reads generalized semantic `Type` values from `poly_env()`.
 - Inferred semantic signatures retain their quantified `TypeVar`s as well as
   result, argument, and constraint `Type` values.
 - Loader diagnostics now distinguish Haskell inference failures from
@@ -138,7 +148,9 @@ Done when: a test fails if inference would typecheck a different Haskell symbol
 than the one the binding template appears to name.
 
 Status: implemented for representative successful resolutions and missing
-global failures through the same conversion path used by rule-call inference.
+global failures through the same conversion path used by rule-call analysis.
+`RuleCallAnalysis` also returns the resolved symbols beside the lowered Haskell
+expression so explicit-rule audit code can reuse the same observation point.
 
 ### 4. Use Or Demote Value Signature Lookup
 
@@ -241,19 +253,22 @@ Plan:
 Done when: audit reports distinguish inference, semantic signature retention,
 and legacy compatibility bridging.
 
-Status: partially implemented for rule loading: inference failures and
-Haskell-to-model compatibility bridge failures now report separate stages.
-Whole-tree audit comparison is still future work.
+Status: partially implemented for rule loading and analysis: inference failures
+and Haskell-to-model compatibility bridge failures now report separate stages,
+and explicit-rule-style analysis can keep a semantic signature even when the
+compatibility bridge would reject a constraint.  Whole-tree audit comparison is
+still future work.
 
 ### 8. Remove Partial Rule Inference Inputs
 
 Problem: inference previously accepted skeletal `Rule` objects that were missing
 the final types and metadata normally expected on `Rule`.
 
-Status: implemented with `RuleInferenceInput`, which carries only the rule name,
-call template, import set, and argument metadata needed by signature inference.
-The current call-only inference path still rejects defaults and alphabets with a
-temporary limitation note.
+Status: implemented with `RuleCallAnalysisInput`, which carries only the rule
+name, call template, import set, and argument metadata needed by call analysis.
+The current strict inferred-mode wrapper still rejects defaults and alphabets
+with a temporary limitation note, but best-effort call analysis itself is not
+tied to those loader policy checks.
 
 ### 9. Keep Synthetic Inference Source Useful
 
@@ -266,15 +281,18 @@ source of behavior.
 
 ## Suggested Next Cleanup Batch
 
-Name-resolution observability and load-time bridge diagnostics are now in place.
-The next useful cleanup slice should either retire the remaining codegen
-compatibility wrapper around located Haskell template expressions, or start the
+Name-resolution observability, load-time bridge diagnostics, and explicit-style
+call analysis are now in place.  The next useful cleanup slice should either
+retire the remaining codegen compatibility wrapper around located Haskell
+template expressions, or start turning `RuleCallAnalysis` into the
 explicit-annotation audit report:
 
-1. Audit/reporting option: add an audit result shape that compares explicit JSON
-   signatures against retained Haskell signatures and the bridged legacy view.
+1. Audit/reporting option: add an audit result shape that stores the explicit
+   JSON signature, the `RuleCallAnalysis` semantic signature, bridge status, and
+   comparison status for one rule.
 2. Audit/reporting option: compare retained Haskell predicates separately from
-   bridged model constraints for one or two explicit rules.
+   bridged model constraints for one or two explicit rules, starting with a
+   bridge-failing case such as `length`.
 3. Lowering/codegen option: teach codegen call sites to carry located Haskell
    expressions directly and remove `make_rule_template_expr(...)`.
 4. Annotation-removal option: convert another small binding only after its call
@@ -361,6 +379,12 @@ For each rule:
    result and arg types.
 
 Do not store live `MetaTypeVar`s or solver evidence in `Rule` objects.
+
+The reusable implementation boundary is `RuleCallAnalysis`: resolution and
+optional Haskell signature inference are best-effort and return structured
+results, while strict inferred-mode loading is a policy wrapper that turns
+missing references, resolution failures, inference failures, and bridge failures
+into loader errors.
 
 Initial inferred mode should require every declared arg to occur in `call`.
 If an arg is absent, fail inference with a clear message requiring explicit
