@@ -1075,6 +1075,16 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(zip_signature.arg_types.size() == 2);
     assert(not zip_signature.result_type.print().empty());
 
+    auto map_id = make_call_inference_rule(
+        "map_id",
+        call_expr("map", {positional_arg(lambda_expr(var_pattern("x"), var_expr("x"))), positional_arg(arg_ref_expr("xs"))}),
+        {"xs"}
+    );
+    auto map_id_signature = infer_rule_call_signature(contexts, map_id);
+    HaskellTypeBridgeState map_bridge_state;
+    assert(bridge_haskell_type_to_model_type(map_id_signature.result_type, map_bridge_state) == CM::list_type(type_t("a")));
+    assert(bridge_haskell_type_to_model_type(map_id_signature.arg_types.at("xs"), map_bridge_state) == CM::list_type(type_t("a")));
+
     auto absent = make_call_inference_rule("absent", arg_ref_expr("x"), {"x", "y"});
     try
     {

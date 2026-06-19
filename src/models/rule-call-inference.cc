@@ -91,11 +91,14 @@ expression_ref convert_template_apps_for_typecheck(const expression_ref& expr, c
     else if (auto lambda = expr.to<Haskell::LambdaExp>())
     {
         auto converted = *lambda;
+        auto lambda_locals = local_vars;
+        for(const auto& bound_var: Haskell::vars_in_patterns(converted.match.patterns))
+            lambda_locals.insert(unloc(bound_var).name);
         for(auto& guarded: converted.match.rhs.guarded_rhss)
         {
             for(auto& guard: guarded.guards)
-                guard = {guard.loc, convert_template_apps_for_typecheck(unloc(guard), module, local_vars)};
-            guarded.body = {guarded.body.loc, convert_template_apps_for_typecheck(unloc(guarded.body), module, local_vars)};
+                guard = {guard.loc, convert_template_apps_for_typecheck(unloc(guard), module, lambda_locals)};
+            guarded.body = {guarded.body.loc, convert_template_apps_for_typecheck(unloc(guarded.body), module, lambda_locals)};
         }
         return converted;
     }
