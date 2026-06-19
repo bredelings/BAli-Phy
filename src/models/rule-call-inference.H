@@ -16,6 +16,13 @@ struct InferredRuleSignature
     std::vector<Type> constraints;
 };
 
+struct RuleCallResolution
+{
+    std::vector<std::string> resolved_symbols;
+};
+
+RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts&, const Rule&);
+
 InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts&, const Rule&);
 
 #endif

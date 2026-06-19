@@ -20,6 +20,12 @@ using std::vector;
 namespace
 {
 
+struct RuleCallInputs
+{
+    map<string, expression_ref> template_args;
+    map<string, string> arg_vars;
+};
+
 // Converts arbitrary rule/argument names into lowercase Haskell binders for a
 // synthetic inference module.
 string safe_haskell_var_name(const string& prefix, const string& name)
@@ -42,50 +48,68 @@ string synthetic_rule_module_body(const Rule& rule)
     return "infer_rule = " + rule.name + "\n";
 }
 
+// Builds the synthetic Haskell argument variables used both by resolution
+// inspection and by full rule-call type inference.
+RuleCallInputs build_rule_call_inputs(const Rule& rule)
+{
+    RuleCallInputs inputs;
+    for(std::size_t i=0; i<rule.args.size(); i++)
+    {
+        const auto& arg = rule.args[i];
+        auto arg_var = safe_haskell_var_name("arg_" + std::to_string(i) + "_", arg.name);
+        inputs.arg_vars.insert({arg.name, arg_var});
+        inputs.template_args.insert({arg.name, var(arg_var)});
+    }
+    return inputs;
+}
+
 // Converts the legacy codegen application S-expression produced by template
 // lowering into Hs::ApplyExp nodes and resolves imported globals for typecheck.
-expression_ref convert_template_apps_for_typecheck(const expression_ref& expr, const Module& module, const set<string>& local_vars)
+expression_ref convert_template_apps_for_typecheck(const expression_ref& expr, const Module& module, const set<string>& local_vars, vector<string>* resolved_symbols = nullptr)
 {
     if (is_apply_exp(expr))
     {
         auto terms = expr.sub();
-        Haskell::LExp result = {noloc, convert_template_apps_for_typecheck(terms[0], module, local_vars)};
+        Haskell::LExp result = {noloc, convert_template_apps_for_typecheck(terms[0], module, local_vars, resolved_symbols)};
         for(std::size_t i=1; i<terms.size(); i++)
-            result = {noloc, Haskell::ApplyExp(result, {noloc, convert_template_apps_for_typecheck(terms[i], module, local_vars)})};
+            result = {noloc, Haskell::ApplyExp(result, {noloc, convert_template_apps_for_typecheck(terms[i], module, local_vars, resolved_symbols)})};
         return unloc(result);
     }
     else if (expr.is_expression())
     {
-        Haskell::LExp result = {noloc, convert_template_apps_for_typecheck(expr.head(), module, local_vars)};
+        Haskell::LExp result = {noloc, convert_template_apps_for_typecheck(expr.head(), module, local_vars, resolved_symbols)};
         for(const auto& arg: expr.sub())
-            result = {noloc, Haskell::ApplyExp(result, {noloc, convert_template_apps_for_typecheck(arg, module, local_vars)})};
+            result = {noloc, Haskell::ApplyExp(result, {noloc, convert_template_apps_for_typecheck(arg, module, local_vars, resolved_symbols)})};
         return unloc(result);
     }
     else if (auto v = expr.to<var>())
     {
         if (local_vars.count(v->name))
             return Haskell::Var(v->name);
-        return Haskell::Var(module.lookup_symbol(v->name)->name);
+        auto symbol = module.lookup_symbol(v->name);
+        if (resolved_symbols)
+            resolved_symbols->push_back(symbol->name);
+        return Haskell::Var(symbol->name);
     }
     else if (auto app = expr.to<Haskell::ApplyExp>())
     {
         auto converted = *app;
-        converted.head = {converted.head.loc, convert_template_apps_for_typecheck(unloc(converted.head), module, local_vars)};
-        converted.arg = {converted.arg.loc, convert_template_apps_for_typecheck(unloc(converted.arg), module, local_vars)};
+        converted.head = {converted.head.loc, convert_template_apps_for_typecheck(unloc(converted.head), module, local_vars, resolved_symbols)};
+        converted.arg = {converted.arg.loc, convert_template_apps_for_typecheck(unloc(converted.arg), module, local_vars, resolved_symbols)};
         return converted;
     }
     else if (auto list = expr.to<Haskell::List>())
     {
         auto converted = *list;
         for(auto& element: converted.elements)
-            element = {element.loc, convert_template_apps_for_typecheck(unloc(element), module, local_vars)};
+            element = {element.loc, convert_template_apps_for_typecheck(unloc(element), module, local_vars, resolved_symbols)};
         return converted;
     }
     else if (auto tuple = expr.to<Haskell::Tuple>())
     {
         auto converted = *tuple;
         for(auto& element: converted.elements)
-            element = {element.loc, convert_template_apps_for_typecheck(unloc(element), module, local_vars)};
+            element = {element.loc, convert_template_apps_for_typecheck(unloc(element), module, local_vars, resolved_symbols)};
         return converted;
     }
     else if (auto lambda = expr.to<Haskell::LambdaExp>())
@@ -97,8 +121,8 @@ expression_ref convert_template_apps_for_typecheck(const expression_ref& expr, c
         for(auto& guarded: converted.match.rhs.guarded_rhss)
         {
             for(auto& guard: guarded.guards)
-                guard = {guard.loc, convert_template_apps_for_typecheck(unloc(guard), module, lambda_locals)};
-            guarded.body = {guarded.body.loc, convert_template_apps_for_typecheck(unloc(guarded.body), module, lambda_locals)};
+                guard = {guard.loc, convert_template_apps_for_typecheck(unloc(guard), module, lambda_locals, resolved_symbols)};
+            guarded.body = {guarded.body.loc, convert_template_apps_for_typecheck(unloc(guarded.body), module, lambda_locals, resolved_symbols)};
         }
         return converted;
     }
@@ -148,24 +172,37 @@ Type infer_rule_function_type(const HaskellBindingContexts& contexts, const Rule
 
 }
 
+// Resolves the globals used by the lowered rule template through the same
+// conversion path used by full Haskell type inference.
+RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& contexts, const Rule& rule)
+{
+    auto inputs = build_rule_call_inputs(rule);
+    auto lowered = lower_rule_template_expr(rule.call, inputs.template_args);
+    require_all_args_referenced(rule, lowered.referenced_args);
+
+    const string module_name = "BindingInfer.Rule.Main";
+    const BindingImportSet imports{rule.imports};
+    auto inference_module = contexts.make_imported_module(imports, module_name, synthetic_rule_module_body(rule));
+
+    set<string> local_vars;
+    for(const auto& [_, arg_var]: inputs.arg_vars)
+        local_vars.insert(arg_var);
+
+    RuleCallResolution resolution;
+    (void)convert_template_apps_for_typecheck(lowered.expr, *inference_module, local_vars, &resolution.resolved_symbols);
+    return resolution;
+}
+
 // Infers one rule call by compiling a synthetic function and reading its
 // generalized semantic Haskell type.
 InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts& contexts, const Rule& rule)
 {
-    map<string, expression_ref> template_args;
-    map<string, string> arg_vars;
-    for(std::size_t i=0; i<rule.args.size(); i++)
-    {
-        const auto& arg = rule.args[i];
-        auto arg_var = safe_haskell_var_name("arg_" + std::to_string(i) + "_", arg.name);
-        arg_vars.insert({arg.name, arg_var});
-        template_args.insert({arg.name, var(arg_var)});
-    }
+    auto inputs = build_rule_call_inputs(rule);
 
-    auto lowered = lower_rule_template_expr(rule.call, template_args);
+    auto lowered = lower_rule_template_expr(rule.call, inputs.template_args);
     require_all_args_referenced(rule, lowered.referenced_args);
 
-    auto inferred_type = infer_rule_function_type(contexts, rule, lowered.expr, arg_vars);
+    auto inferred_type = infer_rule_function_type(contexts, rule, lowered.expr, inputs.arg_vars);
     auto [type_vars, constraints, rho_type] = peel_top_gen(inferred_type);
     auto [arg_types, result_type] = arg_result_types(rho_type);
     if (arg_types.size() != rule.args.size())
