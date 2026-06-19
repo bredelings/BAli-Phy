@@ -11,7 +11,6 @@
 #include "util/myexception.H"
 
 #include <cctype>
-#include <sstream>
 
 using std::map;
 using std::set;
@@ -36,26 +35,11 @@ string safe_haskell_var_name(const string& prefix, const string& name)
     return result;
 }
 
-// Converts a binding import set to import declarations for the synthetic rule
-// module used by the temporary inference path.
-vector<Haskell::LImpDecl> import_decls_for(const BindingImportSet& imports)
-{
-    vector<Haskell::LImpDecl> declarations;
-    for(const auto& module_name: normalize_binding_imports(imports).modules)
-        declarations.emplace_back(noloc, Haskell::ImpDecl{false, {noloc, module_name}, {}, {}});
-    return declarations;
-}
-
-// Builds a human-readable source string used only for deterministic synthetic
+// Builds the display-only synthetic declaration body used for deterministic
 // module hashes and diagnostics.
-string synthetic_rule_module_contents(const string& module_name, const BindingImportSet& imports, const Rule& rule)
+string synthetic_rule_module_body(const Rule& rule)
 {
-    std::ostringstream out;
-    out<<"module "<<module_name<<" where\n";
-    for(const auto& import_name: normalize_binding_imports(imports).modules)
-        out<<"import "<<import_name<<"\n";
-    out<<"infer_rule = "<<rule.name<<"\n";
-    return out.str();
+    return "infer_rule = " + rule.name + "\n";
 }
 
 // Converts the legacy codegen application S-expression produced by template
@@ -133,12 +117,7 @@ Type infer_rule_function_type(const HaskellBindingContexts& contexts, const Rule
 {
     const string module_name = "BindingInfer.Rule.Main";
     const BindingImportSet imports{rule.imports};
-    (void)contexts.context_for(imports);
-
-    FileContents file{module_name, synthetic_rule_module_contents(module_name, imports, rule)};
-    Haskell::Module module{{noloc, module_name}, {}, import_decls_for(imports), {}};
-    Module inference_module(module, LanguageExtensions(), file);
-    inference_module.perform_imports(contexts.program());
+    auto inference_module = contexts.make_imported_module(imports, module_name, synthetic_rule_module_body(rule));
 
     const Haskell::LVar function = {noloc, Haskell::Var("infer_rule")};
     vector<Haskell::LPat> patterns;
@@ -151,11 +130,11 @@ Type infer_rule_function_type(const HaskellBindingContexts& contexts, const Rule
 
     Haskell::Decls declarations;
     declarations.recursive = false;
-    declarations.push_back({noloc, Haskell::simple_fun_decl(function, patterns, {noloc, convert_template_apps_for_typecheck(lowered_call, inference_module, local_vars)})});
+    declarations.push_back({noloc, Haskell::simple_fun_decl(function, patterns, {noloc, convert_template_apps_for_typecheck(lowered_call, *inference_module, local_vars)})});
 
-    inference_module.add_local_symbols(declarations);
+    inference_module->add_local_symbols(declarations);
 
-    TypeChecker typechecker(inference_module);
+    TypeChecker typechecker(*inference_module);
     (void)typechecker.infer_type_for_decls_group({}, declarations, true);
 
     auto type = typechecker.poly_env().find(unloc(function));

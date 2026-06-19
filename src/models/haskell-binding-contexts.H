@@ -8,6 +8,7 @@
 #include <vector>
 
 class CompiledModule;
+class Module;
 class Program;
 class module_loader;
 
@@ -31,6 +32,8 @@ public:
     const Program& program() const;
 
     std::shared_ptr<const CompiledModule> context_for(const BindingImportSet&) const;
+
+    std::shared_ptr<Module> make_imported_module(const BindingImportSet&, const std::string&, const std::string&) const;
 
     std::size_t context_count() const;
 };

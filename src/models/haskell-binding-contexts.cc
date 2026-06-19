@@ -30,12 +30,13 @@ std::vector<Haskell::LImpDecl> import_decls_for(const BindingImportSet& imports)
 
 // Creates display-only source text so synthetic modules have deterministic
 // hash inputs and useful names in diagnostics.
-std::string synthetic_module_contents(const std::string& module_name, const BindingImportSet& imports)
+std::string synthetic_module_contents(const std::string& module_name, const BindingImportSet& imports, const std::string& body_source = {})
 {
     std::ostringstream out;
     out<<"module "<<module_name<<" where\n";
     for(const auto& import_name: imports.modules)
         out<<"import "<<import_name<<"\n";
+    out<<body_source;
     return out.str();
 }
 
@@ -110,6 +111,20 @@ std::shared_ptr<const CompiledModule> HaskellBindingContexts::context_for(const 
     if (iter == context_module_names_.end())
         throw myexception()<<"No Haskell binding context for imports {"<<join(std::vector<std::string>(normalized.modules.begin(), normalized.modules.end()), ", ")<<"}";
     return program().get_module(iter->second);
+}
+
+// Builds an uncompiled synthetic module in a compiled import-set context for
+// rule inference and future binding-interface generation.
+std::shared_ptr<Module> HaskellBindingContexts::make_imported_module(const BindingImportSet& imports, const std::string& module_name, const std::string& body_source) const
+{
+    auto normalized = normalize_binding_imports(imports);
+    (void)context_for(normalized);
+
+    FileContents file{module_name, synthetic_module_contents(module_name, normalized, body_source)};
+    Haskell::Module module{{noloc, module_name}, {}, import_decls_for(normalized), {}};
+    auto imported_module = std::make_shared<Module>(module, LanguageExtensions(), file);
+    imported_module->perform_imports(program());
+    return imported_module;
 }
 
 std::size_t HaskellBindingContexts::context_count() const
