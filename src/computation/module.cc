@@ -576,11 +576,54 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
     // import modid hiding ( etc )
     else if (impdecl.impspec and impdecl.impspec->hiding)
     {
+        set<string> hidden_values;
+        set<string> hidden_types;
+
+        for(const auto& [_,s]: impdecl.impspec->imports)
+        {
+            string id = unloc(s.symbol);
+
+            if (s.is_value())
+                hidden_values.insert(id);
+            else if (s.is_type())
+            {
+                hidden_types.insert(id);
+
+                auto exported_type = m2_exported_types.find(id);
+                if (exported_type == m2_exported_types.end())
+                    continue;
+
+                auto class_type = exported_type->second;
+                if (not class_type->is_class() or not s.subspec)
+                    continue;
+
+                // Add class children from hiding subspecs without hiding unrelated
+                // entities that happen to have the same unqualified name.
+                auto hide_child = [&](const ClassChild& child)
+                {
+                    if (child.kind == ClassChildKind::method)
+                    {
+                        if (auto exported = m2_exported_values.find(child.name); exported != m2_exported_values.end() and exported->second->name == child.resolved_name)
+                            hidden_values.insert(child.name);
+                    }
+                    else if (auto exported = m2_exported_types.find(child.name); exported != m2_exported_types.end() and exported->second->name == child.resolved_name)
+                        hidden_types.insert(child.name);
+                };
+
+                if (not s.subspec->names)
+                    for_each_class_child(*class_type, hide_child);
+                else
+                    for(auto& [_,name]: *s.subspec->names)
+                        if (auto child = class_child_named(*class_type, name))
+                            hide_child(*child);
+            }
+        }
+
         for(const auto& [_,S]: m2_exported_values)
         {
             auto unqualified_name = get_unqualified_name(S->name);
 
-            if (contains_import(impdecl.impspec->imports, unqualified_name)) continue;
+            if (hidden_values.contains(unqualified_name)) continue;
 
             import_symbol(S, modid, qualified);
         }
@@ -588,7 +631,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
         {
             auto unqualified_name = get_unqualified_name(field.name);
 
-            if (contains_import(impdecl.impspec->imports, unqualified_name)) continue;
+            if (hidden_values.contains(unqualified_name)) continue;
 
             import_field(field, modid, qualified);
         }
@@ -596,7 +639,7 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
         {
             auto unqualified_name = get_unqualified_name(T->name);
 
-            if (contains_import(impdecl.impspec->imports, unqualified_name)) continue;
+            if (hidden_types.contains(unqualified_name)) continue;
 
             import_type(T, modid, qualified);
         }
