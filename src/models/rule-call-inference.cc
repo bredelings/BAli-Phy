@@ -10,6 +10,7 @@
 #include "util/myexception.H"
 
 #include <cctype>
+#include <sstream>
 
 using std::map;
 using std::set;
@@ -40,11 +41,18 @@ string safe_haskell_var_name(const string& prefix, const string& name)
     return result;
 }
 
-// Builds the display-only synthetic declaration body used for deterministic
-// module hashes and diagnostics.
-string synthetic_rule_module_body(const RuleInferenceInput& rule)
+// Builds diagnostic-only synthetic source that mirrors the inference declaration
+// shape; the AST declaration below remains the source of behavior.
+string synthetic_rule_module_body(const RuleInferenceInput& rule, const RuleCallInputs& inputs)
 {
-    return "infer_rule = " + rule.name + "\n";
+    auto lowered = lower_rule_template_expr(rule.call, inputs.template_args);
+
+    std::ostringstream out;
+    out<<"infer_rule";
+    for(const auto& arg: rule.args)
+        out<<" "<<inputs.arg_vars.at(arg.name);
+    out<<" = "<<unloc(lowered.expr).print()<<"\n";
+    return out.str();
 }
 
 // Builds the synthetic Haskell argument variables used both by resolution
@@ -82,11 +90,11 @@ void require_all_args_referenced(const RuleInferenceInput& rule, const set<strin
 
 // Builds the synthetic module that supplies the binding imports used while
 // lowering and typechecking one rule inference declaration.
-std::shared_ptr<Module> make_rule_inference_module(const HaskellBindingContexts& contexts, const RuleInferenceInput& rule)
+std::shared_ptr<Module> make_rule_inference_module(const HaskellBindingContexts& contexts, const RuleInferenceInput& rule, const RuleCallInputs& inputs)
 {
     const string module_name = "BindingInfer.Rule.Main";
     const BindingImportSet imports{rule.imports};
-    return contexts.make_imported_module(imports, module_name, synthetic_rule_module_body(rule));
+    return contexts.make_imported_module(imports, module_name, synthetic_rule_module_body(rule, inputs));
 }
 
 // Builds inference-mode lowering options, keeping synthetic argument binders
@@ -133,7 +141,7 @@ RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& cont
 {
     require_call_only_inference_input(rule);
     auto inputs = build_rule_call_inputs(rule);
-    auto inference_module = make_rule_inference_module(contexts, rule);
+    auto inference_module = make_rule_inference_module(contexts, rule, inputs);
 
     RuleCallResolution resolution;
     auto options = make_inference_lowering_options(*inference_module, inputs, &resolution.resolved_symbols);
@@ -148,7 +156,7 @@ InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts& co
 {
     require_call_only_inference_input(rule);
     auto inputs = build_rule_call_inputs(rule);
-    auto inference_module = make_rule_inference_module(contexts, rule);
+    auto inference_module = make_rule_inference_module(contexts, rule, inputs);
 
     auto options = make_inference_lowering_options(*inference_module, inputs);
     auto lowered = lower_rule_template_expr(rule.call, inputs.template_args, options);
