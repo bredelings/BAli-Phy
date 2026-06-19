@@ -278,18 +278,8 @@ RuleHaskellCallAnalysis make_rule_haskell_call_analysis(RuleCallAnalysis analysi
     result.referenced_args = std::move(analysis.referenced_args);
     if (analysis.signature)
         result.inferred_call_signature = make_rule_haskell_signature(*analysis.signature);
-    result.context_error = {};
     result.resolution_error = std::move(analysis.resolution_error);
     result.inference_error = std::move(analysis.inference_error);
-    return result;
-}
-
-// Records that explicit Haskell call analysis could not create the import
-// context, while leaving the explicit JSON signature usable.
-RuleHaskellCallAnalysis make_rule_haskell_call_context_error(std::string error)
-{
-    RuleHaskellCallAnalysis result;
-    result.context_error = std::move(error);
     return result;
 }
 
@@ -315,25 +305,6 @@ RuleSignature bridge_inferred_signature(const RuleCallAnalysisInput& input, cons
     for(const auto& constraint: inferred.constraints)
         signature.constraints.push_back(bridge_haskell_constraint_to_model_constraint(constraint, bridge_state));
     return signature;
-}
-
-// Probes explicit-rule import sets independently so one plugin/import failure
-// can be recorded without disabling analysis for unrelated explicit rules.
-std::map<std::set<std::string>, std::string> explicit_context_errors_for(const std::shared_ptr<module_loader>& loader, const std::map<std::set<std::string>, BindingImportSet>& import_sets)
-{
-    std::map<std::set<std::string>, std::string> errors;
-    for(const auto& [key, imports]: import_sets)
-    {
-        try
-        {
-            (void)HaskellBindingContexts::build(loader, {imports});
-        }
-        catch(const std::exception& e)
-        {
-            errors.insert({key, e.what()});
-        }
-    }
-    return errors;
 }
 
 // Parses citation metadata into a native shape used by the help renderer.
@@ -643,12 +614,13 @@ std::map<std::string, RuleSignature> resolve_rule_signatures(const map<std::stri
     std::map<std::string, RuleSignature> signatures;
     std::map<std::string, RuleCallAnalysisInput> explicit_inputs;
     std::map<std::string, RuleCallAnalysisInput> inferred_inputs;
-    vector<BindingImportSet> inferred_import_sets;
+    vector<BindingImportSet> rule_import_sets;
 
     for(auto& [name, raw_rule]: raw_rules)
     {
         auto mode = classify_signature_mode(raw_rule.fields, raw_rule.name);
         auto input = make_rule_call_analysis_input(raw_rule);
+        rule_import_sets.push_back({input.imports});
         if (mode == RuleSignatureMode::Explicit)
         {
             signatures.insert({name, parse_explicit_signature(raw_rule.fields, raw_rule.name)});
@@ -656,59 +628,28 @@ std::map<std::string, RuleSignature> resolve_rule_signatures(const map<std::stri
         }
         else
         {
-            inferred_import_sets.push_back({input.imports});
             inferred_inputs.insert({name, std::move(input)});
         }
     }
 
     if (not loader)
-        throw myexception()<<"Inferred signature mode requires a Haskell module loader";
+        throw myexception()<<"Rule signature resolution requires a Haskell module loader";
 
-    std::map<std::set<std::string>, BindingImportSet> explicit_import_sets;
-    for(auto& [name, input]: explicit_inputs)
-    {
-        auto normalized_imports = normalize_binding_imports({input.imports});
-        explicit_import_sets.insert({normalized_imports.modules, BindingImportSet{input.imports}});
-    }
+    if (explicit_inputs.empty() and inferred_inputs.empty())
+        return signatures;
 
-    auto explicit_context_errors = explicit_context_errors_for(loader, explicit_import_sets);
-    vector<BindingImportSet> explicit_good_imports;
-    for(const auto& [key, imports]: explicit_import_sets)
-        if (not explicit_context_errors.count(key))
-            explicit_good_imports.push_back(imports);
-
-    optional<HaskellBindingContexts> explicit_contexts;
-    if (not explicit_good_imports.empty())
-    {
-        try
-        {
-            explicit_contexts = HaskellBindingContexts::build(loader, explicit_good_imports);
-        }
-        catch(const std::exception& e)
-        {
-            for(const auto& imports: explicit_good_imports)
-                explicit_context_errors.insert({normalize_binding_imports(imports).modules, e.what()});
-        }
-    }
+    auto contexts = HaskellBindingContexts::build(loader, rule_import_sets);
 
     for(auto& [name, input]: explicit_inputs)
     {
-        auto normalized_imports = normalize_binding_imports({input.imports});
-        const auto& import_key = normalized_imports.modules;
-        if (auto error = explicit_context_errors.find(import_key); error != explicit_context_errors.end())
-            signatures.at(name).haskell_call_analysis = make_rule_haskell_call_context_error(error->second);
-        else
-        {
-            // Temporary limitation: broad explicit-rule loading records
-            // resolution only until expected-type checking replaces raw inference.
-            signatures.at(name).haskell_call_analysis = make_rule_haskell_call_analysis(analyze_rule_call_resolution(*explicit_contexts, input));
-        }
+        // Temporary limitation: broad explicit-rule loading records resolution
+        // only until expected-type checking replaces raw inference.
+        signatures.at(name).haskell_call_analysis = make_rule_haskell_call_analysis(analyze_rule_call_resolution(contexts, input));
     }
 
     if (inferred_inputs.empty())
         return signatures;
 
-    auto contexts = HaskellBindingContexts::build(loader, inferred_import_sets);
     for(auto& [name, input]: inferred_inputs)
     {
         InferredRuleSignature inferred;

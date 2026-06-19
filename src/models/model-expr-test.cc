@@ -1228,7 +1228,6 @@ void test_loaded_explicit_rule_call_analysis(const std::vector<std::filesystem::
     assert(not length_rule.haskell_signature);
     assert(length_rule.haskell_call_analysis);
     auto length_analysis = *length_rule.haskell_call_analysis;
-    assert(not length_analysis.context_error);
     assert(not length_analysis.resolution_error);
     assert(length_analysis.referenced_args.count("xs"));
     auto length_signature = lookup_value_signature(contexts, prelude_imports, "length");
@@ -1250,7 +1249,6 @@ void test_loaded_explicit_rule_call_analysis(const std::vector<std::filesystem::
     assert(not sort_rule.haskell_signature);
     assert(sort_rule.haskell_call_analysis);
     auto sort_analysis = *sort_rule.haskell_call_analysis;
-    assert(not sort_analysis.context_error);
     assert(not sort_analysis.resolution_error);
     assert(sort_analysis.referenced_args.count("xs"));
     auto sort_signature = lookup_value_signature(contexts, data_list_imports, "Data.List.sort");
