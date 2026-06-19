@@ -4,7 +4,6 @@
 #include "computation/loader.H"
 #include "util/myexception.H"
 #include "util/string/join.H"
-#include "util/mapping.H"
 #include "util/log-level.H"
 #include "computation/typecheck/kind.H"
 #include "computation/typecheck/env.H"
@@ -238,10 +237,20 @@ int Program::count_module(const string& module_name) const
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/strong_components.hpp>
 
-vector<string> sort_modules_by_dependencies(const module_loader& L, vector<string>& new_module_names)
+// Sorts already-loaded modules so dependencies appear before the modules that
+// import them, without asking the loader for those modules again.
+vector<string> sort_modules_by_dependencies(const map<string, shared_ptr<Module>>& loaded_modules)
 {
     typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS> Graph;
     typedef boost::graph_traits<Graph>::vertex_descriptor Vertex;
+
+    vector<string> new_module_names;
+    map<string,int> module_indices;
+    for(const auto& [name, _]: loaded_modules)
+    {
+	new_module_names.push_back(name);
+	module_indices.insert({name, int(module_indices.size())});
+    }
 
     // Construct the dependency graph.  (i,j) means that i imports j
     Graph graph;
@@ -252,9 +261,9 @@ vector<string> sort_modules_by_dependencies(const module_loader& L, vector<strin
     for(int i=0;i<new_module_names.size();i++)
     {
 	auto& name = new_module_names[i];
-	for(auto& import_name: L.load_module(name)->dependencies())
-	    if (auto j = find_index(new_module_names, import_name))
-		boost::add_edge(vertices[i], vertices[*j], graph);
+	for(auto& import_name: loaded_modules.at(name)->dependencies())
+	    if (auto j = module_indices.find(import_name); j != module_indices.end())
+		boost::add_edge(vertices[i], vertices[j->second], graph);
     }
 
     // Find connected components
@@ -308,43 +317,41 @@ void Program::check_dependencies()
     }
 }
 
-set<string> new_module_names(const module_loader& L, const set<string>& old_module_names, const set<string>& modules_to_import)
+// Loads each not-yet-present module once while walking transitive imports, so
+// dependency sorting and compilation can reuse the same Module objects.
+map<string, shared_ptr<Module>> load_new_modules_once(const module_loader& L, const set<string>& old_module_names, const set<string>& modules_to_import)
 {
     vector<string> modules_to_consider;
     for(auto& module: modules_to_import)
 	modules_to_consider.push_back(module);
 
-    set<string> new_module_names;
+    map<string, shared_ptr<Module>> loaded_modules;
     for(int i=0; i<modules_to_consider.size(); i++)
     {
 	auto& module = modules_to_consider[i];
 
 	// This one is already included
-	if (old_module_names.count(module) or new_module_names.count(module)) continue;
+	if (old_module_names.count(module) or loaded_modules.count(module)) continue;
 
 	// Add it to the list of new modules
-	new_module_names.insert(module);
+	auto M = L.load_module(module);
+	loaded_modules.insert({module, M});
 
-	for(auto& import: L.load_module(module)->dependencies())
+	for(auto& import: M->dependencies())
 	    modules_to_consider.push_back(import);
     }
 
-    return new_module_names;
+    return loaded_modules;
 }
 
 void Program::add(const std::string& name)
 {
-    auto new_names = new_module_names(*loader, module_names_set(), {name});
-
-    vector<string> new_names1;
-    for(auto& name: new_names)
-	new_names1.push_back(name);
-
-    vector<string> new_names2 = sort_modules_by_dependencies(*loader, new_names1);
+    auto modules_to_add = load_new_modules_once(*loader, module_names_set(), {name});
+    vector<string> new_names = sort_modules_by_dependencies(modules_to_add);
 
     // Add the new modules, processing them as we go.
-    for(auto& name: new_names2)
-	add(loader->load_module(name));
+    for(auto& name: new_names)
+	add(modules_to_add.at(name));
 }
 
 void Program::add(const vector<string>& module_names)
