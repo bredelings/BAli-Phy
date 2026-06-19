@@ -29,12 +29,12 @@ import Probability.Distribution.PhyloCTMC.Properties
 -- 6. n_base_models
 
 
-data PhyloCTMCPropertiesFixedA = PhyloCTMCPropertiesFixedA {
+data PhyloCTMCPropertiesFixedA a = PhyloCTMCPropertiesFixedA {
       prop_fixed_a_subst_root :: Int,
       prop_fixed_a_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_fixed_a_cond_likes :: IntMap CondLikes,
       prop_fixed_a_likelihood :: LogDouble,
-      prop_fixed_a_alphabet :: Alphabet,
+      prop_fixed_a_alphabet :: Alphabet a,
       prop_fixed_a_n_states :: Int,
       prop_fixed_a_n_base_models :: Int,
 
@@ -42,7 +42,6 @@ data PhyloCTMCPropertiesFixedA = PhyloCTMCPropertiesFixedA {
     }
 
 
-instance PhyloCTMCProperties PhyloCTMCPropertiesFixedA where
+instance PhyloCTMCProperties (PhyloCTMCPropertiesFixedA a) where
     prop_likelihood = prop_fixed_a_likelihood
     prop_anc_cat_states = prop_fixed_a_anc_cat_states
-

@@ -79,7 +79,7 @@ compressAlignment a = (compressed, counts, mapping)
 
 -- Current a' is an alignment, but counts and mapping are EVector
 -- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)
-foreign import bpcall "Alignment:compress_alignment_var_nonvar" builtin_compress_alignment_var_nonvar :: EAlignment -> Alphabet ->
+foreign import bpcall "Alignment:compress_alignment_var_nonvar" builtin_compress_alignment_var_nonvar :: EAlignment -> Alphabet a ->
                                                                                                          EPair EAlignment (EVector Int)
 compressAlignmentVarNonvar a alphabet = (compressed, counts)
     where tmp12 = builtin_compress_alignment_var_nonvar (toEAlignment a) alphabet
@@ -123,7 +123,7 @@ That would lose the comments on the fastas though.
 foreign import bpcall "Alignment:select_alignment_columns" builtin_select_alignment_columns :: AlignmentMatrix -> EVector Int -> AlignmentMatrix
 select_alignment_columns alignment sites = builtin_select_alignment_columns alignment (toVector sites)
 
-foreign import bpcall "Alignment:select_alignment_pairs" builtin_select_alignment_pairs :: AlignmentMatrix -> EVector (EPair Int Int) -> Alphabet -> AlignmentMatrix
+foreign import bpcall "Alignment:select_alignment_pairs" builtin_select_alignment_pairs :: AlignmentMatrix -> EVector (EPair Int Int) -> Alphabet (Doublets n) -> AlignmentMatrix
 select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs alignment sites' doublets
     where sites' = toVector $ map (\(x,y) -> c_pair x y) sites
 
@@ -212,13 +212,13 @@ alignedSequences alignment@(AlignmentOnTree tree _ _ _) sequences = getNodesSet 
 class ToFasta a where
     toFasta :: a -> Text
 
-instance ToFasta CharacterData where
+instance ToFasta (CharacterData a) where
     toFasta (CharacterData a sequences) = fastaSeqs [(label,sequenceToText a sequence) | (label,sequence) <- sequences]
 
-instance ToFasta UnalignedCharacterData where
+instance ToFasta (UnalignedCharacterData a) where
     toFasta (Unaligned d) = toFasta d
 
-instance ToFasta AlignedCharacterData where
+instance ToFasta (AlignedCharacterData a) where
     toFasta (Aligned d) = toFasta d
 
 align alignment (Unaligned (CharacterData alphabet seqs)) = Aligned (CharacterData alphabet alignedSeqs)
@@ -227,7 +227,7 @@ align alignment (Unaligned (CharacterData alphabet seqs)) = Aligned (CharacterDa
           alignedSeqsOnTree = alignedSequences alignment seqsOnTree
           alignedSeqs = getLabelled tree (,) alignedSeqsOnTree
 
-instance Alignment AlignedCharacterData where
+instance Alignment (AlignedCharacterData a) where
     alignmentLength (Aligned (CharacterData _ seqs)) = vector_size $ snd $ head seqs
     numSequences (Aligned (CharacterData _ seqs)) = length seqs
     sequenceLength (Aligned (CharacterData _ seqs)) index = vector_size $ stripGaps $ snd $ (seqs !! index)
@@ -247,7 +247,7 @@ getTaxonAges labels regex direction = zip labels (toList $ getTaxonAgesRaw cppLa
           cppDirection = convert direction
 
 class AncestralAlignment a where
-    ancestralAlignment :: (IsTree t, LabelType t ~ Text) => t -> a -> EVector Int -> Alphabet -> IntMap VectorPairIntInt -> AlignedCharacterData
+    ancestralAlignment :: (IsTree t, LabelType t ~ Text) => t -> a -> EVector Int -> Alphabet alpha -> IntMap VectorPairIntInt -> AlignedCharacterData alpha
 
 instance AncestralAlignment (IntMap (Maybe BitVector)) where
     ancestralAlignment tree observedMasks smap alphabet componentStateSequences =

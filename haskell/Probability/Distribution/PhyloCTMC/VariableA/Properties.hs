@@ -31,12 +31,12 @@ import Probability.Distribution.PhyloCTMC.Properties
 -- 9-ish. sequences as EVector Int.
 
 
-data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
+data PhyloCTMCPropertiesVariableA a = PhyloCTMCPropertiesVariableA {
       prop_variable_a_subst_root :: Int,
       prop_variable_a_transition_ps :: IntMap (EVector (Matrix Double)),
       prop_variable_a_cond_likes :: IntMap CondLikes,
       prop_variable_a_likelihood :: LogDouble,
-      prop_variable_a_alphabet :: Alphabet,
+      prop_variable_a_alphabet :: Alphabet a,
       prop_variable_a_n_states :: Int,
       prop_variable_a_n_base_models :: Int,
       prop_variable_a_get_weightedFrequencyMatrix :: IntMap (Matrix Double),   -- only variable A
@@ -46,7 +46,7 @@ data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
     }
 
 
-instance PhyloCTMCProperties PhyloCTMCPropertiesVariableA where
+instance PhyloCTMCProperties (PhyloCTMCPropertiesVariableA a) where
     prop_likelihood = prop_variable_a_likelihood
     prop_anc_cat_states = prop_variable_a_anc_cat_states
     

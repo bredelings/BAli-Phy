@@ -32,10 +32,10 @@ peelBranch toward nodeCLs branchCLs ps f | toward    = peelBranchTowardRoot   no
 foreign import bpcall "LikelihoodSEV:" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
 foreign import bpcall "LikelihoodSEV:" sampleSequence :: VectorPairIntInt -> EVector CondLikes -> EVector (Matrix Double) -> EVector CondLikes -> EVector Int -> VectorPairIntInt
 
-foreign import bpcall "LikelihoodSEV:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
+foreign import bpcall "LikelihoodSEV:" simpleSequenceLikelihoods :: Alphabet a -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
 
 -- Could we move the conversion from sequence-with-gaps to (sequence,bitvector) into here?
-simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int, CBitVector)) -> IntMap (Maybe CondLikes)
+simpleNodeCLVs :: Alphabet a -> EVector Int -> Int -> IntMap (Maybe (EVector Int, CBitVector)) -> IntMap (Maybe CondLikes)
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
     where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels . c_pair'
 

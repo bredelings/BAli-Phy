@@ -23,6 +23,7 @@ instance RateModel m => RateModel (BranchSiteMixture m) where
     rate (BranchSiteMixture d _) = rate d
 
 instance HasAlphabet m => HasAlphabet (BranchSiteMixture m) where
+    type AlphabetOf (BranchSiteMixture m) = AlphabetOf m
     getAlphabet (BranchSiteMixture d _) = getAlphabet d
 
 instance HasSMap m => HasSMap (BranchSiteMixture m) where

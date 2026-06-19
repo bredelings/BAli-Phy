@@ -19,14 +19,14 @@ data AlignmentMatrix
 
 foreign import ecall "Alignment:" alignment_length :: AlignmentMatrix -> Int
 
-foreign import bpcall "Alignment:load_alignment" builtin_load_alignment :: Alphabet -> CPPString -> IO AlignmentMatrix
+foreign import bpcall "Alignment:load_alignment" builtin_load_alignment :: Alphabet a -> CPPString -> IO AlignmentMatrix
 
-load_alignment :: Alphabet -> String -> IO AlignmentMatrix
+load_alignment :: Alphabet a -> String -> IO AlignmentMatrix
 load_alignment alphabet filename = builtin_load_alignment alphabet (list_to_string filename)
 
-foreign import bpcall "Alignment:alignment_from_sequences" builtin_alignment_from_sequences :: Alphabet -> EVector (EPair CPPString CPPString) -> AlignmentMatrix
+foreign import bpcall "Alignment:alignment_from_sequences" builtin_alignment_from_sequences :: Alphabet a -> EVector (EPair CPPString CPPString) -> AlignmentMatrix
 
-alignment_from_sequences :: Alphabet -> [Sequence] -> AlignmentMatrix
+alignment_from_sequences :: Alphabet a -> [Sequence] -> AlignmentMatrix
 alignment_from_sequences a seqs = builtin_alignment_from_sequences a (toVector $ fmap (\(n, s) -> c_pair (Text.toCppString n) (Text.toCppString s)) seqs)
 
 
@@ -150,4 +150,3 @@ addAllMissingAncestors observedSequences tree = fromMaybe missingSequence <$> ob
           alignmentLength = fromMaybe (error msg) $ allSame $ observedSequenceLengths
           msg = "addAllMissingAncestors: not all observed sequences are the same length!"
           observedSequenceLengths = vector_size <$> (catMaybes $ IntMap.elems observedSequences)
-

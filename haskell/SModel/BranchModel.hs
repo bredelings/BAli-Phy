@@ -20,24 +20,25 @@ import           Tree
 -- Should we have an IntMap?
 data BranchMap a = BranchMap (Int -> a)
 
-data BranchModel a = BranchModel Alphabet (EVector Int) (EVector Double) (BranchMap a)
+data BranchModel alpha a = BranchModel (Alphabet alpha) (EVector Int) (EVector Double) (BranchMap a)
 
 instance Functor BranchMap where
     fmap f (BranchMap g) = BranchMap (f . g)
 
-instance Functor BranchModel where
+instance Functor (BranchModel alpha) where
     fmap f (BranchModel a smap pi map) = BranchModel a smap pi (f <$> map)
 
-instance HasAlphabet (BranchModel a) where
+instance HasAlphabet (BranchModel alpha a) where
+    type AlphabetOf (BranchModel alpha a) = alpha
     getAlphabet (BranchModel alphabet _ _ _) = alphabet
 
-instance HasSMap (BranchModel a) where
+instance HasSMap (BranchModel alpha a) where
     getSMap (BranchModel _ smap _ _) = smap
 
-instance CheckReversible (BranchModel m) where
+instance CheckReversible (BranchModel alpha m) where
     getReversibility _ = NonEq
 
-instance (HasSMap m, HasBranchLengths t, CTMC m) => SimpleSModel t (BranchModel m) where
+instance (HasSMap m, HasBranchLengths t, CTMC m) => SimpleSModel t (BranchModel alpha m) where
     stateLetters (SModelOnTree tree model) = getSMap model
     branchTransitionP (SModelOnTree tree model) b = [qExp $ scaleBy (branchLength tree b) (ratesForBranch b)]
         where (BranchModel _ _ _ (BranchMap ratesForBranch)) = model

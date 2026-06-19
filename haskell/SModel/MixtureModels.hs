@@ -20,6 +20,7 @@ branch_categories (MixtureModels categories _ _) = categories
 mmm branch_cats m = MixtureModels branch_cats [m] SameEqs
 
 instance HasAlphabet m => HasAlphabet (MixtureModels m) where
+    type AlphabetOf (MixtureModels m) = AlphabetOf m
     getAlphabet (MixtureModels _ (m:ms) _) = getAlphabet m
 
 instance HasSMap m => HasSMap (MixtureModels m) where

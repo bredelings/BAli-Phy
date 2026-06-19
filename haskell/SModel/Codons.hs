@@ -8,14 +8,14 @@ import qualified Markov
 import Markov (CTMC(..))
 import Reversible
 
-type TripletAlphabet = Alphabet
-type CodonAlphabet = TripletAlphabet
+type TripletAlphabet t = Alphabet t
+type CodonAlphabet n = Alphabet (Codons n)
 
-foreign import bpcall "SModel:" singletToTripletSym :: TripletAlphabet -> Matrix Double -> Matrix Double
-foreign import bpcall "SModel:f3x4_frequencies" f3x4_frequencies_builtin :: TripletAlphabet -> EVector Double -> EVector Double -> EVector Double -> EVector Double
-foreign import bpcall "SModel:" singlet_to_triplet_rates :: TripletAlphabet -> Matrix Double -> Matrix Double -> Matrix Double -> Matrix Double
-foreign import bpcall "SModel:" multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> EVector Double -> Matrix Double
-foreign import bpcall "SModel:" dNdS_matrix :: CodonAlphabet -> Double -> Matrix Double
+foreign import bpcall "SModel:" singletToTripletSym :: TripletAlphabet t -> Matrix Double -> Matrix Double
+foreign import bpcall "SModel:f3x4_frequencies" f3x4_frequencies_builtin :: TripletAlphabet t -> EVector Double -> EVector Double -> EVector Double -> EVector Double
+foreign import bpcall "SModel:" singlet_to_triplet_rates :: TripletAlphabet t -> Matrix Double -> Matrix Double -> Matrix Double -> Matrix Double
+foreign import bpcall "SModel:" multiNucleotideMutationRates :: TripletAlphabet t -> Double -> Double -> Matrix Double -> EVector Double -> Matrix Double
+foreign import bpcall "SModel:" dNdS_matrix :: CodonAlphabet n -> Double -> Matrix Double
 
 f3x4_frequencies a pi1 pi2 pi3 = let pi1' = toVector pi1
                                      pi2' = toVector pi2

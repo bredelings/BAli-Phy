@@ -11,7 +11,7 @@ import           Data.Matrix
 import           Tree
 import           Data.Array
 
-foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
+foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet a -> EVector Int -> Matrix Double -> EVector Double -> Double
 
 -- This takes the rate matrix q and adds:
 -- * pi -> a cached version of the equilibrium frequencies
@@ -41,21 +41,21 @@ foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int ->
 -- Fields are: alphabet, smap, q, and cached rate.
 -- PROBLEM: caching the rate is not quite right, since there are different rates:
 --    DNA rate, AA rate, Codon rate, synonymous rate, etc.
-data Markov = Markov Alphabet (EVector Int) Markov.Markov Double
+data Markov a = Markov (Alphabet a) (EVector Int) Markov.Markov Double
 
 wrapMarkov a smap m = Markov a smap m (getEquilibriumRate a smap (getQ m) (getEqFreqs m))
 
-instance CheckReversible Markov where
+instance CheckReversible (Markov a) where
     getReversibility (Markov _ _ m _) = getReversibility m
 
-instance CanMakeReversible Markov where
+instance CanMakeReversible (Markov a) where
     setReversibility rv (Markov a smap m rate) = Markov a smap (setReversibility rv m) rate
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
-instance HasSMap Markov where
+instance HasSMap (Markov a) where
     getSMap (Markov _ s _ _) = s
 
-instance CTMC Markov where
+instance CTMC (Markov a) where
     qExp (Markov _ _ m _) = qExp m
     getStartFreqs (Markov _ _ m _) = getStartFreqs m
     getEqFreqs (Markov _ _ m _) = getEqFreqs m
@@ -76,18 +76,19 @@ eqFlux (Markov _ _ m _) = Markov.eqFlux m
 
 eqRelFlux (Markov _ _ m _) = Markov.eqRelFlux m
 
-instance HasAlphabet Markov where
+instance HasAlphabet (Markov a) where
+    type AlphabetOf (Markov a) = a
     getAlphabet (Markov a _ _ _) = a
 
-instance HasBranchLengths t => SimpleSModel t Markov where
+instance HasBranchLengths t => SimpleSModel t (Markov a) where
     branchTransitionP (SModelOnTree tree smodel) b = [qExp $ scaleBy (branchLength tree b) smodel]
     stateLetters (SModelOnTree _ rm) = getSMap rm
     componentFrequencies (SModelOnTree _ smodel) = [getStartFreqs smodel]
 
-instance Scalable Markov where
+instance Scalable (Markov a) where
     scaleBy x (Markov a s rm r) = Markov a s (scaleBy x rm) (x*r)
 
-instance RateModel Markov where
+instance RateModel (Markov a) where
     rate (Markov _ _ _ r) = r
 
 -- A markov model needs a map from state -> letter in order to have a rate!
@@ -96,7 +97,7 @@ instance RateModel Markov where
 -- If we had a covarion model on codons, then we'd need to first collaps the state to
 -- a codon, and then collapse the codons to either (i) amino acids or (ii) codons, and then divide by three.
 
-instance Show Markov where
+instance Show (Markov a) where
     show (Markov _ _ m _) = show m
 
 nonEq pi m = scaleTo 1 $ markov (getAlphabet m) (getSMap m) (getQ m) pi
@@ -131,4 +132,3 @@ labelledOffDiagonal alphabet matrix = if n == nrows matrix && n == ncols matrix
                                              show (ncols matrix,nrows matrix) ++" matrix!"
     where letters = listArray' (getLetters alphabet)
           n = length letters
-

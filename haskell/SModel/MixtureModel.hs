@@ -47,6 +47,7 @@ plusInv pInv ms = scaleBy (1/(1-pInv)) $ mix [1 - pInv, pInv] [ms, always $ inv]
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 
 instance HasAlphabet m => HasAlphabet (Discrete m) where
+    type AlphabetOf (Discrete m) = AlphabetOf m
     getAlphabet model = getAlphabet $ component model 0
 
 instance HasSMap m => HasSMap (Discrete m) where
@@ -66,5 +67,4 @@ instance Scalable a => Scalable (Discrete a) where
 
 instance RateModel a => RateModel (Discrete a) where
     rate d = mean $ fmap rate d
-
 

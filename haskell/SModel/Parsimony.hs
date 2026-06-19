@@ -20,14 +20,14 @@ data CondPars
 
 type MutCosts = Matrix Int
 
-foreign import bpcall "Parsimony:" unitCostMatrix :: Alphabet -> MutCosts
-foreign import bpcall "Parsimony:" aminoAcidCostMatrix :: Alphabet -> MutCosts
+foreign import bpcall "Parsimony:" unitCostMatrix :: Alphabet a -> MutCosts
+foreign import bpcall "Parsimony:" aminoAcidCostMatrix :: Alphabet (Codons n) -> MutCosts
 
-foreign import bpcall "Parsimony:" pos1CostMatrix :: Alphabet -> MutCosts
-foreign import bpcall "Parsimony:" pos2CostMatrix :: Alphabet -> MutCosts
+foreign import bpcall "Parsimony:" pos1CostMatrix :: Alphabet (RNAEdits n) -> MutCosts
+foreign import bpcall "Parsimony:" pos2CostMatrix :: Alphabet (RNAEdits n) -> MutCosts
 
-foreign import bpcall "Parsimony:" peelMuts :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> CondPars
-foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> Int
+foreign import bpcall "Parsimony:" peelMuts :: EVector (EVector Int) -> Alphabet a -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> CondPars
+foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet a -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> Int
 
 
 class Parsimony a where
@@ -53,7 +53,7 @@ parsimony_root t seqs as alpha cost = let pc = cached_conditional_muts t seqs as
                                           root = head $ getNodes t
                                       in peel_muts t pc as root seqs alpha cost
 
-instance Parsimony (UnalignedCharacterData, AlignmentOnTree t) where
+instance Parsimony (UnalignedCharacterData a, AlignmentOnTree t) where
     parsimony tree costs (sequenceData,alignment) = let as = pairwiseAlignments alignment
                                                         alphabet = getAlphabet sequenceData
                                                         maybeNodeSequences = labelToNodeMap tree (getSequences sequenceData)
@@ -62,8 +62,8 @@ instance Parsimony (UnalignedCharacterData, AlignmentOnTree t) where
 ----
 type ColumnCounts = EVector Int
 
-foreign import bpcall "Parsimony:" peelMutsFixedA :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> MutCosts -> CondPars
-foreign import bpcall "Parsimony:" mutsRootFixedA :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> MutCosts -> EVector Int -> Int
+foreign import bpcall "Parsimony:" peelMutsFixedA :: EVector (EPair (EVector Int) CBitVector) -> Alphabet a -> EVector CondPars -> MutCosts -> CondPars
+foreign import bpcall "Parsimony:" mutsRootFixedA :: EVector (EPair (EVector Int) CBitVector) -> Alphabet a -> EVector CondPars -> MutCosts -> EVector Int -> Int
 
 cached_conditional_muts_fixed_A t seqs alpha cost =
     let pc    = IntMap.fromSet pcf $ getEdgesSet t
@@ -83,7 +83,7 @@ parsimony_root_fixed_A t seqs alpha cost counts = let pc = cached_conditional_mu
                                                       root = head $ getNodes t
                                                   in peel_muts_fixed_A t pc root seqs alpha cost counts
 
-instance Parsimony AlignedCharacterData where
+instance Parsimony (AlignedCharacterData a) where
     parsimony tree cost alignment = let (isequences, columnCounts, mapping) = compressAlignment $ getSequences alignment
                                         maybeNodeISequences = labelToNodeMap tree isequences
                                         maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
@@ -91,7 +91,7 @@ instance Parsimony AlignedCharacterData where
                                     in parsimony_root_fixed_A tree maybeNodeSeqsBits alphabet cost columnCounts
 
 {-
-parsimony_SEV :: IsTree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet -> MutCosts -> Int
+parsimony_SEV :: IsTree t => t -> IntMap (EVector Int) -> IntMap PairwiseAlignment -> Alphabet a -> MutCosts -> Int
 parsimony_SEV t seqs as alpha cost = let pc = cached_conditional_muts_SEV t seqs as alpha cost
                                         root = head $ getNodes t
                                      in peel_muts_SEV t pc as root seqs alpha cost

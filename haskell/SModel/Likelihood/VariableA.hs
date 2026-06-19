@@ -19,7 +19,7 @@ import qualified Data.IntSet as IntSet
 import SModel.Likelihood.CLV
 
 -- peeling for connected-CLVs
-foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EVector Int -> CondLikes
+foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet a -> EVector Int -> Int -> EVector Int -> CondLikes
 foreign import bpcall "Likelihood:" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
 foreign import bpcall "Likelihood:" calcProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
 foreign import bpcall "Likelihood:" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
@@ -41,7 +41,7 @@ peelBranchNonEq toward nodeCLs branchCLs asIn ps rootF | toward    = peelBranchT
 foreign import bpcall "Likelihood:" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> VectorPairIntInt
 foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> VectorPairIntInt
 
-simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int)) -> IntMap (Maybe CondLikes)
+simpleNodeCLVs :: Alphabet a -> EVector Int -> Int -> IntMap (Maybe (EVector Int)) -> IntMap (Maybe CondLikes)
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
     where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels
 
@@ -106,4 +106,3 @@ sampleAncestralSequences t root nodeCLVs as ps f cl =
                                                 nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! (sourceNode t to_p)
                                             in sampleBranchSequence parent_seq a0 nodeCLV clsIn asIn ps_for_b0 f
     in ancestor_seqs
-

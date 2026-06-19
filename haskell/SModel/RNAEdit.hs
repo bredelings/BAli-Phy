@@ -9,10 +9,10 @@ import Probability.Distribution.Mixture
 import SModel.Doublets
 import Reversible    
 
-type RNAEditAlphabet = Alphabet
+type RNAEditAlphabet n = Alphabet (RNAEdits n)
 
-foreign import bpcall "SModel:" rna_editting_rates :: RNAEditAlphabet -> Matrix Double -> EVector (EPair Int Int) -> Double -> Matrix Double
-foreign import bpcall "SModel:" rna_editting_pi :: RNAEditAlphabet -> EVector Double -> EVector (EPair Int Int) -> EVector Double
+foreign import bpcall "SModel:" rna_editting_rates :: RNAEditAlphabet n -> Matrix Double -> EVector (EPair Int Int) -> Double -> Matrix Double
+foreign import bpcall "SModel:" rna_editting_pi :: RNAEditAlphabet n -> EVector Double -> EVector (EPair Int Int) -> EVector Double
 
 siteEdit alphabet nucModel rnaRate edits = setReversibility rv $ markov alphabet smap q pi
     where rv = getReversibility nucModel

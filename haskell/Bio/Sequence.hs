@@ -23,8 +23,8 @@ mkSequence s = (T.fromCppString $ builtin_sequence_name s, T.fromCppString $ seq
 
 -- FIXME: make these operate on just the text, not the pair?
 -- FIXME: remove sequence_to_indices in favor of stripGaps . sequenceToAlignedIndices?
-foreign import bpcall "Alignment:sequence_to_indices" builtin_sequence_to_indices :: Alphabet -> CPPString -> EVector Int
-foreign import bpcall "Alignment:sequenceToAlignedIndices" builtin_sequenceToAlignedIndices :: Alphabet -> CPPString -> EVector Int
+foreign import bpcall "Alignment:sequence_to_indices" builtin_sequence_to_indices :: Alphabet a -> CPPString -> EVector Int
+foreign import bpcall "Alignment:sequenceToAlignedIndices" builtin_sequenceToAlignedIndices :: Alphabet a -> CPPString -> EVector Int
 sequence_to_indices a (_, s) = builtin_sequence_to_indices a (T.toCppString s)
 sequenceToAlignedIndices a (_, s) = builtin_sequenceToAlignedIndices a (T.toCppString s)
 
@@ -62,56 +62,39 @@ fastaSeq (label, seq) = T.concat [T.singleton '>', label, T.singleton '\n', seq,
 
 fastaSeqs sequences = T.concat [fastaSeq s | s <- sequences]
 
-{- NOTE: If we switch to multiple alphabet types.
+data CharacterData a = CharacterData (Alphabet a) [(Text, EVector Int)]
+data AlignedCharacterData a = Aligned (CharacterData a)
+data UnalignedCharacterData a = Unaligned (CharacterData a)
 
-data CharacterData = forall a.Alphabet a => CharacterData a [(Text, EVector Int)]
-   OR
-data CharacterData a = CharacterData a [(Text, EVector Int)]
-
-If we switch to multiple Alphabet types, we would probably need to have a main
-class Alphabet and then also a class Nucleotides and a class Triplets.
-
-* If we used `forall a.Alphabet a =>` then that only packages the methods for the
-  main class.
-
-* If we used `CharacterData a`, then we know what the underlying type is, but we
-  can't put them in a list.
-
-* If we use Data.Dynamic for the alphabet, then we could check if its a Codons DNA,
-  but I don't know if can check if its a `Codons a` while finding out the a.
-
--}
-
-data CharacterData = CharacterData Alphabet [(Text, EVector Int)]
-data AlignedCharacterData = Aligned CharacterData
-data UnalignedCharacterData = Unaligned CharacterData
-
-instance HasAlphabet CharacterData where
+instance HasAlphabet (CharacterData a) where
+    type AlphabetOf (CharacterData a) = a
     getAlphabet (CharacterData a _) = a
 
-instance HasAlphabet AlignedCharacterData where
+instance HasAlphabet (AlignedCharacterData a) where
+    type AlphabetOf (AlignedCharacterData a) = a
     getAlphabet (Aligned d) = getAlphabet d
 
-instance HasAlphabet UnalignedCharacterData where
+instance HasAlphabet (UnalignedCharacterData a) where
+    type AlphabetOf (UnalignedCharacterData a) = a
     getAlphabet (Unaligned d) = getAlphabet d
 
 class HasSequences d where
     -- If we change the sequences to observations, then does this generalization still work?
     getSequences :: d -> [(Text, EVector Int)]
 
-instance HasSequences CharacterData where
+instance HasSequences (CharacterData a) where
     getSequences (CharacterData _ d) = d
 
-instance HasSequences AlignedCharacterData where
+instance HasSequences (AlignedCharacterData a) where
     getSequences (Aligned d) = getSequences d
 
-instance HasSequences UnalignedCharacterData where
+instance HasSequences (UnalignedCharacterData a) where
     getSequences (Unaligned d) = getSequences d
 
 getTaxa d = map fst $ getSequences d
 
 
-mkCharacterData :: Alphabet -> Sequences -> CharacterData
+mkCharacterData :: Alphabet a -> Sequences -> CharacterData a
 mkCharacterData alphabet sequences = CharacterData alphabet [(label, go sequence) | (label, sequence) <- sequences]
     where go s = builtin_sequenceToAlignedIndices alphabet (T.toCppString s)
 
@@ -132,4 +115,3 @@ checkSameLengths d@(CharacterData _ sequences) | isJust $ allSame lengths = d
 mkAlignedCharacterData alphabet sequences = Aligned $ checkSameLengths $ mkCharacterData alphabet sequences
 
 unalign (Aligned (CharacterData a sequences)) = Unaligned (CharacterData a [(l, stripGaps s) | (l,s) <- sequences])
-

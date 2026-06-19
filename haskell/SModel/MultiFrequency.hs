@@ -29,6 +29,7 @@ edgeRates (MultiFrequency tree f g) edge = g $ f $ node             -- get the n
           node = targetNode tree edge'
 
 instance (HasRoot t, HasAlphabet e) => HasAlphabet (MultiFrequency t i e) where
+    type AlphabetOf (MultiFrequency t i e) = AlphabetOf e
     getAlphabet model@(MultiFrequency tree _ _) = getAlphabet (edgeRates model branch)
         where branch = head $ IntSet.elems (getEdgesSet tree)
 
