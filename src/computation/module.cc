@@ -59,6 +59,55 @@ namespace
     {
         return std::ranges::find(constructors, name) != constructors.end();
     }
+
+    enum class ClassChildKind
+    {
+        method,
+        associated_type_family,
+        associated_data_family
+    };
+
+    struct ClassChild
+    {
+        string name;
+        string resolved_name;
+        ClassChildKind kind;
+    };
+
+    // Visit the value and type children that belong to a class export/import item.
+    // The child name matches C(x) syntax; resolved_name identifies the entity.
+    template <typename F>
+    void for_each_class_child(const type_info& class_type, F&& f)
+    {
+        auto class_info = class_type.is_class();
+        assert(class_info);
+
+        auto class_module = get_module_name(class_type.name);
+        for(const auto& method: class_info->methods)
+        {
+            auto method_name = get_unqualified_name(method);
+            auto resolved_name = is_qualified_symbol(method) ? method : class_module + "." + method_name;
+            f(ClassChild{method_name, resolved_name, ClassChildKind::method});
+        }
+
+        if (not class_info->info)
+            return;
+
+        for(const auto& [type_family, _]: class_info->info->associated_type_families)
+            f(ClassChild{get_unqualified_name(type_family.name), type_family.name, ClassChildKind::associated_type_family});
+
+        for(const auto& data_family: class_info->info->associated_data_families)
+            f(ClassChild{get_unqualified_name(data_family.name), data_family.name, ClassChildKind::associated_data_family});
+    }
+
+    // Look up a named child in the class child set used by C(...) and C(..).
+    // This accepts methods and associated families.
+    optional<ClassChild> class_child_named(const type_info& class_type, const string& name)
+    {
+        optional<ClassChild> result;
+        for_each_class_child(class_type, [&](const ClassChild& child) { if (not result and child.name == name) result = child; });
+        return result;
+    }
 }
 
 std::string Module::qualify_local_name(const std::string& n) const
@@ -370,21 +419,47 @@ void Module::import_module(const Program& P, const Hs::LImpDecl& limpdecl)
                         messages.push_back( error(loc, Note()<<"type synonym `"<<id<<"` can't have import subspec") );
                         continue;
                     }
-                    else if (auto c = type->is_class())
+                    else if (type->is_class())
                     {
                         if (not s.subspec->names)
                         {
-                            for(auto& method: c->methods)
-                                import_symbol( m2_exported_values.at(method), modid, qualified );
+                            // Import only the class children that the source module exported.
+                            // A re-export may expose a subset of the original class children.
+                            for_each_class_child(*type, [&](const ClassChild& child)
+                            {
+                                if (child.kind == ClassChildKind::method)
+                                {
+                                    if (auto exported = m2_exported_values.find(child.name); exported != m2_exported_values.end() and exported->second->name == child.resolved_name)
+                                        import_symbol(exported->second, modid, qualified);
+                                }
+                                else
+                                {
+                                    if (auto exported = m2_exported_types.find(child.name); exported != m2_exported_types.end() and exported->second->name == child.resolved_name)
+                                        import_type(exported->second, modid, qualified);
+                                }
+                            });
                         }
                         else
                         {
                             for(auto& [loc,name]: *s.subspec->names)
                             {
-                                if (not c->methods.count(name))
-                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a method for class `"<<id<<"`") );
+                                auto child = class_child_named(*type, name);
+                                if (not child)
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a method or associated family for class `"<<id<<"`") );
+                                else if (child->kind == ClassChildKind::method)
+                                {
+                                    if (auto exported = m2_exported_values.find(name); exported != m2_exported_values.end() and exported->second->name == child->resolved_name)
+                                        import_symbol(exported->second, modid, qualified);
+                                    else
+                                        messages.push_back( error(loc, Note()<<"`"<<name<<"` was not exported") );
+                                }
                                 else
-                                    import_symbol( m2_exported_values.at(name), modid, qualified );
+                                {
+                                    if (auto exported = m2_exported_types.find(name); exported != m2_exported_types.end() and exported->second->name == child->resolved_name)
+                                        import_type(exported->second, modid, qualified);
+                                    else
+                                        messages.push_back( error(loc, Note()<<"`"<<name<<"` was not exported") );
+                                }
                             }
                         }
                     }
@@ -1367,10 +1442,20 @@ void Module::perform_exports()
                     if (not ex.subspec->names)
                     {
                         // all children
-                        if (auto c = t->is_class())
+                        if (t->is_class())
                         {
-                            for(auto& method: c->methods)
-                                export_symbol(lookup_symbol(method));
+                            // Export class value children as symbols and associated families as types.
+                            // This makes C(..) include associated type and data families.
+                            for_each_class_child(*t, [&](const ClassChild& child)
+                            {
+                                if (child.kind == ClassChildKind::method)
+                                {
+                                    if (symbol_in_scope_with_name(child.resolved_name, child.name))
+                                        export_symbol(lookup_resolved_symbol(child.resolved_name));
+                                }
+                                else if (type_in_scope_with_name(child.resolved_name, child.name))
+                                    export_type(lookup_resolved_type(child.resolved_name));
+                            });
                         }
                         else if (auto d = t->is_data())
                         {
@@ -1398,14 +1483,27 @@ void Module::perform_exports()
                     else
                     {
                         // all children
-                        if (auto c = t->is_class())
+                        if (t->is_class())
                         {
                             for(auto& [loc,name]: *ex.subspec->names)
                             {
-                                if (not c->methods.count(name))
-                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a method for class `"<<id<<"`") );
+                                auto child = class_child_named(*t, name);
+                                if (not child)
+                                    messages.push_back( error(loc, Note()<<"`"<<name<<"` is not a method or associated family for class `"<<id<<"`") );
+                                else if (child->kind == ClassChildKind::method)
+                                {
+                                    if (symbol_in_scope_with_name(child->resolved_name, name))
+                                        export_symbol(lookup_resolved_symbol(child->resolved_name));
+                                    else
+                                        messages.push_back( error(loc, Note()<<"`"<<name<<"` is not in scope") );
+                                }
                                 else
-                                    export_symbol(lookup_symbol(name));
+                                {
+                                    if (type_in_scope_with_name(child->resolved_name, name))
+                                        export_type(lookup_resolved_type(child->resolved_name));
+                                    else
+                                        messages.push_back( error(loc, Note()<<"`"<<name<<"` is not in scope") );
+                                }
                             }
                         }
                         else if (auto d = t->is_data())

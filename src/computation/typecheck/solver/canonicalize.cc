@@ -292,7 +292,9 @@ Type Solver::break_type_equality_cycle(const Constraint& C, const Type& type)
         auto& [tc,args] = *tfam;
 
         // Get the kind for type
-        auto kind = this_mod().lookup_local_type(tc.name)->kind;
+        auto type_family = this_mod().lookup_resolved_type(tc.name);
+        assert(type_family);
+        auto kind = type_family->kind;
         for(int i=0;i<args.size();i++)
         {
             auto [_, result_kind] = is_function_type(kind).value();
