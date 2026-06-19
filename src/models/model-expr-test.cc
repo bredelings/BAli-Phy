@@ -1210,6 +1210,59 @@ void test_explicit_rule_call_analysis(const std::vector<std::filesystem::path>& 
     assert(std::set<std::string>(sort_analysis.resolved_symbols.begin(), sort_analysis.resolved_symbols.end()).count(sort_signature.resolved_name));
 }
 
+// Checks that normal explicit-rule loading keeps JSON types while retaining
+// Haskell name-resolution analysis for the call template.
+void test_loaded_explicit_rule_call_analysis(const std::vector<std::filesystem::path>& package_paths)
+{
+    BindingImportSet prelude_imports;
+    BindingImportSet data_list_imports{{"Data.List"}};
+    auto loader = make_test_loader(package_paths);
+    auto contexts = HaskellBindingContexts::build(loader, {prelude_imports, data_list_imports});
+
+    auto length_root = make_single_rule_fixture(R"JSON({
+    "name": "fixture_explicit_length",
+    "result_type": "Int",
+    "call": "length(@xs)",
+    "args": [
+        {"name": "xs", "type": "List<a>"}
+    ]
+})JSON");
+    auto length_rules = make_test_rules({length_root}, package_paths);
+    auto length_rule = length_rules.require_rule_for_func("fixture_explicit_length");
+    assert(length_rule.result_type == type_t("Int"));
+    assert(length_rule.require_arg("xs").type == CM::list_type(type_t("a")));
+    assert(not length_rule.haskell_signature);
+    assert(length_rule.haskell_call_analysis);
+    auto length_analysis = *length_rule.haskell_call_analysis;
+    assert(not length_analysis.context_error);
+    assert(not length_analysis.resolution_error);
+    assert(length_analysis.referenced_args.count("xs"));
+    auto length_signature = lookup_value_signature(contexts, prelude_imports, "length");
+    assert(std::set<std::string>(length_analysis.resolved_symbols.begin(), length_analysis.resolved_symbols.end()).count(length_signature.resolved_name));
+
+    auto sort_root = make_single_rule_fixture(R"JSON({
+    "name": "fixture_explicit_sort",
+    "result_type": "List<a>",
+    "import": ["Data.List"],
+    "call": "Data.List.sort(@xs)",
+    "args": [
+        {"name": "xs", "type": "List<a>"}
+    ]
+})JSON");
+    auto sort_rules = make_test_rules({sort_root}, package_paths);
+    auto sort_rule = sort_rules.require_rule_for_func("fixture_explicit_sort");
+    assert(sort_rule.result_type == CM::list_type(type_t("a")));
+    assert(sort_rule.require_arg("xs").type == CM::list_type(type_t("a")));
+    assert(not sort_rule.haskell_signature);
+    assert(sort_rule.haskell_call_analysis);
+    auto sort_analysis = *sort_rule.haskell_call_analysis;
+    assert(not sort_analysis.context_error);
+    assert(not sort_analysis.resolution_error);
+    assert(sort_analysis.referenced_args.count("xs"));
+    auto sort_signature = lookup_value_signature(contexts, data_list_imports, "Data.List.sort");
+    assert(std::set<std::string>(sort_analysis.resolved_symbols.begin(), sort_analysis.resolved_symbols.end()).count(sort_signature.resolved_name));
+}
+
 // Loads an inferred rule whose Haskell signature is valid but outside the
 // current model bridge, so diagnostics identify the compatibility stage.
 void test_inferred_signature_bridge_failure(const std::vector<std::filesystem::path>& package_paths)
@@ -1568,6 +1621,7 @@ int main(int argc, char* argv[])
         test_name_resolution_parity({argv[1], argv[2]});
         test_rule_call_inference({argv[1], argv[2]});
         test_explicit_rule_call_analysis({argv[1], argv[2]});
+        test_loaded_explicit_rule_call_analysis({argv[1], argv[2]});
         test_inferred_signature_bridge_failure({argv[1], argv[2]});
         test_inferred_take_rule_loading({argv[1], argv[2]});
         test_inferred_list_utility_rule_loading({argv[1], argv[2]});
