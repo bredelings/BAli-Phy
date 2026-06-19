@@ -43,14 +43,14 @@ string safe_haskell_var_name(const string& prefix, const string& name)
 
 // Builds the display-only synthetic declaration body used for deterministic
 // module hashes and diagnostics.
-string synthetic_rule_module_body(const Rule& rule)
+string synthetic_rule_module_body(const RuleInferenceInput& rule)
 {
     return "infer_rule = " + rule.name + "\n";
 }
 
 // Builds the synthetic Haskell argument variables used both by resolution
 // inspection and by full rule-call type inference.
-RuleCallInputs build_rule_call_inputs(const Rule& rule)
+RuleCallInputs build_rule_call_inputs(const RuleInferenceInput& rule)
 {
     RuleCallInputs inputs;
     for(std::size_t i=0; i<rule.args.size(); i++)
@@ -61,6 +61,15 @@ RuleCallInputs build_rule_call_inputs(const Rule& rule)
         inputs.template_args.insert({arg.name, var(arg_var)});
     }
     return inputs;
+}
+
+// Temporary limitation: this inference path only constrains signatures from the
+// call template. Remove this once defaults and alphabets participate in inference.
+void require_call_only_inference_input(const RuleInferenceInput& rule)
+{
+    for(const auto& arg: rule.args)
+        if (arg.default_value_source or arg.alphabet_source)
+            throw myexception()<<"In rule for "<<rule.name<<": inferred signatures do not use default_value or alphabet yet; keep this rule explicitly annotated";
 }
 
 // Converts the legacy codegen application S-expression produced by template
@@ -131,7 +140,7 @@ expression_ref convert_template_apps_for_typecheck(const expression_ref& expr, c
 
 // Raises a rule-qualified error if call-only inference cannot see every JSON
 // argument in the lowered call template.
-void require_all_args_referenced(const Rule& rule, const set<string>& referenced_args)
+void require_all_args_referenced(const RuleInferenceInput& rule, const set<string>& referenced_args)
 {
     for(const auto& arg: rule.args)
         if (not referenced_args.count(arg.name))
@@ -140,7 +149,7 @@ void require_all_args_referenced(const Rule& rule, const set<string>& referenced
 
 // Builds a mutable import context and infers one synthetic function declaration.
 // This avoids re-running parser disambiguation on already-lowered template ASTs.
-Type infer_rule_function_type(const HaskellBindingContexts& contexts, const Rule& rule, const expression_ref& lowered_call, const map<string, string>& arg_vars)
+Type infer_rule_function_type(const HaskellBindingContexts& contexts, const RuleInferenceInput& rule, const expression_ref& lowered_call, const map<string, string>& arg_vars)
 {
     const string module_name = "BindingInfer.Rule.Main";
     const BindingImportSet imports{rule.imports};
@@ -157,7 +166,8 @@ Type infer_rule_function_type(const HaskellBindingContexts& contexts, const Rule
 
     Haskell::Decls declarations;
     declarations.recursive = false;
-    declarations.push_back({noloc, Haskell::simple_fun_decl(function, patterns, {noloc, convert_template_apps_for_typecheck(lowered_call, *inference_module, local_vars)})});
+    Haskell::LExp body = {noloc, convert_template_apps_for_typecheck(lowered_call, *inference_module, local_vars)};
+    declarations.push_back({noloc, Haskell::simple_fun_decl(function, patterns, body)});
 
     inference_module->add_local_symbols(declarations);
 
@@ -174,8 +184,9 @@ Type infer_rule_function_type(const HaskellBindingContexts& contexts, const Rule
 
 // Resolves the globals used by the lowered rule template through the same
 // conversion path used by full Haskell type inference.
-RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& contexts, const Rule& rule)
+RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& contexts, const RuleInferenceInput& rule)
 {
+    require_call_only_inference_input(rule);
     auto inputs = build_rule_call_inputs(rule);
     auto lowered = lower_rule_template_expr(rule.call, inputs.template_args);
     require_all_args_referenced(rule, lowered.referenced_args);
@@ -195,8 +206,9 @@ RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& cont
 
 // Infers one rule call by compiling a synthetic function and reading its
 // generalized semantic Haskell type.
-InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts& contexts, const Rule& rule)
+InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts& contexts, const RuleInferenceInput& rule)
 {
+    require_call_only_inference_input(rule);
     auto inputs = build_rule_call_inputs(rule);
 
     auto lowered = lower_rule_template_expr(rule.call, inputs.template_args);

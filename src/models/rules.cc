@@ -244,16 +244,16 @@ RuleSignature parse_explicit_signature(const json::object& object, const string&
     return signature;
 }
 
-// Builds a skeletal Rule with only the fields needed by call-template
-// inference: name, imports, call, and argument names/order.
-Rule make_inference_skeleton(const RawRule& raw_rule)
+// Builds the narrow request object used by Haskell call-template signature
+// inference, without constructing a partially initialized Rule.
+RuleInferenceInput make_rule_inference_input(const RawRule& raw_rule)
 {
-    Rule rule;
+    RuleInferenceInput input;
     const auto& name = raw_rule.name;
     const auto& fields = raw_rule.fields;
-    rule.name = name;
-    rule.call = parse_rule_template_expr(required_string(fields, "call", name), name + ": call");
-    rule.imports = import_set(fields, name);
+    input.name = name;
+    input.call = parse_rule_template_expr(required_string(fields, "call", name), name + ": call");
+    input.imports = import_set(fields, name);
 
     auto args = optional_args_array(fields, name);
     for(auto& x: *args)
@@ -261,29 +261,29 @@ Rule make_inference_skeleton(const RawRule& raw_rule)
         if (not x.is_object())
             throw myexception()<<"In rule for "<<name<<": entry in \"args\" is not an object";
         const auto& arg_object = x.as_object();
-        RuleArg arg;
+        RuleInferenceArg arg;
         arg.name = required_string(arg_object, "name", name);
-        if (maybe_field(arg_object, "default_value") or maybe_field(arg_object, "alphabet"))
-            throw myexception()<<"In rule for "<<name<<": inferred signatures do not use default_value or alphabet yet; keep this rule explicitly annotated";
-        rule.args.push_back(std::move(arg));
+        arg.default_value_source = optional_string(arg_object, "default_value", name);
+        arg.alphabet_source = optional_string(arg_object, "alphabet", name);
+        input.args.push_back(std::move(arg));
     }
-    return rule;
+    return input;
 }
 
 // Converts an inferred semantic Haskell signature into the concrete model
 // signature stored on Rule objects, retaining the semantic signature as source data.
-RuleSignature bridge_inferred_signature(const Rule& skeleton, const InferredRuleSignature& inferred)
+RuleSignature bridge_inferred_signature(const RuleInferenceInput& input, const InferredRuleSignature& inferred)
 {
     HaskellTypeBridgeState bridge_state;
     RuleSignature signature;
     signature.haskell_signature = RuleHaskellSignature{inferred.result_type, inferred.arg_types, inferred.constraints};
     signature.result_type = bridge_haskell_type_to_model_type(inferred.result_type, bridge_state);
 
-    for(const auto& arg: skeleton.args)
+    for(const auto& arg: input.args)
     {
         auto type = inferred.arg_types.find(arg.name);
         if (type == inferred.arg_types.end())
-            throw myexception()<<"In rule for "<<skeleton.name<<": no inferred type for argument '"<<arg.name<<"'";
+            throw myexception()<<"In rule for "<<input.name<<": no inferred type for argument '"<<arg.name<<"'";
         signature.arg_types.insert({arg.name, bridge_haskell_type_to_model_type(type->second, bridge_state)});
     }
     // Compatibility output: inferred Haskell predicates are retained above, while
@@ -597,7 +597,7 @@ Rule make_rule_stub(const RawRule& raw_rule)
 std::map<std::string, RuleSignature> resolve_rule_signatures(const map<std::string, RawRule>& raw_rules, const std::shared_ptr<module_loader>& loader)
 {
     std::map<std::string, RuleSignature> signatures;
-    std::map<std::string, Rule> inferred_skeletons;
+    std::map<std::string, RuleInferenceInput> inference_inputs;
     vector<BindingImportSet> import_sets;
 
     for(auto& [name, raw_rule]: raw_rules)
@@ -607,23 +607,23 @@ std::map<std::string, RuleSignature> resolve_rule_signatures(const map<std::stri
             signatures.insert({name, parse_explicit_signature(raw_rule.fields, raw_rule.name)});
         else
         {
-            auto skeleton = make_inference_skeleton(raw_rule);
-            import_sets.push_back({skeleton.imports});
-            inferred_skeletons.insert({name, std::move(skeleton)});
+            auto input = make_rule_inference_input(raw_rule);
+            import_sets.push_back({input.imports});
+            inference_inputs.insert({name, std::move(input)});
         }
     }
 
-    if (inferred_skeletons.empty())
+    if (inference_inputs.empty())
         return signatures;
 
     if (not loader)
         throw myexception()<<"Inferred signature mode requires a Haskell module loader";
 
     auto contexts = HaskellBindingContexts::build(loader, import_sets);
-    for(auto& [name, skeleton]: inferred_skeletons)
+    for(auto& [name, input]: inference_inputs)
     {
-        auto inferred = infer_rule_call_signature(contexts, skeleton);
-        signatures.insert({name, bridge_inferred_signature(skeleton, inferred)});
+        auto inferred = infer_rule_call_signature(contexts, input);
+        signatures.insert({name, bridge_inferred_signature(input, inferred)});
     }
     return signatures;
 }

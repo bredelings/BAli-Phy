@@ -971,30 +971,30 @@ void test_rule_template_lowering()
     expect_rule_template_error(lambda_expr(tuple_pattern({var_pattern("x"), var_pattern("y")}), var_expr("x")), "Only variable lambda patterns");
 }
 
-// Builds a minimal Rule so resolution tests exercise the inference conversion
-// path without depending on a full binding file fixture.
-Rule make_resolution_rule(const BindingImportSet& imports, UntypedExpr expr, std::vector<std::string> arg_names)
+// Builds a minimal inference request so inference tests do not need a full
+// binding file fixture or a partially initialized Rule.
+RuleInferenceInput make_test_rule_inference_input(std::string name, UntypedExpr call, std::vector<std::string> arg_names, std::set<std::string> imports = {})
 {
-    Rule rule;
-    rule.name = "resolution_fixture";
-    rule.imports = imports.modules;
-    rule.call = std::move(expr);
+    RuleInferenceInput input;
+    input.name = std::move(name);
+    input.imports = std::move(imports);
+    input.call = std::move(call);
     for(auto& arg_name: arg_names)
     {
-        RuleArg arg;
+        RuleInferenceArg arg;
         arg.name = std::move(arg_name);
-        rule.args.push_back(std::move(arg));
+        input.args.push_back(std::move(arg));
     }
-    return rule;
+    return input;
 }
 
 // Checks that the rule-inference conversion resolves a template global to the
 // same compiled symbol returned by direct value-signature lookup.
 void expect_template_head_resolves(const HaskellBindingContexts& contexts, const BindingImportSet& imports, const std::string& function_name, UntypedExpr expr, std::vector<std::string> arg_names)
 {
-    auto rule = make_resolution_rule(imports, std::move(expr), std::move(arg_names));
+    auto input = make_test_rule_inference_input("resolution_fixture", std::move(expr), std::move(arg_names), imports.modules);
     auto signature = lookup_value_signature(contexts, imports, function_name);
-    auto resolution = resolve_rule_call_template(contexts, rule);
+    auto resolution = resolve_rule_call_template(contexts, input);
     std::set<std::string> resolved_symbols(resolution.resolved_symbols.begin(), resolution.resolved_symbols.end());
     assert(resolved_symbols.count(signature.resolved_name));
 }
@@ -1003,10 +1003,10 @@ void expect_template_head_resolves(const HaskellBindingContexts& contexts, const
 // fragment from the same conversion path used by full inference.
 void expect_template_resolution_error(const HaskellBindingContexts& contexts, const BindingImportSet& imports, UntypedExpr expr, std::vector<std::string> arg_names, const std::string& message)
 {
-    auto rule = make_resolution_rule(imports, std::move(expr), std::move(arg_names));
+    auto input = make_test_rule_inference_input("resolution_fixture", std::move(expr), std::move(arg_names), imports.modules);
     try
     {
-        (void)resolve_rule_call_template(contexts, rule);
+        (void)resolve_rule_call_template(contexts, input);
     }
     catch(const std::exception& e)
     {
@@ -1077,23 +1077,6 @@ void test_name_resolution_parity(const std::vector<std::filesystem::path>& packa
     );
 }
 
-// Constructs a minimal Rule object for call-inference tests, avoiding full
-// binding-file loading when only the call template and arg names matter.
-Rule make_call_inference_rule(std::string name, UntypedExpr call, std::vector<std::string> arg_names, std::set<std::string> imports = {})
-{
-    Rule rule;
-    rule.name = std::move(name);
-    rule.call = std::move(call);
-    rule.imports = std::move(imports);
-    for(auto& arg_name: arg_names)
-    {
-        RuleArg arg;
-        arg.name = std::move(arg_name);
-        rule.args.push_back(std::move(arg));
-    }
-    return rule;
-}
-
 // Exercises call-only Haskell inference for simple binding templates without
 // using inferred JSON mode in normal rule loading.
 void test_rule_call_inference(const std::vector<std::filesystem::path>& package_paths)
@@ -1101,7 +1084,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
     auto contexts = HaskellBindingContexts::build(loader, {{}});
 
-    auto plus = make_call_inference_rule(
+    auto plus = make_test_rule_inference_input(
         "plus",
         call_expr("+", {positional_arg(arg_ref_expr("x")), positional_arg(arg_ref_expr("y"))}),
         {"x", "y"}
@@ -1110,7 +1093,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(plus_signature.arg_types.size() == 2);
     assert(not plus_signature.constraints.empty());
 
-    auto length = make_call_inference_rule(
+    auto length = make_test_rule_inference_input(
         "length",
         call_expr("length", {positional_arg(arg_ref_expr("xs"))}),
         {"xs"}
@@ -1118,7 +1101,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     auto length_signature = infer_rule_call_signature(contexts, length);
     assert(length_signature.result_type.print().find("Int") != std::string::npos);
 
-    auto zip = make_call_inference_rule(
+    auto zip = make_test_rule_inference_input(
         "zip",
         call_expr("zip", {positional_arg(arg_ref_expr("xs")), positional_arg(arg_ref_expr("ys"))}),
         {"xs", "ys"}
@@ -1127,7 +1110,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(zip_signature.arg_types.size() == 2);
     assert(not zip_signature.result_type.print().empty());
 
-    auto map_id = make_call_inference_rule(
+    auto map_id = make_test_rule_inference_input(
         "map_id",
         call_expr("map", {positional_arg(lambda_expr(var_pattern("x"), var_expr("x"))), positional_arg(arg_ref_expr("xs"))}),
         {"xs"}
@@ -1137,7 +1120,7 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(bridge_haskell_type_to_model_type(map_id_signature.result_type, map_bridge_state) == CM::list_type(type_t("a")));
     assert(bridge_haskell_type_to_model_type(map_id_signature.arg_types.at("xs"), map_bridge_state) == CM::list_type(type_t("a")));
 
-    auto absent = make_call_inference_rule("absent", arg_ref_expr("x"), {"x", "y"});
+    auto absent = make_test_rule_inference_input("absent", arg_ref_expr("x"), {"x", "y"});
     try
     {
         (void)infer_rule_call_signature(contexts, absent);
