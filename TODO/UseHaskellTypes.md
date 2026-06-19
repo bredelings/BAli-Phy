@@ -8,7 +8,7 @@ binding signatures are proven useful.
 
 ## Current Status
 
-Initial infrastructure and one end-to-end inferred binding are in place:
+Initial infrastructure and end-to-end inferred bindings are in place:
 
 - Binding JSON signature modes are validated before type conversion.
 - Mixed signatures are rejected.
@@ -25,13 +25,17 @@ Initial infrastructure and one end-to-end inferred binding are in place:
   values from `poly_env()`.
 - A narrow semantic Haskell `Type` to `CM::Type` bridge supports variables,
   `Int`, `Double`, `Bool`, lists, tuples, and function arrows.
+- A narrow semantic Haskell constraint bridge supports unary `Eq`, `Ord`, and
+  `Num` class predicates as existing model constraints.
 - Loader-aware `Rules(package_paths, module_loader)` can resolve inferred
   signatures before the existing model typechecker sees a rule.
 - `bindings/functions/take.json` now omits redundant signature fields and gets
   `Int -> List<a> -> List<a>` from Haskell inference.
+- `bindings/functions/_eq.json` now omits redundant signature and constraint
+  fields and gets `Eq<a> => a -> a -> Bool` from Haskell inference.
 
 The compatibility constructor `Rules(package_paths)` remains explicit-only for
-tests and simple callers that do not have a Haskell module loader.  Class
+tests and simple callers that do not have a Haskell module loader.  Broader
 constraints, defaults, alphabets, and broad annotation removal still require
 follow-up work.
 
@@ -124,9 +128,10 @@ in this milestone.
 Prototype bindings should be simple:
 
 - `take`: `Int -> [a] -> [a]`
+- `_eq`: `Eq a => a -> a -> Bool`
 - `replicate`: `Int -> a -> [a]`
 - `zip`: `[a] -> [b] -> [(a,b)]`
-- later, after constraint bridging: `_add`, `_eq`, `length`
+- later, after more audit data: `_add`, `_lt`, `min`, `max`, `length`
 
 Keep bindings with defaults, alphabets, or domain-specific latent constraints
 explicit until the audit data says they are safe.
@@ -166,7 +171,8 @@ Keep it intentionally narrow:
 - Common model constructors: `Distribution`, `DiscreteDist`, `CTMC`,
   `ExchangeModel`, `MultiMixtureModel`, `Tree`, `Topology`, alphabet/model
   types used in bindings.
-- Simple class constraints represented as current model constraints.
+- Simple unary `Eq`, `Ord`, and `Num` class constraints represented as current
+  model constraints.
 
 If an inferred type cannot round-trip through this bridge, require explicit
 JSON annotations for that binding.
