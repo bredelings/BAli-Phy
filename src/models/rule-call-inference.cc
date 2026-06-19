@@ -133,36 +133,10 @@ Type infer_rule_function_type(Module& inference_module, const RuleCallAnalysisIn
     return *type;
 }
 
-}
-
-// Resolves the globals used by the lowered rule template through the same
-// inference-mode lowering used by full Haskell type inference.
-RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& contexts, const RuleCallAnalysisInput& rule)
+// Peels the generalized synthetic function type into the signature pieces used
+// by rule loading and audit analysis.
+InferredRuleSignature signature_from_inferred_type(const RuleCallAnalysisInput& rule, const Type& inferred_type)
 {
-    require_call_only_inference_input(rule);
-    auto inputs = build_rule_call_inputs(rule);
-    auto inference_module = make_rule_inference_module(contexts, rule, inputs);
-
-    RuleCallResolution resolution;
-    auto options = make_inference_lowering_options(*inference_module, inputs, &resolution.resolved_symbols);
-    auto lowered = lower_rule_template_expr(rule.call, inputs.template_args, options);
-    require_all_args_referenced(rule, lowered.referenced_args);
-    return resolution;
-}
-
-// Infers one rule call by compiling a synthetic function and reading its
-// generalized semantic Haskell type.
-InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts& contexts, const RuleCallAnalysisInput& rule)
-{
-    require_call_only_inference_input(rule);
-    auto inputs = build_rule_call_inputs(rule);
-    auto inference_module = make_rule_inference_module(contexts, rule, inputs);
-
-    auto options = make_inference_lowering_options(*inference_module, inputs);
-    auto lowered = lower_rule_template_expr(rule.call, inputs.template_args, options);
-    require_all_args_referenced(rule, lowered.referenced_args);
-
-    auto inferred_type = infer_rule_function_type(*inference_module, rule, lowered.expr, inputs.arg_vars);
     auto [type_vars, constraints, rho_type] = peel_top_gen(inferred_type);
     auto [arg_types, result_type] = arg_result_types(rho_type);
     if (arg_types.size() != rule.args.size())
@@ -175,4 +149,79 @@ InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts& co
     for(std::size_t i=0; i<rule.args.size(); i++)
         result.arg_types.insert({rule.args[i].name, arg_types[i]});
     return result;
+}
+
+}
+
+// Performs best-effort Haskell analysis of one rule call template, with callers
+// choosing whether to continue from resolution into signature inference.
+static RuleCallAnalysis analyze_rule_call_impl(const HaskellBindingContexts& contexts, const RuleCallAnalysisInput& rule, bool infer_signature)
+{
+    RuleCallAnalysis analysis;
+    auto inputs = build_rule_call_inputs(rule);
+
+    std::shared_ptr<Module> inference_module;
+    try
+    {
+        inference_module = make_rule_inference_module(contexts, rule, inputs);
+        auto options = make_inference_lowering_options(*inference_module, inputs, &analysis.resolved_symbols);
+        auto lowered = lower_rule_template_expr(rule.call, inputs.template_args, options);
+        analysis.referenced_args = std::move(lowered.referenced_args);
+        analysis.resolved_call = std::move(lowered.expr);
+    }
+    catch(const std::exception& e)
+    {
+        analysis.resolution_error = e.what();
+        return analysis;
+    }
+
+    if (not infer_signature)
+        return analysis;
+
+    try
+    {
+        auto inferred_type = infer_rule_function_type(*inference_module, rule, *analysis.resolved_call, inputs.arg_vars);
+        analysis.signature = signature_from_inferred_type(rule, inferred_type);
+    }
+    catch(const std::exception& e)
+    {
+        analysis.inference_error = e.what();
+    }
+
+    return analysis;
+}
+
+// Performs best-effort Haskell analysis of one rule call template, returning a
+// resolved expression even when later signature inference fails.
+RuleCallAnalysis analyze_rule_call(const HaskellBindingContexts& contexts, const RuleCallAnalysisInput& rule)
+{
+    return analyze_rule_call_impl(contexts, rule, true);
+}
+
+// Resolves the globals used by the lowered rule template through the same
+// inference-mode lowering used by full Haskell type inference.
+RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& contexts, const RuleCallAnalysisInput& rule)
+{
+    auto analysis = analyze_rule_call_impl(contexts, rule, false);
+    if (analysis.resolution_error)
+        throw myexception()<<*analysis.resolution_error;
+
+    RuleCallResolution resolution{std::move(analysis.resolved_symbols)};
+    return resolution;
+}
+
+// Infers one rule call by compiling a synthetic function and reading its
+// generalized semantic Haskell type.
+InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts& contexts, const RuleCallAnalysisInput& rule)
+{
+    require_call_only_inference_input(rule);
+    auto analysis = analyze_rule_call(contexts, rule);
+    if (analysis.resolution_error)
+        throw myexception()<<*analysis.resolution_error;
+    require_all_args_referenced(rule, analysis.referenced_args);
+    if (analysis.signature)
+        return *analysis.signature;
+    if (analysis.inference_error)
+        throw myexception()<<*analysis.inference_error;
+    throw myexception()<<"In rule for "<<rule.name<<": Haskell signature inference did not produce a signature";
 }

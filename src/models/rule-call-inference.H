@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "computation/haskell/coretype.H"
+#include "computation/haskell/haskell.H"
 #include "models/haskell-binding-contexts.H"
 #include "models/model-expr.H"
 
@@ -38,6 +39,18 @@ struct RuleCallResolution
 {
     std::vector<std::string> resolved_symbols;
 };
+
+struct RuleCallAnalysis
+{
+    std::optional<Haskell::LExp> resolved_call;
+    std::set<std::string> referenced_args;
+    std::vector<std::string> resolved_symbols;
+    std::optional<InferredRuleSignature> signature;
+    std::optional<std::string> resolution_error;
+    std::optional<std::string> inference_error;
+};
+
+RuleCallAnalysis analyze_rule_call(const HaskellBindingContexts&, const RuleCallAnalysisInput&);
 
 RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts&, const RuleCallAnalysisInput&);
 
