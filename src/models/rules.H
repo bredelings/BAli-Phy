@@ -6,9 +6,12 @@
 #include <optional>
 #include <set>
 #include <vector>
+#include <memory>
 #include "models/model-expr.H"
 #include "models/model-type.H"
 #include <filesystem>
+
+class module_loader;
 
 using ParsedType = CM::Type;
 using RuleConstraint = CM::Type;
@@ -115,6 +118,8 @@ public:
     Rule require_rule_for_func(const std::string& s) const;
 
     Rules(const std::vector<std::filesystem::path>& path_list);
+
+    Rules(const std::vector<std::filesystem::path>& path_list, const std::shared_ptr<module_loader>&);
 };
 
 #endif

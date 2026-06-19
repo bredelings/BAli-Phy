@@ -6,11 +6,16 @@
 #include "util/io.H"
 #include "util/json.hh"
 #include "models/compile.H"
+#include "models/haskell-binding-contexts.H"
+#include "models/haskell-type-to-model-type.H"
 #include "models/parse.H"
 #include "models/driver.hh" // for parse_expression( )
+#include "models/rule-call-inference.H"
 
 #include "computation/module.H"
 #include "computation/typecheck/typecheck.H"
+
+#include <memory>
 
 using std::vector;
 using std::set;
@@ -19,6 +24,8 @@ using std::string;
 using std::optional;
 namespace fs = std::filesystem;
 
+RuleModelExpr parse_rule_template_expr(const string& text, const string& what);
+
 namespace
 {
 
@@ -26,6 +33,13 @@ struct RawRule
 {
     string name;
     json::object fields;
+};
+
+struct RuleSignature
+{
+    ParsedType result_type;
+    vector<RuleConstraint> constraints;
+    map<string, ParsedType> arg_types;
 };
 
 enum class RuleSignatureMode
@@ -158,13 +172,13 @@ RuleSignatureMode classify_signature_mode(const json::object& object, const stri
     throw error;
 }
 
-// Rejects inferred-mode bindings until the Haskell inference path is connected
-// to rule loading, keeping normal callers from seeing unresolved signatures.
-void validate_signature_mode_enabled(const RawRule& raw_rule)
+// Compatibility path: callers without a Haskell module loader can only load
+// fully explicit rule signatures.  Remove once all real callers pass a loader.
+void validate_explicit_only_signature_mode(const RawRule& raw_rule)
 {
     auto mode = classify_signature_mode(raw_rule.fields, raw_rule.name);
     if (mode == RuleSignatureMode::Inferred)
-        throw myexception()<<"In rule for "<<raw_rule.name<<": inferred signature mode requires Haskell signature inference, which is not enabled yet";
+        throw myexception()<<"In rule for "<<raw_rule.name<<": inferred signature mode requires loader-aware Haskell signature inference";
 }
 
 // Reads an optional array of strings from raw rule JSON.
@@ -207,6 +221,73 @@ vector<RuleConstraint> parse_constraints(const json::object& object, const strin
         constraints.push_back(parse_type(string(constraint.as_string())));
     }
     return constraints;
+}
+
+// Parses the complete JSON signature for explicit-mode rules into concrete
+// command-line model types.
+RuleSignature parse_explicit_signature(const json::object& object, const string& rule_name)
+{
+    RuleSignature signature;
+    signature.result_type = parse_type(required_string(object, "result_type", rule_name));
+    signature.constraints = parse_constraints(object, rule_name);
+
+    auto args = optional_args_array(object, rule_name);
+    for(auto& value: *args)
+    {
+        if (not value.is_object())
+            throw myexception()<<"In rule for "<<rule_name<<": entry in \"args\" is not an object";
+        const auto& arg_object = value.as_object();
+        auto arg_name = required_string(arg_object, "name", rule_name);
+        signature.arg_types.insert({arg_name, parse_type(required_string(arg_object, "type", rule_name))});
+    }
+    return signature;
+}
+
+// Builds a skeletal Rule with only the fields needed by call-template
+// inference: name, imports, call, and argument names/order.
+Rule make_inference_skeleton(const RawRule& raw_rule)
+{
+    Rule rule;
+    const auto& name = raw_rule.name;
+    const auto& fields = raw_rule.fields;
+    rule.name = name;
+    rule.call = parse_rule_template_expr(required_string(fields, "call", name), name + ": call");
+    rule.imports = import_set(fields, name);
+
+    auto args = optional_args_array(fields, name);
+    for(auto& x: *args)
+    {
+        if (not x.is_object())
+            throw myexception()<<"In rule for "<<name<<": entry in \"args\" is not an object";
+        const auto& arg_object = x.as_object();
+        RuleArg arg;
+        arg.name = required_string(arg_object, "name", name);
+        if (maybe_field(arg_object, "default_value") or maybe_field(arg_object, "alphabet"))
+            throw myexception()<<"In rule for "<<name<<": inferred signatures do not use default_value or alphabet yet; keep this rule explicitly annotated";
+        rule.args.push_back(std::move(arg));
+    }
+    return rule;
+}
+
+// Converts an inferred semantic Haskell signature into the concrete model
+// signature stored on Rule objects.
+RuleSignature bridge_inferred_signature(const Rule& skeleton, const InferredRuleSignature& inferred)
+{
+    if (not inferred.constraints.empty())
+        throw myexception()<<"In rule for "<<skeleton.name<<": inferred class constraints are not supported yet; keep this rule explicitly annotated";
+
+    HaskellTypeBridgeState bridge_state;
+    RuleSignature signature;
+    signature.result_type = bridge_haskell_type_to_model_type(inferred.result_type, bridge_state);
+
+    for(const auto& arg: skeleton.args)
+    {
+        auto type = inferred.arg_types.find(arg.name);
+        if (type == inferred.arg_types.end())
+            throw myexception()<<"In rule for "<<skeleton.name<<": no inferred type for argument '"<<arg.name<<"'";
+        signature.arg_types.insert({arg.name, bridge_haskell_type_to_model_type(type->second, bridge_state)});
+    }
+    return signature;
 }
 
 // Parses citation metadata into a native shape used by the help renderer.
@@ -409,20 +490,15 @@ RuleModelExpr parse_rule_template_expr(const string& text, const string& what)
    - "alphabet" -> expression -> fill in default values
    - "computed" -> expression
 */
-Rule convert_rule(const Rules& R, const RawRule& raw_rule)
+Rule convert_rule(const Rules& R, const RawRule& raw_rule, const RuleSignature& signature)
 {
     Rule rule;
     const auto& fields = raw_rule.fields;
     const auto& name = raw_rule.name;
     rule.name = name;
 
-    {
-        rule.result_type = parse_type(required_string(fields, "result_type", name));
-    }
-
-    {
-        rule.constraints = parse_constraints(fields, name);
-    }
+    rule.result_type = signature.result_type;
+    rule.constraints = signature.constraints;
 
     {
         rule.call = parse_rule_template_expr(required_string(fields, "call", name), name + ": call");
@@ -439,9 +515,10 @@ Rule convert_rule(const Rules& R, const RawRule& raw_rule)
             RuleArg arg;
             arg.name = arg_name;
 
-            {
-                arg.type = parse_type(required_string(arg_object, "type", name));
-            }
+            auto arg_type = signature.arg_types.find(arg_name);
+            if (arg_type == signature.arg_types.end())
+                throw myexception()<<"In rule for "<<name<<": no resolved type for argument '"<<arg_name<<"'";
+            arg.type = arg_type->second;
 
             if (auto default_value = optional_string(arg_object, "default_value", name))
                 arg.default_value = parse_rule_model_expr(R, *default_value, name + ": default value for '"+arg_name+"'");
@@ -509,6 +586,42 @@ Rule make_rule_stub(const RawRule& raw_rule)
         }
     }
     return rule;
+}
+
+// Resolves explicit JSON signatures and inferred Haskell signatures into one
+// map keyed by rule name for the later conversion pass.
+std::map<std::string, RuleSignature> resolve_rule_signatures(const map<std::string, RawRule>& raw_rules, const std::shared_ptr<module_loader>& loader)
+{
+    std::map<std::string, RuleSignature> signatures;
+    std::map<std::string, Rule> inferred_skeletons;
+    vector<BindingImportSet> import_sets;
+
+    for(auto& [name, raw_rule]: raw_rules)
+    {
+        auto mode = classify_signature_mode(raw_rule.fields, raw_rule.name);
+        if (mode == RuleSignatureMode::Explicit)
+            signatures.insert({name, parse_explicit_signature(raw_rule.fields, raw_rule.name)});
+        else
+        {
+            auto skeleton = make_inference_skeleton(raw_rule);
+            import_sets.push_back({skeleton.imports});
+            inferred_skeletons.insert({name, std::move(skeleton)});
+        }
+    }
+
+    if (inferred_skeletons.empty())
+        return signatures;
+
+    if (not loader)
+        throw myexception()<<"Inferred signature mode requires a Haskell module loader";
+
+    auto contexts = HaskellBindingContexts::build(loader, import_sets);
+    for(auto& [name, skeleton]: inferred_skeletons)
+    {
+        auto inferred = infer_rule_call_signature(contexts, skeleton);
+        signatures.insert({name, bridge_inferred_signature(skeleton, inferred)});
+    }
+    return signatures;
 }
 
 const map<std::string, Rule>& Rules::get_rules() const
@@ -605,6 +718,10 @@ string show_paths(const vector<fs::path>& paths)
 }
 
 Rules::Rules(const vector<fs::path>& pl)
+    :Rules(pl, std::shared_ptr<module_loader>{})
+{}
+
+Rules::Rules(const vector<fs::path>& pl, const std::shared_ptr<module_loader>& loader)
 {
     std::map<std::string, RawRule> raw_rules;
 
@@ -648,10 +765,11 @@ Rules::Rules(const vector<fs::path>& pl)
 	}
     }
 
-    // 3. Seed the rules map so that parsing default values can still resolve
-    // positional arguments for rules that have not been fully converted yet.
-    for(auto& [name, raw_rule]: raw_rules)
-        validate_signature_mode_enabled(raw_rule);
+    if (not loader)
+        for(auto& [name, raw_rule]: raw_rules)
+            validate_explicit_only_signature_mode(raw_rule);
+
+    auto signatures = resolve_rule_signatures(raw_rules, loader);
 
     // 4. Seed the rules map so that parsing default values can still resolve
     // positional arguments for rules that have not been fully converted yet.
@@ -660,5 +778,5 @@ Rules::Rules(const vector<fs::path>& pl)
 
     // 5. Convert the rules - FIXME: should we convert default args in a later step?
     for(auto& [name, raw_rule]: raw_rules)
-	rules[name] = convert_rule(*this, raw_rule);
+	rules[name] = convert_rule(*this, raw_rule, signatures.at(name));
 }
