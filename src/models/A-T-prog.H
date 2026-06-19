@@ -4,6 +4,7 @@
 #include <memory>                                   // for shared_ptr, alloc...
 #include <filesystem>                               // for std::filesystem::path
 #include <optional>                                 // for optional
+#include <set>                                      // for set
 #include <string>                                   // for string
 #include <tuple>                                    // for tuple
 #include <vector>                                   // for vector
@@ -47,5 +48,6 @@ gen_model_program(const boost::program_options::variables_map& args,
 expression_ref get_alphabet_expression(const alphabet& a);
 
 std::map<std::string, std::string> get_fixed(const boost::program_options::variables_map& args);
+std::set<std::string> get_log_formats(const boost::program_options::variables_map& args, bool is_A_T_model);
 
 #endif

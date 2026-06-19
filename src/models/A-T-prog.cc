@@ -20,7 +20,6 @@
 #include "sequence/codons.H"
 #include "sequence/doublets.H"
 #include "sequence/RNAEdits.H"
-#include "bali-phy/cmd_line.H"                                // for get_log_formats
 
 using std::vector;
 using std::string;
@@ -84,6 +83,20 @@ std::map<std::string, std::string> get_fixed(const boost::program_options::varia
             throw myexception()<<"Fixed "<<word<<" but did not specify "<<word<<" file!  Use --fix "<<word<<"=<filename>";
 
     return fixed;
+}
+
+// Reads the selected output log formats from command-line options for model
+// program generation and status reporting.
+set<string> get_log_formats(const boost::program_options::variables_map& args, bool is_A_T_model)
+{
+    string log_format = is_A_T_model ? "tsv" : "json";
+    if (args.count("log-format"))
+        log_format = args["log-format"].as<string>();
+    auto log_formats_vec = split(log_format, ',');
+    set<string> log_formats;
+    for(auto& format: log_formats_vec)
+        log_formats.insert(format);
+    return log_formats;
 }
 
 expression_ref get_genetic_code_expression(const Genetic_Code& code)
