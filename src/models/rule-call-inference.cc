@@ -1,6 +1,5 @@
 #include "models/rule-call-inference.H"
 
-#include "computation/expression/apply.H"
 #include "computation/haskell/haskell.H"
 #include "computation/expression/var.H"
 #include "computation/loader.H"
@@ -72,72 +71,6 @@ void require_call_only_inference_input(const RuleInferenceInput& rule)
             throw myexception()<<"In rule for "<<rule.name<<": inferred signatures do not use default_value or alphabet yet; keep this rule explicitly annotated";
 }
 
-// Converts the legacy codegen application S-expression produced by template
-// lowering into Hs::ApplyExp nodes and resolves imported globals for typecheck.
-expression_ref convert_template_apps_for_typecheck(const expression_ref& expr, const Module& module, const set<string>& local_vars, vector<string>* resolved_symbols = nullptr)
-{
-    if (is_apply_exp(expr))
-    {
-        auto terms = expr.sub();
-        Haskell::LExp result = {noloc, convert_template_apps_for_typecheck(terms[0], module, local_vars, resolved_symbols)};
-        for(std::size_t i=1; i<terms.size(); i++)
-            result = {noloc, Haskell::ApplyExp(result, {noloc, convert_template_apps_for_typecheck(terms[i], module, local_vars, resolved_symbols)})};
-        return unloc(result);
-    }
-    else if (expr.is_expression())
-    {
-        Haskell::LExp result = {noloc, convert_template_apps_for_typecheck(expr.head(), module, local_vars, resolved_symbols)};
-        for(const auto& arg: expr.sub())
-            result = {noloc, Haskell::ApplyExp(result, {noloc, convert_template_apps_for_typecheck(arg, module, local_vars, resolved_symbols)})};
-        return unloc(result);
-    }
-    else if (auto v = expr.to<var>())
-    {
-        if (local_vars.count(v->name))
-            return Haskell::Var(v->name);
-        auto symbol = module.lookup_symbol(v->name);
-        if (resolved_symbols)
-            resolved_symbols->push_back(symbol->name);
-        return Haskell::Var(symbol->name);
-    }
-    else if (auto app = expr.to<Haskell::ApplyExp>())
-    {
-        auto converted = *app;
-        converted.head = {converted.head.loc, convert_template_apps_for_typecheck(unloc(converted.head), module, local_vars, resolved_symbols)};
-        converted.arg = {converted.arg.loc, convert_template_apps_for_typecheck(unloc(converted.arg), module, local_vars, resolved_symbols)};
-        return converted;
-    }
-    else if (auto list = expr.to<Haskell::List>())
-    {
-        auto converted = *list;
-        for(auto& element: converted.elements)
-            element = {element.loc, convert_template_apps_for_typecheck(unloc(element), module, local_vars, resolved_symbols)};
-        return converted;
-    }
-    else if (auto tuple = expr.to<Haskell::Tuple>())
-    {
-        auto converted = *tuple;
-        for(auto& element: converted.elements)
-            element = {element.loc, convert_template_apps_for_typecheck(unloc(element), module, local_vars, resolved_symbols)};
-        return converted;
-    }
-    else if (auto lambda = expr.to<Haskell::LambdaExp>())
-    {
-        auto converted = *lambda;
-        auto lambda_locals = local_vars;
-        for(const auto& bound_var: Haskell::vars_in_patterns(converted.match.patterns))
-            lambda_locals.insert(unloc(bound_var).name);
-        for(auto& guarded: converted.match.rhs.guarded_rhss)
-        {
-            for(auto& guard: guarded.guards)
-                guard = {guard.loc, convert_template_apps_for_typecheck(unloc(guard), module, lambda_locals, resolved_symbols)};
-            guarded.body = {guarded.body.loc, convert_template_apps_for_typecheck(unloc(guarded.body), module, lambda_locals, resolved_symbols)};
-        }
-        return converted;
-    }
-    return expr;
-}
-
 // Raises a rule-qualified error if call-only inference cannot see every JSON
 // argument in the lowered call template.
 void require_all_args_referenced(const RuleInferenceInput& rule, const set<string>& referenced_args)
@@ -147,33 +80,43 @@ void require_all_args_referenced(const RuleInferenceInput& rule, const set<strin
             throw myexception()<<"In rule for "<<rule.name<<": argument '"<<arg.name<<"' is absent from call template; explicit JSON annotations are required";
 }
 
-// Builds a mutable import context and infers one synthetic function declaration.
-// This avoids re-running parser disambiguation on already-lowered template ASTs.
-Type infer_rule_function_type(const HaskellBindingContexts& contexts, const RuleInferenceInput& rule, const Haskell::LExp& lowered_call, const map<string, string>& arg_vars)
+// Builds the synthetic module that supplies the binding imports used while
+// lowering and typechecking one rule inference declaration.
+std::shared_ptr<Module> make_rule_inference_module(const HaskellBindingContexts& contexts, const RuleInferenceInput& rule)
 {
     const string module_name = "BindingInfer.Rule.Main";
     const BindingImportSet imports{rule.imports};
-    auto inference_module = contexts.make_imported_module(imports, module_name, synthetic_rule_module_body(rule));
+    return contexts.make_imported_module(imports, module_name, synthetic_rule_module_body(rule));
+}
 
+// Builds inference-mode lowering options, keeping synthetic argument binders
+// local while resolving template globals through the imported module.
+RuleTemplateLoweringOptions make_inference_lowering_options(const Module& inference_module, const RuleCallInputs& inputs, vector<string>* resolved_symbols = nullptr)
+{
+    RuleTemplateLoweringOptions options;
+    options.inference_module = &inference_module;
+    options.resolved_symbols = resolved_symbols;
+    for(const auto& [_, arg_var]: inputs.arg_vars)
+        options.local_vars.insert(arg_var);
+    return options;
+}
+
+// Adds and infers one synthetic function declaration in the already imported
+// inference module.
+Type infer_rule_function_type(Module& inference_module, const RuleInferenceInput& rule, const Haskell::LExp& lowered_call, const map<string, string>& arg_vars)
+{
     const Haskell::LVar function = {noloc, Haskell::Var("infer_rule")};
     vector<Haskell::LPat> patterns;
-    set<string> local_vars;
     for(const auto& arg: rule.args)
-    {
-        local_vars.insert(arg_vars.at(arg.name));
         patterns.push_back({noloc, Haskell::VarPattern({noloc, Haskell::Var(arg_vars.at(arg.name))})});
-    }
 
     Haskell::Decls declarations;
     declarations.recursive = false;
-    // Temporary conversion: lowering now builds Hs::ApplyExp, but global
-    // resolution still lives in this pass until inference-mode lowering owns it.
-    Haskell::LExp body = {lowered_call.loc, convert_template_apps_for_typecheck(unloc(lowered_call), *inference_module, local_vars)};
-    declarations.push_back({noloc, Haskell::simple_fun_decl(function, patterns, body)});
+    declarations.push_back({noloc, Haskell::simple_fun_decl(function, patterns, lowered_call)});
 
-    inference_module->add_local_symbols(declarations);
+    inference_module.add_local_symbols(declarations);
 
-    TypeChecker typechecker(*inference_module);
+    TypeChecker typechecker(inference_module);
     (void)typechecker.infer_type_for_decls_group({}, declarations, true);
 
     auto type = typechecker.poly_env().find(unloc(function));
@@ -185,24 +128,17 @@ Type infer_rule_function_type(const HaskellBindingContexts& contexts, const Rule
 }
 
 // Resolves the globals used by the lowered rule template through the same
-// conversion path used by full Haskell type inference.
+// inference-mode lowering used by full Haskell type inference.
 RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& contexts, const RuleInferenceInput& rule)
 {
     require_call_only_inference_input(rule);
     auto inputs = build_rule_call_inputs(rule);
-    auto lowered = lower_rule_template_expr(rule.call, inputs.template_args);
-    require_all_args_referenced(rule, lowered.referenced_args);
-
-    const string module_name = "BindingInfer.Rule.Main";
-    const BindingImportSet imports{rule.imports};
-    auto inference_module = contexts.make_imported_module(imports, module_name, synthetic_rule_module_body(rule));
-
-    set<string> local_vars;
-    for(const auto& [_, arg_var]: inputs.arg_vars)
-        local_vars.insert(arg_var);
+    auto inference_module = make_rule_inference_module(contexts, rule);
 
     RuleCallResolution resolution;
-    (void)convert_template_apps_for_typecheck(unloc(lowered.expr), *inference_module, local_vars, &resolution.resolved_symbols);
+    auto options = make_inference_lowering_options(*inference_module, inputs, &resolution.resolved_symbols);
+    auto lowered = lower_rule_template_expr(rule.call, inputs.template_args, options);
+    require_all_args_referenced(rule, lowered.referenced_args);
     return resolution;
 }
 
@@ -212,11 +148,13 @@ InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts& co
 {
     require_call_only_inference_input(rule);
     auto inputs = build_rule_call_inputs(rule);
+    auto inference_module = make_rule_inference_module(contexts, rule);
 
-    auto lowered = lower_rule_template_expr(rule.call, inputs.template_args);
+    auto options = make_inference_lowering_options(*inference_module, inputs);
+    auto lowered = lower_rule_template_expr(rule.call, inputs.template_args, options);
     require_all_args_referenced(rule, lowered.referenced_args);
 
-    auto inferred_type = infer_rule_function_type(contexts, rule, lowered.expr, inputs.arg_vars);
+    auto inferred_type = infer_rule_function_type(*inference_module, rule, lowered.expr, inputs.arg_vars);
     auto [type_vars, constraints, rho_type] = peel_top_gen(inferred_type);
     auto [arg_types, result_type] = arg_result_types(rho_type);
     if (arg_types.size() != rule.args.size())
