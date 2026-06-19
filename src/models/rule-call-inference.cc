@@ -198,11 +198,18 @@ RuleCallAnalysis analyze_rule_call(const HaskellBindingContexts& contexts, const
     return analyze_rule_call_impl(contexts, rule, true);
 }
 
+// Performs the resolution half of rule-call analysis without invoking Haskell
+// signature inference for callers that need broad, non-fatal inspection.
+RuleCallAnalysis analyze_rule_call_resolution(const HaskellBindingContexts& contexts, const RuleCallAnalysisInput& rule)
+{
+    return analyze_rule_call_impl(contexts, rule, false);
+}
+
 // Resolves the globals used by the lowered rule template through the same
 // inference-mode lowering used by full Haskell type inference.
 RuleCallResolution resolve_rule_call_template(const HaskellBindingContexts& contexts, const RuleCallAnalysisInput& rule)
 {
-    auto analysis = analyze_rule_call_impl(contexts, rule, false);
+    auto analysis = analyze_rule_call_resolution(contexts, rule);
     if (analysis.resolution_error)
         throw myexception()<<*analysis.resolution_error;
 

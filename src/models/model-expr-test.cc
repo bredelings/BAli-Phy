@@ -47,10 +47,11 @@ Rules make_empty_rules()
     return Rules({}, make_test_loader());
 }
 
-// Builds a Rules fixture backed by the package paths needed for Haskell imports.
-Rules make_test_rules(const std::vector<std::filesystem::path>& paths)
+// Builds Rules from fixture binding paths while resolving Haskell imports from
+// the real package paths used by the test binary.
+Rules make_test_rules(const std::vector<std::filesystem::path>& paths, const std::vector<std::filesystem::path>& loader_paths)
 {
-    return Rules(paths, make_test_loader(paths));
+    return Rules(paths, make_test_loader(loader_paths));
 }
 
 // Exercises native command-line type construction, parsing, decomposition,
@@ -833,11 +834,9 @@ std::filesystem::path make_single_rule_fixture(const std::string& json_text)
 void expect_rule_loader_error(const std::vector<std::filesystem::path>& package_paths, const std::string& json_text, const std::string& message)
 {
     auto root = make_single_rule_fixture(json_text);
-    auto paths = package_paths;
-    paths.push_back(root);
     try
     {
-        auto rules = make_test_rules(paths);
+        auto rules = make_test_rules({root}, package_paths);
     }
     catch(const std::exception& e)
     {
@@ -860,9 +859,7 @@ void test_signature_mode_validation(const std::vector<std::filesystem::path>& pa
         {"name": "x", "type": "Int"}
     ]
 })JSON");
-        auto paths = package_paths;
-        paths.push_back(root);
-        auto rules = make_test_rules(paths);
+        auto rules = make_test_rules({root}, package_paths);
         assert(rules.get_rule_for_func("explicit_rule"));
     }
 
@@ -874,9 +871,7 @@ void test_signature_mode_validation(const std::vector<std::filesystem::path>& pa
         {"name": "x"}
     ]
 })JSON");
-        auto paths = package_paths;
-        paths.push_back(root);
-        auto rules = make_test_rules(paths);
+        auto rules = make_test_rules({root}, package_paths);
         auto rule = rules.require_rule_for_func("inferred_rule");
         assert(rule.result_type == type_t("Bool"));
         assert(rule.require_arg("x").type == type_t("Bool"));
@@ -1228,12 +1223,9 @@ void test_inferred_signature_bridge_failure(const std::vector<std::filesystem::p
     ]
 })JSON");
 
-    auto paths = package_paths;
-    paths.push_back(root);
-    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, paths);
     try
     {
-        Rules rules(paths, loader);
+        auto rules = make_test_rules({root}, package_paths);
     }
     catch(const std::exception& e)
     {
@@ -1326,10 +1318,7 @@ void test_inferred_eq_fixture_rule_loading(const std::vector<std::filesystem::pa
     ]
 })JSON");
 
-    auto paths = package_paths;
-    paths.push_back(root);
-    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, paths);
-    Rules rules(paths, loader);
+    auto rules = make_test_rules({root}, package_paths);
 
     auto rule = rules.require_rule_for_func("fixture_eq");
     assert(rule.result_type == type_t("Bool"));
@@ -1390,9 +1379,7 @@ void test_typecheck_rule_calls(const std::vector<std::filesystem::path>& package
     auto root = make_rule_fixture();
     try
     {
-        std::vector<std::filesystem::path> paths{root};
-        paths.insert(paths.end(), package_paths.begin(), package_paths.end());
-        auto rules = make_test_rules(paths);
+        auto rules = make_test_rules({root}, package_paths);
         expect_typecheck_expr(
             rules,
             type_t("Int"),

@@ -32,6 +32,7 @@ struct RuleHaskellCallAnalysis
     std::vector<std::string> resolved_symbols;
     std::set<std::string> referenced_args;
     std::optional<RuleHaskellSignature> inferred_call_signature;
+    std::optional<std::string> context_error;
     std::optional<std::string> resolution_error;
     std::optional<std::string> inference_error;
 };
