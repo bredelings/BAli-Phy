@@ -1,5 +1,6 @@
 #include "models/haskell-type-to-model-type.H"
 
+#include "computation/haskell/ids.H"
 #include "util/myexception.H"
 
 #include <array>
@@ -43,6 +44,20 @@ std::optional<CM::Type> bridge_builtin_type_con(const TypeCon& type_con)
         return CM::type_con("Double");
     if (name == "Bool")
         return CM::type_con("Bool");
+    return {};
+}
+
+// Maps a small set of Haskell class names onto the command-line model
+// constraint constructors used by existing JSON signatures.
+std::optional<std::string> model_constraint_class_name(const TypeCon& type_con)
+{
+    auto unqualified_name = unqualified_type_con_name(type_con.name);
+    if (type_con.name == eq_class_name or unqualified_name == "Eq")
+        return "Eq";
+    if (type_con.name == ord_class_name or unqualified_name == "Ord")
+        return "Ord";
+    if (type_con.name == "Compiler.Num.Num" or unqualified_name == "Num")
+        return "Num";
     return {};
 }
 
@@ -95,4 +110,32 @@ CM::Type bridge_haskell_type_to_model_type(const Type& type)
 {
     HaskellTypeBridgeState state;
     return bridge_haskell_type_to_model_type(type, state);
+}
+
+// Converts one semantic Haskell class predicate into an existing model-layer
+// constraint, intentionally accepting only unary Eq/Ord/Num dictionaries.
+CM::Type bridge_haskell_constraint_to_model_constraint(const Type& input_constraint, HaskellTypeBridgeState& state)
+{
+    auto constraint = follow_meta_type_var(input_constraint);
+
+    if (is_role_equality_pred(constraint) or is_equality_pred(constraint))
+        throw myexception()<<"Cannot bridge Haskell equality constraint '"<<constraint.print()<<"' to a command-line model constraint";
+
+    auto dictionary = is_dictionary_pred(constraint);
+    if (not dictionary)
+        throw myexception()<<"Cannot bridge non-dictionary Haskell constraint '"<<constraint.print()<<"' to a command-line model constraint";
+
+    auto& [head, args] = *dictionary;
+    auto class_con = head.to<TypeCon>();
+    if (not class_con)
+        throw myexception()<<"Cannot bridge Haskell constraint '"<<constraint.print()<<"' with non-constructor class head";
+
+    if (args.size() != 1)
+        throw myexception()<<"Cannot bridge Haskell constraint '"<<constraint.print()<<"' with "<<args.size()<<" arguments; only unary class constraints are supported";
+
+    auto class_name = model_constraint_class_name(*class_con);
+    if (not class_name)
+        throw myexception()<<"Cannot bridge unsupported Haskell class constraint '"<<constraint.print()<<"'";
+
+    return CM::type_app(CM::type_con(*class_name), bridge_haskell_type_to_model_type(args[0], state));
 }

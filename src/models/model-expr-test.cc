@@ -77,6 +77,7 @@ void test_haskell_type_to_model_type_bridge()
 
     HaskellTypeBridgeState state;
     assert(bridge_haskell_type_to_model_type(::list_type(z), state) == CM::list_type(type_t("a")));
+    assert(bridge_haskell_constraint_to_model_constraint(::type_apply(::TypeCon("Data.Eq.Eq"), std::vector<::Type>{z}), state) == CM::type_app("Eq", type_t("a")));
     assert(bridge_haskell_type_to_model_type(::tuple_type(std::vector<::Type>{y, z}), state) == CM::tuple_type({type_t("b"), type_t("a")}));
     assert(bridge_haskell_type_to_model_type(::int_type()) == type_t("Int"));
     assert(bridge_haskell_type_to_model_type(::double_type()) == type_t("Double"));
@@ -90,6 +91,24 @@ void test_haskell_type_to_model_type_bridge()
     catch(const std::exception& e)
     {
         assert(std::string(e.what()).find("unsupported Haskell type") != std::string::npos);
+        return;
+    }
+    assert(false);
+}
+
+// Verifies that the constraint bridge rejects classes outside the deliberately
+// small Eq/Ord/Num allowlist.
+void test_haskell_constraint_to_model_constraint_rejections()
+{
+    ::TypeVar z("z", kind_type());
+    HaskellTypeBridgeState state;
+    try
+    {
+        (void)bridge_haskell_constraint_to_model_constraint(::type_apply(::TypeCon("Data.Foldable.Foldable"), std::vector<::Type>{z}), state);
+    }
+    catch(const std::exception& e)
+    {
+        assert(std::string(e.what()).find("unsupported Haskell class constraint") != std::string::npos);
         return;
     }
     assert(false);
@@ -1263,6 +1282,7 @@ int main(int argc, char* argv[])
 {
     test_model_type_ast();
     test_haskell_type_to_model_type_bridge();
+    test_haskell_constraint_to_model_constraint_rejections();
     test_copy_independence();
     test_accessors_and_traversal();
     test_invariants();

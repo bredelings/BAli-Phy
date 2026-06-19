@@ -17,4 +17,6 @@ CM::Type bridge_haskell_type_to_model_type(const Type&, HaskellTypeBridgeState&)
 
 CM::Type bridge_haskell_type_to_model_type(const Type&);
 
+CM::Type bridge_haskell_constraint_to_model_constraint(const Type&, HaskellTypeBridgeState&);
+
 #endif
