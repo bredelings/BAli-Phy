@@ -63,6 +63,18 @@ std::optional<std::string> model_constraint_class_name(const TypeCon& type_con)
 
 }
 
+// Seeds model type-variable names from Haskell quantifier order so bridged
+// signatures do not depend on result/argument traversal order.
+void seed_haskell_type_bridge_vars(HaskellTypeBridgeState& state, const std::vector<TypeVar>& quantified_vars)
+{
+    for(const auto& type_var: quantified_vars)
+    {
+        auto [_, inserted] = state.type_vars.insert({type_var, canonical_model_type_var_name(state.next_type_var)});
+        if (inserted)
+            state.next_type_var++;
+    }
+}
+
 // Converts one semantic Haskell Type into the existing command-line model type
 // representation, rejecting unsupported shapes before they reach Rules.
 CM::Type bridge_haskell_type_to_model_type(const Type& input_type, HaskellTypeBridgeState& state)

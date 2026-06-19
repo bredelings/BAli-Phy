@@ -28,6 +28,7 @@ struct RuleInferenceInput
 
 struct InferredRuleSignature
 {
+    std::vector<TypeVar> quantified_vars;
     Type result_type;
     std::map<std::string, Type> arg_types;
     std::vector<Type> constraints;

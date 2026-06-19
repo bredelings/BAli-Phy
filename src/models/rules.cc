@@ -275,8 +275,9 @@ RuleInferenceInput make_rule_inference_input(const RawRule& raw_rule)
 RuleSignature bridge_inferred_signature(const RuleInferenceInput& input, const InferredRuleSignature& inferred)
 {
     HaskellTypeBridgeState bridge_state;
+    seed_haskell_type_bridge_vars(bridge_state, inferred.quantified_vars);
     RuleSignature signature;
-    signature.haskell_signature = RuleHaskellSignature{inferred.result_type, inferred.arg_types, inferred.constraints};
+    signature.haskell_signature = RuleHaskellSignature{inferred.quantified_vars, inferred.result_type, inferred.arg_types, inferred.constraints};
     signature.result_type = bridge_haskell_type_to_model_type(inferred.result_type, bridge_state);
 
     for(const auto& arg: input.args)

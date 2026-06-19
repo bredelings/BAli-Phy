@@ -1168,6 +1168,7 @@ void assert_haskell_signature_bridges_to_rule(const Rule& rule)
     assert(rule.haskell_signature);
     const auto& haskell = *rule.haskell_signature;
     HaskellTypeBridgeState bridge_state;
+    seed_haskell_type_bridge_vars(bridge_state, haskell.quantified_vars);
     assert(bridge_haskell_type_to_model_type(haskell.result_type, bridge_state) == rule.result_type);
     for(const auto& arg: rule.args)
         assert(bridge_haskell_type_to_model_type(haskell.arg_types.at(arg.name), bridge_state) == arg.type);
@@ -1189,6 +1190,7 @@ void test_inferred_take_rule_loading(const std::vector<std::filesystem::path>& p
     assert(take.require_arg("xs").type == CM::list_type(type_t("a")));
     assert(take.constraints.empty());
     assert_haskell_signature_bridges_to_rule(take);
+    assert(take.haskell_signature->quantified_vars.size() == 1);
 
     auto expr = parse_model_expr(rules, "take(2,[1,2,3])", "inferred take rule");
     expect_typecheck_expr(rules, CM::list_type(type_t("Int")), expr);
@@ -1207,6 +1209,7 @@ void test_inferred_list_utility_rule_loading(const std::vector<std::filesystem::
     assert(replicate.require_arg("x").type == type_t("a"));
     assert(replicate.constraints.empty());
     assert_haskell_signature_bridges_to_rule(replicate);
+    assert(replicate.haskell_signature->quantified_vars.size() == 1);
 
     auto replicate_expr = call_expr("replicate", {named_arg("n", int_expr(3)), named_arg("x", bool_expr(true))});
     expect_typecheck_expr(rules, CM::list_type(type_t("Bool")), replicate_expr);
@@ -1218,6 +1221,7 @@ void test_inferred_list_utility_rule_loading(const std::vector<std::filesystem::
     assert(zip.require_arg("ys").type == CM::list_type(type_t("b")));
     assert(zip.constraints.empty());
     assert_haskell_signature_bridges_to_rule(zip);
+    assert(zip.haskell_signature->quantified_vars.size() == 2);
 
     auto zip_expr = call_expr("zip", {
         named_arg("xs", list_expr({int_expr(1), int_expr(2)})),
@@ -1252,6 +1256,7 @@ void test_inferred_eq_fixture_rule_loading(const std::vector<std::filesystem::pa
     assert(rule.constraints.size() == 1);
     assert(rule.constraints[0] == CM::type_app("Eq", type_t("a")));
     assert_haskell_signature_bridges_to_rule(rule);
+    assert(rule.haskell_signature->quantified_vars.size() == 1);
 }
 
 // Loads the real package after converting == to inferred mode, then checks that
@@ -1269,6 +1274,7 @@ void test_inferred_eq_rule_loading(const std::vector<std::filesystem::path>& pac
     assert(rule.constraints[0] == CM::type_app("Eq", type_t("a")));
     assert_haskell_signature_bridges_to_rule(rule);
     const auto& eq_haskell = *rule.haskell_signature;
+    assert(eq_haskell.quantified_vars.size() == 1);
     assert(eq_haskell.constraints.size() == 1);
     auto dictionary = is_dictionary_pred(eq_haskell.constraints[0]);
     assert(dictionary);

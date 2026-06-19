@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "computation/haskell/coretype.H"
 #include "models/model-type.H"
@@ -12,6 +13,8 @@ struct HaskellTypeBridgeState
     std::map<TypeVar, std::string> type_vars;
     int next_type_var = 0;
 };
+
+void seed_haskell_type_bridge_vars(HaskellTypeBridgeState&, const std::vector<TypeVar>&);
 
 CM::Type bridge_haskell_type_to_model_type(const Type&, HaskellTypeBridgeState&);
 

@@ -161,10 +161,10 @@ InferredRuleSignature infer_rule_call_signature(const HaskellBindingContexts& co
         throw myexception()<<"In rule for "<<rule.name<<": inferred "<<arg_types.size()<<" arguments, expected "<<rule.args.size();
 
     InferredRuleSignature result;
+    result.quantified_vars = std::move(type_vars);
     result.result_type = result_type;
     result.constraints = std::move(constraints);
     for(std::size_t i=0; i<rule.args.size(); i++)
         result.arg_types.insert({rule.args[i].name, arg_types[i]});
-    (void)type_vars;
     return result;
 }
