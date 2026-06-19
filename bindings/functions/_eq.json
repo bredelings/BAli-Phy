@@ -1,17 +1,13 @@
 {
     "name": "==",
-    "result_type": "Bool",
     "no_log": true,
-    "constraints": ["Eq<a>"],
     "call": "@x == @y",
     "args": [
         {
-            "name": "x",
-            "type": "a"
+            "name": "x"
         },
         {
-            "name": "y",
-            "type": "a"
+            "name": "y"
         }
     ],
     "title":"The equality operator"

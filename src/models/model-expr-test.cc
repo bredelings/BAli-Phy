@@ -1131,6 +1131,35 @@ void test_inferred_eq_fixture_rule_loading(const std::vector<std::filesystem::pa
     assert(rule.constraints[0] == CM::type_app("Eq", type_t("a")));
 }
 
+// Loads the real package after converting == to inferred mode, then checks that
+// the model typechecker receives the inferred Eq constraint.
+void test_inferred_eq_rule_loading(const std::vector<std::filesystem::path>& package_paths)
+{
+    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
+    Rules rules(package_paths, loader);
+
+    auto rule = rules.require_rule_for_func("==");
+    assert(rule.result_type == type_t("Bool"));
+    assert(rule.require_arg("x").type == type_t("a"));
+    assert(rule.require_arg("y").type == type_t("a"));
+    assert(rule.constraints.size() == 1);
+    assert(rule.constraints[0] == CM::type_app("Eq", type_t("a")));
+
+    auto expr = call_expr("==", {named_arg("x", int_expr(1)), named_arg("y", int_expr(2))});
+    auto TC = test_typechecker(rules);
+    auto typed = typecheck_model_expr(TC, type_t("Bool"), expr);
+    substitute_annotated(TC.eqs, typed);
+    assert(typed.ann.type == type_t("Bool"));
+    bool has_eq_constraint = false;
+    for(const auto& constraint: TC.eqs.get_constraints())
+    {
+        auto [head, args] = CM::get_type_apps(constraint);
+        if (head == type_t("Eq") and args.size() == 1 and CM::is_type_variable(args[0]))
+            has_eq_constraint = true;
+    }
+    assert(has_eq_constraint);
+}
+
 void test_typecheck_decls(const Rules& rules);
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls using
@@ -1330,6 +1359,7 @@ int main(int argc, char* argv[])
         test_rule_call_inference({argv[1], argv[2]});
         test_inferred_take_rule_loading({argv[1], argv[2]});
         test_inferred_eq_fixture_rule_loading({argv[1], argv[2]});
+        test_inferred_eq_rule_loading({argv[1], argv[2]});
     }
     test_rule_template_lowering();
     test_typecheck_decls();
