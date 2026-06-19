@@ -721,6 +721,8 @@ Rules::Rules(const vector<fs::path>& pl)
     :Rules(pl, std::shared_ptr<module_loader>{})
 {}
 
+// Loads binding JSON files and resolves every rule signature before parsing
+// defaults, using the Haskell loader when inferred signatures are present.
 Rules::Rules(const vector<fs::path>& pl, const std::shared_ptr<module_loader>& loader)
 {
     std::map<std::string, RawRule> raw_rules;
