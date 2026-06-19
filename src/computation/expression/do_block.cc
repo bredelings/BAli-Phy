@@ -3,6 +3,7 @@
 #include "computation/expression/lambda.H"
 #include "computation/expression/let.H"
 #include "computation/expression/tuple.H"
+#include "computation/haskell/haskell.H"
 
 using std::pair;
 using std::vector;
@@ -119,7 +120,11 @@ expression_ref do_block::finish(const expression_ref& E)
 
 expression_ref do_block::finish_return(const expression_ref& E)
 {
-    return finish({var("return"),E});
+    // Use Haskell application printing so embedded Haskell expressions are
+    // parenthesized as one return argument.
+    Haskell::LExp return_var{noloc, Haskell::Var("return")};
+    Haskell::LExp arg{noloc, E};
+    return finish(Haskell::ApplyExp(return_var, arg));
 }
 
 Decl::Decl(const expression_ref& b, const expression_ref& r):bindpat(b),rhs(r) {}

@@ -1,0 +1,1 @@
+--test --fix=alignment data/P1au_TRUE_1.fas --fix tree=data/tree1a.tree '--smodel=hky85(kappa=2,pi={"A":0.1,"C":0.2,"T":0.3,"G":0.4}) +> x3'
