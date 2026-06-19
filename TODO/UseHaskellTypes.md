@@ -26,6 +26,8 @@ enough audit data.
 - Strict inferred-mode loading is a policy wrapper around `RuleCallAnalysis`.
   It requires call-only inference input, requires every declared arg to appear
   in `call`, and then derives the legacy compatibility signature.
+- `Rules` construction requires a Haskell module loader.  The old explicit-only
+  constructor without a loader has been removed.
 - Inferred rules retain semantic Haskell signatures on `Rule`, including
   quantified `TypeVar`s, result and arg `Type`s, and Haskell constraints.
 - The current `CM::Type` and model-constraint fields are compatibility views
@@ -34,14 +36,13 @@ enough audit data.
   constraint solver; that is a later migration step.
 - Loader diagnostics distinguish Haskell inference failures from
   Haskell-to-`CM::Type` bridge failures.
-- Explicit-rule-style analysis can resolve and infer calls such as `length` and
-  `Data.List.sort` without requiring the narrow `CM::Type` bridge to accept the
-  inferred constraints.
+- Explicit rules retain `RuleHaskellCallAnalysis` during loading.  Broad
+  package loading currently records Haskell resolution data only; raw signature
+  inference for explicit rules remains available in focused analysis tests and
+  should be replaced by expected-type checking before it is run over every
+  binding.
 - Explicit signatures currently act as overrides; a future experiment should
   typecheck call expressions against those declared types instead.
-
-The compatibility constructor `Rules(package_paths)` remains explicit-only for
-tests and simple callers without a Haskell module loader.
 
 ## Implemented End-To-End Checks
 
@@ -110,7 +111,9 @@ exposes `List<a> -> Int`.
 Add a developer/test-only audit result that stores, per explicit rule:
 
 - The explicit JSON signature.
-- The `RuleCallAnalysis` semantic Haskell signature, if available.
+- The retained `RuleHaskellCallAnalysis`: context status, resolved symbols,
+  referenced args, and semantic Haskell signature if expected-type checking or
+  focused inference produced one.
 - Bridge status and bridge diagnostics.
 - Semantic comparison status.
 
