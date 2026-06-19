@@ -971,9 +971,9 @@ void test_rule_template_lowering()
     expect_rule_template_error(lambda_expr(tuple_pattern({var_pattern("x"), var_pattern("y")}), var_expr("x")), "Only variable lambda patterns");
 }
 
-// Checks that the rule-inference conversion resolves a template global to the
-// same compiled symbol returned by direct value-signature lookup.
-void expect_template_head_resolves(const HaskellBindingContexts& contexts, const BindingImportSet& imports, const std::string& function_name, UntypedExpr expr, std::vector<std::string> arg_names)
+// Builds a minimal Rule so resolution tests exercise the inference conversion
+// path without depending on a full binding file fixture.
+Rule make_resolution_rule(const BindingImportSet& imports, UntypedExpr expr, std::vector<std::string> arg_names)
 {
     Rule rule;
     rule.name = "resolution_fixture";
@@ -985,11 +985,35 @@ void expect_template_head_resolves(const HaskellBindingContexts& contexts, const
         arg.name = std::move(arg_name);
         rule.args.push_back(std::move(arg));
     }
+    return rule;
+}
 
+// Checks that the rule-inference conversion resolves a template global to the
+// same compiled symbol returned by direct value-signature lookup.
+void expect_template_head_resolves(const HaskellBindingContexts& contexts, const BindingImportSet& imports, const std::string& function_name, UntypedExpr expr, std::vector<std::string> arg_names)
+{
+    auto rule = make_resolution_rule(imports, std::move(expr), std::move(arg_names));
     auto signature = lookup_value_signature(contexts, imports, function_name);
     auto resolution = resolve_rule_call_template(contexts, rule);
     std::set<std::string> resolved_symbols(resolution.resolved_symbols.begin(), resolution.resolved_symbols.end());
     assert(resolved_symbols.count(signature.resolved_name));
+}
+
+// Requires rule-inference template resolution to fail with a diagnostic
+// fragment from the same conversion path used by full inference.
+void expect_template_resolution_error(const HaskellBindingContexts& contexts, const BindingImportSet& imports, UntypedExpr expr, std::vector<std::string> arg_names, const std::string& message)
+{
+    auto rule = make_resolution_rule(imports, std::move(expr), std::move(arg_names));
+    try
+    {
+        (void)resolve_rule_call_template(contexts, rule);
+    }
+    catch(const std::exception& e)
+    {
+        assert(std::string(e.what()).find(message) != std::string::npos);
+        return;
+    }
+    assert(false);
 }
 
 // Provides early name-resolution parity checks between rule-template lowering
@@ -1043,6 +1067,13 @@ void test_name_resolution_parity(const std::vector<std::filesystem::path>& packa
         "Just",
         call_expr("Just", {positional_arg(arg_ref_expr("x"))}),
         {"x"}
+    );
+    expect_template_resolution_error(
+        contexts,
+        prelude_imports,
+        call_expr("definitely_missing_value", {positional_arg(arg_ref_expr("x"))}),
+        {"x"},
+        "not declared"
     );
 }
 
