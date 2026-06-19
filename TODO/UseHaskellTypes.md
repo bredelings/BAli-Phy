@@ -20,9 +20,11 @@ Initial infrastructure and end-to-end inferred bindings are in place:
 - Rule-template lowering is shared with code generation and records referenced
   `@arg` names.
 - A semantic value-signature lookup API returns compiled `Type`, `TypeVar`, and
-  constraint data.
-- Focused tests begin checking name-resolution parity for representative
-  template heads.
+  constraint data, and serves as the read-only compiled-symbol oracle for
+  parity tests.
+- Focused tests compare rule-inference name resolution with direct
+  value-signature lookup for representative Prelude names, symbolic operators,
+  explicit imports, qualified names, constructors, and missing globals.
 - Rule-call inference lowers a binding call template into a synthetic Haskell
   function declaration, runs the existing `TypeChecker` declaration inference
   path in a compiled import context, and reads generalized semantic `Type`
@@ -128,6 +130,9 @@ Plan:
 Done when: a test fails if inference would typecheck a different Haskell symbol
 than the one the binding template appears to name.
 
+Status: implemented for representative successful resolutions and missing
+global failures through the same conversion path used by rule-call inference.
+
 ### 4. Use Or Demote Value Signature Lookup
 
 Problem: `lookup_value_signature(...)` is public model-layer infrastructure, but
@@ -146,6 +151,9 @@ Plan:
 
 Done when: the helper has a clear role in parity/audit code, or it is no longer
 part of production sources.
+
+Status: kept as the canonical read-only compiled-symbol lookup used by
+name-resolution parity tests.  Audit diagnostics can reuse it later.
 
 ### 5. Fix The Second-Pass Inference Conversion
 
@@ -226,16 +234,19 @@ and legacy compatibility bridging.
 
 ## Suggested Next Cleanup Batch
 
-The next useful slice should address name-resolution observability without
-blocking annotation removal:
+Name-resolution observability is now in place.  The next useful cleanup slice
+should address the audit/reporting boundary without blocking annotation
+removal:
 
-1. Add an inspection helper tied to the real rule-inference conversion path.
-2. Strengthen name-resolution parity tests so they compare resolved symbols from
-   inference against `lookup_value_signature(...)`.
-3. Give `lookup_value_signature(...)` a clear parity/audit role, or demote it to
-   test-only code if a better audit API emerges.
-4. Convert another small binding only after the stronger resolution test covers
-   its call shape.
+1. Add an audit result shape that distinguishes Haskell inference failures,
+   retained semantic signature differences, and legacy `CM::Type` bridge
+   failures.
+2. Report bridge failures as compatibility failures instead of Haskell
+   inference failures.
+3. Compare retained Haskell predicates separately from bridged model
+   constraints for one or two explicit rules.
+4. Convert another small binding only after its call shape is covered by the
+   stronger resolution tests and the compatibility bridge remains narrow.
 
 ## Signature Modes
 
