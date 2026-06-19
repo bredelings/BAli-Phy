@@ -127,8 +127,6 @@ public:
 
     Rule require_rule_for_func(const std::string& s) const;
 
-    Rules(const std::vector<std::filesystem::path>& path_list);
-
     Rules(const std::vector<std::filesystem::path>& path_list, const std::shared_ptr<module_loader>&);
 };
 

@@ -173,15 +173,6 @@ RuleSignatureMode classify_signature_mode(const json::object& object, const stri
     throw error;
 }
 
-// Compatibility path: callers without a Haskell module loader can only load
-// fully explicit rule signatures.  Remove once all real callers pass a loader.
-void validate_explicit_only_signature_mode(const RawRule& raw_rule)
-{
-    auto mode = classify_signature_mode(raw_rule.fields, raw_rule.name);
-    if (mode == RuleSignatureMode::Inferred)
-        throw myexception()<<"In rule for "<<raw_rule.name<<": inferred signature mode requires loader-aware Haskell signature inference";
-}
-
 // Reads an optional array of strings from raw rule JSON.
 vector<string> string_array(const json::object& object, const string& key, const string& rule_name)
 {
@@ -738,14 +729,13 @@ string show_paths(const vector<fs::path>& paths)
     return join(spaths,":");
 }
 
-Rules::Rules(const vector<fs::path>& pl)
-    :Rules(pl, std::shared_ptr<module_loader>{})
-{}
-
 // Loads binding JSON files and resolves every rule signature before parsing
-// defaults, using the Haskell loader when inferred signatures are present.
+// defaults, using the required Haskell loader for signature resolution.
 Rules::Rules(const vector<fs::path>& pl, const std::shared_ptr<module_loader>& loader)
 {
+    if (not loader)
+        throw myexception()<<"Rules construction requires a Haskell module loader";
+
     std::map<std::string, RawRule> raw_rules;
 
     // 1. Only keep paths that have a /functions/ subdir
@@ -787,10 +777,6 @@ Rules::Rules(const vector<fs::path>& pl, const std::shared_ptr<module_loader>& l
 	    }
 	}
     }
-
-    if (not loader)
-        for(auto& [name, raw_rule]: raw_rules)
-            validate_explicit_only_signature_mode(raw_rule);
 
     auto signatures = resolve_rule_signatures(raw_rules, loader);
 

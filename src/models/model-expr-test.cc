@@ -33,6 +33,26 @@ namespace
 
 using namespace CmdModel;
 
+// Builds the loader shape required by Rules while letting small tests choose
+// whether they need package paths.
+std::shared_ptr<module_loader> make_test_loader(const std::vector<std::filesystem::path>& package_paths = {})
+{
+    return std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
+}
+
+// Builds an empty Rules fixture for parser and direct typechecker tests that do
+// not load binding JSON files.
+Rules make_empty_rules()
+{
+    return Rules({}, make_test_loader());
+}
+
+// Builds a Rules fixture backed by the package paths needed for Haskell imports.
+Rules make_test_rules(const std::vector<std::filesystem::path>& paths)
+{
+    return Rules(paths, make_test_loader(paths));
+}
+
 // Exercises native command-line type construction, parsing, decomposition,
 // variable recognition, equality, ordering, and display.
 void test_model_type_ast()
@@ -361,7 +381,7 @@ void test_absent_argument_values()
 // Checks parser wrappers now return native model AST nodes.
 void test_parser_wrappers()
 {
-    Rules rules({});
+    auto rules = make_empty_rules();
 
     auto expr = parse_model_expr(rules, "~normal(0, 1)", "test expression");
     assert(is_sample(expr));
@@ -527,7 +547,7 @@ void expect_typecheck_expr(const Rules& rules, const type_t& required_type, cons
 // Requires AST expression typechecking with the standard empty rule set.
 void expect_typecheck_expr(const type_t& required_type, const UntypedExpr& model, const std::map<std::string,type_t>& identifiers = {}, const std::map<std::string,type_t>& state = {})
 {
-    Rules rules({});
+    auto rules = make_empty_rules();
     expect_typecheck_expr(rules, required_type, model, identifiers, state);
 }
 
@@ -570,7 +590,7 @@ void test_typecheck_exprs()
 // type and annotates each pattern slot with its concrete type.
 void test_typecheck_tuple_pattern_lambda()
 {
-    Rules rules({});
+    auto rules = make_empty_rules();
     auto required_type = CM::type_apps(
         "Function",
         {CM::type_apps("Tuple", {type_t("Int"), type_t("Bool")}), type_t("Int")}
@@ -596,7 +616,7 @@ void test_typecheck_tuple_pattern_lambda()
 // arguments, including when the callee is itself an @arg reference.
 void test_typecheck_variable_function_used_args()
 {
-    Rules rules({});
+    auto rules = make_empty_rules();
 
     // Typechecks one variable-function call and checks the exact used_args set
     // on the typed result.
@@ -628,7 +648,7 @@ void test_typecheck_variable_function_used_args()
 // old fallback behavior.
 void test_typecheck_direct_errors()
 {
-    Rules rules({});
+    auto rules = make_empty_rules();
     // Checks that one direct AST typecheck attempt fails with the expected
     // diagnostic fragment.
     auto expect_error = [&](const type_t& required_type, const CM::UntypedExpr& expr, const std::string& message)
@@ -809,13 +829,15 @@ std::filesystem::path make_single_rule_fixture(const std::string& json_text)
 }
 
 // Requires loading one temporary binding to fail with a diagnostic fragment,
-// keeping signature-mode validation tests independent of full model typing.
-void expect_rule_loader_error(const std::string& json_text, const std::string& message)
+// using the same package paths as loader-aware Rules construction.
+void expect_rule_loader_error(const std::vector<std::filesystem::path>& package_paths, const std::string& json_text, const std::string& message)
 {
     auto root = make_single_rule_fixture(json_text);
+    auto paths = package_paths;
+    paths.push_back(root);
     try
     {
-        Rules rules({root});
+        auto rules = make_test_rules(paths);
     }
     catch(const std::exception& e)
     {
@@ -826,8 +848,8 @@ void expect_rule_loader_error(const std::string& json_text, const std::string& m
 }
 
 // Verifies that binding JSON signatures are either fully explicit or fully
-// inferred, and that the compatibility constructor rejects inferred rules.
-void test_signature_mode_validation()
+// inferred under loader-aware Rules construction.
+void test_signature_mode_validation(const std::vector<std::filesystem::path>& package_paths)
 {
     {
         auto root = make_single_rule_fixture(R"JSON({
@@ -838,19 +860,29 @@ void test_signature_mode_validation()
         {"name": "x", "type": "Int"}
     ]
 })JSON");
-        Rules rules({root});
+        auto paths = package_paths;
+        paths.push_back(root);
+        auto rules = make_test_rules(paths);
         assert(rules.get_rule_for_func("explicit_rule"));
     }
 
-    expect_rule_loader_error(R"JSON({
+    {
+        auto root = make_single_rule_fixture(R"JSON({
     "name": "inferred_rule",
-    "call": "inferredRule(@x)",
+    "call": "not(@x)",
     "args": [
         {"name": "x"}
     ]
-})JSON", "inferred signature mode requires loader-aware Haskell signature inference");
+})JSON");
+        auto paths = package_paths;
+        paths.push_back(root);
+        auto rules = make_test_rules(paths);
+        auto rule = rules.require_rule_for_func("inferred_rule");
+        assert(rule.result_type == type_t("Bool"));
+        assert(rule.require_arg("x").type == type_t("Bool"));
+    }
 
-    expect_rule_loader_error(R"JSON({
+    expect_rule_loader_error(package_paths, R"JSON({
     "name": "missing_result_type",
     "call": "missingResultType(@x)",
     "args": [
@@ -858,7 +890,7 @@ void test_signature_mode_validation()
     ]
 })JSON", "mixed signature mode");
 
-    expect_rule_loader_error(R"JSON({
+    expect_rule_loader_error(package_paths, R"JSON({
     "name": "missing_arg_type",
     "result_type": "Int",
     "call": "missingArgType(@x)",
@@ -867,7 +899,7 @@ void test_signature_mode_validation()
     ]
 })JSON", "mixed signature mode");
 
-    expect_rule_loader_error(R"JSON({
+    expect_rule_loader_error(package_paths, R"JSON({
     "name": "inferred_with_constraints",
     "constraints": ["Num<a>"],
     "call": "inferredWithConstraints(@x)",
@@ -876,7 +908,7 @@ void test_signature_mode_validation()
     ]
 })JSON", "mixed signature mode");
 
-    expect_rule_loader_error(R"JSON({
+    expect_rule_loader_error(package_paths, R"JSON({
     "name": "malformed_constraints",
     "constraints": "Num<a>",
     "call": "malformedConstraints(@x)",
@@ -1353,12 +1385,14 @@ void test_typecheck_decls(const Rules& rules);
 
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls using
 // direct AST inputs and a temporary binding-file fixture.
-void test_typecheck_rule_calls()
+void test_typecheck_rule_calls(const std::vector<std::filesystem::path>& package_paths)
 {
     auto root = make_rule_fixture();
     try
     {
-        Rules rules({root});
+        std::vector<std::filesystem::path> paths{root};
+        paths.insert(paths.end(), package_paths.begin(), package_paths.end());
+        auto rules = make_test_rules(paths);
         expect_typecheck_expr(
             rules,
             type_t("Int"),
@@ -1479,7 +1513,7 @@ void test_typecheck_decls(const Rules& rules)
 // binding-file rules.
 void test_typecheck_decls()
 {
-    Rules rules({});
+    auto rules = make_empty_rules();
     test_typecheck_decls(rules);
 }
 
@@ -1540,9 +1574,9 @@ int main(int argc, char* argv[])
     test_typecheck_tuple_pattern_lambda();
     test_typecheck_variable_function_used_args();
     test_typecheck_direct_errors();
-    test_signature_mode_validation();
     if (argc >= 3)
     {
+        test_signature_mode_validation({argv[1], argv[2]});
         test_haskell_binding_contexts({argv[1], argv[2]});
         test_name_resolution_parity({argv[1], argv[2]});
         test_rule_call_inference({argv[1], argv[2]});
@@ -1552,9 +1586,9 @@ int main(int argc, char* argv[])
         test_inferred_list_utility_rule_loading({argv[1], argv[2]});
         test_inferred_eq_fixture_rule_loading({argv[1], argv[2]});
         test_inferred_eq_rule_loading({argv[1], argv[2]});
+        test_typecheck_rule_calls({argv[1], argv[2]});
     }
     test_rule_template_lowering();
     test_typecheck_decls();
-    test_typecheck_rule_calls();
     test_extraction();
 }
