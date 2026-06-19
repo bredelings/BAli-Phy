@@ -1133,6 +1133,56 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(false);
 }
 
+// Runs Haskell call analysis for explicit-rule-like inputs without using the
+// inferred signature as the command-line rule signature.
+void test_explicit_rule_call_analysis(const std::vector<std::filesystem::path>& package_paths)
+{
+    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
+    BindingImportSet prelude_imports;
+    BindingImportSet data_list_imports{{"Data.List"}};
+    auto contexts = HaskellBindingContexts::build(loader, {prelude_imports, data_list_imports});
+
+    auto length = make_test_rule_call_analysis_input(
+        "explicit_length",
+        call_expr("length", {positional_arg(arg_ref_expr("xs"))}),
+        {"xs"}
+    );
+    auto length_analysis = analyze_rule_call(contexts, length);
+    assert(not length_analysis.resolution_error);
+    assert(length_analysis.resolved_call);
+    assert(length_analysis.signature);
+    auto length_signature = lookup_value_signature(contexts, prelude_imports, "length");
+    assert(std::set<std::string>(length_analysis.resolved_symbols.begin(), length_analysis.resolved_symbols.end()).count(length_signature.resolved_name));
+    assert(not length_analysis.signature->constraints.empty());
+    HaskellTypeBridgeState length_bridge_state;
+    seed_haskell_type_bridge_vars(length_bridge_state, length_analysis.signature->quantified_vars);
+    bool length_bridge_failed = false;
+    try
+    {
+        for(const auto& constraint: length_analysis.signature->constraints)
+            (void)bridge_haskell_constraint_to_model_constraint(constraint, length_bridge_state);
+    }
+    catch(const std::exception& e)
+    {
+        assert(std::string(e.what()).find("unsupported Haskell class constraint") != std::string::npos);
+        length_bridge_failed = true;
+    }
+    assert(length_bridge_failed);
+
+    auto sort = make_test_rule_call_analysis_input(
+        "explicit_sort",
+        call_expr("Data.List.sort", {positional_arg(arg_ref_expr("xs"))}),
+        {"xs"},
+        {"Data.List"}
+    );
+    auto sort_analysis = analyze_rule_call(contexts, sort);
+    assert(not sort_analysis.resolution_error);
+    assert(sort_analysis.resolved_call);
+    assert(sort_analysis.signature);
+    auto sort_signature = lookup_value_signature(contexts, data_list_imports, "Data.List.sort");
+    assert(std::set<std::string>(sort_analysis.resolved_symbols.begin(), sort_analysis.resolved_symbols.end()).count(sort_signature.resolved_name));
+}
+
 // Loads an inferred rule whose Haskell signature is valid but outside the
 // current model bridge, so diagnostics identify the compatibility stage.
 void test_inferred_signature_bridge_failure(const std::vector<std::filesystem::path>& package_paths)
@@ -1496,6 +1546,7 @@ int main(int argc, char* argv[])
         test_haskell_binding_contexts({argv[1], argv[2]});
         test_name_resolution_parity({argv[1], argv[2]});
         test_rule_call_inference({argv[1], argv[2]});
+        test_explicit_rule_call_analysis({argv[1], argv[2]});
         test_inferred_signature_bridge_failure({argv[1], argv[2]});
         test_inferred_take_rule_loading({argv[1], argv[2]});
         test_inferred_list_utility_rule_loading({argv[1], argv[2]});
