@@ -1098,6 +1098,21 @@ void test_rule_call_inference(const std::vector<std::filesystem::path>& package_
     assert(false);
 }
 
+// Verifies that a retained semantic Haskell signature still derives the legacy
+// model signature fields consumed by the current model typechecker.
+void assert_haskell_signature_bridges_to_rule(const Rule& rule)
+{
+    assert(rule.haskell_signature);
+    const auto& haskell = *rule.haskell_signature;
+    HaskellTypeBridgeState bridge_state;
+    assert(bridge_haskell_type_to_model_type(haskell.result_type, bridge_state) == rule.result_type);
+    for(const auto& arg: rule.args)
+        assert(bridge_haskell_type_to_model_type(haskell.arg_types.at(arg.name), bridge_state) == arg.type);
+    assert(haskell.constraints.size() == rule.constraints.size());
+    for(std::size_t i=0; i<haskell.constraints.size(); i++)
+        assert(bridge_haskell_constraint_to_model_constraint(haskell.constraints[i], bridge_state) == rule.constraints[i]);
+}
+
 // Loads the real package through loader-aware Rules and checks that the
 // inferred take binding retains Haskell types and remains usable by model typing.
 void test_inferred_take_rule_loading(const std::vector<std::filesystem::path>& package_paths)
@@ -1110,16 +1125,42 @@ void test_inferred_take_rule_loading(const std::vector<std::filesystem::path>& p
     assert(take.require_arg("n").type == type_t("Int"));
     assert(take.require_arg("xs").type == CM::list_type(type_t("a")));
     assert(take.constraints.empty());
-    assert(take.haskell_signature);
-    const auto& take_haskell = *take.haskell_signature;
-    assert(take_haskell.constraints.empty());
-    HaskellTypeBridgeState take_bridge_state;
-    assert(bridge_haskell_type_to_model_type(take_haskell.result_type, take_bridge_state) == take.result_type);
-    assert(bridge_haskell_type_to_model_type(take_haskell.arg_types.at("n"), take_bridge_state) == take.require_arg("n").type);
-    assert(bridge_haskell_type_to_model_type(take_haskell.arg_types.at("xs"), take_bridge_state) == take.require_arg("xs").type);
+    assert_haskell_signature_bridges_to_rule(take);
 
     auto expr = parse_model_expr(rules, "take(2,[1,2,3])", "inferred take rule");
     expect_typecheck_expr(rules, CM::list_type(type_t("Int")), expr);
+}
+
+// Loads additional inferred list utilities and checks representative polymorphic
+// signatures with shared and independent type variables.
+void test_inferred_list_utility_rule_loading(const std::vector<std::filesystem::path>& package_paths)
+{
+    auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, package_paths);
+    Rules rules(package_paths, loader);
+
+    auto replicate = rules.require_rule_for_func("replicate");
+    assert(replicate.result_type == CM::list_type(type_t("a")));
+    assert(replicate.require_arg("n").type == type_t("Int"));
+    assert(replicate.require_arg("x").type == type_t("a"));
+    assert(replicate.constraints.empty());
+    assert_haskell_signature_bridges_to_rule(replicate);
+
+    auto replicate_expr = call_expr("replicate", {named_arg("n", int_expr(3)), named_arg("x", bool_expr(true))});
+    expect_typecheck_expr(rules, CM::list_type(type_t("Bool")), replicate_expr);
+
+    auto zip = rules.require_rule_for_func("zip");
+    auto pair_type = CM::tuple_type({type_t("a"), type_t("b")});
+    assert(zip.result_type == CM::list_type(pair_type));
+    assert(zip.require_arg("xs").type == CM::list_type(type_t("a")));
+    assert(zip.require_arg("ys").type == CM::list_type(type_t("b")));
+    assert(zip.constraints.empty());
+    assert_haskell_signature_bridges_to_rule(zip);
+
+    auto zip_expr = call_expr("zip", {
+        named_arg("xs", list_expr({int_expr(1), int_expr(2)})),
+        named_arg("ys", list_expr({bool_expr(true), bool_expr(false)}))
+    });
+    expect_typecheck_expr(rules, CM::list_type(CM::tuple_type({type_t("Int"), type_t("Bool")})), zip_expr);
 }
 
 // Checks loader-aware Rules inference for a constrained equality template
@@ -1147,7 +1188,7 @@ void test_inferred_eq_fixture_rule_loading(const std::vector<std::filesystem::pa
     assert(rule.require_arg("y").type == type_t("a"));
     assert(rule.constraints.size() == 1);
     assert(rule.constraints[0] == CM::type_app("Eq", type_t("a")));
-    assert(rule.haskell_signature);
+    assert_haskell_signature_bridges_to_rule(rule);
 }
 
 // Loads the real package after converting == to inferred mode, then checks that
@@ -1163,7 +1204,7 @@ void test_inferred_eq_rule_loading(const std::vector<std::filesystem::path>& pac
     assert(rule.require_arg("y").type == type_t("a"));
     assert(rule.constraints.size() == 1);
     assert(rule.constraints[0] == CM::type_app("Eq", type_t("a")));
-    assert(rule.haskell_signature);
+    assert_haskell_signature_bridges_to_rule(rule);
     const auto& eq_haskell = *rule.haskell_signature;
     assert(eq_haskell.constraints.size() == 1);
     auto dictionary = is_dictionary_pred(eq_haskell.constraints[0]);
@@ -1173,12 +1214,6 @@ void test_inferred_eq_rule_loading(const std::vector<std::filesystem::path>& pac
     assert(class_con);
     assert(class_con->name == eq_class_name);
     assert(class_args.size() == 1);
-
-    HaskellTypeBridgeState eq_bridge_state;
-    assert(bridge_haskell_type_to_model_type(eq_haskell.result_type, eq_bridge_state) == rule.result_type);
-    assert(bridge_haskell_type_to_model_type(eq_haskell.arg_types.at("x"), eq_bridge_state) == rule.require_arg("x").type);
-    assert(bridge_haskell_type_to_model_type(eq_haskell.arg_types.at("y"), eq_bridge_state) == rule.require_arg("y").type);
-    assert(bridge_haskell_constraint_to_model_constraint(eq_haskell.constraints[0], eq_bridge_state) == rule.constraints[0]);
 
     auto expr = call_expr("==", {named_arg("x", int_expr(1)), named_arg("y", int_expr(2))});
     auto TC = test_typechecker(rules);
@@ -1393,6 +1428,7 @@ int main(int argc, char* argv[])
         test_name_resolution_parity({argv[1], argv[2]});
         test_rule_call_inference({argv[1], argv[2]});
         test_inferred_take_rule_loading({argv[1], argv[2]});
+        test_inferred_list_utility_rule_loading({argv[1], argv[2]});
         test_inferred_eq_fixture_rule_loading({argv[1], argv[2]});
         test_inferred_eq_rule_loading({argv[1], argv[2]});
     }

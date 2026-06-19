@@ -1,18 +1,15 @@
 {
     "name": "replicate",
-    "result_type": "List<a>",
     "title": "The replicate function",
     "call": "replicate(@n,@x)",
     "args": [
         {
             "name": "n",
-            "type": "Int",
-	    "description": "Number of times to replicate the object"
+            "description": "Number of times to replicate the object"
         },
         {
             "name": "x",
-            "type": "a",
-	    "description": "The object to replicate"
+            "description": "The object to replicate"
         }
     ],
     "description": "Produces a list of length n where every element is x."
