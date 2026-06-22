@@ -6,7 +6,6 @@
 
 #include "rename.H"
 #include "computation/module.H"
-#include "computation/expression/apply.H"
 #include "util/set.H"
 
 using std::string;

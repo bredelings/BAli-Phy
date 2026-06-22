@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "rename.H"
-#include "computation/expression/apply.H"
 #include "computation/record_utils.H"
 
 using std::map;

@@ -2,8 +2,6 @@
 #include "kindcheck.H"
 #include "computation/haskell/ids.H"
 
-#include "computation/expression/apply.H"
-
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;

@@ -8,9 +8,6 @@
 #include "computation/module.H"
 #include "util/set.H"
 
-// We really should move apply expressions into the haskell ast.
-#include "computation/expression/apply.H"
-
 using std::string;
 using std::vector;
 using std::pair;
