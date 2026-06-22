@@ -13,8 +13,6 @@ struct lambda: public Object
     std::string print() const;
 };
 
-expression_ref lambda_n(const Object& O, int n);
-expression_ref lambda_quantify(int var_index, const expression_ref& E);
 expression_ref lambda_quantify(const expression_ref& var, const expression_ref& E);
 expression_ref lambda_quantify(const std::vector<expression_ref>& var, const expression_ref& E);
 expression_ref lambda_quantify(const std::vector<var>& var, const expression_ref& E);

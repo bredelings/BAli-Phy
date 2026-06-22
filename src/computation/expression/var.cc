@@ -9,7 +9,7 @@ using std::string;
 
 bool var::operator==(const var& d) const
 {
-    return index == d.index and name == d.name;
+    return name == d.name;
 }
 
 bool var::operator==(const Object& o) const 
@@ -22,28 +22,16 @@ bool var::operator==(const Object& o) const
 }
 
 string var::print() const {
-    if (is_wildcard())
-	return "_";
-    else if (is_haskell_qsym(name)) // (:) or QVARSYM or QCONSYM
+    if (is_haskell_qsym(name)) // (:) or QVARSYM or QCONSYM
     {
-	assert(index == 0);
 	return string("(") + name + ")";
     }
     string s = name;
-    if (name.size() and index == 0)
-        ;
-    else
-	s += string("#")+convertToString(index);
-    if (level)
-        s += ":"+std::to_string(*level);
     return s;
 }
 
 bool var::operator<(const var& D) const 
 {
-    if (index < D.index) return true;
-    if (index > D.index) return false;
-
     int cmp = name.compare(D.name);
 
     return (cmp < 0);
@@ -78,7 +66,7 @@ static void get_free_indices2(const expression_ref& E, multiset<var>& bound, set
     if (is_var(E))
     {
 	var d = E.as_<var>();
-	if (not d.is_wildcard() and (bound.find(d) == bound.end()))
+	if (bound.find(d) == bound.end())
 	    free.insert(d);
 	return;
     }

@@ -9,9 +9,6 @@ constructor tuple_head(int n);
 extern expression_ref fst;
 extern expression_ref snd;
 
-// Create a constructor for n-tuples.
-expression_ref Tuple(int n);
-
 inline auto append_exp(const expression_ref& first, const expression_ref& second)
 {
     return first + second;

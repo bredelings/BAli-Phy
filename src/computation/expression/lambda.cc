@@ -21,11 +21,6 @@ expression_ref lambda_quantify(const expression_ref& var, const expression_ref& 
     return new expression(lambda(),{var, R});
 }
 
-expression_ref lambda_quantify(int var_index, const expression_ref& R)
-{
-    return lambda_quantify(var(var_index), R);
-}
-
 expression_ref lambda_quantify(const vector<expression_ref>& vars, expression_ref& body)
 {
     auto L = body;
@@ -42,21 +37,3 @@ expression_ref lambda_quantify(const std::vector<var>& vars, const expression_re
     return L;
 }
 
-expression_ref lambda_n(const Object& O, int n)
-{
-    expression_ref R;
-    if (n == 0)
-	R = expression_ref(O.clone());
-    else
-    {
-	expression* E = new expression(O);
-	for(int i=0;i<n;i++)
-	    E->sub.push_back(expression_ref(var(i)));
-	R = expression_ref(E);
-    }
-  
-    for(int i=n-1;i>=0;i--) 
-	R = lambda_quantify(i,R);
-  
-    return R;
-}

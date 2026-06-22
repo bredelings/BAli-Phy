@@ -28,11 +28,5 @@ constructor tuple_head(int n)
     return constructor(s,n);
 }
 
-expression_ref Tuple(int n)
-{
-    assert(n >= 0);
-    return lambda_n( tuple_head(n), n );
-}
-
 expression_ref fst  = var("Data.Tuple.fst");
 expression_ref snd  = var("Data.Tuple.snd");
