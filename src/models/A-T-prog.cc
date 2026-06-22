@@ -223,7 +223,7 @@ vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
     var tree_length_var("tlength");
     model.let(tree_length_var, {var("treeLength"),tree_var});
     // log |T|
-    model_loggers.push_back( {var("%=%"), String("|T|"), tree_length_var} );
+    maybe_log(model_loggers, "|T|", tree_length_var, {});
 
     vector<expression_ref> scales;
 
@@ -243,10 +243,10 @@ vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
 	scales.push_back(scale_var);
 
 	// log scale[i]
-	model_loggers.push_back( {var("%=%"), String(var_name), scale_var} );
+	maybe_log(model_loggers, var_name, scale_var, {});
 
 	// log scale[i]*|T|
-	model_loggers.push_back( {var("%=%"), String(var_name+"*|T|"), {var("*"),scale_var,tree_length_var}} );
+	maybe_log(model_loggers, var_name+"*|T|", HsG::Apply(Hs::Var("*"), {scale_var, tree_length_var}), {});
     }
 
     return scales;
@@ -622,9 +622,9 @@ compute_logged_quantities(do_block& model,
 	    model.let(length_indels, {var("totalLengthIndels"), alignment_on_tree} );
 	    total_length_indels.push_back(length_indels);
 
-	    sub_loggers.push_back({var("%=%"), String("|A|"), alignment_length });
-	    sub_loggers.push_back({var("%=%"), String("#indels"), num_indels });
-	    sub_loggers.push_back({var("%=%"), String("|indels|"), length_indels} );
+	    maybe_log(sub_loggers, "|A|", alignment_length, {});
+	    maybe_log(sub_loggers, "#indels", num_indels, {});
+	    maybe_log(sub_loggers, "|indels|", length_indels, {});
 	}
 
 	if (not fixed.count("alignment"))
@@ -633,7 +633,7 @@ compute_logged_quantities(do_block& model,
 	    var prior_A("prior_A" + part_suffix);
 	    model.let(prior_A, {var("ln"),{var("probability"),properties_A}});
 	    total_prior_A.push_back(prior_A);
-	    sub_loggers.push_back({var("%=%"), String("prior_A"), prior_A});
+	    maybe_log(sub_loggers, "prior_A", prior_A, {});
 	}
     }
     else
@@ -644,7 +644,7 @@ compute_logged_quantities(do_block& model,
 	alignment_lengths.push_back(alignment_length);
     }
 
-    sub_loggers.push_back({var("%=%"), String("likelihood"), {var("ln"),{var("prop_likelihood"),properties}}});
+    maybe_log(sub_loggers, "likelihood", HsG::Apply(Hs::Var("ln"), {HsG::Apply(Hs::Var("prop_likelihood"), {properties})}), {});
 
     if (n_branches > 0)
     {
@@ -687,7 +687,7 @@ compute_logged_quantities(do_block& model,
 	    aligned_data = Tuple(sequence_data, alignment_on_tree);
 
 	model.let(substs, {var("parsimony"), tree, costs, aligned_data});
-	sub_loggers.push_back({var("%=%"), String("#substs"), substs });
+	maybe_log(sub_loggers, "#substs", substs, {});
 	if (alphabet_exp.print().starts_with("mkRNA"))
 	{
 	    string suffix = part_suffix;
@@ -697,7 +697,7 @@ compute_logged_quantities(do_block& model,
 	    var substs_pos2("substsRNA"+suffix);
 	    expression_ref costs_pos2 = {var("pos2CostMatrix"),alphabet_exp};
 	    model.let(substs_pos2, {var("parsimony"), tree, costs_pos2, aligned_data});
-	    sub_loggers.push_back({var("%=%"), String("#substsRNA"), substs_pos2 });
+	    maybe_log(sub_loggers, "#substsRNA", substs_pos2, {});
 	}
 
 	total_substs.push_back(substs);
@@ -1025,7 +1025,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
         var part_loggers("part"+part+"Loggers");
         model.let(part_loggers,get_list(sub_loggers));
-        model_loggers.push_back( {var("%>%"), String("P"+part), part_loggers} );
+        maybe_log(model_loggers, "P"+part, {}, part_loggers);
         model.empty_stmt();
     }
     bool has_a_variable_alignment = not total_num_indels.empty();
@@ -1040,20 +1040,20 @@ std::string generate_atmodel_program(const variables_map& args,
 	}
 	else
 	    model.let(var("scale"),{var("scale1")});
-	model_loggers.push_back( {var("%=%"), String("scale"), var("scale")});
-	model_loggers.push_back( {var("%=%"), String("scale*|T|"), {var("*"),var("scale"),var("tlength")}});
+	maybe_log(model_loggers, "scale", Hs::Var("scale"), {});
+	maybe_log(model_loggers, "scale*|T|", HsG::Apply(Hs::Var("*"), {Hs::Var("scale"), Hs::Var("tlength")}), {});
     }
 
     if (not alignment_lengths.empty() and has_a_variable_alignment)
-        model_loggers.push_back( {var("%=%"), String("|A|"), {var("sum"),var("alignmentLengths") }} );
+        maybe_log(model_loggers, "|A|", HsG::Apply(Hs::Var("sum"), {Hs::Var("alignmentLengths")}), {});
     if (not total_num_indels.empty())
-        model_loggers.push_back( {var("%=%"), String("#indels"), {var("sum"),get_list(total_num_indels) }} );
+        maybe_log(model_loggers, "#indels", HsG::Apply(Hs::Var("sum"), {HsG::List(total_num_indels)}), {});
     if (not total_length_indels.empty())
-        model_loggers.push_back( {var("%=%"), String("|indels|"), {var("sum"),get_list(total_length_indels) }} );
+        maybe_log(model_loggers, "|indels|", HsG::Apply(Hs::Var("sum"), {HsG::List(total_length_indels)}), {});
     if (not total_substs.empty())
-        model_loggers.push_back( {var("%=%"), String("#substs"), {var("sum"),get_list(total_substs) }} );
+        maybe_log(model_loggers, "#substs", HsG::Apply(Hs::Var("sum"), {HsG::List(total_substs)}), {});
     if (not total_prior_A.empty())
-        model_loggers.push_back( {var("%=%"), String("prior_A"), {var("sum"),get_list(total_prior_A) }} );
+        maybe_log(model_loggers, "prior_A", HsG::Apply(Hs::Var("sum"), {HsG::List(total_prior_A)}), {});
 
     var sequences("sequences");
 
