@@ -8,9 +8,7 @@
 #include "computation/haskell/generated.H" // for Haskell::Generated builders
 #include "computation/haskell/ids.H"       // for haskell_qid
 #include "util/string/join.H"              // for join( )
-#include "computation/expression/let.H"
 #include "computation/expression/var.H"
-#include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
 #include "range/v3/all.hpp"
 
@@ -508,37 +506,10 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
         return;
     }
 
-    if (E.is_expression())
-    {
-        if (auto C = parse_case_expression(E))
-        {
-            auto& [object, alts] = *C;
-
-            get_generated_free_vars2(object, bound, free);
-
-            for(auto& [pattern, body]: alts)
-            {
-                auto bound_ = get_generated_free_vars(pattern);
-                add_generated_bound_vars(bound_, bound);
-                get_generated_free_vars2(body, bound, free);
-                remove_generated_bound_vars(bound_, bound);
-            }
-
-            return;
-        }
-    }
-
     auto bound_ = get_generated_bound_vars(E);
     add_generated_bound_vars(bound_, bound);
 
-    if (is_let_expression(E))
-    {
-        auto& L = E.as_<let_exp>();
-        for(auto& [_, e]: L.binds)
-            get_generated_free_vars2(e, bound, free);
-        get_generated_free_vars2(L.body, bound, free);
-    }
-    else if (E.is_expression())
+    if (E.is_expression())
     {
         for(int i=0;i<E.size();i++)
             get_generated_free_vars2(E.sub()[i], bound, free);
@@ -548,8 +519,7 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
              or E.type() == type_constant::log_double_type
              or E.type() == type_constant::char_type
              or is_gcable_type(E.type())
-             or is_constructor(E)
-             or is_case(E))
+             or is_constructor(E))
     {
         // These legacy atoms do not bind or reference variables on their own.
     }
@@ -576,15 +546,7 @@ set<Hs::Var> get_generated_free_vars(const expression_ref& E)
 set<Hs::Var> get_generated_bound_vars(const expression_ref& E)
 {
     set<Hs::Var> bound;
-    if (is_let_expression(E))
-    {
-        auto& L = E.as_<let_exp>();
-        for(auto& [x,_]: L.binds)
-            bound.insert(generated_var(x));
-
-        assert(not is_case(E));
-    }
-    else if (auto L = E.to<Hs::LetExp>())
+    if (auto L = E.to<Hs::LetExp>())
         bound = get_generated_bound_vars(unloc(L->binds));
     return bound;
 }
