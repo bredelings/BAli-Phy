@@ -8,7 +8,6 @@
 #include "computation/haskell/generated.H" // for Haskell::Generated builders
 #include "computation/haskell/ids.H"       // for haskell_qid
 #include "util/string/join.H"              // for join( )
-#include "computation/expression/var.H"
 #include "computation/expression/constructor.H"
 #include "range/v3/all.hpp"
 
@@ -44,14 +43,12 @@ static void append_generated_let(Hs::Stmts& stmts, const Hs::Var& x, const expre
 
 bool is_generated_var_expr(const expression_ref& E)
 {
-    return E.is_a<var>() or E.is_a<Hs::Var>();
+    return E.is_a<Hs::Var>();
 }
 
 Hs::Var as_generated_var(const expression_ref& E)
 {
-    if (E.is_a<var>())
-        return Hs::Var(E.as_<var>().name);
-    else if (E.is_a<Hs::Var>())
+    if (E.is_a<Hs::Var>())
         return E.as_<Hs::Var>();
     else
         throw myexception()<<"Expected generated variable, but got "<<E;
@@ -151,9 +148,7 @@ expression_ref simplify_intToDouble(const expression_ref& E)
 {
     auto is_int_to_double = [](const expression_ref& head)
     {
-        if (head.is_a<var>())
-            return head.as_<var>().name == "intToDouble";
-        else if (head.is_a<Hs::Var>())
+        if (head.is_a<Hs::Var>())
             return head.as_<Hs::Var>().name == "intToDouble";
         else
             return false;
@@ -359,11 +354,6 @@ translation_result_t CodeGenState::get_model_decls(const CM::TypedDecls& decls)
     return result;
 }
 
-Hs::Var generated_var(const var& x)
-{
-    return Hs::Var(x.name);
-}
-
 void add_generated_bound_vars(const set<Hs::Var>& vars, multiset<Hs::Var>& bound)
 {
     for(const auto& x: vars)
@@ -445,14 +435,7 @@ void get_generated_free_vars2(const Hs::Binds& binds, multiset<Hs::Var>& bound, 
 
 void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound, set<Hs::Var>& free)
 {
-    if (E.is_a<var>())
-    {
-        auto x = generated_var(E.as_<var>());
-        if (not bound.count(x))
-            free.insert(x);
-        return;
-    }
-    else if (E.is_a<Hs::Var>())
+    if (E.is_a<Hs::Var>())
     {
         auto x = E.as_<Hs::Var>();
         if (not bound.count(x))
