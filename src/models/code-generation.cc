@@ -624,8 +624,8 @@ bool is_template_submodel_arg(const CM::Arg<CM::NoAnn>& arg)
 expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,expression_ref>& simple_args)
 {
     return expr.visit(CM::overloaded{
-        [](const CM::IntLiteral& x) -> expression_ref { return x.value; },
-        [](const CM::DoubleLiteral& x) -> expression_ref { return x.value; },
+        [](const CM::IntLiteral& x) -> expression_ref { return Hs::Literal(Hs::Integer{integer(x.value)}); },
+        [](const CM::DoubleLiteral& x) -> expression_ref { return Hs::Literal(Hs::Floating{Hs::rationalFromString(convertToString(x.value))}); },
         [](const CM::BoolLiteral& x) -> expression_ref { return x.value ? Hs::True() : Hs::False(); },
         [](const CM::StringLiteral& x) -> expression_ref { return Hs::Literal(Hs::String{x.value}); },
         [](const CM::Var& x) -> expression_ref { return Hs::Var(x.name); },
