@@ -9,8 +9,6 @@
 #include <utility>                                  // for pair
 #include "models/typecheck.H"
 #include "computation/haskell/haskell.H"            // for Hs::Stmts, Hs::Var
-#include "computation/expression/var.H"             // for var
-#include "computation/expression/do_block.H"        // for legacy Stmts
 
 #include "logger.H"
 
@@ -127,6 +125,5 @@ struct CodeGenState
 };
 
 expression_ref simplify_intToDouble(const expression_ref& E);
-void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers);
 
 #endif

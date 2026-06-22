@@ -14,9 +14,7 @@
 #include "computation/expression/var.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/case.H"
-#include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
-#include "computation/expression/do_block.H"
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;
@@ -78,26 +76,6 @@ bool is_loggable_function(const Rules& R, const string& name)
 
     if (not rule) return false;
     return not rule->no_log;
-}
-
-void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers)
-{
-    if (is_action)
-    {
-        if (not has_loggers)
-            // x <- code
-            block.perform(x, E);
-        else
-            // (x, log_x) <- code
-            block.perform(Tuple(x,log_x), E);
-    }
-    else
-    {
-        if (has_loggers)
-            block.let(Tuple(x,log_x), E);
-        else if (is_referenced)
-            block.let(x, E);
-    }
 }
 
 void perform_action_simplified_(generated_code_t& block, const Hs::Var& x, bool is_referenced, const generated_code_t& code, bool depends_on_lambda)

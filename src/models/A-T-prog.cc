@@ -142,10 +142,31 @@ string maybe_emit_code(map<string,string>& code_to_name, const string& name, con
     return name + code + "\n";
 }
 
+// Compatibility: A-T-prog still builds model programs with legacy do_block.
+// Remove this when A-T-prog stores Hs::Stmts and emits Hs declarations directly.
+static void perform_legacy_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers)
+{
+    if (is_action)
+    {
+        if (not has_loggers)
+            // x <- code
+            block.perform(x, E);
+        else
+            // (x, log_x) <- code
+            block.perform(Tuple(x,log_x), E);
+    }
+    else
+    {
+        if (has_loggers)
+            block.let(Tuple(x,log_x), E);
+        else if (is_referenced)
+            block.let(x, E);
+    }
+}
 
 var bind_and_log(bool do_log, const var& x, const var& log_x, const string& name, const expression_ref& E, bool is_action, bool has_loggers, do_block& block, vector<expression_ref>& loggers, bool is_referenced=true)
 {
-    perform_action_simplified(block.get_stmts(), x, log_x, is_referenced, E, is_action, has_loggers);
+    perform_legacy_action_simplified(block.get_stmts(), x, log_x, is_referenced, E, is_action, has_loggers);
     maybe_log(loggers, name, do_log?x:expression_ref{}, has_loggers?log_x:expression_ref{});
     return x;
 }
