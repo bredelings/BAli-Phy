@@ -1,6 +1,7 @@
 // #define DEBUG_OPTIMIZE
 
 #include "haskell/ids.H"
+#include "haskell/haskell.H"
 #include "util/string/join.H"
 #include "expression_ref.H"
 #include "lambda.H"
@@ -120,6 +121,39 @@ bool is_infix_expression(const expression_ref& e)
     return is_haskell_sym(id);
 }
 
+bool is_haskell_compound_arg(const expression_ref& E)
+{
+    return E.is_a<Hs::ApplyExp>() or E.is_a<Hs::ParsedApp>() or E.is_a<Hs::InfixExp>() or
+           E.is_a<Hs::LambdaExp>() or E.is_a<Hs::LetExp>() or E.is_a<Hs::IfExp>() or
+           E.is_a<Hs::CaseExp>() or E.is_a<Hs::Do>() or E.is_a<Hs::MDo>() or
+           E.is_a<Hs::TypedExp>() or E.is_a<Hs::Wrap>() or E.is_a<Hs::RecordUpdate>();
+}
+
+bool needs_application_arg_parens(const expression_ref& E)
+{
+    if (is_haskell_compound_arg(E))
+        return true;
+
+    // Maybe do blocks should have more visible structure?
+    if (not E.size() and not E.is_a<do_block>())
+        return false;
+
+    if (E.head().is_a<constructor>())
+    {
+        auto& O = E.head().as_<constructor>();
+
+        // Don't parenthesize tuple arguments.
+        if (is_tuple_name(O.name()) and E.size() == O.n_args())
+            return false;
+
+        // Don't parenthesize list arguments.
+        if (O.name() == ":")
+            return false;
+    }
+
+    return true;
+}
+
 // How do I make constructor-specific methods of printing data expressions?
 // Can I move to defining the print function using an expression?
 string expression::print() const 
@@ -191,19 +225,7 @@ string expression::print() const
     vector<string> pargs = args;
     for(int i=1;i<pargs.size();i++)
     {
-        // Maybe do blocks should have more visible structure?
-	if (not sub[i-1].size() and not sub[i-1].is_a<do_block>()) continue;
-
-	if (sub[i-1].head().is_a<constructor>())
-	{
-	    auto& O = sub[i-1].head().as_<constructor>();
-
-	    // Don't parenthesize tuple arguments.
-	    if (is_tuple_name(O.name()) and sub[i-1].size() == O.n_args()) continue;
-
-	    // Don't parenthesize list arguments.
-	    if (O.name() == ":") continue;
-	}
+        if (not needs_application_arg_parens(sub[i-1])) continue;
 
 	pargs[i] = "(" + args[i] + ")";
     }
