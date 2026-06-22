@@ -8,7 +8,6 @@
 #include "computation/haskell/generated.H" // for Haskell::Generated builders
 #include "computation/haskell/ids.H"       // for haskell_qid
 #include "util/string/join.H"              // for join( )
-#include "computation/expression/constructor.H"
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;
@@ -501,8 +500,7 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
              or E.type() == type_constant::double_type
              or E.type() == type_constant::log_double_type
              or E.type() == type_constant::char_type
-             or is_gcable_type(E.type())
-             or is_constructor(E))
+             or is_gcable_type(E.type()))
     {
         // These legacy atoms do not bind or reference variables on their own.
     }
