@@ -1,6 +1,7 @@
 #include "literal.H"
 #include "util/string/join.H"
 #include "util/string/convert.H"
+#include <boost/multiprecision/cpp_dec_float.hpp>
 #include <regex>
 #include "fmt/core.h"
 
@@ -121,6 +122,16 @@ bool Literal::operator==(const Object& O) const
         return false;
 }
 
+static string print_floating_decimal(const rational& r)
+{
+    using boost::multiprecision::cpp_dec_float_50;
+
+    cpp_dec_float_50 x(r.numerator());
+    x /= cpp_dec_float_50(r.denominator());
+
+    return x.str(17, std::ios_base::fmtflags(0));
+}
+
 string Literal::print() const
 {
     if (literal.index() == 0)
@@ -132,7 +143,7 @@ string Literal::print() const
     else if (literal.index() == 3)
     {
 	auto& r = std::get<3>(literal).value;
-        return "(" + r.numerator().str() + "%" + r.denominator().str() +")";
+        return print_floating_decimal(r);
     }
     else if (literal.index() == 4)
         return std::get<4>(literal).value.str() + "#";
