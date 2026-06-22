@@ -58,6 +58,7 @@ struct Floating
 };
 
 rational rationalFromString(const std::string& s);
+rational rationalFromDouble(double x);
 
 struct BoxedInteger
 {

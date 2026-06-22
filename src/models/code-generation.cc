@@ -791,7 +791,7 @@ expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
 {
     return expr.visit(CM::overloaded{
         [](const CM::IntLiteral& x) -> expression_ref { return Hs::Literal(Hs::Integer{integer(x.value)}); },
-        [](const CM::DoubleLiteral& x) -> expression_ref { return Hs::Literal(Hs::Floating{Hs::rationalFromString(convertToString(x.value))}); },
+        [](const CM::DoubleLiteral& x) -> expression_ref { return Hs::Literal(Hs::Floating{Hs::rationalFromDouble(x.value)}); },
         [](const CM::BoolLiteral& x) -> expression_ref { return x.value ? Hs::True() : Hs::False(); },
         [](const CM::StringLiteral& x) -> expression_ref { return Hs::Literal(Hs::String{x.value}); },
         [](const CM::Var& x) -> expression_ref { return Hs::Var(x.name); },
@@ -936,7 +936,7 @@ translation_result_t get_typed_constant_model(const CM::TypedExpr& expr)
     translation_result_t result;
     expr.visit(CM::overloaded{
         [&](const CM::IntLiteral& x) { result.code.E = Hs::Literal(Hs::Integer{integer(x.value)}); },
-        [&](const CM::DoubleLiteral& x) { result.code.E = Hs::Literal(Hs::Floating{Hs::rationalFromString(convertToString(x.value))}); },
+        [&](const CM::DoubleLiteral& x) { result.code.E = Hs::Literal(Hs::Floating{Hs::rationalFromDouble(x.value)}); },
         [&](const CM::BoolLiteral& x) { result.code.E = x.value ? Hs::True() : Hs::False(); },
         [&](const CM::StringLiteral& x) { result.code.E = Hs::Literal(Hs::String{x.value}); },
         [](const auto&) { std::abort(); }
