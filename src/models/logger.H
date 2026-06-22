@@ -8,6 +8,8 @@
 #include "util/owned-ptr.H"                         // for owned_ptr
 #include "computation/expression/do_block.H"        // for do_block
 
+namespace Haskell { struct Stmts; }
+
 struct LoggerObj
 {
     virtual std::string get_name() const = 0;
@@ -50,6 +52,8 @@ struct LogSub: public LoggerObj
 
 std::vector<expression_ref> generate_loggers(do_block& code, const Loggers& Loggers);
 expression_ref generate_loggers_list(do_block& code, const Loggers& Loggers);
+std::vector<expression_ref> generate_loggers(Haskell::Stmts& code, const Loggers& Loggers);
+expression_ref generate_loggers_list(Haskell::Stmts& code, const Loggers& Loggers);
 
 void simplify(Loggers& loggers);
 

@@ -813,9 +813,10 @@ std::string generate_atmodel_program(const variables_map& args,
     // We could fix the whole tree or just the topology.
     expression_ref branch_lengths = var("IntMap.empty");
 
-    // M1. Declarations -- This is similar to use_block(model, ??, decls, "decls");
-    for(auto& stmt: decls.code.stmts)
-	model.get_stmts().push_back(stmt);
+    // Compatibility: A-T-prog still uses legacy do_block, while generated
+    // declarations now store Hs::Stmts. Remove when A-T-prog uses Hs::Do.
+    for(auto& stmt: decls.code.stmts.stmts)
+	model.get_stmts().push_back(unloc(stmt));
     auto decl_loggers = decls.code.loggers;
     simplify(decl_loggers);
     for(auto& logger: generate_loggers(model, decl_loggers))

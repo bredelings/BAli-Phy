@@ -8,9 +8,9 @@
 #include <optional>                                 // for optional
 #include <utility>                                  // for pair
 #include "models/typecheck.H"
-#include "computation/haskell/var.H"                // for Hs::Var
+#include "computation/haskell/haskell.H"            // for Hs::Stmts, Hs::Var
 #include "computation/expression/var.H"             // for var
-#include "computation/expression/do_block.H"        // for Stmts
+#include "computation/expression/do_block.H"        // for legacy Stmts
 
 #include "logger.H"
 
@@ -18,7 +18,7 @@ class Rules;
 
 struct generated_code_t
 {
-    Stmts stmts;
+    Hs::Stmts stmts;
     std::vector<std::pair<Hs::Var, expression_ref>> decls;
 
     // We prefix by these lambda vars at the end?
@@ -33,7 +33,7 @@ struct generated_code_t
     std::map<std::string,Hs::Var> free_vars;
 
     // Under these circumstances, we will return a monadic action
-    bool is_action() const {return perform_function or not stmts.empty();}
+    bool is_action() const {return perform_function or not stmts.stmts.empty();}
     bool has_loggers() const {return not loggers.empty();}
 
     expression_ref generate() const;
@@ -128,6 +128,5 @@ struct CodeGenState
 
 expression_ref simplify_intToDouble(const expression_ref& E);
 void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers);
-void perform_action_simplified(generated_code_t& block, const Hs::Var& x, const Hs::Var& log_x, bool is_referenced, const generated_code_t& code);
 
 #endif

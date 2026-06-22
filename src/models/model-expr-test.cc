@@ -44,7 +44,7 @@ void test_model_type_ast()
     assert(list_args.size() == 1);
     assert(list_args[0] == int_type);
 
-    auto pair_type = tuple_type({int_type, type_t("Bool")});
+    auto pair_type = CmdModel::tuple_type({int_type, type_t("Bool")});
     assert(unparse_type(pair_type) == "(Int,Bool)");
     assert(function_type(int_type, double_type) == parse_type("Int -> Double"));
     assert(CM::type_app("Distribution", double_type) == parse_type("Distribution<Double>"));

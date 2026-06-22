@@ -41,12 +41,14 @@
 #include "computation/module.H"
 #include "computation/expression/expression_ref.H"
 #include "computation/operations.H"
+#include "computation/haskell/generated.H"
 #include "computation/haskell/ids.H"
 #include "computation/expression/lambda.H"  // for is_lambda_exp( )
 #include "computation/expression/tuple.H"   // for Tuple( )
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;
+namespace HsG = Haskell::Generated;
 
 extern int log_verbose;
 
@@ -60,6 +62,42 @@ using std::vector;
 using std::valarray;
 using std::shared_ptr;
 using boost::program_options::variables_map;
+
+// Builds a generated Haskell variable pattern for monadic bind statements.
+static Hs::LPat generated_do_var_pattern(const Hs::Var& x)
+{
+    return {noloc, Hs::VarPattern({noloc, x})};
+}
+
+// Appends a generated Haskell bind statement of the form `pat <- E`.
+static void append_generated_do_bind(Hs::Stmts& stmts, const Hs::LPat& pat, const expression_ref& E)
+{
+    stmts.stmts.push_back({noloc, Hs::PatQual(pat, {noloc, E})});
+}
+
+// Appends a generated Haskell let statement of the form `let x = E`.
+static void append_generated_do_let(Hs::Stmts& stmts, const Hs::Var& x, const expression_ref& E)
+{
+    Hs::Decls decls;
+    decls.push_back({noloc, Hs::simple_decl({noloc, x}, {noloc, E})});
+    stmts.stmts.push_back({noloc, Hs::LetQual({noloc, Hs::Binds({decls})})});
+}
+
+// Appends a generated Haskell expression statement to a do block.
+static void append_generated_do_expr(Hs::Stmts& stmts, const expression_ref& E)
+{
+    stmts.stmts.push_back({noloc, Hs::SimpleQual({noloc, E})});
+}
+
+// Finishes a generated Haskell do block with either `return E` or raw action `E`.
+static expression_ref finish_generated_do(Hs::Stmts stmts, const expression_ref& E, bool use_return)
+{
+    if (use_return)
+        append_generated_do_expr(stmts, HsG::Apply(Hs::Var("return"), {E}));
+    else
+        append_generated_do_expr(stmts, E);
+    return Hs::Do(stmts);
+}
 
 // Returns the expression description for display paths, rejecting declaration
 // models because declarations are only used for generated code/imports today.
@@ -174,7 +212,7 @@ string default_markov_model(const alphabet& a)
 
 expression_ref generated_code_t::generate() const
 {
-    do_block code(stmts);
+    auto code = stmts;
 
     auto loggers2 = loggers;
     simplify(loggers2);
@@ -189,29 +227,32 @@ expression_ref generated_code_t::generate() const
             // FIXME: technically, we should make sure that "result" and "loggers" are unique names
             // FIXME: it would be nice to use e.g. tn93_model = ... instead of just result = ....
             //        see:  var_name = (*func_name)+"_model";  for naming "submodel" arguments.
-            code.let(var("result"),R);
-            code.let(var("loggers"),L);
-            R = Tuple(var("result"),var("loggers"));
+            Hs::Var result_var("result");
+            Hs::Var loggers_var("loggers");
+            append_generated_do_let(code, result_var, R);
+            append_generated_do_let(code, loggers_var, L);
+            R = HsG::Tuple({result_var, loggers_var});
         }
         // If there are let stmts, we could return let{decls} in R
-        if (not code.empty())
-            R = code.finish_return(R);
+        if (not code.stmts.empty())
+            R = finish_generated_do(code, R, true);
     }
     else
     {
         if (has_loggers())
         {
             // result <- E
-            code.perform( var("result"), R );
+            Hs::Var result_var("result");
+            append_generated_do_bind(code, generated_do_var_pattern(result_var), R);
             // return (result, loggers)
-            R = code.finish_return( Tuple(var("result"),L) );
+            R = finish_generated_do(code, HsG::Tuple({result_var, L}), true);
         }
-        else if (not code.empty())
-            R = code.finish( R );
+        else if (not code.stmts.empty())
+            R = finish_generated_do(code, R, false);
     }
 
-    // if is_action() is false, we should not have a do_block()
-    assert(is_action() or not R.is_a<do_block>());
+    // if is_action() is false, we should not have a do expression.
+    assert(is_action() or not R.is_a<Hs::Do>());
 
     for(auto& x : haskell_lambda_vars | views::reverse)
         R = lambda_quantify(x,R);
