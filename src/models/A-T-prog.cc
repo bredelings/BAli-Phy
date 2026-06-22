@@ -221,7 +221,7 @@ vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
 {
     // define tree_length
     var tree_length_var("tlength");
-    model.let(tree_length_var, {var("treeLength"),tree_var});
+    model.let(tree_length_var, HsG::Apply(Hs::Var("treeLength"), {tree_var}));
     // log |T|
     maybe_log(model_loggers, "|T|", tree_length_var, {});
 
@@ -342,10 +342,10 @@ do_block generate_main(const variables_map& args,
 
     do_block main;
 
-    expression_ref directory = var("directory");
+    expression_ref directory = Hs::Var("directory");
     vector<expression_ref> prog_args = {directory};
     if (not args.count("test"))
-        main.perform(get_list(prog_args), var("getArgs"));
+        main.perform(get_list(prog_args), Hs::Var("getArgs"));
 
     auto unaligned_partitions = unaligned_sequence_data;
     auto aligned_partitions = aligned_sequence_data;
@@ -354,17 +354,17 @@ do_block generate_main(const variables_map& args,
         auto [filename, range] = filename_ranges[0];
 
 	// Load the sequences
-	expression_ref E = {var("loadSequences"),String(filename.string())};
+	expression_ref E = HsG::Apply(Hs::Var("loadSequences"), {Hs::Literal(Hs::String(filename.string()))});
 
 	// Select range
 	if (not range.empty())
-            E = {var("<$>"), {var("selectRange"),String(range)}, E};
+            E = HsG::Apply(Hs::Var("<$>"), {HsG::Apply(Hs::Var("selectRange"), {Hs::Literal(Hs::String(range))}), E});
 
 	// Convert to CharacterData
 	if (partition_group[0] == 0)
-	    E = {var("<$>"),{var("mkUnalignedCharacterData"),alphabet_exps[0]}, E};
+	    E = HsG::Apply(Hs::Var("<$>"), {HsG::Apply(Hs::Var("mkUnalignedCharacterData"), {alphabet_exps[0]}), E});
 	else
-	    E = {var("<$>"),{var("mkAlignedCharacterData"),alphabet_exps[0]}, E};
+	    E = HsG::Apply(Hs::Var("<$>"), {HsG::Apply(Hs::Var("mkAlignedCharacterData"), {alphabet_exps[0]}), E});
 
         main.perform(var("sequenceData"), E);
     }
@@ -380,7 +380,7 @@ do_block generate_main(const variables_map& args,
                 if (not index_for_filename.count(filename))
                 {
                     index_for_filename.insert({filename,filenames_.size()});
-                    filenames_.push_back(String(filename.string()));
+                    filenames_.push_back(Hs::Literal(Hs::String(filename.string())));
                 }
             }
             main.let(filenames_var,get_list(filenames_));
@@ -390,7 +390,7 @@ do_block generate_main(const variables_map& args,
             // Main.2: Emit let filenames_to_seqs = ...
             var filename_to_seqs("seqs");
             {
-                main.perform(filename_to_seqs,{var("mapM"), var("loadSequences"), filenames_var});
+                main.perform(filename_to_seqs, HsG::Apply(Hs::Var("mapM"), {Hs::Var("loadSequences"), filenames_var}));
             }
             main.empty_stmt();
 
@@ -407,17 +407,17 @@ do_block generate_main(const variables_map& args,
 		    partition_sequence_data_var = (group==0) ? unaligned_sequence_data : aligned_sequence_data;
 
                 int index = index_for_filename.at( filename_ranges[i].first );
-                expression_ref loaded_sequences = {var("!!"),filename_to_seqs,index};
+                expression_ref loaded_sequences = HsG::Apply(Hs::Var("!!"), {filename_to_seqs, index});
                 if (not filename_ranges[i].second.empty())
-                    loaded_sequences = {var("selectRange"), String(filename_ranges[i].second), loaded_sequences};
+                    loaded_sequences = HsG::Apply(Hs::Var("selectRange"), {Hs::Literal(Hs::String(filename_ranges[i].second)), loaded_sequences});
 		if (partition_group[i] == 0)
 		{
-		    loaded_sequences = {var("mkUnalignedCharacterData"),alphabet_exps[i],loaded_sequences};
+		    loaded_sequences = HsG::Apply(Hs::Var("mkUnalignedCharacterData"), {alphabet_exps[i], loaded_sequences});
 		    unaligned_sequence_partitions.push_back(partition_sequence_data_var);
 		}
 		else
 		{
-		    loaded_sequences = {var("mkAlignedCharacterData"),alphabet_exps[i],loaded_sequences};
+		    loaded_sequences = HsG::Apply(Hs::Var("mkAlignedCharacterData"), {alphabet_exps[i], loaded_sequences});
 		    aligned_sequence_partitions.push_back(partition_sequence_data_var);
 		}
                 main.let(partition_sequence_data_var, loaded_sequences);
@@ -439,13 +439,13 @@ do_block generate_main(const variables_map& args,
     {
         auto tree_filename = fixed.at("tree");
         main.empty_stmt();
-        main.perform(tree, {var("<$>"),var("dropInternalLabels"),{var("readBranchLengthTree"),String(tree_filename)}});
+        main.perform(tree, HsG::Apply(Hs::Var("<$>"), {Hs::Var("dropInternalLabels"), HsG::Apply(Hs::Var("readBranchLengthTree"), {Hs::Literal(Hs::String(tree_filename))})}));
     }
     else if (fixed.count("topology"))
     {
         auto tree_filename = fixed.at("topology");
         main.empty_stmt();
-        main.perform(topology, {var("<$>"),var("dropInternalLabels"),{var("readTreeTopology"),String(tree_filename)}});
+        main.perform(topology, HsG::Apply(Hs::Var("<$>"), {Hs::Var("dropInternalLabels"), HsG::Apply(Hs::Var("readTreeTopology"), {Hs::Literal(Hs::String(tree_filename))})}));
     }
 
     if (not args.count("test"))
@@ -454,20 +454,20 @@ do_block generate_main(const variables_map& args,
 	if (log_formats.count("tsv"))
 	{
 	    main.empty_stmt();
-	    main.perform(tsvLogger, {var("tsvLogger"),{var("</>"), directory, String("C1.log")},get_list(vector<String>{"iter"})});
+	    main.perform(tsvLogger, HsG::Apply(Hs::Var("tsvLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.log"))}), HsG::List({Hs::Literal(Hs::String("iter"))})}));
 	}
 
 	if (log_formats.count("json"))
 	{
 	    main.empty_stmt();
-	    main.perform(jsonLogger, {var("jsonLogger"),{var("</>"), directory, String("C1.log.json")}});
+	    main.perform(jsonLogger, HsG::Apply(Hs::Var("jsonLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.log.json"))})}));
 	}
 
         // Initialize the tree logger
         if (not fixed.count("tree"))
         {
             main.empty_stmt();
-            main.perform(treeLogger,{var("treeLogger"), {var("</>"), directory, String("C1.trees")} });
+            main.perform(treeLogger, HsG::Apply(Hs::Var("treeLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.trees"))})}));
         }
 
         // Initialize the alignment loggers
@@ -479,7 +479,7 @@ do_block generate_main(const variables_map& args,
             for(auto& [i,a,logger]: alignment_loggers)
             {
                 string filename = "C1.P"+std::to_string(i+1)+".fastas";
-                main.perform(logger,{var("alignmentLogger"), {var("</>"), directory, String(filename)}});
+                main.perform(logger, HsG::Apply(Hs::Var("alignmentLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String(filename))})}));
             }
         }
 
@@ -492,14 +492,14 @@ do_block generate_main(const variables_map& args,
             for(auto& [i, cs, logger]: category_state_loggers)
             {
                 string filename = "C1.catStates"+std::to_string(i+1)+".json";
-                main.perform(logger,{var("ejsonLogger"), {var("</>"), directory, String(filename)}});
+                main.perform(logger, HsG::Apply(Hs::Var("ejsonLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String(filename))})}));
             }
         }
     }
 
     // Main.5. Emit mymodel <- makeMCMCModel $ model sequence_data
     main.empty_stmt();
-    main.perform(var("mymodel"),{var("$"),var("makeMCMCModel"),model_fn});
+    main.perform(var("mymodel"), HsG::Apply(Hs::Var("$"), {Hs::Var("makeMCMCModel"), model_fn}));
 
     // Main.6. Emit runMCMC iterations mymodel
     if (args.count("test"))
@@ -507,22 +507,22 @@ do_block generate_main(const variables_map& args,
         if (log_formats.count("tsv"))
         {
             main.empty_stmt();
-            main.perform(var("line"), {var("logTableLine"), var("mymodel"), 0});
+            main.perform(var("line"), HsG::Apply(Hs::Var("logTableLine"), {Hs::Var("mymodel"), 0}));
             main.empty_stmt();
-            main.perform({var("T.putStrLn"), var("line")});
+            main.perform(HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("line")}));
         }
 
         if (log_formats.count("json"))
         {
             main.empty_stmt();
-            main.perform(var("jline"), {var("logJSONLine"), var("mymodel"), 0});
+            main.perform(var("jline"), HsG::Apply(Hs::Var("logJSONLine"), {Hs::Var("mymodel"), 0}));
             main.empty_stmt();
-            main.perform({var("T.putStrLn"), var("jline")});
+            main.perform(HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("jline")}));
         }
 
         if (args.count("verbose"))
         {
-            main.perform({var("writeTraceGraph"),var("mymodel")});
+            main.perform(HsG::Apply(Hs::Var("writeTraceGraph"), {Hs::Var("mymodel")}));
 //            M->write_factor_graph();
         }
     }
@@ -533,7 +533,7 @@ do_block generate_main(const variables_map& args,
         int max_iterations = 200000;
         if (args.count("iterations"))
             max_iterations = args["iterations"].as<long int>();
-        main.perform({var("runMCMC"), max_iterations, var("mymodel")});
+        main.perform(HsG::Apply(Hs::Var("runMCMC"), {max_iterations, Hs::Var("mymodel")}));
     }
 
     return main;
