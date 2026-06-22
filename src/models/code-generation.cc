@@ -439,6 +439,30 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
             get_generated_free_vars2(unloc(element), bound, free);
         return;
     }
+    else if (auto L = E.to<Hs::LambdaExp>())
+    {
+        auto bound_ = Hs::vars_in_patterns(L->match.patterns);
+        for(const auto& x: bound_)
+            bound.insert(unloc(x));
+
+        if (L->match.rhs.decls)
+            throw myexception()<<"get_generated_free_vars: unsupported lambda-local declarations in "<<E;
+
+        for(auto& guarded_rhs: L->match.rhs.guarded_rhss)
+        {
+            for(auto& guard: guarded_rhs.guards)
+                get_generated_free_vars2(unloc(guard), bound, free);
+            get_generated_free_vars2(unloc(guarded_rhs.body), bound, free);
+        }
+
+        for(const auto& x: bound_)
+        {
+            auto i = bound.find(unloc(x));
+            assert(i != bound.end());
+            bound.erase(i);
+        }
+        return;
+    }
 
     if (E.is_expression())
     {
@@ -532,8 +556,53 @@ set<Hs::Var> get_generated_bound_vars(const expression_ref& E)
 
 expression_ref eta_reduce(expression_ref E)
 {
-    while(is_lambda_exp(E) and E.sub()[0].is_a<var>())
+    while(true)
     {
+        if (auto L = E.to<Hs::LambdaExp>())
+        {
+            if (L->match.patterns.size() != 1)
+                break;
+            auto pattern = unloc(L->match.patterns[0]).to<Hs::VarPattern>();
+            if (not pattern)
+                break;
+            auto x = unloc(pattern->var);
+
+            if (L->match.rhs.decls or L->match.rhs.guarded_rhss.size() != 1)
+                break;
+
+            auto& guarded_rhs = L->match.rhs.guarded_rhss[0];
+            if (not guarded_rhs.guards.empty())
+                break;
+
+            auto& body = unloc(guarded_rhs.body);
+            auto A = body.to<Hs::ApplyExp>();
+            if (not A)
+                break;
+
+            auto [head,args] = Hs::decompose_apps({noloc, body});
+            if (args.empty() or not unloc(args.back()).is_a<Hs::Var>() or not (unloc(args.back()).as_<Hs::Var>() == x))
+                break;
+
+            expression_ref E2;
+            if (args.size() == 1)
+                E2 = unloc(head);
+            else
+            {
+                vector<expression_ref> args2;
+                for(int i=0; i<args.size()-1; i++)
+                    args2.push_back(unloc(args[i]));
+                E2 = HsG::Apply(unloc(head), args2);
+            }
+
+            if (get_generated_free_vars(E2).count(x))
+                break;
+            E = E2;
+            continue;
+        }
+
+        if (not (is_lambda_exp(E) and E.sub()[0].is_a<var>()))
+            break;
+
         auto& x    = E.sub()[0].as_<var>();
         auto& body = E.sub()[1];
 
@@ -586,24 +655,22 @@ set<string> find_vars_in_pattern(const CM::TypedPattern& pattern)
         std::abort();
 }
 
-// Converts a typed lambda pattern into the expression_ref shape expected by
-// lambda_quantify(), preserving the old variable/tuple pattern codegen.
-expression_ref get_typed_pattern_expr(const CM::TypedPattern& pattern, const CodeGenState& scope)
+// Converts a typed lambda pattern into Haskell source pattern syntax.
+Hs::LPat get_typed_pattern(const CM::TypedPattern& pattern, const CodeGenState& scope)
 {
     return pattern.visit(CM::overloaded{
-        [&](const CM::VarPattern& var) -> expression_ref
+        [&](const CM::VarPattern& var) -> Hs::LPat
         {
             if (not scope.identifiers.count(var.name))
                 throw myexception()<<"No variable '"<<var.name<<"' in scope!";
-            return scope.identifiers.at(var.name).x;
+            return {noloc, Hs::VarPattern({noloc, scope.identifiers.at(var.name).x})};
         },
-        // Converts tuple-pattern elements to a tuple expression of binders.
-        [&](const CM::TuplePattern<CM::Ann>& tuple) -> expression_ref
+        [&](const CM::TuplePattern<CM::Ann>& tuple) -> Hs::LPat
         {
-            vector<expression_ref> elements;
+            Hs::LPats elements;
             for(auto& element: tuple.elements)
-                elements.push_back(get_typed_pattern_expr(element, scope));
-            return get_tuple(elements);
+                elements.push_back(get_typed_pattern(element, scope));
+            return {noloc, Hs::tuple_pattern(elements)};
         }
     });
 }
@@ -984,8 +1051,8 @@ translation_result_t CodeGenState::get_typed_model_lambda(const CM::Lambda<CM::A
         if (body_result.lambda_vars.count(var_name))
             body_result.lambda_vars.erase(var_name);
 
-    auto pattern2 = get_typed_pattern_expr(lambda.pattern, scope2);
-    body_result.code.E = lambda_quantify(pattern2, body_result.code.E);
+    auto pattern2 = get_typed_pattern(lambda.pattern, scope2);
+    body_result.code.E = Hs::LambdaExp({pattern2}, {noloc, body_result.code.E});
 
     body_result.code.E = eta_reduce(body_result.code.E);
     for(auto& var_name: var_names)
