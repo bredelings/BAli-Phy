@@ -97,7 +97,7 @@ void perform_action_simplified_(generated_code_t& block, const Hs::Var& x, bool 
 	if (not depends_on_lambda)
 	    block.stmts.let(legacy_var(x), code.E);
 	else
-	    block.decls.push_back({legacy_var(x), code.E});
+	    block.decls.push_back({x, code.E});
     }
 }
 
@@ -404,6 +404,65 @@ set<Hs::Var> get_generated_bound_vars(const expression_ref& E);
 
 set<Hs::Var> get_generated_free_vars(const expression_ref& E);
 
+set<Hs::Var> get_generated_bound_vars(const Hs::Binds& binds)
+{
+    set<Hs::Var> bound;
+    for(const auto& x: Hs::vars_bound_in_binds(binds))
+        bound.insert(unloc(x));
+    return bound;
+}
+
+void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound, set<Hs::Var>& free);
+
+void get_generated_free_vars2(const Hs::MultiGuardedRHS& rhs, multiset<Hs::Var>& bound, set<Hs::Var>& free)
+{
+    if (rhs.decls)
+        throw myexception()<<"get_generated_free_vars: unsupported local declarations in RHS";
+
+    for(auto& guarded_rhs: rhs.guarded_rhss)
+    {
+        for(auto& guard: guarded_rhs.guards)
+            get_generated_free_vars2(unloc(guard), bound, free);
+        get_generated_free_vars2(unloc(guarded_rhs.body), bound, free);
+    }
+}
+
+void get_generated_free_vars2(const Hs::MRule& match, multiset<Hs::Var>& bound, set<Hs::Var>& free)
+{
+    auto bound_ = Hs::vars_in_patterns(match.patterns);
+    for(const auto& x: bound_)
+        bound.insert(unloc(x));
+
+    get_generated_free_vars2(match.rhs, bound, free);
+
+    for(const auto& x: bound_)
+    {
+        auto i = bound.find(unloc(x));
+        assert(i != bound.end());
+        bound.erase(i);
+    }
+}
+
+void get_generated_free_vars_in_decl(const Hs::Decl& decl, multiset<Hs::Var>& bound, set<Hs::Var>& free)
+{
+    if (auto F = decl.to<Hs::FunDecl>())
+    {
+        for(auto& match: F->matches)
+            get_generated_free_vars2(match, bound, free);
+    }
+    else if (auto P = decl.to<Hs::PatDecl>())
+        get_generated_free_vars2(P->rhs, bound, free);
+    else
+        throw myexception()<<"get_generated_free_vars: unsupported local declaration "<<decl;
+}
+
+void get_generated_free_vars2(const Hs::Binds& binds, multiset<Hs::Var>& bound, set<Hs::Var>& free)
+{
+    for(auto& decls: binds)
+        for(auto& [_, decl]: decls)
+            get_generated_free_vars_in_decl(decl, bound, free);
+}
+
 void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound, set<Hs::Var>& free)
 {
     if (E.is_a<var>())
@@ -445,15 +504,7 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
         for(const auto& x: bound_)
             bound.insert(unloc(x));
 
-        if (L->match.rhs.decls)
-            throw myexception()<<"get_generated_free_vars: unsupported lambda-local declarations in "<<E;
-
-        for(auto& guarded_rhs: L->match.rhs.guarded_rhss)
-        {
-            for(auto& guard: guarded_rhs.guards)
-                get_generated_free_vars2(unloc(guard), bound, free);
-            get_generated_free_vars2(unloc(guarded_rhs.body), bound, free);
-        }
+        get_generated_free_vars2(L->match.rhs, bound, free);
 
         for(const auto& x: bound_)
         {
@@ -461,6 +512,17 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
             assert(i != bound.end());
             bound.erase(i);
         }
+        return;
+    }
+    else if (auto L = E.to<Hs::LetExp>())
+    {
+        auto bound_ = get_generated_bound_vars(unloc(L->binds));
+        add_generated_bound_vars(bound_, bound);
+
+        get_generated_free_vars2(unloc(L->binds), bound, free);
+        get_generated_free_vars2(unloc(L->body), bound, free);
+
+        remove_generated_bound_vars(bound_, bound);
         return;
     }
 
@@ -551,7 +613,29 @@ set<Hs::Var> get_generated_bound_vars(const expression_ref& E)
 
         assert(not is_case(E));
     }
+    else if (auto L = E.to<Hs::LetExp>())
+        bound = get_generated_bound_vars(unloc(L->binds));
     return bound;
+}
+
+Hs::Binds make_generated_binds(const std::vector<std::pair<Hs::Var, expression_ref>>& decls)
+{
+    Hs::Decls hs_decls;
+    for(auto& [x,E]: decls)
+        hs_decls.push_back({noloc, Hs::simple_decl({noloc, x}, {noloc, E})});
+    return Hs::Binds({hs_decls});
+}
+
+expression_ref make_generated_let(const std::vector<std::vector<std::pair<Hs::Var, expression_ref>>>& decl_groups, const expression_ref& body)
+{
+    expression_ref result = body;
+    for(auto& decls: decl_groups | views::reverse)
+    {
+        if (decls.empty())
+            continue;
+        result = Hs::LetExp({noloc, make_generated_binds(decls)}, {noloc, result});
+    }
+    return result;
 }
 
 expression_ref eta_reduce(expression_ref E)
@@ -996,21 +1080,20 @@ translation_result_t CodeGenState::get_typed_model_let(const CM::Let<CM::Ann>& l
     result.code.E = body_result.code.E;
     result.code.perform_function = body_result.code.perform_function;
 
-    vector<CDecls> decls_groups(1);
+    vector<std::vector<std::pair<Hs::Var, expression_ref>>> decls_groups(1);
     set<Hs::Var> prev_free_vars;
     for(auto& [x,E]: result.code.decls)
     {
-        auto generated_x = generated_var(x);
-        if (prev_free_vars.count(generated_x))
+        if (prev_free_vars.count(x))
         {
             decls_groups.push_back({});
             prev_free_vars.clear();
         }
         decls_groups.back().push_back({x,E});
         add(prev_free_vars, get_generated_free_vars(E));
-        prev_free_vars.insert(generated_x);
+        prev_free_vars.insert(x);
     }
-    result.code.E = let_expression(decls_groups, result.code.E);
+    result.code.E = make_generated_let(decls_groups, result.code.E);
     result.code.decls.clear();
 
     for(auto& [var_name,_]: let.decls)
