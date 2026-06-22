@@ -22,24 +22,6 @@ using std::map;
 
 Hs::Binds make_generated_binds(const std::vector<std::pair<Hs::Var, expression_ref>>& decls);
 
-// Builds a generated Haskell variable pattern for monadic bind statements.
-static Hs::LPat generated_var_pattern(const Hs::Var& x)
-{
-    return {noloc, Hs::VarPattern({noloc, x})};
-}
-
-// Appends a generated Haskell bind statement of the form `pat <- E`.
-static void append_generated_bind(Hs::Stmts& stmts, const Hs::LPat& pat, const expression_ref& E)
-{
-    stmts.stmts.push_back({noloc, Hs::PatQual(pat, {noloc, E})});
-}
-
-// Appends a generated Haskell let statement of the form `let x = E`.
-static void append_generated_let(Hs::Stmts& stmts, const Hs::Var& x, const expression_ref& E)
-{
-    stmts.stmts.push_back({noloc, Hs::LetQual({noloc, make_generated_binds({{x, E}})})});
-}
-
 bool is_generated_var_expr(const expression_ref& E)
 {
     return E.is_a<Hs::Var>();
@@ -74,12 +56,12 @@ void perform_action_simplified_(generated_code_t& block, const Hs::Var& x, bool 
     if (code.perform_function)
     {
 	assert(not depends_on_lambda);
-        append_generated_bind(block.stmts, generated_var_pattern(x), code.E);
+        HsG::Bind(block.stmts, HsG::VarPat(x), code.E);
     }
     else if (is_referenced or code.is_action())
     {
 	if (not depends_on_lambda)
-	    append_generated_let(block.stmts, x, code.E);
+	    HsG::Let(block.stmts, x, code.E);
 	else
 	    block.decls.push_back({x, code.E});
     }
@@ -892,9 +874,9 @@ translation_result_t CodeGenState::get_typed_model_list(const CM::List<CM::Ann>&
 
         bool do_log = is_unlogged_random(element) and is_loggable_type(element.ann.type);
         if (element_result.code.perform_function)
-            append_generated_bind(result.code.stmts, generated_var_pattern(x), element_result.code.E);
+            HsG::Bind(result.code.stmts, HsG::VarPat(x), element_result.code.E);
         else if (do_log and not is_generated_var_expr(element_result.code.E))
-            append_generated_let(result.code.stmts, x, element_result.code.E);
+            HsG::Let(result.code.stmts, x, element_result.code.E);
         else
             elements[i] = element_result.code.E;
 
@@ -934,9 +916,9 @@ translation_result_t CodeGenState::get_typed_model_tuple(const CM::Tuple<CM::Ann
 
         bool do_log = is_unlogged_random(element) and is_loggable_type(element.ann.type);
         if (element_result.code.perform_function)
-            append_generated_bind(result.code.stmts, generated_var_pattern(x), element_result.code.E);
+            HsG::Bind(result.code.stmts, HsG::VarPat(x), element_result.code.E);
         else if (do_log and not is_generated_var_expr(element_result.code.E))
-            append_generated_let(result.code.stmts, x, element_result.code.E);
+            HsG::Let(result.code.stmts, x, element_result.code.E);
         else
             elements[i] = element_result.code.E;
 
@@ -1086,13 +1068,13 @@ translation_result_t CodeGenState::get_typed_variable_call(const CM::Call<CM::An
         if (arg_code.perform_function)
         {
             applied_arg = log_x;
-            append_generated_bind(result.code.stmts, generated_var_pattern(x), arg_code.E);
+            HsG::Bind(result.code.stmts, HsG::VarPat(x), arg_code.E);
             assert(arg_model.lambda_vars.empty());
         }
         else if (do_log and not is_generated_var_expr(arg_code.E))
         {
             applied_arg = log_x;
-            append_generated_let(result.code.stmts, x, arg_code.E);
+            HsG::Let(result.code.stmts, x, arg_code.E);
             assert(arg_model.lambda_vars.empty());
         }
 
@@ -1209,7 +1191,7 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
             use_block(result, *log_alphabet, *alphabet_result, log_names[i]+":alphabet");
 
             if (not is_generated_var_expr(alphabet_result->code.E))
-                append_generated_let(result.code.stmts, *alphabet_var, alphabet_result->code.E);
+                HsG::Let(result.code.stmts, *alphabet_var, alphabet_result->code.E);
         }
 
         if (result.code.perform_function and arg_models[i].lambda_vars.size())
@@ -1222,9 +1204,9 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
 
         use_block(result, log_x, arg_models[i], log_names[i]);
         if (arg_models[i].code.perform_function)
-            append_generated_bind(result.code.stmts, generated_var_pattern(x), arg_models[i].code.E);
+            HsG::Bind(result.code.stmts, HsG::VarPat(x), arg_models[i].code.E);
         else if ((arg_referenced[i] or do_log) and not is_generated_var_expr(arg_models[i].code.E))
-            append_generated_let(result.code.stmts, x, arg_models[i].code.E);
+            HsG::Let(result.code.stmts, x, arg_models[i].code.E);
         else
             argument_environment[arg_names[i]] = arg_models[i].code.E;
 
@@ -1244,7 +1226,7 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
 
             auto& value = x.value;
             auto x_type = type_t("unknown_type");
-            append_generated_let(result.code.stmts, x_var, make_rule_template_expr(value, argument_environment));
+            HsG::Let(result.code.stmts, x_var, make_rule_template_expr(value, argument_environment));
 
             result.code.log_value(x_log_name, x_var, x_type);
 

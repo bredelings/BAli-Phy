@@ -62,42 +62,6 @@ using std::valarray;
 using std::shared_ptr;
 using boost::program_options::variables_map;
 
-// Builds a generated Haskell variable pattern for monadic bind statements.
-static Hs::LPat generated_do_var_pattern(const Hs::Var& x)
-{
-    return {noloc, Hs::VarPattern({noloc, x})};
-}
-
-// Appends a generated Haskell bind statement of the form `pat <- E`.
-static void append_generated_do_bind(Hs::Stmts& stmts, const Hs::LPat& pat, const expression_ref& E)
-{
-    stmts.stmts.push_back({noloc, Hs::PatQual(pat, {noloc, E})});
-}
-
-// Appends a generated Haskell let statement of the form `let x = E`.
-static void append_generated_do_let(Hs::Stmts& stmts, const Hs::Var& x, const expression_ref& E)
-{
-    Hs::Decls decls;
-    decls.push_back({noloc, Hs::simple_decl({noloc, x}, {noloc, E})});
-    stmts.stmts.push_back({noloc, Hs::LetQual({noloc, Hs::Binds({decls})})});
-}
-
-// Appends a generated Haskell expression statement to a do block.
-static void append_generated_do_expr(Hs::Stmts& stmts, const expression_ref& E)
-{
-    stmts.stmts.push_back({noloc, Hs::SimpleQual({noloc, E})});
-}
-
-// Finishes a generated Haskell do block with either `return E` or raw action `E`.
-static expression_ref finish_generated_do(Hs::Stmts stmts, const expression_ref& E, bool use_return)
-{
-    if (use_return)
-        append_generated_do_expr(stmts, HsG::Apply(Hs::Var("return"), {E}));
-    else
-        append_generated_do_expr(stmts, E);
-    return Hs::Do(stmts);
-}
-
 // Returns the expression description for display paths, rejecting declaration
 // models because declarations are only used for generated code/imports today.
 const CM::TypedExpr& model_t::expression_description() const
@@ -247,13 +211,16 @@ expression_ref generated_code_t::generate() const
             //        see:  var_name = (*func_name)+"_model";  for naming "submodel" arguments.
             Hs::Var result_var("result");
             Hs::Var loggers_var("loggers");
-            append_generated_do_let(code, result_var, R);
-            append_generated_do_let(code, loggers_var, L);
+            HsG::Let(code, result_var, R);
+            HsG::Let(code, loggers_var, L);
             R = HsG::Tuple({result_var, loggers_var});
         }
         // If there are let stmts, we could return let{decls} in R
         if (not code.stmts.empty())
-            R = finish_generated_do(code, R, true);
+        {
+            HsG::Return(code, R);
+            R = HsG::Do(code);
+        }
     }
     else
     {
@@ -261,12 +228,16 @@ expression_ref generated_code_t::generate() const
         {
             // result <- E
             Hs::Var result_var("result");
-            append_generated_do_bind(code, generated_do_var_pattern(result_var), R);
+            HsG::Bind(code, HsG::VarPat(result_var), R);
             // return (result, loggers)
-            R = finish_generated_do(code, HsG::Tuple({result_var, L}), true);
+            HsG::Return(code, HsG::Tuple({result_var, L}));
+            R = HsG::Do(code);
         }
         else if (not code.stmts.empty())
-            R = finish_generated_do(code, R, false);
+        {
+            HsG::Expr(code, R);
+            R = HsG::Do(code);
+        }
     }
 
     // if is_action() is false, we should not have a do expression.
