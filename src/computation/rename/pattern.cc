@@ -5,7 +5,6 @@
 #include "records.H"
 #include "haskell/ids.H"
 #include "computation/module.H"
-#include "computation/expression/apply.H"
 #include "computation/record_utils.H"
 #include "util/set.H"
 
@@ -63,7 +62,6 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
 {
     auto& [loc,pat] = lpat;
 
-    assert(not is_apply_exp(pat));
     assert(not pat.is_a<Hs::ApplyExp>());
 
     // 1. Handle _
@@ -201,7 +199,6 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 {
     auto& [loc,pat] = lpat;
 
-    assert(not is_apply_exp(pat));
     assert(not pat.is_a<Hs::ApplyExp>());
 
     // 1. Handle _
