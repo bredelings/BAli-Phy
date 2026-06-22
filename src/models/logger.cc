@@ -1,8 +1,10 @@
 #include "logger.H"
-#include "computation/expression/list.H"            // for get_list( )
+#include "computation/haskell/generated.H"
 
 using std::string;
 using std::vector;
+
+namespace HsG = Haskell::Generated;
 
 void simplify(Loggers& loggers)
 {
@@ -122,10 +124,14 @@ vector<expression_ref> generate_loggers(do_block& code, const Loggers& loggers)
             auto log_x = lsub->log_var;
             auto logger_list = generate_loggers_list(code,lsub->loggers);
             code.let(log_x,logger_list);
-            simple_loggers.push_back({var("%>%"),String(lsub->prefix),log_x});
+            simple_loggers.push_back(HsG::Apply(Hs::Var("%>%"),
+                                                {Hs::Literal(Hs::String{lsub->prefix}),
+                                                 Hs::Var(log_x.name)}));
         }
         else if (auto lvalue = l.as<LogValue>())
-            simple_loggers.push_back({var("%=%"),String(lvalue->name),lvalue->value});
+            simple_loggers.push_back(HsG::Apply(Hs::Var("%=%"),
+                                                {Hs::Literal(Hs::String{lvalue->name}),
+                                                 lvalue->value}));
         else
             std::abort();
     }
@@ -134,6 +140,5 @@ vector<expression_ref> generate_loggers(do_block& code, const Loggers& loggers)
 
 expression_ref generate_loggers_list(do_block& code, const Loggers& loggers)
 {
-    return get_list(generate_loggers(code,loggers));
+    return HsG::List(generate_loggers(code,loggers));
 }
-
