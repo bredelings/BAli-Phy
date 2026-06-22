@@ -14,6 +14,7 @@
 #include "computation/expression/list.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/var.H"
+#include "computation/haskell/generated.H"
 #include "computation/haskell/var.H"
 #include "computation/module.H"
 
@@ -39,6 +40,7 @@ namespace fs = std::filesystem;
 
 namespace po = boost::program_options;
 using po::variables_map;
+namespace HsG = Haskell::Generated;
 
 /* NOTE: Fixing the alignment
  *
@@ -89,42 +91,42 @@ std::map<std::string, std::string> get_fixed(const boost::program_options::varia
 
 expression_ref get_genetic_code_expression(const Genetic_Code& code)
 {
-    return {var("geneticCode"),String(code.name())};
+    return HsG::Apply(Hs::Var("geneticCode"), {Hs::Literal(Hs::String(code.name()))});
 }
 
 expression_ref get_alphabet_expression(const alphabet& a)
 {
     if (a.name == "DNA")
-        return  var("dna");
+        return Hs::Var("dna");
     else if (a.name == "RNA")
-        return var("rna");
+        return Hs::Var("rna");
     else if (a.name == "Amino-Acids")
-        return var("aa");
+        return Hs::Var("aa");
     else if (auto codons = dynamic_cast<const Codons*>(&a))
     {
         auto nucs = get_alphabet_expression(codons->getNucleotides());
         auto code = get_genetic_code_expression(codons->getGenetic_Code());
-        return {var("mkCodons"), nucs, code};
+        return HsG::Apply(Hs::Var("mkCodons"), {nucs, code});
     }
     else if (auto triplets = dynamic_cast<const Triplets*>(&a))
     {
         auto nucs = get_alphabet_expression(triplets->getNucleotides());
-        return {var("mkTriplets"),nucs};
+        return HsG::Apply(Hs::Var("mkTriplets"), {nucs});
     }
     else if (auto doublets = dynamic_cast<const Doublets*>(&a))
     {
         auto nucs = get_alphabet_expression(doublets->getNucleotides());
-        return {var("mkDoublets"),nucs};
+        return HsG::Apply(Hs::Var("mkDoublets"), {nucs});
     }
     else if (auto doublets = dynamic_cast<const RNAEdits*>(&a))
     {
         auto nucs = get_alphabet_expression(doublets->getNucleotides());
-        return {var("mkRNAEdits"),nucs};
+        return HsG::Apply(Hs::Var("mkRNAEdits"), {nucs});
     }
     else if (auto num = dynamic_cast<const Numeric*>(&a))
     {
 	int n = num->size();
-	return {var("mkNumeric"),n};
+	return HsG::Apply(Hs::Var("mkNumeric"), {n});
     }
     else
     {
