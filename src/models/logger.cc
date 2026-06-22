@@ -123,10 +123,10 @@ vector<expression_ref> generate_loggers(do_block& code, const Loggers& loggers)
         {
             auto log_x = lsub->log_var;
             auto logger_list = generate_loggers_list(code,lsub->loggers);
-            code.let(log_x,logger_list);
+            code.let(var(log_x.name),logger_list);
             simple_loggers.push_back(HsG::Apply(Hs::Var("%>%"),
                                                 {Hs::Literal(Hs::String{lsub->prefix}),
-                                                 Hs::Var(log_x.name)}));
+                                                 log_x}));
         }
         else if (auto lvalue = l.as<LogValue>())
             simple_loggers.push_back(HsG::Apply(Hs::Var("%=%"),

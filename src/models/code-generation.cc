@@ -5,6 +5,7 @@
 #include "util/log-level.H"                // for log_verbose
 #include "util/graph.H"                    // for make_graph( )
 #include "computation/haskell/haskell.H"   // for Hs::LExp
+#include "computation/haskell/generated.H" // for Haskell::Generated builders
 #include "computation/haskell/ids.H"       // for haskell_qid
 #include "util/string/join.H"              // for join( )
 #include "computation/expression/let.H"
@@ -19,6 +20,7 @@
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;
+namespace HsG = Haskell::Generated;
 
 using std::string;
 using std::vector;
@@ -114,7 +116,7 @@ void use_block(translation_result_t& block, const Hs::Var& log_x, const translat
         block.code.decls.push_back(decl);
 
     if (code.code.has_loggers())
-        block.code.log_sub(name, legacy_var(log_x), code.code.loggers);
+        block.code.log_sub(name, log_x, code.code.loggers);
 }
 
 void perform_action_simplified(translation_result_t& block, const Hs::Var& x, const Hs::Var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
@@ -159,11 +161,30 @@ bool is_loggable_type(const type_t& type)
 
 expression_ref simplify_intToDouble(const expression_ref& E)
 {
+    auto is_int_to_double = [](const expression_ref& head)
+    {
+        if (head.is_a<var>())
+            return head.as_<var>().name == "intToDouble";
+        else if (head.is_a<Hs::Var>())
+            return head.as_<Hs::Var>().name == "intToDouble";
+        else
+            return false;
+    };
+
     if (is_apply_exp(E) and E.size() == 2)
     {
-        if (E.sub()[0].is_a<var>() and E.sub()[0].as_<var>().name == "intToDouble" and E.sub()[1].is_int())
+        if (is_int_to_double(E.sub()[0]) and E.sub()[1].is_int())
         {
             int i = E.sub()[1].as_int();
+            return double(i);
+        }
+    }
+    else if (E.is_a<Hs::ApplyExp>())
+    {
+        auto [head,args] = Hs::decompose_apps({noloc, E});
+        if (args.size() == 1 and is_int_to_double(unloc(head)) and unloc(args[0]).is_int())
+        {
+            int i = unloc(args[0]).as_int();
             return double(i);
         }
     }
@@ -198,9 +219,9 @@ expression_ref generated_code_t::add_arguments(const expression_ref& F, const st
 {
     auto E = F;
     for(auto& state: used_states)
-	E = {E, state_values.at(state)};
+	E = HsG::Apply(E, {state_values.at(state)});
     for(auto& [_,x]: free_vars)
-	E = {E, x};
+	E = HsG::Apply(E, {x});
     return E;
 }
 
@@ -400,6 +421,25 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
         return;
     }
 
+    if (auto A = E.to<Hs::ApplyExp>())
+    {
+        get_generated_free_vars2(unloc(A->head), bound, free);
+        get_generated_free_vars2(unloc(A->arg), bound, free);
+        return;
+    }
+    else if (auto L = E.to<Hs::List>())
+    {
+        for(auto& element: L->elements)
+            get_generated_free_vars2(unloc(element), bound, free);
+        return;
+    }
+    else if (auto T = E.to<Hs::Tuple>())
+    {
+        for(auto& element: T->elements)
+            get_generated_free_vars2(unloc(element), bound, free);
+        return;
+    }
+
     if (E.is_expression())
     {
         if (auto C = parse_case_expression(E))
@@ -586,9 +626,9 @@ expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
     return expr.visit(CM::overloaded{
         [](const CM::IntLiteral& x) -> expression_ref { return x.value; },
         [](const CM::DoubleLiteral& x) -> expression_ref { return x.value; },
-        [](const CM::BoolLiteral& x) -> expression_ref { return x.value; },
-        [](const CM::StringLiteral& x) -> expression_ref { return String(x.value); },
-        [](const CM::Var& x) -> expression_ref { return var(x.name); },
+        [](const CM::BoolLiteral& x) -> expression_ref { return x.value ? Hs::True() : Hs::False(); },
+        [](const CM::StringLiteral& x) -> expression_ref { return Hs::Literal(Hs::String{x.value}); },
+        [](const CM::Var& x) -> expression_ref { return Hs::Var(x.name); },
         // Looks up a rule-template argument reference in the already generated
         // argument environment.
         [&](const CM::ArgRef& x) -> expression_ref
@@ -608,7 +648,7 @@ expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
         // legacy final-submodel rewrite.
         [&](const CM::Call<CM::NoAnn>& call) -> expression_ref
         {
-            expression_ref E = var(call.function);
+            expression_ref E = Hs::Var(call.function);
             for(int i=0;i<call.args.size();i++)
             {
                 auto& arg = call.args[i];
@@ -621,9 +661,9 @@ expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
                 // Compatibility behavior: rule templates encode `submodel +> f`
                 // as a final @submodel argument. Remove when bindings spell this directly.
                 if (i == call.args.size()-1 and is_template_submodel_arg(arg))
-                    E = {var("+>"), arg_expr, E};
+                    E = HsG::Apply(Hs::Var("+>"), {arg_expr, E});
                 else
-                    E = {E, arg_expr};
+                    E = HsG::Apply(E, {arg_expr});
             }
             return E;
         },
@@ -631,19 +671,19 @@ expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
         // located Haskell expression.
         [&](const CM::List<CM::NoAnn>& list) -> expression_ref
         {
-            vector<Hs::LExp> located_args;
+            vector<expression_ref> args;
             for(auto& element: list.elements)
-                located_args.push_back({noloc, make_rule_template_expr(element, simple_args)});
-            return Hs::List(located_args);
+                args.push_back(make_rule_template_expr(element, simple_args));
+            return HsG::List(args);
         },
         // Compiles a rule-template tuple by translating each element into a
         // located Haskell expression.
         [&](const CM::Tuple<CM::NoAnn>& tuple) -> expression_ref
         {
-            vector<Hs::LExp> located_args;
+            vector<expression_ref> args;
             for(auto& element: tuple.elements)
-                located_args.push_back({noloc, make_rule_template_expr(element, simple_args)});
-            return Hs::Tuple(located_args);
+                args.push_back(make_rule_template_expr(element, simple_args));
+            return HsG::Tuple(args);
         },
         [](const CM::Let<CM::NoAnn>&) -> expression_ref { throw myexception()<<"let expressions are not allowed in rule templates."; },
         // Preserves the old template lambda support by folding adjacent lambda
@@ -672,7 +712,7 @@ expression_ref make_rule_template_expr(const CM::UntypedExpr& expr, const map<st
         [&](const CM::Sample<CM::NoAnn>& sample) -> expression_ref
         {
             auto dist = make_rule_template_expr(sample.dist, simple_args);
-            return {var("sample"), dist};
+            return HsG::Apply(Hs::Var("sample"), {dist});
         }
     });
 }
@@ -824,7 +864,7 @@ translation_result_t CodeGenState::get_typed_model_list(const CM::List<CM::Ann>&
             result.code.log_value(log_name, argument_environment[i], element.ann.type);
     }
 
-    result.code.E = get_list(argument_environment);
+    result.code.E = HsG::List(argument_environment);
     add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
@@ -866,7 +906,7 @@ translation_result_t CodeGenState::get_typed_model_tuple(const CM::Tuple<CM::Ann
             result.code.log_value(log_name, argument_environment[i], element.ann.type);
     }
 
-    result.code.E = get_tuple(argument_environment);
+    result.code.E = HsG::Tuple(argument_environment);
     add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
@@ -890,17 +930,18 @@ translation_result_t CodeGenState::get_typed_model_let(const CM::Let<CM::Ann>& l
     result.code.perform_function = body_result.code.perform_function;
 
     vector<CDecls> decls_groups(1);
-    set<var> prev_free_vars;
+    set<Hs::Var> prev_free_vars;
     for(auto& [x,E]: result.code.decls)
     {
-        if (prev_free_vars.count(x))
+        auto generated_x = generated_var(x);
+        if (prev_free_vars.count(generated_x))
         {
             decls_groups.push_back({});
             prev_free_vars.clear();
         }
         decls_groups.back().push_back({x,E});
-        add(prev_free_vars, get_free_indices(E));
-        prev_free_vars.insert(x);
+        add(prev_free_vars, get_generated_free_vars(E));
+        prev_free_vars.insert(generated_x);
     }
     result.code.E = let_expression(decls_groups, result.code.E);
     result.code.decls.clear();
@@ -1021,7 +1062,7 @@ translation_result_t CodeGenState::get_typed_variable_call(const CM::Call<CM::An
         if (do_log)
             result.code.log_value(log_name, applied_arg, arg_expr.ann.type);
 
-        result.code.E = {result.code.E, applied_arg};
+        result.code.E = HsG::Apply(result.code.E, {applied_arg});
 
         i++;
     }

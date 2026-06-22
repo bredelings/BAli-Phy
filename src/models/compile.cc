@@ -243,7 +243,7 @@ void generated_code_t::log_value(const string& name, expression_ref value, const
     loggers.push_back(LogValue(name, value));
 }
 
-void generated_code_t::log_sub(const string& name, const var& log_var, const Loggers& ls)
+void generated_code_t::log_sub(const string& name, const Hs::Var& log_var, const Loggers& ls)
 {
     loggers.push_back(LogSub(name, log_var, ls));
 }

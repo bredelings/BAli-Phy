@@ -40,7 +40,7 @@ struct generated_code_t
     expression_ref generate() const;
 
     void log_value(const std::string&, expression_ref, const type_t&);
-    void log_sub(const std::string&, const var&, const Loggers&);
+    void log_sub(const std::string&, const Hs::Var&, const Loggers&);
 
     expression_ref add_arguments(const expression_ref& E, const std::map<std::string,expression_ref>& state_values) const;
 

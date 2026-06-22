@@ -3,7 +3,7 @@
 
 #include <string>                                   // for string
 #include <vector>                                   // for vector
-#include "computation/expression/var.H"             // for var
+#include "computation/haskell/var.H"                // for Hs::Var
 #include "computation/expression/expression_ref.H"  // for expression_ref
 #include "util/owned-ptr.H"                         // for owned_ptr
 #include "computation/expression/do_block.H"        // for do_block
@@ -36,14 +36,14 @@ struct LogValue: public LoggerObj
 struct LogSub: public LoggerObj
 {
     std::string prefix;
-    var log_var; // we might emit logger_var = loggers, and then do prefix %>% logger_var
+    Hs::Var log_var; // we might emit logger_var = loggers, and then do prefix %>% logger_var
     Loggers loggers;
 
     LogSub* clone() const {return new LogSub(*this);}
 
     std::string get_name() const {return prefix+"/";}
 
-    LogSub(const std::string& s, const var& v, const Loggers& ls)
+    LogSub(const std::string& s, const Hs::Var& v, const Loggers& ls)
         :prefix(s), log_var(v), loggers(ls)
     {}
 };
