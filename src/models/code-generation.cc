@@ -9,7 +9,6 @@
 #include "computation/haskell/ids.H"       // for haskell_qid
 #include "util/string/join.H"              // for join( )
 #include "computation/expression/let.H"
-#include "computation/expression/apply.H"
 #include "computation/expression/var.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/case.H"
@@ -163,15 +162,7 @@ expression_ref simplify_intToDouble(const expression_ref& E)
             return false;
     };
 
-    if (is_apply_exp(E) and E.size() == 2)
-    {
-        if (is_int_to_double(E.sub()[0]) and E.sub()[1].is_int())
-        {
-            int i = E.sub()[1].as_int();
-            return double(i);
-        }
-    }
-    else if (E.is_a<Hs::ApplyExp>())
+    if (E.is_a<Hs::ApplyExp>())
     {
         auto [head,args] = Hs::decompose_apps({noloc, E});
         if (args.size() == 1 and is_int_to_double(unloc(head)) and unloc(args[0]).is_int())
@@ -560,7 +551,6 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
              or is_gcable_type(E.type())
              or is_constructor(E)
              or is_lambda(E)
-             or is_apply(E)
              or is_case(E))
     {
         // These legacy atoms do not bind or reference variables on their own.
@@ -676,34 +666,7 @@ expression_ref eta_reduce(expression_ref E)
             continue;
         }
 
-        if (not (is_lambda_exp(E) and E.sub()[0].is_a<var>()))
-            break;
-
-        auto& x    = E.sub()[0].as_<var>();
-        auto& body = E.sub()[1];
-
-        if (is_apply_exp(body) and body.sub().back() == x)
-        {
-	    expression_ref E2;
-            // ($) f x  ==> f
-            if (body.size() == 2)
-                E2 = body.sub()[0];
-            // ($) f y x ==> ($) f y
-            else
-            {
-                // This is the simple case, where we can just pop an argument off the end of the list.
-                assert(body.size() > 2);
-                object_ptr<expression> body2 = body.as_expression().clone();
-                body2->sub.pop_back();
-                E2 = body2;
-            }
-	    if (get_generated_free_vars(E2).count(generated_var(x)))
-		break;
-	    else
-		E = E2;
-        }
-        else
-            break;
+        break;
     }
     return E;
 }
