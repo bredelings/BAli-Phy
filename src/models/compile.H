@@ -6,7 +6,6 @@
 #include <variant>                                  // for variant
 #include <vector>                                   // for vector
 #include "computation/expression/expression_ref.H"  // for expression_ref
-#include "computation/expression/do_block.H"        // for do_block
 #include "sequence/alphabet.H"                      // for alphabet
 #include "unification.H"                            // for type_t
 #include "util/json.hh"                             // for json

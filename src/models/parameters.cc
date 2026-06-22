@@ -42,7 +42,6 @@
 #include "alignment/alignment-util.H"
 #include "alignment/alignment-util2.H"
 #include "probability/probability.H"
-#include "computation/expression/do_block.H"
 #include "computation/module.H"
 #include "computation/operations.H" // for VectorFromList<>
 #include "math/exponential.H"

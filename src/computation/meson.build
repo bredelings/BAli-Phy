@@ -38,7 +38,6 @@ computation_sources = [
   'runtime/modifiable.cc', 'runtime/interchangeable.cc',
   'core/convert.cc',
   'expression/bool.cc',
-  'expression/do_block.cc',
 
   'machine/args.cc','machine/tokens.cc', 'machine/graph_register.cc',
   'machine/translate.cc',

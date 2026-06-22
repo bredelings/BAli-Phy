@@ -11,9 +11,6 @@
 #include "models/parse.H"   // for unparse_type
 
 #include "computation/loader.H"
-#include "computation/expression/list.H"
-#include "computation/expression/tuple.H"
-#include "computation/expression/var.H"
 #include "computation/haskell/generated.H"
 #include "computation/haskell/var.H"
 #include "computation/module.H"
@@ -144,42 +141,43 @@ string maybe_emit_code(map<string,string>& code_to_name, const string& name, con
     return name + code + "\n";
 }
 
-// Compatibility: A-T-prog still builds model programs with legacy do_block.
-// Remove this when A-T-prog stores Hs::Stmts and emits Hs declarations directly.
-static void perform_legacy_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers)
+// Emits the generated binding needed for an action or pure expression result.
+static void perform_action_simplified(Hs::Stmts& block, const Hs::Var& x, const Hs::Var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers)
 {
     if (is_action)
     {
         if (not has_loggers)
             // x <- code
-            block.perform(x, E);
+            HsG::Bind(block, HsG::VarPat(x), E);
         else
             // (x, log_x) <- code
-            block.perform(Tuple(x,log_x), E);
+            HsG::Bind(block, HsG::TuplePat({HsG::VarPat(x), HsG::VarPat(log_x)}), E);
     }
     else
     {
         if (has_loggers)
-            block.let(Tuple(x,log_x), E);
+            HsG::Let(block, HsG::TuplePat({HsG::VarPat(x), HsG::VarPat(log_x)}), E);
         else if (is_referenced)
-            block.let(x, E);
+            HsG::Let(block, x, E);
     }
 }
 
-var bind_and_log(bool do_log, const var& x, const var& log_x, const string& name, const expression_ref& E, bool is_action, bool has_loggers, do_block& block, vector<expression_ref>& loggers, bool is_referenced=true)
+// Binds a generated result and appends its logger expression when requested.
+Hs::Var bind_and_log(bool do_log, const Hs::Var& x, const Hs::Var& log_x, const string& name, const expression_ref& E, bool is_action, bool has_loggers, Hs::Stmts& block, vector<expression_ref>& loggers, bool is_referenced=true)
 {
-    perform_legacy_action_simplified(block.get_stmts(), x, log_x, is_referenced, E, is_action, has_loggers);
-    maybe_log(loggers, name, do_log?x:expression_ref{}, has_loggers?log_x:expression_ref{});
+    perform_action_simplified(block, x, log_x, is_referenced, E, is_action, has_loggers);
+    maybe_log(loggers, name, do_log ? expression_ref(x) : expression_ref{}, has_loggers ? expression_ref(log_x) : expression_ref{});
     return x;
 }
 
-var bind_and_log(bool do_log, const string& name, const expression_ref& E, bool is_action, bool has_loggers, do_block& block, vector<expression_ref>& loggers, bool is_referenced=true)
+// Chooses the generated variable names before binding and logging a result.
+Hs::Var bind_and_log(bool do_log, const string& name, const expression_ref& E, bool is_action, bool has_loggers, Hs::Stmts& block, vector<expression_ref>& loggers, bool is_referenced=true)
 {
     string var_name = name;
     if (var_name.empty() or not std::islower(var_name[0]))
         var_name = "_"+var_name;
-    var x(var_name);
-    var log_x("log_"+name);
+    Hs::Var x(var_name);
+    Hs::Var log_x("log_"+name);
     return bind_and_log(do_log, x, log_x, name, E, is_action, has_loggers, block, loggers, is_referenced);
 }
 
@@ -216,12 +214,12 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
 vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
 					     const vector<string>& scaleM_function_for_index,
 					     const expression_ref& tree_var,
-					     do_block& model,
+					     Hs::Stmts& model,
 					     vector<expression_ref>& model_loggers)
 {
     // define tree_length
-    var tree_length_var("tlength");
-    model.let(tree_length_var, HsG::Apply(Hs::Var("treeLength"), {tree_var}));
+    Hs::Var tree_length_var("tlength");
+    HsG::Let(model, tree_length_var, HsG::Apply(Hs::Var("treeLength"), {tree_var}));
     // log |T|
     maybe_log(model_loggers, "|T|", tree_length_var, {});
 
@@ -258,7 +256,7 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
 						    const vector<expression_ref>& alphabet_exps,
 						    const expression_ref& branch_categories,
 						    const expression_ref& tree,
-						    do_block& model,
+						    Hs::Stmts& model,
 						    vector<expression_ref>& model_loggers)
 {
     // M7. Substitution models
@@ -283,8 +281,8 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
                 {"tree",tree}
             });
 
-        auto smodel_var = var("smodel" + suffix);
-        auto log_smodel = var("log_"+smodel_var.name);
+        auto smodel_var = Hs::Var("smodel" + suffix);
+        auto log_smodel = Hs::Var("log_"+smodel_var.name);
         bind_and_log(false, smodel_var, log_smodel, prefix, smodel, code.is_action(), code.has_loggers(), model, model_loggers);
         smodels.push_back(smodel_var);
     }
@@ -294,7 +292,7 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
 vector<expression_ref> generate_indel_models(const vector<model_t>& IMs,
 					     const vector<string>& IM_function_for_index,
 					     const expression_ref& tree_var,
-					     do_block& model,
+					     Hs::Stmts& model,
 					     vector<expression_ref>& model_loggers)
 {
     // M8. Indel models
@@ -310,26 +308,26 @@ vector<expression_ref> generate_indel_models(const vector<model_t>& IMs,
         expression_ref imodel = Hs::Var(IM_function_for_index[i]);
         imodel = code.add_arguments(imodel, {{"topology",tree_var}});
 
-        auto imodel_var = var("imodel" + suffix);
-        auto log_imodel = var("log_"+imodel_var.name);
+        auto imodel_var = Hs::Var("imodel" + suffix);
+        auto log_imodel = Hs::Var("log_"+imodel_var.name);
         bind_and_log(false, imodel_var, log_imodel, prefix, imodel, code.is_action(), code.has_loggers(), model, model_loggers);
         imodels.push_back(imodel_var);
     }
     return imodels;
 }
 
-do_block generate_main(const variables_map& args,
+Hs::Stmts generate_main(const variables_map& args,
 		       const vector<pair<fs::path,string>>& filename_ranges,
 		       const vector<expression_ref>& alphabet_exps,
 		       const vector<int>& partition_group,
 		       const vector<int>& partition_group_size,
-		       const var& unaligned_sequence_data,
-		       const var& aligned_sequence_data,
-		       const expression_ref& tree,
-		       const expression_ref& topology,
-		       const expression_ref& tsvLogger,
-		       const expression_ref& jsonLogger,
-		       const expression_ref& treeLogger,
+		       const Hs::Var& unaligned_sequence_data,
+		       const Hs::Var& aligned_sequence_data,
+		       const Hs::Var& tree,
+		       const Hs::Var& topology,
+		       const Hs::Var& tsvLogger,
+		       const Hs::Var& jsonLogger,
+		       const Hs::Var& treeLogger,
 		       const expression_ref& model_fn,
 		       vector<tuple<int,expression_ref,expression_ref>>& alignment_loggers,
 		       vector<tuple<int,expression_ref,expression_ref>>& category_state_loggers)
@@ -340,12 +338,11 @@ do_block generate_main(const variables_map& args,
 
     int n_partitions = filename_ranges.size();
 
-    do_block main;
+    Hs::Stmts main;
 
-    expression_ref directory = Hs::Var("directory");
-    vector<expression_ref> prog_args = {directory};
+    Hs::Var directory("directory");
     if (not args.count("test"))
-        main.perform(get_list(prog_args), Hs::Var("getArgs"));
+        HsG::Bind(main, HsG::ListPat({HsG::VarPat(directory)}), Hs::Var("getArgs"));
 
     auto unaligned_partitions = unaligned_sequence_data;
     auto aligned_partitions = aligned_sequence_data;
@@ -366,12 +363,12 @@ do_block generate_main(const variables_map& args,
 	else
 	    E = HsG::Apply(Hs::Var("<$>"), {HsG::Apply(Hs::Var("mkAlignedCharacterData"), {alphabet_exps[0]}), E});
 
-        main.perform(var("sequenceData"), E);
+        HsG::Bind(main, HsG::VarPat(Hs::Var("sequenceData")), E);
     }
     else
     {
         // Main.1: Emit let filenames = ...
-        var filenames_var("filenames");
+        Hs::Var filenames_var("filenames");
         map<fs::path,int> index_for_filename;
         {
             vector<expression_ref> filenames_;
@@ -383,26 +380,25 @@ do_block generate_main(const variables_map& args,
                     filenames_.push_back(Hs::Literal(Hs::String(filename.string())));
                 }
             }
-            main.let(filenames_var,get_list(filenames_));
+            HsG::Let(main, filenames_var, HsG::List(filenames_));
         }
 
         {
             // Main.2: Emit let filenames_to_seqs = ...
-            var filename_to_seqs("seqs");
+            Hs::Var filename_to_seqs("seqs");
             {
-                main.perform(filename_to_seqs, HsG::Apply(Hs::Var("mapM"), {Hs::Var("loadSequences"), filenames_var}));
+                HsG::Bind(main, HsG::VarPat(filename_to_seqs), HsG::Apply(Hs::Var("mapM"), {Hs::Var("loadSequences"), filenames_var}));
             }
-            main.empty_stmt();
 
             // Main.3. Emit let sequence_data<n> = 
-            vector<var> unaligned_sequence_partitions;
-            vector<var> aligned_sequence_partitions;
+            vector<expression_ref> unaligned_sequence_partitions;
+            vector<expression_ref> aligned_sequence_partitions;
             for(int i=0;i<n_partitions;i++)
             {
 		int group = partition_group[i];
                 string part = std::to_string(i+1);
 
-                var partition_sequence_data_var("sequenceData"+part);
+                Hs::Var partition_sequence_data_var("sequenceData"+part);
 		if (partition_group_size[group] == 1)
 		    partition_sequence_data_var = (group==0) ? unaligned_sequence_data : aligned_sequence_data;
 
@@ -420,32 +416,27 @@ do_block generate_main(const variables_map& args,
 		    loaded_sequences = HsG::Apply(Hs::Var("mkAlignedCharacterData"), {alphabet_exps[i], loaded_sequences});
 		    aligned_sequence_partitions.push_back(partition_sequence_data_var);
 		}
-                main.let(partition_sequence_data_var, loaded_sequences);
-                main.empty_stmt();
+                HsG::Let(main, partition_sequence_data_var, loaded_sequences);
             }
 
             // Main.4. Emit let sequence_data = ...
 	    if (unaligned_sequence_partitions.size() > 1)
-		main.let(unaligned_partitions, get_list(unaligned_sequence_partitions));
+		HsG::Let(main, unaligned_partitions, HsG::List(unaligned_sequence_partitions));
 
 	    if (aligned_sequence_partitions.size() > 1)
-		main.let(aligned_partitions, get_list(aligned_sequence_partitions));
-
-            main.empty_stmt();
+		HsG::Let(main, aligned_partitions, HsG::List(aligned_sequence_partitions));
         }
     }
 
     if (fixed.count("tree"))
     {
         auto tree_filename = fixed.at("tree");
-        main.empty_stmt();
-        main.perform(tree, HsG::Apply(Hs::Var("<$>"), {Hs::Var("dropInternalLabels"), HsG::Apply(Hs::Var("readBranchLengthTree"), {Hs::Literal(Hs::String(tree_filename))})}));
+        HsG::Bind(main, HsG::VarPat(tree), HsG::Apply(Hs::Var("<$>"), {Hs::Var("dropInternalLabels"), HsG::Apply(Hs::Var("readBranchLengthTree"), {Hs::Literal(Hs::String(tree_filename))})}));
     }
     else if (fixed.count("topology"))
     {
         auto tree_filename = fixed.at("topology");
-        main.empty_stmt();
-        main.perform(topology, HsG::Apply(Hs::Var("<$>"), {Hs::Var("dropInternalLabels"), HsG::Apply(Hs::Var("readTreeTopology"), {Hs::Literal(Hs::String(tree_filename))})}));
+        HsG::Bind(main, HsG::VarPat(topology), HsG::Apply(Hs::Var("<$>"), {Hs::Var("dropInternalLabels"), HsG::Apply(Hs::Var("readTreeTopology"), {Hs::Literal(Hs::String(tree_filename))})}));
     }
 
     if (not args.count("test"))
@@ -453,87 +444,74 @@ do_block generate_main(const variables_map& args,
         // Initialize the parameters logger
 	if (log_formats.count("tsv"))
 	{
-	    main.empty_stmt();
-	    main.perform(tsvLogger, HsG::Apply(Hs::Var("tsvLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.log"))}), HsG::List({Hs::Literal(Hs::String("iter"))})}));
+	    HsG::Bind(main, HsG::VarPat(tsvLogger), HsG::Apply(Hs::Var("tsvLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.log"))}), HsG::List({Hs::Literal(Hs::String("iter"))})}));
 	}
 
 	if (log_formats.count("json"))
 	{
-	    main.empty_stmt();
-	    main.perform(jsonLogger, HsG::Apply(Hs::Var("jsonLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.log.json"))})}));
+	    HsG::Bind(main, HsG::VarPat(jsonLogger), HsG::Apply(Hs::Var("jsonLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.log.json"))})}));
 	}
 
         // Initialize the tree logger
         if (not fixed.count("tree"))
         {
-            main.empty_stmt();
-            main.perform(treeLogger, HsG::Apply(Hs::Var("treeLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.trees"))})}));
+            HsG::Bind(main, HsG::VarPat(treeLogger), HsG::Apply(Hs::Var("treeLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.trees"))})}));
         }
 
         // Initialize the alignment loggers
         if (not alignment_loggers.empty())
         {
-            main.empty_stmt();
-
             // Create alignment loggers.
             for(auto& [i,a,logger]: alignment_loggers)
             {
                 string filename = "C1.P"+std::to_string(i+1)+".fastas";
-                main.perform(logger, HsG::Apply(Hs::Var("alignmentLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String(filename))})}));
+                HsG::Bind(main, HsG::VarPat(logger.as_<Hs::Var>()), HsG::Apply(Hs::Var("alignmentLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String(filename))})}));
             }
         }
 
         // Initialize the category-state loggers
         if (not category_state_loggers.empty())
         {
-            main.empty_stmt();
-
             // Create alignment loggers.
             for(auto& [i, cs, logger]: category_state_loggers)
             {
                 string filename = "C1.catStates"+std::to_string(i+1)+".json";
-                main.perform(logger, HsG::Apply(Hs::Var("ejsonLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String(filename))})}));
+                HsG::Bind(main, HsG::VarPat(logger.as_<Hs::Var>()), HsG::Apply(Hs::Var("ejsonLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String(filename))})}));
             }
         }
     }
 
     // Main.5. Emit mymodel <- makeMCMCModel $ model sequence_data
-    main.empty_stmt();
-    main.perform(var("mymodel"), HsG::Apply(Hs::Var("$"), {Hs::Var("makeMCMCModel"), model_fn}));
+    HsG::Bind(main, HsG::VarPat(Hs::Var("mymodel")), HsG::Apply(Hs::Var("$"), {Hs::Var("makeMCMCModel"), model_fn}));
 
     // Main.6. Emit runMCMC iterations mymodel
     if (args.count("test"))
     {
         if (log_formats.count("tsv"))
         {
-            main.empty_stmt();
-            main.perform(var("line"), HsG::Apply(Hs::Var("logTableLine"), {Hs::Var("mymodel"), 0}));
-            main.empty_stmt();
-            main.perform(HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("line")}));
+            HsG::Bind(main, HsG::VarPat(Hs::Var("line")), HsG::Apply(Hs::Var("logTableLine"), {Hs::Var("mymodel"), 0}));
+            HsG::Expr(main, HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("line")}));
         }
 
         if (log_formats.count("json"))
         {
-            main.empty_stmt();
-            main.perform(var("jline"), HsG::Apply(Hs::Var("logJSONLine"), {Hs::Var("mymodel"), 0}));
-            main.empty_stmt();
-            main.perform(HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("jline")}));
+            HsG::Bind(main, HsG::VarPat(Hs::Var("jline")), HsG::Apply(Hs::Var("logJSONLine"), {Hs::Var("mymodel"), 0}));
+            HsG::Expr(main, HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("jline")}));
         }
 
         if (args.count("verbose"))
         {
-            main.perform(HsG::Apply(Hs::Var("writeTraceGraph"), {Hs::Var("mymodel")}));
+            HsG::Expr(main, HsG::Apply(Hs::Var("writeTraceGraph"), {Hs::Var("mymodel")}));
 //            M->write_factor_graph();
         }
     }
     else
     {
-        main.empty_stmt();
         // int subsample = args["subsample"].as<int>();
         int max_iterations = 200000;
         if (args.count("iterations"))
             max_iterations = args["iterations"].as<long int>();
-        main.perform(HsG::Apply(Hs::Var("runMCMC"), {max_iterations, Hs::Var("mymodel")}));
+        HsG::Expr(main, HsG::Apply(Hs::Var("runMCMC"), {max_iterations, Hs::Var("mymodel")}));
     }
 
     return main;
@@ -583,7 +561,7 @@ void write_header(std::ostream& program_file,
 }
 
 vector<expression_ref>
-compute_logged_quantities(do_block& model,
+compute_logged_quantities(Hs::Stmts& model,
 			  int n_branches,
 			  int n_partitions,
 			  const map<string,string>& fixed,
@@ -609,17 +587,17 @@ compute_logged_quantities(do_block& model,
     vector<expression_ref> sub_loggers;
     if (imodel_index)
     {
-	var alignment_length("alignment_length"+part_suffix);
-	model.let(alignment_length, HsG::Apply(Hs::Var("alignmentLength"), {alignment_on_tree}));
+	Hs::Var alignment_length("alignment_length"+part_suffix);
+	HsG::Let(model, alignment_length, HsG::Apply(Hs::Var("alignmentLength"), {alignment_on_tree}));
 	alignment_lengths.push_back(alignment_length);
 
 	if (n_branches > 0)
 	{
-	    var num_indels("num_indels"+part_suffix);
-	    model.let(num_indels, HsG::Apply(Hs::Var("totalNumIndels"), {alignment_on_tree}));
+	    Hs::Var num_indels("num_indels"+part_suffix);
+	    HsG::Let(model, num_indels, HsG::Apply(Hs::Var("totalNumIndels"), {alignment_on_tree}));
 	    total_num_indels.push_back(num_indels);
-	    var length_indels("total_length_indels"+part_suffix);
-	    model.let(length_indels, HsG::Apply(Hs::Var("totalLengthIndels"), {alignment_on_tree}));
+	    Hs::Var length_indels("total_length_indels"+part_suffix);
+	    HsG::Let(model, length_indels, HsG::Apply(Hs::Var("totalLengthIndels"), {alignment_on_tree}));
 	    total_length_indels.push_back(length_indels);
 
 	    maybe_log(sub_loggers, "|A|", alignment_length, {});
@@ -629,9 +607,9 @@ compute_logged_quantities(do_block& model,
 
 	if (not fixed.count("alignment"))
 	{
-	    var properties_A("properties_A"+part_suffix);
-	    var prior_A("prior_A" + part_suffix);
-	    model.let(prior_A, HsG::Apply(Hs::Var("ln"), {HsG::Apply(Hs::Var("probability"), {properties_A})}));
+	    Hs::Var properties_A("properties_A"+part_suffix);
+	    Hs::Var prior_A("prior_A" + part_suffix);
+	    HsG::Let(model, prior_A, HsG::Apply(Hs::Var("ln"), {HsG::Apply(Hs::Var("probability"), {properties_A})}));
 	    total_prior_A.push_back(prior_A);
 	    maybe_log(sub_loggers, "prior_A", prior_A, {});
 	}
@@ -639,8 +617,8 @@ compute_logged_quantities(do_block& model,
     else
     {
 	// For fixed-alignment partitions, the alignment length comes from the observed-data matrix.
-	var alignment_length("alignment_length"+part_suffix);
-	model.let(alignment_length, HsG::Apply(Hs::Var("alignmentLength"), {sequence_data}));
+	Hs::Var alignment_length("alignment_length"+part_suffix);
+	HsG::Let(model, alignment_length, HsG::Apply(Hs::Var("alignmentLength"), {sequence_data}));
 	alignment_lengths.push_back(alignment_length);
     }
 
@@ -648,11 +626,11 @@ compute_logged_quantities(do_block& model,
 
     if (n_branches > 0)
     {
-        std::optional<var> anc_states;
+        std::optional<Hs::Var> anc_states;
 	if (imodel_index or get_setting_or("write-fixed-alignments",false) or get_setting_or("write-category-states", false))
         {
-            anc_states = var("ancStates" + part_suffix);
-            model.let(*anc_states, HsG::Apply(Hs::Var("prop_anc_cat_states"), {properties}));
+            anc_states = Hs::Var("ancStates" + part_suffix);
+            HsG::Let(model, *anc_states, HsG::Apply(Hs::Var("prop_anc_cat_states"), {properties}));
         }
         
 	if (imodel_index or get_setting_or("write-fixed-alignments",false))
@@ -664,29 +642,30 @@ compute_logged_quantities(do_block& model,
             auto alignment = alignment_on_tree;
             if (not imodel_index)
             {
-                alignment = var("alignment" + part_suffix);
-                model.let(alignment, HsG::Apply(Hs::Var("leafAlignment"), {tree, sequence_data}));
+                Hs::Var fixed_alignment("alignment" + part_suffix);
+                alignment = fixed_alignment;
+                HsG::Let(model, fixed_alignment, HsG::Apply(Hs::Var("leafAlignment"), {tree, sequence_data}));
             }
 
-	    var anc_alignment("ancAlignment"+part_suffix);
-	    model.let(anc_alignment, HsG::Apply(Hs::Var("toFasta"), {HsG::Apply(Hs::Var("ancestralAlignment"), {tree, alignment, HsG::Apply(Hs::Var("getSMap"), {smodel}), alphabet_exp, *anc_states})}));
-            alignment_loggers.push_back({i, anc_alignment,var("logA"+part_suffix)});
+	    Hs::Var anc_alignment("ancAlignment"+part_suffix);
+	    HsG::Let(model, anc_alignment, HsG::Apply(Hs::Var("toFasta"), {HsG::Apply(Hs::Var("ancestralAlignment"), {tree, alignment, HsG::Apply(Hs::Var("getSMap"), {smodel}), alphabet_exp, *anc_states})}));
+            alignment_loggers.push_back({i, anc_alignment, Hs::Var("logA"+part_suffix)});
 	}
 
         if (get_setting_or("write-category-states", false))
         {
-            var cat_states("catStates" + part_suffix);
-            model.let(cat_states, HsG::Apply(Hs::Var("labeledNodeMap"), {tree, *anc_states}));
-            category_state_loggers.push_back({i, HsG::Apply(Hs::Var("J.toEncoding"), {cat_states}), var("logCatStates"+part_suffix)});
+            Hs::Var cat_states("catStates" + part_suffix);
+            HsG::Let(model, cat_states, HsG::Apply(Hs::Var("labeledNodeMap"), {tree, *anc_states}));
+            category_state_loggers.push_back({i, HsG::Apply(Hs::Var("J.toEncoding"), {cat_states}), Hs::Var("logCatStates"+part_suffix)});
 	}
         
-	var substs("substs"+part_suffix);
+	Hs::Var substs("substs"+part_suffix);
 	expression_ref costs = HsG::Apply(Hs::Var("unitCostMatrix"), {alphabet_exp});
 	expression_ref aligned_data = sequence_data;
 	if (imodel_index)
 	    aligned_data = HsG::Tuple({sequence_data, alignment_on_tree});
 
-	model.let(substs, HsG::Apply(Hs::Var("parsimony"), {tree, costs, aligned_data}));
+	HsG::Let(model, substs, HsG::Apply(Hs::Var("parsimony"), {tree, costs, aligned_data}));
 	maybe_log(sub_loggers, "#substs", substs, {});
 	if (alphabet_exp.print().starts_with("mkRNA"))
 	{
@@ -694,9 +673,9 @@ compute_logged_quantities(do_block& model,
 	    if (not suffix.empty())
 		suffix = "_"+suffix;
 
-	    var substs_pos2("substsRNA"+suffix);
+	    Hs::Var substs_pos2("substsRNA"+suffix);
 	    expression_ref costs_pos2 = HsG::Apply(Hs::Var("pos2CostMatrix"), {alphabet_exp});
-	    model.let(substs_pos2, HsG::Apply(Hs::Var("parsimony"), {tree, costs_pos2, aligned_data}));
+	    HsG::Let(model, substs_pos2, HsG::Apply(Hs::Var("parsimony"), {tree, costs_pos2, aligned_data}));
 	    maybe_log(sub_loggers, "#substsRNA", substs_pos2, {});
 	}
 
@@ -779,11 +758,11 @@ std::string generate_atmodel_program(const variables_map& args,
 	program_file<<"sampleTree"<<print_equals_function(tree_model.code.generate())<<"\n";
 
     /* --------------------------------------------------------------- */
-    do_block model;
+    Hs::Stmts model;
 
     // FIXME: We can't load the alignments to read their names until we know the alphabets!
     // FIXME: Can we load the alignments as SEQUENCES first?
-    var taxon_names_var("taxa");
+    Hs::Var taxon_names_var("taxa");
 
     // Loggers = [(string,(Maybe a,Loggers)]
     vector<expression_ref> model_loggers;
@@ -803,13 +782,13 @@ std::string generate_atmodel_program(const variables_map& args,
 	partition_index[i] = partition_group_size[g]++;
     }
 
-    auto unaligned_sequence_data = var("sequenceData");
-    auto aligned_sequence_data = var("sequenceData");
+    Hs::Var unaligned_sequence_data("sequenceData");
+    Hs::Var aligned_sequence_data("sequenceData");
 
     if (partition_group_size[0] > 0 and partition_group_size[1] > 0)
     {
-	unaligned_sequence_data = var("unalignedSequenceData");
-	aligned_sequence_data = var("alignedSequenceData");
+	unaligned_sequence_data = Hs::Var("unalignedSequenceData");
+	aligned_sequence_data = Hs::Var("alignedSequenceData");
     }
 
     auto getSequenceData = [&](int p) -> expression_ref
@@ -829,34 +808,23 @@ std::string generate_atmodel_program(const variables_map& args,
 
     if (n_partitions > 0)
     {
-        model.let(taxon_names_var, HsG::Apply(Hs::Var("getTaxa"), {getSequenceData(0)}));
-        model.empty_stmt();
+        HsG::Let(model, taxon_names_var, HsG::Apply(Hs::Var("getTaxa"), {getSequenceData(0)}));
     }
 
     // We could fix the whole tree or just the topology.
     expression_ref branch_lengths = Hs::Var("IntMap.empty");
 
-    // Compatibility: A-T-prog still uses legacy do_block, while generated
-    // declarations now store Hs::Stmts. Remove when A-T-prog uses Hs::Do.
     for(auto& stmt: decls.code.stmts.stmts)
-	model.get_stmts().push_back(unloc(stmt));
+	model.stmts.push_back(stmt);
     auto decl_loggers = decls.code.loggers;
     simplify(decl_loggers);
     for(auto& logger: generate_loggers(model, decl_loggers))
 	model_loggers.push_back(logger);
 
-    model.empty_stmt();
-
     // M4. Branch-length tree
-    auto tree_var = var("tree");
+    auto tree_var = Hs::Var("tree");
     if (not fixed.count("tree"))
     {
-//      if (not is_reversible(SMs) and not fixed.count("topology") and not fixed.count("tree"))
-//      {
-//          model.perform(var("root"), {var("sample"),{var("uniformCategoricalOn"),{var("nodes"), var("topology")}}});
-//          tree_exp = {var("addRoot"),var("root"),tree_exp};
-//      }
-
         string var_name = "tree";
 
         auto code = tree_model.code;
@@ -869,7 +837,7 @@ std::string generate_atmodel_program(const variables_map& args,
     }
 
     expression_ref subst_tree=tree_var;
-    auto subst_rates_var = var("substRates");
+    auto subst_rates_var = Hs::Var("substRates");
     if (not subst_rates_model.empty())
     {
         string var_name = "substRates";
@@ -877,14 +845,13 @@ std::string generate_atmodel_program(const variables_map& args,
         code.haskell_lambda_vars.clear(); // This isn't a function, these vars should be in scope.
         subst_rates_var = bind_and_log(false, var_name, code.generate(), code.is_action(), code.has_loggers(), model, model_loggers);
 
-        auto subst_tree_var = var("substTree");
-        model.let(subst_tree_var, HsG::Apply(Hs::Var("addBranchRates"), {Hs::Var("substRates"), tree_var}));
+        auto subst_tree_var = Hs::Var("substTree");
+        HsG::Let(model, subst_tree_var, HsG::Apply(Hs::Var("addBranchRates"), {Hs::Var("substRates"), tree_var}));
         subst_tree = subst_tree_var;
-        model.empty_stmt();
     }
 
     expression_ref indel_tree=tree_var;
-    auto indel_rates_var = var("indelRates");
+    auto indel_rates_var = Hs::Var("indelRates");
     if (not indel_rates_model.empty())
     {
         string var_name = "indelRates";
@@ -892,10 +859,9 @@ std::string generate_atmodel_program(const variables_map& args,
         code.haskell_lambda_vars.clear(); // This isn't a function, these vars should be in scope.
         indel_rates_var = bind_and_log(false, var_name, code.generate(), code.is_action(), code.has_loggers(), model, model_loggers);
 
-        auto indel_tree_var = var("indelTree");
-        model.let(indel_tree_var, HsG::Apply(Hs::Var("addBranchRates"), {Hs::Var("indelRates"), tree_var}));
+        auto indel_tree_var = Hs::Var("indelTree");
+        HsG::Let(model, indel_tree_var, HsG::Apply(Hs::Var("addBranchRates"), {Hs::Var("indelRates"), tree_var}));
         indel_tree = indel_tree_var;
-        model.empty_stmt();
     }
 
     set<string> used_states;
@@ -906,8 +872,8 @@ std::string generate_atmodel_program(const variables_map& args,
     expression_ref branch_categories;
     if (used_states.count("branch_categories"))
     {
-        var branch_categories_var("branch_categories");
-        model.let(branch_categories_var, HsG::Apply(Hs::Var("foregroundBranches"), {tree_var, Hs::Literal(Hs::String("foreground"))}));
+        Hs::Var branch_categories_var("branch_categories");
+        HsG::Let(model, branch_categories_var, HsG::Apply(Hs::Var("foregroundBranches"), {tree_var, Hs::Literal(Hs::String("foreground"))}));
         branch_categories = branch_categories_var;
     }
 
@@ -919,14 +885,13 @@ std::string generate_atmodel_program(const variables_map& args,
 
         if (not fixed.count("tree"))
         {
-            model.perform(HsG::Apply(Hs::Var("addMove"), {2, HsG::Apply(Hs::Var("scaleGroupsSlice"), {HsG::List(scales), branch_lengths})}));
-	    model.perform(HsG::Apply(Hs::Var("addMove"), {1, HsG::Apply(Hs::Var("scaleGroupsMH"), {HsG::List(scales), branch_lengths})}));
+            HsG::Expr(model, HsG::Apply(Hs::Var("addMove"), {2, HsG::Apply(Hs::Var("scaleGroupsSlice"), {HsG::List(scales), branch_lengths})}));
+	    HsG::Expr(model, HsG::Apply(Hs::Var("addMove"), {1, HsG::Apply(Hs::Var("scaleGroupsMH"), {HsG::List(scales), branch_lengths})}));
         }
     }
 
     auto smodels = generate_substitution_models(SMs, s_mapping, SM_function_for_index, alphabet_exps, branch_categories, tree_var, model, model_loggers);
     auto imodels = generate_indel_models(IMs, IM_function_for_index, tree_var, model, model_loggers);
-    model.empty_stmt();
 
     vector<tuple<int,expression_ref,expression_ref>> alignment_loggers; // partition, alignment var, alignment logger
     vector<tuple<int,expression_ref,expression_ref>> category_state_loggers; // partition, category-state var, category-state logger
@@ -954,7 +919,7 @@ std::string generate_atmodel_program(const variables_map& args,
 	partition_scales.push_back(scale);
 	
         // Model.Partition.2. Sample the alignment
-        var alignment_on_tree("alignment" + part_suffix);
+        Hs::Var alignment_on_tree("alignment" + part_suffix);
         if (imodel_index)
         {
             assert(like_calcs[i] == 0);
@@ -962,15 +927,17 @@ std::string generate_atmodel_program(const variables_map& args,
 
             if (fixed.count("alignment"))
             {
-                model.let(alignment_on_tree, HsG::Apply(Hs::Var("alignmentOnTreeFromSequences"), {tree_var, sequence_data_var}));
+                HsG::Let(model, alignment_on_tree, HsG::Apply(Hs::Var("alignmentOnTreeFromSequences"), {tree_var, sequence_data_var}));
             }
             else
             {
-                var leaf_sequence_lengths("sequence_lengths" + part_suffix);
-                model.let(leaf_sequence_lengths, HsG::Apply(Hs::Var("getSequenceLengths"), {sequence_data_var}));
+                Hs::Var leaf_sequence_lengths("sequence_lengths" + part_suffix);
+                HsG::Let(model, leaf_sequence_lengths, HsG::Apply(Hs::Var("getSequenceLengths"), {sequence_data_var}));
 
-                var properties_A("properties_A"+part_suffix);
-		model.perform(Tuple(alignment_on_tree, properties_A), HsG::Apply(Hs::Var("sampleWithProps"), {HsG::Apply(Hs::Var("phyloAlignment"), {indel_tree, imodel, scale, leaf_sequence_lengths})}));
+                Hs::Var properties_A("properties_A"+part_suffix);
+		HsG::Bind(model,
+                          HsG::TuplePat({HsG::VarPat(alignment_on_tree), HsG::VarPat(properties_A)}),
+                          HsG::Apply(Hs::Var("sampleWithProps"), {HsG::Apply(Hs::Var("phyloAlignment"), {indel_tree, imodel, scale, leaf_sequence_lengths})}));
             }
         }
 
@@ -994,13 +961,11 @@ std::string generate_atmodel_program(const variables_map& args,
                     throw myexception()<<"Unrecognized ascertainment condition '"<<s_condition<<"'";
             }
 	}
-	var properties("properties"+part_suffix);
+	Hs::Var properties("properties"+part_suffix);
 	expression_ref sequence_data = sequence_data_var;
 	if (fixed.contains("alignment") and i_mapping[i])
 	    sequence_data = HsG::Apply(Hs::Var("unalign"), {sequence_data});
-	model.perform(properties, HsG::Apply(Hs::Var("observe"), {sequence_data, distribution}));
-
-        model.empty_stmt();
+	HsG::Bind(model, HsG::VarPat(properties), HsG::Apply(Hs::Var("observe"), {sequence_data, distribution}));
 
         // Model.Partition.4 Logging.
 	auto sub_loggers = compute_logged_quantities(model,
@@ -1023,23 +988,22 @@ std::string generate_atmodel_program(const variables_map& args,
 						     alignment_loggers,
 						     category_state_loggers);
 
-        var part_loggers("part"+part+"Loggers");
-        model.let(part_loggers, HsG::List(sub_loggers));
+        Hs::Var part_loggers("part"+part+"Loggers");
+        HsG::Let(model, part_loggers, HsG::List(sub_loggers));
         maybe_log(model_loggers, "P"+part, {}, part_loggers);
-        model.empty_stmt();
     }
     bool has_a_variable_alignment = not total_num_indels.empty();
-    model.let(var("alignmentLengths"), HsG::List(alignment_lengths));
+    HsG::Let(model, Hs::Var("alignmentLengths"), HsG::List(alignment_lengths));
     if (n_branches > 0)
     {
 	if (n_partitions > 1)
 	{
-	    model.let(var("scales"), HsG::List(partition_scales));
+	    HsG::Let(model, Hs::Var("scales"), HsG::List(partition_scales));
 	    expression_ref a_lengths = HsG::Apply(Hs::Var("fmap"), {Hs::Var("fromIntegral"), Hs::Var("alignmentLengths")});
-	    model.let(var("scale"), HsG::Apply(Hs::Var("weightedAverage"), {a_lengths, Hs::Var("scales")}));
+	    HsG::Let(model, Hs::Var("scale"), HsG::Apply(Hs::Var("weightedAverage"), {a_lengths, Hs::Var("scales")}));
 	}
 	else
-	    model.let(var("scale"), Hs::Var("scale1"));
+	    HsG::Let(model, Hs::Var("scale"), Hs::Var("scale1"));
 	maybe_log(model_loggers, "scale", Hs::Var("scale"), {});
 	maybe_log(model_loggers, "scale*|T|", HsG::Apply(Hs::Var("*"), {Hs::Var("scale"), Hs::Var("tlength")}), {});
     }
@@ -1055,8 +1019,6 @@ std::string generate_atmodel_program(const variables_map& args,
     if (not total_prior_A.empty())
         maybe_log(model_loggers, "prior_A", HsG::Apply(Hs::Var("sum"), {HsG::List(total_prior_A)}), {});
 
-    var sequences("sequences");
-
     expression_ref model_fn = Hs::Var("model");
 
     // Pass in the sequence data for the two groups.
@@ -1066,17 +1028,17 @@ std::string generate_atmodel_program(const variables_map& args,
 	model_fn = HsG::Apply(model_fn, {aligned_sequence_data});
 
     // Pass in the fixed tree or topology
-    auto tree = var("tree");
-    auto topology = var("topology");
+    auto tree = Hs::Var("tree");
+    auto topology = Hs::Var("topology");
     if (fixed.count("tree"))
         model_fn = HsG::Apply(model_fn, {tree});
     else if (fixed.count("topology"))
         model_fn = HsG::Apply(model_fn, {topology});
 
     // Pass in the loggers
-    var jsonLogger("logParamsJSON");
-    var tsvLogger("logParamsTSV");
-    auto treeLogger = var("logTree");
+    Hs::Var jsonLogger("logParamsJSON");
+    Hs::Var tsvLogger("logParamsTSV");
+    auto treeLogger = Hs::Var("logTree");
     if (not args.count("test"))
     {
 	if (log_formats.count("tsv"))
@@ -1103,52 +1065,43 @@ std::string generate_atmodel_program(const variables_map& args,
         }
     }
 
-    var loggers_var("loggers");
-    model.let(loggers_var, HsG::List(model_loggers));
-    model.empty_stmt();
+    Hs::Var loggers_var("loggers");
+    HsG::Let(model, loggers_var, HsG::List(model_loggers));
 
     // Add the logger for scalar parameters
     if (not args.count("test"))
     {
 	if (log_formats.count("tsv"))
 	{
-	    model.empty_stmt();
-	    model.perform(HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(tsvLogger, {loggers_var})}));
+	    HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(tsvLogger, {loggers_var})}));
 	}
 
 	if (log_formats.count("json"))
 	{
-	    model.empty_stmt();
-	    model.perform(HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(jsonLogger, {loggers_var})}));
+	    HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(jsonLogger, {loggers_var})}));
 	}
 
         // Add the tree logger
         if (not fixed.count("tree"))
         {
-            model.empty_stmt();
 	    expression_ref scaled_tree = tree_var;
 	    if (n_branches > 0)
 		scaled_tree = HsG::Apply(Hs::Var("scaleBranchLengths"), {Hs::Var("scale"), scaled_tree});
-            model.perform(HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(treeLogger, {HsG::Apply(Hs::Var("addInternalLabels"), {scaled_tree})})}));
+            HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(treeLogger, {HsG::Apply(Hs::Var("addInternalLabels"), {scaled_tree})})}));
         }
 
         // Add the alignment loggers.
-        if (not alignment_loggers.empty())
-            model.empty_stmt();
         for(auto& [i,a,l]: alignment_loggers)
-            model.perform(HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(HsG::Apply(Hs::Var("$"), {HsG::Apply(Hs::Var("every"), {10})}), {HsG::Apply(l, {a})})}));
+            HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(HsG::Apply(Hs::Var("$"), {HsG::Apply(Hs::Var("every"), {10})}), {HsG::Apply(l, {a})})}));
 
         // Add the category-state loggers
-        if (not category_state_loggers.empty())
-            model.empty_stmt();
         for(auto& [i,cs,l]: category_state_loggers)
-            model.perform(HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(HsG::Apply(Hs::Var("$"), {HsG::Apply(Hs::Var("every"), {10})}), {HsG::Apply(l, {cs})})}));
+            HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(HsG::Apply(Hs::Var("$"), {HsG::Apply(Hs::Var("every"), {10})}), {HsG::Apply(l, {cs})})}));
     }
 
-    model.empty_stmt();
-    model.finish_return( loggers_var );
+    HsG::Return(model, loggers_var);
     program_file<<"\n";
-    program_file<<model_fn<<" = "<<model.get_expression().print()<<"\n";
+    program_file<<model_fn<<" = "<<HsG::Do(model).print()<<"\n";
 
     auto main = generate_main(args,
 			      filename_ranges,
@@ -1164,9 +1117,9 @@ std::string generate_atmodel_program(const variables_map& args,
 			      treeLogger,
 			      model_fn,
 			      alignment_loggers,
-                              category_state_loggers);
+			      category_state_loggers);
 
-    program_file<<"\nmain = "<<main.get_expression().print()<<"\n";
+    program_file<<"\nmain = "<<HsG::Do(main).print()<<"\n";
 
     return program_file.str();
 }

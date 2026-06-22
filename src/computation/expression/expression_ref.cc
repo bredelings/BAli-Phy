@@ -12,7 +12,6 @@
 #include "tuple.H"
 #include "list.H" // for char_list
 #include "bool.H"
-#include "do_block.H"
 #include "computation/module.H"
 #include <set>
 #include <iterator>
@@ -138,8 +137,7 @@ bool needs_application_arg_parens(const expression_ref& E)
     if (is_haskell_compound_arg(E))
         return true;
 
-    // Maybe do blocks should have more visible structure?
-    if (not E.size() and not E.is_a<do_block>())
+    if (not E.size())
         return false;
 
     if (E.head().is_a<constructor>())

@@ -6,20 +6,6 @@ using std::vector;
 
 namespace HsG = Haskell::Generated;
 
-// Builds a one-binding Haskell let group for generated logger temporaries.
-static Hs::Binds make_logger_binds(const Hs::Var& x, const expression_ref& E)
-{
-    Hs::Decls decls;
-    decls.push_back({noloc, Hs::simple_decl({noloc, x}, {noloc, E})});
-    return Hs::Binds({decls});
-}
-
-// Appends a generated Haskell let statement used to name nested logger lists.
-static void append_logger_let(Hs::Stmts& code, const Hs::Var& x, const expression_ref& E)
-{
-    code.stmts.push_back({noloc, Hs::LetQual({noloc, make_logger_binds(x, E)})});
-}
-
 void simplify(Loggers& loggers)
 {
     // 1. Second, determine if we have subloggers where we can lift children out and append them to the prefix.
@@ -127,32 +113,6 @@ void simplify(Loggers& loggers)
     std::swap(loggers, loggers2);
 }
 
-// Compatibility: legacy A-T-prog generation still emits logger lets into do_block.
-// Remove this overload when A-T-prog stores Hs::Stmts instead of legacy Stmts.
-vector<expression_ref> generate_loggers(do_block& code, const Loggers& loggers)
-{
-    vector<expression_ref> simple_loggers;
-    for(auto& l: loggers)
-    {
-        if (auto lsub = l.as<LogSub>())
-        {
-            auto log_x = lsub->log_var;
-            auto logger_list = generate_loggers_list(code,lsub->loggers);
-            code.let(var(log_x.name),logger_list);
-            simple_loggers.push_back(HsG::Apply(Hs::Var("%>%"),
-                                                {Hs::Literal(Hs::String{lsub->prefix}),
-                                                 log_x}));
-        }
-        else if (auto lvalue = l.as<LogValue>())
-            simple_loggers.push_back(HsG::Apply(Hs::Var("%=%"),
-                                                {Hs::Literal(Hs::String{lvalue->name}),
-                                                 lvalue->value}));
-        else
-            std::abort();
-    }
-    return simple_loggers;
-}
-
 // Emits logger expressions while appending nested logger let-bindings to Hs::Stmts.
 vector<expression_ref> generate_loggers(Hs::Stmts& code, const Loggers& loggers)
 {
@@ -163,7 +123,7 @@ vector<expression_ref> generate_loggers(Hs::Stmts& code, const Loggers& loggers)
         {
             auto log_x = lsub->log_var;
             auto logger_list = generate_loggers_list(code,lsub->loggers);
-            append_logger_let(code, log_x, logger_list);
+            HsG::Let(code, log_x, logger_list);
             simple_loggers.push_back(HsG::Apply(Hs::Var("%>%"),
                                                 {Hs::Literal(Hs::String{lsub->prefix}),
                                                  log_x}));
@@ -176,11 +136,6 @@ vector<expression_ref> generate_loggers(Hs::Stmts& code, const Loggers& loggers)
             std::abort();
     }
     return simple_loggers;
-}
-
-expression_ref generate_loggers_list(do_block& code, const Loggers& loggers)
-{
-    return HsG::List(generate_loggers(code,loggers));
 }
 
 // Generates the logger list expression for generated code using Hs::Stmts.
