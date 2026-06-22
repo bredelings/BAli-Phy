@@ -13,8 +13,6 @@
 #include "alignment/index-matrix.H"                 // for get_alignment
 #include "alignment/load.H"                         // for load_alignment
 #include "computation/expression/expression_ref.H"  // for expression_ref
-#include "computation/expression/lambda.H"          // for lambda_quantify
-#include "computation/expression/var.H"             // for var
 #include "computation/object.H"                     // for intrusive_ptr_rel...
 #include "computation/program.H"                    // for class Program
 #include "link-partitions.H"                        // for shared_items, get...

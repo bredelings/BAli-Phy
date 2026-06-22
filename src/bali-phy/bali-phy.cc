@@ -69,6 +69,7 @@ namespace mpi = boost::mpi;
 #include "computation/machine/graph_register.H"
 #include "models/A-T-prog.H" // for gen_model_program( )
 
+#include "computation/haskell/generated.H"
 #include "computation/haskell/ids.H"
 #include "computation/typecheck/tidy.H"  // for TidyState.print( )
 
@@ -78,6 +79,8 @@ namespace mpi = boost::mpi;
 #include "io.H"
 #include "system.H"
 #include "cmd_line.H"
+
+namespace HsG = Haskell::Generated;
 #include "computation/loader.H"
 
 namespace fs = std::filesystem;
@@ -415,11 +418,11 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     program_file<<"\n";
     program_file<<"main = do\n";
 
-    expression_ref E = var("print_model");
+    expression_ref E = Hs::Var("print_model");
     for(auto& state_name: print.code.used_states)
     {
         if (state_name == "alphabet")
-            E = {E, a};
+            E = HsG::Apply(E, {a});
         else if (state_name == "branch_categories")
         {
             throw myexception()<<"Can't handle state 'branch_categories' in --print expressions right now.";
@@ -450,7 +453,7 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
 expression_ref get_alphabet_expression_from_args(const variables_map& args)
 {
     if (not args.count("alphabet") or args.at("alphabet").as<vector<string>>().empty())
-	return {var("error"),String("No alphabet!")};
+	return HsG::Apply(Hs::Var("error"), {Hs::Literal(Hs::String("No alphabet!"))});
 
     auto anames = args.at("alphabet").as<vector<string>>();
     if (anames.size() > 1)
