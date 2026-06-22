@@ -769,10 +769,10 @@ translation_result_t get_typed_constant_model(const CM::TypedExpr& expr)
 {
     translation_result_t result;
     expr.visit(CM::overloaded{
-        [&](const CM::IntLiteral& x) { result.code.E = x.value; },
+        [&](const CM::IntLiteral& x) { result.code.E = Hs::Literal(Hs::Integer{integer(x.value)}); },
         [&](const CM::DoubleLiteral& x) { result.code.E = x.value; },
-        [&](const CM::BoolLiteral& x) { result.code.E = x.value; },
-        [&](const CM::StringLiteral& x) { result.code.E = String(x.value); },
+        [&](const CM::BoolLiteral& x) { result.code.E = x.value ? Hs::True() : Hs::False(); },
+        [&](const CM::StringLiteral& x) { result.code.E = Hs::Literal(Hs::String{x.value}); },
         [](const auto&) { std::abort(); }
     });
     return result;
@@ -836,14 +836,14 @@ translation_result_t CodeGenState::get_typed_model_list(const CM::List<CM::Ann>&
     int N = list.elements.size();
 
     translation_result_t result;
-    vector<expression_ref> argument_environment(N);
+    vector<Hs::Exp> elements(N);
     for(int i=0; i<N; i++)
     {
         string var_name = "_"+std::to_string(i+1);
         string log_name = "["+std::to_string(i+1)+"]";
 
         auto x = scope2.get_var(var_name);
-        argument_environment[i] = x;
+        elements[i] = x;
 
         auto& element = list.elements[i];
         auto element_result = scope2.get_model_as(element);
@@ -858,13 +858,13 @@ translation_result_t CodeGenState::get_typed_model_list(const CM::List<CM::Ann>&
         else if (do_log and not is_generated_var_expr(element_result.code.E))
             result.code.stmts.let(legacy_var(x), element_result.code.E);
         else
-            argument_environment[i] = element_result.code.E;
+            elements[i] = element_result.code.E;
 
         if (do_log)
-            result.code.log_value(log_name, argument_environment[i], element.ann.type);
+            result.code.log_value(log_name, elements[i], element.ann.type);
     }
 
-    result.code.E = HsG::List(argument_environment);
+    result.code.E = HsG::List(elements);
     add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
@@ -878,14 +878,14 @@ translation_result_t CodeGenState::get_typed_model_tuple(const CM::Tuple<CM::Ann
     int N = tuple.elements.size();
 
     translation_result_t result;
-    vector<expression_ref> argument_environment(N);
+    vector<Hs::Exp> elements(N);
     for(int i=0; i<N; i++)
     {
         string var_name = "_"+std::to_string(i+1);
         string log_name = "["+std::to_string(i+1)+"]";
 
         auto x = scope2.get_var(var_name);
-        argument_environment[i] = x;
+        elements[i] = x;
 
         auto& element = tuple.elements[i];
         auto element_result = scope2.get_model_as(element);
@@ -900,13 +900,13 @@ translation_result_t CodeGenState::get_typed_model_tuple(const CM::Tuple<CM::Ann
         else if (do_log and not is_generated_var_expr(element_result.code.E))
             result.code.stmts.let(legacy_var(x), element_result.code.E);
         else
-            argument_environment[i] = element_result.code.E;
+            elements[i] = element_result.code.E;
 
         if (do_log)
-            result.code.log_value(log_name, argument_environment[i], element.ann.type);
+            result.code.log_value(log_name, elements[i], element.ann.type);
     }
 
-    result.code.E = HsG::Tuple(argument_environment);
+    result.code.E = HsG::Tuple(elements);
     add(result.haskell_vars, scope2.haskell_vars);
 
     return result;
