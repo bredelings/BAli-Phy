@@ -5,8 +5,6 @@
 #include "computation/object.H"
 #include "computation/parser/located.H"
 
-#include "type.H"
-#include "coretype.H"
 #include "computation/core/wrap.H"
 
 namespace Haskell
@@ -66,12 +64,14 @@ typedef Located<Con> LCon;
 
 }
 
+namespace Hs = Haskell;
+
 namespace std
 {
     template <>
-    class hash < Hs::Var >{
+    class hash < Haskell::Var >{
     public :
-        size_t operator()(const Hs::Var &x) const
+        size_t operator()(const Haskell::Var &x) const
         {
             return std::hash<std::string>()(x.name);
         }

@@ -316,8 +316,6 @@ model_t compile_model(const Rules& R,
 */
 
     // 3. Generate code - translate to Haskell
-    vector<var> lambda_vars;
-
     for(auto& [name,type]: scope)
     {
         auto x = code_gen_state.get_var(name);
@@ -329,7 +327,6 @@ model_t compile_model(const Rules& R,
         auto& [var_name, _] = p;
         auto x = code_gen_state.get_var(var_name);
         code_gen_state.set_state(state_name,x);
-        lambda_vars.push_back(x);
     }
 
     auto [code, imports, _lambda_vars, _vars] = code_gen_state.get_model_as(typed_model);
@@ -379,8 +376,6 @@ model_t compile_decls(const Rules& R,
     }
 
     // 3. Generate code - translate to Haskell
-    vector<var> lambda_vars;
-
     for(auto& [name,type]: scope)
     {
         auto x = code_gen_state.get_var(name);
@@ -392,7 +387,6 @@ model_t compile_decls(const Rules& R,
         auto& [var_name, _] = p;
         auto x = code_gen_state.get_var(var_name);
         code_gen_state.set_state(state_name,x);
-        lambda_vars.push_back(x);
     }
 
     auto [code, imports, _1, _2] = code_gen_state.get_model_decls(typed_decls);

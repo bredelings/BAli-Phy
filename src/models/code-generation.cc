@@ -27,6 +27,26 @@ using std::set;
 using std::multiset;
 using std::map;
 
+var legacy_var(const Hs::Var& x)
+{
+    return var(x.name);
+}
+
+bool is_generated_var_expr(const expression_ref& E)
+{
+    return E.is_a<var>() or E.is_a<Hs::Var>();
+}
+
+Hs::Var as_generated_var(const expression_ref& E)
+{
+    if (E.is_a<var>())
+        return Hs::Var(E.as_<var>().name);
+    else if (E.is_a<Hs::Var>())
+        return E.as_<Hs::Var>();
+    else
+        throw myexception()<<"Expected generated variable, but got "<<E;
+}
+
 bool is_loggable_function(const Rules& R, const string& name)
 {
     auto rule = R.get_rule_for_func(name);
@@ -63,23 +83,23 @@ void perform_action_simplified(Stmts& block, const var& x, const var& log_x, boo
     }
 }
 
-void perform_action_simplified_(generated_code_t& block, const var& x, bool is_referenced, const generated_code_t& code, bool depends_on_lambda)
+void perform_action_simplified_(generated_code_t& block, const Hs::Var& x, bool is_referenced, const generated_code_t& code, bool depends_on_lambda)
 {
     if (code.perform_function)
     {
 	assert(not depends_on_lambda);
-        block.stmts.perform(x,code.E);
+        block.stmts.perform(legacy_var(x),code.E);
     }
     else if (is_referenced or code.is_action())
     {
 	if (not depends_on_lambda)
-	    block.stmts.let(x, code.E);
+	    block.stmts.let(legacy_var(x), code.E);
 	else
-	    block.decls.push_back({x, code.E});
+	    block.decls.push_back({legacy_var(x), code.E});
     }
 }
 
-void use_block(translation_result_t& block, const var& log_x, const translation_result_t& code, const string& name)
+void use_block(translation_result_t& block, const Hs::Var& log_x, const translation_result_t& code, const string& name)
 {
     add(block.imports, code.imports);
     add(block.lambda_vars, code.lambda_vars);
@@ -94,10 +114,10 @@ void use_block(translation_result_t& block, const var& log_x, const translation_
         block.code.decls.push_back(decl);
 
     if (code.code.has_loggers())
-        block.code.log_sub(name, log_x, code.code.loggers);
+        block.code.log_sub(name, legacy_var(log_x), code.code.loggers);
 }
 
-void perform_action_simplified(translation_result_t& block, const var& x, const var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
+void perform_action_simplified(translation_result_t& block, const Hs::Var& x, const Hs::Var& log_x, bool is_referenced, const translation_result_t& code, const string& name)
 {
     use_block(block, log_x, code, name);
     perform_action_simplified_(block.code, x, is_referenced, code.code, not code.lambda_vars.empty());
@@ -308,8 +328,8 @@ translation_result_t CodeGenState::get_model_decls(const CM::TypedDecls& decls)
 
     for(auto& [var_name, var_exp]: decls)
     {
-        var x = get_var(var_name);
-        var log_x = get_var("log_" + var_name);
+        auto x = get_var(var_name);
+        auto log_x = get_var("log_" + var_name);
         bool x_is_random = is_random(var_exp);
         var_info_t var_info(x, x_is_random);
 
@@ -794,9 +814,9 @@ translation_result_t CodeGenState::get_typed_model_list(const CM::List<CM::Ann>&
 
         bool do_log = is_unlogged_random(element) and is_loggable_type(element.ann.type);
         if (element_result.code.perform_function)
-            result.code.stmts.perform(x, element_result.code.E);
-        else if (do_log and not is_var(element_result.code.E))
-            result.code.stmts.let(x, element_result.code.E);
+            result.code.stmts.perform(legacy_var(x), element_result.code.E);
+        else if (do_log and not is_generated_var_expr(element_result.code.E))
+            result.code.stmts.let(legacy_var(x), element_result.code.E);
         else
             argument_environment[i] = element_result.code.E;
 
@@ -836,9 +856,9 @@ translation_result_t CodeGenState::get_typed_model_tuple(const CM::Tuple<CM::Ann
 
         bool do_log = is_unlogged_random(element) and is_loggable_type(element.ann.type);
         if (element_result.code.perform_function)
-            result.code.stmts.perform(x, element_result.code.E);
-        else if (do_log and not is_var(element_result.code.E))
-            result.code.stmts.let(x, element_result.code.E);
+            result.code.stmts.perform(legacy_var(x), element_result.code.E);
+        else if (do_log and not is_generated_var_expr(element_result.code.E))
+            result.code.stmts.let(legacy_var(x), element_result.code.E);
         else
             argument_environment[i] = element_result.code.E;
 
@@ -858,8 +878,8 @@ translation_result_t CodeGenState::get_typed_model_let(const CM::Let<CM::Ann>& l
 {
     auto scope2 = *this;
 
-    var body = scope2.get_var("body");
-    var log_body = scope2.get_var("log_body");
+    auto body = scope2.get_var("body");
+    auto log_body = scope2.get_var("log_body");
 
     auto result = scope2.get_model_decls(let.decls);
 
@@ -978,8 +998,8 @@ translation_result_t CodeGenState::get_typed_variable_call(const CM::Call<CM::An
 
         add(scope2.haskell_vars, arg_model.haskell_vars);
 
-        var x = scope2.get_var(var_name);
-        var log_x = scope2.get_var("log_" + var_name);
+        auto x = scope2.get_var(var_name);
+        auto log_x = scope2.get_var("log_" + var_name);
 
         bool do_log = is_unlogged_random(arg_expr) and is_loggable_type(arg_expr.ann.type) and arg_model.lambda_vars.empty();
 
@@ -988,13 +1008,13 @@ translation_result_t CodeGenState::get_typed_variable_call(const CM::Call<CM::An
         if (arg_code.perform_function)
         {
             applied_arg = log_x;
-            result.code.stmts.perform(x, arg_code.E);
+            result.code.stmts.perform(legacy_var(x), arg_code.E);
             assert(arg_model.lambda_vars.empty());
         }
-        else if (do_log and not is_var(arg_code.E))
+        else if (do_log and not is_generated_var_expr(arg_code.E))
         {
             applied_arg = log_x;
-            result.code.stmts.let(x, arg_code.E);
+            result.code.stmts.let(legacy_var(x), arg_code.E);
             assert(arg_model.lambda_vars.empty());
         }
 
@@ -1035,8 +1055,8 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
 
     vector<string> arg_names(args.size());
     map<string,expression_ref> argument_environment;
-    vector<var> arg_vars;
-    vector<var> log_vars;
+    vector<Hs::Var> arg_vars;
+    vector<Hs::Var> log_vars;
     vector<set<string>> used_args_for_arg(args.size());
     for(int i=0;i<args.size();i++)
     {
@@ -1077,8 +1097,8 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
             arg_scope.arg_env = {{name,arg_names[i],argument_environment}};
 
         optional<translation_result_t> alphabet_result;
-        optional<var> alphabet_var;
-        optional<var> log_alphabet;
+        optional<Hs::Var> alphabet_var;
+        optional<Hs::Var> log_alphabet;
         if (arg.alphabet)
         {
             string var_name = "alpha";
@@ -1095,8 +1115,8 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
             if (alphabet_result->lambda_vars.size())
                 throw myexception()<<"An alphabet cannot depend on a lambda variable!";
 
-            if (is_var(alphabet_result->code.E))
-                arg_scope.set_state("alphabet", alphabet_result->code.E.as_<var>());
+            if (is_generated_var_expr(alphabet_result->code.E))
+                arg_scope.set_state("alphabet", as_generated_var(alphabet_result->code.E));
             else
                 arg_scope.set_state("alphabet", *alphabet_var);
         }
@@ -1110,8 +1130,8 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
             assert(not alphabet_result->code.perform_function);
             use_block(result, *log_alphabet, *alphabet_result, log_names[i]+":alphabet");
 
-            if (not is_var(alphabet_result->code.E))
-                result.code.stmts.let(*alphabet_var, alphabet_result->code.E);
+            if (not is_generated_var_expr(alphabet_result->code.E))
+                result.code.stmts.let(legacy_var(*alphabet_var), alphabet_result->code.E);
         }
 
         if (result.code.perform_function and arg_models[i].lambda_vars.size())
@@ -1124,9 +1144,9 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
 
         use_block(result, log_x, arg_models[i], log_names[i]);
         if (arg_models[i].code.perform_function)
-            result.code.stmts.perform(x, arg_models[i].code.E);
-        else if ((arg_referenced[i] or do_log) and not is_var(arg_models[i].code.E))
-            result.code.stmts.let(x, arg_models[i].code.E);
+            result.code.stmts.perform(legacy_var(x), arg_models[i].code.E);
+        else if ((arg_referenced[i] or do_log) and not is_generated_var_expr(arg_models[i].code.E))
+            result.code.stmts.let(legacy_var(x), arg_models[i].code.E);
         else
             argument_environment[arg_names[i]] = arg_models[i].code.E;
 
@@ -1146,7 +1166,7 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
 
             auto& value = x.value;
             auto x_type = type_t("unknown_type");
-            result.code.stmts.let(x_var, make_rule_template_expr(value, argument_environment));
+            result.code.stmts.let(legacy_var(x_var), make_rule_template_expr(value, argument_environment));
 
             result.code.log_value(x_log_name, x_var, x_type);
 

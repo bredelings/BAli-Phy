@@ -8,6 +8,7 @@
 #include <optional>                                 // for optional
 #include <utility>                                  // for pair
 #include "models/typecheck.H"
+#include "computation/haskell/var.H"                // for Hs::Var
 #include "computation/expression/var.H"             // for var
 #include "computation/expression/let.H"             // for CDecls
 #include "computation/expression/do_block.H"        // for Stmts
@@ -22,7 +23,7 @@ struct generated_code_t
     CDecls decls;
 
     // We prefix by these lambda vars at the end?
-    std::vector<var> haskell_lambda_vars;
+    std::vector<Hs::Var> haskell_lambda_vars;
     expression_ref E;
 
     Loggers loggers;
@@ -30,7 +31,7 @@ struct generated_code_t
 
     // Which states were actually used.
     std::set<std::string> used_states;
-    std::map<std::string,var> free_vars;
+    std::map<std::string,Hs::Var> free_vars;
 
     // Under these circumstances, we will return a monadic action
     bool is_action() const {return perform_function or not stmts.empty();}
@@ -48,10 +49,10 @@ struct generated_code_t
 
 struct var_info_t
 {
-    var x;
+    Hs::Var x;
     bool is_random = false;
     bool depends_on_lambda = false;
-    var_info_t(const var& v, bool r=false, bool l=false)
+    var_info_t(const Hs::Var& v, bool r=false, bool l=false)
         :x(v),is_random(r),depends_on_lambda(l)
     { }
 };
@@ -74,32 +75,32 @@ struct translation_result_t
     generated_code_t code;
     std::set<std::string> imports;
     std::set<std::string> lambda_vars;
-    std::set<var> haskell_vars;
+    std::set<Hs::Var> haskell_vars;
 };
 
 struct CodeGenState
 {
     const Rules* R;
     std::map<std::string,var_info_t> identifiers;
-    std::set<var> haskell_vars;
+    std::set<Hs::Var> haskell_vars;
     std::optional<arg_env_t> arg_env;
-    std::map<std::string, var> state;
+    std::map<std::string, Hs::Var> state;
 
     bool is_random(const CM::TypedExpr&) const;
     bool is_unlogged_random(const CM::TypedExpr& model) const;
 
-    var get_var(std::string name)
+    Hs::Var get_var(std::string name)
     {
         if (name.empty() or not std::islower(name[0]))
             name = "_"+name;
-        var x(name);
+        Hs::Var x(name);
         for(int i=2; haskell_vars.count(x); i++)
-            x = var(name+"_"+std::to_string(i));
+            x = Hs::Var(name+"_"+std::to_string(i));
         haskell_vars.insert(x);
         return x;
     }
 
-    void set_state(const std::string& name, const var& x)
+    void set_state(const std::string& name, const Hs::Var& x)
     {
         assert(haskell_vars.count(x));
         if (state.count(name))
@@ -128,6 +129,6 @@ struct CodeGenState
 
 expression_ref simplify_intToDouble(const expression_ref& E);
 void perform_action_simplified(Stmts& block, const var& x, const var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers);
-void perform_action_simplified(generated_code_t& block, const var& x, const var& log_x, bool is_referenced, const generated_code_t& code);
+void perform_action_simplified(generated_code_t& block, const Hs::Var& x, const Hs::Var& log_x, bool is_referenced, const generated_code_t& code);
 
 #endif
