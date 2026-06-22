@@ -14,6 +14,7 @@
 #include "computation/expression/list.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/var.H"
+#include "computation/haskell/var.H"
 #include "computation/module.H"
 
 #include "sequence/genetic_code.H"
@@ -210,7 +211,7 @@ vector<expression_ref> generate_scale_models(const vector<model_t>& scaleMs,
 	string var_name = "scale" + convertToString(i+1);
 
 	auto code = scaleMs[i].code;
-	expression_ref E = var(scaleM_function_for_index[i]);
+	expression_ref E = Hs::Var(scaleM_function_for_index[i]);
 	E = code.add_arguments(E, {});
 
 	// This should still log sub-loggers of the scales, I think.
@@ -252,7 +253,7 @@ vector<expression_ref> generate_substitution_models(const vector<model_t>& SMs,
 
         auto code = SMs[i].code;
 
-        expression_ref smodel = var(SM_function_for_index[i]);
+        expression_ref smodel = Hs::Var(SM_function_for_index[i]);
         smodel = code.add_arguments(smodel, {
                 {"alphabet",alphabet_exps[*first_partition]},
                 {"branch_categories",branch_categories},
@@ -283,7 +284,7 @@ vector<expression_ref> generate_indel_models(const vector<model_t>& IMs,
 
         auto code = IMs[i].code;
 
-        expression_ref imodel = var(IM_function_for_index[i]);
+        expression_ref imodel = Hs::Var(IM_function_for_index[i]);
         imodel = code.add_arguments(imodel, {{"topology",tree_var}});
 
         auto imodel_var = var("imodel" + suffix);
@@ -836,7 +837,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
         auto code = tree_model.code;
 
-        expression_ref E = var("sampleTree");
+        expression_ref E = Hs::Var("sampleTree");
         E = code.add_arguments(E,{{"taxa",taxon_names_var}});
 
         tree_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);

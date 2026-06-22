@@ -217,12 +217,12 @@ optional<string> get_func_name(const CM::TypedExpr& model)
 
 expression_ref generated_code_t::add_arguments(const expression_ref& F, const std::map<std::string,expression_ref>& state_values) const
 {
-    auto E = F;
+    vector<expression_ref> args;
     for(auto& state: used_states)
-	E = HsG::Apply(E, {state_values.at(state)});
+	args.push_back(state_values.at(state));
     for(auto& [_,x]: free_vars)
-	E = HsG::Apply(E, {x});
-    return E;
+	args.push_back(x);
+    return HsG::Apply(F, args);
 }
 
 // Detects whether a typed model expression contains a random expression,
