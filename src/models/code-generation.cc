@@ -9,12 +9,11 @@
 #include "computation/haskell/ids.H"       // for haskell_qid
 #include "util/string/join.H"              // for join( )
 #include "computation/expression/let.H"
-#include "computation/expression/bool.H"
 #include "computation/expression/apply.H"
 #include "computation/expression/var.H"
 #include "computation/expression/lambda.H"
 #include "computation/expression/case.H"
-#include "computation/expression/list.H"
+#include "computation/expression/constructor.H"
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;
