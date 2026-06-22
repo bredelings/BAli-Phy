@@ -121,6 +121,8 @@ bool is_infix_expression(const expression_ref& e)
     return is_haskell_sym(id);
 }
 
+// Compatibility: legacy application printing must parenthesize compound Hs::* nodes.
+// Remove this when generated code no longer mixes Hs::* expressions into expression::print().
 bool is_haskell_compound_arg(const expression_ref& E)
 {
     return E.is_a<Hs::ApplyExp>() or E.is_a<Hs::ParsedApp>() or E.is_a<Hs::InfixExp>() or
@@ -129,6 +131,8 @@ bool is_haskell_compound_arg(const expression_ref& E)
            E.is_a<Hs::TypedExp>() or E.is_a<Hs::Wrap>() or E.is_a<Hs::RecordUpdate>();
 }
 
+// Decides whether a legacy expression application argument needs parentheses.
+// This preserves old tuple/list exceptions while handling temporary Hs::* mixing.
 bool needs_application_arg_parens(const expression_ref& E)
 {
     if (is_haskell_compound_arg(E))
