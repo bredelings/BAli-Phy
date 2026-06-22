@@ -12,6 +12,7 @@
 #include "computation/expression/apply.H"
 #include "computation/expression/var.H"
 #include "computation/expression/lambda.H"
+#include "computation/expression/case.H"
 #include "computation/expression/tuple.H"
 #include "computation/expression/list.H"
 #include "computation/expression/do_block.H"
@@ -23,6 +24,7 @@ using std::string;
 using std::vector;
 using std::optional;
 using std::set;
+using std::multiset;
 using std::map;
 
 bool is_loggable_function(const Rules& R, const string& name)
@@ -336,6 +338,138 @@ translation_result_t CodeGenState::get_model_decls(const CM::TypedDecls& decls)
     return result;
 }
 
+Hs::Var generated_var(const var& x)
+{
+    return Hs::Var(x.name);
+}
+
+void add_generated_bound_vars(const set<Hs::Var>& vars, multiset<Hs::Var>& bound)
+{
+    for(const auto& x: vars)
+        bound.insert(x);
+}
+
+void remove_generated_bound_vars(const set<Hs::Var>& vars, multiset<Hs::Var>& bound)
+{
+    for(const auto& x: vars)
+    {
+        auto i = bound.find(x);
+        assert(i != bound.end());
+        bound.erase(i);
+    }
+}
+
+set<Hs::Var> get_generated_bound_vars(const expression_ref& E);
+
+set<Hs::Var> get_generated_free_vars(const expression_ref& E);
+
+void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound, set<Hs::Var>& free)
+{
+    if (E.is_a<var>())
+    {
+        auto x = generated_var(E.as_<var>());
+        if (not bound.count(x))
+            free.insert(x);
+        return;
+    }
+    else if (E.is_a<Hs::Var>())
+    {
+        auto x = E.as_<Hs::Var>();
+        if (not bound.count(x))
+            free.insert(x);
+        return;
+    }
+
+    if (E.is_expression())
+    {
+        if (auto C = parse_case_expression(E))
+        {
+            auto& [object, alts] = *C;
+
+            get_generated_free_vars2(object, bound, free);
+
+            for(auto& [pattern, body]: alts)
+            {
+                auto bound_ = get_generated_free_vars(pattern);
+                add_generated_bound_vars(bound_, bound);
+                get_generated_free_vars2(body, bound, free);
+                remove_generated_bound_vars(bound_, bound);
+            }
+
+            return;
+        }
+    }
+
+    auto bound_ = get_generated_bound_vars(E);
+    add_generated_bound_vars(bound_, bound);
+
+    if (is_let_expression(E))
+    {
+        auto& L = E.as_<let_exp>();
+        for(auto& [_, e]: L.binds)
+            get_generated_free_vars2(e, bound, free);
+        get_generated_free_vars2(L.body, bound, free);
+    }
+    else if (E.is_expression())
+    {
+        for(int i=0;i<E.size();i++)
+            get_generated_free_vars2(E.sub()[i], bound, free);
+    }
+    else if (E.type() == type_constant::int_type
+             or E.type() == type_constant::double_type
+             or E.type() == type_constant::log_double_type
+             or E.type() == type_constant::char_type
+             or is_gcable_type(E.type())
+             or is_constructor(E)
+             or is_lambda(E)
+             or is_apply(E)
+             or is_case(E))
+    {
+        // These legacy atoms do not bind or reference variables on their own.
+    }
+    else if (E.is_a<String>() or E.is_a<Hs::Con>() or E.is_a<Hs::Literal>())
+    {
+        // Boxed strings, Haskell constructors, and Haskell literals have no free variables.
+    }
+    else if (E)
+    {
+        throw myexception()<<"get_generated_free_vars: unsupported atomic expression "<<E;
+    }
+
+    remove_generated_bound_vars(bound_, bound);
+}
+
+set<Hs::Var> get_generated_free_vars(const expression_ref& E)
+{
+    multiset<Hs::Var> bound;
+    set<Hs::Var> free;
+    get_generated_free_vars2(E, bound, free);
+    return free;
+}
+
+set<Hs::Var> get_generated_bound_vars(const expression_ref& E)
+{
+    set<Hs::Var> bound;
+    if (E.is_expression() and E.head().type() == type_constant::lambda_type)
+    {
+        if (E.sub()[0].is_a<var>())
+            bound.insert(generated_var(E.sub()[0].as_<var>()));
+        else if (E.sub()[0].is_a<Hs::Var>())
+            bound.insert(E.sub()[0].as_<Hs::Var>());
+        else
+            throw myexception()<<"get_generated_free_vars: unsupported lambda binder "<<E.sub()[0];
+    }
+    else if (is_let_expression(E))
+    {
+        auto& L = E.as_<let_exp>();
+        for(auto& [x,_]: L.binds)
+            bound.insert(generated_var(x));
+
+        assert(not is_case(E));
+    }
+    return bound;
+}
+
 expression_ref eta_reduce(expression_ref E)
 {
     while(is_lambda_exp(E) and E.sub()[0].is_a<var>())
@@ -358,7 +492,7 @@ expression_ref eta_reduce(expression_ref E)
                 body2->sub.pop_back();
                 E2 = body2;
             }
-	    if (get_free_indices(E2).count(x))
+	    if (get_generated_free_vars(E2).count(generated_var(x)))
 		break;
 	    else
 		E = E2;
