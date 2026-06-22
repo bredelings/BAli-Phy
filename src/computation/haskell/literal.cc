@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <limits>
 #include <regex>
-#include "fmt/core.h"
+#include <fmt/format.h>
 
 using std::string;
 using std::optional;
