@@ -10,7 +10,6 @@
 #include "util/string/join.H"              // for join( )
 #include "computation/expression/let.H"
 #include "computation/expression/var.H"
-#include "computation/expression/lambda.H"
 #include "computation/expression/case.H"
 #include "computation/expression/constructor.H"
 #include "range/v3/all.hpp"
@@ -550,7 +549,6 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
              or E.type() == type_constant::char_type
              or is_gcable_type(E.type())
              or is_constructor(E)
-             or is_lambda(E)
              or is_case(E))
     {
         // These legacy atoms do not bind or reference variables on their own.
@@ -578,16 +576,7 @@ set<Hs::Var> get_generated_free_vars(const expression_ref& E)
 set<Hs::Var> get_generated_bound_vars(const expression_ref& E)
 {
     set<Hs::Var> bound;
-    if (E.is_expression() and E.head().type() == type_constant::lambda_type)
-    {
-        if (E.sub()[0].is_a<var>())
-            bound.insert(generated_var(E.sub()[0].as_<var>()));
-        else if (E.sub()[0].is_a<Hs::Var>())
-            bound.insert(E.sub()[0].as_<Hs::Var>());
-        else
-            throw myexception()<<"get_generated_free_vars: unsupported lambda binder "<<E.sub()[0];
-    }
-    else if (is_let_expression(E))
+    if (is_let_expression(E))
     {
         auto& L = E.as_<let_exp>();
         for(auto& [x,_]: L.binds)
