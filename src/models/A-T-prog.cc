@@ -610,16 +610,16 @@ compute_logged_quantities(do_block& model,
     if (imodel_index)
     {
 	var alignment_length("alignment_length"+part_suffix);
-	model.let(alignment_length, {var("alignmentLength"), alignment_on_tree} );
+	model.let(alignment_length, HsG::Apply(Hs::Var("alignmentLength"), {alignment_on_tree}));
 	alignment_lengths.push_back(alignment_length);
 
 	if (n_branches > 0)
 	{
 	    var num_indels("num_indels"+part_suffix);
-	    model.let(num_indels, {var("totalNumIndels"), alignment_on_tree} );
+	    model.let(num_indels, HsG::Apply(Hs::Var("totalNumIndels"), {alignment_on_tree}));
 	    total_num_indels.push_back(num_indels);
 	    var length_indels("total_length_indels"+part_suffix);
-	    model.let(length_indels, {var("totalLengthIndels"), alignment_on_tree} );
+	    model.let(length_indels, HsG::Apply(Hs::Var("totalLengthIndels"), {alignment_on_tree}));
 	    total_length_indels.push_back(length_indels);
 
 	    maybe_log(sub_loggers, "|A|", alignment_length, {});
@@ -631,7 +631,7 @@ compute_logged_quantities(do_block& model,
 	{
 	    var properties_A("properties_A"+part_suffix);
 	    var prior_A("prior_A" + part_suffix);
-	    model.let(prior_A, {var("ln"),{var("probability"),properties_A}});
+	    model.let(prior_A, HsG::Apply(Hs::Var("ln"), {HsG::Apply(Hs::Var("probability"), {properties_A})}));
 	    total_prior_A.push_back(prior_A);
 	    maybe_log(sub_loggers, "prior_A", prior_A, {});
 	}
@@ -640,7 +640,7 @@ compute_logged_quantities(do_block& model,
     {
 	// For fixed-alignment partitions, the alignment length comes from the observed-data matrix.
 	var alignment_length("alignment_length"+part_suffix);
-	model.let(alignment_length, {var("alignmentLength"), sequence_data} );
+	model.let(alignment_length, HsG::Apply(Hs::Var("alignmentLength"), {sequence_data}));
 	alignment_lengths.push_back(alignment_length);
     }
 
@@ -652,7 +652,7 @@ compute_logged_quantities(do_block& model,
 	if (imodel_index or get_setting_or("write-fixed-alignments",false) or get_setting_or("write-category-states", false))
         {
             anc_states = var("ancStates" + part_suffix);
-            model.let(*anc_states,{var("prop_anc_cat_states"), properties});
+            model.let(*anc_states, HsG::Apply(Hs::Var("prop_anc_cat_states"), {properties}));
         }
         
 	if (imodel_index or get_setting_or("write-fixed-alignments",false))
@@ -665,28 +665,28 @@ compute_logged_quantities(do_block& model,
             if (not imodel_index)
             {
                 alignment = var("alignment" + part_suffix);
-                model.let(alignment, {var("leafAlignment"), tree, sequence_data});
+                model.let(alignment, HsG::Apply(Hs::Var("leafAlignment"), {tree, sequence_data}));
             }
 
 	    var anc_alignment("ancAlignment"+part_suffix);
-	    model.let(anc_alignment, {var("toFasta"),{var("ancestralAlignment"), tree, alignment, {var("getSMap"),smodel}, alphabet_exp, *anc_states}});
+	    model.let(anc_alignment, HsG::Apply(Hs::Var("toFasta"), {HsG::Apply(Hs::Var("ancestralAlignment"), {tree, alignment, HsG::Apply(Hs::Var("getSMap"), {smodel}), alphabet_exp, *anc_states})}));
             alignment_loggers.push_back({i, anc_alignment,var("logA"+part_suffix)});
 	}
 
         if (get_setting_or("write-category-states", false))
         {
             var cat_states("catStates" + part_suffix);
-            model.let(cat_states, {var("labeledNodeMap"),tree, *anc_states});
-            category_state_loggers.push_back({i, {var("J.toEncoding"),cat_states}, var("logCatStates"+part_suffix)});
-        }
+            model.let(cat_states, HsG::Apply(Hs::Var("labeledNodeMap"), {tree, *anc_states}));
+            category_state_loggers.push_back({i, HsG::Apply(Hs::Var("J.toEncoding"), {cat_states}), var("logCatStates"+part_suffix)});
+	}
         
 	var substs("substs"+part_suffix);
-	expression_ref costs = {var("unitCostMatrix"),alphabet_exp};
+	expression_ref costs = HsG::Apply(Hs::Var("unitCostMatrix"), {alphabet_exp});
 	expression_ref aligned_data = sequence_data;
 	if (imodel_index)
-	    aligned_data = Tuple(sequence_data, alignment_on_tree);
+	    aligned_data = HsG::Tuple({sequence_data, alignment_on_tree});
 
-	model.let(substs, {var("parsimony"), tree, costs, aligned_data});
+	model.let(substs, HsG::Apply(Hs::Var("parsimony"), {tree, costs, aligned_data}));
 	maybe_log(sub_loggers, "#substs", substs, {});
 	if (alphabet_exp.print().starts_with("mkRNA"))
 	{
@@ -695,8 +695,8 @@ compute_logged_quantities(do_block& model,
 		suffix = "_"+suffix;
 
 	    var substs_pos2("substsRNA"+suffix);
-	    expression_ref costs_pos2 = {var("pos2CostMatrix"),alphabet_exp};
-	    model.let(substs_pos2, {var("parsimony"), tree, costs_pos2, aligned_data});
+	    expression_ref costs_pos2 = HsG::Apply(Hs::Var("pos2CostMatrix"), {alphabet_exp});
+	    model.let(substs_pos2, HsG::Apply(Hs::Var("parsimony"), {tree, costs_pos2, aligned_data}));
 	    maybe_log(sub_loggers, "#substsRNA", substs_pos2, {});
 	}
 
