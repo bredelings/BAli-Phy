@@ -44,7 +44,6 @@
 #include "computation/haskell/generated.H"
 #include "computation/haskell/ids.H"
 #include "computation/expression/lambda.H"  // for is_lambda_exp( )
-#include "computation/expression/tuple.H"   // for Tuple( )
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;
@@ -179,11 +178,30 @@ string show(vector<string> args)
 string print_equals_function(expression_ref E)
 {
     std::ostringstream result;
-    while(is_lambda_exp(E))
+    while(true)
     {
-        auto x = E.sub()[0];
-        E = E.sub()[1];
-        result<<" "<<x;
+        if (is_lambda_exp(E))
+        {
+            auto x = E.sub()[0];
+            E = E.sub()[1];
+            result<<" "<<x;
+        }
+        // Compatibility: A-T-prog still formats generated lambdas into top-level
+        // equations. Remove this branch when A-T-prog emits Hs declarations.
+        else if (auto lambda = E.to<Hs::LambdaExp>())
+        {
+            for(const auto& pat: lambda->match.patterns)
+                result<<" "<<pat.print();
+
+            if (lambda->match.rhs.guarded_rhss.size() != 1 or
+                not lambda->match.rhs.guarded_rhss[0].guards.empty() or
+                lambda->match.rhs.decls)
+                break;
+
+            E = unloc(lambda->match.rhs.guarded_rhss[0].body);
+        }
+        else
+            break;
     }
     result<<" = "<<E;
     return result.str();
@@ -255,7 +273,7 @@ expression_ref generated_code_t::generate() const
     assert(is_action() or not R.is_a<Hs::Do>());
 
     for(auto& x : haskell_lambda_vars | views::reverse)
-        R = lambda_quantify(x,R);
+        R = Hs::LambdaExp({{noloc, Hs::VarPattern({noloc, x})}}, {noloc, R});
 
     return R;
 }
@@ -265,11 +283,10 @@ void maybe_log(vector<expression_ref>& loggers,
                const expression_ref& value,
                const expression_ref& subloggers)
 {
-    expression_ref logger_bit;
     if (value)
-        loggers.push_back({var("%=%"),String(name),value});
+        loggers.push_back(HsG::Apply(Hs::Var("%=%"), {Hs::Literal(Hs::String(name)), value}));
     if (subloggers)
-        loggers.push_back({var("%>%"),String(name),subloggers});
+        loggers.push_back(HsG::Apply(Hs::Var("%>%"), {Hs::Literal(Hs::String(name)), subloggers}));
 }
 
 
@@ -278,7 +295,7 @@ void generated_code_t::log_value(const string& name, expression_ref value, const
     auto [head,args] = get_type_apps(type);
     if (head == "DiscreteDist" and args[0] == "Double")
     {
-	value = {var("sortDist"),value};
+        value = HsG::Apply(Hs::Var("sortDist"), {value});
     }
 
     loggers.push_back(LogValue(name, value));
