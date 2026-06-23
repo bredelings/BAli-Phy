@@ -4,7 +4,6 @@
 #include "computation/module.H"
 #include "computation/operations.H"
 #include "computation/core/ast.H"
-#include "expression/lambda.H"
 #include "util/file-paths.H"
 #include "parser/driver.hh"
 #include "haskell/ids.H"

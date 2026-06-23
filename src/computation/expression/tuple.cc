@@ -1,5 +1,4 @@
 #include "tuple.H"
-#include "lambda.H"
 #include "var.H"
 
 #include "haskell/ids.H"

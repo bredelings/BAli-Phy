@@ -4,11 +4,8 @@
 #include "haskell/haskell.H"
 #include "util/string/join.H"
 #include "expression_ref.H"
-#include "lambda.H"
 #include "apply.H"
-#include "let.H"
 #include "var.H"
-#include "case.H"
 #include "tuple.H"
 #include "list.H" // for char_list
 #include "bool.H"
@@ -165,48 +162,6 @@ string expression::print() const
 
     // The head should not have parts.
     // assert(not is_a<expression>());
-
-    //  if (false)
-    {
-	if (head.is_a<lambda>())
-	{
-	    expression_ref body = new expression(*this);
-	    vector<string> vars;
-	    while (body.head().is_a<lambda>())
-	    {
-		vars.push_back(body.sub()[0].print());
-		// Keep a reference 'body.sub()[1]' here, so it is not destroyed!
-		expression_ref tmp = body.sub()[1];
-		body = tmp;
-	    }
-	    result = "\\" + join(vars,' ') + " -> "+ body.print();
-	    return result;
-	}
-
-	else if (is_let_expression(head))
-	{
-            auto& L = head.as_<let_exp>();
-	    result = "let {";
-	    vector<string> parts;
-	    for(auto& [x,e] : L.binds)
-		parts.push_back(x.print() + " = " + e.print());
-	    result += join(parts,"; ");
-	    result += "} in " + L.body.print();
-	    return result;
-	}
-
-	else if (auto C = parse_case_expression(*this))
-	{
-            auto& [object, alts] = *C;
-	    result = "case " + object.print() + " of {";
-	    vector<string> parts;
-	    for(auto& [pattern, body]: alts)
-		parts.push_back( pattern.print() + " -> " + body.print() );
-	    result += join(parts,"; ");
-	    result += "}";
-	    return result;
-	}
-    }
 
     // We have to do this BEFORE we compute pargs, otherwise we do everything twice, which leads to exponential growth.
     if (head.is_a<constructor>())

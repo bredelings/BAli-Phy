@@ -1,7 +1,6 @@
 #ifndef DUMMY_H
 #define DUMMY_H
 
-#include <set>
 #include <string>
 #include <optional>
 #include "computation/object.H"
@@ -33,7 +32,5 @@ struct var: public Object, public occurrence_info
 };
 
 bool is_var(const expression_ref&);
-
-std::set<var> get_free_indices(const expression_ref& E);
 
 #endif

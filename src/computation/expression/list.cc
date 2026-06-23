@@ -1,6 +1,5 @@
 #include "list.H"
 #include "constructor.H"
-#include "lambda.H"
 
 using std::vector;
 using std::optional;
@@ -30,4 +29,3 @@ expression_ref char_list(const string& s)
 	letters.push_back(c);
     return get_list(letters);
 }
-

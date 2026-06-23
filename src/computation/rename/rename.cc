@@ -17,8 +17,6 @@ using std::set;
 using std::optional;
 using std::map;
 
-// So... let_exp is like Core, and Let is like STG.
-
 // A data declaration MAY use the same field label in multiple constructors as long as the typing of the field is the same in all cases after type synonym expansion.
 // A label CANNOT be shared by more than one type in scope.
 // Field names share the top level namespace with ordinary variables and class methods and must not conflict with other top level names in scope.
