@@ -87,7 +87,7 @@ TypecheckingState makeTypechecker(const Rules& R,
 				  const std::vector<std::pair<std::string,type_t>>& scope,
 				  const std::map<std::string,std::pair<std::string,type_t>>& state);
 
-std::string print_equals_function(expression_ref E);
+std::string print_generated_function_decl(const std::string& name, expression_ref E);
 
 std::string default_markov_model(const alphabet& a);
 #endif

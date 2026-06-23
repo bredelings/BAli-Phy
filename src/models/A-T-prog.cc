@@ -131,16 +131,6 @@ expression_ref get_alphabet_expression(const alphabet& a)
     }
 }
 
-string maybe_emit_code(map<string,string>& code_to_name, const string& name, const expression_ref& E)
-{
-    auto code = print_equals_function(E);
-    if (code_to_name.count(code))
-        code = code_to_name.at(code);
-    else
-        code_to_name.insert({code," = " + name});
-    return name + code + "\n";
-}
-
 // Emits the generated binding needed for an action or pure expression result.
 static void perform_action_simplified(Hs::Stmts& block, const Hs::Var& x, const Hs::Var& log_x, bool is_referenced, expression_ref E, bool is_action, bool has_loggers)
 {
@@ -190,21 +180,21 @@ vector<string> print_models(const string& tag, const vector<model_t>& models, st
     vector<string> function_for_index;
     for(int i=0;i<models.size();i++)
     {
-        auto code = print_equals_function(models[i].code.generate());
+        auto code = print_generated_function_decl("_generated_model", models[i].code.generate());
         if (not functions.count(code))
             functions.insert({code,functions.size()});
     }
     int printed = 0;
     for(int i=0;i<models.size();i++)
     {
-        auto code = print_equals_function(models[i].code.generate());
+        auto code = print_generated_function_decl("_generated_model", models[i].code.generate());
         int index = functions.at(code);
         string name = tag;
         if (functions.size() > 1) name += "_"+std::to_string(index+1);
         function_for_index.push_back(name);
         if (index >= printed)
         {
-            file<<name<<" "<<code<<"\n\n";
+            file<<print_generated_function_decl(name, models[i].code.generate())<<"\n\n";
             printed++;
         }
     }
@@ -755,7 +745,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
     // F5. Topology / Tree
     if (not fixed.count("tree"))
-	program_file<<"sampleTree"<<print_equals_function(tree_model.code.generate())<<"\n";
+	program_file<<print_generated_function_decl("sampleTree", tree_model.code.generate())<<"\n";
 
     /* --------------------------------------------------------------- */
     Hs::Stmts model;

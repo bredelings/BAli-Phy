@@ -43,7 +43,6 @@
 #include "computation/operations.H"
 #include "computation/haskell/generated.H"
 #include "computation/haskell/ids.H"
-#include "computation/expression/lambda.H"  // for is_lambda_exp( )
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;
@@ -139,36 +138,33 @@ string show(vector<string> args)
     return output;
 }
 
-string print_equals_function(expression_ref E)
+// Builds a one-function Haskell declaration from a generated expression.
+static Hs::FunDecl make_generated_function_decl(const string& name, expression_ref E)
 {
-    std::ostringstream result;
+    Hs::LPats patterns;
     while(true)
     {
-        if (is_lambda_exp(E))
-        {
-            auto x = E.sub()[0];
-            E = E.sub()[1];
-            result<<" "<<x;
-        }
-        // Compatibility: A-T-prog still formats generated lambdas into top-level
-        // equations. Remove this branch when A-T-prog emits Hs declarations.
-        else if (auto lambda = E.to<Hs::LambdaExp>())
-        {
-            for(const auto& pat: lambda->match.patterns)
-                result<<" "<<pat.print();
-
-            if (lambda->match.rhs.guarded_rhss.size() != 1 or
-                not lambda->match.rhs.guarded_rhss[0].guards.empty() or
-                lambda->match.rhs.decls)
-                break;
-
-            E = unloc(lambda->match.rhs.guarded_rhss[0].body);
-        }
-        else
+        auto lambda = E.to<Hs::LambdaExp>();
+        if (not lambda)
             break;
+
+        if (lambda->match.rhs.guarded_rhss.size() != 1 or
+            not lambda->match.rhs.guarded_rhss[0].guards.empty() or
+            lambda->match.rhs.decls)
+            break;
+
+        for(const auto& pat: lambda->match.patterns)
+            patterns.push_back(pat);
+
+        E = unloc(lambda->match.rhs.guarded_rhss[0].body);
     }
-    result<<" = "<<E;
-    return result.str();
+    return Hs::simple_fun_decl({noloc, Hs::Var(name)}, patterns, {noloc, E});
+}
+
+// Prints one generated top-level function declaration with Haskell AST nodes.
+string print_generated_function_decl(const string& name, expression_ref E)
+{
+    return make_generated_function_decl(name, E).print();
 }
 
 /// \brief Return the default substitution model name for alphabet \a a, and "" if there is no default.
