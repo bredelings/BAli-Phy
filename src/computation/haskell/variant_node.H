@@ -37,7 +37,7 @@ struct VariantNode
     std::string print() const
     {
         return std::visit(
-            // Match the old expression_ref print delegation without reintroducing Object storage.
+            // Delegate printing to the active concrete AST node.
             [](const auto& ptr) -> std::string
             {
                 using Ptr = std::decay_t<decltype(ptr)>;
@@ -97,7 +97,7 @@ struct VariantNode
     VariantNode& operator=(VariantNode&&) noexcept = default;
 
     // Replace the current node with a concrete AST alternative.
-    // This keeps assignment behavior close to the old expression_ref wrapper.
+    // This keeps assignment concise for parser and generated-code callers.
     template <typename T>
         requires ((std::is_same_v<std::decay_t<T>, Alternatives> || ...))
     VariantNode& operator=(T&& t)
@@ -111,7 +111,7 @@ struct VariantNode
     VariantNode(VariantNode&&) noexcept = default;
 
     // Construct the variant from one concrete AST alternative.
-    // There are intentionally no constructors from Object or expression_ref.
+    // There are intentionally no constructors from generic Object storage.
     template <typename T>
         requires ((std::is_same_v<std::decay_t<T>, Alternatives> || ...))
     VariantNode(T&& t)

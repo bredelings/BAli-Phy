@@ -9,7 +9,6 @@
 using std::vector;
 using std::string;
 
-//typedef Box<std::map<int,expression_ref>> EIntMap;
 
 namespace
 {

@@ -6,9 +6,9 @@ using std::vector;
 
 Runtime::Exp reg_heap::capture_local_reg_refs(const Runtime::Exp& E, closure::Env_t& Env, int depth)
 {
-    // Compatibility bridge for expression_ref-only VM/API entry points.
+    // Compatibility bridge for VM/API entry points that pass code without an Env.
     // Some callers build executable expressions with reg_var atoms because they
-    // cannot pass a closure environment alongside an expression_ref.  Convert
+    // cannot pass a closure environment alongside the expression.  Convert
     // those local RegRefs to IndexVars before trimming so Trim nodes can remap
     // the corresponding closure slots.  Long term, prefer APIs that accept a
     // Runtime expression plus Env directly, avoiding local RegRefs here.

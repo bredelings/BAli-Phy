@@ -375,7 +375,7 @@ void get_generated_free_vars2(const Hs::Exp& E, multiset<Hs::Var>& bound, set<Hs
 void get_generated_free_vars2(const Hs::Binds& binds, multiset<Hs::Var>& bound, set<Hs::Var>& free);
 
 // Traverse generated statements for free variables in guards and do-blocks.
-// This mirrors the existing expression traversal without reintroducing expression_ref.
+// This mirrors the existing expression traversal without reintroducing legacy wrappers.
 void get_generated_free_vars2(const Hs::Stmts& stmts, multiset<Hs::Var>& bound, set<Hs::Var>& free)
 {
     for(auto& [_, stmt]: stmts.stmts)

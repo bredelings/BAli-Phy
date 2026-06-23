@@ -5,7 +5,6 @@
 #include "computation/closure.H"
 #include "computation/machine/graph_register.H"
 
-// class expression_ref;
 // class reg_heap;
 
 class OperationArgs

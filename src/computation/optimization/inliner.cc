@@ -458,7 +458,8 @@ inline_context remove_arguments(inline_context context, int n)
 
 bool is_WHNF(const Occ::Exp& E)
 {
-    // Should we allow variables?  The expression_ref definition does not.
+    // Should we allow variables? Existing callers only treat lambdas,
+    // constructor applications, and constants as weak head normal forms.
     return (E.to_lambda() or E.to_conApp() or E.to_constant());
 }
 

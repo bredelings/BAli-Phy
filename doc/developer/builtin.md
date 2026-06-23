@@ -46,8 +46,8 @@ extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
 Input:
 
 * The function takes a single `OperationArgs& Args` argument.
-* The `n`th argument is fetched by calling `Args.evaluate(n)`, and is of type `expression_ref` ([src/computation/expression/expression_ref.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/expression/expression_ref.H))
-* The `expression_ref` can be converted to `int`, `double`, or `log_double_t` using the methods `.as_int()`, `.as_double()` and `.as_log_double()`.
+* The `n`th argument is fetched by calling `Args.evaluate_slot_to_value(n)`, and is of type `Runtime::Exp`.
+* The `Runtime::Exp` can be converted to `int`, `double`, or `log_double_t` using the methods `.as_int()`, `.as_double()` and `.as_log_double()`.
 
 Output:
 
@@ -62,13 +62,10 @@ This is a positive real number represented in terms of its logarithm.  Operators
 ## `Object`
 All C++ objects are accessed from Haskell inherit from this type.
 
-## `expression_ref`
-An expression ref is basically either an atomic value or an Object followed by a list of `expression_ref`s
-
-See [src/computation/expression/expression_ref.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/expression/expression_ref.H)
+## `Runtime::Exp`
+A runtime expression value is represented by the variant AST in [src/computation/runtime/ast.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/runtime/ast.H).
 
 ## `closure`
-A closure is an `expression_ref` with an environment.
+A closure stores a `Runtime::Exp` with an environment.
 
 See [src/computation/closure.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/closure.H)
-

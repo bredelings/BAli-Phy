@@ -220,7 +220,6 @@
 
 %type <Hs::Module> module
  /* %type <void> missing_module_keyword */
- /* %type <expression_ref> maybemodwarning */
 %type <std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>> body2
 %type <std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>> body
 %type <std::pair<std::vector<Hs::LImpDecl>, std::optional<Hs::Decls>>> top
@@ -319,7 +318,6 @@
 
 %type <void> strings
 %type <void> stringlist
-%type <expression_ref> opt_sig
  */
 %type <std::optional<Hs::LType>> opt_tyconsig
 %type <Hs::LType> sigtype
@@ -412,11 +410,8 @@
 %type <std::vector<Hs::LExp>> lexps
 
  /* 
-%type <std::vector<expression_ref>> flattenedpquals 
-%type <std::vector<expression_ref>> pquals
  */
 %type <std::vector<Hs::LStmt>> squals
- /* %type <expression_ref> transformqual */
 
 %type <std::vector<Hs::LStmt>> guardquals
 %type <std::vector<Hs::LStmt>> guardquals1
@@ -427,7 +422,6 @@
 %type <Located<Hs::ParsedAlt>> alt
 %type <Hs::MultiGuardedRHS> alt_rhs
 %type <std::vector<Hs::GuardedRHS>> gdpats
- /* %type <expression_ref> ifgdpats */
 %type <Hs::GuardedRHS> gdpat
 %type <Hs::LExp> pat
 %type <Hs::LExp> bindpat

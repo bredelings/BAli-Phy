@@ -7,8 +7,7 @@ data CList a
 
 -- These builtins have type variables but refer to unlifted types.
 
--- In order for these unlifted types to represent C++ objects and lists we currently
---   rely on expression_ref.
+-- These unlifted types represent C++ objects and lists through Runtime::Exp values.
     
 foreign import ecall "Pair:c_pair" c_cons :: a -> CList a -> CList a
 
@@ -32,4 +31,3 @@ mapFrom j1 j2 f = go j1 where
     go i = case equals_int i j2 of
              True -> []
              _  -> f i : go (increment_int i)
-

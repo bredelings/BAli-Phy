@@ -354,7 +354,7 @@ extern "C" R::Exp simple_function_show_integer(vector<R::Exp>& args)
 }
 
 // Formats a Double for the Prelude show instance while preserving the old
-// expression_ref formatting behavior that trimmed redundant trailing zeroes.
+// output behavior that trimmed redundant trailing zeroes.
 static string double_to_string(double d)
 {
     string s = convertToString(d);

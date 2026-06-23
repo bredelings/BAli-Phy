@@ -184,7 +184,7 @@ extern "C" closure builtin_function_cauchy_quantile(OperationArgs& Args)
 
 // First convert N from tuple to list...
 // Second convert this builtin routine to just take two Vector<double> arguments.
-// Third convert all the expression_ref's here to "var" and use Distribution_Functions()
+// Third convert all value arguments here to "var" and use Distribution_Functions()
 extern "C" closure builtin_function_dirichlet_density(OperationArgs& Args)
 {
     auto n = (vector<double>) Args.evaluate_slot_to_value(0).as_<R::RVector>();

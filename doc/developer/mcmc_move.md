@@ -69,7 +69,7 @@ The `Proposal_Fn` class represents an MCMC move that affects some number of vari
 class Proposal_Fn
 {
 public:
-    virtual log_double_t operator()(std::vector< expression_ref >& x,const std::vector<double>& p) const;
+    virtual log_double_t operator()(std::vector<Runtime::Exp>& x,const std::vector<double>& p) const;
 };
 ```
 
@@ -78,4 +78,3 @@ It is possible to compose `Proposal_Fn`s to create complex proposals, such as:
 1. ``Reflect(bounds, shift_cauchy)``
 2. ``log_scaled(between(-20, 20, shift_cauchy))``
 3. ``log_scaled(between(-20, 20, shift_gaussian))``
-
