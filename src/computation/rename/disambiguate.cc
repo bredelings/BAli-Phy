@@ -434,8 +434,7 @@ Hs::LExp disambiguate_expression(Hs::LExp lhs)
             stmt = disambiguate_stmt(stmt);
         return {lhs.loc, D};
     }
-    else if (E.is_a<Hs::Var>() or E.is_a<Hs::Con>() or E.is_a<Hs::Literal>() or
-             E.is_int() or E.is_log_double() or E.is_double() or E.is_char())
+    else if (E.is_a<Hs::Var>() or E.is_a<Hs::Con>() or E.is_a<Hs::Literal>())
         return lhs;
     else
         std::abort();

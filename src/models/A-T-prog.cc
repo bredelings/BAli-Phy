@@ -479,13 +479,13 @@ Hs::Stmts generate_main(const variables_map& args,
     {
         if (log_formats.count("tsv"))
         {
-            HsG::Bind(main, HsG::VarPat(Hs::Var("line")), HsG::Apply(Hs::Var("logTableLine"), {Hs::Var("mymodel"), 0}));
+            HsG::Bind(main, HsG::VarPat(Hs::Var("line")), HsG::Apply(Hs::Var("logTableLine"), {Hs::Var("mymodel"), Hs::Literal(Hs::Integer{integer(0)})}));
             HsG::Expr(main, HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("line")}));
         }
 
         if (log_formats.count("json"))
         {
-            HsG::Bind(main, HsG::VarPat(Hs::Var("jline")), HsG::Apply(Hs::Var("logJSONLine"), {Hs::Var("mymodel"), 0}));
+            HsG::Bind(main, HsG::VarPat(Hs::Var("jline")), HsG::Apply(Hs::Var("logJSONLine"), {Hs::Var("mymodel"), Hs::Literal(Hs::Integer{integer(0)})}));
             HsG::Expr(main, HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("jline")}));
         }
 
@@ -501,7 +501,7 @@ Hs::Stmts generate_main(const variables_map& args,
         int max_iterations = 200000;
         if (args.count("iterations"))
             max_iterations = args["iterations"].as<long int>();
-        HsG::Expr(main, HsG::Apply(Hs::Var("runMCMC"), {max_iterations, Hs::Var("mymodel")}));
+        HsG::Expr(main, HsG::Apply(Hs::Var("runMCMC"), {Hs::Literal(Hs::Integer{integer(max_iterations)}), Hs::Var("mymodel")}));
     }
 
     return main;
@@ -875,8 +875,8 @@ std::string generate_atmodel_program(const variables_map& args,
 
         if (not fixed.count("tree"))
         {
-            HsG::Expr(model, HsG::Apply(Hs::Var("addMove"), {2, HsG::Apply(Hs::Var("scaleGroupsSlice"), {HsG::List(scales), branch_lengths})}));
-	    HsG::Expr(model, HsG::Apply(Hs::Var("addMove"), {1, HsG::Apply(Hs::Var("scaleGroupsMH"), {HsG::List(scales), branch_lengths})}));
+            HsG::Expr(model, HsG::Apply(Hs::Var("addMove"), {Hs::Literal(Hs::Integer{integer(2)}), HsG::Apply(Hs::Var("scaleGroupsSlice"), {HsG::List(scales), branch_lengths})}));
+	    HsG::Expr(model, HsG::Apply(Hs::Var("addMove"), {Hs::Literal(Hs::Integer{integer(1)}), HsG::Apply(Hs::Var("scaleGroupsMH"), {HsG::List(scales), branch_lengths})}));
         }
     }
 
@@ -903,7 +903,7 @@ std::string generate_atmodel_program(const variables_map& args,
         expression_ref sequence_data_var = getSequenceData(i);
 
         // Model.Partition.1. tree_part<i> = scale_branch_lengths scale tree
-	expression_ref scale = 1;
+	expression_ref scale = Hs::Literal(Hs::Integer{integer(1)});
         if (n_branches > 0)
             scale = scales[scale_index];
 	partition_scales.push_back(scale);
@@ -1082,11 +1082,11 @@ std::string generate_atmodel_program(const variables_map& args,
 
         // Add the alignment loggers.
         for(auto& [i,a,l]: alignment_loggers)
-            HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(HsG::Apply(Hs::Var("$"), {HsG::Apply(Hs::Var("every"), {10})}), {HsG::Apply(l, {a})})}));
+            HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(HsG::Apply(Hs::Var("$"), {HsG::Apply(Hs::Var("every"), {Hs::Literal(Hs::Integer{integer(10)})})}), {HsG::Apply(l, {a})})}));
 
         // Add the category-state loggers
         for(auto& [i,cs,l]: category_state_loggers)
-            HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(HsG::Apply(Hs::Var("$"), {HsG::Apply(Hs::Var("every"), {10})}), {HsG::Apply(l, {cs})})}));
+            HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(HsG::Apply(Hs::Var("$"), {HsG::Apply(Hs::Var("every"), {Hs::Literal(Hs::Integer{integer(10)})})}), {HsG::Apply(l, {cs})})}));
     }
 
     HsG::Return(model, loggers_var);

@@ -388,8 +388,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
 
         E = I;
     }
-    else if (E.is_int() or E.is_log_double() or E.is_double() or E.is_char())
-    { }
     else if (E.is_a<Hs::Literal>())
     { }
     else if (E.is_a<Hs::ParsedApp>())

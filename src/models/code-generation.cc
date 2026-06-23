@@ -125,6 +125,8 @@ bool is_loggable_type(const type_t& type)
     return false;
 }
 
+// Rewrites generated `intToDouble n` applications back to the integer literal
+// so Haskell can resolve the numeric type from context.
 expression_ref simplify_intToDouble(const expression_ref& E)
 {
     auto is_int_to_double = [](const expression_ref& head)
@@ -138,10 +140,11 @@ expression_ref simplify_intToDouble(const expression_ref& E)
     if (E.is_a<Hs::ApplyExp>())
     {
         auto [head,args] = Hs::decompose_apps({noloc, E});
-        if (args.size() == 1 and is_int_to_double(unloc(head)) and unloc(args[0]).is_int())
+        if (args.size() == 1 and is_int_to_double(unloc(head)))
         {
-            int i = unloc(args[0]).as_int();
-            return double(i);
+            auto arg = unloc(args[0]);
+            if (auto L = arg.to<Hs::Literal>(); L and L->is_Integer())
+                return arg;
         }
     }
 
@@ -473,13 +476,9 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
     auto bound_ = get_generated_bound_vars(E);
     add_generated_bound_vars(bound_, bound);
 
-    if (E.type() == type_constant::int_type
-        or E.type() == type_constant::double_type
-        or E.type() == type_constant::log_double_type
-        or E.type() == type_constant::char_type
-        or is_gcable_type(E.type()))
+    if (is_gcable_type(E.type()))
     {
-        // These legacy atoms do not bind or reference variables on their own.
+        // These legacy object atoms do not bind or reference variables on their own.
     }
     else if (E.is_a<String>() or E.is_a<Hs::Con>() or E.is_a<Hs::Literal>())
     {
