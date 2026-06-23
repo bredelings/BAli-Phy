@@ -353,8 +353,22 @@ extern "C" R::Exp simple_function_show_integer(vector<R::Exp>& args)
     return x.str();
 }
 
-//defined in expression_ref.cc
-string double_to_string(double d);
+// Formats a Double for the Prelude show instance while preserving the old
+// expression_ref formatting behavior that trimmed redundant trailing zeroes.
+static string double_to_string(double d)
+{
+    string s = convertToString(d);
+    int i = s.size()-1;
+    if (s[i] == '0' and s.find('.') != string::npos)
+    {
+        while(i>=0 and s[i] == '0')
+            i--;
+        if (s[i] == '.')
+            i++;
+        s.resize(i+1);
+    }
+    return s;
+}
 
 extern "C" R::Exp simple_function_show_double(vector<R::Exp>& args)
 {
