@@ -22,7 +22,7 @@ struct GivenOrigin
 
 struct AppOrigin
 {
-    std::optional<Hs::ApplyExp> app;
+    std::optional<Hs::Apply> app;
 };
 
 struct InstanceOrigin

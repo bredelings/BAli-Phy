@@ -4604,25 +4604,25 @@ namespace yy {
 
   case 331: // aexp: "\\" apats1 "->" exp
 #line 1245 "parser.y"
-                                 {yylhs.value.as < Hs::LExp > () = {yylhs.location, Hs::ParsedLambdaExp(yystack_[2].value.as < std::vector<Hs::LExp> > (),yystack_[0].value.as < Hs::LExp > ())}; }
+                                 {yylhs.value.as < Hs::LExp > () = {yylhs.location, Hs::ParsedLambda(yystack_[2].value.as < std::vector<Hs::LExp> > (),yystack_[0].value.as < Hs::LExp > ())}; }
 #line 4609 "parser.cc"
     break;
 
   case 332: // aexp: "let" binds "in" exp
 #line 1246 "parser.y"
-                                 {yylhs.value.as < Hs::LExp > () = {yylhs.location, Hs::LetExp(yystack_[2].value.as < Located<Hs::Binds> > (),yystack_[0].value.as < Hs::LExp > ())}; }
+                                 {yylhs.value.as < Hs::LExp > () = {yylhs.location, Hs::Let(yystack_[2].value.as < Located<Hs::Binds> > (),yystack_[0].value.as < Hs::LExp > ())}; }
 #line 4615 "parser.cc"
     break;
 
   case 333: // aexp: "if" exp optSemi "then" exp optSemi "else" exp
 #line 1248 "parser.y"
-                                                       {yylhs.value.as < Hs::LExp > () = {yystack_[7].location+yystack_[0].location,Hs::IfExp(yystack_[6].value.as < Hs::LExp > (),yystack_[3].value.as < Hs::LExp > (),yystack_[0].value.as < Hs::LExp > ())}; }
+                                                       {yylhs.value.as < Hs::LExp > () = {yystack_[7].location+yystack_[0].location,Hs::If(yystack_[6].value.as < Hs::LExp > (),yystack_[3].value.as < Hs::LExp > (),yystack_[0].value.as < Hs::LExp > ())}; }
 #line 4621 "parser.cc"
     break;
 
   case 334: // aexp: "case" exp "of" altslist
 #line 1250 "parser.y"
-                                 {yylhs.value.as < Hs::LExp > () = {yylhs.location, Hs::ParsedCaseExp(yystack_[2].value.as < Hs::LExp > (),yystack_[0].value.as < Hs::ParsedAlts > ())}; }
+                                 {yylhs.value.as < Hs::LExp > () = {yylhs.location, Hs::ParsedCase(yystack_[2].value.as < Hs::LExp > (),yystack_[0].value.as < Hs::ParsedAlts > ())}; }
 #line 4627 "parser.cc"
     break;
 
@@ -8033,7 +8033,7 @@ Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::
         body = make_record_field_selection(loc, body, field);
 
     Hs::LPat arg_pat = {loc, Hs::VarPattern(arg)};
-    return {loc, Hs::LambdaExp({arg_pat}, body)};
+    return {loc, Hs::Lambda({arg_pat}, body)};
 }
 
 // See PostProcess.hs:checkTyClHdr

@@ -81,7 +81,7 @@
 namespace Haskell
 {
 
-struct ApplyExp;
+struct Apply;
 struct ParsedApp;
 struct Neg;
 struct InfixExp;
@@ -127,15 +127,15 @@ using ParsedPatQual = PatQualT<ExpOrPat>;
 struct RecStmt;
 struct Do;
 struct MDo;
-struct LetExp;
-struct IfExp;
+struct Let;
+struct If;
 struct PatDecl;
 template<class P> struct AltT;
 template<class P> struct AltsT;
 template<class P> struct MRuleT;
 template<class P> struct MatchesT;
-template<class P> struct LambdaExpT;
-template<class P> struct CaseExpT;
+template<class P> struct LambdaT;
+template<class P> struct CaseT;
 using Alt = AltT<Pat>;
 using ParsedAlt = AltT<ExpOrPat>;
 using Alts = AltsT<Pat>;
@@ -144,10 +144,10 @@ using MRule = MRuleT<Pat>;
 using ParsedMRule = MRuleT<ExpOrPat>;
 using Matches = MatchesT<Pat>;
 using ParsedMatches = MatchesT<ExpOrPat>;
-using LambdaExp = LambdaExpT<Pat>;
-using ParsedLambdaExp = LambdaExpT<ExpOrPat>;
-using CaseExp = CaseExpT<Pat>;
-using ParsedCaseExp = CaseExpT<ExpOrPat>;
+using Lambda = LambdaT<Pat>;
+using ParsedLambda = LambdaT<ExpOrPat>;
+using Case = CaseT<Pat>;
+using ParsedCase = CaseT<ExpOrPat>;
 struct FunDecl;
 struct GenBind;
 
@@ -156,7 +156,7 @@ struct Exp: public VariantNode
     Var,
     Con,
     Literal,
-    ApplyExp,
+    Apply,
     ParsedApp,
     Neg,
     InfixExp,
@@ -176,12 +176,12 @@ struct Exp: public VariantNode
     Tuple,
     Do,
     MDo,
-    LetExp,
-    IfExp,
-    LambdaExp,
-    CaseExp,
-    ParsedLambdaExp,
-    ParsedCaseExp,
+    Let,
+    If,
+    Lambda,
+    Case,
+    ParsedLambda,
+    ParsedCase,
     ParsedAsPattern,
     ParsedLazyPattern,
     ParsedStrictPattern,
@@ -242,7 +242,7 @@ typedef Located<Stmt> LStmt;
 typedef Stmt Qual;
 typedef Located<Qual> LQual;
 
-struct ApplyExp
+struct Apply
 {
     LExp head;
     LExp arg;
@@ -251,7 +251,7 @@ struct ApplyExp
     Core::wrapper res_wrapper;
     std::string print() const;
 
-    ApplyExp(const LExp& h, const LExp& a);
+    Apply(const LExp& h, const LExp& a);
 };
 
 struct ParsedApp
@@ -1243,25 +1243,25 @@ struct AltsT: public std::vector<Located<AltT<P>>>
     AltsT(const std::vector<Located<AltT<P>>>& v): std::vector<Located<AltT<P>>>(v) {};
 };
 
-struct LetExp
+struct Let
 {
     LBinds binds;
     LExp body;
     std::string print() const;
 
-    LetExp(const LBinds& bs, const LExp& b): binds(bs), body(b) {};
+    Let(const LBinds& bs, const LExp& b): binds(bs), body(b) {};
 };
 
-LetExp simple_let(const LVar&, const LExp&, const LExp&);
+Let simple_let(const LVar&, const LExp&, const LExp&);
 
-struct IfExp
+struct If
 {
     LExp condition;
     LExp true_branch;
     LExp false_branch;
     std::string print() const;
 
-    IfExp(const LExp& c, const LExp& t, const LExp& f)
+    If(const LExp& c, const LExp& t, const LExp& f)
         : condition(c),
           true_branch(t),
           false_branch(f)
@@ -1407,7 +1407,7 @@ struct CheckedRecordUpdate
 
 struct CheckedRecordCon
 {
-    // Typechecked positional application; ApplyExp nodes carry argument/result wrappers.
+    // Typechecked positional application; Apply nodes carry argument/result wrappers.
     LExp positional_app;
 
     explicit CheckedRecordCon(const LExp& app): positional_app(app) {}
@@ -1422,13 +1422,13 @@ struct CheckedRecordPattern
 };
 
 template<class P>
-struct LambdaExpT
+struct LambdaT
 {
     MRuleT<P> match;
     std::string print() const;
 
-    LambdaExpT(const std::vector<Located<P>>& ps, const LExp& b);
-    explicit LambdaExpT(const MRuleT<P>& m):match(m) {}
+    LambdaT(const std::vector<Located<P>>& ps, const LExp& b);
+    explicit LambdaT(const MRuleT<P>& m):match(m) {}
 };
 
 
@@ -1446,14 +1446,14 @@ struct MatchContext: std::variant<LambdaContext, CaseContext, FunctionContext>
 };
 
 template<class P>
-struct CaseExpT
+struct CaseT
 {
     LExp object;
     MatchesT<P> alts;
     std::string print() const;
 
-    CaseExpT(const LExp& o, const AltsT<P>& as);
-    CaseExpT(const LExp& o, const MatchesT<P>& ms);
+    CaseT(const LExp& o, const AltsT<P>& as);
+    CaseT(const LExp& o, const MatchesT<P>& ms);
 };
 
 struct FunDecl

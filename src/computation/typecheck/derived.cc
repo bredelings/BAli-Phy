@@ -456,7 +456,7 @@ namespace
 
     Hs::LExp case_exp(const Hs::LExp& object, const Hs::Alts& alts)
     {
-        return {noloc, Hs::CaseExp(object, alts)};
+        return {noloc, Hs::Case(object, alts)};
     }
 
     Located<Hs::Alt> simple_alt(const Hs::LPat& pattern, const Hs::LExp& rhs)
@@ -531,7 +531,7 @@ namespace
 
     Hs::LExp if_exp(const Hs::LExp& condition, const Hs::LExp& true_branch, const Hs::LExp& false_branch)
     {
-        return {noloc, Hs::IfExp(condition, true_branch, false_branch)};
+        return {noloc, Hs::If(condition, true_branch, false_branch)};
     }
 
     Hs::LExp greater_than_exp(const Hs::LExp& x, const Hs::LExp& y)
@@ -1022,7 +1022,7 @@ namespace
 
     Hs::LExp lambda_exp(const Hs::LPats& pats, const Hs::LExp& body)
     {
-        return {noloc, Hs::LambdaExp(pats, body)};
+        return {noloc, Hs::Lambda(pats, body)};
     }
 
     Hs::LExp append_exp(const Hs::LExp& x, const Hs::LExp& y)

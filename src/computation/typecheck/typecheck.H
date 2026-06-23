@@ -487,15 +487,15 @@ public:
 
     void tcRho(Hs::Con& con, const Expected& E);
 
-    void tcRho(Hs::ApplyExp& app_exp, const Expected& E);
+    void tcRho(Hs::Apply& app_exp, const Expected& E);
 
-    [[nodiscard]] Core::wrapper tcRho(Hs::LambdaExp&, const Expected& E);
+    [[nodiscard]] Core::wrapper tcRho(Hs::Lambda&, const Expected& E);
 
-    void tcRho(Hs::LetExp&, const Expected&);
+    void tcRho(Hs::Let&, const Expected&);
 
     void tcRho(Hs::TypedExp& TExp, const Expected&);
 
-    void tcRho(Hs::CaseExp& Case, const Expected&);
+    void tcRho(Hs::Case& Case, const Expected&);
 
     void tcCaseAlts(Hs::Matches& alts, const Type& object_type, const Expected&);
 
@@ -505,7 +505,7 @@ public:
 
     void tcRho(Hs::Literal& Lit, const Expected&);
 
-    void tcRho(Hs::IfExp&, const Expected&);
+    void tcRho(Hs::If&, const Expected&);
 
     void tcRho(Hs::LeftSection&, const Expected&);
 

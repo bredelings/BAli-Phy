@@ -408,38 +408,38 @@ Hs::LExp disambiguate_expression(Hs::LExp lhs)
         T.exp = disambiguate_expression(T.exp);
         return {lhs.loc, T};
     }
-    else if (auto c = E.to<Hs::CaseExp>())
+    else if (auto c = E.to<Hs::Case>())
     {
         auto C = *c;
         C.object = disambiguate_expression(C.object);
         C.alts = disambiguate_matches(C.alts);
         return {lhs.loc, C};
     }
-    else if (auto c = E.to<Hs::ParsedCaseExp>())
+    else if (auto c = E.to<Hs::ParsedCase>())
     {
         auto C = *c;
         C.object = disambiguate_expression(C.object);
-        return {lhs.loc, Hs::CaseExp(C.object, disambiguate_matches(C.alts))};
+        return {lhs.loc, Hs::Case(C.object, disambiguate_matches(C.alts))};
     }
-    else if (auto l = E.to<Hs::LambdaExp>())
+    else if (auto l = E.to<Hs::Lambda>())
     {
         auto L = *l;
         L.match = disambiguate_matches({L.match})[0];
         return {lhs.loc, L};
     }
-    else if (auto l = E.to<Hs::ParsedLambdaExp>())
+    else if (auto l = E.to<Hs::ParsedLambda>())
     {
         auto L = *l;
-        return {lhs.loc, Hs::LambdaExp(disambiguate_matches(Hs::ParsedMatches{L.match})[0])};
+        return {lhs.loc, Hs::Lambda(disambiguate_matches(Hs::ParsedMatches{L.match})[0])};
     }
-    else if (auto l = E.to<Hs::LetExp>())
+    else if (auto l = E.to<Hs::Let>())
     {
         auto L = *l;
         unloc(L.binds) = disambiguate_binds(unloc(L.binds));
         L.body = disambiguate_expression(L.body);
         return {lhs.loc, L};
     }
-    else if (auto i = E.to<Hs::IfExp>())
+    else if (auto i = E.to<Hs::If>())
     {
         auto I = *i;
         I.condition = disambiguate_expression(I.condition);

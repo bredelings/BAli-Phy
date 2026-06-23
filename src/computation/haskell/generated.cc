@@ -16,7 +16,7 @@ namespace Haskell::Generated
     {
         Exp result = head;
         for(const auto& arg: args)
-            result = ApplyExp(Loc(result), Loc(arg));
+            result = Haskell::Apply(Loc(result), Loc(arg));
         return result;
     }
 

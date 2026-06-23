@@ -62,7 +62,7 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
 {
     auto& [loc,pat] = lpat;
 
-    assert(not pat.is_a<Hs::ApplyExp>());
+    assert(not pat.is_a<Hs::Apply>());
 
     // 1. Handle _
     if (pat.is_a<Hs::WildcardPattern>())
@@ -199,7 +199,7 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 {
     auto& [loc,pat] = lpat;
 
-    assert(not pat.is_a<Hs::ApplyExp>());
+    assert(not pat.is_a<Hs::Apply>());
 
     // 1. Handle _
     if (pat.is_a<Hs::WildcardPattern>())

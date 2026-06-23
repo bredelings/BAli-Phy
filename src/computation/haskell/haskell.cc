@@ -21,7 +21,7 @@ namespace Haskell
 
 std::tuple<LExp, vector<LExp>> decompose_apps(const LExp& E)
 {
-    if (auto app = unloc(E).to<ApplyExp>())
+    if (auto app = unloc(E).to<Apply>())
     {
         auto head_args = decompose_apps(app->head);
         std::get<1>(head_args).push_back(app->arg);
@@ -37,7 +37,7 @@ std::tuple<LExp, vector<LExp>> decompose_apps(const LExp& E)
 
 std::tuple<LExp, vector<LExp>> decompose_parsed_app(const LExp& E)
 {
-    if (unloc(E).is_a<ApplyExp>())
+    if (unloc(E).is_a<Apply>())
     {
         std::abort();
     }
@@ -62,7 +62,7 @@ LExp apply(const std::vector<LExp>& terms)
         auto& arg = terms[i];
 
         auto loc = exp.loc * arg.loc;
-        exp = {loc, ApplyExp(exp, arg)};
+        exp = {loc, Apply(exp, arg)};
     }
     return exp;
 }
@@ -73,7 +73,7 @@ LExp apply(const LExp& head, const std::vector<LExp>& args)
     for(auto& arg: args)
     {
         auto loc = exp.loc * arg.loc;
-        exp = {loc, ApplyExp(exp, arg)};
+        exp = {loc, Apply(exp, arg)};
     }
     return exp;
 }
@@ -529,7 +529,7 @@ string AltsT<P>::print() const
 // Print a case expression after its direct pattern representation has been chosen.
 // Parsed cases are removed by disambiguation before rename/typecheck/desugar.
 template<class P>
-string CaseExpT<P>::print() const
+string CaseT<P>::print() const
 {
     vector<string> alt_strings;
     for(auto& alt: alts)
@@ -553,12 +553,12 @@ MatchesT<P> matches_from_alts(const AltsT<P>& alts)
 }
 
 template<class P>
-CaseExpT<P>::CaseExpT(const LExp& o, const MatchesT<P>& ms)
+CaseT<P>::CaseT(const LExp& o, const MatchesT<P>& ms)
     : object(o), alts(ms)
 { }
 
 template<class P>
-CaseExpT<P>::CaseExpT(const LExp& o, const AltsT<P>& as)
+CaseT<P>::CaseT(const LExp& o, const AltsT<P>& as)
     : object(o), alts( matches_from_alts(as) )
 { }
 
@@ -1021,7 +1021,7 @@ MultiGuardedRHS SimpleRHS(const LExp& body, const optional<Located<Binds>>& decl
 // Print a lambda expression using pattern parenthesization for final patterns.
 // Parsed lambdas are diagnostic-only and use expression parenthesization.
 template<class P>
-string LambdaExpT<P>::print() const
+string LambdaT<P>::print() const
 {
     string result = "\\";
     for(auto& pat: match.patterns)
@@ -1038,7 +1038,7 @@ string LambdaExpT<P>::print() const
 // Build a lambda node from either parser-phase or final-phase patterns.
 // Disambiguation converts the parser-phase alias into the final alias.
 template<class P>
-LambdaExpT<P>::LambdaExpT(const std::vector<Located<P>>& ps, const LExp& b)
+LambdaT<P>::LambdaT(const std::vector<Located<P>>& ps, const LExp& b)
     :match(ps, SimpleRHS(b))
 {
     assert(not match.patterns.empty());
@@ -1068,7 +1068,7 @@ std::string parenthesize_exp(const Expression& E)
     return s;
 }
 
-std::string ApplyExp::print() const
+std::string Apply::print() const
 {
     auto [head,args] = decompose_apps({noloc,*this});
 
@@ -1100,34 +1100,34 @@ std::string ApplyExp::print() const
 
 std::string ParsedApp::print() const
 {
-    // Print parsed application spines without lowering them to ApplyExp.
+    // Print parsed application spines without lowering them to Apply.
     vector<string> ss;
     for(auto& term: terms)
         ss.push_back(parenthesize_exp(unloc(term)));
     return join(ss, " ");
 }
 
-ApplyExp::ApplyExp(const LExp& h, const LExp& a)
+Apply::Apply(const LExp& h, const LExp& a)
     :head(h), arg(a)
 {
 }
 
-string LetExp::print() const
+string Let::print() const
 {
     return "let " + binds.print() + " in " + body.print();
 }
 
-LetExp simple_let(const LVar& x, const LExp& E, const LExp& body)
+Let simple_let(const LVar& x, const LExp& E, const LExp& body)
 {
     auto loc = x.loc * E.loc;
     auto decl = simple_decl(x, E);
     Decls decls({{loc,decl}});
     Binds binds({decls});
 
-    return LetExp({x.loc * E.loc, binds}, body);
+    return Let({x.loc * E.loc, binds}, body);
 }
 
-string IfExp::print() const
+string If::print() const
 {
     return "if " + condition.print() + " then " + true_branch.print() + " else " + false_branch.print();
 }
@@ -1214,10 +1214,10 @@ template struct MRuleT<Pat>;
 template struct MRuleT<Exp>;
 template struct MatchesT<Pat>;
 template struct MatchesT<Exp>;
-template struct LambdaExpT<Pat>;
-template struct LambdaExpT<Exp>;
-template struct CaseExpT<Pat>;
-template struct CaseExpT<Exp>;
+template struct LambdaT<Pat>;
+template struct LambdaT<Exp>;
+template struct CaseT<Pat>;
+template struct CaseT<Exp>;
 
 
 string GenBind::print() const

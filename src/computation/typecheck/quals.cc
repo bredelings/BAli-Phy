@@ -51,20 +51,20 @@ namespace
         stmts.push_back({noloc, Hs::SimpleQual(rec_return_stmt)});
         auto rec_do = Haskell::Do(Haskell::Stmts(stmts));
 
-        Hs::Exp rec_lambda = Haskell::LambdaExp({{noloc, Haskell::LazyPattern(rec_tuple_pattern)}}, {noloc, rec_do});
+        Hs::Exp rec_lambda = Haskell::Lambda({{noloc, Haskell::LazyPattern(rec_tuple_pattern)}}, {noloc, rec_do});
         return Hs::apply({noloc, R.mfixOp}, std::vector<Hs::LExp>{{noloc, rec_lambda}});
     }
 
     void copy_checked_rec_stmt_from_mfix_exp(Hs::RecStmt& R, const Hs::LExp& mfix_exp)
     {
-        auto app1 = unloc(mfix_exp).as_<Hs::ApplyExp>();
+        auto app1 = unloc(mfix_exp).as_<Hs::Apply>();
         R.mfixOp = unloc(app1.head).as_<Hs::Var>();
 
-        auto lambda = unloc(app1.arg).as_<Hs::LambdaExp>();
+        auto lambda = unloc(app1.arg).as_<Hs::Lambda>();
         auto rec_do = unloc(lambda.match.rhs.guarded_rhss[0].body).as_<Hs::Do>();
         auto checked_stmts = rec_do.stmts.stmts;
         auto return_stmt = unloc(checked_stmts.back()).as_<Hs::SimpleQual>();
-        auto return_app = unloc(return_stmt.exp).as_<Hs::ApplyExp>();
+        auto return_app = unloc(return_stmt.exp).as_<Hs::Apply>();
 
         R.returnOp = unloc(return_app.head).as_<Hs::Var>();
         checked_stmts.pop_back();

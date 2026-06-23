@@ -396,7 +396,7 @@ Hs::Exp noloc_apply(const std::vector<Hs::Exp>& E)
     Hs::LExp LE = {noloc, E[0]};
     for(int i=1;i<E.size();i++)
     {
-        LE = {noloc, Hs::ApplyExp(LE, {noloc, E[i]})};
+        LE = {noloc, Hs::Apply(LE, {noloc, E[i]})};
     }
     return unloc(LE);
 }
@@ -474,10 +474,10 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
 
             // [ e | b, Q   ]  =  if b then [ e | Q ] else []
             if (auto cond = B.to<Hs::SimpleQual>())
-                return desugar( Hs::IfExp( cond->exp, {noloc, E2}, {noloc, Hs::List({})}) );
+                return desugar( Hs::If( cond->exp, {noloc, E2}, {noloc, Hs::List({})}) );
             // [ e | let decls, Q] = let decls in [ e | Q ]
             else if (auto LQ = B.to<Hs::LetQual>())
-                return desugar( Hs::LetExp( LQ->binds, {noloc, E2} ) );
+                return desugar( Hs::Let( LQ->binds, {noloc, E2} ) );
             // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in concatMap ok l
             else if (auto PQ = B.to<Hs::PatQual>())
             {
@@ -489,13 +489,13 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
 		    //              =  map (\p -> e) l
 		    if (L.quals.empty())
 		    {
-			Hs::Exp f = Hs::LambdaExp({PQ->bindpat}, L.body);
+			Hs::Exp f = Hs::Lambda({PQ->bindpat}, L.body);
 			return desugar( noloc_apply({Hs::Var("Data.OldList.map"), f, unloc(PQ->exp)}) );
 		    }
 		    // [ e | p<-l, Q]  =  concatMap (\p -> [e | q ]) l
 		    else
 		    {
-			Hs::Exp f = Hs::LambdaExp({PQ->bindpat}, {noloc, L});
+			Hs::Exp f = Hs::Lambda({PQ->bindpat}, {noloc, L});
 			return desugar( noloc_apply({concatMap, f, unloc(PQ->exp)}) );
 		    }
                 }
@@ -512,7 +512,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
                     auto body = noloc_apply({concatMap, ok, unloc(PQ->exp)});
                     Hs::Decls decls;
                     decls.push_back({noloc, Hs::Decl{decl}});
-                    return desugar( Hs::LetExp({noloc,Hs::Binds{decls}}, {noloc, body}) );
+                    return desugar( Hs::Let({noloc,Hs::Binds{decls}}, {noloc, body}) );
                 }
             }
         }
@@ -600,7 +600,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
 
             if (not bind_pattern_can_fail(PQ))
             {
-                Hs::Exp lambda = Hs::LambdaExp({PQ.bindpat}, {noloc,do_stmts});
+                Hs::Exp lambda = Hs::Lambda({PQ.bindpat}, {noloc,do_stmts});
                 result = noloc_apply({PQ.bindOp, unloc(PQ.exp), lambda});
             }
             else
@@ -619,7 +619,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
                 Hs::Exp body = noloc_apply({PQ.bindOp, unloc(PQ.exp), ok});
                 Hs::Decls decls;
                 decls.push_back({noloc, Hs::Decl{decl}});
-                result = Hs::LetExp({noloc,Hs::Binds{decls}}, {noloc,body});
+                result = Hs::Let({noloc,Hs::Binds{decls}}, {noloc,body});
             }
         }
         // do {rec rec_stmts ; rest} => do {tuple <- mfix (\~tuple -> do {rec_stmts; return tuple}); rest}
@@ -635,7 +635,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         else if (first.is_a<Hs::LetQual>())
         {
             auto& LQ = first.as_<Hs::LetQual>();
-            result = Hs::LetExp( LQ.binds, {noloc, do_stmts});
+            result = Hs::Let( LQ.binds, {noloc, do_stmts});
         }
         else
             std::abort();
@@ -650,9 +650,9 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         return wrap->wrap( desugar( wrap->exp ) );
     }
-    else if (E.is_a<Hs::LambdaExp>())
+    else if (E.is_a<Hs::Lambda>())
     {
-        auto L = E.as_<Hs::LambdaExp>();
+        auto L = E.as_<Hs::Lambda>();
 
         auto equation = desugar_match(L.match);
         auto loc = L.match.patterns.empty()? std::optional<yy::location>{} : L.match.patterns[0].loc;
@@ -660,7 +660,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
 
         return def_function({equation}, otherwise);
     }
-    else if (auto L = E.to<Hs::LetExp>())
+    else if (auto L = E.to<Hs::Let>())
     {
         auto decls = desugar_decls(unloc(L->binds));
         auto body = desugar(L->body);
@@ -668,9 +668,9 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         // construct the new let expression.
         return make_let(decls.decls, decls.wrap_body(body));
     }
-    else if (E.is_a<Hs::IfExp>())
+    else if (E.is_a<Hs::If>())
     {
-        auto& I = E.as_<Hs::IfExp>();
+        auto& I = E.as_<Hs::If>();
 
         auto condition = desugar(I.condition);
         auto true_branch = desugar(I.true_branch);
@@ -678,7 +678,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
 
         return case_expression(condition,{Hs::TruePat()},{failable_expression(true_branch)}).result(false_branch);
     }
-    else if (auto c = E.to<Hs::CaseExp>())
+    else if (auto c = E.to<Hs::Case>())
     {
         auto& C = *c;
 
@@ -693,7 +693,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         }
         return case_expression(obj, patterns, bodies).result(pattern_match_failure(C.object.loc, "case expression failed pattern match"));
     }
-    else if (auto app = E.to<Hs::ApplyExp>())
+    else if (auto app = E.to<Hs::Apply>())
     {
         auto A = desugar(app->head);
 

@@ -69,7 +69,7 @@ namespace
     {
         Hs::LExp head = checked_rhs;
         std::vector<Hs::CheckedRecordUpdateRhsApply> apps;
-        while(auto app = unloc(head).to<Hs::ApplyExp>())
+        while(auto app = unloc(head).to<Hs::Apply>())
         {
             apps.push_back({app->arg, app->arg_wrapper, app->res_wrapper});
             head = app->head;
@@ -531,7 +531,7 @@ void TypeChecker::tcRho(Hs::Con& con, const Expected& exp_type)
     con.wrap = instantiateSigma(OccurrenceOrigin(con.name), sigma, exp_type);
 }
 
-void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::Apply& App, const Expected& exp_type)
 {
     // 1. Infer the head type
     Expected fun_type = newInfer();
@@ -555,7 +555,7 @@ void TypeChecker::tcRho(Hs::ApplyExp& App, const Expected& exp_type)
     }
 }
 
-void TypeChecker::tcRho(Hs::LetExp& Let, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::Let& Let, const Expected& exp_type)
 {
     auto state2 = copy_clear_wanteds();
 
@@ -567,7 +567,7 @@ void TypeChecker::tcRho(Hs::LetExp& Let, const Expected& exp_type)
     current_wanteds() += state2.current_wanteds();
 }
 
-Core::wrapper TypeChecker::tcRho(Hs::LambdaExp& Lam, const Expected& exp_type)
+Core::wrapper TypeChecker::tcRho(Hs::Lambda& Lam, const Expected& exp_type)
 {
     return tcMatchesFun( getArity(Lam.match), exp_type, [&](const std::vector<Expected>& arg_types, const Expected& result_type){
         return [&](TypeChecker& tc) { tc.tcMatch(Hs::LambdaContext(), Lam.match, arg_types, result_type); }; }
@@ -582,7 +582,7 @@ void TypeChecker::tcRho(Hs::TypedExp& TExp, const Expected& exp_type)
     TExp.wrap = w1 * w2;
 }
 
-void TypeChecker::tcRho(Hs::CaseExp& Case, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::Case& Case, const Expected& exp_type)
 {
     // 2. Check the object
     auto object_type = inferRho(Case.object);
@@ -678,7 +678,7 @@ void TypeChecker::tcRho(Hs::Literal& Lit, const Expected& exp_type)
         std::abort();
 }
 
-void TypeChecker::tcRho(Hs::IfExp& If, const Expected& exp_type)
+void TypeChecker::tcRho(Hs::If& If, const Expected& exp_type)
 {
     checkRho(If.condition, bool_type());
 
@@ -854,14 +854,14 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
         E = Rec;
     }
     // APP
-    else if (auto app = E.to<Hs::ApplyExp>())
+    else if (auto app = E.to<Hs::Apply>())
     {
         auto App = *app;
         tcRho(App, exp_type);
         E = App;
     }
     // LAMBDA
-    else if (auto lam = E.to<Hs::LambdaExp>())
+    else if (auto lam = E.to<Hs::Lambda>())
     {
         auto Lam = *lam;
         auto wrap = tcRho(Lam, exp_type);
@@ -872,14 +872,14 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
             E = Hs::Wrap(checked, wrap);
     }
     // LET
-    else if (auto let = E.to<Hs::LetExp>())
+    else if (auto let = E.to<Hs::Let>())
     {
         auto Let = *let;
         tcRho(Let, exp_type);
         E = Let;
     }
     // CASE
-    else if (auto case_exp = E.to<Hs::CaseExp>())
+    else if (auto case_exp = E.to<Hs::Case>())
     {
         auto Case = *case_exp;
         tcRho(Case, exp_type);
@@ -914,7 +914,7 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
         E = T;
     }
     // IF
-    else if (auto if_exp = E.to<Hs::IfExp>())
+    else if (auto if_exp = E.to<Hs::If>())
     {
         auto If = *if_exp;
         tcRho(If, exp_type);

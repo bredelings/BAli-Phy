@@ -53,8 +53,8 @@ namespace
 
         Hs::Var arg("v$0");
         Hs::LPat arg_pat = {noloc, Hs::VarPattern({noloc, arg})};
-        Hs::Exp body = Haskell::CaseExp({noloc, arg}, Haskell::Alts(alts));
-        Hs::Exp lambda = Haskell::LambdaExp({arg_pat}, {noloc, body});
+        Hs::Exp body = Haskell::Case({noloc, arg}, Haskell::Alts(alts));
+        Hs::Exp lambda = Haskell::Lambda({arg_pat}, {noloc, body});
         return lambda;
     }
 

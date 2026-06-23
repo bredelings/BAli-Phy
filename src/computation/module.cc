@@ -1157,7 +1157,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
             Hs::LVar fromC = {noloc, Hs::Var("Compiler.FFI.ToFromC.fromC")};
             Hs::LVar raw   = {noloc, Hs::Var(raw_name)};
             Hs::LVar lhs   = fdecl.function;
-            Hs::LExp rhs   = {noloc, Hs::ApplyExp(fromC, raw)};
+            Hs::LExp rhs   = {noloc, Hs::Apply(fromC, raw)};
             Hs::Decls decls;
             decls.push_back({noloc, Hs::simple_decl(lhs,rhs)});
 

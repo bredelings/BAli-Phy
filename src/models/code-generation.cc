@@ -137,7 +137,7 @@ Hs::Exp simplify_intToDouble(const Hs::Exp& E)
             return false;
     };
 
-    if (E.is_a<Hs::ApplyExp>())
+    if (E.is_a<Hs::Apply>())
     {
         auto [head,args] = Hs::decompose_apps({noloc, E});
         if (args.size() == 1 and is_int_to_double(unloc(head)))
@@ -462,7 +462,7 @@ void get_generated_free_vars2(const Hs::Exp& E, multiset<Hs::Var>& bound, set<Hs
         return;
     }
 
-    if (auto A = E.to<Hs::ApplyExp>())
+    if (auto A = E.to<Hs::Apply>())
     {
         get_generated_free_vars2(unloc(A->head), bound, free);
         get_generated_free_vars2(unloc(A->arg), bound, free);
@@ -480,7 +480,7 @@ void get_generated_free_vars2(const Hs::Exp& E, multiset<Hs::Var>& bound, set<Hs
             get_generated_free_vars2(unloc(element), bound, free);
         return;
     }
-    else if (auto L = E.to<Hs::LambdaExp>())
+    else if (auto L = E.to<Hs::Lambda>())
     {
         auto bound_ = Hs::vars_in_patterns(L->match.patterns);
         for(const auto& x: bound_)
@@ -496,7 +496,7 @@ void get_generated_free_vars2(const Hs::Exp& E, multiset<Hs::Var>& bound, set<Hs
         }
         return;
     }
-    else if (auto L = E.to<Hs::LetExp>())
+    else if (auto L = E.to<Hs::Let>())
     {
         auto bound_ = get_generated_bound_vars(unloc(L->binds));
         add_generated_bound_vars(bound_, bound);
@@ -534,7 +534,7 @@ set<Hs::Var> get_generated_free_vars(const Hs::Exp& E)
 set<Hs::Var> get_generated_bound_vars(const Hs::Exp& E)
 {
     set<Hs::Var> bound;
-    if (auto L = E.to<Hs::LetExp>())
+    if (auto L = E.to<Hs::Let>())
         bound = get_generated_bound_vars(unloc(L->binds));
     return bound;
 }
@@ -554,7 +554,7 @@ Hs::Exp make_generated_let(const std::vector<std::vector<std::pair<Hs::Var, Hs::
     {
         if (decls.empty())
             continue;
-        result = Hs::LetExp({noloc, make_generated_binds(decls)}, {noloc, result});
+        result = Hs::Let({noloc, make_generated_binds(decls)}, {noloc, result});
     }
     return result;
 }
@@ -563,7 +563,7 @@ Hs::Exp eta_reduce(Hs::Exp E)
 {
     while(true)
     {
-        if (auto L = E.to<Hs::LambdaExp>())
+        if (auto L = E.to<Hs::Lambda>())
         {
             if (L->match.patterns.size() != 1)
                 break;
@@ -580,7 +580,7 @@ Hs::Exp eta_reduce(Hs::Exp E)
                 break;
 
             auto& body = unloc(guarded_rhs.body);
-            auto A = body.to<Hs::ApplyExp>();
+            auto A = body.to<Hs::Apply>();
             if (not A)
                 break;
 
@@ -742,7 +742,7 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
             auto body = make_rule_template_expr(lambda.body, simple_args);
             Hs::LPat p = {noloc, Hs::VarPattern({noloc,Hs::Var(pattern->name)})};
 
-            if (auto L = body.to<Hs::LambdaExp>())
+            if (auto L = body.to<Hs::Lambda>())
             {
                 auto LE = *L;
                 auto& pats = LE.match.patterns;
@@ -750,7 +750,7 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
                 return LE;
             }
             else
-                return Hs::LambdaExp({p}, {noloc, body});
+                return Hs::Lambda({p}, {noloc, body});
         },
         // Compatibility behavior: rule templates share the model parser, so
         // sample(@dist) is parsed as Sample but means a Haskell sample call here.
@@ -1029,7 +1029,7 @@ translation_result_t CodeGenState::get_typed_model_lambda(const CM::Lambda<CM::A
             body_result.lambda_vars.erase(var_name);
 
     auto pattern2 = get_typed_pattern(lambda.pattern, scope2);
-    body_result.code.E = Hs::LambdaExp({pattern2}, {noloc, body_result.code.E});
+    body_result.code.E = Hs::Lambda({pattern2}, {noloc, body_result.code.E});
 
     body_result.code.E = eta_reduce(body_result.code.E);
     for(auto& var_name: var_names)

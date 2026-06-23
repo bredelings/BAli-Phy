@@ -1236,12 +1236,12 @@ fexp: fexp aexp                  {$$ = make_parsed_app(@$, $1, $2);}
 aexp: qvar TIGHT_INFIX_AT aexp   {$$ = {@$, Hs::ParsedAsPattern({@1,Hs::Var($1)},$3)}; }
 |     PREFIX_TILDE aexp          {$$ = {@$, Hs::ParsedLazyPattern($2)}; }
 |     PREFIX_BANG  aexp          {$$ = {@$, Hs::ParsedStrictPattern($2)}; }
-|     "\\" apats1 "->" exp       {$$ = {@$, Hs::ParsedLambdaExp($2,$4)}; }
-|     "let" binds "in" exp       {$$ = {@$, Hs::LetExp($2,$4)}; }
+|     "\\" apats1 "->" exp       {$$ = {@$, Hs::ParsedLambda($2,$4)}; }
+|     "let" binds "in" exp       {$$ = {@$, Hs::Let($2,$4)}; }
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
-|     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = {@1+@8,Hs::IfExp($2,$5,$8)}; }
+|     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = {@1+@8,Hs::If($2,$5,$8)}; }
 /* |     "if" ifgdpats              {} MultiWayIf extension not currently handled */
-|     "case" exp "of" altslist   {$$ = {@$, Hs::ParsedCaseExp($2,$4)}; }
+|     "case" exp "of" altslist   {$$ = {@$, Hs::ParsedCase($2,$4)}; }
 |     "do" stmtlist              {$$ = {@$, Hs::Do($2)}; }
 |     "mdo" stmtlist             {$$ = {@$, Hs::MDo($2)}; }
 /* |     "proc" aexp "->" exp       {} -XArrows not currently handled */
@@ -1708,7 +1708,7 @@ Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::
         body = make_record_field_selection(loc, body, field);
 
     Hs::LPat arg_pat = {loc, Hs::VarPattern(arg)};
-    return {loc, Hs::LambdaExp({arg_pat}, body)};
+    return {loc, Hs::Lambda({arg_pat}, body)};
 }
 
 // See PostProcess.hs:checkTyClHdr

@@ -144,7 +144,7 @@ static Hs::FunDecl make_generated_function_decl(const string& name, Hs::Exp E)
     Hs::LPats patterns;
     while(true)
     {
-        auto lambda = E.to<Hs::LambdaExp>();
+        auto lambda = E.to<Hs::Lambda>();
         if (not lambda)
             break;
 
@@ -240,7 +240,7 @@ Hs::Exp generated_code_t::generate() const
     assert(is_action() or not R.is_a<Hs::Do>());
 
     for(auto& x : haskell_lambda_vars | views::reverse)
-        R = Hs::LambdaExp({{noloc, Hs::VarPattern({noloc, x})}}, {noloc, R});
+        R = Hs::Lambda({{noloc, Hs::VarPattern({noloc, x})}}, {noloc, R});
 
     return R;
 }

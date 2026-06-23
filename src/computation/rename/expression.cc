@@ -342,7 +342,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
             }
         }
     }
-    else if (auto c = E.to<Hs::CaseExp>())
+    else if (auto c = E.to<Hs::Case>())
     {
         auto C = *c;
 
@@ -351,15 +351,15 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
 
         E = C;
     }
-    else if (E.is_a<Hs::LambdaExp>())
+    else if (E.is_a<Hs::Lambda>())
     {
-        auto L = E.as_<Hs::LambdaExp>();
+        auto L = E.as_<Hs::Lambda>();
         L.match = rename(L.match, bound, free_vars);
         E = L;
     }
-    else if (E.is_a<Hs::LetExp>())
+    else if (E.is_a<Hs::Let>())
     {
-        auto L = E.as_<Hs::LetExp>();
+        auto L = E.as_<Hs::Let>();
 
         auto rn = child();
         rn.fixity_env = rn.add_fixities_from_decls(rn.fixity_env, unloc(L.binds)[0]);
@@ -368,9 +368,9 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
 
         E = L;
     }
-    else if (E.is_a<Hs::IfExp>())
+    else if (E.is_a<Hs::If>())
     {
-        auto I = E.as_<Hs::IfExp>();
+        auto I = E.as_<Hs::If>();
 
         I.condition    = rename(I.condition, bound, free_vars);
         I.true_branch  = rename(I.true_branch, bound, free_vars);
@@ -382,7 +382,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     { }
     else if (E.is_a<Hs::ParsedApp>())
         error(loc, Note()<<"Internal error: parsed application reached expression renaming.");
-    else if (E.is_a<Hs::ParsedLambdaExp>() or E.is_a<Hs::ParsedCaseExp>() or
+    else if (E.is_a<Hs::ParsedLambda>() or E.is_a<Hs::ParsedCase>() or
              E.is_a<Hs::ParsedAsPattern>() or E.is_a<Hs::ParsedLazyPattern>() or
              E.is_a<Hs::ParsedStrictPattern>() or E.is_a<Hs::ParsedWildcardPattern>())
         error(loc, Note()<<"Internal error: parser-only expression/pattern syntax reached expression renaming.");
@@ -399,7 +399,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
             E = Hs::Var("<infix-error>");
         }
     }
-    else if (auto app = E.to<Hs::ApplyExp>())
+    else if (auto app = E.to<Hs::Apply>())
     {
         auto App = *app;
         App.head = rename(App.head, bound, free_vars);
