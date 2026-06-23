@@ -279,7 +279,6 @@ public:
     expression_ref(const char* s) = delete;
     expression_ref(const char& c2):c(c2),type_(type_constant::char_type) {}
     expression_ref(const String& s):expression_ref(s.clone()) { }
-    expression_ref(const std::initializer_list<expression_ref>&);
 
     void swap(expression_ref& E) noexcept
         {

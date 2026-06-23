@@ -4,8 +4,6 @@
 #include "haskell/haskell.H"
 #include "util/string/join.H"
 #include "expression_ref.H"
-#include "apply.H"
-#include "var.H"
 #include "bool.H"
 #include "computation/module.H"
 #include <set>
@@ -89,32 +87,6 @@ string print_list(const expression_ref& E)
 
 }
 
-bool is_infix_expression(const expression& e)
-{
-    if (not is_apply(e.head)) return false;
-
-    if (e.size() != 3) return false;
-
-    if (not e.sub[0].is_a<var>()) return false;
-
-    auto id = e.sub[0].as_<var>().name;
-
-    return is_haskell_sym(id);
-}
-
-bool is_infix_expression(const expression_ref& e)
-{
-    if (not is_apply_exp(e)) return false;
-
-    if (e.size() != 3) return false;
-
-    if (not e.sub()[0].is_a<var>()) return false;
-
-    auto id = e.sub()[0].as_<var>().name;
-
-    return is_haskell_sym(id);
-}
-
 // Compatibility: legacy application printing must parenthesize compound Hs::* nodes.
 // Remove this when generated code no longer mixes Hs::* expressions into expression::print().
 bool is_haskell_compound_arg(const expression_ref& E)
@@ -185,28 +157,7 @@ string expression::print() const
 	pargs[i] = "(" + args[i] + ")";
     }
 
-    if (head.is_a<Apply>())
-    {
-	// Don't print @ f x y, just print f x y
-	pargs.erase(pargs.begin());
-
-	if (is_infix_expression(*this))
-	{
-	    // Don't parenthesize the operator!
-	    pargs[0] = sub[0].as_<var>().name;
-
-	    if (is_apply_exp(sub[1]) and not is_infix_expression(sub[1]))
-		pargs[1] = args[2];
-
-	    if (is_apply_exp(sub[2]) and not is_infix_expression(sub[2]))
-		pargs[2] = args[3];
-
-	    std::swap(pargs[0],pargs[1]);
-	}
-
-	return join(pargs, " ");
-    }
-    else if (head.is_a<constructor>())
+    if (head.is_a<constructor>())
     {
 	auto& O = head.as_<constructor>();
 
@@ -268,17 +219,6 @@ expression::expression(const expression_ref& H, const std::vector< expression_re
 expression_ref::expression_ref(const bool& b)
     :expression_ref(b?bool_true:bool_false)
 {}
-
-expression_ref::expression_ref(const std::initializer_list<expression_ref>& es)
-{
-    for(auto& e: es)
-    {
-	if (not (*this))
-	    (*this) = e;
-	else
-	    (*this) = apply((*this),e);
-    }
-}
 
 unique_ptr<expression> operator+(const expression_ref& E1, const expression_ref&E2)
 {

@@ -1292,7 +1292,7 @@ expression_ref error(const std::string& s)
 {
     expression_ref error = Var("Compiler.Error.error");
     expression_ref msg = Literal(String{s});
-    return {error,msg};
+    return unloc(apply({{noloc, error}, {noloc, msg}}));
 }
 
 Con True()

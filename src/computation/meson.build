@@ -30,7 +30,6 @@ computation_sources = [
   
   'expression/constructor.cc',
   'expression/expression_ref.cc',
-  'expression/apply.cc',
   'runtime/indexify.cc',
   'expression/var.cc',
   'runtime/modifiable.cc', 'runtime/interchangeable.cc',
