@@ -13,14 +13,7 @@
 
 class expression_ref
 {
-    union
-    {
-	char c;
-	int i;
-	double d;
-	log_double_t ld;
-	object_ptr<const Object> O;
-    };
+    object_ptr<const Object> O;
     type_constant type_ = type_constant::null_type;
 
 public:
@@ -31,29 +24,13 @@ public:
 	{
 	    if (type_ != E2.type())
 		return false;
-    
-	    switch(type_)
-	    {
-	    case type_constant::null_type:
-		return true;
-		break;
-	    case type_constant::int_type:
-		return (i == E2.as_int());
-		break;
-	    case type_constant::double_type:
-		return (d == E2.as_double());
-		break;
-	    case type_constant::log_double_type:
-		return (ld == E2.as_log_double());
-		break;
-	    case type_constant::char_type:
-		return (c == E2.as_char());
-		break;
-	    default:
-                if (ptr() == E2.ptr()) return true;
 
-		return (*ptr() == *E2.ptr());
-	    }
+	    if (type_ == type_constant::null_type)
+		return true;
+
+	    if (ptr() == E2.ptr()) return true;
+
+	    return (*ptr() == *E2.ptr());
 	}
 
     bool operator==(const Object& O) const
@@ -64,7 +41,7 @@ public:
 		return (*ptr() == O);
 	}
 
-    void clear() {destroy_ptr();type_=type_constant::null_type;}
+    void clear() {O = {}; type_=type_constant::null_type;}
 
     type_constant type() const
         {
@@ -142,54 +119,6 @@ public:
 	    return *convert_and_check<const T>(ptr().get());
 	}
 
-    bool is_int() const
-	{
-	    return type_ == type_constant::int_type;
-	}
-
-    int as_int() const
-	{
-	    if (not is_int())
-		throw myexception()<<"Treating '"<<*this<<"' as int!";
-	    return i;
-	}
-
-    bool is_double() const
-	{
-	    return type_ == type_constant::double_type;
-	}
-
-    double as_double() const
-	{
-	    if (not is_double())
-		throw myexception()<<"Treating '"<<*this<<"' as double!";
-	    return d;
-	}
-
-    bool is_char() const
-	{
-	    return type_ == type_constant::char_type;
-	}
-
-    char as_char() const
-	{
-	    if (not is_char())
-		throw myexception()<<"Treating '"<<*this<<"' as char!";
-	    return c;
-	}
-
-    bool is_log_double() const
-	{
-	    return type_ == type_constant::log_double_type;
-	}
-
-    log_double_t as_log_double() const
-	{
-	    if (not is_log_double())
-		throw myexception()<<"Treating '"<<*this<<"' as log_double!";
-	    return ld;
-	}
-
     inline const object_ptr<const Object>& ptr() const
 	{
 	    if (not is_object_type())
@@ -207,19 +136,13 @@ public:
 
     typedef object_ptr<const Object> otype;
 
-    inline void destroy_ptr()
-	{
-	    if (is_object_type())
-		(&O)->~otype();
-	}
-
     // Default
-    expression_ref() {d = 0;}
+    expression_ref() = default;
 
     // Object arguments
-    expression_ref(Object* v):O(v),type_(v->type()) { }
+    expression_ref(Object* v):O(v),type_(v ? v->type() : type_constant::null_type) { }
 
-    expression_ref(const Object* v):O(v),type_(v->type()) { }
+    expression_ref(const Object* v):O(v),type_(v ? v->type() : type_constant::null_type) { }
 
     expression_ref(const object_ptr<Object>& v):expression_ref(v.get()) { }
 
@@ -229,57 +152,30 @@ public:
     expression_ref(const Object& o):expression_ref(o.clone()) { }
 
     // Builtin-type arguments
-    expression_ref(const int& i2):i(i2),type_(type_constant::int_type) {}
-    expression_ref(const double& d2):d(d2),type_(type_constant::double_type) {}
-    expression_ref(const log_double_t& ld2):ld(ld2),type_(type_constant::log_double_type) {}
+    expression_ref(const int& i2) = delete;
+    expression_ref(const double& d2) = delete;
+    expression_ref(const log_double_t& ld2) = delete;
     expression_ref(const bool& b) = delete;
     expression_ref(const std::string& s) = delete;
     expression_ref(const char* s) = delete;
-    expression_ref(const char& c2):c(c2),type_(type_constant::char_type) {}
+    expression_ref(const char& c2) = delete;
     expression_ref(const String& s):expression_ref(s.clone()) { }
 
     void swap(expression_ref& E) noexcept
         {
-            static_assert(sizeof(d) >= sizeof(O));
-            std::swap(d, E.d);
+            std::swap(O, E.O);
             std::swap(type_, E.type_);
         }
 
-    expression_ref& operator=(const expression_ref& E)
-	{
-            // If *this points to a structure containing E,
-            // then E can get destroyed during the operation.
-            // That means we can't access E.type_ after the assignment of E.O
+    expression_ref& operator=(const expression_ref& E) = default;
 
-            // By constructing a temporary here we
-            // * increment the reference of E.O (if its a pointer)
-            // * copy E.type_, so that we can use it safely.
+    expression_ref& operator=(expression_ref&& E) noexcept = default;
 
-            expression_ref(E).swap(*this);
-	    return *this;
-	}
+    expression_ref(const expression_ref& E) = default;
 
-    expression_ref& operator=(expression_ref&& E) noexcept
-	{
-            swap(E);
-	    return *this;
-	}
+    expression_ref(expression_ref&& E) noexcept = default;
 
-    expression_ref(const expression_ref& E):type_(E.type_)
-	{
-	    if (is_object_type())
-		new (&O) otype(E.ptr());
-	    else
-		d = E.d;
-	}
-
-    expression_ref(expression_ref&& E) noexcept
-	{
-	    d = 0;
-	    swap(E);
-	}
-
-    inline ~expression_ref() {destroy_ptr();}
+    ~expression_ref() = default;
 };
 
 inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)

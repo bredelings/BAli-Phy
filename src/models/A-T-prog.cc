@@ -123,7 +123,7 @@ expression_ref get_alphabet_expression(const alphabet& a)
     else if (auto num = dynamic_cast<const Numeric*>(&a))
     {
 	int n = num->size();
-	return HsG::Apply(Hs::Var("mkNumeric"), {n});
+	return HsG::Apply(Hs::Var("mkNumeric"), {Hs::Literal(Hs::Integer{integer(n)})});
     }
     else
     {
@@ -393,7 +393,7 @@ Hs::Stmts generate_main(const variables_map& args,
 		    partition_sequence_data_var = (group==0) ? unaligned_sequence_data : aligned_sequence_data;
 
                 int index = index_for_filename.at( filename_ranges[i].first );
-                expression_ref loaded_sequences = HsG::Apply(Hs::Var("!!"), {filename_to_seqs, index});
+                expression_ref loaded_sequences = HsG::Apply(Hs::Var("!!"), {filename_to_seqs, Hs::Literal(Hs::Integer{integer(index)})});
                 if (not filename_ranges[i].second.empty())
                     loaded_sequences = HsG::Apply(Hs::Var("selectRange"), {Hs::Literal(Hs::String(filename_ranges[i].second)), loaded_sequences});
 		if (partition_group[i] == 0)
@@ -793,7 +793,7 @@ std::string generate_atmodel_program(const variables_map& args,
 	if (partition_group_size[group] == 1)
 	    return sequenceData;
 	else
-	    return HsG::Apply(Hs::Var("!!"), {sequenceData, partition_index[p]});
+	    return HsG::Apply(Hs::Var("!!"), {sequenceData, Hs::Literal(Hs::Integer{integer(partition_index[p])})});
     };
 
     if (n_partitions > 0)

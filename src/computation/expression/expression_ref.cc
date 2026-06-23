@@ -4,57 +4,17 @@
 #include "util/string/join.H"
 #include "expression_ref.H"
 #include "computation/module.H"
-#include <set>
-#include <iterator>
-#include <map>
-#include <cctype>
 
 using std::pair;
 using std::vector;
 using std::string;
-using std::set;
-using std::multiset;
-using std::unique_ptr;
-
-using boost::dynamic_pointer_cast;
-
-/// 16.31281376 -> "16.312813760000001"
-string double_to_string(double d)
-{
-    string s = convertToString(d);
-    int i = s.size()-1;
-    if (s[i] == '0' and s.find('.') != string::npos)
-    {
-        while(i>=0 and s[i] == '0')
-            i--;
-        if (s[i] == '.')
-            i++;
-        s.resize(i+1);
-    }
-    return s;
-}
 
 std::string expression_ref::print() const
 {
-    switch(type_)
-    {
-    case type_constant::null_type:
+    if (type_ == type_constant::null_type)
         return "[NULL]";
-    case type_constant::int_type:
-        return (i<0)?"("+convertToString(i)+")":convertToString(i);
-        break;
-    case type_constant::double_type:
-        return (d<0)?"("+double_to_string(d)+")":double_to_string(d);
-        break;
-    case type_constant::log_double_type:
-        return "LD"+convertToString(ld);
-        break;
-    case type_constant::char_type:
-        return std::string("'")+c+"'";
-        break;
-    default:
+    else
         return ptr()->print();
-    }
 }
 
 int EPtree::count(const std::string& key) const
