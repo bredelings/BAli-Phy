@@ -1,10 +1,9 @@
 #include "ids.H"
 
+#include <cassert>
 #include <regex>
 #include "util/myexception.H"
 #include "util/string/join.H"
-
-#include "expression/tuple.H"
 
 using std::string;
 using std::vector;

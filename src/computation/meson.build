@@ -32,7 +32,6 @@ computation_sources = [
   'expression/expression_ref.cc',
   'expression/apply.cc',
   'runtime/indexify.cc',
-  'expression/tuple.cc','expression/list.cc',
   'expression/var.cc',
   'runtime/modifiable.cc', 'runtime/interchangeable.cc',
   'core/convert.cc',

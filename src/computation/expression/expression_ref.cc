@@ -6,8 +6,6 @@
 #include "expression_ref.H"
 #include "apply.H"
 #include "var.H"
-#include "tuple.H"
-#include "list.H" // for char_list
 #include "bool.H"
 #include "computation/module.H"
 #include <set>
