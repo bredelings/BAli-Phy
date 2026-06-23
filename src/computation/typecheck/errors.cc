@@ -148,7 +148,7 @@ Note make_mismatch_message(TidyState& tidy_state, const Constraint& wanted, cons
     }
     else if (auto app = to<AppOrigin>(wanted.origin); app and app->app)
     {
-        auto [head,args] = Hs::decompose_apps({noloc,app->app});
+        auto [head,args] = Hs::decompose_apps({noloc,*app->app});
         int arg_index = int(args.size())-1;
 
         mismatch<<"Applying "<<(arg_index+1)<<" arguments to function "<<head<<", but it only takes "<<arg_index<<"!";

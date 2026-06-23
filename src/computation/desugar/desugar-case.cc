@@ -591,7 +591,7 @@ failable_expression desugar_state::match(const vector<Core::Var<>>& x, const vec
 }
 
 // For `case T of patterns[i] -> bodies[i]`
-failable_expression desugar_state::case_expression(const Core::Exp<>& T, const vector<expression_ref>& patterns, const vector<failable_expression>& bodies)
+failable_expression desugar_state::case_expression(const Core::Exp<>& T, const vector<Hs::Pattern>& patterns, const vector<failable_expression>& bodies)
 {
     assert(patterns.size() == bodies.size());
     vector<equation_info_t> equations;

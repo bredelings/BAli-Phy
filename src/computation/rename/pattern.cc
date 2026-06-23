@@ -153,9 +153,9 @@ bound_var_info renamer_state::find_vars_in_pattern(const Hs::LPat& lpat, bool to
     else if (auto i = pat.to<Hs::InfixPat>())
     {
         Hs::LPats operands;
-        for(auto& term: i->terms)
-            if (not unloc(term).is_a<Hs::Var>() and not unloc(term).is_a<Hs::Con>() and not unloc(term).is_a<Hs::Neg>())
-                operands.push_back(term);
+        for(int n=0; n<i->terms.size(); n++)
+            if (is_infix_operand_term(i->terms, n))
+                operands.push_back(disambiguate_pattern(i->terms[n]));
         return find_vars_in_patterns(operands, top);
     }
     else if (auto r = pat.to<Hs::RecordPattern>())
@@ -335,12 +335,14 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
         {
             bound_var_info bound;
             bool overlap = false;
-            for(auto& term: I.terms)
+            for(int n=0; n<I.terms.size(); n++)
             {
-                if (unloc(term).is_a<Hs::Var>() or unloc(term).is_a<Hs::Con>() or unloc(term).is_a<Hs::Neg>())
+                if (not is_infix_operand_term(I.terms, n))
                     continue;
 
-                auto bound_here = rename_pattern(term, top);
+                auto& term = I.terms[n];
+                auto term_pat = disambiguate_pattern(term);
+                auto bound_here = rename_pattern(term_pat, top);
                 overlap = overlap or not disjoint_add(bound, bound_here);
             }
             if (overlap)

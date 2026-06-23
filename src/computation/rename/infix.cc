@@ -20,7 +20,7 @@ using InfixBuilder = function<Hs::LExp(const Hs::LExp&, const Hs::LExp&, const H
 using NegBuilder = function<Hs::LExp(const Hs::LExp&, const Hs::LExp&)>;
 using OpLookup = function<Located<OpInfo>(const Hs::LExp&)>;
 
-Located<expression_ref> infix_parse(const OpLookup& get_op, const Located<OpInfo>& op1, const Located<expression_ref>& E1, deque<Located<expression_ref>>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg);
+Hs::LExp infix_parse(const OpLookup& get_op, const Located<OpInfo>& op1, const Hs::LExp& E1, deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg);
 
 namespace
 {
@@ -61,11 +61,11 @@ Hs::LExp make_infix_exp(const vector<Hs::LExp>& terms)
 }
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
-Located<expression_ref> infix_parse_neg(const OpLookup& get_op, const Located<OpInfo>& op1, deque<Located<expression_ref>>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg)
+Hs::LExp infix_parse_neg(const OpLookup& get_op, const Located<OpInfo>& op1, deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg)
 {
     assert(not T.empty());
 
-    Located<expression_ref> E1 = T.front();
+    Hs::LExp E1 = T.front();
     T.pop_front();
 
     // We are starting with a Neg
@@ -101,7 +101,7 @@ OpInfo renamer_state::get_operator(const string& name) const
         return {name, {left_fix, 9}};
 }
 
-Located<OpInfo> get_op_sym(const renamer_state& Rn, const Located<expression_ref>& O)
+Located<OpInfo> get_op_sym(const renamer_state& Rn, const Hs::LExp& O)
 {
     string name;
     if (auto v = unloc(O).to<Haskell::Var>())
@@ -115,7 +115,7 @@ Located<OpInfo> get_op_sym(const renamer_state& Rn, const Located<expression_ref
 }
 
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
-Located<expression_ref> infix_parse(const OpLookup& get_op, const Located<OpInfo>& loc_op1, const Located<expression_ref>& E1, deque<Located<expression_ref>>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg)
+Hs::LExp infix_parse(const OpLookup& get_op, const Located<OpInfo>& loc_op1, const Hs::LExp& E1, deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg)
 {
     if (T.empty())
 	return E1;
@@ -147,16 +147,16 @@ Located<expression_ref> infix_parse(const OpLookup& get_op, const Located<OpInfo
 }
 
 // Resolve an unresolved infix spine using the supplied output builders.
-Located<expression_ref> resolve_infix(const vector<Located<expression_ref>>& T, const OpLookup& get_op, const InfixBuilder& build_infix, const NegBuilder& build_neg)
+Hs::LExp resolve_infix(const vector<Hs::LExp>& T, const OpLookup& get_op, const InfixBuilder& build_infix, const NegBuilder& build_neg)
 {
-    deque<Located<expression_ref>> T2;
+    deque<Hs::LExp> T2;
     T2.insert(T2.begin(), T.begin(), T.end());
 
     auto no_sym = OpInfo{"",{non_fix,-1}};
     return infix_parse_neg(get_op, {noloc, no_sym}, T2, build_infix, build_neg);
 }
 
-Located<expression_ref> desugar_infix(const renamer_state& Rn, const vector<Located<expression_ref>>& T)
+Hs::LExp desugar_infix(const renamer_state& Rn, const vector<Hs::LExp>& T)
 {
     auto get_op = [&](const Hs::LExp& op)
     {
@@ -176,25 +176,28 @@ Located<expression_ref> desugar_infix(const renamer_state& Rn, const vector<Loca
     return resolve_infix(T, get_op, build_infix, build_neg);
 }
 
-Hs::LPat desugar_pattern_infix(const renamer_state& Rn, const vector<Located<expression_ref>>& T)
+Hs::LPat desugar_pattern_infix(const renamer_state& Rn, const vector<Hs::LExp>& T)
 {
     auto get_op = [&](const Hs::LExp& op)
     {
         return get_op_sym(Rn, op);
     };
 
+    // Build expression-shaped constructor application, then pattern-disambiguate
+    // after fixity resolution so Exp does not need final pattern alternatives.
     auto build_infix = [](const Hs::LExp& op, const Hs::LExp& lhs, const Hs::LExp& rhs)
     {
-        if (auto con = unloc(op).to<Hs::Con>())
-            return Hs::LExp{op.loc, Hs::ConPattern({op.loc, *con}, {lhs, rhs})};
-        else
-            return Hs::LExp{op.loc, Hs::WildcardPattern()};
+        auto loc = lhs.loc * op.loc * rhs.loc;
+        return Hs::LExp{loc, Hs::ParsedApp({op, lhs, rhs})};
     };
 
+    // Preserve prefix-negation as expression-shaped syntax; pattern classification
+    // will reject it unless later support for negative patterns is added.
     auto build_neg = [](const Hs::LExp& neg, const Hs::LExp& arg)
     {
-        return Hs::apply(neg, {arg});
+        auto loc = neg.loc * arg.loc;
+        return Hs::LExp{loc, Hs::ParsedApp({neg, arg})};
     };
 
-    return resolve_infix(T, get_op, build_infix, build_neg);
+    return disambiguate_pattern(resolve_infix(T, get_op, build_infix, build_neg));
 }

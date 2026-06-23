@@ -24,7 +24,7 @@ using std::map;
 namespace
 {
     // Build the body of a selector from the field metadata for one label.
-    expression_ref synthesize_field_accessor(const Module& m, const FieldInfo& field)
+    Hs::Exp synthesize_field_accessor(const Module& m, const FieldInfo& field)
     {
         vector<Located<Haskell::Alt>> alts;
         auto selector_name = get_unqualified_name(field.name);
@@ -53,8 +53,8 @@ namespace
 
         Hs::Var arg("v$0");
         Hs::LPat arg_pat = {noloc, Hs::VarPattern({noloc, arg})};
-        expression_ref body = Haskell::CaseExp({noloc, arg}, Haskell::Alts(alts));
-        expression_ref lambda = Haskell::LambdaExp({arg_pat}, {noloc, body});
+        Hs::Exp body = Haskell::CaseExp({noloc, arg}, Haskell::Alts(alts));
+        Hs::Exp lambda = Haskell::LambdaExp({arg_pat}, {noloc, body});
         return lambda;
     }
 
@@ -71,7 +71,7 @@ namespace
 
             Hs::LVar lhs = {noloc, Hs::Var(field.name)};
             auto rhs = Hs::LExp{noloc, synthesize_field_accessor(m, field)};
-            decls.push_back({noloc, Haskell::simple_decl(lhs, rhs)});
+            decls.push_back({noloc, Hs::Decl{Haskell::simple_decl(lhs, rhs)}});
         }
 
         return decls;
@@ -284,7 +284,7 @@ bound_var_info renamer_state::find_vars_in_patterns(const Hs::LPats& pats, bool 
     return bound;
 }
 
-bound_var_info renamer_state::find_bound_vars_in_funpatdecl(const expression_ref& decl, bool top)
+bound_var_info renamer_state::find_bound_vars_in_funpatdecl(const Hs::Decl& decl, bool top)
 {
     if (auto d = decl.to<Haskell::PatDecl>())
         return find_vars_in_pattern( d->lhs, top);
@@ -344,7 +344,7 @@ fixity_env_t renamer_state::add_fixities_from_decls(fixity_env_t env, const Hs::
 void remove_fixity_decls(Hs::Decls& decls)
 {
     decls.erase(std::remove_if(decls.begin(), decls.end(),
-                               [](const Located<expression_ref>& decl) { return unloc(decl).is_a<Hs::FixityDecl>(); }),
+                               [](const Hs::LDecl& decl) { return unloc(decl).is_a<Hs::FixityDecl>(); }),
                 decls.end());
 }
 
@@ -380,7 +380,7 @@ bound_var_info renamer_state::find_bound_vars_in_decl(const Haskell::TypeSigDecl
     return bound_names;
 }
 
-const set<string>& get_rhs_free_vars(const expression_ref& decl)
+const set<string>& get_rhs_free_vars(const Hs::Decl& decl)
 {
     if (decl.is_a<Hs::PatDecl>())
         return decl.as_<Hs::PatDecl>().rhs_free_vars;
@@ -390,7 +390,7 @@ const set<string>& get_rhs_free_vars(const expression_ref& decl)
         std::abort();
 };
 
-bound_var_info renamer_state::find_bound_vars_in_stmt(Located<expression_ref>& lstmt)
+bound_var_info renamer_state::find_bound_vars_in_stmt(Hs::LStmt& lstmt)
 {
     auto& stmt = unloc(lstmt);
     if (stmt.is_a<Hs::SimpleQual>())

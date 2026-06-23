@@ -11,7 +11,6 @@
 #include <tuple>
 #include <memory>
 #include "computation/object.H"
-#include "computation/expression/expression_ref.H"
 #include "computation/parser/located.H"
 
 #include "var.H"
@@ -83,10 +82,165 @@
 namespace Haskell
 {
 
-typedef expression_ref Expression;
-typedef expression_ref Exp;
+struct ApplyExp;
+struct ParsedApp;
+struct Neg;
+struct InfixExp;
+struct InfixPat;
+struct TypedExp;
+struct Wrap;
+struct TypeSigDecl;
+struct KindSigDecl;
+struct ForeignDecl;
+struct FieldBinding;
+struct RecordSyntax;
+struct RecordCon;
+struct RecordUpdate;
+struct RecordPattern;
+struct InlinePragma;
+struct FixityDecl;
+struct DataOrNewtypeDecl;
+struct TypeSynonymDecl;
+struct TypeFamilyInstanceDecl;
+struct DataFamilyInstanceDecl;
+struct FamilyDecl;
+struct ClassDecl;
+struct InstanceDecl;
+struct StandaloneDerivingDecl;
+struct RoleAnnotationDecl;
+struct DefaultDecl;
+struct List;
+struct ListFrom;
+struct ListFromThen;
+struct ListFromTo;
+struct ListFromThenTo;
+struct ListComprehension;
+struct LeftSection;
+struct RightSection;
+struct Tuple;
+struct StrictValueDecl;
+struct ValueDecl;
+struct LetQual;
+struct SimpleQual;
+template<class P> struct PatQualT;
+using PatQual = PatQualT<Pat>;
+using ParsedPatQual = PatQualT<ExpOrPat>;
+struct RecStmt;
+struct Do;
+struct MDo;
+struct LetExp;
+struct IfExp;
+struct PatDecl;
+template<class P> struct AltT;
+template<class P> struct AltsT;
+template<class P> struct MRuleT;
+template<class P> struct MatchesT;
+template<class P> struct LambdaExpT;
+template<class P> struct CaseExpT;
+using Alt = AltT<Pat>;
+using ParsedAlt = AltT<ExpOrPat>;
+using Alts = AltsT<Pat>;
+using ParsedAlts = AltsT<ExpOrPat>;
+using MRule = MRuleT<Pat>;
+using ParsedMRule = MRuleT<ExpOrPat>;
+using Matches = MatchesT<Pat>;
+using ParsedMatches = MatchesT<ExpOrPat>;
+using LambdaExp = LambdaExpT<Pat>;
+using ParsedLambdaExp = LambdaExpT<ExpOrPat>;
+using CaseExp = CaseExpT<Pat>;
+using ParsedCaseExp = CaseExpT<ExpOrPat>;
+struct FunDecl;
+struct GenBind;
+
+struct Exp: public VariantNode
+<
+    Var,
+    Con,
+    Literal,
+    ApplyExp,
+    ParsedApp,
+    Neg,
+    InfixExp,
+    TypedExp,
+    Wrap,
+    RecordSyntax,
+    RecordCon,
+    RecordUpdate,
+    List,
+    ListFrom,
+    ListFromThen,
+    ListFromTo,
+    ListFromThenTo,
+    ListComprehension,
+    LeftSection,
+    RightSection,
+    Tuple,
+    Do,
+    MDo,
+    LetExp,
+    IfExp,
+    LambdaExp,
+    CaseExp,
+    ParsedLambdaExp,
+    ParsedCaseExp,
+    ParsedAsPattern,
+    ParsedLazyPattern,
+    ParsedStrictPattern,
+    ParsedWildcardPattern
+>
+{
+    using VariantNode::VariantNode;
+    using VariantNode::operator=;
+};
+
+typedef Exp Expression;
 typedef Located<Exp> LExp;
-typedef expression_ref Qual;
+
+struct Decl: public VariantNode
+<
+    TypeSigDecl,
+    KindSigDecl,
+    ForeignDecl,
+    InlinePragma,
+    FixityDecl,
+    DataOrNewtypeDecl,
+    TypeSynonymDecl,
+    TypeFamilyInstanceDecl,
+    DataFamilyInstanceDecl,
+    FamilyDecl,
+    ClassDecl,
+    InstanceDecl,
+    StandaloneDerivingDecl,
+    RoleAnnotationDecl,
+    DefaultDecl,
+    StrictValueDecl,
+    ValueDecl,
+    PatDecl,
+    FunDecl,
+    GenBind
+>
+{
+    using VariantNode::VariantNode;
+    using VariantNode::operator=;
+};
+
+typedef Located<Decl> LDecl;
+
+struct Stmt: public VariantNode
+<
+    LetQual,
+    SimpleQual,
+    PatQual,
+    ParsedPatQual,
+    RecStmt
+>
+{
+    using VariantNode::VariantNode;
+    using VariantNode::operator=;
+};
+
+typedef Located<Stmt> LStmt;
+typedef Stmt Qual;
 typedef Located<Qual> LQual;
 
 struct ApplyExp: public Object
@@ -217,7 +371,20 @@ struct InfixExp: public Object
     std::string print() const;
 
     InfixExp() = default;
-    InfixExp(const std::vector<Located<expression_ref>>& ts): terms(ts) {}
+    InfixExp(const std::vector<Located<Exp>>& ts): terms(ts) {}
+};
+
+// Transitional: unresolved pattern infix still carries expression-shaped terms
+// until rename resolves fixity; replace this with strict pattern terms later.
+struct InfixPat: public Object
+{
+    std::vector<LExp> terms;
+
+    InfixPat* clone() const { return new InfixPat(*this);}
+    std::string print() const;
+
+    InfixPat() = default;
+    InfixPat(const std::vector<LExp>& ts): terms(ts) {}
 };
 
 
@@ -408,9 +575,6 @@ struct RecordPattern: public Object
 
 // Eventually we replace ValueDecl with PatDecl and FunDecl,
 // move TypeSigDecls to a map, and remove FixityDecls.
-
-typedef expression_ref Decl;
-typedef Located<Decl> LDecl;
 
 enum class inline_pragma_t {INLINE, INLINABLE, NOINLINE};
 
@@ -995,14 +1159,14 @@ Exp tuple(const std::vector<LExp>& es);
 
 struct GuardedRHS
 {
-    std::vector<LExp> guards;
+    std::vector<LStmt> guards;
     LExp body;
 
     std::string print() const;
     std::string print_no_equals() const;
 
     GuardedRHS() = default;
-    GuardedRHS(const std::vector<LExp> v, const LExp& e)
+    GuardedRHS(const std::vector<LStmt> v, const LExp& e)
         :guards(v),
          body(e)
     { }
@@ -1022,7 +1186,7 @@ struct MultiGuardedRHS
     MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<LBinds>& ds):guarded_rhss(v), decls(ds) {}
 };
 
-MultiGuardedRHS SimpleRHS(const Located<expression_ref>&, const std::optional<LBinds>& ds = {});
+MultiGuardedRHS SimpleRHS(const LExp&, const std::optional<LBinds>& ds = {});
 
 struct StrictValueDecl: public Object
 {
@@ -1033,8 +1197,8 @@ struct StrictValueDecl: public Object
     std::string print() const;
 
     StrictValueDecl() = default;
-    StrictValueDecl(const Located<expression_ref>& l, const expression_ref& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
-    StrictValueDecl(const Located<expression_ref>& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
+    StrictValueDecl(const LExp& l, const Exp& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
+    StrictValueDecl(const LExp& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
 };
 
 // Where do we make ValueDecl's with an rhs that is a plain expression?
@@ -1051,12 +1215,9 @@ struct ValueDecl: public Object
     std::string print() const;
 
     ValueDecl() = default;
-    ValueDecl(const Located<expression_ref>& l, const expression_ref& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
-    ValueDecl(const Located<expression_ref>& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
+    ValueDecl(const LExp& l, const Exp& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
+    ValueDecl(const LExp& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
 };
-
-typedef expression_ref Stmt;
-typedef Located<Stmt> LStmt;
 
 struct Stmts: public Object
 {
@@ -1088,18 +1249,19 @@ struct SimpleQual: public Object
     SimpleQual(const LExp &e): exp(e) {};
 };
 
-struct PatQual: public Object
+template<class P>
+struct PatQualT: public Object
 {
-    LPat bindpat;
+    Located<P> bindpat;
     LExp exp;
 
     Hs::Var bindOp = {"Control.Monad.>>="};
     std::optional<Hs::Var> failOp = {{"Control.Monad.fail"}};
     std::optional<bool> bindpat_can_fail;
 
-    PatQual* clone() const { return new PatQual(*this);}
-    std::string print() const;
-    PatQual(const LPat &bp, const LExp& e): bindpat(bp), exp(e) {};
+    PatQualT* clone() const { return new PatQualT(*this);}
+    std::string print() const { return bindpat.print() + " <- " + exp.print(); }
+    PatQualT(const Located<P>& bp, const LExp& e): bindpat(bp), exp(e) {};
 };
 
 struct CheckedRecStmt
@@ -1147,23 +1309,25 @@ struct MDo: public Object
     MDo(const Stmts& s):stmts(s) {}
 };
 
-struct Alt
+template<class P>
+struct AltT
 {
-    LPat pattern;
+    Located<P> pattern;
     MultiGuardedRHS rhs;
 
     std::string print() const;
 
-    Alt() = default;
-    Alt(const LPat& p, const MultiGuardedRHS& r):pattern(p), rhs(r) {};
+    AltT() = default;
+    AltT(const Located<P>& p, const MultiGuardedRHS& r):pattern(p), rhs(r) {};
 };
 
-struct Alts: public std::vector<Located<Alt>>
+template<class P>
+struct AltsT: public std::vector<Located<AltT<P>>>
 {
     std::string print() const;
 
-    Alts() = default;
-    Alts(const std::vector<Located<Alt>>& v): std::vector<Located<Alt>>(v) {};
+    AltsT() = default;
+    AltsT(const std::vector<Located<AltT<P>>>& v): std::vector<Located<AltT<P>>>(v) {};
 };
 
 struct LetExp: public Object
@@ -1177,7 +1341,7 @@ struct LetExp: public Object
     LetExp(const LBinds& bs, const LExp& b): binds(bs), body(b) {};
 };
 
-LetExp simple_let(const LVar&, const LExp&, const Exp&);
+LetExp simple_let(const LVar&, const LExp&, const LExp&);
 
 struct IfExp: public Object
 {
@@ -1282,18 +1446,21 @@ struct PatDecl: public Object
     PatDecl(const LPat& p, const MultiGuardedRHS& r):lhs(p), rhs(r) {}
 };
 
-struct MRule
+template<class P>
+struct MRuleT
 {
     std::string print() const;
 
-    std::vector<LPat> patterns;
+    std::vector<Located<P>> patterns;
     MultiGuardedRHS rhs;
-    MRule(const std::vector<LPat>& ps, const MultiGuardedRHS& r);
+    MRuleT() = default;
+    MRuleT(const std::vector<Located<P>>& ps, const MultiGuardedRHS& r);
 };
 
-struct Matches: public std::vector<MRule>
+template<class P>
+struct MatchesT: public std::vector<MRuleT<P>>
 {
-    using std::vector<MRule>::vector;
+    using std::vector<MRuleT<P>>::vector;
 };
 
 struct CheckedRecordUpdateRhsApply
@@ -1346,14 +1513,16 @@ struct CheckedRecordPattern
     explicit CheckedRecordPattern(const LPat& pat): positional_pattern(pat) {}
 };
 
-struct LambdaExp: public Object
+template<class P>
+struct LambdaExpT: public Object
 {
-    MRule match;
+    MRuleT<P> match;
 
-    LambdaExp* clone() const {return new LambdaExp(*this);}
+    LambdaExpT* clone() const {return new LambdaExpT(*this);}
     std::string print() const;
 
-    LambdaExp(const std::vector<LPat>& ps, const LExp& b);
+    LambdaExpT(const std::vector<Located<P>>& ps, const LExp& b);
+    explicit LambdaExpT(const MRuleT<P>& m):match(m) {}
 };
 
 
@@ -1370,16 +1539,17 @@ struct MatchContext: std::variant<LambdaContext, CaseContext, FunctionContext>
     std::string print() const;
 };
 
-struct CaseExp: public Object
+template<class P>
+struct CaseExpT: public Object
 {
     LExp object;
-    Matches alts;
+    MatchesT<P> alts;
 
-    CaseExp* clone() const { return new CaseExp(*this);}
+    CaseExpT* clone() const { return new CaseExpT(*this);}
     std::string print() const;
 
-    CaseExp(const LExp& o, const Alts& as);
-    CaseExp(const LExp& o, const Matches& ms);
+    CaseExpT(const LExp& o, const AltsT<P>& as);
+    CaseExpT(const LExp& o, const MatchesT<P>& ms);
 };
 
 struct FunDecl: public Object

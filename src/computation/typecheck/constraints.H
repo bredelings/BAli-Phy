@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <utility>
+#include <optional>
 
 #include "computation/haskell/coretype.H"
 #include "computation/haskell/haskell.H" // for Hs::LExp
@@ -21,7 +22,7 @@ struct GivenOrigin
 
 struct AppOrigin
 {
-    expression_ref app;
+    std::optional<Hs::ApplyExp> app;
 };
 
 struct InstanceOrigin

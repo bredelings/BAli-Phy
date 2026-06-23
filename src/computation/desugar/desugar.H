@@ -5,10 +5,11 @@
 #include <vector>
 #include "computation/haskell/haskell.H"
 #include "computation/fresh_vars.H"
+#include "util/string/convert.H"
 
 class Module;
 
-Core::Exp<> desugar(const Module& p, FreshVarState&, const expression_ref&);
+Core::Exp<> desugar(const Module& p, FreshVarState&, const Hs::Exp&);
 Core::Decls<> desugar(const Module& p, FreshVarState&, const Haskell::Decls&);
 Core::Decls<> desugar(const Module& p, FreshVarState&, const Haskell::Binds&);
 

@@ -140,14 +140,14 @@ set<string> free_type_cons(const Hs::StandaloneDerivingDecl& deriving_decl)
     return tcons;
 }
 
-vector<vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls)
+vector<vector<Hs::Decl>> find_type_groups(const Hs::Decls& type_decls)
 {
     // 1. Collection type and instance declarations
 
     // [(name,names-we-depend-on)]  No instances.
     map<string,set<string>> referenced_types;
 
-    map<string, expression_ref> decl_for_type;
+    map<string, Hs::Decl> decl_for_type;
 
     vector<tuple<Hs::InstanceDecl,set<string>>> instance_decls;
 

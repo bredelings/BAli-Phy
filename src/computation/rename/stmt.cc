@@ -40,7 +40,7 @@ void renamer_state::rename_rec_stmt_ops(Hs::RecStmt& R, const bound_var_info& bo
 
 // Here we want to find all the variables bound by the list of stmts, and make sure that they don't overlap.
 // Getting the list of variables bound by a "rec" should return all the variables bound by the statements inside the rec.
-bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_var_info& bound, set<string>& free_vars)
+bound_var_info renamer_state::rename_rec_stmt(Hs::LStmt& lrec_stmt, const bound_var_info& bound, set<string>& free_vars)
 {
     auto& rec_stmt = unloc(lrec_stmt);
 
@@ -68,7 +68,7 @@ bound_var_info renamer_state::rename_rec_stmt(Hs::LExp& lrec_stmt, const bound_v
 }
 
 bound_var_info
-renamer_state::rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
+renamer_state::rename_stmt(Hs::LStmt& stmt, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
 {
     set<string> stmt_free_vars;
     auto new_binders = rename_stmt(stmt, plus(bound, binders), stmt_free_vars);
@@ -76,7 +76,7 @@ renamer_state::rename_stmt(Hs::LExp& stmt, const bound_var_info& bound, const bo
     return new_binders;
 }
 
-bound_var_info renamer_state::rename_stmt(Hs::LExp& lstmt, const bound_var_info& bound, set<string>& free_vars)
+bound_var_info renamer_state::rename_stmt(Hs::LStmt& lstmt, const bound_var_info& bound, set<string>& free_vars)
 {
     auto& stmt = unloc(lstmt);
 
@@ -94,6 +94,11 @@ bound_var_info renamer_state::rename_stmt(Hs::LExp& lstmt, const bound_var_info&
 	auto bound_vars = rename_pattern(PQ.bindpat);
         stmt = PQ;
 	return bound_vars;
+    }
+    else if (stmt.is_a<Haskell::ParsedPatQual>())
+    {
+        error(lstmt.loc, Note()<<"Internal error: parsed pattern statement reached statement renaming.");
+        return {};
     }
     else if (stmt.is_a<Haskell::LetQual>())
     {

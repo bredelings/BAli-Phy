@@ -69,7 +69,7 @@ struct kindchecker_state
     // type synonym
     void kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_decl);
 
-    TypeConEnv infer_kinds(const std::vector<expression_ref>& type_decl_group);
+    TypeConEnv infer_kinds(const std::vector<Hs::Decl>& type_decl_group);
 
     kindchecker_state(TypeChecker&);
 };

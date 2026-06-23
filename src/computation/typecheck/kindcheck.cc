@@ -527,7 +527,7 @@ void kindchecker_state::kind_check_type_synonym(Hs::TypeSynonymDecl& type_syn_de
     pop_type_var_scope();
 }
 
-TypeConEnv kindchecker_state::infer_kinds(const vector<expression_ref>& type_decl_group)
+TypeConEnv kindchecker_state::infer_kinds(const vector<Hs::Decl>& type_decl_group)
 {
     // 1. Infer initial kinds for types and type classes
     TypeConEnv new_tycons;

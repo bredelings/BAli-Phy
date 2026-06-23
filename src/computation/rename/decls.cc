@@ -20,7 +20,7 @@ using std::optional;
 using std::map;
 using std::deque;
 
-optional<Hs::LVar> fundecl_head(const expression_ref& decl)
+optional<Hs::LVar> fundecl_head(const Hs::Decl& decl)
 {
     if (auto fd = decl.to<Hs::FunDecl>())
         return fd->v;
@@ -90,7 +90,7 @@ tuple<map<Hs::LVar,Hs::LType>, map<Hs::LVar, Hs::inline_pragma_t>, Hs::Decls> gr
             if (m[0].patterns.empty() and m.size() != 1)
                 error(loc, Note()<<"Multiple definitions for variable "<<fvar->print()<<"!");
 
-            decls2.push_back( {loc,Hs::FunDecl( *fvar, m )} );
+            decls2.push_back({loc, Hs::Decl{Hs::FunDecl(*fvar, m)}});
 
             // skip the other bindings for this function
             i += (consumed_decls-1);
@@ -138,7 +138,7 @@ Hs::Decls group_fundecls(const Haskell::Decls& decls)
             if (m[0].patterns.empty() and m.size() != 1)
                 throw myexception()<<"Multiple definitions for variable "<<fvar->print()<<"!";
 
-            decls2.push_back( {loc, Hs::FunDecl( *fvar, m )} );
+            decls2.push_back({loc, Hs::Decl{Hs::FunDecl(*fvar, m)}});
 
             // skip the other bindings for this function
             i += (consumed_decls-1);

@@ -6,6 +6,7 @@
 #include "util/set.H"           // for includes( , )
 #include "util/variant.H"       // for to<>()
 #include "util/string/split.H"  // for split( , )
+#include "util/string/convert.H"
 #include "typecheck/kind.H"
 
 using std::string;
@@ -471,7 +472,7 @@ string Tuple::print() const
     return "(" + join(parts,", ") +")";
 }
 
-Expression tuple(const std::vector<LExp>& es)
+Exp tuple(const std::vector<LExp>& es)
 {
     if (es.size() == 1)
         return unloc(es[0]);
@@ -488,11 +489,6 @@ string LetQual::print() const
 string SimpleQual::print() const
 {
     return exp.print();
-}
-
-string PatQual::print() const
-{
-    return bindpat.print() + " <- " + exp.print();
 }
 
 string RecStmt::print() const
@@ -518,12 +514,16 @@ string MDo::print() const
     return "mdo " + stmts.print();
 }
 
-string Alt::print() const
+template<class P>
+string AltT<P>::print() const
 {
     return pattern.print() + rhs.print_no_equals();
 }
 
-string Alts::print() const
+// Print case alternatives for either parsed ExpOrPat patterns or final Pat patterns.
+// The template exists only to avoid duplicating the parsed/final container shape.
+template<class P>
+string AltsT<P>::print() const
 {
     vector<string> alt_string;
     for(auto& alt: *this)
@@ -531,7 +531,10 @@ string Alts::print() const
     return "{" + join(alt_string, "\n;") + "}";
 }
 
-string CaseExp::print() const
+// Print a case expression after its direct pattern representation has been chosen.
+// Parsed cases are removed by disambiguation before rename/typecheck/desugar.
+template<class P>
+string CaseExpT<P>::print() const
 {
     vector<string> alt_strings;
     for(auto& alt: alts)
@@ -540,22 +543,27 @@ string CaseExp::print() const
     return "case " + unloc(object).print() + " of {" + join(alt_strings, "\n;") + "}";
 }
 
-Matches matches_from_alts(const Alts& alts)
+// Convert single-pattern case alternatives into the internal match representation.
+// This is templated only to share the parsed/final pattern container shape.
+template<class P>
+MatchesT<P> matches_from_alts(const AltsT<P>& alts)
 {
-    Hs::Matches matches;
+    Hs::MatchesT<P> matches;
     for(auto& alt: alts)
     {
         auto& [pattern, body] = unloc(alt);
-        matches.push_back(Hs::MRule{{pattern},body});
+        matches.push_back(Hs::MRuleT<P>{{pattern},body});
     }
     return matches;
 }
 
-CaseExp::CaseExp(const Located<Expression>& o, const Matches& ms)
+template<class P>
+CaseExpT<P>::CaseExpT(const LExp& o, const MatchesT<P>& ms)
     : object(o), alts(ms)
 { }
 
-CaseExp::CaseExp(const Located<Expression>& o, const Alts& as)
+template<class P>
+CaseExpT<P>::CaseExpT(const LExp& o, const AltsT<P>& as)
     : object(o), alts( matches_from_alts(as) )
 { }
 
@@ -1010,21 +1018,32 @@ std::string MultiGuardedRHS::print_no_equals() const
     return join(ss, "\n");
 }
 
-MultiGuardedRHS SimpleRHS(const Located<expression_ref>& body, const optional<Located<Binds>>& decls)
+MultiGuardedRHS SimpleRHS(const LExp& body, const optional<Located<Binds>>& decls)
 {
     return MultiGuardedRHS( {{{},body}}   ,decls);
 }
 
-string LambdaExp::print() const
+// Print a lambda expression using pattern parenthesization for final patterns.
+// Parsed lambdas are diagnostic-only and use expression parenthesization.
+template<class P>
+string LambdaExpT<P>::print() const
 {
     string result = "\\";
     for(auto& pat: match.patterns)
-        result += parenthesize_pattern(pat) + " ";
+    {
+        if constexpr (std::is_same_v<P, Pat>)
+            result += parenthesize_pattern(pat) + " ";
+        else
+            result += parenthesize_exp(unloc(pat)) + " ";
+    }
     result += match.rhs.print_no_equals();
     return result;
 }
 
-LambdaExp::LambdaExp(const LPats& ps, const LExp& b)
+// Build a lambda node from either parser-phase or final-phase patterns.
+// Disambiguation converts the parser-phase alias into the final alias.
+template<class P>
+LambdaExpT<P>::LambdaExpT(const std::vector<Located<P>>& ps, const LExp& b)
     :match(ps, SimpleRHS(b))
 {
     assert(not match.patterns.empty());
@@ -1166,20 +1185,44 @@ string PatDecl::print() const
     return lhs.print() + " " + rhs.print();
 }
 
-string MRule::print() const
+// Print a function/case/lambda match rule for either parsed or final pattern slots.
+// Final users see only MRuleT<Pat>; parsed rules are consumed by disambiguation.
+template<class P>
+string MRuleT<P>::print() const
 {
     vector<string> ss;
     for(auto& pat: patterns)
-        ss.push_back(parenthesize_pattern(pat));
+    {
+        if constexpr (std::is_same_v<P, Pat>)
+            ss.push_back(parenthesize_pattern(pat));
+        else
+            ss.push_back(parenthesize_exp(unloc(pat)));
+    }
     ss.push_back(rhs.print());
 
     return join( ss, " ");
 }
 
-MRule::MRule(const LPats& ps, const MultiGuardedRHS& r)
+// Store the selected pattern representation with a RHS in one match rule.
+// This avoids maintaining separate ParsedMRule and MRule implementations.
+template<class P>
+MRuleT<P>::MRuleT(const std::vector<Located<P>>& ps, const MultiGuardedRHS& r)
     :patterns(ps), rhs(r)
 {
 }
+
+template struct AltT<Pat>;
+template struct AltT<Exp>;
+template struct AltsT<Pat>;
+template struct AltsT<Exp>;
+template struct MRuleT<Pat>;
+template struct MRuleT<Exp>;
+template struct MatchesT<Pat>;
+template struct MatchesT<Exp>;
+template struct LambdaExpT<Pat>;
+template struct LambdaExpT<Exp>;
+template struct CaseExpT<Pat>;
+template struct CaseExpT<Exp>;
 
 
 string GenBind::print() const
@@ -1288,10 +1331,10 @@ set<LVar> vars_bound_in_stmts(const Stmts& stmts)
     return vars;
 }
 
-expression_ref error(const std::string& s)
+Exp error(const std::string& s)
 {
-    expression_ref error = Var("Compiler.Error.error");
-    expression_ref msg = Literal(String{s});
+    Exp error = Var("Compiler.Error.error");
+    Exp msg = Literal(String{s});
     return unloc(apply({{noloc, error}, {noloc, msg}}));
 }
 

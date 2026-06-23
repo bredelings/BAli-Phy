@@ -26,9 +26,10 @@ namespace
 {
     Hs::MultiGuardedRHS disambiguate_rhs(Hs::MultiGuardedRHS rhs);
     Hs::Matches disambiguate_matches(Hs::Matches matches);
+    Hs::Matches disambiguate_matches(Hs::ParsedMatches matches);
     Hs::Decls disambiguate_classified_decls(Hs::Decls decls);
     Hs::Decls disambiguate_decls(Hs::Decls decls);
-    Hs::LExp disambiguate_stmt(Hs::LExp stmt);
+    Hs::LStmt disambiguate_stmt(Hs::LStmt stmt);
 
     using record_utils::record_field_pun_pattern;
 
@@ -78,7 +79,7 @@ namespace
     }
 
     // Convert parser-only expression syntax inside a statement.
-    Hs::LExp disambiguate_stmt(Hs::LExp stmt)
+    Hs::LStmt disambiguate_stmt(Hs::LStmt stmt)
     {
         auto& S = unloc(stmt);
 
@@ -91,9 +92,13 @@ namespace
         else if (auto pq = S.to<Hs::PatQual>())
         {
             auto Q = *pq;
-            Q.bindpat = disambiguate_pattern(Q.bindpat);
             Q.exp = disambiguate_expression(Q.exp);
             return {stmt.loc, Q};
+        }
+        else if (auto pq = S.to<Hs::ParsedPatQual>())
+        {
+            auto Q = *pq;
+            return {stmt.loc, Hs::PatQual(disambiguate_pattern(Q.bindpat), disambiguate_expression(Q.exp))};
         }
         else if (auto lq = S.to<Hs::LetQual>())
         {
@@ -132,10 +137,22 @@ namespace
     Hs::Matches disambiguate_matches(Hs::Matches matches)
     {
         for(auto& match: matches)
-        {
-            for(auto& pattern: match.patterns)
-                pattern = disambiguate_pattern(pattern);
             match.rhs = disambiguate_rhs(match.rhs);
+
+        return matches;
+    }
+
+    // Convert parser-phase match patterns into final patterns and recurse into RHSs.
+    // The parsed alias is removed here so later passes only see Hs::Matches.
+    Hs::Matches disambiguate_matches(Hs::ParsedMatches parsed_matches)
+    {
+        Hs::Matches matches;
+        for(auto& parsed_match: parsed_matches)
+        {
+            Hs::LPats patterns;
+            for(auto& pattern: parsed_match.patterns)
+                patterns.push_back(disambiguate_pattern(pattern));
+            matches.push_back(Hs::MRule(patterns, disambiguate_rhs(parsed_match.rhs)));
         }
 
         return matches;
@@ -155,7 +172,6 @@ namespace
             else if (auto p = decl.to<Hs::PatDecl>())
             {
                 auto P = *p;
-                P.lhs = disambiguate_pattern(P.lhs);
                 P.rhs = disambiguate_rhs(P.rhs);
                 decl = P;
             }
@@ -198,10 +214,10 @@ namespace
     }
 
     // Decide whether a parsed value binding is a function declaration or pattern declaration.
-    expression_ref classify_value_decl(const Hs::ValueDecl& D)
+    Hs::Decl classify_value_decl(const Hs::ValueDecl& D)
     {
         // Classify the declaration LHS while carrying arguments peeled from nested applications.
-        auto classify_lhs = [&](auto&& self, Hs::LExp lhs, Hs::LPats extra_args) -> expression_ref
+        auto classify_lhs = [&](auto&& self, Hs::LExp lhs, Hs::LPats extra_args) -> Hs::Decl
         {
             auto& E = unloc(lhs);
 
@@ -260,7 +276,7 @@ namespace
     }
 
     // Classify a raw value declaration, leaving already-classified declarations unchanged.
-    expression_ref classify_value_decl(const expression_ref& E)
+    Hs::Decl classify_value_decl(const Hs::Decl& E)
     {
         if (auto D = E.to<Hs::ValueDecl>())
             return classify_value_decl(*D);
@@ -399,11 +415,22 @@ Hs::LExp disambiguate_expression(Hs::LExp lhs)
         C.alts = disambiguate_matches(C.alts);
         return {lhs.loc, C};
     }
+    else if (auto c = E.to<Hs::ParsedCaseExp>())
+    {
+        auto C = *c;
+        C.object = disambiguate_expression(C.object);
+        return {lhs.loc, Hs::CaseExp(C.object, disambiguate_matches(C.alts))};
+    }
     else if (auto l = E.to<Hs::LambdaExp>())
     {
         auto L = *l;
         L.match = disambiguate_matches({L.match})[0];
         return {lhs.loc, L};
+    }
+    else if (auto l = E.to<Hs::ParsedLambdaExp>())
+    {
+        auto L = *l;
+        return {lhs.loc, Hs::LambdaExp(disambiguate_matches(Hs::ParsedMatches{L.match})[0])};
     }
     else if (auto l = E.to<Hs::LetExp>())
     {
@@ -434,6 +461,12 @@ Hs::LExp disambiguate_expression(Hs::LExp lhs)
             stmt = disambiguate_stmt(stmt);
         return {lhs.loc, D};
     }
+    else if (E.is_a<Hs::ParsedAsPattern>() or E.is_a<Hs::ParsedLazyPattern>() or
+             E.is_a<Hs::ParsedStrictPattern>() or E.is_a<Hs::ParsedWildcardPattern>())
+    {
+        error(lhs.loc, Note()<<"Pattern syntax '"<<lhs<<"' is not valid as an expression.");
+        return {lhs.loc, Hs::Var("<pattern-syntax-error>")};
+    }
     else if (E.is_a<Hs::Var>() or E.is_a<Hs::Con>() or E.is_a<Hs::Literal>())
         return lhs;
     else
@@ -450,12 +483,7 @@ Hs::LPat disambiguate_pattern(Hs::LExp lhs)
         if (I->terms.size() == 1)
             return disambiguate_pattern(I->terms[0]);
 
-        auto terms = I->terms;
-        for(int i=0; i<terms.size(); i++)
-            if (is_infix_operand_term(terms, i))
-                terms[i] = disambiguate_pattern(terms[i]);
-
-        return {lhs.loc, Hs::InfixPat(terms)};
+        return {lhs.loc, Hs::InfixPat(I->terms)};
     }
     else if (E.is_a<Hs::ParsedApp>())
     {
@@ -496,12 +524,14 @@ Hs::LPat disambiguate_pattern(Hs::LExp lhs)
             P.elements.push_back(disambiguate_pattern(element));
         return {lhs.loc, P};
     }
-    else if (auto ap = E.to<Hs::AsPattern>())
+    else if (auto ap = E.to<Hs::ParsedAsPattern>())
         return {lhs.loc, Hs::AsPattern(ap->var, disambiguate_pattern(ap->pattern))};
-    else if (auto lp = E.to<Hs::LazyPattern>())
+    else if (auto lp = E.to<Hs::ParsedLazyPattern>())
         return {lhs.loc, Hs::LazyPattern(disambiguate_pattern(lp->pattern))};
-    else if (auto sp = E.to<Hs::StrictPattern>())
+    else if (auto sp = E.to<Hs::ParsedStrictPattern>())
         return {lhs.loc, Hs::StrictPattern(disambiguate_pattern(sp->pattern))};
+    else if (E.is_a<Hs::ParsedWildcardPattern>())
+        return {lhs.loc, Hs::WildcardPattern()};
     else if (auto t = E.to<Hs::TypedExp>())
     {
         Hs::TypedPattern P;
@@ -515,12 +545,6 @@ Hs::LPat disambiguate_pattern(Hs::LExp lhs)
         return {lhs.loc, Hs::ConPattern({lhs.loc, *c}, {})};
     else if (auto v = E.to<Hs::Var>())
         return {lhs.loc, Hs::VarPattern({lhs.loc, *v})};
-    else if (E.is_a<Hs::WildcardPattern>())
-        return {lhs.loc, Hs::WildcardPattern()};
-    else if (E.is_a<Hs::VarPattern>() or E.is_a<Hs::ConPattern>() or E.is_a<Hs::InfixPat>() or
-             E.is_a<Hs::LiteralPattern>() or E.is_a<Hs::ListPattern>() or E.is_a<Hs::TuplePattern>() or
-             E.is_a<Hs::RecordPattern>() or E.is_a<Hs::TypedPattern>())
-        return lhs;
     else
     {
         error(lhs.loc, Note()<<"Expression '"<<lhs<<"' is not valid in a pattern.");

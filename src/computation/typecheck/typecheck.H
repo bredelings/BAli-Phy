@@ -710,7 +710,7 @@ Hs::LVar rename_var_from_bindinfo(Hs::LVar V, const std::map<Hs::Var, Hs::BindIn
 
 Hs::LPat rename_pattern_from_bindinfo(Hs::LPat pat, const std::map<Hs::Var, Hs::BindInfo>& bind_info);
 
-std::vector<std::vector<expression_ref>> find_type_groups(const Hs::Decls& type_decls);
+std::vector<std::vector<Hs::Decl>> find_type_groups(const Hs::Decls& type_decls);
 
 ID get_full_class_name_from_constraint(const Type& constraint);
 

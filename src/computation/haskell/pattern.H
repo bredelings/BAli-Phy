@@ -4,16 +4,15 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <type_traits>
 
 #include "computation/object.H"
 #include "computation/parser/located.H"
 
-// Can we eliminate this?
-#include "computation/expression/expression_ref.H"
-
 #include "computation/core/ast.H"
 #include "computation/core/wrap.H"
 #include "computation/haskell/ids.H"
+#include "computation/haskell/variant_node.H"
 
 #include "var.H"
 #include "literal.H"
@@ -59,13 +58,60 @@
 namespace Haskell
 {
 
-typedef expression_ref Pattern;
-typedef expression_ref Pat;
+struct Exp;
+// Transitional parser-phase root for syntax that may later become an Exp or Pat.
+// Replace this alias with a separate root when the parser AST is split.
+using ExpOrPat = Exp;
+using LExpOrPat = Located<ExpOrPat>;
+
+struct Pat;
+typedef Pat Pattern;
 typedef Located<Pat> LPat;
 typedef std::vector<LPat> LPats;
 
+struct VarPattern;
+struct ConPattern;
+struct InfixPat;
+struct TypedPattern;
+struct LiteralPattern;
+struct WildcardPattern;
+struct ListPattern;
+struct TuplePattern;
+template<class P> struct LazyPatternT;
+template<class P> struct StrictPatternT;
+template<class P> struct AsPatternT;
+using LazyPattern = LazyPatternT<Pat>;
+using StrictPattern = StrictPatternT<Pat>;
+using AsPattern = AsPatternT<Pat>;
+using ParsedLazyPattern = LazyPatternT<ExpOrPat>;
+using ParsedStrictPattern = StrictPatternT<ExpOrPat>;
+using ParsedAsPattern = AsPatternT<ExpOrPat>;
+struct ParsedWildcardPattern;
+struct RecordPattern;
+
+struct Pat: public VariantNode
+<
+    VarPattern,
+    ConPattern,
+    InfixPat,
+    TypedPattern,
+    LiteralPattern,
+    WildcardPattern,
+    ListPattern,
+    TuplePattern,
+    LazyPattern,
+    StrictPattern,
+    AsPattern,
+    RecordPattern
+>
+{
+    using VariantNode::VariantNode;
+    using VariantNode::operator=;
+};
+
 std::string parenthesize_pattern(const Pat& p);
 std::string parenthesize_pattern(const LPat& p);
+std::string parenthesize_exp(const Exp& E);
 
 struct VarPattern: public Object
 {
@@ -92,17 +138,6 @@ struct ConPattern: public Object
     ConPattern* clone() const { return new ConPattern(*this);}
     std::string print() const;
     ConPattern(const LCon& h, const LPats& as):head(h),args(as) {}
-};
-
-struct InfixPat: public Object
-{
-    std::vector<Located<expression_ref>> terms;
-
-    InfixPat* clone() const { return new InfixPat(*this);}
-    std::string print() const;
-
-    InfixPat() = default;
-    InfixPat(const std::vector<Located<expression_ref>>& ts): terms(ts) {}
 };
 
 struct TypedPattern: public Object
@@ -156,31 +191,61 @@ struct TuplePattern: public Object
 
 Pattern tuple_pattern(const LPats& es);
 
-struct LazyPattern: public Object
+template<class P>
+struct LazyPatternT: public Object
 {
-    LPat pattern;
+    Located<P> pattern;
 
-    LazyPattern* clone() const { return new LazyPattern(*this);}
-    std::string print() const;
-    LazyPattern(const LPat& p):pattern(p) {}
+    LazyPatternT* clone() const { return new LazyPatternT(*this);}
+    // Print either a final pattern child or a parser-phase expression/pattern child.
+    std::string print() const
+    {
+        if constexpr (std::is_same_v<P, Pat>)
+            return "~"+parenthesize_pattern(pattern);
+        else
+            return "~"+parenthesize_exp(unloc(pattern));
+    }
+    LazyPatternT(const Located<P>& p):pattern(p) {}
 };
 
-struct StrictPattern: public Object
+template<class P>
+struct StrictPatternT: public Object
 {
-    LPat pattern;
-    StrictPattern* clone() const { return new StrictPattern(*this);}
-    std::string print() const;
-    StrictPattern(const LPat& p):pattern(p) {}
+    Located<P> pattern;
+    StrictPatternT* clone() const { return new StrictPatternT(*this);}
+    // Print either a final pattern child or a parser-phase expression/pattern child.
+    std::string print() const
+    {
+        if constexpr (std::is_same_v<P, Pat>)
+            return "!"+parenthesize_pattern(pattern);
+        else
+            return "!"+parenthesize_exp(unloc(pattern));
+    }
+    StrictPatternT(const Located<P>& p):pattern(p) {}
 };
 
-struct AsPattern: public Object
+template<class P>
+struct AsPatternT: public Object
 {
     LVar var;
-    LPat pattern;
+    Located<P> pattern;
 
-    AsPattern* clone() const { return new AsPattern(*this);}
-    std::string print() const;
-    AsPattern(const LVar& v, const LPat& p):var(v),pattern(p) {}
+    AsPatternT* clone() const { return new AsPatternT(*this);}
+    // Print either a final pattern child or a parser-phase expression/pattern child.
+    std::string print() const
+    {
+        if constexpr (std::is_same_v<P, Pat>)
+            return var.print()+"@"+parenthesize_pattern(pattern);
+        else
+            return var.print()+"@"+parenthesize_exp(unloc(pattern));
+    }
+    AsPatternT(const LVar& v, const Located<P>& p):var(v),pattern(p) {}
+};
+
+struct ParsedWildcardPattern: public Object
+{
+    ParsedWildcardPattern* clone() const { return new ParsedWildcardPattern(*this);}
+    std::string print() const { return "_"; }
 };
 
 std::set<LVar> vars_in_pattern(const LPat& pat);

@@ -127,22 +127,6 @@ string parenthesize_pattern(const Pattern& p)
     return result;
 }
 
-string LazyPattern::print() const
-{
-    return "~"+parenthesize_pattern(pattern);
-}
-
-string StrictPattern::print() const
-{
-    return "!"+parenthesize_pattern(pattern);
-}
-
-string AsPattern::print() const
-{
-    return var.print()+"@"+parenthesize_pattern(pattern);
-}
-
-
 std::set<LVar> vars_in_patterns(const LPats& pats)
 {
     std::set<LVar> vars;
@@ -174,13 +158,9 @@ std::set<LVar> vars_in_pattern(const LPat& lpat)
 	return { v->var };
     else if (auto c = pat.to<ConPattern>())
         return vars_in_patterns(c->args);
-    else if (auto i = pat.to<InfixPat>())
+    else if (pat.is_a<InfixPat>())
     {
-        LPats operands;
-        for(auto& term: i->terms)
-            if (not unloc(term).is_a<Hs::Var>() and not unloc(term).is_a<Hs::Con>() and not unloc(term).is_a<Hs::Neg>())
-                operands.push_back(term);
-        return vars_in_patterns(operands);
+        throw myexception()<<"Internal error: unresolved infix pattern '"<<pat<<"' reached vars_in_pattern.";
     }
     else if (auto r = pat.to<RecordPattern>())
     {

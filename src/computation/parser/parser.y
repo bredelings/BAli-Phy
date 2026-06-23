@@ -13,7 +13,6 @@
   # include <vector>
   # include <tuple>
   # include <optional>
-  # include "computation/expression/expression_ref.H"
   # include "computation/haskell/haskell.H"
   # include "computation/typecheck/types.H"
   # include "computation/typecheck/kind.H"
@@ -40,7 +39,6 @@
   Hs::Context make_context(const Hs::LType& context);
   std::tuple<Located<Hs::TypeCon>, std::vector<Hs::LType>> check_type_or_class_header2(const Hs::LType& type);
 
-  expression_ref yy_make_string(const std::string&);
   Hs::LExp make_parsed_app(const yy::location& loc, const Hs::LExp& head, const Hs::LExp& arg);
   Hs::LExp make_record_field_selection(const yy::location& loc, const Hs::LExp& object, const std::string& field);
   Hs::LExp make_record_expression(const yy::location& loc, const Hs::LExp& head, const Located<Hs::FieldBindings>& fbinds);
@@ -260,13 +258,13 @@
 
 %type <Hs::Decls> topdecls
 %type <Hs::Decls> topdecls_semi
-%type <Located<expression_ref>> topdecl
-%type <Located<expression_ref>> cl_decl
-%type <Located<expression_ref>> ty_decl
-%type <Located<expression_ref>> inst_decl
-%type <Located<expression_ref>> stand_alone_deriving
+%type <Hs::LDecl> topdecl
+%type <Hs::LDecl> cl_decl
+%type <Hs::LDecl> ty_decl
+%type <Hs::LDecl> inst_decl
+%type <Hs::LDecl> stand_alone_deriving
 
-%type <Located<expression_ref>> standalone_kind_sig
+%type <Hs::LDecl> standalone_kind_sig
 
 %type <std::vector<Hs::LTypeCon>> sks_vars
 
@@ -294,20 +292,20 @@
 %type <void> pattern_synonym_sig
 */
 
-%type <Located<expression_ref>> decl_cls
+%type <Hs::LDecl> decl_cls
 %type <Hs::Decls> decls_cls
 %type <Located<Hs::Decls>> decllist_cls
 %type <std::optional<Located<Hs::Decls>>> where_cls
 
-%type <Located<expression_ref>> at_decl_cls
-%type <Located<expression_ref>> at_decl_inst
+%type <Hs::LDecl> at_decl_cls
+%type <Hs::LDecl> at_decl_inst
 
-%type <Located<expression_ref>> decl_inst
+%type <Hs::LDecl> decl_inst
 %type <Hs::Decls> decls_inst
 %type <Located<Hs::Decls>> decllist_inst
 %type <std::optional<Located<Hs::Decls>>> where_inst
 
-%type <std::vector<Located<expression_ref>>> decls
+%type <Hs::Decls> decls
 %type <Hs::Decls> decllist
 %type <Located<Hs::Binds>> binds
 %type <std::optional<Located<Hs::Binds>>> wherebinds
@@ -386,61 +384,61 @@
 %type <Located<std::optional<Role>>> role
 %type <std::vector<Located<std::optional<Role>>>> roles maybe_roles
 
-%type <Located<expression_ref>> decl_no_th
-%type <Located<expression_ref>> decl
+%type <Hs::LDecl> decl_no_th
+%type <Hs::LDecl> decl
 %type <Hs::MultiGuardedRHS> rhs
 %type <std::vector<Hs::GuardedRHS>> gdrhs
 %type <Hs::GuardedRHS> gdrh
-%type <Located<expression_ref>> sigdecl
+%type <Hs::LDecl> sigdecl
  /*
 %type <void> activation
 %type <void> explicit_activation
  */
 
-%type <Located<expression_ref>> exp
+%type <Hs::LExp> exp
 %type <Located<Hs::InfixExp>> infixexp
-%type <Located<expression_ref>> exp10
+%type <Hs::LExp> exp10
 
-%type <Located<expression_ref>> fexp
-%type <Located<expression_ref>> aexp
-%type <Located<expression_ref>> aexp1
-%type <Located<expression_ref>> aexp2
-%type <Located<expression_ref>> texp
-%type <std::vector<Located<expression_ref>>> tup_exprs
+%type <Hs::LExp> fexp
+%type <Hs::LExp> aexp
+%type <Hs::LExp> aexp1
+%type <Hs::LExp> aexp2
+%type <Hs::LExp> texp
+%type <std::vector<Hs::LExp>> tup_exprs
  /*
 %type <void> tup_tail
  */
-%type <expression_ref> list
-%type <std::vector<Located<expression_ref>>> lexps
+%type <Hs::Exp> list
+%type <std::vector<Hs::LExp>> lexps
 
  /* 
 %type <std::vector<expression_ref>> flattenedpquals 
 %type <std::vector<expression_ref>> pquals
  */
-%type <std::vector<Located<expression_ref>>> squals
+%type <std::vector<Hs::LStmt>> squals
  /* %type <expression_ref> transformqual */
 
-%type <std::vector<Located<expression_ref>>> guardquals
-%type <std::vector<Located<expression_ref>>> guardquals1
+%type <std::vector<Hs::LStmt>> guardquals
+%type <std::vector<Hs::LStmt>> guardquals1
 
-%type <Hs::Alts> altslist
-%type <std::vector<Located<Hs::Alt>>> alts
-%type <std::vector<Located<Hs::Alt>>> alts1
-%type <Located<Hs::Alt>> alt
+%type <Hs::ParsedAlts> altslist
+%type <std::vector<Located<Hs::ParsedAlt>>> alts
+%type <std::vector<Located<Hs::ParsedAlt>>> alts1
+%type <Located<Hs::ParsedAlt>> alt
 %type <Hs::MultiGuardedRHS> alt_rhs
 %type <std::vector<Hs::GuardedRHS>> gdpats
  /* %type <expression_ref> ifgdpats */
 %type <Hs::GuardedRHS> gdpat
-%type <Located<expression_ref>> pat
-%type <Located<expression_ref>> bindpat
-%type <Located<expression_ref>> apat
-%type <std::vector<Located<expression_ref>>> apats1
+%type <Hs::LExp> pat
+%type <Hs::LExp> bindpat
+%type <Hs::LExp> apat
+%type <std::vector<Hs::LExp>> apats1
 
 %type <Hs::Stmts> stmtlist
-%type <std::vector<Located<expression_ref>>> stmts
-%type <Located<expression_ref>> stmt
+%type <std::vector<Hs::LStmt>> stmts
+%type <Hs::LStmt> stmt
 
-%type <Located<expression_ref>> qual
+%type <Hs::LStmt> qual
 
 %type <Located<Hs::FieldBindings>> fbinds
 %type <Located<Hs::FieldBindings>> fbinds1
@@ -476,8 +474,8 @@
 
 %type <std::string> op
 %type <std::string> varop
-%type <expression_ref> qop
-%type <expression_ref> qopm
+%type <Hs::Exp> qop
+%type <Hs::Exp> qopm
  //%type <std::string> hole_op
 %type <std::string> qvarop
 %type <std::string> qvaropm
@@ -506,7 +504,7 @@
 %type <std::string> qconsym
 %type <std::string> consym
 
-%type  <expression_ref> literal
+%type  <Hs::Exp> literal
 %type  <Located<std::string>> modid
 %type  <int> commas
 /*
@@ -681,7 +679,8 @@ topdecl: cl_decl                               {$$ = $1;}
 |        annotation*/
 |        decl_no_th                            {$$ = $1;}
 /* What is this for? How is this a decl ? */
-|        infixexp                              {$$ = $1;}
+|        infixexp                              { drv.push_error_message(@1, "Unexpected top-level expression.");
+                                                $$ = {@1, Hs::ValueDecl({@1, unloc($1)}, Hs::SimpleRHS({@1, Hs::Var("<top-level-expression>")}))}; }
 
 
 call_conv: "bpcall" {$$ = {@$,"bpcall"};}
@@ -1240,15 +1239,15 @@ fexp: fexp aexp                  {$$ = make_parsed_app(@$, $1, $2);}
 |     aexp                       {$$ = $1;}
 
 /* EP */
-aexp: qvar TIGHT_INFIX_AT aexp   {$$ = {@$, Hs::AsPattern({@1,Hs::Var($1)},$3)}; }
-|     PREFIX_TILDE aexp          {$$ = {@$, Hs::LazyPattern($2)}; }
-|     PREFIX_BANG  aexp          {$$ = {@$, Hs::StrictPattern($2)}; }
-|     "\\" apats1 "->" exp       {$$ = {@$, Hs::LambdaExp($2,$4)}; }
+aexp: qvar TIGHT_INFIX_AT aexp   {$$ = {@$, Hs::ParsedAsPattern({@1,Hs::Var($1)},$3)}; }
+|     PREFIX_TILDE aexp          {$$ = {@$, Hs::ParsedLazyPattern($2)}; }
+|     PREFIX_BANG  aexp          {$$ = {@$, Hs::ParsedStrictPattern($2)}; }
+|     "\\" apats1 "->" exp       {$$ = {@$, Hs::ParsedLambdaExp($2,$4)}; }
 |     "let" binds "in" exp       {$$ = {@$, Hs::LetExp($2,$4)}; }
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
 |     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = {@1+@8,Hs::IfExp($2,$5,$8)}; }
 /* |     "if" ifgdpats              {} MultiWayIf extension not currently handled */
-|     "case" exp "of" altslist   {$$ = {@$, Hs::CaseExp($2,$4)}; }
+|     "case" exp "of" altslist   {$$ = {@$, Hs::ParsedCaseExp($2,$4)}; }
 |     "do" stmtlist              {$$ = {@$, Hs::Do($2)}; }
 |     "mdo" stmtlist             {$$ = {@$, Hs::MDo($2)}; }
 /* |     "proc" aexp "->" exp       {} -XArrows not currently handled */
@@ -1271,7 +1270,7 @@ aexp2: qvar                   {$$ = {@$, Hs::Var($1)};}
 |      "(#" tup_exprs "#)"    {}
 */
 |      "[" list "]"           {$$ = {@$, $2};}
-|      "_"                    {$$ = {@$, Hs::WildcardPattern()};}
+|      "_"                    {$$ = {@$, Hs::ParsedWildcardPattern()};}
 /* Skip Template Haskell Extensions */
 
 projection: projection TIGHT_INFIX_DOT field  {$$ = $1; $$.push_back($3);}
@@ -1346,8 +1345,8 @@ guardquals1: guardquals1 "," qual  {$$ = $1;$$.push_back($3);}
 |            qual                  {$$.push_back($1);}
 
 /* ------------- Case alternatives ------------------------------- */
-altslist: "{" alts "}"           {$$ = Hs::Alts{$2};}
-|         VOCURLY alts close     {$$ = Hs::Alts{$2};}
+altslist: "{" alts "}"           {$$ = Hs::ParsedAlts{$2};}
+|         VOCURLY alts close     {$$ = Hs::ParsedAlts{$2};}
 |         "{" "}"                {}
 |         VOCURLY close          {}
 
@@ -1358,7 +1357,7 @@ alts1: alts1 ";" alt             {$$ = $1; $$.push_back($3);}
 |      alts1 ";"                 {$$ = $1;}
 |      alt                       {$$.push_back($1);}
 
-alt:   pat alt_rhs               {$$ = Located<Hs::Alt>{@1+@2,{$1,$2}};}
+alt:   pat alt_rhs               {$$ = Located<Hs::ParsedAlt>{@1+@2,{$1,$2}};}
 
 alt_rhs: "->" exp wherebinds     {$$ = Hs::SimpleRHS($2,$3);}
 |        gdpats   wherebinds     {$$ = Hs::MultiGuardedRHS($1,$2);}
@@ -1399,7 +1398,7 @@ stmts: stmts ";" stmt  {$$ = $1; $$.push_back($3);}
 stmt: qual              {$$ = $1;}
 |     "rec" stmtlist    {$$ = {@$, Hs::RecStmt($2)};}
 
-qual: bindpat "<-" exp  {$$ = {@$, Hs::PatQual($1,$3)};}
+qual: bindpat "<-" exp  {$$ = {@$, Hs::ParsedPatQual($1,$3)};}
 |     exp               {$$ = {@$, Hs::SimpleQual($1)};}
 |     "let" binds       {$$ = {@$, Hs::LetQual($2)};}
 
@@ -1714,7 +1713,8 @@ Hs::LExp make_record_projection(const yy::location& loc, const std::vector<std::
     for(const auto& field: fields)
         body = make_record_field_selection(loc, body, field);
 
-    return {loc, Hs::LambdaExp({{loc, unloc(arg)}}, body)};
+    Hs::LPat arg_pat = {loc, Hs::VarPattern(arg)};
+    return {loc, Hs::LambdaExp({arg_pat}, body)};
 }
 
 // See PostProcess.hs:checkTyClHdr

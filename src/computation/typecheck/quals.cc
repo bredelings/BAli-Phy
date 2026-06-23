@@ -51,8 +51,8 @@ namespace
         stmts.push_back({noloc, Hs::SimpleQual(rec_return_stmt)});
         auto rec_do = Haskell::Do(Haskell::Stmts(stmts));
 
-        expression_ref rec_lambda = Haskell::LambdaExp({{noloc, Haskell::LazyPattern(rec_tuple_pattern)}}, {noloc, rec_do});
-        return Hs::apply({noloc, R.mfixOp}, {{noloc, rec_lambda}});
+        Hs::Exp rec_lambda = Haskell::LambdaExp({{noloc, Haskell::LazyPattern(rec_tuple_pattern)}}, {noloc, rec_do});
+        return Hs::apply({noloc, R.mfixOp}, std::vector<Hs::LExp>{{noloc, rec_lambda}});
     }
 
     void copy_checked_rec_stmt_from_mfix_exp(Hs::RecStmt& R, const Hs::LExp& mfix_exp)
@@ -284,7 +284,7 @@ void TypeChecker::tcRhoStmts(int i, vector<Located<Hs::Qual>>& stmts, const Expe
         synthetic_pq.bindOp = R.bindOp;
         synthetic_pq.failOp = {};
         synthetic_pq.bindpat_can_fail = false;
-        auto synthetic_stmt = Hs::LExp{stmts[i].loc, synthetic_pq};
+        auto synthetic_stmt = Hs::LStmt{stmts[i].loc, synthetic_pq};
 
         vector<Located<Hs::Qual>> synthetic_stmts;
         synthetic_stmts.push_back(synthetic_stmt);

@@ -8,9 +8,7 @@
 #include "computation/object.H"
 #include "computation/parser/located.H"
 #include "Integer.H"
-
-// Can we eliminate this? -- for the Ops
-#include "computation/expression/expression_ref.H"
+#include "var.H"
 
 namespace Haskell
 {
@@ -28,9 +26,9 @@ struct Integer
     integer value;
     bool operator==(const Integer&) const;
 
-    expression_ref fromIntegerOp;
+    std::optional<Hs::Var> fromIntegerOp;
     Integer(integer i): value(i) {}
-    Integer(integer i, const expression_ref& op): value(i), fromIntegerOp(op) {}
+    Integer(integer i, const Hs::Var& op): value(i), fromIntegerOp(op) {}
 };
 
 integer integerFromString(const std::string& s);
@@ -40,9 +38,9 @@ struct String
     std::string value;
     bool operator==(const String&) const = default;
 
-    expression_ref fromStringOp;
+    std::optional<Hs::Var> fromStringOp;
     String(const std::string& s):value(s) {}
-    String(const std::string& s, const expression_ref& op):value(s), fromStringOp(op) {}
+    String(const std::string& s, const Hs::Var& op):value(s), fromStringOp(op) {}
 };
 
 struct Floating
@@ -51,10 +49,10 @@ struct Floating
 
     bool operator==(const Floating&) const = default;
 
-    expression_ref fromRationalOp;
+    std::optional<Hs::Var> fromRationalOp;
 
     Floating(rational r):value(r) {}
-    Floating(rational r, const expression_ref& op):value(r),fromRationalOp(op) {}
+    Floating(rational r, const Hs::Var& op):value(r),fromRationalOp(op) {}
 };
 
 rational rationalFromString(const std::string& s);
@@ -76,7 +74,7 @@ struct Literal: public Object
     // In a pattern, we need an equals op to compare with.
     // Can we get away with a expression like (\x -> x == (fromInteger lit)) ??
     // Or do we need a Wrapper, that takes a var, and generates (var == (fromInteger lit))?
-    expression_ref equalsOp; // ??
+    std::optional<Hs::Var> equalsOp; // ??
 
     Literal* clone() const override {return new Literal(*this);}
     std::string print() const override;

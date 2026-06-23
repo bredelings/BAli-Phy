@@ -213,16 +213,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
             error(loc, Note()<<"Data constructor `"<<name<<"` not in scope.");
         }
     }
-    else if (E.is_a<Hs::RecStmt>())
-    {
-        auto rn = child();
-        bound_var_info binders;
-        auto R = E.as_<Hs::RecStmt>();
-        for(auto& stmt: R.stmts.stmts)
-            add(binders, rn.rename_stmt(stmt, bound, binders, free_vars));
-
-        E = R;
-    }
     else if (E.is_a<Hs::Do>())
     {
         auto rn = child();
@@ -392,6 +382,10 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
     { }
     else if (E.is_a<Hs::ParsedApp>())
         error(loc, Note()<<"Internal error: parsed application reached expression renaming.");
+    else if (E.is_a<Hs::ParsedLambdaExp>() or E.is_a<Hs::ParsedCaseExp>() or
+             E.is_a<Hs::ParsedAsPattern>() or E.is_a<Hs::ParsedLazyPattern>() or
+             E.is_a<Hs::ParsedStrictPattern>() or E.is_a<Hs::ParsedWildcardPattern>())
+        error(loc, Note()<<"Internal error: parser-only expression/pattern syntax reached expression renaming.");
     else if (auto I = E.to<Hs::InfixExp>())
     {
         try
@@ -411,10 +405,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         App.head = rename(App.head, bound, free_vars);
         App.arg  = rename(App.arg,  bound, free_vars);
         E = App;
-    }
-    else if (E.is_a<Hs::WildcardPattern>())
-    {
-        error(loc, Note()<<"Wildcard pattern in expression!");
     }
     else
     {
