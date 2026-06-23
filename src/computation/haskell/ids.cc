@@ -1,5 +1,6 @@
 #include "ids.H"
 
+#include <optional>
 #include <cassert>
 #include <regex>
 #include "util/myexception.H"
