@@ -5,7 +5,6 @@
 #include <string>
 #include <optional>
 #include <variant>
-#include "computation/object.H"
 #include "computation/parser/located.H"
 #include "Integer.H"
 #include "var.H"
@@ -64,20 +63,17 @@ struct BoxedInteger
     bool operator==(const BoxedInteger&) const = default;
 };
 
-struct Literal: public Object
+struct Literal
 {
     std::variant<Char, Integer, String, Floating, BoxedInteger> literal;
 
     bool operator==(const Literal&) const;
-    bool operator==(const Object&) const override;
 
     // In a pattern, we need an equals op to compare with.
     // Can we get away with a expression like (\x -> x == (fromInteger lit)) ??
     // Or do we need a Wrapper, that takes a var, and generates (var == (fromInteger lit))?
     std::optional<Hs::Var> equalsOp; // ??
-
-    Literal* clone() const override {return new Literal(*this);}
-    std::string print() const override;
+    std::string print() const;
 
     std::optional<char> is_Char() const;
     std::optional<integer> is_Integer() const;

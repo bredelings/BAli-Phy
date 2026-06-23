@@ -287,11 +287,6 @@ string ValueDecl::print() const
     return unloc(lhs).print() + rhs.print();
 }
 
-bool ValueDecl::operator==(const Object&) const
-{
-    std::abort();
-}
-
 bool ValueDecl::operator==(const ValueDecl&) const
 {
     std::abort();

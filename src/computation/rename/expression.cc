@@ -244,7 +244,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         {
             bool overlap = not disjoint_add(mdo_binders, rn.find_bound_vars_in_stmt(stmt));
             if (overlap)
-                throw myexception()<<"mdo expression '"<<MD<<"' uses a variable twice!";
+                throw myexception()<<"mdo expression '"<<MD.print()<<"' uses a variable twice!";
         }
 
         vector<mdo_stmt_info> stmt_infos;

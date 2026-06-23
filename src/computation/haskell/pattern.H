@@ -6,7 +6,6 @@
 #include <string>
 #include <type_traits>
 
-#include "computation/object.H"
 #include "computation/parser/located.H"
 
 #include "computation/core/ast.H"
@@ -113,17 +112,15 @@ std::string parenthesize_pattern(const Pat& p);
 std::string parenthesize_pattern(const LPat& p);
 std::string parenthesize_exp(const Exp& E);
 
-struct VarPattern: public Object
+struct VarPattern
 {
     LVar var;
-
-    VarPattern* clone() const { return new VarPattern(*this);}
     std::string print() const;
 
     VarPattern(const LVar& v):var(v) {}
 };
 
-struct ConPattern: public Object
+struct ConPattern
 {
     LCon head;
     LPats args;
@@ -135,55 +132,46 @@ struct ConPattern: public Object
     std::shared_ptr<const Core::Decls<>> ev_binds;
 
     // get given variables for dictionaries only (nothing for type equalities)
-    ConPattern* clone() const { return new ConPattern(*this);}
     std::string print() const;
     ConPattern(const LCon& h, const LPats& as):head(h),args(as) {}
 };
 
-struct TypedPattern: public Object
+struct TypedPattern
 {
     LPat pat;
     LType type;
     Core::wrapper wrap;
-
-    TypedPattern* clone() const { return new TypedPattern(*this);}
     std::string print() const;
 };
 
-struct LiteralPattern: public Object
+struct LiteralPattern
 {
     Literal lit;
     bool operator==(const LiteralPattern&) const;
-    bool operator==(const Object&) const override;
 
     Hs::Var equalsOp = {eq_method_name};
-
-    LiteralPattern* clone() const override { return new LiteralPattern(*this);}
-    std::string print() const override;
+    std::string print() const;
 
     LiteralPattern(const Literal& l): lit(l) {}
 };
 
-struct WildcardPattern: public Object
+struct WildcardPattern
 {
-    WildcardPattern* clone() const { return new WildcardPattern(*this);}
     std::string print() const;
 };
 
-struct ListPattern: public Object
+struct ListPattern
 {
     LPats elements;
-    ListPattern* clone() const { return new ListPattern(*this);}
     std::string print() const;
 
     ListPattern() {}
     ListPattern(const LPats& es):elements(es) {}
 };
 
-struct TuplePattern: public Object
+struct TuplePattern
 {
     LPats elements;
-    TuplePattern* clone() const { return new TuplePattern(*this);}
     std::string print() const;
     TuplePattern() {}
     TuplePattern(const LPats& es): elements(es) {}
@@ -192,11 +180,9 @@ struct TuplePattern: public Object
 Pattern tuple_pattern(const LPats& es);
 
 template<class P>
-struct LazyPatternT: public Object
+struct LazyPatternT
 {
     Located<P> pattern;
-
-    LazyPatternT* clone() const { return new LazyPatternT(*this);}
     // Print either a final pattern child or a parser-phase expression/pattern child.
     std::string print() const
     {
@@ -209,10 +195,9 @@ struct LazyPatternT: public Object
 };
 
 template<class P>
-struct StrictPatternT: public Object
+struct StrictPatternT
 {
     Located<P> pattern;
-    StrictPatternT* clone() const { return new StrictPatternT(*this);}
     // Print either a final pattern child or a parser-phase expression/pattern child.
     std::string print() const
     {
@@ -225,12 +210,10 @@ struct StrictPatternT: public Object
 };
 
 template<class P>
-struct AsPatternT: public Object
+struct AsPatternT
 {
     LVar var;
     Located<P> pattern;
-
-    AsPatternT* clone() const { return new AsPatternT(*this);}
     // Print either a final pattern child or a parser-phase expression/pattern child.
     std::string print() const
     {
@@ -242,9 +225,8 @@ struct AsPatternT: public Object
     AsPatternT(const LVar& v, const Located<P>& p):var(v),pattern(p) {}
 };
 
-struct ParsedWildcardPattern: public Object
+struct ParsedWildcardPattern
 {
-    ParsedWildcardPattern* clone() const { return new ParsedWildcardPattern(*this);}
     std::string print() const { return "_"; }
 };
 

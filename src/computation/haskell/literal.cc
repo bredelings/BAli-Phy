@@ -146,14 +146,6 @@ bool Literal::operator==(const Literal& L) const
     return literal == L.literal;
 }
 
-bool Literal::operator==(const Object& O) const
-{
-    if (auto l = dynamic_cast<const Literal*>(&O))
-        return (*this) == *l;
-    else
-        return false;
-}
-
 static string print_floating_decimal(const rational& r)
 {
     using boost::multiprecision::cpp_dec_float_50;

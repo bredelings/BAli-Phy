@@ -2,6 +2,7 @@
 #define LOCATED_H
 #include <iostream>
 #include <optional>
+#include <vector>
 #include "location.hh"
 
 template <typename T>

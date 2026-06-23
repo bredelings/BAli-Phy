@@ -111,7 +111,7 @@ struct VariantNode
     VariantNode(VariantNode&&) noexcept = default;
 
     // Construct the variant from one concrete AST alternative.
-    // There are intentionally no constructors from generic Object storage.
+    // There are intentionally no constructors from generic untyped storage.
     template <typename T>
         requires ((std::is_same_v<std::decay_t<T>, Alternatives> || ...))
     VariantNode(T&& t)

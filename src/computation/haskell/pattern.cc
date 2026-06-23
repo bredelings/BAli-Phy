@@ -65,14 +65,6 @@ bool LiteralPattern::operator==(const LiteralPattern& LP) const
     return lit == LP.lit;
 }
 
-bool LiteralPattern::operator==(const Object& O) const
-{
-    if (auto lp = dynamic_cast<const LiteralPattern*>(&O))
-        return (*this) == *lp;
-    else
-        return false;
-}
-
 string ListPattern::print() const
 {
     vector<string> parts;

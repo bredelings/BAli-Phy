@@ -10,7 +10,6 @@
 #include <set>
 #include <tuple>
 #include <memory>
-#include "computation/object.H"
 #include "computation/parser/located.H"
 
 #include "var.H"
@@ -243,25 +242,21 @@ typedef Located<Stmt> LStmt;
 typedef Stmt Qual;
 typedef Located<Qual> LQual;
 
-struct ApplyExp: public Object
+struct ApplyExp
 {
     LExp head;
     LExp arg;
 
     Core::wrapper arg_wrapper;
     Core::wrapper res_wrapper;
-
-    ApplyExp* clone() const { return new ApplyExp(*this);}
     std::string print() const;
 
     ApplyExp(const LExp& h, const LExp& a);
 };
 
-struct ParsedApp: public Object
+struct ParsedApp
 {
     std::vector<LExp> terms;
-
-    ParsedApp* clone() const { return new ParsedApp(*this);}
     std::string print() const;
 
     ParsedApp() = default;
@@ -353,21 +348,17 @@ LPat = WildPat          -- wildcard pattern
 
 std::string parenthesize_exp(const Expression& E);
 
-struct Neg: public Object
+struct Neg
 {
     std::optional<Hs::Var> negate_op;
-
-    Neg* clone() const { return new Neg(*this);}
     std::string print() const;
 
     Neg() = default;
 };
 
-struct InfixExp: public Object
+struct InfixExp
 {
     std::vector<Located<Exp>> terms;
-
-    InfixExp* clone() const { return new InfixExp(*this);}
     std::string print() const;
 
     InfixExp() = default;
@@ -376,11 +367,9 @@ struct InfixExp: public Object
 
 // Transitional: unresolved pattern infix still carries expression-shaped terms
 // until rename resolves fixity; replace this with strict pattern terms later.
-struct InfixPat: public Object
+struct InfixPat
 {
     std::vector<LExp> terms;
-
-    InfixPat* clone() const { return new InfixPat(*this);}
     std::string print() const;
 
     InfixPat() = default;
@@ -388,56 +377,48 @@ struct InfixPat: public Object
 };
 
 
-struct TypedExp: public Object
+struct TypedExp
 {
     LExp exp;
     LType type;
     Core::wrapper wrap;
-
-    TypedExp* clone() const { return new TypedExp(*this);}
     std::string print() const;
 
     TypedExp() = default;
     TypedExp(const LExp& e, const LType& t): exp(e), type(t) {}
 };
 
-struct Wrap: public Object
+struct Wrap
 {
     LExp exp;
     Core::wrapper wrap;
-
-    Wrap* clone() const { return new Wrap(*this);}
     std::string print() const;
 
     Wrap() = default;
     Wrap(const LExp& e, const Core::wrapper& w): exp(e), wrap(w) {}
 };
 
-struct TypeSigDecl: public Object
+struct TypeSigDecl
 {
     std::vector<LVar> vars;
     LType type;
-
-    TypeSigDecl* clone() const { return new TypeSigDecl(*this);}
     std::string print() const;
 
     TypeSigDecl() = default;
     TypeSigDecl(const std::vector<LVar>& vs, const LType& t): vars(vs), type(t) {}
 };
 
-struct KindSigDecl: public Object
+struct KindSigDecl
 {
     std::vector<LTypeCon> tycons;
     Kind kind;
-
-    KindSigDecl* clone() const { return new KindSigDecl(*this);}
     std::string print() const;
 
     KindSigDecl() = default;
     KindSigDecl(const std::vector<LTypeCon>& tcs, const Kind& k): tycons(tcs), kind(k) {}
 };
 
-struct ForeignDecl: public Object
+struct ForeignDecl
 {
     Located<std::string> call_conv;
 
@@ -445,20 +426,16 @@ struct ForeignDecl: public Object
     std::string symbol_name;
     Hs::LVar function;
     LType type;
-
-    ForeignDecl* clone() const {return new ForeignDecl(*this);}
     std::string print() const;
 
     ForeignDecl(const Located<std::string>& conv, const std::string& n, const Hs::LVar& f, const LType& t);
 };
 
-struct FieldBinding: public Object
+struct FieldBinding
 {
     LVar field;
     std::optional<LExp> value;
     std::optional<std::string> resolved_field;
-
-    FieldBinding* clone() const { return new FieldBinding(*this);}
     std::string print() const;
 
     FieldBinding(const LVar& lv):field(lv) {}
@@ -466,12 +443,10 @@ struct FieldBinding: public Object
 };
 
 template<class Field>
-struct RecordFieldBindings: public Object
+struct RecordFieldBindings
 {
     std::vector<Located<Field>> fields;
     std::optional<yy::location> dotdot;
-
-    RecordFieldBindings* clone() const { return new RecordFieldBindings(*this);}
     std::string print() const
     {
         std::string result;
@@ -499,12 +474,10 @@ struct CheckedRecordPattern;
 
 // Parsed record braces before context decides construction, update, or pattern.
 
-struct RecordSyntax: public Object
+struct RecordSyntax
 {
     LExp head;
     Located<FieldBindings> fbinds;
-
-    RecordSyntax* clone() const { return new RecordSyntax(*this);}
     std::string print() const;
 
     RecordSyntax() = default;
@@ -513,26 +486,22 @@ struct RecordSyntax: public Object
 
 // Shared expression-side record field list for classified construction/update syntax.
 
-struct RecordCon: public Object
+struct RecordCon
 {
     LCon con;
     Located<FieldBindings> fbinds;
     std::shared_ptr<CheckedRecordCon> checked_con;
-
-    RecordCon* clone() const { return new RecordCon(*this);}
     std::string print() const;
 
     RecordCon() = default;
     RecordCon(const LCon& c, const Located<FieldBindings>& fb): con(c), fbinds(fb) {}
 };
 
-struct RecordUpdate: public Object
+struct RecordUpdate
 {
     LExp object;
     Located<FieldBindings> fbinds;
     std::shared_ptr<CheckedRecordUpdate> checked_update;
-
-    RecordUpdate* clone() const { return new RecordUpdate(*this);}
     std::string print() const;
 
     RecordUpdate() = default;
@@ -555,13 +524,11 @@ struct PatternFieldBinding
 
 using PatternFieldBindings = RecordFieldBindings<PatternFieldBinding>;
 
-struct RecordPattern: public Object
+struct RecordPattern
 {
     LCon head;
     Located<PatternFieldBindings> fbinds;
     std::shared_ptr<CheckedRecordPattern> checked_pattern;
-
-    RecordPattern* clone() const { return new RecordPattern(*this);}
     std::string print() const;
 
     RecordPattern() = default;
@@ -580,12 +547,11 @@ enum class inline_pragma_t {INLINE, INLINABLE, NOINLINE};
 
 std::ostream& operator<<(std::ostream& o, inline_pragma_t );    
 
-struct InlinePragma: public Object
+struct InlinePragma
 {
     Located<std::string> command_string;
     inline_pragma_t command;
     Located<std::string> var;
-    InlinePragma* clone() const { return new InlinePragma(*this);}
 
     std::string print() const;
 
@@ -622,13 +588,11 @@ Binds operator+(const Binds& b1, const Binds& b2);
 
 enum class Fixity {infixl, infix, infixr, unknown};
 
-struct FixityDecl: public Object
+struct FixityDecl
 {
     Fixity fixity;
     std::optional<int> precedence;
     std::vector<Located<std::string>> names;
-
-    FixityDecl* clone() const { return new FixityDecl(*this);}
     std::string print()  const;
 
     FixityDecl() = default;  // so this can be a token value.
@@ -646,12 +610,11 @@ struct FieldDecl
 };
 
 
-struct FieldDecls: public Object
+struct FieldDecls
 {
     std::vector<FieldDecl> field_decls;
 
     std::string print()  const;
-    FieldDecls* clone() const { return new FieldDecls(*this);}
     FieldDecls() = default;      // so this can be a token value.
     FieldDecls(const std::vector<FieldDecl>& ds):field_decls(ds) {}
 };
@@ -804,15 +767,13 @@ struct DataDefn
 };
 
 
-struct DataOrNewtypeDecl: public Object, public DataDefn
+struct DataOrNewtypeDecl: public DataDefn
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
     // Should I factor out this group into a DataOrNewtypeHeader?
     LTypeCon con;
     std::vector<LTypeVar> type_vars;
-
-    DataOrNewtypeDecl* clone() const { return new DataOrNewtypeDecl(*this);}
     std::string print() const;
 
     DataOrNewtypeDecl(const LTypeCon& c,
@@ -824,7 +785,7 @@ struct DataOrNewtypeDecl: public Object, public DataDefn
         {}
 };
 
-struct TypeSynonymDecl: public Object
+struct TypeSynonymDecl
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
@@ -834,8 +795,6 @@ struct TypeSynonymDecl: public Object
     LType rhs_type;
 
     int arity() const {return type_vars.size();}
-
-    TypeSynonymDecl* clone() const { return new TypeSynonymDecl(*this);}
     std::string print() const;
 
     TypeSynonymDecl(const LTypeCon& c,
@@ -847,13 +806,11 @@ struct TypeSynonymDecl: public Object
         {}
 };
 
-struct TypeFamilyInstanceEqn: public Object
+struct TypeFamilyInstanceEqn
 {
     Located<TypeCon> con;
     std::vector<LType> args;
     LType rhs;
-
-    TypeFamilyInstanceEqn* clone() const { return new TypeFamilyInstanceEqn(*this);}
     std::string print() const;
 
     TypeFamilyInstanceEqn() = default;
@@ -864,7 +821,6 @@ struct TypeFamilyInstanceEqn: public Object
 
 struct TypeFamilyInstanceDecl: public TypeFamilyInstanceEqn
 {
-    TypeFamilyInstanceDecl* clone() const { return new TypeFamilyInstanceDecl(*this);}
 
     std::string print() const;
 
@@ -885,14 +841,12 @@ struct TypeFamilyInstanceDecl: public TypeFamilyInstanceEqn
 // See GHC/Tc/TyCl/Instance.hs
 
 
-struct DataFamilyInstanceDecl: public Object
+struct DataFamilyInstanceDecl
 {
     std::optional<std::vector<LTypeVar>> forall;
     Located<TypeCon> con;
     std::vector<LType> args;
     DataDefn rhs;
-    
-    DataFamilyInstanceDecl* clone() const {return new DataFamilyInstanceDecl(*this);}
 
     std::string print() const;
 
@@ -907,7 +861,7 @@ struct DataFamilyInstanceDecl: public Object
 
 enum FamilyInfo { TypeFamily, DataFamily };
 
-struct FamilyDecl: public Object
+struct FamilyDecl
 {
     FamilyInfo info;
     LTypeCon con;
@@ -926,8 +880,6 @@ struct FamilyDecl: public Object
     bool is_open_type_family() const {return is_type_family() and not where_instances;}
     bool is_closed_type_family() const {return is_type_family() and where_instances;}
 
-    FamilyDecl* clone() const { return new FamilyDecl(*this);}
-
     std::string print() const;
 
     FamilyDecl(FamilyInfo i, const LTypeCon& tc, const std::vector<LTypeVar>& as, const std::optional<Kind>& ks,
@@ -941,12 +893,10 @@ struct FamilyDecl: public Object
 };
 
 
-struct FunDep: public Object
+struct FunDep
 {
     std::vector<LTypeVar> lhs;
     std::vector<LTypeVar> rhs;
-
-    FunDep* clone() const { return new FunDep(*this);}
     std::string print() const;
 
     FunDep() = default; // for the parser
@@ -956,7 +906,7 @@ struct FunDep: public Object
         {}
 };
 
-struct ClassDecl: public Object
+struct ClassDecl
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
@@ -971,8 +921,6 @@ struct ClassDecl: public Object
     std::vector<TypeFamilyInstanceDecl> default_type_inst_decls;
     std::vector<TypeSigDecl> sig_decls;
     Decls default_method_decls;
-
-    ClassDecl* clone() const { return new ClassDecl(*this);}
     std::string print() const;
 
     ClassDecl(const Context& ct,
@@ -996,7 +944,7 @@ struct ClassDecl: public Object
         {}
 };
 
-struct InstanceDecl: public Object
+struct InstanceDecl
 {
     // See PostProcess.hs: checkTyClHdr for checks and post-processing.
 
@@ -1011,8 +959,6 @@ struct InstanceDecl: public Object
     Decls method_decls;
 
     bool generalized_newtype_deriving = false;
-
-    InstanceDecl* clone() const { return new InstanceDecl(*this);}
     std::string print() const;
 
     InstanceDecl(const std::optional<std::string>& o,
@@ -1028,13 +974,11 @@ struct InstanceDecl: public Object
         {}
 };
 
-struct StandaloneDerivingDecl: public Object
+struct StandaloneDerivingDecl
 {
     std::optional<DerivingStrategy> strategy;
     LType polytype;
     std::optional<LType> via_type;
-
-    StandaloneDerivingDecl* clone() const { return new StandaloneDerivingDecl(*this);}
     std::string print() const;
 
     StandaloneDerivingDecl(const std::optional<DerivingStrategy>& s, const LType& t, const std::optional<LType>& v = {})
@@ -1044,12 +988,10 @@ struct StandaloneDerivingDecl: public Object
         {}
 };
 
-struct RoleAnnotationDecl: public Object
+struct RoleAnnotationDecl
 {
     LTypeCon con;
     std::vector<Located<std::optional<Role>>> roles;
-
-    RoleAnnotationDecl* clone() const { return new RoleAnnotationDecl(*this);}
     std::string print() const;
 
     RoleAnnotationDecl(const LTypeCon& c, const std::vector<Located<std::optional<Role>>>& rs)
@@ -1058,96 +1000,86 @@ struct RoleAnnotationDecl: public Object
         {}
 };
 
-struct DefaultDecl: public Object
+struct DefaultDecl
 {
     std::optional<Located<std::string>> maybe_class;
     std::vector<LType> types;
     DefaultDecl() {}
-    DefaultDecl* clone() const { return new DefaultDecl(*this);}
     std::string print() const;
     DefaultDecl(const std::optional<Located<std::string>>& c, std::vector<LType>& ts):maybe_class(c), types(ts) {}
 };
 
 
-struct List: public Object
+struct List
 {
     std::vector<LExp> elements;
-    List* clone() const { return new List(*this);}
     std::string print() const;
     List(const std::vector<LExp>& es): elements(es) {}
 };
 
-struct ListFrom: public Object
+struct ListFrom
 {
     LExp from;
     Hs::Var enumFromOp = {"Compiler.Enum.enumFrom"};
-    ListFrom* clone() const { return new ListFrom(*this);}
     std::string print() const;
     ListFrom(const LExp& e): from(e) {}
 };
 
-struct ListFromThen: public Object
+struct ListFromThen
 {
     LExp from;
     LExp then;
     Hs::Var enumFromThenOp = {"Compiler.Enum.enumFromThen"};
-    ListFromThen* clone() const { return new ListFromThen(*this);}
     std::string print() const;
     ListFromThen(const LExp& e1, const LExp& e2): from(e1), then(e2) {}
 };
 
-struct ListFromTo: public Object
+struct ListFromTo
 {
     LExp from;
     LExp to;
     Hs::Var enumFromToOp = {"Compiler.Enum.enumFromTo"};
-    ListFromTo* clone() const { return new ListFromTo(*this);}
     std::string print() const;
     ListFromTo(const LExp& e1, const LExp& e2): from(e1), to(e2) {}
 };
 
-struct ListFromThenTo: public Object
+struct ListFromThenTo
 {
     LExp from;
     LExp then;
     LExp to;
     Hs::Var enumFromThenToOp = {"Compiler.Enum.enumFromThenTo"};
-    ListFromThenTo* clone() const { return new ListFromThenTo(*this);}
     std::string print() const;
     ListFromThenTo(const LExp& e1, const LExp& e2, const LExp& e3): from(e1), then(e2), to(e3) {}
 };
 
-struct ListComprehension: public Object
+struct ListComprehension
 {
     LExp body;
     std::vector<LQual> quals;
-    ListComprehension* clone() const { return new ListComprehension(*this);}
     std::string print() const;
     ListComprehension(const LExp& e, const std::vector<LQual>& es): body(e), quals(es) {}
 };
 
-struct LeftSection: public Object
+struct LeftSection
 {
     LExp l_arg;
     LExp op;
-    LeftSection* clone() const {return new LeftSection(*this);}
     std::string print() const;
     LeftSection(const LExp& e, const LExp& v):l_arg(e),op(v) {}
 };
 
-struct RightSection: public Object
+struct RightSection
 {
     LExp op;
     LExp r_arg;
-    RightSection* clone() const {return new RightSection(*this);}
     std::string print() const;
     RightSection(const LExp& v, const LExp& e):op(v), r_arg(e) {}
 };
 
-struct Tuple: public Object
+struct Tuple
 {
     std::vector<LExp> elements;
-    Tuple* clone() const { return new Tuple(*this);}
     std::string print() const;
     Tuple(const std::vector<LExp>& es): elements(es)
         {
@@ -1188,12 +1120,10 @@ struct MultiGuardedRHS
 
 MultiGuardedRHS SimpleRHS(const LExp&, const std::optional<LBinds>& ds = {});
 
-struct StrictValueDecl: public Object
+struct StrictValueDecl
 {
     LExp lhs;
     MultiGuardedRHS rhs;
-
-    StrictValueDecl* clone() const { return new StrictValueDecl(*this);}
     std::string print() const;
 
     StrictValueDecl() = default;
@@ -1204,14 +1134,11 @@ struct StrictValueDecl: public Object
 // Where do we make ValueDecl's with an rhs that is a plain expression?
 // Can we just make a SimpleValueDecl from the plain expression using a SimpleRHS?
 
-struct ValueDecl: public Object
+struct ValueDecl
 {
     LExp lhs;
     MultiGuardedRHS rhs;
-
-    bool operator==(const Object& O) const;
     bool operator==(const ValueDecl& V) const;
-    ValueDecl* clone() const { return new ValueDecl(*this);}
     std::string print() const;
 
     ValueDecl() = default;
@@ -1219,38 +1146,32 @@ struct ValueDecl: public Object
     ValueDecl(const LExp& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
 };
 
-struct Stmts: public Object
+struct Stmts
 {
     std::vector<LStmt> stmts;
-
-    Stmts* clone() const { return new Stmts(*this);}
     std::string print() const;
 
     Stmts() = default;
     Stmts(const std::vector<LStmt>& v):stmts(v) {}
 };
 
-struct LetQual: public Object
+struct LetQual
 {
     LBinds binds;
-
-    LetQual* clone() const { return new LetQual(*this);}
     std::string print()  const;
     LetQual(const LBinds& b): binds(b) {}
 };
 
-struct SimpleQual: public Object
+struct SimpleQual
 {
     LExp exp;
     Hs::Var andThenOp = {"Control.Monad.>>"};
-
-    SimpleQual* clone() const { return new SimpleQual(*this);}
     std::string print() const;
     SimpleQual(const LExp &e): exp(e) {};
 };
 
 template<class P>
-struct PatQualT: public Object
+struct PatQualT
 {
     Located<P> bindpat;
     LExp exp;
@@ -1258,8 +1179,6 @@ struct PatQualT: public Object
     Hs::Var bindOp = {"Control.Monad.>>="};
     std::optional<Hs::Var> failOp = {{"Control.Monad.fail"}};
     std::optional<bool> bindpat_can_fail;
-
-    PatQualT* clone() const { return new PatQualT(*this);}
     std::string print() const { return bindpat.print() + " <- " + exp.print(); }
     PatQualT(const Located<P>& bp, const LExp& e): bindpat(bp), exp(e) {};
 };
@@ -1271,15 +1190,13 @@ struct CheckedRecStmt
     explicit CheckedRecStmt(const LStmt& stmt): mfix_bind_stmt(stmt) {}
 };
 
-struct RecStmt: public Object
+struct RecStmt
 {
     Stmts stmts;
     Hs::Var bindOp = {"Control.Monad.>>="};
     Hs::Var returnOp = {"Control.Monad.return"};
     Hs::Var mfixOp = {"Control.Monad.Fix.mfix"};
     std::shared_ptr<CheckedRecStmt> checked_rec;
-
-    RecStmt* clone() const {return new RecStmt(*this);}
     std::string print() const;
 
     RecStmt(const Stmts& s):stmts(s) {}
@@ -1287,22 +1204,18 @@ struct RecStmt: public Object
 
 // at some point, we need to distinguish between TuplePattern and TupleExpression...    
 
-struct Do: public Object
+struct Do
 {
     Stmts stmts;
-
-    Do* clone() const { return new Do(*this);}
     std::string print() const;
 
     Do() = default;
     Do(const Stmts& s):stmts(s) {}
 };
 
-struct MDo: public Object
+struct MDo
 {
     Stmts stmts;
-
-    MDo* clone() const { return new MDo(*this);}
     std::string print() const;
 
     MDo() = default;
@@ -1330,12 +1243,10 @@ struct AltsT: public std::vector<Located<AltT<P>>>
     AltsT(const std::vector<Located<AltT<P>>>& v): std::vector<Located<AltT<P>>>(v) {};
 };
 
-struct LetExp: public Object
+struct LetExp
 {
     LBinds binds;
     LExp body;
-
-    LetExp* clone() const {return new LetExp(*this);}
     std::string print() const;
 
     LetExp(const LBinds& bs, const LExp& b): binds(bs), body(b) {};
@@ -1343,13 +1254,11 @@ struct LetExp: public Object
 
 LetExp simple_let(const LVar&, const LExp&, const LExp&);
 
-struct IfExp: public Object
+struct IfExp
 {
     LExp condition;
     LExp true_branch;
     LExp false_branch;
-
-    IfExp* clone() const {return new IfExp(*this);}
     std::string print() const;
 
     IfExp(const LExp& c, const LExp& t, const LExp& f)
@@ -1432,9 +1341,8 @@ struct Module
     {}
 };
 
-struct PatDecl: public Object
+struct PatDecl
 {
-    PatDecl* clone() const {return new PatDecl(*this);}
     std::string print() const;
 
     LPat lhs;
@@ -1514,11 +1422,9 @@ struct CheckedRecordPattern
 };
 
 template<class P>
-struct LambdaExpT: public Object
+struct LambdaExpT
 {
     MRuleT<P> match;
-
-    LambdaExpT* clone() const {return new LambdaExpT(*this);}
     std::string print() const;
 
     LambdaExpT(const std::vector<Located<P>>& ps, const LExp& b);
@@ -1540,21 +1446,18 @@ struct MatchContext: std::variant<LambdaContext, CaseContext, FunctionContext>
 };
 
 template<class P>
-struct CaseExpT: public Object
+struct CaseExpT
 {
     LExp object;
     MatchesT<P> alts;
-
-    CaseExpT* clone() const { return new CaseExpT(*this);}
     std::string print() const;
 
     CaseExpT(const LExp& o, const AltsT<P>& as);
     CaseExpT(const LExp& o, const MatchesT<P>& ms);
 };
 
-struct FunDecl: public Object
+struct FunDecl
 {
-    FunDecl* clone() const {return new FunDecl(*this);}
     std::string print() const;
 
     LVar v;
@@ -1597,7 +1500,7 @@ struct BindInfo
     { }
 };
 
-struct GenBind: public Object
+struct GenBind
 {
     std::vector<::TypeVar> tv_args;
 
@@ -1612,8 +1515,6 @@ struct GenBind: public Object
 
     // Defaulting info for each binder
     std::map<Var, BindInfo> bind_infos;
-
-    GenBind* clone() const {return new GenBind(*this);}
     std::string print() const;
 
     GenBind(const std::vector<::TypeVar>& v1,
