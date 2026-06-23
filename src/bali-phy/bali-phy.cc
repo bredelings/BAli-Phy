@@ -401,7 +401,7 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
     return L;
 }
 
-std::string generate_print_program(const model_t& print, const expression_ref& a)
+std::string generate_print_program(const model_t& print, const Hs::Exp& a)
 {
     std::ostringstream program_file;
 
@@ -418,7 +418,7 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     program_file<<"\n";
     program_file<<"main = do\n";
 
-    expression_ref E = Hs::Var("print_model");
+    Hs::Exp E = Hs::Var("print_model");
     for(auto& state_name: print.code.used_states)
     {
         if (state_name == "alphabet")
@@ -450,7 +450,7 @@ std::string generate_print_program(const model_t& print, const expression_ref& a
     return program_file.str();
 }
 
-expression_ref get_alphabet_expression_from_args(const variables_map& args)
+Hs::Exp get_alphabet_expression_from_args(const variables_map& args)
 {
     if (not args.count("alphabet") or args.at("alphabet").as<vector<string>>().empty())
 	return HsG::Apply(Hs::Var("error"), {Hs::Literal(Hs::String("No alphabet!"))});
@@ -469,7 +469,7 @@ std::unique_ptr<Program> print_program(variables_map& args, const shared_ptr<mod
     auto TC = makeTypechecker(R, {}, {{"alphabet",{"alphabet","b"}}});
     model_t print = compile_model(R, TC, CodeGenState(R), "a", mstring, "print expression", {}, {{"alphabet",{"alphabet","b"}}});
 
-    expression_ref a = get_alphabet_expression_from_args(args);
+    Hs::Exp a = get_alphabet_expression_from_args(args);
     {
         checked_ofstream program_file("Print.Main.hs");
         program_file<<generate_print_program(print, a);

@@ -17,11 +17,11 @@ class Rules;
 struct generated_code_t
 {
     Hs::Stmts stmts;
-    std::vector<std::pair<Hs::Var, expression_ref>> decls;
+    std::vector<std::pair<Hs::Var, Hs::Exp>> decls;
 
     // We prefix by these lambda vars at the end?
     std::vector<Hs::Var> haskell_lambda_vars;
-    expression_ref E;
+    Hs::Exp E;
 
     Loggers loggers;
     bool perform_function = false;
@@ -34,12 +34,12 @@ struct generated_code_t
     bool is_action() const {return perform_function or not stmts.stmts.empty();}
     bool has_loggers() const {return not loggers.empty();}
 
-    expression_ref generate() const;
+    Hs::Exp generate() const;
 
-    void log_value(const std::string&, expression_ref, const type_t&);
+    void log_value(const std::string&, Hs::Exp, const type_t&);
     void log_sub(const std::string&, const Hs::Var&, const Loggers&);
 
-    expression_ref add_arguments(const expression_ref& E, const std::map<std::string,expression_ref>& state_values) const;
+    Hs::Exp add_arguments(const Hs::Exp& E, const std::map<std::string,Hs::Exp>& state_values) const;
 
     std::string print() const {return generate().print();}
 };
@@ -58,9 +58,9 @@ struct arg_env_t
 {
     std::string func; // context: calling func:arg
     std::string arg;
-    std::map<std::string,expression_ref> code_for_arg;
+    std::map<std::string,Hs::Exp> code_for_arg;
 
-    arg_env_t(const std::string& f, const std::string& a, const std::map<std::string,expression_ref>& c):
+    arg_env_t(const std::string& f, const std::string& a, const std::map<std::string,Hs::Exp>& c):
         func(f),
         arg(a),
         code_for_arg(c)
@@ -124,6 +124,6 @@ struct CodeGenState
     CodeGenState(const Rules& r):R(&r) {}
 };
 
-expression_ref simplify_intToDouble(const expression_ref& E);
+Hs::Exp simplify_intToDouble(const Hs::Exp& E);
 
 #endif

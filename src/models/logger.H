@@ -3,8 +3,8 @@
 
 #include <string>                                   // for string
 #include <vector>                                   // for vector
+#include "computation/haskell/haskell.H"            // for Hs::Exp
 #include "computation/haskell/var.H"                // for Hs::Var
-#include "computation/expression/expression_ref.H"  // for expression_ref
 #include "util/owned-ptr.H"                         // for owned_ptr
 
 namespace Haskell { struct Stmts; }
@@ -23,13 +23,13 @@ typedef std::vector<Logger> Loggers;
 struct LogValue: public LoggerObj
 {
     std::string name;
-    expression_ref value;
+    Hs::Exp value;
 
     LogValue* clone() const {return new LogValue(*this);}
 
     std::string get_name() const {return name;}
 
-    LogValue(const std::string& s, const expression_ref& e)
+    LogValue(const std::string& s, const Hs::Exp& e)
         :name(s),value(e)
     {}
 };
@@ -49,8 +49,8 @@ struct LogSub: public LoggerObj
     {}
 };
 
-std::vector<expression_ref> generate_loggers(Haskell::Stmts& code, const Loggers& Loggers);
-expression_ref generate_loggers_list(Haskell::Stmts& code, const Loggers& Loggers);
+std::vector<Hs::Exp> generate_loggers(Haskell::Stmts& code, const Loggers& Loggers);
+Hs::Exp generate_loggers_list(Haskell::Stmts& code, const Loggers& Loggers);
 
 void simplify(Loggers& loggers);
 

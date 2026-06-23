@@ -5,7 +5,7 @@
 #include <utility>                                  // for pair
 #include <variant>                                  // for variant
 #include <vector>                                   // for vector
-#include "computation/expression/expression_ref.H"  // for expression_ref
+#include "computation/haskell/haskell.H"                  // for Hs::Exp
 #include "sequence/alphabet.H"                      // for alphabet
 #include "unification.H"                            // for type_t
 #include "util/json.hh"                             // for json
@@ -33,10 +33,10 @@ bool bound(const CM::TypedExpr&, const std::set<std::string>&);
 bool do_extract(const CM::TypedExpr&, const CM::TypedExpr&, const std::set<std::string>&);
 std::vector<std::pair<std::string, CM::TypedExpr>> extract_terms(CM::TypedExpr&, const std::set<std::string>&);
 
-void maybe_log(std::vector<expression_ref>& logger_bits,
+void maybe_log(std::vector<Hs::Exp>& logger_bits,
                const std::string& name,
-               const expression_ref& value,
-               const expression_ref& subloggers);
+               const Hs::Exp& value,
+               const Hs::Exp& subloggers);
 
 class model_t
 {
@@ -87,7 +87,7 @@ TypecheckingState makeTypechecker(const Rules& R,
 				  const std::vector<std::pair<std::string,type_t>>& scope,
 				  const std::map<std::string,std::pair<std::string,type_t>>& state);
 
-std::string print_generated_function_decl(const std::string& name, expression_ref E);
+std::string print_generated_function_decl(const std::string& name, Hs::Exp E);
 
 std::string default_markov_model(const alphabet& a);
 #endif

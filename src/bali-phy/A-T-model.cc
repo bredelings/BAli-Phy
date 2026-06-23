@@ -12,7 +12,6 @@
 #include "alignment/alignment.H"                    // for alignment, sequen...
 #include "alignment/index-matrix.H"                 // for get_alignment
 #include "alignment/load.H"                         // for load_alignment
-#include "computation/expression/expression_ref.H"  // for expression_ref
 #include "computation/object.H"                     // for intrusive_ptr_rel...
 #include "computation/program.H"                    // for class Program
 #include "link-partitions.H"                        // for shared_items, get...
@@ -1074,7 +1073,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 
     //------------------- create the program -----------------//
     fs::path program_filename = dir / "BAliPhy.Main.hs";
-    vector<expression_ref> alphabet_exps;
+    vector<Hs::Exp> alphabet_exps;
     for(int i=0;i<n_partitions;i++)
         alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
 

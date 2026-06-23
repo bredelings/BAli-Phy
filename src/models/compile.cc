@@ -39,7 +39,7 @@
 #include "models/parse.H"
 #include "models/path.H"
 #include "computation/module.H"
-#include "computation/expression/expression_ref.H"
+#include "computation/haskell/haskell.H"
 #include "computation/operations.H"
 #include "computation/haskell/generated.H"
 #include "computation/haskell/ids.H"
@@ -139,7 +139,7 @@ string show(vector<string> args)
 }
 
 // Builds a one-function Haskell declaration from a generated expression.
-static Hs::FunDecl make_generated_function_decl(const string& name, expression_ref E)
+static Hs::FunDecl make_generated_function_decl(const string& name, Hs::Exp E)
 {
     Hs::LPats patterns;
     while(true)
@@ -162,7 +162,7 @@ static Hs::FunDecl make_generated_function_decl(const string& name, expression_r
 }
 
 // Prints one generated top-level function declaration with Haskell AST nodes.
-string print_generated_function_decl(const string& name, expression_ref E)
+string print_generated_function_decl(const string& name, Hs::Exp E)
 {
     return make_generated_function_decl(name, E).print();
 }
@@ -188,7 +188,7 @@ string default_markov_model(const alphabet& a)
 
 // See simplify(json& j) in models/model.cc and simplify(ptree&) models/in path.cc
 
-expression_ref generated_code_t::generate() const
+Hs::Exp generated_code_t::generate() const
 {
     auto code = stmts;
 
@@ -245,10 +245,10 @@ expression_ref generated_code_t::generate() const
     return R;
 }
 
-void maybe_log(vector<expression_ref>& loggers,
+void maybe_log(vector<Hs::Exp>& loggers,
                const string& name,
-               const expression_ref& value,
-               const expression_ref& subloggers)
+               const Hs::Exp& value,
+               const Hs::Exp& subloggers)
 {
     if (value)
         loggers.push_back(HsG::Apply(Hs::Var("%=%"), {Hs::Literal(Hs::String(name)), value}));
@@ -257,7 +257,7 @@ void maybe_log(vector<expression_ref>& loggers,
 }
 
 
-void generated_code_t::log_value(const string& name, expression_ref value, const type_t& type)
+void generated_code_t::log_value(const string& name, Hs::Exp value, const type_t& type)
 {
     auto [head,args] = get_type_apps(type);
     if (head == "DiscreteDist" and args[0] == "Double")

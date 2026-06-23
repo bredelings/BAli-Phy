@@ -114,9 +114,9 @@ void simplify(Loggers& loggers)
 }
 
 // Emits logger expressions while appending nested logger let-bindings to Hs::Stmts.
-vector<expression_ref> generate_loggers(Hs::Stmts& code, const Loggers& loggers)
+vector<Hs::Exp> generate_loggers(Hs::Stmts& code, const Loggers& loggers)
 {
-    vector<expression_ref> simple_loggers;
+    vector<Hs::Exp> simple_loggers;
     for(auto& l: loggers)
     {
         if (auto lsub = l.as<LogSub>())
@@ -139,7 +139,7 @@ vector<expression_ref> generate_loggers(Hs::Stmts& code, const Loggers& loggers)
 }
 
 // Generates the logger list expression for generated code using Hs::Stmts.
-expression_ref generate_loggers_list(Hs::Stmts& code, const Loggers& loggers)
+Hs::Exp generate_loggers_list(Hs::Stmts& code, const Loggers& loggers)
 {
     return HsG::List(generate_loggers(code,loggers));
 }
