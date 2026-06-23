@@ -1,10 +1,8 @@
 // #define DEBUG_OPTIMIZE
 
-#include "haskell/ids.H"
 #include "haskell/haskell.H"
 #include "util/string/join.H"
 #include "expression_ref.H"
-#include "constructor.H"
 #include "computation/module.H"
 #include <set>
 #include <iterator>
@@ -59,122 +57,21 @@ std::string expression_ref::print() const
     }
 }
 
-string print_list(const expression_ref& E)
-{
-    if (not has_constructor(E,":")) std::abort();
-
-    vector<string> V;
-    string S;
-
-    expression_ref E2 = E;
-    while(has_constructor(E2,":"))
-    {
-	assert(E2.size() == 2);
-	auto x = E2.sub()[0];
-	if (x.is_char())
-	    S += x.as_char();
-	V.push_back(x.print());
-	E2 = E2.sub()[1];
-    }
-    if (not S.empty() and S.size() == V.size())
-	return "\"" + S + "\"";
-    else if (has_constructor(E2,"[]"))
-	return "["+join(V,", ")+"]";
-    else {
-	V.push_back(E2.print());
-	return join(V,":");
-    }
-
-}
-
-// Compatibility: legacy application printing must parenthesize compound Hs::* nodes.
-// Remove this when generated code no longer mixes Hs::* expressions into expression::print().
-bool is_haskell_compound_arg(const expression_ref& E)
-{
-    return E.is_a<Hs::ApplyExp>() or E.is_a<Hs::ParsedApp>() or E.is_a<Hs::InfixExp>() or
-           E.is_a<Hs::LambdaExp>() or E.is_a<Hs::LetExp>() or E.is_a<Hs::IfExp>() or
-           E.is_a<Hs::CaseExp>() or E.is_a<Hs::Do>() or E.is_a<Hs::MDo>() or
-           E.is_a<Hs::TypedExp>() or E.is_a<Hs::Wrap>() or E.is_a<Hs::RecordUpdate>();
-}
-
-// Decides whether a legacy expression application argument needs parentheses.
-// This preserves old tuple/list exceptions while handling temporary Hs::* mixing.
-bool needs_application_arg_parens(const expression_ref& E)
-{
-    if (is_haskell_compound_arg(E))
-        return true;
-
-    if (not E.size())
-        return false;
-
-    if (E.head().is_a<constructor>())
-    {
-        auto& O = E.head().as_<constructor>();
-
-        // Don't parenthesize tuple arguments.
-        if (is_tuple_name(O.name()) and E.size() == O.n_args())
-            return false;
-
-        // Don't parenthesize list arguments.
-        if (O.name() == ":")
-            return false;
-    }
-
-    return true;
-}
-
-// How do I make constructor-specific methods of printing data expressions?
-// Can I move to defining the print function using an expression?
 string expression::print() const 
 {
-    string result;
     assert(head);
 
-    // The head should not have parts.
-    // assert(not is_a<expression>());
-
-    // We have to do this BEFORE we compute pargs, otherwise we do everything twice, which leads to exponential growth.
-    if (head.is_a<constructor>())
+    vector<string> args;
+    args.push_back(head.print());
+    for(auto& arg: sub)
     {
-        auto& c = head.as_<constructor>();
-        if (c.f_name == ":" and size() == 2)
-        {
-            return print_list(*this);
-        }
+        auto arg_text = arg.print();
+        if (arg.size())
+            arg_text = "(" + arg_text + ")";
+        args.push_back(arg_text);
     }
 
-    // Print the (unparenthesized) sub-expressions
-    vector<string> args(1+size());
-    args[0] = head.print();
-    for(int i=0;i<size();i++)
-	args[1+i] = sub[i].print();
-
-    vector<string> pargs = args;
-    for(int i=1;i<pargs.size();i++)
-    {
-        if (not needs_application_arg_parens(sub[i-1])) continue;
-
-	pargs[i] = "(" + args[i] + ")";
-    }
-
-    if (head.is_a<constructor>())
-    {
-	auto& O = head.as_<constructor>();
-
-	string O_name = O.name();
-	if (is_tuple_name(O.name()) and size() == O.n_args())
-	{
-	    // Should Tuple's parenthesis sub-expressions?
-	    vector<string> sub_names;
-	    for(int i=0;i<size();i++)
-		sub_names.push_back( args[1+i] );
-	    return "(" + join(sub_names,", ") + ")";
-	}
-      
-	return join(pargs, " ");
-    }
-
-    return join(pargs, " ");
+    return join(args, " ");
 }
 
 bool expression::operator==(const expression& E) const
