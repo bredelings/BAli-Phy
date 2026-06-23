@@ -21,8 +21,7 @@ enum class type_constant {
     // anything with type >= 100 and type < 200 is gc_able (see is_gcable_type)
     gc_type = 100,
 
-    expression_type=200,
-    eptree_type,
+    eptree_type=200,
     modifiable_type,
     interchangeable_type,
     let_type,
@@ -38,12 +37,12 @@ enum class type_constant {
 inline bool is_object_type(type_constant c) { return (c >= type_constant::unknown_type);}
 
 // Used in Prelude.cc, gc.cc, show_graph.cc, and param.cc (2025).
-inline bool is_gcable_type(type_constant c) {return c >= type_constant::gc_type and c < type_constant::expression_type;}
+inline bool is_gcable_type(type_constant c) {return c >= type_constant::gc_type and c < type_constant::eptree_type;}
 
 // we test "literal-or-constructor" (2025).
 inline bool is_literal_type(type_constant c) { return (c >=type_constant::int_type and c <=type_constant::char_type) or (c==type_constant::unknown_type) or is_gcable_type(c);}
 
 // This is used in exactly one place (2025).
-inline bool is_whnf_type(type_constant c) {return (c >=type_constant::int_type and c < type_constant::expression_type);}
+inline bool is_whnf_type(type_constant c) {return (c >=type_constant::int_type and c < type_constant::eptree_type);}
 
 #endif

@@ -11,9 +11,6 @@
 #include "computation/type_constant.H"
 #include <concepts>
 
-/// An S-expression: An Object, and possibly an array of Objects.
-struct expression;
-
 class expression_ref
 {
     union
@@ -69,37 +66,10 @@ public:
 
     void clear() {destroy_ptr();type_=type_constant::null_type;}
 
-    bool is_expression() const;
-
-    bool is_atomic() const
-	{
-	    return not is_expression();
-	}
-
     type_constant type() const
-	{
-	    return type_;
-	}
-  
-    const expression& as_expression() const
-	{
-	    assert(not is_atomic());
-	    return *convert<expression>(ptr().get());
-	}
-
-    inline const expression_ref& head() const;
-
-    inline const std::vector<expression_ref>& sub() const;
-
-    inline std::vector<expression_ref> copy_sub() const;
-
-    inline int size() const 
-	{
-	    if (is_atomic())
-		return 0;
-	    else
-		return sub().size();
-	}
+        {
+            return type_;
+        }
 
     template <DerivedFromObject T>
     const T* to() const
@@ -246,18 +216,6 @@ public:
     // Default
     expression_ref() {d = 0;}
 
-    expression_ref(expression* e);
-
-    expression_ref(const expression* e);
-
-    expression_ref(std::unique_ptr<expression> e):expression_ref(e.release()) {};
-
-    expression_ref(const object_ptr<const expression>& e):expression_ref(e.get()) { }
-
-    expression_ref(const object_ptr<expression>& e):expression_ref(e.get()) { }
-
-    explicit expression_ref(const expression_ref& e, const std::vector<expression_ref>& v);
-
     // Object arguments
     expression_ref(Object* v):O(v),type_(v->type()) { }
 
@@ -324,73 +282,6 @@ public:
     inline ~expression_ref() {destroy_ptr();}
 };
 
-
-/*
- *  By separating out the head from the children, each expression now represents
- *  a node in a directed acyclic graph, where each node has an Object on in.
- */
-
-/// An array of Objects.
-struct expression: public Object
-{
-    // The head of the expression.
-    expression_ref head;
-
-    // An expression may or may not have sub-expressions
-    std::vector< expression_ref > sub;
-
-    /// The number of terms after the head
-    int size() const {return sub.size();}
-  
-    // Methods from Object
-    expression* clone() const {return new expression(*this);}
-    std::string print() const;
-  
-    bool operator==(const expression& E) const;
-    bool operator==(const Object& o) const;
-
-    type_constant type() const {return type_constant::expression_type;}
-
-    expression() {}
-
-    expression(const expression_ref&);
-
-    expression(const expression_ref&, const std::initializer_list< expression_ref > S);
-
-    expression(const expression_ref&, const std::vector< expression_ref >& S);
-
-    virtual ~expression() {}
-};
-
-inline const expression_ref& expression_ref::head() const 
-{
-    if (is_expression())
-	return as_expression().head;
-    else
-	return *this;
-}
-
-inline bool expression_ref::is_expression() const
-{
-    return (type_ == type_constant::expression_type);
-}
-
-inline std::vector<expression_ref> expression_ref::copy_sub() const
-{
-    if (is_expression())
-	return as_expression().sub;
-    else
-	return {};
-}
-
-inline const std::vector<expression_ref>& expression_ref::sub() const {return as_expression().sub;}
-
-inline expression_ref::expression_ref(expression* e):O(e),type_(type_constant::expression_type) { }
-
-inline expression_ref::expression_ref(const expression* e):O(e),type_(type_constant::expression_type) { }
-
-inline expression_ref::expression_ref(const expression_ref& e, const std::vector<expression_ref>& v):expression_ref(new expression(e,v)) { }
-
 inline std::ostream& operator<<(std::ostream& o,const expression_ref& E)
 {
     return o<<E.print();
@@ -453,14 +344,6 @@ template<>
 inline std::string Box<std::pair<expression_ref,expression_ref>>::print() const
 {
     return std::string("(") + first.print() + "," + second.print() + ")";
-}
-
-std::unique_ptr<expression> operator+(const expression_ref& E1, const expression_ref& E2);
-std::unique_ptr<expression> operator+(const expression& E1, const expression_ref& E2);
-inline std::unique_ptr<expression> operator+(std::unique_ptr<expression> E1, const expression_ref& E2)
-{
-    E1->sub.push_back(E2);
-    return E1;
 }
 
 #endif

@@ -323,7 +323,7 @@ failable_expression desugar_state::match_literal(const vector<Core::Var<>>& x, c
     vector< vector<int> > rules;
     for(int j=0;j<M;j++)
     {
-	auto L = equations[j].patterns[0].head().as_<Hs::LiteralPattern>();
+        auto L = equations[j].patterns[0].as_<Hs::LiteralPattern>();
 	auto which = find_object(constants, L);
 
 	if (not which)
@@ -351,10 +351,10 @@ failable_expression desugar_state::match_literal(const vector<Core::Var<>>& x, c
 	vector<equation_info_t> equations2;
 	for(int r: rules[c])
 	{
-	    assert(equations[r].patterns[0].size() == 0);
+            assert(equations[r].patterns[0].is_a<Hs::LiteralPattern>());
 
-	    // pattern: Add the sub-partitions of the first top-level pattern at the beginning.
-	    auto patterns = equations[r].patterns[0].copy_sub();
+            // pattern: Add the sub-partitions of the first top-level pattern at the beginning.
+            vector<Hs::Pat> patterns;
 	    // pattern: Add the remaining top-level patterns (minus the first).
 	    patterns.insert(patterns.end(), equations[r].patterns.begin()+1, equations[r].patterns.end());
 

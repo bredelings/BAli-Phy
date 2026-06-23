@@ -473,16 +473,11 @@ void get_generated_free_vars2(const expression_ref& E, multiset<Hs::Var>& bound,
     auto bound_ = get_generated_bound_vars(E);
     add_generated_bound_vars(bound_, bound);
 
-    if (E.is_expression())
-    {
-        for(int i=0;i<E.size();i++)
-            get_generated_free_vars2(E.sub()[i], bound, free);
-    }
-    else if (E.type() == type_constant::int_type
-             or E.type() == type_constant::double_type
-             or E.type() == type_constant::log_double_type
-             or E.type() == type_constant::char_type
-             or is_gcable_type(E.type()))
+    if (E.type() == type_constant::int_type
+        or E.type() == type_constant::double_type
+        or E.type() == type_constant::log_double_type
+        or E.type() == type_constant::char_type
+        or is_gcable_type(E.type()))
     {
         // These legacy atoms do not bind or reference variables on their own.
     }

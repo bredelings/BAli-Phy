@@ -57,78 +57,6 @@ std::string expression_ref::print() const
     }
 }
 
-string expression::print() const 
-{
-    assert(head);
-
-    vector<string> args;
-    args.push_back(head.print());
-    for(auto& arg: sub)
-    {
-        auto arg_text = arg.print();
-        if (arg.size())
-            arg_text = "(" + arg_text + ")";
-        args.push_back(arg_text);
-    }
-
-    return join(args, " ");
-}
-
-bool expression::operator==(const expression& E) const
-{
-    if (head != E.head) return false;
-
-    if (size() != E.size()) return false;
-    
-    for(int i=0;i<size();i++) 
-	if (sub[i] != E.sub[i]) return false;
-
-    return true;
-}
-
-bool expression::operator==(const Object& o) const 
-{
-    const expression* E = dynamic_cast<const expression*>(&o);
-    if (not E) 
-	return false;
-
-    return operator==(*E);
-}
-
-expression::expression(const expression_ref& H)
-    :head(H)
-{ 
-    assert(H.is_atomic());
-}
-
-expression::expression(const expression_ref& H, const std::initializer_list< expression_ref > S)
-    :expression(H,std::vector<expression_ref>(S))
-{
-    assert(H.is_atomic());
-}
-
-expression::expression(const expression_ref& H, const std::vector< expression_ref >& S)
-    :head(H),sub(S)
-{ 
-    assert(H.is_atomic());
-}
-
-unique_ptr<expression> operator+(const expression_ref& E1, const expression_ref&E2)
-{
-    expression* E3 = new expression(E1.head());
-    if (not E1.is_atomic())
-	E3->sub = E1.sub();
-    E3->sub.push_back(E2);
-    return unique_ptr<expression>(E3);
-}
-
-unique_ptr<expression> operator+(const expression& E1, const expression_ref& E2)
-{
-    auto E3 = E1.clone();
-    E3->sub.push_back(E2);
-    return unique_ptr<expression>(E3);
-}
-
 int EPtree::count(const std::string& key) const
 {
     int c = 0;
@@ -223,18 +151,15 @@ bool EPtree::operator==(const Object& o) const
 EPtree::EPtree(const expression_ref& H)
     :head(H)
 {
-    assert(H.is_atomic());
 }
 
 EPtree::EPtree(const expression_ref& H, const std::initializer_list< std::pair<std::string, expression_ref> > S)
     :EPtree(H, std::vector< std::pair<std::string, expression_ref> >(S))
 {
-    assert(H.is_atomic());
 }
 
 
 EPtree::EPtree(const expression_ref& H, const std::vector< std::pair<std::string, expression_ref> > S)
     :Vector< std::pair< std::string, expression_ref> >(S), head(H)
 {
-    assert(H.is_atomic());
 }

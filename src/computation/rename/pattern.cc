@@ -272,9 +272,6 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
     {
         auto C = *c;
 
-        // 8. Rename arguments and accumulate bound variables
-        vector<expression_ref> args = pat.copy_sub();
-
         bound_var_info bound;
         // Rename the arguments
         bool overlap = false;

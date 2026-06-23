@@ -132,7 +132,6 @@ namespace Runtime
         ObjectValue() = default;
         ObjectValue(object_ptr<const Object> o):value(std::move(o))
         {
-            assert(value->type() != type_constant::expression_type);
             assert(value->type() != type_constant::constructor_type);
             assert(not dynamic_pointer_cast<const Box<std::string>>(o));
             assert(not dynamic_pointer_cast<const Box<integer>>(o));

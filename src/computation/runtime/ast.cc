@@ -607,7 +607,6 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, ObjectValue>)
             {
-                assert(e.value->type() != type_constant::expression_type);
                 assert(e.value->type() != type_constant::constructor_type);
                 assert(not dynamic_pointer_cast<const Box<std::string>>(e.value));
                 assert(not dynamic_pointer_cast<const Box<integer>>(e.value));
