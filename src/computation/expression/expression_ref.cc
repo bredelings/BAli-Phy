@@ -4,7 +4,7 @@
 #include "haskell/haskell.H"
 #include "util/string/join.H"
 #include "expression_ref.H"
-#include "bool.H"
+#include "constructor.H"
 #include "computation/module.H"
 #include <set>
 #include <iterator>
@@ -217,7 +217,7 @@ expression::expression(const expression_ref& H, const std::vector< expression_re
 }
 
 expression_ref::expression_ref(const bool& b)
-    :expression_ref(b?bool_true:bool_false)
+    :expression_ref(b ? Hs::True() : Hs::False())
 {}
 
 unique_ptr<expression> operator+(const expression_ref& E1, const expression_ref&E2)
