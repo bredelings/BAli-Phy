@@ -274,7 +274,7 @@ public:
     expression_ref(const int& i2):i(i2),type_(type_constant::int_type) {}
     expression_ref(const double& d2):d(d2),type_(type_constant::double_type) {}
     expression_ref(const log_double_t& ld2):ld(ld2),type_(type_constant::log_double_type) {}
-    expression_ref(const bool& b);
+    expression_ref(const bool& b) = delete;
     expression_ref(const std::string& s) = delete;
     expression_ref(const char* s) = delete;
     expression_ref(const char& c2):c(c2),type_(type_constant::char_type) {}

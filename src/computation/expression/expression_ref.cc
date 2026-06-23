@@ -113,10 +113,6 @@ expression::expression(const expression_ref& H, const std::vector< expression_re
     assert(H.is_atomic());
 }
 
-expression_ref::expression_ref(const bool& b)
-    :expression_ref(b ? Hs::True() : Hs::False())
-{}
-
 unique_ptr<expression> operator+(const expression_ref& E1, const expression_ref&E2)
 {
     expression* E3 = new expression(E1.head());
