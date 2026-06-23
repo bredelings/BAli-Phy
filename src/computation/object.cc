@@ -3,7 +3,6 @@
 #include "util/string/convert.H"
 #include <iomanip> // for std::quoted
 #include <sstream>
-#include "computation/expression/expression_ref.H"
 #include "computation/runtime/ast.H"
 
 std::string Object::print() const {

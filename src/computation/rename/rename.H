@@ -7,7 +7,6 @@
 #include <set>
 #include <string>
 #include <tuple>
-#include "computation/expression/expression_ref.H"
 #include "computation/haskell/haskell.H"
 #include "computation/symbols.H"
 #include "computation/optimization/simplifier_options.H"       // for simplifier options
@@ -130,8 +129,6 @@ void remove_fixity_decls(Hs::Decls& decls);
 
 // I think ghc returns a moduledecls AND a... class environment?
 Hs::ModuleDecls rename(const simplifier_options&, const Module& p, Hs::ModuleDecls);
-expression_ref rename(const Module& p, const expression_ref&);
-expression_ref rename(const Module& p, const expression_ref&,const std::set<std::string>&);
 
 typedef std::set<std::string> bound_var_info;
 const bound_var_info& get_rhs_free_vars(const Hs::Decl& decl);

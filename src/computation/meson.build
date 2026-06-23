@@ -28,7 +28,6 @@ computation_sources = [
 
   'core/wrap.cc', 'core/func.cc',
   
-  'expression/expression_ref.cc',
   'runtime/indexify.cc',
   'runtime/modifiable.cc', 'runtime/interchangeable.cc',
   'core/convert.cc',
