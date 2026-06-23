@@ -8,8 +8,7 @@
 #include "util/cow-ptr.H"
 #include "computation/parser/located.H"
 
-// Can we eliminate this?
-#include "coretype.H" // for Kind
+#include "computation/core/type.H" // for Kind
 
 namespace Haskell
 {

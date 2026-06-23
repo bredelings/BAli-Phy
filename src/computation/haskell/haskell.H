@@ -17,7 +17,7 @@
 #include "literal.H"
 #include "pattern.H"
 #include "type.H"
-#include "coretype.H"
+#include "computation/core/type.H"
 
 #include "computation/core/ast.H"
 #include "computation/core/wrap.H"

@@ -6,7 +6,7 @@
 #include <optional>
 #include <map>
 #include <variant>
-#include "computation/haskell/coretype.H"
+#include "computation/core/type.H"
 
 struct Check
 {

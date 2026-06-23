@@ -1,8 +1,8 @@
-#include "coretype.H"
-#include "haskell.H"
-#include "typecheck/kind.H"
+#include "computation/core/type.H"
+#include "computation/haskell/haskell.H"
+#include "computation/typecheck/kind.H"
 #include "util/string/join.H"
-#include "haskell/ids.H"       // for tuple_name
+#include "computation/haskell/ids.H"       // for tuple_name
 #include "util/set.H"          // for includes( , )
 #include <range/v3/all.hpp>
 

@@ -6,7 +6,7 @@
 #include <optional>
 #include <map>
 #include "computation/haskell/haskell.H"
-#include "computation/haskell/coretype.H"
+#include "computation/core/type.H"
 #include "computation/typecheck/substitution.H"
 
 namespace Haskell

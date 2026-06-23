@@ -7,7 +7,7 @@
 #include "immer/set.hpp" // for immer::map
 #include "immer/map.hpp" // for immer::map
 #include "computation/haskell/haskell.H" // for Hs::Var, Type, Hs::Kind, TypeVar, Hs::Context, Hs::MetaTypeVar
-#include "computation/haskell/coretype.H"
+#include "computation/core/type.H"
 #include "util/set.H"
 #include "kind.H"
 #include "computation/instance_info.H"

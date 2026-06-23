@@ -17,7 +17,7 @@
 #include "var.H"
 #include "literal.H"
 #include "type.H"
-#include "coretype.H"
+#include "computation/core/type.H"
 
 // Currently we translate expressions into these pattern objects in rename/pattern.
 // But we are not using VarPattern or LiteralPattern.

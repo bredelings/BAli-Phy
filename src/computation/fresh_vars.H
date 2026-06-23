@@ -8,7 +8,7 @@
 #include "computation/optimization/occurrence_info.H" // for Core::Var<>, Occ::Var
 #include "computation/haskell/var.H" // for Hs::Var
 #include "computation/haskell/type.H" // for Hs::TypeVar
-#include "computation/haskell/coretype.H" // for TypeVar
+#include "computation/core/type.H" // for TypeVar
 
 #include "computation/optimization/set-levels.H" // for Levels::Var
 #include "core/ast.H"

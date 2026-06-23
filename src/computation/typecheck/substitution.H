@@ -3,7 +3,7 @@
 
 #include <optional>
 #include "computation/haskell/haskell.H"
-#include "computation/haskell/coretype.H"
+#include "computation/core/type.H"
 #include "immer/map.hpp" // for immer::map
 
 

@@ -1,5 +1,5 @@
-#ifndef HASKELL_CORETYPE
-#define HASKELL_CORETYPE
+#ifndef CORE_TYPE_H
+#define CORE_TYPE_H
 
 #include <variant>
 #include <iostream>

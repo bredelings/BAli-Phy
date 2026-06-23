@@ -4,7 +4,7 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include "haskell/coretype.H"
+#include "computation/core/type.H"
 
 struct DataConInfo
 {
