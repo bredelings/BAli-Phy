@@ -9,6 +9,7 @@
 - Implement `deriving`
 - Implement records fully
 - Implement `LANGUAGE BangPatterns`
+- Implement `LANGUAGE MultiWayIf`
 - Fix `LANGUAGE RankNTypes`
 - Fix `LANGUAGE RecursiveDo`
 - Print usable error message for pattern-match errors.

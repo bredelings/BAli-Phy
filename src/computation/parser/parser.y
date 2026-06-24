@@ -422,6 +422,7 @@
 %type <Located<Hs::ParsedAlt>> alt
 %type <Hs::MultiGuardedRHS> alt_rhs
 %type <std::vector<Hs::GuardedRHS>> gdpats
+%type <std::vector<Hs::GuardedRHS>> ifgdpats
 %type <Hs::GuardedRHS> gdpat
 %type <Hs::LExp> pat
 %type <Hs::LExp> bindpat
@@ -1240,7 +1241,7 @@ aexp: qvar TIGHT_INFIX_AT aexp   {$$ = {@$, Hs::ParsedAsPattern({@1,Hs::Var($1)}
 |     "let" binds "in" exp       {$$ = {@$, Hs::Let($2,$4)}; }
 /* |     "\\" "case" altslist       {} LambdaCase extension not currently handled */
 |     "if" exp optSemi "then" exp optSemi "else" exp   {$$ = {@1+@8,Hs::If($2,$5,$8)}; }
-/* |     "if" ifgdpats              {} MultiWayIf extension not currently handled */
+|     "if" ifgdpats              {$$ = {@$, Hs::MultiWayIf($2)}; }
 |     "case" exp "of" altslist   {$$ = {@$, Hs::ParsedCase($2,$4)}; }
 |     "do" stmtlist              {$$ = {@$, Hs::Do($2)}; }
 |     "mdo" stmtlist             {$$ = {@$, Hs::MDo($2)}; }
@@ -1359,12 +1360,8 @@ alt_rhs: "->" exp wherebinds     {$$ = Hs::SimpleRHS($2,$3);}
 gdpats: gdpats gdpat             {$$ = $1; $$.push_back($2);}
 |       gdpat                    {$$.push_back($1);}
 
-/*
-Used in MultiWayIf extension:
-
-ifgdpats : "{" gdpats "}"        {}
-|          gdpats close          {}
-*/
+ifgdpats : "{" gdpats "}"        {$$ = $2;}
+|          gdpats close          {$$ = $1;}
 
 gdpat: "|" guardquals "->" exp   {$$=Hs::GuardedRHS{$2,$4};}
 

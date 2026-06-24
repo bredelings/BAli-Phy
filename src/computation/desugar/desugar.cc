@@ -1,6 +1,7 @@
 #include <range/v3/all.hpp>
 #include "computation/module.H"
 #include <deque>
+#include <optional>
 #include <tuple>
 #include <utility>
 #include "util/io.H"
@@ -677,6 +678,18 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         auto false_branch = desugar(I.false_branch);
 
         return case_expression(condition,{Hs::TruePat()},{failable_expression(true_branch)}).result(false_branch);
+    }
+    else if (auto I = E.to<Hs::MultiWayIf>())
+    {
+        vector<failable_expression> gdrhs;
+        for(const auto& guarded_rhs: I->guarded_rhss)
+            gdrhs.push_back(desugar_gdrh(guarded_rhs));
+
+        std::optional<yy::location> loc;
+        if (not I->guarded_rhss.empty())
+            loc = I->guarded_rhss.front().body.loc;
+
+        return fold(gdrhs).result(pattern_match_failure(loc, "multi-way if failed pattern match"));
     }
     else if (auto c = E.to<Hs::Case>())
     {

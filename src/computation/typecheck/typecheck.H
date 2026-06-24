@@ -507,6 +507,8 @@ public:
 
     void tcRho(Hs::If&, const Expected&);
 
+    void tcRho(Hs::MultiWayIf&, const Expected&);
+
     void tcRho(Hs::LeftSection&, const Expected&);
 
     void tcRho(Hs::RightSection&, const Expected&);

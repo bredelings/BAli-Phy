@@ -27,6 +27,7 @@ map<string,LangExt> ext_to_bit =
     {"KindSignatures",              {LangExt::KindSignatures}},
     {"LexicalNegation",             {LangExt::LexicalNegation}},
     {"MonoLocalBinds",              {LangExt::MonoLocalBinds}},
+    {"MultiWayIf",                  {LangExt::MultiWayIf}},
     {"MultiParamTypeClasses",       {LangExt::MultiParamTypeClasses}},
     {"NamedDefaults",               {LangExt::NamedDefaults}},
     {"NamedFieldPuns",              {LangExt::NamedFieldPuns}},

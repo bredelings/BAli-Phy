@@ -129,6 +129,7 @@ struct Do;
 struct MDo;
 struct Let;
 struct If;
+struct MultiWayIf;
 struct PatDecl;
 template<class P> struct AltT;
 template<class P> struct AltsT;
@@ -175,11 +176,12 @@ struct Exp: public VariantNode
     RightSection,
     Tuple,
     Do,
-    MDo,
-    Let,
-    If,
-    Lambda,
-    Case,
+	    MDo,
+	    Let,
+	    If,
+	    MultiWayIf,
+	    Lambda,
+	    Case,
     ParsedLambda,
     ParsedCase,
     ParsedAsPattern,
@@ -1265,7 +1267,16 @@ struct If
         : condition(c),
           true_branch(t),
           false_branch(f)
-        { }
+	        { }
+};
+
+struct MultiWayIf
+{
+    std::vector<GuardedRHS> guarded_rhss;
+    std::string print() const;
+
+    MultiWayIf() = default;
+    MultiWayIf(const std::vector<GuardedRHS>& grhss): guarded_rhss(grhss) {}
 };
 
 struct ExportSubSpec

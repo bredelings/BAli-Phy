@@ -751,6 +751,7 @@ namespace yy {
 
       // gdrhs
       // gdpats
+      // ifgdpats
       char dummy62[sizeof (std::vector<Hs::GuardedRHS>)];
 
       // tup_exprs
@@ -1331,66 +1332,67 @@ namespace yy {
         S_alt = 304,                             // alt
         S_alt_rhs = 305,                         // alt_rhs
         S_gdpats = 306,                          // gdpats
-        S_gdpat = 307,                           // gdpat
-        S_pat = 308,                             // pat
-        S_bindpat = 309,                         // bindpat
-        S_apat = 310,                            // apat
-        S_apats1 = 311,                          // apats1
-        S_stmtlist = 312,                        // stmtlist
-        S_stmts = 313,                           // stmts
-        S_stmt = 314,                            // stmt
-        S_qual = 315,                            // qual
-        S_fbinds = 316,                          // fbinds
-        S_fbinds1 = 317,                         // fbinds1
-        S_fbind = 318,                           // fbind
-        S_fieldToUpdate = 319,                   // fieldToUpdate
-        S_qcon = 320,                            // qcon
-        S_gen_qcon = 321,                        // gen_qcon
-        S_con = 322,                             // con
-        S_con_list = 323,                        // con_list
-        S_sysdcon_no_list = 324,                 // sysdcon_no_list
-        S_sysdcon = 325,                         // sysdcon
-        S_conop = 326,                           // conop
-        S_qconop = 327,                          // qconop
-        S_gtycon = 328,                          // gtycon
-        S_ntgtycon = 329,                        // ntgtycon
-        S_oqtycon = 330,                         // oqtycon
-        S_oqtycon_no_varcon = 331,               // oqtycon_no_varcon
-        S_qtyconop = 332,                        // qtyconop
-        S_qtycondoc = 333,                       // qtycondoc
-        S_qtycon = 334,                          // qtycon
-        S_tycon = 335,                           // tycon
-        S_qtyconsym = 336,                       // qtyconsym
-        S_tyconsym = 337,                        // tyconsym
-        S_op = 338,                              // op
-        S_varop = 339,                           // varop
-        S_qop = 340,                             // qop
-        S_qopm = 341,                            // qopm
-        S_qvarop = 342,                          // qvarop
-        S_qvaropm = 343,                         // qvaropm
-        S_tyvar = 344,                           // tyvar
-        S_tyvarop = 345,                         // tyvarop
-        S_tyvarid = 346,                         // tyvarid
-        S_var = 347,                             // var
-        S_qvar = 348,                            // qvar
-        S_field = 349,                           // field
-        S_qvarid = 350,                          // qvarid
-        S_varid = 351,                           // varid
-        S_qvarsym = 352,                         // qvarsym
-        S_qvarsym_no_minus = 353,                // qvarsym_no_minus
-        S_qvarsym1 = 354,                        // qvarsym1
-        S_varsym = 355,                          // varsym
-        S_varsym_no_minus = 356,                 // varsym_no_minus
-        S_special_id = 357,                      // special_id
-        S_special_sym = 358,                     // special_sym
-        S_qconid = 359,                          // qconid
-        S_conid = 360,                           // conid
-        S_qconsym = 361,                         // qconsym
-        S_consym = 362,                          // consym
-        S_literal = 363,                         // literal
-        S_close = 364,                           // close
-        S_modid = 365,                           // modid
-        S_commas = 366                           // commas
+        S_ifgdpats = 307,                        // ifgdpats
+        S_gdpat = 308,                           // gdpat
+        S_pat = 309,                             // pat
+        S_bindpat = 310,                         // bindpat
+        S_apat = 311,                            // apat
+        S_apats1 = 312,                          // apats1
+        S_stmtlist = 313,                        // stmtlist
+        S_stmts = 314,                           // stmts
+        S_stmt = 315,                            // stmt
+        S_qual = 316,                            // qual
+        S_fbinds = 317,                          // fbinds
+        S_fbinds1 = 318,                         // fbinds1
+        S_fbind = 319,                           // fbind
+        S_fieldToUpdate = 320,                   // fieldToUpdate
+        S_qcon = 321,                            // qcon
+        S_gen_qcon = 322,                        // gen_qcon
+        S_con = 323,                             // con
+        S_con_list = 324,                        // con_list
+        S_sysdcon_no_list = 325,                 // sysdcon_no_list
+        S_sysdcon = 326,                         // sysdcon
+        S_conop = 327,                           // conop
+        S_qconop = 328,                          // qconop
+        S_gtycon = 329,                          // gtycon
+        S_ntgtycon = 330,                        // ntgtycon
+        S_oqtycon = 331,                         // oqtycon
+        S_oqtycon_no_varcon = 332,               // oqtycon_no_varcon
+        S_qtyconop = 333,                        // qtyconop
+        S_qtycondoc = 334,                       // qtycondoc
+        S_qtycon = 335,                          // qtycon
+        S_tycon = 336,                           // tycon
+        S_qtyconsym = 337,                       // qtyconsym
+        S_tyconsym = 338,                        // tyconsym
+        S_op = 339,                              // op
+        S_varop = 340,                           // varop
+        S_qop = 341,                             // qop
+        S_qopm = 342,                            // qopm
+        S_qvarop = 343,                          // qvarop
+        S_qvaropm = 344,                         // qvaropm
+        S_tyvar = 345,                           // tyvar
+        S_tyvarop = 346,                         // tyvarop
+        S_tyvarid = 347,                         // tyvarid
+        S_var = 348,                             // var
+        S_qvar = 349,                            // qvar
+        S_field = 350,                           // field
+        S_qvarid = 351,                          // qvarid
+        S_varid = 352,                           // varid
+        S_qvarsym = 353,                         // qvarsym
+        S_qvarsym_no_minus = 354,                // qvarsym_no_minus
+        S_qvarsym1 = 355,                        // qvarsym1
+        S_varsym = 356,                          // varsym
+        S_varsym_no_minus = 357,                 // varsym_no_minus
+        S_special_id = 358,                      // special_id
+        S_special_sym = 359,                     // special_sym
+        S_qconid = 360,                          // qconid
+        S_conid = 361,                           // conid
+        S_qconsym = 362,                         // qconsym
+        S_consym = 363,                          // consym
+        S_literal = 364,                         // literal
+        S_close = 365,                           // close
+        S_modid = 366,                           // modid
+        S_commas = 367                           // commas
       };
     };
 
@@ -1797,6 +1799,7 @@ namespace yy {
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
+      case symbol_kind::S_ifgdpats: // ifgdpats
         value.move< std::vector<Hs::GuardedRHS> > (std::move (that.value));
         break;
 
@@ -3341,6 +3344,7 @@ switch (yykind)
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
+      case symbol_kind::S_ifgdpats: // ifgdpats
         value.template destroy< std::vector<Hs::GuardedRHS> > ();
         break;
 
@@ -6147,8 +6151,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 5728,     ///< Last index in yytable_.
-      yynnts_ = 220,  ///< Number of nonterminal symbols.
+      yylast_ = 5778,     ///< Last index in yytable_.
+      yynnts_ = 221,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
 
@@ -6600,6 +6604,7 @@ switch (yykind)
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
+      case symbol_kind::S_ifgdpats: // ifgdpats
         value.copy< std::vector<Hs::GuardedRHS> > (YY_MOVE (that.value));
         break;
 
@@ -7078,6 +7083,7 @@ switch (yykind)
 
       case symbol_kind::S_gdrhs: // gdrhs
       case symbol_kind::S_gdpats: // gdpats
+      case symbol_kind::S_ifgdpats: // ifgdpats
         value.move< std::vector<Hs::GuardedRHS> > (YY_MOVE (s.value));
         break;
 
@@ -7221,7 +7227,7 @@ switch (yykind)
 
 
 } // yy
-#line 7225 "parser.hh"
+#line 7231 "parser.hh"
 
 
 

@@ -447,6 +447,13 @@ Hs::LExp disambiguate_expression(Hs::LExp lhs)
         I.false_branch = disambiguate_expression(I.false_branch);
         return {lhs.loc, I};
     }
+    else if (auto i = E.to<Hs::MultiWayIf>())
+    {
+        auto I = *i;
+        auto rhs = disambiguate_rhs(Hs::MultiGuardedRHS(I.guarded_rhss));
+        I.guarded_rhss = rhs.guarded_rhss;
+        return {lhs.loc, I};
+    }
     else if (auto d = E.to<Hs::Do>())
     {
         auto D = *d;

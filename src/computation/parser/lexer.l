@@ -171,7 +171,11 @@ signed       {negative}?
 <layout,layout_do,layout_if>"{"/[^-]    return drv.hopefully_open_brace(loc);
 <layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
 
-<layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  drv.hopefully_open_brace(loc);
+<layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  {
+                                                auto layout_loc = loc;
+                                                layout_loc.end = loc.begin;
+                                                return drv.new_layout_context(layout_loc, false, yy::parser::token::TOK_VBAR);
+                                             }
 <layout_if>""/.                             yy_pop_state();
 
 <layout>""/.                              return drv.new_layout_context(loc, true, yy::parser::token::TOK_VOCURLY);

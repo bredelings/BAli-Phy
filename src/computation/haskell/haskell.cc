@@ -1132,6 +1132,17 @@ string If::print() const
     return "if " + condition.print() + " then " + true_branch.print() + " else " + false_branch.print();
 }
 
+// Print a multi-way if using guarded-alternative syntax after the `if` keyword.
+// The branch representation is shared with case alternatives and guarded RHSs.
+string MultiWayIf::print() const
+{
+    vector<string> ss;
+    for(const auto& guarded_rhs: guarded_rhss)
+        ss.push_back(guarded_rhs.print_no_equals());
+
+    return "if " + join(ss, "\n   ");
+}
+
 ModuleDecls::ModuleDecls()
 {
     value_decls.push_back({});

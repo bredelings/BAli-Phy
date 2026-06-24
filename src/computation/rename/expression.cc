@@ -378,6 +378,17 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
 
         E = I;
     }
+    else if (E.is_a<Hs::MultiWayIf>())
+    {
+        if (not m.language_extensions.has_extension(LangExt::MultiWayIf))
+            error(loc, Note()<<"multi-way if expression requires the MultiWayIf extension.");
+
+        auto I = E.as_<Hs::MultiWayIf>();
+        auto rhs = rename(Hs::MultiGuardedRHS(I.guarded_rhss), bound, free_vars);
+        I.guarded_rhss = rhs.guarded_rhss;
+
+        E = I;
+    }
     else if (E.is_a<Hs::Literal>())
     { }
     else if (E.is_a<Hs::ParsedApp>())

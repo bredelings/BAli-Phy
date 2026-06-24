@@ -687,6 +687,18 @@ void TypeChecker::tcRho(Hs::If& If, const Expected& exp_type)
     checkRho(If.false_branch, result_type);
 }
 
+// Check all multi-way-if guarded RHSs against one shared expected result type.
+// There are no local where-declarations to add for this expression form.
+void TypeChecker::tcRho(Hs::MultiWayIf& If, const Expected& exp_type)
+{
+    auto state2 = copy_clear_wanteds();
+    auto result_type = expTypeToType(exp_type);
+    for(auto& guarded_rhs: If.guarded_rhss)
+        state2.tcRho(guarded_rhs, Check(result_type));
+
+    current_wanteds() += state2.current_wanteds();
+}
+
 
 void TypeChecker::tcRho(Hs::LeftSection& LSec, const Expected& exp_type)
 {
@@ -915,6 +927,13 @@ void TypeChecker::tcRho_(Hs::Expression& E, const Expected& exp_type)
     }
     // IF
     else if (auto if_exp = E.to<Hs::If>())
+    {
+        auto If = *if_exp;
+        tcRho(If, exp_type);
+        E = If;
+    }
+    // MULTI-WAY IF
+    else if (auto if_exp = E.to<Hs::MultiWayIf>())
     {
         auto If = *if_exp;
         tcRho(If, exp_type);

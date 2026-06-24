@@ -58,6 +58,7 @@ enum class LangExt
     LexicalNegation,
     MonoLocalBinds,
     MultiParamTypeClasses,
+    MultiWayIf,
     NamedDefaults,
     NamedFieldPuns,
     NamedWildCards,
