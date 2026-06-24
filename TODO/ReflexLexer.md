@@ -62,10 +62,10 @@ This explicitness is good.  The final design should not hide scanner lifetime
 behind a global object.  The scanner should either be owned by the driver for a
 parse, or owned by a small object with a clear parse lifetime.
 
-### Empty Layout Rules Are The Main Obstacle
+### Empty Layout Rules Were The Main Obstacle
 
-The current Flex lexer uses zero-width rules to run layout logic before the
-next real token is consumed:
+The old Flex lexer used zero-width rules to run layout logic before the next
+real token was consumed:
 
 - `<bol>""/.`
 - `<layout>""/.`
@@ -80,6 +80,11 @@ and `yyless(0)`.
 That workaround should not be kept.  It couples layout to scanner backtracking
 and location repair, and it already produced an off-by-one column bug during
 the experiment.
+
+The current migration branch has moved these layout decisions into the
+parser-facing lexer wrapper.  The raw Flex scanner now recognizes real tokens,
+while the wrapper can delay a real token and return virtual tokens around it.
+This removes the layout-specific empty rules before any RE/flex conversion.
 
 ### Some No-Token Actions Became Recursive
 
@@ -322,23 +327,21 @@ context, the explicit `{` must occur to the right of that context's indentation
 column.  Otherwise the parser should report the current "Missing block" error
 instead of pushing a no-layout context.
 
-## Side Effects That Must Move
+## Side Effects Moved To Commit Time
 
-The current scanner actions contain effects that are not safe if the token is
-recognized early and delivered later.
+Several scanner actions used to contain effects that are not safe if the token
+is recognized early and delivered later.
 
-These should move to commit time or become raw-token metadata:
+These have moved to commit time or become raw-token metadata:
 
 - `drv.push_context()` for explicit `{`;
 - `drv.pop_context()` for explicit `}`;
-- `drv.set_closing_token()`;
-- `drv.step_closing_token()` in `YY_USER_ACTION`;
-- `drv.check_closing_token()` inside `varsym()`;
-- `driver::varid()` pushing `layout`, `layout_do`, or `layout_if` Flex states.
+- close-atom effects for identifiers, literals, and closing delimiters;
+- layout intent after layout-introducing keywords.
 
-The old countdown-based `prec_close_count` must be replaced by explicit
-previous-token and spacing metadata before the filter starts delaying real
-tokens.  The current direction is:
+The old countdown-based previous-token state has been replaced by explicit
+left-adjacency tracking before the wrapper starts delaying real tokens.  The
+current direction is:
 
 ```text
 operator classification =
@@ -596,13 +599,14 @@ depends on empty rules:
 - EOF after open layout contexts;
 - any parser-error layout behavior we intentionally preserve.
 
-### Make Scanner-State Decisions Explicit Under Flex
+### Completed: Make Scanner-State Decisions Explicit Under Flex
 
 Recover the useful cleanup from the experiment branch: driver helper methods
 should compute layout decisions, not push or pop Flex states.
 
-In particular, `driver::varid()` should not push `layout`, `layout_do`, or
-`layout_if`.  It should classify the keyword and return layout intent as data.
+The old `driver::varid()` path no longer pushes `layout`, `layout_do`, or
+`layout_if`.  Keyword classification now returns layout intent as data, and
+the wrapper interprets that intent.
 
 This step has value even if RE/flex is later abandoned.
 
@@ -638,37 +642,38 @@ This checkpoint should include tests for prefix, loose infix, tight infix, and
 reserved-symbol classification.  It is required because delayed-token layout
 insertion would otherwise observe previous-token state in the wrong order.
 
-### Move Beginning-Of-Line Layout Into The Filter
+### Completed: Move Beginning-Of-Line Layout Into The Wrapper
 
-Replace `<bol>""/.` first.  This is the cleanest empty-rule category.
+`<bol>""/.` has been replaced under Flex.
 
-The raw scanner should mark the first real token after newline/trivia with
-`starts_line=true`.  The filter should use that token's location to insert
-`VCCURLY` or `SEMI` before committing the real token.
+The raw scanner marks the first real token after newline/trivia with
+`starts_line=true`.  The wrapper uses that token's location to insert `VCCURLY`
+or `SEMI` before committing the real token.
 
-### Move Post-Keyword Layout Into The Filter
+### Completed: Move Post-Keyword Layout Into The Wrapper
 
-Replace `<layout>""/.` and `<layout_do>""/.`.
+`<layout>""/.` and `<layout_do>""/.` have been replaced under Flex.
 
-A committed layout keyword records pending layout intent.  The filter then
-uses the next raw token either to commit an explicit `{` or to insert
-`VOCURLY` before the next real token.
+A committed layout keyword records pending layout intent.  The wrapper then
+uses the next raw token either to commit an explicit `{` or to insert `VOCURLY`
+before the next real token.
 
-### Move Immediate Close Into The Filter
+### Completed: Move Immediate Close Into The Wrapper
 
-Replace `<layout_left>""/.`.
+`<layout_left>""/.` has been replaced under Flex.
 
 When an implicit context would open at or left of the enclosing layout column,
-the filter should return `VOCURLY`, queue `VCCURLY`, and then deliver the
-stashed real token.
+the wrapper returns `VOCURLY`, queues `VCCURLY`, and then delivers the stashed
+real token.
 
-### Move MultiWayIf Last
+### Completed: Move MultiWayIf Into The Wrapper
 
-Replace `<layout_if>""/.` only after the ordinary layout cases are stable.
+`<layout_if>""/.` has been replaced under Flex.
 
-This step needs focused tests because `|` can also be an operator.  The filter
-should ideally reason from raw token kind and spacing metadata rather than
-from scanner trailing context.
+The wrapper reasons from the raw token kind: exact `|` is the MultiWayIf
+opener, while longer operators remain ordinary symbolic identifiers.  The
+normal multiline-`if` regression test protects the GHC-compatible behavior
+where newlines after `if` do not also trigger ordinary BOL layout.
 
 ### Route Parser-Error Close Through The Filter
 
@@ -698,10 +703,9 @@ main = let x = 1 in x
 and a case/where interaction where indentation alone is not enough to decide
 that the layout block must close.
 
-### Remove Obsolete Flex Start States
+### Completed: Remove Obsolete Layout Flex Start States
 
-After all empty layout rules are gone, remove the layout-specific Flex start
-states:
+The layout-specific Flex start states have been removed:
 
 - `bol`;
 - `layout`;
@@ -790,8 +794,8 @@ One possible commit sequence:
 6. `parser: move keyword layout into token filter`
 7. `parser: queue immediate offside layout close`
 8. `parser: move MultiWayIf layout into token filter`
-9. `parser: route parse-error layout close through filter`
-10. `parser: remove layout-specific Flex states`
+9. `parser: remove layout-specific Flex states`
+10. `parser: route parse-error layout close through filter`
 11. `build: add RE/flex dependency`
 12. `parser: generate Haskell lexer with RE/flex`
 13. `parser: add Unicode lexer coverage`
