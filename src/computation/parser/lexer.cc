@@ -2808,28 +2808,6 @@ void yyfree (void * ptr )
 
 
 
-// Keep the parser-facing lexer API stable while the generated scanner returns
-// wrapper tokens that can be held while layout tokens are emitted first.
-yy::parser::symbol_type yylex(driver& drv)
-{
-    if (auto token = drv.take_pending_virtual_token())
-        return std::move(*token);
-
-    if (not drv.has_pending_real_token())
-    {
-        auto token = raw_yylex(drv);
-        token.starts_line = drv.take_next_real_token_starts_line();
-        drv.set_pending_real_token(std::move(token));
-    }
-
-    if (auto virtual_token = drv.next_virtual_token())
-        return std::move(*virtual_token);
-
-    auto token = drv.take_pending_real_token();
-    drv.commit_token(token);
-    return std::move(token.symbol);
-}
-
 void
 driver::scan_begin (const std::string& content)
 {

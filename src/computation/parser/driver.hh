@@ -136,6 +136,8 @@ public:
     void push_error_message(const location_type& loc, const Note& e);
     void pop_error_message();
 
+    yy::parser::symbol_type next_parser_token();
+
     // Store the result
     Haskell::Module result;
     // Run the parser on file F.  Return 0 on success.

@@ -71,6 +71,33 @@ void driver::pop_error_message()
     messages.pop_back();
 }
 
+// Drive the raw scanner and virtual-token insertion to produce the parser's
+// next token.
+yy::parser::symbol_type driver::next_parser_token()
+{
+    if (auto token = take_pending_virtual_token())
+        return std::move(*token);
+
+    if (not has_pending_real_token())
+    {
+        auto token = raw_yylex(*this);
+        token.starts_line = take_next_real_token_starts_line();
+        set_pending_real_token(std::move(token));
+    }
+
+    if (auto virtual_token = next_virtual_token())
+        return std::move(*virtual_token);
+
+    auto token = take_pending_real_token();
+    commit_token(token);
+    return std::move(token.symbol);
+}
+
+yy::parser::symbol_type yylex(driver& drv)
+{
+    return drv.next_parser_token();
+}
+
 // Apply effects for a real token at the point where the wrapper actually
 // returns it to the parser.
 void driver::commit_token(const LexedToken& token)
