@@ -37,7 +37,7 @@ zz::parser::symbol_type zz_make_varsym(std::string_view text, const zz::parser::
 
 %}
 
-%option noyywrap nounput batch debug noinput stack never-interactive nounistd
+%option noyywrap nounput batch debug noinput never-interactive nounistd
 %option prefix="zz"
 
 unispace     \x05
@@ -324,10 +324,4 @@ zz::parser::symbol_type zz_make_varsym(std::string_view text, const zz::parser::
 
     else
         return zz::parser::make_VARSYM(std::string(text),loc);
-}
-
-void zz_use_things() {
-    yy_top_state();
-    yy_push_state(0);
-    yy_pop_state();
 }

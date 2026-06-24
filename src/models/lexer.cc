@@ -1052,16 +1052,6 @@ static int input ( void );
 
 /* %if-c-only */
 
-        static int yy_start_stack_ptr = 0;
-        static int yy_start_stack_depth = 0;
-        static int *yy_start_stack = NULL;
-    
-    static void yy_push_state ( int _new_state );
-    
-    static void yy_pop_state ( void );
-    
-    static int yy_top_state ( void );
-    
 /* %endif */
 
 /* Amount of stuff to slurp up with each read. */
@@ -1258,7 +1248,7 @@ YY_DECL
     loc.step ();
 
 
-#line 1262 "src/models/lexer.cc"
+#line 1252 "src/models/lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1566,7 +1556,7 @@ YY_RULE_SETUP
 #line 203 "src/models/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1570 "src/models/lexer.cc"
+#line 1560 "src/models/lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2435,56 +2425,6 @@ YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len )
 }
 /* %endif */
 
-/* %if-c-only */
-    static void yy_push_state (int  _new_state )
-/* %endif */
-/* %if-c++-only */
-/* %endif */
-{
-    	if ( (yy_start_stack_ptr) >= (yy_start_stack_depth) )
-		{
-		yy_size_t new_size;
-
-		(yy_start_stack_depth) += YY_START_STACK_INCR;
-		new_size = (yy_size_t) (yy_start_stack_depth) * sizeof( int );
-
-		if ( ! (yy_start_stack) )
-			(yy_start_stack) = (int *) yyalloc( new_size  );
-
-		else
-			(yy_start_stack) = (int *) yyrealloc(
-					(void *) (yy_start_stack), new_size  );
-
-		if ( ! (yy_start_stack) )
-			YY_FATAL_ERROR( "out of memory expanding start-condition stack" );
-		}
-
-	(yy_start_stack)[(yy_start_stack_ptr)++] = YY_START;
-
-	BEGIN(_new_state);
-}
-
-/* %if-c-only */
-    static void yy_pop_state  (void)
-/* %endif */
-/* %if-c++-only */
-/* %endif */
-{
-    	if ( --(yy_start_stack_ptr) < 0 )
-		YY_FATAL_ERROR( "start-condition stack underflow" );
-
-	BEGIN((yy_start_stack)[(yy_start_stack_ptr)]);
-}
-
-/* %if-c-only */
-    static int yy_top_state  (void)
-/* %endif */
-/* %if-c++-only */
-/* %endif */
-{
-    	return (yy_start_stack)[(yy_start_stack_ptr) - 1];
-}
-
 #ifndef YY_EXIT_FAILURE
 #define YY_EXIT_FAILURE 2
 #endif
@@ -2624,10 +2564,6 @@ static int yy_init_globals (void)
     (yy_init) = 0;
     (yy_start) = 0;
 
-    (yy_start_stack_ptr) = 0;
-    (yy_start_stack_depth) = 0;
-    (yy_start_stack) =  NULL;
-
 /* Defined in main.c */
 #ifdef YY_STDINIT
     yyin = stdin;
@@ -2659,10 +2595,6 @@ int yylex_destroy  (void)
 	/* Destroy the stack itself. */
 	yyfree((yy_buffer_stack) );
 	(yy_buffer_stack) = NULL;
-
-    /* Destroy the start condition stack. */
-        yyfree( (yy_start_stack)  );
-        (yy_start_stack) = NULL;
 
     /* Reset the globals. This is important in a non-reentrant scanner so the next time
      * yylex() is called, initialization will occur. */
@@ -2855,11 +2787,5 @@ zz::parser::symbol_type zz_make_varsym(std::string_view text, const zz::parser::
 
     else
         return zz::parser::make_VARSYM(std::string(text),loc);
-}
-
-void zz_use_things() {
-    yy_top_state();
-    yy_push_state(0);
-    yy_pop_state();
 }
 
