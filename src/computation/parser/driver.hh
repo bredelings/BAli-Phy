@@ -51,7 +51,7 @@ public:
 
     symbol_type hopefully_open_brace(const location_type& loc);
     std::optional<symbol_type> do_bol(const location_type& loc);
-    symbol_type new_layout_context(const location_type& loc, bool strict, bool gen_semis, token_type tok);
+    symbol_type new_layout_context(const location_type& loc, bool gen_semis, token_type tok);
     symbol_type do_layout_left(const location_type& loc);
     void pop() {}
     yy::parser::symbol_type varid(std::string_view text, const yy::parser::location_type& loc) const;
