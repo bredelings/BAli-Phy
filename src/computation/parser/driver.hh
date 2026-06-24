@@ -103,9 +103,9 @@ class driver
     std::deque<symbol_type> pending_virtual_tokens;
     std::optional<LexedToken> pending_real_token;
 
-    std::optional<symbol_type> layout_after_keyword(const location_type& loc);
-    std::optional<symbol_type> layout_after_if(const location_type& loc);
-    std::optional<symbol_type> layout_at_bol(const location_type& loc);
+    std::optional<symbol_type> virtual_after_keyword(const location_type& loc);
+    std::optional<symbol_type> virtual_after_if(const location_type& loc);
+    std::optional<symbol_type> virtual_at_bol(const location_type& loc);
 
 public:
     driver (const LanguageExtensions& lang_exts);
@@ -127,7 +127,7 @@ public:
     std::optional<symbol_type> take_pending_virtual_token();
     bool has_pending_real_token() const {return pending_real_token.has_value();}
     void set_pending_real_token(LexedToken&& token) {pending_real_token.emplace(std::move(token));}
-    std::optional<symbol_type> next_layout_token();
+    std::optional<symbol_type> next_virtual_token();
     LexedToken take_pending_real_token();
     yy::parser::symbol_type consym(std::string_view text, const yy::parser::location_type& loc) const;
     std::optional<yy::parser::symbol_type> prag(std::string_view text, const yy::parser::location_type& loc);

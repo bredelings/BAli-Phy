@@ -2830,8 +2830,8 @@ yy::parser::symbol_type yylex(driver& drv)
         drv.set_pending_real_token(std::move(token));
     }
 
-    if (auto layout_token = drv.next_layout_token())
-        return std::move(*layout_token);
+    if (auto virtual_token = drv.next_virtual_token())
+        return std::move(*virtual_token);
 
     auto token = drv.take_pending_real_token();
     drv.commit_token(token);

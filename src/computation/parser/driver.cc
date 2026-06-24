@@ -110,13 +110,13 @@ std::optional<driver::symbol_type> driver::take_pending_virtual_token()
 
 // Handle layout triggered by a committed keyword, such as let/where/do/if,
 // using the pending real token as the first token after the keyword.
-std::optional<driver::symbol_type> driver::layout_after_keyword(const location_type& loc)
+std::optional<driver::symbol_type> driver::virtual_after_keyword(const location_type& loc)
 {
     auto layout_intent = pending_layout_intent;
     pending_layout_intent = LayoutIntent::None;
 
     if (layout_intent == LayoutIntent::LayoutIf)
-        return layout_after_if(loc);
+        return virtual_after_if(loc);
 
     auto kind = pending_real_token->symbol.kind();
     if (kind == yy::parser::symbol_kind::S_OCURLY)
@@ -147,7 +147,7 @@ std::optional<driver::symbol_type> driver::layout_after_keyword(const location_t
 
 // Handle the special post-if layout decision: either explicit braces,
 // MultiWayIf's real '|' opener, or ordinary if without additional layout.
-std::optional<driver::symbol_type> driver::layout_after_if(const location_type& loc)
+std::optional<driver::symbol_type> driver::virtual_after_if(const location_type& loc)
 {
     // GHC consumes newlines while deciding whether this is MultiWayIf, so the
     // following real token must not also trigger BOL layout.
@@ -187,7 +187,7 @@ std::optional<driver::symbol_type> driver::layout_after_if(const location_type& 
 
 // Insert ordinary beginning-of-line layout before the pending real token.
 // Rechecking the same token handles multiple closes at one source location.
-std::optional<driver::symbol_type> driver::layout_at_bol(const location_type& loc)
+std::optional<driver::symbol_type> driver::virtual_at_bol(const location_type& loc)
 {
     auto kind = pending_real_token->symbol.kind();
     if (kind == yy::parser::symbol_kind::S_OCURLY or kind == yy::parser::symbol_kind::S_CCURLY)
@@ -217,7 +217,7 @@ std::optional<driver::symbol_type> driver::layout_at_bol(const location_type& lo
 
 // Return the next virtual layout token that must precede or follow the pending
 // real token; otherwise leave the pending real token ready to commit.
-std::optional<driver::symbol_type> driver::next_layout_token()
+std::optional<driver::symbol_type> driver::next_virtual_token()
 {
     if (not pending_real_token)
         return {};
@@ -229,9 +229,9 @@ std::optional<driver::symbol_type> driver::next_layout_token()
     loc.end = loc.begin;
 
     if (pending_layout_intent != LayoutIntent::None)
-        return layout_after_keyword(loc);
+        return virtual_after_keyword(loc);
 
-    return layout_at_bol(loc);
+    return virtual_at_bol(loc);
 }
 
 // Remove the stashed real token once all preceding virtual layout tokens have
