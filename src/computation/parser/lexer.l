@@ -37,6 +37,8 @@ yy::parser::symbol_type make_rational(std::string_view text, const yy::parser::l
 yy::parser::symbol_type make_char(std::string_view text, const yy::parser::location_type& loc, driver& drv);
 yy::parser::symbol_type make_string(std::string_view text, const yy::parser::location_type& loc, driver& drv);
 
+static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followed_by_opening);
+
 %}
 
 %option noyywrap nounput batch debug noinput stack never-interactive nounistd
@@ -248,13 +250,30 @@ signed       {negative}?
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 
-  /* precededByClosing and followedByOpening -> tight infix
-     followedByOpening                       -> prefix
-     precededByClosing                       -> suffix
-     otherwise                               -> loose infix */
-<INITIAL>{varsym}/"{-"                   return drv.varsym(std::string_view(yytext, yyleng), drv.check_closing_token(), false, loc);
-<INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    return drv.varsym(std::string_view(yytext, yyleng), drv.check_closing_token(), true, loc);
-<INITIAL>{varsym}                        return drv.varsym(std::string_view(yytext, yyleng), drv.check_closing_token(), false, loc);
+<INITIAL>{varsym}/"{-"                   {
+                                            auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
+                                                                                 symbol_occurrence(drv.check_closing_token(), false));
+                                            if (classified.token)
+                                              return yy::parser::symbol_type(*classified.token, loc);
+                                            else
+                                              return yy::parser::make_VARSYM(classified.text, loc);
+                                          }
+<INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    {
+                                            auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
+                                                                                 symbol_occurrence(drv.check_closing_token(), true));
+                                            if (classified.token)
+                                              return yy::parser::symbol_type(*classified.token, loc);
+                                            else
+                                              return yy::parser::make_VARSYM(classified.text, loc);
+                                          }
+<INITIAL>{varsym}                        {
+                                            auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
+                                                                                 symbol_occurrence(drv.check_closing_token(), false));
+                                            if (classified.token)
+                                              return yy::parser::symbol_type(*classified.token, loc);
+                                            else
+                                              return yy::parser::make_VARSYM(classified.text, loc);
+                                          }
 
 <INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (std::string(yytext, yyleng),loc);
 <INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (std::string(yytext, yyleng),loc);
@@ -408,7 +427,23 @@ ClassifiedVarId driver::classify_varid(std::string_view text) const
     }
 }
 
-yy::parser::symbol_type driver::varsym(std::string_view text, bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc) const
+// Name how a symbolic token occurs relative to adjacent lexical tokens, so
+// reserved-symbol lookup does not depend on anonymous boolean combinations.
+static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followed_by_opening)
+{
+    if (preceded_by_closing and followed_by_opening)
+        return SymbolOccurrence::TightInfix;
+    else if (followed_by_opening)
+        return SymbolOccurrence::Prefix;
+    else if (preceded_by_closing)
+        return SymbolOccurrence::Suffix;
+    else
+        return SymbolOccurrence::LooseInfix;
+}
+
+// Classify a symbolic identifier using its occurrence position, without
+// inspecting mutable lexer state or constructing a parser symbol.
+ClassifiedVarSym driver::classify_varsym(std::string_view text, SymbolOccurrence occurrence) const
 {
     std::string token(text);
 
@@ -416,35 +451,28 @@ yy::parser::symbol_type driver::varsym(std::string_view text, bool precededByClo
     // if we handle type operators, then we should be able to parse (a ~ b) with ~ being a type operator.
 
     // tight infix reserved symbols
-    if (precededByClosing and followedByOpening)
+    if (occurrence == SymbolOccurrence::TightInfix)
     {
         auto it = tight_infix_reserved_symbols.find(token);
         if (it != tight_infix_reserved_symbols.end())
-        {
-            auto tok = it->second;
-            return yy::parser::symbol_type(tok, loc);
-        }
+            return {token, it->second};
     }
 
     // prefix reserved symbols
-    if (precededByClosing == false and followedByOpening == true)
+    if (occurrence == SymbolOccurrence::Prefix)
     {
         auto it = prefix_reserved_symbols.find(token);
         if (it != prefix_reserved_symbols.end())
-        {
-            auto tok = it->second;
-            return yy::parser::symbol_type(tok, loc);
-        }
+            return {token, it->second};
     }
 
     // other reserved symbols
     auto it = reserved_symbols.find(token);
     if (it == reserved_symbols.end())
-	return yy::parser::make_VARSYM  (token, loc);
+	return {token, {}};
 
     // general varsyms
-    auto tok = it->second;
-    return yy::parser::symbol_type(tok, loc);
+    return {token, it->second};
 }
 
 yy::parser::symbol_type driver::consym(std::string_view text, const yy::parser::location_type& loc) const

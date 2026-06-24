@@ -36,6 +36,20 @@ struct ClassifiedVarId
     LayoutIntent layout_after = LayoutIntent::None;
 };
 
+enum class SymbolOccurrence
+{
+    LooseInfix,
+    Prefix,
+    Suffix,
+    TightInfix
+};
+
+struct ClassifiedVarSym
+{
+    std::string text;
+    std::optional<yy::parser::token_type> token;
+};
+
 // Conducting the whole scanning and parsing of Calc++.
 class driver
 {
@@ -71,7 +85,7 @@ public:
     symbol_type do_layout_left(const location_type& loc);
     void pop() {}
     ClassifiedVarId classify_varid(std::string_view text) const;
-    yy::parser::symbol_type varsym(std::string_view text, bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc) const;
+    ClassifiedVarSym classify_varsym(std::string_view text, SymbolOccurrence occurrence) const;
     yy::parser::symbol_type consym(std::string_view text, const yy::parser::location_type& loc) const;
     std::optional<yy::parser::symbol_type> prag(std::string_view text, const yy::parser::location_type& loc);
 
