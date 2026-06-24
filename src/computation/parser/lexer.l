@@ -575,8 +575,8 @@ yy::parser::symbol_type make_string(std::string_view text, const yy::parser::loc
     return yy::parser::make_STRING(s,loc);
 }
 
-// Compatibility note: flex generates yy_top_state only when state stacks are
-// enabled. Remove this once scanner-state ownership is cleaned up.
-void use_things() {
+// Compatibility note: flex's stack option emits yy_top_state(), and GCC warns
+// if no user action references it. Remove this when flex stack use is gone.
+void keep_flex_stack_helpers_used() {
     yy_top_state();
 }
