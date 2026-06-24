@@ -886,11 +886,11 @@ int yy_flex_debug = 1;
 
 static const flex_int16_t yy_rule_linenum[42] =
     {   0,
-      132,  133,  136,  139,  141,  142,  143,  144,  145,  146,
-      147,  148,  149,  150,  151,  152,  153,  154,  155,  156,
-      157,  158,  159,  160,  162,  163,  165,  166,  167,  168,
-      169,  170,  173,  174,  175,  176,  190,  192,  194,  195,
-      197
+      133,  134,  137,  140,  142,  143,  144,  145,  146,  147,
+      148,  149,  150,  151,  152,  153,  154,  155,  156,  157,
+      158,  159,  160,  161,  163,  164,  166,  167,  168,  169,
+      170,  171,  174,  175,  176,  177,  191,  193,  195,  196,
+      198
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -943,10 +943,11 @@ zz::parser::symbol_type zz_make_varsym(std::string_view text, const zz::parser::
 #define YY_NO_INPUT 1
 #define YY_NO_UNISTD_H 1
 #line 105 "src/models/lexer.l"
-  // Code run each time a pattern is matched.
+  // Audit note: this flex hook is the remaining implicit text-length dependency.
+  // Token helpers receive matched text explicitly from rule actions.
   # define YY_USER_ACTION  loc.columns (yyleng);
-#line 949 "src/models/lexer.cc"
 #line 950 "src/models/lexer.cc"
+#line 951 "src/models/lexer.cc"
 
 #define INITIAL 0
 
@@ -1224,10 +1225,10 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 109 "src/models/lexer.l"
+#line 110 "src/models/lexer.l"
 
 
-#line 112 "src/models/lexer.l"
+#line 113 "src/models/lexer.l"
   /* Code run each time yylex is called. */
 
     // A handy shortcut to the location held by the driver.
@@ -1248,7 +1249,7 @@ YY_DECL
     loc.step ();
 
 
-#line 1252 "src/models/lexer.cc"
+#line 1253 "src/models/lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1326,186 +1327,186 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 132 "src/models/lexer.l"
+#line 133 "src/models/lexer.l"
 loc.step ();
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 133 "src/models/lexer.l"
+#line 134 "src/models/lexer.l"
 loc.step ();
 	YY_BREAK
 /* Comment */
 case 3:
 YY_RULE_SETUP
-#line 136 "src/models/lexer.l"
+#line 137 "src/models/lexer.l"
 loc.step();
 	YY_BREAK
 /* EOL */
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 139 "src/models/lexer.l"
+#line 140 "src/models/lexer.l"
 loc.lines(1); loc.step ();
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 141 "src/models/lexer.l"
+#line 142 "src/models/lexer.l"
 return zz::parser::make_OPAREN (loc);
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 142 "src/models/lexer.l"
+#line 143 "src/models/lexer.l"
 return zz::parser::make_CPAREN (loc);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 143 "src/models/lexer.l"
+#line 144 "src/models/lexer.l"
 return zz::parser::make_BAR    (loc);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 144 "src/models/lexer.l"
+#line 145 "src/models/lexer.l"
 return zz::parser::make_OBRACK (loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 145 "src/models/lexer.l"
+#line 146 "src/models/lexer.l"
 return zz::parser::make_CBRACK (loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 146 "src/models/lexer.l"
+#line 147 "src/models/lexer.l"
 return zz::parser::make_OCURLY (loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 147 "src/models/lexer.l"
+#line 148 "src/models/lexer.l"
 return zz::parser::make_CCURLY (loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 148 "src/models/lexer.l"
+#line 149 "src/models/lexer.l"
 return zz::parser::make_COMMA  (loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 149 "src/models/lexer.l"
+#line 150 "src/models/lexer.l"
 return zz::parser::make_EQUAL  (loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 150 "src/models/lexer.l"
+#line 151 "src/models/lexer.l"
 return zz::parser::make_SEMI   (loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 151 "src/models/lexer.l"
+#line 152 "src/models/lexer.l"
 return zz::parser::make_COLON  (loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 152 "src/models/lexer.l"
+#line 153 "src/models/lexer.l"
 return zz::parser::make_STACK  (loc);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 153 "src/models/lexer.l"
+#line 154 "src/models/lexer.l"
 return zz::parser::make_ARROW  (loc);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 154 "src/models/lexer.l"
+#line 155 "src/models/lexer.l"
 return zz::parser::make_AT     (loc);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 155 "src/models/lexer.l"
+#line 156 "src/models/lexer.l"
 return zz::parser::make_TILDE  (loc);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 156 "src/models/lexer.l"
+#line 157 "src/models/lexer.l"
 return zz::parser::make_PLUS   (loc);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 157 "src/models/lexer.l"
+#line 158 "src/models/lexer.l"
 return zz::parser::make_MINUS  (loc);
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 158 "src/models/lexer.l"
+#line 159 "src/models/lexer.l"
 return zz::parser::make_TIMES  (loc);
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 159 "src/models/lexer.l"
+#line 160 "src/models/lexer.l"
 return zz::parser::make_DIVIDE (loc);
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 160 "src/models/lexer.l"
+#line 161 "src/models/lexer.l"
 return zz::parser::make_MOD    (loc);
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 162 "src/models/lexer.l"
+#line 163 "src/models/lexer.l"
 return zz::parser::make_LE (loc);
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 163 "src/models/lexer.l"
+#line 164 "src/models/lexer.l"
 return zz::parser::make_GE (loc);
 	YY_BREAK
 /* Note that LT and GT are also used in types like List<a> */
 case 27:
 YY_RULE_SETUP
-#line 165 "src/models/lexer.l"
+#line 166 "src/models/lexer.l"
 return zz::parser::make_LT (loc);
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 166 "src/models/lexer.l"
+#line 167 "src/models/lexer.l"
 return zz::parser::make_GT (loc);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 167 "src/models/lexer.l"
+#line 168 "src/models/lexer.l"
 return zz::parser::make_EQ (loc);
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 168 "src/models/lexer.l"
+#line 169 "src/models/lexer.l"
 return zz::parser::make_NE (loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 169 "src/models/lexer.l"
+#line 170 "src/models/lexer.l"
 return zz::parser::make_AND (loc);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 170 "src/models/lexer.l"
+#line 171 "src/models/lexer.l"
 return zz::parser::make_OR  (loc);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 173 "src/models/lexer.l"
+#line 174 "src/models/lexer.l"
 return zz::parser::make_QVARID (std::string(yytext, yyleng), loc);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 174 "src/models/lexer.l"
+#line 175 "src/models/lexer.l"
 return zz::parser::make_QVARID (std::string(yytext, yyleng), loc);
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 175 "src/models/lexer.l"
+#line 176 "src/models/lexer.l"
 return drv.varid(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 176 "src/models/lexer.l"
+#line 177 "src/models/lexer.l"
 return drv.varid(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 /* {varsym}      return zz_make_varsym(loc);
@@ -1521,42 +1522,42 @@ return drv.varid(std::string_view(yytext, yyleng), loc);
  */
 case 37:
 YY_RULE_SETUP
-#line 190 "src/models/lexer.l"
+#line 191 "src/models/lexer.l"
 return zz_make_varsym(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 192 "src/models/lexer.l"
+#line 193 "src/models/lexer.l"
 return zz_make_integer10(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 194 "src/models/lexer.l"
+#line 195 "src/models/lexer.l"
 return zz_make_float(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 195 "src/models/lexer.l"
+#line 196 "src/models/lexer.l"
 return zz_make_string(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 197 "src/models/lexer.l"
+#line 198 "src/models/lexer.l"
 {
              throw zz::parser::syntax_error
-               (loc, "invalid character: " + std::string(yytext));
+               (loc, "invalid character: " + std::string(yytext, yyleng));
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 202 "src/models/lexer.l"
+#line 203 "src/models/lexer.l"
 return zz::parser::make_END (loc);
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 203 "src/models/lexer.l"
+#line 204 "src/models/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1560 "src/models/lexer.cc"
+#line 1561 "src/models/lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2661,7 +2662,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 203 "src/models/lexer.l"
+#line 204 "src/models/lexer.l"
 
 
 
@@ -2669,6 +2670,7 @@ void yyfree (void * ptr )
 void
 zz_driver::scan_begin (const std::string& content)
 {
+  // Audit note: buffer ownership still uses flex globals until scanner state is explicit.
   yy_flex_debug = trace_scanning;
   yy_scan_string(content.c_str());
 }
@@ -2677,6 +2679,7 @@ zz_driver::scan_begin (const std::string& content)
 void
 zz_driver::scan_end ()
 {
+  // Audit note: buffer ownership still uses flex globals until scanner state is explicit.
   yy_delete_buffer(YY_CURRENT_BUFFER);
 }
 

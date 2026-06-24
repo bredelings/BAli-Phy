@@ -102,7 +102,8 @@ signed       {negative}?
 
 
 %{
-  // Code run each time a pattern is matched.
+  // Audit note: this flex hook is the remaining implicit text-length dependency.
+  // Token helpers receive matched text explicitly from rule actions.
   # define YY_USER_ACTION  loc.columns (yyleng);
 %}
 
@@ -195,7 +196,7 @@ signed       {negative}?
 
 <*>.          {
              throw zz::parser::syntax_error
-               (loc, "invalid character: " + std::string(yytext));
+               (loc, "invalid character: " + std::string(yytext, yyleng));
 }
 
 <<EOF>>    return zz::parser::make_END (loc);
@@ -206,6 +207,7 @@ signed       {negative}?
 void
 zz_driver::scan_begin (const std::string& content)
 {
+  // Audit note: buffer ownership still uses flex globals until scanner state is explicit.
   yy_flex_debug = trace_scanning;
   yy_scan_string(content.c_str());
 }
@@ -214,6 +216,7 @@ zz_driver::scan_begin (const std::string& content)
 void
 zz_driver::scan_end ()
 {
+  // Audit note: buffer ownership still uses flex globals until scanner state is explicit.
   yy_delete_buffer(YY_CURRENT_BUFFER);
 }
 

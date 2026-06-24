@@ -123,7 +123,8 @@ signed       {negative}?
 
 
 %{
-  // Code run each time a pattern is matched.
+  // Audit note: this flex hook is still an implicit side-effect point for
+  // location columns and closing-token tracking.
   # define YY_USER_ACTION  loc.columns (yyleng); drv.step_closing_token();
 %}
 
@@ -250,7 +251,7 @@ signed       {negative}?
 
 <*>.          {
              throw yy::parser::syntax_error
-               (loc, "invalid character: " + std::string(yytext));
+               (loc, "invalid character: " + std::string(yytext, yyleng));
 }
 
 <<EOF>>    return yy::parser::make_END (loc);
@@ -261,6 +262,7 @@ signed       {negative}?
 void
 driver::scan_begin (const std::string& content)
 {
+  // Audit note: buffer ownership still uses flex globals until scanner state is explicit.
   yy_flex_debug = trace_scanning;
   yy_scan_string(content.c_str());
 }
@@ -269,6 +271,7 @@ driver::scan_begin (const std::string& content)
 void
 driver::scan_end ()
 {
+  // Audit note: buffer ownership still uses flex globals until scanner state is explicit.
   yy_delete_buffer(YY_CURRENT_BUFFER);
 }
 
@@ -354,6 +357,8 @@ yy::parser::symbol_type driver::varid(std::string_view text, const yy::parser::l
     else
     {
 	auto tok = it->second.first;
+	// Audit note: keyword classification still mutates flex start state.
+	// A later cleanup should return scanner-mode intent instead.
 	switch(tok)
 	{
 	case parser::token::TOK_DO:
@@ -603,6 +608,8 @@ yy::parser::symbol_type make_string(std::string_view text, const yy::parser::loc
 
 std::optional<yy::parser::symbol_type> driver::do_bol(const yy::parser::location_type& loc)
 {
+    // Audit note: layout helpers still combine layout decisions with flex state
+    // transitions. Split those scanner actions out before replacing flex.
     auto x = get_offside(loc);
     int delta_offset = x.offset;
     bool gen_semis = x.gen_semis;
@@ -669,6 +676,8 @@ yy::parser::symbol_type driver::hopefully_open_brace(const yy::parser::location_
     return yy::parser::make_OCURLY(loc);
 }
 
+// Compatibility note: flex generates yy_top_state only when state stacks are
+// enabled. Remove this once scanner-state ownership is cleaned up.
 void use_things() {
     yy_top_state();
 }
