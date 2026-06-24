@@ -121,7 +121,10 @@ std::optional<driver::symbol_type> driver::virtual_after_keyword(const location_
     pending_layout_intent = LayoutIntent::None;
 
     if (layout_intent == LayoutIntent::LayoutIf)
-        return virtual_after_if(loc);
+    {
+        virtual_after_if(loc);
+        return {};
+    }
 
     auto kind = pending_real_token->symbol.kind();
     if (kind == yy::parser::symbol_kind::S_OCURLY)
@@ -152,7 +155,7 @@ std::optional<driver::symbol_type> driver::virtual_after_keyword(const location_
 
 // Handle the special post-if layout decision: either explicit braces,
 // MultiWayIf's real '|' opener, or ordinary if without additional layout.
-std::optional<driver::symbol_type> driver::virtual_after_if(const location_type& loc)
+void driver::virtual_after_if(const location_type& loc)
 {
     // GHC consumes newlines while deciding whether this is MultiWayIf, so the
     // following real token must not also trigger BOL layout.
@@ -166,7 +169,7 @@ std::optional<driver::symbol_type> driver::virtual_after_if(const location_type&
             if (layout_context->offset >= loc.end.column)
                 throw yy::parser::syntax_error(loc, "Missing block");
         }
-        return {};
+        return;
     }
 
     if (kind == yy::parser::symbol_kind::S_VBAR)
@@ -179,15 +182,15 @@ std::optional<driver::symbol_type> driver::virtual_after_if(const location_type&
             {
                 pending_virtual_tokens.push_back(yy::parser::make_VCCURLY(loc));
                 mark_next_real_token_starts_line();
-                return {};
+                return;
             }
         }
 
         push_context({loc.end.column, false});
-        return {};
+        return;
     }
 
-    return {};
+    return;
 }
 
 // Insert ordinary beginning-of-line layout before the pending real token.

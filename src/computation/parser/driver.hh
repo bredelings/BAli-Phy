@@ -104,7 +104,7 @@ class driver
     std::optional<LexedToken> pending_real_token;
 
     std::optional<symbol_type> virtual_after_keyword(const location_type& loc);
-    std::optional<symbol_type> virtual_after_if(const location_type& loc);
+    void virtual_after_if(const location_type& loc);
     std::optional<symbol_type> virtual_at_bol(const location_type& loc);
 
 public:
