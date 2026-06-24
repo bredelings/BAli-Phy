@@ -338,6 +338,75 @@ driver::driver (const LanguageExtensions& exts)
     }
 }
 
+// Classify an identifier as a reserved word or ordinary variable, and record
+// the layout state that reserved layout keywords should start after commit.
+ClassifiedVarId driver::classify_varid(std::string_view text) const
+{
+    std::string token(text);
+    auto it = reserved_words.find(token);
+    if (it == reserved_words.end())
+        return {token, {}, LayoutIntent::None};
+    else
+    {
+        auto tok = it->second;
+        LayoutIntent layout_after = LayoutIntent::None;
+        switch(tok)
+        {
+        case yy::parser::token::TOK_DO:
+        case yy::parser::token::TOK_MDO:
+            layout_after = LayoutIntent::LayoutDo;
+            break;
+        case yy::parser::token::TOK_OF:
+        case yy::parser::token::TOK_LCASE:
+        case yy::parser::token::TOK_LET:
+        case yy::parser::token::TOK_WHERE:
+        case yy::parser::token::TOK_REC:
+            layout_after = LayoutIntent::Layout;
+            break;
+        case yy::parser::token::TOK_IF:
+            layout_after = LayoutIntent::LayoutIf;
+            break;
+        default:
+            break;
+        }
+        return {token, tok, layout_after};
+    }
+}
+
+// Classify a symbolic identifier using its occurrence position, without
+// inspecting mutable lexer state or constructing a parser symbol.
+ClassifiedVarSym driver::classify_varsym(std::string_view text, SymbolOccurrence occurrence) const
+{
+    std::string token(text);
+
+    // if loose infix occurrences are always operators, then:
+    // if we handle type operators, then we should be able to parse (a ~ b) with ~ being a type operator.
+
+    // tight infix reserved symbols
+    if (occurrence == SymbolOccurrence::TightInfix)
+    {
+        auto it = tight_infix_reserved_symbols.find(token);
+        if (it != tight_infix_reserved_symbols.end())
+            return {token, it->second};
+    }
+
+    // prefix reserved symbols
+    if (occurrence == SymbolOccurrence::Prefix)
+    {
+        auto it = prefix_reserved_symbols.find(token);
+        if (it != prefix_reserved_symbols.end())
+            return {token, it->second};
+    }
+
+    // other reserved symbols
+    auto it = reserved_symbols.find(token);
+    if (it == reserved_symbols.end())
+        return {token, {}};
+
+    // general varsyms
+    return {token, it->second};
+}
+
 /*
    map (\ (x,y,z) -> (mkFastString x,(y,z)))
       [ ("..",  ITdotdot,              always)
