@@ -33,19 +33,16 @@ struct LexedToken
 {
     yy::parser::symbol_type symbol;
     TokenEffects effects;
-    bool is_real = true;
     bool starts_line = false;
 
-    LexedToken(const yy::parser::symbol_type& symbol_arg, TokenEffects effects_arg = {}, bool is_real_arg = true)
+    LexedToken(const yy::parser::symbol_type& symbol_arg, TokenEffects effects_arg = {})
         : symbol(symbol_arg),
-          effects(effects_arg),
-          is_real(is_real_arg)
+          effects(effects_arg)
     {}
 
-    LexedToken(yy::parser::symbol_type&& symbol_arg, TokenEffects effects_arg = {}, bool is_real_arg = true)
+    LexedToken(yy::parser::symbol_type&& symbol_arg, TokenEffects effects_arg = {})
         : symbol(std::move(symbol_arg)),
-          effects(effects_arg),
-          is_real(is_real_arg)
+          effects(effects_arg)
     {}
 };
 

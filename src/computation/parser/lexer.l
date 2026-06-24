@@ -286,12 +286,6 @@ yy::parser::symbol_type yylex(driver& drv)
     if (not drv.has_pending_real_token())
     {
         auto token = raw_yylex(drv);
-        if (not token.is_real)
-        {
-            drv.commit_token(token);
-            return std::move(token.symbol);
-        }
-
         token.starts_line = drv.take_next_real_token_starts_line();
         drv.set_pending_real_token(std::move(token));
     }
