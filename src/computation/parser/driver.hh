@@ -12,9 +12,15 @@
 
 class driver;
 
+struct TokenEffects
+{
+    bool closes_atom = false;
+};
+
 struct LexedToken
 {
     yy::parser::symbol_type symbol;
+    TokenEffects effects;
 
     LexedToken(const yy::parser::symbol_type& symbol_arg)
         : symbol(symbol_arg)
@@ -22,6 +28,16 @@ struct LexedToken
 
     LexedToken(yy::parser::symbol_type&& symbol_arg)
         : symbol(std::move(symbol_arg))
+    {}
+
+    LexedToken(const yy::parser::symbol_type& symbol_arg, TokenEffects effects_arg)
+        : symbol(symbol_arg),
+          effects(effects_arg)
+    {}
+
+    LexedToken(yy::parser::symbol_type&& symbol_arg, TokenEffects effects_arg)
+        : symbol(std::move(symbol_arg)),
+          effects(effects_arg)
     {}
 };
 
@@ -104,6 +120,7 @@ public:
     void pop() {}
     ClassifiedVarId classify_varid(std::string_view text) const;
     ClassifiedVarSym classify_varsym(std::string_view text, SymbolOccurrence occurrence) const;
+    void commit_token(const LexedToken& token);
     yy::parser::symbol_type consym(std::string_view text, const yy::parser::location_type& loc) const;
     std::optional<yy::parser::symbol_type> prag(std::string_view text, const yy::parser::location_type& loc);
 

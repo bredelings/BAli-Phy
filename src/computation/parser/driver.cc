@@ -70,6 +70,14 @@ void driver::pop_error_message()
     messages.pop_back();
 }
 
+// Apply effects for a real token at the point where the wrapper actually
+// returns it to the parser.
+void driver::commit_token(const LexedToken& token)
+{
+    if (token.effects.closes_atom)
+        mark_token_closes_atom();
+}
+
 driver::driver (const LanguageExtensions& exts)
     : lang_exts(exts), trace_parsing (false), trace_scanning (false)
 {
