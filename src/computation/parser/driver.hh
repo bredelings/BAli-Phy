@@ -118,9 +118,6 @@ public:
     void push_module_context();
     void push_context();
 
-    symbol_type hopefully_open_brace(const location_type& loc);
-    symbol_type new_layout_context(const location_type& loc, bool gen_semis, token_type tok);
-    void pop() {}
     ClassifiedVarId classify_varid(std::string_view text) const;
     ClassifiedVarSym classify_varsym(std::string_view text, SymbolOccurrence occurrence) const;
     void commit_token(const LexedToken& token);

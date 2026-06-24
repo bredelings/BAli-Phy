@@ -42,7 +42,7 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 %}
 
 %option noyywrap nounput batch debug noinput stack never-interactive nounistd
-%s layout_if nested_comment nested_comment2
+%s nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
 
 unispace     \x05
@@ -159,21 +159,11 @@ signed       {negative}?
 
 
   /* These rules should not be active in a nested comment */
-<INITIAL,layout_if,option_prags,line_prag1a,line_prag2,line_prag2a>{
+<INITIAL,option_prags,line_prag1a,line_prag2,line_prag2a>{
 "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
 "--"-*$           loc.step();
 "-- "$            loc.step();
 }
-
-<layout_if>"{"/[^-]    return drv.hopefully_open_brace(loc);
-<layout_if>[\n]        loc.lines(1); loc.step();
-
-<layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  {
-                                                auto layout_loc = loc;
-                                                layout_loc.end = loc.begin;
-                                                return drv.new_layout_context(layout_loc, false, yy::parser::token::TOK_VBAR);
-                                             }
-<layout_if>""/.                             yy_pop_state();
 
 <INITIAL,option_prags>[\n]              loc.lines(1); loc.step(); drv.mark_next_real_token_starts_line();
 
@@ -218,9 +208,6 @@ signed       {negative}?
                                       switch(classified.layout_after)
                                       {
                                       case LayoutIntent::LayoutIf:
-                                        yy_push_state(layout_if);
-                                        layout_after = LayoutIntent::None;
-                                        break;
                                       case LayoutIntent::LayoutDo:
                                       case LayoutIntent::Layout:
                                       case LayoutIntent::None:
@@ -669,41 +656,6 @@ yy::parser::symbol_type make_string(std::string_view text, const yy::parser::loc
 //    std::cerr<<"got string: '"<<s<<"'\n";
 
     return yy::parser::make_STRING(s,loc);
-}
-
-yy::parser::symbol_type driver::new_layout_context(const yy::parser::location_type& loc, bool gen_semis, yy::parser::token_type tok)
-{
-    yy_pop_state();
-    int offset = loc.end.column;
-//    std::cerr<<"Opening new layout context at "<<loc<<std::endl;
-    if (auto layout_context = get_context())
-    {
-	int prev_offset = layout_context->offset;
-	if (prev_offset >= offset)
-	{
-//	    std::cerr<<"   - Going to layout_left"<<std::endl;
-	    pending_virtual_tokens.push_back(yy::parser::make_VCCURLY(loc));
-	    mark_next_real_token_starts_line();
-	    return yy::parser::symbol_type(tok,loc);
-	}
-    }
-
-    push_context({offset,gen_semis});
-    return yy::parser::symbol_type(tok,loc);
-}
-
-yy::parser::symbol_type driver::hopefully_open_brace(const yy::parser::location_type& loc)
-{
-    if (auto layout_context = get_context())
-    {
-	int offset = loc.end.column;
-	if (layout_context->offset >= offset)
-	    throw yy::parser::syntax_error(loc,"Missing block");
-
-    }
-    yy_pop_state();
-    push_context();
-    return yy::parser::make_OCURLY(loc);
 }
 
 // Compatibility note: flex generates yy_top_state only when state stacks are

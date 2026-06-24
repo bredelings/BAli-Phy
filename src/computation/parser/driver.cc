@@ -123,8 +123,46 @@ std::optional<driver::symbol_type> driver::layout_before_pending_real()
 
     if (pending_layout_intent != LayoutIntent::None)
     {
+        bool is_layout_if = pending_layout_intent == LayoutIntent::LayoutIf;
         pending_layout_intent = LayoutIntent::None;
         auto kind = pending_real_token->symbol.kind();
+
+        if (is_layout_if)
+        {
+            // GHC consumes newlines while deciding whether this is MultiWayIf,
+            // so the following real token must not also trigger BOL layout.
+            pending_real_token->starts_line = false;
+
+            if (kind == yy::parser::symbol_kind::S_OCURLY)
+            {
+                if (auto layout_context = get_context())
+                {
+                    if (layout_context->offset >= loc.end.column)
+                        throw yy::parser::syntax_error(loc, "Missing block");
+                }
+                return {};
+            }
+
+            if (kind == yy::parser::symbol_kind::S_VBAR)
+            {
+                // MultiWayIf uses the real '|' token as the layout opener.
+                // Empty layout therefore queues a close after that token.
+                if (auto layout_context = get_context())
+                {
+                    if (layout_context->offset >= loc.end.column)
+                    {
+                        pending_virtual_tokens.push_back(yy::parser::make_VCCURLY(loc));
+                        mark_next_real_token_starts_line();
+                        return {};
+                    }
+                }
+
+                push_context({loc.end.column, false});
+                return {};
+            }
+
+            return {};
+        }
 
         if (kind == yy::parser::symbol_kind::S_OCURLY)
         {
