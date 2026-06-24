@@ -42,7 +42,7 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 %}
 
 %option noyywrap nounput batch debug noinput stack never-interactive nounistd
-%s layout layout_do layout_if layout_left nested_comment nested_comment2
+%s layout_if layout_left nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
 
 unispace     \x05
@@ -159,14 +159,14 @@ signed       {negative}?
 
 
   /* These rules should not be active in a nested comment */
-<INITIAL,layout,layout_do,layout_if,layout_left,option_prags,line_prag1a,line_prag2,line_prag2a>{
+<INITIAL,layout_if,layout_left,option_prags,line_prag1a,line_prag2,line_prag2a>{
 "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
 "--"-*$           loc.step();
 "-- "$            loc.step();
 }
 
-<layout,layout_do,layout_if>"{"/[^-]    return drv.hopefully_open_brace(loc);
-<layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
+<layout_if>"{"/[^-]    return drv.hopefully_open_brace(loc);
+<layout_if>[\n]        loc.lines(1); loc.step();
 
 <layout_if>"|"/[^!#$%&*+./<=>?@\\^|\-~:\n]  {
                                                 auto layout_loc = loc;
@@ -174,9 +174,6 @@ signed       {negative}?
                                                 return drv.new_layout_context(layout_loc, false, yy::parser::token::TOK_VBAR);
                                              }
 <layout_if>""/.                             yy_pop_state();
-
-<layout>""/.                              return LexedToken(drv.new_layout_context(loc, true, yy::parser::token::TOK_VOCURLY), TokenEffects{}, false);
-<layout_do>""/.                           return LexedToken(drv.new_layout_context(loc, true, yy::parser::token::TOK_VOCURLY), TokenEffects{}, false);
 
   /* If we've generated a VOCURLY and started a new line to the left, then
      we need to generate a VCCURLY */
@@ -213,32 +210,32 @@ signed       {negative}?
 <INITIAL,option_prags>"`"      return yy::parser::make_BACKQUOTE (loc);
 
   /* action: push a "NoLayout" context into the stack */
-"{"      drv.push_context(); return yy::parser::make_OCURLY (loc);
+"{"      return LexedToken(yy::parser::make_OCURLY(loc), TokenEffects{.push_no_layout_context = true});
   /* action: pop the top context from the stack */
-"}"      drv.mark_token_closes_atom(); drv.pop_context(); return yy::parser::make_CCURLY (loc);
+"}"      return LexedToken(yy::parser::make_CCURLY(loc), TokenEffects{.closes_atom = true, .pop_context = true});
 
 <INITIAL,option_prags>{qvarid}      return LexedToken(yy::parser::make_QVARID(std::string(yytext, yyleng), loc), TokenEffects{.closes_atom = true});
 <INITIAL,option_prags>{qconid}      return LexedToken(yy::parser::make_QCONID(std::string(yytext, yyleng), loc), TokenEffects{.closes_atom = true});
 <INITIAL,option_prags>{varid}       {
                                       auto classified = drv.classify_varid(std::string_view(yytext, yyleng));
+                                      auto layout_after = classified.layout_after;
                                       switch(classified.layout_after)
                                       {
-                                      case LayoutIntent::LayoutDo:
-                                        yy_push_state(layout_do);
-                                        break;
-                                      case LayoutIntent::Layout:
-                                        yy_push_state(layout);
-                                        break;
                                       case LayoutIntent::LayoutIf:
                                         yy_push_state(layout_if);
+                                        layout_after = LayoutIntent::None;
                                         break;
+                                      case LayoutIntent::LayoutDo:
+                                      case LayoutIntent::Layout:
                                       case LayoutIntent::None:
                                         break;
                                       }
                                       if (classified.token)
-                                        return LexedToken(yy::parser::symbol_type(*classified.token, loc), TokenEffects{.closes_atom = true});
+                                        return LexedToken(yy::parser::symbol_type(*classified.token, loc),
+                                                          TokenEffects{.closes_atom = true, .layout_after = layout_after});
                                       else
-                                        return LexedToken(yy::parser::make_VARID(classified.text, loc), TokenEffects{.closes_atom = true});
+                                        return LexedToken(yy::parser::make_VARID(classified.text, loc),
+                                                          TokenEffects{.closes_atom = true, .layout_after = layout_after});
                                     }
 <INITIAL,option_prags>{conid}       return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), loc), TokenEffects{.closes_atom = true});
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
@@ -300,6 +297,9 @@ signed       {negative}?
 // wrapper tokens that can be held while layout tokens are emitted first.
 yy::parser::symbol_type yylex(driver& drv)
 {
+    if (auto token = drv.take_pending_virtual_token())
+        return std::move(*token);
+
     if (not drv.has_pending_real_token())
     {
         auto token = raw_yylex(drv);

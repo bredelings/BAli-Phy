@@ -2,6 +2,7 @@
 # define DRIVER_HH
 # include <string>
 # include <string_view>
+# include <deque>
 # include <map>
 # include <optional>
 # include <set>
@@ -23,6 +24,9 @@ enum class LayoutIntent
 struct TokenEffects
 {
     bool closes_atom = false;
+    bool push_no_layout_context = false;
+    bool pop_context = false;
+    LayoutIntent layout_after = LayoutIntent::None;
 };
 
 struct LexedToken
@@ -98,6 +102,8 @@ class driver
     std::map<std::string,yy::parser::token_type> reserved_symbols;
 
     bool next_real_token_starts_line = false;
+    LayoutIntent pending_layout_intent = LayoutIntent::None;
+    std::deque<symbol_type> pending_virtual_tokens;
     std::optional<LexedToken> pending_real_token;
 
 public:
@@ -121,6 +127,7 @@ public:
     void commit_token(const LexedToken& token);
     void mark_next_real_token_starts_line() {next_real_token_starts_line = true;}
     bool take_next_real_token_starts_line();
+    std::optional<symbol_type> take_pending_virtual_token();
     bool has_pending_real_token() const {return pending_real_token.has_value();}
     void set_pending_real_token(LexedToken&& token) {pending_real_token.emplace(std::move(token));}
     std::optional<symbol_type> layout_before_pending_real();

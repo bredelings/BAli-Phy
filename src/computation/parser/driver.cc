@@ -76,6 +76,15 @@ void driver::commit_token(const LexedToken& token)
 {
     if (token.effects.closes_atom)
         mark_token_closes_atom();
+
+    if (token.effects.push_no_layout_context)
+        push_context();
+
+    if (token.effects.pop_context)
+        pop_context();
+
+    if (token.effects.layout_after != LayoutIntent::None)
+        pending_layout_intent = token.effects.layout_after;
 }
 
 // Return and clear the line-start marker accumulated while raw scanning
@@ -87,15 +96,62 @@ bool driver::take_next_real_token_starts_line()
     return starts_line;
 }
 
+// Return queued virtual layout tokens that do not require recomputing layout
+// against the pending real token.
+std::optional<driver::symbol_type> driver::take_pending_virtual_token()
+{
+    if (pending_virtual_tokens.empty())
+        return {};
+
+    auto token = std::move(pending_virtual_tokens.front());
+    pending_virtual_tokens.pop_front();
+    return token;
+}
+
 // Insert BOL layout tokens before the pending real token. Rechecking the same
 // pending token handles multiple virtual close braces at one source location.
 std::optional<driver::symbol_type> driver::layout_before_pending_real()
 {
     if (not pending_real_token or not pending_real_token->starts_line)
-        return {};
+    {
+        if (not pending_real_token or pending_layout_intent == LayoutIntent::None)
+            return {};
+    }
 
     auto loc = pending_real_token->symbol.location;
     loc.end = loc.begin;
+
+    if (pending_layout_intent != LayoutIntent::None)
+    {
+        pending_layout_intent = LayoutIntent::None;
+        auto kind = pending_real_token->symbol.kind();
+
+        if (kind == yy::parser::symbol_kind::S_OCURLY)
+        {
+            pending_real_token->starts_line = false;
+            if (auto layout_context = get_context())
+            {
+                if (layout_context->offset >= loc.end.column)
+                    throw yy::parser::syntax_error(loc, "Missing block");
+            }
+            return {};
+        }
+
+        if (auto layout_context = get_context())
+        {
+            if (layout_context->offset >= loc.end.column)
+            {
+                pending_real_token->starts_line = true;
+                pending_virtual_tokens.push_back(yy::parser::make_VCCURLY(loc));
+                return yy::parser::make_VOCURLY(loc);
+            }
+        }
+
+        pending_real_token->starts_line = false;
+        push_context({loc.end.column, true});
+        return yy::parser::make_VOCURLY(loc);
+    }
+
     auto kind = pending_real_token->symbol.kind();
     if (kind == yy::parser::symbol_kind::S_OCURLY or kind == yy::parser::symbol_kind::S_CCURLY)
     {
