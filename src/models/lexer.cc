@@ -1,6 +1,6 @@
-#line 2 "lexer.cc"
+#line 2 "src/models/lexer.cc"
 
-#line 4 "lexer.cc"
+#line 4 "src/models/lexer.cc"
 
 #define  YY_INT_ALIGNED short int
 
@@ -886,11 +886,11 @@ int yy_flex_debug = 1;
 
 static const flex_int16_t yy_rule_linenum[42] =
     {   0,
-      131,  132,  135,  138,  140,  141,  142,  143,  144,  145,
-      146,  147,  148,  149,  150,  151,  152,  153,  154,  155,
-      156,  157,  158,  159,  161,  162,  164,  165,  166,  167,
-      168,  169,  172,  173,  174,  175,  189,  191,  193,  194,
-      196
+      132,  133,  136,  139,  141,  142,  143,  144,  145,  146,
+      147,  148,  149,  150,  151,  152,  153,  154,  155,  156,
+      157,  158,  159,  160,  162,  163,  165,  166,  167,  168,
+      169,  170,  173,  174,  175,  176,  190,  192,  194,  195,
+      197
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -901,12 +901,13 @@ static const flex_int16_t yy_rule_linenum[42] =
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "lexer.l"
-#line 2 "lexer.l"
+#line 1 "src/models/lexer.l"
+#line 2 "src/models/lexer.l"
 # include <cerrno>
 # include <climits>
 # include <cstdlib>
 # include <string>
+# include <string_view>
 # include "driver.hh"
 # include "parser.hh"
 # include "util/string/convert.H"    
@@ -925,27 +926,27 @@ char *yytext;
 #endif
 
 // Forward declarations
-zz::parser::symbol_type zz_make_integer(int radix, bool positive, int shift,
+zz::parser::symbol_type zz_make_integer(std::string_view text, int radix, bool positive, int shift,
 				     const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_integer10(const zz::parser::location_type& loc);
+zz::parser::symbol_type zz_make_integer10(std::string_view text, const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_float(const zz::parser::location_type& loc);
+zz::parser::symbol_type zz_make_float(std::string_view text, const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_string(const zz::parser::location_type& loc);
+zz::parser::symbol_type zz_make_string(std::string_view text, const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_qvarsym(const zz::parser::location_type& loc);
+zz::parser::symbol_type zz_make_qvarsym(std::string_view text, const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_varsym(const zz::parser::location_type& loc);
+zz::parser::symbol_type zz_make_varsym(std::string_view text, const zz::parser::location_type& loc);
 
-#line 942 "lexer.cc"
+#line 943 "src/models/lexer.cc"
 #define YY_NO_INPUT 1
 #define YY_NO_UNISTD_H 1
-#line 104 "lexer.l"
+#line 105 "src/models/lexer.l"
   // Code run each time a pattern is matched.
   # define YY_USER_ACTION  loc.columns (yyleng);
-#line 948 "lexer.cc"
-#line 949 "lexer.cc"
+#line 949 "src/models/lexer.cc"
+#line 950 "src/models/lexer.cc"
 
 #define INITIAL 0
 
@@ -1233,10 +1234,10 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 108 "lexer.l"
+#line 109 "src/models/lexer.l"
 
 
-#line 111 "lexer.l"
+#line 112 "src/models/lexer.l"
   /* Code run each time yylex is called. */
 
     // A handy shortcut to the location held by the driver.
@@ -1257,7 +1258,7 @@ YY_DECL
     loc.step ();
 
 
-#line 1261 "lexer.cc"
+#line 1262 "src/models/lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1335,187 +1336,187 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 131 "lexer.l"
+#line 132 "src/models/lexer.l"
 loc.step ();
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 132 "lexer.l"
+#line 133 "src/models/lexer.l"
 loc.step ();
 	YY_BREAK
 /* Comment */
 case 3:
 YY_RULE_SETUP
-#line 135 "lexer.l"
+#line 136 "src/models/lexer.l"
 loc.step();
 	YY_BREAK
 /* EOL */
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 138 "lexer.l"
+#line 139 "src/models/lexer.l"
 loc.lines(1); loc.step ();
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 140 "lexer.l"
+#line 141 "src/models/lexer.l"
 return zz::parser::make_OPAREN (loc);
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 141 "lexer.l"
+#line 142 "src/models/lexer.l"
 return zz::parser::make_CPAREN (loc);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 142 "lexer.l"
+#line 143 "src/models/lexer.l"
 return zz::parser::make_BAR    (loc);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 143 "lexer.l"
+#line 144 "src/models/lexer.l"
 return zz::parser::make_OBRACK (loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 144 "lexer.l"
+#line 145 "src/models/lexer.l"
 return zz::parser::make_CBRACK (loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 145 "lexer.l"
+#line 146 "src/models/lexer.l"
 return zz::parser::make_OCURLY (loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 146 "lexer.l"
+#line 147 "src/models/lexer.l"
 return zz::parser::make_CCURLY (loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 147 "lexer.l"
+#line 148 "src/models/lexer.l"
 return zz::parser::make_COMMA  (loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 148 "lexer.l"
+#line 149 "src/models/lexer.l"
 return zz::parser::make_EQUAL  (loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 149 "lexer.l"
+#line 150 "src/models/lexer.l"
 return zz::parser::make_SEMI   (loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 150 "lexer.l"
+#line 151 "src/models/lexer.l"
 return zz::parser::make_COLON  (loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 151 "lexer.l"
+#line 152 "src/models/lexer.l"
 return zz::parser::make_STACK  (loc);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 152 "lexer.l"
+#line 153 "src/models/lexer.l"
 return zz::parser::make_ARROW  (loc);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 153 "lexer.l"
+#line 154 "src/models/lexer.l"
 return zz::parser::make_AT     (loc);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 154 "lexer.l"
+#line 155 "src/models/lexer.l"
 return zz::parser::make_TILDE  (loc);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 155 "lexer.l"
+#line 156 "src/models/lexer.l"
 return zz::parser::make_PLUS   (loc);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 156 "lexer.l"
+#line 157 "src/models/lexer.l"
 return zz::parser::make_MINUS  (loc);
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 157 "lexer.l"
+#line 158 "src/models/lexer.l"
 return zz::parser::make_TIMES  (loc);
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 158 "lexer.l"
+#line 159 "src/models/lexer.l"
 return zz::parser::make_DIVIDE (loc);
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 159 "lexer.l"
+#line 160 "src/models/lexer.l"
 return zz::parser::make_MOD    (loc);
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 161 "lexer.l"
+#line 162 "src/models/lexer.l"
 return zz::parser::make_LE (loc);
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 162 "lexer.l"
+#line 163 "src/models/lexer.l"
 return zz::parser::make_GE (loc);
 	YY_BREAK
 /* Note that LT and GT are also used in types like List<a> */
 case 27:
 YY_RULE_SETUP
-#line 164 "lexer.l"
+#line 165 "src/models/lexer.l"
 return zz::parser::make_LT (loc);
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 165 "lexer.l"
+#line 166 "src/models/lexer.l"
 return zz::parser::make_GT (loc);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 166 "lexer.l"
+#line 167 "src/models/lexer.l"
 return zz::parser::make_EQ (loc);
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 167 "lexer.l"
+#line 168 "src/models/lexer.l"
 return zz::parser::make_NE (loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 168 "lexer.l"
+#line 169 "src/models/lexer.l"
 return zz::parser::make_AND (loc);
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 169 "lexer.l"
+#line 170 "src/models/lexer.l"
 return zz::parser::make_OR  (loc);
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 172 "lexer.l"
-return zz::parser::make_QVARID (yytext, loc);
+#line 173 "src/models/lexer.l"
+return zz::parser::make_QVARID (std::string(yytext, yyleng), loc);
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 173 "lexer.l"
-return zz::parser::make_QVARID (yytext, loc);
+#line 174 "src/models/lexer.l"
+return zz::parser::make_QVARID (std::string(yytext, yyleng), loc);
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 174 "lexer.l"
-return drv.varid(loc);
+#line 175 "src/models/lexer.l"
+return drv.varid(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 175 "lexer.l"
-return drv.varid(loc);
+#line 176 "src/models/lexer.l"
+return drv.varid(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 /* {varsym}      return zz_make_varsym(loc);
 
@@ -1530,42 +1531,42 @@ return drv.varid(loc);
  */
 case 37:
 YY_RULE_SETUP
-#line 189 "lexer.l"
-return zz_make_varsym(loc);
+#line 190 "src/models/lexer.l"
+return zz_make_varsym(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 191 "lexer.l"
-return zz_make_integer10(loc);
+#line 192 "src/models/lexer.l"
+return zz_make_integer10(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 193 "lexer.l"
-return zz_make_float(loc);
+#line 194 "src/models/lexer.l"
+return zz_make_float(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 194 "lexer.l"
-return zz_make_string(loc);
+#line 195 "src/models/lexer.l"
+return zz_make_string(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 196 "lexer.l"
+#line 197 "src/models/lexer.l"
 {
              throw zz::parser::syntax_error
                (loc, "invalid character: " + std::string(yytext));
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 201 "lexer.l"
+#line 202 "src/models/lexer.l"
 return zz::parser::make_END (loc);
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 202 "lexer.l"
+#line 203 "src/models/lexer.l"
 ECHO;
 	YY_BREAK
-#line 1569 "lexer.cc"
+#line 1570 "src/models/lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2728,7 +2729,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 202 "lexer.l"
+#line 203 "src/models/lexer.l"
 
 
 
@@ -2749,11 +2750,12 @@ zz_driver::scan_end ()
 
 using namespace yy;
 
-zz::parser::symbol_type zz_driver::varid(const zz::parser::location_type& loc) const
+zz::parser::symbol_type zz_driver::varid(std::string_view text, const zz::parser::location_type& loc) const
 {
-    auto it = reserved_words.find(yytext);
+    std::string token(text);
+    auto it = reserved_words.find(token);
     if (it == reserved_words.end())
-	return zz::parser::make_VARID  (yytext, loc);
+	return zz::parser::make_VARID  (token, loc);
     else
     {
 	auto tok = it->second.first;
@@ -2761,38 +2763,39 @@ zz::parser::symbol_type zz_driver::varid(const zz::parser::location_type& loc) c
     }
 }
 
-zz::parser::symbol_type zz_make_integer(int radix, bool positive, int shift,
+zz::parser::symbol_type zz_make_integer(std::string_view text, int radix, bool positive, int shift,
 				     const zz::parser::location_type& loc)
 {
     errno = 0;
-    auto n = std::stoi(yytext+shift, NULL, radix);
+    std::string token(text);
+    auto n = std::stoi(token.c_str()+shift, NULL, radix);
     if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))
-	throw zz::parser::syntax_error(loc, "integer is out of range: " + std::string(yytext));
+	throw zz::parser::syntax_error(loc, "integer is out of range: " + token);
     if (not positive)
 	n = -n;
     return zz::parser::make_INTEGER(n, loc);
 }
 
-zz::parser::symbol_type zz_make_integer10(const zz::parser::location_type& loc)
+zz::parser::symbol_type zz_make_integer10(std::string_view text, const zz::parser::location_type& loc)
 {
     int shift = 0;
     bool positive = true;
-    if (yytext[0] == '-')
+    if (text[0] == '-')
     {
         shift++;
         positive = false;
     }
-    return zz_make_integer(10, positive, shift, loc);
+    return zz_make_integer(text, 10, positive, shift, loc);
 }
 
-zz::parser::symbol_type zz_make_float(const zz::parser::location_type& loc)
+zz::parser::symbol_type zz_make_float(std::string_view text, const zz::parser::location_type& loc)
 {
-    std::string s(yytext);
-    double d = convertTo<double>(std::string(yytext));
+    std::string s(text);
+    double d = convertTo<double>(s);
     return zz::parser::make_FLOAT(d,loc);
 }
 
-char zz_get_char(const char* s, int& i)
+char zz_get_char(std::string_view s, int& i)
 {
     char c = s[i];
     if (c == '\\')
@@ -2823,35 +2826,35 @@ char zz_get_char(const char* s, int& i)
     return c;
 }
 
-zz::parser::symbol_type zz_make_string(const zz::parser::location_type& loc)
+zz::parser::symbol_type zz_make_string(std::string_view text, const zz::parser::location_type& loc)
 {
     std::string s;
-    s.resize(yyleng);
+    s.resize(text.size());
     int j=0;
-    for(int i=1;i<yyleng-1;i++)
-	s[j++] = zz_get_char(yytext,i);
+    for(int i=1;i<text.size()-1;i++)
+	s[j++] = zz_get_char(text,i);
     s.resize(j);
     return zz::parser::make_STRING(s,loc);
 }
 
-zz::parser::symbol_type zz_make_qvarsym(const zz::parser::location_type& loc)
+zz::parser::symbol_type zz_make_qvarsym(std::string_view text, const zz::parser::location_type& loc)
 {
-    return zz::parser::make_QVARSYM(yytext,loc);    
+    return zz::parser::make_QVARSYM(std::string(text),loc);
 }
 
-zz::parser::symbol_type zz_make_varsym(const zz::parser::location_type& loc)
+zz::parser::symbol_type zz_make_varsym(std::string_view text, const zz::parser::location_type& loc)
 {
     // Right now we are not using this.
     // We need to parser recognized varsyms as their own tokens to take advantage of
     //   the associativity and precedence rules in the parser.
     
-    if (std::string_view(yytext) == "/")
+    if (text == "/")
         return zz::parser::make_DIVIDE (loc);
 
     // Put other special symbols here
 
     else
-        return zz::parser::make_VARSYM(yytext,loc);    
+        return zz::parser::make_VARSYM(std::string(text),loc);
 }
 
 void zz_use_things() {

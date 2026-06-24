@@ -1,6 +1,7 @@
 #ifndef ZZ_DRIVER_HH
 # define ZZ_DRIVER_HH
 # include <string>
+# include <string_view>
 # include <map>
 # include <set>
 # include "parser.hh"
@@ -33,7 +34,7 @@ public:
 
     int get_start_token();
 
-    zz::parser::symbol_type varid(const zz::parser::location_type& loc) const;
+    zz::parser::symbol_type varid(std::string_view text, const zz::parser::location_type& loc) const;
 
     void push_error_message(const location_type& loc, const std::string& err);
     void pop_error_message();

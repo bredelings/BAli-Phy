@@ -3,6 +3,7 @@
 # include <climits>
 # include <cstdlib>
 # include <string>
+# include <string_view>
 # include "driver.hh"
 # include "parser.hh"
 # include "util/string/convert.H"    
@@ -21,18 +22,18 @@
 #endif
 
 // Forward declarations
-zz::parser::symbol_type zz_make_integer(int radix, bool positive, int shift,
+zz::parser::symbol_type zz_make_integer(std::string_view text, int radix, bool positive, int shift,
 				     const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_integer10(const zz::parser::location_type& loc);
+zz::parser::symbol_type zz_make_integer10(std::string_view text, const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_float(const zz::parser::location_type& loc);
+zz::parser::symbol_type zz_make_float(std::string_view text, const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_string(const zz::parser::location_type& loc);
+zz::parser::symbol_type zz_make_string(std::string_view text, const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_qvarsym(const zz::parser::location_type& loc);
+zz::parser::symbol_type zz_make_qvarsym(std::string_view text, const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_varsym(const zz::parser::location_type& loc);
+zz::parser::symbol_type zz_make_varsym(std::string_view text, const zz::parser::location_type& loc);
 
 %}
 
@@ -168,10 +169,10 @@ signed       {negative}?
 "||"     return zz::parser::make_OR  (loc);
 
 
-{qvarid}      return zz::parser::make_QVARID (yytext, loc);
-{qconid}      return zz::parser::make_QVARID (yytext, loc);
-{varid}       return drv.varid(loc);
-{conid}       return drv.varid(loc);
+{qvarid}      return zz::parser::make_QVARID (std::string(yytext, yyleng), loc);
+{qconid}      return zz::parser::make_QVARID (std::string(yytext, yyleng), loc);
+{varid}       return drv.varid(std::string_view(yytext, yyleng), loc);
+{conid}       return drv.varid(std::string_view(yytext, yyleng), loc);
 
  /* {varsym}      return zz_make_varsym(loc);
 
@@ -185,12 +186,12 @@ signed       {negative}?
     Maybe we should have a different parser for types?
  */
 
-{qvarsym}     return zz_make_varsym(loc);
+{qvarsym}     return zz_make_varsym(std::string_view(yytext, yyleng), loc);
 
-{decimal}                              return zz_make_integer10(loc);
+{decimal}                              return zz_make_integer10(std::string_view(yytext, yyleng), loc);
 
-{floating_point}                       return zz_make_float(loc);
-[\"]({graphicnonqq}|" "|{escape})*[\"]   return zz_make_string(loc);
+{floating_point}                       return zz_make_float(std::string_view(yytext, yyleng), loc);
+[\"]({graphicnonqq}|" "|{escape})*[\"]   return zz_make_string(std::string_view(yytext, yyleng), loc);
 
 <*>.          {
              throw zz::parser::syntax_error
@@ -218,11 +219,12 @@ zz_driver::scan_end ()
 
 using namespace yy;
 
-zz::parser::symbol_type zz_driver::varid(const zz::parser::location_type& loc) const
+zz::parser::symbol_type zz_driver::varid(std::string_view text, const zz::parser::location_type& loc) const
 {
-    auto it = reserved_words.find(yytext);
+    std::string token(text);
+    auto it = reserved_words.find(token);
     if (it == reserved_words.end())
-	return zz::parser::make_VARID  (yytext, loc);
+	return zz::parser::make_VARID  (token, loc);
     else
     {
 	auto tok = it->second.first;
@@ -230,38 +232,39 @@ zz::parser::symbol_type zz_driver::varid(const zz::parser::location_type& loc) c
     }
 }
 
-zz::parser::symbol_type zz_make_integer(int radix, bool positive, int shift,
+zz::parser::symbol_type zz_make_integer(std::string_view text, int radix, bool positive, int shift,
 				     const zz::parser::location_type& loc)
 {
     errno = 0;
-    auto n = std::stoi(yytext+shift, NULL, radix);
+    std::string token(text);
+    auto n = std::stoi(token.c_str()+shift, NULL, radix);
     if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))
-	throw zz::parser::syntax_error(loc, "integer is out of range: " + std::string(yytext));
+	throw zz::parser::syntax_error(loc, "integer is out of range: " + token);
     if (not positive)
 	n = -n;
     return zz::parser::make_INTEGER(n, loc);
 }
 
-zz::parser::symbol_type zz_make_integer10(const zz::parser::location_type& loc)
+zz::parser::symbol_type zz_make_integer10(std::string_view text, const zz::parser::location_type& loc)
 {
     int shift = 0;
     bool positive = true;
-    if (yytext[0] == '-')
+    if (text[0] == '-')
     {
         shift++;
         positive = false;
     }
-    return zz_make_integer(10, positive, shift, loc);
+    return zz_make_integer(text, 10, positive, shift, loc);
 }
 
-zz::parser::symbol_type zz_make_float(const zz::parser::location_type& loc)
+zz::parser::symbol_type zz_make_float(std::string_view text, const zz::parser::location_type& loc)
 {
-    std::string s(yytext);
-    double d = convertTo<double>(std::string(yytext));
+    std::string s(text);
+    double d = convertTo<double>(s);
     return zz::parser::make_FLOAT(d,loc);
 }
 
-char zz_get_char(const char* s, int& i)
+char zz_get_char(std::string_view s, int& i)
 {
     char c = s[i];
     if (c == '\\')
@@ -292,35 +295,35 @@ char zz_get_char(const char* s, int& i)
     return c;
 }
 
-zz::parser::symbol_type zz_make_string(const zz::parser::location_type& loc)
+zz::parser::symbol_type zz_make_string(std::string_view text, const zz::parser::location_type& loc)
 {
     std::string s;
-    s.resize(yyleng);
+    s.resize(text.size());
     int j=0;
-    for(int i=1;i<yyleng-1;i++)
-	s[j++] = zz_get_char(yytext,i);
+    for(int i=1;i<text.size()-1;i++)
+	s[j++] = zz_get_char(text,i);
     s.resize(j);
     return zz::parser::make_STRING(s,loc);
 }
 
-zz::parser::symbol_type zz_make_qvarsym(const zz::parser::location_type& loc)
+zz::parser::symbol_type zz_make_qvarsym(std::string_view text, const zz::parser::location_type& loc)
 {
-    return zz::parser::make_QVARSYM(yytext,loc);    
+    return zz::parser::make_QVARSYM(std::string(text),loc);
 }
 
-zz::parser::symbol_type zz_make_varsym(const zz::parser::location_type& loc)
+zz::parser::symbol_type zz_make_varsym(std::string_view text, const zz::parser::location_type& loc)
 {
     // Right now we are not using this.
     // We need to parser recognized varsyms as their own tokens to take advantage of
     //   the associativity and precedence rules in the parser.
     
-    if (std::string_view(yytext) == "/")
+    if (text == "/")
         return zz::parser::make_DIVIDE (loc);
 
     // Put other special symbols here
 
     else
-        return zz::parser::make_VARSYM(yytext,loc);    
+        return zz::parser::make_VARSYM(std::string(text),loc);
 }
 
 void zz_use_things() {
