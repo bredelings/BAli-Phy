@@ -76,84 +76,84 @@ driver::driver (const LanguageExtensions& exts)
     using namespace yy;
 
     reserved_words = {
-        {"_",{parser::token::TOK_UNDERSCORE,0}},
-        {"as",{parser::token::TOK_AS,0}},
-        {"anyclass",{parser::token::TOK_ANYCLASS,0}},
-        {"bpcall",{parser::token::TOK_BPCALL,0}},
-        {"case",{parser::token::TOK_CASE,0}},
-        {"class",{parser::token::TOK_CLASS,0}},
-        {"data",{parser::token::TOK_DATA,0}},
-        {"default",{parser::token::TOK_DEFAULT,0}},
-        {"deriving",{parser::token::TOK_DERIVING,0}},
-        {"do",{parser::token::TOK_DO,0}},
-        {"ecall",{parser::token::TOK_ECALL,0}},
-        {"else",{parser::token::TOK_ELSE,0}},
-        {"family",{parser::token::TOK_FAMILY,0}},
-        {"forall",{parser::token::TOK_FORALL,0}},
-        {"foreign",{parser::token::TOK_FOREIGN,0}},
-        {"hiding",{parser::token::TOK_HIDING,0}},
-        {"if",{parser::token::TOK_IF,0}},
-        {"import",{parser::token::TOK_IMPORT,0}},
-        {"in",{parser::token::TOK_IN,0}},
-        {"infix",{parser::token::TOK_INFIX,0}},
-        {"infixl",{parser::token::TOK_INFIXL,0}},
-        {"infixr",{parser::token::TOK_INFIXR,0}},
-        {"instance",{parser::token::TOK_INSTANCE,0}},
-        {"let",{parser::token::TOK_LET,0}},
-        {"module",{parser::token::TOK_MODULE,0}},
-        {"newtype",{parser::token::TOK_NEWTYPE,0}},
-        {"of",{parser::token::TOK_OF,0}},
-        {"qualified",{parser::token::TOK_QUALIFIED,0}},
-        {"then",{parser::token::TOK_THEN,0}},
-        {"trcall",{parser::token::TOK_TRCALL,0}},
-        {"type",{parser::token::TOK_TYPE,0}},
-        {"mdo", {parser::token::TOK_MDO,0}},
-        {"rec", {parser::token::TOK_REC,0}},
-        {"role", {parser::token::TOK_ROLE,0}},
-        {"stock", {parser::token::TOK_STOCK,0}},
-        {"via", {parser::token::TOK_VIA,0}},
-        {"where",{parser::token::TOK_WHERE,0}}
+        {"_", parser::token::TOK_UNDERSCORE},
+        {"as", parser::token::TOK_AS},
+        {"anyclass", parser::token::TOK_ANYCLASS},
+        {"bpcall", parser::token::TOK_BPCALL},
+        {"case", parser::token::TOK_CASE},
+        {"class", parser::token::TOK_CLASS},
+        {"data", parser::token::TOK_DATA},
+        {"default", parser::token::TOK_DEFAULT},
+        {"deriving", parser::token::TOK_DERIVING},
+        {"do", parser::token::TOK_DO},
+        {"ecall", parser::token::TOK_ECALL},
+        {"else", parser::token::TOK_ELSE},
+        {"family", parser::token::TOK_FAMILY},
+        {"forall", parser::token::TOK_FORALL},
+        {"foreign", parser::token::TOK_FOREIGN},
+        {"hiding", parser::token::TOK_HIDING},
+        {"if", parser::token::TOK_IF},
+        {"import", parser::token::TOK_IMPORT},
+        {"in", parser::token::TOK_IN},
+        {"infix", parser::token::TOK_INFIX},
+        {"infixl", parser::token::TOK_INFIXL},
+        {"infixr", parser::token::TOK_INFIXR},
+        {"instance", parser::token::TOK_INSTANCE},
+        {"let", parser::token::TOK_LET},
+        {"module", parser::token::TOK_MODULE},
+        {"newtype", parser::token::TOK_NEWTYPE},
+        {"of", parser::token::TOK_OF},
+        {"qualified", parser::token::TOK_QUALIFIED},
+        {"then", parser::token::TOK_THEN},
+        {"trcall", parser::token::TOK_TRCALL},
+        {"type", parser::token::TOK_TYPE},
+        {"mdo", parser::token::TOK_MDO},
+        {"rec", parser::token::TOK_REC},
+        {"role", parser::token::TOK_ROLE},
+        {"stock", parser::token::TOK_STOCK},
+        {"via", parser::token::TOK_VIA},
+        {"where", parser::token::TOK_WHERE}
     };
 
     tight_infix_reserved_symbols = {
-        {"@",{parser::token::TOK_TIGHT_INFIX_AT,0}},
-        {"-",{parser::token::TOK_MINUS,0}}
+        {"@", parser::token::TOK_TIGHT_INFIX_AT},
+        {"-", parser::token::TOK_MINUS}
     };
 
     prefix_reserved_symbols = {
-        {"~",{parser::token::TOK_PREFIX_TILDE,0}},
-        {"!",{parser::token::TOK_PREFIX_BANG,0}},
-        {"@",{parser::token::TOK_PREFIX_AT,0}},
-        {"-",{parser::token::TOK_PREFIX_MINUS,0}}
+        {"~", parser::token::TOK_PREFIX_TILDE},
+        {"!", parser::token::TOK_PREFIX_BANG},
+        {"@", parser::token::TOK_PREFIX_AT},
+        {"-", parser::token::TOK_PREFIX_MINUS}
     };
 
     if (lang_exts.has_extension(LangExt::OverloadedRecordDot))
     {
-        tight_infix_reserved_symbols.insert({".",{parser::token::TOK_TIGHT_INFIX_DOT,0}});
-        prefix_reserved_symbols.insert({".",{parser::token::TOK_PREFIX_DOT,0}});
+        tight_infix_reserved_symbols.insert({".", parser::token::TOK_TIGHT_INFIX_DOT});
+        prefix_reserved_symbols.insert({".", parser::token::TOK_PREFIX_DOT});
     }
 
     reserved_symbols = {
-        {"..",{parser::token::TOK_DOTDOT,0}},
-        {":",{parser::token::TOK_COLON,0}},
-        {"::",{parser::token::TOK_DCOLON,0}},
-        {"=",{parser::token::TOK_EQUAL,0}},
-        {"\\",{parser::token::TOK_LAM,0}},
-        {"|",{parser::token::TOK_VBAR,0}},
-        {"<-",{parser::token::TOK_LARROW,0}},
-        {"->",{parser::token::TOK_RARROW,0}},
-        {"=>",{parser::token::TOK_DARROW,0}},
-        {".",{parser::token::TOK_DOT,0}} /* remove this */
+        {"..", parser::token::TOK_DOTDOT},
+        {":", parser::token::TOK_COLON},
+        {"::", parser::token::TOK_DCOLON},
+        {"=", parser::token::TOK_EQUAL},
+        {"\\", parser::token::TOK_LAM},
+        {"|", parser::token::TOK_VBAR},
+        {"<-", parser::token::TOK_LARROW},
+        {"->", parser::token::TOK_RARROW},
+        {"=>", parser::token::TOK_DARROW},
+        {".", parser::token::TOK_DOT} /* remove this */
     };
 
     if (not lang_exts.has_extension(LangExt::LexicalNegation))
     {
-        reserved_symbols.insert({"-",{parser::token::TOK_MINUS,0}});
+        reserved_symbols.insert({"-", parser::token::TOK_MINUS});
     }
 
     if (not lang_exts.has_extension(LangExt::StarIsType))
     {
-        reserved_symbols.insert({"*",{parser::token::TOK_STAR,0}});
+        reserved_symbols.insert({"*", parser::token::TOK_STAR});
     }
 }
 

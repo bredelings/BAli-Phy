@@ -32,10 +32,10 @@ class driver
 
     LanguageExtensions lang_exts;
 
-    std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_words;
-    std::map<std::string,std::pair<yy::parser::token_type,int>> tight_infix_reserved_symbols;
-    std::map<std::string,std::pair<yy::parser::token_type,int>> prefix_reserved_symbols;
-    std::map<std::string,std::pair<yy::parser::token_type,int>> reserved_symbols;
+    std::map<std::string,yy::parser::token_type> reserved_words;
+    std::map<std::string,yy::parser::token_type> tight_infix_reserved_symbols;
+    std::map<std::string,yy::parser::token_type> prefix_reserved_symbols;
+    std::map<std::string,yy::parser::token_type> reserved_symbols;
 
 public:
     driver (const LanguageExtensions& lang_exts);

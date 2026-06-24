@@ -3099,7 +3099,7 @@ yy::parser::symbol_type driver::varid(std::string_view text, const yy::parser::l
 	return yy::parser::make_VARID  (token, loc);
     else
     {
-	auto tok = it->second.first;
+	auto tok = it->second;
 	// Audit note: keyword classification still mutates flex start state.
 	// A later cleanup should return scanner-mode intent instead.
 	switch(tok)
@@ -3141,7 +3141,7 @@ yy::parser::symbol_type driver::varsym(std::string_view text, bool precededByClo
         auto it = tight_infix_reserved_symbols.find(token);
         if (it != tight_infix_reserved_symbols.end())
         {
-            auto tok = it->second.first;
+            auto tok = it->second;
             return yy::parser::symbol_type(tok, loc);
         }
     }
@@ -3152,7 +3152,7 @@ yy::parser::symbol_type driver::varsym(std::string_view text, bool precededByClo
         auto it = prefix_reserved_symbols.find(token);
         if (it != prefix_reserved_symbols.end())
         {
-            auto tok = it->second.first;
+            auto tok = it->second;
             return yy::parser::symbol_type(tok, loc);
         }
     }
@@ -3163,7 +3163,7 @@ yy::parser::symbol_type driver::varsym(std::string_view text, bool precededByClo
 	return yy::parser::make_VARSYM  (token, loc);
 
     // general varsyms
-    auto tok = it->second.first;
+    auto tok = it->second;
     return yy::parser::symbol_type(tok, loc);
 }
 
@@ -3175,7 +3175,7 @@ yy::parser::symbol_type driver::consym(std::string_view text, const yy::parser::
 	return yy::parser::make_CONSYM  (token, loc);
     else
     {
-	auto tok = it->second.first;
+	auto tok = it->second;
 	return yy::parser::symbol_type(tok, loc);
     }
 }
