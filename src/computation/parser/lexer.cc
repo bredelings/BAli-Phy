@@ -1068,8 +1068,8 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
    If we don't do so, then bad escapes fail to lex and fall through to "invalid character" error message. */
 #line 128 "lexer.l"
   // Audit note: this flex hook is still an implicit side-effect point for
-  // location columns and closing-token tracking.
-  # define YY_USER_ACTION  loc.columns (yyleng); drv.step_closing_token();
+  // location columns and left-adjacency tracking.
+  # define YY_USER_ACTION  loc.columns (yyleng); drv.advance_left_adjacency_window();
 #line 1074 "lexer.cc"
 #line 1075 "lexer.cc"
 
@@ -1667,7 +1667,7 @@ return yy::parser::make_OPAREN (loc);
 case 28:
 YY_RULE_SETUP
 #line 214 "lexer.l"
-drv.set_closing_token(); return yy::parser::make_CPAREN (loc);
+drv.mark_token_closes_atom(); return yy::parser::make_CPAREN (loc);
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
@@ -1677,7 +1677,7 @@ return yy::parser::make_OBRACK (loc);
 case 30:
 YY_RULE_SETUP
 #line 216 "lexer.l"
-drv.set_closing_token(); return yy::parser::make_CBRACK (loc);
+drv.mark_token_closes_atom(); return yy::parser::make_CBRACK (loc);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
@@ -1704,23 +1704,23 @@ drv.push_context(); return yy::parser::make_OCURLY (loc);
 case 35:
 YY_RULE_SETUP
 #line 224 "lexer.l"
-drv.set_closing_token(); drv.pop_context(); return yy::parser::make_CCURLY (loc);
+drv.mark_token_closes_atom(); drv.pop_context(); return yy::parser::make_CCURLY (loc);
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
 #line 226 "lexer.l"
-drv.set_closing_token(); return yy::parser::make_QVARID (std::string(yytext, yyleng), loc);
+drv.mark_token_closes_atom(); return yy::parser::make_QVARID (std::string(yytext, yyleng), loc);
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
 #line 227 "lexer.l"
-drv.set_closing_token(); return yy::parser::make_QCONID (std::string(yytext, yyleng), loc);
+drv.mark_token_closes_atom(); return yy::parser::make_QCONID (std::string(yytext, yyleng), loc);
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
 #line 228 "lexer.l"
 {
-                                      drv.set_closing_token();
+                                      drv.mark_token_closes_atom();
                                       auto classified = drv.classify_varid(std::string_view(yytext, yyleng));
                                       switch(classified.layout_after)
                                       {
@@ -1745,7 +1745,7 @@ YY_RULE_SETUP
 case 39:
 YY_RULE_SETUP
 #line 250 "lexer.l"
-drv.set_closing_token(); return yy::parser::make_CONID  (std::string(yytext, yyleng), loc);
+drv.mark_token_closes_atom(); return yy::parser::make_CONID  (std::string(yytext, yyleng), loc);
 	YY_BREAK
 /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 case 40:
@@ -1756,7 +1756,7 @@ YY_RULE_SETUP
 #line 254 "lexer.l"
 {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.check_closing_token(), false));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
@@ -1771,7 +1771,7 @@ YY_RULE_SETUP
 #line 262 "lexer.l"
 {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.check_closing_token(), true));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), true));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
@@ -1783,7 +1783,7 @@ YY_RULE_SETUP
 #line 270 "lexer.l"
 {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.check_closing_token(), false));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
@@ -1808,46 +1808,46 @@ return drv.consym(std::string_view(yytext, yyleng), loc);
 case 46:
 YY_RULE_SETUP
 #line 283 "lexer.l"
-drv.set_closing_token(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
+drv.mark_token_closes_atom(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
 #line 284 "lexer.l"
-drv.set_closing_token(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
+drv.mark_token_closes_atom(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
 #line 285 "lexer.l"
-drv.set_closing_token(); return make_integer10(std::string_view(yytext, yyleng), loc);
+drv.mark_token_closes_atom(); return make_integer10(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
 case 49:
 YY_RULE_SETUP
 #line 287 "lexer.l"
-drv.set_closing_token(); return make_integer(std::string_view(yytext, yyleng), 8,true,2,loc);
+drv.mark_token_closes_atom(); return make_integer(std::string_view(yytext, yyleng), 8,true,2,loc);
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
 #line 288 "lexer.l"
-drv.set_closing_token(); return make_integer(std::string_view(yytext, yyleng),16,true,2,loc);
+drv.mark_token_closes_atom(); return make_integer(std::string_view(yytext, yyleng),16,true,2,loc);
 	YY_BREAK
 /* negative literals depend on an extension */
 case 51:
 YY_RULE_SETUP
 #line 291 "lexer.l"
-drv.set_closing_token(); return make_rational(std::string_view(yytext, yyleng), loc);
+drv.mark_token_closes_atom(); return make_rational(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 /* Its important that we only allow escaped quotes inside char or string literals */
 case 52:
 YY_RULE_SETUP
 #line 294 "lexer.l"
-drv.set_closing_token(); return make_char(std::string_view(yytext, yyleng), loc, drv);
+drv.mark_token_closes_atom(); return make_char(std::string_view(yytext, yyleng), loc, drv);
 	YY_BREAK
 case 53:
 /* rule 53 can match eol */
 YY_RULE_SETUP
 #line 295 "lexer.l"
-drv.set_closing_token(); return make_string(std::string_view(yytext, yyleng), loc, drv);
+drv.mark_token_closes_atom(); return make_string(std::string_view(yytext, yyleng), loc, drv);
 	YY_BREAK
 case 54:
 YY_RULE_SETUP

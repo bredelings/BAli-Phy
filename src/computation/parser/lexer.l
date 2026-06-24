@@ -126,8 +126,8 @@ signed       {negative}?
 
 %{
   // Audit note: this flex hook is still an implicit side-effect point for
-  // location columns and closing-token tracking.
-  # define YY_USER_ACTION  loc.columns (yyleng); drv.step_closing_token();
+  // location columns and left-adjacency tracking.
+  # define YY_USER_ACTION  loc.columns (yyleng); drv.advance_left_adjacency_window();
 %}
 
 %%
@@ -210,9 +210,9 @@ signed       {negative}?
   /* unboxed tuples: (# and #) */
 
 <INITIAL,option_prags>"("      return yy::parser::make_OPAREN (loc);
-<INITIAL,option_prags>")"      drv.set_closing_token(); return yy::parser::make_CPAREN (loc);
+<INITIAL,option_prags>")"      drv.mark_token_closes_atom(); return yy::parser::make_CPAREN (loc);
 <INITIAL,option_prags>"["      return yy::parser::make_OBRACK (loc);
-<INITIAL,option_prags>"]"      drv.set_closing_token(); return yy::parser::make_CBRACK (loc);
+<INITIAL,option_prags>"]"      drv.mark_token_closes_atom(); return yy::parser::make_CBRACK (loc);
 <INITIAL,option_prags>","      return yy::parser::make_COMMA  (loc);
 <INITIAL,option_prags>";"      return yy::parser::make_SEMI   (loc);
 <INITIAL,option_prags>"`"      return yy::parser::make_BACKQUOTE (loc);
@@ -220,12 +220,12 @@ signed       {negative}?
   /* action: push a "NoLayout" context into the stack */
 "{"      drv.push_context(); return yy::parser::make_OCURLY (loc);
   /* action: pop the top context from the stack */
-"}"      drv.set_closing_token(); drv.pop_context(); return yy::parser::make_CCURLY (loc);
+"}"      drv.mark_token_closes_atom(); drv.pop_context(); return yy::parser::make_CCURLY (loc);
 
-<INITIAL,option_prags>{qvarid}      drv.set_closing_token(); return yy::parser::make_QVARID (std::string(yytext, yyleng), loc);
-<INITIAL,option_prags>{qconid}      drv.set_closing_token(); return yy::parser::make_QCONID (std::string(yytext, yyleng), loc);
+<INITIAL,option_prags>{qvarid}      drv.mark_token_closes_atom(); return yy::parser::make_QVARID (std::string(yytext, yyleng), loc);
+<INITIAL,option_prags>{qconid}      drv.mark_token_closes_atom(); return yy::parser::make_QCONID (std::string(yytext, yyleng), loc);
 <INITIAL,option_prags>{varid}       {
-                                      drv.set_closing_token();
+                                      drv.mark_token_closes_atom();
                                       auto classified = drv.classify_varid(std::string_view(yytext, yyleng));
                                       switch(classified.layout_after)
                                       {
@@ -246,13 +246,13 @@ signed       {negative}?
                                       else
                                         return yy::parser::make_VARID(classified.text, loc);
                                     }
-<INITIAL,option_prags>{conid}       drv.set_closing_token(); return yy::parser::make_CONID  (std::string(yytext, yyleng), loc);
+<INITIAL,option_prags>{conid}       drv.mark_token_closes_atom(); return yy::parser::make_CONID  (std::string(yytext, yyleng), loc);
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 
 <INITIAL>{varsym}/"{-"                   {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.check_closing_token(), false));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
@@ -260,7 +260,7 @@ signed       {negative}?
                                           }
 <INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.check_closing_token(), true));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), true));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
@@ -268,7 +268,7 @@ signed       {negative}?
                                           }
 <INITIAL>{varsym}                        {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.check_closing_token(), false));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
@@ -279,19 +279,19 @@ signed       {negative}?
 <INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (std::string(yytext, yyleng),loc);
 <INITIAL>{consym}       return drv.consym(std::string_view(yytext, yyleng), loc);
 
-<INITIAL>"-"{decimal}"#"                        drv.set_closing_token(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
-<INITIAL>{decimal}"#"                           drv.set_closing_token(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
-<INITIAL>{decimal}                              drv.set_closing_token(); return make_integer10(std::string_view(yytext, yyleng), loc);
+<INITIAL>"-"{decimal}"#"                        drv.mark_token_closes_atom(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
+<INITIAL>{decimal}"#"                           drv.mark_token_closes_atom(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
+<INITIAL>{decimal}                              drv.mark_token_closes_atom(); return make_integer10(std::string_view(yytext, yyleng), loc);
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
-<INITIAL>0[oO]{numspc}{octal}                   drv.set_closing_token(); return make_integer(std::string_view(yytext, yyleng), 8,true,2,loc);
-<INITIAL>0[xX]{numspc}{hexadecimal}             drv.set_closing_token(); return make_integer(std::string_view(yytext, yyleng),16,true,2,loc);
+<INITIAL>0[oO]{numspc}{octal}                   drv.mark_token_closes_atom(); return make_integer(std::string_view(yytext, yyleng), 8,true,2,loc);
+<INITIAL>0[xX]{numspc}{hexadecimal}             drv.mark_token_closes_atom(); return make_integer(std::string_view(yytext, yyleng),16,true,2,loc);
 
   /* negative literals depend on an extension */
-<INITIAL>{floating_point}                       drv.set_closing_token(); return make_rational(std::string_view(yytext, yyleng), loc);
+<INITIAL>{floating_point}                       drv.mark_token_closes_atom(); return make_rational(std::string_view(yytext, yyleng), loc);
 
   /* Its important that we only allow escaped quotes inside char or string literals */
-<INITIAL>\'({char})\'         drv.set_closing_token(); return make_char(std::string_view(yytext, yyleng), loc, drv);
-<INITIAL>[\"]({stringchar})*[\"]                drv.set_closing_token(); return make_string(std::string_view(yytext, yyleng), loc, drv);
+<INITIAL>\'({char})\'         drv.mark_token_closes_atom(); return make_char(std::string_view(yytext, yyleng), loc, drv);
+<INITIAL>[\"]({stringchar})*[\"]                drv.mark_token_closes_atom(); return make_string(std::string_view(yytext, yyleng), loc, drv);
 
 <*>.          {
              throw yy::parser::syntax_error

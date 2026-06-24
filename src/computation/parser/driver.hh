@@ -111,10 +111,14 @@ public:
     // The token's location used by the scanner.
     yy::location location;
 
-    int prec_close_count = 0;
-    void step_closing_token() {if (prec_close_count > 0) prec_close_count--;}
-    void set_closing_token() {prec_close_count = 2;}
-    bool check_closing_token() {return prec_close_count > 0;}
+    static constexpr int left_adjacency_window_size = 2;
+
+    // YY_USER_ACTION runs before each lexer action, including whitespace/comment
+    // actions. This window is visible only to an immediately adjacent token.
+    int left_adjacency_window = 0;
+    void advance_left_adjacency_window() {if (left_adjacency_window > 0) left_adjacency_window--;}
+    void mark_token_closes_atom() {left_adjacency_window = left_adjacency_window_size;}
+    bool left_adjacent_closes_atom() const {return left_adjacency_window > 0;}
 };
 
 Haskell::Module parse_module_file(const std::string& content, const std::string& input_name, const LanguageExtensions& lang_exts);
