@@ -1,6 +1,7 @@
 #ifndef DRIVER_HH
 # define DRIVER_HH
 # include <string>
+# include <string_view>
 # include <map>
 # include <set>
 # include "parser.hh"
@@ -53,10 +54,10 @@ public:
     symbol_type new_layout_context(const location_type& loc, bool strict, bool gen_semis, token_type tok);
     symbol_type do_layout_left(const location_type& loc);
     void pop() {}
-    yy::parser::symbol_type varid(const yy::parser::location_type& loc) const;
-    yy::parser::symbol_type varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc) const;
-    yy::parser::symbol_type consym(const yy::parser::location_type& loc) const;
-    std::optional<yy::parser::symbol_type> prag(const yy::parser::location_type& loc);
+    yy::parser::symbol_type varid(std::string_view text, const yy::parser::location_type& loc) const;
+    yy::parser::symbol_type varsym(std::string_view text, bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc) const;
+    yy::parser::symbol_type consym(std::string_view text, const yy::parser::location_type& loc) const;
+    std::optional<yy::parser::symbol_type> prag(std::string_view text, const yy::parser::location_type& loc);
 
     void push_warning_message(const location_type& loc, const Note& w);
     void push_error_message(const location_type& loc, const Note& e);
@@ -88,4 +89,3 @@ public:
 
 Haskell::Module parse_module_file(const std::string& content, const std::string& input_name, const LanguageExtensions& lang_exts);
 #endif // ! DRIVER_HH
-

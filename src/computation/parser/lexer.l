@@ -3,6 +3,7 @@
 # include <climits>
 # include <cstdlib>
 # include <string>
+# include <string_view>
 # include <regex>
 # include "driver.hh"
 # include "parser.hh"
@@ -21,20 +22,20 @@
 #endif
 
 // Forward declarations
-yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
+yy::parser::symbol_type make_integer(std::string_view text, int radix, bool positive, int shift,
 				     const yy::parser::location_type& loc);
 
-yy::parser::symbol_type make_boxed_integer(int radix, bool positive, int shift,
+yy::parser::symbol_type make_boxed_integer(std::string_view text, int radix, bool positive, int shift,
 				           const yy::parser::location_type& loc);
 
-yy::parser::symbol_type make_integer10(const yy::parser::location_type& loc);
+yy::parser::symbol_type make_integer10(std::string_view text, const yy::parser::location_type& loc);
 
-yy::parser::symbol_type make_boxed_integer10(const yy::parser::location_type& loc);
+yy::parser::symbol_type make_boxed_integer10(std::string_view text, const yy::parser::location_type& loc);
 
-yy::parser::symbol_type make_rational(const yy::parser::location_type& loc);
+yy::parser::symbol_type make_rational(std::string_view text, const yy::parser::location_type& loc);
 
-yy::parser::symbol_type make_char(const yy::parser::location_type& loc, driver& drv);
-yy::parser::symbol_type make_string(const yy::parser::location_type& loc, driver& drv);
+yy::parser::symbol_type make_char(std::string_view text, const yy::parser::location_type& loc, driver& drv);
+yy::parser::symbol_type make_string(std::string_view text, const yy::parser::location_type& loc, driver& drv);
 
 %}
 
@@ -193,9 +194,9 @@ signed       {negative}?
   /* <column_prag> */
 
   /* two-word pragmas */
-  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(loc)) return *prag; else yy_push_state(nested_comment); */
+  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(yytext, yyleng), loc)) return *prag; else yy_push_state(nested_comment); */
   /* one-word pragmas */
-<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+                           if (auto prag = drv.prag(loc)) return *prag; else yy_push_state(nested_comment);
+<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+                           if (auto prag = drv.prag(std::string_view(yytext, yyleng), loc)) return *prag; else yy_push_state(nested_comment);
   /* end pragma */
 <INITIAL,option_prags>"#-}"                                                    return yy::parser::make_CLOSE_PRAG(loc);
 
@@ -214,10 +215,10 @@ signed       {negative}?
   /* action: pop the top context from the stack */
 "}"      drv.set_closing_token(); drv.pop_context(); return yy::parser::make_CCURLY (loc);
 
-<INITIAL,option_prags>{qvarid}      drv.set_closing_token(); return yy::parser::make_QVARID (yytext, loc);
-<INITIAL,option_prags>{qconid}      drv.set_closing_token(); return yy::parser::make_QCONID (yytext, loc);
-<INITIAL,option_prags>{varid}       drv.set_closing_token(); return drv.varid(loc);
-<INITIAL,option_prags>{conid}       drv.set_closing_token(); return yy::parser::make_CONID  (yytext, loc);
+<INITIAL,option_prags>{qvarid}      drv.set_closing_token(); return yy::parser::make_QVARID (std::string(yytext, yyleng), loc);
+<INITIAL,option_prags>{qconid}      drv.set_closing_token(); return yy::parser::make_QCONID (std::string(yytext, yyleng), loc);
+<INITIAL,option_prags>{varid}       drv.set_closing_token(); return drv.varid(std::string_view(yytext, yyleng), loc);
+<INITIAL,option_prags>{conid}       drv.set_closing_token(); return yy::parser::make_CONID  (std::string(yytext, yyleng), loc);
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 
@@ -225,27 +226,27 @@ signed       {negative}?
      followedByOpening                       -> prefix
      precededByClosing                       -> suffix
      otherwise                               -> loose infix */
-<INITIAL>{varsym}/"{-"                   return drv.varsym(drv.check_closing_token(), false, loc);
-<INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    return drv.varsym(drv.check_closing_token(), true, loc);
-<INITIAL>{varsym}                        return drv.varsym(drv.check_closing_token(), false, loc);
+<INITIAL>{varsym}/"{-"                   return drv.varsym(std::string_view(yytext, yyleng), drv.check_closing_token(), false, loc);
+<INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    return drv.varsym(std::string_view(yytext, yyleng), drv.check_closing_token(), true, loc);
+<INITIAL>{varsym}                        return drv.varsym(std::string_view(yytext, yyleng), drv.check_closing_token(), false, loc);
 
-<INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (yytext,loc);
-<INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (yytext,loc);
-<INITIAL>{consym}       return drv.consym(loc);
+<INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (std::string(yytext, yyleng),loc);
+<INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (std::string(yytext, yyleng),loc);
+<INITIAL>{consym}       return drv.consym(std::string_view(yytext, yyleng), loc);
 
-<INITIAL>"-"{decimal}"#"                        drv.set_closing_token(); return make_boxed_integer10(loc);
-<INITIAL>{decimal}"#"                           drv.set_closing_token(); return make_boxed_integer10(loc);
-<INITIAL>{decimal}                              drv.set_closing_token(); return make_integer10(loc);
+<INITIAL>"-"{decimal}"#"                        drv.set_closing_token(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
+<INITIAL>{decimal}"#"                           drv.set_closing_token(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
+<INITIAL>{decimal}                              drv.set_closing_token(); return make_integer10(std::string_view(yytext, yyleng), loc);
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
-<INITIAL>0[oO]{numspc}{octal}                   drv.set_closing_token(); return make_integer( 8,true,2,loc);
-<INITIAL>0[xX]{numspc}{hexadecimal}             drv.set_closing_token(); return make_integer(16,true,2,loc);
+<INITIAL>0[oO]{numspc}{octal}                   drv.set_closing_token(); return make_integer(std::string_view(yytext, yyleng), 8,true,2,loc);
+<INITIAL>0[xX]{numspc}{hexadecimal}             drv.set_closing_token(); return make_integer(std::string_view(yytext, yyleng),16,true,2,loc);
 
   /* negative literals depend on an extension */
-<INITIAL>{floating_point}                       drv.set_closing_token(); return make_rational(loc);
+<INITIAL>{floating_point}                       drv.set_closing_token(); return make_rational(std::string_view(yytext, yyleng), loc);
 
   /* Its important that we only allow escaped quotes inside char or string literals */
-<INITIAL>\'({char})\'         drv.set_closing_token(); return make_char(loc, drv);
-<INITIAL>[\"]({stringchar})*[\"]                drv.set_closing_token(); return make_string(loc, drv);
+<INITIAL>\'({char})\'         drv.set_closing_token(); return make_char(std::string_view(yytext, yyleng), loc, drv);
+<INITIAL>[\"]({stringchar})*[\"]                drv.set_closing_token(); return make_string(std::string_view(yytext, yyleng), loc, drv);
 
 <*>.          {
              throw yy::parser::syntax_error
@@ -331,9 +332,9 @@ std::string clean_pragma(std::string prag)
     return join(words, ' ');
 }
 
-std::optional<yy::parser::symbol_type> driver::prag(const yy::parser::location_type& loc)
+std::optional<yy::parser::symbol_type> driver::prag(std::string_view text, const yy::parser::location_type& loc)
 {
-    auto prag = clean_pragma(yytext);
+    auto prag = clean_pragma(std::string(text));
     auto it = pragmas.find(prag);
     if (it == pragmas.end())
     {
@@ -344,11 +345,12 @@ std::optional<yy::parser::symbol_type> driver::prag(const yy::parser::location_t
         return it->second(loc);
 }
 
-yy::parser::symbol_type driver::varid(const yy::parser::location_type& loc) const
+yy::parser::symbol_type driver::varid(std::string_view text, const yy::parser::location_type& loc) const
 {
-    auto it = reserved_words.find(yytext);
+    std::string token(text);
+    auto it = reserved_words.find(token);
     if (it == reserved_words.end())
-	return yy::parser::make_VARID  (yytext, loc);
+	return yy::parser::make_VARID  (token, loc);
     else
     {
 	auto tok = it->second.first;
@@ -378,15 +380,17 @@ yy::parser::symbol_type driver::varid(const yy::parser::location_type& loc) cons
     }
 }
 
-yy::parser::symbol_type driver::varsym(bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc) const
+yy::parser::symbol_type driver::varsym(std::string_view text, bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc) const
 {
+    std::string token(text);
+
     // if loose infix occurrences are always operators, then:
     // if we handle type operators, then we should be able to parse (a ~ b) with ~ being a type operator.
 
     // tight infix reserved symbols
     if (precededByClosing and followedByOpening)
     {
-        auto it = tight_infix_reserved_symbols.find(yytext);
+        auto it = tight_infix_reserved_symbols.find(token);
         if (it != tight_infix_reserved_symbols.end())
         {
             auto tok = it->second.first;
@@ -397,7 +401,7 @@ yy::parser::symbol_type driver::varsym(bool precededByClosing, bool followedByOp
     // prefix reserved symbols
     if (precededByClosing == false and followedByOpening == true)
     {
-        auto it = prefix_reserved_symbols.find(yytext);
+        auto it = prefix_reserved_symbols.find(token);
         if (it != prefix_reserved_symbols.end())
         {
             auto tok = it->second.first;
@@ -406,20 +410,21 @@ yy::parser::symbol_type driver::varsym(bool precededByClosing, bool followedByOp
     }
 
     // other reserved symbols
-    auto it = reserved_symbols.find(yytext);
+    auto it = reserved_symbols.find(token);
     if (it == reserved_symbols.end())
-	return yy::parser::make_VARSYM  (yytext, loc);
+	return yy::parser::make_VARSYM  (token, loc);
 
     // general varsyms
     auto tok = it->second.first;
     return yy::parser::symbol_type(tok, loc);
 }
 
-yy::parser::symbol_type driver::consym(const yy::parser::location_type& loc) const
+yy::parser::symbol_type driver::consym(std::string_view text, const yy::parser::location_type& loc) const
 {
-    auto it = reserved_symbols.find(yytext);
+    std::string token(text);
+    auto it = reserved_symbols.find(token);
     if (it == reserved_symbols.end())
-	return yy::parser::make_CONSYM  (yytext, loc);
+	return yy::parser::make_CONSYM  (token, loc);
     else
     {
 	auto tok = it->second.first;
@@ -427,40 +432,42 @@ yy::parser::symbol_type driver::consym(const yy::parser::location_type& loc) con
     }
 }
 
-yy::parser::symbol_type make_integer10(const yy::parser::location_type& loc)
+yy::parser::symbol_type make_integer10(std::string_view text, const yy::parser::location_type& loc)
 {
-    return yy::parser::make_INTEGER(Haskell::integerFromString(yytext), loc);
+    return yy::parser::make_INTEGER(Haskell::integerFromString(std::string(text)), loc);
 }
 
-yy::parser::symbol_type make_boxed_integer10(const yy::parser::location_type& loc)
+yy::parser::symbol_type make_boxed_integer10(std::string_view text, const yy::parser::location_type& loc)
 {
-    std::string s(yytext);
+    std::string s(text);
     assert(s.back() == '#');
     s.resize(s.size()-1);
     return yy::parser::make_PRIMINTEGER(Haskell::integerFromString(s), loc);
 }
 
-yy::parser::symbol_type make_integer(int radix, bool positive, int shift,
+yy::parser::symbol_type make_integer(std::string_view text, int radix, bool positive, int shift,
 				     const yy::parser::location_type& loc)
 {
     // This doesn't handle underscore separators
     errno = 0;
-    auto n = std::stoi(yytext+shift, NULL, radix);
+    std::string token(text);
+    auto n = std::stoi(token.c_str()+shift, NULL, radix);
     if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))
-	throw yy::parser::syntax_error(loc, "integer is out of range: " + std::string(yytext));
+	throw yy::parser::syntax_error(loc, "integer is out of range: " + token);
     if (not positive)
 	n = -n;
     return yy::parser::make_INTEGER(n, loc);
 }
 
-yy::parser::symbol_type make_boxed_integer(int radix, bool positive, int shift,
+yy::parser::symbol_type make_boxed_integer(std::string_view text, int radix, bool positive, int shift,
                                            const yy::parser::location_type& loc)
 {
     // This doesn't handle underscore separators
     errno = 0;
-    auto n = std::stoi(yytext+shift, NULL, radix);
+    std::string token(text);
+    auto n = std::stoi(token.c_str()+shift, NULL, radix);
     if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))
-	throw yy::parser::syntax_error(loc, "integer is out of range: " + std::string(yytext));
+	throw yy::parser::syntax_error(loc, "integer is out of range: " + token);
     if (not positive)
 	n = -n;
     return yy::parser::make_PRIMINTEGER(n, loc);
@@ -468,9 +475,9 @@ yy::parser::symbol_type make_boxed_integer(int radix, bool positive, int shift,
 
 #include "computation/haskell/literal.H"
 
-yy::parser::symbol_type make_rational(const yy::parser::location_type& loc)
+yy::parser::symbol_type make_rational(std::string_view text, const yy::parser::location_type& loc)
 {
-    rational r = Haskell::rationalFromString(yytext);
+    rational r = Haskell::rationalFromString(std::string(text));
     return yy::parser::make_RATIONAL(r, loc);
 }
 
@@ -485,8 +492,9 @@ bool is_whitespace_char(char c)
     else return false;
 }
 
-std::optional<int> is_gap(const yy::parser::location_type& loc, driver& drv, const char* text, int length, int start)
+std::optional<int> is_gap(const yy::parser::location_type& loc, driver& drv, std::string_view text, int start)
 {
+    int length = text.size();
     assert(start<length);
 
     if (not (start+1 < length and text[start] == '\\' and is_whitespace_char(text[start+1])))
@@ -509,7 +517,7 @@ std::optional<int> is_gap(const yy::parser::location_type& loc, driver& drv, con
     return i;
 }
 
-std::pair<char,int> get_char(const yy::parser::location_type& loc, driver& drv, const char* text, int length, int i)
+std::pair<char,int> get_char(const yy::parser::location_type& loc, driver& drv, std::string_view text, int length, int i)
 {
     assert(i < length);
 
@@ -518,7 +526,7 @@ std::pair<char,int> get_char(const yy::parser::location_type& loc, driver& drv, 
     {
         if (i+1 >= length)
         {
-            assert(yyleng > 2 and yytext[yyleng-2] == '\\');
+            assert(text.size() > 2 and text[text.size()-2] == '\\');
             yy::parser::location_type loc2(loc.begin+i, loc.begin+i+2);
             drv.push_error_message(loc2, Note()<<"invalid escape of ending quote");
             return {'?',i+2};
@@ -560,28 +568,28 @@ std::pair<char,int> get_char(const yy::parser::location_type& loc, driver& drv, 
     return {c,i+1};
 }
 
-yy::parser::symbol_type make_char(const yy::parser::location_type& loc, driver& drv)
+yy::parser::symbol_type make_char(std::string_view text, const yy::parser::location_type& loc, driver& drv)
 {
     int i=1;
-    auto [c,_] = get_char(loc, drv, yytext, yyleng - 1, i);
+    auto [c,_] = get_char(loc, drv, text, text.size() - 1, i);
 
     return yy::parser::make_CHAR(c,loc);
 }
 
-yy::parser::symbol_type make_string(const yy::parser::location_type& loc, driver& drv)
+yy::parser::symbol_type make_string(std::string_view text, const yy::parser::location_type& loc, driver& drv)
 {
-//    std::cerr<<"analyzing string: '"<<yytext<<"'\n";
+//    std::cerr<<"analyzing string: '"<<text<<"'\n";
     std::string s;
-    s.resize(yyleng);
+    s.resize(text.size());
     int j=0;
-    for(int i=1;i<yyleng-1;)
+    for(int i=1;i<text.size()-1;)
     {
-//        std::cerr<<"   looking at: '"<<yytext+i<<"'\n";
-        if (auto after_gap = is_gap(loc, drv, yytext, yyleng-1, i))
+//        std::cerr<<"   looking at: '"<<text.substr(i)<<"'\n";
+        if (auto after_gap = is_gap(loc, drv, text.substr(0, text.size()-1), i))
             i = *after_gap;
         else
         {
-            auto [c, next_pos] = get_char(loc, drv, yytext, yyleng-1, i);
+            auto [c, next_pos] = get_char(loc, drv, text, text.size()-1, i);
             s[j++] = c;
             i = next_pos;
         }
