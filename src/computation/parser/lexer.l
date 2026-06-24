@@ -42,7 +42,7 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 %}
 
 %option noyywrap nounput batch debug noinput stack never-interactive nounistd
-%s layout layout_do layout_if layout_left bol nested_comment nested_comment2
+%s layout layout_do layout_if layout_left nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
 
 unispace     \x05
@@ -159,16 +159,11 @@ signed       {negative}?
 
 
   /* These rules should not be active in a nested comment */
-<INITIAL,bol,layout,layout_do,layout_if,layout_left,option_prags,line_prag1a,line_prag2,line_prag2a>{
+<INITIAL,layout,layout_do,layout_if,layout_left,option_prags,line_prag1a,line_prag2,line_prag2a>{
 "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
 "--"-*$           loc.step();
 "-- "$            loc.step();
 }
-
-  /* bol state */
-<bol>[\n]  loc.lines(1); loc.step();
-<bol>""/.  if (auto tok = drv.do_bol(loc)) return *tok;
-<bol><<EOF>>  if (auto tok = drv.do_bol(loc)) return *tok;
 
 <layout,layout_do,layout_if>"{"/[^-]    return drv.hopefully_open_brace(loc);
 <layout,layout_do,layout_if>[\n]        loc.lines(1); loc.step();
@@ -180,14 +175,14 @@ signed       {negative}?
                                              }
 <layout_if>""/.                             yy_pop_state();
 
-<layout>""/.                              return drv.new_layout_context(loc, true, yy::parser::token::TOK_VOCURLY);
-<layout_do>""/.                           return drv.new_layout_context(loc, true, yy::parser::token::TOK_VOCURLY);
+<layout>""/.                              return LexedToken(drv.new_layout_context(loc, true, yy::parser::token::TOK_VOCURLY), TokenEffects{}, false);
+<layout_do>""/.                           return LexedToken(drv.new_layout_context(loc, true, yy::parser::token::TOK_VOCURLY), TokenEffects{}, false);
 
   /* If we've generated a VOCURLY and started a new line to the left, then
      we need to generate a VCCURLY */
-<layout_left>""/.                       return drv.do_layout_left(loc);
+<layout_left>""/.                       return LexedToken(drv.do_layout_left(loc), TokenEffects{}, false);
 
-<INITIAL,option_prags>[\n]              loc.lines(1); loc.step (); yy_push_state(bol);
+<INITIAL,option_prags>[\n]              loc.lines(1); loc.step(); drv.mark_next_real_token_starts_line();
 
   /* line pragmas */
 
@@ -302,10 +297,26 @@ signed       {negative}?
 
 
 // Keep the parser-facing lexer API stable while the generated scanner returns
-// a wrapper token that can later carry deferred commit information.
+// wrapper tokens that can be held while layout tokens are emitted first.
 yy::parser::symbol_type yylex(driver& drv)
 {
-    auto token = raw_yylex(drv);
+    if (not drv.has_pending_real_token())
+    {
+        auto token = raw_yylex(drv);
+        if (not token.is_real)
+        {
+            drv.commit_token(token);
+            return std::move(token.symbol);
+        }
+
+        token.starts_line = drv.take_next_real_token_starts_line();
+        drv.set_pending_real_token(std::move(token));
+    }
+
+    if (auto layout_token = drv.layout_before_pending_real())
+        return std::move(*layout_token);
+
+    auto token = drv.take_pending_real_token();
     drv.commit_token(token);
     return std::move(token.symbol);
 }
@@ -664,33 +675,6 @@ yy::parser::symbol_type make_string(std::string_view text, const yy::parser::loc
     return yy::parser::make_STRING(s,loc);
 }
 
-std::optional<yy::parser::symbol_type> driver::do_bol(const yy::parser::location_type& loc)
-{
-    // Audit note: layout helpers still combine layout decisions with flex state
-    // transitions. Split those scanner actions out before replacing flex.
-    auto x = get_offside(loc);
-    int delta_offset = x.offset;
-    bool gen_semis = x.gen_semis;
-//    std::cerr<<"do_bol @ "<<loc<<std::endl;
-    if (delta_offset < 0)
-    {
-//	std::cerr<<"offset = "<<loc.end.column<<", LT, generating '}'"<<std::endl;
-	pop_context();
-	return yy::parser::make_VCCURLY(loc);
-    }
-    else if (delta_offset == 0 and gen_semis)
-    {
-//	std::cerr<<"offset = "<<loc.end.column<<", EQ, generating ';'"<<std::endl;
-	yy_pop_state();
-	return yy::parser::make_SEMI(loc);
-    }
-    else
-    {
-	yy_pop_state();
-	return {};
-    }
-}
-
 yy::parser::symbol_type driver::new_layout_context(const yy::parser::location_type& loc, bool gen_semis, yy::parser::token_type tok)
 {
     yy_pop_state();
@@ -715,7 +699,7 @@ yy::parser::symbol_type driver::do_layout_left(const yy::parser::location_type& 
 {
 //    std::cerr<<"Doing layout_left at "<<loc<<std::endl;
     yy_pop_state();
-    yy_push_state(bol);
+    mark_next_real_token_starts_line();
     return yy::parser::make_VCCURLY(loc);
 }
 

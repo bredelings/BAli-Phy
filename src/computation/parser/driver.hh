@@ -12,6 +12,14 @@
 
 class driver;
 
+enum class LayoutIntent
+{
+    None,
+    Layout,
+    LayoutDo,
+    LayoutIf
+};
+
 struct TokenEffects
 {
     bool closes_atom = false;
@@ -21,23 +29,19 @@ struct LexedToken
 {
     yy::parser::symbol_type symbol;
     TokenEffects effects;
+    bool is_real = true;
+    bool starts_line = false;
 
-    LexedToken(const yy::parser::symbol_type& symbol_arg)
-        : symbol(symbol_arg)
-    {}
-
-    LexedToken(yy::parser::symbol_type&& symbol_arg)
-        : symbol(std::move(symbol_arg))
-    {}
-
-    LexedToken(const yy::parser::symbol_type& symbol_arg, TokenEffects effects_arg)
+    LexedToken(const yy::parser::symbol_type& symbol_arg, TokenEffects effects_arg = {}, bool is_real_arg = true)
         : symbol(symbol_arg),
-          effects(effects_arg)
+          effects(effects_arg),
+          is_real(is_real_arg)
     {}
 
-    LexedToken(yy::parser::symbol_type&& symbol_arg, TokenEffects effects_arg)
+    LexedToken(yy::parser::symbol_type&& symbol_arg, TokenEffects effects_arg = {}, bool is_real_arg = true)
         : symbol(std::move(symbol_arg)),
-          effects(effects_arg)
+          effects(effects_arg),
+          is_real(is_real_arg)
     {}
 };
 
@@ -53,14 +57,6 @@ struct LayoutContext
 {
     int offset;
     bool gen_semis;
-};
-
-enum class LayoutIntent
-{
-    None,
-    Layout,
-    LayoutDo,
-    LayoutIf
 };
 
 struct ClassifiedVarId
@@ -101,6 +97,9 @@ class driver
     std::map<std::string,yy::parser::token_type> prefix_reserved_symbols;
     std::map<std::string,yy::parser::token_type> reserved_symbols;
 
+    bool next_real_token_starts_line = false;
+    std::optional<LexedToken> pending_real_token;
+
 public:
     driver (const LanguageExtensions& lang_exts);
 
@@ -114,13 +113,18 @@ public:
     void push_context();
 
     symbol_type hopefully_open_brace(const location_type& loc);
-    std::optional<symbol_type> do_bol(const location_type& loc);
     symbol_type new_layout_context(const location_type& loc, bool gen_semis, token_type tok);
     symbol_type do_layout_left(const location_type& loc);
     void pop() {}
     ClassifiedVarId classify_varid(std::string_view text) const;
     ClassifiedVarSym classify_varsym(std::string_view text, SymbolOccurrence occurrence) const;
     void commit_token(const LexedToken& token);
+    void mark_next_real_token_starts_line() {next_real_token_starts_line = true;}
+    bool take_next_real_token_starts_line();
+    bool has_pending_real_token() const {return pending_real_token.has_value();}
+    void set_pending_real_token(LexedToken&& token) {pending_real_token.emplace(std::move(token));}
+    std::optional<symbol_type> layout_before_pending_real();
+    LexedToken take_pending_real_token();
     yy::parser::symbol_type consym(std::string_view text, const yy::parser::location_type& loc) const;
     std::optional<yy::parser::symbol_type> prag(std::string_view text, const yy::parser::location_type& loc);
 

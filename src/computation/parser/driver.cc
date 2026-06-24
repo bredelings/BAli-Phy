@@ -78,6 +78,62 @@ void driver::commit_token(const LexedToken& token)
         mark_token_closes_atom();
 }
 
+// Return and clear the line-start marker accumulated while raw scanning
+// trivia before the next parser-visible source token.
+bool driver::take_next_real_token_starts_line()
+{
+    bool starts_line = next_real_token_starts_line;
+    next_real_token_starts_line = false;
+    return starts_line;
+}
+
+// Insert BOL layout tokens before the pending real token. Rechecking the same
+// pending token handles multiple virtual close braces at one source location.
+std::optional<driver::symbol_type> driver::layout_before_pending_real()
+{
+    if (not pending_real_token or not pending_real_token->starts_line)
+        return {};
+
+    auto loc = pending_real_token->symbol.location;
+    loc.end = loc.begin;
+    auto kind = pending_real_token->symbol.kind();
+    if (kind == yy::parser::symbol_kind::S_OCURLY or kind == yy::parser::symbol_kind::S_CCURLY)
+    {
+        pending_real_token->starts_line = false;
+        return {};
+    }
+
+    auto x = get_offside(loc);
+    int delta_offset = x.offset;
+    bool gen_semis = x.gen_semis;
+
+    if (delta_offset < 0)
+    {
+        pop_context();
+        return yy::parser::make_VCCURLY(loc);
+    }
+    else
+    {
+        pending_real_token->starts_line = false;
+        if (delta_offset == 0 and gen_semis)
+            return yy::parser::make_SEMI(loc);
+        else
+            return {};
+    }
+}
+
+// Remove the stashed real token once all preceding virtual layout tokens have
+// been emitted and the token is ready to commit.
+LexedToken driver::take_pending_real_token()
+{
+    if (not pending_real_token)
+        throw myexception()<<"No pending real token!";
+
+    auto token = std::move(*pending_real_token);
+    pending_real_token.reset();
+    return token;
+}
+
 driver::driver (const LanguageExtensions& exts)
     : lang_exts(exts), trace_parsing (false), trace_scanning (false)
 {
