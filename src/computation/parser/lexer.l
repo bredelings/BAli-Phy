@@ -205,14 +205,6 @@ signed       {negative}?
 <INITIAL,option_prags>{varid}       {
                                       auto classified = drv.classify_varid(std::string_view(yytext, yyleng));
                                       auto layout_after = classified.layout_after;
-                                      switch(classified.layout_after)
-                                      {
-                                      case LayoutIntent::LayoutIf:
-                                      case LayoutIntent::LayoutDo:
-                                      case LayoutIntent::Layout:
-                                      case LayoutIntent::None:
-                                        break;
-                                      }
                                       if (classified.token)
                                         return LexedToken(yy::parser::symbol_type(*classified.token, loc),
                                                           TokenEffects{.closes_atom = true, .layout_after = layout_after});
