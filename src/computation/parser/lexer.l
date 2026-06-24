@@ -42,7 +42,7 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 %}
 
 %option noyywrap nounput batch debug noinput stack never-interactive nounistd
-%s layout_if layout_left nested_comment nested_comment2
+%s layout_if nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
 
 unispace     \x05
@@ -159,7 +159,7 @@ signed       {negative}?
 
 
   /* These rules should not be active in a nested comment */
-<INITIAL,layout_if,layout_left,option_prags,line_prag1a,line_prag2,line_prag2a>{
+<INITIAL,layout_if,option_prags,line_prag1a,line_prag2,line_prag2a>{
 "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
 "--"-*$           loc.step();
 "-- "$            loc.step();
@@ -174,10 +174,6 @@ signed       {negative}?
                                                 return drv.new_layout_context(layout_loc, false, yy::parser::token::TOK_VBAR);
                                              }
 <layout_if>""/.                             yy_pop_state();
-
-  /* If we've generated a VOCURLY and started a new line to the left, then
-     we need to generate a VCCURLY */
-<layout_left>""/.                       return LexedToken(drv.do_layout_left(loc), TokenEffects{}, false);
 
 <INITIAL,option_prags>[\n]              loc.lines(1); loc.step(); drv.mark_next_real_token_starts_line();
 
@@ -686,21 +682,14 @@ yy::parser::symbol_type driver::new_layout_context(const yy::parser::location_ty
 	if (prev_offset >= offset)
 	{
 //	    std::cerr<<"   - Going to layout_left"<<std::endl;
-	    yy_push_state(layout_left);
+	    pending_virtual_tokens.push_back(yy::parser::make_VCCURLY(loc));
+	    mark_next_real_token_starts_line();
 	    return yy::parser::symbol_type(tok,loc);
 	}
     }
 
     push_context({offset,gen_semis});
     return yy::parser::symbol_type(tok,loc);
-}
-
-yy::parser::symbol_type driver::do_layout_left(const yy::parser::location_type& loc)
-{
-//    std::cerr<<"Doing layout_left at "<<loc<<std::endl;
-    yy_pop_state();
-    mark_next_real_token_starts_line();
-    return yy::parser::make_VCCURLY(loc);
 }
 
 yy::parser::symbol_type driver::hopefully_open_brace(const yy::parser::location_type& loc)
