@@ -222,7 +222,28 @@ signed       {negative}?
 
 <INITIAL,option_prags>{qvarid}      drv.set_closing_token(); return yy::parser::make_QVARID (std::string(yytext, yyleng), loc);
 <INITIAL,option_prags>{qconid}      drv.set_closing_token(); return yy::parser::make_QCONID (std::string(yytext, yyleng), loc);
-<INITIAL,option_prags>{varid}       drv.set_closing_token(); return drv.varid(std::string_view(yytext, yyleng), loc);
+<INITIAL,option_prags>{varid}       {
+                                      drv.set_closing_token();
+                                      auto classified = drv.classify_varid(std::string_view(yytext, yyleng));
+                                      switch(classified.layout_after)
+                                      {
+                                      case LayoutIntent::LayoutDo:
+                                        yy_push_state(layout_do);
+                                        break;
+                                      case LayoutIntent::Layout:
+                                        yy_push_state(layout);
+                                        break;
+                                      case LayoutIntent::LayoutIf:
+                                        yy_push_state(layout_if);
+                                        break;
+                                      case LayoutIntent::None:
+                                        break;
+                                      }
+                                      if (classified.token)
+                                        return yy::parser::symbol_type(*classified.token, loc);
+                                      else
+                                        return yy::parser::make_VARID(classified.text, loc);
+                                    }
 <INITIAL,option_prags>{conid}       drv.set_closing_token(); return yy::parser::make_CONID  (std::string(yytext, yyleng), loc);
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
@@ -352,40 +373,38 @@ std::optional<yy::parser::symbol_type> driver::prag(std::string_view text, const
         return it->second(loc);
 }
 
-yy::parser::symbol_type driver::varid(std::string_view text, const yy::parser::location_type& loc) const
+// Classify an identifier as a reserved word or ordinary variable, and record
+// the layout state that reserved layout keywords should start after commit.
+ClassifiedVarId driver::classify_varid(std::string_view text) const
 {
     std::string token(text);
     auto it = reserved_words.find(token);
     if (it == reserved_words.end())
-	return yy::parser::make_VARID  (token, loc);
+	return {token, {}, LayoutIntent::None};
     else
     {
 	auto tok = it->second;
-	// Audit note: keyword classification still mutates flex start state.
-	// A later cleanup should return scanner-mode intent instead.
+        LayoutIntent layout_after = LayoutIntent::None;
 	switch(tok)
 	{
 	case parser::token::TOK_DO:
 	case parser::token::TOK_MDO:
-//	    std::cerr<<"switch to <layout_do> @ "<<loc<<"\n";
-	    yy_push_state(layout_do);
+	    layout_after = LayoutIntent::LayoutDo;
 	    break;
 	case parser::token::TOK_OF:
 	case parser::token::TOK_LCASE:
 	case parser::token::TOK_LET:
 	case parser::token::TOK_WHERE:
 	case parser::token::TOK_REC:
-//	    std::cerr<<"switch to <layout> @ "<<loc<<"\n";
-	    yy_push_state(layout);
+	    layout_after = LayoutIntent::Layout;
 	    break;
 	case parser::token::TOK_IF:
-//	    std::cerr<<"switch to <layout_do> @ "<<loc<<"\n";
-	    yy_push_state(layout_if);
+	    layout_after = LayoutIntent::LayoutIf;
 	    break;
 	default:
 	    break;
 	}
-	return yy::parser::symbol_type(tok, loc);
+	return {token, tok, layout_after};
     }
 }
 

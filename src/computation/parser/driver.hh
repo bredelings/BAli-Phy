@@ -3,6 +3,7 @@
 # include <string>
 # include <string_view>
 # include <map>
+# include <optional>
 # include <set>
 # include "parser.hh"
 # include "computation/haskell/extensions.H"
@@ -18,6 +19,21 @@ struct LayoutContext
 {
     int offset;
     bool gen_semis;
+};
+
+enum class LayoutIntent
+{
+    None,
+    Layout,
+    LayoutDo,
+    LayoutIf
+};
+
+struct ClassifiedVarId
+{
+    std::string text;
+    std::optional<yy::parser::token_type> token;
+    LayoutIntent layout_after = LayoutIntent::None;
 };
 
 // Conducting the whole scanning and parsing of Calc++.
@@ -54,7 +70,7 @@ public:
     symbol_type new_layout_context(const location_type& loc, bool gen_semis, token_type tok);
     symbol_type do_layout_left(const location_type& loc);
     void pop() {}
-    yy::parser::symbol_type varid(std::string_view text, const yy::parser::location_type& loc) const;
+    ClassifiedVarId classify_varid(std::string_view text) const;
     yy::parser::symbol_type varsym(std::string_view text, bool precededByClosing, bool followedByOpening, const yy::parser::location_type& loc) const;
     yy::parser::symbol_type consym(std::string_view text, const yy::parser::location_type& loc) const;
     std::optional<yy::parser::symbol_type> prag(std::string_view text, const yy::parser::location_type& loc);

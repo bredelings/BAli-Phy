@@ -1005,9 +1005,9 @@ static const flex_int16_t yy_rule_linenum[55] =
       141,  142,  145,  146,  147,  150,  151,  152,  153,  154,
       157,  162,  163,  164,  168,  169,  172,  173,  175,  180,
       182,  183,  187,  189,  205,  207,  211,  212,  213,  214,
-      215,  216,  217,  220,  222,  224,  225,  226,  227,  235,
-      236,  237,  239,  240,  241,  243,  244,  245,  247,  248,
-      251,  254,  255,  257
+      215,  216,  217,  220,  222,  224,  225,  226,  248,  256,
+      257,  258,  260,  261,  262,  264,  265,  266,  268,  269,
+      272,  275,  276,  278
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1717,11 +1717,32 @@ drv.set_closing_token(); return yy::parser::make_QCONID (std::string(yytext, yyl
 case 38:
 YY_RULE_SETUP
 #line 226 "lexer.l"
-drv.set_closing_token(); return drv.varid(std::string_view(yytext, yyleng), loc);
+{
+                                      drv.set_closing_token();
+                                      auto classified = drv.classify_varid(std::string_view(yytext, yyleng));
+                                      switch(classified.layout_after)
+                                      {
+                                      case LayoutIntent::LayoutDo:
+                                        yy_push_state(layout_do);
+                                        break;
+                                      case LayoutIntent::Layout:
+                                        yy_push_state(layout);
+                                        break;
+                                      case LayoutIntent::LayoutIf:
+                                        yy_push_state(layout_if);
+                                        break;
+                                      case LayoutIntent::None:
+                                        break;
+                                      }
+                                      if (classified.token)
+                                        return yy::parser::symbol_type(*classified.token, loc);
+                                      else
+                                        return yy::parser::make_VARID(classified.text, loc);
+                                    }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 227 "lexer.l"
+#line 248 "lexer.l"
 drv.set_closing_token(); return yy::parser::make_CONID  (std::string(yytext, yyleng), loc);
 	YY_BREAK
 /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
@@ -1734,7 +1755,7 @@ case 40:
 (yy_c_buf_p) = yy_cp -= 2;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 235 "lexer.l"
+#line 256 "lexer.l"
 return drv.varsym(std::string_view(yytext, yyleng), drv.check_closing_token(), false, loc);
 	YY_BREAK
 case 41:
@@ -1742,76 +1763,76 @@ case 41:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 236 "lexer.l"
+#line 257 "lexer.l"
 return drv.varsym(std::string_view(yytext, yyleng), drv.check_closing_token(), true, loc);
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 237 "lexer.l"
+#line 258 "lexer.l"
 return drv.varsym(std::string_view(yytext, yyleng), drv.check_closing_token(), false, loc);
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 239 "lexer.l"
+#line 260 "lexer.l"
 return yy::parser::make_QVARSYM  (std::string(yytext, yyleng),loc);
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 240 "lexer.l"
+#line 261 "lexer.l"
 return yy::parser::make_QCONSYM  (std::string(yytext, yyleng),loc);
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 241 "lexer.l"
+#line 262 "lexer.l"
 return drv.consym(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 243 "lexer.l"
+#line 264 "lexer.l"
 drv.set_closing_token(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 244 "lexer.l"
+#line 265 "lexer.l"
 drv.set_closing_token(); return make_boxed_integer10(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 245 "lexer.l"
+#line 266 "lexer.l"
 drv.set_closing_token(); return make_integer10(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
 case 49:
 YY_RULE_SETUP
-#line 247 "lexer.l"
+#line 268 "lexer.l"
 drv.set_closing_token(); return make_integer(std::string_view(yytext, yyleng), 8,true,2,loc);
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 248 "lexer.l"
+#line 269 "lexer.l"
 drv.set_closing_token(); return make_integer(std::string_view(yytext, yyleng),16,true,2,loc);
 	YY_BREAK
 /* negative literals depend on an extension */
 case 51:
 YY_RULE_SETUP
-#line 251 "lexer.l"
+#line 272 "lexer.l"
 drv.set_closing_token(); return make_rational(std::string_view(yytext, yyleng), loc);
 	YY_BREAK
 /* Its important that we only allow escaped quotes inside char or string literals */
 case 52:
 YY_RULE_SETUP
-#line 254 "lexer.l"
+#line 275 "lexer.l"
 drv.set_closing_token(); return make_char(std::string_view(yytext, yyleng), loc, drv);
 	YY_BREAK
 case 53:
 /* rule 53 can match eol */
 YY_RULE_SETUP
-#line 255 "lexer.l"
+#line 276 "lexer.l"
 drv.set_closing_token(); return make_string(std::string_view(yytext, yyleng), loc, drv);
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 257 "lexer.l"
+#line 278 "lexer.l"
 {
              throw yy::parser::syntax_error
                (loc, "invalid character: " + std::string(yytext, yyleng));
@@ -1826,15 +1847,15 @@ case YY_STATE_EOF(option_prags):
 case YY_STATE_EOF(line_prag1a):
 case YY_STATE_EOF(line_prag2):
 case YY_STATE_EOF(line_prag2a):
-#line 262 "lexer.l"
+#line 283 "lexer.l"
 return yy::parser::make_END (loc);
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 263 "lexer.l"
+#line 284 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1838 "lexer.cc"
+#line 1859 "lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2997,7 +3018,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 263 "lexer.l"
+#line 284 "lexer.l"
 
 
 
@@ -3091,40 +3112,38 @@ std::optional<yy::parser::symbol_type> driver::prag(std::string_view text, const
         return it->second(loc);
 }
 
-yy::parser::symbol_type driver::varid(std::string_view text, const yy::parser::location_type& loc) const
+// Classify an identifier as a reserved word or ordinary variable, and record
+// the layout state that reserved layout keywords should start after commit.
+ClassifiedVarId driver::classify_varid(std::string_view text) const
 {
     std::string token(text);
     auto it = reserved_words.find(token);
     if (it == reserved_words.end())
-	return yy::parser::make_VARID  (token, loc);
+	return {token, {}, LayoutIntent::None};
     else
     {
 	auto tok = it->second;
-	// Audit note: keyword classification still mutates flex start state.
-	// A later cleanup should return scanner-mode intent instead.
+        LayoutIntent layout_after = LayoutIntent::None;
 	switch(tok)
 	{
 	case parser::token::TOK_DO:
 	case parser::token::TOK_MDO:
-//	    std::cerr<<"switch to <layout_do> @ "<<loc<<"\n";
-	    yy_push_state(layout_do);
+	    layout_after = LayoutIntent::LayoutDo;
 	    break;
 	case parser::token::TOK_OF:
 	case parser::token::TOK_LCASE:
 	case parser::token::TOK_LET:
 	case parser::token::TOK_WHERE:
 	case parser::token::TOK_REC:
-//	    std::cerr<<"switch to <layout> @ "<<loc<<"\n";
-	    yy_push_state(layout);
+	    layout_after = LayoutIntent::Layout;
 	    break;
 	case parser::token::TOK_IF:
-//	    std::cerr<<"switch to <layout_do> @ "<<loc<<"\n";
-	    yy_push_state(layout_if);
+	    layout_after = LayoutIntent::LayoutIf;
 	    break;
 	default:
 	    break;
 	}
-	return yy::parser::symbol_type(tok, loc);
+	return {token, tok, layout_after};
     }
 }
 
