@@ -5,14 +5,32 @@
 # include <map>
 # include <optional>
 # include <set>
+# include <utility>
 # include "parser.hh"
 # include "computation/haskell/extensions.H"
 # include "computation/message.H"
 
-// Tell Flex the lexer's prototype ...
+class driver;
+
+struct LexedToken
+{
+    yy::parser::symbol_type symbol;
+
+    LexedToken(const yy::parser::symbol_type& symbol_arg)
+        : symbol(symbol_arg)
+    {}
+
+    LexedToken(yy::parser::symbol_type&& symbol_arg)
+        : symbol(std::move(symbol_arg))
+    {}
+};
+
+yy::parser::symbol_type yylex(driver& drv);
+
+// Tell Flex the raw lexer's prototype ...
 # define YY_DECL \
-  yy::parser::symbol_type yylex (driver& drv)
-// ... and declare it for the parser's sake.
+  LexedToken raw_yylex (driver& drv)
+// ... and declare it for the wrapper's sake.
 YY_DECL;
 
 struct LayoutContext

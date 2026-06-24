@@ -302,6 +302,13 @@ signed       {negative}?
 %%
 
 
+// Keep the parser-facing lexer API stable while the generated scanner returns
+// a wrapper token that can later carry deferred commit information.
+yy::parser::symbol_type yylex(driver& drv)
+{
+    auto token = raw_yylex(drv);
+    return std::move(token.symbol);
+}
 
 void
 driver::scan_begin (const std::string& content)
