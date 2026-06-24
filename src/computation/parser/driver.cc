@@ -1,3 +1,4 @@
+#include <cassert>
 #include "driver.hh"
 #include "parser.hh"
 #include "util/myexception.H"
@@ -74,6 +75,10 @@ void driver::pop_error_message()
 // returns it to the parser.
 void driver::commit_token(const LexedToken& token)
 {
+    assert(not (token.effects.push_no_layout_context and token.effects.pop_context));
+    assert(token.effects.layout_after == LayoutIntent::None or
+           (not token.effects.push_no_layout_context and not token.effects.pop_context));
+
     if (token.effects.closes_atom)
         mark_token_closes_atom();
 
