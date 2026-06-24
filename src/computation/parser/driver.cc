@@ -108,88 +108,87 @@ std::optional<driver::symbol_type> driver::take_pending_virtual_token()
     return token;
 }
 
-// Insert BOL layout tokens before the pending real token. Rechecking the same
-// pending token handles multiple virtual close braces at one source location.
-std::optional<driver::symbol_type> driver::layout_before_pending_real()
+// Handle layout triggered by a committed keyword, such as let/where/do/if,
+// using the pending real token as the first token after the keyword.
+std::optional<driver::symbol_type> driver::layout_after_keyword(const location_type& loc)
 {
-    if (not pending_real_token or not pending_real_token->starts_line)
+    auto layout_intent = pending_layout_intent;
+    pending_layout_intent = LayoutIntent::None;
+
+    if (layout_intent == LayoutIntent::LayoutIf)
+        return layout_after_if(loc);
+
+    auto kind = pending_real_token->symbol.kind();
+    if (kind == yy::parser::symbol_kind::S_OCURLY)
     {
-        if (not pending_real_token or pending_layout_intent == LayoutIntent::None)
-            return {};
+        pending_real_token->starts_line = false;
+        if (auto layout_context = get_context())
+        {
+            if (layout_context->offset >= loc.end.column)
+                throw yy::parser::syntax_error(loc, "Missing block");
+        }
+        return {};
     }
 
-    auto loc = pending_real_token->symbol.location;
-    loc.end = loc.begin;
-
-    if (pending_layout_intent != LayoutIntent::None)
+    if (auto layout_context = get_context())
     {
-        bool is_layout_if = pending_layout_intent == LayoutIntent::LayoutIf;
-        pending_layout_intent = LayoutIntent::None;
-        auto kind = pending_real_token->symbol.kind();
-
-        if (is_layout_if)
+        if (layout_context->offset >= loc.end.column)
         {
-            // GHC consumes newlines while deciding whether this is MultiWayIf,
-            // so the following real token must not also trigger BOL layout.
-            pending_real_token->starts_line = false;
-
-            if (kind == yy::parser::symbol_kind::S_OCURLY)
-            {
-                if (auto layout_context = get_context())
-                {
-                    if (layout_context->offset >= loc.end.column)
-                        throw yy::parser::syntax_error(loc, "Missing block");
-                }
-                return {};
-            }
-
-            if (kind == yy::parser::symbol_kind::S_VBAR)
-            {
-                // MultiWayIf uses the real '|' token as the layout opener.
-                // Empty layout therefore queues a close after that token.
-                if (auto layout_context = get_context())
-                {
-                    if (layout_context->offset >= loc.end.column)
-                    {
-                        pending_virtual_tokens.push_back(yy::parser::make_VCCURLY(loc));
-                        mark_next_real_token_starts_line();
-                        return {};
-                    }
-                }
-
-                push_context({loc.end.column, false});
-                return {};
-            }
-
-            return {};
+            pending_real_token->starts_line = true;
+            pending_virtual_tokens.push_back(yy::parser::make_VCCURLY(loc));
+            return yy::parser::make_VOCURLY(loc);
         }
+    }
 
-        if (kind == yy::parser::symbol_kind::S_OCURLY)
+    pending_real_token->starts_line = false;
+    push_context({loc.end.column, true});
+    return yy::parser::make_VOCURLY(loc);
+}
+
+// Handle the special post-if layout decision: either explicit braces,
+// MultiWayIf's real '|' opener, or ordinary if without additional layout.
+std::optional<driver::symbol_type> driver::layout_after_if(const location_type& loc)
+{
+    // GHC consumes newlines while deciding whether this is MultiWayIf, so the
+    // following real token must not also trigger BOL layout.
+    pending_real_token->starts_line = false;
+
+    auto kind = pending_real_token->symbol.kind();
+    if (kind == yy::parser::symbol_kind::S_OCURLY)
+    {
+        if (auto layout_context = get_context())
         {
-            pending_real_token->starts_line = false;
-            if (auto layout_context = get_context())
-            {
-                if (layout_context->offset >= loc.end.column)
-                    throw yy::parser::syntax_error(loc, "Missing block");
-            }
-            return {};
+            if (layout_context->offset >= loc.end.column)
+                throw yy::parser::syntax_error(loc, "Missing block");
         }
+        return {};
+    }
 
+    if (kind == yy::parser::symbol_kind::S_VBAR)
+    {
+        // MultiWayIf uses the real '|' token as the layout opener. Empty
+        // layout therefore queues a close after that token.
         if (auto layout_context = get_context())
         {
             if (layout_context->offset >= loc.end.column)
             {
-                pending_real_token->starts_line = true;
                 pending_virtual_tokens.push_back(yy::parser::make_VCCURLY(loc));
-                return yy::parser::make_VOCURLY(loc);
+                mark_next_real_token_starts_line();
+                return {};
             }
         }
 
-        pending_real_token->starts_line = false;
-        push_context({loc.end.column, true});
-        return yy::parser::make_VOCURLY(loc);
+        push_context({loc.end.column, false});
+        return {};
     }
 
+    return {};
+}
+
+// Insert ordinary beginning-of-line layout before the pending real token.
+// Rechecking the same token handles multiple closes at one source location.
+std::optional<driver::symbol_type> driver::layout_at_bol(const location_type& loc)
+{
     auto kind = pending_real_token->symbol.kind();
     if (kind == yy::parser::symbol_kind::S_OCURLY or kind == yy::parser::symbol_kind::S_CCURLY)
     {
@@ -214,6 +213,25 @@ std::optional<driver::symbol_type> driver::layout_before_pending_real()
         else
             return {};
     }
+}
+
+// Return the next virtual layout token that must precede or follow the pending
+// real token; otherwise leave the pending real token ready to commit.
+std::optional<driver::symbol_type> driver::next_layout_token()
+{
+    if (not pending_real_token)
+        return {};
+
+    if (not pending_real_token->starts_line and pending_layout_intent == LayoutIntent::None)
+        return {};
+
+    auto loc = pending_real_token->symbol.location;
+    loc.end = loc.begin;
+
+    if (pending_layout_intent != LayoutIntent::None)
+        return layout_after_keyword(loc);
+
+    return layout_at_bol(loc);
 }
 
 // Remove the stashed real token once all preceding virtual layout tokens have
