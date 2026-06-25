@@ -106,6 +106,11 @@ class driver
     std::optional<symbol_type> virtual_after_keyword(const location_type& loc);
     void virtual_after_if(const location_type& loc);
     std::optional<symbol_type> virtual_at_bol(const location_type& loc);
+    void commit_token(const LexedToken& token);
+    bool take_next_real_token_starts_line();
+    std::optional<symbol_type> take_pending_virtual_token();
+    std::optional<symbol_type> next_virtual_token();
+    LexedToken take_pending_real_token();
 
 public:
     driver (const LanguageExtensions& lang_exts);
@@ -121,14 +126,7 @@ public:
 
     ClassifiedVarId classify_varid(std::string_view text) const;
     ClassifiedVarSym classify_varsym(std::string_view text, SymbolOccurrence occurrence) const;
-    void commit_token(const LexedToken& token);
     void mark_next_real_token_starts_line() {next_real_token_starts_line = true;}
-    bool take_next_real_token_starts_line();
-    std::optional<symbol_type> take_pending_virtual_token();
-    bool has_pending_real_token() const {return pending_real_token.has_value();}
-    void set_pending_real_token(LexedToken&& token) {pending_real_token.emplace(std::move(token));}
-    std::optional<symbol_type> next_virtual_token();
-    LexedToken take_pending_real_token();
     yy::parser::symbol_type consym(std::string_view text, const yy::parser::location_type& loc) const;
     std::optional<yy::parser::symbol_type> prag(std::string_view text, const yy::parser::location_type& loc);
 

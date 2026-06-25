@@ -78,11 +78,11 @@ yy::parser::symbol_type driver::next_parser_token()
     if (auto token = take_pending_virtual_token())
         return std::move(*token);
 
-    if (not has_pending_real_token())
+    if (not pending_real_token)
     {
         auto token = raw_yylex(*this);
         token.starts_line = take_next_real_token_starts_line();
-        set_pending_real_token(std::move(token));
+        pending_real_token.emplace(std::move(token));
     }
 
     if (auto virtual_token = next_virtual_token())
