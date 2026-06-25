@@ -28,12 +28,11 @@ Done:
 - The lexer parses decimal numeric escapes in character and string literals.
 - The lexer rejects `\&` in character literals and treats it as an empty escape
   in string literals.
-- `Hs::String::print()` escapes quotes, backslashes, controls, and bytes that
-  are not safe printable ASCII.
-- String printing is byte-preserving for now: bytes greater than `0x7f` print
-  as numeric escapes until Runtime/Text are deliberately widened.
+- `Hs::String` stores valid UTF-8 bytes for Haskell string literal payloads.
+- `Hs::String::print()` validates UTF-8, escapes quotes, backslashes,
+  controls, and non-ASCII code points that are not safe printable ASCII source.
 - Literal escape tests cover decimal escapes, `\&`, invalid scalar escapes, and
-  the current byte-preserving string guard.
+  UTF-8-backed string literal behavior.
 - `util/utf8.{H,cc}` provides shared UTF-8 scalar validation, scalar
   encode/decode, code-point counting, and code-point-to-byte offset conversion.
 - Haskell literal printing and lexer numeric escapes use the shared scalar
@@ -53,15 +52,22 @@ Done:
   `std::vector<std::byte>` storage with cheap slicing.
 - `Data.Text.Encoding.encodeUtf8` and `decodeUtf8` bridge validated UTF-8
   `Text` and raw `ByteString`.
+- String literals containing decimal numeric escapes store UTF-8 bytes, so
+  escapes such as `"\256"` produce one `Char` when desugared to `[Char]`.
+- `Foreign.String.unpackUtf8String` lazily decodes `CPPString` values by byte
+  offset with `decodeUtf8CharAt`.
+- `Foreign.String.unpack_cpp_string` is now a compatibility alias for
+  `unpackUtf8String`, because the desugarer still constructs that magic name
+  for string literals.
 
 Still limited:
 
-- The lexer accepts only ASCII character and string literal source today.
-- `Hs::String` and the string-literal parser still store bytes and reject
-  numeric escapes above `0xff`.
+- The lexer accepts only ASCII character and string literal source characters
+  directly today.  Non-ASCII literal values can be written with numeric escapes.
 - `Data.Char` predicates and case transforms are still ASCII-only.
 - `CPPString` remains an opaque C++ `std::string` transport, not a text type.
-  Generic `Foreign.String` unpacking still maps raw bytes to `Char` values.
+  `Foreign.String` text unpacking assumes valid UTF-8 and rejects invalid
+  sequences when decoding; raw byte helpers remain byte-oriented.
 - The wider `Data.Text.Encoding` API is not implemented yet.  `decodeUtf8'`,
   lenient decoding, UTF-16/32 codecs, and streaming validation remain deferred.
 - CSV separators are still restricted to one byte.
@@ -139,8 +145,8 @@ Required behavior:
 - Parse decimal numeric escapes in character literals.
 - Parse decimal numeric escapes in string literals.
 - Reject numeric escapes that are not Unicode scalar values.
-- In string literals, keep rejecting numeric escapes above `0xff` while
-  `Hs::String` remains byte-preserving storage.
+- In string literals, encode each scalar value as UTF-8 in the `Hs::String`
+  payload.
 - Handle escape termination unambiguously.  If a numeric escape is followed by
   a digit in a string literal, the printer must use a Haskell empty escape
   `\&` or another unambiguous representation.
@@ -155,18 +161,19 @@ Validation:
 
 ### Safe `Hs::String` Printing
 
-Status: implemented with byte-preserving semantics.
+Status: implemented with UTF-8 payload semantics.
 
-`Hs::String` remains UTF-8 bytes, but printing should be deliberate.
+`Hs::String` stores valid UTF-8 bytes for Haskell string literal payloads, and
+printing should be deliberate.
 
 Required behavior:
 
 - Escape quotes, backslashes, and standard control characters.
-- Escape other control bytes using numeric escapes.
-- Print bytes greater than `0x7f` as numeric escapes until generated Haskell
-  source and Runtime/Text intentionally switch to Unicode text semantics.
-- Do not interpret or validate UTF-8 here yet; this printer is byte-preserving
-  until Runtime/Text follow-through changes that policy.
+- Escape other control code points using numeric escapes.
+- Print code points greater than `0x7f` as numeric escapes until generated
+  Haskell source intentionally emits raw Unicode source text.
+- Validate UTF-8 here; invalid bytes indicate broken internal construction of a
+  Haskell source string literal.
 - Avoid numeric escape ambiguity by inserting `\&` when needed.
 
 Validation:
@@ -174,7 +181,7 @@ Validation:
 - Quotes and backslashes in generated string literals.
 - Newline, tab, carriage return, and other control bytes.
 - Numeric escape followed by a digit.
-- Bytes greater than `0x7f` print as numeric escapes.
+- Code points greater than `0x7f` print as numeric escapes.
 
 ### Character Literal Semantics
 
@@ -282,10 +289,14 @@ As the UTF-8-aware region expands, the number of marked boundaries should shrink
    remain byte-oriented, but their names or local comments should make that
    explicit.
 10. Partly done: byte-oriented consumers are either converted or marked where
-    found.  `Data.ByteString` is now a raw byte type.  CSV separators and
-    generic `CPPString` unpacking remain marked temporary byte/text boundaries.
+    found.  `Data.ByteString` is now a raw byte type.  Generic
+    `Foreign.String` text unpacking now decodes UTF-8, while
+    `getStringElement` and `unpack_cpp_substring` remain raw byte compatibility
+    helpers.  CSV separators remain restricted to one byte.
 11. Done: remove the desugar-time runtime `Char` byte guard.  `Hs::Char` can
     now lower to Core and Runtime `Char` values for all valid Unicode scalars.
+12. Done: string literals and `Hs::String` use UTF-8 payload semantics for
+    numeric escapes and generated-source printing.
 
 ### Known Consumer Status
 
@@ -308,6 +319,10 @@ Resolved in the runtime `Char` widening:
 - `Data.Text` construction, unpacking, basic Char-facing operations, length,
   equality, ordering, concatenation, `toCppString`, and `Data.Text.IO`
   read/write paths
+- Haskell string literals with non-ASCII numeric escapes, through UTF-8-backed
+  `Hs::String` payloads and lazy `Foreign.String.unpackUtf8String` decoding
+- `Foreign.String.unpack_cpp_string`, now a compatibility alias for
+  `unpackUtf8String`
 
 Remaining or intentionally limited:
 
@@ -315,15 +330,17 @@ Remaining or intentionally limited:
   category and case-conversion support is designed.
 - Future `Data.Text` indexing and slicing operations such as `index`, `take`,
   `drop`, and `splitAt` should use code-point offsets when they are added.
-- `Foreign.String` substring unpacking still maps raw bytes to `Char` values
-  through `CPPString`; `Data.Text.unpack` no longer uses that path.
+- `Foreign.String.getStringElement` and `unpack_cpp_substring` still map raw
+  bytes to `Char` values through `CPPString`; text callers should use
+  `unpackUtf8String`.
 - `Data.Text.Encoding.encodeUtf8` and `decodeUtf8` are implemented.  Explicit
   error-returning, lenient, UTF-16/32, and streaming APIs remain deferred.
 - `hPutStrRaw`, `hGetLineRaw`, `hGetContentsRaw`, and other raw string APIs
-  remain byte-oriented by design, but callers that expose `[Char]` need UTF-8
-  decoding.
+  remain byte-oriented by design.  Callers that expose `[Char]` through
+  `Foreign.String` now decode UTF-8.
 - CSV separator handling in `Data.cc` is still restricted to one byte.
-- String literals and `Hs::String` remain byte-preserving.
+- Direct non-ASCII source characters in string literals still need lexer
+  Unicode input support.
 
 ### Validation
 
@@ -337,6 +354,8 @@ Add tests as each layer is converted rather than waiting until the end:
 - Future `Text.index`, `take`, `drop`, and `splitAt` tests should confirm they
   operate on code-point offsets when those functions are implemented.
 - `hPutChar` and `hGetChar` round-trip UTF-8.
+- Source string numeric escapes such as `"\256"` produce one `Char`, and
+  `\&` terminates numeric escapes before following digits.
 - Existing byte-boundary rejection tests are removed or updated as their
   corresponding temporary boundaries disappear.
 
@@ -554,18 +573,17 @@ Completed:
 4. `parser: parse numeric character escapes`
 5. `haskell: print string literals safely`
 6. `haskell: test literal escape semantics`
+7. `haskell: decode CPPString as UTF-8`
 
 Next recommended commits:
 
-1. `runtime: widen character constants`
-2. `builtins: update Char and Text Unicode behavior`
-3. `haskell: add remaining ASCII lexer regression tests`
-4. `haskell: classify identifiers by UTF-8 code point`
-5. `parser: add Unicode identifier and operator tests`
-6. `parser: verify or fix Unicode source locations`
-7. `parser: use Unicode classes in Haskell lexer`
-8. `parser: parse raw Unicode char and string literals`
-9. `parser: finish UnicodeSyntax lexer support`
+1. `haskell: add remaining ASCII lexer regression tests`
+2. `haskell: classify identifiers by UTF-8 code point`
+3. `parser: add Unicode identifier and operator tests`
+4. `parser: verify or fix Unicode source locations`
+5. `parser: use Unicode classes in Haskell lexer`
+6. `parser: parse raw Unicode char and string literals`
+7. `parser: finish UnicodeSyntax lexer support`
 
 ## Validation Matrix
 
