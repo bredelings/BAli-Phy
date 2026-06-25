@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include "util/io.H"   // for portable_getline( ).
+#include "util/utf8.H"
 #include "computation/haskell/Integer.H" // for Integer
 #include "bali-phy/files.H" // for create_unique_dir
 
@@ -12,6 +13,49 @@ using std::fstream;
 typedef Box<std::shared_ptr<std::iostream>> Handle;
 
 typedef Box<std::shared_ptr<std::fstream>> FHandle;
+
+struct utf8_read_result
+{
+    char32_t code_point;
+    std::string bytes;
+};
+
+// Read one UTF-8 scalar from a stream.  Invalid or incomplete byte sequences
+// are rejected at the IO boundary, and callers can inspect the consumed bytes.
+static utf8_read_result read_utf8_char(std::iostream& handle)
+{
+    int first = handle.get();
+    if (first == std::streambuf::traits_type::eof())
+        throw myexception()<<"hGetChar: end of file.";
+
+    auto byte0 = static_cast<unsigned char>(first);
+    int length = 0;
+    if (byte0 <= 0x7F)
+        length = 1;
+    else if (0xC2 <= byte0 and byte0 <= 0xDF)
+        length = 2;
+    else if (0xE0 <= byte0 and byte0 <= 0xEF)
+        length = 3;
+    else if (0xF0 <= byte0 and byte0 <= 0xF4)
+        length = 4;
+    else
+        throw myexception()<<"hGetChar: invalid UTF-8 leading byte.";
+
+    std::string bytes;
+    bytes.push_back(static_cast<char>(byte0));
+    for(int i=1; i<length; i++)
+    {
+        int next = handle.get();
+        if (next == std::streambuf::traits_type::eof())
+            throw myexception()<<"hGetChar: incomplete UTF-8 sequence.";
+        bytes.push_back(static_cast<char>(static_cast<unsigned char>(next)));
+    }
+
+    auto decoded = utf8::decode_next(bytes, 0);
+    if (not decoded or decoded->next_byte != bytes.size())
+        throw myexception()<<"hGetChar: invalid UTF-8 sequence.";
+    return {decoded->code_point, bytes};
+}
 
 // FilePath -> Int -> RealWorld -> Handle
 extern "C" closure builtin_function_openFileRaw(OperationArgs& Args)
@@ -122,9 +166,10 @@ extern "C" closure builtin_function_hPutChar(OperationArgs& Args)
 {
     auto handle = Args.evaluate_slot_to_value(0).as_<Handle>();
 
-    char c = Args.evaluate_slot_to_value(1).as_char();
+    auto c = Args.evaluate_slot_to_value(1).as_char();
 
-    handle->put(c);
+    auto bytes = utf8::encode(c);
+    handle->write(bytes.data(), bytes.size());
 
     return closure(R::ConstructorApp("()", 0, {}));
 }
@@ -146,9 +191,7 @@ extern "C" closure builtin_function_hGetChar(OperationArgs& Args)
 {
     auto handle = Args.evaluate_slot_to_value(0).as_<Handle>();
 
-    char c = handle->get();
-
-    return {c};
+    return read_utf8_char(*handle).code_point;
 }
 
 // Handle -> RealWorld -> CPPString
@@ -251,9 +294,14 @@ extern "C" closure builtin_function_hLookAhead(OperationArgs& Args)
 {
     auto handle = Args.evaluate_slot_to_value(0).as_<Handle>();
 
-    char c = handle->peek();
+    auto result = read_utf8_char(*handle);
+    for(auto i = result.bytes.rbegin(); i != result.bytes.rend(); ++i)
+    {
+        if (not handle->putback(*i))
+            throw myexception()<<"hLookAhead: could not restore stream after lookahead.";
+    }
 
-    return {c};
+    return result.code_point;
 }
 
 extern "C" closure builtin_function_combine(OperationArgs& Args)

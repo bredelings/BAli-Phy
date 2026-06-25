@@ -1,9 +1,48 @@
 #include <cctype>
+#include <optional>
+#include <string_view>
 
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
+#include "util/utf8.H"
 
 using std::vector;
+
+struct decoded_text_char
+{
+    char32_t code_point;
+    std::size_t begin_byte;
+    std::size_t next_byte;
+};
+
+// Decode the first UTF-8 scalar in Text.  Text storage is std::string bytes,
+// but Char-facing APIs should expose Unicode scalar values.
+static decoded_text_char decode_first_text_char(std::string_view text, const char* function_name)
+{
+    auto decoded = utf8::decode_next(text, 0);
+    if (not decoded)
+        throw myexception()<<function_name<<": invalid UTF-8 Text.";
+    return {decoded->code_point, 0, decoded->next_byte};
+}
+
+// Find the final UTF-8 scalar in Text by validating from the front.  This
+// avoids treating continuation bytes as standalone characters.
+static decoded_text_char decode_last_text_char(std::string_view text, const char* function_name)
+{
+    std::optional<decoded_text_char> last;
+    for(std::size_t byte_offset = 0; byte_offset < text.size(); )
+    {
+        auto decoded = utf8::decode_next(text, byte_offset);
+        if (not decoded)
+            throw myexception()<<function_name<<": invalid UTF-8 Text.";
+        last = decoded_text_char{decoded->code_point, byte_offset, decoded->next_byte};
+        byte_offset = decoded->next_byte;
+    }
+
+    if (not last)
+        throw myexception()<<function_name<<": empty Text!";
+    return *last;
+}
 
 extern "C" R::Exp simple_function_pack(vector<R::Exp>& args)
 {
@@ -11,20 +50,16 @@ extern "C" R::Exp simple_function_pack(vector<R::Exp>& args)
     const auto& etext = arg.as_<R::RVector>();
 
     std::string s;
-    s.resize(etext.size());
     for(int i=0;i<etext.size();i++)
-        s[i] = etext[i].as_char();
+        s += utf8::encode(etext[i].as_char());
     return s;
 }
 
 extern "C" R::Exp simple_function_singleton(vector<R::Exp>& args)
 {
-    char c = get_arg(args).as_char();
+    auto c = get_arg(args).as_char();
 
-    std::string s;
-    s.push_back(c);
-
-    return s;
+    return utf8::encode(c);
 }
 
 extern "C" R::Exp simple_function_empty(vector<R::Exp>&)
@@ -36,20 +71,20 @@ extern "C" R::Exp simple_function_empty(vector<R::Exp>&)
 
 extern "C" R::Exp simple_function_cons(vector<R::Exp>& args)
 {
-    char c = get_arg(args).as_char();
+    auto c = get_arg(args).as_char();
 
     std::string s  = get_arg(args).as_string();
 
-    return (c + s);
+    return utf8::encode(c) + s;
 }
 
 extern "C" R::Exp simple_function_snoc(vector<R::Exp>& args)
 {
     std::string s  = get_arg(args).as_string();
 
-    char c = get_arg(args).as_char();
+    auto c = get_arg(args).as_char();
 
-    return (s + c);
+    return s + utf8::encode(c);
 }
 
 extern "C" R::Exp simple_function_append(vector<R::Exp>& args)
@@ -66,6 +101,8 @@ extern "C" R::Exp simple_function_append(vector<R::Exp>& args)
 
     s3.reserve(length1+length2);
 
+    // FIXME-UNICODE: Text slices still use byte offsets and byte lengths.
+    // Convert this with the rest of the Data.Text offset API.
     s3 = s1.as_string().substr(offset1,length1);
     s3 += s2.as_string().substr(offset2,length2);
 
@@ -79,9 +116,7 @@ extern "C" R::Exp simple_function_head(vector<R::Exp>& args)
     if (s.empty())
         throw myexception()<<"Text.head: empty Text!";
 
-    char c = s[0];
-
-    return c;
+    return decode_first_text_char(s, "Text.head").code_point;
 }
 
 extern "C" R::Exp simple_function_last(vector<R::Exp>& args)
@@ -91,9 +126,7 @@ extern "C" R::Exp simple_function_last(vector<R::Exp>& args)
     if (s.empty())
         throw myexception()<<"Text.last: empty Text!";
 
-    char c = s.back();
-
-    return c;
+    return decode_last_text_char(s, "Text.last").code_point;
 }
 
 extern "C" R::Exp simple_function_init(vector<R::Exp>& args)
@@ -103,7 +136,8 @@ extern "C" R::Exp simple_function_init(vector<R::Exp>& args)
     if (s.empty())
         throw myexception()<<"Text.init: empty Text!";
 
-    s.pop_back();
+    auto last = decode_last_text_char(s, "Text.init");
+    s.resize(last.begin_byte);
 
     return s;
 }
@@ -115,7 +149,8 @@ extern "C" R::Exp simple_function_tail(vector<R::Exp>& args)
     if (s.empty())
         throw myexception()<<"Text.tail: empty Text!";
 
-    s = s.substr(1);
+    auto first = decode_first_text_char(s, "Text.tail");
+    s = s.substr(first.next_byte);
 
     return s;
 }
@@ -124,6 +159,8 @@ extern "C" R::Exp simple_function_length(vector<R::Exp>& args)
 {
     std::string s  = get_arg(args).as_string();
 
+    // FIXME-UNICODE: This currently reports bytes, not Unicode scalar values.
+    // Convert together with Text slicing and comparison offsets.
     int length = s.size();
 
     return length;
@@ -142,6 +179,8 @@ extern "C" R::Exp simple_function_equals(vector<R::Exp>& args)
     std::string_view S1 = s1.as_string();
     std::string_view S2 = s2.as_string();
 
+    // FIXME-UNICODE: Text comparison offsets and lengths are still byte-based.
+    // Convert this with the rest of the Data.Text offset API.
     return S1.substr(offset1,length1) == S2.substr(offset2,length2);
 }
 
@@ -158,6 +197,8 @@ extern "C" R::Exp simple_function_less_than(vector<R::Exp>& args)
     std::string_view S1 = s1.as_string();
     std::string_view S2 = s2.as_string();
 
+    // FIXME-UNICODE: Text comparison offsets and lengths are still byte-based.
+    // Convert this with the rest of the Data.Text offset API.
     return S1.substr(offset1,length1) < S2.substr(offset2,length2);
 }
 

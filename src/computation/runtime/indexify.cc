@@ -29,7 +29,7 @@ bool is_global_var(const Core::Var<>& x)
 
 Runtime::Exp atom_from_constant(const Core::Constant& C)
 {
-    if (auto c = to<char>(C.value))
+    if (auto c = to<char32_t>(C.value))
         return Runtime::Char(*c);
     else if (auto i = to<int>(C.value))
         return Runtime::Int(*i);

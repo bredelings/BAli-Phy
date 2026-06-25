@@ -726,12 +726,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         if (auto c = L->is_Char())
         {
-            // FIXME-UNICODE: Temporary byte boundary. This rejects non-byte
-            // Char values until Core::Constant and Runtime::Char use char32_t.
-            if (*c > std::numeric_limits<unsigned char>::max())
-                throw myexception()<<"Character literal code point "<<static_cast<std::uint32_t>(*c)
-                                   <<" is not yet supported by the byte-sized runtime Char representation.";
-            return Core::Constant{static_cast<char>(*c)};
+            return Core::Constant{*c};
         }
         else if (auto i = L->is_Integer())
         {

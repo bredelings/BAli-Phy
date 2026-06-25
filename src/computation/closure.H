@@ -142,9 +142,10 @@ public:
     requires std::same_as<std::remove_cvref_t<T>, int>
     closure(T x):closure(Runtime::Int(x)) {}
 
-    template <typename T>
-    requires std::same_as<std::remove_cvref_t<T>, char>
-    closure(T x):closure(Runtime::Char(x)) {}
+    closure(char32_t x):closure(Runtime::Char(x)) {}
+    closure(char) = delete;
+    closure(signed char) = delete;
+    closure(unsigned char) = delete;
 
     template <typename T>
     requires std::same_as<std::remove_cvref_t<T>, double>

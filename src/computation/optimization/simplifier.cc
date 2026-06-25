@@ -58,7 +58,7 @@ namespace
 
 R::Exp runtime_exp_from_core_constant(const Core::Constant& C)
 {
-    if (auto c = to<char>(C.value))
+    if (auto c = to<char32_t>(C.value))
 	return *c;
     else if (auto i = to<int>(C.value))
 	return *i;

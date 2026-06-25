@@ -7,9 +7,11 @@
 #include <variant>
 #include <vector>
 #include <string>
+#include <cstdint>
 #include "util/cow-ptr.H"
 #include "util/string/join.H"
 #include "util/math/log-double.H"
+#include "util/utf8.H"
 #include "util/variant.H"
 #include "computation/haskell/ids.H"
 #include "computation/haskell/integer_container.H"
@@ -731,7 +733,7 @@ namespace Core
 
     struct Constant
     {
-	std::variant<char,int,integer_container,double,std::string> value;
+	std::variant<char32_t,int,integer_container,double,std::string> value;
 
 	std::string print() const;
 
@@ -937,8 +939,26 @@ namespace Core
 
     inline std::string Constant::print() const
     {
-	if (auto c = to<char>(value))
-	    return (std::string("'") + *c + "'");
+	if (auto c = to<char32_t>(value))
+        {
+            if (not utf8::is_scalar_value(*c))
+                throw std::runtime_error("Invalid Core character constant");
+
+            std::string payload;
+            if (*c == U'\a') payload = "\\a";
+            else if (*c == U'\b') payload = "\\b";
+            else if (*c == U'\f') payload = "\\f";
+            else if (*c == U'\n') payload = "\\n";
+            else if (*c == U'\r') payload = "\\r";
+            else if (*c == U'\t') payload = "\\t";
+            else if (*c == U'\v') payload = "\\v";
+            else if (*c == U'\\') payload = "\\\\";
+            else if (*c == U'\'') payload = "\\'";
+            else if (0x20 <= *c and *c <= 0x7E) payload = std::string(1, static_cast<char>(*c));
+            else payload = "\\" + std::to_string(static_cast<std::uint32_t>(*c));
+
+	    return "'" + payload + "'";
+        }
 	else if (auto i = to<int>(value))
 	    return std::to_string(*i) + "#";
 	else if (auto ic = to<integer_container>(value))

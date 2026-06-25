@@ -8,6 +8,7 @@
 #include "util/myexception.H"
 #include "util/string/join.H"
 #include "util/string/convert.H"
+#include "util/utf8.H"
 
 using std::vector;
 
@@ -58,7 +59,7 @@ namespace Runtime
             push_back(value);
     }
 
-    RVector::RVector(const vector<char>& values)
+    RVector::RVector(const vector<char32_t>& values)
     {
         reserve(values.size());
         for(auto value: values)
@@ -83,9 +84,9 @@ namespace Runtime
         return values;
     }
 
-    RVector::operator vector<char>() const
+    RVector::operator vector<char32_t>() const
     {
-        vector<char> values;
+        vector<char32_t> values;
         values.reserve(size());
         for(const auto& value: *this)
             values.push_back(value.as_char());
@@ -424,6 +425,29 @@ namespace Runtime
         return app.head->print();
     }
 
+    // Format a runtime Char as a Haskell-style character literal for debugging
+    // and diagnostics.  Runtime Char now stores a Unicode scalar value.
+    static std::string print_char_literal(char32_t c)
+    {
+        if (not utf8::is_scalar_value(c))
+            throw myexception()<<"Invalid Runtime character code point: "<<static_cast<std::uint32_t>(c);
+
+        std::string payload;
+        if (c == U'\a') payload = "\\a";
+        else if (c == U'\b') payload = "\\b";
+        else if (c == U'\f') payload = "\\f";
+        else if (c == U'\n') payload = "\\n";
+        else if (c == U'\r') payload = "\\r";
+        else if (c == U'\t') payload = "\\t";
+        else if (c == U'\v') payload = "\\v";
+        else if (c == U'\\') payload = "\\\\";
+        else if (c == U'\'') payload = "\\'";
+        else if (0x20 <= c and c <= 0x7E) payload = std::string(1, static_cast<char>(c));
+        else payload = "\\" + std::to_string(static_cast<std::uint32_t>(c));
+
+        return "'" + payload + "'";
+    }
+
     std::string print(const Exp& E)
     {
         if (not E)
@@ -447,7 +471,7 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Char>)
             {
-                return std::string("'") + e.value + "'";
+                return print_char_literal(e.value);
             }
             else if constexpr (std::is_same_v<T, String>)
             {

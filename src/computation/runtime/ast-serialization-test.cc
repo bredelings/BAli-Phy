@@ -275,9 +275,9 @@ namespace
         require(ld.is_atomic_value(), "runtime LogDouble should be atomic");
         require(ld.as_log_double() == ld_value, "runtime LogDouble value mismatch");
 
-        Runtime::Exp c = 'x';
+        Runtime::Exp c = U'x';
         require(c.is_atomic_value(), "runtime Char should be atomic");
-        require(c.as_char() == 'x', "runtime Char value mismatch");
+        require(c.as_char() == U'x', "runtime Char value mismatch");
 
         Runtime::Exp s = std::string("runtime");
         require(s.is_atomic_value(), "runtime String should be atomic");
@@ -314,8 +314,8 @@ namespace
         Runtime::RVector doubles(std::vector<double>{1.5, 2.5});
         require(((std::vector<double>)doubles == std::vector<double>{1.5, 2.5}), "Runtime::RVector double conversion mismatch");
 
-        Runtime::RVector chars(std::vector<char>{'a', 'b'});
-        require(((std::vector<char>)chars == std::vector<char>{'a', 'b'}), "Runtime::RVector char conversion mismatch");
+        Runtime::RVector chars(std::vector<char32_t>{U'a', U'b'});
+        require(((std::vector<char32_t>)chars == std::vector<char32_t>{U'a', U'b'}), "Runtime::RVector char conversion mismatch");
     }
 
     Runtime::Exp archive_roundtrip(const Runtime::Exp& before)

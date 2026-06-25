@@ -657,8 +657,8 @@ yy::parser::symbol_type make_string(std::string_view text, const yy::parser::loc
             auto [c, next_pos] = get_char(loc, drv, text, text.size()-1, i);
             if (c)
             {
-                // Compatibility note: string literals still store bytes until
-                // Hs::String/Data.Text are widened, so reject larger code points.
+                // FIXME-UNICODE: Temporary byte boundary. String literals still
+                // store bytes until Hs::String/Data.Text are widened.
                 if (*c > std::numeric_limits<unsigned char>::max())
                 {
                     yy::parser::location_type loc2(loc.begin+i, loc.begin+next_pos);

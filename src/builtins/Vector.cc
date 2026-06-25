@@ -3,6 +3,7 @@
 #include "computation/operation.H"
 #include "util/myexception.H"
 #include "util/matrix.H"
+#include "util/utf8.H"
 #include "computation/machine/graph_register.H"
 #include "computation/machine/args.H"
 
@@ -60,7 +61,9 @@ extern "C" R::Exp simple_function_getStringElement(vector<R::Exp>& args)
     const std::string& s = arg0.as_string();
     int i = get_arg(args).as_int();
 
-    return s[i];
+    // FIXME-UNICODE: Temporary byte boundary. CPPString unpacking still maps
+    // raw bytes to Char values until it is converted to decode UTF-8.
+    return static_cast<char32_t>(static_cast<unsigned char>(s[i]));
 }
 
 extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
@@ -129,7 +132,7 @@ extern "C" closure builtin_function_clist_to_string(OperationArgs& Args)
     std::string s;
 
     for(; not is_clist_nil(xs); xs = clist_second(xs))
-        s += clist_first(xs).as_char();
+        s += utf8::encode(clist_first(xs).as_char());
 
     return s;
 }

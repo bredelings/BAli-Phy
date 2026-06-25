@@ -114,10 +114,13 @@ namespace Runtime
 
     struct Char
     {
-        char value;
+        char32_t value;
 
         Char() = default;
-        Char(char x):value(x) {}
+        Char(char32_t x):value(x) {}
+        Char(char) = delete;
+        Char(signed char) = delete;
+        Char(unsigned char) = delete;
 
         bool operator==(const Char&) const = default;
 
@@ -228,7 +231,10 @@ namespace Runtime
         Exp(double x):Exp(Double(x)) {}
         Exp(log_double_t x):Exp(LogDouble(x)) {}
         Exp(bool);
-        Exp(char x):Exp(Char(x)) {}
+        Exp(char32_t x):Exp(Char(x)) {}
+        Exp(char) = delete;
+        Exp(signed char) = delete;
+        Exp(unsigned char) = delete;
         Exp(std::string);
         Exp(const char*);
         Exp(integer);
@@ -310,7 +316,7 @@ namespace Runtime
         int as_int() const;
         double as_double() const;
         log_double_t as_log_double() const;
-        char as_char() const;
+        char32_t as_char() const;
         const std::string& as_string() const;
         const integer& as_integer() const;
         const ConstructorTag& as_constructor() const;
@@ -521,11 +527,13 @@ namespace Runtime
 
         explicit RVector(const std::vector<double>&);
         explicit RVector(const std::vector<int>&);
-        explicit RVector(const std::vector<char>&);
+        explicit RVector(const std::vector<char32_t>&);
+        explicit RVector(const std::vector<char>&) = delete;
 
         explicit operator std::vector<double>() const;
         explicit operator std::vector<int>() const;
-        explicit operator std::vector<char>() const;
+        explicit operator std::vector<char32_t>() const;
+        explicit operator std::vector<char>() const = delete;
     };
 
     struct String: intrusive_counted<String>
@@ -900,7 +908,7 @@ namespace Runtime
         return as<LogDouble>().value;
     }
 
-    inline char Exp::as_char() const
+    inline char32_t Exp::as_char() const
     {
         return as<Char>().value;
     }
