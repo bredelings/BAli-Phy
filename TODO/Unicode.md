@@ -33,6 +33,12 @@ Done:
   as numeric escapes until Runtime/Text are deliberately widened.
 - Literal escape tests cover decimal escapes, `\&`, invalid scalar escapes, and
   the current byte-sized runtime/string guards.
+- `util/utf8.{H,cc}` provides shared UTF-8 scalar validation, scalar
+  encode/decode, code-point counting, and code-point-to-byte offset conversion.
+- Haskell literal printing and lexer numeric escapes use the shared scalar
+  validation helper.
+- The desugar-time runtime `Char` byte guard is marked as a temporary
+  `FIXME-UNICODE` boundary.
 
 Still limited:
 
@@ -219,13 +225,12 @@ As the UTF-8-aware region expands, the number of marked boundaries should shrink
 
 ### Implementation Order
 
-1. Add `util/utf8.{H,cc}` and wire it into `src/util/meson.build`.
-   Start with scalar validation, scalar encode/decode, code-point counting, and
-   code-point offset to byte offset conversion.  Use `std::string_view` for
-   input and byte offsets for slicing.
-2. Replace existing scalar validation or byte-guard code with `util/utf8` where
-   this is straightforward.  Keep the current desugar-time byte guard for now,
-   but mark it as a temporary boundary with `FIXME-UNICODE`.
+1. Done: `util/utf8.{H,cc}` is wired into `src/util/meson.build` with scalar
+   validation, scalar encode/decode, code-point counting, and code-point offset
+   to byte offset conversion.
+2. Done for the initial scalar-validation sites: Haskell literal printing and
+   lexer numeric escapes use `util/utf8`, and the current desugar-time byte
+   guard is marked as a temporary boundary with `FIXME-UNICODE`.
 3. Widen `Core::Constant` character storage from `char` to `char32_t`.
    Construct character constants explicitly as `char32_t` so the variant is not
    confused with `int`.
