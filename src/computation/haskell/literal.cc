@@ -156,10 +156,40 @@ static string print_floating_decimal(const rational& r)
     return x.str(17, std::ios_base::fmtflags(0));
 }
 
+// Check the Unicode scalar-value invariant before printing a Haskell character.
+static bool is_unicode_scalar_value(char32_t c)
+{
+    return c <= 0x10FFFF and not (0xD800 <= c and c <= 0xDFFF);
+}
+
+// Print one Haskell character literal from a Unicode scalar value, using
+// numeric escapes until raw non-ASCII source output is deliberately enabled.
+static string print_char_literal(char32_t c)
+{
+    if (not is_unicode_scalar_value(c))
+        throw myexception()<<"Invalid Haskell character literal code point: "<<static_cast<std::uint32_t>(c);
+
+    if (c == U'\a') return "'\\a'";
+    if (c == U'\b') return "'\\b'";
+    if (c == U'\f') return "'\\f'";
+    if (c == U'\n') return "'\\n'";
+    if (c == U'\r') return "'\\r'";
+    if (c == U'\t') return "'\\t'";
+    if (c == U'\v') return "'\\v'";
+    if (c == U'\\') return "'\\\\'";
+    if (c == U'\'') return "'\\''";
+    if (c == U'"') return "'\\\"'";
+
+    if (0x20 <= c and c <= 0x7E)
+        return "'" + string(1, static_cast<char>(c)) + "'";
+
+    return "'\\" + std::to_string(static_cast<std::uint32_t>(c)) + "'";
+}
+
 string Literal::print() const
 {
     if (literal.index() == 0)
-        return "'" + std::string(1, std::get<0>(literal).value) + "'";
+        return print_char_literal(std::get<0>(literal).value);
     else if (literal.index() == 1)
         return std::get<1>(literal).value.str();
     else if (literal.index() == 2)
@@ -175,7 +205,7 @@ string Literal::print() const
         std::abort();
 }
 
-std::optional<char> Literal::is_Char() const
+std::optional<char32_t> Literal::is_Char() const
 {
     if (literal.index() == 0)
         return std::get<0>(literal).value;

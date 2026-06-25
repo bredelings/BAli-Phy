@@ -14,10 +14,10 @@ namespace Haskell
 
 struct Char
 {
-    char value;
+    char32_t value;
 
     bool operator==(const Char&) const = default;
-    Char(char c):value(c) {}
+    Char(char32_t c):value(c) {}
 };
 
 struct Integer
@@ -75,7 +75,7 @@ struct Literal
     std::optional<Hs::Var> equalsOp; // ??
     std::string print() const;
 
-    std::optional<char> is_Char() const;
+    std::optional<char32_t> is_Char() const;
     std::optional<integer> is_Integer() const;
     std::optional<std::string> is_String() const;
     std::optional<rational> is_Floating() const;

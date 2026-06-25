@@ -1,4 +1,6 @@
 #include <range/v3/all.hpp>
+#include <cstdint>
+#include <limits>
 #include "computation/module.H"
 #include <deque>
 #include <optional>
@@ -724,7 +726,12 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
     {
         if (auto c = L->is_Char())
         {
-            return Core::Constant{*c};
+            // Compatibility note: Runtime::Char and Core::Constant still store
+            // byte-sized chars; widen them before allowing larger code points.
+            if (*c > std::numeric_limits<unsigned char>::max())
+                throw myexception()<<"Character literal code point "<<static_cast<std::uint32_t>(*c)
+                                   <<" is not yet supported by the byte-sized runtime Char representation.";
+            return Core::Constant{static_cast<char>(*c)};
         }
         else if (auto i = L->is_Integer())
         {

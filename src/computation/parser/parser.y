@@ -201,12 +201,12 @@
 %token <std::string> IPDUPVARID "IPDUPVARID" /* extension: implicit param ?x */
 %token <std::string> LABELVARID "LABELVARID" /* Overladed label: #x */
 
-%token <char>          CHAR     "CHAR"
+%token <char32_t>      CHAR     "CHAR"
 %token <std::string>   STRING   "STRING"
 %token <integer>       INTEGER  "INTEGER"
 %token <rational>      RATIONAL "RATIONAL"
 
-%token <char>          PRIMCHAR    "PRIMCHAR"
+%token <char32_t>      PRIMCHAR    "PRIMCHAR"
 %token <std::string>   PRIMSTRING  "PRIMSTRING"
 %token <integer>       PRIMINTEGER "PRIMINTEGER"
 %token <int>           PRINTWORD   "PRIMWORD"

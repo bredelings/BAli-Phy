@@ -606,7 +606,7 @@ namespace yy {
 
       // "CHAR"
       // "PRIMCHAR"
-      char dummy36[sizeof (char)];
+      char dummy36[sizeof (char32_t)];
 
       // "PRIMDOUBLE"
       char dummy37[sizeof (double)];
@@ -1628,7 +1628,7 @@ namespace yy {
 
       case symbol_kind::S_CHAR: // "CHAR"
       case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
-        value.move< char > (std::move (that.value));
+        value.move< char32_t > (std::move (that.value));
         break;
 
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
@@ -2391,13 +2391,13 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, char&& v, location_type&& l)
+      basic_symbol (typename Base::kind_type t, char32_t&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
         , location (std::move (l))
       {}
 #else
-      basic_symbol (typename Base::kind_type t, const char& v, const location_type& l)
+      basic_symbol (typename Base::kind_type t, const char32_t& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -3173,7 +3173,7 @@ switch (yykind)
 
       case symbol_kind::S_CHAR: // "CHAR"
       case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
-        value.template destroy< char > ();
+        value.template destroy< char32_t > ();
         break;
 
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
@@ -3526,10 +3526,10 @@ switch (yykind)
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
-      symbol_type (int tok, char v, location_type l)
+      symbol_type (int tok, char32_t v, location_type l)
         : super_type (token_kind_type (tok), std::move (v), std::move (l))
 #else
-      symbol_type (int tok, const char& v, const location_type& l)
+      symbol_type (int tok, const char32_t& v, const location_type& l)
         : super_type (token_kind_type (tok), v, l)
 #endif
       {
@@ -5674,14 +5674,14 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_CHAR (char v, location_type l)
+      make_CHAR (char32_t v, location_type l)
       {
         return symbol_type (token::TOK_CHAR, std::move (v), std::move (l));
       }
 #else
       static
       symbol_type
-      make_CHAR (const char& v, const location_type& l)
+      make_CHAR (const char32_t& v, const location_type& l)
       {
         return symbol_type (token::TOK_CHAR, v, l);
       }
@@ -5734,14 +5734,14 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
-      make_PRIMCHAR (char v, location_type l)
+      make_PRIMCHAR (char32_t v, location_type l)
       {
         return symbol_type (token::TOK_PRIMCHAR, std::move (v), std::move (l));
       }
 #else
       static
       symbol_type
-      make_PRIMCHAR (const char& v, const location_type& l)
+      make_PRIMCHAR (const char32_t& v, const location_type& l)
       {
         return symbol_type (token::TOK_PRIMCHAR, v, l);
       }
@@ -6433,7 +6433,7 @@ switch (yykind)
 
       case symbol_kind::S_CHAR: // "CHAR"
       case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
-        value.copy< char > (YY_MOVE (that.value));
+        value.copy< char32_t > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
@@ -6912,7 +6912,7 @@ switch (yykind)
 
       case symbol_kind::S_CHAR: // "CHAR"
       case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
-        value.move< char > (YY_MOVE (s.value));
+        value.move< char32_t > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"

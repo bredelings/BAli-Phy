@@ -405,7 +405,7 @@ namespace yy {
 
       case symbol_kind::S_CHAR: // "CHAR"
       case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
-        value.YY_MOVE_OR_COPY< char > (YY_MOVE (that.value));
+        value.YY_MOVE_OR_COPY< char32_t > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
@@ -868,7 +868,7 @@ namespace yy {
 
       case symbol_kind::S_CHAR: // "CHAR"
       case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
-        value.move< char > (YY_MOVE (that.value));
+        value.move< char32_t > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
@@ -1331,7 +1331,7 @@ namespace yy {
 
       case symbol_kind::S_CHAR: // "CHAR"
       case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
-        value.copy< char > (that.value);
+        value.copy< char32_t > (that.value);
         break;
 
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
@@ -1793,7 +1793,7 @@ namespace yy {
 
       case symbol_kind::S_CHAR: // "CHAR"
       case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
-        value.move< char > (that.value);
+        value.move< char32_t > (that.value);
         break;
 
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
@@ -2500,7 +2500,7 @@ namespace yy {
 
       case symbol_kind::S_CHAR: // "CHAR"
       case symbol_kind::S_PRIMCHAR: // "PRIMCHAR"
-        yylhs.value.emplace< char > ();
+        yylhs.value.emplace< char32_t > ();
         break;
 
       case symbol_kind::S_PRIMDOUBLE: // "PRIMDOUBLE"
@@ -5803,7 +5803,7 @@ namespace yy {
 
   case 532: // literal: "CHAR"
 #line 1623 "parser.y"
-                     {yylhs.value.as < Hs::Exp > () = Hs::Literal(Hs::Char{yystack_[0].value.as < char > ()});}
+                     {yylhs.value.as < Hs::Exp > () = Hs::Literal(Hs::Char{yystack_[0].value.as < char32_t > ()});}
 #line 5808 "parser.cc"
     break;
 

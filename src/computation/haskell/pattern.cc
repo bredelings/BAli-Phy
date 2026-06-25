@@ -202,8 +202,8 @@ ConPattern to_con_pat(const ListPattern& L)
 ConPattern to_con_pat(const std::string& s)
 {
     ListPattern L;
-    for(char c: s)
-	L.elements.push_back({noloc,LiteralPattern(Literal(Char(c)))});
+    for(unsigned char c: s)
+	L.elements.push_back({noloc,LiteralPattern(Literal(Char(static_cast<char32_t>(c))))});
     return to_con_pat(L);
 }
 

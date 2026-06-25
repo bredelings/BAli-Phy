@@ -7,6 +7,7 @@
 # include <cassert>
 # include <climits>
 # include <cstdlib>
+# include <limits>
 # include <memory>
 # include <string>
 # include <string_view>
@@ -522,11 +523,11 @@ std::optional<int> is_gap(const yy::parser::location_type& loc, driver& drv, std
     return i;
 }
 
-std::pair<char,int> get_char(const yy::parser::location_type& loc, driver& drv, std::string_view text, int length, int i)
+std::pair<char32_t,int> get_char(const yy::parser::location_type& loc, driver& drv, std::string_view text, int length, int i)
 {
     assert(i < length);
 
-    char c = text[i];
+    char32_t c = static_cast<unsigned char>(text[i]);
     if (c == '\\')
     {
         if (i+1 >= length)
@@ -537,7 +538,7 @@ std::pair<char,int> get_char(const yy::parser::location_type& loc, driver& drv, 
             return {'?',i+2};
         }
 
-	c = text[i+1];
+	c = static_cast<unsigned char>(text[i+1]);
 	if (c == 'a')
 	    c = '\a';
 	else if (c == 'b')
@@ -562,7 +563,7 @@ std::pair<char,int> get_char(const yy::parser::location_type& loc, driver& drv, 
         {
             yy::parser::location_type loc2(loc.begin+i);
             loc2 += 2;
-            auto msg = Note()<<"invalid escape sequence '\\"<<c<<"'";
+            auto msg = Note()<<"invalid escape sequence '\\"<<static_cast<char>(c)<<"'";
             drv.push_error_message(loc2, msg);
 
             c = '?';
@@ -595,7 +596,15 @@ yy::parser::symbol_type make_string(std::string_view text, const yy::parser::loc
         else
         {
             auto [c, next_pos] = get_char(loc, drv, text, text.size()-1, i);
-            s[j++] = c;
+            // Compatibility note: string literals still store bytes until
+            // Hs::String/Data.Text are widened, so reject larger code points.
+            if (c > std::numeric_limits<unsigned char>::max())
+            {
+                yy::parser::location_type loc2(loc.begin+i, loc.begin+next_pos);
+                drv.push_error_message(loc2, Note()<<"string literal code point is not yet supported by the byte-sized string representation");
+                c = '?';
+            }
+            s[j++] = static_cast<char>(c);
             i = next_pos;
         }
     }
