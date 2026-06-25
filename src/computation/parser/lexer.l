@@ -7,8 +7,10 @@
 # include <cassert>
 # include <climits>
 # include <cstdlib>
+# include <cstdint>
 # include <limits>
 # include <memory>
+# include <optional>
 # include <string>
 # include <string_view>
 # include <regex>
@@ -72,6 +74,7 @@ graphic      {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"\'
 graphicnonq  {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"
 graphicnonqq {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\'
 charescape   [a b f n r t v \\ \" \' \&]
+decimalescape \\{decdigit}+
 
 binit        [0-1]
 octit        [0-7]
@@ -99,8 +102,8 @@ exponent     {numspc}[eE][\-\+]?{decimal}
 bin_exponent {numspc}[pP][\-\+]?{decimal}
 
 gap          \\{whitechar}+\\
-escape	     \\{charescape}
-escapechar   \\({charescape}|" "|{graphic})
+escape	     \\{charescape}|{decimalescape}
+escapechar   {decimalescape}|\\({charescape}|" "|{graphic})
 stringchar   {graphicnonqq}|" "|{escape}|{gap}
 /* We want to parse incorrect escapes as char/string so that we can give better error messages.
    If we don't do so, then bad escapes fail to lex and fall through to "invalid character" error message. */
@@ -523,7 +526,58 @@ std::optional<int> is_gap(const yy::parser::location_type& loc, driver& drv, std
     return i;
 }
 
-std::pair<char32_t,int> get_char(const yy::parser::location_type& loc, driver& drv, std::string_view text, int length, int i)
+struct ParsedChar
+{
+    std::optional<char32_t> value;
+    int next_pos;
+};
+
+// Recognize the decimal digits allowed in numeric character escapes.
+static bool is_ascii_digit(char c)
+{
+    return '0' <= c and c <= '9';
+}
+
+// Check the Unicode scalar-value invariant before accepting a numeric escape.
+static bool is_unicode_scalar_value(char32_t c)
+{
+    return c <= 0x10FFFF and not (0xD800 <= c and c <= 0xDFFF);
+}
+
+// Parse one decimal numeric escape after a backslash, preserving the source
+// span for diagnostics and detecting overflow before it can wrap.
+ParsedChar get_decimal_escape(const yy::parser::location_type& loc, driver& drv, std::string_view text, int length, int i)
+{
+    assert(i+1 < length);
+    assert(text[i] == '\\');
+    assert(is_ascii_digit(text[i+1]));
+
+    std::uint32_t c = 0;
+    bool overflow = false;
+    int j = i+1;
+    while(j < length and is_ascii_digit(text[j]))
+    {
+        auto digit = static_cast<std::uint32_t>(text[j] - '0');
+        if (c > (0x10FFFF - digit) / 10)
+            overflow = true;
+        else
+            c = 10*c + digit;
+        j++;
+    }
+
+    if (overflow or not is_unicode_scalar_value(c))
+    {
+        yy::parser::location_type loc2(loc.begin+i, loc.begin+j);
+        drv.push_error_message(loc2, Note()<<"numeric character escape is not a Unicode scalar value");
+        c = '?';
+    }
+
+    return {static_cast<char32_t>(c), j};
+}
+
+// Parse one character or escape from a character/string literal.  A missing
+// value represents Haskell's empty string-only escape `\&`.
+ParsedChar get_char(const yy::parser::location_type& loc, driver& drv, std::string_view text, int length, int i)
 {
     assert(i < length);
 
@@ -539,7 +593,9 @@ std::pair<char32_t,int> get_char(const yy::parser::location_type& loc, driver& d
         }
 
 	c = static_cast<unsigned char>(text[i+1]);
-	if (c == 'a')
+        if (is_ascii_digit(static_cast<char>(c)))
+            return get_decimal_escape(loc, drv, text, length, i);
+	else if (c == 'a')
 	    c = '\a';
 	else if (c == 'b')
 	    c = '\b';
@@ -559,6 +615,8 @@ std::pair<char32_t,int> get_char(const yy::parser::location_type& loc, driver& d
 	    c = '\'';
 	else if (c == '\\')
 	    c = '\\';
+        else if (c == '&')
+            return {std::nullopt, i+2};
 	else
         {
             yy::parser::location_type loc2(loc.begin+i);
@@ -578,8 +636,14 @@ yy::parser::symbol_type make_char(std::string_view text, const yy::parser::locat
 {
     int i=1;
     auto [c,_] = get_char(loc, drv, text, text.size() - 1, i);
+    if (not c)
+    {
+        yy::parser::location_type loc2(loc.begin+i, loc.begin+i+2);
+        drv.push_error_message(loc2, Note()<<"empty escape '\\&' is not valid in a character literal");
+        c = '?';
+    }
 
-    return yy::parser::make_CHAR(c,loc);
+    return yy::parser::make_CHAR(*c,loc);
 }
 
 yy::parser::symbol_type make_string(std::string_view text, const yy::parser::location_type& loc, driver& drv)
@@ -596,15 +660,18 @@ yy::parser::symbol_type make_string(std::string_view text, const yy::parser::loc
         else
         {
             auto [c, next_pos] = get_char(loc, drv, text, text.size()-1, i);
-            // Compatibility note: string literals still store bytes until
-            // Hs::String/Data.Text are widened, so reject larger code points.
-            if (c > std::numeric_limits<unsigned char>::max())
+            if (c)
             {
-                yy::parser::location_type loc2(loc.begin+i, loc.begin+next_pos);
-                drv.push_error_message(loc2, Note()<<"string literal code point is not yet supported by the byte-sized string representation");
-                c = '?';
+                // Compatibility note: string literals still store bytes until
+                // Hs::String/Data.Text are widened, so reject larger code points.
+                if (*c > std::numeric_limits<unsigned char>::max())
+                {
+                    yy::parser::location_type loc2(loc.begin+i, loc.begin+next_pos);
+                    drv.push_error_message(loc2, Note()<<"string literal code point is not yet supported by the byte-sized string representation");
+                    c = '?';
+                }
+                s[j++] = static_cast<char>(*c);
             }
-            s[j++] = static_cast<char>(c);
             i = next_pos;
         }
     }
