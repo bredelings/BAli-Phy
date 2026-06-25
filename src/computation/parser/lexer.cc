@@ -937,8 +937,8 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
    If we don't do so, then bad escapes fail to lex and fall through to "invalid character" error message. */
 #line 128 "lexer.l"
   // Audit note: this flex hook is still an implicit side-effect point for
-  // location columns and left-adjacency tracking.
-  # define YY_USER_ACTION  loc.columns (yyleng); drv.advance_left_adjacency_window();
+  // location columns.
+  # define YY_USER_ACTION  loc.columns (yyleng);
 #line 943 "lexer.cc"
 #line 944 "lexer.cc"
 
@@ -1527,7 +1527,7 @@ YY_RULE_SETUP
 #line 220 "lexer.l"
 {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), false));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(loc), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
@@ -1542,7 +1542,7 @@ YY_RULE_SETUP
 #line 228 "lexer.l"
 {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), true));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(loc), true));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
@@ -1554,7 +1554,7 @@ YY_RULE_SETUP
 #line 236 "lexer.l"
 {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), false));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(loc), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else

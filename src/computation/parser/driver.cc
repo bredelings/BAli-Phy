@@ -106,8 +106,8 @@ void driver::commit_token(const LexedToken& token)
     assert(token.effects.layout_after == LayoutIntent::None or
            (not token.effects.push_no_layout_context and not token.effects.pop_context));
 
-    if (token.effects.closes_atom)
-        mark_token_closes_atom();
+    previous_committed_token_closes_atom = token.effects.closes_atom;
+    previous_committed_token_end = token.symbol.location.end;
 
     if (token.effects.push_no_layout_context)
         push_context();
@@ -117,6 +117,19 @@ void driver::commit_token(const LexedToken& token)
 
     if (token.effects.layout_after != LayoutIntent::None)
         pending_layout_intent = token.effects.layout_after;
+}
+
+// Check whether the previous committed source token closed an atom and ended
+// exactly where the current token begins.
+bool driver::left_adjacent_closes_atom(const location_type& loc) const
+{
+    if (not previous_committed_token_closes_atom)
+        return false;
+
+    assert(previous_committed_token_end.filename == loc.begin.filename);
+
+    return previous_committed_token_end.line == loc.begin.line and
+           previous_committed_token_end.column == loc.begin.column;
 }
 
 // Return and clear the line-start marker accumulated while raw scanning

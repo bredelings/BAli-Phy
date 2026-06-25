@@ -102,6 +102,8 @@ class driver
     LayoutIntent pending_layout_intent = LayoutIntent::None;
     std::deque<symbol_type> pending_virtual_tokens;
     std::optional<LexedToken> pending_real_token;
+    bool previous_committed_token_closes_atom = false;
+    yy::position previous_committed_token_end;
 
     std::optional<symbol_type> virtual_after_keyword(const location_type& loc);
     void virtual_after_if(const location_type& loc);
@@ -154,14 +156,7 @@ public:
     // The token's location used by the scanner.
     yy::location location;
 
-    static constexpr int left_adjacency_window_size = 2;
-
-    // YY_USER_ACTION runs before each lexer action, including whitespace/comment
-    // actions. This window is visible only to an immediately adjacent token.
-    int left_adjacency_window = 0;
-    void advance_left_adjacency_window() {if (left_adjacency_window > 0) left_adjacency_window--;}
-    void mark_token_closes_atom() {left_adjacency_window = left_adjacency_window_size;}
-    bool left_adjacent_closes_atom() const {return left_adjacency_window > 0;}
+    bool left_adjacent_closes_atom(const location_type& loc) const;
 };
 
 Haskell::Module parse_module_file(const std::string& content, const std::string& input_name, const LanguageExtensions& lang_exts);

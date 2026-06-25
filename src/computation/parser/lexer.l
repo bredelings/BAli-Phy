@@ -126,8 +126,8 @@ signed       {negative}?
 
 %{
   // Audit note: this flex hook is still an implicit side-effect point for
-  // location columns and left-adjacency tracking.
-  # define YY_USER_ACTION  loc.columns (yyleng); drv.advance_left_adjacency_window();
+  // location columns.
+  # define YY_USER_ACTION  loc.columns (yyleng);
 %}
 
 %%
@@ -218,7 +218,7 @@ signed       {negative}?
 
 <INITIAL>{varsym}/"{-"                   {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), false));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(loc), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
@@ -226,7 +226,7 @@ signed       {negative}?
                                           }
 <INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), true));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(loc), true));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
@@ -234,7 +234,7 @@ signed       {negative}?
                                           }
 <INITIAL>{varsym}                        {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(), false));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(loc), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, loc);
                                             else
