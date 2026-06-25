@@ -20,8 +20,9 @@ Done:
 - `Literal::is_Char()` returns `std::optional<char32_t>`.
 - Parser semantic values for `CHAR` and `PRIMCHAR` use `char32_t`.
 - The lexer helper for character literals returns `char32_t`.
-- Desugaring rejects `Hs::Char` values that cannot fit in the current
-  byte-sized runtime `Char`.
+- Desugaring can lower non-byte `Hs::Char` values to Core character constants.
+- `Core::Constant`, `Runtime::Char`, `Runtime::Exp::as_char()`, character
+  closure constructors, and runtime atom/Core conversions use `char32_t`.
 - ASCII lexer regression tests cover character/string literals and `--`
   comment behavior versus symbolic operators.
 - The lexer parses decimal numeric escapes in character and string literals.
@@ -32,23 +33,28 @@ Done:
 - String printing is byte-preserving for now: bytes greater than `0x7f` print
   as numeric escapes until Runtime/Text are deliberately widened.
 - Literal escape tests cover decimal escapes, `\&`, invalid scalar escapes, and
-  the current byte-sized runtime/string guards.
+  the current byte-preserving string guard.
 - `util/utf8.{H,cc}` provides shared UTF-8 scalar validation, scalar
   encode/decode, code-point counting, and code-point-to-byte offset conversion.
 - Haskell literal printing and lexer numeric escapes use the shared scalar
   validation helper.
-- The desugar-time runtime `Char` byte guard is marked as a temporary
-  `FIXME-UNICODE` boundary.
+- Scalar `Char` conversions such as `ord`, `chr`, `intToChar`, `charToInt`,
+  `integerToChar`, and `charToInteger` use Unicode scalar semantics.
+- `hPutChar`, `hGetChar`, and `hLookAhead` encode or decode UTF-8 scalars.
+- C++ `Text` packing and construction helpers encode `Char` values as UTF-8.
 
 Still limited:
 
 - The lexer accepts only ASCII character and string literal source today.
-- `Core::Constant` and `Runtime::Char` still store byte-sized characters.
-- `Runtime::Exp::as_char()` and related closure constructors still assume
-  byte-sized characters.
-- `Data.Char`, `Data.Text`, `Text.pack`, `Text.unpack`, `hPutChar`,
-  `hGetChar`, `intToChar`, `charToInt`, and `integerToChar` still need
-  Unicode scalar or UTF-8 semantics.
+- `Hs::String` and the string-literal parser still store bytes and reject
+  numeric escapes above `0xff`.
+- `Data.Char` predicates and case transforms are still ASCII-only.
+- Public `Data.Text` offsets and lengths are still byte-based.  This means
+  `length`, `head`, `last`, `tail`, `init`, `append`, `Eq`, `Ord`,
+  `toCppString`, and `unpack` do not yet have code-point semantics for
+  multibyte text.
+- `CPPString` unpacking still maps raw bytes to `Char` values.
+- CSV separators are still restricted to one byte.
 - `haskell/ids.cc` still classifies identifiers and symbols byte-by-byte using
   ASCII rules.
 - `computation/parser/lexer.l` still has placeholder Unicode character classes
@@ -83,8 +89,8 @@ large lexer changes is:
   decides otherwise.
 - Decimal numeric literals remain ASCII-only even if Unicode `Nd` characters
   are allowed inside identifiers.
-- Temporary byte-sized runtime boundaries must be marked with compatibility
-  notes and must reject unrepresentable values.
+- Temporary byte/string boundaries must be marked with compatibility notes and
+  must reject unrepresentable values.
 
 ## Design Decisions
 
@@ -117,8 +123,8 @@ Required behavior:
 - Parse decimal numeric escapes in character literals.
 - Parse decimal numeric escapes in string literals.
 - Reject numeric escapes that are not Unicode scalar values.
-- Reject numeric escapes that cannot currently be represented by the byte-sized
-  runtime when desugaring is reached.
+- In string literals, keep rejecting numeric escapes above `0xff` while
+  `Hs::String` remains byte-preserving storage.
 - Handle escape termination unambiguously.  If a numeric escape is followed by
   a digit in a string literal, the printer must use a Haskell empty escape
   `\&` or another unambiguous representation.
@@ -163,12 +169,14 @@ Already implemented:
 - Printable ASCII prints directly.
 - Non-ASCII and non-printable code points print as numeric escapes.
 - Invalid scalar values are rejected by the character literal printer.
+- Non-byte character literals can desugar to Core and Runtime `Char` values.
 
 Remaining work:
 
 - Optional direct C++ tests for constructed non-ASCII and invalid `Hs::Char`
   printing if a convenient local test hook is added.
-- Runtime/Text follow-through before non-byte `Char` values can be desugared.
+- Direct non-ASCII source characters in character literals still need lexer
+  Unicode input support.
 
 ## Runtime Char and Text Follow-Through
 
@@ -229,42 +237,45 @@ As the UTF-8-aware region expands, the number of marked boundaries should shrink
    validation, scalar encode/decode, code-point counting, and code-point offset
    to byte offset conversion.
 2. Done for the initial scalar-validation sites: Haskell literal printing and
-   lexer numeric escapes use `util/utf8`, and the current desugar-time byte
-   guard is marked as a temporary boundary with `FIXME-UNICODE`.
-3. Widen `Core::Constant` character storage from `char` to `char32_t`.
+   lexer numeric escapes use `util/utf8`.  String-literal byte storage remains
+   marked as a temporary boundary with `FIXME-UNICODE`.
+3. Done: widen `Core::Constant` character storage from `char` to `char32_t`.
    Construct character constants explicitly as `char32_t` so the variant is not
    confused with `int`.
-4. Widen `Runtime::Char` and `Runtime::Exp::as_char()` to `char32_t`.
+4. Done: widen `Runtime::Char` and `Runtime::Exp::as_char()` to `char32_t`.
    Update closure constructors, runtime serialization tests, and conversions
    between Core constants and runtime atoms.
-5. Update scalar `Char` primitive and builtin functions:
+5. Done: update scalar `Char` primitive and builtin functions:
    `ord`, `chr`, `intToChar`, `charToInt`, `integerToChar`,
    `charToInteger`, comparisons, and any remaining arithmetic or conversion
    operations.  Reject invalid Unicode scalar results.
-6. For `Data.Char` predicates and transforms currently implemented with
-   `<cctype>`, either keep them explicitly ASCII-only with `FIXME-UNICODE`
-   notes or defer full Unicode behavior until Unicode category tables are
-   designed.  Do not pass `char32_t` values directly to byte-oriented C library
-   functions.
-7. Convert `Data.Text` to upstream-style public semantics: internally store
+6. Done for now: `Data.Char` predicates and transforms currently implemented
+   with `<cctype>` are explicitly ASCII-only with `FIXME-UNICODE` notes.
+   Full Unicode behavior is deferred until Unicode category tables are
+   designed.
+7. Convert public `Data.Text` to upstream-style semantics: internally store
    UTF-8 bytes, but expose lengths, indices, `take`, `drop`, `splitAt`, and
    similar operations in Unicode code points.  Use `util/utf8` to map public
    code-point offsets to internal byte offsets.
-8. Update `[Char]` and `Text` conversions:
-   `Text.pack`, `Text.unpack`, `singleton`, `cons`, `snoc`, `head`, `last`,
-   `init`, and similar functions should encode or decode UTF-8 at the boundary.
-9. Update text IO:
-   `hPutChar` should encode one scalar as UTF-8, and `hGetChar` should decode
-   one UTF-8 scalar.  Raw byte/string APIs may remain byte-oriented, but their
-   names or local comments should make that explicit.
-10. Audit byte-oriented consumers such as CSV separators, `vector<char>` string
-    conversions, and raw file helpers.  Either convert them to `char32_t`/UTF-8
-    semantics or mark temporary byte behavior with `FIXME-UNICODE`.
-11. Remove the desugar-time byte guard only after runtime `Char`, main
-    `[Char]`/`Text` conversions, and basic character IO can represent Unicode
-    scalar values.
+8. Partly done: C++ `Text.pack`, `singleton`, `cons`, and `snoc` encode
+   `Char` values as UTF-8.  Still convert public `[Char]` and `Text`
+   boundaries such as `Text.unpack`, `Data.Text.head`, `Data.Text.last`,
+   `Data.Text.tail`, `Data.Text.init`, and `Foreign.String` substring
+   unpacking to decode UTF-8 at the boundary.
+9. Done for character IO: `hPutChar` encodes one scalar as UTF-8, and
+   `hGetChar`/`hLookAhead` decode one UTF-8 scalar.  Raw byte/string APIs may
+   remain byte-oriented, but their names or local comments should make that
+   explicit.
+10. Partly done: byte-oriented consumers are either converted or marked where
+    found.  CSV separators and `CPPString` unpacking are marked temporary byte
+    boundaries.  Continue shrinking this list as Text and string APIs move to
+    UTF-8 semantics.
+11. Done: remove the desugar-time runtime `Char` byte guard.  `Hs::Char` can
+    now lower to Core and Runtime `Char` values for all valid Unicode scalars.
 
-### Known Consumers to Audit
+### Known Consumer Status
+
+Resolved in the runtime `Char` widening:
 
 - `Core::Constant`
 - `Runtime::Char`
@@ -274,21 +285,26 @@ As the UTF-8-aware region expands, the number of marked boundaries should shrink
 - `core_constant_from_runtime_exp()`
 - `atom_from_constant()`
 - `runtime_constant_to_core()`
-- `Data.Char` builtins
-- `Data.Text` builtins
-- `Text.pack`
-- `Text.unpack`
 - `hPutChar`
 - `hGetChar`
-- `intToChar`
-- `charToInt`
-- `integerToChar`
-- `charToInteger`
-- `Data.Char` predicates and case transforms
-- `Data.Text` indexing, slicing, packing, and unpacking
-- `hPutStrRaw`, `hGetLineRaw`, and other intentionally byte-oriented APIs
-- CSV separator handling in `Data.cc`
-- `vector<char>` to string conversions
+- `hLookAhead`
+- `ord`, `chr`, `intToChar`, `charToInt`, `integerToChar`, and
+  `charToInteger`
+- `Runtime::RVector` character vectors, now using `std::vector<char32_t>`
+
+Remaining or intentionally limited:
+
+- `Data.Char` predicates and case transforms are ASCII-only until Unicode
+  category and case-conversion support is designed.
+- Public `Data.Text` indexing, slicing, length, equality, ordering, packing,
+  and unpacking still need a coherent code-point-offset implementation.
+- `Text.unpack` and `Foreign.String` substring unpacking still map raw bytes to
+  `Char` values through `CPPString`.
+- `hPutStrRaw`, `hGetLineRaw`, `hGetContentsRaw`, and other raw string APIs
+  remain byte-oriented by design, but callers that expose `[Char]` need UTF-8
+  decoding.
+- CSV separator handling in `Data.cc` is still restricted to one byte.
+- String literals and `Hs::String` remain byte-preserving.
 
 ### Validation
 
