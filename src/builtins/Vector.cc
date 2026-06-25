@@ -1,5 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include <vector>
+#include <limits>
 #include "computation/operation.H"
 #include "util/myexception.H"
 #include "util/matrix.H"
@@ -61,9 +62,30 @@ extern "C" R::Exp simple_function_getStringElement(vector<R::Exp>& args)
     const std::string& s = arg0.as_string();
     int i = get_arg(args).as_int();
 
-    // FIXME-UNICODE: Temporary byte boundary. CPPString unpacking still maps
-    // raw bytes to Char values until it is converted to decode UTF-8.
+    // Compatibility/raw-byte helper.  Text callers should use
+    // decodeUtf8CharAt rather than interpreting this byte as a Char.
     return static_cast<char32_t>(static_cast<unsigned char>(s[i]));
+}
+
+// Decode one UTF-8 scalar from a CPPString and return the scalar plus the next
+// byte offset, so Haskell can lazily unpack a String without bulk allocation.
+extern "C" R::Exp simple_function_decodeUtf8CharAt(vector<R::Exp>& args)
+{
+    auto arg0 = get_arg(args);
+    const std::string& s = arg0.as_string();
+    int offset = get_arg(args).as_int();
+
+    if (offset < 0)
+        throw myexception()<<"decodeUtf8CharAt: negative byte offset "<<offset;
+
+    auto decoded = utf8::decode_next(s, static_cast<std::size_t>(offset));
+    if (not decoded)
+        throw myexception()<<"decodeUtf8CharAt: invalid UTF-8 at byte offset "<<offset;
+
+    if (decoded->next_byte > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw myexception()<<"decodeUtf8CharAt: next byte offset exceeds Int range.";
+
+    return R::RPair(decoded->code_point, static_cast<int>(decoded->next_byte));
 }
 
 extern "C" closure builtin_function_cppSubString(OperationArgs& Args)

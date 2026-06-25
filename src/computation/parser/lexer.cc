@@ -1462,8 +1462,6 @@ yy::parser::symbol_type make_string(std::string_view text, const yy::parser::loc
 {
 //    std::cerr<<"analyzing string: '"<<text<<"'\n";
     std::string s;
-    s.resize(text.size());
-    int j=0;
     for(int i=1;i<text.size()-1;)
     {
 //        std::cerr<<"   looking at: '"<<text.substr(i)<<"'\n";
@@ -1473,21 +1471,10 @@ yy::parser::symbol_type make_string(std::string_view text, const yy::parser::loc
         {
             auto [c, next_pos] = get_char(loc, drv, text, text.size()-1, i);
             if (c)
-            {
-                // FIXME-UNICODE: Temporary byte boundary. String literals still
-                // store bytes until Hs::String/Data.Text are widened.
-                if (*c > std::numeric_limits<unsigned char>::max())
-                {
-                    yy::parser::location_type loc2(loc.begin+i, loc.begin+next_pos);
-                    drv.push_error_message(loc2, Note()<<"string literal code point is not yet supported by the byte-sized string representation");
-                    c = '?';
-                }
-                s[j++] = static_cast<char>(*c);
-            }
+                s += utf8::encode(*c);
             i = next_pos;
         }
     }
-    s.resize(j);
 
 //    std::cerr<<"got string: '"<<s<<"'\n";
 

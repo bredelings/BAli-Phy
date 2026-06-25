@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 #include <regex>
+#include <vector>
 #include <fmt/format.h>
 
 using std::string;
@@ -201,19 +202,37 @@ static string print_char_literal(char32_t c)
     return "'" + print_literal_payload_char(c, false) + "'";
 }
 
-// Print a byte-preserving string literal.  Bytes >= 128 are numeric escapes
-// until Runtime/Text are deliberately widened to Unicode text semantics.
+// Decode Hs::String payload bytes before printing.  Invalid bytes indicate
+// broken internal construction of a Haskell source string literal.
+static std::vector<char32_t> decode_string_literal_payload(const string& text)
+{
+    std::vector<char32_t> chars;
+    for(std::size_t byte_offset = 0; byte_offset < text.size();)
+    {
+        auto decoded = utf8::decode_next(text, byte_offset);
+        if (not decoded)
+            throw myexception()<<"Invalid UTF-8 in Haskell string literal payload.";
+        chars.push_back(decoded->code_point);
+        byte_offset = decoded->next_byte;
+    }
+    return chars;
+}
+
+// Print a UTF-8-backed Haskell string literal using numeric escapes for
+// non-ASCII source output until raw Unicode source is deliberately enabled.
 static string print_string_literal(const string& text)
 {
+    auto chars = decode_string_literal_payload(text);
+
     string result = "\"";
-    for(int i=0; i<text.size(); i++)
+    for(std::size_t i=0; i<chars.size(); i++)
     {
-        auto c = static_cast<unsigned char>(text[i]);
+        auto c = chars[i];
         bool use_numeric_escape = not standard_escape(c, true) and not (0x20 <= c and c <= 0x7E);
         auto escaped = print_literal_payload_char(c, true);
 
         result += escaped;
-        if (use_numeric_escape and i+1 < text.size() and is_ascii_digit(static_cast<unsigned char>(text[i+1])))
+        if (use_numeric_escape and i+1 < chars.size() and is_ascii_digit(chars[i+1]))
             result += "\\&";
     }
     result += "\"";

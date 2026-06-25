@@ -34,6 +34,7 @@ integer integerFromString(const std::string& s);
 
 struct String
 {
+    // Valid UTF-8 bytes for a Haskell String literal payload.
     std::string value;
     bool operator==(const String&) const = default;
 
