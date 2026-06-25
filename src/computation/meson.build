@@ -1,6 +1,7 @@
 
 computation_sources = [
   'object.cc',
+  'byte-string.cc',
   'closure.cc',
   'program.cc',
   'preprocess.cc',
