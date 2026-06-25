@@ -1,0 +1,6 @@
+[wrap-file]
+directory = RE-flex-6.3.0
+source_url = https://github.com/Genivia/RE-flex/archive/refs/tags/v6.3.0.tar.gz
+source_filename = re-flex-6.3.0.tar.gz
+source_hash = c9e448b621734238c22352f54562bb88c1c6c18450f89d8fe6a2eb2bcce68a2b
+

@@ -127,6 +127,23 @@ cereal = dependency('cereal').as_system()
 
 subdir('external/immer/')
 
+# RE/flex is wired as an opt-in CMake subproject before the scanner switch so
+# the later lexer conversion can use a reproducible generator and runtime.
+used_reflex = 'disabled'
+reflex_dep = disabler()
+reflex_generator = disabler()
+if not get_option('with-reflex').disabled()
+  cmake = import('cmake')
+  reflex_project = cmake.subproject('reflex', required: get_option('with-reflex'))
+  if reflex_project.found()
+    reflex_dep = reflex_project.dependency('ReflexLibStatic', include_type: 'system')
+    reflex_generator = reflex_project.target('Reflex')
+    used_reflex = 'subproject'
+  else
+    used_reflex = 'not found'
+  endif
+endif
+
 math_dep = cpp.find_library('m', required:false)
 
 small_fasta=files('examples/5S-rRNA/5d-muscle.fasta')
@@ -214,5 +231,6 @@ summary({'optimization': get_option('optimization'),
 
 summary({
          'range v3': used_librange,
-         'cairo': used_cairo
+         'cairo': used_cairo,
+         'RE/flex': used_reflex
         },section: 'Libraries')
