@@ -4,6 +4,7 @@
 # include <string_view>
 # include <deque>
 # include <map>
+# include <memory>
 # include <optional>
 # include <set>
 # include <utility>
@@ -12,6 +13,12 @@
 # include "computation/message.H"
 
 class driver;
+class RawLexerState;
+
+struct RawLexerStateDeleter
+{
+    void operator()(RawLexerState* state) const;
+};
 
 enum class LayoutIntent
 {
@@ -48,11 +55,7 @@ struct LexedToken
 
 yy::parser::symbol_type yylex(driver& drv);
 
-// Tell Flex the raw lexer's prototype ...
-# define YY_DECL \
-  LexedToken raw_yylex (driver& drv)
-// ... and declare it for the wrapper's sake.
-YY_DECL;
+LexedToken raw_yylex(driver& drv);
 
 struct LayoutContext
 {
@@ -104,6 +107,7 @@ class driver
     std::optional<LexedToken> pending_real_token;
     bool previous_committed_token_closes_atom = false;
     yy::position previous_committed_token_end;
+    std::unique_ptr<RawLexerState, RawLexerStateDeleter> raw_lexer;
 
     std::optional<symbol_type> virtual_after_keyword(const location_type& loc);
     void virtual_after_if(const location_type& loc);
@@ -116,6 +120,9 @@ class driver
 
 public:
     driver (const LanguageExtensions& lang_exts);
+    ~driver();
+
+    friend LexedToken raw_yylex(driver& drv);
 
     LayoutContext get_offside(const location_type& loc);
 

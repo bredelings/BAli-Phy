@@ -1,25 +1,18 @@
+%top{
+# include "driver.hh"
+}
+
 %{ /* -*- C++ -*- */
 # include <cerrno>
+# include <cassert>
 # include <climits>
 # include <cstdlib>
+# include <memory>
 # include <string>
 # include <string_view>
 # include <regex>
 # include "driver.hh"
 # include "parser.hh"
-
-// Work around an incompatibility in flex (at least versions
-// 2.5.31 through 2.5.33): it generates code that does
-// not conform to C89.  See Debian bug 333231
-// <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=333231>.
-# undef yywrap
-# define yywrap() 1
-
-// Pacify warnings in yy_init_buffer (observed with Flex 2.6.4)
-// and GCC 7.3.0.
-#if defined __GNUC__ && 7 <= __GNUC__
-# pragma GCC diagnostic ignored "-Wnull-dereference"
-#endif
 
 // Forward declarations
 yy::parser::symbol_type make_integer(std::string_view text, int radix, bool positive, int shift,
@@ -42,6 +35,7 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 %}
 
 %option noyywrap nounput batch debug noinput stack never-interactive nounistd
+%option lex=raw_yylex token-type=LexedToken token-eof="LexedToken(yy::parser::make_END(yy::location()))" params="driver& drv"
 %s nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
 
@@ -125,47 +119,44 @@ signed       {negative}?
 
 
 %{
-  // Audit note: this flex hook is still an implicit side-effect point for
-  // location columns.
-  # define YY_USER_ACTION  loc.columns (yyleng);
+  # undef YY_USER_ACTION
+  # define YY_USER_ACTION  drv.location.columns (yyleng);
 %}
 
 %%
 
   /* Code run each time yylex is called. */
 %{
-  // A handy shortcut to the location held by the driver.
-  yy::location& loc = drv.location;
-  loc.step ();
+  drv.location.step ();
 %}
 
-{white_no_nl}+   loc.step ();
-{tab}	         loc.step ();
+{white_no_nl}+   drv.location.step ();
+{tab}	         drv.location.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
 <nested_comment2>"-}"        yy_pop_state();
-<nested_comment>"-}"         loc.step(); yy_pop_state();
-"-}"         throw yy::parser::syntax_error(loc, "Too many -}");
+<nested_comment>"-}"         drv.location.step(); yy_pop_state();
+<INITIAL,option_prags>"-}"   throw yy::parser::syntax_error(drv.location, "Too many -}");
 
 <nested_comment,nested_comment2>{
 "{-"         yy_push_state(nested_comment2);
 "{"          // eat a chunk with no newline or "-"
 [^-\n{]*     // eat a chunk with no newline or "-"
 "-"          // eat a "-" not followed by "}"
-[\n]         loc.lines(1);
-<<EOF>>      throw yy::parser::syntax_error(loc, "Unterminated {-");
+[\n]         drv.location.lines(1);
+<<EOF>>      throw yy::parser::syntax_error(drv.location, "Unterminated {-");
 }
 "{-"/[^#]                    yy_push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
 <INITIAL,option_prags,line_prag1a,line_prag2,line_prag2a>{
-"--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           loc.step();
-"--"-*$           loc.step();
-"-- "$            loc.step();
+"--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           drv.location.step();
+"--"-*$           drv.location.step();
+"-- "$            drv.location.step();
 }
 
-<INITIAL,option_prags>[\n]              loc.lines(1); loc.step(); drv.mark_next_real_token_starts_line();
+<INITIAL,option_prags>[\n]              drv.location.lines(1); drv.location.step(); drv.mark_next_real_token_starts_line();
 
   /* line pragmas */
 
@@ -179,109 +170,153 @@ signed       {negative}?
   /* <column_prag> */
 
   /* two-word pragmas */
-  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(yytext, yyleng), loc)) return *prag; else yy_push_state(nested_comment); */
+  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(yytext, yyleng), drv.location)) return *prag; else yy_push_state(nested_comment); */
   /* one-word pragmas */
-<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+                           if (auto prag = drv.prag(std::string_view(yytext, yyleng), loc)) return *prag; else yy_push_state(nested_comment);
+<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+                           if (auto prag = drv.prag(std::string_view(yytext, yyleng), drv.location)) return *prag; else yy_push_state(nested_comment);
   /* end pragma */
-<INITIAL,option_prags>"#-}"                                                    return yy::parser::make_CLOSE_PRAG(loc);
+<INITIAL,option_prags>"#-}"                                                    return yy::parser::make_CLOSE_PRAG(drv.location);
 
   /* unboxed tuples: (# and #) */
 
-<INITIAL,option_prags>"("      return yy::parser::make_OPAREN (loc);
-<INITIAL,option_prags>")"      return LexedToken(yy::parser::make_CPAREN(loc), TokenEffects{.closes_atom = true});
-<INITIAL,option_prags>"["      return yy::parser::make_OBRACK (loc);
-<INITIAL,option_prags>"]"      return LexedToken(yy::parser::make_CBRACK(loc), TokenEffects{.closes_atom = true});
-<INITIAL,option_prags>","      return yy::parser::make_COMMA  (loc);
-<INITIAL,option_prags>";"      return yy::parser::make_SEMI   (loc);
-<INITIAL,option_prags>"`"      return yy::parser::make_BACKQUOTE (loc);
+<INITIAL,option_prags>"("      return yy::parser::make_OPAREN (drv.location);
+<INITIAL,option_prags>")"      return LexedToken(yy::parser::make_CPAREN(drv.location), TokenEffects{.closes_atom = true});
+<INITIAL,option_prags>"["      return yy::parser::make_OBRACK (drv.location);
+<INITIAL,option_prags>"]"      return LexedToken(yy::parser::make_CBRACK(drv.location), TokenEffects{.closes_atom = true});
+<INITIAL,option_prags>","      return yy::parser::make_COMMA  (drv.location);
+<INITIAL,option_prags>";"      return yy::parser::make_SEMI   (drv.location);
+<INITIAL,option_prags>"`"      return yy::parser::make_BACKQUOTE (drv.location);
 
   /* action: push a "NoLayout" context into the stack */
-"{"      return LexedToken(yy::parser::make_OCURLY(loc), TokenEffects{.push_no_layout_context = true});
+<INITIAL,option_prags>"{"      return LexedToken(yy::parser::make_OCURLY(drv.location), TokenEffects{.push_no_layout_context = true});
   /* action: pop the top context from the stack */
-"}"      return LexedToken(yy::parser::make_CCURLY(loc), TokenEffects{.closes_atom = true, .pop_context = true});
+<INITIAL,option_prags>"}"      return LexedToken(yy::parser::make_CCURLY(drv.location), TokenEffects{.closes_atom = true, .pop_context = true});
 
-<INITIAL,option_prags>{qvarid}      return LexedToken(yy::parser::make_QVARID(std::string(yytext, yyleng), loc), TokenEffects{.closes_atom = true});
-<INITIAL,option_prags>{qconid}      return LexedToken(yy::parser::make_QCONID(std::string(yytext, yyleng), loc), TokenEffects{.closes_atom = true});
+<INITIAL,option_prags>{qvarid}      return LexedToken(yy::parser::make_QVARID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+<INITIAL,option_prags>{qconid}      return LexedToken(yy::parser::make_QCONID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
 <INITIAL,option_prags>{varid}       {
                                       auto classified = drv.classify_varid(std::string_view(yytext, yyleng));
                                       auto layout_after = classified.layout_after;
                                       if (classified.token)
-                                        return LexedToken(yy::parser::symbol_type(*classified.token, loc),
+                                        return LexedToken(yy::parser::symbol_type(*classified.token, drv.location),
                                                           TokenEffects{.closes_atom = true, .layout_after = layout_after});
                                       else
-                                        return LexedToken(yy::parser::make_VARID(classified.text, loc),
+                                        return LexedToken(yy::parser::make_VARID(classified.text, drv.location),
                                                           TokenEffects{.closes_atom = true, .layout_after = layout_after});
                                     }
-<INITIAL,option_prags>{conid}       return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), loc), TokenEffects{.closes_atom = true});
+<INITIAL,option_prags>{conid}       return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 
 <INITIAL>{varsym}/"{-"                   {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(loc), false));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), false));
                                             if (classified.token)
-                                              return yy::parser::symbol_type(*classified.token, loc);
+                                              return yy::parser::symbol_type(*classified.token, drv.location);
                                             else
-                                              return yy::parser::make_VARSYM(classified.text, loc);
+                                              return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
 <INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(loc), true));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), true));
                                             if (classified.token)
-                                              return yy::parser::symbol_type(*classified.token, loc);
+                                              return yy::parser::symbol_type(*classified.token, drv.location);
                                             else
-                                              return yy::parser::make_VARSYM(classified.text, loc);
+                                              return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
 <INITIAL>{varsym}                        {
                                             auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
-                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(loc), false));
+                                                                                 symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), false));
                                             if (classified.token)
-                                              return yy::parser::symbol_type(*classified.token, loc);
+                                              return yy::parser::symbol_type(*classified.token, drv.location);
                                             else
-                                              return yy::parser::make_VARSYM(classified.text, loc);
+                                              return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
 
-<INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (std::string(yytext, yyleng),loc);
-<INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (std::string(yytext, yyleng),loc);
-<INITIAL>{consym}       return drv.consym(std::string_view(yytext, yyleng), loc);
+<INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (std::string(yytext, yyleng), drv.location);
+<INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (std::string(yytext, yyleng), drv.location);
+<INITIAL>{consym}       return drv.consym(std::string_view(yytext, yyleng), drv.location);
 
-<INITIAL>"-"{decimal}"#"                        return LexedToken(make_boxed_integer10(std::string_view(yytext, yyleng), loc), TokenEffects{.closes_atom = true});
-<INITIAL>{decimal}"#"                           return LexedToken(make_boxed_integer10(std::string_view(yytext, yyleng), loc), TokenEffects{.closes_atom = true});
-<INITIAL>{decimal}                              return LexedToken(make_integer10(std::string_view(yytext, yyleng), loc), TokenEffects{.closes_atom = true});
-  /* 0[bB]{numspc}{binary}      make_integer(2,true,2,loc); */
-<INITIAL>0[oO]{numspc}{octal}                   return LexedToken(make_integer(std::string_view(yytext, yyleng), 8,true,2,loc), TokenEffects{.closes_atom = true});
-<INITIAL>0[xX]{numspc}{hexadecimal}             return LexedToken(make_integer(std::string_view(yytext, yyleng),16,true,2,loc), TokenEffects{.closes_atom = true});
+<INITIAL>"-"{decimal}"#"                        return LexedToken(make_boxed_integer10(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>{decimal}"#"                           return LexedToken(make_boxed_integer10(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>{decimal}                              return LexedToken(make_integer10(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+  /* 0[bB]{numspc}{binary}      make_integer(2,true,2,drv.location); */
+<INITIAL>0[oO]{numspc}{octal}                   return LexedToken(make_integer(std::string_view(yytext, yyleng), 8,true,2,drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>0[xX]{numspc}{hexadecimal}             return LexedToken(make_integer(std::string_view(yytext, yyleng),16,true,2,drv.location), TokenEffects{.closes_atom = true});
 
   /* negative literals depend on an extension */
-<INITIAL>{floating_point}                       return LexedToken(make_rational(std::string_view(yytext, yyleng), loc), TokenEffects{.closes_atom = true});
+<INITIAL>{floating_point}                       return LexedToken(make_rational(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
 
   /* Its important that we only allow escaped quotes inside char or string literals */
-<INITIAL>\'({char})\'         return LexedToken(make_char(std::string_view(yytext, yyleng), loc, drv), TokenEffects{.closes_atom = true});
-<INITIAL>[\"]({stringchar})*[\"]                return LexedToken(make_string(std::string_view(yytext, yyleng), loc, drv), TokenEffects{.closes_atom = true});
+<INITIAL>\'({char})\'         return LexedToken(make_char(std::string_view(yytext, yyleng), drv.location, drv), TokenEffects{.closes_atom = true});
+<INITIAL>[\"]({stringchar})*[\"]                return LexedToken(make_string(std::string_view(yytext, yyleng), drv.location, drv), TokenEffects{.closes_atom = true});
 
-<*>.          {
+<INITIAL,option_prags,line_prag1a,line_prag2,line_prag2a>.          {
              throw yy::parser::syntax_error
-               (loc, "invalid character: " + std::string(yytext, yyleng));
+               (drv.location, "invalid character: " + std::string(yytext, yyleng));
 }
 
-<<EOF>>    return yy::parser::make_END (loc);
+<<EOF>>    return yy::parser::make_END (drv.location);
 %%
 
 
+class RawLexerState
+{
+    std::string content;
+    yyFlexLexer scanner;
+
+public:
+    RawLexerState(const std::string& content_arg, bool trace_scanning);
+    LexedToken lex(driver& drv);
+};
+
+// Keep RE/flex's input storage alive for the scanner and initialize scanner
+// debug/state for one parse.
+RawLexerState::RawLexerState(const std::string& content_arg, bool trace_scanning)
+    : content(content_arg),
+      scanner(reflex::Input(&content))
+{
+    scanner.set_debug(trace_scanning);
+    scanner.start(INITIAL);
+}
+
+// Return one real source token from the generated RE/flex scanner.
+LexedToken RawLexerState::lex(driver& drv)
+{
+    return scanner.raw_yylex(drv);
+}
+
+// Delete the opaque scanner state where the RE/flex-generated class is
+// complete, keeping RE/flex headers out of driver.hh.
+void RawLexerStateDeleter::operator()(RawLexerState* state) const
+{
+    delete state;
+}
+
+driver::~driver() = default;
+
+// Bridge the parser driver wrapper to the generated scanner object without
+// exposing RE/flex types in driver.hh.
+LexedToken
+raw_yylex(driver& drv)
+{
+  assert(drv.raw_lexer);
+  return drv.raw_lexer->lex(drv);
+}
+
+// Create a fresh RE/flex scanner for this parse so input and start-condition
+// state do not leak between parser runs.
 void
 driver::scan_begin (const std::string& content)
 {
-  // Audit note: buffer ownership still uses flex globals until scanner state is explicit.
-  yy_flex_debug = trace_scanning;
-  yy_scan_string(content.c_str());
+  raw_lexer.reset(new RawLexerState(content, trace_scanning));
 }
 
 
+// Drop the parse-local scanner and its owned input once parsing is complete.
 void
 driver::scan_end ()
 {
-  // Audit note: buffer ownership still uses flex globals until scanner state is explicit.
-  yy_delete_buffer(YY_CURRENT_BUFFER);
+  raw_lexer.reset();
 }
 
 using namespace yy;
@@ -551,10 +586,4 @@ yy::parser::symbol_type make_string(std::string_view text, const yy::parser::loc
 //    std::cerr<<"got string: '"<<s<<"'\n";
 
     return yy::parser::make_STRING(s,loc);
-}
-
-// Compatibility note: flex's stack option emits yy_top_state(), and GCC warns
-// if no user action references it. Remove this when flex stack use is gone.
-void keep_flex_stack_helpers_used() {
-    yy_top_state();
 }

@@ -127,22 +127,12 @@ cereal = dependency('cereal').as_system()
 
 subdir('external/immer/')
 
-# RE/flex is wired as an opt-in CMake subproject before the scanner switch so
-# the later lexer conversion can use a reproducible generator and runtime.
-used_reflex = 'disabled'
-reflex_dep = disabler()
-reflex_generator = disabler()
-if not get_option('with-reflex').disabled()
-  cmake = import('cmake')
-  reflex_project = cmake.subproject('reflex', required: get_option('with-reflex'))
-  if reflex_project.found()
-    reflex_dep = reflex_project.dependency('ReflexLibStatic', include_type: 'system')
-    reflex_generator = reflex_project.target('Reflex')
-    used_reflex = 'subproject'
-  else
-    used_reflex = 'not found'
-  endif
-endif
+# RE/flex now owns the Haskell raw scanner, so the build requires its generator
+# and runtime instead of silently falling back to the old Flex scanner.
+cmake = import('cmake')
+reflex_project = cmake.subproject('reflex', required: true)
+reflex_dep = reflex_project.dependency('ReflexLibStatic', include_type: 'system')
+used_reflex = 'subproject'
 
 math_dep = cpp.find_library('m', required:false)
 

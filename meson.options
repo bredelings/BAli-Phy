@@ -3,4 +3,3 @@ option('static-cpp-libs', type: 'boolean', value: false, description: 'Link in l
 option('extra-tools', type: 'boolean', value: true, description: 'Build extra tools')
 option('cpu-arch', type: 'string', value: 'baseline', description: 'Enable CPU instructions for specific architecture')
 option('test_seed', type: 'string', value: '', description: 'Random seed for tests')
-option('with-reflex', type: 'feature', value: 'disabled', description: 'Enable the RE/flex lexer generator subproject')
