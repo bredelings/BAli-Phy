@@ -51,6 +51,8 @@ Done:
   represented by an `Int` runtime value for now.
 - `Data.ByteString` is a raw byte type backed by immutable shared
   `std::vector<std::byte>` storage with cheap slicing.
+- `Data.Text.Encoding.encodeUtf8` and `decodeUtf8` bridge validated UTF-8
+  `Text` and raw `ByteString`.
 
 Still limited:
 
@@ -60,8 +62,8 @@ Still limited:
 - `Data.Char` predicates and case transforms are still ASCII-only.
 - `CPPString` remains an opaque C++ `std::string` transport, not a text type.
   Generic `Foreign.String` unpacking still maps raw bytes to `Char` values.
-- `Data.Text.Encoding` is not implemented yet; it should become the explicit
-  bridge between validated `Text` and raw `ByteString`.
+- The wider `Data.Text.Encoding` API is not implemented yet.  `decodeUtf8'`,
+  lenient decoding, UTF-16/32 codecs, and streaming validation remain deferred.
 - CSV separators are still restricted to one byte.
 - `haskell/ids.cc` still classifies identifiers and symbols byte-by-byte using
   ASCII rules.
@@ -108,8 +110,8 @@ large lexer changes is:
   decide whether a value is validated text, raw bytes, a path, or a diagnostic.
 - Treat `Data.Text.Text` as validated UTF-8 over `CPPString`, with byte
   offset/length internally and code-point semantics in the public API.
-- Implement `Data.Text.Encoding` on top of the now-separate `Data.ByteString`
-  raw-byte representation.
+- Implement additional `Data.Text.Encoding` functions on top of the
+  now-separate `Data.ByteString` raw-byte representation as needed.
 - Add a narrow shared `util/utf8.{H,cc}` module for UTF-8 decoding, UTF-8
   encoding, Unicode scalar validation, and code-point/byte offset conversion.
   Do not let it grow into a general Unicode category or normalization library.
@@ -315,8 +317,8 @@ Remaining or intentionally limited:
   `drop`, and `splitAt` should use code-point offsets when they are added.
 - `Foreign.String` substring unpacking still maps raw bytes to `Char` values
   through `CPPString`; `Data.Text.unpack` no longer uses that path.
-- `Data.Text.Encoding` remains deferred, but `Data.ByteString` now provides the
-  raw-byte representation it should use.
+- `Data.Text.Encoding.encodeUtf8` and `decodeUtf8` are implemented.  Explicit
+  error-returning, lenient, UTF-16/32, and streaming APIs remain deferred.
 - `hPutStrRaw`, `hGetLineRaw`, `hGetContentsRaw`, and other raw string APIs
   remain byte-oriented by design, but callers that expose `[Char]` need UTF-8
   decoding.
