@@ -47,6 +47,10 @@ Done:
   `snoc`, `uncons`, `head`, `last`, `tail`, `init`, and `length` use
   code-point semantics, while `append`, `Eq`, `Ord`, `concat`, `fromCppString`,
   `toCppString`, and `Data.Text.IO` preserve validated UTF-8 byte slices.
+- `Data.Word.Word8` is an abstract Haskell type with modulo-256 arithmetic,
+  represented by an `Int` runtime value for now.
+- `Data.ByteString` is a raw byte type backed by immutable shared
+  `std::vector<std::byte>` storage with cheap slicing.
 
 Still limited:
 
@@ -56,9 +60,8 @@ Still limited:
 - `Data.Char` predicates and case transforms are still ASCII-only.
 - `CPPString` remains an opaque C++ `std::string` transport, not a text type.
   Generic `Foreign.String` unpacking still maps raw bytes to `Char` values.
-- `Data.ByteString` is still a compatibility alias for `Text`; it needs a real
-  raw-byte representation before `Data.Text.Encoding` can be implemented
-  correctly.
+- `Data.Text.Encoding` is not implemented yet; it should become the explicit
+  bridge between validated `Text` and raw `ByteString`.
 - CSV separators are still restricted to one byte.
 - `haskell/ids.cc` still classifies identifiers and symbols byte-by-byte using
   ASCII rules.
@@ -105,8 +108,8 @@ large lexer changes is:
   decide whether a value is validated text, raw bytes, a path, or a diagnostic.
 - Treat `Data.Text.Text` as validated UTF-8 over `CPPString`, with byte
   offset/length internally and code-point semantics in the public API.
-- Defer `Data.Text.Encoding` until `Data.ByteString` is split from `Text` and
-  can represent raw bytes directly.
+- Implement `Data.Text.Encoding` on top of the now-separate `Data.ByteString`
+  raw-byte representation.
 - Add a narrow shared `util/utf8.{H,cc}` module for UTF-8 decoding, UTF-8
   encoding, Unicode scalar validation, and code-point/byte offset conversion.
   Do not let it grow into a general Unicode category or normalization library.
@@ -277,8 +280,8 @@ As the UTF-8-aware region expands, the number of marked boundaries should shrink
    remain byte-oriented, but their names or local comments should make that
    explicit.
 10. Partly done: byte-oriented consumers are either converted or marked where
-    found.  CSV separators, `CPPString` unpacking, and the `ByteString = Text`
-    compatibility alias are marked temporary byte/text boundaries.
+    found.  `Data.ByteString` is now a raw byte type.  CSV separators and
+    generic `CPPString` unpacking remain marked temporary byte/text boundaries.
 11. Done: remove the desugar-time runtime `Char` byte guard.  `Hs::Char` can
     now lower to Core and Runtime `Char` values for all valid Unicode scalars.
 
@@ -312,8 +315,8 @@ Remaining or intentionally limited:
   `drop`, and `splitAt` should use code-point offsets when they are added.
 - `Foreign.String` substring unpacking still maps raw bytes to `Char` values
   through `CPPString`; `Data.Text.unpack` no longer uses that path.
-- `Data.ByteString` is not a true raw-byte type yet, so `Data.Text.Encoding`
-  remains deferred.
+- `Data.Text.Encoding` remains deferred, but `Data.ByteString` now provides the
+  raw-byte representation it should use.
 - `hPutStrRaw`, `hGetLineRaw`, `hGetContentsRaw`, and other raw string APIs
   remain byte-oriented by design, but callers that expose `[Char]` need UTF-8
   decoding.
