@@ -157,7 +157,7 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 #line 121 "src/computation/parser/lexer.l"
 
   # undef YY_USER_ACTION
-  # define YY_USER_ACTION  drv.location.columns (yyleng);
+  # define YY_USER_ACTION  drv.location.columns(size());
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -286,7 +286,7 @@ throw yy::parser::syntax_error(drv.location, "Too many -}");
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 149 "src/computation/parser/lexer.l"
-yy_push_state(nested_comment);
+push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
@@ -327,14 +327,14 @@ drv.location.lines(1); drv.location.step(); drv.mark_next_real_token_starts_line
   /* <column_prag> */
 
   /* two-word pragmas */
-  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(yytext, yyleng), drv.location)) return *prag; else yy_push_state(nested_comment); */
+  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(text(), size()), drv.location)) return *prag; else push_state(nested_comment); */
   /* one-word pragmas */
             YY_BREAK
           case 9: // rule src/computation/parser/lexer.l:175: "{-#"{whitechar}*{pragmachar}+ :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:175 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 175 "src/computation/parser/lexer.l"
-if (auto prag = drv.prag(std::string_view(yytext, yyleng), drv.location)) return *prag; else yy_push_state(nested_comment);
+if (auto prag = drv.prag(std::string_view(text(), size()), drv.location)) return *prag; else push_state(nested_comment);
   /* end pragma */
             YY_BREAK
           case 10: // rule src/computation/parser/lexer.l:177: "#-}" :
@@ -408,20 +408,20 @@ return LexedToken(yy::parser::make_CCURLY(drv.location), TokenEffects{.closes_at
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:194 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 194 "src/computation/parser/lexer.l"
-return LexedToken(yy::parser::make_QVARID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(yy::parser::make_QVARID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
             YY_BREAK
           case 21: // rule src/computation/parser/lexer.l:195: {qconid} :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:195 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 195 "src/computation/parser/lexer.l"
-return LexedToken(yy::parser::make_QCONID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(yy::parser::make_QCONID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
             YY_BREAK
           case 22: // rule src/computation/parser/lexer.l:196: {varid} :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:196 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 196 "src/computation/parser/lexer.l"
 {
-                                      auto classified = drv.classify_varid(std::string_view(yytext, yyleng));
+                                      auto classified = drv.classify_varid(std::string_view(text(), size()));
                                       auto layout_after = classified.layout_after;
                                       if (classified.token)
                                         return LexedToken(yy::parser::symbol_type(*classified.token, drv.location),
@@ -435,7 +435,7 @@ return LexedToken(yy::parser::make_QCONID(std::string(yytext, yyleng), drv.locat
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:206 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 206 "src/computation/parser/lexer.l"
-return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(yy::parser::make_CONID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 
@@ -445,7 +445,7 @@ return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), drv.locati
             YY_USER_ACTION
 #line 210 "src/computation/parser/lexer.l"
 {
-                                            auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
+                                            auto classified = drv.classify_varsym(std::string_view(text(), size()),
                                                                                  symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, drv.location);
@@ -458,7 +458,7 @@ return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), drv.locati
             YY_USER_ACTION
 #line 218 "src/computation/parser/lexer.l"
 {
-                                            auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
+                                            auto classified = drv.classify_varsym(std::string_view(text(), size()),
                                                                                  symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), true));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, drv.location);
@@ -471,7 +471,7 @@ return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), drv.locati
             YY_USER_ACTION
 #line 226 "src/computation/parser/lexer.l"
 {
-                                            auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
+                                            auto classified = drv.classify_varsym(std::string_view(text(), size()),
                                                                                  symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, drv.location);
@@ -484,51 +484,51 @@ return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), drv.locati
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:235 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 235 "src/computation/parser/lexer.l"
-return yy::parser::make_QVARSYM  (std::string(yytext, yyleng), drv.location);
+return yy::parser::make_QVARSYM  (std::string(text(), size()), drv.location);
             YY_BREAK
           case 28: // rule src/computation/parser/lexer.l:236: {qconsym} :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:236 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 236 "src/computation/parser/lexer.l"
-return yy::parser::make_QCONSYM  (std::string(yytext, yyleng), drv.location);
+return yy::parser::make_QCONSYM  (std::string(text(), size()), drv.location);
             YY_BREAK
           case 29: // rule src/computation/parser/lexer.l:237: {consym} :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:237 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 237 "src/computation/parser/lexer.l"
-return drv.consym(std::string_view(yytext, yyleng), drv.location);
+return drv.consym(std::string_view(text(), size()), drv.location);
 
             YY_BREAK
           case 30: // rule src/computation/parser/lexer.l:239: "-"{decimal}"#" :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:239 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 239 "src/computation/parser/lexer.l"
-return LexedToken(make_boxed_integer10(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(make_boxed_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
             YY_BREAK
           case 31: // rule src/computation/parser/lexer.l:240: {decimal}"#" :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:240 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 240 "src/computation/parser/lexer.l"
-return LexedToken(make_boxed_integer10(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(make_boxed_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
             YY_BREAK
           case 32: // rule src/computation/parser/lexer.l:241: {decimal} :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:241 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 241 "src/computation/parser/lexer.l"
-return LexedToken(make_integer10(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(make_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,drv.location); */
             YY_BREAK
           case 33: // rule src/computation/parser/lexer.l:243: 0[oO]{numspc}{octal} :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:243 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 243 "src/computation/parser/lexer.l"
-return LexedToken(make_integer(std::string_view(yytext, yyleng), 8,true,2,drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(make_integer(std::string_view(text(), size()), 8,true,2,drv.location), TokenEffects{.closes_atom = true});
             YY_BREAK
           case 34: // rule src/computation/parser/lexer.l:244: 0[xX]{numspc}{hexadecimal} :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:244 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 244 "src/computation/parser/lexer.l"
-return LexedToken(make_integer(std::string_view(yytext, yyleng),16,true,2,drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(make_integer(std::string_view(text(), size()),16,true,2,drv.location), TokenEffects{.closes_atom = true});
 
   /* negative literals depend on an extension */
             YY_BREAK
@@ -536,7 +536,7 @@ return LexedToken(make_integer(std::string_view(yytext, yyleng),16,true,2,drv.lo
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:247 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 247 "src/computation/parser/lexer.l"
-return LexedToken(make_rational(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(make_rational(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
 
   /* Its important that we only allow escaped quotes inside char or string literals */
             YY_BREAK
@@ -544,13 +544,13 @@ return LexedToken(make_rational(std::string_view(yytext, yyleng), drv.location),
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:250 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 250 "src/computation/parser/lexer.l"
-return LexedToken(make_char(std::string_view(yytext, yyleng), drv.location, drv), TokenEffects{.closes_atom = true});
+return LexedToken(make_char(std::string_view(text(), size()), drv.location, drv), TokenEffects{.closes_atom = true});
             YY_BREAK
           case 37: // rule src/computation/parser/lexer.l:251: [\"]({stringchar})*[\"] :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:251 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 251 "src/computation/parser/lexer.l"
-return LexedToken(make_string(std::string_view(yytext, yyleng), drv.location, drv), TokenEffects{.closes_atom = true});
+return LexedToken(make_string(std::string_view(text(), size()), drv.location, drv), TokenEffects{.closes_atom = true});
 
             YY_BREAK
           case 38: // rule src/computation/parser/lexer.l:253: . :
@@ -559,7 +559,7 @@ return LexedToken(make_string(std::string_view(yytext, yyleng), drv.location, dr
 #line 253 "src/computation/parser/lexer.l"
 {
              throw yy::parser::syntax_error
-               (drv.location, "invalid character: " + std::string(yytext, yyleng));
+               (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
             YY_BREAK
@@ -600,13 +600,13 @@ drv.location.step ();
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:138 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 138 "src/computation/parser/lexer.l"
-drv.location.step(); yy_pop_state();
+drv.location.step(); pop_state();
             YY_BREAK
           case 4: // rule src/computation/parser/lexer.l:142: "{-" :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:142 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 142 "src/computation/parser/lexer.l"
-yy_push_state(nested_comment2);
+push_state(nested_comment2);
             YY_BREAK
           case 5: // rule src/computation/parser/lexer.l:143: "{" :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:143 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
@@ -636,7 +636,7 @@ drv.location.lines(1);
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 149 "src/computation/parser/lexer.l"
-yy_push_state(nested_comment);
+push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
@@ -678,13 +678,13 @@ drv.location.step ();
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:137 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 137 "src/computation/parser/lexer.l"
-yy_pop_state();
+pop_state();
             YY_BREAK
           case 4: // rule src/computation/parser/lexer.l:142: "{-" :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:142 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 142 "src/computation/parser/lexer.l"
-yy_push_state(nested_comment2);
+push_state(nested_comment2);
             YY_BREAK
           case 5: // rule src/computation/parser/lexer.l:143: "{" :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:143 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
@@ -714,7 +714,7 @@ drv.location.lines(1);
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 149 "src/computation/parser/lexer.l"
-yy_push_state(nested_comment);
+push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
@@ -763,7 +763,7 @@ throw yy::parser::syntax_error(drv.location, "Too many -}");
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 149 "src/computation/parser/lexer.l"
-yy_push_state(nested_comment);
+push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
@@ -804,14 +804,14 @@ drv.location.lines(1); drv.location.step(); drv.mark_next_real_token_starts_line
   /* <column_prag> */
 
   /* two-word pragmas */
-  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(yytext, yyleng), drv.location)) return *prag; else yy_push_state(nested_comment); */
+  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(text(), size()), drv.location)) return *prag; else push_state(nested_comment); */
   /* one-word pragmas */
             YY_BREAK
           case 9: // rule src/computation/parser/lexer.l:175: "{-#"{whitechar}*{pragmachar}+ :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:175 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 175 "src/computation/parser/lexer.l"
-if (auto prag = drv.prag(std::string_view(yytext, yyleng), drv.location)) return *prag; else yy_push_state(nested_comment);
+if (auto prag = drv.prag(std::string_view(text(), size()), drv.location)) return *prag; else push_state(nested_comment);
   /* end pragma */
             YY_BREAK
           case 10: // rule src/computation/parser/lexer.l:177: "#-}" :
@@ -885,20 +885,20 @@ return LexedToken(yy::parser::make_CCURLY(drv.location), TokenEffects{.closes_at
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:194 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 194 "src/computation/parser/lexer.l"
-return LexedToken(yy::parser::make_QVARID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(yy::parser::make_QVARID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
             YY_BREAK
           case 21: // rule src/computation/parser/lexer.l:195: {qconid} :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:195 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 195 "src/computation/parser/lexer.l"
-return LexedToken(yy::parser::make_QCONID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(yy::parser::make_QCONID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
             YY_BREAK
           case 22: // rule src/computation/parser/lexer.l:196: {varid} :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:196 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 196 "src/computation/parser/lexer.l"
 {
-                                      auto classified = drv.classify_varid(std::string_view(yytext, yyleng));
+                                      auto classified = drv.classify_varid(std::string_view(text(), size()));
                                       auto layout_after = classified.layout_after;
                                       if (classified.token)
                                         return LexedToken(yy::parser::symbol_type(*classified.token, drv.location),
@@ -912,7 +912,7 @@ return LexedToken(yy::parser::make_QCONID(std::string(yytext, yyleng), drv.locat
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:206 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 206 "src/computation/parser/lexer.l"
-return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+return LexedToken(yy::parser::make_CONID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 
@@ -923,7 +923,7 @@ return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), drv.locati
 #line 253 "src/computation/parser/lexer.l"
 {
              throw yy::parser::syntax_error
-               (drv.location, "invalid character: " + std::string(yytext, yyleng));
+               (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
             YY_BREAK
@@ -964,7 +964,7 @@ drv.location.step ();
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 149 "src/computation/parser/lexer.l"
-yy_push_state(nested_comment);
+push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
@@ -993,7 +993,7 @@ drv.location.step();
 #line 253 "src/computation/parser/lexer.l"
 {
              throw yy::parser::syntax_error
-               (drv.location, "invalid character: " + std::string(yytext, yyleng));
+               (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
             YY_BREAK
@@ -1034,7 +1034,7 @@ drv.location.step ();
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 149 "src/computation/parser/lexer.l"
-yy_push_state(nested_comment);
+push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
@@ -1063,7 +1063,7 @@ drv.location.step();
 #line 253 "src/computation/parser/lexer.l"
 {
              throw yy::parser::syntax_error
-               (drv.location, "invalid character: " + std::string(yytext, yyleng));
+               (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
             YY_BREAK
@@ -1104,7 +1104,7 @@ drv.location.step ();
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
             YY_USER_ACTION
 #line 149 "src/computation/parser/lexer.l"
-yy_push_state(nested_comment);
+push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
@@ -1133,7 +1133,7 @@ drv.location.step();
 #line 253 "src/computation/parser/lexer.l"
 {
              throw yy::parser::syntax_error
-               (drv.location, "invalid character: " + std::string(yytext, yyleng));
+               (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
             YY_BREAK

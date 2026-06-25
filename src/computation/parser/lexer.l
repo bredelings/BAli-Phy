@@ -120,7 +120,7 @@ signed       {negative}?
 
 %{
   # undef YY_USER_ACTION
-  # define YY_USER_ACTION  drv.location.columns (yyleng);
+  # define YY_USER_ACTION  drv.location.columns(size());
 %}
 
 %%
@@ -134,19 +134,19 @@ signed       {negative}?
 {tab}	         drv.location.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-<nested_comment2>"-}"        yy_pop_state();
-<nested_comment>"-}"         drv.location.step(); yy_pop_state();
+<nested_comment2>"-}"        pop_state();
+<nested_comment>"-}"         drv.location.step(); pop_state();
 <INITIAL,option_prags>"-}"   throw yy::parser::syntax_error(drv.location, "Too many -}");
 
 <nested_comment,nested_comment2>{
-"{-"         yy_push_state(nested_comment2);
+"{-"         push_state(nested_comment2);
 "{"          // eat a chunk with no newline or "-"
 [^-\n{]*     // eat a chunk with no newline or "-"
 "-"          // eat a "-" not followed by "}"
 [\n]         drv.location.lines(1);
 <<EOF>>      throw yy::parser::syntax_error(drv.location, "Unterminated {-");
 }
-"{-"/[^#]                    yy_push_state(nested_comment);
+"{-"/[^#]                    push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
@@ -170,9 +170,9 @@ signed       {negative}?
   /* <column_prag> */
 
   /* two-word pragmas */
-  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(yytext, yyleng), drv.location)) return *prag; else yy_push_state(nested_comment); */
+  /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(text(), size()), drv.location)) return *prag; else push_state(nested_comment); */
   /* one-word pragmas */
-<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+                           if (auto prag = drv.prag(std::string_view(yytext, yyleng), drv.location)) return *prag; else yy_push_state(nested_comment);
+<INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+                           if (auto prag = drv.prag(std::string_view(text(), size()), drv.location)) return *prag; else push_state(nested_comment);
   /* end pragma */
 <INITIAL,option_prags>"#-}"                                                    return yy::parser::make_CLOSE_PRAG(drv.location);
 
@@ -191,10 +191,10 @@ signed       {negative}?
   /* action: pop the top context from the stack */
 <INITIAL,option_prags>"}"      return LexedToken(yy::parser::make_CCURLY(drv.location), TokenEffects{.closes_atom = true, .pop_context = true});
 
-<INITIAL,option_prags>{qvarid}      return LexedToken(yy::parser::make_QVARID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
-<INITIAL,option_prags>{qconid}      return LexedToken(yy::parser::make_QCONID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+<INITIAL,option_prags>{qvarid}      return LexedToken(yy::parser::make_QVARID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
+<INITIAL,option_prags>{qconid}      return LexedToken(yy::parser::make_QCONID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
 <INITIAL,option_prags>{varid}       {
-                                      auto classified = drv.classify_varid(std::string_view(yytext, yyleng));
+                                      auto classified = drv.classify_varid(std::string_view(text(), size()));
                                       auto layout_after = classified.layout_after;
                                       if (classified.token)
                                         return LexedToken(yy::parser::symbol_type(*classified.token, drv.location),
@@ -203,12 +203,12 @@ signed       {negative}?
                                         return LexedToken(yy::parser::make_VARID(classified.text, drv.location),
                                                           TokenEffects{.closes_atom = true, .layout_after = layout_after});
                                     }
-<INITIAL,option_prags>{conid}       return LexedToken(yy::parser::make_CONID(std::string(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+<INITIAL,option_prags>{conid}       return LexedToken(yy::parser::make_CONID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 
 <INITIAL>{varsym}/"{-"                   {
-                                            auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
+                                            auto classified = drv.classify_varsym(std::string_view(text(), size()),
                                                                                  symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, drv.location);
@@ -216,7 +216,7 @@ signed       {negative}?
                                               return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
 <INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    {
-                                            auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
+                                            auto classified = drv.classify_varsym(std::string_view(text(), size()),
                                                                                  symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), true));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, drv.location);
@@ -224,7 +224,7 @@ signed       {negative}?
                                               return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
 <INITIAL>{varsym}                        {
-                                            auto classified = drv.classify_varsym(std::string_view(yytext, yyleng),
+                                            auto classified = drv.classify_varsym(std::string_view(text(), size()),
                                                                                  symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), false));
                                             if (classified.token)
                                               return yy::parser::symbol_type(*classified.token, drv.location);
@@ -232,27 +232,27 @@ signed       {negative}?
                                               return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
 
-<INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (std::string(yytext, yyleng), drv.location);
-<INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (std::string(yytext, yyleng), drv.location);
-<INITIAL>{consym}       return drv.consym(std::string_view(yytext, yyleng), drv.location);
+<INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (std::string(text(), size()), drv.location);
+<INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (std::string(text(), size()), drv.location);
+<INITIAL>{consym}       return drv.consym(std::string_view(text(), size()), drv.location);
 
-<INITIAL>"-"{decimal}"#"                        return LexedToken(make_boxed_integer10(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
-<INITIAL>{decimal}"#"                           return LexedToken(make_boxed_integer10(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
-<INITIAL>{decimal}                              return LexedToken(make_integer10(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>"-"{decimal}"#"                        return LexedToken(make_boxed_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>{decimal}"#"                           return LexedToken(make_boxed_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>{decimal}                              return LexedToken(make_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,drv.location); */
-<INITIAL>0[oO]{numspc}{octal}                   return LexedToken(make_integer(std::string_view(yytext, yyleng), 8,true,2,drv.location), TokenEffects{.closes_atom = true});
-<INITIAL>0[xX]{numspc}{hexadecimal}             return LexedToken(make_integer(std::string_view(yytext, yyleng),16,true,2,drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>0[oO]{numspc}{octal}                   return LexedToken(make_integer(std::string_view(text(), size()), 8,true,2,drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>0[xX]{numspc}{hexadecimal}             return LexedToken(make_integer(std::string_view(text(), size()),16,true,2,drv.location), TokenEffects{.closes_atom = true});
 
   /* negative literals depend on an extension */
-<INITIAL>{floating_point}                       return LexedToken(make_rational(std::string_view(yytext, yyleng), drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>{floating_point}                       return LexedToken(make_rational(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
 
   /* Its important that we only allow escaped quotes inside char or string literals */
-<INITIAL>\'({char})\'         return LexedToken(make_char(std::string_view(yytext, yyleng), drv.location, drv), TokenEffects{.closes_atom = true});
-<INITIAL>[\"]({stringchar})*[\"]                return LexedToken(make_string(std::string_view(yytext, yyleng), drv.location, drv), TokenEffects{.closes_atom = true});
+<INITIAL>\'({char})\'         return LexedToken(make_char(std::string_view(text(), size()), drv.location, drv), TokenEffects{.closes_atom = true});
+<INITIAL>[\"]({stringchar})*[\"]                return LexedToken(make_string(std::string_view(text(), size()), drv.location, drv), TokenEffects{.closes_atom = true});
 
 <INITIAL,option_prags,line_prag1a,line_prag2,line_prag2a>.          {
              throw yy::parser::syntax_error
-               (drv.location, "invalid character: " + std::string(yytext, yyleng));
+               (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
 <<EOF>>    return yy::parser::make_END (drv.location);
