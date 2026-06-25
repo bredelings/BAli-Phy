@@ -162,6 +162,40 @@ static bool is_unicode_scalar_value(char32_t c)
     return c <= 0x10FFFF and not (0xD800 <= c and c <= 0xDFFF);
 }
 
+// Recognize decimal digits because numeric escapes must be separated from a
+// following literal digit with Haskell's empty escape.
+static bool is_ascii_digit(char32_t c)
+{
+    return U'0' <= c and c <= U'9';
+}
+
+// Return the short Haskell escape spelling for characters that have one in
+// character or string literal context.
+static optional<string> standard_escape(char32_t c, bool in_string_literal)
+{
+    if (c == U'\a') return "\\a";
+    if (c == U'\b') return "\\b";
+    if (c == U'\f') return "\\f";
+    if (c == U'\n') return "\\n";
+    if (c == U'\r') return "\\r";
+    if (c == U'\t') return "\\t";
+    if (c == U'\v') return "\\v";
+    if (c == U'\\') return "\\\\";
+    if (c == U'"') return "\\\"";
+    if (c == U'\'' and not in_string_literal) return "\\'";
+    return {};
+}
+
+// Print one escaped literal payload character, without the surrounding quotes.
+static string print_literal_payload_char(char32_t c, bool in_string_literal)
+{
+    if (auto escaped = standard_escape(c, in_string_literal))
+        return *escaped;
+    if (0x20 <= c and c <= 0x7E)
+        return string(1, static_cast<char>(c));
+    return "\\" + std::to_string(static_cast<std::uint32_t>(c));
+}
+
 // Print one Haskell character literal from a Unicode scalar value, using
 // numeric escapes until raw non-ASCII source output is deliberately enabled.
 static string print_char_literal(char32_t c)
@@ -169,21 +203,26 @@ static string print_char_literal(char32_t c)
     if (not is_unicode_scalar_value(c))
         throw myexception()<<"Invalid Haskell character literal code point: "<<static_cast<std::uint32_t>(c);
 
-    if (c == U'\a') return "'\\a'";
-    if (c == U'\b') return "'\\b'";
-    if (c == U'\f') return "'\\f'";
-    if (c == U'\n') return "'\\n'";
-    if (c == U'\r') return "'\\r'";
-    if (c == U'\t') return "'\\t'";
-    if (c == U'\v') return "'\\v'";
-    if (c == U'\\') return "'\\\\'";
-    if (c == U'\'') return "'\\''";
-    if (c == U'"') return "'\\\"'";
+    return "'" + print_literal_payload_char(c, false) + "'";
+}
 
-    if (0x20 <= c and c <= 0x7E)
-        return "'" + string(1, static_cast<char>(c)) + "'";
+// Print a byte-preserving string literal.  Bytes >= 128 are numeric escapes
+// until Runtime/Text are deliberately widened to Unicode text semantics.
+static string print_string_literal(const string& text)
+{
+    string result = "\"";
+    for(int i=0; i<text.size(); i++)
+    {
+        auto c = static_cast<unsigned char>(text[i]);
+        bool use_numeric_escape = not standard_escape(c, true) and not (0x20 <= c and c <= 0x7E);
+        auto escaped = print_literal_payload_char(c, true);
 
-    return "'\\" + std::to_string(static_cast<std::uint32_t>(c)) + "'";
+        result += escaped;
+        if (use_numeric_escape and i+1 < text.size() and is_ascii_digit(static_cast<unsigned char>(text[i+1])))
+            result += "\\&";
+    }
+    result += "\"";
+    return result;
 }
 
 string Literal::print() const
@@ -193,7 +232,7 @@ string Literal::print() const
     else if (literal.index() == 1)
         return std::get<1>(literal).value.str();
     else if (literal.index() == 2)
-        return '"' + std::get<2>(literal).value + '"';
+        return print_string_literal(std::get<2>(literal).value);
     else if (literal.index() == 3)
     {
 	auto& r = std::get<3>(literal).value;
