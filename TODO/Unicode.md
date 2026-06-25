@@ -42,6 +42,11 @@ Done:
   `integerToChar`, and `charToInteger` use Unicode scalar semantics.
 - `hPutChar`, `hGetChar`, and `hLookAhead` encode or decode UTF-8 scalars.
 - C++ `Text` packing and construction helpers encode `Char` values as UTF-8.
+- `Data.Text` stores validated UTF-8 byte slices internally.  Implemented
+  Char-facing operations such as `pack`, `unpack`, `singleton`, `cons`,
+  `snoc`, `uncons`, `head`, `last`, `tail`, `init`, and `length` use
+  code-point semantics, while `append`, `Eq`, `Ord`, `concat`, `fromCppString`,
+  `toCppString`, and `Data.Text.IO` preserve validated UTF-8 byte slices.
 
 Still limited:
 
@@ -49,11 +54,11 @@ Still limited:
 - `Hs::String` and the string-literal parser still store bytes and reject
   numeric escapes above `0xff`.
 - `Data.Char` predicates and case transforms are still ASCII-only.
-- Public `Data.Text` offsets and lengths are still byte-based.  This means
-  `length`, `head`, `last`, `tail`, `init`, `append`, `Eq`, `Ord`,
-  `toCppString`, and `unpack` do not yet have code-point semantics for
-  multibyte text.
-- `CPPString` unpacking still maps raw bytes to `Char` values.
+- `CPPString` remains an opaque C++ `std::string` transport, not a text type.
+  Generic `Foreign.String` unpacking still maps raw bytes to `Char` values.
+- `Data.ByteString` is still a compatibility alias for `Text`; it needs a real
+  raw-byte representation before `Data.Text.Encoding` can be implemented
+  correctly.
 - CSV separators are still restricted to one byte.
 - `haskell/ids.cc` still classifies identifiers and symbols byte-by-byte using
   ASCII rules.
@@ -96,6 +101,12 @@ large lexer changes is:
 
 - Keep `Hs::Char` as `char32_t`.
 - Keep `Hs::String` as `std::string` containing UTF-8 bytes.
+- Treat `CPPString` as opaque C++ `std::string` transport.  Wrapper modules
+  decide whether a value is validated text, raw bytes, a path, or a diagnostic.
+- Treat `Data.Text.Text` as validated UTF-8 over `CPPString`, with byte
+  offset/length internally and code-point semantics in the public API.
+- Defer `Data.Text.Encoding` until `Data.ByteString` is split from `Text` and
+  can represent raw bytes directly.
 - Add a narrow shared `util/utf8.{H,cc}` module for UTF-8 decoding, UTF-8
   encoding, Unicode scalar validation, and code-point/byte offset conversion.
   Do not let it grow into a general Unicode category or normalization library.
@@ -253,23 +264,21 @@ As the UTF-8-aware region expands, the number of marked boundaries should shrink
    with `<cctype>` are explicitly ASCII-only with `FIXME-UNICODE` notes.
    Full Unicode behavior is deferred until Unicode category tables are
    designed.
-7. Convert public `Data.Text` to upstream-style semantics: internally store
-   UTF-8 bytes, but expose lengths, indices, `take`, `drop`, `splitAt`, and
-   similar operations in Unicode code points.  Use `util/utf8` to map public
-   code-point offsets to internal byte offsets.
-8. Partly done: C++ `Text.pack`, `singleton`, `cons`, and `snoc` encode
-   `Char` values as UTF-8.  Still convert public `[Char]` and `Text`
-   boundaries such as `Text.unpack`, `Data.Text.head`, `Data.Text.last`,
-   `Data.Text.tail`, `Data.Text.init`, and `Foreign.String` substring
-   unpacking to decode UTF-8 at the boundary.
+7. Done for the implemented public `Data.Text` surface: internally store UTF-8
+   bytes, but expose Unicode code-point semantics for lengths and Char-facing
+   operations.  Future operations such as `index`, `take`, `drop`, and
+   `splitAt` should use the same code-point offset policy when implemented.
+8. Done for `Data.Text`: C++ `Text.pack`, `singleton`, `cons`, and `snoc`
+   encode `Char` values as UTF-8, and `Data.Text.unpack`, `head`, `last`,
+   `tail`, and `init` decode UTF-8 at the boundary.  Generic
+   `Foreign.String` substring unpacking remains raw/transitional.
 9. Done for character IO: `hPutChar` encodes one scalar as UTF-8, and
    `hGetChar`/`hLookAhead` decode one UTF-8 scalar.  Raw byte/string APIs may
    remain byte-oriented, but their names or local comments should make that
    explicit.
 10. Partly done: byte-oriented consumers are either converted or marked where
-    found.  CSV separators and `CPPString` unpacking are marked temporary byte
-    boundaries.  Continue shrinking this list as Text and string APIs move to
-    UTF-8 semantics.
+    found.  CSV separators, `CPPString` unpacking, and the `ByteString = Text`
+    compatibility alias are marked temporary byte/text boundaries.
 11. Done: remove the desugar-time runtime `Char` byte guard.  `Hs::Char` can
     now lower to Core and Runtime `Char` values for all valid Unicode scalars.
 
@@ -291,15 +300,20 @@ Resolved in the runtime `Char` widening:
 - `ord`, `chr`, `intToChar`, `charToInt`, `integerToChar`, and
   `charToInteger`
 - `Runtime::RVector` character vectors, now using `std::vector<char32_t>`
+- `Data.Text` construction, unpacking, basic Char-facing operations, length,
+  equality, ordering, concatenation, `toCppString`, and `Data.Text.IO`
+  read/write paths
 
 Remaining or intentionally limited:
 
 - `Data.Char` predicates and case transforms are ASCII-only until Unicode
   category and case-conversion support is designed.
-- Public `Data.Text` indexing, slicing, length, equality, ordering, packing,
-  and unpacking still need a coherent code-point-offset implementation.
-- `Text.unpack` and `Foreign.String` substring unpacking still map raw bytes to
-  `Char` values through `CPPString`.
+- Future `Data.Text` indexing and slicing operations such as `index`, `take`,
+  `drop`, and `splitAt` should use code-point offsets when they are added.
+- `Foreign.String` substring unpacking still maps raw bytes to `Char` values
+  through `CPPString`; `Data.Text.unpack` no longer uses that path.
+- `Data.ByteString` is not a true raw-byte type yet, so `Data.Text.Encoding`
+  remains deferred.
 - `hPutStrRaw`, `hGetLineRaw`, `hGetContentsRaw`, and other raw string APIs
   remain byte-oriented by design, but callers that expose `[Char]` need UTF-8
   decoding.
@@ -315,7 +329,8 @@ Add tests as each layer is converted rather than waiting until the end:
 - Rejection of surrogate and out-of-range scalar values.
 - `Text.singleton`, `Text.pack`, and `Text.unpack` with multibyte code points.
 - `Text.length` counts code points, not UTF-8 bytes.
-- `Text.index`, `take`, `drop`, and `splitAt` operate on code-point offsets.
+- Future `Text.index`, `take`, `drop`, and `splitAt` tests should confirm they
+  operate on code-point offsets when those functions are implemented.
 - `hPutChar` and `hGetChar` round-trip UTF-8.
 - Existing byte-boundary rejection tests are removed or updated as their
   corresponding temporary boundaries disappear.
