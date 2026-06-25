@@ -1,6 +1,7 @@
 #include "literal.H"
 #include "util/string/join.H"
 #include "util/string/convert.H"
+#include "util/utf8.H"
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <cmath>
 #include <cstdint>
@@ -156,12 +157,6 @@ static string print_floating_decimal(const rational& r)
     return x.str(17, std::ios_base::fmtflags(0));
 }
 
-// Check the Unicode scalar-value invariant before printing a Haskell character.
-static bool is_unicode_scalar_value(char32_t c)
-{
-    return c <= 0x10FFFF and not (0xD800 <= c and c <= 0xDFFF);
-}
-
 // Recognize decimal digits because numeric escapes must be separated from a
 // following literal digit with Haskell's empty escape.
 static bool is_ascii_digit(char32_t c)
@@ -200,7 +195,7 @@ static string print_literal_payload_char(char32_t c, bool in_string_literal)
 // numeric escapes until raw non-ASCII source output is deliberately enabled.
 static string print_char_literal(char32_t c)
 {
-    if (not is_unicode_scalar_value(c))
+    if (not utf8::is_scalar_value(c))
         throw myexception()<<"Invalid Haskell character literal code point: "<<static_cast<std::uint32_t>(c);
 
     return "'" + print_literal_payload_char(c, false) + "'";

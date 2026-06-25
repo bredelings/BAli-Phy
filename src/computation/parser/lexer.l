@@ -14,6 +14,7 @@
 # include <string>
 # include <string_view>
 # include <regex>
+# include "util/utf8.H"
 # include "driver.hh"
 # include "parser.hh"
 
@@ -538,12 +539,6 @@ static bool is_ascii_digit(char c)
     return '0' <= c and c <= '9';
 }
 
-// Check the Unicode scalar-value invariant before accepting a numeric escape.
-static bool is_unicode_scalar_value(char32_t c)
-{
-    return c <= 0x10FFFF and not (0xD800 <= c and c <= 0xDFFF);
-}
-
 // Parse one decimal numeric escape after a backslash, preserving the source
 // span for diagnostics and detecting overflow before it can wrap.
 ParsedChar get_decimal_escape(const yy::parser::location_type& loc, driver& drv, std::string_view text, int length, int i)
@@ -565,7 +560,7 @@ ParsedChar get_decimal_escape(const yy::parser::location_type& loc, driver& drv,
         j++;
     }
 
-    if (overflow or not is_unicode_scalar_value(c))
+    if (overflow or not utf8::is_scalar_value(c))
     {
         yy::parser::location_type loc2(loc.begin+i, loc.begin+j);
         drv.push_error_message(loc2, Note()<<"numeric character escape is not a Unicode scalar value");
