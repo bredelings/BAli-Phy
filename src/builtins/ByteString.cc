@@ -81,6 +81,36 @@ extern "C" R::Exp simple_function_unpack(vector<R::Exp>& args)
     return values;
 }
 
+// Raw CPPString transport bridge for Data.Text.Encoding.  This copies bytes
+// without validating or interpreting them as text.
+extern "C" R::Exp simple_function_fromCPPStringBytes(vector<R::Exp>& args)
+{
+    auto arg = get_arg(args);
+    const auto& string = arg.as_string();
+
+    ByteString::storage_type bytes;
+    bytes.reserve(string.size());
+    for(char byte: string)
+        bytes.push_back(static_cast<std::byte>(static_cast<unsigned char>(byte)));
+
+    return ByteString(std::move(bytes));
+}
+
+// Raw CPPString transport bridge for Data.Text.Encoding.  This exposes the
+// visible ByteString slice as bytes in a CPPString without UTF-8 validation.
+extern "C" R::Exp simple_function_toCPPStringBytes(vector<R::Exp>& args)
+{
+    auto arg = get_arg(args);
+    const auto& bytes = arg.as_<ByteString>();
+
+    std::string string;
+    string.reserve(bytes.size());
+    for(std::size_t i = 0; i < bytes.size(); i++)
+        string.push_back(static_cast<char>(std::to_integer<unsigned char>(bytes[i])));
+
+    return string;
+}
+
 extern "C" R::Exp simple_function_take(vector<R::Exp>& args)
 {
     auto length = nonnegative_size(get_arg(args).as_int(), "ByteString.take", "length");

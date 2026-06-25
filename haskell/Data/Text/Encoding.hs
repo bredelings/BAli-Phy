@@ -1,7 +1,11 @@
-module Data.Text.Encoding where
+module Data.Text.Encoding
+    (encodeUtf8,
+     decodeUtf8)
+    where
 
-import Data.ByteString
-import Data.Text
+import Data.ByteString (ByteString)
+import qualified Data.Text as T
+import Foreign.String (CPPString)
 
 data Decoding
 
@@ -15,6 +19,20 @@ data UnicodeException
 
 -- N.B. Encoding/Decoding UTF-* shouldn't be that hard.
 -- It doesn't require understanding Unicode code points, just how to represent them in a byte string.
+
+-- Raw byte transport bridge used only to rewrap Text's validated UTF-8 storage
+-- as ByteString.  It does not validate or interpret bytes.
+foreign import ecall "ByteString:fromCPPStringBytes" fromCPPStringBytes :: CPPString -> ByteString
+
+-- Raw byte transport bridge used only before Text.fromCppString performs UTF-8
+-- validation while decoding.
+foreign import ecall "ByteString:toCPPStringBytes" toCPPStringBytes :: ByteString -> CPPString
+
+encodeUtf8 :: T.Text -> ByteString
+encodeUtf8 = fromCPPStringBytes . T.toCppString
+
+decodeUtf8 :: ByteString -> T.Text
+decodeUtf8 = T.fromCppString . toCPPStringBytes
 
 
 {-
@@ -55,8 +73,6 @@ decodeUtf32LE :: ByteString -> Text
 decodeUtf32BE :: ByteString -> Text
 
 streamDecodeUtf8 :: ByteString -> Decoding
-
-encodeUtf8 :: Text -> ByteString
 
 encodeUtf16LE :: Text -> ByteString
 
