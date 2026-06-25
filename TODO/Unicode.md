@@ -84,9 +84,12 @@ large lexer changes is:
 
 - Keep `Hs::Char` as `char32_t`.
 - Keep `Hs::String` as `std::string` containing UTF-8 bytes.
+- Add a narrow shared `util/utf8.{H,cc}` module for UTF-8 decoding, UTF-8
+  encoding, Unicode scalar validation, and code-point/byte offset conversion.
+  Do not let it grow into a general Unicode category or normalization library.
 - Use RE/flex Unicode tables for Unicode category checks unless a concrete need
   justifies ICU, libunistring, or another Unicode dependency.
-- Keep UTF-8 and category helpers private to `haskell/ids.cc` unless another
+- Keep Unicode category helpers private to `haskell/ids.cc` unless another
   concrete caller appears.
 - Treat `UnicodeSyntax` as separate from general Unicode identifiers and
   operators.
@@ -167,22 +170,96 @@ Unicode source support and Unicode runtime character support are related but
 not identical.  The current source AST can represent wider characters, but the
 runtime cannot.
 
-Suggested order:
+The runtime transition should push the UTF-8-aware region outward in small
+steps.  Each remaining byte-sized boundary must be visible while the transition
+is incomplete.
 
-1. Keep the current desugar-time byte guard while parser/source work is still
-   ASCII-only or while non-byte chars are only printable source objects.
-2. Widen `Core::Constant` character storage from `char` to a Unicode scalar
-   type.
-3. Widen `Runtime::Char` and `Runtime::Exp::as_char()`.
-4. Update closure constructors and conversions between Core constants and
-   runtime atoms.
-5. Update primitive/builtin functions that consume or produce `Char`.
-6. Update `Data.Text` and text IO to treat text as UTF-8 with explicit
-   encode/decode boundaries for `[Char]`.
-7. Remove the desugar-time byte guard once the runtime can represent all
-   Unicode scalar values.
+### Shared UTF-8 Helper
 
-Known consumers to audit:
+Adding `util/utf8.{H,cc}` is shared infrastructure.  The benefit outweighs the
+cost because runtime `Char`, `Data.Text`, text IO, source literal printing, and
+later identifier validation all need the same UTF-8 and Unicode scalar rules.
+Duplicating small decoders in each caller would make it easy for these layers to
+accept different malformed inputs or count text differently.
+
+The interface should stay deliberately narrow:
+
+- `bool is_scalar_value(char32_t)`
+- decode one UTF-8 scalar from `std::string_view` and a byte offset
+- encode one Unicode scalar to UTF-8
+- count code points in a validated UTF-8 string
+- convert a code-point offset to a byte offset
+
+The helper should not perform normalization, display-width calculation, Unicode
+category lookup, case conversion, or grapheme-cluster segmentation.  Those are
+separate design decisions.
+
+The first commit that adds this helper should also use it immediately in at
+least one real boundary.  Do not leave it as unused parallel infrastructure.
+
+### Temporary Boundary Marker
+
+Any remaining `char32_t` to `char` conversion must be marked with this comment
+shape:
+
+```c++
+// FIXME-UNICODE: Temporary byte boundary. This rejects non-byte Char values
+// until this caller is converted to UTF-8 or char32_t semantics.
+```
+
+The marker should be used only where a byte boundary is intentionally retained
+during the transition.  Such code must reject unrepresentable values rather than
+truncate them.  The marker should make this audit useful:
+
+```sh
+rg 'FIXME-UNICODE|static_cast<char>|as_char'
+```
+
+As the UTF-8-aware region expands, the number of marked boundaries should shrink.
+
+### Implementation Order
+
+1. Add `util/utf8.{H,cc}` and wire it into `src/util/meson.build`.
+   Start with scalar validation, scalar encode/decode, code-point counting, and
+   code-point offset to byte offset conversion.  Use `std::string_view` for
+   input and byte offsets for slicing.
+2. Replace existing scalar validation or byte-guard code with `util/utf8` where
+   this is straightforward.  Keep the current desugar-time byte guard for now,
+   but mark it as a temporary boundary with `FIXME-UNICODE`.
+3. Widen `Core::Constant` character storage from `char` to `char32_t`.
+   Construct character constants explicitly as `char32_t` so the variant is not
+   confused with `int`.
+4. Widen `Runtime::Char` and `Runtime::Exp::as_char()` to `char32_t`.
+   Update closure constructors, runtime serialization tests, and conversions
+   between Core constants and runtime atoms.
+5. Update scalar `Char` primitive and builtin functions:
+   `ord`, `chr`, `intToChar`, `charToInt`, `integerToChar`,
+   `charToInteger`, comparisons, and any remaining arithmetic or conversion
+   operations.  Reject invalid Unicode scalar results.
+6. For `Data.Char` predicates and transforms currently implemented with
+   `<cctype>`, either keep them explicitly ASCII-only with `FIXME-UNICODE`
+   notes or defer full Unicode behavior until Unicode category tables are
+   designed.  Do not pass `char32_t` values directly to byte-oriented C library
+   functions.
+7. Convert `Data.Text` to upstream-style public semantics: internally store
+   UTF-8 bytes, but expose lengths, indices, `take`, `drop`, `splitAt`, and
+   similar operations in Unicode code points.  Use `util/utf8` to map public
+   code-point offsets to internal byte offsets.
+8. Update `[Char]` and `Text` conversions:
+   `Text.pack`, `Text.unpack`, `singleton`, `cons`, `snoc`, `head`, `last`,
+   `init`, and similar functions should encode or decode UTF-8 at the boundary.
+9. Update text IO:
+   `hPutChar` should encode one scalar as UTF-8, and `hGetChar` should decode
+   one UTF-8 scalar.  Raw byte/string APIs may remain byte-oriented, but their
+   names or local comments should make that explicit.
+10. Audit byte-oriented consumers such as CSV separators, `vector<char>` string
+    conversions, and raw file helpers.  Either convert them to `char32_t`/UTF-8
+    semantics or mark temporary byte behavior with `FIXME-UNICODE`.
+11. Remove the desugar-time byte guard only after runtime `Char`, main
+    `[Char]`/`Text` conversions, and basic character IO can represent Unicode
+    scalar values.
+
+### Known Consumers to Audit
 
 - `Core::Constant`
 - `Runtime::Char`
@@ -202,6 +279,25 @@ Known consumers to audit:
 - `charToInt`
 - `integerToChar`
 - `charToInteger`
+- `Data.Char` predicates and case transforms
+- `Data.Text` indexing, slicing, packing, and unpacking
+- `hPutStrRaw`, `hGetLineRaw`, and other intentionally byte-oriented APIs
+- CSV separator handling in `Data.cc`
+- `vector<char>` to string conversions
+
+### Validation
+
+Add tests as each layer is converted rather than waiting until the end:
+
+- Runtime non-ASCII `Char` construction and printing where applicable.
+- `ord` and `chr` above `255`.
+- Rejection of surrogate and out-of-range scalar values.
+- `Text.singleton`, `Text.pack`, and `Text.unpack` with multibyte code points.
+- `Text.length` counts code points, not UTF-8 bytes.
+- `Text.index`, `take`, `drop`, and `splitAt` operate on code-point offsets.
+- `hPutChar` and `hGetChar` round-trip UTF-8.
+- Existing byte-boundary rejection tests are removed or updated as their
+  corresponding temporary boundaries disappear.
 
 ## UTF-8 Identifier Classification
 
