@@ -34,8 +34,8 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 
 %}
 
-%option noyywrap nounput batch debug noinput stack never-interactive nounistd
-%option lex=raw_yylex token-type=LexedToken token-eof="LexedToken(yy::parser::make_END(yy::location()))" params="driver& drv"
+%option batch debug never-interactive bison-cc bison-locations YYSTYPE=int YYLTYPE=yy::location
+%option lexer=HaskellRawLexer lex=raw_yylex token-type=LexedToken token-eof="LexedToken(yy::parser::make_END(yy::location()))" params="driver& drv"
 %s nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
 
@@ -117,16 +117,13 @@ hex_floating_point  {numspc}{hexadecimal}\.{hexadecimal}{bin_exponent}?|{numspc}
 negative     \-
 signed       {negative}?
 
-
-%{
-  # undef YY_USER_ACTION
-  # define YY_USER_ACTION  drv.location.columns(size());
-%}
-
 %%
 
   /* Code run each time yylex is called. */
 %{
+  // RE/flex's bison-cc interface passes yylval even though complete Bison
+  // symbols carry semantic values here; mark it used until that interface goes.
+  (void)yylval;
   drv.location.step ();
 %}
 
@@ -258,11 +255,31 @@ signed       {negative}?
 <<EOF>>    return yy::parser::make_END (drv.location);
 %%
 
+class BaliPhyHaskellRawLexer: public HaskellRawLexer
+{
+public:
+    using HaskellRawLexer::HaskellRawLexer;
+
+    void yylloc_update(yy::location& yylloc) override;
+};
+
+// Compatibility note: RE/flex's generated bison-cc updater uses 0-based
+// columns, so adapt it until lexer actions construct tokens from location().
+// Convert matcher columns to Bison's 1-based, end-exclusive convention while
+// preserving the filename set by the driver.
+void BaliPhyHaskellRawLexer::yylloc_update(yy::location& yylloc)
+{
+    yylloc.begin.line = static_cast<unsigned int>(matcher().lineno());
+    yylloc.begin.column = static_cast<unsigned int>(matcher().columno() + 1);
+    yylloc.end.line = static_cast<unsigned int>(matcher().lineno_end());
+    yylloc.end.column = static_cast<unsigned int>(matcher().columno_end() + 2);
+}
+
 
 class RawLexerState
 {
     std::string content;
-    yyFlexLexer scanner;
+    BaliPhyHaskellRawLexer scanner;
 
 public:
     RawLexerState(const std::string& content_arg, bool trace_scanning);
@@ -276,13 +293,14 @@ RawLexerState::RawLexerState(const std::string& content_arg, bool trace_scanning
       scanner(reflex::Input(&content))
 {
     scanner.set_debug(trace_scanning);
-    scanner.start(INITIAL);
+    scanner.start(HaskellRawLexer::INITIAL);
 }
 
 // Return one real source token from the generated RE/flex scanner.
 LexedToken RawLexerState::lex(driver& drv)
 {
-    return scanner.raw_yylex(drv);
+    int yylval = 0;
+    return scanner.raw_yylex(yylval, drv.location, drv);
 }
 
 // Delete the opaque scanner state where the RE/flex-generated class is

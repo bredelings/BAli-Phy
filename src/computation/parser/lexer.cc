@@ -10,20 +10,19 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+#define REFLEX_OPTION_YYLTYPE             yy::location
+#define REFLEX_OPTION_YYSTYPE             int
 #define REFLEX_OPTION_batch               true
+#define REFLEX_OPTION_bison_cc            true
+#define REFLEX_OPTION_bison_cc_namespace  yy
+#define REFLEX_OPTION_bison_cc_parser     parser
+#define REFLEX_OPTION_bison_locations     true
 #define REFLEX_OPTION_debug               true
-#define REFLEX_OPTION_flex                true
 #define REFLEX_OPTION_lex                 raw_yylex
-#define REFLEX_OPTION_lexer               yyFlexLexer
+#define REFLEX_OPTION_lexer               HaskellRawLexer
 #define REFLEX_OPTION_never_interactive   true
-#define REFLEX_OPTION_noinput             true
-#define REFLEX_OPTION_nounistd            true
-#define REFLEX_OPTION_nounput             true
-#define REFLEX_OPTION_noyywrap            true
 #define REFLEX_OPTION_outfile             "src/computation/parser/lexer.cc"
 #define REFLEX_OPTION_params              driver& drv
-#define REFLEX_OPTION_prefix              yy
-#define REFLEX_OPTION_stack               true
 #define REFLEX_OPTION_token_eof           LexedToken(yy::parser::make_END(yy::location()))
 #define REFLEX_OPTION_token_type          LexedToken
 
@@ -43,21 +42,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
-//  FLEX-COMPATIBLE DEFINITIONS                                               //
-//                                                                            //
-////////////////////////////////////////////////////////////////////////////////
-
-#define INITIAL (0)
-#define nested_comment (1)
-#define nested_comment2 (2)
-#define option_prags (3)
-#define line_prag1a (4)
-#define line_prag2 (5)
-#define line_prag2a (6)
-#define YY_NUM_RULES (110)
-
-////////////////////////////////////////////////////////////////////////////////
-//                                                                            //
 //  REGEX MATCHER                                                             //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,12 +50,11 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
-//  FLEX-COMPATIBLE ABSTRACT LEXER CLASS                                      //
+//  ABSTRACT LEXER CLASS                                                      //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <reflex/flexlexer.h>
-typedef reflex::FlexLexer<reflex::Matcher> FlexLexer;
+#include <reflex/abslexer.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 //                                                                            //
@@ -79,38 +62,40 @@ typedef reflex::FlexLexer<reflex::Matcher> FlexLexer;
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-class yyFlexLexer : public FlexLexer {
+class HaskellRawLexer : public reflex::AbstractLexer<reflex::Matcher> {
  public:
-  yyFlexLexer(
+  typedef reflex::AbstractLexer<reflex::Matcher> AbstractBaseLexer;
+  HaskellRawLexer(
       // a persistent source of input, empty by default
       const reflex::Input& input = reflex::Input(),
-      // optional output stream, NULL means std::cout by default
-      std::ostream *os = NULL)
+      // optional output stream, std::cout by default
+      std::ostream& os = std::cout)
     :
-      FlexLexer(input, os)
+      AbstractBaseLexer(input, os)
   {
     set_debug(true);
   }
-  virtual LexedToken yylex(void)
+  static const int INITIAL = 0;
+  static const int nested_comment = 1;
+  static const int nested_comment2 = 2;
+  static const int option_prags = 3;
+  static const int line_prag1a = 4;
+  static const int line_prag2 = 5;
+  static const int line_prag2a = 6;
+  // bison-cc bison-locations: yylloc_update() tracks lexeme locations
+  virtual void yylloc_update(yy::location& yylloc)
   {
-    LexerError("yyFlexLexer::yylex invoked but %option lex=raw_yylex is used");
-    yyterminate();
+    yylloc.begin.line = static_cast<unsigned int>(matcher().lineno());
+    yylloc.begin.column = static_cast<unsigned int>(matcher().columno());
+    yylloc.end.line = static_cast<unsigned int>(matcher().lineno_end());
+    yylloc.end.column = static_cast<unsigned int>(matcher().columno_end());
   }
-  // the flex lexer function defined by SECTION 2
-  virtual LexedToken raw_yylex(driver& drv);
-  // lexer functions accepting new input to scan
-  LexedToken raw_yylex(const reflex::Input& input, driver& drv)
+  virtual LexedToken raw_yylex(int *lvalp, yy::location *llocp, driver& drv)
   {
-    in(input);
-    return raw_yylex(drv);
+    return raw_yylex(*lvalp, *llocp, drv);
   }
-  LexedToken raw_yylex(const reflex::Input& input, std::ostream *os, driver& drv)
-  {
-    in(input);
-    if (os)
-      out(*os);
-    return raw_yylex(drv);
-  }
+  // the bison-cc bison-locations lexer function defined by SECTION 2
+  virtual LexedToken raw_yylex(int& yylval, yy::location& yylloc, driver& drv);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -154,10 +139,12 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 #line 104 "src/computation/parser/lexer.l"
 /* We want to parse incorrect escapes as char/string so that we can give better error messages.
    If we don't do so, then bad escapes fail to lex and fall through to "invalid character" error message. */
-#line 121 "src/computation/parser/lexer.l"
 
-  # undef YY_USER_ACTION
-  # define YY_USER_ACTION  drv.location.columns(size());
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  BISON C++                                                                 //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -166,7 +153,7 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-LexedToken yyFlexLexer::raw_yylex(driver& drv)
+LexedToken HaskellRawLexer::raw_yylex(int& yylval, yy::location& yylloc, driver& drv)
 {
   static const char *REGEX_INITIAL = "(?m)((?:[\\x0b\\x20]|(?:\\x05))+)|((?:\\t))|((?:\\Q-}\\E))|((?:\\Q{-\\E)(?=[^\\x23]))|((?:\\Q--\\E)-*[^\\x0a!\\x23-&*+\\x2d-/:<-@\\x5c\\x5e\\x7c\\x7e].*)|((?:\\Q--\\E)-*$)|((?:\\Q-- \\E)$)|([\\x0a])|((?:\\Q{-#\\E)(?:(?:[\\x0a\\x0c\\x0d])|\\v|(?:(?:\\Q \\E)|(?:\\x05)))*(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:[0-9])|(?:\\x03)))+)|((?:\\Q#-}\\E))|((?:\\Q(\\E))|((?:\\Q)\\E))|((?:\\Q[\\E))|((?:\\Q]\\E))|((?:\\Q,\\E))|((?:\\Q;\\E))|((?:\\Q`\\E))|((?:\\Q{\\E))|((?:\\Q}\\E))|((?:(?:(?:(?:(?:(?:[A-Z])|(?:\\x01))(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:[0-9])|(?:\\x03))|(?:\\x07)|')*)\\.)+)(?:(?:(?:[a-z])|(?:\\x02)|_)(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:[0-9])|(?:\\x03))|(?:\\x07)|')*)))|((?:(?:(?:(?:(?:(?:[A-Z])|(?:\\x01))(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:[0-9])|(?:\\x03))|(?:\\x07)|')*)\\.)+)(?:(?:(?:[A-Z])|(?:\\x01))(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:[0-9])|(?:\\x03))|(?:\\x07)|')*)))|((?:(?:(?:[a-z])|(?:\\x02)|_)(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:[0-9])|(?:\\x03))|(?:\\x07)|')*))|((?:(?:(?:[A-Z])|(?:\\x01))(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:[0-9])|(?:\\x03))|(?:\\x07)|')*))|((?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e]))(?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e])|:))*)(?=(?:\\Q{-\\E)))|((?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e]))(?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e])|:))*)(?=[\"'(0-9A-\\x5b_a-{]))|((?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e]))(?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e])|:))*))|((?:(?:(?:(?:(?:(?:[A-Z])|(?:\\x01))(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:[0-9])|(?:\\x03))|(?:\\x07)|')*)\\.)+)(?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e]))(?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e])|:))*)))|((?:(?:(?:(?:(?:(?:[A-Z])|(?:\\x01))(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:[0-9])|(?:\\x03))|(?:\\x07)|')*)\\.)+)(?::(?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e])|:))*)))|((?::(?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e])|:))*))|((?:\\Q-\\E)(?:(?:(?:[0-9]))(?:(?:_*)(?:(?:[0-9])))*)(?:\\Q#\\E))|((?:(?:(?:[0-9]))(?:(?:_*)(?:(?:[0-9])))*)(?:\\Q#\\E))|((?:(?:(?:[0-9]))(?:(?:_*)(?:(?:[0-9])))*))|(0[Oo](?:_*)(?:(?:[0-7])(?:(?:_*)(?:[0-7]))*))|(0[Xx](?:_*)(?:(?:(?:(?:[0-9]))|[A-Fa-f])(?:(?:_*)(?:(?:(?:[0-9]))|[A-Fa-f]))*))|((?:(?:_*)(?:(?:(?:[0-9]))(?:(?:_*)(?:(?:[0-9])))*)\\.(?:(?:(?:[0-9]))(?:(?:_*)(?:(?:[0-9])))*)(?:(?:_*)[Ee][\\x2b\\x2d]?(?:(?:(?:[0-9]))(?:(?:_*)(?:(?:[0-9])))*))?|(?:_*)(?:(?:(?:[0-9]))(?:(?:_*)(?:(?:[0-9])))*)(?:(?:_*)[Ee][\\x2b\\x2d]?(?:(?:(?:[0-9]))(?:(?:_*)(?:(?:[0-9])))*))))|('(?:(?:(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e])|:))|(?:(?:[0-9])|(?:\\x03))|(?:[(),;\\x5b\\x5d`\\x7b\\x7d])|(?:\\x06)|\")|(?:\\Q \\E)|(?:\\\\(?:(?:[\\x20\"&'\\x5cabfnrtv])|(?:\\Q \\E)|(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e])|:))|(?:(?:[0-9])|(?:\\x03))|(?:[(),;\\x5b\\x5d`\\x7b\\x7d])|(?:\\x06)|\"')))))')|([\"](?:(?:(?:(?:(?:[a-z])|(?:\\x02)|_)|(?:(?:[A-Z])|(?:\\x01))|(?:(?:(?:[!\\x23-&*+\\x2d-/<-@\\x5c\\x5e\\x7c\\x7e])|:))|(?:(?:[0-9])|(?:\\x03))|(?:[(),;\\x5b\\x5d`\\x7b\\x7d])|(?:\\x06)|')|(?:\\Q \\E)|(?:\\\\(?:[\\x20\"&'\\x5cabfnrtv]))|(?:\\\\(?:(?:[\\x0a\\x0c\\x0d])|\\v|(?:(?:\\Q \\E)|(?:\\x05)))+\\\\)))*[\"])|(.)";
   static const reflex::Pattern PATTERN_INITIAL(REGEX_INITIAL);
@@ -186,56 +173,76 @@ LexedToken yyFlexLexer::raw_yylex(driver& drv)
   {
     matcher(new Matcher(PATTERN_INITIAL, stdinit(), this));
     matcher().buffer();
-    YY_USER_INIT
   }
   switch (start())
   {
     case INITIAL:
-#line 132 "src/computation/parser/lexer.l"
+#line 129 "src/computation/parser/lexer.l"
 /* Code run each time yylex is called. */
 
+  // RE/flex's bison-cc interface passes yylval even though complete Bison
+  // symbols carry semantic values here; mark it used until that interface goes.
+  (void)yylval;
   drv.location.step ();
 
     break;
     case nested_comment:
-#line 132 "src/computation/parser/lexer.l"
+#line 129 "src/computation/parser/lexer.l"
 /* Code run each time yylex is called. */
 
+  // RE/flex's bison-cc interface passes yylval even though complete Bison
+  // symbols carry semantic values here; mark it used until that interface goes.
+  (void)yylval;
   drv.location.step ();
 
     break;
     case nested_comment2:
-#line 132 "src/computation/parser/lexer.l"
+#line 129 "src/computation/parser/lexer.l"
 /* Code run each time yylex is called. */
 
+  // RE/flex's bison-cc interface passes yylval even though complete Bison
+  // symbols carry semantic values here; mark it used until that interface goes.
+  (void)yylval;
   drv.location.step ();
 
     break;
     case option_prags:
-#line 132 "src/computation/parser/lexer.l"
+#line 129 "src/computation/parser/lexer.l"
 /* Code run each time yylex is called. */
 
+  // RE/flex's bison-cc interface passes yylval even though complete Bison
+  // symbols carry semantic values here; mark it used until that interface goes.
+  (void)yylval;
   drv.location.step ();
 
     break;
     case line_prag1a:
-#line 132 "src/computation/parser/lexer.l"
+#line 129 "src/computation/parser/lexer.l"
 /* Code run each time yylex is called. */
 
+  // RE/flex's bison-cc interface passes yylval even though complete Bison
+  // symbols carry semantic values here; mark it used until that interface goes.
+  (void)yylval;
   drv.location.step ();
 
     break;
     case line_prag2:
-#line 132 "src/computation/parser/lexer.l"
+#line 129 "src/computation/parser/lexer.l"
 /* Code run each time yylex is called. */
 
+  // RE/flex's bison-cc interface passes yylval even though complete Bison
+  // symbols carry semantic values here; mark it used until that interface goes.
+  (void)yylval;
   drv.location.step ();
 
     break;
     case line_prag2a:
-#line 132 "src/computation/parser/lexer.l"
+#line 129 "src/computation/parser/lexer.l"
 /* Code run each time yylex is called. */
 
+  // RE/flex's bison-cc interface passes yylval even though complete Bison
+  // symbols carry semantic values here; mark it used until that interface goes.
+  (void)yylval;
   drv.location.step ();
 
     break;
@@ -246,73 +253,67 @@ LexedToken yyFlexLexer::raw_yylex(driver& drv)
     {
       case INITIAL:
         matcher().pattern(PATTERN_INITIAL);
-        switch (matcher().scan())
+        matcher().scan();
+        yylloc_update(yylloc);
+        switch (matcher().accept())
         {
           case 0:
             if (matcher().at_end())
             {
-              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:258 start(" << start() << ")\n";
-#line 258 "src/computation/parser/lexer.l"
+              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:255 start(" << start() << ")\n";
+#line 255 "src/computation/parser/lexer.l"
 return yy::parser::make_END (drv.location);
             }
             else
             {
               if (debug()) std::cerr << "--default rule\n";
-              output(matcher().input());
+              out().put(matcher().input());
             }
-            YY_BREAK
-          case 1: // rule src/computation/parser/lexer.l:133: {white_no_nl}+ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:133 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 133 "src/computation/parser/lexer.l"
+            break;
+          case 1: // rule src/computation/parser/lexer.l:130: {white_no_nl}+ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:130 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 130 "src/computation/parser/lexer.l"
 drv.location.step ();
-            YY_BREAK
-          case 2: // rule src/computation/parser/lexer.l:134: {tab} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:134 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 134 "src/computation/parser/lexer.l"
+            break;
+          case 2: // rule src/computation/parser/lexer.l:131: {tab} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:131 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 131 "src/computation/parser/lexer.l"
 drv.location.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-            YY_BREAK
-          case 3: // rule src/computation/parser/lexer.l:139: "-}" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:139 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 139 "src/computation/parser/lexer.l"
+            break;
+          case 3: // rule src/computation/parser/lexer.l:136: "-}" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:136 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 136 "src/computation/parser/lexer.l"
 throw yy::parser::syntax_error(drv.location, "Too many -}");
 
-            YY_BREAK
-          case 4: // rule src/computation/parser/lexer.l:149: "{-"/[^#] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 149 "src/computation/parser/lexer.l"
+            break;
+          case 4: // rule src/computation/parser/lexer.l:146: "{-"/[^#] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:146 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 146 "src/computation/parser/lexer.l"
 push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
-            YY_BREAK
-          case 5: // rule src/computation/parser/lexer.l:154: "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].* :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:154 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 154 "src/computation/parser/lexer.l"
+            break;
+          case 5: // rule src/computation/parser/lexer.l:151: "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].* :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:151 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 151 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 6: // rule src/computation/parser/lexer.l:155: "--"-*$ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:155 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 155 "src/computation/parser/lexer.l"
+            break;
+          case 6: // rule src/computation/parser/lexer.l:152: "--"-*$ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:152 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 152 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 7: // rule src/computation/parser/lexer.l:156: "-- "$ :
+            break;
+          case 7: // rule src/computation/parser/lexer.l:153: "-- "$ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:153 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 153 "src/computation/parser/lexer.l"
+drv.location.step();
+            break;
+          case 8: // rule src/computation/parser/lexer.l:156: [\n] :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:156 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
 #line 156 "src/computation/parser/lexer.l"
-drv.location.step();
-            YY_BREAK
-          case 8: // rule src/computation/parser/lexer.l:159: [\n] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:159 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 159 "src/computation/parser/lexer.l"
 drv.location.lines(1); drv.location.step(); drv.mark_next_real_token_starts_line();
 
   /* line pragmas */
@@ -329,97 +330,83 @@ drv.location.lines(1); drv.location.step(); drv.mark_next_real_token_starts_line
   /* two-word pragmas */
   /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(text(), size()), drv.location)) return *prag; else push_state(nested_comment); */
   /* one-word pragmas */
-            YY_BREAK
-          case 9: // rule src/computation/parser/lexer.l:175: "{-#"{whitechar}*{pragmachar}+ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:175 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 175 "src/computation/parser/lexer.l"
+            break;
+          case 9: // rule src/computation/parser/lexer.l:172: "{-#"{whitechar}*{pragmachar}+ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:172 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 172 "src/computation/parser/lexer.l"
 if (auto prag = drv.prag(std::string_view(text(), size()), drv.location)) return *prag; else push_state(nested_comment);
   /* end pragma */
-            YY_BREAK
-          case 10: // rule src/computation/parser/lexer.l:177: "#-}" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:177 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 177 "src/computation/parser/lexer.l"
+            break;
+          case 10: // rule src/computation/parser/lexer.l:174: "#-}" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:174 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 174 "src/computation/parser/lexer.l"
 return yy::parser::make_CLOSE_PRAG(drv.location);
 
   /* unboxed tuples: (# and #) */
 
-            YY_BREAK
-          case 11: // rule src/computation/parser/lexer.l:181: "(" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:181 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 181 "src/computation/parser/lexer.l"
+            break;
+          case 11: // rule src/computation/parser/lexer.l:178: "(" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:178 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 178 "src/computation/parser/lexer.l"
 return yy::parser::make_OPAREN (drv.location);
-            YY_BREAK
-          case 12: // rule src/computation/parser/lexer.l:182: ")" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:182 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 182 "src/computation/parser/lexer.l"
+            break;
+          case 12: // rule src/computation/parser/lexer.l:179: ")" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:179 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 179 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_CPAREN(drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 13: // rule src/computation/parser/lexer.l:183: "[" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:183 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 183 "src/computation/parser/lexer.l"
+            break;
+          case 13: // rule src/computation/parser/lexer.l:180: "[" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:180 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 180 "src/computation/parser/lexer.l"
 return yy::parser::make_OBRACK (drv.location);
-            YY_BREAK
-          case 14: // rule src/computation/parser/lexer.l:184: "]" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:184 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 184 "src/computation/parser/lexer.l"
+            break;
+          case 14: // rule src/computation/parser/lexer.l:181: "]" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:181 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 181 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_CBRACK(drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 15: // rule src/computation/parser/lexer.l:185: "," :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:185 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 185 "src/computation/parser/lexer.l"
+            break;
+          case 15: // rule src/computation/parser/lexer.l:182: "," :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:182 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 182 "src/computation/parser/lexer.l"
 return yy::parser::make_COMMA  (drv.location);
-            YY_BREAK
-          case 16: // rule src/computation/parser/lexer.l:186: ";" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:186 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 186 "src/computation/parser/lexer.l"
+            break;
+          case 16: // rule src/computation/parser/lexer.l:183: ";" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:183 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 183 "src/computation/parser/lexer.l"
 return yy::parser::make_SEMI   (drv.location);
-            YY_BREAK
-          case 17: // rule src/computation/parser/lexer.l:187: "`" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:187 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 187 "src/computation/parser/lexer.l"
+            break;
+          case 17: // rule src/computation/parser/lexer.l:184: "`" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:184 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 184 "src/computation/parser/lexer.l"
 return yy::parser::make_BACKQUOTE (drv.location);
 
   /* action: push a "NoLayout" context into the stack */
-            YY_BREAK
-          case 18: // rule src/computation/parser/lexer.l:190: "{" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:190 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 190 "src/computation/parser/lexer.l"
+            break;
+          case 18: // rule src/computation/parser/lexer.l:187: "{" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:187 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 187 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_OCURLY(drv.location), TokenEffects{.push_no_layout_context = true});
   /* action: pop the top context from the stack */
-            YY_BREAK
-          case 19: // rule src/computation/parser/lexer.l:192: "}" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:192 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 192 "src/computation/parser/lexer.l"
+            break;
+          case 19: // rule src/computation/parser/lexer.l:189: "}" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:189 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 189 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_CCURLY(drv.location), TokenEffects{.closes_atom = true, .pop_context = true});
 
-            YY_BREAK
-          case 20: // rule src/computation/parser/lexer.l:194: {qvarid} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:194 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 194 "src/computation/parser/lexer.l"
+            break;
+          case 20: // rule src/computation/parser/lexer.l:191: {qvarid} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:191 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 191 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_QVARID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 21: // rule src/computation/parser/lexer.l:195: {qconid} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:195 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 195 "src/computation/parser/lexer.l"
+            break;
+          case 21: // rule src/computation/parser/lexer.l:192: {qconid} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:192 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 192 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_QCONID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 22: // rule src/computation/parser/lexer.l:196: {varid} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:196 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 196 "src/computation/parser/lexer.l"
+            break;
+          case 22: // rule src/computation/parser/lexer.l:193: {varid} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:193 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 193 "src/computation/parser/lexer.l"
 {
                                       auto classified = drv.classify_varid(std::string_view(text(), size()));
                                       auto layout_after = classified.layout_after;
@@ -430,20 +417,18 @@ return LexedToken(yy::parser::make_QCONID(std::string(text(), size()), drv.locat
                                         return LexedToken(yy::parser::make_VARID(classified.text, drv.location),
                                                           TokenEffects{.closes_atom = true, .layout_after = layout_after});
                                     }
-            YY_BREAK
-          case 23: // rule src/computation/parser/lexer.l:206: {conid} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:206 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 206 "src/computation/parser/lexer.l"
+            break;
+          case 23: // rule src/computation/parser/lexer.l:203: {conid} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:203 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 203 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_CONID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 
-            YY_BREAK
-          case 24: // rule src/computation/parser/lexer.l:210: {varsym}/"{-" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:210 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 210 "src/computation/parser/lexer.l"
+            break;
+          case 24: // rule src/computation/parser/lexer.l:207: {varsym}/"{-" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:207 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 207 "src/computation/parser/lexer.l"
 {
                                             auto classified = drv.classify_varsym(std::string_view(text(), size()),
                                                                                  symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), false));
@@ -452,11 +437,10 @@ return LexedToken(yy::parser::make_CONID(std::string(text(), size()), drv.locati
                                             else
                                               return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
-            YY_BREAK
-          case 25: // rule src/computation/parser/lexer.l:218: {varsym}/[{([\"\'_A-Za-z0-9] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:218 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 218 "src/computation/parser/lexer.l"
+            break;
+          case 25: // rule src/computation/parser/lexer.l:215: {varsym}/[{([\"\'_A-Za-z0-9] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:215 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 215 "src/computation/parser/lexer.l"
 {
                                             auto classified = drv.classify_varsym(std::string_view(text(), size()),
                                                                                  symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), true));
@@ -465,11 +449,10 @@ return LexedToken(yy::parser::make_CONID(std::string(text(), size()), drv.locati
                                             else
                                               return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
-            YY_BREAK
-          case 26: // rule src/computation/parser/lexer.l:226: {varsym} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:226 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 226 "src/computation/parser/lexer.l"
+            break;
+          case 26: // rule src/computation/parser/lexer.l:223: {varsym} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:223 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 223 "src/computation/parser/lexer.l"
 {
                                             auto classified = drv.classify_varsym(std::string_view(text(), size()),
                                                                                  symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), false));
@@ -479,317 +462,285 @@ return LexedToken(yy::parser::make_CONID(std::string(text(), size()), drv.locati
                                               return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
 
-            YY_BREAK
-          case 27: // rule src/computation/parser/lexer.l:235: {qvarsym} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:235 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 235 "src/computation/parser/lexer.l"
+            break;
+          case 27: // rule src/computation/parser/lexer.l:232: {qvarsym} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:232 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 232 "src/computation/parser/lexer.l"
 return yy::parser::make_QVARSYM  (std::string(text(), size()), drv.location);
-            YY_BREAK
-          case 28: // rule src/computation/parser/lexer.l:236: {qconsym} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:236 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 236 "src/computation/parser/lexer.l"
+            break;
+          case 28: // rule src/computation/parser/lexer.l:233: {qconsym} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:233 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 233 "src/computation/parser/lexer.l"
 return yy::parser::make_QCONSYM  (std::string(text(), size()), drv.location);
-            YY_BREAK
-          case 29: // rule src/computation/parser/lexer.l:237: {consym} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:237 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 237 "src/computation/parser/lexer.l"
+            break;
+          case 29: // rule src/computation/parser/lexer.l:234: {consym} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:234 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 234 "src/computation/parser/lexer.l"
 return drv.consym(std::string_view(text(), size()), drv.location);
 
-            YY_BREAK
-          case 30: // rule src/computation/parser/lexer.l:239: "-"{decimal}"#" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:239 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 239 "src/computation/parser/lexer.l"
+            break;
+          case 30: // rule src/computation/parser/lexer.l:236: "-"{decimal}"#" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:236 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 236 "src/computation/parser/lexer.l"
 return LexedToken(make_boxed_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 31: // rule src/computation/parser/lexer.l:240: {decimal}"#" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:240 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 240 "src/computation/parser/lexer.l"
+            break;
+          case 31: // rule src/computation/parser/lexer.l:237: {decimal}"#" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:237 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 237 "src/computation/parser/lexer.l"
 return LexedToken(make_boxed_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 32: // rule src/computation/parser/lexer.l:241: {decimal} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:241 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 241 "src/computation/parser/lexer.l"
+            break;
+          case 32: // rule src/computation/parser/lexer.l:238: {decimal} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:238 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 238 "src/computation/parser/lexer.l"
 return LexedToken(make_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,drv.location); */
-            YY_BREAK
-          case 33: // rule src/computation/parser/lexer.l:243: 0[oO]{numspc}{octal} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:243 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 243 "src/computation/parser/lexer.l"
+            break;
+          case 33: // rule src/computation/parser/lexer.l:240: 0[oO]{numspc}{octal} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:240 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 240 "src/computation/parser/lexer.l"
 return LexedToken(make_integer(std::string_view(text(), size()), 8,true,2,drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 34: // rule src/computation/parser/lexer.l:244: 0[xX]{numspc}{hexadecimal} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:244 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 244 "src/computation/parser/lexer.l"
+            break;
+          case 34: // rule src/computation/parser/lexer.l:241: 0[xX]{numspc}{hexadecimal} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:241 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 241 "src/computation/parser/lexer.l"
 return LexedToken(make_integer(std::string_view(text(), size()),16,true,2,drv.location), TokenEffects{.closes_atom = true});
 
   /* negative literals depend on an extension */
-            YY_BREAK
-          case 35: // rule src/computation/parser/lexer.l:247: {floating_point} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:247 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 247 "src/computation/parser/lexer.l"
+            break;
+          case 35: // rule src/computation/parser/lexer.l:244: {floating_point} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:244 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 244 "src/computation/parser/lexer.l"
 return LexedToken(make_rational(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
 
   /* Its important that we only allow escaped quotes inside char or string literals */
-            YY_BREAK
-          case 36: // rule src/computation/parser/lexer.l:250: \'({char})\' :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:250 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 250 "src/computation/parser/lexer.l"
+            break;
+          case 36: // rule src/computation/parser/lexer.l:247: \'({char})\' :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:247 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 247 "src/computation/parser/lexer.l"
 return LexedToken(make_char(std::string_view(text(), size()), drv.location, drv), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 37: // rule src/computation/parser/lexer.l:251: [\"]({stringchar})*[\"] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:251 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 251 "src/computation/parser/lexer.l"
+            break;
+          case 37: // rule src/computation/parser/lexer.l:248: [\"]({stringchar})*[\"] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:248 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 248 "src/computation/parser/lexer.l"
 return LexedToken(make_string(std::string_view(text(), size()), drv.location, drv), TokenEffects{.closes_atom = true});
 
-            YY_BREAK
-          case 38: // rule src/computation/parser/lexer.l:253: . :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:253 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 253 "src/computation/parser/lexer.l"
+            break;
+          case 38: // rule src/computation/parser/lexer.l:250: . :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:250 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 250 "src/computation/parser/lexer.l"
 {
              throw yy::parser::syntax_error
                (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
-            YY_BREAK
+            break;
         }
         break;
       case nested_comment:
         matcher().pattern(PATTERN_nested_comment);
-        switch (matcher().scan())
+        matcher().scan();
+        yylloc_update(yylloc);
+        switch (matcher().accept())
         {
           case 0:
             if (matcher().at_end())
             {
-              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:147 start(" << start() << ")\n";
-#line 147 "src/computation/parser/lexer.l"
+              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:144 start(" << start() << ")\n";
+#line 144 "src/computation/parser/lexer.l"
 throw yy::parser::syntax_error(drv.location, "Unterminated {-");
             }
             else
             {
               if (debug()) std::cerr << "--default rule\n";
-              output(matcher().input());
+              out().put(matcher().input());
             }
-            YY_BREAK
-          case 1: // rule src/computation/parser/lexer.l:133: {white_no_nl}+ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:133 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 133 "src/computation/parser/lexer.l"
+            break;
+          case 1: // rule src/computation/parser/lexer.l:130: {white_no_nl}+ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:130 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 130 "src/computation/parser/lexer.l"
 drv.location.step ();
-            YY_BREAK
-          case 2: // rule src/computation/parser/lexer.l:134: {tab} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:134 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 134 "src/computation/parser/lexer.l"
+            break;
+          case 2: // rule src/computation/parser/lexer.l:131: {tab} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:131 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 131 "src/computation/parser/lexer.l"
 drv.location.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-            YY_BREAK
-          case 3: // rule src/computation/parser/lexer.l:138: "-}" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:138 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 138 "src/computation/parser/lexer.l"
+            break;
+          case 3: // rule src/computation/parser/lexer.l:135: "-}" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:135 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 135 "src/computation/parser/lexer.l"
 drv.location.step(); pop_state();
-            YY_BREAK
-          case 4: // rule src/computation/parser/lexer.l:142: "{-" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:142 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 142 "src/computation/parser/lexer.l"
+            break;
+          case 4: // rule src/computation/parser/lexer.l:139: "{-" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:139 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 139 "src/computation/parser/lexer.l"
 push_state(nested_comment2);
-            YY_BREAK
-          case 5: // rule src/computation/parser/lexer.l:143: "{" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:143 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 143 "src/computation/parser/lexer.l"
+            break;
+          case 5: // rule src/computation/parser/lexer.l:140: "{" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:140 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 140 "src/computation/parser/lexer.l"
 // eat a chunk with no newline or "-"
-            YY_BREAK
-          case 6: // rule src/computation/parser/lexer.l:144: [^-\n{]* :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:144 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 144 "src/computation/parser/lexer.l"
+            break;
+          case 6: // rule src/computation/parser/lexer.l:141: [^-\n{]* :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:141 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 141 "src/computation/parser/lexer.l"
 // eat a chunk with no newline or "-"
-            YY_BREAK
-          case 7: // rule src/computation/parser/lexer.l:145: "-" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:145 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 145 "src/computation/parser/lexer.l"
+            break;
+          case 7: // rule src/computation/parser/lexer.l:142: "-" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:142 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 142 "src/computation/parser/lexer.l"
 // eat a "-" not followed by "}"
-            YY_BREAK
-          case 8: // rule src/computation/parser/lexer.l:146: [\n] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:146 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 146 "src/computation/parser/lexer.l"
+            break;
+          case 8: // rule src/computation/parser/lexer.l:143: [\n] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:143 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 143 "src/computation/parser/lexer.l"
 drv.location.lines(1);
-            YY_BREAK
-          case 9: // rule src/computation/parser/lexer.l:149: "{-"/[^#] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 149 "src/computation/parser/lexer.l"
+            break;
+          case 9: // rule src/computation/parser/lexer.l:146: "{-"/[^#] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:146 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 146 "src/computation/parser/lexer.l"
 push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
-            YY_BREAK
+            break;
         }
         break;
       case nested_comment2:
         matcher().pattern(PATTERN_nested_comment2);
-        switch (matcher().scan())
+        matcher().scan();
+        yylloc_update(yylloc);
+        switch (matcher().accept())
         {
           case 0:
             if (matcher().at_end())
             {
-              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:147 start(" << start() << ")\n";
-#line 147 "src/computation/parser/lexer.l"
+              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:144 start(" << start() << ")\n";
+#line 144 "src/computation/parser/lexer.l"
 throw yy::parser::syntax_error(drv.location, "Unterminated {-");
             }
             else
             {
               if (debug()) std::cerr << "--default rule\n";
-              output(matcher().input());
+              out().put(matcher().input());
             }
-            YY_BREAK
-          case 1: // rule src/computation/parser/lexer.l:133: {white_no_nl}+ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:133 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 133 "src/computation/parser/lexer.l"
+            break;
+          case 1: // rule src/computation/parser/lexer.l:130: {white_no_nl}+ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:130 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 130 "src/computation/parser/lexer.l"
 drv.location.step ();
-            YY_BREAK
-          case 2: // rule src/computation/parser/lexer.l:134: {tab} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:134 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 134 "src/computation/parser/lexer.l"
+            break;
+          case 2: // rule src/computation/parser/lexer.l:131: {tab} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:131 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 131 "src/computation/parser/lexer.l"
 drv.location.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-            YY_BREAK
-          case 3: // rule src/computation/parser/lexer.l:137: "-}" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:137 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 137 "src/computation/parser/lexer.l"
+            break;
+          case 3: // rule src/computation/parser/lexer.l:134: "-}" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:134 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 134 "src/computation/parser/lexer.l"
 pop_state();
-            YY_BREAK
-          case 4: // rule src/computation/parser/lexer.l:142: "{-" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:142 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 142 "src/computation/parser/lexer.l"
+            break;
+          case 4: // rule src/computation/parser/lexer.l:139: "{-" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:139 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 139 "src/computation/parser/lexer.l"
 push_state(nested_comment2);
-            YY_BREAK
-          case 5: // rule src/computation/parser/lexer.l:143: "{" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:143 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 143 "src/computation/parser/lexer.l"
+            break;
+          case 5: // rule src/computation/parser/lexer.l:140: "{" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:140 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 140 "src/computation/parser/lexer.l"
 // eat a chunk with no newline or "-"
-            YY_BREAK
-          case 6: // rule src/computation/parser/lexer.l:144: [^-\n{]* :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:144 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 144 "src/computation/parser/lexer.l"
+            break;
+          case 6: // rule src/computation/parser/lexer.l:141: [^-\n{]* :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:141 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 141 "src/computation/parser/lexer.l"
 // eat a chunk with no newline or "-"
-            YY_BREAK
-          case 7: // rule src/computation/parser/lexer.l:145: "-" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:145 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 145 "src/computation/parser/lexer.l"
+            break;
+          case 7: // rule src/computation/parser/lexer.l:142: "-" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:142 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 142 "src/computation/parser/lexer.l"
 // eat a "-" not followed by "}"
-            YY_BREAK
-          case 8: // rule src/computation/parser/lexer.l:146: [\n] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:146 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 146 "src/computation/parser/lexer.l"
+            break;
+          case 8: // rule src/computation/parser/lexer.l:143: [\n] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:143 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 143 "src/computation/parser/lexer.l"
 drv.location.lines(1);
-            YY_BREAK
-          case 9: // rule src/computation/parser/lexer.l:149: "{-"/[^#] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 149 "src/computation/parser/lexer.l"
+            break;
+          case 9: // rule src/computation/parser/lexer.l:146: "{-"/[^#] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:146 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 146 "src/computation/parser/lexer.l"
 push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
-            YY_BREAK
+            break;
         }
         break;
       case option_prags:
         matcher().pattern(PATTERN_option_prags);
-        switch (matcher().scan())
+        matcher().scan();
+        yylloc_update(yylloc);
+        switch (matcher().accept())
         {
           case 0:
             if (matcher().at_end())
             {
-              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:258 start(" << start() << ")\n";
-#line 258 "src/computation/parser/lexer.l"
+              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:255 start(" << start() << ")\n";
+#line 255 "src/computation/parser/lexer.l"
 return yy::parser::make_END (drv.location);
             }
             else
             {
               if (debug()) std::cerr << "--default rule\n";
-              output(matcher().input());
+              out().put(matcher().input());
             }
-            YY_BREAK
-          case 1: // rule src/computation/parser/lexer.l:133: {white_no_nl}+ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:133 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 133 "src/computation/parser/lexer.l"
+            break;
+          case 1: // rule src/computation/parser/lexer.l:130: {white_no_nl}+ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:130 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 130 "src/computation/parser/lexer.l"
 drv.location.step ();
-            YY_BREAK
-          case 2: // rule src/computation/parser/lexer.l:134: {tab} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:134 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 134 "src/computation/parser/lexer.l"
+            break;
+          case 2: // rule src/computation/parser/lexer.l:131: {tab} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:131 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 131 "src/computation/parser/lexer.l"
 drv.location.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-            YY_BREAK
-          case 3: // rule src/computation/parser/lexer.l:139: "-}" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:139 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 139 "src/computation/parser/lexer.l"
+            break;
+          case 3: // rule src/computation/parser/lexer.l:136: "-}" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:136 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 136 "src/computation/parser/lexer.l"
 throw yy::parser::syntax_error(drv.location, "Too many -}");
 
-            YY_BREAK
-          case 4: // rule src/computation/parser/lexer.l:149: "{-"/[^#] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 149 "src/computation/parser/lexer.l"
+            break;
+          case 4: // rule src/computation/parser/lexer.l:146: "{-"/[^#] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:146 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 146 "src/computation/parser/lexer.l"
 push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
-            YY_BREAK
-          case 5: // rule src/computation/parser/lexer.l:154: "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].* :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:154 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 154 "src/computation/parser/lexer.l"
+            break;
+          case 5: // rule src/computation/parser/lexer.l:151: "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].* :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:151 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 151 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 6: // rule src/computation/parser/lexer.l:155: "--"-*$ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:155 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 155 "src/computation/parser/lexer.l"
+            break;
+          case 6: // rule src/computation/parser/lexer.l:152: "--"-*$ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:152 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 152 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 7: // rule src/computation/parser/lexer.l:156: "-- "$ :
+            break;
+          case 7: // rule src/computation/parser/lexer.l:153: "-- "$ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:153 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 153 "src/computation/parser/lexer.l"
+drv.location.step();
+            break;
+          case 8: // rule src/computation/parser/lexer.l:156: [\n] :
             if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:156 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
 #line 156 "src/computation/parser/lexer.l"
-drv.location.step();
-            YY_BREAK
-          case 8: // rule src/computation/parser/lexer.l:159: [\n] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:159 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 159 "src/computation/parser/lexer.l"
 drv.location.lines(1); drv.location.step(); drv.mark_next_real_token_starts_line();
 
   /* line pragmas */
@@ -806,97 +757,83 @@ drv.location.lines(1); drv.location.step(); drv.mark_next_real_token_starts_line
   /* two-word pragmas */
   /* <INITIAL,option_prags>"{-#"{whitechar}*{pragmachar}+{whitechar}+{pragmachar}+  if (auto prag = drv.prag(std::string_view(text(), size()), drv.location)) return *prag; else push_state(nested_comment); */
   /* one-word pragmas */
-            YY_BREAK
-          case 9: // rule src/computation/parser/lexer.l:175: "{-#"{whitechar}*{pragmachar}+ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:175 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 175 "src/computation/parser/lexer.l"
+            break;
+          case 9: // rule src/computation/parser/lexer.l:172: "{-#"{whitechar}*{pragmachar}+ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:172 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 172 "src/computation/parser/lexer.l"
 if (auto prag = drv.prag(std::string_view(text(), size()), drv.location)) return *prag; else push_state(nested_comment);
   /* end pragma */
-            YY_BREAK
-          case 10: // rule src/computation/parser/lexer.l:177: "#-}" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:177 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 177 "src/computation/parser/lexer.l"
+            break;
+          case 10: // rule src/computation/parser/lexer.l:174: "#-}" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:174 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 174 "src/computation/parser/lexer.l"
 return yy::parser::make_CLOSE_PRAG(drv.location);
 
   /* unboxed tuples: (# and #) */
 
-            YY_BREAK
-          case 11: // rule src/computation/parser/lexer.l:181: "(" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:181 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 181 "src/computation/parser/lexer.l"
+            break;
+          case 11: // rule src/computation/parser/lexer.l:178: "(" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:178 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 178 "src/computation/parser/lexer.l"
 return yy::parser::make_OPAREN (drv.location);
-            YY_BREAK
-          case 12: // rule src/computation/parser/lexer.l:182: ")" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:182 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 182 "src/computation/parser/lexer.l"
+            break;
+          case 12: // rule src/computation/parser/lexer.l:179: ")" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:179 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 179 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_CPAREN(drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 13: // rule src/computation/parser/lexer.l:183: "[" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:183 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 183 "src/computation/parser/lexer.l"
+            break;
+          case 13: // rule src/computation/parser/lexer.l:180: "[" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:180 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 180 "src/computation/parser/lexer.l"
 return yy::parser::make_OBRACK (drv.location);
-            YY_BREAK
-          case 14: // rule src/computation/parser/lexer.l:184: "]" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:184 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 184 "src/computation/parser/lexer.l"
+            break;
+          case 14: // rule src/computation/parser/lexer.l:181: "]" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:181 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 181 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_CBRACK(drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 15: // rule src/computation/parser/lexer.l:185: "," :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:185 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 185 "src/computation/parser/lexer.l"
+            break;
+          case 15: // rule src/computation/parser/lexer.l:182: "," :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:182 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 182 "src/computation/parser/lexer.l"
 return yy::parser::make_COMMA  (drv.location);
-            YY_BREAK
-          case 16: // rule src/computation/parser/lexer.l:186: ";" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:186 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 186 "src/computation/parser/lexer.l"
+            break;
+          case 16: // rule src/computation/parser/lexer.l:183: ";" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:183 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 183 "src/computation/parser/lexer.l"
 return yy::parser::make_SEMI   (drv.location);
-            YY_BREAK
-          case 17: // rule src/computation/parser/lexer.l:187: "`" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:187 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 187 "src/computation/parser/lexer.l"
+            break;
+          case 17: // rule src/computation/parser/lexer.l:184: "`" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:184 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 184 "src/computation/parser/lexer.l"
 return yy::parser::make_BACKQUOTE (drv.location);
 
   /* action: push a "NoLayout" context into the stack */
-            YY_BREAK
-          case 18: // rule src/computation/parser/lexer.l:190: "{" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:190 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 190 "src/computation/parser/lexer.l"
+            break;
+          case 18: // rule src/computation/parser/lexer.l:187: "{" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:187 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 187 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_OCURLY(drv.location), TokenEffects{.push_no_layout_context = true});
   /* action: pop the top context from the stack */
-            YY_BREAK
-          case 19: // rule src/computation/parser/lexer.l:192: "}" :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:192 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 192 "src/computation/parser/lexer.l"
+            break;
+          case 19: // rule src/computation/parser/lexer.l:189: "}" :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:189 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 189 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_CCURLY(drv.location), TokenEffects{.closes_atom = true, .pop_context = true});
 
-            YY_BREAK
-          case 20: // rule src/computation/parser/lexer.l:194: {qvarid} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:194 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 194 "src/computation/parser/lexer.l"
+            break;
+          case 20: // rule src/computation/parser/lexer.l:191: {qvarid} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:191 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 191 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_QVARID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 21: // rule src/computation/parser/lexer.l:195: {qconid} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:195 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 195 "src/computation/parser/lexer.l"
+            break;
+          case 21: // rule src/computation/parser/lexer.l:192: {qconid} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:192 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 192 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_QCONID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
-            YY_BREAK
-          case 22: // rule src/computation/parser/lexer.l:196: {varid} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:196 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 196 "src/computation/parser/lexer.l"
+            break;
+          case 22: // rule src/computation/parser/lexer.l:193: {varid} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:193 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 193 "src/computation/parser/lexer.l"
 {
                                       auto classified = drv.classify_varid(std::string_view(text(), size()));
                                       auto layout_after = classified.layout_after;
@@ -907,236 +844,219 @@ return LexedToken(yy::parser::make_QCONID(std::string(text(), size()), drv.locat
                                         return LexedToken(yy::parser::make_VARID(classified.text, drv.location),
                                                           TokenEffects{.closes_atom = true, .layout_after = layout_after});
                                     }
-            YY_BREAK
-          case 23: // rule src/computation/parser/lexer.l:206: {conid} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:206 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 206 "src/computation/parser/lexer.l"
+            break;
+          case 23: // rule src/computation/parser/lexer.l:203: {conid} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:203 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 203 "src/computation/parser/lexer.l"
 return LexedToken(yy::parser::make_CONID(std::string(text(), size()), drv.location), TokenEffects{.closes_atom = true});
   /* Here we look for {qvarid}#+ ... {conid}#+ if magicHashEnabled */
 
 
-            YY_BREAK
-          case 24: // rule src/computation/parser/lexer.l:253: . :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:253 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 253 "src/computation/parser/lexer.l"
+            break;
+          case 24: // rule src/computation/parser/lexer.l:250: . :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:250 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 250 "src/computation/parser/lexer.l"
 {
              throw yy::parser::syntax_error
                (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
-            YY_BREAK
+            break;
         }
         break;
       case line_prag1a:
         matcher().pattern(PATTERN_line_prag1a);
-        switch (matcher().scan())
+        matcher().scan();
+        yylloc_update(yylloc);
+        switch (matcher().accept())
         {
           case 0:
             if (matcher().at_end())
             {
-              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:258 start(" << start() << ")\n";
-#line 258 "src/computation/parser/lexer.l"
+              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:255 start(" << start() << ")\n";
+#line 255 "src/computation/parser/lexer.l"
 return yy::parser::make_END (drv.location);
             }
             else
             {
               if (debug()) std::cerr << "--default rule\n";
-              output(matcher().input());
+              out().put(matcher().input());
             }
-            YY_BREAK
-          case 1: // rule src/computation/parser/lexer.l:133: {white_no_nl}+ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:133 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 133 "src/computation/parser/lexer.l"
+            break;
+          case 1: // rule src/computation/parser/lexer.l:130: {white_no_nl}+ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:130 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 130 "src/computation/parser/lexer.l"
 drv.location.step ();
-            YY_BREAK
-          case 2: // rule src/computation/parser/lexer.l:134: {tab} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:134 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 134 "src/computation/parser/lexer.l"
+            break;
+          case 2: // rule src/computation/parser/lexer.l:131: {tab} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:131 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 131 "src/computation/parser/lexer.l"
 drv.location.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-            YY_BREAK
-          case 3: // rule src/computation/parser/lexer.l:149: "{-"/[^#] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 149 "src/computation/parser/lexer.l"
+            break;
+          case 3: // rule src/computation/parser/lexer.l:146: "{-"/[^#] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:146 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 146 "src/computation/parser/lexer.l"
 push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
-            YY_BREAK
-          case 4: // rule src/computation/parser/lexer.l:154: "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].* :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:154 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 154 "src/computation/parser/lexer.l"
+            break;
+          case 4: // rule src/computation/parser/lexer.l:151: "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].* :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:151 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 151 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 5: // rule src/computation/parser/lexer.l:155: "--"-*$ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:155 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 155 "src/computation/parser/lexer.l"
+            break;
+          case 5: // rule src/computation/parser/lexer.l:152: "--"-*$ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:152 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 152 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 6: // rule src/computation/parser/lexer.l:156: "-- "$ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:156 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 156 "src/computation/parser/lexer.l"
+            break;
+          case 6: // rule src/computation/parser/lexer.l:153: "-- "$ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:153 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 153 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 7: // rule src/computation/parser/lexer.l:253: . :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:253 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 253 "src/computation/parser/lexer.l"
+            break;
+          case 7: // rule src/computation/parser/lexer.l:250: . :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:250 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 250 "src/computation/parser/lexer.l"
 {
              throw yy::parser::syntax_error
                (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
-            YY_BREAK
+            break;
         }
         break;
       case line_prag2:
         matcher().pattern(PATTERN_line_prag2);
-        switch (matcher().scan())
+        matcher().scan();
+        yylloc_update(yylloc);
+        switch (matcher().accept())
         {
           case 0:
             if (matcher().at_end())
             {
-              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:258 start(" << start() << ")\n";
-#line 258 "src/computation/parser/lexer.l"
+              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:255 start(" << start() << ")\n";
+#line 255 "src/computation/parser/lexer.l"
 return yy::parser::make_END (drv.location);
             }
             else
             {
               if (debug()) std::cerr << "--default rule\n";
-              output(matcher().input());
+              out().put(matcher().input());
             }
-            YY_BREAK
-          case 1: // rule src/computation/parser/lexer.l:133: {white_no_nl}+ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:133 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 133 "src/computation/parser/lexer.l"
+            break;
+          case 1: // rule src/computation/parser/lexer.l:130: {white_no_nl}+ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:130 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 130 "src/computation/parser/lexer.l"
 drv.location.step ();
-            YY_BREAK
-          case 2: // rule src/computation/parser/lexer.l:134: {tab} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:134 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 134 "src/computation/parser/lexer.l"
+            break;
+          case 2: // rule src/computation/parser/lexer.l:131: {tab} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:131 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 131 "src/computation/parser/lexer.l"
 drv.location.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-            YY_BREAK
-          case 3: // rule src/computation/parser/lexer.l:149: "{-"/[^#] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 149 "src/computation/parser/lexer.l"
+            break;
+          case 3: // rule src/computation/parser/lexer.l:146: "{-"/[^#] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:146 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 146 "src/computation/parser/lexer.l"
 push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
-            YY_BREAK
-          case 4: // rule src/computation/parser/lexer.l:154: "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].* :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:154 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 154 "src/computation/parser/lexer.l"
+            break;
+          case 4: // rule src/computation/parser/lexer.l:151: "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].* :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:151 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 151 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 5: // rule src/computation/parser/lexer.l:155: "--"-*$ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:155 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 155 "src/computation/parser/lexer.l"
+            break;
+          case 5: // rule src/computation/parser/lexer.l:152: "--"-*$ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:152 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 152 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 6: // rule src/computation/parser/lexer.l:156: "-- "$ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:156 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 156 "src/computation/parser/lexer.l"
+            break;
+          case 6: // rule src/computation/parser/lexer.l:153: "-- "$ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:153 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 153 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 7: // rule src/computation/parser/lexer.l:253: . :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:253 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 253 "src/computation/parser/lexer.l"
+            break;
+          case 7: // rule src/computation/parser/lexer.l:250: . :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:250 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 250 "src/computation/parser/lexer.l"
 {
              throw yy::parser::syntax_error
                (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
-            YY_BREAK
+            break;
         }
         break;
       case line_prag2a:
         matcher().pattern(PATTERN_line_prag2a);
-        switch (matcher().scan())
+        matcher().scan();
+        yylloc_update(yylloc);
+        switch (matcher().accept())
         {
           case 0:
             if (matcher().at_end())
             {
-              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:258 start(" << start() << ")\n";
-#line 258 "src/computation/parser/lexer.l"
+              if (debug()) std::cerr << "--EOF rule src/computation/parser/lexer.l:255 start(" << start() << ")\n";
+#line 255 "src/computation/parser/lexer.l"
 return yy::parser::make_END (drv.location);
             }
             else
             {
               if (debug()) std::cerr << "--default rule\n";
-              output(matcher().input());
+              out().put(matcher().input());
             }
-            YY_BREAK
-          case 1: // rule src/computation/parser/lexer.l:133: {white_no_nl}+ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:133 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 133 "src/computation/parser/lexer.l"
+            break;
+          case 1: // rule src/computation/parser/lexer.l:130: {white_no_nl}+ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:130 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 130 "src/computation/parser/lexer.l"
 drv.location.step ();
-            YY_BREAK
-          case 2: // rule src/computation/parser/lexer.l:134: {tab} :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:134 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 134 "src/computation/parser/lexer.l"
+            break;
+          case 2: // rule src/computation/parser/lexer.l:131: {tab} :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:131 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 131 "src/computation/parser/lexer.l"
 drv.location.step ();
 
   /* GHC calls some handwritten code to deal with nested comments */
-            YY_BREAK
-          case 3: // rule src/computation/parser/lexer.l:149: "{-"/[^#] :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:149 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 149 "src/computation/parser/lexer.l"
+            break;
+          case 3: // rule src/computation/parser/lexer.l:146: "{-"/[^#] :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:146 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 146 "src/computation/parser/lexer.l"
 push_state(nested_comment);
 
 
   /* These rules should not be active in a nested comment */
-            YY_BREAK
-          case 4: // rule src/computation/parser/lexer.l:154: "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].* :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:154 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 154 "src/computation/parser/lexer.l"
+            break;
+          case 4: // rule src/computation/parser/lexer.l:151: "--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].* :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:151 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 151 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 5: // rule src/computation/parser/lexer.l:155: "--"-*$ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:155 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 155 "src/computation/parser/lexer.l"
+            break;
+          case 5: // rule src/computation/parser/lexer.l:152: "--"-*$ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:152 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 152 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 6: // rule src/computation/parser/lexer.l:156: "-- "$ :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:156 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 156 "src/computation/parser/lexer.l"
+            break;
+          case 6: // rule src/computation/parser/lexer.l:153: "-- "$ :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:153 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 153 "src/computation/parser/lexer.l"
 drv.location.step();
-            YY_BREAK
-          case 7: // rule src/computation/parser/lexer.l:253: . :
-            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:253 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
-            YY_USER_ACTION
-#line 253 "src/computation/parser/lexer.l"
+            break;
+          case 7: // rule src/computation/parser/lexer.l:250: . :
+            if (debug()) std::cerr << "--rule src/computation/parser/lexer.l:250 start(" << start() << ") " << matcher().lineno() << "," << matcher().columno() << ":\"" << matcher().text() << "\"\n";
+#line 250 "src/computation/parser/lexer.l"
 {
              throw yy::parser::syntax_error
                (drv.location, "invalid character: " + std::string(text(), size()));
 }
 
-            YY_BREAK
+            break;
         }
         break;
       default:
@@ -1151,13 +1071,33 @@ drv.location.step();
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-#line 260 "src/computation/parser/lexer.l"
+#line 257 "src/computation/parser/lexer.l"
+
+class BaliPhyHaskellRawLexer: public HaskellRawLexer
+{
+public:
+    using HaskellRawLexer::HaskellRawLexer;
+
+    void yylloc_update(yy::location& yylloc) override;
+};
+
+// Compatibility note: RE/flex's generated bison-cc updater uses 0-based
+// columns, so adapt it until lexer actions construct tokens from location().
+// Convert matcher columns to Bison's 1-based, end-exclusive convention while
+// preserving the filename set by the driver.
+void BaliPhyHaskellRawLexer::yylloc_update(yy::location& yylloc)
+{
+    yylloc.begin.line = static_cast<unsigned int>(matcher().lineno());
+    yylloc.begin.column = static_cast<unsigned int>(matcher().columno() + 1);
+    yylloc.end.line = static_cast<unsigned int>(matcher().lineno_end());
+    yylloc.end.column = static_cast<unsigned int>(matcher().columno_end() + 2);
+}
 
 
 class RawLexerState
 {
     std::string content;
-    yyFlexLexer scanner;
+    BaliPhyHaskellRawLexer scanner;
 
 public:
     RawLexerState(const std::string& content_arg, bool trace_scanning);
@@ -1171,13 +1111,14 @@ RawLexerState::RawLexerState(const std::string& content_arg, bool trace_scanning
       scanner(reflex::Input(&content))
 {
     scanner.set_debug(trace_scanning);
-    scanner.start(INITIAL);
+    scanner.start(HaskellRawLexer::INITIAL);
 }
 
 // Return one real source token from the generated RE/flex scanner.
 LexedToken RawLexerState::lex(driver& drv)
 {
-    return scanner.raw_yylex(drv);
+    int yylval = 0;
+    return scanner.raw_yylex(yylval, drv.location, drv);
 }
 
 // Delete the opaque scanner state where the RE/flex-generated class is
