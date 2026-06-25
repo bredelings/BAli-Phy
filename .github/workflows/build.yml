@@ -81,7 +81,7 @@ jobs:
             arch: "mac-intel64"
 
           - name: macos-xcode16-arm-sanitize
-            os: macos-latest
+            os: macos-15
             compiler: xcode
             version: "16"
             buildtype: "release"
