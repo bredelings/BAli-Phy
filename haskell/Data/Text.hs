@@ -10,10 +10,10 @@ module Data.Text
      doubleToText)
     where
 
--- Note that this module is really just a hacky implementation of a boxed c++ std::string
--- It should probably be a UTF-8 string, and make Char a UTF-32 value.
--- The number of code points can be larger than the number of graphemes.
--- Does (length) return the number of code points?  Probably.
+-- A CPPString is an opaque C++ std::string transport value.  Text gives it
+-- UTF-8 semantics: Text stores a validated UTF-8 byte string plus a byte
+-- offset and byte length that must point to UTF-8 scalar boundaries.  Public
+-- character operations count Unicode code points, not graphemes.
 
 import Prelude as P hiding (null, head, last, tail, init, length, empty, intercalate, intersperse, concat, uncons)
 import qualified Prelude as P
@@ -28,11 +28,11 @@ import Data.String
 import qualified Foreign.String as FS
 import Compiler.FFI.ToFromC    
 
--- We need to change this to Text CPPString Int {- offset -} Int {- length -}
--- Ideally we'd have the strictness annotations ! as well.
-
--- These should all be strict.
+-- These fields should all be strict.  The Int fields are byte offset and byte
+-- length, not code-point offset and code-point length.
 data Text = Text CPPString Int Int
+
+foreign import ecall "Text:validate" builtin_validate :: CPPString -> CPPString
 
 foreign import ecall "Text:pack" builtin_pack :: EVector Char -> CPPString
 
@@ -41,10 +41,11 @@ instance Show Text where
 
 pack = fromCppString . builtin_pack . toVector
 
-unpack (Text array offset length) = FS.unpack_cpp_substring array offset length
+foreign import ecall "Text:unpack" builtin_unpack :: CPPString -> Int -> Int -> EVector Char
+unpack (Text array offset len) = vectorToList $ builtin_unpack array offset len
 
 foreign import ecall "Text:singleton" builtin_singleton :: Char -> CPPString
-singleton c = Text (builtin_singleton c) 0 1
+singleton c = fromCppString $ builtin_singleton c
 
 foreign import ecall "Text:empty" builtin_empty :: CPPString
 empty = Text builtin_empty 0 0
@@ -75,25 +76,31 @@ uncons t | null t    = Nothing
 
 -- unsnoc :: Text -> Maybe (Text, Char)
 
+foreign import ecall "Text:head" builtin_head :: CPPString -> Int -> Int -> Char
 head (Text arr off len)
     | len <= 0  = error "head: empty Text"
-    | otherwise = getStringElement arr off
+    | otherwise = builtin_head arr off len
 
-last t@(Text arr off len)
+foreign import ecall "Text:last" builtin_last :: CPPString -> Int -> Int -> Char
+last (Text arr off len)
     | len <= 0  = error "last: empty Text"
-    | otherwise = getStringElement arr (off+len-1)
+    | otherwise = builtin_last arr off len
 
+foreign import ecall "Text:tailOffset" builtin_tailOffset :: CPPString -> Int -> Int -> Int
 tail (Text arr off len)
     | len <= 0  = error "tail: empty Text"
-    | otherwise = text arr (off + 1) (len - 1)
+    | otherwise = text arr off2 (off + len - off2)
+    where off2 = builtin_tailOffset arr off len
 
+foreign import ecall "Text:initLength" builtin_initLength :: CPPString -> Int -> Int -> Int
 init (Text arr off len)
-    | len <= 0 = error "tail: empty Text"
-    | otherwise = text arr off (len - 1)
+    | len <= 0 = error "init: empty Text"
+    | otherwise = text arr off (builtin_initLength arr off len)
 
-null t = length t <= 0
+null (Text _ _ len) = len <= 0
 
-length (Text _ _ len) = len
+foreign import ecall "Text:codePointLength" builtin_codePointLength :: CPPString -> Int -> Int -> Int
+length (Text arr off len) = builtin_codePointLength arr off len
 
 -- compareLength :: Text -> Int -> Ordering
 
@@ -136,7 +143,7 @@ intercalate i ts = concat $ P.intersperse i ts
 
 -- foldr1 :: (Char -> Char -> Char) -> Text -> Char
 
-fromCppString s = Text s 0 (FS.sizeOfString s)
+fromCppString s = Text s' 0 (FS.sizeOfString s') where s' = builtin_validate s
 
 foreign import ecall "Text:" concatRaw :: EVector CPPString -> CPPString
 
@@ -284,7 +291,7 @@ instance Ord Text where
     (Text arr1 off1 len1) < (Text arr2 off2 len2) = builtin_less_than arr1 off1 len1 arr2 off2 len2
 
 foreign import ecall "Prelude:show_double" doubleToCPPString :: Double -> CPPString
-doubleToText d = Text arr 0 (FS.sizeOfString arr) where arr = doubleToCPPString d
+doubleToText d = fromCppString (doubleToCPPString d)
 
 
 toCppString (Text arr off len) = FS.cppSubString arr off len

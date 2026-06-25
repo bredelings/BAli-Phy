@@ -3,6 +3,8 @@ module Foreign.String where
 
 import Foreign.CList
 
+-- Opaque C++ std::string transport across the builtin boundary.  Callers give
+-- it text, byte, path, or diagnostic semantics at the wrapper layer.
 data CPPString
 
 foreign import ecall "Vector:getStringElement" getStringElement :: CPPString -> Int -> Char
@@ -31,4 +33,3 @@ empty_cpp_string = list_to_string ""
 foreign import ecall "Prelude:" show_int :: Int -> CPPString
 foreign import ecall "Prelude:" show_integer :: Integer -> CPPString
 foreign import ecall "Prelude:" show_double :: Double -> CPPString
-
