@@ -127,11 +127,17 @@ cereal = dependency('cereal').as_system()
 
 subdir('external/immer/')
 
-# RE/flex now owns the Haskell raw scanner, so build its runtime from the
-# Meson overlay carried by the wrap instead of requiring CMake.
-reflex_project = subproject('reflex', required: true)
-reflex_dep = reflex_project.get_variable('reflex_dep').as_system()
-used_reflex = 'subproject'
+# RE/flex now owns the Haskell raw scanner. Prefer an installed Autotools
+# package via reflex.pc, then fall back to the Meson overlay carried by the wrap.
+reflex_dep = dependency('reflex', method: 'pkg-config', required: false)
+if reflex_dep.found()
+  reflex_dep = reflex_dep.as_system()
+  used_reflex = 'system'
+else
+  reflex_project = subproject('reflex', required: true)
+  reflex_dep = reflex_project.get_variable('reflex_dep').as_system()
+  used_reflex = 'subproject'
+endif
 
 math_dep = cpp.find_library('m', required:false)
 
