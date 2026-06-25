@@ -127,11 +127,10 @@ cereal = dependency('cereal').as_system()
 
 subdir('external/immer/')
 
-# RE/flex now owns the Haskell raw scanner, so the build requires its generator
-# and runtime instead of silently falling back to the old Flex scanner.
-cmake = import('cmake')
-reflex_project = cmake.subproject('reflex', required: true)
-reflex_dep = reflex_project.dependency('ReflexLibStatic', include_type: 'system')
+# RE/flex now owns the Haskell raw scanner, so build its runtime from the
+# Meson overlay carried by the wrap instead of requiring CMake.
+reflex_project = subproject('reflex', required: true)
+reflex_dep = reflex_project.get_variable('reflex_dep').as_system()
 used_reflex = 'subproject'
 
 math_dep = cpp.find_library('m', required:false)

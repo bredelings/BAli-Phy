@@ -3,6 +3,8 @@ doc/latex
 
 build*/
 subprojects/*/*
+!subprojects/packagefiles/
+!subprojects/packagefiles/**
 *.Main.hs
 history.txt
 win64-cross.txt
