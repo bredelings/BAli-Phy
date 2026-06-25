@@ -24,13 +24,19 @@ Done:
   byte-sized runtime `Char`.
 - ASCII lexer regression tests cover character/string literals and `--`
   comment behavior versus symbolic operators.
+- The lexer parses decimal numeric escapes in character and string literals.
+- The lexer rejects `\&` in character literals and treats it as an empty escape
+  in string literals.
+- `Hs::String::print()` escapes quotes, backslashes, controls, and bytes that
+  are not safe printable ASCII.
+- String printing is byte-preserving for now: bytes greater than `0x7f` print
+  as numeric escapes until Runtime/Text are deliberately widened.
+- Literal escape tests cover decimal escapes, `\&`, invalid scalar escapes, and
+  the current byte-sized runtime/string guards.
 
 Still limited:
 
 - The lexer accepts only ASCII character and string literal source today.
-- `Hs::String::print()` still needs deliberate escaping for quotes,
-  backslashes, controls, and non-ASCII/invalid UTF-8 policy.
-- The lexer does not yet parse numeric character escapes.
 - `Core::Constant` and `Runtime::Char` still store byte-sized characters.
 - `Runtime::Exp::as_char()` and related closure constructors still assume
   byte-sized characters.
@@ -91,6 +97,8 @@ large lexer changes is:
 
 ### Numeric Character Escapes
 
+Status: implemented for decimal escapes.
+
 The Haskell source printer can emit numeric character escapes for non-ASCII or
 non-printable `Hs::Char` values.  The lexer should parse the same syntax before
 we rely on printed Haskell source round-tripping.
@@ -98,8 +106,7 @@ we rely on printed Haskell source round-tripping.
 Required behavior:
 
 - Parse decimal numeric escapes in character literals.
-- Parse decimal numeric escapes in string literals when string escape handling
-  is updated.
+- Parse decimal numeric escapes in string literals.
 - Reject numeric escapes that are not Unicode scalar values.
 - Reject numeric escapes that cannot currently be represented by the byte-sized
   runtime when desugaring is reached.
@@ -117,17 +124,18 @@ Validation:
 
 ### Safe `Hs::String` Printing
 
+Status: implemented with byte-preserving semantics.
+
 `Hs::String` remains UTF-8 bytes, but printing should be deliberate.
 
 Required behavior:
 
 - Escape quotes, backslashes, and standard control characters.
 - Escape other control bytes using numeric escapes.
-- Decide and document whether valid non-ASCII UTF-8 prints raw or as numeric
-  escapes.  Raw UTF-8 is preferable if generated Haskell source and diagnostics
-  handle it reliably.
-- Reject or escape invalid UTF-8 deliberately.  Do not silently emit malformed
-  Haskell source.
+- Print bytes greater than `0x7f` as numeric escapes until generated Haskell
+  source and Runtime/Text intentionally switch to Unicode text semantics.
+- Do not interpret or validate UTF-8 here yet; this printer is byte-preserving
+  until Runtime/Text follow-through changes that policy.
 - Avoid numeric escape ambiguity by inserting `\&` when needed.
 
 Validation:
@@ -135,8 +143,7 @@ Validation:
 - Quotes and backslashes in generated string literals.
 - Newline, tab, carriage return, and other control bytes.
 - Numeric escape followed by a digit.
-- Valid non-ASCII UTF-8 once that policy is chosen.
-- Invalid UTF-8 once validation is added.
+- Bytes greater than `0x7f` print as numeric escapes.
 
 ### Character Literal Semantics
 
@@ -150,9 +157,9 @@ Already implemented:
 
 Remaining work:
 
-- Add focused tests for non-ASCII constructed `Hs::Char` printing.
-- Add focused tests for invalid constructed `Hs::Char` values.
-- Ensure the parser supports every escape form the printer emits.
+- Optional direct C++ tests for constructed non-ASCII and invalid `Hs::Char`
+  printing if a convenient local test hook is added.
+- Runtime/Text follow-through before non-byte `Char` values can be desugared.
 
 ## Runtime Char and Text Follow-Through
 
@@ -406,21 +413,22 @@ Completed:
 
 1. `parser: add partial ASCII lexer regression tests`
 2. `haskell: widen character literals to code points`
+3. `TODO: refresh Unicode implementation plan`
+4. `parser: parse numeric character escapes`
+5. `haskell: print string literals safely`
+6. `haskell: test literal escape semantics`
 
 Next recommended commits:
 
-1. `TODO: refresh Unicode implementation plan`
-2. `parser: parse numeric character escapes`
-3. `haskell: print string literals safely`
-4. `haskell: add remaining ASCII lexer regression tests`
-5. `haskell: classify identifiers by UTF-8 code point`
-6. `parser: add Unicode identifier and operator tests`
-7. `parser: verify or fix Unicode source locations`
-8. `parser: use Unicode classes in Haskell lexer`
-9. `parser: parse raw Unicode char and string literals`
-10. `runtime: widen character constants`
-11. `builtins: update Char and Text Unicode behavior`
-12. `parser: finish UnicodeSyntax lexer support`
+1. `runtime: widen character constants`
+2. `builtins: update Char and Text Unicode behavior`
+3. `haskell: add remaining ASCII lexer regression tests`
+4. `haskell: classify identifiers by UTF-8 code point`
+5. `parser: add Unicode identifier and operator tests`
+6. `parser: verify or fix Unicode source locations`
+7. `parser: use Unicode classes in Haskell lexer`
+8. `parser: parse raw Unicode char and string literals`
+9. `parser: finish UnicodeSyntax lexer support`
 
 ## Validation Matrix
 
