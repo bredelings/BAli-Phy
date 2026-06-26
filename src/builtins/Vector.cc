@@ -88,16 +88,33 @@ extern "C" R::Exp simple_function_decodeUtf8CharAt(vector<R::Exp>& args)
     return R::RPair(decoded->code_point, static_cast<int>(decoded->next_byte));
 }
 
+// Return a byte-indexed CPPString slice, preserving the original register for
+// full-string slices and rejecting invalid Haskell Int offsets explicitly.
 extern "C" closure builtin_function_cppSubString(OperationArgs& Args)
 {
     int offset = Args.evaluate_slot_to_value(1).as_int();
     int length = Args.evaluate_slot_to_value(2).as_int();
     std::string s = Args.evaluate_slot_to_value(0).as_string();
 
-    if (offset == 0 and length == s.size())
+    if (offset < 0)
+        throw myexception()<<"cppSubString: negative offset "<<offset<<".";
+
+    if (length < 0)
+        throw myexception()<<"cppSubString: negative length "<<length<<".";
+
+    auto start = static_cast<std::size_t>(offset);
+    auto n = static_cast<std::size_t>(length);
+
+    if (start > s.size())
+        throw myexception()<<"cppSubString: offset "<<offset<<" is past string size "<<s.size()<<".";
+
+    if (n > s.size() - start)
+        throw myexception()<<"cppSubString: length "<<length<<" exceeds string size "<<s.size()<<" at offset "<<offset<<".";
+
+    if (start == 0 and n == s.size())
 	return {R::IndexVar(0),{Args.reg_for_slot(0)}};
     else
-	return {s.substr(offset,length)};
+	return {s.substr(start,n)};
 }
 
 extern "C" R::Exp simple_function_vector_size(vector<R::Exp>& args)
