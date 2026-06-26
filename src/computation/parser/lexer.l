@@ -43,7 +43,7 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 %s nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
 
-unispace     \x05
+unispace     [\p{Zs}--[\p{ASCII}]]
 nl           [\n\r\f]
 space        " "|{unispace}
 whitechar    {nl}|\v|{space}
@@ -73,7 +73,7 @@ unismall     \p{Ll}|\p{Lo}
 ascsmall     [a-z]
 small        {ascsmall}|{unismall}|_
 
-unigraphic   \p{Non_ASCII_Unicode}
+unigraphic   [\p{L}--[\p{ASCII}]]|[\p{M}--[\p{ASCII}]]|[\p{N}--[\p{ASCII}]]|[\p{P}--[\p{ASCII}]]|[\p{S}--[\p{ASCII}]]
 graphic      {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"\'
 graphicnonq  {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"
 graphicnonqq {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\'
