@@ -1,5 +1,8 @@
 #include "message.H"
+#include "util/utf8.H"
+#include <algorithm>
 #include <sstream>
+#include <string_view>
 #include "util/text.H"
 #include "util/string/join.H"
 #include <range/v3/all.hpp>
@@ -8,6 +11,70 @@ using std::string;
 using std::vector;
 
 namespace views = ranges::views;
+
+// Advance one source column position using the same tab convention as RE/flex:
+// UTF-8 scalar values count as one column, and tabs advance to an 8-column stop.
+static int column_after_source_char(int column, char32_t code_point)
+{
+    if (code_point != U'\t')
+        return column + 1;
+
+    constexpr int tab_width = 8;
+    return column + tab_width - ((column - 1) % tab_width);
+}
+
+// Convert Bison's 1-based source columns to byte offsets before slicing a
+// UTF-8 line for diagnostics.  Invalid UTF-8 falls back to one byte per column.
+static std::size_t byte_offset_for_source_column(std::string_view line, int column)
+{
+    if (column <= 1)
+        return 0;
+
+    std::size_t byte_offset = 0;
+    int current_column = 1;
+    while(byte_offset < line.size() and current_column < column)
+    {
+        char32_t code_point = static_cast<unsigned char>(line[byte_offset]);
+        std::size_t next_byte = byte_offset + 1;
+
+        if (auto decoded = utf8::decode_next(line, byte_offset))
+        {
+            code_point = decoded->code_point;
+            next_byte = decoded->next_byte;
+        }
+
+        int next_column = column_after_source_char(current_column, code_point);
+        if (next_column > column)
+            break;
+
+        byte_offset = next_byte;
+        current_column = next_column;
+    }
+    return byte_offset;
+}
+
+// Compute the source column immediately after a line so multi-line diagnostics
+// can highlight the whole first line without treating UTF-8 bytes as columns.
+static int source_column_after_line(std::string_view line)
+{
+    std::size_t byte_offset = 0;
+    int column = 1;
+    while(byte_offset < line.size())
+    {
+        char32_t code_point = static_cast<unsigned char>(line[byte_offset]);
+        std::size_t next_byte = byte_offset + 1;
+
+        if (auto decoded = utf8::decode_next(line, byte_offset))
+        {
+            code_point = decoded->code_point;
+            next_byte = decoded->next_byte;
+        }
+
+        column = column_after_source_char(column, code_point);
+        byte_offset = next_byte;
+    }
+    return column;
+}
 
 string FileContents::print_range(int line1, int col1, int line2, int col2) const
 {
@@ -30,22 +97,17 @@ string FileContents::print_range(int line1, int col1, int line2, int col2) const
     if (line1-1 == lines.size() and col1 == 1)
     {
         line1 = lines.size();
-        col1 = lines[line1-1].size()+1;
+        col1 = source_column_after_line(lines[line1-1]);
     }
-    // (line1,col1) == EOF
+    // (line2,col2) == EOF
     if (line2-1 == lines.size() and col2 == 1)
     {
         line2 = lines.size();
-        col2 = lines[line2-1].size()+1;
+        col2 = source_column_after_line(lines[line2-1]);
     }
     // Check that the lines exist in the file.
     assert(line1-1 < lines.size());
     assert(line2-1 < lines.size());
-
-    // Check that the columns exist in the file.
-    // The end column is the first character AFTER the range.
-    assert(col1 -1 <= lines[line1-1].size());
-    assert(col2 -1 <= lines[line2-1].size());
 
     const string& line = lines[line1-1];
 
@@ -53,11 +115,18 @@ string FileContents::print_range(int line1, int col1, int line2, int col2) const
     int n = line_no1.size();
 
     // For multi-line selections, just print the whole first line.
-    if (line2 > line1) col2 = line.size();
+    if (line2 > line1)
+        col2 = source_column_after_line(line);
+
+    auto byte_col1 = byte_offset_for_source_column(line, col1);
+    auto byte_col2 = byte_offset_for_source_column(line, col2);
+    if (byte_col2 < byte_col1)
+        byte_col2 = byte_col1;
+    int indicator_width = std::max(1, col2 - col1);
 
     out<<string(n+1,' ')<<bold_blue("|")<<"\n";
-    out<<bold_blue(line_no1)<<" "<<bold_blue("| ")<<line.substr(0,col1-1)<<bold_red(line.substr(col1-1,col2-col1))<<line.substr(col2-1)<<"\n";
-    out<<string(n+1,' ')<<bold_blue("|")<<string(col1,' ')<<bold_red(string(col2-col1,'^'))<<"\n";
+    out<<bold_blue(line_no1)<<" "<<bold_blue("| ")<<line.substr(0,byte_col1)<<bold_red(line.substr(byte_col1,byte_col2-byte_col1))<<line.substr(byte_col2)<<"\n";
+    out<<string(n+1,' ')<<bold_blue("|")<<string(col1,' ')<<bold_red(string(indicator_width,'^'))<<"\n";
 
     return out.str();
 }
