@@ -6,6 +6,7 @@ module Data.Char where
 import Compiler.Error
 import Compiler.Base
 import Compiler.Num
+import Data.Bool
 import Data.Eq
 import Data.Ord
 
@@ -60,46 +61,137 @@ isHexDigit c = if builtin_isHexDigit c == 1 then True else False
 isLetter :: Char -> Bool
 isLetter = isAlpha
 
--- isMark :: Char -> Bool
--- not implemented
+data GeneralCategory =
+    UppercaseLetter
+  | LowercaseLetter
+  | TitlecaseLetter
+  | ModifierLetter
+  | OtherLetter
+  | NonSpacingMark
+  | SpacingCombiningMark
+  | EnclosingMark
+  | DecimalNumber
+  | LetterNumber
+  | OtherNumber
+  | ConnectorPunctuation
+  | DashPunctuation
+  | OpenPunctuation
+  | ClosePunctuation
+  | InitialQuote
+  | FinalQuote
+  | OtherPunctuation
+  | MathSymbol
+  | CurrencySymbol
+  | ModifierSymbol
+  | OtherSymbol
+  | Space
+  | LineSeparator
+  | ParagraphSeparator
+  | Control
+  | Format
+  | Surrogate
+  | PrivateUse
+  | NotAssigned
 
--- isNumber :: Char -> Bool
--- not implemented
+foreign import ecall "Char:generalCategory" builtin_generalCategory :: Char -> Int
+
+-- Decode the C++ category ordinal into the standard Data.Char category type.
+-- The ordinal order is local to the Char builtin and mirrors these constructors.
+generalCategory :: Char -> GeneralCategory
+generalCategory c = case builtin_generalCategory c of
+    0  -> UppercaseLetter
+    1  -> LowercaseLetter
+    2  -> TitlecaseLetter
+    3  -> ModifierLetter
+    4  -> OtherLetter
+    5  -> NonSpacingMark
+    6  -> SpacingCombiningMark
+    7  -> EnclosingMark
+    8  -> DecimalNumber
+    9  -> LetterNumber
+    10 -> OtherNumber
+    11 -> ConnectorPunctuation
+    12 -> DashPunctuation
+    13 -> OpenPunctuation
+    14 -> ClosePunctuation
+    15 -> InitialQuote
+    16 -> FinalQuote
+    17 -> OtherPunctuation
+    18 -> MathSymbol
+    19 -> CurrencySymbol
+    20 -> ModifierSymbol
+    21 -> OtherSymbol
+    22 -> Space
+    23 -> LineSeparator
+    24 -> ParagraphSeparator
+    25 -> Control
+    26 -> Format
+    27 -> Surrogate
+    28 -> PrivateUse
+    29 -> NotAssigned
+    _  -> error "Data.Char.generalCategory: invalid category"
+
+-- Group the three Unicode mark categories under the standard Data.Char
+-- predicate name.
+isMark :: Char -> Bool
+isMark c = case generalCategory c of
+    NonSpacingMark -> True
+    SpacingCombiningMark -> True
+    EnclosingMark -> True
+    _ -> False
+
+-- Group all Unicode numeric categories.  This is broader than isDigit, which
+-- follows Haskell and accepts only ASCII decimal digits.
+isNumber :: Char -> Bool
+isNumber c = case generalCategory c of
+    DecimalNumber -> True
+    LetterNumber -> True
+    OtherNumber -> True
+    _ -> False
 
 foreign import ecall "Char:isPunctuation" builtin_isPunctuation :: Char -> Int
 
 isPunctuation :: Char -> Bool
 isPunctuation c = if builtin_isPunctuation c == 1 then True else False
 
--- isSymbol :: Char -> Bool
--- not implemented
+-- Group the four Unicode symbol categories under the standard Data.Char
+-- predicate name.
+isSymbol :: Char -> Bool
+isSymbol c = case generalCategory c of
+    MathSymbol -> True
+    CurrencySymbol -> True
+    ModifierSymbol -> True
+    OtherSymbol -> True
+    _ -> False
 
--- isSeparator :: Char -> Bool
--- not implemented
+-- Group the Unicode separator categories under the standard Data.Char
+-- predicate name.
+isSeparator :: Char -> Bool
+isSeparator c = case generalCategory c of
+    Space -> True
+    LineSeparator -> True
+    ParagraphSeparator -> True
+    _ -> False
 
 -- subranges
 isAscii :: Char -> Bool
-isAscii _ = True
+isAscii c = ord c <= 127
 
 isLatin1 :: Char -> Bool
-isLatin1 _ = True
+isLatin1 c = ord c <= 255
 
 isAsciiUpper :: Char -> Bool
-isAsciiUpper = isUpper
+isAsciiUpper c = c >= 'A' && c <= 'Z'
 
 isAsciiLower :: Char -> Bool
-isAsciiLower = isLower
-
--- Unicode general categories
--- GeneralCategory(..), generalCategory
+isAsciiLower c = c >= 'a' && c <= 'z'
 
 -- case conversion
 foreign import ecall "Char:toUpper" toUpper :: Char -> Char
 
 foreign import ecall "Char:toLower" toLower :: Char -> Char
 
--- toTitle :: Char -> Char
--- not implemented
+foreign import ecall "Char:toTitle" toTitle :: Char -> Char
 
 -- single digit characters
 digitToInt :: Char -> Int
