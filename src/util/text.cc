@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "util/text.H"
 #include "util/assert.hh"
+#include "util/utf8.H"
 #include "util/string/join.H"
 #include "util/string/convert.H"
 #include <cstdlib>
@@ -71,6 +72,8 @@ bool skip_ansi(const string& line, int& pos)
         return false;
 }
 
+// Move forward by visible source columns while ignoring ANSI escape sequences.
+// Valid UTF-8 scalar values count as one column; invalid bytes count as one.
 int advance(const string& line, int pos, int delta)
 {
     assert(pos >= 0 and pos <= line.size());
@@ -78,7 +81,12 @@ int advance(const string& line, int pos, int delta)
     while(delta > 0 and pos < line.size())
     {
         while(skip_ansi(line,pos)) { };
-        pos++;
+        if (pos >= line.size())
+            break;
+        if (auto decoded = utf8::decode_next(line, pos))
+            pos = decoded->next_byte;
+        else
+            pos++;
         delta--;
     }
 
