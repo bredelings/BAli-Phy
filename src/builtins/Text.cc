@@ -133,24 +133,6 @@ extern "C" R::Exp simple_function_empty(vector<R::Exp>&)
     return s;
 }
 
-extern "C" R::Exp simple_function_cons(vector<R::Exp>& args)
-{
-    auto c = get_arg(args).as_char();
-
-    std::string s  = get_arg(args).as_string();
-
-    return utf8::encode(c) + s;
-}
-
-extern "C" R::Exp simple_function_snoc(vector<R::Exp>& args)
-{
-    std::string s  = get_arg(args).as_string();
-
-    auto c = get_arg(args).as_char();
-
-    return s + utf8::encode(c);
-}
-
 extern "C" R::Exp simple_function_append(vector<R::Exp>& args)
 {
     auto s1 = get_arg(args);

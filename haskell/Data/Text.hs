@@ -51,10 +51,8 @@ foreign import ecall "Text:empty" builtin_empty :: CPPString
 empty = Text builtin_empty 0 0
 
 infixr 5 `cons`
-foreign import ecall "Text:cons" builtin_cons :: Char -> CPPString -> CPPString
 cons c t = append (singleton c) t
 
-foreign import ecall "Text:snoc" builtin_snoc :: CPPString -> Char -> CPPString
 snoc t c = append t (singleton c)
 
 text arr off len | len == 0  = empty
