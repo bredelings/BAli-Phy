@@ -1,6 +1,7 @@
 #include "literal.H"
 #include "util/string/join.H"
 #include "util/string/convert.H"
+#include "util/unicode.H"
 #include "util/utf8.H"
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <cmath>
@@ -182,6 +183,21 @@ static optional<string> standard_escape(char32_t c, bool in_string_literal)
     return {};
 }
 
+// Decide whether a non-ASCII scalar can be emitted directly inside a Haskell
+// source literal.  Separators and non-graphic categories stay escaped.
+static bool is_raw_printable_non_ascii_literal_char(char32_t c)
+{
+    if (c <= 0x7E)
+        return false;
+
+    auto category = unicode::category(c);
+    return unicode::is_letter(category) or
+           unicode::is_mark(category) or
+           unicode::is_number(category) or
+           unicode::is_punctuation(category) or
+           unicode::is_symbol(category);
+}
+
 // Print one escaped literal payload character, without the surrounding quotes.
 static string print_literal_payload_char(char32_t c, bool in_string_literal)
 {
@@ -189,11 +205,12 @@ static string print_literal_payload_char(char32_t c, bool in_string_literal)
         return *escaped;
     if (0x20 <= c and c <= 0x7E)
         return string(1, static_cast<char>(c));
+    if (is_raw_printable_non_ascii_literal_char(c))
+        return utf8::encode(c);
     return "\\" + std::to_string(static_cast<std::uint32_t>(c));
 }
 
-// Print one Haskell character literal from a Unicode scalar value, using
-// numeric escapes until raw non-ASCII source output is deliberately enabled.
+// Print one Haskell character literal from a Unicode scalar value.
 static string print_char_literal(char32_t c)
 {
     if (not utf8::is_scalar_value(c))
@@ -218,8 +235,7 @@ static std::vector<char32_t> decode_string_literal_payload(const string& text)
     return chars;
 }
 
-// Print a UTF-8-backed Haskell string literal using numeric escapes for
-// non-ASCII source output until raw Unicode source is deliberately enabled.
+// Print a UTF-8-backed Haskell string literal.
 static string print_string_literal(const string& text)
 {
     auto chars = decode_string_literal_payload(text);
