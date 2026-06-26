@@ -238,8 +238,22 @@ signed       {negative}?
                                               return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
 
-<INITIAL>{qvarsym}      return yy::parser::make_QVARSYM  (std::string(text(), size()), drv.location);
-<INITIAL>{qconsym}      return yy::parser::make_QCONSYM  (std::string(text(), size()), drv.location);
+<INITIAL>{qvarsym}      {
+                          std::string qsym(text(), size());
+                          auto suffix = qsym.substr(qsym.rfind('.') + 1);
+                          auto classified = drv.classify_varsym(suffix, SymbolOccurrence::LooseInfix);
+                          if (classified.token)
+                            throw yy::parser::syntax_error(drv.location, "reserved operator '" + suffix + "' cannot be qualified");
+                          return yy::parser::make_QVARSYM(qsym, drv.location);
+                        }
+<INITIAL>{qconsym}      {
+                          std::string qsym(text(), size());
+                          auto suffix = qsym.substr(qsym.rfind('.') + 1);
+                          auto classified = drv.classify_varsym(suffix, SymbolOccurrence::LooseInfix);
+                          if (classified.token)
+                            throw yy::parser::syntax_error(drv.location, "reserved operator '" + suffix + "' cannot be qualified");
+                          return yy::parser::make_QCONSYM(qsym, drv.location);
+                        }
 <INITIAL>{consym}       return drv.consym(std::string_view(text(), size()), drv.location);
 
 <INITIAL>"-"{decimal}"#"                        return LexedToken(make_boxed_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
