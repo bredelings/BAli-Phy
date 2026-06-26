@@ -38,7 +38,7 @@ static SymbolOccurrence symbol_occurrence(bool preceded_by_closing, bool followe
 
 %}
 
-%option batch debug never-interactive bison-cc bison-locations YYSTYPE=int YYLTYPE=yy::location
+%option batch debug never-interactive unicode bison-cc bison-locations YYSTYPE=int YYLTYPE=yy::location
 %option lexer=HaskellRawLexer lex=raw_yylex token-type=LexedToken token-eof="LexedToken(yy::parser::make_END(yy::location()))" params="driver& drv"
 %s nested_comment nested_comment2
 %s option_prags line_prag1a line_prag2 line_prag2a
@@ -70,7 +70,7 @@ unismall     \x02
 ascsmall     [a-z]
 small        {ascsmall}|{unismall}|_
 
-unigraphic   \x06
+unigraphic   \p{Non_ASCII_Unicode}
 graphic      {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"\'
 graphicnonq  {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"
 graphicnonqq {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\'
@@ -624,7 +624,15 @@ ParsedChar get_char(const yy::parser::location_type& loc, driver& drv, std::stri
         return {c,i+2};
     
     }
-    return {c,i+1};
+    auto decoded = utf8::decode_next(text, i);
+    if (not decoded or decoded->next_byte > static_cast<std::size_t>(length))
+    {
+        yy::parser::location_type loc2(loc.begin+i);
+        loc2 += 1;
+        drv.push_error_message(loc2, Note()<<"invalid UTF-8 character in literal");
+        return {'?', i+1};
+    }
+    return {decoded->code_point, static_cast<int>(decoded->next_byte)};
 }
 
 yy::parser::symbol_type make_char(std::string_view text, const yy::parser::location_type& loc, driver& drv)
