@@ -61,15 +61,34 @@ readPunctuation = readToken noTokenTail
 noTokenTail :: Char -> Bool
 noTokenTail _ = False
 
+-- Match the Haskell identifier-tail categories used by haskell/ids.cc.  This
+-- is still only a token-boundary helper for derived Read, not a full lexer.
 isIdentTail :: Char -> Bool
-isIdentTail c = isAlphaNum c || c == '_' || c == '\''
+isIdentTail c = isAlphaNum c || c == '_' || c == '\'' || case generalCategory c of
+    NonSpacingMark -> True
+    _ -> False
 
-isSymbolChar :: Char -> Bool
-isSymbolChar c =
+-- Keep the ASCII operator set explicit so quotes, underscore, and delimiters do
+-- not become operators through broad Unicode punctuation categories.
+isAsciiSymbolChar :: Char -> Bool
+isAsciiSymbolChar c =
     c == '!' || c == '#' || c == '$' || c == '%' || c == '&' ||
     c == '*' || c == '+' || c == '.' || c == '/' || c == '<' ||
     c == '=' || c == '>' || c == '?' || c == '@' || c == '\\' ||
     c == '^' || c == '|' || c == '-' || c == '~' || c == ':'
+
+-- Match Haskell symbolic token continuation rules without depending on the
+-- lexer.  Non-ASCII punctuation uses only the operator-like category subset.
+isSymbolChar :: Char -> Bool
+isSymbolChar c = if isAscii c then isAsciiSymbolChar c else case generalCategory c of
+    ConnectorPunctuation -> True
+    DashPunctuation -> True
+    OtherPunctuation -> True
+    MathSymbol -> True
+    CurrencySymbol -> True
+    ModifierSymbol -> True
+    OtherSymbol -> True
+    _ -> False
 
 readParen :: Bool -> ReadS a -> ReadS a
 readParen True p s =

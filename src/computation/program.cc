@@ -6,6 +6,7 @@
 #include "util/string/join.H"
 #include "util/mapping.H"
 #include "util/log-level.H"
+#include "util/utf8.H"
 #include "computation/typecheck/kind.H"
 #include "computation/typecheck/env.H"
 #include "computation/optimization/occurrence.H"
@@ -445,23 +446,49 @@ set<string> range(const map<string,string>& m)
     return S;
 }
 
+// Suffix simplification strips only generated ASCII decimal counters, not
+// Unicode numeric characters that may appear in source-level names.
+static bool is_ascii_digit(char c)
+{
+    return c >= '0' and c <= '9';
+}
+
+// Decode the code point ending at a byte offset.  Invalid UTF-8 returns nullopt
+// so suffix simplification does not treat continuation bytes as identifiers.
+static optional<char32_t> previous_utf8_code_point(const string& s, std::size_t end)
+{
+    if (end == 0 or end > s.size())
+        return {};
+
+    std::size_t start = end - 1;
+    while(start > 0 and (static_cast<unsigned char>(s[start]) & 0xC0) == 0x80)
+        start--;
+
+    auto decoded = utf8::decode_next(s, start);
+    if (not decoded or decoded->next_byte != end)
+        return {};
+
+    return decoded->code_point;
+}
+
 string remove_suffix(const string& s, char c)
 {
     if (s.empty()) return s;
 
-    int i = s.size()-1;
-    while(std::isdigit(s[i]) and i > 0)
+    std::size_t i = s.size()-1;
+    while(i > 0 and is_ascii_digit(s[i]))
 	i--;
 
     // We stripped the suffix, and there's something left.
     if (s[i] == c and i > 0)
     {
-	if (s[i-1] == '.' and i > 1 and is_haskell_id_char(s[i-2]))
+	if (i > 1 and s[i-1] == '.')
 	{
-	    return s;
+	    auto previous = previous_utf8_code_point(s, i-1);
+	    if (previous and is_haskell_id_char(*previous))
+		return s;
 	}
-	else
-	    return s.substr(0,i);
+	return s.substr(0,i);
     }
     else
 	return s;

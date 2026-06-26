@@ -1,12 +1,15 @@
 #include "ids.H"
 
-#include <optional>
 #include <cassert>
-#include <regex>
+#include <optional>
+#include <string_view>
 #include "util/myexception.H"
 #include "util/string/join.H"
+#include "util/unicode.H"
+#include "util/utf8.H"
 
 using std::string;
+using std::string_view;
 using std::vector;
 
 std::string bool_true_name  = "Data.Bool.True";
@@ -89,41 +92,79 @@ string tuple_name(int n)
     return s;
 }
 
-const std::regex rgx( R"(^([A-Z][a-zA-Z0-9_']*)\.)" );
+const string symbol_chars = "!#$%&*+./<=>?@\\^|-~:";
 
-inline bool ok(char c)
+bool is_haskell_id_char(char32_t c);
+
+// Haskell varids start with lower-case letters, other letters, or underscore.
+// Modifier letters and marks are allowed only after the first character.
+static bool is_haskell_varid_start(char32_t c)
 {
-    if (c >= 'a' and c <= 'z') return true;
-    if (c >= 'A' and c <= 'Z') return true;
-    if (c >= '0' and c <= '9') return true;
-    if (c == '_' or c == '\'') return true;
-    return false;
+    auto category = unicode::category(c);
+    return c == U'_' or
+           category == unicode::Category::lowercase_letter or
+           category == unicode::Category::other_letter;
 }
 
-std::optional<int> skip_conid_dot(const std::string& s, int i)
+// Haskell conids start with upper-case and title-case letters.  The lexer still
+// controls which source text reaches this validator.
+static bool is_haskell_conid_start(char32_t c)
 {
-    if (i < s.size())
-    {
-        if (s[i] < 'A' or s[i] > 'Z')
-            return {};
-        else
-            i++;
+    auto category = unicode::category(c);
+    return category == unicode::Category::uppercase_letter or
+           category == unicode::Category::titlecase_letter;
+}
 
-        while(i < s.size() and ok(s[i]))
-            i++;
-
-        if (i<s.size() and s[i]== '.')
-            return i;
-        else
-            return {};
-    }
-    else
+// Decode the first code point of a UTF-8 string.  Invalid or empty strings have
+// no first code point for identifier classification.
+static std::optional<utf8::decoded_char> first_code_point(string_view s)
+{
+    if (s.empty())
         return {};
+
+    return utf8::decode_next(s, 0);
 }
 
-std::optional<int> find_module_separator(const std::string& s)
+// Check every remaining code point in an identifier.  Malformed UTF-8 rejects
+// the identifier instead of validating individual bytes.
+static bool all_haskell_id_chars(string_view s, std::size_t i)
 {
-    int i=0;
+    while(i < s.size())
+    {
+        auto decoded = utf8::decode_next(s, i);
+        if (not decoded or not is_haskell_id_char(decoded->code_point))
+            return false;
+        i = decoded->next_byte;
+    }
+    return true;
+}
+
+// Parse one qualified module component and return the following dot.  This
+// mirrors the lexer shape while decoding UTF-8 safely by code point.
+std::optional<std::size_t> skip_conid_dot(string_view s, std::size_t i)
+{
+    auto first = utf8::decode_next(s, i);
+    if (not first or not is_haskell_conid_start(first->code_point))
+        return {};
+
+    i = first->next_byte;
+    while(i < s.size())
+    {
+        if (s[i] == '.')
+            return i;
+
+        auto decoded = utf8::decode_next(s, i);
+        if (not decoded or not is_haskell_id_char(decoded->code_point))
+            return {};
+        i = decoded->next_byte;
+    }
+
+    return {};
+}
+
+std::optional<std::size_t> find_module_separator(string_view s)
+{
+    std::size_t i=0;
     while(auto i2 = skip_conid_dot(s,i))
     {
         i=*i2+1;
@@ -137,7 +178,7 @@ std::optional<int> find_module_separator(const std::string& s)
 vector<string> haskell_name_path(const std::string& s)
 {
     vector<string> path;
-    int i=0;
+    std::size_t i=0;
     while(auto i2 = skip_conid_dot(s,i))
     {
         path.push_back(s.substr(i,*i2-i));
@@ -178,58 +219,69 @@ vector<string> get_haskell_identifier_path(const std::string& s)
     return path;
 }
 
-bool haskell_is_lower(char c)
-{
-    return (islower(c) or c=='_');
-}
-
 bool is_haskell_id(const std::string& s)
 {
-    if (s.empty()) return false;
+    auto first = first_code_point(s);
+    if (not first) return false;
 
-    if (not (haskell_is_lower(s[0]) or isupper(s[0]))) return false;
+    if (not (is_haskell_varid_start(first->code_point) or is_haskell_conid_start(first->code_point)))
+        return false;
 
-    for(char c: s)
-    {
-        if (not is_haskell_id_char(c))
-            return false;
-    }
-    return true;
+    return all_haskell_id_chars(s, first->next_byte);
 }
 
 bool is_haskell_varid(const std::string& s)
 {
     if (not is_haskell_id(s)) return false;
 
-    return haskell_is_lower(s[0]);
+    auto first = first_code_point(s);
+    return first and is_haskell_varid_start(first->code_point);
 }
 
 bool is_haskell_conid(const std::string& s)
 {
     if (not is_haskell_id(s)) return false;
 
-    return isupper(s[0]);
+    auto first = first_code_point(s);
+    return first and is_haskell_conid_start(first->code_point);
 }
 
-bool is_haskell_id_char(char c)
+bool is_haskell_id_char(char32_t c)
 {
-    return (isupper(c) or haskell_is_lower(c) or isdigit(c) or c=='\'');
+    auto category = unicode::category(c);
+    return is_haskell_varid_start(c) or
+           is_haskell_conid_start(c) or
+           category == unicode::Category::modifier_letter or
+           category == unicode::Category::non_spacing_mark or
+           unicode::is_number(category) or
+           c == U'\'';
 }
 
-const string symbol_chars = "!#$%&*+./<=>?@\\^|-~:";
-
-bool is_haskell_symbol_char(char c)
+bool is_haskell_symbol_char(char32_t c)
 {
-    return symbol_chars.find(c) != -1;
+    if (c <= 0x7F)
+        return symbol_chars.find(static_cast<char>(c)) != string::npos;
+
+    auto category = unicode::category(c);
+    return category == unicode::Category::connector_punctuation or
+           category == unicode::Category::dash_punctuation or
+           category == unicode::Category::other_punctuation or
+           unicode::is_symbol(category);
 }
 
+// Validate an unqualified symbolic name by code point.  Invalid UTF-8 rejects
+// the symbol instead of treating continuation bytes as operators.
 bool is_haskell_uqsym(const string& s)
 {
     if (not s.size()) return false;
 
-    for(int i=0;i<s.size();i++)
-        if (not is_haskell_symbol_char(s[i]))
+    for(std::size_t i=0; i<s.size();)
+    {
+        auto decoded = utf8::decode_next(s, i);
+        if (not decoded or not is_haskell_symbol_char(decoded->code_point))
             return false;
+        i = decoded->next_byte;
+    }
 
     return true;
 }

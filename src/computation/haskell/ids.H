@@ -83,7 +83,9 @@ std::string get_unqualified_name(const std::string&);
 
 std::vector<std::string> get_haskell_identifier_path(const std::string& s);
 
-bool is_haskell_symbol_char(char c);
-bool is_haskell_id_char(char c);
+bool is_haskell_symbol_char(char32_t c);
+bool is_haskell_symbol_char(char c) = delete;
+bool is_haskell_id_char(char32_t c);
+bool is_haskell_id_char(char c) = delete;
 
 #endif
