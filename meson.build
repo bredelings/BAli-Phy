@@ -115,6 +115,12 @@ utf8proc_dep = dependency('libutf8proc',
                           fallback: ['utf8proc', 'utf8proc_dep'],
                           default_options: ['default_library=static',
                                             'tests=disabled']).as_system()
+if utf8proc_dep.type_name() == 'internal'
+  # The static WrapDB fallback needs this on Windows so utf8proc.h does not
+  # declare dllimport symbols while we link libutf8proc.a.
+  utf8proc_dep = declare_dependency(dependencies: utf8proc_dep,
+                                    compile_args: ['-DUTF8PROC_STATIC'])
+endif
 
 if host_machine.system() == 'windows'
   # We should have a system of 'cygwin' for cygwin.
