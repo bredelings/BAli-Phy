@@ -17,6 +17,7 @@ libutil_sources = [
   'ptree.cc',
   'text.cc',
   'utf8.cc',
+  'unicode.cc',
   'myexception.cc',
   'time.cc',
   'file-readers.cc',
@@ -26,6 +27,5 @@ libutil_sources = [
 libutil_inc = include_directories('include')
 
 libutil = static_library('util', libutil_sources,
-			 include_directories: libutil_inc,
-			 dependencies: [boost, eigen, librange, fmt, cereal])
-
+				 include_directories: libutil_inc,
+				 dependencies: [boost, eigen, librange, fmt, cereal, utf8proc_dep])
