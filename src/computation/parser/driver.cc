@@ -375,9 +375,22 @@ driver::driver (const LanguageExtensions& exts)
         reserved_symbols.insert({"-", parser::token::TOK_MINUS});
     }
 
+    if (lang_exts.has_extension(LangExt::UnicodeSyntax))
+    {
+        reserved_symbols.insert({"∷", parser::token::TOK_DCOLON});
+        reserved_symbols.insert({"⇒", parser::token::TOK_DARROW});
+        reserved_symbols.insert({"∀", parser::token::TOK_FORALL});
+        reserved_symbols.insert({"→", parser::token::TOK_RARROW});
+        reserved_symbols.insert({"←", parser::token::TOK_LARROW});
+        // Unicode arrow-tail syntax is deferred until the ASCII Arrows syntax
+        // is implemented and reserved here too.
+    }
+
     if (not lang_exts.has_extension(LangExt::StarIsType))
     {
         reserved_symbols.insert({"*", parser::token::TOK_STAR});
+        if (lang_exts.has_extension(LangExt::UnicodeSyntax))
+            reserved_symbols.insert({"★", parser::token::TOK_STAR});
     }
 }
 

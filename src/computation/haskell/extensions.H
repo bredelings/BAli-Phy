@@ -85,6 +85,7 @@ enum class LangExt
     TypeSections,
     TypeSynonymInstances,
     UndecidableInstances,
+    UnicodeSyntax,
     Last
 };
 

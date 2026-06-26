@@ -45,6 +45,7 @@ map<string,LangExt> ext_to_bit =
     {"ScopedTypeVariables",         {LangExt::ScopedTypeVariables}},
     {"StarIsType",                  {LangExt::StarIsType}},
     {"TraditionalRecordSyntax",     {LangExt::TraditionalRecordSyntax}},
+    {"UnicodeSyntax",               {LangExt::UnicodeSyntax}},
     {"UndecidableInstances",        {LangExt::UndecidableInstances}}
 };
 
