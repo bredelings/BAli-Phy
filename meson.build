@@ -109,10 +109,12 @@ fmt = dependency('fmt', static: true).as_system()
 libxxhash = dependency('libxxhash', static: true, fallback: ['xxhash', 'xxhash_dep']).as_system()
 
 # utf8proc provides the Unicode category and case-conversion data used by the
-# upcoming Unicode helpers; prefer distro packages, then fall back to WrapDB.
+# Unicode helpers.  Keep the WrapDB fallback static so build-tree tests do not
+# depend on the install prefix being present in LD_LIBRARY_PATH.
 utf8proc_dep = dependency('libutf8proc',
                           fallback: ['utf8proc', 'utf8proc_dep'],
-                          default_options: ['tests=disabled']).as_system()
+                          default_options: ['default_library=static',
+                                            'tests=disabled']).as_system()
 
 if host_machine.system() == 'windows'
   # We should have a system of 'cygwin' for cygwin.
