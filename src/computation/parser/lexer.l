@@ -51,7 +51,7 @@ white_no_nl  [\v\ ]|{unispace}
 tab          \t
 
 ascdigit     [0-9]
-unidigit     \x03
+unidigit     \p{Nd}
 decdigit     {ascdigit}
 digit        {ascdigit}|{unidigit}
 
@@ -62,11 +62,11 @@ unisymbol    \x04
 symbol_except_colon {ascsymbol_except_colon}
 symbol       {ascsymbol}
 
-unilarge     \x01
+unilarge     \p{Lu}|\p{Lt}
 asclarge     [A-Z]
 large        {asclarge}|{unilarge}
 
-unismall     \x02
+unismall     \p{Ll}|\p{Lo}
 ascsmall     [a-z]
 small        {ascsmall}|{unismall}|_
 
@@ -81,10 +81,10 @@ binit        [0-1]
 octit        [0-7]
 hexit        {decdigit}|[A-Fa-f]
 
-uniidchar    \x07
+uniidchar    \p{Lm}|\p{Mn}|\p{Nl}|\p{No}
 idchar       {small}|{large}|{digit}|{uniidchar}|\'
 
-pragmachar   {small}|{large}|{digit}
+pragmachar   {ascsmall}|{asclarge}|{ascdigit}
 
 docsym       [|\^*$]
 
