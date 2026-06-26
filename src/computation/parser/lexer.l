@@ -58,9 +58,12 @@ digit        {ascdigit}|{unidigit}
 special      [(),;[\]`\{\}]
 ascsymbol_except_colon    [!#$%&\*+./<=>?@\\^|\-~]
 ascsymbol    {ascsymbol_except_colon}|:
-unisymbol    \x04
-symbol_except_colon {ascsymbol_except_colon}
-symbol       {ascsymbol}
+unisymbol    [\p{Pc}--[\p{ASCII}]]|[\p{Pd}--[\p{ASCII}]]|[\p{Po}--[\p{ASCII}]]|[\p{S}--[\p{ASCII}]]
+symbol_except_colon {ascsymbol_except_colon}|{unisymbol}
+symbol       {symbol_except_colon}|:
+unicode_non_symbol [\p{Non_ASCII_Unicode}--[\p{Pc}]--[\p{Pd}]--[\p{Po}]--[\p{S}]]
+ascii_comment_non_symbol [\p{ASCII}--[!#$%&\*+./<=>?@\\^|\-~:\n]]
+comment_non_symbol {ascii_comment_non_symbol}|{unicode_non_symbol}
 
 unilarge     \p{Lu}|\p{Lt}
 asclarge     [A-Z]
@@ -93,6 +96,7 @@ conid        {large}{idchar}*
 
 varsym       {symbol_except_colon}{symbol}*
 consym       :{symbol}*
+atomstart    \{|\(|\[|\"|\'|{small}|{large}|{ascdigit}
 
 numspc       _*
 decimal      {decdigit}({numspc}{decdigit})*
@@ -153,7 +157,7 @@ signed       {negative}?
 
   /* These rules should not be active in a nested comment */
 <INITIAL,option_prags,line_prag1a,line_prag2,line_prag2a>{
-"--"-*[^!#$%&*+./<=>?@\\^|\-~:\n].*           drv.location.step();
+"--"-*{comment_non_symbol}.*                  drv.location.step();
 "--"-*$           drv.location.step();
 "-- "$            drv.location.step();
 }
@@ -217,7 +221,7 @@ signed       {negative}?
                                             else
                                               return yy::parser::make_VARSYM(classified.text, drv.location);
                                           }
-<INITIAL>{varsym}/[{([\"\'_A-Za-z0-9]    {
+<INITIAL>{varsym}/{atomstart}            {
                                             auto classified = drv.classify_varsym(std::string_view(text(), size()),
                                                                                  symbol_occurrence(drv.left_adjacent_closes_atom(drv.location), true));
                                             if (classified.token)
