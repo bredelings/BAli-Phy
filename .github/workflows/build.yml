@@ -329,7 +329,8 @@ jobs:
       run: |
         ccache -p
         ccache -s
-        ninja -C build install -j4
+        ninja -C build -j4
+        meson install -C build --skip-subprojects
         ccache -s
 
         skip=none
@@ -368,7 +369,8 @@ jobs:
       run: |
         ccache -p
         ccache -s
-        ninja -C build install -j2
+        ninja -C build -j2
+        meson install -C build --skip-subprojects
         ccache -s
 
     - name: Test (Windows native MinGW)

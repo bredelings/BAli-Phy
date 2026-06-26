@@ -275,7 +275,8 @@ jobs:
       run: |
         ccache -p
         ccache -s
-        ninja -C build install -j4
+        ninja -C build -j4
+        meson install -C build --skip-subprojects
         ccache -s
 
         skip=none
