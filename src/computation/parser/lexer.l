@@ -274,6 +274,8 @@ public:
 
 // Compatibility note: RE/flex's generated bison-cc updater uses 0-based
 // columns, so adapt it until lexer actions construct tokens from location().
+// RE/flex counts tabs and UTF-8 code points, not terminal display width; layout
+// deliberately uses those source columns.
 // Convert matcher columns to Bison's 1-based, end-exclusive convention while
 // preserving the filename set by the driver.
 void BaliPhyHaskellRawLexer::yylloc_update(yy::location& yylloc)
