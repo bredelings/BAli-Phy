@@ -363,8 +363,9 @@ namespace Core
 
 	NoteV info;
 
-        // Perhaps this should go on a note...
-        bool is_exported = false;
+	        // This preserves stable top-level bindings.  Most such bindings are
+	        // source exports, but internal runtime/optimizer entry points use it too.
+	        bool is_exported = false;
 
 	bool operator==(const Var<NoteV>& v2) const
 	{

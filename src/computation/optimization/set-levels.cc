@@ -269,7 +269,7 @@ Levels::Exp let_floater_state::set_level_maybe_MFE(const FV::Exp& E, int level, 
     if (level2 < level and not E.to_var()) // and not is_WHNF(E))
     {
         // See note in set_level on why we want to lift constants out of case alternatives.
-        // If we have a 0-arg Constructure, then there's already a unique variable for it.
+        // Nullary constructor wrappers are kept alive so they can serve as canonical values.
         if (auto con = E.to_conApp(); con and con->args.empty())
         {
             assert(level2 == 0);

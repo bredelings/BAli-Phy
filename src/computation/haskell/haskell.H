@@ -1503,7 +1503,8 @@ struct BindInfo
     // Wrapper to apply types and dicts to the tuple entry.
     Core::wrapper wrap;
 
-    // Mark the generated core variable as exported.
+    // True for source-exported binders; desugaring copies this onto Core's
+    // stronger top-level preservation flag.
     bool is_exported = false;
 
     BindInfo(const Var& o, const Var& i, const ::Type& m, const ::Type& p, const Core::wrapper& w, bool e = false)
