@@ -108,9 +108,16 @@ size (Bin s _ _ _) = s
 -- Build a set by repeated insertion; duplicate elements collapse naturally.
 fromList xs = List.foldl (\s x -> insert x s) empty xs
 
--- Compatibility fallback: keep the old API but do not exploit sorted input yet.
--- Replace with a linear builder if construction cost becomes important.
-fromAscList xs = fromList xs
+-- Collapse adjacent duplicates in ascending input; sortedness is assumed.
+distinctAsc [] = []
+distinctAsc (x:xs) = go x xs
+  where
+    go x [] = [x]
+    go x (y:ys) | x == y    = go y ys
+                | otherwise = x:go y ys
+
+-- Build from ascending input after collapsing adjacent duplicates.
+fromAscList xs = fromDistinctAscList (distinctAsc xs)
 
 -- Compatibility fallback: descending input currently takes the general path.
 -- Replace with a linear builder if construction cost becomes important.

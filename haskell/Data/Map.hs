@@ -122,9 +122,17 @@ size (Bin s _ _ _ _) = s
 -- Build a map by repeated insertion; duplicate keys use the last value.
 fromList kxs = List.foldl (\m (k,x) -> insert k x m) empty kxs
 
--- Compatibility fallback: keep the old API but do not exploit sorted input yet.
--- Replace with a linear builder if construction cost becomes important.
-fromAscList kxs = fromList kxs
+-- Collapse adjacent equal-key runs in ascending input, keeping the last value.
+-- Sortedness is assumed and not validated.
+distinctAscByKeyLast [] = []
+distinctAscByKeyLast (kx:kxs) = go kx kxs
+  where
+    go kx [] = [kx]
+    go (k,x) ((k2,x2):rest) | k == k2   = go (k2,x2) rest
+                            | otherwise = (k,x):go (k2,x2) rest
+
+-- Build from ascending input after collapsing adjacent equal-key runs.
+fromAscList kxs = fromDistinctAscList (distinctAscByKeyLast kxs)
 
 -- Compatibility fallback: descending input currently takes the general path.
 -- Replace with a linear builder if construction cost becomes important.

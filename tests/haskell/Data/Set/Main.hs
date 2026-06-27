@@ -22,3 +22,4 @@ main = do
   putStrLn $ show $ Set.toList $ Set.cartesianProduct xs ys
   putStrLn $ show $ Set.toAscList (Set.fromDistinctAscList [1,2,3,4,5] :: Set.Set Int)
   putStrLn $ show $ Set.toAscList (Set.fromDistinctDescList [5,4,3,2,1] :: Set.Set Int)
+  putStrLn $ show $ Set.toAscList (Set.fromAscList [1,1,2,3,3] :: Set.Set Int)
