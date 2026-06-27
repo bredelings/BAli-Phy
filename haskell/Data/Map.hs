@@ -143,9 +143,8 @@ buildDistinctAsc n kxs =
 -- Build directly from ascending distinct input; sortedness is assumed, not checked.
 fromDistinctAscList kxs = fst (buildDistinctAsc (length kxs) kxs)
 
--- Compatibility fallback: distinct descending input currently takes the general path.
--- Replace with a linear builder if construction cost becomes important.
-fromDistinctDescList kxs = fromList kxs
+-- Build from descending distinct input by reusing the ascending builder.
+fromDistinctDescList kxs = fromDistinctAscList (reverse kxs)
 
 -- Check whether all key/value pairs from the first map appear in the second map.
 isSubmapOf m1 m2 = all present (toAscList m1)

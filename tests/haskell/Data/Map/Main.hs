@@ -26,3 +26,4 @@ main = do
   putStrLn (show $ Map.isProperSubmapOf subSame m)
   putStrLn (show $ Map.isProperSubmapOf m m)
   putStrLn (show $ Map.toAscList (Map.fromDistinctAscList [("A",1),("B",2),("C",3)] :: Map.Map [Char] Int))
+  putStrLn (show $ Map.toAscList (Map.fromDistinctDescList [("C",3),("B",2),("A",1)] :: Map.Map [Char] Int))

@@ -129,9 +129,8 @@ buildDistinctAsc n xs =
 -- Build directly from ascending distinct input; sortedness is assumed, not checked.
 fromDistinctAscList xs = fst (buildDistinctAsc (length xs) xs)
 
--- Compatibility fallback: distinct descending input currently takes the general path.
--- Replace with a linear builder if construction cost becomes important.
-fromDistinctDescList xs = fromList xs
+-- Build from descending distinct input by reusing the ascending builder.
+fromDistinctDescList xs = fromDistinctAscList (reverse xs)
 
 -- Build the set of all subsets from the ordered element list.
 powerSet s = fromList (go (toList s))
