@@ -1,4 +1,16 @@
-module Data.Set where
+module Data.Set
+    ( Set(..)
+    , empty, singleton
+    , fromList, fromAscList, fromDescList, fromDistinctAscList, fromDistinctDescList
+    , powerSet
+    , insert, delete, member, notMember
+    , null, size
+    , isSubsetOf, isProperSubsetOf, disjoint
+    , union, unions, difference, (\\), intersection
+    , cartesionProduct, disjointUnion
+    , filter, map
+    , elems, toList, toAscList, toDescList
+    ) where
 
 import Prelude hiding (filter,foldl,foldr,null,map,take,drop,splitAt,empty)
 import qualified Data.List as List
@@ -6,6 +18,8 @@ import qualified Data.Foldable as F
 
 -- The tree is size-balanced.  The cached size supports O(1) size queries and
 -- gives the balancing code enough information to keep operations logarithmic.
+-- Non-ideal: constructors are exported because the runtime translator needs
+-- them for imported function bodies; hide them once abstract exports work.
 data Set a = Tip | Bin Int a (Set a) (Set a)
 
 delta = 3

@@ -1,4 +1,15 @@
-module Data.Map where
+module Data.Map
+    ( Map(..)
+    , empty, singleton
+    , fromList, fromAscList, fromDescList, fromDistinctAscList, fromDistinctDescList
+    , insert, delete, lookup, (!), member, notMember
+    , null, size
+    , isSubmapOf, isProperSubmapOf
+    , filter, map, mapWithKey
+    , foldr, foldl
+    , elems, keys, assocs, keySet
+    , toList, toAscList, toDescList
+    ) where
 
 import Prelude hiding (filter,foldl,foldr,null,map,take,drop,splitAt,elems,lookup,(!),empty)
 import qualified Data.List as List
@@ -12,6 +23,8 @@ import Text.Show
 
 -- The tree is size-balanced.  The cached size supports O(1) size queries and
 -- gives insert/delete enough information to preserve logarithmic access.
+-- Non-ideal: constructors are exported because the runtime translator needs
+-- them for imported function bodies; hide them once abstract exports work.
 data Map k a = Tip | Bin Int k a (Map k a) (Map k a)
 
 delta = 3
