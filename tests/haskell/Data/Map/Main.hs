@@ -8,9 +8,14 @@ import System.IO (putStrLn)
 import Text.Show (show)
 
 main = do
-  let m = Map.fromList [("A",2),("B",7)] :: Map.Map [Char] Int
+  let m = Map.fromList [("B",7),("A",2),("B",9)] :: Map.Map [Char] Int
+      m2 = Map.insert "C" 4 m
+      m3 = Map.delete "A" m2
   putStrLn (show $ Map.keys m)
   putStrLn (show $ Map.elems m)
   putStrLn (show $ Map.assocs m)
   putStrLn (show $ Map.keySet m)
-  putStrLn (show $ m Map.! "A")
+  putStrLn (show $ m Map.! "B")
+  putStrLn (show $ Map.member "A" m3)
+  putStrLn (show $ Map.assocs m3)
+  putStrLn (show $ Map.assocs $ Map.map (+1) m)

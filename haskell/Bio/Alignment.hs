@@ -30,7 +30,6 @@ import Foreign.IntMap (EIntMap)
 import qualified Foreign.IntMap as FIM
 
 import qualified Data.Map as Map
-import Data.Map (Map(..))
 
 import Data.JSON
 
@@ -174,7 +173,7 @@ sequencesFromTree tree isequences = [(label, isequence) | n <- leafNodes tree ++
                                                              let label = addAncestralLabel n (getLabels tree),
                                                              let isequence = isequences IntMap.! n]
 
-labeledNodeMap tree objects = Map [(label, objects IntMap.! n) | n <- nodes tree, Just label <- [getLabels tree IntMap.! n]]
+labeledNodeMap tree objects = Map.fromList [(label, objects IntMap.! n) | n <- nodes tree, Just label <- [getLabels tree IntMap.! n]]
 
 foreign import bpcall "Vector:showObject" showVectorPairIntInt :: VectorPairIntInt -> CPPString
 instance Show VectorPairIntInt where
