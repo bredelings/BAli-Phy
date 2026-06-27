@@ -119,9 +119,8 @@ distinctAsc (x:xs) = go x xs
 -- Build from ascending input after collapsing adjacent duplicates.
 fromAscList xs = fromDistinctAscList (distinctAsc xs)
 
--- Compatibility fallback: descending input currently takes the general path.
--- Replace with a linear builder if construction cost becomes important.
-fromDescList xs = fromList xs
+-- Build from descending input by reversing to ascending, then dropping duplicates.
+fromDescList xs = fromDistinctAscList (distinctAsc (reverse xs))
 
 -- Build a balanced tree from the first n ascending distinct elements.
 -- The returned tail lets recursive calls share one pass through the input.

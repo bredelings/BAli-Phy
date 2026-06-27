@@ -28,3 +28,4 @@ main = do
   putStrLn (show $ Map.toAscList (Map.fromDistinctAscList [("A",1),("B",2),("C",3)] :: Map.Map [Char] Int))
   putStrLn (show $ Map.toAscList (Map.fromDistinctDescList [("C",3),("B",2),("A",1)] :: Map.Map [Char] Int))
   putStrLn (show $ Map.toAscList (Map.fromAscList [("A",1),("A",2),("B",3)] :: Map.Map [Char] Int))
+  putStrLn (show $ Map.toAscList (Map.fromDescList [("B",1),("B",2),("A",3)] :: Map.Map [Char] Int))
