@@ -25,3 +25,4 @@ main = do
   putStrLn (show $ Map.isSubmapOf subDifferent m)
   putStrLn (show $ Map.isProperSubmapOf subSame m)
   putStrLn (show $ Map.isProperSubmapOf m m)
+  putStrLn (show $ Map.toAscList (Map.fromDistinctAscList [("A",1),("B",2),("C",3)] :: Map.Map [Char] Int))

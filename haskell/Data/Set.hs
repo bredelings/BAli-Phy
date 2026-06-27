@@ -116,9 +116,18 @@ fromAscList xs = fromList xs
 -- Replace with a linear builder if construction cost becomes important.
 fromDescList xs = fromList xs
 
--- Compatibility fallback: distinct ascending input currently takes the general path.
--- Replace with a linear builder if construction cost becomes important.
-fromDistinctAscList xs = fromList xs
+-- Build a balanced tree from the first n ascending distinct elements.
+-- The returned tail lets recursive calls share one pass through the input.
+buildDistinctAsc 0 xs = (Tip, xs)
+buildDistinctAsc n xs =
+    let leftN = n `div` 2
+        rightN = n - leftN - 1
+        (l, x:xs1) = buildDistinctAsc leftN xs
+        (r, xs2) = buildDistinctAsc rightN xs1
+    in (bin x l r, xs2)
+
+-- Build directly from ascending distinct input; sortedness is assumed, not checked.
+fromDistinctAscList xs = fst (buildDistinctAsc (length xs) xs)
 
 -- Compatibility fallback: distinct descending input currently takes the general path.
 -- Replace with a linear builder if construction cost becomes important.

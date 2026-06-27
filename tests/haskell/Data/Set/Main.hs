@@ -20,3 +20,4 @@ main = do
   putStrLn $ show $ Set.toList $ xs Set.\\ ys
   putStrLn $ show $ Set.toList $ Set.map (+10) xs
   putStrLn $ show $ Set.toList $ Set.cartesianProduct xs ys
+  putStrLn $ show $ Set.toAscList (Set.fromDistinctAscList [1,2,3,4,5] :: Set.Set Int)
