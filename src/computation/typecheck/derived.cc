@@ -464,6 +464,9 @@ namespace
         return {noloc, Hs::Alt(pattern, Hs::SimpleRHS(rhs))};
     }
 
+    // FIXME: Generated derived contexts are emitted directly instead of being
+    // simplified. Add a GHC-like pass that solves these predicates and keeps
+    // only the residual constraints before registering the derived instance.
     Hs::LType stock_instance_type(const DerivingDataInfo& data_info, const string& class_name)
     {
         assert(data_info.data.info);

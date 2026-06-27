@@ -599,6 +599,8 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_superclass_entry(
 }
 
 // Find the representation class dictionary added to the synthetic GND context.
+// FIXME: If derived contexts are simplified, GND must solve/build this
+// representation dictionary as evidence instead of assuming it remains a given.
 optional<pair<Type, Core::Var<>>> find_gnd_representation_dictionary(const TypeChecker& tc, const LIE& givens, const TypeCon& class_con, const vector<Type>& instance_args)
 {
     for(auto it = givens.rbegin(); it != givens.rend(); ++it)

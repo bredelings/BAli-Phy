@@ -960,6 +960,9 @@ struct InstanceDecl
     std::vector<DataFamilyInstanceDecl> data_inst_decls;
     Decls method_decls;
 
+    // FIXME: This records the method-generation strategy, not whether the
+    // instance context was inferred and may be simplified. Split that if derived
+    // context simplification needs to distinguish user-written contexts.
     bool generalized_newtype_deriving = false;
     std::string print() const;
 
