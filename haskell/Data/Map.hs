@@ -1,5 +1,5 @@
 module Data.Map
-    ( Map(..)
+    ( Map
     , empty, singleton
     , fromList, fromAscList, fromDescList, fromDistinctAscList, fromDistinctDescList
     , insert, delete, lookup, (!), member, notMember
@@ -23,8 +23,6 @@ import Text.Show
 
 -- The tree is size-balanced.  The cached size supports O(1) size queries and
 -- gives insert/delete enough information to preserve logarithmic access.
--- Non-ideal: constructors are exported because the runtime translator needs
--- them for imported function bodies; hide them once abstract exports work.
 data Map k a = Tip | Bin Int k a (Map k a) (Map k a)
 
 delta = 3
