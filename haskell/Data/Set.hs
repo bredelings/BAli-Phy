@@ -7,7 +7,7 @@ module Data.Set
     , null, size
     , isSubsetOf, isProperSubsetOf, disjoint
     , union, unions, difference, (\\), intersection
-    , cartesionProduct, disjointUnion
+    , cartesianProduct, disjointUnion
     , filter, map
     , elems, toList, toAscList, toDescList
     ) where
@@ -153,7 +153,7 @@ s1 \\ s2 = s1 `difference` s2
 intersection s1 s2 = fromList [x | x <- toList s1, member x s2]
 
 -- Produce the Cartesian product while preserving set uniqueness.
-cartesionProduct s1 s2 = fromList [(x,y) | x <- toList s1, y <- toList s2]
+cartesianProduct s1 s2 = fromList [(x,y) | x <- toList s1, y <- toList s2]
 
 disjointUnion xs ys = map Left xs `union` map Right ys
 

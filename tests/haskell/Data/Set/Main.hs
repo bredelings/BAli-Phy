@@ -19,3 +19,4 @@ main = do
   putStrLn $ show $ Set.toList $ Set.intersection xs ys
   putStrLn $ show $ Set.toList $ xs Set.\\ ys
   putStrLn $ show $ Set.toList $ Set.map (+10) xs
+  putStrLn $ show $ Set.toList $ Set.cartesianProduct xs ys
