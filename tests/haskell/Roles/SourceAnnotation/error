@@ -3,7 +3,7 @@
      role check failed while comparing '[1;32mInt[0m[1m' with '[1;32mAge[0m[1m'
        Representation method type: '[1;32mNominalBox Int -> NominalBox Int[0m[1m'
        Newtype method type: '[1;32mNominalBox Age -> NominalBox Age[0m[1m'
-   • In instance `Bad Int => Bad Age`:
+   • In instance `Bad Age`:
    [1;34m|[0m
 [1;34m14[0m [1;34m| [0mnewtype Age = Age Int deriving newtype [1;31mBad[0m
    [1;34m|[0m                                        [1;31m^^^[0m

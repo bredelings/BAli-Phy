@@ -16,12 +16,12 @@ namespace
 {
     // Return the syntactic class predicate from an instance declaration type.
     // This preserves the source location for diagnostics while ignoring context.
-    const Hs::LType& instance_head_syntax(const Hs::LType& type)
+    const Hs::LType& syntactic_instance_head(const Hs::LType& type)
     {
         if (auto forall_type = unloc(type).to<Hs::ForallType>())
-            return instance_head_syntax(forall_type->type);
+            return syntactic_instance_head(forall_type->type);
         if (auto constrained_type = unloc(type).to<Hs::ConstrainedType>())
-            return instance_head_syntax(constrained_type->type);
+            return syntactic_instance_head(constrained_type->type);
         return type;
     }
 
@@ -639,7 +639,7 @@ optional<Hs::Var> class_method_selector(const ClassInfo& class_info, const Hs::V
 std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_instance_method(
     const Hs::Var& method, const Type& method_type,
     const std::vector<TypeVar>& instance_tvs, const LIE& givens,
-    const Type& inst_head, const std::optional<yy::location>& inst_head_loc, const substitution_t& subst,
+    const Type& inst_head, const substitution_t& subst,
     const std::map<Hs::Var,Hs::Matches>& method_matches, const ClassInfo& class_info)
 {
     auto op = get_fresh_Var("i$"+method.name, true);
@@ -667,7 +667,7 @@ std::tuple<Hs::Decl,Core::Var<>> TypeChecker::type_check_instance_method(
     }
     else
     {
-        record_warning(inst_head_loc, Note() <<"Missing method '"<<method.name<<"'" );
+        record_warning( Note() <<"Missing method '"<<method.name<<"'" );
 
         Hs::String msg("method `" + method.name + "` undefined in instance `" + show_type_plain(inst_head) + "`");
         Hs::LVar error{noloc,Hs::Var("Compiler.Error.error")};
@@ -742,9 +742,11 @@ TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::Instanc
 
     // This could be Num Int or forall a b.(Ord a, Ord b) => Ord (a,b)
     auto inst_type = S->instance_info->type();
-    auto inst_head_syntax = instance_head_syntax(inst_decl.polytype);
+    auto inst_head_syntax = syntactic_instance_head(inst_decl.polytype);
+    // Generated deriving heads can be locationless; use the deriving-clause span.
+    auto inst_head_loc = inst_head_syntax.loc ? inst_head_syntax.loc : inst_decl.polytype.loc;
 
-    auto span = source_span_scope(inst_head_syntax.loc);
+    auto span = source_span_scope(inst_head_loc);
     // Instantiate it with rigid type variables.
     auto tc2 = copy_clear_wanteds(true);
     auto [wrap_gen, instance_tvs, givens, instance_head] = tc2.skolemize(inst_type, true);
@@ -802,7 +804,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::Instanc
     {
         auto [hs_decl, op] = inst_decl.generalized_newtype_deriving
             ? type_check_gnd_instance_method(method, method_type, instance_tvs, givens, subst, class_info, class_con, instance_args)
-            : type_check_instance_method(method, method_type, instance_tvs, givens, instance_head, inst_head_syntax.loc, subst, method_matches, class_info);
+            : type_check_instance_method(method, method_type, instance_tvs, givens, instance_head, subst, method_matches, class_info);
 
         instance_sc_methods.push_back(op);
         decls.push_back({noloc,hs_decl});
