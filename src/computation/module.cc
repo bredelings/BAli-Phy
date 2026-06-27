@@ -1929,7 +1929,14 @@ Core::Decls<> Module::load_constructors(const Hs::Decls& topdecls)
         auto info = lookup_resolved_symbol(con_name)->con_info;
         assert(info);
         auto exp = make_constructor(con_name, *info);
-        decls.push_back( Core::Decl<>{ Core::Var<>(con_name) , exp} );
+        auto var = Core::Var<>(con_name);
+
+        // Nullary constructors are used as canonical runtime values by let-floating.
+        // Keep the wrapper alive even when it is not source-exported.
+        if (info->dict_arity() + info->arity() == 0)
+            var.is_exported = true;
+
+        decls.push_back( Core::Decl<>{ var, exp} );
     };
 
     auto load_data_family_instance_constructors = [&](const Hs::DataFamilyInstanceDecl& d)
