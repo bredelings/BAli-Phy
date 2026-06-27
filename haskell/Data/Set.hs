@@ -171,9 +171,11 @@ elems = toAscList
 
 toList = toAscList
 
--- Traverse left-root-right to expose the ordered representation.
-toAscList Tip = []
-toAscList (Bin _ x l r) = toAscList l ++ (x:toAscList r)
+-- Traverse left-root-right with an accumulator so list construction is linear.
+toAscList s = go s []
+  where
+    go Tip xs = xs
+    go (Bin _ x l r) xs = go l (x:go r xs)
 
 toDescList = reverse . toAscList
 
@@ -187,4 +189,4 @@ instance Show a => Show (Set a) where
     show xs = "Set " ++ show (toAscList xs)
 
 instance F.Foldable Set where
-    toList = toList
+    toList = toAscList

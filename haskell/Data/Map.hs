@@ -177,9 +177,11 @@ keySet m = Set.fromDistinctAscList $ keys m
 
 toList = toAscList
 
--- Traverse left-root-right to expose the ordered representation.
-toAscList Tip = []
-toAscList (Bin _ k x l r) = toAscList l ++ ((k,x):toAscList r)
+-- Traverse left-root-right with an accumulator so list construction is linear.
+toAscList m = go m []
+  where
+    go Tip xs = xs
+    go (Bin _ k x l r) xs = go l ((k,x):go r xs)
 
 toDescList = reverse . toAscList
 
