@@ -1,5 +1,8 @@
 # Moving evaluation off the C++ stack
 
+FIXME NOTE: This documentation doesn't actually describe how we would modify
+incremental evaluation to USE a stack.
+
 The current evaluators in `src/computation/machine/evaluate.cc` use the C++
 call stack in two ways:
 
