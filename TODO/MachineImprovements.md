@@ -1,5 +1,17 @@
 # Machine Improvements
 
+## Refactor incremental_evaluate{1,2,unchangeable} to be one function
+
+If we are going to rewrite the stack handling, doing it 3 times is a bad idea.
+
+## Dependent uses/forces
+
+We would need to store these on the step.
+
+## Separate created-by-reg and created-by-step
+
+One issue is what to do with non-contingent regs.
+
 ## Implementing our own stack
 
 This is necessary to not crash for programs that walk medium-sized or larger
@@ -13,6 +25,8 @@ We need to
    top operation off the stack and execute it.
 
 See [Stack](Stack.md).
+
+Does this really need all the other stuff done first?  Maybe not.
 
 ### All evaluation done with case?
 
@@ -73,9 +87,8 @@ evaluation of x .. z.  However, if we can incorporate them into the case object
 evaluation, then ideally we use a stack that can evaluate sub-expression
 without switching to a new reg.
 
-## Dependent uses/forces
-
-We would need to store these on the step.
+REQUIRES [Dependent uses/forces](#dependent_uses_forces), since the object might
+evaluate to a variable, which would then be a dependent use/force if not 
 
 ## runST
 
@@ -98,15 +111,69 @@ See [runST](runST.md).
 If we put uses/forces on steps, then perhaps we would
 also put the call in the same list.
 
-## Separate created-by-reg and created-by-step
+## Replace e-ops with something more general
 
-One issue is what to do with non-contingent regs.
+Currently we avoid heap-allocating e-op arguments.
+In theory we would split e-op expression trees if they get too expensive.
 
-## Allocate non-escaping regs on the stack
+It seems like GHC does this by using `let` instead of `case` in normalization.
+This is done in CorePrep.
+When a function is strict in its argument, they do
 
-Some let-allocated variables are marked as going on the stack.
-Currently we do this with e-ops, but this is more general.
-We might need to implement a stack for this to work.
+    f E ==> case E of x -> f x
+    
+Whereas when a function is lazy (and non-trivial) in its argument then
+
+    f E ==> let x = E in f x
+
+This allows expressions like the following
+
+    case op1 x y of z { _ -> case op2 a b of c {_ -> op3 z c }}
+    
+where z and c are allocated somehow.  Apparently "on the stack" is one of the
+possible locations.
+
+However, just like with e-ops, changing `a` or `b` will require rerunning
+`op1 x y`, so we may need a merging threshold.  Here, I guess the question is
+whether the cost of redoing `op1 x y` is worth the benefit of not let-allocating
+that expression.
+
+ * Do we need case-binder vars to handle this?
+ 
+ * Must case-binder vars be added to the closure?
+
+   If the case-binder var is of type [a], I don't see how it could be.
+   If it is of type Int#, then it could.
+
+   We can't currently add values to the closure, only pointers.
+   We could put values on a value stack instead.
+   If the value ends up as the final answer, thats find -- we'll let-allocated it.  GHC can't do that.
+   If the value ends up as an argument to an e-op that's also fine.
+   But if the value ends up as an argument to a constructor, or an argument to a function allocation, that's not fine.
+   In order to handle that, we'd need to extend closures with non-pointer arguments.
+   
+  * What is a strict let?  Which stage/phase does it exist in?
+ 
+### Extending the closure with non-pointer arguments
+
+In order to extend closures with non-pointer arguments, we need to 
+
+ * make a second environment for non-pointers, OR
+ 
+ * group the pointer arguments into the first n values. 
+ 
+The first one is definitely simpler.
+
+One issue is that a lot of non-pointer arguments are object_ptr.
+This is equivalent to ForeignPtr -- when the pointer is removed, we need to
+ decrement a use count, and if the count goes to zero, we need to run a finalizer.
+However, probably GHC does not allow ForeignPtr as an unboxed value.
+
+QUESTION: Can we avoid doing putting ForeignPtr-type things into closures?
+Hmm.. in GHC, if the case-binder is of type Int#, then it CANNOT be let-allocated.
+And if it is of type [a], then it CANNOT be added to a closure.
+So
+
 
 ## Use global forward/backward edges
 
@@ -117,3 +184,16 @@ and maybe some other stuff.
 This allows a uniform implementation, but maybe some worse cache-locality, as
 we need to look at forward + backward + global list, instead of just 
 forward + backward.
+
+Q: Maybe this is actually bad?  We change [x,i] <-> [y,j] to
+
+    i <-> [k:x,y,i,j] <-> j
+    
+So if we delete i, we need to
+
+ * copy the last element k2 over k, then update k2.i and k2.j to point from k2->k
+ * copy the last element j2 over j, then update the combined entry to point from j2->j
+ * copy the last element i2 over i, then update the combined entry to point from i2->i
+ 
+So there is 50% more work. 
+
