@@ -135,6 +135,7 @@ public:
 
     ClassifiedVarId classify_varid(std::string_view text) const;
     ClassifiedVarSym classify_varsym(std::string_view text, SymbolOccurrence occurrence) const;
+    bool has_extension(LangExt ext) const { return lang_exts.has_extension(ext); }
     void mark_next_real_token_starts_line() {next_real_token_starts_line = true;}
     yy::parser::symbol_type consym(std::string_view text, const yy::parser::location_type& loc) const;
     std::optional<yy::parser::symbol_type> prag(std::string_view text, const yy::parser::location_type& loc);

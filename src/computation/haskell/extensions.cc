@@ -23,6 +23,7 @@ map<string,LangExt> ext_to_bit =
     {"GADTs",                       {LangExt::GADTs}},                // implies MonoLocalBinds
     {"ImplicitPrelude",             {LangExt::ImplicitPrelude}},
     {"ImpredicativeTypes",          {LangExt::ImpredicativeTypes}},   // implies RankNTypes
+    {"ImportQualifiedPost",         {LangExt::ImportQualifiedPost}},
     {"Incoherent Instances",        {LangExt::IncoherentInstances}},  // DEPRECATED
     {"KindSignatures",              {LangExt::KindSignatures}},
     {"LexicalNegation",             {LangExt::LexicalNegation}},
@@ -113,7 +114,7 @@ set<LangExt> ghc2021_extensions =
 //    LangExt::GADTSyntax,
 //    LangExt::GeneralizedNewtypeDeriving,
 //    LangExt::HexFloatLiterals,
-//    LangExt::ImportQualifiedPost,
+    LangExt::ImportQualifiedPost,
 //    LangExt::InstanceSigs,
 //    LangExt::KindSignatures,
 //    LangExt::MultiParamTypeClasses,
@@ -136,6 +137,7 @@ set<LangExt> ghc2021_extensions =
 set<LangExt> default_extensions =
 {
     LangExt::ImplicitPrelude,
+    LangExt::ImportQualifiedPost,
     LangExt::TraditionalRecordSyntax,
     LangExt::FieldSelectors
 };
