@@ -602,8 +602,12 @@ importdecls: importdecls_semi importdecl { $$ = $1, $$.push_back($2); }
 importdecls_semi: importdecls_semi importdecl semis1 { $$ = $1; $$.push_back($2); }
 |                 %empty { }
 
-importdecl: "import" /*maybe_src*/ /*maybe_safe*/ optqualified /*maybe_pkg*/ modid maybeas maybeimpspec {
-    $$ = {@$, Hs::ImpDecl($2,$3,$4,$5)};
+importdecl: "import" /*maybe_src*/ /*maybe_safe*/ optqualified /*maybe_pkg*/ modid optqualified maybeas maybeimpspec {
+    if ($2 and $4)
+        drv.push_error_message(@4, "Multiple occurrences of 'qualified'");
+    else if ($4 and not drv.has_extension(LangExt::ImportQualifiedPost))
+        drv.push_error_message(@4, "ImportQualifiedPost is required for postpositive 'qualified'");
+    $$ = {@$, Hs::ImpDecl($2 or $4,$3,$5,$6)};
 }
 /*
 maybe_src: "{-# SOURCE" "#-}"  { $$ = true; }
