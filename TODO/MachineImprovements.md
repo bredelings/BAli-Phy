@@ -14,6 +14,46 @@ We need to
 
 See [Stack](Stack.md).
 
+### All evaluation done with case?
+
+If we could require that all evaluation is done with case, then we might
+be able to have a lot fewer frame types.
+Hoever, we might want to translate current builtins more mechanically, so
+that each evaluation member function of args corresponds to a different
+argument evaluation frame type.
+
+We could modify builtins to push evaluation frames for their arguments.
+I wonder if we could require that all arguments are already evaluated
+ via case, so that a builtin ins something like
+ 
+    case x of _ -> case y of _ -> builtinOp x y
+ 
+The problem is that we want to record a USE on the builtinOp, but the above
+would (i) record a force instead of a use and (ii) would record it on the
+case.  Possibly we could switch to something like:
+
+    case x of x' -> case y of y' -> builtinOp x' y'
+
+Possibly in this case we somehow delay the USE until something consumes the
+ x'?  I'm not quite sure what the framework would be here.
+GHC adds a binder separately of the pattern, which would be _ in this case,
+so
+
+    case x of x' _ -> case y of y' _ -> builtinOp x' y'
+ 
+So maybe if the binder is not dead, then we record a USE and keep on going? 
+Presumably if `x` is a reg, the `x'` is then same reg?
+
+Possibly `x'` and `y'` would go either (i) in the closure or (ii) on the stack?
+Right now I assume that only pointers can go on closures.  But in theory I could
+try and make Core variables have kind LiftedPtr or Unlifted {Double, Int, Char, LogDouble_t, or ObjectPtr}.
+If that could survive optimization, then we could use it in code-generation and put
+it in the runtime.  I wonder if we could arrange that all the LiftedPtr references come
+first, so that it would be easy to loop over them.  Possibly we would reference closure
+entries by their byte offset into the closure environment?
+
+In any case, it seems easier to put unlifted values on the stack that in a closure.
+
 ## Don't allocate case objects
 
 `case (op E1 E2 E3)` of alts should not allocate a separate reg for the op,
@@ -28,7 +68,7 @@ them either, since
 
 See [CaseObject](CaseObject.md).
 
-If E1 .. E3 are replace by x .. z, then we still need a stack to force the
+If E1 .. E3 are replaced by x .. z, then we still need a stack to force the
 evaluation of x .. z.  However, if we can incorporate them into the case object
 evaluation, then ideally we use a stack that can evaluate sub-expression
 without switching to a new reg.
