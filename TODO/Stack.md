@@ -1,44 +1,72 @@
 # Moving evaluation off the C++ stack
 
-FIXME NOTE: This documentation doesn't actually describe how we would modify
-incremental evaluation to USE a stack.
+The evaluators in `src/computation/machine/evaluate.cc` currently use the C++
+call stack to represent object-language evaluation.  That is a poor fit for
+Haskell-style code, because ordinary recursion in the object language can need
+stack proportional to heap.  The goal is to make evaluator continuations
+explicit and managed by the runtime.
 
-The current evaluators in `src/computation/machine/evaluate.cc` use the C++
-call stack in two ways:
+The current code uses the C++ stack in two ways:
 
 1. Evaluator-internal recursion, such as evaluating a referenced register,
-   evaluating the call of a changeable register, or evaluating an argument of
-   an operation.
+   evaluating the call of a changeable register, or evaluating the result of a
+   reduction.
 2. Operation callback recursion, where a builtin receives `OperationArgs&` and
-   calls back into the evaluator with methods such as
-   `evaluate_slot_to_value`, `evaluate_slot_force`, or
-   `evaluate_reg_to_closure`.
+   calls back into the evaluator with methods such as `evaluate_slot_to_value`,
+   `evaluate_slot_force`, or `evaluate_reg_to_closure`.
 
-Haskell-style programs can require stack proportional to heap because ordinary
-program recursion is expressed through the object language.  The long-term goal
-is to make that stack explicit and managed by the runtime, avoiding C++ stack
-overflow without adding unnecessary overhead to common operations.
+Solving only one of these is not enough.  A stack-safe design needs both:
 
-This note only describes the stack work.  It intentionally does not depend on
-storing evaluator kinds on registers, adding `runST`, or JIT compilation.  Those
-ideas may reuse this machinery later, but they should remain separate design
-problems.
+- an operation protocol that makes argument demands visible to the evaluator;
+- an explicit evaluator loop that uses heap-allocated frames instead of
+  recursive calls to `incremental_evaluate*`.
 
-## First constraint: preserve semantics
+This note does not depend on storing evaluator kinds on registers, adding
+`runST`, or JIT compilation.  Those ideas may reuse this machinery later, but
+they should remain separate design problems.
 
-The initial stack refactor should not change evaluator behavior.
+## Summary of the proposed design
+
+The preferred design is:
+
+1. Use fixed-demand prepared operations for the common case.
+2. Use dynamic operation frames only for operations whose demand pattern really
+   depends on earlier demand results.
+3. Represent evaluator continuations with an explicit control stack.
+4. Keep operation argument results in a generic prepared-operation frame, rather
+   than copying closures or values into ad-hoc storage.
+5. Implement `incremental_evaluate1`, `incremental_evaluate2`, and
+   `incremental_evaluate_unchangeable` as wrappers around one stack engine with
+   mode-specific policy.
+
+The fixed-demand operation protocol is the main part of the builtin conversion.
+Most existing operations already have this shape: for one invocation, they know
+which arguments they will use or force.  Later evaluation may depend on the
+closure produced by the operation, but that is a new operation invocation.
+
+## Semantic constraints
+
+The initial stack refactor should preserve behavior.
 
 In particular, it should preserve:
 
-- `incremental_evaluate1` semantics.
-- `incremental_evaluate2` semantics.
-- `incremental_evaluate_unchangeable` semantics.
-- Effect registration behavior.
-- Step/result/token-delta behavior.
-- Force-count behavior.
+- `incremental_evaluate1` semantics;
+- `incremental_evaluate2` semantics;
+- `incremental_evaluate_unchangeable` semantics;
+- use and force dependency recording;
+- effect registration behavior;
+- step/result/token-delta behavior;
+- force-count behavior;
+- active-register cycle checks;
+- exception context;
+- garbage-collection roots.
 
-The first milestone is mechanical: replace evaluator-to-evaluator recursion
-with explicit frames where possible.
+The existing `reg_heap::stack` should not be repurposed as the new continuation
+stack.  It records registers that are actively being evaluated.  That active-reg
+stack is useful for cycle checks, exception context, and GC treatment of
+partially evaluated registers.  A continuation stack records what the evaluator
+should do next.  These are different concepts and should remain separate at
+first.  Later, the old field could be renamed to something like `active_regs`.
 
 ## Why arbitrary `OperationArgs` callbacks are hard
 
@@ -55,8 +83,8 @@ extern "C" closure builtin_function_foo(OperationArgs& Args)
 }
 ```
 
-The evaluator cannot generate stack frames for this directly, because it does
-not know ahead of time:
+The evaluator cannot generate explicit stack frames for this directly, because
+it does not know ahead of time:
 
 - how many arguments the operation will evaluate;
 - whether each argument is used or forced;
@@ -65,17 +93,16 @@ not know ahead of time:
 
 The key step is to make this evaluation plan data.
 
-## Prepared operations
+## Fixed-demand prepared operations
 
-A `PreparedOperation` splits an operation into two parts:
+A prepared operation splits an operation into two parts:
 
-1. A declarative argument evaluation plan.
+1. A declarative demand plan.
 2. A non-recursive finalizer.
 
-The evaluator executes the plan by pushing/resuming explicit frames.  When all
-arguments are prepared, it calls the finalizer.  The finalizer may inspect the
-heap, allocate registers, set effects, and return a closure, but it must not
-call back into evaluation.
+The evaluator executes the demand plan.  When all arguments are prepared, it
+calls the finalizer.  The finalizer may inspect the heap, allocate registers,
+set effects, and return a closure, but it must not call back into evaluation.
 
 Sketch:
 
@@ -100,11 +127,20 @@ struct PreparedOperation: public Object
 };
 ```
 
-The exact representation can differ.  For static exported operations, an array
-of `prepared_arg_mode` may be easier than a `std::span` initialized from a
-temporary.
+The exact representation can differ.  It may be better to split the mode into
+orthogonal fields:
 
-## Frame storage
+```text
+target: operation slot / expression / env entry / operation-specific target
+demand: raw / use / force / unchangeable
+result shape: reg / closure / value
+count policy: default / count on return / do not count
+```
+
+That would avoid modes such as `use_value` and `force_value` growing into many
+combinations.  The simple enum is still a useful first sketch.
+
+## Prepared operation frame
 
 `PreparedArgs` should be cheap.  It should not copy closures or runtime values
 into separate vectors.  It should be a view over the current prepared-operation
@@ -126,9 +162,19 @@ struct PreparedOpFrame
     int step = 0;
     const PreparedOperation* op = nullptr;
     uint8_t next_arg = 0;
+    bool first_eval = false;
+    bool used_changeable = false;
     small_vector<PreparedArgState, 6> args;
 };
 ```
+
+`source_reg`, `dep_reg`, and `value_reg` have different jobs:
+
+- `source_reg` is the register named by the operation argument before
+  evaluation.
+- `dep_reg` is the register that dependency bookkeeping should see after
+  following relevant references.
+- `value_reg` is the register whose closure contains the WHNF/value result.
 
 `PreparedArgs` is then just an accessor object:
 
@@ -166,17 +212,17 @@ public:
 ```
 
 The finalizer reads values by reference from the heap.  This avoids the current
-`e_op` pattern of evaluating arguments and copying/moving `Runtime::Exp` values
-onto a separate value stack.
+`e_op` pattern of evaluating arguments and copying or moving `Runtime::Exp`
+values onto a separate value stack.
 
-## Executing the argument plan
+## Executing a prepared operation
 
 When the evaluator enters a prepared operation:
 
 1. Create a `PreparedOpFrame`.
 2. Fill `args[i].source_reg` from the operation slots.
 3. Set `next_arg = 0`.
-4. Interpret the plan incrementally.
+4. Interpret the demand plan under the current evaluator policy.
 
 For each argument:
 
@@ -201,8 +247,8 @@ constructing closures that refer to unevaluated arguments.
 The evaluator requests evaluation of the source register with use semantics.
 
 ```text
-push continuation: resume prepared op after argument i
-push evaluation frame: evaluate source_reg with USE
+set prepared frame state to waiting for argument i
+push EnterReg(source_reg, demand = Use)
 ```
 
 When the child evaluation completes:
@@ -210,6 +256,7 @@ When the child evaluation completes:
 ```text
 arg.dep_reg = returned.dep_reg
 arg.value_reg = returned.value_reg
+policy records USE-related bookkeeping
 next_arg++
 ```
 
@@ -223,8 +270,8 @@ This is the same shape as `use_reg`, but the child evaluation request uses force
 semantics.
 
 ```text
-push continuation: resume prepared op after argument i
-push evaluation frame: evaluate source_reg with FORCE
+set prepared frame state to waiting for argument i
+push EnterReg(source_reg, demand = Force)
 ```
 
 ### `use_value`
@@ -290,7 +337,303 @@ The finalizer must not call back into evaluation:
 
 This is the main rule that makes prepared operations stack-safe.
 
-## Example: strict value operation
+## Dynamic-demand operations
+
+Most operations have fixed demands, but not all.  Operations over structures
+such as `EVector` or `IntMap` may need to inspect one value to decide which
+value or values to inspect next.  An implementation that analyzes only one
+element per operation can fit the fixed-demand protocol, but may be much slower
+than analyzing several dependent elements inside one operation.
+
+These operations should use dynamic activation frames:
+
+```text
+DynamicOpFrame {
+    current_reg
+    step
+    operation identity
+    operation-specific state
+    temporary-root mark
+}
+```
+
+The frame repeatedly performs one dynamic step:
+
+```text
+dynamic state -> need demand D and updated state
+dynamic state + demand result -> need another demand
+dynamic state + demand result -> done with result closure
+```
+
+Dynamic operation frames should reuse the same child-evaluation and demand
+recording machinery as fixed operations.  They should not introduce a second
+way to record use, force, counts, or token deltas.
+
+There is a further semantic question: if one dynamic operation performs
+multiple dependent uses or forces, those dependencies may belong more naturally
+to the step than to a fixed set of registers.  Supporting that precisely may
+require step-local use/force edges.  That is a separate semantic extension,
+because it affects unsharing, force counts, token deltas, and invalidation.
+
+The first stack-safety implementation should not require step-local use/force
+edges.  It should allow dynamic frames structurally, but the first converted
+dynamic operation can either use existing dependency mechanisms or wait until
+the step-edge design is ready.
+
+## Stack representation
+
+The primary runtime structure should be an explicit evaluator engine:
+
+```text
+EvalEngine {
+    vector<EvalFrame> control_stack
+    optional<EvalResult> incoming_result
+}
+```
+
+`EvalResult` is the result of entering a register:
+
+```text
+EvalResult {
+    dep_reg
+    value_reg
+}
+```
+
+This matches the current pair returned by `incremental_evaluate1` and
+`incremental_evaluate2`, but names the two roles.
+
+The main frame kinds are:
+
+```text
+EnterReg
+PreparedOpFrame
+DynamicOpFrame
+FinishReductionResult
+Cleanup
+```
+
+`EnterReg` evaluates one register under an `EvalRequest`.  A child frame returns
+by setting `incoming_result` and popping itself.  The parent frame consumes the
+incoming result and either advances or produces another result.
+
+This differs from a bytecode-style control stack plus result stack.  That
+alternative is also viable:
+
+```text
+control stack: Finish(+), Eval(y), Eval(x)
+result stack:  evaluated demand results
+```
+
+The result-stack design is attractive for fixed-demand operations because an
+operation can expand into a little stack program.  However, the frame-local
+`PreparedOpFrame` design has practical advantages for this codebase:
+
+- source, dependency, and value registers live together in named fields;
+- `PreparedArgs` can be a simple view over the frame;
+- finalizers do not need to know about result-stack layout;
+- cleanup state and temporary-root marks live with the operation;
+- stack-effect bugs are less likely than with an untyped result stack.
+
+For these reasons, the preferred design is a control stack with frame-local
+operation state.  A result stack can still be added later if profiling or
+implementation pressure shows that command expansion is better for fixed
+operations.
+
+## Evaluator requests and policy
+
+Each `EnterReg` frame should carry an evaluation request:
+
+```text
+EvalRequest {
+    reg
+    mode
+    demand_kind
+    count_policy
+}
+```
+
+The mode distinguishes the three existing evaluators:
+
+```text
+Eval1
+Eval2
+Unchangeable
+```
+
+The demand kind says why this child is being evaluated:
+
+```text
+Plain
+Use
+Force
+Unchangeable
+```
+
+The count policy is especially important for `Eval2`.  The current
+`incremental_evaluate2(r, do_count)` attaches count behavior to individual
+child evaluations.  It should not become a single global flag on the engine.
+Different child evaluations from the same root may need different count
+behavior.
+
+The engine owns the control flow.  A policy layer owns mode-specific semantics.
+The policy answers questions such as:
+
+- What happens when entering a changeable register?
+- Is evaluating this register allowed to continue, or should it stop with
+  `no_context`?
+- How is a use demand recorded?
+- How is a force demand recorded?
+- Should force counts be incremented on return?
+- Which token deltas should be written?
+- How should an old result or old step be bumped?
+
+For `Eval1`, the policy mostly records first-execution dependencies and creates
+steps/results when a reduction becomes changeable.
+
+For `Eval2`, the policy must handle force counts, `do_count`-like behavior,
+token deltas, unshared results, bumped steps, and recomputation of invalid
+changeable registers.
+
+For `Unchangeable`, the policy should stop at changeable or forcing boundaries
+and report `no_context` rather than attempting incremental bookkeeping.
+
+The policy should be narrow.  It should not own the whole evaluator.
+
+## Engine loop
+
+The public entry points should remain:
+
+```text
+incremental_evaluate1(r)
+incremental_evaluate2(r, do_count)
+incremental_evaluate_unchangeable(r)
+```
+
+Internally, they submit an initial `EnterReg` request to the engine:
+
+```text
+push EnterReg(root request)
+
+while control_stack is not empty:
+    frame = control_stack.back()
+
+    if incoming_result exists:
+        let frame consume incoming_result
+        clear incoming_result
+        continue
+
+    step frame
+```
+
+A frame step can:
+
+- push another frame;
+- replace itself with another frame;
+- mutate the heap and continue;
+- pop itself and set `incoming_result`;
+- throw an exception.
+
+The important point is that recursive evaluator calls become frame pushes.
+
+### Entering registers
+
+`EnterReg` replaces the recursive body of the current evaluator functions.  Its
+transitions should match the current cases.
+
+For an already evaluated constant, it returns:
+
+```text
+EvalResult { dep_reg = r, value_reg = r }
+```
+
+For an unchangeable reference, it pushes work to enter the referenced register
+and records enough state to perform any reference-chain update needed for the
+original register.
+
+For `ref_with_force`, the policy determines whether force behavior is needed in
+the current mode.  `Eval1` can mostly look through the reference.  `Eval2` must
+preserve the existing force-count semantics.
+
+For a changeable register, the policy decides whether an existing result is
+usable, whether an existing call should be evaluated, or whether the original
+closure should be reduced again.
+
+For an unevaluated operation, `EnterReg` creates or finds the step needed for
+reduction and then dispatches according to operation kind:
+
+```text
+prepared fixed operation -> push PreparedOpFrame
+dynamic operation        -> push DynamicOpFrame
+legacy operation         -> temporary compatibility path
+```
+
+The legacy operation path is not stack-safe if it recursively evaluates through
+`OperationArgs`.  It is a migration aid only and should be marked as such in
+code.
+
+### Handling a prepared operation result
+
+A prepared finalizer returns a closure.  The current evaluator then has two
+broad cases.
+
+If the reduction did not depend on changeable data, the parent register can be
+updated with the returned closure and evaluation continues on the same register.
+In the explicit loop this can be represented by setting the closure and pushing
+or replacing with `EnterReg(parent_reg)`.
+
+If the reduction did depend on changeable data, the parent register becomes
+changeable.  If the returned closure is not already a register reference, it is
+allocated into a child register.  The engine then evaluates that child register
+so that the parent step can record its call/result.
+
+This is where a `FinishReductionResult` frame is useful:
+
+```text
+FinishReductionResult(parent_reg, step)
+EnterReg(result_reg)
+```
+
+When `EnterReg(result_reg)` finishes, `FinishReductionResult` consumes the
+child result and performs mode-specific call/result/token bookkeeping.
+
+This removes another recursive call from the current evaluator: reduction no
+longer calls `incremental_evaluate*` on the closure it just produced.  It
+schedules that work on the explicit stack.
+
+## Active-register stack, GC, and cleanup
+
+The explicit evaluator stack must be visible to GC.  It may contain:
+
+- source registers;
+- result registers;
+- parent registers;
+- step ids;
+- closures or runtime expressions held by dynamic frames;
+- temporary roots created while reducing an operation.
+
+The current GC already treats the active-register stack, temporary heads, and
+ordinary heads as roots.  The new evaluator frames need equivalent tracing.  A
+frame should not hide a register id inside an opaque object without providing a
+trace method or equivalent root enumeration.
+
+Cleanup must also become explicit.  The current C++ stack gives automatic
+destruction for `OperationArgs`, which pops temporary heads on destruction.  With
+an explicit stack, each operation frame needs enough state to restore
+temporary-root depth when the operation finishes or unwinds through an
+exception.
+
+The first implementation can use eager mutation with explicit cleanup/unwind
+frames.  A full transaction log is probably too large for the initial change.
+
+Active-register push/pop also needs explicit cleanup.  Entering a register sets
+`reg_is_on_stack_bit` and pushes the register onto the active-reg stack.
+Leaving that register must reset the bit and pop the active-reg stack even when
+evaluation exits through an exception.
+
+## Examples
+
+### Strict value operation
 
 Current form:
 
@@ -333,7 +676,7 @@ extern "C" PreparedOperation prepared_builtin_gamma_density {
 The finalizer contains no recursive evaluation.  The evaluator prepares the
 three values before calling it.
 
-## Example: effectful operation
+### Effectful operation
 
 Current form:
 
@@ -389,7 +732,7 @@ extern "C" PreparedOperation prepared_builtin_register_prior {
 This still allocates and sets an effect.  That is fine: allocation and effect
 registration are not the source of C++ stack growth.  Recursive evaluation is.
 
-## Example: lazy/register-preserving operation
+### Lazy/register-preserving operation
 
 Some operations intentionally avoid evaluating arguments and instead return a
 closure that refers to their registers.
@@ -424,6 +767,22 @@ extern "C" PreparedOperation prepared_builtin_changeable_apply {
 `raw_reg` does not push an evaluation frame.  It only records the source
 register for the finalizer.
 
+### Core lazy operations
+
+The core lazy operations can also be prepared operations:
+
+- `apply f x` demands the function head as a used closure, then constructs the
+  applied closure.
+- `case e of alts` demands the scrutinee as a used closure or value, then
+  chooses the branch and constructs the branch closure.
+- `seq e body` forces `e`, then returns the body closure.
+- `let` has no evaluation demands; it allocates bindings and returns the body
+  closure.
+
+Converting at least one of these early is important.  Strict arithmetic
+operations are good protocol tests, but stack safety for object-language
+recursion depends on the path through the lazy control operations.
+
 ## Relationship to existing `e_op`
 
 Existing `e_op` functions are already close to prepared operations:
@@ -441,28 +800,22 @@ Prepared operations generalize this:
 - finalizers can allocate and set effects, as long as they do not recursively
   evaluate.
 
+The existing `e_value_stack` is also a useful comparison point for stack
+representation.  It shows that a value stack can work for simple operations.
+The prepared-frame design keeps the same no-recursive-evaluation boundary while
+making source/dependency/value registers explicit.
+
 ## Migration strategy
 
 Do not convert every builtin at once.
 
-1. Add `PreparedOperation` alongside existing `Operation`.
-2. Make the evaluator recognize and execute `PreparedOperation` frames.
-3. Convert existing `simple_function_*` / `e_op` operations first.
-4. Convert strict value builtins that only use fixed `evaluate_slot_to_value`
-   calls.
-5. Convert effectful but non-recursive builtins such as `register_prior` and
-   `register_likelihood`.
-6. Convert closure/register-sensitive helpers where useful.
-7. Leave context/MCMC/proposal-heavy operations on the old `OperationArgs`
-   callback path until there is a clear need.
+The migration has two different goals:
 
-The old operation path remains valid for arbitrary C++ callbacks.  It is not
-stack-safe if the callback recursively evaluates, but it allows gradual
-migration.
+1. Validate the prepared-operation protocol on easy operations.
+2. Establish a real stack-safe object-language recursion path.
 
-## Likely easy candidates
-
-The easiest functions are strict kernels that already resemble `e_op`:
+Easy protocol validation can start with strict kernels that already resemble
+`e_op`:
 
 - `Num.cc`
 - `Real.cc`
@@ -486,17 +839,42 @@ Many fixed-argument value builtins should also be mostly mechanical:
 - parts of `PopGen.cc`
 - probability-kernel parts of `SMC.cc`
 
+The first meaningful stack-safety milestone should also convert at least one
+core lazy operation such as `apply` or `case`, and route the corresponding
+`incremental_evaluate1` path through the explicit engine.
+
 Harder candidates include:
 
 - `Modifiables.cc`, because it manipulates effects and changeable structure;
 - `Prelude.cc`, because of IORef/ST-style behavior;
-- `IntMap.cc`, where some functions apply user functions or force map
-  contents;
+- `IntMap.cc`, where some functions apply user functions or force map contents;
 - `MCMC.cc`, because many operations manipulate contexts and proposals;
 - proposal-heavy parts of `SMC.cc`.
 
 These harder operations may still be convertible, but they should not drive the
 initial design.
+
+Suggested implementation order:
+
+1. Add the explicit evaluator stack types and make GC trace them.
+2. Add the shared engine with enough `EnterReg` behavior to handle constants and
+   simple references.
+3. Add prepared operations and convert a small strict value operation.
+4. Convert one core lazy operation such as `apply` or `case`.
+5. Route `incremental_evaluate1` through the engine for the converted path.
+6. Add deep-recursion tests.  Tests for unimplemented stack safety should be
+   marked expected-fail until the engine path handles them.
+7. Extend the policy layer and frames until `incremental_evaluate2` can use the
+   same engine.
+8. Add dynamic operation frames when converting the first operation that needs
+   dynamic demands.
+9. Remove or shrink legacy recursive `OperationArgs` paths as converted
+   operations make them unnecessary.
+
+The old operation path can remain temporarily for arbitrary C++ callbacks.  It
+is not stack-safe if the callback recursively evaluates, but it allows gradual
+migration.  Code using that path should carry a brief compatibility note saying
+why it remains and what needs to happen to remove it.
 
 ## Performance notes
 
@@ -523,9 +901,18 @@ stack behavior and simple frame layout.
 - Should `use_value` reject lambdas only in debug mode or always?
 - Should `raw_reg` set `value_reg = 0` to catch mistakes, or
   `value_reg = source_reg` for convenience?
+- Should the demand mode be one enum, or should demand kind and result shape be
+  orthogonal fields?
 - Should prepared finalizers be allowed to call advanced heap mutation helpers
   such as `set_call`, `mark_reg_changeable`, and `add_shared_step` directly, or
   should these be wrapped in a narrower API?
 - How should old `Operation` and new `PreparedOperation` share loader and
   binding metadata?
 - Which operations are hot enough to deserve arity-specialized prepared frames?
+- How much of the current `RegOperationArgs1`, `RegOperationArgs2*`, and
+  `RegOperationArgsUnchangeable` behavior belongs in policy methods versus in
+  prepared-frame code?
+- How should exception context be reconstructed from explicit frames?
+- Should step-local use/force edges be added before dynamic collection
+  operations are converted, or should the first dynamic operation use only the
+  existing dependency model?
