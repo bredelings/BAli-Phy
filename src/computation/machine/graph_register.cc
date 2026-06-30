@@ -1652,6 +1652,13 @@ bool reg_heap::force_regs_check_same_inputs(int r)
     // during the loop if we do evaluation, and the range-for saves
     // the location of regs[r] from before it was moved.
 
+    // Why do we evaluate the forced regs here even when zero_count == false?
+    // If zero_count == false, the forced child should already have a positive force count.
+    // Therefore, evaluating the child here mainly guarantees that the child is re-validated
+    //   BEFORE the parent.
+    // This is true for random sampling builtins, getProperties, registerInterchangeable,
+    //   register_out_edge, and others.
+
     bool zero_count = not reg_is_forced(r);
     for(int i=0;i<regs[r].forced_regs.size();i++)
     {

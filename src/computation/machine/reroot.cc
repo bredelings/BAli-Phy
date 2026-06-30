@@ -605,7 +605,6 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
     };
 
     // 1. Decrement calls from steps bumped during execution.
-    //    See decrement_counts_from_initial_bumped_calls() for steps bumped before execution.
     //    Should all of these regs have force counts > 0, since there is a new step for the reg?
     for(auto& [r,s]: vm_step2->delta())
     {
@@ -629,7 +628,11 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
         // and so excludes e.g. the calls from modifiables.
         if (prog_unshare[r].test(unshare_step_bit))
         {
-            // Should all of these regs have force counts == 0, since there is NOT a new step for the reg?
+            // These regs may still be forced.
+
+            // We tentatively remove the count from the old invalid call.
+            // If the step is later retained, call_decremented_bit tells
+            //   incremental_evaluate2_changeable_() to add that demand back.
             prog_unshare[r].set(call_decremented_bit);
             int s = prog_steps[r];
             int call = steps[s].call;
@@ -670,6 +673,15 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
 
 void reg_heap::evaluate_forced_invalid_regs(const std::vector<int>& unshared_regs, const std::vector<interchange_op>& interchanges)
 {
+    // The reverse order here is not what guarantees that we reach a fixed point
+    //  in evaluating all regs with a positive force count.
+    // If a reg has a positive force count because of an earlier-executed reg, then
+    //  we can follow this chain backward to a reg that is not dependent on an
+    //  earlier-executed reg.
+    // Such a reg will have a positive force count, so it will be executed.
+    // Additionally, when it is executed, it will execute all the dependent regs
+    //  as well.
+
     for(int r: unshared_regs | views::reverse)
     {
         if (reg_is_forced(r) and not has_result2(r))
@@ -814,6 +826,20 @@ void reg_heap::mark_as_program_execution_token(int t)
         release_unreferenced_tips(*t3);
 }
 
+// This routine does not perform any evaluations that will not be kept.
+// Any evaluations that are not forced in the new program are immediately removed.
+// One goal is to avoid walking the entire program.
+// Instead the amount of work is proportional to the size of the changed part.
+//
+// This routine does not walk the entire program to find forced regs that are invalid.
+// Instead it uses force counts to determine which invalid regs need to be executed.
+// Force counts track the transitive closure from the program head under use, force,
+//  and call edges.
+// Additionally, we are guaranteed to find all forced regs by evaluating invalid regs
+//  that have positive force counts solely from regs outside the invalidated region.
+// 
+// We use force counts are used instead of force bits because then we know what to
+// do when an individual forcer goes away.
 void reg_heap::unshare_regs2(int t)
 {
     // parent_token(t) should be the root.
@@ -848,21 +874,44 @@ void reg_heap::unshare_regs2(int t)
     // 4. Determine which invalid regs we can safely execute.
 
     // 4a. Increment counts for new calls, if count > 0
+    //
+    //     Add counts from step overrides that are in the new root before execution,
+    //       mainly old modifiables with new values.
+    //     This must happen before subtracting invalid old calls, or the forced-invalid
+    //     scan can temporarily undercount regs demanded by newly installed calls.
+    //
     increment_counts_from_new_calls();
 
+    tokens[t2].flags.set(0);    // Before execution: mark t2 a root-child for execution
+
     // 4b. Evaluate unconditionally-executed regs.
-    tokens[t2].flags.set(0);    // mark t2 a root-child for execution
+    //
+    //     OPTIMIZATION: This avoids decrementing and re-incrementing invalid steps that are
+    //       retained after execution.
+    //
     evaluate_unconditional_regs(unshared_regs);
 
-    // 4c. Decrement counts from invalid calls
+    // 4c. Decrement counts from bumped calls and invalid-but-not-bumped calls
+    //
+    //     We need to know which regs have counts that will not go down to zero
+    //       in order to know which ones we are allowed to re-execute.
+    //
     auto& zero_count_regs = get_scratch_list();
     decrement_counts_from_invalid_calls(unshared_regs, zero_count_regs);
 
-    // 5. Evaluate forced invalid regs.
+    // 5. Evaluate all forced invalid regs.
+    //
+    //    This depends on recursively visiting all children, but does not
+    //     depend on walking the regs backward.
+    //
     evaluate_forced_invalid_regs(unshared_regs, tokens[t2].interchanges);
     tokens[t2].flags.reset(0);    // unmark t2 a root-child for execution
 
     // 6. Get the program result.
+    //
+    //    Evaluation does not descend into any reg with a positive force count.
+    //    Since the head has a positive force count, why do we need this?
+    //
     lazy_evaluate2(heads[*program_result_head]);
 
     // 7. Clear unshare_count_bit and remove no-effect override from delta-force-count
