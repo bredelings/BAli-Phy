@@ -446,33 +446,11 @@ pair<int,int> reg_heap::incremental_evaluate1_changeable_(int r)
     }
 }
 
-pair<int,int> reg_heap::incremental_evaluate1_(int r)
+/// Evaluate an unevaluated register in evaluate1 through refs, WHNF, and reductions.
+/// Changeable registers are handled by incremental_evaluate1_changeable_ instead.
+pair<int,int> reg_heap::incremental_evaluate1_unevaluated_(int r)
 {
-    assert(regs.is_valid_address(r));
-    assert(regs.is_used(r));
-
-#ifndef NDEBUG
-    if (reg_has_value(r))
-    {
-        assert(access_value_for_reg(r).get_code().is_whnf());
-        assert(not reg_is_ref_no_force(r));
-        assert(not reg_is_unevaluated(r));
-    }
-    if (unevaluated_reg_is_ref_no_force(r))
-        assert(not has_result1(r));
-#endif
-
-    if (reg_is_constant(r)) return {r,r};
-
-    else if (reg_is_changeable(r))
-        return incremental_evaluate1_changeable_(r);
-    else if (unevaluated_reg_is_ref_no_force(r))
-    {
-        int r2 = closure_at(r).reg_for_ref();
-        return incremental_evaluate1(r2);
-    }
-    else if (reg_is_ref_with_force(r))
-        return incremental_evaluate1_ref_with_force_(r);
+    assert(reg_is_unevaluated(r));
 
     while (1)
     {
@@ -505,13 +483,13 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
                 return {r3,result};
             }
 
-	    int r4 = follow_reg_ref(r3);
-	    if (was_index_var and r3 != r4) regs[r].C.Env[0] = r4;
+            int r4 = follow_reg_ref(r3);
+            if (was_index_var and r3 != r4) regs[r].C.Env[0] = r4;
 
-	    mark_reg_ref_with_force(r);
+            mark_reg_ref_with_force(r);
 
             if (not reg_is_constant(r3))
-		set_forced_reg(r,r3);
+                set_forced_reg(r,r3);
 
             assert(not has_result1(r));
 
@@ -525,31 +503,31 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         {
             assert(not closure_at(r).get_code().to<Operation>());
             if (regs[r].forced_regs.empty())
-	    {
+            {
                 mark_reg_constant(r);
 
-		assert( not has_step1(r) );
-		assert( not has_result1(r) );
-		assert( not reg_is_unevaluated(r) );
+                assert( not has_step1(r) );
+                assert( not has_result1(r) );
+                assert( not reg_is_unevaluated(r) );
 
-		return {r,r};
-	    }
-	    else
-	    {
-		// Allocate a new reg
-		int r2 = allocate();
-		auto creator_step = creator_step_for_reg(r);
-		if (creator_step)
-		    mark_reg_created_by_step(r2, *creator_step);
+                return {r,r};
+            }
+            else
+            {
+                // Allocate a new reg
+                int r2 = allocate();
+                auto creator_step = creator_step_for_reg(r);
+                if (creator_step)
+                    mark_reg_created_by_step(r2, *creator_step);
 
-		// Copy the constant from r -> r2
-		closure C2 = closure_at(r);  // do this after allocation - allocation could modify the environment of C2!
-		set_C(r2, std::move(C2));
+                // Copy the constant from r -> r2
+                closure C2 = closure_at(r);  // do this after allocation - allocation could modify the environment of C2!
+                set_C(r2, std::move(C2));
 
-		// Make the current reg into an index-var that points to it.
-		closure C1(Runtime::IndexVar(0),{r2});
-		set_C(r, std::move(C1));
-	    }
+                // Make the current reg into an index-var that points to it.
+                closure C1(Runtime::IndexVar(0),{r2});
+                set_C(r, std::move(C1));
+            }
 
         }
 
@@ -640,6 +618,37 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 
     std::cerr<<"incremental_evaluate: unreachable?";
     std::abort();
+}
+
+pair<int,int> reg_heap::incremental_evaluate1_(int r)
+{
+    assert(regs.is_valid_address(r));
+    assert(regs.is_used(r));
+
+#ifndef NDEBUG
+    if (reg_has_value(r))
+    {
+        assert(access_value_for_reg(r).get_code().is_whnf());
+        assert(not reg_is_ref_no_force(r));
+        assert(not reg_is_unevaluated(r));
+    }
+    if (unevaluated_reg_is_ref_no_force(r))
+        assert(not has_result1(r));
+#endif
+
+    if (reg_is_constant(r)) return {r,r};
+
+    else if (reg_is_changeable(r))
+        return incremental_evaluate1_changeable_(r);
+    else if (unevaluated_reg_is_ref_no_force(r))
+    {
+        int r2 = closure_at(r).reg_for_ref();
+        return incremental_evaluate1(r2);
+    }
+    else if (reg_is_ref_with_force(r))
+        return incremental_evaluate1_ref_with_force_(r);
+    else
+        return incremental_evaluate1_unevaluated_(r);
 }
 
 /// Evaluate regs when called from a changeable reg.
