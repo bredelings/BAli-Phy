@@ -71,7 +71,7 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changea
 }
 
 /// Evaluate regs when called from a changeable reg.
-/// Since the reg has already been marked changable, dependencies have already been recorded.
+/// Since the reg has already been marked changeable, dependencies have already been recorded.
 class RegOperationArgs1Changeable final: public OperationArgs
 {
     const int s;
@@ -85,28 +85,16 @@ class RegOperationArgs1Changeable final: public OperationArgs
             return M.incremental_evaluate1(r2).second;
         }
 
-    /// Evaluate the reg r2 and note whether it still depends on changeable data.
-    /// New dependency edges should already have been recorded.
+    /// Evaluate the reg r2 without recording new dependencies.
+    /// Those dependencies should already have been recorded.
     int evaluate_reg_use(int r2) override
         {
-            // Compute the value, and follow register-reference chains (which are not changeable).
-            auto [r3, result] = M.incremental_evaluate1(r2);
-
-            if (M.reg_is_to_changeable(r3))
-                make_changeable();
-
-            return result;
+            return M.incremental_evaluate1(r2).second;
         }
 
 public:
 
-    bool used_changeable = false;
-
-    void make_changeable() override
-    {
-        used_changeable = true;
-	creator_step = s;
-    }
+    void make_changeable() override {}
 
     // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
     // and point references to q instead of p.  But then it would not be true that a variable can
@@ -114,14 +102,15 @@ public:
 
     void set_effect(int r) override
         {
-            make_changeable();
-            M.mark_step_with_effect(s);
+            memory().mark_step_with_effect(s);
             M._register_effect_at_reg(r, s);
         }
 
     RegOperationArgs1Changeable(int r_, int s_, reg_heap& m)
         :OperationArgs(m, r_), s(s_)
-        { }
+        {
+	    creator_step = s;
+        }
 };
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
@@ -425,8 +414,6 @@ pair<int,int> reg_heap::incremental_evaluate1_changeable_(int r)
             closure value = (*O)(Args);
             total_reductions++;
 
-            assert(Args.used_changeable);
-
             total_changeable_reductions++;
             mark_reg_changeable(r);
 
@@ -688,16 +675,16 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
 }
 
 /// Evaluate regs when called from a changeable reg.
-/// Since the reg has already been marked changable, dependencies have already been recorded.
+/// Since the reg has already been marked changeable, dependencies have already been recorded.
 /// Used regs and forced regs should already be up-to-date, having been forced by force_regs_check_same_inputs( ).
 class RegOperationArgs2Changeable final: public OperationArgs
 {
     const int s;
 
-    bool evaluate_changeables() const {return true;}
+    bool evaluate_changeables() const override {return true;}
 
     /// We don't need to evaluate r2 or record dependencies -- this should already have happened.
-    int evaluate_reg_force(int r2)
+    int evaluate_reg_force(int r2) override
         {
             r2 = M.follow_reg_ref_no_force(r2);
 
@@ -707,7 +694,7 @@ class RegOperationArgs2Changeable final: public OperationArgs
         }
 
     /// We don't need to evaluate r2 or record dependencies -- this should already have happened.
-    int evaluate_reg_use(int r2)
+    int evaluate_reg_use(int r2) override
         {
             r2 = M.follow_reg_ref_no_force(r2);
 
@@ -718,13 +705,13 @@ class RegOperationArgs2Changeable final: public OperationArgs
 
 public:
 
-    void make_changeable() {}
+    void make_changeable() override {}
 
     // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
 
-    void set_effect(int r)
+    void set_effect(int r) override
         {
             memory().mark_step_with_effect(s);
             M._register_effect_at_reg(r, s);
