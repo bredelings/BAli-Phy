@@ -778,6 +778,7 @@ public:
 
 private:  
     std::pair<int,int> incremental_evaluate1_(int R);
+    std::pair<int,int> incremental_evaluate1_ref_with_force_(int R);
     std::pair<int,int> incremental_evaluate2_(int R);
     std::pair<int,int> incremental_evaluate2_ref_with_force_(int R);
     std::pair<int,int> incremental_evaluate2_changeable_(int R);

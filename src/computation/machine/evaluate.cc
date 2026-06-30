@@ -287,6 +287,20 @@ closure evaluate_e_op_to_c(OperationArgs& Args)
     return closure(evaluate_e_op(Args, E));
 }
 
+/// Evaluate a ref-with-force in evaluate1 without forcing its attached regs.
+/// This preserves evaluate1's current treatment of forced references.
+pair<int,int> reg_heap::incremental_evaluate1_ref_with_force_(int r)
+{
+    assert(reg_is_ref_with_force(r));
+
+    // We don't have to force the forced regs in evaluate1.
+    int r2 = closure_at(r).reg_for_ref();
+    auto [r3, result3] = incremental_evaluate1(r2);
+
+    assert(not reg_is_unevaluated(r));
+    return {r, result3};
+}
+
 pair<int,int> reg_heap::incremental_evaluate1_(int r)
 {
     assert(regs.is_valid_address(r));
@@ -355,14 +369,7 @@ pair<int,int> reg_heap::incremental_evaluate1_(int r)
         return incremental_evaluate1(r2);
     }
     else if (reg_is_ref_with_force(r))
-    {
-	// We don't have to force the forced regs in evaluate1.
-	int r2 = closure_at(r).reg_for_ref();
-	auto [r3, result3] = incremental_evaluate1(r2);
-
-	assert(not reg_is_unevaluated(r));
-	return {r, result3};
-    }
+        return incremental_evaluate1_ref_with_force_(r);
 
     while (1)
     {
