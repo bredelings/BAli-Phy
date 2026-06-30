@@ -70,48 +70,30 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changea
     throw e;
 }
 
-/// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
-class RegOperationArgs1 final: public OperationArgs
+/// Evaluate regs when called from a changeable reg.
+/// Since the reg has already been marked changable, dependencies have already been recorded.
+class RegOperationArgs1Changeable final: public OperationArgs
 {
     const int s;
 
-    const bool first_eval;
-
     bool evaluate_changeables() const override {return true;}
 
-    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
+    /// Evaluate the reg r2 without recording new dependencies.
+    /// Those dependencies should already have been recorded.
     int evaluate_reg_force(int r2) override
         {
-            auto [r3, result] = M.incremental_evaluate1(r2);
-
-            if (M.reg_is_changeable_or_forcing(r3))
-            {
-                if (first_eval)
-                    M.set_forced_reg(r, r3);
-            }
-
-            return result;
+            return M.incremental_evaluate1(r2).second;
         }
 
-    /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
+    /// Evaluate the reg r2 and note whether it still depends on changeable data.
+    /// New dependency edges should already have been recorded.
     int evaluate_reg_use(int r2) override
         {
             // Compute the value, and follow register-reference chains (which are not changeable).
             auto [r3, result] = M.incremental_evaluate1(r2);
 
-            // Note that although r2 is newly used, r3 might be already used if it was 
-            // found from r2 through a non-changeable register-reference chain.
             if (M.reg_is_to_changeable(r3))
-            {
                 make_changeable();
-                if (first_eval)
-                    M.set_used_reg(r, r3);
-            }
-            else if (M.reg_is_changeable_or_forcing(r3))
-            {
-                if (first_eval)
-                    M.set_forced_reg(r, r3);
-            }
 
             return result;
         }
@@ -137,8 +119,8 @@ public:
             M._register_effect_at_reg(r, s);
         }
 
-    RegOperationArgs1(int r_, int s_, reg_heap& m)
-        :OperationArgs(m, r_), s(s_), first_eval(m.reg_is_unevaluated(r))
+    RegOperationArgs1Changeable(int r_, int s_, reg_heap& m)
+        :OperationArgs(m, r_), s(s_)
         { }
 };
 
@@ -438,7 +420,7 @@ pair<int,int> reg_heap::incremental_evaluate1_changeable_(int r)
 
         try
         {
-            RegOperationArgs1 Args(r, s, *this);
+            RegOperationArgs1Changeable Args(r, s, *this);
             auto O = operation_for_reduction(closure_at(r));
             closure value = (*O)(Args);
             total_reductions++;

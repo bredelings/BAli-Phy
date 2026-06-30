@@ -331,7 +331,7 @@ private:
 
     void note_step_in_root(int s);
 
-    friend class RegOperationArgs1;
+    friend class RegOperationArgs1Changeable;
     friend class RegOperationArgs1Unevaluated;
     friend class RegOperationArgs2Changeable;
     friend class RegOperationArgs2Unevaluated;
