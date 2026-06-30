@@ -142,6 +142,71 @@ public:
         { }
 };
 
+/// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
+class RegOperationArgs1Unevaluated final: public OperationArgs
+{
+    const int s;
+
+    bool evaluate_changeables() const override {return true;}
+
+    /// Evaluate the reg r2, record dependencies, and return the reg following call chains.
+    int evaluate_reg_force(int r2) override
+        {
+            auto [r3, result] = M.incremental_evaluate1(r2);
+
+            if (M.reg_is_changeable_or_forcing(r3))
+                M.set_forced_reg(r, r3);
+
+            return result;
+        }
+
+    /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
+    int evaluate_reg_use(int r2) override
+        {
+            // Compute the value, and follow register-reference chains (which are not changeable).
+            auto [r3, result] = M.incremental_evaluate1(r2);
+
+            // Note that although r2 is newly used, r3 might be already used if it was 
+            // found from r2 through a non-changeable register-reference chain.
+            if (M.reg_is_to_changeable(r3))
+            {
+                make_changeable();
+                M.set_used_reg(r, r3);
+            }
+            else if (M.reg_is_changeable_or_forcing(r3))
+                M.set_forced_reg(r, r3);
+
+            return result;
+        }
+
+public:
+
+    bool used_changeable = false;
+
+    void make_changeable() override
+    {
+        used_changeable = true;
+	creator_step = s;
+    }
+
+    // If we unreference regs that evaluate to a variable, then we unreference p->let q=2 in q
+    // and point references to q instead of p.  But then it would not be true that a variable can
+    // only be referenced if the slot that created it is still referenced.
+
+    void set_effect(int r) override
+        {
+            make_changeable();
+            M.mark_step_with_effect(s);
+            M._register_effect_at_reg(r, s);
+        }
+
+    RegOperationArgs1Unevaluated(int r_, int s_, reg_heap& m)
+        :OperationArgs(m, r_), s(s_)
+        {
+            assert(M.reg_is_unevaluated(r));
+        }
+};
+
 /// Evaluate r and look through register-reference chains to return the first reg that is NOT a reg reference.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg reference.
 pair<int,int> reg_heap::incremental_evaluate1(int r)
@@ -535,7 +600,7 @@ pair<int,int> reg_heap::incremental_evaluate1_unevaluated_(int r)
 
             try
             {
-                RegOperationArgs1 Args(r, s, *this);
+                RegOperationArgs1Unevaluated Args(r, s, *this);
                 auto O = operation_for_reduction(closure_at(r));
                 closure value = (*O)(Args);
                 total_reductions++;
