@@ -44,6 +44,27 @@ Most existing operations already have this shape: for one invocation, they know
 which arguments they will use or force.  Later evaluation may depend on the
 closure produced by the operation, but that is a new operation invocation.
 
+## Initial migration principle
+
+The first implementation should route a real evaluator path through an explicit
+engine loop before adding substantial prepared-operation infrastructure.  This
+keeps the new stack machinery exercised by existing semantics instead of
+building a parallel abstraction that is not yet used.
+
+The first loop does not need to solve callback recursion.  It is useful to
+separate the transition into two boundaries:
+
+- evaluator-internal recursion, where `incremental_evaluate*` directly calls
+  itself or another evaluator helper;
+- operation callback recursion, where legacy `OperationArgs` callbacks call back
+  into evaluation.
+
+Removing evaluator-internal recursion first is a meaningful milestone, even if
+legacy callbacks remain a compatibility path until prepared or dynamic operation
+frames replace them.  `incremental_evaluate1` is the current intended first
+candidate, but this document does not require a particular first-loop
+implementation strategy.
+
 ## Semantic constraints
 
 The initial stack refactor should preserve behavior.
@@ -382,12 +403,11 @@ the step-edge design is ready.
 
 ## Stack representation
 
-The primary runtime structure should be an explicit evaluator engine:
+The primary runtime structure should be an explicit evaluator stack:
 
 ```text
 EvalEngine {
     vector<EvalFrame> control_stack
-    optional<EvalResult> incoming_result
 }
 ```
 
@@ -413,9 +433,23 @@ FinishReductionResult
 Cleanup
 ```
 
-`EnterReg` evaluates one register under an `EvalRequest`.  A child frame returns
-by setting `incoming_result` and popping itself.  The parent frame consumes the
-incoming result and either advances or produces another result.
+`EnterReg` evaluates one register under an `EvalRequest`.  A child frame must
+return an `EvalResult` to exactly the parent continuation that requested the
+child evaluation.
+
+There are several viable return-delivery mechanisms:
+
+- an engine-level pending-result slot;
+- a mailbox stored on the parent frame;
+- a separate result stack;
+- immediate resume dispatch after popping the child frame.
+
+The important invariant is not the exact mechanism.  The important invariant is
+that a child result is consumed by the parent frame that requested it, and that
+the result remains GC-safe while it is pending.  If a pending result is stored in
+an evaluator frame, frame tracing must trace and remap the result registers.  If
+the implementation chooses not to trace pending results, it must instead consume
+them before any allocation or GC can occur.
 
 This differs from a bytecode-style control stack plus result stack.  That
 alternative is also viable:
@@ -518,9 +552,8 @@ push EnterReg(root request)
 while control_stack is not empty:
     frame = control_stack.back()
 
-    if incoming_result exists:
-        let frame consume incoming_result
-        clear incoming_result
+    if frame has a pending child result:
+        resume the frame with that result
         continue
 
     step frame
@@ -531,10 +564,20 @@ A frame step can:
 - push another frame;
 - replace itself with another frame;
 - mutate the heap and continue;
-- pop itself and set `incoming_result`;
+- pop itself and deliver an `EvalResult` to its parent;
 - throw an exception.
 
 The important point is that recursive evaluator calls become frame pushes.
+
+The engine may be re-entered while legacy `OperationArgs` callbacks still exist.
+A transition design must therefore choose one of two strategies:
+
+- local loop state for each public evaluator call;
+- a shared evaluator frame stack with a per-call base-depth delimiter.
+
+With a shared stack, each public call records the current frame depth, pushes its
+root frame, and runs only frames above that depth.  Nested legacy calls can then
+push and pop their own frames without consuming the outer evaluator's frames.
 
 ### Entering registers
 
@@ -623,6 +666,23 @@ an explicit stack, each operation frame needs enough state to restore
 temporary-root depth when the operation finishes or unwinds through an
 exception.
 
+Legacy `OperationArgs` owns temporary heads with RAII: allocations made through
+`Args.allocate` are rooted until the `OperationArgs` destructor pops them.  A
+frame-based path that evaluates an operation result after the callback scope ends
+must preserve this root lifetime.
+
+Possible approaches include:
+
+- keep the legacy callback and its post-result evaluation together until the
+  operation is converted;
+- transfer the temporary-head cleanup count from `OperationArgs` to an evaluator
+  frame;
+- replace legacy callbacks with prepared or dynamic frames whose cleanup state is
+  explicit from the start.
+
+This is a compatibility concern.  It should be marked in code and removed once
+legacy callbacks no longer own evaluator-visible temporary roots.
+
 The first implementation can use eager mutation with explicit cleanup/unwind
 frames.  A full transaction log is probably too large for the initial change.
 
@@ -630,6 +690,27 @@ Active-register push/pop also needs explicit cleanup.  Entering a register sets
 `reg_is_on_stack_bit` and pushes the register onto the active-reg stack.
 Leaving that register must reset the bit and pop the active-reg stack even when
 evaluation exits through an exception.
+
+The frame that enters a register owns that register's active-stack lifetime.
+Parent frames remain active while child frames run.  This preserves the current
+recursive shape where evaluating `r` keeps `r` on the active stack while a child
+register is evaluated.  Existing legacy uses of `reg_heap::stack_push` and
+`reg_heap::stack_pop` may also use the stack as a temporary GC root; such uses do
+not necessarily mean that the pushed register is an active evaluator frame, and
+they should not automatically set or clear `reg_is_on_stack_bit`.
+
+Exception unwinding must do two things: clean frame-owned state and preserve the
+current exception-context behavior.  Cleanup includes active-register pop/reset
+and any temporary-root cleanup owned by the frame.  Cleanup during unwind should
+not mask the original exception; stack mismatches or impossible frame states are
+internal evaluator bugs.
+
+Reduction frames also need enough information to reconstruct the current
+`evaluating reg ...` context.  That context must cover both the callback and any
+subsequent evaluation of the operation result.  The order of prepended contexts
+should match the old recursive behavior.  Existing `error_exception`,
+`myexception`, and `std::exception` handling should be preserved, including the
+current `log_verbose` behavior for `error_exception`.
 
 ## Examples
 
@@ -809,10 +890,12 @@ making source/dependency/value registers explicit.
 
 Do not convert every builtin at once.
 
-The migration has two different goals:
+The migration has three related goals:
 
-1. Validate the prepared-operation protocol on easy operations.
-2. Establish a real stack-safe object-language recursion path.
+1. Establish a real evaluator path that uses an explicit loop.
+2. Validate the prepared-operation protocol on easy operations.
+3. Establish a stack-safe object-language recursion path through lazy control
+   operations.
 
 Easy protocol validation can start with strict kernels that already resemble
 `e_op`:
@@ -856,20 +939,26 @@ initial design.
 
 Suggested implementation order:
 
-1. Add the explicit evaluator stack types and make GC trace them.
-2. Add the shared engine with enough `EnterReg` behavior to handle constants and
-   simple references.
-3. Add prepared operations and convert a small strict value operation.
-4. Convert one core lazy operation such as `apply` or `case`.
-5. Route `incremental_evaluate1` through the engine for the converted path.
-6. Add deep-recursion tests.  Tests for unimplemented stack safety should be
-   marked expected-fail until the engine path handles them.
-7. Extend the policy layer and frames until `incremental_evaluate2` can use the
-   same engine.
+1. Route one real evaluator path through an explicit loop and remove direct
+   evaluator-internal recursion from that path.  `incremental_evaluate1` is the
+   current intended first candidate, but the important requirement is that the
+   loop is used immediately by a real evaluator path.
+2. Preserve legacy `OperationArgs` callback recursion as a marked compatibility
+   path during this first step.
+3. Make evaluator frames visible to GC and make active-register and
+   temporary-root cleanup explicit.
+4. Add tests for the converted evaluator path.  Tests for not-yet-converted
+   stack-safety behavior should be expected-fail until the engine path handles
+   them.
+5. Convert one core lazy operation such as `apply` or `case` to an engine-native
+   prepared or dynamic frame.
+6. Convert simple fixed-demand builtins to prepared operations.
+7. Extend the same engine model to `incremental_evaluate2` and unchangeable
+   evaluation, adding policy structure only once the shared shape is clear.
 8. Add dynamic operation frames when converting the first operation that needs
    dynamic demands.
-9. Remove or shrink legacy recursive `OperationArgs` paths as converted
-   operations make them unnecessary.
+9. Remove or shrink legacy recursive `OperationArgs` paths as prepared or
+   dynamic operation coverage grows.
 
 The old operation path can remain temporarily for arbitrary C++ callbacks.  It
 is not stack-safe if the callback recursively evaluates, but it allows gradual
