@@ -65,6 +65,98 @@ frames replace them.  `incremental_evaluate1` is the current intended first
 candidate, but this document does not require a particular first-loop
 implementation strategy.
 
+## Design-space map
+
+The stack rewrite has several separable design choices.  Mixing these choices
+up makes it harder to see what is required and what is merely one
+implementation strategy.
+
+Frame granularity:
+
+- Activation frames represent one active evaluation and contain a small state
+  machine.  A frame can start in an `enter` state, change into an `after_*`
+  continuation while a child runs, and finally clean itself up.  This uses fewer
+  frames and centralizes active-register cleanup, but the continuation structure
+  is less visible than with one frame per code fragment.
+- Prefix or continuation frames represent the next fragment of evaluator code
+  to run.  Evaluating `r` might push frames such as `Return`, `Leave(r)`,
+  `AfterChangeableCall(r,s)`, and `Enter(child)`.  This mirrors the current
+  recursive call/return structure more directly and works naturally with
+  function-pointer dispatch, but it creates more frames and must represent
+  cleanup explicitly.
+- A command stack plus result stack treats evaluation as a small stack program,
+  such as `Finish(+)`, `Eval(y)`, `Eval(x)`.  This can be compact for
+  fixed-demand operations, but dependency bookkeeping and cleanup state must
+  remain explicit enough to audit.
+
+Dispatch:
+
+- An enum plus `switch` is the simplest representation.  It keeps dispatch,
+  field validity, GC tracing, and debugging close together.
+- An enum can also index a dispatch table.  This is an indirect-threaded style:
+  the frame stores a compact opcode, and the engine looks up the code to run.
+- A frame can store a function pointer or member-function pointer directly.
+  This is a direct-threaded or continuation-dispatch style.  It can make prefix
+  frames look like calls to small member functions, but GC, unwinding, and debug
+  printing still need a tag or descriptor that says what fields the frame
+  contains.
+- Virtual frame objects are another version of function dispatch.  They are
+  flexible, but add allocation and pointer chasing unless backed by a custom
+  arena.
+
+Physical frame layout:
+
+- A single fixed-size frame struct with a tag is easiest to implement and trace.
+  Some fields are unused in some states.
+- A `std::variant` of frame structs improves field validity in C++ code, but is
+  usually still as large as its largest alternative and requires visitors for
+  trace, remap, cleanup, and debug output.
+- A fixed header plus variable-size payload area supports differently sized
+  frames while keeping storage contiguous.  This is a common long-term runtime
+  shape, but it requires frame descriptors for tracing, remapping, unwinding,
+  and debugging.
+- Heap-allocated polymorphic frames are the most flexible and probably the
+  least attractive first step for this evaluator, because every push would add
+  allocator, locality, and ownership concerns.
+
+Result delivery:
+
+- A parent-frame mailbox stores a child result in the frame that requested it.
+- An engine-level pending-result slot stores the latest result outside the
+  frames.
+- A result stack separates value flow from control flow.
+- Immediate resume dispatch can pop a child and directly call or step the
+  parent.
+
+The result-delivery invariant is independent of the chosen mechanism: the child
+result must be consumed by the continuation that requested it, and it must be
+visible to GC or consumed before any allocation can occur.
+
+Cleanup and return:
+
+- Centralized cleanup can be handled by a helper such as `finish_frame`, which
+  pops temporary roots, clears active-register state, pops the frame, and
+  delivers the result.
+- Explicit cleanup can be represented by `Leave` frames, and the final public
+  return can be represented by a `Return` frame.
+
+Both are viable.  Centralized cleanup gives fewer frames; explicit cleanup
+frames make the call/return skeleton easier to see.
+
+Re-entry:
+
+- A local frame stack per public evaluator call avoids interference between
+  calls, but does not directly expose in-flight frames to `reg_heap` GC.
+- A shared stack on `reg_heap` with a per-call base-depth delimiter lets nested
+  legacy calls coexist with an outer loop and gives GC one place to trace
+  evaluator frames.
+
+The mandatory parts are not the specific choices above.  The mandatory parts
+are: recursive evaluator calls become scheduled work, active-register lifetime
+is preserved, temporary roots survive until their uses are done, exceptions
+unwind frames correctly, and every register stored in a frame is traced and
+remapped.
+
 ## Semantic constraints
 
 The initial stack refactor should preserve behavior.
@@ -403,7 +495,7 @@ the step-edge design is ready.
 
 ## Stack representation
 
-The primary runtime structure should be an explicit evaluator stack:
+The preferred primary runtime structure is an explicit evaluator stack:
 
 ```text
 EvalEngine {
@@ -432,6 +524,13 @@ DynamicOpFrame
 FinishReductionResult
 Cleanup
 ```
+
+This list describes logical frame roles, not necessarily C++ classes.  An
+initial implementation might represent several roles as states of one fixed
+frame struct.  A later implementation might split them into a variant or into
+headers with variable-size payloads.  The representation choice should not
+change the semantic invariants about result delivery, active-register lifetime,
+temporary roots, or GC tracing.
 
 `EnterReg` evaluates one register under an `EvalRequest`.  A child frame must
 return an `EvalResult` to exactly the parent continuation that requested the
@@ -558,6 +657,13 @@ while control_stack is not empty:
 
     step frame
 ```
+
+This pseudocode is intentionally written as a switch-style loop, because that is
+the easiest form to audit first.  The same control flow could later be expressed
+with threaded dispatch, where a frame stores a function pointer or descriptor
+for the code that resumes it.  Dispatch style is a performance and code-shape
+choice; it does not remove the need for frame metadata used by GC, exception
+unwinding, and debugging.
 
 A frame step can:
 
