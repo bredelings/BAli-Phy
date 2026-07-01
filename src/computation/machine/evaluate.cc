@@ -389,80 +389,71 @@ pair<int,int> reg_heap::incremental_evaluate1_changeable_(int r)
     assert(not has_step1(r));
     assert(closure_at(r).has_code());
 
-    if (closure_at(r).is_reg_ref())
-        std::abort();
-
-    else if (closure_at(r).get_code().is_whnf())
-        std::abort();
-
-#ifndef NDEBUG
-    else if (is_trim_code(closure_at(r)))
-        std::abort();
-#endif
+    assert(not closure_at(r).is_reg_ref());
+    assert(not closure_at(r).get_code().is_whnf());
+    assert(not is_trim_code(closure_at(r)));
 
     // 3. Reduction: Operation (includes @, case, +, etc.)
-    else
+
+    // The only we reason we are getting this here is to store created_regs on it,
+    // if we perform allocations AFTER using/forcing something changeable.
+    int s = get_shared_step(r);
+
+    try
     {
-        // The only we reason we are getting this here is to store created_regs on it,
-        // if we perform allocations AFTER using/forcing something changeable.
-        int s = get_shared_step(r);
+        RegOperationArgs1Changeable Args(r, s, *this);
+        auto O = operation_for_reduction(closure_at(r));
+        closure value = (*O)(Args);
+        total_reductions++;
 
-        try
+        total_changeable_reductions++;
+        mark_reg_changeable(r);
+
+        int r2;
+        if (value.is_reg_ref())
         {
-            RegOperationArgs1Changeable Args(r, s, *this);
-            auto O = operation_for_reduction(closure_at(r));
-            closure value = (*O)(Args);
-            total_reductions++;
-
-            total_changeable_reductions++;
-            mark_reg_changeable(r);
-
-            int r2;
-            if (value.is_reg_ref())
-            {
-                r2 = value.reg_for_ref();
-            }
-            else
-            {
-                r2 = Args.allocate( std::move(value) ) ;
-                assert(regs[r2].created_by_step.value().first == s);
-                assert(not has_step1(r2));
-            }
-
-            auto [call,result] = incremental_evaluate1(r2);
-
-            set_call(s, call);
-
-            prog_steps[r] = s;
-            set_result_for_reg(r);
-
-            if (not tokens[root_token].children.empty())
-            {
-                int t = tokens[root_token].children[0];
-                tokens[t].vm_result.add_value(r, non_computed_index);
-                tokens[t].vm_step.add_value(r, non_computed_index);
-            }
-
-            assert(not reg_is_unevaluated(r));
-            return {r, result};
+            r2 = value.reg_for_ref();
         }
-        catch (error_exception& e)
+        else
         {
-            if (log_verbose)
-                throw_reg_exception(*this, root_token, r, e, true);
-            else
-                throw;
+            r2 = Args.allocate( std::move(value) ) ;
+            assert(regs[r2].created_by_step.value().first == s);
+            assert(not has_step1(r2));
         }
-        catch (myexception& e)
+
+        auto [call,result] = incremental_evaluate1(r2);
+
+        set_call(s, call);
+
+        prog_steps[r] = s;
+        set_result_for_reg(r);
+
+        if (not tokens[root_token].children.empty())
         {
+            int t = tokens[root_token].children[0];
+            tokens[t].vm_result.add_value(r, non_computed_index);
+            tokens[t].vm_step.add_value(r, non_computed_index);
+        }
+
+        assert(not reg_is_unevaluated(r));
+        return {r, result};
+    }
+    catch (error_exception& e)
+    {
+        if (log_verbose)
             throw_reg_exception(*this, root_token, r, e, true);
-        }
-        catch (const std::exception& ee)
-        {
-            myexception e;
-            e<<ee.what();
-            throw_reg_exception(*this, root_token, r, e, true);
-        }
+        else
+            throw;
+    }
+    catch (myexception& e)
+    {
+        throw_reg_exception(*this, root_token, r, e, true);
+    }
+    catch (const std::exception& ee)
+    {
+        myexception e;
+        e<<ee.what();
+        throw_reg_exception(*this, root_token, r, e, true);
     }
 
     std::cerr<<"incremental_evaluate1_changeable_: unreachable?";
