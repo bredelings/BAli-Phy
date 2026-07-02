@@ -1475,6 +1475,13 @@ int reg_heap::incremental_evaluate_unchangeable(int r)
         eval_frame.r = r;
         eval_unchangeable_frames.push_back(eval_frame);
 
+        auto cleanup_active_reg = [&](int active_r)
+        {
+            assert(reg_is_on_stack(active_r));
+            regs[active_r].flags.reset(reg_is_on_stack_bit);
+            stack.pop_back();
+        };
+
         while (true)
         {
             auto kind = eval_unchangeable_frames.back().kind;
@@ -1501,18 +1508,32 @@ int reg_heap::incremental_evaluate_unchangeable(int r)
             int result;
             try
             {
+                assert(regs.is_valid_address(r2));
+                assert(regs.is_used(r2));
+
+                // NOTE: Keep activating each ref-no-force link before retargeting.
+                // Chasing the chain before activation may be faster, but would
+                // change active-stack behavior and should be considered separately.
+                if (unevaluated_reg_is_ref_no_force(r2))
+                {
+                    int r3 = closure_at(r2).reg_for_ref();
+
+                    cleanup_active_reg(r2);
+                    assert(eval_unchangeable_frames.back().kind == EvalUnchangeableFrameKind::eval_enter);
+                    eval_unchangeable_frames.back().r = r3;
+                    continue;
+                }
+
                 result = incremental_evaluate_unchangeable_(r2);
             }
             catch (...)
             {
-                regs[r2].flags.reset(reg_is_on_stack_bit);
-                stack.pop_back();
+                cleanup_active_reg(r2);
                 throw;
             }
 
             assert(reg_is_on_stack(r2));
-            regs[r2].flags.reset(reg_is_on_stack_bit);
-            stack.pop_back();
+            cleanup_active_reg(r2);
 
             eval_unchangeable_frames.pop_back();
             assert(not eval_unchangeable_frames.empty());
