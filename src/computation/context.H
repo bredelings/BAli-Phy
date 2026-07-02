@@ -6,6 +6,7 @@
 #include "computation/closure.H"
 #include "computation/program.H"
 #include "computation/runtime/ast.H"
+#include "computation/machine/eval_result.H"
 #include "util/math/log-double.H"
 #include "util/bounds.H"
 #include "mcmc/prob_ratios.H"
@@ -87,7 +88,7 @@ public:
     const closure& lazy_evaluate_reg(int& r) const;
 
     /// Return the value of a particular index, computing it if necessary
-    std::pair<int,int> incremental_evaluate(int r) const;
+    EvalResult incremental_evaluate(int r) const;
 
     /// Return the value of a particular index, computing it if necessary
     const Runtime::Exp& evaluate_head_unchangeable(int index) const;

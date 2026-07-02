@@ -2961,7 +2961,7 @@ optional<int> reg_heap::precomputed_value_in_context(int r, int c)
     }
 }
 
-pair<int,int> reg_heap::incremental_evaluate_in_context(int R, int c)
+EvalResult reg_heap::incremental_evaluate_in_context(int R, int c)
 {
 #if DEBUG_MACHINE >= 2
     check_used_regs();

@@ -82,14 +82,14 @@ class RegOperationArgs1Changeable final: public OperationArgs
     /// Those dependencies should already have been recorded.
     int evaluate_reg_force(int r2) override
         {
-            return M.incremental_evaluate1(r2).second;
+            return M.incremental_evaluate1(r2).value_reg;
         }
 
     /// Evaluate the reg r2 without recording new dependencies.
     /// Those dependencies should already have been recorded.
     int evaluate_reg_use(int r2) override
         {
-            return M.incremental_evaluate1(r2).second;
+            return M.incremental_evaluate1(r2).value_reg;
         }
 
 public:
@@ -180,7 +180,7 @@ public:
 
 /// Evaluate r and look through register-reference chains to return the first reg that is NOT a reg reference.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg reference.
-pair<int,int> reg_heap::incremental_evaluate1(int r)
+EvalResult reg_heap::incremental_evaluate1(int r)
 {
     assert(execution_allowed_at_root());
 
@@ -192,8 +192,8 @@ pair<int,int> reg_heap::incremental_evaluate1(int r)
     stack.push_back(r);
 
     auto result = incremental_evaluate1_(r);
-    assert(not reg_is_ref_no_force(result.first));
-    assert(not reg_is_unevaluated(result.first));
+    assert(not reg_is_ref_no_force(result.dep_reg));
+    assert(not reg_is_unevaluated(result.dep_reg));
     assert(not reg_is_unevaluated(r));
     assert(reg_is_on_stack(r));
 
@@ -325,7 +325,7 @@ closure evaluate_e_op_to_c(OperationArgs& Args)
 
 /// Evaluate a ref-with-force in evaluate1 without forcing its attached regs.
 /// This preserves evaluate1's current treatment of forced references.
-pair<int,int> reg_heap::incremental_evaluate1_ref_with_force_(int r)
+EvalResult reg_heap::incremental_evaluate1_ref_with_force_(int r)
 {
     assert(reg_is_ref_with_force(r));
 
@@ -339,7 +339,7 @@ pair<int,int> reg_heap::incremental_evaluate1_ref_with_force_(int r)
 
 /// Handle evaluate1 for a changeable reg, including a reduction with no cached result.
 /// The no-result/no-step path must install changeable bookkeeping before returning.
-pair<int,int> reg_heap::incremental_evaluate1_changeable_(int r)
+EvalResult reg_heap::incremental_evaluate1_changeable_(int r)
 {
     assert(reg_is_changeable(r));
 
@@ -462,7 +462,7 @@ pair<int,int> reg_heap::incremental_evaluate1_changeable_(int r)
 
 /// Evaluate an unevaluated register in evaluate1 through refs, WHNF, and reductions.
 /// Changeable registers are handled by incremental_evaluate1_changeable_ instead.
-pair<int,int> reg_heap::incremental_evaluate1_unevaluated_(int r)
+EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
 {
     assert(reg_is_unevaluated(r));
 
@@ -634,7 +634,7 @@ pair<int,int> reg_heap::incremental_evaluate1_unevaluated_(int r)
     std::abort();
 }
 
-pair<int,int> reg_heap::incremental_evaluate1_(int r)
+EvalResult reg_heap::incremental_evaluate1_(int r)
 {
     assert(regs.is_valid_address(r));
     assert(regs.is_used(r));
@@ -839,7 +839,7 @@ int reg_heap::dec_count(int r)
 
 /// Evaluate r and look through register-reference chains to return the first reg that is NOT a reg reference.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg reference.
-pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
+EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
 {
     assert(execution_allowed_at_root());
 
@@ -851,21 +851,21 @@ pair<int,int> reg_heap::incremental_evaluate2(int r, bool do_count)
     stack.push_back(r);
 
     auto result = incremental_evaluate2_(r);
-    assert(not reg_is_ref_no_force(result.first));
-    assert(not reg_is_unevaluated(result.first));
+    assert(not reg_is_ref_no_force(result.dep_reg));
+    assert(not reg_is_unevaluated(result.dep_reg));
     assert(not reg_is_unevaluated(r));
 
     assert(reg_is_on_stack(r));
     stack.pop_back();
     regs[r].flags.reset(reg_is_on_stack_bit);
 
-    int r2 = result.first;
+    int r2 = result.dep_reg;
     if (do_count and reg_is_changeable_or_forcing(r2))
         inc_count(r2);
     return result;
 }
 
-pair<int,int> reg_heap::incremental_evaluate2_(int r)
+EvalResult reg_heap::incremental_evaluate2_(int r)
 {
     assert(regs.is_valid_address(r));
     assert(regs.is_used(r));
@@ -899,7 +899,7 @@ pair<int,int> reg_heap::incremental_evaluate2_(int r)
     std::abort();
 }
 
-pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
+EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
 {
     assert(regs.is_valid_address(r));
     assert(regs.is_used(r));
@@ -1084,7 +1084,7 @@ pair<int,int> reg_heap::incremental_evaluate2_unevaluated_(int r)
 
 }
 
-pair<int,int> reg_heap::incremental_evaluate2_ref_with_force_(int r)
+EvalResult reg_heap::incremental_evaluate2_ref_with_force_(int r)
 {
     if (not reg_is_forced(r))
 	force_reg_no_call(r);
@@ -1110,7 +1110,7 @@ pair<int,int> reg_heap::incremental_evaluate2_ref_with_force_(int r)
     return {r, result3};
 }
 
-pair<int,int> reg_heap::incremental_evaluate2_changeable_(int r)
+EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
 {
     total_changeable_eval2++;
 

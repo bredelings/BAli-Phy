@@ -79,7 +79,7 @@ const closure& context_ref::lazy_evaluate_reg(int& r) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-std::pair<int,int> context_ref::incremental_evaluate(int r) const
+EvalResult context_ref::incremental_evaluate(int r) const
 {
     return memory()->incremental_evaluate_in_context(r, context_index);
 }

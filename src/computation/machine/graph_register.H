@@ -13,6 +13,7 @@
 #include "computation/program.H"
 #include <boost/container/small_vector.hpp>
 #include "computation/loader.H"
+#include "computation/machine/eval_result.H"
 #include "util/assert.hh"
 #include "util/bitmask.H"
 #include "mcmc/prob_ratios.H"
@@ -769,23 +770,23 @@ public:
     void maybe_unshare_regs(int t1);
     bool execution_allowed_at_root() const;
 
-    std::pair<int,int> incremental_evaluate_in_context(int R, int c);
+    EvalResult incremental_evaluate_in_context(int R, int c);
 
-    std::pair<int,int> incremental_evaluate1(int R);
+    EvalResult incremental_evaluate1(int R);
 
-    std::pair<int,int> incremental_evaluate2(int R, bool);
+    EvalResult incremental_evaluate2(int R, bool);
 
     std::optional<int> precomputed_value_in_context(int R, int c);
 
 private:  
-    std::pair<int,int> incremental_evaluate1_(int R);
-    std::pair<int,int> incremental_evaluate1_changeable_(int R);
-    std::pair<int,int> incremental_evaluate1_ref_with_force_(int R);
-    std::pair<int,int> incremental_evaluate1_unevaluated_(int R);
-    std::pair<int,int> incremental_evaluate2_(int R);
-    std::pair<int,int> incremental_evaluate2_ref_with_force_(int R);
-    std::pair<int,int> incremental_evaluate2_changeable_(int R);
-    std::pair<int,int> incremental_evaluate2_unevaluated_(int R);
+    EvalResult incremental_evaluate1_(int R);
+    EvalResult incremental_evaluate1_changeable_(int R);
+    EvalResult incremental_evaluate1_ref_with_force_(int R);
+    EvalResult incremental_evaluate1_unevaluated_(int R);
+    EvalResult incremental_evaluate2_(int R);
+    EvalResult incremental_evaluate2_ref_with_force_(int R);
+    EvalResult incremental_evaluate2_changeable_(int R);
+    EvalResult incremental_evaluate2_unevaluated_(int R);
     int incremental_evaluate_unchangeable_(int R);
 
 public:
