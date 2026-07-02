@@ -1418,21 +1418,71 @@ public:
 
 int reg_heap::incremental_evaluate_unchangeable(int r)
 {
+    auto return_frame_index = eval_unchangeable_frames.size();
+
+    try
+    {
+        EvalUnchangeableFrame return_frame;
+        return_frame.kind = EvalUnchangeableFrameKind::return_frame;
+        eval_unchangeable_frames.push_back(return_frame);
+
+        EvalUnchangeableFrame eval_frame;
+        eval_frame.kind = EvalUnchangeableFrameKind::eval_enter;
+        eval_frame.r = r;
+        eval_unchangeable_frames.push_back(eval_frame);
+
+        while (true)
+        {
+            auto kind = eval_unchangeable_frames.back().kind;
+
+            if (kind == EvalUnchangeableFrameKind::return_frame)
+            {
+                assert(eval_unchangeable_frames.back().result);
+                int result = *eval_unchangeable_frames.back().result;
+                eval_unchangeable_frames.pop_back();
+                return result;
+            }
+
+            assert(kind == EvalUnchangeableFrameKind::eval_enter);
+            int r2 = eval_unchangeable_frames.back().r;
+
 #ifndef NDEBUG
-    if (reg_is_on_stack(r))
-        throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
+            if (reg_is_on_stack(r2))
+                throw myexception()<<"Evaluating reg "<<r2<<" that is already on the stack!";
 #endif
 
-    regs[r].flags.set(reg_is_on_stack_bit);
-    stack.push_back(r);
+            stack.push_back(r2);
+            regs[r2].flags.set(reg_is_on_stack_bit);
 
-    auto result = incremental_evaluate_unchangeable_(r);
-    assert(reg_is_on_stack(r));
+            int result;
+            try
+            {
+                result = incremental_evaluate_unchangeable_(r2);
+            }
+            catch (...)
+            {
+                regs[r2].flags.reset(reg_is_on_stack_bit);
+                stack.pop_back();
+                throw;
+            }
 
-    stack.pop_back();
-    regs[r].flags.reset(reg_is_on_stack_bit);
+            assert(reg_is_on_stack(r2));
+            regs[r2].flags.reset(reg_is_on_stack_bit);
+            stack.pop_back();
 
-    return result;
+            eval_unchangeable_frames.pop_back();
+            assert(not eval_unchangeable_frames.empty());
+            auto& parent = eval_unchangeable_frames.back();
+            assert(parent.kind == EvalUnchangeableFrameKind::return_frame);
+            assert(not parent.result);
+            parent.result = result;
+        }
+    }
+    catch (...)
+    {
+        eval_unchangeable_frames.resize(return_frame_index);
+        throw;
+    }
 }
 
 int reg_heap::incremental_evaluate_unchangeable_(int r)

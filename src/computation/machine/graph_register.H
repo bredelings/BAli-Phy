@@ -823,6 +823,24 @@ private:
     EvalResult incremental_evaluate2_ref_with_force_(int R);
     EvalResult incremental_evaluate2_changeable_(int R);
     EvalResult incremental_evaluate2_unevaluated_(int R);
+
+    enum class EvalUnchangeableFrameKind: unsigned char
+    {
+        return_frame,
+        eval_enter
+    };
+
+    struct EvalUnchangeableFrame
+    {
+        EvalUnchangeableFrameKind kind = EvalUnchangeableFrameKind::return_frame;
+        int r = 0;
+        std::optional<int> result;
+    };
+
+    // Compatibility: eval_unchangeable_frames currently wraps unchangeable
+    // evaluation, but recursive calls inside the body still use the C++ stack.
+    std::vector<EvalUnchangeableFrame> eval_unchangeable_frames;
+
     int incremental_evaluate_unchangeable_(int R);
 
 public:
