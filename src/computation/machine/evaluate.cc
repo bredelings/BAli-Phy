@@ -930,6 +930,13 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
         eval_frame.do_count = do_count;
         eval2_frames.push_back(eval_frame);
 
+        auto cleanup_active_reg = [&](int active_r)
+        {
+            assert(reg_is_on_stack(active_r));
+            regs[active_r].flags.reset(reg_is_on_stack_bit);
+            stack.pop_back();
+        };
+
         while (true)
         {
             auto kind = eval2_frames.back().kind;
@@ -956,12 +963,28 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
             EvalResult result;
             try
             {
+                assert(regs.is_valid_address(r2));
+                assert(regs.is_used(r2));
+
+                // NOTE: Keep activating each ref-no-force link before retargeting.
+                // Chasing the chain before activation may be faster, but would
+                // change active-stack behavior and should be considered separately.
+                if (unevaluated_reg_is_ref_no_force(r2))
+                {
+                    assert(not has_result1(r2));
+                    int r3 = closure_at(r2).reg_for_ref();
+
+                    cleanup_active_reg(r2);
+                    assert(eval2_frames.back().kind == Eval2FrameKind::eval_enter);
+                    eval2_frames.back().r = r3;
+                    continue;
+                }
+
                 result = incremental_evaluate2_(r2);
             }
             catch (...)
             {
-                regs[r2].flags.reset(reg_is_on_stack_bit);
-                stack.pop_back();
+                cleanup_active_reg(r2);
                 throw;
             }
 
@@ -970,8 +993,7 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
             assert(not reg_is_unevaluated(r2));
 
             assert(reg_is_on_stack(r2));
-            regs[r2].flags.reset(reg_is_on_stack_bit);
-            stack.pop_back();
+            cleanup_active_reg(r2);
 
             int dep_reg = result.dep_reg;
             if (do_count2 and reg_is_changeable_or_forcing(dep_reg))
