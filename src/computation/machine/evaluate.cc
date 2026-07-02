@@ -184,23 +184,74 @@ EvalResult reg_heap::incremental_evaluate1(int r)
 {
     assert(execution_allowed_at_root());
 
+    auto return_frame_index = eval1_frames.size();
+
+    try
+    {
+        Eval1Frame return_frame;
+        return_frame.kind = Eval1FrameKind::return_frame;
+        eval1_frames.push_back(return_frame);
+
+        Eval1Frame eval_frame;
+        eval_frame.kind = Eval1FrameKind::eval_enter;
+        eval_frame.r = r;
+        eval1_frames.push_back(eval_frame);
+
+        while (true)
+        {
+            auto kind = eval1_frames.back().kind;
+
+            if (kind == Eval1FrameKind::return_frame)
+            {
+                assert(eval1_frames.back().result);
+                auto result = *eval1_frames.back().result;
+                eval1_frames.pop_back();
+                return result;
+            }
+
+            assert(kind == Eval1FrameKind::eval_enter);
+            int r2 = eval1_frames.back().r;
+
 #ifndef NDEBUG
-    if (reg_is_on_stack(r))
-        throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
+            if (reg_is_on_stack(r2))
+                throw myexception()<<"Evaluating reg "<<r2<<" that is already on the stack!";
 #endif
-    regs[r].flags.set(reg_is_on_stack_bit);
-    stack.push_back(r);
+            stack.push_back(r2);
+            regs[r2].flags.set(reg_is_on_stack_bit);
 
-    auto result = incremental_evaluate1_(r);
-    assert(not reg_is_ref_no_force(result.dep_reg));
-    assert(not reg_is_unevaluated(result.dep_reg));
-    assert(not reg_is_unevaluated(r));
-    assert(reg_is_on_stack(r));
+            EvalResult result;
+            try
+            {
+                result = incremental_evaluate1_(r2);
+            }
+            catch (...)
+            {
+                regs[r2].flags.reset(reg_is_on_stack_bit);
+                stack.pop_back();
+                throw;
+            }
 
-    stack.pop_back();
-    regs[r].flags.reset(reg_is_on_stack_bit);
+            assert(not reg_is_ref_no_force(result.dep_reg));
+            assert(not reg_is_unevaluated(result.dep_reg));
+            assert(not reg_is_unevaluated(r2));
+            assert(reg_is_on_stack(r2));
 
-    return result;
+            regs[r2].flags.reset(reg_is_on_stack_bit);
+            stack.pop_back();
+
+            eval1_frames.pop_back();
+            assert(not eval1_frames.empty());
+            auto& parent = eval1_frames.back();
+            assert(parent.kind == Eval1FrameKind::return_frame);
+            assert(not parent.result);
+            parent.result = result;
+        }
+    }
+    catch (...)
+    {
+        eval1_frames.resize(return_frame_index);
+        throw;
+    }
 }
 
 vector<R::Exp> e_value_stack;

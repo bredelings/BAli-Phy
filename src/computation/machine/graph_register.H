@@ -779,6 +779,23 @@ public:
     std::optional<int> precomputed_value_in_context(int R, int c);
 
 private:  
+    enum class Eval1FrameKind: unsigned char
+    {
+        return_frame,
+        eval_enter
+    };
+
+    struct Eval1Frame
+    {
+        Eval1FrameKind kind = Eval1FrameKind::return_frame;
+        int r = 0;
+        std::optional<EvalResult> result;
+    };
+
+    // Compatibility: eval1_frames currently wraps evaluate1, but recursive
+    // calls inside incremental_evaluate1_ still use the C++ stack.
+    std::vector<Eval1Frame> eval1_frames;
+
     EvalResult incremental_evaluate1_(int R);
     EvalResult incremental_evaluate1_changeable_(int R);
     EvalResult incremental_evaluate1_ref_with_force_(int R);
