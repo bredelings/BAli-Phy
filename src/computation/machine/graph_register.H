@@ -782,13 +782,15 @@ private:
     enum class Eval1FrameKind: unsigned char
     {
         return_frame,
-        eval_enter
+        eval_enter,
+        ref_with_force_finish
     };
 
     struct Eval1Frame
     {
         Eval1FrameKind kind = Eval1FrameKind::return_frame;
         int r = 0;
+        bool active = false;
         std::optional<EvalResult> result;
     };
 
@@ -797,7 +799,6 @@ private:
     std::vector<Eval1Frame> eval1_frames;
 
     EvalResult incremental_evaluate1_changeable_(int R);
-    EvalResult incremental_evaluate1_ref_with_force_(int R);
     EvalResult incremental_evaluate1_unevaluated_(int R);
 
     enum class Eval2FrameKind: unsigned char

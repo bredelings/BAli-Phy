@@ -186,6 +186,15 @@ EvalResult reg_heap::incremental_evaluate1(int r)
 
     auto return_frame_index = eval1_frames.size();
 
+    // Undo the active-register state installed for an eval frame.
+    // Suspended finish frames keep this ownership until their child returns.
+    auto cleanup_active_reg = [&](int active_r)
+    {
+        assert(reg_is_on_stack(active_r));
+        regs[active_r].flags.reset(reg_is_on_stack_bit);
+        stack.pop_back();
+    };
+
     try
     {
         Eval1Frame return_frame;
@@ -196,15 +205,6 @@ EvalResult reg_heap::incremental_evaluate1(int r)
         eval_frame.kind = Eval1FrameKind::eval_enter;
         eval_frame.r = r;
         eval1_frames.push_back(eval_frame);
-
-        // Undo the active-register state installed for the current eval frame.
-        // This is used before retargeting, returning, or rethrowing.
-        auto cleanup_active_reg = [&](int active_r)
-        {
-            assert(reg_is_on_stack(active_r));
-            regs[active_r].flags.reset(reg_is_on_stack_bit);
-            stack.pop_back();
-        };
 
         while (true)
         {
@@ -218,6 +218,28 @@ EvalResult reg_heap::incremental_evaluate1(int r)
                 return result;
             }
 
+            if (kind == Eval1FrameKind::ref_with_force_finish)
+            {
+                auto& frame = eval1_frames.back();
+                assert(frame.result);
+                auto child_result = *frame.result;
+                EvalResult result = {frame.r, child_result.value_reg};
+
+                assert(not reg_is_unevaluated(frame.r));
+                assert(frame.active);
+                cleanup_active_reg(frame.r);
+                frame.active = false;
+
+                eval1_frames.pop_back();
+                assert(not eval1_frames.empty());
+                auto& parent = eval1_frames.back();
+                assert(parent.kind == Eval1FrameKind::return_frame or
+                       parent.kind == Eval1FrameKind::ref_with_force_finish);
+                assert(not parent.result);
+                parent.result = result;
+                continue;
+            }
+
             assert(kind == Eval1FrameKind::eval_enter);
             int r2 = eval1_frames.back().r;
 
@@ -227,6 +249,7 @@ EvalResult reg_heap::incremental_evaluate1(int r)
 #endif
             stack.push_back(r2);
             regs[r2].flags.set(reg_is_on_stack_bit);
+            eval1_frames.back().active = true;
 
             EvalResult result;
             try
@@ -256,18 +279,36 @@ EvalResult reg_heap::incremental_evaluate1(int r)
                     int r3 = closure_at(r2).reg_for_ref();
 
                     cleanup_active_reg(r2);
+                    eval1_frames.back().active = false;
                     assert(eval1_frames.back().kind == Eval1FrameKind::eval_enter);
                     eval1_frames.back().r = r3;
                     continue;
                 }
                 else if (reg_is_ref_with_force(r2))
-                    result = incremental_evaluate1_ref_with_force_(r2);
+                {
+                    // We don't have to force the forced regs in evaluate1.
+                    int r3 = closure_at(r2).reg_for_ref();
+
+                    Eval1Frame eval_frame;
+                    eval_frame.kind = Eval1FrameKind::eval_enter;
+                    eval_frame.r = r3;
+                    eval1_frames.push_back(eval_frame);
+
+                    assert(eval1_frames[eval1_frames.size() - 2].kind == Eval1FrameKind::eval_enter);
+                    eval1_frames[eval1_frames.size() - 2].kind = Eval1FrameKind::ref_with_force_finish;
+                    continue;
+                }
                 else
                     result = incremental_evaluate1_unevaluated_(r2);
             }
             catch (...)
             {
-                cleanup_active_reg(r2);
+                assert(eval1_frames.back().kind == Eval1FrameKind::eval_enter);
+                if (eval1_frames.back().active)
+                {
+                    cleanup_active_reg(r2);
+                    eval1_frames.back().active = false;
+                }
                 throw;
             }
 
@@ -277,17 +318,28 @@ EvalResult reg_heap::incremental_evaluate1(int r)
             assert(reg_is_on_stack(r2));
 
             cleanup_active_reg(r2);
+            eval1_frames.back().active = false;
 
             eval1_frames.pop_back();
             assert(not eval1_frames.empty());
             auto& parent = eval1_frames.back();
-            assert(parent.kind == Eval1FrameKind::return_frame);
+            assert(parent.kind == Eval1FrameKind::return_frame or
+                   parent.kind == Eval1FrameKind::ref_with_force_finish);
             assert(not parent.result);
             parent.result = result;
         }
     }
     catch (...)
     {
+        for (auto i = eval1_frames.size(); i > return_frame_index; --i)
+        {
+            auto& frame = eval1_frames[i - 1];
+            if (frame.active)
+            {
+                cleanup_active_reg(frame.r);
+                frame.active = false;
+            }
+        }
         eval1_frames.resize(return_frame_index);
         throw;
     }
@@ -411,20 +463,6 @@ closure evaluate_e_op_to_c(OperationArgs& Args)
     // Make a copy here because the location of Args.current_closure() can change if the heap grows.
     auto E = Args.current_closure().get_code();
     return closure(evaluate_e_op(Args, E));
-}
-
-/// Evaluate a ref-with-force in evaluate1 without forcing its attached regs.
-/// This preserves evaluate1's current treatment of forced references.
-EvalResult reg_heap::incremental_evaluate1_ref_with_force_(int r)
-{
-    assert(reg_is_ref_with_force(r));
-
-    // We don't have to force the forced regs in evaluate1.
-    int r2 = closure_at(r).reg_for_ref();
-    auto [r3, result3] = incremental_evaluate1(r2);
-
-    assert(not reg_is_unevaluated(r));
-    return {r, result3};
 }
 
 /// Handle evaluate1 for a changeable reg, including a reduction with no cached result.
