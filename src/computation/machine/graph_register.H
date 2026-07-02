@@ -815,10 +815,9 @@ private:
     };
 
     // Compatibility: eval2_frames currently wraps evaluate2, but recursive
-    // calls inside incremental_evaluate2_ still use the C++ stack.
+    // calls inside the evaluator helpers still use the C++ stack.
     std::vector<Eval2Frame> eval2_frames;
 
-    EvalResult incremental_evaluate2_(int R);
     EvalResult incremental_evaluate2_ref_with_force_(int R);
     EvalResult incremental_evaluate2_changeable_(int R);
     EvalResult incremental_evaluate2_unevaluated_(int R);
