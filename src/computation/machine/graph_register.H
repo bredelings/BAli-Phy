@@ -800,6 +800,25 @@ private:
     EvalResult incremental_evaluate1_changeable_(int R);
     EvalResult incremental_evaluate1_ref_with_force_(int R);
     EvalResult incremental_evaluate1_unevaluated_(int R);
+
+    enum class Eval2FrameKind: unsigned char
+    {
+        return_frame,
+        eval_enter
+    };
+
+    struct Eval2Frame
+    {
+        Eval2FrameKind kind = Eval2FrameKind::return_frame;
+        int r = 0;
+        bool do_count = false;
+        std::optional<EvalResult> result;
+    };
+
+    // Compatibility: eval2_frames currently wraps evaluate2, but recursive
+    // calls inside incremental_evaluate2_ still use the C++ stack.
+    std::vector<Eval2Frame> eval2_frames;
+
     EvalResult incremental_evaluate2_(int R);
     EvalResult incremental_evaluate2_ref_with_force_(int R);
     EvalResult incremental_evaluate2_changeable_(int R);

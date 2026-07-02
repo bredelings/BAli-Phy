@@ -894,26 +894,80 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
 {
     assert(execution_allowed_at_root());
 
+    auto return_frame_index = eval2_frames.size();
+
+    try
+    {
+        Eval2Frame return_frame;
+        return_frame.kind = Eval2FrameKind::return_frame;
+        eval2_frames.push_back(return_frame);
+
+        Eval2Frame eval_frame;
+        eval_frame.kind = Eval2FrameKind::eval_enter;
+        eval_frame.r = r;
+        eval_frame.do_count = do_count;
+        eval2_frames.push_back(eval_frame);
+
+        while (true)
+        {
+            auto kind = eval2_frames.back().kind;
+
+            if (kind == Eval2FrameKind::return_frame)
+            {
+                assert(eval2_frames.back().result);
+                auto result = *eval2_frames.back().result;
+                eval2_frames.pop_back();
+                return result;
+            }
+
+            assert(kind == Eval2FrameKind::eval_enter);
+            int r2 = eval2_frames.back().r;
+            bool do_count2 = eval2_frames.back().do_count;
+
 #ifndef NDEBUG
-    if (reg_is_on_stack(r))
-        throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
+            if (reg_is_on_stack(r2))
+                throw myexception()<<"Evaluating reg "<<r2<<" that is already on the stack!";
 #endif
-    regs[r].flags.set(reg_is_on_stack_bit);
-    stack.push_back(r);
+            stack.push_back(r2);
+            regs[r2].flags.set(reg_is_on_stack_bit);
 
-    auto result = incremental_evaluate2_(r);
-    assert(not reg_is_ref_no_force(result.dep_reg));
-    assert(not reg_is_unevaluated(result.dep_reg));
-    assert(not reg_is_unevaluated(r));
+            EvalResult result;
+            try
+            {
+                result = incremental_evaluate2_(r2);
+            }
+            catch (...)
+            {
+                regs[r2].flags.reset(reg_is_on_stack_bit);
+                stack.pop_back();
+                throw;
+            }
 
-    assert(reg_is_on_stack(r));
-    stack.pop_back();
-    regs[r].flags.reset(reg_is_on_stack_bit);
+            assert(not reg_is_ref_no_force(result.dep_reg));
+            assert(not reg_is_unevaluated(result.dep_reg));
+            assert(not reg_is_unevaluated(r2));
 
-    int r2 = result.dep_reg;
-    if (do_count and reg_is_changeable_or_forcing(r2))
-        inc_count(r2);
-    return result;
+            assert(reg_is_on_stack(r2));
+            regs[r2].flags.reset(reg_is_on_stack_bit);
+            stack.pop_back();
+
+            int dep_reg = result.dep_reg;
+            if (do_count2 and reg_is_changeable_or_forcing(dep_reg))
+                inc_count(dep_reg);
+
+            eval2_frames.pop_back();
+            assert(not eval2_frames.empty());
+            auto& parent = eval2_frames.back();
+            assert(parent.kind == Eval2FrameKind::return_frame);
+            assert(not parent.result);
+            parent.result = result;
+        }
+    }
+    catch (...)
+    {
+        eval2_frames.resize(return_frame_index);
+        throw;
+    }
 }
 
 EvalResult reg_heap::incremental_evaluate2_(int r)
