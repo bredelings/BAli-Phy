@@ -839,8 +839,6 @@ private:
     // evaluation, but recursive calls inside the body still use the C++ stack.
     std::vector<EvalUnchangeableFrame> eval_unchangeable_frames;
 
-    int incremental_evaluate_unchangeable_(int R);
-
 public:
   
     int incremental_evaluate_unchangeable(int R);

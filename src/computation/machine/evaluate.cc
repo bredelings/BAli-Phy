@@ -199,8 +199,6 @@ EvalResult reg_heap::incremental_evaluate1(int r)
 
         // Undo the active-register state installed for the current eval frame.
         // This is used before retargeting, returning, or rethrowing.
-        // Undo the active-register state installed for the current eval frame.
-        // This is used before retargeting, returning, or rethrowing.
         auto cleanup_active_reg = [&](int active_r)
         {
             assert(reg_is_on_stack(active_r));
@@ -918,6 +916,8 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
         eval_frame.do_count = do_count;
         eval2_frames.push_back(eval_frame);
 
+        // Undo the active-register state installed for the current eval frame.
+        // This is used before retargeting, returning, or rethrowing.
         auto cleanup_active_reg = [&](int active_r)
         {
             assert(reg_is_on_stack(active_r));
@@ -1444,6 +1444,8 @@ int reg_heap::incremental_evaluate_unchangeable(int r)
         eval_frame.r = r;
         eval_unchangeable_frames.push_back(eval_frame);
 
+        // Undo the active-register state installed for the current eval frame.
+        // This is used before retargeting, returning, or rethrowing.
         auto cleanup_active_reg = [&](int active_r)
         {
             assert(reg_is_on_stack(active_r));
@@ -1474,26 +1476,121 @@ int reg_heap::incremental_evaluate_unchangeable(int r)
             stack.push_back(r2);
             regs[r2].flags.set(reg_is_on_stack_bit);
 
-            int result;
+            int result = r2;
             try
             {
                 assert(regs.is_valid_address(r2));
                 assert(regs.is_used(r2));
 
-                // NOTE: Keep activating each ref-no-force link before retargeting.
-                // Chasing the chain before activation may be faster, but would
-                // change active-stack behavior and should be considered separately.
-                if (unevaluated_reg_is_ref_no_force(r2))
-                {
-                    int r3 = closure_at(r2).reg_for_ref();
+#ifndef NDEBUG
+                assert(closure_at(r2).has_code());
+#endif
 
-                    cleanup_active_reg(r2);
-                    assert(eval_unchangeable_frames.back().kind == EvalUnchangeableFrameKind::eval_enter);
-                    eval_unchangeable_frames.back().r = r3;
-                    continue;
+                bool retargeted = false;
+                while (1)
+                {
+                    assert(closure_at(r2).has_code());
+
+                    if (reg_is_constant(r2) or reg_is_changeable_or_forcing(r2))
+                        break;
+
+                    // NOTE: Keep activating each ref-no-force link before retargeting.
+                    // Chasing the chain before activation may be faster, but would
+                    // change active-stack behavior and should be considered separately.
+                    else if (unevaluated_reg_is_ref_no_force(r2))
+                    {
+                        int r3 = closure_at(r2).reg_for_ref();
+
+                        cleanup_active_reg(r2);
+                        assert(eval_unchangeable_frames.back().kind == EvalUnchangeableFrameKind::eval_enter);
+                        eval_unchangeable_frames.back().r = r3;
+                        retargeted = true;
+                        break;
+                    }
+                    else
+                        assert(reg_is_unevaluated(r2));
+
+                    /*---------- Below here, there is no call, and no value. ------------*/
+                    if (closure_at(r2).is_reg_ref())
+                    {
+                        mark_reg_ref_no_force(r2);
+
+                        bool was_index_var = is_index_var_code(closure_at(r2));
+                        int r3 = closure_at(r2).reg_for_ref();
+
+                        int r4 = incremental_evaluate_unchangeable( r3 );
+
+                        // If we point to r4 through an intermediate index_var chain, then change us to point to the end.
+                        if (was_index_var and r4 != r3)
+                            set_C(r2, closure(Runtime::IndexVar(0),{r4}));
+
+                        result = r4;
+                        break;
+                    }
+
+                    // Check for WHNF *OR* heap variables
+                    else if (closure_at(r2).get_code().is_whnf())
+                        mark_reg_constant(r2);
+
+#ifndef NDEBUG
+                    else if (is_trim_code(closure_at(r2)))
+                        std::abort();
+#endif
+
+                    // 3. Reduction: Operation (includes @, case, +, etc.)
+                    else
+                    {
+                        auto O = operation_for_reduction(closure_at(r2));
+
+                        // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
+                        // Therefore, we cannot do "assert(not result_for_reg(t,r).changeable);" here.
+
+#if defined(DEBUG_MACHINE) && DEBUG_MACHINE>2
+                        string SS = "";
+                        SS = compact_graph_expression(*this, r2, get_identifiers()).print();
+                        string SSS = untranslate_vars(deindexify(closure_at(r2)),
+                                                      get_identifiers()).print();
+                        if (log_verbose >= 3)
+                            write_dot_graph(*this);
+#endif
+
+                        try
+                        {
+                            RegOperationArgsUnchangeable Args(r2, *this);
+                            closure value = (*O)(Args);
+                            total_reductions++;
+            
+                            set_C(r2, std::move(value) );
+                        }
+                        catch (no_context&)
+                        {
+                            result = r2;
+                            break;
+                        }
+                        catch (error_exception& e)
+                        {
+                            throw;
+                        }
+                        catch (myexception& e)
+                        {
+                            throw_reg_exception(*this, root_token, r2, e, false);
+                        }
+                        catch (const std::exception& ee)
+                        {
+                            myexception e;
+                            e<<ee.what();
+                            throw_reg_exception(*this, root_token, r2, e, false);
+                        }
+
+#if defined(DEBUG_MACHINE) && DEBUG_MACHINE > 2
+                        //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
+                        std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
+#endif
+                    }
                 }
 
-                result = incremental_evaluate_unchangeable_(r2);
+                if (retargeted)
+                    continue;
             }
             catch (...)
             {
@@ -1517,108 +1614,4 @@ int reg_heap::incremental_evaluate_unchangeable(int r)
         eval_unchangeable_frames.resize(return_frame_index);
         throw;
     }
-}
-
-int reg_heap::incremental_evaluate_unchangeable_(int r)
-{
-    assert(regs.is_valid_address(r));
-    assert(regs.is_used(r));
-
-#ifndef NDEBUG
-    assert(closure_at(r).has_code());
-#endif
-
-    while (1)
-    {
-        assert(closure_at(r).has_code());
-
-        if (reg_is_constant(r) or reg_is_changeable_or_forcing(r))
-            break;
-
-        else if (unevaluated_reg_is_ref_no_force(r))
-        {
-            int r2 = closure_at(r).reg_for_ref();
-            return incremental_evaluate_unchangeable(r2);
-        }
-        else
-            assert(reg_is_unevaluated(r));
-
-        /*---------- Below here, there is no call, and no value. ------------*/
-        if (closure_at(r).is_reg_ref())
-        {
-            mark_reg_ref_no_force(r);
-
-            bool was_index_var = is_index_var_code(closure_at(r));
-            int r2 = closure_at(r).reg_for_ref();
-
-            int r3 = incremental_evaluate_unchangeable( r2 );
-
-            // If we point to r3 through an intermediate index_var chain, then change us to point to the end.
-            if (was_index_var and r3 != r2)
-                set_C(r, closure(Runtime::IndexVar(0),{r3}));
-
-            return r3;
-        }
-
-        // Check for WHNF *OR* heap variables
-        else if (closure_at(r).get_code().is_whnf())
-            mark_reg_constant(r);
-
-#ifndef NDEBUG
-        else if (is_trim_code(closure_at(r)))
-            std::abort();
-#endif
-
-        // 3. Reduction: Operation (includes @, case, +, etc.)
-        else
-        {
-            auto O = operation_for_reduction(closure_at(r));
-
-            // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable value.
-            // Therefore, we cannot do "assert(not result_for_reg(t,r).changeable);" here.
-
-#if defined(DEBUG_MACHINE) && DEBUG_MACHINE>2
-            string SS = "";
-            SS = compact_graph_expression(*this, r, get_identifiers()).print();
-            string SSS = untranslate_vars(deindexify(closure_at(r)),
-                                          get_identifiers()).print();
-            if (log_verbose >= 3)
-                write_dot_graph(*this);
-#endif
-
-            try
-            {
-                RegOperationArgsUnchangeable Args(r, *this);
-                closure value = (*O)(Args);
-                total_reductions++;
-        
-                set_C(r, std::move(value) );
-            }
-            catch (no_context&)
-            {
-                return r;
-            }
-            catch (error_exception& e)
-            {
-                throw;
-            }
-            catch (myexception& e)
-            {
-                throw_reg_exception(*this, root_token, r, e, false);
-            }
-            catch (const std::exception& ee)
-            {
-                myexception e;
-                e<<ee.what();
-                throw_reg_exception(*this, root_token, r, e, false);
-            }
-
-#if defined(DEBUG_MACHINE) && DEBUG_MACHINE > 2
-            //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
-            std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
-#endif
-        }
-    }
-
-    return r;
 }
