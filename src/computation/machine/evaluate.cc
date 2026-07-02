@@ -197,6 +197,8 @@ EvalResult reg_heap::incremental_evaluate1(int r)
         eval_frame.r = r;
         eval1_frames.push_back(eval_frame);
 
+        // Undo the active-register state installed for the current eval frame.
+        // This is used before retargeting, returning, or rethrowing.
         auto cleanup_active_reg = [&](int active_r)
         {
             assert(reg_is_on_stack(active_r));
@@ -232,10 +234,23 @@ EvalResult reg_heap::incremental_evaluate1(int r)
                 assert(regs.is_valid_address(r2));
                 assert(regs.is_used(r2));
 
+#ifndef NDEBUG
+                if (reg_has_value(r2))
+                {
+                    assert(access_value_for_reg(r2).get_code().is_whnf());
+                    assert(not reg_is_ref_no_force(r2));
+                    assert(not reg_is_unevaluated(r2));
+                }
+#endif
+
+                if (reg_is_constant(r2))
+                    result = {r2, r2};
+                else if (reg_is_changeable(r2))
+                    result = incremental_evaluate1_changeable_(r2);
                 // NOTE: Keep activating each ref-no-force link before retargeting.
                 // Chasing the chain before activation may be faster, but would
                 // change active-stack behavior and should be considered separately.
-                if (unevaluated_reg_is_ref_no_force(r2))
+                else if (unevaluated_reg_is_ref_no_force(r2))
                 {
                     assert(not has_result1(r2));
                     int r3 = closure_at(r2).reg_for_ref();
@@ -245,8 +260,10 @@ EvalResult reg_heap::incremental_evaluate1(int r)
                     eval1_frames.back().r = r3;
                     continue;
                 }
-
-                result = incremental_evaluate1_(r2);
+                else if (reg_is_ref_with_force(r2))
+                    result = incremental_evaluate1_ref_with_force_(r2);
+                else
+                    result = incremental_evaluate1_unevaluated_(r2);
             }
             catch (...)
             {
@@ -705,37 +722,6 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
 
     std::cerr<<"incremental_evaluate: unreachable?";
     std::abort();
-}
-
-EvalResult reg_heap::incremental_evaluate1_(int r)
-{
-    assert(regs.is_valid_address(r));
-    assert(regs.is_used(r));
-
-#ifndef NDEBUG
-    if (reg_has_value(r))
-    {
-        assert(access_value_for_reg(r).get_code().is_whnf());
-        assert(not reg_is_ref_no_force(r));
-        assert(not reg_is_unevaluated(r));
-    }
-    if (unevaluated_reg_is_ref_no_force(r))
-        assert(not has_result1(r));
-#endif
-
-    if (reg_is_constant(r)) return {r,r};
-
-    else if (reg_is_changeable(r))
-        return incremental_evaluate1_changeable_(r);
-    else if (unevaluated_reg_is_ref_no_force(r))
-    {
-        int r2 = closure_at(r).reg_for_ref();
-        return incremental_evaluate1(r2);
-    }
-    else if (reg_is_ref_with_force(r))
-        return incremental_evaluate1_ref_with_force_(r);
-    else
-        return incremental_evaluate1_unevaluated_(r);
 }
 
 /// Evaluate regs when called from a changeable reg.

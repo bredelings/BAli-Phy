@@ -793,10 +793,9 @@ private:
     };
 
     // Compatibility: eval1_frames currently wraps evaluate1, but recursive
-    // calls inside incremental_evaluate1_ still use the C++ stack.
+    // calls inside the evaluator helpers still use the C++ stack.
     std::vector<Eval1Frame> eval1_frames;
 
-    EvalResult incremental_evaluate1_(int R);
     EvalResult incremental_evaluate1_changeable_(int R);
     EvalResult incremental_evaluate1_ref_with_force_(int R);
     EvalResult incremental_evaluate1_unevaluated_(int R);
