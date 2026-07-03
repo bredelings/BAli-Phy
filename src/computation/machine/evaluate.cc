@@ -199,14 +199,8 @@ EvalResult reg_heap::incremental_evaluate1(int r)
 
     try
     {
-        Eval1Frame return_frame;
-        return_frame.kind = Eval1FrameKind::return_frame;
-        eval1_frames.push_back(return_frame);
-
-        Eval1Frame eval_frame;
-        eval_frame.kind = Eval1FrameKind::eval_enter;
-        eval_frame.r = r;
-        eval1_frames.push_back(eval_frame);
+        eval1_frames.emplace_back(Eval1FrameKind::return_frame);
+        eval1_frames.emplace_back(Eval1FrameKind::eval_enter, r);
 
         while (true)
         {
@@ -288,10 +282,8 @@ EvalResult reg_heap::incremental_evaluate1(int r)
                     // We don't have to force the forced regs in evaluate1.
                     int r3 = closure_at(r2).reg_for_ref();
 
-                    Eval1Frame eval_frame;
-                    eval_frame.kind = Eval1FrameKind::eval_enter;
-                    eval_frame.r = r3;
-                    eval1_frames.push_back(eval_frame);
+                    // Push before mutating the parent; emplace_back can reallocate the frame vector.
+                    eval1_frames.emplace_back(Eval1FrameKind::eval_enter, r3);
 
                     assert(eval1_frames[eval1_frames.size() - 2].kind == Eval1FrameKind::eval_enter);
                     eval1_frames[eval1_frames.size() - 2].kind = Eval1FrameKind::ref_with_force_finish;
@@ -947,15 +939,8 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
 
     try
     {
-        Eval2Frame return_frame;
-        return_frame.kind = Eval2FrameKind::return_frame;
-        eval2_frames.push_back(return_frame);
-
-        Eval2Frame eval_frame;
-        eval_frame.kind = Eval2FrameKind::eval_enter;
-        eval_frame.r = r;
-        eval_frame.do_count = do_count;
-        eval2_frames.push_back(eval_frame);
+        eval2_frames.emplace_back(Eval2FrameKind::return_frame);
+        eval2_frames.emplace_back(Eval2FrameKind::eval_enter, r, do_count);
 
         while (true)
         {
@@ -1056,11 +1041,8 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
                      *         out unforced.
                      */
 
-                    Eval2Frame eval_frame;
-                    eval_frame.kind = Eval2FrameKind::eval_enter;
-                    eval_frame.r = r3;
-                    eval_frame.do_count = false;
-                    eval2_frames.push_back(eval_frame);
+                    // Push before mutating the parent; emplace_back can reallocate the frame vector.
+                    eval2_frames.emplace_back(Eval2FrameKind::eval_enter, r3, false);
 
                     assert(eval2_frames[eval2_frames.size() - 2].kind == Eval2FrameKind::eval_enter);
                     eval2_frames[eval2_frames.size() - 2].kind = Eval2FrameKind::ref_with_force_finish;

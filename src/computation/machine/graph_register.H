@@ -788,6 +788,9 @@ private:
 
     struct Eval1Frame
     {
+        Eval1Frame() = default;
+        Eval1Frame(Eval1FrameKind kind_, int r_ = 0): kind(kind_), r(r_) {}
+
         Eval1FrameKind kind = Eval1FrameKind::return_frame;
         int r = 0;
         bool owns_active_reg = false;
@@ -810,6 +813,10 @@ private:
 
     struct Eval2Frame
     {
+        Eval2Frame() = default;
+        Eval2Frame(Eval2FrameKind kind_, int r_ = 0, bool do_count_ = false)
+            :kind(kind_), r(r_), do_count(do_count_) {}
+
         Eval2FrameKind kind = Eval2FrameKind::return_frame;
         int r = 0;
         bool do_count = false;
