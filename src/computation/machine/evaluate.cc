@@ -186,13 +186,15 @@ EvalResult reg_heap::incremental_evaluate1(int r)
 
     auto return_frame_index = eval1_frames.size();
 
-    // Undo the active-register state installed for an eval frame.
-    // Suspended finish frames keep this ownership until their child returns.
-    auto cleanup_active_reg = [&](int active_r)
+    // Undo the active-register state owned by a frame.
+    // This clears both the machine stack bit and the frame ownership flag.
+    auto cleanup_active_frame = [&](Eval1Frame& frame)
     {
-        assert(reg_is_on_stack(active_r));
-        regs[active_r].flags.reset(reg_is_on_stack_bit);
+        assert(frame.owns_active_reg);
+        assert(reg_is_on_stack(frame.r));
+        regs[frame.r].flags.reset(reg_is_on_stack_bit);
         stack.pop_back();
+        frame.owns_active_reg = false;
     };
 
     try
@@ -226,9 +228,7 @@ EvalResult reg_heap::incremental_evaluate1(int r)
                 EvalResult result = {frame.r, child_result.value_reg};
 
                 assert(not reg_is_unevaluated(frame.r));
-                assert(frame.owns_active_reg);
-                cleanup_active_reg(frame.r);
-                frame.owns_active_reg = false;
+                cleanup_active_frame(frame);
 
                 eval1_frames.pop_back();
                 assert(not eval1_frames.empty());
@@ -278,9 +278,8 @@ EvalResult reg_heap::incremental_evaluate1(int r)
                     assert(not has_result1(r2));
                     int r3 = closure_at(r2).reg_for_ref();
 
-                    cleanup_active_reg(r2);
-                    eval1_frames.back().owns_active_reg = false;
                     assert(eval1_frames.back().kind == Eval1FrameKind::eval_enter);
+                    cleanup_active_frame(eval1_frames.back());
                     eval1_frames.back().r = r3;
                     continue;
                 }
@@ -305,10 +304,7 @@ EvalResult reg_heap::incremental_evaluate1(int r)
             {
                 assert(eval1_frames.back().kind == Eval1FrameKind::eval_enter);
                 if (eval1_frames.back().owns_active_reg)
-                {
-                    cleanup_active_reg(r2);
-                    eval1_frames.back().owns_active_reg = false;
-                }
+                    cleanup_active_frame(eval1_frames.back());
                 throw;
             }
 
@@ -317,8 +313,7 @@ EvalResult reg_heap::incremental_evaluate1(int r)
             assert(not reg_is_unevaluated(r2));
             assert(reg_is_on_stack(r2));
 
-            cleanup_active_reg(r2);
-            eval1_frames.back().owns_active_reg = false;
+            cleanup_active_frame(eval1_frames.back());
 
             eval1_frames.pop_back();
             assert(not eval1_frames.empty());
@@ -335,10 +330,7 @@ EvalResult reg_heap::incremental_evaluate1(int r)
         {
             auto& frame = eval1_frames[i - 1];
             if (frame.owns_active_reg)
-            {
-                cleanup_active_reg(frame.r);
-                frame.owns_active_reg = false;
-            }
+                cleanup_active_frame(frame);
         }
         eval1_frames.resize(return_frame_index);
         throw;
@@ -942,13 +934,15 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
 
     auto return_frame_index = eval2_frames.size();
 
-    // Undo the active-register state installed for an eval frame.
-    // Suspended finish frames keep this ownership until their child returns.
-    auto cleanup_active_reg = [&](int active_r)
+    // Undo the active-register state owned by a frame.
+    // This clears both the machine stack bit and the frame ownership flag.
+    auto cleanup_active_frame = [&](Eval2Frame& frame)
     {
-        assert(reg_is_on_stack(active_r));
-        regs[active_r].flags.reset(reg_is_on_stack_bit);
+        assert(frame.owns_active_reg);
+        assert(reg_is_on_stack(frame.r));
+        regs[frame.r].flags.reset(reg_is_on_stack_bit);
         stack.pop_back();
+        frame.owns_active_reg = false;
     };
 
     try
@@ -983,9 +977,7 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
                 EvalResult result = {frame.r, child_result.value_reg};
 
                 assert(not reg_is_unevaluated(frame.r));
-                assert(frame.owns_active_reg);
-                cleanup_active_reg(frame.r);
-                frame.owns_active_reg = false;
+                cleanup_active_frame(frame);
 
                 int dep_reg = result.dep_reg;
                 if (frame.do_count and reg_is_changeable_or_forcing(dep_reg))
@@ -1040,9 +1032,8 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
                     assert(not has_result1(r2));
                     int r3 = closure_at(r2).reg_for_ref();
 
-                    cleanup_active_reg(r2);
-                    eval2_frames.back().owns_active_reg = false;
                     assert(eval2_frames.back().kind == Eval2FrameKind::eval_enter);
+                    cleanup_active_frame(eval2_frames.back());
                     eval2_frames.back().r = r3;
                     continue;
                 }
@@ -1082,10 +1073,7 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
             {
                 assert(eval2_frames.back().kind == Eval2FrameKind::eval_enter);
                 if (eval2_frames.back().owns_active_reg)
-                {
-                    cleanup_active_reg(r2);
-                    eval2_frames.back().owns_active_reg = false;
-                }
+                    cleanup_active_frame(eval2_frames.back());
                 throw;
             }
 
@@ -1094,8 +1082,7 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
             assert(not reg_is_unevaluated(r2));
 
             assert(reg_is_on_stack(r2));
-            cleanup_active_reg(r2);
-            eval2_frames.back().owns_active_reg = false;
+            cleanup_active_frame(eval2_frames.back());
 
             int dep_reg = result.dep_reg;
             if (do_count2 and reg_is_changeable_or_forcing(dep_reg))
@@ -1116,10 +1103,7 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
         {
             auto& frame = eval2_frames[i - 1];
             if (frame.owns_active_reg)
-            {
-                cleanup_active_reg(frame.r);
-                frame.owns_active_reg = false;
-            }
+                cleanup_active_frame(frame);
         }
         eval2_frames.resize(return_frame_index);
         throw;
