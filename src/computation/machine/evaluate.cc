@@ -942,6 +942,15 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
 
     auto return_frame_index = eval2_frames.size();
 
+    // Undo the active-register state installed for an eval frame.
+    // Suspended finish frames keep this ownership until their child returns.
+    auto cleanup_active_reg = [&](int active_r)
+    {
+        assert(reg_is_on_stack(active_r));
+        regs[active_r].flags.reset(reg_is_on_stack_bit);
+        stack.pop_back();
+    };
+
     try
     {
         Eval2Frame return_frame;
@@ -953,15 +962,6 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
         eval_frame.r = r;
         eval_frame.do_count = do_count;
         eval2_frames.push_back(eval_frame);
-
-        // Undo the active-register state installed for the current eval frame.
-        // This is used before retargeting, returning, or rethrowing.
-        auto cleanup_active_reg = [&](int active_r)
-        {
-            assert(reg_is_on_stack(active_r));
-            regs[active_r].flags.reset(reg_is_on_stack_bit);
-            stack.pop_back();
-        };
 
         while (true)
         {
@@ -975,6 +975,32 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
                 return result;
             }
 
+            if (kind == Eval2FrameKind::ref_with_force_finish)
+            {
+                auto& frame = eval2_frames.back();
+                assert(frame.result);
+                auto child_result = *frame.result;
+                EvalResult result = {frame.r, child_result.value_reg};
+
+                assert(not reg_is_unevaluated(frame.r));
+                assert(frame.active);
+                cleanup_active_reg(frame.r);
+                frame.active = false;
+
+                int dep_reg = result.dep_reg;
+                if (frame.do_count and reg_is_changeable_or_forcing(dep_reg))
+                    inc_count(dep_reg);
+
+                eval2_frames.pop_back();
+                assert(not eval2_frames.empty());
+                auto& parent = eval2_frames.back();
+                assert(parent.kind == Eval2FrameKind::return_frame or
+                       parent.kind == Eval2FrameKind::ref_with_force_finish);
+                assert(not parent.result);
+                parent.result = result;
+                continue;
+            }
+
             assert(kind == Eval2FrameKind::eval_enter);
             int r2 = eval2_frames.back().r;
             bool do_count2 = eval2_frames.back().do_count;
@@ -985,6 +1011,7 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
 #endif
             stack.push_back(r2);
             regs[r2].flags.set(reg_is_on_stack_bit);
+            eval2_frames.back().active = true;
 
             EvalResult result;
             try
@@ -1014,18 +1041,51 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
                     int r3 = closure_at(r2).reg_for_ref();
 
                     cleanup_active_reg(r2);
+                    eval2_frames.back().active = false;
                     assert(eval2_frames.back().kind == Eval2FrameKind::eval_enter);
                     eval2_frames.back().r = r3;
                     continue;
                 }
                 else if (reg_is_ref_with_force(r2))
-                    result = incremental_evaluate2_ref_with_force_(r2);
+                {
+                    if (not reg_is_forced(r2))
+                        force_reg_no_call(r2);
+
+                    assert(not has_result1(r2));
+                    assert(not has_result2(r2));
+
+                    int r3 = closure_at(r2).reg_for_ref();
+
+                    /*
+                     * NOTE: If we are going to evaluate the same reg twice, once do_count=true
+                     *       and once with do_count=false, then we have to do the do_count=true one first.
+                     *
+                     *       If we don't, the children will get their counts incremented twice.
+                     *       This is because incrementing of child counts is done whenever the parent starts
+                     *         out unforced.
+                     */
+
+                    Eval2Frame eval_frame;
+                    eval_frame.kind = Eval2FrameKind::eval_enter;
+                    eval_frame.r = r3;
+                    eval_frame.do_count = false;
+                    eval2_frames.push_back(eval_frame);
+
+                    assert(eval2_frames[eval2_frames.size() - 2].kind == Eval2FrameKind::eval_enter);
+                    eval2_frames[eval2_frames.size() - 2].kind = Eval2FrameKind::ref_with_force_finish;
+                    continue;
+                }
                 else
                     result = incremental_evaluate2_unevaluated_(r2);
             }
             catch (...)
             {
-                cleanup_active_reg(r2);
+                assert(eval2_frames.back().kind == Eval2FrameKind::eval_enter);
+                if (eval2_frames.back().active)
+                {
+                    cleanup_active_reg(r2);
+                    eval2_frames.back().active = false;
+                }
                 throw;
             }
 
@@ -1035,6 +1095,7 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
 
             assert(reg_is_on_stack(r2));
             cleanup_active_reg(r2);
+            eval2_frames.back().active = false;
 
             int dep_reg = result.dep_reg;
             if (do_count2 and reg_is_changeable_or_forcing(dep_reg))
@@ -1043,13 +1104,23 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
             eval2_frames.pop_back();
             assert(not eval2_frames.empty());
             auto& parent = eval2_frames.back();
-            assert(parent.kind == Eval2FrameKind::return_frame);
+            assert(parent.kind == Eval2FrameKind::return_frame or
+                   parent.kind == Eval2FrameKind::ref_with_force_finish);
             assert(not parent.result);
             parent.result = result;
         }
     }
     catch (...)
     {
+        for (auto i = eval2_frames.size(); i > return_frame_index; --i)
+        {
+            auto& frame = eval2_frames[i - 1];
+            if (frame.active)
+            {
+                cleanup_active_reg(frame.r);
+                frame.active = false;
+            }
+        }
         eval2_frames.resize(return_frame_index);
         throw;
     }
@@ -1238,32 +1309,6 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
         }
     }
 
-}
-
-EvalResult reg_heap::incremental_evaluate2_ref_with_force_(int r)
-{
-    if (not reg_is_forced(r))
-	force_reg_no_call(r);
-
-    assert(not has_result1(r));
-    assert(not has_result2(r));
-
-    int r2 = closure_at(r).reg_for_ref();
-
-    /*
-     * NOTE: If we are going to evaluate the same reg twice, once do_count=true
-     *       and once with do_count=false, then we have to do the do_count=true one first.
-     *
-     *       If we don't, the children will get their counts incremented twice.
-     *       This is because incrementing of child counts is done whenever the parent starts
-     *         out unforced.
-     */
-
-    auto [r3, result3] = incremental_evaluate2(r2, false);
-
-    assert(not reg_is_unevaluated(r));
-
-    return {r, result3};
 }
 
 EvalResult reg_heap::incremental_evaluate2_changeable_(int r)

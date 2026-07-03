@@ -804,7 +804,8 @@ private:
     enum class Eval2FrameKind: unsigned char
     {
         return_frame,
-        eval_enter
+        eval_enter,
+        ref_with_force_finish
     };
 
     struct Eval2Frame
@@ -812,6 +813,7 @@ private:
         Eval2FrameKind kind = Eval2FrameKind::return_frame;
         int r = 0;
         bool do_count = false;
+        bool active = false;
         std::optional<EvalResult> result;
     };
 
@@ -819,7 +821,6 @@ private:
     // calls inside the evaluator helpers still use the C++ stack.
     std::vector<Eval2Frame> eval2_frames;
 
-    EvalResult incremental_evaluate2_ref_with_force_(int R);
     EvalResult incremental_evaluate2_changeable_(int R);
     EvalResult incremental_evaluate2_unevaluated_(int R);
 
