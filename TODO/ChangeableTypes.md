@@ -81,6 +81,45 @@ Function arrows may also have latent effects:
 The plain arrow `a -> b` can mean `a ->{pure} b`.  This keeps ordinary values
 ordinary while still recording that applying some functions may perform reads.
 
+### Effects and Function Bodies
+
+A "Read" effect on a function arrow can say that evaluating a body may record
+dependencies.
+It does not need to record exactly which arguments are used on each arrow.
+The Core body should say which reads occur and where they occur.
+This is closer to the usual Haskell style:
+
+    a -> b -> Eval c
+
+where partial application is pure and effects happen when the final computation
+is evaluated.
+
+For example, `id` should be taint-polymorphic and pure:
+
+    id :: a@p -> a@p
+
+It changes no machine state and preserves the taint of its argument.  In
+contrast, a changeable version of `take` may record reads while evaluating the
+result spine:
+
+    take :: Int@n -> [a@p]@q ->{Read} [a@p]@(n | q)
+
+The summary says how taints flow.  The elaborated body, using `read` and
+`readcase`, says which dependencies are actually recorded.  In a monadic
+style, this would translate to
+
+    take :: Int@n -> [a@p]@q -> Read ([a@p]@(n | q))
+
+If we had a strict version of `take` where `take n` already read `n`, then
+we would put a `{Read}` effect on the first arrow as well.  In a monadic style
+this would translate to
+
+    take :: Int@n -> Read([a@p]@q -> Read ([a@p]@(n | q)))
+
+This nesting is awkward, and is one reason it is attractive to keep detailed
+read placement in the Core body rather than encode it all in arrows.
+
+
 ## Extended Core
 
 One idea is to add a form like:
