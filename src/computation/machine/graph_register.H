@@ -790,7 +790,7 @@ private:
     {
         Eval1FrameKind kind = Eval1FrameKind::return_frame;
         int r = 0;
-        bool active = false;
+        bool owns_active_reg = false;
         std::optional<EvalResult> result;
     };
 
@@ -813,7 +813,7 @@ private:
         Eval2FrameKind kind = Eval2FrameKind::return_frame;
         int r = 0;
         bool do_count = false;
-        bool active = false;
+        bool owns_active_reg = false;
         std::optional<EvalResult> result;
     };
 

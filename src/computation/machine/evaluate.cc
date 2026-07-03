@@ -226,9 +226,9 @@ EvalResult reg_heap::incremental_evaluate1(int r)
                 EvalResult result = {frame.r, child_result.value_reg};
 
                 assert(not reg_is_unevaluated(frame.r));
-                assert(frame.active);
+                assert(frame.owns_active_reg);
                 cleanup_active_reg(frame.r);
-                frame.active = false;
+                frame.owns_active_reg = false;
 
                 eval1_frames.pop_back();
                 assert(not eval1_frames.empty());
@@ -249,7 +249,7 @@ EvalResult reg_heap::incremental_evaluate1(int r)
 #endif
             stack.push_back(r2);
             regs[r2].flags.set(reg_is_on_stack_bit);
-            eval1_frames.back().active = true;
+            eval1_frames.back().owns_active_reg = true;
 
             EvalResult result;
             try
@@ -279,7 +279,7 @@ EvalResult reg_heap::incremental_evaluate1(int r)
                     int r3 = closure_at(r2).reg_for_ref();
 
                     cleanup_active_reg(r2);
-                    eval1_frames.back().active = false;
+                    eval1_frames.back().owns_active_reg = false;
                     assert(eval1_frames.back().kind == Eval1FrameKind::eval_enter);
                     eval1_frames.back().r = r3;
                     continue;
@@ -304,10 +304,10 @@ EvalResult reg_heap::incremental_evaluate1(int r)
             catch (...)
             {
                 assert(eval1_frames.back().kind == Eval1FrameKind::eval_enter);
-                if (eval1_frames.back().active)
+                if (eval1_frames.back().owns_active_reg)
                 {
                     cleanup_active_reg(r2);
-                    eval1_frames.back().active = false;
+                    eval1_frames.back().owns_active_reg = false;
                 }
                 throw;
             }
@@ -318,7 +318,7 @@ EvalResult reg_heap::incremental_evaluate1(int r)
             assert(reg_is_on_stack(r2));
 
             cleanup_active_reg(r2);
-            eval1_frames.back().active = false;
+            eval1_frames.back().owns_active_reg = false;
 
             eval1_frames.pop_back();
             assert(not eval1_frames.empty());
@@ -334,10 +334,10 @@ EvalResult reg_heap::incremental_evaluate1(int r)
         for (auto i = eval1_frames.size(); i > return_frame_index; --i)
         {
             auto& frame = eval1_frames[i - 1];
-            if (frame.active)
+            if (frame.owns_active_reg)
             {
                 cleanup_active_reg(frame.r);
-                frame.active = false;
+                frame.owns_active_reg = false;
             }
         }
         eval1_frames.resize(return_frame_index);
@@ -983,9 +983,9 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
                 EvalResult result = {frame.r, child_result.value_reg};
 
                 assert(not reg_is_unevaluated(frame.r));
-                assert(frame.active);
+                assert(frame.owns_active_reg);
                 cleanup_active_reg(frame.r);
-                frame.active = false;
+                frame.owns_active_reg = false;
 
                 int dep_reg = result.dep_reg;
                 if (frame.do_count and reg_is_changeable_or_forcing(dep_reg))
@@ -1011,7 +1011,7 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
 #endif
             stack.push_back(r2);
             regs[r2].flags.set(reg_is_on_stack_bit);
-            eval2_frames.back().active = true;
+            eval2_frames.back().owns_active_reg = true;
 
             EvalResult result;
             try
@@ -1041,7 +1041,7 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
                     int r3 = closure_at(r2).reg_for_ref();
 
                     cleanup_active_reg(r2);
-                    eval2_frames.back().active = false;
+                    eval2_frames.back().owns_active_reg = false;
                     assert(eval2_frames.back().kind == Eval2FrameKind::eval_enter);
                     eval2_frames.back().r = r3;
                     continue;
@@ -1081,10 +1081,10 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
             catch (...)
             {
                 assert(eval2_frames.back().kind == Eval2FrameKind::eval_enter);
-                if (eval2_frames.back().active)
+                if (eval2_frames.back().owns_active_reg)
                 {
                     cleanup_active_reg(r2);
-                    eval2_frames.back().active = false;
+                    eval2_frames.back().owns_active_reg = false;
                 }
                 throw;
             }
@@ -1095,7 +1095,7 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
 
             assert(reg_is_on_stack(r2));
             cleanup_active_reg(r2);
-            eval2_frames.back().active = false;
+            eval2_frames.back().owns_active_reg = false;
 
             int dep_reg = result.dep_reg;
             if (do_count2 and reg_is_changeable_or_forcing(dep_reg))
@@ -1115,10 +1115,10 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
         for (auto i = eval2_frames.size(); i > return_frame_index; --i)
         {
             auto& frame = eval2_frames[i - 1];
-            if (frame.active)
+            if (frame.owns_active_reg)
             {
                 cleanup_active_reg(frame.r);
-                frame.active = false;
+                frame.owns_active_reg = false;
             }
         }
         eval2_frames.resize(return_frame_index);
