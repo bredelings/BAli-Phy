@@ -246,59 +246,49 @@ EvalResult reg_heap::incremental_evaluate1(int r)
             eval1_frames.back().owns_active_reg = true;
 
             EvalResult result;
-            try
-            {
-                assert(regs.is_valid_address(r2));
-                assert(regs.is_used(r2));
+            assert(regs.is_valid_address(r2));
+            assert(regs.is_used(r2));
 
 #ifndef NDEBUG
-                if (reg_has_value(r2))
-                {
-                    assert(access_value_for_reg(r2).get_code().is_whnf());
-                    assert(not reg_is_ref_no_force(r2));
-                    assert(not reg_is_unevaluated(r2));
-                }
+            if (reg_has_value(r2))
+            {
+                assert(access_value_for_reg(r2).get_code().is_whnf());
+                assert(not reg_is_ref_no_force(r2));
+                assert(not reg_is_unevaluated(r2));
+            }
 #endif
 
-                if (reg_is_constant(r2))
-                    result = {r2, r2};
-                else if (reg_is_changeable(r2))
-                    result = incremental_evaluate1_changeable_(r2);
-                // NOTE: Keep activating each ref-no-force link before retargeting.
-                // Chasing the chain before activation may be faster, but would
-                // change active-stack behavior and should be considered separately.
-                else if (unevaluated_reg_is_ref_no_force(r2))
-                {
-                    assert(not has_result1(r2));
-                    int r3 = closure_at(r2).reg_for_ref();
-
-                    assert(eval1_frames.back().kind == Eval1FrameKind::eval_enter);
-                    cleanup_active_frame(eval1_frames.back());
-                    eval1_frames.back().r = r3;
-                    continue;
-                }
-                else if (reg_is_ref_with_force(r2))
-                {
-                    // We don't have to force the forced regs in evaluate1.
-                    int r3 = closure_at(r2).reg_for_ref();
-
-                    // Push before mutating the parent; emplace_back can reallocate the frame vector.
-                    eval1_frames.emplace_back(Eval1FrameKind::eval_enter, r3);
-
-                    assert(eval1_frames[eval1_frames.size() - 2].kind == Eval1FrameKind::eval_enter);
-                    eval1_frames[eval1_frames.size() - 2].kind = Eval1FrameKind::ref_with_force_finish;
-                    continue;
-                }
-                else
-                    result = incremental_evaluate1_unevaluated_(r2);
-            }
-            catch (...)
+            if (reg_is_constant(r2))
+                result = {r2, r2};
+            else if (reg_is_changeable(r2))
+                result = incremental_evaluate1_changeable_(r2);
+            // NOTE: Keep activating each ref-no-force link before retargeting.
+            // Chasing the chain before activation may be faster, but would
+            // change active-stack behavior and should be considered separately.
+            else if (unevaluated_reg_is_ref_no_force(r2))
             {
+                assert(not has_result1(r2));
+                int r3 = closure_at(r2).reg_for_ref();
+
                 assert(eval1_frames.back().kind == Eval1FrameKind::eval_enter);
-                if (eval1_frames.back().owns_active_reg)
-                    cleanup_active_frame(eval1_frames.back());
-                throw;
+                cleanup_active_frame(eval1_frames.back());
+                eval1_frames.back().r = r3;
+                continue;
             }
+            else if (reg_is_ref_with_force(r2))
+            {
+                // We don't have to force the forced regs in evaluate1.
+                int r3 = closure_at(r2).reg_for_ref();
+
+                // Push before mutating the parent; emplace_back can reallocate the frame vector.
+                eval1_frames.emplace_back(Eval1FrameKind::eval_enter, r3);
+
+                assert(eval1_frames[eval1_frames.size() - 2].kind == Eval1FrameKind::eval_enter);
+                eval1_frames[eval1_frames.size() - 2].kind = Eval1FrameKind::ref_with_force_finish;
+                continue;
+            }
+            else
+                result = incremental_evaluate1_unevaluated_(r2);
 
             assert(not reg_is_ref_no_force(result.dep_reg));
             assert(not reg_is_unevaluated(result.dep_reg));
@@ -318,6 +308,8 @@ EvalResult reg_heap::incremental_evaluate1(int r)
     }
     catch (...)
     {
+        // Any exception from the loop may leave active eval frames behind.
+        // Unwind them before discarding this invocation's frame suffix.
         for (auto i = eval1_frames.size(); i > return_frame_index; --i)
         {
             auto& frame = eval1_frames[i - 1];
