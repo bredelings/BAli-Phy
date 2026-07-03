@@ -44,7 +44,9 @@ For mutually recursive types, the SCC can be inferred together:
     data Y@shape a@p b@q = NoX | YesX (X@shape b@q a@p)
 
 This shares the structural taint through the recursive family while preserving
-the taints of type parameters under substitution.
+the taints of type parameters under substitution. We could in theory add
+separate taint variables for each type in the SCC -- X@xshape@yshape -- but this
+may not be worth it.
 
 ## Function Summaries
 
@@ -87,13 +89,40 @@ One idea is to add a form like:
 
 where `x :: Changeable a` and `x' :: a`.  The read records a dependency edge
 and binds an ordinary value, so pure code can use `x'` without recording
-additional edges.
+additional edges.  This form is most natural for scalar or opaque values where
+reading the current value gives a representable ordinary type.
 
 Initially, `read` should probably take only lifted heap variables.  Dependency
 edges target heap cells, so arbitrary `read E` would hide allocation and
 materialization decisions.  For example, `read (x + y)` could mean reading `x`
 and `y`, or it could mean allocating a heap cell for `x + y` and reading that
 cell.  Those are different choices.
+
+### Readcase and Constructor Views
+
+Plain `read` is awkward for ADTs with tainted recursive fields.  For example,
+reading a value of type `[a@p]@changeable` reveals an ordinary constructor, but
+the fields of that constructor can still be tainted.  The simple type
+`[a@p]@q` has no good way to say "this constructor layer is known, but the tail
+keeps the original spine taint."
+
+One way to avoid that intermediate type is to merge read and case:
+
+    readcase MODE x of
+      []     -> ...
+      (x:xs) -> ...
+
+The alternative binders have representable types directly.  In the cons branch,
+`x :: a@p` and `xs :: [a@p]@q`, where `q` is the original spine taint.
+This form deliberately has no case binder for the observed scrutinee.  If a
+branch needs the observed whole value, it should reconstruct that value from
+the selected constructor and field binders, such as `x:xs` or `Nothing`.
+
+An implementation may still need a value representation for the cached result
+of observing a changeable ADT node: the cached constructor is not changeable,
+but its fields can carry tainted types such as `a@p` and `[a@p]@q`.  `readcase`
+keeps that one-layer view internal instead of forcing it into the surface type
+of a separate binder.
 
 ### Read Modes
 
@@ -145,8 +174,8 @@ under different modifiable values, `E` might reduce differently.
 A possible notation is:
 
     noreplace {
-      read USE z as z'
-      case z' of (a,b) -> a + b
+      readcase USE z of
+        (a,b) -> a + b
     }
 
 The reads are the conditions for the protected reduction.  The protected
@@ -165,45 +194,47 @@ might become:
 
     case x of (y,z) ->
       noreplace {
-        read USE z as z'
-        case z' of (a,b) ->
-          noreplace {
-            read USE a as a'
-            read USE b as b'
-            a' + b'
-          }
+        readcase USE z of
+          (a,b) ->
+            noreplace {
+              read USE a as a'
+              read USE b as b'
+              a' + b'
+            }
       }
 
 if `x` is stable but `z`, `a`, and `b` are changeable heap values.  The outer
-case on `x` can still be replaced normally.  The case on `z'` cannot be
+case on `x` can still be replaced normally.  The case on `z` cannot be
 replaced by the selected alternative without retaining the condition that `z`
 had its current value.  Likewise, the arithmetic cannot be replaced by its
 current integer result without retaining the conditions on `a` and `b`.
 
 A working interpretation is that `noreplace` protects the next reducible
 operation after its reads.  It also gives an implicit source heap cell for the
-reads.  Without such a scope, `read USE z` specifies the edge target but not the
-cell that owns the edge.  The exact normalized form still needs design.
+reads.  Without such a scope, `readcase USE z` specifies the edge target but
+not the cell that owns the edge.  The exact normalized form still needs design.
 
 ## Merged Continuations
 
 Some useful programs need dependencies whose target is discovered while
 evaluating a protected reduction.  For example:
 
-    noreplace {
-      read USE i as i'
-      case a ! i' of tmp ->
-        merged {
-          read USE tmp as tmp'
-          case tmp' of
-            Just x  -> x
-            Nothing -> tmp'
-        }
-    }
+    lookupMaybe a i =
+      noreplace {
+        read USE i as i'
+        case a ! i' of tmp ->
+          merged {
+            readcase USE tmp of
+              Just x  -> Just x
+              Nothing -> Nothing
+          }
+      }
 
 Here `tmp` is computed from `a ! i'`.  If `tmp` is not materialized as a heap
-cell, then `read USE tmp` has no stable heap target.  The current machine would
-need let-floating or allocation so that `tmp` names a heap cell.
+cell, then `readcase USE tmp` has no stable heap target.  The current machine
+would need let-floating or allocation so that `tmp` names a heap cell.  Since
+`readcase` has no case binder, returning the observed value means reconstructing
+it in each alternative.
 
 The `merged` notation is a possible future extension.  It means that the
 selected continuation keeps evaluating in the same protected step, rather than
@@ -235,3 +266,32 @@ This is valid only when the read occurs on every path being crossed, does not
 mention binders that would go out of scope, and can be moved without changing
 strictness or effect order.  It may also widen the protected reduction and
 change caching granularity, so it is not merely a cosmetic transformation.
+
+## Tainted Function Versions
+
+When calling a function like `factorial n` or `take n xs` with changeable
+arguments, we should probably delegate handling of the changeability to the
+function itself.
+
+This will require multiple different versions of the function depending on
+the taint status.  For `factorial n`, there would be a single taint status,
+but for:
+
+    take :: Int@n -> [a@p]@q -> [a@p]@(n | q)
+
+there are taint roles for `n`, the element type `p`, and the list spine `q`.
+A `read` on `n` can lower the local state from `Changeable Int` to ordinary
+`Int`.  A `readcase` on `xs` only observes one constructor layer; in the cons
+branch, the tail keeps the original spine taint.
+
+For example, when `n` is changeable but `xs` is pure, the specialized version
+could be a wrapper around a less-tainted worker:
+
+    take_Nchg_Xpure n xs =
+      read USE n as n' in
+      take_Npure_Xpure n' xs
+
+After each read, calls should be resolved against the lowered local taint state.
+This matters for recursive calls as well as ordinary calls: a version that reads
+`n` should not blindly recurse to the same changeable-`n` version if it is now
+passing `n' - 1`.
