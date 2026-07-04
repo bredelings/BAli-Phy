@@ -7,14 +7,16 @@ able to run them in a faster interpreter.
 
 There are three related ideas that should not be conflated:
 
-* a value may be tainted, meaning that it may depend on modifiables;
-* a runtime heap cell may be changeable, meaning that observing it can record
-  dependency edges;
-* evaluating an expression may have an effect, such as recording USE or FORCE
-  edges.
+* a type position may be tainted, meaning that this part of the value may
+  depend on modifiables;
+* a tainted lifted structural layer is represented by a runtime heap-cell
+  handle such as `Changeable a`;
+* evaluating an expression may have an effect, such as reading a `Changeable a`
+  and recording USE or FORCE edges.
 
-Thus `Changeable a` is ambiguous.  It might mean a tainted `a`, or it might
-mean a heap-cell handle whose current value has type `a`.
+Thus `Changeable a` is not the general notation for a tainted `a`.  It is the
+runtime representation used when a lifted structural layer is changeable.  The
+source-level taint notation is translated to representation types later.
 
 ## Data Types
 
