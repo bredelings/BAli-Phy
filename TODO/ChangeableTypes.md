@@ -20,33 +20,117 @@ mean a heap-cell handle whose current value has type `a`.
 
 We need to express which parts of data types are changeable.  For lists, the
 spine of the list and the values in the list can have separate taints.  We can
-write this as `[a@p]@q`, where `p` says whether the elements are changeable,
-and `q` says whether the constructor choices are changeable.
+write this abstractly as `[a@p]@q`, where `p` says whether the elements are
+changeable, and `q` says whether the structural layer of the list is
+changeable.  For a multi-constructor type this includes the constructor choice;
+for a single-constructor type it can still include changeable field identities.
 
-Writing `[a@changeable]@changeable` as `Changeable [Changeable a]` can be a
-useful intuition, but it is misleading if `Changeable` means a runtime cell
-that changeably evaluates to a pure list.  What we want is that the tail fields
-of a changeable list are changeable too.
+Let us assume that the data type `X a b` does not need to track whether its
+field types are tainted, because they carry that taint in a self-contained
+fashion.
 
-One possible default is one structural taint per recursive datatype SCC, plus
-one taint for each type parameter.  Recursive occurrences inside the SCC inherit
-the same structural taint.  Non-recursive ADT fields keep their own taint
-summaries; otherwise a wrapper type like `Box [a]` would unnecessarily taint
-the list spine merely because the box is tainted.
+Let us assume that `Changeable a` means a runtime cell that changeably evaluates
+to `a`.
+`Changeable` has kind `Type -> Type` and can only be applied to lifted values.
+So, if `a` is not a heap-allocatable type, then it cannot be changeable.
+
+If we are able to separate Int and Int#, then operations on Int# would be 
+unchangeable by definition.  Thus a changeable addition would need to record
+a use on the boxed, heap-allocated form, extract the unboxed form, and add it.
+This would clearly separate basic operations from edge-recording, which would
+be nice.
+
+For recursive data types like list, we need to be able to represent a
+non-changeable record with changeable fields.  We can define
+
+    type List@C a = Changeable (List#C a)
+    data List#C a = Nil | Cons a (List@C a)
+    
+However, for data types with no recursive fields, `T#P` and `T#C` would
+be identical.
+
+More generally, source-level taint notation is translated to representation
+types.  A pure structural layer uses the ordinary representation, while a
+changeable structural layer uses a heap cell containing the changeable
+representation:
+
+    [[T@P args]] = T#P [[args]]
+    [[T@C args]] = Changeable (T#C [[args]])
+
+Here `T#P` may just be the original datatype.  The datatype `T#C` does not need
+to know whether its field types are tainted, because the transformed field types
+carry that information themselves.
+
+For recursive data types, we propose one "structural" taint per recursive
+datatype SCC. 
+Recursive occurrences inside the SCC inherit the same (structural) taint.
+Non-recursive ADT fields keep their own taint summaries; otherwise a wrapper
+type like `Box [a]` would unnecessarily taint the list spine merely because the
+box is tainted.
 
 For lists:
 
     data List@q a@p = Nil | Cons a@p (List@q a@p)
 
-For mutually recursive types, the SCC can be inferred together:
+For mutually recursive types, the SCC can be inferred together.  Dropping the
+taint markers on type arguments, we would have:
 
-    data X@shape a@p b@q = NoY | YesY (Y@shape a@p b@q)
-    data Y@shape a@p b@q = NoX | YesX (X@shape b@q a@p)
+    -- this is the taint-annotated form
+    data X@shape a b = NoY | YesY (Y@shape a b)
+    data Y@shape a b = NoX | YesX (X@shape b a)
+
+    -- this is the translation to concrete types
+    type X@C a b = Changeable (X#C a b)
+    type Y@C a b = Changeable (Y#C a b)
+
+    data X#C a b = NoY | YesY (Y@C a b)
+    data Y#C a b = NoX | YesX (X@C b a)
 
 This shares the structural taint through the recursive family while preserving
 the taints of type parameters under substitution. We could in theory add
 separate taint variables for each type in the SCC -- X@xshape@yshape -- but this
 may not be worth it.
+
+### Unresolved issues
+
+* What about higher-kinded parameters?
+
+  For a type like `data List f a = Nil | Cons (f a) (List f a)`, then we cannot
+  have `Changeable f`, since `f` does not have kind `Type`.  If it unclear if
+  this would actually be a problem, since we don't yet know what the tainting
+  algorithm on Core function bodies would do here.
+  
+  To handle this, would we need a type per constructor field?  That is, one for
+  the cons (f a) and one for the (List f a)?  If a field is just `a`, then maybe
+  the taint could be contained within the `a`.
+  
+* How about functions?  If we have
+
+        data T a = K (a -> Int)
+
+  would we ever infer a taint on the `a`?
+
+* What about newtypes?
+
+  I think single-constructor data types can still be changeable.  For example, we
+  could have
+  
+        if x > 1 then (p,q) else (x,y)
+        
+  This is changeable because these two answers point to different fields.
+  
+  If we have
+  
+        data X a = X a
+        f x = if x > 1 then X p else X q
+
+  then I suppose `X p` and `X q` are still different closures.  But if we have
+  
+        newtype Y a = Y a
+        f x = if x > 1 then Y p else  Y q
+
+  then there is no real `Y` constructor.  So perhaps we should just change `Y@t a`
+  to `Y a@t`.
 
 ## Function Summaries
 
@@ -104,9 +188,9 @@ result spine:
 
     take :: Int@n -> [a@p]@q ->{Read} [a@p]@(n | q)
 
-The summary says how taints flow.  The elaborated body, using `read` and
-`readcase`, says which dependencies are actually recorded.  In a monadic
-style, this would translate to
+The summary says how taints flow.  The elaborated body, using `read`, says
+which dependencies are actually recorded.  In a monadic style, this would
+translate to
 
     take :: Int@n -> [a@p]@q -> Read ([a@p]@(n | q))
 
@@ -119,6 +203,42 @@ this would translate to
 This nesting is awkward, and is one reason it is attractive to keep detailed
 read placement in the Core body rather than encode it all in arrows.
 
+
+## The concrete `Changeable a` type
+
+To some extent we regard the type `Changeable a` as abstract.
+
+However, it is worth thinking about how we might actually implement the
+interpreter in Haskell.  This is pseudo-Haskell.
+
+    data Node = forall a.Node (Changeable a)
+
+    data Step a = Step { used_forced_regs :: Vector Node,
+                       , call :: Changeable a 
+                       }
+
+    data Changeable a = Constant  { value :: a }
+                      | ConstantWithForce  { value :: a
+                                           , forced_regs :: Vector Node
+                                           }
+                      | RegRef           { next :: Changeable a }
+                      | RefRefWithForce  { next :: Changeable a
+                                         , forced_regs :: Vector Node 
+                                         }
+                      | Changeable  { exp:: Expr a
+                                    , step :: Step a,
+                                    , used_by :: Node,
+                                    , created_by_step :: forall a.Step a
+                                    }
+
+The C++ machine is untyped, so in some sense the type for `used_force_regs`
+might be `Vector Node`.
+
+The current machine has a mapping from `Int` to each cell, but this is
+basically a pointer.
+
+This doesn't quite say how we would connect `exp :: Expr a` to other force-reg cells.
+I guess `Expr a` would be an expression in a "runtime" AST...
 
 ## Extended Core
 
@@ -137,31 +257,15 @@ materialization decisions.  For example, `read (x + y)` could mean reading `x`
 and `y`, or it could mean allocating a heap cell for `x + y` and reading that
 cell.  Those are different choices.
 
-### Readcase and Constructor Views
+Now that we have `List@C a = Changeable (List#C a)`, it is no longer awkward to
+have
 
-Plain `read` is awkward for ADTs with tainted recursive fields.  For example,
-reading a value of type `[a@p]@changeable` reveals an ordinary constructor, but
-the fields of that constructor can still be tainted.  The simple type
-`[a@p]@q` has no good way to say "this constructor layer is known, but the tail
-keeps the original spine taint."
+    read MODE x as x' in
+    case x' of z alts       -- with possible case binder `z`
 
-One way to avoid that intermediate type is to merge read and case:
-
-    readcase MODE x of
-      []     -> ...
-      (x:xs) -> ...
-
-The alternative binders have representable types directly.  In the cons branch,
-`x :: a@p` and `xs :: [a@p]@q`, where `q` is the original spine taint.
-This form deliberately has no case binder for the observed scrutinee.  If a
-branch needs the observed whole value, it should reconstruct that value from
-the selected constructor and field binders, such as `x:xs` or `Nothing`.
-
-An implementation may still need a value representation for the cached result
-of observing a changeable ADT node: the cached constructor is not changeable,
-but its fields can carry tainted types such as `a@p` and `[a@p]@q`.  `readcase`
-keeps that one-layer view internal instead of forcing it into the surface type
-of a separate binder.
+Now `x'` would have type `List#C a`.
+The earlier fused read/case notation is unnecessary because the generated
+representation type can express this one-layer view directly.
 
 ### Read Modes
 
@@ -213,7 +317,8 @@ under different modifiable values, `E` might reduce differently.
 A possible notation is:
 
     noreplace {
-      readcase USE z of
+      read USE z as z' in
+      case z' of
         (a,b) -> a + b
     }
 
@@ -233,7 +338,8 @@ might become:
 
     case x of (y,z) ->
       noreplace {
-        readcase USE z of
+        read USE z as z' in
+        case z' of
           (a,b) ->
             noreplace {
               read USE a as a'
@@ -250,8 +356,8 @@ current integer result without retaining the conditions on `a` and `b`.
 
 A working interpretation is that `noreplace` protects the next reducible
 operation after its reads.  It also gives an implicit source heap cell for the
-reads.  Without such a scope, `readcase USE z` specifies the edge target but
-not the cell that owns the edge.  The exact normalized form still needs design.
+reads.  Without such a scope, `read USE z` specifies the edge target but not
+the cell that owns the edge.  The exact normalized form still needs design.
 
 ## Merged Continuations
 
@@ -263,17 +369,16 @@ evaluating a protected reduction.  For example:
         read USE i as i'
         case a ! i' of tmp ->
           merged {
-            readcase USE tmp of
+            read USE tmp as tmp' in
+            case tmp' of
               Just x  -> Just x
               Nothing -> Nothing
           }
       }
 
 Here `tmp` is computed from `a ! i'`.  If `tmp` is not materialized as a heap
-cell, then `readcase USE tmp` has no stable heap target.  The current machine
-would need let-floating or allocation so that `tmp` names a heap cell.  Since
-`readcase` has no case binder, returning the observed value means reconstructing
-it in each alternative.
+cell, then `read USE tmp` has no stable heap target.  The current machine would
+need let-floating or allocation so that `tmp` names a heap cell.
 
 The `merged` notation is a possible future extension.  It means that the
 selected continuation keeps evaluating in the same protected step, rather than
@@ -320,7 +425,7 @@ but for:
 
 there are taint roles for `n`, the element type `p`, and the list spine `q`.
 A `read` on `n` can lower the local state from `Changeable Int` to ordinary
-`Int`.  A `readcase` on `xs` only observes one constructor layer; in the cons
+`Int`.  A `read` on `xs` exposes one `List#C` constructor layer; in the cons
 branch, the tail keeps the original spine taint.
 
 For example, when `n` is changeable but `xs` is pure, the specialized version
