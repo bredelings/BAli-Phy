@@ -631,9 +631,9 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
             // These regs may still be forced.
 
             // We tentatively remove the count from the old invalid call.
-            // If the step is later retained, call_decremented_bit tells
+            // If the step is later retained, step_edges_decremented_bit tells
             //   incremental_evaluate2_changeable_() to add that demand back.
-            prog_unshare[r].set(call_decremented_bit);
+            prog_unshare[r].set(step_edges_decremented_bit);
             int s = prog_steps[r];
             int call = steps[s].call;
             if (reg_is_changeable_or_forcing(call))

@@ -179,7 +179,7 @@ typedef std::variant<set_op, interchange_op> set_interchange_op;
 constexpr int unshare_result_bit = 1;
 constexpr int unshare_step_bit   = 2;
 constexpr int unshare_count_bit  = 3;
-constexpr int call_decremented_bit = 4;
+constexpr int step_edges_decremented_bit = 4;
 // This bit can only be set if unshare_result_bit was originally set.
 // If we don't follow this rule, it could be set on regs not in unshared_regs,
 //   and then it might not get cleared.

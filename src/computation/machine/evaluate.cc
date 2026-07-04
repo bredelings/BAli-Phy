@@ -1200,7 +1200,7 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
         int r2 = steps[s].call;
 
         // Since the call is unchanged, we only need to increment the call count if its been decremented
-        auto [call,result] = incremental_evaluate2(r2, prog_unshare[r].test(call_decremented_bit));
+        auto [call,result] = incremental_evaluate2(r2, prog_unshare[r].test(step_edges_decremented_bit));
 
         if (prog_unshare[r].test(unshare_result_bit) and regs_maybe_different_value(prog_results[r],result))
             prog_unshare[r].set(different_result_bit);
@@ -1215,7 +1215,7 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
 
         prog_unshare[r].reset(unshare_result_bit);
         prog_unshare[r].reset(unshare_step_bit);
-        prog_unshare[r].reset(call_decremented_bit);
+        prog_unshare[r].reset(step_edges_decremented_bit);
 
         return {r, result};
     }
@@ -1259,7 +1259,7 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
 
         prog_unshare[r].reset(unshare_result_bit);
         prog_unshare[r].reset(unshare_step_bit);
-        prog_unshare[r].reset(call_decremented_bit);
+        prog_unshare[r].reset(step_edges_decremented_bit);
 
         return {r, result};
     }
