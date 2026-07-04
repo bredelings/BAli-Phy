@@ -1,23 +1,44 @@
 # Machine Improvements
 
-## Refactor incremental_evaluate{1,2,unchangeable} to be one function
-
-If we are going to rewrite the stack handling, doing it 3 times is a bad idea.
+## DONE: Combine force/uses into one list
 
 ## Dependent uses/forces
 
 We would need to store these on the step.
 
+## Merge incremental_evaluate{1,2} to be one function?
+
+Main differences:
+ 
+ * `force_regs_check_same_inputs`.
+ * ??
+
+Should flags be in a register or function argument?
+How much slower would this make stuff?
+
 ## Separate created-by-reg and created-by-step
 
 One issue is what to do with non-contingent regs.
+
+## Speeding up the interpreter
+
+### Inline Array.!, Int.+, etc, maybe case, let, etc?
+
+Can we avoid function calls for common/fast cases?
 
 ## Implementing our own stack
 
 This is necessary to not crash for programs that walk medium-sized or larger
 data structures.
 
-We need to 
+We need to start by converting non-operation-args related recursion to loops.
+
+ * probably merge incremental_evaluate1/2
+ * Change incremental_evaluate1/2( ) into a loop with just Enter/Return as on `stack-refactor2`
+ * inline incremental_evaluate1/2_ into the only caller
+ * maybe change helper contracts to stop returning `result`, but instead run a eval_postlude 
+   that pops the stack and puts the result into the parent frame's mailbox
+
 
  * modify builtins to push the work of evaluating their arguments onto the
    stack, followed by a "finalizer"
@@ -70,6 +91,14 @@ In any case, it seems easier to put unlifted values on the stack that in a closu
 
 ## Don't allocate case objects
 
+NOTE: So GHC would actually allocate if `E` returns new constructor in
+      `case E of z alts`.  However, I think GHC would _not_ allocate for
+      `case a!i of z {alts}`, because `a!i` always returns a pointer.
+
+QUESTION: if `E` returns a new constructor, but `z` is unreferenced then
+it seems there is no value in allocating.  What would GHC do?
+How about if `E` is immedately `case`-d in the alts, and otherwise unused?
+
 `case (op E1 E2 E3)` of alts should not allocate a separate reg for the op,
 although it _should_ allocate separate regs if E1, E2, and E3 are separate
 expressions.
@@ -105,11 +134,6 @@ This may
 * benefit from directly evaluting case objects w/o allocation.
 
 See [runST](runST.md).
-
-## Combine force/uses into one list
-
-If we put uses/forces on steps, then perhaps we would
-also put the call in the same list.
 
 ## Replace e-ops with something more general
 
@@ -187,7 +211,7 @@ forward + backward.
 
 Q: Maybe this is actually bad?  We change [x,i] <-> [y,j] to
 
-    i <-> [k:x,y,i,j] <-> j
+    i:k <-> [k:x,y,i,j] <-> j:k
     
 So if we delete i, we need to
 
