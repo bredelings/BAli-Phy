@@ -39,7 +39,7 @@ struct Step
 
     int call = 0;
 
-    // NOTE: There is a space-time trade-off in the number of used_regs here.
+    // NOTE: There is a space-time trade-off in the number of use/force edges here.
     //       However, small_vector< ,1> takes little or no extra space, and noticeably saves time.
 
     /// Does C reduce to another reg that we need to evaluate to get the true value?
@@ -104,6 +104,16 @@ std::ostream& operator<<(std::ostream& o, token_type);
 
 class effect;
 
+enum class use_force_mode : unsigned char {use, force};
+
+struct use_force_edge
+{
+    use_force_mode mode;
+    int reg;
+    int target;
+    int back_index;
+};
+
 class reg
 {
 public:
@@ -121,12 +131,10 @@ public:
 
     type_t type = type_t::unevaluated;
 
-    /// Which reg's were used to reduce this expression?
-    boost::container::small_vector< std::tuple<int,int,int>, 2 > used_regs;
+    /// Which regs were used or forced to reduce this expression, in observation order.
+    boost::container::small_vector<use_force_edge, 2> used_forced_regs;
 
-    boost::container::small_vector< int, 2 > forced_regs;
-
-    /// Which regs (reg,index) USE this reg?
+    /// Which regs (reg,edge-index) USE this reg?
     boost::container::small_vector<std::pair<int,int>, 2> used_by;
 
     /// Which reduction values made use of the value of this expression (via call)
@@ -848,7 +856,10 @@ inline bool reg_heap::reg_is_evaluated(int r) const
 
 inline bool reg_heap::reg_has_forces(int r) const
 {
-    return not regs[r].forced_regs.empty();
+    for(const auto& edge: regs[r].used_forced_regs)
+        if (edge.mode == use_force_mode::force)
+            return true;
+    return false;
 }
 
 inline bool reg_heap::reg_is_on_stack(int r) const

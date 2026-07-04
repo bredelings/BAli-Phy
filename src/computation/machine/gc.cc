@@ -217,8 +217,9 @@ void reg_heap::trace(vector<int>& remap)
                 mark_reg(r);
         }
 
-        for(auto r : R.forced_regs)
-	    mark_reg(r);
+        for(const auto& edge : R.used_forced_regs)
+            if (edge.mode == use_force_mode::force)
+	        mark_reg(edge.reg);
     }
 
     release_scratch_list();
@@ -339,8 +340,9 @@ void reg_heap::trace_root()
                 mark_reg(r);
         }
 
-        for(auto r : R.forced_regs)
-	    mark_reg(r);
+        for(const auto& edge : R.used_forced_regs)
+            if (edge.mode == use_force_mode::force)
+	        mark_reg(edge.reg);
 
         // If there's a step, then the call should be marked.
         if (has_step1(r))

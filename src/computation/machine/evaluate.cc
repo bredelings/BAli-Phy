@@ -329,7 +329,7 @@ EvalResult reg_heap::incremental_evaluate1_ref_with_force_(int r)
 {
     assert(reg_is_ref_with_force(r));
 
-    // We don't have to force the forced regs in evaluate1.
+    // We don't have to force force-edge children in evaluate1.
     int r2 = closure_at(r).reg_for_ref();
     auto [r3, result3] = incremental_evaluate1(r2);
 
@@ -491,11 +491,14 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
             // If this is an index_var, update it to point to the end of the ref_no_force chain.
             if (was_index_var and r2 != r3) regs[r].C.Env[0] = r3;
 
-            if (regs[r].forced_regs.empty())
+            if (regs[r].used_forced_regs.empty())
             {
                 mark_reg_ref_no_force(r);
                 return {r3,result};
             }
+
+            for(const auto& edge: regs[r].used_forced_regs)
+                assert(edge.mode == use_force_mode::force);
 
             int r4 = follow_reg_ref(r3);
             if (was_index_var and r3 != r4) regs[r].C.Env[0] = r4;
@@ -516,7 +519,7 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
         else if (closure_at(r).get_code().is_whnf())
         {
             assert(not closure_at(r).get_code().to<Operation>());
-            if (regs[r].forced_regs.empty())
+            if (regs[r].used_forced_regs.empty())
             {
                 mark_reg_constant(r);
 
@@ -528,6 +531,9 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
             }
             else
             {
+                for(const auto& edge: regs[r].used_forced_regs)
+                    assert(edge.mode == use_force_mode::force);
+
                 // Allocate a new reg
                 int r2 = allocate();
                 auto creator_step = creator_step_for_reg(r);
@@ -570,7 +576,7 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
                 {
                     assert( not reg_has_call(r) );
                     assert( not has_result1(r) );
-                    assert( regs[r].used_regs.empty() );
+                    assert( used_regs_for_reg(r).empty() );
                     assert( steps[s].created_regs.empty() ); // Any allocations should have gone to creator_step
                     set_C( r, std::move(value) );
                     steps.reclaim_used(s);
@@ -667,7 +673,7 @@ EvalResult reg_heap::incremental_evaluate1_(int r)
 
 /// Evaluate regs when called from a changeable reg.
 /// Since the reg has already been marked changeable, dependencies have already been recorded.
-/// Used regs and forced regs should already be up-to-date, having been forced by force_regs_check_same_inputs( ).
+/// USE and FORCE edges should already be up-to-date, having been forced by force_regs_check_same_inputs( ).
 class RegOperationArgs2Changeable final: public OperationArgs
 {
     const int s;
@@ -936,11 +942,14 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
             // If this is an index_var, update it to point to the end of the ref_no_force chain.
             if (was_index_var and r2 != r3) regs[r].C.Env[0] = r3;
 
-            if (regs[r].forced_regs.empty())
+            if (regs[r].used_forced_regs.empty())
             {
                 mark_reg_ref_no_force(r);
                 return {r3,result};
             }
+
+            for(const auto& edge: regs[r].used_forced_regs)
+                assert(edge.mode == use_force_mode::force);
 
 	    int r4 = follow_reg_ref(r3);
 	    if (was_index_var and r3 != r4) regs[r].C.Env[0] = r4;
@@ -971,7 +980,7 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
         // Check for WHNF *OR* heap variables
         else if (closure_at(r).get_code().is_whnf())
         {
-            if (regs[r].forced_regs.empty())
+            if (regs[r].used_forced_regs.empty())
 	    {
                 mark_reg_constant(r);
 
@@ -983,6 +992,9 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
 	    }
 	    else
 	    {
+                for(const auto& edge: regs[r].used_forced_regs)
+                    assert(edge.mode == use_force_mode::force);
+
 		// Allocate a new reg
 		int r2 = allocate();
 		auto creator_step = creator_step_for_reg(r);
@@ -1024,7 +1036,7 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
                 {
                     assert( not reg_has_call(r) );
                     assert( not has_result1(r) );
-                    assert( regs[r].used_regs.empty() );
+                    assert( used_regs_for_reg(r).empty() );
                     assert( steps[s].created_regs.empty() ); // Any allocations should have gone to sp
                     set_C( r, std::move(value) );
                     steps.reclaim_used(s);

@@ -1034,7 +1034,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 		o<<"{rank = same; "<<name<<"; "<<name2<<";}"<<std::endl;
 	}
 
-	// used_regs
+	// USE edges
 	for(int R2: C.used_regs_for_reg(R))
 	{
 	    bool is_ref_edge_also = false;
@@ -1052,7 +1052,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
 	    o<<"];\n";
 	}
 
-	// forced_regs
+	// FORCE edges
 	for(int R2: C.forced_regs_for_reg(R))
 	{
 	    bool is_ref_edge_also = false;

@@ -50,7 +50,7 @@ long total_tokens = 0;
  *
  * Forward edges consist of
  * - E edges
- * - used edges (forward: used_regs, backward: used_by)
+ * - used edges (forward: used_forced_regs, backward: used_by)
  * - call edges (forward: call, backward: called_by)
  * - value edges (computed by following call edges).
  * The called_by back edges indicate that a value is being used by another value that calls us.
@@ -80,7 +80,7 @@ long total_tokens = 0;
  *
  * 5. Clean up back-edges to computations when computations are destroyed.
  *
- * 6. Move call and used_regs into reduction
+ * 6. Move call and used_forced_regs into reduction
  *
  * 7. Make back-edges from reduction to computations that use it.
  *    - remove duplicate_computation( ).
@@ -194,8 +194,7 @@ void reg::clear()
 {
     C.clear();
     type = type_t::unevaluated;
-    truncate(used_regs);
-    truncate(forced_regs);
+    truncate(used_forced_regs);
     truncate(used_by);
     truncate(called_by);
     truncate(created_by_step);
@@ -206,8 +205,7 @@ void reg::check_cleared() const
 {
     assert(not C);
     assert(type == type_t::unevaluated);
-    assert(used_regs.empty());
-    assert(forced_regs.empty());
+    assert(used_forced_regs.empty());
     assert(used_by.empty());
     assert(called_by.empty());
     assert(not created_by_step);
@@ -220,9 +218,7 @@ reg& reg::operator=(reg&& R) noexcept
 
     type = R.type;
 
-    used_regs  = std::move( R.used_regs );
-
-    forced_regs  = std::move( R.forced_regs );
+    used_forced_regs = std::move( R.used_forced_regs );
 
     used_by = std::move( R.used_by );
 
@@ -238,8 +234,7 @@ reg& reg::operator=(reg&& R) noexcept
 reg::reg(reg&& R) noexcept
     :C( std::move(R.C) ),
      type ( R.type ),
-     used_regs ( std::move(R.used_regs) ),
-     forced_regs (std::move(R.forced_regs) ),
+     used_forced_regs ( std::move(R.used_forced_regs) ),
      used_by ( std::move( R.used_by) ),
      called_by ( std::move( R.called_by) ),
      created_by_step( std::move(R.created_by_step) ),
@@ -619,13 +614,9 @@ void reg_heap::compute_initial_force_counts()
         int r = forced_regs[i];
         auto& R = regs[r];
 
-        // 3a. Count uses
-        for(auto [ur,_,__]: R.used_regs)
-            force_reg(ur);
-
-        // 3b. Count forces
-        for(auto fr: R.forced_regs)
-            force_reg(fr);
+        // 3a. Count uses and forces
+        for(const auto& edge: R.used_forced_regs)
+            force_reg(edge.reg);
 
         if (has_step1(r))
         {
@@ -663,16 +654,13 @@ void reg_heap::mark_unconditional_regs()
         int r = unconditionally_evaluated_regs[i];
         auto & R = regs[r];
 
-        // Mark used regs
-        for(auto [fr, ur, _]: R.used_regs)
+        // Mark used and forced regs
+        for(const auto& edge: R.used_forced_regs)
 	{
-            use_reg_unconditionally(fr);
-            use_reg_unconditionally(ur);
+            use_reg_unconditionally(edge.reg);
+            if (edge.mode == use_force_mode::use)
+                use_reg_unconditionally(edge.target);
 	}
-
-        // Mark force regs
-        for(auto fr: R.forced_regs)
-            use_reg_unconditionally(fr);
     }
 
     release_scratch_list(); // unconditionally_evaluated_regs
@@ -796,11 +784,8 @@ void reg_heap::check_force_counts() const
 	// Skip if prog_force_counts is zero.
 	if (prog_force_counts[r] == 0) continue;
 
-	for(auto& [r2,_,__]: regs[r].used_regs)
-	    true_force_counts[r2]++;
-
-	for(auto& r2: regs[r].forced_regs)
-	    true_force_counts[r2]++;
+	for(const auto& edge: regs[r].used_forced_regs)
+	    true_force_counts[edge.reg]++;
 
 	if (reg_is_changeable(r))
 	{
@@ -1652,33 +1637,33 @@ bool reg_heap::force_regs_check_same_inputs(int r)
     // during the loop if we do evaluation, and the range-for saves
     // the location of regs[r] from before it was moved.
 
-    // Why do we evaluate the forced regs here even when zero_count == false?
-    // If zero_count == false, the forced child should already have a positive force count.
-    // Therefore, evaluating the child here mainly guarantees that the child is re-validated
-    //   BEFORE the parent.
-    // This is true for random sampling builtins, getProperties, registerInterchangeable,
-    //   register_out_edge, and others.
+    // Why do we evaluate force edges here even when zero_count == false?
+    // If zero_count == false, the forced child should already have a positive
+    // force count.  Evaluating it here mainly guarantees that the child is
+    // re-validated BEFORE the parent.
 
     bool zero_count = not reg_is_forced(r);
-    for(int i=0;i<regs[r].forced_regs.size();i++)
-    {
-        int r2 = regs[r].forced_regs[i];
-
-        incremental_evaluate2(r2, zero_count);
-
-        assert(reg_is_constant(follow_reg_ref_target(r2)) or has_result2(follow_reg_ref_target(r2)));
-        assert(reg_is_forced(r2));
-    }
-
-    // We can only have the same inputs as a previous step if we have a step from the
-    // previous program that was marked invalid.
     bool same_inputs = prog_unshare[r].test(unshare_step_bit);
-    for(int i=0;i<regs[r].used_regs.size();i++)
+
+    // Replay the recorded dependency observations in order.  FORCE edges
+    // demand their child but do not decide whether the parent can be retained.
+    for(int i=0;i<regs[r].used_forced_regs.size();i++)
     {
-        auto [r2,r3,__] = regs[r].used_regs[i];
+        auto edge = regs[r].used_forced_regs[i];
+        int r2 = edge.reg;
 
         incremental_evaluate2(r2, zero_count);
 
+        if (edge.mode == use_force_mode::force)
+        {
+            assert(reg_is_constant(follow_reg_ref_target(r2)) or has_result2(follow_reg_ref_target(r2)));
+            assert(reg_is_forced(r2));
+            continue;
+        }
+
+        int r3 = edge.target;
+
+        assert(edge.mode == use_force_mode::use);
 	assert(follow_reg_ref_target(r2) == r3);
         assert(reg_is_forced(r3));
         assert(reg_is_constant(r3) or reg_is_changeable(r3));
@@ -1696,19 +1681,9 @@ void reg_heap::force_reg_no_call(int r)
 
     // We can't use a range-for here because regs[r] can be moved
     // during the loop if we do evaluation.
-    for(int i=0; i < regs[r].used_regs.size(); i++)
+    for(int i=0; i < regs[r].used_forced_regs.size(); i++)
     {
-        auto [r2,_,__] = regs[r].used_regs[i];
-
-        incremental_evaluate2(r2, true);
-
-        assert(reg_is_constant(follow_reg_ref_target(r2)) or has_result2(follow_reg_ref_target(r2)));
-        assert(reg_is_forced(r2));
-    }
-
-    for(int i=0; i < regs[r].forced_regs.size(); i++)
-    {
-        int r2 = regs[r].forced_regs[i];
+        int r2 = regs[r].used_forced_regs[i].reg;
 
         incremental_evaluate2(r2, true);
 
@@ -1820,9 +1795,9 @@ void reg_heap::set_used_reg(int r1, int r2)
     auto& R1 = regs[r1];
     auto& R3 = regs[r3];
     int back_index = R3.used_by.size();
-    int forw_index = R1.used_regs.size();
+    int forw_index = R1.used_forced_regs.size();
     R3.used_by.push_back({r1,forw_index});
-    R1.used_regs.push_back({r2,r3,back_index});
+    R1.used_forced_regs.push_back({use_force_mode::use, r2, r3, back_index});
 
     assert(reg_is_used_by(r1,r2));
 }
@@ -1840,9 +1815,11 @@ int reg_heap::follow_single_force_ref(int r) const
 
     assert(reg_has_value(r));
 
-    while(reg_is_ref_with_force(r) and regs[r].forced_regs.size() == 1)
+    while(reg_is_ref_with_force(r) and regs[r].used_forced_regs.size() == 1)
     {
-	r = regs[r].forced_regs[0];
+        const auto& edge = regs[r].used_forced_regs[0];
+        assert(edge.mode == use_force_mode::force);
+	r = edge.reg;
 
 	assert(regs.is_used(r));
 
@@ -1855,15 +1832,19 @@ int reg_heap::follow_single_force_ref(int r) const
 	assert(reg_has_value(r));
     }
 
-    assert(reg_is_changeable(r) or regs[r].forced_regs.size() > 1);
+    assert(reg_is_changeable(r) or regs[r].used_forced_regs.size() > 1);
 
     return r;
 }
 
 std::optional<int> reg_heap::reg_has_single_force(int r1) const
 {
-    if (closure_at(r1).is_reg_ref() and regs[r1].forced_regs.size() == 1)
-	return regs[r1].forced_regs[0];
+    if (closure_at(r1).is_reg_ref() and regs[r1].used_forced_regs.size() == 1)
+    {
+        const auto& edge = regs[r1].used_forced_regs[0];
+        assert(edge.mode == use_force_mode::force);
+	return edge.reg;
+    }
     else
 	return {};
 }
@@ -1903,7 +1884,7 @@ int reg_heap::set_forced_reg(int r1, int r2)
 	assert(not reg_is_ref_no_force(r2));
     }
 
-    regs[r1].forced_regs.push_back(r2);
+    regs[r1].used_forced_regs.push_back({use_force_mode::force, r2, 0, 0});
 
     assert(reg_is_forced_by(r1,r2));
 
@@ -2085,7 +2066,7 @@ int reg_heap::allocate()
     total_reg_allocations++;
     int r = regs.allocate();
     mark_reg_unevaluated(r);
-    assert(regs[r].used_regs.empty());
+    assert(regs[r].used_forced_regs.empty());
     return r;
 }
 
@@ -2251,8 +2232,9 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
 {
     vector<int> U;
 
-    for(const auto& [r2,_,__]: regs[r].used_regs)
-        U.push_back(r2);
+    for(const auto& edge: regs[r].used_forced_regs)
+        if (edge.mode == use_force_mode::use)
+            U.push_back(edge.reg);
 
     return U;
 }
@@ -2261,8 +2243,9 @@ std::vector<int> reg_heap::forced_regs_for_reg(int r) const
 {
     vector<int> U;
 
-    for(int r2: regs[r].forced_regs)
-        U.push_back(r2);
+    for(const auto& edge: regs[r].used_forced_regs)
+        if (edge.mode == use_force_mode::force)
+            U.push_back(edge.reg);
 
     return U;
 }
@@ -2446,8 +2429,8 @@ bool reg_heap::reg_is_called_by(int r1, int s1) const
 
 bool reg_heap::reg_is_used_by(int r1, int r2) const
 {
-    for(auto& [r,_,__]: regs[r1].used_regs)
-        if (r == r2)
+    for(const auto& edge: regs[r1].used_forced_regs)
+        if (edge.mode == use_force_mode::use and edge.reg == r2)
             return true;
 
     return false;
@@ -2455,8 +2438,8 @@ bool reg_heap::reg_is_used_by(int r1, int r2) const
 
 bool reg_heap::reg_is_forced_by(int r1, int r2) const
 {
-    for(int r: regs[r1].forced_regs)
-        if (r == r2)
+    for(const auto& edge: regs[r1].used_forced_regs)
+        if (edge.mode == use_force_mode::force and edge.reg == r2)
             return true;
 
     return false;
@@ -2652,11 +2635,8 @@ void reg_heap::check_used_regs() const
 	    for(int r2: R.C.Env)
 		assert(not reg_is_contingent(r2));
 
-	    for(auto& [r2,_,__]: R.used_regs)
-		assert(not reg_is_contingent(r2));
-
-	    for(int r2: R.forced_regs)
-		assert(not reg_is_contingent(r2));
+	    for(const auto& edge: R.used_forced_regs)
+		assert(not reg_is_contingent(edge.reg));
 	}
 
         if (do_check_force_counts)
@@ -2674,10 +2654,18 @@ void reg_heap::check_used_regs() const
         if (prog_force_counts[r1] > 0)
             assert(reg_is_changeable_or_forcing(r1));
 
-        if (not regs[r1].used_regs.empty())
+        bool has_use_edge = false;
+        bool has_force_edge = false;
+        for(const auto& edge: regs[r1].used_forced_regs)
+        {
+            has_use_edge = has_use_edge or edge.mode == use_force_mode::use;
+            has_force_edge = has_force_edge or edge.mode == use_force_mode::force;
+        }
+
+        if (has_use_edge)
             assert(reg_is_changeable(r1) or reg_is_unevaluated(r1));
 
-        if (not regs[r1].forced_regs.empty())
+        if (has_force_edge)
             assert(reg_is_changeable_or_forcing(r1) or reg_is_unevaluated(r1));
 
         // Under what conditions should a constant_with_force have finished forcing its regs?
@@ -2696,8 +2684,11 @@ void reg_heap::check_used_regs() const
             }
         }
 
-        for(const auto& [r2,_,__]: regs[r1].used_regs)
+        for(const auto& edge: regs[r1].used_forced_regs)
         {
+            if (edge.mode != use_force_mode::use) continue;
+            int r2 = edge.reg;
+
             // Used regs should have back-references to R
             assert( reg_is_used_by(r1, r2) );
 
@@ -2708,16 +2699,19 @@ void reg_heap::check_used_regs() const
             // so that this result can be invalidated, and the used result won't be GC-ed.
             // FIXME - nonlocal.  assert(is_modifiable(closure_at(R2).get_code()) or result_is_referenced(t,res2));
         }
-        for(int r2: regs[r1].forced_regs)
+        for(const auto& edge: regs[r1].used_forced_regs)
         {
-            // Used regs should have back-references to R
+            if (edge.mode != use_force_mode::force) continue;
+            int r2 = edge.reg;
+
+            // Forced regs should be recorded as FORCE edges from R
             assert( reg_is_forced_by(r1, r2) );
 
-            // Used computations should be mapped computation for the current token, if we are at the root
+            // Forced computations should be mapped computation for the current token, if we are at the root
             assert(reg_is_changeable_or_forcing(r2));
 
-            // The used result should be referenced somewhere more root-ward
-            // so that this result can be invalidated, and the used result won't be GC-ed.
+            // The forced result should be referenced somewhere more root-ward
+            // so that this result can be invalidated, and the forced result won't be GC-ed.
             // FIXME - nonlocal.  assert(is_modifiable(closure_at(R2).get_code()) or result_is_referenced(t,res2));
         }
     }
@@ -2764,11 +2758,15 @@ void reg_heap::check_back_edges_cleared_for_step(int s) const
 
 void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 {
-    // 1. When destroying a reg, remove edge from regs[r] <---used_by--- regs[r3]
+    // 1. When destroying a reg, remove USE edges from regs[r] <---used_by--- regs[r3]
     assert(r > 0);
-    for(auto& forward: regs[r].used_regs)
+    for(auto& forward: regs[r].used_forced_regs)
     {
-        auto [_,r3,j] = forward;
+        if (forward.mode == use_force_mode::force)
+            continue;
+
+        int r3 = forward.target;
+        int j = forward.back_index;
 
 	if (regs.is_free(r3)) continue;
 
@@ -2784,18 +2782,19 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
             backward[j] = backward.back();
             auto [r2,i2] = backward[j];
             // adjust the forward edge for that backward edge
-            auto& forward2 = regs[r2].used_regs;
+            auto& forward2 = regs[r2].used_forced_regs;
             assert(0 <= i2 and i2 < forward2.size());
-	    std::get<2>(forward2[i2]) = j;
+            assert(forward2[i2].mode == use_force_mode::use);
+	    forward2[i2].back_index = j;
 
 	    // We can assume that r2 isn't deleted, because if it was this entry would be gone.
-            assert(std::get<2>(regs[r2].used_regs[i2]) == j);
-            assert(regs[std::get<1>(forward2[i2])].used_by[std::get<2>(forward2[i2])].second == i2);
+            assert(regs[r2].used_forced_regs[i2].back_index == j);
+            assert(regs[forward2[i2].target].used_by[forward2[i2].back_index].second == i2);
         }
 
         backward.pop_back();
 
-        forward = {0,0,0};
+        forward = {use_force_mode::use, 0, 0, 0};
     }
 
     // 3. When destroying a reg, remove edge from step[s] ---created_regs---> regs[r]
@@ -2828,8 +2827,9 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 
 void reg_heap::check_back_edges_cleared_for_reg(int r) const
 {
-    for(auto& [_,__,index]: regs.access_unused(r).used_regs)
-        assert(index == 0);
+    for(const auto& edge: regs.access_unused(r).used_forced_regs)
+        if (edge.mode == use_force_mode::use)
+            assert(edge.back_index == 0);
 }
 
 void reg_heap::clear_back_edges_for_step(int s)
