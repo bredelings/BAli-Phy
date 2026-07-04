@@ -93,18 +93,60 @@ the taints of type parameters under substitution. We could in theory add
 separate taint variables for each type in the SCC -- X@xshape@yshape -- but this
 may not be worth it.
 
+### Taint-Indexed Kinds
+
+Another way to express the same idea is to make the taint part of the kind of
+lifted types:
+
+    data Taint = P | C
+    Type :: Taint -> Kind
+
+Then a type of kind `Type P` has a pure outer structural layer, while a type of
+kind `Type C` has a changeable outer structural layer.  The list constructor
+can be taint-polymorphic in its element type while fixing the taint of its own
+spine:
+
+    []@P :: forall p. Type p -> Type P
+    []@C :: forall p. Type p -> Type C
+
+Thus a list with a pure spine and changeable elements is different from a list
+with a changeable spine.  The element taint is contained in the element type;
+the list-spine taint is in the result kind.
+
+This taint index only needs to apply to lifted heap-allocatable types; unboxed
+or otherwise non-lifted types can remain outside this `Type p` family.
+
+This also gives a better story for higher-kinded parameters.  For example:
+
+    data List f a = Nil | Cons (f a) (List f a)
+
+does not require `Changeable f`, because `f` is not a lifted value.  Instead,
+`f` has a higher kind such as:
+
+    f :: Type p -> Type q
+
+or a taint-polymorphic variant of that kind.  Applying `f` to `a` produces an
+ordinary field type with whatever result taint the kind of `f` specifies.  The
+outer `List@C f a` can still make the recursive list spine changeable without
+making the type constructor `f` itself changeable.
+
+This does not settle the whole kind system.  We may need taint variables,
+taint-level functions, or unification over result taints for constructors whose
+result taint depends on their arguments.  But it moves the higher-kinded problem
+from "how can `f` be changeable?" to "what tainted kind does `f` have?", which
+is a better-shaped question.
+
 ### Unresolved issues
 
 * What about higher-kinded parameters?
 
   For a type like `data List f a = Nil | Cons (f a) (List f a)`, then we cannot
-  have `Changeable f`, since `f` does not have kind `Type`.  If it unclear if
-  this would actually be a problem, since we don't yet know what the tainting
-  algorithm on Core function bodies would do here.
+  have `Changeable f`, since `f` does not have kind `Type`.  Taint-indexed
+  kinds may address this by giving `f` a kind like `Type p -> Type q`.
   
-  To handle this, would we need a type per constructor field?  That is, one for
-  the cons (f a) and one for the (List f a)?  If a field is just `a`, then maybe
-  the taint could be contained within the `a`.
+  The remaining question is how expressive the tainted kind language needs to
+  be.  Some constructors ignore an argument's outer taint in their result kind,
+  while others may preserve or compute result taints from argument taints.
   
 * How about functions?  If we have
 
