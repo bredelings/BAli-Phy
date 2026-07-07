@@ -1199,6 +1199,10 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
         int s = prog_steps[r];
         int r2 = steps[s].call;
 
+        if (prog_unshare[r].test(step_edges_decremented_bit))
+            for(const auto& edge: steps[s].used_forced_regs)
+                inc_count(edge.reg);
+
         // Since the call is unchanged, we only need to increment the call count if its been decremented
         auto [call,result] = incremental_evaluate2(r2, prog_unshare[r].test(step_edges_decremented_bit));
 

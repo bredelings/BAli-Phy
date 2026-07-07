@@ -229,6 +229,7 @@ void reg_heap::check_created_regs_unshared(int t)
  *  and then restart the inner loop to invalidate downstream steps and results.
  * result <-- called_by -- result
  * result <-- used_by_reg  --- (step,result)
+ * result <-- used_by_step --- step
  *                         step <--- created_by --- reg <---located-at-- (step,result)
  */
 
@@ -342,6 +343,11 @@ void reg_heap::unshare_regs1(int t)
         // Look at steps that USE the reg in the root (that has overridden result in t)
         for(auto& [r2,_]: R.used_by_reg)
             if (prog_steps[r2] > 0)
+                unshare_step(r2);
+
+        // Look at steps with dependent USE edges to the changed reg.
+        for(auto& [s2,_]: R.used_by_step)
+            if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2)
                 unshare_step(r2);
     };
 
@@ -482,6 +488,10 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
             if (prog_steps[r2] > 0 and has_result1(r2))
                 unshare_step(r2);
 
+        // Look at steps with dependent USE edges to the changed reg.
+        for(auto& [s2,_]: R.used_by_step)
+            if (int r2 = steps[s2].source_reg; prog_steps[r2] == s2 and has_result1(r2))
+                unshare_step(r2);
     };
 
     // Interchanges aren't actually unshared.  But they have changed.
@@ -581,7 +591,7 @@ void reg_heap::evaluate_unconditional_regs(const vector<int>& unshared_regs)
         }
 }
 
-void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_regs, vector<int>& zero_count_regs)
+void reg_heap::decrement_counts_from_invalid_step_demands(const vector<int>& unshared_regs, vector<int>& zero_count_regs)
 {
     int t2 = tokens[root_token].children[0];
 
@@ -604,7 +614,29 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
             zero_count_regs.push_back(r);
     };
 
-    // 1. Decrement calls from steps bumped during execution.
+    // Decrement the outgoing demands owned by a step: dependent USE/FORCE
+    // edges first, then the call edge that represents the step result.
+    auto dec_step_demands = [&](int s) -> bool
+    {
+        bool decremented = false;
+        for(const auto& edge: steps[s].used_forced_regs)
+        {
+            dec_force_count(edge.reg);
+            decremented = true;
+        }
+
+        int call = steps[s].call;
+        assert(call > 0);
+        if (reg_is_changeable_or_forcing(call))
+        {
+            dec_force_count(call);
+            decremented = true;
+        }
+
+        return decremented;
+    };
+
+    // 1. Decrement demands from steps bumped during execution.
     //    Should all of these regs have force counts > 0, since there is a new step for the reg?
     for(auto& [r,s]: vm_step2->delta())
     {
@@ -613,14 +645,11 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
         {
             // But we should only be able to bump old steps here with new valid steps.
             assert(prog_steps[r] > 0);
-
-            int call = steps[s].call;
-            if (reg_is_changeable_or_forcing(call))
-                dec_force_count(call);
+            dec_step_demands(s);
         }
     }
 
-    // 2. Decrement calls from invalid steps.
+    // 2. Decrement demands from invalid steps.
     int n_invalid_control_flow = 0;
     for(int r : unshared_regs)
     {
@@ -635,12 +664,8 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
             //   incremental_evaluate2_changeable_() to add that demand back.
             prog_unshare[r].set(step_edges_decremented_bit);
             int s = prog_steps[r];
-            int call = steps[s].call;
-            if (reg_is_changeable_or_forcing(call))
-            {
+            if (dec_step_demands(s))
                 n_invalid_control_flow++;
-                dec_force_count(call);
-            }
         }
     }
 
@@ -661,9 +686,7 @@ void reg_heap::decrement_counts_from_invalid_calls(const vector<int>& unshared_r
         {
             int s = prog_steps[r];
             assert(s > 0 and s < steps.size());
-            int call = steps[s].call;
-            if (reg_is_changeable_or_forcing(call))
-                dec_force_count(call);
+            dec_step_demands(s);
         }
     }
 
@@ -895,7 +918,7 @@ void reg_heap::unshare_regs2(int t)
     //       in order to know which ones we are allowed to re-execute.
     //
     auto& zero_count_regs = get_scratch_list();
-    decrement_counts_from_invalid_calls(unshared_regs, zero_count_regs);
+    decrement_counts_from_invalid_step_demands(unshared_regs, zero_count_regs);
 
     // 5. Evaluate all forced invalid regs.
     //

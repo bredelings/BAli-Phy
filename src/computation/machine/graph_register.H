@@ -775,7 +775,7 @@ public:
     void reroot_at_token_with_tweaked_deltas_and_bits(int t);
     void increment_counts_from_new_calls();
     void evaluate_unconditional_regs(const std::vector<int>& unshared_regs);
-    void decrement_counts_from_invalid_calls(const std::vector<int>&, std::vector<int>&);
+    void decrement_counts_from_invalid_step_demands(const std::vector<int>&, std::vector<int>&);
     void evaluate_forced_invalid_regs(const std::vector<int>&, const std::vector<interchange_op>&);
     void cleanup_count_deltas_and_bits();
     void remove_zero_count_regs(const std::vector<int>&, const std::vector<int>&);

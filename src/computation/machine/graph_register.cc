@@ -801,7 +801,12 @@ void reg_heap::check_force_counts() const
 	{
 	    assert(has_step1(r));
 
-	    int call = step_for_reg(r).call;
+            const auto& step = step_for_reg(r);
+
+            for(const auto& edge: step.used_forced_regs)
+                true_force_counts[edge.reg]++;
+
+	    int call = step.call;
 
 	    if (reg_is_changeable_or_forcing(call))
 		true_force_counts[call]++;
@@ -1655,7 +1660,7 @@ bool reg_heap::force_regs_check_same_inputs(int r)
     bool zero_count = not reg_is_forced(r);
     bool same_inputs = prog_unshare[r].test(unshare_step_bit);
 
-    // Replay the recorded dependency observations in order.  FORCE edges
+    // Replay the fixed dependency observations in order.  FORCE edges
     // demand their child but do not decide whether the parent can be retained.
     for(int i=0;i<regs[r].used_forced_regs.size();i++)
     {
@@ -1681,6 +1686,38 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 
         same_inputs = same_inputs and not prog_unshare[r3].test(different_result_bit);
     }
+
+    if (not same_inputs)
+        return false;
+
+    int s = step_index_for_reg(r);
+
+    // Replay dependent dependency observations in order.  A changed USE edge
+    // short-circuits the old step because later dependent edges may no longer exist.
+    for(int i=0;i<steps[s].used_forced_regs.size();i++)
+    {
+        auto edge = steps[s].used_forced_regs[i];
+        int r2 = edge.reg;
+
+        incremental_evaluate2(r2, false);
+
+        if (edge.mode == use_force_mode::force)
+        {
+            assert(reg_is_constant(follow_reg_ref_target(r2)) or has_result2(follow_reg_ref_target(r2)));
+            continue;
+        }
+
+        int r3 = edge.target;
+
+        assert(edge.mode == use_force_mode::use);
+        assert(follow_reg_ref_target(r2) == r3);
+        assert(reg_is_constant(r3) or reg_is_changeable(r3));
+        assert(reg_is_constant(r3) or has_result2(r3));
+
+        same_inputs = not prog_unshare[r3].test(different_result_bit);
+        if (not same_inputs)
+            return false;
+    }
     return same_inputs;
 }
 
@@ -1699,6 +1736,20 @@ void reg_heap::force_reg_no_call(int r)
 
         assert(reg_is_constant(follow_reg_ref_target(r2)) or has_result2(follow_reg_ref_target(r2)));
         assert(reg_is_forced(r2));
+    }
+
+    if (reg_is_changeable(r) and has_step2(r))
+    {
+        int s = step_index_for_reg(r);
+        for(int i=0; i < steps[s].used_forced_regs.size(); i++)
+        {
+            int r2 = steps[s].used_forced_regs[i].reg;
+
+            incremental_evaluate2(r2, true);
+
+            assert(reg_is_constant(follow_reg_ref_target(r2)) or has_result2(follow_reg_ref_target(r2)));
+            assert(reg_is_forced(r2));
+        }
     }
 }
 
@@ -2328,6 +2379,11 @@ std::vector<int> reg_heap::used_regs_for_reg(int r) const
         if (edge.mode == use_force_mode::use)
             U.push_back(edge.reg);
 
+    if (has_step1(r))
+        for(const auto& edge: step_for_reg(r).used_forced_regs)
+            if (edge.mode == use_force_mode::use)
+                U.push_back(edge.reg);
+
     return U;
 }
 
@@ -2338,6 +2394,11 @@ std::vector<int> reg_heap::forced_regs_for_reg(int r) const
     for(const auto& edge: regs[r].used_forced_regs)
         if (edge.mode == use_force_mode::force)
             U.push_back(edge.reg);
+
+    if (has_step1(r))
+        for(const auto& edge: step_for_reg(r).used_forced_regs)
+            if (edge.mode == use_force_mode::force)
+                U.push_back(edge.reg);
 
     return U;
 }

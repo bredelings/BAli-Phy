@@ -119,8 +119,9 @@ void reg_heap::trace(vector<int>& remap)
      * (v) regs in the environment of a referenced reg.
      * (vi) regs that are forced by a referenced reg.
      *
-     * We don't follow use edges, because anything that is used should also be in the
-     * environment.
+     * We don't follow fixed reg USE edges here, because anything that is fixed-used
+     * should also be in the environment.  Dependent step USE edges are marked from
+     * the owning step because their targets need not appear in the closure.
      *
      * If something is only forced, then:
      * - if it is a constant (with force), we should be able to ignore its references.
@@ -181,6 +182,9 @@ void reg_heap::trace(vector<int>& remap)
     for(auto& S: steps)
     {
 	mark_reg(S.source_reg);
+
+        for(const auto& edge: S.used_forced_regs)
+            mark_reg(edge.reg);
 
 	if (S.call > 0)
 	    mark_reg(S.call);
@@ -346,7 +350,12 @@ void reg_heap::trace_root()
 
         // If there's a step, then the call should be marked.
         if (has_step1(r))
+        {
+            for(const auto& edge: step_for_reg(r).used_forced_regs)
+                mark_reg(edge.reg);
+
             mark_reg( call_for_reg(r) );
+        }
     }
 
     release_scratch_list();
