@@ -50,7 +50,8 @@ long total_tokens = 0;
  *
  * Forward edges consist of
  * - E edges
- * - used edges (forward: used_forced_regs, backward: used_by_reg)
+ * - fixed used edges (forward: regs[].used_forced_regs, backward: used_by_reg)
+ * - dependent used edges (forward: steps[].used_forced_regs, backward: used_by_step)
  * - call edges (forward: call, backward: called_by)
  * - value edges (computed by following call edges).
  * The called_by back edges indicate that a value is being used by another value that calls us.
@@ -145,6 +146,7 @@ void Step::clear()
     source_reg = -1;
     call = 0;
     truncate(call_edge);
+    truncate(used_forced_regs);
     // We are clearing created_regs in clear_back_edges_for_step.
     assert(created_regs.empty());
 
@@ -157,6 +159,7 @@ void Step::check_cleared() const
 {
     assert(not call);
     assert(not call_edge);
+    assert(used_forced_regs.empty());
     assert(created_regs.empty());
     assert(flags.none());
 }
@@ -166,6 +169,7 @@ Step& Step::operator=(Step&& S) noexcept
     source_reg = S.source_reg;
     call = S.call;
     call_edge = S.call_edge;
+    used_forced_regs = std::move( S.used_forced_regs );
     created_regs  = std::move( S.created_regs );
     flags = S.flags;
 
@@ -176,6 +180,7 @@ Step::Step(Step&& S) noexcept
     :source_reg( S.source_reg),
      call ( S.call ),
      call_edge (S.call_edge),
+     used_forced_regs ( std::move(S.used_forced_regs) ),
      created_regs ( std::move(S.created_regs) ),
      flags ( S.flags )
 { }
@@ -196,6 +201,7 @@ void reg::clear()
     type = type_t::unevaluated;
     truncate(used_forced_regs);
     truncate(used_by_reg);
+    truncate(used_by_step);
     truncate(called_by);
     truncate(created_by_step);
     flags.reset();
@@ -207,6 +213,7 @@ void reg::check_cleared() const
     assert(type == type_t::unevaluated);
     assert(used_forced_regs.empty());
     assert(used_by_reg.empty());
+    assert(used_by_step.empty());
     assert(called_by.empty());
     assert(not created_by_step);
     assert(flags.none());
@@ -222,6 +229,8 @@ reg& reg::operator=(reg&& R) noexcept
 
     used_by_reg = std::move( R.used_by_reg );
 
+    used_by_step = std::move( R.used_by_step );
+
     called_by = std::move( R.called_by );
 
     created_by_step = std::move(R.created_by_step);
@@ -236,6 +245,7 @@ reg::reg(reg&& R) noexcept
      type ( R.type ),
      used_forced_regs ( std::move(R.used_forced_regs) ),
      used_by_reg ( std::move( R.used_by_reg) ),
+     used_by_step ( std::move( R.used_by_step) ),
      called_by ( std::move( R.called_by) ),
      created_by_step( std::move(R.created_by_step) ),
      flags ( R.flags )
@@ -1891,6 +1901,88 @@ int reg_heap::set_forced_reg(int r1, int r2)
     return r2;
 }
 
+// Record a dependent USE edge discovered while executing a step.
+// The back edge is stored on the final non-reference target, as for fixed USE edges.
+void reg_heap::set_used_reg_for_step(int s1, int r2)
+{
+    assert(steps.is_used(s1));
+    assert(regs.is_used(r2));
+
+    int r1 = steps[s1].source_reg;
+    assert(regs.is_used(r1));
+    assert(reg_is_changeable(r1));
+
+    assert(closure_at(r2));
+    assert(reg_has_value(r2));
+
+    // A register reference's value only changes if the thing it points to also changes.
+    // So, we may as well forbid using a no-force reference as an input.
+    assert(not reg_is_ref_no_force(r2));
+
+    // We are going to put the back-edge on the first non-reference that we see.
+    int r3 = follow_reg_ref_target(r2);
+
+    assert(reg_is_changeable(r3));
+
+    auto& S1 = steps[s1];
+    auto& R3 = regs[r3];
+    int back_index = R3.used_by_step.size();
+    int forw_index = S1.used_forced_regs.size();
+    R3.used_by_step.push_back({s1,forw_index});
+    S1.used_forced_regs.push_back({use_force_mode::use, r2, r3, back_index});
+
+    assert(reg_is_used_by_step(s1,r2));
+}
+
+// Record a dependent FORCE edge discovered while executing a step.
+// Single-force references are flattened in the same way as fixed FORCE edges.
+int reg_heap::set_forced_reg_for_step(int s1, int r2)
+{
+    assert(steps.is_used(s1));
+    assert(regs.is_used(r2));
+
+    int r1 = steps[s1].source_reg;
+    assert(regs.is_used(r1));
+    assert(reg_is_changeable(r1));
+
+    assert(reg_is_evaluated(r2));
+
+    assert(closure_at(r2));
+
+    assert(reg_is_changeable_or_forcing(r2));
+
+    assert(reg_has_value(r2));
+
+    // A register reference's value only changes if the thing it points to also changes.
+    // So, we may as well forbid using a no-force reference as an input.
+    assert(not reg_is_ref_no_force(r2));
+
+    if (auto r3 = reg_has_single_force(r2))
+    {
+        assert(not reg_has_single_force(*r3));
+
+        r2 = *r3;
+
+        assert(regs.is_used(r2));
+
+        assert(reg_is_evaluated(r2));
+
+        assert(closure_at(r2));
+
+        assert(reg_is_changeable_or_forcing(r2));
+
+        assert(reg_has_value(r2));
+
+        assert(not reg_is_ref_no_force(r2));
+    }
+
+    steps[s1].used_forced_regs.push_back({use_force_mode::force, r2, 0, 0});
+
+    assert(reg_is_forced_by_step(s1,r2));
+
+    return r2;
+}
+
 void reg_heap::set_call(int s1, int r2, bool unsafe)
 {
     // Check that step s is legal
@@ -2436,9 +2528,31 @@ bool reg_heap::reg_is_used_by_reg(int r1, int r2) const
     return false;
 }
 
+// Check whether the step has a dependent USE edge to this observed reg.
+// This validates the step-owned edge list, not the target-side backref.
+bool reg_heap::reg_is_used_by_step(int s1, int r2) const
+{
+    for(const auto& edge: steps[s1].used_forced_regs)
+        if (edge.mode == use_force_mode::use and edge.reg == r2)
+            return true;
+
+    return false;
+}
+
 bool reg_heap::reg_is_forced_by(int r1, int r2) const
 {
     for(const auto& edge: regs[r1].used_forced_regs)
+        if (edge.mode == use_force_mode::force and edge.reg == r2)
+            return true;
+
+    return false;
+}
+
+// Check whether the step has a dependent FORCE edge to this observed reg.
+// FORCE edges do not have target-side backrefs.
+bool reg_heap::reg_is_forced_by_step(int s1, int r2) const
+{
+    for(const auto& edge: steps[s1].used_forced_regs)
         if (edge.mode == use_force_mode::force and edge.reg == r2)
             return true;
 
@@ -2714,6 +2828,32 @@ void reg_heap::check_used_regs() const
             // so that this result can be invalidated, and the forced result won't be GC-ed.
             // FIXME - nonlocal.  assert(is_modifiable(closure_at(R2).get_code()) or result_is_referenced(t,res2));
         }
+        if (has_step1(r1))
+        {
+            int s1 = step_index_for_reg(r1);
+            for(const auto& edge: steps[s1].used_forced_regs)
+            {
+                if (edge.mode != use_force_mode::use) continue;
+                int r2 = edge.reg;
+
+                // Dynamically used regs should have back-references to their source step.
+                assert( reg_is_used_by_step(s1, r2) );
+
+                // Dynamic USE edges invalidate the source step if the target changes.
+                assert(reg_is_to_changeable(r2));
+            }
+            for(const auto& edge: steps[s1].used_forced_regs)
+            {
+                if (edge.mode != use_force_mode::force) continue;
+                int r2 = edge.reg;
+
+                // Dynamic FORCE edges should be recorded on the source step.
+                assert( reg_is_forced_by_step(s1, r2) );
+
+                // Dynamic FORCE edges preserve demand without invalidating the source step.
+                assert(reg_is_changeable_or_forcing(r2));
+            }
+        }
     }
 
 }
@@ -2751,6 +2891,7 @@ int reg_heap::add_shared_step(int r)
 void reg_heap::check_back_edges_cleared_for_step(int s) const
 {
     assert(not steps[s].call_edge);
+    assert(steps[s].used_forced_regs.empty());
 
     for(auto& r: steps.access_unused(s).created_regs)
         assert(not regs.access(r).created_by_step);
@@ -2838,7 +2979,46 @@ void reg_heap::clear_back_edges_for_step(int s)
     if (steps[s].call > 0)
         clear_call(s);
 
-    // 3. Clear list of created regs.
+    // 3. Clear dependent USE edges from steps[s] <---used_by_step--- regs[r3].
+    for(auto& forward: steps[s].used_forced_regs)
+    {
+        if (forward.mode == use_force_mode::force)
+            continue;
+
+        int r3 = forward.target;
+        int j = forward.back_index;
+
+        if (regs.is_free(r3)) continue;
+
+        assert(reg_is_changeable(r3));
+
+        auto& backward = regs[r3].used_by_step;
+        assert(0 <= j and j < backward.size());
+
+        // erase regs[r3].used_by_step[j]
+        if (j+1 < backward.size())
+        {
+            // erase the backward edge by moving another backward edge on top of it.
+            backward[j] = backward.back();
+            auto [s2,i2] = backward[j];
+            // adjust the forward edge for that backward edge
+            assert(steps.is_used(s2));
+            auto& forward2 = steps[s2].used_forced_regs;
+            assert(0 <= i2 and i2 < forward2.size());
+            assert(forward2[i2].mode == use_force_mode::use);
+            forward2[i2].back_index = j;
+
+            assert(steps[s2].used_forced_regs[i2].back_index == j);
+            assert(regs[forward2[i2].target].used_by_step[forward2[i2].back_index].second == i2);
+        }
+
+        backward.pop_back();
+
+        forward = {use_force_mode::use, 0, 0, 0};
+    }
+    steps[s].used_forced_regs.clear();
+
+    // 4. Clear list of created regs.
 #ifndef NDEBUG
     for(auto& r: steps[s].created_regs)
         assert(regs.is_free(r));

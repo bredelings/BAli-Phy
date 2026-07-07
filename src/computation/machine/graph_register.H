@@ -33,6 +33,16 @@ struct prev_prog_token_t
     prev_prog_token_t(int i, std::optional<int> oi, bool b):token(i),index(oi),can_revert(b) {}
 };
 
+enum class use_force_mode : unsigned char {use, force};
+
+struct use_force_edge
+{
+    use_force_mode mode;
+    int reg;
+    int target;
+    int back_index;
+};
+
 struct Step
 {
     int source_reg = -1;
@@ -44,6 +54,9 @@ struct Step
 
     /// Does C reduce to another reg that we need to evaluate to get the true value?
     std::optional<std::tuple<int,int,int>> call_edge;
+
+    /// Dependent USE/FORCE edges discovered while executing this step.
+    boost::container::small_vector<use_force_edge, 2> used_forced_regs;
 
     boost::container::small_vector< int, 2 > created_regs;
 
@@ -104,16 +117,6 @@ std::ostream& operator<<(std::ostream& o, token_type);
 
 class effect;
 
-enum class use_force_mode : unsigned char {use, force};
-
-struct use_force_edge
-{
-    use_force_mode mode;
-    int reg;
-    int target;
-    int back_index;
-};
-
 class reg
 {
 public:
@@ -136,6 +139,9 @@ public:
 
     /// Which regs (reg,edge-index) USE this reg?
     boost::container::small_vector<std::pair<int,int>, 2> used_by_reg;
+
+    /// Which steps (step,edge-index) dynamically USE this reg?
+    boost::container::small_vector<std::pair<int,int>, 2> used_by_step;
 
     /// Which reduction values made use of the value of this expression (via call)
     boost::container::small_vector<int, 5> called_by;
@@ -222,7 +228,9 @@ private:
 
     bool reg_is_called_by(int, int) const;
     bool reg_is_used_by_reg(int, int) const;
+    bool reg_is_used_by_step(int, int) const;
     bool reg_is_forced_by(int, int) const;
+    bool reg_is_forced_by_step(int, int) const;
 
     void allocate_identifiers_for_program();
 
@@ -273,6 +281,8 @@ public:
 
     void set_used_reg(int r1, int r2);
     int set_forced_reg(int r1, int r2);
+    void set_used_reg_for_step(int s1, int r2);
+    int set_forced_reg_for_step(int s1, int r2);
     void set_call(int s, int r2, bool = false);
     void destroy_step_and_created_regs(int s);
     void destroy_all_computations_in_token(int t);

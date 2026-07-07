@@ -194,7 +194,8 @@ void reg_heap::destroy_step_and_created_regs(int s)
     {
         // Clearing the reg deallocates RAM used by (For example) cached conditional likelihoods.
 
-        // This clears used_by_reg edges pointing to r.  It does not clear used_reg edges pointing to r.
+        // This removes target-side backrefs for fixed USE edges owned by r.
+        // Dependent USE edges owned by s are cleared below by clear_back_edges_for_step(s).
         clear_back_edges_for_reg(r,false);    // We don't need to adjust steps[s].created_regs, since we will destroy steps[s].
 
 	// Unforgettable regs include modifiables with 1 argument.
