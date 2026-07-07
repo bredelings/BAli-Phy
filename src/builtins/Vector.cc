@@ -164,6 +164,40 @@ extern "C" closure builtin_function_clist_to_vector(OperationArgs& Args)
     return v;
 }
 
+// Convert a Haskell list directly to an EVector, recording dynamic USE edges
+// for list cells and values discovered while walking the spine.
+extern "C" closure builtin_function_list_to_vector(OperationArgs& Args)
+{
+    object_ptr<R::RVector> v (new R::RVector);
+
+    int xs = Args.evaluate_slot_use(0);
+
+    while(true)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"list_to_vector: expected a list constructor, but got "
+                               <<xs_closure.get_code().print();
+
+        const auto& tag = list_cell->head;
+        if (tag.name() == "[]" and tag.n_args() == 0)
+            return v;
+
+        if (tag.name() != ":" or tag.n_args() != 2)
+            throw myexception()<<"list_to_vector: expected ':' or '[]', but got "
+                               <<tag.print();
+
+        int x = xs_closure.reg_for_constructor_slot(0);
+        int xs_tail = xs_closure.reg_for_constructor_slot(1);
+
+        int value_reg = Args.evaluate_reg_dependent_use(x);
+        v->push_back(Args.memory().closure_at(value_reg).get_code());
+
+        xs = Args.evaluate_reg_dependent_use(xs_tail);
+    }
+}
+
 extern "C" closure builtin_function_clist_to_string(OperationArgs& Args)
 {
     R::Exp xs = Args.evaluate_slot_to_value(0);
