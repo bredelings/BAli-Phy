@@ -418,20 +418,8 @@ extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
     return result;
 }
 
-closure makeRVector(OperationArgs& Args)
-{
-    int n = Args.n_args();
-
-    object_ptr<R::RVector> result = new R::RVector;
-    result->reserve(n);
-    for(int i=0;i<n;i++)
-    {
-	int r = Args.reg_for_slot(i);
-	result->push_back(Args.evaluate_reg_to_closure(r).get_code());
-    }
-    return result;
-}
-
+// Build a vector from selected IntMap values directly, recording each value
+// discovered through the map as a dynamic USE edge on this step.
 extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
@@ -441,23 +429,15 @@ extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& keys = arg1.as_<IntSet>();
 
-    int n = keys.size();
+    object_ptr<R::RVector> result = new R::RVector;
+    result->reserve(keys.size());
 
-    closure result;
-    result.Env.resize(n);
-    std::vector<Runtime::Exp> args;
-    args.reserve(n);
-    int i=0;
     for(int key: keys)
     {
-	result.Env[i] = map0[key];
-	args.push_back(Runtime::IndexVar(n - 1 - i));
-
-	i++;
+        int r = map0[key];
+        int value_reg = Args.evaluate_reg_dependent_use(r);
+        result->push_back(Args.memory().closure_at(value_reg).get_code());
     }
-    result.set_code(Runtime::OperationApp(new Operation(makeRVector, "makeRVector"),
-                                          std::move(args)));
-
     return result;
 }
 
