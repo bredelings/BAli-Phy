@@ -1696,32 +1696,11 @@ bool reg_heap::force_regs_check_same_inputs(int r)
 
     int s = step_index_for_reg(r);
 
-    // Replay dependent dependency observations in order.  A changed USE edge
-    // short-circuits the old step because later dependent edges may no longer exist.
-    for(int i=0;i<steps[s].used_forced_regs.size();i++)
-    {
-        auto edge = steps[s].used_forced_regs[i];
-        int r2 = edge.reg;
+    // NOTE: Conservative limitation.  We cannot safely retain old dependent
+    // edges until replay tracks which old demands have been reactivated.
+    if (not steps[s].used_forced_regs.empty())
+        return false;
 
-        incremental_evaluate2(r2, false);
-
-        if (edge.mode == use_force_mode::force)
-        {
-            assert(reg_is_constant(follow_reg_ref_target(r2)) or has_result2(follow_reg_ref_target(r2)));
-            continue;
-        }
-
-        int r3 = edge.target;
-
-        assert(edge.mode == use_force_mode::use);
-        assert(follow_reg_ref_target(r2) == r3);
-        assert(reg_is_constant(r3) or reg_is_changeable(r3));
-        assert(reg_is_constant(r3) or has_result2(r3));
-
-        same_inputs = not prog_unshare[r3].test(different_result_bit);
-        if (not same_inputs)
-            return false;
-    }
     return same_inputs;
 }
 
