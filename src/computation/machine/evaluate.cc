@@ -85,11 +85,37 @@ class RegOperationArgs1Changeable final: public OperationArgs
             return M.incremental_evaluate1(r2).value_reg;
         }
 
+    /// Evaluate r2 as a dependent FORCE discovered by this step.
+    /// The edge is recorded on the step because it was not a fixed operation input.
+    int evaluate_reg_dependent_force(int r2) override
+        {
+            auto [r3, result] = M.incremental_evaluate1(r2);
+
+            if (M.reg_is_changeable_or_forcing(r3))
+                M.set_forced_reg_for_step(s, r3);
+
+            return result;
+        }
+
     /// Evaluate the reg r2 without recording new dependencies.
     /// Those dependencies should already have been recorded.
     int evaluate_reg_use(int r2) override
         {
             return M.incremental_evaluate1(r2).value_reg;
+        }
+
+    /// Evaluate r2 as a dependent USE discovered by this step.
+    /// Non-USE changeable refs are recorded as dependent FORCE edges.
+    int evaluate_reg_dependent_use(int r2) override
+        {
+            auto [r3, result] = M.incremental_evaluate1(r2);
+
+            if (M.reg_is_to_changeable(r3))
+                M.set_used_reg_for_step(s, r3);
+            else if (M.reg_is_changeable_or_forcing(r3))
+                M.set_forced_reg_for_step(s, r3);
+
+            return result;
         }
 
 public:
@@ -131,6 +157,21 @@ class RegOperationArgs1Unevaluated final: public OperationArgs
             return result;
         }
 
+    /// Evaluate r2 as a dependent FORCE when this step may not yet be changeable.
+    /// Until the reduction is marked changeable, use the fixed FORCE path.
+    int evaluate_reg_dependent_force(int r2) override
+        {
+            if (not used_changeable)
+                return evaluate_reg_force(r2);
+
+            auto [r3, result] = M.incremental_evaluate1(r2);
+
+            if (M.reg_is_changeable_or_forcing(r3))
+                M.set_forced_reg_for_step(s, r3);
+
+            return result;
+        }
+
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
     int evaluate_reg_use(int r2) override
         {
@@ -146,6 +187,23 @@ class RegOperationArgs1Unevaluated final: public OperationArgs
             }
             else if (M.reg_is_changeable_or_forcing(r3))
                 M.set_forced_reg(r, r3);
+
+            return result;
+        }
+
+    /// Evaluate r2 as a dependent USE when this step may not yet be changeable.
+    /// Until the reduction is marked changeable, use the fixed USE path.
+    int evaluate_reg_dependent_use(int r2) override
+        {
+            if (not used_changeable)
+                return evaluate_reg_use(r2);
+
+            auto [r3, result] = M.incremental_evaluate1(r2);
+
+            if (M.reg_is_to_changeable(r3))
+                M.set_used_reg_for_step(s, r3);
+            else if (M.reg_is_changeable_or_forcing(r3))
+                M.set_forced_reg_for_step(s, r3);
 
             return result;
         }
@@ -690,6 +748,28 @@ class RegOperationArgs2Changeable final: public OperationArgs
             return M.value_for_reg(r2);
         }
 
+    /// Evaluate r2 as a dependent FORCE discovered by this step.
+    /// The new step records the edge and immediately restores its force count.
+    int evaluate_reg_dependent_force(int r2) override
+        {
+            auto [r3, result] = M.incremental_evaluate2(r2, false);
+
+            if (M.reg_is_changeable_or_forcing(r3))
+            {
+                int r4 = M.set_forced_reg_for_step(s, r3);
+
+                // Case 1: r4 == r3 -> new force edge to r3!
+                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
+                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
+                if (r4 == r3 or M.reg_is_forced(r3))
+                    M.inc_count(r4);
+                else
+                    assert(M.reg_is_forced(r4));
+            }
+
+            return result;
+        }
+
     /// We don't need to evaluate r2 or record dependencies -- this should already have happened.
     int evaluate_reg_use(int r2) override
         {
@@ -698,6 +778,33 @@ class RegOperationArgs2Changeable final: public OperationArgs
             assert(M.reg_is_constant(M.follow_reg_ref_target(r2)) or M.has_result2(M.follow_reg_ref_target(r2)));
 
             return M.value_for_reg(r2);
+        }
+
+    /// Evaluate r2 as a dependent USE discovered by this step.
+    /// Non-USE changeable refs are recorded as dependent FORCE edges.
+    int evaluate_reg_dependent_use(int r2) override
+        {
+            auto [r3, result] = M.incremental_evaluate2(r2, false);
+
+            if (M.reg_is_to_changeable(r3))
+            {
+                M.inc_count(r3);
+                M.set_used_reg_for_step(s, r3);
+            }
+            else if (M.reg_is_changeable_or_forcing(r3))
+            {
+                int r4 = M.set_forced_reg_for_step(s, r3);
+
+                // Case 1: r4 == r3 -> new force edge to r3!
+                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
+                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
+                if (r4 == r3 or M.reg_is_forced(r3))
+                    M.inc_count(r4);
+                else
+                    assert(M.reg_is_forced(r4));
+            }
+
+            return result;
         }
 
 public:
@@ -749,6 +856,31 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
             return result;
         }
 
+    /// Evaluate r2 as a dependent FORCE when this step may not yet be changeable.
+    /// Until the reduction is marked changeable, use the fixed FORCE path.
+    int evaluate_reg_dependent_force(int r2) override
+        {
+            if (not used_changeable)
+                return evaluate_reg_force(r2);
+
+            auto [r3, result] = M.incremental_evaluate2(r2, false);
+
+            if (M.reg_is_changeable_or_forcing(r3))
+            {
+                int r4 = M.set_forced_reg_for_step(s, r3);
+
+                // Case 1: r4 == r3 -> new force edge to r3!
+                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
+                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
+                if (r4 == r3 or M.reg_is_forced(r3))
+                    M.inc_count(r4);
+                else
+                    assert(M.reg_is_forced(r4));
+            }
+
+            return result;
+        }
+
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
     int evaluate_reg_use(int r2) override
         {
@@ -775,6 +907,36 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
                 else
                     assert(M.reg_is_forced(r4));
 	    }
+
+            return result;
+        }
+
+    /// Evaluate r2 as a dependent USE when this step may not yet be changeable.
+    /// Until the reduction is marked changeable, use the fixed USE path.
+    int evaluate_reg_dependent_use(int r2) override
+        {
+            if (not used_changeable)
+                return evaluate_reg_use(r2);
+
+            auto [r3, result] = M.incremental_evaluate2(r2, false);
+
+            if (M.reg_is_to_changeable(r3))
+            {
+                M.inc_count(r3);
+                M.set_used_reg_for_step(s, r3);
+            }
+            else if (M.reg_is_changeable_or_forcing(r3))
+            {
+                int r4 = M.set_forced_reg_for_step(s, r3);
+
+                // Case 1: r4 == r3 -> new force edge to r3!
+                // Case 2: r3 != r4, r3 is forced -> new force edge to r4!
+                // Case 3: r3 != r4  r3 is not forced -> new force edge to r4, force edge from r3->r4 stops counting.
+                if (r4 == r3 or M.reg_is_forced(r3))
+                    M.inc_count(r4);
+                else
+                    assert(M.reg_is_forced(r4));
+            }
 
             return result;
         }
@@ -1308,8 +1470,22 @@ class RegOperationArgsUnchangeable final: public OperationArgs
             return evaluate_reg(r2);
         }
 
+    /// Dependent FORCE has no special bookkeeping in the unchangeable interpreter.
+    /// It is evaluated exactly like a fixed FORCE.
+    int evaluate_reg_dependent_force(int r2) override
+        {
+            return evaluate_reg(r2);
+        }
+
     /// Evaluate the reg r2, record a dependency on r2, and return the reg following call chains.
     int evaluate_reg_use(int r2) override
+        {
+            return evaluate_reg(r2);
+        }
+
+    /// Dependent USE has no special bookkeeping in the unchangeable interpreter.
+    /// It is evaluated exactly like a fixed USE.
+    int evaluate_reg_dependent_use(int r2) override
         {
             return evaluate_reg(r2);
         }

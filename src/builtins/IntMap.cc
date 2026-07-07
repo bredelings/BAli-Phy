@@ -504,7 +504,7 @@ extern "C" closure builtin_function_forceAll(OperationArgs& Args)
     auto& m = arg0.as_<IntMap>();
 
     for(auto& [_,r]: m)
-	Args.evaluate_reg_force(r);
+	Args.evaluate_reg_dependent_force(r);
 
     return closure(R::ConstructorApp("()", 0, {}));
 }

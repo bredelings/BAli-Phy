@@ -39,6 +39,7 @@ main = do
   putStrLn "Set operations"
   putStrLn $ show $ m8
   putStrLn $ show $ keysSet m8
+  putStrLn $ show $ forceAll m8
 
 
 -- maybe make Foldable?

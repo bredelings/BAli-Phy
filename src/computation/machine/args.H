@@ -55,11 +55,15 @@ public:
     // in an unchangeable context
     virtual int evaluate_reg_force(int) = 0;
 
+    virtual int evaluate_reg_dependent_force(int) = 0;
+
     std::optional<int> evaluate_code_force(const Runtime::Exp&);
 
     int evaluate_slot_force(int);
 
     virtual int evaluate_reg_use(int) = 0;
+
+    virtual int evaluate_reg_dependent_use(int) = 0;
 
     std::optional<int> evaluate_code_use(const Runtime::Exp&);
   
