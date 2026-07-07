@@ -135,7 +135,7 @@ public:
     boost::container::small_vector<use_force_edge, 2> used_forced_regs;
 
     /// Which regs (reg,edge-index) USE this reg?
-    boost::container::small_vector<std::pair<int,int>, 2> used_by;
+    boost::container::small_vector<std::pair<int,int>, 2> used_by_reg;
 
     /// Which reduction values made use of the value of this expression (via call)
     boost::container::small_vector<int, 5> called_by;
@@ -221,7 +221,7 @@ private:
     void reclaim_used(int);
 
     bool reg_is_called_by(int, int) const;
-    bool reg_is_used_by(int, int) const;
+    bool reg_is_used_by_reg(int, int) const;
     bool reg_is_forced_by(int, int) const;
 
     void allocate_identifiers_for_program();

@@ -50,7 +50,7 @@ long total_tokens = 0;
  *
  * Forward edges consist of
  * - E edges
- * - used edges (forward: used_forced_regs, backward: used_by)
+ * - used edges (forward: used_forced_regs, backward: used_by_reg)
  * - call edges (forward: call, backward: called_by)
  * - value edges (computed by following call edges).
  * The called_by back edges indicate that a value is being used by another value that calls us.
@@ -195,7 +195,7 @@ void reg::clear()
     C.clear();
     type = type_t::unevaluated;
     truncate(used_forced_regs);
-    truncate(used_by);
+    truncate(used_by_reg);
     truncate(called_by);
     truncate(created_by_step);
     flags.reset();
@@ -206,7 +206,7 @@ void reg::check_cleared() const
     assert(not C);
     assert(type == type_t::unevaluated);
     assert(used_forced_regs.empty());
-    assert(used_by.empty());
+    assert(used_by_reg.empty());
     assert(called_by.empty());
     assert(not created_by_step);
     assert(flags.none());
@@ -220,7 +220,7 @@ reg& reg::operator=(reg&& R) noexcept
 
     used_forced_regs = std::move( R.used_forced_regs );
 
-    used_by = std::move( R.used_by );
+    used_by_reg = std::move( R.used_by_reg );
 
     called_by = std::move( R.called_by );
 
@@ -235,7 +235,7 @@ reg::reg(reg&& R) noexcept
     :C( std::move(R.C) ),
      type ( R.type ),
      used_forced_regs ( std::move(R.used_forced_regs) ),
-     used_by ( std::move( R.used_by) ),
+     used_by_reg ( std::move( R.used_by_reg) ),
      called_by ( std::move( R.called_by) ),
      created_by_step( std::move(R.created_by_step) ),
      flags ( R.flags )
@@ -1794,12 +1794,12 @@ void reg_heap::set_used_reg(int r1, int r2)
 
     auto& R1 = regs[r1];
     auto& R3 = regs[r3];
-    int back_index = R3.used_by.size();
+    int back_index = R3.used_by_reg.size();
     int forw_index = R1.used_forced_regs.size();
-    R3.used_by.push_back({r1,forw_index});
+    R3.used_by_reg.push_back({r1,forw_index});
     R1.used_forced_regs.push_back({use_force_mode::use, r2, r3, back_index});
 
-    assert(reg_is_used_by(r1,r2));
+    assert(reg_is_used_by_reg(r1,r2));
 }
 
 
@@ -2427,7 +2427,7 @@ bool reg_heap::reg_is_called_by(int r1, int s1) const
     return false;
 }
 
-bool reg_heap::reg_is_used_by(int r1, int r2) const
+bool reg_heap::reg_is_used_by_reg(int r1, int r2) const
 {
     for(const auto& edge: regs[r1].used_forced_regs)
         if (edge.mode == use_force_mode::use and edge.reg == r2)
@@ -2690,7 +2690,7 @@ void reg_heap::check_used_regs() const
             int r2 = edge.reg;
 
             // Used regs should have back-references to R
-            assert( reg_is_used_by(r1, r2) );
+            assert( reg_is_used_by_reg(r1, r2) );
 
             // Used computations should be mapped computation for the current token, if we are at the root
             assert(reg_is_to_changeable(r2));
@@ -2758,7 +2758,7 @@ void reg_heap::check_back_edges_cleared_for_step(int s) const
 
 void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 {
-    // 1. When destroying a reg, remove USE edges from regs[r] <---used_by--- regs[r3]
+    // 1. When destroying a reg, remove USE edges from regs[r] <---used_by_reg--- regs[r3]
     assert(r > 0);
     for(auto& forward: regs[r].used_forced_regs)
     {
@@ -2772,10 +2772,10 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 
 	assert(reg_is_changeable(r3));
 
-	auto& backward = regs[r3].used_by;
+	auto& backward = regs[r3].used_by_reg;
         assert(0 <= j and j < backward.size());
 
-	// erase regs[r3].used_by[j]
+	// erase regs[r3].used_by_reg[j]
         if (j+1 < backward.size())
         {
             // erase the backward edge by moving another backward edge on top of it.
@@ -2789,7 +2789,7 @@ void reg_heap::clear_back_edges_for_reg(int r, bool creator_survives)
 
 	    // We can assume that r2 isn't deleted, because if it was this entry would be gone.
             assert(regs[r2].used_forced_regs[i2].back_index == j);
-            assert(regs[forward2[i2].target].used_by[forward2[i2].back_index].second == i2);
+            assert(regs[forward2[i2].target].used_by_reg[forward2[i2].back_index].second == i2);
         }
 
         backward.pop_back();

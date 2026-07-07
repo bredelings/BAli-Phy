@@ -228,7 +228,7 @@ void reg_heap::check_created_regs_unshared(int t)
  * It seems like we could, in theory walk all the steps that we unshare after each round, and invalidate their steps and results,
  *  and then restart the inner loop to invalidate downstream steps and results.
  * result <-- called_by -- result
- * result <-- used_by  --- (step,result)
+ * result <-- used_by_reg  --- (step,result)
  *                         step <--- created_by --- reg <---located-at-- (step,result)
  */
 
@@ -340,7 +340,7 @@ void reg_heap::unshare_regs1(int t)
                 unshare_result(r2);
 
         // Look at steps that USE the reg in the root (that has overridden result in t)
-        for(auto& [r2,_]: R.used_by)
+        for(auto& [r2,_]: R.used_by_reg)
             if (prog_steps[r2] > 0)
                 unshare_step(r2);
     };
@@ -478,7 +478,7 @@ void reg_heap::find_unshared_regs(vector<int>& unshared_regs, vector<int>& zero_
                 unshare_result(r2);
 
         // Look at steps that USE the reg in the root (that has overridden result in t)
-        for(auto& [r2,_]: R.used_by)
+        for(auto& [r2,_]: R.used_by_reg)
             if (prog_steps[r2] > 0 and has_result1(r2))
                 unshare_step(r2);
 
