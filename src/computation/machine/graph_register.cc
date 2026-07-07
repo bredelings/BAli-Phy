@@ -630,7 +630,11 @@ void reg_heap::compute_initial_force_counts()
 
         if (has_step1(r))
         {
-            int call = step_for_reg(r).call;
+            const auto& step = step_for_reg(r);
+            for(const auto& edge: step.used_forced_regs)
+                force_reg(edge.reg);
+
+            int call = step.call;
             assert(call);
             if (reg_is_changeable_or_forcing(call))
                 force_reg(call);
@@ -1961,7 +1965,9 @@ void reg_heap::set_used_reg_for_step(int s1, int r2)
 
     int r1 = steps[s1].source_reg;
     assert(regs.is_used(r1));
-    assert(reg_is_changeable(r1));
+    // During first execution the source reg is marked changeable after the
+    // builtin returns, so step edges may be recorded while it is still unevaluated.
+    assert(reg_is_changeable(r1) or reg_is_unevaluated(r1));
 
     assert(closure_at(r2));
     assert(reg_has_value(r2));
@@ -1994,7 +2000,9 @@ int reg_heap::set_forced_reg_for_step(int s1, int r2)
 
     int r1 = steps[s1].source_reg;
     assert(regs.is_used(r1));
-    assert(reg_is_changeable(r1));
+    // During first execution the source reg is marked changeable after the
+    // builtin returns, so step edges may be recorded while it is still unevaluated.
+    assert(reg_is_changeable(r1) or reg_is_unevaluated(r1));
 
     assert(reg_is_evaluated(r2));
 

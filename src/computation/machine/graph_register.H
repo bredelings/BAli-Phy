@@ -773,7 +773,7 @@ public:
     void find_unshared_regs(std::vector<int>&, std::vector<int>&, int t);
     void tweak_deltas_and_unshare_bits(int t);
     void reroot_at_token_with_tweaked_deltas_and_bits(int t);
-    void increment_counts_from_new_calls();
+    void increment_counts_from_new_step_demands();
     void evaluate_unconditional_regs(const std::vector<int>& unshared_regs);
     void decrement_counts_from_invalid_step_demands(const std::vector<int>&, std::vector<int>&);
     void evaluate_forced_invalid_regs(const std::vector<int>&, const std::vector<interchange_op>&);

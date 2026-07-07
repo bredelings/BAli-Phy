@@ -566,7 +566,7 @@ void reg_heap::reroot_at_token_with_tweaked_deltas_and_bits(int t)
     tokens[t2].flags.reset(0);
 }
 
-void reg_heap::increment_counts_from_new_calls()
+void reg_heap::increment_counts_from_new_step_demands()
 {
     int t2 = tokens[root_token].children[0];
 
@@ -574,7 +574,12 @@ void reg_heap::increment_counts_from_new_calls()
     {
         if (reg_is_forced(r))
         {
-            int call = call_for_reg(r);
+            int s = step_index_for_reg(r);
+
+            for(const auto& edge: steps[s].used_forced_regs)
+                inc_count(edge.reg);
+
+            int call = steps[s].call;
             if (reg_is_changeable_or_forcing(call))
                 inc_count(call);
         }
@@ -637,7 +642,8 @@ void reg_heap::decrement_counts_from_invalid_step_demands(const vector<int>& uns
     };
 
     // 1. Decrement demands from steps bumped during execution.
-    //    Should all of these regs have force counts > 0, since there is a new step for the reg?
+    //    A bumped old step owned outgoing counts only if its source was forced
+    //    before unsharing started; current force counts are transient here.
     for(auto& [r,s]: vm_step2->delta())
     {
         // We can get bumped -1 steps here from executing new regs.
@@ -894,14 +900,15 @@ void reg_heap::unshare_regs2(int t)
 
     // 4. Determine which invalid regs we can safely execute.
 
-    // 4a. Increment counts for new calls, if count > 0
+    // 4a. Increment counts for new step demands, if count > 0
     //
     //     Add counts from step overrides that are in the new root before execution,
     //       mainly old modifiables with new values.
-    //     This must happen before subtracting invalid old calls, or the forced-invalid
-    //     scan can temporarily undercount regs demanded by newly installed calls.
+    //     This must happen before subtracting invalid old step demands, or the
+    //     forced-invalid scan can temporarily undercount regs demanded by newly
+    //     installed steps.
     //
-    increment_counts_from_new_calls();
+    increment_counts_from_new_step_demands();
 
     tokens[t2].flags.set(0);    // Before execution: mark t2 a root-child for execution
 
