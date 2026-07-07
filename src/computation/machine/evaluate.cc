@@ -752,6 +752,8 @@ class RegOperationArgs2Changeable final: public OperationArgs
     /// The new step records the edge and immediately restores its force count.
     int evaluate_reg_dependent_force(int r2) override
         {
+            // Count after recording the edge, because ref-with-force flattening can
+            // change which reg actually owns the dynamic FORCE demand.
             auto [r3, result] = M.incremental_evaluate2(r2, false);
 
             if (M.reg_is_changeable_or_forcing(r3))
@@ -784,6 +786,8 @@ class RegOperationArgs2Changeable final: public OperationArgs
     /// Non-USE changeable refs are recorded as dependent FORCE edges.
     int evaluate_reg_dependent_use(int r2) override
         {
+            // Evaluate without an incoming count first; the dynamic edge below
+            // determines which reg receives the restored force count.
             auto [r3, result] = M.incremental_evaluate2(r2, false);
 
             if (M.reg_is_to_changeable(r3))
@@ -863,6 +867,8 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
             if (not used_changeable)
                 return evaluate_reg_force(r2);
 
+            // Count after recording the edge, because ref-with-force flattening can
+            // change which reg actually owns the dynamic FORCE demand.
             auto [r3, result] = M.incremental_evaluate2(r2, false);
 
             if (M.reg_is_changeable_or_forcing(r3))
@@ -918,6 +924,8 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
             if (not used_changeable)
                 return evaluate_reg_use(r2);
 
+            // Evaluate without an incoming count first; the dynamic edge below
+            // determines which reg receives the restored force count.
             auto [r3, result] = M.incremental_evaluate2(r2, false);
 
             if (M.reg_is_to_changeable(r3))

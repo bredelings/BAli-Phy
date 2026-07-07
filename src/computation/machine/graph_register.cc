@@ -624,7 +624,8 @@ void reg_heap::compute_initial_force_counts()
         int r = forced_regs[i];
         auto& R = regs[r];
 
-        // 3a. Count uses and forces
+        // A positive count on a source reg activates both fixed reg-owned
+        // demands and step-owned demands from its retained step.
         for(const auto& edge: R.used_forced_regs)
             force_reg(edge.reg);
 
@@ -1723,6 +1724,8 @@ void reg_heap::force_reg_no_call(int r)
 
     if (reg_is_changeable(r) and has_step2(r))
     {
+        // Retained step-owned demands are outgoing demands of r, just like the
+        // fixed reg-owned demands above.
         int s = step_index_for_reg(r);
         for(int i=0; i < steps[s].used_forced_regs.size(); i++)
         {
@@ -3030,6 +3033,8 @@ void reg_heap::clear_back_edges_for_step(int s)
     // 3. Clear dependent USE edges from steps[s] <---used_by_step--- regs[r3].
     for(auto& forward: steps[s].used_forced_regs)
     {
+        // FORCE edges have no target-side backrefs; clearing the vector below
+        // is enough after USE backrefs have been removed.
         if (forward.mode == use_force_mode::force)
             continue;
 

@@ -665,9 +665,9 @@ void reg_heap::decrement_counts_from_invalid_step_demands(const vector<int>& uns
         {
             // These regs may still be forced.
 
-            // We tentatively remove the count from the old invalid call.
+            // We tentatively remove counts from the old invalid step-owned demands.
             // If the step is later retained, step_edges_decremented_bit tells
-            //   incremental_evaluate2_changeable_() to add that demand back.
+            //   incremental_evaluate2_changeable_() to add those demands back.
             prog_unshare[r].set(step_edges_decremented_bit);
             int s = prog_steps[r];
             if (dec_step_demands(s))
@@ -919,7 +919,7 @@ void reg_heap::unshare_regs2(int t)
     //
     evaluate_unconditional_regs(unshared_regs);
 
-    // 4c. Decrement counts from bumped calls and invalid-but-not-bumped calls
+    // 4c. Decrement counts from bumped and invalid-but-not-bumped step demands
     //
     //     We need to know which regs have counts that will not go down to zero
     //       in order to know which ones we are allowed to re-execute.

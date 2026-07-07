@@ -55,6 +55,8 @@ public:
     // in an unchangeable context
     virtual int evaluate_reg_force(int) = 0;
 
+    // Dependent use/force APIs are for regs discovered after fixed operation inputs.
+    // Changeable interpreters record these edges on the current step.
     virtual int evaluate_reg_dependent_force(int) = 0;
 
     std::optional<int> evaluate_code_force(const Runtime::Exp&);

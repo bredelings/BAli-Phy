@@ -38,6 +38,8 @@ enum class use_force_mode : unsigned char {use, force};
 struct use_force_edge
 {
     use_force_mode mode;
+    // reg is the observed demand target.  USE edges also use target/back_index
+    // for invalidation backrefs; FORCE edges leave them zero.
     int reg;
     int target;
     int back_index;
@@ -185,6 +187,8 @@ typedef std::variant<set_op, interchange_op> set_interchange_op;
 constexpr int unshare_result_bit = 1;
 constexpr int unshare_step_bit   = 2;
 constexpr int unshare_count_bit  = 3;
+// Set after invalid step-owned demands are tentatively decremented; retained
+// steps restore those counts before clearing it.
 constexpr int step_edges_decremented_bit = 4;
 // This bit can only be set if unshare_result_bit was originally set.
 // If we don't follow this rule, it could be set on regs not in unshared_regs,
