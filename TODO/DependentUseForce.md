@@ -51,10 +51,13 @@ depends on.  We do not require the old runtime observation order to be "all
 fixed first, then all dependent"; we only require replaying in that canonical
 order to be equivalent.
 
-If replay finds that a USE input changed, replay should short-circuit and
-re-execute the operation.  In particular, if a dependent USE changes, do not
-replay later old dependent edges.  The new execution will discover and count the
-new dependent edge list.
+Replay should evaluate all fixed edges before deciding whether to re-execute
+the operation.  This preserves the current invariant that fixed operands have
+already been evaluated when the operation body is re-entered.  After fixed
+replay is complete, a changed fixed USE causes re-execution.  During dependent
+edge replay, a changed dependent USE should short-circuit immediately: do not
+replay later old dependent edges, because the new execution will discover and
+count the new dependent edge list.
 
 For phase 1, dependency shape must not depend only on the value of a FORCE edge.
 If an operation uses a value to decide which later edges to record, then that
@@ -171,10 +174,12 @@ for both edge lists:
 
 1. Assert `reg_is_changeable(r)`.
 2. Replay fixed `regs[r].used_forced_regs`.
-3. If any fixed USE has a different result, return `false` immediately.
-4. Replay `steps[prog_steps[r]].used_forced_regs` in order.
-5. If any dependent USE has a different result, return `false` immediately.
-6. Return `true` if all USE inputs match.
+3. Track whether any fixed USE has a different result, but continue replaying
+   all fixed edges.
+4. If any fixed USE differed, return `false`.
+5. Replay `steps[prog_steps[r]].used_forced_regs` in order.
+6. If any dependent USE has a different result, return `false` immediately.
+7. Return `true` if all USE inputs match.
 
 FORCE edges demand their child but do not affect `same_inputs`.
 
