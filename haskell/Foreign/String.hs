@@ -41,10 +41,7 @@ unpackUtf8String string = unpackUtf8Substring string 0# (sizeOfString string)
 unpack_cpp_string :: CPPString -> [Char]
 unpack_cpp_string = unpackUtf8String
 
-foreign import bpcall "Vector:clist_to_string" clist_to_string :: CList Char -> CPPString
-
-list_to_string :: [Char] -> CPPString
-list_to_string x  = clist_to_string (listToCList x)
+foreign import bpcall "Vector:" list_to_string :: [Char] -> CPPString
 
 pack_cpp_string = list_to_string
 

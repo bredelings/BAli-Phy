@@ -198,16 +198,38 @@ extern "C" closure builtin_function_list_to_vector(OperationArgs& Args)
     }
 }
 
-extern "C" closure builtin_function_clist_to_string(OperationArgs& Args)
+// Convert a Haskell [Char] directly to a CPPString, recording dynamic USE edges
+// for list cells and character values discovered while walking the spine.
+extern "C" closure builtin_function_list_to_string(OperationArgs& Args)
 {
-    R::Exp xs = Args.evaluate_slot_to_value(0);
-
     std::string s;
 
-    for(; not is_clist_nil(xs); xs = clist_second(xs))
-        s += utf8::encode(clist_first(xs).as_char());
+    int xs = Args.evaluate_slot_use(0);
 
-    return s;
+    while(true)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"list_to_string: expected a list constructor, but got "
+                               <<xs_closure.get_code().print();
+
+        const auto& tag = list_cell->head;
+        if (tag.name() == "[]" and tag.n_args() == 0)
+            return s;
+
+        if (tag.name() != ":" or tag.n_args() != 2)
+            throw myexception()<<"list_to_string: expected ':' or '[]', but got "
+                               <<tag.print();
+
+        int c = xs_closure.reg_for_constructor_slot(0);
+        int xs_tail = xs_closure.reg_for_constructor_slot(1);
+
+        int value_reg = Args.evaluate_reg_dependent_use(c);
+        s += utf8::encode(Args.memory().closure_at(value_reg).get_code().as_char());
+
+        xs = Args.evaluate_reg_dependent_use(xs_tail);
+    }
 }
 
 extern "C" closure builtin_function_emptyString(OperationArgs& /*Args*/)
