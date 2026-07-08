@@ -529,7 +529,8 @@ extern "C" closure builtin_function_toVector(OperationArgs& Args)
 
     object_ptr<R::RVector>  v(new R::RVector);
 
-    // Ensure the value regs don't vanish on us!
+    // The local IntMap object is not a machine GC root, so pin all entry regs
+    // while evaluating values discovered through the map.
     std::vector<int> tmp;
     for(auto& [_,reg]: m)
     {
@@ -540,7 +541,8 @@ extern "C" closure builtin_function_toVector(OperationArgs& Args)
     // Compute the values
     for(auto& [key,reg]: m)
     {
-        v->push_back( Args.evaluate_reg_to_closure(reg).get_code() );
+        int value_reg = Args.evaluate_reg_dependent_use(reg);
+        v->push_back( Args.memory().closure_at(value_reg).get_code() );
     }
 
     // Unreserve the value regs
