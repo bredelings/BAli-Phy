@@ -414,8 +414,8 @@ void reg_heap::unshare_regs1(int t)
 #endif
 }
 
-template <typename T,typename F>
-void filter_unordered_vector(vector<T>& x, F ok)
+template <typename V,typename F>
+void filter_unordered_vector(V& x, F ok)
 {
     for(int i=0;i<x.size();)
     {
