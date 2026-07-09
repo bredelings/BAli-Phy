@@ -5,10 +5,12 @@ import Bio.Alphabet
 import Reversible
 import SModel.ReversibleMarkov
 import SModel.MixtureModel
+import SModel.Property
 import SModel.Rate
 import qualified Markov
 import Markov (getQ, getStartFreqs, getEqFreqs)
 import Data.Matrix -- for fromLists, %*%
+import qualified Data.Map as Map
 
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
 foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi :: EVector (EVector Double) -> EVector Double -> EVector Double
@@ -31,7 +33,7 @@ modulatedMarkovSmap smaps = builtin_modulated_markov_smap (toVector smaps)
    QUESTION: How would we record this?
  -}
 
-modulatedMarkov models between = setReversibility rev $ markov a smap q pi where
+modulatedMarkov models between = setModulatedProperties properties baseModel where
     a = getAlphabet $ head models
     qs = map getQ models
     pis = map getStartFreqs models
@@ -40,6 +42,24 @@ modulatedMarkov models between = setReversibility rev $ markov a smap q pi where
     pi = modulatedMarkovPi pis (getStartFreqs between)
     smap = modulatedMarkovSmap smaps
     rev = (minimum $ fmap getReversibility models) `min` (getReversibility between)
+    baseModel = setReversibility rev $ markov a smap q pi
+    properties = modulateCommonProperties $ fmap getStatePropertyFunctions models
+
+-- Install common input properties after flattening each component/state
+-- property vector into the output modulated Markov state order.
+setModulatedProperties propertyMap model = foldl addProperty model (Map.toAscList propertyMap)
+    where addProperty m (name, property) = setStateProperty name property m
+
+-- Retain only properties supplied by every component model and pass later
+-- scaling through to each component property before flattening.
+modulateCommonProperties [] = Map.empty
+modulateCommonProperties (properties:rest) = Map.fromList
+    [ (name, modulateProperties (property:[p Map.! name | p <- rest]))
+    | (name, property) <- Map.toAscList properties
+    , all (Map.member name) rest
+    ]
+
+modulateProperties properties scale = markovModulateProperty $ ComponentStateProperties [property scale | property <- properties]
 
 markovModulateMixture nu dist = modulatedMarkov models (Markov.gtr ratesBetween (toVector levelProbs)) where
     (models, levelProbs) = unzip $ unpackDiscrete dist
@@ -107,5 +127,3 @@ covarionGtrSym sym model = modulatedMarkov models (Markov.markov ratesBetween (t
     dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
     ratesBetween = sym %*% (plus_f_matrix $ toVector levelProbs)
-
-

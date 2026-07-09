@@ -545,6 +545,7 @@ void write_header(std::ostream& program_file,
         program_file<<"\nimport "<<mod;
     program_file<<"\nimport qualified Data.IntMap as IntMap";
     program_file<<"\nimport qualified Data.JSON as J";
+    program_file<<"\nimport Data.JSON ((.=))";
     program_file<<"\nimport qualified Data.Text.IO as T";
     program_file<<"\nimport Probability.Logger";
     program_file<<"\nimport System.Environment";
@@ -647,7 +648,14 @@ compute_logged_quantities(Hs::Stmts& model,
         {
             Hs::Var cat_states("catStates" + part_suffix);
             HsG::Let(model, cat_states, HsG::Apply(Hs::Var("labeledNodeMap"), {tree, *anc_states}));
-            category_state_loggers.push_back({i, HsG::Apply(Hs::Var("J.toEncoding"), {cat_states}), Hs::Var("logCatStates"+part_suffix)});
+            Hs::Exp smodel_properties = HsG::Apply(Hs::Var("prop_smodel_properties"), {properties});
+            Hs::Exp cat_states_key = HsG::Apply(Hs::Var("J.toJSONKey"), {Hs::Literal(Hs::String("catStates"))});
+            Hs::Exp properties_key = HsG::Apply(Hs::Var("J.toJSONKey"), {Hs::Literal(Hs::String("properties"))});
+            Hs::Exp cat_state_fields = HsG::Apply(Hs::Var("<>"),
+                {HsG::Apply(Hs::Var(".="), {cat_states_key, cat_states}),
+                 HsG::Apply(Hs::Var(".="), {properties_key, smodel_properties})});
+            Hs::Exp cat_state_encoding = HsG::Apply(Hs::Var("J.pairs"), {cat_state_fields});
+            category_state_loggers.push_back({i, cat_state_encoding, Hs::Var("logCatStates"+part_suffix)});
 	}
         
 	Hs::Var substs("substs"+part_suffix);

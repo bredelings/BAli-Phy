@@ -32,6 +32,7 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
+      smodelProperties = getProperties smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
       cls | isReversible smodel = cachedConditionalLikelihoodsEqRev rtree nodeCLVs transitionPs f
           | otherwise = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs f
@@ -44,7 +45,7 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) ancestralComponentStates
+  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) ancestralComponentStates smodelProperties
 
   return ([likelihood], prop)
 
@@ -53,7 +54,7 @@ instance Dist (PhyloCTMC t Int s) where
     dist_name _ = "PhyloCTMCFixedA"
 
 -- TODO: make this work on forests!
-instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s) => HasAnnotatedPdf (PhyloCTMC t Int s) where
+instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s) => HasAnnotatedPdf (PhyloCTMC t Int s) where
     type DistProperties (PhyloCTMC t Int s) = PhyloCTMCPropertiesFixedA
     annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedA tree length (scaleTo scale smodel)
 
@@ -69,6 +70,5 @@ instance (HasAlphabet s, HasRoot t, LabelType t ~ Text, HasBranchLengths t, Rate
 
       return $ Aligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 
-instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s) => Sampleable (PhyloCTMC t Int s) where
+instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s, HasProperties t s) => Sampleable (PhyloCTMC t Int s) where
     sample dist = RanDistribution2 dist do_nothing
-

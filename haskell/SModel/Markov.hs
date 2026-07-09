@@ -4,12 +4,14 @@ import           Reversible
 import qualified Markov
 import           Markov (CTMC(..))
 import           SModel.Simple
+import           SModel.Property
 import           SModel.Rate
 import           SModel.Frequency
 import           Bio.Alphabet
 import           Data.Matrix
 import           Tree
 import           Data.Array
+import qualified Data.Map as Map
 
 foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
 
@@ -41,25 +43,25 @@ foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int ->
 -- Fields are: alphabet, smap, q, and cached rate.
 -- PROBLEM: caching the rate is not quite right, since there are different rates:
 --    DNA rate, AA rate, Codon rate, synonymous rate, etc.
-data Markov = Markov Alphabet (EVector Int) Markov.Markov Double
+data Markov = Markov Alphabet (EVector Int) Markov.Markov Double StatePropertyMap
 
-wrapMarkov a smap m = Markov a smap m (getEquilibriumRate a smap (getQ m) (getEqFreqs m))
+wrapMarkov a smap m = Markov a smap m (getEquilibriumRate a smap (getQ m) (getEqFreqs m)) Map.empty
 
 instance CheckReversible Markov where
-    getReversibility (Markov _ _ m _) = getReversibility m
+    getReversibility (Markov _ _ m _ _) = getReversibility m
 
 instance CanMakeReversible Markov where
-    setReversibility rv (Markov a smap m rate) = Markov a smap (setReversibility rv m) rate
+    setReversibility rv (Markov a smap m rate properties) = Markov a smap (setReversibility rv m) rate properties
 
 -- This is used both for observations, and also to determine which states are the same for computing rates.
 instance HasSMap Markov where
-    getSMap (Markov _ s _ _) = s
+    getSMap (Markov _ s _ _ _) = s
 
 instance CTMC Markov where
-    qExp (Markov _ _ m _) = qExp m
-    getStartFreqs (Markov _ _ m _) = getStartFreqs m
-    getEqFreqs (Markov _ _ m _) = getEqFreqs m
-    getQ (Markov _ _ m  _) = getQ m
+    qExp (Markov _ _ m _ _) = qExp m
+    getStartFreqs (Markov _ _ m _ _) = getStartFreqs m
+    getEqFreqs (Markov _ _ m _ _) = getEqFreqs m
+    getQ (Markov _ _ m _ _) = getQ m
 
 simpleSMap a = toVector [0..(alphabetSize a)-1]
 
@@ -70,14 +72,14 @@ markov a smap q pi = wrapMarkov a smap (Markov.markov q pi)
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 eqMarkov a smap q = wrapMarkov a smap (Markov.eqMarkov q)
 
-eqFlow (Markov _ _ m _) = Markov.eqFlow m
+eqFlow (Markov _ _ m _ _) = Markov.eqFlow m
 
-eqFlux (Markov _ _ m _) = Markov.eqFlux m
+eqFlux (Markov _ _ m _ _) = Markov.eqFlux m
 
-eqRelFlux (Markov _ _ m _) = Markov.eqRelFlux m
+eqRelFlux (Markov _ _ m _ _) = Markov.eqRelFlux m
 
 instance HasAlphabet Markov where
-    getAlphabet (Markov a _ _ _) = a
+    getAlphabet (Markov a _ _ _ _) = a
 
 instance HasBranchLengths t => SimpleSModel t Markov where
     branchTransitionP (SModelOnTree tree smodel) b = [qExp $ scaleBy (branchLength tree b) smodel]
@@ -85,10 +87,18 @@ instance HasBranchLengths t => SimpleSModel t Markov where
     componentFrequencies (SModelOnTree _ smodel) = [getStartFreqs smodel]
 
 instance Scalable Markov where
-    scaleBy x (Markov a s rm r) = Markov a s (scaleBy x rm) (x*r)
+    scaleBy x (Markov a s rm r properties) = Markov a s (scaleBy x rm) (x*r) (scaleStatePropertyMap x properties)
 
 instance RateModel Markov where
-    rate (Markov _ _ _ r) = r
+    rate (Markov _ _ _ r _) = r
+
+instance HasStateProperties Markov where
+    getStatePropertyFunctions (Markov _ _ _ _ properties) = properties
+    setStateProperty name property (Markov a s rm r properties) = Markov a s rm r (Map.insert name property properties)
+    nPropertyStates (Markov _ _ m _ _) = Markov.getNStates m
+
+instance HasProperties t Markov where
+    getProperties (SModelOnTree _ model) = statePropertyMapToComponentPropertyMap $ getStateProperties model
 
 -- A markov model needs a map from state -> letter in order to have a rate!
 -- For codon models, we basically use smap = id for nucleotides (then divide by three)
@@ -97,7 +107,7 @@ instance RateModel Markov where
 -- a codon, and then collapse the codons to either (i) amino acids or (ii) codons, and then divide by three.
 
 instance Show Markov where
-    show (Markov _ _ m _) = show m
+    show (Markov _ _ m _ _) = show m
 
 nonEq pi m = scaleTo 1 $ markov (getAlphabet m) (getSMap m) (getQ m) pi
 
@@ -131,4 +141,3 @@ labelledOffDiagonal alphabet matrix = if n == nrows matrix && n == ncols matrix
                                              show (ncols matrix,nrows matrix) ++" matrix!"
     where letters = listArray' (getLetters alphabet)
           n = length letters
-

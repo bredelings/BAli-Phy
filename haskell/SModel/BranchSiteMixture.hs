@@ -3,30 +3,37 @@ module SModel.BranchSiteMixture where
 import           Probability.Distribution.Discrete
 import           Data.Matrix
 import           Bio.Alphabet (HasSMap(..), HasAlphabet(..))
+import           Foreign.Vector
 import           Graph
 import qualified Data.Matrix as M
 import           SModel.Rate
 import           SModel.Simple
+import           SModel.Property
 import           Markov (CTMC(..), qExp)
 import           SModel.MixtureModel ( ) -- just for the instances
 import           Reversible
+import qualified Data.Map as Map
 
 {- NOTE: As branch lengths approach 0, this approaches a CTMC model with Q = meanMatrix Qs -}
 
-data BranchSiteMixture m = BranchSiteMixture (Discrete m) IsEqSame
+data BranchSiteMixture m =
+    BranchSiteMixture
+        (Discrete m)
+        IsEqSame
+        StatePropertyMap
 
 instance Scalable m => Scalable (BranchSiteMixture m) where
-    scaleBy x (BranchSiteMixture d e) = BranchSiteMixture (scaleBy x d) e
+    scaleBy x (BranchSiteMixture d e properties) = BranchSiteMixture (scaleBy x d) e (scaleStatePropertyMap x properties)
 
 -- The model rate is the average of the Q matrix rates.
 instance RateModel m => RateModel (BranchSiteMixture m) where
-    rate (BranchSiteMixture d _) = rate d
+    rate (BranchSiteMixture d _ _) = rate d
 
 instance HasAlphabet m => HasAlphabet (BranchSiteMixture m) where
-    getAlphabet (BranchSiteMixture d _) = getAlphabet d
+    getAlphabet (BranchSiteMixture d _ _) = getAlphabet d
 
 instance HasSMap m => HasSMap (BranchSiteMixture m) where
-    getSMap (BranchSiteMixture d _) = getSMap q
+    getSMap (BranchSiteMixture d _ _) = getSMap q
         where Discrete ((q,_):_) = d
 
 {- How should we scale the rate matrices?
@@ -53,16 +60,26 @@ meanMatrix (Discrete mps) = foldl1 (+) [scaleMatrix p m | (m,p) <- mps]
 -}
 
 instance CheckReversible m => CheckReversible (BranchSiteMixture m) where
-    getReversibility (BranchSiteMixture (Discrete [(m,_)]) _      ) = getReversibility m
-    getReversibility (BranchSiteMixture ms                 SameEqs) = getReversibility ms
-    getReversibility _                                             = NonEq
+    getReversibility (BranchSiteMixture (Discrete [(m,_)]) _       _) = getReversibility m
+    getReversibility (BranchSiteMixture ms                 SameEqs _) = getReversibility ms
+    getReversibility _                                               = NonEq
 
 instance (HasSMap m, CTMC m, HasAlphabet m, HasBranchLengths t, SimpleSModel t m) => SimpleSModel t (BranchSiteMixture m) where
-    branchTransitionP (SModelOnTree tree (BranchSiteMixture m r)) b = [ meanMatrix $ (qExp . scaleBy (branchLength tree b)) <$> m ]
+    branchTransitionP (SModelOnTree tree (BranchSiteMixture m r _)) b = [ meanMatrix $ (qExp . scaleBy (branchLength tree b)) <$> m ]
     distribution _ = [1]
     stateLetters (SModelOnTree _ smodel) = getSMap model
-        where BranchSiteMixture (Discrete models) _ = smodel
+        where BranchSiteMixture (Discrete models) _ _ = smodel
               (model,_):_ = models
     componentFrequencies (SModelOnTree _ smodel) = [getStartFreqs model]
-        where BranchSiteMixture (Discrete models) _ = smodel
+        where BranchSiteMixture (Discrete models) _ _ = smodel
               (model,_):_ = models
+
+instance HasSMap m => HasStateProperties (BranchSiteMixture m) where
+    getStatePropertyFunctions (BranchSiteMixture _ _ properties) = properties
+    setStateProperty name property (BranchSiteMixture d e properties) = BranchSiteMixture d e (Map.insert name property properties)
+    nPropertyStates model = vector_size (getSMap model)
+
+-- Matrix mixtures do not lift inner component properties yet.  Direct
+-- homogeneous properties, such as ASRV rate tags, are still well-defined.
+instance HasSMap m => HasProperties t (BranchSiteMixture m) where
+    getProperties (SModelOnTree _ model) = statePropertyMapToComponentPropertyMap $ getStateProperties model

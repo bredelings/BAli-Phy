@@ -2,12 +2,14 @@ module SModel.MixtureModels where
 
 import Bio.Alphabet
 import SModel.Simple
+import SModel.Property
 import Reversible
 import SModel.Rate
 import SModel.MixtureModel
 import Tree
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+import qualified Data.Map as Map
 import qualified Data.Text as T
 
 -- Currently we are weirdly duplicating the mixture probabilities for each component.
@@ -37,6 +39,11 @@ instance (HasSMap m, HasAlphabet m, RateModel m, HasBranchLengths t, SimpleSMode
     nBaseModels            (SModelOnTree tree (MixtureModels _ (m:ms) _)) = nBaseModels (SModelOnTree tree m)
     stateLetters           (SModelOnTree tree (MixtureModels _ (m:ms) _)) = stateLetters (SModelOnTree tree m)
     componentFrequencies   (SModelOnTree tree (MixtureModels _ (m:ms) _)) = componentFrequencies (SModelOnTree tree m)
+
+-- Branch-dependent mixture properties are intentionally empty until there is
+-- a clear semantic model for branch-specific state properties.
+instance HasProperties t (MixtureModels m) where
+    getProperties _ = Map.empty
 
 
 -- No Attribute

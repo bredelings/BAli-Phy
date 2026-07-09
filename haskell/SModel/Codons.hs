@@ -2,6 +2,7 @@ module SModel.Codons (module SModel.Codons) where
 
 import Bio.Alphabet
 import SModel.ReversibleMarkov
+import SModel.Property
 import SModel.Nucleotides
 import Data.Matrix
 import qualified Markov
@@ -56,8 +57,15 @@ mnm a v2 v3 nucModel = setReversibility rv $ markov a smap q pi where
     pi' = getStartFreqs nucModel
     pi = f3x4_frequencies_builtin a pi' pi' pi'
 
--- maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
-dNdS omega m@(Markov a s _ _) = setReversibility rv $ markov a s q pi where
+-- Add codon dN/dS effects to the rate matrix and tag every codon state with
+-- the chosen omega value and whether it represents positive selection.
+-- NOTE: maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
+dNdS omega m@(Markov a s _ _ _) =
+    setConstantStateProperty posSelectionPropertyName posSelection $
+    setConstantStateProperty dNdSPropertyName omega $
+    setReversibility rv $ markov a s q pi
+  where
     rv = getReversibility m
     pi = getStartFreqs m
     q = (getQ m) %*% dNdS_matrix a omega
+    posSelection = if omega > 1 then 1 else 0

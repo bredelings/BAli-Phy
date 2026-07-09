@@ -9,6 +9,7 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 
 import SModel.Likelihood.CLV
+import SModel.Property
 import Numeric.LogDouble
 
 import Probability.Distribution.PhyloCTMC.Properties
@@ -21,7 +22,8 @@ import Probability.Distribution.PhyloCTMC.Properties
 -- 4 - alphabet
 -- 5 - n_states
 -- 6 - n_base_models
--- # - ?ancestral states         -- used through haskell, not parameters.cc
+-- 7 - ?ancestral states         -- used through haskell, not parameters.cc
+-- 8 - smodel properties         -- used through haskell, not parameters.cc
 
 -- Some of these things could be accessed through the distribution arguments:
 -- 4. alphabet
@@ -38,11 +40,12 @@ data PhyloCTMCPropertiesFixedA = PhyloCTMCPropertiesFixedA {
       prop_fixed_a_n_states :: Int,
       prop_fixed_a_n_base_models :: Int,
 
-      prop_fixed_a_anc_cat_states :: IntMap VectorPairIntInt
+      prop_fixed_a_anc_cat_states :: IntMap VectorPairIntInt,
+      prop_fixed_a_smodel_properties :: PropertyMap
     }
 
 
 instance PhyloCTMCProperties PhyloCTMCPropertiesFixedA where
     prop_likelihood = prop_fixed_a_likelihood
     prop_anc_cat_states = prop_fixed_a_anc_cat_states
-
+    prop_smodel_properties = prop_fixed_a_smodel_properties

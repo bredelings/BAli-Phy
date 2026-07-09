@@ -4,11 +4,13 @@ import qualified Markov
 import           Markov (CTMC(..))
 import           Reversible
 import           SModel.Simple
+import           SModel.Property
 import           SModel.Rate
 import           SModel.Frequency
 import           Bio.Alphabet
 import           Data.Matrix
 import           Tree
+import qualified Data.Map as Map
 
 {-
   This model is for PAML's branch-model, where every branch can have a different Q matrix
@@ -42,3 +44,8 @@ instance (HasSMap m, HasBranchLengths t, CTMC m) => SimpleSModel t (BranchModel 
     branchTransitionP (SModelOnTree tree model) b = [qExp $ scaleBy (branchLength tree b) (ratesForBranch b)]
         where (BranchModel _ _ _ (BranchMap ratesForBranch)) = model
     componentFrequencies (SModelOnTree _ (BranchModel _ _ pi _)) = [pi]
+
+-- Branch-specific rate models need branch-indexed property semantics, so the
+-- homogeneous component/state property map is empty for now.
+instance HasProperties t (BranchModel m) where
+    getProperties _ = Map.empty

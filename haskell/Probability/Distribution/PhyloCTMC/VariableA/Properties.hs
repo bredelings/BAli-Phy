@@ -9,6 +9,7 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 
 import SModel.Likelihood.CLV
+import SModel.Property
 import Numeric.LogDouble
 
 import Probability.Distribution.PhyloCTMC.Properties
@@ -22,7 +23,8 @@ import Probability.Distribution.PhyloCTMC.Properties
 -- 6 - n_base_models
 -- 7 - weightedfrequencymatrix   -- only variableA
 -- 8 - sequence likelihoods      -- only variableA: used to get node CLVs for dists2 when aligning 2 sequences. 
--- # - ?ancestral states         -- used through haskell, not parameters.cc
+-- 9 - ?ancestral states         -- used through haskell, not parameters.cc
+-- 10 - smodel properties        -- used through haskell, not parameters.cc
 
 -- Some of these things could be accessed through the distribution arguments:
 -- 5. alphabet
@@ -42,11 +44,13 @@ data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
       prop_variable_a_get_weightedFrequencyMatrix :: IntMap (Matrix Double),   -- only variable A
       prop_variable_a_nodeCLVs :: IntMap (Maybe CondLikes),                    -- only variable A
 
-      prop_variable_a_anc_cat_states :: IntMap VectorPairIntInt
+      prop_variable_a_anc_cat_states :: IntMap VectorPairIntInt,
+      prop_variable_a_smodel_properties :: PropertyMap
     }
 
 
 instance PhyloCTMCProperties PhyloCTMCPropertiesVariableA where
     prop_likelihood = prop_variable_a_likelihood
     prop_anc_cat_states = prop_variable_a_anc_cat_states
+    prop_smodel_properties = prop_variable_a_smodel_properties
     

@@ -3,11 +3,13 @@ module SModel.MultiFrequency where
 import Bio.Alphabet
 import Foreign.Vector
 import SModel.Simple
+import SModel.Property
 import SModel.Rate
 import Tree
 import Markov (CTMC, qExp, getEqFreqs)
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
+import qualified Data.Map as Map
 import SModel.Frequency (frequenciesFromDict)
 import SModel.MarkovModulated
 import Reversible
@@ -20,28 +22,33 @@ import Reversible
 --           - This allows getting the branches to apply q(b) and get an alphabet and smap out...
 
 -- The node information (i) is used to construct a node property (n) and an edge property (e).
-data MultiFrequency t i e = MultiFrequency t (NodeId -> i) (i -> e)
+data MultiFrequency t i e =
+    MultiFrequency
+        t
+        (NodeId -> i)
+        (i -> e)
+        StatePropertyMap
 
-nodeFreq (MultiFrequency _ f g) node = getEqFreqs $ g $ f $ node    -- get the node property
-edgeRates (MultiFrequency tree f g) edge = g $ f $ node             -- get the node rates
+nodeFreq (MultiFrequency _ f g _) node = getEqFreqs $ g $ f $ node    -- get the node property
+edgeRates (MultiFrequency tree f g _) edge = g $ f $ node             -- get the node rates
     where edge' | towardRoot tree edge = reverseEdge edge
                 | otherwise = edge
           node = targetNode tree edge'
 
 instance (HasRoot t, HasAlphabet e) => HasAlphabet (MultiFrequency t i e) where
-    getAlphabet model@(MultiFrequency tree _ _) = getAlphabet (edgeRates model branch)
+    getAlphabet model@(MultiFrequency tree _ _ _) = getAlphabet (edgeRates model branch)
         where branch = head $ IntSet.elems (getEdgesSet tree)
 
 instance (HasRoot t, HasSMap e) => HasSMap (MultiFrequency t i e) where
-    getSMap model@(MultiFrequency tree _ _) = getSMap (edgeRates model branch)
+    getSMap model@(MultiFrequency tree _ _ _) = getSMap (edgeRates model branch)
         where branch = head $ IntSet.elems (getEdgesSet tree)
 
 instance Scalable e => Scalable (MultiFrequency t i e) where
-    scaleBy x (MultiFrequency tree nodeInfo branchQ) = MultiFrequency tree nodeInfo (scaleBy x . branchQ)
+    scaleBy x (MultiFrequency tree nodeInfo branchQ properties) = MultiFrequency tree nodeInfo (scaleBy x . branchQ) (scaleStatePropertyMap x properties)
 
 -- All branches need to have the same rate!
 instance (HasRoot t, RateModel e) => RateModel (MultiFrequency t i e) where
-    rate model@(MultiFrequency tree _ _) = rate (edgeRates model branch)
+    rate model@(MultiFrequency tree _ _ _) = rate (edgeRates model branch)
         where branch = head $ IntSet.elems (getEdgesSet tree)
 
 -- It would be nice if the branchQ and the nodePi contained the _alphabet_ *before* applying them to a value.
@@ -67,7 +74,17 @@ instance (HasRoot t, HasSMap m, RateModel m, CTMC m, HasBranchLengths t, t ~ t2)
     branchTransitionP (SModelOnTree tree model) b = [qExp $ scaleBy (branchLength tree b) $ edgeRates model b]
     componentFrequencies (SModelOnTree tree model) = [nodeFreq model (root tree)]
 
-multiFrequencyUnscaled tree nodeInfo branchQ = MultiFrequency tree (nodeInfo IntMap.!) branchQ
+instance (HasRoot t2, HasSMap m) => HasStateProperties (MultiFrequency t2 i m) where
+    getStatePropertyFunctions (MultiFrequency _ _ _ properties) = properties
+    setStateProperty name property (MultiFrequency tree nodeInfo branchQ properties) = MultiFrequency tree nodeInfo branchQ (Map.insert name property properties)
+    nPropertyStates model = vector_size (getSMap model)
+
+-- Homogeneous properties stored directly on MultiFrequency are exposed here.
+-- Branch-specific inner-model properties still need location-indexed semantics.
+instance (HasRoot t2, HasSMap m) => HasProperties t (MultiFrequency t2 i m) where
+    getProperties (SModelOnTree _ model) = statePropertyMapToComponentPropertyMap $ getStateProperties model
+
+multiFrequencyUnscaled tree nodeInfo branchQ = MultiFrequency tree (nodeInfo IntMap.!) branchQ Map.empty
 
 multiFrequency tree nodeInfo branchQ = multiFrequencyUnscaled tree nodeInfo (scaleTo 1 . branchQ)
 

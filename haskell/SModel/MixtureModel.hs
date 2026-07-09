@@ -4,6 +4,7 @@ module SModel.MixtureModel (module SModel.MixtureModel,
 
 import Bio.Alphabet
 import SModel.Simple
+import SModel.Property
 import SModel.Rate
 import SModel.Frequency
 import Probability.Distribution.Discrete
@@ -31,7 +32,7 @@ mixture ms fs = mix fs ms
 -- parameter_mixture :: Discrete a -> (a -> MixtureModel b) -> MixtureModel b
 parameterMixture values modelFn = values >>= modelFn
 
-rateMixture model rates = scaleBy (1/mean rates) $ rates >>= (\rate -> scaleBy rate model)
+rateMixture model rates = fmap setRateProperty $ scaleBy (1/mean rates) $ rates >>= (\rate -> scaleBy rate model)
 
 wfm (Discrete ms) = let freqs = toVector [ getStartFreqs m | (m,p) <- ms]
                         dist =  toVector [p | (m,p) <- ms ]
@@ -39,7 +40,7 @@ wfm (Discrete ms) = let freqs = toVector [ getStartFreqs m | (m,p) <- ms]
 
 averageFrequency ms = vectorToList $ builtin_average_frequency $ wfm ms
 
-plusInv pInv ms = scaleBy (1/(1-pInv)) $ mix [1 - pInv, pInv] [ms, always $ inv]
+plusInv pInv ms = fmap setRateProperty $ scaleBy (1/(1-pInv)) $ mix [1 - pInv, pInv] [ms, always $ inv]
     where a  = getAlphabet ms
           pi = averageFrequency ms
           inv = scaleBy 0 $ f81 pi a
@@ -61,10 +62,11 @@ instance (HasBranchLengths t, HasSMap m, SimpleSModel t m) => SimpleSModel t (Di
     componentFrequencies (SModelOnTree tree model) = concat [componentFrequencies (SModelOnTree tree component) | (component,_) <- unpackDiscrete model]
     stateLetters (SModelOnTree _ model) = getSMap model
 
+instance HasProperties t m => HasProperties t (Discrete m) where
+    getProperties (SModelOnTree tree model) = commonPropertyMap [getProperties (SModelOnTree tree component) | (component, _) <- unpackDiscrete model]
+
 instance Scalable a => Scalable (Discrete a) where
     scaleBy x dist = fmap (scaleBy x) dist
 
 instance RateModel a => RateModel (Discrete a) where
     rate d = mean $ fmap rate d
-
-
