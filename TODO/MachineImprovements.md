@@ -16,10 +16,16 @@ How much slower would this make stuff?
 
 ## Separate created-by-reg and created-by-step
 
-One issue is what to do with non-contingent regs.
+Issues:
 
-We should be able to not record either creation or created_by in the
-non-contingent case.
+* For non-contingent regs, we should be able to drop the edge.
+
+* reg_exists(r) currently checks if the creator step is mapped in the root.
+  So we might need the transitive creator step even if we record the creator
+  reg.
+  
+* unshare_regs1( ) current unmaps regs created by unmapped steps.
+  So we might need to walk the transitive creator graph.
 
 ## Speeding up the interpreter
 
