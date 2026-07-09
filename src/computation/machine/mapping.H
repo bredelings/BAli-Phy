@@ -7,7 +7,11 @@
 
 class mapping
 {
-    std::vector<std::pair<int,int>> delta_;
+public:
+    typedef std::vector<std::pair<int,int>> storage_type;
+
+private:
+    storage_type delta_;
 
 public:
     mapping& operator=(const mapping&) = default;
@@ -42,8 +46,8 @@ public:
     void resize(int s) { delta_.reserve(s);}
     bool empty() const {return delta_.empty();}
 
-    const std::vector<std::pair<int,int>>& delta() const {return delta_;}
-          std::vector<std::pair<int,int>>& delta()       {return delta_;}
+    const storage_type& delta() const {return delta_;}
+          storage_type& delta()       {return delta_;}
   
     // This is for debugging
     std::vector<int> find_values(int r0) const;
