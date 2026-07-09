@@ -15,7 +15,14 @@ using std::vector;
 namespace Runtime
 {
 
-    Exp::Exp(bool x):Exp(ConstructorApp(x ? bool_true_name : bool_false_name, 0, {})) {}
+    // Reuse the immutable nullary Bool constructors instead of allocating a
+    // ConstructorApp for every Bool result from simple interpreter calls.
+    Exp::Exp(bool x)
+    {
+        static const ExpPtr<ConstructorApp> true_exp(new ConstructorApp(bool_true_name, 0, {}));
+        static const ExpPtr<ConstructorApp> false_exp(new ConstructorApp(bool_false_name, 0, {}));
+        value = x ? true_exp : false_exp;
+    }
     Exp::Exp(std::string x):Exp(String(std::move(x))) {}
     Exp::Exp(const char* x):Exp(String(x)) {}
     Exp::Exp(integer x):Exp(Integer(std::move(x))) {}
