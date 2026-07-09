@@ -2,9 +2,7 @@
 
 ## DONE: Combine force/uses into one list
 
-## Dependent uses/forces
-
-We would need to store these on the step.
+## DONE: Dependent uses/forces
 
 ## Merge incremental_evaluate{1,2} to be one function?
 
@@ -19,6 +17,9 @@ How much slower would this make stuff?
 ## Separate created-by-reg and created-by-step
 
 One issue is what to do with non-contingent regs.
+
+We should be able to not record either creation or created_by in the
+non-contingent case.
 
 ## Speeding up the interpreter
 
