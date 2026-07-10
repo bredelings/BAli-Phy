@@ -8,6 +8,10 @@ arithmetic of Haskell numerical vectors and matrices.
 The target is a coherent dense `Int`/`Double` subset of `hmatrix`, not its
 Complex, sparse, random, modular, or file-I/O facilities.
 
+Implementation status: complete through commit 20.  The final invariant
+searches and full verification described below passed when the plan was
+completed.
+
 ## Review decisions
 
 The plan incorporates the following decisions from its review:
