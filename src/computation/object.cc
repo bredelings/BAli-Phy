@@ -28,6 +28,18 @@ std::string print_matrix(const matrix<T>& native_matrix)
     return "[ " + join(rows, ", \n") + "]";
 }
 
+// Format a native numeric vector in the compact representation used by
+// Numeric.LinearAlgebra.Vector's Show instance.
+template <typename T>
+std::string print_numeric_vector(const DenseVector<T>& native_vector)
+{
+    std::vector<T> values;
+    values.reserve(native_vector.size());
+    for(Eigen::Index i = 0; i < native_vector.size(); i++)
+        values.push_back(native_vector(i));
+    return "[" + join(values, ",") + "]";
+}
+
 }
 
 // Format the runtime's native Double matrix representation.
@@ -40,6 +52,18 @@ template<> std::string Box<Matrix>::print() const
 template<> std::string Box<matrix<int>>::print() const
 {
     return print_matrix(*this);
+}
+
+// Format the runtime's native Double vector representation.
+template<> std::string Box<DenseVector<double>>::print() const
+{
+    return print_numeric_vector(*this);
+}
+
+// Format the runtime's native Int vector representation.
+template<> std::string Box<DenseVector<int>>::print() const
+{
+    return print_numeric_vector(*this);
 }
 
 template<>  std::string Box<std::string>::print() const

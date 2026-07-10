@@ -102,9 +102,12 @@ typedef Box<std::string> String;
 template<> std::string Box<std::string>::print() const;
 
 #include "util/matrix.H"
+#include "util/dense-matrix.H"
 
 template<> std::string Box<Matrix>::print() const;
 template<> std::string Box<matrix<int>>::print() const;
+template<> std::string Box<DenseVector<double>>::print() const;
+template<> std::string Box<DenseVector<int>>::print() const;
 
 template<> std::string Box<std::vector<std::pair<int,int>>>::print() const;
 

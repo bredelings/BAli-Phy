@@ -6,10 +6,12 @@
 #include "sequence/doublets.H"
 #include "sequence/codons.H"
 #include "util/io.H"
+#include "util/dense-matrix.H"
 #include <valarray>
 #include "dp/2way.H"
 #include "util/range.H"
 #include "substitution/parsimony.H"
+#include <algorithm>
 #include <limits>
 #include <type_traits>
 
@@ -39,6 +41,19 @@ decltype(auto) visit_matrix(const R::Exp& value, F&& operation)
         return operation(value.as_<Box<matrix<int>>>());
 
     throw myexception()<<"Unsupported native matrix representation "<<value.print();
+}
+
+// Dispatch an operation to one of the native numeric vector representations
+// supported by the Haskell Vector type.
+template <typename F>
+decltype(auto) visit_numeric_vector(const R::Exp& value, F&& operation)
+{
+    if (value.is_a<Box<DenseVector<double>>>() )
+        return operation(value.as_<Box<DenseVector<double>>>());
+    if (value.is_a<Box<DenseVector<int>>>() )
+        return operation(value.as_<Box<DenseVector<int>>>());
+
+    throw myexception()<<"Unsupported native vector representation "<<value.print();
 }
 
 // Dispatch a binary operation after verifying that both matrices have the
@@ -140,15 +155,117 @@ closure transpose_matrix(const Box<matrix<T>>& matrix1)
     return matrix2;
 }
 
-// Flatten a native matrix into runtime scalar values in row-major order.
+// Flatten a native matrix into contiguous numeric values in row-major order.
 template <typename T>
 closure matrix_to_vector(const Box<matrix<T>>& native_matrix)
 {
-    object_ptr<R::RVector> values = new R::RVector;
-    for(int i=0; i<native_matrix.size1(); i++)
-        for(int j=0; j<native_matrix.size2(); j++)
-            values->push_back(native_matrix(i,j));
+    object_ptr<Box<DenseVector<T>>> values = new Box<DenseVector<T>>(native_matrix.size());
+    std::copy(native_matrix.begin(), native_matrix.end(), values->data());
     return values;
+}
+
+// Read a complete Haskell list through dependent USE edges and store its
+// scalar values contiguously in a native numeric vector.
+template <typename T>
+closure vector_from_list(OperationArgs& Args)
+{
+    std::vector<T> values;
+    int xs = Args.evaluate_slot_use(0);
+
+    while(true)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"vector fromList: expected a list constructor, but got "
+                               <<xs_closure.get_code().print();
+
+        const auto& tag = list_cell->head;
+        if (tag.name() == "[]" and tag.n_args() == 0)
+            break;
+        if (tag.name() != ":" or tag.n_args() != 2)
+            throw myexception()<<"vector fromList: expected ':' or '[]', but got "<<tag.print();
+        if (values.size() == static_cast<std::size_t>(std::numeric_limits<int>::max()))
+            throw myexception()<<"vector fromList: element count exceeds supported Int range";
+
+        int element = xs_closure.reg_for_constructor_slot(0);
+        int tail = xs_closure.reg_for_constructor_slot(1);
+        int value = Args.evaluate_reg_dependent_use(element);
+        values.push_back(matrix_scalar<T>(Args.memory().closure_at(value).get_code()));
+        xs = Args.evaluate_reg_dependent_use(tail);
+    }
+
+    object_ptr<Box<DenseVector<T>>> result = new Box<DenseVector<T>>(values.size());
+    std::copy(values.begin(), values.end(), result->data());
+    return result;
+}
+
+// Read exactly the requested number of Haskell list cells, rejecting short
+// input and leaving any excess tail unevaluated.
+template <typename T>
+closure sized_vector_from_list(OperationArgs& Args)
+{
+    int expected_size = Args.evaluate_slot_to_value(0).as_int();
+    if (expected_size < 0)
+        throw myexception()<<"vector (|>): size must be nonnegative, but got "<<expected_size;
+
+    object_ptr<Box<DenseVector<T>>> result = new Box<DenseVector<T>>(expected_size);
+    int xs = Args.evaluate_slot_use(1);
+    for(int k=0; k<expected_size; k++)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"vector (|>): expected a list constructor, but got "
+                               <<xs_closure.get_code().print();
+
+        const auto& tag = list_cell->head;
+        if (tag.name() == "[]" and tag.n_args() == 0)
+            throw myexception()<<"vector (|>): expected "<<expected_size<<" elements, but got "<<k;
+        if (tag.name() != ":" or tag.n_args() != 2)
+            throw myexception()<<"vector (|>): expected ':' or '[]', but got "<<tag.print();
+
+        int element = xs_closure.reg_for_constructor_slot(0);
+        int tail = xs_closure.reg_for_constructor_slot(1);
+        int value = Args.evaluate_reg_dependent_use(element);
+        (*result)(k) = matrix_scalar<T>(Args.memory().closure_at(value).get_code());
+        xs = Args.evaluate_reg_dependent_use(tail);
+    }
+    return result;
+}
+
+// Copy a native vector into a row-major matrix having the requested column
+// count, validating that the vector can be partitioned into complete rows.
+template <typename T>
+closure reshape_vector(const Box<DenseVector<T>>& values, int columns)
+{
+    if (columns < 0)
+        throw myexception()<<"reshape: column count must be nonnegative, but got "<<columns;
+    if (columns == 0)
+    {
+        if (values.size() != 0)
+            throw myexception()<<"reshape: a nonempty vector cannot have zero columns";
+        return new Box<matrix<T>>(0, 0);
+    }
+    if (values.size() % columns != 0)
+        throw myexception()<<"reshape: vector length "<<values.size()
+                           <<" is not divisible by column count "<<columns;
+
+    int rows = values.size() / columns;
+    auto result = new Box<matrix<T>>(rows, columns);
+    std::copy(values.data(), values.data() + values.size(), result->begin());
+    return result;
+}
+
+// Copy a native vector into either a single row or a single column matrix.
+template <typename T>
+closure vector_as_matrix(const Box<DenseVector<T>>& values, bool as_row)
+{
+    int rows = as_row ? 1 : values.size();
+    int columns = as_row ? values.size() : 1;
+    auto result = new Box<matrix<T>>(rows, columns);
+    std::copy(values.data(), values.data() + values.size(), result->begin());
+    return result;
 }
 
 // Build a native matrix while walking a Haskell list through dependent USE
@@ -210,6 +327,119 @@ extern "C" closure builtin_function_doubleMatrixFromList(OperationArgs& Args)
     return matrix_from_list<double>(Args);
 }
 
+// Construct a native Int vector from a complete Haskell list.
+extern "C" closure builtin_function_intVectorFromList(OperationArgs& Args)
+{
+    return vector_from_list<int>(Args);
+}
+
+// Construct a native Double vector from a complete Haskell list.
+extern "C" closure builtin_function_doubleVectorFromList(OperationArgs& Args)
+{
+    return vector_from_list<double>(Args);
+}
+
+// Construct a fixed-length Int vector without evaluating an excess list tail.
+extern "C" closure builtin_function_sizedIntVectorFromList(OperationArgs& Args)
+{
+    return sized_vector_from_list<int>(Args);
+}
+
+// Construct a fixed-length Double vector without evaluating an excess list tail.
+extern "C" closure builtin_function_sizedDoubleVectorFromList(OperationArgs& Args)
+{
+    return sized_vector_from_list<double>(Args);
+}
+
+// Return the dimension of either supported native numeric vector.
+extern "C" R::Exp simple_function_vectorSize(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_numeric_vector(value, [](const auto& vector_value) {
+        return static_cast<int>(vector_value.size());
+    });
+}
+
+// Return one native vector element after checking its zero-based index.
+extern "C" R::Exp simple_function_vectorAtIndex(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    int index = get_arg(args).as_int();
+    // Check the requested index before preserving the native scalar representation.
+    return visit_numeric_vector(value, [index](const auto& vector_value) -> R::Exp {
+        if (index < 0 or index >= vector_value.size())
+            throw myexception()<<"vector atIndex: index "<<index
+                               <<" is outside vector length "<<vector_value.size();
+        return vector_value(index);
+    });
+}
+
+// Compare two native vectors exactly after verifying that their element
+// representations agree.
+extern "C" R::Exp simple_function_vectorEqual(vector<R::Exp>& args)
+{
+    auto value1 = get_arg(args);
+    auto value2 = get_arg(args);
+    if (value1.is_a<Box<DenseVector<double>>>() and
+        value2.is_a<Box<DenseVector<double>>>())
+    {
+        const auto& vector1 = value1.as_<Box<DenseVector<double>>>();
+        const auto& vector2 = value2.as_<Box<DenseVector<double>>>();
+        return vector1.size() == vector2.size() and
+               (vector1.array() == vector2.array()).all();
+    }
+    if (value1.is_a<Box<DenseVector<int>>>() and
+        value2.is_a<Box<DenseVector<int>>>())
+    {
+        const auto& vector1 = value1.as_<Box<DenseVector<int>>>();
+        const auto& vector2 = value2.as_<Box<DenseVector<int>>>();
+        return vector1.size() == vector2.size() and
+               (vector1.array() == vector2.array()).all();
+    }
+    if (value1.is_a<Box<DenseVector<double>>>() or value1.is_a<Box<DenseVector<int>>>())
+        throw myexception()<<"Native vectors have different element representations";
+
+    throw myexception()<<"Unsupported native vector representation "<<value1.print();
+}
+
+// Sum a native vector while preserving its Int or Double scalar
+// representation.
+extern "C" R::Exp simple_function_vectorSumElements(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_numeric_vector(value, [](const auto& vector_value) -> R::Exp {
+        return vector_value.sum();
+    });
+}
+
+// Reshape either supported native vector into a row-major matrix.
+extern "C" closure builtin_function_reshapeVector(OperationArgs& Args)
+{
+    int columns = Args.evaluate_slot_to_value(0).as_int();
+    auto value = Args.evaluate_slot_to_value(1);
+    return visit_numeric_vector(value, [columns](const auto& vector_value) {
+        return reshape_vector(vector_value, columns);
+    });
+}
+
+// Convert either supported native vector into a one-row matrix.
+extern "C" closure builtin_function_vectorAsRow(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    return visit_numeric_vector(value, [](const auto& vector_value) {
+        return vector_as_matrix(vector_value, true);
+    });
+}
+
+// Convert either supported native vector into a one-column matrix.
+extern "C" closure builtin_function_vectorAsColumn(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    return visit_numeric_vector(value, [](const auto& vector_value) {
+        return vector_as_matrix(vector_value, false);
+    });
+}
+
 // Return the number of rows for either supported native matrix representation.
 extern "C" R::Exp simple_function_nrows(vector<R::Exp>& args)
 {
@@ -222,6 +452,22 @@ extern "C" R::Exp simple_function_ncols(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     return visit_matrix(arg0, [](const auto& native_matrix) { return native_matrix.size2(); });
+}
+
+// Sum a native matrix while preserving its Int or Double scalar
+// representation.
+extern "C" R::Exp simple_function_matrixSumElements(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    // Accumulate in the matrix's native scalar type without flattening it.
+    return visit_matrix(value, [](const auto& native_matrix) -> R::Exp {
+        using Scalar = std::remove_cvref_t<decltype(native_matrix(0,0))>;
+        Scalar total = 0;
+        for(int i = 0; i < native_matrix.size1(); i++)
+            for(int j = 0; j < native_matrix.size2(); j++)
+                total += native_matrix(i,j);
+        return total;
+    });
 }
 
 // scaleMatrix :: a -> Matrix a -> Matrix a

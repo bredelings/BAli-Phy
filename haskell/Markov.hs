@@ -18,7 +18,7 @@ foreign import bpcall "SModel:" flow :: EVector Double -> Matrix Double -> Matri
 flux pi q = f - transpose f
     where f = flow pi q
 
-relativeFlux pi q = (1/2) * sum(abs(flux')) / (sum(flow') + 1.0e-12) where
+relativeFlux pi q = (1/2) * sumElements (abs flux') / (sumElements flow' + 1.0e-12) where
     flow' = flow pi q
     flux' = flow' - transpose flow'
 
