@@ -27,11 +27,12 @@ module Numeric.LinearAlgebra
     , (<#)
     , (<>)
     , outer
+    , optimiseMult
     ) where
 
 import Prelude hiding ((<>))
 import Numeric.LinearAlgebra.Data
-import Numeric.Matrix ()
+import Numeric.Matrix (optimiseMult)
 import Numeric.Vector ()
 
 infixr 8 <>
