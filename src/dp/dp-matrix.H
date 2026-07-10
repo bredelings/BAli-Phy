@@ -241,7 +241,7 @@ public:
                  const HMM& M,
                  EmissionProbs&& dists1,
                  EmissionProbs&& dists2,
-                 const Matrix& frequency);
+                 const DenseMatrix<double>& frequency);
   
     virtual ~DPmatrixEmit() {}
 };
@@ -284,7 +284,7 @@ public:
                         const HMM& M,
                         EmissionProbs&& d1,
                         EmissionProbs&& d2, 
-                        const Matrix& f);
+                        const DenseMatrix<double>& f);
 
     virtual ~DPmatrixConstrained() {}
 };

@@ -28,7 +28,7 @@ using Alphabet = PtrBox<alphabet>;
 extern "C" closure builtin_function_compute_stationary_freqs(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& Q = arg0.as_<Box<Matrix>>();
+    auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
 
     auto vpi = compute_stationary_freqs(Q);
     int n = vpi.size();
@@ -47,7 +47,7 @@ extern "C" closure builtin_function_equilibriumLimit(OperationArgs& Args)
     auto pi0 = (vector<double>)arg0.as_<R::RVector>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& Q = arg1.as_<Box<Matrix>>();
+    auto& Q = arg1.as_<Box<DenseMatrix<double>>>();
 
     // In exponential.cc
     return (R::RVector)equilibriumLimit(pi0, Q);
@@ -58,10 +58,10 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
     constexpr double tol = 1.0e-7;
 
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& Q = arg0.as_<Box<Matrix>>();
+    auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
 
-    assert(Q.size1() == Q.size2() );
-    int n = Q.size1();
+    assert(Q.rows() == Q.cols() );
+    int n = Q.rows();
 
     for(int i=0;i<n;i++)
     {
@@ -140,7 +140,7 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
 extern "C" closure builtin_function_checkStationary(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& Q = arg0.as_<Box<Matrix>>();
+    auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto pi = (vector<double>)arg1.as_<R::RVector>();
@@ -151,7 +151,7 @@ extern "C" closure builtin_function_checkStationary(OperationArgs& Args)
 extern "C" closure builtin_function_checkReversible(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& Q = arg0.as_<Box<Matrix>>();
+    auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto pi = (vector<double>)arg1.as_<R::RVector>();
@@ -168,18 +168,18 @@ extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
     auto& smap = arg1.as_< R::RVector >();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    const Matrix& Q = arg2.as_< Box<Matrix> >();
+    const DenseMatrix<double>& Q = arg2.as_< Box<DenseMatrix<double>> >();
 
     auto pi = vector<double> (Args.evaluate_slot_to_value(3).as_<R::RVector>() );
 
-    assert(Q.size2() == Q.size1());
+    assert(Q.cols() == Q.rows());
     const unsigned N = smap.size();
     
     double scale=0;
 
     if (N == a.size()) 
     {
-	for(int i=0;i<Q.size1();i++) 
+	for(int i=0;i<Q.rows();i++)
 	    scale -= pi[i]*Q(i,i);
     }
     else 
@@ -223,7 +223,7 @@ extern "C" closure builtin_function_rna_16a_exchange(OperationArgs& Args)
 
     const int n = D.size();
 
-    object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
+    object_ptr<Box<DenseMatrix<double>>> R( new Box<DenseMatrix<double>>(n,n) );
 
     for(int i=0;i<n;i++)
     {
@@ -292,20 +292,20 @@ extern "C" closure builtin_function_singlet_to_doublet_rates(OperationArgs& Args
     auto& D = *arg0.poly_cast<alphabet,Doublets>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const Matrix& R1 = arg1.as_<Box<Matrix>>();
+    const DenseMatrix<double>& R1 = arg1.as_<Box<DenseMatrix<double>>>();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    const Matrix& R2 = arg2.as_<Box<Matrix>>();
+    const DenseMatrix<double>& R2 = arg2.as_<Box<DenseMatrix<double>>>();
 
     // The way alphabet is currently implemented, doublets must be doublets of nucleotides.
-    assert(R1.size1() == 4);
-    assert(R1.size2() == 4);
-    assert(R2.size1() == 4);
-    assert(R2.size2() == 4);
+    assert(R1.rows() == 4);
+    assert(R1.cols() == 4);
+    assert(R2.rows() == 4);
+    assert(R2.cols() == 4);
 
     const int n = D.size();
 
-    object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
+    object_ptr<Box<DenseMatrix<double>>> R( new Box<DenseMatrix<double>>(n,n) );
 
     for(int i=0;i<n;i++)
     {
@@ -352,25 +352,25 @@ extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args
     auto& T = *arg0.poly_cast<alphabet,Triplets>();
   
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const Matrix& R1 = arg1.as_<Box<Matrix>>();
+    const DenseMatrix<double>& R1 = arg1.as_<Box<DenseMatrix<double>>>();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    const Matrix& R2 = arg2.as_<Box<Matrix>>();
+    const DenseMatrix<double>& R2 = arg2.as_<Box<DenseMatrix<double>>>();
 
     auto arg3 = Args.evaluate_slot_to_value(3);
-    const Matrix& R3 = arg3.as_<Box<Matrix>>();
+    const DenseMatrix<double>& R3 = arg3.as_<Box<DenseMatrix<double>>>();
 
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
-    assert(R1.size1() == 4);
-    assert(R1.size2() == 4);
-    assert(R2.size1() == 4);
-    assert(R2.size2() == 4);
-    assert(R3.size1() == 4);
-    assert(R3.size2() == 4);
+    assert(R1.rows() == 4);
+    assert(R1.cols() == 4);
+    assert(R2.rows() == 4);
+    assert(R2.cols() == 4);
+    assert(R3.rows() == 4);
+    assert(R3.cols() == 4);
 
     const int n = T.size();
 
-    object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
+    object_ptr<Box<DenseMatrix<double>>> R( new Box<DenseMatrix<double>>(n,n) );
 
     for(int i=0;i<n;i++)
     {
@@ -421,7 +421,7 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
     double v3 = Args.evaluate_slot_to_value(2).as_double();
 
     auto arg3 = Args.evaluate_slot_to_value(3);
-    const Matrix& R1 = arg3.as_<Box<Matrix>>();
+    const DenseMatrix<double>& R1 = arg3.as_<Box<DenseMatrix<double>>>();
 
     auto arg4 = Args.evaluate_slot_to_value(4);
     const auto& pi1 = arg4.as_<R::RVector>();
@@ -440,14 +440,14 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
     assert(v2 >= 0);
     assert(v3 >= 0);
 
-    assert(R1.size1() == 4);
-    assert(R1.size2() == 4);
+    assert(R1.rows() == 4);
+    assert(R1.cols() == 4);
 
     assert(pi1.size() == 4);
 
     const int n = T.size();
 
-    object_ptr<Box<Matrix>> R( new Box<Matrix>(n,n) );
+    object_ptr<Box<DenseMatrix<double>>> R( new Box<DenseMatrix<double>>(n,n) );
 
     // Compute sums for unscaled 2-nuc and 3-nuc mutations.
     double sum2 = 0;
@@ -575,10 +575,10 @@ extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
     assert(D.getNucleotides().size() == 4);
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const Matrix& Q_nuc = arg1.as_<Box<Matrix>>();
+    const DenseMatrix<double>& Q_nuc = arg1.as_<Box<DenseMatrix<double>>>();
     // The way alphabet is currently implemented, doublets must be doublets of nucleotides.
-    assert(Q_nuc.size1() == 4);
-    assert(Q_nuc.size2() == 4);
+    assert(Q_nuc.rows() == 4);
+    assert(Q_nuc.cols() == 4);
 
     auto arg2 = Args.evaluate_slot_to_value(2);
     const R::RVector& edit_pairs = arg2.as_<R::RVector>();
@@ -587,7 +587,7 @@ extern "C" closure builtin_function_rna_editting_rates(OperationArgs& Args)
     double rnaRate = Args.evaluate_slot_to_value(3).as_double();
     assert(rnaRate >= 0);
 
-    object_ptr<Box<Matrix>> Q( new Box<Matrix>(n,n) );
+    object_ptr<Box<DenseMatrix<double>>> Q( new Box<DenseMatrix<double>>(n,n) );
 
     for(int i=0;i<n;i++)
     {
@@ -658,7 +658,7 @@ extern "C" closure builtin_function_rna_editting_pi(OperationArgs& Args)
 
 object_ptr<Object> SimpleExchangeFunction(double rho, int n)
 {
-    object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
+    object_ptr<Box<DenseMatrix<double>>> R(new Box<DenseMatrix<double>>(n,n));
 
     for(int i=0;i<n;i++) {
 	for(int j=0;j<n;j++)
@@ -672,7 +672,7 @@ object_ptr<Object> SimpleExchangeFunction(double rho, int n)
 
 object_ptr<const Object> EQU_Exchange_Function(int n)
 {
-    object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
+    object_ptr<Box<DenseMatrix<double>>> R(new Box<DenseMatrix<double>>(n,n));
 
     // Calculate S matrix
     for(int i=0;i<n;i++)
@@ -728,7 +728,7 @@ void inc_modulated_states_matrix(int& r, int& level, int& state, const R::RVecto
 {
     r++;
     state++;
-    if (state < Qs[level].as_<Box<Matrix>>().size1())
+    if (state < Qs[level].as_<Box<DenseMatrix<double>>>().rows())
         ;
     else
     {
@@ -759,21 +759,21 @@ extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
     int n_levels = Qs.size();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& rates_between = arg1.as_<Box<Matrix>>();
-    assert(rates_between.size1() == n_levels);
-    assert(rates_between.size2() == n_levels);
+    auto& rates_between = arg1.as_<Box<DenseMatrix<double>>>();
+    assert(rates_between.rows() == n_levels);
+    assert(rates_between.cols() == n_levels);
 
     int total_states = 0;
     for(int l = 0; l < n_levels; l++)
     {
-        auto& Q = Qs[l].as_<Box<Matrix>>();
-        int n_states_for_level = Q.size1();
-        assert(Q.size2() == n_states_for_level);
+        auto& Q = Qs[l].as_<Box<DenseMatrix<double>>>();
+        int n_states_for_level = Q.rows();
+        assert(Q.cols() == n_states_for_level);
 
         total_states += n_states_for_level;
     }
 
-    auto R = new Box<Matrix>(total_states, total_states);
+    auto R = new Box<DenseMatrix<double>>(total_states, total_states);
     for(int r1=0, l1=0, s1=0; r1 < total_states; inc_modulated_states_matrix(r1,l1,s1,Qs))
     {
         double sum = 0;
@@ -789,7 +789,7 @@ extern "C" closure builtin_function_modulated_markov_rates(OperationArgs& Args)
             else
             {
                 assert(l1 == l2);
-                auto& Q = Qs[l1].as_<Box<Matrix>>();
+                auto& Q = Qs[l1].as_<Box<DenseMatrix<double>>>();
                 assert(s1 != s2);
                 rate = Q(s1,s2);
             }
@@ -867,7 +867,7 @@ object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, istream&
 {
     int n = a.size();
 
-    object_ptr<Box<Matrix>> R(new Box<Matrix>(n,n));
+    object_ptr<Box<DenseMatrix<double>>> R(new Box<DenseMatrix<double>>(n,n));
   
     int k=0;
     for(int i=0;i<n;i++)
@@ -949,7 +949,7 @@ extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationAr
                            <<" entries for matrix of size "<<n<<", but got "<<xs.size();
 
     // 3. Create the matrix
-    object_ptr<Box<Matrix>> M(new Box<Matrix>(n,n));
+    object_ptr<Box<DenseMatrix<double>>> M(new Box<DenseMatrix<double>>(n,n));
 
     // 4. Fill the matrix
     int k=0;
@@ -1198,7 +1198,7 @@ extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
     auto& S = arg0.as_<R::RVector>();
     int n = Args.evaluate_slot_to_value(1).as_int();
 
-    auto R = new Box<Matrix>(n,n);
+    auto R = new Box<DenseMatrix<double>>(n,n);
     if (S.size() != n*(n-1)/2)
 	throw myexception()<<"Matrix of size "<<n<<" x "<<n<<" should have "<<n*(n-1)/2<<" exchangeabilities, but got "<<S.size()<<"!";
 
@@ -1223,7 +1223,7 @@ extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(1);
     auto& S = arg0.as_<R::RVector>();
 
-    auto R = new Box<Matrix>(n,n);
+    auto R = new Box<DenseMatrix<double>>(n,n);
     if (S.size() != n*(n-1))
 	throw myexception()<<"Matrix of size "<<n<<" x "<<n<<" should have "<<n*(n-1)<<" off-diagonal entries, but got "<<S.size()<<"!";
 
@@ -1246,14 +1246,14 @@ extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
 extern "C" closure builtin_function_fixupDiagonalRates(OperationArgs& Args)
 {
     auto arg1 = Args.evaluate_slot_to_value(0);
-    const Matrix& m1 = arg1.as_<Box<Matrix>>();
+    const DenseMatrix<double>& m1 = arg1.as_<Box<DenseMatrix<double>>>();
 
-    auto m2 = new Box<Matrix>(m1);
+    auto m2 = new Box<DenseMatrix<double>>(m1);
 
-    int n = m2->size1();
+    int n = m2->rows();
 
-    if (m2->size2() != n)
-	throw myexception()<<"Rate matrix should be square, but has size ("<<n<<","<<m2->size2()<<")";
+    if (m2->cols() != n)
+	throw myexception()<<"Rate matrix should be square, but has size ("<<n<<","<<m2->cols()<<")";
 
     for(int i=0;i<n;i++)
     {
@@ -1276,7 +1276,7 @@ extern "C" closure builtin_function_dNdS_matrix(OperationArgs& Args)
 
     int n = C.size();
 
-    auto R = new Box<Matrix>(n,n);
+    auto R = new Box<DenseMatrix<double>>(n,n);
 
     for(int i=0;i<n;i++)
 	for(int j=0;j<n;j++)
@@ -1291,11 +1291,11 @@ extern "C" closure builtin_function_singletToTripletSym(OperationArgs& Args)
     auto& C = *arg0.poly_cast<alphabet,Triplets>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const Matrix& S = arg1.as_<Box<Matrix>>();
+    const DenseMatrix<double>& S = arg1.as_<Box<DenseMatrix<double>>>();
 
     int n = C.size();
 
-    auto R = new Box<Matrix>(n,n);
+    auto R = new Box<DenseMatrix<double>>(n,n);
 
     for(int i=0;i<n;i++) 
     {
@@ -1336,7 +1336,7 @@ extern "C" closure builtin_function_plus_gwf_matrix(OperationArgs& Args)
 
     int n = pi.size();
 
-    auto R = new Box<Matrix>(n,n);
+    auto R = new Box<DenseMatrix<double>>(n,n);
 
     // compute frequencies
     normalize(pi);
@@ -1369,9 +1369,9 @@ double bound(double low, double high, double x)
 extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const Matrix& Q0 = arg0.as_< Box<Matrix> >();
-    assert(Q0.size1() == Q0.size2());
-    int n = Q0.size1();
+    const DenseMatrix<double>& Q0 = arg0.as_< Box<DenseMatrix<double>> >();
+    assert(Q0.rows() == Q0.cols());
+    int n = Q0.rows();
 
     auto F   = vector<double>( Args.evaluate_slot_to_value(1).as_< R::RVector >() );
     for(auto& f: F)
@@ -1379,8 +1379,8 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
 
     assert(F.size() == n);
 
-    auto Q_ = new Box<Matrix>(n,n);
-    Matrix& Q = *Q_;
+    auto Q_ = new Box<DenseMatrix<double>>(n,n);
+    DenseMatrix<double>& Q = *Q_;
 
     for(int i=0;i<n;i++)
     {
@@ -1436,10 +1436,10 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
 extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& WF = arg0.as_<Box<Matrix>>();
+    const auto& WF = arg0.as_<Box<DenseMatrix<double>>>();
 
-    const int n_models = WF.size1();
-    const int n_states = WF.size2();
+    const int n_models = WF.rows();
+    const int n_states = WF.cols();
 
     auto* ave_f = new R::RVector(n_states);
     for(int s=0;s<n_states;s++)
@@ -1467,7 +1467,7 @@ extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Ar
     const int n_models = F.size();
     const int n_states = F[0].as_<R::RVector>().size();
 
-    auto *WF = new Box<Matrix>(n_models, n_states);
+    auto *WF = new Box<DenseMatrix<double>>(n_models, n_states);
 
     for(int m=0;m<n_models;m++) {
 	double p = D[m].as_double();
@@ -1487,7 +1487,7 @@ extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
     const int n_models = F.size();
     const int n_states = F[0].as_<R::RVector>().size();
 
-    auto *FF = new Box<Matrix>(n_models, n_states);
+    auto *FF = new Box<DenseMatrix<double>>(n_models, n_states);
 
     for(int m=0;m<n_models;m++) {
 	const auto& f = F[m].as_<R::RVector>();
@@ -1505,13 +1505,13 @@ extern "C" closure builtin_function_flow(OperationArgs& Args)
 
     // Rate matrix
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const auto& Q = arg1.as_<Box<Matrix>>();
-    assert(Q.size1() == Q.size2());
+    const auto& Q = arg1.as_<Box<DenseMatrix<double>>>();
+    assert(Q.rows() == Q.cols());
 
     int n_states = pi.size();
-    assert(Q.size1() == n_states);
+    assert(Q.rows() == n_states);
 
-    auto* Fptr = new Box<Matrix>(n_states, n_states);
+    auto* Fptr = new Box<DenseMatrix<double>>(n_states, n_states);
     auto& F = *Fptr;
 
     for(int i=0;i<n_states;i++)

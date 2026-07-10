@@ -30,40 +30,13 @@ using Alphabet = PtrBox<alphabet>;
 namespace
 {
 
-// NOTE: Matrix Int moves to Eigen one commit before Matrix Double.  These
-// accessors keep shared builtins single-sourced until the Double migration.
-template <typename NativeMatrix>
-int native_rows(const NativeMatrix& value)
-{
-    if constexpr (requires { value.rows(); })
-        return static_cast<int>(value.rows());
-    else
-        return value.size1();
-}
-
-// Return the column count from either representation used during the staged
-// runtime-matrix migration.
-template <typename NativeMatrix>
-int native_cols(const NativeMatrix& value)
-{
-    if constexpr (requires { value.cols(); })
-        return static_cast<int>(value.cols());
-    else
-        return value.size2();
-}
-
-// Select the temporary runtime representation associated with each Haskell
-// Matrix element type while Int and Double migrate in separate commits.
-template <typename T>
-using RuntimeMatrix = std::conditional_t<std::is_same_v<T, int>, DenseMatrix<int>, matrix<double>>;
-
 // Dispatch an operation to one of the native matrix representations supported
 // by the Haskell Matrix type.
 template <typename F>
 decltype(auto) visit_matrix(const R::Exp& value, F&& operation)
 {
-    if (value.is_a<Box<matrix<double>>>() )
-        return operation(value.as_<Box<matrix<double>>>());
+    if (value.is_a<Box<DenseMatrix<double>>>() )
+        return operation(value.as_<Box<DenseMatrix<double>>>());
     if (value.is_a<Box<DenseMatrix<int>>>() )
         return operation(value.as_<Box<DenseMatrix<int>>>());
 
@@ -88,11 +61,11 @@ decltype(auto) visit_numeric_vector(const R::Exp& value, F&& operation)
 template <typename F>
 decltype(auto) visit_same_matrix_pair(const R::Exp& value1, const R::Exp& value2, F&& operation)
 {
-    if (value1.is_a<Box<matrix<double>>>() )
+    if (value1.is_a<Box<DenseMatrix<double>>>() )
     {
-        if (not value2.is_a<Box<matrix<double>>>() )
+        if (not value2.is_a<Box<DenseMatrix<double>>>() )
             throw myexception()<<"Matrices have different native element representations";
-        return operation(value1.as_<Box<matrix<double>>>(), value2.as_<Box<matrix<double>>>());
+        return operation(value1.as_<Box<DenseMatrix<double>>>(), value2.as_<Box<DenseMatrix<double>>>());
     }
     if (value1.is_a<Box<DenseMatrix<int>>>() )
     {
@@ -119,9 +92,9 @@ T matrix_scalar(const R::Exp& value)
 template <typename NativeMatrix, typename F>
 closure map_matrix(const Box<NativeMatrix>& matrix1, F&& operation)
 {
-    auto matrix2 = new Box<NativeMatrix>(native_rows(matrix1), native_cols(matrix1));
-    for(int i=0; i<native_rows(matrix1); i++)
-        for(int j=0; j<native_cols(matrix1); j++)
+    auto matrix2 = new Box<NativeMatrix>(matrix1.rows(), matrix1.cols());
+    for(Eigen::Index i=0; i<matrix1.rows(); i++)
+        for(Eigen::Index j=0; j<matrix1.cols(); j++)
             (*matrix2)(i,j) = operation(matrix1(i,j));
     return matrix2;
 }
@@ -132,15 +105,15 @@ template <typename NativeMatrix, typename F>
 closure zip_matrices(const Box<NativeMatrix>& matrix1, const Box<NativeMatrix>& matrix2,
                      const std::string& operation_name, F&& operation)
 {
-    int rows = native_rows(matrix1);
-    int cols = native_cols(matrix1);
-    if (native_rows(matrix2) != rows or native_cols(matrix2) != cols)
+    Eigen::Index rows = matrix1.rows();
+    Eigen::Index cols = matrix1.cols();
+    if (matrix2.rows() != rows or matrix2.cols() != cols)
         throw myexception()<<"Trying to "<<operation_name<<" matrices of unequal sizes ("
-                           <<rows<<","<<cols<<") and ("<<native_rows(matrix2)<<","<<native_cols(matrix2)<<")";
+                           <<rows<<","<<cols<<") and ("<<matrix2.rows()<<","<<matrix2.cols()<<")";
 
     auto matrix3 = new Box<NativeMatrix>(rows, cols);
-    for(int i=0; i<rows; i++)
-        for(int j=0; j<cols; j++)
+    for(Eigen::Index i=0; i<rows; i++)
+        for(Eigen::Index j=0; j<cols; j++)
             (*matrix3)(i,j) = operation(matrix1(i,j), matrix2(i,j));
     return matrix3;
 }
@@ -150,22 +123,22 @@ closure zip_matrices(const Box<NativeMatrix>& matrix1, const Box<NativeMatrix>& 
 template <typename NativeMatrix>
 closure multiply_matrices(const Box<NativeMatrix>& matrix1, const Box<NativeMatrix>& matrix2)
 {
-    if (native_cols(matrix1) != native_rows(matrix2))
+    if (matrix1.cols() != matrix2.rows())
         throw myexception()<<"Trying to multiply matrices of incompatible sizes ("
-                           <<native_rows(matrix1)<<","<<native_cols(matrix1)<<") and ("
-                           <<native_rows(matrix2)<<","<<native_cols(matrix2)<<")";
+                           <<matrix1.rows()<<","<<matrix1.cols()<<") and ("
+                           <<matrix2.rows()<<","<<matrix2.cols()<<")";
 
-    int rows = native_rows(matrix1);
-    int inner = native_cols(matrix1);
-    int cols = native_cols(matrix2);
+    Eigen::Index rows = matrix1.rows();
+    Eigen::Index inner = matrix1.cols();
+    Eigen::Index cols = matrix2.cols();
     auto matrix3 = new Box<NativeMatrix>(rows, cols);
     using T = std::remove_cvref_t<decltype(matrix1(0,0))>;
 
-    for(int i=0; i<rows; i++)
-        for(int j=0; j<cols; j++)
+    for(Eigen::Index i=0; i<rows; i++)
+        for(Eigen::Index j=0; j<cols; j++)
         {
             T sum = 0;
-            for(int k=0; k<inner; k++)
+            for(Eigen::Index k=0; k<inner; k++)
                 sum += matrix1(i,k) * matrix2(k,j);
             (*matrix3)(i,j) = sum;
         }
@@ -176,9 +149,9 @@ closure multiply_matrices(const Box<NativeMatrix>& matrix1, const Box<NativeMatr
 template <typename NativeMatrix>
 closure transpose_matrix(const Box<NativeMatrix>& matrix1)
 {
-    auto matrix2 = new Box<NativeMatrix>(native_cols(matrix1), native_rows(matrix1));
-    for(int i=0; i<native_rows(*matrix2); i++)
-        for(int j=0; j<native_cols(*matrix2); j++)
+    auto matrix2 = new Box<NativeMatrix>(matrix1.cols(), matrix1.rows());
+    for(Eigen::Index i=0; i<matrix2->rows(); i++)
+        for(Eigen::Index j=0; j<matrix2->cols(); j++)
             (*matrix2)(i,j) = matrix1(j,i);
     return matrix2;
 }
@@ -189,9 +162,9 @@ closure matrix_to_vector(const Box<NativeMatrix>& native_matrix)
 {
     using T = std::remove_cvref_t<decltype(native_matrix(0,0))>;
     object_ptr<Box<DenseVector<T>>> values = new Box<DenseVector<T>>(native_matrix.size());
-    for(int i=0; i<native_rows(native_matrix); i++)
-        for(int j=0; j<native_cols(native_matrix); j++)
-            (*values)(i * native_cols(native_matrix) + j) = native_matrix(i,j);
+    for(Eigen::Index i=0; i<native_matrix.rows(); i++)
+        for(Eigen::Index j=0; j<native_matrix.cols(); j++)
+            (*values)(i * native_matrix.cols() + j) = native_matrix(i,j);
     return values;
 }
 
@@ -276,14 +249,14 @@ closure reshape_vector(const Box<DenseVector<T>>& values, int columns)
     {
         if (values.size() != 0)
             throw myexception()<<"reshape: a nonempty vector cannot have zero columns";
-        return new Box<RuntimeMatrix<T>>(0, 0);
+        return new Box<DenseMatrix<T>>(0, 0);
     }
     if (values.size() % columns != 0)
         throw myexception()<<"reshape: vector length "<<values.size()
                            <<" is not divisible by column count "<<columns;
 
     int rows = values.size() / columns;
-    auto result = new Box<RuntimeMatrix<T>>(rows, columns);
+    auto result = new Box<DenseMatrix<T>>(rows, columns);
     for(int k=0; k<values.size(); k++)
         (*result)(k / columns, k % columns) = values(k);
     return result;
@@ -295,7 +268,7 @@ closure vector_as_matrix(const Box<DenseVector<T>>& values, bool as_row)
 {
     int rows = as_row ? 1 : values.size();
     int columns = as_row ? values.size() : 1;
-    auto result = new Box<RuntimeMatrix<T>>(rows, columns);
+    auto result = new Box<DenseMatrix<T>>(rows, columns);
     for(int k=0; k<values.size(); k++)
         (*result)(as_row ? 0 : k, as_row ? k : 0) = values(k);
     return result;
@@ -318,7 +291,7 @@ closure matrix_from_list(OperationArgs& Args)
                            <<") exceed the supported element count";
 
     int expected_size = rows * columns;
-    object_ptr<Box<RuntimeMatrix<T>>> native_matrix = new Box<RuntimeMatrix<T>>(rows, columns);
+    object_ptr<Box<DenseMatrix<T>>> native_matrix = new Box<DenseMatrix<T>>(rows, columns);
     int xs = Args.evaluate_slot_use(2);
 
     for(int k=0; k<expected_size; k++)
@@ -478,14 +451,14 @@ extern "C" closure builtin_function_vectorAsColumn(OperationArgs& Args)
 extern "C" R::Exp simple_function_rows(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
-    return visit_matrix(arg0, [](const auto& native_matrix) { return native_rows(native_matrix); });
+    return visit_matrix(arg0, [](const auto& native_matrix) { return static_cast<int>(native_matrix.rows()); });
 }
 
 // Return the number of columns for either supported native matrix representation.
 extern "C" R::Exp simple_function_cols(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
-    return visit_matrix(arg0, [](const auto& native_matrix) { return native_cols(native_matrix); });
+    return visit_matrix(arg0, [](const auto& native_matrix) { return static_cast<int>(native_matrix.cols()); });
 }
 
 // Sum a native matrix while preserving its Int or Double scalar
@@ -497,8 +470,8 @@ extern "C" R::Exp simple_function_matrixSumElements(vector<R::Exp>& args)
     return visit_matrix(value, [](const auto& native_matrix) -> R::Exp {
         using Scalar = std::remove_cvref_t<decltype(native_matrix(0,0))>;
         Scalar total = 0;
-        for(int i = 0; i < native_rows(native_matrix); i++)
-            for(int j = 0; j < native_cols(native_matrix); j++)
+        for(Eigen::Index i = 0; i < native_matrix.rows(); i++)
+            for(Eigen::Index j = 0; j < native_matrix.cols(); j++)
                 total += native_matrix(i,j);
         return total;
     });
@@ -590,36 +563,25 @@ extern "C" closure builtin_function_mat_signum(OperationArgs& Args)
 
 extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
 {
-    using Eigen::Map;
-    using Eigen::Dynamic;
-    using Eigen::RowMajor;
-
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& Q = arg0.as_<Box<Matrix>>();
-    int n = Q.size1();
-    assert(Q.size2() == n);
+    auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
+    Eigen::Index n = Q.rows();
+    assert(Q.cols() == n);
 
     double t = Args.evaluate_slot_to_value(1).as_double();
 
-    auto P = new Box<Matrix>(n,n);
+    auto P = new Box<DenseMatrix<double>>((t*Q).exp());
 
-    // Using Map<.., Eigen::Aligned> gives a small (0.2%) speedup with codon alphabets.
-    // But ensuring alignment is messy on windows.
-    Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> EQ(Q.begin(), n, n);
-    Map<Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> EP(P->begin(), n, n);
-
-    EP = (t*EQ).exp();
-
-    for(int i=0; i< n;i++)
+    for(Eigen::Index i=0; i<n; i++)
     {
         double sum = 0;
-        for(int j=0; j< n;j++)
+        for(Eigen::Index j=0; j<n; j++)
         {
-            EP(i,j) = std::max(EP(i,j),0.0);
-            sum += EP(i,j);
+            (*P)(i,j) = std::max((*P)(i,j),0.0);
+            sum += (*P)(i,j);
         }
-        for(int j=0; j< n;j++)
-            EP(i,j)/= sum;
+        for(Eigen::Index j=0; j<n; j++)
+            (*P)(i,j) /= sum;
     }
     
     return P;
@@ -640,12 +602,12 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
     using namespace Eigen;
 
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const ::Matrix& Q = arg0.as_< Box<::Matrix> >();
+    const auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
 
     auto pi = vector<double>(Args.evaluate_slot_to_value(1).as_<R::RVector>() );
 
-    const unsigned n = Q.size1();
-    assert(Q.size2() == Q.size1());
+    const Eigen::Index n = Q.rows();
+    assert(Q.cols() == Q.rows());
 
 #ifdef DEBUG_RATE_MATRIX
     assert(std::abs(sum(pi)-1.0) < 1.0e-6);
@@ -673,9 +635,9 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
     }
 
     //--------------- Calculate eigensystem -----------------//
-    ::Matrix S(n,n);
-    for(int i=0;i<n;i++)
-	for(int j=0;j<=i;j++) {
+    DenseMatrix<double> S(n,n);
+    for(Eigen::Index i=0;i<n;i++)
+        for(Eigen::Index j=0;j<=i;j++) {
 	    S(j,i) = S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
 
 #ifdef DEBUG_RATE_MATRIX
@@ -696,10 +658,7 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 	}
 
     //---------------- Compute eigensystem ------------------//
-    // 1. Make an eigen array from M
-    Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> S2(S.begin(), n, n);
-
-    object_ptr<Box<EigenValues>> eigensolver(new Box<EigenValues>(S2, ComputeEigenvectors));
+    object_ptr<Box<EigenValues>> eigensolver(new Box<EigenValues>(S, ComputeEigenvectors));
     if (eigensolver->info() != Eigen::Success)
         return {R::RMaybe()};
     else if (std::abs(eigensolver->eigenvalues().maxCoeff()) > 1.0e-9)
@@ -717,7 +676,7 @@ extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
     auto pi = (vector<double>) Args.evaluate_slot_to_value(1).as_<R::RVector>();
     double t = Args.evaluate_slot_to_value(2).as_double();
 
-    object_ptr<Box<Matrix>> Mptr = new Box<Matrix>;
+    object_ptr<Box<DenseMatrix<double>>> Mptr = new Box<DenseMatrix<double>>;
     auto& M = *Mptr;
     M = exp(L.as_<Box<EigenValues>>(), pi, t);
 

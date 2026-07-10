@@ -92,7 +92,7 @@ extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)
 						 arg1.as_<R::RVector>(),        // LCB
 						 arg2.as_<R::RVector>(),        // A
 						 arg3.as_<R::RVector>(),        // transition_P
-						 arg4.as_<Box<Matrix>>()  ); // F
+						 arg4.as_<Box<DenseMatrix<double>>>()  ); // F
 }
 
 extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
@@ -105,7 +105,7 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
     log_double_t Pr = substitution::calc_prob_at_root(arg0.as_<R::RVector>(),       // LCN
 						      arg1.as_<R::RVector>(),       // LCB
 						      arg2.as_<R::RVector>(),       // A
-						      arg3.as_<Box<Matrix>>());  // F
+						      arg3.as_<Box<DenseMatrix<double>>>());  // F
     return {Pr};
 }
 
@@ -121,7 +121,7 @@ extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 						    arg1.as_<R::RVector>(),        // LCB
 						    arg2.as_<R::RVector>(),        // A
 						    arg3.as_<R::RVector>(),        // transition_P
-						    arg4.as_<Box<Matrix>>());   // F
+						    arg4.as_<Box<DenseMatrix<double>>>());   // F
 }
 
 extern "C" closure builtin_function_calcProb(OperationArgs& Args)
@@ -134,7 +134,7 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
     log_double_t Pr = substitution::calc_prob(arg0.as_<R::RVector>(),       // LCN
 					      arg1.as_<R::RVector>(),       // LCB
 					      arg2.as_<R::RVector>(),       // A
-					      arg3.as_<Box<Matrix>>());  // F
+					      arg3.as_<Box<DenseMatrix<double>>>());  // F
     return {Pr};
 }
 
@@ -163,7 +163,7 @@ extern "C" closure builtin_function_peelBranchAwayFromRootNonEq(OperationArgs& A
 							   arg1.as_<R::RVector>(),        // LCB
 							   arg2.as_<R::RVector>(),        // A
 							   arg3.as_<R::RVector>(),        // transition_P
-							   arg4.as_<Box<Matrix>>());   // F
+							   arg4.as_<Box<DenseMatrix<double>>>());   // F
 }
 
 extern "C" closure builtin_function_calcProbNonEq(OperationArgs& Args)
@@ -176,7 +176,7 @@ extern "C" closure builtin_function_calcProbNonEq(OperationArgs& Args)
     log_double_t Pr = substitution::calc_prob_non_eq(arg0.as_<R::RVector>(),       // LCN
 						     arg1.as_<R::RVector>(),       // LCB
 						     arg2.as_<R::RVector>(),       // A
-						     arg3.as_<Box<Matrix>>());  // F
+						     arg3.as_<Box<DenseMatrix<double>>>());  // F
     return {Pr};
 }
 
@@ -185,7 +185,7 @@ extern "C" closure builtin_function_propagateFrequencies(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
 
-    object_ptr<Box<Matrix>> F2 = new Box<Matrix>(propagate_frequencies(arg0.as_<Box<Matrix>>(), // F
+    object_ptr<Box<DenseMatrix<double>>> F2 = new Box<DenseMatrix<double>>(propagate_frequencies(arg0.as_<Box<DenseMatrix<double>>>(), // F
 								       arg1.as_<R::RVector>()));   // transition_P
     return F2;
 }
@@ -200,7 +200,7 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
     return substitution::sample_root_sequence(arg0.as_<R::RVector>(),      // LCN
                                               arg1.as_<R::RVector>(),      // LCB
                                               arg2.as_<R::RVector>(),      // As
-                                              arg3.as_<Box<Matrix>>()); // F
+                                              arg3.as_<Box<DenseMatrix<double>>>()); // F
 }
 
 extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
@@ -219,7 +219,7 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
 						arg3.as_<R::RVector>(),                   // LCB
 						arg4.as_<R::RVector>(),                   // A
 						arg5.as_<R::RVector>(),                   // transition_P
-						arg6.as_<Box<Matrix>>());              // F
+						arg6.as_<Box<DenseMatrix<double>>>());              // F
 }
 
 // maskSequenceRaw :: CBitVector -> R::RVector Int -> R::RVector Int
@@ -253,7 +253,7 @@ extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
 {
     int L = Args.evaluate_slot_to_value(0).as_int();
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& F = arg1.as_<Box<Matrix>>();
+    auto& F = arg1.as_<Box<DenseMatrix<double>>>();
 
     Vector<pair<int,int>> sequence(L);
     for(int i=0;i<L;i++)
@@ -273,7 +273,7 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
     auto& transition_ps = arg2.as_<R::RVector>();
 
     auto arg3 = Args.evaluate_slot_to_value(3);
-    auto& F = arg3.as_<Box<Matrix>>();
+    auto& F = arg3.as_<Box<DenseMatrix<double>>>();
 
     Vector<pair<int,int>> sequence;
     auto S = F;
@@ -304,7 +304,7 @@ extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Arg
     auto& transition_ps = arg1.as_<R::RVector>();
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto& F = arg2.as_<Box<Matrix>>();
+    auto& F = arg2.as_<Box<DenseMatrix<double>>>();
 
     int L = parentSequence.size();
 

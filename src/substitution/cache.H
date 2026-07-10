@@ -48,10 +48,10 @@ public:
     void init_other_subst(log_double_t p=1) {assert(not other_subst_); other_subst_ = p;}
           log_double_t& other_subst() {return other_subst_.value();}
     const log_double_t& other_subst() const {return other_subst_.value();}
-    std::function<log_double_t(const Matrix&)> other_subst_f;
+    std::function<log_double_t(const DenseMatrix<double>&)> other_subst_f;
 
     boost::dynamic_bitset<> bits;
-    std::optional<Matrix> away_from_root_WF;
+    std::optional<DenseMatrix<double>> away_from_root_WF;
 
     bool away_from_root() const {return away_from_root_WF.has_value();}
 
@@ -78,10 +78,10 @@ public:
 	    m[i] = d;
     }
 
-    void set(int c, const Matrix& M)
+    void set(int c, const DenseMatrix<double>& M)
     {
 	double* __restrict__ m1 = data + matrix_size()*c;
-	const double* __restrict__ m2 = M.begin();
+	const double* __restrict__ m2 = M.data();
 	for(int i=0;i<matrix_size();i++)
 	    m1[i] = m2[i];
     }
@@ -93,18 +93,18 @@ public:
 	    m1[i] = m2[i];
     }
 
-    void get(int c, Matrix& M) const
+    void get(int c, DenseMatrix<double>& M) const
     {
-	double* __restrict__ m1 = M.begin();
+	double* __restrict__ m1 = M.data();
 	const double* __restrict__ m2 = data + matrix_size()*c;
 	for(int i=0;i<matrix_size();i++)
 	    m1[i] = m2[i];
     }
 
-    void mul(int c, const Matrix& M)
+    void mul(int c, const DenseMatrix<double>& M)
     {
 	double* __restrict__ m1 = data + matrix_size()*c;
-	const double* __restrict__ m2 = M.begin();
+	const double* __restrict__ m2 = M.data();
 	for(int i=0;i<matrix_size();i++)
 	    m1[i] *= m2[i];
     }
@@ -116,10 +116,10 @@ public:
 	    m1[i] *= f;
     }
 
-    double dot(int c, const Matrix& M) const
+    double dot(int c, const DenseMatrix<double>& M) const
     {
 	const double* __restrict__ m1 = data + matrix_size()*c;
-	const double* __restrict__ m2 = M.begin();
+	const double* __restrict__ m2 = M.data();
 	double total = 0;
 	for(int i=0;i<matrix_size();i++)
 	    total += m1[i] * m2[i];

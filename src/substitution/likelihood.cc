@@ -65,17 +65,17 @@ using std::optional;
 //
 // * 
 
-pair<int,int> sample(const Matrix& M)
+pair<int,int> sample(const DenseMatrix<double>& M)
 {
     double total = element_sum(M);
     if (std::isnan(total))
-        throw myexception()<<"substitution.cc:sample(M): Matrix contains NaN!\n";
+        throw myexception()<<"substitution.cc:sample(M): DenseMatrix<double> contains NaN!\n";
 
     double r = uniform()*total;
 
     double sum = 0;
-    for(int m=0;m<M.size1();m++)
-        for(int l=0;l<M.size2();l++)
+    for(int m=0;m<M.rows();m++)
+        for(int l=0;l<M.cols();l++)
         {
             sum += M(m,l);
             if (r <= sum)
@@ -137,7 +137,7 @@ namespace substitution {
         return total;
     }
 
-    inline double sum(const Matrix& Q,int l1, int l2, const alphabet& a)
+    inline double sum(const DenseMatrix<double>& Q,int l1, int l2, const alphabet& a)
     {
         double total=0;
         for(int l=0;l<a.size();l++)
@@ -147,7 +147,7 @@ namespace substitution {
     }
 
 
-    inline double sum(const Matrix& Q, const R::RVector& smap, int s1, int l)
+    inline double sum(const DenseMatrix<double>& Q, const R::RVector& smap, int s1, int l)
     {
         double total = 0;
         int n_states = smap.size();
@@ -156,11 +156,11 @@ namespace substitution {
             if (smap[s2].as_int() == l)
                 total += Q(s1,s2);
 
-        assert(total - 1.0 < 1.0e-9*Q.size1());
+        assert(total - 1.0 < 1.0e-9*Q.rows());
         return total;
     }
 
-    inline double sum(const Matrix& Q,const R::RVector& smap,
+    inline double sum(const DenseMatrix<double>& Q,const R::RVector& smap,
                       int s1, int l2, const alphabet& a)
     {
         double total=0;
@@ -169,7 +169,7 @@ namespace substitution {
             if (a.matches(smap[s].as_int(),l2))
                 total += Q(s1,s);
 
-        assert(total - 1.0 < 1.0e-9*Q.size1());
+        assert(total - 1.0 < 1.0e-9*Q.rows());
         return total;
     }
 
@@ -180,15 +180,15 @@ namespace substitution {
 					  const pairwise_alignment_t& A0,
 					  const pairwise_alignment_t& A1,
 					  const pairwise_alignment_t& A2,
-					  const Matrix& F)
+					  const DenseMatrix<double>& F)
     {
         assert(LCB1.n_columns() == A0.length1());
         assert(LCB2.n_columns() == A1.length1());
         assert(LCB3.n_columns() == A2.length1());
         total_calc_root_prob++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         assert(n_models == LCB1.n_models());
@@ -202,7 +202,7 @@ namespace substitution {
 
 #ifdef DEBUG_SUBSTITUTION
         // scratch matrix
-        Matrix S(n_models,n_states);
+        DenseMatrix<double> S(n_models,n_states);
 #endif
 
         log_prod total;
@@ -218,7 +218,7 @@ namespace substitution {
             while(i0 < AL0 and not A0.has_character2(i0))
             {
                 assert(A0.has_character1(i0));
-                double p_col = element_prod_sum(F.begin(), LCB1[s0], matrix_size );
+                double p_col = element_prod_sum(F.data(), LCB1[s0], matrix_size );
                 assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
                 scale += LCB1.scale(s0);
@@ -229,7 +229,7 @@ namespace substitution {
             while (i1 < AL1 and not A1.has_character2(i1))
             {
                 assert(A1.has_character1(i1));
-                double p_col = element_prod_sum(F.begin(), LCB2[s1], matrix_size );
+                double p_col = element_prod_sum(F.data(), LCB2[s1], matrix_size );
                 assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
                 scale += LCB2.scale(s1);
@@ -240,7 +240,7 @@ namespace substitution {
             while (i2 < AL2 and not A2.has_character2(i2))
             {
                 assert(A2.has_character1(i2));
-                double p_col = element_prod_sum(F.begin(), LCB3[s2], matrix_size );
+                double p_col = element_prod_sum(F.data(), LCB3[s2], matrix_size );
                 assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
                 scale += LCB3.scale(s2);
@@ -291,11 +291,11 @@ namespace substitution {
 
             double p_col = 1;
             if (mi==3)
-                p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
+                p_col = element_prod_sum(F.data(), m[0], m[1], m[2], matrix_size);
             else if (mi==2)
-                p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
+                p_col = element_prod_sum(F.data(), m[0], m[1], matrix_size);
             else if (mi==1)
-                p_col = element_prod_sum(F.begin(), m[0], matrix_size);
+                p_col = element_prod_sum(F.data(), m[0], matrix_size);
 
 #ifdef DEBUG_SUBSTITUTION
             //-------------- Set letter & model prior probabilities  ---------------//
@@ -304,9 +304,9 @@ namespace substitution {
             //-------------- Propagate and collect information at 'root' -----------//
             if (not_gap0)
             if (not_gap1)
-                element_prod_modify(S.begin(),LCB2[s1], matrix_size);
+                element_prod_modify(S.data(),LCB2[s1], matrix_size);
             if (not_gap2)
-                element_prod_modify(S.begin(),LCB3[s2], matrix_size);
+                element_prod_modify(S.data(),LCB3[s2], matrix_size);
 
             //------------ Check that individual models are not crazy -------------//
             for(int m=0;m<n_models;m++) {
@@ -362,12 +362,12 @@ namespace substitution {
     log_double_t calc_prob_at_root(const R::RVector& sparse_LCN,
 				   const R::RVector& LCB,
 				   const R::RVector& A_,
-				   const Matrix& F)
+				   const DenseMatrix<double>& F)
     {
         total_calc_root_prob++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         auto LCN = sparse_to_dense(sparse_LCN);
@@ -399,8 +399,8 @@ namespace substitution {
 #endif
 
         // scratch matrix
-        Matrix SMAT(n_models,n_states);
-        double* S = SMAT.begin();
+        DenseMatrix<double> SMAT(n_models,n_states);
+        double* S = SMAT.data();
 
         log_prod total;
         int total_scale = 0;
@@ -418,7 +418,7 @@ namespace substitution {
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    double p_col = element_prod_sum(F.data(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
 		    total_scale += lcb.scale(sj);
@@ -441,7 +441,7 @@ namespace substitution {
 		}
 	    }
 
-	    element_assign(S, F.begin(), matrix_size);
+	    element_assign(S, F.data(), matrix_size);
 
 	    for(int j=0;j<n_branches_in;j++)
 	    {
@@ -485,12 +485,12 @@ namespace substitution {
     log_double_t calc_prob_not_at_root(const R::RVector& sparse_LCN,
 				       const R::RVector& LCB,
 				       const R::RVector& A_,
-				       const Matrix& F)
+				       const DenseMatrix<double>& F)
     {
         total_calc_root_prob++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         auto LCN = sparse_to_dense(sparse_LCN);
@@ -522,8 +522,8 @@ namespace substitution {
 #endif
 
         // scratch matrix
-        Matrix SMAT(n_models,n_states);
-        double* S = SMAT.begin();
+        DenseMatrix<double> SMAT(n_models,n_states);
+        double* S = SMAT.data();
 
         log_prod total;
         int total_scale = 0;
@@ -541,7 +541,7 @@ namespace substitution {
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = (j == 0) ? element_sum(lcb[sj], matrix_size) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    double p_col = (j == 0) ? element_sum(lcb[sj], matrix_size) : element_prod_sum(F.data(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
 		    total_scale += lcb.scale(sj);
@@ -567,7 +567,7 @@ namespace substitution {
 	    if (A(0).has_character1(i[0]))
 		element_assign(S, 1.0, matrix_size);
 	    else
-		element_assign(S, F.begin(), matrix_size);
+		element_assign(S, F.data(), matrix_size);
 
 	    for(int j=0;j<n_branches_in;j++)
 	    {
@@ -610,7 +610,7 @@ namespace substitution {
     log_double_t calc_prob(const R::RVector& LCN,
 			   const R::RVector& LCB,
 			   const R::RVector& A_,
-			   const Matrix& F)
+			   const DenseMatrix<double>& F)
     {
 	optional<int> away_from_root_index;
 	for(int j=0;j<LCB.size();j++)
@@ -639,12 +639,12 @@ namespace substitution {
     log_double_t calc_prob_at_root_non_eq(const R::RVector& sparse_LCN,
 					  const R::RVector& LCB,
 					  const R::RVector& A_,
-					  const Matrix& F)
+					  const DenseMatrix<double>& F)
     {
         total_calc_root_prob++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         auto LCN = sparse_to_dense(sparse_LCN);
@@ -676,8 +676,8 @@ namespace substitution {
 #endif
 
         // scratch matrix
-        Matrix SMAT(n_models,n_states);
-        double* S = SMAT.begin();
+        DenseMatrix<double> SMAT(n_models,n_states);
+        double* S = SMAT.data();
 
         log_prod total;
         int total_scale = 0;
@@ -695,7 +695,7 @@ namespace substitution {
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    double p_col = element_prod_sum(F.data(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
 		    total_scale += lcb.scale(sj);
@@ -718,7 +718,7 @@ namespace substitution {
 		}
 	    }
 
-	    element_assign(S, F.begin(), matrix_size);
+	    element_assign(S, F.data(), matrix_size);
 
 	    for(int j=0;j<n_branches_in;j++)
 	    {
@@ -778,8 +778,8 @@ namespace substitution {
 	assert(not LCN.empty() or not A_.empty());
 	int L = (LCN.empty()) ? A(0).length2() : node_cache(0).n_columns();
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
 #ifndef NDEBUG
@@ -800,8 +800,8 @@ namespace substitution {
 #endif
 
         // scratch matrix
-        Matrix SMAT(n_models,n_states);
-        double* S = SMAT.begin();
+        DenseMatrix<double> SMAT(n_models,n_states);
+        double* S = SMAT.data();
 
         log_prod total;
         int total_scale = 0;
@@ -819,7 +819,7 @@ namespace substitution {
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = (j == 0) ? element_sum(lcb[sj], matrix_size) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    double p_col = (j == 0) ? element_sum(lcb[sj], matrix_size) : element_prod_sum(F.data(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
 		    total_scale += lcb.scale(sj);
@@ -845,7 +845,7 @@ namespace substitution {
 	    if (A(0).has_character1(i[0]))
 		element_assign(S, 1.0, matrix_size);
 	    else
-		element_assign(S, F.begin(), matrix_size);
+		element_assign(S, F.data(), matrix_size);
 
 	    for(int j=0;j<n_branches_in;j++)
 	    {
@@ -891,7 +891,7 @@ namespace substitution {
     log_double_t calc_prob_non_eq(const R::RVector& LCN,
 				  const R::RVector& LCB,
 				  const R::RVector& A_,
-				  const Matrix& F)
+				  const DenseMatrix<double>& F)
     {
 	optional<int> away_from_root_index;
 	for(int j=0;j<LCB.size();j++)
@@ -925,7 +925,7 @@ namespace substitution {
         int L0 = sequence.size();
 
         const int n_models  = transition_P.size();
-        const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
+        const int n_states  = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
         const int matrix_size = n_models * n_states;
         const int n_letters = a.n_letters();
 
@@ -942,7 +942,7 @@ namespace substitution {
             if (a.is_letter(l2))
                 for(int m=0;m<n_models;m++) 
                 {
-                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+                    const DenseMatrix<double>& Q = transition_P[m].as_<Box<DenseMatrix<double>>>();
                     for(int s1=0;s1<n_states;s1++)
                         R[m*n_states + s1] = Q(s1,l2);
                 }
@@ -953,7 +953,7 @@ namespace substitution {
                 const alphabet::fmask_t& fmask = a.letter_fmask(l2);
                 for(int m=0;m<n_models;m++) 
                 {
-                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+                    const DenseMatrix<double>& Q = transition_P[m].as_<Box<DenseMatrix<double>>>();
                     for(int s1=0;s1<n_states;s1++)
                     {
                         double sum = 0.0;
@@ -988,7 +988,7 @@ namespace substitution {
         int L0 = sequence.size();
 
         const int n_models  = transition_P.size();
-        const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
+        const int n_states  = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
         const int matrix_size = n_models * n_states;
         const int n_letters = a.n_letters();
 
@@ -1009,13 +1009,13 @@ namespace substitution {
 
             if (a.is_letter(l2))
                 for(int m=0;m<n_models;m++) {
-                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+                    const DenseMatrix<double>& Q = transition_P[m].as_<Box<DenseMatrix<double>>>();
                     for(int s1=0;s1<n_states;s1++)
                         R[m*n_states + s1] = sum(Q,smap,s1,l2);
                 }
             else if (a.is_letter_class(l2)) {
                 for(int m=0;m<n_models;m++) {
-                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+                    const DenseMatrix<double>& Q = transition_P[m].as_<Box<DenseMatrix<double>>>();
                     for(int s1=0;s1<n_states;s1++)
                         R[m*n_states + s1] = sum(Q,smap,s1,l2,a);
                 }
@@ -1033,12 +1033,12 @@ namespace substitution {
                          const pairwise_alignment_t& A0,
                          const pairwise_alignment_t& A1,
                          const R::RVector& transition_P,
-                         const Matrix& F)
+                         const DenseMatrix<double>& F)
     {
         total_peel_internal_branches++;
 
         const int n_models = transition_P.size();
-        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+        const int n_states = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
         const int matrix_size = n_models * n_states;
 
         // get the relationships with the sub-alignments for the (two) branches behind b0
@@ -1052,7 +1052,7 @@ namespace substitution {
         // scratch matrix
         double* S = LCB3->scratch(0);
 
-        Matrix ones(n_models, n_states);
+        DenseMatrix<double> ones(n_models, n_states);
         element_assign(ones, 1);
 
         log_prod total;
@@ -1065,7 +1065,7 @@ namespace substitution {
             while (i0 < AL0 and not A0.has_character2(i0))
             {
                 assert(A0.has_character1(i0));
-                double p_col = element_prod_sum(F.begin(), LCB1[s0], matrix_size );
+                double p_col = element_prod_sum(F.data(), LCB1[s0], matrix_size );
                 assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
                 total_scale += LCB1.scale(s0);
@@ -1075,7 +1075,7 @@ namespace substitution {
             while (i1 < AL1 and not A1.has_character2(i1))
             {
                 assert(A1.has_character1(i1));
-                double p_col = element_prod_sum(F.begin(), LCB2[s1], matrix_size );
+                double p_col = element_prod_sum(F.data(), LCB2[s1], matrix_size );
                 assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
                 total *= p_col;
                 total_scale += LCB2.scale(s1);
@@ -1119,7 +1119,7 @@ namespace substitution {
                 s1++;
             }
             else
-                C = ones.begin();  // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
+                C = ones.data();  // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
 
             // propagate from the source distribution
             double* R = (*LCB3)[s2];            //name the result matrix
@@ -1144,7 +1144,7 @@ namespace substitution {
         const int n_states  = nodeCLV.n_states();
 
 	assert(transition_P.size() == n_models);
-	assert(transition_P[0].as_<Box<Matrix>>().size1() == n_states);
+	assert(transition_P[0].as_<Box<DenseMatrix<double>>>().rows() == n_states);
 
 	int L0 = nodeCLV.n_columns();
 
@@ -1163,7 +1163,7 @@ namespace substitution {
         if (equilibrium)
             LCB->init_other_subst(1);
         else
-            LCB->other_subst_f = [](const Matrix&) {return log_double_t(1);};
+            LCB->other_subst_f = [](const DenseMatrix<double>&) {return log_double_t(1);};
 
         return LCB;
     }
@@ -1179,7 +1179,7 @@ namespace substitution {
         const int n_states  = nodeCLV.n_states();
 
         assert(transition_P.size() == n_models);
-        assert(transition_P[0].as_<Box<Matrix>>().size1() == n_states);
+        assert(transition_P[0].as_<Box<DenseMatrix<double>>>().rows() == n_states);
 
         int L0 = nodeCLV.n_columns();
 
@@ -1202,7 +1202,7 @@ namespace substitution {
                 int s2 = nodeCLV.states[offset];
                 for(int m=0;m<n_models;m++)
                 {
-                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+                    const DenseMatrix<double>& Q = transition_P[m].as_<Box<DenseMatrix<double>>>();
 
                     // compute the distribution at the target (parent) node - single letters
                     for(int s1=0;s1<n_states;s1++)
@@ -1213,7 +1213,7 @@ namespace substitution {
             {
                 for(int m=0;m<n_models;m++)
                 {
-                    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+                    const DenseMatrix<double>& Q = transition_P[m].as_<Box<DenseMatrix<double>>>();
 
                     // compute the distribution at the target (parent) node - multiple letters
                     for(int s1=0;s1<n_states;s1++)
@@ -1236,7 +1236,7 @@ namespace substitution {
         if (equilibrium)
             LCB->init_other_subst(1);
         else
-            LCB->other_subst_f = [](const Matrix&) {return log_double_t(1);};
+            LCB->other_subst_f = [](const DenseMatrix<double>&) {return log_double_t(1);};
 
         return LCB;
     }
@@ -1261,7 +1261,7 @@ namespace substitution {
 			    const R::RVector& LCB,
 			    const R::RVector& A_,
 			    const R::RVector& transition_P,
-			    const Matrix& F)
+			    const DenseMatrix<double>& F)
     {
         // The SEV version also special-cases:
         // * LCN.empty() and LCB.size() == 2
@@ -1271,8 +1271,8 @@ namespace substitution {
 
         total_peel_internal_branches++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         auto LCN = sparse_to_dense(sparse_LCN);
@@ -1322,7 +1322,7 @@ namespace substitution {
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    double p_col = element_prod_sum(F.data(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
 		    total_scale += lcb.scale(sj);
@@ -1383,12 +1383,12 @@ namespace substitution {
 			const R::RVector& LCB,
 			const R::RVector& A_,
 			const R::RVector& transition_P,
-			const Matrix& F)
+			const DenseMatrix<double>& F)
     {
         total_peel_internal_branches++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         auto LCN = sparse_to_dense(sparse_LCN);
@@ -1438,7 +1438,7 @@ namespace substitution {
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    double p_col = element_prod_sum(F.data(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
 		    total_scale += lcb.scale(sj);
@@ -1462,7 +1462,7 @@ namespace substitution {
 	    }
 
 	    int scale = 0;
-	    element_assign(S, F.begin(), matrix_size);
+	    element_assign(S, F.data(), matrix_size);
 	    for(int j=0;j<n_branches_in;j++)
 	    {
 		if (A(j).has_character1(i[j]))
@@ -1500,12 +1500,12 @@ namespace substitution {
 			       const R::RVector& LCB,
 			       const R::RVector& A_,
 			       const R::RVector& transition_P,
-			       const Matrix& F)
+			       const DenseMatrix<double>& F)
     {
         total_peel_internal_branches++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         auto LCN = sparse_to_dense(sparse_LCN);
@@ -1555,7 +1555,7 @@ namespace substitution {
 		while (ij < a.size() and not a.has_character2(ij))
 		{
 		    assert(a.has_character1(ij));
-		    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    double p_col = element_prod_sum(F.data(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
 		    total_scale += lcb.scale(sj);
@@ -1579,7 +1579,7 @@ namespace substitution {
 	    }
 
 	    int scale = 0;
-	    element_assign(S, F.begin(), matrix_size);
+	    element_assign(S, F.data(), matrix_size);
 	    for(int j=0;j<n_branches_in;j++)
 	    {
 		if (A(j).has_character1(i[j]))
@@ -1723,7 +1723,7 @@ namespace substitution {
             LCB_OUT->scale(s_out++) = scale;
         }
 
-	LCB_OUT->other_subst_f = [LCN_, LCB_, A__, transition_P_](const Matrix& F_in)
+	LCB_OUT->other_subst_f = [LCN_, LCB_, A__, transition_P_](const DenseMatrix<double>& F_in)
 	{
 	    auto& LCN = LCN_.as_<R::RVector>();
 	    auto& LCB = LCB_.as_<R::RVector>();
@@ -1756,7 +1756,7 @@ namespace substitution {
 		    {
 			if (not a.has_character2(ij))
 			{
-			    double p_col = element_prod_sum(F.begin(), lcb[sj], matrix_size );
+			    double p_col = element_prod_sum(F.data(), lcb[sj], matrix_size );
 			    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 			    total *= p_col;
 			    total_scale += lcb.scale(sj);
@@ -1784,7 +1784,7 @@ namespace substitution {
 			       const R::RVector& LCB,
 			       const R::RVector& A_,
 			       const R::RVector& transition_P,
-			       const Matrix& F)
+			       const DenseMatrix<double>& F)
     {
 	optional<int> away_from_root_index;
 	for(int j=0;j<LCB.size();j++)
@@ -1799,8 +1799,8 @@ namespace substitution {
 
 	total_peel_internal_branches++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         auto LCN = sparse_to_dense(sparse_LCN);
@@ -1851,7 +1851,7 @@ namespace substitution {
 		{
 		    assert(a.has_character1(ij));
 		    // Characters coming from the root have already have the root frequencies applied.
-		    double p_col = (j==*away_from_root_index) ? element_sum(lcb[sj], matrix_size ) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    double p_col = (j==*away_from_root_index) ? element_sum(lcb[sj], matrix_size ) : element_prod_sum(F.data(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
 		    total_scale += lcb.scale(sj);
@@ -1878,7 +1878,7 @@ namespace substitution {
 	    if (A(*away_from_root_index).has_character1(i[*away_from_root_index]))
 		element_assign(S, 1.0, matrix_size);
 	    else
-		element_assign(S, F.begin(), matrix_size);
+		element_assign(S, F.data(), matrix_size);
 
 	    for(int j=0;j<n_branches_in;j++)
 	    {
@@ -1915,7 +1915,7 @@ namespace substitution {
 				      const R::RVector& LCB,
 				      const R::RVector& A_,
 				      const R::RVector& transition_P,
-				      const Matrix& rootF)
+				      const DenseMatrix<double>& rootF)
     {
 	optional<int> away_from_root_index;
 	for(int j=0;j<LCB.size();j++)
@@ -1940,7 +1940,7 @@ namespace substitution {
         const int n_states = LCN.empty() ? cache(0).n_states() : node_cache(0).n_states();
         const int matrix_size = n_models * n_states;
 
-	const Matrix& F = cache(*away_from_root_index).away_from_root_WF.value();
+	const DenseMatrix<double>& F = cache(*away_from_root_index).away_from_root_WF.value();
 
 	int n_sequences = LCN.size();
 	int n_branches_in = LCB.size();
@@ -1984,7 +1984,7 @@ namespace substitution {
 		{
 		    assert(a.has_character1(ij));
 		    // Characters coming from the root have already have the root frequencies applied.
-		    double p_col = (j==*away_from_root_index) ? element_sum(lcb[sj], matrix_size ) : element_prod_sum(F.begin(), lcb[sj], matrix_size );
+		    double p_col = (j==*away_from_root_index) ? element_sum(lcb[sj], matrix_size ) : element_prod_sum(F.data(), lcb[sj], matrix_size );
 		    assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 		    total *= p_col;
 		    total_scale += lcb.scale(sj);
@@ -2011,7 +2011,7 @@ namespace substitution {
 	    if (A(*away_from_root_index).has_character1(i[*away_from_root_index]))
 		element_assign(S, 1.0, matrix_size);
 	    else
-		element_assign(S, F.begin(), matrix_size);
+		element_assign(S, F.data(), matrix_size);
 
 	    for(int j=0;j<n_branches_in;j++)
 	    {
@@ -2083,7 +2083,7 @@ namespace substitution {
 
         auto LCB_OUT = object_ptr<Likelihood_Cache_Branch>(new Likelihood_Cache_Branch(L, n_models, n_states));
 
-	Matrix F;
+	DenseMatrix<double> F;
 	if (away_from_root_index)
 	{
 	    F = cache(*away_from_root_index).away_from_root_WF.value();
@@ -2140,7 +2140,7 @@ namespace substitution {
 
 	    int scale = 0;
 	    if (away_from_root_index and not A(*away_from_root_index).has_character1(i[*away_from_root_index]))
-		element_assign(S, F.begin(), matrix_size);
+		element_assign(S, F.data(), matrix_size);
 	    else
 		element_assign(S, 1.0, matrix_size);
 
@@ -2297,7 +2297,7 @@ namespace substitution {
 
     /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
     Likelihood_Cache_Branch
-    get_column_likelihoods(const vector<object_ptr<const Likelihood_Cache_Branch>>& cache, const matrix<int>& indices, const Matrix& F, int delta)
+    get_column_likelihoods(const vector<object_ptr<const Likelihood_Cache_Branch>>& cache, const matrix<int>& indices, const DenseMatrix<double>& F, int delta)
     {
         //------ Check that the number of branches matches the number of rows -----------//
         int B = cache.size();
@@ -2430,11 +2430,11 @@ namespace substitution {
     Vector<pair<int,int>> sample_root_sequence(const R::RVector& sparse_LCN,
 					       const R::RVector& LCB,
 					       const R::RVector& A_,
-                                               const Matrix& F)
+                                               const DenseMatrix<double>& F)
     {
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         auto LCN = sparse_to_dense(sparse_LCN);
@@ -2466,7 +2466,7 @@ namespace substitution {
 #endif
 
         // scratch matrix
-        Matrix S(n_models,n_states);
+        DenseMatrix<double> S(n_models,n_states);
 
 	vector<int> s(n_branches_in, 0);
 	vector<int> i(n_branches_in, 0);
@@ -2499,13 +2499,13 @@ namespace substitution {
 		}
 	    }
 
-	    element_assign(S.begin(), F.begin(), matrix_size);
+	    element_assign(S.data(), F.data(), matrix_size);
 
 	    for(int j=0;j<n_branches_in;j++)
 	    {
 		if (A(j).has_character1(i[j]))
 		{
-		    element_prod_assign(S.begin(), cache(j)[s[j]], matrix_size);
+		    element_prod_assign(S.data(), cache(j)[s[j]], matrix_size);
 		    s[j]++;
 		}
 		i[j]++;
@@ -2513,7 +2513,7 @@ namespace substitution {
 
 	    // Handle observed sequences at the node.
 	    for(int j=0;j<n_sequences;j++)
-		element_prod_assign(S.begin(), node_cache(j)[s_out], matrix_size);
+		element_prod_assign(S.data(), node_cache(j)[s_out], matrix_size);
 
             ancestral_characters[s_out] = sample(S);
         }
@@ -2527,12 +2527,12 @@ namespace substitution {
 						 const R::RVector& LCB,
 						 const R::RVector& A_,
 						 const R::RVector& transition_P,
-						 const Matrix& F)
+						 const DenseMatrix<double>& F)
     {
         total_peel_internal_branches++;
 
         const int n_models = transition_P.size();
-        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+        const int n_states = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
         const int matrix_size = n_models * n_states;
 
         auto LCN = sparse_to_dense(sparse_LCN);
@@ -2565,8 +2565,8 @@ namespace substitution {
 #endif
 
         // scratch matrix
-	Matrix SMAT(n_models, n_states);
-        double* S = SMAT.begin();
+	DenseMatrix<double> SMAT(n_models, n_states);
+        double* S = SMAT.data();
 
 	// index into LCBs
 	vector<int> s(n_branches_in, 0);

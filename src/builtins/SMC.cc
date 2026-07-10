@@ -1156,7 +1156,7 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(Op
 
 // https://doi.org/10.1534/genetics.105.044917
 // No missing data allowed!
-log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const Matrix& Q_, const vector<double>& pi, const vector<Chunk>& rho, double theta)
+log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix<double>& Q_, const vector<double>& pi, const vector<Chunk>& rho, double theta)
 {
     assert(k>=1);
 
@@ -1175,8 +1175,8 @@ log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const Matrix& Q_,
 	return { Pr };
     }
 
-    const int S = Q_.size1();
-    assert(Q_.size2() == S);
+    const int S = Q_.rows();
+    assert(Q_.cols() == S);
     assert(pi.size() == S);
 
     // The coalescence rate is 1, the mutation rate is N*mu, and the recombination rate is N*r.
@@ -1271,7 +1271,7 @@ log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const Matrix& Q_,
     return { Pr };
 }
 
-log_double_t wilson_mcvean_2006_composite_likelihood(const alignment& A, const Matrix& Q, const vector<double>& pi, const vector<Chunk>& rho, double theta)
+log_double_t wilson_mcvean_2006_composite_likelihood(const alignment& A, const DenseMatrix<double>& Q, const vector<double>& pi, const vector<Chunk>& rho, double theta)
 {
     int n = A.n_sequences();
 
@@ -1286,7 +1286,7 @@ log_double_t wilson_mcvean_2006_composite_likelihood(const alignment& A, const M
 extern "C" closure builtin_function_wilson_mcvean_2006_composite_likelihood_raw(OperationArgs& Args)
 {
     auto arg0  = Args.evaluate_slot_to_value(0);
-    auto& Q = arg0.as_<Box<Matrix>>();
+    auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
 

@@ -27,6 +27,7 @@
 #define LIKELIHOOD_H
 
 #include <vector>
+#include "util/dense-matrix.H"
 #include "util/matrix.H"
 #include "util/math/log-double.H"
 #include "substitution/cache.H"
@@ -42,7 +43,7 @@ namespace substitution {
     /// Find the likelihood matrices for data at leaf node n.
     Likelihood_Cache_Branch shift(const Likelihood_Cache_Branch& CL, int delta);
 
-    Likelihood_Cache_Branch get_column_likelihoods(const std::vector<object_ptr<const Likelihood_Cache_Branch>>& cache, const matrix<int>& index, const Matrix& F, int delta);
+    Likelihood_Cache_Branch get_column_likelihoods(const std::vector<object_ptr<const Likelihood_Cache_Branch>>& cache, const matrix<int>& index, const DenseMatrix<double>& F, int delta);
 
     object_ptr<const Likelihood_Cache_Branch>
     merge_branches(const R::RVector& LCN,
@@ -77,14 +78,14 @@ namespace substitution {
                          const pairwise_alignment_t& A0,
                          const pairwise_alignment_t& A1,
                          const R::RVector& transition_P,
-                         const Matrix& F);
+                         const DenseMatrix<double>& F);
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_branch_toward_root(const R::RVector& LCN,
 			    const R::RVector& LCB,
 			    const R::RVector& A_,
 			    const R::RVector& transition_P,
-			    const Matrix& F);
+			    const DenseMatrix<double>& F);
 
 
     object_ptr<const Likelihood_Cache_Branch>
@@ -92,18 +93,18 @@ namespace substitution {
 			       const R::RVector& LCB,
 			       const R::RVector& A_,
 			       const R::RVector& transition_P,
-			       const Matrix& F);
+			       const DenseMatrix<double>& F);
 
     log_double_t calc_prob_at_root(const R::RVector& LCN,
 				   const R::RVector& LCB,
 				   const R::RVector& A_,
-				   const Matrix& F);
+				   const DenseMatrix<double>& F);
 
 
     log_double_t calc_prob(const R::RVector& LCN,
 			   const R::RVector& LCB,
 			   const R::RVector& A_,
-			   const Matrix& F);
+			   const DenseMatrix<double>& F);
     //-- NonEq
 
     // This version takes Runtime::Exp because lambda-capturing them copies them.
@@ -119,19 +120,19 @@ namespace substitution {
 				      const R::RVector& LCB,
 				      const R::RVector& A_,
 				      const R::RVector& transition_P,
-				      const Matrix& F);
+				      const DenseMatrix<double>& F);
 
     log_double_t calc_prob_non_eq(const R::RVector& LCN,
 				  const R::RVector& LCB,
 				  const R::RVector& A_,
-				  const Matrix& F);
+				  const DenseMatrix<double>& F);
 
     // -- Generic
 
     Vector<std::pair<int,int>> sample_root_sequence(const R::RVector& LCN,
 					       const R::RVector& LCB,
 					       const R::RVector& A_,
-                                               const Matrix& F);
+                                               const DenseMatrix<double>& F);
 
     Vector<std::pair<int,int>> sample_branch_sequence(const Vector<std::pair<int,int>>& parent_seq,
 						 const pairwise_alignment_t& parent_A,
@@ -139,7 +140,7 @@ namespace substitution {
 						 const R::RVector& LCB,
 						 const R::RVector& A_,
 						 const R::RVector& transition_P,
-						 const Matrix& F);
+						 const DenseMatrix<double>& F);
 
 }
 #endif

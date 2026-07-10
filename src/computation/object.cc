@@ -12,22 +12,6 @@ std::string Object::print() const {
 namespace
 {
 
-// Format a native matrix in the shared row-oriented representation used by
-// the runtime Show instance.
-template <typename T>
-std::string print_matrix(const matrix<T>& native_matrix)
-{
-    std::vector<std::string> rows;
-    for(int i=0;i<native_matrix.size1();i++)
-    {
-        std::vector<T> row;
-        for(int j=0;j<native_matrix.size2();j++)
-            row.push_back(native_matrix(i,j));
-        rows.push_back( "[ " + join(row, ", ") + "]" );
-    }
-    return "[ " + join(rows, ", \n") + "]";
-}
-
 // Format an Eigen-backed runtime matrix without converting it to the general
 // C++ two-dimensional storage type.
 template <typename T>
@@ -58,10 +42,10 @@ std::string print_numeric_vector(const DenseVector<T>& native_vector)
 
 }
 
-// Format the runtime's native Double matrix representation.
-template<> std::string Box<Matrix>::print() const
+// Format a runtime matrix using the shared Eigen-backed representation.
+template<> std::string Box<DenseMatrix<double>>::print() const
 {
-    return print_matrix(*this);
+    return print_dense_matrix(*this);
 }
 
 // Format the runtime's native Int matrix representation.

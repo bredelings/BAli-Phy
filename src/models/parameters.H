@@ -45,7 +45,7 @@
 #include "tree/tree.H"                              // for tree_edge
 #include "util/assert.hh"                           // for assert
 #include "util/math/log-double.H"                   // for log_double_t
-#include "util/matrix.H"                            // for Matrix, matrix
+#include "util/dense-matrix.H"                      // for DenseMatrix
 #include "imodel/imodel.H"
 class Likelihood_Cache_Branch;
 class Parameters;
@@ -108,7 +108,7 @@ public:
 
     int n_states() const;                       // used in substitution.cc for get_column_likelihoods
 
-    object_ptr<const Box<Matrix>> WeightedFrequencyMatrix(int n) const;     // used in sample-alignment.cc, sample-cube.cc, sample-tri.cc
+    object_ptr<const Box<DenseMatrix<double>>> WeightedFrequencyMatrix(int n) const;     // used in sample-alignment.cc, sample-cube.cc, sample-tri.cc
 
     object_ptr<const Likelihood_Cache_Branch> cache(int b) const;  // used in get_column_likelihoods( ), other_subst( ), sample_subst_history( )
 

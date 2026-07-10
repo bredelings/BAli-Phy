@@ -153,7 +153,7 @@ protected:
     Matrix s13_sub;
     Matrix s23_sub;
 
-    Matrix weighted_frequencies;
+    DenseMatrix<double> weighted_frequencies;
     
     inline void prepare_cell(int i,int j,int k);
 
@@ -198,7 +198,7 @@ public:
 	       EmissionProbs&& dists1,
 	       EmissionProbs&& dists2,
 	       EmissionProbs&& dists3,
-	       const Matrix& frequency);
+	       const DenseMatrix<double>& frequency);
   
     virtual ~DPcubeEmit() {}
 };

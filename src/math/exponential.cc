@@ -26,6 +26,7 @@
 #include <vector>
 #include <set>
 #include <iostream>
+#include <cassert>
 #include <unsupported/Eigen/MatrixFunctions>
 #include "exponential.H"
 #include "util/log-level.H"
@@ -68,7 +69,7 @@
 using std::vector;
 
 // compute the exp(M) - I from the SVD for M (i.e. M=O D O^t )
-Matrix expm1(const EigenValues& solution,double t) 
+DenseMatrix<double> expm1(const EigenValues& solution,double t)
 {
     typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixE;
 
@@ -76,8 +77,8 @@ Matrix expm1(const EigenValues& solution,double t)
     Eigen::VectorXd D = solution.eigenvalues();
     int n = D.size();
 
-    Matrix E(n,n);
-    Eigen::Map<MatrixE> EE(E.begin(), n, n);
+    DenseMatrix<double> E(n,n);
+    Eigen::Map<MatrixE> EE(E.data(), n, n);
 
     // Exponentiate Eigenvalues
     D = (D.array() * t).expm1();
@@ -95,7 +96,7 @@ Matrix expm1(const EigenValues& solution,double t)
 }
 
 // compute the exp(M) I from the SVD for M (i.e. M=O D O^t )
-Matrix exp(const EigenValues& solution,double t)
+DenseMatrix<double> exp(const EigenValues& solution,double t)
 {
     typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixE;
 
@@ -106,8 +107,8 @@ Matrix exp(const EigenValues& solution,double t)
     // Exponentiate Eigenvalues
     D = (D.array() * t).exp();
 
-    Matrix E(n,n);
-    Eigen::Map<MatrixE> EE(E.begin(), n, n);
+    DenseMatrix<double> E(n,n);
+    Eigen::Map<MatrixE> EE(E.data(), n, n);
     EE = O*Eigen::DiagonalMatrix<double, Eigen::Dynamic>(D)*O.transpose();
 
 //#ifndef NDEBUG
@@ -120,9 +121,9 @@ Matrix exp(const EigenValues& solution,double t)
 }
 
 /// Compute the exponential of a matrix from a reversible markov chain
-Matrix exp_small(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+DenseMatrix<double> exp_small(const EigenValues& eigensystem, const vector<double>& pi, const double t)
 {
-    Matrix E = expm1(eigensystem,t);
+    DenseMatrix<double> E = expm1(eigensystem,t);
 
     const int n = pi.size();
 
@@ -133,20 +134,20 @@ Matrix exp_small(const EigenValues& eigensystem, const vector<double>& pi, const
 	DN[i] = 1.0/DP[i];
     }
 
-    for(int i=0;i<E.size1();i++)
-	for(int j=0;j<E.size2();j++)
+    for(Eigen::Index i=0;i<E.rows();i++)
+	for(Eigen::Index j=0;j<E.cols();j++)
 	    E(i,j) *= DN[i]*DP[j];
 
-    for(int i=0;i<E.size1();i++)
+    for(Eigen::Index i=0;i<E.rows();i++)
 	E(i,i) += 1.0;
 
     return E;
 }
 
 /// Compute the exponential of a matrix from a reversible markov chain
-Matrix exp_large(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+DenseMatrix<double> exp_large(const EigenValues& eigensystem, const vector<double>& pi, const double t)
 {
-    Matrix E = exp(eigensystem,t);
+    DenseMatrix<double> E = exp(eigensystem,t);
 
     const int n = pi.size();
 
@@ -157,14 +158,14 @@ Matrix exp_large(const EigenValues& eigensystem, const vector<double>& pi, const
 	DN[i] = 1.0/DP[i];
     }
 
-    for(int i=0;i<E.size1();i++)
-	for(int j=0;j<E.size2();j++)
+    for(Eigen::Index i=0;i<E.rows();i++)
+	for(Eigen::Index j=0;j<E.cols();j++)
 	    E(i,j) *= DN[i]*DP[j];
 
     return E;
 }
 
-Matrix exp(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+DenseMatrix<double> exp(const EigenValues& eigensystem, const vector<double>& pi, const double t)
 {
     bool small = true;
     for(double eigenvalue: eigensystem.eigenvalues())
@@ -188,10 +189,10 @@ Eigen::MatrixXd exp(const Eigen::MatrixXd& Q, double t)
     return E;
 }
 
-Eigen::MatrixXd toEigen(const Matrix& Q)
+Eigen::MatrixXd toEigen(const DenseMatrix<double>& Q)
 {
-    int N1 = Q.size1();
-    int N2 = Q.size2();
+    Eigen::Index N1 = Q.rows();
+    Eigen::Index N2 = Q.cols();
 
     Eigen::MatrixXd EQ(N1,N2);
 
@@ -202,12 +203,12 @@ Eigen::MatrixXd toEigen(const Matrix& Q)
     return EQ;
 }
 
-Matrix fromEigen(const Eigen::MatrixXd& EM)
+DenseMatrix<double> fromEigen(const Eigen::MatrixXd& EM)
 {
     int N1 = EM.rows();
     int N2 = EM.cols();
 
-    Matrix M(N1,N2);
+    DenseMatrix<double> M(N1,N2);
 
     for(int i=0;i<N1;i++)
         for(int j=0;j<N2;j++)
@@ -228,14 +229,14 @@ double rate_away(const vector<double>& pi, const Eigen::MatrixXd& Q)
     return rate;
 }
 
-double positivize_and_renormalize_matrix(Matrix& E)
+double positivize_and_renormalize_matrix(DenseMatrix<double>& E)
 {
     double error = 0;
     // Force positive, and renormalize rows.
-    for(int i=0;i<E.size1();i++)
+    for(Eigen::Index i=0;i<E.rows();i++)
     {
         double sum = 0;
-	for(int j=0;j<E.size2();j++) {
+	for(Eigen::Index j=0;j<E.cols();j++) {
 	    // assert(E(i,j) >= -1.0e-10);
 
             // Force positive
@@ -247,7 +248,7 @@ double positivize_and_renormalize_matrix(Matrix& E)
 
         // Renormalize rows
         double factor = 1.0/sum;
-	for(int j=0;j<E.size2();j++)
+	for(Eigen::Index j=0;j<E.cols();j++)
             E(i,j) *= factor;
 
         // The row sum should be 1!
@@ -286,12 +287,12 @@ double positivize_and_renormalize_matrix(Eigen::MatrixXd& E)
     return error;
 }
 
-std::vector<double> compute_stationary_freqs(const Matrix& Q)
+std::vector<double> compute_stationary_freqs(const DenseMatrix<double>& Q)
 {
     constexpr double tol = 1.0e-7;
 
-    assert(Q.size1() == Q.size2());
-    int n = Q.size1();
+    assert(Q.rows() == Q.cols());
+    int n = Q.rows();
 
     for(int i=0;i<n;i++)
     {
@@ -385,10 +386,10 @@ bool checkStationary(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double
     return (err < tol);
 }
 
-bool checkStationary(const Matrix& Q, const std::vector<double>& pi, double tol)
+bool checkStationary(const DenseMatrix<double>& Q, const std::vector<double>& pi, double tol)
 {
-    int n = Q.size1();
-    assert(Q.size2() == n);
+    int n = Q.rows();
+    assert(Q.cols() == n);
 
     // 1. Q2 = Q
     Eigen::MatrixXd Q2 = toEigen(Q);
@@ -414,10 +415,10 @@ bool checkReversible(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double
     return (error < tol);
 }
 
-bool checkReversible(const Matrix& Q, const std::vector<double>& pi, double tol)
+bool checkReversible(const DenseMatrix<double>& Q, const std::vector<double>& pi, double tol)
 {
-    int n = Q.size1();
-    assert(Q.size2() == n);
+    int n = Q.rows();
+    assert(Q.cols() == n);
     assert(pi.size() == n);
 
     // 1. Q2 = Q
@@ -611,11 +612,11 @@ Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const Eigen::Matrix
 
 
 // Compute lim_{t->inf} pi0*exp(Q*t)
-std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const Matrix& Q)
+std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const DenseMatrix<double>& Q)
 {
     constexpr double tol = 1.0e-7;
 
-    int n = Q.size1();
+    int n = Q.rows();
 
     Eigen::VectorXd epi0(n+1);
     for(int i=0;i<n;i++)
@@ -662,4 +663,3 @@ std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const Matri
 
     return pi;
 }
-

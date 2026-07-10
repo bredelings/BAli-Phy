@@ -445,7 +445,7 @@ DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
                            const HMM& M,
                            EmissionProbs&& d1,
                            EmissionProbs&& d2,
-                           const Matrix& weighted_frequencies)
+                           const DenseMatrix<double>& weighted_frequencies)
     :DPmatrix(std::move(ms), M),
      dists1(std::move(d1)), dists2(std::move(d2))
 {
@@ -458,7 +458,7 @@ DPmatrixEmit::DPmatrixEmit(MatrixShape&& ms,
     bool at_root = not dists1.away_from_root_WF and not dists2.away_from_root_WF;
     assert(not (dists1.away_from_root() and dists2.away_from_root()));
 
-    Matrix WF = weighted_frequencies;
+    DenseMatrix<double> WF = weighted_frequencies;
     if (dists1.away_from_root_WF)
         WF = dists1.away_from_root_WF.value();
     if (dists2.away_from_root_WF)
@@ -860,8 +860,7 @@ DPmatrixConstrained::DPmatrixConstrained(MatrixShape&& ms,
                                          const HMM& M,
                                          EmissionProbs&& d1,
                                          EmissionProbs&& d2,
-                                         const Matrix& f):
+                                         const DenseMatrix<double>& f):
     DPmatrixEmit(std::move(ms),M,std::move(d1),std::move(d2),f),
     allowed_states(dists2.n_columns())
 { }
-

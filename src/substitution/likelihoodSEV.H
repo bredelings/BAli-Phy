@@ -1,7 +1,7 @@
 #ifndef LIKELIHOODSEV_H
 #define LIKELIHOODSEV_H
 #include <vector>
-#include "util/matrix.H"
+#include "util/dense-matrix.H"
 #include "util/math/log-double.H"
 #include "substitution/cache.H"
 #include "computation/runtime/ast.H"
@@ -13,26 +13,26 @@ namespace substitution {
     log_double_t calc_probability_SEV(const Likelihood_Cache_Branch& LCB1,
                                            const Likelihood_Cache_Branch& LCB2,
                                            const Likelihood_Cache_Branch& LCB3,
-                                           const Matrix& F,
+                                           const DenseMatrix<double>& F,
 					   const R::RVector& counts);
 
     log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
                                                 const Likelihood_Cache_Branch& LCB2,
-                                                const Matrix& F,
+                                                const DenseMatrix<double>& F,
                                                 const R::RVector& counts);
     log_double_t calc_prob_at_root_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
-				       const Matrix& F,
+				       const DenseMatrix<double>& F,
 				       const R::RVector& counts);
 
     log_double_t calc_prob_at_root_variable_SEV(const R::RVector& LCN,
 						const R::RVector& LCB,
-						const Matrix& F,
+						const DenseMatrix<double>& F,
 						const R::RVector& counts);
 
     log_double_t calc_prob_SEV(const R::RVector& LCN,
 				     const R::RVector& LCB,
-				     const Matrix& FF,
+				     const DenseMatrix<double>& FF,
 				     const R::RVector& counts);
 
     object_ptr<const Likelihood_Cache_Branch>
@@ -57,7 +57,7 @@ namespace substitution {
     peel_branch_away_from_root_SEV(const R::RVector& LCN,
 				   const R::RVector& LCB,
 				   const R::RVector& transition_P,
-				   const Matrix& ff);
+				   const DenseMatrix<double>& ff);
 
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods_SEV(const Runtime::Exp& sequence_mask,
@@ -74,7 +74,7 @@ namespace substitution {
 
     Vector<std::pair<int,int>> sample_root_sequence_SEV(const R::RVector& LCN,
 							const R::RVector& LCB,
-							const Matrix& F,
+							const DenseMatrix<double>& F,
 							const R::RVector& compressed_col_for_col);
 
     Vector<std::pair<int,int>> sample_sequence_SEV(const Vector<std::pair<int,int>>& parent_seq,

@@ -55,7 +55,7 @@ extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
     return substitution::peel_branch_away_from_root_SEV(arg0.as_<R::RVector>(),        // LCN
 							arg1.as_<R::RVector>(),        // LCB
 							arg2.as_<R::RVector>(),        // transition_P
-							arg3.as_<Box<Matrix>>());   // WF
+							arg3.as_<Box<DenseMatrix<double>>>());   // WF
 }
 
 extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
@@ -82,7 +82,7 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
 
     log_double_t Pr = substitution::calc_prob_SEV(arg0.as_<R::RVector>(),       // sequences
 						  arg1.as_<R::RVector>(),       // LCB
-						  arg2.as_<Box<Matrix>>(),   // FF
+						  arg2.as_<Box<DenseMatrix<double>>>(),   // FF
 						  arg3.as_<R::RVector>());      // counts
     return {Pr};
 }
@@ -96,7 +96,7 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
 
     log_double_t Pr = substitution::calc_prob_at_root_SEV(arg0.as_<R::RVector>(),       // sequences
 							  arg1.as_<R::RVector>(),       // LCB
-							  arg2.as_<Box<Matrix>>(),   // F
+							  arg2.as_<Box<DenseMatrix<double>>>(),   // F
 							  arg3.as_<R::RVector>());      // counts
     return {Pr};
 }
@@ -110,7 +110,7 @@ extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
 
     log_double_t Pr = substitution::calc_prob_at_root_variable_SEV(arg0.as_<R::RVector>(),       // sequences
 								   arg1.as_<R::RVector>(),       // LCB
-								   arg2.as_<Box<Matrix>>(),   // F
+								   arg2.as_<Box<DenseMatrix<double>>>(),   // F
 								   arg3.as_<R::RVector>());      // counts
     return {Pr};
 }
@@ -124,6 +124,6 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
 
     return substitution::sample_root_sequence_SEV(arg0.as_<R::RVector>(),      // LCN
                                                   arg1.as_<R::RVector>(),      // LCB
-                                                  arg2.as_<Box<Matrix>>(),  // F
+                                                  arg2.as_<Box<DenseMatrix<double>>>(),  // F
                                                   arg3.as_<R::RVector>());     // compressed_col_for_col
 }

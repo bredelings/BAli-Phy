@@ -169,9 +169,9 @@ int data_partition::n_states() const
     return property(5).value().as_int();
 }
 
-object_ptr<const Box<Matrix>> data_partition::WeightedFrequencyMatrix(int n) const
+object_ptr<const Box<DenseMatrix<double>>> data_partition::WeightedFrequencyMatrix(int n) const
 {
-    return property(7)[n].value().as_ptr_to<Box<Matrix>>();
+    return property(7)[n].value().as_ptr_to<Box<DenseMatrix<double>>>();
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const

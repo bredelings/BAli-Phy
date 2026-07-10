@@ -38,13 +38,13 @@ namespace substitution
    log_double_t calc_probability_at_root_SEV(const Likelihood_Cache_Branch& LCB1,
 					     const Likelihood_Cache_Branch& LCB2,
 					     const Likelihood_Cache_Branch& LCB3,
-					     const Matrix& F,
+					     const DenseMatrix<double>& F,
 					     const R::RVector& counts)
     {
         total_calc_root_prob++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         assert(n_models == LCB1.n_models());
@@ -58,7 +58,7 @@ namespace substitution
 
 #ifdef DEBUG_SUBSTITUTION
         // scratch matrix
-        Matrix S(n_models,n_states);
+        DenseMatrix<double> S(n_models,n_states);
 #endif
 
         const auto& bits1 = LCB1.bits;
@@ -104,11 +104,11 @@ namespace substitution
 
             double p_col = 1.0;
             if (mi==3)
-                p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
+                p_col = element_prod_sum(F.data(), m[0], m[1], m[2], matrix_size);
             else if (mi==2)
-                p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
+                p_col = element_prod_sum(F.data(), m[0], m[1], matrix_size);
             else if (mi==1)
-                p_col = element_prod_sum(F.begin(), m[0], matrix_size);
+                p_col = element_prod_sum(F.data(), m[0], matrix_size);
 
 #ifdef DEBUG_SUBSTITUTION
             //-------------- Set letter & model prior probabilities  ---------------//
@@ -117,9 +117,9 @@ namespace substitution
             //-------------- Propagate and collect information at 'root' -----------//
             if (non_gap1)
             if (non_gap2)
-                element_prod_modify(S.begin(),LCB2[i2], matrix_size);
+                element_prod_modify(S.data(),LCB2[i2], matrix_size);
             if (non_gap3)
-                element_prod_modify(S.begin(),LCB3[i3], matrix_size);
+                element_prod_modify(S.data(),LCB3[i3], matrix_size);
 
             //------------ Check that individual models are not crazy -------------//
             for(int m=0;m<n_models;m++) {
@@ -158,13 +158,13 @@ namespace substitution
 
     log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
 					      const Likelihood_Cache_Branch& LCB2,
-					      const Matrix& F,
+					      const DenseMatrix<double>& F,
 					      const R::RVector& counts)
     {
         total_calc_root_prob++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
         assert(n_models == LCB1.n_models());
@@ -175,7 +175,7 @@ namespace substitution
 
 #ifdef DEBUG_SUBSTITUTION
         // scratch matrix
-        Matrix S(n_models,n_states);
+        DenseMatrix<double> S(n_models,n_states);
 #endif
 
         const auto& bits1 = LCB1.bits;
@@ -213,9 +213,9 @@ namespace substitution
 
             double p_col = 1.0;
             if (mi==2)
-                p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
+                p_col = element_prod_sum(F.data(), m[0], m[1], matrix_size);
             else if (mi==1)
-                p_col = element_prod_sum(F.begin(), m[0], matrix_size);
+                p_col = element_prod_sum(F.data(), m[0], matrix_size);
 
 #ifdef DEBUG_SUBSTITUTION
             //-------------- Set letter & model prior probabilities  ---------------//
@@ -223,9 +223,9 @@ namespace substitution
 
             //-------------- Propagate and collect information at 'root' -----------//
             if (non_gap1)
-                element_prod_modify(S.begin(),LCB1[i1], matrix_size);
+                element_prod_modify(S.data(),LCB1[i1], matrix_size);
             if (non_gap2)
-                element_prod_modify(S.begin(),LCB2[i2], matrix_size);
+                element_prod_modify(S.data(),LCB2[i2], matrix_size);
 
             //------------ Check that individual models are not crazy -------------//
             for(int m=0;m<n_models;m++) {
@@ -264,13 +264,13 @@ namespace substitution
 
     log_double_t calc_prob_at_root_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
-				       const Matrix& F,
+				       const DenseMatrix<double>& F,
 				       const R::RVector& counts)
     {
 	total_calc_root_prob++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
 	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
@@ -307,8 +307,8 @@ namespace substitution
 #endif
 
         // scratch matrix
-        Matrix SMAT(n_models,n_states);
-        double* S = SMAT.begin();
+        DenseMatrix<double> SMAT(n_models,n_states);
+        double* S = SMAT.data();
         total_root_clv_length += L;
 
 	boost::dynamic_bitset<> bits_out;
@@ -347,24 +347,24 @@ namespace substitution
 	    if (j == n_clvs)
 	    {
 		if (mi==3)
-		    p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
+		    p_col = element_prod_sum(F.data(), m[0], m[1], m[2], matrix_size);
 		else if (mi==2)
-		    p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
+		    p_col = element_prod_sum(F.data(), m[0], m[1], matrix_size);
 		else if (mi==1)
-		    p_col = element_prod_sum(F.begin(), m[0], matrix_size);
+		    p_col = element_prod_sum(F.data(), m[0], matrix_size);
 		else
 		    p_col = 1;
 	    }
 	    else
 	    {
 		if (mi==3)
-		    element_prod_assign(S, F.begin(), m[0], m[1], m[2], matrix_size);
+		    element_prod_assign(S, F.data(), m[0], m[1], m[2], matrix_size);
 		else if (mi==2)
-		    element_prod_assign(S, F.begin(), m[0], m[1], matrix_size);
+		    element_prod_assign(S, F.data(), m[0], m[1], matrix_size);
 		else if (mi==1)
-		    element_prod_assign(S, F.begin(), m[0], matrix_size);
+		    element_prod_assign(S, F.data(), m[0], matrix_size);
 		else
-		    element_assign(S, F.begin(), matrix_size);
+		    element_assign(S, F.data(), matrix_size);
 
 		for(;j<n_clvs;j++)
 		{
@@ -403,13 +403,13 @@ namespace substitution
 
     log_double_t calc_prob_at_root_variable_SEV(const R::RVector& LCN,
 						const R::RVector& LCB,
-						const Matrix& F,
+						const DenseMatrix<double>& F,
 						const R::RVector& counts)
     {
 	total_calc_root_prob++;
 
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
 	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
@@ -446,8 +446,8 @@ namespace substitution
 #endif
 
         // scratch matrix
-        Matrix SMAT(n_models,n_states);
-        double* S = SMAT.begin();
+        DenseMatrix<double> SMAT(n_models,n_states);
+        double* S = SMAT.data();
         total_root_clv_length += L;
 
 	boost::dynamic_bitset<> bits_out;
@@ -486,24 +486,24 @@ namespace substitution
 	    if (j == n_clvs)
 	    {
 		if (mi==3)
-		    p_col = element_prod_sum(F.begin(), m[0], m[1], m[2], matrix_size);
+		    p_col = element_prod_sum(F.data(), m[0], m[1], m[2], matrix_size);
 		else if (mi==2)
-		    p_col = element_prod_sum(F.begin(), m[0], m[1], matrix_size);
+		    p_col = element_prod_sum(F.data(), m[0], m[1], matrix_size);
 		else if (mi==1)
-		    p_col = element_prod_sum(F.begin(), m[0], matrix_size);
+		    p_col = element_prod_sum(F.data(), m[0], matrix_size);
 		else
 		    p_col = 1;
 	    }
 	    else
 	    {
 		if (mi==3)
-		    element_prod_assign(S, F.begin(), m[0], m[1], m[2], matrix_size);
+		    element_prod_assign(S, F.data(), m[0], m[1], m[2], matrix_size);
 		else if (mi==2)
-		    element_prod_assign(S, F.begin(), m[0], m[1], matrix_size);
+		    element_prod_assign(S, F.data(), m[0], m[1], matrix_size);
 		else if (mi==1)
-		    element_prod_assign(S, F.begin(), m[0], matrix_size);
+		    element_prod_assign(S, F.data(), m[0], matrix_size);
 		else
-		    element_assign(S, F.begin(), matrix_size);
+		    element_assign(S, F.data(), matrix_size);
 
 		for(;j<n_clvs;j++)
 		{
@@ -554,7 +554,7 @@ namespace substitution
 
     log_double_t calc_prob_SEV(const R::RVector& LCN,
 			       const R::RVector& LCB,
-			       const Matrix& FF,
+			       const DenseMatrix<double>& FF,
 			       const R::RVector& counts)
     {
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
@@ -608,12 +608,12 @@ namespace substitution
 	    assert(n_states == cache(i).n_states());
         }
 #endif
-	const Matrix& f = away_from_root_branch->away_from_root_WF.value();
+	const DenseMatrix<double>& f = away_from_root_branch->away_from_root_WF.value();
 	const boost::dynamic_bitset<>& prev_rootward_bits = away_from_root_branch->bits;
 
         // scratch matrix
-        Matrix SMAT(n_models,n_states);
-        double* S = SMAT.begin();
+        DenseMatrix<double> SMAT(n_models,n_states);
+        double* S = SMAT.data();
         total_root_clv_length += L;
 
 	boost::dynamic_bitset<> bits_out;
@@ -636,7 +636,7 @@ namespace substitution
 	    int mi=0;
 
 	    if (not prev_rootward_bits.test(c))
-		m[mi++] = f.begin();
+		m[mi++] = f.data();
 
             // Handle branches in
 	    int j=0;
@@ -718,7 +718,7 @@ namespace substitution
         const int n_states  = nodeCLV.n_states();
 
         assert(transition_P.size() == n_models);
-        assert(transition_P[0].as_<Box<Matrix>>().size1() == n_states);
+        assert(transition_P[0].as_<Box<DenseMatrix<double>>>().rows() == n_states);
 
         int L0 = nodeCLV.n_columns();
 
@@ -743,7 +743,7 @@ namespace substitution
         int L0 = nodeCLV.n_columns();
 
         const int n_models  = transition_P.size();
-        const int n_states  = transition_P[0].as_<Box<Matrix>>().size1();
+        const int n_states  = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
 
 	assert(nodeCLV.n_models() == n_models);
 	assert(nodeCLV.n_states() == n_states);
@@ -769,7 +769,7 @@ namespace substitution
 		int s2 = nodeCLV.states[offset];
 		for(int m=0;m<n_models;m++)
 		{
-		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+		    const DenseMatrix<double>& Q = transition_P[m].as_<Box<DenseMatrix<double>>>();
 
 		    // compute the distribution at the target (parent) node - single letters
 		    for(int s1=0;s1<n_states;s1++)
@@ -780,7 +780,7 @@ namespace substitution
 	    {
 		for(int m=0;m<n_models;m++)
 		{
-		    const Matrix& Q = transition_P[m].as_<Box<Matrix>>();
+		    const DenseMatrix<double>& Q = transition_P[m].as_<Box<DenseMatrix<double>>>();
 
 		    // compute the distribution at the target (parent) node - multiple letters
 		    for(int s1=0;s1<n_states;s1++)
@@ -822,7 +822,7 @@ namespace substitution
         total_peel_internal_branches++;
 
         const int n_models = transition_P.size();
-        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+        const int n_states = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
         const int matrix_size = n_models * n_states;
     
         const auto& bits1 = LCB1.bits;
@@ -890,7 +890,7 @@ namespace substitution
         total_peel_internal_branches++;
 
         const int n_models = transition_P.size();
-        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+        const int n_states = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
 
         const auto& bits1 = LCB1.bits;
 
@@ -938,7 +938,7 @@ namespace substitution
 	    return peel_leaf_branch_SEV(LCN[0], transition_P);
 
         const int n_models = transition_P.size();
-        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+        const int n_states = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
         const int matrix_size = n_models * n_states;
 
 	R::RVector LC;
@@ -1024,7 +1024,7 @@ namespace substitution
     peel_branch_away_from_root_SEV(const R::RVector& LCN,
 				   const R::RVector& LCB,
 				   const R::RVector& transition_P,
-				   const Matrix& ff)
+				   const DenseMatrix<double>& ff)
     {
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
 	for(auto& lcb: LCB)
@@ -1036,12 +1036,12 @@ namespace substitution
 
 	bool at_root = not away_from_root_branch;
 
-	const Matrix& f = at_root ? ff : away_from_root_branch->away_from_root_WF.value();
+	const DenseMatrix<double>& f = at_root ? ff : away_from_root_branch->away_from_root_WF.value();
 
         total_peel_internal_branches++;
 
         const int n_models = transition_P.size();
-        const int n_states = transition_P[0].as_<Box<Matrix>>().size1();
+        const int n_states = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
         const int matrix_size = n_models * n_states;
 
 	R::RVector LC;
@@ -1104,7 +1104,7 @@ namespace substitution
 	    if (prev_rootward_bits.test(c))
 		element_assign(S, 1, matrix_size);
 	    else
-		element_assign(S, f.begin(), matrix_size);
+		element_assign(S, f.data(), matrix_size);
 
             // Handle branches in
             for(int j=0;j<n_clvs;j++)
@@ -1258,12 +1258,12 @@ namespace substitution
     // So, we can assume that anything that's not in the mask will not have an ancestral letter.
     Vector<pair<int,int>> sample_root_sequence_SEV(const R::RVector& LCN,
 						   const R::RVector& LCB,
-                                                   const Matrix& F,
+                                                   const DenseMatrix<double>& F,
                                                    const R::RVector& compressed_col_for_col)
     {
         // 1. Construct a scratch CL matrix, and check that dimensions match inputs
-        const int n_models = F.size1();
-        const int n_states = F.size2();
+        const int n_models = F.rows();
+        const int n_states = F.cols();
         const int matrix_size = n_models * n_states;
 
 	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
@@ -1301,7 +1301,7 @@ namespace substitution
 #endif
 
 	// scratch matrix
-        Matrix S(n_models,n_states);
+        DenseMatrix<double> S(n_models,n_states);
 
 	boost::dynamic_bitset<> allbits;
 	allbits.resize(L_compressed);
@@ -1326,7 +1326,7 @@ namespace substitution
 
 	    for(int b=0;b<n_clvs;b++)
 		if (auto i = cache_index_for_compressed_column[b][c2])
-		    element_prod_modify(S.begin(), cache(b)[*i], matrix_size);
+		    element_prod_modify(S.data(), cache(b)[*i], matrix_size);
 
             ancestral_characters[c] = sample( S );
         }
@@ -1342,7 +1342,7 @@ namespace substitution
     {
         // 1. Construct a scratch matrix and check that dimensions match inputs
         const int n_models  = transition_Ps.size();
-        const int n_states  = transition_Ps[0].as_<Box<Matrix>>().size1();
+        const int n_states  = transition_Ps[0].as_<Box<DenseMatrix<double>>>().rows();
         const int matrix_size = n_models * n_states;
 
 	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
@@ -1380,7 +1380,7 @@ namespace substitution
         }
 #endif
 
-	Matrix S(n_models, n_states);
+	DenseMatrix<double> S(n_models, n_states);
 
 	boost::dynamic_bitset<> allbits;
 	allbits.resize(L_compressed);
@@ -1405,7 +1405,7 @@ namespace substitution
 
 	    for(int b=0;b<n_clvs;b++)
 		if (auto i = cache_index_for_compressed_column[b][c2])
-		    element_prod_modify(S.begin(), cache(b)[*i], matrix_size);
+		    element_prod_modify(S.data(), cache(b)[*i], matrix_size);
 
             ancestral_characters[c] = sample(S);
         }

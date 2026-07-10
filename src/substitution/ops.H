@@ -2,63 +2,63 @@
 #define SUBSTITUTION_OPS_H
 
 #include <utility>
-#include "util/matrix.H"
+#include "util/dense-matrix.H"
 #include "substitution/cache.H"
 #include "computation/runtime/ast.H"
 #include <Eigen/Dense>
 
-inline void element_assign(Matrix& M1,double d)
+inline void element_assign(DenseMatrix<double>& M1,double d)
 {
-    M1.fill(d);
+    M1.setConstant(d);
 }
 
-inline void element_assign(Matrix& M1,const Matrix& M2)
+inline void element_assign(DenseMatrix<double>& M1,const DenseMatrix<double>& M2)
 {
-    assert(M1.size1() == M2.size1());
-    assert(M1.size2() == M2.size2());
+    assert(M1.rows() == M2.rows());
+    assert(M1.cols() == M2.cols());
 
     const int size = M1.size();
-    double * __restrict__ m1 = M1.begin();
-    const double * __restrict__ m2 = M2.begin();
+    double * __restrict__ m1 = M1.data();
+    const double * __restrict__ m2 = M2.data();
 
     for(int i=0;i<size;i++)
         m1[i] = m2[i];
 }
 
-inline void element_prod_modify(Matrix& M1,const Matrix& M2)
+inline void element_prod_modify(DenseMatrix<double>& M1,const DenseMatrix<double>& M2)
 {
-    assert(M1.size1() == M2.size1());
-    assert(M1.size2() == M2.size2());
+    assert(M1.rows() == M2.rows());
+    assert(M1.cols() == M2.cols());
 
     const int size = M1.size();
-    double * __restrict__ m1 = M1.begin();
-    const double * __restrict__ m2 = M2.begin();
+    double * __restrict__ m1 = M1.data();
+    const double * __restrict__ m2 = M2.data();
 
     for(int i=0;i<size;i++)
         m1[i] *= m2[i];
 }
 
-inline void element_prod_assign(Matrix& M1,const Matrix& M2,const Matrix& M3)
+inline void element_prod_assign(DenseMatrix<double>& M1,const DenseMatrix<double>& M2,const DenseMatrix<double>& M3)
 {
-    assert(M1.size1() == M2.size1());
-    assert(M1.size2() == M2.size2());
+    assert(M1.rows() == M2.rows());
+    assert(M1.cols() == M2.cols());
 
-    assert(M1.size1() == M3.size1());
-    assert(M1.size2() == M3.size2());
+    assert(M1.rows() == M3.rows());
+    assert(M1.cols() == M3.cols());
 
     const int size = M1.size();
-    double * __restrict__ m1 = M1.begin();
-    const double * __restrict__ m2 = M2.begin();
-    const double * __restrict__ m3 = M3.begin();
+    double * __restrict__ m1 = M1.data();
+    const double * __restrict__ m2 = M2.data();
+    const double * __restrict__ m3 = M3.data();
 
     for(int i=0;i<size;i++)
         m1[i] = m2[i]*m3[i];
 }
 
-inline double element_sum(const Matrix& M1)
+inline double element_sum(const DenseMatrix<double>& M1)
 {
     const int size = M1.size();
-    const double * __restrict__ m1 = M1.begin();
+    const double * __restrict__ m1 = M1.data();
 
     double sum = 0;
     for(int i=0;i<size;i++)
@@ -67,14 +67,14 @@ inline double element_sum(const Matrix& M1)
 }
 
 
-inline double element_prod_sum(Matrix& M1,const Matrix& M2)
+inline double element_prod_sum(DenseMatrix<double>& M1,const DenseMatrix<double>& M2)
 {
-    assert(M1.size1() == M2.size1());
-    assert(M1.size2() == M2.size2());
+    assert(M1.rows() == M2.rows());
+    assert(M1.cols() == M2.cols());
 
     const int size = M1.size();
-    const double * __restrict__ m1 = M1.begin();
-    const double * __restrict__ m2 = M2.begin();
+    const double * __restrict__ m1 = M1.data();
+    const double * __restrict__ m2 = M2.data();
 
     double sum = 0;
     for(int i=0;i<size;i++)
@@ -83,18 +83,18 @@ inline double element_prod_sum(Matrix& M1,const Matrix& M2)
     return sum;
 }
 
-inline double element_prod_sum(Matrix& M1,const Matrix& M2,const Matrix& M3)
+inline double element_prod_sum(DenseMatrix<double>& M1,const DenseMatrix<double>& M2,const DenseMatrix<double>& M3)
 {
-    assert(M1.size1() == M2.size1());
-    assert(M1.size2() == M2.size2());
+    assert(M1.rows() == M2.rows());
+    assert(M1.cols() == M2.cols());
 
-    assert(M1.size1() == M3.size1());
-    assert(M1.size2() == M3.size2());
+    assert(M1.rows() == M3.rows());
+    assert(M1.cols() == M3.cols());
 
     const int size = M1.size();
-    const double * __restrict__ m1 = M1.begin();
-    const double * __restrict__ m2 = M2.begin();
-    const double * __restrict__ m3 = M3.begin();
+    const double * __restrict__ m1 = M1.data();
+    const double * __restrict__ m2 = M2.data();
+    const double * __restrict__ m3 = M3.data();
 
     double sum = 0;
     for(int i=0;i<size;i++)
@@ -103,22 +103,22 @@ inline double element_prod_sum(Matrix& M1,const Matrix& M2,const Matrix& M3)
     return sum;
 }
 
-inline double element_prod_sum(Matrix& M1,const Matrix& M2,const Matrix& M3,const Matrix& M4)
+inline double element_prod_sum(DenseMatrix<double>& M1,const DenseMatrix<double>& M2,const DenseMatrix<double>& M3,const DenseMatrix<double>& M4)
 {
-    assert(M1.size1() == M2.size1());
-    assert(M1.size2() == M2.size2());
+    assert(M1.rows() == M2.rows());
+    assert(M1.cols() == M2.cols());
 
-    assert(M1.size1() == M3.size1());
-    assert(M1.size2() == M3.size2());
+    assert(M1.rows() == M3.rows());
+    assert(M1.cols() == M3.cols());
 
-    assert(M1.size1() == M4.size1());
-    assert(M1.size2() == M4.size2());
+    assert(M1.rows() == M4.rows());
+    assert(M1.cols() == M4.cols());
 
     const int size = M1.size();
-    const double * __restrict__ m1 = M1.begin();
-    const double * __restrict__ m2 = M2.begin();
-    const double * __restrict__ m3 = M3.begin();
-    const double * __restrict__ m4 = M4.begin();
+    const double * __restrict__ m1 = M1.data();
+    const double * __restrict__ m2 = M2.data();
+    const double * __restrict__ m3 = M3.data();
+    const double * __restrict__ m4 = M4.data();
 
     double sum = 0;
     for(int i=0;i<size;i++)
@@ -244,7 +244,7 @@ inline void propagate_toward_root_fixed(double* R, int n_models, int& scale, con
     for(int m = 0; m < n_models; m++)
     {
         // 1. Get pointer to raw data
-        const double* q_data = transition_P[m].as_<Box<Matrix>>().begin();
+        const double* q_data = transition_P[m].as_<Box<DenseMatrix<double>>>().data();
         
         // 2. Map Q as Row-Major
         Map<const FixedMatrix> Q(q_data);
@@ -289,7 +289,7 @@ inline void propagate_toward_root(double* R, int n_models, int n_states, int& sc
     for(int m = 0; m < n_models; m++)
     {
         // 1. Get pointer to raw data
-        const double* q_data = transition_P[m].as_<Box<Matrix>>().begin();
+        const double* q_data = transition_P[m].as_<Box<DenseMatrix<double>>>().data();
         
         // 2. Map Q as Row-Major
         Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> Q(q_data, n_states, n_states);
@@ -334,7 +334,7 @@ inline void propagate_away_from_root_fixed(double* R, int n_models, int& scale, 
     for(int m = 0; m < n_models; m++)
     {
         // 1. Get pointer to raw data
-        const double* q_data = transition_P[m].as_<Box<Matrix>>().begin();
+        const double* q_data = transition_P[m].as_<Box<DenseMatrix<double>>>().data();
         
         // 2. Map Q as Row-Major
         Map<const FixedMatrix> Q(q_data);
@@ -381,7 +381,7 @@ inline void propagate_away_from_root(double* R, int n_models, int n_states, int&
     for(int m = 0; m < n_models; m++)
     {
         // 1. Get pointer to raw data
-        const double* q_data = transition_P[m].as_<Box<Matrix>>().begin();
+        const double* q_data = transition_P[m].as_<Box<DenseMatrix<double>>>().data();
         
         // 2. Map Q as Row-Major
         Map<const Eigen::Matrix<double, Dynamic, Dynamic, RowMajor>> Q(q_data, n_states, n_states);
@@ -410,11 +410,11 @@ inline void propagate_away_from_root(double* R, int n_models, int n_states, int&
     }
 }
 
-Matrix propagate_frequencies(const Matrix& F, const R::RVector& transition_P);
+DenseMatrix<double> propagate_frequencies(const DenseMatrix<double>& F, const R::RVector& transition_P);
 
-void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const R::RVector& Ps);
-void calc_transition_prob_from_parent(Matrix& S, const std::pair<int,int>& state_model_parent, const R::RVector& Ps, const Matrix& WF);
+void calc_transition_prob_from_parent(DenseMatrix<double>& S, const std::pair<int,int>& state_model_parent, const R::RVector& Ps);
+void calc_transition_prob_from_parent(DenseMatrix<double>& S, const std::pair<int,int>& state_model_parent, const R::RVector& Ps, const DenseMatrix<double>& WF);
 
-std::pair<int,int> sample(const Matrix& M);
+std::pair<int,int> sample(const DenseMatrix<double>& M);
 
 #endif

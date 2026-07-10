@@ -420,7 +420,7 @@ void DPcubeEmit::prepare_cell(int i,int j,int k)
     const double* __restrict__ m1 = dists1[i];
     const double* __restrict__ m2 = dists2[j];
     const double* __restrict__ m3 = dists3[k];
-    const double* __restrict__ wf = weighted_frequencies.begin();
+    const double* __restrict__ wf = weighted_frequencies.data();
 
     double total123=0;
     double total12=0;
@@ -446,7 +446,7 @@ DPcubeEmit::DPcubeEmit(const HMM& M,
 			   EmissionProbs&& d1,
 			   EmissionProbs&& d2,
 			   EmissionProbs&& d3,
-			   const Matrix& WF)
+			   const DenseMatrix<double>& WF)
     :DPcube(d1.n_columns(), d2.n_columns(), d3.n_columns(), M),
      s123_sub(d1.n_columns(), d2.n_columns(), d3.n_columns()),
      s12_sub(d1.n_columns(), d2.n_columns()),
@@ -604,4 +604,3 @@ void DPcubeSimple::forward_cell(int i2,int j2,int k2)
 	scale(i2,j2,k2) -= logs;
     }
 } 
-
