@@ -270,21 +270,6 @@ extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
     return M;
 }
 
-extern "C" closure builtin_function_matrixToVector(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& M = arg0.as_<Box<Matrix>>();
-
-    object_ptr<R::RVector> Vptr = new R::RVector;
-    auto& V = *Vptr;
-
-    for(int i=0;i<M.size1();i++)
-        for(int j=0;j<M.size2();j++)
-            V.push_back(M(i,j));
-
-    return V;
-}
-
 extern "C" closure builtin_function_vectorToMatrix(OperationArgs& Args)
 {
     int s1 = Args.evaluate_slot_to_value(0).as_int();

@@ -10,6 +10,7 @@
 #include "dp/2way.H"
 #include "util/range.H"
 #include "substitution/parsimony.H"
+#include <type_traits>
 
 using std::vector;
 using std::pair;
@@ -23,196 +24,226 @@ using std::abs;
 
 using Alphabet = PtrBox<alphabet>;
 
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+namespace
+{
+
+// Dispatch an operation to one of the native matrix representations supported
+// by the Haskell Matrix type.
+template <typename F>
+decltype(auto) visit_matrix(const R::Exp& value, F&& operation)
+{
+    if (value.is_a<Box<matrix<double>>>() )
+        return operation(value.as_<Box<matrix<double>>>());
+    if (value.is_a<Box<matrix<int>>>() )
+        return operation(value.as_<Box<matrix<int>>>());
+
+    throw myexception()<<"Unsupported native matrix representation "<<value.print();
+}
+
+// Dispatch a binary operation after verifying that both matrices have the
+// same supported native element representation.
+template <typename F>
+decltype(auto) visit_same_matrix_pair(const R::Exp& value1, const R::Exp& value2, F&& operation)
+{
+    if (value1.is_a<Box<matrix<double>>>() )
+    {
+        if (not value2.is_a<Box<matrix<double>>>() )
+            throw myexception()<<"Matrices have different native element representations";
+        return operation(value1.as_<Box<matrix<double>>>(), value2.as_<Box<matrix<double>>>());
+    }
+    if (value1.is_a<Box<matrix<int>>>() )
+    {
+        if (not value2.is_a<Box<matrix<int>>>() )
+            throw myexception()<<"Matrices have different native element representations";
+        return operation(value1.as_<Box<matrix<int>>>(), value2.as_<Box<matrix<int>>>());
+    }
+
+    throw myexception()<<"Unsupported native matrix representation "<<value1.print();
+}
+
+// Read a runtime scalar using the representation selected by its matrix.
+template <typename T>
+T matrix_scalar(const R::Exp& value)
+{
+    if constexpr (std::is_same_v<T, int>)
+        return value.as_int();
+    else
+        return value.as_double();
+}
+
+// Apply a scalar operation to every element while preserving the native
+// matrix representation.
+template <typename T, typename F>
+closure map_matrix(const Box<matrix<T>>& matrix1, F&& operation)
+{
+    auto matrix2 = new Box<matrix<T>>(matrix1.size1(), matrix1.size2());
+    for(int i=0; i<matrix1.size1(); i++)
+        for(int j=0; j<matrix1.size2(); j++)
+            (*matrix2)(i,j) = operation(matrix1(i,j));
+    return matrix2;
+}
+
+// Apply an elementwise binary operation after checking that matrix dimensions
+// agree.
+template <typename T, typename F>
+closure zip_matrices(const Box<matrix<T>>& matrix1, const Box<matrix<T>>& matrix2,
+                     const std::string& operation_name, F&& operation)
+{
+    int rows = matrix1.size1();
+    int cols = matrix1.size2();
+    if (matrix2.size1() != rows or matrix2.size2() != cols)
+        throw myexception()<<"Trying to "<<operation_name<<" matrices of unequal sizes ("
+                           <<rows<<","<<cols<<") and ("<<matrix2.size1()<<","<<matrix2.size2()<<")";
+
+    auto matrix3 = new Box<matrix<T>>(rows, cols);
+    for(int i=0; i<rows; i++)
+        for(int j=0; j<cols; j++)
+            (*matrix3)(i,j) = operation(matrix1(i,j), matrix2(i,j));
+    return matrix3;
+}
+
+// Multiply two compatible matrices without changing their native element
+// representation.
+template <typename T>
+closure multiply_matrices(const Box<matrix<T>>& matrix1, const Box<matrix<T>>& matrix2)
+{
+    if (matrix1.size2() != matrix2.size1())
+        throw myexception()<<"Trying to multiply matrices of incompatible sizes ("
+                           <<matrix1.size1()<<","<<matrix1.size2()<<") and ("
+                           <<matrix2.size1()<<","<<matrix2.size2()<<")";
+
+    int rows = matrix1.size1();
+    int inner = matrix1.size2();
+    int cols = matrix2.size2();
+    auto matrix3 = new Box<matrix<T>>(rows, cols);
+
+    for(int i=0; i<rows; i++)
+        for(int j=0; j<cols; j++)
+        {
+            T sum = 0;
+            for(int k=0; k<inner; k++)
+                sum += matrix1(i,k) * matrix2(k,j);
+            (*matrix3)(i,j) = sum;
+        }
+    return matrix3;
+}
+
+// Transpose a native matrix while preserving its element representation.
+template <typename T>
+closure transpose_matrix(const Box<matrix<T>>& matrix1)
+{
+    auto matrix2 = new Box<matrix<T>>(matrix1.size2(), matrix1.size1());
+    for(int i=0; i<matrix2->size1(); i++)
+        for(int j=0; j<matrix2->size2(); j++)
+            (*matrix2)(i,j) = matrix1(j,i);
+    return matrix2;
+}
+
+// Flatten a native matrix into runtime scalar values in row-major order.
+template <typename T>
+closure matrix_to_vector(const Box<matrix<T>>& native_matrix)
+{
+    object_ptr<R::RVector> values = new R::RVector;
+    for(int i=0; i<native_matrix.size1(); i++)
+        for(int j=0; j<native_matrix.size2(); j++)
+            values->push_back(native_matrix(i,j));
+    return values;
+}
+
+}
+
+// Return the number of rows for either supported native matrix representation.
 extern "C" R::Exp simple_function_nrows(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
-    const Matrix& m = arg0.as_<Box<Matrix>>();
-
-    return (int)m.size1();
+    return visit_matrix(arg0, [](const auto& native_matrix) { return native_matrix.size1(); });
 }
 
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
+// Return the number of columns for either supported native matrix representation.
 extern "C" R::Exp simple_function_ncols(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
-    const Matrix& m = arg0.as_<Box<Matrix>>();
-
-    return (int)m.size2();
+    return visit_matrix(arg0, [](const auto& native_matrix) { return native_matrix.size2(); });
 }
 
 // scaleMatrix :: a -> Matrix a -> Matrix a
 extern "C" closure builtin_function_scaleMatrix(OperationArgs& Args)
 {
-    double factor = Args.evaluate_slot_to_value(0).as_double();;
-
-    auto arg2 = Args.evaluate_slot_to_value(1);
-    const Matrix& m = arg2.as_<Box<Matrix>>();
-
-    int n1 = m.size1();
-    int n2 = m.size2();
-
-    auto m2 = new Box<Matrix>(n1,n2);
-    for(int i=0;i<n1;i++)
-	for(int j=0;j<n2;j++)
-	    (*m2)(i,j) = factor * m(i,j);
-
-    return m2;
+    auto factor = Args.evaluate_slot_to_value(0);
+    auto matrix_value = Args.evaluate_slot_to_value(1);
+    // Convert the factor according to the matrix representation selected at runtime.
+    return visit_matrix(matrix_value, [&factor]<typename T>(const Box<matrix<T>>& native_matrix) {
+        T typed_factor = matrix_scalar<T>(factor);
+        return map_matrix(native_matrix, [typed_factor](T element) { return typed_factor * element; });
+    });
 }
 
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_elementwise_multiply(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate_slot_to_value(0);
-    const Matrix& m1 = arg1.as_<Box<Matrix>>();
-
-    auto arg2 = Args.evaluate_slot_to_value(1);
-    const Matrix& m2 = arg2.as_<Box<Matrix>>();
-
-    int n1 = m1.size1();
-    int n2 = m1.size2();
-
-    if (m2.size1() != n1 or m2.size2() != n2)
-	throw myexception()<<"Trying to elementwise-multiply matrices of unequal sizes ("<<n1<<","<<n2<<") and ("<<m2.size1()<<","<<m2.size2()<<") elementwise";
-
-    auto m3 = new Box<Matrix>(n1,n2);
-    for(int i=0;i<n1;i++)
-	for(int j=0;j<n2;j++)
-	    (*m3)(i,j) = m1(i,j) * m2(i,j);
-
-    return m3;
+    auto matrix1 = Args.evaluate_slot_to_value(0);
+    auto matrix2 = Args.evaluate_slot_to_value(1);
+    return visit_same_matrix_pair(matrix1, matrix2, [](const auto& native1, const auto& native2) {
+        return zip_matrices(native1, native2, "elementwise-multiply",
+                            [](auto element1, auto element2) { return element1 * element2; });
+    });
 }
 
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_mat_mult(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate_slot_to_value(0);
-    const Matrix& m1 = arg1.as_<Box<Matrix>>();
-
-    auto arg2 = Args.evaluate_slot_to_value(1);
-    const Matrix& m2 = arg2.as_<Box<Matrix>>();
-
-    if (m1.size2() != m2.size1())
-	throw myexception()<<"Trying to multiply matrices of incompatible sizes ("<<m1.size1()<<","<<m1.size2()<<") and ("<<m2.size1()<<","<<m2.size2()<<") elementwise";
-
-    int n1 = m1.size1();
-    int n2 = m1.size2();
-    int n3 = m2.size2();
-
-    auto m3 = new Box<Matrix>(n1,n3);
-
-    for(int i=0;i<n1;i++)
-	for(int j=0;j<n3;j++)
-        {
-            double sum = 0;
-            for(int k=0;k<n2;k++)
-                sum += m1(i,k)*m2(k,j);
-            (*m3)(i,j) = sum;
-        }
-
-    return m3;
+    auto matrix1 = Args.evaluate_slot_to_value(0);
+    auto matrix2 = Args.evaluate_slot_to_value(1);
+    return visit_same_matrix_pair(matrix1, matrix2, [](const auto& native1, const auto& native2) {
+        return multiply_matrices(native1, native2);
+    });
 }
 
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_elementwise_add(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate_slot_to_value(0);
-    const Matrix& m1 = arg1.as_<Box<Matrix>>();
-
-    auto arg2 = Args.evaluate_slot_to_value(1);
-    const Matrix& m2 = arg2.as_<Box<Matrix>>();
-
-    int n1 = m1.size1();
-    int n2 = m1.size2();
-
-    if (m2.size1() != n1 or m2.size2() != n2)
-	throw myexception()<<"Trying to add matrices of unequal sizes ("<<n1<<","<<n2<<") and ("<<m2.size1()<<","<<m2.size2()<<") elementwise";
-
-    auto m3 = new Box<Matrix>(n1,n2);
-    for(int i=0;i<n1;i++)
-	for(int j=0;j<n2;j++)
-	    (*m3)(i,j) = m1(i,j) + m2(i,j);
-
-    return m3;
+    auto matrix1 = Args.evaluate_slot_to_value(0);
+    auto matrix2 = Args.evaluate_slot_to_value(1);
+    return visit_same_matrix_pair(matrix1, matrix2, [](const auto& native1, const auto& native2) {
+        return zip_matrices(native1, native2, "add",
+                            [](auto element1, auto element2) { return element1 + element2; });
+    });
 }
 
 
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_elementwise_sub(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate_slot_to_value(0);
-    const Matrix& m1 = arg1.as_<Box<Matrix>>();
-
-    auto arg2 = Args.evaluate_slot_to_value(1);
-    const Matrix& m2 = arg2.as_<Box<Matrix>>();
-
-    int n1 = m1.size1();
-    int n2 = m1.size2();
-
-    if (m2.size1() != n1 or m2.size2() != n2)
-	throw myexception()<<"Trying to add matrices of unequal sizes ("<<n1<<","<<n2<<") and ("<<m2.size1()<<","<<m2.size2()<<") elementwise";
-
-    auto m3 = new Box<Matrix>(n1,n2);
-    for(int i=0;i<n1;i++)
-	for(int j=0;j<n2;j++)
-	    (*m3)(i,j) = m1(i,j) - m2(i,j);
-
-    return m3;
+    auto matrix1 = Args.evaluate_slot_to_value(0);
+    auto matrix2 = Args.evaluate_slot_to_value(1);
+    return visit_same_matrix_pair(matrix1, matrix2, [](const auto& native1, const auto& native2) {
+        return zip_matrices(native1, native2, "subtract",
+                            [](auto element1, auto element2) { return element1 - element2; });
+    });
 }
 
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_mat_negate(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate_slot_to_value(0);
-    const Matrix& m1 = arg1.as_<Box<Matrix>>();
-
-    int n1 = m1.size1();
-    int n2 = m1.size2();
-
-    auto m2 = new Box<Matrix>(n1,n2);
-    for(int i=0;i<n1;i++)
-	for(int j=0;j<n2;j++)	
-            (*m2)(i,j) = -m1(i,j);
-
-    return m2;
+    auto matrix_value = Args.evaluate_slot_to_value(0);
+    return visit_matrix(matrix_value, [](const auto& native_matrix) {
+        return map_matrix(native_matrix, [](auto element) { return -element; });
+    });
 }
 
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_mat_abs(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate_slot_to_value(0);
-    const Matrix& m1 = arg1.as_<Box<Matrix>>();
-
-    int n1 = m1.size1();
-    int n2 = m1.size2();
-
-    auto m2 = new Box<Matrix>(n1,n2);
-    for(int i=0;i<n1;i++)
-	for(int j=0;j<n2;j++)	
-            (*m2)(i,j) = std::abs(m1(i,j));
-
-    return m2;
+    auto matrix_value = Args.evaluate_slot_to_value(0);
+    return visit_matrix(matrix_value, [](const auto& native_matrix) {
+        return map_matrix(native_matrix, [](auto element) { return std::abs(element); });
+    });
 }
 
 
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
 extern "C" closure builtin_function_mat_signum(OperationArgs& Args)
 {
-    auto arg1 = Args.evaluate_slot_to_value(0);
-    const Matrix& m1 = arg1.as_<Box<Matrix>>();
-
-    int n1 = m1.size1();
-    int n2 = m1.size2();
-
-    auto m2 = new Box<Matrix>(n1,n2);
-    for(int i=0;i<n1;i++)
-	for(int j=0;j<n2;j++)
-        {
-            double x = m1(i,j);
-            (*m2)(i,j) = (x > 0 ? 1 : 0) - (x < 0 ? 1 : 0);
-        }
-
-    return m2;
+    auto matrix_value = Args.evaluate_slot_to_value(0);
+    // Preserve the native representation while mapping values to -1, 0, or 1.
+    return visit_matrix(matrix_value, [](const auto& native_matrix) {
+        return map_matrix(native_matrix, [](auto element) {
+            return (element > 0 ? 1 : 0) - (element < 0 ? 1 : 0);
+        });
+    });
 }
 
 
@@ -390,23 +421,27 @@ extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
 extern "C" closure builtin_function_transpose(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& M1 = arg0.as_<Box<Matrix>>();
-
-    auto M2p = new Box<Matrix>(M1.size2(), M1.size1());
-    auto& M2 = *M2p;
-    for(int i=0;i<M2.size1();i++)
-        for(int j=0;j<M2.size2();j++)
-            M2(i,j) = M1(j,i);
-
-    return M2p;
+    return visit_matrix(arg0, [](const auto& native_matrix) {
+        return transpose_matrix(native_matrix);
+    });
 }
 
+// Flatten either supported matrix representation into an EVector.
+extern "C" closure builtin_function_matrixToVector(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    return visit_matrix(arg0, [](const auto& native_matrix) {
+        return matrix_to_vector(native_matrix);
+    });
+}
+
+// Read one element without converting its native scalar representation.
 extern "C" R::Exp simple_function_getElem(vector<R::Exp>& args)
 {
     int i = get_arg(args).as_int();
     int j = get_arg(args).as_int();
     auto arg2 = get_arg(args);
-    auto& M = arg2.as_<Box<Matrix>>();
-
-    return M(i,j);
+    return visit_matrix(arg2, [i,j](const auto& native_matrix) {
+        return R::Exp(native_matrix(i,j));
+    });
 }

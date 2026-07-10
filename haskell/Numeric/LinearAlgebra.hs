@@ -9,6 +9,7 @@ import Text.Show
 -- Dense native matrices backed by the C++ matrix<T> in "util/matrix.H".
 -- Only element representations supported by the runtime can inhabit Matrix.
 -- The foreign-import "Matrix:" prefixes name the C++ builtin plugin.
+type role Matrix nominal
 data Matrix a
 
 foreign import ecall "Matrix:" nrows :: Matrix a -> Int
@@ -37,13 +38,14 @@ foreign import bpcall "Vector:fromVectors" fromVectors :: EVector (EVector a) ->
 fromLists :: [[a]] -> Matrix a
 fromLists xss = fromVectors $ toVector $ map toVector xss
 
-foreign import bpcall "Vector:" matrixToVector :: Matrix a -> EVector a
+-- NOTE: Flatten through EVector until Numeric.LinearAlgebra has a native
+-- numerical vector representation.
+foreign import bpcall "Matrix:" matrixToVector :: Matrix a -> EVector a
 -- toList :: Matrix a -> [a]
 toList = vectorToList . matrixToVector
 --toLists :: Matrix a -> [[a]]
 
--- getElem :: Int -> Itt -> Matrix a -> a
-foreign import ecall "Matrix:" getElem :: Int -> Int -> Matrix Double -> Double
+foreign import ecall "Matrix:" getElem :: Int -> Int -> Matrix a -> a
 -- unsafeGet :: Int -> Int -> Matrix a -> a           
 -- safeGet :: Int -> Int -> Matrix a -> Maybe a
 -- safeSet :: a -> (Int,Int) -> Matrix a -> Maybe (Matrix a)

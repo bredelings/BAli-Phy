@@ -9,17 +9,37 @@ std::string Object::print() const {
     return std::string("unprintable[")+demangle(typeid(*this).name())+"] "+ convertToString(this);
 }
 
-template<> std::string Box<Matrix>::print() const
+namespace
+{
+
+// Format a native matrix in the shared row-oriented representation used by
+// the runtime Show instance.
+template <typename T>
+std::string print_matrix(const matrix<T>& native_matrix)
 {
     std::vector<std::string> rows;
-    for(int i=0;i<size1();i++)
+    for(int i=0;i<native_matrix.size1();i++)
     {
-	std::vector<double> row;
-	for(int j=0;j<size2();j++)
-	    row.push_back((*this)(i,j));
-	rows.push_back( "[ " + join(row, ", ") + "]" );
+        std::vector<T> row;
+        for(int j=0;j<native_matrix.size2();j++)
+            row.push_back(native_matrix(i,j));
+        rows.push_back( "[ " + join(row, ", ") + "]" );
     }
     return "[ " + join(rows, ", \n") + "]";
+}
+
+}
+
+// Format the runtime's native Double matrix representation.
+template<> std::string Box<Matrix>::print() const
+{
+    return print_matrix(*this);
+}
+
+// Format the runtime's native Int matrix representation.
+template<> std::string Box<matrix<int>>::print() const
+{
+    return print_matrix(*this);
 }
 
 template<>  std::string Box<std::string>::print() const
