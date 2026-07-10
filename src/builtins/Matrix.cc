@@ -10,6 +10,7 @@
 #include "dp/2way.H"
 #include "util/range.H"
 #include "substitution/parsimony.H"
+#include <limits>
 #include <type_traits>
 
 using std::vector;
@@ -150,6 +151,63 @@ closure matrix_to_vector(const Box<matrix<T>>& native_matrix)
     return values;
 }
 
+// Build a native matrix while walking a Haskell list through dependent USE
+// edges, validating dimensions and the exact element count before returning.
+template <typename T>
+closure matrix_from_list(OperationArgs& Args)
+{
+    int rows = Args.evaluate_slot_to_value(0).as_int();
+    int columns = Args.evaluate_slot_to_value(1).as_int();
+
+    if (rows < 0 or columns < 0)
+        throw myexception()<<"matrix (><): dimensions must be nonnegative, but got ("
+                           <<rows<<", "<<columns<<")";
+
+    if (columns != 0 and rows > std::numeric_limits<int>::max() / columns)
+        throw myexception()<<"matrix (><): dimensions ("<<rows<<", "<<columns
+                           <<") exceed the supported element count";
+
+    int expected_size = rows * columns;
+    object_ptr<Box<matrix<T>>> native_matrix = new Box<matrix<T>>(rows, columns);
+    int xs = Args.evaluate_slot_use(2);
+
+    for(int k=0; k<expected_size; k++)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"matrix (><): expected a list constructor, but got "
+                               <<xs_closure.get_code().print();
+
+        const auto& tag = list_cell->head;
+        if (tag.name() == "[]" and tag.n_args() == 0)
+            throw myexception()<<"matrix (><): expected "<<expected_size
+                               <<" elements, but got "<<k;
+        if (tag.name() != ":" or tag.n_args() != 2)
+            throw myexception()<<"matrix (><): expected ':' or '[]', but got "<<tag.print();
+
+        int element = xs_closure.reg_for_constructor_slot(0);
+        int tail = xs_closure.reg_for_constructor_slot(1);
+        int value = Args.evaluate_reg_dependent_use(element);
+        native_matrix->begin()[k] = matrix_scalar<T>(Args.memory().closure_at(value).get_code());
+        xs = Args.evaluate_reg_dependent_use(tail);
+    }
+
+    return native_matrix;
+}
+
+}
+
+// Construct a matrix using the native Int representation.
+extern "C" closure builtin_function_intMatrixFromList(OperationArgs& Args)
+{
+    return matrix_from_list<int>(Args);
+}
+
+// Construct a matrix using the native Double representation.
+extern "C" closure builtin_function_doubleMatrixFromList(OperationArgs& Args)
+{
+    return matrix_from_list<double>(Args);
 }
 
 // Return the number of rows for either supported native matrix representation.
@@ -246,33 +304,6 @@ extern "C" closure builtin_function_mat_signum(OperationArgs& Args)
     });
 }
 
-
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
-extern "C" closure builtin_function_zero(OperationArgs& Args)
-{
-    int n1 = Args.evaluate_slot_to_value(0).as_int();
-    int n2 = Args.evaluate_slot_to_value(1).as_int();
-
-    auto m = new Box<Matrix>(n1, n2);
-    for(int i=0; i<n1; i++)
-	for(int j=0; j<n2; j++)
-	    (*m)(i,j) = 0;
-
-    return m;
-}
-
-// Currently we are assuming that one of these matrices is symmetric, so that we don't have to update the frequencies.
-extern "C" closure builtin_function_identity(OperationArgs& Args)
-{
-    int n = Args.evaluate_slot_to_value(0).as_int();
-
-    auto m = new Box<Matrix>(n, n);
-    for(int i=0;i<n;i++)
-	for(int j=0;j<n;j++)
-	    (*m)(i,j) = (i==j)?1:0;
-
-    return m;
-}
 
 #include <unsupported/Eigen/MatrixFunctions>
 

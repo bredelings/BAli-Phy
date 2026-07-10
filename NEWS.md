@@ -27,6 +27,8 @@
 - Move the native matrix API from `Data.Matrix` to `Numeric.LinearAlgebra`;
   custom Haskell modules must update their imports.
 - Support basic operations on native `Matrix Int` values.
+- Add element-directed matrix construction through `(><)`, with `Int` and
+  `Double` representations.
 - Parse UTF8 variable names in Haskell files.
 - UTF8:
   * `Char` is now a unicode code point.

@@ -22,28 +22,60 @@ foreign import ecall "Prelude:show" showMatrix :: Matrix a -> CPPString
 
 -- rowVector :: Vector a -> Matrix a
 -- colVector :: Vector a -> Matrix a
--- zero :: Num a -> Int -> Int -> Matrix a
-foreign import bpcall "Matrix:" zero :: Int -> Int -> Matrix Double
--- identity :: Num a => Int -> Matrix a
-foreign import bpcall "Matrix:" identity :: Int -> Matrix Double
 -- diagonalList :: Int -> a -> [a] -> Matrix a
 -- diagonal :: a -> Vector a -> Matrix a
 -- permMatrix :: Num a => Int -> Int -> Int -> Matrix a
 
-foreign import bpcall "Vector:" vectorToMatrix :: Int -> Int -> EVector a -> Matrix a
-fromList :: Int -> Int -> [a] -> Matrix a
-fromList i j xs = vectorToMatrix i j (listToVector xs)            
+infixl 4 ><
 
-foreign import bpcall "Vector:fromVectors" fromVectors :: EVector (EVector a) -> Matrix a
-fromLists :: [[a]] -> Matrix a
-fromLists xss = fromVectors $ toVector $ map toVector xss
+-- Element selects the native representation used when constructing a matrix.
+-- Instances are deliberately limited to representations supported by C++.
+class Element a where
+    (><) :: Int -> Int -> [a] -> Matrix a
+
+foreign import bpcall "Matrix:intMatrixFromList" intMatrixFromList :: Int -> Int -> [Int] -> Matrix Int
+foreign import bpcall "Matrix:doubleMatrixFromList" doubleMatrixFromList :: Int -> Int -> [Double] -> Matrix Double
+
+instance Element Int where
+    (><) = intMatrixFromList
+
+instance Element Double where
+    (><) = doubleMatrixFromList
+
+-- Construct a rectangular matrix from rows, expanding singleton rows to the
+-- longest row and rejecting all other incompatible row lengths.
+fromLists :: Element a => [[a]] -> Matrix a
+fromLists [] = (0 >< 0) []
+fromLists xss
+    | all compatible lengths = (length xss >< columns) (concatMap expand xss)
+    | otherwise = error "Numeric.LinearAlgebra.fromLists: rows have incompatible lengths"
+  where
+    lengths = map length xss
+    columns = maximum lengths
+    compatible n = n == columns || n == 1
+    expand [x] = replicate columns x
+    expand xs = xs
+
+zero :: (Element a, Num a) => Int -> Int -> Matrix a
+zero rows columns = (rows >< columns) (replicate (rows * columns) 0)
+
+identity :: (Element a, Num a) => Int -> Matrix a
+identity size = (size >< size) [if i == j then 1 else 0 | i <- [0..size-1], j <- [0..size-1]]
 
 -- NOTE: Flatten through EVector until Numeric.LinearAlgebra has a native
 -- numerical vector representation.
 foreign import bpcall "Matrix:" matrixToVector :: Matrix a -> EVector a
--- toList :: Matrix a -> [a]
+toList :: Matrix a -> [a]
 toList = vectorToList . matrixToVector
---toLists :: Matrix a -> [[a]]
+
+-- Split a row-major list into the requested number of rows, including empty
+-- rows when the matrix has zero columns.
+splitRows :: Int -> Int -> [a] -> [[a]]
+splitRows 0 _ _ = []
+splitRows rows columns xs = take columns xs : splitRows (rows-1) columns (drop columns xs)
+
+toLists :: Matrix a -> [[a]]
+toLists matrix = splitRows (nrows matrix) (ncols matrix) (toList matrix)
 
 foreign import ecall "Matrix:" getElem :: Int -> Int -> Matrix a -> a
 -- unsafeGet :: Int -> Int -> Matrix a -> a           
@@ -108,7 +140,7 @@ foreign import bpcall "Matrix:" scaleMatrix :: a -> Matrix a -> Matrix a
 instance Show (Matrix a) where
     show x = unpack_cpp_string $ showMatrix x
 
-instance Num a => Num (Matrix a) where
+instance (Element a, Num a) => Num (Matrix a) where
     fromInteger x = fromLists [[fromInteger x]]
 
     negate = mat_negate

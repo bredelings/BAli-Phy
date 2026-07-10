@@ -3,12 +3,10 @@
 #include <limits>
 #include "computation/operation.H"
 #include "util/myexception.H"
-#include "util/matrix.H"
 #include "util/utf8.H"
 #include "computation/machine/graph_register.H"
 #include "computation/machine/args.H"
 
-using boost::dynamic_pointer_cast;
 using std::vector;
 
 namespace
@@ -243,50 +241,4 @@ extern "C" closure builtin_function_showObject(OperationArgs& Args)
 {
     auto arg = Args.evaluate_slot_to_value(0);
     return arg.print();
-}
-
-extern "C" closure builtin_function_fromVectors(OperationArgs& Args)
-{
-    // This doesn't distinguish between a 0x0, 2x0 or 2x0 matrix.
-
-    // If I really want something like the Haskell matrix, I could use an RVector of RVectors.
-    // Then I could get a matrix of anything -- integers, doubles, log_doubles, etc.
-
-    auto arg = Args.evaluate_slot_to_value(0);
-    auto& V = arg.as_<R::RVector>();
-    int I = V.size();
-    if (I <= 0)
-        return Box<Matrix>();
-
-    int J = V[0].as_<R::RVector>().size();
-    if (J <= 0)
-        return Box<Matrix>();
-
-    auto M = new Box<Matrix>(I,J);
-    for(int i=0;i<I;i++)
-        for(int j=0;j<J;j++)
-            (*M)(i,j) = V[i].as_<R::RVector>()[j].as_double();
-
-    return M;
-}
-
-extern "C" closure builtin_function_vectorToMatrix(OperationArgs& Args)
-{
-    int s1 = Args.evaluate_slot_to_value(0).as_int();
-    int s2 = Args.evaluate_slot_to_value(1).as_int();
-    auto arg2 = Args.evaluate_slot_to_value(2);
-    auto& V = arg2.as_<R::RVector>();
-
-    if (V.size() != s1*s2)
-        throw myexception()<<"vectorToMatrix: size = ("<<s1<<", "<<s2<<") so expected "<<s1*s2<<" elements, but got "<<V.size()<<"!";
-
-    auto Mptr = new Box<Matrix>(s1, s2);
-    auto& M = *Mptr;
-
-    int k=0;
-    for(int i=0;i<s1;i++)
-        for(int j=0;j<s2;j++)
-            M(i,j) = V[k++].as_double();
-
-    return Mptr;
 }
