@@ -128,20 +128,8 @@ closure multiply_matrices(const Box<NativeMatrix>& matrix1, const Box<NativeMatr
                            <<matrix1.rows()<<","<<matrix1.cols()<<") and ("
                            <<matrix2.rows()<<","<<matrix2.cols()<<")";
 
-    Eigen::Index rows = matrix1.rows();
-    Eigen::Index inner = matrix1.cols();
-    Eigen::Index cols = matrix2.cols();
-    auto matrix3 = new Box<NativeMatrix>(rows, cols);
-    using T = std::remove_cvref_t<decltype(matrix1(0,0))>;
-
-    for(Eigen::Index i=0; i<rows; i++)
-        for(Eigen::Index j=0; j<cols; j++)
-        {
-            T sum = 0;
-            for(Eigen::Index k=0; k<inner; k++)
-                sum += matrix1(i,k) * matrix2(k,j);
-            (*matrix3)(i,j) = sum;
-        }
+    auto matrix3 = new Box<NativeMatrix>(matrix1.rows(), matrix2.cols());
+    matrix3->noalias() = matrix1 * matrix2;
     return matrix3;
 }
 
