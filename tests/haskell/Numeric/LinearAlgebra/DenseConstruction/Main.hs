@@ -2,6 +2,7 @@
 
 import Numeric.LinearAlgebra
 import Compiler.Fractional
+import Compiler.Floating
 import Compiler.Integral (fromIntegral)
 import Compiler.Num
 import Data.List (map)
@@ -60,3 +61,18 @@ main = do
     print (minIndex reductionMatrix, maxIndex reductionMatrix, find (> 2) reductionMatrix)
     print (toList (conj reductionVector), toList (cmod 3 reductionVector))
     print (toLists (conj reductionMatrix), toLists (cmod 3 reductionMatrix))
+    let floating = fromList [0.25,0.5] :: Vector Double
+    print (toList (floating / 2), toList (recip floating))
+    print (toList (exp floating), toList (sqrt floating), toList (log floating))
+    print (toList (floating ** 2), toList (logBase floating 2))
+    print (toList (sin floating), toList (tan floating), toList (cos floating))
+    print (toList (asin floating), toList (atan floating), toList (acos floating))
+    print (toList (sinh floating), toList (tanh floating), toList (cosh floating))
+    print (toList (asinh floating), toList (atanh floating),
+           toList (acosh (fromList [1.25,2] :: Vector Double)))
+    print (toList (log1p floating), toList (expm1 floating),
+           toList (log1pexp floating), toList (log1mexp (negate floating)))
+    let floatingMatrix = (2 >< 2) [1,4,9,16] :: Matrix Double
+    print (toLists (floatingMatrix / 2), toLists (2 / floatingMatrix))
+    print (toLists (sqrt floatingMatrix), toLists (floatingMatrix ** 2))
+    print (toLists (sin floatingMatrix), toLists (log1p floatingMatrix))

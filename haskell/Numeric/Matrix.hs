@@ -1,9 +1,13 @@
 module Numeric.Matrix (optimiseMult) where
 
 import qualified Data.Array as A
+import Compiler.Floating
 import Data.List.NonEmpty
 import Data.Monoid
 import Numeric.LinearAlgebra.Data
+
+foreign import bpcall "Matrix:" matrixFloatingUnary :: Int -> Matrix Double -> Matrix Double
+foreign import bpcall "Matrix:" matrixFloatingBinary :: Int -> Matrix Double -> Matrix Double -> Matrix Double
 
 -- Separate singleton scalar matrices from a chain while preserving the
 -- order of every non-scalar matrix.
@@ -97,6 +101,34 @@ instance (Element a, Num a) => Num (Matrix a) where
     (+) = elementwise_add
     (-) = elementwise_sub
     (*) = elementwise_multiply
+
+instance Fractional (Matrix Double) where
+    (/) = matrixFloatingBinary 0
+    recip = matrixFloatingUnary 19
+
+instance Floating (Matrix Double) where
+    pi = scalar 3.14159265358979323846
+    exp = matrixFloatingUnary 0
+    sqrt = matrixFloatingUnary 1
+    log = matrixFloatingUnary 2
+    (**) = matrixFloatingBinary 1
+    logBase = matrixFloatingBinary 2
+    sin = matrixFloatingUnary 3
+    tan = matrixFloatingUnary 4
+    cos = matrixFloatingUnary 5
+    asin = matrixFloatingUnary 6
+    atan = matrixFloatingUnary 7
+    acos = matrixFloatingUnary 8
+    sinh = matrixFloatingUnary 9
+    tanh = matrixFloatingUnary 10
+    cosh = matrixFloatingUnary 11
+    asinh = matrixFloatingUnary 12
+    atanh = matrixFloatingUnary 13
+    acosh = matrixFloatingUnary 14
+    log1p = matrixFloatingUnary 15
+    expm1 = matrixFloatingUnary 16
+    log1pexp = matrixFloatingUnary 17
+    log1mexp = matrixFloatingUnary 18
 
 instance Element a => Semigroup (Matrix a) where
     (<>) = matrixProduct

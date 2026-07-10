@@ -10,6 +10,7 @@
 #include <valarray>
 #include "dp/2way.H"
 #include "util/range.H"
+#include "util/math/logsum.H"
 #include "substitution/parsimony.H"
 #include <algorithm>
 #include <limits>
@@ -358,6 +359,47 @@ closure repeat_matrix(const Box<NativeMatrix>& matrix, int row_repeats, int colu
             result->block(i * matrix.rows(), j * matrix.cols(),
                           matrix.rows(), matrix.cols()) = matrix;
     return result;
+}
+
+// Apply one private Floating opcode to a Double element.
+double floating_unary(int operation, double value)
+{
+    switch(operation)
+    {
+        case 0: return std::exp(value);
+        case 1: return std::sqrt(value);
+        case 2: return std::log(value);
+        case 3: return std::sin(value);
+        case 4: return std::tan(value);
+        case 5: return std::cos(value);
+        case 6: return std::asin(value);
+        case 7: return std::atan(value);
+        case 8: return std::acos(value);
+        case 9: return std::sinh(value);
+        case 10: return std::tanh(value);
+        case 11: return std::cosh(value);
+        case 12: return std::asinh(value);
+        case 13: return std::atanh(value);
+        case 14: return std::acosh(value);
+        case 15: return std::log1p(value);
+        case 16: return std::expm1(value);
+        case 17: return log1pexp(value);
+        case 18: return log1mexp(value);
+        case 19: return 1.0 / value;
+        default: throw myexception()<<"unknown dense unary Floating operation "<<operation;
+    }
+}
+
+// Apply one private Fractional/Floating opcode to two Double elements.
+double floating_binary(int operation, double left, double right)
+{
+    switch(operation)
+    {
+        case 0: return left / right;
+        case 1: return std::pow(left, right);
+        case 2: return std::log(left) / std::log(right);
+        default: throw myexception()<<"unknown dense binary Floating operation "<<operation;
+    }
 }
 
 // Transpose a native matrix while preserving its element representation.
@@ -746,6 +788,52 @@ extern "C" closure builtin_function_repmatNative(OperationArgs& Args)
     return visit_matrix(matrix_value, [=](const auto& matrix) {
         return repeat_matrix(matrix, row_repeats, column_repeats);
     });
+}
+
+// Map a private unary Floating opcode over a native Double vector.
+extern "C" closure builtin_function_vectorFloatingUnary(OperationArgs& Args)
+{
+    int operation = Args.evaluate_slot_to_value(0).as_int();
+    auto value = Args.evaluate_slot_to_value(1);
+    const auto& vector = value.as_<Box<DenseVector<double>>>();
+    return map_vector(vector, [operation](double element) {
+        return floating_unary(operation, element);
+    });
+}
+
+// Apply a private binary Floating opcode with singleton vector broadcasting.
+extern "C" closure builtin_function_vectorFloatingBinary(OperationArgs& Args)
+{
+    int operation = Args.evaluate_slot_to_value(0).as_int();
+    auto left_value = Args.evaluate_slot_to_value(1);
+    const auto& left = left_value.as_<Box<DenseVector<double>>>();
+    auto right_value = Args.evaluate_slot_to_value(2);
+    const auto& right = right_value.as_<Box<DenseVector<double>>>();
+    return zip_vectors(left, right, "vector floating operation",
+                       [operation](double x, double y) { return floating_binary(operation, x, y); });
+}
+
+// Map a private unary Floating opcode over a native Double matrix.
+extern "C" closure builtin_function_matrixFloatingUnary(OperationArgs& Args)
+{
+    int operation = Args.evaluate_slot_to_value(0).as_int();
+    auto value = Args.evaluate_slot_to_value(1);
+    const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
+    return map_matrix(matrix, [operation](double element) {
+        return floating_unary(operation, element);
+    });
+}
+
+// Apply a private binary Floating opcode with independent matrix broadcasting.
+extern "C" closure builtin_function_matrixFloatingBinary(OperationArgs& Args)
+{
+    int operation = Args.evaluate_slot_to_value(0).as_int();
+    auto left_value = Args.evaluate_slot_to_value(1);
+    const auto& left = left_value.as_<Box<DenseMatrix<double>>>();
+    auto right_value = Args.evaluate_slot_to_value(2);
+    const auto& right = right_value.as_<Box<DenseMatrix<double>>>();
+    return zip_matrices(left, right, "matrix floating operation",
+                        [operation](double x, double y) { return floating_binary(operation, x, y); });
 }
 
 // Return the number of rows for either supported native matrix representation.
