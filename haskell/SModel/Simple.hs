@@ -30,7 +30,7 @@ data SModelOnTree t m = SModelOnTree t m
    - getAlphabet / stateLetters
 
  * It should still make sense to have weighted componentFrequencies, but the rows of the weighted frequency MATRIX
-   would have different lengths.  So maybe, weighted_frequenced_vectors: m -> EVector EVector Double.
+   would have different lengths.  So maybe, weighted_frequenced_vectors: m -> EVector (Vector Double).
 -}
 
 
@@ -45,14 +45,14 @@ class CheckReversible m => SimpleSModel t m where
     branchTransitionP :: (SModelOnTree t m) -> EdgeId -> [Matrix Double]
     distribution :: (SModelOnTree t m) -> [Double]
     nBaseModels :: (SModelOnTree t m) -> Int
-    componentFrequencies :: (SModelOnTree t m) -> [EVector Double]
+    componentFrequencies :: (SModelOnTree t m) -> [Vector Double]
 
     distribution m = [1]
     nBaseModels m = length (distribution m)
     getTree (SModelOnTree tree _) = tree
 
-foreign import bpcall "SModel:" weightedFrequencyMatrixRaw :: EVector Double -> EVector (EVector Double) -> Matrix Double
-foreign import bpcall "SModel:" frequencyMatrixRaw :: EVector (EVector Double) -> Matrix Double
+foreign import bpcall "SModel:" weightedFrequencyMatrixRaw :: EVector Double -> EVector (Vector Double) -> Matrix Double
+foreign import bpcall "SModel:" frequencyMatrixRaw :: EVector (Vector Double) -> Matrix Double
 
 weightedFrequencyMatrix model = let dist = toVector $ distribution model
                                     freqs = toVector $ componentFrequencies model

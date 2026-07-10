@@ -121,14 +121,14 @@ DenseMatrix<double> exp(const EigenValues& solution,double t)
 }
 
 /// Compute the exponential of a matrix from a reversible markov chain
-DenseMatrix<double> exp_small(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+DenseMatrix<double> exp_small(const EigenValues& eigensystem, Eigen::Ref<const DenseVector<double>> pi, const double t)
 {
     DenseMatrix<double> E = expm1(eigensystem,t);
 
     const int n = pi.size();
 
-    std::vector<double> DP(n);
-    std::vector<double> DN(n);
+    DenseVector<double> DP(n);
+    DenseVector<double> DN(n);
     for(int i=0;i<pi.size();i++) {
 	DP[i] = sqrt(pi[i]);
 	DN[i] = 1.0/DP[i];
@@ -145,14 +145,14 @@ DenseMatrix<double> exp_small(const EigenValues& eigensystem, const vector<doubl
 }
 
 /// Compute the exponential of a matrix from a reversible markov chain
-DenseMatrix<double> exp_large(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+DenseMatrix<double> exp_large(const EigenValues& eigensystem, Eigen::Ref<const DenseVector<double>> pi, const double t)
 {
     DenseMatrix<double> E = exp(eigensystem,t);
 
     const int n = pi.size();
 
-    std::vector<double> DP(n);
-    std::vector<double> DN(n);
+    DenseVector<double> DP(n);
+    DenseVector<double> DN(n);
     for(int i=0;i<pi.size();i++) {
 	DP[i] = sqrt(pi[i]);
 	DN[i] = 1.0/DP[i];
@@ -165,7 +165,7 @@ DenseMatrix<double> exp_large(const EigenValues& eigensystem, const vector<doubl
     return E;
 }
 
-DenseMatrix<double> exp(const EigenValues& eigensystem, const vector<double>& pi, const double t)
+DenseMatrix<double> exp(const EigenValues& eigensystem, Eigen::Ref<const DenseVector<double>> pi, const double t)
 {
     bool small = true;
     for(double eigenvalue: eigensystem.eigenvalues())
@@ -189,7 +189,7 @@ DenseMatrix<double> exp(const DenseMatrix<double>& Q, double t)
     return E;
 }
 
-double rate_away(const vector<double>& pi, const DenseMatrix<double>& Q)
+double rate_away(Eigen::Ref<const DenseVector<double>> pi, const DenseMatrix<double>& Q)
 {
     double rate = 0;
     for(int s=0;s<Q.rows();s++)
@@ -230,7 +230,7 @@ double positivize_and_renormalize_matrix(DenseMatrix<double>& E)
     return error;
 }
 
-std::vector<double> compute_stationary_freqs(const DenseMatrix<double>& Q)
+DenseVector<double> compute_stationary_freqs(const DenseMatrix<double>& Q)
 {
     constexpr double tol = 1.0e-7;
 
@@ -303,15 +303,10 @@ std::vector<double> compute_stationary_freqs(const DenseMatrix<double>& Q)
         std::cerr<<"compute_stationary_freqs: err1 = "<<err<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
     }
 
-    // 5. Copy back to an R::RVector double;
-    std::vector<double> pi(n);
-    for(int i=0;i<n;i++)
-        pi[i] = epi[i];
-
-    return pi;
+    return epi;
 }
 
-bool checkStationary(const DenseMatrix<double>& Q, const Eigen::VectorXd& pi, double tol)
+bool checkStationary(const DenseMatrix<double>& Q, Eigen::Ref<const DenseVector<double>> pi, double tol)
 {
     assert(tol >= 0);
     assert(Q.rows() == Q.cols());
@@ -329,20 +324,7 @@ bool checkStationary(const DenseMatrix<double>& Q, const Eigen::VectorXd& pi, do
     return (err < tol);
 }
 
-bool checkStationary(const DenseMatrix<double>& Q, const std::vector<double>& pi, double tol)
-{
-    int n = Q.rows();
-    assert(Q.cols() == n);
-
-    // 1. pi2 = pi
-    Eigen::VectorXd pi2(n);
-    for(int i=0;i<n;i++)
-        pi2[i] = pi[i];
-
-    return checkStationary(Q, pi2, tol);
-}
-
-bool checkReversible(const DenseMatrix<double>& Q, const Eigen::VectorXd& pi, double tol)
+bool checkReversible(const DenseMatrix<double>& Q, Eigen::Ref<const DenseVector<double>> pi, double tol)
 {
     // S(i,j) = pi[i]*Q(i,j) should be symmetric.
 
@@ -354,22 +336,6 @@ bool checkReversible(const DenseMatrix<double>& Q, const Eigen::VectorXd& pi, do
 
     return (error < tol);
 }
-
-bool checkReversible(const DenseMatrix<double>& Q, const std::vector<double>& pi, double tol)
-{
-    int n = Q.rows();
-    assert(Q.cols() == n);
-    assert(pi.size() == n);
-
-    // 1. pi2 = pi
-    Eigen::VectorXd pi2(n);
-    for(int i=0;i<n;i++)
-        pi2[i] = pi[i];
-
-    return checkReversible(Q, pi2, tol);
-}
-
-
 
 // Find strongly connected components using Kosaraju's algorithm
 static std::vector<std::vector<int>> stronglyConnectedComponents(const DenseMatrix<double>& Q) {
@@ -468,7 +434,8 @@ static Eigen::VectorXd stationaryDistribution(const DenseMatrix<double>& Q) {
 }
 
 // Compute equilibrium limit
-Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const DenseMatrix<double>& Q)
+static DenseVector<double> equilibriumLimitRaw(Eigen::Ref<const DenseVector<double>> pi0,
+                                               const DenseMatrix<double>& Q)
 {
     int n = Q.rows();
     auto sccs = stronglyConnectedComponents(Q);
@@ -549,15 +516,12 @@ Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const DenseMatrix<d
 
 
 // Compute lim_{t->inf} pi0*exp(Q*t)
-std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const DenseMatrix<double>& Q)
+DenseVector<double> equilibriumLimit(Eigen::Ref<const DenseVector<double>> pi0,
+                                     const DenseMatrix<double>& Q)
 {
     constexpr double tol = 1.0e-7;
 
     int n = Q.rows();
-
-    Eigen::VectorXd epi0(n+1);
-    for(int i=0;i<n;i++)
-        epi0[i] = pi0[i];
 
     DenseMatrix<double> eQ = Q;
 
@@ -570,7 +534,7 @@ std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const Dense
         eQ(i,i) = -sum;
     }
 
-    auto epi = equilibriumLimit(epi0, eQ);
+    auto epi = equilibriumLimitRaw(pi0, eQ);
     
     // Check that all the rates are 0.
     double err1 = (epi.transpose() * eQ).cwiseAbs().maxCoeff();
@@ -593,10 +557,5 @@ std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const Dense
         std::cerr<<"compute_stationary_freqs: maxcoeff = "<<eQ.cwiseAbs().maxCoeff()<<"   err1 = "<<err1<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
     }
 
-    // 5. Copy back to an R::RVector double;
-    std::vector<double> pi(n);
-    for(int i=0;i<n;i++)
-        pi[i] = epi[i];
-
-    return pi;
+    return epi;
 }

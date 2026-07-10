@@ -838,10 +838,12 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     const auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
 
-    auto pi = vector<double>(Args.evaluate_slot_to_value(1).as_<R::RVector>() );
+    auto pi_value = Args.evaluate_slot_to_value(1);
+    const auto& pi = pi_value.as_<Box<DenseVector<double>>>();
 
     const Eigen::Index n = Q.rows();
     assert(Q.cols() == Q.rows());
+    assert(pi.size() == n);
 
 #ifdef DEBUG_RATE_MATRIX
     assert(std::abs(sum(pi)-1.0) < 1.0e-6);
@@ -854,8 +856,8 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 #endif
 
     //--------- Compute pi[i]**0.5 and pi[i]**-0.5 ----------//
-    vector<double> sqrt_pi(n, 1.0);
-    vector<double> inverse_sqrt_pi(n, 1.0);
+    DenseVector<double> sqrt_pi(n);
+    DenseVector<double> inverse_sqrt_pi(n);
     for(int i=0;i<n;i++)
     {
         // symmetrizing may be ill-conditioned -- fail
@@ -907,7 +909,8 @@ extern "C" closure builtin_function_getEigensystemRaw(OperationArgs& Args)
 extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
 {
     auto L = Args.evaluate_slot_to_value(0);
-    auto pi = (vector<double>) Args.evaluate_slot_to_value(1).as_<R::RVector>();
+    auto pi_value = Args.evaluate_slot_to_value(1);
+    const auto& pi = pi_value.as_<Box<DenseVector<double>>>();
     double t = Args.evaluate_slot_to_value(2).as_double();
 
     object_ptr<Box<DenseMatrix<double>>> Mptr = new Box<DenseMatrix<double>>;

@@ -8,12 +8,12 @@ import Reversible
 foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
 foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Matrix Double
 foreign import bpcall "SModel:" fixupDiagonalRates :: Matrix Double -> Matrix Double
-foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: EVector Double -> Double -> Matrix Double
+foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: Vector Double -> Double -> Matrix Double
 foreign import bpcall "Matrix:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
-foreign import bpcall "SModel:" equilibriumLimit :: EVector Double -> Matrix Double -> EVector Double
-foreign import bpcall "SModel:" checkReversible :: Matrix Double -> EVector Double -> Bool
-foreign import bpcall "SModel:" checkStationary :: Matrix Double -> EVector Double -> Bool
-foreign import bpcall "SModel:" flow :: EVector Double -> Matrix Double -> Matrix Double
+foreign import bpcall "SModel:" equilibriumLimit :: Vector Double -> Matrix Double -> Vector Double
+foreign import bpcall "SModel:" checkReversible :: Matrix Double -> Vector Double -> Bool
+foreign import bpcall "SModel:" checkStationary :: Matrix Double -> Vector Double -> Bool
+foreign import bpcall "SModel:" flow :: Vector Double -> Matrix Double -> Matrix Double
 
 flux pi q = f - tr f
     where f = flow pi q
@@ -36,8 +36,8 @@ relativeFlux pi q = (1/2) * sumElements (abs flux') / (sumElements flow' + 1.0e-
 
 class Scalable c => CTMC c where
     getQ :: c -> Matrix Double
-    getStartFreqs :: c -> EVector Double
-    getEqFreqs :: c -> EVector Double
+    getStartFreqs :: c -> Vector Double
+    getEqFreqs :: c -> Vector Double
     qExp :: c -> Matrix Double
 
     getEqFreqs m = equilibriumLimit (getStartFreqs m) (getQ m) 
@@ -56,13 +56,13 @@ eqRelFlux m = relativeFlux (getEqFreqs m) (getQ m)
 -- TODO: Should I rename Markov -> CTMC?
 
 -- Fields are: q, start frequencies, rate, possibly eigendecomposition, reversibility
-data Markov = Markov (Matrix Double) (EVector Double) Double MatDecomp Reversibility
+data Markov = Markov (Matrix Double) (Vector Double) Double MatDecomp Reversibility
 
 markov q pi = Markov qFixed pi 1 (NoDecomp Nothing) NonEq where
     qFixed = fixupDiagonalRates q
 
 uniformEquilibriumLimit q = equilibriumLimit pi0 q where
-    pi0 = toVector $ replicate n (1/fromIntegral n)
+    pi0 = fromList $ replicate n (1/fromIntegral n)
     n = rows q
 
 eqMarkov q = setReversibility EqNonRev $ markov q (uniformEquilibriumLimit q)
@@ -112,7 +112,7 @@ plus_f_matrix pi = plus_gwf_matrix pi 1
 
 gtr_sym n exchange = builtin_gtr_sym (toVector exchange) n
 
-gtr er pi = setReversibility EqRev $ markov (er * plus_f_matrix pi') pi' where pi' = toVector pi
+gtr er pi = setReversibility EqRev $ markov (er * plus_f_matrix pi') pi' where pi' = fromList pi
 
 -- Probabily we should make a builtin for this
 equ n x = gtr_sym n (replicate n_elements x)

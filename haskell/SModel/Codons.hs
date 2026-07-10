@@ -13,15 +13,15 @@ type TripletAlphabet = Alphabet
 type CodonAlphabet = TripletAlphabet
 
 foreign import bpcall "SModel:" singletToTripletSym :: TripletAlphabet -> Matrix Double -> Matrix Double
-foreign import bpcall "SModel:f3x4_frequencies" f3x4_frequencies_builtin :: TripletAlphabet -> EVector Double -> EVector Double -> EVector Double -> EVector Double
+foreign import bpcall "SModel:f3x4_frequencies" f3x4_frequencies_builtin :: TripletAlphabet -> Vector Double -> Vector Double -> Vector Double -> Vector Double
 foreign import bpcall "SModel:" singlet_to_triplet_rates :: TripletAlphabet -> Matrix Double -> Matrix Double -> Matrix Double -> Matrix Double
-foreign import bpcall "SModel:" multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> EVector Double -> Matrix Double
+foreign import bpcall "SModel:" multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> Vector Double -> Matrix Double
 foreign import bpcall "SModel:" dNdS_matrix :: CodonAlphabet -> Double -> Matrix Double
 
-f3x4_frequencies a pi1 pi2 pi3 = let pi1' = toVector pi1
-                                     pi2' = toVector pi2
-                                     pi3' = toVector pi3
-                                  in vectorToList $ f3x4_frequencies_builtin a pi1' pi2' pi3'
+f3x4_frequencies a pi1 pi2 pi3 = let pi1' = fromList pi1
+                                     pi2' = fromList pi2
+                                     pi3' = fromList pi3
+                                  in toList $ f3x4_frequencies_builtin a pi1' pi2' pi3'
 
 f3x4'_frequencies a pi1 pi2 pi3 = zip (getLetters a) (f3x4_frequencies a pi1' pi2' pi3')
     where pi1' = get_ordered_elements nucLetters pi1 "frequencies"

@@ -13,12 +13,12 @@ import Numeric.LinearAlgebra -- for fromLists and scale
 import qualified Data.Map as Map
 
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
-foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi :: EVector (EVector Double) -> EVector Double -> EVector Double
+foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi :: EVector (Vector Double) -> Vector Double -> Vector Double
 foreign import bpcall "SModel:modulated_markov_smap" builtin_modulated_markov_smap :: EVector (EVector Int) -> EVector Int
 
 modulatedMarkovRates qs rates_between = builtin_modulated_markov_rates (toVector qs) rates_between
 
-modulatedMarkovPi pis levelProbs = builtin_modulated_markov_pi (toVector pis) (toVector levelProbs)
+modulatedMarkovPi pis levelProbs = builtin_modulated_markov_pi (toVector pis) levelProbs
 
 modulatedMarkovSmap smaps = builtin_modulated_markov_smap (toVector smaps)
 
@@ -61,14 +61,14 @@ modulateCommonProperties (properties:rest) = Map.fromList
 
 modulateProperties properties scale = markovModulateProperty $ ComponentStateProperties [property scale | property <- properties]
 
-markovModulateMixture nu dist = modulatedMarkov models (Markov.gtr ratesBetween (toVector levelProbs)) where
+markovModulateMixture nu dist = modulatedMarkov models (Markov.gtr ratesBetween levelProbs) where
     (models, levelProbs) = unzip $ unpackDiscrete dist
     ratesBetween = Markov.equ (length models) nu
 
 -- We need to scaleTo submodels to have substitution rate `1`.
 -- Otherwise class-switching rates are not relative to the substitution rate.
 
-tuffleySteel98Unscaled s01 s10 q = modulatedMarkov [scaleBy 0 q, q] (setReversibility EqRev $ Markov.markov ratesBetween (toVector levelProbs)) where
+tuffleySteel98Unscaled s01 s10 q = modulatedMarkov [scaleBy 0 q, q] (setReversibility EqRev $ Markov.markov ratesBetween (fromList levelProbs)) where
     levelProbs = [s10/total, s01/total] where total = s10 + s01
     ratesBetween = fromLists [[-s01,s01],[s10,-s10]]
 
@@ -85,7 +85,7 @@ huelsenbeck02Test s01 s10 fraction model = mix [1-fraction, fraction] [model & h
 huelsenbeck02Two s01a s10a s01b s10b fraction model = mix [1-fraction, fraction] [model & huelsenbeck02 s01b s10b,
                                                                                   model & huelsenbeck02 s01a s10a]
 
-galtier01Ssrv nu model = modulatedMarkov models (Markov.gtr (Markov.equ nLevels nu) (toVector levelProbs)) where
+galtier01Ssrv nu model = modulatedMarkov models (Markov.gtr (Markov.equ nLevels nu) levelProbs) where
     dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
     nLevels = length models
@@ -115,15 +115,15 @@ wssr07Ext s01 s10 nu a b c model = Discrete [(noCov,   (1-a)*(1-b)),
           hb02gt01 = wssr07Ssrv s01 s10 nu model
 
 -- Instead of passing ratesBetween+levelProbs, could we just pass a q matrix?
-covarionGtrSsrv nu exchange model = modulatedMarkov models (Markov.markov ratesBetween (toVector levelProbs)) where
+covarionGtrSsrv nu exchange model = modulatedMarkov models (Markov.markov ratesBetween (fromList levelProbs)) where
     Discrete dist = scaleTo 1 model
     (models, levelProbs) = unzip dist
     -- This is really a gtr rate matrix, just without the alphabet / smap!
-    ratesBetween = (scale nu exchange) * (plus_f_matrix $ toVector levelProbs)
+    ratesBetween = (scale nu exchange) * (plus_f_matrix $ fromList levelProbs)
 
 covarionGtr nu exchange pi model = (\nu' -> covarionGtrSsrv nu' exchange model) <$> (Discrete [(0,1-pi), (nu, pi)])
 
-covarionGtrSym sym model = modulatedMarkov models (Markov.markov ratesBetween (toVector levelProbs)) where
+covarionGtrSym sym model = modulatedMarkov models (Markov.markov ratesBetween (fromList levelProbs)) where
     dist = scaleTo 1 model
     (models, levelProbs) = unzip $ unpackDiscrete dist
-    ratesBetween = sym * (plus_f_matrix $ toVector levelProbs)
+    ratesBetween = sym * (plus_f_matrix $ fromList levelProbs)

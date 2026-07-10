@@ -12,7 +12,7 @@ import Reversible
 type RNAEditAlphabet = Alphabet
 
 foreign import bpcall "SModel:" rna_editting_rates :: RNAEditAlphabet -> Matrix Double -> EVector (EPair Int Int) -> Double -> Matrix Double
-foreign import bpcall "SModel:" rna_editting_pi :: RNAEditAlphabet -> EVector Double -> EVector (EPair Int Int) -> EVector Double
+foreign import bpcall "SModel:" rna_editting_pi :: RNAEditAlphabet -> Vector Double -> EVector (EPair Int Int) -> Vector Double
 
 siteEdit alphabet nucModel rnaRate edits = setReversibility rv $ markov alphabet smap q pi
     where rv = getReversibility nucModel

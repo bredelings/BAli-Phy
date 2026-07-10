@@ -13,7 +13,7 @@ import Data.Maybe
 import Data.OldList ((!!), drop, take)
 import Data.Ord
 import Data.Text (pack)
-import Foreign.Vector (toVector)
+import Numeric.LinearAlgebra (cols, fromList, rows, toList)
 import qualified Markov as CoreMarkov
 import Probability.Distribution.PhyloCTMC.FixedA.Properties
 import Probability.Distribution.PhyloCTMC.Properties
@@ -66,10 +66,16 @@ main = do
 
   let model1 = setConstantStateProperty (pack "dNdS") 0.5 (jukes_cantor dna)
       model2 = setConstantStateProperty (pack "dNdS") 2.0 (jukes_cantor dna)
-      between = CoreMarkov.gtr (CoreMarkov.equ 2 1) (toVector [0.5, 0.5])
+      between = CoreMarkov.gtr (CoreMarkov.equ 2 1) [0.5, 0.5]
       modulated = modulatedMarkov [model1, model2] between
       modulatedValues = singleComponentValues $ lookupProperty "dNdS" $ getProperties (SModelOnTree () modulated)
 
+  putStrLn $ show $ toList $ CoreMarkov.getStartFreqs between
+  putStrLn $ show [ CoreMarkov.checkStationary (CoreMarkov.getQ between) (CoreMarkov.getStartFreqs between)
+                  , CoreMarkov.checkReversible (CoreMarkov.getQ between) (CoreMarkov.getEqFreqs between)
+                  ]
+  putStrLn $ show $ toList $ CoreMarkov.equilibriumLimit (fromList [1, 0]) (CoreMarkov.getQ between)
+  putStrLn $ show (rows (CoreMarkov.qExp between), cols (CoreMarkov.qExp between))
   putStrLn $ show $ take 4 modulatedValues
   putStrLn $ show $ take 4 $ drop 4 modulatedValues
 

@@ -9,7 +9,7 @@ import Reversible
 
 type DoubletAlphabet = Alphabet
 
-foreign import bpcall "SModel:f2x4_frequencies" f2x4_frequencies_builtin :: DoubletAlphabet -> EVector Double -> EVector Double -> EVector Double
+foreign import bpcall "SModel:f2x4_frequencies" f2x4_frequencies_builtin :: DoubletAlphabet -> Vector Double -> Vector Double -> Vector Double
 foreign import bpcall "SModel:singlet_to_doublet_rates" singlet_to_doublet_rates :: DoubletAlphabet -> Matrix Double -> Matrix Double -> Matrix Double
 
 x2x2 a m1 m2 = setReversibility rv $ markov a smap q pi where

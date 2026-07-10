@@ -13,7 +13,7 @@ import           Tree
 import           Data.Array
 import qualified Data.Map as Map
 
-foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int -> Matrix Double -> EVector Double -> Double
+foreign import bpcall "SModel:" getEquilibriumRate :: Alphabet -> EVector Int -> Matrix Double -> Vector Double -> Double
 
 -- This takes the rate matrix q and adds:
 -- * pi -> a cached version of the equilibrium frequencies
@@ -118,14 +118,14 @@ allOrderedPairs l = [(x,y) | x <- l, y <- l, x /= y]
 orderedLetterPairNames a = pairNames $ allOrderedPairs (getLetters a)
 
 nonEq' pi' m = nonEq pi m
-    where pi = toVector $ frequenciesFromDict (getAlphabet m) pi'
+    where pi = fromList $ frequenciesFromDict (getAlphabet m) pi'
 
 labelledEqFrequencies m = zip (getLetters a) frequencies
-    where frequencies = vectorToList $ getEqFreqs m
+    where frequencies = toList $ getEqFreqs m
           a = getAlphabet m
 
 labelledStartFrequencies m = zip (getLetters a) frequencies
-    where frequencies = vectorToList $ getStartFreqs m
+    where frequencies = toList $ getStartFreqs m
           a = getAlphabet m
 
 labelledUpperTriangle alphabet matrix = if n == rows matrix && n == cols matrix

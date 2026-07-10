@@ -1156,7 +1156,7 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(Op
 
 // https://doi.org/10.1534/genetics.105.044917
 // No missing data allowed!
-log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix<double>& Q_, const vector<double>& pi, const vector<Chunk>& rho, double theta)
+log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix<double>& Q_, Eigen::Ref<const DenseVector<double>> pi, const vector<Chunk>& rho, double theta)
 {
     assert(k>=1);
 
@@ -1165,8 +1165,8 @@ log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix
     if (k == 0)
     {
 	vector<log_double_t> pi_log;
-	for(double p: pi)
-	    pi_log.push_back(p);
+	for(Eigen::Index i=0; i<pi.size(); i++)
+	    pi_log.push_back(pi[i]);
 
 	log_double_t Pr = 1;
 	for(int c=0; c<L; c++)
@@ -1271,7 +1271,7 @@ log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix
     return { Pr };
 }
 
-log_double_t wilson_mcvean_2006_composite_likelihood(const alignment& A, const DenseMatrix<double>& Q, const vector<double>& pi, const vector<Chunk>& rho, double theta)
+log_double_t wilson_mcvean_2006_composite_likelihood(const alignment& A, const DenseMatrix<double>& Q, Eigen::Ref<const DenseVector<double>> pi, const vector<Chunk>& rho, double theta)
 {
     int n = A.n_sequences();
 

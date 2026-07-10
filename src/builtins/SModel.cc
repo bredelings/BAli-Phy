@@ -30,27 +30,18 @@ extern "C" closure builtin_function_compute_stationary_freqs(OperationArgs& Args
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
 
-    auto vpi = compute_stationary_freqs(Q);
-    int n = vpi.size();
-
-    // 4. Copy back to an R::RVector double;
-    R::RVector pi(n);
-    for(int i=0;i<n;i++)
-        pi[i] = vpi[i];
-
-    return pi;
+    return new Box<DenseVector<double>>(compute_stationary_freqs(Q));
 }
 
 extern "C" closure builtin_function_equilibriumLimit(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto pi0 = (vector<double>)arg0.as_<R::RVector>();
+    const auto& pi0 = arg0.as_<Box<DenseVector<double>>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& Q = arg1.as_<Box<DenseMatrix<double>>>();
 
-    // In exponential.cc
-    return (R::RVector)equilibriumLimit(pi0, Q);
+    return new Box<DenseVector<double>>(equilibriumLimit(pi0, Q));
 }
 
 extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs& Args)
@@ -110,22 +101,12 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
     // Eigen::VectorXd epi = QQ.ColPivHouseholderQr.solve(b);  Maybe faster?
     Eigen::VectorXd epi = QQ.fullPivLu().solve(b);
 
-    // 4. Copy back to an R::RVector double;
-    R::RVector pi(n);
-    for(int i=0;i<n;i++)
-        pi[i] = epi[i];
-
     double err = (QQ * epi - b).cwiseAbs().sum();
 
     // Compare with known pi
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& pi0 = arg1.as_<R::RVector>();
-
-    // 2. b = 0*n + 1
-    Eigen::VectorXd epi0(n);
-    for(int i=0;i<n;i++)
-        epi0[i] = pi0[i].as_double();
+    const auto& epi0 = arg1.as_<Box<DenseVector<double>>>();
 
     double err2 = (QQ * epi0 - b).cwiseAbs().sum();
     double err3 = (epi - epi0).cwiseAbs().sum();
@@ -134,7 +115,7 @@ extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs
     {
         std::cerr<<"err1 = "<<err<<"   err2 = "<<err2<<"   err3 = "<<err3<<"\n";
     }
-    return pi;
+    return new Box<DenseVector<double>>(epi);
 }
 
 extern "C" closure builtin_function_checkStationary(OperationArgs& Args)
@@ -143,7 +124,7 @@ extern "C" closure builtin_function_checkStationary(OperationArgs& Args)
     auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto pi = (vector<double>)arg1.as_<R::RVector>();
+    const auto& pi = arg1.as_<Box<DenseVector<double>>>();
 
     return { checkStationary(Q,pi) };
 }
@@ -154,7 +135,7 @@ extern "C" closure builtin_function_checkReversible(OperationArgs& Args)
     auto& Q = arg0.as_<Box<DenseMatrix<double>>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto pi = (vector<double>)arg1.as_<R::RVector>();
+    const auto& pi = arg1.as_<Box<DenseVector<double>>>();
 
     return { checkReversible(Q,pi) };
 }
@@ -170,7 +151,8 @@ extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
     auto arg2 = Args.evaluate_slot_to_value(2);
     const DenseMatrix<double>& Q = arg2.as_< Box<DenseMatrix<double>> >();
 
-    auto pi = vector<double> (Args.evaluate_slot_to_value(3).as_<R::RVector>() );
+    auto pi_value = Args.evaluate_slot_to_value(3);
+    const auto& pi = pi_value.as_<Box<DenseVector<double>>>();
 
     assert(Q.cols() == Q.rows());
     const unsigned N = smap.size();
@@ -411,7 +393,7 @@ extern "C" closure builtin_function_singlet_to_triplet_rates(OperationArgs& Args
     return R;
 }
 
-// multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> R::RVector Double -> Matrix Double
+// multiNucleotideMutationRates :: TripletAlphabet -> Double -> Double -> Matrix Double -> Vector Double -> Matrix Double
 extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
@@ -424,7 +406,7 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
     const DenseMatrix<double>& R1 = arg3.as_<Box<DenseMatrix<double>>>();
 
     auto arg4 = Args.evaluate_slot_to_value(4);
-    const auto& pi1 = arg4.as_<R::RVector>();
+    const auto& pi1 = arg4.as_<Box<DenseVector<double>>>();
 
     // Compute the average rate at equilibrium for R1.
 //    double rate = 0;
@@ -471,7 +453,7 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
                 if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
                 {
                     int to = T.sub_nuc(j,p);
-                    prod *= pi1[to].as_double();
+                    prod *= pi1[to];
                 }
             }
 
@@ -516,7 +498,7 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
                     if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
                     {
                         int to = T.sub_nuc(j,p);
-                        prod *= pi1[to].as_double();
+                        prod *= pi1[to];
                     }
                 }
 
@@ -630,7 +612,7 @@ extern "C" closure builtin_function_rna_editting_pi(OperationArgs& Args)
     const int n = D.size();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const auto& nuc_pi = arg1.as_<R::RVector>();
+    const auto& nuc_pi = arg1.as_<Box<DenseVector<double>>>();
     // The way alphabet is currently implemented, doublets must be doublets of nucleotides.
     assert(nuc_pi.size() == 4);
 
@@ -638,7 +620,7 @@ extern "C" closure builtin_function_rna_editting_pi(OperationArgs& Args)
     const R::RVector& edit_pairs = arg2.as_<R::RVector>();
     vector<int> edit = make_edit_map(edit_pairs, 4);
 
-    vector<double> pi( n );
+    auto pi = new Box<DenseVector<double>>(n);
     for(int i = 0; i < n; i++)
     {
         int i1 = D.sub_nuc(i,0);
@@ -646,13 +628,13 @@ extern "C" closure builtin_function_rna_editting_pi(OperationArgs& Args)
         bool i_ok = (i2 == edit[i1]);
 
         if (i_ok)
-            pi[i] = nuc_pi[i1].as_double();
+            (*pi)[i] = nuc_pi[i1];
         else
-            pi[i] = 0;
+            (*pi)[i] = 0;
     }
 
-    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
-    return R::RVector(pi);
+    assert(std::abs(pi->sum() - 1.0) < 1.0e-9);
+    return pi;
 }
 
 
@@ -741,7 +723,7 @@ void inc_modulated_states_vec(int& r, int& level, int& state, const R::RVector& 
 {
     r++;
     state++;
-    if (state < pis[level].as_<R::RVector>().size())
+    if (state < pis[level].as_<Box<DenseVector<double>>>().size())
         ;
     else
     {
@@ -810,24 +792,24 @@ extern "C" closure builtin_function_modulated_markov_pi(OperationArgs& Args)
     int n_levels = pis.size();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& level_probs = arg1.as_<R::RVector>();
+    auto& level_probs = arg1.as_<Box<DenseVector<double>>>();
     assert(level_probs.size() == n_levels);
 
     int total_states = 0;
     for(int l = 0; l < n_levels; l++)
     {
-        auto& pi = pis[l].as_<R::RVector>();
+        auto& pi = pis[l].as_<Box<DenseVector<double>>>();
         int n_states_for_level = pi.size();
 
         total_states += n_states_for_level;
     }
 
-    vector<double> pi(total_states);
+    auto pi = new Box<DenseVector<double>>(total_states);
     for(int r=0, l=0, s=0; r < total_states; inc_modulated_states_vec(r,l,s,pis))
-        pi[r] = level_probs[l].as_double() * pis[l].as_<R::RVector>()[s].as_double();
+        (*pi)[r] = level_probs[l] * pis[l].as_<Box<DenseVector<double>>>()[s];
 
-    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
-    return R::RVector(pi);
+    assert(std::abs(pi->sum() - 1.0) < 1.0e-9);
+    return pi;
 }
 
 extern "C" closure builtin_function_modulated_markov_smap(OperationArgs& Args)
@@ -1111,7 +1093,7 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const auto& pi1 = arg1.as_<R::RVector>();
+    const auto& pi1 = arg1.as_<Box<DenseVector<double>>>();
 
     int nuc_size = T.getNucleotides().size();
 
@@ -1119,32 +1101,30 @@ extern "C" closure builtin_function_f3x4_frequencies(OperationArgs& Args)
 	throw myexception()<<"f3x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    const auto& pi2 = arg2.as_<R::RVector>();
+    const auto& pi2 = arg2.as_<Box<DenseVector<double>>>();
 
     if (pi2.size() != nuc_size)
 	throw myexception()<<"f3x4_frequencies:site 2:expected "<<nuc_size<<" frequencies, but got "<<pi2.size()<<"!";
 
     auto arg3 = Args.evaluate_slot_to_value(3);
-    const auto& pi3 = arg3.as_<R::RVector>();
+    const auto& pi3 = arg3.as_<Box<DenseVector<double>>>();
 
     if (pi3.size() != nuc_size)
 	throw myexception()<<"f3x4_frequencies:site 3:expected "<<nuc_size<<" frequencies, but got "<<pi3.size()<<"!";
 
-    R::RVector pi;
-    pi.resize(T.size());
+    auto pi = new Box<DenseVector<double>>(T.size());
     double sum = 0;
     for(int i=0;i<T.size();i++)
     {
-	double x = pi1[T.sub_nuc(i,0)].as_double() * pi2[T.sub_nuc(i,1)].as_double() * pi3[T.sub_nuc(i,2)].as_double();
-	pi[i] = x;
+	double x = pi1[T.sub_nuc(i,0)] * pi2[T.sub_nuc(i,1)] * pi3[T.sub_nuc(i,2)];
+	(*pi)[i] = x;
 	sum += x;
     }
 
     // Some triplets may be missing from the triplet alphabet (e.g. stop codons).  So renormalize.
 
     double scale = 1.0/sum;
-    for(auto& d : pi)
-	d = d.as_double() * scale;
+    *pi *= scale;
 
 //    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
 
@@ -1158,7 +1138,7 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    const auto& pi1 = arg1.as_<R::RVector>();
+    const auto& pi1 = arg1.as_<Box<DenseVector<double>>>();
 
     int nuc_size = D.getNucleotides().size();
 
@@ -1166,26 +1146,24 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
 	throw myexception()<<"f2x4_frequencies:site 1:expected "<<nuc_size<<" frequencies, but got "<<pi1.size()<<"!";
 
     auto arg2 = Args.evaluate_slot_to_value(2);
-    const auto& pi2 = arg2.as_<R::RVector>();
+    const auto& pi2 = arg2.as_<Box<DenseVector<double>>>();
 
     if (pi2.size() != nuc_size)
 	throw myexception()<<"f2x4_frequencies:site 2:expected "<<nuc_size<<" frequencies, but got "<<pi2.size()<<"!";
 
-    R::RVector pi;
-    pi.resize(D.size());
+    auto pi = new Box<DenseVector<double>>(D.size());
     double sum = 0;
     for(int i=0;i<D.size();i++)
     {
-	double x = pi1[D.sub_nuc(i,0)].as_double() * pi2[D.sub_nuc(i,1)].as_double();
-	pi[i] = x;
+	double x = pi1[D.sub_nuc(i,0)] * pi2[D.sub_nuc(i,1)];
+	(*pi)[i] = x;
 	sum += x;
     }
 
     // Some triplets may be missing from the doublet alphabet (e.g. mismatches). So renormalize
 
     double scale = 1.0/sum;
-    for(auto& d : pi)
-	d = d.as_double() * scale;
+    *pi *= scale;
 
 //    assert(std::abs(sum(pi) - 1.0) < 1.0e-9);
 
@@ -1330,7 +1308,7 @@ extern "C" closure builtin_function_singletToTripletSym(OperationArgs& Args)
 
 extern "C" closure builtin_function_plus_gwf_matrix(OperationArgs& Args)
 {
-    auto pi = vector<double>( Args.evaluate_slot_to_value(0).as_<R::RVector>() );
+    DenseVector<double> pi = Args.evaluate_slot_to_value(0).as_<Box<DenseVector<double>>>();
 
     double f = Args.evaluate_slot_to_value(1).as_double();
 
@@ -1339,7 +1317,7 @@ extern "C" closure builtin_function_plus_gwf_matrix(OperationArgs& Args)
     auto R = new Box<DenseMatrix<double>>(n,n);
 
     // compute frequencies
-    normalize(pi);
+    pi /= pi.sum();
     
     // compute transition rates
     valarray<double> pi_f(n);
@@ -1413,7 +1391,8 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
 // pi0 w
 extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
 {
-    auto pi0 = vector<double>( Args.evaluate_slot_to_value(0).as_< R::RVector >() );
+    auto pi0_value = Args.evaluate_slot_to_value(0);
+    const auto& pi0 = pi0_value.as_<Box<DenseVector<double>>>();
 
     auto F   = vector<double>( Args.evaluate_slot_to_value(1).as_< R::RVector >() );
     for(auto& f: F)
@@ -1422,15 +1401,15 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
     assert(pi0.size() == F.size());
 
     // compute frequencies
-    vector<double> pi = pi0;
+    auto pi = new Box<DenseVector<double>>(pi0);
 
     double Fmax = max(F);
 
-    for(int i=0; i<pi.size(); i++)
-	pi[i] *= exp(F[i]-Fmax);
+    for(int i=0; i<pi->size(); i++)
+	(*pi)[i] *= exp(F[i]-Fmax);
 
-    normalize(pi);
-    return R::RVector(pi);
+    *pi /= pi->sum();
+    return pi;
 }
 
 extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
@@ -1441,7 +1420,7 @@ extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
     const int n_models = WF.rows();
     const int n_states = WF.cols();
 
-    auto* ave_f = new R::RVector(n_states);
+    auto* ave_f = new Box<DenseVector<double>>(n_states);
     for(int s=0;s<n_states;s++)
     {
 	double total = 0;
@@ -1465,15 +1444,15 @@ extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Ar
     assert(D.size() == F.size());
 
     const int n_models = F.size();
-    const int n_states = F[0].as_<R::RVector>().size();
+    const int n_states = F[0].as_<Box<DenseVector<double>>>().size();
 
     auto *WF = new Box<DenseMatrix<double>>(n_models, n_states);
 
     for(int m=0;m<n_models;m++) {
 	double p = D[m].as_double();
-	const auto& f = F[m].as_<R::RVector>();
+	const auto& f = F[m].as_<Box<DenseVector<double>>>();
 	for(int s=0;s<n_states;s++) 
-	    (*WF)(m,s) = p*f[s].as_double();
+	    (*WF)(m,s) = p*f[s];
     }
     return WF;
 }
@@ -1485,14 +1464,14 @@ extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
     // cache matrix of frequencies
 
     const int n_models = F.size();
-    const int n_states = F[0].as_<R::RVector>().size();
+    const int n_states = F[0].as_<Box<DenseVector<double>>>().size();
 
     auto *FF = new Box<DenseMatrix<double>>(n_models, n_states);
 
     for(int m=0;m<n_models;m++) {
-	const auto& f = F[m].as_<R::RVector>();
+	const auto& f = F[m].as_<Box<DenseVector<double>>>();
 	for(int s=0;s<n_states;s++) 
-	    (*FF)(m,s) = f[s].as_double();
+	    (*FF)(m,s) = f[s];
     }
     return FF;
 }
@@ -1501,7 +1480,7 @@ extern "C" closure builtin_function_flow(OperationArgs& Args)
 {
     // Equilibrium frequencies
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& pi = arg0.as_<R::RVector>();
+    const auto& pi = arg0.as_<Box<DenseVector<double>>>();
 
     // Rate matrix
     auto arg1 = Args.evaluate_slot_to_value(1);
@@ -1520,7 +1499,7 @@ extern "C" closure builtin_function_flow(OperationArgs& Args)
             if (i == j)
                 F(i,j) = 0;
             else
-                F(i,j) = pi[i].as_double() * Q(i,j);
+                F(i,j) = pi[i] * Q(i,j);
         }
 
     return Fptr;

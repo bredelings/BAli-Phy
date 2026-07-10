@@ -38,7 +38,7 @@ wfm (Discrete ms) = let freqs = toVector [ getStartFreqs m | (m,p) <- ms]
                         dist =  toVector [p | (m,p) <- ms ]
                     in weightedFrequencyMatrixRaw dist freqs
 
-averageFrequency ms = vectorToList $ builtin_average_frequency $ wfm ms
+averageFrequency ms = toList $ builtin_average_frequency $ wfm ms
 
 plusInv pInv ms = fmap setRateProperty $ scaleBy (1/(1-pInv)) $ mix [1 - pInv, pInv] [ms, always $ inv]
     where a  = getAlphabet ms

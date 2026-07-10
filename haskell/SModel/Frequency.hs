@@ -6,7 +6,7 @@ import Foreign.Vector
 import Numeric.LinearAlgebra
 import qualified Markov
 
-foreign import bpcall "SModel:average_frequency" builtin_average_frequency :: Matrix Double -> EVector Double
+foreign import bpcall "SModel:average_frequency" builtin_average_frequency :: Matrix Double -> Vector Double
 
 -- pi is [Double] here
 uniform_frequencies a = Markov.uniform_frequencies $ alphabetSize a

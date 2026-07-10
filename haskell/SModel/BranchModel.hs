@@ -22,7 +22,7 @@ import qualified Data.Map as Map
 -- Should we have an IntMap?
 data BranchMap a = BranchMap (Int -> a)
 
-data BranchModel a = BranchModel Alphabet (EVector Int) (EVector Double) (BranchMap a)
+data BranchModel a = BranchModel Alphabet (EVector Int) (Vector Double) (BranchMap a)
 
 instance Functor BranchMap where
     fmap f (BranchMap g) = BranchMap (f . g)
