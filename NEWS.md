@@ -7,6 +7,7 @@
 ## Fixes
 
 - A variety of bug fixes.
+- Fix matrix `signum` for negative elements.
 
 ## Haskell
 

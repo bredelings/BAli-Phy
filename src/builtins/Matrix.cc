@@ -209,7 +209,7 @@ extern "C" closure builtin_function_mat_signum(OperationArgs& Args)
 	for(int j=0;j<n2;j++)
         {
             double x = m1(i,j);
-            (*m2)(i,j) = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
+            (*m2)(i,j) = (x > 0 ? 1 : 0) - (x < 0 ? 1 : 0);
         }
 
     return m2;

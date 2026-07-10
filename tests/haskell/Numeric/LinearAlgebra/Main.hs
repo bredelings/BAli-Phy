@@ -14,3 +14,4 @@ main = do
     putStrLn $ show $ ncols matrix
     putStrLn $ show $ toList $ transpose matrix
     putStrLn $ show $ toList $ matrix * identity 2
+    putStrLn $ show $ toList $ signum (fromLists [[-2, 0, 3]] :: Matrix Double)
