@@ -49,6 +49,9 @@ instance Element Double where
 vector :: [Double] -> Vector Double
 vector = fromList
 
+matrix :: Int -> [Double] -> Matrix Double
+matrix columns = reshape columns . fromList
+
 range :: Int -> Vector Int
 range n = fromList [0..n-1]
 
@@ -96,37 +99,13 @@ instance Element a => Container Matrix a where
 toList :: Element a => Vector a -> [a]
 toList values = mapFrom 0 (vectorSize values) (vectorAtIndex values)
 
--- Construct a rectangular matrix from rows, expanding singleton rows to the
--- longest row and rejecting all other incompatible row lengths.
-fromLists :: Element a => [[a]] -> Matrix a
-fromLists [] = (0 >< 0) []
-fromLists xss
-    | all compatible lengths = (length xss >< columns) (concatMap expand xss)
-    | otherwise = error "Numeric.LinearAlgebra.fromLists: rows have incompatible lengths"
-  where
-    lengths = map length xss
-    columns = maximum lengths
-    compatible n = n == columns || n == 1
-    expand [x] = replicate columns x
-    expand xs = xs
-
-ident :: (Element a, Num a) => Int -> Matrix a
-ident dimension = (dimension >< dimension)
-                     [if i == j then 1 else 0 | i <- [0..dimension-1], j <- [0..dimension-1]]
-
 foreign import bpcall "Matrix:" matrixToVector :: Matrix a -> Vector a
 
 flatten :: Element a => Matrix a -> Vector a
 flatten = matrixToVector
 
--- Split a row-major list into the requested number of rows, including empty
--- rows when the matrix has zero columns.
-splitRows :: Int -> Int -> [a] -> [[a]]
-splitRows 0 _ _ = []
-splitRows rows columns xs = take columns xs : splitRows (rows-1) columns (drop columns xs)
-
 toLists :: Element a => Matrix a -> [[a]]
-toLists matrix = splitRows (rows matrix) (cols matrix) (toList (flatten matrix))
+toLists = map toList . toRows
 
 foreign import bpcall "Matrix:" reshapeVector :: Int -> Vector a -> Matrix a
 foreign import bpcall "Matrix:" vectorAsRow :: Vector a -> Matrix a
@@ -140,6 +119,89 @@ asRow = vectorAsRow
 
 asColumn :: Element a => Vector a -> Matrix a
 asColumn = vectorAsColumn
+
+row :: [Double] -> Matrix Double
+row = asRow . fromList
+
+col :: [Double] -> Matrix Double
+col = asColumn . fromList
+
+-- Construct rows with hmatrix singleton expansion, rejecting vectors with
+-- incompatible non-singleton extents.
+fromRows :: Element a => [Vector a] -> Matrix a
+fromRows [] = (0 >< 0) []
+fromRows vectors =
+    case conform (map size vectors) of
+        Nothing -> error "Numeric.LinearAlgebra.fromRows: vectors have incompatible sizes"
+        Just columns -> (length vectors >< columns) (concatMap (expand columns) vectors)
+  where
+    -- Find the common extent while retaining zero as the extent of empty rows.
+    conform [] = Nothing
+    conform [n] = Just n
+    conform (n:m:ns)
+        | n == m = conform (m:ns)
+        | n == 1 = conform (m:ns)
+        | m == 1 = conform (n:ns)
+        | otherwise = Nothing
+
+    -- Expand a singleton row to the common extent, or preserve a full row.
+    expand columns values
+        | columns == 0 = []
+        | size values == columns = toList values
+        | otherwise = replicate columns (atIndex values 0)
+
+-- Extract matrix rows as independent native vectors without passing through
+-- a structural EVector.
+toRows :: Element a => Matrix a -> [Vector a]
+toRows matrix =
+    mapFrom 0 (rows matrix) $ \i ->
+        fromList (mapFrom 0 (cols matrix) $ \j -> atIndex matrix (i,j))
+
+fromColumns :: Element a => [Vector a] -> Matrix a
+fromColumns = tr . fromRows
+
+toColumns :: Element a => Matrix a -> [Vector a]
+toColumns = toRows . tr
+
+fromLists :: Element a => [[a]] -> Matrix a
+fromLists = fromRows . map fromList
+
+build :: (Element a, Num a) => (Int, Int) -> (a -> a -> a) -> Matrix a
+build (rowCount, columnCount) element = (rowCount >< columnCount)
+    [element (fromIntegral i) (fromIntegral j)
+        | i <- [0..rowCount-1], j <- [0..columnCount-1]]
+
+ident :: (Element a, Num a) => Int -> Matrix a
+ident dimension = (dimension >< dimension)
+    [if i == j then 1 else 0
+        | i <- [0..dimension-1], j <- [0..dimension-1]]
+
+-- Fill a rectangular matrix and replace as much of its main diagonal as the
+-- supplied vector and requested dimensions permit.
+diagRect :: Element a => a -> Vector a -> Int -> Int -> Matrix a
+diagRect fill diagonal rowCount columnCount = (rowCount >< columnCount)
+    [if i == j && i < size diagonal then atIndex diagonal i else fill
+        | i <- [0..rowCount-1], j <- [0..columnCount-1]]
+
+diag :: (Element a, Num a) => Vector a -> Matrix a
+diag diagonal = diagRect 0 diagonal dimension dimension
+  where dimension = size diagonal
+
+diagl :: [Double] -> Matrix Double
+diagl = diag . fromList
+
+takeDiag :: Element a => Matrix a -> Vector a
+takeDiag matrix = fromList
+    [atIndex matrix (i,i) | i <- [0..min (rows matrix) (cols matrix)-1]]
+
+-- Construct evenly spaced endpoints, using their midpoint for the
+-- single-element case as hmatrix does.
+linspace :: (Element a, Fractional a) => Int -> (a, a) -> Vector a
+linspace 0 _ = fromList []
+linspace 1 (start, end) = fromList [(start + end) / 2]
+linspace count (start, end) = fromList
+    [start + fromIntegral i * step | i <- [0..count-1]]
+  where step = (end - start) / fromIntegral (count - 1)
 
 foreign import bpcall "Matrix:tr" transposeNative :: Matrix a -> Matrix a
 foreign import bpcall "Matrix:scale" scaleNative :: a -> Matrix a -> Matrix a

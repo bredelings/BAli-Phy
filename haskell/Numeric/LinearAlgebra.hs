@@ -7,6 +7,7 @@ module Numeric.LinearAlgebra
     , IndexOf
     , Container(..)
     , vector
+    , matrix
     , range
     , idxs
     , toList
@@ -14,11 +15,23 @@ module Numeric.LinearAlgebra
     , cols
     , fromLists
     , toLists
+    , row
+    , col
     , flatten
     , reshape
     , asRow
     , asColumn
+    , fromRows
+    , toRows
+    , fromColumns
+    , toColumns
+    , build
     , ident
+    , diag
+    , diagl
+    , diagRect
+    , takeDiag
+    , linspace
     , tr
     , scale
     , dot
