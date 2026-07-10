@@ -2,7 +2,6 @@ module Numeric.LinearAlgebra.Data
     ( R, I
     , NativeVector, NativeMatrix, Vector, Matrix
     , vectorFromNative, matrixFromNative, nativeVector, nativeMatrix
-    , vectorParts, matrixParts
     , vectorSize, rows, cols
     , showMatrixNative, showNumericVectorNative
     , Element(..), IndexOf, Container(..)
@@ -50,13 +49,6 @@ vectorFromNative = Vector
 
 matrixFromNative :: Int -> Int -> NativeMatrix a -> Matrix a
 matrixFromNative = Matrix
-
-vectorParts :: Vector a -> (Int, NativeVector a)
-vectorParts (Vector count payload) = (count, payload)
-
-matrixParts :: Matrix a -> (Int, Int, NativeMatrix a)
-matrixParts (Matrix rowCount columnCount payload) =
-    (rowCount, columnCount, payload)
 
 vectorSize :: Vector a -> Int
 vectorSize (Vector count _) = count

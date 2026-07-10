@@ -113,7 +113,10 @@ public:
     prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& object, const std::vector<Occ::Alt>& alts);
 
     Occ::Alt
-    simplify_alt(const std::optional<Occ::Exp>& object, const std::set<std::string>& seen_constructors, const simplifier::substitution& S, const in_scope_set& bound_vars, Occ::Alt alt, const inline_context& context);
+    simplify_alt(const std::optional<Occ::Exp>& object, bool scrutinee_is_variable,
+                 const std::set<std::string>& seen_constructors,
+                 const simplifier::substitution& S, const in_scope_set& bound_vars,
+                 Occ::Alt alt, const inline_context& context);
 
     std::tuple<SimplFloats,Occ::Exp>
     rebuildCall(const Occ::Var& f, const in_scope_set& bound_vars, inline_context context);

@@ -14,19 +14,15 @@ import Numeric.LinearAlgebra.Data
 foreign import bpcall "SModel:mut_sel_q" mutSelQNative :: NativeMatrix Double -> NativeVector Double -> NativeMatrix Double
 foreign import bpcall "SModel:mut_sel_pi" mutSelPiNative :: NativeVector Double -> NativeVector Double -> NativeVector Double
 
--- Preserve the rate-matrix dimensions while applying native mutation-selection
--- weights to its payload.
+-- Apply mutation-selection weights while preserving the rate-matrix shape.
 mut_sel_q rates fitness =
-    case (matrixParts rates, vectorParts fitness) of
-        ((rowCount, columnCount, ratesNative), (_, fitnessNative)) ->
-            matrixFromNative rowCount columnCount
-                (mutSelQNative ratesNative fitnessNative)
+    matrixFromNative (rows rates) (cols rates)
+        (mutSelQNative (nativeMatrix rates) (nativeVector fitness))
 
--- Preserve the frequency-vector length while applying native fitness weights.
+-- Apply mutation-selection weights while preserving the frequency-vector size.
 mut_sel_pi frequencies fitness =
-    case (vectorParts frequencies, vectorParts fitness) of
-        ((count, frequenciesNative), (_, fitnessNative)) ->
-            vectorFromNative count (mutSelPiNative frequenciesNative fitnessNative)
+    vectorFromNative (vectorSize frequencies)
+        (mutSelPiNative (nativeVector frequencies) (nativeVector fitness))
 
 mut_sel ws' m0@(Markov a smap _ _ _) = setReversibility rv $ markov a smap q pi where
     rv = getReversibility m0

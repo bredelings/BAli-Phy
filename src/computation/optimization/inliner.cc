@@ -50,7 +50,7 @@ int num_arguments(inline_context context)
 
 inline_context make_case_context(const Occ::Case& C, const simplifier::substitution& S, const inline_context& context)
 {
-    return std::make_shared<const case_context>(C.alts, S, context);
+    return std::make_shared<const case_context>((bool)C.object.to_var(), C.alts, S, context);
 }
 
 inline_context make_apply_context_one_arg(const Occ::Exp& arg, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context)

@@ -834,7 +834,8 @@ Occ::Exp SimplifierState::rebuild_case_inner(Occ::Exp object, vector<Occ::Alt> a
 
     // 2. Simplify each alternative
     for(auto& alt: alts2)
-        alt = simplify_alt(object, seen_constructors, S, bound_vars, alt, cont);
+        alt = simplify_alt(object, (bool)object.to_var(), seen_constructors,
+                           S, bound_vars, alt, cont);
 
     return make_case(object, alts2);
 }
@@ -889,11 +890,22 @@ SimplifierState::simplifyArg(const in_scope_set& bound_vars, DupStatus dup_statu
 }
 
 Occ::Alt
-SimplifierState::simplify_alt(const std::optional<Occ::Exp>& object, const std::set<std::string>& seen_constructors,
+SimplifierState::simplify_alt(const std::optional<Occ::Exp>& object, bool scrutinee_is_variable,
+                              const std::set<std::string>& seen_constructors,
                               const simplifier::substitution& S, const in_scope_set& bound_vars,
                               Occ::Alt alt, const inline_context& context)
 {
     auto& [pattern, body] = alt;
+
+    // A variable scrutinee's constructor unfolding can make an originally
+    // dead field live while the alternative is being simplified.
+    if (scrutinee_is_variable)
+        for(auto& arg: pattern.args)
+            if (arg.info.code_dup == amount_t::None)
+            {
+                arg.info.work_dup = amount_t::Many;
+                arg.info.code_dup = amount_t::Many;
+            }
 
     // 1. Rename and bind pattern variables
     auto [S2, bound_vars2] = rename_and_bind_pattern_vars(pattern, S, bound_vars);
@@ -1037,7 +1049,8 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
 
         auto alts = cc->alts;
         for(auto& alt: alts)
-            alt = simplify_alt({}, {}, cc->subst, alts_bound_vars, alt, alt_cont);
+            alt = simplify_alt({}, cc->scrutinee_is_variable, {}, cc->subst,
+                               alts_bound_vars, alt, alt_cont);
 
         for(auto& alt: alts)
         {
@@ -1046,7 +1059,8 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
             floats.append(this_mod, options, joins);
         }
 
-        auto cc2 = std::make_shared<case_context>(alts, substitution(), make_stop_context(CallCtxt::BoringCtxt));
+        auto cc2 = std::make_shared<case_context>(cc->scrutinee_is_variable, alts,
+                                                  substitution(), make_stop_context(CallCtxt::BoringCtxt));
         cc2->dup_status = DupStatus::OkToDup;
         return {floats, cc2};
     }

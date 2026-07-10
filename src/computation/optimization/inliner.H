@@ -104,10 +104,14 @@ struct apply_context
 struct case_context
 {
     DupStatus dup_status = DupStatus::NoDup;
+    // Simplification may revive dead alternative fields when the scrutinee is a variable.
+    bool scrutinee_is_variable;
     std::vector<Occ::Alt> alts;
     simplifier::substitution subst;
     inline_context next;
-    case_context(const std::vector<Occ::Alt>& as, const simplifier::substitution& s, const inline_context& i):alts(as), subst(s), next(i) {}
+    case_context(bool siv, const std::vector<Occ::Alt>& as,
+                 const simplifier::substitution& s, const inline_context& i)
+        :scrutinee_is_variable(siv), alts(as), subst(s), next(i) {}
 };
 
 // It is allowed to inline here.
