@@ -34,24 +34,20 @@ along with BAli-Phy; see the file COPYING.  If not see
 typedef Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> EigenValues;
 
 DenseMatrix<double> exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);
-Eigen::MatrixXd exp(const Eigen::MatrixXd& Q, double t);
+DenseMatrix<double> exp(const DenseMatrix<double>& Q, double t);
 
-double rate_away(const std::vector<double>& pi, const Eigen::MatrixXd& Q);
+double rate_away(const std::vector<double>& pi, const DenseMatrix<double>& Q);
 
 double positivize_and_renormalize_matrix(DenseMatrix<double>& E);
-double positivize_and_renormalize_matrix(Eigen::MatrixXd& E);
-
-Eigen::MatrixXd toEigen(const DenseMatrix<double>& Q);
-DenseMatrix<double> fromEigen(const Eigen::MatrixXd& EM);
 
 std::vector<double> compute_stationary_freqs(const DenseMatrix<double>& Q);
-bool checkStationary(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double tol = 1.0e-9);
+bool checkStationary(const DenseMatrix<double>& Q, const Eigen::VectorXd& pi, double tol = 1.0e-9);
 bool checkStationary(const DenseMatrix<double>& Q, const std::vector<double>& pi, double tol = 1.0e-9);
 
-bool checkReversible(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double tol = 1.0e-9);
+bool checkReversible(const DenseMatrix<double>& Q, const Eigen::VectorXd& pi, double tol = 1.0e-9);
 bool checkReversible(const DenseMatrix<double>& Q, const std::vector<double>& pi, double tol = 1.0e-9);
 
-Eigen::VectorXd     equilibriumLimit(const Eigen::VectorXd& pi0, const Eigen::MatrixXd& Q);
+Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const DenseMatrix<double>& Q);
 std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const DenseMatrix<double>& Q);
 
 #endif

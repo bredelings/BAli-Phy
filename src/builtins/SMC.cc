@@ -1181,12 +1181,12 @@ log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix
 
     // The coalescence rate is 1, the mutation rate is N*mu, and the recombination rate is N*r.
     double subst_rate = theta/2;
-    EMatrix Q = toEigen(Q_);
+    DenseMatrix<double> Q = Q_;
     Q *= subst_rate / rate_away(pi, Q);
 
     // The rate of coalescing with another lineage is k for k other lineages.
     double coalescent_time = 1.0/k;
-    EMatrix P = exp(Q, coalescent_time * 2);
+    DenseMatrix<double> P = exp(Q, coalescent_time * 2);
 
     // 2. Set the probability of copying from each of the k parents to 1/k at location 0.
     Matrix m(L+1,k);

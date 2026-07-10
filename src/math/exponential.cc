@@ -178,10 +178,10 @@ DenseMatrix<double> exp(const EigenValues& eigensystem, const vector<double>& pi
         return exp_large(eigensystem, pi, t);
 }
 
-Eigen::MatrixXd exp(const Eigen::MatrixXd& Q, double t)
+DenseMatrix<double> exp(const DenseMatrix<double>& Q, double t)
 {
     // 1. Take the matrix exponential
-    Eigen::MatrixXd E = (Q*t).exp();
+    DenseMatrix<double> E = (Q*t).exp();
 
     // 2. Ensure that all entries are non-negative and rows sum to 1
     positivize_and_renormalize_matrix(E);
@@ -189,35 +189,7 @@ Eigen::MatrixXd exp(const Eigen::MatrixXd& Q, double t)
     return E;
 }
 
-Eigen::MatrixXd toEigen(const DenseMatrix<double>& Q)
-{
-    Eigen::Index N1 = Q.rows();
-    Eigen::Index N2 = Q.cols();
-
-    Eigen::MatrixXd EQ(N1,N2);
-
-    for(int i=0;i<N1;i++)
-        for(int j=0;j<N2;j++)
-            EQ(i,j) = Q(i,j);
-
-    return EQ;
-}
-
-DenseMatrix<double> fromEigen(const Eigen::MatrixXd& EM)
-{
-    int N1 = EM.rows();
-    int N2 = EM.cols();
-
-    DenseMatrix<double> M(N1,N2);
-
-    for(int i=0;i<N1;i++)
-        for(int j=0;j<N2;j++)
-            M(i,j) = EM(i,j);
-
-    return M;
-}
-
-double rate_away(const vector<double>& pi, const Eigen::MatrixXd& Q)
+double rate_away(const vector<double>& pi, const DenseMatrix<double>& Q)
 {
     double rate = 0;
     for(int s=0;s<Q.rows();s++)
@@ -252,35 +224,6 @@ double positivize_and_renormalize_matrix(DenseMatrix<double>& E)
             E(i,j) *= factor;
 
         // The row sum should be 1!
-        error = std::max(error, std::abs(1-sum));
-    }
-
-    return error;
-}
-
-double positivize_and_renormalize_matrix(Eigen::MatrixXd& E)
-{
-    double error = 0;
-    // Force positive, and renormalize rows.
-    for(int i=0;i<E.rows();i++)
-    {
-        double sum = 0;
-        for(int j=0;j<E.cols();j++) {
-            // assert(E(i,j) >= -1.0e-10);
-
-            // Force positive
-            E(i,j) = std::max(0.0, E(i,j));
-            sum += E(i,j);
-        }
-
-        // assert(t > 10 or std::abs(sum - 1.0) < 1.0e-10*E.size1());
-
-        // Renormalize rows
-        double factor = 1.0/sum;
-        for(int j=0;j<E.cols();j++)
-            E(i,j) *= factor;
-
-        // The row sum factor should be 1!
         error = std::max(error, std::abs(1-sum));
     }
 
@@ -368,7 +311,7 @@ std::vector<double> compute_stationary_freqs(const DenseMatrix<double>& Q)
     return pi;
 }
 
-bool checkStationary(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double tol)
+bool checkStationary(const DenseMatrix<double>& Q, const Eigen::VectorXd& pi, double tol)
 {
     assert(tol >= 0);
     assert(Q.rows() == Q.cols());
@@ -391,18 +334,15 @@ bool checkStationary(const DenseMatrix<double>& Q, const std::vector<double>& pi
     int n = Q.rows();
     assert(Q.cols() == n);
 
-    // 1. Q2 = Q
-    Eigen::MatrixXd Q2 = toEigen(Q);
-
-    // 2. pi2 = pi
+    // 1. pi2 = pi
     Eigen::VectorXd pi2(n);
     for(int i=0;i<n;i++)
         pi2[i] = pi[i];
 
-    return checkStationary(Q2, pi2, tol);
+    return checkStationary(Q, pi2, tol);
 }
 
-bool checkReversible(const Eigen::MatrixXd& Q, const Eigen::VectorXd& pi, double tol)
+bool checkReversible(const DenseMatrix<double>& Q, const Eigen::VectorXd& pi, double tol)
 {
     // S(i,j) = pi[i]*Q(i,j) should be symmetric.
 
@@ -421,21 +361,18 @@ bool checkReversible(const DenseMatrix<double>& Q, const std::vector<double>& pi
     assert(Q.cols() == n);
     assert(pi.size() == n);
 
-    // 1. Q2 = Q
-    Eigen::MatrixXd Q2 = toEigen(Q);
-
-    // 2. pi2 = pi
+    // 1. pi2 = pi
     Eigen::VectorXd pi2(n);
     for(int i=0;i<n;i++)
         pi2[i] = pi[i];
 
-    return checkReversible(Q2, pi2, tol);
+    return checkReversible(Q, pi2, tol);
 }
 
 
 
 // Find strongly connected components using Kosaraju's algorithm
-static std::vector<std::vector<int>> stronglyConnectedComponents(const Eigen::MatrixXd& Q) {
+static std::vector<std::vector<int>> stronglyConnectedComponents(const DenseMatrix<double>& Q) {
     int n = Q.rows();
     std::vector<std::vector<int>> adj(n), adjT(n);
     for (int i = 0; i < n; ++i)
@@ -482,7 +419,7 @@ static std::vector<std::vector<int>> stronglyConnectedComponents(const Eigen::Ma
 }
 
 // Check if SCC is closed (no outgoing edges)
-static bool isClosedClass(const Eigen::MatrixXd& Q, const std::vector<int>& cls) {
+static bool isClosedClass(const DenseMatrix<double>& Q, const std::vector<int>& cls) {
     std::set<int> members(cls.begin(), cls.end());
     for (int i : cls) {
         for (int j = 0; j < Q.cols(); ++j) {
@@ -494,12 +431,12 @@ static bool isClosedClass(const Eigen::MatrixXd& Q, const std::vector<int>& cls)
 }
 
 // Compute stationary distribution for irreducible closed class
-static Eigen::VectorXd stationaryDistribution(const Eigen::MatrixXd& Q) {
+static Eigen::VectorXd stationaryDistribution(const DenseMatrix<double>& Q) {
     const Eigen::Index n = Q.rows();
     assert(Q.cols() == n);
 
     // Form A = Qᵀ so that we solve A * π = 0
-    Eigen::MatrixXd A = Q.transpose();
+    DenseMatrix<double> A = Q.transpose();
 
     // 🔹 Step 1: Normalize to improve conditioning
     double max_diag = A.diagonal().cwiseAbs().maxCoeff();
@@ -531,7 +468,7 @@ static Eigen::VectorXd stationaryDistribution(const Eigen::MatrixXd& Q) {
 }
 
 // Compute equilibrium limit
-Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const Eigen::MatrixXd& Q)
+Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const DenseMatrix<double>& Q)
 {
     int n = Q.rows();
     auto sccs = stronglyConnectedComponents(Q);
@@ -549,7 +486,7 @@ Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const Eigen::Matrix
     if (transient.empty()) {
         Eigen::VectorXd pi_inf = Eigen::VectorXd::Zero(n);
         for (auto& cls : closed) {
-            Eigen::MatrixXd Qsub(cls.size(), cls.size());
+            DenseMatrix<double> Qsub(cls.size(), cls.size());
             for (int i = 0; i < (int)cls.size(); ++i)
                 for (int j = 0; j < (int)cls.size(); ++j)
                     Qsub(i, j) = Q(cls[i], cls[j]);
@@ -572,7 +509,7 @@ Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const Eigen::Matrix
         R.insert(R.end(), cls.begin(), cls.end());
 
     int nT = T.size(), nR = R.size();
-    Eigen::MatrixXd Q_TT(nT, nT), Q_TR(nT, nR);
+    DenseMatrix<double> Q_TT(nT, nT), Q_TR(nT, nR);
     for (int i = 0; i < nT; ++i)
         for (int j = 0; j < nT; ++j)
             Q_TT(i, j) = Q(T[i], T[j]);
@@ -581,7 +518,7 @@ Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const Eigen::Matrix
             Q_TR(i, j) = Q(T[i], R[j]);
 
     // Compute absorption matrix B = (-Q_TT)^{-1} * Q_TR
-    Eigen::MatrixXd B = (-Q_TT).colPivHouseholderQr().solve(Q_TR);
+    DenseMatrix<double> B = (-Q_TT).colPivHouseholderQr().solve(Q_TR);
 
     // Compute alpha_R = pi0_T * B + pi0_R
     Eigen::VectorXd pi0_T(nT), pi0_R(nR);
@@ -593,7 +530,7 @@ Eigen::VectorXd equilibriumLimit(const Eigen::VectorXd& pi0, const Eigen::Matrix
     Eigen::VectorXd pi_inf = Eigen::VectorXd::Zero(n);
     int offset = 0;
     for (auto& cls : closed) {
-        Eigen::MatrixXd Qsub(cls.size(), cls.size());
+        DenseMatrix<double> Qsub(cls.size(), cls.size());
         for (int i = 0; i < (int)cls.size(); ++i)
             for (int j = 0; j < (int)cls.size(); ++j)
                 Qsub(i, j) = Q(cls[i], cls[j]);
@@ -622,7 +559,7 @@ std::vector<double> equilibriumLimit(const std::vector<double>& pi0, const Dense
     for(int i=0;i<n;i++)
         epi0[i] = pi0[i];
 
-    auto eQ = toEigen(Q);
+    DenseMatrix<double> eQ = Q;
 
     for(int i=0;i<n;i++)
     {
