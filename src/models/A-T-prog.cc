@@ -466,7 +466,7 @@ Hs::Stmts generate_main(const variables_map& args,
             // Create alignment loggers.
             for(auto& [i, cs, logger]: category_state_loggers)
             {
-                string filename = "C1.catStates"+std::to_string(i+1)+".json";
+                string filename = "C1.properties"+std::to_string(i+1)+".json";
                 HsG::Bind(main, HsG::VarPat(logger.as_<Hs::Var>()), HsG::Apply(Hs::Var("ejsonLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String(filename))})}));
             }
         }
