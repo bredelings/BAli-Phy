@@ -73,6 +73,15 @@
  
  * Implement Data.Array correctly
  
+ * Implement Numerical.LinearAlgebra
+ 
+   - replace some things -- like frequencyMatrix / weightedFrequencyMatrix -- with linear algebra?
+   - allow transpose to not copy?
+   
+ * Clean up EVector
+   - EVector -> RVector?
+   - constrain EVector ops so that things that are not runtime values fail?
+ 
  * Clean up error message printing
 
    - record all the types so that we can jointly tidy them using an implicit tidy state, similar to constraint warnings
