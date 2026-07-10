@@ -54,3 +54,10 @@ True
 True
 True
 True
+True
+True
+((3,3),(2,2),True)
+((3,2),(2,2),True)
+True
+((3,3),(3,2),True)
+((3,2),(2,2),True)

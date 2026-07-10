@@ -14,8 +14,10 @@
 #include "substitution/parsimony.H"
 #include <algorithm>
 #include <Eigen/Cholesky>
+#include <Eigen/Eigenvalues>
 #include <Eigen/LU>
 #include <Eigen/QR>
+#include <Eigen/SVD>
 #include <limits>
 #include <type_traits>
 
@@ -1160,6 +1162,84 @@ extern "C" closure builtin_function_expmNative(OperationArgs& Args)
     if (matrix.rows() != matrix.cols())
         throw myexception()<<"expm: expected a square matrix";
     return new Box<DenseMatrix<double>>(matrix.exp());
+}
+
+// Compute ordered eigenvalues and column eigenvectors of a symmetric matrix.
+extern "C" closure builtin_function_eigSHNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
+    if (matrix.rows() != matrix.cols())
+        throw myexception()<<"eigSH: expected a square matrix";
+    Eigen::SelfAdjointEigenSolver<DenseMatrix<double>> solver(matrix);
+    if (solver.info() != Eigen::Success)
+        throw myexception()<<"eigSH: eigensolver failed";
+    object_ptr<Box<DenseVector<double>>> eigenvalues =
+        new Box<DenseVector<double>>(solver.eigenvalues());
+    object_ptr<Box<DenseMatrix<double>>> eigenvectors =
+        new Box<DenseMatrix<double>>(solver.eigenvectors());
+    return R::RPair(eigenvalues, eigenvectors);
+}
+
+// Compute only the ordered eigenvalues of a symmetric matrix.
+extern "C" closure builtin_function_eigenvaluesSHNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
+    if (matrix.rows() != matrix.cols())
+        throw myexception()<<"eigenvaluesSH: expected a square matrix";
+    Eigen::SelfAdjointEigenSolver<DenseMatrix<double>> solver(matrix, Eigen::EigenvaluesOnly);
+    if (solver.info() != Eigen::Success)
+        throw myexception()<<"eigenvaluesSH: eigensolver failed";
+    return new Box<DenseVector<double>>(solver.eigenvalues());
+}
+
+// Compute full or thin singular vectors once and return the three native
+// results as a nested runtime pair.
+extern "C" closure builtin_function_svdNative(OperationArgs& Args)
+{
+    bool thin = Args.evaluate_slot_to_value(0).as_int();
+    auto value = Args.evaluate_slot_to_value(1);
+    const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
+    unsigned int options = thin ? Eigen::ComputeThinU | Eigen::ComputeThinV
+                                : Eigen::ComputeFullU | Eigen::ComputeFullV;
+    Eigen::JacobiSVD<DenseMatrix<double>> solver(matrix, options);
+    if (solver.info() != Eigen::Success)
+        throw myexception()<<"svd: decomposition failed";
+    object_ptr<Box<DenseMatrix<double>>> u = new Box<DenseMatrix<double>>(solver.matrixU());
+    object_ptr<Box<DenseVector<double>>> s = new Box<DenseVector<double>>(solver.singularValues());
+    object_ptr<Box<DenseMatrix<double>>> v = new Box<DenseMatrix<double>>(solver.matrixV());
+    return R::RPair(u, R::RPair(s, v));
+}
+
+// Compute singular values without allocating either singular-vector matrix.
+extern "C" closure builtin_function_singularValuesNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
+    Eigen::JacobiSVD<DenseMatrix<double>> solver(matrix);
+    if (solver.info() != Eigen::Success)
+        throw myexception()<<"singularValues: decomposition failed";
+    return new Box<DenseVector<double>>(solver.singularValues());
+}
+
+// Compute a full or economy-size QR factorization with explicit Q and R.
+extern "C" closure builtin_function_qrNative(OperationArgs& Args)
+{
+    bool thin = Args.evaluate_slot_to_value(0).as_int();
+    auto value = Args.evaluate_slot_to_value(1);
+    const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
+    Eigen::HouseholderQR<DenseMatrix<double>> solver(matrix);
+    Eigen::Index k = std::min(matrix.rows(), matrix.cols());
+    DenseMatrix<double> full_q = solver.householderQ() *
+        DenseMatrix<double>::Identity(matrix.rows(), matrix.rows());
+    DenseMatrix<double> full_r = DenseMatrix<double>::Zero(matrix.rows(), matrix.cols());
+    full_r.topRows(k) = solver.matrixQR().topRows(k).template triangularView<Eigen::Upper>();
+    DenseMatrix<double> q = thin ? full_q.leftCols(k) : full_q;
+    DenseMatrix<double> r = thin ? full_r.topRows(k) : full_r;
+    object_ptr<Box<DenseMatrix<double>>> q_result = new Box<DenseMatrix<double>>(std::move(q));
+    object_ptr<Box<DenseMatrix<double>>> r_result = new Box<DenseMatrix<double>>(std::move(r));
+    return R::RPair(q_result, r_result);
 }
 
 

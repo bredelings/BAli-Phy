@@ -102,3 +102,24 @@ main = do
     let diagonal = fromLists [[1,0],[0,2]] :: Matrix Double
         expectedExponential = fromLists [[exp 1,0],[0,exp 2]] :: Matrix Double
     print (smallResidual (expm diagonal) expectedExponential)
+    let symmetric = fromLists [[2,1],[1,2]] :: Matrix Double
+        (eigenvalues, eigenvectors) = eigSH symmetric
+    print (smallResidual (symmetric <> eigenvectors)
+                         (eigenvectors <> diag eigenvalues))
+    print (maxElement (abs (eigenvalues - eigenvaluesSH symmetric)) < 1.0e-10)
+    let decompositionInput = fromLists [[1,2],[3,4],[5,6]] :: Matrix Double
+        (fullU, fullS, fullV) = svd decompositionInput
+        k = size fullS
+        fullReconstruction = takeColumns k fullU <> diag fullS <> tr (takeColumns k fullV)
+    print ((rows fullU, cols fullU), (rows fullV, cols fullV),
+           smallResidual fullReconstruction decompositionInput)
+    let (thinU, thinS, thinV) = thinSVD decompositionInput
+    print ((rows thinU, cols thinU), (rows thinV, cols thinV),
+           smallResidual (thinU <> diag thinS <> tr thinV) decompositionInput)
+    print (maxElement (abs (thinS - singularValues decompositionInput)) < 1.0e-10)
+    let (fullQ, fullR) = qr decompositionInput
+        (thinQ, thinR) = thinQR decompositionInput
+    print ((rows fullQ, cols fullQ), (rows fullR, cols fullR),
+           smallResidual (fullQ <> fullR) decompositionInput)
+    print ((rows thinQ, cols thinQ), (rows thinR, cols thinR),
+           smallResidual (thinQ <> thinR) decompositionInput)
