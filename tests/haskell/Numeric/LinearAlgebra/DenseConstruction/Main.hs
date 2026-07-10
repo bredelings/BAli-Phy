@@ -2,8 +2,10 @@
 
 import Numeric.LinearAlgebra
 import Compiler.Fractional
+import Compiler.Integral (fromIntegral)
 import Compiler.Num
 import Data.List (map)
+import Data.Ord ((>))
 import System.IO (print)
 
 -- Exercise the hmatrix construction and conversion interface for both native
@@ -45,3 +47,16 @@ main = do
     print (toLists (repmat left 2 3))
     print (map (map toLists) (toBlocks [1,2] [2,1] sourceMatrix))
     print (map (map toLists) (toBlocksEvery 3 2 sourceMatrix))
+    let reductionVector = fromList [3,1,4,1,5] :: Vector Int
+    print (toList (cmap (\x -> fromIntegral x / 2) reductionVector :: Vector Double))
+    print (sumElements reductionVector, prodElements reductionVector,
+           minElement reductionVector, maxElement reductionVector)
+    print (minIndex reductionVector, maxIndex reductionVector, find (> 2) reductionVector)
+    print (toList (sortVector reductionVector), toList (sortIndex reductionVector))
+    let reductionMatrix = (2 >< 3) [3,1,4,1,5,2] :: Matrix Int
+    print (toLists (cmap (\x -> fromIntegral x / 2) reductionMatrix :: Matrix Double))
+    print (sumElements reductionMatrix, prodElements reductionMatrix,
+           minElement reductionMatrix, maxElement reductionMatrix)
+    print (minIndex reductionMatrix, maxIndex reductionMatrix, find (> 2) reductionMatrix)
+    print (toList (conj reductionVector), toList (cmod 3 reductionVector))
+    print (toLists (conj reductionMatrix), toLists (cmod 3 reductionMatrix))

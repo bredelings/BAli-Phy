@@ -1,6 +1,7 @@
 module Numeric.LinearAlgebra.Data where
 
 import Foreign.CList (mapFrom)
+import Data.OldList (sort)
 
 type R = Double
 type I = Int
@@ -24,7 +25,7 @@ infixl 4 |>
 
 -- Element selects the native representation used by numeric vectors and
 -- matrices.  Instances are limited to representations supported by C++.
-class Element a where
+class (Num a, Ord a) => Element a where
     fromList :: [a] -> Vector a
     (|>) :: Int -> [a] -> Vector a
     (><) :: Int -> Int -> [a] -> Matrix a
@@ -63,14 +64,21 @@ type family IndexOf c
 type instance IndexOf Vector = Int
 type instance IndexOf Matrix = (Int, Int)
 
--- Container supplies the common shape, indexing, constant, and scalar
--- operations needed immediately by both supported dense container types.
+-- Container supplies common shape, construction, traversal, and reduction
+-- operations for both supported dense container types.
 class Element e => Container c e where
     size :: c e -> IndexOf c
     atIndex :: c e -> IndexOf c -> e
     konst :: e -> IndexOf c -> c e
     scalar :: e -> c e
     sumElements :: c e -> e
+    cmap :: Element b => (e -> b) -> c e -> c b
+    prodElements :: c e -> e
+    minElement :: c e -> e
+    maxElement :: c e -> e
+    minIndex :: c e -> IndexOf c
+    maxIndex :: c e -> IndexOf c
+    find :: (e -> Bool) -> c e -> [IndexOf c]
 
 foreign import ecall "Matrix:" vectorSize :: Vector a -> Int
 foreign import ecall "Matrix:" vectorAtIndex :: Vector a -> Int -> a
@@ -83,6 +91,17 @@ instance Element a => Container Vector a where
     konst value count = fromList (replicate count value)
     scalar value = fromList [value]
     sumElements = vectorSumElements
+    cmap function values = fromList (map function (toList values))
+    prodElements = product . toList
+    minElement = minimum . toList
+    maxElement = maximum . toList
+    -- Return the first vector position attaining each extremum.
+    minIndex values = let target = minElement values
+                      in head [i | i <- [0..size values-1], atIndex values i == target]
+    -- Return the first vector position attaining the maximum.
+    maxIndex values = let target = maxElement values
+                      in head [i | i <- [0..size values-1], atIndex values i == target]
+    find predicate values = [i | i <- [0..size values-1], predicate (atIndex values i)]
 
 foreign import ecall "Matrix:" matrixAtIndex :: Int -> Int -> Matrix a -> a
 foreign import ecall "Matrix:" matrixSumElements :: Matrix a -> a
@@ -93,6 +112,22 @@ instance Element a => Container Matrix a where
     konst value (rows,columns) = (rows >< columns) (replicate (rows * columns) value)
     scalar value = (1 >< 1) [value]
     sumElements = matrixSumElements
+    cmap function matrix = (rows matrix >< cols matrix)
+        (map function (toList (flatten matrix)))
+    prodElements = product . toList . flatten
+    minElement = minimum . toList . flatten
+    maxElement = maximum . toList . flatten
+    -- Return the first row-major matrix position attaining each extremum.
+    minIndex matrix = let target = minElement matrix
+                      in head [(i,j) | i <- [0..rows matrix-1], j <- [0..cols matrix-1],
+                                      atIndex matrix (i,j) == target]
+    -- Return the first row-major matrix position attaining the maximum.
+    maxIndex matrix = let target = maxElement matrix
+                      in head [(i,j) | i <- [0..rows matrix-1], j <- [0..cols matrix-1],
+                                      atIndex matrix (i,j) == target]
+    find predicate matrix =
+        [(i,j) | i <- [0..rows matrix-1], j <- [0..cols matrix-1],
+                 predicate (atIndex matrix (i,j))]
 
 -- Convert a native vector to a lazy Haskell list without constructing an
 -- intermediate boxed runtime vector.
@@ -348,6 +383,18 @@ toBlocksEvery rowSize columnSize matrix
     sizes blockSize remaining =
         let current = min blockSize remaining
         in current : sizes blockSize (remaining-current)
+
+sortVector :: (Element a, Ord a) => Vector a -> Vector a
+sortVector = fromList . sort . toList
+
+sortIndex :: (Element a, Ord a) => Vector a -> Vector Int
+sortIndex values = fromList (map snd (sort (zip (toList values) [0..])))
+
+conj :: Container c a => c a -> c a
+conj = id
+
+cmod :: (Container c a, Integral a) => a -> c a -> c a
+cmod divisor = cmap (\value -> value `mod` divisor)
 
 foreign import bpcall "Matrix:tr" transposeNative :: Matrix a -> Matrix a
 foreign import bpcall "Matrix:scale" scaleNative :: a -> Matrix a -> Matrix a

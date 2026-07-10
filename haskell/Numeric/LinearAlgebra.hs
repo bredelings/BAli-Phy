@@ -51,6 +51,17 @@ module Numeric.LinearAlgebra
     , repmat
     , toBlocks
     , toBlocksEvery
+    , cmap
+    , prodElements
+    , minElement
+    , maxElement
+    , minIndex
+    , maxIndex
+    , find
+    , sortVector
+    , sortIndex
+    , conj
+    , cmod
     , tr
     , scale
     , dot
@@ -62,7 +73,7 @@ module Numeric.LinearAlgebra
     , optimiseMult
     ) where
 
-import Prelude hiding ((<>))
+import Prelude hiding ((<>), find)
 import Numeric.LinearAlgebra.Data
 import Numeric.Matrix (optimiseMult)
 import Numeric.Vector ()
