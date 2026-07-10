@@ -35,7 +35,7 @@ parameterMixture values modelFn = values >>= modelFn
 rateMixture model rates = fmap setRateProperty $ scaleBy (1/mean rates) $ rates >>= (\rate -> scaleBy rate model)
 
 wfm (Discrete ms) = let freqs = toVector [ getStartFreqs m | (m,p) <- ms]
-                        dist =  toVector [p | (m,p) <- ms ]
+                        dist =  fromList [p | (m,p) <- ms ]
                     in weightedFrequencyMatrixRaw dist freqs
 
 averageFrequency ms = toList $ builtin_average_frequency $ wfm ms

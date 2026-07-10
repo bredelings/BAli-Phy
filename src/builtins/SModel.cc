@@ -825,26 +825,6 @@ extern "C" closure builtin_function_modulated_markov_smap(OperationArgs& Args)
     return new_smap;
 }
 
-template <typename T>
-T sum(const R::RVector& v);
-
-template<> double sum<>(const R::RVector& v)
-{
-    double d=0;
-    for(auto& vv: v)
-	d += vv.as_double();
-    return d;
-}
-
-void normalize(R::RVector& v)
-{
-    double scale = 1.0/sum<double>(v);
-
-    for(auto& vv: v)
-	vv = vv.as_double()*scale;
-}
-
-
 object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, istream& ifile)
 {
     int n = a.size();
@@ -883,7 +863,7 @@ object_ptr<const Object> Empirical_Frequencies_Function(const alphabet& a, istre
 	}
 
     // Get the frequencies
-    object_ptr<R::RVector> F(new R::RVector(a.size()));
+    object_ptr<Box<DenseVector<double>>> F(new Box<DenseVector<double>>(a.size()));
 
     for(int i=0;i<a.size();i++)
     {
@@ -894,7 +874,7 @@ object_ptr<const Object> Empirical_Frequencies_Function(const alphabet& a, istre
 	    throw myexception()<<"Read "<<i<<" empirical frequencies.";
     }
 
-    normalize(*F);
+    *F /= F->sum();
 
     return object_ptr<const Object>(F);
 }
@@ -919,7 +899,7 @@ extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationAr
     assert(n >= 0);
 
     auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& xs = arg1.as_<R::RVector>();
+    auto& xs = arg1.as_<Box<DenseVector<double>>>();
     
 
     // 2. Check that we have the right number of entries
@@ -939,7 +919,7 @@ extern "C" closure builtin_function_symmetricMatrixFromLowerTriangle(OperationAr
     {
         (*M)(i,i) = 0;
 	for(int j=0;j<i;j++)
-            (*M)(j,i) = (*M)(i,j) = xs[k++].as_double();
+	    (*M)(j,i) = (*M)(i,j) = xs[k++];
     }
 
 
@@ -1173,7 +1153,7 @@ extern "C" closure builtin_function_f2x4_frequencies(OperationArgs& Args)
 extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& S = arg0.as_<R::RVector>();
+    auto& S = arg0.as_<Box<DenseVector<double>>>();
     int n = Args.evaluate_slot_to_value(1).as_int();
 
     auto R = new Box<DenseMatrix<double>>(n,n);
@@ -1186,7 +1166,7 @@ extern "C" closure builtin_function_gtr_sym(OperationArgs& Args)
 	(*R)(i,i) = 0;
 	for(int j=i+1;j<n;j++)
 	{
-	    double x = S[k++].as_double();
+	    double x = S[k++];
 	    (*R)(i,j) = (*R)(j,i) = x;
 	}
     }
@@ -1199,7 +1179,7 @@ extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
     int n = Args.evaluate_slot_to_value(0).as_int();
 
     auto arg0 = Args.evaluate_slot_to_value(1);
-    auto& S = arg0.as_<R::RVector>();
+    auto& S = arg0.as_<Box<DenseVector<double>>>();
 
     auto R = new Box<DenseMatrix<double>>(n,n);
     if (S.size() != n*(n-1))
@@ -1213,7 +1193,7 @@ extern "C" closure builtin_function_non_rev_from_vec(OperationArgs& Args)
 	{
             if (i == j) continue;
 
-	    (*R)(i,j) = S[k++].as_double();
+	    (*R)(i,j) = S[k++];
 	}
     }
 
@@ -1351,9 +1331,9 @@ extern "C" closure builtin_function_mut_sel_q(OperationArgs& Args)
     assert(Q0.rows() == Q0.cols());
     int n = Q0.rows();
 
-    auto F   = vector<double>( Args.evaluate_slot_to_value(1).as_< R::RVector >() );
-    for(auto& f: F)
-	f = bound(-20,20,f);
+    DenseVector<double> F = Args.evaluate_slot_to_value(1).as_<Box<DenseVector<double>>>();
+    for(Eigen::Index i=0; i<F.size(); i++)
+	F[i] = bound(-20,20,F[i]);
 
     assert(F.size() == n);
 
@@ -1394,16 +1374,16 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
     auto pi0_value = Args.evaluate_slot_to_value(0);
     const auto& pi0 = pi0_value.as_<Box<DenseVector<double>>>();
 
-    auto F   = vector<double>( Args.evaluate_slot_to_value(1).as_< R::RVector >() );
-    for(auto& f: F)
-	f = bound(-20,20,f);
+    DenseVector<double> F = Args.evaluate_slot_to_value(1).as_<Box<DenseVector<double>>>();
+    for(Eigen::Index i=0; i<F.size(); i++)
+	F[i] = bound(-20,20,F[i]);
 
     assert(pi0.size() == F.size());
 
     // compute frequencies
     auto pi = new Box<DenseVector<double>>(pi0);
 
-    double Fmax = max(F);
+    double Fmax = F.maxCoeff();
 
     for(int i=0; i<pi->size(); i++)
 	(*pi)[i] *= exp(F[i]-Fmax);
@@ -1435,7 +1415,7 @@ extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
 extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& D = arg0.as_<R::RVector>();
+    const auto& D = arg0.as_<Box<DenseVector<double>>>();
 
     auto arg1 = Args.evaluate_slot_to_value(1);
     const auto& F = arg1.as_<R::RVector>();
@@ -1449,7 +1429,7 @@ extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Ar
     auto *WF = new Box<DenseMatrix<double>>(n_models, n_states);
 
     for(int m=0;m<n_models;m++) {
-	double p = D[m].as_double();
+	double p = D[m];
 	const auto& f = F[m].as_<Box<DenseVector<double>>>();
 	for(int s=0;s<n_states;s++) 
 	    (*WF)(m,s) = p*f[s];

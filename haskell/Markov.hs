@@ -5,8 +5,8 @@ import SModel.Rate
 import EigenExp
 import Reversible
 
-foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: EVector Double -> Int -> Matrix Double
-foreign import bpcall "SModel:" non_rev_from_vec :: Int -> EVector Double -> Matrix Double
+foreign import bpcall "SModel:gtr_sym" builtin_gtr_sym :: Vector Double -> Int -> Matrix Double
+foreign import bpcall "SModel:" non_rev_from_vec :: Int -> Vector Double -> Matrix Double
 foreign import bpcall "SModel:" fixupDiagonalRates :: Matrix Double -> Matrix Double
 foreign import bpcall "SModel:plus_gwf_matrix" plus_gwf_matrix :: Vector Double -> Double -> Matrix Double
 foreign import bpcall "Matrix:MatrixExp" mexp :: Matrix Double -> Double -> Matrix Double
@@ -67,7 +67,7 @@ uniformEquilibriumLimit q = equilibriumLimit pi0 q where
 
 eqMarkov q = setReversibility EqNonRev $ markov q (uniformEquilibriumLimit q)
 
-non_rev_from_list n rates = non_rev_from_vec n (toVector rates)
+non_rev_from_list n rates = non_rev_from_vec n (fromList rates)
 
 instance Scalable Markov where
     scaleBy f (Markov q pi s decomp rev) = Markov q pi (s*f) decomp rev
@@ -110,7 +110,7 @@ instance Show Markov where
 
 plus_f_matrix pi = plus_gwf_matrix pi 1
 
-gtr_sym n exchange = builtin_gtr_sym (toVector exchange) n
+gtr_sym n exchange = builtin_gtr_sym (fromList exchange) n
 
 gtr er pi = setReversibility EqRev $ markov (er * plus_f_matrix pi') pi' where pi' = fromList pi
 

@@ -10,10 +10,11 @@ import Data.Function (($))
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
 import Data.Maybe
-import Data.OldList ((!!), drop, take)
+import Data.OldList ((!!), drop, length, replicate, take)
 import Data.Ord
 import Data.Text (pack)
-import Numeric.LinearAlgebra (cols, fromList, rows, toList)
+import Foreign.Vector (toVector)
+import Numeric.LinearAlgebra (cols, flatten, fromList, rows, toList)
 import qualified Markov as CoreMarkov
 import Probability.Distribution.PhyloCTMC.FixedA.Properties
 import Probability.Distribution.PhyloCTMC.Properties
@@ -46,8 +47,8 @@ singleComponentValues property =
       [StateProperties values] -> values
       _                        -> error "expected one component"
 
--- Check rate, dN/dS, Markov-modulated, missing-property, and observable
--- PhyloCTMC property behavior through stable printed results.
+-- Check model properties and native substitution-model numeric arrays through
+-- stable printed results.
 main = do
   let base = always (jukes_cantor dna)
       rates = Discrete [(0.5, 0.5), (1.5, 0.5)]
@@ -63,6 +64,17 @@ main = do
       posSelectionValue = firstValue $ singleComponentValues $ lookupProperty "posSelection" codonProperties
 
   putStrLn $ show [dndsValue, posSelectionValue]
+  let triangle = symmetricMatrixFromLowerTriangle 3 [1, 2, 3]
+      nonReversible = nonRev dna (replicate 12 1)
+      weighted = weightedFrequencyMatrixRaw (fromList [0.25, 0.75])
+                   (toVector [fromList [0.5, 0.5], fromList [0.25, 0.75]])
+      selected = mut_sel (replicate (alphabetSize codons) 0) codonModel
+
+  putStrLn $ show (rows triangle, cols triangle, toList (flatten triangle))
+  putStrLn $ show $ length $ wag_frequencies aa
+  putStrLn $ show (rows (CoreMarkov.getQ nonReversible), cols (CoreMarkov.getQ nonReversible))
+  putStrLn $ show (rows weighted, cols weighted, toList (flatten weighted))
+  putStrLn $ show $ length $ toList $ CoreMarkov.getStartFreqs selected
 
   let model1 = setConstantStateProperty (pack "dNdS") 0.5 (jukes_cantor dna)
       model2 = setConstantStateProperty (pack "dNdS") 2.0 (jukes_cantor dna)

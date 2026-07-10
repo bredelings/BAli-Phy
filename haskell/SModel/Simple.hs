@@ -51,10 +51,10 @@ class CheckReversible m => SimpleSModel t m where
     nBaseModels m = length (distribution m)
     getTree (SModelOnTree tree _) = tree
 
-foreign import bpcall "SModel:" weightedFrequencyMatrixRaw :: EVector Double -> EVector (Vector Double) -> Matrix Double
+foreign import bpcall "SModel:" weightedFrequencyMatrixRaw :: Vector Double -> EVector (Vector Double) -> Matrix Double
 foreign import bpcall "SModel:" frequencyMatrixRaw :: EVector (Vector Double) -> Matrix Double
 
-weightedFrequencyMatrix model = let dist = toVector $ distribution model
+weightedFrequencyMatrix model = let dist = fromList $ distribution model
                                     freqs = toVector $ componentFrequencies model
                                 in weightedFrequencyMatrixRaw dist freqs
 
