@@ -1,6 +1,11 @@
 # 4.3 (UNRELEASED)
 
+## Features
+
+- Compute posterior mean rate, dNdS and probability of positive selection.
+
 ## Fixes
+
 - A variety of bug fixes.
 
 ## Haskell
@@ -10,16 +15,30 @@
 - Implement records fully
 - Implement `LANGUAGE BangPatterns`
 - Implement `LANGUAGE MultiWayIf`
+- Implement `LANGUAGE ImportQualifiedPost`
 - Fix `LANGUAGE RankNTypes`
 - Fix `LANGUAGE RecursiveDo`
 - Print usable error message for pattern-match errors.
-- Improve diagnostics
-- Correctly handle infix declarations.
+- Improve diagnostics.
+- Correctly handle nested infix declarations.
 - Disentangle disambiguation and renaming
+- Implement `Data.Map` and `Data.Set` as balanced binary trees.
+- Parse UTF8 variable names in Haskell files.
+- UTF8:
+  * `Char` is now a unicode code point.
+  * `Text` is now UTF8.
+  * `CPPString` is now UTF8.
 
-## Runtime
+## Internal
+
+- Use typed AST for Haskell code.
+
+## Runtime/Interpreter
 
 - Use typed AST for runtime code
+- Allow recording dependent USE/FORCE edges in addition to fixed edges.
+- Faster operations on lists using dependent edges.
+- Record USE/FORCE edges in the same list.
 
 # 4.2 (May 27, 2026)
 
