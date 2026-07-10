@@ -260,6 +260,106 @@ closure outer_vectors(const Box<NativeVector>& vector1,
     return result;
 }
 
+// Copy a checked contiguous vector segment into independent native storage.
+template <typename NativeVector>
+closure slice_vector(const Box<NativeVector>& values, int start, int count)
+{
+    if (start < 0 or count < 0 or start > values.size() or count > values.size() - start)
+        throw myexception()<<"subVector: range ("<<start<<", "<<count
+                           <<") exceeds vector length "<<values.size();
+    NativeVector result = values.segment(start, count);
+    return new Box<NativeVector>(std::move(result));
+}
+
+// Copy a checked rectangular block into independent row-major storage.
+template <typename NativeMatrix>
+closure slice_matrix(const Box<NativeMatrix>& matrix, int first_row, int first_column,
+                     int row_count, int column_count)
+{
+    if (row_count <= 0 or column_count <= 0)
+        return new Box<NativeMatrix>(std::max(0, row_count), std::max(0, column_count));
+    if (first_row < 0 or first_column < 0 or
+        first_row > matrix.rows() - row_count or first_column > matrix.cols() - column_count)
+        throw myexception()<<"subMatrix: requested block (("<<first_row<<", "<<first_column
+                           <<"), ("<<row_count<<", "<<column_count<<")) from matrix ("
+                           <<matrix.rows()<<", "<<matrix.cols()<<")";
+    NativeMatrix result = matrix.block(first_row, first_column, row_count, column_count);
+    return new Box<NativeMatrix>(std::move(result));
+}
+
+// Gather arbitrary checked rows and columns without constructing intermediate
+// matrices for either dimension.
+template <typename NativeMatrix>
+closure gather_matrix(const Box<NativeMatrix>& matrix,
+                      const Box<DenseVector<int>>& row_indices,
+                      const Box<DenseVector<int>>& column_indices)
+{
+    for(auto index: row_indices)
+        if (index < 0 or index >= matrix.rows())
+            throw myexception()<<"matrix extraction: row index "<<index<<" is out of range";
+    for(auto index: column_indices)
+        if (index < 0 or index >= matrix.cols())
+            throw myexception()<<"matrix extraction: column index "<<index<<" is out of range";
+
+    auto result = new Box<NativeMatrix>(row_indices.size(), column_indices.size());
+    for(Eigen::Index i=0; i<row_indices.size(); i++)
+        for(Eigen::Index j=0; j<column_indices.size(); j++)
+            (*result)(i,j) = matrix(row_indices(i), column_indices(j));
+    return result;
+}
+
+// Concatenate vectors into one native allocation.
+template <typename NativeVector>
+closure append_vectors(const Box<NativeVector>& left, const Box<NativeVector>& right)
+{
+    auto result = new Box<NativeVector>(left.size() + right.size());
+    result->head(left.size()) = left;
+    result->tail(right.size()) = right;
+    return result;
+}
+
+// Join matrices along one axis, broadcasting a singleton perpendicular
+// extent while copying directly into the result blocks.
+template <typename NativeMatrix>
+closure join_matrices(const Box<NativeMatrix>& first, const Box<NativeMatrix>& second,
+                      bool horizontally)
+{
+    Eigen::Index rows = horizontally
+        ? conform_dimension(first.rows(), second.rows(), "horizontal join", "row")
+        : first.rows() + second.rows();
+    Eigen::Index columns = horizontally
+        ? first.cols() + second.cols()
+        : conform_dimension(first.cols(), second.cols(), "vertical join", "column");
+    auto result = new Box<NativeMatrix>(rows, columns);
+    for(Eigen::Index i=0; i<rows; i++)
+        for(Eigen::Index j=0; j<columns; j++)
+        {
+            bool in_first = horizontally ? j < first.cols() : i < first.rows();
+            const auto& source = in_first ? first : second;
+            Eigen::Index source_i = horizontally ? (source.rows() == 1 ? 0 : i)
+                                                 : i - (in_first ? 0 : first.rows());
+            Eigen::Index source_j = horizontally ? j - (in_first ? 0 : first.cols())
+                                                 : (source.cols() == 1 ? 0 : j);
+            (*result)(i,j) = source(source_i, source_j);
+        }
+    return result;
+}
+
+// Tile a matrix into an explicitly repeated Eigen-backed result.
+template <typename NativeMatrix>
+closure repeat_matrix(const Box<NativeMatrix>& matrix, int row_repeats, int column_repeats)
+{
+    if (row_repeats < 0 or column_repeats < 0)
+        throw myexception()<<"repmat: repeat counts must be nonnegative";
+    auto result = new Box<NativeMatrix>(matrix.rows() * row_repeats,
+                                        matrix.cols() * column_repeats);
+    for(int i=0; i<row_repeats; i++)
+        for(int j=0; j<column_repeats; j++)
+            result->block(i * matrix.rows(), j * matrix.cols(),
+                          matrix.rows(), matrix.cols()) = matrix;
+    return result;
+}
+
 // Transpose a native matrix while preserving its element representation.
 template <typename NativeMatrix>
 closure transpose_matrix(const Box<NativeMatrix>& matrix1)
@@ -574,6 +674,77 @@ extern "C" closure builtin_function_vectorAsColumn(OperationArgs& Args)
     auto value = Args.evaluate_slot_to_value(0);
     return visit_numeric_vector(value, [](const auto& vector_value) {
         return vector_as_matrix(vector_value, false);
+    });
+}
+
+// Extract a contiguous segment from either native vector representation.
+extern "C" closure builtin_function_subVectorNative(OperationArgs& Args)
+{
+    int start = Args.evaluate_slot_to_value(0).as_int();
+    int count = Args.evaluate_slot_to_value(1).as_int();
+    auto value = Args.evaluate_slot_to_value(2);
+    return visit_numeric_vector(value, [start, count](const auto& vector) {
+        return slice_vector(vector, start, count);
+    });
+}
+
+// Append vectors after checking that their native element representations agree.
+extern "C" closure builtin_function_appendVectorsNative(OperationArgs& Args)
+{
+    auto left = Args.evaluate_slot_to_value(0);
+    auto right = Args.evaluate_slot_to_value(1);
+    return visit_same_numeric_vector_pair(left, right, [](const auto& native_left,
+                                                          const auto& native_right) {
+        return append_vectors(native_left, native_right);
+    });
+}
+
+// Extract a rectangular Eigen block from either matrix representation.
+extern "C" closure builtin_function_subMatrixNative(OperationArgs& Args)
+{
+    int first_row = Args.evaluate_slot_to_value(0).as_int();
+    int first_column = Args.evaluate_slot_to_value(1).as_int();
+    int row_count = Args.evaluate_slot_to_value(2).as_int();
+    int column_count = Args.evaluate_slot_to_value(3).as_int();
+    auto value = Args.evaluate_slot_to_value(4);
+    return visit_matrix(value, [=](const auto& matrix) {
+        return slice_matrix(matrix, first_row, first_column, row_count, column_count);
+    });
+}
+
+// Gather rows and columns selected by native integer index vectors.
+extern "C" closure builtin_function_gatherMatrixNative(OperationArgs& Args)
+{
+    auto row_value = Args.evaluate_slot_to_value(0);
+    const auto& row_indices = row_value.as_<Box<DenseVector<int>>>();
+    auto column_value = Args.evaluate_slot_to_value(1);
+    const auto& column_indices = column_value.as_<Box<DenseVector<int>>>();
+    auto matrix_value = Args.evaluate_slot_to_value(2);
+    return visit_matrix(matrix_value, [&](const auto& matrix) {
+        return gather_matrix(matrix, row_indices, column_indices);
+    });
+}
+
+// Concatenate matrices horizontally or vertically with singleton expansion.
+extern "C" closure builtin_function_joinMatricesNative(OperationArgs& Args)
+{
+    bool horizontally = Args.evaluate_slot_to_value(0).as_int();
+    auto first = Args.evaluate_slot_to_value(1);
+    auto second = Args.evaluate_slot_to_value(2);
+    return visit_same_matrix_pair(first, second, [horizontally](const auto& native_first,
+                                                               const auto& native_second) {
+        return join_matrices(native_first, native_second, horizontally);
+    });
+}
+
+// Repeat a matrix by whole row and column blocks.
+extern "C" closure builtin_function_repmatNative(OperationArgs& Args)
+{
+    auto matrix_value = Args.evaluate_slot_to_value(0);
+    int row_repeats = Args.evaluate_slot_to_value(1).as_int();
+    int column_repeats = Args.evaluate_slot_to_value(2).as_int();
+    return visit_matrix(matrix_value, [=](const auto& matrix) {
+        return repeat_matrix(matrix, row_repeats, column_repeats);
     });
 }
 

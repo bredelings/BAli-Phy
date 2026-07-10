@@ -3,6 +3,7 @@
 import Numeric.LinearAlgebra
 import Compiler.Fractional
 import Compiler.Num
+import Data.List (map)
 import System.IO (print)
 
 -- Exercise the hmatrix construction and conversion interface for both native
@@ -26,3 +27,21 @@ main = do
     print (toList (linspace 0 (1,5) :: Vector Double))
     print (toList (linspace 1 (1,5) :: Vector Double))
     print (toList (linspace 5 (-3,7) :: Vector Double))
+    let sourceVector = fromList [0..7] :: Vector Int
+    print (toList (subVector 2 3 sourceVector))
+    print (takesV [2,3] sourceVector)
+    print (toList (vjoin [subVector 0 2 sourceVector, subVector 5 3 sourceVector]))
+    let sourceMatrix = (4 >< 5) [0..19] :: Matrix Int
+    print (toLists (subMatrix (1,1) (2,3) sourceMatrix))
+    print (toLists (takeRows 2 sourceMatrix), toLists (dropColumns 3 sourceMatrix))
+    print (toLists (flipud sourceMatrix), toLists (fliprl sourceMatrix))
+    print (toLists (sourceMatrix ?? (Pos (idxs [2,1]), Range 4 (-2) 0)))
+    print (toLists (sourceMatrix ?? (PosCyc (idxs [-7,80]), Take 3)))
+    let left = (2 >< 1) [1,2] :: Matrix Int
+        right = (1 >< 2) [3,4] :: Matrix Int
+    print (toLists (left ||| right), toLists (left === right))
+    print (toLists (fromBlocks [[left, right], [right, left]]))
+    print (toLists (diagBlock [left, right]))
+    print (toLists (repmat left 2 3))
+    print (map (map toLists) (toBlocks [1,2] [2,1] sourceMatrix))
+    print (map (map toLists) (toBlocksEvery 3 2 sourceMatrix))

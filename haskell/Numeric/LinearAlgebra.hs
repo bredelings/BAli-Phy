@@ -32,6 +32,25 @@ module Numeric.LinearAlgebra
     , diagRect
     , takeDiag
     , linspace
+    , subVector
+    , takesV
+    , vjoin
+    , subMatrix
+    , takeRows
+    , dropRows
+    , takeColumns
+    , dropColumns
+    , flipud
+    , fliprl
+    , Extractor(..)
+    , (??)
+    , fromBlocks
+    , (|||)
+    , (===)
+    , diagBlock
+    , repmat
+    , toBlocks
+    , toBlocksEvery
     , tr
     , scale
     , dot

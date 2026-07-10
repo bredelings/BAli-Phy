@@ -203,6 +203,152 @@ linspace count (start, end) = fromList
     [start + fromIntegral i * step | i <- [0..count-1]]
   where step = (end - start) / fromIntegral (count - 1)
 
+foreign import bpcall "Matrix:" subVectorNative :: Int -> Int -> Vector a -> Vector a
+foreign import bpcall "Matrix:" appendVectorsNative :: Vector a -> Vector a -> Vector a
+
+subVector :: Element a => Int -> Int -> Vector a -> Vector a
+subVector = subVectorNative
+
+-- Extract consecutive vector segments, leaving any unrequested suffix unused.
+takesV :: Element a => [Int] -> Vector a -> [Vector a]
+takesV [] _ = []
+takesV (count:counts) values =
+    subVector 0 count values :
+        takesV counts (subVector count (size values - count) values)
+
+vjoin :: Element a => [Vector a] -> Vector a
+vjoin [] = fromList []
+vjoin (value:values) = appendVectorsNative value (vjoin values)
+
+foreign import bpcall "Matrix:" subMatrixNative :: Int -> Int -> Int -> Int -> Matrix a -> Matrix a
+foreign import bpcall "Matrix:" gatherMatrixNative :: Vector Int -> Vector Int -> Matrix a -> Matrix a
+foreign import bpcall "Matrix:" joinMatricesNative :: Int -> Matrix a -> Matrix a -> Matrix a
+foreign import bpcall "Matrix:" repmatNative :: Matrix a -> Int -> Int -> Matrix a
+
+subMatrix :: Element a => (Int, Int) -> (Int, Int) -> Matrix a -> Matrix a
+subMatrix (firstRow, firstColumn) (rowCount, columnCount) =
+    subMatrixNative firstRow firstColumn rowCount columnCount
+
+takeRows :: Element a => Int -> Matrix a -> Matrix a
+takeRows count matrix = subMatrix (0,0) (count, cols matrix) matrix
+
+dropRows :: Element a => Int -> Matrix a -> Matrix a
+dropRows count matrix = subMatrix (count,0) (rows matrix-count, cols matrix) matrix
+
+takeColumns :: Element a => Int -> Matrix a -> Matrix a
+takeColumns count matrix = subMatrix (0,0) (rows matrix, count) matrix
+
+dropColumns :: Element a => Int -> Matrix a -> Matrix a
+dropColumns count matrix = subMatrix (0,count) (rows matrix, cols matrix-count) matrix
+
+data Extractor = All
+               | Range Int Int Int
+               | Pos (Vector Int)
+               | PosCyc (Vector Int)
+               | Take Int
+               | TakeLast Int
+               | Drop Int
+               | DropLast Int
+
+infixl 9 ??
+
+-- Convert each public extraction form to native indices and gather both
+-- dimensions in one pass over the source matrix.
+(??) :: Element a => Matrix a -> (Extractor, Extractor) -> Matrix a
+matrix ?? (rowExtractor, columnExtractor) =
+    gatherMatrixNative (indices (rows matrix) rowExtractor)
+                       (indices (cols matrix) columnExtractor) matrix
+  where
+    -- Interpret one extractor against a concrete matrix extent.
+    indices dimension All = range dimension
+    indices _ (Range start step end)
+        | step == 0 = error "Numeric.LinearAlgebra.(??): Range step cannot be zero"
+        | otherwise = idxs [start,start+step..end]
+    indices _ (Pos positions) = positions
+    indices dimension (PosCyc positions)
+        | dimension == 0 && size positions /= 0 =
+            error "Numeric.LinearAlgebra.(??): cannot cycle indexes into an empty dimension"
+        | otherwise = fromList [position `mod` dimension | position <- toList positions]
+    indices dimension (Take count) = idxs [0..min dimension (max 0 count)-1]
+    indices dimension (TakeLast count) =
+        idxs [max 0 (dimension-max 0 count)..dimension-1]
+    indices dimension (Drop count) = idxs [min dimension (max 0 count)..dimension-1]
+    indices dimension (DropLast count) =
+        idxs [0..max 0 (dimension-max 0 count)-1]
+
+flipud :: Element a => Matrix a -> Matrix a
+flipud matrix = matrix ?? (Range (rows matrix-1) (-1) 0, All)
+
+fliprl :: Element a => Matrix a -> Matrix a
+fliprl matrix = matrix ?? (All, Range (cols matrix-1) (-1) 0)
+
+infixl 3 |||
+infixl 2 ===
+
+(|||) :: Element a => Matrix a -> Matrix a -> Matrix a
+(|||) = joinMatricesNative 1
+
+(===) :: Element a => Matrix a -> Matrix a -> Matrix a
+(===) = joinMatricesNative 0
+
+-- Assemble block rows through native concatenation so each element remains in
+-- Eigen-backed storage throughout singleton expansion and copying.
+fromBlocks :: Element a => [[Matrix a]] -> Matrix a
+fromBlocks blocks = stack (map joinRow blocks)
+  where
+    -- Join one horizontal block row from right to left.
+    joinRow [] = (0 >< 0) []
+    joinRow [matrix] = matrix
+    joinRow (matrix:matrices) = matrix ||| joinRow matrices
+    -- Stack the completed block rows from top to bottom.
+    stack [] = (0 >< 0) []
+    stack [matrix] = matrix
+    stack (matrix:matrices) = matrix === stack matrices
+
+-- Place matrices on a block diagonal and fill every off-diagonal block with
+-- zeros having the corresponding row and column extents.
+diagBlock :: (Element a, Num a) => [Matrix a] -> Matrix a
+diagBlock matrices = fromBlocks
+    [[if i == j then matrix else konst 0 (rows matrix, cols other)
+        | (j,other) <- zip [0..] matrices]
+        | (i,matrix) <- zip [0..] matrices]
+
+repmat :: Element a => Matrix a -> Int -> Int -> Matrix a
+repmat = repmatNative
+
+-- Partition the requested prefix into explicit block sizes, discarding any
+-- rows or columns not covered by those sizes.
+toBlocks :: Element a => [Int] -> [Int] -> Matrix a -> [[Matrix a]]
+toBlocks rowSizes columnSizes matrix
+    | any (< 0) rowSizes || any (< 0) columnSizes =
+        error "Numeric.LinearAlgebra.toBlocks: block sizes must be nonnegative"
+    | otherwise = rowsAt 0 rowSizes
+  where
+    -- Walk the requested row sizes while retaining their source offset.
+    rowsAt _ [] = []
+    rowsAt firstRow (rowCount:remainingRows) =
+        columnsAt firstRow rowCount 0 columnSizes :
+            rowsAt (firstRow+rowCount) remainingRows
+    -- Walk one block row's column sizes while retaining their source offset.
+    columnsAt _ _ _ [] = []
+    columnsAt firstRow rowCount firstColumn (columnCount:remainingColumns) =
+        subMatrix (firstRow,firstColumn) (rowCount,columnCount) matrix :
+            columnsAt firstRow rowCount (firstColumn+columnCount) remainingColumns
+
+-- Cover the complete matrix with equal blocks and smaller final blocks when
+-- an extent is not divisible by the requested block size.
+toBlocksEvery :: Element a => Int -> Int -> Matrix a -> [[Matrix a]]
+toBlocksEvery rowSize columnSize matrix
+    | rowSize <= 0 || columnSize <= 0 =
+        error "Numeric.LinearAlgebra.toBlocksEvery: block sizes must be positive"
+    | otherwise = toBlocks (sizes rowSize (rows matrix))
+                           (sizes columnSize (cols matrix)) matrix
+  where
+    sizes _ 0 = []
+    sizes blockSize remaining =
+        let current = min blockSize remaining
+        in current : sizes blockSize (remaining-current)
+
 foreign import bpcall "Matrix:tr" transposeNative :: Matrix a -> Matrix a
 foreign import bpcall "Matrix:scale" scaleNative :: a -> Matrix a -> Matrix a
 
