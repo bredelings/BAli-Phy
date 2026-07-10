@@ -619,7 +619,7 @@ compute_logged_quantities(Hs::Stmts& model,
     if (n_branches > 0)
     {
         std::optional<Hs::Var> anc_states;
-	if (imodel_index or get_setting_or("write-fixed-alignments",false) or get_setting_or("write-category-states", false))
+	if (imodel_index or get_setting_or("write-fixed-alignments",false) or get_setting_or("write-properties", false))
         {
             anc_states = Hs::Var("ancStates" + part_suffix);
             HsG::Let(model, *anc_states, HsG::Apply(Hs::Var("prop_anc_cat_states"), {properties}));
@@ -644,7 +644,7 @@ compute_logged_quantities(Hs::Stmts& model,
             alignment_loggers.push_back({i, anc_alignment, Hs::Var("logA"+part_suffix)});
 	}
 
-        if (get_setting_or("write-category-states", false))
+        if (get_setting_or("write-properties", false))
         {
             Hs::Var cat_states("catStates" + part_suffix);
             HsG::Let(model, cat_states, HsG::Apply(Hs::Var("labeledNodeMap"), {tree, *anc_states}));

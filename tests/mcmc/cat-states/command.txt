@@ -1,2 +1,2 @@
-5d-muscle.fasta --set write-category-states=true --iter=20
+5d-muscle.fasta --set write-properties=true --iter=20
 
