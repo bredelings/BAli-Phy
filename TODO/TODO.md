@@ -87,3 +87,5 @@
 
    - how do operations return multiple things?
    
+ * Functional Dependencies / FunDeps
+
