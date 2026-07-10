@@ -11,6 +11,7 @@
 #include "util/string/strip.H"
 #include "util/log-level.H"
 #include "math/logprod.H"
+#include "util/dense-matrix.H"
 
 using std::string;
 using std::optional;
@@ -455,8 +456,10 @@ extern "C" closure builtin_function_ewens_sampling_probability(OperationArgs& Ar
 
 extern "C" closure builtin_function_ewens_sampling_mixture_probability(OperationArgs& Args)
 {
-    auto thetas = (vector<double>) Args.evaluate_slot_to_value(0).as_<R::RVector>();
-    auto ps =     (vector<double>) Args.evaluate_slot_to_value(1).as_<R::RVector>();
+    auto thetas_value = Args.evaluate_slot_to_value(0);
+    const auto& thetas = thetas_value.as_<Box<DenseVector<double>>>();
+    auto ps_value = Args.evaluate_slot_to_value(1);
+    const auto& ps = ps_value.as_<Box<DenseVector<double>>>();
     auto arg2 = Args.evaluate_slot_to_value(2);
     const vector<Vector<int>>& afs = arg2.as_<Vector<Vector<int>>>();
 

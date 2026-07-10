@@ -45,8 +45,8 @@ instance HasAnnotatedPdf AFSGroup where
 afsGroup args = AFSGroup args
 
 ---------------------------------
-foreign import bpcall "PopGen:ewens_sampling_mixture_probability" builtin_ewens_sampling_mixture_probability :: EVector Double -> EVector Double -> VVI -> LogDouble
-ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (toVector thetas) (toVector ps) x
+foreign import bpcall "PopGen:ewens_sampling_mixture_probability" builtin_ewens_sampling_mixture_probability :: Vector Double -> Vector Double -> VVI -> LogDouble
+ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (fromList thetas) (fromList ps) x
 
 data AFSMixture = AFSMixture [Double] [Double]
 
@@ -111,4 +111,3 @@ instance HasAnnotatedPdf WilsonMcVean2006 where
     annotated_densities (WilsonMcVean2006 q rhos theta) = make_densities $ wilson_mcvean_2006_composite_likelihood q rhos theta
 
 wilson_mcvean_2006 q rhos theta = WilsonMcVean2006 q rhos theta
-

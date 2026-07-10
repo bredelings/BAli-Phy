@@ -525,12 +525,10 @@ namespace Runtime
 
         RVector* clone() const override { return new RVector(*this); }
 
-        explicit RVector(const std::vector<double>&);
         explicit RVector(const std::vector<int>&);
         explicit RVector(const std::vector<char32_t>&);
         explicit RVector(const std::vector<char>&) = delete;
 
-        explicit operator std::vector<double>() const;
         explicit operator std::vector<int>() const;
         explicit operator std::vector<char32_t>() const;
         explicit operator std::vector<char>() const = delete;

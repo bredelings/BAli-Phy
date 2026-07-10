@@ -4,9 +4,10 @@ import Probability.Random
 import Probability.Distribution.Gamma
 import Probability.Distribution.List
 import MCMC.Moves.Real
+import Numeric.LinearAlgebra (Vector, fromList)
 
-foreign import bpcall "Distribution:dirichlet_density" builtinDirichletDensity :: EVector Double -> EVector Double -> LogDouble
-dirichletDensity as ps = builtinDirichletDensity (toVector as) (toVector ps)
+foreign import bpcall "Distribution:dirichlet_density" builtinDirichletDensity :: Vector Double -> Vector Double -> LogDouble
+dirichletDensity as ps = builtinDirichletDensity (fromList as) (fromList ps)
 
 -- The `dirichlet` does not handle cases where the number of as changes in a graceful way: all entries are resampled!
 sampleDirichlet as = do vs <- mapM (\a-> sample $ gamma a 1) as
@@ -66,4 +67,3 @@ instance Sampleable (DirichletOn a) where
 dirichletOn items ps = DirichletOn items ps
 
 symmetricDirichletOn items a = dirichletOn items (replicate (length items) a)
-

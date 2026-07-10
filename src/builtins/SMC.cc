@@ -57,12 +57,13 @@ double reverse_quantile(double eta, double p)
 
 struct demography
 {
-    vector<double> coalescent_rates;
-    vector<double> level_boundaries;
+    DenseVector<double> coalescent_rates;
+    DenseVector<double> level_boundaries;
 
     EMatrix Pr_X_at(double t, double rho_over_theta);
 
-    demography(const vector<double>& c, const vector<double>& l)
+    demography(Eigen::Ref<const DenseVector<double>> c,
+               Eigen::Ref<const DenseVector<double>> l)
 	:coalescent_rates(c),
 	 level_boundaries(l)
 	{
@@ -71,7 +72,9 @@ struct demography
 };
 
 
-vector<double> get_quantiles(const vector<double>& P, const vector<double>& coalescent_rates, const vector<double>& level_boundaries)
+vector<double> get_quantiles(const vector<double>& P,
+                             Eigen::Ref<const DenseVector<double>> coalescent_rates,
+                             Eigen::Ref<const DenseVector<double>> level_boundaries)
 {
     assert(coalescent_rates.size() == level_boundaries.size());
     assert(level_boundaries[0] == 0.0);
@@ -375,7 +378,9 @@ EMatrix demography::Pr_X_at(double t, double rho_over_theta)
 }
 
 Matrix get_transition_probabilities(const vector<double>& B, const vector<double>& T, const vector<double>& beta, const vector<double>& alpha,
-				    const vector<double>& coalescent_rates, const vector<double>& level_boundaries, double rho_over_theta)
+				    Eigen::Ref<const DenseVector<double>> coalescent_rates,
+                                    Eigen::Ref<const DenseVector<double>> level_boundaries,
+                                    double rho_over_theta)
 {
     assert(level_boundaries.size() >= 1);
     assert(level_boundaries[0] == 0.0);
@@ -720,7 +725,10 @@ vector<pair<double,int>> compress_states(const vector<int>& states, const vector
 
 typedef double smc_tree;
 
-vector<pair<smc_tree,int>> smc_trace(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, double error_rate, const alignment& A)
+vector<pair<smc_tree,int>> smc_trace(double rho_over_theta,
+                                     Eigen::Ref<const DenseVector<double>> coalescent_rates,
+                                     Eigen::Ref<const DenseVector<double>> level_boundaries,
+                                     double error_rate, const alignment& A)
 {
     assert(level_boundaries.size() >= 1);
     assert(level_boundaries[0] == 0.0);
@@ -816,7 +824,10 @@ vector<pair<smc_tree,int>> smc_trace(double rho_over_theta, vector<double> coale
     return compress_states(states, bin_times);
 }
 
-log_double_t smc(double rho_over_theta, vector<double> coalescent_rates, vector<double> level_boundaries, double error_rate, const alignment& A)
+log_double_t smc(double rho_over_theta,
+                 Eigen::Ref<const DenseVector<double>> coalescent_rates,
+                 Eigen::Ref<const DenseVector<double>> level_boundaries,
+                 double error_rate, const alignment& A)
 {
     assert(level_boundaries.size() >= 1);
     assert(level_boundaries[0] == 0.0);
@@ -893,16 +904,16 @@ extern "C" closure builtin_function_smc_density(OperationArgs& Args)
 {
     double rho_over_theta = Args.evaluate_slot_to_value(0).as_double();
 
-    auto thetas = (vector<double>)Args.evaluate_slot_to_value(1).as_<R::RVector>();
+    auto thetas_value = Args.evaluate_slot_to_value(1);
+    const auto& thetas = thetas_value.as_<Box<DenseVector<double>>>();
 
-    auto level_boundaries = (vector<double>)Args.evaluate_slot_to_value(2).as_<R::RVector>();
+    auto boundaries_value = Args.evaluate_slot_to_value(2);
+    const auto& level_boundaries = boundaries_value.as_<Box<DenseVector<double>>>();
 
     // Perhaps we should make this different, depending on whether a sequence matches the reference.
     double error_rate = Args.evaluate_slot_to_value(3).as_double();
 
-    vector<double> coalescent_rates;
-    for(auto theta: thetas)
-	coalescent_rates.push_back(2.0/theta);
+    DenseVector<double> coalescent_rates = 2.0 / thetas.array();
 
     auto a = Args.evaluate_slot_to_value(4);
     auto& A = a.as_<Box<alignment>>().value();
@@ -914,16 +925,16 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
 {
     double rho_over_theta = Args.evaluate_slot_to_value(0).as_double();
 
-    auto thetas = (vector<double>)Args.evaluate_slot_to_value(1).as_<R::RVector>();
+    auto thetas_value = Args.evaluate_slot_to_value(1);
+    const auto& thetas = thetas_value.as_<Box<DenseVector<double>>>();
 
-    auto level_boundaries = (vector<double>)Args.evaluate_slot_to_value(2).as_<R::RVector>();
+    auto boundaries_value = Args.evaluate_slot_to_value(2);
+    const auto& level_boundaries = boundaries_value.as_<Box<DenseVector<double>>>();
 
     // Perhaps we should make this different, depending on whether a sequence matches the reference.
     double error_rate = Args.evaluate_slot_to_value(3).as_double();
 
-    vector<double> coalescent_rates;
-    for(auto theta: thetas)
-	coalescent_rates.push_back(2.0/theta);
+    DenseVector<double> coalescent_rates = 2.0 / thetas.array();
 
     auto a = Args.evaluate_slot_to_value(4);
     auto& A = a.as_<Box<alignment>>().value();

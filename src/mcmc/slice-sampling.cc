@@ -390,8 +390,12 @@ constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(c
      indices(indices_),
      n(n_)
 { 
-    auto x = (vector<double>)C.get_modifiable_values(indices);
-    double total = sum(x);
+    // NOTE: context_ref still returns a structural RVector; remove this
+    // extraction loop when it exposes a direct numeric reduction.
+    auto values = C.get_modifiable_values(indices);
+    double total = 0;
+    for(const auto& value: values)
+        total += value.as_double();
 
     set_lower_bound(0);
     set_upper_bound(total);

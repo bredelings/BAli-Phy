@@ -311,9 +311,6 @@ namespace
         Runtime::RVector ints(std::vector<int>{1, 2, 3});
         require(((std::vector<int>)ints == std::vector<int>{1, 2, 3}), "Runtime::RVector int conversion mismatch");
 
-        Runtime::RVector doubles(std::vector<double>{1.5, 2.5});
-        require(((std::vector<double>)doubles == std::vector<double>{1.5, 2.5}), "Runtime::RVector double conversion mismatch");
-
         Runtime::RVector chars(std::vector<char32_t>{U'a', U'b'});
         require(((std::vector<char32_t>)chars == std::vector<char32_t>{U'a', U'b'}), "Runtime::RVector char conversion mismatch");
     }

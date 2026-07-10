@@ -9,6 +9,7 @@
 #include "util/bounds.H"
 #include "util/rng.H"
 #include "util/log-level.H"
+#include "util/dense-matrix.H"
 
 #include <boost/math/distributions.hpp>
 #include <boost/math/special_functions/gamma.hpp>
@@ -187,8 +188,15 @@ extern "C" closure builtin_function_cauchy_quantile(OperationArgs& Args)
 // Third convert all value arguments here to "var" and use Distribution_Functions()
 extern "C" closure builtin_function_dirichlet_density(OperationArgs& Args)
 {
-    auto n = (vector<double>) Args.evaluate_slot_to_value(0).as_<R::RVector>();
-    auto x = (vector<double>) Args.evaluate_slot_to_value(1).as_<R::RVector>();
+    auto n_value = Args.evaluate_slot_to_value(0);
+    const auto& native_n = n_value.as_<Box<DenseVector<double>>>();
+    auto x_value = Args.evaluate_slot_to_value(1);
+    const auto& native_x = x_value.as_<Box<DenseVector<double>>>();
+
+    // NOTE: probability.cc still accepts std::vector; remove these copies
+    // when its Dirichlet kernel accepts a contiguous numeric view.
+    vector<double> n(native_n.data(), native_n.data() + native_n.size());
+    vector<double> x(native_x.data(), native_x.data() + native_x.size());
   
     return { ::dirichlet_pdf(x, n) };
 }
@@ -452,7 +460,12 @@ extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
     //------------- 1. Get argument p -----------------
 
-    auto z = (vector<double>) Args.evaluate_slot_to_value_(0).as_<R::RVector>();
+    auto z_value = Args.evaluate_slot_to_value_(0);
+    const auto& native_z = z_value.as_<Box<DenseVector<double>>>();
+
+    // NOTE: choose_scratch mutates std::vector scratch storage; remove this
+    // copy when it accepts mutable contiguous numeric storage.
+    vector<double> z(native_z.data(), native_z.data() + native_z.size());
 
     return { choose_scratch(z) };
 }
