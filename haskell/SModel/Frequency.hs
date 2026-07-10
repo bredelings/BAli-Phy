@@ -3,7 +3,7 @@ module SModel.Frequency (module SModel.Frequency, Markov.plus_gwf_matrix, Markov
 
 import Bio.Alphabet
 import Foreign.Vector
-import Data.Matrix
+import Numeric.LinearAlgebra
 import qualified Markov
 
 foreign import bpcall "SModel:average_frequency" builtin_average_frequency :: Matrix Double -> EVector Double

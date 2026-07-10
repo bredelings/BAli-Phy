@@ -3,7 +3,7 @@ module PopGen where
 import Probability
 import Range
 import Bio.Alignment.Matrix
-import Data.Matrix
+import Numeric.LinearAlgebra
 
 data VVI -- Vector<Vector<int>>
 
@@ -111,5 +111,4 @@ instance HasAnnotatedPdf WilsonMcVean2006 where
     annotated_densities (WilsonMcVean2006 q rhos theta) = make_densities $ wilson_mcvean_2006_composite_likelihood q rhos theta
 
 wilson_mcvean_2006 q rhos theta = WilsonMcVean2006 q rhos theta
-
 

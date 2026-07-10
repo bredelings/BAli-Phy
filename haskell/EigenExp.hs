@@ -1,6 +1,6 @@
 module EigenExp where
 
-import Data.Matrix
+import Numeric.LinearAlgebra
 import Foreign.Maybe    
 
 data EigenSystem

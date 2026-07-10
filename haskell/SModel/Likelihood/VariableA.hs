@@ -5,7 +5,7 @@ import Bio.Alphabet
 import Bio.Alignment
 import Data.BitVector
 import Data.Foldable
-import Data.Matrix
+import Numeric.LinearAlgebra
 import Data.Maybe (maybeToList)
 import Data.Array
 import Foreign.Vector
@@ -106,4 +106,3 @@ sampleAncestralSequences t root nodeCLVs as ps f cl =
                                                 nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! (sourceNode t to_p)
                                             in sampleBranchSequence parent_seq a0 nodeCLV clsIn asIn ps_for_b0 f
     in ancestor_seqs
-

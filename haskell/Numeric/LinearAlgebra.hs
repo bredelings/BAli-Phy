@@ -1,4 +1,4 @@
-module Data.Matrix where
+module Numeric.LinearAlgebra where
 
 import Foreign.Vector
 
@@ -6,10 +6,9 @@ import qualified Data.Foldable as F
 
 import Text.Show
 
--- This is actually a C++ matrix<T> defined in "util/matrix.H"
---    Most of these functions seem to only be defined for matrix<double> = Matrix
-
--- It looks like the haskell Data.Matrix is more like a lazy array with index type (i,j).
+-- Dense native matrices backed by the C++ matrix<T> in "util/matrix.H".
+-- Only element representations supported by the runtime can inhabit Matrix.
+-- The foreign-import "Matrix:" prefixes name the C++ builtin plugin.
 data Matrix a
 
 foreign import ecall "Matrix:" nrows :: Matrix a -> Int
@@ -133,4 +132,3 @@ foreign import bpcall "Matrix:" mat_mult :: Matrix a -> Matrix a -> Matrix a
 foreign import bpcall "Matrix:" mat_abs :: Matrix a -> Matrix a
 foreign import bpcall "Matrix:" mat_negate :: Matrix a -> Matrix a
 foreign import bpcall "Matrix:" mat_signum :: Matrix a -> Matrix a
-

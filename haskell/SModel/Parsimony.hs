@@ -6,7 +6,7 @@ import Bio.Alphabet
 import Bio.Alignment
 import Data.BitVector
 import Data.Foldable
-import Data.Matrix
+import Numeric.LinearAlgebra
 import Data.Array
 import Foreign.Vector
 import Numeric.LogDouble

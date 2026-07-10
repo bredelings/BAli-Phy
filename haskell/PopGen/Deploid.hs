@@ -4,7 +4,7 @@ import Probability
 import Control.Monad.IO.Class
 import Range
 import Data.CSV
-import Data.Matrix
+import Numeric.LinearAlgebra
 
 type Haplotype = EVector Int
 type Reads = EVector (EPair Int Int)

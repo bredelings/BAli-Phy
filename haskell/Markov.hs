@@ -1,6 +1,6 @@
 module Markov where
 
-import Data.Matrix
+import Numeric.LinearAlgebra
 import SModel.Rate
 import EigenExp
 import Reversible

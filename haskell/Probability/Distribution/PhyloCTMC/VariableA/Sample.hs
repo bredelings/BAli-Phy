@@ -6,7 +6,7 @@ import Probability.Random
 import Tree
 import SModel
 import Bio.Alignment
-import Data.Matrix
+import Numeric.LinearAlgebra
 import qualified Data.IntMap as IntMap
 
 -- This is imported for both FixedA and VariableA, which is ugly.

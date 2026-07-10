@@ -8,7 +8,7 @@ import           SModel.Property
 import           SModel.Rate
 import           SModel.Frequency
 import           Bio.Alphabet
-import           Data.Matrix
+import           Numeric.LinearAlgebra
 import           Tree
 import qualified Data.Map as Map
 

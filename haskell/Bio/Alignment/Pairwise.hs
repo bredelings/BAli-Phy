@@ -1,7 +1,7 @@
 module Bio.Alignment.Pairwise where
 
 import Data.BitVector
-import Data.Matrix
+import Numeric.LinearAlgebra
 import Control.DeepSeq
 import Numeric.LogDouble
 

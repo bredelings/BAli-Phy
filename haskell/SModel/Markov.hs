@@ -1,4 +1,4 @@
-module SModel.Markov (module SModel.Markov, module SModel.Frequency, module Data.Matrix, getEqFreqs) where
+module SModel.Markov (module SModel.Markov, module SModel.Frequency, module Numeric.LinearAlgebra, getEqFreqs) where
 
 import           Reversible
 import qualified Markov
@@ -8,7 +8,7 @@ import           SModel.Property
 import           SModel.Rate
 import           SModel.Frequency
 import           Bio.Alphabet
-import           Data.Matrix
+import           Numeric.LinearAlgebra
 import           Tree
 import           Data.Array
 import qualified Data.Map as Map

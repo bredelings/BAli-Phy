@@ -9,7 +9,7 @@ import SModel
 import SModel.Likelihood.FixedA
 import Bio.Alignment -- for many things.
 import Bio.Alphabet (HasAlphabet(..))
-import Data.Matrix
+import Numeric.LinearAlgebra
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap

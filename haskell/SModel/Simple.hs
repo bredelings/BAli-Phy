@@ -3,7 +3,7 @@ module SModel.Simple where
 import Foreign.Vector
 import Bio.Alphabet
 import Tree
-import Data.Matrix
+import Numeric.LinearAlgebra
 import qualified Data.IntMap as IntMap (fromSet)
 import Reversible
 

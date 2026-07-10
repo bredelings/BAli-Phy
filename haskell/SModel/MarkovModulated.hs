@@ -9,7 +9,7 @@ import SModel.Property
 import SModel.Rate
 import qualified Markov
 import Markov (getQ, getStartFreqs, getEqFreqs)
-import Data.Matrix -- for fromLists, %*%
+import Numeric.LinearAlgebra -- for fromLists, %*%
 import qualified Data.Map as Map
 
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double

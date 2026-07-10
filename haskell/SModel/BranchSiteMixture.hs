@@ -1,11 +1,11 @@
 module SModel.BranchSiteMixture where
 
 import           Probability.Distribution.Discrete
-import           Data.Matrix
+import           Numeric.LinearAlgebra
 import           Bio.Alphabet (HasSMap(..), HasAlphabet(..))
 import           Foreign.Vector
 import           Graph
-import qualified Data.Matrix as M
+import qualified Numeric.LinearAlgebra as M
 import           SModel.Rate
 import           SModel.Simple
 import           SModel.Property

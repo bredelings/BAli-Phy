@@ -4,7 +4,7 @@ import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.Property
 import SModel.Nucleotides
-import Data.Matrix
+import Numeric.LinearAlgebra
 import qualified Markov
 import Markov (CTMC(..))
 import Reversible

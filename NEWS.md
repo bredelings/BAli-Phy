@@ -23,6 +23,8 @@
 - Correctly handle nested infix declarations.
 - Disentangle disambiguation and renaming
 - Implement `Data.Map` and `Data.Set` as balanced binary trees.
+- Move the native matrix API from `Data.Matrix` to `Numeric.LinearAlgebra`;
+  custom Haskell modules must update their imports.
 - Parse UTF8 variable names in Haskell files.
 - UTF8:
   * `Char` is now a unicode code point.

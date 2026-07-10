@@ -6,7 +6,7 @@ import Probability.Random
 import Tree
 import SModel
 import Bio.Alignment (VectorPairIntInt)
-import Data.Matrix
+import Numeric.LinearAlgebra
 import qualified Data.IntMap as IntMap
 
 -- This is imported for both FixedA and VariableA, which is ugly.
@@ -26,4 +26,3 @@ sampleComponentStatesFixed rtree rootLength smodel =  do
                                              in simulateFixedSequenceFrom (stateSequences IntMap.! parent) (ps IntMap.! b) f
       stateSequences <- lazySequence $ IntMap.fromSet simulateSequenceForNode (getNodesSet rtree)
   return stateSequences
-
