@@ -7,6 +7,7 @@ import Bio.Alignment
 import Data.BitVector
 import Data.Foldable
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data (NativeMatrix, matrixFromNative, nativeMatrix)
 import Data.Array
 import Foreign.Vector
 import Numeric.LogDouble
@@ -20,14 +21,28 @@ data CondPars
 
 type MutCosts = Matrix Int
 
-foreign import bpcall "Parsimony:" unitCostMatrix :: Alphabet -> MutCosts
-foreign import bpcall "Parsimony:" aminoAcidCostMatrix :: Alphabet -> MutCosts
+foreign import bpcall "Parsimony:unitCostMatrix" unitCostMatrixNative :: Alphabet -> NativeMatrix Int
+foreign import bpcall "Parsimony:aminoAcidCostMatrix" aminoAcidCostMatrixNative :: Alphabet -> NativeMatrix Int
 
-foreign import bpcall "Parsimony:" pos1CostMatrix :: Alphabet -> MutCosts
-foreign import bpcall "Parsimony:" pos2CostMatrix :: Alphabet -> MutCosts
+foreign import bpcall "Parsimony:pos1CostMatrix" pos1CostMatrixNative :: Alphabet -> NativeMatrix Int
+foreign import bpcall "Parsimony:pos2CostMatrix" pos2CostMatrixNative :: Alphabet -> NativeMatrix Int
 
-foreign import bpcall "Parsimony:" peelMuts :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> CondPars
-foreign import bpcall "Parsimony:" mutsRoot :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> MutCosts -> Int
+foreign import bpcall "Parsimony:peelMuts" peelMutsNative :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> NativeMatrix Int -> CondPars
+foreign import bpcall "Parsimony:mutsRoot" mutsRootNative :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> NativeMatrix Int -> Int
+
+unitCostMatrix alphabet = costMatrix alphabet (unitCostMatrixNative alphabet)
+aminoAcidCostMatrix alphabet = costMatrix alphabet (aminoAcidCostMatrixNative alphabet)
+pos1CostMatrix alphabet = costMatrix alphabet (pos1CostMatrixNative alphabet)
+pos2CostMatrix alphabet = costMatrix alphabet (pos2CostMatrixNative alphabet)
+
+costMatrix alphabet = matrixFromNative dimension dimension
+  where dimension = alphabetSize alphabet
+
+peelMuts sequences alphabet alignments partials costs =
+    peelMutsNative sequences alphabet alignments partials (nativeMatrix costs)
+
+mutsRoot sequences alphabet alignments partials costs =
+    mutsRootNative sequences alphabet alignments partials (nativeMatrix costs)
 
 
 class Parsimony a where
@@ -62,8 +77,14 @@ instance Parsimony (UnalignedCharacterData, AlignmentOnTree t) where
 ----
 type ColumnCounts = EVector Int
 
-foreign import bpcall "Parsimony:" peelMutsFixedA :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> MutCosts -> CondPars
-foreign import bpcall "Parsimony:" mutsRootFixedA :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> MutCosts -> EVector Int -> Int
+foreign import bpcall "Parsimony:peelMutsFixedA" peelMutsFixedANative :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> NativeMatrix Int -> CondPars
+foreign import bpcall "Parsimony:mutsRootFixedA" mutsRootFixedANative :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> NativeMatrix Int -> EVector Int -> Int
+
+peelMutsFixedA sequences alphabet partials costs =
+    peelMutsFixedANative sequences alphabet partials (nativeMatrix costs)
+
+mutsRootFixedA sequences alphabet partials costs counts =
+    mutsRootFixedANative sequences alphabet partials (nativeMatrix costs) counts
 
 cached_conditional_muts_fixed_A t seqs alpha cost =
     let pc    = IntMap.fromSet pcf $ getEdgesSet t

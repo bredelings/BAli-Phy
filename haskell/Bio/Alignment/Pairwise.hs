@@ -2,14 +2,20 @@ module Bio.Alignment.Pairwise where
 
 import Data.BitVector
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data
 import Control.DeepSeq
 import Numeric.LogDouble
 
 data PairHMM
 
-foreign import bpcall "Alignment:" transition_counts :: PairwiseAlignment -> Matrix Int
+foreign import bpcall "Alignment:transition_counts" transitionCountsNative :: PairwiseAlignment -> NativeMatrix Int
 
-foreign import bpcall "Alignment:" pairwise_alignment_probability_from_counts :: Matrix Int -> PairHMM -> LogDouble
+foreign import bpcall "Alignment:pairwise_alignment_probability_from_counts" pairwiseProbabilityNative :: NativeMatrix Int -> PairHMM -> LogDouble
+
+transition_counts alignment = matrixFromNative 5 5 (transitionCountsNative alignment)
+
+pairwise_alignment_probability_from_counts counts hmm =
+    pairwiseProbabilityNative (nativeMatrix counts) hmm
 
 data PairwiseAlignment = PairwiseAlignment
 

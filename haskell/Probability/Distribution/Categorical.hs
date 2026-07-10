@@ -7,10 +7,11 @@ import MCMC
 
 import Foreign.Vector
 import qualified Numeric.LinearAlgebra as LA
+import Numeric.LinearAlgebra.Data (NativeVector, nativeVector)
 
 categorical_effect n x = addMove 1 $ gibbsSampleCategorical x n
-foreign import bpcall "Distribution:sample_categorical" builtin_sample_categorical :: LA.Vector Double -> IO Int
-sample_categorical ps = builtin_sample_categorical (LA.fromList (toList ps))
+foreign import bpcall "Distribution:sample_categorical" sampleCategoricalNative :: NativeVector Double -> IO Int
+sample_categorical ps = sampleCategoricalNative (nativeVector (LA.fromList (toList ps)))
 
 data Categorical = Categorical (Array Int Double)
 

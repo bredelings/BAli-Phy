@@ -1,4 +1,28 @@
-module Numeric.LinearAlgebra.Data where
+module Numeric.LinearAlgebra.Data
+    ( R, I
+    , NativeVector, NativeMatrix, Vector, Matrix
+    , vectorFromNative, matrixFromNative, nativeVector, nativeMatrix
+    , vectorParts, matrixParts
+    , vectorSize, rows, cols
+    , showMatrixNative, showNumericVectorNative
+    , Element(..), IndexOf, Container(..)
+    , vector, matrix, range, idxs, toList
+    , flatten, toLists, reshape, asRow, asColumn, row, col
+    , fromRows, toRows, fromColumns, toColumns, fromLists
+    , build, ident, diagRect, diag, diagl, takeDiag, linspace
+    , subVector, takesV, vjoin, subMatrix
+    , takeRows, dropRows, takeColumns, dropColumns
+    , Extractor(..), (??), flipud, fliprl, (|||), (===)
+    , fromBlocks, diagBlock, repmat, toBlocks, toBlocksEvery
+    , sortVector, sortIndex, conj, cmod, tr, scale
+    , vectorEqual, vector_elementwise_multiply, vector_elementwise_add
+    , vector_elementwise_sub, vector_abs, vector_negate, vector_signum
+    , unaryVector, binaryVector, dotVector
+    , matrixVectorProduct, vectorMatrixProduct, outerProduct
+    , elementwise_multiply, elementwise_add, elementwise_sub
+    , mat_abs, mat_negate, mat_signum, unaryMatrix, binaryMatrix
+    , matrixProduct
+    ) where
 
 import Foreign.CList (mapFrom)
 import Data.OldList (sort)
@@ -6,19 +30,51 @@ import Data.OldList (sort)
 type R = Double
 type I = Int
 
--- Dense native vectors and matrices have nominal element roles because their
--- runtime storage representation is selected by Element.
+-- Native payloads select an Eigen representation through their element type.
+type role NativeVector nominal
+data NativeVector a
+
+type role NativeMatrix nominal
+data NativeMatrix a
+
+-- Keep stable dimensions separate from changing native vector contents.
 type role Vector nominal
-data Vector a
+data Vector a = Vector !Int (NativeVector a)
 
+-- Keep stable dimensions separate from changing native matrix contents.
 type role Matrix nominal
-data Matrix a
+data Matrix a = Matrix !Int !Int (NativeMatrix a)
 
-foreign import ecall "Matrix:" rows :: Matrix a -> Int
-foreign import ecall "Matrix:" cols :: Matrix a -> Int
+vectorFromNative :: Int -> NativeVector a -> Vector a
+vectorFromNative = Vector
 
-foreign import ecall "Prelude:show" showMatrix :: Matrix a -> CPPString
-foreign import ecall "Prelude:show" showNumericVector :: Vector a -> CPPString
+matrixFromNative :: Int -> Int -> NativeMatrix a -> Matrix a
+matrixFromNative = Matrix
+
+vectorParts :: Vector a -> (Int, NativeVector a)
+vectorParts (Vector count payload) = (count, payload)
+
+matrixParts :: Matrix a -> (Int, Int, NativeMatrix a)
+matrixParts (Matrix rowCount columnCount payload) =
+    (rowCount, columnCount, payload)
+
+vectorSize :: Vector a -> Int
+vectorSize (Vector count _) = count
+
+rows :: Matrix a -> Int
+rows (Matrix rowCount _ _) = rowCount
+
+cols :: Matrix a -> Int
+cols (Matrix _ columnCount _) = columnCount
+
+nativeVector :: Vector a -> NativeVector a
+nativeVector (Vector _ payload) = payload
+
+nativeMatrix :: Matrix a -> NativeMatrix a
+nativeMatrix (Matrix _ _ payload) = payload
+
+foreign import ecall "Prelude:show" showMatrixNative :: NativeMatrix a -> CPPString
+foreign import ecall "Prelude:show" showNumericVectorNative :: NativeVector a -> CPPString
 
 infixl 4 ><
 infixl 4 |>
@@ -30,22 +86,24 @@ class (Num a, Ord a) => Element a where
     (|>) :: Int -> [a] -> Vector a
     (><) :: Int -> Int -> [a] -> Matrix a
 
-foreign import bpcall "Matrix:intVectorFromList" intVectorFromList :: [Int] -> Vector Int
-foreign import bpcall "Matrix:doubleVectorFromList" doubleVectorFromList :: [Double] -> Vector Double
-foreign import bpcall "Matrix:sizedIntVectorFromList" sizedIntVectorFromList :: Int -> [Int] -> Vector Int
-foreign import bpcall "Matrix:sizedDoubleVectorFromList" sizedDoubleVectorFromList :: Int -> [Double] -> Vector Double
-foreign import bpcall "Matrix:intMatrixFromList" intMatrixFromList :: Int -> Int -> [Int] -> Matrix Int
-foreign import bpcall "Matrix:doubleMatrixFromList" doubleMatrixFromList :: Int -> Int -> [Double] -> Matrix Double
+foreign import bpcall "Matrix:intVectorFromList" intVectorFromListNative :: [Int] -> NativeVector Int
+foreign import bpcall "Matrix:doubleVectorFromList" doubleVectorFromListNative :: [Double] -> NativeVector Double
+foreign import bpcall "Matrix:sizedIntVectorFromList" sizedIntVectorFromListNative :: Int -> [Int] -> NativeVector Int
+foreign import bpcall "Matrix:sizedDoubleVectorFromList" sizedDoubleVectorFromListNative :: Int -> [Double] -> NativeVector Double
+foreign import bpcall "Matrix:intMatrixFromList" intMatrixFromListNative :: Int -> Int -> [Int] -> NativeMatrix Int
+foreign import bpcall "Matrix:doubleMatrixFromList" doubleMatrixFromListNative :: Int -> Int -> [Double] -> NativeMatrix Double
 
 instance Element Int where
-    fromList = intVectorFromList
-    (|>) = sizedIntVectorFromList
-    (><) = intMatrixFromList
+    fromList values = Vector (length values) (intVectorFromListNative values)
+    count |> values = Vector count (sizedIntVectorFromListNative count values)
+    rowCount >< columnCount = Matrix rowCount columnCount .
+        intMatrixFromListNative rowCount columnCount
 
 instance Element Double where
-    fromList = doubleVectorFromList
-    (|>) = sizedDoubleVectorFromList
-    (><) = doubleMatrixFromList
+    fromList values = Vector (length values) (doubleVectorFromListNative values)
+    count |> values = Vector count (sizedDoubleVectorFromListNative count values)
+    rowCount >< columnCount = Matrix rowCount columnCount .
+        doubleMatrixFromListNative rowCount columnCount
 
 vector :: [Double] -> Vector Double
 vector = fromList
@@ -80,17 +138,19 @@ class Element e => Container c e where
     maxIndex :: c e -> IndexOf c
     find :: (e -> Bool) -> c e -> [IndexOf c]
 
-foreign import ecall "Matrix:" vectorSize :: Vector a -> Int
-foreign import ecall "Matrix:" vectorAtIndex :: Vector a -> Int -> a
-foreign import ecall "Matrix:" vectorEqual :: Vector a -> Vector a -> Bool
-foreign import ecall "Matrix:" vectorSumElements :: Vector a -> a
+foreign import ecall "Matrix:vectorAtIndex" vectorAtIndexNative :: NativeVector a -> Int -> a
+foreign import ecall "Matrix:vectorEqual" vectorEqualNative :: NativeVector a -> NativeVector a -> Bool
+foreign import ecall "Matrix:vectorSumElements" vectorSumElementsNative :: NativeVector a -> a
+
+vectorEqual :: Vector a -> Vector a -> Bool
+vectorEqual left right = vectorEqualNative (nativeVector left) (nativeVector right)
 
 instance Element a => Container Vector a where
     size = vectorSize
-    atIndex = vectorAtIndex
+    atIndex values index = vectorAtIndexNative (nativeVector values) index
     konst value count = fromList (replicate count value)
     scalar value = fromList [value]
-    sumElements = vectorSumElements
+    sumElements = vectorSumElementsNative . nativeVector
     cmap function values = fromList (map function (toList values))
     prodElements = product . toList
     minElement = minimum . toList
@@ -103,15 +163,15 @@ instance Element a => Container Vector a where
                       in head [i | i <- [0..size values-1], atIndex values i == target]
     find predicate values = [i | i <- [0..size values-1], predicate (atIndex values i)]
 
-foreign import ecall "Matrix:" matrixAtIndex :: Int -> Int -> Matrix a -> a
-foreign import ecall "Matrix:" matrixSumElements :: Matrix a -> a
+foreign import ecall "Matrix:matrixAtIndex" matrixAtIndexNative :: Int -> Int -> NativeMatrix a -> a
+foreign import ecall "Matrix:matrixSumElements" matrixSumElementsNative :: NativeMatrix a -> a
 
 instance Element a => Container Matrix a where
     size matrix = (rows matrix, cols matrix)
-    atIndex matrix (i,j) = matrixAtIndex i j matrix
+    atIndex matrix (i,j) = matrixAtIndexNative i j (nativeMatrix matrix)
     konst value (rows,columns) = (rows >< columns) (replicate (rows * columns) value)
     scalar value = (1 >< 1) [value]
-    sumElements = matrixSumElements
+    sumElements = matrixSumElementsNative . nativeMatrix
     cmap function matrix = (rows matrix >< cols matrix)
         (map function (toList (flatten matrix)))
     prodElements = product . toList . flatten
@@ -132,28 +192,36 @@ instance Element a => Container Matrix a where
 -- Convert a native vector to a lazy Haskell list without constructing an
 -- intermediate boxed runtime vector.
 toList :: Element a => Vector a -> [a]
-toList values = mapFrom 0 (vectorSize values) (vectorAtIndex values)
+toList values = mapFrom 0 (vectorSize values) $ \index ->
+    vectorAtIndexNative (nativeVector values) index
 
-foreign import bpcall "Matrix:" matrixToVector :: Matrix a -> Vector a
+foreign import bpcall "Matrix:matrixToVector" matrixToVectorNative :: NativeMatrix a -> NativeVector a
 
 flatten :: Element a => Matrix a -> Vector a
-flatten = matrixToVector
+flatten matrix = Vector (rows matrix * cols matrix)
+    (matrixToVectorNative (nativeMatrix matrix))
 
 toLists :: Element a => Matrix a -> [[a]]
 toLists = map toList . toRows
 
-foreign import bpcall "Matrix:" reshapeVector :: Int -> Vector a -> Matrix a
-foreign import bpcall "Matrix:" vectorAsRow :: Vector a -> Matrix a
-foreign import bpcall "Matrix:" vectorAsColumn :: Vector a -> Matrix a
+foreign import bpcall "Matrix:reshapeVector" reshapeVectorNative :: Int -> NativeVector a -> NativeMatrix a
+foreign import bpcall "Matrix:vectorAsRow" vectorAsRowNative :: NativeVector a -> NativeMatrix a
+foreign import bpcall "Matrix:vectorAsColumn" vectorAsColumnNative :: NativeVector a -> NativeMatrix a
 
+-- Reshape a vector while deriving the matrix dimensions without inspecting
+-- the native payload.
 reshape :: Element a => Int -> Vector a -> Matrix a
-reshape = reshapeVector
+reshape columnCount values = Matrix rowCount columnCount
+    (reshapeVectorNative columnCount (nativeVector values))
+  where rowCount = if columnCount == 0 then 0 else vectorSize values `div` columnCount
 
 asRow :: Element a => Vector a -> Matrix a
-asRow = vectorAsRow
+asRow values = Matrix 1 (vectorSize values)
+    (vectorAsRowNative (nativeVector values))
 
 asColumn :: Element a => Vector a -> Matrix a
-asColumn = vectorAsColumn
+asColumn values = Matrix (vectorSize values) 1
+    (vectorAsColumnNative (nativeVector values))
 
 row :: [Double] -> Matrix Double
 row = asRow . fromList
@@ -238,11 +306,12 @@ linspace count (start, end) = fromList
     [start + fromIntegral i * step | i <- [0..count-1]]
   where step = (end - start) / fromIntegral (count - 1)
 
-foreign import bpcall "Matrix:" subVectorNative :: Int -> Int -> Vector a -> Vector a
-foreign import bpcall "Matrix:" appendVectorsNative :: Vector a -> Vector a -> Vector a
+foreign import bpcall "Matrix:subVectorNative" subVectorNative :: Int -> Int -> NativeVector a -> NativeVector a
+foreign import bpcall "Matrix:appendVectorsNative" appendVectorsNative :: NativeVector a -> NativeVector a -> NativeVector a
 
 subVector :: Element a => Int -> Int -> Vector a -> Vector a
-subVector = subVectorNative
+subVector start count values = Vector count
+    (subVectorNative start count (nativeVector values))
 
 -- Extract consecutive vector segments, leaving any unrequested suffix unused.
 takesV :: Element a => [Int] -> Vector a -> [Vector a]
@@ -251,18 +320,26 @@ takesV (count:counts) values =
     subVector 0 count values :
         takesV counts (subVector count (size values - count) values)
 
+-- Join vectors while recording their combined length independently of the
+-- appended native payload.
 vjoin :: Element a => [Vector a] -> Vector a
 vjoin [] = fromList []
-vjoin (value:values) = appendVectorsNative value (vjoin values)
+vjoin (value:values) = append value (vjoin values)
+  where
+    append left right = Vector (vectorSize left + vectorSize right)
+        (appendVectorsNative (nativeVector left) (nativeVector right))
 
-foreign import bpcall "Matrix:" subMatrixNative :: Int -> Int -> Int -> Int -> Matrix a -> Matrix a
-foreign import bpcall "Matrix:" gatherMatrixNative :: Vector Int -> Vector Int -> Matrix a -> Matrix a
-foreign import bpcall "Matrix:" joinMatricesNative :: Int -> Matrix a -> Matrix a -> Matrix a
-foreign import bpcall "Matrix:" repmatNative :: Matrix a -> Int -> Int -> Matrix a
+foreign import bpcall "Matrix:subMatrixNative" subMatrixNative :: Int -> Int -> Int -> Int -> NativeMatrix a -> NativeMatrix a
+foreign import bpcall "Matrix:gatherMatrixNative" gatherMatrixNative :: NativeVector Int -> NativeVector Int -> NativeMatrix a -> NativeMatrix a
+foreign import bpcall "Matrix:joinMatricesNative" joinMatricesNative :: Int -> NativeMatrix a -> NativeMatrix a -> NativeMatrix a
+foreign import bpcall "Matrix:repmatNative" repmatNative :: NativeMatrix a -> Int -> Int -> NativeMatrix a
 
+-- Extract a rectangular payload and record its requested shape directly.
 subMatrix :: Element a => (Int, Int) -> (Int, Int) -> Matrix a -> Matrix a
-subMatrix (firstRow, firstColumn) (rowCount, columnCount) =
-    subMatrixNative firstRow firstColumn rowCount columnCount
+subMatrix (firstRow, firstColumn) (rowCount, columnCount) matrix =
+    Matrix rowCount columnCount
+        (subMatrixNative firstRow firstColumn rowCount columnCount
+            (nativeMatrix matrix))
 
 takeRows :: Element a => Int -> Matrix a -> Matrix a
 takeRows count matrix = subMatrix (0,0) (count, cols matrix) matrix
@@ -291,8 +368,12 @@ infixl 9 ??
 -- dimensions in one pass over the source matrix.
 (??) :: Element a => Matrix a -> (Extractor, Extractor) -> Matrix a
 matrix ?? (rowExtractor, columnExtractor) =
-    gatherMatrixNative (indices (rows matrix) rowExtractor)
-                       (indices (cols matrix) columnExtractor) matrix
+    let rowIndices = indices (rows matrix) rowExtractor
+        columnIndices = indices (cols matrix) columnExtractor
+    in Matrix (vectorSize rowIndices) (vectorSize columnIndices)
+        (gatherMatrixNative (nativeVector rowIndices)
+                             (nativeVector columnIndices)
+                             (nativeMatrix matrix))
   where
     -- Interpret one extractor against a concrete matrix extent.
     indices dimension All = range dimension
@@ -321,10 +402,14 @@ infixl 3 |||
 infixl 2 ===
 
 (|||) :: Element a => Matrix a -> Matrix a -> Matrix a
-(|||) = joinMatricesNative 1
+left ||| right = Matrix (max (rows left) (rows right))
+    (cols left + cols right)
+    (joinMatricesNative 1 (nativeMatrix left) (nativeMatrix right))
 
 (===) :: Element a => Matrix a -> Matrix a -> Matrix a
-(===) = joinMatricesNative 0
+top === bottom = Matrix (rows top + rows bottom)
+    (max (cols top) (cols bottom))
+    (joinMatricesNative 0 (nativeMatrix top) (nativeMatrix bottom))
 
 -- Assemble block rows through native concatenation so each element remains in
 -- Eigen-backed storage throughout singleton expansion and copying.
@@ -349,7 +434,9 @@ diagBlock matrices = fromBlocks
         | (i,matrix) <- zip [0..] matrices]
 
 repmat :: Element a => Matrix a -> Int -> Int -> Matrix a
-repmat = repmatNative
+repmat matrix rowRepeats columnRepeats =
+    Matrix (rows matrix * rowRepeats) (cols matrix * columnRepeats)
+        (repmatNative (nativeMatrix matrix) rowRepeats columnRepeats)
 
 -- Partition the requested prefix into explicit block sizes, discarding any
 -- rows or columns not covered by those sizes.
@@ -396,32 +483,106 @@ conj = id
 cmod :: (Container c a, Integral a) => a -> c a -> c a
 cmod divisor = cmap (\value -> value `mod` divisor)
 
-foreign import bpcall "Matrix:tr" transposeNative :: Matrix a -> Matrix a
-foreign import bpcall "Matrix:scale" scaleNative :: a -> Matrix a -> Matrix a
+foreign import bpcall "Matrix:tr" transposeNative :: NativeMatrix a -> NativeMatrix a
+foreign import bpcall "Matrix:scale" scaleNative :: a -> NativeMatrix a -> NativeMatrix a
 
 tr :: Element a => Matrix a -> Matrix a
-tr = transposeNative
+tr matrix = Matrix (cols matrix) (rows matrix)
+    (transposeNative (nativeMatrix matrix))
 
 scale :: Element a => a -> Matrix a -> Matrix a
-scale = scaleNative
+scale factor matrix = Matrix (rows matrix) (cols matrix)
+    (scaleNative factor (nativeMatrix matrix))
 
-foreign import bpcall "Matrix:" vector_elementwise_multiply :: Vector a -> Vector a -> Vector a
-foreign import bpcall "Matrix:" vector_elementwise_add :: Vector a -> Vector a -> Vector a
-foreign import bpcall "Matrix:" vector_elementwise_sub :: Vector a -> Vector a -> Vector a
-foreign import bpcall "Matrix:" vector_abs :: Vector a -> Vector a
-foreign import bpcall "Matrix:" vector_negate :: Vector a -> Vector a
-foreign import bpcall "Matrix:" vector_signum :: Vector a -> Vector a
-foreign import ecall "Matrix:" dotNative :: Vector a -> Vector a -> a
-foreign import bpcall "Matrix:" matrixVectorNative :: Matrix a -> Vector a -> Vector a
-foreign import bpcall "Matrix:" vectorMatrixNative :: Vector a -> Matrix a -> Vector a
-foreign import bpcall "Matrix:" outerNative :: Vector a -> Vector a -> Matrix a
-foreign import bpcall "Matrix:" elementwise_multiply :: Matrix a -> Matrix a -> Matrix a
-foreign import bpcall "Matrix:" elementwise_add :: Matrix a -> Matrix a -> Matrix a
-foreign import bpcall "Matrix:" elementwise_sub :: Matrix a -> Matrix a -> Matrix a
-foreign import bpcall "Matrix:" mat_mult :: Matrix a -> Matrix a -> Matrix a
-foreign import bpcall "Matrix:" mat_abs :: Matrix a -> Matrix a
-foreign import bpcall "Matrix:" mat_negate :: Matrix a -> Matrix a
-foreign import bpcall "Matrix:" mat_signum :: Matrix a -> Matrix a
+foreign import bpcall "Matrix:vector_elementwise_multiply" vectorMultiplyNative :: NativeVector a -> NativeVector a -> NativeVector a
+foreign import bpcall "Matrix:vector_elementwise_add" vectorAddNative :: NativeVector a -> NativeVector a -> NativeVector a
+foreign import bpcall "Matrix:vector_elementwise_sub" vectorSubtractNative :: NativeVector a -> NativeVector a -> NativeVector a
+foreign import bpcall "Matrix:vector_abs" vectorAbsNative :: NativeVector a -> NativeVector a
+foreign import bpcall "Matrix:vector_negate" vectorNegateNative :: NativeVector a -> NativeVector a
+foreign import bpcall "Matrix:vector_signum" vectorSignumNative :: NativeVector a -> NativeVector a
+foreign import ecall "Matrix:dotNative" dotNative :: NativeVector a -> NativeVector a -> a
+foreign import bpcall "Matrix:matrixVectorNative" matrixVectorNative :: NativeMatrix a -> NativeVector a -> NativeVector a
+foreign import bpcall "Matrix:vectorMatrixNative" vectorMatrixNative :: NativeVector a -> NativeMatrix a -> NativeVector a
+foreign import bpcall "Matrix:outerNative" outerNative :: NativeVector a -> NativeVector a -> NativeMatrix a
+foreign import bpcall "Matrix:elementwise_multiply" matrixMultiplyElementsNative :: NativeMatrix a -> NativeMatrix a -> NativeMatrix a
+foreign import bpcall "Matrix:elementwise_add" matrixAddNative :: NativeMatrix a -> NativeMatrix a -> NativeMatrix a
+foreign import bpcall "Matrix:elementwise_sub" matrixSubtractNative :: NativeMatrix a -> NativeMatrix a -> NativeMatrix a
+foreign import bpcall "Matrix:mat_mult" matrixProductNative :: NativeMatrix a -> NativeMatrix a -> NativeMatrix a
+foreign import bpcall "Matrix:mat_abs" matrixAbsNative :: NativeMatrix a -> NativeMatrix a
+foreign import bpcall "Matrix:mat_negate" matrixNegateNative :: NativeMatrix a -> NativeMatrix a
+foreign import bpcall "Matrix:mat_signum" matrixSignumNative :: NativeMatrix a -> NativeMatrix a
+
+vector_elementwise_multiply :: Vector a -> Vector a -> Vector a
+vector_elementwise_multiply = binaryVector vectorMultiplyNative
+
+vector_elementwise_add :: Vector a -> Vector a -> Vector a
+vector_elementwise_add = binaryVector vectorAddNative
+
+vector_elementwise_sub :: Vector a -> Vector a -> Vector a
+vector_elementwise_sub = binaryVector vectorSubtractNative
+
+vector_abs :: Vector a -> Vector a
+vector_abs = unaryVector vectorAbsNative
+
+vector_negate :: Vector a -> Vector a
+vector_negate = unaryVector vectorNegateNative
+
+vector_signum :: Vector a -> Vector a
+vector_signum = unaryVector vectorSignumNative
+
+unaryVector :: (NativeVector a -> NativeVector b) -> Vector a -> Vector b
+unaryVector operation values = Vector (vectorSize values)
+    (operation (nativeVector values))
+
+-- Apply a native binary operation and record its singleton-broadcast extent.
+binaryVector :: (NativeVector a -> NativeVector b -> NativeVector c)
+             -> Vector a -> Vector b -> Vector c
+binaryVector operation left right = Vector (max (vectorSize left) (vectorSize right))
+    (operation (nativeVector left) (nativeVector right))
+
+dotVector :: Vector a -> Vector a -> a
+dotVector left right = dotNative (nativeVector left) (nativeVector right)
+
+matrixVectorProduct :: Matrix a -> Vector a -> Vector a
+matrixVectorProduct matrix vector = Vector (rows matrix)
+    (matrixVectorNative (nativeMatrix matrix) (nativeVector vector))
+
+vectorMatrixProduct :: Vector a -> Matrix a -> Vector a
+vectorMatrixProduct vector matrix = Vector (cols matrix)
+    (vectorMatrixNative (nativeVector vector) (nativeMatrix matrix))
+
+outerProduct :: Vector a -> Vector a -> Matrix a
+outerProduct left right = Matrix (vectorSize left) (vectorSize right)
+    (outerNative (nativeVector left) (nativeVector right))
+
+elementwise_multiply :: Matrix a -> Matrix a -> Matrix a
+elementwise_multiply = binaryMatrix matrixMultiplyElementsNative
+
+elementwise_add :: Matrix a -> Matrix a -> Matrix a
+elementwise_add = binaryMatrix matrixAddNative
+
+elementwise_sub :: Matrix a -> Matrix a -> Matrix a
+elementwise_sub = binaryMatrix matrixSubtractNative
+
+mat_abs :: Matrix a -> Matrix a
+mat_abs = unaryMatrix matrixAbsNative
+
+mat_negate :: Matrix a -> Matrix a
+mat_negate = unaryMatrix matrixNegateNative
+
+mat_signum :: Matrix a -> Matrix a
+mat_signum = unaryMatrix matrixSignumNative
+
+unaryMatrix :: (NativeMatrix a -> NativeMatrix b) -> Matrix a -> Matrix b
+unaryMatrix operation matrix = Matrix (rows matrix) (cols matrix)
+    (operation (nativeMatrix matrix))
+
+-- Apply a native binary operation and record both singleton-broadcast extents.
+binaryMatrix :: (NativeMatrix a -> NativeMatrix b -> NativeMatrix c)
+             -> Matrix a -> Matrix b -> Matrix c
+binaryMatrix operation left right =
+    Matrix (max (rows left) (rows right)) (max (cols left) (cols right))
+        (operation (nativeMatrix left) (nativeMatrix right))
 
 -- Scale singleton matrices and otherwise dispatch a conformable product to
 -- the native Eigen implementation.
@@ -429,4 +590,5 @@ matrixProduct :: Element a => Matrix a -> Matrix a -> Matrix a
 matrixProduct left right
     | rows left == 1 && cols left == 1 = scale (atIndex left (0,0)) right
     | rows right == 1 && cols right == 1 = scale (atIndex right (0,0)) left
-    | otherwise = mat_mult left right
+    | otherwise = Matrix (rows left) (cols right)
+        (matrixProductNative (nativeMatrix left) (nativeMatrix right))

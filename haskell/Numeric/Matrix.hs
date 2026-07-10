@@ -6,8 +6,14 @@ import Data.List.NonEmpty
 import Data.Monoid
 import Numeric.LinearAlgebra.Data
 
-foreign import bpcall "Matrix:" matrixFloatingUnary :: Int -> Matrix Double -> Matrix Double
-foreign import bpcall "Matrix:" matrixFloatingBinary :: Int -> Matrix Double -> Matrix Double -> Matrix Double
+foreign import bpcall "Matrix:matrixFloatingUnary" matrixFloatingUnaryNative :: Int -> NativeMatrix Double -> NativeMatrix Double
+foreign import bpcall "Matrix:matrixFloatingBinary" matrixFloatingBinaryNative :: Int -> NativeMatrix Double -> NativeMatrix Double -> NativeMatrix Double
+
+matrixFloatingUnary :: Int -> Matrix Double -> Matrix Double
+matrixFloatingUnary operation = unaryMatrix (matrixFloatingUnaryNative operation)
+
+matrixFloatingBinary :: Int -> Matrix Double -> Matrix Double -> Matrix Double
+matrixFloatingBinary operation = binaryMatrix (matrixFloatingBinaryNative operation)
 
 -- Separate singleton scalar matrices from a chain while preserving the
 -- order of every non-scalar matrix.
@@ -91,7 +97,7 @@ optimiseMult [] = scalar 1
 optimiseMult matrices = optimiseNonEmpty matrices
 
 instance Show (Matrix a) where
-    show value = unpack_cpp_string (showMatrix value)
+    show value = unpack_cpp_string (showMatrixNative (nativeMatrix value))
 
 instance (Element a, Num a) => Num (Matrix a) where
     fromInteger value = scalar (fromInteger value)

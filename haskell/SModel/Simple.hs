@@ -4,6 +4,7 @@ import Foreign.Vector
 import Bio.Alphabet
 import Tree
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data
 import qualified Data.IntMap as IntMap (fromSet)
 import Reversible
 
@@ -30,7 +31,7 @@ data SModelOnTree t m = SModelOnTree t m
    - getAlphabet / stateLetters
 
  * It should still make sense to have weighted componentFrequencies, but the rows of the weighted frequency MATRIX
-   would have different lengths.  So maybe, weighted_frequenced_vectors: m -> EVector (Vector Double).
+   would have different lengths.  So maybe, weighted_frequenced_vectors: m -> [Vector Double].
 -}
 
 
@@ -51,16 +52,35 @@ class CheckReversible m => SimpleSModel t m where
     nBaseModels m = length (distribution m)
     getTree (SModelOnTree tree _) = tree
 
-foreign import bpcall "SModel:" weightedFrequencyMatrixRaw :: Vector Double -> EVector (Vector Double) -> Matrix Double
-foreign import bpcall "SModel:" frequencyMatrixRaw :: EVector (Vector Double) -> Matrix Double
+foreign import bpcall "SModel:weightedFrequencyMatrixRaw" weightedFrequencyMatrixNative :: NativeVector Double -> EVector (NativeVector Double) -> NativeMatrix Double
+foreign import bpcall "SModel:frequencyMatrixRaw" frequencyMatrixNative :: EVector (NativeVector Double) -> NativeMatrix Double
 
-weightedFrequencyMatrix model = let dist = fromList $ distribution model
-                                    freqs = toVector $ componentFrequencies model
-                                in weightedFrequencyMatrixRaw dist freqs
+-- Build weighted frequency rows while retaining model and state counts as
+-- Haskell matrix dimensions.
+weightedFrequencyMatrixFromVectors dist frequencies = matrixFromNative modelCount stateCount
+    (weightedFrequencyMatrixNative (nativeVector dist) payloads)
+  where
+    payloads = toVector $ map nativeVector frequencies
+    modelCount = length frequencies
+    stateCount = if null frequencies then 0 else vectorSize (head frequencies)
 
-frequencyMatrix model = frequencyMatrixRaw $ toVector $ componentFrequencies model
+weightedFrequencyMatrix model =
+    weightedFrequencyMatrixFromVectors (fromList $ distribution model)
+                                       (componentFrequencies model)
+
+-- Build the unweighted frequency payload while retaining its dimensions in
+-- the Haskell wrapper.
+frequencyMatrix model = matrixFromNative modelCount stateCount (frequencyMatrixNative payloads)
+  where
+    frequencies = componentFrequencies model
+    payloads = toVector $ map nativeVector frequencies
+    modelCount = length frequencies
+    stateCount = if null frequencies then 0 else vectorSize (head frequencies)
 
 nStates m = vector_size (stateLetters m)
 
-transitionPsMap smodel_on_tree = IntMap.fromSet (toVector . branchTransitionP smodel_on_tree) edges where
+-- Store transition payloads in the runtime cache without embedding lifted
+-- Matrix constructors inside an EVector.
+transitionPsMap smodel_on_tree = IntMap.fromSet
+    (toVector . map nativeMatrix . branchTransitionP smodel_on_tree) edges where
     edges = getEdgesSet $ getTree smodel_on_tree

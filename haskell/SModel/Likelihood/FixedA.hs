@@ -6,6 +6,7 @@ import Bio.Alignment
 import Data.BitVector
 import Data.Foldable
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data
 import Data.Maybe (maybeToList)
 import Data.Array
 import Foreign.Vector
@@ -19,18 +20,33 @@ import qualified Data.IntSet as IntSet
 import SModel.Likelihood.CLV
 
 -- peeling for SEV
-foreign import bpcall "LikelihoodSEV:" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:" calcProbAtRootVariable :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:" calcProb :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> CondLikes
-foreign import bpcall "LikelihoodSEV:" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector (Matrix Double) -> Matrix Double -> CondLikes
+foreign import bpcall "LikelihoodSEV:calcProbAtRoot" calcProbAtRootNative :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> EVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:calcProbAtRootVariable" calcProbAtRootVariableNative :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> EVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:calcProb" calcProbNative :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> EVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:peelBranchTowardRoot" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> CondLikes
+foreign import bpcall "LikelihoodSEV:peelBranchAwayFromRoot" peelBranchAwayFromRootNative :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> NativeMatrix Double -> CondLikes
+
+calcProbAtRoot node branch frequencies counts =
+    calcProbAtRootNative node branch (nativeMatrix frequencies) counts
+
+calcProbAtRootVariable node branch frequencies counts =
+    calcProbAtRootVariableNative node branch (nativeMatrix frequencies) counts
+
+calcProb node branch frequencies counts =
+    calcProbNative node branch (nativeMatrix frequencies) counts
+
+peelBranchAwayFromRoot node branch probabilities frequencies =
+    peelBranchAwayFromRootNative node branch probabilities (nativeMatrix frequencies)
 
 peelBranch toward nodeCLs branchCLs ps f | toward    = peelBranchTowardRoot   nodeCLs branchCLs ps
                                          | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs ps f
 
 -- ancestral sequence sampling for SEV
-foreign import bpcall "LikelihoodSEV:" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> EVector Int -> VectorPairIntInt
-foreign import bpcall "LikelihoodSEV:" sampleSequence :: VectorPairIntInt -> EVector CondLikes -> EVector (Matrix Double) -> EVector CondLikes -> EVector Int -> VectorPairIntInt
+foreign import bpcall "LikelihoodSEV:sampleRootSequence" sampleRootSequenceNative :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> EVector Int -> VectorPairIntInt
+foreign import bpcall "LikelihoodSEV:sampleSequence" sampleSequence :: VectorPairIntInt -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> EVector Int -> VectorPairIntInt
+
+sampleRootSequence node branch frequencies columns =
+    sampleRootSequenceNative node branch (nativeMatrix frequencies) columns
 
 foreign import bpcall "LikelihoodSEV:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
 

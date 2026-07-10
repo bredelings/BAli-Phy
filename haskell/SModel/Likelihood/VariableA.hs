@@ -6,6 +6,7 @@ import Bio.Alignment
 import Data.BitVector
 import Data.Foldable
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data
 import Data.Maybe (maybeToList)
 import Data.Array
 import Foreign.Vector
@@ -20,16 +21,37 @@ import SModel.Likelihood.CLV
 
 -- peeling for connected-CLVs
 foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EVector Int -> CondLikes
-foreign import bpcall "Likelihood:" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
-foreign import bpcall "Likelihood:" calcProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
-foreign import bpcall "Likelihood:" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
-foreign import bpcall "Likelihood:" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
+foreign import bpcall "Likelihood:calcProbAtRoot" calcProbAtRootNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> NativeMatrix Double -> LogDouble
+foreign import bpcall "Likelihood:calcProb" calcProbNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> NativeMatrix Double -> LogDouble
+foreign import bpcall "Likelihood:peelBranchTowardRoot" peelBranchTowardRootNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> NativeMatrix Double -> CondLikes
+foreign import bpcall "Likelihood:peelBranchAwayFromRoot" peelBranchAwayFromRootNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> NativeMatrix Double -> CondLikes
 
-foreign import bpcall "Likelihood:" calcProbNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
-foreign import bpcall "Likelihood:" peelBranchTowardRootNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> CondLikes
-foreign import bpcall "Likelihood:" peelBranchAwayFromRootNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> CondLikes
+foreign import bpcall "Likelihood:calcProbNonEq" calcProbNonEqNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> NativeMatrix Double -> LogDouble
+foreign import bpcall "Likelihood:peelBranchTowardRootNonEq" peelBranchTowardRootNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> CondLikes
+foreign import bpcall "Likelihood:peelBranchAwayFromRootNonEq" peelBranchAwayFromRootNonEqNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> NativeMatrix Double -> CondLikes
 
-foreign import bpcall "Likelihood:" propagateFrequencies :: Matrix Double -> EVector (Matrix Double) -> Matrix Double
+foreign import bpcall "Likelihood:propagateFrequencies" propagateFrequenciesNative :: NativeMatrix Double -> EVector (NativeMatrix Double) -> NativeMatrix Double
+
+calcProbAtRoot node branch alignments frequencies =
+    calcProbAtRootNative node branch alignments (nativeMatrix frequencies)
+
+calcProb node branch alignments frequencies =
+    calcProbNative node branch alignments (nativeMatrix frequencies)
+
+peelBranchTowardRoot node branch alignments probabilities frequencies =
+    peelBranchTowardRootNative node branch alignments probabilities (nativeMatrix frequencies)
+
+peelBranchAwayFromRoot node branch alignments probabilities frequencies =
+    peelBranchAwayFromRootNative node branch alignments probabilities (nativeMatrix frequencies)
+
+calcProbNonEq node branch alignments frequencies =
+    calcProbNonEqNative node branch alignments (nativeMatrix frequencies)
+
+peelBranchAwayFromRootNonEq node branch alignments probabilities frequencies =
+    peelBranchAwayFromRootNonEqNative node branch alignments probabilities (nativeMatrix frequencies)
+
+propagateFrequencies frequencies probabilities = matrixFromNative (rows frequencies) (cols frequencies)
+    (propagateFrequenciesNative (nativeMatrix frequencies) probabilities)
 
 peelBranch toward nodeCLs branchCLs asIn ps eqF | toward    = peelBranchTowardRoot   nodeCLs branchCLs asIn ps eqF
                                                 | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs asIn ps eqF
@@ -38,8 +60,15 @@ peelBranchNonEq toward nodeCLs branchCLs asIn ps rootF | toward    = peelBranchT
                                                        | otherwise = peelBranchAwayFromRootNonEq nodeCLs branchCLs asIn ps rootF
 
 -- ancestral sequence sampling for connected-CLVs
-foreign import bpcall "Likelihood:" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> VectorPairIntInt
-foreign import bpcall "Likelihood:" sampleBranchSequence :: VectorPairIntInt -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (Matrix Double) -> Matrix Double -> VectorPairIntInt
+foreign import bpcall "Likelihood:sampleRootSequence" sampleRootSequenceNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> NativeMatrix Double -> VectorPairIntInt
+foreign import bpcall "Likelihood:sampleBranchSequence" sampleBranchSequenceNative :: VectorPairIntInt -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> NativeMatrix Double -> VectorPairIntInt
+
+sampleRootSequence node branch alignments frequencies =
+    sampleRootSequenceNative node branch alignments (nativeMatrix frequencies)
+
+sampleBranchSequence sequence alignment node branch alignments probabilities frequencies =
+    sampleBranchSequenceNative sequence alignment node branch alignments probabilities
+        (nativeMatrix frequencies)
 
 simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int)) -> IntMap (Maybe CondLikes)
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs

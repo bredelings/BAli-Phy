@@ -1,12 +1,15 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 import Compiler.Num
+import Compiler.Error (error)
 import Bio.Alphabet (dna)
 import Data.Function (($))
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Data.Monoid (mconcat, mempty)
 import Data.Semigroup (sconcat)
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data
+    (NativeVector, NativeMatrix, vectorFromNative, matrixFromNative, vectorSize)
 import SModel.Parsimony (unitCostMatrix)
 import System.IO (putStrLn)
 import Text.Show (show)
@@ -14,6 +17,12 @@ import Text.Show (show)
 -- Exercise construction, conversion, empty shapes, and the full basic
 -- operation set for both native element representations.
 main = do
+    putStrLn $ show $ vectorSize (vectorFromNative 3
+        (error "vector payload forced" :: NativeVector Int))
+    putStrLn $ show $ let matrix = matrixFromNative 2 4
+                            (error "matrix payload forced" :: NativeMatrix Int)
+                            :: Matrix Int
+                      in (rows matrix, cols matrix)
     let intVector = fromList [1, 2, 3] :: Vector Int
     putStrLn $ show $ toList $ intVector + 10
     putStrLn $ show $ toList $ 2 * intVector

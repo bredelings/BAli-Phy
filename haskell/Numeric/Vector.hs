@@ -3,11 +3,17 @@ module Numeric.Vector () where
 import Compiler.Floating
 import Numeric.LinearAlgebra.Data
 
-foreign import bpcall "Matrix:" vectorFloatingUnary :: Int -> Vector Double -> Vector Double
-foreign import bpcall "Matrix:" vectorFloatingBinary :: Int -> Vector Double -> Vector Double -> Vector Double
+foreign import bpcall "Matrix:vectorFloatingUnary" vectorFloatingUnaryNative :: Int -> NativeVector Double -> NativeVector Double
+foreign import bpcall "Matrix:vectorFloatingBinary" vectorFloatingBinaryNative :: Int -> NativeVector Double -> NativeVector Double -> NativeVector Double
+
+vectorFloatingUnary :: Int -> Vector Double -> Vector Double
+vectorFloatingUnary operation = unaryVector (vectorFloatingUnaryNative operation)
+
+vectorFloatingBinary :: Int -> Vector Double -> Vector Double -> Vector Double
+vectorFloatingBinary operation = binaryVector (vectorFloatingBinaryNative operation)
 
 instance Show (Vector a) where
-    show value = unpack_cpp_string (showNumericVector value)
+    show value = unpack_cpp_string (showNumericVectorNative (nativeVector value))
 
 instance Element a => Eq (Vector a) where
     (==) = vectorEqual

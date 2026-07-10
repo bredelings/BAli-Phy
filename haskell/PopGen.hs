@@ -4,6 +4,7 @@ import Probability
 import Range
 import Bio.Alignment.Matrix
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data
 
 data VVI -- Vector<Vector<int>>
 
@@ -45,8 +46,9 @@ instance HasAnnotatedPdf AFSGroup where
 afsGroup args = AFSGroup args
 
 ---------------------------------
-foreign import bpcall "PopGen:ewens_sampling_mixture_probability" builtin_ewens_sampling_mixture_probability :: Vector Double -> Vector Double -> VVI -> LogDouble
-ewens_sampling_mixture_probability thetas ps x = builtin_ewens_sampling_mixture_probability (fromList thetas) (fromList ps) x
+foreign import bpcall "PopGen:ewens_sampling_mixture_probability" ewensSamplingMixtureNative :: NativeVector Double -> NativeVector Double -> VVI -> LogDouble
+ewens_sampling_mixture_probability thetas ps x = ewensSamplingMixtureNative
+    (nativeVector (fromList thetas)) (nativeVector (fromList ps)) x
 
 data AFSMixture = AFSMixture [Double] [Double]
 
@@ -98,9 +100,9 @@ li_stephens_2003 locs rho = LiStephens2003 (toVector locs) rho
 
 data WilsonMcVean2006 = WilsonMcVean2006 (Matrix Double) [(Double,Double,Double)] Double
 
-foreign import bpcall "SMC:" wilson_mcvean_2006_composite_likelihood_raw :: Matrix Double -> EVector (EVector Double) -> Double -> AlignmentMatrix -> LogDouble
+foreign import bpcall "SMC:wilson_mcvean_2006_composite_likelihood_raw" wilsonMcVeanNative :: NativeMatrix Double -> EVector (EVector Double) -> Double -> AlignmentMatrix -> LogDouble
 
-wilson_mcvean_2006_composite_likelihood q rhos theta alignment = wilson_mcvean_2006_composite_likelihood_raw q rhosRaw theta alignment
+wilson_mcvean_2006_composite_likelihood q rhos theta alignment = wilsonMcVeanNative (nativeMatrix q) rhosRaw theta alignment
     where rhosRaw = toVector [toVector [x,start,end] | (x,start,end) <- rhos]
 
 instance Dist WilsonMcVean2006 where

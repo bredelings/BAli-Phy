@@ -96,79 +96,109 @@ import Numeric.Vector ()
 infixr 8 <>
 
 dot :: Element a => Vector a -> Vector a -> a
-dot = dotNative
+dot = dotVector
 
 (<.>) :: Element a => Vector a -> Vector a -> a
 (<.>) = dot
 
 (#>) :: Element a => Matrix a -> Vector a -> Vector a
-(#>) = matrixVectorNative
+(#>) = matrixVectorProduct
 
 (<#) :: Element a => Vector a -> Matrix a -> Vector a
-(<#) = vectorMatrixNative
+(<#) = vectorMatrixProduct
 
 (<>) :: Element a => Matrix a -> Matrix a -> Matrix a
 (<>) = matrixProduct
 
 outer :: Element a => Vector a -> Vector a -> Matrix a
-outer = outerNative
+outer = outerProduct
 
-foreign import bpcall "Matrix:" detNative :: Matrix Double -> Double
-foreign import bpcall "Matrix:" invNative :: Matrix Double -> Matrix Double
-foreign import bpcall "Matrix:" linearSolveNative :: Matrix Double -> Matrix Double -> CMaybe (Matrix Double)
-foreign import bpcall "Matrix:" linearSolveLSNative :: Matrix Double -> Matrix Double -> Matrix Double
-foreign import bpcall "Matrix:" cholNative :: Matrix Double -> Matrix Double
-foreign import bpcall "Matrix:" expmNative :: Matrix Double -> Matrix Double
+foreign import bpcall "Matrix:detNative" detNative :: NativeMatrix Double -> Double
+foreign import bpcall "Matrix:invNative" invNative :: NativeMatrix Double -> NativeMatrix Double
+foreign import bpcall "Matrix:linearSolveNative" linearSolveNative :: NativeMatrix Double -> NativeMatrix Double -> CMaybe (NativeMatrix Double)
+foreign import bpcall "Matrix:linearSolveLSNative" linearSolveLSNative :: NativeMatrix Double -> NativeMatrix Double -> NativeMatrix Double
+foreign import bpcall "Matrix:cholNative" cholNative :: NativeMatrix Double -> NativeMatrix Double
+foreign import bpcall "Matrix:expmNative" expmNative :: NativeMatrix Double -> NativeMatrix Double
 
 det :: Matrix Double -> Double
-det = detNative
+det = detNative . nativeMatrix
 
 inv :: Matrix Double -> Matrix Double
-inv = invNative
+inv matrix = matrixFromNative (rows matrix) (cols matrix) (invNative (nativeMatrix matrix))
 
+-- Wrap a successful solve with dimensions determined by the coefficient and
+-- right-hand-side shapes.
 linearSolve :: Matrix Double -> Matrix Double -> Maybe (Matrix Double)
-linearSolve coefficients rhs = fromCMaybe (linearSolveNative coefficients rhs)
+linearSolve coefficients rhs =
+    case fromCMaybe (linearSolveNative (nativeMatrix coefficients) (nativeMatrix rhs)) of
+        Nothing -> Nothing
+        Just payload -> Just (matrixFromNative (cols coefficients) (cols rhs) payload)
 
 linearSolveLS :: Matrix Double -> Matrix Double -> Matrix Double
-linearSolveLS = linearSolveLSNative
+linearSolveLS coefficients rhs = matrixFromNative (cols coefficients) (cols rhs)
+    (linearSolveLSNative (nativeMatrix coefficients) (nativeMatrix rhs))
 
 chol :: Matrix Double -> Matrix Double
-chol = cholNative
+chol matrix = matrixFromNative (rows matrix) (cols matrix) (cholNative (nativeMatrix matrix))
 
 expm :: Matrix Double -> Matrix Double
-expm = expmNative
+expm matrix = matrixFromNative (rows matrix) (cols matrix) (expmNative (nativeMatrix matrix))
 
-foreign import bpcall "Matrix:" eigSHNative :: Matrix Double -> EPair (Vector Double) (Matrix Double)
-foreign import bpcall "Matrix:" eigenvaluesSHNative :: Matrix Double -> Vector Double
-foreign import bpcall "Matrix:" svdNative :: Int -> Matrix Double -> EPair (Matrix Double) (EPair (Vector Double) (Matrix Double))
-foreign import bpcall "Matrix:" singularValuesNative :: Matrix Double -> Vector Double
-foreign import bpcall "Matrix:" qrNative :: Int -> Matrix Double -> EPair (Matrix Double) (Matrix Double)
+foreign import bpcall "Matrix:eigSHNative" eigSHNative :: NativeMatrix Double -> EPair (NativeVector Double) (NativeMatrix Double)
+foreign import bpcall "Matrix:eigenvaluesSHNative" eigenvaluesSHNative :: NativeMatrix Double -> NativeVector Double
+foreign import bpcall "Matrix:svdNative" svdNative :: Int -> NativeMatrix Double -> EPair (NativeMatrix Double) (EPair (NativeVector Double) (NativeMatrix Double))
+foreign import bpcall "Matrix:singularValuesNative" singularValuesNative :: NativeMatrix Double -> NativeVector Double
+foreign import bpcall "Matrix:qrNative" qrNative :: Int -> NativeMatrix Double -> EPair (NativeMatrix Double) (NativeMatrix Double)
 
+-- Wrap a symmetric eigendecomposition without reading native result sizes.
 eigSH :: Matrix Double -> (Vector Double, Matrix Double)
-eigSH = pair_from_c . eigSHNative
+eigSH matrix = (vectorFromNative dimension values,
+                matrixFromNative dimension dimension vectors)
+  where
+    dimension = rows matrix
+    (values, vectors) = pair_from_c (eigSHNative (nativeMatrix matrix))
 
 eigenvaluesSH :: Matrix Double -> Vector Double
-eigenvaluesSH = eigenvaluesSHNative
+eigenvaluesSH matrix = vectorFromNative (rows matrix)
+    (eigenvaluesSHNative (nativeMatrix matrix))
 
--- Unpack one native SVD computation into the public hmatrix-style triple.
-svdResult :: EPair (Matrix Double) (EPair (Vector Double) (Matrix Double))
+-- Wrap one native SVD computation with dimensions derived from its input.
+svdResult :: Int -> Matrix Double
           -> (Matrix Double, Vector Double, Matrix Double)
-svdResult decomposition = (u, singular, v)
+svdResult thin matrix = (matrixFromNative rowCount uColumns u,
+                         vectorFromNative k singular,
+                         matrixFromNative columnCount vColumns v)
   where
-    (u, rest) = pair_from_c decomposition
+    rowCount = rows matrix
+    columnCount = cols matrix
+    k = min rowCount columnCount
+    uColumns = if thin == 0 then rowCount else k
+    vColumns = if thin == 0 then columnCount else k
+    (u, rest) = pair_from_c (svdNative thin (nativeMatrix matrix))
     (singular, v) = pair_from_c rest
 
 svd :: Matrix Double -> (Matrix Double, Vector Double, Matrix Double)
-svd = svdResult . svdNative 0
+svd = svdResult 0
 
 thinSVD :: Matrix Double -> (Matrix Double, Vector Double, Matrix Double)
-thinSVD = svdResult . svdNative 1
+thinSVD = svdResult 1
 
 singularValues :: Matrix Double -> Vector Double
-singularValues = singularValuesNative
+singularValues matrix = vectorFromNative (min (rows matrix) (cols matrix))
+    (singularValuesNative (nativeMatrix matrix))
 
 qr :: Matrix Double -> (Matrix Double, Matrix Double)
-qr = pair_from_c . qrNative 0
+qr = qrResult 0
 
 thinQR :: Matrix Double -> (Matrix Double, Matrix Double)
-thinQR = pair_from_c . qrNative 1
+thinQR = qrResult 1
+
+-- Wrap one native QR computation with full or thin dimensions from its input.
+qrResult :: Int -> Matrix Double -> (Matrix Double, Matrix Double)
+qrResult thin matrix = (matrixFromNative rowCount k q,
+                        matrixFromNative k columnCount r)
+  where
+    rowCount = rows matrix
+    columnCount = cols matrix
+    k = if thin == 0 then rowCount else min rowCount columnCount
+    (q, r) = pair_from_c (qrNative thin (nativeMatrix matrix))

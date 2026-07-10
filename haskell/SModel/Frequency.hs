@@ -4,9 +4,13 @@ module SModel.Frequency (module SModel.Frequency, Markov.plus_gwf_matrix, Markov
 import Bio.Alphabet
 import Foreign.Vector
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data
 import qualified Markov
 
-foreign import bpcall "SModel:average_frequency" builtin_average_frequency :: Matrix Double -> Vector Double
+foreign import bpcall "SModel:average_frequency" averageFrequencyNative :: NativeMatrix Double -> NativeVector Double
+
+builtin_average_frequency matrix = vectorFromNative (cols matrix)
+    (averageFrequencyNative (nativeMatrix matrix))
 
 -- pi is [Double] here
 uniform_frequencies a = Markov.uniform_frequencies $ alphabetSize a

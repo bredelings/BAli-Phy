@@ -11,14 +11,19 @@ import qualified Markov
 import Markov (getQ, getStartFreqs, getEqFreqs)
 import Numeric.LinearAlgebra -- for fromLists and scale
 import qualified Data.Map as Map
+import Numeric.LinearAlgebra.Data
 
-foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
-foreign import bpcall "SModel:modulated_markov_pi" builtin_modulated_markov_pi :: EVector (Vector Double) -> Vector Double -> Vector Double
+foreign import bpcall "SModel:modulated_markov_rates" modulatedRatesNative :: EVector (NativeMatrix Double) -> NativeMatrix Double -> NativeMatrix Double
+foreign import bpcall "SModel:modulated_markov_pi" modulatedPiNative :: EVector (NativeVector Double) -> NativeVector Double -> NativeVector Double
 foreign import bpcall "SModel:modulated_markov_smap" builtin_modulated_markov_smap :: EVector (EVector Int) -> EVector Int
 
-modulatedMarkovRates qs rates_between = builtin_modulated_markov_rates (toVector qs) rates_between
+modulatedMarkovRates qs rates_between = matrixFromNative stateCount stateCount
+    (modulatedRatesNative (toVector (map nativeMatrix qs)) (nativeMatrix rates_between))
+  where stateCount = sum (map rows qs)
 
-modulatedMarkovPi pis levelProbs = builtin_modulated_markov_pi (toVector pis) levelProbs
+modulatedMarkovPi pis levelProbs = vectorFromNative stateCount
+    (modulatedPiNative (toVector (map nativeVector pis)) (nativeVector levelProbs))
+  where stateCount = sum (map vectorSize pis)
 
 modulatedMarkovSmap smaps = builtin_modulated_markov_smap (toVector smaps)
 

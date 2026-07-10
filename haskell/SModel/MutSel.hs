@@ -9,9 +9,24 @@ import Bio.Alphabet
 import qualified Markov
 import Markov (getQ, getEqFreqs)
 import Reversible    
+import Numeric.LinearAlgebra.Data
 
-foreign import bpcall "SModel:" mut_sel_q :: Matrix Double -> Vector Double -> Matrix Double
-foreign import bpcall "SModel:" mut_sel_pi :: Vector Double -> Vector Double -> Vector Double
+foreign import bpcall "SModel:mut_sel_q" mutSelQNative :: NativeMatrix Double -> NativeVector Double -> NativeMatrix Double
+foreign import bpcall "SModel:mut_sel_pi" mutSelPiNative :: NativeVector Double -> NativeVector Double -> NativeVector Double
+
+-- Preserve the rate-matrix dimensions while applying native mutation-selection
+-- weights to its payload.
+mut_sel_q rates fitness =
+    case (matrixParts rates, vectorParts fitness) of
+        ((rowCount, columnCount, ratesNative), (_, fitnessNative)) ->
+            matrixFromNative rowCount columnCount
+                (mutSelQNative ratesNative fitnessNative)
+
+-- Preserve the frequency-vector length while applying native fitness weights.
+mut_sel_pi frequencies fitness =
+    case (vectorParts frequencies, vectorParts fitness) of
+        ((count, frequenciesNative), (_, fitnessNative)) ->
+            vectorFromNative count (mutSelPiNative frequenciesNative fitnessNative)
 
 mut_sel ws' m0@(Markov a smap _ _ _) = setReversibility rv $ markov a smap q pi where
     rv = getReversibility m0

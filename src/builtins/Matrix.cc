@@ -620,15 +620,6 @@ extern "C" closure builtin_function_sizedDoubleVectorFromList(OperationArgs& Arg
     return sized_vector_from_list<double>(Args);
 }
 
-// Return the dimension of either supported native numeric vector.
-extern "C" R::Exp simple_function_vectorSize(vector<R::Exp>& args)
-{
-    auto value = get_arg(args);
-    return visit_numeric_vector(value, [](const auto& vector_value) {
-        return static_cast<int>(vector_value.size());
-    });
-}
-
 // Return one native vector element after checking its zero-based index.
 extern "C" R::Exp simple_function_vectorAtIndex(vector<R::Exp>& args)
 {
@@ -839,20 +830,6 @@ extern "C" closure builtin_function_matrixFloatingBinary(OperationArgs& Args)
     const auto& right = right_value.as_<Box<DenseMatrix<double>>>();
     return zip_matrices(left, right, "matrix floating operation",
                         [operation](double x, double y) { return floating_binary(operation, x, y); });
-}
-
-// Return the number of rows for either supported native matrix representation.
-extern "C" R::Exp simple_function_rows(vector<R::Exp>& args)
-{
-    auto arg0 = get_arg(args);
-    return visit_matrix(arg0, [](const auto& native_matrix) { return static_cast<int>(native_matrix.rows()); });
-}
-
-// Return the number of columns for either supported native matrix representation.
-extern "C" R::Exp simple_function_cols(vector<R::Exp>& args)
-{
-    auto arg0 = get_arg(args);
-    return visit_matrix(arg0, [](const auto& native_matrix) { return static_cast<int>(native_matrix.cols()); });
 }
 
 // Sum a native matrix while preserving its Int or Double scalar

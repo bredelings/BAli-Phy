@@ -3,19 +3,35 @@ module SModel.Empirical where
 import Bio.Alphabet
 import Foreign.String
 import SModel.ReversibleMarkov
+import Numeric.LinearAlgebra.Data
 
-foreign import bpcall "SModel:empirical" builtin_empirical :: Alphabet -> CPPString -> Matrix Double
-foreign import bpcall "SModel:" pam :: Alphabet -> Matrix Double
-foreign import bpcall "SModel:" jtt :: Alphabet -> Matrix Double
-foreign import bpcall "SModel:" wag :: Alphabet -> Matrix Double
-foreign import bpcall "SModel:wag_frequencies" builtin_wag_frequencies :: Alphabet -> Vector Double
-foreign import bpcall "SModel:lg_frequencies" builtin_lg_frequencies :: Alphabet -> Vector Double
-foreign import bpcall "SModel:" lg :: Alphabet -> Matrix Double
-foreign import bpcall "SModel:symmetricMatrixFromLowerTriangle" builtinSymmetricMatrixFromLowerTriangle :: Int -> Vector Double -> Matrix Double
+foreign import bpcall "SModel:empirical" empiricalNative :: Alphabet -> CPPString -> NativeMatrix Double
+foreign import bpcall "SModel:pam" pamNative :: Alphabet -> NativeMatrix Double
+foreign import bpcall "SModel:jtt" jttNative :: Alphabet -> NativeMatrix Double
+foreign import bpcall "SModel:wag" wagNative :: Alphabet -> NativeMatrix Double
+foreign import bpcall "SModel:wag_frequencies" wagFrequenciesNative :: Alphabet -> NativeVector Double
+foreign import bpcall "SModel:lg_frequencies" lgFrequenciesNative :: Alphabet -> NativeVector Double
+foreign import bpcall "SModel:lg" lgNative :: Alphabet -> NativeMatrix Double
+foreign import bpcall "SModel:symmetricMatrixFromLowerTriangle" symmetricNative :: Int -> NativeVector Double -> NativeMatrix Double
 
-symmetricMatrixFromLowerTriangle n xs = builtinSymmetricMatrixFromLowerTriangle n (fromList xs)
+empiricalMatrix operation alphabet = matrixFromNative dimension dimension (operation alphabet)
+  where dimension = alphabetSize alphabet
 
-empirical a filename = builtin_empirical a (list_to_string filename)
+pam alphabet = empiricalMatrix pamNative alphabet
+jtt alphabet = empiricalMatrix jttNative alphabet
+wag alphabet = empiricalMatrix wagNative alphabet
+lg alphabet = empiricalMatrix lgNative alphabet
+
+builtin_wag_frequencies alphabet = vectorFromNative (alphabetSize alphabet)
+    (wagFrequenciesNative alphabet)
+
+builtin_lg_frequencies alphabet = vectorFromNative (alphabetSize alphabet)
+    (lgFrequenciesNative alphabet)
+
+symmetricMatrixFromLowerTriangle n xs = matrixFromNative n n
+    (symmetricNative n (nativeVector (fromList xs)))
+
+empirical a filename = empiricalMatrix (\alphabet -> empiricalNative alphabet (list_to_string filename)) a
 
 wag_frequencies a = zip (getLetters a) (toList $ builtin_wag_frequencies a)
 lg_frequencies a = zip (getLetters a) (toList $ builtin_lg_frequencies a)

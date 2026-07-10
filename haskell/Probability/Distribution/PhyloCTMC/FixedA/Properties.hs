@@ -4,6 +4,7 @@ import Bio.Sequence -- for sequence_to_indices
 import Bio.Alignment
 import Bio.Alphabet  -- for type Alphabet
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data (NativeMatrix)
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
@@ -33,7 +34,7 @@ import Probability.Distribution.PhyloCTMC.Properties
 
 data PhyloCTMCPropertiesFixedA = PhyloCTMCPropertiesFixedA {
       prop_fixed_a_subst_root :: Int,
-      prop_fixed_a_transition_ps :: IntMap (EVector (Matrix Double)),
+      prop_fixed_a_transition_ps :: IntMap (EVector (NativeMatrix Double)),
       prop_fixed_a_cond_likes :: IntMap CondLikes,
       prop_fixed_a_likelihood :: LogDouble,
       prop_fixed_a_alphabet :: Alphabet,

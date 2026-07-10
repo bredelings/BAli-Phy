@@ -10,6 +10,7 @@ import SModel.Likelihood.VariableA
 import Bio.Alignment -- for many things.
 import Bio.Alphabet (HasAlphabet(..))
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data (nativeMatrix)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
@@ -60,7 +61,8 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   in_edge "alignment" alignment
   in_edge "smodel" smodel
 
-  let prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) fs nodeCLVs ancestralComponentStates smodelProperties
+  let nativeFs = fmap nativeMatrix fs
+      prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) nativeFs nodeCLVs ancestralComponentStates smodelProperties
 
   return ([likelihood], prop)
 

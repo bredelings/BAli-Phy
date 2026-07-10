@@ -8,11 +8,19 @@ import Markov (getQ, getEqFreqs)
 import Probability.Distribution.Mixture
 import SModel.Doublets
 import Reversible    
+import Numeric.LinearAlgebra.Data
 
 type RNAEditAlphabet = Alphabet
 
-foreign import bpcall "SModel:" rna_editting_rates :: RNAEditAlphabet -> Matrix Double -> EVector (EPair Int Int) -> Double -> Matrix Double
-foreign import bpcall "SModel:" rna_editting_pi :: RNAEditAlphabet -> Vector Double -> EVector (EPair Int Int) -> Vector Double
+foreign import bpcall "SModel:rna_editting_rates" rnaEditingRatesNative :: RNAEditAlphabet -> NativeMatrix Double -> EVector (EPair Int Int) -> Double -> NativeMatrix Double
+foreign import bpcall "SModel:rna_editting_pi" rnaEditingPiNative :: RNAEditAlphabet -> NativeVector Double -> EVector (EPair Int Int) -> NativeVector Double
+
+rna_editting_rates alphabet rates edits rate = matrixFromNative dimension dimension
+    (rnaEditingRatesNative alphabet (nativeMatrix rates) edits rate)
+  where dimension = alphabetSize alphabet
+
+rna_editting_pi alphabet frequencies edits = vectorFromNative (alphabetSize alphabet)
+    (rnaEditingPiNative alphabet (nativeVector frequencies) edits)
 
 siteEdit alphabet nucModel rnaRate edits = setReversibility rv $ markov alphabet smap q pi
     where rv = getReversibility nucModel

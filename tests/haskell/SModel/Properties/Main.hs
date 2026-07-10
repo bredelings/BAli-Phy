@@ -13,7 +13,6 @@ import Data.Maybe
 import Data.OldList ((!!), drop, length, replicate, take)
 import Data.Ord
 import Data.Text (pack)
-import Foreign.Vector (toVector)
 import Numeric.LinearAlgebra (cols, flatten, fromList, rows, toList)
 import qualified Markov as CoreMarkov
 import Probability.Distribution.PhyloCTMC.FixedA.Properties
@@ -66,8 +65,8 @@ main = do
   putStrLn $ show [dndsValue, posSelectionValue]
   let triangle = symmetricMatrixFromLowerTriangle 3 [1, 2, 3]
       nonReversible = nonRev dna (replicate 12 1)
-      weighted = weightedFrequencyMatrixRaw (fromList [0.25, 0.75])
-                   (toVector [fromList [0.5, 0.5], fromList [0.25, 0.75]])
+      weighted = weightedFrequencyMatrixFromVectors (fromList [0.25, 0.75])
+                   [fromList [0.5, 0.5], fromList [0.25, 0.75]]
       selected = mut_sel (replicate (alphabetSize codons) 0) codonModel
 
   putStrLn $ show (rows triangle, cols triangle, toList (flatten triangle))

@@ -7,12 +7,19 @@ import Tree
 import SModel
 import Bio.Alignment (VectorPairIntInt)
 import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data
 import qualified Data.IntMap as IntMap
 
 -- This is imported for both FixedA and VariableA, which is ugly.
-foreign import bpcall "Likelihood:" simulateRootSequence :: Int -> Matrix Double -> IO VectorPairIntInt
+foreign import bpcall "Likelihood:simulateRootSequence" simulateRootSequenceNative :: Int -> NativeMatrix Double -> IO VectorPairIntInt
 
-foreign import bpcall "Likelihood:" simulateFixedSequenceFrom :: VectorPairIntInt -> EVector (Matrix Double) -> Matrix Double -> IO VectorPairIntInt
+foreign import bpcall "Likelihood:simulateFixedSequenceFrom" simulateFixedSequenceFromNative :: VectorPairIntInt -> EVector (NativeMatrix Double) -> NativeMatrix Double -> IO VectorPairIntInt
+
+simulateRootSequence count frequencies =
+    simulateRootSequenceNative count (nativeMatrix frequencies)
+
+simulateFixedSequenceFrom sequence probabilities frequencies =
+    simulateFixedSequenceFromNative sequence probabilities (nativeMatrix frequencies)
 
 sampleComponentStatesFixed rtree rootLength smodel =  do
   let smodelOnTree = SModelOnTree rtree smodel
