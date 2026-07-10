@@ -9,7 +9,7 @@ import SModel.Property
 import SModel.Rate
 import qualified Markov
 import Markov (getQ, getStartFreqs, getEqFreqs)
-import Numeric.LinearAlgebra -- for fromLists, %*%
+import Numeric.LinearAlgebra -- for fromLists, scale, and %*%
 import qualified Data.Map as Map
 
 foreign import bpcall "SModel:modulated_markov_rates" builtin_modulated_markov_rates :: EVector (Matrix Double) -> Matrix Double -> Matrix Double
@@ -119,7 +119,7 @@ covarionGtrSsrv nu exchange model = modulatedMarkov models (Markov.markov ratesB
     Discrete dist = scaleTo 1 model
     (models, levelProbs) = unzip dist
     -- This is really a gtr rate matrix, just without the alphabet / smap!
-    ratesBetween = (scaleMatrix nu exchange) %*% (plus_f_matrix $ toVector levelProbs)
+    ratesBetween = (scale nu exchange) %*% (plus_f_matrix $ toVector levelProbs)
 
 covarionGtr nu exchange pi model = (\nu' -> covarionGtrSsrv nu' exchange model) <$> (Discrete [(0,1-pi), (nu, pi)])
 

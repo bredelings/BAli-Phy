@@ -13,8 +13,8 @@ data Vector a
 type role Matrix nominal
 data Matrix a
 
-foreign import ecall "Matrix:" nrows :: Matrix a -> Int
-foreign import ecall "Matrix:" ncols :: Matrix a -> Int
+foreign import ecall "Matrix:" rows :: Matrix a -> Int
+foreign import ecall "Matrix:" cols :: Matrix a -> Int
 
 foreign import ecall "Prelude:show" showMatrix :: Matrix a -> CPPString
 foreign import ecall "Prelude:show" showNumericVector :: Vector a -> CPPString
@@ -81,12 +81,12 @@ instance Element a => Container Vector a where
     scalar value = fromList [value]
     sumElements = vectorSumElements
 
-foreign import ecall "Matrix:" getElem :: Int -> Int -> Matrix a -> a
+foreign import ecall "Matrix:" matrixAtIndex :: Int -> Int -> Matrix a -> a
 foreign import ecall "Matrix:" matrixSumElements :: Matrix a -> a
 
 instance Element a => Container Matrix a where
-    size matrix = (nrows matrix, ncols matrix)
-    atIndex matrix (i,j) = getElem i j matrix
+    size matrix = (rows matrix, cols matrix)
+    atIndex matrix (i,j) = matrixAtIndex i j matrix
     konst value (rows,columns) = (rows >< columns) (replicate (rows * columns) value)
     scalar value = (1 >< 1) [value]
     sumElements = matrixSumElements
@@ -110,11 +110,8 @@ fromLists xss
     expand [x] = replicate columns x
     expand xs = xs
 
-zero :: (Element a, Num a) => Int -> Int -> Matrix a
-zero rows columns = konst 0 (rows, columns)
-
-identity :: (Element a, Num a) => Int -> Matrix a
-identity dimension = (dimension >< dimension)
+ident :: (Element a, Num a) => Int -> Matrix a
+ident dimension = (dimension >< dimension)
                      [if i == j then 1 else 0 | i <- [0..dimension-1], j <- [0..dimension-1]]
 
 foreign import bpcall "Matrix:" matrixToVector :: Matrix a -> Vector a
@@ -129,7 +126,7 @@ splitRows 0 _ _ = []
 splitRows rows columns xs = take columns xs : splitRows (rows-1) columns (drop columns xs)
 
 toLists :: Element a => Matrix a -> [[a]]
-toLists matrix = splitRows (nrows matrix) (ncols matrix) (toList (flatten matrix))
+toLists matrix = splitRows (rows matrix) (cols matrix) (toList (flatten matrix))
 
 foreign import bpcall "Matrix:" reshapeVector :: Int -> Vector a -> Matrix a
 foreign import bpcall "Matrix:" vectorAsRow :: Vector a -> Matrix a
@@ -144,8 +141,14 @@ asRow = vectorAsRow
 asColumn :: Element a => Vector a -> Matrix a
 asColumn = vectorAsColumn
 
-foreign import bpcall "Matrix:" transpose :: Matrix a -> Matrix a
-foreign import bpcall "Matrix:" scaleMatrix :: a -> Matrix a -> Matrix a
+foreign import bpcall "Matrix:tr" transposeNative :: Matrix a -> Matrix a
+foreign import bpcall "Matrix:scale" scaleNative :: a -> Matrix a -> Matrix a
+
+tr :: Element a => Matrix a -> Matrix a
+tr = transposeNative
+
+scale :: Element a => a -> Matrix a -> Matrix a
+scale = scaleNative
 
 (%*%) = elementwise_multiply
 

@@ -15,12 +15,12 @@ foreign import bpcall "SModel:" checkReversible :: Matrix Double -> EVector Doub
 foreign import bpcall "SModel:" checkStationary :: Matrix Double -> EVector Double -> Bool
 foreign import bpcall "SModel:" flow :: EVector Double -> Matrix Double -> Matrix Double
 
-flux pi q = f - transpose f
+flux pi q = f - tr f
     where f = flow pi q
 
 relativeFlux pi q = (1/2) * sumElements (abs flux') / (sumElements flow' + 1.0e-12) where
     flow' = flow pi q
-    flux' = flow' - transpose flow'
+    flux' = flow' - tr flow'
 
 -- NOTE: Rates
 -- We don't have rates here, because rates require a concept of states being "equal".
@@ -43,7 +43,7 @@ class Scalable c => CTMC c where
     getEqFreqs m = equilibriumLimit (getStartFreqs m) (getQ m) 
     qExp m = mexp (getQ m) 1
 
-getNStates m = nrows (getQ m)
+getNStates m = rows (getQ m)
 
 eqFlow m = flow (getEqFreqs m) (getQ m)
 
@@ -63,7 +63,7 @@ markov q pi = Markov qFixed pi 1 (NoDecomp Nothing) NonEq where
 
 uniformEquilibriumLimit q = equilibriumLimit pi0 q where
     pi0 = toVector $ replicate n (1/fromIntegral n)
-    n = nrows q
+    n = rows q
 
 eqMarkov q = setReversibility EqNonRev $ markov q (uniformEquilibriumLimit q)
 
@@ -86,7 +86,7 @@ instance CanMakeReversible Markov where
 
 
 instance CTMC Markov where
-    getQ  (Markov q _  factor _ _) = scaleMatrix factor q
+    getQ  (Markov q _  factor _ _) = scale factor q
     getStartFreqs (Markov _ pi _ _ _) = pi
     qExp   (Markov q _  factor (NoDecomp _) _) = mexp q factor
     qExp   (Markov q pi  factor (RealEigenDecomp eigensys) _) =

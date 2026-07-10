@@ -441,14 +441,14 @@ extern "C" closure builtin_function_vectorAsColumn(OperationArgs& Args)
 }
 
 // Return the number of rows for either supported native matrix representation.
-extern "C" R::Exp simple_function_nrows(vector<R::Exp>& args)
+extern "C" R::Exp simple_function_rows(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     return visit_matrix(arg0, [](const auto& native_matrix) { return native_matrix.size1(); });
 }
 
 // Return the number of columns for either supported native matrix representation.
-extern "C" R::Exp simple_function_ncols(vector<R::Exp>& args)
+extern "C" R::Exp simple_function_cols(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
     return visit_matrix(arg0, [](const auto& native_matrix) { return native_matrix.size2(); });
@@ -470,8 +470,8 @@ extern "C" R::Exp simple_function_matrixSumElements(vector<R::Exp>& args)
     });
 }
 
-// scaleMatrix :: a -> Matrix a -> Matrix a
-extern "C" closure builtin_function_scaleMatrix(OperationArgs& Args)
+// Scale every matrix element without changing its native representation.
+extern "C" closure builtin_function_scale(OperationArgs& Args)
 {
     auto factor = Args.evaluate_slot_to_value(0);
     auto matrix_value = Args.evaluate_slot_to_value(1);
@@ -695,7 +695,8 @@ extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
 }
 
 
-extern "C" closure builtin_function_transpose(OperationArgs& Args)
+// Transpose either native matrix representation.
+extern "C" closure builtin_function_tr(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     return visit_matrix(arg0, [](const auto& native_matrix) {
@@ -713,7 +714,7 @@ extern "C" closure builtin_function_matrixToVector(OperationArgs& Args)
 }
 
 // Read one element without converting its native scalar representation.
-extern "C" R::Exp simple_function_getElem(vector<R::Exp>& args)
+extern "C" R::Exp simple_function_matrixAtIndex(vector<R::Exp>& args)
 {
     int i = get_arg(args).as_int();
     int j = get_arg(args).as_int();

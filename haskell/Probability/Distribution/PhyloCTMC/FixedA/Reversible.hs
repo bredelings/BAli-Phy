@@ -25,7 +25,7 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
 
       maybeNodeISequences = labelToNodeMap rtree isequences
       maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
-      nModels = nrows f
+      nModels = rows f
       nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
 
       alphabet = getAlphabet smodel

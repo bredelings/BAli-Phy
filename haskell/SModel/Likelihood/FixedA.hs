@@ -57,7 +57,7 @@ cachedConditionalLikelihoodsWith peelBranch t nodeCLVs ps f
 
 peelLikelihoodWith calcProb nodeCLVs t cls f alpha smap root counts
     = let inEdges = edgesTowardNodeSet t root
-          nModels = nrows f
+          nModels = rows f
           nodeCLs = toVector $ maybeToList $ nodeCLVs IntMap.! root
           clsIn = IntMap.restrictKeysToVector cls inEdges
       in calcProb nodeCLs clsIn f counts

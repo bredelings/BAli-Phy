@@ -128,16 +128,16 @@ labelledStartFrequencies m = zip (getLetters a) frequencies
     where frequencies = vectorToList $ getStartFreqs m
           a = getAlphabet m
 
-labelledUpperTriangle alphabet matrix = if n == nrows matrix && n == ncols matrix
-                                        then [ ((letters!i) ++ (letters!j), getElem i j matrix) | (i, j) <- Markov.all_pairs [0..n-1]]
+labelledUpperTriangle alphabet matrix = if n == rows matrix && n == cols matrix
+                                        then [ ((letters!i) ++ (letters!j), atIndex matrix (i,j)) | (i, j) <- Markov.all_pairs [0..n-1]]
                                         else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
-                                             show (ncols matrix,nrows matrix) ++" matrix!"
+                                             show (cols matrix,rows matrix) ++" matrix!"
     where letters = listArray' (getLetters alphabet)
           n = length letters
 
-labelledOffDiagonal alphabet matrix = if n == nrows matrix && n == ncols matrix
-                                      then [ ((letters!i) ++ (letters!j), getElem i j matrix) | i <- [0..n-1], j <- [0..n-1], i /= j]
+labelledOffDiagonal alphabet matrix = if n == rows matrix && n == cols matrix
+                                      then [ ((letters!i) ++ (letters!j), atIndex matrix (i,j)) | i <- [0..n-1], j <- [0..n-1], i /= j]
                                       else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
-                                             show (ncols matrix,nrows matrix) ++" matrix!"
+                                             show (cols matrix,rows matrix) ++" matrix!"
     where letters = listArray' (getLetters alphabet)
           n = length letters
