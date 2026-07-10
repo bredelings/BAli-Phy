@@ -6,8 +6,12 @@ import Compiler.Floating
 import Compiler.Integral (fromIntegral)
 import Compiler.Num
 import Data.List (map)
-import Data.Ord ((>))
+import Data.Bool (Bool(False, True))
+import Data.Maybe (Maybe(Nothing, Just))
+import Data.Ord ((<), (>))
 import System.IO (print)
+
+smallResidual left right = maxElement (abs (left - right)) < 1.0e-10
 
 -- Exercise the hmatrix construction and conversion interface for both native
 -- element representations, including singleton and empty row conformance.
@@ -76,3 +80,25 @@ main = do
     print (toLists (floatingMatrix / 2), toLists (2 / floatingMatrix))
     print (toLists (sqrt floatingMatrix), toLists (floatingMatrix ** 2))
     print (toLists (sin floatingMatrix), toLists (log1p floatingMatrix))
+    let coefficients = fromLists [[4,1],[2,3]] :: Matrix Double
+        rhs = fromLists [[1],[2]] :: Matrix Double
+    print (det coefficients)
+    print (smallResidual (coefficients <> inv coefficients) (ident 2))
+    case linearSolve coefficients rhs of
+        Nothing -> print False
+        Just solution -> print (smallResidual (coefficients <> solution) rhs)
+    let singular = fromLists [[1,2],[2,4]] :: Matrix Double
+    case linearSolve singular rhs of
+        Nothing -> print True
+        Just _ -> print False
+    let rectangular = fromLists [[1,0],[0,1],[1,1]] :: Matrix Double
+        expected = fromLists [[2],[3]] :: Matrix Double
+        rectangularRhs = rectangular <> expected
+        leastSquares = linearSolveLS rectangular rectangularRhs
+    print (smallResidual (rectangular <> leastSquares) rectangularRhs)
+    let positiveDefinite = fromLists [[4,2],[2,3]] :: Matrix Double
+        factor = chol positiveDefinite
+    print (smallResidual (tr factor <> factor) positiveDefinite)
+    let diagonal = fromLists [[1,0],[0,2]] :: Matrix Double
+        expectedExponential = fromLists [[exp 1,0],[0,exp 2]] :: Matrix Double
+    print (smallResidual (expm diagonal) expectedExponential)

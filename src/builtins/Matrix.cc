@@ -13,6 +13,9 @@
 #include "util/math/logsum.H"
 #include "substitution/parsimony.H"
 #include <algorithm>
+#include <Eigen/Cholesky>
+#include <Eigen/LU>
+#include <Eigen/QR>
 #include <limits>
 #include <type_traits>
 
@@ -1078,6 +1081,85 @@ extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
     }
     
     return P;
+}
+
+// Compute the determinant of a square native Double matrix.
+extern "C" closure builtin_function_detNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
+    if (matrix.rows() != matrix.cols())
+        throw myexception()<<"det: expected a square matrix, got ("
+                           <<matrix.rows()<<", "<<matrix.cols()<<")";
+    return {matrix.determinant()};
+}
+
+// Invert a nonsingular square Double matrix using full-pivoting LU.
+extern "C" closure builtin_function_invNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
+    if (matrix.rows() != matrix.cols())
+        throw myexception()<<"inv: expected a square matrix";
+    Eigen::FullPivLU<DenseMatrix<double>> decomposition(matrix);
+    if (not decomposition.isInvertible())
+        throw myexception()<<"inv: matrix is singular";
+    return new Box<DenseMatrix<double>>(decomposition.inverse());
+}
+
+// Solve a square system, returning Nothing when the coefficient matrix is
+// singular and a native Matrix in Just otherwise.
+extern "C" closure builtin_function_linearSolveNative(OperationArgs& Args)
+{
+    auto coefficient_value = Args.evaluate_slot_to_value(0);
+    const auto& coefficients = coefficient_value.as_<Box<DenseMatrix<double>>>();
+    auto rhs_value = Args.evaluate_slot_to_value(1);
+    const auto& rhs = rhs_value.as_<Box<DenseMatrix<double>>>();
+    if (coefficients.rows() != coefficients.cols() or coefficients.rows() != rhs.rows())
+        throw myexception()<<"linearSolve: incompatible matrix dimensions";
+    Eigen::FullPivLU<DenseMatrix<double>> decomposition(coefficients);
+    if (not decomposition.isInvertible())
+        return {R::RMaybe()};
+    object_ptr<Box<DenseMatrix<double>>> result =
+        new Box<DenseMatrix<double>>(decomposition.solve(rhs));
+    return {R::RMaybe(result)};
+}
+
+// Solve a possibly rectangular least-squares system using rank-revealing QR.
+extern "C" closure builtin_function_linearSolveLSNative(OperationArgs& Args)
+{
+    auto coefficient_value = Args.evaluate_slot_to_value(0);
+    const auto& coefficients = coefficient_value.as_<Box<DenseMatrix<double>>>();
+    auto rhs_value = Args.evaluate_slot_to_value(1);
+    const auto& rhs = rhs_value.as_<Box<DenseMatrix<double>>>();
+    if (coefficients.rows() != rhs.rows())
+        throw myexception()<<"linearSolveLS: incompatible right-hand side rows";
+    DenseMatrix<double> result = coefficients.completeOrthogonalDecomposition().solve(rhs);
+    return new Box<DenseMatrix<double>>(std::move(result));
+}
+
+// Return the upper Cholesky factor of a symmetric positive-definite matrix.
+extern "C" closure builtin_function_cholNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
+    if (matrix.rows() != matrix.cols())
+        throw myexception()<<"chol: expected a square matrix";
+    Eigen::LLT<DenseMatrix<double>> decomposition(matrix);
+    if (decomposition.info() != Eigen::Success)
+        throw myexception()<<"chol: matrix is not positive definite";
+    DenseMatrix<double> result = decomposition.matrixU();
+    return new Box<DenseMatrix<double>>(std::move(result));
+}
+
+// Evaluate the matrix exponential without Markov-specific renormalization.
+extern "C" closure builtin_function_expmNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    const auto& matrix = value.as_<Box<DenseMatrix<double>>>();
+    if (matrix.rows() != matrix.cols())
+        throw myexception()<<"expm: expected a square matrix";
+    return new Box<DenseMatrix<double>>(matrix.exp());
 }
 
 
