@@ -38,6 +38,13 @@ main = do
     let intMatrix = (2 >< 3) [1, 2, 3, 4, 5, 6] :: Matrix Int
         intRow = (1 >< 3) [10, 20, 30] :: Matrix Int
         intColumn = (2 >< 1) [1, 2] :: Matrix Int
+    putStrLn $ show $ dot intVector (fromList [4, 5, 6])
+    putStrLn $ show $ intVector <.> fromList [4, 5, 6]
+    putStrLn $ show $ toList $ intMatrix #> fromList [2, 3, 4]
+    putStrLn $ show $ toList $ (fromList [1, 2] :: Vector Int) <# intMatrix
+    putStrLn $ show $ toList $ flatten $ outer (fromList [1, 2]) (fromList [3, 4, 5] :: Vector Int)
+    putStrLn $ show $ toList $ flatten $ (2 :: Matrix Int) <> intMatrix
+    putStrLn $ show $ toList $ flatten $ intMatrix <> (3 :: Matrix Int)
     putStrLn $ show $ toLists intMatrix
     putStrLn $ show $ toList $ flatten $ intMatrix + 10
     putStrLn $ show $ toList $ flatten $ intMatrix + intRow
@@ -45,6 +52,8 @@ main = do
     putStrLn $ show $ toList $ flatten $ intRow + intColumn
     let doubleMatrix = (2 >< 3) [1, 2, 3, 4, 5, 6] :: Matrix Double
         doubleRow = (1 >< 3) [0.5, 1, 2] :: Matrix Double
+        doubleRight = (3 >< 2) [7, 8, 9, 10, 11, 12] :: Matrix Double
+    putStrLn $ show $ toList $ flatten $ doubleMatrix <> doubleRight
     putStrLn $ show $ toList $ flatten $ doubleMatrix * doubleRow
     putStrLn $ show $ toList $ flatten $ doubleMatrix - 1
     putStrLn $ show $ toList $ flatten (fromLists [[1, 2], [3, 4]] :: Matrix Int)

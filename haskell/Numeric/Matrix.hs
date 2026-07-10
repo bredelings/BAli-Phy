@@ -13,3 +13,6 @@ instance (Element a, Num a) => Num (Matrix a) where
     (+) = elementwise_add
     (-) = elementwise_sub
     (*) = elementwise_multiply
+
+instance Element a => Semigroup (Matrix a) where
+    (<>) = matrixProduct

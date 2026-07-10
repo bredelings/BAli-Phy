@@ -98,6 +98,31 @@ decltype(auto) visit_same_matrix_pair(const R::Exp& value1, const R::Exp& value2
     throw myexception()<<"Unsupported native matrix representation "<<value1.print();
 }
 
+// Dispatch a matrix/vector operation only when both values use the same
+// supported native element representation.
+template <typename F>
+decltype(auto) visit_same_matrix_vector_pair(const R::Exp& matrix_value,
+                                             const R::Exp& vector_value,
+                                             F&& operation)
+{
+    if (matrix_value.is_a<Box<DenseMatrix<double>>>() )
+    {
+        if (not vector_value.is_a<Box<DenseVector<double>>>() )
+            throw myexception()<<"Matrix and vector have different native element representations";
+        return operation(matrix_value.as_<Box<DenseMatrix<double>>>(),
+                         vector_value.as_<Box<DenseVector<double>>>());
+    }
+    if (matrix_value.is_a<Box<DenseMatrix<int>>>() )
+    {
+        if (not vector_value.is_a<Box<DenseVector<int>>>() )
+            throw myexception()<<"Matrix and vector have different native element representations";
+        return operation(matrix_value.as_<Box<DenseMatrix<int>>>(),
+                         vector_value.as_<Box<DenseVector<int>>>());
+    }
+
+    throw myexception()<<"Unsupported native matrix representation "<<matrix_value.print();
+}
+
 // Read a runtime scalar using the representation selected by its matrix.
 template <typename T>
 T matrix_scalar(const R::Exp& value)
@@ -194,6 +219,45 @@ closure multiply_matrices(const Box<NativeMatrix>& matrix1, const Box<NativeMatr
     auto matrix3 = new Box<NativeMatrix>(matrix1.rows(), matrix2.cols());
     matrix3->noalias() = matrix1 * matrix2;
     return matrix3;
+}
+
+// Multiply a matrix by a conformable column vector using Eigen evaluation.
+template <typename NativeMatrix, typename NativeVector>
+closure multiply_matrix_vector(const Box<NativeMatrix>& matrix,
+                               const Box<NativeVector>& vector)
+{
+    if (matrix.cols() != vector.size())
+        throw myexception()<<"matrix #> vector: incompatible extents "
+                           <<matrix.cols()<<" and "<<vector.size();
+    auto result = new Box<NativeVector>(matrix.rows());
+    result->noalias() = matrix * vector;
+    return result;
+}
+
+// Multiply a row vector by a conformable matrix, returning a column-stored
+// vector containing the row-product values.
+template <typename NativeVector, typename NativeMatrix>
+closure multiply_vector_matrix(const Box<NativeVector>& vector,
+                               const Box<NativeMatrix>& matrix)
+{
+    if (vector.size() != matrix.rows())
+        throw myexception()<<"vector <# matrix: incompatible extents "
+                           <<vector.size()<<" and "<<matrix.rows();
+    auto result = new Box<NativeVector>(matrix.cols());
+    result->noalias() = matrix.transpose() * vector;
+    return result;
+}
+
+// Form the outer product of two vectors without materializing row-vector
+// storage.
+template <typename NativeVector>
+closure outer_vectors(const Box<NativeVector>& vector1,
+                      const Box<NativeVector>& vector2)
+{
+    using T = typename NativeVector::Scalar;
+    auto result = new Box<DenseMatrix<T>>(vector1.size(), vector2.size());
+    result->noalias() = vector1 * vector2.transpose();
+    return result;
 }
 
 // Transpose a native matrix while preserving its element representation.
@@ -470,6 +534,21 @@ extern "C" R::Exp simple_function_vectorSumElements(vector<R::Exp>& args)
     });
 }
 
+// Compute the dot product of two equal-length vectors.
+extern "C" R::Exp simple_function_dotNative(vector<R::Exp>& args)
+{
+    auto value1 = get_arg(args);
+    auto value2 = get_arg(args);
+    // Evaluate the Eigen dot product after checking the shared representation.
+    return visit_same_numeric_vector_pair(value1, value2, [](const auto& vector1, const auto& vector2) -> R::Exp {
+        if (vector1.size() != vector2.size())
+            throw myexception()<<"dot: incompatible vector lengths "
+                               <<vector1.size()<<" and "<<vector2.size();
+        using T = typename std::remove_cvref_t<decltype(vector1)>::Scalar;
+        return static_cast<T>(vector1.dot(vector2));
+    });
+}
+
 // Reshape either supported native vector into a row-major matrix.
 extern "C" closure builtin_function_reshapeVector(OperationArgs& Args)
 {
@@ -607,6 +686,42 @@ extern "C" closure builtin_function_vector_signum(OperationArgs& Args)
             return (element > 0 ? 1 : 0) - (element < 0 ? 1 : 0);
         });
     });
+}
+
+// Multiply a matrix by a vector after dispatching their shared representation.
+extern "C" closure builtin_function_matrixVectorNative(OperationArgs& Args)
+{
+    auto matrix_value = Args.evaluate_slot_to_value(0);
+    auto vector_value = Args.evaluate_slot_to_value(1);
+    // Evaluate the typed product after representation dispatch.
+    return visit_same_matrix_vector_pair(matrix_value, vector_value,
+        [](const auto& matrix, const auto& vector) {
+            return multiply_matrix_vector(matrix, vector);
+        });
+}
+
+// Multiply a vector by a matrix after dispatching their shared representation.
+extern "C" closure builtin_function_vectorMatrixNative(OperationArgs& Args)
+{
+    auto vector_value = Args.evaluate_slot_to_value(0);
+    auto matrix_value = Args.evaluate_slot_to_value(1);
+    // Reverse the dispatch arguments while preserving the public operand order.
+    return visit_same_matrix_vector_pair(matrix_value, vector_value,
+        [](const auto& matrix, const auto& vector) {
+            return multiply_vector_matrix(vector, matrix);
+        });
+}
+
+// Form the outer product of two vectors with the same native scalar type.
+extern "C" closure builtin_function_outerNative(OperationArgs& Args)
+{
+    auto vector1 = Args.evaluate_slot_to_value(0);
+    auto vector2 = Args.evaluate_slot_to_value(1);
+    // Evaluate the typed outer product after representation dispatch.
+    return visit_same_numeric_vector_pair(vector1, vector2,
+        [](const auto& native1, const auto& native2) {
+            return outer_vectors(native1, native2);
+        });
 }
 
 extern "C" closure builtin_function_elementwise_multiply(OperationArgs& Args)

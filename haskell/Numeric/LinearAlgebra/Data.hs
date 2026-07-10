@@ -156,6 +156,10 @@ foreign import bpcall "Matrix:" vector_elementwise_sub :: Vector a -> Vector a -
 foreign import bpcall "Matrix:" vector_abs :: Vector a -> Vector a
 foreign import bpcall "Matrix:" vector_negate :: Vector a -> Vector a
 foreign import bpcall "Matrix:" vector_signum :: Vector a -> Vector a
+foreign import ecall "Matrix:" dotNative :: Vector a -> Vector a -> a
+foreign import bpcall "Matrix:" matrixVectorNative :: Matrix a -> Vector a -> Vector a
+foreign import bpcall "Matrix:" vectorMatrixNative :: Vector a -> Matrix a -> Vector a
+foreign import bpcall "Matrix:" outerNative :: Vector a -> Vector a -> Matrix a
 foreign import bpcall "Matrix:" elementwise_multiply :: Matrix a -> Matrix a -> Matrix a
 foreign import bpcall "Matrix:" elementwise_add :: Matrix a -> Matrix a -> Matrix a
 foreign import bpcall "Matrix:" elementwise_sub :: Matrix a -> Matrix a -> Matrix a
@@ -163,3 +167,11 @@ foreign import bpcall "Matrix:" mat_mult :: Matrix a -> Matrix a -> Matrix a
 foreign import bpcall "Matrix:" mat_abs :: Matrix a -> Matrix a
 foreign import bpcall "Matrix:" mat_negate :: Matrix a -> Matrix a
 foreign import bpcall "Matrix:" mat_signum :: Matrix a -> Matrix a
+
+-- Scale singleton matrices and otherwise dispatch a conformable product to
+-- the native Eigen implementation.
+matrixProduct :: Element a => Matrix a -> Matrix a -> Matrix a
+matrixProduct left right
+    | rows left == 1 && cols left == 1 = scale (atIndex left (0,0)) right
+    | rows right == 1 && cols right == 1 = scale (atIndex right (0,0)) left
+    | otherwise = mat_mult left right

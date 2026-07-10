@@ -8,7 +8,7 @@ import           SModel.Property
 import           SModel.Rate
 import           SModel.Frequency
 import           Bio.Alphabet
-import           Numeric.LinearAlgebra
+import           Numeric.LinearAlgebra hiding ((<>))
 import           Tree
 import           Data.Array
 import qualified Data.Map as Map
