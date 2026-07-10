@@ -28,6 +28,22 @@ std::string print_matrix(const matrix<T>& native_matrix)
     return "[ " + join(rows, ", \n") + "]";
 }
 
+// Format an Eigen-backed runtime matrix without converting it to the general
+// C++ two-dimensional storage type.
+template <typename T>
+std::string print_dense_matrix(const DenseMatrix<T>& native_matrix)
+{
+    std::vector<std::string> rows;
+    for(Eigen::Index i = 0; i < native_matrix.rows(); i++)
+    {
+        std::vector<T> row;
+        for(Eigen::Index j = 0; j < native_matrix.cols(); j++)
+            row.push_back(native_matrix(i,j));
+        rows.push_back("[ " + join(row, ", ") + "]");
+    }
+    return "[ " + join(rows, ", \n") + "]";
+}
+
 // Format a native numeric vector in the compact representation used by
 // Numeric.LinearAlgebra.Vector's Show instance.
 template <typename T>
@@ -49,9 +65,9 @@ template<> std::string Box<Matrix>::print() const
 }
 
 // Format the runtime's native Int matrix representation.
-template<> std::string Box<matrix<int>>::print() const
+template<> std::string Box<DenseMatrix<int>>::print() const
 {
-    return print_matrix(*this);
+    return print_dense_matrix(*this);
 }
 
 // Format the runtime's native Double vector representation.

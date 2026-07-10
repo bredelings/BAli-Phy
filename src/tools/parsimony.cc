@@ -21,9 +21,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "parsimony.H"
 using namespace std;
 
-matrix<int> unit_cost_matrix(unsigned size)
+DenseMatrix<int> unit_cost_matrix(unsigned size)
 {
-  matrix<int> cost(size,size);
+  DenseMatrix<int> cost(size,size);
   for(int i=0;i<size;i++) {
     cost(i,i) = 0;
     for(int j=0;j<i;j++)
@@ -32,7 +32,7 @@ matrix<int> unit_cost_matrix(unsigned size)
   return cost;
 }
 
-matrix<int> unit_cost_matrix(const alphabet& a)
+DenseMatrix<int> unit_cost_matrix(const alphabet& a)
 {
   return unit_cost_matrix(a.size());
 }
@@ -46,12 +46,12 @@ unsigned n_nuc_differences(const Doublets& D,int i,int j)
   return n;
 }
 
-matrix<int> nucleotide_cost_matrix(const Doublets& D)
+DenseMatrix<int> nucleotide_cost_matrix(const Doublets& D)
 {
-  matrix<int> cost(D.size(), D.size());
+  DenseMatrix<int> cost(D.size(), D.size());
 
-  for(int i=0;i<cost.size1();i++)
-    for(int j=0;j<cost.size2();j++)
+  for(Eigen::Index i=0;i<cost.rows();i++)
+    for(Eigen::Index j=0;j<cost.cols();j++)
       cost(i,j) = n_nuc_differences(D,i,j);
 
   return cost;
@@ -67,24 +67,24 @@ unsigned n_nuc_differences(const Triplets& T,int i,int j)
 }
 
 
-matrix<int> nucleotide_cost_matrix(const Triplets& T)
+DenseMatrix<int> nucleotide_cost_matrix(const Triplets& T)
 {
-  matrix<int> cost(T.size(), T.size());
+  DenseMatrix<int> cost(T.size(), T.size());
 
-  for(int i=0;i<cost.size1();i++)
-    for(int j=0;j<cost.size2();j++)
+  for(Eigen::Index i=0;i<cost.rows();i++)
+    for(Eigen::Index j=0;j<cost.cols();j++)
       cost(i,j) = n_nuc_differences(T,i,j);
 
   return cost;
 }
 
 
-matrix<int> amino_acid_cost_matrix(const Codons& C)
+DenseMatrix<int> amino_acid_cost_matrix(const Codons& C)
 {
-  matrix<int> cost(C.size(), C.size());
+  DenseMatrix<int> cost(C.size(), C.size());
 
-  for(int i=0;i<cost.size1();i++)
-    for(int j=0;j<cost.size2();j++)
+  for(Eigen::Index i=0;i<cost.rows();i++)
+    for(Eigen::Index j=0;j<cost.cols();j++)
       if (C.translate(i) == C.translate(j))
 	cost(i,j) = 0;
       else
@@ -93,12 +93,12 @@ matrix<int> amino_acid_cost_matrix(const Codons& C)
   return cost;
 }
 
-matrix<int> pos1_cost_matrix(const RNAEdits& D)
+DenseMatrix<int> pos1_cost_matrix(const RNAEdits& D)
 {
-    matrix<int> cost(D.size(), D.size());
+    DenseMatrix<int> cost(D.size(), D.size());
 
-    for(int i=0;i<cost.size1();i++)
-        for(int j=0;j<cost.size2();j++)
+    for(Eigen::Index i=0;i<cost.rows();i++)
+        for(Eigen::Index j=0;j<cost.cols();j++)
             if (D.sub_nuc(i,0) == D.sub_nuc(j,0))
                 cost(i,j) = 0;
             else
@@ -107,12 +107,12 @@ matrix<int> pos1_cost_matrix(const RNAEdits& D)
     return cost;
 }
 
-matrix<int> pos2_cost_matrix(const RNAEdits& D)
+DenseMatrix<int> pos2_cost_matrix(const RNAEdits& D)
 {
-    matrix<int> cost(D.size(), D.size());
+    DenseMatrix<int> cost(D.size(), D.size());
 
-    for(int i=0;i<cost.size1();i++)
-        for(int j=0;j<cost.size2();j++)
+    for(Eigen::Index i=0;i<cost.rows();i++)
+        for(Eigen::Index j=0;j<cost.cols();j++)
             if (D.sub_nuc(i,1) == D.sub_nuc(j,1))
                 cost(i,j) = 0;
             else
@@ -142,14 +142,14 @@ B row_min(const matrix<B>& M,int row)
 
 template <class B>
 void peel_n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,
-		      const matrix<B>& cost,matrix<B>& n_muts,
+		      const DenseMatrix<B>& cost,matrix<B>& n_muts,
 		      const vector<const_branchview>& branches)
 {
   const int A = a.size();
 
   assert(letters.size() == T.n_leaves());
-  assert(cost.size1() == A);
-  assert(cost.size2() == A);
+  assert(cost.rows() == A);
+  assert(cost.cols() == A);
 
   // we need a scratch row in the matrix
   assert(n_muts.size1() == T.n_nodes());
@@ -204,7 +204,7 @@ void peel_n_mutations(const alphabet& a, const vector<int>& letters, const Seque
 }
 
 template <class B>
-B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const matrix<B>& cost,
+B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const DenseMatrix<B>& cost,
 	      matrix<B>& n_muts, const vector<const_branchview>& branches)
 {
   int root = T.directed_branch(0).target();
@@ -215,7 +215,7 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree&
 }
 
 template <class B>
-B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const matrix<B>& cost)
+B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const DenseMatrix<B>& cost)
 {
   int root = T.directed_branch(0).target();
 
@@ -226,15 +226,15 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree&
   return n_mutations(a,letters,T,cost,n_muts,branches);
 }
 
-template int n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const matrix<int>& cost);
+template int n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const DenseMatrix<int>& cost);
 
-template int n_mutations(const alignment& A, const SequenceTree& T,const matrix<int>& cost);
+template int n_mutations(const alignment& A, const SequenceTree& T,const DenseMatrix<int>& cost);
 
-template double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const matrix<double>& cost);
+template double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const DenseMatrix<double>& cost);
 
 
 vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters, const SequenceTree& T,
-				  const matrix<int>& cost)
+				  const DenseMatrix<int>& cost)
 {
   int root = T.directed_branch(0).target();
   matrix<int> n_muts(T.n_nodes(),a.size());
@@ -273,7 +273,7 @@ vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters,
 
 
 vector<vector<int> > get_all_parsimony_letters(const alphabet& a, const vector<int>& letters, const SequenceTree& T,
-					       const matrix<int>& cost)
+					       const DenseMatrix<int>& cost)
 {
   int root = T.directed_branch(0).target();
 
@@ -335,7 +335,7 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree&
 
 
 template <class B>
-B n_mutations(const alignment& A, const SequenceTree& T,const matrix<B>& cost)
+B n_mutations(const alignment& A, const SequenceTree& T,const DenseMatrix<B>& cost)
 {
   const alphabet& a = A.get_alphabet();
 

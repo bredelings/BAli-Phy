@@ -205,7 +205,13 @@ prefixed_tools = ['subsample']
 
 extra_sources = {'alignment-draw': ['tools/colors.cc'], 'trees-bootstrap': ['tools/bootstrap.cc']}
 
-extra_deps = {'draw-tree': [cairo]}
+extra_deps = {
+  'draw-tree': [cairo],
+  'alignment-info': [eigen],
+  'alignment-find-conserved': [eigen],
+  'alignment-smc': [eigen],
+  'joint-parsimony': [eigen],
+}
 
 joint_indels_exe = disabler()
 

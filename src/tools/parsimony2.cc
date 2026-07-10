@@ -42,14 +42,14 @@ B row_min(const matrix<B>& M,int row)
 
 template <class B>
 void peel_n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,
-		      const matrix<B>& cost,matrix<B>& n_muts,
+		      const DenseMatrix<B>& cost,matrix<B>& n_muts,
 		      const vector<int>& branches)
 {
   const int A = a.size();
 
   assert(letters.size() == T.n_leaves());
-  assert(cost.size1() == A);
-  assert(cost.size2() == A);
+  assert(cost.rows() == A);
+  assert(cost.cols() == A);
 
   // we need a scratch row in the matrix
   assert(n_muts.size1() == T.n_nodes());
@@ -104,7 +104,7 @@ void peel_n_mutations(const alphabet& a, const vector<int>& letters, const TreeI
 }
 
 template <class B>
-B n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,const matrix<B>& cost,
+B n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,const DenseMatrix<B>& cost,
 	      matrix<B>& n_muts, const vector<int>& branches)
 {
   int root = T.target(0);
@@ -115,7 +115,7 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface
 }
 
 template <class B>
-B n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,const matrix<B>& cost)
+B n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,const DenseMatrix<B>& cost)
 {
   int root = T.target(0);
 
@@ -126,12 +126,12 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface
   return n_mutations(a,letters,T,cost,n_muts,branches);
 }
 
-template int n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,const matrix<int>& cost);
+template int n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,const DenseMatrix<int>& cost);
 
-template double n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,const matrix<double>& cost);
+template double n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface& T,const DenseMatrix<double>& cost);
 
 vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters, const TreeInterface& T,
-				  const matrix<int>& cost)
+				  const DenseMatrix<int>& cost)
 {
   int root = T.target(0);
   matrix<int> n_muts(T.n_nodes(),a.size());
@@ -170,7 +170,7 @@ vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters,
 
 
 vector<vector<int> > get_all_parsimony_letters(const alphabet& a, const vector<int>& letters, const TreeInterface& T,
-					       const matrix<int>& cost)
+					       const DenseMatrix<int>& cost)
 {
   int root = T.target(0);
 
@@ -232,7 +232,7 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const TreeInterface
 
 
 template <class B>
-B n_mutations(const alignment& A, const TreeInterface& T,const matrix<B>& cost)
+B n_mutations(const alignment& A, const TreeInterface& T,const DenseMatrix<B>& cost)
 {
   const alphabet& a = A.get_alphabet();
 
@@ -256,7 +256,7 @@ B n_mutations(const alignment& A, const TreeInterface& T,const matrix<B>& cost)
 }
 
 template 
-int n_mutations(const alignment& A, const TreeInterface& T,const matrix<int>& cost);
+int n_mutations(const alignment& A, const TreeInterface& T,const DenseMatrix<int>& cost);
 
 int n_mutations(const alignment& A, const TreeInterface& T)
 {

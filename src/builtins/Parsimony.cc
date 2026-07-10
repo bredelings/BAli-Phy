@@ -37,7 +37,7 @@ extern "C" closure builtin_function_unitCostMatrix(OperationArgs& Args)
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
-    auto U = new Box<matrix<int>>(N, N, 1);
+    auto U = new Box<DenseMatrix<int>>(N, N);
 
     if (auto T = arg0.poly_cast<alphabet,Triplets>())
 	*U = nucleotide_cost_matrix(*T);
@@ -57,7 +57,7 @@ extern "C" closure builtin_function_aminoAcidCostMatrix(OperationArgs& Args)
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
-    auto U = new Box<matrix<int>>(N, N, 1);
+    auto U = new Box<DenseMatrix<int>>(N, N);
 
     if (auto C = arg0.poly_cast<alphabet,Codons>())
 	*U = amino_acid_cost_matrix(*C);
@@ -73,7 +73,7 @@ extern "C" closure builtin_function_pos1CostMatrix(OperationArgs& Args)
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
-    auto U = new Box<matrix<int>>(N, N, 1);
+    auto U = new Box<DenseMatrix<int>>(N, N);
 
     if (auto E = arg0.poly_cast<alphabet,RNAEdits>())
 	*U = pos1_cost_matrix(*E);
@@ -89,7 +89,7 @@ extern "C" closure builtin_function_pos2CostMatrix(OperationArgs& Args)
     const alphabet& a = *arg0.as_<Alphabet>();
 
     int N = a.size();
-    auto U = new Box<matrix<int>>(N, N, 1);
+    auto U = new Box<DenseMatrix<int>>(N, N);
 
     if (auto E = arg0.poly_cast<alphabet,RNAEdits>())
 	*U = pos2_cost_matrix(*E);
@@ -101,7 +101,7 @@ extern "C" closure builtin_function_pos2CostMatrix(OperationArgs& Args)
 
 
 object_ptr<ParsimonyCacheBranch>
-peel_muts(const R::RVector& sequences, const alphabet& a, const R::RVector& A, const R::RVector& n_muts, const matrix<int>& cost);
+peel_muts(const R::RVector& sequences, const alphabet& a, const R::RVector& A, const R::RVector& n_muts, const DenseMatrix<int>& cost);
 
 extern "C" closure builtin_function_peelMuts(OperationArgs& Args)
 {
@@ -115,10 +115,10 @@ extern "C" closure builtin_function_peelMuts(OperationArgs& Args)
 		     *arg1.as_<Alphabet>(),  // alphabet
 		     arg2.as_<R::RVector>(),    // A
 		     arg3.as_<R::RVector>(),    // n_muts
-		     arg4.as_<Box<matrix<int>>>());
+		     arg4.as_<Box<DenseMatrix<int>>>());
 }
 
-int muts_root(const R::RVector& sequences, const alphabet& a, const R::RVector& A, const R::RVector& n_muts, const matrix<int>& cost);
+int muts_root(const R::RVector& sequences, const alphabet& a, const R::RVector& A, const R::RVector& n_muts, const DenseMatrix<int>& cost);
 
 extern "C" closure builtin_function_mutsRoot(OperationArgs& Args)
 {
@@ -132,13 +132,13 @@ extern "C" closure builtin_function_mutsRoot(OperationArgs& Args)
 			 *arg1.as_<Alphabet>(),
 			 arg2.as_<R::RVector>(),
 			 arg3.as_<R::RVector>(),
-			 arg4.as_<Box<matrix<int>>>());
+			 arg4.as_<Box<DenseMatrix<int>>>());
 
     return {muts};
 }
 
 object_ptr<const ParsimonyCacheBranch>
-peel_muts_fixed_A(const R::RVector& sequences, const alphabet& a, const R::RVector& n_muts_, const matrix<int>& cost);
+peel_muts_fixed_A(const R::RVector& sequences, const alphabet& a, const R::RVector& n_muts_, const DenseMatrix<int>& cost);
 
 extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
 {
@@ -150,11 +150,11 @@ extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
     return peel_muts_fixed_A(arg0.as_<R::RVector>(),            // sequences
 			     *arg1.as_<Alphabet>(),          // a
 			     arg2.as_<R::RVector>(),            // n_muts_
-			     arg3.as_<Box<matrix<int>>>());  // cost
+			     arg3.as_<Box<DenseMatrix<int>>>());  // cost
 }
 
 
-int muts_root_fixed_A(const R::RVector& sequences, const alphabet& a, const R::RVector& n_muts, const matrix<int>& costs, const R::RVector& counts);
+int muts_root_fixed_A(const R::RVector& sequences, const alphabet& a, const R::RVector& n_muts, const DenseMatrix<int>& costs, const R::RVector& counts);
 
 extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
 {
@@ -167,10 +167,8 @@ extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
     int muts = muts_root_fixed_A(arg0.as_<R::RVector>(),            // sequences
 				 *arg1.as_<Alphabet>(),          // a
 				 arg2.as_<R::RVector>(),            // n_muts_
-				 arg3.as_<Box<matrix<int>>>(),   // cost
+				 arg3.as_<Box<DenseMatrix<int>>>(),   // cost
 				 arg4.as_<R::RVector>());           // counts
 
     return { muts };
 }
-
-

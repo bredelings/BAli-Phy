@@ -12,6 +12,7 @@
 #include "util/cmdline.H"
 #include "util/range.H"
 #include "util/rng.H"
+#include "util/dense-matrix.H"
 #include <regex>                                  // to use in getTaxonNamesRaw
 
 using std::string;
@@ -70,7 +71,7 @@ extern "C" closure builtin_function_left_aligned_pairwise_alignment(OperationArg
 extern "C" closure builtin_function_pairwise_alignment_probability_from_counts(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    const matrix<int>& counts = arg0.as_<Box<matrix<int>>>();
+    const DenseMatrix<int>& counts = arg0.as_<Box<DenseMatrix<int>>>();
     auto arg1 = Args.evaluate_slot_to_value(1);
     const indel::PairHMM& Q = arg1.as_<indel::PairHMM>();
 
@@ -150,7 +151,8 @@ extern "C" closure builtin_function_transition_counts(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     const auto& A = arg0.as_<Box<pairwise_alignment_t>>().value();
 
-    Box<matrix<int>> counts(5,5,0);
+    Box<DenseMatrix<int>> counts(5,5);
+    counts.setZero();
 
     using namespace A2;
 

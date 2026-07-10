@@ -25,29 +25,30 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment.H"
 #include "tree/sequencetree.H"
 #include "util/matrix.H"
+#include "util/dense-matrix.H"
 
-matrix<int> unit_cost_matrix(unsigned size);
+DenseMatrix<int> unit_cost_matrix(unsigned size);
 
-matrix<int> unit_cost_matrix(const alphabet&);
+DenseMatrix<int> unit_cost_matrix(const alphabet&);
 
-matrix<int> nucleotide_cost_matrix(const Triplets& T);
+DenseMatrix<int> nucleotide_cost_matrix(const Triplets& T);
 
-matrix<int> nucleotide_cost_matrix(const Doublets& D);
+DenseMatrix<int> nucleotide_cost_matrix(const Doublets& D);
 
-matrix<int> pos1_cost_matrix(const RNAEdits& E);
+DenseMatrix<int> pos1_cost_matrix(const RNAEdits& E);
 
-matrix<int> pos2_cost_matrix(const RNAEdits& E);
+DenseMatrix<int> pos2_cost_matrix(const RNAEdits& E);
 
-matrix<int> amino_acid_cost_matrix(const Codons& C);
+DenseMatrix<int> amino_acid_cost_matrix(const Codons& C);
 
 template <class B>
-B n_mutations(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const matrix<B>& cost);
+B n_mutations(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const DenseMatrix<B>& cost);
 
 template <typename B>
-B n_mutations(const alignment& A, const SequenceTree& T,const matrix<B>& cost);
+B n_mutations(const alignment& A, const SequenceTree& T,const DenseMatrix<B>& cost);
 
 int n_mutations(const alignment& A, const SequenceTree& T);
 
-std::vector<int> get_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const matrix<int>& cost);
+std::vector<int> get_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const DenseMatrix<int>& cost);
 
-std::vector<std::vector<int> > get_all_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const matrix<int>& cost);
+std::vector<std::vector<int> > get_all_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const DenseMatrix<int>& cost);

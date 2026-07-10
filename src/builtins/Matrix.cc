@@ -30,6 +30,33 @@ using Alphabet = PtrBox<alphabet>;
 namespace
 {
 
+// NOTE: Matrix Int moves to Eigen one commit before Matrix Double.  These
+// accessors keep shared builtins single-sourced until the Double migration.
+template <typename NativeMatrix>
+int native_rows(const NativeMatrix& value)
+{
+    if constexpr (requires { value.rows(); })
+        return static_cast<int>(value.rows());
+    else
+        return value.size1();
+}
+
+// Return the column count from either representation used during the staged
+// runtime-matrix migration.
+template <typename NativeMatrix>
+int native_cols(const NativeMatrix& value)
+{
+    if constexpr (requires { value.cols(); })
+        return static_cast<int>(value.cols());
+    else
+        return value.size2();
+}
+
+// Select the temporary runtime representation associated with each Haskell
+// Matrix element type while Int and Double migrate in separate commits.
+template <typename T>
+using RuntimeMatrix = std::conditional_t<std::is_same_v<T, int>, DenseMatrix<int>, matrix<double>>;
+
 // Dispatch an operation to one of the native matrix representations supported
 // by the Haskell Matrix type.
 template <typename F>
@@ -37,8 +64,8 @@ decltype(auto) visit_matrix(const R::Exp& value, F&& operation)
 {
     if (value.is_a<Box<matrix<double>>>() )
         return operation(value.as_<Box<matrix<double>>>());
-    if (value.is_a<Box<matrix<int>>>() )
-        return operation(value.as_<Box<matrix<int>>>());
+    if (value.is_a<Box<DenseMatrix<int>>>() )
+        return operation(value.as_<Box<DenseMatrix<int>>>());
 
     throw myexception()<<"Unsupported native matrix representation "<<value.print();
 }
@@ -67,11 +94,11 @@ decltype(auto) visit_same_matrix_pair(const R::Exp& value1, const R::Exp& value2
             throw myexception()<<"Matrices have different native element representations";
         return operation(value1.as_<Box<matrix<double>>>(), value2.as_<Box<matrix<double>>>());
     }
-    if (value1.is_a<Box<matrix<int>>>() )
+    if (value1.is_a<Box<DenseMatrix<int>>>() )
     {
-        if (not value2.is_a<Box<matrix<int>>>() )
+        if (not value2.is_a<Box<DenseMatrix<int>>>() )
             throw myexception()<<"Matrices have different native element representations";
-        return operation(value1.as_<Box<matrix<int>>>(), value2.as_<Box<matrix<int>>>());
+        return operation(value1.as_<Box<DenseMatrix<int>>>(), value2.as_<Box<DenseMatrix<int>>>());
     }
 
     throw myexception()<<"Unsupported native matrix representation "<<value1.print();
@@ -89,29 +116,29 @@ T matrix_scalar(const R::Exp& value)
 
 // Apply a scalar operation to every element while preserving the native
 // matrix representation.
-template <typename T, typename F>
-closure map_matrix(const Box<matrix<T>>& matrix1, F&& operation)
+template <typename NativeMatrix, typename F>
+closure map_matrix(const Box<NativeMatrix>& matrix1, F&& operation)
 {
-    auto matrix2 = new Box<matrix<T>>(matrix1.size1(), matrix1.size2());
-    for(int i=0; i<matrix1.size1(); i++)
-        for(int j=0; j<matrix1.size2(); j++)
+    auto matrix2 = new Box<NativeMatrix>(native_rows(matrix1), native_cols(matrix1));
+    for(int i=0; i<native_rows(matrix1); i++)
+        for(int j=0; j<native_cols(matrix1); j++)
             (*matrix2)(i,j) = operation(matrix1(i,j));
     return matrix2;
 }
 
 // Apply an elementwise binary operation after checking that matrix dimensions
 // agree.
-template <typename T, typename F>
-closure zip_matrices(const Box<matrix<T>>& matrix1, const Box<matrix<T>>& matrix2,
+template <typename NativeMatrix, typename F>
+closure zip_matrices(const Box<NativeMatrix>& matrix1, const Box<NativeMatrix>& matrix2,
                      const std::string& operation_name, F&& operation)
 {
-    int rows = matrix1.size1();
-    int cols = matrix1.size2();
-    if (matrix2.size1() != rows or matrix2.size2() != cols)
+    int rows = native_rows(matrix1);
+    int cols = native_cols(matrix1);
+    if (native_rows(matrix2) != rows or native_cols(matrix2) != cols)
         throw myexception()<<"Trying to "<<operation_name<<" matrices of unequal sizes ("
-                           <<rows<<","<<cols<<") and ("<<matrix2.size1()<<","<<matrix2.size2()<<")";
+                           <<rows<<","<<cols<<") and ("<<native_rows(matrix2)<<","<<native_cols(matrix2)<<")";
 
-    auto matrix3 = new Box<matrix<T>>(rows, cols);
+    auto matrix3 = new Box<NativeMatrix>(rows, cols);
     for(int i=0; i<rows; i++)
         for(int j=0; j<cols; j++)
             (*matrix3)(i,j) = operation(matrix1(i,j), matrix2(i,j));
@@ -120,18 +147,19 @@ closure zip_matrices(const Box<matrix<T>>& matrix1, const Box<matrix<T>>& matrix
 
 // Multiply two compatible matrices without changing their native element
 // representation.
-template <typename T>
-closure multiply_matrices(const Box<matrix<T>>& matrix1, const Box<matrix<T>>& matrix2)
+template <typename NativeMatrix>
+closure multiply_matrices(const Box<NativeMatrix>& matrix1, const Box<NativeMatrix>& matrix2)
 {
-    if (matrix1.size2() != matrix2.size1())
+    if (native_cols(matrix1) != native_rows(matrix2))
         throw myexception()<<"Trying to multiply matrices of incompatible sizes ("
-                           <<matrix1.size1()<<","<<matrix1.size2()<<") and ("
-                           <<matrix2.size1()<<","<<matrix2.size2()<<")";
+                           <<native_rows(matrix1)<<","<<native_cols(matrix1)<<") and ("
+                           <<native_rows(matrix2)<<","<<native_cols(matrix2)<<")";
 
-    int rows = matrix1.size1();
-    int inner = matrix1.size2();
-    int cols = matrix2.size2();
-    auto matrix3 = new Box<matrix<T>>(rows, cols);
+    int rows = native_rows(matrix1);
+    int inner = native_cols(matrix1);
+    int cols = native_cols(matrix2);
+    auto matrix3 = new Box<NativeMatrix>(rows, cols);
+    using T = std::remove_cvref_t<decltype(matrix1(0,0))>;
 
     for(int i=0; i<rows; i++)
         for(int j=0; j<cols; j++)
@@ -145,22 +173,25 @@ closure multiply_matrices(const Box<matrix<T>>& matrix1, const Box<matrix<T>>& m
 }
 
 // Transpose a native matrix while preserving its element representation.
-template <typename T>
-closure transpose_matrix(const Box<matrix<T>>& matrix1)
+template <typename NativeMatrix>
+closure transpose_matrix(const Box<NativeMatrix>& matrix1)
 {
-    auto matrix2 = new Box<matrix<T>>(matrix1.size2(), matrix1.size1());
-    for(int i=0; i<matrix2->size1(); i++)
-        for(int j=0; j<matrix2->size2(); j++)
+    auto matrix2 = new Box<NativeMatrix>(native_cols(matrix1), native_rows(matrix1));
+    for(int i=0; i<native_rows(*matrix2); i++)
+        for(int j=0; j<native_cols(*matrix2); j++)
             (*matrix2)(i,j) = matrix1(j,i);
     return matrix2;
 }
 
 // Flatten a native matrix into contiguous numeric values in row-major order.
-template <typename T>
-closure matrix_to_vector(const Box<matrix<T>>& native_matrix)
+template <typename NativeMatrix>
+closure matrix_to_vector(const Box<NativeMatrix>& native_matrix)
 {
+    using T = std::remove_cvref_t<decltype(native_matrix(0,0))>;
     object_ptr<Box<DenseVector<T>>> values = new Box<DenseVector<T>>(native_matrix.size());
-    std::copy(native_matrix.begin(), native_matrix.end(), values->data());
+    for(int i=0; i<native_rows(native_matrix); i++)
+        for(int j=0; j<native_cols(native_matrix); j++)
+            (*values)(i * native_cols(native_matrix) + j) = native_matrix(i,j);
     return values;
 }
 
@@ -245,15 +276,16 @@ closure reshape_vector(const Box<DenseVector<T>>& values, int columns)
     {
         if (values.size() != 0)
             throw myexception()<<"reshape: a nonempty vector cannot have zero columns";
-        return new Box<matrix<T>>(0, 0);
+        return new Box<RuntimeMatrix<T>>(0, 0);
     }
     if (values.size() % columns != 0)
         throw myexception()<<"reshape: vector length "<<values.size()
                            <<" is not divisible by column count "<<columns;
 
     int rows = values.size() / columns;
-    auto result = new Box<matrix<T>>(rows, columns);
-    std::copy(values.data(), values.data() + values.size(), result->begin());
+    auto result = new Box<RuntimeMatrix<T>>(rows, columns);
+    for(int k=0; k<values.size(); k++)
+        (*result)(k / columns, k % columns) = values(k);
     return result;
 }
 
@@ -263,8 +295,9 @@ closure vector_as_matrix(const Box<DenseVector<T>>& values, bool as_row)
 {
     int rows = as_row ? 1 : values.size();
     int columns = as_row ? values.size() : 1;
-    auto result = new Box<matrix<T>>(rows, columns);
-    std::copy(values.data(), values.data() + values.size(), result->begin());
+    auto result = new Box<RuntimeMatrix<T>>(rows, columns);
+    for(int k=0; k<values.size(); k++)
+        (*result)(as_row ? 0 : k, as_row ? k : 0) = values(k);
     return result;
 }
 
@@ -285,7 +318,7 @@ closure matrix_from_list(OperationArgs& Args)
                            <<") exceed the supported element count";
 
     int expected_size = rows * columns;
-    object_ptr<Box<matrix<T>>> native_matrix = new Box<matrix<T>>(rows, columns);
+    object_ptr<Box<RuntimeMatrix<T>>> native_matrix = new Box<RuntimeMatrix<T>>(rows, columns);
     int xs = Args.evaluate_slot_use(2);
 
     for(int k=0; k<expected_size; k++)
@@ -306,7 +339,8 @@ closure matrix_from_list(OperationArgs& Args)
         int element = xs_closure.reg_for_constructor_slot(0);
         int tail = xs_closure.reg_for_constructor_slot(1);
         int value = Args.evaluate_reg_dependent_use(element);
-        native_matrix->begin()[k] = matrix_scalar<T>(Args.memory().closure_at(value).get_code());
+        (*native_matrix)(k / columns, k % columns) =
+            matrix_scalar<T>(Args.memory().closure_at(value).get_code());
         xs = Args.evaluate_reg_dependent_use(tail);
     }
 
@@ -444,14 +478,14 @@ extern "C" closure builtin_function_vectorAsColumn(OperationArgs& Args)
 extern "C" R::Exp simple_function_rows(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
-    return visit_matrix(arg0, [](const auto& native_matrix) { return native_matrix.size1(); });
+    return visit_matrix(arg0, [](const auto& native_matrix) { return native_rows(native_matrix); });
 }
 
 // Return the number of columns for either supported native matrix representation.
 extern "C" R::Exp simple_function_cols(vector<R::Exp>& args)
 {
     auto arg0 = get_arg(args);
-    return visit_matrix(arg0, [](const auto& native_matrix) { return native_matrix.size2(); });
+    return visit_matrix(arg0, [](const auto& native_matrix) { return native_cols(native_matrix); });
 }
 
 // Sum a native matrix while preserving its Int or Double scalar
@@ -463,8 +497,8 @@ extern "C" R::Exp simple_function_matrixSumElements(vector<R::Exp>& args)
     return visit_matrix(value, [](const auto& native_matrix) -> R::Exp {
         using Scalar = std::remove_cvref_t<decltype(native_matrix(0,0))>;
         Scalar total = 0;
-        for(int i = 0; i < native_matrix.size1(); i++)
-            for(int j = 0; j < native_matrix.size2(); j++)
+        for(int i = 0; i < native_rows(native_matrix); i++)
+            for(int j = 0; j < native_cols(native_matrix); j++)
                 total += native_matrix(i,j);
         return total;
     });
@@ -476,7 +510,8 @@ extern "C" closure builtin_function_scale(OperationArgs& Args)
     auto factor = Args.evaluate_slot_to_value(0);
     auto matrix_value = Args.evaluate_slot_to_value(1);
     // Convert the factor according to the matrix representation selected at runtime.
-    return visit_matrix(matrix_value, [&factor]<typename T>(const Box<matrix<T>>& native_matrix) {
+    return visit_matrix(matrix_value, [&factor](const auto& native_matrix) {
+        using T = std::remove_cvref_t<decltype(native_matrix(0,0))>;
         T typed_factor = matrix_scalar<T>(factor);
         return map_matrix(native_matrix, [typed_factor](T element) { return typed_factor * element; });
     });

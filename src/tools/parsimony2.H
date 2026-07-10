@@ -22,15 +22,16 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment.H"
 #include "models/TreeInterface.H"
 #include "util/matrix.H"
+#include "util/dense-matrix.H"
 
 template <class B>
-B n_mutations(const alphabet& a, const std::vector<int>& letters, const TreeInterface& T,const matrix<B>& cost);
+B n_mutations(const alphabet& a, const std::vector<int>& letters, const TreeInterface& T,const DenseMatrix<B>& cost);
 
 template <typename B>
-B n_mutations(const alignment& A, const TreeInterface& T,const matrix<B>& cost);
+B n_mutations(const alignment& A, const TreeInterface& T,const DenseMatrix<B>& cost);
 
 int n_mutations(const alignment& A, const TreeInterface& T);
 
-std::vector<int> get_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const TreeInterface& T,const matrix<int>& cost);
+std::vector<int> get_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const TreeInterface& T,const DenseMatrix<int>& cost);
 
-std::vector<std::vector<int> > get_all_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const TreeInterface& T,const matrix<int>& cost);
+std::vector<std::vector<int> > get_all_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const TreeInterface& T,const DenseMatrix<int>& cost);

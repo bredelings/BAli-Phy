@@ -21,7 +21,7 @@ int max_element(const matrix<int>& M)
 
 
 // cost for l1 -> l2, where l1 is a letter class
-int letter_class1_cost(const alphabet& a, int l1, int l2, const matrix<int>& cost, int max_cost)
+int letter_class1_cost(const alphabet& a, int l1, int l2, const DenseMatrix<int>& cost, int max_cost)
 {
     assert(a.is_letter(l2));
     assert(a.is_letter_class(l1));
@@ -38,7 +38,7 @@ int letter_class1_cost(const alphabet& a, int l1, int l2, const matrix<int>& cos
 }
 
 // cost for l1 -> l2, where l2 is a letter class
-int letter_class2_cost(const alphabet& a, int l1, int l2, const matrix<int>& cost, int max_cost)
+int letter_class2_cost(const alphabet& a, int l1, int l2, const DenseMatrix<int>& cost, int max_cost)
 {
     assert(a.is_letter(l1));
     assert(a.is_letter_class(l2));
@@ -54,7 +54,7 @@ int letter_class2_cost(const alphabet& a, int l1, int l2, const matrix<int>& cos
     return c;
 }
 
-void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const matrix<int>& cost)
+void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const DenseMatrix<int>& cost)
 {
     for(int l2=0;l2<n_letters;l2++)
     {
@@ -70,7 +70,7 @@ peel_muts(const R::RVector& sequences,
 	  const alphabet& a,
 	  const R::RVector& A_,
 	  const R::RVector& n_muts_,
-	  const matrix<int>& cost)
+	  const DenseMatrix<int>& cost)
 {
     int n_branches_in = n_muts_.size();
     assert(n_muts_.size() == n_branches_in);
@@ -83,7 +83,7 @@ peel_muts(const R::RVector& sequences,
     assert(not sequences.empty() or not A_.empty());
     int L = (sequences.empty())?A(0).length2() : sequence(0).size();
 
-    int n_letters = cost.size1();
+    int n_letters = cost.rows();
 
 #ifndef NDEBUG
     for(int i=0; i<n_branches_in; i++)
@@ -174,7 +174,7 @@ int muts_root(const R::RVector& sequences,
 	      const alphabet& a,
 	      const R::RVector& A_,
 	      const R::RVector& n_muts_,
-              const matrix<int>& cost)
+              const DenseMatrix<int>& cost)
 {
     int n_branches_in = n_muts_.size();
     assert(n_muts_.size() == n_branches_in);
@@ -279,9 +279,9 @@ object_ptr<const ParsimonyCacheBranch>
 peel_muts_fixed_A(const R::RVector& sequences,
 		  const alphabet& a,
 		  const R::RVector& n_muts_,
-		  const matrix<int>& cost)
+		  const DenseMatrix<int>& cost)
 {
-    int n_letters = cost.size1();
+    int n_letters = cost.rows();
 
     auto sequence = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().first.as_<R::RVector>(); };
     auto mask = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
@@ -363,10 +363,10 @@ peel_muts_fixed_A(const R::RVector& sequences,
 int muts_root_fixed_A(const R::RVector& sequences,
 		      const alphabet& a,
 		      const R::RVector& n_muts_,
-		      const matrix<int>& costs,
+		      const DenseMatrix<int>& costs,
 		      const R::RVector& counts)
 {
-    int n_letters = costs.size1();
+    int n_letters = costs.rows();
 
     auto sequence = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().first.as_<R::RVector>(); };
     auto mask = [&](int i) -> auto& { return sequences[i].as_<R::RPair>().second.as_<Box<boost::dynamic_bitset<>>>(); };
@@ -450,7 +450,7 @@ int muts_root_fixed_A(const R::RVector& sequences,
 
 
 int muts_root_fixed_A(const ParsimonyCacheBranch& n_muts0, const ParsimonyCacheBranch& n_muts1, const ParsimonyCacheBranch& n_muts2,
-                      const matrix<int>& costs, const R::RVector& counts)
+                      const DenseMatrix<int>& costs, const R::RVector& counts)
 {
 
     int n_letters = n_muts0.n_letters;
