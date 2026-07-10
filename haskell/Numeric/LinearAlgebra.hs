@@ -21,7 +21,6 @@ module Numeric.LinearAlgebra
     , ident
     , tr
     , scale
-    , (%*%)
     ) where
 
 import Numeric.LinearAlgebra.Data

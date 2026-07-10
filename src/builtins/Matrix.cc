@@ -56,6 +56,27 @@ decltype(auto) visit_numeric_vector(const R::Exp& value, F&& operation)
     throw myexception()<<"Unsupported native vector representation "<<value.print();
 }
 
+// Dispatch a binary operation after verifying that both vectors have the
+// same supported native element representation.
+template <typename F>
+decltype(auto) visit_same_numeric_vector_pair(const R::Exp& value1, const R::Exp& value2, F&& operation)
+{
+    if (value1.is_a<Box<DenseVector<double>>>() )
+    {
+        if (not value2.is_a<Box<DenseVector<double>>>() )
+            throw myexception()<<"Vectors have different native element representations";
+        return operation(value1.as_<Box<DenseVector<double>>>(), value2.as_<Box<DenseVector<double>>>());
+    }
+    if (value1.is_a<Box<DenseVector<int>>>() )
+    {
+        if (not value2.is_a<Box<DenseVector<int>>>() )
+            throw myexception()<<"Vectors have different native element representations";
+        return operation(value1.as_<Box<DenseVector<int>>>(), value2.as_<Box<DenseVector<int>>>());
+    }
+
+    throw myexception()<<"Unsupported native vector representation "<<value1.print();
+}
+
 // Dispatch a binary operation after verifying that both matrices have the
 // same supported native element representation.
 template <typename F>
@@ -87,6 +108,47 @@ T matrix_scalar(const R::Exp& value)
         return value.as_double();
 }
 
+// Return the broadcast result for two extents, rejecting unequal extents
+// unless one operand is a singleton along this dimension.
+Eigen::Index conform_dimension(Eigen::Index extent1, Eigen::Index extent2,
+                               const std::string& operation_name,
+                               const std::string& dimension_name)
+{
+    if (extent1 == extent2)
+        return extent1;
+    if (extent1 == 1)
+        return extent2;
+    if (extent2 == 1)
+        return extent1;
+    throw myexception()<<operation_name<<": incompatible "<<dimension_name
+                       <<" extents "<<extent1<<" and "<<extent2;
+}
+
+// Apply a scalar operation to every vector element while preserving its
+// native representation.
+template <typename NativeVector, typename F>
+closure map_vector(const Box<NativeVector>& vector1, F&& operation)
+{
+    auto vector2 = new Box<NativeVector>(vector1.size());
+    for(Eigen::Index i=0; i<vector1.size(); i++)
+        (*vector2)(i) = operation(vector1(i));
+    return vector2;
+}
+
+// Apply an elementwise binary operation using singleton vector broadcasting.
+template <typename NativeVector, typename F>
+closure zip_vectors(const Box<NativeVector>& vector1, const Box<NativeVector>& vector2,
+                    const std::string& operation_name, F&& operation)
+{
+    Eigen::Index size = conform_dimension(vector1.size(), vector2.size(),
+                                          operation_name, "vector");
+    auto vector3 = new Box<NativeVector>(size);
+    for(Eigen::Index i=0; i<size; i++)
+        (*vector3)(i) = operation(vector1(vector1.size() == 1 ? 0 : i),
+                                  vector2(vector2.size() == 1 ? 0 : i));
+    return vector3;
+}
+
 // Apply a scalar operation to every element while preserving the native
 // matrix representation.
 template <typename NativeMatrix, typename F>
@@ -99,22 +161,23 @@ closure map_matrix(const Box<NativeMatrix>& matrix1, F&& operation)
     return matrix2;
 }
 
-// Apply an elementwise binary operation after checking that matrix dimensions
-// agree.
+// Apply an elementwise binary operation using independent singleton
+// broadcasting for rows and columns.
 template <typename NativeMatrix, typename F>
 closure zip_matrices(const Box<NativeMatrix>& matrix1, const Box<NativeMatrix>& matrix2,
                      const std::string& operation_name, F&& operation)
 {
-    Eigen::Index rows = matrix1.rows();
-    Eigen::Index cols = matrix1.cols();
-    if (matrix2.rows() != rows or matrix2.cols() != cols)
-        throw myexception()<<"Trying to "<<operation_name<<" matrices of unequal sizes ("
-                           <<rows<<","<<cols<<") and ("<<matrix2.rows()<<","<<matrix2.cols()<<")";
+    Eigen::Index rows = conform_dimension(matrix1.rows(), matrix2.rows(),
+                                          operation_name, "row");
+    Eigen::Index cols = conform_dimension(matrix1.cols(), matrix2.cols(),
+                                          operation_name, "column");
 
     auto matrix3 = new Box<NativeMatrix>(rows, cols);
     for(Eigen::Index i=0; i<rows; i++)
         for(Eigen::Index j=0; j<cols; j++)
-            (*matrix3)(i,j) = operation(matrix1(i,j), matrix2(i,j));
+            (*matrix3)(i,j) = operation(
+                matrix1(matrix1.rows() == 1 ? 0 : i, matrix1.cols() == 1 ? 0 : j),
+                matrix2(matrix2.rows() == 1 ? 0 : i, matrix2.cols() == 1 ? 0 : j));
     return matrix3;
 }
 
@@ -475,6 +538,74 @@ extern "C" closure builtin_function_scale(OperationArgs& Args)
         using T = std::remove_cvref_t<decltype(native_matrix(0,0))>;
         T typed_factor = matrix_scalar<T>(factor);
         return map_matrix(native_matrix, [typed_factor](T element) { return typed_factor * element; });
+    });
+}
+
+// Multiply vectors elementwise with singleton broadcasting.
+extern "C" closure builtin_function_vector_elementwise_multiply(OperationArgs& Args)
+{
+    auto vector1 = Args.evaluate_slot_to_value(0);
+    auto vector2 = Args.evaluate_slot_to_value(1);
+    // Apply multiplication after dispatching the common native representation.
+    return visit_same_numeric_vector_pair(vector1, vector2, [](const auto& native1, const auto& native2) {
+        return zip_vectors(native1, native2, "vector multiply",
+                           [](auto element1, auto element2) { return element1 * element2; });
+    });
+}
+
+// Add vectors elementwise with singleton broadcasting.
+extern "C" closure builtin_function_vector_elementwise_add(OperationArgs& Args)
+{
+    auto vector1 = Args.evaluate_slot_to_value(0);
+    auto vector2 = Args.evaluate_slot_to_value(1);
+    // Apply addition after dispatching the common native representation.
+    return visit_same_numeric_vector_pair(vector1, vector2, [](const auto& native1, const auto& native2) {
+        return zip_vectors(native1, native2, "vector add",
+                           [](auto element1, auto element2) { return element1 + element2; });
+    });
+}
+
+// Subtract vectors elementwise with singleton broadcasting.
+extern "C" closure builtin_function_vector_elementwise_sub(OperationArgs& Args)
+{
+    auto vector1 = Args.evaluate_slot_to_value(0);
+    auto vector2 = Args.evaluate_slot_to_value(1);
+    // Apply subtraction after dispatching the common native representation.
+    return visit_same_numeric_vector_pair(vector1, vector2, [](const auto& native1, const auto& native2) {
+        return zip_vectors(native1, native2, "vector subtract",
+                           [](auto element1, auto element2) { return element1 - element2; });
+    });
+}
+
+// Negate every vector element without changing its native representation.
+extern "C" closure builtin_function_vector_negate(OperationArgs& Args)
+{
+    auto vector_value = Args.evaluate_slot_to_value(0);
+    // Map the unary operation after dispatching the native representation.
+    return visit_numeric_vector(vector_value, [](const auto& native_vector) {
+        return map_vector(native_vector, [](auto element) { return -element; });
+    });
+}
+
+// Take the absolute value of every vector element.
+extern "C" closure builtin_function_vector_abs(OperationArgs& Args)
+{
+    auto vector_value = Args.evaluate_slot_to_value(0);
+    // Map the unary operation after dispatching the native representation.
+    return visit_numeric_vector(vector_value, [](const auto& native_vector) {
+        return map_vector(native_vector, [](auto element) { return std::abs(element); });
+    });
+}
+
+// Map vector elements to -1, 0, or 1 without changing representation.
+extern "C" closure builtin_function_vector_signum(OperationArgs& Args)
+{
+    auto vector_value = Args.evaluate_slot_to_value(0);
+    // Map the unary operation after dispatching the native representation.
+    return visit_numeric_vector(vector_value, [](const auto& native_vector) {
+        return map_vector(native_vector, [](auto element) {
+            return (element > 0 ? 1 : 0) - (element < 0 ? 1 : 0);
+        });
     });
 }
 

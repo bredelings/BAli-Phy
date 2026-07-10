@@ -42,7 +42,7 @@ gtr_sym' es' a = gtr_sym es a where lpairs = Markov.all_pairs (getLetters a)
 
 plus_f   a pi s   = gtr a s pi
 plus_fe  a s      = plus_f a (uniform_frequencies a) s
-plus_gwf a pi f s = setReversibility EqRev $ markov a (simpleSMap a) (s %*% plus_gwf_matrix pi' f) pi' where pi' = toVector pi
+plus_gwf a pi f s = setReversibility EqRev $ markov a (simpleSMap a) (s * plus_gwf_matrix pi' f) pi' where pi' = toVector pi
 
 plus_f'  a pi s   = plus_f a (frequenciesFromDict a pi) s
 plus_gwf'  a pi f s = plus_gwf a (frequenciesFromDict a pi) f s

@@ -12,4 +12,4 @@ instance (Element a, Num a) => Num (Matrix a) where
     signum = mat_signum
     (+) = elementwise_add
     (-) = elementwise_sub
-    (*) = mat_mult
+    (*) = elementwise_multiply

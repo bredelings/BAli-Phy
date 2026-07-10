@@ -59,7 +59,7 @@ mnm a v2 v3 nucModel = setReversibility rv $ markov a smap q pi where
 
 -- Add codon dN/dS effects to the rate matrix and tag every codon state with
 -- the chosen omega value and whether it represents positive selection.
--- NOTE: maybe this should be t*(q %*% dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
+-- NOTE: maybe this should be t*(q * dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
 dNdS omega m@(Markov a s _ _ _) =
     setConstantStateProperty posSelectionPropertyName posSelection $
     setConstantStateProperty dNdSPropertyName omega $
@@ -67,5 +67,5 @@ dNdS omega m@(Markov a s _ _ _) =
   where
     rv = getReversibility m
     pi = getStartFreqs m
-    q = (getQ m) %*% dNdS_matrix a omega
+    q = (getQ m) * dNdS_matrix a omega
     posSelection = if omega > 1 then 1 else 0

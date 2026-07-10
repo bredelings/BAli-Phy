@@ -112,7 +112,7 @@ plus_f_matrix pi = plus_gwf_matrix pi 1
 
 gtr_sym n exchange = builtin_gtr_sym (toVector exchange) n
 
-gtr er pi = setReversibility EqRev $ markov (er %*% plus_f_matrix pi') pi' where pi' = toVector pi
+gtr er pi = setReversibility EqRev $ markov (er * plus_f_matrix pi') pi' where pi' = toVector pi
 
 -- Probabily we should make a builtin for this
 equ n x = gtr_sym n (replicate n_elements x)

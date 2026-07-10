@@ -150,8 +150,12 @@ tr = transposeNative
 scale :: Element a => a -> Matrix a -> Matrix a
 scale = scaleNative
 
-(%*%) = elementwise_multiply
-
+foreign import bpcall "Matrix:" vector_elementwise_multiply :: Vector a -> Vector a -> Vector a
+foreign import bpcall "Matrix:" vector_elementwise_add :: Vector a -> Vector a -> Vector a
+foreign import bpcall "Matrix:" vector_elementwise_sub :: Vector a -> Vector a -> Vector a
+foreign import bpcall "Matrix:" vector_abs :: Vector a -> Vector a
+foreign import bpcall "Matrix:" vector_negate :: Vector a -> Vector a
+foreign import bpcall "Matrix:" vector_signum :: Vector a -> Vector a
 foreign import bpcall "Matrix:" elementwise_multiply :: Matrix a -> Matrix a -> Matrix a
 foreign import bpcall "Matrix:" elementwise_add :: Matrix a -> Matrix a -> Matrix a
 foreign import bpcall "Matrix:" elementwise_sub :: Matrix a -> Matrix a -> Matrix a

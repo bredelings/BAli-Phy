@@ -11,6 +11,12 @@ import Text.Show (show)
 -- Exercise construction, conversion, empty shapes, and the full basic
 -- operation set for both native element representations.
 main = do
+    let intVector = fromList [1, 2, 3] :: Vector Int
+    putStrLn $ show $ toList $ intVector + 10
+    putStrLn $ show $ toList $ 2 * intVector
+    putStrLn $ show $ toList $ intVector - 1
+    putStrLn $ show $ toList $ signum $ negate intVector
+    putStrLn $ show $ toList $ (fromList [0.5] :: Vector Double) + vector [1, 2]
     let matrix = fromLists [[1, 2], [3, 4]] :: Matrix Double
     putStrLn $ show $ rows matrix
     putStrLn $ show $ cols matrix
@@ -26,17 +32,21 @@ main = do
     putStrLn $ show $ toList $ flatten $ scale 2 costs
     putStrLn $ show $ toList $ flatten $ costs + costs
     putStrLn $ show $ toList $ flatten $ costs - costs
-    putStrLn $ show $ toList $ flatten $ costs %*% costs
     putStrLn $ show $ toList $ flatten $ costs * costs
     putStrLn $ show $ toList $ flatten $ abs $ negate costs
     putStrLn $ show $ toList $ flatten $ signum $ negate costs
     let intMatrix = (2 >< 3) [1, 2, 3, 4, 5, 6] :: Matrix Int
-        intColumn = (3 >< 1) [2, 3, 4] :: Matrix Int
+        intRow = (1 >< 3) [10, 20, 30] :: Matrix Int
+        intColumn = (2 >< 1) [1, 2] :: Matrix Int
     putStrLn $ show $ toLists intMatrix
-    putStrLn $ show $ toList $ flatten $ intMatrix * intColumn
+    putStrLn $ show $ toList $ flatten $ intMatrix + 10
+    putStrLn $ show $ toList $ flatten $ intMatrix + intRow
+    putStrLn $ show $ toList $ flatten $ intMatrix + intColumn
+    putStrLn $ show $ toList $ flatten $ intRow + intColumn
     let doubleMatrix = (2 >< 3) [1, 2, 3, 4, 5, 6] :: Matrix Double
-        doubleMatrix2 = (3 >< 2) [7, 8, 9, 10, 11, 12] :: Matrix Double
-    putStrLn $ show $ toList $ flatten $ doubleMatrix * doubleMatrix2
+        doubleRow = (1 >< 3) [0.5, 1, 2] :: Matrix Double
+    putStrLn $ show $ toList $ flatten $ doubleMatrix * doubleRow
+    putStrLn $ show $ toList $ flatten $ doubleMatrix - 1
     putStrLn $ show $ toList $ flatten (fromLists [[1, 2], [3, 4]] :: Matrix Int)
     putStrLn $ show $ toList $ flatten (konst 0 (2,3) :: Matrix Int)
     putStrLn $ show $ toList $ flatten (konst 0 (2,2) :: Matrix Double)
