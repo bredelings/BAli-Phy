@@ -8,6 +8,7 @@
 #include "computation/runtime/ast.H"
 
 #include <cerrno>
+#include <cmath>
 #include <cstdlib>
 #include <limits>
 
@@ -20,31 +21,29 @@ extern "C" R::Exp simple_function_truncate(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
-    return trunc(x);
+    return static_cast<int>(std::trunc(x));
 }
 
 extern "C" R::Exp simple_function_ceiling(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
 
-    return ceil(x);
+    return static_cast<int>(std::ceil(x));
 }
 
 extern "C" R::Exp simple_function_floor(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
-    assert(x > 0.0);
 
-    return floor(x);
+    return static_cast<int>(std::floor(x));
 }
 
 
 extern "C" R::Exp simple_function_round(vector<R::Exp>& args)
 {
     double x = get_arg(args).as_double();
-    assert(x > 0.0);
 
-    return round(x);
+    return static_cast<int>(std::rint(x));
 }
 
 extern "C" R::Exp simple_function_doubleToInt(vector<R::Exp>& args)
