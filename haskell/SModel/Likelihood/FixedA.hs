@@ -8,7 +8,6 @@ import Data.Foldable
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
 import Data.Maybe (maybeToList)
-import Data.Array
 import Foreign.Vector
 import Numeric.LogDouble
 import Bio.Sequence

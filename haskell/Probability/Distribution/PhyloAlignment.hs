@@ -4,7 +4,6 @@ import           Probability.Random
 import           Tree
 import           Bio.Alignment
 import           Control.DeepSeq
-import           Data.Array
 import           Data.Maybe (mapMaybes)
 import           MCMC
 import           Effect (getProperties)

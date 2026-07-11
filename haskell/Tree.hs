@@ -3,7 +3,6 @@ module Tree (module Tree, module Forest, module Graph) where
 import Forest
 import Graph
 import Data.Foldable
-import Data.Array
 import Data.List (lookup)
 
 import Data.IntMap (IntMap)

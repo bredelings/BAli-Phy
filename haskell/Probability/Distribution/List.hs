@@ -5,7 +5,7 @@ import Probability.Distribution.Independent
 import Probability.Distribution.Gamma
 import Probability.Distribution.Tuple
 import Probability.Distribution.Discrete -- Maybe move to a different module?
-import Data.Array
+import qualified Data.Vector as V
 import Effect
 import MCMC
 import Data.IntMap (IntMap)
@@ -145,16 +145,16 @@ dirichletOnDirichlet n a1 a2 = do
 
 even_sorted_on_iid f n dist = do let n_all = 2*n+1
                                  xs' <- sample $ iid n_all dist
-                                 let xs = listArray n_all $ sortOn f xs'
-                                 return [xs!(2*i-1) | i <- [1..n]]
+                                 let xs = V.fromList $ sortOn f xs'
+                                 return [xs V.! (2*i-1) | i <- [1..n]]
 
 even_sorted_iid = even_sorted_on_iid id
 
 
 odd_sorted_on_iid f n dist = do let n_all = max (2*n-1) 0
                                 xs' <- sample $ iid n_all dist
-                                let xs = listArray n_all $ sortOn f xs'
-                                return [xs!(2*i) | i <- [0..n-1]]
+                                let xs = V.fromList $ sortOn f xs'
+                                return [xs V.! (2*i) | i <- [0..n-1]]
 
 odd_sorted_iid = odd_sorted_on_iid id
 {-

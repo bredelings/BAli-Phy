@@ -206,7 +206,7 @@ instance IsGraph (Graph l) where
 
 ------------------ Derived Operations ------------
 edgesTowardNodeSet t node = reverseEdgesSet $ edgesOutOfNodeSet t node
-edgesTowardNodeArray t node = IntSet.toArray $ edgesTowardNodeSet t node
+edgesTowardNodeVector t node = IntSet.toVector $ edgesTowardNodeSet t node
 edgesTowardNode t node = IntSet.toList $ edgesTowardNodeSet t node
 
 edgeForNodes t (n1,n2) = fromJust $ find (\b -> targetNode t b == n2) (edgesOutOfNode t n1)
@@ -219,8 +219,8 @@ edgesBeforeEdgeSet t b  = reverseEdgesSet $ IntSet.delete b $ edgesOutOfNodeSet 
 edgesAfterEdgeSet t b = IntSet.delete (reverseEdge b) $ edgesOutOfNodeSet t node
     where node = targetNode t b
 
-edgesBeforeEdgeArray t b = IntSet.toArray $ edgesBeforeEdgeSet t b
-edgesAfterEdgeArray t b = IntSet.toArray $ edgesAfterEdgeSet t b
+edgesBeforeEdgeVector t b = IntSet.toVector $ edgesBeforeEdgeSet t b
+edgesAfterEdgeVector t b = IntSet.toVector $ edgesAfterEdgeSet t b
 edgesBeforeEdge t b = IntSet.toList $ edgesBeforeEdgeSet t b
 edgesAfterEdge t b = IntSet.toList $ edgesAfterEdgeSet t b
 
@@ -243,8 +243,8 @@ reverseEdge e = -e
 
 reverseEdges = map reverseEdge
 reverseEdgesSet = IntSet.mapNegate
---reverseEdgesArray :: Array Int -> Array Int
-reverseEdgesArray = fmap reverseEdge
+--reverseEdgesVector :: Vector Int -> Vector Int
+reverseEdgesVector = fmap reverseEdge
 
 isUEdge e = e > reverseEdge e
 
@@ -255,7 +255,7 @@ numBranches t = length $ getUEdges t
 
 undirectedName e  = max e (reverseEdge e)
 
-edgesOutOfNodeArray tree nodeIndex = IntSet.toArray $ edgesOutOfNodeSet tree nodeIndex
+edgesOutOfNodeVector tree nodeIndex = IntSet.toVector $ edgesOutOfNodeSet tree nodeIndex
 edgesOutOfNode tree nodeIndex = IntSet.toList $ edgesOutOfNodeSet tree nodeIndex
 
 treeLength tree = sum [ branchLength tree b | b <- getUEdges tree ]

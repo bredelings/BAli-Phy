@@ -21,7 +21,6 @@ import Data.List (stripPrefix)
 import Data.Unique.Id
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
-import Data.Array
 import Data.Text.Display
 
 -- We need to handle adding (i) root (ii) labels (iii) branch lengths.

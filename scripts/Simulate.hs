@@ -13,7 +13,6 @@ import qualified Data.IntMap as IntMap
 import qualified Data.JSON as J
 import Probability.Logger
 import qualified Data.Text.IO as T
-import Data.Array
 import System.Environment
 import System.IO
 

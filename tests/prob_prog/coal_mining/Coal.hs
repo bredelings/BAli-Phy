@@ -2,14 +2,14 @@ module Coal where
 
 import Probability
 import Data.Frame
-import Data.Array
+import qualified Data.Vector as V
 
--- When we get polymorphism, maybe we can create an temporary array as a view on xs'
+-- When we get polymorphism, maybe we can create a temporary vector as a view on xs'
 -- I presume that using n directly is more efficient that using [length xs']
 orderedSample n dist = do
   xs' <- sample $ iid n dist
   let xs = sort xs'
-  return $ listArray n xs
+  return $ V.fromList xs
 
 get_intervals (r:[]) (t:[]) tend = [(r,t,tend)]
 get_intervals (r:rs) (t1:ts@(t2:_)) tend = (r,t1,t2):get_intervals rs ts tend
@@ -22,7 +22,7 @@ model (t1,t2) times = do
 
   -- even numbered order statistics over the interval [t1,t2]
   s' <- orderedSample (2*n+1) (uniform t1 t2)
-  let s = t1:[s'!(2*i-1) | i <- [1..n]]
+  let s = t1:[s' V.! (2*i-1) | i <- [1..n]]
 
   -- n+1 rates
   g <- prior $ iid (n+1) (gamma a b)

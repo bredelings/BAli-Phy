@@ -3,7 +3,6 @@ module Probability.Distribution.Tree.Modifiable where
 import           Tree
 import           Probability.Random (triggeredModifiableStructure)
 
-import           Data.Array
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 

@@ -1,6 +1,6 @@
 source_inc = include_directories('../..')
 
-builtins = ['Array','Data','Prelude','Alphabet','Pair','Modifiables','Alignment',
+builtins = ['Data','Prelude','Alphabet','Pair','Modifiables','Alignment',
             'PopGen','Distribution','Range','SModel','MCMC','Vector','Environment',
             'SMC','Real','Bits','Foreign','Text','ByteString','Char', 'Num', 'IntMap', 'IntSet',
             'Word', 'Parsimony', 'Matrix', 'Likelihood', 'LikelihoodSEV', 'File', 'TreeDist']

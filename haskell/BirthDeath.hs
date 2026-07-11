@@ -4,7 +4,7 @@ module BirthDeath where
 -- See also Probability/Distribution/Tree/BirthDeath.hs
 
 import Probability
-import Data.Array
+import qualified Data.Vector as V
 
 type Time = Double
 
@@ -95,13 +95,13 @@ instance Foldable Tree where
 
 -- PROBLEM: we need to access the whole node in order to count the number of leaves, branches, etc.
 
-node_out_edges :: Node a -> Array Int (Edge a)
-node_out_edges (Left (Start1 _ node)) = listArray' [Edge node FromRoot]
-node_out_edges (Left (Start2 _ node1 node2)) = listArray' [Edge node1 FromRoot, Edge node2 FromRoot]
-node_out_edges (Right n1@(Next _ (Birth n2 n3) _ _)) = listArray' [Edge n1 ToRoot, Edge n2 FromRoot, Edge n3 FromRoot]
-node_out_edges (Right n1@(Next _ (Sample n2) _ _)) = listArray' [Edge n1 ToRoot, Edge n2 FromRoot]
-node_out_edges (Right n@(Next _ Finish _ _)) = listArray' [Edge n ToRoot]
-node_out_edges (Right n@(Next _ Death _ _)) = listArray' [Edge n ToRoot]
+node_out_edges :: Node a -> V.Vector (Edge a)
+node_out_edges (Left (Start1 _ node)) = V.fromList [Edge node FromRoot]
+node_out_edges (Left (Start2 _ node1 node2)) = V.fromList [Edge node1 FromRoot, Edge node2 FromRoot]
+node_out_edges (Right n1@(Next _ (Birth n2 n3) _ _)) = V.fromList [Edge n1 ToRoot, Edge n2 FromRoot, Edge n3 FromRoot]
+node_out_edges (Right n1@(Next _ (Sample n2) _ _)) = V.fromList [Edge n1 ToRoot, Edge n2 FromRoot]
+node_out_edges (Right n@(Next _ Finish _ _)) = V.fromList [Edge n ToRoot]
+node_out_edges (Right n@(Next _ Death _ _)) = V.fromList [Edge n ToRoot]
 
 edgesOutOfNode = node_out_edges
 
@@ -141,14 +141,17 @@ edgesTowardNode node = fmap reverseEdge $ edgesOutOfNode node
 
 -- edgeForNodes == ???
 
-nodeDegree = length . edgesOutOfNode
+nodeDegree = V.length . edgesOutOfNode
 neighbors = fmap targetNode . edgesOutOfNode
 sourceIndex (Edge _ ToRoot) = 0
 sourceIndex (Edge (Next _ _ (Left _) i) FromRoot) = i    -- node is child of root
 sourceIndex (Edge (Next _ _ (Right _) i) FromRoot) = i+1 -- node is child of non-root
 edgesBeforeEdge edge = let source = sourceNode edge
                            index = sourceIndex edge
-                       in fmap reverseEdge $ removeElement index $ edgesOutOfNode source
+                           edges = edgesOutOfNode source
+                       in if index < 0 || index >= V.length edges
+                          then error "edgesBeforeEdge: edge index is outside the node edge vector"
+                          else fmap reverseEdge $ V.take index edges V.++ V.drop (index+1) edges
 
 edgesAfterEdge = fmap reverseEdge . edgesBeforeEdge . reverseEdge
 
@@ -181,4 +184,3 @@ treeLength tree = sum [ branchLength b | b <- undirected_edges tree ]
 
 allEdgesAfterEdge b = b:concatMap allEdgesAfterEdge (edgesAfterEdge b)
 allEdgesFromNode n = concatMap allEdgesAfterEdge (edgesOutOfNode n)
-

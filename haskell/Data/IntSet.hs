@@ -3,9 +3,9 @@ module Data.IntSet where
 import Prelude hiding (map,empty,elems,filter)
 import Data.Functor
 import qualified Data.List as L
-import Foreign.Vector
+import Foreign.Vector (EVector, get_vector_index, vector_size, vectorToList)
 import Data.Foldable (foldr)
-import Data.Array (vectorToArray)
+import qualified Data.Vector as V
 import Control.DeepSeq
 
 data IntSet
@@ -63,7 +63,8 @@ elems m = vectorToList $ _keys m
 
 toList m = elems m
 
-toArray s = vectorToArray $ _keys s
+toVector s = V.generate (vector_size keys) (get_vector_index keys)
+  where keys = _keys s
 
 toAscList m = toList m
 
@@ -96,4 +97,3 @@ instance Show (IntSet) where
 foreign import bpcall "IntSet:" mapNegate :: IntSet -> IntSet
 
 instance NFData IntSet
-

@@ -11,7 +11,7 @@ import           Bio.Alphabet
 import           Numeric.LinearAlgebra hiding ((<>))
 import           Numeric.LinearAlgebra.Data (NativeMatrix, NativeVector, nativeMatrix, nativeVector)
 import           Tree
-import           Data.Array
+import qualified Data.Vector as V
 import qualified Data.Map as Map
 
 foreign import bpcall "SModel:getEquilibriumRate" getEquilibriumRateNative :: Alphabet -> EVector Int -> NativeMatrix Double -> NativeVector Double -> Double
@@ -134,15 +134,15 @@ labelledStartFrequencies m = zip (getLetters a) frequencies
           a = getAlphabet m
 
 labelledUpperTriangle alphabet matrix = if n == rows matrix && n == cols matrix
-                                        then [ ((letters!i) ++ (letters!j), atIndex matrix (i,j)) | (i, j) <- Markov.all_pairs [0..n-1]]
+                                        then [ ((letters V.! i) ++ (letters V.! j), atIndex matrix (i,j)) | (i, j) <- Markov.all_pairs [0..n-1]]
                                         else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
                                              show (cols matrix,rows matrix) ++" matrix!"
-    where letters = listArray' (getLetters alphabet)
-          n = length letters
+    where letters = V.fromList (getLetters alphabet)
+          n = V.length letters
 
 labelledOffDiagonal alphabet matrix = if n == rows matrix && n == cols matrix
-                                      then [ ((letters!i) ++ (letters!j), atIndex matrix (i,j)) | i <- [0..n-1], j <- [0..n-1], i /= j]
+                                      then [ ((letters V.! i) ++ (letters V.! j), atIndex matrix (i,j)) | i <- [0..n-1], j <- [0..n-1], i /= j]
                                       else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
                                              show (cols matrix,rows matrix) ++" matrix!"
-    where letters = listArray' (getLetters alphabet)
-          n = length letters
+    where letters = V.fromList (getLetters alphabet)
+          n = V.length letters

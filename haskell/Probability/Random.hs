@@ -15,7 +15,6 @@ import Data.JSON as J
 import Effect
 import Control.Monad.IO.Class -- for liftIO
 import Data.IntMap (IntMap)
-import Data.Array (Array)
 import Numeric.LogDouble
 import Numeric.Prob
 import Control.Monad.Fix
@@ -435,4 +434,3 @@ foreign import bpcall "Modifiables:interchangeable" interchangeableRaw :: (a->b)
 
 interchangeableIO id x s = let e = interchangeableRaw unsafePerformIO x s
                            in registerInterchangeable id e `seq` e
-

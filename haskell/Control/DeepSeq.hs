@@ -1,6 +1,5 @@
 module Control.DeepSeq where
 
-import           Data.Array
 import           Data.Foldable
 
 -- I don't think we can use this for cyclic data structures -- it would just go on forever.

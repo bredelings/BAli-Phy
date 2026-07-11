@@ -1,6 +1,6 @@
 module Numeric.Matrix (optimiseMult) where
 
-import qualified Data.Array as A
+import qualified Data.Vector as V
 import Compiler.Floating
 import Data.List.NonEmpty
 import Data.Monoid
@@ -47,10 +47,10 @@ multiplyChain [matrix] = matrix
 multiplyChain matrices = evaluate 0 (count-1)
   where
     count = length matrices
-    values = A.listArray' matrices
-    dimensions = A.mkArray count (\i -> (rows (values A.! i), cols (values A.! i)))
+    values = V.fromList matrices
+    dimensions = V.generate count (\i -> (rows (values V.! i), cols (values V.! i)))
     cellIndex i j = i * count + j
-    costs = A.mkArray (count * count) costAt
+    costs = V.generate (count * count) costAt
 
     -- Compute one dynamic-programming cell from shorter memoized subchains.
     costAt index
@@ -63,19 +63,19 @@ multiplyChain matrices = evaluate 0 (count-1)
     -- Estimate one split with Integer arithmetic to avoid dimension-cost
     -- overflow even though native matrix dimensions use Int.
     candidate i j split =
-        let (leftCost, _) = costs A.! cellIndex i split
-            (rightCost, _) = costs A.! cellIndex (split+1) j
-            (leftRows, _) = dimensions A.! i
-            (_, leftColumns) = dimensions A.! split
-            (_, rightColumns) = dimensions A.! j
+        let (leftCost, _) = costs V.! cellIndex i split
+            (rightCost, _) = costs V.! cellIndex (split+1) j
+            (leftRows, _) = dimensions V.! i
+            (_, leftColumns) = dimensions V.! split
+            (_, rightColumns) = dimensions V.! j
             multiplicationCost = toInteger leftRows * toInteger leftColumns * toInteger rightColumns
         in (leftCost + rightCost + multiplicationCost, split)
 
     -- Follow the recorded splits and delegate each binary product to Eigen.
     evaluate i j
-        | i == j = values A.! i
+        | i == j = values V.! i
         | otherwise =
-            let (_, split) = costs A.! cellIndex i j
+            let (_, split) = costs V.! cellIndex i j
             in matrixProduct (evaluate i split) (evaluate (split+1) j)
 
 -- Optimize a nonempty chain after validating all non-scalar dimensions,

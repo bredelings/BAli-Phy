@@ -2,7 +2,6 @@ module Forest (module Forest, module Graph) where
 
 import Graph
 import Data.Foldable
-import Data.Array
 import Data.List (lookup)
 
 import Data.IntMap (IntMap)

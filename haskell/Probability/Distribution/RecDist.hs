@@ -33,7 +33,7 @@ import Control.Monad.Fix
 
    In PGMs, perhaps we could write something like
 
-   > x ~ mkArray(nodes, node, normal( if node == root then rootMean else x[parent(node)], sigma^2))
+   > x ~ generate(nodes, node, normal( if node == root then rootMean else x[parent(node)], sigma^2))
 
    In strict PPLs, it might be possible to generate values at nodes of the tree by doing something like:
 

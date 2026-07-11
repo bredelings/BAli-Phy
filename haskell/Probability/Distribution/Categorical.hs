@@ -1,7 +1,7 @@
 module Probability.Distribution.Categorical where
 
 import Probability.Random
-import Data.Array
+import qualified Data.Vector as V
 import Data.Foldable
 import MCMC
 
@@ -13,7 +13,7 @@ categorical_effect n x = addMove 1 $ gibbsSampleCategorical x n
 foreign import bpcall "Distribution:sample_categorical" sampleCategoricalNative :: NativeVector Double -> IO Int
 sample_categorical ps = sampleCategoricalNative (nativeVector (LA.fromList (toList ps)))
 
-data Categorical = Categorical (Array Int Double)
+data Categorical = Categorical (V.Vector Double)
 
 instance Dist Categorical where
     type Result Categorical = Int
@@ -23,27 +23,27 @@ instance IOSampleable Categorical where
     sampleIO (Categorical ps) = sample_categorical ps
 
 instance HasPdf Categorical where
-    pdf (Categorical ps) n | n < 0          = 0
-                           | n >= length ps = 0
-                           | otherwise      = doubleToLogDouble $ ps!n
+    pdf (Categorical ps) n | n < 0            = 0
+                           | n >= V.length ps = 0
+                           | otherwise        = doubleToLogDouble $ ps V.! n
 
 instance Dist1D Categorical where
-    cdf (Categorical ps) x | n < 0          = 0
-                           | n >= length ps = 1
-                           | otherwise      = sum $ take (n+1) $ toList ps
+    cdf (Categorical ps) x | n < 0            = 0
+                           | n >= V.length ps = 1
+                           | otherwise        = sum $ take (n+1) $ V.toList ps
                            where n = floor x
 
 instance HasAnnotatedPdf Categorical where
     annotated_densities dist = make_densities $ pdf dist
 
 instance Sampleable Categorical where
-    sample dist@(Categorical ps) = RanDistribution2 dist $ categorical_effect (length ps)
+    sample dist@(Categorical ps) = RanDistribution2 dist $ categorical_effect (V.length ps)
 
-categorical ps = Categorical $ listArray' ps
+categorical ps = Categorical $ V.fromList ps
 
 ---
 
-data CategoricalOn a = CategoricalOn (Array Int a) (Array Int Double)
+data CategoricalOn a = CategoricalOn (V.Vector a) (V.Vector Double)
 
 instance Dist (CategoricalOn a) where
     type Result (CategoricalOn a) = a
@@ -52,17 +52,17 @@ instance Dist (CategoricalOn a) where
 instance IOSampleable (CategoricalOn a) where
     sampleIO (CategoricalOn xs ps) = do
       i <- sample_categorical ps
-      return (xs!i)
+      return (xs V.! i)
 
 {-
 Error - why doesn't this work?
 Also, why  can't we rewrite (Result (CategoricalOn a)) to a?
-And, why would we think that xs :: Array Int Int?  Is there some defaulting going on there?     -}
+And, why would we think that xs :: Vector Int?  Is there some defaulting going on there?     -}
 
 instance Eq a => HasPdf (CategoricalOn a) where
-    pdf (CategoricalOn xs ps) x = case elemIndexArray x xs of
+    pdf (CategoricalOn xs ps) x = case V.elemIndex x xs of
                                     Nothing -> 0
-                                    Just n -> doubleToLogDouble $ ps!n
+                                    Just n -> doubleToLogDouble $ ps V.! n
 
 instance Eq a => HasAnnotatedPdf (CategoricalOn a) where
     annotated_densities dist = make_densities $ pdf dist
@@ -70,13 +70,13 @@ instance Eq a => HasAnnotatedPdf (CategoricalOn a) where
 instance Sampleable (CategoricalOn a) where
     sample dist@(CategoricalOn xs ps) = do
         i <- sample $ Categorical ps
-        return $ xs!i
+        return $ xs V.! i
 
 
-categorical_on pairs = CategoricalOn (listArray' xs) (listArray' ps)
+categorical_on pairs = CategoricalOn (V.fromList xs) (V.fromList ps)
     where xs = map fst pairs
           ps = map snd pairs
 
-uniformCategoricalOn xs = CategoricalOn (listArray' xs) (listArray' ps)
+uniformCategoricalOn xs = CategoricalOn (V.fromList xs) (V.fromList ps)
     where ps = replicate n (1/fromIntegral n)
           n = length xs

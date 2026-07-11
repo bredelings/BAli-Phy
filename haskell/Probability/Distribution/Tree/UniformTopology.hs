@@ -8,7 +8,6 @@ import           Probability.Distribution.List
 import           Probability.Distribution.Exponential
 import           Probability.Distribution.Categorical
 import           MCMC
-import           Data.Array
 import qualified Data.IntMap as IntMap
 import           Data.IntMap (IntMap)
 import qualified Data.IntSet as IntSet

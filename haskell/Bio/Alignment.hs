@@ -7,7 +7,6 @@ module Bio.Alignment (module Bio.Alignment,
 import Tree
 import Data.BitVector
 import Data.Foldable
-import Data.Array
 import Data.Maybe (catMaybes, fromMaybe)
 import Parameters
 import Foreign.Vector
@@ -195,9 +194,9 @@ data BranchAlignment -- BranchAlignment TargetNode PairwiseAlignment (EVector Br
 foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment -> EVector BranchAlignment -> BranchAlignment
 
 exportAlignmentOnTree :: IsTree t => AlignmentOnTree t -> NodeAlignment
-exportAlignmentOnTree a@(AlignmentOnTree tree _ _ as) = mkNodeAlignment root (sequenceLength a root) (branchAlignments $ edgesOutOfNodeArray tree root)
+exportAlignmentOnTree a@(AlignmentOnTree tree _ _ as) = mkNodeAlignment root (sequenceLength a root) (branchAlignments $ edgesOutOfNodeVector tree root)
     where root = head $ getNodes tree
-          branchAlignments edges = toVector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdgeArray tree e) | e <- toList $ edges]
+          branchAlignments edges = toVector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdgeVector tree e) | e <- toList $ edges]
 
 foreign import bpcall "Alignment:" substituteLetters :: EVector Int -> EVector Int -> EVector Int
 

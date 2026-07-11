@@ -11,6 +11,71 @@ using std::vector;
 
 namespace
 {
+    // Keep registers discovered by dependent reads rooted until a native
+    // operation has installed them in its returned boxed Vector.
+    class stacked_register_roots
+    {
+        OperationArgs& args_;
+        std::size_t count_ = 0;
+
+    public:
+        explicit stacked_register_roots(OperationArgs& args): args_(args) {}
+
+        // Push one discovered register onto the evaluator's GC-root stack.
+        void add(int reg)
+        {
+            args_.stack_push(reg);
+            count_++;
+        }
+
+        // Remove the temporary roots in stack order on normal and exceptional
+        // exits; all nested evaluator stack entries have already been removed.
+        ~stacked_register_roots()
+        {
+            while(count_ > 0)
+            {
+                args_.stack_pop();
+                count_--;
+            }
+        }
+    };
+
+    // Return the constructor application used by a lazy boxed Data.Vector.
+    const Runtime::ConstructorApp& boxed_vector_app(const closure& value)
+    {
+        auto app = value.get_code().to<Runtime::ConstructorApp>();
+        if (not app or app->head.name() != "Vector")
+            throw myexception()<<"Expression is not a boxed Vector: "
+                               <<value.get_code().print();
+        auto size = app->args.size();
+        if (size > static_cast<std::size_t>(std::numeric_limits<int>::max()) or
+            app->head.n_args() != static_cast<int>(size) or
+            value.Env.size() != size)
+            throw myexception()<<"Malformed boxed Vector representation with "
+                               <<app->head.n_args()<<" declared fields, "
+                               <<size<<" constructor fields, and "
+                               <<value.Env.size()<<" environment registers";
+        return *app;
+    }
+
+    // Construct a boxed Vector whose elements refer to the supplied machine
+    // registers without forcing the values stored in those registers.
+    closure make_boxed_vector(std::vector<int> registers)
+    {
+        if (registers.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+            throw myexception()<<"Boxed Vector length exceeds the Int range";
+        int length = static_cast<int>(registers.size());
+        std::vector<Runtime::Exp> elements(length);
+        for(int i = 0; i < length; i++)
+            elements[i] = Runtime::IndexVar(length - 1 - i);
+
+        closure result;
+        result.Env.assign(registers.begin(), registers.end());
+        result.set_code(Runtime::ConstructorApp("Vector", length,
+                                                std::move(elements)));
+        return result;
+    }
+
     bool is_clist_nil(const R::Exp& xs)
     {
         // c_nil is represented by an integer sentinel, and the legacy walker
@@ -31,6 +96,130 @@ namespace
         assert(pair);
         return pair->second;
     }
+}
+
+// Generate a lazy boxed Vector by retaining one application of the supplied
+// function for every index from zero to the requested length minus one.
+extern "C" closure builtin_function_boxedGenerate(OperationArgs& Args)
+{
+    int length = Args.evaluate_slot_to_value(0).as_int();
+    if (length < 0)
+        throw myexception()<<"Data.Vector.generate: negative length "<<length;
+
+    int function_reg = Args.reg_for_slot(1);
+    std::vector<int> elements;
+    elements.reserve(length);
+    for(int i = 0; i < length; i++)
+    {
+        int index_reg = Args.allocate(i);
+        int element_reg = Args.allocate(
+            closure(Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}),
+                    {function_reg, index_reg}));
+        elements.push_back(element_reg);
+    }
+    return make_boxed_vector(std::move(elements));
+}
+
+// Traverse a complete Haskell list spine and retain each lazy head register in
+// a boxed Vector, without recursively indexing the original list.
+extern "C" closure builtin_function_boxedFromList(OperationArgs& Args)
+{
+    int xs = Args.evaluate_slot_use(0);
+    std::vector<int> elements;
+    stacked_register_roots roots(Args);
+
+    while(true)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"Data.Vector.fromList: expected a list constructor, but got "
+                               <<xs_closure.get_code().print();
+
+        const auto& tag = list_cell->head;
+        if (tag.name() == "[]" and tag.n_args() == 0 and
+            list_cell->args.empty())
+            return make_boxed_vector(std::move(elements));
+        if (tag.name() != ":" or tag.n_args() != 2 or
+            list_cell->args.size() != 2)
+            throw myexception()<<"Data.Vector.fromList: expected ':' or '[]', but got "
+                               <<tag.print();
+        if (elements.size() == static_cast<std::size_t>(std::numeric_limits<int>::max()))
+            throw myexception()<<"Data.Vector.fromList: length exceeds the Int range";
+
+        auto head_reg = xs_closure.reg_for_code(list_cell->args[0]);
+        auto tail_reg = xs_closure.reg_for_code(list_cell->args[1]);
+        if (not head_reg or not tail_reg)
+            throw myexception()<<"Data.Vector.fromList: malformed ':' constructor";
+
+        // Capture both registers before evaluating the tail: evaluation may
+        // grow the machine heap and invalidate the xs_closure reference.
+        roots.add(*head_reg);
+        elements.push_back(*head_reg);
+        xs = Args.evaluate_reg_dependent_use(*tail_reg);
+    }
+}
+
+// Return the number of lazy element registers stored by a boxed Vector.
+extern "C" closure builtin_function_boxedLength(OperationArgs& Args)
+{
+    closure value = Args.evaluate_slot_to_closure(0);
+    return {static_cast<int>(boxed_vector_app(value).args.size())};
+}
+
+// Return one lazy boxed Vector element after validating its zero-based index.
+extern "C" closure builtin_function_boxedIndex(OperationArgs& Args)
+{
+    extern long total_index_op;
+    total_index_op++;
+
+    int index = Args.evaluate_slot_to_value(1).as_int();
+    closure value = Args.evaluate_slot_to_closure(0);
+    const auto& app = boxed_vector_app(value);
+    int length = static_cast<int>(app.args.size());
+    if (index < 0 or index >= length)
+        throw myexception()<<"Data.Vector.!: index "<<index
+                           <<" is outside vector length "<<length;
+    return closure(Runtime::IndexVar(0), {value.Env[index]});
+}
+
+// Copy a contiguous range of lazy element registers into a new boxed Vector.
+extern "C" closure builtin_function_boxedSlice(OperationArgs& Args)
+{
+    int start = Args.evaluate_slot_to_value(0).as_int();
+    int count = Args.evaluate_slot_to_value(1).as_int();
+    closure value = Args.evaluate_slot_to_closure(2);
+    int length = static_cast<int>(boxed_vector_app(value).args.size());
+    if (start < 0 or count < 0 or start > length or count > length - start)
+        throw myexception()<<"Data.Vector.slice: invalid slice ("<<start<<","<<count
+                           <<") for vector length "<<length;
+
+    std::vector<int> elements(value.Env.begin() + start,
+                              value.Env.begin() + start + count);
+    return make_boxed_vector(std::move(elements));
+}
+
+// Concatenate two boxed Vectors by copying their lazy element register
+// references into one result environment.
+extern "C" closure builtin_function_boxedAppend(OperationArgs& Args)
+{
+    closure left = Args.evaluate_slot_to_closure(0);
+    boxed_vector_app(left);
+    stacked_register_roots left_roots(Args);
+    for(int reg: left.Env)
+        left_roots.add(reg);
+
+    closure right = Args.evaluate_slot_to_closure(1);
+    boxed_vector_app(right);
+
+    if (right.Env.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()) - left.Env.size())
+        throw myexception()<<"Data.Vector.++: result length exceeds the Int range";
+
+    std::vector<int> elements;
+    elements.reserve(left.Env.size() + right.Env.size());
+    elements.insert(elements.end(), left.Env.begin(), left.Env.end());
+    elements.insert(elements.end(), right.Env.begin(), right.Env.end());
+    return make_boxed_vector(std::move(elements));
 }
 
 int vector_value_size(const R::Exp& value)

@@ -6,7 +6,7 @@ import Data.Foldable
 import Control.Monad
 import qualified Data.List as List (foldr)
 import Data.Maybe (Maybe(..))
-import Data.Array
+import qualified Data.Vector as Vector
 import Control.Applicative
 import Data.Function    
 
@@ -47,8 +47,7 @@ instance Traversable [] where
 instance Traversable ((,) a) where
     traverse f (x,y) = (,) x <$> f y
 
---instance Ix i => Traversable (Array i) where
---    traverse f arr = listArray (bounds arr) `fmap` traverse f (elems arr)
-
-instance Traversable (Array Int) where
-    traverse f arr = listArray (length arr) `fmap` traverse f (elems arr)
+instance Traversable Vector.Vector where
+    -- NOTE: This compatibility fallback rebuilds through a list because the
+    -- runtime has no applicative vector builder; remove it when one exists.
+    traverse f values = Vector.fromList <$> traverse f (Vector.toList values)

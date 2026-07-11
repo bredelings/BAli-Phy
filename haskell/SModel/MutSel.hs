@@ -1,6 +1,6 @@
 module SModel.MutSel where
 
-import Data.Array
+import qualified Data.Vector as V
 import Foreign.Vector
 import SModel.ReversibleMarkov
 import SModel.Codons
@@ -48,8 +48,8 @@ fMutSel codon_a codon_w omega nuc_model = nuc_model & x3 codon_a & dNdS omega & 
 fMutSel' codon_a codon_ws' omega nuc_model = fMutSel codon_a codon_ws omega nuc_model
     where codon_ws = get_ordered_elements (getLetters codon_a) codon_ws' "fitnesses"
 
-aa_to_codon codon_a xs = [xs_array!aa | codon <- codons, let aa = translate codon_a codon]
-    where xs_array = listArray' xs
+aa_to_codon codon_a xs = [xs_array V.! aa | codon <- codons, let aa = translate codon_a codon]
+    where xs_array = V.fromList xs
           codons = take n_letters [0..]
           n_letters = alphabetSize codon_a
 

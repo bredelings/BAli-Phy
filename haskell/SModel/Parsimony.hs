@@ -8,7 +8,6 @@ import Data.BitVector
 import Data.Foldable
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data (NativeMatrix, matrixFromNative, nativeMatrix)
-import Data.Array
 import Foreign.Vector
 import Numeric.LogDouble
 import Data.Maybe (maybeToList)

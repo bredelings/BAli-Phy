@@ -10,7 +10,6 @@ import qualified Data.IntMap as IntMap
 import           Data.Text (Text)
 import           Data.Maybe (isJust, fromJust)
 import           MCMC
-import           Data.Array
 
 yulePrFactors :: (HasRoots t, HasNodeTimes t) => Int -> Rate -> t -> [LogDouble]
 yulePrFactors n lambda tree = require (numLeaves tree == n)

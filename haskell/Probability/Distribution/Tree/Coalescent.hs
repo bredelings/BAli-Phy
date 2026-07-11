@@ -11,7 +11,7 @@ import qualified Data.IntMap as IntMap
 import qualified Foreign.IntMap as FIM
 import           Data.Text (Text)
 import           MCMC
-import           Data.Array
+import           Data.Vector (Vector)
 
 {- NOTE: Time scaling in the coalescent.
 
@@ -327,8 +327,8 @@ sampleCoalescentTree2 theta leafTimes popSizes = do
 data RootedTree = RootedTree {
       getRoot :: RootedTreeNode,
 
-      getNode :: (Array Int RootedTreeNode),
-      getOrderedNode :: (Array Int Int)       -- cached the order of the nodes
+      getNode :: Vector RootedTreeNode,
+      getOrderedNode :: Vector Int       -- cached the order of the nodes
 }
 
 instance Show RootedTree where
