@@ -291,12 +291,12 @@ extern "C" closure builtin_function_boxedFromIndexedList(OperationArgs& Args)
 // association list, retaining each replacement value as an unevaluated reg.
 extern "C" closure builtin_function_boxedReplaceIndexed(OperationArgs& Args)
 {
-    closure base = Args.evaluate_slot_to_closure(0);
+    const closure& base = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     int length = static_cast<int>(boxed_vector_app(base).args.size());
     std::vector<int> elements(base.Env.begin(), base.Env.end());
 
-    // The evaluated base closure is local C++ state, so root every copied reg
-    // before evaluating the independently supplied association list.
+    // The copied base registers are local C++ state, so root each one before
+    // evaluating the independently supplied association list.
     stacked_register_roots roots(Args);
     for(int reg: elements)
         roots.add(reg);
@@ -367,12 +367,12 @@ extern "C" closure builtin_function_boxedReplaceIndexed(OperationArgs& Args)
 extern "C" closure builtin_function_boxedAccumIndexed(OperationArgs& Args)
 {
     int combine_reg = Args.reg_for_slot(0);
-    closure base = Args.evaluate_slot_to_closure(1);
+    const closure& base = Args.evaluate_reg_to_closure(Args.reg_for_slot(1));
     int length = static_cast<int>(boxed_vector_app(base).args.size());
     std::vector<int> elements(base.Env.begin(), base.Env.end());
 
-    // Root the copied base independently of its evaluated local closure while
-    // association and combine evaluation can grow or collect the machine heap.
+    // Root the copied base registers before association and combine evaluation
+    // can grow or collect the machine heap.
     stacked_register_roots roots(Args);
     for(int reg: elements)
         roots.add(reg);
@@ -453,7 +453,7 @@ extern "C" closure builtin_function_boxedAccumIndexed(OperationArgs& Args)
 // Return the number of lazy element registers stored by a boxed Vector.
 extern "C" closure builtin_function_boxedLength(OperationArgs& Args)
 {
-    closure value = Args.evaluate_slot_to_closure(0);
+    const closure& value = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     return {static_cast<int>(boxed_vector_app(value).args.size())};
 }
 
@@ -464,7 +464,7 @@ extern "C" closure builtin_function_boxedIndex(OperationArgs& Args)
     total_index_op++;
 
     int index = Args.evaluate_slot_to_value(1).as_int();
-    closure value = Args.evaluate_slot_to_closure(0);
+    const closure& value = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     const auto& app = boxed_vector_app(value);
     int length = static_cast<int>(app.args.size());
     if (index < 0 or index >= length)
@@ -478,7 +478,7 @@ extern "C" closure builtin_function_boxedSlice(OperationArgs& Args)
 {
     int start = Args.evaluate_slot_to_value(0).as_int();
     int count = Args.evaluate_slot_to_value(1).as_int();
-    closure value = Args.evaluate_slot_to_closure(2);
+    const closure& value = Args.evaluate_reg_to_closure(Args.reg_for_slot(2));
     int length = static_cast<int>(boxed_vector_app(value).args.size());
     if (start < 0 or count < 0 or start > length or count > length - start)
         throw myexception()<<"Data.Vector.slice: invalid slice ("<<start<<","<<count
@@ -493,21 +493,21 @@ extern "C" closure builtin_function_boxedSlice(OperationArgs& Args)
 // references into one result environment.
 extern "C" closure builtin_function_boxedAppend(OperationArgs& Args)
 {
-    closure left = Args.evaluate_slot_to_closure(0);
+    const closure& left = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     boxed_vector_app(left);
+
+    std::vector<int> elements(left.Env.begin(), left.Env.end());
     stacked_register_roots left_roots(Args);
-    for(int reg: left.Env)
+    for(int reg: elements)
         left_roots.add(reg);
 
-    closure right = Args.evaluate_slot_to_closure(1);
+    const closure& right = Args.evaluate_reg_to_closure(Args.reg_for_slot(1));
     boxed_vector_app(right);
 
-    if (right.Env.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()) - left.Env.size())
+    if (right.Env.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()) - elements.size())
         throw myexception()<<"Data.Vector.++: result length exceeds the Int range";
 
-    std::vector<int> elements;
-    elements.reserve(left.Env.size() + right.Env.size());
-    elements.insert(elements.end(), left.Env.begin(), left.Env.end());
+    elements.reserve(elements.size() + right.Env.size());
     elements.insert(elements.end(), right.Env.begin(), right.Env.end());
     return make_boxed_vector(std::move(elements));
 }

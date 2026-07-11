@@ -528,13 +528,13 @@ extern "C" closure builtin_function_catchRaw(OperationArgs& Args)
 {
     try
     {
-        Args.evaluate_slot_to_closure(0);
+        Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
         int r = Args.reg_for_slot(0);
         return closure(Runtime::IndexVar(0), {r});
     }
     catch (HaskellException& H)
     {
-        closure C = Args.evaluate_slot_to_closure(1);
+        closure C = Args.evaluate_reg_to_closure(Args.reg_for_slot(1));
 
         peel_closure_lambdas(C, 1);
         C.Env.push_back(H.r);
@@ -561,7 +561,7 @@ extern "C" closure builtin_function_newIORef(OperationArgs& Args)
 extern "C" closure builtin_function_readIORef(OperationArgs& Args)
 {
     // 1. IORef
-    auto C = Args.evaluate_slot_to_closure(0);
+    const closure& C = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     assert(Runtime::has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
 
@@ -607,7 +607,7 @@ extern "C" closure builtin_function_writeIORef(OperationArgs& Args)
 {
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
-    auto C = Args.evaluate_slot_to_closure(0);
+    closure C = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     assert(Runtime::has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
 
@@ -633,7 +633,7 @@ extern "C" closure builtin_function_modifyIORef(OperationArgs& Args)
 {
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
-    auto C = Args.evaluate_slot_to_closure(0);
+    closure C = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     assert(Runtime::has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
     int r_value = C.Env[0];
@@ -659,7 +659,7 @@ extern "C" closure builtin_function_modifyIORefStrict(OperationArgs& Args)
 {
     // 1. IORef
     int r_ioref = Args.evaluate_slot_unchangeable(0);
-    auto C = Args.evaluate_slot_to_closure(0);
+    closure C = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     assert(Runtime::has_constructor(C.get_code(),"Data.IORef.IORef"));
     assert(C.Env.size() == 1);
     int r_value = C.Env[0];
@@ -703,7 +703,7 @@ extern "C" R::Exp simple_function_isWindows(vector<R::Exp>&)
 */
 extern "C" closure builtin_function_andThenST(OperationArgs& Args)
 {
-    closure m = Args.evaluate_slot_to_closure(0);
+    closure m = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
 
     int s_reg = Args.current_closure().reg_for_operation_slot(2);
 
@@ -716,7 +716,7 @@ extern "C" closure builtin_function_andThenST(OperationArgs& Args)
     int r_reg = -1;
 
     
-    closure k = Args.evaluate_slot_to_closure(1);
+    closure k = Args.evaluate_reg_to_closure(Args.reg_for_slot(1));
     peel_closure_lambdas(k, 1);
     k.Env.push_back(r_reg);
 
@@ -725,7 +725,7 @@ extern "C" closure builtin_function_andThenST(OperationArgs& Args)
 
     int k2_reg = -1;
 
-    closure k2 = Args.evaluate_slot_to_closure(k2_reg);
+    closure k2 = Args.evaluate_reg_to_closure(k2_reg);
     peel_closure_lambdas(k2, 1);
     k2.Env.push_back(new_s_reg);
 

@@ -79,10 +79,6 @@ public:
 
     closure evaluate_code_to_closure_(const Runtime::Exp&);
 
-    closure evaluate_slot_to_closure(int);
-
-    closure evaluate_slot_to_closure_(int);
-
     Runtime::Exp evaluate_slot_to_value(int);
 
     Runtime::Exp evaluate_slot_to_value_(int);

@@ -40,24 +40,6 @@ const closure& OperationArgs::evaluate_reg_to_closure_(int r2)
     return M[r3];
 }
 
-closure OperationArgs::evaluate_slot_to_closure(int slot_index)
-{
-    const auto& E = slot_ref(slot_index);
-    if (auto r = reg_for_code(E))
-        return evaluate_reg_to_closure(*r);
-    else
-        return E;
-}
-
-closure OperationArgs::evaluate_slot_to_closure_(int slot_index)
-{
-    const auto& E = slot_ref(slot_index);
-    if (auto r = reg_for_code(E))
-        return evaluate_reg_to_closure_(*r);
-    else
-        return E;
-}
-
 closure OperationArgs::evaluate_code_to_closure(const Runtime::Exp& E)
 {
     if (auto r = reg_for_code(E))
