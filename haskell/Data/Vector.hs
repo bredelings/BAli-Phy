@@ -76,17 +76,20 @@ take :: Int -> Vector a -> Vector a
 take count values = slice 0 (min (max 0 count) (length values)) values
 
 drop :: Int -> Vector a -> Vector a
-drop count values = slice offset (length values - offset) values
-  where offset = min (max 0 count) (length values)
+drop requested values = slice offset (count - offset) values
+  where
+    count = length values
+    offset = min (max 0 requested) count
 
 -- Return the first index whose element equals the requested value, without
 -- converting the vector to a list.
 elemIndex :: Eq a => a -> Vector a -> Maybe Int
 elemIndex target values = go 0
   where
+    count = vectorLength values
     -- Scan indexes in ascending order and stop at the first match.
     go index
-        | index == length values = Nothing
+        | index == count = Nothing
         | values ! index == target = Just index
         | otherwise = go (index + 1)
 
@@ -104,17 +107,19 @@ instance F.Foldable Vector where
     -- Fold from the left without first allocating a list of vector elements.
     foldl function initial values = go 0 initial
       where
+        count = vectorLength values
         -- Carry a lazy accumulator through the vector in index order.
         go index result
-            | index < vectorLength values = go (index + 1) (function result (values ! index))
+            | index < count = go (index + 1) (function result (values ! index))
             | otherwise = result
 
     -- Strictly fold from the left while retaining indexed vector traversal.
     foldl' function initial values = go 0 initial
       where
+        count = vectorLength values
         -- Force each accumulator before advancing to the next index.
         go index result
-            | index < vectorLength values =
+            | index < count =
                 let next = function result (values ! index)
                 in next `seq` go (index + 1) next
             | otherwise = result
@@ -122,9 +127,10 @@ instance F.Foldable Vector where
     -- Fold from the right without materializing a separate element list.
     foldr function initial values = go 0
       where
+        count = vectorLength values
         -- Produce a lazy right-associated fold beginning at this index.
         go index
-            | index < vectorLength values = function (values ! index) (go (index + 1))
+            | index < count = function (values ! index) (go (index + 1))
             | otherwise = initial
 
     -- Strictly fold from the right without first materializing a list.
@@ -141,9 +147,10 @@ instance F.Foldable Vector where
     -- through vector indexing when no initial element exists.
     foldl1 function values = go 1 (values ! 0)
       where
+        count = vectorLength values
         -- Carry a lazy nonempty accumulator through the remaining indexes.
         go index result
-            | index < vectorLength values = go (index + 1) (function result (values ! index))
+            | index < count = go (index + 1) (function result (values ! index))
             | otherwise = result
 
     -- Fold a nonempty vector from the right, retaining lazy right-association.
@@ -161,27 +168,37 @@ instance F.Foldable Vector where
 
 -- Compare corresponding elements without allocating lists, stopping at the
 -- first mismatch or at the end of the shorter vector.
-vectorsEqual :: Eq a => Int -> Vector a -> Vector a -> Bool
-vectorsEqual index left right
-    | index == length left = True
-    | left ! index == right ! index = vectorsEqual (index + 1) left right
+vectorsEqual :: Eq a => Int -> Int -> Vector a -> Vector a -> Bool
+vectorsEqual count index left right
+    | index == count = True
+    | left ! index == right ! index = vectorsEqual count (index + 1) left right
     | otherwise = False
 
 instance Eq a => Eq (Vector a) where
-    left == right = length left == length right && vectorsEqual 0 left right
+    left == right = leftCount == rightCount &&
+                    vectorsEqual leftCount 0 left right
+      where
+        leftCount = length left
+        rightCount = length right
 
 -- Lexicographically compare vector elements before comparing a shared prefix's
 -- lengths, matching the conventional boxed-vector ordering.
-compareVectors :: Ord a => Int -> Vector a -> Vector a -> Ordering
-compareVectors index left right
-    | index == commonLength = compare (length left) (length right)
-    | otherwise = case compare (left ! index) (right ! index) of
-        EQ -> compareVectors (index + 1) left right
-        ordering -> ordering
-  where commonLength = min (length left) (length right)
+compareVectors :: Ord a => Vector a -> Vector a -> Ordering
+compareVectors left right = go 0
+  where
+    leftCount = length left
+    rightCount = length right
+    commonCount = min leftCount rightCount
+
+    -- Walk the shared prefix once and compare cached lengths at its end.
+    go index
+        | index == commonCount = compare leftCount rightCount
+        | otherwise = case compare (left ! index) (right ! index) of
+            EQ -> go (index + 1)
+            ordering -> ordering
 
 instance Ord a => Ord (Vector a) where
-    compare = compareVectors 0
+    compare = compareVectors
 
 instance Show a => Show (Vector a) where
     show values = show (toList values)
