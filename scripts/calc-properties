@@ -1,95 +1,349 @@
 #!/usr/bin/env python3
 
-import json
 import argparse
+import json
+import math
 import sys
 
-parser = argparse.ArgumentParser(description="Compute posterior mean property values for each letter.")
 
-parser.add_argument("filenames", help="Filenames with property values and category-states info for each letter.",nargs='+')
-parser.add_argument("--verbose",default=0, help="Be verbose",action='store_true')
-parser.add_argument("--format", default="AU", help="Output format")
-args = parser.parse_args()
+class PropertyAccumulator:
+    # Track the common sample shape and streaming sums and counts across chains.
+    def __init__(self):
+        self.property_names = None
+        self.sequence_names = None
+        self.sequence_lengths = None
+        self.sums = None
+        self.counts = None
+        self.retained_samples = 0
 
-# Hmm.. this isn't quite right... this just collects the properties for all the iterations.
-# But we actually want to read the catStates, and then create a sum of the properties
+    # Allocate one sum and count for each property and sequence character.
+    def _initialize(self, cat_states, properties):
+        self.property_names = tuple(sorted(properties))
+        self.sequence_names = tuple(sorted(cat_states))
+        self.sequence_lengths = {
+            name: len(cat_states[name]) for name in self.sequence_names
+        }
+        self.sums = {
+            property_name: {
+                name: [0.0] * self.sequence_lengths[name]
+                for name in self.sequence_names
+            }
+            for property_name in self.property_names
+        }
+        self.counts = {
+            property_name: {
+                name: [0] * self.sequence_lengths[name]
+                for name in self.sequence_names
+            }
+            for property_name in self.property_names
+        }
 
-def transform_by_property(cat_states, property_values):
-    # here we take a map from name -> [(Int,Int)]
+    # Ensure every retained sample describes the same properties and characters.
+    def _validate_shape(self, cat_states, properties, context):
+        property_names = tuple(sorted(properties))
+        if property_names != self.property_names:
+            raise ValueError(
+                f"{context}: property names changed; expected "
+                f"{list(self.property_names)}, got {list(property_names)}"
+            )
 
-    return {
-        key: [
-            None if pair is None else property_values[pair[0]][pair[1]]
-            for pair in outer
-        ]
-        for key, outer in cat_states.items()
+        sequence_names = tuple(sorted(cat_states))
+        if sequence_names != self.sequence_names:
+            raise ValueError(
+                f"{context}: sequence names changed; expected "
+                f"{list(self.sequence_names)}, got {list(sequence_names)}"
+            )
+
+        for name in self.sequence_names:
+            length = len(cat_states[name])
+            expected = self.sequence_lengths[name]
+            if length != expected:
+                raise ValueError(
+                    f"{context}: sequence '{name}' length changed; "
+                    f"expected {expected} characters, got {length}"
+                )
+
+    # Validate each component-state table before any values are accumulated.
+    def _validate_property_tables(self, properties, context):
+        for property_name, components in properties.items():
+            if not isinstance(property_name, str):
+                raise ValueError(f"{context}: property names must be strings")
+            if not isinstance(components, list):
+                raise ValueError(
+                    f"{context}: property '{property_name}' must contain a list "
+                    "of component tables"
+                )
+
+            for component_index, states in enumerate(components):
+                if not isinstance(states, list):
+                    raise ValueError(
+                        f"{context}: property '{property_name}' component "
+                        f"{component_index} must contain a list of state values"
+                    )
+                for state_index, value in enumerate(states):
+                    if (
+                        isinstance(value, bool)
+                        or not isinstance(value, (int, float))
+                        or not math.isfinite(value)
+                    ):
+                        raise ValueError(
+                            f"{context}: property '{property_name}' component "
+                            f"{component_index} state {state_index} must be finite"
+                        )
+
+    # Resolve a validated character state against one property's sampled table.
+    def _property_value(
+        self,
+        properties,
+        property_name,
+        component_index,
+        state_index,
+        character_context,
+    ):
+        components = properties[property_name]
+        if component_index >= len(components):
+            raise ValueError(
+                f"{character_context}: property '{property_name}' has no component "
+                f"{component_index}"
+            )
+        if state_index >= len(components[component_index]):
+            raise ValueError(
+                f"{character_context}: property '{property_name}' component "
+                f"{component_index} has no state {state_index}"
+            )
+        return float(components[component_index][state_index])
+
+    # Validate and add one retained sample without storing the sample itself.
+    def add_sample(self, sample, context):
+        cat_states = sample.get("catStates")
+        properties = sample.get("properties")
+        if not isinstance(cat_states, dict):
+            raise ValueError(f"{context}: 'catStates' must be an object")
+        if not cat_states:
+            raise ValueError(f"{context}: 'catStates' must contain a sequence")
+        if not isinstance(properties, dict):
+            raise ValueError(f"{context}: 'properties' must be an object")
+
+        for name, states in cat_states.items():
+            if not isinstance(name, str):
+                raise ValueError(f"{context}: sequence names must be strings")
+            if not isinstance(states, list):
+                raise ValueError(
+                    f"{context}: sequence '{name}' category states must be a list"
+                )
+
+        self._validate_property_tables(properties, context)
+        if self.property_names is None:
+            self._initialize(cat_states, properties)
+        else:
+            self._validate_shape(cat_states, properties, context)
+
+        for name in self.sequence_names:
+            for character_index, pair in enumerate(cat_states[name]):
+                if pair is None:
+                    continue
+
+                character_context = (
+                    f"{context}: sequence '{name}' character {character_index}"
+                )
+                if not isinstance(pair, list) or len(pair) != 2:
+                    raise ValueError(
+                        f"{character_context}: category-state value must be "
+                        "null or a two-element list"
+                    )
+                component_index, state_index = pair
+                if (
+                    isinstance(component_index, bool)
+                    or isinstance(state_index, bool)
+                    or not isinstance(component_index, int)
+                    or not isinstance(state_index, int)
+                ):
+                    raise ValueError(
+                        f"{character_context}: category and state indices must be integers"
+                    )
+                if component_index < 0 or state_index < 0:
+                    raise ValueError(
+                        f"{character_context}: category and state indices must be non-negative"
+                    )
+
+                for property_name in self.property_names:
+                    value = self._property_value(
+                        properties,
+                        property_name,
+                        component_index,
+                        state_index,
+                        character_context,
+                    )
+                    self.sums[property_name][name][character_index] += value
+                    self.counts[property_name][name][character_index] += 1
+
+        self.retained_samples += 1
+
+    # Convert the streaming sums into posterior means and count matrices.
+    def result(self, selection, retained_samples_by_chain):
+        summaries = {}
+        for property_name in self.property_names:
+            means = {}
+            for name in self.sequence_names:
+                means[name] = [
+                    total / count if count else None
+                    for total, count in zip(
+                        self.sums[property_name][name],
+                        self.counts[property_name][name],
+                    )
+                ]
+            summaries[property_name] = {
+                "mean": means,
+                "count": self.counts[property_name],
+            }
+
+        return {
+            "format": "bali-phy-character-properties",
+            "version": 1,
+            "coordinates": {
+                "kind": "ungapped-sequence-character",
+                "index_base": 0,
+            },
+            "selection": selection,
+            "retained_samples": self.retained_samples,
+            "retained_samples_by_chain": retained_samples_by_chain,
+            "properties": summaries,
+        }
+
+
+# Define the small public CLI and reject inconsistent selection arguments early.
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Compute posterior mean property values for each sequence character."
+    )
+    parser.add_argument(
+        "filenames",
+        nargs="+",
+        help="JSON Lines files containing sampled category states and properties",
+    )
+    parser.add_argument(
+        "--skip",
+        type=int,
+        default=None,
+        metavar="ITER",
+        help="discard samples at or before iteration ITER",
+    )
+    parser.add_argument(
+        "--until",
+        type=int,
+        default=None,
+        metavar="ITER",
+        help="discard samples after iteration ITER",
+    )
+    parser.add_argument(
+        "--subsample",
+        type=int,
+        default=1,
+        metavar="N",
+        help="retain every Nth eligible sample in each chain",
+    )
+    args = parser.parse_args(argv)
+
+    if args.skip is not None and args.skip < 0:
+        parser.error("--skip must be non-negative")
+    if args.until is not None and args.until < 0:
+        parser.error("--until must be non-negative")
+    if args.subsample <= 0:
+        parser.error("--subsample must be positive")
+    if (
+        args.skip is not None
+        and args.until is not None
+        and args.until <= args.skip
+    ):
+        parser.error("--until must be greater than --skip")
+    return args
+
+
+# Decode one non-empty JSON Lines record and attach its source to parse errors.
+def decode_sample(line, context):
+    if not line.strip():
+        raise ValueError(f"{context}: empty JSON line")
+    try:
+        sample = json.loads(line)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"{context}: invalid JSON: {error.msg}") from None
+    if not isinstance(sample, dict):
+        raise ValueError(f"{context}: sample must be a JSON object")
+    return sample
+
+
+# Stream one chain, applying iteration bounds and stride independently.
+def accumulate_chain(filename, args, accumulator):
+    previous_iteration = None
+    eligible_samples = 0
+    retained_samples = 0
+
+    with open(filename, encoding="utf-8") as json_lines:
+        for line_number, line in enumerate(json_lines, start=1):
+            context = f"{filename}:{line_number}"
+            sample = decode_sample(line, context)
+            iteration = sample.get("iter")
+            if isinstance(iteration, bool) or not isinstance(iteration, int):
+                raise ValueError(f"{context}: 'iter' must be an integer")
+            if iteration < 0:
+                raise ValueError(f"{context}: 'iter' must be non-negative")
+            if previous_iteration is not None and iteration <= previous_iteration:
+                raise ValueError(
+                    f"{context}: iterations must increase strictly; got {iteration} "
+                    f"after {previous_iteration}"
+                )
+            previous_iteration = iteration
+
+            if args.until is not None and iteration > args.until:
+                break
+            if args.skip is not None and iteration <= args.skip:
+                continue
+
+            retain = eligible_samples % args.subsample == 0
+            eligible_samples += 1
+            if not retain:
+                continue
+
+            accumulator.add_sample(sample, context)
+            retained_samples += 1
+
+    if retained_samples == 0:
+        raise ValueError(f"{filename}: no samples remain after selection")
+    return retained_samples
+
+
+# Combine selected records from all chains and construct the summary document.
+def calculate_summary(args):
+    accumulator = PropertyAccumulator()
+    retained_samples_by_chain = [
+        accumulate_chain(filename, args, accumulator) for filename in args.filenames
+    ]
+    selection = {
+        "skip": args.skip,
+        "until": args.until,
+        "subsample": args.subsample,
     }
-
-# What if the sequences have different lengths?  It should error.
-# What if we try to add a None and a number? If should error.
-def add_sequence_properties(seq_properties1, seq_properties2):
-    return {
-        key: [
-            (a + b) if (a is not None and b is not None) else None
-            for a, b in zip(list1, seq_properties2[key])
-        ]
-        for key, list1 in seq_properties1.items()
-    }
-
-# What if the sequences have different lengths?  It should error.
-# What if we try to add a None and a number? If should error.
-def div_sequence_properties(seq_properties1, n):
-    return {
-        key: [
-            a/n if a is not None else None
-            for a in list1
-        ]
-        for key, list1 in seq_properties1.items()
-    }
+    return accumulator.result(selection, retained_samples_by_chain)
 
 
-def read_samples_from_file(filename):
-
-    with open(filename) as json_data:
-        nsamples = 0
-        summed_properties = None
-
-        for line in json_data:
-            nsamples += 1;
-
-            line_data = json.loads(line)
-            cat_states = line_data['catStates']
-            props = line_data['properties']
-
-            if summed_properties is None:
-                summed_properties = dict()
-                for key in props.keys():
-                    summed_properties[key] = transform_by_property(cat_states, props[key])
-            else:
-                if summed_properties.keys() != props.keys():
-                    print(f"Property names changed within file {filename}.\n {summed_properties.keys()}\n {props.keys()}", file=sys.stderr)
-                    sys.exit(1)
-                for key in summed_properties.keys():
-                    summed_properties[key] = add_sequence_properties(summed_properties[key], transform_by_property(cat_states, props[key]))
-        return (nsamples, summed_properties)
+# Report validation and I/O failures without exposing implementation tracebacks.
+def main(argv=None):
+    args = parse_args(argv)
+    try:
+        summary = calculate_summary(args)
+        json.dump(
+            summary,
+            sys.stdout,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        print()
+    except (OSError, ValueError) as error:
+        print(f"calc-properties: Error! {error}", file=sys.stderr)
+        return 1
+    return 0
 
 
-total_samples = 0
-summed_properties = None
-for filename in args.filenames:
-    (n, summed_properties_for_file) = read_samples_from_file(filename)
-    total_samples += n
-
-    if summed_properties is None:
-        summed_properties = summed_properties_for_file
-    else:
-        if summed_properties.keys() != summed_properties_for_file.keys():
-            print(f"Property names for file {filename} don't match previous property names.\n previous = {summed_properties.keys()}\n previous = {summed_properties.keys()}", file=sys.stderr)
-            sys.exit(1)
-        for key in summed_properties.keys():
-            summed_properties[key] = add_sequence_properties(summed_properties[key], summed_properties_for_file[key])
-
-for key in summed_properties.keys():
-    summed_properties[key] = div_sequence_properties(summed_properties[key], total_samples)
-
-print(json.dumps(summed_properties))
+if __name__ == "__main__":
+    sys.exit(main())

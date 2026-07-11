@@ -48,7 +48,6 @@ class CalcPropertiesTests(unittest.TestCase):
             self.assertIn(phrase, result.stderr)
 
     # Check sample-specific property lookup and exact pooled means and counts.
-    @unittest.expectedFailure
     def test_computes_exact_means_and_counts(self):
         samples = [
             {
@@ -92,7 +91,6 @@ class CalcPropertiesTests(unittest.TestCase):
         )
 
     # Check strict skip, inclusive until, and post-filter per-chain stride semantics.
-    @unittest.expectedFailure
     def test_filters_samples_by_iteration_and_subsample(self):
         samples = [
             {
@@ -116,7 +114,6 @@ class CalcPropertiesTests(unittest.TestCase):
         self.assertEqual(output["properties"]["rate"]["count"], {"A": [2]})
 
     # Check that chains are pooled by retained draw rather than by chain mean.
-    @unittest.expectedFailure
     def test_pools_multiple_chains_by_sample(self):
         chain1 = [
             {
@@ -144,7 +141,6 @@ class CalcPropertiesTests(unittest.TestCase):
         self.assertEqual(output["properties"]["rate"]["count"], {"A": [3]})
 
     # Check that unavailable draws are omitted and represented by per-cell counts.
-    @unittest.expectedFailure
     def test_averages_available_values_and_preserves_all_missing_cells(self):
         samples = [
             {
@@ -172,7 +168,6 @@ class CalcPropertiesTests(unittest.TestCase):
         self.assertEqual(output["properties"]["rate"]["count"], {"A": [2, 0]})
 
     # Reject changing character counts instead of silently truncating with zip().
-    @unittest.expectedFailure
     def test_rejects_changed_sequence_lengths(self):
         samples = [
             {
@@ -192,7 +187,6 @@ class CalcPropertiesTests(unittest.TestCase):
         self.assert_validation_error(result, "chain-1.jsonl:2", "sequence", "length")
 
     # Reject negative category indices, which Python would otherwise index from the end.
-    @unittest.expectedFailure
     def test_rejects_negative_component_indices(self):
         samples = [
             {
@@ -207,7 +201,6 @@ class CalcPropertiesTests(unittest.TestCase):
         self.assert_validation_error(result, "chain-1.jsonl:1", "A", "character 0")
 
     # Reject property definitions that change between samples in one chain.
-    @unittest.expectedFailure
     def test_rejects_changed_property_names(self):
         samples = [
             {
@@ -227,7 +220,6 @@ class CalcPropertiesTests(unittest.TestCase):
         self.assert_validation_error(result, "chain-1.jsonl:2", "property")
 
     # Reject non-finite values so the summary remains strict browser-readable JSON.
-    @unittest.expectedFailure
     def test_rejects_nonfinite_property_values(self):
         samples = [
             {

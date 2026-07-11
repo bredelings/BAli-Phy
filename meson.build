@@ -192,6 +192,7 @@ endforeach
 # Install non-executable files
 
 install_data('scripts/bp-analyze', install_mode: 'rwxr-xr-x', install_dir: 'bin')
+install_data('scripts/calc-properties', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 install_data('scripts/bali-phy-pkg', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R',
               'scripts/tree-plot.R', 'scripts/tree-plot-3D.R'],
@@ -201,6 +202,10 @@ install_subdir('haskell', install_dir: 'lib/bali-phy')
 install_subdir('bindings', install_dir: 'lib/bali-phy')
 install_subdir('help', install_dir: 'lib/bali-phy')
 install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
+
+test('calc-properties summaries',
+     python,
+     args: [files('tests/scripts/test_calc_properties.py')])
 
 if host_machine.system() == 'windows'
   windows_runtime_dll_args = [
