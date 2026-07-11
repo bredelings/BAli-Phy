@@ -1392,26 +1392,6 @@ extern "C" closure builtin_function_mut_sel_pi(OperationArgs& Args)
     return pi;
 }
 
-extern "C" closure builtin_function_average_frequency(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& WF = arg0.as_<Box<DenseMatrix<double>>>();
-
-    const int n_models = WF.rows();
-    const int n_states = WF.cols();
-
-    auto* ave_f = new Box<DenseVector<double>>(n_states);
-    for(int s=0;s<n_states;s++)
-    {
-	double total = 0;
-	for(int m=0;m<n_models;m++)
-	    total += WF(m,s);
-	(*ave_f)[s] = total;
-    }
-
-    return ave_f;
-}
-
 extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
