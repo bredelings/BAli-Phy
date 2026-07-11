@@ -26,7 +26,7 @@ instance HasPdf Categorical where
 instance Dist1D Categorical where
     cdf (Categorical ps) x | n < 0            = 0
                            | n >= V.length ps = 1
-                           | otherwise        = sum $ take (n+1) $ V.toList ps
+                           | otherwise        = sum (V.take (n + 1) ps)
                            where n = floor x
 
 instance HasAnnotatedPdf Categorical where
