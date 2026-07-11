@@ -266,6 +266,110 @@ closure outer_vectors(const Box<NativeVector>& vector1,
     return result;
 }
 
+// Copy one conforming native vector into a matrix row or column, expanding a
+// singleton vector along the destination extent.
+template <typename T>
+void copy_matrix_vector(DenseMatrix<T>& result, int index,
+                        const Box<DenseVector<T>>& values, bool by_rows)
+{
+    Eigen::Index extent = by_rows ? result.cols() : result.rows();
+    if (values.size() == extent)
+    {
+        if (by_rows)
+            result.row(index) = values.transpose();
+        else
+            result.col(index) = values;
+    }
+    else if (values.size() == 1)
+    {
+        if (by_rows)
+            result.row(index).setConstant(values(0));
+        else
+            result.col(index).setConstant(values(0));
+    }
+    else
+        throw myexception()<<"matrix from vectors: vector extent "<<values.size()
+                           <<" does not conform to destination extent "<<extent;
+}
+
+// Continue walking a Haskell list after its first native vector and copy all
+// vectors into one newly allocated matrix.
+template <typename T>
+closure matrix_from_vectors(OperationArgs& Args, int count, int extent, int tail,
+                            const Box<DenseVector<T>>& first, bool by_rows)
+{
+    int rows = by_rows ? count : extent;
+    int columns = by_rows ? extent : count;
+    auto result = new Box<DenseMatrix<T>>(rows, columns);
+    copy_matrix_vector(*result, 0, first, by_rows);
+
+    int xs = tail;
+    for(int i=1; i<count; i++)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell or list_cell->head.name() != ":" or list_cell->head.n_args() != 2)
+            throw myexception()<<"matrix from vectors: expected "<<count<<" rows or columns";
+
+        int element = xs_closure.reg_for_constructor_slot(0);
+        int next_tail = xs_closure.reg_for_constructor_slot(1);
+        int value = Args.evaluate_reg_dependent_use(element);
+        const auto& expression = Args.memory().closure_at(value).get_code();
+        if (not expression.is_a<Box<DenseVector<T>>>() )
+            throw myexception()<<"matrix from vectors: vectors have different native representations";
+        copy_matrix_vector(*result, i, expression.as_<Box<DenseVector<T>>>(), by_rows);
+        xs = Args.evaluate_reg_dependent_use(next_tail);
+    }
+    return result;
+}
+
+// Start a dependent traversal of native vectors and dispatch the result's
+// scalar representation from the first vector.
+closure matrix_from_vectors(OperationArgs& Args, bool by_rows)
+{
+    int count = Args.evaluate_slot_to_value(0).as_int();
+    int extent = Args.evaluate_slot_to_value(1).as_int();
+    if (count <= 0 or extent <= 0)
+        throw myexception()<<"matrix from vectors: positive dimensions are required";
+
+    int xs = Args.evaluate_slot_use(2);
+    const closure& xs_closure = Args.memory().closure_at(xs);
+    auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+    if (not list_cell or list_cell->head.name() != ":" or list_cell->head.n_args() != 2)
+        throw myexception()<<"matrix from vectors: expected a nonempty vector list";
+
+    int element = xs_closure.reg_for_constructor_slot(0);
+    int tail = xs_closure.reg_for_constructor_slot(1);
+    int value = Args.evaluate_reg_dependent_use(element);
+    const auto& expression = Args.memory().closure_at(value).get_code();
+    tail = Args.evaluate_reg_dependent_use(tail);
+
+    if (expression.is_a<Box<DenseVector<double>>>() )
+        return matrix_from_vectors<double>(Args, count, extent, tail,
+            expression.as_<Box<DenseVector<double>>>(), by_rows);
+    if (expression.is_a<Box<DenseVector<int>>>() )
+        return matrix_from_vectors<int>(Args, count, extent, tail,
+            expression.as_<Box<DenseVector<int>>>(), by_rows);
+    throw myexception()<<"matrix from vectors: unsupported native vector representation";
+}
+
+// Copy one matrix row or column into a column-stored native vector.
+template <typename NativeMatrix>
+closure matrix_vector_at(const Box<NativeMatrix>& matrix, int index, bool row)
+{
+    Eigen::Index count = row ? matrix.rows() : matrix.cols();
+    if (index < 0 or index >= count)
+        throw myexception()<<"matrix vector extraction: index "<<index
+                           <<" is outside extent "<<count;
+    using T = typename NativeMatrix::Scalar;
+    auto result = new Box<DenseVector<T>>(row ? matrix.cols() : matrix.rows());
+    if (row)
+        result->noalias() = matrix.row(index).transpose();
+    else
+        result->noalias() = matrix.col(index);
+    return result;
+}
+
 // Copy a checked contiguous vector segment into independent native storage.
 template <typename NativeVector>
 closure slice_vector(const Box<NativeVector>& values, int start, int count)
@@ -712,6 +816,38 @@ extern "C" closure builtin_function_vectorAsColumn(OperationArgs& Args)
     auto value = Args.evaluate_slot_to_value(0);
     return visit_numeric_vector(value, [](const auto& vector_value) {
         return vector_as_matrix(vector_value, false);
+    });
+}
+
+// Stack native vectors as matrix rows without scalar Haskell-list conversion.
+extern "C" closure builtin_function_matrixFromRowsNative(OperationArgs& Args)
+{
+    return matrix_from_vectors(Args, true);
+}
+
+// Stack native vectors as matrix columns without an intermediate transpose.
+extern "C" closure builtin_function_matrixFromColumnsNative(OperationArgs& Args)
+{
+    return matrix_from_vectors(Args, false);
+}
+
+// Extract one matrix row as an independent native vector.
+extern "C" closure builtin_function_matrixRowNative(OperationArgs& Args)
+{
+    int index = Args.evaluate_slot_to_value(0).as_int();
+    auto matrix = Args.evaluate_slot_to_value(1);
+    return visit_matrix(matrix, [index](const auto& native) {
+        return matrix_vector_at(native, index, true);
+    });
+}
+
+// Extract one matrix column as an independent native vector.
+extern "C" closure builtin_function_matrixColumnNative(OperationArgs& Args)
+{
+    int index = Args.evaluate_slot_to_value(0).as_int();
+    auto matrix = Args.evaluate_slot_to_value(1);
+    return visit_matrix(matrix, [index](const auto& native) {
+        return matrix_vector_at(native, index, false);
     });
 }
 

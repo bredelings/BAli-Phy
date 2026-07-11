@@ -200,6 +200,10 @@ toLists matrix = mapFrom 0 (rows matrix) $ \i ->
 foreign import bpcall "Matrix:reshapeVector" reshapeVectorNative :: Int -> NativeVector a -> NativeMatrix a
 foreign import bpcall "Matrix:vectorAsRow" vectorAsRowNative :: NativeVector a -> NativeMatrix a
 foreign import bpcall "Matrix:vectorAsColumn" vectorAsColumnNative :: NativeVector a -> NativeMatrix a
+foreign import bpcall "Matrix:matrixFromRowsNative" matrixFromRowsNative :: Int -> Int -> [NativeVector a] -> NativeMatrix a
+foreign import bpcall "Matrix:matrixFromColumnsNative" matrixFromColumnsNative :: Int -> Int -> [NativeVector a] -> NativeMatrix a
+foreign import bpcall "Matrix:matrixRowNative" matrixRowNative :: Int -> NativeMatrix a -> NativeVector a
+foreign import bpcall "Matrix:matrixColumnNative" matrixColumnNative :: Int -> NativeMatrix a -> NativeVector a
 
 -- Reshape a vector while deriving the matrix dimensions without inspecting
 -- the native payload.
@@ -240,26 +244,30 @@ fromRows [] = (0 >< 0) []
 fromRows vectors =
     case conformRows (map size vectors) of
         Nothing -> error "Numeric.LinearAlgebra.fromRows: vectors have incompatible sizes"
-        Just columns -> (length vectors >< columns) (concatMap (expand columns) vectors)
-  where
-    -- Expand a singleton row to the common extent, or preserve a full row.
-    expand columns values
-        | columns == 0 = []
-        | size values == columns = toList values
-        | otherwise = replicate columns (atIndex values 0)
+        Just 0 -> (length vectors >< 0) []
+        Just columns -> Matrix (length vectors) columns
+            (matrixFromRowsNative (length vectors) columns (map nativeVector vectors))
 
 -- Extract matrix rows as independent native vectors without passing through
 -- a structural EVector.
 toRows :: Element a => Matrix a -> [Vector a]
 toRows matrix =
     mapFrom 0 (rows matrix) $ \i ->
-        fromList (mapFrom 0 (cols matrix) $ \j -> atIndex matrix (i,j))
+        Vector (cols matrix) (matrixRowNative i (nativeMatrix matrix))
 
 fromColumns :: Element a => [Vector a] -> Matrix a
-fromColumns = tr . fromRows
+fromColumns [] = (0 >< 0) []
+fromColumns vectors =
+    case conformRows (map size vectors) of
+        Nothing -> error "Numeric.LinearAlgebra.fromRows: vectors have incompatible sizes"
+        Just 0 -> (0 >< length vectors) []
+        Just rowCount -> Matrix rowCount (length vectors)
+            (matrixFromColumnsNative (length vectors) rowCount (map nativeVector vectors))
 
 toColumns :: Element a => Matrix a -> [Vector a]
-toColumns = toRows . tr
+toColumns matrix =
+    mapFrom 0 (cols matrix) $ \j ->
+        Vector (rows matrix) (matrixColumnNative j (nativeMatrix matrix))
 
 -- Construct directly from scalar rows without creating temporary native
 -- vectors that would immediately be converted back into lists.
@@ -267,7 +275,7 @@ fromLists :: Element a => [[a]] -> Matrix a
 fromLists [] = (0 >< 0) []
 fromLists rowLists =
     case conformRows (map length rowLists) of
-        Nothing -> error "Numeric.LinearAlgebra.fromLists: rows have incompatible sizes"
+        Nothing -> error "Numeric.LinearAlgebra.fromRows: vectors have incompatible sizes"
         Just columns -> (length rowLists >< columns)
             (concatMap (expand columns) rowLists)
   where
