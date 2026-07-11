@@ -194,7 +194,8 @@ flatten matrix = Vector (rows matrix * cols matrix)
     (matrixToVectorNative (nativeMatrix matrix))
 
 toLists :: Element a => Matrix a -> [[a]]
-toLists = map toList . toRows
+toLists matrix = mapFrom 0 (rows matrix) $ \i ->
+    mapFrom 0 (cols matrix) $ \j -> atIndex matrix (i,j)
 
 foreign import bpcall "Matrix:reshapeVector" reshapeVectorNative :: Int -> NativeVector a -> NativeMatrix a
 foreign import bpcall "Matrix:vectorAsRow" vectorAsRowNative :: NativeVector a -> NativeMatrix a
@@ -221,24 +222,26 @@ row = asRow . fromList
 col :: [Double] -> Matrix Double
 col = asColumn . fromList
 
+-- Find the shared row extent, allowing singleton rows to expand to the
+-- largest compatible extent.
+conformRows :: [Int] -> Maybe Int
+conformRows [] = Nothing
+conformRows [n] = Just n
+conformRows (n:m:ns)
+    | n == m = conformRows (m:ns)
+    | n == 1 = conformRows (m:ns)
+    | m == 1 = conformRows (n:ns)
+    | otherwise = Nothing
+
 -- Construct rows with hmatrix singleton expansion, rejecting vectors with
 -- incompatible non-singleton extents.
 fromRows :: Element a => [Vector a] -> Matrix a
 fromRows [] = (0 >< 0) []
 fromRows vectors =
-    case conform (map size vectors) of
+    case conformRows (map size vectors) of
         Nothing -> error "Numeric.LinearAlgebra.fromRows: vectors have incompatible sizes"
         Just columns -> (length vectors >< columns) (concatMap (expand columns) vectors)
   where
-    -- Find the common extent while retaining zero as the extent of empty rows.
-    conform [] = Nothing
-    conform [n] = Just n
-    conform (n:m:ns)
-        | n == m = conform (m:ns)
-        | n == 1 = conform (m:ns)
-        | m == 1 = conform (n:ns)
-        | otherwise = Nothing
-
     -- Expand a singleton row to the common extent, or preserve a full row.
     expand columns values
         | columns == 0 = []
@@ -258,8 +261,20 @@ fromColumns = tr . fromRows
 toColumns :: Element a => Matrix a -> [Vector a]
 toColumns = toRows . tr
 
+-- Construct directly from scalar rows without creating temporary native
+-- vectors that would immediately be converted back into lists.
 fromLists :: Element a => [[a]] -> Matrix a
-fromLists = fromRows . map fromList
+fromLists [] = (0 >< 0) []
+fromLists rowLists =
+    case conformRows (map length rowLists) of
+        Nothing -> error "Numeric.LinearAlgebra.fromLists: rows have incompatible sizes"
+        Just columns -> (length rowLists >< columns)
+            (concatMap (expand columns) rowLists)
+  where
+    expand columns values
+        | columns == 0 = []
+        | length values == columns = values
+        | otherwise = replicate columns (head values)
 
 build :: (Element a, Num a) => (Int, Int) -> (a -> a -> a) -> Matrix a
 build (rowCount, columnCount) element = (rowCount >< columnCount)
