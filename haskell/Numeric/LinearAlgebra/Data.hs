@@ -133,6 +133,8 @@ class Element e => Container c e where
 foreign import ecall "Matrix:vectorAtIndex" vectorAtIndexNative :: NativeVector a -> Int -> a
 foreign import ecall "Matrix:vectorEqual" vectorEqualNative :: NativeVector a -> NativeVector a -> Bool
 foreign import ecall "Matrix:vectorSumElements" vectorSumElementsNative :: NativeVector a -> a
+foreign import bpcall "Matrix:vectorKonstNative" vectorKonstNative :: a -> Int -> NativeVector a
+foreign import bpcall "Matrix:matrixKonstNative" matrixKonstNative :: a -> Int -> Int -> NativeMatrix a
 
 vectorEqual :: Vector a -> Vector a -> Bool
 vectorEqual left right = vectorEqualNative (nativeVector left) (nativeVector right)
@@ -140,8 +142,8 @@ vectorEqual left right = vectorEqualNative (nativeVector left) (nativeVector rig
 instance Element a => Container Vector a where
     size = vectorSize
     atIndex values index = vectorAtIndexNative (nativeVector values) index
-    konst value count = fromList (replicate count value)
-    scalar value = fromList [value]
+    konst value count = Vector count (vectorKonstNative value count)
+    scalar value = Vector 1 (vectorKonstNative value 1)
     sumElements = vectorSumElementsNative . nativeVector
     cmap function values = fromList (map function (toList values))
     prodElements = product . toList
@@ -161,8 +163,9 @@ foreign import ecall "Matrix:matrixSumElements" matrixSumElementsNative :: Nativ
 instance Element a => Container Matrix a where
     size matrix = (rows matrix, cols matrix)
     atIndex matrix (i,j) = matrixAtIndexNative i j (nativeMatrix matrix)
-    konst value (rows,columns) = (rows >< columns) (replicate (rows * columns) value)
-    scalar value = (1 >< 1) [value]
+    konst value (rows,columns) = Matrix rows columns
+        (matrixKonstNative value rows columns)
+    scalar value = Matrix 1 1 (matrixKonstNative value 1 1)
     sumElements = matrixSumElementsNative . nativeMatrix
     cmap function matrix = (rows matrix >< cols matrix)
         (map function (toList (flatten matrix)))
@@ -296,10 +299,12 @@ ident dimension = (dimension >< dimension)
 
 -- Fill a rectangular matrix and replace as much of its main diagonal as the
 -- supplied vector and requested dimensions permit.
+foreign import bpcall "Matrix:diagRectNative" diagRectNative :: a -> NativeVector a -> Int -> Int -> NativeMatrix a
+foreign import bpcall "Matrix:takeDiagNative" takeDiagNative :: NativeMatrix a -> NativeVector a
+
 diagRect :: Element a => a -> Vector a -> Int -> Int -> Matrix a
-diagRect fill diagonal rowCount columnCount = (rowCount >< columnCount)
-    [if i == j && i < size diagonal then atIndex diagonal i else fill
-        | i <- [0..rowCount-1], j <- [0..columnCount-1]]
+diagRect fill diagonal rowCount columnCount = Matrix rowCount columnCount
+    (diagRectNative fill (nativeVector diagonal) rowCount columnCount)
 
 diag :: (Element a, Num a) => Vector a -> Matrix a
 diag diagonal = diagRect 0 diagonal dimension dimension
@@ -309,8 +314,8 @@ diagl :: [Double] -> Matrix Double
 diagl = diag . fromList
 
 takeDiag :: Element a => Matrix a -> Vector a
-takeDiag matrix = fromList
-    [atIndex matrix (i,i) | i <- [0..min (rows matrix) (cols matrix)-1]]
+takeDiag matrix = Vector count (takeDiagNative (nativeMatrix matrix))
+  where count = min (rows matrix) (cols matrix)
 
 -- Construct evenly spaced endpoints, using their midpoint for the
 -- single-element case as hmatrix does.

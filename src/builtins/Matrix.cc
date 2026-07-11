@@ -192,6 +192,53 @@ closure map_matrix(const Box<NativeMatrix>& matrix1, F&& operation)
     return matrix2;
 }
 
+// Allocate a native constant vector using the scalar's runtime representation.
+template <typename T>
+closure constant_vector(T value, int count)
+{
+    if (count < 0)
+        throw myexception()<<"constant vector: negative extent "<<count;
+    auto result = new Box<DenseVector<T>>(count);
+    result->setConstant(value);
+    return result;
+}
+
+// Allocate a native constant matrix using the scalar's runtime representation.
+template <typename T>
+closure constant_matrix(T value, int rows, int columns)
+{
+    if (rows < 0 or columns < 0)
+        throw myexception()<<"constant matrix: negative dimensions ("<<rows<<", "<<columns<<")";
+    auto result = new Box<DenseMatrix<T>>(rows, columns);
+    result->setConstant(value);
+    return result;
+}
+
+// Fill a matrix and overwrite the available main diagonal from a native vector.
+template <typename NativeVector>
+closure diagonal_matrix(const Box<NativeVector>& diagonal, typename NativeVector::Scalar fill,
+                        int rows, int columns)
+{
+    using T = typename NativeVector::Scalar;
+    if (rows < 0 or columns < 0)
+        throw myexception()<<"diagRect: negative dimensions ("<<rows<<", "<<columns<<")";
+    auto result = new Box<DenseMatrix<T>>(rows, columns);
+    result->setConstant(fill);
+    Eigen::Index count = std::min<Eigen::Index>({rows, columns, diagonal.size()});
+    result->diagonal().head(count) = diagonal.head(count);
+    return result;
+}
+
+// Copy the main diagonal of a native matrix into a native vector.
+template <typename NativeMatrix>
+closure matrix_diagonal(const Box<NativeMatrix>& matrix)
+{
+    using T = typename NativeMatrix::Scalar;
+    auto result = new Box<DenseVector<T>>(std::min(matrix.rows(), matrix.cols()));
+    result->noalias() = matrix.diagonal();
+    return result;
+}
+
 // Apply an elementwise binary operation using independent singleton
 // broadcasting for rows and columns.
 template <typename NativeMatrix, typename F>
@@ -722,6 +769,53 @@ extern "C" closure builtin_function_sizedIntVectorFromList(OperationArgs& Args)
 extern "C" closure builtin_function_sizedDoubleVectorFromList(OperationArgs& Args)
 {
     return sized_vector_from_list<double>(Args);
+}
+
+// Construct a constant vector without allocating a Haskell element list.
+extern "C" closure builtin_function_vectorKonstNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    int count = Args.evaluate_slot_to_value(1).as_int();
+    if (value.is_int())
+        return constant_vector(value.as_int(), count);
+    if (value.is_double())
+        return constant_vector(value.as_double(), count);
+    throw myexception()<<"constant vector: unsupported scalar representation";
+}
+
+// Construct a constant matrix without allocating a Haskell element list.
+extern "C" closure builtin_function_matrixKonstNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    int rows = Args.evaluate_slot_to_value(1).as_int();
+    int columns = Args.evaluate_slot_to_value(2).as_int();
+    if (value.is_int())
+        return constant_matrix(value.as_int(), rows, columns);
+    if (value.is_double())
+        return constant_matrix(value.as_double(), rows, columns);
+    throw myexception()<<"constant matrix: unsupported scalar representation";
+}
+
+// Construct a filled matrix with a native main diagonal.
+extern "C" closure builtin_function_diagRectNative(OperationArgs& Args)
+{
+    auto fill = Args.evaluate_slot_to_value(0);
+    auto diagonal = Args.evaluate_slot_to_value(1);
+    int rows = Args.evaluate_slot_to_value(2).as_int();
+    int columns = Args.evaluate_slot_to_value(3).as_int();
+    return visit_numeric_vector(diagonal, [&](const auto& native) {
+        using T = typename std::decay_t<decltype(native)>::Scalar;
+        return diagonal_matrix(native, matrix_scalar<T>(fill), rows, columns);
+    });
+}
+
+// Extract a native matrix's main diagonal.
+extern "C" closure builtin_function_takeDiagNative(OperationArgs& Args)
+{
+    auto matrix = Args.evaluate_slot_to_value(0);
+    return visit_matrix(matrix, [](const auto& native) {
+        return matrix_diagonal(native);
+    });
 }
 
 // Return one native vector element after checking its zero-based index.
