@@ -24,7 +24,6 @@ module Numeric.LinearAlgebra.Data
     ) where
 
 import Foreign.CList (mapFrom)
-import Data.OldList (sort)
 
 type R = Double
 type I = Int
@@ -353,6 +352,7 @@ foreign import bpcall "Matrix:subMatrixNative" subMatrixNative :: Int -> Int -> 
 foreign import bpcall "Matrix:gatherMatrixNative" gatherMatrixNative :: NativeVector Int -> NativeVector Int -> NativeMatrix a -> NativeMatrix a
 foreign import bpcall "Matrix:joinMatricesNative" joinMatricesNative :: Int -> NativeMatrix a -> NativeMatrix a -> NativeMatrix a
 foreign import bpcall "Matrix:repmatNative" repmatNative :: NativeMatrix a -> Int -> Int -> NativeMatrix a
+foreign import bpcall "Matrix:vectorModuloNative" vectorModuloNative :: NativeVector Int -> Int -> NativeVector Int
 
 -- Extract a rectangular payload and record its requested shape directly.
 subMatrix :: Element a => (Int, Int) -> (Int, Int) -> Matrix a -> Matrix a
@@ -404,7 +404,9 @@ matrix ?? (rowExtractor, columnExtractor) =
     indices dimension (PosCyc positions)
         | dimension == 0 && size positions /= 0 =
             error "Numeric.LinearAlgebra.(??): cannot cycle indexes into an empty dimension"
-        | otherwise = fromList [position `mod` dimension | position <- toList positions]
+        | dimension == 0 = positions
+        | otherwise = Vector (vectorSize positions)
+            (vectorModuloNative (nativeVector positions) dimension)
     indices dimension (Take count) = idxs [0..min dimension (max 0 count)-1]
     indices dimension (TakeLast count) =
         idxs [max 0 (dimension-max 0 count)..dimension-1]
@@ -491,11 +493,16 @@ toBlocksEvery rowSize columnSize matrix
         let current = min blockSize remaining
         in current : sizes blockSize (remaining-current)
 
+foreign import bpcall "Matrix:sortVectorNative" sortVectorNative :: NativeVector a -> NativeVector a
+foreign import bpcall "Matrix:sortIndexNative" sortIndexNative :: NativeVector a -> NativeVector Int
+
 sortVector :: (Element a, Ord a) => Vector a -> Vector a
-sortVector = fromList . sort . toList
+sortVector values = Vector (vectorSize values)
+    (sortVectorNative (nativeVector values))
 
 sortIndex :: (Element a, Ord a) => Vector a -> Vector Int
-sortIndex values = fromList (map snd (sort (zip (toList values) [0..])))
+sortIndex values = Vector (vectorSize values)
+    (sortIndexNative (nativeVector values))
 
 conj :: Container c a => c a -> c a
 conj = id

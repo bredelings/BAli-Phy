@@ -166,6 +166,44 @@ closure map_vector(const Box<NativeVector>& vector1, F&& operation)
     return vector2;
 }
 
+// Copy and stably sort a native vector without constructing scalar Haskell values.
+template <typename NativeVector>
+closure sort_vector(const Box<NativeVector>& values)
+{
+    auto result = new Box<NativeVector>(values);
+    std::stable_sort(result->data(), result->data() + result->size());
+    return result;
+}
+
+// Return stable value-order indices, preserving original order for equal values.
+template <typename NativeVector>
+closure sort_index(const Box<NativeVector>& values)
+{
+    std::vector<int> indices(values.size());
+    for(int i=0; i<indices.size(); i++)
+        indices[i] = i;
+    std::stable_sort(indices.begin(), indices.end(), [&](int left, int right) {
+        return values(left) < values(right);
+    });
+    auto result = new Box<DenseVector<int>>(indices.size());
+    std::copy(indices.begin(), indices.end(), result->data());
+    return result;
+}
+
+// Apply positive-modulus wrapping to a native integer index vector.
+closure modulo_vector(const Box<DenseVector<int>>& values, int divisor)
+{
+    if (divisor <= 0)
+        throw myexception()<<"vector modulo: divisor must be positive";
+    auto result = new Box<DenseVector<int>>(values.size());
+    for(int i=0; i<values.size(); i++)
+    {
+        int remainder = values(i) % divisor;
+        (*result)(i) = remainder < 0 ? remainder + divisor : remainder;
+    }
+    return result;
+}
+
 // Apply an elementwise binary operation using singleton vector broadcasting.
 template <typename NativeVector, typename F>
 closure zip_vectors(const Box<NativeVector>& vector1, const Box<NativeVector>& vector2,
@@ -1207,6 +1245,32 @@ extern "C" closure builtin_function_vector_signum(OperationArgs& Args)
             return (element > 0 ? 1 : 0) - (element < 0 ? 1 : 0);
         });
     });
+}
+
+// Sort either supported native vector representation stably.
+extern "C" closure builtin_function_sortVectorNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    return visit_numeric_vector(value, [](const auto& native) {
+        return sort_vector(native);
+    });
+}
+
+// Compute stable sorted indices for either native vector representation.
+extern "C" closure builtin_function_sortIndexNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    return visit_numeric_vector(value, [](const auto& native) {
+        return sort_index(native);
+    });
+}
+
+// Wrap native integer indices into a positive cyclic extent.
+extern "C" closure builtin_function_vectorModuloNative(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    int divisor = Args.evaluate_slot_to_value(1).as_int();
+    return modulo_vector(value.as_<Box<DenseVector<int>>>(), divisor);
 }
 
 // Multiply a matrix by a vector after dispatching their shared representation.
