@@ -31,6 +31,7 @@ infixl 9 !, !?
 infixr 5 ++
 
 foreign import bpcall "Vector:boxedGenerate" generate :: Int -> (Int -> a) -> Vector a
+foreign import bpcall "Vector:boxedReplicate" replicate :: Int -> a -> Vector a
 foreign import bpcall "Vector:boxedFromList" vectorFromList :: [a] -> Vector a
 foreign import bpcall "Vector:boxedLength" vectorLength :: Vector a -> Int
 foreign import bpcall "Vector:boxedIndex" (!) :: Vector a -> Int -> a
@@ -44,10 +45,7 @@ fromList :: [a] -> Vector a
 fromList = vectorFromList
 
 singleton :: a -> Vector a
-singleton value = generate 1 (\_ -> value)
-
-replicate :: Int -> a -> Vector a
-replicate count value = generate count (\_ -> value)
+singleton = replicate 1
 
 length :: Vector a -> Int
 length = vectorLength

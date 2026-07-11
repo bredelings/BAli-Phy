@@ -120,6 +120,20 @@ extern "C" closure builtin_function_boxedGenerate(OperationArgs& Args)
     return make_boxed_vector(std::move(elements));
 }
 
+// Replicate one lazy element register directly, avoiding per-index function
+// applications while retaining sharing between every result position.
+extern "C" closure builtin_function_boxedReplicate(OperationArgs& Args)
+{
+    int length = Args.evaluate_slot_to_value(0).as_int();
+    if (length < 0)
+        throw myexception()<<"Data.Vector.replicate: negative length "<<length;
+    if (length == 0)
+        return make_boxed_vector(closure::Env_t{});
+
+    int value_reg = Args.reg_for_slot(1);
+    return make_boxed_vector(closure::Env_t(length, value_reg));
+}
+
 // Traverse a complete Haskell list spine and retain each lazy head register in
 // a boxed Vector, without recursively indexing the original list.
 extern "C" closure builtin_function_boxedFromList(OperationArgs& Args)
