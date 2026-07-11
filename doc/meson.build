@@ -10,7 +10,7 @@ if pandoc.found()
     pandoc_cmd = pandoc_cmd + ['-f', 'markdown-smart']
   endif
 
-  foreach prog : all_progs+['bp-analyze', 'bali-phy-pkg']
+  foreach prog : all_progs+['bp-analyze', 'calc-properties', 'bali-phy-pkg']
     markdown = files('man/'+prog+'.md')
     manpage = prog+'.1'
     custom_target(manpage, command:pandoc_cmd + [markdown], output:manpage, capture: true, install: true, install_dir: join_paths(get_option('mandir'),'man1'))
@@ -19,4 +19,3 @@ if pandoc.found()
 else
   warning('Program "pandoc" not found!  Cannot generate man pages')
 endif
-

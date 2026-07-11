@@ -4,7 +4,7 @@
 
 # NAME
 
-**alignment-draw** - Draw an alignment to HTML, optionally coloring residues by AU.
+**alignment-draw** - Draw an alignment and interactively inspect character properties.
 
 # SYNOPSIS
 
@@ -12,7 +12,21 @@
 
 # DESCRIPTION
 
-Draw an alignment to HTML, optionally coloring residues by AU.
+Draw an alignment to HTML, optionally coloring cells by alignment uncertainty
+(AU). With **--properties**, the output is a self-contained interactive page:
+it embeds the scientific data, styles, and JavaScript and does not require a
+network connection.
+
+The property selector supports linear, log10, and empirical-rank color scales.
+Linear and log10 scales can use the full range, a robust 2--98% range, or custom
+bounds. The legend and cell colors update together, and pointing at or focusing
+a non-gap cell shows its raw posterior mean and retained-sample count.
+
+When **--AU** and **--properties** are supplied together, the viewer can fade
+the property color toward white according to posterior alignment certainty.
+Property values use ungapped sequence-character coordinates; AU values use
+alignment-grid coordinates. The AU file must therefore have exactly the same
+number of model-character columns as the displayed alignment.
 
 # GENERAL OPTIONS:
 **-h**, **--help**
@@ -32,6 +46,12 @@ Draw an alignment to HTML, optionally coloring residues by AU.
 
 **--AU** _arg_
 : file with alignment uncertainties
+
+**--properties** _arg_
+: JSON property summary produced by **calc-properties**
+
+**--alphabet** _arg_
+: alphabet used to tokenize model characters; required with **--properties**
 
 **--show-gaps** _arg_ (=yes)
 : Show gaps
@@ -71,11 +91,26 @@ Draw an alignment to HTML, optionally coloring residues by AU.
 
 
 # EXAMPLES:
- Rainbow+contrast+fade
-AA+contrast+fade+fade+fade+fade
+
+Create a property summary and an interactive DNA alignment:
+
+```
+calc-properties run-1/C1.properties1.json run-2/C1.properties1.json \
+  --skip=1000 > P1.character-properties.json
+
+alignment-draw P1.initial.fasta --alphabet DNA \
+  --properties P1.character-properties.json > P1.initial.html
+```
+
+Add posterior alignment uncertainty to the same interactive page:
+
+```
+alignment-draw P1.initial.fasta --alphabet DNA \
+  --properties P1.character-properties.json --AU P1.initial-AU.prob \
+  > P1.initial-AU.html
+```
 
 # REPORTING BUGS:
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
-
