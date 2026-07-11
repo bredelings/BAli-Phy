@@ -60,7 +60,7 @@ namespace
 
     // Construct a boxed Vector whose elements refer to the supplied machine
     // registers without forcing the values stored in those registers.
-    closure make_boxed_vector(std::vector<int> registers)
+    closure make_boxed_vector(closure::Env_t registers)
     {
         if (registers.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
             throw myexception()<<"Boxed Vector length exceeds the Int range";
@@ -70,7 +70,7 @@ namespace
             elements[i] = Runtime::IndexVar(length - 1 - i);
 
         closure result;
-        result.Env.assign(registers.begin(), registers.end());
+        result.Env = std::move(registers);
         result.set_code(Runtime::ConstructorApp("Vector", length,
                                                 std::move(elements)));
         return result;
@@ -107,7 +107,7 @@ extern "C" closure builtin_function_boxedGenerate(OperationArgs& Args)
         throw myexception()<<"Data.Vector.generate: negative length "<<length;
 
     int function_reg = Args.reg_for_slot(1);
-    std::vector<int> elements;
+    closure::Env_t elements;
     elements.reserve(length);
     for(int i = 0; i < length; i++)
     {
@@ -125,7 +125,7 @@ extern "C" closure builtin_function_boxedGenerate(OperationArgs& Args)
 extern "C" closure builtin_function_boxedFromList(OperationArgs& Args)
 {
     int xs = Args.evaluate_slot_use(0);
-    std::vector<int> elements;
+    closure::Env_t elements;
     stacked_register_roots roots(Args);
 
     while(true)
@@ -171,10 +171,10 @@ extern "C" closure builtin_function_boxedFromListNDefault(OperationArgs& Args)
 
     // A zero-length result must not inspect the list argument at all.
     if (length == 0)
-        return make_boxed_vector({});
+        return make_boxed_vector(closure::Env_t{});
 
     int default_reg = Args.reg_for_slot(1);
-    std::vector<int> elements(length, default_reg);
+    closure::Env_t elements(length, default_reg);
     stacked_register_roots roots(Args);
     int xs = Args.evaluate_slot_use(2);
 
@@ -225,7 +225,7 @@ extern "C" closure builtin_function_boxedFromIndexedList(OperationArgs& Args)
                            <<length;
 
     int default_reg = Args.reg_for_slot(1);
-    std::vector<int> elements(length, default_reg);
+    closure::Env_t elements(length, default_reg);
     stacked_register_roots roots(Args);
     int xs = Args.evaluate_slot_use(2);
 
@@ -293,7 +293,7 @@ extern "C" closure builtin_function_boxedReplaceIndexed(OperationArgs& Args)
 {
     const closure& base = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     int length = static_cast<int>(boxed_vector_app(base).args.size());
-    std::vector<int> elements(base.Env.begin(), base.Env.end());
+    closure::Env_t elements(base.Env.begin(), base.Env.end());
 
     // The copied base registers are local C++ state, so root each one before
     // evaluating the independently supplied association list.
@@ -369,7 +369,7 @@ extern "C" closure builtin_function_boxedAccumIndexed(OperationArgs& Args)
     int combine_reg = Args.reg_for_slot(0);
     const closure& base = Args.evaluate_reg_to_closure(Args.reg_for_slot(1));
     int length = static_cast<int>(boxed_vector_app(base).args.size());
-    std::vector<int> elements(base.Env.begin(), base.Env.end());
+    closure::Env_t elements(base.Env.begin(), base.Env.end());
 
     // Root the copied base registers before association and combine evaluation
     // can grow or collect the machine heap.
@@ -484,8 +484,8 @@ extern "C" closure builtin_function_boxedSlice(OperationArgs& Args)
         throw myexception()<<"Data.Vector.slice: invalid slice ("<<start<<","<<count
                            <<") for vector length "<<length;
 
-    std::vector<int> elements(value.Env.begin() + start,
-                              value.Env.begin() + start + count);
+    closure::Env_t elements(value.Env.begin() + start,
+                            value.Env.begin() + start + count);
     return make_boxed_vector(std::move(elements));
 }
 
@@ -496,7 +496,7 @@ extern "C" closure builtin_function_boxedAppend(OperationArgs& Args)
     const closure& left = Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
     boxed_vector_app(left);
 
-    std::vector<int> elements(left.Env.begin(), left.Env.end());
+    closure::Env_t elements(left.Env.begin(), left.Env.end());
     stacked_register_roots left_roots(Args);
     for(int reg: elements)
         left_roots.add(reg);
