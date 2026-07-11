@@ -48,6 +48,8 @@ instance Traversable ((,) a) where
     traverse f (x,y) = (,) x <$> f y
 
 instance Traversable Vector.Vector where
-    -- NOTE: This compatibility fallback rebuilds through a list because the
-    -- runtime has no applicative vector builder; remove it when one exists.
-    traverse f values = Vector.fromList <$> traverse f (Vector.toList values)
+    -- NOTE: Successful results are accumulated in a list and converted once,
+    -- which is linear. Avoiding the intermediate spine requires mutable or
+    -- fused Vector construction under an arbitrary Applicative.
+    traverse f values = Vector.fromList <$> foldr cons' (pure []) values
+      where cons' value result = liftA2 (:) (f value) result
