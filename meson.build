@@ -207,6 +207,10 @@ test('calc-properties summaries',
      python,
      args: [files('tests/scripts/test_calc_properties.py')])
 
+test('bp-analyze character properties',
+     python,
+     args: [files('tests/scripts/test_bp_analyze_properties.py')])
+
 if host_machine.system() == 'windows'
   windows_runtime_dll_args = [
     files('scripts/install-windows-runtime-dlls.py'),

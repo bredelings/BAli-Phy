@@ -322,6 +322,7 @@ class MCMCRun(object):
         self.trees_file = None
         self.log_file = None
         self.alignments_files = None
+        self.character_property_files = None
         self.input_files = None
         self.command = None
         self.version = None
@@ -375,6 +376,9 @@ class MCMCRun(object):
 
     def get_alignments_files(self):
         return self.alignments_files
+
+    def get_character_property_files(self):
+        return self.character_property_files
 
     def get_log_file(self):
         return self.log_file
@@ -540,6 +544,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
         self.input_files = [ add_range(p['filename'],p['range']) for p in self.run_info['partitions']]
         self.trees_file = check_file_exists( self.get_dir() / 'C1.trees')
         self.alignments_files = self.get_alignment_files()
+        self.character_property_files = self.find_character_property_files()
 
         self.smodel_indices = [p["smodel"] for p in self.run_info["partitions"]]
         self.imodel_indices = [p["imodel"] for p in self.run_info["partitions"]]
@@ -657,6 +662,14 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
             if not path.exists(filename):
                 filename = None
             filenames.append(filename)
+        return filenames
+
+    # Return the optional category-state/property log associated with each partition.
+    def find_character_property_files(self):
+        filenames = []
+        for partition in range(1, self.n_partitions() + 1):
+            filename = self.get_dir() / f"C1.properties{partition}.json"
+            filenames.append(filename if filename.exists() else None)
         return filenames
 
     def find_header_attribute(self, attribute):
@@ -891,6 +904,7 @@ class Analysis(object):
             self.compute_srq_plots()
             self.compute_tree_MDS()
         if self.has_alignments():
+            self.summarize_character_properties()
             self.compute_initial_alignments()
             self.compute_wpd_alignments()
             self.compute_ancestral_states()
@@ -1001,6 +1015,9 @@ class Analysis(object):
     def get_alignments_files(self):
         return [run.get_alignments_files() for run in self.mcmc_runs]
 
+    def get_character_property_files(self):
+        return [run.get_character_property_files() for run in self.mcmc_runs]
+
     def get_log_files(self):
         return [run.get_log_file() for run in self.mcmc_runs]
 
@@ -1009,6 +1026,14 @@ class Analysis(object):
 
     def get_alignments_for_partition(self,p):
         return [run.get_alignments_files()[p] for run in self.mcmc_runs]
+
+    # Collect one partition's optional raw property log from every chain.
+    def get_character_properties_for_partition(self, p):
+        return [
+            run.get_character_property_files()[p]
+            if run.get_character_property_files() is not None else None
+            for run in self.mcmc_runs
+        ]
 
     def exec_show_result(self,cmd,**kwargs):
         showcmd = ' '.join([f"'{word}'" for word in cmd])
@@ -1118,11 +1143,18 @@ class Analysis(object):
             print(input_file_names.join('\n'),file=out)
 
     def initialize_results_directory(self):
+        character_property_file_names = [
+            [str(filename) if filename is not None else None for filename in files]
+            if files is not None else None
+            for files in self.get_character_property_files()
+        ]
         reuse = self.check_analysis_property("burnin", self.burnin)
         reuse = reuse and self.check_analysis_property("subsample", self.subsample)
         reuse = reuse and self.check_analysis_property("until", self.until)
         reuse = reuse and self.check_analysis_property("prune", self.prune)
+        reuse = reuse and self.check_analysis_property("alphabets", self.get_alphabets())
         reuse = reuse and self.check_analysis_property("alignment_file_names",[str(file) for file in self.get_alignments_files()])
+        reuse = reuse and self.check_analysis_property("character_property_file_names", character_property_file_names)
         reuse = reuse and self.check_analysis_property("input_files", self.get_input_files())
 
         if not reuse and self.outdir.exists():
@@ -1140,8 +1172,10 @@ class Analysis(object):
         self.write_analysis_property("subsample", self.subsample)
         self.write_analysis_property("until", self.until)
         self.write_analysis_property("prune", self.prune)
+        self.write_analysis_property("alphabets", self.get_alphabets())
         self.write_analysis_property("input_files", self.get_input_files())
         self.write_analysis_property("alignment_file_names", [str(file) for file in self.get_alignments_files()])
+        self.write_analysis_property("character_property_file_names", character_property_file_names)
 
     def determine_burnin(self):
         if self.burnin is not None:
@@ -1595,6 +1629,45 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             self.make_ordered_alignment(name)
 
 
+    # Pool per-character property means only when every chain logged a partition.
+    def summarize_character_properties(self):
+        self.character_property_summaries = [None] * self.n_partitions()
+        partition_files = [
+            self.get_character_properties_for_partition(partition)
+            for partition in range(self.n_partitions())
+        ]
+        if not any(any(filename is not None for filename in files)
+                   for files in partition_files):
+            return
+
+        print("Summarizing character properties: ", end="", flush=True)
+        for partition, filenames in enumerate(partition_files):
+            present = sum(filename is not None for filename in filenames)
+            if present == 0:
+                continue
+            if present != len(filenames):
+                print(
+                    f"\nWarning: character properties for partition {partition + 1} "
+                    "were not logged by all chains; skipping this partition."
+                )
+                continue
+
+            output = self.outdir / f"P{partition + 1}.character-properties.json"
+            self.character_property_summaries[partition] = output
+            if more_recent_than_all_of(output, filenames):
+                continue
+
+            command = ["calc-properties", *filenames]
+            if self.burnin is not None:
+                command.append(f"--skip={self.burnin}")
+            if self.until is not None:
+                command.append(f"--until={self.until}")
+            if self.subsample is not None and self.subsample != 1:
+                command.append(f"--subsample={self.subsample}")
+            self.exec_show(command, outfile=output)
+        print("done.")
+
+
     def compute_wpd_alignments(self):
         print("\nComputing consensus alignments via posterior decoding: ", end='',flush=True)
         for i in range(self.n_partitions()):
@@ -1667,6 +1740,19 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         else:
             return "DNA+contrast"
 
+    # Map tip-only partition alignments to their shared character-property summary.
+    def character_properties_for_alignment(self, alignment):
+        match = re.match(r"^P([0-9]+)\.", alignment)
+        excluded = re.match(r"^P[0-9]+\.ancestors", alignment) or re.search(
+            r"(?:^|[.-])diff(?:[.-]|$)", alignment
+        )
+        if not match or excluded:
+            return None
+        partition = int(match.group(1)) - 1
+        if partition < 0 or partition >= len(self.character_property_summaries):
+            return None
+        return self.character_property_summaries[partition]
+
     def draw_alignment(self,filename,**kwargs):
         cmd = ['alignment-draw',filename]
 
@@ -1683,6 +1769,13 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             AU = kwargs["AU"]
             if AU is not None:
                 cmd += ['--AU',AU]
+
+        properties = kwargs.get("properties")
+        alphabet = kwargs.get("alphabet")
+        if (properties is None) != (alphabet is None):
+            raise ValueError("alignment properties and alphabet must be supplied together")
+        if properties is not None:
+            cmd += ['--properties', properties, '--alphabet', alphabet]
 
         if "outfile" in kwargs:
             outfile = kwargs["outfile"]
@@ -1702,7 +1795,14 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         for (alignment,alphabet,name) in self.alignments:
             filename = self.outdir / f"{alignment}.fasta"
             color_scheme = self.color_scheme_for_alphabet(alphabet)
-            self.draw_alignment(filename, color_scheme=color_scheme, ruler=True)
+            properties = self.character_properties_for_alignment(alignment)
+            self.draw_alignment(
+                filename,
+                color_scheme=color_scheme,
+                ruler=True,
+                properties=properties,
+                alphabet=alphabet if properties is not None else None,
+            )
             print('*',end='',flush=True)
 
         # Here we draw the alignment diffs
@@ -1770,7 +1870,9 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                     continue
                 print(f"Generating AU values for '{alignment}'...", end='',flush=True)
                 AUfile = self.outdir / f"{alignment}-AU.prob"
-                if not more_recent_than_all_of(AUfile, afiles):
+                map_tree = self.outdir / 'MAP.tree'
+                au_inputs = [*afiles, afile, map_tree]
+                if not more_recent_than_all_of(AUfile, au_inputs):
                     cut_cmd=['cut-range']+afiles
                     if self.burnin is not None:
                         cut_cmd.append(f"--skip={self.burnin}")
@@ -1780,20 +1882,39 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                         cut_cmd.append(f"--subsample={self.subsample}")
                     p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
-                    chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
+                    chop_cmd=['alignment-chop-internal','--tree',map_tree]
                     p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
-                    gild_cmd = ['alignment-gild',afile,self.outdir / 'MAP.tree','--max-alignments=500']
+                    gild_cmd = [
+                        'alignment-gild',
+                        afile,
+                        map_tree,
+                        '--max-alignments=500',
+                        '--alphabet',
+                        alphabet,
+                    ]
                     self.exec_show(gild_cmd, stdin=p2.stdout, outfile=AUfile)
 
                     p1.wait()
                     p2.wait()
 
                 html_file = self.outdir / f"{alignment}-AU.html"
-                if not more_recent_than_all_of(html_file,[afile,AUfile]):
+                properties = self.character_properties_for_alignment(alignment)
+                html_inputs = [afile, AUfile]
+                if properties is not None:
+                    html_inputs.append(properties)
+                if not more_recent_than_all_of(html_file, html_inputs):
                     color_scheme=self.color_scheme_for_alphabet(alphabet)
                     color_scheme += "+fade+fade+fade+fade"
-                    self.draw_alignment(afile,ruler=True,AU=AUfile,color_scheme=color_scheme,outfile=html_file)
+                    self.draw_alignment(
+                        afile,
+                        ruler=True,
+                        AU=AUfile,
+                        color_scheme=color_scheme,
+                        outfile=html_file,
+                        properties=properties,
+                        alphabet=alphabet if properties is not None else None,
+                    )
                 print(' done.')
 
 
