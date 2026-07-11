@@ -7,7 +7,6 @@
 ## Fixes
 
 - A variety of bug fixes.
-- Fix matrix `signum` for negative elements.
 
 ## Haskell
 
@@ -24,21 +23,7 @@
 - Correctly handle nested infix declarations.
 - Disentangle disambiguation and renaming
 - Implement `Data.Map` and `Data.Set` as balanced binary trees.
-- Move the native matrix API from `Data.Matrix` to `Numeric.LinearAlgebra`;
-  custom Haskell modules must update their imports.
-- Support basic operations on native `Matrix Int` values.
-- Add element-directed matrix construction through `(><)`, with `Int` and
-  `Double` representations.
-- Add contiguous native `Vector Int` and `Vector Double` values and an
-  Eigen-backed dense `hmatrix` subset in `Numeric.LinearAlgebra`.
-- Add hmatrix-style construction, extraction, broadcasting, products,
-  reductions, block operations, and optimized matrix multiplication chains.
-- Add Double matrix solves, Cholesky and matrix exponential operations, and
-  symmetric eigenvalue, SVD, and QR decompositions.
-- Numeric code should use `Vector`; `EVector` remains the representation for
-  general structural runtime collections.
-- Matrix multiplication now uses `(<>)`; `(*)` is elementwise, matching
-  `hmatrix`.  The old native matrix names have no compatibility aliases.
+- Implement `Numerical.LinearAlgebra`
 - Parse UTF8 variable names in Haskell files.
 - UTF8:
   * `Char` is now a unicode code point.
