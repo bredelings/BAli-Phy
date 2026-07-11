@@ -46,9 +46,9 @@ multiplyChain [] = error "Numeric.LinearAlgebra.optimiseMult: internal empty mat
 multiplyChain [matrix] = matrix
 multiplyChain matrices = evaluate 0 (count-1)
   where
-    count = length matrices
     values = V.fromList matrices
-    dimensions = V.generate count (\i -> (rows (values V.! i), cols (values V.! i)))
+    count = V.length values
+    dimensions = V.map (\matrix -> (rows matrix, cols matrix)) values
     cellIndex i j = i * count + j
     costs = V.generate (count * count) costAt
 
