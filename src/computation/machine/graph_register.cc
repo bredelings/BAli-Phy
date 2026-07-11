@@ -1926,7 +1926,9 @@ int reg_heap::set_forced_reg(int r1, int r2)
 
 	assert(reg_is_changeable_or_forcing(r2));
 
-	assert(reg_has_value(r2));
+        // If we have force edges r1 ---> r2 ---> r3, then
+        //   `incremental_evaluate1` does NOT guarantee that r3 is evaluated.
+	// assert(reg_has_value(r2));
 
 	assert(not reg_is_ref_no_force(r2));
     }
