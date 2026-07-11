@@ -160,6 +160,133 @@ extern "C" closure builtin_function_boxedFromList(OperationArgs& Args)
     }
 }
 
+// Fill exactly the requested number of boxed Vector slots from a Haskell
+// list, retaining one shared default register for any unfilled suffix.
+extern "C" closure builtin_function_boxedFromListNDefault(OperationArgs& Args)
+{
+    int length = Args.evaluate_slot_to_value(0).as_int();
+    if (length < 0)
+        throw myexception()<<"Data.Vector.Internal.fromListNDefault: negative length "
+                           <<length;
+
+    // A zero-length result must not inspect the list argument at all.
+    if (length == 0)
+        return make_boxed_vector({});
+
+    int default_reg = Args.reg_for_slot(1);
+    std::vector<int> elements(length, default_reg);
+    stacked_register_roots roots(Args);
+    int xs = Args.evaluate_slot_use(2);
+
+    for(int index = 0; index < length; index++)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"Data.Vector.Internal.fromListNDefault: expected a list "
+                               <<"constructor, but got "
+                               <<xs_closure.get_code().print();
+
+        const auto& tag = list_cell->head;
+        if (tag.name() == "[]" and tag.n_args() == 0 and
+            list_cell->args.empty())
+            return make_boxed_vector(std::move(elements));
+        if (tag.name() != ":" or tag.n_args() != 2 or
+            list_cell->args.size() != 2)
+            throw myexception()<<"Data.Vector.Internal.fromListNDefault: expected ':' or "
+                               <<"'[]', but got "<<tag.print();
+
+        auto head_reg = xs_closure.reg_for_code(list_cell->args[0]);
+        auto tail_reg = xs_closure.reg_for_code(list_cell->args[1]);
+        if (not head_reg or not tail_reg)
+            throw myexception()<<"Data.Vector.Internal.fromListNDefault: malformed ':' "
+                               <<"constructor";
+
+        roots.add(*head_reg);
+        elements[index] = *head_reg;
+
+        // Do not inspect the tail after filling the final result slot.
+        if (index + 1 == length)
+            return make_boxed_vector(std::move(elements));
+
+        xs = Args.evaluate_reg_dependent_use(*tail_reg);
+    }
+
+    return make_boxed_vector(std::move(elements));
+}
+
+// Build a boxed Vector from linear (Int,value) associations, retaining lazy
+// value registers and letting each later duplicate overwrite the earlier one.
+extern "C" closure builtin_function_boxedFromIndexedList(OperationArgs& Args)
+{
+    int length = Args.evaluate_slot_to_value(0).as_int();
+    if (length < 0)
+        throw myexception()<<"Data.Vector.Internal.fromIndexedList: negative length "
+                           <<length;
+
+    int default_reg = Args.reg_for_slot(1);
+    std::vector<int> elements(length, default_reg);
+    stacked_register_roots roots(Args);
+    int xs = Args.evaluate_slot_use(2);
+
+    while(true)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"Data.Vector.Internal.fromIndexedList: expected a list "
+                               <<"constructor, but got "
+                               <<xs_closure.get_code().print();
+
+        const auto& list_tag = list_cell->head;
+        if (list_tag.name() == "[]" and list_tag.n_args() == 0 and
+            list_cell->args.empty())
+            return make_boxed_vector(std::move(elements));
+        if (list_tag.name() != ":" or list_tag.n_args() != 2 or
+            list_cell->args.size() != 2)
+            throw myexception()<<"Data.Vector.Internal.fromIndexedList: expected ':' or "
+                               <<"'[]', but got "<<list_tag.print();
+
+        auto association_reg = xs_closure.reg_for_code(list_cell->args[0]);
+        auto tail_reg = xs_closure.reg_for_code(list_cell->args[1]);
+        if (not association_reg or not tail_reg)
+            throw myexception()<<"Data.Vector.Internal.fromIndexedList: malformed ':' "
+                               <<"constructor";
+
+        // Capture the list registers before evaluating the association, since
+        // that evaluation can invalidate the xs_closure reference.
+        int association = Args.evaluate_reg_dependent_use(*association_reg);
+        const closure& association_closure = Args.memory().closure_at(association);
+        auto pair = association_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not pair or pair->head.name() != "(,)" or
+            pair->head.n_args() != 2 or pair->args.size() != 2)
+            throw myexception()<<"Data.Vector.Internal.fromIndexedList: expected an "
+                               <<"(Int,value) pair";
+
+        auto index_reg = association_closure.reg_for_code(pair->args[0]);
+        auto value_reg = association_closure.reg_for_code(pair->args[1]);
+        if (not index_reg or not value_reg)
+            throw myexception()<<"Data.Vector.Internal.fromIndexedList: malformed pair "
+                               <<"constructor";
+
+        // Root the lazy value before evaluating the index; evaluating it here
+        // would make array construction unnecessarily strict in elements.
+        roots.add(*value_reg);
+        int evaluated_index = Args.evaluate_reg_dependent_use(*index_reg);
+        const auto& index_value = Args.memory().closure_at(evaluated_index).get_code();
+        if (not index_value.is_int())
+            throw myexception()<<"Data.Vector.Internal.fromIndexedList: association index "
+                               <<"is not an Int";
+        int index = index_value.as_int();
+        if (index < 0 or index >= length)
+            throw myexception()<<"Data.Vector.Internal.fromIndexedList: index "<<index
+                               <<" is outside vector length "<<length;
+
+        elements[index] = *value_reg;
+        xs = Args.evaluate_reg_dependent_use(*tail_reg);
+    }
+}
+
 // Return the number of lazy element registers stored by a boxed Vector.
 extern "C" closure builtin_function_boxedLength(OperationArgs& Args)
 {

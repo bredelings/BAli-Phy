@@ -557,6 +557,24 @@ namespace
         return Hs::apply(wired_var_exp("Compiler.Num.*"), {x, y});
     }
 
+    // Ix offsets and sizes are widened before arithmetic to avoid native Int overflow.
+    Hs::LExp int_to_integer_exp(const Hs::LExp& x)
+    {
+        return Hs::apply(wired_var_exp("Compiler.Num.intToInteger"), {x});
+    }
+
+    // Use the library guard so hand-written and derived Ix instances agree.
+    Hs::LExp checked_ix_index_exp(const Hs::LExp& member, const Hs::LExp& offset)
+    {
+        return Hs::apply(wired_var_exp("Data.Ix.Internal.checkedIndex"), {member, offset});
+    }
+
+    // The guard is lazy in size, so an empty product does no size arithmetic.
+    Hs::LExp checked_ix_range_size_exp(const Hs::LExp& non_empty, const Hs::LExp& size)
+    {
+        return Hs::apply(wired_var_exp("Data.Ix.Internal.checkedRangeSize"), {non_empty, size});
+    }
+
     Hs::LExp ordering_exp(const string& name)
     {
         return wired_con_exp(name);
@@ -777,18 +795,22 @@ namespace
         range_matches.push_back(unary_method_rule(bounds_pat, Hs::apply(wired_var_exp(list_filter_name), {in_range_bounds, all_constructors})));
 
         Hs::Matches index_matches;
+        auto index_member = ix_in_range_exp(tc, data_info, "lo$", "hi$", "x$");
+        auto exact_index = subtract_exp(int_to_integer_exp(ix_tag_exp(tc, data_info, "x$")),
+                                        int_to_integer_exp(ix_tag_exp(tc, data_info, "lo$")));
         index_matches.push_back(binary_method_rule(bounds_pat, var_pat("x$"),
-                                                   subtract_exp(ix_tag_exp(tc, data_info, "x$"), ix_tag_exp(tc, data_info, "lo$"))));
+                                                   checked_ix_index_exp(index_member, exact_index)));
 
         Hs::Matches in_range_matches;
         in_range_matches.push_back(binary_method_rule(bounds_pat, var_pat("x$"), ix_in_range_exp(tc, data_info, "lo$", "hi$", "x$")));
 
         Hs::Matches range_size_matches;
-        auto size = add_exp(subtract_exp(ix_tag_exp(tc, data_info, "hi$"), ix_tag_exp(tc, data_info, "lo$")), int_exp(1));
+        auto non_empty = ix_in_range_exp(tc, data_info, "lo$", "hi$", "hi$");
+        auto exact_size = add_exp(subtract_exp(int_to_integer_exp(ix_tag_exp(tc, data_info, "hi$")),
+                                               int_to_integer_exp(ix_tag_exp(tc, data_info, "lo$"))),
+                                  int_to_integer_exp(int_exp(1)));
         range_size_matches.push_back(unary_method_rule(bounds_pat,
-                                                       if_exp(greater_than_exp(ix_tag_exp(tc, data_info, "lo$"), ix_tag_exp(tc, data_info, "hi$")),
-                                                              int_exp(0),
-                                                              size)));
+                                                       checked_ix_range_size_exp(non_empty, exact_size)));
 
         Hs::Decls methods;
         methods.push_back(derived_method_decl(deriving_loc, ix_range_name, range_matches));
@@ -818,6 +840,13 @@ namespace
     Hs::LExp ix_field_in_range_exp(int i)
     {
         return Hs::apply(wired_var_exp(ix_in_range_name), {ix_field_bounds_exp(i), local_var_exp("x$" + std::to_string(i))});
+    }
+
+    // Product rangeSize tests every upper field before evaluating any sizes.
+    Hs::LExp ix_field_upper_in_range_exp(int i)
+    {
+        return Hs::apply(wired_var_exp(ix_in_range_name),
+                         {ix_field_bounds_exp(i), local_var_exp("hi$" + std::to_string(i))});
     }
 
     Hs::LExp ix_field_range_size_exp(int i)
@@ -852,14 +881,15 @@ namespace
     {
         assert(arity > 0);
 
-        auto result = ix_field_index_exp(arity - 1);
+        auto result = int_to_integer_exp(ix_field_index_exp(arity - 1));
         vector<Hs::LExp> suffix_sizes;
-        suffix_sizes.push_back(ix_field_range_size_exp(arity - 1));
+        suffix_sizes.push_back(int_to_integer_exp(ix_field_range_size_exp(arity - 1)));
 
         for(int i=arity - 2; i>=0; i--)
         {
-            result = add_exp(multiply_exp(ix_field_index_exp(i), product_exp(suffix_sizes)), result);
-            suffix_sizes.insert(suffix_sizes.begin(), ix_field_range_size_exp(i));
+            auto exact_index = int_to_integer_exp(ix_field_index_exp(i));
+            result = add_exp(multiply_exp(exact_index, product_exp(suffix_sizes)), result);
+            suffix_sizes.insert(suffix_sizes.begin(), int_to_integer_exp(ix_field_range_size_exp(i)));
         }
 
         return result;
@@ -876,6 +906,7 @@ namespace
         vector<Hs::LExp> value_fields;
         vector<Hs::LQual> range_quals;
         vector<Hs::LExp> in_range_fields;
+        vector<Hs::LExp> upper_in_range_fields;
         vector<Hs::LExp> range_size_fields;
         for(int i=0; i<arity; i++)
         {
@@ -883,7 +914,8 @@ namespace
             value_fields.push_back(local_var_exp(field_var));
             range_quals.push_back(pat_qual(var_pat(field_var), ix_field_range_exp(i)));
             in_range_fields.push_back(ix_field_in_range_exp(i));
-            range_size_fields.push_back(ix_field_range_size_exp(i));
+            upper_in_range_fields.push_back(ix_field_upper_in_range_exp(i));
+            range_size_fields.push_back(int_to_integer_exp(ix_field_range_size_exp(i)));
         }
 
         Hs::Matches range_matches;
@@ -891,13 +923,17 @@ namespace
         range_matches.push_back(unary_method_rule(bounds_pat, range_body));
 
         Hs::Matches index_matches;
-        index_matches.push_back(binary_method_rule(bounds_pat, value_pat, ix_product_index_exp(arity)));
+        index_matches.push_back(binary_method_rule(bounds_pat, value_pat,
+                                                   checked_ix_index_exp(and_all_exp(in_range_fields),
+                                                                        ix_product_index_exp(arity))));
 
         Hs::Matches in_range_matches;
         in_range_matches.push_back(binary_method_rule(bounds_pat, value_pat, and_all_exp(in_range_fields)));
 
         Hs::Matches range_size_matches;
-        range_size_matches.push_back(unary_method_rule(bounds_pat, product_exp(range_size_fields)));
+        range_size_matches.push_back(unary_method_rule(bounds_pat,
+                                                       checked_ix_range_size_exp(and_all_exp(upper_in_range_fields),
+                                                                                 product_exp(range_size_fields))));
 
         Hs::Decls methods;
         methods.push_back(derived_method_decl(deriving_loc, ix_range_name, range_matches));
