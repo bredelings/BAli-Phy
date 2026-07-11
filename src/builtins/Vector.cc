@@ -287,6 +287,169 @@ extern "C" closure builtin_function_boxedFromIndexedList(OperationArgs& Args)
     }
 }
 
+// Copy a boxed Vector once and replace indexed slots from a complete Haskell
+// association list, retaining each replacement value as an unevaluated reg.
+extern "C" closure builtin_function_boxedReplaceIndexed(OperationArgs& Args)
+{
+    closure base = Args.evaluate_slot_to_closure(0);
+    int length = static_cast<int>(boxed_vector_app(base).args.size());
+    std::vector<int> elements(base.Env.begin(), base.Env.end());
+
+    // The evaluated base closure is local C++ state, so root every copied reg
+    // before evaluating the independently supplied association list.
+    stacked_register_roots roots(Args);
+    for(int reg: elements)
+        roots.add(reg);
+
+    int xs = Args.evaluate_slot_use(1);
+    while(true)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"Data.Vector.Internal.replaceIndexed: expected a list "
+                               <<"constructor, but got "
+                               <<xs_closure.get_code().print();
+
+        const auto& list_tag = list_cell->head;
+        if (list_tag.name() == "[]" and list_tag.n_args() == 0 and
+            list_cell->args.empty())
+            return make_boxed_vector(std::move(elements));
+        if (list_tag.name() != ":" or list_tag.n_args() != 2 or
+            list_cell->args.size() != 2)
+            throw myexception()<<"Data.Vector.Internal.replaceIndexed: expected ':' or "
+                               <<"'[]', but got "<<list_tag.print();
+
+        auto association_reg = xs_closure.reg_for_code(list_cell->args[0]);
+        auto tail_reg = xs_closure.reg_for_code(list_cell->args[1]);
+        if (not association_reg or not tail_reg)
+            throw myexception()<<"Data.Vector.Internal.replaceIndexed: malformed ':' "
+                               <<"constructor";
+
+        // Capture the list registers before evaluating the association, since
+        // that evaluation can invalidate the xs_closure reference.  Keep the
+        // tail rooted through index evaluation before following it.
+        roots.add(*tail_reg);
+        int association = Args.evaluate_reg_dependent_use(*association_reg);
+        const closure& association_closure = Args.memory().closure_at(association);
+        auto pair = association_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not pair or pair->head.name() != "(,)" or
+            pair->head.n_args() != 2 or pair->args.size() != 2)
+            throw myexception()<<"Data.Vector.Internal.replaceIndexed: expected an "
+                               <<"(Int,value) pair";
+
+        auto index_reg = association_closure.reg_for_code(pair->args[0]);
+        auto value_reg = association_closure.reg_for_code(pair->args[1]);
+        if (not index_reg or not value_reg)
+            throw myexception()<<"Data.Vector.Internal.replaceIndexed: malformed pair "
+                               <<"constructor";
+
+        // Keep the lazy replacement alive while evaluating its index and all
+        // later associations, without evaluating the replacement itself.
+        roots.add(*value_reg);
+        int evaluated_index = Args.evaluate_reg_dependent_use(*index_reg);
+        const auto& index_value = Args.memory().closure_at(evaluated_index).get_code();
+        if (not index_value.is_int())
+            throw myexception()<<"Data.Vector.Internal.replaceIndexed: association index "
+                               <<"is not an Int";
+        int index = index_value.as_int();
+        if (index < 0 or index >= length)
+            throw myexception()<<"Data.Vector.Internal.replaceIndexed: index "<<index
+                               <<" is outside vector length "<<length;
+
+        elements[index] = *value_reg;
+        xs = Args.evaluate_reg_dependent_use(*tail_reg);
+    }
+}
+
+// Copy a boxed Vector and accumulate indexed associations in source order,
+// forcing every combine result before it can feed a later duplicate index.
+extern "C" closure builtin_function_boxedAccumIndexed(OperationArgs& Args)
+{
+    int combine_reg = Args.reg_for_slot(0);
+    closure base = Args.evaluate_slot_to_closure(1);
+    int length = static_cast<int>(boxed_vector_app(base).args.size());
+    std::vector<int> elements(base.Env.begin(), base.Env.end());
+
+    // Root the copied base independently of its evaluated local closure while
+    // association and combine evaluation can grow or collect the machine heap.
+    stacked_register_roots roots(Args);
+    for(int reg: elements)
+        roots.add(reg);
+
+    int xs = Args.evaluate_slot_use(2);
+    while(true)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"Data.Vector.Internal.accumIndexed: expected a list "
+                               <<"constructor, but got "
+                               <<xs_closure.get_code().print();
+
+        const auto& list_tag = list_cell->head;
+        if (list_tag.name() == "[]" and list_tag.n_args() == 0 and
+            list_cell->args.empty())
+            return make_boxed_vector(std::move(elements));
+        if (list_tag.name() != ":" or list_tag.n_args() != 2 or
+            list_cell->args.size() != 2)
+            throw myexception()<<"Data.Vector.Internal.accumIndexed: expected ':' or "
+                               <<"'[]', but got "<<list_tag.print();
+
+        auto association_reg = xs_closure.reg_for_code(list_cell->args[0]);
+        auto tail_reg = xs_closure.reg_for_code(list_cell->args[1]);
+        if (not association_reg or not tail_reg)
+            throw myexception()<<"Data.Vector.Internal.accumIndexed: malformed ':' "
+                               <<"constructor";
+
+        // Capture the list registers before evaluating the association, since
+        // that evaluation can invalidate the xs_closure reference.  Keep the
+        // tail rooted through index and combine evaluation before following it.
+        roots.add(*tail_reg);
+        int association = Args.evaluate_reg_dependent_use(*association_reg);
+        const closure& association_closure = Args.memory().closure_at(association);
+        auto pair = association_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not pair or pair->head.name() != "(,)" or
+            pair->head.n_args() != 2 or pair->args.size() != 2)
+            throw myexception()<<"Data.Vector.Internal.accumIndexed: expected an "
+                               <<"(Int,value) pair";
+
+        auto index_reg = association_closure.reg_for_code(pair->args[0]);
+        auto value_reg = association_closure.reg_for_code(pair->args[1]);
+        if (not index_reg or not value_reg)
+            throw myexception()<<"Data.Vector.Internal.accumIndexed: malformed pair "
+                               <<"constructor";
+
+        // Root the new value without forcing it before evaluating the index.
+        // The combine function determines how much of old and new it needs.
+        roots.add(*value_reg);
+        int evaluated_index = Args.evaluate_reg_dependent_use(*index_reg);
+        const auto& index_value = Args.memory().closure_at(evaluated_index).get_code();
+        if (not index_value.is_int())
+            throw myexception()<<"Data.Vector.Internal.accumIndexed: association index "
+                               <<"is not an Int";
+        int index = index_value.as_int();
+        if (index < 0 or index >= length)
+            throw myexception()<<"Data.Vector.Internal.accumIndexed: index "<<index
+                               <<" is outside vector length "<<length;
+
+        int old_reg = elements[index];
+        // Args.allocate keeps the application as a temporary machine root for
+        // the remainder of this native operation.
+        int apply_reg = Args.allocate(
+            closure(Runtime::apply(Runtime::IndexVar(2),
+                                   {Runtime::IndexVar(1), Runtime::IndexVar(0)}),
+                    {combine_reg, old_reg, *value_reg}));
+
+        // Keep the application register, rather than only the evaluator's
+        // result register, so its creator step stays reachable.  Forcing now
+        // gives accum and accumArray their per-association WHNF strictness.
+        Args.evaluate_reg_force(apply_reg);
+        elements[index] = apply_reg;
+        xs = Args.evaluate_reg_dependent_use(*tail_reg);
+    }
+}
+
 // Return the number of lazy element registers stored by a boxed Vector.
 extern "C" closure builtin_function_boxedLength(OperationArgs& Args)
 {
