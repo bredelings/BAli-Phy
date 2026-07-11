@@ -96,12 +96,12 @@ instance Foldable Tree where
 -- PROBLEM: we need to access the whole node in order to count the number of leaves, branches, etc.
 
 node_out_edges :: Node a -> V.Vector (Edge a)
-node_out_edges (Left (Start1 _ node)) = V.fromList [Edge node FromRoot]
+node_out_edges (Left (Start1 _ node)) = V.singleton (Edge node FromRoot)
 node_out_edges (Left (Start2 _ node1 node2)) = V.fromList [Edge node1 FromRoot, Edge node2 FromRoot]
 node_out_edges (Right n1@(Next _ (Birth n2 n3) _ _)) = V.fromList [Edge n1 ToRoot, Edge n2 FromRoot, Edge n3 FromRoot]
 node_out_edges (Right n1@(Next _ (Sample n2) _ _)) = V.fromList [Edge n1 ToRoot, Edge n2 FromRoot]
-node_out_edges (Right n@(Next _ Finish _ _)) = V.fromList [Edge n ToRoot]
-node_out_edges (Right n@(Next _ Death _ _)) = V.fromList [Edge n ToRoot]
+node_out_edges (Right n@(Next _ Finish _ _)) = V.singleton (Edge n ToRoot)
+node_out_edges (Right n@(Next _ Death _ _)) = V.singleton (Edge n ToRoot)
 
 edgesOutOfNode = node_out_edges
 
