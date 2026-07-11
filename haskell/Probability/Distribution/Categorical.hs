@@ -73,6 +73,9 @@ categorical_on pairs = CategoricalOn (V.fromList xs) (V.fromList ps)
     where xs = map fst pairs
           ps = map snd pairs
 
-uniformCategoricalOn xs = CategoricalOn (V.fromList xs) (V.fromList ps)
-    where ps = replicate n (1/fromIntegral n)
-          n = length xs
+-- Materialize the outcomes once, then construct their equal probabilities
+-- directly in a boxed vector without an intermediate list.
+uniformCategoricalOn xs = CategoricalOn values probabilities
+    where values = V.fromList xs
+          count = V.length values
+          probabilities = V.replicate count (1 / fromIntegral count)
