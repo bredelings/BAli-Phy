@@ -327,7 +327,7 @@ linspace count (start, end) = fromList
   where step = (end - start) / fromIntegral (count - 1)
 
 foreign import bpcall "Matrix:subVectorNative" subVectorNative :: Int -> Int -> NativeVector a -> NativeVector a
-foreign import bpcall "Matrix:appendVectorsNative" appendVectorsNative :: NativeVector a -> NativeVector a -> NativeVector a
+foreign import bpcall "Matrix:joinVectorsNative" joinVectorsNative :: Int -> [NativeVector a] -> NativeVector a
 
 subVector :: Element a => Int -> Int -> Vector a -> Vector a
 subVector start count values = Vector count
@@ -335,19 +335,19 @@ subVector start count values = Vector count
 
 -- Extract consecutive vector segments, leaving any unrequested suffix unused.
 takesV :: Element a => [Int] -> Vector a -> [Vector a]
-takesV [] _ = []
-takesV (count:counts) values =
-    subVector 0 count values :
-        takesV counts (subVector count (size values - count) values)
+takesV counts values = segments 0 counts
+  where
+    segments _ [] = []
+    segments offset (count:remaining) =
+        subVector offset count values : segments (offset + count) remaining
 
 -- Join vectors while recording their combined length independently of the
 -- appended native payload.
 vjoin :: Element a => [Vector a] -> Vector a
 vjoin [] = fromList []
-vjoin (value:values) = append value (vjoin values)
-  where
-    append left right = Vector (vectorSize left + vectorSize right)
-        (appendVectorsNative (nativeVector left) (nativeVector right))
+vjoin values = Vector total
+    (joinVectorsNative total (map nativeVector values))
+  where total = sum (map vectorSize values)
 
 foreign import bpcall "Matrix:subMatrixNative" subMatrixNative :: Int -> Int -> Int -> Int -> NativeMatrix a -> NativeMatrix a
 foreign import bpcall "Matrix:gatherMatrixNative" gatherMatrixNative :: NativeVector Int -> NativeVector Int -> NativeMatrix a -> NativeMatrix a

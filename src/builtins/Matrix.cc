@@ -465,14 +465,69 @@ closure gather_matrix(const Box<NativeMatrix>& matrix,
     return result;
 }
 
-// Concatenate vectors into one native allocation.
-template <typename NativeVector>
-closure append_vectors(const Box<NativeVector>& left, const Box<NativeVector>& right)
+// Continue a dependent list traversal and copy every same-representation
+// vector into one pre-sized native allocation.
+template <typename T>
+closure join_vectors(OperationArgs& Args, int total, int tail,
+                     const Box<DenseVector<T>>& first)
 {
-    auto result = new Box<NativeVector>(left.size() + right.size());
-    result->head(left.size()) = left;
-    result->tail(right.size()) = right;
+    auto result = new Box<DenseVector<T>>(total);
+    int offset = first.size();
+    if (offset > total)
+        throw myexception()<<"vjoin: vector lengths exceed declared total";
+    result->head(offset) = first;
+
+    int xs = tail;
+    while(true)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"vjoin: expected a vector list";
+        if (list_cell->head.name() == "[]" and list_cell->head.n_args() == 0)
+            break;
+        if (list_cell->head.name() != ":" or list_cell->head.n_args() != 2)
+            throw myexception()<<"vjoin: expected ':' or '[]'";
+
+        int element = xs_closure.reg_for_constructor_slot(0);
+        int next_tail = xs_closure.reg_for_constructor_slot(1);
+        int value = Args.evaluate_reg_dependent_use(element);
+        const auto& expression = Args.memory().closure_at(value).get_code();
+        if (not expression.is_a<Box<DenseVector<T>>>() )
+            throw myexception()<<"vjoin: vectors have different native representations";
+        const auto& vector = expression.as_<Box<DenseVector<T>>>();
+        if (offset + vector.size() > total)
+            throw myexception()<<"vjoin: vector lengths exceed declared total";
+        result->segment(offset, vector.size()) = vector;
+        offset += vector.size();
+        xs = Args.evaluate_reg_dependent_use(next_tail);
+    }
+    if (offset != total)
+        throw myexception()<<"vjoin: vector lengths do not match declared total";
     return result;
+}
+
+// Dispatch a nonempty vector-list join from its first native representation.
+closure join_vectors(OperationArgs& Args)
+{
+    int total = Args.evaluate_slot_to_value(0).as_int();
+    int xs = Args.evaluate_slot_use(1);
+    const closure& xs_closure = Args.memory().closure_at(xs);
+    auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+    if (not list_cell or list_cell->head.name() != ":" or list_cell->head.n_args() != 2)
+        throw myexception()<<"vjoin: expected a nonempty vector list";
+    int element = xs_closure.reg_for_constructor_slot(0);
+    int tail = xs_closure.reg_for_constructor_slot(1);
+    int value = Args.evaluate_reg_dependent_use(element);
+    const auto& expression = Args.memory().closure_at(value).get_code();
+    tail = Args.evaluate_reg_dependent_use(tail);
+    if (expression.is_a<Box<DenseVector<double>>>() )
+        return join_vectors<double>(Args, total, tail,
+            expression.as_<Box<DenseVector<double>>>());
+    if (expression.is_a<Box<DenseVector<int>>>() )
+        return join_vectors<int>(Args, total, tail,
+            expression.as_<Box<DenseVector<int>>>());
+    throw myexception()<<"vjoin: unsupported native vector representation";
 }
 
 // Join matrices along one axis, broadcasting a singleton perpendicular
@@ -956,15 +1011,10 @@ extern "C" closure builtin_function_subVectorNative(OperationArgs& Args)
     });
 }
 
-// Append vectors after checking that their native element representations agree.
-extern "C" closure builtin_function_appendVectorsNative(OperationArgs& Args)
+// Join a nonempty Haskell list of native vectors into one allocation.
+extern "C" closure builtin_function_joinVectorsNative(OperationArgs& Args)
 {
-    auto left = Args.evaluate_slot_to_value(0);
-    auto right = Args.evaluate_slot_to_value(1);
-    return visit_same_numeric_vector_pair(left, right, [](const auto& native_left,
-                                                          const auto& native_right) {
-        return append_vectors(native_left, native_right);
-    });
+    return join_vectors(Args);
 }
 
 // Extract a rectangular Eigen block from either matrix representation.
