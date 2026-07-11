@@ -131,6 +131,8 @@ class AlignmentDrawPropertyTests(unittest.TestCase):
         self.assertEqual(viewer["format"], "bali-phy-alignment-viewer")
         self.assertEqual(viewer["version"], 1)
         self.assertEqual(viewer["sequences"], ["alpha", "beta"])
+        self.assertIn(".alignment-viewer-toolbar", result.stdout)
+        self.assertIn("BaliPhyAlignmentViewer", result.stdout)
         self.assertEqual(properties["retained_samples"], 4)
         self.assertEqual(
             properties["properties"]["rate"]["mean"]["alpha"],

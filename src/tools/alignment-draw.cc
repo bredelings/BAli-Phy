@@ -35,6 +35,7 @@
 #include "util/io.H"
 #include "util/string/convert.H"
 #include "colors.H"
+#include "alignment-draw-assets.hh"
 
 #include <boost/program_options.hpp>
 
@@ -1349,7 +1350,12 @@ BODY {\n\
 .legend {\n\
 //  width: 100%;\n\
 //  text-align: center;\n\
-}\n\
+}\n";
+
+	    if (character_properties)
+		cout<<alignment_draw_stylesheet;
+
+	    cout<<"\
     </style>\n\
   </head>\n\
   <body>\n\n";
@@ -1452,6 +1458,8 @@ BODY {\n\
 		cout<<"</table>"<<endl;
 		pos += width;
 	    }
+	    if (character_properties)
+		cout<<"<script>\n"<<alignment_draw_javascript<<"\n</script>\n";
 	    cout<<"</body>\n</html>\n";
 	}
     }

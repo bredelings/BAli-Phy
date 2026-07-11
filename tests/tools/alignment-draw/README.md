@@ -12,4 +12,6 @@ python3 tests/tools/alignment-draw/run-tests.py \
 
 The tests intentionally do not depend on a browser. They parse the generated
 HTML to check grid-to-character coordinates, centralized property and AU data,
-safe JSON embedding, codon-width handling, and input validation.
+safe JSON embedding, self-contained viewer assets, codon-width handling, and
+input validation. Browser-independent scale tests exercise linear, logarithmic,
+rank, clipping, and AU color composition behavior.

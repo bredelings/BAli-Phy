@@ -203,7 +203,18 @@ prefix = 'bali-'
 
 prefixed_tools = ['subsample']
 
-extra_sources = {'alignment-draw': ['tools/colors.cc'], 'trees-bootstrap': ['tools/bootstrap.cc']}
+alignment_draw_assets = custom_target(
+  'alignment-draw-assets',
+  input: ['tools/alignment-draw.js', 'tools/alignment-draw.css'],
+  output: 'alignment-draw-assets.hh',
+  command: [python, files('../scripts/embed-text.py'), '@OUTPUT@',
+            'alignment_draw_javascript', '@INPUT0@',
+            'alignment_draw_stylesheet', '@INPUT1@'])
+
+extra_sources = {
+  'alignment-draw': ['tools/colors.cc', alignment_draw_assets],
+  'trees-bootstrap': ['tools/bootstrap.cc'],
+}
 
 extra_deps = {
   'draw-tree': [cairo],
@@ -262,6 +273,14 @@ foreach tool: tools + prefixed_tools
          python,
          args: [alignment_draw_test_script] + python_tool_wrapper_args + [tool_exe],
          depends: tool_exe)
+
+    node = find_program('node', required: false)
+    if node.found()
+      alignment_draw_scale_test = files('../tests/tools/alignment-draw/test-scales.js')
+      test('alignment-draw scale controls',
+           node,
+           args: [alignment_draw_scale_test])
+    endif
   endif
 
   if tool == 'joint-indels'
