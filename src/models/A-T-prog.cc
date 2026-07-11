@@ -654,8 +654,7 @@ compute_logged_quantities(Hs::Stmts& model,
             Hs::Exp cat_state_fields = HsG::Apply(Hs::Var("<>"),
                 {HsG::Apply(Hs::Var(".="), {cat_states_key, cat_states}),
                  HsG::Apply(Hs::Var(".="), {properties_key, smodel_properties})});
-            Hs::Exp cat_state_encoding = HsG::Apply(Hs::Var("J.pairs"), {cat_state_fields});
-            category_state_loggers.push_back({i, cat_state_encoding, Hs::Var("logCatStates"+part_suffix)});
+            category_state_loggers.push_back({i, cat_state_fields, Hs::Var("logCatStates"+part_suffix)});
 	}
         
 	Hs::Var substs("substs"+part_suffix);

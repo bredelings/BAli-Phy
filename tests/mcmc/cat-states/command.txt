@@ -1,2 +1,1 @@
-5d-muscle.fasta --set write-properties=true --iter=20
-
+5d-muscle.fasta --set write-properties=true --smodel 'tn93 +> Rates.gamma(n=2)' --iter=20

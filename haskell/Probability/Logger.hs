@@ -89,11 +89,13 @@ writeAlignment file alignment iter _ _ _  = do hPutStrLn file $ "iterations = " 
 -- We need to be operating OUTSIDE the context in order to get the prior, likelihood, and posterior.
 
 
-writeJSONe :: Handle -> Encoding -> LoggerAction
-writeJSONe file encoding iter _ _ _ = do T.hPutStrLn file $ J.fromEncoding encoding
-                                         hFlush file
+writeJSONe :: Handle -> Series -> LoggerAction
+writeJSONe file fields iter _ _ _ = do T.hPutStrLn file $ J.fromEncoding encoding
+                                       hFlush file
+    where encoding = pairs ("iter" .= iter <> fields)
 
-writeJSON file ljson iter prior likelihood posterior = writeJSONe file encoding iter prior likelihood posterior
+writeJSON file ljson iter prior likelihood posterior = do T.hPutStrLn file $ J.fromEncoding encoding
+                                                          hFlush file
     where encoding = pairs (
                             "iter" .= iter <>
                             "prior" .= prior <>
