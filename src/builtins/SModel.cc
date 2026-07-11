@@ -1437,25 +1437,6 @@ extern "C" closure builtin_function_weightedFrequencyMatrixRaw(OperationArgs& Ar
     return WF;
 }
 
-extern "C" closure builtin_function_frequencyMatrixRaw(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& F = arg0.as_<R::RVector>();
-    // cache matrix of frequencies
-
-    const int n_models = F.size();
-    const int n_states = F[0].as_<Box<DenseVector<double>>>().size();
-
-    auto *FF = new Box<DenseMatrix<double>>(n_models, n_states);
-
-    for(int m=0;m<n_models;m++) {
-	const auto& f = F[m].as_<Box<DenseVector<double>>>();
-	for(int s=0;s<n_states;s++) 
-	    (*FF)(m,s) = f[s];
-    }
-    return FF;
-}
-
 extern "C" closure builtin_function_flow(OperationArgs& Args)
 {
     // Equilibrium frequencies
