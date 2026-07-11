@@ -132,6 +132,11 @@ class Element e => Container c e where
 foreign import ecall "Matrix:vectorAtIndex" vectorAtIndexNative :: NativeVector a -> Int -> a
 foreign import ecall "Matrix:vectorEqual" vectorEqualNative :: NativeVector a -> NativeVector a -> Bool
 foreign import ecall "Matrix:vectorSumElements" vectorSumElementsNative :: NativeVector a -> a
+foreign import ecall "Matrix:vectorProductElements" vectorProductElementsNative :: NativeVector a -> a
+foreign import ecall "Matrix:vectorMinElement" vectorMinElementNative :: NativeVector a -> a
+foreign import ecall "Matrix:vectorMaxElement" vectorMaxElementNative :: NativeVector a -> a
+foreign import ecall "Matrix:vectorMinIndex" vectorMinIndexNative :: NativeVector a -> Int
+foreign import ecall "Matrix:vectorMaxIndex" vectorMaxIndexNative :: NativeVector a -> Int
 foreign import bpcall "Matrix:vectorKonstNative" vectorKonstNative :: a -> Int -> NativeVector a
 foreign import bpcall "Matrix:matrixKonstNative" matrixKonstNative :: a -> Int -> Int -> NativeMatrix a
 
@@ -145,19 +150,20 @@ instance Element a => Container Vector a where
     scalar value = Vector 1 (vectorKonstNative value 1)
     sumElements = vectorSumElementsNative . nativeVector
     cmap function values = fromList (map function (toList values))
-    prodElements = product . toList
-    minElement = minimum . toList
-    maxElement = maximum . toList
-    -- Return the first vector position attaining each extremum.
-    minIndex values = let target = minElement values
-                      in head [i | i <- [0..size values-1], atIndex values i == target]
-    -- Return the first vector position attaining the maximum.
-    maxIndex values = let target = maxElement values
-                      in head [i | i <- [0..size values-1], atIndex values i == target]
+    prodElements = vectorProductElementsNative . nativeVector
+    minElement = vectorMinElementNative . nativeVector
+    maxElement = vectorMaxElementNative . nativeVector
+    minIndex = vectorMinIndexNative . nativeVector
+    maxIndex = vectorMaxIndexNative . nativeVector
     find predicate values = [i | i <- [0..size values-1], predicate (atIndex values i)]
 
 foreign import ecall "Matrix:matrixAtIndex" matrixAtIndexNative :: Int -> Int -> NativeMatrix a -> a
 foreign import ecall "Matrix:matrixSumElements" matrixSumElementsNative :: NativeMatrix a -> a
+foreign import ecall "Matrix:matrixProductElements" matrixProductElementsNative :: NativeMatrix a -> a
+foreign import ecall "Matrix:matrixMinElement" matrixMinElementNative :: NativeMatrix a -> a
+foreign import ecall "Matrix:matrixMaxElement" matrixMaxElementNative :: NativeMatrix a -> a
+foreign import ecall "Matrix:matrixMinIndex" matrixMinIndexNative :: NativeMatrix a -> Int
+foreign import ecall "Matrix:matrixMaxIndex" matrixMaxIndexNative :: NativeMatrix a -> Int
 
 instance Element a => Container Matrix a where
     size matrix = (rows matrix, cols matrix)
@@ -168,17 +174,11 @@ instance Element a => Container Matrix a where
     sumElements = matrixSumElementsNative . nativeMatrix
     cmap function matrix = (rows matrix >< cols matrix)
         (map function (toList (flatten matrix)))
-    prodElements = product . toList . flatten
-    minElement = minimum . toList . flatten
-    maxElement = maximum . toList . flatten
-    -- Return the first row-major matrix position attaining each extremum.
-    minIndex matrix = let target = minElement matrix
-                      in head [(i,j) | i <- [0..rows matrix-1], j <- [0..cols matrix-1],
-                                      atIndex matrix (i,j) == target]
-    -- Return the first row-major matrix position attaining the maximum.
-    maxIndex matrix = let target = maxElement matrix
-                      in head [(i,j) | i <- [0..rows matrix-1], j <- [0..cols matrix-1],
-                                      atIndex matrix (i,j) == target]
+    prodElements = matrixProductElementsNative . nativeMatrix
+    minElement = matrixMinElementNative . nativeMatrix
+    maxElement = matrixMaxElementNative . nativeMatrix
+    minIndex matrix = matrixMinIndexNative (nativeMatrix matrix) `divMod` cols matrix
+    maxIndex matrix = matrixMaxIndexNative (nativeMatrix matrix) `divMod` cols matrix
     find predicate matrix =
         [(i,j) | i <- [0..rows matrix-1], j <- [0..cols matrix-1],
                  predicate (atIndex matrix (i,j))]

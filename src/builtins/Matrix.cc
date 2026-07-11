@@ -18,6 +18,7 @@
 #include <Eigen/LU>
 #include <Eigen/QR>
 #include <Eigen/SVD>
+#include <functional>
 #include <limits>
 #include <type_traits>
 
@@ -60,6 +61,32 @@ decltype(auto) visit_numeric_vector(const R::Exp& value, F&& operation)
         return operation(value.as_<Box<DenseVector<int>>>());
 
     throw myexception()<<"Unsupported native vector representation "<<value.print();
+}
+
+// Multiply all coefficients of a contiguous native vector or matrix, using
+// one as the identity for an empty container.
+template <typename Container>
+auto product_coefficients(const Container& values)
+{
+    using Scalar = typename Container::Scalar;
+    Scalar product = 1;
+    for(Eigen::Index i = 0; i < values.size(); i++)
+        product *= values.data()[i];
+    return product;
+}
+
+// Find the first coefficient selected by a strict comparison and return its
+// value together with its linear storage index.
+template <typename Container, typename Compare>
+auto extreme_coefficient(const Container& values, Compare compare, const char* operation)
+{
+    if (values.size() == 0)
+        throw myexception()<<operation<<": empty container";
+    Eigen::Index best = 0;
+    for(Eigen::Index i = 1; i < values.size(); i++)
+        if (compare(values.data()[i], values.data()[best]))
+            best = i;
+    return pair{values.data()[best], static_cast<int>(best)};
 }
 
 // Dispatch a binary operation after verifying that both vectors have the
@@ -963,6 +990,51 @@ extern "C" R::Exp simple_function_vectorSumElements(vector<R::Exp>& args)
     });
 }
 
+// Multiply a native vector's coefficients without constructing a Haskell list.
+extern "C" R::Exp simple_function_vectorProductElements(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_numeric_vector(value, [](const auto& values) -> R::Exp {
+        return product_coefficients(values);
+    });
+}
+
+// Return the smallest coefficient of a nonempty native vector.
+extern "C" R::Exp simple_function_vectorMinElement(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_numeric_vector(value, [](const auto& values) -> R::Exp {
+        return extreme_coefficient(values, std::less{}, "minElement").first;
+    });
+}
+
+// Return the largest coefficient of a nonempty native vector.
+extern "C" R::Exp simple_function_vectorMaxElement(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_numeric_vector(value, [](const auto& values) -> R::Exp {
+        return extreme_coefficient(values, std::greater{}, "maxElement").first;
+    });
+}
+
+// Return the first index containing the smallest native vector coefficient.
+extern "C" R::Exp simple_function_vectorMinIndex(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_numeric_vector(value, [](const auto& values) -> R::Exp {
+        return extreme_coefficient(values, std::less{}, "minIndex").second;
+    });
+}
+
+// Return the first index containing the largest native vector coefficient.
+extern "C" R::Exp simple_function_vectorMaxIndex(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_numeric_vector(value, [](const auto& values) -> R::Exp {
+        return extreme_coefficient(values, std::greater{}, "maxIndex").second;
+    });
+}
+
 // Compute the dot product of two equal-length vectors.
 extern "C" R::Exp simple_function_dotNative(vector<R::Exp>& args)
 {
@@ -1163,6 +1235,51 @@ extern "C" R::Exp simple_function_matrixSumElements(vector<R::Exp>& args)
             for(Eigen::Index j = 0; j < native_matrix.cols(); j++)
                 total += native_matrix(i,j);
         return total;
+    });
+}
+
+// Multiply native matrix coefficients in their row-major storage order.
+extern "C" R::Exp simple_function_matrixProductElements(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_matrix(value, [](const auto& matrix) -> R::Exp {
+        return product_coefficients(matrix);
+    });
+}
+
+// Return the smallest coefficient of a nonempty native matrix.
+extern "C" R::Exp simple_function_matrixMinElement(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_matrix(value, [](const auto& matrix) -> R::Exp {
+        return extreme_coefficient(matrix, std::less{}, "minElement").first;
+    });
+}
+
+// Return the largest coefficient of a nonempty native matrix.
+extern "C" R::Exp simple_function_matrixMaxElement(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_matrix(value, [](const auto& matrix) -> R::Exp {
+        return extreme_coefficient(matrix, std::greater{}, "maxElement").first;
+    });
+}
+
+// Return the first row-major index containing the matrix minimum.
+extern "C" R::Exp simple_function_matrixMinIndex(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_matrix(value, [](const auto& matrix) -> R::Exp {
+        return extreme_coefficient(matrix, std::less{}, "minIndex").second;
+    });
+}
+
+// Return the first row-major index containing the matrix maximum.
+extern "C" R::Exp simple_function_matrixMaxIndex(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    return visit_matrix(value, [](const auto& matrix) -> R::Exp {
+        return extreme_coefficient(matrix, std::greater{}, "maxIndex").second;
     });
 }
 
