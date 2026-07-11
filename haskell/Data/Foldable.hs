@@ -52,8 +52,8 @@ class Foldable t where
 
     maximum = foldl1 (max)
     minimum = foldl1 (min)
-    sum     = foldl (+) 0
-    product = foldl (*) 1
+    sum     = foldl' (+) 0
+    product = foldl' (*) 1
 
 -- List of functions should go here...
 
