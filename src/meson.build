@@ -215,6 +215,11 @@ extra_deps = {
 
 joint_indels_exe = disabler()
 
+python_tool_wrapper_args = []
+if host_machine.system() == 'windows' and meson.is_cross_build()
+  python_tool_wrapper_args = ['--wrapper', 'wine']
+endif
+
 foreach tool: tools + prefixed_tools
   sources = ['tools/' + tool + '.cc']
   if tool in extra_sources
@@ -242,6 +247,14 @@ foreach tool: tools + prefixed_tools
 			install: true)
 
   test(tool + ' --help', tool_exe, args:['--help'])
+
+  if tool == 'cut-range'
+    cut_range_test_script = files('../tests/tools/cut-range/run-tests.py')
+    test('cut-range sample selection',
+         python,
+         args: [cut_range_test_script] + python_tool_wrapper_args + [tool_exe],
+         depends: tool_exe)
+  endif
 
   if tool == 'joint-indels'
     joint_indels_exe = tool_exe

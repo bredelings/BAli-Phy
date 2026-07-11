@@ -1620,6 +1620,9 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 if self.until is not None:
                     cut_cmd.append(f"--until={self.until}")
 
+                if self.subsample is not None and self.subsample != 1:
+                    cut_cmd.append(f"--subsample={self.subsample}")
+
                 p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
                 chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
@@ -1773,6 +1776,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                         cut_cmd.append(f"--skip={self.burnin}")
                     if self.until is not None:
                         cut_cmd.append(f"--until={self.until}")
+                    if self.subsample is not None and self.subsample != 1:
+                        cut_cmd.append(f"--subsample={self.subsample}")
                     p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
                     chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
@@ -2465,7 +2470,7 @@ if __name__ == '__main__':
     parser.add_argument("--clean", default=False,help="Delete generated files",action='store_true')
     parser.add_argument("--verbose",default=0, help="Be verbose",action='store_true')
     parser.add_argument("--skip", metavar='NUM',type=int,default=None,help="Skip NUM iterations as burnin")
-    parser.add_argument("--subsample",metavar='NUM',type=int,default=1,help="Keep only every NUM iterations")
+    parser.add_argument("--subsample",metavar='NUM',type=int,default=1,help="Keep only every NUMth stored sample")
     parser.add_argument("--until",type=int,default=None)
     parser.add_argument("--prune", default=None,help="Taxa to remove")
     parser.add_argument("--outdir", default="Results",help="Output directory")

@@ -26,7 +26,9 @@ A log of all sub-commands is created at **Reports/bp-analyze.log**.
 : Skip NUM iterations as burnin
 
 **--subsample=NUM**
-: Keep only ever NUM iterations
+: Keep only every NUMth stored sample. Alignment and character-property
+  samples are normally stored every 10 MCMC iterations, so this applies
+  additional thinning to those streams.
 
 
 # REPORTING BUGS:
@@ -35,4 +37,3 @@ See **Reports/bp-analyze.log** to check if any sub-commands failed.
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
-

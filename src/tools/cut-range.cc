@@ -52,6 +52,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("key", value<string>()->default_value("iterations"),"cut based on values of <key>=value")
 	("skip",value<int>(),"the number of samples to skip")
 	("until",value<int>(),"last sample to use")
+	("subsample",value<int>()->default_value(1),"keep only every NUM eligible samples")
 	("size",value<int>(),"maximum number of samples to use")
 	("verbose","Output more log messages on stderr.")
 	;
@@ -90,14 +91,16 @@ variables_map parse_cmd_line(int argc,char* argv[])
 }
 
 
+// Copy selected keyed records, applying the stride independently to each input stream.
 void cut_range(std::istream& in, std::ostream& out,
-	       const string& key, optional<int> min, optional<int> max)
+	       const string& key, optional<int> min, optional<int> max, int subsample)
 {
     string pattern = key + " = ";
 
     string line;
 
     bool in_interval = not min;
+    int eligible_record = 0;
     while(portable_getline(in,line))
     {
 	// look for the pattern
@@ -109,12 +112,13 @@ void cut_range(std::istream& in, std::ostream& out,
 	    // move PAST the pattern
 	    where += pattern.size();
 	    double value = convertTo<double>(line.substr(where));
-	    in_interval = true;
-	    if (min and value <= *min)
-		in_interval = false;
-
 	    if (max and value > *max)
 		return;
+
+	    bool eligible = not min or value > *min;
+	    in_interval = eligible and eligible_record % subsample == 0;
+	    if (eligible)
+		eligible_record++;
 
 	    //    std::cerr<<line<<std::endl;
 	    //    std::cerr<<"where = "<<where<<std::endl;
@@ -157,6 +161,10 @@ int main(int argc,char* argv[])
 	if (args.count("size"))
 	    size = args["size"].as<int>();
 
+	int subsample = args["subsample"].as<int>();
+	if (subsample < 1)
+	    throw myexception()<<"subsample must be at least 1";
+
 	if (args.count("size") and args.count("until"))
 	    throw myexception()<<"cannot set both arguments 'size' and 'until'.";
 	else if (size)
@@ -169,7 +177,7 @@ int main(int argc,char* argv[])
 	for(auto& filename: filenames)
 	{
 	    istream_or_ifstream in(std::cin,"-", filename, "alignments file");
-	    cut_range(in, std::cout, key, min, max);
+	    cut_range(in, std::cout, key, min, max, subsample);
 	}
     }
     catch (std::exception& e) {
