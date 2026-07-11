@@ -2,6 +2,7 @@
 #include <vector>
 #include <valarray>
 #include <string>
+#include "Vector.H"
 #include "computation/operation.H"
 #include "computation/machine/args.H"
 #include "computation/module.H"
@@ -456,16 +457,31 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
     return S;
 }
 
+// Read boxed probabilities through dependent FORCE edges and sample without
+// constructing intermediate Haskell lists or native Eigen vectors.
 extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
-    //------------- 1. Get argument p -----------------
+    int probabilities_reg = Args.evaluate_slot_force(0);
+    std::size_t count = boxed_vector_element_regs(
+        Args.memory().closure_at(probabilities_reg)).size();
+    if (count == 0)
+        throw myexception()<<"Probability.Distribution.Categorical: cannot sample "
+                           <<"from an empty probability vector";
 
-    auto z_value = Args.evaluate_slot_to_value_(0);
-    const auto& native_z = z_value.as_<Box<DenseVector<double>>>();
+    // NOTE: choose_scratch overwrites its input with cumulative sums; remove
+    // this mutable buffer when it accepts separate probabilities and scratch.
+    vector<double> probabilities;
+    probabilities.reserve(count);
+    for(std::size_t i = 0; i < count; i++)
+    {
+        // Copy the register before evaluation, which may grow the machine heap
+        // and invalidate the environment reference used to discover it.
+        int element_reg = boxed_vector_element_regs(
+            Args.memory().closure_at(probabilities_reg))[i];
+        int value_reg = Args.evaluate_reg_dependent_force(element_reg);
+        probabilities.push_back(
+            Args.memory().closure_at(value_reg).get_code().as_double());
+    }
 
-    // NOTE: choose_scratch mutates std::vector scratch storage; remove this
-    // copy when it accepts mutable contiguous numeric storage.
-    vector<double> z(native_z.data(), native_z.data() + native_z.size());
-
-    return { choose_scratch(z) };
+    return { choose_scratch(probabilities) };
 }
