@@ -20,10 +20,16 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <map>
+#include <optional>
+#include <sstream>
+#include <string_view>
 #include "tree/tree.H"
+#include "sequence/alphabet.H"
 #include "sequence/sequence.H"
 #include "sequence/sequence-format.H"
 #include "util/matrix.H"
+#include "util/json.hh"
 #include "util/string/split.H"
 #include "util/mapping.H"
 #include "util/io.H"
@@ -464,7 +470,7 @@ string latex_rgb(const vector<int>& RGB) {
 }
 
 
-matrix<double> read_alignment_certainty(const vector<sequence>& S, const string& filename)
+matrix<double> read_alignment_certainty(const vector<sequence>& S, int alignment_length, const string& filename)
 {
     checked_ifstream colorfile(filename,"alignment annotation file");
 
@@ -483,7 +489,7 @@ matrix<double> read_alignment_certainty(const vector<sequence>& S, const string&
     mapping.push_back(mapping.size());
 
     //------------------ Read in the colors ------------------------//
-    matrix<double> colors(S[0].size(), S.size()+1);
+    matrix<double> colors(alignment_length, S.size()+1);
     for(int column=0;column<colors.size1();column++) 
     { 
 	// read a line
@@ -508,6 +514,12 @@ matrix<double> read_alignment_certainty(const vector<sequence>& S, const string&
 	    colors(column,mapping[i]) = d;
 	}
     }
+
+    string trailing_line;
+    while (portable_getline(colorfile, trailing_line))
+        if (trailing_line.find_first_not_of(" \t\r") != string::npos)
+            throw myexception()<<"AU probabilities contain more than "<<alignment_length
+                               <<" alignment columns.";
 
     return colors;
 }
@@ -722,6 +734,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("show-ruler","Print a ruler to show column numbers") 
 	("column-colors","Color-code column ticks by column certainty") 
 	("AU",value<string>(),"file with alignment uncertainties")
+	("properties",value<string>(),"JSON file with posterior character-property summaries")
+	("alphabet",value<string>(),"alphabet name used to tokenize alignment cells")
 	("show-gaps",value<string>()->default_value("yes"),"Show gaps")
 	("show-letters",value<string>()->default_value("yes"),"Show letters")
 	("show-names",value<string>()->default_value("yes"),"Show names")
@@ -793,6 +807,375 @@ vector<sequence> load_file(const string& filename)
     }
 }
 
+struct alignment_token
+{
+    int alphabet_code;
+    int character_index;
+};
+
+struct tokenized_alignment
+{
+    int token_width;
+    vector<vector<alignment_token>> rows;
+
+    const vector<alignment_token>& operator[](size_t index) const {return rows[index];}
+};
+
+/// Split every alignment row into alphabet-width cells and attach ungapped coordinates.
+tokenized_alignment tokenize_alignment(const vector<sequence>& sequences, const alphabet* alph)
+{
+    int token_width = alph ? alph->width() : 1;
+    vector<vector<alignment_token>> token_rows;
+    std::optional<size_t> n_columns;
+
+    for (const auto& seq: sequences)
+    {
+        vector<int> codes;
+        if (alph)
+            codes = (*alph)(static_cast<const string&>(seq));
+        else
+        {
+            codes.reserve(seq.size());
+            for (char letter: seq)
+            {
+                if (letter == '-')
+                    codes.push_back(alphabet::gap);
+                else if (letter == '?' or letter == '=')
+                    codes.push_back(alphabet::unknown);
+                else
+                    codes.push_back(0);
+            }
+        }
+
+        if (not n_columns)
+            n_columns = codes.size();
+        else if (codes.size() != *n_columns)
+            throw myexception()<<"Sequence '"<<seq.name<<"' has "<<codes.size()
+                               <<" alignment cells, but the first sequence has "<<*n_columns<<".";
+
+        vector<alignment_token> tokens;
+        tokens.reserve(codes.size());
+        int character_index = 0;
+        for (size_t column = 0; column < codes.size(); column++)
+        {
+            int code = codes[column];
+            int index = -1;
+            if (alphabet::is_feature(code))
+                index = character_index++;
+            tokens.push_back({code, index});
+        }
+        token_rows.push_back(std::move(tokens));
+    }
+
+    if (not n_columns or *n_columns == 0)
+        throw myexception()<<"Alignment did not contain any character columns.";
+    return {token_width, std::move(token_rows)};
+}
+
+/// Return a required object field, adding context to errors from malformed schemas.
+const json::value& required_json_field(const json::object& object, const char* field, const string& context)
+{
+    if (const auto* value = object.if_contains(field))
+        return *value;
+    throw myexception()<<context<<": missing required field '"<<field<<"'.";
+}
+
+/// Read a JSON string field while reporting the field name on type errors.
+string required_json_string(const json::object& object, const char* field, const string& context)
+{
+    const auto& value = required_json_field(object, field, context);
+    if (not value.is_string())
+        throw myexception()<<context<<": field '"<<field<<"' must be a string.";
+    return string(value.as_string().c_str());
+}
+
+/// Convert a JSON integer to an unsigned count without accepting negative values.
+uint64_t json_count(const json::value& value, const string& context)
+{
+    if (value.is_uint64())
+        return value.as_uint64();
+    if (value.is_int64() and value.as_int64() >= 0)
+        return value.as_int64();
+    throw myexception()<<context<<" must be a non-negative integer.";
+}
+
+/// Convert any JSON number kind to a finite double for property validation.
+double finite_json_number(const json::value& value, const string& context)
+{
+    double result;
+    if (value.is_double())
+        result = value.as_double();
+    else if (value.is_int64())
+        result = value.as_int64();
+    else if (value.is_uint64())
+        result = value.as_uint64();
+    else
+        throw myexception()<<context<<" must be a number or null.";
+
+    if (not std::isfinite(result))
+        throw myexception()<<context<<" must be finite.";
+    return result;
+}
+
+/// Validate paired mean/count arrays, with an exact length for displayed sequences.
+void validate_property_sequence(const string& property_context,
+                                const string& sequence_name,
+                                const json::value& means_value,
+                                const json::value& counts_value,
+                                std::optional<size_t> displayed_character_count,
+                                uint64_t retained_samples)
+{
+    if (not means_value.is_array())
+        throw myexception()<<property_context<<": mean values for sequence '"<<sequence_name<<"' must be an array.";
+    if (not counts_value.is_array())
+        throw myexception()<<property_context<<": count values for sequence '"<<sequence_name<<"' must be an array.";
+
+    const auto& means = means_value.as_array();
+    const auto& counts = counts_value.as_array();
+    if (means.size() != counts.size())
+        throw myexception()<<property_context<<": sequence '"<<sequence_name
+                           <<"' has different numbers of mean and count values.";
+    if (displayed_character_count and means.size() != *displayed_character_count)
+        throw myexception()<<property_context<<": sequence '"<<sequence_name<<"' has "<<means.size()
+                           <<" values, but the alignment has "<<*displayed_character_count<<" characters.";
+
+    for (size_t character = 0; character < means.size(); character++)
+    {
+        string cell_context = property_context+", sequence '"+sequence_name+"', character "+convertToString(character);
+        uint64_t count = json_count(counts[character], cell_context+" count");
+        if (count > retained_samples)
+            throw myexception()<<cell_context<<" count exceeds retained_samples.";
+        if (means[character].is_null())
+        {
+            if (count != 0)
+                throw myexception()<<cell_context<<" has a null mean but a nonzero count.";
+        }
+        else
+        {
+            finite_json_number(means[character], cell_context+" mean");
+            if (count == 0)
+                throw myexception()<<cell_context<<" has a numeric mean but a zero count.";
+        }
+    }
+}
+
+/// Check one named property's arrays and require every displayed sequence.
+void validate_property(const string& property_name,
+                       const json::value& property_value,
+                       const std::map<string,size_t>& character_counts,
+                       uint64_t retained_samples)
+{
+    string context = "Property '"+property_name+"'";
+    if (not property_value.is_object())
+        throw myexception()<<context<<" must be an object.";
+    const auto& property = property_value.as_object();
+
+    const auto& mean_value = required_json_field(property, "mean", context);
+    const auto& count_value = required_json_field(property, "count", context);
+    if (not mean_value.is_object())
+        throw myexception()<<context<<": field 'mean' must be an object keyed by sequence name.";
+    if (not count_value.is_object())
+        throw myexception()<<context<<": field 'count' must be an object keyed by sequence name.";
+    const auto& means = mean_value.as_object();
+    const auto& counts = count_value.as_object();
+
+    if (means.size() != counts.size())
+        throw myexception()<<context<<": fields 'mean' and 'count' contain different sequence names.";
+
+    for (const auto& item: means)
+    {
+        string sequence_name(item.key_c_str());
+        const auto* sequence_counts = counts.if_contains(item.key());
+        if (not sequence_counts)
+            throw myexception()<<context<<": count values are missing sequence '"<<sequence_name<<"'.";
+        std::optional<size_t> displayed_character_count;
+        if (auto displayed = character_counts.find(sequence_name); displayed != character_counts.end())
+            displayed_character_count = displayed->second;
+        validate_property_sequence(context, sequence_name, item.value(), *sequence_counts,
+                                   displayed_character_count, retained_samples);
+    }
+
+    for (const auto& entry: character_counts)
+        if (not means.if_contains(entry.first))
+            throw myexception()<<context<<": mean values are missing sequence '"<<entry.first<<"'.";
+}
+
+/// Parse and fully validate the reviewed character-property interchange format.
+json::value read_character_properties(const string& filename,
+                                      const vector<sequence>& sequences,
+                                      const tokenized_alignment& tokens)
+{
+    checked_ifstream input(filename, "character property file");
+    std::ostringstream contents;
+    contents<<input.rdbuf();
+
+    json::value document;
+    try {
+        document = json::parse(contents.str());
+    }
+    catch (const std::exception& error) {
+        throw myexception()<<"Character property file '"<<filename<<"': invalid JSON: "<<error.what();
+    }
+    if (not document.is_object())
+        throw myexception()<<"Character property file '"<<filename<<"' must contain a JSON object.";
+    const auto& root = document.as_object();
+    string context = "Character property file '"+filename+"'";
+
+    if (required_json_string(root, "format", context) != "bali-phy-character-properties")
+        throw myexception()<<context<<": unrecognized format.";
+    if (json_count(required_json_field(root, "version", context), context+" version") != 1)
+        throw myexception()<<context<<": only version 1 is supported.";
+
+    const auto& coordinates_value = required_json_field(root, "coordinates", context);
+    if (not coordinates_value.is_object())
+        throw myexception()<<context<<": field 'coordinates' must be an object.";
+    const auto& coordinates = coordinates_value.as_object();
+    if (required_json_string(coordinates, "kind", context+" coordinates") != "ungapped-sequence-character")
+        throw myexception()<<context<<": unsupported coordinate kind.";
+    if (json_count(required_json_field(coordinates, "index_base", context+" coordinates"),
+                   context+" coordinates index_base") != 0)
+        throw myexception()<<context<<": coordinates index_base must be 0.";
+
+    const auto& selection = required_json_field(root, "selection", context);
+    if (not selection.is_object())
+        throw myexception()<<context<<": field 'selection' must be an object.";
+    const auto& selection_object = selection.as_object();
+    string selection_context = context+" selection";
+    std::optional<uint64_t> skip;
+    std::optional<uint64_t> until;
+    const auto& skip_value = required_json_field(selection_object, "skip", selection_context);
+    const auto& until_value = required_json_field(selection_object, "until", selection_context);
+    if (not skip_value.is_null())
+        skip = json_count(skip_value, context+" selection skip");
+    if (not until_value.is_null())
+        until = json_count(until_value, context+" selection until");
+    uint64_t subsample = json_count(
+        required_json_field(selection_object, "subsample", selection_context),
+        context+" selection subsample");
+    if (subsample == 0)
+        throw myexception()<<context<<": selection subsample must be positive.";
+    if (skip and until and *until <= *skip)
+        throw myexception()<<context<<": selection until must be greater than skip.";
+
+    uint64_t retained_samples = json_count(required_json_field(root, "retained_samples", context),
+                                           context+" retained_samples");
+    const auto& chain_counts_value = required_json_field(root, "retained_samples_by_chain", context);
+    if (not chain_counts_value.is_array())
+        throw myexception()<<context<<": field 'retained_samples_by_chain' must be an array.";
+    uint64_t chain_total = 0;
+    for (const auto& count: chain_counts_value.as_array())
+        chain_total += json_count(count, context+" retained_samples_by_chain entry");
+    if (chain_total != retained_samples)
+        throw myexception()<<context<<": retained_samples_by_chain does not sum to retained_samples.";
+
+    std::map<string,size_t> character_counts;
+    for (size_t sequence_index = 0; sequence_index < sequences.size(); sequence_index++)
+    {
+        size_t count = 0;
+        for (const auto& token: tokens[sequence_index])
+            if (token.character_index >= 0)
+                count++;
+        if (not character_counts.emplace(sequences[sequence_index].name, count).second)
+            throw myexception()<<"Alignment contains duplicate sequence name '"<<sequences[sequence_index].name<<"'.";
+    }
+
+    const auto& properties_value = required_json_field(root, "properties", context);
+    if (not properties_value.is_object())
+        throw myexception()<<context<<": field 'properties' must be an object.";
+    for (const auto& item: properties_value.as_object())
+        validate_property(string(item.key_c_str()), item.value(), character_counts, retained_samples);
+
+    return document;
+}
+
+/// Escape text inserted into HTML text and attribute contexts.
+string escape_html(std::string_view text)
+{
+    string escaped;
+    escaped.reserve(text.size());
+    for (char c: text)
+    {
+        if (c == '&') escaped += "&amp;";
+        else if (c == '<') escaped += "&lt;";
+        else if (c == '>') escaped += "&gt;";
+        else if (c == '"') escaped += "&quot;";
+        else if (c == '\'') escaped += "&#39;";
+        else escaped += c;
+    }
+    return escaped;
+}
+
+/// Serialize JSON for a script data block without permitting an HTML end tag.
+string serialize_json_for_html(const json::value& document)
+{
+    string serialized = json::serialize(document);
+    string escaped;
+    escaped.reserve(serialized.size());
+    for (char c: serialized)
+    {
+        if (c == '<') escaped += "\\u003c";
+        else if (c == '>') escaped += "\\u003e";
+        else if (c == '&') escaped += "\\u0026";
+        else escaped += c;
+    }
+    return escaped;
+}
+
+/// Package scientific property data, display order, and optional grid-cell AU values.
+json::value make_viewer_payload(const json::value& character_properties,
+                                const vector<sequence>& sequences,
+                                const matrix<double>& colors,
+                                bool include_uncertainty)
+{
+    json::object payload;
+    payload["format"] = "bali-phy-alignment-viewer";
+    payload["version"] = 1;
+
+    json::array sequence_names;
+    for (const auto& seq: sequences)
+        sequence_names.push_back(json::string(seq.name));
+    payload["sequences"] = std::move(sequence_names);
+    payload["character_properties"] = character_properties;
+
+    if (include_uncertainty)
+    {
+        for (int column = 0; column < colors.size1(); column++)
+            for (int sequence = 0; sequence < colors.size2(); sequence++)
+            {
+                double value = colors(column, sequence);
+                if (value >= 0 and (not std::isfinite(value) or value > 1))
+                    throw myexception()<<"AU value at column "<<column+1
+                                       <<" is not a probability in [0,1].";
+            }
+
+        json::object uncertainty;
+        uncertainty["kind"] = "posterior-alignment-probability";
+        uncertainty["coordinates"] = {
+            {"kind", "alignment-grid-cell"},
+            {"index_base", 0}
+        };
+
+        json::array rows;
+        for (size_t sequence = 0; sequence < sequences.size(); sequence++)
+        {
+            json::array row;
+            for (int column = 0; column < colors.size1(); column++)
+            {
+                double value = colors(column, sequence);
+                if (value < 0)
+                    row.push_back(nullptr);
+                else
+                    row.push_back(value);
+            }
+            rows.push_back(std::move(row));
+        }
+        uncertainty["mean"] = std::move(rows);
+        payload["alignment_uncertainty"] = std::move(uncertainty);
+    }
+
+    return payload;
+}
+
 int main(int argc,char* argv[]) 
 { 
 
@@ -831,7 +1214,21 @@ int main(int argc,char* argv[])
             S = load_file(filename);
 
         int n_sequences = S.size();
-        int L = S[0].size();
+
+	std::shared_ptr<const alphabet> alph;
+	if (args.count("alphabet"))
+	    alph = get_alphabet(args["alphabet"].as<string>());
+	if (args.count("properties") and not alph)
+	    throw myexception()<<"Option '--alphabet' is required when '--properties' is supplied.";
+	if (args.count("properties") and args["format"].as<string>() != "HTML")
+	    throw myexception()<<"Character properties are currently supported only for HTML output.";
+
+	auto tokens = tokenize_alignment(S, alph.get());
+        int L = tokens[0].size();
+
+	std::optional<json::value> character_properties;
+	if (args.count("properties"))
+	    character_properties = read_character_properties(args["properties"].as<string>(), S, tokens);
 
 	//---- Find mapping from colorfile to alignment sequence order -----//
 	owned_ptr<ColorScheme> color_scheme = get_color_scheme(args);
@@ -840,7 +1237,7 @@ int main(int argc,char* argv[])
 	matrix<double> colors(L, n_sequences+1);
     
 	if (args.count("AU"))
-	    colors = read_alignment_certainty(S,args["AU"].as<string>());
+	    colors = read_alignment_certainty(S,L,args["AU"].as<string>());
 	else
 	    for(int i=0;i<colors.size1();i++)
 		for(int j=0;j<colors.size2();j++)
@@ -891,7 +1288,8 @@ int main(int argc,char* argv[])
 		    int s = i;
 
 		    for(int column=pos;column<pos+width and column <= end; column++) {
-			auto c = S[s][column];
+			std::string_view c(static_cast<const string&>(S[s]).data()
+			                   + column*tokens.token_width, tokens.token_width);
 			string latexcolor = "";//latex_get_bgcolor(colors(column,s),sscale,color);
 			if (column != pos)
 			    cout<<"& ";
@@ -907,12 +1305,11 @@ int main(int argc,char* argv[])
 	else {
 
 	    cout<<"\
-<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\
-   \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n\
-<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\" lang=\"en\">\n\
+<!doctype html>\n\
+<html lang=\"en\">\n\
  <head>\n\
-  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />\n\
-  <title>Alignment Uncertainty: "<<args["file"].as<string>()<<"</title>\n\
+  <meta charset=\"utf-8\" />\n\
+  <title>Alignment Uncertainty: "<<escape_html(args["file"].as<string>())<<"</title>\n\
   <style type=\"text/css\">\n\
 \n\
 TABLE {\n\
@@ -956,6 +1353,14 @@ BODY {\n\
     </style>\n\
   </head>\n\
   <body>\n\n";
+
+	    if (character_properties)
+	    {
+		auto viewer_payload = make_viewer_payload(
+		    *character_properties, S, colors, args.count("AU"));
+		cout<<"<script type=\"application/json\" id=\"alignment-viewer-data\">"
+		    <<serialize_json_for_html(viewer_payload)<<"</script>\n";
+	    }
 
 	    //-------------------- Print a legend ------------------------//
 	    if (args.count("legend")) {
@@ -1012,16 +1417,32 @@ BODY {\n\
 		    int s = i;
 		    cout<<"  <tr>\n";
 		    if (show_names)
-			cout<<"    <td class=\"sequencename\">"<<S[s].name<<"</td>\n";
+			cout<<"    <td class=\"sequencename\">"<<escape_html(S[s].name)<<"</td>\n";
 		    for(int column=pos;column<pos+width and column <= end; column++)
 		    {
-			auto c = S[s][column];
-			string c_string(1,c);
-			if (not show_letters or (not show_gaps and c == '-'))
+			const auto& token = tokens[s][column];
+			std::string_view c(static_cast<const string&>(S[s]).data()
+			                   + column*tokens.token_width, tokens.token_width);
+			string c_string = escape_html(c);
+			if (not show_letters or (not show_gaps and token.alphabet_code == alphabet::gap))
 			    c_string = "&nbsp;";
 
-			string style = getstyle(colors(column,s),string(1,c),*color_scheme);
-			cout<<"<td style=\""<<style<<"\">"<<c_string<<"</td>";
+			// NOTE: Legacy palettes accept one-letter keys; preserve compound gap/missing
+			// semantics and use neutral colors until they support compound characters.
+			string color_key(c);
+			if (c.size() > 1)
+			{
+			    if (token.alphabet_code == alphabet::gap) color_key = "-";
+			    else if (token.alphabet_code == alphabet::unknown) color_key = "?";
+			    else color_key = "";
+			}
+			string style = getstyle(colors(column,s),color_key,*color_scheme);
+			cout<<"<td";
+			if (character_properties)
+			    cout<<" class=\"alignment-cell\" data-sequence=\""<<s
+				<<"\" data-column=\""<<column
+				<<"\" data-character=\""<<token.character_index<<"\"";
+			cout<<" style=\""<<style<<"\">"<<c_string<<"</td>";
 		    }
 		    cout<<"  </tr>\n";
 		}
@@ -1057,4 +1478,3 @@ BODY {\n\
 //   : whiten-below-0.5
 //   : fore-ground-colors (AA)
 //   : whiten-according to uncertainty
-
