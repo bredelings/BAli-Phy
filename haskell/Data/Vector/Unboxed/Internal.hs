@@ -3,7 +3,7 @@ module Data.Vector.Unboxed.Internal
     ( Vector(..)
     , Unbox(..)
     , intVectorFromNative
-    , intVectorFromNativeResult
+    , intVectorFromNativeWithLength
     , intVectorNativeView
     ) where
 
@@ -11,7 +11,6 @@ import Compiler.Num
 import qualified Data.OldList as List
 import Data.Tuple (fst, snd)
 import Foreign.NativeVector (NativeVector)
-import Foreign.Pair (EPair, pair_from_c)
 
 data family Vector a
 
@@ -39,6 +38,7 @@ foreign import bpcall "NativeVector:vectorKonstNative" intVectorReplicateNative 
 foreign import bpcall "NativeVector:vectorKonstNative" doubleVectorReplicateNative :: Double -> Int -> NativeVector Double
 foreign import ecall "NativeVector:unsafeIntIndex" unsafeIntIndexNative :: NativeVector Int -> Int -> Int
 foreign import ecall "NativeVector:unsafeDoubleIndex" unsafeDoubleIndexNative :: NativeVector Double -> Int -> Double
+foreign import ecall "NativeVector:intVectorSize" intVectorSizeNative :: NativeVector Int -> Int
 
 instance Unbox Int where
     basicLength (V_Int _ count _) = count
@@ -83,20 +83,17 @@ instance (Unbox a, Unbox b) => Unbox (a,b) where
         V_2 count (basicReplicate count (fst value))
                   (basicReplicate count (snd value))
 
--- Wrap a trusted native Int producer with stable, offset-zero Haskell shape
--- metadata.  The supplied count must match the native extent.
-intVectorFromNative :: Int -> NativeVector Int -> Vector Int
-intVectorFromNative count = V_Int 0 count
+-- Wrap a complete native Int owner and obtain its offset-zero logical length
+-- from the owner's physical extent.
+intVectorFromNative :: NativeVector Int -> Vector Int
+intVectorFromNative native = V_Int 0 (intVectorSizeNative native) native
+
+-- Wrap a native Int owner when an independent Haskell calculation already
+-- supplies its authoritative logical length.
+intVectorFromNativeWithLength :: Int -> NativeVector Int -> Vector Int
+intVectorFromNativeWithLength count = V_Int 0 count
 
 -- Expose the complete primitive view only to foreign-boundary wrappers, so
 -- native consumers preserve slices instead of silently using the whole owner.
 intVectorNativeView :: Vector Int -> (Int, Int, NativeVector Int)
 intVectorNativeView (V_Int offset count native) = (offset, count, native)
-
--- NOTE: Keep native result extraction opaque so simplifying its two projections
--- cannot duplicate the producing bpcall; remove when such sharing is guaranteed.
-intVectorFromNativeResult :: EPair Int (NativeVector Int) -> Vector Int
-{-# NOINLINE intVectorFromNativeResult #-}
-intVectorFromNativeResult result = intVectorFromNative count native
-  where
-    (count, native) = pair_from_c result

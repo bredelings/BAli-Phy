@@ -13,7 +13,8 @@ import Probability.Distribution.Uniform
 import Numeric.Log -- for log1p
 
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (intVectorFromNative, intVectorNativeView)
+import Data.Vector.Unboxed.Internal (intVectorFromNativeWithLength,
+                                     intVectorNativeView)
 import Foreign.NativeVector (NativeVector)
 
 import Control.DeepSeq
@@ -102,7 +103,7 @@ foreign import bpcall "Distribution:sample_CRP" sample_crp_native :: Double -> I
 
 sample_crp alpha n d = do
     native <- sample_crp_native alpha n d
-    return $ U.toList (intVectorFromNative n native)
+    return $ U.toList (intVectorFromNativeWithLength n native)
 ran_sample_crp alpha n d = liftIO $ sample_crp alpha n d
 
 triggeredModifiableList n value effect = let raw_list = mapn n modifiable value

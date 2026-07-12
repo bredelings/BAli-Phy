@@ -616,9 +616,9 @@ std::tuple<R::RVector, vector<int>> compress_alignment_var_nonvar(const R::RVect
     return {alignment_from_patterns(A, constant_patterns), counts};
 }
 
-// Transfer an already-computed integer result into the shared contiguous
-// representation and return the extent needed by its Haskell wrapper.
-R::RPair native_int_vector_result(const vector<int>& values)
+// Copy an already-computed integer result into the shared contiguous native
+// representation used by primitive unboxed vectors.
+object_ptr<Box<DenseVector<int>>> copy_to_native_int_vector(const vector<int>& values)
 {
     if (values.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         throw myexception()<<"compressed vector length exceeds the Haskell Int range";
@@ -627,7 +627,7 @@ R::RPair native_int_vector_result(const vector<int>& values)
     object_ptr<Box<DenseVector<int>>> native(new Box<DenseVector<int>>(count));
     for(int index = 0; index < count; index++)
         (*native)(index) = values[index];
-    return {count, native};
+    return native;
 }
 
 
@@ -638,8 +638,8 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 
     auto [A,counts,mapping] = compress_alignment(A1);
 
-    return R::RPair(A, R::RPair(native_int_vector_result(counts),
-                                native_int_vector_result(mapping)));
+    return R::RPair(A, R::RPair(copy_to_native_int_vector(counts),
+                                copy_to_native_int_vector(mapping)));
 }
 
 extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs& Args)
@@ -652,7 +652,7 @@ extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs&
 
     auto [A,counts] = compress_alignment_var_nonvar(A0, a);
 
-    return R::RPair(A, native_int_vector_result(counts));
+    return R::RPair(A, copy_to_native_int_vector(counts));
 }
 
 extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)

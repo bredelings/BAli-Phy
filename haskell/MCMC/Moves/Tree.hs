@@ -1,17 +1,16 @@
 module MCMC.Moves.Tree where
 
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (intVectorFromNativeResult)
+import Data.Vector.Unboxed.Internal (intVectorFromNative)
 import Foreign.NativeVector (NativeVector)
-import Foreign.Pair (EPair)
 import MCMC.Types
 import Tree
 
-foreign import bpcall "MCMC:" walkTreePathRaw :: Modifiable t -> ContextIndex -> EPair Int (NativeVector Int)
+foreign import bpcall "MCMC:" walkTreePathRaw :: Modifiable t -> ContextIndex -> NativeVector Int
 
 walkTreePathVector :: Modifiable t -> ContextIndex -> U.Vector Int
 walkTreePathVector tree context =
-    intVectorFromNativeResult (walkTreePathRaw tree context)
+    intVectorFromNative (walkTreePathRaw tree context)
 
 walk_tree_path tree context = U.toList (walkTreePathVector tree context)
 

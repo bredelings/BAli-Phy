@@ -4,9 +4,8 @@ import Prelude hiding (map,empty,elems,filter,toVector)
 import Data.Functor
 import qualified Data.List as L
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (intVectorFromNativeResult)
+import Data.Vector.Unboxed.Internal (intVectorFromNative)
 import Foreign.NativeVector (NativeVector)
-import Foreign.Pair (EPair)
 import Data.Foldable (foldr)
 import Control.DeepSeq
 
@@ -60,13 +59,13 @@ foreign import bpcall "IntSet:" disjoint :: IntSet -> IntSet -> Int
 
 -- Note!  These are supposed be to in ascending order of keys, but are not.
 
-foreign import bpcall "IntSet:keys" keysNative :: IntSet -> EPair Int (NativeVector Int)
+foreign import bpcall "IntSet:keys" keysNative :: IntSet -> NativeVector Int
 
 elems m = U.toList (toVector m)
 
 toList m = elems m
 
-toVector = intVectorFromNativeResult . keysNative
+toVector = intVectorFromNative . keysNative
 
 toAscList m = toList m
 

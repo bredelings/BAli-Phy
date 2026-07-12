@@ -28,3 +28,4 @@ main = do
   putStrLn $ show $ m6 \\ m7
   putStrLn $ show $ m7 \\ m6
   putStrLn $ show $ U.toList $ toVector m4
+  putStrLn $ show $ U.length $ toVector empty

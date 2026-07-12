@@ -828,7 +828,7 @@ extern "C" closure builtin_function_walkTreePathRaw(OperationArgs& Args)
     int count = static_cast<int>(branches.size());
     object_ptr<Box<DenseVector<int>>> path(new Box<DenseVector<int>>(count));
     std::copy(branches.begin(), branches.end(), path->data());
-    return R::RPair(count, path);
+    return path;
 }
 
 extern "C" closure builtin_function_fnprUnsafeProposalRaw(OperationArgs& Args)

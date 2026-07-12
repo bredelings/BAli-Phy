@@ -43,6 +43,7 @@ main = do
   putStrLn $ show $ keysSet m8
   putStrLn $ show $ forceAll m8
   putStrLn $ show $ U.toList $ keysVector m4
+  putStrLn $ show $ U.length $ keysVector (empty :: IntMap Int)
 
 
 -- maybe make Foldable?

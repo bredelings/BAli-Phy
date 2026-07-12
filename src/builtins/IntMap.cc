@@ -157,8 +157,8 @@ extern "C" closure builtin_function_insertWith(OperationArgs& Args)
     return m;
 }
 
-// Export keys directly into contiguous native Int storage with its Haskell
-// sized extent.
+// Export keys directly into contiguous native Int storage; Haskell obtains
+// the logical length from the completed native owner.
 extern "C" closure builtin_function_keys(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
@@ -173,7 +173,7 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
     for(auto& [k,v]: m)
         (*keys)(index++) = k;
 
-    return R::RPair(count, keys);
+    return keys;
 }
 
 extern "C" closure builtin_function_union(OperationArgs& Args)

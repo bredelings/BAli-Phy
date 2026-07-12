@@ -3,6 +3,7 @@
 #include "util/dense-matrix.H"
 #include "util/myexception.H"
 
+#include <limits>
 #include <type_traits>
 #include <vector>
 
@@ -121,6 +122,17 @@ extern "C" R::Exp simple_function_vectorAtIndex(vector<R::Exp>& args)
         return native(index);
     }
     throw myexception()<<"Unsupported native vector representation "<<value.print();
+}
+
+// Report the physical extent of a complete native Int owner so Haskell can
+// establish the initial logical length of an offset-zero unboxed vector.
+extern "C" R::Exp simple_function_intVectorSize(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    auto count = value.as_<Box<DenseVector<int>>>().size();
+    if (count > std::numeric_limits<int>::max())
+        throw myexception()<<"native Int vector length exceeds the Haskell Int range";
+    return static_cast<int>(count);
 }
 
 // Read an Int element after the Haskell view has established its bounds.
