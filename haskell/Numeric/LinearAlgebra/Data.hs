@@ -74,21 +74,23 @@ class (Num a, Ord a) => Element a where
     (|>) :: Int -> [a] -> Vector a
     (><) :: Int -> Int -> [a] -> Matrix a
 
-foreign import bpcall "NativeVector:intVectorFromList" intVectorFromListNative :: [Int] -> NativeVector Int
-foreign import bpcall "NativeVector:doubleVectorFromList" doubleVectorFromListNative :: [Double] -> NativeVector Double
 foreign import bpcall "NativeVector:sizedIntVectorFromList" sizedIntVectorFromListNative :: Int -> [Int] -> NativeVector Int
 foreign import bpcall "NativeVector:sizedDoubleVectorFromList" sizedDoubleVectorFromListNative :: Int -> [Double] -> NativeVector Double
 foreign import bpcall "Matrix:intMatrixFromList" intMatrixFromListNative :: Int -> Int -> [Int] -> NativeMatrix Int
 foreign import bpcall "Matrix:doubleMatrixFromList" doubleMatrixFromListNative :: Int -> Int -> [Double] -> NativeMatrix Double
 
 instance Element Int where
-    fromList values = Vector (length values) (intVectorFromListNative values)
+    fromList values = Vector count (sizedIntVectorFromListNative count values)
+      where
+        count = length values
     count |> values = Vector count (sizedIntVectorFromListNative count values)
     rowCount >< columnCount = Matrix rowCount columnCount .
         intMatrixFromListNative rowCount columnCount
 
 instance Element Double where
-    fromList values = Vector (length values) (doubleVectorFromListNative values)
+    fromList values = Vector count (sizedDoubleVectorFromListNative count values)
+      where
+        count = length values
     count |> values = Vector count (sizedDoubleVectorFromListNative count values)
     rowCount >< columnCount = Matrix rowCount columnCount .
         doubleMatrixFromListNative rowCount columnCount

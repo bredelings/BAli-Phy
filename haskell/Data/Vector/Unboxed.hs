@@ -14,6 +14,7 @@ import Compiler.Num
 import Data.Bool
 import Data.Eq
 import Data.Maybe (Maybe(Nothing, Just))
+import qualified Data.OldList as List
 import Data.Ord
 import Data.Vector.Unboxed.Internal (Vector(..), Unbox(..))
 import Foreign.CList (mapFrom)
@@ -90,7 +91,7 @@ replicate count value
 -- its lazy native owner; remove when the simplifier preserves that sharing.
 fromList :: Unbox a => [a] -> Vector a
 {-# NOINLINE fromList #-}
-fromList = basicFromList
+fromList values = basicFromListN (List.length values) values
 
 -- Expose logical elements as a lazy list without allocating a boxed-vector
 -- intermediate or copying a primitive slice.

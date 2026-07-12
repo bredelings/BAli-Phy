@@ -28,11 +28,11 @@ class Unbox a where
     basicLength :: Vector a -> Int
     basicUnsafeIndex :: Vector a -> Int -> a
     basicUnsafeSlice :: Int -> Int -> Vector a -> Vector a
-    basicFromList :: [a] -> Vector a
+    basicFromListN :: Int -> [a] -> Vector a
     basicReplicate :: Int -> a -> Vector a
 
-foreign import bpcall "NativeVector:intVectorFromList" intVectorFromListNative :: [Int] -> NativeVector Int
-foreign import bpcall "NativeVector:doubleVectorFromList" doubleVectorFromListNative :: [Double] -> NativeVector Double
+foreign import bpcall "NativeVector:sizedIntVectorFromList" sizedIntVectorFromListNative :: Int -> [Int] -> NativeVector Int
+foreign import bpcall "NativeVector:sizedDoubleVectorFromList" sizedDoubleVectorFromListNative :: Int -> [Double] -> NativeVector Double
 foreign import bpcall "NativeVector:vectorKonstNative" intVectorReplicateNative :: Int -> Int -> NativeVector Int
 foreign import bpcall "NativeVector:vectorKonstNative" doubleVectorReplicateNative :: Double -> Int -> NativeVector Double
 foreign import ecall "NativeVector:unsafeIntIndex" unsafeIntIndexNative :: NativeVector Int -> Int -> Int
@@ -44,8 +44,8 @@ instance Unbox Int where
         unsafeIntIndexNative native (offset + index)
     basicUnsafeSlice start count (V_Int offset _ native) =
         V_Int (offset + start) count native
-    basicFromList values =
-        V_Int 0 (List.length values) (intVectorFromListNative values)
+    basicFromListN count values =
+        V_Int 0 count (sizedIntVectorFromListNative count values)
     basicReplicate count value =
         V_Int 0 count (intVectorReplicateNative value count)
 
@@ -55,8 +55,8 @@ instance Unbox Double where
         unsafeDoubleIndexNative native (offset + index)
     basicUnsafeSlice start count (V_Double offset _ native) =
         V_Double (offset + start) count native
-    basicFromList values =
-        V_Double 0 (List.length values) (doubleVectorFromListNative values)
+    basicFromListN count values =
+        V_Double 0 count (sizedDoubleVectorFromListNative count values)
     basicReplicate count value =
         V_Double 0 count (doubleVectorReplicateNative value count)
 
@@ -70,11 +70,10 @@ instance (Unbox a, Unbox b) => Unbox (a,b) where
 
     -- NOTE: This immutable fallback builds two projected list spines.  Replace it
     -- when unboxed vectors gain a direct builder that can fill both components.
-    basicFromList values = V_2 count left right
+    basicFromListN count values = V_2 count left right
       where
-        left = basicFromList (List.map fst values)
-        right = basicFromList (List.map snd values)
-        count = basicLength left
+        left = basicFromListN count (List.map fst values)
+        right = basicFromListN count (List.map snd values)
 
     -- Preserve shape-only operations by deferring both pair projections until
     -- a primitive child owner is actually evaluated.
