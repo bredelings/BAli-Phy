@@ -2087,7 +2087,10 @@ void reg_heap::clear_call(int s)
 
 	if (r2 > 0 and not regs.is_free(r2))
 	{
-	    assert(follow_reg_ref(call) == r2);
+	    // The original call register may already have been reclaimed with the
+	    // step's created regs, but the recorded target back-edge still survives.
+	    if (not regs.is_free(call))
+		assert(follow_reg_ref(call) == r2);
 	    auto& backward = regs[r2].called_by;
 	    assert(0 <= j and j < backward.size());
 
