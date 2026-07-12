@@ -2,14 +2,24 @@
 (function (globalScope) {
 'use strict';
 
-// Five representative stops from the perceptually uniform, CC0 viridis palette.
-const PROPERTY_PALETTE = [
-    [68, 1, 84],
-    [59, 82, 139],
-    [33, 145, 140],
-    [94, 201, 98],
-    [253, 231, 37],
-];
+const PROPERTY_PALETTES = {
+    viridis: {
+        label: 'Viridis',
+        kind: 'sequential',
+        // Five representative stops from the perceptually uniform, CC0 palette.
+        stops: [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]],
+    },
+    'blue-red': {
+        label: 'Blue–red',
+        kind: 'sequential',
+        stops: [[8, 48, 107], [33, 113, 181], [123, 50, 148], [194, 42, 91], [239, 59, 44]],
+    },
+    'blue-gray-red': {
+        label: 'Blue–gray–red',
+        kind: 'diverging',
+        stops: [[33, 102, 172], [103, 169, 207], [232, 232, 232], [239, 138, 98], [178, 24, 43]],
+    },
+};
 
 const AUTO_SCALE_MIN_VALUES = 20;
 const AUTO_SCALE_MIN_DISTINCT_POSITIVE = 8;
@@ -129,13 +139,23 @@ function createContinuousScale(values, options, transform, inverse)
                      (transformedUpper - transformedLower), 0, 1);
     }
 
+    // Converts a palette position back into a raw value in transformed scale space.
+    function valueAt(position)
+    {
+        if (lower === upper)
+            return lower;
+        const transformed = transformedLower +
+            clamp(position, 0, 1) * (transformedUpper - transformedLower);
+        return inverse(transformed);
+    }
+
     // Returns raw values and normalized positions for a numeric legend.
     function legendTicks(count)
     {
         return continuousLegendTicks(count, lower, upper, transform, inverse);
     }
 
-    return {normalize, legendTicks, lower, upper, transform: options.transform};
+    return {normalize, valueAt, legendTicks, lower, upper, transform: options.transform};
 }
 
 // Locates an arbitrary value among sorted distinct rank groups.
@@ -197,6 +217,7 @@ function createRankScale(values)
         return {
             normalize: (value) => !Number.isFinite(value) ? null :
                 value < constant ? 0 : value > constant ? 1 : 0.5,
+            valueAt: () => constant,
             legendTicks: () => [{position: 0.5, value: constant}],
             lower: constant,
             upper: constant,
@@ -241,6 +262,7 @@ function createRankScale(values)
 
     return {
         normalize,
+        valueAt: (position) => valueAtRank(groups, clamp(position, 0, 1)),
         legendTicks,
         lower: sorted[0],
         upper: sorted[sorted.length - 1],
@@ -330,6 +352,77 @@ function preferredTransform(propertyName, observations)
     return logEntropy >= linearEntropy + AUTO_SCALE_ENTROPY_MARGIN ? 'log10' : 'linear';
 }
 
+// Re-centers an existing scale so the supplied raw median occupies the palette midpoint.
+function createDivergingScale(baseScale, center)
+{
+    if (!baseScale || typeof baseScale.normalize !== 'function' ||
+        typeof baseScale.valueAt !== 'function')
+        throw new TypeError('A diverging scale needs an invertible base scale.');
+    if (!Number.isFinite(center))
+        throw new RangeError('A diverging scale center must be finite.');
+    const centerPosition = baseScale.normalize(center);
+    if (!Number.isFinite(centerPosition))
+        throw new RangeError('A diverging scale center must lie in the scale domain.');
+    if (baseScale.lower === baseScale.upper) {
+        return {
+            ...baseScale,
+            center,
+            diverging: true,
+        };
+    }
+
+    // Maps each side of the center independently onto half of the color palette.
+    function normalize(value)
+    {
+        if (!Number.isFinite(value))
+            return null;
+        if (value === center)
+            return 0.5;
+        const position = baseScale.normalize(value);
+        if (value < center)
+            return centerPosition === 0 ? 0 : 0.5 * position / centerPosition;
+        return centerPosition === 1 ? 1 :
+            0.5 + 0.5 * (position - centerPosition) / (1 - centerPosition);
+    }
+
+    // Converts a diverging palette coordinate back through the corresponding half.
+    function valueAt(position)
+    {
+        const clipped = clamp(position, 0, 1);
+        if (clipped === 0.5)
+            return center;
+        if (clipped < 0.5)
+            return baseScale.valueAt(2 * clipped * centerPosition);
+        return baseScale.valueAt(
+            centerPosition + 2 * (clipped - 0.5) * (1 - centerPosition));
+    }
+
+    // Places legend ticks evenly in the two independently normalized palette halves.
+    function legendTicks(count)
+    {
+        if (!Number.isInteger(count) || count < 2)
+            throw new RangeError('A legend needs at least two ticks.');
+        const firstPosition = centerPosition === 0 ? 0.5 : 0;
+        const lastPosition = centerPosition === 1 ? 0.5 : 1;
+        return Array.from({length: count}, (_, index) => {
+            const fraction = index / (count - 1);
+            const position = firstPosition + fraction * (lastPosition - firstPosition);
+            return {position, value: valueAt(position)};
+        });
+    }
+
+    return {
+        normalize,
+        valueAt,
+        legendTicks,
+        lower: baseScale.lower,
+        upper: baseScale.upper,
+        transform: baseScale.transform,
+        center,
+        diverging: true,
+    };
+}
+
 // Fades an RGB property color toward white according to AU certainty.
 function blendWithWhite(color, certainty)
 {
@@ -342,15 +435,25 @@ function blendWithWhite(color, certainty)
     return color.map((channel) => Math.round(255 + (channel - 255) * weight));
 }
 
-// Interpolates the fixed sequential palette at a normalized coordinate.
-function paletteColor(position)
+// Returns a named palette definition or rejects stale and malformed UI state.
+function propertyPalette(name)
 {
-    const scaled = clamp(position, 0, 1) * (PROPERTY_PALETTE.length - 1);
+    const palette = PROPERTY_PALETTES[name];
+    if (!palette)
+        throw new RangeError(`Unknown property palette: ${name}`);
+    return palette;
+}
+
+// Interpolates a named property palette at a normalized coordinate.
+function paletteColor(position, paletteName = 'viridis')
+{
+    const stops = propertyPalette(paletteName).stops;
+    const scaled = clamp(position, 0, 1) * (stops.length - 1);
     const lower = Math.floor(scaled);
     const upper = Math.ceil(scaled);
     const fraction = scaled - lower;
-    return PROPERTY_PALETTE[lower].map((channel, index) =>
-        Math.round(channel * (1 - fraction) + PROPERTY_PALETTE[upper][index] * fraction));
+    return stops[lower].map((channel, index) =>
+        Math.round(channel * (1 - fraction) + stops[upper][index] * fraction));
 }
 
 // Converts an sRGB channel to the linear-light value used for contrast ratios.
@@ -385,11 +488,12 @@ function rgb(color)
     return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
-// Produces the CSS gradient shared by one- and two-dimensional legends.
-function paletteGradient()
+// Produces the CSS gradient shared by one- and two-dimensional named-palette legends.
+function paletteGradient(paletteName = 'viridis')
 {
-    const last = PROPERTY_PALETTE.length - 1;
-    const stops = PROPERTY_PALETTE.map((color, index) =>
+    const colors = propertyPalette(paletteName).stops;
+    const last = colors.length - 1;
+    const stops = colors.map((color, index) =>
         `${rgb(color)} ${(100 * index) / last}%`);
     return `linear-gradient(to right, ${stops.join(', ')})`;
 }
@@ -607,6 +711,12 @@ class AlignmentPropertyViewer {
         addOption(doc, this.transformSelect, 'rank', 'Percentile rank');
         this.controlRow.append(labelledControl(doc, 'Scale', this.transformSelect));
 
+        this.paletteSelect = makeElement(doc, 'select', 'alignment-viewer-select');
+        this.paletteSelect.setAttribute('aria-label', 'Property color palette');
+        for (const [name, palette] of Object.entries(PROPERTY_PALETTES))
+            addOption(doc, this.paletteSelect, name, palette.label);
+        this.controlRow.append(labelledControl(doc, 'Palette', this.paletteSelect));
+
         this.rangeSelect = makeElement(doc, 'select', 'alignment-viewer-select');
         this.rangeSelect.setAttribute('aria-label', 'Property display range');
         addOption(doc, this.rangeSelect, 'robust', 'Robust (2–98%)');
@@ -693,6 +803,7 @@ class AlignmentPropertyViewer {
     {
         this.propertySelect.addEventListener('change', this.handlePropertyChange.bind(this));
         this.transformSelect.addEventListener('change', this.handleTransformChange.bind(this));
+        this.paletteSelect.addEventListener('change', this.handlePaletteChange.bind(this));
         this.rangeSelect.addEventListener('change', this.handleRangeChange.bind(this));
         this.lowerInput.addEventListener('change', this.handleBoundsChange.bind(this));
         this.upperInput.addEventListener('change', this.handleBoundsChange.bind(this));
@@ -722,6 +833,7 @@ class AlignmentPropertyViewer {
         if (!this.displayStates.has(property.name)) {
             this.displayStates.set(property.name, {
                 transform: preferredTransform(property.name, property.values),
+                palette: 'viridis',
                 range: 'robust',
                 customLower: null,
                 customUpper: null,
@@ -749,6 +861,7 @@ class AlignmentPropertyViewer {
         const original = !property;
         const unavailable = !original && property.values.length === 0;
         this.transformSelect.disabled = original || unavailable;
+        this.paletteSelect.disabled = original || unavailable;
         this.rangeSelect.disabled = original || unavailable || state.transform === 'rank';
         this.logOption.disabled = unavailable ||
             (!original && !canUseLogScale(property.name, property.values));
@@ -756,6 +869,7 @@ class AlignmentPropertyViewer {
             state.transform = 'linear';
         if (!original) {
             this.transformSelect.value = state.transform;
+            this.paletteSelect.value = state.palette;
             this.rangeSelect.value = state.range;
         }
         const custom = !original && !unavailable &&
@@ -821,7 +935,7 @@ class AlignmentPropertyViewer {
     }
 
     // Applies the selected property scale and optional AU fade to every visible cell.
-    colorCells(property, scale, fadeByAU)
+    colorCells(property, scale, paletteName, fadeByAU)
     {
         for (const cell of this.cells) {
             this.restoreCell(cell);
@@ -836,7 +950,7 @@ class AlignmentPropertyViewer {
                 cell.element.classList.add('alignment-property-missing');
                 continue;
             }
-            let color = paletteColor(scale.normalize(value));
+            let color = paletteColor(scale.normalize(value), paletteName);
             if (fadeByAU) {
                 if (!Number.isFinite(cell.uncertainty)) {
                     cell.element.classList.add('alignment-au-missing');
@@ -874,15 +988,18 @@ class AlignmentPropertyViewer {
         const rangeLabel = state.transform === 'rank' ? '' :
             state.range === 'robust' ? ' · robust 2–98%' :
             state.range === 'full' ? ' · full range' : ' · custom range';
-        this.legendCaption.textContent = `${property.name} · ${transformLabels[state.transform]}${rangeLabel}`;
+        const palette = propertyPalette(state.palette);
+        const centerLabel = scale.diverging ? ` · median ${formatValue(scale.center)}` : '';
+        this.legendCaption.textContent =
+            `${property.name} · ${transformLabels[state.transform]}${rangeLabel} · ${palette.label}${centerLabel}`;
         const fadeByAU = state.fadeByAU && Boolean(this.uncertainty);
         this.legend.classList.toggle('alignment-viewer-legend-2d', fadeByAU);
         this.legendRamp.style.backgroundImage = fadeByAU ?
-            `linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0)), ${paletteGradient()}` :
-            paletteGradient();
+            `linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0)), ${paletteGradient(state.palette)}` :
+            paletteGradient(state.palette);
         this.legendRamp.setAttribute('aria-label', fadeByAU ?
-            `${property.name} color by horizontal position and alignment certainty vertically` :
-            `${property.name} color scale`);
+            `${property.name} ${palette.label} color by horizontal position and alignment certainty vertically` :
+            `${property.name} ${palette.label} color scale${scale.diverging ? ' centered on the median' : ''}`);
         this.auCertain.hidden = !fadeByAU;
         this.auUncertain.hidden = !fadeByAU;
 
@@ -896,15 +1013,19 @@ class AlignmentPropertyViewer {
         this.legendTicks.replaceChildren();
         const ticks = scale.legendTicks(5);
         // Positions raw-value labels under their corresponding palette coordinates.
-        ticks.forEach((tick, index) => {
+        ticks.forEach((tick) => {
             const label = makeElement(this.document, 'span', 'alignment-viewer-legend-tick');
             label.style.left = `${100 * tick.position}%`;
+            if (tick.position === 0)
+                label.classList.add('alignment-viewer-legend-tick-lower');
+            if (tick.position === 1)
+                label.classList.add('alignment-viewer-legend-tick-upper');
             let text = formatValue(tick.value);
-            if (index === 0 && (clippedLower || clippedZero))
+            if (tick.position === 0 && (clippedLower || clippedZero))
                 text = `≤ ${text}`;
-            if (index === 0 && clippedZero)
+            if (tick.position === 0 && clippedZero)
                 text += ' (includes 0)';
-            if (index === ticks.length - 1 && clippedUpper)
+            if (tick.position === 1 && clippedUpper)
                 text = `≥ ${text}`;
             label.textContent = text;
             this.legendTicks.append(label);
@@ -943,7 +1064,8 @@ class AlignmentPropertyViewer {
         this.currentRange = null;
         this.legend.hidden = true;
         this.hideTooltip(true);
-        this.updateControls(null, {transform: 'linear', range: 'robust'}, {});
+        this.updateControls(
+            null, {transform: 'linear', palette: 'viridis', range: 'robust'}, {});
         this.clearStatus();
     }
 
@@ -979,9 +1101,16 @@ class AlignmentPropertyViewer {
             state.transform = 'linear';
         try {
             const bounds = this.boundsFor(property, state);
-            const scale = createScale(property.values, {transform: state.transform, ...bounds});
+            const baseScale = createScale(
+                property.values, {transform: state.transform, ...bounds});
+            const palette = propertyPalette(state.palette);
+            const sorted = [...property.values].sort((left, right) => left - right);
+            const scale = palette.kind === 'diverging' ?
+                createDivergingScale(baseScale, quantile(sorted, 0.5)) : baseScale;
             this.updateControls(property, state, bounds);
-            this.colorCells(property, scale, state.fadeByAU && Boolean(this.uncertainty));
+            this.colorCells(
+                property, scale, state.palette,
+                state.fadeByAU && Boolean(this.uncertainty));
             this.currentProperty = property;
             this.currentScale = scale;
             this.currentRange = state.range;
@@ -1017,6 +1146,16 @@ class AlignmentPropertyViewer {
             state.customLower = robust.lower;
             state.customUpper = robust.upper;
         }
+        this.render();
+    }
+
+    // Changes the color palette while retaining the property's numerical transform.
+    handlePaletteChange()
+    {
+        const property = this.selectedProperty();
+        if (!property)
+            return;
+        this.stateFor(property).palette = this.paletteSelect.value;
         this.render();
     }
 
@@ -1103,6 +1242,7 @@ class AlignmentPropertyViewer {
         const transformLabel = state.transform === 'rank' ? 'percentile rank' : state.transform;
         const rangeLabel = state.transform === 'rank' ? '' : `, ${state.range}`;
         this.appendTooltipRow(list, 'Display scale', `${transformLabel}${rangeLabel}`);
+        this.appendTooltipRow(list, 'Palette', propertyPalette(state.palette).label);
         this.tooltip.replaceChildren(list);
     }
 
@@ -1289,9 +1429,12 @@ function initializeAlignmentViewer(documentObject = globalScope.document)
 
 const api = {
     createScale,
+    createDivergingScale,
     automaticScaleBounds,
     canUseLogScale,
     preferredTransform,
+    paletteColor,
+    paletteGradient,
     blendWithWhite,
     initializeAlignmentViewer,
 };

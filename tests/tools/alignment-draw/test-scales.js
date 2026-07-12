@@ -4,9 +4,12 @@ const assert = require('node:assert/strict');
 
 const {
     createScale,
+    createDivergingScale,
     automaticScaleBounds,
     canUseLogScale,
     preferredTransform,
+    paletteColor,
+    paletteGradient,
     blendWithWhite,
 } = require('../../../src/tools/alignment-draw.js');
 
@@ -17,6 +20,70 @@ function assertClose(actual, expected, message)
     const tolerance = 1e-12;
     assert.ok(Math.abs(actual - expected) <= tolerance,
               `${message}: expected ${expected}, got ${actual}`);
+}
+
+{
+    assert.deepEqual(paletteColor(0, 'blue-red'), [8, 48, 107],
+                     'the sequential blue-red palette starts at blue');
+    assert.deepEqual(paletteColor(1, 'blue-red'), [239, 59, 44],
+                     'the sequential blue-red palette ends at red');
+    assert.deepEqual(paletteColor(0.5, 'blue-gray-red'), [232, 232, 232],
+                     'the diverging palette has a light-gray midpoint');
+    assert.match(paletteGradient('blue-gray-red'), /rgb\(232, 232, 232\) 50%/,
+                 'the legend gradient contains the same gray midpoint');
+    assert.throws(() => paletteColor(0.5, 'missing'), /unknown property palette/i,
+                  'stale palette state is rejected rather than silently miscolored');
+}
+
+{
+    const base = createScale([0, 2, 10], {
+        transform: 'linear',
+        lower: 0,
+        upper: 10,
+    });
+    const scale = createDivergingScale(base, 2);
+    assert.equal(scale.normalize(0), 0, 'the robust lower bound remains blue');
+    assert.equal(scale.normalize(2), 0.5, 'the raw median maps to gray');
+    assert.equal(scale.normalize(10), 1, 'the robust upper bound remains red');
+    assertClose(scale.normalize(1), 0.25,
+                'the lower half is normalized independently');
+    assertClose(scale.normalize(6), 0.75,
+                'the upper half is normalized independently');
+    const ticks = scale.legendTicks(5);
+    assert.deepEqual(ticks.map((tick) => tick.position), [0, 0.25, 0.5, 0.75, 1]);
+    assertClose(ticks[2].value, 2, 'the central legend tick reports the median');
+}
+
+{
+    const base = createScale([0, 0.01, 0.1, 10], {
+        transform: 'log10',
+        lower: 0.01,
+        upper: 10,
+    });
+    const scale = createDivergingScale(base, 0.1);
+    assert.equal(scale.normalize(0), 0,
+                 'zero remains at the clipped floor of a diverging log scale');
+    assert.equal(scale.normalize(0.1), 0.5,
+                 'a log-scale median still maps exactly to gray');
+    assert.equal(scale.normalize(10), 1,
+                 'the logarithmic upper bound remains red');
+}
+
+{
+    const base = createScale([0, 1, 2], {
+        transform: 'linear',
+        lower: 0,
+        upper: 2,
+    });
+    const scale = createDivergingScale(base, 0);
+    assert.equal(scale.normalize(0), 0.5,
+                 'a median at the lower bound collapses the empty blue half');
+    const ticks = scale.legendTicks(3);
+    assert.deepEqual(ticks.map((tick) => tick.position), [0.5, 0.75, 1],
+                     'a collapsed half does not invent lower-tail legend values');
+    for (const tick of ticks)
+        assertClose(scale.normalize(tick.value), tick.position,
+                    'degenerate diverging legend labels still invert the scale');
 }
 
 {

@@ -159,11 +159,11 @@ td.alignment-cell:focus-visible {
     white-space: nowrap;
 }
 
-.alignment-viewer-legend-tick:first-child {
+.alignment-viewer-legend-tick-lower {
     transform: none;
 }
 
-.alignment-viewer-legend-tick:last-child {
+.alignment-viewer-legend-tick-upper {
     transform: translateX(-100%);
 }
 

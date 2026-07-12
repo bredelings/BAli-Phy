@@ -133,6 +133,7 @@ class AlignmentDrawPropertyTests(unittest.TestCase):
         self.assertEqual(viewer["sequences"], ["alpha", "beta"])
         self.assertIn(".alignment-viewer-toolbar", result.stdout)
         self.assertIn("BaliPhyAlignmentViewer", result.stdout)
+        self.assertIn("Blue–gray–red", result.stdout)
         self.assertEqual(properties["retained_samples"], 4)
         self.assertEqual(
             properties["properties"]["rate"]["mean"]["alpha"],
