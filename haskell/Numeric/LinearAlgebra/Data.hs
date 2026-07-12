@@ -24,13 +24,10 @@ module Numeric.LinearAlgebra.Data
     ) where
 
 import Foreign.CList (mapFrom)
+import Foreign.NativeVector (NativeVector)
 
 type R = Double
 type I = Int
-
--- Native payloads select an Eigen representation through their element type.
-type role NativeVector nominal
-data NativeVector a
 
 type role NativeMatrix nominal
 data NativeMatrix a
@@ -77,10 +74,10 @@ class (Num a, Ord a) => Element a where
     (|>) :: Int -> [a] -> Vector a
     (><) :: Int -> Int -> [a] -> Matrix a
 
-foreign import bpcall "Matrix:intVectorFromList" intVectorFromListNative :: [Int] -> NativeVector Int
-foreign import bpcall "Matrix:doubleVectorFromList" doubleVectorFromListNative :: [Double] -> NativeVector Double
-foreign import bpcall "Matrix:sizedIntVectorFromList" sizedIntVectorFromListNative :: Int -> [Int] -> NativeVector Int
-foreign import bpcall "Matrix:sizedDoubleVectorFromList" sizedDoubleVectorFromListNative :: Int -> [Double] -> NativeVector Double
+foreign import bpcall "NativeVector:intVectorFromList" intVectorFromListNative :: [Int] -> NativeVector Int
+foreign import bpcall "NativeVector:doubleVectorFromList" doubleVectorFromListNative :: [Double] -> NativeVector Double
+foreign import bpcall "NativeVector:sizedIntVectorFromList" sizedIntVectorFromListNative :: Int -> [Int] -> NativeVector Int
+foreign import bpcall "NativeVector:sizedDoubleVectorFromList" sizedDoubleVectorFromListNative :: Int -> [Double] -> NativeVector Double
 foreign import bpcall "Matrix:intMatrixFromList" intMatrixFromListNative :: Int -> Int -> [Int] -> NativeMatrix Int
 foreign import bpcall "Matrix:doubleMatrixFromList" doubleMatrixFromListNative :: Int -> Int -> [Double] -> NativeMatrix Double
 
@@ -129,7 +126,7 @@ class Element e => Container c e where
     maxIndex :: c e -> IndexOf c
     find :: (e -> Bool) -> c e -> [IndexOf c]
 
-foreign import ecall "Matrix:vectorAtIndex" vectorAtIndexNative :: NativeVector a -> Int -> a
+foreign import ecall "NativeVector:vectorAtIndex" vectorAtIndexNative :: NativeVector a -> Int -> a
 foreign import ecall "Matrix:vectorEqual" vectorEqualNative :: NativeVector a -> NativeVector a -> Bool
 foreign import ecall "Matrix:vectorSumElements" vectorSumElementsNative :: NativeVector a -> a
 foreign import ecall "Matrix:vectorProductElements" vectorProductElementsNative :: NativeVector a -> a
@@ -137,7 +134,7 @@ foreign import ecall "Matrix:vectorMinElement" vectorMinElementNative :: NativeV
 foreign import ecall "Matrix:vectorMaxElement" vectorMaxElementNative :: NativeVector a -> a
 foreign import ecall "Matrix:vectorMinIndex" vectorMinIndexNative :: NativeVector a -> Int
 foreign import ecall "Matrix:vectorMaxIndex" vectorMaxIndexNative :: NativeVector a -> Int
-foreign import bpcall "Matrix:vectorKonstNative" vectorKonstNative :: a -> Int -> NativeVector a
+foreign import bpcall "NativeVector:vectorKonstNative" vectorKonstNative :: a -> Int -> NativeVector a
 foreign import bpcall "Matrix:matrixKonstNative" matrixKonstNative :: a -> Int -> Int -> NativeMatrix a
 
 vectorEqual :: Vector a -> Vector a -> Bool

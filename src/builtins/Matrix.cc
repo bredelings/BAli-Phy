@@ -257,17 +257,6 @@ closure map_matrix(const Box<NativeMatrix>& matrix1, F&& operation)
     return matrix2;
 }
 
-// Allocate a native constant vector using the scalar's runtime representation.
-template <typename T>
-closure constant_vector(T value, int count)
-{
-    if (count < 0)
-        throw myexception()<<"constant vector: negative extent "<<count;
-    auto result = new Box<DenseVector<T>>(count);
-    result->setConstant(value);
-    return result;
-}
-
 // Allocate a native constant matrix using the scalar's runtime representation.
 template <typename T>
 closure constant_matrix(T value, int rows, int columns)
@@ -701,76 +690,6 @@ closure matrix_to_vector(const Box<NativeMatrix>& native_matrix)
     return values;
 }
 
-// Read a complete Haskell list through dependent USE edges and store its
-// scalar values contiguously in a native numeric vector.
-template <typename T>
-closure vector_from_list(OperationArgs& Args)
-{
-    std::vector<T> values;
-    int xs = Args.evaluate_slot_use(0);
-
-    while(true)
-    {
-        const closure& xs_closure = Args.memory().closure_at(xs);
-        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
-        if (not list_cell)
-            throw myexception()<<"vector fromList: expected a list constructor, but got "
-                               <<xs_closure.get_code().print();
-
-        const auto& tag = list_cell->head;
-        if (tag.name() == "[]" and tag.n_args() == 0)
-            break;
-        if (tag.name() != ":" or tag.n_args() != 2)
-            throw myexception()<<"vector fromList: expected ':' or '[]', but got "<<tag.print();
-        if (values.size() == static_cast<std::size_t>(std::numeric_limits<int>::max()))
-            throw myexception()<<"vector fromList: element count exceeds supported Int range";
-
-        int element = xs_closure.reg_for_constructor_slot(0);
-        int tail = xs_closure.reg_for_constructor_slot(1);
-        int value = Args.evaluate_reg_dependent_use(element);
-        values.push_back(matrix_scalar<T>(Args.memory().closure_at(value).get_code()));
-        xs = Args.evaluate_reg_dependent_use(tail);
-    }
-
-    object_ptr<Box<DenseVector<T>>> result = new Box<DenseVector<T>>(values.size());
-    std::copy(values.begin(), values.end(), result->data());
-    return result;
-}
-
-// Read exactly the requested number of Haskell list cells, rejecting short
-// input and leaving any excess tail unevaluated.
-template <typename T>
-closure sized_vector_from_list(OperationArgs& Args)
-{
-    int expected_size = Args.evaluate_slot_to_value(0).as_int();
-    if (expected_size < 0)
-        throw myexception()<<"vector (|>): size must be nonnegative, but got "<<expected_size;
-
-    object_ptr<Box<DenseVector<T>>> result = new Box<DenseVector<T>>(expected_size);
-    int xs = Args.evaluate_slot_use(1);
-    for(int k=0; k<expected_size; k++)
-    {
-        const closure& xs_closure = Args.memory().closure_at(xs);
-        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
-        if (not list_cell)
-            throw myexception()<<"vector (|>): expected a list constructor, but got "
-                               <<xs_closure.get_code().print();
-
-        const auto& tag = list_cell->head;
-        if (tag.name() == "[]" and tag.n_args() == 0)
-            throw myexception()<<"vector (|>): expected "<<expected_size<<" elements, but got "<<k;
-        if (tag.name() != ":" or tag.n_args() != 2)
-            throw myexception()<<"vector (|>): expected ':' or '[]', but got "<<tag.print();
-
-        int element = xs_closure.reg_for_constructor_slot(0);
-        int tail = xs_closure.reg_for_constructor_slot(1);
-        int value = Args.evaluate_reg_dependent_use(element);
-        (*result)(k) = matrix_scalar<T>(Args.memory().closure_at(value).get_code());
-        xs = Args.evaluate_reg_dependent_use(tail);
-    }
-    return result;
-}
-
 // Copy a native vector into a row-major matrix having the requested column
 // count, validating that the vector can be partitioned into complete rows.
 template <typename T>
@@ -867,42 +786,6 @@ extern "C" closure builtin_function_doubleMatrixFromList(OperationArgs& Args)
     return matrix_from_list<double>(Args);
 }
 
-// Construct a native Int vector from a complete Haskell list.
-extern "C" closure builtin_function_intVectorFromList(OperationArgs& Args)
-{
-    return vector_from_list<int>(Args);
-}
-
-// Construct a native Double vector from a complete Haskell list.
-extern "C" closure builtin_function_doubleVectorFromList(OperationArgs& Args)
-{
-    return vector_from_list<double>(Args);
-}
-
-// Construct a fixed-length Int vector without evaluating an excess list tail.
-extern "C" closure builtin_function_sizedIntVectorFromList(OperationArgs& Args)
-{
-    return sized_vector_from_list<int>(Args);
-}
-
-// Construct a fixed-length Double vector without evaluating an excess list tail.
-extern "C" closure builtin_function_sizedDoubleVectorFromList(OperationArgs& Args)
-{
-    return sized_vector_from_list<double>(Args);
-}
-
-// Construct a constant vector without allocating a Haskell element list.
-extern "C" closure builtin_function_vectorKonstNative(OperationArgs& Args)
-{
-    auto value = Args.evaluate_slot_to_value(0);
-    int count = Args.evaluate_slot_to_value(1).as_int();
-    if (value.is_int())
-        return constant_vector(value.as_int(), count);
-    if (value.is_double())
-        return constant_vector(value.as_double(), count);
-    throw myexception()<<"constant vector: unsupported scalar representation";
-}
-
 // Construct a constant matrix without allocating a Haskell element list.
 extern "C" closure builtin_function_matrixKonstNative(OperationArgs& Args)
 {
@@ -935,20 +818,6 @@ extern "C" closure builtin_function_takeDiagNative(OperationArgs& Args)
     auto matrix = Args.evaluate_slot_to_value(0);
     return visit_matrix(matrix, [](const auto& native) {
         return matrix_diagonal(native);
-    });
-}
-
-// Return one native vector element after checking its zero-based index.
-extern "C" R::Exp simple_function_vectorAtIndex(vector<R::Exp>& args)
-{
-    auto value = get_arg(args);
-    int index = get_arg(args).as_int();
-    // Check the requested index before preserving the native scalar representation.
-    return visit_numeric_vector(value, [index](const auto& vector_value) -> R::Exp {
-        if (index < 0 or index >= vector_value.size())
-            throw myexception()<<"vector atIndex: index "<<index
-                               <<" is outside vector length "<<vector_value.size();
-        return vector_value(index);
     });
 }
 
