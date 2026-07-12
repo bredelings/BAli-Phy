@@ -82,7 +82,7 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
 
       stateSequences <- sampleComponentStatesFixed rtree rootLength smodel
 
-      let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
+      let sequenceForNode label stateSequence = (label, statesToLetters smap $ componentStates stateSequence)
 
       return $ Aligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 

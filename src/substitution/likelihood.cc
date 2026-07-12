@@ -2427,7 +2427,7 @@ namespace substitution {
         return Pr3;
     }
 
-    Vector<pair<int,int>> sample_root_sequence(const R::RVector& sparse_LCN,
+    ComponentStateVectors sample_root_sequence(const R::RVector& sparse_LCN,
 					       const R::RVector& LCB,
 					       const R::RVector& A_,
                                                const DenseMatrix<double>& F)
@@ -2470,7 +2470,7 @@ namespace substitution {
 
 	vector<int> s(n_branches_in, 0);
 	vector<int> i(n_branches_in, 0);
-	Vector<pair<int,int>> ancestral_characters(L);
+	ComponentStateVectors ancestral_characters(L);
         for(int s_out=0;;s_out++)
         {
 	    for(int j =0;j < n_branches_in; j++)
@@ -2515,13 +2515,16 @@ namespace substitution {
 	    for(int j=0;j<n_sequences;j++)
 		element_prod_assign(S.data(), node_cache(j)[s_out], matrix_size);
 
-            ancestral_characters[s_out] = sample(S);
+            auto [component, state] = sample(S);
+            ancestral_characters.components[s_out] = component;
+            ancestral_characters.states[s_out] = state;
         }
 
         return ancestral_characters;
     }
 
-    Vector<pair<int,int>> sample_branch_sequence(const Vector<pair<int,int>>& parent_seq,
+    ComponentStateVectors sample_branch_sequence(std::span<const int> parent_components,
+						 std::span<const int> parent_states,
 						 const pairwise_alignment_t& parent_A,
 						 const R::RVector& sparse_LCN,
 						 const R::RVector& LCB,
@@ -2530,6 +2533,9 @@ namespace substitution {
 						 const DenseMatrix<double>& F)
     {
         total_peel_internal_branches++;
+
+        assert(parent_components.size() == parent_states.size());
+        assert(parent_components.size() == parent_A.length1());
 
         const int n_models = transition_P.size();
         const int n_states = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
@@ -2579,7 +2585,7 @@ namespace substitution {
 	// index into parent_A
 	int i_parent = 0;
 
-	Vector<pair<int,int>> ancestral_characters(L);
+	ComponentStateVectors ancestral_characters(L);
         for(;;)
         {
 	    for(int j =0;j < n_branches_in; j++)
@@ -2626,7 +2632,7 @@ namespace substitution {
 	    pair<int,int> state_model_parent(-1,-1);
 	    if (i_parent < parent_A.size() and parent_A.has_character1(i_parent))
 	    {
-		state_model_parent = parent_seq[s_parent];
+		state_model_parent = {parent_components[s_parent], parent_states[s_parent]};
 		s_parent++;
 	    }
 	    i_parent++;
@@ -2647,7 +2653,9 @@ namespace substitution {
 	    for(int j=0;j<n_sequences;j++)
 		element_prod_assign(S, node_cache(j)[s_node], matrix_size);
 
-            ancestral_characters[s_node] = sample(SMAT);
+            auto [component, state] = sample(SMAT);
+            ancestral_characters.components[s_node] = component;
+            ancestral_characters.states[s_node] = state;
 
 	    s_node++;
         }

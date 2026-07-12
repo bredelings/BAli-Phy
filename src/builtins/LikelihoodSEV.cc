@@ -7,7 +7,6 @@
 #include "util/myexception.H"
 
 using std::vector;
-using std::pair;
 using std::istringstream;
 using std::istream;
 using std::valarray;
@@ -21,6 +20,36 @@ using Alphabet = PtrBox<alphabet>;
 #include "substitution/cache.H"
 #include "dp/hmm.H"
 using boost::dynamic_bitset;
+
+namespace
+{
+
+// Validate one Haskell primitive view after all arguments are retained and
+// expose its contiguous logical range without per-element checks.
+std::span<const int> native_int_view(const R::Exp& value, int offset, int count,
+                                     const char* operation)
+{
+    const auto& owner = value.as_<Box<DenseVector<int>>>();
+    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
+        throw myexception()<<operation<<": invalid native Int vector view";
+    std::span<const int> storage(owner.data(), static_cast<std::size_t>(owner.size()));
+    return storage.subspan(static_cast<std::size_t>(offset),
+                           static_cast<std::size_t>(count));
+}
+
+// Move a sampled structure-of-arrays result into two unboxed-vector owners
+// without copying either primitive array.
+closure component_state_result(ComponentStateVectors values)
+{
+    assert(values.components.size() == values.states.size());
+    object_ptr<Box<DenseVector<int>>> components(
+        new Box<DenseVector<int>>(std::move(values.components)));
+    object_ptr<Box<DenseVector<int>>> states(
+        new Box<DenseVector<int>>(std::move(values.states)));
+    return R::RPair(components, states);
+}
+
+}
 
 extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
 {
@@ -61,23 +90,36 @@ extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 
 extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto arg2 = Args.evaluate_slot_to_value(2);
-    auto arg3 = Args.evaluate_slot_to_value(3);
-    int offset = Args.evaluate_slot_to_value(4).as_int();
-    int count = Args.evaluate_slot_to_value(5).as_int();
-    auto owner_value = Args.evaluate_slot_to_value(6);
-    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
-        throw myexception()<<"LikelihoodSEV.sampleSequence: invalid column-map view";
-    auto columns = owner.segment(offset, count);
+    int parent_count = Args.evaluate_slot_to_value(0).as_int();
+    int component_offset = Args.evaluate_slot_to_value(1).as_int();
+    auto component_value = Args.evaluate_slot_to_value(2);
+    int state_offset = Args.evaluate_slot_to_value(3).as_int();
+    auto state_value = Args.evaluate_slot_to_value(4);
+    auto arg5 = Args.evaluate_slot_to_value(5);
+    auto arg6 = Args.evaluate_slot_to_value(6);
+    auto arg7 = Args.evaluate_slot_to_value(7);
+    int column_offset = Args.evaluate_slot_to_value(8).as_int();
+    int column_count = Args.evaluate_slot_to_value(9).as_int();
+    auto column_value = Args.evaluate_slot_to_value(10);
+    if (parent_count != column_count)
+        throw myexception()<<"LikelihoodSEV.sampleSequence: parent and column-map lengths differ";
+    auto parent_components = native_int_view(
+        component_value, component_offset, parent_count,
+        "LikelihoodSEV.sampleSequence components");
+    auto parent_states = native_int_view(
+        state_value, state_offset, parent_count,
+        "LikelihoodSEV.sampleSequence states");
+    auto columns = native_int_view(
+        column_value, column_offset, column_count,
+        "LikelihoodSEV.sampleSequence columns");
 
-    return substitution::sample_sequence_SEV(arg0.as_<Vector<pair<int,int>>>(), // parent_seq,
-					     arg1.as_<R::RVector>(),               // LCN
-					     arg2.as_<R::RVector>(),               // transition_ps
-					     arg3.as_<R::RVector>(),               // LCB
-					     columns);                             // compressed_col_for_col
+    auto result = substitution::sample_sequence_SEV(
+        parent_components, parent_states,
+	arg5.as_<R::RVector>(), // LCN
+	arg6.as_<R::RVector>(), // transition_ps
+	arg7.as_<R::RVector>(), // LCB
+	columns);
+    return component_state_result(std::move(result));
 }
 
 extern "C" closure builtin_function_calcProb(OperationArgs& Args)
@@ -148,13 +190,14 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
     int offset = Args.evaluate_slot_to_value(3).as_int();
     int count = Args.evaluate_slot_to_value(4).as_int();
     auto owner_value = Args.evaluate_slot_to_value(5);
-    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
-        throw myexception()<<"LikelihoodSEV.sampleRootSequence: invalid column-map view";
-    auto columns = owner.segment(offset, count);
+    auto columns = native_int_view(
+        owner_value, offset, count,
+        "LikelihoodSEV.sampleRootSequence columns");
 
-    return substitution::sample_root_sequence_SEV(arg0.as_<R::RVector>(),      // LCN
-                                                  arg1.as_<R::RVector>(),      // LCB
-                                                  arg2.as_<Box<DenseMatrix<double>>>(),  // F
-						  columns);                    // compressed_col_for_col
+    auto result = substitution::sample_root_sequence_SEV(
+        arg0.as_<R::RVector>(),                    // LCN
+        arg1.as_<R::RVector>(),                    // LCB
+        arg2.as_<Box<DenseMatrix<double>>>(),       // F
+        columns);                                   // compressed_col_for_col
+    return component_state_result(std::move(result));
 }

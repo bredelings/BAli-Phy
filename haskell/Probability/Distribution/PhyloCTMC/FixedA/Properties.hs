@@ -41,7 +41,7 @@ data PhyloCTMCPropertiesFixedA = PhyloCTMCPropertiesFixedA {
       prop_fixed_a_n_states :: Int,
       prop_fixed_a_n_base_models :: Int,
 
-      prop_fixed_a_anc_cat_states :: IntMap VectorPairIntInt,
+      prop_fixed_a_anc_cat_states :: IntMap ComponentStateSequence,
       prop_fixed_a_smodel_properties :: PropertyMap
     }
 

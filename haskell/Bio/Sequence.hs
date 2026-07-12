@@ -6,6 +6,9 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.BitVector
 import Data.Maybe (isJust)
+import qualified Data.Vector.Unboxed as U
+import Data.Vector.Unboxed.Internal (intVectorNativeView)
+import Foreign.NativeVector (NativeVector)
 
 -- Dummy type that stands for the c++ `sequence` type
 -- Can we eliminate this?
@@ -31,7 +34,12 @@ sequenceToAlignedIndices a (_, s) = builtin_sequenceToAlignedIndices a (T.toCppS
 -- sequence_to_indices :: Sequence -> [Int]
 -- maybe add this later
 
-foreign import bpcall "Alignment:" statesToLetters :: EVector Int -> EVector Int -> EVector Int
+foreign import bpcall "Alignment:statesToLetters" statesToLettersRaw :: EVector Int -> Int -> Int -> NativeVector Int -> EVector Int
+
+-- Translate an unboxed state view without first copying it into an EVector.
+statesToLetters :: EVector Int -> U.Vector Int -> EVector Int
+statesToLetters smap states = statesToLettersRaw smap offset count native
+    where (offset, count, native) = intVectorNativeView states
 
 foreign import bpcall "Alignment:loadSequences" builtin_loadSequences :: CPPString -> IO (EVector ESequence)
 loadSequences :: String -> IO [Sequence]
@@ -132,4 +140,3 @@ checkSameLengths d@(CharacterData _ sequences) | isJust $ allSame lengths = d
 mkAlignedCharacterData alphabet sequences = Aligned $ checkSameLengths $ mkCharacterData alphabet sequences
 
 unalign (Aligned (CharacterData a sequences)) = Unaligned (CharacterData a [(l, stripGaps s) | (l,s) <- sequences])
-

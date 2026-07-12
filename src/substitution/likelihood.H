@@ -26,7 +26,9 @@
 #ifndef LIKELIHOOD_H
 #define LIKELIHOOD_H
 
+#include <span>
 #include <vector>
+#include "substitution/component-state.H"
 #include "util/dense-matrix.H"
 #include "util/matrix.H"
 #include "util/math/log-double.H"
@@ -129,12 +131,13 @@ namespace substitution {
 
     // -- Generic
 
-    Vector<std::pair<int,int>> sample_root_sequence(const R::RVector& LCN,
+    ComponentStateVectors sample_root_sequence(const R::RVector& LCN,
 					       const R::RVector& LCB,
 					       const R::RVector& A_,
                                                const DenseMatrix<double>& F);
 
-    Vector<std::pair<int,int>> sample_branch_sequence(const Vector<std::pair<int,int>>& parent_seq,
+    ComponentStateVectors sample_branch_sequence(std::span<const int> parent_components,
+						 std::span<const int> parent_states,
 						 const pairwise_alignment_t& parent_A,
 						 const R::RVector& LCN,
 						 const R::RVector& LCB,

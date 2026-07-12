@@ -51,7 +51,8 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
                  | isStationary smodel = peelLikelihoodEqNonRev rtree nodeCLVs cls as f substRoot
                  | otherwise           = peelLikelihoodNonEq    rtree nodeCLVs cls as f substRoot
 
-      ancestralComponentStates = sampleAncestralSequences rtree substRoot nodeCLVs as transitionPs f cls
+      ancestralComponentStates = sampleAncestralSequences rtree substRoot
+          (sequenceLength alignment substRoot) nodeCLVs as transitionPs f cls
 
       -- Can we eliminate fs, since it is only used as a property?
       fs | isStationary smodel = getNodesSet rtree & IntMap.fromSet (\_ -> f)
@@ -94,7 +95,7 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
 
       stateSequences <- sampleComponentStates rtree alignment smodel
 
-      let sequenceForNode label stateSequence = (label, statesToLetters smap $ extractStates stateSequence)
+      let sequenceForNode label stateSequence = (label, statesToLetters smap $ componentStates stateSequence)
 
       return $ Unaligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 

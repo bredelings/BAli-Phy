@@ -1,6 +1,8 @@
 #ifndef LIKELIHOODSEV_H
 #define LIKELIHOODSEV_H
+#include <span>
 #include <vector>
+#include "substitution/component-state.H"
 #include "util/dense-matrix.H"
 #include "util/math/log-double.H"
 #include "substitution/cache.H"
@@ -72,15 +74,16 @@ namespace substitution {
 				     const R::RVector& smap,
 				     int n_models);
 
-    Vector<std::pair<int,int>> sample_root_sequence_SEV(const R::RVector& LCN,
+    ComponentStateVectors sample_root_sequence_SEV(const R::RVector& LCN,
 							const R::RVector& LCB,
 							const DenseMatrix<double>& F,
-							Eigen::Ref<const DenseVector<int>> compressed_col_for_col);
+							std::span<const int> compressed_col_for_col);
 
-    Vector<std::pair<int,int>> sample_sequence_SEV(const Vector<std::pair<int,int>>& parent_seq,
+    ComponentStateVectors sample_sequence_SEV(std::span<const int> parent_components,
+						   std::span<const int> parent_states,
 						   const R::RVector& LCN,
 						   const R::RVector& transition_Ps,
 						   const R::RVector& LCB,
-						   Eigen::Ref<const DenseVector<int>> compressed_col_for_col);
+						   std::span<const int> compressed_col_for_col);
 }
 #endif

@@ -43,14 +43,24 @@ peelBranch toward nodeCLs branchCLs ps f | toward    = peelBranchTowardRoot   no
                                          | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs ps f
 
 -- ancestral sequence sampling for SEV
-foreign import bpcall "LikelihoodSEV:sampleRootSequence" sampleRootSequenceRaw :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> Int -> Int -> NativeVector Int -> VectorPairIntInt
-foreign import bpcall "LikelihoodSEV:sampleSequence" sampleSequenceRaw :: VectorPairIntInt -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> Int -> Int -> NativeVector Int -> VectorPairIntInt
+foreign import bpcall "LikelihoodSEV:sampleRootSequence" sampleRootSequenceRaw :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> Int -> Int -> NativeVector Int -> NativeComponentStateSequence
+foreign import bpcall "LikelihoodSEV:sampleSequence" sampleSequenceRaw :: Int -> Int -> NativeVector Int -> Int -> NativeVector Int -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> Int -> Int -> NativeVector Int -> NativeComponentStateSequence
 
 sampleRootSequence node branch frequencies (UInternal.V_Int offset count native) =
-    sampleRootSequenceRaw node branch (nativeMatrix frequencies) offset count native
+    componentStateSequenceFromNative count $
+        sampleRootSequenceRaw node branch (nativeMatrix frequencies)
+                              offset count native
 
+-- Sample from both native parent arrays while retaining the full-column count
+-- supplied by the parent and compressed-column view.
 sampleSequence parent node probabilities branch (UInternal.V_Int offset count native) =
-    sampleSequenceRaw parent node probabilities branch offset count native
+    componentStateSequenceFromNative count $
+        sampleSequenceRaw parentCount componentOffset componentNative
+                                      stateOffset stateNative
+                                      node probabilities branch offset count native
+  where
+    (parentCount, componentOffset, componentNative, stateOffset, stateNative) =
+        componentStateSequenceNativeView parent
 
 foreign import bpcall "LikelihoodSEV:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
 

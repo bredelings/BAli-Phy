@@ -1256,10 +1256,10 @@ namespace substitution
 
     // Currently we are not treating N as a gap during compression.
     // So, we can assume that anything that's not in the mask will not have an ancestral letter.
-    Vector<pair<int,int>> sample_root_sequence_SEV(const R::RVector& LCN,
+    ComponentStateVectors sample_root_sequence_SEV(const R::RVector& LCN,
 						   const R::RVector& LCB,
                                                    const DenseMatrix<double>& F,
-                                                   Eigen::Ref<const DenseVector<int>> compressed_col_for_col)
+                                                   std::span<const int> compressed_col_for_col)
     {
         // 1. Construct a scratch CL matrix, and check that dimensions match inputs
         const int n_models = F.rows();
@@ -1313,7 +1313,9 @@ namespace substitution
 	    cache_index_for_compressed_column[i] = get_index_for_column( cache(i).bits );
 
 	// Initially all the ancestral letters are missing.
-        Vector<pair<int,int>> ancestral_characters(L_full,{-1,-1});
+        ComponentStateVectors ancestral_characters(L_full);
+        ancestral_characters.components.setConstant(-1);
+        ancestral_characters.states.setConstant(-1);
 
         // 3. Walk the alignment and sample (model,letter) for ancestral sequence
         for(int c = 0; c < L_full; c++)
@@ -1328,17 +1330,20 @@ namespace substitution
 		if (auto i = cache_index_for_compressed_column[b][c2])
 		    element_prod_modify(S.data(), cache(b)[*i], matrix_size);
 
-            ancestral_characters[c] = sample( S );
+            auto [component, state] = sample(S);
+            ancestral_characters.components[c] = component;
+            ancestral_characters.states[c] = state;
         }
 
         return ancestral_characters;
     }
 
-    Vector<pair<int,int>> sample_sequence_SEV(const Vector<pair<int,int>>& parent_seq,
+    ComponentStateVectors sample_sequence_SEV(std::span<const int> parent_components,
+					       std::span<const int> parent_states,
 					      const R::RVector& LCN,
 					      const R::RVector& transition_Ps,
 					      const R::RVector& LCB,
-					      Eigen::Ref<const DenseVector<int>> compressed_col_for_col)
+					      std::span<const int> compressed_col_for_col)
     {
         // 1. Construct a scratch matrix and check that dimensions match inputs
         const int n_models  = transition_Ps.size();
@@ -1369,7 +1374,8 @@ namespace substitution
         int L_compressed = cache(0).bits.size();
 
 #ifndef NDEBUG
-	assert(parent_seq.size() == L_full);
+	assert(parent_components.size() == L_full);
+	assert(parent_states.size() == L_full);
 	assert(L_full >= L_compressed);
 
         for(int i=0;i<n_clvs;i++)
@@ -1392,7 +1398,9 @@ namespace substitution
 	    cache_index_for_compressed_column[i] = get_index_for_column( cache(i).bits );
 
 	// Initially all the ancestral letters are missing.
-        Vector<pair<int,int>> ancestral_characters(L_full,{-1,-1});
+        ComponentStateVectors ancestral_characters(L_full);
+        ancestral_characters.components.setConstant(-1);
+        ancestral_characters.states.setConstant(-1);
 
         // 3. Walk the alignment and sample (model,letter) for ancestral sequence
         for(int c = 0; c < L_full; c++)
@@ -1401,13 +1409,16 @@ namespace substitution
 
             if (not allbits.test(c2)) continue;
 
-            calc_transition_prob_from_parent(S, parent_seq[c], transition_Ps);
+            calc_transition_prob_from_parent(
+                S, {parent_components[c], parent_states[c]}, transition_Ps);
 
 	    for(int b=0;b<n_clvs;b++)
 		if (auto i = cache_index_for_compressed_column[b][c2])
 		    element_prod_modify(S.data(), cache(b)[*i], matrix_size);
 
-            ancestral_characters[c] = sample(S);
+            auto [component, state] = sample(S);
+            ancestral_characters.components[c] = component;
+            ancestral_characters.states[c] = state;
         }
 
         return ancestral_characters;

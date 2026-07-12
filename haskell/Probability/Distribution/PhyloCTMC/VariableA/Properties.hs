@@ -45,7 +45,7 @@ data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
       prop_variable_a_get_weightedFrequencyMatrix :: IntMap (NativeMatrix Double), -- only variable A
       prop_variable_a_nodeCLVs :: IntMap (Maybe CondLikes),                    -- only variable A
 
-      prop_variable_a_anc_cat_states :: IntMap VectorPairIntInt,
+      prop_variable_a_anc_cat_states :: IntMap ComponentStateSequence,
       prop_variable_a_smodel_properties :: PropertyMap
     }
 

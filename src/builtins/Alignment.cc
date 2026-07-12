@@ -18,7 +18,6 @@
 
 using std::string;
 using std::vector;
-using std::pair;
 
 using std::optional;
 using std::map;
@@ -807,17 +806,20 @@ extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args
 extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& smap = arg0.as_<R::RVector>();
+    int offset = Args.evaluate_slot_to_value(1).as_int();
+    int count = Args.evaluate_slot_to_value(2).as_int();
+    auto owner_value = Args.evaluate_slot_to_value(3);
+    const auto& smap = arg0.as_<R::RVector>();
+    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
+    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
+        throw myexception()<<"Alignment.statesToLetters: invalid native state view";
 
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& state_sequence = arg1.as_<R::RVector>();
-
-    auto result = object_ptr<R::RVector>(new R::RVector(state_sequence.size()));
+    auto result = object_ptr<R::RVector>(new R::RVector(count));
     auto& letter_sequence = *result;
 
-    for(int i=0; i < state_sequence.size(); i++)
+    for(int i=0; i<count; i++)
     {
-        int s = state_sequence[i].as_int();
+        int s = owner[offset + i];
         if (s >= 0)
             letter_sequence[i] = smap[s].as_int();
         else
@@ -931,65 +933,6 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
     }
 
     return A1;
-}
-
-extern "C" closure builtin_function_ancestral_sequence_alignment(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& A0 = arg0.as_<Box<alignment>>().value();
-
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& states = arg1.as_<R::RVector>();
-
-    auto arg2 = Args.evaluate_slot_to_value(2);
-    auto& smap = arg2.as_<R::RVector>();
-
-    int n = states.size();
-    int L = states[0].as_<Vector<pair<int,int>>>().size();
-
-    object_ptr<Box<alignment>> A_(new Box<alignment>(A0.get_alphabet(), n, L));
-    auto& A = *A_;
-
-    assert(A0.length() == A.length());
-
-    for(int i=0;i<A.n_sequences();i++)
-    {
-        auto& node_states = states[i].as_<Vector<pair<int,int>>>();
-
-        if (i < A0.n_sequences())
-        {
-            A.seq(i) = A0.seq(i);
-            for(int c=0;c<A.length();c++)
-                A.set_value(c, i, A0(c,i));
-        }
-        else
-        {
-            A.seq(i).name = "A"+std::to_string(i);
-            for(int c=0;c<A.length();c++)
-            {
-                int state = node_states[c].second;
-                int letter = (state == -1)?-1:smap[state].as_int();
-                A.set_value(c, i, letter);
-            }
-        }
-    }
-
-    // FIXME - minimally-connect leaf characters in the machine!
-    // It might be a bit slower if we did that, though.
-
-    return A_;
-}
-
-extern "C" closure builtin_function_extractStates(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& states = arg0.as_<Vector<pair<int,int>>>();
-
-    R::RVector sequence(states.size());
-    for(int i=0; i<sequence.size(); i++)
-        sequence[i] = states[i].second;
-
-    return sequence;
 }
 
 extern "C" closure builtin_function_mkNodeAlignment(OperationArgs& Args)

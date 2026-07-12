@@ -22,7 +22,7 @@ import qualified Data.IntSet as IntSet
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (intVectorFromNativeResult)
+import Data.Vector.Unboxed.Internal (intVectorFromNative, intVectorFromNativeResult, intVectorNativeView)
 import Foreign.NativeVector (NativeVector)
 
 import qualified Data.Text as Text
@@ -37,7 +37,34 @@ import Data.JSON
 
 import qualified Data.JSON.Encoding as E
 
-data VectorPairIntInt -- ancestral sequences with (int letter, int category) for each site.
+-- Store the sampled substitution component and state for each site in two
+-- unboxed primitive arrays while retaining their domain-specific JSON rules.
+data ComponentStateSequence = ComponentStateSequence (U.Vector (Int,Int))
+
+type NativeComponentStateSequence = EPair (NativeVector Int) (NativeVector Int)
+
+componentStateSequenceFromNative :: Int -> NativeComponentStateSequence -> ComponentStateSequence
+componentStateSequenceFromNative count result =
+    ComponentStateSequence (U.zip (intVectorFromNative count components)
+                                  (intVectorFromNative count states))
+  where
+    (components, states) = pair_from_c result
+
+-- Return both complete native child views so foreign consumers preserve
+-- independently sliced component and state arrays.
+componentStateSequenceNativeView :: ComponentStateSequence ->
+    (Int, Int, NativeVector Int, Int, NativeVector Int)
+componentStateSequenceNativeView (ComponentStateSequence values) =
+    (U.length values, componentOffset, componentNative,
+                      stateOffset, stateNative)
+  where
+    (components, states) = U.unzip values
+    (componentOffset, _, componentNative) = intVectorNativeView components
+    (stateOffset, _, stateNative) = intVectorNativeView states
+
+-- Project the state array without copying or inspecting the component array.
+componentStates :: ComponentStateSequence -> U.Vector Int
+componentStates (ComponentStateSequence values) = snd (U.unzip values)
 
 foreign import bpcall "Alignment:leaf_sequence_counts" builtin_leaf_sequence_counts :: AlignmentMatrix -> Int -> EVector Int -> EVector (EVector Int)
 
@@ -100,14 +127,6 @@ totalLengthIndels (AlignmentOnTree t _ _ as) = sum [lengthIndels (as IntMap.! b)
 
 -- Alignment -> Int -> EVector Int -> [EVector Int]
 leaf_sequence_counts a n counts = vectorToList $ builtin_leaf_sequence_counts a n counts
-
-foreign import bpcall "Alignment:ancestral_sequence_alignment" builtin_ancestral_sequence_alignment :: AlignmentMatrix -> EVector VectorPairIntInt -> EVector Int -> AlignmentMatrix
-ancestral_sequence_alignment tree a0 states smap = builtin_ancestral_sequence_alignment a0 states' smap
-    where states' = toVector [ states IntMap.! node  | node <- sort $ getNodes tree]
-
--- Extract (component,state) -> state.
-foreign import bpcall "Alignment:" extractStates :: VectorPairIntInt -> EVector Int
-
 
 {-
   OK, so what do we use the original alignment matrix for?
@@ -182,9 +201,8 @@ sequencesFromTree tree isequences = [(label, isequence) | n <- leafNodes tree ++
 
 labeledNodeMap tree objects = Map.fromList [(label, objects IntMap.! n) | n <- nodes tree, Just label <- [getLabels tree IntMap.! n]]
 
-foreign import bpcall "Vector:showObject" showVectorPairIntInt :: VectorPairIntInt -> CPPString
-instance Show VectorPairIntInt where
-    show = unpack_cpp_string . showVectorPairIntInt
+instance Show ComponentStateSequence where
+    show (ComponentStateSequence values) = show values
 
 
 -- Ideally we'd like to do
@@ -255,35 +273,37 @@ getTaxonAges labels regex direction = zip labels (toList $ getTaxonAgesRaw cppLa
           cppDirection = convert direction
 
 class AncestralAlignment a where
-    ancestralAlignment :: (IsTree t, LabelType t ~ Text) => t -> a -> EVector Int -> Alphabet -> IntMap VectorPairIntInt -> AlignedCharacterData
+    ancestralAlignment :: (IsTree t, LabelType t ~ Text) => t -> a -> EVector Int -> Alphabet -> IntMap ComponentStateSequence -> AlignedCharacterData
 
 instance AncestralAlignment (IntMap (Maybe BitVector)) where
     ancestralAlignment tree observedMasks smap alphabet componentStateSequences =
 --    This also needs the map from columns to compressed columns:
-      let ancestralStateSequences :: IntMap (EVector Int)
-          ancestralStateSequences = extractStates <$> componentStateSequences
-          ancestralStateSequences' = minimallyConnectCharacters observedMasks tree ancestralStateSequences
-          ancestralLetterSequences = statesToLetters smap <$> ancestralStateSequences'
-      in Aligned (CharacterData alphabet $ sequencesFromTree tree ancestralLetterSequences)
+      let ancestralLetterSequences = statesToLetters smap . componentStates <$> componentStateSequences
+          connectedLetterSequences = minimallyConnectCharacters observedMasks tree ancestralLetterSequences
+      in Aligned (CharacterData alphabet $ sequencesFromTree tree connectedLetterSequences)
 
 
 instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
     ancestralAlignment rtree alignment smap alphabet componentStateSequences =
         Aligned $ CharacterData alphabet (sequencesFromTree rtree alignedLetterSequences)
-        where stateSequences = extractStates <$> componentStateSequences
-              alignedStateSequences = alignedSequences alignment stateSequences
-              alignedLetterSequences = statesToLetters smap <$> alignedStateSequences
+        where letterSequences = statesToLetters smap . componentStates <$> componentStateSequences
+              alignedLetterSequences = alignedSequences alignment letterSequences
 
 leafAlignment tree sequenceData = labelToNodeMap tree $ fmap (fmap bitmaskFromSequence') $ getSequences sequenceData
 
 
-foreign import bpcall "Foreign:" encodeVectorPairIntIntRaw :: VectorPairIntInt -> CPPString
---foreign import bpcall "Foreign:" toJSONVectorPairIntIntRaw :: VectorPairIntInt -> EJSON
---TODO: EJSON -> JSON.Value
+foreign import bpcall "Foreign:" encodeComponentStateSequenceRaw :: Int -> Int -> NativeVector Int -> Int -> NativeVector Int -> CPPString
 
-encodeVectorPairIntInt = Text.fromCppString . encodeVectorPairIntIntRaw
+-- Encode directly from both native child views, retaining the historical
+-- missing-state sentinel without constructing an intermediate pair list.
+encodeComponentStateSequence sequence = Text.fromCppString $
+    encodeComponentStateSequenceRaw count componentOffset componentNative
+                                              stateOffset stateNative
+  where
+    (count, componentOffset, componentNative, stateOffset, stateNative) =
+        componentStateSequenceNativeView sequence
 
-instance ToJSON VectorPairIntInt where
-    toJSON = error "VectorPairIntInt.toJSON: not implemented"
+instance ToJSON ComponentStateSequence where
+    toJSON = error "ComponentStateSequence.toJSON: not implemented"
 
-    toEncoding = E.unsafeToEncoding . Text.fromCppString . encodeVectorPairIntIntRaw
+    toEncoding = E.unsafeToEncoding . encodeComponentStateSequence

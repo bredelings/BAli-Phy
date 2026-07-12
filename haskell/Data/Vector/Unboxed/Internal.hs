@@ -4,6 +4,7 @@ module Data.Vector.Unboxed.Internal
     , Unbox(..)
     , intVectorFromNative
     , intVectorFromNativeResult
+    , intVectorNativeView
     ) where
 
 import Compiler.Num
@@ -86,6 +87,11 @@ instance (Unbox a, Unbox b) => Unbox (a,b) where
 -- metadata.  The supplied count must match the native extent.
 intVectorFromNative :: Int -> NativeVector Int -> Vector Int
 intVectorFromNative count = V_Int 0 count
+
+-- Expose the complete primitive view only to foreign-boundary wrappers, so
+-- native consumers preserve slices instead of silently using the whole owner.
+intVectorNativeView :: Vector Int -> (Int, Int, NativeVector Int)
+intVectorNativeView (V_Int offset count native) = (offset, count, native)
 
 -- NOTE: Keep native result extraction opaque so simplifying its two projections
 -- cannot duplicate the producing bpcall; remove when such sharing is guaranteed.

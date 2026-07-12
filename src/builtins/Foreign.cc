@@ -7,6 +7,7 @@
 #include <string_view>
 #include "computation/machine/graph_register.H"
 #include "mcon/mcon.H"
+#include "util/dense-matrix.H"
 
 using std::string;
 using std::string_view;
@@ -214,23 +215,33 @@ extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
     return MCON::tsv_line(MCON::get_row(mapping, sample2));
 }
 
-extern "C" closure builtin_function_encodeVectorPairIntIntRaw(OperationArgs& Args)
+extern "C" closure builtin_function_encodeComponentStateSequenceRaw(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& x = arg0.as_<Vector<pair<int,int>>>();
+    int count = Args.evaluate_slot_to_value(0).as_int();
+    int component_offset = Args.evaluate_slot_to_value(1).as_int();
+    auto component_value = Args.evaluate_slot_to_value(2);
+    int state_offset = Args.evaluate_slot_to_value(3).as_int();
+    auto state_value = Args.evaluate_slot_to_value(4);
+    const auto& components = component_value.as_<Box<DenseVector<int>>>();
+    const auto& states = state_value.as_<Box<DenseVector<int>>>();
+    if (component_offset < 0 or count < 0 or component_offset > components.size() or
+        count > components.size() - component_offset or state_offset < 0 or
+        state_offset > states.size() or count > states.size() - state_offset)
+        throw myexception()<<"Foreign.encodeComponentStateSequenceRaw: invalid native views";
 
     std::ostringstream o;
     o<<"[";
     
-    for(int i=0;i<x.size();i++)
+    for(int i=0;i<count;i++)
     {
-        auto& [y1,y2] = x[i];
+        int y1 = components[component_offset + i];
+        int y2 = states[state_offset + i];
 
         if (y1 == -1 and y2 == -1)
             o<<"null";
         else
             o<<"["<<y1<<", "<<y2<<"]";
-        if (i+1 < x.size())
+        if (i+1 < count)
             o<<", ";
     }
     o<<"]";
