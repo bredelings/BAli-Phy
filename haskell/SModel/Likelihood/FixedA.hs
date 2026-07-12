@@ -15,24 +15,26 @@ import Bio.Sequence
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
+import qualified Data.Vector.Unboxed.Internal as UInternal
+import Foreign.NativeVector (NativeVector)
 
 import SModel.Likelihood.CLV
 
 -- peeling for SEV
-foreign import bpcall "LikelihoodSEV:calcProbAtRoot" calcProbAtRootNative :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> EVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:calcProbAtRootVariable" calcProbAtRootVariableNative :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> EVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:calcProb" calcProbNative :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> EVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:calcProbAtRoot" calcProbAtRootRaw :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> Int -> Int -> NativeVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:calcProbAtRootVariable" calcProbAtRootVariableRaw :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> Int -> Int -> NativeVector Int -> LogDouble
+foreign import bpcall "LikelihoodSEV:calcProb" calcProbRaw :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> Int -> Int -> NativeVector Int -> LogDouble
 foreign import bpcall "LikelihoodSEV:peelBranchTowardRoot" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> CondLikes
 foreign import bpcall "LikelihoodSEV:peelBranchAwayFromRoot" peelBranchAwayFromRootNative :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> NativeMatrix Double -> CondLikes
 
-calcProbAtRoot node branch frequencies counts =
-    calcProbAtRootNative node branch (nativeMatrix frequencies) counts
+calcProbAtRoot node branch frequencies (UInternal.V_Int offset count native) =
+    calcProbAtRootRaw node branch (nativeMatrix frequencies) offset count native
 
-calcProbAtRootVariable node branch frequencies counts =
-    calcProbAtRootVariableNative node branch (nativeMatrix frequencies) counts
+calcProbAtRootVariable node branch frequencies (UInternal.V_Int offset count native) =
+    calcProbAtRootVariableRaw node branch (nativeMatrix frequencies) offset count native
 
-calcProb node branch frequencies counts =
-    calcProbNative node branch (nativeMatrix frequencies) counts
+calcProb node branch frequencies (UInternal.V_Int offset count native) =
+    calcProbRaw node branch (nativeMatrix frequencies) offset count native
 
 peelBranchAwayFromRoot node branch probabilities frequencies =
     peelBranchAwayFromRootNative node branch probabilities (nativeMatrix frequencies)
@@ -41,11 +43,14 @@ peelBranch toward nodeCLs branchCLs ps f | toward    = peelBranchTowardRoot   no
                                          | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs ps f
 
 -- ancestral sequence sampling for SEV
-foreign import bpcall "LikelihoodSEV:sampleRootSequence" sampleRootSequenceNative :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> EVector Int -> VectorPairIntInt
-foreign import bpcall "LikelihoodSEV:sampleSequence" sampleSequence :: VectorPairIntInt -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> EVector Int -> VectorPairIntInt
+foreign import bpcall "LikelihoodSEV:sampleRootSequence" sampleRootSequenceRaw :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> Int -> Int -> NativeVector Int -> VectorPairIntInt
+foreign import bpcall "LikelihoodSEV:sampleSequence" sampleSequenceRaw :: VectorPairIntInt -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> Int -> Int -> NativeVector Int -> VectorPairIntInt
 
-sampleRootSequence node branch frequencies columns =
-    sampleRootSequenceNative node branch (nativeMatrix frequencies) columns
+sampleRootSequence node branch frequencies (UInternal.V_Int offset count native) =
+    sampleRootSequenceRaw node branch (nativeMatrix frequencies) offset count native
+
+sampleSequence parent node probabilities branch (UInternal.V_Int offset count native) =
+    sampleSequenceRaw parent node probabilities branch offset count native
 
 foreign import bpcall "LikelihoodSEV:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
 

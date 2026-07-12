@@ -22,6 +22,8 @@ import qualified Data.IntSet as IntSet
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.Vector.Unboxed as U
+import Data.Vector.Unboxed.Internal (intVectorFromNativeResult)
+import Foreign.NativeVector (NativeVector)
 
 import qualified Data.Text as Text
 import Data.Text (Text)
@@ -66,23 +68,28 @@ type EAlignment = EVector (EPair CPPString (EVector Int))
 toEAlignment a = toVector [ c_pair (Text.toCppString label) indices | (label, indices) <- a ]
 fromEAlignment ea = map ( (\(x,y) -> (Text.fromCppString x,y)) . pair_from_c) $ vectorToList ea
 
--- Current a' is an alignment, but counts and mapping are EVector
--- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)
+-- Current a' is an alignment, while counts and mapping use contiguous native
+-- Int storage wrapped with their Haskell dimensions below.
 foreign import bpcall "Alignment:compress_alignment" builtin_compress_alignment :: EAlignment ->
-                                                                                   EPair EAlignment (EPair (EVector Int) (EVector Int))
+                                                                                   EPair EAlignment (EPair (EPair Int (NativeVector Int)) (EPair Int (NativeVector Int)))
+-- Wrap both native integer results while retaining the compressed alignment's
+-- existing runtime representation.
 compressAlignment a = (compressed, counts, mapping)
     where tmp123 = builtin_compress_alignment (toEAlignment a)
           (compressed', tmp23) = pair_from_c tmp123
-          (counts, mapping) = pair_from_c tmp23
+          (countsResult, mappingResult) = pair_from_c tmp23
+          counts = intVectorFromNativeResult countsResult
+          mapping = intVectorFromNativeResult mappingResult
           compressed = fromEAlignment compressed'
 
--- Current a' is an alignment, but counts and mapping are EVector
--- AlignmentMatrix -> ETuple (AlignmentMatrix, EVector Int, EVector Int)
+-- Return compressed sequences with their unboxed column multiplicities.
 foreign import bpcall "Alignment:compress_alignment_var_nonvar" builtin_compress_alignment_var_nonvar :: EAlignment -> Alphabet ->
-                                                                                                         EPair EAlignment (EVector Int)
+                                                                                                         EPair EAlignment (EPair Int (NativeVector Int))
+-- Wrap the native multiplicities paired with the expanded compressed rows.
 compressAlignmentVarNonvar a alphabet = (compressed, counts)
     where tmp12 = builtin_compress_alignment_var_nonvar (toEAlignment a) alphabet
-          (compressed', counts) = pair_from_c tmp12
+          (compressed', countsResult) = pair_from_c tmp12
+          counts = intVectorFromNativeResult countsResult
           compressed = fromEAlignment compressed'
 
 totalNumIndels (AlignmentOnTree t _ _ as) = sum [numIndels (as IntMap.! b) | b <- allEdgesFromNode t node0]

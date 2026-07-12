@@ -39,7 +39,7 @@ namespace substitution
 					     const Likelihood_Cache_Branch& LCB2,
 					     const Likelihood_Cache_Branch& LCB3,
 					     const DenseMatrix<double>& F,
-					     const R::RVector& counts)
+					     Eigen::Ref<const DenseVector<int>> counts)
     {
         total_calc_root_prob++;
 
@@ -142,7 +142,7 @@ namespace substitution
             if (non_gap2) i2++;
             if (non_gap3) i3++;
 
-            total.mult_with_count(p_col, counts[c].as_int());
+            total.mult_with_count(p_col, counts[c]);
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
@@ -159,7 +159,7 @@ namespace substitution
     log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
 					      const Likelihood_Cache_Branch& LCB2,
 					      const DenseMatrix<double>& F,
-					      const R::RVector& counts)
+					      Eigen::Ref<const DenseVector<int>> counts)
     {
         total_calc_root_prob++;
 
@@ -247,7 +247,7 @@ namespace substitution
             if (non_gap1) i1++;
             if (non_gap2) i2++;
 
-            total.mult_with_count(p_col,counts[c].as_int());
+            total.mult_with_count(p_col,counts[c]);
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
@@ -265,7 +265,7 @@ namespace substitution
     log_double_t calc_prob_at_root_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
 				       const DenseMatrix<double>& F,
-				       const R::RVector& counts)
+				       Eigen::Ref<const DenseVector<int>> counts)
     {
 	total_calc_root_prob++;
 
@@ -383,7 +383,7 @@ namespace substitution
             // SOME model must be possible
             assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 
-            total.mult_with_count(p_col, counts[c].as_int());
+            total.mult_with_count(p_col, counts[c]);
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
@@ -404,7 +404,7 @@ namespace substitution
     log_double_t calc_prob_at_root_variable_SEV(const R::RVector& LCN,
 						const R::RVector& LCB,
 						const DenseMatrix<double>& F,
-						const R::RVector& counts)
+						Eigen::Ref<const DenseVector<int>> counts)
     {
 	total_calc_root_prob++;
 
@@ -537,7 +537,7 @@ namespace substitution
 		sum += Prs[c*n+i];
 	    double Pr = 1.0 - sum;
             assert(Pr >= 0 and Pr <= 1);
-	    total.mult_with_count(Pr, counts[c].as_int());
+            total.mult_with_count(Pr, counts[c]);
 	}
 
         log_double_t Pr = total;
@@ -555,7 +555,7 @@ namespace substitution
     log_double_t calc_prob_SEV(const R::RVector& LCN,
 			       const R::RVector& LCB,
 			       const DenseMatrix<double>& FF,
-			       const R::RVector& counts)
+			       Eigen::Ref<const DenseVector<int>> counts)
     {
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
 	for(auto& lcb: LCB)
@@ -691,7 +691,7 @@ namespace substitution
             // SOME model must be possible
             assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 
-            total.mult_with_count(p_col, counts[c].as_int());
+            total.mult_with_count(p_col, counts[c]);
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
@@ -1259,7 +1259,7 @@ namespace substitution
     Vector<pair<int,int>> sample_root_sequence_SEV(const R::RVector& LCN,
 						   const R::RVector& LCB,
                                                    const DenseMatrix<double>& F,
-                                                   const R::RVector& compressed_col_for_col)
+                                                   Eigen::Ref<const DenseVector<int>> compressed_col_for_col)
     {
         // 1. Construct a scratch CL matrix, and check that dimensions match inputs
         const int n_models = F.rows();
@@ -1318,7 +1318,7 @@ namespace substitution
         // 3. Walk the alignment and sample (model,letter) for ancestral sequence
         for(int c = 0; c < L_full; c++)
         {
-            int c2 = compressed_col_for_col[c].as_int();
+            int c2 = compressed_col_for_col[c];
 
             if (not allbits.test(c2)) continue;
 
@@ -1338,7 +1338,7 @@ namespace substitution
 					      const R::RVector& LCN,
 					      const R::RVector& transition_Ps,
 					      const R::RVector& LCB,
-					      const R::RVector& compressed_col_for_col)
+					      Eigen::Ref<const DenseVector<int>> compressed_col_for_col)
     {
         // 1. Construct a scratch matrix and check that dimensions match inputs
         const int n_models  = transition_Ps.size();
@@ -1397,7 +1397,7 @@ namespace substitution
         // 3. Walk the alignment and sample (model,letter) for ancestral sequence
         for(int c = 0; c < L_full; c++)
         {
-            int c2 = compressed_col_for_col[c].as_int();
+            int c2 = compressed_col_for_col[c];
 
             if (not allbits.test(c2)) continue;
 

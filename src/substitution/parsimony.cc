@@ -364,7 +364,7 @@ int muts_root_fixed_A(const R::RVector& sequences,
 		      const alphabet& a,
 		      const R::RVector& n_muts_,
 		      const DenseMatrix<int>& costs,
-		      const R::RVector& counts)
+		      Eigen::Ref<const DenseVector<int>> counts)
 {
     int n_letters = costs.rows();
 
@@ -440,7 +440,7 @@ int muts_root_fixed_A(const R::RVector& sequences,
 	    }
 	}
 
-        total += min(S) * counts[s_node].as_int();
+        total += min(S) * counts[s_node];
 
 	s_node++;
     }
@@ -450,7 +450,7 @@ int muts_root_fixed_A(const R::RVector& sequences,
 
 
 int muts_root_fixed_A(const ParsimonyCacheBranch& n_muts0, const ParsimonyCacheBranch& n_muts1, const ParsimonyCacheBranch& n_muts2,
-                      const DenseMatrix<int>& costs, const R::RVector& counts)
+                      const DenseMatrix<int>& costs, Eigen::Ref<const DenseVector<int>> counts)
 {
 
     int n_letters = n_muts0.n_letters;
@@ -493,7 +493,7 @@ int muts_root_fixed_A(const ParsimonyCacheBranch& n_muts0, const ParsimonyCacheB
         if (n_muts1.bits.test(c)) i1++;
         if (n_muts2.bits.test(c)) i2++;
 
-        int count = counts[c].as_int();
+        int count = counts[c];
         assert(count > 0);
 
         total += count * min(S);

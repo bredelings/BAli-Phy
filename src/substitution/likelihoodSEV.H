@@ -14,26 +14,26 @@ namespace substitution {
                                            const Likelihood_Cache_Branch& LCB2,
                                            const Likelihood_Cache_Branch& LCB3,
                                            const DenseMatrix<double>& F,
-					   const R::RVector& counts);
+					   Eigen::Ref<const DenseVector<int>> counts);
 
     log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
                                                 const Likelihood_Cache_Branch& LCB2,
                                                 const DenseMatrix<double>& F,
-                                                const R::RVector& counts);
+                                                Eigen::Ref<const DenseVector<int>> counts);
     log_double_t calc_prob_at_root_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
 				       const DenseMatrix<double>& F,
-				       const R::RVector& counts);
+				       Eigen::Ref<const DenseVector<int>> counts);
 
     log_double_t calc_prob_at_root_variable_SEV(const R::RVector& LCN,
 						const R::RVector& LCB,
 						const DenseMatrix<double>& F,
-						const R::RVector& counts);
+						Eigen::Ref<const DenseVector<int>> counts);
 
     log_double_t calc_prob_SEV(const R::RVector& LCN,
 				     const R::RVector& LCB,
 				     const DenseMatrix<double>& FF,
-				     const R::RVector& counts);
+				     Eigen::Ref<const DenseVector<int>> counts);
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_SEV(const Likelihood_Cache_Branch& nodeCLV, const R::RVector& transition_P);
@@ -75,12 +75,12 @@ namespace substitution {
     Vector<std::pair<int,int>> sample_root_sequence_SEV(const R::RVector& LCN,
 							const R::RVector& LCB,
 							const DenseMatrix<double>& F,
-							const R::RVector& compressed_col_for_col);
+							Eigen::Ref<const DenseVector<int>> compressed_col_for_col);
 
     Vector<std::pair<int,int>> sample_sequence_SEV(const Vector<std::pair<int,int>>& parent_seq,
 						   const R::RVector& LCN,
 						   const R::RVector& transition_Ps,
 						   const R::RVector& LCB,
-						   const R::RVector& compressed_col_for_col);
+						   Eigen::Ref<const DenseVector<int>> compressed_col_for_col);
 }
 #endif

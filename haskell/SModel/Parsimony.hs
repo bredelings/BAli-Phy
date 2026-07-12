@@ -12,6 +12,9 @@ import Foreign.Vector
 import Numeric.LogDouble
 import Data.Maybe (maybeToList)
 import Data.Text (Text)
+import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Internal as UInternal
+import Foreign.NativeVector (NativeVector)
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
@@ -74,16 +77,16 @@ instance Parsimony (UnalignedCharacterData, AlignmentOnTree t) where
                                                     in parsimony_root tree maybeNodeSequences as alphabet costs
 
 ----
-type ColumnCounts = EVector Int
+type ColumnCounts = U.Vector Int
 
 foreign import bpcall "Parsimony:peelMutsFixedA" peelMutsFixedANative :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> NativeMatrix Int -> CondPars
-foreign import bpcall "Parsimony:mutsRootFixedA" mutsRootFixedANative :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> NativeMatrix Int -> EVector Int -> Int
+foreign import bpcall "Parsimony:mutsRootFixedA" mutsRootFixedARaw :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> NativeMatrix Int -> Int -> Int -> NativeVector Int -> Int
 
 peelMutsFixedA sequences alphabet partials costs =
     peelMutsFixedANative sequences alphabet partials (nativeMatrix costs)
 
-mutsRootFixedA sequences alphabet partials costs counts =
-    mutsRootFixedANative sequences alphabet partials (nativeMatrix costs) counts
+mutsRootFixedA sequences alphabet partials costs (UInternal.V_Int offset count native) =
+    mutsRootFixedARaw sequences alphabet partials (nativeMatrix costs) offset count native
 
 cached_conditional_muts_fixed_A t seqs alpha cost =
     let pc    = IntMap.fromSet pcf $ getEdgesSet t

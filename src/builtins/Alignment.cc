@@ -13,6 +13,7 @@
 #include "util/range.H"
 #include "util/rng.H"
 #include "util/dense-matrix.H"
+#include <limits>
 #include <regex>                                  // to use in getTaxonNamesRaw
 
 using std::string;
@@ -616,6 +617,20 @@ std::tuple<R::RVector, vector<int>> compress_alignment_var_nonvar(const R::RVect
     return {alignment_from_patterns(A, constant_patterns), counts};
 }
 
+// Transfer an already-computed integer result into the shared contiguous
+// representation and return the extent needed by its Haskell wrapper.
+R::RPair native_int_vector_result(const vector<int>& values)
+{
+    if (values.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw myexception()<<"compressed vector length exceeds the Haskell Int range";
+
+    int count = static_cast<int>(values.size());
+    object_ptr<Box<DenseVector<int>>> native(new Box<DenseVector<int>>(count));
+    for(int index = 0; index < count; index++)
+        (*native)(index) = values[index];
+    return {count, native};
+}
+
 
 extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 {
@@ -624,7 +639,8 @@ extern "C" closure builtin_function_compress_alignment(OperationArgs& Args)
 
     auto [A,counts,mapping] = compress_alignment(A1);
 
-    return R::RPair(A, R::RPair(R::RVector(counts), R::RVector(mapping)));
+    return R::RPair(A, R::RPair(native_int_vector_result(counts),
+                                native_int_vector_result(mapping)));
 }
 
 extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs& Args)
@@ -637,7 +653,7 @@ extern "C" closure builtin_function_compress_alignment_var_nonvar(OperationArgs&
 
     auto [A,counts] = compress_alignment_var_nonvar(A0, a);
 
-    return R::RPair(A, R::RVector(counts));
+    return R::RPair(A, native_int_vector_result(counts));
 }
 
 extern "C" closure builtin_function_leaf_sequence_counts(OperationArgs& Args)

@@ -13,6 +13,7 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include "substitution/parsimony.H"
 #include "tools/parsimony.H"
+#include "util/myexception.H"
 #include <boost/dynamic_bitset.hpp>
 
 using std::vector;
@@ -154,7 +155,7 @@ extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
 }
 
 
-int muts_root_fixed_A(const R::RVector& sequences, const alphabet& a, const R::RVector& n_muts, const DenseMatrix<int>& costs, const R::RVector& counts);
+int muts_root_fixed_A(const R::RVector& sequences, const alphabet& a, const R::RVector& n_muts, const DenseMatrix<int>& costs, Eigen::Ref<const DenseVector<int>> counts);
 
 extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
 {
@@ -162,13 +163,19 @@ extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
-    auto arg4 = Args.evaluate_slot_to_value(4);
+    int offset = Args.evaluate_slot_to_value(4).as_int();
+    int count = Args.evaluate_slot_to_value(5).as_int();
+    auto owner_value = Args.evaluate_slot_to_value(6);
+    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
+    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
+        throw myexception()<<"Parsimony.mutsRootFixedA: invalid count-vector view";
+    auto counts = owner.segment(offset, count);
 
     int muts = muts_root_fixed_A(arg0.as_<R::RVector>(),            // sequences
 				 *arg1.as_<Alphabet>(),          // a
 				 arg2.as_<R::RVector>(),            // n_muts_
 				 arg3.as_<Box<DenseMatrix<int>>>(),   // cost
-				 arg4.as_<R::RVector>());           // counts
+				 counts);                            // counts
 
     return { muts };
 }
