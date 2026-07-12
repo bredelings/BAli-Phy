@@ -81,6 +81,9 @@ closure sized_vector_from_list(OperationArgs& Args)
         throw myexception()<<"vector (|>): size must be nonnegative, but got "<<expected_size;
 
     object_ptr<Box<DenseVector<T>>> result = new Box<DenseVector<T>>(expected_size);
+    if (expected_size == 0)
+        return result;
+
     int xs = Args.evaluate_slot_use(1);
     for(int k=0; k<expected_size; k++)
     {
@@ -97,10 +100,13 @@ closure sized_vector_from_list(OperationArgs& Args)
             throw myexception()<<"vector (|>): expected ':' or '[]', but got "<<tag.print();
 
         int element = xs_closure.reg_for_constructor_slot(0);
-        int tail = xs_closure.reg_for_constructor_slot(1);
+        int tail = -1;
+        if (k + 1 < expected_size)
+            tail = xs_closure.reg_for_constructor_slot(1);
         int value = Args.evaluate_reg_dependent_use(element);
         (*result)(k) = native_scalar<T>(Args.memory().closure_at(value).get_code());
-        xs = Args.evaluate_reg_dependent_use(tail);
+        if (k + 1 < expected_size)
+            xs = Args.evaluate_reg_dependent_use(tail);
     }
     return result;
 }
