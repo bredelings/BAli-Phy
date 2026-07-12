@@ -1332,7 +1332,7 @@ BODY {\n\
    padding-bottom: 0.1em;\n\
    margin: 0;\n\
 \n\
-   font-size: 10pt; \n\
+   font-size: 12pt; \n\
    font-weight: bold;\n\
    font-family: monospace;\n\
 \n\
