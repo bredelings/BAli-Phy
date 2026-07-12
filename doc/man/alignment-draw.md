@@ -19,11 +19,31 @@ network connection.
 
 The property selector supports linear, log10, and empirical-rank color scales.
 Linear and log10 scales can use the full range, a robust 2--98% range, or custom
-bounds. The legend and cell colors update together, and pointing at or focusing
-a non-gap cell shows its raw posterior mean and retained-sample count.
+bounds. A property initially uses log10 only when it has enough nonnegative,
+distinct observations and logarithmic normalization uses the color range
+materially more evenly; otherwise it uses linear. **posSelection** remains
+linear because it is a probability. Reset restores this automatically selected
+default.
+
+Zero is valid on a log10 property scale. It is clipped to the positive lower
+bound, while its tooltip continues to report zero and the legend identifies
+that the lower color includes zero. Negative values cannot use log10.
+
+Viridis is the default palette. The palette selector also provides a
+blue-to-red sequential palette and a blue-to-light-gray-to-red diverging
+palette. The diverging palette maps the median to gray and normalizes the lower
+and upper halves independently. Its colors therefore indicate position within
+the displayed distribution, not biological categories or thresholds. Palette
+and scale choices are retained separately for each property.
+
+The legend and cell colors update together, and pointing at or focusing a
+non-gap cell shows its raw posterior mean, retained-sample count, scale, and
+palette.
 
 When **--AU** and **--properties** are supplied together, the viewer can fade
 the property color toward white according to posterior alignment certainty.
+The light-gray center of the diverging palette remains distinguishable from
+this white uncertainty limit.
 Property values use ungapped sequence-character coordinates; AU values use
 alignment-grid coordinates. The AU file must therefore have exactly the same
 number of model-character columns as the displayed alignment.
