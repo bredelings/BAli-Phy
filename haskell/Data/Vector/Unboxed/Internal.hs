@@ -2,6 +2,7 @@
 module Data.Vector.Unboxed.Internal
     ( Vector(..)
     , Unbox(..)
+    , intVectorFromNative
     , intVectorFromNativeResult
     ) where
 

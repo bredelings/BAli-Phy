@@ -1,5 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include <vector>
+#include <span>
 #include <valarray>
 #include <string>
 #include "Vector.H"
@@ -11,6 +12,7 @@
 #include "util/rng.H"
 #include "util/log-level.H"
 #include "util/dense-matrix.H"
+#include "util/myexception.H"
 
 #include <boost/math/distributions.hpp>
 #include <boost/math/special_functions/gamma.hpp>
@@ -353,7 +355,7 @@ extern "C" closure builtin_function_sample_poisson(OperationArgs& Args)
 }
 
 
-log_double_t CRP_pdf(const double alpha, int N, int D, const vector<int>& z)
+log_double_t CRP_pdf(const double alpha, int N, int D, std::span<const int> z)
 {
     if (z.size() != N) return 0.0;
 
@@ -398,7 +400,15 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
     int D = Args.evaluate_slot_to_value(2).as_int();
 
     //------------- 2. Get argument Z -----------------
-    auto z = (vector<int>) Args.evaluate_slot_to_value(3).as_<R::RVector>();
+    int offset = Args.evaluate_slot_to_value(3).as_int();
+    int count = Args.evaluate_slot_to_value(4).as_int();
+    auto owner_value = Args.evaluate_slot_to_value(5);
+    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
+    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
+        throw myexception()<<"Distribution.CRP_density: invalid assignment-vector view";
+
+    std::span<const int> owner_view(owner.data(), owner.size());
+    auto z = owner_view.subspan(offset, count);
 
     return { ::CRP_pdf(alpha,N,D,z) };
 }
@@ -424,7 +434,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
     int n_seen=0;
 
     // The series of sampled categories
-    object_ptr<R::RVector> S (new R::RVector);
+    object_ptr<Box<DenseVector<int>>> S(new Box<DenseVector<int>>(N));
 
     for(int i=0;i<N;i++)
     {
@@ -451,7 +461,7 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 
 	// The index we've chosen is now valid.
 	counts[index] += 1.0;
-	S->push_back(categories[index]);
+	(*S)(i) = categories[index];
     }
 
     return S;

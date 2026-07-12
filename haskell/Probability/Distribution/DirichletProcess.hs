@@ -12,7 +12,10 @@ import Probability.Distribution.Exponential
 import Probability.Distribution.Uniform
 import Numeric.Log -- for log1p
 
-import Foreign.Vector
+import qualified Data.Vector.Unboxed as U
+import qualified Data.Vector.Unboxed.Internal as UInternal
+import Data.Vector.Unboxed.Internal (intVectorFromNative)
+import Foreign.NativeVector (NativeVector)
 
 import Control.DeepSeq
 import MCMC -- for GibbsSampleCategorical
@@ -87,11 +90,20 @@ do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
                                   cs <- do_crp'' alpha (n-1) bins (inc counts c) 
                                   return (c:cs)
 
-foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -> Int -> Int -> EVector Int -> LogDouble
-crp_density alpha n d z = builtin_crp_density alpha n d (toVector z)
-foreign import bpcall "Distribution:sample_CRP" sample_crp_vector :: Double -> Int -> Int -> IO (EVector Int)
-sample_crp alpha n d = do v <- sample_crp_vector alpha n d
-                          return $ sizedVectorToList v n
+foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -> Int -> Int -> Int -> Int -> NativeVector Int -> LogDouble
+
+-- Marshal assignments into contiguous unboxed storage so the native density
+-- can scan primitive integers without copying or unboxing each element.
+crp_density alpha n d z =
+    case U.fromList z of
+      UInternal.V_Int offset count native ->
+          builtin_crp_density alpha n d offset count native
+
+foreign import bpcall "Distribution:sample_CRP" sample_crp_native :: Double -> Int -> Int -> IO (NativeVector Int)
+
+sample_crp alpha n d = do
+    native <- sample_crp_native alpha n d
+    return $ U.toList (intVectorFromNative n native)
 ran_sample_crp alpha n d = liftIO $ sample_crp alpha n d
 
 triggeredModifiableList n value effect = let raw_list = mapn n modifiable value
@@ -128,4 +140,3 @@ instance Sampleable CRP where
     sample dist@(CRP alpha n d) = RanDistribution3 dist (crp_effect n d) (triggeredModifiableList n) (ran_sample_crp alpha n d)
 
 crp = CRP
-
