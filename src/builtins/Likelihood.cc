@@ -341,7 +341,10 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
     {
         pair<int,int> parent_model_state(-2,-2);
         if (alignment.is_delete(i))
+        {
+            j++;
             continue;
+        }
         else if (alignment.is_match(i))
         {
             parent_model_state = {parent_components[j], parent_states[j]};

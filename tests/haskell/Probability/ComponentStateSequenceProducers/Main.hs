@@ -34,6 +34,9 @@ main = do
         slicedParent = ComponentStateSequence
             (U.zip (U.slice 1 1 (U.fromList [99,0,99]))
                    (U.slice 2 1 (U.fromList [99,99,0,99])))
+        deletionParent = ComponentStateSequence
+            (U.zip (U.slice 1 2 (U.fromList [99,0,0,99]))
+                   (U.slice 2 2 (U.fromList [99,99,0,0,99])))
         posteriorRoot = sampleRootSequence nodeLikes branchLikes
             frequencies compressedColumns
         posteriorChild = sampleSequence slicedParent nodeLikes transitions
@@ -47,7 +50,10 @@ main = do
         transitions frequencies
     simulatedVariable <- VariableSample.simulateSequenceFrom slicedParent
         (left_aligned_pairwise_alignment 1 1) transitions frequencies
+    simulatedDeletion <- VariableSample.simulateSequenceFrom deletionParent
+        (left_aligned_pairwise_alignment 2 1) transitions frequencies
 
     print simulatedRoot
     print simulatedFixed
     print simulatedVariable
+    print simulatedDeletion
