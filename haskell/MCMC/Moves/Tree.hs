@@ -1,21 +1,17 @@
 module MCMC.Moves.Tree where
 
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (intVectorFromNative)
+import Data.Vector.Unboxed.Internal (intVectorFromNativeResult)
 import Foreign.NativeVector (NativeVector)
-import Foreign.Pair (EPair, pair_from_c)
+import Foreign.Pair (EPair)
 import MCMC.Types
 import Tree
 
 foreign import bpcall "MCMC:" walkTreePathRaw :: Modifiable t -> ContextIndex -> EPair Int (NativeVector Int)
 
--- NOTE: Keep the randomized native walk opaque so simplifying a shared path
--- cannot duplicate it; remove when the simplifier preserves bpcall sharing.
 walkTreePathVector :: Modifiable t -> ContextIndex -> U.Vector Int
-{-# NOINLINE walkTreePathVector #-}
-walkTreePathVector tree context = intVectorFromNative count native
-  where
-    (count, native) = pair_from_c (walkTreePathRaw tree context)
+walkTreePathVector tree context =
+    intVectorFromNativeResult (walkTreePathRaw tree context)
 
 walk_tree_path tree context = U.toList (walkTreePathVector tree context)
 
@@ -42,4 +38,3 @@ sampleSPRNodes tree = TransitionKernel $ sampleSPRNodesRaw tree
 
 foreign import bpcall "MCMC:" sampleSPRFlatRaw :: Modifiable t -> ContextIndex -> IO ()
 sampleSPRFlat tree = TransitionKernel $ sampleSPRFlatRaw tree
-

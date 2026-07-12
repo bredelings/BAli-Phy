@@ -6,9 +6,11 @@ import Data.IntMap as I
 import qualified Data.IntSet as IS
 import Data.Function (($))
 import Data.Functor (fmap)
+import qualified Data.Vector.Unboxed as U
 import System.IO (putStrLn)
 import Text.Show (show)
 
+-- Exercise ordinary map operations and the unboxed key-vector boundary.
 main = do
   let xs = [(i,i) | i <- [0..10]]
 
@@ -40,6 +42,7 @@ main = do
   putStrLn $ show $ m8
   putStrLn $ show $ keysSet m8
   putStrLn $ show $ forceAll m8
+  putStrLn $ show $ U.toList $ keysVector m4
 
 
 -- maybe make Foldable?

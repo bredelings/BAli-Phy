@@ -1,11 +1,13 @@
 module Data.IntSet where
 
-import Prelude hiding (map,empty,elems,filter)
+import Prelude hiding (map,empty,elems,filter,toVector)
 import Data.Functor
 import qualified Data.List as L
-import Foreign.Vector (EVector, get_vector_index, vector_size, vectorToList)
+import qualified Data.Vector.Unboxed as U
+import Data.Vector.Unboxed.Internal (intVectorFromNativeResult)
+import Foreign.NativeVector (NativeVector)
+import Foreign.Pair (EPair)
 import Data.Foldable (foldr)
-import qualified Data.Vector as V
 import Control.DeepSeq
 
 data IntSet
@@ -16,8 +18,8 @@ foreign import ecall "IntSet:" empty :: IntSet
 
 foreign import ecall "IntSet:" singleton :: Key -> IntSet
 
--- Should this be more efficient? With immer it might be OK, but maybe we should
--- convert to an EVector Int, and then convert that to an IntSet
+-- NOTE: This fallback performs one persistent insertion per list element.
+-- Replace it if IntSet gains a worthwhile native bulk builder.
 fromList []     = empty
 fromList (k:ks) = insert k $ fromList ks
 
@@ -58,13 +60,13 @@ foreign import bpcall "IntSet:" disjoint :: IntSet -> IntSet -> Int
 
 -- Note!  These are supposed be to in ascending order of keys, but are not.
 
-foreign import bpcall "IntSet:keys" _keys :: IntSet -> EVector Key
-elems m = vectorToList $ _keys m
+foreign import bpcall "IntSet:keys" keysNative :: IntSet -> EPair Int (NativeVector Int)
+
+elems m = U.toList (toVector m)
 
 toList m = elems m
 
-toVector s = V.generate (vector_size keys) (get_vector_index keys)
-  where keys = _keys s
+toVector = intVectorFromNativeResult . keysNative
 
 toAscList m = toList m
 

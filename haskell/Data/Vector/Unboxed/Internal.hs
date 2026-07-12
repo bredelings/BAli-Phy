@@ -2,14 +2,14 @@
 module Data.Vector.Unboxed.Internal
     ( Vector(..)
     , Unbox(..)
-    , intVectorFromNative
-    , doubleVectorFromNative
+    , intVectorFromNativeResult
     ) where
 
 import Compiler.Num
 import qualified Data.OldList as List
 import Data.Tuple (fst, snd)
 import Foreign.NativeVector (NativeVector)
+import Foreign.Pair (EPair, pair_from_c)
 
 data family Vector a
 
@@ -87,7 +87,10 @@ instance (Unbox a, Unbox b) => Unbox (a,b) where
 intVectorFromNative :: Int -> NativeVector Int -> Vector Int
 intVectorFromNative count = V_Int 0 count
 
--- Wrap a trusted native Double producer with stable, offset-zero Haskell shape
--- metadata.  The supplied count must match the native extent.
-doubleVectorFromNative :: Int -> NativeVector Double -> Vector Double
-doubleVectorFromNative count = V_Double 0 count
+-- NOTE: Keep native result extraction opaque so simplifying its two projections
+-- cannot duplicate the producing bpcall; remove when such sharing is guaranteed.
+intVectorFromNativeResult :: EPair Int (NativeVector Int) -> Vector Int
+{-# NOINLINE intVectorFromNativeResult #-}
+intVectorFromNativeResult result = intVectorFromNative count native
+  where
+    (count, native) = pair_from_c result

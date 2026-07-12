@@ -21,6 +21,7 @@ import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+import qualified Data.Vector.Unboxed as U
 
 import qualified Data.Text as Text
 import Data.Text (Text)
@@ -193,10 +194,12 @@ foreign import bpcall "Alignment:" mkNodeAlignment :: Int -> Int -> EVector Bran
 data BranchAlignment -- BranchAlignment TargetNode PairwiseAlignment (EVector BranchAlignment)
 foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment -> EVector BranchAlignment -> BranchAlignment
 
+-- Export the recursive branch structure while consuming graph edge views
+-- directly from their unboxed representation.
 exportAlignmentOnTree :: IsTree t => AlignmentOnTree t -> NodeAlignment
 exportAlignmentOnTree a@(AlignmentOnTree tree _ _ as) = mkNodeAlignment root (sequenceLength a root) (branchAlignments $ edgesOutOfNodeVector tree root)
     where root = head $ getNodes tree
-          branchAlignments edges = toVector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdgeVector tree e) | e <- toList $ edges]
+          branchAlignments edges = toVector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdgeVector tree e) | e <- U.toList edges]
 
 foreign import bpcall "Alignment:" substituteLetters :: EVector Int -> EVector Int -> EVector Int
 

@@ -243,9 +243,6 @@ reverseEdge e = -e
 
 reverseEdges = map reverseEdge
 reverseEdgesSet = IntSet.mapNegate
---reverseEdgesVector :: Vector Int -> Vector Int
-reverseEdgesVector = fmap reverseEdge
-
 isUEdge e = e > reverseEdge e
 
 getEdges t  = getEdgesSet t & IntSet.toList

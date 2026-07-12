@@ -4,9 +4,11 @@ import Compiler.Enum
 import Compiler.Num
 import Data.IntSet as I
 import Data.Function (($))
+import qualified Data.Vector.Unboxed as U
 import System.IO (putStrLn)
 import Text.Show (show)
 
+-- Exercise ordinary set operations and the unboxed key-vector boundary.
 main = do
   let xs = [i | i <- [0..10]]
 
@@ -25,3 +27,4 @@ main = do
   putStrLn $ show $ intersection m7 m6
   putStrLn $ show $ m6 \\ m7
   putStrLn $ show $ m7 \\ m6
+  putStrLn $ show $ U.toList $ toVector m4

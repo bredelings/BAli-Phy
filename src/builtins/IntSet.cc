@@ -1,7 +1,9 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
+#include "util/dense-matrix.H"
 
 #include "immer/set.hpp"
+#include <limits>
 
 typedef Box<immer::set<int>> IntSet;
 
@@ -67,17 +69,23 @@ extern "C" closure builtin_function_insert(OperationArgs& Args)
     return S;
 }
 
+// Export keys directly into contiguous native Int storage with its Haskell
+// sized extent.
 extern "C" closure builtin_function_keys(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& S = arg0.as_<IntSet>();
 
-    R::RVector V;
+    if (S.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw myexception()<<"IntSet.keys: key count exceeds supported Int range";
 
+    int count = static_cast<int>(S.size());
+    object_ptr<Box<DenseVector<int>>> keys(new Box<DenseVector<int>>(count));
+    int index = 0;
     for(auto& k: S)
-        V.push_back(k);
+        (*keys)(index++) = k;
 
-    return V;
+    return R::RPair(count, keys);
 }
 
 extern "C" closure builtin_function_union(OperationArgs& Args)

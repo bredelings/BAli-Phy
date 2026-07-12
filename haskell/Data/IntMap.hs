@@ -4,7 +4,11 @@ import Prelude hiding (map,empty,lookup,(!))
 import Data.Functor
 import qualified Data.Foldable as F
 import qualified Data.Traversable as T    
-import Foreign.Vector
+import Foreign.Vector (EVector)
+import qualified Data.Vector.Unboxed as U
+import Data.Vector.Unboxed.Internal (intVectorFromNativeResult)
+import Foreign.NativeVector (NativeVector)
+import Foreign.Pair (EPair)
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
 import Control.DeepSeq
@@ -120,8 +124,9 @@ foreign import bpcall "IntMap:mapWithKey" mapWithKey :: (Key -> a -> b) -> IntMa
 -- Note!  These are supposed be to in ascending order of keys, but are not.
 elems m = [ m!k | k <- keys m]
 
-foreign import bpcall "IntMap:keys" keysVector :: IntMap a -> EVector Key
-keys m = vectorToList $ keysVector m
+foreign import bpcall "IntMap:keys" keysNative :: IntMap a -> EPair Int (NativeVector Int)
+keysVector = intVectorFromNativeResult . keysNative
+keys m = U.toList (keysVector m)
 
 assocs m = [ (k,m!k) | k <- keys m]
 

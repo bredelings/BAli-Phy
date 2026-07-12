@@ -2,10 +2,12 @@
 #include "computation/machine/args.H"
 #include "computation/operation.H"
 #include "computation/runtime/ast.H"
+#include "util/dense-matrix.H"
 
 #include "computation/machine/gcobject.H"
 #include "immer/set.hpp"
 #include <map>
+#include <limits>
 #include <memory>
 
 #include "range/v3/all.hpp"
@@ -155,17 +157,23 @@ extern "C" closure builtin_function_insertWith(OperationArgs& Args)
     return m;
 }
 
+// Export keys directly into contiguous native Int storage with its Haskell
+// sized extent.
 extern "C" closure builtin_function_keys(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& m = arg0.as_<IntMap>();
 
-    R::RVector V;
+    if (m.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw myexception()<<"IntMap.keys: key count exceeds supported Int range";
 
+    int count = static_cast<int>(m.size());
+    object_ptr<Box<DenseVector<int>>> keys(new Box<DenseVector<int>>(count));
+    int index = 0;
     for(auto& [k,v]: m)
-        V.push_back(k);
+        (*keys)(index++) = k;
 
-    return V;
+    return R::RPair(count, keys);
 }
 
 extern "C" closure builtin_function_union(OperationArgs& Args)
