@@ -72,11 +72,3 @@ template<>  std::string Box<std::string>::print() const
     s << std::quoted(value());
     return s.str();
 }
-
-template<> std::string Box<std::vector<std::pair<int,int>>>::print() const
-{
-    R::RVector V;
-    for(auto& [x,y]: *this)
-        V.push_back(R::RPair(x, y));
-    return V.print();
-}

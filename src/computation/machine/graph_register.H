@@ -210,9 +210,6 @@ class reg_heap: public Object
     mutable int n_active_scratch_lists = 0;
     mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
 
-    mutable int n_active_pair_scratch_lists = 0;
-    mutable std::vector< object_ptr<Vector<std::pair<int,int>> > > pair_scratch_lists;
-
     std::vector<std::function<void(int, int)>> register_dist_handlers;
     std::vector<std::function<void(int, int)>> unregister_dist_handlers;
 
@@ -827,9 +824,6 @@ public:
 
     std::vector<int>& get_scratch_list() const;
     void release_scratch_list() const;
-
-    std::vector<std::pair<int,int>>& get_pair_scratch_list() const;
-    void release_pair_scratch_list() const;
 
     void run_main();
     

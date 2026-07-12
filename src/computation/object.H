@@ -109,8 +109,6 @@ template<> std::string Box<DenseMatrix<int>>::print() const;
 template<> std::string Box<DenseVector<double>>::print() const;
 template<> std::string Box<DenseVector<int>>::print() const;
 
-template<> std::string Box<std::vector<std::pair<int,int>>>::print() const;
-
 template <typename T>
 using Vector = Box<std::vector<T>>;
 
