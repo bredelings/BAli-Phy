@@ -11,6 +11,11 @@ const PROPERTY_PALETTE = [
     [253, 231, 37],
 ];
 
+const AUTO_SCALE_MIN_VALUES = 20;
+const AUTO_SCALE_MIN_DISTINCT_POSITIVE = 8;
+const AUTO_SCALE_BINS = 16;
+const AUTO_SCALE_ENTROPY_MARGIN = 0.10;
+
 // Restricts a number to the inclusive interval [lower, upper].
 function clamp(value, lower, upper)
 {
@@ -50,6 +55,26 @@ function quantile(sorted, probability)
     const upperIndex = Math.ceil(position);
     const fraction = position - lowerIndex;
     return sorted[lowerIndex] * (1 - fraction) + sorted[upperIndex] * fraction;
+}
+
+// Returns full or percentile-clipped bounds in the selected transform's domain.
+function automaticScaleBounds(observations, transform, range = 'robust')
+{
+    const values = finiteValues(observations);
+    if (!['linear', 'log10'].includes(transform))
+        throw new RangeError(`Automatic bounds do not support ${transform}.`);
+    if (!['robust', 'full'].includes(range))
+        throw new RangeError(`Unknown automatic range: ${range}`);
+    if (transform === 'log10' && values.some((value) => value < 0))
+        throw new RangeError('A log10 scale cannot display negative values.');
+    const eligible = transform === 'log10' ?
+        values.filter((value) => value > 0) : values;
+    if (eligible.length === 0)
+        throw new RangeError('A log10 scale needs at least one positive value.');
+    const sorted = [...eligible].sort((left, right) => left - right);
+    if (range === 'robust')
+        return {lower: quantile(sorted, 0.02), upper: quantile(sorted, 0.98)};
+    return {lower: sorted[0], upper: sorted[sorted.length - 1]};
 }
 
 // Creates evenly positioned legend ticks in transformed scale space.
@@ -233,16 +258,76 @@ function createScale(observations, requestedOptions = {})
     if (options.transform === 'linear')
         return createContinuousScale(values, options, (value) => value, (value) => value);
     if (options.transform === 'log10') {
-        const observed = extent(values);
+        if (values.some((value) => value < 0))
+            throw new RangeError('A log10 scale cannot display negative values.');
+        const positive = values.filter((value) => value > 0);
+        if (positive.length === 0)
+            throw new RangeError('A log10 scale needs at least one positive value.');
+        const observed = extent(positive);
         const lower = options.lower === undefined ? observed.lower : options.lower;
         const upper = options.upper === undefined ? observed.upper : options.upper;
-        if (values.some((value) => value <= 0) || lower <= 0 || upper <= 0)
-            throw new RangeError('A log10 scale requires positive values and bounds.');
-        return createContinuousScale(values, options, Math.log10, (value) => 10 ** value);
+        if (lower <= 0 || upper <= 0)
+            throw new RangeError('A log10 scale requires positive bounds.');
+        return createContinuousScale(
+            values, {...options, lower, upper}, Math.log10, (value) => 10 ** value);
     }
     if (options.transform === 'rank')
         return createRankScale(values);
     throw new RangeError(`Unknown property transform: ${options.transform}`);
+}
+
+// Reports whether a property's semantics and observed domain permit logarithmic display.
+function canUseLogScale(propertyName, observations)
+{
+    if (!Array.isArray(observations))
+        throw new TypeError('Scale values must be an array.');
+    const values = observations.filter((value) => Number.isFinite(value));
+    // NOTE: Remove this built-in-name policy once property results carry scale metadata.
+    if (propertyName === 'posSelection' || values.length === 0)
+        return false;
+    return values.some((value) => value > 0) &&
+           values.every((value) => value >= 0);
+}
+
+// Measures how evenly normalized observations occupy a fixed number of color bins.
+function normalizedColorEntropy(values, scale, binCount = AUTO_SCALE_BINS)
+{
+    const counts = Array(binCount).fill(0);
+    for (const value of values) {
+        const position = scale.normalize(value);
+        const bin = Math.min(binCount - 1, Math.floor(position * binCount));
+        counts[bin] += 1;
+    }
+    let entropy = 0;
+    for (const count of counts) {
+        if (count === 0)
+            continue;
+        const probability = count / values.length;
+        entropy -= probability * Math.log(probability);
+    }
+    return entropy / Math.log(binCount);
+}
+
+// Selects log10 only when sufficient positive data make materially better use of color.
+function preferredTransform(propertyName, observations)
+{
+    if (!Array.isArray(observations))
+        throw new TypeError('Scale values must be an array.');
+    const values = observations.filter((value) => Number.isFinite(value));
+    if (!canUseLogScale(propertyName, values) || values.length < AUTO_SCALE_MIN_VALUES)
+        return 'linear';
+    const positive = values.filter((value) => value > 0);
+    if (new Set(positive).size < AUTO_SCALE_MIN_DISTINCT_POSITIVE)
+        return 'linear';
+    const linearBounds = automaticScaleBounds(values, 'linear', 'robust');
+    const logBounds = automaticScaleBounds(values, 'log10', 'robust');
+    if (linearBounds.lower === linearBounds.upper || logBounds.lower === logBounds.upper)
+        return 'linear';
+    const linear = createScale(values, {transform: 'linear', ...linearBounds});
+    const logarithmic = createScale(values, {transform: 'log10', ...logBounds});
+    const linearEntropy = normalizedColorEntropy(positive, linear);
+    const logEntropy = normalizedColorEntropy(positive, logarithmic);
+    return logEntropy >= linearEntropy + AUTO_SCALE_ENTROPY_MARGIN ? 'log10' : 'linear';
 }
 
 // Fades an RGB property color toward white according to AU certainty.
@@ -636,7 +721,7 @@ class AlignmentPropertyViewer {
     {
         if (!this.displayStates.has(property.name)) {
             this.displayStates.set(property.name, {
-                transform: 'linear',
+                transform: preferredTransform(property.name, property.values),
                 range: 'robust',
                 customLower: null,
                 customUpper: null,
@@ -646,22 +731,13 @@ class AlignmentPropertyViewer {
         return this.displayStates.get(property.name);
     }
 
-    // Computes full or percentile-clipped raw bounds for the selected property.
-    automaticBounds(property, range)
-    {
-        const sorted = [...property.values].sort((left, right) => left - right);
-        if (range === 'robust')
-            return {lower: quantile(sorted, 0.02), upper: quantile(sorted, 0.98)};
-        return {lower: sorted[0], upper: sorted[sorted.length - 1]};
-    }
-
     // Resolves the active automatic or user-specified property range.
     boundsFor(property, state)
     {
         if (state.transform === 'rank')
             return {};
         if (state.range !== 'custom')
-            return this.automaticBounds(property, state.range);
+            return automaticScaleBounds(property.values, state.transform, state.range);
         if (!Number.isFinite(state.customLower) || !Number.isFinite(state.customUpper))
             throw new RangeError('Enter finite lower and upper custom bounds.');
         return {lower: state.customLower, upper: state.customUpper};
@@ -675,7 +751,7 @@ class AlignmentPropertyViewer {
         this.transformSelect.disabled = original || unavailable;
         this.rangeSelect.disabled = original || unavailable || state.transform === 'rank';
         this.logOption.disabled = unavailable ||
-            (!original && property.values.some((value) => value <= 0));
+            (!original && !canUseLogScale(property.name, property.values));
         if (!original && state.transform === 'log10' && this.logOption.disabled)
             state.transform = 'linear';
         if (!original) {
@@ -810,9 +886,13 @@ class AlignmentPropertyViewer {
         this.auCertain.hidden = !fadeByAU;
         this.auUncertain.hidden = !fadeByAU;
 
-        const full = this.automaticBounds(property, 'full');
+        const full = state.transform === 'rank' ?
+            {lower: scale.lower, upper: scale.upper} :
+            automaticScaleBounds(property.values, state.transform, 'full');
         const clippedLower = state.transform !== 'rank' && scale.lower > full.lower;
         const clippedUpper = state.transform !== 'rank' && scale.upper < full.upper;
+        const clippedZero = state.transform === 'log10' &&
+            property.values.some((value) => value === 0);
         this.legendTicks.replaceChildren();
         const ticks = scale.legendTicks(5);
         // Positions raw-value labels under their corresponding palette coordinates.
@@ -820,8 +900,10 @@ class AlignmentPropertyViewer {
             const label = makeElement(this.document, 'span', 'alignment-viewer-legend-tick');
             label.style.left = `${100 * tick.position}%`;
             let text = formatValue(tick.value);
-            if (index === 0 && clippedLower)
+            if (index === 0 && (clippedLower || clippedZero))
                 text = `≤ ${text}`;
+            if (index === 0 && clippedZero)
+                text += ' (includes 0)';
             if (index === ticks.length - 1 && clippedUpper)
                 text = `≥ ${text}`;
             label.textContent = text;
@@ -893,7 +975,7 @@ class AlignmentPropertyViewer {
             return;
         }
         const state = this.stateFor(property);
-        if (state.transform === 'log10' && property.values.some((value) => value <= 0))
+        if (state.transform === 'log10' && !canUseLogScale(property.name, property.values))
             state.transform = 'linear';
         try {
             const bounds = this.boundsFor(property, state);
@@ -927,7 +1009,14 @@ class AlignmentPropertyViewer {
         const property = this.selectedProperty();
         if (!property)
             return;
-        this.stateFor(property).transform = this.transformSelect.value;
+        const state = this.stateFor(property);
+        state.transform = this.transformSelect.value;
+        if (state.transform === 'log10' && state.range === 'custom' &&
+            (!(state.customLower > 0) || !(state.customUpper > 0))) {
+            const robust = automaticScaleBounds(property.values, 'log10', 'robust');
+            state.customLower = robust.lower;
+            state.customUpper = robust.upper;
+        }
         this.render();
     }
 
@@ -941,7 +1030,7 @@ class AlignmentPropertyViewer {
         state.range = this.rangeSelect.value;
         if (state.range === 'custom' &&
             (!Number.isFinite(state.customLower) || !Number.isFinite(state.customUpper))) {
-            const robust = this.automaticBounds(property, 'robust');
+            const robust = automaticScaleBounds(property.values, state.transform, 'robust');
             state.customLower = robust.lower;
             state.customUpper = robust.upper;
         }
@@ -1200,6 +1289,9 @@ function initializeAlignmentViewer(documentObject = globalScope.document)
 
 const api = {
     createScale,
+    automaticScaleBounds,
+    canUseLogScale,
+    preferredTransform,
     blendWithWhite,
     initializeAlignmentViewer,
 };

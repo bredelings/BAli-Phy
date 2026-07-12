@@ -2,7 +2,13 @@
 
 const assert = require('node:assert/strict');
 
-const {createScale, blendWithWhite} = require('../../../src/tools/alignment-draw.js');
+const {
+    createScale,
+    automaticScaleBounds,
+    canUseLogScale,
+    preferredTransform,
+    blendWithWhite,
+} = require('../../../src/tools/alignment-draw.js');
 
 // Compares floating-point scale results without coupling the tests to their
 // exact arithmetic evaluation order.
@@ -44,7 +50,45 @@ function assertClose(actual, expected, message)
     assert.deepEqual(ticks.map((tick) => tick.position), [0, 0.5, 1]);
     assert.deepEqual(ticks.map((tick) => tick.value), [0.1, 1, 10]);
 
-    assert.throws(() => createScale([0, 1], {transform: 'log10'}), /positive/i);
+    const zeroScale = createScale([0, 0.1, 1], {
+        transform: 'log10',
+        lower: 0.1,
+        upper: 1,
+    });
+    assert.equal(zeroScale.normalize(0), 0,
+                 'zero values clip to the positive logarithmic floor');
+    const automaticZeroScale = createScale([0, 0.1, 1], {transform: 'log10'});
+    assert.equal(automaticZeroScale.lower, 0.1,
+                 'an implicit logarithmic floor uses the smallest positive value');
+    assert.throws(() => createScale([-1, 1], {transform: 'log10'}), /negative/i);
+}
+
+{
+    assert.deepEqual(automaticScaleBounds([0, 0.1, 1, 10], 'log10', 'full'),
+                     {lower: 0.1, upper: 10},
+                     'logarithmic full bounds use the positive extent');
+    assert.equal(canUseLogScale('rate', [0, 1, 2]), true,
+                 'zero rates permit a clipped logarithmic scale');
+    assert.equal(canUseLogScale('rate', [-1, 1, 2]), false,
+                 'negative properties do not permit logarithmic display');
+    assert.equal(canUseLogScale('posSelection', [0.01, 0.5, 0.99]), false,
+                 'the built-in probability property remains linear-only');
+    assert.equal(preferredTransform('rate', []), 'linear',
+                 'properties without finite values retain a usable default state');
+}
+
+{
+    const uniform = Array.from({length: 100}, (_, index) => index / 99);
+    const logUniform = [0, ...Array.from({length: 100}, (_, index) =>
+        10 ** (-3 + (3 * index) / 99))];
+    assert.equal(preferredTransform('dNdS', uniform), 'linear',
+                 'uniform ratios retain a linear default');
+    assert.equal(preferredTransform('rate', logUniform), 'log10',
+                 'orders-of-magnitude rates default to logarithmic display');
+    assert.equal(preferredTransform('posSelection', logUniform), 'linear',
+                 'probabilities do not inherit a distribution-driven log default');
+    assert.equal(preferredTransform('rate', logUniform.slice(0, 10)), 'linear',
+                 'small samples retain the conservative linear default');
 }
 
 {
