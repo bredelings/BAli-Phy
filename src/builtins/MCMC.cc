@@ -13,8 +13,12 @@
 #include "computation/operations.H"      // for is_seq( )
 #include "models/TreeInterface.H"
 #include "mcmc/sample.H"
+#include "util/dense-matrix.H"
 
 #include "dp/dp-matrix.H"
+
+#include <algorithm>
+#include <limits>
 
 using boost::dynamic_pointer_cast;
 
@@ -818,11 +822,13 @@ extern "C" closure builtin_function_walkTreePathRaw(OperationArgs& Args)
     //------------ 4. Walk the tree and realign --------//
     auto branches = walk_tree_path(T, subst_root);
 
-    object_ptr<R::RVector> v (new R::RVector);
-    for(int branch: branches)
-        v->push_back(branch);
+    if (branches.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw myexception()<<"walkTreePathRaw: branch count exceeds supported Int range";
 
-    return v;
+    int count = static_cast<int>(branches.size());
+    object_ptr<Box<DenseVector<int>>> path(new Box<DenseVector<int>>(count));
+    std::copy(branches.begin(), branches.end(), path->data());
+    return R::RPair(count, path);
 }
 
 extern "C" closure builtin_function_fnprUnsafeProposalRaw(OperationArgs& Args)
