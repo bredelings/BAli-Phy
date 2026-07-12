@@ -13,7 +13,7 @@ import Numeric.LogDouble
 import Data.Maybe (maybeToList)
 import Data.Text (Text)
 import qualified Data.Vector.Unboxed as U
-import qualified Data.Vector.Unboxed.Internal as UInternal
+import Data.Vector.Unboxed.Internal (intVectorNativeView)
 import Foreign.NativeVector (NativeVector)
 
 import Data.IntMap (IntMap)
@@ -85,8 +85,10 @@ foreign import bpcall "Parsimony:mutsRootFixedA" mutsRootFixedARaw :: EVector (E
 peelMutsFixedA sequences alphabet partials costs =
     peelMutsFixedANative sequences alphabet partials (nativeMatrix costs)
 
-mutsRootFixedA sequences alphabet partials costs (UInternal.V_Int offset count native) =
+mutsRootFixedA sequences alphabet partials costs counts =
     mutsRootFixedARaw sequences alphabet partials (nativeMatrix costs) offset count native
+  where
+    (offset, count, native) = intVectorNativeView counts
 
 cached_conditional_muts_fixed_A t seqs alpha cost =
     let pc    = IntMap.fromSet pcf $ getEdgesSet t

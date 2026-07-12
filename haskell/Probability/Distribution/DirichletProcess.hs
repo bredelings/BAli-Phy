@@ -13,8 +13,7 @@ import Probability.Distribution.Uniform
 import Numeric.Log -- for log1p
 
 import qualified Data.Vector.Unboxed as U
-import qualified Data.Vector.Unboxed.Internal as UInternal
-import Data.Vector.Unboxed.Internal (intVectorFromNative)
+import Data.Vector.Unboxed.Internal (intVectorFromNative, intVectorNativeView)
 import Foreign.NativeVector (NativeVector)
 
 import Control.DeepSeq
@@ -95,8 +94,8 @@ foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -
 -- Marshal assignments into contiguous unboxed storage so the native density
 -- can scan primitive integers without copying or unboxing each element.
 crp_density alpha n d z =
-    case U.fromList z of
-      UInternal.V_Int offset count native ->
+    case intVectorNativeView (U.fromList z) of
+      (offset, count, native) ->
           builtin_crp_density alpha n d offset count native
 
 foreign import bpcall "Distribution:sample_CRP" sample_crp_native :: Double -> Int -> Int -> IO (NativeVector Int)
