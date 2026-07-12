@@ -11,12 +11,12 @@ import Data.List
 import Data.Function
 import Data.Functor
     
-foreign import bpcall "Environment:getArgs" builtin_getArgs :: IO (EVector CPPString)
+foreign import bpcall "Environment:" getArgsRaw :: IO (EVector CPPString)
 
 getArgs :: IO [String]
-getArgs = fmap (map listFromString . vectorToList) $ builtin_getArgs
+getArgs = fmap (map listFromString . vectorToList) $ getArgsRaw
 
-foreign import bpcall "Environment:getArgs" getEnvRaw :: CPPString -> RealWorld -> CPPString
+foreign import bpcall "Environment:" getEnvRaw :: CPPString -> RealWorld -> CPPString
 
 getEnv :: String -> IO String
 getEnv = fromC getEnvRaw

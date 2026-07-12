@@ -8,7 +8,7 @@
 
 using namespace std;
 
-extern "C" closure builtin_function_getArgs(OperationArgs& Args)
+extern "C" closure builtin_function_getArgsRaw(OperationArgs& Args)
 {
     reg_heap& M = Args.memory();
 
