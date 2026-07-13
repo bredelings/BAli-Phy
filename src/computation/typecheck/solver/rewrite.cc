@@ -144,6 +144,70 @@ std::optional<Type> Solver::reduce_type_family_app(const TypeCon& family, const 
     return reduce_closed_type_family(family, *info->closed_family, args);
 }
 
+Type Solver::normalize_declared_type(Type t, unsigned family_reduction_depth)
+{
+    constexpr unsigned max_family_reductions = 100;
+
+    t = follow_meta_type_var(t);
+
+    if (t.is_a<MetaTypeVar>() or t.is_a<TypeVar>())
+        return t;
+
+    if (auto constrained = t.to<ConstrainedType>())
+    {
+        auto result = *constrained;
+        for(auto& constraint: result.context)
+            constraint = normalize_declared_type(constraint, family_reduction_depth);
+        result.type = normalize_declared_type(result.type, family_reduction_depth);
+        return result;
+    }
+
+    if (auto forall = t.to<ForallType>())
+    {
+        auto result = *forall;
+        result.type = normalize_declared_type(result.type, family_reduction_depth);
+        return result;
+    }
+
+    if (auto app = t.to<TypeApp>())
+    {
+        // A synonym or family constructor must be considered together with
+        // its arguments.  Expanding the bare head of `Synonym a` first would
+        // incorrectly report that the synonym was under-saturated.
+        auto head = follow_meta_type_var(app->head);
+        if (not head.is_a<TypeCon>() and
+            not head.is_a<TypeVar>() and
+            not head.is_a<MetaTypeVar>())
+            head = normalize_declared_type(head, family_reduction_depth);
+        auto arg = normalize_declared_type(app->arg, family_reduction_depth);
+        t = TypeApp(head, arg);
+    }
+
+    if (auto synonym = expand_type_synonym(t))
+        return normalize_declared_type(*synonym, family_reduction_depth);
+
+    if (auto family_app = is_type_fam_app(t))
+    {
+        auto& [family, args] = *family_app;
+        if (auto rhs = reduce_type_family_app(family, args))
+        {
+            if (same_type(t, *rhs))
+                throw myexception()<<"Type family normalization made no progress at '"
+                                   <<show_type_plain(t)<<"'";
+            if (family_reduction_depth >= max_family_reductions)
+                throw myexception()<<"Type family normalization exceeded "
+                                   <<max_family_reductions<<" reductions at '"
+                                   <<show_type_plain(t)<<"'";
+            return normalize_declared_type(*rhs, family_reduction_depth + 1);
+        }
+    }
+
+    if (t.is_a<TypeCon>() or t.is_a<TypeApp>())
+        return t;
+
+    std::abort();
+}
+
 Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, const vector<Type>& args)
 {
     Type t = type_apply(tc, rewrite(flavor, args));

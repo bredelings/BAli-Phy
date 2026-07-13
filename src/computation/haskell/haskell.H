@@ -420,6 +420,18 @@ struct KindSigDecl
     KindSigDecl(const std::vector<LTypeCon>& tcs, const Kind& k): tycons(tcs), kind(k) {}
 };
 
+struct ForeignTypeInfo
+{
+    ::Type haskell_type;
+    ::Type foreign_type;
+    ::Type abi_type;
+
+    // Ordinary bpcall/ecall imports returning IO need the existing makeIO
+    // wrapper.  For trcall, the translated raw type already contains its
+    // world argument and this remains false.
+    bool needs_io_wrapper = false;
+};
+
 struct ForeignDecl
 {
     Located<std::string> call_conv;
@@ -428,6 +440,7 @@ struct ForeignDecl
     std::string symbol_name;
     Hs::LVar function;
     LType type;
+    std::optional<ForeignTypeInfo> foreign_info;
     std::string print() const;
 
     ForeignDecl(const Located<std::string>& conv, const std::string& n, const Hs::LVar& f, const LType& t);

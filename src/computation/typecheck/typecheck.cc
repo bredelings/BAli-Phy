@@ -18,6 +18,7 @@
 #include "haskell/ids.H"
 
 #include "alphabetize.H" // for alphabetize_type( ).
+#include "solver.H"
 
 namespace views = ranges::views;
 
@@ -1500,6 +1501,73 @@ pair<Hs::Binds,Core::Decls<>> typechecker_result::all_binds() const
     return {all, all2};
 }
 
+Type TypeChecker::normalize_foreign_type(const Type& type)
+{
+    Solver solver(*this);
+    return solver.normalize_declared_type(type);
+}
+
+void TypeChecker::annotate_foreign_declarations(vector<Hs::ForeignDecl>& declarations)
+{
+    for(auto& declaration: declarations)
+    {
+        auto span = source_span_scope(declaration.function.loc * declaration.type.loc);
+        auto public_name = unloc(declaration.function).name;
+        auto public_symbol = this_mod().lookup_local_symbol(public_name);
+        assert(public_symbol);
+
+        auto foreign_name = public_name;
+        if (unloc(declaration.call_conv) == "trcall")
+            foreign_name += "$raw";
+
+        auto foreign_symbol = this_mod().lookup_local_symbol(foreign_name);
+        assert(foreign_symbol);
+
+        Hs::ForeignTypeInfo info;
+        info.haskell_type = public_symbol->type;
+        info.foreign_type = foreign_symbol->type;
+
+        try
+        {
+            auto normalized_foreign_type = normalize_foreign_type(info.foreign_type);
+            info.abi_type = normalized_foreign_type;
+
+            // trcall's translated raw signature already contains its world
+            // argument.  Ordinary imports retain the existing makeIO wrapper
+            // and expose that extra operation slot in the ABI type.
+            if (unloc(declaration.call_conv) != "trcall")
+            {
+                auto [type_vars, constraints, monotype] = peel_top_gen(normalized_foreign_type);
+                auto [argument_types, result_type] = arg_result_types(monotype);
+                if (auto io_result = is_IO_type(result_type))
+                {
+                    info.needs_io_wrapper = true;
+                    argument_types.push_back(int_type());
+                    auto abi_monotype = function_type(argument_types, *io_result);
+                    info.abi_type = add_forall_vars(type_vars,
+                                                    add_constraints(constraints, abi_monotype));
+                }
+            }
+
+            auto [_, abi_result] = gen_arg_result_types(info.abi_type);
+            if (is_type_fam_app(abi_result))
+            {
+                record_error(Note()<<"Cannot determine the ABI arity of foreign import '"
+                                   <<get_unqualified_name(public_name)<<"'.  Normalization left '"
+                                   <<show_type_plain(abi_result)<<"' at the operation result");
+                continue;
+            }
+
+            declaration.foreign_info = std::move(info);
+        }
+        catch(const myexception& e)
+        {
+            record_error(Note()<<"Cannot normalize the ABI type of foreign import '"
+                               <<get_unqualified_name(public_name)<<"': "<<e.what());
+        }
+    }
+}
+
 typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
 {
     // 1. Check the module's type declarations, and derives a Type Environment TE_T:(TCE_T, CVE_T)
@@ -1608,6 +1676,10 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
         V->type = type;
     }
 
+    // Foreign declarations need the final checked symbol types and the
+    // complete local/imported family environment.
+    annotate_foreign_declarations(M.foreign_decls);
+
     // 14. Print messages sorted by location.
     show_messages(this_mod().file, std::cerr, messages());
 
@@ -1617,7 +1689,8 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
 
     messages().clear();
 
-    return {class_decls, value_decls, dm_decls, instance_method_binds, dfun_decls, top_simplify_decls};
+    return {class_decls, value_decls, dm_decls, instance_method_binds,
+            dfun_decls, top_simplify_decls, M.foreign_decls};
 }
 
 /*

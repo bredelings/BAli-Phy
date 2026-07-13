@@ -677,6 +677,18 @@ set<string> Module::hidden_dependencies() const
     set<string> modules;
     if (language_extensions.has_extension(LangExt::RecursiveDo))
         modules.insert(control_monad_fix_module_name);
+
+    if (module_AST.topdecls)
+    {
+        Hs::ModuleDecls declarations(*module_AST.topdecls);
+        for(const auto& foreign_decl: declarations.foreign_decls)
+            if (unloc(foreign_decl.call_conv) == "trcall")
+            {
+                modules.insert("Compiler.FFI.ToFromC");
+                break;
+            }
+    }
+
     return modules;
 }
 
@@ -1193,7 +1205,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
         else if (call_conv == "trcall")
         {
             string raw_name = fname +"$raw";
-            MM->def_function( raw_name );
+            MM->def_function( get_unqualified_name(raw_name) );
 
             Hs::LVar fromC = {noloc, Hs::Var("Compiler.FFI.ToFromC.fromC")};
             Hs::LVar raw   = {noloc, Hs::Var(raw_name)};
@@ -1249,7 +1261,7 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     value_decls += core_decls;
 
-    value_decls += MM->load_builtins(loader, M.foreign_decls);
+    value_decls += MM->load_builtins(loader, tc_result.foreign_decls);
 
     value_decls += MM->load_constructors(M.type_decls);
 
@@ -1294,6 +1306,8 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
     MM->export_small_decls(opts, value_decls);
 
     auto CM = std::make_shared<CompiledModule>(MM);
+
+    CM->set_foreign_decls(tc_result.foreign_decls);
 
     CM->finish_value_decls(value_decls);
 
@@ -1878,6 +1892,12 @@ Core::Decls<> Module::load_builtins(const module_loader& L, const std::vector<Hs
     Core::Decls<> decls;
     for(const auto& decl: foreign_decls)
     {
+        if (not decl.foreign_info)
+            throw myexception()<<"Foreign import '"<<unloc(decl.function).name
+                               <<"' has no checked ABI type";
+
+        const auto& foreign_info = *decl.foreign_info;
+        int abi_arity = gen_type_arity(foreign_info.abi_type);
         auto function_name = unloc(decl.function).name;
 
         Core::Exp<> body;
@@ -1888,15 +1908,11 @@ Core::Decls<> Module::load_builtins(const module_loader& L, const std::vector<Hs
             
             function_name = S->name;
 
-            int n_args = gen_type_arity(S->type);
-
-            // Type synonyms have already been expanded during type checking.
-            auto [arg_types, result_type] = gen_arg_result_types(S->type);
-
-            if (is_IO_type(result_type))
+            if (foreign_info.needs_io_wrapper)
             {
-                auto builtin = parse_builtin(decl, n_args+1, L);
-                auto xs = make_vars<>(n_args);
+                assert(abi_arity > 0);
+                auto builtin = parse_builtin(decl, abi_arity, L);
+                auto xs = make_vars<>(abi_arity - 1);
                 auto f1 = Core::Var<>("f1");
                 auto f2 = Core::Var<>("f2");
                 auto makeIO = Core::Var<>("Compiler.IO.makeIO");
@@ -1908,14 +1924,12 @@ Core::Decls<> Module::load_builtins(const module_loader& L, const std::vector<Hs
                 body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO f2
             }
             else
-                body = parse_builtin(decl, n_args, L);
+                body = parse_builtin(decl, abi_arity, L);
         }
         else if (unloc(decl.call_conv) == "trcall")
         {
             function_name = unloc(decl.function).name + "$raw";
-            auto S = lookup_symbol(function_name);
-            int n_args = gen_type_arity(S->type);
-            body = parse_builtin(decl, n_args, L);
+            body = parse_builtin(decl, abi_arity, L);
         }
 
         decls.push_back( { Core::Var<>(function_name), body} );

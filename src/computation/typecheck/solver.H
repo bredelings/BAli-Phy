@@ -129,6 +129,7 @@ struct Solver: public TypeChecker
     std::optional<Type> reduce_open_type_family(const TypeCon&, const std::vector<Type>&);
     std::optional<Type> reduce_closed_type_family(const TypeCon&, const ClosedTypeFamInfo&, const std::vector<Type>&);
     std::optional<Type> reduce_type_family_app(const TypeCon&, const std::vector<Type>&);
+    Type normalize_declared_type(Type, unsigned family_reduction_depth = 0);
     Type rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon&, const std::vector<Type>&);
     Type rewrite_app(ConstraintFlavor, const Type&, const Type&);
     

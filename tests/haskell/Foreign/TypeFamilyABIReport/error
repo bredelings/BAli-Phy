@@ -1,0 +1,9 @@
+familyDiv
+  Haskell     :: PureABI Int
+  foreign ABI :: Int -> Int -> Int
+familyGetEnv
+  Haskell     :: EffectfulABI Int
+  foreign ABI :: CPPString -> Int -> CPPString
+translatedGetEnv
+  Haskell     :: String -> IO String
+  foreign ABI :: CPPString -> Int -> CPPString

@@ -664,6 +664,10 @@ public:
 
     void finish_closed_type_family(TypeFamInfo& family_info);
 
+    Type normalize_foreign_type(const Type&);
+
+    void annotate_foreign_declarations(std::vector<Hs::ForeignDecl>&);
+
     bool check_family_instance_association(const Hs::LTypeCon& family_con,
 					   const std::optional<std::string>& family_associated_class,
 					   const std::optional<std::string>& instance_associated_class,

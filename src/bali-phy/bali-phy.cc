@@ -680,6 +680,18 @@ int main(int argc,char* argv[])
                 TidyState tidy_state;
                 std::cerr<<name<<" :: "<<tidy_state.print(symbol->type)<<"\n\n";
             }
+            for(const auto& declaration: M2->foreign_decls())
+            {
+                if (not declaration.foreign_info) continue;
+
+                TidyState tidy_state;
+                auto name = get_unqualified_name(unloc(declaration.function).name);
+                std::cerr<<name<<"\n"
+                         <<"  Haskell     :: "
+                         <<tidy_state.print(declaration.foreign_info->haskell_type)<<"\n"
+                         <<"  foreign ABI :: "
+                         <<tidy_state.print(declaration.foreign_info->abi_type)<<"\n\n";
+            }
 
             exit(0);
         }
