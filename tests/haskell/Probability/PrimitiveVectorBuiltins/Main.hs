@@ -4,7 +4,7 @@ import Compiler.Fractional
 import Compiler.IO (IO)
 import Compiler.Num
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (doubleVectorNativeView)
+import Data.Vector.Unboxed.Internal (doubleVectorNativeView, intVectorNativeView)
 import Foreign.NativeVector (NativeVector)
 import Foreign.Vector (EVector, listToVector, vectorToList)
 import Probability (LogDouble)
@@ -13,6 +13,7 @@ import System.IO (print)
 
 foreign import bpcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: Int -> Int -> NativeVector Double -> EVector Int -> LogDouble
 foreign import bpcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf :: Int -> Int -> NativeVector Double -> IO (EVector Int)
+foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_coalescence_probability :: Int -> Double -> Int -> Int -> NativeVector Int -> LogDouble
 
 -- Exercise primitive-vector probability boundaries without exposing their
 -- internal unboxed representation in the public list-facing interface.
@@ -24,8 +25,12 @@ main = do
     sampled <- builtin_sample_haplotype01_from_plaf sampleOffset sampleCount
                                                     sampleNative
     print (vectorToList sampled)
+    print (builtin_selfing_coalescence_probability 2 0 indicatorOffset
+                                                    indicatorCount indicatorNative)
   where
     (offset, count, native) = doubleVectorNativeView
                                   (U.fromList [0.25,0.75])
     (sampleOffset, sampleCount, sampleNative) = doubleVectorNativeView
                                                    (U.fromList [0,1])
+    (indicatorOffset, indicatorCount, indicatorNative) = intVectorNativeView
+                                                             (U.fromList [0,0])

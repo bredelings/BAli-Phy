@@ -5,6 +5,8 @@ import Range
 import Bio.Alignment.Matrix
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
+import qualified Data.Vector.Unboxed as U
+import Data.Vector.Unboxed.Internal (intVectorNativeView)
 
 data VVI -- Vector<Vector<int>>
 
@@ -65,8 +67,11 @@ afsMixture thetas ps = AFSMixture thetas ps
 ----------------------------------------
 data SelfingCoalescence = SelfingCoalescence Int Double
 
-foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_coalescence_probability :: Int -> Double -> EVector Int -> LogDouble
-selfing_coalescence_probability n_loci s i = builtin_selfing_coalescence_probability n_loci s (toVector i)
+foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_coalescence_probability :: Int -> Double -> Int -> Int -> NativeVector Int -> LogDouble
+selfing_coalescence_probability n_loci s indicators =
+    builtin_selfing_coalescence_probability n_loci s offset count native
+  where
+    (offset, count, native) = intVectorNativeView (U.fromList indicators)
 
 instance Dist SelfingCoalescence where
     type Result SelfingCoalescence = [Int]
@@ -79,12 +84,15 @@ selfing_coalescence n_loci s = SelfingCoalescence n_loci s
 
 ----------------------------------------
 
-data LiStephens2003 = LiStephens2003 (EVector Int) [(Double,Double,Double)]
+data LiStephens2003 = LiStephens2003 (U.Vector Int) [(Double,Double,Double)]
 
-foreign import bpcall "SMC:" li_stephens_2003_composite_likelihood_raw :: EVector Int -> EVector (EVector Double) -> AlignmentMatrix -> LogDouble
+foreign import bpcall "SMC:" li_stephens_2003_composite_likelihood_raw :: Int -> Int -> NativeVector Int -> EVector (EVector Double) -> AlignmentMatrix -> LogDouble
 
-li_stephens_2003_composite_likelihood sites rhoFunc alignment = li_stephens_2003_composite_likelihood_raw sites rhoFuncRaw alignment
-    where rhoFuncRaw = toVector [toVector [x,start,end] | (x,start,end) <- rhoFunc]
+li_stephens_2003_composite_likelihood sites rhoFunc alignment =
+    li_stephens_2003_composite_likelihood_raw offset count native rhoFuncRaw alignment
+  where
+    (offset, count, native) = intVectorNativeView sites
+    rhoFuncRaw = toVector [toVector [x,start,end] | (x,start,end) <- rhoFunc]
 
 instance Dist LiStephens2003 where
     type Result LiStephens2003 = AlignmentMatrix
@@ -93,7 +101,7 @@ instance Dist LiStephens2003 where
 instance HasAnnotatedPdf LiStephens2003 where
     annotated_densities (LiStephens2003 locs rho) = make_densities $ li_stephens_2003_composite_likelihood locs rho
 
-li_stephens_2003 locs rho = LiStephens2003 (toVector locs) rho
+li_stephens_2003 locs rho = LiStephens2003 (U.fromList locs) rho
 
 
 ----------------------------------------

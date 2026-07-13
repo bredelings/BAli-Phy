@@ -1052,7 +1052,7 @@ struct Chunk
  */
 
 // Question: do we want to actually distinguish between N and -?
-log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment& A, const vector<int>& d, int k, const vector<Chunk>& rho, double theta)
+log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment& A, std::span<const int> d, int k, const vector<Chunk>& rho, double theta)
 {
     // 1. Determine mutation probabilities when copying from a given parent.
     assert(k>=1);
@@ -1145,7 +1145,7 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
     return { Pr };
 }
 
-log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vector<int>& d, const vector<Chunk>& rho)
+log_double_t li_stephens_2003_composite_likelihood(const alignment& A, std::span<const int> d, const vector<Chunk>& rho)
 {
     assert(A.length() == d.size());
 
@@ -1162,10 +1162,16 @@ log_double_t li_stephens_2003_composite_likelihood(const alignment& A, const vec
 
 extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(OperationArgs& Args)
 {
-    auto locs = (vector<int>)Args.evaluate_slot_to_value(0).as_<R::RVector>();
+    int loc_offset = Args.evaluate_slot_to_value(0).as_int();
+    int loc_count = Args.evaluate_slot_to_value(1).as_int();
+    auto loc_value = Args.evaluate_slot_to_value(2);
+    const auto& loc_owner = loc_value.as_<Box<DenseVector<int>>>();
+    auto locs = checked_native_vector_view(
+        loc_owner, loc_offset, loc_count,
+        "li_stephens_2003 locations");
 
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& rho_func = arg1.as_<R::RVector>();
+    auto rho_value = Args.evaluate_slot_to_value(3);
+    auto& rho_func = rho_value.as_<R::RVector>();
     vector<Chunk> rhos;
     for(auto& chunk: rho_func)
     {
@@ -1173,8 +1179,8 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(Op
 	rhos.push_back({ c[0].as_double(), c[1].as_double(), c[2].as_double()} );
     }
 
-    auto arg2 = Args.evaluate_slot_to_value(2);
-    auto& A = arg2.as_<Box<alignment>>().value();
+    auto alignment_value = Args.evaluate_slot_to_value(4);
+    auto& A = alignment_value.as_<Box<alignment>>().value();
 
     log_double_t Pr = li_stephens_2003_composite_likelihood(A, locs, rhos);
     
