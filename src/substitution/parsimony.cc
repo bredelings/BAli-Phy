@@ -1,6 +1,7 @@
 #include "substitution/parsimony.H"
 
 #include <limits>
+#include <span>
 #include "dp/hmm.H"
 #include "dp/2way.H"
 #include "util/range.H"
@@ -364,7 +365,7 @@ int muts_root_fixed_A(const R::RVector& sequences,
 		      const alphabet& a,
 		      const R::RVector& n_muts_,
 		      const DenseMatrix<int>& costs,
-		      Eigen::Ref<const DenseVector<int>> counts)
+		      std::span<const int> counts)
 {
     int n_letters = costs.rows();
 

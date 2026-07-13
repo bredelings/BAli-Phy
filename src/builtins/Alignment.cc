@@ -1,4 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+#include "builtins/native-vector-view.H"
 #include "computation/machine/args.H"
 #include "dp/2way.H"
 #include "imodel/imodel.H"
@@ -811,15 +812,15 @@ extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
     auto owner_value = Args.evaluate_slot_to_value(3);
     const auto& smap = arg0.as_<R::RVector>();
     const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
-        throw myexception()<<"Alignment.statesToLetters: invalid native state view";
+    auto states = checked_native_vector_view(
+        owner, offset, count, "Alignment.statesToLetters");
 
     auto result = object_ptr<R::RVector>(new R::RVector(count));
     auto& letter_sequence = *result;
 
     for(int i=0; i<count; i++)
     {
-        int s = owner[offset + i];
+        int s = states[i];
         if (s >= 0)
             letter_sequence[i] = smap[s].as_int();
         else

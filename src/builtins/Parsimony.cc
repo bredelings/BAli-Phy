@@ -1,5 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
+#include "builtins/native-vector-view.H"
 #include "computation/machine/args.H"
 #include "math/exponential.H"
 #include "sequence/alphabet.H"
@@ -155,7 +156,9 @@ extern "C" closure builtin_function_peelMutsFixedA(OperationArgs& Args)
 }
 
 
-int muts_root_fixed_A(const R::RVector& sequences, const alphabet& a, const R::RVector& n_muts, const DenseMatrix<int>& costs, Eigen::Ref<const DenseVector<int>> counts);
+int muts_root_fixed_A(const R::RVector& sequences, const alphabet& a,
+                      const R::RVector& n_muts, const DenseMatrix<int>& costs,
+                      std::span<const int> counts);
 
 extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
 {
@@ -167,9 +170,8 @@ extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
     int count = Args.evaluate_slot_to_value(5).as_int();
     auto owner_value = Args.evaluate_slot_to_value(6);
     const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
-        throw myexception()<<"Parsimony.mutsRootFixedA: invalid count-vector view";
-    auto counts = owner.segment(offset, count);
+    auto counts = checked_native_vector_view(
+        owner, offset, count, "Parsimony.mutsRootFixedA");
 
     int muts = muts_root_fixed_A(arg0.as_<R::RVector>(),            // sequences
 				 *arg1.as_<Alphabet>(),          // a

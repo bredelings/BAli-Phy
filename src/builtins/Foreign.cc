@@ -1,4 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+#include "builtins/native-vector-view.H"
 #include "computation/machine/args.H"
 #include "computation/haskell/ids.H"
 #include "util/myexception.H"
@@ -224,18 +225,20 @@ extern "C" closure builtin_function_encodeComponentStateSequenceRaw(OperationArg
     auto state_value = Args.evaluate_slot_to_value(4);
     const auto& components = component_value.as_<Box<DenseVector<int>>>();
     const auto& states = state_value.as_<Box<DenseVector<int>>>();
-    if (component_offset < 0 or count < 0 or component_offset > components.size() or
-        count > components.size() - component_offset or state_offset < 0 or
-        state_offset > states.size() or count > states.size() - state_offset)
-        throw myexception()<<"Foreign.encodeComponentStateSequenceRaw: invalid native views";
+    auto component_view = checked_native_vector_view(
+        components, component_offset, count,
+        "Foreign.encodeComponentStateSequenceRaw components");
+    auto state_view = checked_native_vector_view(
+        states, state_offset, count,
+        "Foreign.encodeComponentStateSequenceRaw states");
 
     std::ostringstream o;
     o<<"[";
     
     for(int i=0;i<count;i++)
     {
-        int y1 = components[component_offset + i];
-        int y2 = states[state_offset + i];
+        int y1 = component_view[i];
+        int y2 = state_view[i];
 
         if (y1 == -1 and y2 == -1)
             o<<"null";

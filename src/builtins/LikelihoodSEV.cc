@@ -1,5 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
+#include "builtins/native-vector-view.H"
 #include "computation/machine/args.H"
 #include "sequence/alphabet.H"
 #include "substitution/ops.H"
@@ -23,19 +24,6 @@ using boost::dynamic_bitset;
 
 namespace
 {
-
-// Validate one Haskell primitive view after all arguments are retained and
-// expose its contiguous logical range without per-element checks.
-std::span<const int> native_int_view(const R::Exp& value, int offset, int count,
-                                     const char* operation)
-{
-    const auto& owner = value.as_<Box<DenseVector<int>>>();
-    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
-        throw myexception()<<operation<<": invalid native Int vector view";
-    std::span<const int> storage(owner.data(), static_cast<std::size_t>(owner.size()));
-    return storage.subspan(static_cast<std::size_t>(offset),
-                           static_cast<std::size_t>(count));
-}
 
 // Move a sampled structure-of-arrays result into two unboxed-vector owners
 // without copying either primitive array.
@@ -103,14 +91,17 @@ extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
     auto column_value = Args.evaluate_slot_to_value(10);
     if (parent_count != column_count)
         throw myexception()<<"LikelihoodSEV.sampleSequence: parent and column-map lengths differ";
-    auto parent_components = native_int_view(
-        component_value, component_offset, parent_count,
+    const auto& component_owner = component_value.as_<Box<DenseVector<int>>>();
+    const auto& state_owner = state_value.as_<Box<DenseVector<int>>>();
+    const auto& column_owner = column_value.as_<Box<DenseVector<int>>>();
+    auto parent_components = checked_native_vector_view(
+        component_owner, component_offset, parent_count,
         "LikelihoodSEV.sampleSequence components");
-    auto parent_states = native_int_view(
-        state_value, state_offset, parent_count,
+    auto parent_states = checked_native_vector_view(
+        state_owner, state_offset, parent_count,
         "LikelihoodSEV.sampleSequence states");
-    auto columns = native_int_view(
-        column_value, column_offset, column_count,
+    auto columns = checked_native_vector_view(
+        column_owner, column_offset, column_count,
         "LikelihoodSEV.sampleSequence columns");
 
     auto result = substitution::sample_sequence_SEV(
@@ -131,9 +122,8 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
     int count = Args.evaluate_slot_to_value(4).as_int();
     auto owner_value = Args.evaluate_slot_to_value(5);
     const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
-        throw myexception()<<"LikelihoodSEV.calcProb: invalid count-vector view";
-    auto counts = owner.segment(offset, count);
+    auto counts = checked_native_vector_view(
+        owner, offset, count, "LikelihoodSEV.calcProb");
 
     log_double_t Pr = substitution::calc_prob_SEV(arg0.as_<R::RVector>(),       // sequences
 						  arg1.as_<R::RVector>(),       // LCB
@@ -151,9 +141,10 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
     int count = Args.evaluate_slot_to_value(4).as_int();
     auto owner_value = Args.evaluate_slot_to_value(5);
     const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
-        throw myexception()<<"LikelihoodSEV.calcProbAtRoot: invalid count-vector view";
-    auto counts = owner.segment(offset, count);
+    auto count_view = checked_native_vector_view(
+        owner, offset, count, "LikelihoodSEV.calcProbAtRoot");
+    Eigen::Map<const DenseVector<int>> counts(
+        count_view.data(), static_cast<Eigen::Index>(count_view.size()));
 
     log_double_t Pr = substitution::calc_prob_at_root_SEV(arg0.as_<R::RVector>(),       // sequences
 							  arg1.as_<R::RVector>(),       // LCB
@@ -171,9 +162,8 @@ extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
     int count = Args.evaluate_slot_to_value(4).as_int();
     auto owner_value = Args.evaluate_slot_to_value(5);
     const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
-        throw myexception()<<"LikelihoodSEV.calcProbAtRootVariable: invalid count-vector view";
-    auto counts = owner.segment(offset, count);
+    auto counts = checked_native_vector_view(
+        owner, offset, count, "LikelihoodSEV.calcProbAtRootVariable");
 
     log_double_t Pr = substitution::calc_prob_at_root_variable_SEV(arg0.as_<R::RVector>(),       // sequences
 								   arg1.as_<R::RVector>(),       // LCB
@@ -190,8 +180,9 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
     int offset = Args.evaluate_slot_to_value(3).as_int();
     int count = Args.evaluate_slot_to_value(4).as_int();
     auto owner_value = Args.evaluate_slot_to_value(5);
-    auto columns = native_int_view(
-        owner_value, offset, count,
+    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
+    auto columns = checked_native_vector_view(
+        owner, offset, count,
         "LikelihoodSEV.sampleRootSequence columns");
 
     auto result = substitution::sample_root_sequence_SEV(

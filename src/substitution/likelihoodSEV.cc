@@ -39,7 +39,7 @@ namespace substitution
 					     const Likelihood_Cache_Branch& LCB2,
 					     const Likelihood_Cache_Branch& LCB3,
 					     const DenseMatrix<double>& F,
-					     Eigen::Ref<const DenseVector<int>> counts)
+					     std::span<const int> counts)
     {
         total_calc_root_prob++;
 
@@ -159,7 +159,7 @@ namespace substitution
     log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
 					      const Likelihood_Cache_Branch& LCB2,
 					      const DenseMatrix<double>& F,
-					      Eigen::Ref<const DenseVector<int>> counts)
+					      std::span<const int> counts)
     {
         total_calc_root_prob++;
 
@@ -404,7 +404,7 @@ namespace substitution
     log_double_t calc_prob_at_root_variable_SEV(const R::RVector& LCN,
 						const R::RVector& LCB,
 						const DenseMatrix<double>& F,
-						Eigen::Ref<const DenseVector<int>> counts)
+						std::span<const int> counts)
     {
 	total_calc_root_prob++;
 
@@ -555,7 +555,7 @@ namespace substitution
     log_double_t calc_prob_SEV(const R::RVector& LCN,
 			       const R::RVector& LCB,
 			       const DenseMatrix<double>& FF,
-			       Eigen::Ref<const DenseVector<int>> counts)
+			       std::span<const int> counts)
     {
 	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
 	for(auto& lcb: LCB)
@@ -568,7 +568,11 @@ namespace substitution
 	bool at_root = not away_from_root_branch;
 
 	if (at_root)
-	    return calc_prob_at_root_SEV(LCN, LCB, FF, counts);
+	{
+	    Eigen::Map<const DenseVector<int>> count_map(
+		counts.data(), static_cast<Eigen::Index>(counts.size()));
+	    return calc_prob_at_root_SEV(LCN, LCB, FF, count_map);
+	}
 
 	total_calc_root_prob++;
 

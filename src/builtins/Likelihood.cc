@@ -1,5 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
+#include "builtins/native-vector-view.H"
 #include "computation/machine/args.H"
 #include "sequence/alphabet.H"
 #include "dp/2way.H"
@@ -24,19 +25,6 @@ using boost::dynamic_bitset;
 
 namespace
 {
-
-// Validate one complete Haskell view at the native boundary and expose its
-// contiguous logical range without per-element checks.
-std::span<const int> native_int_view(const R::Exp& value, int offset, int count,
-                                     const char* operation)
-{
-    const auto& owner = value.as_<Box<DenseVector<int>>>();
-    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
-        throw myexception()<<operation<<": invalid native Int vector view";
-    std::span<const int> storage(owner.data(), static_cast<std::size_t>(owner.size()));
-    return storage.subspan(static_cast<std::size_t>(offset),
-                           static_cast<std::size_t>(count));
-}
 
 // Move a sampled structure-of-arrays result into the two native owners used
 // by Data.Vector.Unboxed without copying either array.
@@ -251,11 +239,13 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
     const auto& parent_alignment = arg5.as_<Box<pairwise_alignment_t>>();
     if (parent_count != parent_alignment.length1())
         throw myexception()<<"Likelihood.sampleBranchSequence: parent length does not match alignment";
-    auto parent_components = native_int_view(
-        component_value, component_offset, parent_count,
+    const auto& component_owner = component_value.as_<Box<DenseVector<int>>>();
+    const auto& state_owner = state_value.as_<Box<DenseVector<int>>>();
+    auto parent_components = checked_native_vector_view(
+        component_owner, component_offset, parent_count,
         "Likelihood.sampleBranchSequence components");
-    auto parent_states = native_int_view(
-        state_value, state_offset, parent_count,
+    auto parent_states = checked_native_vector_view(
+        state_owner, state_offset, parent_count,
         "Likelihood.sampleBranchSequence states");
     auto result = substitution::sample_branch_sequence(
         parent_components, parent_states,
@@ -321,11 +311,13 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
     auto alignment_value = Args.evaluate_slot_to_value(5);
     auto transition_value = Args.evaluate_slot_to_value(6);
     auto frequency_value = Args.evaluate_slot_to_value(7);
-    auto parent_components = native_int_view(
-        component_value, component_offset, parent_count,
+    const auto& component_owner = component_value.as_<Box<DenseVector<int>>>();
+    const auto& state_owner = state_value.as_<Box<DenseVector<int>>>();
+    auto parent_components = checked_native_vector_view(
+        component_owner, component_offset, parent_count,
         "Likelihood.simulateSequenceFrom components");
-    auto parent_states = native_int_view(
-        state_value, state_offset, parent_count,
+    auto parent_states = checked_native_vector_view(
+        state_owner, state_offset, parent_count,
         "Likelihood.simulateSequenceFrom states");
     const auto& alignment = alignment_value.as_<Box<pairwise_alignment_t>>();
     if (parent_count != alignment.length1())
@@ -375,11 +367,13 @@ extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Arg
     auto state_value = Args.evaluate_slot_to_value(4);
     auto transition_value = Args.evaluate_slot_to_value(5);
     auto frequency_value = Args.evaluate_slot_to_value(6);
-    auto parent_components = native_int_view(
-        component_value, component_offset, count,
+    const auto& component_owner = component_value.as_<Box<DenseVector<int>>>();
+    const auto& state_owner = state_value.as_<Box<DenseVector<int>>>();
+    auto parent_components = checked_native_vector_view(
+        component_owner, component_offset, count,
         "Likelihood.simulateFixedSequenceFrom components");
-    auto parent_states = native_int_view(
-        state_value, state_offset, count,
+    auto parent_states = checked_native_vector_view(
+        state_owner, state_offset, count,
         "Likelihood.simulateFixedSequenceFrom states");
     const auto& transition_ps = transition_value.as_<R::RVector>();
     const auto& F = frequency_value.as_<Box<DenseMatrix<double>>>();

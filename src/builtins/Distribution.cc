@@ -3,6 +3,7 @@
 #include <span>
 #include <valarray>
 #include <string>
+#include "builtins/native-vector-view.H"
 #include "Vector.H"
 #include "computation/operation.H"
 #include "computation/machine/args.H"
@@ -404,11 +405,8 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
     int count = Args.evaluate_slot_to_value(4).as_int();
     auto owner_value = Args.evaluate_slot_to_value(5);
     const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    if (offset < 0 or count < 0 or offset > owner.size() or count > owner.size() - offset)
-        throw myexception()<<"Distribution.CRP_density: invalid assignment-vector view";
-
-    std::span<const int> owner_view(owner.data(), owner.size());
-    auto z = owner_view.subspan(offset, count);
+    auto z = checked_native_vector_view(
+        owner, offset, count, "Distribution.CRP_density");
 
     return { ::CRP_pdf(alpha,N,D,z) };
 }

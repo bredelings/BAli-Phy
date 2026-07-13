@@ -16,12 +16,14 @@ namespace substitution {
                                            const Likelihood_Cache_Branch& LCB2,
                                            const Likelihood_Cache_Branch& LCB3,
                                            const DenseMatrix<double>& F,
-					   Eigen::Ref<const DenseVector<int>> counts);
+					   std::span<const int> counts);
 
     log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
                                                 const Likelihood_Cache_Branch& LCB2,
                                                 const DenseMatrix<double>& F,
-                                                Eigen::Ref<const DenseVector<int>> counts);
+                                                std::span<const int> counts);
+    // NOTE: Keep Eigen::Ref in this hot path because std::span increased its
+    // retired instructions; revisit when compiler code generation changes.
     log_double_t calc_prob_at_root_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
 				       const DenseMatrix<double>& F,
@@ -30,12 +32,12 @@ namespace substitution {
     log_double_t calc_prob_at_root_variable_SEV(const R::RVector& LCN,
 						const R::RVector& LCB,
 						const DenseMatrix<double>& F,
-						Eigen::Ref<const DenseVector<int>> counts);
+						std::span<const int> counts);
 
     log_double_t calc_prob_SEV(const R::RVector& LCN,
 				     const R::RVector& LCB,
 				     const DenseMatrix<double>& FF,
-				     Eigen::Ref<const DenseVector<int>> counts);
+				     std::span<const int> counts);
 
     object_ptr<const Likelihood_Cache_Branch>
     peel_leaf_branch_SEV(const Likelihood_Cache_Branch& nodeCLV, const R::RVector& transition_P);
