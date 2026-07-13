@@ -3,6 +3,7 @@
 #include <vector>
 #include <span>
 
+#include "builtins/native-vector-view.H"
 #include "math/pow2.H"
 #include "math/logprod.H"
 #include "math/exponential.H"
@@ -1374,7 +1375,7 @@ int get_allele(const R::Exp& haplotypes, int individual, int site)
 
 // CSD = conditional sampling distribution
 
-log_double_t deploid_01_plaf_only_CSD(const R::RVector& alt_allele_frequency, const R::RVector& haplotype)
+log_double_t deploid_01_plaf_only_CSD(std::span<const double> alt_allele_frequency, const R::RVector& haplotype)
 {
     assert(alt_allele_frequency.size() == haplotype.size());
 
@@ -1382,7 +1383,7 @@ log_double_t deploid_01_plaf_only_CSD(const R::RVector& alt_allele_frequency, co
     for(int site=0; site < haplotype.size(); site++)
     {
         int h = haplotype[site].as_int();
-        double f = alt_allele_frequency[site].as_double();
+        double f = alt_allele_frequency[site];
         double p = h?f:1.0-f;
         total *= p;
     }
@@ -1542,13 +1543,16 @@ log_double_t panel_01_CSD(const R::RVector& panel, const R::RVector& sites, doub
 
 extern "C" closure builtin_function_haplotype01_from_plaf_probability(OperationArgs& Args)
 {
-    // 1. Population-Level Allele Frequencies (PLAF) - an R::RVector of double.
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& plaf = arg0.as_<R::RVector>();
+    int plaf_offset = Args.evaluate_slot_to_value(0).as_int();
+    int plaf_count = Args.evaluate_slot_to_value(1).as_int();
+    auto plaf_value = Args.evaluate_slot_to_value(2);
+    const auto& plaf_owner = plaf_value.as_<Box<DenseVector<double>>>();
+    auto plaf = checked_native_vector_view(
+        plaf_owner, plaf_offset, plaf_count,
+        "haplotype01_from_plaf_probability frequencies");
 
-    // 2. Haplotypes - an R::RVector of R::RVector of Int
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& haplotype = arg1.as_<R::RVector>();
+    auto haplotype_value = Args.evaluate_slot_to_value(3);
+    auto& haplotype = haplotype_value.as_<R::RVector>();
 
     auto Pr = deploid_01_plaf_only_CSD(plaf, haplotype);
 
@@ -1587,8 +1591,13 @@ extern "C" closure builtin_function_haplotype01_from_panel_probability(Operation
 // In that case redrawing individual element would come automatically.
 extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value_(0);
-    auto& alt_allele_frequency = arg0.as_<R::RVector>();
+    int plaf_offset = Args.evaluate_slot_to_value_(0).as_int();
+    int plaf_count = Args.evaluate_slot_to_value_(1).as_int();
+    auto plaf_value = Args.evaluate_slot_to_value_(2);
+    const auto& plaf_owner = plaf_value.as_<Box<DenseVector<double>>>();
+    auto alt_allele_frequency = checked_native_vector_view(
+        plaf_owner, plaf_offset, plaf_count,
+        "sample_haplotype01_from_plaf frequencies");
 
     int num_sites = alt_allele_frequency.size();
 
@@ -1596,7 +1605,7 @@ extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& 
     auto& haplotype = *H;
     for(int site=0; site < num_sites; site++)
     {
-        double f = alt_allele_frequency[site].as_double();
+        double f = alt_allele_frequency[site];
         if (bernoulli(f))
             haplotype[site] = 1;
         else
