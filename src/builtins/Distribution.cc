@@ -291,22 +291,22 @@ extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value(0).as_int();
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    const auto& ps = arg1.as_<R::RVector>();
-    auto arg2 = Args.evaluate_slot_to_value(2);
-    const auto& ks = arg2.as_<R::RVector>();
+    int ps_offset = Args.evaluate_slot_to_value(1).as_int();
+    int ps_count = Args.evaluate_slot_to_value(2).as_int();
+    auto ps_value = Args.evaluate_slot_to_value(3);
+    const auto& ps_owner = ps_value.as_<Box<DenseVector<double>>>();
+    auto ps = checked_native_vector_view(
+        ps_owner, ps_offset, ps_count, "multinomial probabilities");
+
+    int ks_offset = Args.evaluate_slot_to_value(4).as_int();
+    int ks_count = Args.evaluate_slot_to_value(5).as_int();
+    auto ks_value = Args.evaluate_slot_to_value(6);
+    const auto& ks_owner = ks_value.as_<Box<DenseVector<int>>>();
+    auto ks = checked_native_vector_view(
+        ks_owner, ks_offset, ks_count, "multinomial counts");
 
     if (ps.size() != ks.size()) throw myexception()<<"multinomial_density: |ps| != |ks|";
-
-    vector<log_double_t> ps2(ps.size());
-    vector<int> ks2(ps.size());
-    for(int i=0;i<ps.size();i++)
-    {
-        ps2[i] = ps[i].as_double();
-        ks2[i] = ks[i].as_int();
-    }
-
-    return { ::multinomial_pdf(n,ps2,ks2) };
+    return { ::multinomial_pdf(n, ps, ks) };
 }
 
 extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)

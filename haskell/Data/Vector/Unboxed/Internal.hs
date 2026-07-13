@@ -5,6 +5,7 @@ module Data.Vector.Unboxed.Internal
     , intVectorFromNative
     , intVectorFromNativeWithLength
     , intVectorNativeView
+    , doubleVectorNativeView
     ) where
 
 import Compiler.Num
@@ -97,3 +98,9 @@ intVectorFromNativeWithLength count = V_Int 0 count
 -- native consumers preserve slices instead of silently using the whole owner.
 intVectorNativeView :: Vector Int -> (Int, Int, NativeVector Int)
 intVectorNativeView (V_Int offset count native) = (offset, count, native)
+
+-- Expose a Double view only at foreign boundaries, preserving slices through
+-- their logical offset and length instead of exposing the complete owner.
+doubleVectorNativeView :: Vector Double -> (Int, Int, NativeVector Double)
+doubleVectorNativeView (V_Double offset count native) =
+    (offset, count, native)

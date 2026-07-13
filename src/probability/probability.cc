@@ -485,13 +485,14 @@ log_double_t L_beta(double x, double y)
     return L_gamma(x) * L_gamma(y) / L_gamma(x+y);
 }
 
-log_double_t multinomial_pdf(int n, const std::vector<log_double_t>& ps, const std::vector<int>& ks)
+log_double_t multinomial_pdf(int n, std::span<const double> ps,
+                             std::span<const int> ks)
 {
     assert(ps.size() == ks.size());
 
     // First check that the ks are in bounds
     int sum = 0;
-    for(auto& k : ks)
+    for(int k : ks)
     {
         if (k < 0) return 0;
         sum += k;

@@ -3,8 +3,12 @@ module Probability.Distribution.Multinomial where
 import Probability.Random
 import MCMC
 import Probability.Distribution.Binomial
+import qualified Data.Vector.Unboxed as U
+import Data.Vector.Unboxed.Internal
+    (doubleVectorNativeView, intVectorNativeView)
+import Foreign.NativeVector (NativeVector)
 
-foreign import bpcall "Distribution:multinomial_density" builtin_multinomial_density :: Int -> EVector Double -> EVector Int -> LogDouble
+foreign import bpcall "Distribution:multinomial_density" builtin_multinomial_density :: Int -> Int -> Int -> NativeVector Double -> Int -> Int -> NativeVector Int -> LogDouble
 
 data Multinomial = Multinomial Int [Double]
 
@@ -25,9 +29,13 @@ instance HasAnnotatedPdf Multinomial where
 instance Sampleable Multinomial where
     sample (Multinomial n ps) = sample_multinomial n ps
 
-multinomial_density n ps ks = builtin_multinomial_density n ps' ks'
-    where ps' = toVector ps
-          ks' = toVector ks
+multinomial_density n ps ks = builtin_multinomial_density
+    n psOffset psCount psNative ksOffset ksCount ksNative
+  where
+    psVector = U.fromList ps
+    ksVector = U.fromList ks
+    (psOffset, psCount, psNative) = doubleVectorNativeView psVector
+    (ksOffset, ksCount, ksNative) = intVectorNativeView ksVector
 
 sample_multinomial n [] = return []
 sample_multinomial n (p:ps) = do
@@ -37,4 +45,3 @@ sample_multinomial n (p:ps) = do
   return (m:ms)
 
 multinomial ps = Multinomial (length ps) ps
-
