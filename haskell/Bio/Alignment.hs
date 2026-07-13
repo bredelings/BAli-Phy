@@ -22,7 +22,8 @@ import qualified Data.IntSet as IntSet
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (intVectorFromNative,
+import Data.Vector.Unboxed.Internal (doubleVectorFromNativeWithLength,
+                                     intVectorFromNative,
                                      intVectorFromNativeWithLength,
                                      intVectorNativeView)
 import Foreign.NativeVector (NativeVector)
@@ -266,14 +267,16 @@ instance Alignment AlignedCharacterData where
 -- Would we ever want to specify the present as being older that the oldest taxon?
 data TimeDirection = Forward | Backward
 
-foreign import bpcall "Alignment:" getTaxonAgesRaw :: EVector CPPString -> CPPString -> Int -> EVector Double
+foreign import bpcall "Alignment:" getTaxonAgesRaw :: EVector CPPString -> CPPString -> Int -> NativeVector Double
 
-getTaxonAges labels regex direction = zip labels (toList $ getTaxonAgesRaw cppLabels cppRegex cppDirection)
+getTaxonAges labels regex direction = zip labels (U.toList ages)
     where cppLabels = toVector (map Text.toCppString labels)
           cppRegex = pack_cpp_string regex
           convert Forward  = 0
           convert Backward = 1
           cppDirection = convert direction
+          ages = doubleVectorFromNativeWithLength (length labels)
+                                                   (getTaxonAgesRaw cppLabels cppRegex cppDirection)
 
 class AncestralAlignment a where
     ancestralAlignment :: (IsTree t, LabelType t ~ Text) => t -> a -> EVector Int -> Alphabet -> IntMap ComponentStateSequence -> AlignedCharacterData

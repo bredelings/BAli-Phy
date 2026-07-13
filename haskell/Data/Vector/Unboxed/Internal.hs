@@ -5,6 +5,7 @@ module Data.Vector.Unboxed.Internal
     , intVectorFromNative
     , intVectorFromNativeWithLength
     , intVectorNativeView
+    , doubleVectorFromNativeWithLength
     , doubleVectorNativeView
     ) where
 
@@ -93,6 +94,11 @@ intVectorFromNative native = V_Int 0 (intVectorSizeNative native) native
 -- supplies its authoritative logical length.
 intVectorFromNativeWithLength :: Int -> NativeVector Int -> Vector Int
 intVectorFromNativeWithLength count = V_Int 0 count
+
+-- Wrap a native Double owner when an independent Haskell calculation already
+-- supplies its authoritative logical length.
+doubleVectorFromNativeWithLength :: Int -> NativeVector Double -> Vector Double
+doubleVectorFromNativeWithLength count = V_Double 0 count
 
 -- Expose the complete primitive view only to foreign-boundary wrappers, so
 -- native consumers preserve slices instead of silently using the whole owner.

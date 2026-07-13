@@ -1245,7 +1245,7 @@ extern "C" closure builtin_function_showPairwiseAlignmentRaw(OperationArgs& Args
     return s;
 }
 
-// taxonAgesRaw :: R::RVector CPPString -> CPPString -> Int (0/1) -> R::RVector Double
+// taxonAgesRaw :: R::RVector CPPString -> CPPString -> Int (0/1) -> NativeVector Double
 extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
@@ -1259,7 +1259,8 @@ extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
     // 1 = backward
     int direction = Args.evaluate_slot_to_value(2).as_int();
 
-    std::vector<double> times(n,0);
+    object_ptr<Box<DenseVector<double>>> result(new Box<DenseVector<double>>(n));
+    auto& times = *result;
 
     for(int i=0;i<n;i++)
     {
@@ -1278,24 +1279,18 @@ extern "C" closure builtin_function_getTaxonAgesRaw(OperationArgs& Args)
 	    throw myexception()<<"Label '"<<label<<"' does not match regex '"<<pattern<<"'";
     }
 
-    if (direction == 0)
+    if (n > 0 && direction == 0)
     {
 	// We need to convert these to ages (backwards in time).
-	double oldest_time = max(times);
-	for(auto& time: times)
-	    time = oldest_time - time;
+	double oldest_time = times.maxCoeff();
+	times.array() = oldest_time - times.array();
     }
-    else
+    else if (n > 0)
     {
 	// What if we want to normalize things to a non-zero age?
-	double youngest_time = min(times);
-	for(auto& time: times)
-	    time = time - youngest_time;
+	double youngest_time = times.minCoeff();
+	times.array() -= youngest_time;
     }
-
-    R::RVector result(n);
-    for(int i=0;i<n;i++)
-	result[i] = times[i];
 
     return result;
 }
