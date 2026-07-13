@@ -149,8 +149,11 @@ Maybe we want a map from String -> EVector Int.
 That would lose the comments on the fastas though.
 -}
 
-foreign import bpcall "Alignment:select_alignment_columns" builtin_select_alignment_columns :: AlignmentMatrix -> EVector Int -> AlignmentMatrix
-select_alignment_columns alignment sites = builtin_select_alignment_columns alignment (toVector sites)
+foreign import bpcall "Alignment:select_alignment_columns" builtin_select_alignment_columns :: AlignmentMatrix -> Int -> Int -> NativeVector Int -> AlignmentMatrix
+select_alignment_columns alignment sites =
+    builtin_select_alignment_columns alignment offset count native
+  where
+    (offset, count, native) = intVectorNativeView (U.fromList sites)
 
 foreign import bpcall "Alignment:select_alignment_pairs" builtin_select_alignment_pairs :: AlignmentMatrix -> EVector (EPair Int Int) -> Alphabet -> AlignmentMatrix
 select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs alignment sites' doublets

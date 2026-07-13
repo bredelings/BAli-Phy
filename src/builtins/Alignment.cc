@@ -879,11 +879,15 @@ extern "C" closure builtin_function_reorder_alignment(OperationArgs& Args)
 
 extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& A0 = arg0.as_<Box<alignment>>().value();
-
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& sites = arg1.as_<R::RVector>();
+    auto alignment_value = Args.evaluate_slot_to_value(0);
+    auto& A0 = alignment_value.as_<Box<alignment>>().value();
+    int site_offset = Args.evaluate_slot_to_value(1).as_int();
+    int site_count = Args.evaluate_slot_to_value(2).as_int();
+    auto site_value = Args.evaluate_slot_to_value(3);
+    const auto& site_owner = site_value.as_<Box<DenseVector<int>>>();
+    auto sites = checked_native_vector_view(
+        site_owner, site_offset, site_count,
+        "select_alignment_columns sites");
 
     int N = A0.n_sequences();
     int L = sites.size();
@@ -891,7 +895,7 @@ extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args
 
     for(int i=0;i<sites.size();i++)
     {
-        int site = sites[i].as_int();
+        int site = sites[i];
         for(int j=0;j<N;j++)
         {
             int letter = A0(site,j);
