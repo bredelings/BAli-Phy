@@ -175,6 +175,20 @@ test('model expression AST', model_expr_test)
 
 test('bali-phy version', baliphy, args:['--version'], is_parallel: false)
 test('bali-phy help', baliphy, args:['--help'], is_parallel: false)
+
+module_cache_wrapper_args = []
+if host_machine.system() == 'windows' and meson.is_cross_build()
+  module_cache_wrapper_args = ['--wrapper', 'wine']
+endif
+test('compiled module cache',
+     python,
+     args: [files('../tests/scripts/test_module_cache.py')] +
+           module_cache_wrapper_args +
+           ['--', baliphy.full_path(),
+            meson.project_source_root()/'tests/haskell/ModuleCache',
+            packagepath],
+     timeout: 120)
+
 # When running on very slow autobuilders these tests could take a long time.
 test('bali-phy 5d test', baliphy, args:[small_fasta,'--test', packagepath], timeout: 300)
 test('bali-phy 5d +A 50', baliphy, args:[small_fasta,'--iter=50', '-V', packagepath], timeout: 300)

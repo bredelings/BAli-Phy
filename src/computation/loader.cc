@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <chrono>
+#include <fstream>
 #include <regex>
 #include <iterator>
 #include "computation/loader.H"
@@ -11,6 +14,7 @@
 #include "core/func.H"
 
 #include "util/io.H"
+#include "util/log-level.H"
 #include <boost/compute/detail/sha1.hpp>
 #include <range/v3/all.hpp>
 
@@ -253,9 +257,121 @@ shared_ptr<Module> module_loader::load_module(const string& module_name) const
     return M;
 }
 
-module_loader::module_loader(const optional<fs::path>& cp, const vector<fs::path>& path_list)
-    :cache_path(cp)
+// Select this executable's module cache, removing legacy artifacts and all
+// but the four most recently selected executable caches.
+static optional<fs::path> prepare_module_cache(const fs::path& cache_root)
 {
+    static const std::regex cache_key_re("^[0-9a-f]{16}$");
+
+    try
+    {
+        fs::create_directories(cache_root);
+
+        vector<fs::path> legacy_directories;
+        for(const auto& entry: fs::directory_iterator(cache_root))
+        {
+            auto name = entry.path().filename().string();
+            if (fs::is_directory(entry.symlink_status()) and
+                std::regex_match(name, cache_key_re))
+                continue;
+
+            if (fs::is_regular_file(entry.symlink_status()) and
+                entry.path().extension() == ".mod")
+            {
+                fs::remove(entry.path());
+                continue;
+            }
+
+            if (not fs::is_directory(entry.symlink_status())) continue;
+            legacy_directories.push_back(entry.path());
+            for(const auto& legacy: fs::recursive_directory_iterator(entry.path()))
+            {
+                if (fs::is_directory(legacy.symlink_status()))
+                    legacy_directories.push_back(legacy.path());
+                else if (fs::is_regular_file(legacy.symlink_status()) and
+                         legacy.path().extension() == ".mod")
+                    fs::remove(legacy.path());
+            }
+        }
+
+        std::sort(legacy_directories.begin(), legacy_directories.end(),
+                  // Remove child directories before parents without disturbing
+                  // a directory that still contains unrelated cache data.
+                  [](const fs::path& left, const fs::path& right)
+                  {
+                      return std::distance(left.begin(), left.end()) >
+                             std::distance(right.begin(), right.end());
+                  });
+        for(const auto& directory: legacy_directories)
+        {
+            std::error_code error;
+            fs::remove(directory, error);
+        }
+    }
+    catch(const fs::filesystem_error& e)
+    {
+        if (log_verbose >= 2)
+            std::cerr<<"Failure removing legacy compiled-module cache files: "
+                     <<e.what()<<"\n";
+    }
+
+    try
+    {
+        auto current = cache_root / module_loader::executable_hash();
+        fs::create_directories(current);
+
+        auto marker = current / ".last-used";
+        std::ofstream marker_file(marker, std::ios::app);
+        if (not marker_file)
+            throw fs::filesystem_error("Could not touch compiled-module cache marker",
+                                       marker, std::make_error_code(std::errc::io_error));
+        marker_file.close();
+        fs::last_write_time(marker, fs::file_time_type::clock::now());
+
+        vector<std::pair<fs::file_time_type, fs::path>> caches;
+        for(const auto& entry: fs::directory_iterator(cache_root))
+        {
+            auto name = entry.path().filename().string();
+            auto last_used = entry.path() / ".last-used";
+            if (fs::is_directory(entry.symlink_status()) and
+                std::regex_match(name, cache_key_re) and
+                fs::is_regular_file(last_used))
+                caches.push_back({fs::last_write_time(last_used), entry.path()});
+        }
+        std::sort(caches.begin(), caches.end());
+
+        auto excess = caches.size() > 4 ? caches.size() - 4 : 0;
+        for(const auto& [_, path]: caches)
+        {
+            if (excess == 0) break;
+            if (path == current) continue;
+
+            std::error_code error;
+            fs::remove_all(path, error);
+            if (error)
+            {
+                if (log_verbose >= 2)
+                    std::cerr<<"Failure removing old compiled-module cache '"
+                             <<path<<"': "<<error.message()<<"\n";
+            }
+            else
+                --excess;
+        }
+
+        return current;
+    }
+    catch(const fs::filesystem_error& e)
+    {
+        if (log_verbose >= 2)
+            std::cerr<<"Failure preparing compiled-module cache: "<<e.what()<<"\n";
+        return {};
+    }
+}
+
+module_loader::module_loader(const optional<fs::path>& cp, const vector<fs::path>& path_list)
+{
+    if (cp) cache_path = prepare_module_cache(*cp);
+
     for(auto& path: path_list)
 	try_add_plugin_path(path.string());
 }

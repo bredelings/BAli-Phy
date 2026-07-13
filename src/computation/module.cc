@@ -3168,7 +3168,7 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
     }
 }
 
-const string& exe_str()
+const string& module_loader::executable_hash()
 {
     static optional<string> str;
     if (not str)
@@ -3202,7 +3202,7 @@ std::string Module::all_inputs_hash(const Program& P) const
         XXH3_state_t* state = XXH3_createState();
         XXH3_64bits_reset(state);
 
-        auto exe = exe_str();
+        auto exe = module_loader::executable_hash();
         XXH3_64bits_update(state, exe.data(), exe.size());
         XXH3_64bits_update(state, file.contents.data(), file.contents.size());
 

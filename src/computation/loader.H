@@ -45,6 +45,8 @@ public:
 
     void* load_builtin_ptr(const std::string& lib_name, const std::string& func_name, const std::string& call_conv) const;
 
+    static const std::string& executable_hash();
+
     module_loader(const std::optional<std::filesystem::path>& cp, const std::vector<std::filesystem::path>& paths);
 };
 
