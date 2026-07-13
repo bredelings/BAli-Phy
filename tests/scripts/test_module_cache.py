@@ -1,12 +1,27 @@
 #!/usr/bin/env python3
 
 import argparse
+import getpass
 import os
 import pathlib
 import re
 import subprocess
 import sys
 import tempfile
+import time
+
+
+# Wine compatibility: HOME selects the isolated prefix but is not passed to the
+# guest. Remove this mapping if the test can inject the cache root explicitly.
+def test_cache_root(home, wrapper):
+    if wrapper:
+        if pathlib.Path(wrapper[0]).name not in {"wine", "wine64"}:
+            raise ValueError(f"cannot locate cache for wrapper {wrapper!r}")
+        data_root = (home / ".wine" / "drive_c" / "users" / getpass.getuser() /
+                     "AppData" / "Local")
+    else:
+        data_root = home / ".local" / "share"
+    return data_root / "bali-phy" / "cache"
 
 
 # Run the fixture with an isolated user cache and return its complete log.
@@ -40,16 +55,18 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix="bali-phy-module-cache-") as tmp:
         home = pathlib.Path(tmp)
-        cache_root = home / ".local" / "share" / "bali-phy" / "cache"
+        cache_root = test_cache_root(home, args.wrapper)
         cache_root.mkdir(parents=True)
 
         fake_caches = []
+        recent_time = time.time()
         for number in range(1, 5):
             cache = cache_root / f"{number:016x}"
             cache.mkdir()
             marker = cache / ".last-used"
             marker.touch()
-            os.utime(marker, (number, number))
+            timestamp = recent_time - 60 * (5 - number)
+            os.utime(marker, (timestamp, timestamp))
             fake_caches.append(cache)
 
         removable_legacy = cache_root / "Compiler" / "Internal"
@@ -91,10 +108,11 @@ def main():
             raise AssertionError("unrelated legacy cache data was removed")
 
         marker = current / ".last-used"
-        os.utime(marker, (1, 1))
+        stale_time = time.time() - 60
+        os.utime(marker, (stale_time, stale_time))
         second_log = run_program(args.wrapper, args.executable, args.fixture,
                                  args.package_path, home)
-        if marker.stat().st_mtime <= 1:
+        if marker.stat().st_mtime <= stale_time:
             raise AssertionError("the current cache marker was not touched")
         if "[ Loading Main ]" not in second_log:
             raise AssertionError("the warm run did not load Main")
