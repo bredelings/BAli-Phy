@@ -29,7 +29,7 @@ def managed_caches(cache_root):
                   (path / ".last-used").is_file())
 
 
-# Check legacy cleanup, LRU retention, cache touching, and a warm module load.
+# Check migration, retention, compression, warm loads, and corruption recovery.
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--wrapper", action="append", default=[])
@@ -73,8 +73,11 @@ def main():
         if len(current_candidates) != 1:
             raise AssertionError(f"could not identify current cache: {caches}")
         current = current_candidates[0]
-        if not (current / "Main.hs.mod").is_file():
+        main_module = current / "Main.hs.mod"
+        if not main_module.is_file():
             raise AssertionError("the first run did not cache Main")
+        if not main_module.read_bytes().startswith(b"\x28\xb5\x2f\xfd"):
+            raise AssertionError("the cached module is not a zstd frame")
         if "[ Compiling Main ]" not in first_log:
             raise AssertionError("the cold run did not compile Main")
 
@@ -97,6 +100,22 @@ def main():
             raise AssertionError("the warm run did not load Main")
         if "[ Compiling Main ]" in second_log:
             raise AssertionError("the warm run recompiled Main")
+
+        compressed_module = main_module.read_bytes()
+        main_module.write_bytes(compressed_module[:-1])
+        third_log = run_program(args.wrapper, args.executable, args.fixture,
+                                args.package_path, home)
+        if "[ Compiling Main ]" not in third_log:
+            raise AssertionError("a corrupt cached module was not recompiled")
+        if not main_module.read_bytes().startswith(b"\x28\xb5\x2f\xfd"):
+            raise AssertionError("recompilation did not replace the corrupt module")
+
+        fourth_log = run_program(args.wrapper, args.executable, args.fixture,
+                                 args.package_path, home)
+        if "[ Loading Main ]" not in fourth_log:
+            raise AssertionError("the repaired cached module was not loaded")
+        if "[ Compiling Main ]" in fourth_log:
+            raise AssertionError("the repaired cached module was recompiled")
 
     return 0
 

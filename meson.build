@@ -108,6 +108,16 @@ fmt = dependency('fmt', static: true).as_system()
 
 libxxhash = dependency('libxxhash', static: true, fallback: ['xxhash', 'xxhash_dep']).as_system()
 
+libzstd = dependency('libzstd',
+                     static: true,
+                     fallback: ['zstd', 'libzstd_dep'],
+                     default_options: ['bin_programs=false',
+                                       'legacy_level=0',
+                                       'multi_thread=disabled',
+                                       'zlib=disabled',
+                                       'lzma=disabled',
+                                       'lz4=disabled']).as_system()
+
 # utf8proc provides the Unicode category and case-conversion data used by the
 # Unicode helpers.  Keep the WrapDB fallback static so build-tree tests do not
 # depend on the install prefix being present in LD_LIBRARY_PATH.

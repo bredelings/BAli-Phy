@@ -3,6 +3,8 @@
 #include <tuple>
 #include <fstream>
 #include <algorithm>
+#include <limits>
+#include <string_view>
 #include "computation/module.H"
 #include "computation/record_utils.H"
 #include "computation/preprocess.H"
@@ -40,6 +42,7 @@
 #include <cereal/archives/adapters.hpp>
 
 #include <xxhash.h>
+#include <zstd.h>
 
 namespace views = ranges::views;
 
@@ -700,19 +703,55 @@ std::string xxhash64_hex(const std::string& s) {
 
 std::string extract_xxhash(std::string& data)
 {
-    // 1. Check that we have 40 chars followed by a newline.
-    if (data[16] != '\n') throw myexception()<<"archive failed integrity check: failed to read stored integrity hash";
+    // 1. Check that we have 16 chars followed by a newline.
+    if (data.size() < 17 or data[16] != '\n')
+        throw myexception()<<"archive failed integrity check: failed to read stored integrity hash";
 
-    // 2. Get the 40 chars and check that they are all hex digits.
-    string stored_archive_sha = data.substr(0,16);
-    stored_archive_sha.resize(16);
-    for(char c: stored_archive_sha)
+    // 2. Get the 16 chars and check that they are all hex digits.
+    string stored_archive_hash = data.substr(0,16);
+    stored_archive_hash.resize(16);
+    for(char c: stored_archive_hash)
 	if (not std::isxdigit(c)) throw myexception()<<"archive failed integrity check: failed to read stored integrity hash";
 
     // 3. Drop the first 17 chars -- 16 hex digits plus newline.
     data = data.substr(17);
 
-    return stored_archive_sha;
+    return stored_archive_hash;
+}
+
+// Compress one complete compile artifact using zstd's fast level 1.
+static string compress_compile_artifact(std::string_view data)
+{
+    string compressed(ZSTD_compressBound(data.size()), '\0');
+    auto compressed_size = ZSTD_compress(compressed.data(), compressed.size(),
+                                         data.data(), data.size(), 1);
+    if (ZSTD_isError(compressed_size))
+        throw myexception()<<"failed to compress compile artifact: "
+                           <<ZSTD_getErrorName(compressed_size);
+    compressed.resize(compressed_size);
+    return compressed;
+}
+
+// Decompress a complete compile artifact whose original size is in its frame.
+static string decompress_compile_artifact(std::string_view compressed)
+{
+    auto data_size = ZSTD_getFrameContentSize(compressed.data(), compressed.size());
+    if (data_size == ZSTD_CONTENTSIZE_ERROR)
+        throw myexception()<<"compile artifact is not a zstd frame";
+    if (data_size == ZSTD_CONTENTSIZE_UNKNOWN)
+        throw myexception()<<"compile artifact does not record its uncompressed size";
+    if (data_size > std::numeric_limits<std::size_t>::max())
+        throw myexception()<<"compile artifact is too large to decompress";
+
+    string data(static_cast<std::size_t>(data_size), '\0');
+    auto decompressed_size = ZSTD_decompress(data.data(), data.size(),
+                                             compressed.data(), compressed.size());
+    if (ZSTD_isError(decompressed_size))
+        throw myexception()<<"failed to decompress compile artifact: "
+                           <<ZSTD_getErrorName(decompressed_size);
+    if (decompressed_size != data.size())
+        throw myexception()<<"compile artifact decompressed to an unexpected size";
+    return data;
 }
 
 std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, const std::string& modid, const std::string& required_xxhash)
@@ -724,7 +763,8 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
         try
         {
             std::ifstream infile(*path, std::ios::binary);
-            std::string data = std::string(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>());
+            std::string compressed = std::string(std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>());
+            std::string data = decompress_compile_artifact(compressed);
             string stored_archive_xxhash = extract_xxhash(data);
 
             string computed_archive_xxhash = xxhash64_hex(data);
@@ -809,9 +849,11 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             }
             string data = buffer.str();
             string archive_hash = xxhash64_hex(data);
+            string artifact = archive_hash + "\n" + data;
+            string compressed = compress_compile_artifact(artifact);
 
             if (log_verbose >= 4)
-                std::cerr<<"    Writing archive for "<<modid<<":    length = "<<data.size()<<"    hash = "<<archive_hash<<"\n";
+                std::cerr<<"    Writing archive for "<<modid<<":    length = "<<data.size()<<"    compressed length = "<<compressed.size()<<"    hash = "<<archive_hash<<"\n";
 
             // Create parent directories if needed.
             fs::create_directories(mod_path->parent_path());
@@ -822,8 +864,7 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             if (not tmp_file) throw myexception()<<"Could not open file!";
 
             // Write the archive to the temporary file.
-            tmp_file<<archive_hash<<"\n";
-            tmp_file.write(data.c_str(),data.size());
+            tmp_file.write(compressed.data(), compressed.size());
             tmp_file.close();
 
             // Move the temporary file to the correct location.
