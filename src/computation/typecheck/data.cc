@@ -124,7 +124,7 @@ namespace
             else
                 std::abort();
         }
-        return apply_subst(subst, type);
+        return apply_subst_transitively(subst, type);
     }
 
     // Decide if one constructor's field can contribute to a callable selector.

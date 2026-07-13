@@ -81,7 +81,7 @@ std::optional<Type> check_apply_subst(const substitution_t& s, const Type& t)
     else if (auto tv = t.to<TypeVar>())
     {
         if (auto t2 = s.find(*tv))
-            return apply_subst(s,*t2);
+            return *t2;
         else
             return {};
     }
@@ -205,7 +205,7 @@ std::optional<Type> check_apply_subst(const usubstitution_t& s, const Type& t)
         {
             if (tv->filled())
                 throw myexception()<<"Trying to substitution for filled unification variable "<<tv->name;
-            return apply_subst(s,*t2);
+            return *t2;
         }
         else
             return {};
@@ -280,7 +280,7 @@ std::optional<Type> check_apply_subst(const bsubstitution_t& s, const Type& t)
         {
             if (mtv->filled())
                 throw myexception()<<"Trying to substitute for filled unification variable "<<mtv->name;
-            return apply_subst(s,*t2);
+            return *t2;
         }
         else
             return {};
@@ -288,7 +288,7 @@ std::optional<Type> check_apply_subst(const bsubstitution_t& s, const Type& t)
     else if (auto tv = t.to<TypeVar>())
     {
         if (auto t2 = s.find(*tv))
-            return apply_subst(s,*t2);
+            return *t2;
         else
             return {};
     }
@@ -316,7 +316,11 @@ std::optional<Type> check_apply_subst(const bsubstitution_t& s, const Type& t)
     }
     else if (auto forall = t.to<ForallType>())
     {
-        if (auto maybe_type = check_apply_subst(s, forall->type))
+        auto s2 = s;
+        for(const auto& tv: forall->type_var_binders)
+            s2 = s2.erase(tv);
+
+        if (auto maybe_type = check_apply_subst(s2, forall->type))
         {
             auto Forall = *forall;
             Forall.type = *maybe_type;
@@ -348,6 +352,42 @@ std::optional<Type> check_apply_subst(const bsubstitution_t& s, const Type& t)
         std::abort();
 }
 
+namespace
+{
+template<class Substitution>
+Type apply_subst_transitively_(const Substitution& s, Type type)
+{
+    // An acyclic substitution with N entries reaches a fixed point in at
+    // most N applications.  The extra application verifies the fixed point
+    // and turns cycles into a deterministic diagnostic instead of recursion.
+    for(unsigned i = 0; i <= s.size(); i++)
+    {
+        auto next = check_apply_subst(s, type);
+        if (not next)
+            return type;
+        type = std::move(*next);
+    }
+
+    throw myexception()<<"Cyclic substitution while resolving type '"
+                       <<type.print()<<"'";
+}
+}
+
+Type apply_subst_transitively(const substitution_t& s, const Type& type)
+{
+    return apply_subst_transitively_(s, type);
+}
+
+Type apply_subst_transitively(const usubstitution_t& s, const Type& type)
+{
+    return apply_subst_transitively_(s, type);
+}
+
+Type apply_subst_transitively(const bsubstitution_t& s, const Type& type)
+{
+    return apply_subst_transitively_(s, type);
+}
+
 // This should yield a substitution that is equivalent to apply FIRST s1 and THEN s2,
 // like f . g
 substitution_t compose(substitution_t s2, substitution_t s1)
@@ -359,4 +399,3 @@ substitution_t compose(substitution_t s2, substitution_t s1)
         s3 = s3.insert({tv,apply_subst(s2,e)});
     return s3;
 }
-

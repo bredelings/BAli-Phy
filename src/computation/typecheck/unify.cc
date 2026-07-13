@@ -193,6 +193,29 @@ void TypeChecker::unify_solve_(const ConstraintOrigin& origin, const Type& t1, c
     }
 }
 
+namespace
+{
+void extend_unifier_substitution(bsubstitution_t& substitution,
+                                 const std::variant<TypeVar,MetaTypeVar>& variable,
+                                 const Type& replacement)
+{
+    assert(not substitution.count(variable));
+
+    bsubstitution_t extension;
+    extension = extension.insert({variable, replacement});
+
+    // Compose the new binding after the existing substitution so that no
+    // existing range mentions the newly solved variable.  The resulting
+    // substitution is idempotent and can be applied simultaneously.
+    bsubstitution_t composed = extension;
+    for(const auto& [old_variable, old_replacement]: substitution)
+        composed = composed.insert({old_variable,
+                                    apply_subst(extension, old_replacement)});
+
+    substitution = std::move(composed);
+}
+}
+
 bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, const std::variant<TypeVar,MetaTypeVar>& btv1, const Type& t2, bsubstitution_t& s) const
 {
     // translate using env
@@ -208,6 +231,11 @@ bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, c
 
     if (auto s2 = expand_type_synonym(t2))
         return maybe_unify_var_(both_ways, env, btv1, *s2, s);
+
+    // Keep the returned substitution idempotent.  This also resolves solved
+    // variables occurring beneath a type constructor before the occurs check.
+    if (auto resolved_t2 = check_apply_subst(s, t2))
+        return maybe_unify_var_(both_ways, env, btv1, *resolved_t2, s);
 
     if (auto tv1 = to<TypeVar>(btv1))
     {
@@ -248,7 +276,7 @@ bool TypeChecker::maybe_unify_var_(bool both_ways, const unification_env& env, c
     }
 
     // ghc does not do an occurs check when matching
-    s = s.insert({btv1,t2});
+    extend_unifier_substitution(s, btv1, t2);
 
     return true;
 }
