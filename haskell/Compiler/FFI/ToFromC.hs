@@ -3,12 +3,10 @@ module Compiler.FFI.ToFromC where
 
 import Compiler.Base (String)
 import Compiler.IO
-import Foreign.Vector
 import Foreign.Pair
 import Foreign.String
 import Data.Bool    
 import Data.Function
-import Data.List (map)
 import Numeric.LogDouble (LogDouble)
 import Data.Functor
 
@@ -58,19 +56,13 @@ instance ToFromC a => ToFromC (IO a) where
     toC i = (\s -> let (_,x) = runIO i s in toC x)
     fromC i = fromC <$> makeIO i
 
-instance ToFromC a => ToFromC [a] where
-    type ToC [a] = EVector (ToC a)
-
-    toC xs = listToVector $ map toC xs
-    fromC v = map fromC $ vectorToList v
-
 instance (ToFromC a, ToFromC b) => ToFromC (a, b) where
     type ToC (a, b) = EPair (ToC a) (ToC b)
 
     toC (x,y) = c_pair (toC x) (toC y)
     fromC xy = (fromC $ c_fst xy, fromC $ c_snd xy)
 
-instance  {-# INCOHERENT #-} ToFromC String where
+instance ToFromC String where
     type ToC String = CPPString
 
     toC = pack_cpp_string

@@ -30,23 +30,33 @@ struct InstanceInfo
     }
 };
 
+struct TypeFamEqnInfo
+{
+    std::vector<TypeVar> quantified_tvs;
+    TypeCon family;
+    std::vector<Type> lhs_args;
+    Type rhs;
+
+    Type lhs() const;
+    Type type() const;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(quantified_tvs, family, lhs_args, rhs);
+    }
+};
+
 struct EqInstanceInfo
 {
-    // forall tvs. lhs ~ rhs
-
-    std::vector<TypeVar> tvs;
-
-    // TypeCon lhs_tyfam_tycon;
-
-    Type lhs;
-    Type rhs;
+    TypeFamEqnInfo equation;
 
     Type type() const;
 
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(tvs, lhs, rhs);
+	ar(equation);
     }
 };
 

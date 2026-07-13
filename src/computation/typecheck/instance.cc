@@ -185,18 +185,119 @@ TypeFamilyInstanceCheck TypeChecker::check_type_instance(const Hs::LType& hs_lhs
     return {{free_tvs, context, lhs, family_args}, rhs};
 }
 
-void TypeChecker::add_type_instance(const vector<TypeVar>& free_tvs, const Type& lhs, const Type& rhs)
+void TypeChecker::add_type_instance(const TypeFamEqnInfo& equation)
 {
+    auto lhs = equation.lhs();
+    auto& rhs = equation.rhs;
     auto dvar = fresh_dvar(make_equality_pred(lhs,rhs), true);
 
     auto S = symbol_info(dvar.name, symbol_type_t::instance_dfun, {}, {}, {});
-    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{free_tvs,{},TypeCon("~"),{lhs, rhs}, false, false, false} );
-    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{free_tvs, lhs, rhs} );
+    S.instance_info = std::make_shared<InstanceInfo>( InstanceInfo{equation.quantified_tvs,{},TypeCon("~"),{lhs, rhs}, false, false, false} );
+    S.eq_instance_info = std::make_shared<EqInstanceInfo>( EqInstanceInfo{equation} );
     S.type = S.instance_info->type();
     this_mod().add_symbol(S);
 
     this_mod().local_instances.insert( {dvar, *S.instance_info} );
     this_mod().local_eq_instances.insert( {dvar, *S.eq_instance_info} );
+}
+
+bool TypeChecker::compatible_type_family_equations(const TypeFamEqnInfo& first_, const TypeFamEqnInfo& second_)
+{
+    if (first_.family != second_.family) return true;
+
+    auto first = freshen(first_);
+    auto second = freshen(second_);
+
+    if (auto subst = maybe_unify(first.lhs_args, second.lhs_args))
+        return same_type(apply_subst(*subst, first.rhs),
+                         apply_subst(*subst, second.rhs));
+
+    return apartness(first.lhs_args, second.lhs_args) == Apartness::SurelyApart;
+}
+
+bool TypeChecker::check_open_type_family_equation(const TypeFamEqnInfo& candidate)
+{
+    bool compatible = true;
+
+    auto check_env = [&](const EqInstanceEnv& env, const optional<string>& module_name)
+    {
+        for(auto& [_, info]: env)
+        {
+            auto& existing = info.equation;
+            if (existing.family != candidate.family) continue;
+            if (compatible_type_family_equations(existing, candidate)) continue;
+
+            TidyState tidy_state;
+            auto note = Note()<<"Conflicting type family equations '"
+                              <<show_type_plain(tidy_state, existing.type())
+                              <<"' and '"
+                              <<show_type_plain(tidy_state, candidate.type())
+                              <<"': their left-hand sides are not surely apart and their right-hand sides differ";
+            if (module_name)
+                note<<" (previous equation imported from module "<<*module_name<<")";
+            record_error(note);
+            compatible = false;
+        }
+    };
+
+    check_env(this_mod().local_eq_instances, {});
+    for(auto& [modid, mod]: this_mod().transitively_imported_modules)
+        check_env(mod->local_eq_instances(), modid);
+
+    return compatible;
+}
+
+void TypeChecker::check_imported_type_family_consistency()
+{
+    struct ImportedEquation
+    {
+        string module;
+        const TypeFamEqnInfo* equation;
+    };
+
+    map<TypeCon, vector<ImportedEquation>> equations;
+    for(auto& [modid, mod]: this_mod().transitively_imported_modules)
+        for(auto& [_, info]: mod->local_eq_instances())
+            equations[info.equation.family].push_back({modid, &info.equation});
+
+    for(auto& [family, family_equations]: equations)
+    {
+        for(int i = 0; i < family_equations.size(); i++)
+        {
+            for(int j = i + 1; j < family_equations.size(); j++)
+            {
+                auto& first = family_equations[i];
+                auto& second = family_equations[j];
+                if (first.module == second.module) continue;
+                if (compatible_type_family_equations(*first.equation, *second.equation)) continue;
+
+                TidyState tidy_state;
+                record_error(Note()<<"Conflicting imported type family equations '"
+                    <<show_type_plain(tidy_state, first.equation->type())
+                    <<"' from module "<<first.module<<" and '"
+                    <<show_type_plain(tidy_state, second.equation->type())
+                    <<"' from module "<<second.module);
+            }
+        }
+    }
+}
+
+void TypeChecker::finish_closed_type_family(TypeFamInfo& family_info)
+{
+    assert(family_info.is_closed());
+    assert(family_info.closed_family);
+
+    auto& equations = family_info.closed_family->equations;
+    for(int i = 0; i < equations.size(); i++)
+    {
+        if (i > 0)
+            assert(equations[i].equation.family == equations[0].equation.family);
+        equations[i].incompatible_predecessors.clear();
+        for(int j = 0; j < i; j++)
+            if (not compatible_type_family_equations(equations[j].equation,
+                                                      equations[i].equation))
+                equations[i].incompatible_predecessors.push_back(j);
+    }
 }
 
 bool TypeChecker::check_family_instance_association(const Hs::LTypeCon& family_con,
@@ -272,7 +373,11 @@ void TypeChecker::check_associated_family_instance_args(const vector<Hs::LType>&
     }
 }
 
-void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
+optional<TypeFamEqnInfo> TypeChecker::check_type_family_equation(
+    const Hs::TypeFamilyInstanceEqn& inst,
+    const optional<string>& associated_class,
+    const substitution_t& instance_subst,
+    bool closed_branch)
 {
     auto inst_loc = *(inst.con.loc * range(inst.args) * inst.rhs.loc);
     auto span = source_span_scope( inst_loc );
@@ -283,7 +388,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     {
         auto con_span = source_span_scope(inst.con.loc);
         record_error( Note()<<"  No type family '"<<inst.con.print()<<"'");
-        return;
+        return {};
     }
 
     // Check RHS -- move down next to add_type_instance??
@@ -299,7 +404,7 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
 
     // 3. Check family association
     if (not check_family_instance_association(inst.con, tf_info->associated_class, associated_class, "type instance", "type family", false, true))
-        return;
+        return {};
 
     auto note = note_scope( Note()<<"In type instance '"<<show_type_plain(type_inst.head.type)<<"':" );
 
@@ -308,20 +413,37 @@ void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst,
     {
         auto args_span = source_span_scope( *(inst.con.loc * range(inst.args)) );
         record_error(Note() << "  Type family takes "<<tf_info->args.size()<<" arguments, but was given "<<inst.args.size()<<".");
-        return;
+        return {};
     }
 
     // 5. Check that arguments corresponding to class parameters are the same as the parameter type for the instance.
     check_associated_family_instance_args(inst.args, type_inst.head.args, tf_info->args, instance_subst);
 
-    // 6. Check that the type family is not closed
-    if (tf_info->closed)
+    // 6. Check that the equation is being processed through the right path.
+    if (closed_branch and not tf_info->is_closed())
+    {
+        record_error(Note() << "  Closed type family equation supplied for open type family '"<<inst.con.print()<<"'");
+        return {};
+    }
+    else if (not closed_branch and tf_info->is_closed())
     {
         record_error( Note() << "  Can't declare additional type instance for closed type family '"<<inst.con.print()<<"'");
-        return;
+        return {};
     }
 
-    add_type_instance(type_inst.head.type_vars, type_inst.head.type, type_inst.rhs);
+    return TypeFamEqnInfo{type_inst.head.type_vars, tf_con,
+                          type_inst.head.args, type_inst.rhs};
+}
+
+void TypeChecker::check_add_type_instance(const Hs::TypeFamilyInstanceEqn& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
+{
+    auto inst_loc = *(inst.con.loc * range(inst.args) * inst.rhs.loc);
+    auto span = source_span_scope(inst_loc);
+    auto equation = check_type_family_equation(inst, associated_class,
+                                               instance_subst, false);
+    if (not equation) return;
+    if (not check_open_type_family_equation(*equation)) return;
+    add_type_instance(*equation);
 }
 
 void TypeChecker::check_data_instance(const Hs::DataFamilyInstanceDecl& inst, const optional<string>& associated_class, const substitution_t& instance_subst)
@@ -397,9 +519,10 @@ void TypeChecker::default_type_instance(const TypeCon& tf_con,
     rhs = apply_subst(default_subst, rhs);
 
     // 4. add the instance
-    auto lhs = type_apply(tf_con, args);
-    auto free_tvs = free_type_variables(lhs) | ranges::to<vector>();
-    add_type_instance(free_tvs, lhs, rhs);
+    auto quantified_tvs = free_type_variables(type_apply(tf_con, args)) | ranges::to<vector>();
+    TypeFamEqnInfo equation{quantified_tvs, tf_con, args, rhs};
+    if (check_open_type_family_equation(equation))
+        add_type_instance(equation);
 }
 
 std::optional<Core::Var<>>
@@ -934,8 +1057,14 @@ InstanceInfo TypeChecker::freshen(InstanceInfo info)
 
 EqInstanceInfo TypeChecker::freshen(EqInstanceInfo info)
 {
-    auto s = fresh_tv_binders(info.tvs);
-    info.lhs = apply_subst(s, info.lhs);
+    info.equation = freshen(info.equation);
+    return info;
+}
+
+TypeFamEqnInfo TypeChecker::freshen(TypeFamEqnInfo info)
+{
+    auto s = fresh_tv_binders(info.quantified_tvs);
+    info.lhs_args = apply_subst(s, info.lhs_args);
     info.rhs = apply_subst(s, info.rhs);
     return info;
 }

@@ -425,6 +425,29 @@ Apartness TypeChecker::apartness(const Type& t1, const Type& t2) const
     return Apartness::SurelyApart;
 }
 
+Apartness TypeChecker::apartness(const vector<Type>& t1, const vector<Type>& t2) const
+{
+    if (t1.size() != t2.size()) return Apartness::SurelyApart;
+    if (maybe_unify(t1, t2)) return Apartness::Unifiable;
+
+    auto result = Apartness::Unifiable;
+    for(int i = 0; i < t1.size(); i++)
+        result = combine_apartness(result, apartness(t1[i], t2[i]));
+
+    if (result != Apartness::Unifiable)
+        return result;
+
+    // Shared variables can make a vector pair apart even when every position
+    // is independently unifiable, for example (a,a) and (Int,Bool).  A ground
+    // side makes that failure definitive.  Otherwise remain conservative.
+    bool t1_ground = free_type_variables(t1).empty() and free_meta_type_variables(t1).empty();
+    bool t2_ground = free_type_variables(t2).empty() and free_meta_type_variables(t2).empty();
+    if (t1_ground or t2_ground)
+        return Apartness::SurelyApart;
+
+    return Apartness::MaybeApart;
+}
+
 bool TypeChecker::same_type_no_syns(const Type& t1, const Type& t2) const
 {
     return same_type(true, t1, t2);

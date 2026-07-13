@@ -329,7 +329,13 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
     {
         auto args = get_family_args(fam_decl);
         auto fam_kind = get_family_kind(fam_decl);
-        return std::make_shared<TypeFamInfo>(args, fam_kind, associated_class);
+        auto info = std::make_shared<TypeFamInfo>(args, fam_kind, associated_class);
+        if (fam_decl.where_instances)
+        {
+            info->flavor = TypeFamilyFlavor::Closed;
+            info->closed_family = ClosedTypeFamInfo{};
+        }
+        return info;
     };
 
     auto get_data_family_info = [&](const Hs::FamilyDecl& fam_decl, const std::optional<std::string>& associated_class)
@@ -347,14 +353,37 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
 
             if (fam_decl->is_type_family())
             {
-                this_mod().lookup_local_type(fam_name)->is_type_fam()->info = get_type_family_info(*fam_decl, {});
+                auto family_info = get_type_family_info(*fam_decl, {});
+                this_mod().lookup_local_type(fam_name)->is_type_fam()->info = family_info;
 
-                // Add instance equations for closed type families
                 if (fam_decl->where_instances)
                 {
                     for(auto& inst: *fam_decl->where_instances)
-                        check_add_type_instance(inst, {}, {});
-                    this_mod().lookup_local_type(fam_name)->is_type_fam()->info->closed = true;
+                    {
+                        auto equation = check_type_family_equation(inst, {}, {}, true);
+                        if (equation)
+                        {
+                            bool dominated = false;
+                            for(auto& previous: family_info->closed_family->equations)
+                            {
+                                auto previous_equation = freshen(previous.equation);
+                                auto current_equation = freshen(*equation);
+                                if (maybe_match(previous_equation.lhs_args,
+                                                current_equation.lhs_args))
+                                {
+                                    dominated = true;
+                                    break;
+                                }
+                            }
+                            if (dominated)
+                                record_warning(inst.con.loc,
+                                    Note()<<"Type family equation '"
+                                          <<show_type_plain(equation->type())
+                                          <<"' is inaccessible because it is overlapped by a previous equation");
+                            family_info->closed_family->equations.push_back({*equation, {}});
+                        }
+                    }
+                    finish_closed_type_family(*family_info);
                 }
             }
             else if (fam_decl->is_data_family())
@@ -372,7 +401,17 @@ void TypeChecker::get_type_families(const Hs::Decls& decls)
             {
                 auto fam_name = unloc(fam_decl.con).name;
                 if (fam_decl.is_type_family())
-                    this_mod().lookup_local_type(fam_name)->is_type_fam()->info = get_type_family_info(fam_decl, class_name);
+                {
+                    auto family_info = get_type_family_info(fam_decl, class_name);
+                    if (fam_decl.where_instances)
+                    {
+                        record_error(fam_decl.con.loc,
+                            Note()<<"Associated type family '"<<fam_decl.con.print()<<"' cannot be a closed type family");
+                        family_info->flavor = TypeFamilyFlavor::Open;
+                        family_info->closed_family.reset();
+                    }
+                    this_mod().lookup_local_type(fam_name)->is_type_fam()->info = family_info;
+                }
                 else if (fam_decl.is_data_family())
                 {
                     if (fam_decl.where_instances)

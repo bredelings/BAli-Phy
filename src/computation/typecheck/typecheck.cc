@@ -988,6 +988,19 @@ optional<bsubstitution_t> TypeChecker::maybe_unify(const Type& t1, const Type& t
         return {};
 }
 
+optional<bsubstitution_t> TypeChecker::maybe_unify(const vector<Type>& t1, const vector<Type>& t2) const
+{
+    if (t1.size() != t2.size()) return {};
+
+    unification_env env;
+    bsubstitution_t s;
+    for(int i = 0; i < t1.size(); i++)
+        if (not maybe_unify_(true, env, t1[i], t2[i], s))
+            return {};
+
+    return s;
+}
+
 optional<bsubstitution_t> TypeChecker::maybe_match(const Type& t1, const Type& t2) const
 {
     unification_env env;
@@ -996,6 +1009,19 @@ optional<bsubstitution_t> TypeChecker::maybe_match(const Type& t1, const Type& t
         return s;
     else
         return {};
+}
+
+optional<bsubstitution_t> TypeChecker::maybe_match(const vector<Type>& t1, const vector<Type>& t2) const
+{
+    if (t1.size() != t2.size()) return {};
+
+    unification_env env;
+    bsubstitution_t s;
+    for(int i = 0; i < t1.size(); i++)
+        if (not maybe_unify_(false, env, t1[i], t2[i], s))
+            return {};
+
+    return s;
 }
 
 bsubstitution_t TypeChecker::match(const Type& t1, const Type& t2, const myexception& e) const
@@ -1519,6 +1545,15 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
     // 5. Get type families declared outside of classes.
     get_type_families(M.type_decls);
 
+    // Independently compiled imports may introduce conflicting open-family
+    // equations only when they are brought together by this module.
+    check_imported_type_family_consistency();
+    if (has_errors())
+    {
+        show_messages(this_mod().file, std::cerr, messages());
+        exit_on_error(messages());
+    }
+
     // 6. Get types for value constructors  (CVE_T = constructor types)
     get_constructor_info(M.type_decls);
 
@@ -1546,6 +1581,9 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
     check_derived_instances(M.type_decls);
     show_messages(this_mod().file, std::cerr, messages());
     exit_on_error(messages());
+    // Successful checkpoints may contain warnings.  They have now been
+    // emitted and must not be printed again at the final checkpoint.
+    messages().clear();
 
     // 9. Typecheck value decls
     auto value_decls = infer_type_for_binds_top(M.value_decls);

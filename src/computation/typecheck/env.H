@@ -153,15 +153,36 @@ struct ClassInfo
     }
 };
 
-struct TypeFamEqnInfo
+enum class TypeFamilyFlavor
 {
-    std::vector<Type> args;
-    Type rhs;
-    std::vector<TypeVar> free_tvs;
+    Open,
+    Closed
 };
 
-// This index indicates a unique name for each instance, and also indicates the evidence for an instance.
-typedef int TypeFamEqnId;
+using TypeFamBranchIndex = unsigned;
+
+struct ClosedTypeFamEqnInfo
+{
+    TypeFamEqnInfo equation;
+    std::vector<TypeFamBranchIndex> incompatible_predecessors;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(equation, incompatible_predecessors);
+    }
+};
+
+struct ClosedTypeFamInfo
+{
+    std::vector<ClosedTypeFamEqnInfo> equations;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(equations);
+    }
+};
 
 struct TypeFamInfo
 {
@@ -169,14 +190,17 @@ struct TypeFamInfo
     Kind result_kind;
 
     std::optional<std::string> associated_class;
-    bool closed = false;
+    TypeFamilyFlavor flavor = TypeFamilyFlavor::Open;
+    std::optional<ClosedTypeFamInfo> closed_family;
 
     int arity() const {return args.size();}
+    bool is_open() const {return flavor == TypeFamilyFlavor::Open;}
+    bool is_closed() const {return flavor == TypeFamilyFlavor::Closed;}
 
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(args, result_kind, associated_class, closed);
+	ar(args, result_kind, associated_class, flavor, closed_family);
     }
 
     TypeFamInfo(const std::vector<TypeVar>&, const Kind&, const std::optional<std::string>& = {});

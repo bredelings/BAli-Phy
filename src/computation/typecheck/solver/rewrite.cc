@@ -73,6 +73,77 @@ Type Solver::rewrite_forall(ConstraintFlavor flavor, const ForallType& forall)
     return forall2;
 }
 
+std::optional<Type> Solver::reduce_open_type_family(const TypeCon& family, const vector<Type>& target_args)
+{
+    std::optional<Type> result;
+
+    vector<const EqInstanceEnv*> eq_instance_envs({&this_mod().local_eq_instances});
+    for(auto& [_, mod]: this_mod().transitively_imported_modules)
+        eq_instance_envs.push_back(&mod->local_eq_instances());
+
+    for(auto eq_instance_env: eq_instance_envs)
+    {
+        for(auto& [_, info_]: *eq_instance_env)
+        {
+            if (info_.equation.family != family) continue;
+            auto equation = freshen(info_.equation);
+            if (auto subst = maybe_match(equation.lhs_args, target_args))
+            {
+                auto rhs = apply_subst(*subst, equation.rhs);
+                if (result)
+                    assert(same_type(*result, rhs));
+                else
+                    result = rhs;
+            }
+        }
+    }
+
+    return result;
+}
+
+std::optional<Type> Solver::reduce_closed_type_family(const TypeCon& family,
+                                                       const ClosedTypeFamInfo& closed,
+                                                       const vector<Type>& target_args)
+{
+    for(int i = 0; i < closed.equations.size(); i++)
+    {
+        auto candidate = freshen(closed.equations[i].equation);
+        assert(candidate.family == family);
+
+        auto subst = maybe_match(candidate.lhs_args, target_args);
+        if (not subst) continue;
+
+        bool blocked = false;
+        for(auto predecessor_index: closed.equations[i].incompatible_predecessors)
+        {
+            assert(predecessor_index < i);
+            auto predecessor = freshen(closed.equations[predecessor_index].equation);
+            if (apartness(target_args, predecessor.lhs_args) != Apartness::SurelyApart)
+            {
+                blocked = true;
+                break;
+            }
+        }
+
+        if (not blocked)
+            return apply_subst(*subst, candidate.rhs);
+    }
+
+    return {};
+}
+
+std::optional<Type> Solver::reduce_type_family_app(const TypeCon& family, const vector<Type>& args)
+{
+    auto info = info_for_type_fam(family.name);
+    assert(info);
+
+    if (info->is_open())
+        return reduce_open_type_family(family, args);
+
+    assert(info->closed_family);
+    return reduce_closed_type_family(family, *info->closed_family, args);
+}
+
 Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, const vector<Type>& args)
 {
     Type t = type_apply(tc, rewrite(flavor, args));
@@ -80,24 +151,9 @@ Type Solver::rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon& tc, co
         return rewrite(flavor, *t2);
     else if (auto tfam = is_type_fam_app(t))
     {
-        // auto& [fam_con, fam_args] = *tfam;
-
-        vector<const EqInstanceEnv*> eq_instance_envs({&this_mod().local_eq_instances});
-        for(auto& [_, mod]: this_mod().transitively_imported_modules)
-            eq_instance_envs.push_back(&mod->local_eq_instances());
-
-        for(auto eq_instance_env: eq_instance_envs)
-        {
-            for(auto& [dfun, info_]: *eq_instance_env)
-            {
-                // if (info.tyfam_tycon != fam_con) continue;
-                auto info = freshen(info_);
-
-                // If the term matches the lhs, then return the rhs.
-                if (auto S = maybe_match(info.lhs, t))
-                    return rewrite(flavor, apply_subst(*S, info.rhs));
-            }
-        }
+        auto& [family, family_args] = *tfam;
+        if (auto rhs = reduce_type_family_app(family, family_args))
+            return rewrite(flavor, *rhs);
 
         for(auto& inert: inerts.tyfam_eqs)
         {

@@ -126,6 +126,9 @@ struct Solver: public TypeChecker
     Type rewrite_tv(ConstraintFlavor flavor, const TypeVar&) const;
     Type rewrite_constrained_type(ConstraintFlavor flavor, const ConstrainedType&);
     Type rewrite_forall(ConstraintFlavor flavor, const ForallType&);
+    std::optional<Type> reduce_open_type_family(const TypeCon&, const std::vector<Type>&);
+    std::optional<Type> reduce_closed_type_family(const TypeCon&, const ClosedTypeFamInfo&, const std::vector<Type>&);
+    std::optional<Type> reduce_type_family_app(const TypeCon&, const std::vector<Type>&);
     Type rewrite_type_con_app(ConstraintFlavor flavor, const TypeCon&, const std::vector<Type>&);
     Type rewrite_app(ConstraintFlavor, const Type&, const Type&);
     

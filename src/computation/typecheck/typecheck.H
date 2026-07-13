@@ -374,14 +374,17 @@ public:
     bool maybe_unify_var_(bool both_ways, const unification_env& env, const std::variant<TypeVar,MetaTypeVar>& btv1, const Type& t2, bsubstitution_t& s) const;
 
     std::optional<bsubstitution_t> maybe_unify(const Type& t1, const Type& t2) const;
+    std::optional<bsubstitution_t> maybe_unify(const std::vector<Type>& t1, const std::vector<Type>& t2) const;
 
     std::optional<bsubstitution_t> maybe_match(const Type& t1, const Type& t2) const;
+    std::optional<bsubstitution_t> maybe_match(const std::vector<Type>& t1, const std::vector<Type>& t2) const;
 
     bsubstitution_t match(const Type& t1, const Type& t2, const myexception& e) const;
 
     bsubstitution_t match(const Type& t1, const Type& t2) const;
 
     Apartness apartness(const Type& t1, const Type& t2) const;
+    Apartness apartness(const std::vector<Type>& t1, const std::vector<Type>& t2) const;
     // end pure unifier.
     
     DataConInfo constructor_info(const Hs::Con&);
@@ -405,6 +408,7 @@ public:
     substitution_t fresh_tv_binders(std::vector<TypeVar>& type_var_binders);
     InstanceInfo freshen(InstanceInfo);
     EqInstanceInfo freshen(EqInstanceInfo);
+    TypeFamEqnInfo freshen(TypeFamEqnInfo);
 
     std::tuple<std::vector<MetaTypeVar>, LIE, Type> instantiate(const ConstraintOrigin& origin, const Type& t);
 
@@ -643,7 +647,22 @@ public:
 
     std::map<Hs::Var, Hs::Matches> get_instance_methods(const Hs::Decls& decls, const global_value_env& members, const std::string& class_name);
 
-    void add_type_instance(const std::vector<TypeVar>& free_tvs, const Type& lhs, const Type& rhs);
+    void add_type_instance(const TypeFamEqnInfo& equation);
+
+    std::optional<TypeFamEqnInfo> check_type_family_equation(
+        const Hs::TypeFamilyInstanceEqn& inst,
+        const std::optional<std::string>& associated_class,
+        const substitution_t& instance_subst,
+        bool closed_branch);
+
+    bool compatible_type_family_equations(const TypeFamEqnInfo& first,
+                                           const TypeFamEqnInfo& second);
+
+    bool check_open_type_family_equation(const TypeFamEqnInfo& candidate);
+
+    void check_imported_type_family_consistency();
+
+    void finish_closed_type_family(TypeFamInfo& family_info);
 
     bool check_family_instance_association(const Hs::LTypeCon& family_con,
 					   const std::optional<std::string>& family_associated_class,
