@@ -58,13 +58,14 @@ double reverse_quantile(double eta, double p)
 
 struct demography
 {
-    DenseVector<double> coalescent_rates;
-    DenseVector<double> level_boundaries;
+    std::span<const double> coalescent_rates;
+    std::span<const double> level_boundaries;
 
     EMatrix Pr_X_at(double t, double rho_over_theta);
 
-    demography(Eigen::Ref<const DenseVector<double>> c,
-               Eigen::Ref<const DenseVector<double>> l)
+    // Retain call-local demographic views while their native owners remain
+    // alive through each synchronous probability calculation.
+    demography(std::span<const double> c, std::span<const double> l)
 	:coalescent_rates(c),
 	 level_boundaries(l)
 	{
@@ -74,8 +75,8 @@ struct demography
 
 
 vector<double> get_quantiles(const vector<double>& P,
-                             Eigen::Ref<const DenseVector<double>> coalescent_rates,
-                             Eigen::Ref<const DenseVector<double>> level_boundaries)
+                             std::span<const double> coalescent_rates,
+                             std::span<const double> level_boundaries)
 {
     assert(coalescent_rates.size() == level_boundaries.size());
     assert(level_boundaries[0] == 0.0);
@@ -379,8 +380,8 @@ EMatrix demography::Pr_X_at(double t, double rho_over_theta)
 }
 
 Matrix get_transition_probabilities(const vector<double>& B, const vector<double>& T, const vector<double>& beta, const vector<double>& alpha,
-				    Eigen::Ref<const DenseVector<double>> coalescent_rates,
-                                    Eigen::Ref<const DenseVector<double>> level_boundaries,
+				    std::span<const double> coalescent_rates,
+                                    std::span<const double> level_boundaries,
                                     double rho_over_theta)
 {
     assert(level_boundaries.size() >= 1);
@@ -727,8 +728,8 @@ vector<pair<double,int>> compress_states(const vector<int>& states, const vector
 typedef double smc_tree;
 
 vector<pair<smc_tree,int>> smc_trace(double rho_over_theta,
-                                     Eigen::Ref<const DenseVector<double>> coalescent_rates,
-                                     Eigen::Ref<const DenseVector<double>> level_boundaries,
+                                     std::span<const double> coalescent_rates,
+                                     std::span<const double> level_boundaries,
                                      double error_rate, const alignment& A)
 {
     assert(level_boundaries.size() >= 1);
@@ -826,8 +827,8 @@ vector<pair<smc_tree,int>> smc_trace(double rho_over_theta,
 }
 
 log_double_t smc(double rho_over_theta,
-                 Eigen::Ref<const DenseVector<double>> coalescent_rates,
-                 Eigen::Ref<const DenseVector<double>> level_boundaries,
+                 std::span<const double> coalescent_rates,
+                 std::span<const double> level_boundaries,
                  double error_rate, const alignment& A)
 {
     assert(level_boundaries.size() >= 1);
@@ -919,7 +920,13 @@ extern "C" closure builtin_function_smc_density(OperationArgs& Args)
     auto a = Args.evaluate_slot_to_value(4);
     auto& A = a.as_<Box<alignment>>().value();
 
-    return { smc(rho_over_theta, coalescent_rates, level_boundaries, error_rate, A) };
+    std::span<const double> rate_view(
+        coalescent_rates.data(),
+        static_cast<std::size_t>(coalescent_rates.size()));
+    std::span<const double> boundary_view(
+        level_boundaries.data(),
+        static_cast<std::size_t>(level_boundaries.size()));
+    return { smc(rho_over_theta, rate_view, boundary_view, error_rate, A) };
 }
 
 extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
@@ -940,7 +947,14 @@ extern "C" closure builtin_function_smc_trace(OperationArgs& Args)
     auto a = Args.evaluate_slot_to_value(4);
     auto& A = a.as_<Box<alignment>>().value();
 
-    auto compressed_states = smc_trace(rho_over_theta, coalescent_rates, level_boundaries, error_rate, A);
+    std::span<const double> rate_view(
+        coalescent_rates.data(),
+        static_cast<std::size_t>(coalescent_rates.size()));
+    std::span<const double> boundary_view(
+        level_boundaries.data(),
+        static_cast<std::size_t>(level_boundaries.size()));
+    auto compressed_states = smc_trace(
+        rho_over_theta, rate_view, boundary_view, error_rate, A);
 
     R::RVector ecs;
     for(auto& [h,l]: compressed_states)
@@ -1168,7 +1182,7 @@ extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(Op
 
 // https://doi.org/10.1534/genetics.105.044917
 // No missing data allowed!
-log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix<double>& Q_, Eigen::Ref<const DenseVector<double>> pi, const vector<Chunk>& rho, double theta)
+log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix<double>& Q_, std::span<const double> pi, const vector<Chunk>& rho, double theta)
 {
     assert(k>=1);
 
@@ -1194,9 +1208,7 @@ log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix
     // The coalescence rate is 1, the mutation rate is N*mu, and the recombination rate is N*r.
     double subst_rate = theta/2;
     DenseMatrix<double> Q = Q_;
-    std::span<const double> pi_view(pi.data(),
-                                    static_cast<std::size_t>(pi.size()));
-    Q *= subst_rate / rate_away(pi_view, Q);
+    Q *= subst_rate / rate_away(pi, Q);
 
     // The rate of coalescing with another lineage is k for k other lineages.
     double coalescent_time = 1.0/k;
@@ -1285,7 +1297,7 @@ log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix
     return { Pr };
 }
 
-log_double_t wilson_mcvean_2006_composite_likelihood(const alignment& A, const DenseMatrix<double>& Q, Eigen::Ref<const DenseVector<double>> pi, const vector<Chunk>& rho, double theta)
+log_double_t wilson_mcvean_2006_composite_likelihood(const alignment& A, const DenseMatrix<double>& Q, std::span<const double> pi, const vector<Chunk>& rho, double theta)
 {
     int n = A.n_sequences();
 
@@ -1319,7 +1331,10 @@ extern "C" closure builtin_function_wilson_mcvean_2006_composite_likelihood_raw(
 
     auto pi = compute_stationary_freqs(Q);
 
-    log_double_t Pr = wilson_mcvean_2006_composite_likelihood(A, Q, pi, rhos, theta);
+    std::span<const double> pi_view(pi.data(),
+                                    static_cast<std::size_t>(pi.size()));
+    log_double_t Pr = wilson_mcvean_2006_composite_likelihood(
+        A, Q, pi_view, rhos, theta);
     
     return { Pr };
 }
