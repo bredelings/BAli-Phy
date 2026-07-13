@@ -20,6 +20,7 @@
 #include <Eigen/SVD>
 #include <functional>
 #include <limits>
+#include <span>
 #include <type_traits>
 
 using std::vector;
@@ -1643,7 +1644,9 @@ extern "C" closure builtin_function_lExpRaw(OperationArgs& Args)
 
     object_ptr<Box<DenseMatrix<double>>> Mptr = new Box<DenseMatrix<double>>;
     auto& M = *Mptr;
-    M = exp(L.as_<Box<EigenValues>>(), pi, t);
+    std::span<const double> pi_view(pi.data(),
+                                    static_cast<std::size_t>(pi.size()));
+    M = exp(L.as_<Box<EigenValues>>(), pi_view, t);
 
     double error = positivize_and_renormalize_matrix(M);
 

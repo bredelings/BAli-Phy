@@ -10,6 +10,7 @@
 #include "dp/2way.H"
 #include "util/range.H"
 #include <Eigen/Dense>
+#include <span>
 #include <unsupported/Eigen/MatrixFunctions>
 #include "substitution/parsimony.H"
 
@@ -41,7 +42,9 @@ extern "C" closure builtin_function_equilibriumLimit(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto& Q = arg1.as_<Box<DenseMatrix<double>>>();
 
-    return new Box<DenseVector<double>>(equilibriumLimit(pi0, Q));
+    std::span<const double> pi0_view(pi0.data(),
+                                     static_cast<std::size_t>(pi0.size()));
+    return new Box<DenseVector<double>>(equilibriumLimit(pi0_view, Q));
 }
 
 extern "C" closure builtin_function_compute_check_stationary_freqs(OperationArgs& Args)

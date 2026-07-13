@@ -1,6 +1,7 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 
 #include <vector>
+#include <span>
 
 #include "math/pow2.H"
 #include "math/logprod.H"
@@ -1193,7 +1194,9 @@ log_double_t wilson_mcvean_2006_CSD(const alignment& A, int k, const DenseMatrix
     // The coalescence rate is 1, the mutation rate is N*mu, and the recombination rate is N*r.
     double subst_rate = theta/2;
     DenseMatrix<double> Q = Q_;
-    Q *= subst_rate / rate_away(pi, Q);
+    std::span<const double> pi_view(pi.data(),
+                                    static_cast<std::size_t>(pi.size()));
+    Q *= subst_rate / rate_away(pi_view, Q);
 
     // The rate of coalescing with another lineage is k for k other lineages.
     double coalescent_time = 1.0/k;

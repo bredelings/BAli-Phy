@@ -29,14 +29,15 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define EXPONENTIAL_H
 #include "util/dense-matrix.H"
 #include <Eigen/Dense>
+#include <span>
 
 
 typedef Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> EigenValues;
 
-DenseMatrix<double> exp(const EigenValues& eigensystem, Eigen::Ref<const DenseVector<double>> D, double t);
+DenseMatrix<double> exp(const EigenValues& eigensystem, std::span<const double> pi, double t);
 DenseMatrix<double> exp(const DenseMatrix<double>& Q, double t);
 
-double rate_away(Eigen::Ref<const DenseVector<double>> pi, const DenseMatrix<double>& Q);
+double rate_away(std::span<const double> pi, const DenseMatrix<double>& Q);
 
 double positivize_and_renormalize_matrix(DenseMatrix<double>& E);
 
@@ -45,6 +46,6 @@ bool checkStationary(const DenseMatrix<double>& Q, Eigen::Ref<const DenseVector<
 
 bool checkReversible(const DenseMatrix<double>& Q, Eigen::Ref<const DenseVector<double>> pi, double tol = 1.0e-9);
 
-DenseVector<double> equilibriumLimit(Eigen::Ref<const DenseVector<double>> pi0, const DenseMatrix<double>& Q);
+DenseVector<double> equilibriumLimit(std::span<const double> pi0, const DenseMatrix<double>& Q);
 
 #endif

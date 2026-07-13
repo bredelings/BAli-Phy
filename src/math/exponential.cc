@@ -121,7 +121,7 @@ DenseMatrix<double> exp(const EigenValues& solution,double t)
 }
 
 /// Compute the exponential of a matrix from a reversible markov chain
-DenseMatrix<double> exp_small(const EigenValues& eigensystem, Eigen::Ref<const DenseVector<double>> pi, const double t)
+DenseMatrix<double> exp_small(const EigenValues& eigensystem, std::span<const double> pi, const double t)
 {
     DenseMatrix<double> E = expm1(eigensystem,t);
 
@@ -145,7 +145,7 @@ DenseMatrix<double> exp_small(const EigenValues& eigensystem, Eigen::Ref<const D
 }
 
 /// Compute the exponential of a matrix from a reversible markov chain
-DenseMatrix<double> exp_large(const EigenValues& eigensystem, Eigen::Ref<const DenseVector<double>> pi, const double t)
+DenseMatrix<double> exp_large(const EigenValues& eigensystem, std::span<const double> pi, const double t)
 {
     DenseMatrix<double> E = exp(eigensystem,t);
 
@@ -165,7 +165,7 @@ DenseMatrix<double> exp_large(const EigenValues& eigensystem, Eigen::Ref<const D
     return E;
 }
 
-DenseMatrix<double> exp(const EigenValues& eigensystem, Eigen::Ref<const DenseVector<double>> pi, const double t)
+DenseMatrix<double> exp(const EigenValues& eigensystem, std::span<const double> pi, const double t)
 {
     bool small = true;
     for(double eigenvalue: eigensystem.eigenvalues())
@@ -189,7 +189,7 @@ DenseMatrix<double> exp(const DenseMatrix<double>& Q, double t)
     return E;
 }
 
-double rate_away(Eigen::Ref<const DenseVector<double>> pi, const DenseMatrix<double>& Q)
+double rate_away(std::span<const double> pi, const DenseMatrix<double>& Q)
 {
     double rate = 0;
     for(int s=0;s<Q.rows();s++)
@@ -434,7 +434,7 @@ static Eigen::VectorXd stationaryDistribution(const DenseMatrix<double>& Q) {
 }
 
 // Compute equilibrium limit
-static DenseVector<double> equilibriumLimitRaw(Eigen::Ref<const DenseVector<double>> pi0,
+static DenseVector<double> equilibriumLimitRaw(std::span<const double> pi0,
                                                const DenseMatrix<double>& Q)
 {
     int n = Q.rows();
@@ -460,7 +460,7 @@ static DenseVector<double> equilibriumLimitRaw(Eigen::Ref<const DenseVector<doub
             Eigen::VectorXd pi_cls = stationaryDistribution(Qsub);
 
             double weight = 0.0;
-            for (int i : cls) weight += pi0(i);
+            for (int i : cls) weight += pi0[i];
 
             for (int k = 0; k < (int)cls.size(); ++k)
                 pi_inf(cls[k]) += weight * pi_cls(k);
@@ -489,8 +489,8 @@ static DenseVector<double> equilibriumLimitRaw(Eigen::Ref<const DenseVector<doub
 
     // Compute alpha_R = pi0_T * B + pi0_R
     Eigen::VectorXd pi0_T(nT), pi0_R(nR);
-    for (int i = 0; i < nT; ++i) pi0_T(i) = pi0(T[i]);
-    for (int i = 0; i < nR; ++i) pi0_R(i) = pi0(R[i]);
+    for (int i = 0; i < nT; ++i) pi0_T(i) = pi0[T[i]];
+    for (int i = 0; i < nR; ++i) pi0_R(i) = pi0[R[i]];
     Eigen::VectorXd alpha_R = pi0_T.transpose() * B + pi0_R.transpose();
 
     // Compute stationary for each closed class
@@ -516,7 +516,7 @@ static DenseVector<double> equilibriumLimitRaw(Eigen::Ref<const DenseVector<doub
 
 
 // Compute lim_{t->inf} pi0*exp(Q*t)
-DenseVector<double> equilibriumLimit(Eigen::Ref<const DenseVector<double>> pi0,
+DenseVector<double> equilibriumLimit(std::span<const double> pi0,
                                      const DenseMatrix<double>& Q)
 {
     constexpr double tol = 1.0e-7;
