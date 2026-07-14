@@ -281,7 +281,6 @@ closure let_op(OperationArgs& Args)
                 M.set_C(reg, std::move(rhs));
                 C.Env.push_back(reg);
 
-                assert(runtime_let->body.to<Runtime::Trim>());
                 C = get_trimmed(runtime_let->body, C.Env);
                 continue;
             }
@@ -297,7 +296,6 @@ closure let_op(OperationArgs& Args)
             for(int i=0;i<n_binds;i++)
                 M.set_C(C.Env[start+i], get_trimmed(rhss[i], C.Env));
 
-            assert(runtime_let->body.to<Runtime::Trim>());
             C = get_trimmed(runtime_let->body, C.Env);
             continue;
         }

@@ -148,10 +148,11 @@ bool is_simple_core_arg(const Core::Exp<>& E, bool sub_exp_ok)
     return false;
 }
 
-std::tuple<Core::Decls<>, Core::Exp<>>
+// Normalize an expression and lift a non-simple result into an ordered NonRec.
+std::tuple<Core::Binds<>, Core::Exp<>>
 graph_normalize_lift(FreshVarSource& source, const Core::Exp<>& E, bool sub_exp_ok)
 {
-    Core::Decls<> decls;
+    Core::Binds<> binds;
 
     if (sub_exp_ok)
     {
@@ -161,12 +162,12 @@ graph_normalize_lift(FreshVarSource& source, const Core::Exp<>& E, bool sub_exp_
 
             for(auto& arg: E2.args)
             {
-                auto [decls2, arg2] = graph_normalize_lift(source, arg, true);
+                auto [binds2, arg2] = graph_normalize_lift(source, arg, true);
                 arg = arg2;
-                std::ranges::move(decls2, std::back_inserter(decls));
+                std::ranges::move(binds2, std::back_inserter(binds));
             }
 
-            return {decls, E2};
+            return {binds, E2};
         }
     }
 
@@ -175,11 +176,11 @@ graph_normalize_lift(FreshVarSource& source, const Core::Exp<>& E, bool sub_exp_
     if (not is_simple_core_arg(E2, sub_exp_ok))
     {
         auto x = source.get_fresh_core_var("gn");
-        decls.push_back({x, E2});
+        binds.push_back(Core::NonRec<>{Core::Decl<>{x, std::move(E2)}});
         E2 = x;
     }
 
-    return {decls, E2};
+    return {binds, E2};
 }
 
 Core::Decls<> graph_normalize(FreshVarSource& source, Core::Decls<> decls)
@@ -200,60 +201,61 @@ Core::Exp<> graph_normalize(FreshVarSource& source, const Core::Exp<>& E)
         return Core::Lambda<>{L->x, graph_normalize(source, L->body)};
     else if (auto A = E.to_apply())
     {
-        auto [head_decls, head] = graph_normalize_lift(source, A->head, false);
-        auto [arg_decls, arg] = graph_normalize_lift(source, A->arg, false);
+        auto [head_binds, head] = graph_normalize_lift(source, A->head, false);
+        auto [arg_binds, arg] = graph_normalize_lift(source, A->arg, false);
 
-        head_decls.insert(head_decls.end(), arg_decls.begin(), arg_decls.end());
-        return make_rec_let(std::move(head_decls), Core::Exp<>{Core::Apply<>{head, arg}});
+        std::ranges::move(arg_binds, std::back_inserter(head_binds));
+        return make_lets(std::move(head_binds), Core::Exp<>{Core::Apply<>{head, arg}});
     }
     else if (auto L = E.to_let())
     {
-        auto body = graph_normalize(source, L->body);
         if (auto nonrec = L->to_nonrec())
         {
             auto decl = nonrec->decl;
             decl.body = graph_normalize(source, decl.body);
+            auto body = graph_normalize(source, L->body);
             return Core::Let<>{Core::NonRec<>{std::move(decl)}, std::move(body)};
         }
 
         auto decls = graph_normalize(source, L->to_rec()->decls);
+        auto body = graph_normalize(source, L->body);
         return Core::Let<>{Core::Rec<>{std::move(decls)}, std::move(body)};
     }
     else if (auto C = E.to_case())
     {
-        auto [decls, object] = graph_normalize_lift(source, C->object, true);
+        auto [binds, object] = graph_normalize_lift(source, C->object, true);
         auto alts = C->alts;
         for(auto& [_, body]: alts)
             body = graph_normalize(source, body);
 
-        return make_rec_let(std::move(decls), Core::Exp<>{Core::Case<>{object, alts}});
+        return make_lets(std::move(binds), Core::Exp<>{Core::Case<>{object, alts}});
     }
     else if (auto C = E.to_conApp())
     {
-        Core::Decls<> decls;
+        Core::Binds<> binds;
         auto args = C->args;
         for(auto& arg: args)
         {
-            auto [decls2, arg2] = graph_normalize_lift(source, arg, false);
+            auto [binds2, arg2] = graph_normalize_lift(source, arg, false);
             arg = arg2;
-            std::ranges::move(decls2, std::back_inserter(decls));
+            std::ranges::move(binds2, std::back_inserter(binds));
         }
 
-        return make_rec_let(std::move(decls), Core::Exp<>{Core::ConApp<>{C->head, args}});
+        return make_lets(std::move(binds), Core::Exp<>{Core::ConApp<>{C->head, args}});
     }
     else if (auto B = E.to_builtinOp())
     {
-        Core::Decls<> decls;
+        Core::Binds<> binds;
         auto args = B->args;
         bool sub_exp_ok = B->call_conv == "ecall";
         for(auto& arg: args)
         {
-            auto [decls2, arg2] = graph_normalize_lift(source, arg, sub_exp_ok);
+            auto [binds2, arg2] = graph_normalize_lift(source, arg, sub_exp_ok);
             arg = arg2;
-            std::ranges::move(decls2, std::back_inserter(decls));
+            std::ranges::move(binds2, std::back_inserter(binds));
         }
 
-        return make_rec_let(std::move(decls), Core::Exp<>{Core::BuiltinOp<>{B->lib_name, B->func_name, B->call_conv, args, B->op}});
+        return make_lets(std::move(binds), Core::Exp<>{Core::BuiltinOp<>{B->lib_name, B->func_name, B->call_conv, args, B->op}});
     }
     else
         std::abort();

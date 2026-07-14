@@ -305,14 +305,21 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
+                auto body = trim_normalize(e.body);
+
+                // let_op consumes nested lets with the current environment, so wrapping an
+                // immediate Let would only rescan the remaining chain at every nesting level.
+                if (not body.template to<Let>())
+                    body = trim(body);
+
                 if (auto nonrec = e.to_nonrec())
                     return Let(NonRec{trim(trim_normalize(nonrec->rhs))},
-                               trim(trim_normalize(e.body)));
+                               std::move(body));
 
                 vector<Exp> rhss;
                 for(const auto& rhs: e.to_rec()->rhss)
                     rhss.push_back(trim(trim_normalize(rhs)));
-                return Let(Rec(std::move(rhss)), trim(trim_normalize(e.body)));
+                return Let(Rec(std::move(rhss)), std::move(body));
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
