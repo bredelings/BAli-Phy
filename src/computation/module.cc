@@ -3,6 +3,7 @@
 #include <tuple>
 #include <fstream>
 #include <algorithm>
+#include <cstring>
 #include <limits>
 #include <string_view>
 #include "computation/module.H"
@@ -43,6 +44,11 @@
 
 #include <xxhash.h>
 #include <zstd.h>
+
+#if defined(__ELF__) && defined(__linux__)
+#include <elf.h>
+#include <link.h>
+#endif
 
 namespace views = ranges::views;
 
@@ -3199,18 +3205,89 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
     }
 }
 
+#if defined(__ELF__) && defined(__linux__)
+namespace
+{
+    struct ExecutableBuildId
+    {
+        vector<unsigned char> bytes;
+    };
+
+    // Copy the GNU build ID from the main executable's loaded ELF note.
+    int find_executable_build_id(dl_phdr_info* info, size_t, void* data)
+    {
+        if (info->dlpi_name and info->dlpi_name[0] != '\0') return 0;
+
+        auto& result = *static_cast<ExecutableBuildId*>(data);
+        for(ElfW(Half) i = 0; i < info->dlpi_phnum; ++i)
+        {
+            const auto& header = info->dlpi_phdr[i];
+            if (header.p_type != PT_NOTE) continue;
+
+            auto note = reinterpret_cast<const unsigned char*>(info->dlpi_addr + header.p_vaddr);
+            size_t offset = 0;
+            while(offset + sizeof(ElfW(Nhdr)) <= header.p_filesz)
+            {
+                auto note_header = reinterpret_cast<const ElfW(Nhdr)*>(note + offset);
+                offset += sizeof(ElfW(Nhdr));
+
+                auto name_size = (static_cast<size_t>(note_header->n_namesz) + 3) & ~size_t(3);
+                auto description_size = (static_cast<size_t>(note_header->n_descsz) + 3) & ~size_t(3);
+                if (name_size > header.p_filesz - offset) break;
+
+                auto name = note + offset;
+                offset += name_size;
+                if (description_size > header.p_filesz - offset) break;
+
+                auto description = note + offset;
+                offset += description_size;
+                if (note_header->n_type == NT_GNU_BUILD_ID and
+                    note_header->n_namesz == 4 and
+                    std::memcmp(name, "GNU", 4) == 0)
+                {
+                    result.bytes.assign(description,
+                                        description + note_header->n_descsz);
+                    return 1;
+                }
+            }
+        }
+        return 0;
+    }
+
+    // Hash the linker's executable build identity down to the cache key size.
+    optional<string> executable_build_id_hash()
+    {
+        ExecutableBuildId build_id;
+        dl_iterate_phdr(find_executable_build_id, &build_id);
+        if (build_id.bytes.empty()) return {};
+
+        return xxhash_to_hex(XXH3_64bits(build_id.bytes.data(),
+                                        build_id.bytes.size()));
+    }
+}
+#endif
+
 const string& module_loader::executable_hash()
 {
     static optional<string> str;
     if (not str)
     {
+#if defined(__ELF__) && defined(__linux__)
+        str = executable_build_id_hash();
+#endif
+    }
+
+    if (not str)
+    {
+        // NOTE: Platforms without a native build-ID reader hash the executable
+        // in full.  Replace this fallback when their exact native ID is exposed.
         auto exe_path = find_exe_path();
-        std::ifstream exe_file(exe_path);
+        std::ifstream exe_file(exe_path, std::ios::binary);
 
         XXH3_state_t* state = XXH3_createState();
         XXH3_64bits_reset(state);
 
-        vector<char> buffer(4096);
+        vector<char> buffer(1024 * 1024);
         while (exe_file)
         {
             exe_file.read(buffer.data(), buffer.size());
