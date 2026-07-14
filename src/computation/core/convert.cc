@@ -39,6 +39,18 @@ Core::Decls<> to_core(const Occ::Decls& decls)
     return decls2;
 }
 
+// Remove occurrence annotations from a binding without changing its scope form.
+Core::Bind<> to_core(const Occ::Bind& bind)
+{
+    if (auto nonrec = std::get_if<Occ::NonRec>(&bind))
+    {
+        const auto& [x, rhs] = nonrec->decl;
+        return Core::NonRec<>{{to_core_var(x), to_core_exp(rhs)}};
+    }
+
+    return Core::Rec<>{to_core(std::get<Occ::Rec>(bind).decls)};
+}
+
 Core::Apply<> to_core_apply(const Occ::Apply A)
 {
     return Core::Apply<>{to_core_exp(A.head), to_core_exp(A.arg)};
@@ -46,14 +58,7 @@ Core::Apply<> to_core_apply(const Occ::Apply A)
 
 Core::Let<> to_core_let(const Occ::Let& L)
 {
-    if (auto nonrec = L.to_nonrec())
-    {
-        const auto& [x, rhs] = nonrec->decl;
-        Core::Decl<> decl{to_core_var(x), to_core_exp(rhs)};
-        return {Core::NonRec<>{std::move(decl)}, to_core_exp(L.body)};
-    }
-
-    return {Core::Rec<>{to_core(L.to_rec()->decls)}, to_core_exp(L.body)};
+    return {to_core(L.bind), to_core_exp(L.body)};
 }
 
 Core::Var<> to_core_pattern_arg(const Occ::Var& V)

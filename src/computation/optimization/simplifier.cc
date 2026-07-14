@@ -261,31 +261,37 @@ int count_cont_args(const ConCont& cont)
         return 1 + count_cont_args(cont->next);
 }
 
-void SimplFloats::append(const Module& m, const inliner_options& opts, const Occ::Decls& d)
+// Append one ordered float and extend the in-scope set with its binders.
+void SimplFloats::append(const Module& m, const inliner_options& opts, const Occ::Bind& bind)
 {
-    if (not d.empty())
+    if (auto nonrec = std::get_if<Occ::NonRec>(&bind))
+        bound_vars = bind_var(bound_vars, nonrec->decl.x,
+                              make_core_unfolding(m, opts, nonrec->decl.body));
+    else
     {
-        bound_vars = bind_decls(m, opts, bound_vars, d);
-        decls.push_back(d);
+        const auto& decls = std::get<Occ::Rec>(bind).decls;
+        bound_vars = bind_decls(m, opts, bound_vars, decls);
     }
+    binds.push_back(bind);
 }
 
-void SimplFloats::append(const Module& m, const inliner_options& opts, const vector<Occ::Decls>& decl_groups)
+// Append an outer-to-inner sequence without coalescing its binding forms.
+void SimplFloats::append(const Module& m, const inliner_options& opts, const Occ::Binds& new_binds)
 {
-    for(auto& decls: decl_groups)
-        append(m, opts, decls);
+    for(const auto& bind: new_binds)
+        append(m, opts, bind);
 }
 
 void SimplFloats::append(const Module& m, const inliner_options& opts, const SimplFloats& F)
 {
-    append(m, opts, F.decls);
+    append(m, opts, F.binds);
 }
 
 Occ::Exp wrap(const SimplFloats& F, Occ::Exp E)
 {
     // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
-    for(auto& d: F.decls | views::reverse)
-        E = Occ::Let{Occ::Rec{d}, E};
+    for(const auto& bind: F.binds | views::reverse)
+        E = Occ::Let{bind, E};
 
     return E;
 }
@@ -316,18 +322,20 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
         // return exprIsConApp_worker(in_scope_set2, S2, floats, lam->body, cont->next);
 
         auto S2 = bind_var(S, lam->x, make_core_unfolding(this_mod, options, cont->arg));
-        Float f = FloatLet{{{lam->x, cont->arg}}};
+        Float f = FloatLet{Occ::NonRec{{lam->x, cont->arg}}};
         floats.push_back(f);
         return exprIsConApp_worker(S2, floats, lam->body, cont->next);
     }
     else if (auto let = E.to_let(); let and false)
     {
-        if (let->to_nonrec()) std::abort();
-        Float f = FloatLet{let->to_rec()->decls};
+        Float f = FloatLet{let->bind};
         floats.push_back(f);
         auto S2 = S;
-        for(auto& [x,e]: let->to_rec()->decls)
-            S2 = bind_var(S, x, make_core_unfolding(this_mod, options,e));
+        if (auto nonrec = let->to_nonrec())
+            S2 = bind_var(S2, nonrec->decl.x, make_core_unfolding(this_mod, options, nonrec->decl.body));
+        else
+            for(auto& [x,e]: let->to_rec()->decls)
+                S2 = bind_var(S2, x, make_core_unfolding(this_mod, options,e));
             
         return exprIsConApp_worker(S2, floats, let->body, cont);
     }
@@ -407,7 +415,7 @@ Occ::Exp apply_floats(const vector<Float>& floats, Occ::Exp E)
     for(auto& f: floats | views::reverse)
     {
         if (auto lf = to<FloatLet>(f))
-            E = Occ::Let(Occ::Rec{lf->decls}, E);
+            E = Occ::Let(lf->bind, E);
         else
         {
             auto cf = to<FloatCase>(f);
@@ -685,23 +693,22 @@ const OtherConUnfolding* is_evaluated_var(const Occ::Exp& e, const in_scope_set&
     return nullptr;
 }
 
-std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
+Occ::Binds strip_multi_let(Occ::Exp& E)
 {
-    std::vector<Occ::Decls> decl_groups;
+    Occ::Binds binds;
     while(auto let = E.to_let())
     {
-       if (let->to_nonrec()) break;
-       decl_groups.push_back(let->to_rec()->decls);
+       binds.push_back(let->bind);
        auto tmp = E;
        E = let->body;
     }
-    return decl_groups;
+    return binds;
 }
 
-Occ::Exp make_lets(const vector<Occ::Decls>& decls, Occ::Exp E)
+Occ::Exp make_lets(const Occ::Binds& binds, Occ::Exp E)
 {
-    for(auto& d: decls | views::reverse)
-        E = Occ::Let{Occ::Rec{d},E};
+    for(const auto& bind: binds | views::reverse)
+        E = Occ::Let{bind,E};
 
     return E;
 }
@@ -1045,7 +1052,7 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
         k.info.work_dup = amount_t::Many;
         k.info.code_dup = amount_t::Many;
         Occ::Decls decls{{k,arg2}};
-        floats1.append(this_mod, options, decls);
+        floats1.append(this_mod, options, Occ::Rec{std::move(decls)});
 
         auto ac2 = std::make_shared<apply_context>(k, substitution(), floats1.bound_vars, cont1);
         ac2->dup_status = DupStatus::OkToDup;
@@ -1065,7 +1072,9 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
         {
             auto [joins,alt2] = make_dupable_alt(alt, *this);
             alt = alt2;
-            floats.append(this_mod, options, joins);
+            for(auto& decls: joins)
+                if (not decls.empty())
+                    floats.append(this_mod, options, Occ::Rec{std::move(decls)});
         }
 
         auto cc2 = std::make_shared<case_context>(cc->scrutinee_is_variable, alts,
@@ -1104,7 +1113,8 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
             decls.push_back({arg2, args[i]});
         }
 
-        F.append(this_mod, options, decls);
+        if (not decls.empty())
+            F.append(this_mod, options, Occ::Rec{std::move(decls)});
 
         auto [F2, E2] = simplify(apply_floats(floats,body), S2, F.bound_vars, context);
 
@@ -1186,8 +1196,9 @@ bool post_inline(const Occ::Var& x, const Occ::Exp& rhs)
 
 // FIXME - Cache free vars on expressions!
 
+// Simplify one recursive group, retaining RHS floats in that recursive scope.
 tuple<SimplFloats, substitution>
-SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution& S, in_scope_set bound_vars, bool is_top_level)
+SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitution& S, in_scope_set bound_vars, bool is_top_level)
 {
     auto S2 = S;
 
@@ -1264,13 +1275,23 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
 	    if (options.let_float_from_let and (rhs2.to_conApp() or rhs2.to_lambda() or is_top_level))
             {
                 rhs = rhs2;
-		for(auto& decls: F2.decls)
-		    for(auto& decl: decls)
-		    {
-			bound_vars = bind_var(bound_vars, decl.x, make_core_unfolding(this_mod, options, decl.body));
-			new_names.push_back(decl.x);
-			new_decls.push_back(decl);
-		    }
+		for(const auto& bind: F2.binds)
+                {
+                    if (auto nonrec = std::get_if<Occ::NonRec>(&bind))
+                    {
+                        const auto& decl = nonrec->decl;
+                        bound_vars = bind_var(bound_vars, decl.x, make_core_unfolding(this_mod, options, decl.body));
+                        new_decls.push_back(decl);
+                    }
+                    else
+                    {
+                        for(const auto& decl: std::get<Occ::Rec>(bind).decls)
+                        {
+                            bound_vars = bind_var(bound_vars, decl.x, make_core_unfolding(this_mod, options, decl.body));
+                            new_decls.push_back(decl);
+                        }
+                    }
+                }
             }
             else
                 rhs = wrap(F2,rhs2);
@@ -1310,7 +1331,72 @@ SimplifierState::simplify_decls(const Occ::Decls& orig_decls, const substitution
     if (new_decls.empty())
         return {SimplFloats({}, bound_vars), S2};
     else
-        return {SimplFloats({new_decls}, bound_vars), S2};
+        return {SimplFloats({Occ::Rec{std::move(new_decls)}}, bound_vars), S2};
+}
+
+// Simplify a NonRec RHS in the outer scope, then introduce its binder for later code.
+tuple<SimplFloats, substitution>
+SimplifierState::simplify_nonrec(const Occ::NonRec& nonrec, const substitution& S, in_scope_set bound_vars, bool is_top_level)
+{
+    const auto& [x, original_rhs] = nonrec.decl;
+    assert(not get_free_vars(original_rhs).count(x));
+
+    if (pre_inline(x, original_rhs))
+    {
+        auto S2 = S.erase(x);
+        S2 = S2.insert({x, {original_rhs, S2}});
+        return {SimplFloats({}, bound_vars), S2};
+    }
+
+    auto [rhs_floats, rhs2] = simplify(original_rhs, S, bound_vars,
+                                       make_stop_context(CallCtxt::BoringCtxt));
+    SimplFloats output(bound_vars);
+    Occ::Exp rhs;
+    if (options.let_float_from_let and (rhs2.to_conApp() or rhs2.to_lambda() or is_top_level))
+    {
+        output = std::move(rhs_floats);
+        bound_vars = output.bound_vars;
+        rhs = std::move(rhs2);
+    }
+    else
+        rhs = wrap(rhs_floats, std::move(rhs2));
+
+    if (post_inline(x, rhs))
+    {
+        auto S2 = S.erase(x);
+        S2 = S2.insert({x, rhs});
+        return {std::move(output), S2};
+    }
+
+    auto S2 = S;
+    auto x2 = rename_and_bind_var(x, S2, bound_vars);
+    Unfolding unfolding;
+    bool noinline = false;
+    if (is_top_level and is_qualified_by_module(x2.name, this_mod.name))
+    {
+        if (auto symbol = this_mod.lookup_resolved_symbol(x2.name))
+        {
+            noinline = symbol->inline_pragma == Hs::inline_pragma_t::NOINLINE;
+            if (not to<std::monostate>(symbol->unfolding) and not noinline)
+                unfolding = symbol->unfolding;
+        }
+    }
+
+    if (to<std::monostate>(unfolding) and not noinline)
+        unfolding = make_core_unfolding(this_mod, options, rhs);
+    bound_vars = rebind_var(bound_vars, x2, unfolding);
+    output.binds.push_back(Occ::NonRec{{x2, std::move(rhs)}});
+    output.bound_vars = std::move(bound_vars);
+    return {std::move(output), S2};
+}
+
+// Dispatch one explicit binding form to its scope-correct simplification path.
+tuple<SimplFloats, substitution>
+SimplifierState::simplify_bind(const Occ::Bind& bind, const substitution& S, in_scope_set bound_vars, bool is_top_level)
+{
+    if (auto nonrec = std::get_if<Occ::NonRec>(&bind))
+        return simplify_nonrec(*nonrec, S, std::move(bound_vars), is_top_level);
+    return simplify_rec_decls(std::get<Occ::Rec>(bind).decls, S, std::move(bound_vars), is_top_level);
 }
 
 // NOTE: See maybe_eta_reduce( ) in occurrence.cc
@@ -1375,7 +1461,7 @@ tuple<SimplFloats,Occ::Exp> SimplifierState::rebuild(const Occ::Exp& E, const in
         return rebuild(Occ::Apply{E, arg2}, bound_vars, ac->next);
     }
     else
-        return {SimplFloats(), E};
+        return {SimplFloats(bound_vars), E};
 }
 
 // Q1. Where do we handle beta-reduction (@ constant x1 x2 ... xn)?
@@ -1446,7 +1532,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
                 auto x2 = rename_var(lam->x, S2, bound_vars);
                 SimplFloats F(bound_vars);
                 Occ::Decls decls{{x2,arg}};
-                F.append(this_mod, options, decls);
+                F.append(this_mod, options, Occ::Rec{std::move(decls)});
                 auto [F2,E2] = simplify(lam->body, S2, F.bound_vars, ac->next);
 
                 F.append(this_mod, options, F2);
@@ -1495,9 +1581,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
     // 
     else if (auto let = E.to_let())
     {
-	if (let->to_nonrec()) std::abort();
-	auto decls = let->to_rec()->decls;
-	auto [F, S2] = simplify_decls(decls, S, bound_vars, false);
+        auto [F, S2] = simplify_bind(let->bind, S, bound_vars, false);
 
         auto [F2, E2] = simplify(let->body, S2, F.bound_vars, context);
         F.append(this_mod, options, F2);
@@ -1617,13 +1701,13 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
  */
 
 
-vector<Core::Decls<>>
-SimplifierState::simplify_module_one(const vector<Core::Decls<>>& decl_groups_in)
+Core::Binds<>
+SimplifierState::simplify_module_one(const Core::Binds<>& binds_in)
 {
     set<Occ::Var> free_vars;
 
     // Decompose the decls, remove unused decls, and occurrence-analyze the decls.
-    auto decl_groups = occurrence_analyze_decl_groups(this_mod, decl_groups_in, free_vars);
+    auto binds = occurrence_analyze_binds(this_mod, binds_in, free_vars);
 
     for(auto& x: free_vars)
     {
@@ -1636,26 +1720,26 @@ SimplifierState::simplify_module_one(const vector<Core::Decls<>>& decl_groups_in
 
     in_scope_set bound_vars;
 
-    vector<substitution> S(1);
-    vector<Occ::Decls> decl_groups2;
-    for(auto& decls: decl_groups)
+    substitution S;
+    Occ::Binds binds2;
+    for(const auto& bind: binds)
     {
-	auto [F, s] = simplify_decls(decls, S.back(), bound_vars, true);
-        decl_groups2.insert(decl_groups2.end(), F.decls.begin(), F.decls.end());
-	S.push_back( s );
+        auto [F, S2] = simplify_bind(bind, S, bound_vars, true);
+        binds2.insert(binds2.end(), F.binds.begin(), F.binds.end());
+        S = std::move(S2);
         bound_vars = F.bound_vars;
     }
 
-    vector<Core::Decls<>> decl_groups_out;
-    for(auto& decls: decl_groups2)
-        decl_groups_out.push_back(to_core(decls));
+    Core::Binds<> binds_out;
+    for(const auto& bind: binds2)
+        binds_out.push_back(to_core(bind));
 
-    return decl_groups_out;
+    return binds_out;
 }
 
 
-vector<Core::Decls<>> simplify_module_gently(const simplifier_options& options, FreshVarState& fresh_var_state, const Module& m,
-                                              const vector<Core::Decls<>>& decl_groups_in)
+Core::Binds<> simplify_module_gently(const simplifier_options& options, FreshVarState& fresh_var_state, const Module& m,
+                                     const Core::Binds<>& binds_in)
 {
     simplifier_options options_gentle = options;
     options_gentle.case_of_case = false;
@@ -1663,21 +1747,21 @@ vector<Core::Decls<>> simplify_module_gently(const simplifier_options& options, 
 //    options_gentle.beta_reduction = false;  This breaks the inliner.  Should probably fix!
 
     SimplifierState state(options_gentle, fresh_var_state, m);
-    return state.simplify_module_one(decl_groups_in);
+    return state.simplify_module_one(binds_in);
 }
 
-vector<Core::Decls<>> simplify_module(const simplifier_options& options, FreshVarState& fresh_var_state, const Module& m,
-                               const vector<Core::Decls<>>& decl_groups_in)
+Core::Binds<> simplify_module(const simplifier_options& options, FreshVarState& fresh_var_state, const Module& m,
+                              const Core::Binds<>& binds_in)
 {
     SimplifierState state(options, fresh_var_state, m);
-    auto decl_groups = decl_groups_in;
+    auto binds = binds_in;
 
     for(int i = 0; i < options.max_iterations; i++)
     {
-        decl_groups = state.simplify_module_one(decl_groups);
+        binds = state.simplify_module_one(binds);
     }
 
-    return decl_groups;
+    return binds;
 }
 
 

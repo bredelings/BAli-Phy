@@ -26,7 +26,7 @@ class Module;
 
 struct FloatLet
 {
-    Occ::Decls decls;
+    Occ::Bind bind;
 };
 
 struct FloatCase
@@ -52,21 +52,21 @@ struct ConContObj
     ConContObj(const Occ::Exp& a, const ConCont& n):arg(a), next(n){}
 };
 
-std::vector<Core::Decls<>> simplify_module_gently(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core::Decls<>>& decl_groups);
-std::vector<Core::Decls<>> simplify_module(const simplifier_options&, FreshVarState&, const Module&, const std::vector<Core::Decls<>>& decl_groups);
+Core::Binds<> simplify_module_gently(const simplifier_options&, FreshVarState&, const Module&, const Core::Binds<>& binds);
+Core::Binds<> simplify_module(const simplifier_options&, FreshVarState&, const Module&, const Core::Binds<>& binds);
 
 struct SimplFloats
 {
-    std::vector<Occ::Decls> decls;
+    Occ::Binds binds;
     in_scope_set bound_vars;
 
-    void append(const Module& m, const inliner_options& opts, const Occ::Decls& d);
-    void append(const Module& m, const inliner_options& opts, const std::vector<Occ::Decls>& d);
+    void append(const Module& m, const inliner_options& opts, const Occ::Bind& bind);
+    void append(const Module& m, const inliner_options& opts, const Occ::Binds& binds);
     void append(const Module& m, const inliner_options& opts, const SimplFloats& F);
 
     SimplFloats() {}
     SimplFloats(const in_scope_set& bv):bound_vars(bv) {}
-    SimplFloats(const std::vector<Occ::Decls>& d, const in_scope_set& bv):decls(d),bound_vars(bv) {}
+    SimplFloats(Occ::Binds bs, const in_scope_set& bv):binds(std::move(bs)),bound_vars(bv) {}
 };
 
 
@@ -139,10 +139,16 @@ public:
     make_dupable_case_cont( const simplifier::substitution& S, const in_scope_set& bound_vars, const std::vector<Occ::Alt>& alts, const inline_context& cont);
 
     std::tuple<SimplFloats, simplifier::substitution>
-    simplify_decls(const Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
+    simplify_rec_decls(const Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
 
-    std::vector<Core::Decls<>>
-    simplify_module_one(const std::vector<Core::Decls<>>& decl_groups);
+    std::tuple<SimplFloats, simplifier::substitution>
+    simplify_nonrec(const Occ::NonRec& nonrec, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
+
+    std::tuple<SimplFloats, simplifier::substitution>
+    simplify_bind(const Occ::Bind& bind, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
+
+    Core::Binds<>
+    simplify_module_one(const Core::Binds<>& binds);
 
     SimplifierState(const simplifier_options& opts, FreshVarState& s, const Module& m);
 };

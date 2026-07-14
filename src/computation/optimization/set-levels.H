@@ -16,6 +16,7 @@ namespace Levels
     using NonRec = Core::NonRec<int>;
     using Rec = Core::Rec<int>;
     using Bind = Core::Bind<int>;
+    using Binds = Core::Binds<int>;
     using Case = Core::Case<int>;
     using Pattern = Core::Pattern<int>;
     using Alt = Core::Alt<int>;
@@ -28,6 +29,6 @@ namespace Levels
 Core::Var<> strip_level(const Levels::Var&);
 std::vector<Core::Var<>> strip_levels(const std::vector<Levels::Var>& xs);
 Core::Pattern<> strip_levels_from_pattern(const Levels::Pattern&);
-std::vector<Levels::Decls> set_level_for_module(FreshVarState& fresh_var_state, const std::vector<Core::Decls<>>& decl_groups);
+Levels::Binds set_level_for_module(FreshVarState& fresh_var_state, const Core::Binds<>& binds);
 
 #endif

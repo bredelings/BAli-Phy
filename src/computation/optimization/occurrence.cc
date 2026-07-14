@@ -120,6 +120,8 @@ const std::set<Occ::Var>* unfolding_free_vars(const Module& m, const Core::Var<>
 
     if (auto S = m.lookup_resolved_symbol(x.name))
     {
+        // DFun metadata is the only unfolding dependency present before optimization.
+        // Ordinary local Core unfoldings are installed after this analysis.
         if (auto du = to<DFunUnfolding>(S->unfolding))
             return &du->free_vars;
     }
@@ -248,18 +250,46 @@ int select_loop_breaker(const vector<int>& sub_component, const vector<int>& com
 //              Deal with this later.
 //
 
-vector<Occ::Decls>
-occurrence_analyze_decl_groups(const Module& m, const std::vector<Core::Decls<>>& decl_groups, set<Occ::Var>& free_vars)
+// Analyze one non-recursive binding, omitting it without visiting its RHS when dead.
+std::optional<Occ::NonRec>
+occurrence_analyze_nonrec(const Module& m, const Core::NonRec<>& nonrec, set<Occ::Var>& free_vars)
 {
-    vector<vector<Occ::Decls>> output;
-    for(const auto& decls: reverse(decl_groups))
-        output.push_back(occurrence_analyze_decls(m, decls, free_vars));
+    auto x = remove_var_and_set_occurrence_info(nonrec.decl.x, free_vars);
+    if (not is_alive(x))
+        return {};
+
+    auto [rhs, rhs_free_vars] = occurrence_analyzer(m, nonrec.decl.body);
+    if (auto uf_free_vars = unfolding_free_vars(m, nonrec.decl.x))
+        merge_occurrences_into(rhs_free_vars, *uf_free_vars);
+
+    assert(not rhs_free_vars.count(x));
+    merge_occurrences_into(free_vars, rhs_free_vars);
+    return Occ::NonRec{{x, std::move(rhs)}};
+}
+
+// Analyze top-level binds from inner to outer while retaining their scope forms.
+Occ::Binds
+occurrence_analyze_binds(const Module& m, const Core::Binds<>& binds_in, set<Occ::Var>& free_vars)
+{
+    vector<Occ::Binds> output;
+    for(const auto& bind: reverse(binds_in))
+    {
+        if (auto nonrec = std::get_if<Core::NonRec<>>(&bind))
+        {
+            Occ::Binds binds;
+            if (auto analyzed = occurrence_analyze_nonrec(m, *nonrec, free_vars))
+                binds.push_back(std::move(*analyzed));
+            output.push_back(std::move(binds));
+        }
+        else
+            output.push_back(occurrence_analyze_decls(m, std::get<Core::Rec<>>(bind).decls, free_vars));
+    }
 
     std::reverse(output.begin(), output.end());
     return flatten(std::move(output));
 }
 
-vector<Occ::Decls>
+Occ::Binds
 occurrence_analyze_decls(const Module& m, const Core::Decls<>& decls_in, set<Occ::Var>& free_vars)
 {
     // 1. Determine which vars are alive or dead.
@@ -283,11 +313,19 @@ occurrence_analyze_decls(const Module& m, const Core::Decls<>& decls_in, set<Occ
     // 5. Find strongly connected components
     vector<pair<vector<int>,Graph>> ordered_components = get_ordered_live_components(graph, decls);
 
-    // 6. Break cycles in each component
+    vector<bool> component_is_cyclic;
+    component_is_cyclic.reserve(ordered_components.size());
+
+    // 6. Classify components and break only their actual cycles.
     for(auto& component: ordered_components)
     {
         auto& component_indices = component.first;
         auto& component_graph = component.second;
+        bool is_cyclic = component_indices.size() > 1 or edge(0, 0, component_graph).second;
+        component_is_cyclic.push_back(is_cyclic);
+
+        if (not is_cyclic)
+            continue;
 
         // 6.1 Break cycles in this component
         bool changed = true;
@@ -324,16 +362,24 @@ occurrence_analyze_decls(const Module& m, const Core::Decls<>& decls_in, set<Occ
         component_indices = apply_indices(component_indices, topo_sort(component_graph));
     }
 
-    // 7. Flatten the decl groups
-    vector<Occ::Decls> decls2;
-    for(auto& component: ordered_components)
+    // 7. Preserve the SCC classification in dependency order.
+    Occ::Binds binds;
+    for(int component_index = 0; component_index < ordered_components.size(); component_index++)
     {
+        auto& component = ordered_components[component_index];
         Occ::Decls a_decls;
         for(int i: component.first)
             a_decls.push_back(decls[i]);
-        decls2.push_back(a_decls);
+
+        if (component_is_cyclic[component_index])
+            binds.push_back(Occ::Rec{std::move(a_decls)});
+        else
+        {
+            assert(a_decls.size() == 1);
+            binds.push_back(Occ::NonRec{std::move(a_decls[0])});
+        }
     }
-    return decls2;
+    return binds;
 }
 
 set<Occ::Var> dup_work(set<Occ::Var>& vars)
@@ -436,19 +482,23 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core::Ex
     // 4. Let (let {x[i] = F[i]} in body)
     else if (auto L = E.to_let())
     {
-	// NonRec is not emitted until occurrence classification is preserved by
-	// the optimizer in the next commit.
-	if (L->to_nonrec()) std::abort();
-
 	// A. Analyze the body
         auto [F, free_vars] = occurrence_analyzer(m, L->body);
 
+        if (auto nonrec = L->to_nonrec())
+        {
+            auto analyzed = occurrence_analyze_nonrec(m, *nonrec, free_vars);
+            if (not analyzed)
+                return {F, free_vars};
+            return {Occ::Let{std::move(*analyzed), std::move(F)}, free_vars};
+        }
+
         // B. Analyze the decls
-        auto decls_groups = occurrence_analyze_decls(m, L->to_rec()->decls, free_vars);
+        auto binds = occurrence_analyze_decls(m, L->to_rec()->decls, free_vars);
 
         // C. Wrap the decls around the body
-        for(auto& decls: reverse(decls_groups))
-            F = Occ::Let{Occ::Rec{std::move(decls)},F};
+        for(auto& bind: reverse(binds))
+            F = Occ::Let{std::move(bind), F};
 
 	return {F, free_vars};
     }

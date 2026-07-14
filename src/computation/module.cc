@@ -1782,14 +1782,24 @@ void Module::export_small_decls(const inliner_options& options, const Core::Decl
 {
     // Determine which decls are loop breakers, and give them empty unfoldings.
     set<Occ::Var> occ_free_vars;
-    auto occ_decl_groups = occurrence_analyze_decl_groups(*this, {decls}, occ_free_vars);
+    Core::Binds<> binds;
+    if (not decls.empty())
+        binds.push_back(Core::Rec<>{decls});
+    auto occ_binds = occurrence_analyze_binds(*this, binds, occ_free_vars);
     set<Core::Var<>> loop_breakers;
-    for(auto decl_group: occ_decl_groups)
-        for(auto& [x,_]: decl_group)
+    for(const auto& bind: occ_binds)
+    {
+        if (auto nonrec = std::get_if<Occ::NonRec>(&bind))
+        {
+            if (nonrec->decl.x.info.is_loop_breaker)
+                loop_breakers.insert(to_core_var(nonrec->decl.x));
+            continue;
+        }
+
+        for(const auto& [x,_]: std::get<Occ::Rec>(bind).decls)
             if (x.info.is_loop_breaker)
-            {
                 loop_breakers.insert(to_core_var(x));
-            }
+    }
 
     // FIXME: add a wrapper for EVERY constructor!
     for(auto& [x,rhs]: decls)
@@ -1824,21 +1834,22 @@ void Module::export_small_decls(const inliner_options& options, const Core::Decl
 Core::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& fvstate, Core::Decls<> decls)
 {
     if (not opts.optimize) return decls;
+    if (decls.empty()) return decls;
 
-    vector<Core::Decls<>> core_decl_groups = {decls};
+    Core::Binds<> core_binds = {Core::Rec<>{std::move(decls)}};
 
     // Pass: Simplify gently, Static argument
 
     // Pass: Simplify Gently
-    core_decl_groups = simplify_module_gently(opts, fvstate, *this, core_decl_groups);
+    core_binds = simplify_module_gently(opts, fvstate, *this, core_binds);
 
     // Pass: specialize
 
     // Pass: Full Laziness (FloatLambdas = 0, FloatConstants)
-    if (opts.fully_lazy) float_out_from_module(fvstate, core_decl_groups);
+    if (opts.fully_lazy) float_out_from_module(fvstate, core_binds);
 
     // Pass: Simplifier*3
-    core_decl_groups = simplify_module(opts, fvstate, *this, core_decl_groups);
+    core_binds = simplify_module(opts, fvstate, *this, core_binds);
 
     // Pass: Float In
 
@@ -1849,7 +1860,7 @@ Core::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& fv
     // Pass: Exitification
 
     // Pass: Full Laziness (Float Lambdas = ??, FloutConstants, FloatOverSatApps, FloatJoins)
-    if (opts.fully_lazy) float_out_from_module(fvstate, core_decl_groups);
+    if (opts.fully_lazy) float_out_from_module(fvstate, core_binds);
     // QUESTION!  We need to avoid floating things into case alternatives as well as lambda expressions.
     //            Should this be an option to the simplifier?
 
@@ -1869,7 +1880,19 @@ Core::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& fv
     // Pass: add caller ccs?
     // Pass: add late ccs?
 
-    return flatten(core_decl_groups);
+    Core::Decls<> result;
+    for(auto& bind: core_binds)
+    {
+        if (auto nonrec = std::get_if<Core::NonRec<>>(&bind))
+            result.push_back(std::move(nonrec->decl));
+        else
+        {
+            auto& rec = std::get<Core::Rec<>>(bind);
+            result.insert(result.end(), std::make_move_iterator(rec.decls.begin()),
+                          std::make_move_iterator(rec.decls.end()));
+        }
+    }
+    return result;
 }
 
 /* Note: Implementing CSE

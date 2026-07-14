@@ -38,16 +38,14 @@ int get_level(const Levels::Decls& decl_group)
 
 struct float_binds_t
 {
-    Core::Decls<> top_binds;
-    std::map<int,vector<Core::Decls<>>> level_binds;
+    Core::Binds<> top_binds;
+    std::map<int,Core::Binds<>> level_binds;
 
-    vector<Core::Decls<>> get_decl_groups_at_level(int level);
+    Core::Binds<> get_binds_at_level(int level);
 
-    void append_top(Core::Decls<>&);
+    void append_top(Core::Binds<>&);
 
-    void append_level(int level, Core::Decls<>&);
-
-    void append_level(int level, vector<Core::Decls<>>&);
+    void append_level(int level, Core::Binds<>&);
 
     void append(float_binds_t& float_binds2);
 
@@ -58,17 +56,17 @@ struct float_binds_t
     float_binds_t& operator=(float_binds_t&&) = default;
 };
 
-vector<Core::Decls<>> float_binds_t::get_decl_groups_at_level(int level)
+Core::Binds<> float_binds_t::get_binds_at_level(int level)
 {
     auto iter = level_binds.find(level);
     if (iter == level_binds.end())
         return {};
 
-    vector<Core::Decls<>> decl_groups;
-    std::swap(decl_groups, iter->second);
+    Core::Binds<> binds;
+    std::swap(binds, iter->second);
     level_binds.erase(iter);
 
-    return decl_groups;
+    return binds;
 }
 
 tuple<vector<Levels::Var>,Levels::Exp> get_lambda_binders(Levels::Exp E)
@@ -88,10 +86,8 @@ float_lets(const Levels::Exp& E, int level);
 
 Core::Exp<> install_current_level(float_binds_t& float_binds, int level, Core::Exp<> E)
 {
-    auto decl_groups_here = float_binds.get_decl_groups_at_level(level);
-    for(auto& decls: decl_groups_here | views::reverse)
-        E = Core::Let<>(Core::Rec<>{std::move(decls)}, E);
-    return E;
+    auto binds_here = float_binds.get_binds_at_level(level);
+    return make_lets(std::move(binds_here), std::move(E));
 }
 
 tuple<Core::Exp<>, float_binds_t>
@@ -102,43 +98,19 @@ float_lets_install_current_level(const Levels::Exp& E, int level)
     return {E3, float_binds};
 }
 
-void append(vector<Core::Decls<>>& decl_groups1, vector<Core::Decls<>>& decl_groups2)
+void float_binds_t::append_top(Core::Binds<>& binds)
 {
-    assert(&decl_groups1 != &decl_groups2);
-    for(auto& decls: decl_groups2)
-        decl_groups1.push_back(std::move(decls));
+    top_binds.insert(top_binds.end(), std::make_move_iterator(binds.begin()),
+                     std::make_move_iterator(binds.end()));
+    binds.clear();
 }
 
-void float_binds_t::append_top(Core::Decls<>& decls)
+void float_binds_t::append_level(int level, Core::Binds<>& binds)
 {
-    if (not top_binds.empty())
-    {
-        for(auto& decl: decls)
-            top_binds.push_back( std::move(decl) );
-
-        decls.clear();
-    }
-    else
-        std::swap(top_binds,decls);
-}
-
-void float_binds_t::append_level(int level, vector<Core::Decls<>>& decl_groups)
-{
-    if (auto iter = level_binds.find(level); iter != level_binds.end())
-    {
-        ::append(level_binds[level], decl_groups);
-
-        decl_groups.clear();
-    }
-    else
-        std::swap(level_binds[level], decl_groups);
-}
-
-void float_binds_t::append_level(int level, Core::Decls<>& decls)
-{
-    vector<Core::Decls<>> decl_groups;
-    decl_groups.push_back( std::move(decls) );
-    append_level( level, decl_groups );
+    auto& destination = level_binds[level];
+    destination.insert(destination.end(), std::make_move_iterator(binds.begin()),
+                       std::make_move_iterator(binds.end()));
+    binds.clear();
 }
 
 void float_binds_t::append(float_binds_t& float_binds2)
@@ -147,8 +119,8 @@ void float_binds_t::append(float_binds_t& float_binds2)
 
     append_top(float_binds2.top_binds);
 
-    for(auto& [level,decl_groups]: float_binds2.level_binds)
-        append_level(level, decl_groups);
+    for(auto& [level,binds]: float_binds2.level_binds)
+        append_level(level, binds);
 }
 
 tuple<Core::Decls<>,float_binds_t,int> float_out_from_decl_group(const Levels::Decls& decls_in)
@@ -166,17 +138,61 @@ tuple<Core::Decls<>,float_binds_t,int> float_out_from_decl_group(const Levels::D
         decls_out.push_back({strip_level(x), rhs2});
     }
 
-    // We need to move any level-0 bindings to the top level.
-    // Otherwise (i) some of their components and/or (ii) components from the let body
-    //  could get floated above their binders.
+    // A top-level float extracted from a recursive RHS may refer to a binder in
+    // decls_out, while the rewritten RHS refers to the float. Neither bind can
+    // then precede the other, so all top-level RHS floats must join the Rec.
+    // Widening their scope cannot capture distinct Core variable identities.
+    // This mirrors GHC's addTopFloatPairs; a later occurrence pass may split SCCs.
     if (level2 == 0)
     {
-        for(auto& decl: decls_out)
-            float_binds.top_binds.push_back( decl );
+        Core::Decls<> recursive_decls;
+        for(auto& bind: float_binds.top_binds)
+        {
+            if (auto nonrec = std::get_if<Core::NonRec<>>(&bind))
+                recursive_decls.push_back(std::move(nonrec->decl));
+            else
+            {
+                auto& decls = std::get<Core::Rec<>>(bind).decls;
+                recursive_decls.insert(recursive_decls.end(),
+                                       std::make_move_iterator(decls.begin()),
+                                       std::make_move_iterator(decls.end()));
+            }
+        }
+        float_binds.top_binds.clear();
+        recursive_decls.insert(recursive_decls.end(),
+                               std::make_move_iterator(decls_out.begin()),
+                               std::make_move_iterator(decls_out.end()));
         decls_out.clear();
+        if (not recursive_decls.empty())
+            float_binds.top_binds.push_back(Core::Rec<>{std::move(recursive_decls)});
     }
 
     return {std::move(decls_out), std::move(float_binds), level2};
+}
+
+// Float one explicit bind while preserving NonRec ordering and recursive scope.
+tuple<std::optional<Core::Bind<>>,float_binds_t,int>
+float_out_from_bind(const Levels::Bind& bind)
+{
+    if (auto nonrec = std::get_if<Levels::NonRec>(&bind))
+    {
+        int level = nonrec->decl.x.info;
+        auto [rhs, float_binds] = float_lets_install_current_level(nonrec->decl.body, level);
+        Core::Bind<> bind2 = Core::NonRec<>{{strip_level(nonrec->decl.x), std::move(rhs)}};
+        if (level == 0)
+        {
+            // The NonRec binder was not in scope in its RHS, so its top-level
+            // RHS floats can remain dependency-ordered before the binder.
+            float_binds.top_binds.push_back(std::move(bind2));
+            return {{}, std::move(float_binds), level};
+        }
+        return {std::move(bind2), std::move(float_binds), level};
+    }
+
+    auto [decls, float_binds, level] = float_out_from_decl_group(std::get<Levels::Rec>(bind).decls);
+    if (decls.empty())
+        return {{}, std::move(float_binds), level};
+    return {Core::Rec<>{std::move(decls)}, std::move(float_binds), level};
 }
 
 tuple<Core::Exp<>,float_binds_t>
@@ -235,42 +251,48 @@ float_lets(const Levels::Exp& E, int level)
     // 7. Let
     else if (auto L = E.to_let())
     {
-        // NonRec float ordering is implemented with Bind-based float storage
-        // when occurrence precision is enabled in the next commit.
-        if (L->to_nonrec()) std::abort();
-        auto [decls, float_binds, level2] = float_out_from_decl_group(L->to_rec()->decls);
-        auto Lbinds = decls;
+        bool is_nonrec = L->to_nonrec();
+        auto [bind, rhs_float_binds, level2] = float_out_from_bind(L->bind);
         assert(level2 <= level);
 
-        auto [body, float_binds_from_body] = float_lets(L->body, level);
-
-        float_binds.append(float_binds_from_body);
+        auto [body, body_float_binds] = float_lets(L->body, level);
 
         Core::Exp<> E2;
         if (level2 < level)
         {
-            // The decls here have to go BEFORE the decls from the (i) the body and (ii) the decl rhs's.
-            float_binds_t float_binds_first;
-            if (level2 == 0)
-                float_binds_first.append_top( Lbinds );
-            else
-                float_binds_first.append_level( level2, Lbinds );
-            float_binds_first.append(float_binds);
-            std::swap(float_binds_first, float_binds);
+            float_binds_t float_binds;
+            // NonRec RHS floats precede its binder. A top-level Rec has already
+            // merged its mutually scoped RHS floats and returns no separate bind.
+            if (is_nonrec or not bind)
+                float_binds.append(rhs_float_binds);
+
+            if (bind)
+            {
+                if (level2 == 0)
+                    float_binds.top_binds.push_back(std::move(*bind));
+                else
+                    float_binds.level_binds[level2].push_back(std::move(*bind));
+            }
+
+            if (not is_nonrec and bind)
+                float_binds.append(rhs_float_binds);
+            float_binds.append(body_float_binds);
             E2 = body;
+            return {E2, std::move(float_binds)};
         }
         // Prevents floated bindings at the same level from getting installed HIGHER than
         // bindings that they reference.
         // Does this place floated bindings as deep as possible at the correct level?
         else
         {
-            E2 = install_current_level(float_binds, level, body);
+            rhs_float_binds.append(body_float_binds);
+            E2 = install_current_level(rhs_float_binds, level, body);
 
-            if (not Lbinds.empty())
-                E2 = Core::Let<>(Core::Rec<>{std::move(Lbinds)}, E2);
+            if (bind)
+                E2 = Core::Let<>(std::move(*bind), E2);
         }
 
-        return {E2, float_binds};
+        return {E2, std::move(rhs_float_binds)};
     }
 
     // 2. Constant
@@ -306,27 +328,25 @@ float_lets(const Levels::Exp& E, int level)
     std::abort();
 }
 
-void float_out_from_module(FreshVarState& fresh_var_state, vector<Core::Decls<>>& core_decl_groups)
+void float_out_from_module(FreshVarState& fresh_var_state, Core::Binds<>& core_binds)
 {
-    auto decl_groups = set_level_for_module(fresh_var_state, core_decl_groups);
+    auto level_binds = set_level_for_module(fresh_var_state, core_binds);
 
-    vector<Core::Decls<>> core_decl_groups2;
+    Core::Binds<> core_binds2;
 
-    for(auto& decl_group: decl_groups)
+    for(auto& bind: level_binds)
     {
-        // FIXME - should we remove empty groups before we get here?
-        if (decl_group.empty()) continue;
-
-        auto [decls, float_binds, level2] = float_out_from_decl_group(decl_group);
+        auto [bind2, float_binds, level] = float_out_from_bind(bind);
 
         assert(float_binds.level_binds.empty());
+        assert(level == 0);
 
-        // Why put these at the END?
-        for(auto& decl: float_binds.top_binds)
-            decls.push_back( decl );
-
-        core_decl_groups2.push_back(decls); //decl_group = decls;
+        if (bind2)
+            core_binds2.push_back(std::move(*bind2));
+        core_binds2.insert(core_binds2.end(),
+                           std::make_move_iterator(float_binds.top_binds.begin()),
+                           std::make_move_iterator(float_binds.top_binds.end()));
     }
 
-    std::swap(core_decl_groups, core_decl_groups2);
+    core_binds = std::move(core_binds2);
 }

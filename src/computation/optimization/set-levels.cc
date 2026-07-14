@@ -42,6 +42,7 @@ struct let_floater_state: public FreshVarSource
     Levels::Exp set_level_maybe_MFE(const FV::Exp& AE, int level, const level_env_t& env);
 
     pair<Levels::Decls,level_env_t> set_level_decl_group(const FV::Decls& decls, const level_env_t& env);
+    pair<Levels::NonRec,level_env_t> set_level_nonrec(const FV::NonRec& nonrec, const level_env_t& env);
 
     let_floater_state(FreshVarState& s):FreshVarSource(s) {}
 };
@@ -144,6 +145,19 @@ pair<Levels::Decls,level_env_t> let_floater_state::set_level_decl_group(const FV
     return {decls_out, env2};
 }
 
+// Set a NonRec RHS at its outer level, then extend the environment for later code.
+pair<Levels::NonRec,level_env_t>
+let_floater_state::set_level_nonrec(const FV::NonRec& nonrec, const level_env_t& env)
+{
+    const auto& [x, rhs] = nonrec.decl;
+    int level = max_level(env, get_free_vars(rhs));
+    auto x2 = x.is_exported ? Levels::Var(x.name, x.index, 0, true)
+                            : new_unique_var(x, level);
+    auto rhs2 = set_level(rhs, level, env);
+    auto env2 = env.insert({x, x2});
+    return {Levels::NonRec{{x2, std::move(rhs2)}}, std::move(env2)};
+}
+
 Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const level_env_t& env)
 {
     // 1. Var
@@ -227,14 +241,9 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     {
         if (auto nonrec = L->to_nonrec())
         {
-            const auto& [x, rhs] = nonrec->decl;
-            int level2 = max_level(env, get_free_vars(rhs));
-            auto x2 = x.is_exported ? Levels::Var(x.name, x.index, 0, true)
-                                    : new_unique_var(x, level2);
-            auto rhs2 = set_level(rhs, level2, env);
-            auto env2 = env.insert({x, x2});
+            auto [bind, env2] = set_level_nonrec(*nonrec, env);
             auto body2 = set_level_maybe_MFE(L->body, level, env2);
-            return Levels::Let{Levels::NonRec{{x2, std::move(rhs2)}}, std::move(body2)};
+            return Levels::Let{std::move(bind), std::move(body2)};
         }
 
         auto [binds2, env2] = set_level_decl_group(L->to_rec()->decls, env);
@@ -296,23 +305,31 @@ Levels::Exp let_floater_state::set_level_maybe_MFE(const FV::Exp& E, int level, 
         return set_level(E, level, env);
 }
 
-vector<Levels::Decls> set_level_for_module(FreshVarState& fresh_var_state, const vector<Core::Decls<>>& decl_groups)
+Levels::Binds set_level_for_module(FreshVarState& fresh_var_state, const Core::Binds<>& binds)
 {
     let_floater_state state(fresh_var_state);
     level_env_t env;
 
-    vector<Levels::Decls> decl_groups_out;
-    for(auto& decls: decl_groups)
+    Levels::Binds binds_out;
+    for(const auto& bind: binds)
     {
+        if (auto nonrec = std::get_if<Core::NonRec<>>(&bind))
+        {
+            FV::NonRec fv_nonrec{{nonrec->decl.x, add_free_variable_annotations(nonrec->decl.body)}};
+            auto [level_nonrec, env2] = state.set_level_nonrec(fv_nonrec, env);
+            binds_out.push_back(std::move(level_nonrec));
+            env = std::move(env2);
+            continue;
+        }
+
         FV::Decls fv_decls;
-        for(auto& [x,rhs]: decls)
+        for(const auto& [x,rhs]: std::get<Core::Rec<>>(bind).decls)
             fv_decls.push_back({x, add_free_variable_annotations(rhs)});
 
-        auto [level_decls,env2] = state.set_level_decl_group(fv_decls, env);
-        env = env2;
-
-        decl_groups_out.push_back(level_decls);
+        auto [level_decls, env2] = state.set_level_decl_group(fv_decls, env);
+        binds_out.push_back(Levels::Rec{std::move(level_decls)});
+        env = std::move(env2);
     }
 
-    return decl_groups_out;
+    return binds_out;
 }
