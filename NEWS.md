@@ -7,6 +7,7 @@
 ## Fixes
 
 - A variety of bug fixes.
+- Fix substitution into Haskell type headers.
 
 ## Haskell
 
@@ -22,10 +23,17 @@
 - Improve diagnostics.
 - Correctly handle nested infix declarations.
 - Disentangle disambiguation and renaming
-- Implement `Data.Map` and `Data.Set` as balanced binary trees.
+- Implement `Data.Map`
+- Implement `Data.Set`
 - Implement `Numerical.LinearAlgebra`
-- Parse UTF8 variable names in Haskell files.
+- Implement `Data.Array`
+- Implement `Data.Vector`
+- Implement `Data.Vector.Unboxed`
+- Implement checking for _open_ type families.
+- Implement _closed_ type families.
+- 
 - UTF8:
+  * Parse UTF8 variable names in Haskell files.
   * `Char` is now a unicode code point.
   * `Text` is now UTF8.
   * `CPPString` is now UTF8.
