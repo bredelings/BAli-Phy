@@ -159,8 +159,7 @@ const Runtime::Exp& context_ref::perform_expression(Runtime::Exp E, closure::Env
     // point at contingent environment registers created by earlier effects.
     // unsafePerformIO is a pinned global symbol, so it can be referenced
     // directly instead of occupying another closure environment slot.
-    auto argument = Runtime::shift_free_indices(E, 1);
-    auto app = Runtime::Let(Runtime::Rec({argument}),
+    auto app = Runtime::Let(Runtime::NonRec{std::move(E)},
                             Runtime::apply(Runtime::RegRef(perform_io_reg),
                                            {Runtime::IndexVar(0)}));
     return evaluate_expression(std::move(app), std::move(Env), ec);
