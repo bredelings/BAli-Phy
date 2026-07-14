@@ -80,12 +80,11 @@ import Foreign.String
 import System.IO (putChar, putStr, putStrLn, print, getChar, getLine, getContents, interact,
                   FilePath,readFile, writeFile, appendFile, readIO, readLn)
 
-import Compiler.FFI.ToFromC -- ensure this is typechecked
+import Compiler.FFI.Import () -- ensure the FFI translation interface is checked
     
 undefined = error "Prelude.undefined"
 
 foreign import bpcall "Vector:showObject" showVector :: EVector a -> CPPString
 instance Show (EVector a) where
     show = unpack_cpp_string . showVector
-
 

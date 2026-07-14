@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies #-}
 module Data.Text
     (Text,
      pack, unpack,
@@ -26,7 +28,7 @@ import Control.DeepSeq
 import Data.String
 
 import qualified Foreign.String as FS
-import Compiler.FFI.ToFromC    
+import Compiler.FFI.Import (CInput(..), COutput(..))
 
 -- These fields should all be strict.  The Int fields are byte offset and byte
 -- length, not code-point offset and code-point length.
@@ -306,8 +308,10 @@ instance Monoid Text where
 instance IsString Text where
     fromString s = pack s
 
-instance ToFromC Text where
-    type ToC Text = CPPString
+instance CInput Text where
+    type CInputType Text result = CPPString -> result
+    withCInput value continuation = continuation (toCppString value)
 
-    toC (Text s i l) = FS.cppSubString s i l
-    fromC = fromCppString
+instance COutput Text where
+    type COutputType Text = CPPString
+    fromCOutput = fromCppString

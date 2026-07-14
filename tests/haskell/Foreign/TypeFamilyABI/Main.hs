@@ -44,7 +44,7 @@ foreign import ecall "Prelude:div_int"
 foreign import ecall "Prelude:div_int"
     importedDiv :: ImportedABI Int
 
--- trcall's associated ToC family is itself family-headed.  The effectful
+-- trcall's closed RawImport family is itself family-headed.  The effectful
 -- binding also verifies that its translated raw type contributes exactly one
 -- world argument.
 foreign import trcall "Vector:cppSubString"

@@ -1,15 +1,19 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeFamilies #-}
 module Data.Vector.Unboxed.Internal
     ( Vector(..)
     , Unbox(..)
     , intVectorFromNative
     , intVectorFromNativeWithLength
     , intVectorNativeView
+    , doubleVectorFromNative
     , doubleVectorFromNativeWithLength
     , doubleVectorNativeView
     ) where
 
 import Compiler.Num
+import Compiler.FFI.Import (CInput(..), COutput(..))
 import qualified Data.OldList as List
 import Data.Tuple (fst, snd)
 import Foreign.NativeVector (NativeVector)
@@ -41,6 +45,7 @@ foreign import bpcall "NativeVector:vectorKonstNative" doubleVectorReplicateNati
 foreign import ecall "NativeVector:unsafeIntIndex" unsafeIntIndexNative :: NativeVector Int -> Int -> Int
 foreign import ecall "NativeVector:unsafeDoubleIndex" unsafeDoubleIndexNative :: NativeVector Double -> Int -> Double
 foreign import ecall "NativeVector:intVectorSize" intVectorSizeNative :: NativeVector Int -> Int
+foreign import ecall "NativeVector:doubleVectorSize" doubleVectorSizeNative :: NativeVector Double -> Int
 
 instance Unbox Int where
     basicLength (V_Int _ count _) = count
@@ -90,6 +95,12 @@ instance (Unbox a, Unbox b) => Unbox (a,b) where
 intVectorFromNative :: NativeVector Int -> Vector Int
 intVectorFromNative native = V_Int 0 (intVectorSizeNative native) native
 
+-- Wrap a complete native Double owner and obtain its offset-zero logical
+-- length from the owner's physical extent.
+doubleVectorFromNative :: NativeVector Double -> Vector Double
+doubleVectorFromNative native =
+    V_Double 0 (doubleVectorSizeNative native) native
+
 -- Wrap a native Int owner when an independent Haskell calculation already
 -- supplies its authoritative logical length.
 intVectorFromNativeWithLength :: Int -> NativeVector Int -> Vector Int
@@ -110,3 +121,25 @@ intVectorNativeView (V_Int offset count native) = (offset, count, native)
 doubleVectorNativeView :: Vector Double -> (Int, Int, NativeVector Double)
 doubleVectorNativeView (V_Double offset count native) =
     (offset, count, native)
+
+instance CInput (Vector Int) where
+    type CInputType (Vector Int) result =
+        Int -> Int -> NativeVector Int -> result
+    withCInput vector continuation =
+        case intVectorNativeView vector of
+          (offset, count, owner) -> continuation offset count owner
+
+instance COutput (Vector Int) where
+    type COutputType (Vector Int) = NativeVector Int
+    fromCOutput = intVectorFromNative
+
+instance CInput (Vector Double) where
+    type CInputType (Vector Double) result =
+        Int -> Int -> NativeVector Double -> result
+    withCInput vector continuation =
+        case doubleVectorNativeView vector of
+          (offset, count, owner) -> continuation offset count owner
+
+instance COutput (Vector Double) where
+    type COutputType (Vector Double) = NativeVector Double
+    fromCOutput = doubleVectorFromNative

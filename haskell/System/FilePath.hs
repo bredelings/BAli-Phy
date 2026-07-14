@@ -2,7 +2,7 @@
 module System.FilePath where
 
 import Compiler.Base (String)
-import Compiler.FFI.ToFromC    
+import Compiler.FFI.Import
 import Foreign.String
 import Data.Eq
 import Data.Function
@@ -81,10 +81,12 @@ hasExtension x = not (null (takeExtension x))
                    
 (<.>) = addExtension
     
-foreign import bpcall "File:" takeFileNameRaw :: CPPString -> CPPString
+type TakeFileName = FilePath -> FilePath
+
+foreign import bpcall "File:" takeFileNameRaw :: RawImport TakeFileName
 
 takeFileName :: FilePath -> FilePath
-takeFileName = fromC takeFileNameRaw
+takeFileName = fromCImport takeFileNameRaw
 
 {-
 replaceFileName :: FilePath -> String -> FilePath

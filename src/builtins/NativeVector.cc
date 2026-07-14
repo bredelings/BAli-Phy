@@ -135,6 +135,17 @@ extern "C" R::Exp simple_function_intVectorSize(vector<R::Exp>& args)
     return static_cast<int>(count);
 }
 
+// Report the physical extent of a complete native Double owner so Haskell can
+// establish the initial logical length of an offset-zero unboxed vector.
+extern "C" R::Exp simple_function_doubleVectorSize(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    auto count = value.as_<Box<DenseVector<double>>>().size();
+    if (count > std::numeric_limits<int>::max())
+        throw myexception()<<"native Double vector length exceeds the Haskell Int range";
+    return static_cast<int>(count);
+}
+
 // Read an Int element after the Haskell view has established its bounds.
 extern "C" R::Exp simple_function_unsafeIntIndex(vector<R::Exp>& args)
 {

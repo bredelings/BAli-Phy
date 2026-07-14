@@ -684,7 +684,7 @@ set<string> Module::hidden_dependencies() const
         for(const auto& foreign_decl: declarations.foreign_decls)
             if (unloc(foreign_decl.call_conv) == "trcall")
             {
-                modules.insert("Compiler.FFI.ToFromC");
+                modules.insert("Compiler.FFI.Import");
                 break;
             }
     }
@@ -1207,21 +1207,21 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
             string raw_name = fname +"$raw";
             MM->def_function( get_unqualified_name(raw_name) );
 
-            Hs::LVar fromC = {noloc, Hs::Var("Compiler.FFI.ToFromC.fromC")};
+            Hs::LVar fromCImport = {noloc, Hs::Var("Compiler.FFI.Import.fromCImport")};
             Hs::LVar raw   = {noloc, Hs::Var(raw_name)};
             Hs::LVar lhs   = fdecl.function;
-            Hs::LExp rhs   = {noloc, Hs::Apply(fromC, raw)};
+            Hs::LExp rhs   = {noloc, Hs::Apply(fromCImport, raw)};
             Hs::Decls decls;
             decls.push_back({noloc, Hs::simple_decl(lhs,rhs)});
 
             // fname :: <type>
-            // fname = fromC fname$builtin
+            // fname = fromCImport fname$raw
             M.value_decls.signatures.insert({fdecl.function, fdecl.type});
             M.value_decls.push_back(decls);
 
-            // fname$builtin :: ToC <type>
-            Hs::TypeCon ToC("Compiler.FFI.ToFromC.ToC");
-            Hs::Type raw_type = Hs::TypeApp({loc,ToC},fdecl.type);
+            // fname$raw :: RawImport <type>
+            Hs::TypeCon RawImport("Compiler.FFI.Import.RawImport");
+            Hs::Type raw_type = Hs::TypeApp({loc,RawImport},fdecl.type);
             M.value_decls.signatures.insert({raw, {loc, raw_type}});
         }
     }
@@ -1862,30 +1862,6 @@ Core::Exp<> parse_builtin(const Haskell::ForeignDecl& B, int n_args, const modul
     assert(not call_conv.empty());
     return load_builtin(L, B.plugin_name, B.symbol_name, call_conv, n_args);
 }
-
-/*
- * IN theory we could use the type class in Compiler.Translate
- * - we would need to write `f :: declared_type; f = Compiler.Translate.toC f$raw` BEFORE we do type-checking.
- * - we would need to rewrite `Tr <declared type>` to find out how many lambda arguments to give parse_builtin.
- * - we may need to complain about arguments that have no Translate instance.
- * - we would need to write `f$raw :: Compiler.Translate.Tr <declared_type>`.
- *   (if the result is IO a, then its n+1, otherwise n)
- * - we also need to ensure that Compiler.Translate is loaded into the program
- *   (we could add it to imports() if there are foreign declarations).
- * - we need to ensure that the simplifier actually inlines all the many calls to fromC and toC.
- * This seems like the way to go -- but its a fair amount of work.
- */
-
-/*
- * IN theory we could also write C++ functions
- * - wrapper ToC(const Type& a);
- * - wrapper FromC(const Type& a);
- * However, we would need access to a unique name source.  For example, for ToC(a->b), we would have
- *   f :: \x -> fromC (f (ToC x))
- * But in core that would actually be
- *   f :: \x -> fromC (let y = ToC x in f y)
- * with y fresh.
- */
 
 Core::Decls<> Module::load_builtins(const module_loader& L, const std::vector<Hs::ForeignDecl>& foreign_decls)
 {

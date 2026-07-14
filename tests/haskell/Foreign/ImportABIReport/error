@@ -1,0 +1,8 @@
+pairIORaw
+  Haskell     :: RawImport PairIO
+  foreign ABI :: Int -> Double -> Int -> EPair Int Double
+vectorIORaw
+  Haskell     :: RawImport VectorIO
+  foreign ABI :: Int -> Int -> NativeVector Int -> Int -> NativeVector Double
+vectorIOSugar
+  Haskell     :: VectorIO
