@@ -382,14 +382,15 @@ jobs:
         if [ "$skip" = "none" ] ; then
             echo ::group::Test suite
             cd tests
-            ./run-tests.py ${BALIPHY} --seed=$seed
+            ./run-tests.py run . -j2 -- ${BALIPHY} --seed=$seed
             cd
             echo ::endgroup::
         else
             echo ::group::Reduced test suite
-            ( cd tests/prob_prog/demos ; ../../run-tests.py ${BALIPHY} --seed=$seed )
-            ( cd tests/prob_prog/coal_mining ; ../../run-tests.py ${BALIPHY} --seed=$seed )
-            ( cd tests/prob_prog/cluster ; ../../run-tests.py ${BALIPHY} --seed=$seed )
+            cd tests
+            ./run-tests.py run /prob_prog/demos       -j2 -- ${BALIPHY} --seed=$seed
+            ./run-tests.py run /prob_prog/coal_mining -j2 -- ${BALIPHY} --seed=$seed
+            ./run-tests.py run /prob_prog/cluster     -j2 -- ${BALIPHY} --seed=$seed
             cd
             echo ::endgroup::
         fi
