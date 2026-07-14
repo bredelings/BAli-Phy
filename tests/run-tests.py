@@ -230,8 +230,8 @@ class Tester:
         os.symlink(self.data_dir, test_data_dir)
 
         try:
-            with codecs.open(obt_outf, 'w', encoding='utf-8') as obt_out:
-                with codecs.open(obt_errf, 'w', encoding='utf-8') as obt_err:
+            with obt_outf.open('w', encoding='utf-8') as obt_out:
+                with obt_errf.open('w', encoding='utf-8') as obt_err:
     #            invocation = '"{}"'.format('" "'.join(cmd))
     #            debug('Running: ' + invocation + ' >"' + obt_outf + '" 2>"' + obt_errf + '" ; echo $? >"' + obt_exitf + '"')
 
@@ -248,7 +248,7 @@ class Tester:
                     finally:
                         with self.process_lock:
                             self.processes.discard(p)
-                    with codecs.open(obt_exitf, 'w', encoding='utf-8') as obt_exit:
+                    with obt_exitf.open('w', encoding='utf-8') as obt_exit:
                         obt_exit.write('{e:d}\n'.format(e=exit_code))
         finally:
             if os.path.exists(test_data_dir) and os.path.islink(test_data_dir):
@@ -272,13 +272,13 @@ class Tester:
                 return "0"
             else:
                 return None
-        return codecs.open(pathname, 'r', encoding='utf-8').read().rstrip()
+        return pathname.read_text(encoding='utf-8').rstrip()
 
     def read_obtained(self, test_subdir, name):
         rundir = self.rundir_for_test(test_subdir)
         prefix = self.method.prefix()+"obtained-"
         outputf   = rundir / (prefix+name)
-        return codecs.open(outputf  , 'r', encoding='utf-8').read().rstrip()
+        return outputf.read_text(encoding='utf-8').rstrip()
 
     def check_expected(self, test_subdir, name):
         test_dir = self.dir_for_test(test_subdir)
@@ -548,7 +548,6 @@ def parse_run_arguments(arguments):
     return top_test_dir, jobs, progs
 
 if __name__ == '__main__':
-    import codecs
 #    import json
     import sys
 
