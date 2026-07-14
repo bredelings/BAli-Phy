@@ -107,9 +107,9 @@ namespace Core
     Var<> error();
     Var<> unsafePerformIO();
 
-    Exp<> unpack_cpp_string(const std::string&);
-    Exp<> error(const std::string&);
-    Exp<> unsafePerformIO(const Exp<>&);
+    Exp<> unpack_cpp_string(FreshVarSource&, const std::string&);
+    Exp<> error(FreshVarSource&, const std::string&);
+    Exp<> unsafePerformIO(FreshVarSource&, const Exp<>&);
 
     bool is_bool_true(const Core::Exp<>&);
     bool is_bool_false(const Core::Exp<>&);

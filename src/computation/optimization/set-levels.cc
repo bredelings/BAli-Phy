@@ -299,7 +299,7 @@ Levels::Exp let_floater_state::set_level_maybe_MFE(const FV::Exp& E, int level, 
 
         auto E2 = set_level(E, level2, env);
         Levels::Var v = new_unique_var("$v", level2);
-        return Levels::Let(Levels::Rec({{v,E2}}), v);
+        return Levels::Let(Levels::NonRec{{v,E2}}, v);
     }
     else
         return set_level(E, level, env);

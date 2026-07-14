@@ -1001,7 +1001,8 @@ bool is_dupable(int n, const Occ::Exp& E)
         return false;
 }
 
-tuple<vector<Occ::Decls>, Occ::Alt>
+// Lift a non-dupable alternative body into one fresh non-recursive join point.
+tuple<Occ::Binds, Occ::Alt>
 make_dupable_alt(Occ::Alt alt, FreshVarSource& fresh_vars)
 {
     auto& [pattern, body] = alt;
@@ -1023,12 +1024,12 @@ make_dupable_alt(Occ::Alt alt, FreshVarSource& fresh_vars)
         f.info.code_dup = amount_t::Many;
 
         // f = \x y .. -> body
-        Occ::Decls join{{f, lambda_quantify(used_vars, body)}};
+        Occ::Bind join = Occ::NonRec{{f, lambda_quantify(used_vars, body)}};
 
         // body = f x y ...
         body = make_apply(Occ::Exp(f), used_vars);
 
-        return {{join},{alt}};
+        return {{std::move(join)}, std::move(alt)};
     }
 }
 
@@ -1051,8 +1052,7 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
         auto k = get_fresh_occ_var("karg");
         k.info.work_dup = amount_t::Many;
         k.info.code_dup = amount_t::Many;
-        Occ::Decls decls{{k,arg2}};
-        floats1.append(this_mod, options, Occ::Rec{std::move(decls)});
+        floats1.append(this_mod, options, Occ::NonRec{{k,std::move(arg2)}});
 
         auto ac2 = std::make_shared<apply_context>(k, substitution(), floats1.bound_vars, cont1);
         ac2->dup_status = DupStatus::OkToDup;
@@ -1071,10 +1071,8 @@ SimplifierState::make_dupable_cont(const substitution& S, const in_scope_set& bo
         for(auto& alt: alts)
         {
             auto [joins,alt2] = make_dupable_alt(alt, *this);
-            alt = alt2;
-            for(auto& decls: joins)
-                if (not decls.empty())
-                    floats.append(this_mod, options, Occ::Rec{std::move(decls)});
+            alt = std::move(alt2);
+            floats.append(this_mod, options, joins);
         }
 
         auto cc2 = std::make_shared<case_context>(cc->scrutinee_is_variable, alts,
@@ -1105,16 +1103,12 @@ std::tuple<SimplFloats, Occ::Exp> SimplifierState::rebuild_case(Occ::Exp object,
 
         // NOTE: the previous approach used substitutions, which worked because the 
         auto S2 = S;
-        Occ::Decls decls;
         for(int i=0;i<pattern.args.size();i++)
         {
-            auto arg2 = rename_var(pattern.args[i], S2, bound_vars);
+            auto arg2 = rename_var(pattern.args[i], S2, F.bound_vars);
             // args[i] is already simplified, arg2 is already renamed
-            decls.push_back({arg2, args[i]});
+            F.append(this_mod, options, Occ::NonRec{{arg2, std::move(args[i])}});
         }
-
-        if (not decls.empty())
-            F.append(this_mod, options, Occ::Rec{std::move(decls)});
 
         auto [F2, E2] = simplify(apply_floats(floats,body), S2, F.bound_vars, context);
 
@@ -1531,8 +1525,7 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
             {
                 auto x2 = rename_var(lam->x, S2, bound_vars);
                 SimplFloats F(bound_vars);
-                Occ::Decls decls{{x2,arg}};
-                F.append(this_mod, options, Occ::Rec{std::move(decls)});
+                F.append(this_mod, options, Occ::NonRec{{x2,std::move(arg)}});
                 auto [F2,E2] = simplify(lam->body, S2, F.bound_vars, ac->next);
 
                 F.append(this_mod, options, F2);

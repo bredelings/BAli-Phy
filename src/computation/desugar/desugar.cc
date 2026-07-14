@@ -62,11 +62,11 @@ desugar_state::desugar_state(const Module& m_, FreshVarState& state)
       m(m_)
 {}
 
-Core::Exp<> desugar_state::pattern_match_failure(const std::optional<yy::location>& loc, const string& message) const
+Core::Exp<> desugar_state::pattern_match_failure(const std::optional<yy::location>& loc, const string& message)
 {
     Note note;
     note<<message;
-    return Core::error(Message{ErrorMsg, loc, {note}}.print(m.file));
+    return Core::error(*this, Message{ErrorMsg, loc, {note}}.print(m.file));
 }
 
 Hs::VarPattern make_VarPattern(const Core::Var<>& v)
@@ -749,7 +749,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         }
         else if (auto s = L->is_String())
         {
-            auto core_string = Core::unpack_cpp_string(*s);
+            auto core_string = Core::unpack_cpp_string(*this, *s);
             Hs::String S = std::get<Hs::String>(L->literal);
             if(S.fromStringOp)
                 return safe_apply(desugar(*S.fromStringOp),{core_string});

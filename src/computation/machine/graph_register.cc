@@ -3471,7 +3471,9 @@ reg_heap::reg_heap(std::unique_ptr<Program> P)
 
     if (program->get_main_name())
     {
-        main_head = add_compute_expression(Core::unsafePerformIO(Core::Var<>(*program->get_main_name())));
+        FreshVarSource source(fresh_var_state);
+        main_head = add_compute_expression(
+            Core::unsafePerformIO(source, Core::Var<>(*program->get_main_name())));
     }
 }
 

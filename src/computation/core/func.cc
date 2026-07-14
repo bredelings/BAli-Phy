@@ -31,22 +31,30 @@ namespace Core
         return Var<>("Compiler.IO.unsafePerformIO");
     }
 
-    Exp<> unpack_cpp_string(const std::string&s)
+    // Bind a C++ string value before applying the Haskell unpacking function.
+    Exp<> unpack_cpp_string(FreshVarSource& source, const std::string& s)
     {
-        Var<> x("x");
-        return Let<>(Rec<>({{x,Constant{s}}}), Apply<>(unpack_cpp_string(),{x}));
+        Exp<> rhs = Constant{s};
+        auto x = source.get_fresh_core_var("x");
+        return make_nonrec_let<>(Core::Decl<>{x, std::move(rhs)},
+                                 Exp<>(Apply<>(unpack_cpp_string(), {x})));
     }
 
-    Exp<> error(const std::string& s)
+    // Bind an unpacked message before applying the Haskell error function.
+    Exp<> error(FreshVarSource& source, const std::string& s)
     {
-        Var<> x("x");
-        return Let<>(Rec<>({{x, unpack_cpp_string(s)}}), Apply<>(error(),{x}));
+        auto rhs = unpack_cpp_string(source, s);
+        auto x = source.get_fresh_core_var("x");
+        return make_nonrec_let<>(Core::Decl<>{x, std::move(rhs)},
+                                 Exp<>(Apply<>(error(), {x})));
     }
 
-    Exp<> unsafePerformIO(const Exp<>& e)
+    // Bind an existing IO expression before applying unsafePerformIO.
+    Exp<> unsafePerformIO(FreshVarSource& source, const Exp<>& e)
     {
-        Var<> x("x");
-        return Let<>(Rec<>({{x, e}}), Apply<>(unsafePerformIO(),{x}));
+        auto x = source.get_fresh_core_var("x");
+        return make_nonrec_let<>(Core::Decl<>{x, e},
+                                 Exp<>(Apply<>(unsafePerformIO(), {x})));
     }
 
     bool is_bool_true(const Core::Exp<>& E)
