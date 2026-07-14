@@ -1,5 +1,6 @@
 module Data.JSON.Types.Foreign where
 
+import Compiler.FFI.Runtime (RuntimeValue)
 import qualified Data.Text as T
 import Data.Text (Text)
 import Data.String
@@ -9,6 +10,8 @@ import Data.JSON.Types.ToJSON
 data CJSON
 
 data EJSON
+
+instance RuntimeValue EJSON
 
 foreign import bpcall "Foreign:c_json" builtin_c_json :: EJSON -> CJSON
 
@@ -40,4 +43,3 @@ deep_eval_json (FNumber f) = ejson_fnumber f
 deep_eval_json (Bool b)    = ejson_bool b
 deep_eval_json (String s)  = ejson_string (T.toCppString s)
 deep_eval_json Null        = ejson_null
-

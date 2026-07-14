@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.Word where
 
+import Compiler.FFI.Runtime (RuntimeValue)
 import Compiler.Num
 import Data.Bool
 import Data.Eq
@@ -12,6 +13,8 @@ type Word = Int
 -- FIXME-UNICODE: Word8 is represented by an Int runtime value for now.  A
 -- real uint8 runtime value can be considered after profiling runtime plumbing.
 data Word8
+
+instance RuntimeValue Word8
 
 foreign import ecall "Word:integerToWord8" integerToWord8 :: Integer -> Word8
 foreign import ecall "Word:intToWord8" intToWord8 :: Int -> Word8

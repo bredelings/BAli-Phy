@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 module Bio.Alignment (module Bio.Alignment,
                       module Bio.Sequence,
                       module Bio.Alignment.Matrix,
@@ -5,6 +6,8 @@ module Bio.Alignment (module Bio.Alignment,
                       module Bio.Alignment.Class) where
 
 import Tree
+import Compiler.FFI.Import (CInput(..))
+import Compiler.FFI.Runtime (RuntimeValue)
 import Data.BitVector
 import Data.Foldable
 import Data.Maybe (catMaybes, fromMaybe)
@@ -65,6 +68,15 @@ componentStateSequenceNativeView (ComponentStateSequence values) =
     (components, states) = U.unzip values
     (componentOffset, _, componentNative) = intVectorNativeView components
     (stateOffset, _, stateNative) = intVectorNativeView states
+
+instance CInput ComponentStateSequence where
+    type CInputType ComponentStateSequence result =
+        Int -> Int -> NativeVector Int -> Int -> NativeVector Int -> result
+    withCInput sequence continuation =
+        case componentStateSequenceNativeView sequence of
+          (count, componentOffset, componentOwner, stateOffset, stateOwner) ->
+              continuation count componentOffset componentOwner
+                           stateOffset stateOwner
 
 -- Project the state array without copying or inspecting the component array.
 componentStates :: ComponentStateSequence -> U.Vector Int
@@ -224,6 +236,7 @@ data NodeAlignment -- NodeAlignment SourceNode Int (EVector BranchAlignment)
 foreign import bpcall "Alignment:" mkNodeAlignment :: Int -> Int -> EVector BranchAlignment -> NodeAlignment
 
 data BranchAlignment -- BranchAlignment TargetNode PairwiseAlignment (EVector BranchAlignment)
+instance RuntimeValue BranchAlignment
 foreign import bpcall "Alignment:" mkBranchAlignment :: Int -> PairwiseAlignment -> EVector BranchAlignment -> BranchAlignment
 
 -- Export the recursive branch structure while consuming graph edge views

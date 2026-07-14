@@ -121,6 +121,16 @@ instance (COutput a, COutput b) => COutput (a,b) where
     fromCOutput pair =
         (fromCOutput (c_fst pair), fromCOutput (c_snd pair))
 
+-- EPair is already an opaque runtime value.  Unlike a Haskell tuple, passing
+-- or returning it does not translate its two elements into separate slots.
+instance CInput (EPair a b) where
+    type CInputType (EPair a b) result = EPair a b -> result
+    withCInput value continuation = continuation value
+
+instance COutput (EPair a b) where
+    type COutputType (EPair a b) = EPair a b
+    fromCOutput = id
+
 instance COutput a => COutput (IO a) where
     type COutputType (IO a) = RealWorld -> COutputType a
     fromCOutput raw = fromCOutput <$> makeIO raw

@@ -1,20 +1,41 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-module Foreign.CList where
+module Foreign.CList
+    ( CList
+    , c_cons
+    , c_nil
+    , listToCList
+    , mapFrom
+    , increment_int
+    , equals_int
+    ) where
 
+import Compiler.FFI.Runtime (RuntimeValue)
 import Data.Bool
 
 data CList a
+
+-- The public constructors establish that every stored element is
+-- self-contained, so an existing CList is itself a runtime value.
+instance RuntimeValue (CList a)
 
 -- These builtins have type variables but refer to unlifted types.
 
 -- These unlifted types represent C++ objects and lists through Runtime::Exp values.
     
-foreign import ecall "Pair:c_pair" c_cons :: a -> CList a -> CList a
+foreign import ecall "Pair:c_pair"
+    c_cons_raw :: a -> CList a -> CList a
 
-foreign import ecall "Pair:c_nil" c_nil :: CList a
+foreign import ecall "Pair:c_nil"
+    c_nil_raw :: CList a
+
+c_cons :: RuntimeValue a => a -> CList a -> CList a
+c_cons = c_cons_raw
+
+c_nil :: RuntimeValue a => CList a
+c_nil = c_nil_raw
 
 -- If we use "error" here, then we get an error defining error in Compiler.Base
-listToCList :: [a] -> CList a
+listToCList :: RuntimeValue a => [a] -> CList a
 listToCList (x:xs) = c_cons x (listToCList xs)
 listToCList _ = c_nil
 

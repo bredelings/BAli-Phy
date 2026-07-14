@@ -3,7 +3,7 @@
 #include <span>
 #include <valarray>
 #include <string>
-#include "builtins/native-vector-view.H"
+#include "builtins/native-vector-input.H"
 #include "Vector.H"
 #include "computation/operation.H"
 #include "computation/machine/args.H"
@@ -291,22 +291,15 @@ extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value(0).as_int();
-    int ps_offset = Args.evaluate_slot_to_value(1).as_int();
-    int ps_count = Args.evaluate_slot_to_value(2).as_int();
-    auto ps_value = Args.evaluate_slot_to_value(3);
-    const auto& ps_owner = ps_value.as_<Box<DenseVector<double>>>();
-    auto ps = checked_native_vector_view(
-        ps_owner, ps_offset, ps_count, "multinomial probabilities");
+    auto probabilities =
+        read_native_vector_input<double, ForeignDemand::use>(
+            Args, 1, "multinomial probabilities");
+    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 4, "multinomial counts");
 
-    int ks_offset = Args.evaluate_slot_to_value(4).as_int();
-    int ks_count = Args.evaluate_slot_to_value(5).as_int();
-    auto ks_value = Args.evaluate_slot_to_value(6);
-    const auto& ks_owner = ks_value.as_<Box<DenseVector<int>>>();
-    auto ks = checked_native_vector_view(
-        ks_owner, ks_offset, ks_count, "multinomial counts");
-
-    if (ps.size() != ks.size()) throw myexception()<<"multinomial_density: |ps| != |ks|";
-    return { ::multinomial_pdf(n, ps, ks) };
+    if (probabilities.view().size() != counts.view().size())
+        throw myexception()<<"multinomial_density: |ps| != |ks|";
+    return { ::multinomial_pdf(n, probabilities.view(), counts.view()) };
 }
 
 extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)

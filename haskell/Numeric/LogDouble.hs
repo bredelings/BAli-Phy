@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Numeric.LogDouble where
 
+import Compiler.FFI.Runtime (RuntimeValue)
 import Data.Bool
 import Data.Eq
 import Data.Ord
@@ -15,6 +16,8 @@ import Compiler.Real
 import Data.Floating.Types
 
 data LogDouble
+
+instance RuntimeValue LogDouble
 
 foreign import ecall "Num:" add_logdouble :: LogDouble -> LogDouble -> LogDouble
 foreign import ecall "Num:" subtract_logdouble :: LogDouble -> LogDouble -> LogDouble

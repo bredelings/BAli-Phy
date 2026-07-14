@@ -3,7 +3,7 @@
 #include <vector>
 #include <span>
 
-#include "builtins/native-vector-view.H"
+#include "builtins/native-vector-input.H"
 #include "math/pow2.H"
 #include "math/logprod.H"
 #include "math/exponential.H"
@@ -1597,13 +1597,10 @@ extern "C" closure builtin_function_haplotype01_from_panel_probability(Operation
 // In that case redrawing individual element would come automatically.
 extern "C" closure builtin_function_sample_haplotype01_from_plaf(OperationArgs& Args)
 {
-    int plaf_offset = Args.evaluate_slot_to_value_(0).as_int();
-    int plaf_count = Args.evaluate_slot_to_value_(1).as_int();
-    auto plaf_value = Args.evaluate_slot_to_value_(2);
-    const auto& plaf_owner = plaf_value.as_<Box<DenseVector<double>>>();
-    auto alt_allele_frequency = checked_native_vector_view(
-        plaf_owner, plaf_offset, plaf_count,
-        "sample_haplotype01_from_plaf frequencies");
+    auto frequencies =
+        read_native_vector_input<double, ForeignDemand::force>(
+            Args, 0, "sample_haplotype01_from_plaf frequencies");
+    auto alt_allele_frequency = frequencies.view();
 
     int num_sites = alt_allele_frequency.size();
 

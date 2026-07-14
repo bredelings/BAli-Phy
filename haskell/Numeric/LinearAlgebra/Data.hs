@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 module Numeric.LinearAlgebra.Data
     ( R, I
     , NativeVector, NativeMatrix, Vector, Matrix
@@ -23,6 +24,8 @@ module Numeric.LinearAlgebra.Data
     , matrixProduct
     ) where
 
+import Compiler.FFI.Runtime (RuntimeValue)
+import Compiler.FFI.Import (CInput(..))
 import Foreign.CList (mapFrom)
 import Foreign.NativeVector (NativeVector)
 
@@ -31,6 +34,8 @@ type I = Int
 
 type role NativeMatrix nominal
 data NativeMatrix a
+
+instance RuntimeValue (NativeMatrix a)
 
 -- Keep stable dimensions separate from changing native vector contents.
 type role Vector nominal
@@ -60,6 +65,10 @@ nativeVector (Vector _ payload) = payload
 
 nativeMatrix :: Matrix a -> NativeMatrix a
 nativeMatrix (Matrix _ _ payload) = payload
+
+instance CInput (Matrix a) where
+    type CInputType (Matrix a) result = NativeMatrix a -> result
+    withCInput value continuation = continuation (nativeMatrix value)
 
 foreign import ecall "Prelude:show" showMatrixNative :: NativeMatrix a -> CPPString
 foreign import ecall "Prelude:show" showNumericVectorNative :: NativeVector a -> CPPString

@@ -14,7 +14,8 @@ import qualified Probability.Distribution.PhyloCTMC.FixedA.Sample as FixedSample
 import qualified Probability.Distribution.PhyloCTMC.VariableA.Sample as VariableSample
 import SModel.Likelihood.CLV (CondLikes)
 import SModel.Likelihood.FixedA
-    (sampleRootSequence, sampleSequence, simpleSequenceLikelihoods)
+    (calcProb, calcProbAtRoot, calcProbAtRootVariable,
+     sampleRootSequence, sampleSequence, simpleSequenceLikelihoods)
 import System.IO (print)
 
 -- Exercise every component/state producer not reached by the MCMC cat-states
@@ -31,6 +32,7 @@ main = do
         nodeLikes = listToVector [leaf] :: EVector CondLikes
         branchLikes = listToVector [] :: EVector CondLikes
         compressedColumns = U.slice 1 1 (U.fromList [99,0,99])
+        compressedCounts = U.slice 1 1 (U.fromList [99,1,99])
         slicedParent = ComponentStateSequence
             (U.zip (U.slice 1 1 (U.fromList [99,0,99]))
                    (U.slice 2 1 (U.fromList [99,99,0,99])))
@@ -44,6 +46,10 @@ main = do
 
     print posteriorRoot
     print posteriorChild
+    print (calcProbAtRoot nodeLikes branchLikes frequencies compressedCounts)
+    print (calcProbAtRootVariable nodeLikes branchLikes frequencies
+                                    compressedCounts)
+    print (calcProb nodeLikes branchLikes frequencies compressedCounts)
 
     simulatedRoot <- FixedSample.simulateRootSequence 1 frequencies
     simulatedFixed <- FixedSample.simulateFixedSequenceFrom slicedParent

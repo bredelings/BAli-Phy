@@ -15,63 +15,35 @@ import Bio.Sequence
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
-import Data.Vector.Unboxed.Internal (intVectorNativeView)
-import Foreign.NativeVector (NativeVector)
+import qualified Data.Vector.Unboxed as U
 
 import SModel.Likelihood.CLV
 
 -- peeling for SEV
-foreign import bpcall "LikelihoodSEV:calcProbAtRoot" calcProbAtRootRaw :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> Int -> Int -> NativeVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:calcProbAtRootVariable" calcProbAtRootVariableRaw :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> Int -> Int -> NativeVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:calcProb" calcProbRaw :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> Int -> Int -> NativeVector Int -> LogDouble
-foreign import bpcall "LikelihoodSEV:peelBranchTowardRoot" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> CondLikes
-foreign import bpcall "LikelihoodSEV:peelBranchAwayFromRoot" peelBranchAwayFromRootNative :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> NativeMatrix Double -> CondLikes
-
-calcProbAtRoot node branch frequencies columns =
-    calcProbAtRootRaw node branch (nativeMatrix frequencies) offset count native
-  where
-    (offset, count, native) = intVectorNativeView columns
-
-calcProbAtRootVariable node branch frequencies columns =
-    calcProbAtRootVariableRaw node branch (nativeMatrix frequencies) offset count native
-  where
-    (offset, count, native) = intVectorNativeView columns
-
-calcProb node branch frequencies columns =
-    calcProbRaw node branch (nativeMatrix frequencies) offset count native
-  where
-    (offset, count, native) = intVectorNativeView columns
-
-peelBranchAwayFromRoot node branch probabilities frequencies =
-    peelBranchAwayFromRootNative node branch probabilities (nativeMatrix frequencies)
+foreign import trcall "LikelihoodSEV:calcProbAtRoot" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> LogDouble
+foreign import trcall "LikelihoodSEV:calcProbAtRootVariable" calcProbAtRootVariable :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> LogDouble
+foreign import trcall "LikelihoodSEV:calcProb" calcProb :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> LogDouble
+foreign import trcall "LikelihoodSEV:peelBranchTowardRoot" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> CondLikes
+foreign import trcall "LikelihoodSEV:peelBranchAwayFromRoot" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> Matrix Double -> CondLikes
 
 peelBranch toward nodeCLs branchCLs ps f | toward    = peelBranchTowardRoot   nodeCLs branchCLs ps
                                          | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs ps f
 
 -- ancestral sequence sampling for SEV
-foreign import bpcall "LikelihoodSEV:sampleRootSequence" sampleRootSequenceRaw :: EVector CondLikes -> EVector CondLikes -> NativeMatrix Double -> Int -> Int -> NativeVector Int -> NativeComponentStateSequence
-foreign import bpcall "LikelihoodSEV:sampleSequence" sampleSequenceRaw :: Int -> Int -> NativeVector Int -> Int -> NativeVector Int -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> Int -> Int -> NativeVector Int -> NativeComponentStateSequence
+foreign import trcall "LikelihoodSEV:sampleRootSequence" sampleRootSequenceNative :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> NativeComponentStateSequence
+foreign import trcall "LikelihoodSEV:sampleSequence" sampleSequenceNative :: ComponentStateSequence -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> U.Vector Int -> NativeComponentStateSequence
 
 sampleRootSequence node branch frequencies columns =
-    componentStateSequenceFromNative count $
-        sampleRootSequenceRaw node branch (nativeMatrix frequencies)
-                              offset count native
-  where
-    (offset, count, native) = intVectorNativeView columns
+    componentStateSequenceFromNative (U.length columns) $
+        sampleRootSequenceNative node branch frequencies columns
 
 -- Sample from both native parent arrays while retaining the full-column count
 -- supplied by the parent and compressed-column view.
 sampleSequence parent node probabilities branch columns =
-    componentStateSequenceFromNative count $
-        sampleSequenceRaw parentCount componentOffset componentNative
-                                      stateOffset stateNative
-                                      node probabilities branch offset count native
-  where
-    (offset, count, native) = intVectorNativeView columns
-    (parentCount, componentOffset, componentNative, stateOffset, stateNative) =
-        componentStateSequenceNativeView parent
+    componentStateSequenceFromNative (U.length columns) $
+        sampleSequenceNative parent node probabilities branch columns
 
-foreign import bpcall "LikelihoodSEV:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
+foreign import trcall "LikelihoodSEV:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
 
 -- Could we move the conversion from sequence-with-gaps to (sequence,bitvector) into here?
 simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int, CBitVector)) -> IntMap (Maybe CondLikes)

@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Foreign.String where
 
+import Compiler.FFI.Runtime (RuntimeValue)
 import Data.Bool
 import Foreign.CList
 import Foreign.Pair
@@ -8,6 +9,8 @@ import Foreign.Pair
 -- Opaque C++ std::string transport across the builtin boundary.  Callers give
 -- it text, byte, path, or diagnostic semantics at the wrapper layer.
 data CPPString
+
+instance RuntimeValue CPPString
 
 foreign import ecall "Vector:getStringElement" getStringElement :: CPPString -> Int -> Char
 

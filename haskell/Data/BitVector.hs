@@ -1,7 +1,11 @@
 module Data.BitVector where
 
+import Compiler.FFI.Runtime (RuntimeValue)
+
 data CBitVector = CBitVector
 data BitVector = BitVector CBitVector
+
+instance RuntimeValue CBitVector
 
 foreign import bpcall "Bits:empty_bitvector" builtin_zeros :: Int -> CBitVector
 foreign import bpcall "Bits:complement" builtin_complement :: CBitVector -> CBitVector
@@ -68,4 +72,3 @@ not_ x = complement x
 
 -- toBits x = []        -- toBits
 toBits x = reverse [ x @. n | n <- [0..size x - 1] ]
-
