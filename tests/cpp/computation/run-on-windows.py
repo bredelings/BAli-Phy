@@ -8,6 +8,7 @@ import sys
 import tempfile
 
 
+# Runs the computation test under the requested wrapper with a Windows-compatible name.
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--wrapper', action='append', default=[])
@@ -17,7 +18,9 @@ def main():
 
     executable = pathlib.Path(args.executable)
 
-    with tempfile.TemporaryDirectory(prefix='runtime-ast-serialization-') as tmpdir:
+    with tempfile.TemporaryDirectory(prefix='computation-tests-') as tmpdir:
+        # Compatibility workaround: Windows builtins import host symbols from
+        # bali-phy.exe. Remove this copy once plugins use a host-independent ABI.
         host_executable = pathlib.Path(tmpdir) / 'bali-phy.exe'
         shutil.copy2(executable, host_executable)
 

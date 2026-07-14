@@ -140,31 +140,6 @@ subdir('bali-phy')
 builtins_path = builtins
 subdir('builtins')
 
-runtime_ast_serialization_test = executable('runtime-ast-serialization-test',
-                                            'computation/runtime/ast-serialization-test.cc',
-                                            include_directories: [root_inc, libutil_inc, libmcon_inc],
-                                            dependencies: [boost, libxxhash, eigen, libdl, math_dep, librange, immer, fmt, cereal],
-                                            link_with: [libcomputation, libcommon, libmcon, libutil],
-                                            export_dynamic: true)
-
-if host_machine.system() == 'windows'
-  runtime_ast_serialization_runner = meson.project_source_root()/'tests/run-runtime-ast-serialization-test.py'
-  runtime_ast_serialization_args = [
-             runtime_ast_serialization_test.full_path(),
-             builtins_path,
-             meson.project_source_root()]
-  if meson.is_cross_build()
-    runtime_ast_serialization_args = ['--wrapper', 'wine'] + runtime_ast_serialization_args
-  endif
-  test('runtime AST serialization',
-       python,
-       args: [runtime_ast_serialization_runner] + runtime_ast_serialization_args,
-       depends: runtime_ast_serialization_test,
-       timeout: 120)
-else
-  test('runtime AST serialization', runtime_ast_serialization_test, args:[builtins_path, meson.project_source_root()])
-endif
-
 model_expr_test = executable('model-expr-test',
                              'models/model-expr-test.cc',
                              include_directories: [root_inc, libutil_inc],

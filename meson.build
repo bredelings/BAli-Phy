@@ -172,6 +172,8 @@ packagepath = '--package-path=@0@:@1@'.format(builtins,meson.project_source_root
 
 subdir('src')
 
+subdir('tests/cpp')
+
 subdir('doc')
 
 # Run internal tests
