@@ -6,8 +6,20 @@ import subprocess
 import re
 import shlex
 import pathlib
+import threading
+import traceback
 
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
+
+
+@dataclass
+class TestResult:
+    test_subdir: str
+    failures: list
+    xfail: bool
+    message: str
 
 def indent(n,s):
     space = ' '*n
@@ -181,6 +193,8 @@ class Tester:
         self.NUM_TESTS = 0
         self.FAILED_TESTS = []
         self.XFAILED_TESTS = []
+        self.process_lock = threading.Lock()
+        self.processes = set()
 
     def dir_for_test(self, test_subdir):
         return self.top_test_dir / test_subdir
@@ -190,9 +204,9 @@ class Tester:
 
     def get_test_dirs(self):
         test_dirs = []
-        for root, dirs, files in os.walk(top_test_dir):
+        for root, dirs, files in os.walk(self.top_test_dir):
             if self.method.control_file() in files:
-                path = os.path.relpath(root, top_test_dir)
+                path = os.path.relpath(root, self.top_test_dir)
                 test_dirs.insert(0,path)
         return test_dirs
 
@@ -215,23 +229,40 @@ class Tester:
 
         os.symlink(self.data_dir, test_data_dir)
 
-        with codecs.open(obt_outf, 'w', encoding='utf-8') as obt_out:
-            with codecs.open(obt_errf, 'w', encoding='utf-8') as obt_err:
+        try:
+            with codecs.open(obt_outf, 'w', encoding='utf-8') as obt_out:
+                with codecs.open(obt_errf, 'w', encoding='utf-8') as obt_err:
     #            invocation = '"{}"'.format('" "'.join(cmd))
     #            debug('Running: ' + invocation + ' >"' + obt_outf + '" 2>"' + obt_errf + '" ; echo $? >"' + obt_exitf + '"')
 
-                # Make sure the test output doesn't depend on the terminal width.
-                env = os.environ.copy()
-                env["COLUMNS"] = "80"
+                    # Make sure the test output doesn't depend on the terminal width.
+                    env = os.environ.copy()
+                    env["COLUMNS"] = "80"
 
-                p = subprocess.Popen(cmd, cwd=rundir, stdin=subprocess.PIPE, stdout=obt_out, stderr=obt_err, env=env)
-                p.communicate(input=stdin)
-                exit_code = p.wait()
-                with codecs.open(obt_exitf, 'w', encoding='utf-8') as obt_exit:
-                    obt_exit.write('{e:d}\n'.format(e=exit_code))
+                    p = subprocess.Popen(cmd, cwd=rundir, stdin=subprocess.PIPE, stdout=obt_out, stderr=obt_err, env=env)
+                    with self.process_lock:
+                        self.processes.add(p)
+                    try:
+                        p.communicate(input=stdin)
+                        exit_code = p.wait()
+                    finally:
+                        with self.process_lock:
+                            self.processes.discard(p)
+                    with codecs.open(obt_exitf, 'w', encoding='utf-8') as obt_exit:
+                        obt_exit.write('{e:d}\n'.format(e=exit_code))
+        finally:
+            if os.path.exists(test_data_dir) and os.path.islink(test_data_dir):
+                os.unlink(test_data_dir)
 
-        if os.path.exists(test_data_dir) and os.path.islink(test_data_dir):
-            os.unlink(test_data_dir)
+    # Terminate subprocesses still supervised by parallel test workers.
+    def terminate_processes(self):
+        with self.process_lock:
+            processes = list(self.processes)
+        for process in processes:
+            try:
+                process.terminate()
+            except OSError:
+                pass
 
     def read_expected(self, test_subdir, name):
         test_dir = self.top_test_dir / test_subdir
@@ -326,37 +357,73 @@ class Tester:
         return (failures,xfail,message)
 
     def perform_test(self, test_subdir):
-        import re
-        self.NUM_TESTS += 1
+        result = self.run_one_test(test_subdir)
+        self.report_test_result(result)
 
-        print("Running {} test:".format(self.method.name),test_subdir," ",end="", flush=True)
+    # Run one directory-local test without mutating aggregate reporting state.
+    def run_one_test(self, test_subdir):
         self.run_test_cmd(test_subdir)
         failures,xfail,message = self.check_test_output(test_subdir)
-        if not failures:
+        return TestResult(test_subdir, failures, xfail, message)
+
+    # Record and print one completed result from the main reporting thread.
+    def report_test_result(self, result):
+        self.NUM_TESTS += 1
+
+        print("Running {} test:".format(self.method.name),result.test_subdir," ",end="", flush=True)
+        if not result.failures:
             print("... ok")
-        elif failures:
-            if xfail:
+        else:
+            if result.xfail:
                 expected="(expected)"
-                self.XFAILED_TESTS.append(test_subdir)
+                self.XFAILED_TESTS.append(result.test_subdir)
             else:
-                self.FAILED_TESTS.append(test_subdir)
+                self.FAILED_TESTS.append(result.test_subdir)
                 expected=""
-            print("... FAIL! {} {}".format(failures,expected))
-            if message:
-                message = message.rstrip('\n')+"\n"
+            print("... FAIL! {} {}".format(result.failures,expected))
+            if result.message:
+                message = result.message.rstrip('\n')+"\n"
                 try:
                     print(message)
                 # Some terminals don't support unicode
                 except UnicodeEncodeError:
                     print(message.encode('ascii','replace'))
 
+    # Run tests through a bounded worker pool while serializing their reports.
+    def perform_tests(self, test_subdirs, jobs):
+        if jobs == 1:
+            for test_subdir in test_subdirs:
+                self.perform_test(test_subdir)
+            return
+
+        executor = ThreadPoolExecutor(max_workers=jobs)
+        futures = {executor.submit(self.run_one_test, test): test
+                   for test in test_subdirs}
+        try:
+            for future in as_completed(futures):
+                test_subdir = futures[future]
+                try:
+                    result = future.result()
+                except Exception as exception:
+                    message = ''.join(traceback.format_exception(
+                        type(exception), exception, exception.__traceback__))
+                    result = TestResult(test_subdir, ['harness'], False,
+                                        message)
+                self.report_test_result(result)
+        except KeyboardInterrupt:
+            for future in futures:
+                future.cancel()
+            self.terminate_processes()
+            raise
+        finally:
+            executor.shutdown(wait=True, cancel_futures=True)
+
     def test_result_string(self, test_subdir):
         print("Running {} test:".format(self.method.name),test_subdir," ",file=sys.stderr)
-        self.run_test_cmd(test_subdir)
-        failures,xfail,message = self.check_test_output(test_subdir)
-        if xfail and failures:
+        result = self.run_one_test(test_subdir)
+        if result.xfail and result.failures:
             return 'XFAIL'
-        elif failures:
+        elif result.failures:
             return 'FAIL'
         else:
             return 'PASS'
@@ -441,6 +508,45 @@ def prog_name(pathname):
         filename = filename[0:-4]
     return filename
 
+
+# Parse aggregate-run options without consuming options meant for the program.
+def parse_run_arguments(arguments):
+    if not arguments:
+        raise ValueError("run requires a test root")
+
+    top_test_dir = arguments[0]
+    jobs = 1
+    position = 1
+    while position < len(arguments):
+        argument = arguments[position]
+        if argument == '--':
+            position += 1
+            break
+        if argument in ('-j', '--jobs'):
+            position += 1
+            if position == len(arguments):
+                raise ValueError("{} requires a job count".format(argument))
+            value = arguments[position]
+        elif argument.startswith('-j') and len(argument) > 2:
+            value = argument[2:]
+        elif argument.startswith('--jobs='):
+            value = argument.split('=', 1)[1]
+        else:
+            break
+
+        try:
+            jobs = int(value)
+        except ValueError:
+            raise ValueError("invalid job count '{}'".format(value))
+        if jobs < 1:
+            raise ValueError("job count must be at least one")
+        position += 1
+
+    progs = arguments[position:]
+    if not progs:
+        raise ValueError("run requires a program after its test root")
+    return top_test_dir, jobs, progs
+
 if __name__ == '__main__':
     import codecs
 #    import json
@@ -452,6 +558,7 @@ if __name__ == '__main__':
     data_dir = script_dir / 'data'
 
     top_test_dir = os.getcwd()
+    jobs = 1
 
     cmd = sys.argv[1:]
     if not cmd:
@@ -478,22 +585,28 @@ if __name__ == '__main__':
         print_test_matrix(test_matrix_from_dict(results_dict(top_test_dir, data_dir, progs),progs))
         exit(1)
     elif cmd[0] == 'run':
-        top_test_dir = cmd[1]
-        progs = cmd[2:]
+        try:
+            top_test_dir, jobs, progs = parse_run_arguments(cmd[1:])
+        except ValueError as exception:
+            print("ERROR: {}".format(exception), file=sys.stderr)
+            exit(2)
     else:
         progs = cmd
 
     method = get_test_method(progs)
 
-    print("Running tests for '{}':\n".format(method.name))
+    print("Running tests for '{}':\n".format(method.name), flush=True)
     if os.path.isabs(progs[0]) and not os.path.exists(progs[0]):
         print("Executable '{}' not found!".format(progs[0]))
         exit(1)
 
     tester = Tester(top_test_dir, data_dir, method)
 
-    for test_subdir in tester.get_test_dirs():
-        tester.perform_test(test_subdir)
+    try:
+        tester.perform_tests(tester.get_test_dirs(), jobs)
+    except KeyboardInterrupt:
+        print("\nInterrupted.", file=sys.stderr)
+        exit(130)
     if (len(tester.FAILED_TESTS) > 0):
         print("FAIL! ({} unexpected failures, {} expected failures, {} tests total)".format(len(tester.FAILED_TESTS), len(tester.XFAILED_TESTS), tester.NUM_TESTS))
         exit(1)
