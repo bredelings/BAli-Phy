@@ -488,7 +488,11 @@ log_double_t L_beta(double x, double y)
 log_double_t multinomial_pdf(int n, std::span<const double> ps,
                              std::span<const int> ks)
 {
-    assert(ps.size() == ks.size());
+    // If we return LogDensity, then we could return ks[i]/n * 0 if p[i] was zero.
+    // We could also return abs(ks[i])/n * 0 if ks[i] was negative.
+    // We could also return abs(n-N)/n * 0 if the sum is incorrect.
+
+    // Should we scale this or not?
 
     // First check that the ks are in bounds
     int sum = 0;
