@@ -436,15 +436,19 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core::Ex
     // 4. Let (let {x[i] = F[i]} in body)
     else if (auto L = E.to_let())
     {
+	// NonRec is not emitted until occurrence classification is preserved by
+	// the optimizer in the next commit.
+	if (L->to_nonrec()) std::abort();
+
 	// A. Analyze the body
         auto [F, free_vars] = occurrence_analyzer(m, L->body);
 
         // B. Analyze the decls
-        auto decls_groups = occurrence_analyze_decls(m, L->decls, free_vars);
+        auto decls_groups = occurrence_analyze_decls(m, L->to_rec()->decls, free_vars);
 
         // C. Wrap the decls around the body
         for(auto& decls: reverse(decls_groups))
-            F = Occ::Let{decls,F};
+            F = Occ::Let{Occ::Rec{std::move(decls)},F};
 
 	return {F, free_vars};
     }

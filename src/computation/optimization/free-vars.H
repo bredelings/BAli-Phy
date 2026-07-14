@@ -16,6 +16,9 @@ namespace FV
     using Let = Core::Let<std::monostate, FreeVars>;
     using Decl = Core::Decl<std::monostate, FreeVars>;
     using Decls = Core::Decls<std::monostate, FreeVars>;
+    using NonRec = Core::NonRec<std::monostate, FreeVars>;
+    using Rec = Core::Rec<std::monostate, FreeVars>;
+    using Bind = Core::Bind<std::monostate, FreeVars>;
     using Case = Core::Case<std::monostate, FreeVars>;
     using Pattern = Core::Pattern<>;
     using Alt = Core::Alt<std::monostate, FreeVars>;

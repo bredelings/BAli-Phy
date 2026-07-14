@@ -56,7 +56,7 @@ namespace Core
 
     Exp<> WrapLetObj::operator()(const Exp<>& e) const
     {
-        return make_let(*decls,e);
+        return make_rec_let(*decls,e);
     }
 
     WrapLetObj::WrapLetObj(const Decls<>& d)

@@ -506,19 +506,55 @@ namespace Core
     };
 
     template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct NonRec
+    {
+        Decl<NoteV,NoteE> decl;
+
+        bool operator==(const NonRec&) const = default;
+        std::strong_ordering operator<=>(const NonRec&) const = default;
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(decl); }
+    };
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct Rec
+    {
+        Decls<NoteV,NoteE> decls;
+
+        Rec() = default;
+        explicit Rec(Decls<NoteV,NoteE> d):decls(std::move(d)) { assert(not decls.empty()); }
+
+        bool operator==(const Rec&) const = default;
+        std::strong_ordering operator<=>(const Rec&) const = default;
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(decls); }
+    };
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    using Bind = std::variant<NonRec<NoteV,NoteE>, Rec<NoteV,NoteE>>;
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    using Binds = std::vector<Bind<NoteV,NoteE>>;
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
     struct Let
     {
-	Decls<NoteV,NoteE> decls;
+	Bind<NoteV,NoteE> bind;
 	Exp<NoteV,NoteE> body;
+
+        const NonRec<NoteV,NoteE>* to_nonrec() const { return std::get_if<NonRec<NoteV,NoteE>>(&bind); }
+        const Rec<NoteV,NoteE>* to_rec() const { return std::get_if<Rec<NoteV,NoteE>>(&bind); }
 
 	bool operator==(const Let<NoteV,NoteE>& let) const
 	{
-	    return decls == let.decls and body == let.body;
+	    return bind == let.bind and body == let.body;
 	}
 
 	std::strong_ordering operator<=>(const Let<NoteV,NoteE>& let) const
 	{
-	    auto cmp = decls <=> let.decls;
+	    auto cmp = bind <=> let.bind;
 
 	    if (cmp != std::strong_ordering::equivalent) return cmp;
 
@@ -530,16 +566,16 @@ namespace Core
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-	    ar(decls, body);
+	    ar(bind, body);
 	}
 
         Let() = default;
-        Let(const Decls<NoteV,NoteE>& d, const Exp<NoteV,NoteE>& e):decls(d), body(e) { assert(not decls.empty()); }
+        Let(Bind<NoteV,NoteE> b, Exp<NoteV,NoteE> e):bind(std::move(b)), body(std::move(e)) {}
     };
 
     // Deduction guide.
     template <typename NoteV, typename NoteE, typename T>
-    Let(const Decls<NoteV,NoteE>&, const T&) -> Let<NoteV,NoteE>;
+    Let(const Bind<NoteV,NoteE>&, const T&) -> Let<NoteV,NoteE>;
 
     // Deduction guide.
     template <typename NoteV, typename NoteE, typename T>
@@ -851,7 +887,10 @@ namespace Core
     template <typename NoteV, typename NoteE>
     std::string Let<NoteV,NoteE>::print() const
     {
-	return "let " + decls.print() + " in " + body.print();
+        if (auto nonrec = to_nonrec())
+            return "let " + nonrec->decl.print() + " in " + body.print();
+        else
+            return "letrec " + to_rec()->decls.print() + " in " + body.print();
     }
 
     template <typename NoteV>

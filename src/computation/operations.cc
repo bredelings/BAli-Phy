@@ -274,7 +274,20 @@ closure let_op(OperationArgs& Args)
         assert(C.has_code());
         if (auto runtime_let = C.get_code().to<Runtime::Let>())
         {
-            int n_binds = runtime_let->binds.size();
+            if (auto nonrec = runtime_let->to_nonrec())
+            {
+                auto rhs = get_trimmed(nonrec->rhs, C.Env);
+                auto reg = Args.allocate_reg();
+                M.set_C(reg, std::move(rhs));
+                C.Env.push_back(reg);
+
+                assert(runtime_let->body.to<Runtime::Trim>());
+                C = get_trimmed(runtime_let->body, C.Env);
+                continue;
+            }
+
+            const auto& rhss = runtime_let->to_rec()->rhss;
+            int n_binds = rhss.size();
 
             // 1. Allocate the new vars on the heap
             for(int i=0;i<n_binds;i++)
@@ -282,7 +295,7 @@ closure let_op(OperationArgs& Args)
 
             // 2. Substitute the new heap vars for the var vars in expression T and in the bodies
             for(int i=0;i<n_binds;i++)
-                M.set_C(C.Env[start+i], get_trimmed(runtime_let->binds[i], C.Env));
+                M.set_C(C.Env[start+i], get_trimmed(rhss[i], C.Env));
 
             assert(runtime_let->body.to<Runtime::Trim>());
             C = get_trimmed(runtime_let->body, C.Env);

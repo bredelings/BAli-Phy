@@ -44,7 +44,7 @@ namespace
         Core::Alt<> pair_alt{pair_pat, Core::ConApp<>{ "Pair", {q, p} }};
         Core::Alt<> wildcard_alt{{}, x};
 
-        Core::Exp<> body = Core::Let<>{decls, Core::Exp<>(Core::Case<>{y, {pair_alt, wildcard_alt}})};
+        Core::Exp<> body = Core::Let<>{Core::Rec<>{decls}, Core::Exp<>(Core::Case<>{y, {pair_alt, wildcard_alt}})};
         return Core::Lambda<>{x, body};
     }
 
@@ -87,11 +87,16 @@ namespace
         int local_reg = heap.allocate();
         Runtime::Exp bind = Runtime::RegRef(local_reg);
         Runtime::Exp body = Runtime::IndexVar(0);
-        Runtime::Exp local_let = Runtime::Let({bind}, body);
+        Runtime::Exp local_let = Runtime::Let(Runtime::NonRec{bind}, body);
 
         auto C = heap.preprocess(local_let);
-        require(C.Env.size() == 1, "preprocess should capture one local RegRef");
-        require(C.Env[0] == local_reg, "preprocess captured the wrong local RegRef");
+        require(C.Env.size() == 1, "NonRec preprocess should capture one local RegRef");
+        require(C.Env[0] == local_reg, "NonRec preprocess captured the wrong local RegRef");
+
+        Runtime::Exp local_rec = Runtime::Let(Runtime::Rec({bind}), body);
+        auto C2 = heap.preprocess(local_rec);
+        require(C2.Env.size() == 1, "Rec preprocess should capture one local RegRef");
+        require(C2.Env[0] == local_reg, "Rec preprocess captured the wrong local RegRef");
     }
 
     void check_runtime_closure_trim()
@@ -152,7 +157,7 @@ namespace
 
     void check_shift_free_indices()
     {
-        Runtime::Exp e = Runtime::Let({Runtime::IndexVar(1)},
+        Runtime::Exp e = Runtime::Let(Runtime::Rec({Runtime::IndexVar(1)}),
                                       Runtime::apply(Runtime::IndexVar(1),
                                                      {Runtime::IndexVar(0),
                                                       Runtime::RegRef(7)}));
@@ -161,7 +166,7 @@ namespace
         auto let = shifted.to<Runtime::Let>();
         require(bool(let), "shifted expression should remain a Let");
 
-        auto bind = let->binds[0].to<Runtime::IndexVar>();
+        auto bind = let->to_rec()->rhss[0].to<Runtime::IndexVar>();
         require(bool(bind), "shifted Let bind should remain an IndexVar");
         require(bind->index == 2, "shifted Let bind index mismatch");
 
@@ -176,6 +181,20 @@ namespace
         require(fn->index == 2, "shifted App function index mismatch");
         require(bound_arg->index == 0, "bound App argument index mismatch");
         require(reg_ref->target == 7, "RegRef App argument target mismatch");
+
+        Runtime::Exp nonrec = Runtime::Let(Runtime::NonRec{Runtime::IndexVar(0)},
+                                           Runtime::apply(Runtime::IndexVar(1), {Runtime::IndexVar(0)}));
+        auto shifted_nonrec_exp = Runtime::shift_free_indices(nonrec, 1);
+        auto shifted_nonrec = shifted_nonrec_exp.to<Runtime::Let>();
+        require(shifted_nonrec and shifted_nonrec->to_nonrec(),
+                "shifted NonRec should retain its binding form");
+        require(shifted_nonrec->to_nonrec()->rhs.to<Runtime::IndexVar>()->index == 1,
+                "NonRec shifting should treat the RHS at outer depth");
+        auto nonrec_app = shifted_nonrec->body.to<Runtime::FunctionApp>();
+        require(nonrec_app->head.to<Runtime::IndexVar>()->index == 2,
+                "NonRec shifting should shift free body indices through the binder");
+        require(nonrec_app->args[0].to<Runtime::IndexVar>()->index == 0,
+                "NonRec shifting should preserve the bound body index");
 
         Runtime::Exp trim_exp = Runtime::Trim({0, 2}, Runtime::IndexVar(1));
         auto shifted_trim = Runtime::shift_free_indices(trim_exp, 1);
@@ -351,6 +370,12 @@ namespace
                                            {Runtime::Alt(Runtime::ConstructorPattern("Data.Bool.True", 0),
                                                          Runtime::Int(1))});
         check_archive_roundtrip(case_);
+
+        Runtime::Exp nonrec = Runtime::Let(Runtime::NonRec{Runtime::Int(1)}, Runtime::IndexVar(0));
+        require(archive_roundtrip(nonrec) == nonrec, "Runtime NonRec should survive serialization");
+
+        Runtime::Exp rec = Runtime::Let(Runtime::Rec({Runtime::IndexVar(0)}), Runtime::IndexVar(0));
+        require(archive_roundtrip(rec) == rec, "Runtime Rec should survive serialization");
     }
 
     void check_intrusive_ptr_serialization_preserves_aliases()
@@ -389,18 +414,21 @@ namespace
 
     void check_runtime_exp_equality()
     {
-        Runtime::Exp e1 = Runtime::Let({Runtime::Int(1), Runtime::String("field")},
+        Runtime::Exp e1 = Runtime::Let(Runtime::Rec({Runtime::Int(1), Runtime::String("field")}),
                                        Runtime::ConstructorApp("Pair", 2,
                                                                {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
-        Runtime::Exp e2 = Runtime::Let({Runtime::Int(1), Runtime::String("field")},
+        Runtime::Exp e2 = Runtime::Let(Runtime::Rec({Runtime::Int(1), Runtime::String("field")}),
                                        Runtime::ConstructorApp("Pair", 2,
                                                                {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
-        Runtime::Exp e3 = Runtime::Let({Runtime::Int(2), Runtime::String("field")},
+        Runtime::Exp e3 = Runtime::Let(Runtime::Rec({Runtime::Int(2), Runtime::String("field")}),
                                        Runtime::ConstructorApp("Pair", 2,
                                                                {Runtime::IndexVar(0), Runtime::IndexVar(1)}));
 
         require(e1 == e2, "matching Runtime::Exp trees should compare equal");
         require(not (e1 == e3), "different Runtime::Exp trees should not compare equal");
+        require(Runtime::Exp(Runtime::Let(Runtime::NonRec{Runtime::Int(1)}, Runtime::IndexVar(0))) !=
+                    Runtime::Exp(Runtime::Let(Runtime::Rec({Runtime::Int(1)}), Runtime::IndexVar(0))),
+                "Runtime equality should distinguish NonRec from Rec");
         require(not (Runtime::ConstructorApp("Pair", 2, {}) == Runtime::ConstructorApp("Pair", 1, {})),
                 "Runtime constructor application equality should include arity");
 
@@ -419,6 +447,9 @@ int main(int argc, char** argv)
 
     auto loader = std::make_shared<module_loader>(std::optional<std::filesystem::path>{}, std::vector<std::filesystem::path>{argv[1], argv[2]});
     auto op = loader->load_builtin_ptr("Num", "add_int", "ecall");
+
+    check_pinned_global_translation(loader);
+    check_local_reg_refs_are_captured_before_trimming(loader);
 
     std::vector<Core::Exp<>> args = {int_constant(1), int_constant(2)};
     Core::BuiltinOp<> builtin("Num", "add_int", "ecall", args, op);

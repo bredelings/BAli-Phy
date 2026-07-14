@@ -42,13 +42,17 @@ Runtime::Exp reg_heap::capture_local_reg_refs(const Runtime::Exp& E, closure::En
         }
         else if constexpr (std::is_same_v<T, Runtime::Let>)
         {
-            int n = e.binds.size();
+            if (auto nonrec = e.to_nonrec())
+                return Runtime::Let(Runtime::NonRec{capture_local_reg_refs(nonrec->rhs, Env, depth)},
+                                    capture_local_reg_refs(e.body, Env, depth + 1));
 
-            vector<Runtime::Exp> binds;
-            for(const auto& bind: e.binds)
-                binds.push_back(capture_local_reg_refs(bind, Env, depth + n));
-
-            return Runtime::Let(binds, capture_local_reg_refs(e.body, Env, depth + n));
+            const auto& rhss = e.to_rec()->rhss;
+            int n = rhss.size();
+            vector<Runtime::Exp> captured;
+            for(const auto& rhs: rhss)
+                captured.push_back(capture_local_reg_refs(rhs, Env, depth + n));
+            return Runtime::Let(Runtime::Rec(std::move(captured)),
+                                capture_local_reg_refs(e.body, Env, depth + n));
         }
         else if constexpr (std::is_same_v<T, Runtime::Case>)
         {
@@ -138,13 +142,17 @@ Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E, closure::Env_t& Env
         }
         else if constexpr (std::is_same_v<T, Runtime::Let>)
         {
-            int n = e.binds.size();
+            if (auto nonrec = e.to_nonrec())
+                return Runtime::Let(Runtime::NonRec{translate_refs(nonrec->rhs, Env, depth)},
+                                    translate_refs(e.body, Env, depth + 1));
 
-            vector<Runtime::Exp> binds;
-            for(const auto& bind: e.binds)
-                binds.push_back(translate_refs(bind, Env, depth + n));
-
-            return Runtime::Let(binds, translate_refs(e.body, Env, depth + n));
+            const auto& rhss = e.to_rec()->rhss;
+            int n = rhss.size();
+            vector<Runtime::Exp> translated;
+            for(const auto& rhs: rhss)
+                translated.push_back(translate_refs(rhs, Env, depth + n));
+            return Runtime::Let(Runtime::Rec(std::move(translated)),
+                                translate_refs(e.body, Env, depth + n));
         }
         else if constexpr (std::is_same_v<T, Runtime::Case>)
         {

@@ -81,19 +81,29 @@ Runtime::Exp indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
     // Let expression
     else if (auto L = E.to_let())
     {
-        for(auto& [x,_]: L->decls)
+        if (auto nonrec = L->to_nonrec())
+        {
+            auto rhs = indexify(nonrec->decl.body, variables);
+            variables.push_back(nonrec->decl.x);
+            auto body = indexify(L->body, variables);
+            variables.pop_back();
+            return Runtime::Let(Runtime::NonRec{std::move(rhs)}, std::move(body));
+        }
+
+        const auto& decls = L->to_rec()->decls;
+        for(auto& [x,_]: decls)
             variables.push_back(x);
 
-        vector<Runtime::Exp> binds;
-        for(auto& [_,e]: L->decls)
-            binds.push_back(indexify(e, variables));
+        vector<Runtime::Exp> rhss;
+        for(auto& [_,e]: decls)
+            rhss.push_back(indexify(e, variables));
 
         auto body = indexify(L->body, variables);
 
-        for(int i=0;i<L->decls.size();i++)
+        for(int i=0;i<decls.size();i++)
             variables.pop_back();
 
-        return Runtime::Let(binds, body);
+        return Runtime::Let(Runtime::Rec(std::move(rhss)), std::move(body));
     }
 
     // case expression
@@ -268,25 +278,36 @@ Core::Exp<> deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
     }
     else if (auto e = E.to<Runtime::Let>())
     {
-        Core::Decls<> decls;
-        decls.reserve(e->binds.size());
+        if (auto nonrec = e->to_nonrec())
+        {
+            auto rhs = deindexify(nonrec->rhs, variables);
+            auto x = get_named_core_var(variables.size());
+            variables.push_back(x);
+            auto body = deindexify(e->body, variables);
+            variables.pop_back();
+            return Core::Let<>{Core::NonRec<>{{x, std::move(rhs)}}, std::move(body)};
+        }
 
-        for(int i = 0; i < e->binds.size(); i++)
+        const auto& rhss = e->to_rec()->rhss;
+        Core::Decls<> decls;
+        decls.reserve(rhss.size());
+
+        for(int i = 0; i < rhss.size(); i++)
         {
             auto x = get_named_core_var(variables.size());
             variables.push_back(x);
             decls.push_back({x, {}});
         }
 
-        for(int i = 0; i < e->binds.size(); i++)
-            decls[i].body = deindexify(e->binds[i], variables);
+        for(int i = 0; i < rhss.size(); i++)
+            decls[i].body = deindexify(rhss[i], variables);
 
         auto body = deindexify(e->body, variables);
 
-        for(int i = 0; i < e->binds.size(); i++)
+        for(int i = 0; i < rhss.size(); i++)
             variables.pop_back();
 
-        return Core::Let<>{decls, body};
+        return Core::Let<>{Core::Rec<>{std::move(decls)}, std::move(body)};
     }
     else if (auto e = E.to<Runtime::Case>())
     {

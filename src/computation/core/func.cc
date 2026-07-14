@@ -34,19 +34,19 @@ namespace Core
     Exp<> unpack_cpp_string(const std::string&s)
     {
         Var<> x("x");
-        return Let<>({{x,Constant{s}}}, Apply<>(unpack_cpp_string(),{x}));
+        return Let<>(Rec<>({{x,Constant{s}}}), Apply<>(unpack_cpp_string(),{x}));
     }
 
     Exp<> error(const std::string& s)
     {
         Var<> x("x");
-        return Let<>({{x, unpack_cpp_string(s)}}, Apply<>(error(),{x}));
+        return Let<>(Rec<>({{x, unpack_cpp_string(s)}}), Apply<>(error(),{x}));
     }
 
     Exp<> unsafePerformIO(const Exp<>& e)
     {
         Var<> x("x");
-        return Let<>({{x, e}}, Apply<>(unsafePerformIO(),{x}));
+        return Let<>(Rec<>({{x, e}}), Apply<>(unsafePerformIO(),{x}));
     }
 
     bool is_bool_true(const Core::Exp<>& E)

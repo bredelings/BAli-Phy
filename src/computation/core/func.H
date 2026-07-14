@@ -46,13 +46,28 @@ Core::Exp<NoteV, NoteE> lambda_quantify(const std::vector<Core::Var<NoteV>>& xs,
     return E;
 }
 
+// Wrap one declaration whose binder is scoped only over the body.
 template <typename NoteV = std::monostate, typename NoteE = std::monostate>
-Core::Exp<NoteV, NoteE> make_let(const Core::Decls<NoteV,NoteE>& decls, const Core::Exp<NoteV, NoteE>& body)
+Core::Exp<NoteV, NoteE> make_nonrec_let(Core::Decl<NoteV,NoteE> decl, Core::Exp<NoteV, NoteE> body)
 {
-    if (decls.empty())
-	return body;
-    else
-	return Core::Let<NoteV,NoteE>{decls,body};
+    return Core::Let<NoteV,NoteE>{Core::NonRec<NoteV,NoteE>{std::move(decl)}, std::move(body)};
+}
+
+// Wrap a possibly recursive declaration batch, omitting an empty batch.
+template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+Core::Exp<NoteV, NoteE> make_rec_let(Core::Decls<NoteV,NoteE> decls, Core::Exp<NoteV, NoteE> body)
+{
+    if (decls.empty()) return body;
+    return Core::Let<NoteV,NoteE>{Core::Rec<NoteV,NoteE>{std::move(decls)}, std::move(body)};
+}
+
+// Nest outer-to-inner bindings around a body without changing their forms.
+template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+Core::Exp<NoteV, NoteE> make_lets(Core::Binds<NoteV,NoteE> binds, Core::Exp<NoteV, NoteE> body)
+{
+    for(auto& bind: binds | ranges::views::reverse)
+        body = Core::Let<NoteV,NoteE>{std::move(bind), std::move(body)};
+    return body;
 }
 
 template <typename NoteV = std::monostate>

@@ -32,16 +32,24 @@ Exp<NoteV, NoteE> subst(const subst_t<NoteV>& S, const Exp<NoteV,NoteE>& E)
     }
     else if (auto L = E.to_let())
     {
+        if (auto nonrec = L->to_nonrec())
+        {
+            auto decl = nonrec->decl;
+            decl.body = subst(S, decl.body);
+            auto body = subst(S.erase(decl.x), L->body);
+            return Let<NoteV,NoteE>{NonRec<NoteV,NoteE>{std::move(decl)}, std::move(body)};
+        }
+
         auto S2 = S;
-        for(auto& [x,_]: L->decls)
+        auto decls = L->to_rec()->decls;
+        for(auto& [x,_]: decls)
             S2 = S2.erase(x);
 
-        auto decls = L->decls;
         for(auto& [_,e]: decls)
             e = subst(S2,e);
 
         auto body = subst(S2, L->body);
-        return Let<NoteV,NoteE>{decls, body};
+        return Let<NoteV,NoteE>{Rec<NoteV,NoteE>{std::move(decls)}, std::move(body)};
     }
     else if (auto C = E.to_case())
     {

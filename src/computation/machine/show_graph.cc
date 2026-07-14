@@ -42,11 +42,18 @@ Core::Exp<> map_symbol_names(const Core::Exp<>& E, const std::map<string,string>
         return Core::Apply<>{map_symbol_names(A->head, simplify), map_symbol_names(A->arg, simplify)};
     else if (auto L = E.to_let())
     {
-        auto decls = L->decls;
-        for(auto& [_, body]: decls)
-            body = map_symbol_names(body, simplify);
+        auto body = map_symbol_names(L->body, simplify);
+        if (auto nonrec = L->to_nonrec())
+        {
+            auto decl = nonrec->decl;
+            decl.body = map_symbol_names(decl.body, simplify);
+            return Core::Let<>{Core::NonRec<>{std::move(decl)}, std::move(body)};
+        }
 
-        return Core::Let<>{decls, map_symbol_names(L->body, simplify)};
+        auto decls = L->to_rec()->decls;
+        for(auto& [_, rhs]: decls)
+            rhs = map_symbol_names(rhs, simplify);
+        return Core::Let<>{Core::Rec<>{std::move(decls)}, std::move(body)};
     }
     else if (auto C = E.to_case())
     {
@@ -93,12 +100,18 @@ int n_free_occurrences(const Core::Exp<>& E, const Core::Var<>& x)
         return n_free_occurrences(A->head, x) + n_free_occurrences(A->arg, x);
     else if (auto L = E.to_let())
     {
-        for(const auto& [y, _]: L->decls)
-            if (y == x)
-                return 0;
+        if (auto nonrec = L->to_nonrec())
+        {
+            int rhs_count = n_free_occurrences(nonrec->decl.body, x);
+            if (nonrec->decl.x == x) return rhs_count;
+            return rhs_count + n_free_occurrences(L->body, x);
+        }
+
+        for(const auto& [y, _]: L->to_rec()->decls)
+            if (y == x) return 0;
 
         int count = n_free_occurrences(L->body, x);
-        for(const auto& [_, body]: L->decls)
+        for(const auto& [_, body]: L->to_rec()->decls)
             count += n_free_occurrences(body, x);
 
         return count;
@@ -153,39 +166,50 @@ Core::Exp<> unlet(const Core::Exp<>& E)
     }
     else if (auto L = E.to_let())
     {
+        if (auto nonrec = L->to_nonrec())
+        {
+            auto decl = nonrec->decl;
+            decl.body = unlet(decl.body);
+            auto body = unlet(L->body);
+            if (not decl.body.to_case() and n_free_occurrences(body, decl.x) == 1)
+                return subst_var(body, decl.x, decl.body);
+            return Core::Let<>{Core::NonRec<>{std::move(decl)}, std::move(body)};
+        }
+
         auto L2 = *L;
         L2.body = unlet(L2.body);
-        for(auto& [_, body]: L2.decls)
+        auto& decls = std::get<Core::Rec<>>(L2.bind).decls;
+        for(auto& [_, body]: decls)
             body = unlet(body);
 
         bool changed = true;
         while(changed)
         {
             changed = false;
-            for(int i = L2.decls.size() - 1; i >= 0; i--)
+            for(int i = decls.size() - 1; i >= 0; i--)
             {
-                const auto x = L2.decls[i].x;
-                const auto rhs = L2.decls[i].body;
+                const auto x = decls[i].x;
+                const auto rhs = decls[i].body;
 
                 if (rhs.to_case()) continue;
                 if (n_free_occurrences(rhs, x)) continue;
 
                 int count = n_free_occurrences(L2.body, x);
-                for(const auto& [_, body]: L2.decls)
+                for(const auto& [_, body]: decls)
                     count += n_free_occurrences(body, x);
 
                 if (count != 1) continue;
 
                 changed = true;
-                L2.decls.erase(L2.decls.begin() + i);
+                decls.erase(decls.begin() + i);
 
-                for(auto& [_, body]: L2.decls)
+                for(auto& [_, body]: decls)
                     body = subst_var(body, x, rhs);
                 L2.body = subst_var(L2.body, x, rhs);
             }
         }
 
-        if (L2.decls.empty())
+        if (decls.empty())
             return L2.body;
         else
             return L2;

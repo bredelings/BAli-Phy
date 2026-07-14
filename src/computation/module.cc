@@ -723,7 +723,7 @@ std::string xxhash64_hex(const std::string& s) {
 // This is independent of the executable-keyed cache directory: it makes the
 // archive self-describing and prevents an older reader from silently treating
 // newly appended compiled-module metadata as a valid artifact.
-static constexpr std::uint32_t compiled_module_cache_format = 2;
+static constexpr std::uint32_t compiled_module_cache_format = 3;
 
 std::string extract_xxhash(std::string& data)
 {
@@ -1033,19 +1033,29 @@ Core::Exp<> rename(const Core::Exp<>& E, const map<Core::Var<>,Core::Var<>>& sub
     // 4. Let (let {x[i] = F[i]} in body)
     else if (auto L = E.to_let())
     {
-        for(auto& [x,_]: L->decls)
+        if (auto nonrec = L->to_nonrec())
+        {
+            auto decl = nonrec->decl;
+            decl.body = rename(decl.body, substitution, bound);
+            bound.insert(decl.x);
+            auto body = rename(L->body, substitution, bound);
+            erase_one(bound, decl.x);
+            return Core::Let<>{Core::NonRec<>{std::move(decl)}, std::move(body)};
+        }
+
+        auto decls = L->to_rec()->decls;
+        for(auto& [x,_]: decls)
             bound.insert(x);
 
         auto body = rename(L->body, substitution, bound);
 
-        auto decls = L->decls;
         for(auto& [_,e]: decls)
             e = rename(e, substitution, bound);
 
-        for(auto& [x,e]: L->decls)
+        for(auto& [x,e]: decls)
             erase_one(bound, x);
 
-        return Core::Let<>{decls, body};
+        return Core::Let<>{Core::Rec<>{std::move(decls)}, std::move(body)};
     }
     // 5. Case
     else if (auto C = E.to_case())
@@ -1933,8 +1943,8 @@ Core::Decls<> Module::load_builtins(const module_loader& L, const std::vector<Hs
                 auto f2 = Core::Var<>("f2");
                 auto makeIO = Core::Var<>("Compiler.IO.makeIO");
 
-                body = Core::Let<>{ {{f1, builtin},                          // let f1 = builtin
-                                      {f2, make_apply(Core::Exp<>(f1),xs)}}, //     f2 = f1 x1 .. xn
+                body = Core::Let<>{Core::Rec<>({{f1, builtin},                          // let f1 = builtin
+                                                {f2, make_apply(Core::Exp<>(f1),xs)}}), //     f2 = f1 x1 .. xn
                     Core::Apply<>{makeIO, {f2}}};                          // in makeIO f2
 
                 body = lambda_quantify(xs, body);  // \x1 .. xn -> let {f1 = builtin; f2 = f1 x1 .. xn} in makeIO f2

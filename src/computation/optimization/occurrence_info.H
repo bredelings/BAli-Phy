@@ -33,6 +33,10 @@ namespace Occ
     using Let = Core::Let<occurrence_info>;
     using Decl = Core::Decl<occurrence_info>;
     using Decls = Core::Decls<occurrence_info>;
+    using NonRec = Core::NonRec<occurrence_info>;
+    using Rec = Core::Rec<occurrence_info>;
+    using Bind = Core::Bind<occurrence_info>;
+    using Binds = Core::Binds<occurrence_info>;
     using Case = Core::Case<occurrence_info>;
     using Pattern = Core::Pattern<occurrence_info>;
     using Alt = Core::Alt<occurrence_info>;

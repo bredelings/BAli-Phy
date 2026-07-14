@@ -187,9 +187,16 @@ set<Occ::Var> get_free_vars(const Occ::Exp& E)
     else if (auto let = E.to_let())
     {
         auto free = get_free_vars(let->body);
-        for(auto& [x,body]: let->decls)
+        if (auto nonrec = let->to_nonrec())
+        {
+            free.erase(nonrec->decl.x);
+            add(free, get_free_vars(nonrec->decl.body));
+            return free;
+        }
+
+        for(auto& [x,body]: let->to_rec()->decls)
             add(free, get_free_vars(body));
-        for(auto& [x,_]: let->decls)
+        for(auto& [x,_]: let->to_rec()->decls)
             free.erase(x);
         return free;
     }
@@ -278,7 +285,7 @@ Occ::Exp wrap(const SimplFloats& F, Occ::Exp E)
 {
     // Instead of re-generating the let-expressions, could we pass the decls to rebuild?
     for(auto& d: F.decls | views::reverse)
-        E = Occ::Let{d, E};
+        E = Occ::Let{Occ::Rec{d}, E};
 
     return E;
 }
@@ -315,10 +322,11 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
     }
     else if (auto let = E.to_let(); let and false)
     {
-        Float f = FloatLet{let->decls};
+        if (let->to_nonrec()) std::abort();
+        Float f = FloatLet{let->to_rec()->decls};
         floats.push_back(f);
         auto S2 = S;
-        for(auto& [x,e]: let->decls)
+        for(auto& [x,e]: let->to_rec()->decls)
             S2 = bind_var(S, x, make_core_unfolding(this_mod, options,e));
             
         return exprIsConApp_worker(S2, floats, let->body, cont);
@@ -399,7 +407,7 @@ Occ::Exp apply_floats(const vector<Float>& floats, Occ::Exp E)
     for(auto& f: floats | views::reverse)
     {
         if (auto lf = to<FloatLet>(f))
-            E = Occ::Let(lf->decls,E);
+            E = Occ::Let(Occ::Rec{lf->decls}, E);
         else
         {
             auto cf = to<FloatCase>(f);
@@ -682,7 +690,8 @@ std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
     std::vector<Occ::Decls> decl_groups;
     while(auto let = E.to_let())
     {
-       decl_groups.push_back(let->decls);
+       if (let->to_nonrec()) break;
+       decl_groups.push_back(let->to_rec()->decls);
        auto tmp = E;
        E = let->body;
     }
@@ -692,7 +701,7 @@ std::vector<Occ::Decls> strip_multi_let(Occ::Exp& E)
 Occ::Exp make_lets(const vector<Occ::Decls>& decls, Occ::Exp E)
 {
     for(auto& d: decls | views::reverse)
-        E = Occ::Let{d,E};
+        E = Occ::Let{Occ::Rec{d},E};
 
     return E;
 }
@@ -1486,7 +1495,8 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
     // 
     else if (auto let = E.to_let())
     {
-	auto decls = let->decls;
+	if (let->to_nonrec()) std::abort();
+	auto decls = let->to_rec()->decls;
 	auto [F, S2] = simplify_decls(decls, S, bound_vars, false);
 
         auto [F2, E2] = simplify(let->body, S2, F.bound_vars, context);

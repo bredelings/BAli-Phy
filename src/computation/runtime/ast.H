@@ -693,18 +693,46 @@ namespace Runtime
         void serialize(Archive& ar) { ar(body); }
     };
 
+    struct NonRec
+    {
+        Exp rhs;
+
+        bool operator==(const NonRec&) const = default;
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(rhs); }
+    };
+
+    struct Rec
+    {
+        std::vector<Exp> rhss;
+
+        Rec() = default;
+        explicit Rec(std::vector<Exp> es):rhss(std::move(es)) { assert(not rhss.empty()); }
+
+        bool operator==(const Rec&) const = default;
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(rhss); }
+    };
+
+    using Bind = std::variant<NonRec, Rec>;
+
     struct Let: intrusive_counted<Let>
     {
-        std::vector<Exp> binds;
+        Bind bind;
         Exp body;
 
+        const NonRec* to_nonrec() const { return std::get_if<NonRec>(&bind); }
+        const Rec* to_rec() const { return std::get_if<Rec>(&bind); }
+
         Let() = default;
-        Let(std::vector<Exp> bs, Exp b):binds(std::move(bs)), body(std::move(b)) {}
+        Let(Bind bs, Exp b):bind(std::move(bs)), body(std::move(b)) {}
 
         bool operator==(const Let&) const = default;
 
         template <class Archive>
-        void serialize(Archive& ar) { ar(binds, body); }
+        void serialize(Archive& ar) { ar(bind, body); }
     };
 
     struct WildcardPattern

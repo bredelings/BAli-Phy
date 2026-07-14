@@ -13,6 +13,9 @@ namespace Levels
     using Let = Core::Let<int>;
     using Decl = Core::Decl<int>;
     using Decls = Core::Decls<int>;
+    using NonRec = Core::NonRec<int>;
+    using Rec = Core::Rec<int>;
+    using Bind = Core::Bind<int>;
     using Case = Core::Case<int>;
     using Pattern = Core::Pattern<int>;
     using Alt = Core::Alt<int>;

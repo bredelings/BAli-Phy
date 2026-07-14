@@ -90,7 +90,7 @@ Core::Exp<> install_current_level(float_binds_t& float_binds, int level, Core::E
 {
     auto decl_groups_here = float_binds.get_decl_groups_at_level(level);
     for(auto& decls: decl_groups_here | views::reverse)
-        E = Core::Let<>(decls, E);
+        E = Core::Let<>(Core::Rec<>{std::move(decls)}, E);
     return E;
 }
 
@@ -235,7 +235,10 @@ float_lets(const Levels::Exp& E, int level)
     // 7. Let
     else if (auto L = E.to_let())
     {
-        auto [decls, float_binds, level2] = float_out_from_decl_group(L->decls);
+        // NonRec float ordering is implemented with Bind-based float storage
+        // when occurrence precision is enabled in the next commit.
+        if (L->to_nonrec()) std::abort();
+        auto [decls, float_binds, level2] = float_out_from_decl_group(L->to_rec()->decls);
         auto Lbinds = decls;
         assert(level2 <= level);
 
@@ -264,7 +267,7 @@ float_lets(const Levels::Exp& E, int level)
             E2 = install_current_level(float_binds, level, body);
 
             if (not Lbinds.empty())
-                E2 = Core::Let<>(Lbinds, E2);
+                E2 = Core::Let<>(Core::Rec<>{std::move(Lbinds)}, E2);
         }
 
         return {E2, float_binds};

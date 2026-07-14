@@ -81,11 +81,12 @@ int simple_size(const Occ::Exp& E)
 
     else if (auto let = E.to_let())
     {
-	int size = simple_size(let->body) + let->decls.size();
+	if (auto nonrec = let->to_nonrec())
+	    return simple_size(let->body) + 1 + simple_size(nonrec->decl.body);
 
-	for(auto& [x,e]: let->decls)
+	int size = simple_size(let->body) + let->to_rec()->decls.size();
+	for(auto& [x,e]: let->to_rec()->decls)
 	    size += simple_size(e);
-
 	return size;
     }
     else if (auto C = E.to_case())
@@ -127,11 +128,12 @@ int simple_size(const Core::Exp<>& E)
 
     else if (auto let = E.to_let())
     {
-	int size = simple_size(let->body) + let->decls.size();
+	if (auto nonrec = let->to_nonrec())
+	    return simple_size(let->body) + 1 + simple_size(nonrec->decl.body);
 
-	for(auto& [x,e]: let->decls)
+	int size = simple_size(let->body) + let->to_rec()->decls.size();
+	for(auto& [x,e]: let->to_rec()->decls)
 	    size += simple_size(e);
-
 	return size;
     }
     else if (auto C = E.to_case())
@@ -389,10 +391,14 @@ ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size
     else if (auto L = E.to_let())
     {
         //size_up rhs1 `addSizeNDS` size_up rhs2 `addSizeNDS` (size_up_body body `addSizeN` number of heap bindings)
+        if (auto nonrec = L->to_nonrec())
+            return size_of_expr(m, opts, max_size, top_args, nonrec->decl.body) +
+                   (size_of_expr(m, opts, max_size, top_args, L->body) + 1);
+
         ExprSize rhs_sizes;
-        for(auto& [x,e]: L->decls)
+        for(auto& [x,e]: L->to_rec()->decls)
             rhs_sizes = rhs_sizes + size_of_expr(m, opts, max_size, top_args, e);
-        return rhs_sizes + (size_of_expr(m, opts, max_size, top_args, L->body) + L->decls.size());
+        return rhs_sizes + (size_of_expr(m, opts, max_size, top_args, L->body) + L->to_rec()->decls.size());
     }
     else if (auto C = E.to_case())
     {
@@ -570,7 +576,9 @@ bool is_work_free(const Occ::Exp& e) // , int n=0)
     else if (auto le = e.to_let())
     {
         if (not is_work_free(le->body)) return false;
-        for(auto& [x,e]: le->decls)
+        if (auto nonrec = le->to_nonrec())
+            return is_work_free(nonrec->decl.body);
+        for(auto& [x,e]: le->to_rec()->decls)
             if (not is_work_free(e)) return false;
         return true;
     }
@@ -849,10 +857,18 @@ arg_info SimplifierState::interesting_arg(const Occ::Exp& E, const simplifier::s
     else if (auto let = E.to_let())
     {
         auto bound_vars2 = bound_vars;
-        for(auto& [x,e]: let->decls)
+        if (auto nonrec = let->to_nonrec())
         {
-            bound_vars2 = bound_vars2.erase(x);
-            bound_vars2 = bind_var(bound_vars2, x, {});
+            bound_vars2 = bound_vars2.erase(nonrec->decl.x);
+            bound_vars2 = bind_var(bound_vars2, nonrec->decl.x, {});
+        }
+        else
+        {
+            for(auto& [x,e]: let->to_rec()->decls)
+            {
+                bound_vars2 = bound_vars2.erase(x);
+                bound_vars2 = bind_var(bound_vars2, x, {});
+            }
         }
 
         // GHC adds the let-binders to the "env" .... to the substitution?

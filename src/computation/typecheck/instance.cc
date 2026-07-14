@@ -951,7 +951,7 @@ TypeChecker::infer_type_for_instance2(const Core::Var<>& dfun, const Hs::Instanc
     Core::Exp<> dict = Core::ConApp<>(class_name, dict_entries);
     if (dict_entries.size() == 1)
         dict = dict_entries[0];
-    dict = make_let(dict_decls, dict);
+    dict = make_rec_let(dict_decls, dict);
 
     // 8. Construct the DFunUnfolding
     // We need to convert instance_dict_args and instance_sc_methods from Core::<> to Occ::

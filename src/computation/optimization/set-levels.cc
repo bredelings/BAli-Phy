@@ -225,11 +225,23 @@ Levels::Exp let_floater_state::set_level(const FV::Exp& E, int level, const leve
     // 5. Let
     else if (auto L = E.to_let())
     {
-        auto [binds2, env2] = set_level_decl_group(L->decls, env);
+        if (auto nonrec = L->to_nonrec())
+        {
+            const auto& [x, rhs] = nonrec->decl;
+            int level2 = max_level(env, get_free_vars(rhs));
+            auto x2 = x.is_exported ? Levels::Var(x.name, x.index, 0, true)
+                                    : new_unique_var(x, level2);
+            auto rhs2 = set_level(rhs, level2, env);
+            auto env2 = env.insert({x, x2});
+            auto body2 = set_level_maybe_MFE(L->body, level, env2);
+            return Levels::Let{Levels::NonRec{{x2, std::move(rhs2)}}, std::move(body2)};
+        }
+
+        auto [binds2, env2] = set_level_decl_group(L->to_rec()->decls, env);
 
         auto body2 = set_level_maybe_MFE(L->body, level, env2);
 
-        return Levels::Let{binds2, body2};
+        return Levels::Let{Levels::Rec{std::move(binds2)}, std::move(body2)};
     }
 
     // 2. Constant
@@ -278,7 +290,7 @@ Levels::Exp let_floater_state::set_level_maybe_MFE(const FV::Exp& E, int level, 
 
         auto E2 = set_level(E, level2, env);
         Levels::Var v = new_unique_var("$v", level2);
-        return Levels::Let({{v,E2}}, v);
+        return Levels::Let(Levels::Rec({{v,E2}}), v);
     }
     else
         return set_level(E, level, env);

@@ -46,14 +46,14 @@ void failable_expression::add_binding(const Core::Decls<>& decls)
 {
     auto result2 = result;
 
-    result = [result2,decls](const Core::Exp<>& o) {return make_let(decls,result2(o));};
+    result = [result2,decls](const Core::Exp<>& o) {return make_rec_let(decls,result2(o));};
 }
 
 void failable_expression::add_binding(const desugared_decls& decls)
 {
     auto result2 = result;
 
-    result = [result2,decls](const Core::Exp<>& o) {return make_let(decls.decls, decls.wrap_body(result2(o)));};
+    result = [result2,decls](const Core::Exp<>& o) {return make_rec_let(decls.decls, decls.wrap_body(result2(o)));};
 }
 
 
@@ -245,10 +245,10 @@ desugared_decls desugar_state::desugar_decls(const Hs::Decls& v)
             ranges::insert(all_locals, all_locals.end(), gb_body_decls.strict_vars);
 
             auto all_locals_exp = all_locals | ranges::to<vector<Core::Exp<>>>;
-            Core::Exp<> tup_body = make_let( gb_body_decls.decls, gb_body_decls.wrap_body(Tuple(all_locals_exp)) );
+            Core::Exp<> tup_body = make_rec_let( gb_body_decls.decls, gb_body_decls.wrap_body(Tuple(all_locals_exp)) );
 
             for(auto& dd: gb->dict_decls | views::reverse)
-                tup_body = make_let (*dd, tup_body);
+                tup_body = make_rec_let (*dd, tup_body);
         
             auto tup_lambda = lambda_quantify( gb->dict_args, tup_body );
 
@@ -669,7 +669,7 @@ Core::Exp<> desugar_state::desugar(const Hs::Exp& E)
         auto body = desugar(L->body);
 
         // construct the new let expression.
-        return make_let(decls.decls, decls.wrap_body(body));
+        return make_rec_let(decls.decls, decls.wrap_body(body));
     }
     else if (E.is_a<Hs::If>())
     {

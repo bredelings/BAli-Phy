@@ -46,7 +46,14 @@ Core::Apply<> to_core_apply(const Occ::Apply A)
 
 Core::Let<> to_core_let(const Occ::Let& L)
 {
-    return {to_core(L.decls), to_core_exp(L.body)};
+    if (auto nonrec = L.to_nonrec())
+    {
+        const auto& [x, rhs] = nonrec->decl;
+        Core::Decl<> decl{to_core_var(x), to_core_exp(rhs)};
+        return {Core::NonRec<>{std::move(decl)}, to_core_exp(L.body)};
+    }
+
+    return {Core::Rec<>{to_core(L.to_rec()->decls)}, to_core_exp(L.body)};
 }
 
 Core::Var<> to_core_pattern_arg(const Occ::Var& V)

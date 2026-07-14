@@ -76,18 +76,27 @@ add_free_variable_annotations(const Core::Exp<>& E)
         auto body = add_free_variable_annotations(L->body);
         FreeVars free_vars = get_free_vars(body);
 
+        if (auto nonrec = L->to_nonrec())
+        {
+            auto rhs = add_free_variable_annotations(nonrec->decl.body);
+            free_vars = free_vars.erase(nonrec->decl.x);
+            free_vars = get_union(free_vars, get_free_vars(rhs));
+            FV::Decl decl{nonrec->decl.x, std::move(rhs)};
+            return FV::Exp(FV::Let{FV::NonRec{std::move(decl)}, std::move(body)}, free_vars);
+        }
+
         FV::Decls decls;
-        for(auto& [x,rhs]: L->decls)
+        for(auto& [x,rhs]: L->to_rec()->decls)
         {
             auto fv_rhs = add_free_variable_annotations(rhs);
             free_vars = get_union(free_vars, get_free_vars(fv_rhs));
             decls.push_back({x,fv_rhs});
         }
 
-        for(auto& [x,_]: L->decls)
+        for(auto& [x,_]: decls)
             free_vars = free_vars.erase(x);
 
-        return FV::Exp(FV::Let{decls, body}, free_vars);
+        return FV::Exp(FV::Let{FV::Rec{std::move(decls)}, std::move(body)}, free_vars);
     }
     // 5. Case
     else if (auto C = E.to_case())

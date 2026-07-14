@@ -8,6 +8,7 @@
 #include "computation/fresh_vars.H"
 #include "computation/runtime/indexify.H"
 #include "computation/core/convert.H"
+#include "computation/core/func.H"
 #include "haskell/ids.H"
 #include "util/variant.H"
 
@@ -43,12 +44,15 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                vector<Exp> binds;
-                binds.reserve(e.binds.size());
-                for(const auto& bind: e.binds)
-                    binds.push_back(untranslate_vars(bind, ids));
+                if (auto nonrec = e.to_nonrec())
+                    return Let(NonRec{untranslate_vars(nonrec->rhs, ids)},
+                               untranslate_vars(e.body, ids));
 
-                return Let(std::move(binds), untranslate_vars(e.body, ids));
+                vector<Exp> rhss;
+                rhss.reserve(e.to_rec()->rhss.size());
+                for(const auto& rhs: e.to_rec()->rhss)
+                    rhss.push_back(untranslate_vars(rhs, ids));
+                return Let(Rec(std::move(rhss)), untranslate_vars(e.body, ids));
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
@@ -127,14 +131,6 @@ Core::Exp<> unprepare_for_translation(const Runtime::Exp& E, const map<string, i
 Core::Decls<> graph_normalize(FreshVarSource& source, Core::Decls<> decls);
 Core::Exp<> graph_normalize(FreshVarSource& source, const Core::Exp<>& E);
 
-Core::Exp<> make_let(const Core::Decls<>& decls, const Core::Exp<>& body)
-{
-    if (decls.empty())
-        return body;
-    else
-        return Core::Let<>{decls, body};
-}
-
 bool is_simple_core_arg(const Core::Exp<>& E, bool sub_exp_ok)
 {
     if (E.to_var())
@@ -208,13 +204,20 @@ Core::Exp<> graph_normalize(FreshVarSource& source, const Core::Exp<>& E)
         auto [arg_decls, arg] = graph_normalize_lift(source, A->arg, false);
 
         head_decls.insert(head_decls.end(), arg_decls.begin(), arg_decls.end());
-        return make_let(head_decls, Core::Apply<>{head, arg});
+        return make_rec_let(std::move(head_decls), Core::Exp<>{Core::Apply<>{head, arg}});
     }
     else if (auto L = E.to_let())
     {
-        auto decls = graph_normalize(source, L->decls);
         auto body = graph_normalize(source, L->body);
-        return Core::Let<>{decls, body};
+        if (auto nonrec = L->to_nonrec())
+        {
+            auto decl = nonrec->decl;
+            decl.body = graph_normalize(source, decl.body);
+            return Core::Let<>{Core::NonRec<>{std::move(decl)}, std::move(body)};
+        }
+
+        auto decls = graph_normalize(source, L->to_rec()->decls);
+        return Core::Let<>{Core::Rec<>{std::move(decls)}, std::move(body)};
     }
     else if (auto C = E.to_case())
     {
@@ -223,7 +226,7 @@ Core::Exp<> graph_normalize(FreshVarSource& source, const Core::Exp<>& E)
         for(auto& [_, body]: alts)
             body = graph_normalize(source, body);
 
-        return make_let(decls, Core::Case<>{object, alts});
+        return make_rec_let(std::move(decls), Core::Exp<>{Core::Case<>{object, alts}});
     }
     else if (auto C = E.to_conApp())
     {
@@ -236,7 +239,7 @@ Core::Exp<> graph_normalize(FreshVarSource& source, const Core::Exp<>& E)
             std::ranges::move(decls2, std::back_inserter(decls));
         }
 
-        return make_let(decls, Core::ConApp<>{C->head, args});
+        return make_rec_let(std::move(decls), Core::Exp<>{Core::ConApp<>{C->head, args}});
     }
     else if (auto B = E.to_builtinOp())
     {
@@ -250,7 +253,7 @@ Core::Exp<> graph_normalize(FreshVarSource& source, const Core::Exp<>& E)
             std::ranges::move(decls2, std::back_inserter(decls));
         }
 
-        return make_let(decls, Core::BuiltinOp<>{B->lib_name, B->func_name, B->call_conv, args, B->op});
+        return make_rec_let(std::move(decls), Core::Exp<>{Core::BuiltinOp<>{B->lib_name, B->func_name, B->call_conv, args, B->op}});
     }
     else
         std::abort();
