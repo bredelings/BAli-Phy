@@ -10,6 +10,89 @@ place.
 The filename has the requested `.hs` suffix, but this file is a Markdown plan,
 not a Haskell module.
 
+## Implementation results
+
+The experiments retained four independent changes: generated scanner tables,
+two focused test consolidations, and faster executable identification for the
+compiled-module cache.  Measurements below used `gcc-16-debug-O`, isolated
+writable homes, warm module caches unless stated otherwise, and no more than
+seven concurrent tests.
+
+### Retained changes
+
+- The original scanner took 2.52--2.55 seconds, about 29.0 billion
+  instructions, roughly 373,000 page faults, and about 1.2 GB RSS to compile
+  the two-line `Types/11` test.  Generating full scanner tables with RE/flex
+  `-f` reduced that invocation to about 0.13 seconds before the later cache-key
+  optimization, 844 million instructions, 574 page faults, and 13.5 MB RSS.
+  All 19 lexer tests passed.
+- RE/flex `-F` also passed the lexer tests, but executed about 851 million
+  instructions and produced a 29.5 MB lexer object instead of the `-f`
+  object's 20.7 MB.  Its small wall-time variation was not a material win, so
+  the `-F` experiment was abandoned and no scanner-mode option was retained.
+- Nine positive `Data.Vector` tests whose warm serial total was 3.27 seconds
+  now run as one labelled runtime specification in about 0.40 seconds.  Tests
+  of errors, strictness, and native tree paths remain independent.
+- Thirteen compatible positive `Data.Array` tests now run as one labelled
+  runtime specification.  Its warm time is about 0.40 seconds; 14 error and
+  strictness cases remain independent.
+- The post-scanner profile exposed hashing the approximately 450 MB executable
+  as the new fixed startup cost.  Increasing the fallback read buffer from 4
+  KB to 1 MiB reduced the tiny direct test to about 0.067 seconds.  On Linux,
+  using the loaded ELF GNU build ID reduced it further to about 4.72 ms and
+  27.1 million instructions.  Other platforms retain the full-file hash with
+  the larger binary-mode buffer until an exact native build identity is
+  available.  Cache migration, retention, compression, warm loading, and
+  corrupt-entry recovery tests pass.
+
+### Final suite measurements
+
+The retained stack discovers 313 Haskell tests.  With one prewarmed
+executable-specific cache, the complete set passed at each measured
+concurrency:
+
+| Jobs | Wall time |
+| ---: | --------: |
+| 1 | 109.27 s |
+| 4 | 30.79 s |
+| 7 | 20.70 s |
+
+Seven jobs are therefore retained as the normal upper bound.  The final
+parallel run was not limited by the old scanner or executable hashing: its
+long tail was real runtime work, including `Numeric/LinearAlgebra` at 14.93
+seconds, `Probability/PrimitiveVectorBuiltins` at 6.60 seconds, and
+`SMCInterface` at 6.15 seconds.
+
+The final validation run passed all 514 registered BAli-Phy tests, including
+the required `bali-phy 5d +A 50` test.
+
+### Experiments not retained
+
+- In-process batching was not implemented.  A direct compiler invocation now
+  takes about 5 ms, so even eliminating that entire cost for all 313 tests
+  would save under 2% of the 109-second serial suite.  The loader, compiler,
+  and runtime also own mutable module maps, source roots, unique state,
+  diagnostics, heaps, registers, random state, and native state which would
+  need an explicit reset protocol.  This fails the batching gate before that
+  infrastructure is justified.
+- Local `Main` cache names and cold-cache locking were left alone.
+  `--test-module` intentionally recompiles the source under test, shared
+  modules load successfully from the executable-specific cache, and the warm
+  suite showed no cache-collision failure worth new namespaces or locking.
+- A stop-after-frontend-phase interface was not added.  Expected frontend
+  failures already stop naturally and complete in about 0.04 seconds through
+  Meson after the fixed-cost changes.  A new compiler mode cannot meet the
+  required 5% complete-suite improvement on that population.
+- The 17 remaining tests without `NoImplicitPrelude` were inspected.  Most
+  exercise Unicode syntax or broad Prelude-facing APIs, while three FFI tests
+  are part of separate ongoing compiler work.  Making all dependencies
+  explicit would lengthen those tests without affecting the now-small fixed
+  compiler floor.
+- No batch manifest, cache lock, test-support library, stop-phase enum, or
+  additional Meson suite labels were left dormant.  The full parallel Haskell
+  suite is short enough that suite labels would change feedback selection but
+  not address a remaining work bottleneck.
+
 ## Current evidence
 
 The starting measurements were made with
