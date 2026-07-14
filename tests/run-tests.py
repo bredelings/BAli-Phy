@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 
+import argparse
 import os
 import subprocess
 import re
 import shlex
 import pathlib
+import sys
 import threading
 import traceback
 
@@ -509,107 +511,146 @@ def prog_name(pathname):
     return filename
 
 
-# Parse aggregate-run options without consuming options meant for the program.
-def parse_run_arguments(arguments):
-    if not arguments:
-        raise ValueError("run requires a test root")
+# Require a strictly positive worker count for aggregate test execution.
+def positive_job_count(value):
+    try:
+        jobs = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be an integer")
+    if jobs < 1:
+        raise argparse.ArgumentTypeError("must be at least one")
+    return jobs
 
-    top_test_dir = arguments[0]
-    jobs = 1
-    position = 1
-    while position < len(arguments):
-        argument = arguments[position]
-        if argument == '--':
-            position += 1
-            break
-        if argument in ('-j', '--jobs'):
-            position += 1
-            if position == len(arguments):
-                raise ValueError("{} requires a job count".format(argument))
-            value = arguments[position]
-        elif argument.startswith('-j') and len(argument) > 2:
-            value = argument[2:]
-        elif argument.startswith('--jobs='):
-            value = argument.split('=', 1)[1]
-        else:
-            break
 
-        try:
-            jobs = int(value)
-        except ValueError:
-            raise ValueError("invalid job count '{}'".format(value))
-        if jobs < 1:
-            raise ValueError("job count must be at least one")
-        position += 1
+# Construct the documented command-line interface for test discovery and execution.
+def build_argument_parser():
+    parser = argparse.ArgumentParser(
+        description="Run BAli-Phy directory-based golden tests.",
+        epilog="""examples:
+  %(prog)s run tests/haskell -j7 -- bali-phy --seed=0
+  %(prog)s listdir tests/haskell bali-phy
 
-    progs = arguments[position:]
-    if not progs:
-        raise ValueError("run requires a program after its test root")
-    return top_test_dir, jobs, progs
+The run and test commands require the tested program after `--`.""",
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    commands = parser.add_subparsers(dest='command', required=True)
 
-if __name__ == '__main__':
-#    import json
-    import sys
+    run_parser = commands.add_parser(
+        'run', help="run tests below an explicit root directory",
+        description="Run and check every supported test below ROOT.",
+        usage="%(prog)s [-h] [-j JOBS] ROOT -- PROGRAM [PROGRAM_ARGS...]",
+        epilog="Program arguments must follow the `--` separator.")
+    run_parser.add_argument('root', metavar='ROOT',
+                            help="root directory containing tests")
+    run_parser.add_argument('-j', '--jobs', type=positive_job_count,
+                            default=1, metavar='JOBS',
+                            help="run at most JOBS tests concurrently (default: 1)")
 
-    script_dir = os.path.split(sys.argv[0])[0]
-    script_dir = pathlib.Path(os.path.abspath(script_dir))
+    test_parser = commands.add_parser(
+        'test', help="run tests below the current directory",
+        description="Run and check every supported test below the current directory.",
+        usage="%(prog)s [-h] [-j JOBS] -- PROGRAM [PROGRAM_ARGS...]",
+        epilog="Program arguments must follow the `--` separator.")
+    test_parser.add_argument('-j', '--jobs', type=positive_job_count,
+                             default=1, metavar='JOBS',
+                             help="run at most JOBS tests concurrently (default: 1)")
 
-    data_dir = script_dir / 'data'
+    coverage_parser = commands.add_parser(
+        'coverage', help="print a test-by-program coverage matrix",
+        description="Show which tests below the current directory support each program.")
+    coverage_parser.add_argument(
+        'programs', nargs='+', metavar='PROGRAM',
+        help="program executable name included in the matrix")
 
-    top_test_dir = os.getcwd()
-    jobs = 1
+    list_parser = commands.add_parser(
+        'list', help="list tests below the current directory",
+        description="List tests below the current directory supported by any PROGRAM.")
+    list_parser.add_argument(
+        'programs', nargs='+', metavar='PROGRAM',
+        help="program executable name used for test discovery")
 
-    cmd = sys.argv[1:]
-    if not cmd:
-        print("Please specify which program to test! (e.g. 'bali-phy', 'rb', etc.)")
-        exit(1)
+    listdir_parser = commands.add_parser(
+        'listdir', help="list tests below an explicit root directory",
+        description="List tests below ROOT supported by any PROGRAM.")
+    listdir_parser.add_argument(
+        'root', metavar='ROOT', help="root directory containing tests")
+    listdir_parser.add_argument(
+        'programs', nargs='+', metavar='PROGRAM',
+        help="program executable name used for test discovery")
 
-    if cmd[0] == 'test':
-        progs = cmd[1:]
-    elif cmd[0] == 'coverage':
-        progs = cmd[1:]
-        print_test_matrix(test_matrix_from_dict(coverage_dict(top_test_dir, data_dir, progs),progs))
-        exit(1)
-    elif cmd[0] == 'list':
-        progs = cmd[1:]
-        print_existing_tests(test_matrix_from_dict(coverage_dict(top_test_dir, data_dir, progs),progs))
-        exit(1)
-    elif cmd[0] == 'listdir':
-        top_test_dir = cmd[1]
-        progs = cmd[2:]
-        print_existing_tests(test_matrix_from_dict(coverage_dict(top_test_dir, data_dir, progs),progs))
-        exit(1)
-    elif cmd[0] == 'results':
-        progs = cmd[1:]
-        print_test_matrix(test_matrix_from_dict(results_dict(top_test_dir, data_dir, progs),progs))
-        exit(1)
-    elif cmd[0] == 'run':
-        try:
-            top_test_dir, jobs, progs = parse_run_arguments(cmd[1:])
-        except ValueError as exception:
-            print("ERROR: {}".format(exception), file=sys.stderr)
-            exit(2)
-    else:
-        progs = cmd
+    results_parser = commands.add_parser(
+        'results', help="run tests and print a test-by-program result matrix",
+        description="Run tests below the current directory for each program.")
+    results_parser.add_argument(
+        'programs', nargs='+', metavar='PROGRAM',
+        help="program executable to run")
+    return parser
 
+
+# Separate runner arguments from the tested command at the explicit `--` boundary.
+def split_program_arguments(arguments):
+    try:
+        separator = arguments.index('--')
+    except ValueError:
+        return arguments, []
+    return arguments[:separator], arguments[separator + 1:]
+
+
+# Run one aggregate test command and print its existing summary format.
+def run_tests(top_test_dir, data_dir, progs, jobs):
     method = get_test_method(progs)
-
     print("Running tests for '{}':\n".format(method.name), flush=True)
     if os.path.isabs(progs[0]) and not os.path.exists(progs[0]):
         print("Executable '{}' not found!".format(progs[0]))
-        exit(1)
+        return 1
 
     tester = Tester(top_test_dir, data_dir, method)
-
     try:
         tester.perform_tests(tester.get_test_dirs(), jobs)
     except KeyboardInterrupt:
         print("\nInterrupted.", file=sys.stderr)
-        exit(130)
-    if (len(tester.FAILED_TESTS) > 0):
-        print("FAIL! ({} unexpected failures, {} expected failures, {} tests total)".format(len(tester.FAILED_TESTS), len(tester.XFAILED_TESTS), tester.NUM_TESTS))
-        exit(1)
-    else:
-        print("SUCCESS! ({} unexpected failures, {} expected failures, {} tests total)".format(len(tester.FAILED_TESTS), len(tester.XFAILED_TESTS), tester.NUM_TESTS))
+        return 130
 
-        exit(0)
+    if tester.FAILED_TESTS:
+        print("FAIL! ({} unexpected failures, {} expected failures, {} tests total)".format(len(tester.FAILED_TESTS), len(tester.XFAILED_TESTS), tester.NUM_TESTS))
+        return 1
+    print("SUCCESS! ({} unexpected failures, {} expected failures, {} tests total)".format(len(tester.FAILED_TESTS), len(tester.XFAILED_TESTS), tester.NUM_TESTS))
+    return 0
+
+
+# Parse a command, dispatch to the existing test operations, and return its status.
+def main(arguments=None):
+    if arguments is None:
+        arguments = sys.argv[1:]
+
+    parser = build_argument_parser()
+    runner_arguments, progs = split_program_arguments(arguments)
+    options = parser.parse_args(runner_arguments)
+    script_dir = pathlib.Path(__file__).resolve().parent
+    data_dir = script_dir / 'data'
+
+    if options.command in ('run', 'test'):
+        if not progs:
+            parser.error("{} requires `-- PROGRAM [PROGRAM_ARGS...]`".format(options.command))
+        top_test_dir = options.root if options.command == 'run' else os.getcwd()
+        return run_tests(top_test_dir, data_dir, progs, options.jobs)
+
+    if progs:
+        parser.error("the `--` program separator is only valid for run and test")
+    top_test_dir = options.root if options.command == 'listdir' else os.getcwd()
+    if options.command == 'coverage':
+        print_test_matrix(test_matrix_from_dict(
+            coverage_dict(top_test_dir, data_dir, options.programs),
+            options.programs))
+    elif options.command in ('list', 'listdir'):
+        print_existing_tests(test_matrix_from_dict(
+            coverage_dict(top_test_dir, data_dir, options.programs),
+            options.programs))
+    else:
+        print_test_matrix(test_matrix_from_dict(
+            results_dict(top_test_dir, data_dir, options.programs),
+            options.programs))
+    return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

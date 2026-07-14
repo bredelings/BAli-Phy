@@ -196,7 +196,7 @@ foreach test: test_list
        python,
        timeout: 300,
        workdir: test_dir,
-       args:[run_tests, 'run', test, wrapper, baliphy.full_path(), packagepath, '--seed', randomseed])
+       args:[run_tests, 'run', test, '--', wrapper, baliphy.full_path(), packagepath, '--seed', randomseed])
 endforeach
 
 # Install non-executable files
