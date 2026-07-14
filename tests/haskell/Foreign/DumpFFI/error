@@ -1,0 +1,36 @@
+  primitiveRaw
+  Int -> Double
+  0: Int
+     slot 0: Int
+  Haskell: Double
+  raw: Double
+  pairInputRaw
+  0: (Int, Double)
+     slots 0..1: Int, Double
+  nestedPairInputRaw
+  0: ((Int, Double), Char)
+     slots 0..2: Int, Double, Char
+  pairOutputRaw
+  Int -> EPair Double Int
+  Haskell: (Double, Int)
+  raw: EPair Double Int
+  vectorRaw
+  Int -> Int -> NativeVector Int -> NativeVector Double
+  0: Vector Int
+     slots 0..2: Int, Int, NativeVector Int
+  Haskell: Vector Double
+  raw: NativeVector Double
+  ioRaw
+     slot 1: Int (RealWorld)
+  mixedRaw
+  Int -> Int -> NativeVector Int -> Double -> Int -> Int -> NativeVector Double
+  0: Vector Int
+     slots 0..2: Int, Int, NativeVector Int
+  1: (Double, Int)
+     slots 3..4: Double, Int
+     slot 5: Int (RealWorld)
+  ordinaryRaw
+  raw slot 0: Int
+  raw slot 1: Int
+  hiddenRaw
+  HiddenRawImport

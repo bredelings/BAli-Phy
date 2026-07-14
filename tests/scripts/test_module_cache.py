@@ -36,6 +36,20 @@ def run_program(wrapper, executable, fixture, package_path, home):
     return result.stdout + result.stderr
 
 
+# Load Main through --test-module and require --dump-ffi to read the same
+# durable metadata from the warm compiled-module cache.
+def run_ffi_dump(wrapper, executable, fixture, package_path, home):
+    env = os.environ.copy()
+    env["HOME"] = str(home)
+    command = wrapper + [executable, "--test-module", "Main.hs", "--dump-ffi",
+                         "-V", package_path]
+    result = subprocess.run(command, cwd=fixture, env=env,
+                            text=True, capture_output=True)
+    if result.returncode != 0:
+        raise RuntimeError(result.stdout + result.stderr)
+    return result.stdout + result.stderr
+
+
 # Return only executable-keyed cache directories managed by the loader.
 def managed_caches(cache_root):
     cache_key = re.compile(r"^[0-9a-f]{16}$")
@@ -118,6 +132,25 @@ def main():
             raise AssertionError("the warm run did not load Main")
         if "[ Compiling Main ]" in second_log:
             raise AssertionError("the warm run recompiled Main")
+
+        ffi_log = run_ffi_dump(args.wrapper, args.executable, args.fixture,
+                               args.package_path, home)
+        if "[ Loading Main ]" not in ffi_log:
+            raise AssertionError("--dump-ffi did not load Main from cache")
+        if "[ Compiling Main ]" in ffi_log:
+            raise AssertionError("--dump-ffi unexpectedly recompiled Main")
+        for expected in [
+                "cachedSubstring$raw",
+                "Vector:builtin_function_cppSubString",
+                "String -> Int -> Int -> String",
+                "CPPString -> Int -> Int -> CPPString",
+                "slot 0: CPPString",
+                "slot 1: Int",
+                "slot 2: Int",
+                "raw: CPPString"]:
+            if expected not in ffi_log:
+                raise AssertionError(
+                    f"cached --dump-ffi report omitted {expected!r}:\n{ffi_log}")
 
         compressed_module = main_module.read_bytes()
         main_module.write_bytes(compressed_module[:-1])

@@ -420,16 +420,91 @@ struct KindSigDecl
     KindSigDecl(const std::vector<LTypeCon>& tcs, const Kind& k): tycons(tcs), kind(k) {}
 };
 
+struct ForeignABISlot
+{
+    int index = -1;
+    ::Type type;
+    std::optional<std::string> role;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(index, type, role);
+    }
+};
+
+struct ForeignArgumentGroup
+{
+    int public_argument_index = -1;
+    ::Type haskell_type;
+    std::vector<ForeignABISlot> slots;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(public_argument_index, haskell_type, slots);
+    }
+};
+
+struct ForeignABIResult
+{
+    ::Type haskell_type;
+    ::Type abi_type;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(haskell_type, abi_type);
+    }
+};
+
+struct ForeignABILayout
+{
+    std::vector<ForeignArgumentGroup> arguments;
+    std::optional<ForeignABISlot> world_token;
+    ForeignABIResult result;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(arguments, world_token, result);
+    }
+};
+
 struct ForeignTypeInfo
 {
     ::Type haskell_type;
     ::Type foreign_type;
     ::Type abi_type;
+    std::optional<::Type> public_type;
+    std::optional<ForeignABILayout> layout;
 
     // Ordinary bpcall/ecall imports returning IO need the existing makeIO
     // wrapper.  For trcall, the translated raw type already contains its
     // world argument and this remains false.
     bool needs_io_wrapper = false;
+};
+
+struct CompiledForeignInfo
+{
+    std::string public_name;
+    std::string raw_name;
+    std::string plugin_name;
+    std::string symbol_name;
+    std::string call_conv;
+
+    ::Type haskell_type;
+    ::Type foreign_type;
+    ::Type abi_type;
+
+    std::optional<ForeignABILayout> layout;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(public_name, raw_name, plugin_name, symbol_name, call_conv);
+        ar(haskell_type, foreign_type, abi_type, layout);
+    }
 };
 
 struct ForeignDecl

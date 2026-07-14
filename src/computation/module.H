@@ -290,9 +290,9 @@ class CompiledModule
 
     std::shared_ptr<FreshVarState> fresh_var_state_;
 
-    // Milestone-A reporting data.  The requested --test-module target is
-    // recompiled, so durable cache serialization is deferred to --dump-ffi.
-    std::vector<Hs::ForeignDecl> foreign_decls_;
+    // Compact source and ABI metadata retained in compiled-module caches for
+    // diagnostics such as --dump-ffi.
+    std::vector<Hs::CompiledForeignInfo> foreign_infos_;
 
 public:
 
@@ -327,11 +327,11 @@ public:
 
     const EqInstanceEnv& local_eq_instances() const {return local_eq_instances_;}
 
-    const std::vector<Hs::ForeignDecl>& foreign_decls() const {return foreign_decls_;}
+    const std::vector<Hs::CompiledForeignInfo>& foreign_infos() const {return foreign_infos_;}
 
-    void set_foreign_decls(std::vector<Hs::ForeignDecl> decls)
+    void set_foreign_infos(std::vector<Hs::CompiledForeignInfo> infos)
     {
-        foreign_decls_ = std::move(decls);
+        foreign_infos_ = std::move(infos);
     }
 
     const std::map<std::string, const_symbol_ptr>& exported_symbols() const {return exported_symbols_;}
@@ -363,7 +363,7 @@ public:
 	ar( modid, dependencies_, prepared_value_decls, symbols, types, exported_symbols_, exported_fields_, exported_types_ );
         ar( aliases, field_aliases, type_aliases );
 	ar( language_extensions_, local_instances_, local_eq_instances_, fresh_var_state_ );
-	ar( all_inputs_hash_ );
+	ar( all_inputs_hash_, foreign_infos_ );
 
 	// Maybe we should write the SHA at both beginning and end and then check them when we read it back.
     }

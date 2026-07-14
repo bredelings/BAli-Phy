@@ -666,6 +666,11 @@ public:
 
     Type normalize_foreign_type(const Type&);
 
+    std::optional<Type> direct_raw_import_public_type(const Type&);
+
+    std::optional<Hs::ForeignABILayout>
+    make_foreign_abi_layout(const Type& public_type, const Type& abi_type);
+
     void annotate_foreign_declarations(std::vector<Hs::ForeignDecl>&);
 
     bool check_family_instance_association(const Hs::LTypeCon& family_con,

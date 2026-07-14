@@ -104,6 +104,105 @@ using std::optional;
 
 using std::shared_ptr;
 
+static string tidy_type(const Type& type)
+{
+    TidyState tidy_state;
+    return tidy_state.print(type);
+}
+
+static string ffi_cpp_symbol(const Hs::CompiledForeignInfo& info)
+{
+    string prefix;
+    if (info.call_conv == "ecall")
+        prefix = "simple_function_";
+    else
+        prefix = "builtin_function_";
+    return info.plugin_name + ":" + prefix + info.symbol_name;
+}
+
+static void print_ffi_slots(ostream& out,
+                            const vector<Hs::ForeignABISlot>& slots)
+{
+    if (slots.empty())
+    {
+        out<<"     slots: (none)\n";
+        return;
+    }
+
+    if (slots.size() == 1)
+        out<<"     slot "<<slots.front().index<<": ";
+    else
+        out<<"     slots "<<slots.front().index<<".."
+           <<slots.back().index<<": ";
+
+    for(int i = 0; i < slots.size(); ++i)
+    {
+        if (i) out<<", ";
+        out<<tidy_type(slots[i].type);
+        if (slots[i].role) out<<" ("<<*slots[i].role<<")";
+    }
+    out<<"\n";
+}
+
+static void dump_ffi_info(ostream& out,
+                          const Hs::CompiledForeignInfo& info)
+{
+    out<<"Haskell name:\n"
+       <<"  "<<info.public_name<<"\n\n";
+
+    if (info.raw_name != info.public_name)
+        out<<"Raw Haskell name:\n"
+           <<"  "<<info.raw_name<<"\n\n";
+
+    out<<"C++ symbol:\n"
+       <<"  "<<ffi_cpp_symbol(info)<<"\n\n"
+       <<"Calling convention:\n"
+       <<"  "<<info.call_conv<<"\n\n"
+       <<"Public type:\n"
+       <<"  "<<tidy_type(info.haskell_type)<<"\n\n"
+       <<"Source raw type:\n"
+       <<"  "<<tidy_type(info.foreign_type)<<"\n\n"
+       <<"Normalized ABI:\n"
+       <<"  "<<tidy_type(info.abi_type)<<"\n\n"
+       <<"Arity:\n"
+       <<"  "<<gen_type_arity(info.abi_type)<<"\n\n"
+       <<"Arguments:\n";
+
+    if (info.layout)
+    {
+        if (info.layout->arguments.empty()) out<<"  (none)\n";
+        for(const auto& argument: info.layout->arguments)
+        {
+            out<<"  "<<argument.public_argument_index<<": "
+               <<tidy_type(argument.haskell_type)<<"\n";
+            print_ffi_slots(out, argument.slots);
+        }
+
+        if (info.layout->world_token)
+            out<<"\n  IO token:\n"
+               <<"     slot "<<info.layout->world_token->index<<": "
+               <<tidy_type(info.layout->world_token->type)
+               <<" (RealWorld)\n";
+
+        out<<"\nResult:\n"
+           <<"  Haskell: "<<tidy_type(info.layout->result.haskell_type)<<"\n"
+           <<"  raw: "<<tidy_type(info.layout->result.abi_type)<<"\n";
+    }
+    else
+    {
+        auto [raw_arguments, raw_result] = gen_arg_result_types(info.abi_type);
+        if (raw_arguments.empty()) out<<"  (none)\n";
+        for(int index = 0; index < raw_arguments.size(); ++index)
+            out<<"  raw slot "<<index<<": "
+               <<tidy_type(raw_arguments[index])<<"\n";
+
+        out<<"\nResult:\n"
+           <<"  raw: "<<tidy_type(raw_result)<<"\n";
+    }
+
+    out<<"\n";
+}
+
 /* 
  * 1. Add a PRANK-like initial algorithm.
  * 2. Add some kind of constraint.
@@ -393,7 +492,7 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
                 L->recompile_modules.insert(modid);
         }
     }
-    else if (args.count("test-module"))
+    else if (args.count("test-module") and not args.count("dump-ffi"))
     {
         L->recompile_modules.insert(args.at("test-module").as<string>());
     }
@@ -675,22 +774,28 @@ int main(int argc,char* argv[])
 
             Program P(L,{M});
             auto M2 = P.get_module(M->name);
-            for(auto& [name,symbol]: M2->exported_symbols())
+            if (args.count("dump-ffi"))
             {
-                TidyState tidy_state;
-                std::cerr<<name<<" :: "<<tidy_state.print(symbol->type)<<"\n\n";
+                for(const auto& info: M2->foreign_infos())
+                    dump_ffi_info(std::cerr, info);
             }
-            for(const auto& declaration: M2->foreign_decls())
+            else
             {
-                if (not declaration.foreign_info) continue;
+                for(auto& [name,symbol]: M2->exported_symbols())
+                    std::cerr<<name<<" :: "<<tidy_type(symbol->type)<<"\n\n";
 
-                TidyState tidy_state;
-                auto name = get_unqualified_name(unloc(declaration.function).name);
-                std::cerr<<name<<"\n"
-                         <<"  Haskell     :: "
-                         <<tidy_state.print(declaration.foreign_info->haskell_type)<<"\n"
-                         <<"  foreign ABI :: "
-                         <<tidy_state.print(declaration.foreign_info->abi_type)<<"\n\n";
+                for(const auto& info: M2->foreign_infos())
+                {
+                    const auto& source_type =
+                        info.call_conv == "trcall"
+                        ? info.haskell_type
+                        : info.foreign_type;
+                    std::cerr<<info.public_name<<"\n"
+                             <<"  Haskell     :: "
+                             <<tidy_type(source_type)<<"\n"
+                             <<"  foreign ABI :: "
+                             <<tidy_type(info.abi_type)<<"\n\n";
+                }
             }
 
             exit(0);

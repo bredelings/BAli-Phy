@@ -3,6 +3,7 @@
 #include <tuple>
 #include <fstream>
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <limits>
 #include <string_view>
@@ -719,6 +720,11 @@ std::string xxhash64_hex(const std::string& s) {
     return ss.str();
 }
 
+// This is independent of the executable-keyed cache directory: it makes the
+// archive self-describing and prevents an older reader from silently treating
+// newly appended compiled-module metadata as a valid artifact.
+static constexpr std::uint32_t compiled_module_cache_format = 2;
+
 std::string extract_xxhash(std::string& data)
 {
     // 1. Check that we have 16 chars followed by a newline.
@@ -797,6 +803,13 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
 
             std::shared_ptr<CompiledModule> M;
 
+            std::uint32_t format = 0;
+            archive(format);
+            if (format != compiled_module_cache_format)
+                throw myexception()<<"compiled module cache format "<<format
+                                   <<" is not supported (expected "
+                                   <<compiled_module_cache_format<<")";
+
             std::string hash;
             archive(hash);
 
@@ -862,6 +875,7 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             std::ostringstream buffer;
             {
                 cereal::BinaryOutputArchive archive( buffer );
+                archive(compiled_module_cache_format);
                 archive(CM->all_inputs_hash());
                 archive(CM);
             }
@@ -1313,7 +1327,27 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
 
     auto CM = std::make_shared<CompiledModule>(MM);
 
-    CM->set_foreign_decls(tc_result.foreign_decls);
+    std::vector<Hs::CompiledForeignInfo> foreign_infos;
+    for(const auto& declaration: tc_result.foreign_decls)
+    {
+        if (not declaration.foreign_info) continue;
+
+        const auto& checked = *declaration.foreign_info;
+        Hs::CompiledForeignInfo info;
+        info.public_name = get_unqualified_name(unloc(declaration.function).name);
+        info.raw_name = info.public_name;
+        info.plugin_name = declaration.plugin_name;
+        info.symbol_name = declaration.symbol_name;
+        info.call_conv = unloc(declaration.call_conv);
+        if (info.call_conv == "trcall") info.raw_name += "$raw";
+
+        info.haskell_type = checked.public_type.value_or(checked.haskell_type);
+        info.foreign_type = checked.foreign_type;
+        info.abi_type = checked.abi_type;
+        info.layout = checked.layout;
+        foreign_infos.push_back(std::move(info));
+    }
+    CM->set_foreign_infos(std::move(foreign_infos));
 
     CM->finish_value_decls(value_decls);
 

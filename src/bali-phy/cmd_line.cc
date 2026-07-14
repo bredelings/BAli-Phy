@@ -303,6 +303,7 @@ po::options_description developer_options()
     options_description developer("Developer options");
     developer.add_options()
 	("test-module",value<string>(),"Parse and optimize the given module")
+	("dump-ffi","Show grouped foreign-import ABI information")
 	("run,r",value<vector<string>>()->multitoken(),"Run the given module")
 	("type",value<string>(),"Get the type of a qualified haskell function")
 	("partition-weights",value<string>(),"File containing tree with partition weights")
@@ -433,6 +434,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     }
 
     load_bali_phy_rc(args,all);
+
+    if (args.count("dump-ffi") and not args.count("test-module"))
+        throw myexception()<<"--dump-ffi requires --test-module";
 
     std::set<string> commands;
     for(auto word : {"align", "model", "print", "test-module", "run", "type"})

@@ -1,8 +1,20 @@
-pairIORaw
-  Haskell     :: RawImport PairIO
-  foreign ABI :: Int -> Double -> Int -> EPair Int Double
-vectorIORaw
-  Haskell     :: RawImport VectorIO
-  foreign ABI :: Int -> Int -> NativeVector Int -> Int -> NativeVector Double
-vectorIOSugar
-  Haskell     :: VectorIO
+  pairIORaw
+  Pair:builtin_function_c_pair
+  RawImport PairIO
+  Int -> Double -> Int -> EPair Int Double
+  0: (Int, Double)
+     slots 0..1: Int, Double
+     slot 2: Int (RealWorld)
+  Haskell: (Int, Double)
+  raw: EPair Int Double
+  vectorIORaw
+  vectorIOSugar
+  vectorIOSugar$raw
+  NativeVector:builtin_function_vectorKonstNative
+  RawImport VectorIO
+  Int -> Int -> NativeVector Int -> Int -> NativeVector Double
+  0: Vector Int
+     slots 0..2: Int, Int, NativeVector Int
+     slot 3: Int (RealWorld)
+  Haskell: Vector Double
+  raw: NativeVector Double

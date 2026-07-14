@@ -1507,6 +1507,100 @@ Type TypeChecker::normalize_foreign_type(const Type& type)
     return solver.normalize_declared_type(type);
 }
 
+optional<Type> TypeChecker::direct_raw_import_public_type(const Type& type)
+{
+    auto [type_vars, constraints, monotype] = peel_top_gen(type);
+    auto [head, args] = decompose_type_apps(monotype);
+    auto type_con = head.to<TypeCon>();
+    if (not type_con or
+        type_con->name != "Compiler.FFI.Import.RawImport" or
+        args.size() != 1)
+        return {};
+
+    return add_forall_vars(type_vars, add_constraints(constraints, args.front()));
+}
+
+optional<Hs::ForeignABILayout>
+TypeChecker::make_foreign_abi_layout(const Type& public_type,
+                                     const Type& abi_type)
+{
+    auto normalized_public_type = normalize_foreign_type(public_type);
+    auto [type_vars, constraints, public_monotype] =
+        peel_top_gen(normalized_public_type);
+    auto [public_arguments, public_result] =
+        arg_result_types(public_monotype);
+
+    const Type tail = fresh_rigid_type_var("ffi_layout_tail", kind_type());
+    const TypeCon input_family("Compiler.FFI.Import.CInputType");
+    const TypeCon output_family("Compiler.FFI.Import.COutputType");
+
+    Hs::ForeignABILayout layout;
+    int next_slot = 0;
+
+    for(int argument_index = 0;
+        argument_index < public_arguments.size();
+        ++argument_index)
+    {
+        const auto& public_argument = public_arguments[argument_index];
+        auto input_application =
+            type_apply(input_family, {public_argument, tail});
+        auto normalized_input = normalize_foreign_type(input_application);
+        auto [slot_types, input_tail] = arg_result_types(normalized_input);
+
+        // A stuck associated family means the source type did not expose a
+        // usable directional translation.  Keep the flat ABI report rather
+        // than guessing a grouping.
+        if (not same_type(input_tail, tail)) return {};
+
+        Hs::ForeignArgumentGroup group;
+        group.public_argument_index = argument_index;
+        group.haskell_type = public_argument;
+        for(const auto& slot_type: slot_types)
+            group.slots.push_back({next_slot++, slot_type, {}});
+        layout.arguments.push_back(std::move(group));
+    }
+
+    auto output_application = type_apply(output_family, {public_result});
+    auto normalized_output = normalize_foreign_type(output_application);
+    auto [output_slots, raw_result] = arg_result_types(normalized_output);
+
+    auto haskell_result = public_result;
+    if (auto io_result = is_IO_type(public_result))
+    {
+        if (output_slots.size() != 1)
+            throw myexception()<<"COutputType for an IO result produced "
+                               <<output_slots.size()<<" world-token slots";
+        layout.world_token = Hs::ForeignABISlot{
+            next_slot++, output_slots.front(), {}};
+        haskell_result = *io_result;
+    }
+    else if (not output_slots.empty())
+        throw myexception()<<"COutputType for a pure result produced "
+                           <<output_slots.size()<<" operation input slots";
+
+    layout.result = {haskell_result, raw_result};
+
+    vector<Type> reconstructed_slots;
+    for(const auto& group: layout.arguments)
+        for(const auto& slot: group.slots)
+            reconstructed_slots.push_back(slot.type);
+    if (layout.world_token)
+        reconstructed_slots.push_back(layout.world_token->type);
+
+    auto reconstructed_monotype =
+        function_type(reconstructed_slots, layout.result.abi_type);
+    auto reconstructed_type = add_forall_vars(
+        type_vars, add_constraints(constraints, reconstructed_monotype));
+
+    if (not same_type(reconstructed_type, abi_type))
+        throw myexception()<<"Internal FFI ABI layout mismatch: grouped type '"
+                           <<show_type_plain(reconstructed_type)
+                           <<"' does not equal normalized ABI type '"
+                           <<show_type_plain(abi_type)<<"'";
+
+    return layout;
+}
+
 void TypeChecker::annotate_foreign_declarations(vector<Hs::ForeignDecl>& declarations)
 {
     for(auto& declaration: declarations)
@@ -1526,6 +1620,11 @@ void TypeChecker::annotate_foreign_declarations(vector<Hs::ForeignDecl>& declara
         Hs::ForeignTypeInfo info;
         info.haskell_type = public_symbol->type;
         info.foreign_type = foreign_symbol->type;
+
+        if (unloc(declaration.call_conv) == "trcall")
+            info.public_type = info.haskell_type;
+        else
+            info.public_type = direct_raw_import_public_type(info.foreign_type);
 
         try
         {
@@ -1557,6 +1656,10 @@ void TypeChecker::annotate_foreign_declarations(vector<Hs::ForeignDecl>& declara
                                    <<show_type_plain(abi_result)<<"' at the operation result");
                 continue;
             }
+
+            if (info.public_type)
+                info.layout = make_foreign_abi_layout(*info.public_type,
+                                                      info.abi_type);
 
             declaration.foreign_info = std::move(info);
         }
