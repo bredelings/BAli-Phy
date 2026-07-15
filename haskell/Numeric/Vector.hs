@@ -3,14 +3,17 @@ module Numeric.Vector () where
 import Compiler.Floating
 import Numeric.LinearAlgebra.Data
 
-foreign import bpcall "Matrix:vectorFloatingUnary" vectorFloatingUnaryNative :: Int -> NativeVector Double -> NativeVector Double
-foreign import bpcall "Matrix:vectorFloatingBinary" vectorFloatingBinaryNative :: Int -> NativeVector Double -> NativeVector Double -> NativeVector Double
+foreign import trcall "Matrix:vectorFloatingUnary" vectorFloatingUnaryNative :: Int -> Vector Double -> Vector Double
+foreign import trcall "Matrix:vectorFloatingBinary" vectorFloatingBinaryNative :: Int -> Vector Double -> Vector Double -> Vector Double
 
 vectorFloatingUnary :: Int -> Vector Double -> Vector Double
-vectorFloatingUnary operation = unaryVector (vectorFloatingUnaryNative operation)
+vectorFloatingUnary operation values =
+    overrideVectorSize (vectorSize values) (vectorFloatingUnaryNative operation values)
 
 vectorFloatingBinary :: Int -> Vector Double -> Vector Double -> Vector Double
-vectorFloatingBinary operation = binaryVector (vectorFloatingBinaryNative operation)
+vectorFloatingBinary operation left right =
+    overrideVectorSize (max (vectorSize left) (vectorSize right))
+        (vectorFloatingBinaryNative operation left right)
 
 instance Show (Vector a) where
     show value = unpack_cpp_string (showNumericVectorNative (nativeVector value))
