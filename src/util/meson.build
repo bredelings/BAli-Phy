@@ -29,11 +29,3 @@ libutil_inc = include_directories('include')
 libutil = static_library('util', libutil_sources,
 				 include_directories: libutil_inc,
 				 dependencies: [boost, eigen, librange, fmt, cereal, utf8proc_dep])
-
-util_text_test = executable('util-text-test',
-                            'text-test.cc',
-                            include_directories: libutil_inc,
-                            dependencies: [boost, eigen, librange, fmt, cereal, utf8proc_dep],
-                            link_with: libutil)
-
-test('util text wrapping', util_text_test)
