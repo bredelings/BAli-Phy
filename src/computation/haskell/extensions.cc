@@ -134,13 +134,60 @@ set<LangExt> ghc2021_extensions =
 //    LangExt::TypeSynonymInstances
 };
 
-set<LangExt> default_extensions =
+set<LangExt> ghc2024_extensions =
 {
     LangExt::ImplicitPrelude,
-    LangExt::ImportQualifiedPost,
+    LangExt::StarIsType,
+    LangExt::MonomorphismRestriction,
     LangExt::TraditionalRecordSyntax,
-    LangExt::FieldSelectors
+    LangExt::EmptyDataDecls,
+    LangExt::ForeignFunctionInterface,
+    LangExt::PatternGuards,
+    LangExt::DoAndIfThenElse,
+    LangExt::FieldSelectors,
+    LangExt::RelaxedPolyRec,
+    LangExt::BangPatterns,
+    LangExt::BinaryLiterals,
+    LangExt::ConstrainedClassMethods,
+    LangExt::ConstraintKinds,
+    LangExt::DataKinds,
+    LangExt::DeriveDataTypeable,
+    LangExt::DeriveFoldable,
+    LangExt::DeriveFunctor,
+    LangExt::DeriveGeneric,
+    LangExt::DeriveLift,
+    LangExt::DeriveTraversable,
+    LangExt::EmptyCase,
+    LangExt::EmptyDataDeriving,
+    LangExt::ExistentialQuantification,
+    LangExt::ExplicitForall,
+    LangExt::FlexibleContexts,
+    LangExt::FlexibleInstances,
+    LangExt::GADTSyntax,
+    LangExt::GADTs,
+    LangExt::GeneralizedNewtypeDeriving,
+    LangExt::HexFloatLiterals,
+    LangExt::ImportQualifiedPost,
+    LangExt::InstanceSigs,
+    LangExt::KindSignatures,
+    LangExt::MonoLocalBinds,
+    LangExt::MultiParamTypeClasses,
+    LangExt::NamedFieldPuns,
+    LangExt::NamedWildCards,
+    LangExt::NumericUnderscores,
+    LangExt::DisambiguateRecordFields,
+    LangExt::PolyKinds,
+    LangExt::Postfixoperators,
+    LangExt::RankNTypes,
+    LangExt::ScopedTypeVariables,
+    LangExt::StandaloneDeriving,
+    LangExt::StandaloneKindSignatures,
+    LangExt::TypeApplications,
+    LangExt::TypeOperators,
+    LangExt::TypeSynonymInstances
 };
+
+set<LangExt> default_extensions = ghc2024_extensions;
 
 bool LanguageExtensions::has_extension(LangExt opt) const
 {

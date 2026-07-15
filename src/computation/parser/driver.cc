@@ -386,7 +386,7 @@ driver::driver (const LanguageExtensions& exts)
         // is implemented and reserved here too.
     }
 
-    if (not lang_exts.has_extension(LangExt::StarIsType))
+    if (lang_exts.has_extension(LangExt::StarIsType))
     {
         reserved_symbols.insert({"*", parser::token::TOK_STAR});
         if (lang_exts.has_extension(LangExt::UnicodeSyntax))
