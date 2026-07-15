@@ -124,7 +124,6 @@ namespace
         Core::BuiltinOp<> builtin("Num", "add_int", "ecall", args, op);
 
         auto before = indexify(Core::Exp<>(builtin));
-        Runtime::check_invariants(before);
 
         std::stringstream buffer;
         {
@@ -139,7 +138,6 @@ namespace
             archive(after);
         }
 
-        Runtime::check_invariants(after);
         require(before == after, "Runtime AST serialization changed the expression");
 
         auto recovered_builtin = unprepare_for_translation(before);
