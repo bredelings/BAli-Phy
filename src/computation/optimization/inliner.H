@@ -138,8 +138,7 @@ ExprSize size_of_expr(const Module& m, const inliner_options& opts, int max_size
 
 bool is_WHNF(const Occ::Exp& E);
 
-UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options& opts, const Occ::Exp& e);
-
-CoreUnfolding make_core_unfolding(const Module& m, const inliner_options& opts, const Occ::Exp& e);
+CoreUnfolding make_core_unfolding(const Module& m, const inliner_options& opts,
+                                  const Core::id_info& binder_info, const Occ::Exp& e);
 
 #endif

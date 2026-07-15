@@ -37,7 +37,7 @@ int manifest_arity(const Occ::Exp& expression);
 // Add only the missing lambdas justified by a safe RHS arity.
 Occ::Exp eta_expand(FreshVarSource& fresh, Occ::Exp expression, const arity_type& arity);
 
-// Report whether evaluating an expression to weak head normal form performs no work.
-bool is_work_free(const Occ::Exp& expression);
+// Report whether resolved id arities prove that evaluating an expression performs no work.
+bool is_work_free(const Occ::Exp& expression, const id_info_lookup& lookup);
 
 #endif

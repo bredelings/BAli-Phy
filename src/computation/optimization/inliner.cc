@@ -638,7 +638,8 @@ CallCtxt interesting_call_context(const inline_context& context)
         return CallCtxt::BoringCtxt;
 }
 
-optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding, const occurrence_info& occur, const inline_context& context)
+optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding, const occurrence_info& occur,
+                                                     const in_scope_set& bound_vars, const inline_context& context)
 {
     auto [lone_variable, arg_infos, call_context] = continuation_args(context);
 
@@ -648,6 +649,9 @@ optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding,
     if (not cu) return {};
 
     auto& rhs = cu->expr;
+    const id_info_lookup lookup = [this, &bound_vars](const Occ::Var& variable) {
+        return get_id_info(variable, bound_vars);
+    };
 
     // If always_unfold
     if (cu->always_unfold)
@@ -675,7 +679,7 @@ optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding,
         // QUESTION: when is uw->boring_ok=true?
 
         // UnfoldWhen should only happen for lambdas and trivial expressions.
-        assert(is_work_free(rhs));
+        assert(is_work_free(rhs, lookup));
 
         int n_args = arg_infos.size();
 
@@ -695,7 +699,7 @@ optional<Occ::Exp> SimplifierState::call_site_inline(const Unfolding& unfolding,
     {
         // QUESTION: If the var is NotInLambda, and n_br < (say) 100, then should we still require work_free?
 
-        bool is_wf = is_work_free(rhs);
+        bool is_wf = is_work_free(rhs, lookup);
 
         bool some_benefit = calc_some_benefit(arg_infos, ui->arg_discounts.size(), false);
 
@@ -882,10 +886,11 @@ bool unconditionally_inline(const Occ::Exp& e, int arity, int size)
  */
 
 
-UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options& opts, const Occ::Exp& e)
+UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options& opts,
+                                          const Core::id_info& binder_info, const Occ::Exp& e)
 {
     auto [top_binders,body] = compute_top_binders(e);
-    int n_binders = top_binders.size();
+    int id_arity = binder_info.arity;
     int max_size = opts.creation_threshold;
     auto size = size_of_expr(m, opts, max_size, top_binders, body);
 
@@ -896,8 +901,8 @@ UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options
     // (i) e is a FUNCTION and the body is smaller than the call
     // (ii) e is TRIVIAL
     // In both cases, e should be work-free.
-    if (unconditionally_inline(e, n_binders, size.size))
-        return UnfoldWhen(true, true, n_binders);
+    if (unconditionally_inline(e, id_arity, size.size))
+        return UnfoldWhen(true, true, id_arity);
     
     // If this is a top bottoming expression return UnfoldNever()
     else
@@ -921,7 +926,8 @@ UnfoldingGuidance make_unfolding_guidance(const Module& m, const inliner_options
     }
 }
 
-CoreUnfolding make_core_unfolding(const Module& m, const inliner_options& opts, const Occ::Exp& e)
+CoreUnfolding make_core_unfolding(const Module& m, const inliner_options& opts,
+                                  const Core::id_info& binder_info, const Occ::Exp& e)
 {
-    return CoreUnfolding(e, make_unfolding_guidance(m, opts,e));
+    return CoreUnfolding(e, make_unfolding_guidance(m, opts, binder_info, e));
 }

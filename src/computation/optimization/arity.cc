@@ -106,6 +106,16 @@ arity_type add_call_arity(arity_type arity, int call_arity)
 }
 
 arity_type expression_arity(const Occ::Exp&, const arity_environment&, const id_info_lookup&);
+bool is_work_free_in(const Occ::Exp&, const arity_environment&, const id_info_lookup&, int);
+
+// Resolve a local arity signature before falling back to canonical id metadata.
+int variable_arity(const Occ::Var& variable, const arity_environment& environment,
+                   const id_info_lookup& lookup)
+{
+    if (auto local = environment.find(variable); local != environment.end())
+        return local->second.arity();
+    return lookup(variable).arity;
+}
 
 // Remove case-pattern binders before analyzing one alternative body.
 arity_type alternative_arity(const Occ::Alt& alternative, const arity_environment& environment,
@@ -127,15 +137,17 @@ arity_type let_arity(const Occ::Let& let, const arity_environment& environment,
     {
         auto rhs_arity = safe_arity(expression_arity(nonrec->decl.body, environment, lookup));
         body_environment[nonrec->decl.x] = std::move(rhs_arity);
-        if (not is_work_free(nonrec->decl.body)) binding_cost = arity_cost::expensive;
+        if (not is_work_free_in(nonrec->decl.body, environment, lookup, 0))
+            binding_cost = arity_cost::expensive;
     }
     else
     {
         for (const auto& [binder, rhs]: let.to_rec()->decls)
-        {
             body_environment[binder] = known_arity(binder.id.arity);
-            if (not is_work_free(rhs)) binding_cost = arity_cost::expensive;
-        }
+
+        for (const auto& [binder, rhs]: let.to_rec()->decls)
+            if (not is_work_free_in(rhs, body_environment, lookup, 0))
+                binding_cost = arity_cost::expensive;
     }
     return float_in(binding_cost, expression_arity(let.body, body_environment, lookup));
 }
@@ -145,11 +157,7 @@ arity_type expression_arity(const Occ::Exp& expression, const arity_environment&
                             const id_info_lookup& lookup)
 {
     if (auto variable = expression.to_var())
-    {
-        if (auto local = environment.find(*variable); local != environment.end())
-            return local->second;
-        return known_arity(lookup(*variable).arity);
-    }
+        return known_arity(variable_arity(*variable, environment, lookup));
     if (auto lambda = expression.to_lambda())
     {
         auto body_environment = environment;
@@ -160,7 +168,9 @@ arity_type expression_arity(const Occ::Exp& expression, const arity_environment&
     }
     if (auto application = expression.to_apply())
         return apply_argument(expression_arity(application->head, environment, lookup),
-                              is_work_free(application->arg) ? arity_cost::cheap : arity_cost::expensive);
+                              is_work_free_in(application->arg, environment, lookup, 0)
+                                  ? arity_cost::cheap
+                                  : arity_cost::expensive);
     if (auto let = expression.to_let())
         return let_arity(*let, environment, lookup);
     if (auto case_expression = expression.to_case())
@@ -170,7 +180,9 @@ arity_type expression_arity(const Occ::Exp& expression, const arity_environment&
         for (std::size_t i = 1; i < case_expression->alts.size(); ++i)
             alternatives_arity = intersect_arities(
                 alternatives_arity, alternative_arity(case_expression->alts[i], environment, lookup));
-        return is_work_free(case_expression->object) ? alternatives_arity : add_work(alternatives_arity);
+        return is_work_free_in(case_expression->object, environment, lookup, 0)
+                   ? alternatives_arity
+                   : add_work(alternatives_arity);
     }
     return {};
 }
@@ -232,27 +244,57 @@ Occ::Exp eta_expand(FreshVarSource& fresh, Occ::Exp expression, const arity_type
     return lambda_quantify(binders, std::move(body));
 }
 
-// Report whether evaluating an expression to weak head normal form performs no work.
-bool is_work_free(const Occ::Exp& expression)
+namespace
 {
-    if (expression.to_var() or expression.to_constant() or expression.to_conApp() or expression.to_lambda())
-        return true;
-    if (expression.to_apply() or expression.to_builtinOp())
-        return false;
+
+// Apply the shared cheapness rules with local signatures and an application depth.
+bool is_work_free_in(const Occ::Exp& expression, const arity_environment& environment,
+                     const id_info_lookup& lookup, int arguments)
+{
+    if (auto variable = expression.to_var())
+        return arguments == 0 or variable_arity(*variable, environment, lookup) > arguments;
+    if (auto application = expression.to_apply())
+        return is_work_free_in(application->head, environment, lookup, arguments + 1) and
+               is_work_free_in(application->arg, environment, lookup, 0);
+    if (arguments > 0) return false;
+    if (expression.to_constant() or expression.to_conApp() or expression.to_lambda()) return true;
+    if (expression.to_builtinOp()) return false;
     if (auto case_expression = expression.to_case())
     {
-        if (not is_work_free(case_expression->object)) return false;
-        for (const auto& [pattern, body]: case_expression->alts)
-            if (not is_work_free(body)) return false;
+        if (not is_work_free_in(case_expression->object, environment, lookup, 0)) return false;
+        for (const auto& alternative: case_expression->alts)
+        {
+            auto body_environment = environment;
+            for (const auto& binder: alternative.pat.args)
+                body_environment.erase(binder);
+            if (not is_work_free_in(alternative.body, body_environment, lookup, 0)) return false;
+        }
         return true;
     }
     if (auto let = expression.to_let())
     {
-        if (not is_work_free(let->body)) return false;
-        if (auto nonrec = let->to_nonrec()) return is_work_free(nonrec->decl.body);
-        for (const auto& [binder, rhs]: let->to_rec()->decls)
-            if (not is_work_free(rhs)) return false;
-        return true;
+        auto body_environment = environment;
+        if (auto nonrec = let->to_nonrec())
+        {
+            if (not is_work_free_in(nonrec->decl.body, environment, lookup, 0)) return false;
+            body_environment[nonrec->decl.x] = known_arity(nonrec->decl.x.id.arity);
+        }
+        else
+        {
+            for (const auto& [binder, rhs]: let->to_rec()->decls)
+                body_environment[binder] = known_arity(binder.id.arity);
+            for (const auto& [binder, rhs]: let->to_rec()->decls)
+                if (not is_work_free_in(rhs, body_environment, lookup, 0)) return false;
+        }
+        return is_work_free_in(let->body, body_environment, lookup, 0);
     }
     std::abort();
+}
+
+}
+
+// Report whether resolved id arities prove that evaluating an expression performs no work.
+bool is_work_free(const Occ::Exp& expression, const id_info_lookup& lookup)
+{
+    return is_work_free_in(expression, {}, lookup, 0);
 }

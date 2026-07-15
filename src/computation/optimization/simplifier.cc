@@ -136,7 +136,7 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
 [[nodiscard]] in_scope_set bind_decls(const Module& m, const inliner_options& opts, in_scope_set bound_vars, const Occ::Decls& decls)
 {
     for(const auto& [x,rhs]: decls)
-	bound_vars = bind_var(bound_vars, x, make_core_unfolding(m, opts,rhs));
+	bound_vars = bind_var(bound_vars, x, make_core_unfolding(m, opts, x.id, rhs));
     return bound_vars;
 }
 
@@ -268,7 +268,7 @@ void SimplFloats::append(const Module& m, const inliner_options& opts, const Occ
 {
     if (auto nonrec = std::get_if<Occ::NonRec>(&bind))
         bound_vars = bind_var(bound_vars, nonrec->decl.x,
-                              make_core_unfolding(m, opts, nonrec->decl.body));
+                              make_core_unfolding(m, opts, nonrec->decl.x.id, nonrec->decl.body));
     else
     {
         const auto& decls = std::get<Occ::Rec>(bind).decls;
@@ -323,7 +323,7 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
         // floats.push_back(f);
         // return exprIsConApp_worker(in_scope_set2, S2, floats, lam->body, cont->next);
 
-        auto S2 = bind_var(S, lam->x, make_core_unfolding(this_mod, options, cont->arg));
+        auto S2 = bind_var(S, lam->x, make_core_unfolding(this_mod, options, lam->x.id, cont->arg));
         Float f = FloatLet{Occ::NonRec{{lam->x, cont->arg}}};
         floats.push_back(f);
         return exprIsConApp_worker(S2, floats, lam->body, cont->next);
@@ -334,10 +334,11 @@ SimplifierState::exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& 
         floats.push_back(f);
         auto S2 = S;
         if (auto nonrec = let->to_nonrec())
-            S2 = bind_var(S2, nonrec->decl.x, make_core_unfolding(this_mod, options, nonrec->decl.body));
+            S2 = bind_var(S2, nonrec->decl.x,
+                          make_core_unfolding(this_mod, options, nonrec->decl.x.id, nonrec->decl.body));
         else
             for(auto& [x,e]: let->to_rec()->decls)
-                S2 = bind_var(S2, x, make_core_unfolding(this_mod, options,e));
+                S2 = bind_var(S2, x, make_core_unfolding(this_mod, options, x.id, e));
             
         return exprIsConApp_worker(S2, floats, let->body, cont);
     }
@@ -457,7 +458,7 @@ SimplifierState::simplify_out_var(const Occ::Var& x, const in_scope_set& bound_v
         }
     }
 
-    if (auto e = call_site_inline(unfolding, occ_info, context))
+    if (auto e = call_site_inline(unfolding, occ_info, bound_vars, context))
         return simplify(*e, {}, bound_vars, context);
     else
         return rebuildCall(x, bound_vars, context);
@@ -944,7 +945,7 @@ SimplifierState::simplify_alt(const std::optional<Occ::Exp>& object, bool scruti
             else
             {
                 auto pattern_expression = pattern_to_expression(pattern).value();
-                unfolding = make_core_unfolding(this_mod, options, pattern_expression);
+                unfolding = make_core_unfolding(this_mod, options, x.id, pattern_expression);
             }
 
             // Set the unfolding
@@ -1281,14 +1282,16 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
                     if (auto nonrec = std::get_if<Occ::NonRec>(&bind))
                     {
                         const auto& decl = nonrec->decl;
-                        bound_vars = bind_var(bound_vars, decl.x, make_core_unfolding(this_mod, options, decl.body));
+                        bound_vars = bind_var(bound_vars, decl.x,
+                                              make_core_unfolding(this_mod, options, decl.x.id, decl.body));
                         new_decls.push_back(decl);
                     }
                     else
                     {
                         for(const auto& decl: std::get<Occ::Rec>(bind).decls)
                         {
-                            bound_vars = bind_var(bound_vars, decl.x, make_core_unfolding(this_mod, options, decl.body));
+                            bound_vars = bind_var(bound_vars, decl.x,
+                                                  make_core_unfolding(this_mod, options, decl.x.id, decl.body));
                             new_decls.push_back(decl);
                         }
                     }
@@ -1325,7 +1328,7 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
                 }
 
                 if (to<std::monostate>(unfolding) and not noinline)
-                    unfolding = make_core_unfolding(this_mod, options, rhs);
+                    unfolding = make_core_unfolding(this_mod, options, x2.id, rhs);
 
                 bound_vars = rebind_var(bound_vars, x2, unfolding);
 	    }
@@ -1406,7 +1409,7 @@ SimplifierState::simplify_nonrec(const Occ::NonRec& nonrec, const substitution& 
     }
 
     if (to<std::monostate>(unfolding) and not noinline)
-        unfolding = make_core_unfolding(this_mod, options, rhs);
+        unfolding = make_core_unfolding(this_mod, options, x2.id, rhs);
     bound_vars = rebind_var(bound_vars, x2, unfolding);
     output.binds.push_back(Occ::NonRec{{x2, std::move(rhs)}});
     output.bound_vars = std::move(bound_vars);
