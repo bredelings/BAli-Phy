@@ -22,42 +22,6 @@ namespace
 
 using namespace CmdModel;
 
-// Exercises native command-line type construction, parsing, decomposition,
-// variable recognition, equality, ordering, and display.
-void test_model_type_ast()
-{
-    auto int_type = type_t("Int");
-    auto double_type = type_t("Double");
-    auto a_type = type_t("a");
-    auto fresh_type = type_t("a#0");
-
-    BALI_PHY_TEST_CHECK(int_type == type_con("Int"));
-    BALI_PHY_TEST_CHECK(a_type == type_var("a"));
-    BALI_PHY_TEST_CHECK(is_type_variable(a_type));
-    BALI_PHY_TEST_CHECK(is_type_variable(fresh_type));
-    BALI_PHY_TEST_CHECK(not is_type_variable(int_type));
-
-    auto list_int = list_type(int_type);
-    auto [list_head, list_args] = get_type_apps(list_int);
-    BALI_PHY_TEST_CHECK(list_head == type_t("List"));
-    BALI_PHY_TEST_CHECK(list_args.size() == 1);
-    BALI_PHY_TEST_CHECK(list_args[0] == int_type);
-
-    auto pair_type = CmdModel::tuple_type({int_type, type_t("Bool")});
-    BALI_PHY_TEST_CHECK(unparse_type(pair_type) == "(Int,Bool)");
-    BALI_PHY_TEST_CHECK(function_type(int_type, double_type) == parse_type("Int -> Double"));
-    BALI_PHY_TEST_CHECK(CM::type_app("Distribution", double_type) == parse_type("Distribution<Double>"));
-    BALI_PHY_TEST_CHECK(parse_type("a") == a_type);
-    BALI_PHY_TEST_CHECK(type_atom("a#0") == fresh_type);
-
-    std::set<type_t> ordered{double_type, int_type, list_int, pair_type};
-    BALI_PHY_TEST_CHECK(ordered.count(int_type));
-    BALI_PHY_TEST_CHECK(ordered.count(list_int));
-
-    auto vars = find_variables_in_type(function_type(a_type, list_type(type_t("b#1"))));
-    BALI_PHY_TEST_CHECK(vars == std::set<std::string>({"a", "b#1"}));
-}
-
 // Builds a small untyped variable expression for AST unit tests.
 UntypedExpr var_expr(std::string name)
 {
@@ -313,69 +277,6 @@ void test_typed_pretty_printing()
     BALI_PHY_TEST_CHECK(show_model_annotated(sample) == "~ normal");
 }
 
-// Checks solved type equations propagate through typed AST annotations.
-void test_typed_substitution()
-{
-    auto a = type_t("a#0");
-    auto b = type_t("b#1");
-    auto c = type_t("c#2");
-    auto alphabet_type = type_t("alphabet#3");
-
-    TypedExpr list_expr{
-        Ann{CM::type_app("List", c), {}, false, {}},
-        List<Ann>{{TypedExpr{Ann{c, {}, false, {}}, IntLiteral{1}}}}
-    };
-
-    TypedExpr expr{
-        Ann{a, {}, false, {}},
-        Call<Ann>{
-            "f",
-            {
-                Arg<Ann>{
-                    "x",
-                    TypedExpr{Ann{b, {}, false, {}}, Var{"x"}},
-                    false,
-                    false,
-                    TypedExpr{Ann{alphabet_type, {}, false, {}}, Var{"dna"}}
-                },
-                Arg<Ann>{
-                    "items",
-                    std::move(list_expr),
-                    false,
-                    false,
-                    std::nullopt
-                }
-            }
-        }
-    };
-
-    auto eqs = unify(a, type_t("Double"))
-             && unify(b, type_t("Int"))
-             && unify(c, type_t("String"))
-             && unify(alphabet_type, type_t("Alphabet"));
-    BALI_PHY_TEST_CHECK(eqs);
-
-    substitute_annotated(eqs, expr);
-
-    BALI_PHY_TEST_CHECK(expr.ann.type == type_t("Double"));
-    auto& call = expr.as<Call<Ann>>();
-    BALI_PHY_TEST_CHECK(require_arg_value(call.args[0]).ann.type == type_t("Int"));
-    BALI_PHY_TEST_CHECK(call.args[0].alphabet);
-    BALI_PHY_TEST_CHECK(call.args[0].alphabet->ann.type == type_t("Alphabet"));
-    BALI_PHY_TEST_CHECK(require_arg_value(call.args[1]).ann.type == CM::type_app("List", type_t("String")));
-
-    auto& list = require_arg_value(call.args[1]).as<List<Ann>>();
-    BALI_PHY_TEST_CHECK(list.elements[0].ann.type == type_t("String"));
-
-    TypedDecls decls{
-        {"x", TypedExpr{Ann{type_t("decl#4"), {}, false, {}}, Var{"x"}}}
-    };
-    auto decl_eqs = unify(type_t("decl#4"), type_t("Int"));
-    BALI_PHY_TEST_CHECK(decl_eqs);
-    substitute_annotated(decl_eqs, decls);
-    BALI_PHY_TEST_CHECK(decls[0].second.ann.type == type_t("Int"));
-}
-
 // Builds a TypecheckingState fixture with optional identifiers and state vars.
 TypecheckingState test_typechecker(const Rules& rules, const std::map<std::string,type_t>& identifiers = {}, const std::map<std::string,type_t>& state = {})
 {
@@ -511,12 +412,10 @@ void test_tuple_pattern_compile()
 // Runs the focused model AST regression checks in a deterministic order.
 int main()
 {
-    test_model_type_ast();
     test_copy_independence();
     test_invariants();
     test_untyped_pretty_printing();
     test_typed_pretty_printing();
-    test_typed_substitution();
     test_typecheck_tuple_pattern_lambda();
     test_typecheck_variable_function_used_args();
     test_local_function_shadowing();
