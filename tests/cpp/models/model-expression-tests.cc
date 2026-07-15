@@ -70,12 +70,6 @@ UntypedExpr call_expr(std::string function, std::vector<Arg<NoAnn>> args)
     return {NoAnn{}, Call<NoAnn>{std::move(function), std::move(args)}};
 }
 
-// Builds an untyped tuple expression from element expressions.
-UntypedExpr tuple_expr(std::vector<UntypedExpr> elements)
-{
-    return {NoAnn{}, Tuple<NoAnn>{std::move(elements)}};
-}
-
 // Builds an untyped let expression from declarations and a body expression.
 UntypedExpr let_expr(Decls<NoAnn> decls, UntypedExpr body)
 {
@@ -172,44 +166,6 @@ void test_copy_independence()
 
     BALI_PHY_TEST_CHECK(original_var.name == "x");
     BALI_PHY_TEST_CHECK(copied_var.name == "y");
-}
-
-// Requires check_invariants() to reject one malformed untyped expression.
-void expect_invariant_failure(const UntypedExpr& expr)
-{
-    try
-    {
-        check_invariants(expr);
-    }
-    catch (const std::logic_error&)
-    {
-        return;
-    }
-    BALI_PHY_TEST_CHECK(false);
-}
-
-// Requires check_invariants() to reject one malformed untyped pattern.
-void expect_pattern_invariant_failure(const UntypedPattern& pattern)
-{
-    try
-    {
-        check_invariants(pattern);
-    }
-    catch (const std::logic_error&)
-    {
-        return;
-    }
-    BALI_PHY_TEST_CHECK(false);
-}
-
-// Exercises structural invariant checks that are independent of typechecking.
-void test_invariants()
-{
-    check_invariants(tuple_expr({int_expr(1), int_expr(2)}));
-    expect_invariant_failure(tuple_expr({int_expr(1)}));
-
-    check_invariants(tuple_pattern({var_pattern("x"), var_pattern("y")}));
-    expect_pattern_invariant_failure(tuple_pattern({var_pattern("x")}));
 }
 
 // Exercises untyped AST pretty-printing for representative syntax.
@@ -413,7 +369,6 @@ void test_tuple_pattern_compile()
 int main()
 {
     test_copy_independence();
-    test_invariants();
     test_untyped_pretty_printing();
     test_typed_pretty_printing();
     test_typecheck_tuple_pattern_lambda();

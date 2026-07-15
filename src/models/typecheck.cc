@@ -308,6 +308,7 @@ namespace
 // Builds a typed model AST annotation with the common default metadata values.
 CM::Ann model_ann(type_t type, set<string> used_args = {})
 {
+    assert(not type.is_null());
     return {std::move(type), std::move(used_args), false, {}};
 }
 
@@ -540,6 +541,7 @@ optional<CM::TypedExpr> typecheck_model_tuple(const TypecheckingState& TC, const
     auto tuple = expr.to<CM::Tuple<CM::NoAnn>>();
     if (not tuple)
         return {};
+    assert(tuple->elements.size() >= 2);
 
     vector<type_t> element_required_types;
     for(int i=0; i<tuple->elements.size(); i++)
@@ -871,6 +873,7 @@ pair<type_t, map<string,type_t>> TypecheckingState::parse_pattern(const CM::Unty
     }
     else if (auto tuple = pattern.to<CM::TuplePattern<CM::NoAnn>>())
     {
+        assert(tuple->elements.size() >= 2);
         vector<type_t> element_types;
         map<string,type_t> var_to_type;
         for(auto& value: tuple->elements)
