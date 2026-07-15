@@ -960,7 +960,6 @@ namespace Runtime
     const Exp& rpair_second(const Exp&);
     int count_lambdas(const Exp&);
     Exp peel_lambdas(const Exp&, int);
-    Exp shift_free_indices(const Exp&, int amount, int depth = 0);
 
     int pattern_arity(const Pattern&);
     bool has_constructor(const Exp&, const std::string&);
