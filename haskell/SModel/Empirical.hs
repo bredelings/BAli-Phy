@@ -1,20 +1,19 @@
 module SModel.Empirical where
 
 import Bio.Alphabet
-import Foreign.String
 import SModel.ReversibleMarkov
 import Numeric.LinearAlgebra.Data
 
-foreign import bpcall "SModel:empirical" empiricalNative :: Alphabet -> CPPString -> NativeMatrix Double
-foreign import bpcall "SModel:pam" pamNative :: Alphabet -> NativeMatrix Double
-foreign import bpcall "SModel:jtt" jttNative :: Alphabet -> NativeMatrix Double
-foreign import bpcall "SModel:wag" wagNative :: Alphabet -> NativeMatrix Double
+foreign import trcall "SModel:empirical" empiricalNative :: Alphabet -> String -> Matrix Double
+foreign import trcall "SModel:pam" pamNative :: Alphabet -> Matrix Double
+foreign import trcall "SModel:jtt" jttNative :: Alphabet -> Matrix Double
+foreign import trcall "SModel:wag" wagNative :: Alphabet -> Matrix Double
 foreign import bpcall "SModel:wag_frequencies" wagFrequenciesNative :: Alphabet -> NativeVector Double
 foreign import bpcall "SModel:lg_frequencies" lgFrequenciesNative :: Alphabet -> NativeVector Double
-foreign import bpcall "SModel:lg" lgNative :: Alphabet -> NativeMatrix Double
+foreign import trcall "SModel:lg" lgNative :: Alphabet -> Matrix Double
 foreign import trcall "SModel:symmetricMatrixFromLowerTriangle" symmetricNative :: Int -> Vector Double -> Matrix Double
 
-empiricalMatrix operation alphabet = matrixFromNative dimension dimension (operation alphabet)
+empiricalMatrix operation alphabet = overrideMatrixDims dimension dimension (operation alphabet)
   where dimension = alphabetSize alphabet
 
 pam alphabet = empiricalMatrix pamNative alphabet
@@ -31,7 +30,7 @@ builtin_lg_frequencies alphabet = vectorFromNative (alphabetSize alphabet)
 symmetricMatrixFromLowerTriangle n xs = overrideMatrixDims n n
     (symmetricNative n (fromList xs))
 
-empirical a filename = empiricalMatrix (\alphabet -> empiricalNative alphabet (list_to_string filename)) a
+empirical a filename = empiricalMatrix (\alphabet -> empiricalNative alphabet filename) a
 
 wag_frequencies a = zip (getLetters a) (toList $ builtin_wag_frequencies a)
 lg_frequencies a = zip (getLetters a) (toList $ builtin_lg_frequencies a)
