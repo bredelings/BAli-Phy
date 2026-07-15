@@ -8,9 +8,9 @@ import Reversible
 
 foreign import trcall "SModel:gtr_sym" gtrSymNative :: Vector Double -> Int -> Matrix Double
 foreign import trcall "SModel:non_rev_from_vec" nonRevNative :: Int -> Vector Double -> Matrix Double
-foreign import bpcall "SModel:fixupDiagonalRates" fixupDiagonalNative :: NativeMatrix Double -> NativeMatrix Double
+foreign import trcall "SModel:fixupDiagonalRates" fixupDiagonalNative :: Matrix Double -> Matrix Double
 foreign import trcall "SModel:plus_gwf_matrix" plusGwfNative :: Vector Double -> Double -> Matrix Double
-foreign import bpcall "Matrix:MatrixExp" matrixExpNative :: NativeMatrix Double -> Double -> NativeMatrix Double
+foreign import trcall "Matrix:MatrixExp" matrixExpNative :: Matrix Double -> Double -> Matrix Double
 foreign import trcall "SModel:equilibriumLimit" equilibriumLimitNative :: Vector Double -> Matrix Double -> Vector Double
 foreign import trcall "SModel:checkReversible" checkReversibleNative :: Matrix Double -> Vector Double -> Bool
 foreign import trcall "SModel:checkStationary" checkStationaryNative :: Matrix Double -> Vector Double -> Bool
@@ -22,15 +22,15 @@ builtin_gtr_sym exchange dimension = overrideMatrixDims dimension dimension
 non_rev_from_vec dimension rates = overrideMatrixDims dimension dimension
     (nonRevNative dimension rates)
 
-fixupDiagonalRates matrix = matrixFromNative (rows matrix) (cols matrix)
-    (fixupDiagonalNative (nativeMatrix matrix))
+fixupDiagonalRates matrix = overrideMatrixDims (rows matrix) (cols matrix)
+    (fixupDiagonalNative matrix)
 
 plus_gwf_matrix frequencies weight = overrideMatrixDims dimension dimension
     (plusGwfNative frequencies weight)
   where dimension = vectorSize frequencies
 
-mexp matrix time = matrixFromNative (rows matrix) (cols matrix)
-    (matrixExpNative (nativeMatrix matrix) time)
+mexp matrix time = overrideMatrixDims (rows matrix) (cols matrix)
+    (matrixExpNative matrix time)
 
 equilibriumLimit frequencies matrix = overrideVectorSize (vectorSize frequencies)
     (equilibriumLimitNative frequencies matrix)
