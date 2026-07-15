@@ -111,9 +111,9 @@ li_stephens_2003 locs rho = LiStephens2003 (U.fromList locs) rho
 
 data WilsonMcVean2006 = WilsonMcVean2006 (Matrix Double) [(Double,Double,Double)] Double
 
-foreign import bpcall "SMC:wilson_mcvean_2006_composite_likelihood_raw" wilsonMcVeanNative :: NativeMatrix Double -> EVector (EVector Double) -> Double -> AlignmentMatrix -> LogDouble
+foreign import trcall "SMC:wilson_mcvean_2006_composite_likelihood_raw" wilsonMcVeanNative :: Matrix Double -> EVector (EVector Double) -> Double -> AlignmentMatrix -> LogDouble
 
-wilson_mcvean_2006_composite_likelihood q rhos theta alignment = wilsonMcVeanNative (nativeMatrix q) rhosRaw theta alignment
+wilson_mcvean_2006_composite_likelihood q rhos theta alignment = wilsonMcVeanNative q rhosRaw theta alignment
     where rhosRaw = toVector [toVector [x,start,end] | (x,start,end) <- rhos]
 
 instance Dist WilsonMcVean2006 where
