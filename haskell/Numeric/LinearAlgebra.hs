@@ -115,18 +115,18 @@ dot = dotVector
 outer :: Element a => Vector a -> Vector a -> Matrix a
 outer = outerProduct
 
-foreign import bpcall "Matrix:detNative" detNative :: NativeMatrix Double -> Double
-foreign import bpcall "Matrix:invNative" invNative :: NativeMatrix Double -> NativeMatrix Double
+foreign import trcall "Matrix:detNative" detNative :: Matrix Double -> Double
+foreign import trcall "Matrix:invNative" invNative :: Matrix Double -> Matrix Double
 foreign import trcall "Matrix:linearSolveNative" linearSolveNative :: Matrix Double -> Matrix Double -> Maybe (Matrix Double)
-foreign import bpcall "Matrix:linearSolveLSNative" linearSolveLSNative :: NativeMatrix Double -> NativeMatrix Double -> NativeMatrix Double
-foreign import bpcall "Matrix:cholNative" cholNative :: NativeMatrix Double -> NativeMatrix Double
-foreign import bpcall "Matrix:expmNative" expmNative :: NativeMatrix Double -> NativeMatrix Double
+foreign import trcall "Matrix:linearSolveLSNative" linearSolveLSNative :: Matrix Double -> Matrix Double -> Matrix Double
+foreign import trcall "Matrix:cholNative" cholNative :: Matrix Double -> Matrix Double
+foreign import trcall "Matrix:expmNative" expmNative :: Matrix Double -> Matrix Double
 
 det :: Matrix Double -> Double
-det = detNative . nativeMatrix
+det = detNative
 
 inv :: Matrix Double -> Matrix Double
-inv matrix = matrixFromNative (rows matrix) (cols matrix) (invNative (nativeMatrix matrix))
+inv matrix = overrideMatrixDims (rows matrix) (cols matrix) (invNative matrix)
 
 -- Wrap a successful solve with dimensions determined by the coefficient and
 -- right-hand-side shapes.
@@ -136,14 +136,14 @@ linearSolve coefficients rhs = fmap
     (linearSolveNative coefficients rhs)
 
 linearSolveLS :: Matrix Double -> Matrix Double -> Matrix Double
-linearSolveLS coefficients rhs = matrixFromNative (cols coefficients) (cols rhs)
-    (linearSolveLSNative (nativeMatrix coefficients) (nativeMatrix rhs))
+linearSolveLS coefficients rhs = overrideMatrixDims (cols coefficients) (cols rhs)
+    (linearSolveLSNative coefficients rhs)
 
 chol :: Matrix Double -> Matrix Double
-chol matrix = matrixFromNative (rows matrix) (cols matrix) (cholNative (nativeMatrix matrix))
+chol matrix = overrideMatrixDims (rows matrix) (cols matrix) (cholNative matrix)
 
 expm :: Matrix Double -> Matrix Double
-expm matrix = matrixFromNative (rows matrix) (cols matrix) (expmNative (nativeMatrix matrix))
+expm matrix = overrideMatrixDims (rows matrix) (cols matrix) (expmNative matrix)
 
 foreign import bpcall "Matrix:eigSHNative" eigSHNative :: NativeMatrix Double -> EPair (NativeVector Double) (NativeMatrix Double)
 foreign import bpcall "Matrix:eigenvaluesSHNative" eigenvaluesSHNative :: NativeMatrix Double -> NativeVector Double
