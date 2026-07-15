@@ -67,6 +67,14 @@ rawVectorInput offset count _ = offset * 100 + count
 vectorInput :: U.Vector Int -> Int
 vectorInput = fromCImport rawVectorInput
 
+rawPairVectorInput :: Int -> Int -> NativeVector Int ->
+                      Int -> Int -> NativeVector Double -> Int
+rawPairVectorInput leftOffset leftCount _ rightOffset rightCount _ =
+    leftOffset * 1000 + leftCount * 100 + rightOffset * 10 + rightCount
+
+pairVectorInput :: U.Vector (Int, Double) -> Int
+pairVectorInput = fromCImport rawPairVectorInput
+
 intOwner :: NativeVector Int
 intOwner = case intVectorNativeView (U.fromList [4, 5, 6]) of
     (_, _, owner) -> owner
@@ -100,6 +108,9 @@ main = do
     result <- ioOutput 8
     print result
     print (vectorInput (U.slice 1 2 (U.fromList [10, 20, 30, 40])))
+    print (pairVectorInput
+        (U.zip (U.slice 1 2 (U.fromList [10, 20, 30, 40]))
+               (U.slice 2 2 (U.fromList [1.0, 2.0, 3.0, 4.0, 5.0]))))
     print (U.toList vectorOutput)
     print (U.toList doubleVectorOutput)
     vectorResult <- combined (U.fromList [1, 2]) (3.0, 4)

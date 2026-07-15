@@ -140,6 +140,13 @@ instance CInput (Vector Double) where
         case doubleVectorNativeView vector of
           (offset, count, owner) -> continuation offset count owner
 
+instance (CInput (Vector a), CInput (Vector b)) =>
+         CInput (Vector (a,b)) where
+    type CInputType (Vector (a,b)) result =
+        CInputType (Vector a) (CInputType (Vector b) result)
+    withCInput (V_2 _ left right) continuation =
+        withCInput right (withCInput left continuation)
+
 instance COutput (Vector Double) where
     type COutputType (Vector Double) = NativeVector Double
     fromCOutput = doubleVectorFromNative
