@@ -11,7 +11,7 @@ module Foreign.Vector
     ) where
 
 import Compiler.FFI.Runtime (RuntimeValue)
-import Compiler.FFI.Import (CInput(..))
+import Compiler.FFI.Import (CInput, COutput)
 import Foreign.CList
 import Data.Foldable
 import Data.Eq
@@ -21,7 +21,10 @@ data EVector a
 
 instance RuntimeValue (EVector a)
 
+-- EVector is one opaque runtime object; translated boundaries do not traverse
+-- or translate its elements.
 instance CInput (EVector a)
+instance COutput (EVector a)
 
 foreign import ecall "Vector:" get_vector_index :: EVector a -> Int -> a
 
