@@ -30,6 +30,7 @@
 #include "computation/loader.H"
 #include "core/convert.H" // for load_builtins( )
 #include "computation/optimization/simplifier.H"
+#include "computation/optimization/call-arity.H"
 #include "computation/optimization/occurrence.H"
 #include "computation/optimization/float-out.H"
 #include "computation/optimization/inliner.H"
@@ -1855,6 +1856,8 @@ Core::Decls<> Module::optimize(const simplifier_options& opts, FreshVarState& fv
     // Pass: Float In
 
     // Pass: Call Arity, Simplify
+    core_binds = call_arity_analyze(*this, core_binds);
+    core_binds = simplify_module(opts, fvstate, *this, core_binds);
 
     // Pass: Demand Analysis
 

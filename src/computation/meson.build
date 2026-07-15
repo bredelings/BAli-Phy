@@ -51,7 +51,7 @@ computation_sources = [
   'typecheck/context.cc', 'typecheck/errors.cc', 'typecheck/tidy.cc', 'typecheck/data.cc',
 
   'optimization/free-vars.cc', 'optimization/set-levels.cc', 'optimization/float-out.cc',
-  'optimization/arity.cc',
+  'optimization/arity.cc', 'optimization/call-arity.cc',
   'optimization/occurrence.cc', 'optimization/inliner.cc', 'optimization/simplifier.cc'
 ]
 

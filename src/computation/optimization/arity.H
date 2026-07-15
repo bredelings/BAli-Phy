@@ -27,6 +27,7 @@ struct arity_type
 };
 
 using id_info_lookup = std::function<Core::id_info(const Occ::Var&)>;
+using core_id_info_lookup = std::function<Core::id_info(const Core::Var<>&)>;
 
 // Infer the safe arity of a non-recursive RHS, including transient call arity.
 arity_type find_rhs_arity(const Occ::Exp& rhs, int call_arity, const id_info_lookup& lookup);
@@ -39,5 +40,8 @@ Occ::Exp eta_expand(FreshVarSource& fresh, Occ::Exp expression, const arity_type
 
 // Report whether resolved id arities prove that evaluating an expression performs no work.
 bool is_work_free(const Occ::Exp& expression, const id_info_lookup& lookup);
+
+// Apply the same cheapness rules to plain Core before occurrence analysis.
+bool is_work_free(const Core::Exp<>& expression, const core_id_info_lookup& lookup);
 
 #endif
