@@ -78,27 +78,30 @@ extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 
 extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
 {
-    int parent_count = Args.evaluate_slot_to_value(0).as_int();
-    int component_offset = Args.evaluate_slot_to_value(1).as_int();
+    int component_offset = Args.evaluate_slot_to_value(0).as_int();
+    int component_count = Args.evaluate_slot_to_value(1).as_int();
     auto component_value = Args.evaluate_slot_to_value(2);
     int state_offset = Args.evaluate_slot_to_value(3).as_int();
-    auto state_value = Args.evaluate_slot_to_value(4);
-    auto arg5 = Args.evaluate_slot_to_value(5);
+    int state_count = Args.evaluate_slot_to_value(4).as_int();
+    auto state_value = Args.evaluate_slot_to_value(5);
     auto arg6 = Args.evaluate_slot_to_value(6);
     auto arg7 = Args.evaluate_slot_to_value(7);
-    int column_offset = Args.evaluate_slot_to_value(8).as_int();
-    int column_count = Args.evaluate_slot_to_value(9).as_int();
-    auto column_value = Args.evaluate_slot_to_value(10);
-    if (parent_count != column_count)
+    auto arg8 = Args.evaluate_slot_to_value(8);
+    int column_offset = Args.evaluate_slot_to_value(9).as_int();
+    int column_count = Args.evaluate_slot_to_value(10).as_int();
+    auto column_value = Args.evaluate_slot_to_value(11);
+    if (component_count != state_count)
+        throw myexception()<<"LikelihoodSEV.sampleSequence: component and state lengths differ";
+    if (component_count != column_count)
         throw myexception()<<"LikelihoodSEV.sampleSequence: parent and column-map lengths differ";
     const auto& component_owner = component_value.as_<Box<DenseVector<int>>>();
     const auto& state_owner = state_value.as_<Box<DenseVector<int>>>();
     const auto& column_owner = column_value.as_<Box<DenseVector<int>>>();
     auto parent_components = checked_native_vector_view(
-        component_owner, component_offset, parent_count,
+        component_owner, component_offset, component_count,
         "LikelihoodSEV.sampleSequence components");
     auto parent_states = checked_native_vector_view(
-        state_owner, state_offset, parent_count,
+        state_owner, state_offset, state_count,
         "LikelihoodSEV.sampleSequence states");
     auto columns = checked_native_vector_view(
         column_owner, column_offset, column_count,
@@ -106,9 +109,9 @@ extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
 
     auto result = substitution::sample_sequence_SEV(
         parent_components, parent_states,
-	arg5.as_<R::RVector>(), // LCN
-	arg6.as_<R::RVector>(), // transition_ps
-	arg7.as_<R::RVector>(), // LCB
+	arg6.as_<R::RVector>(), // LCN
+	arg7.as_<R::RVector>(), // transition_ps
+	arg8.as_<R::RVector>(), // LCB
 	columns);
     return component_state_result(std::move(result));
 }

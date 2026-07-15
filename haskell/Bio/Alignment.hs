@@ -71,12 +71,8 @@ componentStateSequenceNativeView (ComponentStateSequence values) =
 
 instance CInput ComponentStateSequence where
     type CInputType ComponentStateSequence result =
-        Int -> Int -> NativeVector Int -> Int -> NativeVector Int -> result
-    withCInput sequence continuation =
-        case componentStateSequenceNativeView sequence of
-          (count, componentOffset, componentOwner, stateOffset, stateOwner) ->
-              continuation count componentOffset componentOwner
-                           stateOffset stateOwner
+        CInputType (U.Vector (Int,Int)) result
+    withCInput (ComponentStateSequence values) = withCInput values
 
 instance COutput ComponentStateSequence where
     type COutputType ComponentStateSequence = NativeComponentStateSequence
