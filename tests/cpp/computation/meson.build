@@ -3,9 +3,9 @@ computation_tests = executable(
   [
     'computation-test-main.cc',
     'closure-tests.cc',
+    'equality-tests.cc',
     'serialization-tests.cc',
     'transform-tests.cc',
-    'values-tests.cc',
   ],
   include_directories: [root_inc, libutil_inc, libmcon_inc, native_test_inc],
   dependencies: [boost, libxxhash, eigen, libdl, math_dep, librange, immer, fmt, cereal],

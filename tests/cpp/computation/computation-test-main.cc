@@ -8,9 +8,9 @@
 namespace bali_phy_test
 {
     void run_closure_tests();
+    void run_equality_tests();
     void run_serialization_tests(const std::shared_ptr<module_loader>& loader);
     void run_transform_tests();
-    void run_value_tests();
 }
 
 // Runs the computation tests with the package paths needed by component checks.
@@ -24,6 +24,6 @@ int main(int argc, char** argv)
 
     bali_phy_test::run_serialization_tests(loader);
     bali_phy_test::run_closure_tests();
+    bali_phy_test::run_equality_tests();
     bali_phy_test::run_transform_tests();
-    bali_phy_test::run_value_tests();
 }

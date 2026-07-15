@@ -25,7 +25,7 @@ namespace
 }
 
 // Runs the Runtime equality-policy tests.
-void run_value_tests()
+void run_equality_tests()
 {
     check_exp_equality_policies();
 }
