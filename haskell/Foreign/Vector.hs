@@ -1,5 +1,4 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE TypeFamilies #-}
 module Foreign.Vector
     ( EVector
     , get_vector_index
@@ -22,9 +21,7 @@ data EVector a
 
 instance RuntimeValue (EVector a)
 
-instance CInput (EVector a) where
-    type CInputType (EVector a) result = EVector a -> result
-    withCInput value continuation = continuation value
+instance CInput (EVector a)
 
 foreign import ecall "Vector:" get_vector_index :: EVector a -> Int -> a
 

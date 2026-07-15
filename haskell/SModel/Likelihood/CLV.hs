@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeFamilies #-}
 module SModel.Likelihood.CLV where
 
 import Compiler.FFI.Import (COutput(..))
@@ -8,6 +7,4 @@ data CondLikes
 
 instance RuntimeValue CondLikes
 
-instance COutput CondLikes where
-    type COutputType CondLikes = CondLikes
-    fromCOutput value = value
+instance COutput CondLikes

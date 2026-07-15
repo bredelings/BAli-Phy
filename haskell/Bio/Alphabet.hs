@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeFamilies #-}
 module Bio.Alphabet where
 
 import Compiler.FFI.Import (CInput(..))
@@ -8,9 +7,7 @@ import qualified Data.Text as T
 
 data Alphabet
 
-instance CInput Alphabet where
-    type CInputType Alphabet result = Alphabet -> result
-    withCInput value continuation = continuation value
+instance CInput Alphabet
 
 data GeneticCode
 

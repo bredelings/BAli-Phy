@@ -1,3 +1,4 @@
+{-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -23,13 +24,23 @@ import Numeric.LogDouble (LogDouble)
 -- argument to occupy any number of raw slots.
 class CInput a where
     type CInputType a result
+    type CInputType a result = a -> result
+
     withCInput :: a -> CInputType a result -> result
+    default withCInput
+        :: CInputType a result ~ (a -> result)
+        => a -> CInputType a result -> result
+    withCInput value continuation = continuation value
 
 -- | Translate the single raw result of an imported builtin into its Haskell
 -- result.  Input and output capabilities are intentionally independent.
 class COutput a where
     type COutputType a
+    type COutputType a = a
+
     fromCOutput :: COutputType a -> a
+    default fromCOutput :: COutputType a ~ a => COutputType a -> a
+    fromCOutput = id
 
 -- | Compute the complete raw signature of an imported builtin from its public
 -- Haskell signature.  The order of these closed equations is significant: an
@@ -55,53 +66,23 @@ instance {-# OVERLAPPABLE #-}
 fromCImport :: BuildImport f => RawImport f -> f
 fromCImport = buildImport
 
-instance CInput () where
-    type CInputType () result = () -> result
-    withCInput value continuation = continuation value
+instance CInput ()
+instance COutput ()
 
-instance COutput () where
-    type COutputType () = ()
-    fromCOutput = id
+instance CInput Int
+instance COutput Int
 
-instance CInput Int where
-    type CInputType Int result = Int -> result
-    withCInput value continuation = continuation value
+instance CInput Char
+instance COutput Char
 
-instance COutput Int where
-    type COutputType Int = Int
-    fromCOutput = id
+instance CInput Double
+instance COutput Double
 
-instance CInput Char where
-    type CInputType Char result = Char -> result
-    withCInput value continuation = continuation value
+instance CInput Bool
+instance COutput Bool
 
-instance COutput Char where
-    type COutputType Char = Char
-    fromCOutput = id
-
-instance CInput Double where
-    type CInputType Double result = Double -> result
-    withCInput value continuation = continuation value
-
-instance COutput Double where
-    type COutputType Double = Double
-    fromCOutput = id
-
-instance CInput Bool where
-    type CInputType Bool result = Bool -> result
-    withCInput value continuation = continuation value
-
-instance COutput Bool where
-    type COutputType Bool = Bool
-    fromCOutput = id
-
-instance CInput LogDouble where
-    type CInputType LogDouble result = LogDouble -> result
-    withCInput value continuation = continuation value
-
-instance COutput LogDouble where
-    type COutputType LogDouble = LogDouble
-    fromCOutput = id
+instance CInput LogDouble
+instance COutput LogDouble
 
 instance CInput String where
     type CInputType String result = CPPString -> result
@@ -123,13 +104,8 @@ instance (COutput a, COutput b) => COutput (a,b) where
 
 -- EPair is already an opaque runtime value.  Unlike a Haskell tuple, passing
 -- or returning it does not translate its two elements into separate slots.
-instance CInput (EPair a b) where
-    type CInputType (EPair a b) result = EPair a b -> result
-    withCInput value continuation = continuation value
-
-instance COutput (EPair a b) where
-    type COutputType (EPair a b) = EPair a b
-    fromCOutput = id
+instance CInput (EPair a b)
+instance COutput (EPair a b)
 
 instance COutput a => COutput (IO a) where
     type COutputType (IO a) = RealWorld -> COutputType a
