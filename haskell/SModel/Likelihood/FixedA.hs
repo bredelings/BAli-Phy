@@ -30,18 +30,8 @@ peelBranch toward nodeCLs branchCLs ps f | toward    = peelBranchTowardRoot   no
                                          | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs ps f
 
 -- ancestral sequence sampling for SEV
-foreign import trcall "LikelihoodSEV:sampleRootSequence" sampleRootSequenceNative :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> NativeComponentStateSequence
-foreign import trcall "LikelihoodSEV:sampleSequence" sampleSequenceNative :: ComponentStateSequence -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> U.Vector Int -> NativeComponentStateSequence
-
-sampleRootSequence node branch frequencies columns =
-    componentStateSequenceFromNative (U.length columns) $
-        sampleRootSequenceNative node branch frequencies columns
-
--- Sample from both native parent arrays while retaining the full-column count
--- supplied by the parent and compressed-column view.
-sampleSequence parent node probabilities branch columns =
-    componentStateSequenceFromNative (U.length columns) $
-        sampleSequenceNative parent node probabilities branch columns
+foreign import trcall "LikelihoodSEV:sampleRootSequence" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> ComponentStateSequence
+foreign import trcall "LikelihoodSEV:sampleSequence" sampleSequence :: ComponentStateSequence -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> U.Vector Int -> ComponentStateSequence
 
 foreign import trcall "LikelihoodSEV:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
 
