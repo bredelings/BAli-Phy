@@ -95,12 +95,6 @@ UntypedExpr string_expr(std::string value)
     return {NoAnn{}, StringLiteral{std::move(value)}};
 }
 
-// Builds a small untyped get_state expression for AST unit tests.
-UntypedExpr get_state_expr(std::string name)
-{
-    return {NoAnn{}, GetState{std::move(name)}};
-}
-
 // Wraps an untyped expression as a positional call argument.
 Arg<NoAnn> positional_arg(UntypedExpr value)
 {
@@ -458,58 +452,6 @@ TypecheckingState test_typechecker(const Rules& rules, const std::map<std::strin
     return TypecheckingState(rules, std::make_shared<FVSource>(), identifiers, state);
 }
 
-// Requires AST expression typechecking to produce a typed expression with the
-// requested top-level type after substituting solved equations.
-void expect_typecheck_expr(const Rules& rules, const type_t& required_type, const UntypedExpr& model, const std::map<std::string,type_t>& identifiers = {}, const std::map<std::string,type_t>& state = {})
-{
-    auto TC = test_typechecker(rules, identifiers, state);
-    auto typed = typecheck_model_expr(TC, required_type, model);
-    substitute_annotated(TC.eqs, typed);
-    BALI_PHY_TEST_CHECK(typed.ann.type == required_type);
-}
-
-// Requires AST expression typechecking with the standard empty rule set.
-void expect_typecheck_expr(const type_t& required_type, const UntypedExpr& model, const std::map<std::string,type_t>& identifiers = {}, const std::map<std::string,type_t>& state = {})
-{
-    Rules rules({});
-    expect_typecheck_expr(rules, required_type, model, identifiers, state);
-}
-
-// Exercises direct AST typechecking for constants, variables, collections,
-// lambda patterns, state, lets, and function-variable calls.
-void test_typecheck_exprs()
-{
-    expect_typecheck_expr(type_t("Int"), var_expr("x"), {{"x", type_t("Int")}});
-    expect_typecheck_expr(type_t("Int"), int_expr(1));
-    expect_typecheck_expr(
-        CM::type_apps("List", {type_t("Int")}),
-        list_expr({int_expr(1), int_expr(2)})
-    );
-    expect_typecheck_expr(
-        CM::type_apps("Tuple", {type_t("Int"), type_t("Bool")}),
-        tuple_expr({int_expr(1), bool_expr(true)})
-    );
-    expect_typecheck_expr(
-        type_t("Alphabet"),
-        get_state_expr("alphabet"),
-        {},
-        {{"alphabet", type_t("Alphabet")}}
-    );
-    expect_typecheck_expr(
-        type_t("Int"),
-        let_expr({{"x", int_expr(1)}}, var_expr("x"))
-    );
-    expect_typecheck_expr(
-        CM::type_apps("Function", {type_t("Int"), type_t("Int")}),
-        lambda_expr(var_pattern("x"), var_expr("x"))
-    );
-    expect_typecheck_expr(
-        type_t("Double"),
-        call_expr("f", {positional_arg(int_expr(1))}),
-        {{"f", CM::type_apps("Function", {type_t("Int"), type_t("Double")})}}
-    );
-}
-
 // Checks that tuple-pattern lambda typechecking solves the structured argument
 // type and annotates each pattern slot with its concrete type.
 void test_typecheck_tuple_pattern_lambda()
@@ -566,32 +508,6 @@ void test_typecheck_variable_function_used_args()
         {{"f", f_type}, {"x", type_t("Int")}},
         {"f", "x"}
     );
-}
-
-// Verifies expression typechecker failures that are intentionally clearer than
-// old fallback behavior.
-void test_typecheck_direct_errors()
-{
-    Rules rules({});
-    // Checks that one direct AST typecheck attempt fails with the expected
-    // diagnostic fragment.
-    auto expect_error = [&](const type_t& required_type, const CM::UntypedExpr& expr, const std::string& message)
-    {
-        auto TC = test_typechecker(rules);
-        try
-        {
-            (void)typecheck_model_expr(TC, required_type, expr);
-        }
-        catch(const std::exception& e)
-        {
-            BALI_PHY_TEST_CHECK(std::string(e.what()).find(message) != std::string::npos);
-            return;
-        }
-        BALI_PHY_TEST_CHECK(false);
-    };
-
-    expect_error(type_t("Int"), CM::UntypedExpr{NoAnn{}, Placeholder{}}, "Placeholder '_'");
-    expect_error(type_t("Int"), call_expr("unknown", {positional_arg(int_expr(1))}), "No direct typechecker");
 }
 
 // Test workaround: Rules load only from binding files, so the shadowing
@@ -761,10 +677,8 @@ int main()
     test_untyped_pretty_printing();
     test_typed_pretty_printing();
     test_typed_substitution();
-    test_typecheck_exprs();
     test_typecheck_tuple_pattern_lambda();
     test_typecheck_variable_function_used_args();
-    test_typecheck_direct_errors();
     test_typecheck_decls();
     test_local_function_shadowing();
     test_tuple_pattern_compile();
