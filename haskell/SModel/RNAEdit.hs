@@ -12,11 +12,11 @@ import Numeric.LinearAlgebra.Data
 
 type RNAEditAlphabet = Alphabet
 
-foreign import bpcall "SModel:rna_editting_rates" rnaEditingRatesNative :: RNAEditAlphabet -> NativeMatrix Double -> EVector (EPair Int Int) -> Double -> NativeMatrix Double
+foreign import trcall "SModel:rna_editting_rates" rnaEditingRatesNative :: RNAEditAlphabet -> Matrix Double -> EVector (EPair Int Int) -> Double -> Matrix Double
 foreign import trcall "SModel:rna_editting_pi" rnaEditingPiNative :: RNAEditAlphabet -> Vector Double -> EVector (EPair Int Int) -> Vector Double
 
-rna_editting_rates alphabet rates edits rate = matrixFromNative dimension dimension
-    (rnaEditingRatesNative alphabet (nativeMatrix rates) edits rate)
+rna_editting_rates alphabet rates edits rate = overrideMatrixDims dimension dimension
+    (rnaEditingRatesNative alphabet rates edits rate)
   where dimension = alphabetSize alphabet
 
 rna_editting_pi alphabet frequencies edits = overrideVectorSize (alphabetSize alphabet)
