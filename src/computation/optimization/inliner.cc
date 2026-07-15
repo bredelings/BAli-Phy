@@ -4,6 +4,7 @@
 #include "computation/loader.H"
 #include "occurrence.H"
 #include "inliner.H"
+#include "arity.H"
 #include "simplifier.H"
 #include "util/assert.hh"
 #include "util/set.H"    // for includes(vector,elem)
@@ -546,46 +547,6 @@ bool evaluates_to_bottom(const Occ::Exp& /* rhs */)
 bool whnf_or_bottom(const Occ::Exp& rhs)
 {
     return is_WHNF(rhs) or evaluates_to_bottom(rhs);
-}
-
-bool is_work_free(const Occ::Exp& e) // , int n=0)
-{
-    // var + constant + lambda + conapp +
-    //   lets and cases where all parts are work_free.
-
-    if (e.to_var())
-        return true; // n == 0 or (n<x->arity) or x is a data constructor
-    else if (e.to_constant())
-        return true;
-    else if (e.to_conApp())
-        return true;
-    else if (e.to_apply())
-        return false; // is_work_free(a->head, 1);
-    else if (auto cs = e.to_case())
-    {
-        if (not is_work_free(cs->object)) return false;
-        for(auto& [pat,body]: cs->alts)
-            if (not is_work_free(body)) return false;
-        return true;
-    }
-    else if (e.to_lambda())
-    {
-        // We could call is_work_free(la->body, n-1) if n >= 1
-        return true;
-    }
-    else if (auto le = e.to_let())
-    {
-        if (not is_work_free(le->body)) return false;
-        if (auto nonrec = le->to_nonrec())
-            return is_work_free(nonrec->decl.body);
-        for(auto& [x,e]: le->to_rec()->decls)
-            if (not is_work_free(e)) return false;
-        return true;
-    }
-    else if (e.to_builtinOp())
-        return false;
-    else
-        std::abort();
 }
 
 std::tuple<bool, std::vector<arg_info>, inline_context>

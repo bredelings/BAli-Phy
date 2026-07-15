@@ -11,6 +11,7 @@
 #include "core/subst.H"
 
 #include "simplifier.H"
+#include "arity.H"
 
 #include "util/assert.hh"
 
@@ -1201,6 +1202,7 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
 
     Occ::Decls new_decls;
     vector<Occ::Var> new_names;
+    vector<std::optional<Occ::Var>> completed_names(n_decls);
 
     // 5.1 Rename and bind all variables.
     //     Binding all variables ensures that we avoid shadowing them, which helps with let-floating.
@@ -1303,6 +1305,9 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
 	    }
 	    else
 	    {
+		x2.id.arity = manifest_arity(rhs);
+		x2.id.call_arity = 0;
+		completed_names[i] = x2;
 		new_decls.push_back({x2,rhs});
 
 		// Any later occurrences will see the bound value of x[i] when they are simplified.
@@ -1325,6 +1330,17 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
                 bound_vars = rebind_var(bound_vars, x2, unfolding);
 	    }
 	}
+    }
+
+    // Publish recursive manifest arities together, after no RHS can observe them.
+    for (const auto& completed_name: completed_names)
+    {
+        if (not completed_name) continue;
+        auto binding = bound_vars.at(*completed_name);
+        bound_vars = bound_vars.erase(*completed_name);
+        auto environment_name = *completed_name;
+        environment_name.info = binding.occurrence;
+        bound_vars = bind_var(bound_vars, environment_name, binding.unfolding);
     }
 
     if (new_decls.empty())
@@ -1360,6 +1376,11 @@ SimplifierState::simplify_nonrec(const Occ::NonRec& nonrec, const substitution& 
     else
         rhs = wrap(rhs_floats, std::move(rhs2));
 
+    const auto rhs_arity = find_rhs_arity(rhs, x.id.call_arity, [this, &bound_vars](const Occ::Var& variable) {
+        return get_id_info(variable, bound_vars);
+    });
+    rhs = eta_expand(*this, std::move(rhs), rhs_arity);
+
     if (post_inline(x, rhs))
     {
         auto S2 = S.erase(x);
@@ -1368,7 +1389,10 @@ SimplifierState::simplify_nonrec(const Occ::NonRec& nonrec, const substitution& 
     }
 
     auto S2 = S;
-    auto x2 = rename_and_bind_var(x, S2, bound_vars);
+    auto completed_x = x;
+    completed_x.id.arity = rhs_arity.arity();
+    completed_x.id.call_arity = 0;
+    auto x2 = rename_and_bind_var(completed_x, S2, bound_vars);
     Unfolding unfolding;
     bool noinline = false;
     if (is_top_level and is_qualified_by_module(x2.name, this_mod.name))
