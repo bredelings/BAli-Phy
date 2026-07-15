@@ -13,14 +13,14 @@ import Numeric.LinearAlgebra -- for fromLists and scale
 import qualified Data.Map as Map
 import Numeric.LinearAlgebra.Data
 
-foreign import bpcall "SModel:modulated_markov_rates" modulatedRatesNative :: EVector (NativeMatrix Double) -> NativeMatrix Double -> NativeMatrix Double
+foreign import trcall "SModel:modulated_markov_rates" modulatedRatesNative :: EVector (NativeMatrix Double) -> Matrix Double -> Matrix Double
 -- NOTE: Component frequencies stay raw because trcall does not translate
 -- EVector elements; remove this once collection-level translation exists.
 foreign import trcall "SModel:modulated_markov_pi" modulatedPiNative :: EVector (NativeVector Double) -> Vector Double -> Vector Double
 foreign import bpcall "SModel:modulated_markov_smap" builtin_modulated_markov_smap :: EVector (EVector Int) -> EVector Int
 
-modulatedMarkovRates qs rates_between = matrixFromNative stateCount stateCount
-    (modulatedRatesNative (toVector (map nativeMatrix qs)) (nativeMatrix rates_between))
+modulatedMarkovRates qs rates_between = overrideMatrixDims stateCount stateCount
+    (modulatedRatesNative (toVector (map nativeMatrix qs)) rates_between)
   where stateCount = sum (map rows qs)
 
 modulatedMarkovPi pis levelProbs = overrideVectorSize stateCount
