@@ -6,14 +6,17 @@ import Data.List.NonEmpty
 import Data.Monoid
 import Numeric.LinearAlgebra.Data
 
-foreign import bpcall "Matrix:matrixFloatingUnary" matrixFloatingUnaryNative :: Int -> NativeMatrix Double -> NativeMatrix Double
-foreign import bpcall "Matrix:matrixFloatingBinary" matrixFloatingBinaryNative :: Int -> NativeMatrix Double -> NativeMatrix Double -> NativeMatrix Double
+foreign import trcall "Matrix:matrixFloatingUnary" matrixFloatingUnaryNative :: Int -> Matrix Double -> Matrix Double
+foreign import trcall "Matrix:matrixFloatingBinary" matrixFloatingBinaryNative :: Int -> Matrix Double -> Matrix Double -> Matrix Double
 
 matrixFloatingUnary :: Int -> Matrix Double -> Matrix Double
-matrixFloatingUnary operation = unaryMatrix (matrixFloatingUnaryNative operation)
+matrixFloatingUnary operation matrix = overrideMatrixDims (rows matrix) (cols matrix)
+    (matrixFloatingUnaryNative operation matrix)
 
 matrixFloatingBinary :: Int -> Matrix Double -> Matrix Double -> Matrix Double
-matrixFloatingBinary operation = binaryMatrix (matrixFloatingBinaryNative operation)
+matrixFloatingBinary operation left right =
+    overrideMatrixDims (max (rows left) (rows right)) (max (cols left) (cols right))
+        (matrixFloatingBinaryNative operation left right)
 
 -- Separate singleton scalar matrices from a chain while preserving the
 -- order of every non-scalar matrix.
