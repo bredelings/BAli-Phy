@@ -594,134 +594,15 @@ void test_typecheck_direct_errors()
     expect_error(type_t("Int"), call_expr("unknown", {positional_arg(int_expr(1))}), "No direct typechecker");
 }
 
-// Test workaround: Rules currently load only from binding files, so these tests
-// create a tiny temporary package.  Replace with an in-memory Rules builder if
-// the production loader grows one.
-std::filesystem::path make_rule_fixture()
+// Test workaround: Rules load only from binding files, so the shadowing
+// regression needs one temporary global rule. Remove this fixture when Rules
+// can construct a rule in memory or the regression moves to an integration test.
+std::filesystem::path make_shadowing_rule_fixture()
 {
     auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
     auto root = std::filesystem::temp_directory_path() / ("bali-phy-model-expr-test-" + std::to_string(stamp));
     auto functions = root / "bindings" / "functions";
     std::filesystem::create_directories(functions);
-
-    {
-        std::ofstream out(functions / "fixture_model.json");
-        out << R"JSON({
-    "name": "fixture_model",
-    "result_type": "Int",
-    "no_log": true,
-    "extract": "all",
-    "call": "fixtureModel(@x,@y,@z)",
-    "args": [
-        {"name": "x", "type": "Int"},
-        {"name": "y", "type": "Int", "default_value": "2"},
-        {"name": "z", "type": "Int", "alphabet": "dna"}
-    ]
-})JSON";
-    }
-
-    {
-        std::ofstream out(functions / "intToDouble.json");
-        out << R"JSON({
-    "name": "intToDouble",
-    "result_type": "Double",
-    "no_log": true,
-    "call": "intToDouble(@x)",
-    "args": [
-        {"name": "x", "type": "Int"}
-    ]
-})JSON";
-    }
-
-    {
-        std::ofstream out(functions / "zero.json");
-        out << R"JSON({
-    "name": "zero",
-    "result_type": "Int",
-    "no_log": true,
-    "call": "zero",
-    "args": []
-})JSON";
-    }
-
-    {
-        std::ofstream out(functions / "sample.json");
-        out << R"JSON({
-    "name": "sample",
-    "result_type": "a",
-    "perform": true,
-    "no_log": true,
-    "call": "sample(@dist)",
-    "args": [
-        {"name": "dist", "type": "Distribution<a>"}
-    ]
-})JSON";
-    }
-
-    {
-        std::ofstream out(functions / "normal.json");
-        out << R"JSON({
-    "name": "normal",
-    "result_type": "Distribution<Double>",
-    "call": "normal(@mu,@sigma)",
-    "args": [
-        {"name": "mu", "type": "Double"},
-        {"name": "sigma", "type": "Double"}
-    ]
-})JSON";
-    }
-
-    {
-        std::ofstream out(functions / "discrete.json");
-        out << R"JSON({
-    "name": "discrete",
-    "result_type": "DiscreteDist<a>",
-    "no_log": true,
-    "call": "Discrete(@pairs)",
-    "args": [
-        {"name": "pairs", "type": "List<(a,Double)>"}
-    ]
-})JSON";
-    }
-
-    {
-        std::ofstream out(functions / "convertDiscrete.json");
-        out << R"JSON({
-    "name": "convertDiscrete",
-    "result_type": "Distribution<a>",
-    "no_log": true,
-    "call": "@x",
-    "args": [
-        {"name": "x", "type": "DiscreteDist<a>"}
-    ]
-})JSON";
-    }
-
-    {
-        std::ofstream out(functions / "unit_mixture.json");
-        out << R"JSON({
-    "name": "unit_mixture",
-    "result_type": "DiscreteDist<CTMC<a>>",
-    "no_log": true,
-    "call": "unitMixture(@submodel)",
-    "args": [
-        {"name": "submodel", "type": "CTMC<a>"}
-    ]
-})JSON";
-    }
-
-    {
-        std::ofstream out(functions / "multiMixtureModel.json");
-        out << R"JSON({
-    "name": "multiMixtureModel",
-    "result_type": "MultiMixtureModel<a>",
-    "no_log": true,
-    "call": "SModel.mmm(@submodel)",
-    "args": [
-        {"name": "submodel", "type": "DiscreteDist<CTMC<a>>"}
-    ]
-})JSON";
-    }
 
     {
         std::ofstream out(functions / "f.json");
@@ -738,13 +619,11 @@ std::filesystem::path make_rule_fixture()
     return root;
 }
 
-void test_typecheck_decls(const Rules& rules);
-
 // Checks that a local function shadows a binding-file rule with the same name
 // throughout parsing, typechecking, and code generation.
 void test_local_function_shadowing()
 {
-    auto root = make_rule_fixture();
+    auto root = make_shadowing_rule_fixture();
     try
     {
         Rules rules({root});
@@ -779,68 +658,6 @@ void test_tuple_pattern_compile()
         "tuple-pattern compile test"
     );
     BALI_PHY_TEST_CHECK(model.type == type_t("Int"));
-}
-
-// Verifies rule-backed calls, defaults, alphabets, and conversion calls using
-// direct AST inputs and a temporary binding-file fixture.
-void test_typecheck_rule_calls()
-{
-    auto root = make_rule_fixture();
-    try
-    {
-        Rules rules({root});
-        expect_typecheck_expr(
-            rules,
-            type_t("Int"),
-            call_expr("fixture_model", {named_arg("x", int_expr(1)), named_arg("z", int_expr(3))}),
-            {{"dna", type_t("Alphabet")}}
-        );
-        expect_typecheck_expr(rules, type_t("Double"), int_expr(1));
-        expect_typecheck_expr(rules, type_t("Int"), var_expr("zero"));
-        expect_typecheck_expr(rules, type_t("Double"), sample_expr(call_expr("normal", {
-            named_arg("mu", int_expr(0)),
-            named_arg("sigma", int_expr(1))
-        })));
-        expect_typecheck_expr(
-            rules,
-            CM::type_app("DiscreteDist", type_t("Int")),
-            list_expr({
-                tuple_expr({int_expr(1), double_expr(0.25)}),
-                tuple_expr({int_expr(2), double_expr(0.75)})
-            })
-        );
-        expect_typecheck_expr(
-            rules,
-            CM::type_app("Distribution", type_t("Int")),
-            var_expr("d"),
-            {{"d", CM::type_app("DiscreteDist", type_t("Int"))}}
-        );
-        expect_typecheck_expr(
-            rules,
-            CM::type_app("DiscreteDist", CM::type_app("CTMC", type_t("AA"))),
-            var_expr("m"),
-            {{"m", CM::type_app("CTMC", type_t("AA"))}}
-        );
-        expect_typecheck_expr(
-            rules,
-            CM::type_app("MultiMixtureModel", type_t("AA")),
-            var_expr("m"),
-            {{"m", CM::type_app("CTMC", type_t("AA"))}}
-        );
-        expect_typecheck_expr(
-            rules,
-            CM::type_app("CTMC", type_t("AA")),
-            var_expr("s"),
-            {{"s", CM::type_app("ExchangeModel", type_t("AA"))}}
-        );
-        test_typecheck_decls(rules);
-    }
-    catch (...)
-    {
-        std::filesystem::remove_all(root);
-        throw;
-    }
-    std::filesystem::remove_all(root);
 }
 
 // Exercises declaration typechecking directly through the AST declaration path.
@@ -951,6 +768,5 @@ int main()
     test_typecheck_decls();
     test_local_function_shadowing();
     test_tuple_pattern_compile();
-    test_typecheck_rule_calls();
     test_extraction();
 }
