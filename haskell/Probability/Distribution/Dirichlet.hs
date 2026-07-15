@@ -5,11 +5,10 @@ import Probability.Distribution.Gamma
 import Probability.Distribution.List
 import MCMC.Moves.Real
 import Numeric.LinearAlgebra (Vector, fromList)
-import Numeric.LinearAlgebra.Data (NativeVector, nativeVector)
 
-foreign import bpcall "Distribution:dirichlet_density" dirichletDensityNative :: NativeVector Double -> NativeVector Double -> LogDouble
+foreign import trcall "Distribution:dirichlet_density" dirichletDensityNative :: Vector Double -> Vector Double -> LogDouble
 dirichletDensity as ps = dirichletDensityNative
-    (nativeVector (fromList as)) (nativeVector (fromList ps))
+    (fromList as) (fromList ps)
 
 -- The `dirichlet` does not handle cases where the number of as changes in a graceful way: all entries are resampled!
 sampleDirichlet as = do vs <- mapM (\a-> sample $ gamma a 1) as
