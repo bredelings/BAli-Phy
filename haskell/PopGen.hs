@@ -1,5 +1,6 @@
 module PopGen where
 
+import Compiler.FFI.Import (CInput)
 import Probability
 import Range
 import Bio.Alignment.Matrix
@@ -9,6 +10,8 @@ import qualified Data.Vector.Unboxed as U
 import Data.Vector.Unboxed.Internal (intVectorNativeView)
 
 data VVI -- Vector<Vector<int>>
+
+instance CInput VVI
 
 foreign import bpcall "PopGen:read_phase_file" builtin_read_phase_file :: CPPString -> IO (EVector (EVector Int))
 foreign import bpcall "PopGen:read_phase2_file" builtin_read_phase2_file :: CPPString -> IO (EVector (EVector Int))
@@ -48,9 +51,9 @@ instance HasAnnotatedPdf AFSGroup where
 afsGroup args = AFSGroup args
 
 ---------------------------------
-foreign import bpcall "PopGen:ewens_sampling_mixture_probability" ewensSamplingMixtureNative :: NativeVector Double -> NativeVector Double -> VVI -> LogDouble
+foreign import trcall "PopGen:ewens_sampling_mixture_probability" ewensSamplingMixtureNative :: Vector Double -> Vector Double -> VVI -> LogDouble
 ewens_sampling_mixture_probability thetas ps x = ewensSamplingMixtureNative
-    (nativeVector (fromList thetas)) (nativeVector (fromList ps)) x
+    (fromList thetas) (fromList ps) x
 
 data AFSMixture = AFSMixture [Double] [Double]
 
