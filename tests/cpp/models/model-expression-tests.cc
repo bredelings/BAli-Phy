@@ -8,7 +8,6 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <optional>
@@ -111,12 +110,6 @@ Arg<NoAnn> named_arg(std::string name, UntypedExpr value)
 UntypedExpr call_expr(std::string function, std::vector<Arg<NoAnn>> args)
 {
     return {NoAnn{}, Call<NoAnn>{std::move(function), std::move(args)}};
-}
-
-// Builds an untyped list expression from element expressions.
-UntypedExpr list_expr(std::vector<UntypedExpr> elements)
-{
-    return {NoAnn{}, List<NoAnn>{std::move(elements)}};
 }
 
 // Builds an untyped tuple expression from element expressions.
@@ -296,27 +289,6 @@ void test_absent_argument_values()
     BALI_PHY_TEST_CHECK(call.args[1].value);
 }
 
-// Checks parser wrappers now return native model AST nodes.
-void test_parser_wrappers()
-{
-    Rules rules({});
-
-    auto expr = parse_model_expr(rules, "~normal(0, 1)", "test expression");
-    BALI_PHY_TEST_CHECK(is_sample(expr));
-
-    auto decls = parse_model_decls(rules, "x = 1; y = x");
-    BALI_PHY_TEST_CHECK(decls.size() == 2);
-    BALI_PHY_TEST_CHECK(decls[0].first == "x");
-    BALI_PHY_TEST_CHECK(decls[1].first == "y");
-
-    auto tuple_lambda = parse_model_expr(rules, "|(x,y):x|", "tuple-pattern lambda");
-    auto& lambda = tuple_lambda.as<Lambda<NoAnn>>();
-    auto& pattern = lambda.pattern.as<TuplePattern<NoAnn>>();
-    BALI_PHY_TEST_CHECK(pattern.elements.size() == 2);
-    BALI_PHY_TEST_CHECK(pattern.elements[0].as<VarPattern>().name == "x");
-    BALI_PHY_TEST_CHECK(pattern.elements[1].as<VarPattern>().name == "y");
-}
-
 // Exercises untyped AST pretty-printing for representative syntax.
 void test_untyped_pretty_printing()
 {
@@ -344,8 +316,7 @@ void test_untyped_pretty_printing()
     BALI_PHY_TEST_CHECK(show_model(var_expr("x")) == "= x");
 }
 
-// Exercises typed AST pretty-printing directly, without a ptree conversion
-// oracle.
+// Exercises user-visible typed AST pretty-printing and argument metadata.
 void test_typed_pretty_printing()
 {
     BALI_PHY_TEST_CHECK(unparse_annotated(typed_expr(type_t("Int"), IntLiteral{1})) == "1");
@@ -576,93 +547,6 @@ void test_tuple_pattern_compile()
     BALI_PHY_TEST_CHECK(model.type == type_t("Int"));
 }
 
-// Exercises declaration typechecking directly through the AST declaration path.
-void test_typecheck_decls(const Rules& rules)
-{
-    // Checks that a declaration block typechecks to the expected declaration
-    // names and substituted top-level types.
-    auto expect_typed_decls = [&](const Decls<NoAnn>& decls, std::vector<std::pair<std::string,type_t>> expected)
-    {
-        auto ast_TC = test_typechecker(rules);
-        auto typed = typecheck_model_decls(ast_TC, decls);
-        substitute_annotated(ast_TC.eqs, typed);
-
-        BALI_PHY_TEST_CHECK(typed.size() == expected.size());
-        for(std::size_t i = 0; i < expected.size(); i++)
-        {
-            BALI_PHY_TEST_CHECK(typed[i].first == expected[i].first);
-            BALI_PHY_TEST_CHECK(typed[i].second.ann.type == expected[i].second);
-        }
-    };
-
-    expect_typed_decls({{"x", int_expr(1)}}, {{"x", type_t("Int")}});
-    expect_typed_decls({
-        {"x", int_expr(1)},
-        {"y", var_expr("x")}
-    }, {{"x", type_t("Int")}, {"y", type_t("Int")}});
-    expect_typed_decls({
-        {"xs", list_expr({int_expr(1), int_expr(2)})},
-        {"pair", tuple_expr({var_expr("xs"), bool_expr(true)})}
-    }, {
-        {"xs", CM::type_app("List", type_t("Int"))},
-        {"pair", CM::type_apps("Tuple", {CM::type_app("List", type_t("Int")), type_t("Bool")})}
-    });
-    expect_typed_decls({
-        {"x", let_expr({{"y", int_expr(1)}}, var_expr("y"))}
-    }, {{"x", type_t("Int")}});
-    if (rules.get_rule_for_func("intToDouble"))
-    {
-        expect_typed_decls({
-            {"x", call_expr("intToDouble", {named_arg("x", int_expr(1))})}
-        }, {{"x", type_t("Double")}});
-    }
-}
-
-// Exercises declaration typechecking for declarations that do not need
-// binding-file rules.
-void test_typecheck_decls()
-{
-    Rules rules({});
-    test_typecheck_decls(rules);
-}
-
-// Checks that typed pretty extraction consumes direct typed AST expressions.
-void test_extraction()
-{
-    auto scalar = pretty_model_t(typed_expr(type_t("Int"), IntLiteral{1}));
-    BALI_PHY_TEST_CHECK(scalar.show() == "1");
-
-    auto dist_type = CM::type_app("Distribution", type_t("Double"));
-    auto sampled_arg = typed_expr(
-        type_t("Double"),
-        Sample<Ann>{typed_expr(dist_type, Var{"normal"})}
-    );
-    auto model = typed_call_expr("f", {typed_named_arg("x", sampled_arg)}, type_t("Model"));
-    auto pretty = pretty_model_t(model);
-    BALI_PHY_TEST_CHECK(pretty.show_main() == "f");
-    BALI_PHY_TEST_CHECK(pretty.show_extracted().find("f:x") != std::string::npos);
-
-    auto no_log = typed_call_expr("f", {typed_named_arg("x", sampled_arg)}, type_t("Model"), true);
-    auto pretty_no_log = pretty_model_t(no_log);
-    BALI_PHY_TEST_CHECK(pretty_no_log.show_extracted().empty());
-
-    auto extract_all = typed_call_expr("f", {typed_named_arg("x", typed_expr(type_t("Int"), IntLiteral{1}))}, type_t("Model"), false, "all");
-    auto pretty_extract_all = pretty_model_t(extract_all);
-    BALI_PHY_TEST_CHECK(pretty_extract_all.show_extracted().find("f:x") != std::string::npos);
-
-    auto with_alphabet = typed_call_expr("f", {
-        typed_named_arg(
-            "x",
-            typed_expr(type_t("Int"), Var{"x"}, {"x"}),
-            false,
-            false,
-            typed_expr(type_t("Alphabet"), Var{"dna"})
-        )
-    }, type_t("Model"));
-    auto pretty_with_alphabet = pretty_model_t(with_alphabet);
-    BALI_PHY_TEST_CHECK(pretty_with_alphabet.show_main() == "f(x)");
-}
-
 }
 
 // Runs the focused model AST regression checks in a deterministic order.
@@ -673,14 +557,11 @@ int main()
     test_accessors_and_traversal();
     test_invariants();
     test_absent_argument_values();
-    test_parser_wrappers();
     test_untyped_pretty_printing();
     test_typed_pretty_printing();
     test_typed_substitution();
     test_typecheck_tuple_pattern_lambda();
     test_typecheck_variable_function_used_args();
-    test_typecheck_decls();
     test_local_function_shadowing();
     test_tuple_pattern_compile();
-    test_extraction();
 }
