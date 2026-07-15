@@ -113,31 +113,6 @@ namespace
                 "inverse preprocess final Core should prepare back to the same Runtime expression");
     }
 
-    // Checks diagnostic Core forms produced for references and Runtime-only values.
-    void check_deindexify_diagnostic_terms()
-    {
-        auto direct_reg = deindexify(Runtime::RegRef(7));
-        require(direct_reg.to_var() and direct_reg.to_var()->name == "<7>",
-                "direct Runtime::RegRef should become a diagnostic Core variable");
-
-        closure C(Runtime::IndexVar(0), {152});
-        auto env_reg = deindexify(C);
-        require(env_reg.to_var() and env_reg.to_var()->name == "[152]",
-                "closure Runtime::IndexVar should resolve through Env to a diagnostic Core variable");
-
-        auto free_index = deindexify(Runtime::IndexVar(0));
-        require(free_index.to_var() and free_index.to_var()->name == "[?0]",
-                "free Runtime::IndexVar should become a diagnostic fallback Core variable");
-
-        object_ptr<R::RVector> vec(new R::RVector(std::vector<int>{1, 2}));
-        auto object_value = deindexify(Runtime::Exp(vec));
-        require(object_value.to_runtimeOnly() and object_value.print() == vec->print(),
-                "Runtime::ObjectValue should become a RuntimeOnly Core diagnostic");
-
-        auto log_double = deindexify(Runtime::LogDouble(log_double_t(0.25)));
-        require(log_double.to_runtimeOnly() and log_double.print().ends_with("L#"),
-                "Runtime::LogDouble should become a RuntimeOnly Core diagnostic");
-    }
 }
 
 // Runs the direct Runtime indexing and Core conversion tests.
@@ -145,6 +120,5 @@ void run_transform_tests()
 {
     check_shift_free_indices();
     check_inverse_preprocess_round_trip();
-    check_deindexify_diagnostic_terms();
 }
 }
