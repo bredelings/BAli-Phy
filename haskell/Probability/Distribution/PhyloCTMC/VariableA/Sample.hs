@@ -8,29 +8,12 @@ import SModel
 import Bio.Alignment
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
-import Foreign.NativeVector (NativeVector)
 import qualified Data.IntMap as IntMap
 
 -- This is imported for both FixedA and VariableA, which is ugly.
-foreign import bpcall "Likelihood:simulateRootSequence" simulateRootSequenceNative :: Int -> NativeMatrix Double -> IO NativeComponentStateSequence
+foreign import trcall "Likelihood:simulateRootSequence" simulateRootSequence :: Int -> Matrix Double -> IO ComponentStateSequence
 
-foreign import bpcall "Likelihood:simulateSequenceFrom" simulateSequenceFromNative :: Int -> Int -> NativeVector Int -> Int -> NativeVector Int -> PairwiseAlignment -> EVector (NativeMatrix Double) -> NativeMatrix Double -> IO NativeComponentStateSequence
-
-simulateRootSequence count frequencies =
-    fmap (componentStateSequenceFromNative count) $
-        simulateRootSequenceNative count (nativeMatrix frequencies)
-
--- Pass cached native transition payloads and unwrap the frequency matrix at
--- the builtin boundary.
-simulateSequenceFrom sequence alignment probabilities frequencies =
-    fmap (componentStateSequenceFromNative outputCount) $
-        simulateSequenceFromNative parentCount componentOffset componentNative
-            stateOffset stateNative
-            alignment probabilities (nativeMatrix frequencies)
-  where
-    outputCount = pairwise_alignment_length2 alignment
-    (parentCount, componentOffset, componentNative, stateOffset, stateNative) =
-        componentStateSequenceNativeView sequence
+foreign import trcall "Likelihood:simulateSequenceFrom" simulateSequenceFrom :: ComponentStateSequence -> PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> IO ComponentStateSequence
 
 sampleComponentStates rtree alignment smodel =  do
   let smodelOnTree = SModelOnTree rtree smodel

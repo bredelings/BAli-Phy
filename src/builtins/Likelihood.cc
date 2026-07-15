@@ -306,24 +306,27 @@ extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)
 
 extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
 {
-    int parent_count = Args.evaluate_slot_to_value(0).as_int();
-    int component_offset = Args.evaluate_slot_to_value(1).as_int();
+    int component_offset = Args.evaluate_slot_to_value(0).as_int();
+    int component_count = Args.evaluate_slot_to_value(1).as_int();
     auto component_value = Args.evaluate_slot_to_value(2);
     int state_offset = Args.evaluate_slot_to_value(3).as_int();
-    auto state_value = Args.evaluate_slot_to_value(4);
-    auto alignment_value = Args.evaluate_slot_to_value(5);
-    auto transition_value = Args.evaluate_slot_to_value(6);
-    auto frequency_value = Args.evaluate_slot_to_value(7);
+    int state_count = Args.evaluate_slot_to_value(4).as_int();
+    auto state_value = Args.evaluate_slot_to_value(5);
+    auto alignment_value = Args.evaluate_slot_to_value(6);
+    auto transition_value = Args.evaluate_slot_to_value(7);
+    auto frequency_value = Args.evaluate_slot_to_value(8);
+    if (component_count != state_count)
+        throw myexception()<<"Likelihood.simulateSequenceFrom: component and state lengths differ";
     const auto& component_owner = component_value.as_<Box<DenseVector<int>>>();
     const auto& state_owner = state_value.as_<Box<DenseVector<int>>>();
     auto parent_components = checked_native_vector_view(
-        component_owner, component_offset, parent_count,
+        component_owner, component_offset, component_count,
         "Likelihood.simulateSequenceFrom components");
     auto parent_states = checked_native_vector_view(
-        state_owner, state_offset, parent_count,
+        state_owner, state_offset, state_count,
         "Likelihood.simulateSequenceFrom states");
     const auto& alignment = alignment_value.as_<Box<pairwise_alignment_t>>();
-    if (parent_count != alignment.length1())
+    if (component_count != alignment.length1())
         throw myexception()<<"Likelihood.simulateSequenceFrom: parent length does not match alignment";
     const auto& transition_ps = transition_value.as_<R::RVector>();
     const auto& F = frequency_value.as_<Box<DenseMatrix<double>>>();
@@ -355,7 +358,7 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
         sequence.states[k++] = state;
     }
 
-    assert(j == parent_count);
+    assert(j == component_count);
     assert(k == alignment.length2());
 
     return component_state_result(std::move(sequence));
