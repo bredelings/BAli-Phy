@@ -27,7 +27,6 @@ import qualified Data.IntMap as IntMap
 import qualified Data.Vector.Unboxed as U
 import Data.Vector.Unboxed.Internal (doubleVectorFromNativeWithLength,
                                      intVectorFromNative,
-                                     intVectorFromNativeWithLength,
                                      intVectorNativeView)
 import Foreign.NativeVector (NativeVector)
 
@@ -47,16 +46,6 @@ import qualified Data.JSON.Encoding as E
 -- unboxed primitive arrays while retaining their domain-specific JSON rules.
 newtype ComponentStateSequence = ComponentStateSequence (U.Vector (Int,Int))
     deriving newtype (CInput, COutput)
-
-type NativeComponentStateSequence = EPair (NativeVector Int) (NativeVector Int)
-
-componentStateSequenceFromNative :: Int -> NativeComponentStateSequence -> ComponentStateSequence
-componentStateSequenceFromNative count result =
-    ComponentStateSequence
-        (U.zip (intVectorFromNativeWithLength count components)
-               (intVectorFromNativeWithLength count states))
-  where
-    (components, states) = pair_from_c result
 
 -- Return both complete native child views so foreign consumers preserve
 -- independently sliced component and state arrays.
