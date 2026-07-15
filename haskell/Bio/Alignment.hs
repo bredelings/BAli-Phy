@@ -45,7 +45,7 @@ import qualified Data.JSON.Encoding as E
 
 -- Store the sampled substitution component and state for each site in two
 -- unboxed primitive arrays while retaining their domain-specific JSON rules.
-data ComponentStateSequence = ComponentStateSequence (U.Vector (Int,Int))
+newtype ComponentStateSequence = ComponentStateSequence (U.Vector (Int,Int))
 
 type NativeComponentStateSequence = EPair (NativeVector Int) (NativeVector Int)
 
