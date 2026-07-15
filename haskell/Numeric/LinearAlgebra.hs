@@ -13,6 +13,7 @@ module Numeric.LinearAlgebra
     , toList
     , rows
     , cols
+    , overrideVectorSize
     , fromLists
     , toLists
     , row

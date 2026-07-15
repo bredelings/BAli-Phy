@@ -2,6 +2,7 @@
 
 import Compiler.Num
 import Compiler.Error (error)
+import Compiler.FFI.Import (COutput(fromCOutput))
 import Bio.Alphabet (dna)
 import Data.Function (($))
 import Data.List.NonEmpty (NonEmpty((:|)))
@@ -14,6 +15,9 @@ import SModel.Parsimony (unitCostMatrix)
 import System.IO (putStrLn)
 import Text.Show (show)
 
+foreign import trcall "NativeVector:vectorKonstNative"
+    translatedVectorKonstNative :: Double -> Int -> Vector Double
+
 -- Exercise construction, conversion, empty shapes, and the full basic
 -- operation set for both native element representations.
 main = do
@@ -23,6 +27,12 @@ main = do
                             (error "matrix payload forced" :: NativeMatrix Int)
                             :: Matrix Int
                       in (rows matrix, cols matrix)
+    let translated = translatedVectorKonstNative 2.5 3
+    putStrLn $ show (vectorSize translated, toList translated)
+    let lazyOutput = fromCOutput
+            (error "native vector fallback forced" :: NativeVector Double)
+            :: Vector Double
+    putStrLn $ show $ vectorSize $ overrideVectorSize 5 lazyOutput
     let intVector = fromList [1, 2, 3] :: Vector Int
     putStrLn $ show $ toList $ intVector + 10
     putStrLn $ show $ toList $ 2 * intVector

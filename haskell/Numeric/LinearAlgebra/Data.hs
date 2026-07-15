@@ -3,6 +3,7 @@ module Numeric.LinearAlgebra.Data
     ( R, I
     , NativeVector, NativeMatrix, Vector, Matrix
     , vectorFromNative, matrixFromNative, nativeVector, nativeMatrix
+    , overrideVectorSize
     , vectorSize, rows, cols
     , showMatrixNative, showNumericVectorNative
     , Element(..), IndexOf, Container(..)
@@ -25,7 +26,7 @@ module Numeric.LinearAlgebra.Data
     ) where
 
 import Compiler.FFI.Runtime (RuntimeValue)
-import Compiler.FFI.Import (CInput(..))
+import Compiler.FFI.Import (CInput(..), COutput(..))
 import Foreign.CList (mapFrom)
 import Foreign.NativeVector (NativeVector)
 
@@ -39,7 +40,7 @@ instance RuntimeValue (NativeMatrix a)
 
 -- Keep stable dimensions separate from changing native vector contents.
 type role Vector nominal
-data Vector a = Vector !Int (NativeVector a)
+data Vector a = Vector Int (NativeVector a)
 
 -- Keep stable dimensions separate from changing native matrix contents.
 type role Matrix nominal
@@ -47,6 +48,11 @@ data Matrix a = Matrix !Int !Int (NativeMatrix a)
 
 vectorFromNative :: Int -> NativeVector a -> Vector a
 vectorFromNative = Vector
+
+-- Replace the cached length when the builtin contract guarantees it; the
+-- supplied length is authoritative and discards any lazy native fallback.
+overrideVectorSize :: Int -> Vector a -> Vector a
+overrideVectorSize count (Vector _ payload) = Vector count payload
 
 matrixFromNative :: Int -> Int -> NativeMatrix a -> Matrix a
 matrixFromNative = Matrix
@@ -69,6 +75,12 @@ nativeMatrix (Matrix _ _ payload) = payload
 instance CInput (Vector a) where
     type CInputType (Vector a) result = NativeVector a -> result
     withCInput value continuation = continuation (nativeVector value)
+
+foreign import ecall "NativeVector:doubleVectorSize" doubleVectorSizeNative :: NativeVector Double -> Int
+
+instance COutput (Vector Double) where
+    type COutputType (Vector Double) = NativeVector Double
+    fromCOutput payload = Vector (doubleVectorSizeNative payload) payload
 
 instance CInput (Matrix a) where
     type CInputType (Matrix a) result = NativeMatrix a -> result
