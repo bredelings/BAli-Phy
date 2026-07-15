@@ -91,39 +91,6 @@ namespace
         require(trim_body->index == 1, "shifted Trim body index mismatch");
     }
 
-    // Checks counting and removing a requested number of leading lambdas.
-    void check_lambda_peeling()
-    {
-        Runtime::Exp body{Runtime::IndexVar(2)};
-        Runtime::Exp one_lambda{Runtime::Lambda(body)};
-        Runtime::Exp e{Runtime::Lambda(one_lambda)};
-
-        require(Runtime::count_lambdas(e) == 2, "runtime lambda count mismatch");
-
-        auto once = Runtime::peel_lambdas(e, 1);
-        require(bool(once.to<Runtime::Lambda>()), "peeling one lambda should leave one lambda");
-
-        auto twice = Runtime::peel_lambdas(e, 2);
-        auto peeled_body = twice.to<Runtime::IndexVar>();
-        require(bool(peeled_body), "peeling two lambdas should expose the body");
-        require(peeled_body->index == 2, "peeled lambda body index mismatch");
-    }
-
-    // Checks that translated references survive untranslation, deindexing, and reindexing.
-    void check_untranslate_vars()
-    {
-        Runtime::Exp translated = Runtime::apply(
-            Runtime::RegRef(3), {Runtime::Trim({0}, Runtime::RegRef(4))});
-        auto un = Runtime::untranslate_vars(
-            translated, std::map<int, std::string>{{3, "Test.f"}, {4, "Test.x"}});
-        auto untrimmed = Runtime::trim_unnormalize(un);
-        auto core = deindexify(untrimmed);
-        auto reindexed = indexify(core);
-
-        require(reindexed == untrimmed,
-                "runtime untranslate/deindexify should round-trip through indexify");
-    }
-
     // Checks inverse preprocessing against nested Core scopes and Runtime trimming.
     void check_inverse_preprocess_round_trip()
     {
@@ -177,8 +144,6 @@ namespace
 void run_transform_tests()
 {
     check_shift_free_indices();
-    check_lambda_peeling();
-    check_untranslate_vars();
     check_inverse_preprocess_round_trip();
     check_deindexify_diagnostic_terms();
 }

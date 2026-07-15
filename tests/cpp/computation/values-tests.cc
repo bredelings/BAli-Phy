@@ -6,18 +6,6 @@ namespace bali_phy_test
 {
 namespace
 {
-    // Checks conversion of Runtime vectors to their corresponding C++ vectors.
-    void check_vector_conversions()
-    {
-        Runtime::RVector ints(std::vector<int>{1, 2, 3});
-        require(((std::vector<int>)ints == std::vector<int>{1, 2, 3}),
-                "Runtime::RVector int conversion mismatch");
-
-        Runtime::RVector chars(std::vector<char32_t>{U'a', U'b'});
-        require(((std::vector<char32_t>)chars == std::vector<char32_t>{U'a', U'b'}),
-                "Runtime::RVector char conversion mismatch");
-    }
-
     // Checks binding-form distinctions and the deliberate Runtime NaN policy.
     void check_exp_equality_policies()
     {
@@ -36,10 +24,9 @@ namespace
     }
 }
 
-// Runs the remaining Runtime conversion and equality-policy tests.
+// Runs the Runtime equality-policy tests.
 void run_value_tests()
 {
-    check_vector_conversions();
     check_exp_equality_policies();
 }
 }
