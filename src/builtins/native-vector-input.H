@@ -112,7 +112,7 @@ read_native_vector_input(OperationArgs& args, int first_slot,
     auto object_value = owner_value.template to<Runtime::ObjectValue>();
     object_ptr<const Box<DenseVector<T>>> owner;
     if (object_value)
-        owner = boost::dynamic_pointer_cast<const Box<DenseVector<T>>>(
+        owner = boost::static_pointer_cast<const Box<DenseVector<T>>>(
             object_value->value);
     if (not owner)
         throw myexception()<<argument_name<<" (raw slots "<<first_slot<<".."
