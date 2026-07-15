@@ -91,16 +91,14 @@ Remove a test when it:
 ## Organization
 
 Native test sources should live in a test tree organized by subsystem, not
-beside whichever production source file motivated the test.  A possible
-future layout is:
+beside whichever production source file motivated the test.  The current
+layout is:
 
 ```text
 tests/
   cpp/
     computation/
-      core/
-      runtime/
-      optimization/
+    models/
     util/
 ```
 
@@ -109,41 +107,26 @@ granularity should normally be one executable per substantial library or
 subsystem, with multiple focused test files linked into it, rather than one
 executable per feature.
 
-This layout is a design direction, not permission to introduce parallel test
-infrastructure incrementally.  Create it only as an explicitly reviewed
-migration that begins using it immediately and addresses existing tests where
-practical.
+Source filenames within a subsystem should identify the contract under test.
+Do not add another directory level merely to repeat subsystem context already
+provided by the owning directory.
 
 ## Runtime test migration
 
-`runtime-ast-serialization-test` mixes unit checks of Runtime APIs with
-component checks involving loaders, heaps, and multiple compiler phases.  Its
-name, production-source location, and requirement for package data are not a
-good permanent organization.
+Runtime transformations, equality, values, closures, and serialization are
+direct C++ contracts owned by `tests/cpp/computation/` and linked into the one
+`computation-tests` executable.  Its source files are split by contract.
+Loader-dependent component checks belong there only when they provide durable
+coverage and work on every required platform.
 
-Apply the criteria above to each check.  Move language-visible behavior to the
-standard harness and universal validity rules to production invariants.  Keep
-direct checks of C++ transformations, equality, aliasing, and serialization in
-a native suite; distinguish self-contained unit tests from component tests in
-their source and test names.
-
-As part of a reviewed native-test migration, place these checks under
-`tests/cpp/computation/runtime/`, split by contract, and link them with Core and
-optimization test sources into one `computation-tests` executable.  This gives
-`libcomputation` clear ownership without adding an executable per feature.  The
-current runner may preserve unique coverage until then, but should not acquire
-unrelated checks or be treated as the final structure.
-
-## Short-term policy for bali-phy
-
-Until a centralized native-test structure is designed:
+## Policy for bali-phy
 
 - do not create new permanent C++ test executables;
 - use `tests/haskell/` and existing integration suites where possible;
 - use existing subsystem runners only for tests within their stated scope;
 - keep temporary C++ harnesses in disposable `jj` changes; and
 - when durable low-level C++ coverage has no suitable home, raise the need for
-  a centralized runner instead of adding a feature-specific executable.
+  an explicitly owned runner instead of adding a feature-specific executable.
 
 This is a moratorium on ad hoc executable targets, not a claim that native
 unit tests are never useful.
