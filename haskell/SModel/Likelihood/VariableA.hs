@@ -19,37 +19,19 @@ import SModel.Likelihood.CLV
 
 -- peeling for connected-CLVs
 foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EVector Int -> CondLikes
-foreign import bpcall "Likelihood:calcProbAtRoot" calcProbAtRootNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> NativeMatrix Double -> LogDouble
-foreign import bpcall "Likelihood:calcProb" calcProbNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> NativeMatrix Double -> LogDouble
-foreign import bpcall "Likelihood:peelBranchTowardRoot" peelBranchTowardRootNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> NativeMatrix Double -> CondLikes
-foreign import bpcall "Likelihood:peelBranchAwayFromRoot" peelBranchAwayFromRootNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> NativeMatrix Double -> CondLikes
+foreign import trcall "Likelihood:calcProbAtRoot" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
+foreign import trcall "Likelihood:calcProb" calcProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
+foreign import trcall "Likelihood:peelBranchTowardRoot" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> CondLikes
+foreign import trcall "Likelihood:peelBranchAwayFromRoot" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> CondLikes
 
-foreign import bpcall "Likelihood:calcProbNonEq" calcProbNonEqNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> NativeMatrix Double -> LogDouble
+foreign import trcall "Likelihood:calcProbNonEq" calcProbNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> LogDouble
 foreign import bpcall "Likelihood:peelBranchTowardRootNonEq" peelBranchTowardRootNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> CondLikes
-foreign import bpcall "Likelihood:peelBranchAwayFromRootNonEq" peelBranchAwayFromRootNonEqNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> NativeMatrix Double -> CondLikes
+foreign import trcall "Likelihood:peelBranchAwayFromRootNonEq" peelBranchAwayFromRootNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> CondLikes
 
-foreign import bpcall "Likelihood:propagateFrequencies" propagateFrequenciesNative :: NativeMatrix Double -> EVector (NativeMatrix Double) -> NativeMatrix Double
+foreign import trcall "Likelihood:propagateFrequencies" propagateFrequenciesNative :: Matrix Double -> EVector (NativeMatrix Double) -> Matrix Double
 
-calcProbAtRoot node branch alignments frequencies =
-    calcProbAtRootNative node branch alignments (nativeMatrix frequencies)
-
-calcProb node branch alignments frequencies =
-    calcProbNative node branch alignments (nativeMatrix frequencies)
-
-peelBranchTowardRoot node branch alignments probabilities frequencies =
-    peelBranchTowardRootNative node branch alignments probabilities (nativeMatrix frequencies)
-
-peelBranchAwayFromRoot node branch alignments probabilities frequencies =
-    peelBranchAwayFromRootNative node branch alignments probabilities (nativeMatrix frequencies)
-
-calcProbNonEq node branch alignments frequencies =
-    calcProbNonEqNative node branch alignments (nativeMatrix frequencies)
-
-peelBranchAwayFromRootNonEq node branch alignments probabilities frequencies =
-    peelBranchAwayFromRootNonEqNative node branch alignments probabilities (nativeMatrix frequencies)
-
-propagateFrequencies frequencies probabilities = matrixFromNative (rows frequencies) (cols frequencies)
-    (propagateFrequenciesNative (nativeMatrix frequencies) probabilities)
+propagateFrequencies frequencies probabilities = overrideMatrixDims (rows frequencies) (cols frequencies)
+    (propagateFrequenciesNative frequencies probabilities)
 
 peelBranch toward nodeCLs branchCLs asIn ps eqF | toward    = peelBranchTowardRoot   nodeCLs branchCLs asIn ps eqF
                                                 | otherwise = peelBranchAwayFromRoot nodeCLs branchCLs asIn ps eqF
