@@ -7,7 +7,7 @@ computation_tests = executable(
     'transform-tests.cc',
     'values-tests.cc',
   ],
-  include_directories: [root_inc, libutil_inc, libmcon_inc],
+  include_directories: [root_inc, libutil_inc, libmcon_inc, native_test_inc],
   dependencies: [boost, libxxhash, eigen, libdl, math_dep, librange, immer, fmt, cereal],
   link_with: [libcomputation, libcommon, libmcon, libutil],
   export_dynamic: true,

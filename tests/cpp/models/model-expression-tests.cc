@@ -3,8 +3,8 @@
 #include "models/parse.H"
 #include "models/rules.H"
 #include "models/typecheck.H"
+#include "test-util.H"
 
-#include <cassert>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -32,31 +32,31 @@ void test_model_type_ast()
     auto a_type = type_t("a");
     auto fresh_type = type_t("a#0");
 
-    assert(int_type == type_con("Int"));
-    assert(a_type == type_var("a"));
-    assert(is_type_variable(a_type));
-    assert(is_type_variable(fresh_type));
-    assert(not is_type_variable(int_type));
+    BALI_PHY_TEST_CHECK(int_type == type_con("Int"));
+    BALI_PHY_TEST_CHECK(a_type == type_var("a"));
+    BALI_PHY_TEST_CHECK(is_type_variable(a_type));
+    BALI_PHY_TEST_CHECK(is_type_variable(fresh_type));
+    BALI_PHY_TEST_CHECK(not is_type_variable(int_type));
 
     auto list_int = list_type(int_type);
     auto [list_head, list_args] = get_type_apps(list_int);
-    assert(list_head == type_t("List"));
-    assert(list_args.size() == 1);
-    assert(list_args[0] == int_type);
+    BALI_PHY_TEST_CHECK(list_head == type_t("List"));
+    BALI_PHY_TEST_CHECK(list_args.size() == 1);
+    BALI_PHY_TEST_CHECK(list_args[0] == int_type);
 
     auto pair_type = CmdModel::tuple_type({int_type, type_t("Bool")});
-    assert(unparse_type(pair_type) == "(Int,Bool)");
-    assert(function_type(int_type, double_type) == parse_type("Int -> Double"));
-    assert(CM::type_app("Distribution", double_type) == parse_type("Distribution<Double>"));
-    assert(parse_type("a") == a_type);
-    assert(type_atom("a#0") == fresh_type);
+    BALI_PHY_TEST_CHECK(unparse_type(pair_type) == "(Int,Bool)");
+    BALI_PHY_TEST_CHECK(function_type(int_type, double_type) == parse_type("Int -> Double"));
+    BALI_PHY_TEST_CHECK(CM::type_app("Distribution", double_type) == parse_type("Distribution<Double>"));
+    BALI_PHY_TEST_CHECK(parse_type("a") == a_type);
+    BALI_PHY_TEST_CHECK(type_atom("a#0") == fresh_type);
 
     std::set<type_t> ordered{double_type, int_type, list_int, pair_type};
-    assert(ordered.count(int_type));
-    assert(ordered.count(list_int));
+    BALI_PHY_TEST_CHECK(ordered.count(int_type));
+    BALI_PHY_TEST_CHECK(ordered.count(list_int));
 
     auto vars = find_variables_in_type(function_type(a_type, list_type(type_t("b#1"))));
-    assert(vars == std::set<std::string>({"a", "b#1"}));
+    BALI_PHY_TEST_CHECK(vars == std::set<std::string>({"a", "b#1"}));
 }
 
 // Builds a small untyped variable expression for AST unit tests.
@@ -225,8 +225,8 @@ void test_copy_independence()
     auto& original_call = original.as<Call<NoAnn>>();
     auto& original_var = require_arg_value(original_call.args[0]).as<Var>();
 
-    assert(original_var.name == "x");
-    assert(copied_var.name == "y");
+    BALI_PHY_TEST_CHECK(original_var.name == "x");
+    BALI_PHY_TEST_CHECK(copied_var.name == "y");
 }
 
 // Checks basic node predicates and child traversal for a simple sample node.
@@ -237,12 +237,12 @@ void test_accessors_and_traversal()
         Sample<NoAnn>{var_expr("dist")}
     };
 
-    assert(is_sample(expr));
-    assert(not is_list(expr));
+    BALI_PHY_TEST_CHECK(is_sample(expr));
+    BALI_PHY_TEST_CHECK(not is_list(expr));
 
     int n_children = 0;
     for_each_child(expr, [&](const UntypedExpr&) { n_children++; });
-    assert(n_children == 1);
+    BALI_PHY_TEST_CHECK(n_children == 1);
 }
 
 // Requires check_invariants() to reject one malformed untyped expression.
@@ -256,7 +256,7 @@ void expect_invariant_failure(const UntypedExpr& expr)
     {
         return;
     }
-    assert(false);
+    BALI_PHY_TEST_CHECK(false);
 }
 
 // Requires check_invariants() to reject one malformed untyped pattern.
@@ -270,7 +270,7 @@ void expect_pattern_invariant_failure(const UntypedPattern& pattern)
     {
         return;
     }
-    assert(false);
+    BALI_PHY_TEST_CHECK(false);
 }
 
 // Exercises structural invariant checks that are independent of typechecking.
@@ -298,8 +298,8 @@ void test_absent_argument_values()
         }
     };
     auto& call = expr.as<Call<NoAnn>>();
-    assert(not call.args[0].value);
-    assert(call.args[1].value);
+    BALI_PHY_TEST_CHECK(not call.args[0].value);
+    BALI_PHY_TEST_CHECK(call.args[1].value);
 }
 
 // Checks parser wrappers now return native model AST nodes.
@@ -308,60 +308,60 @@ void test_parser_wrappers()
     Rules rules({});
 
     auto expr = parse_model_expr(rules, "~normal(0, 1)", "test expression");
-    assert(is_sample(expr));
+    BALI_PHY_TEST_CHECK(is_sample(expr));
 
     auto decls = parse_model_decls(rules, "x = 1; y = x");
-    assert(decls.size() == 2);
-    assert(decls[0].first == "x");
-    assert(decls[1].first == "y");
+    BALI_PHY_TEST_CHECK(decls.size() == 2);
+    BALI_PHY_TEST_CHECK(decls[0].first == "x");
+    BALI_PHY_TEST_CHECK(decls[1].first == "y");
 
     auto tuple_lambda = parse_model_expr(rules, "|(x,y):x|", "tuple-pattern lambda");
     auto& lambda = tuple_lambda.as<Lambda<NoAnn>>();
     auto& pattern = lambda.pattern.as<TuplePattern<NoAnn>>();
-    assert(pattern.elements.size() == 2);
-    assert(pattern.elements[0].as<VarPattern>().name == "x");
-    assert(pattern.elements[1].as<VarPattern>().name == "y");
+    BALI_PHY_TEST_CHECK(pattern.elements.size() == 2);
+    BALI_PHY_TEST_CHECK(pattern.elements[0].as<VarPattern>().name == "x");
+    BALI_PHY_TEST_CHECK(pattern.elements[1].as<VarPattern>().name == "y");
 }
 
 // Exercises untyped AST pretty-printing for representative syntax.
 void test_untyped_pretty_printing()
 {
-    assert(unparse(int_expr(1)) == "1");
-    assert(unparse(double_expr(1.5)) == "1.5");
-    assert(unparse(bool_expr(true)) == "true");
-    assert(unparse(string_expr("abc")) == "\"abc\"");
-    assert(unparse(var_expr("x")) == "x");
-    assert(unparse(arg_ref_expr("arg")) == "@arg");
+    BALI_PHY_TEST_CHECK(unparse(int_expr(1)) == "1");
+    BALI_PHY_TEST_CHECK(unparse(double_expr(1.5)) == "1.5");
+    BALI_PHY_TEST_CHECK(unparse(bool_expr(true)) == "true");
+    BALI_PHY_TEST_CHECK(unparse(string_expr("abc")) == "\"abc\"");
+    BALI_PHY_TEST_CHECK(unparse(var_expr("x")) == "x");
+    BALI_PHY_TEST_CHECK(unparse(arg_ref_expr("arg")) == "@arg");
 
-    assert(unparse(call_expr("f", {positional_arg(int_expr(1)), positional_arg(var_expr("x"))})) == "f(1, x)");
-    assert(unparse(call_expr("+", {positional_arg(int_expr(1)), positional_arg(int_expr(2))})) == "1+2");
-    assert(unparse(sample_expr(call_expr("normal", {positional_arg(int_expr(0)), positional_arg(int_expr(1))}))) == "~normal(0, 1)");
+    BALI_PHY_TEST_CHECK(unparse(call_expr("f", {positional_arg(int_expr(1)), positional_arg(var_expr("x"))})) == "f(1, x)");
+    BALI_PHY_TEST_CHECK(unparse(call_expr("+", {positional_arg(int_expr(1)), positional_arg(int_expr(2))})) == "1+2");
+    BALI_PHY_TEST_CHECK(unparse(sample_expr(call_expr("normal", {positional_arg(int_expr(0)), positional_arg(int_expr(1))}))) == "~normal(0, 1)");
 
     auto expr = let_expr({{"x", int_expr(1)}}, var_expr("x"));
-    assert(unparse(expr) == "x where {x = 1}");
+    BALI_PHY_TEST_CHECK(unparse(expr) == "x where {x = 1}");
 
     Decls<NoAnn> decls{
         {"x", int_expr(1)},
         {"y", call_expr("+", {positional_arg(var_expr("x")), positional_arg(int_expr(1))})}
     };
-    assert(unparse(decls) == "x = 1; y = x+1");
+    BALI_PHY_TEST_CHECK(unparse(decls) == "x = 1; y = x+1");
 
-    assert(show_model(sample_expr(var_expr("normal"))) == "~ normal");
-    assert(show_model(var_expr("x")) == "= x");
+    BALI_PHY_TEST_CHECK(show_model(sample_expr(var_expr("normal"))) == "~ normal");
+    BALI_PHY_TEST_CHECK(show_model(var_expr("x")) == "= x");
 }
 
 // Exercises typed AST pretty-printing directly, without a ptree conversion
 // oracle.
 void test_typed_pretty_printing()
 {
-    assert(unparse_annotated(typed_expr(type_t("Int"), IntLiteral{1})) == "1");
-    assert(unparse_annotated(typed_expr(type_t("String"), StringLiteral{"abc"})) == "\"abc\"");
+    BALI_PHY_TEST_CHECK(unparse_annotated(typed_expr(type_t("Int"), IntLiteral{1})) == "1");
+    BALI_PHY_TEST_CHECK(unparse_annotated(typed_expr(type_t("String"), StringLiteral{"abc"})) == "\"abc\"");
 
     auto add = typed_call_expr("+", {
         typed_positional_arg(typed_expr(type_t("Int"), IntLiteral{1})),
         typed_positional_arg(typed_expr(type_t("Int"), IntLiteral{2}))
     }, type_t("Int"));
-    assert(unparse_annotated(add) == "1+2");
+    BALI_PHY_TEST_CHECK(unparse_annotated(add) == "1+2");
 
     auto pair_type = CM::type_apps("Tuple", {type_t("Text"), type_t("Int")});
     auto list_type = CM::type_app("List", pair_type);
@@ -372,7 +372,7 @@ void test_typed_pretty_printing()
             typed_expr(pair_type, Tuple<Ann>{{typed_expr(type_t("Text"), Var{"b"}), typed_expr(type_t("Int"), IntLiteral{2})}})
         }}
     };
-    assert(unparse_annotated(pairs) == "{a: 1, b: 2}");
+    BALI_PHY_TEST_CHECK(unparse_annotated(pairs) == "{a: 1, b: 2}");
 
     auto default_state = typed_expr(type_t("Alphabet"), GetState{"alphabet"});
     auto hidden_default = typed_expr(type_t("Int"), IntLiteral{1});
@@ -380,13 +380,13 @@ void test_typed_pretty_printing()
         typed_named_arg("alphabet", std::move(default_state), true),
         typed_named_arg("n", std::move(hidden_default), true, true)
     }, type_t("Model"));
-    assert(unparse_annotated(call) == "f");
+    BALI_PHY_TEST_CHECK(unparse_annotated(call) == "f");
 
     auto sample = typed_expr(
         type_t("Double"),
         Sample<Ann>{typed_expr(CM::type_app("Distribution", type_t("Double")), Var{"normal"})}
     );
-    assert(show_model_annotated(sample) == "~ normal");
+    BALI_PHY_TEST_CHECK(show_model_annotated(sample) == "~ normal");
 }
 
 // Checks solved type equations propagate through typed AST annotations.
@@ -429,27 +429,27 @@ void test_typed_substitution()
              && unify(b, type_t("Int"))
              && unify(c, type_t("String"))
              && unify(alphabet_type, type_t("Alphabet"));
-    assert(eqs);
+    BALI_PHY_TEST_CHECK(eqs);
 
     substitute_annotated(eqs, expr);
 
-    assert(expr.ann.type == type_t("Double"));
+    BALI_PHY_TEST_CHECK(expr.ann.type == type_t("Double"));
     auto& call = expr.as<Call<Ann>>();
-    assert(require_arg_value(call.args[0]).ann.type == type_t("Int"));
-    assert(call.args[0].alphabet);
-    assert(call.args[0].alphabet->ann.type == type_t("Alphabet"));
-    assert(require_arg_value(call.args[1]).ann.type == CM::type_app("List", type_t("String")));
+    BALI_PHY_TEST_CHECK(require_arg_value(call.args[0]).ann.type == type_t("Int"));
+    BALI_PHY_TEST_CHECK(call.args[0].alphabet);
+    BALI_PHY_TEST_CHECK(call.args[0].alphabet->ann.type == type_t("Alphabet"));
+    BALI_PHY_TEST_CHECK(require_arg_value(call.args[1]).ann.type == CM::type_app("List", type_t("String")));
 
     auto& list = require_arg_value(call.args[1]).as<List<Ann>>();
-    assert(list.elements[0].ann.type == type_t("String"));
+    BALI_PHY_TEST_CHECK(list.elements[0].ann.type == type_t("String"));
 
     TypedDecls decls{
         {"x", TypedExpr{Ann{type_t("decl#4"), {}, false, {}}, Var{"x"}}}
     };
     auto decl_eqs = unify(type_t("decl#4"), type_t("Int"));
-    assert(decl_eqs);
+    BALI_PHY_TEST_CHECK(decl_eqs);
     substitute_annotated(decl_eqs, decls);
-    assert(decls[0].second.ann.type == type_t("Int"));
+    BALI_PHY_TEST_CHECK(decls[0].second.ann.type == type_t("Int"));
 }
 
 // Builds a TypecheckingState fixture with optional identifiers and state vars.
@@ -465,7 +465,7 @@ void expect_typecheck_expr(const Rules& rules, const type_t& required_type, cons
     auto TC = test_typechecker(rules, identifiers, state);
     auto typed = typecheck_model_expr(TC, required_type, model);
     substitute_annotated(TC.eqs, typed);
-    assert(typed.ann.type == required_type);
+    BALI_PHY_TEST_CHECK(typed.ann.type == required_type);
 }
 
 // Requires AST expression typechecking with the standard empty rule set.
@@ -525,15 +525,15 @@ void test_typecheck_tuple_pattern_lambda()
     auto typed = typecheck_model_expr(TC, required_type, model);
     substitute_annotated(TC.eqs, typed);
 
-    assert(typed.ann.type == required_type);
+    BALI_PHY_TEST_CHECK(typed.ann.type == required_type);
     auto& lambda = typed.as<Lambda<Ann>>();
     auto& pattern = lambda.pattern.as<TuplePattern<Ann>>();
-    assert(pattern.elements.size() == 2);
-    assert(pattern.elements[0].ann.type == type_t("Int"));
-    assert(pattern.elements[1].ann.type == type_t("Bool"));
-    assert(pattern.elements[0].as<VarPattern>().name == "x");
-    assert(pattern.elements[1].as<VarPattern>().name == "flag");
-    assert(lambda.body.ann.type == type_t("Int"));
+    BALI_PHY_TEST_CHECK(pattern.elements.size() == 2);
+    BALI_PHY_TEST_CHECK(pattern.elements[0].ann.type == type_t("Int"));
+    BALI_PHY_TEST_CHECK(pattern.elements[1].ann.type == type_t("Bool"));
+    BALI_PHY_TEST_CHECK(pattern.elements[0].as<VarPattern>().name == "x");
+    BALI_PHY_TEST_CHECK(pattern.elements[1].as<VarPattern>().name == "flag");
+    BALI_PHY_TEST_CHECK(lambda.body.ann.type == type_t("Int"));
 }
 
 // Checks that function-valued variables propagate used_args from positional
@@ -549,7 +549,7 @@ void test_typecheck_variable_function_used_args()
         auto TC = test_typechecker(rules, identifiers);
         TC.args = args;
         auto typed = typecheck_model_expr(TC, type_t("Double"), model);
-        assert(typed.ann.used_args == expected);
+        BALI_PHY_TEST_CHECK(typed.ann.used_args == expected);
     };
 
     auto f_type = CM::type_apps("Function", {type_t("Int"), type_t("Double")});
@@ -584,10 +584,10 @@ void test_typecheck_direct_errors()
         }
         catch(const std::exception& e)
         {
-            assert(std::string(e.what()).find(message) != std::string::npos);
+            BALI_PHY_TEST_CHECK(std::string(e.what()).find(message) != std::string::npos);
             return;
         }
-        assert(false);
+        BALI_PHY_TEST_CHECK(false);
     };
 
     expect_error(type_t("Int"), CM::UntypedExpr{NoAnn{}, Placeholder{}}, "Placeholder '_'");
@@ -770,7 +770,7 @@ void test_typecheck_rule_calls()
             "f(1) where {f = |x:x|}",
             "shadowing compile test"
         );
-        assert(shadowed_rule_model.type == type_t("Int"));
+        BALI_PHY_TEST_CHECK(shadowed_rule_model.type == type_t("Int"));
         auto tuple_pattern_model = compile_model(
             rules,
             test_typechecker(rules),
@@ -779,7 +779,7 @@ void test_typecheck_rule_calls()
             "f((1,2)) where {f = |(x,y):x|}",
             "tuple-pattern shadowing compile test"
         );
-        assert(tuple_pattern_model.type == type_t("Int"));
+        BALI_PHY_TEST_CHECK(tuple_pattern_model.type == type_t("Int"));
         expect_typecheck_expr(
             rules,
             CM::type_app("DiscreteDist", type_t("Int")),
@@ -833,11 +833,11 @@ void test_typecheck_decls(const Rules& rules)
         auto typed = typecheck_model_decls(ast_TC, decls);
         substitute_annotated(ast_TC.eqs, typed);
 
-        assert(typed.size() == expected.size());
+        BALI_PHY_TEST_CHECK(typed.size() == expected.size());
         for(std::size_t i = 0; i < expected.size(); i++)
         {
-            assert(typed[i].first == expected[i].first);
-            assert(typed[i].second.ann.type == expected[i].second);
+            BALI_PHY_TEST_CHECK(typed[i].first == expected[i].first);
+            BALI_PHY_TEST_CHECK(typed[i].second.ann.type == expected[i].second);
         }
     };
 
@@ -876,7 +876,7 @@ void test_typecheck_decls()
 void test_extraction()
 {
     auto scalar = pretty_model_t(typed_expr(type_t("Int"), IntLiteral{1}));
-    assert(scalar.show() == "1");
+    BALI_PHY_TEST_CHECK(scalar.show() == "1");
 
     auto dist_type = CM::type_app("Distribution", type_t("Double"));
     auto sampled_arg = typed_expr(
@@ -885,16 +885,16 @@ void test_extraction()
     );
     auto model = typed_call_expr("f", {typed_named_arg("x", sampled_arg)}, type_t("Model"));
     auto pretty = pretty_model_t(model);
-    assert(pretty.show_main() == "f");
-    assert(pretty.show_extracted().find("f:x") != std::string::npos);
+    BALI_PHY_TEST_CHECK(pretty.show_main() == "f");
+    BALI_PHY_TEST_CHECK(pretty.show_extracted().find("f:x") != std::string::npos);
 
     auto no_log = typed_call_expr("f", {typed_named_arg("x", sampled_arg)}, type_t("Model"), true);
     auto pretty_no_log = pretty_model_t(no_log);
-    assert(pretty_no_log.show_extracted().empty());
+    BALI_PHY_TEST_CHECK(pretty_no_log.show_extracted().empty());
 
     auto extract_all = typed_call_expr("f", {typed_named_arg("x", typed_expr(type_t("Int"), IntLiteral{1}))}, type_t("Model"), false, "all");
     auto pretty_extract_all = pretty_model_t(extract_all);
-    assert(pretty_extract_all.show_extracted().find("f:x") != std::string::npos);
+    BALI_PHY_TEST_CHECK(pretty_extract_all.show_extracted().find("f:x") != std::string::npos);
 
     auto with_alphabet = typed_call_expr("f", {
         typed_named_arg(
@@ -906,7 +906,7 @@ void test_extraction()
         )
     }, type_t("Model"));
     auto pretty_with_alphabet = pretty_model_t(with_alphabet);
-    assert(pretty_with_alphabet.show_main() == "f(x)");
+    BALI_PHY_TEST_CHECK(pretty_with_alphabet.show_main() == "f(x)");
 }
 
 }

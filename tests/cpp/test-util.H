@@ -12,3 +12,6 @@ namespace bali_phy_test
             throw std::runtime_error(message);
     }
 }
+
+#define BALI_PHY_TEST_CHECK(condition) \
+    ::bali_phy_test::require(bool(condition), #condition)
