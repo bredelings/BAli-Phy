@@ -3,22 +3,21 @@ module SMC where
 import Data.Text
 import Bio.Alignment.Matrix (AlignmentMatrix)
 import Numeric.LinearAlgebra (Vector, fromList)
-import Numeric.LinearAlgebra.Data (NativeVector, nativeVector)
 
 import Probability
-foreign import bpcall "SMC:smc_density" smcDensityNative :: Double -> NativeVector Double -> NativeVector Double -> Double -> AlignmentMatrix -> LogDouble
-foreign import bpcall "SMC:smc_trace" smcTraceNative :: Double -> NativeVector Double -> NativeVector Double -> Double -> AlignmentMatrix -> EVector (EPair Double Int)
+foreign import trcall "SMC:smc_density" smcDensityNative :: Double -> Vector Double -> Vector Double -> Double -> AlignmentMatrix -> LogDouble
+foreign import trcall "SMC:smc_trace" smcTraceNative :: Double -> Vector Double -> Vector Double -> Double -> AlignmentMatrix -> EVector (EPair Double Int)
 foreign import bpcall "SMC:trace_to_trees" builtin_trace_to_trees :: EVector (EPair Double Int) -> CPPString
 
 trace_to_trees = fromCppString . builtin_trace_to_trees
 
-smc_density rho_over_theta rates level_boundaries error_rate sequences = smcDensityNative rho_over_theta rates' level_boundaries' error_rate sequences
-  where rates' = nativeVector (fromList rates)
-        level_boundaries' = nativeVector (fromList level_boundaries)
+smc_density rho_over_theta rates level_boundaries error_rate sequences =
+    smcDensityNative rho_over_theta (fromList rates) (fromList level_boundaries)
+                     error_rate sequences
 
-smc_trace rho_over_theta rates level_boundaries error_rate sequences = smcTraceNative rho_over_theta rates' level_boundaries' error_rate sequences
-  where rates' = nativeVector (fromList rates)
-        level_boundaries' = nativeVector (fromList level_boundaries)
+smc_trace rho_over_theta rates level_boundaries error_rate sequences =
+    smcTraceNative rho_over_theta (fromList rates) (fromList level_boundaries)
+                   error_rate sequences
 
 data SMC = SMC Double [Double] [Double] Double
 

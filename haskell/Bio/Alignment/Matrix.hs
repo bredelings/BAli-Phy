@@ -1,5 +1,6 @@
 module Bio.Alignment.Matrix where
 
+import Compiler.FFI.Import (CInput)
 import Bio.Sequence
 import Bio.Alphabet
 import Data.BitVector
@@ -16,6 +17,8 @@ import Data.Maybe (catMaybes)
 import Data.Foldable (toList)
 
 data AlignmentMatrix
+
+instance CInput AlignmentMatrix
 
 foreign import ecall "Alignment:" alignment_length :: AlignmentMatrix -> Int
 
@@ -150,4 +153,3 @@ addAllMissingAncestors observedSequences tree = fromMaybe missingSequence <$> ob
           alignmentLength = fromMaybe (error msg) $ allSame $ observedSequenceLengths
           msg = "addAllMissingAncestors: not all observed sequences are the same length!"
           observedSequenceLengths = vector_size <$> (catMaybes $ IntMap.elems observedSequences)
-
