@@ -47,6 +47,29 @@ Hs::Var unqualified(Hs::Var v)
     return v;
 }
 
+// Discard outer method contexts and compare method shapes in both directions;
+// the final outer predicate is the class constraint that anchors class parameters.
+bool default_signatures_match(TypeChecker& tc, const Type& ordinary_type, const Type& default_type)
+{
+    auto ordinary_outer = peel_top_gen(ordinary_type);
+    auto default_outer = peel_top_gen(default_type);
+    auto ordinary_method = peel_top_gen(std::get<2>(ordinary_outer));
+    auto default_method = peel_top_gen(std::get<2>(default_outer));
+
+    auto& ordinary_outer_context = std::get<1>(ordinary_outer);
+    auto& default_outer_context = std::get<1>(default_outer);
+    assert(not ordinary_outer_context.empty());
+    assert(not default_outer_context.empty());
+
+    auto ordinary_phi = add_constraints({ordinary_outer_context.back()}, std::get<2>(ordinary_method));
+    auto default_phi = add_constraints({default_outer_context.back()}, std::get<2>(default_method));
+    auto ordinary_match = tc.maybe_match(ordinary_phi, default_phi);
+    auto default_match = tc.maybe_match(default_phi, ordinary_phi);
+    return ordinary_match and default_match and
+           tc.same_type(apply_subst(*ordinary_match, ordinary_phi), default_phi) and
+           tc.same_type(apply_subst(*default_match, default_phi), ordinary_phi);
+}
+
 // OK, so
 // * global_value_env    = name         :: forall a: class var => signature (i.e. a-> b -> a)
 // * global_instance_env = made-up-name :: forall a: class var => superclass var
@@ -75,9 +98,13 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
 
     // 3. make global types for class methods
 
-    // Add class methods to GVE
+    map<string,Type> ordinary_method_types;
+
+    // Add ordinary class methods to GVE.
     for(auto& sig_decl: class_decl.sig_decls)
     {
+        if (sig_decl.is_default_method()) continue;
+
         // forall a. C a => method_type  (non-class variables are quantified in rename)
         auto hs_method_type = Hs::quantify(class_decl.type_vars, {hs_class_constraint}, sig_decl.type);
         auto method_type = check_type(hs_method_type);
@@ -85,13 +112,54 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         for(auto& lv: sig_decl.vars)
         {
             auto& v = unloc(lv);
+            auto method_name = get_unqualified_name(v.name);
             auto S = this_mod().lookup_local_symbol(v.name);
             S->type = method_type;
             class_info.members = class_info.members.insert({unqualified(v), method_type});
+            ordinary_method_types.insert({method_name, method_type});
         }
     }
 
     auto method_matches = get_instance_methods( class_decl.default_method_decls, class_info.members, class_info.name );
+
+    map<string,Type> default_method_types;
+    for(auto& sig_decl: class_decl.sig_decls)
+    {
+        if (not sig_decl.is_default_method()) continue;
+
+        auto span = source_span_scope(sig_decl.type.loc);
+        auto hs_default_type = Hs::quantify(class_decl.type_vars, {hs_class_constraint}, sig_decl.type);
+        auto default_type = check_type(hs_default_type);
+
+        for(auto& lv: sig_decl.vars)
+        {
+            auto method_name = get_unqualified_name(unloc(lv).name);
+            if (default_method_types.count(method_name))
+            {
+                record_error(Note()<<"Default signature for method '"<<method_name<<"' defined twice");
+                continue;
+            }
+
+            default_method_types.insert({method_name, default_type});
+            if (not ordinary_method_types.count(method_name))
+            {
+                record_error(Note()<<"Default signature for '"<<method_name<<"' has no ordinary method signature");
+                continue;
+            }
+
+            if (not method_matches.count(Hs::Var(method_name)))
+                record_error(Note()<<"Default signature for '"<<method_name<<"' has no default method binding");
+
+            auto ordinary_type = ordinary_method_types.at(method_name);
+            if (not default_signatures_match(*this, ordinary_type, default_type))
+            {
+                TidyState tidy_state;
+                record_error(Note()<<"Default signature for '"<<method_name<<"' does not match its ordinary signature\n"
+                             <<"  ordinary: "<<show_type_plain(tidy_state, ordinary_type)<<"\n"
+                             <<"  default:  "<<show_type_plain(tidy_state, default_type));
+            }
+        }
+    }
 
     for(auto& [method, match]: method_matches)
     {
@@ -101,6 +169,8 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
         class_info.default_methods.insert({method_name, dm});
 
         auto type = class_info.members.at(method_name);
+        if (default_method_types.count(method_name))
+            type = default_method_types.at(method_name);
 
         // Hmm... so one issue is that I think we want to declare this (i) with NO alias and (ii) only with the original name.
         auto S = symbol_info(dm.name, symbol_type_t::default_method, class_name, {}, {});

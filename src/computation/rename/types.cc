@@ -501,6 +501,10 @@ Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 
     for(auto& sig_decl: C.sig_decls)
     {
+        if (sig_decl.is_default_method() and
+            not m.language_extensions.has_extension(LangExt::DefaultSignatures))
+            error(sig_decl.type.loc, Note()<<"Default method signatures require the DefaultSignatures extension");
+
         sig_decl.type = rename_and_quantify_type(sig_decl.type, C.type_vars);
 
         for(auto& v: sig_decl.vars)

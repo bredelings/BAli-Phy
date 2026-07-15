@@ -400,14 +400,19 @@ struct Wrap
     Wrap(const LExp& e, const Core::wrapper& w): exp(e), wrap(w) {}
 };
 
+enum class TypeSigKind {ordinary, default_method};
+
 struct TypeSigDecl
 {
     std::vector<LVar> vars;
     LType type;
+    TypeSigKind kind = TypeSigKind::ordinary;
     std::string print() const;
+    bool is_default_method() const { return kind == TypeSigKind::default_method; }
 
     TypeSigDecl() = default;
-    TypeSigDecl(const std::vector<LVar>& vs, const LType& t): vars(vs), type(t) {}
+    TypeSigDecl(const std::vector<LVar>& vs, const LType& t, TypeSigKind k = TypeSigKind::ordinary)
+        : vars(vs), type(t), kind(k) {}
 };
 
 struct KindSigDecl

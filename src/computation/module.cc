@@ -3246,11 +3246,15 @@ void Module::add_local_symbols(const Hs::Decls& topdecls)
 		    def_data_family( unloc(fam_decl.con).name, fam_decl.arity() );
 
             for(auto& sig_decl: Class->sig_decls)
+            {
+                if (sig_decl.is_default_method()) continue;
+
                 for(auto& v: sig_decl.vars)
                 {
                     def_type_class_method(unloc(v).name, unloc(Class->con).name);
                     info.methods.insert(unloc(v).name);
                 }
+            }
 
             def_type_class(unloc(Class->con).name, Class->type_vars.size(), info);
         }

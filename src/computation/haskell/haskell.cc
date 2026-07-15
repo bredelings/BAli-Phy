@@ -265,7 +265,10 @@ string TypeSigDecl::print() const
     for(auto& var: vars)
         var_strings.push_back(var.print());
 
-    return join(var_strings,", ") + " :: " + type.print();
+    string result = join(var_strings,", ") + " :: " + type.print();
+    if (is_default_method())
+        result = "default " + result;
+    return result;
 }
 
 string KindSigDecl::print() const

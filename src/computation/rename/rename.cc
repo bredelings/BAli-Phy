@@ -145,8 +145,12 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
         if (auto C = decl.to<Haskell::ClassDecl>())
         {
             for(auto& sig_decl: C->sig_decls)
+            {
+                if (sig_decl.is_default_method()) continue;
+
                 for(auto& method_var: sig_decl.vars)
                     bound_names.insert(unloc(method_var).name);
+            }
         }
         // Wait.. don't we need to discover constructors, too?
     }

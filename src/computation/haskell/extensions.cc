@@ -9,6 +9,7 @@ using std::optional;
 map<string,LangExt> ext_to_bit =
 {
     {"DataKinds",                   {LangExt::DataKinds}},
+    {"DefaultSignatures",           {LangExt::DefaultSignatures}},
     {"DisambiguateRecordFields",    {LangExt::DisambiguateRecordFields}},
     {"DuplicateRecordFields",       {LangExt::DuplicateRecordFields}}, // implies DisambiguateRecordFields
     {"EmptyDataDecls",              {LangExt::EmptyDataDecls}},

@@ -885,6 +885,8 @@ pattern_synonym_sig: "pattern" con_list "::" sigtypedoc
 /* ------------- Nested declarations ----------------------------- */
 
 decl_cls:  at_decl_cls  {$$ = $1;}
+|          "default" var "::" sigtypedoc
+           { $$ = {@$,Hs::TypeSigDecl{{{@2,Hs::Var($2)}},$4,Hs::TypeSigKind::default_method}}; }
 |          decl         {$$ = $1;}
 
 decls_cls: decls_cls ";" decl_cls          {$$ = $1; $$.push_back($3);}

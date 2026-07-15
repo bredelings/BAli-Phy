@@ -32,6 +32,7 @@ enum class LangExt
     ConstrainedClassMethods,
     ConstraintKinds,
     DataKinds,
+    DefaultSignatures,
     DeriveDataTypeable,
     DeriveFoldable,
     DeriveFunctor,
