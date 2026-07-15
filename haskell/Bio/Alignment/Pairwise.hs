@@ -1,5 +1,7 @@
+{-# LANGUAGE TypeFamilies #-}
 module Bio.Alignment.Pairwise where
 
+import Compiler.FFI.Import (CInput(..))
 import Data.BitVector
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
@@ -18,6 +20,11 @@ pairwise_alignment_probability_from_counts counts hmm =
     pairwiseProbabilityNative (nativeMatrix counts) hmm
 
 data PairwiseAlignment = PairwiseAlignment
+
+-- Pass the opaque native alignment unchanged at translated FFI boundaries.
+instance CInput PairwiseAlignment where
+    type CInputType PairwiseAlignment result = PairwiseAlignment -> result
+    withCInput value continuation = continuation value
 
 foreign import bpcall "Alignment:" numInsert :: PairwiseAlignment -> Int
 
