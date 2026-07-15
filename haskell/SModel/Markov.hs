@@ -9,16 +9,14 @@ import           SModel.Rate
 import           SModel.Frequency
 import           Bio.Alphabet
 import           Numeric.LinearAlgebra hiding ((<>))
-import           Numeric.LinearAlgebra.Data (NativeMatrix, NativeVector, nativeMatrix, nativeVector)
 import           Tree
 import qualified Data.Vector as V
 import qualified Data.Map as Map
 
-foreign import bpcall "SModel:getEquilibriumRate" getEquilibriumRateNative :: Alphabet -> EVector Int -> NativeMatrix Double -> NativeVector Double -> Double
+foreign import trcall "SModel:getEquilibriumRate" getEquilibriumRateNative :: Alphabet -> EVector Int -> Matrix Double -> Vector Double -> Double
 
 getEquilibriumRate alphabet states rates frequencies =
-    getEquilibriumRateNative alphabet states (nativeMatrix rates)
-        (nativeVector frequencies)
+    getEquilibriumRateNative alphabet states rates frequencies
 
 -- This takes the rate matrix q and adds:
 -- * pi -> a cached version of the equilibrium frequencies
