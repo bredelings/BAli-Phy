@@ -784,6 +784,18 @@ std::tuple<Unfolding,occurrence_info> SimplifierState::get_unfolding(const Occ::
     return {unfolding, occ_info};
 }
 
+// Resolve canonical local metadata or the stable id arity exported by another module.
+Core::id_info SimplifierState::get_id_info(const Occ::Var& x, const in_scope_set& bound_vars) const
+{
+    if (auto binding = bound_vars.find(x))
+        return binding->id;
+
+    auto info = x.id;
+    if (auto symbol = this_mod.lookup_resolved_symbol(x.name))
+        info.arity = symbol->id_arity;
+    return info;
+}
+
 arg_info SimplifierState::interesting_arg(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, int n)
 {
     if (auto x = E.to_var())

@@ -394,25 +394,6 @@ set<Occ::Var> dup_work(set<Occ::Var>& vars)
     return vars2;
 }
 
-// Eta-reduction : if f does not reference x2 then
-//                     \x2 ->               ($) f x2  ===>              f
-//                 We don't do this (could perform more allocation):
-//                     \x2 -> (let decls in ($) f x2) ===> let decls in f
-std::optional<Occ::Exp>
-maybe_eta_reduce(const Occ::Lambda& L)
-{
-    // We could also consider:
-    // * \x -> (let decls in f x)
-    // * \x -> case obj of pat1 -> f1 x; pat2 -> f2 x
-    // * \x -> (\y -> f y x)
-
-    // \x -> f x ==> f  (where x does not occur in f)
-    if (auto A = L.body.to_apply(); A and A->arg == L.x and L.x.info.code_dup == amount_t::Once)
-        return A->head;
-    else
-        return {};
-}
-
 pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Core::Var<> x_in, var_context context)
 {
     Occ::Var x{x_in.name, x_in.index, {}, x_in.id, x_in.is_exported};
@@ -458,14 +439,8 @@ pair<Occ::Exp,set<Occ::Var>> occurrence_analyzer(const Module& m, const Core::Ex
 	// 3. Remove variable from free variables
 	auto x = remove_var_and_set_occurrence_info(L->x, free_vars);
 
-        // 4. Quantify and maybe eta-reduce.
-        //    Note that we also eta-reduce in simplifier.cc
-        auto unreduced = Occ::Lambda{x,body};
-        if (auto reduced = maybe_eta_reduce(unreduced))
-            return {*reduced, free_vars};
-        else
-            // change Once -> OnceInLam / work=Many, code=Once
-            return {unreduced, dup_work(free_vars)};
+        // 4. Quantify and change Once -> OnceInLam / work=Many, code=Once.
+        return {Occ::Lambda{x,body}, dup_work(free_vars)};
     }
     // 3. Apply
     else if (auto A = E.to_apply())

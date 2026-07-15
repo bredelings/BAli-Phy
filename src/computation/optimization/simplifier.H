@@ -80,6 +80,8 @@ class SimplifierState: FreshVarSource
 
 public:
 
+    Core::id_info get_id_info(const Occ::Var& x, const in_scope_set& bound_vars) const;
+
     std::tuple<Unfolding, occurrence_info> get_unfolding(const Occ::Var& x, const in_scope_set& bound_vars) const;
 
     Occ::Var get_new_name(Occ::Var x, const in_scope_set& bound_vars);
@@ -123,6 +125,8 @@ public:
 
     std::tuple<SimplFloats,Occ::Exp>
     rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context);
+
+    Occ::Exp maybe_eta_reduce(const Occ::Exp& expression, const in_scope_set& bound_vars) const;
 
     std::tuple<simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(Occ::Pattern& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);
 

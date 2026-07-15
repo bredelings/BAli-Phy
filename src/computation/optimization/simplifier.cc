@@ -1207,10 +1207,14 @@ SimplifierState::simplify_rec_decls(const Occ::Decls& orig_decls, const substitu
     //     Renaming them is necessary to correctly simplify the bodies.
     for(auto& [x,_]: orig_decls)
     {
-	auto x2 = rename_and_bind_var(x, S2, bound_vars);
+	auto x2 = rename_var(x, S2, bound_vars);
 	if (x.is_exported) assert(x == x2);
 
 	new_names.push_back(x2);
+
+        auto rhs_binder = x2;
+        rhs_binder.id.arity = 0;
+        bound_vars = bind_var(bound_vars, rhs_binder, {});
     }
 
     // 5.2 Iterate over decls, renaming and binding vars as we go, and simplifying them and adding substitutions for unconditional inlines.
@@ -1394,36 +1398,36 @@ SimplifierState::simplify_bind(const Occ::Bind& bind, const substitution& S, in_
     return simplify_rec_decls(std::get<Occ::Rec>(bind).decls, S, std::move(bound_vars), is_top_level);
 }
 
-// NOTE: See maybe_eta_reduce( ) in occurrence.cc
-//       That version depends on occurrence info.
-// NOTE: GHC says that for some reason the simplifier only eta-reduces
-//       when it produces a "trivial" expression  (See CoreSyn/CorePrep.hs)
-//       Why?  Is it for correctness, or because it is not always faster (for GHC)?
-
-// Eta-reduction : if f does not reference x2 then
-//                     \x2 ->               ($) f x2  ===>              f
-//                 We don't do this (could perform more allocation):
-//                     \x2 -> (let decls in ($) f x2) ===> let decls in f
-Occ::Exp maybe_eta_reduce2(const Occ::Lambda& L)
+// Reduce an exact eta wrapper only when the head's id arity proves it is already a function.
+Occ::Exp SimplifierState::maybe_eta_reduce(const Occ::Exp& expression, const in_scope_set& bound_vars) const
 {
-    // 1. Check that we have \x -> (...)  x
-    auto app = L.body.to_apply();
-    if (not app or app->arg != L.x) return L;
-
-    // 2. Check that L->body has the form (( ) a b c x) and all other arguments are not x.
-    Occ::Exp E = app->head;
-    while(auto A = E.to_apply())
+    vector<Occ::Var> binders;
+    auto body = expression;
+    while (auto lambda = body.to_lambda())
     {
-        E = A->head;
-        if (A->arg == L.x) return L;
+        binders.push_back(lambda->x);
+        body = lambda->body;
     }
 
-    // 3. Check that the head is a var that is not x.
-    auto V = E.to_var();
-    if (not V or *V == L.x) return L;
-    
-    // f x  ==> f
-    return app->head;
+    vector<Occ::Var> arguments;
+    while (auto application = body.to_apply())
+    {
+        auto argument = application->arg.to_var();
+        if (not argument)
+            return expression;
+        arguments.push_back(*argument);
+        body = application->head;
+    }
+
+    auto head = body.to_var();
+    if (not head or arguments.size() != binders.size())
+        return expression;
+
+    std::reverse(arguments.begin(), arguments.end());
+    if (arguments != binders or get_id_info(*head, bound_vars).arity < binders.size())
+        return expression;
+
+    return *head;
 }
 
 tuple<SimplFloats,Occ::Exp> SimplifierState::rebuildCall(const Occ::Var& f, const in_scope_set& bound_vars, inline_context context)
@@ -1500,14 +1504,6 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
         // NOTE: This was having a problem with "\\#5 -> let {k = #5} in let {a = #4} in SModel.Nucleotides.tn93_sym a k k"
         //       That was getting changed into  "\\#5 -> SModel.Nucleotides.tn93_sym #4 #5 #5", but keeping the work_dup:Once mark on #5.
 
-	// 2.1 eta reduction: (\x -> @ f a1 ...... an x) => (@ f a1 ....... an)
-	// if (auto E2 = maybe_eta_reduce(E))
-	// {
-	    // Simplifying the body in (\x -> let {y=x} in f y y) can result in f x x even if x is originally only used once.
-	    // Since maybe_eta_reduce( ) uses occurrence info to check that x is only used once, we have to do this *before* we simplify E (below).
-            // return simplify(E2, S, bound_vars, context);
-        // }
-
         auto S2 = S;
 
         if (auto ac = context.is_apply_context())
@@ -1541,18 +1537,9 @@ std::tuple<SimplFloats,Occ::Exp> SimplifierState::simplify(const Occ::Exp& E, co
 	// 2.3 Simplify the body with x added to the bound set.
 	auto new_body = wrap(simplify(lam->body, S2, bound_vars_x, make_stop_context(CallCtxt::BoringCtxt)));
 
-	// 2.4 Return (\x2 -> new_body) after eta-reduction
-        auto L = Occ::Lambda{x2, new_body};
-
-        // 2.5 Maybe eta reduce
-        //     I don't think there can be any substitutions that make the function body or other arguments
-        //     depend on x here, so this SHOULD be safe...
-        //
-        //     BROKEN: Now that the arguments can be expressions, there's no fast way to check if x occurs only once.
-        //     It seems like we should be able to look at the occurrence info... but that seems to be incorrect?
-        // auto E2 = maybe_eta_reduce2( L );
-
-        return rebuild(L, bound_vars, context);
+	// 2.4 Return the lambda after any id-arity-justified eta reduction.
+        auto result = maybe_eta_reduce(Occ::Lambda{x2, new_body}, bound_vars);
+        return rebuild(result, bound_vars, context);
     }
 
     // 6. Case
