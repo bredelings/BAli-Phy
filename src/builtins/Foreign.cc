@@ -1,5 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "builtins/native-vector-view.H"
+#include "builtins/native-vector-input.H"
 #include "computation/machine/args.H"
 #include "computation/haskell/ids.H"
 #include "util/myexception.H"
@@ -216,29 +216,26 @@ extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
     return MCON::tsv_line(MCON::get_row(mapping, sample2));
 }
 
-extern "C" closure builtin_function_encodeComponentStateSequenceRaw(OperationArgs& Args)
+// Encode component-state pairs directly from their translated native views.
+extern "C" closure builtin_function_encodeComponentStateSequence(OperationArgs& Args)
 {
-    int count = Args.evaluate_slot_to_value(0).as_int();
-    int component_offset = Args.evaluate_slot_to_value(1).as_int();
-    auto component_value = Args.evaluate_slot_to_value(2);
-    int state_offset = Args.evaluate_slot_to_value(3).as_int();
-    auto state_value = Args.evaluate_slot_to_value(4);
-    const auto& components = component_value.as_<Box<DenseVector<int>>>();
-    const auto& states = state_value.as_<Box<DenseVector<int>>>();
-    auto component_view = checked_native_vector_view(
-        components, component_offset, count,
-        "Foreign.encodeComponentStateSequenceRaw components");
-    auto state_view = checked_native_vector_view(
-        states, state_offset, count,
-        "Foreign.encodeComponentStateSequenceRaw states");
+    auto component_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0,
+        "Foreign.encodeComponentStateSequence components");
+    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3,
+        "Foreign.encodeComponentStateSequence states");
+    auto components = component_input.view();
+    auto states = state_input.view();
+    auto count = std::min(components.size(), states.size());
 
     std::ostringstream o;
     o<<"[";
     
-    for(int i=0;i<count;i++)
+    for(std::size_t i=0;i<count;i++)
     {
-        int y1 = component_view[i];
-        int y2 = state_view[i];
+        int y1 = components[i];
+        int y2 = states[i];
 
         if (y1 == -1 and y2 == -1)
             o<<"null";

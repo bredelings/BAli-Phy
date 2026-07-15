@@ -47,18 +47,6 @@ import qualified Data.JSON.Encoding as E
 newtype ComponentStateSequence = ComponentStateSequence (U.Vector (Int,Int))
     deriving newtype (CInput, COutput)
 
--- Return both complete native child views so foreign consumers preserve
--- independently sliced component and state arrays.
-componentStateSequenceNativeView :: ComponentStateSequence ->
-    (Int, Int, NativeVector Int, Int, NativeVector Int)
-componentStateSequenceNativeView (ComponentStateSequence values) =
-    (U.length values, componentOffset, componentNative,
-                      stateOffset, stateNative)
-  where
-    (components, states) = U.unzip values
-    (componentOffset, _, componentNative) = intVectorNativeView components
-    (stateOffset, _, stateNative) = intVectorNativeView states
-
 -- Project the state array without copying or inspecting the component array.
 componentStates :: ComponentStateSequence -> U.Vector Int
 componentStates (ComponentStateSequence values) = snd (U.unzip values)
@@ -295,18 +283,12 @@ instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
 leafAlignment tree sequenceData = labelToNodeMap tree $ fmap (fmap bitmaskFromSequence') $ getSequences sequenceData
 
 
-foreign import bpcall "Foreign:" encodeComponentStateSequenceRaw :: Int -> Int -> NativeVector Int -> Int -> NativeVector Int -> CPPString
-
--- Encode directly from both native child views, retaining the historical
--- missing-state sentinel without constructing an intermediate pair list.
-encodeComponentStateSequence sequence = Text.fromCppString $
-    encodeComponentStateSequenceRaw count componentOffset componentNative
-                                              stateOffset stateNative
-  where
-    (count, componentOffset, componentNative, stateOffset, stateNative) =
-        componentStateSequenceNativeView sequence
+-- Encode an unboxed component-state vector without constructing an
+-- intermediate pair list.
+foreign import trcall "Foreign:" encodeComponentStateSequence :: U.Vector (Int,Int) -> Text
 
 instance ToJSON ComponentStateSequence where
     toJSON = error "ComponentStateSequence.toJSON: not implemented"
 
-    toEncoding = E.unsafeToEncoding . encodeComponentStateSequence
+    toEncoding (ComponentStateSequence values) =
+        E.unsafeToEncoding (encodeComponentStateSequence values)
