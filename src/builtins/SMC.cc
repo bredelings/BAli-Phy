@@ -1162,13 +1162,9 @@ log_double_t li_stephens_2003_composite_likelihood(const alignment& A, std::span
 
 extern "C" closure builtin_function_li_stephens_2003_composite_likelihood_raw(OperationArgs& Args)
 {
-    int loc_offset = Args.evaluate_slot_to_value(0).as_int();
-    int loc_count = Args.evaluate_slot_to_value(1).as_int();
-    auto loc_value = Args.evaluate_slot_to_value(2);
-    const auto& loc_owner = loc_value.as_<Box<DenseVector<int>>>();
-    auto locs = checked_native_vector_view(
-        loc_owner, loc_offset, loc_count,
-        "li_stephens_2003 locations");
+    auto location_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0, "li_stephens_2003 locations");
+    auto locs = location_input.view();
 
     auto rho_value = Args.evaluate_slot_to_value(3);
     auto& rho_func = rho_value.as_<R::RVector>();
@@ -1549,13 +1545,10 @@ log_double_t panel_01_CSD(const R::RVector& panel, const R::RVector& sites, doub
 
 extern "C" closure builtin_function_haplotype01_from_plaf_probability(OperationArgs& Args)
 {
-    int plaf_offset = Args.evaluate_slot_to_value(0).as_int();
-    int plaf_count = Args.evaluate_slot_to_value(1).as_int();
-    auto plaf_value = Args.evaluate_slot_to_value(2);
-    const auto& plaf_owner = plaf_value.as_<Box<DenseVector<double>>>();
-    auto plaf = checked_native_vector_view(
-        plaf_owner, plaf_offset, plaf_count,
-        "haplotype01_from_plaf_probability frequencies");
+    auto frequency_input =
+        read_native_vector_input<double, ForeignDemand::use>(
+            Args, 0, "haplotype01_from_plaf_probability frequencies");
+    auto plaf = frequency_input.view();
 
     auto haplotype_value = Args.evaluate_slot_to_value(3);
     auto& haplotype = haplotype_value.as_<R::RVector>();
