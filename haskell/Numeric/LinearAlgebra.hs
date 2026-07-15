@@ -88,7 +88,7 @@ module Numeric.LinearAlgebra
     , thinQR
     ) where
 
-import Foreign.Maybe (CMaybe, fromCMaybe)
+import Foreign.Maybe ()
 import Foreign.Pair (EPair, pair_from_c)
 import Prelude hiding ((<>), find)
 import Numeric.LinearAlgebra.Data
@@ -117,7 +117,7 @@ outer = outerProduct
 
 foreign import bpcall "Matrix:detNative" detNative :: NativeMatrix Double -> Double
 foreign import bpcall "Matrix:invNative" invNative :: NativeMatrix Double -> NativeMatrix Double
-foreign import bpcall "Matrix:linearSolveNative" linearSolveNative :: NativeMatrix Double -> NativeMatrix Double -> CMaybe (NativeMatrix Double)
+foreign import trcall "Matrix:linearSolveNative" linearSolveNative :: Matrix Double -> Matrix Double -> Maybe (Matrix Double)
 foreign import bpcall "Matrix:linearSolveLSNative" linearSolveLSNative :: NativeMatrix Double -> NativeMatrix Double -> NativeMatrix Double
 foreign import bpcall "Matrix:cholNative" cholNative :: NativeMatrix Double -> NativeMatrix Double
 foreign import bpcall "Matrix:expmNative" expmNative :: NativeMatrix Double -> NativeMatrix Double
@@ -131,10 +131,9 @@ inv matrix = matrixFromNative (rows matrix) (cols matrix) (invNative (nativeMatr
 -- Wrap a successful solve with dimensions determined by the coefficient and
 -- right-hand-side shapes.
 linearSolve :: Matrix Double -> Matrix Double -> Maybe (Matrix Double)
-linearSolve coefficients rhs =
-    case fromCMaybe (linearSolveNative (nativeMatrix coefficients) (nativeMatrix rhs)) of
-        Nothing -> Nothing
-        Just payload -> Just (matrixFromNative (cols coefficients) (cols rhs) payload)
+linearSolve coefficients rhs = fmap
+    (overrideMatrixDims (cols coefficients) (cols rhs))
+    (linearSolveNative coefficients rhs)
 
 linearSolveLS :: Matrix Double -> Matrix Double -> Matrix Double
 linearSolveLS coefficients rhs = matrixFromNative (cols coefficients) (cols rhs)

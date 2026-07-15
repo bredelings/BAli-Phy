@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeFamilies #-}
 module Foreign.Maybe
     ( CMaybe
     , cNothing
@@ -10,16 +11,23 @@ module Foreign.Maybe
     , fromCMaybe
     ) where
 
-import Compiler.FFI.Import (COutput)
+import Compiler.FFI.Import (COutput(..))
 import Compiler.FFI.Runtime (RuntimeValue)
 import Data.Bool -- for not
 import Data.Function -- for (.)
+import Data.Functor (fmap)
 import Data.Maybe
 
 data CMaybe a
 
 -- CMaybe is an opaque runtime result; translating it does not translate a.
 instance COutput (CMaybe a)
+
+-- Translate an optional raw result after inspecting its already-constructed
+-- CMaybe container; no RuntimeValue constraint is needed for inspection.
+instance COutput a => COutput (Maybe a) where
+    type COutputType (Maybe a) = CMaybe (COutputType a)
+    fromCOutput = fmap fromCOutput . fromCMaybe
 
 foreign import ecall "Prelude:" cNothing :: CMaybe a
 foreign import ecall "Prelude:cJust" cJustRaw :: a -> CMaybe a
