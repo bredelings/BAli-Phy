@@ -1,5 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "builtins/native-vector-view.H"
+#include "builtins/native-vector-input.H"
 #include "computation/machine/args.H"
 #include "dp/2way.H"
 #include "imodel/imodel.H"
@@ -807,13 +807,11 @@ extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args
 extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    int offset = Args.evaluate_slot_to_value(1).as_int();
-    int count = Args.evaluate_slot_to_value(2).as_int();
-    auto owner_value = Args.evaluate_slot_to_value(3);
+    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 1, "Alignment.statesToLetters");
     const auto& smap = arg0.as_<R::RVector>();
-    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    auto states = checked_native_vector_view(
-        owner, offset, count, "Alignment.statesToLetters");
+    auto states = state_input.view();
+    int count = static_cast<int>(states.size());
 
     auto result = object_ptr<R::RVector>(new R::RVector(count));
     auto& letter_sequence = *result;
@@ -881,16 +879,12 @@ extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args
 {
     auto alignment_value = Args.evaluate_slot_to_value(0);
     auto& A0 = alignment_value.as_<Box<alignment>>().value();
-    int site_offset = Args.evaluate_slot_to_value(1).as_int();
-    int site_count = Args.evaluate_slot_to_value(2).as_int();
-    auto site_value = Args.evaluate_slot_to_value(3);
-    const auto& site_owner = site_value.as_<Box<DenseVector<int>>>();
-    auto sites = checked_native_vector_view(
-        site_owner, site_offset, site_count,
-        "select_alignment_columns sites");
+    auto site_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 1, "select_alignment_columns sites");
+    auto sites = site_input.view();
 
     int N = A0.n_sequences();
-    int L = sites.size();
+    int L = static_cast<int>(sites.size());
     object_ptr<Box<alignment>> A1(new Box<alignment>(A0.get_alphabet(), N, L));
 
     for(int i=0;i<sites.size();i++)
