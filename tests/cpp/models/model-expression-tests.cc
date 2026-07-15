@@ -740,6 +740,47 @@ std::filesystem::path make_rule_fixture()
 
 void test_typecheck_decls(const Rules& rules);
 
+// Checks that a local function shadows a binding-file rule with the same name
+// throughout parsing, typechecking, and code generation.
+void test_local_function_shadowing()
+{
+    auto root = make_rule_fixture();
+    try
+    {
+        Rules rules({root});
+        auto model = compile_model(
+            rules,
+            test_typechecker(rules),
+            CodeGenState(rules),
+            type_t("Int"),
+            "f(1) where {f = |x:x|}",
+            "shadowing compile test"
+        );
+        BALI_PHY_TEST_CHECK(model.type == type_t("Int"));
+    }
+    catch (...)
+    {
+        std::filesystem::remove_all(root);
+        throw;
+    }
+    std::filesystem::remove_all(root);
+}
+
+// Checks tuple-pattern syntax through the complete model compilation path.
+void test_tuple_pattern_compile()
+{
+    Rules rules({});
+    auto model = compile_model(
+        rules,
+        test_typechecker(rules),
+        CodeGenState(rules),
+        type_t("Int"),
+        "f((1,2)) where {f = |(x,y):x|}",
+        "tuple-pattern compile test"
+    );
+    BALI_PHY_TEST_CHECK(model.type == type_t("Int"));
+}
+
 // Verifies rule-backed calls, defaults, alphabets, and conversion calls using
 // direct AST inputs and a temporary binding-file fixture.
 void test_typecheck_rule_calls()
@@ -760,26 +801,6 @@ void test_typecheck_rule_calls()
             named_arg("mu", int_expr(0)),
             named_arg("sigma", int_expr(1))
         })));
-        auto shadowed_rule_call = parse_model_expr(rules, "f(1) where {f = |x:x|}", "shadowing test");
-        expect_typecheck_expr(rules, type_t("Int"), shadowed_rule_call);
-        auto shadowed_rule_model = compile_model(
-            rules,
-            test_typechecker(rules),
-            CodeGenState(rules),
-            type_t("Int"),
-            "f(1) where {f = |x:x|}",
-            "shadowing compile test"
-        );
-        BALI_PHY_TEST_CHECK(shadowed_rule_model.type == type_t("Int"));
-        auto tuple_pattern_model = compile_model(
-            rules,
-            test_typechecker(rules),
-            CodeGenState(rules),
-            type_t("Int"),
-            "f((1,2)) where {f = |(x,y):x|}",
-            "tuple-pattern shadowing compile test"
-        );
-        BALI_PHY_TEST_CHECK(tuple_pattern_model.type == type_t("Int"));
         expect_typecheck_expr(
             rules,
             CM::type_app("DiscreteDist", type_t("Int")),
@@ -928,6 +949,8 @@ int main()
     test_typecheck_variable_function_used_args();
     test_typecheck_direct_errors();
     test_typecheck_decls();
+    test_local_function_shadowing();
+    test_tuple_pattern_compile();
     test_typecheck_rule_calls();
     test_extraction();
 }
