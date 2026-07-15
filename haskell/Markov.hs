@@ -6,43 +6,43 @@ import SModel.Rate
 import EigenExp
 import Reversible
 
-foreign import bpcall "SModel:gtr_sym" gtrSymNative :: NativeVector Double -> Int -> NativeMatrix Double
-foreign import bpcall "SModel:non_rev_from_vec" nonRevNative :: Int -> NativeVector Double -> NativeMatrix Double
+foreign import trcall "SModel:gtr_sym" gtrSymNative :: Vector Double -> Int -> Matrix Double
+foreign import trcall "SModel:non_rev_from_vec" nonRevNative :: Int -> Vector Double -> Matrix Double
 foreign import bpcall "SModel:fixupDiagonalRates" fixupDiagonalNative :: NativeMatrix Double -> NativeMatrix Double
-foreign import bpcall "SModel:plus_gwf_matrix" plusGwfNative :: NativeVector Double -> Double -> NativeMatrix Double
+foreign import trcall "SModel:plus_gwf_matrix" plusGwfNative :: Vector Double -> Double -> Matrix Double
 foreign import bpcall "Matrix:MatrixExp" matrixExpNative :: NativeMatrix Double -> Double -> NativeMatrix Double
-foreign import bpcall "SModel:equilibriumLimit" equilibriumLimitNative :: NativeVector Double -> NativeMatrix Double -> NativeVector Double
-foreign import bpcall "SModel:checkReversible" checkReversibleNative :: NativeMatrix Double -> NativeVector Double -> Bool
-foreign import bpcall "SModel:checkStationary" checkStationaryNative :: NativeMatrix Double -> NativeVector Double -> Bool
-foreign import bpcall "SModel:flow" flowNative :: NativeVector Double -> NativeMatrix Double -> NativeMatrix Double
+foreign import trcall "SModel:equilibriumLimit" equilibriumLimitNative :: Vector Double -> Matrix Double -> Vector Double
+foreign import trcall "SModel:checkReversible" checkReversibleNative :: Matrix Double -> Vector Double -> Bool
+foreign import trcall "SModel:checkStationary" checkStationaryNative :: Matrix Double -> Vector Double -> Bool
+foreign import trcall "SModel:flow" flowNative :: Vector Double -> Matrix Double -> Matrix Double
 
-builtin_gtr_sym exchange dimension = matrixFromNative dimension dimension
-    (gtrSymNative (nativeVector exchange) dimension)
+builtin_gtr_sym exchange dimension = overrideMatrixDims dimension dimension
+    (gtrSymNative exchange dimension)
 
-non_rev_from_vec dimension rates = matrixFromNative dimension dimension
-    (nonRevNative dimension (nativeVector rates))
+non_rev_from_vec dimension rates = overrideMatrixDims dimension dimension
+    (nonRevNative dimension rates)
 
 fixupDiagonalRates matrix = matrixFromNative (rows matrix) (cols matrix)
     (fixupDiagonalNative (nativeMatrix matrix))
 
-plus_gwf_matrix frequencies weight = matrixFromNative dimension dimension
-    (plusGwfNative (nativeVector frequencies) weight)
+plus_gwf_matrix frequencies weight = overrideMatrixDims dimension dimension
+    (plusGwfNative frequencies weight)
   where dimension = vectorSize frequencies
 
 mexp matrix time = matrixFromNative (rows matrix) (cols matrix)
     (matrixExpNative (nativeMatrix matrix) time)
 
-equilibriumLimit frequencies matrix = vectorFromNative (vectorSize frequencies)
-    (equilibriumLimitNative (nativeVector frequencies) (nativeMatrix matrix))
+equilibriumLimit frequencies matrix = overrideVectorSize (vectorSize frequencies)
+    (equilibriumLimitNative frequencies matrix)
 
 checkReversible matrix frequencies =
-    checkReversibleNative (nativeMatrix matrix) (nativeVector frequencies)
+    checkReversibleNative matrix frequencies
 
 checkStationary matrix frequencies =
-    checkStationaryNative (nativeMatrix matrix) (nativeVector frequencies)
+    checkStationaryNative matrix frequencies
 
-flow frequencies matrix = matrixFromNative (rows matrix) (cols matrix)
-    (flowNative (nativeVector frequencies) (nativeMatrix matrix))
+flow frequencies matrix = overrideMatrixDims (rows matrix) (cols matrix)
+    (flowNative frequencies matrix)
 
 flux pi q = f - tr f
     where f = flow pi q
