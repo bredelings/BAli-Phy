@@ -4,7 +4,7 @@
 #include <map>
 #include <unordered_map>
 #include <optional>
-#include "builtins/native-vector-view.H"
+#include "builtins/native-vector-input.H"
 #include "computation/machine/args.H"
 #include "util/io.H"
 #include "util/string/convert.H"
@@ -603,13 +603,9 @@ extern "C" closure builtin_function_selfing_coalescence_probability(OperationArg
 
     assert(s >= 0 and s <= 1);
 
-    int indicator_offset = Args.evaluate_slot_to_value(2).as_int();
-    int indicator_count = Args.evaluate_slot_to_value(3).as_int();
-    auto indicator_value = Args.evaluate_slot_to_value(4);
-    const auto& indicator_owner = indicator_value.as_<Box<DenseVector<int>>>();
-    auto I = checked_native_vector_view(
-        indicator_owner, indicator_offset, indicator_count,
-        "selfing_coalescence_probability indicators");
+    auto indicator_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 2, "selfing_coalescence_probability indicators");
+    auto I = indicator_input.view();
     if (I.size() < static_cast<std::size_t>(L))
         throw myexception()<<"selfing_coalescence_probability: fewer indicators than loci";
 
