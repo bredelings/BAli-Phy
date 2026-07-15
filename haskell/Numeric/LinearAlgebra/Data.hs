@@ -3,7 +3,7 @@ module Numeric.LinearAlgebra.Data
     ( R, I
     , NativeVector, NativeMatrix, Vector, Matrix
     , vectorFromNative, matrixFromNative, nativeVector, nativeMatrix
-    , overrideVectorSize
+    , overrideVectorSize, overrideMatrixDims
     , vectorSize, rows, cols
     , showMatrixNative, showNumericVectorNative
     , Element(..), IndexOf, Container(..)
@@ -44,7 +44,7 @@ data Vector a = Vector Int (NativeVector a)
 
 -- Keep stable dimensions separate from changing native matrix contents.
 type role Matrix nominal
-data Matrix a = Matrix !Int !Int (NativeMatrix a)
+data Matrix a = Matrix Int Int (NativeMatrix a)
 
 vectorFromNative :: Int -> NativeVector a -> Vector a
 vectorFromNative = Vector
@@ -56,6 +56,12 @@ overrideVectorSize count (Vector _ payload) = Vector count payload
 
 matrixFromNative :: Int -> Int -> NativeMatrix a -> Matrix a
 matrixFromNative = Matrix
+
+-- Replace cached dimensions when the builtin contract guarantees them; the
+-- supplied shape is authoritative and discards lazy native fallbacks.
+overrideMatrixDims :: Int -> Int -> Matrix a -> Matrix a
+overrideMatrixDims rowCount columnCount (Matrix _ _ payload) =
+    Matrix rowCount columnCount payload
 
 vectorSize :: Vector a -> Int
 vectorSize (Vector count _) = count
@@ -85,6 +91,14 @@ instance COutput (Vector Double) where
 instance CInput (Matrix a) where
     type CInputType (Matrix a) result = NativeMatrix a -> result
     withCInput value continuation = continuation (nativeMatrix value)
+
+foreign import ecall "Matrix:matrixRowsNative" matrixRowsNative :: NativeMatrix Double -> Int
+foreign import ecall "Matrix:matrixColsNative" matrixColsNative :: NativeMatrix Double -> Int
+
+instance COutput (Matrix Double) where
+    type COutputType (Matrix Double) = NativeMatrix Double
+    fromCOutput payload =
+        Matrix (matrixRowsNative payload) (matrixColsNative payload) payload
 
 foreign import ecall "Prelude:show" showMatrixNative :: NativeMatrix a -> CPPString
 foreign import ecall "Prelude:show" showNumericVectorNative :: NativeVector a -> CPPString

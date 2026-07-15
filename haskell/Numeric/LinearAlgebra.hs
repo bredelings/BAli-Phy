@@ -14,6 +14,7 @@ module Numeric.LinearAlgebra
     , rows
     , cols
     , overrideVectorSize
+    , overrideMatrixDims
     , fromLists
     , toLists
     , row

@@ -775,6 +775,26 @@ closure matrix_from_list(OperationArgs& Args)
 
 }
 
+// Report the row extent of either native matrix representation.
+extern "C" R::Exp simple_function_matrixRowsNative(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    auto count = visit_matrix(value, [](const auto& matrix) { return matrix.rows(); });
+    if (count > std::numeric_limits<int>::max())
+        throw myexception()<<"native matrix row count exceeds the Haskell Int range";
+    return static_cast<int>(count);
+}
+
+// Report the column extent of either native matrix representation.
+extern "C" R::Exp simple_function_matrixColsNative(vector<R::Exp>& args)
+{
+    auto value = get_arg(args);
+    auto count = visit_matrix(value, [](const auto& matrix) { return matrix.cols(); });
+    if (count > std::numeric_limits<int>::max())
+        throw myexception()<<"native matrix column count exceeds the Haskell Int range";
+    return static_cast<int>(count);
+}
+
 // Construct a matrix using the native Int representation.
 extern "C" closure builtin_function_intMatrixFromList(OperationArgs& Args)
 {

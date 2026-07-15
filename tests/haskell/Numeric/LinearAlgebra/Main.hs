@@ -17,6 +17,8 @@ import Text.Show (show)
 
 foreign import trcall "NativeVector:vectorKonstNative"
     translatedVectorKonstNative :: Double -> Int -> Vector Double
+foreign import trcall "Matrix:matrixKonstNative"
+    translatedMatrixKonstNative :: Double -> Int -> Int -> Matrix Double
 
 -- Exercise construction, conversion, empty shapes, and the full basic
 -- operation set for both native element representations.
@@ -33,6 +35,14 @@ main = do
             (error "native vector fallback forced" :: NativeVector Double)
             :: Vector Double
     putStrLn $ show $ vectorSize $ overrideVectorSize 5 lazyOutput
+    let translatedMatrix = translatedMatrixKonstNative 1.5 2 3
+    putStrLn $ show (rows translatedMatrix, cols translatedMatrix,
+                     toLists translatedMatrix)
+    let lazyMatrixOutput = fromCOutput
+            (error "native matrix fallback forced" :: NativeMatrix Double)
+            :: Matrix Double
+    let overriddenMatrix = overrideMatrixDims 4 6 lazyMatrixOutput
+    putStrLn $ show (rows overriddenMatrix, cols overriddenMatrix)
     let intVector = fromList [1, 2, 3] :: Vector Int
     putStrLn $ show $ toList $ intVector + 10
     putStrLn $ show $ toList $ 2 * intVector
