@@ -394,14 +394,10 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
     int D = Args.evaluate_slot_to_value(2).as_int();
 
     //------------- 2. Get argument Z -----------------
-    int offset = Args.evaluate_slot_to_value(3).as_int();
-    int count = Args.evaluate_slot_to_value(4).as_int();
-    auto owner_value = Args.evaluate_slot_to_value(5);
-    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    auto z = checked_native_vector_view(
-        owner, offset, count, "Distribution.CRP_density");
+    auto z = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "Distribution.CRP_density");
 
-    return { ::CRP_pdf(alpha,N,D,z) };
+    return { ::CRP_pdf(alpha,N,D,z.view()) };
 }
 
 #include "probability/choose.H"
