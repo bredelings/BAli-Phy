@@ -12,7 +12,7 @@ foreign import bpcall "SModel:wag" wagNative :: Alphabet -> NativeMatrix Double
 foreign import bpcall "SModel:wag_frequencies" wagFrequenciesNative :: Alphabet -> NativeVector Double
 foreign import bpcall "SModel:lg_frequencies" lgFrequenciesNative :: Alphabet -> NativeVector Double
 foreign import bpcall "SModel:lg" lgNative :: Alphabet -> NativeMatrix Double
-foreign import bpcall "SModel:symmetricMatrixFromLowerTriangle" symmetricNative :: Int -> NativeVector Double -> NativeMatrix Double
+foreign import trcall "SModel:symmetricMatrixFromLowerTriangle" symmetricNative :: Int -> Vector Double -> Matrix Double
 
 empiricalMatrix operation alphabet = matrixFromNative dimension dimension (operation alphabet)
   where dimension = alphabetSize alphabet
@@ -28,8 +28,8 @@ builtin_wag_frequencies alphabet = vectorFromNative (alphabetSize alphabet)
 builtin_lg_frequencies alphabet = vectorFromNative (alphabetSize alphabet)
     (lgFrequenciesNative alphabet)
 
-symmetricMatrixFromLowerTriangle n xs = matrixFromNative n n
-    (symmetricNative n (nativeVector (fromList xs)))
+symmetricMatrixFromLowerTriangle n xs = overrideMatrixDims n n
+    (symmetricNative n (fromList xs))
 
 empirical a filename = empiricalMatrix (\alphabet -> empiricalNative alphabet (list_to_string filename)) a
 
