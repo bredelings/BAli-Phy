@@ -234,25 +234,17 @@ Core::Exp<> unlet(const Core::Exp<>& E)
     return E;
 }
 
-std::map<string,Core::Exp<>> diagnostic_reg_replacements(const map<int,Core::Exp<>>& replace)
-{
-    std::map<string,Core::Exp<>> replacements;
-    for(const auto& [r, E]: replace)
-    {
-        replacements["<" + convertToString(r) + ">"] = E;
-        replacements["[" + convertToString(r) + "]"] = E;
-    }
-
-    return replacements;
-}
-
-Core::Exp<> subst_diagnostic_vars(const Core::Exp<>& E, const std::map<string,Core::Exp<>>& replacements)
+// Build the substitution that gives diagnostic register references readable names.
+Core::subst_t<> make_diagnostic_substitution(const map<int,Core::Exp<>>& replace)
 {
     Core::subst_t<> subst;
-    for(const auto& [name, replacement]: replacements)
-        subst = subst.insert({Core::Var<>(name), replacement});
+    for(const auto& [r, E]: replace)
+    {
+        subst = subst.insert({Core::Var<>("<" + convertToString(r) + ">"), E});
+        subst = subst.insert({Core::Var<>("[" + convertToString(r) + "]"), E});
+    }
 
-    return Core::subst(subst, E);
+    return subst;
 }
 
 Core::Exp<> untranslate_vars(const Core::Exp<>& E, const map<int,string>& ids)
@@ -261,7 +253,7 @@ Core::Exp<> untranslate_vars(const Core::Exp<>& E, const map<int,string>& ids)
     for(const auto& [r, name]: ids)
         replace[r] = Core::Var<>(name);
 
-    return subst_diagnostic_vars(E, diagnostic_reg_replacements(replace));
+    return Core::subst(make_diagnostic_substitution(replace), E);
 }
 
 Core::Exp<> untranslate_vars(const Core::Exp<>& E, const map<string, int>& ids)
@@ -698,7 +690,9 @@ string register_graph_ref_name(const GraphRef& ref, const map<int,Core::Exp<>>& 
     return loc->second.print() + " " + name;
 }
 
-string render_register_graph_table_arg_cell(const Runtime::Exp& E, const closure& CR, const map<int,Core::Exp<>>& replace)
+string render_register_graph_table_arg_cell(const Runtime::Exp& E, const closure& CR,
+                                            const map<int,Core::Exp<>>& replace,
+                                            const Core::subst_t<>& diagnostic_subst)
 {
     closure arg(E, CR.Env);
     if (auto ref = graph_ref_for_arg(E, CR))
@@ -707,7 +701,7 @@ string render_register_graph_table_arg_cell(const Runtime::Exp& E, const closure
         return "<td port=\"r" + convertToString(ref->reg) + "\">" + escape(name) + "</td>";
     }
 
-    auto E2 = subst_diagnostic_vars(deindexify(arg), diagnostic_reg_replacements(replace));
+    auto E2 = Core::subst(diagnostic_subst, deindexify(arg));
     return "<td>" + escape(E2.print()) + "</td>";
 }
 
@@ -754,7 +748,8 @@ string factor_graph_ref_name(const GraphRef& ref, const map<int,string>& reg_nam
 string render_factor_graph_table_arg_cell(const Runtime::Exp& E, const closure& CR,
                                           const map<int,string>& reg_names,
                                           const map<int,string>& constants,
-                                          const map<string,string>& simplify)
+                                          const map<string,string>& simplify,
+                                          const Core::subst_t<>& diagnostic_subst)
 {
     closure arg(E, CR.Env);
     if (auto ref = graph_ref_for_arg(E, CR))
@@ -764,7 +759,7 @@ string render_factor_graph_table_arg_cell(const Runtime::Exp& E, const closure& 
     }
 
     auto E2 = deindexify(arg);
-    E2 = subst_diagnostic_vars(E2, diagnostic_reg_replacements(make_factor_graph_replacements(reg_names, constants)));
+    E2 = Core::subst(diagnostic_subst, E2);
     E2 = map_symbol_names(E2, simplify);
 
     return "<td>" + escape(E2.print()) + "</td>";
@@ -777,7 +772,8 @@ closure follow_reg_ref(const reg_heap& M, closure C)
     return C;
 }
 
-string label_for_reg(int R, const reg_heap& C, const map<int,Core::Exp<>>& replace, bool skip_ref = false)
+string label_for_reg(int R, const reg_heap& C, const map<int,Core::Exp<>>& replace,
+                     const Core::subst_t<>& diagnostic_subst, bool skip_ref = false)
 {
     auto CR = C[R];
     if (skip_ref)
@@ -806,7 +802,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,Core::Exp<>>& repla
         if (auto args = record_app_args(CR.get_code()))
 	{
             for(const auto& E: *args)
-                label += render_register_graph_table_arg_cell(E, CR, replace);
+                label += render_register_graph_table_arg_cell(E, CR, replace, diagnostic_subst);
 	}
         else if (auto im = CR.get_code().to<IntMap>())
         {
@@ -843,7 +839,7 @@ string label_for_reg(int R, const reg_heap& C, const map<int,Core::Exp<>>& repla
     }
     else
     {
-        auto E = unlet(subst_diagnostic_vars(deindexify(C[R]), diagnostic_reg_replacements(replace)));
+        auto E = unlet(Core::subst(diagnostic_subst, deindexify(C[R])));
 
         label += E.print();
         label = escape(wrap(label,40));
@@ -852,7 +848,8 @@ string label_for_reg(int R, const reg_heap& C, const map<int,Core::Exp<>>& repla
 }
 
 string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names,
-                      const map<int,string>& constants, const map<string,string>& simplify)
+                      const map<int,string>& constants, const map<string,string>& simplify,
+                      const Core::subst_t<>& diagnostic_subst)
 {
     auto CR = C[R];
     for(int& r: CR.Env)
@@ -878,7 +875,8 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
         if (auto args = record_app_args(CR.get_code()))
 	{
             for(const auto& E: *args)
-                label += render_factor_graph_table_arg_cell(E, CR, reg_names, constants, simplify);
+                label += render_factor_graph_table_arg_cell(E, CR, reg_names, constants, simplify,
+                                                            diagnostic_subst);
 	}
         label += "</tr></table>";
     }
@@ -895,8 +893,7 @@ string label_for_reg2(int R, const reg_heap& C, const map<int,string>& reg_names
         label="mod";
     else
     {
-        auto replace = make_factor_graph_replacements(reg_names, constants);
-        auto E = unlet(subst_diagnostic_vars(deindexify(CR), diagnostic_reg_replacements(replace)));
+        auto E = unlet(Core::subst(diagnostic_subst, deindexify(CR)));
         E = map_symbol_names(E, simplify);
 
         label += E.print();
@@ -945,6 +942,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
     int t = C.get_root_token();
 
     map<int,Core::Exp<>> replace = get_names_for_regs(C);
+    auto diagnostic_subst = make_diagnostic_substitution(replace);
 
     vector<int> regs = C.find_all_used_regs_in_context(t,false);
     std::unordered_set<int> regs_set;
@@ -969,7 +967,7 @@ void write_dot_graph(const reg_heap& C, std::ostream& o)
             o<<"shape = plain, ";
 
         // node label = R/name: expression
-	string label = label_for_reg(R, C, replace);
+	string label = label_for_reg(R, C, replace, diagnostic_subst);
 	o<<"label = <"<<label<<">";
 //	if (this is a gc root) // maybe call get_roots, and then make a set<int> of all the roots?
 //	    o<<",style=\"dashed,filled\",color=orange";
@@ -1133,6 +1131,8 @@ void context_ref::write_factor_graph(std::ostream& o) const
     map<string,string> simplify = get_simplified_names(get_names(ids));
 
     map<int,string> constants = get_constants(M, t);
+    auto replace = make_factor_graph_replacements(reg_names, constants);
+    auto diagnostic_subst = make_diagnostic_substitution(replace);
 
     vector<int> regs = M.find_all_used_regs_in_context(t,false);
 
@@ -1245,9 +1245,9 @@ void context_ref::write_factor_graph(std::ostream& o) const
 
         bool print_record = print_as_record(M[r].get_code());
         if (print_record)
-            o<<"r"<<r<<"  [label=<"<<label_for_reg2(r,M,reg_names,constants,simplify)<<">,shape=plain]\n";
+            o<<"r"<<r<<"  [label=<"<<label_for_reg2(r,M,reg_names,constants,simplify,diagnostic_subst)<<">,shape=plain]\n";
         else
-            o<<"r"<<r<<"  [label=<"<<label_for_reg2(r,M,reg_names,constants,simplify)<<">]\n";
+            o<<"r"<<r<<"  [label=<"<<label_for_reg2(r,M,reg_names,constants,simplify,diagnostic_subst)<<">]\n";
 
         // out-edges
 	if (print_record)
