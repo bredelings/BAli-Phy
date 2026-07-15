@@ -8,6 +8,8 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <type_traits>
+#include "util/OrderedDouble.H"
 #include "util/cow-ptr.H"
 #include "util/string/join.H"
 #include "util/math/log-double.H"
@@ -778,7 +780,26 @@ namespace Core
 
 	std::string print() const;
 
-	std::strong_ordering operator<=>(const Constant& v2) const = default;
+	// Preserve Core's strong structural ordering by giving floating-point
+	// constants the same total order used by Runtime.
+	std::strong_ordering operator<=>(const Constant& v2) const
+	{
+            auto type_order = value.index() <=> v2.value.index();
+            if (type_order != 0) return type_order;
+
+            // Compare the selected alternatives after confirming that their types match.
+            return std::visit([&](const auto& x) -> std::strong_ordering
+            {
+                using T = std::decay_t<decltype(x)>;
+                const auto& y = std::get<T>(v2.value);
+                if constexpr (std::is_same_v<T, double>)
+                    return OrderedDouble(x) <=> OrderedDouble(y);
+                else
+                    return x <=> y;
+            }, value);
+	}
+
+	bool operator==(const Constant& v2) const {return (*this <=> v2) == 0;}
 
 	template <class Archive>
 	void serialize(Archive& ar)
