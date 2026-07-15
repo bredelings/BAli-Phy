@@ -13,21 +13,20 @@ import Numeric.LinearAlgebra.Data
 type TripletAlphabet = Alphabet
 type CodonAlphabet = TripletAlphabet
 
-foreign import bpcall "SModel:singletToTripletSym" singletToTripletNative :: TripletAlphabet -> NativeMatrix Double -> NativeMatrix Double
+foreign import trcall "SModel:singletToTripletSym" singletToTripletNative :: TripletAlphabet -> Matrix Double -> Matrix Double
 foreign import trcall "SModel:f3x4_frequencies" f3x4Native :: TripletAlphabet -> Vector Double -> Vector Double -> Vector Double -> Vector Double
-foreign import bpcall "SModel:singlet_to_triplet_rates" tripletRatesNative :: TripletAlphabet -> NativeMatrix Double -> NativeMatrix Double -> NativeMatrix Double -> NativeMatrix Double
+foreign import trcall "SModel:singlet_to_triplet_rates" tripletRatesNative :: TripletAlphabet -> Matrix Double -> Matrix Double -> Matrix Double -> Matrix Double
 foreign import trcall "SModel:multiNucleotideMutationRates" multiNucleotideNative :: TripletAlphabet -> Double -> Double -> Matrix Double -> Vector Double -> Matrix Double
-foreign import bpcall "SModel:dNdS_matrix" dNdSNative :: CodonAlphabet -> Double -> NativeMatrix Double
+foreign import trcall "SModel:dNdS_matrix" dNdSNative :: CodonAlphabet -> Double -> Matrix Double
 
 singletToTripletSym alphabet rates = squareFor alphabet
-    (singletToTripletNative alphabet (nativeMatrix rates))
+    (singletToTripletNative alphabet rates)
 
 f3x4_frequencies_builtin alphabet pi1 pi2 pi3 = overrideVectorSize (alphabetSize alphabet)
     (f3x4Native alphabet pi1 pi2 pi3)
 
 singlet_to_triplet_rates alphabet rates1 rates2 rates3 = squareFor alphabet
-    (tripletRatesNative alphabet (nativeMatrix rates1) (nativeMatrix rates2)
-        (nativeMatrix rates3))
+    (tripletRatesNative alphabet rates1 rates2 rates3)
 
 multiNucleotideMutationRates alphabet v2 v3 rates frequencies =
     overrideMatrixDims dimension dimension
@@ -36,7 +35,7 @@ multiNucleotideMutationRates alphabet v2 v3 rates frequencies =
 
 dNdS_matrix alphabet omega = squareFor alphabet (dNdSNative alphabet omega)
 
-squareFor alphabet = matrixFromNative dimension dimension
+squareFor alphabet = overrideMatrixDims dimension dimension
   where dimension = alphabetSize alphabet
 
 f3x4_frequencies a pi1 pi2 pi3 = let pi1' = fromList pi1
