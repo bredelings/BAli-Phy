@@ -6,8 +6,6 @@ import Range
 import Data.CSV
 import Numeric.LinearAlgebra
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (doubleVectorNativeView)
-import Foreign.NativeVector (NativeVector)
 
 type Haplotype = EVector Int
 type Reads = EVector (EPair Int Int)
@@ -15,12 +13,10 @@ type Panel = EVector (EVector Int)
 type Sites = EVector Int
 type ContextIndex = Int
 
-foreign import bpcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf :: Int -> Int -> NativeVector Double -> IO Haplotype
-foreign import bpcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: Int -> Int -> NativeVector Double -> Haplotype -> LogDouble
+foreign import trcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf :: U.Vector Double -> IO Haplotype
+foreign import trcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: U.Vector Double -> Haplotype -> LogDouble
 haplotype01_from_plaf_probability plaf hap =
-    builtin_haplotype01_from_plaf_probability offset count native hap
-  where
-    (offset, count, native) = doubleVectorNativeView (U.fromList plaf)
+    builtin_haplotype01_from_plaf_probability (U.fromList plaf) hap
 
 data Haplotype01FromPLAF = Haplotype01FromPLAF [Double]
 
@@ -30,9 +26,7 @@ instance Dist Haplotype01FromPLAF where
 
 instance IOSampleable Haplotype01FromPLAF where
     sampleIO (Haplotype01FromPLAF plafs) =
-        builtin_sample_haplotype01_from_plaf offset count native
-      where
-        (offset, count, native) = doubleVectorNativeView (U.fromList plafs)
+        builtin_sample_haplotype01_from_plaf (U.fromList plafs)
 
 instance HasAnnotatedPdf Haplotype01FromPLAF where
     annotated_densities dist@(Haplotype01FromPLAF plafs) haplotype = do
