@@ -6,7 +6,7 @@ module Bio.Alignment (module Bio.Alignment,
                       module Bio.Alignment.Class) where
 
 import Tree
-import Compiler.FFI.Import (CInput(..), COutput(..))
+import Compiler.FFI.Import (CInput, COutput)
 import Compiler.FFI.Runtime (RuntimeValue)
 import Data.BitVector
 import Data.Foldable
@@ -46,6 +46,7 @@ import qualified Data.JSON.Encoding as E
 -- Store the sampled substitution component and state for each site in two
 -- unboxed primitive arrays while retaining their domain-specific JSON rules.
 newtype ComponentStateSequence = ComponentStateSequence (U.Vector (Int,Int))
+    deriving newtype (CInput, COutput)
 
 type NativeComponentStateSequence = EPair (NativeVector Int) (NativeVector Int)
 
@@ -68,16 +69,6 @@ componentStateSequenceNativeView (ComponentStateSequence values) =
     (components, states) = U.unzip values
     (componentOffset, _, componentNative) = intVectorNativeView components
     (stateOffset, _, stateNative) = intVectorNativeView states
-
-instance CInput ComponentStateSequence where
-    type CInputType ComponentStateSequence result =
-        CInputType (U.Vector (Int,Int)) result
-    withCInput (ComponentStateSequence values) = withCInput values
-
-instance COutput ComponentStateSequence where
-    type COutputType ComponentStateSequence = NativeComponentStateSequence
-    fromCOutput result = ComponentStateSequence
-        (fromCOutput result :: U.Vector (Int,Int))
 
 -- Project the state array without copying or inspecting the component array.
 componentStates :: ComponentStateSequence -> U.Vector Int
