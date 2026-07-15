@@ -89,6 +89,9 @@ doubleOwner = case doubleVectorNativeView (U.fromList [1.5, 2.5]) of
 doubleVectorOutput :: U.Vector Double
 doubleVectorOutput = fromCImport doubleOwner
 
+pairVectorOutput :: U.Vector (Int, Double)
+pairVectorOutput = fromCImport (c_pair intOwner doubleOwner)
+
 rawCombined :: Int -> Int -> NativeVector Int -> Double -> Int ->
                RealWorld -> NativeVector Double
 rawCombined _ _ _ _ _ _ = doubleOwner
@@ -113,5 +116,6 @@ main = do
                (U.slice 2 2 (U.fromList [1.0, 2.0, 3.0, 4.0, 5.0]))))
     print (U.toList vectorOutput)
     print (U.toList doubleVectorOutput)
+    print (U.toList pairVectorOutput)
     vectorResult <- combined (U.fromList [1, 2]) (3.0, 4)
     print (U.toList vectorResult)

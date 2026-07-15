@@ -15,8 +15,10 @@ module Data.Vector.Unboxed.Internal
 import Compiler.Num
 import Compiler.FFI.Import (CInput(..), COutput(..))
 import qualified Data.OldList as List
+import Data.Ord (min)
 import Data.Tuple (fst, snd)
 import Foreign.NativeVector (NativeVector)
+import Foreign.Pair (EPair, c_fst, c_snd)
 
 data family Vector a
 
@@ -146,6 +148,21 @@ instance (CInput (Vector a), CInput (Vector b)) =>
         CInputType (Vector a) (CInputType (Vector b) result)
     withCInput (V_2 _ left right) continuation =
         withCInput right (withCInput left continuation)
+
+instance (Unbox a, Unbox b, COutput (Vector a), COutput (Vector b)) =>
+         COutput (Vector (a,b)) where
+    type COutputType (Vector (a,b)) =
+        EPair (COutputType (Vector a)) (COutputType (Vector b))
+
+    -- Rebuild the structure-of-arrays view and normalize unequal native
+    -- owners with the same truncation rule as public vector zip.
+    fromCOutput pair =
+        V_2 count (basicUnsafeSlice 0 count left)
+                   (basicUnsafeSlice 0 count right)
+      where
+        left = fromCOutput (c_fst pair)
+        right = fromCOutput (c_snd pair)
+        count = min (basicLength left) (basicLength right)
 
 instance COutput (Vector Double) where
     type COutputType (Vector Double) = NativeVector Double
