@@ -52,12 +52,14 @@ class CheckReversible m => SimpleSModel t m where
     nBaseModels m = length (distribution m)
     getTree (SModelOnTree tree _) = tree
 
-foreign import bpcall "SModel:weightedFrequencyMatrixRaw" weightedFrequencyMatrixNative :: NativeVector Double -> EVector (NativeVector Double) -> NativeMatrix Double
+-- NOTE: Component frequencies stay raw because trcall does not translate
+-- EVector elements; remove this once collection-level translation exists.
+foreign import trcall "SModel:weightedFrequencyMatrixRaw" weightedFrequencyMatrixNative :: Vector Double -> EVector (NativeVector Double) -> Matrix Double
 
 -- Build weighted frequency rows while retaining model and state counts as
 -- Haskell matrix dimensions.
-weightedFrequencyMatrixFromVectors dist frequencies = matrixFromNative modelCount stateCount
-    (weightedFrequencyMatrixNative (nativeVector dist) payloads)
+weightedFrequencyMatrixFromVectors dist frequencies = overrideMatrixDims modelCount stateCount
+    (weightedFrequencyMatrixNative dist payloads)
   where
     payloads = toVector $ map nativeVector frequencies
     modelCount = length frequencies
