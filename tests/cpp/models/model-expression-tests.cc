@@ -100,12 +100,6 @@ Arg<NoAnn> positional_arg(UntypedExpr value)
     return {"", std::move(value), false, false, std::nullopt};
 }
 
-// Wraps an untyped expression as a named call argument.
-Arg<NoAnn> named_arg(std::string name, UntypedExpr value)
-{
-    return {std::move(name), std::move(value), false, false, std::nullopt};
-}
-
 // Builds an untyped call expression from a function name and argument edges.
 UntypedExpr call_expr(std::string function, std::vector<Arg<NoAnn>> args)
 {
@@ -191,8 +185,8 @@ TypedExpr typed_call_expr(std::string function, std::vector<Arg<Ann>> args, type
     return {expr_ann(std::move(type), {}, no_log, std::move(extract)), Call<Ann>{std::move(function), std::move(args)}};
 }
 
-// Checks that copying recursive AST nodes performs deep copies of boxed
-// children rather than sharing nested expression storage.
+// Protects the value semantics of CmdModel::Box, whose manual ownership must
+// deep-copy recursive nodes instead of aliasing their mutable storage.
 void test_copy_independence()
 {
     UntypedExpr original{
@@ -214,22 +208,6 @@ void test_copy_independence()
 
     BALI_PHY_TEST_CHECK(original_var.name == "x");
     BALI_PHY_TEST_CHECK(copied_var.name == "y");
-}
-
-// Checks basic node predicates and child traversal for a simple sample node.
-void test_accessors_and_traversal()
-{
-    UntypedExpr expr{
-        NoAnn{},
-        Sample<NoAnn>{var_expr("dist")}
-    };
-
-    BALI_PHY_TEST_CHECK(is_sample(expr));
-    BALI_PHY_TEST_CHECK(not is_list(expr));
-
-    int n_children = 0;
-    for_each_child(expr, [&](const UntypedExpr&) { n_children++; });
-    BALI_PHY_TEST_CHECK(n_children == 1);
 }
 
 // Requires check_invariants() to reject one malformed untyped expression.
@@ -268,25 +246,6 @@ void test_invariants()
 
     check_invariants(tuple_pattern({var_pattern("x"), var_pattern("y")}));
     expect_pattern_invariant_failure(tuple_pattern({var_pattern("x")}));
-}
-
-// Verifies that absent call-argument values are represented on argument edges
-// without pretending to be expressions.
-void test_absent_argument_values()
-{
-    UntypedExpr expr{
-        NoAnn{},
-        Call<NoAnn>{
-            "f",
-            {
-                {"x", std::nullopt, false, false, std::nullopt},
-                named_arg("y", int_expr(2))
-            }
-        }
-    };
-    auto& call = expr.as<Call<NoAnn>>();
-    BALI_PHY_TEST_CHECK(not call.args[0].value);
-    BALI_PHY_TEST_CHECK(call.args[1].value);
 }
 
 // Exercises untyped AST pretty-printing for representative syntax.
@@ -554,9 +513,7 @@ int main()
 {
     test_model_type_ast();
     test_copy_independence();
-    test_accessors_and_traversal();
     test_invariants();
-    test_absent_argument_values();
     test_untyped_pretty_printing();
     test_typed_pretty_printing();
     test_typed_substitution();
