@@ -73,8 +73,8 @@ frequencyMatrix model = fromRows (componentFrequencies model)
 
 nStates m = vector_size (stateLetters m)
 
--- Store transition payloads in the runtime cache without embedding lifted
--- Matrix constructors inside an EVector.
+-- NOTE: Transition matrices stay raw because runtime vectors cannot contain
+-- lifted Matrix records; remove this when the cache translates its elements.
 transitionPsMap smodel_on_tree = IntMap.fromSet
     (toVector . map nativeMatrix . branchTransitionP smodel_on_tree) edges where
     edges = getEdgesSet $ getTree smodel_on_tree

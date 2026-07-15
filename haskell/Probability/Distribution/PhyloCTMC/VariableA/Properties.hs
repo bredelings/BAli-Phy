@@ -36,12 +36,16 @@ import Probability.Distribution.PhyloCTMC.Properties
 
 data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
       prop_variable_a_subst_root :: Int,
+      -- NOTE: The transition cache stays raw until runtime vectors can
+      -- translate lifted Matrix elements.
       prop_variable_a_transition_ps :: IntMap (EVector (NativeMatrix Double)),
       prop_variable_a_cond_likes :: IntMap CondLikes,
       prop_variable_a_likelihood :: LogDouble,
       prop_variable_a_alphabet :: Alphabet,
       prop_variable_a_n_states :: Int,
       prop_variable_a_n_base_models :: Int,
+      -- NOTE: parameters.cc reads native matrix boxes from property 7; use
+      -- Matrix after that accessor can unpack the lifted representation.
       prop_variable_a_get_weightedFrequencyMatrix :: IntMap (NativeMatrix Double), -- only variable A
       prop_variable_a_nodeCLVs :: IntMap (Maybe CondLikes),                    -- only variable A
 

@@ -13,6 +13,8 @@ import Numeric.LinearAlgebra -- for fromLists and scale
 import qualified Data.Map as Map
 import Numeric.LinearAlgebra.Data
 
+-- NOTE: Component matrices stay raw because trcall does not translate EVector
+-- elements; remove this once collection-level translation exists.
 foreign import trcall "SModel:modulated_markov_rates" modulatedRatesNative :: EVector (NativeMatrix Double) -> Matrix Double -> Matrix Double
 -- NOTE: Component frequencies stay raw because trcall does not translate
 -- EVector elements; remove this once collection-level translation exists.

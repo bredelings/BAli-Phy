@@ -34,6 +34,8 @@ import Probability.Distribution.PhyloCTMC.Properties
 
 data PhyloCTMCPropertiesFixedA = PhyloCTMCPropertiesFixedA {
       prop_fixed_a_subst_root :: Int,
+      -- NOTE: The transition cache stays raw until runtime vectors can
+      -- translate lifted Matrix elements.
       prop_fixed_a_transition_ps :: IntMap (EVector (NativeMatrix Double)),
       prop_fixed_a_cond_likes :: IntMap CondLikes,
       prop_fixed_a_likelihood :: LogDouble,
