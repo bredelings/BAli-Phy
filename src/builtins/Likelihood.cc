@@ -363,27 +363,30 @@ extern "C" closure builtin_function_simulateSequenceFrom(OperationArgs& Args)
 
 extern "C" closure builtin_function_simulateFixedSequenceFrom(OperationArgs& Args)
 {
-    int count = Args.evaluate_slot_to_value(0).as_int();
-    int component_offset = Args.evaluate_slot_to_value(1).as_int();
+    int component_offset = Args.evaluate_slot_to_value(0).as_int();
+    int component_count = Args.evaluate_slot_to_value(1).as_int();
     auto component_value = Args.evaluate_slot_to_value(2);
     int state_offset = Args.evaluate_slot_to_value(3).as_int();
-    auto state_value = Args.evaluate_slot_to_value(4);
-    auto transition_value = Args.evaluate_slot_to_value(5);
-    auto frequency_value = Args.evaluate_slot_to_value(6);
+    int state_count = Args.evaluate_slot_to_value(4).as_int();
+    auto state_value = Args.evaluate_slot_to_value(5);
+    auto transition_value = Args.evaluate_slot_to_value(6);
+    auto frequency_value = Args.evaluate_slot_to_value(7);
+    if (component_count != state_count)
+        throw myexception()<<"Likelihood.simulateFixedSequenceFrom: component and state lengths differ";
     const auto& component_owner = component_value.as_<Box<DenseVector<int>>>();
     const auto& state_owner = state_value.as_<Box<DenseVector<int>>>();
     auto parent_components = checked_native_vector_view(
-        component_owner, component_offset, count,
+        component_owner, component_offset, component_count,
         "Likelihood.simulateFixedSequenceFrom components");
     auto parent_states = checked_native_vector_view(
-        state_owner, state_offset, count,
+        state_owner, state_offset, state_count,
         "Likelihood.simulateFixedSequenceFrom states");
     const auto& transition_ps = transition_value.as_<R::RVector>();
     const auto& F = frequency_value.as_<Box<DenseMatrix<double>>>();
 
-    ComponentStateVectors sequence(count);
+    ComponentStateVectors sequence(component_count);
     auto S = F;
-    for(int i=0; i<count; i++)
+    for(int i=0; i<component_count; i++)
     {
         pair<int,int> parent_model_state{parent_components[i], parent_states[i]};
 
