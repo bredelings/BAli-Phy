@@ -15,8 +15,6 @@ import Bio.Sequence
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
-import Foreign.NativeVector (NativeVector)
-
 import SModel.Likelihood.CLV
 
 -- peeling for connected-CLVs
@@ -60,24 +58,9 @@ peelBranchNonEq toward nodeCLs branchCLs asIn ps rootF | toward    = peelBranchT
                                                        | otherwise = peelBranchAwayFromRootNonEq nodeCLs branchCLs asIn ps rootF
 
 -- ancestral sequence sampling for connected-CLVs
-foreign import bpcall "Likelihood:sampleRootSequence" sampleRootSequenceNative :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> NativeMatrix Double -> NativeComponentStateSequence
-foreign import bpcall "Likelihood:sampleBranchSequence" sampleBranchSequenceNative :: Int -> Int -> NativeVector Int -> Int -> NativeVector Int -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> NativeMatrix Double -> NativeComponentStateSequence
+foreign import trcall "Likelihood:sampleRootSequence" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> ComponentStateSequence
 
-sampleRootSequence count node branch alignments frequencies =
-    componentStateSequenceFromNative count $
-        sampleRootSequenceNative node branch alignments (nativeMatrix frequencies)
-
--- Sample a child from both native parent arrays and retain the target length
--- supplied by its pairwise alignment as Haskell shape metadata.
-sampleBranchSequence sequence alignment node branch alignments probabilities frequencies =
-    componentStateSequenceFromNative outputCount $
-        sampleBranchSequenceNative parentCount componentOffset componentNative
-            stateOffset stateNative
-            alignment node branch alignments probabilities (nativeMatrix frequencies)
-  where
-    outputCount = pairwise_alignment_length2 alignment
-    (parentCount, componentOffset, componentNative, stateOffset, stateNative) =
-        componentStateSequenceNativeView sequence
+foreign import trcall "Likelihood:sampleBranchSequence" sampleBranchSequence :: ComponentStateSequence -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> ComponentStateSequence
 
 simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int)) -> IntMap (Maybe CondLikes)
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
@@ -122,7 +105,7 @@ frequenciesOnTree t f ps = let fs = getNodesSet t & IntMap.fromSet getF
                                          | otherwise      = f
                            in fs
 
-sampleAncestralSequences t root rootLength nodeCLVs as ps f cl =
+sampleAncestralSequences t root nodeCLVs as ps f cl =
     let rt = addRoot root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node $ getNodesSet t
 
@@ -132,7 +115,7 @@ sampleAncestralSequences t root rootLength nodeCLVs as ps f cl =
                                             nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! root
                                             clsIn = IntMap.restrictKeysToVector cl inEdges
                                             asIn  = IntMap.restrictKeysToVector as inEdges
-                                        in sampleRootSequence rootLength nodeCLV clsIn asIn f
+                                        in sampleRootSequence nodeCLV clsIn asIn f
 
         ancestor_for_branch n (Just to_p) = let parent_seq = ancestor_seqs IntMap.! (targetNode t to_p)
                                                 b0 = reverseEdge to_p

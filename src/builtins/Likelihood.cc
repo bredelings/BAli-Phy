@@ -225,36 +225,39 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
 
 extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
 {
-    int parent_count = Args.evaluate_slot_to_value(0).as_int();
-    int component_offset = Args.evaluate_slot_to_value(1).as_int();
+    int component_offset = Args.evaluate_slot_to_value(0).as_int();
+    int component_count = Args.evaluate_slot_to_value(1).as_int();
     auto component_value = Args.evaluate_slot_to_value(2);
     int state_offset = Args.evaluate_slot_to_value(3).as_int();
-    auto state_value = Args.evaluate_slot_to_value(4);
-    auto arg5 = Args.evaluate_slot_to_value(5);
+    int state_count = Args.evaluate_slot_to_value(4).as_int();
+    auto state_value = Args.evaluate_slot_to_value(5);
     auto arg6 = Args.evaluate_slot_to_value(6);
     auto arg7 = Args.evaluate_slot_to_value(7);
     auto arg8 = Args.evaluate_slot_to_value(8);
     auto arg9 = Args.evaluate_slot_to_value(9);
     auto arg10 = Args.evaluate_slot_to_value(10);
-    const auto& parent_alignment = arg5.as_<Box<pairwise_alignment_t>>();
-    if (parent_count != parent_alignment.length1())
+    auto arg11 = Args.evaluate_slot_to_value(11);
+    if (component_count != state_count)
+        throw myexception()<<"Likelihood.sampleBranchSequence: component and state lengths differ";
+    const auto& parent_alignment = arg6.as_<Box<pairwise_alignment_t>>();
+    if (component_count != parent_alignment.length1())
         throw myexception()<<"Likelihood.sampleBranchSequence: parent length does not match alignment";
     const auto& component_owner = component_value.as_<Box<DenseVector<int>>>();
     const auto& state_owner = state_value.as_<Box<DenseVector<int>>>();
     auto parent_components = checked_native_vector_view(
-        component_owner, component_offset, parent_count,
+        component_owner, component_offset, component_count,
         "Likelihood.sampleBranchSequence components");
     auto parent_states = checked_native_vector_view(
-        state_owner, state_offset, parent_count,
+        state_owner, state_offset, state_count,
         "Likelihood.sampleBranchSequence states");
     auto result = substitution::sample_branch_sequence(
         parent_components, parent_states,
 	parent_alignment,                      // parent_A
-	arg6.as_<R::RVector>(),                // LCN
-	arg7.as_<R::RVector>(),                // LCB
-	arg8.as_<R::RVector>(),                // A
-	arg9.as_<R::RVector>(),                // transition_P
-	arg10.as_<Box<DenseMatrix<double>>>()); // F
+	arg7.as_<R::RVector>(),                // LCN
+	arg8.as_<R::RVector>(),                // LCB
+	arg9.as_<R::RVector>(),                // A
+	arg10.as_<R::RVector>(),               // transition_P
+	arg11.as_<Box<DenseMatrix<double>>>()); // F
     return component_state_result(std::move(result));
 }
 
