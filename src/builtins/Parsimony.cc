@@ -1,6 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
-#include "builtins/native-vector-view.H"
+#include "builtins/native-vector-input.H"
 #include "computation/machine/args.H"
 #include "math/exponential.H"
 #include "sequence/alphabet.H"
@@ -166,18 +166,14 @@ extern "C" closure builtin_function_mutsRootFixedA(OperationArgs& Args)
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
-    int offset = Args.evaluate_slot_to_value(4).as_int();
-    int count = Args.evaluate_slot_to_value(5).as_int();
-    auto owner_value = Args.evaluate_slot_to_value(6);
-    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    auto counts = checked_native_vector_view(
-        owner, offset, count, "Parsimony.mutsRootFixedA");
+    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 4, "Parsimony.mutsRootFixedA");
 
     int muts = muts_root_fixed_A(arg0.as_<R::RVector>(),            // sequences
 				 *arg1.as_<Alphabet>(),          // a
 				 arg2.as_<R::RVector>(),            // n_muts_
 				 arg3.as_<Box<DenseMatrix<int>>>(),   // cost
-				 counts);                            // counts
+				 counts.view());                     // counts
 
     return { muts };
 }
