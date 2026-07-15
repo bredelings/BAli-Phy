@@ -66,6 +66,10 @@ nativeVector (Vector _ payload) = payload
 nativeMatrix :: Matrix a -> NativeMatrix a
 nativeMatrix (Matrix _ _ payload) = payload
 
+instance CInput (Vector a) where
+    type CInputType (Vector a) result = NativeVector a -> result
+    withCInput value continuation = continuation (nativeVector value)
+
 instance CInput (Matrix a) where
     type CInputType (Matrix a) result = NativeMatrix a -> result
     withCInput value continuation = continuation (nativeMatrix value)
