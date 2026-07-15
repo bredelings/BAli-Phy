@@ -4,7 +4,12 @@
 #include "computation/unfolding.H"
 #include "computation/optimization/occurrence.H" // for Occ::Var
 
-typedef std::pair<Unfolding,occurrence_info> bound_variable_info;
+struct bound_variable_info
+{
+    Unfolding unfolding;
+    occurrence_info occurrence;
+    Core::id_info id;
+};
 
 typedef immer::map<Occ::Var, bound_variable_info> in_scope_set;
 

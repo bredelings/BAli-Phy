@@ -762,9 +762,9 @@ std::tuple<Unfolding,occurrence_info> SimplifierState::get_unfolding(const Occ::
     occurrence_info occ_info;
     if (is_local_symbol(x.name, this_mod.name))
     {
-        const auto& [unfolding2, occ_info2] = bound_vars.at(x);
-        unfolding = unfolding2;
-        occ_info = occ_info2;
+        const auto& binding = bound_vars.at(x);
+        unfolding = binding.unfolding;
+        occ_info = binding.occurrence;
     }
     else
     {

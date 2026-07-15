@@ -13,7 +13,7 @@ using std::string;
 
 Core::Var<> to_core_var(const Occ::Var& V)
 {
-    return Core::Var<>{V.name, V.index, {}, V.is_exported};
+    return Core::Var<>{V.name, V.index, {}, V.id, V.is_exported};
 }
 
 Core::Lambda<> to_core_lambda(const Occ::Lambda& L)

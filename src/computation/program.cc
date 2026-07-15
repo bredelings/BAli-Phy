@@ -51,6 +51,7 @@ Core::Exp<> declare_seq_info(Module& m)
 
     // 4. create the symbol
     auto seq = symbol_info{"seq", symbol_type_t::variable, {}, 2, fixity};
+    seq.id_arity = 2;
     seq.type = type;
     seq.unfolding = CoreUnfolding{occ_code, UnfoldWhen(), /* always_unfold */ true};
 
@@ -74,6 +75,7 @@ Core::Exp<> declare_coerce_info(Module& m)
     Type type = ForallType({a,b}, ConstrainedType(Context({constraint}), make_arrow_type(a,b)));
 
     auto coerce = symbol_info{"coerce", symbol_type_t::variable, {}, 1};
+    coerce.id_arity = 1;
     coerce.type = type;
     coerce.unfolding = CoreUnfolding{occ_code, UnfoldWhen(), /* always_unfold */ true};
 

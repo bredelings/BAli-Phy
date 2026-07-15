@@ -13,6 +13,7 @@
 #include "util/math/log-double.H"
 #include "util/utf8.H"
 #include "util/variant.H"
+#include "computation/core/id_info.H"
 #include "computation/haskell/ids.H"
 #include "computation/haskell/integer_container.H"
 
@@ -362,6 +363,7 @@ namespace Core
 	int index=0;
 
 	NoteV info;
+	Core::id_info id;
 
 	        // This preserves stable top-level bindings.  Most such bindings are
 	        // source exports, but internal runtime/optimizer entry points use it too.
@@ -386,7 +388,7 @@ namespace Core
 	template <class Archive>
 	void serialize(Archive& ar)
 	{
-	    ar(name, index, info, is_exported);
+	    ar(name, index, info, id, is_exported);
 	}
 
         Var() = default;
@@ -394,6 +396,8 @@ namespace Core
         Var(const std::string& s, int i):name(s), index(i) {}
         Var(const std::string& s, int i, const NoteV& n):name(s), index(i), info(n) {}
         Var(const std::string& s, int i, const NoteV& n, bool b):name(s), index(i), info(n), is_exported(b) {}
+        Var(const std::string& s, int i, const NoteV& n, const Core::id_info& id_info, bool b)
+            :name(s), index(i), info(n), id(id_info), is_exported(b) {}
     };
 
     template <typename NoteV>

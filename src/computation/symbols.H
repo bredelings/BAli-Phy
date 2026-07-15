@@ -114,6 +114,7 @@ struct symbol_info
     symbol_type_t symbol_type;
     std::optional<std::string> parent;
     std::optional<int> arity;
+    int id_arity = 0;
     std::optional<fixity_info> fixity;
     Type type;
     Unfolding unfolding;
@@ -130,7 +131,7 @@ struct symbol_info
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(name, symbol_type, parent, arity, fixity, type, unfolding, con_info, instance_info, eq_instance_info, record_selector, inline_pragma, visible);
+	ar(name, symbol_type, parent, arity, id_arity, fixity, type, unfolding, con_info, instance_info, eq_instance_info, record_selector, inline_pragma, visible);
     }
 
     symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>, std::optional<fixity_info> = {});

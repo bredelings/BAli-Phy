@@ -49,8 +49,9 @@ struct let_floater_state: public FreshVarSource
 
 Levels::Var let_floater_state::new_unique_var(const FV::Var& x, int level)
 {
-    // I guess we are assuming that the name is sufficient?
-    return new_unique_var(x.name, level);
+    auto x2 = new_unique_var(x.name, level);
+    x2.id = x.id;
+    return x2;
 }
 
 
@@ -63,7 +64,7 @@ Levels::Var let_floater_state::new_unique_var(const string& name, int level)
 
 Core::Var<> strip_level(const Levels::Var& x)
 {
-    return Core::Var<>(x.name, x.index, {}, x.is_exported);
+    return Core::Var<>(x.name, x.index, {}, x.id, x.is_exported);
 }
 
 vector<Core::Var<>> strip_levels(const vector<Levels::Var>& xs)
@@ -82,7 +83,7 @@ Levels::Var add_level(const FV::Var& x, const level_env_t& env)
     if (auto x_out = env.find(x))
         return *x_out;
     else
-        return Levels::Var(x.name, x.index, 0, x.is_exported);
+        return Levels::Var(x.name, x.index, 0, x.id, x.is_exported);
 }
 
 vector<Levels::Var> add_levels_no_missing(const Vector<FV::Var>& xs, const level_env_t& env)
@@ -133,7 +134,7 @@ pair<Levels::Decls,level_env_t> let_floater_state::set_level_decl_group(const FV
         Levels::Var x2;
         if (x.is_exported)
         {
-            x2 = Levels::Var(x.name, x.index, 0, x.is_exported);
+            x2 = Levels::Var(x.name, x.index, 0, x.id, x.is_exported);
         }
         else
             x2 = env2.at(x);
@@ -151,7 +152,7 @@ let_floater_state::set_level_nonrec(const FV::NonRec& nonrec, const level_env_t&
 {
     const auto& [x, rhs] = nonrec.decl;
     int level = max_level(env, get_free_vars(rhs));
-    auto x2 = x.is_exported ? Levels::Var(x.name, x.index, 0, true)
+    auto x2 = x.is_exported ? Levels::Var(x.name, x.index, 0, x.id, true)
                             : new_unique_var(x, level);
     auto rhs2 = set_level(rhs, level, env);
     auto env2 = env.insert({x, x2});

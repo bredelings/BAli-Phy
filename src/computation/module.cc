@@ -723,7 +723,7 @@ std::string xxhash64_hex(const std::string& s) {
 // This is independent of the executable-keyed cache directory: it makes the
 // archive self-describing and prevents an older reader from silently treating
 // newly appended compiled-module metadata as a valid artifact.
-static constexpr std::uint32_t compiled_module_cache_format = 3;
+static constexpr std::uint32_t compiled_module_cache_format = 4;
 
 std::string extract_xxhash(std::string& data)
 {
@@ -1809,6 +1809,7 @@ void Module::export_small_decls(const inliner_options& options, const Core::Decl
 
         // Add the unfolding for this variable.
         auto S = lookup_make_local_symbol(x.name);
+        S->id_arity = x.id.arity;
 
         if (loop_breakers.count(x))
         {
@@ -2921,6 +2922,7 @@ void Module::def_constructor(const string& cname, int arity, const string& type_
 //        throw myexception()<<"Locally defined symbol '"<<type_name<<"' should not be qualified.";
 
     auto S = symbol_info(cname, symbol_type_t::constructor, qualify_local_name(type_name), arity, {});
+    S.id_arity = arity;
     declare_symbol( S );
 }
 

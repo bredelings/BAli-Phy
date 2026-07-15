@@ -119,7 +119,7 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
     assert(x.info.work_dup != amount_t::Unknown);
     assert(x.info.code_dup != amount_t::Unknown);
 
-    return bound_vars.insert({x,{unfolding,x.info}});
+    return bound_vars.insert({x,{unfolding,x.info,x.id}});
 }
 
 [[nodiscard]] in_scope_set rebind_var(in_scope_set bound_vars, const Occ::Var& x, const Unfolding& U)
@@ -127,7 +127,8 @@ Occ::Exp peel_n_lambdas1(Occ::Exp E, int n)
     bound_variable_info old_binding = bound_vars.at(x);
     bound_vars = bound_vars.erase(x);
     Occ::Var x2 = x;
-    x2.info = old_binding.second;
+    x2.info = old_binding.occurrence;
+    x2.id = old_binding.id;
     return bind_var(bound_vars,x2,U);
 }
 
@@ -687,7 +688,7 @@ const OtherConUnfolding* is_evaluated_var(const Occ::Exp& e, const in_scope_set&
     if (auto v = e.to_var())
     {
         if (auto found = bound_vars.find(*v))
-            return to<OtherConUnfolding>(found->first);
+            return to<OtherConUnfolding>(found->unfolding);
     }
 
     return nullptr;

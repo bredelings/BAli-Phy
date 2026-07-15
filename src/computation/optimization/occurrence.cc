@@ -79,7 +79,7 @@ void merge_occurrences_into(set<Occ::Var>& free_vars1, const set<Occ::Var>& free
 
 Occ::Var remove_var_and_set_occurrence_info(const Core::Var<>& x_in, set<Occ::Var>& free_vars)
 {
-    Occ::Var x{x_in.name, x_in.index, {}, x_in.is_exported};
+    Occ::Var x{x_in.name, x_in.index, {}, x_in.id, x_in.is_exported};
 
     // 1. Copy occurrence info
     auto x_iter = free_vars.find(x);
@@ -144,7 +144,7 @@ tuple<Occ::Decls, Graph> construct_directed_reference_graph(const Module& m, con
     {
         auto& x = decls_in[i].x;
 
-	decls[i].x = Occ::Var{x.name, x.index, {}, x.is_exported};
+	decls[i].x = Occ::Var{x.name, x.index, {}, x.id, x.is_exported};
 	decls[i].x.info.code_dup = free_vars.count(decls[i].x)?(amount_t::Unknown):(amount_t::None);
 	if (is_alive(decls[i].x))
 	    work.push_back(i);
@@ -415,7 +415,7 @@ maybe_eta_reduce(const Occ::Lambda& L)
 
 pair<Occ::Var, set<Occ::Var>> occurrence_analyze_var(const Module& m, Core::Var<> x_in, var_context context)
 {
-    Occ::Var x{x_in.name, x_in.index, {}, x_in.is_exported};
+    Occ::Var x{x_in.name, x_in.index, {}, x_in.id, x_in.is_exported};
 
     // 1. Var
     x.info.is_loop_breaker = false;
