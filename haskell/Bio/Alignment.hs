@@ -6,7 +6,7 @@ module Bio.Alignment (module Bio.Alignment,
                       module Bio.Alignment.Class) where
 
 import Tree
-import Compiler.FFI.Import (CInput(..))
+import Compiler.FFI.Import (CInput(..), COutput(..))
 import Compiler.FFI.Runtime (RuntimeValue)
 import Data.BitVector
 import Data.Foldable
@@ -77,6 +77,11 @@ instance CInput ComponentStateSequence where
           (count, componentOffset, componentOwner, stateOffset, stateOwner) ->
               continuation count componentOffset componentOwner
                            stateOffset stateOwner
+
+instance COutput ComponentStateSequence where
+    type COutputType ComponentStateSequence = NativeComponentStateSequence
+    fromCOutput result = ComponentStateSequence
+        (fromCOutput result :: U.Vector (Int,Int))
 
 -- Project the state array without copying or inspecting the component array.
 componentStates :: ComponentStateSequence -> U.Vector Int
