@@ -1,6 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
-#include "builtins/native-vector-view.H"
+#include "builtins/native-vector-input.H"
 #include "computation/machine/args.H"
 #include "sequence/alphabet.H"
 #include "substitution/ops.H"
@@ -78,34 +78,23 @@ extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
 
 extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
 {
-    int component_offset = Args.evaluate_slot_to_value(0).as_int();
-    int component_count = Args.evaluate_slot_to_value(1).as_int();
-    auto component_value = Args.evaluate_slot_to_value(2);
-    int state_offset = Args.evaluate_slot_to_value(3).as_int();
-    int state_count = Args.evaluate_slot_to_value(4).as_int();
-    auto state_value = Args.evaluate_slot_to_value(5);
+    auto component_input =
+        read_native_vector_input<int, ForeignDemand::use>(
+            Args, 0, "LikelihoodSEV.sampleSequence components");
+    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "LikelihoodSEV.sampleSequence states");
     auto arg6 = Args.evaluate_slot_to_value(6);
     auto arg7 = Args.evaluate_slot_to_value(7);
     auto arg8 = Args.evaluate_slot_to_value(8);
-    int column_offset = Args.evaluate_slot_to_value(9).as_int();
-    int column_count = Args.evaluate_slot_to_value(10).as_int();
-    auto column_value = Args.evaluate_slot_to_value(11);
-    if (component_count != state_count)
+    auto column_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 9, "LikelihoodSEV.sampleSequence columns");
+    auto parent_components = component_input.view();
+    auto parent_states = state_input.view();
+    auto columns = column_input.view();
+    if (parent_components.size() != parent_states.size())
         throw myexception()<<"LikelihoodSEV.sampleSequence: component and state lengths differ";
-    if (component_count != column_count)
+    if (parent_components.size() != columns.size())
         throw myexception()<<"LikelihoodSEV.sampleSequence: parent and column-map lengths differ";
-    const auto& component_owner = component_value.as_<Box<DenseVector<int>>>();
-    const auto& state_owner = state_value.as_<Box<DenseVector<int>>>();
-    const auto& column_owner = column_value.as_<Box<DenseVector<int>>>();
-    auto parent_components = checked_native_vector_view(
-        component_owner, component_offset, component_count,
-        "LikelihoodSEV.sampleSequence components");
-    auto parent_states = checked_native_vector_view(
-        state_owner, state_offset, state_count,
-        "LikelihoodSEV.sampleSequence states");
-    auto columns = checked_native_vector_view(
-        column_owner, column_offset, column_count,
-        "LikelihoodSEV.sampleSequence columns");
 
     auto result = substitution::sample_sequence_SEV(
         parent_components, parent_states,
@@ -121,17 +110,13 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
-    int offset = Args.evaluate_slot_to_value(3).as_int();
-    int count = Args.evaluate_slot_to_value(4).as_int();
-    auto owner_value = Args.evaluate_slot_to_value(5);
-    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    auto counts = checked_native_vector_view(
-        owner, offset, count, "LikelihoodSEV.calcProb");
+    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "LikelihoodSEV.calcProb");
 
     log_double_t Pr = substitution::calc_prob_SEV(arg0.as_<R::RVector>(),       // sequences
 						  arg1.as_<R::RVector>(),       // LCB
 						  arg2.as_<Box<DenseMatrix<double>>>(),   // FF
-						  counts);                      // counts
+						  counts.view());               // counts
     return {Pr};
 }
 
@@ -140,12 +125,9 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
-    int offset = Args.evaluate_slot_to_value(3).as_int();
-    int count = Args.evaluate_slot_to_value(4).as_int();
-    auto owner_value = Args.evaluate_slot_to_value(5);
-    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    auto count_view = checked_native_vector_view(
-        owner, offset, count, "LikelihoodSEV.calcProbAtRoot");
+    auto count_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "LikelihoodSEV.calcProbAtRoot");
+    auto count_view = count_input.view();
     Eigen::Map<const DenseVector<int>> counts(
         count_view.data(), static_cast<Eigen::Index>(count_view.size()));
 
@@ -161,17 +143,13 @@ extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
-    int offset = Args.evaluate_slot_to_value(3).as_int();
-    int count = Args.evaluate_slot_to_value(4).as_int();
-    auto owner_value = Args.evaluate_slot_to_value(5);
-    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    auto counts = checked_native_vector_view(
-        owner, offset, count, "LikelihoodSEV.calcProbAtRootVariable");
+    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "LikelihoodSEV.calcProbAtRootVariable");
 
     log_double_t Pr = substitution::calc_prob_at_root_variable_SEV(arg0.as_<R::RVector>(),       // sequences
 								   arg1.as_<R::RVector>(),       // LCB
 								   arg2.as_<Box<DenseMatrix<double>>>(),   // F
-								   counts);                      // counts
+								   counts.view());               // counts
     return {Pr};
 }
 
@@ -180,18 +158,13 @@ extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
-    int offset = Args.evaluate_slot_to_value(3).as_int();
-    int count = Args.evaluate_slot_to_value(4).as_int();
-    auto owner_value = Args.evaluate_slot_to_value(5);
-    const auto& owner = owner_value.as_<Box<DenseVector<int>>>();
-    auto columns = checked_native_vector_view(
-        owner, offset, count,
-        "LikelihoodSEV.sampleRootSequence columns");
+    auto columns = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "LikelihoodSEV.sampleRootSequence columns");
 
     auto result = substitution::sample_root_sequence_SEV(
         arg0.as_<R::RVector>(),                    // LCN
         arg1.as_<R::RVector>(),                    // LCB
         arg2.as_<Box<DenseMatrix<double>>>(),       // F
-        columns);                                   // compressed_col_for_col
+        columns.view());                            // compressed_col_for_col
     return component_state_result(std::move(result));
 }
