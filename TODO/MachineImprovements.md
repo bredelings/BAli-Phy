@@ -56,75 +56,18 @@ See [Stack](Stack.md).
 
 Does this really need all the other stuff done first?  Maybe not.
 
-### All evaluation done with case?
+### Case evaluation and strict arguments
 
-If we could require that all evaluation is done with case, then we might
-be able to have a lot fewer frame types.
-Hoever, we might want to translate current builtins more mechanically, so
-that each evaluation member function of args corresponds to a different
-argument evaluation frame type.
-
-We could modify builtins to push evaluation frames for their arguments.
-I wonder if we could require that all arguments are already evaluated
- via case, so that a builtin ins something like
- 
-    case x of _ -> case y of _ -> builtinOp x y
- 
-The problem is that we want to record a USE on the builtinOp, but the above
-would (i) record a force instead of a use and (ii) would record it on the
-case.  Possibly we could switch to something like:
-
-    case x of x' -> case y of y' -> builtinOp x' y'
-
-Possibly in this case we somehow delay the USE until something consumes the
- x'?  I'm not quite sure what the framework would be here.
-GHC adds a binder separately of the pattern, which would be _ in this case,
-so
-
-    case x of x' _ -> case y of y' _ -> builtinOp x' y'
- 
-So maybe if the binder is not dead, then we record a USE and keep on going? 
-Presumably if `x` is a reg, the `x'` is then same reg?
-
-Possibly `x'` and `y'` would go either (i) in the closure or (ii) on the stack?
-Right now I assume that only pointers can go on closures.  But in theory I could
-try and make Core variables have kind LiftedPtr or Unlifted {Double, Int, Char, LogDouble_t, or ObjectPtr}.
-If that could survive optimization, then we could use it in code-generation and put
-it in the runtime.  I wonder if we could arrange that all the LiftedPtr references come
-first, so that it would be easy to loop over them.  Possibly we would reference closure
-entries by their byte offset into the closure environment?
-
-In any case, it seems easier to put unlifted values on the stack that in a closure.
+Preparing builtin arguments with `case` may simplify evaluator frames, but it
+also changes graph allocation, dependency boundaries, and reuse.  The runtime
+representation is discussed in [CaseEvaluation](CaseEvaluation.md), while
+demand signatures and optimizer transformations are discussed in
+[StrictArguments](StrictArguments.md).
 
 ## Don't allocate case objects
 
-NOTE: So GHC would actually allocate if `E` returns new constructor in
-      `case E of z alts`.  However, I think GHC would _not_ allocate for
-      `case a!i of z {alts}`, because `a!i` always returns a pointer.
-
-QUESTION: if `E` returns a new constructor, but `z` is unreferenced then
-it seems there is no value in allocating.  What would GHC do?
-How about if `E` is immedately `case`-d in the alts, and otherwise unused?
-
-`case (op E1 E2 E3)` of alts should not allocate a separate reg for the op,
-although it _should_ allocate separate regs if E1, E2, and E3 are separate
-expressions.
-
-If E1 .. E3 are "cheap" expressions, though, then perhaps we shouldn't allocate
-them either, since 
- * we do have the cost of recomputing E2 and E3 if E1 changes.
- * but if this is cheap enough, then caching E1/E2/E3 separately is slower than
-   recomputing them from scratch.
-
-See [CaseObject](CaseObject.md).
-
-If E1 .. E3 are replaced by x .. z, then we still need a stack to force the
-evaluation of x .. z.  However, if we can incorporate them into the case object
-evaluation, then ideally we use a stack that can evaluate sub-expression
-without switching to a new reg.
-
-REQUIRES [Dependent uses/forces](#dependent_uses_forces), since the object might
-evaluate to a variable, which would then be a dependent use/force if not 
+Whether eliminating a case register saves work or removes a useful cache node
+depends on invalidation and reuse.  See [CaseEvaluation](CaseEvaluation.md).
 
 ## runST
 
@@ -144,66 +87,9 @@ See [runST](runST.md).
 
 ## Replace e-ops with something more general
 
-Currently we avoid heap-allocating e-op arguments.
-In theory we would split e-op expression trees if they get too expensive.
-
-It seems like GHC does this by using `let` instead of `case` in normalization.
-This is done in CorePrep.
-When a function is strict in its argument, they do
-
-    f E ==> case E of x -> f x
-    
-Whereas when a function is lazy (and non-trivial) in its argument then
-
-    f E ==> let x = E in f x
-
-This allows expressions like the following
-
-    case op1 x y of z { _ -> case op2 a b of c {_ -> op3 z c }}
-    
-where z and c are allocated somehow.  Apparently "on the stack" is one of the
-possible locations.
-
-However, just like with e-ops, changing `a` or `b` will require rerunning
-`op1 x y`, so we may need a merging threshold.  Here, I guess the question is
-whether the cost of redoing `op1 x y` is worth the benefit of not let-allocating
-that expression.
-
- * Do we need case-binder vars to handle this?
- 
- * Must case-binder vars be added to the closure?
-
-   If the case-binder var is of type [a], I don't see how it could be.
-   If it is of type Int#, then it could.
-
-   We can't currently add values to the closure, only pointers.
-   We could put values on a value stack instead.
-   If the value ends up as the final answer, thats find -- we'll let-allocated it.  GHC can't do that.
-   If the value ends up as an argument to an e-op that's also fine.
-   But if the value ends up as an argument to a constructor, or an argument to a function allocation, that's not fine.
-   In order to handle that, we'd need to extend closures with non-pointer arguments.
-   
-  * What is a strict let?  Which stage/phase does it exist in?
- 
-### Extending the closure with non-pointer arguments
-
-In order to extend closures with non-pointer arguments, we need to 
-
- * make a second environment for non-pointers, OR
- 
- * group the pointer arguments into the first n values. 
- 
-The first one is definitely simpler.
-
-One issue is that a lot of non-pointer arguments are object_ptr.
-This is equivalent to ForeignPtr -- when the pointer is removed, we need to
- decrement a use count, and if the count goes to zero, we need to run a finalizer.
-However, probably GHC does not allow ForeignPtr as an unboxed value.
-
-QUESTION: Can we avoid doing putting ForeignPtr-type things into closures?
-Hmm.. in GHC, if the case-binder is of type Int#, then it CANNOT be let-allocated.
-And if it is of type [a], then it CANNOT be added to a closure.
-So
+General strict-argument preparation could subsume e-op argument handling, but
+case conversion has different caching costs in the incremental graph.  See
+[StrictArguments](StrictArguments.md) and [CaseEvaluation](CaseEvaluation.md).
 
 
 ## Use global forward/backward edges
@@ -227,4 +113,3 @@ So if we delete i, we need to
  * copy the last element i2 over i, then update the combined entry to point from i2->i
  
 So there is 50% more work. 
-
