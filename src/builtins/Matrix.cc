@@ -397,7 +397,8 @@ void copy_matrix_vector(DenseMatrix<T>& result, int index,
 // Continue walking a Haskell list after its first native vector and copy all
 // vectors into one newly allocated matrix.
 template <typename T>
-closure matrix_from_vectors(OperationArgs& Args, int count, int extent, int tail,
+closure matrix_from_vectors(OperationArgs& Args, int count, int extent,
+                            UseWithContingency xs,
                             const Box<DenseVector<T>>& first, bool by_rows)
 {
     int rows = by_rows ? count : extent;
@@ -405,46 +406,51 @@ closure matrix_from_vectors(OperationArgs& Args, int count, int extent, int tail
     auto result = new Box<DenseMatrix<T>>(rows, columns);
     copy_matrix_vector(*result, 0, first, by_rows);
 
-    int xs = tail;
     for(int i=1; i<count; i++)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell or list_cell->head.name() != ":" or list_cell->head.n_args() != 2)
             throw myexception()<<"matrix from vectors: expected "<<count<<" rows or columns";
 
         int element = xs_closure.reg_for_constructor_slot(0);
         int next_tail = xs_closure.reg_for_constructor_slot(1);
-        int value = Args.evaluate_reg_dependent_use(element);
+        int value = Args.evaluate_reg_use(element, xs.edge_contingency);
         const auto& expression = Args.memory().closure_at(value).get_code();
         if (not expression.is_a<Box<DenseVector<T>>>() )
             throw myexception()<<"matrix from vectors: vectors have different native representations";
         copy_matrix_vector(*result, i, expression.as_<Box<DenseVector<T>>>(), by_rows);
-        xs = Args.evaluate_reg_dependent_use(next_tail);
+        xs = Args.evaluate_reg_use_with_contingency(
+            next_tail, xs.edge_contingency);
     }
     return result;
 }
 
-// Start a dependent traversal of native vectors and dispatch the result's
-// scalar representation from the first vector.
+// Start a contingency-aware traversal and dispatch the result's scalar
+// representation from the first vector.
 closure matrix_from_vectors(OperationArgs& Args, bool by_rows)
 {
-    int count = Args.evaluate_slot_to_value(0).as_int();
+    auto count_arg = Args.evaluate_slot_to_value_with_contingency(0);
+    int count = count_arg.value.as_int();
     int extent = Args.evaluate_slot_to_value(1).as_int();
     if (count <= 0 or extent <= 0)
         throw myexception()<<"matrix from vectors: positive dimensions are required";
 
-    int xs = Args.evaluate_slot_use(2);
-    const closure& xs_closure = Args.memory().closure_at(xs);
+    auto xs = Args.evaluate_slot_use_with_contingency(2);
+    const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
     auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
     if (not list_cell or list_cell->head.name() != ":" or list_cell->head.n_args() != 2)
         throw myexception()<<"matrix from vectors: expected a nonempty vector list";
 
     int element = xs_closure.reg_for_constructor_slot(0);
-    int tail = xs_closure.reg_for_constructor_slot(1);
-    int value = Args.evaluate_reg_dependent_use(element);
-    const auto& expression = Args.memory().closure_at(value).get_code();
-    tail = Args.evaluate_reg_dependent_use(tail);
+    int tail_reg = xs_closure.reg_for_constructor_slot(1);
+    auto first_vector = Args.evaluate_reg_use_with_contingency(
+        element, xs.edge_contingency);
+    const auto& expression = Args.memory().closure_at(first_vector.value_reg).get_code();
+    auto tail = Args.evaluate_reg_use_with_contingency(
+        tail_reg, xs.edge_contingency);
+    tail.edge_contingency = tail.edge_contingency |
+        first_vector.edge_contingency | count_arg.edge_contingency;
 
     if (expression.is_a<Box<DenseVector<double>>>() )
         return matrix_from_vectors<double>(Args, count, extent, tail,
@@ -520,10 +526,10 @@ closure gather_matrix(const Box<NativeMatrix>& matrix,
     return result;
 }
 
-// Continue a dependent list traversal and copy every same-representation
-// vector into one pre-sized native allocation.
+// Continue a contingency-aware list traversal and copy every
+// same-representation vector into one pre-sized native allocation.
 template <typename T>
-closure join_vectors(OperationArgs& Args, int total, int tail,
+closure join_vectors(OperationArgs& Args, int total, UseWithContingency xs,
                      const Box<DenseVector<T>>& first)
 {
     auto result = new Box<DenseVector<T>>(total);
@@ -532,10 +538,9 @@ closure join_vectors(OperationArgs& Args, int total, int tail,
         throw myexception()<<"vjoin: vector lengths exceed declared total";
     result->head(offset) = first;
 
-    int xs = tail;
     while(true)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell)
             throw myexception()<<"vjoin: expected a vector list";
@@ -546,7 +551,7 @@ closure join_vectors(OperationArgs& Args, int total, int tail,
 
         int element = xs_closure.reg_for_constructor_slot(0);
         int next_tail = xs_closure.reg_for_constructor_slot(1);
-        int value = Args.evaluate_reg_dependent_use(element);
+        int value = Args.evaluate_reg_use(element, xs.edge_contingency);
         const auto& expression = Args.memory().closure_at(value).get_code();
         if (not expression.is_a<Box<DenseVector<T>>>() )
             throw myexception()<<"vjoin: vectors have different native representations";
@@ -555,7 +560,8 @@ closure join_vectors(OperationArgs& Args, int total, int tail,
             throw myexception()<<"vjoin: vector lengths exceed declared total";
         result->segment(offset, vector.size()) = vector;
         offset += vector.size();
-        xs = Args.evaluate_reg_dependent_use(next_tail);
+        xs = Args.evaluate_reg_use_with_contingency(
+            next_tail, xs.edge_contingency);
     }
     if (offset != total)
         throw myexception()<<"vjoin: vector lengths do not match declared total";
@@ -566,16 +572,20 @@ closure join_vectors(OperationArgs& Args, int total, int tail,
 closure join_vectors(OperationArgs& Args)
 {
     int total = Args.evaluate_slot_to_value(0).as_int();
-    int xs = Args.evaluate_slot_use(1);
-    const closure& xs_closure = Args.memory().closure_at(xs);
+    auto xs = Args.evaluate_slot_use_with_contingency(1);
+    const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
     auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
     if (not list_cell or list_cell->head.name() != ":" or list_cell->head.n_args() != 2)
         throw myexception()<<"vjoin: expected a nonempty vector list";
     int element = xs_closure.reg_for_constructor_slot(0);
-    int tail = xs_closure.reg_for_constructor_slot(1);
-    int value = Args.evaluate_reg_dependent_use(element);
-    const auto& expression = Args.memory().closure_at(value).get_code();
-    tail = Args.evaluate_reg_dependent_use(tail);
+    int tail_reg = xs_closure.reg_for_constructor_slot(1);
+    auto first_vector = Args.evaluate_reg_use_with_contingency(
+        element, xs.edge_contingency);
+    const auto& expression = Args.memory().closure_at(first_vector.value_reg).get_code();
+    auto tail = Args.evaluate_reg_use_with_contingency(
+        tail_reg, xs.edge_contingency);
+    tail.edge_contingency = tail.edge_contingency |
+        first_vector.edge_contingency;
     if (expression.is_a<Box<DenseVector<double>>>() )
         return join_vectors<double>(Args, total, tail,
             expression.as_<Box<DenseVector<double>>>());
@@ -727,13 +737,15 @@ closure vector_as_matrix(const Box<DenseVector<T>>& values, bool as_row)
     return result;
 }
 
-// Build a native matrix while walking a Haskell list through dependent USE
-// edges, validating dimensions and the exact element count before returning.
+// Build a native matrix while carrying dimension and spine contingency through
+// each required element, validating the exact element count before returning.
 template <typename T>
 closure matrix_from_list(OperationArgs& Args)
 {
-    int rows = Args.evaluate_slot_to_value(0).as_int();
-    int columns = Args.evaluate_slot_to_value(1).as_int();
+    auto rows_arg = Args.evaluate_slot_to_value_with_contingency(0);
+    int rows = rows_arg.value.as_int();
+    auto columns_arg = Args.evaluate_slot_to_value_with_contingency(1);
+    int columns = columns_arg.value.as_int();
 
     if (rows < 0 or columns < 0)
         throw myexception()<<"matrix (><): dimensions must be nonnegative, but got ("
@@ -745,11 +757,13 @@ closure matrix_from_list(OperationArgs& Args)
 
     int expected_size = rows * columns;
     object_ptr<Box<DenseMatrix<T>>> native_matrix = new Box<DenseMatrix<T>>(rows, columns);
-    int xs = Args.evaluate_slot_use(2);
+    auto xs = Args.evaluate_slot_use_with_contingency(2);
+    xs.edge_contingency = xs.edge_contingency |
+        rows_arg.edge_contingency | columns_arg.edge_contingency;
 
     for(int k=0; k<expected_size; k++)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell)
             throw myexception()<<"matrix (><): expected a list constructor, but got "
@@ -764,10 +778,11 @@ closure matrix_from_list(OperationArgs& Args)
 
         int element = xs_closure.reg_for_constructor_slot(0);
         int tail = xs_closure.reg_for_constructor_slot(1);
-        int value = Args.evaluate_reg_dependent_use(element);
+        int value = Args.evaluate_reg_use(element, xs.edge_contingency);
         (*native_matrix)(k / columns, k % columns) =
             matrix_scalar<T>(Args.memory().closure_at(value).get_code());
-        xs = Args.evaluate_reg_dependent_use(tail);
+        xs = Args.evaluate_reg_use_with_contingency(
+            tail, xs.edge_contingency);
     }
 
     return native_matrix;

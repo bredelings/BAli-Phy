@@ -39,7 +39,8 @@ closure constant_vector(T value, int count)
 template <typename T>
 closure sized_vector_from_list(OperationArgs& Args)
 {
-    int expected_size = Args.evaluate_slot_to_value(0).as_int();
+    auto size_arg = Args.evaluate_slot_to_value_with_contingency(0);
+    int expected_size = size_arg.value.as_int();
     if (expected_size < 0)
         throw myexception()<<"vector (|>): size must be nonnegative, but got "<<expected_size;
 
@@ -47,10 +48,11 @@ closure sized_vector_from_list(OperationArgs& Args)
     if (expected_size == 0)
         return result;
 
-    int xs = Args.evaluate_slot_use(1);
+    auto xs = Args.evaluate_reg_use_with_contingency(
+        Args.reg_for_slot(1), size_arg.edge_contingency);
     for(int k=0; k<expected_size; k++)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell)
             throw myexception()<<"vector (|>): expected a list constructor, but got "
@@ -66,10 +68,10 @@ closure sized_vector_from_list(OperationArgs& Args)
         int tail = -1;
         if (k + 1 < expected_size)
             tail = xs_closure.reg_for_constructor_slot(1);
-        int value = Args.evaluate_reg_dependent_use(element);
+        auto value = Args.evaluate_reg_use(element, xs.edge_contingency);
         (*result)(k) = native_scalar<T>(Args.memory().closure_at(value).get_code());
         if (k + 1 < expected_size)
-            xs = Args.evaluate_reg_dependent_use(tail);
+            xs = Args.evaluate_reg_use_with_contingency(tail, xs.edge_contingency);
     }
     return result;
 }
