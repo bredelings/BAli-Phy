@@ -5,7 +5,36 @@
 #include "computation/closure.H"
 #include "computation/machine/graph_register.H"
 
-// class reg_heap;
+// Describes edge ownership relative to the current OperationArgs boundary.
+enum class EdgeContingency : unsigned char
+{
+    fixed = 0,
+    contingent = 1
+};
+
+// Combine controllers; an edge is contingent if either controller can change.
+constexpr EdgeContingency operator|(EdgeContingency c1, EdgeContingency c2)
+{
+    if (c1 == EdgeContingency::fixed and c2 == EdgeContingency::fixed)
+        return EdgeContingency::fixed;
+    else
+        return EdgeContingency::contingent;
+}
+
+// Pairs a USE result with the contingency selected by its resolved dependency.
+struct UseWithContingency
+{
+    int value_reg;
+    EdgeContingency edge_contingency;
+};
+
+// Pairs an evaluated slot value with the contingency of its fixed USE.
+struct ValueWithContingency
+{
+    Runtime::Exp value;
+    EdgeContingency edge_contingency;
+};
+
 
 class OperationArgs
 {
@@ -55,21 +84,68 @@ public:
     // in an unchangeable context
     virtual int evaluate_reg_force(int) = 0;
 
-    // Dependent use/force APIs are for regs discovered after fixed operation inputs.
-    // Changeable interpreters record these edges on the current step.
+    // NOTE: Migration-only call-order fallback for unmigrated builtins.
+    // Remove after all callers pass EdgeContingency explicitly.
     virtual int evaluate_reg_dependent_force(int) = 0;
+
+    virtual int evaluate_reg_contingent_force(int) = 0;
+
+    // Route a FORCE to its owning reg or step according to its input contingency.
+    int evaluate_reg_force(int r, EdgeContingency c)
+    {
+        if (c == EdgeContingency::fixed)
+            return evaluate_reg_force(r);
+        else
+            return evaluate_reg_contingent_force(r);
+    }
 
     std::optional<int> evaluate_code_force(const Runtime::Exp&);
 
     int evaluate_slot_force(int);
 
-    virtual int evaluate_reg_use(int) = 0;
+    virtual UseWithContingency evaluate_reg_use_with_contingency(int) = 0;
 
+    // Perform a fixed USE while discarding its output contingency.
+    int evaluate_reg_use(int r)
+    {
+        return evaluate_reg_use_with_contingency(r).value_reg;
+    }
+
+    // NOTE: Migration-only call-order fallback for unmigrated builtins.
+    // Remove after all callers pass EdgeContingency explicitly.
     virtual int evaluate_reg_dependent_use(int) = 0;
+
+    virtual UseWithContingency evaluate_reg_contingent_use_with_contingency(int) = 0;
+
+    // Perform a contingent USE while discarding its output contingency.
+    int evaluate_reg_contingent_use(int r)
+    {
+        return evaluate_reg_contingent_use_with_contingency(r).value_reg;
+    }
+
+    // Route a USE by its input contingency and propagate contingency through it.
+    UseWithContingency evaluate_reg_use_with_contingency(int r, EdgeContingency c1)
+    {
+        if (c1 == EdgeContingency::fixed)
+            return evaluate_reg_use_with_contingency(r);
+        else
+        {
+            auto [result,c2] = evaluate_reg_contingent_use_with_contingency(r);
+            return {result, c1 | c2};
+        }
+    }
+
+    // Perform a USE with explicit input contingency while discarding its output.
+    int evaluate_reg_use(int r, EdgeContingency c)
+    {
+        return evaluate_reg_use_with_contingency(r,c).value_reg;
+    }
 
     std::optional<int> evaluate_code_use(const Runtime::Exp&);
   
     int evaluate_slot_use(int);
+
+    UseWithContingency evaluate_slot_use_with_contingency(int);
 
     const closure& evaluate_reg_to_closure(int r2);
 
@@ -80,6 +156,8 @@ public:
     closure evaluate_code_to_closure_(const Runtime::Exp&);
 
     Runtime::Exp evaluate_slot_to_value(int);
+
+    ValueWithContingency evaluate_slot_to_value_with_contingency(int);
 
     Runtime::Exp evaluate_slot_to_value_(int);
 

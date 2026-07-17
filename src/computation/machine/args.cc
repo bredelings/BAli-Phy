@@ -82,6 +82,12 @@ int OperationArgs::evaluate_slot_use(int slot)
     return evaluate_reg_use(reg_for_slot(slot));
 }
 
+// Evaluate a fixed slot USE and retain whether its resolved dependency can change.
+UseWithContingency OperationArgs::evaluate_slot_use_with_contingency(int slot)
+{
+    return evaluate_reg_use_with_contingency(reg_for_slot(slot));
+}
+
 Runtime::Exp OperationArgs::evaluate_slot_to_value(int slot)
 {
     const auto& E = slot_ref(slot);
@@ -101,6 +107,31 @@ Runtime::Exp OperationArgs::evaluate_slot_to_value(int slot)
             throw myexception()<<"Evaluating lambda as object: "<<E.print();
 #endif
         return E;
+    }
+}
+
+// Evaluate a slot once and return its value with the fixed USE's output contingency.
+ValueWithContingency OperationArgs::evaluate_slot_to_value_with_contingency(int slot)
+{
+    const auto& E = slot_ref(slot);
+    if (auto r1 = reg_for_code(E))
+    {
+        auto [r2, contingency] = evaluate_reg_use_with_contingency(*r1);
+        assert(evaluate_changeables() or M.reg_is_constant(r2));
+        const closure& result = M[r2];
+#ifndef NDEBUG
+        if (result.get_code().to<Runtime::Lambda>())
+            throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
+#endif
+        return {result.get_code(), contingency};
+    }
+    else
+    {
+#ifndef NDEBUG
+        if (E.to<Runtime::Lambda>())
+            throw myexception()<<"Evaluating lambda as object: "<<E.print();
+#endif
+        return {E, EdgeContingency::fixed};
     }
 }
 
