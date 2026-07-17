@@ -12,7 +12,7 @@ using std::vector;
 
 namespace
 {
-    // Keep registers discovered by dependent reads rooted until a native
+    // Keep registers discovered during list traversal rooted until a native
     // operation has installed them in its returned boxed Vector.
     class stacked_register_roots
     {
@@ -121,13 +121,13 @@ extern "C" closure builtin_function_boxedReplicate(OperationArgs& Args)
 // a boxed Vector, without recursively indexing the original list.
 extern "C" closure builtin_function_boxedFromList(OperationArgs& Args)
 {
-    int xs = Args.evaluate_slot_use(0);
+    auto xs = Args.evaluate_slot_use_with_contingency(0);
     closure::Env_t elements;
     stacked_register_roots roots(Args);
 
     while(true)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell)
             throw myexception()<<"Data.Vector.fromList: expected a list constructor, but got "
@@ -153,7 +153,8 @@ extern "C" closure builtin_function_boxedFromList(OperationArgs& Args)
         // grow the machine heap and invalidate the xs_closure reference.
         roots.add(*head_reg);
         elements.push_back(*head_reg);
-        xs = Args.evaluate_reg_dependent_use(*tail_reg);
+        xs = Args.evaluate_reg_use_with_contingency(
+            *tail_reg, xs.edge_contingency);
     }
 }
 
@@ -161,7 +162,8 @@ extern "C" closure builtin_function_boxedFromList(OperationArgs& Args)
 // list, retaining one shared default register for any unfilled suffix.
 extern "C" closure builtin_function_boxedFromListNDefault(OperationArgs& Args)
 {
-    int length = Args.evaluate_slot_to_value(0).as_int();
+    auto length_arg = Args.evaluate_slot_to_value_with_contingency(0);
+    int length = length_arg.value.as_int();
     if (length < 0)
         throw myexception()<<"Data.Vector.Internal.fromListNDefault: negative length "
                            <<length;
@@ -173,11 +175,12 @@ extern "C" closure builtin_function_boxedFromListNDefault(OperationArgs& Args)
     int default_reg = Args.reg_for_slot(1);
     closure::Env_t elements(length, default_reg);
     stacked_register_roots roots(Args);
-    int xs = Args.evaluate_slot_use(2);
+    auto xs = Args.evaluate_reg_use_with_contingency(
+        Args.reg_for_slot(2), length_arg.edge_contingency);
 
     for(int index = 0; index < length; index++)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell)
             throw myexception()<<"Data.Vector.Internal.fromListNDefault: expected a list "
@@ -206,7 +209,8 @@ extern "C" closure builtin_function_boxedFromListNDefault(OperationArgs& Args)
         if (index + 1 == length)
             return make_boxed_vector(std::move(elements));
 
-        xs = Args.evaluate_reg_dependent_use(*tail_reg);
+        xs = Args.evaluate_reg_use_with_contingency(
+            *tail_reg, xs.edge_contingency);
     }
 
     return make_boxed_vector(std::move(elements));
@@ -224,11 +228,11 @@ extern "C" closure builtin_function_boxedFromIndexedList(OperationArgs& Args)
     int default_reg = Args.reg_for_slot(1);
     closure::Env_t elements(length, default_reg);
     stacked_register_roots roots(Args);
-    int xs = Args.evaluate_slot_use(2);
+    auto xs = Args.evaluate_slot_use_with_contingency(2);
 
     while(true)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell)
             throw myexception()<<"Data.Vector.Internal.fromIndexedList: expected a list "
@@ -252,8 +256,10 @@ extern "C" closure builtin_function_boxedFromIndexedList(OperationArgs& Args)
 
         // Capture the list registers before evaluating the association, since
         // that evaluation can invalidate the xs_closure reference.
-        int association = Args.evaluate_reg_dependent_use(*association_reg);
-        const closure& association_closure = Args.memory().closure_at(association);
+        auto association = Args.evaluate_reg_use_with_contingency(
+            *association_reg, xs.edge_contingency);
+        const closure& association_closure =
+            Args.memory().closure_at(association.value_reg);
         auto pair = association_closure.get_code().to<Runtime::ConstructorApp>();
         if (not pair or pair->head.name() != "(,)" or
             pair->head.n_args() != 2 or pair->args.size() != 2)
@@ -269,7 +275,8 @@ extern "C" closure builtin_function_boxedFromIndexedList(OperationArgs& Args)
         // Root the lazy value before evaluating the index; evaluating it here
         // would make array construction unnecessarily strict in elements.
         roots.add(*value_reg);
-        int evaluated_index = Args.evaluate_reg_dependent_use(*index_reg);
+        int evaluated_index = Args.evaluate_reg_use(
+            *index_reg, association.edge_contingency);
         const auto& index_value = Args.memory().closure_at(evaluated_index).get_code();
         if (not index_value.is_int())
             throw myexception()<<"Data.Vector.Internal.fromIndexedList: association index "
@@ -280,7 +287,8 @@ extern "C" closure builtin_function_boxedFromIndexedList(OperationArgs& Args)
                                <<" is outside vector length "<<length;
 
         elements[index] = *value_reg;
-        xs = Args.evaluate_reg_dependent_use(*tail_reg);
+        xs = Args.evaluate_reg_use_with_contingency(
+            *tail_reg, xs.edge_contingency);
     }
 }
 
@@ -299,10 +307,10 @@ extern "C" closure builtin_function_boxedReplaceIndexed(OperationArgs& Args)
     for(int reg: elements)
         roots.add(reg);
 
-    int xs = Args.evaluate_slot_use(1);
+    auto xs = Args.evaluate_slot_use_with_contingency(1);
     while(true)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell)
             throw myexception()<<"Data.Vector.Internal.replaceIndexed: expected a list "
@@ -328,8 +336,10 @@ extern "C" closure builtin_function_boxedReplaceIndexed(OperationArgs& Args)
         // that evaluation can invalidate the xs_closure reference.  Keep the
         // tail rooted through index evaluation before following it.
         roots.add(*tail_reg);
-        int association = Args.evaluate_reg_dependent_use(*association_reg);
-        const closure& association_closure = Args.memory().closure_at(association);
+        auto association = Args.evaluate_reg_use_with_contingency(
+            *association_reg, xs.edge_contingency);
+        const closure& association_closure =
+            Args.memory().closure_at(association.value_reg);
         auto pair = association_closure.get_code().to<Runtime::ConstructorApp>();
         if (not pair or pair->head.name() != "(,)" or
             pair->head.n_args() != 2 or pair->args.size() != 2)
@@ -345,7 +355,8 @@ extern "C" closure builtin_function_boxedReplaceIndexed(OperationArgs& Args)
         // Keep the lazy replacement alive while evaluating its index and all
         // later associations, without evaluating the replacement itself.
         roots.add(*value_reg);
-        int evaluated_index = Args.evaluate_reg_dependent_use(*index_reg);
+        int evaluated_index = Args.evaluate_reg_use(
+            *index_reg, association.edge_contingency);
         const auto& index_value = Args.memory().closure_at(evaluated_index).get_code();
         if (not index_value.is_int())
             throw myexception()<<"Data.Vector.Internal.replaceIndexed: association index "
@@ -356,7 +367,8 @@ extern "C" closure builtin_function_boxedReplaceIndexed(OperationArgs& Args)
                                <<" is outside vector length "<<length;
 
         elements[index] = *value_reg;
-        xs = Args.evaluate_reg_dependent_use(*tail_reg);
+        xs = Args.evaluate_reg_use_with_contingency(
+            *tail_reg, xs.edge_contingency);
     }
 }
 
@@ -376,10 +388,10 @@ extern "C" closure builtin_function_boxedAccumIndexed(OperationArgs& Args)
     for(int reg: elements)
         roots.add(reg);
 
-    int xs = Args.evaluate_slot_use(2);
+    auto xs = Args.evaluate_slot_use_with_contingency(2);
     while(true)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell)
             throw myexception()<<"Data.Vector.Internal.accumIndexed: expected a list "
@@ -405,8 +417,10 @@ extern "C" closure builtin_function_boxedAccumIndexed(OperationArgs& Args)
         // that evaluation can invalidate the xs_closure reference.  Keep the
         // tail rooted through index and combine evaluation before following it.
         roots.add(*tail_reg);
-        int association = Args.evaluate_reg_dependent_use(*association_reg);
-        const closure& association_closure = Args.memory().closure_at(association);
+        auto association = Args.evaluate_reg_use_with_contingency(
+            *association_reg, xs.edge_contingency);
+        const closure& association_closure =
+            Args.memory().closure_at(association.value_reg);
         auto pair = association_closure.get_code().to<Runtime::ConstructorApp>();
         if (not pair or pair->head.name() != "(,)" or
             pair->head.n_args() != 2 or pair->args.size() != 2)
@@ -422,7 +436,8 @@ extern "C" closure builtin_function_boxedAccumIndexed(OperationArgs& Args)
         // Root the new value without forcing it before evaluating the index.
         // The combine function determines how much of old and new it needs.
         roots.add(*value_reg);
-        int evaluated_index = Args.evaluate_reg_dependent_use(*index_reg);
+        int evaluated_index = Args.evaluate_reg_use(
+            *index_reg, association.edge_contingency);
         const auto& index_value = Args.memory().closure_at(evaluated_index).get_code();
         if (not index_value.is_int())
             throw myexception()<<"Data.Vector.Internal.accumIndexed: association index "
@@ -445,7 +460,8 @@ extern "C" closure builtin_function_boxedAccumIndexed(OperationArgs& Args)
         // gives accum and accumArray their per-association WHNF strictness.
         Args.evaluate_reg_force(apply_reg);
         elements[index] = apply_reg;
-        xs = Args.evaluate_reg_dependent_use(*tail_reg);
+        xs = Args.evaluate_reg_use_with_contingency(
+            *tail_reg, xs.edge_contingency);
     }
 }
 
@@ -654,17 +670,17 @@ extern "C" closure builtin_function_clist_to_vector(OperationArgs& Args)
     return v;
 }
 
-// Convert a Haskell list directly to an EVector, recording dynamic USE edges
-// for list cells and values discovered while walking the spine.
+// Convert a Haskell list directly to an EVector while keeping element and tail
+// USEs as siblings controlled by the current spine observation.
 extern "C" closure builtin_function_list_to_vector(OperationArgs& Args)
 {
     object_ptr<R::RVector> v (new R::RVector);
 
-    int xs = Args.evaluate_slot_use(0);
+    auto xs = Args.evaluate_slot_use_with_contingency(0);
 
     while(true)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell)
             throw myexception()<<"list_to_vector: expected a list constructor, but got "
@@ -681,24 +697,25 @@ extern "C" closure builtin_function_list_to_vector(OperationArgs& Args)
         int x = xs_closure.reg_for_constructor_slot(0);
         int xs_tail = xs_closure.reg_for_constructor_slot(1);
 
-        int value_reg = Args.evaluate_reg_dependent_use(x);
+        int value_reg = Args.evaluate_reg_use(x, xs.edge_contingency);
         v->push_back(Args.memory().closure_at(value_reg).get_code());
 
-        xs = Args.evaluate_reg_dependent_use(xs_tail);
+        xs = Args.evaluate_reg_use_with_contingency(
+            xs_tail, xs.edge_contingency);
     }
 }
 
-// Convert a Haskell [Char] directly to a CPPString, recording dynamic USE edges
-// for list cells and character values discovered while walking the spine.
+// Convert a Haskell [Char] directly to a CPPString while keeping character and
+// tail USEs as siblings controlled by the current spine observation.
 extern "C" closure builtin_function_list_to_string(OperationArgs& Args)
 {
     std::string s;
 
-    int xs = Args.evaluate_slot_use(0);
+    auto xs = Args.evaluate_slot_use_with_contingency(0);
 
     while(true)
     {
-        const closure& xs_closure = Args.memory().closure_at(xs);
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
         auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
         if (not list_cell)
             throw myexception()<<"list_to_string: expected a list constructor, but got "
@@ -715,10 +732,11 @@ extern "C" closure builtin_function_list_to_string(OperationArgs& Args)
         int c = xs_closure.reg_for_constructor_slot(0);
         int xs_tail = xs_closure.reg_for_constructor_slot(1);
 
-        int value_reg = Args.evaluate_reg_dependent_use(c);
+        int value_reg = Args.evaluate_reg_use(c, xs.edge_contingency);
         s += utf8::encode(Args.memory().closure_at(value_reg).get_code().as_char());
 
-        xs = Args.evaluate_reg_dependent_use(xs_tail);
+        xs = Args.evaluate_reg_use_with_contingency(
+            xs_tail, xs.edge_contingency);
     }
 }
 
