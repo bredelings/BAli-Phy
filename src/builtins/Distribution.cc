@@ -454,11 +454,12 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
     return S;
 }
 
-// Read boxed probabilities through dependent FORCE edges and sample without
-// constructing intermediate Haskell lists or native Eigen vectors.
+// Read boxed probabilities through vector-contingent FORCE edges and sample
+// without constructing intermediate Haskell lists or native Eigen vectors.
 extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
-    int probabilities_reg = Args.evaluate_slot_force(0);
+    auto probabilities_arg = Args.evaluate_slot_use_with_contingency(0);
+    int probabilities_reg = probabilities_arg.value_reg;
     std::size_t count = boxed_vector_element_regs(
         Args.memory().closure_at(probabilities_reg)).size();
     if (count == 0)
@@ -475,7 +476,8 @@ extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
         // and invalidate the environment reference used to discover it.
         int element_reg = boxed_vector_element_regs(
             Args.memory().closure_at(probabilities_reg))[i];
-        int value_reg = Args.evaluate_reg_dependent_force(element_reg);
+        int value_reg = Args.evaluate_reg_force(
+            element_reg, probabilities_arg.edge_contingency);
         probabilities.push_back(
             Args.memory().closure_at(value_reg).get_code().as_double());
     }
