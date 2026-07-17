@@ -22,6 +22,10 @@ bali-phy -m Model.hs RSV2-25taxa.fasta --iter=N --name ignore --seed=S
   input.  A shipped binary built for another ISA answers a separate question.
   Give each revision a dedicated `HOME` and output directory, warm it once, and
   verify `.mod` cache hits; generated `Main.hs` may change with output paths.
+- Record the exact `jj` source revision.  When `jj edit` represents that commit
+  as its Git parent plus a working-tree diff, the executable's embedded Git
+  version may name the parent even though the measured sources are the `jj`
+  revision.
 - Measure `perf stat` instructions at `N=1` and `N=50` for each seed.
   `(I50-I1)/49` estimates recurring work within a revision; cross-revision
   differences are controlled only when traces match.  Use cycles, Work, and
@@ -97,6 +101,12 @@ measurement table can remain compact.
 | `ed5611f3` | Completed vector translations | 19.083 | 135.441 | 2.375 | 12.763 | verified |
 | `670ccb6f` | Before direct coalescent inputs | 19.131 | 135.498 | 2.375 | 12.807 | verified |
 | `b0f1cb92` | Direct coalescent inputs | 17.704 | 115.584 | 1.998 | 10.710 | verified |
+| `02ea5034` | Before edge-contingency API | 19.117 | 134.317 | 2.351 | 12.500 | verified |
+| `85415916` | Windows-test plan checkpoint | 19.132 | 134.347 | 2.351 | 12.713 | verified |
+| `44e6c6d9` | Edge-contingency API only | 19.150 | 135.568 | 2.376 | 12.594 | verified |
+| `ee18ab15` | IntMap edge contingency | 18.251 | 101.739 | 1.704 | 8.550 | verified |
+| `258d2fd4` | Other important users converted | 18.180 | 98.468 | 1.639 | 8.292 | verified |
+| `eae8edab` | Legacy dependent API removed | 18.153 | 98.207 | 1.634 | 8.201 | verified |
 
 ### Evidence and interpretation
 
@@ -144,6 +154,12 @@ affected rows were not recorded and therefore remain `unknown` here.
 | `ed5611f3` | unknown | checkpoint | Later vector translations are neutral in the seed-0 measurements. |
 | `670ccb6f` | unknown | checkpoint | Matrix translations are neutral in the seed-0 measurements. |
 | `b0f1cb92` | unknown | checkpoint | `I50` is the mean of two clean-cache seed-0 runs; recurring cost is 15.9% below `670ccb6f`, but the trace comparison was not retained. |
+| `02ea5034` | n/a | checkpoint | Baseline for the controlled edge-contingency migration series. |
+| `85415916` | same | controlled | This requested checkpoint changes only the Windows-test plan; recurring instructions differ from `02ea5034` by 0.01%. |
+| `44e6c6d9` | same | controlled | Adding the API before migrating users raises recurring instructions by 1.0%; the internal cause is not isolated. |
+| `ee18ab15` | same | controlled | Propagating map and key-set contingency through IntMap operations lowers recurring instructions by 28.3% from `44e6c6d9`. |
+| `258d2fd4` | same | controlled | Converting native and boxed traversals plus categorical sampling lowers recurring instructions by another 3.8%; this endpoint does not partition the gain by user. |
+| `eae8edab` | same | controlled | Removing the legacy API lowers recurring instructions by another 0.3%. |
 
 ## Multi-seed checkpoints
 
@@ -167,49 +183,51 @@ child instead has 221 `NativeVector:intVectorSize` operations, 216 fed by
 key producers.  The graph change perturbs the MCMC trace, and seed 0 happens to
 perform substantially more work in the child.
 
-In the long-range panel means, current recurring cost is 23.5% above the 4.2
-source baseline, and about 84% of the absolute gap accumulated after the
+In the long-range panel means, recurring cost at `b0f1cb92` is 23.5% above the
+4.2 source baseline, and about 84% of that absolute gap accumulated after the
 pre-dependent-edge checkpoint.  Mean Work is 26.4% above 4.2.  These percentages
-describe distributional checkpoints, not controlled same-work deltas.
+describe distributional checkpoints, not controlled same-work deltas; the new
+edge-contingency endpoint has not yet been measured over this seed panel.
 
-## Dependent-edge hypothesis
+## Edge-contingency result
 
-The attribution of the `672da381` regression to `IntMap.toVector` is strong:
-the commit changes only its value lookup from fixed to dependent USE edges,
-and its parent and child have identical benchmark traces.  The exact mechanism
-is not yet proven.  Fixed USE edges are replayed by
-`force_regs_check_same_inputs()`, which can retain the old result when every
-USE result is unchanged.  After checking fixed edges, that function currently
-returns false whenever the step owns any dependent edge.
+The earlier `672da381` regression came from treating IntMap entry USEs as one
+call-order-dependent sequence.  In `ee18ab15`, sibling entries instead inherit
+only the map and key-set contingencies.  With byte-identical traces, this lowers
+recurring instructions by 28.3% from the API-only checkpoint and by 27.5% from
+the pre-API baseline.  This is strong evidence for overbroad dependency
+ownership as the main mechanism, although the combined commit does not
+partition the recovery among the individual IntMap operations.
 
-This behavior strongly suggests that many `IntMap.toVector` evaluations are
-invalidated conservatively and later recover unchanged dependent USE results.
-If any result had changed, the old fixed-edge implementation would also rerun
-the operation.  However, the frequency of all-unchanged invalidations has not
-been counted, and dependent-edge bookkeeping may contribute some overhead.
+Converting the other important traversals recovers another 3.8%, and deleting
+the compatibility API recovers 0.3%.  The API-only boundary itself adds 1.0%
+recurring instructions and remains unexplained.  Raw measurements and hashes
+are in `benchmarks/coalescent-runs.tsv`.
 
 ## Slowdowns to investigate
 
-- `IntMap.toVector`: confirmed same-trace regression; test dependent-edge
-  replay against a fixed-edge rollback.
-- `IntMap.restrictKeysToVector`: 15.4% seed-0 recurring increase, but the trace
-  changes, so establish whether the slowdown survives multiple seeds.
+- Edge-contingency API-only boundary: a same-trace 1.0% recurring increase;
+  separate dispatch, object-layout, and code-layout effects.
+- The earlier standalone `IntMap.restrictKeysToVector` boundary changed its
+  trace.  The combined IntMap recovery does not identify its individual share.
 - Apparent dependent-edge machinery boundary: 3.6% seed-0 recurring increase
   with unknown trace status; separate bookkeeping, invalidation, and evaluation
   costs.
 - Completed Runtime AST conversion: 6.5% higher `I50`; measure `I1` at both
   endpoints before assigning the increase to recurring work.
-- Current fixed startup: the five-seed mean `I1` is 15.6% above 4.2 after
-  removing the Unicode scanner cost; recover the per-seed dispersion.
+- Fixed startup at `b0f1cb92`: the five-seed mean `I1` is 15.6% above 4.2
+  after removing the Unicode scanner cost; recover the per-seed dispersion.
 - The long-range panel mean has a remaining 3.8% recurring increase from 4.2 to
   the pre-dependent-edge checkpoint, including the small runtime-layout
   regressions.
 
 ## Future work
 
-- Count fixed-input matches that fall back solely because dependent edges are
-  present, all-unchanged dependent replays, first mismatch positions, replayed
-  prefix lengths, and executions retained for each affected IntMap operation.
+- If per-operation attribution is needed, benchmark sibling changes that
+  migrate each IntMap operation separately from the API-only checkpoint.
+- For genuinely sequential dependencies, count fixed-input fallbacks,
+  all-unchanged dependent replays, and first mismatch positions before adding
+  replay machinery.
 - Backfill raw `I1` and `I50` rows, dispersion, and trace hashes for the
   high-priority changed or unknown boundaries: `restrictKeysToVector`,
   arity/eta expansion, lazy vector and matrix dimensions, and direct coalescent
@@ -219,25 +237,6 @@ been counted, and dependent-edge bookkeeping may contribute some overhead.
   instruction-set effects remain separate.
 - Compare profiles after normalizing by useful work such as values exported,
   likelihood evaluations, and branches peeled.
-
-### Dependent-edge side line
-
-Use `670ccb6f`, immediately before the direct `coalescentPrRaw` input changes,
-as a common base for sibling experiments:
-
-1. Restore fixed-edge evaluation in `restrictKeysToVector`, IntMap export, and
-   `toVector`, with each operation changed in a separate commit.
-2. On a separate diagnostic line, add the counters needed to determine how
-   often invalidated dependent inputs ultimately produce unchanged values.
-3. From the unchanged base, replay old dependent edges in order and stop after
-   the first changed USE result.
-4. Pass the replayed-prefix length to `RegOperationArgs2Changeable`; reattach
-   that prefix without evaluating it or changing force counts twice, and
-   assert that replayed edge modes and targets match.
-5. Benchmark each uninstrumented variant with warmed `I1` and `I50` runs over
-   several seeds, and compare output hashes wherever the trace should match.
-6. Port a successful replay implementation to current code, remove temporary
-   diagnostics, then run the 5d `+A` test and the coalescent benchmark.
 
 ## Migration-only checkpoints
 
