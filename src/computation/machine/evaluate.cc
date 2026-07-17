@@ -97,12 +97,6 @@ class RegOperationArgs1Changeable final: public OperationArgs
             return result;
         }
 
-    // NOTE: Migration-only wrapper for builtins using the dependent-edge API.
-    int evaluate_reg_dependent_force(int r2) override
-    {
-        return evaluate_reg_contingent_force(r2);
-    }
-
     /// Evaluate a fixed USE without recording new dependencies.
     /// Return whether its resolved dependency can change.
     UseWithContingency evaluate_reg_use_with_contingency(int r2) override
@@ -130,12 +124,6 @@ class RegOperationArgs1Changeable final: public OperationArgs
                 M.set_forced_reg_for_step(s, r3);
 
             return {result, contingency};
-        }
-
-    // NOTE: Migration-only wrapper for builtins using the dependent-edge API.
-    int evaluate_reg_dependent_use(int r2) override
-        {
-            return evaluate_reg_contingent_use(r2);
         }
 
 public:
@@ -180,21 +168,15 @@ class RegOperationArgs1Unevaluated final: public OperationArgs
     /// Evaluate an edge-contingent FORCE and record it on this operation's step.
     int evaluate_reg_contingent_force(int r2) override
         {
+            assert(used_changeable);
+            assert(creator_step and *creator_step == s);
+
             auto [r3, result] = M.incremental_evaluate1(r2);
 
             if (M.reg_is_changeable_or_forcing(r3))
                 M.set_forced_reg_for_step(s, r3);
 
             return result;
-        }
-
-    // NOTE: Migration-only call-order fallback for unmigrated builtins.
-    int evaluate_reg_dependent_force(int r2) override
-        {
-            if (not used_changeable)
-                return evaluate_reg_force(r2);
-            else
-                return evaluate_reg_contingent_force(r2);
         }
 
     /// Evaluate a fixed USE, record its dependency, and return its output contingency.
@@ -222,6 +204,9 @@ class RegOperationArgs1Unevaluated final: public OperationArgs
     /// Evaluate an edge-contingent USE and record it on this operation's step.
     UseWithContingency evaluate_reg_contingent_use_with_contingency(int r2) override
     {
+            assert(used_changeable);
+            assert(creator_step and *creator_step == s);
+
             auto contingency = EdgeContingency::fixed;
             auto [r3, result] = M.incremental_evaluate1(r2);
 
@@ -235,15 +220,6 @@ class RegOperationArgs1Unevaluated final: public OperationArgs
 
             return {result, contingency};
     }
-
-    // NOTE: Migration-only call-order fallback for unmigrated builtins.
-    int evaluate_reg_dependent_use(int r2) override
-        {
-            if (not used_changeable)
-                return evaluate_reg_use(r2);
-            else
-                return evaluate_reg_contingent_use(r2);
-        }
 
 public:
 
@@ -809,12 +785,6 @@ class RegOperationArgs2Changeable final: public OperationArgs
             return result;
         }
 
-    // NOTE: Migration-only wrapper for builtins using the dependent-edge API.
-    int evaluate_reg_dependent_force(int r2) override
-        {
-            return evaluate_reg_contingent_force(r2);
-        }
-
     /// Evaluate a fixed USE without recording dependencies and return its contingency.
     UseWithContingency evaluate_reg_use_with_contingency(int r2) override
         {
@@ -859,12 +829,6 @@ class RegOperationArgs2Changeable final: public OperationArgs
             }
 
             return {result, contingency};
-        }
-
-    // NOTE: Migration-only wrapper for builtins using the dependent-edge API.
-    int evaluate_reg_dependent_use(int r2) override
-        {
-            return evaluate_reg_contingent_use(r2);
         }
 
 public:
@@ -919,6 +883,9 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
     /// Evaluate an edge-contingent FORCE and restore its step-owned count.
     int evaluate_reg_contingent_force(int r2) override
         {
+            assert(used_changeable);
+            assert(creator_step and *creator_step == s);
+
             // Count after recording the edge, because ref-with-force flattening can
             // change which reg actually owns the dynamic FORCE demand.
             auto [r3, result] = M.incremental_evaluate2(r2, false);
@@ -937,15 +904,6 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
             }
 
             return result;
-        }
-
-    // NOTE: Migration-only call-order fallback for unmigrated builtins.
-    int evaluate_reg_dependent_force(int r2) override
-        {
-            if (not used_changeable)
-                return evaluate_reg_force(r2);
-            else
-                return evaluate_reg_contingent_force(r2);
         }
 
     /// Evaluate a fixed USE, record its dependency, and return its output contingency.
@@ -984,6 +942,9 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
     /// Evaluate an edge-contingent USE and restore its step-owned count.
     UseWithContingency evaluate_reg_contingent_use_with_contingency(int r2) override
         {
+            assert(used_changeable);
+            assert(creator_step and *creator_step == s);
+
             auto contingency = EdgeContingency::fixed;
 
             // Evaluate without an incoming count first; the dynamic edge below
@@ -1010,15 +971,6 @@ class RegOperationArgs2Unevaluated final: public OperationArgs
             }
 
             return {result, contingency};
-        }
-
-    // NOTE: Migration-only call-order fallback for unmigrated builtins.
-    int evaluate_reg_dependent_use(int r2) override
-        {
-            if (not used_changeable)
-                return evaluate_reg_use(r2);
-            else
-                return evaluate_reg_contingent_use(r2);
         }
 
 public:
@@ -1550,17 +1502,10 @@ class RegOperationArgsUnchangeable final: public OperationArgs
             return evaluate_reg(r2);
         }
 
-    /// Evaluate an edge-contingent FORCE without changeable bookkeeping.
-    /// This interpreter can only return an unchangeable result.
-    int evaluate_reg_contingent_force(int r2) override
+    /// Reject an edge-contingent FORCE in the statically unchangeable interpreter.
+    int evaluate_reg_contingent_force(int /*r2*/) override
         {
-            return evaluate_reg(r2);
-        }
-
-    // NOTE: Migration-only wrapper for builtins using the dependent-edge API.
-    int evaluate_reg_dependent_force(int r2) override
-        {
-            return evaluate_reg(r2);
+            throw no_context();
         }
 
     /// Evaluate a fixed USE and report its necessarily fixed output contingency.
@@ -1570,18 +1515,10 @@ class RegOperationArgsUnchangeable final: public OperationArgs
             return {result, EdgeContingency::fixed};
         }
 
-    /// Evaluate an edge-contingent USE without changeable bookkeeping.
-    /// This interpreter can only return an unchangeable result.
-    UseWithContingency evaluate_reg_contingent_use_with_contingency(int r2) override
+    /// Reject an edge-contingent USE in the statically unchangeable interpreter.
+    UseWithContingency evaluate_reg_contingent_use_with_contingency(int /*r2*/) override
         {
-            int result = evaluate_reg(r2);
-            return {result, EdgeContingency::fixed};
-        }
-
-    // NOTE: Migration-only wrapper for builtins using the dependent-edge API.
-    int evaluate_reg_dependent_use(int r2) override
-        {
-            return evaluate_reg(r2);
+            throw no_context();
         }
 
 public:

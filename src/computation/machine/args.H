@@ -47,6 +47,11 @@ protected:
 
     std::optional<int> creator_step;
 
+    virtual int evaluate_reg_contingent_force(int) = 0;
+
+    virtual UseWithContingency
+    evaluate_reg_contingent_use_with_contingency(int) = 0;
+
 public:
 
     reg_heap& memory() {return M;}
@@ -84,12 +89,6 @@ public:
     // in an unchangeable context
     virtual int evaluate_reg_force(int) = 0;
 
-    // NOTE: Migration-only call-order fallback for unmigrated builtins.
-    // Remove after all callers pass EdgeContingency explicitly.
-    virtual int evaluate_reg_dependent_force(int) = 0;
-
-    virtual int evaluate_reg_contingent_force(int) = 0;
-
     // Route a FORCE to its owning reg or step according to its input contingency.
     int evaluate_reg_force(int r, EdgeContingency c)
     {
@@ -109,18 +108,6 @@ public:
     int evaluate_reg_use(int r)
     {
         return evaluate_reg_use_with_contingency(r).value_reg;
-    }
-
-    // NOTE: Migration-only call-order fallback for unmigrated builtins.
-    // Remove after all callers pass EdgeContingency explicitly.
-    virtual int evaluate_reg_dependent_use(int) = 0;
-
-    virtual UseWithContingency evaluate_reg_contingent_use_with_contingency(int) = 0;
-
-    // Perform a contingent USE while discarding its output contingency.
-    int evaluate_reg_contingent_use(int r)
-    {
-        return evaluate_reg_contingent_use_with_contingency(r).value_reg;
     }
 
     // Route a USE by its input contingency and propagate contingency through it.
