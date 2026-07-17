@@ -381,7 +381,7 @@ jobs:
         export PATH="$PWD/local/bin:$PATH"
         meson test -C build --print-errorlogs \
           'bali-phy:bali-phy version' \
-          'bali-phy:runtime AST serialization' \
+          'bali-phy:computation' \
           'bali-phy:bali-phy 5d +A 50' \
           'bali-phy:bali-phy testsuite prob_prog/examples.3/mixture_model'
 
