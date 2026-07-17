@@ -1,97 +1,107 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+#include <map>
 #include <vector>
-#include <string>
 #include "computation/machine/args.H"
-//#include "util/myexception.H"
+#include "computation/machine/gcobject.H"
 #include "computation/runtime/ast.H"
 
-//using boost::dynamic_pointer_cast;
+using std::map;
 using std::vector;
-using std::string;
-
-
-namespace
-{
-    object_ptr<R::RVector> runtime_vector_from_value(const R::Exp& value)
-    {
-        object_ptr<R::RVector> result(new R::RVector);
-
-        if (const auto* runtime_vector = value.to<R::RVector>())
-        {
-            result->assign(runtime_vector->begin(), runtime_vector->end());
-            return result;
-        }
-
-        throw myexception()<<"Expected coalescent tree vector to be an RVector or R::RVector, but got "<<value.print();
-    }
-}
 
 enum class EventType {RateChange, NewLeaf, Coalescent};
 
 struct Event
 {
     EventType type;
-    int index;
+    double time;
+    double population_size = 0;
 };
 
-// coalescentTreePr :: [(Double,Double)] -> Tree -> LogDouble
-// rawCoalescent
+// Read each node time once through an edge controlled by the IntMap, then use
+// detached doubles with the population schedule and tree topology.
 extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
 {
     using enum EventType;
-    
-    // population sizes: RVector (RPair Double Double)
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto popSizes = runtime_vector_from_value(arg0);
 
-    // nodeTimes :: RVector (RPair Double (RVector Double))
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto nodeTimes = runtime_vector_from_value(arg1);
+    auto pop_sizes_value = Args.evaluate_slot_to_value(0);
+    const auto& pop_sizes = pop_sizes_value.as_<R::RVector>();
 
-    // Define sorting function.
-    auto event_time = [&](const Event& e) {
-        if (e.type == EventType::RateChange)
-            return R::rpair_first((*popSizes)[e.index]).as_double();
-        else
-            return R::rpair_first((*nodeTimes)[e.index]).as_double();
-    };
+    auto node_times_arg = Args.evaluate_slot_use_with_contingency(1);
 
-    auto event_compare = [&](const Event& e1, const Event& e2)
-        {
-            return event_time(e1) < event_time(e2);
-        };
+    auto topology_value = Args.evaluate_slot_to_value(2);
+    const auto& topology = topology_value.as_<R::RVector>();
+
+    const auto& node_time_regs = Args.memory().closure_at(node_times_arg.value_reg)
+                                     .get_code().as_<IntMap>();
+    vector<int> node_ids;
+    node_ids.reserve(node_time_regs.size());
+    for(const auto& [node, _]: node_time_regs)
+        node_ids.push_back(node);
+
+    map<int, double> node_times;
+    for(int node: node_ids)
+    {
+        // Evaluation can move the heap, so reacquire the IntMap before lookup.
+        const auto& current_node_time_regs =
+            Args.memory().closure_at(node_times_arg.value_reg).get_code().as_<IntMap>();
+        int value_reg = Args.evaluate_reg_use(
+            current_node_time_regs[node], node_times_arg.edge_contingency);
+        node_times[node] = Args.memory().closure_at(value_reg).get_code().as_double();
+    }
+
+    if (topology.size() != node_times.size())
+        throw myexception()<<"Coalescent topology has "<<topology.size()
+                           <<" nodes, but its time map has "<<node_times.size();
 
     std::vector<Event> events;
+    events.reserve(pop_sizes.size() + topology.size());
 
     // 1. Add popSize changes
-    for(int i=0;i<popSizes->size();i++)
-        events.push_back({EventType::RateChange, i});
+    for(const auto& pop_size: pop_sizes)
+    {
+        double time = R::rpair_first(pop_size).as_double();
+        double population_size = R::rpair_second(pop_size).as_double();
+        events.push_back({RateChange, time, population_size});
+    }
 
     // 2. Add tree nodes
-    for(int i=0;i<nodeTimes->size();i++)
+    for(const auto& node_entry: topology)
     {
+        int node = R::rpair_first(node_entry).as_int();
+        auto node_time = node_times.find(node);
+        if (node_time == node_times.end())
+            throw myexception()<<"Coalescent topology node "<<node
+                               <<" has no node time";
+        const auto& child_nodes = R::rpair_second(node_entry).as_<R::RVector>();
+
         // Check that parent is not younger than children.
-        auto nodeTime = R::rpair_first((*nodeTimes)[i]).as_double();
-        auto childTimes = runtime_vector_from_value(R::rpair_second((*nodeTimes)[i]));
-        for(auto& childTime: *childTimes)
-            if (not (nodeTime >= childTime.as_double()))
+        for(const auto& child_value: child_nodes)
+        {
+            int child = child_value.as_int();
+            auto child_time = node_times.find(child);
+            if (child_time == node_times.end())
+                throw myexception()<<"Coalescent child node "<<child
+                                   <<" has no node time";
+            if (not (node_time->second >= child_time->second))
             {
                 log_double_t Pr;
                 return { Pr };
             }
+        }
 
         // Classify events based on number of children.
-        int n = childTimes->size();
-        if (n == 0)
-            events.push_back({EventType::NewLeaf, i});
-        else if (n == 2)
-            events.push_back({EventType::Coalescent, i});
+        if (child_nodes.empty())
+            events.push_back({NewLeaf, node_time->second});
+        else if (child_nodes.size() == 2)
+            events.push_back({Coalescent, node_time->second});
         else
-            throw myexception()<<"Coalescent tree node has "<<n<<" children -- not allowed!";
+            throw myexception()<<"Coalescent tree node has "<<child_nodes.size()
+                               <<" children -- not allowed!";
     }
 
     // 3. Sort events
-    std::sort(events.begin(), events.end(), event_compare);
+    std::sort(events.begin(), events.end(),
+              [](const Event& e1, const Event& e2) {return e1.time < e2.time;});
 
     // 4. Get the initial population size and skip NewLeaf events before
     double N = 0;
@@ -101,7 +111,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
     {
         if (events[i].type == EventType::RateChange)
         {
-            N = R::rpair_second((*popSizes)[events[i].index]).as_double();
+            N = events[i].population_size;
             i++;
             break;
         }
@@ -122,8 +132,8 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
     log_double_t Pr = 1;
     for(;i<events.size();i++)
     {
-        double t1 = event_time(events[i-1]);
-        double t2 = event_time(events[i]);
+        double t1 = events[i-1].time;
+        double t2 = events[i].time;
         assert(t1 <= t2);
         
         double nChoose2 = n*(n-1)/2;
@@ -133,7 +143,7 @@ extern "C" closure builtin_function_rawCoalescentTreePr(OperationArgs& Args)
         auto type = events[i].type;
         if (type == RateChange)
         {
-            N = R::rpair_second((*popSizes)[events[i].index]).as_double();
+            N = events[i].population_size;
         }
         else if (type == NewLeaf)
         {

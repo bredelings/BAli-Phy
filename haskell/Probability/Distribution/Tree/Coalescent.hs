@@ -8,7 +8,6 @@ import           Probability.Distribution.Tree.UniformTimeTree
 import           Probability.Distribution.Tree.Util
 import           Probability.Distribution.Exponential
 import qualified Data.IntMap as IntMap
-import qualified Foreign.IntMap as FIM
 import           Data.Text (Text)
 import           MCMC
 import           Data.Vector (Vector)
@@ -169,11 +168,16 @@ coalescentTreePrFactorsSort ((t0,popSize0):popSizes) tree = [balancedProduct $ g
 
 -------------------------------------------------------------
 
-foreign import bpcall "TreeDist:" rawCoalescentTreePr :: EVector (EPair Double Double) -> EVector (EPair Double (EVector Double)) -> LogDouble
+foreign import bpcall "TreeDist:" rawCoalescentTreePr
+    :: EVector (EPair Double Double)
+    -> IntMap.IntMap Double
+    -> EVector (EPair Int (EVector Int))
+    -> LogDouble
 
-coalescentTreePr popSizes tree = rawCoalescentTreePr popSizes' nodeTimes
+coalescentTreePr popSizes tree = rawCoalescentTreePr popSizes' (nodeTimes tree) topology
     where popSizes' = toVector $ c_pair' <$> popSizes
-          nodeTimes =  getNodesSet tree & IntMap.fromSet (\node -> c_pair (nodeTime tree node) (toVector $ nodeTime tree <$> children tree node)) & FIM.exportIntMapToVector
+          topology = toVector
+              [c_pair node (toVector $ children tree node) | node <- getNodes tree]
 
 coalescentTreePrFactors popSizes tree = [coalescentTreePr popSizes tree]
 
