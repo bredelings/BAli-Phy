@@ -426,24 +426,24 @@ extern "C" closure builtin_function_restrictKeys(OperationArgs& Args)
     return result;
 }
 
-// Build a vector from selected IntMap values directly, recording each value
-// discovered through the map as a dynamic USE edge on this step.
+// Build selected IntMap values directly; sibling entry USEs inherit only the
+// map and key-set contingencies, never earlier entry values.
 extern "C" closure builtin_function_restrictKeysToVector(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& map0 = arg0.as_<IntMap>();
+    auto [map_arg,map_is_cont] = Args.evaluate_slot_to_value_with_contingency(0);
+    const auto& map = map_arg.as_<IntMap>();
 
     // The order for a specific keys object should remain unchanged.
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& keys = arg1.as_<IntSet>();
+    auto [keys_arg, keys_are_cont] = Args.evaluate_slot_to_value_with_contingency(1);
+    auto& keys = keys_arg.as_<IntSet>();
 
     object_ptr<R::RVector> result = new R::RVector;
     result->reserve(keys.size());
 
     for(int key: keys)
     {
-        int r = map0[key];
-        int value_reg = Args.evaluate_reg_dependent_use(r);
+        int r = map[key];
+        int value_reg = Args.evaluate_reg_use(r, map_is_cont | keys_are_cont);
         result->push_back(Args.memory().closure_at(value_reg).get_code());
     }
     return result;
@@ -488,35 +488,36 @@ extern "C" closure builtin_function_ekeysSet(OperationArgs& Args)
 
 extern "C" closure builtin_function_forceAll(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& m = arg0.as_<IntMap>();
+    auto map_arg = Args.evaluate_slot_to_value_with_contingency(0);
+    auto& map = map_arg.value.as_<IntMap>();
 
-    for(auto& [_,r]: m)
-	Args.evaluate_reg_dependent_force(r);
+    // Entry FORCEs are siblings controlled only by the map representation.
+    for(auto& [_,r]: map)
+	Args.evaluate_reg_force(r, map_arg.edge_contingency);
 
     return closure(R::ConstructorApp("()", 0, {}));
 }
 
 extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& m = arg0.as_<IntMap>();
+    auto [map_arg, map_is_cont] = Args.evaluate_slot_to_value_with_contingency(0);
+    auto& map = map_arg.as_<IntMap>();
 
     object_ptr<R::RIntMap>  m2(new R::RIntMap);
 
     // The local IntMap object is not a machine GC root, so pin all entry regs
     // while evaluating values discovered through the map.
     std::vector<int> tmp;
-    for(auto& [_,reg]: m)
+    for(auto& [_,reg]: map)
     {
         Args.stack_push(reg);
         tmp.push_back(reg);
     }
 
-    // Compute the values
-    for(auto& [key,reg]: m)
+    // Entry USEs are siblings controlled only by the map representation.
+    for(auto& [key,reg]: map)
     {
-        int value_reg = Args.evaluate_reg_dependent_use(reg);
+        int value_reg = Args.evaluate_reg_use(reg, map_is_cont);
         auto value = Args.memory().closure_at(value_reg).get_code();
 	m2->insert({key, value});
     }
@@ -532,24 +533,23 @@ extern "C" closure builtin_function_exportIntMap(OperationArgs& Args)
 
 extern "C" closure builtin_function_toVector(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& m = arg0.as_<IntMap>();
+    auto [map_arg, map_is_cont] = Args.evaluate_slot_to_value_with_contingency(0);
+    auto& map = map_arg.as_<IntMap>();
 
     object_ptr<R::RVector>  v(new R::RVector);
-
     // The local IntMap object is not a machine GC root, so pin all entry regs
     // while evaluating values discovered through the map.
     std::vector<int> tmp;
-    for(auto& [_,reg]: m)
+    for(auto& [_,reg]: map)
     {
         Args.stack_push(reg);
         tmp.push_back(reg);
     }
 
-    // Compute the values
-    for(auto& [key,reg]: m)
+    // Entry USEs are siblings controlled only by the map representation.
+    for(auto& [key,reg]: map)
     {
-        int value_reg = Args.evaluate_reg_dependent_use(reg);
+        int value_reg = Args.evaluate_reg_use(reg, map_is_cont);
         v->push_back( Args.memory().closure_at(value_reg).get_code() );
     }
 
