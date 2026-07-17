@@ -35,9 +35,9 @@ bali-phy -m Model.hs RSV2-25taxa.fasta --iter=N --name ignore --seed=S
   the corresponding uninstrumented baseline, rollback, and fix.
 - Retain one raw record per process invocation with revision, host and build
   identity, command and input, seed, iteration count, cache status, counters,
-  timing, run order, log and tree hashes, and instrumentation status.  Future
-  records belong in `benchmarks/coalescent-runs.tsv`, created with the first new
-  measurement; a plain TSV is sufficient and requires no benchmark executable.
+  timing, run order, log and tree hashes, and instrumentation status.  Raw
+  records belong in `benchmarks/coalescent-runs.tsv`; a plain TSV is sufficient
+  and requires no benchmark executable.
   Summaries must state the seed set, trace status, and evidence class.
 
 Prefer coherent design endpoints over migration intermediates.  Record
@@ -51,7 +51,7 @@ or single-seed measurement that does not support causal attribution.
 
 The initial history search reused one cache directory and did not retain every
 raw run.  In the table, `verified` means that imported modules were observed to
-hit a dedicated warmed cache; seven early rows remain `unverified`.  Trace
+hit a dedicated warmed cache; five early rows remain `unverified`.  Trace
 status is `unknown` unless explicitly recorded.  Unverified and unknown results
 still locate transitions, but close comparisons should be remeasured.
 
@@ -66,8 +66,9 @@ measurement table can remain compact.
 | Revision | Change boundary | I1 (B) | I50 (B) | Extra/iter (B) | Work 50 (s) | Cache |
 |---|---|---:|---:|---:|---:|---|
 | `f30c3177` | 4.2 source revision, common build | 15.756 | 99.917 | 1.718 | 8.802 | verified |
-| `bed6443e` | Before `runtime/ast.H` | | 104.013 | | 9.343 | unverified |
-| `8a647583` | Variant2 Runtime Exp | | 110.751 | | 10.389 | unverified |
+| `bed6443e` | Before `runtime/ast.H` | 16.238 | 103.983 | 1.791 | 9.615 | verified |
+| `0053b4f0` | `std::variant` Runtime Exp | 15.570 | 108.871 | 1.904 | 11.016 | verified |
+| `8a647583` | Variant2 Runtime Exp | 15.616 | 110.670 | 1.940 | 10.863 | verified |
 | `38bd4274` | Before newtype IO | | 111.230 | | 9.658 | unverified |
 | `c8327966` | Use newtype for IO | | 103.030 | | 8.858 | unverified |
 | `06e65341` | Runtime app layout series | | 103.559 | | 9.073 | unverified |
@@ -107,6 +108,8 @@ measurement table can remain compact.
 | `ee18ab15` | IntMap edge contingency | 18.251 | 101.739 | 1.704 | 8.550 | verified |
 | `258d2fd4` | Other important users converted | 18.180 | 98.468 | 1.639 | 8.292 | verified |
 | `eae8edab` | Legacy dependent API removed | 18.153 | 98.207 | 1.634 | 8.201 | verified |
+| `03548c24` | Before direct coalescent node-time inputs | 18.164 | 98.227 | 1.634 | 9.035 | verified |
+| `2ce355ee` | Direct coalescent node-time inputs | 17.437 | 96.261 | 1.609 | 8.920 | verified |
 
 ### Evidence and interpretation
 
@@ -120,7 +123,8 @@ affected rows were not recorded and therefore remain `unknown` here.
 |---|---|---|---|
 | `f30c3177` | n/a | checkpoint | Source-built 4.2 baseline, not the downloaded `x86-64-v3` binary.  An earlier three-run Work mean was 9.069s. |
 | `bed6443e` | n/a | checkpoint | Start boundary for the Runtime AST migration. |
-| `8a647583` | unknown | checkpoint | Completed Runtime AST endpoint has 6.5% higher `I50`; missing `I1` prevents separating fixed and recurring work. |
+| `0053b4f0` | same | controlled | The completed `std::variant` endpoint has 6.3% more recurring work than `bed6443e`, despite reducing fixed startup work. |
+| `8a647583` | same | controlled | The direct Variant2 change adds another 1.9% recurring work; the completed endpoint is 8.3% above `bed6443e`. |
 | `38bd4274` | n/a | checkpoint | Start boundary for the IO representation change. |
 | `c8327966` | unknown | checkpoint | `I50` is 7.4% lower than `38bd4274`; attribution to newtype IO is not controlled. |
 | `06e65341` | unknown | checkpoint | `I50` is 0.5% above the newtype-IO checkpoint. |
@@ -160,12 +164,14 @@ affected rows were not recorded and therefore remain `unknown` here.
 | `ee18ab15` | same | controlled | Propagating map and key-set contingency through IntMap operations lowers recurring instructions by 28.3% from `44e6c6d9`. |
 | `258d2fd4` | same | controlled | Converting native and boxed traversals plus categorical sampling lowers recurring instructions by another 3.8%; this endpoint does not partition the gain by user. |
 | `eae8edab` | same | controlled | Removing the legacy API lowers recurring instructions by another 0.3%. |
+| `03548c24` | same | controlled | This common-parent benchmark checkpoint matches the completed contingency migration. |
+| `2ce355ee` | changed | distributional | Four of five panel traces changed; the five-seed comparison appears below. |
 
 ## Multi-seed checkpoints
 
-The retained distributional summaries are means over seeds 0 through 4.  The
-individual results and their dispersion are not recorded here, so these
-comparisons are incomplete and should be repeated under the current protocol.
+The retained distributional summaries are means over seeds 0 through 4.  Older
+comparisons lack individual results and dispersion; the coalescent node-time
+comparison follows the current protocol and has raw records.
 
 | Comparison | Revision | State | I1 (B) | I50 (B) | Extra/iter (B) | Work 50 (s) |
 |---|---|---|---:|---:|---:|---:|
@@ -174,6 +180,8 @@ comparisons are incomplete and should be repeated under the current protocol.
 | Long-range | `f30c3177` | 4.2 source baseline | 15.639 | 93.602 | 1.591 | 8.216 |
 | Long-range | `90a02246` | before dependent edges | 38.396 | 119.348 | 1.652 | 8.779 |
 | Long-range | `b0f1cb92` | direct coalescent inputs | 18.076 | 114.380 | 1.965 | 10.387 |
+| Coalescent node times | `03548c24` | before | 18.003 | 100.312 | 1.680 | 9.131 |
+| Coalescent node times | `2ce355ee` | after | 17.666 | 95.704 | 1.593 | 8.842 |
 
 At the native-length boundary, the mean `I50` and Work changes are small, but
 the missing dispersion prevents concluding that the change is systematically
@@ -186,8 +194,17 @@ perform substantially more work in the child.
 In the long-range panel means, recurring cost at `b0f1cb92` is 23.5% above the
 4.2 source baseline, and about 84% of that absolute gap accumulated after the
 pre-dependent-edge checkpoint.  Mean Work is 26.4% above 4.2.  These percentages
-describe distributional checkpoints, not controlled same-work deltas; the new
-edge-contingency endpoint has not yet been measured over this seed panel.
+describe distributional checkpoints, not controlled same-work deltas.  The
+current edge-contingency baseline is measured in a separate panel below; its
+traces cannot be compared directly with this older panel.
+
+Reading coalescent node times directly from the `IntMap`, with sibling element
+USEs contingent only on the map, lowers mean recurring instructions by 5.2%
+and mean Work by 3.2%.  Recurring-work standard deviations are 0.036B before
+and 0.035B after; the paired change is -0.087B with standard deviation 0.049B.
+Work standard deviations are 0.343s before and 0.428s after; the paired change
+is -0.289s with standard deviation 0.481s.  Four of five traces changed, so
+this is favorable distributional evidence rather than a controlled delta.
 
 ## Edge-contingency result
 
@@ -204,6 +221,34 @@ the compatibility API recovers 0.3%.  The API-only boundary itself adds 1.0%
 recurring instructions and remains unexplained.  Raw measurements and hashes
 are in `benchmarks/coalescent-runs.tsv`.
 
+## Runtime AST result
+
+Fresh warmed measurements reproduce the Runtime AST regression with
+byte-identical logs and trees.  From `bed6443e` to the completed Variant2
+endpoint, fixed startup falls by 0.622B instructions, but recurring work rises
+8.3%.  The direct `std::variant` to Variant2 boundary accounts for 1.9%; using
+`std::variant` still leaves a 6.3% recurring regression.
+
+Retired-instruction profiles show nearly unchanged absolute work in the main
+incremental-evaluation and invalidation routines.  The added work is in runtime
+value plumbing: operation argument lookup, object casts, expression
+copy/destruction, and register-reference traversal.  Repeated pair-field
+extraction in the historical coalescent sort comparator is one concrete
+hotspot; `2ce355ee` also removes it by storing detached times before sorting.
+The casts are below the variant: runtime heap objects share the `ObjectValue`
+alternative, so a same-API outer representation does not remove them.  Hardware
+counters show more branches and cache accesses but similar miss rates,
+so the regression is primarily extra work.  `Runtime::Exp` and the old
+`expression_ref` are both 16 bytes; their containing closures are both 80 bytes.
+
+A same-API `std::variant` experiment on current code reduces recurring
+instructions by 2.4%, but three interleaved N=50 runs average 66.118B cycles
+and 12.229s task time, versus 64.204B and 11.869s for Variant2.  The replacement
+is about 3% slower despite retiring fewer instructions.  A manual tagged union
+would duplicate copy, move, destruction, visitation, and serialization logic
+for 18 alternatives without evidence that dispatch is the dominant remaining
+cost, so it is not introduced.
+
 ## Slowdowns to investigate
 
 - Edge-contingency API-only boundary: a same-trace 1.0% recurring increase;
@@ -213,8 +258,8 @@ are in `benchmarks/coalescent-runs.tsv`.
 - Apparent dependent-edge machinery boundary: 3.6% seed-0 recurring increase
   with unknown trace status; separate bookkeeping, invalidation, and evaluation
   costs.
-- Completed Runtime AST conversion: 6.5% higher `I50`; measure `I1` at both
-  endpoints before assigning the increase to recurring work.
+- Runtime AST conversion: 8.3% more recurring work; Variant2 explains 1.9%,
+  while the remaining value-plumbing and traversal costs are not partitioned.
 - Fixed startup at `b0f1cb92`: the five-seed mean `I1` is 15.6% above 4.2
   after removing the Unicode scanner cost; recover the per-seed dispersion.
 - The long-range panel mean has a remaining 3.8% recurring increase from 4.2 to
@@ -232,7 +277,9 @@ are in `benchmarks/coalescent-runs.tsv`.
   high-priority changed or unknown boundaries: `restrictKeysToVector`,
   arity/eta expansion, lazy vector and matrix dimensions, and direct coalescent
   inputs.
-- Measure `I1` around the completed Runtime AST and IO-newtype series.
+- Isolate known-type object access, argument staging, and register-reference
+  traversal before reconsidering a custom `Runtime::Exp` representation.
+- Measure `I1` around the IO-newtype series.
 - Compare baseline and `x86-64-v3` builds at both 4.2 and current so source and
   instruction-set effects remain separate.
 - Compare profiles after normalizing by useful work such as values exported,
