@@ -719,7 +719,7 @@ namespace
                                                           map_to_enum(int_range_from_to(from_enum("x$"), from_enum("y$")))));
 
         Hs::Matches enum_from_then_matches;
-        auto limit = if_exp(greater_than_exp(from_enum("y$"), from_enum("x$")), int_exp(max_tag), int_exp(0));
+        auto limit = if_exp(greater_than_exp(from_enum("x$"), from_enum("y$")), int_exp(0), int_exp(max_tag));
         enum_from_then_matches.push_back(binary_method_rule(var_pat("x$"), var_pat("y$"),
                                                             map_to_enum(int_range_from_then_to(from_enum("x$"), from_enum("y$"), limit))));
 
