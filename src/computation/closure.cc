@@ -3,8 +3,11 @@
 #include "computation/operation.H"
 #include "computation/preprocess.H"
 #include "util/string/join.H" // for join( )
+#include <range/v3/all.hpp>
 #include <cstdlib>
 #include <utility>
+
+namespace views = ranges::views;
 
 using std::vector;
 using std::string;
@@ -66,14 +69,11 @@ int closure::reg_for_operation_slot(int i) const
 closure get_trimmed(const Runtime::TrimmedExp& code, const closure::Env_t& Env)
 {
     closure::Env_t trimmed_env;
-    trimmed_env.resize(code.indices.size());
+    trimmed_env.reserve(code.indices.size());
 
     // Runtime environments use reverse lexical indexing.
-    for(int i = 0; i < code.indices.size(); i++)
-    {
-        int k = code.indices[code.indices.size() - 1 - i];
-        trimmed_env[i] = lookup_in_env(Env, k);
-    }
+    for(int index: code.indices | views::reverse)
+        trimmed_env.push_back(lookup_in_env(Env, index));
 
     return closure(code.body, trimmed_env);
 }

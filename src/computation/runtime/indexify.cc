@@ -7,7 +7,10 @@
 #include "computation/runtime/ast.H"
 #include "computation/runtime/trim.H"
 
+#include <range/v3/all.hpp>
 #include <stdexcept>
+
+namespace views = ranges::views;
 
 using std::vector;
 using std::string;
@@ -258,10 +261,10 @@ Core::Exp<> deindexify(const Runtime::TrimmedExp& E, vector<Core::Var<>>& variab
 {
     vector<Core::Var<>> projected;
     projected.reserve(E.indices.size());
-    for(auto index = E.indices.rbegin(); index != E.indices.rend(); ++index)
+    for(int index: E.indices | views::reverse)
     {
-        assert(*index < variables.size());
-        projected.push_back(variables[variables.size() - 1 - *index]);
+        assert(index < variables.size());
+        projected.push_back(variables[variables.size() - 1 - index]);
     }
     return deindexify(E.body, projected);
 }
@@ -334,8 +337,8 @@ Core::Exp<> deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
         auto body = deindexify(e->body, variables);
         variables.resize(old_variable_count);
 
-        for(auto bind = binds.rbegin(); bind != binds.rend(); ++bind)
-            body = Core::Let<>{std::move(*bind), std::move(body)};
+        for(auto& bind: binds | views::reverse)
+            body = Core::Let<>{std::move(bind), std::move(body)};
 
         return body;
     }

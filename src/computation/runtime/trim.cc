@@ -1,5 +1,9 @@
 #include "trim.H"
 
+#include <range/v3/all.hpp>
+
+namespace views = ranges::views;
+
 using std::vector;
 
 namespace Runtime
@@ -111,14 +115,14 @@ namespace
             else if constexpr (std::is_same_v<T, Let>)
             {
                 auto vars = get_free_index_vars(e.body);
-                for(auto bind = e.binds.rbegin(); bind != e.binds.rend(); ++bind)
+                for(const auto& bind: e.binds | views::reverse)
                 {
-                    if (auto nonrec = std::get_if<NonRec>(&*bind))
+                    if (auto nonrec = std::get_if<NonRec>(&bind))
                         vars = merge_vars(get_free_index_vars(nonrec->rhs),
                                           pop_vars(1, std::move(vars)));
                     else
                     {
-                        const auto& rhss = std::get<Rec>(*bind).rhss;
+                        const auto& rhss = std::get<Rec>(bind).rhss;
                         for(const auto& rhs: rhss)
                             vars = merge_vars(vars, get_free_index_vars(rhs));
                         vars = pop_vars(rhss.size(), std::move(vars));
