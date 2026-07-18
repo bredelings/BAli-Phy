@@ -256,6 +256,14 @@ foreach tool: tools + prefixed_tools
          depends: tool_exe)
   endif
 
+  if tool == 'alignment-convert'
+    alignment_convert_test_script = files('../tests/tools/alignment-convert/run-tests.py')
+    test('alignment-convert PHYLIP parsing',
+         python,
+         args: [alignment_convert_test_script] + python_tool_wrapper_args + [tool_exe],
+         depends: tool_exe)
+  endif
+
   if tool == 'alignment-draw'
     alignment_draw_test_script = files('../tests/tools/alignment-draw/run-tests.py')
     test('alignment-draw character properties',

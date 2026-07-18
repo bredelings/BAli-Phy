@@ -263,7 +263,7 @@ namespace sequence_format {
 	for(int i=1;i<letters.size();i++) 
 	    assert(letters[i].size() == letters[0].size());
 
-	return file.good();
+	return true;
     }
 
     vector<sequence> read_phylip(std::istream& file) {
