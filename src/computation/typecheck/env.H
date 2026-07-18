@@ -122,6 +122,19 @@ struct DataInfo
     }
 };
 
+struct FunctionalDependency
+{
+    // Class-parameter indexes remain meaningful after interface serialization.
+    std::vector<int> determining;
+    std::vector<int> determined;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(determining, determined);
+    }
+};
+
 struct ClassInfo
 {
     ID name;
@@ -130,6 +143,8 @@ struct ClassInfo
     // Maybe change this to vector<pair<Type,string>>, 
     // FIXME: Should we record here the names of functions to extract 
     Context context;
+
+    std::vector<FunctionalDependency> functional_dependencies;
 
     local_value_env members;
 
@@ -149,7 +164,7 @@ struct ClassInfo
     {
 	// PROBLEM: Should we be storing Hs::Var with all its annotations, or just a (string,int) pair?
 	// PROBLEM: Should we be storing Core::Var with all its annotations, or just a (string,int) pair?
-	ar(name, type_vars, context, members, superclass_extractors, default_methods, fields, associated_type_families, associated_data_families);
+	ar(name, type_vars, context, functional_dependencies, members, superclass_extractors, default_methods, fields, associated_type_families, associated_data_families);
     }
 };
 

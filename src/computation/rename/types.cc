@@ -489,6 +489,10 @@ Haskell::RoleAnnotationDecl renamer_state::rename(Haskell::RoleAnnotationDecl D)
 
 Haskell::ClassDecl renamer_state::rename(Haskell::ClassDecl C)
 {
+    if (not C.fun_deps.empty() and
+        not m.language_extensions.has_extension(LangExt::FunctionalDependencies))
+        error(C.con.loc, Note()<<"Functional dependencies require the FunctionalDependencies extension");
+
     qualify_name(unloc(C.con).name);
     for(auto& constraint: C.context)
         constraint = rename_type(constraint);

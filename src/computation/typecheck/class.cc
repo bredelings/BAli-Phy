@@ -96,6 +96,40 @@ TypeChecker::infer_type_for_class(const Hs::ClassDecl& class_decl)
     class_info.name = class_name;
     class_info.context = context;
 
+    map<string, int> class_parameter_index;
+    for(int i = 0; i < class_decl.type_vars.size(); i++)
+        class_parameter_index.insert({unloc(class_decl.type_vars[i]).name, i});
+
+    for(const auto& source_dependency: class_decl.fun_deps)
+    {
+        FunctionalDependency dependency;
+        bool valid = true;
+
+        // Converts one side while retaining its source order and duplicates.
+        auto add_parameters = [&](const vector<Hs::LTypeVar>& parameters,
+                                  vector<int>& indexes)
+        {
+            for(const auto& parameter: parameters)
+            {
+                const auto& name = unloc(parameter).name;
+                auto index = class_parameter_index.find(name);
+                if (index == class_parameter_index.end())
+                {
+                    record_error(parameter.loc, Note()<<"Functional dependency variable '"<<name
+                                 <<"' is not a parameter of class '"<<class_name<<"'");
+                    valid = false;
+                }
+                else
+                    indexes.push_back(index->second);
+            }
+        };
+
+        add_parameters(source_dependency.lhs, dependency.determining);
+        add_parameters(source_dependency.rhs, dependency.determined);
+        if (valid)
+            class_info.functional_dependencies.push_back(std::move(dependency));
+    }
+
     // 3. make global types for class methods
 
     map<string,Type> ordinary_method_types;

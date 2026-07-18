@@ -236,6 +236,8 @@ optional<Note> LanguageExtensions::set_option(const string& opt)
     {
         if (extension == LangExt::DuplicateRecordFields or extension == LangExt::RecordWildCards)
             set_extension(LangExt::DisambiguateRecordFields);
+        else if (extension == LangExt::FunctionalDependencies)
+            set_extension(LangExt::MultiParamTypeClasses);
     }
 
     return {};
