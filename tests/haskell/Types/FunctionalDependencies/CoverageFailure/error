@@ -1,0 +1,4 @@
+   • Functional dependency ordinary coverage condition fails for class 'C'
+       dependency: Int -> a
+       uncovered variables: a
+   • In class instance 'forall a. C Int a':

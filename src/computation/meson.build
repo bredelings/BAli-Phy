@@ -43,7 +43,7 @@ computation_sources = [
   'runtime/trim.cc',
 
   'typecheck/kind.cc', 'typecheck/kindcheck.cc', 'typecheck/typecheck.cc', 'typecheck/substitution.cc',
-  'typecheck/env.cc', 'typecheck/alphabetize.cc', 'typecheck/types.cc', 'typecheck/instance.cc', 'typecheck/derived.cc',
+  'typecheck/env.cc', 'typecheck/alphabetize.cc', 'typecheck/types.cc', 'typecheck/fundeps.cc', 'typecheck/instance.cc', 'typecheck/derived.cc',
   'typecheck/class.cc', 'typecheck/expression.cc', 'typecheck/pattern.cc', 'typecheck/match.cc',
   'typecheck/quals.cc', 'typecheck/binds.cc', 'typecheck/solver.cc', 'typecheck/default.cc',
   'typecheck/type_groups.cc', 'typecheck/constraints.cc', 'typecheck/expected.cc',

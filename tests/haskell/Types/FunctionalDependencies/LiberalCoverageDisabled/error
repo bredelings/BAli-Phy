@@ -1,0 +1,4 @@
+   • Functional dependency ordinary coverage condition fails for class 'C'
+       dependency: [a] -> [b]
+       uncovered variables: b
+   • In class instance 'forall a b. D a b => C [a] [b]':

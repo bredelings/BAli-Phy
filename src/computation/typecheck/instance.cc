@@ -2,7 +2,9 @@
 #include "kindcheck.H"
 #include "haskell/ids.H"
 #include "core/func.H"
+#include "fundeps.H"
 #include "rename/rename.H"
+#include "util/string/join.H"
 
 using std::string;
 using std::vector;
@@ -63,6 +65,51 @@ namespace
     bool same_instance_head(TypeChecker& tc, const Type& head1, const Type& head2)
     {
         return tc.maybe_match(head1, head2) and tc.maybe_match(head2, head1);
+    }
+
+    // Checks ordinary or liberal coverage for every dependency of an instance.
+    bool functional_dependency_coverage(TypeChecker& tc,
+                                        const ClassInfo& class_info,
+                                        const vector<Type>& instance_args,
+                                        const vector<Type>& context)
+    {
+        bool liberal = tc.this_mod().language_extensions.has_extension(
+            LangExt::UndecidableInstances);
+        bool valid = true;
+
+        for(const auto& dependency: class_info.functional_dependencies)
+        {
+            auto [determining, determined] = instantiate_fun_dep(
+                dependency, instance_args);
+            auto determining_vars = close_wrt_fun_deps(
+                tc, liberal ? context : vector<Type>{},
+                free_type_variables(determining));
+            auto determined_vars = close_wrt_fun_deps(
+                tc, {}, free_type_variables(determined));
+            auto uncovered = determined_vars - determining_vars;
+            if (uncovered.empty()) continue;
+
+            TidyState tidy;
+            vector<string> determining_text;
+            vector<string> determined_text;
+            vector<string> uncovered_text;
+            for(const auto& type: determining)
+                determining_text.push_back(show_type_plain(tidy, type));
+            for(const auto& type: determined)
+                determined_text.push_back(show_type_plain(tidy, type));
+            for(const auto& variable: uncovered)
+                uncovered_text.push_back(tidy.print(variable));
+
+            tc.record_error(Note()<<"Functional dependency "
+                <<(liberal ? "liberal" : "ordinary")
+                <<" coverage condition fails for class '"
+                <<get_unqualified_name(class_info.name)<<"'\n"
+                <<"  dependency: "<<join(determining_text, " ")<<" -> "
+                <<join(determined_text, " ")<<"\n"
+                <<"  uncovered variables: "<<join(uncovered_text, " "));
+            valid = false;
+        }
+        return valid;
     }
 
     // Reject duplicate/forbidden-overlap instances before adding a new dfun to the environment.
@@ -550,6 +597,9 @@ TypeChecker::infer_type_for_instance1(const Hs::InstanceDecl& inst_decl)
     auto maybe_class_info = info_for_class(class_name);
     assert(maybe_class_info);
     auto class_info = *maybe_class_info;
+
+    if (not functional_dependency_coverage(*this, class_info, args, constraints))
+        return {};
 
     // 5. Construct the mapping from original class variables to instance variables
     substitution_t instance_subst;
