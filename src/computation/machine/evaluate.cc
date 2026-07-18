@@ -249,27 +249,51 @@ public:
         }
 };
 
+class reg_heap::evaluation_stack_guard
+{
+    reg_heap& M;
+    int r;
+
+public:
+    // Mark a register as active and retain it on the evaluator's root stack.
+    evaluation_stack_guard(reg_heap& M_, int r_): M(M_), r(r_)
+    {
+#ifndef NDEBUG
+        if (M.reg_is_on_stack(r))
+            throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
+#endif
+        M.stack.push_back(r);
+        M.regs[r].flags.set(reg_is_on_stack_bit);
+    }
+
+    evaluation_stack_guard(const evaluation_stack_guard&) = delete;
+    evaluation_stack_guard& operator=(const evaluation_stack_guard&) = delete;
+
+    // Remove the exact entry installed by this guard during normal return or unwinding.
+    ~evaluation_stack_guard() noexcept
+    {
+        assert(M.reg_is_on_stack(r));
+        assert(not M.stack.empty());
+        assert(M.stack.back() == r);
+        M.stack.pop_back();
+        M.regs[r].flags.reset(reg_is_on_stack_bit);
+    }
+};
+
 /// Evaluate r and look through register-reference chains to return the first reg that is NOT a reg reference.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg reference.
 EvalResult reg_heap::incremental_evaluate1(int r)
 {
     assert(execution_allowed_at_root());
 
-#ifndef NDEBUG
-    if (reg_is_on_stack(r))
-        throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
-#endif
-    regs[r].flags.set(reg_is_on_stack_bit);
-    stack.push_back(r);
-
-    auto result = incremental_evaluate1_(r);
-    assert(not reg_is_ref_no_force(result.dep_reg));
-    assert(not reg_is_unevaluated(result.dep_reg));
-    assert(not reg_is_unevaluated(r));
-    assert(reg_is_on_stack(r));
-
-    stack.pop_back();
-    regs[r].flags.reset(reg_is_on_stack_bit);
+    EvalResult result;
+    {
+        evaluation_stack_guard stack_entry(*this, r);
+        result = incremental_evaluate1_(r);
+        assert(not reg_is_ref_no_force(result.dep_reg));
+        assert(not reg_is_unevaluated(result.dep_reg));
+        assert(not reg_is_unevaluated(r));
+    }
 
     return result;
 }
@@ -1032,21 +1056,14 @@ EvalResult reg_heap::incremental_evaluate2(int r, bool do_count)
 {
     assert(execution_allowed_at_root());
 
-#ifndef NDEBUG
-    if (reg_is_on_stack(r))
-        throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
-#endif
-    regs[r].flags.set(reg_is_on_stack_bit);
-    stack.push_back(r);
-
-    auto result = incremental_evaluate2_(r);
-    assert(not reg_is_ref_no_force(result.dep_reg));
-    assert(not reg_is_unevaluated(result.dep_reg));
-    assert(not reg_is_unevaluated(r));
-
-    assert(reg_is_on_stack(r));
-    stack.pop_back();
-    regs[r].flags.reset(reg_is_on_stack_bit);
+    EvalResult result;
+    {
+        evaluation_stack_guard stack_entry(*this, r);
+        result = incremental_evaluate2_(r);
+        assert(not reg_is_ref_no_force(result.dep_reg));
+        assert(not reg_is_unevaluated(result.dep_reg));
+        assert(not reg_is_unevaluated(r));
+    }
 
     int r2 = result.dep_reg;
     if (do_count and reg_is_changeable_or_forcing(r2))
@@ -1520,19 +1537,11 @@ public:
 
 int reg_heap::incremental_evaluate_unchangeable(int r)
 {
-#ifndef NDEBUG
-    if (reg_is_on_stack(r))
-        throw myexception()<<"Evaluating reg "<<r<<" that is already on the stack!";
-#endif
-
-    regs[r].flags.set(reg_is_on_stack_bit);
-    stack.push_back(r);
-
-    auto result = incremental_evaluate_unchangeable_(r);
-    assert(reg_is_on_stack(r));
-
-    stack.pop_back();
-    regs[r].flags.reset(reg_is_on_stack_bit);
+    int result;
+    {
+        evaluation_stack_guard stack_entry(*this, r);
+        result = incremental_evaluate_unchangeable_(r);
+    }
 
     return result;
 }

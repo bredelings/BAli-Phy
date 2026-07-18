@@ -795,7 +795,9 @@ public:
 
     std::optional<int> precomputed_value_in_context(int R, int c);
 
-private:  
+private:
+    class evaluation_stack_guard;
+
     EvalResult incremental_evaluate1_(int R);
     EvalResult incremental_evaluate1_changeable_(int R);
     EvalResult incremental_evaluate1_ref_with_force_(int R);
