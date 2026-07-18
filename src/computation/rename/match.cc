@@ -36,10 +36,11 @@ Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var
 
     for(auto& guarded_rhs: R.guarded_rhss)
     {
+        auto guarded_binders = binders;
         for(auto& guard: guarded_rhs.guards)
-            add(binders, rn.rename_stmt(guard, bound, binders, free_vars));
+            add(guarded_binders, rn.rename_stmt(guard, bound, guarded_binders, free_vars));
 
-        guarded_rhs.body = rn.rename(guarded_rhs.body, bound, binders, free_vars);
+        guarded_rhs.body = rn.rename(guarded_rhs.body, bound, guarded_binders, free_vars);
     }
 
     return R;
