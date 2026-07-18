@@ -622,9 +622,10 @@ public:
 
     Hs::Decls synthesize_derived_instances(const Hs::Decls& decls);
 
-    std::optional<Type> find_missing_derived_constraint(const Type& pred, const std::set<TypeVar>& data_tvs, std::vector<Type>& active);
+    std::optional<Type> collect_derived_context(const Type& pred, const std::set<TypeVar>& data_tvs,
+                                                std::vector<Type>& active, Context& context);
 
-    void check_derived_instances(const Hs::Decls& decls);
+    void infer_stock_derived_contexts(std::vector<std::pair<Core::Var<>, Hs::InstanceDecl>>& named_instances);
 
     // Figure 12
     std::pair<Hs::Binds, Core::Decls<>>

@@ -2,6 +2,7 @@
 #include "haskell/ids.H"
 #include "tidy.H"
 
+#include <algorithm>
 #include <map>
 #include <set>
 
@@ -207,15 +208,16 @@ namespace
         return type_apply(class_con, vector<Type>{type});
     }
 
+    // A residual derived predicate must mention only, and at least one of, the datatype parameters.
     bool is_allowed_derived_context_pred(const Type& pred, const set<TypeVar>& data_tvs)
     {
-        auto [head, args] = decompose_type_apps(pred);
-        if (args.empty())
-            return false;
+        auto pred_tvs = free_type_variables(pred);
+        if (pred_tvs.empty()) return false;
 
-        auto field_type = follow_meta_type_var(args.back());
-        auto tv = field_type.to<TypeVar>();
-        return tv and data_tvs.contains(*tv);
+        for(auto& tv: pred_tvs)
+            if (not data_tvs.contains(tv)) return false;
+
+        return true;
     }
 
 }
@@ -464,23 +466,13 @@ namespace
         return {noloc, Hs::Alt(pattern, Hs::SimpleRHS(rhs))};
     }
 
-    // FIXME: Generated derived contexts are emitted directly instead of being
-    // simplified. Add a GHC-like pass that solves these predicates and keeps
-    // only the residual constraints before registering the derived instance.
+    // Emit an empty provisional context; pass 1 registers its head before context inference.
     Hs::LType stock_instance_type(const DerivingDataInfo& data_info, const string& class_name)
     {
         assert(data_info.data.info);
 
-        Hs::Context context;
-        for(auto& tv: data_info.data.info->type_vars)
-        {
-            auto tv_type = type_var_type(tv);
-            context.push_back(class_constraint(class_name, tv_type));
-        }
-
         auto instance_head = class_constraint(class_name, derived_data_type(data_info, data_info.data.info->type_vars.size()));
-        Hs::LType polytype = context.empty() ? instance_head : Hs::LType{noloc, Hs::ConstrainedType(context, instance_head)};
-        return Hs::add_forall_vars(hs_type_vars(data_info.data.info->type_vars, data_info.data.info->type_vars.size()), polytype);
+        return Hs::add_forall_vars(hs_type_vars(data_info.data.info->type_vars, data_info.data.info->type_vars.size()), instance_head);
     }
 
     Hs::LExp constructor_tag_exp(TypeChecker& tc, const DerivingDataInfo& data_info, const Hs::LExp& value)
@@ -1649,10 +1641,14 @@ namespace
     }
 
     // Override standalone stock heads, but keep inferred contexts needed by coercive deriving.
-    void add_derived_instance(Hs::Decls& instances, const optional<yy::location>& loc, Hs::InstanceDecl instance, const DerivingTarget& target)
+    void add_derived_instance(Hs::Decls& instances, const optional<yy::location>& loc, Hs::InstanceDecl instance,
+                              const DerivingTarget& target, bool infer_stock_context = false)
     {
         if (target.explicit_polytype and not instance.generalized_newtype_deriving)
             instance.polytype = *target.explicit_polytype;
+        else
+            instance.inferred_stock_context = infer_stock_context;
+        if (not instance.polytype.loc) instance.polytype.loc = loc;
         instances.push_back({loc, instance});
     }
 
@@ -1690,6 +1686,12 @@ namespace
             auto& semantic_data = target.data;
             assert(semantic_data.data.info);
 
+            // Mark only implicit stock contexts for the post-pass inference phase.
+            auto add_stock_instance = [&](Hs::InstanceDecl instance) {
+                add_derived_instance(instances, deriving.type.loc, std::move(instance), target,
+                                     spec.needs_field_constraints);
+            };
+
             // Validate the semantic type shape before synthesizing stock methods.
             auto validate_stock = [&]() {
                 if (spec.validate(tc, semantic_data))
@@ -1703,7 +1705,7 @@ namespace
                 if (not validate_stock())
                     return true;
 
-                add_derived_instance(instances, deriving.type.loc, derive_bounded_instance(tc, semantic_data, deriving.type.loc), target);
+                add_stock_instance(derive_bounded_instance(tc, semantic_data, deriving.type.loc));
                 return true;
             }
 
@@ -1712,7 +1714,7 @@ namespace
                 if (not validate_stock())
                     return true;
 
-                add_derived_instance(instances, deriving.type.loc, derive_enum_instance(tc, semantic_data, deriving.type.loc), target);
+                add_stock_instance(derive_enum_instance(tc, semantic_data, deriving.type.loc));
                 return true;
             }
 
@@ -1721,7 +1723,7 @@ namespace
                 if (not validate_stock())
                     return true;
 
-                add_derived_instance(instances, deriving.type.loc, derive_ix_instance(tc, semantic_data, deriving.type.loc), target);
+                add_stock_instance(derive_ix_instance(tc, semantic_data, deriving.type.loc));
                 return true;
             }
 
@@ -1730,7 +1732,7 @@ namespace
                 if (not validate_stock())
                     return true;
 
-                add_derived_instance(instances, deriving.type.loc, derive_show_instance(tc, semantic_data, deriving.type.loc), target);
+                add_stock_instance(derive_show_instance(tc, semantic_data, deriving.type.loc));
                 return true;
             }
 
@@ -1739,7 +1741,7 @@ namespace
                 if (not validate_stock())
                     return true;
 
-                add_derived_instance(instances, deriving.type.loc, derive_read_instance(tc, semantic_data, deriving.type.loc), target);
+                add_stock_instance(derive_read_instance(tc, semantic_data, deriving.type.loc));
                 return true;
             }
 
@@ -1747,7 +1749,7 @@ namespace
                 return true;
 
             assert(spec.derive);
-            add_derived_instance(instances, deriving.type.loc, spec.derive(tc, semantic_data, deriving.type.loc), target);
+            add_stock_instance(spec.derive(tc, semantic_data, deriving.type.loc));
             return true;
         };
 
@@ -1846,15 +1848,31 @@ Hs::Decls TypeChecker::synthesize_derived_instances(const Hs::Decls& decls)
     return instances;
 }
 
-// Return the first derived constraint that cannot be solved or floated into the instance context.
-optional<Type> TypeChecker::find_missing_derived_constraint(const Type& pred, const set<TypeVar>& data_tvs, vector<Type>& active)
+// Expand a field predicate through known instances, collecting constraints on data parameters.
+optional<Type> TypeChecker::collect_derived_context(const Type& pred, const set<TypeVar>& data_tvs,
+                                                    vector<Type>& active, Context& context)
 {
-    if (is_allowed_derived_context_pred(pred, data_tvs))
-        return {};
+    // Keep each residual predicate once in constructor and field traversal order.
+    auto retain = [&]()
+    {
+        if (not std::ranges::contains(context, pred))
+            context.push_back(pred);
+    };
 
-    for(auto& active_pred: active)
-        if (active_pred == pred)
+    bool allowed = is_allowed_derived_context_pred(pred, data_tvs);
+    auto [_, class_args] = decompose_type_apps(pred);
+    if (allowed and not class_args.empty())
+    {
+        auto [field_head, field_args] = decompose_type_apps(follow_meta_type_var(class_args.back()));
+        if (field_head.is_a<TypeVar>())
+        {
+            retain();
             return {};
+        }
+    }
+
+    if (std::find(active.begin(), active.end(), pred) != active.end())
+        return {};
 
     active.push_back(pred);
 
@@ -1862,13 +1880,18 @@ optional<Type> TypeChecker::find_missing_derived_constraint(const Type& pred, co
     if (not inst)
     {
         active.pop_back();
+        if (allowed)
+        {
+            retain();
+            return {};
+        }
         return pred;
     }
 
-    auto& [_, wanteds] = *inst;
+    auto& wanteds = inst->second;
     for(auto& wanted: wanteds)
     {
-        if (auto missing = find_missing_derived_constraint(wanted.pred, data_tvs, active))
+        if (auto missing = collect_derived_context(wanted.pred, data_tvs, active, context))
         {
             active.pop_back();
             return missing;
@@ -1879,54 +1902,73 @@ optional<Type> TypeChecker::find_missing_derived_constraint(const Type& pred, co
     return {};
 }
 
-// Check stock-derived instances after pass 1 has registered local instance headers.
-void TypeChecker::check_derived_instances(const Hs::Decls& decls)
+// Infer mutually recursive stock contexts after pass 1, then synchronize every stored instance form.
+void TypeChecker::infer_stock_derived_contexts(vector<pair<Core::Var<>, Hs::InstanceDecl>>& named_instances)
 {
-    for(auto& [_, decl]: decls)
+    bool changed;
+    do
     {
-        auto data_decl = decl.to<Hs::DataOrNewtypeDecl>();
-        if (not data_decl)
-            continue;
-
-        auto type_info = this_mod().lookup_resolved_type(unloc(data_decl->con).name);
-        auto data_info = type_info ? type_info->is_data() : nullptr;
-        if (not data_info or not data_info->info)
-            continue;
-
-        for(auto& deriving: data_decl->derivings)
+        changed = false;
+        bool failed = false;
+        for(auto& [dfun, instance_decl]: named_instances)
         {
-            if (deriving.strategy and deriving.strategy != Hs::DerivingStrategy::stock)
-                continue;
+            if (not instance_decl.inferred_stock_context) continue;
 
-            auto derived_class = stock_deriving_class(this_mod(), deriving.type);
-            if (not derived_class or not derived_class->spec->needs_field_constraints)
-                continue;
+            auto symbol = this_mod().lookup_local_symbol(dfun.name);
+            assert(symbol and symbol->instance_info);
+            auto info = *symbol->instance_info;
+            assert(info.args.size() == 1);
 
-            auto semantic_data = DerivingDataInfo{TypeCon(type_info->name, type_info->kind), type_info, *data_info};
-            if (not derived_class->spec->validate(*this, semantic_data))
-                continue;
+            auto [data_head, data_args] = decompose_type_apps(info.args.back());
+            auto data_con = data_head.to<TypeCon>();
+            assert(data_con);
+            auto type_info = this_mod().lookup_resolved_type(data_con->name);
+            auto data_info = type_info ? type_info->is_data() : nullptr;
+            assert(data_info and data_info->info);
 
+            set<TypeVar> data_tvs(data_info->info->type_vars.begin(), data_info->info->type_vars.end());
+            Context context;
+            bool instance_failed = false;
             for(const auto& con_name: data_info->info->constructors)
             {
                 auto con_info = deriving_constructor_info(*this, con_name);
-
-                set<TypeVar> data_tvs(con_info.uni_tvs.begin(), con_info.uni_tvs.end());
                 for(int i=0; i<con_info.field_types.size(); i++)
                 {
-                    auto pred = class_constraint(derived_class->type_con, con_info.field_types[i]);
+                    auto pred = class_constraint(info.class_con, con_info.field_types[i]);
                     vector<Type> active;
-                    auto missing = find_missing_derived_constraint(pred, data_tvs, active);
+                    auto missing = collect_derived_context(pred, data_tvs, active, context);
                     if (not missing)
                         continue;
 
-                    auto span = source_span_scope(deriving.type.loc);
+                    auto span = source_span_scope(instance_decl.polytype.loc);
                     TidyState tidy_state;
-                    auto data_name = data_info->info ? data_info->info->name : unloc(data_decl->con).name;
-                    auto instance_pred = class_constraint(derived_class->type_con, type_apply(TypeCon(data_name), con_info.uni_tvs));
+                    auto instance_pred = type_apply(info.class_con, info.args);
                     auto note = note_scope(Note()<<"When deriving the instance for "<<show_type_plain(tidy_state, instance_pred));
                     record_error(Note()<<"Could not deduce '"<<show_type_plain(tidy_state, *missing)<<"' arising from field "<<(i+1)<<" of constructor '"<<get_unqualified_name(con_name)<<"' (type '"<<show_type_plain(tidy_state, con_info.field_types[i])<<"')");
+                    instance_failed = true;
                 }
             }
+
+            if (instance_failed)
+            {
+                failed = true;
+                continue;
+            }
+            if (context == Context(info.constraints)) continue;
+
+            info.constraints = context;
+            *symbol->instance_info = info;
+            symbol->type = info.type();
+            this_mod().local_instances.at(dfun) = info;
+
+            auto hs_type = semantic_type_to_hs_type(info.type());
+            assert(hs_type);
+            hs_type->loc = instance_decl.polytype.loc;
+            instance_decl.polytype = *hs_type;
+            changed = true;
         }
+
+        if (failed) return;
     }
+    while(changed);
 }

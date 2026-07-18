@@ -1744,12 +1744,8 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
     // 8. Get types and names for instances (pass 1)
     auto named_instances = infer_type_for_instances1(M.type_decls);
 
-    // FIXME: This is the natural point to simplify inferred derived instance
-    // contexts: local instance heads are known, but instance bodies have not
-    // been generated. Any simplification must update the registered InstanceInfo.
-
-    // 8b. Check derived instance contexts now that local instance headers are known.
-    check_derived_instances(M.type_decls);
+    // 8b. Infer stock contexts now that mutually recursive local instance heads are known.
+    infer_stock_derived_contexts(named_instances);
     show_messages(this_mod().file, std::cerr, messages());
     exit_on_error(messages());
     // Successful checkpoints may contain warnings.  They have now been
