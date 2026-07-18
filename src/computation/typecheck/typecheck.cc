@@ -1695,10 +1695,7 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
     //
     // 4. Should imports/export only affect what NAMES are in scope, or also things like the instance environment?
 
-    // 1. Get the types for defaulting.
-    get_defaults( M );
-
-    // 2. Find the kind and arity of type constructors declared in this module ( TCE_T = type con info, part1 )
+    // 1. Find the kind and arity of type constructors declared in this module ( TCE_T = type con info, part1 )
     get_tycon_info( M.type_decls );
 
     // Quit early if there are errors in kind-checking.
@@ -1706,15 +1703,18 @@ typechecker_result TypeChecker::typecheck_module( Hs::ModuleDecls M )
     show_messages(this_mod().file, std::cerr, messages());
     exit_on_error(messages());
 
-    // 3. Annotate tyvars in types with their kind.
+    // 2. Annotate tyvars in types with their kind.
     // Do we need this, could we do it in infer_type_for_classes/synonyms/data?
     M.type_decls = add_type_var_kinds( M.type_decls );
 
-    // 4. Get type synonyms
+    // 3. Get type synonyms
     get_type_synonyms(M.type_decls);
 
-    // 5. Get type families declared outside of classes.
+    // 4. Get type families declared outside of classes.
     get_type_families(M.type_decls);
+
+    // 5. Check defaults after their local type constructors and synonyms are available.
+    get_defaults(M);
 
     // Independently compiled imports may introduce conflicting open-family
     // equations only when they are brought together by this module.
