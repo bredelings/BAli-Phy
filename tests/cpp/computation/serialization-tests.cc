@@ -66,12 +66,12 @@ namespace
         check_archive_roundtrip(case_);
 
         Runtime::Exp nonrec = Runtime::Let(
-            Runtime::NonRec{Runtime::Int(1)}, Runtime::IndexVar(0));
+            {Runtime::NonRec{Runtime::Int(1)}}, Runtime::IndexVar(0));
         require(archive_roundtrip(nonrec) == nonrec,
                 "Runtime NonRec should survive serialization");
 
         Runtime::Exp rec = Runtime::Let(
-            Runtime::Rec({Runtime::IndexVar(0)}), Runtime::IndexVar(0));
+            {Runtime::Rec({Runtime::IndexVar(0)})}, Runtime::IndexVar(0));
         require(archive_roundtrip(rec) == rec,
                 "Runtime Rec should survive serialization");
     }

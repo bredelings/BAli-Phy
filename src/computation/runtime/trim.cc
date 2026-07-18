@@ -96,15 +96,21 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                if (auto nonrec = e.to_nonrec())
-                    return merge_vars(get_free_index_vars(nonrec->rhs),
-                                      pop_vars(1, get_free_index_vars(e.body)));
-
-                const auto& rhss = e.to_rec()->rhss;
                 auto vars = get_free_index_vars(e.body);
-                for(const auto& rhs: rhss)
-                    vars = merge_vars(vars, get_free_index_vars(rhs));
-                return pop_vars(rhss.size(), vars);
+                for(auto bind = e.binds.rbegin(); bind != e.binds.rend(); ++bind)
+                {
+                    if (auto nonrec = std::get_if<NonRec>(&*bind))
+                        vars = merge_vars(get_free_index_vars(nonrec->rhs),
+                                          pop_vars(1, std::move(vars)));
+                    else
+                    {
+                        const auto& rhss = std::get<Rec>(*bind).rhss;
+                        for(const auto& rhs: rhss)
+                            vars = merge_vars(vars, get_free_index_vars(rhs));
+                        vars = pop_vars(rhss.size(), std::move(vars));
+                    }
+                }
+                return vars;
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
@@ -193,16 +199,30 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                if (auto nonrec = e.to_nonrec())
-                    return Let(NonRec{remap_free_indices(nonrec->rhs, mapping, depth)},
-                               remap_free_indices(e.body, mapping, depth + 1));
-
-                const auto& rhss = e.to_rec()->rhss;
-                int n = rhss.size();
-                vector<Exp> remapped;
-                for(const auto& rhs: rhss)
-                    remapped.push_back(remap_free_indices(rhs, mapping, depth + n));
-                return Let(Rec(std::move(remapped)), remap_free_indices(e.body, mapping, depth + n));
+                vector<Bind> binds;
+                int bind_depth = depth;
+                for(const auto& bind: e.binds)
+                {
+                    if (auto nonrec = std::get_if<NonRec>(&bind))
+                    {
+                        binds.push_back(NonRec{
+                            remap_free_indices(nonrec->rhs, mapping, bind_depth)});
+                        bind_depth++;
+                    }
+                    else
+                    {
+                        const auto& rhss = std::get<Rec>(bind).rhss;
+                        int n = rhss.size();
+                        vector<Exp> remapped;
+                        for(const auto& rhs: rhss)
+                            remapped.push_back(
+                                remap_free_indices(rhs, mapping, bind_depth + n));
+                        binds.push_back(Rec(std::move(remapped)));
+                        bind_depth += n;
+                    }
+                }
+                return Let(std::move(binds),
+                           remap_free_indices(e.body, mapping, bind_depth));
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
@@ -305,21 +325,20 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                auto body = trim_normalize(e.body);
-
-                // let_op consumes nested lets with the current environment, so wrapping an
-                // immediate Let would only rescan the remaining chain at every nesting level.
-                if (not body.template to<Let>())
-                    body = trim(body);
-
-                if (auto nonrec = e.to_nonrec())
-                    return Let(NonRec{trim(trim_normalize(nonrec->rhs))},
-                               std::move(body));
-
-                vector<Exp> rhss;
-                for(const auto& rhs: e.to_rec()->rhss)
-                    rhss.push_back(trim(trim_normalize(rhs)));
-                return Let(Rec(std::move(rhss)), std::move(body));
+                vector<Bind> binds;
+                for(const auto& bind: e.binds)
+                {
+                    if (auto nonrec = std::get_if<NonRec>(&bind))
+                        binds.push_back(NonRec{trim(trim_normalize(nonrec->rhs))});
+                    else
+                    {
+                        vector<Exp> rhss;
+                        for(const auto& rhs: std::get<Rec>(bind).rhss)
+                            rhss.push_back(trim(trim_normalize(rhs)));
+                        binds.push_back(Rec(std::move(rhss)));
+                    }
+                }
+                return Let(std::move(binds), trim(trim_normalize(e.body)));
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
@@ -376,14 +395,21 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                if (auto nonrec = e.to_nonrec())
-                    return Let(NonRec{trim_unnormalize(untrim(nonrec->rhs))},
-                               trim_unnormalize(untrim(e.body)));
-
-                vector<Exp> rhss;
-                for(const auto& rhs: e.to_rec()->rhss)
-                    rhss.push_back(trim_unnormalize(untrim(rhs)));
-                return Let(Rec(std::move(rhss)), trim_unnormalize(untrim(e.body)));
+                vector<Bind> binds;
+                for(const auto& bind: e.binds)
+                {
+                    if (auto nonrec = std::get_if<NonRec>(&bind))
+                        binds.push_back(NonRec{
+                            trim_unnormalize(untrim(nonrec->rhs))});
+                    else
+                    {
+                        vector<Exp> rhss;
+                        for(const auto& rhs: std::get<Rec>(bind).rhss)
+                            rhss.push_back(trim_unnormalize(untrim(rhs)));
+                        binds.push_back(Rec(std::move(rhss)));
+                    }
+                }
+                return Let(std::move(binds), trim_unnormalize(untrim(e.body)));
             }
             else if constexpr (std::is_same_v<T, Case>)
             {

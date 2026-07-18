@@ -10,9 +10,9 @@ namespace
     void check_exp_equality_policies()
     {
         require(Runtime::Exp(Runtime::Let(
-                    Runtime::NonRec{Runtime::Int(1)}, Runtime::IndexVar(0))) !=
+                    {Runtime::NonRec{Runtime::Int(1)}}, Runtime::IndexVar(0))) !=
                     Runtime::Exp(Runtime::Let(
-                        Runtime::Rec({Runtime::Int(1)}), Runtime::IndexVar(0))),
+                        {Runtime::Rec({Runtime::Int(1)})}, Runtime::IndexVar(0))),
                 "Runtime equality should distinguish NonRec from Rec");
 
         const double nan = std::numeric_limits<double>::quiet_NaN();

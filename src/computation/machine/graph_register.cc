@@ -2139,11 +2139,12 @@ void reg_heap::check_reg_vars_are_pinned(const Runtime::Exp& E) const
         }
         else if constexpr (std::is_same_v<T, Runtime::Let>)
         {
-            if (auto nonrec = e.to_nonrec())
-                check_reg_vars_are_pinned(nonrec->rhs);
-            else
-                for(const auto& rhs: e.to_rec()->rhss)
-                    check_reg_vars_are_pinned(rhs);
+            for(const auto& bind: e.binds)
+                if (auto nonrec = std::get_if<Runtime::NonRec>(&bind))
+                    check_reg_vars_are_pinned(nonrec->rhs);
+                else
+                    for(const auto& rhs: std::get<Runtime::Rec>(bind).rhss)
+                        check_reg_vars_are_pinned(rhs);
             check_reg_vars_are_pinned(e.body);
         }
         else if constexpr (std::is_same_v<T, Runtime::Case>)

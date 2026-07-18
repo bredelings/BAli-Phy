@@ -207,7 +207,7 @@ namespace Runtime
 
         // NOTE: This preserves the existing recursive indexing of the argument
         // batch.  Nested NonRec lets require removing and recalculating shifts.
-        return Let(Rec(std::move(args)), FunctionApp(std::move(head), std::move(app_args)));
+        return Let({Rec(std::move(args))}, FunctionApp(std::move(head), std::move(app_args)));
     }
 
     int count_lambdas(const Exp& E)
@@ -408,13 +408,20 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                if (auto nonrec = e.to_nonrec())
-                    return "let " + print(nonrec->rhs) + " in " + print(e.body);
-
-                vector<std::string> rhss;
-                for(const auto& rhs: e.to_rec()->rhss)
-                    rhss.push_back(print(rhs));
-                return "letrec {" + join(rhss, "; ") + "} in " + print(e.body);
+                vector<std::string> groups;
+                for(const auto& bind: e.binds)
+                {
+                    if (auto nonrec = std::get_if<NonRec>(&bind))
+                        groups.push_back("let " + print(nonrec->rhs));
+                    else
+                    {
+                        vector<std::string> rhss;
+                        for(const auto& rhs: std::get<Rec>(bind).rhss)
+                            rhss.push_back(print(rhs));
+                        groups.push_back("letrec {" + join(rhss, "; ") + "}");
+                    }
+                }
+                return join(groups, "; ") + " in " + print(e.body);
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
@@ -558,11 +565,14 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                if (auto nonrec = e.to_nonrec())
-                    check_invariants(nonrec->rhs);
-                else
-                    for(const auto& rhs: e.to_rec()->rhss)
-                        check_invariants(rhs);
+                assert(not e.binds.empty());
+                assert(not e.body.template to<Let>());
+                for(const auto& bind: e.binds)
+                    if (auto nonrec = std::get_if<NonRec>(&bind))
+                        check_invariants(nonrec->rhs);
+                    else
+                        for(const auto& rhs: std::get<Rec>(bind).rhss)
+                            check_invariants(rhs);
                 check_invariants(e.body);
             }
             else if constexpr (std::is_same_v<T, Case>)
@@ -614,11 +624,12 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                if (auto nonrec = e.to_nonrec())
-                    check_no_reg_refs(nonrec->rhs);
-                else
-                    for(const auto& rhs: e.to_rec()->rhss)
-                        check_no_reg_refs(rhs);
+                for(const auto& bind: e.binds)
+                    if (auto nonrec = std::get_if<NonRec>(&bind))
+                        check_no_reg_refs(nonrec->rhs);
+                    else
+                        for(const auto& rhs: std::get<Rec>(bind).rhss)
+                            check_no_reg_refs(rhs);
                 check_no_reg_refs(e.body);
             }
             else if constexpr (std::is_same_v<T, Case>)
@@ -663,11 +674,12 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                if (auto nonrec = e.to_nonrec())
-                    check_translated(nonrec->rhs);
-                else
-                    for(const auto& rhs: e.to_rec()->rhss)
-                        check_translated(rhs);
+                for(const auto& bind: e.binds)
+                    if (auto nonrec = std::get_if<NonRec>(&bind))
+                        check_translated(nonrec->rhs);
+                    else
+                        for(const auto& rhs: std::get<Rec>(bind).rhss)
+                            check_translated(rhs);
                 check_translated(e.body);
             }
             else if constexpr (std::is_same_v<T, Case>)

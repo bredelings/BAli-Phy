@@ -267,41 +267,33 @@ closure let_op(OperationArgs& Args)
 
     auto C  = Args.current_closure();
 
-    while (true)
+    assert(C.has_code());
+    auto runtime_let = C.get_code().to<Runtime::Let>();
+    assert(runtime_let);
+
+    for(const auto& bind: runtime_let->binds)
     {
-	int start = C.Env.size();
-
-        assert(C.has_code());
-        if (auto runtime_let = C.get_code().to<Runtime::Let>())
+        if (auto nonrec = std::get_if<Runtime::NonRec>(&bind))
         {
-            if (auto nonrec = runtime_let->to_nonrec())
-            {
-                auto rhs = get_trimmed(nonrec->rhs, C.Env);
-                auto reg = Args.allocate_reg();
-                M.set_C(reg, std::move(rhs));
-                C.Env.push_back(reg);
-
-                C = get_trimmed(runtime_let->body, C.Env);
-                continue;
-            }
-
-            const auto& rhss = runtime_let->to_rec()->rhss;
+            auto rhs = get_trimmed(nonrec->rhs, C.Env);
+            auto reg = Args.allocate_reg();
+            M.set_C(reg, std::move(rhs));
+            C.Env.push_back(reg);
+        }
+        else
+        {
+            int start = C.Env.size();
+            const auto& rhss = std::get<Runtime::Rec>(bind).rhss;
             int n_binds = rhss.size();
 
-            // 1. Allocate the new vars on the heap
-            for(int i=0;i<n_binds;i++)
-                C.Env.push_back( Args.allocate_reg() );
+            // Allocate the recursive group before closing any of its RHSs.
+            for(int i = 0; i < n_binds; i++)
+                C.Env.push_back(Args.allocate_reg());
 
-            // 2. Substitute the new heap vars for the var vars in expression T and in the bodies
-            for(int i=0;i<n_binds;i++)
+            for(int i = 0; i < n_binds; i++)
                 M.set_C(C.Env[start+i], get_trimmed(rhss[i], C.Env));
-
-            C = get_trimmed(runtime_let->body, C.Env);
-            continue;
         }
-
-        break;
     }
 
-    return C;
+    return get_trimmed(runtime_let->body, C.Env);
 }

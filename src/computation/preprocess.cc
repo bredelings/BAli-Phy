@@ -44,15 +44,20 @@ namespace Runtime
             }
             else if constexpr (std::is_same_v<T, Let>)
             {
-                if (auto nonrec = e.to_nonrec())
-                    return Let(NonRec{untranslate_vars(nonrec->rhs, ids)},
-                               untranslate_vars(e.body, ids));
-
-                vector<Exp> rhss;
-                rhss.reserve(e.to_rec()->rhss.size());
-                for(const auto& rhs: e.to_rec()->rhss)
-                    rhss.push_back(untranslate_vars(rhs, ids));
-                return Let(Rec(std::move(rhss)), untranslate_vars(e.body, ids));
+                vector<Bind> binds;
+                for(const auto& bind: e.binds)
+                {
+                    if (auto nonrec = std::get_if<NonRec>(&bind))
+                        binds.push_back(NonRec{untranslate_vars(nonrec->rhs, ids)});
+                    else
+                    {
+                        vector<Exp> rhss;
+                        for(const auto& rhs: std::get<Rec>(bind).rhss)
+                            rhss.push_back(untranslate_vars(rhs, ids));
+                        binds.push_back(Rec(std::move(rhss)));
+                    }
+                }
+                return Let(std::move(binds), untranslate_vars(e.body, ids));
             }
             else if constexpr (std::is_same_v<T, Case>)
             {

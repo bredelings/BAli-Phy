@@ -20,22 +20,28 @@ namespace
     Core::Exp<> inverse_preprocess_test_core()
     {
         Core::Var<> x("x");
+        Core::Var<> z("z");
         Core::Var<> y("y");
+        Core::Var<> w("w");
         Core::Var<> p("p");
         Core::Var<> q("q");
 
         Core::Decls<> decls;
-        decls.push_back({y, Core::ConApp<>{"Pair", {x, int_constant(3)}}});
+        decls.push_back({y, Core::ConApp<>{"Pair", {z, x}}});
 
         Core::Pattern<> pair_pat;
         pair_pat.head = "Pair";
         pair_pat.args = {p, q};
 
         Core::Alt<> pair_alt{pair_pat, Core::ConApp<>{"Pair", {q, p}}};
-        Core::Alt<> wildcard_alt{{}, x};
+        Core::Alt<> wildcard_alt{{}, z};
 
-        Core::Exp<> body = Core::Let<>{
-            Core::Rec<>{decls}, Core::Exp<>(Core::Case<>{y, {pair_alt, wildcard_alt}})};
+        Core::Exp<> body = Core::Case<>{w, {pair_alt, wildcard_alt}};
+        body = Core::Let<>{Core::NonRec<>{{w, y}}, std::move(body)};
+        body = Core::Let<>{Core::Rec<>{decls}, std::move(body)};
+        body = Core::Let<>{
+            Core::NonRec<>{{z, Core::ConApp<>{"Pair", {x, int_constant(3)}}}},
+            std::move(body)};
         return Core::Lambda<>{x, body};
     }
 
@@ -46,6 +52,17 @@ namespace
 
         FreshVarState fresh1;
         auto prepared = prepare_for_translation(fresh1, original);
+
+        auto lambda = prepared.to<Runtime::Lambda>();
+        require(bool(lambda), "mixed binding test should prepare to a Runtime lambda");
+        auto let = lambda->body.to<Runtime::Let>();
+        require(bool(let), "mixed binding test should retain its Runtime let");
+        require(let->binds.size() == 3,
+                "contiguous Core lets should form one Runtime let chain");
+        require(std::holds_alternative<Runtime::NonRec>(let->binds[0]) and
+                    std::holds_alternative<Runtime::Rec>(let->binds[1]) and
+                    std::holds_alternative<Runtime::NonRec>(let->binds[2]),
+                "flattened Runtime let should preserve binding-group order");
 
         auto untrimmed = Runtime::trim_unnormalize(prepared);
         auto deindexed = deindexify(untrimmed);

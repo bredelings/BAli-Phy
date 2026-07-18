@@ -720,19 +720,19 @@ namespace Runtime
 
     struct Let: intrusive_counted<Let>
     {
-        Bind bind;
+        std::vector<Bind> binds;
         Exp body;
 
-        const NonRec* to_nonrec() const { return std::get_if<NonRec>(&bind); }
-        const Rec* to_rec() const { return std::get_if<Rec>(&bind); }
-
         Let() = default;
-        Let(Bind bs, Exp b):bind(std::move(bs)), body(std::move(b)) {}
+        Let(std::vector<Bind> bs, Exp b):binds(std::move(bs)), body(std::move(b))
+        {
+            assert(not binds.empty());
+        }
 
         bool operator==(const Let&) const = default;
 
         template <class Archive>
-        void serialize(Archive& ar) { ar(bind, body); }
+        void serialize(Archive& ar) { ar(binds, body); }
     };
 
     struct WildcardPattern

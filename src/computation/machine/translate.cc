@@ -43,16 +43,20 @@ Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E)
         }
         else if constexpr (std::is_same_v<T, Runtime::Let>)
         {
-            if (auto nonrec = e.to_nonrec())
-                return Runtime::Let(Runtime::NonRec{translate_refs(nonrec->rhs)},
-                                    translate_refs(e.body));
-
-            const auto& rhss = e.to_rec()->rhss;
-            vector<Runtime::Exp> translated;
-            for(const auto& rhs: rhss)
-                translated.push_back(translate_refs(rhs));
-            return Runtime::Let(Runtime::Rec(std::move(translated)),
-                                translate_refs(e.body));
+            vector<Runtime::Bind> binds;
+            for(const auto& bind: e.binds)
+            {
+                if (auto nonrec = std::get_if<Runtime::NonRec>(&bind))
+                    binds.push_back(Runtime::NonRec{translate_refs(nonrec->rhs)});
+                else
+                {
+                    vector<Runtime::Exp> rhss;
+                    for(const auto& rhs: std::get<Runtime::Rec>(bind).rhss)
+                        rhss.push_back(translate_refs(rhs));
+                    binds.push_back(Runtime::Rec(std::move(rhss)));
+                }
+            }
+            return Runtime::Let(std::move(binds), translate_refs(e.body));
         }
         else if constexpr (std::is_same_v<T, Runtime::Case>)
         {
