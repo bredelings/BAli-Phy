@@ -167,15 +167,12 @@ namespace statistics {
     int find_smallest_interval(const vector<double>& values, int delta)
     {
         const int N = values.size();
-    
-        int ways = N - delta - 1;
 
         // scan for the interval with the smallest width
         double width = values.back() - values[0];
         int best = 0;
-        for(int i=0;i<ways;i++)
+        for(int i=0; i+delta<N; i++)
         {
-            assert(i+delta < N);
             double w = values[i+delta] - values[i];
             if (w < width)
             {
@@ -401,4 +398,3 @@ namespace statistics {
         return sqrt(E);
     }
 }
-

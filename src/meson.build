@@ -248,6 +248,14 @@ foreach tool: tools + prefixed_tools
          depends: tool_exe)
   endif
 
+  if tool == 'statreport'
+    statreport_test_script = files('../tests/tools/statreport/run-tests.py')
+    test('statreport interval selection',
+         python,
+         args: [statreport_test_script] + python_tool_wrapper_args + [tool_exe],
+         depends: tool_exe)
+  endif
+
   if tool == 'trees-distances'
     trees_distances_test_script = files('../tests/tools/trees-distances/run-tests.py')
     test('trees-distances matching metric',
