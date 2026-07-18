@@ -153,7 +153,9 @@ unsigned geometric(double p) {
 int negative_binomial(int r, double p)
 {
     assert(r >= 0);
-    assert(0 <= p and p <= 1);
+    assert(0 < p and p <= 1);
+
+    if (r == 0 or p == 1) return 0;
 
     return std::negative_binomial_distribution<>(r,p)(standard_rng);
 }
@@ -195,4 +197,3 @@ valarray<double> dirichlet(const valarray<double>& n)
     x /= x.sum();
     return x;
 }
-

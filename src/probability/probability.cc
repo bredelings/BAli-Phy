@@ -440,10 +440,14 @@ double gamma_quantile(double p, double a, double b)
 // make a special taylor series just for it.
 log_double_t negative_binomial_pdf(int r, double p, int k)
 {
+    assert(r >= 0);
+    assert(p > 0.0 and p <= 1.0);
+
     if (k < 0) return 0;
+    if (r == 0 or p == 1.0) return (k == 0) ? 1 : 0;
 
     log_double_t Pr;
-    Pr.log() = log_choose(k + r - 1, k) + r*log1p(-p) + k*log(p);
+    Pr.log() = log_choose(k + r - 1, k) + r*log(p) + k*log1p(-p);
 
     return Pr;
 }

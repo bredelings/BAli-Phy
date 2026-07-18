@@ -268,7 +268,7 @@ extern "C" closure builtin_function_negative_binomial_density(OperationArgs& Arg
     double p = Args.evaluate_slot_to_value(1).as_double();
     int k = Args.evaluate_slot_to_value(2).as_int();
 
-    return { ::binomial_pdf(r,p,k) };
+    return { ::negative_binomial_pdf(r,p,k) };
 }
 
 extern "C" closure builtin_function_sample_negative_binomial(OperationArgs& Args)

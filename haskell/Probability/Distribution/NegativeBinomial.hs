@@ -12,27 +12,27 @@ instance Dist NegativeBinomial where
     type Result NegativeBinomial = Int
 
 instance IOSampleable NegativeBinomial where
-    sampleIO (NegativeBinomial r p) = sample_negative_binomial r p
+    sampleIO (NegativeBinomial r p) = sample_negative_binomial r (toFloating p)
 
 instance HasPdf NegativeBinomial where
-    pdf (NegativeBinomial r p) = negative_binomial_density r p
+    pdf (NegativeBinomial r p) = negative_binomial_density r (toFloating p)
 
 instance Dist1D NegativeBinomial where
     cdf (NegativeBinomial r p) = undefined
     lower_bound _ = Just 0
 
 instance MaybeMean NegativeBinomial where
-    maybeMean (NegativeBinomial r p) = Just $ r * toFloating $ (1-p)/p
+    maybeMean (NegativeBinomial r p) = Just $ fromIntegral r * toFloating ((1-p)/p)
 
-instance Mean NegativeBinomial where
+instance Mean NegativeBinomial
 
 instance MaybeVariance NegativeBinomial where
-    maybeVariance (NegativeBinomial r p) = Just $ r * toFloating $ (1-p)/(p*p)
+    maybeVariance (NegativeBinomial r p) = Just $ fromIntegral r * toFloating ((1-p)/(p*p))
 
 instance Variance NegativeBinomial
 
 instance HasAnnotatedPdf NegativeBinomial where
-    annotated_densities dist x = return [ pdf dist x ]
+    annotated_densities dist = make_densities $ pdf dist
 
 instance Sampleable NegativeBinomial where
     sample dist@(NegativeBinomial r p) = RanDistribution2 dist (negative_binomial_effect r)
