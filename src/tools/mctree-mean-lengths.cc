@@ -340,6 +340,7 @@ int main(int argc,char* argv[])
 
 	try {
 	    scan_trees(std::cin,skip,last,subsample,prune,Q.T.get_leaf_labels(),A);
+	    A.finalize();
 	}
 	catch (std::exception& e) 
 	{

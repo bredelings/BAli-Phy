@@ -161,6 +161,7 @@ int main(int argc,char* argv[])
         count_pair_distances D(RF);
 
         scan_trees(std::cin, skip, max, subsample, D);
+        D.finalize();
 
         //------- Merge lengths and topology -------//
         vector<string> s_out;

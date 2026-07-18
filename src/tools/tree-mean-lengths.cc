@@ -369,6 +369,7 @@ int main(int argc,char* argv[])
 	if ( args.count("simple") ) {
 	    accum_branch_lengths_ignore_topology A(Q);
 	    scan_trees(std::cin,skip,last,subsample,prune,Q.get_leaf_labels(), A);
+	    A.finalize();
 	    for(int b=0;b<B;b++)
 		Q.branch(b).set_length(A.m1[b]);
 	    cout<<Q<<endl;
@@ -387,6 +388,7 @@ int main(int argc,char* argv[])
                 istream_or_ifstream f(std::cin,"-",file);
                 scan_trees(f,skip,last,subsample,prune,Q.get_leaf_labels(), A);
             }
+            A.finalize();
 	}
 	catch (std::exception& e) 
 	{

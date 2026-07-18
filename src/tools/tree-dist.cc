@@ -369,9 +369,6 @@ void scan_trees(istream& file, int skip, optional<int> last, int subsample, cons
     RootedSequenceTree T;
     while (trees->next_tree(T))
 	op(T);
-
-    //---------------------- Finalize ----------------------//
-    op.finalize();
 }
 
 void scan_trees(istream& file,int skip,optional<int> last,int subsample, const vector<string>& prune,
