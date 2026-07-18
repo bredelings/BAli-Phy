@@ -67,7 +67,7 @@ extern "C" R::Exp simple_function_signum_integer(vector<R::Exp>& args)
 {
     integer x = get_arg(args).as_integer();
 
-    integer result = (x > 0 ? 1 : 0) - (x < 0 ? -1 : 0);
+    integer result = (x > 0 ? 1 : 0) - (x < 0 ? 1 : 0);
 
     return result;
 }
@@ -117,7 +117,7 @@ extern "C" R::Exp simple_function_signum_int(vector<R::Exp>& args)
 {
     int x = get_arg(args).as_int();
 
-    auto result = x > 0 ? 1 : 0;
+    auto result = (x > 0 ? 1 : 0) - (x < 0 ? 1 : 0);
 
     return { result };
 }
@@ -268,7 +268,7 @@ extern "C" R::Exp simple_function_signum_double(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_double();
 
-    double result = (x > 0.0 ? 1.0 : 0.0) - (x < 0.0 ? -1.0 : 0.0);
+    double result = (x > 0.0 ? 1.0 : 0.0) - (x < 0.0 ? 1.0 : 0.0);
 
     return {result};
 }
