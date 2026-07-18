@@ -1,5 +1,5 @@
   pairIORaw
-  Pair:builtin_function_c_pair
+  Pair:simple_function_c_pair
   RawImport PairIO
   Int -> Double -> Int -> EPair Int Double
   0: (Int, Double)

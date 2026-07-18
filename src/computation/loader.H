@@ -28,6 +28,7 @@ public:
 
     std::set<std::string> recompile_modules;
 
+    // The second key is the exported C symbol, including its calling-convention prefix.
     mutable std::map<std::tuple<std::string,std::string>, void*> cached_builtins;
 
     bool try_add_plugin_path(const std::filesystem::path& path);

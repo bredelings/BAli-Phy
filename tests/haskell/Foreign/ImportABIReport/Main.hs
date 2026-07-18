@@ -6,7 +6,7 @@ import qualified Data.Vector.Unboxed as U
 
 type PairIO = (Int, Double) -> IO (Int, Double)
 
-foreign import bpcall "Pair:c_pair"
+foreign import ecall "Pair:c_pair"
     pairIORaw :: RawImport PairIO
 
 type VectorIO = U.Vector Int -> IO (U.Vector Double)

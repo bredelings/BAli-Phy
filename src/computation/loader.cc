@@ -395,12 +395,8 @@ std::string function_prefix(const std::string& call_conv)
         throw myexception()<<"Calling convention '"<<call_conv<<"' not recognized";
 }
 
-void* load_builtin_(const fs::path& filename, const string& raw_symbol_name, const std::string& call_conv)
+void* load_builtin_(const fs::path& filename, const string& symbol_name)
 {
-    const string builtin_prefix = function_prefix(call_conv);
-
-    string symbol_name = builtin_prefix + raw_symbol_name;
-
     // load the library
     void* library = dlopen(filename.string().c_str(), RTLD_LAZY);
     if (not library)
@@ -413,7 +409,7 @@ void* load_builtin_(const fs::path& filename, const string& raw_symbol_name, con
     void* fn =  dlsym(library, symbol_name.c_str());
     const char* dlsym_error = dlerror();
     if (dlsym_error)
-	throw myexception() << "Cannot load symbol for builtin '"<<raw_symbol_name<<"' from file "<<filename<<": " << dlsym_error;
+	throw myexception() << "Cannot load symbol for builtin '"<<symbol_name<<"' from file "<<filename<<": " << dlsym_error;
 
     return fn;
 }
@@ -422,10 +418,11 @@ void* module_loader::load_builtin_ptr(const string& plugin_name, const string& s
 {
     // Presumably on windows we don't need to search separately for ".DLL", since the FS isn't case sensitive.
     auto filename = find_plugin(plugin_name);
+    auto exported_symbol_name = function_prefix(call_conv) + symbol_name;
 
-    auto op = tuple<string,string>(plugin_name, symbol_name);
+    auto op = tuple<string,string>(plugin_name, exported_symbol_name);
     if (not cached_builtins.count(op))
-	cached_builtins.insert({op, load_builtin_(filename, symbol_name, call_conv)});
+	cached_builtins.insert({op, load_builtin_(filename, exported_symbol_name)});
 
     return cached_builtins.at(op);
 }
