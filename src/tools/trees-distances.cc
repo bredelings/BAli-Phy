@@ -626,11 +626,11 @@ double matching_distance(const tree_record& t1, const tree_record& t2)
 
     for(int i=t1.n_internal_branches();i<N;i++)
 	for(int j=0;j<t2.n_internal_branches();j++)
-	    C(i,j) = split_distance_to_dummy(t1.partitions[i]);
+	    C(i,j) = split_distance_to_dummy(t2.partitions[j]);
 
     for(int j=t2.n_internal_branches();j<N;j++)
 	for(int i=0;i<t1.n_internal_branches();i++)
-	    C(i,j) = split_distance_to_dummy(t2.partitions[j]);
+	    C(i,j) = split_distance_to_dummy(t1.partitions[i]);
 
     return min_perfect_matching_cost(C);
 }
