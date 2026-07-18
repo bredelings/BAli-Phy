@@ -285,7 +285,7 @@ Runtime::Exp prepare_for_translation(FreshVarState& state, const Core::Exp<>& E)
 closure translate_prepared(reg_heap& heap, Runtime::Exp E, closure&& C)
 {
     Runtime::check_invariants(E);
-    E = heap.translate_refs(E, C.Env);
+    E = heap.translate_refs(E);
     Runtime::check_translated(E);
     C.set_code( std::move(E) );
     return std::move(C);

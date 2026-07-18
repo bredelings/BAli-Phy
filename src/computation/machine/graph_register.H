@@ -464,7 +464,7 @@ public:
     int reg_for_id(const Runtime::GlobalVar&);
 
     /// Resolve runtime globals and verify that direct register references are pinned.
-    Runtime::Exp translate_refs(const Runtime::Exp& R, closure::Env_t&, int depth = 0);
+    Runtime::Exp translate_refs(const Runtime::Exp& R);
 
     closure preprocess(Runtime::Exp E, closure::Env_t Env = {});
 
