@@ -221,9 +221,13 @@ void slide_node_slice_function::set_value(double x)
 
        Solution: Store x0 and y0 separately, and compute y = y0 + (x0-x).
     */
+    double l2 = y0+(x0-x);
+
     assert(0 <= x and x <= (x0+y0));
+    assert(0 <= l2 and l2 <= (x0+y0));
+
     static_cast<Parameters&>(C).setlength(b1,x);
-    static_cast<Parameters&>(C).setlength(b2,y0+(x0-x));
+    static_cast<Parameters&>(C).setlength(b2,l2);
 }
 
 double slide_node_slice_function::current_value() const
@@ -459,9 +463,9 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,const LogDensity&
 std::ostream& operator<<(std::ostream& o, optional<LogDensity> l)
 {
     if (l)
-        o<<"OOB";
-    else
         o<<l.value();
+    else
+        o<<"OOB";
     return o;
 }
 
@@ -594,6 +598,8 @@ bool pre_slice_sampling_check_OK(double x0, slice_function& g)
     assert(g.in_range(x0));
 
     auto gx0 = g();
+    assert(gx0.isfinite());
+
     LogDensity gx0_v2 = gx0;
     if (log_verbose >= 4)
         gx0_v2 = *g(x0);
@@ -685,7 +691,7 @@ double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
 {
     if (log_verbose >= 4)
     {
-        std::cerr<<"slice_sampling_doubling_: x0 = "<<x0<<" w = "<<w<<"\n";
+        std::cerr<<"slice_sampling_doubling_: x0 = "<<x0<<" w = "<<w<<" Pr(x0) = "<<g()<<"\n";
     }
 
     // 0. Check that the values are OK
