@@ -283,11 +283,6 @@ namespace
         return C.get_code().to<R::IndexVar>();
     }
 
-    bool is_trim_code(const closure& C)
-    {
-        return C.get_code().to<R::Trim>();
-    }
-
     o_operation_fn operation_for_reduction(const closure& C)
     {
         return R::exp_variant::visit([](const auto& value) -> o_operation_fn
@@ -462,7 +457,6 @@ EvalResult reg_heap::incremental_evaluate1_changeable_(int r)
 
     assert(not closure_at(r).is_reg_ref());
     assert(not closure_at(r).get_code().is_whnf());
-    assert(not is_trim_code(closure_at(r)));
 
     // 3. Reduction: Operation (includes @, case, +, etc.)
 
@@ -621,11 +615,6 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
             }
 
         }
-
-#ifndef NDEBUG
-        else if (is_trim_code(closure_at(r)))
-            std::abort();
-#endif
 
         // 3. Reduction: Operation (includes @, case, +, etc.)
         else
@@ -1205,11 +1194,6 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
 	    }
         }
 
-#ifndef NDEBUG
-        else if (is_trim_code(closure_at(r)))
-            std::abort();
-#endif
-
         // 3. Reduction: Operation (includes @, case, +, etc.)
         else
         {
@@ -1597,11 +1581,6 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
         // Check for WHNF *OR* heap variables
         else if (closure_at(r).get_code().is_whnf())
             mark_reg_constant(r);
-
-#ifndef NDEBUG
-        else if (is_trim_code(closure_at(r)))
-            std::abort();
-#endif
 
         // 3. Reduction: Operation (includes @, case, +, etc.)
         else

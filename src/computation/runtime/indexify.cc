@@ -90,7 +90,7 @@ Runtime::Exp indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
             if (auto nonrec = current_let->to_nonrec())
             {
                 auto rhs = indexify(nonrec->decl.body, variables);
-                binds.push_back(Runtime::NonRec{std::move(rhs)});
+                binds.push_back(Runtime::NonRec{Runtime::trim(rhs)});
                 variables.push_back(nonrec->decl.x);
             }
             else
@@ -99,16 +99,16 @@ Runtime::Exp indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
                 for(const auto& [x,_]: decls)
                     variables.push_back(x);
 
-                vector<Runtime::Exp> rhss;
+                vector<Runtime::TrimmedExp> rhss;
                 for(const auto& [_,rhs]: decls)
-                    rhss.push_back(indexify(rhs, variables));
+                    rhss.push_back(Runtime::trim(indexify(rhs, variables)));
                 binds.push_back(Runtime::Rec(std::move(rhss)));
             }
 
             current = &current_let->body;
         }
 
-        auto body = indexify(*current, variables);
+        auto body = Runtime::trim(indexify(*current, variables));
         variables.resize(old_variable_count);
 
         return Runtime::Let(std::move(binds), std::move(body));
@@ -123,12 +123,12 @@ Runtime::Exp indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
         for(auto& [pattern, body]: C->alts)
         {
             Runtime::Pattern pattern2;
-            Runtime::Exp body2;
+            Runtime::TrimmedExp body2;
 
             if (pattern.is_wildcard_pat())
             {
                 pattern2 = Runtime::WildcardPattern{};
-                body2 = indexify(body, variables);
+                body2 = Runtime::trim(indexify(body, variables));
             }
             else
             {
@@ -137,7 +137,7 @@ Runtime::Exp indexify(const Core::Exp<>& E, vector<Core::Var<>>& variables)
                 for(auto& arg: pattern.args)
                     variables.push_back(arg);
 
-                body2 = indexify(body, variables);
+                body2 = Runtime::trim(indexify(body, variables));
 
                 for(auto& _: pattern.args)
                     variables.pop_back();
@@ -249,6 +249,21 @@ Core::Pattern<> deindexify_pattern(const Runtime::Pattern& pattern, vector<Core:
         else
             std::abort();
     }, pattern);
+}
+
+Core::Exp<> deindexify(const Runtime::Exp&, vector<Core::Var<>>&);
+
+// Reconstructs the lexical environment projected into a structurally trimmed body.
+Core::Exp<> deindexify(const Runtime::TrimmedExp& E, vector<Core::Var<>>& variables)
+{
+    vector<Core::Var<>> projected;
+    projected.reserve(E.indices.size());
+    for(auto index = E.indices.rbegin(); index != E.indices.rend(); ++index)
+    {
+        assert(*index < variables.size());
+        projected.push_back(variables[variables.size() - 1 - *index]);
+    }
+    return deindexify(E.body, projected);
 }
 
 Core::Exp<> deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
@@ -402,10 +417,6 @@ Core::Exp<> deindexify(const Runtime::Exp& E, vector<Core::Var<>>& variables)
 
         return Core::BuiltinOp<>{e->lib_name, e->func_name, e->call_conv, args, op};
     }
-    else if (E.to<Runtime::Trim>())
-    {
-        return deindexify(Runtime::trim_unnormalize(E), variables);
-    }
     else
         std::abort();
 }
@@ -430,5 +441,5 @@ Core::Exp<> deindexify(const closure& C)
     for(int r: C.Env)
         variables.push_back(env_reg_core_var(r));
 
-    return deindexify(trim_unnormalize(C).get_code(), variables);
+    return deindexify(C.get_code(), variables);
 }

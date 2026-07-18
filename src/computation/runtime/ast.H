@@ -53,7 +53,6 @@ namespace Runtime
     struct FunctionApp;
     struct ConstructorApp;
     struct OperationApp;
-    struct Trim;
 
     template <typename T>
     using ExpPtr = boost::intrusive_ptr<const T>;
@@ -187,7 +186,6 @@ namespace Runtime
     template <> struct is_boxed_exp_node<FunctionApp>: std::true_type {};
     template <> struct is_boxed_exp_node<ConstructorApp>: std::true_type {};
     template <> struct is_boxed_exp_node<OperationApp>: std::true_type {};
-    template <> struct is_boxed_exp_node<Trim>: std::true_type {};
 
     template <typename T, std::enable_if_t<is_boxed_exp_node<T>::value, int> = 0>
     void intrusive_ptr_add_ref(const T*);
@@ -220,8 +218,7 @@ namespace Runtime
             ExpPtr<Case>,
             ExpPtr<FunctionApp>,
             ExpPtr<ConstructorApp>,
-            ExpPtr<OperationApp>,
-            ExpPtr<Trim>
+            ExpPtr<OperationApp>
         >;
 
         value_type value;
@@ -262,7 +259,6 @@ namespace Runtime
         Exp(FunctionApp);
         Exp(ConstructorApp);
         Exp(OperationApp);
-        Exp(Trim);
 
         bool empty() const
         {
@@ -489,12 +485,6 @@ namespace Runtime
                 value = std::move(node);
                 break;
             }
-            case 17: {
-                ExpPtr<Trim> node;
-                ar(node);
-                value = std::move(node);
-                break;
-            }
             default:
                 throw std::runtime_error("Invalid Runtime::Exp archive tag");
             }
@@ -502,6 +492,22 @@ namespace Runtime
     };
 
     bool operator==(const Exp&, const Exp&);
+
+    struct TrimmedExp
+    {
+        std::vector<int> indices;
+        Exp body;
+
+        TrimmedExp() = default;
+        TrimmedExp(std::vector<int> is, Exp b)
+            :indices(std::move(is)), body(std::move(b))
+        {}
+
+        bool operator==(const TrimmedExp&) const = default;
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(indices, body); }
+    };
 
     using RIntMap = Box<std::map<int, Exp>>;
     using RPair = Box<std::pair<Exp, Exp>>;
@@ -695,7 +701,7 @@ namespace Runtime
 
     struct NonRec
     {
-        Exp rhs;
+        TrimmedExp rhs;
 
         bool operator==(const NonRec&) const = default;
 
@@ -705,10 +711,10 @@ namespace Runtime
 
     struct Rec
     {
-        std::vector<Exp> rhss;
+        std::vector<TrimmedExp> rhss;
 
         Rec() = default;
-        explicit Rec(std::vector<Exp> es):rhss(std::move(es)) { assert(not rhss.empty()); }
+        explicit Rec(std::vector<TrimmedExp> es):rhss(std::move(es)) { assert(not rhss.empty()); }
 
         bool operator==(const Rec&) const = default;
 
@@ -721,10 +727,10 @@ namespace Runtime
     struct Let: intrusive_counted<Let>
     {
         std::vector<Bind> binds;
-        Exp body;
+        TrimmedExp body;
 
         Let() = default;
-        Let(std::vector<Bind> bs, Exp b):binds(std::move(bs)), body(std::move(b))
+        Let(std::vector<Bind> bs, TrimmedExp b):binds(std::move(bs)), body(std::move(b))
         {
             assert(not binds.empty());
         }
@@ -766,10 +772,10 @@ namespace Runtime
     struct Alt
     {
         Pattern pattern;
-        Exp body;
+        TrimmedExp body;
 
         Alt() = default;
-        Alt(Pattern p, Exp b):pattern(std::move(p)), body(std::move(b)) {}
+        Alt(Pattern p, TrimmedExp b):pattern(std::move(p)), body(std::move(b)) {}
 
         bool operator==(const Alt&) const = default;
 
@@ -873,20 +879,6 @@ namespace Runtime
         void serialize(Archive& ar) { ar(head, args); }
     };
 
-    struct Trim: intrusive_counted<Trim>
-    {
-        std::vector<int> indices;
-        Exp body;
-
-        Trim() = default;
-        Trim(std::vector<int> is, Exp b):indices(std::move(is)), body(std::move(b)) {}
-
-        bool operator==(const Trim&) const = default;
-
-        template <class Archive>
-        void serialize(Archive& ar) { ar(indices, body); }
-    };
-
     inline Exp::Exp(String node):value(ExpPtr<String>(new String(std::move(node)))) {}
     inline Exp::Exp(Integer node):value(ExpPtr<Integer>(new Integer(std::move(node)))) {}
     inline Exp::Exp(GlobalVar node):value(ExpPtr<GlobalVar>(new GlobalVar(std::move(node)))) {}
@@ -896,7 +888,6 @@ namespace Runtime
     inline Exp::Exp(FunctionApp node):value(ExpPtr<FunctionApp>(new FunctionApp(std::move(node)))) {}
     inline Exp::Exp(ConstructorApp node):value(ExpPtr<ConstructorApp>(new ConstructorApp(std::move(node)))) {}
     inline Exp::Exp(OperationApp node):value(ExpPtr<OperationApp>(new OperationApp(std::move(node)))) {}
-    inline Exp::Exp(Trim node):value(ExpPtr<Trim>(new Trim(std::move(node)))) {}
 
     template <typename T, std::enable_if_t<is_boxed_exp_node<T>::value, int>>
     inline void intrusive_ptr_add_ref(const T* ptr)

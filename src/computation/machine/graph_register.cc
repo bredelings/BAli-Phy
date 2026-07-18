@@ -2141,17 +2141,17 @@ void reg_heap::check_reg_vars_are_pinned(const Runtime::Exp& E) const
         {
             for(const auto& bind: e.binds)
                 if (auto nonrec = std::get_if<Runtime::NonRec>(&bind))
-                    check_reg_vars_are_pinned(nonrec->rhs);
+                    check_reg_vars_are_pinned(nonrec->rhs.body);
                 else
                     for(const auto& rhs: std::get<Runtime::Rec>(bind).rhss)
-                        check_reg_vars_are_pinned(rhs);
-            check_reg_vars_are_pinned(e.body);
+                        check_reg_vars_are_pinned(rhs.body);
+            check_reg_vars_are_pinned(e.body.body);
         }
         else if constexpr (std::is_same_v<T, Runtime::Case>)
         {
             check_reg_vars_are_pinned(e.object);
             for(const auto& alt: e.alts)
-                check_reg_vars_are_pinned(alt.body);
+                check_reg_vars_are_pinned(alt.body.body);
         }
         else if constexpr (std::is_same_v<T, Runtime::FunctionApp>)
         {
@@ -2164,10 +2164,6 @@ void reg_heap::check_reg_vars_are_pinned(const Runtime::Exp& E) const
         {
             for(const auto& arg: e.args)
                 check_reg_vars_are_pinned(arg);
-        }
-        else if constexpr (std::is_same_v<T, Runtime::Trim>)
-        {
-            check_reg_vars_are_pinned(e.body);
         }
     });
 }
@@ -3442,12 +3438,12 @@ void reg_heap::allocate_identifiers_for_program()
 
 #ifdef DEBUG_OPTIMIZE
             std::cerr<<"     "<<x<<" := "<<body<<"\n\n";
-            std::cerr<<"     "<<x<<" := "<<preprocess_prepared(body).print()<<"\n\n\n\n";
+            std::cerr<<"     "<<x<<" := "<<preprocess(body).print()<<"\n\n\n\n";
 #endif
 
             // load the body into the machine
             assert(R != -1);
-            set_C(R, preprocess_prepared(body) );
+            set_C(R, preprocess(body) );
         }
 
         M->clear_code();

@@ -149,7 +149,7 @@ static closure alts_op(OperationArgs& Args, const closure::Env_t& Env, const clo
 	throw myexception()<<"Case argument is a lambda in '"<<Runtime::print(Runtime::Exp(runtime_case))<<"'";
 #endif
 
-    const Runtime::Exp* result_code = nullptr;
+    const Runtime::TrimmedExp* result_code = nullptr;
     closure::Env_t result_env = Env;
 
     for(int i=0;i<L and not result_code;i++)

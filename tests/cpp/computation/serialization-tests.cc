@@ -62,16 +62,19 @@ namespace
 
         Runtime::Exp case_ = Runtime::Case(
             Runtime::ConstructorApp("Data.Bool.True", 0, {}),
-            {Runtime::Alt(Runtime::ConstructorPattern("Data.Bool.True", 0), Runtime::Int(1))});
+            {Runtime::Alt(Runtime::ConstructorPattern("Data.Bool.True", 0),
+                          Runtime::TrimmedExp({}, Runtime::Int(1)))});
         check_archive_roundtrip(case_);
 
         Runtime::Exp nonrec = Runtime::Let(
-            {Runtime::NonRec{Runtime::Int(1)}}, Runtime::IndexVar(0));
+            {Runtime::NonRec{Runtime::TrimmedExp({}, Runtime::Int(1))}},
+            Runtime::TrimmedExp({0}, Runtime::IndexVar(0)));
         require(archive_roundtrip(nonrec) == nonrec,
                 "Runtime NonRec should survive serialization");
 
         Runtime::Exp rec = Runtime::Let(
-            {Runtime::Rec({Runtime::IndexVar(0)})}, Runtime::IndexVar(0));
+            {Runtime::Rec({Runtime::TrimmedExp({0}, Runtime::IndexVar(0))})},
+            Runtime::TrimmedExp({0}, Runtime::IndexVar(0)));
         require(archive_roundtrip(rec) == rec,
                 "Runtime Rec should survive serialization");
     }

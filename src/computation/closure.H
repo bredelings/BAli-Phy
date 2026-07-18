@@ -198,8 +198,6 @@ inline int lookup_in_env(const closure::Env_t& Env, int i) {return Env[Env.size(
 
 inline int closure::lookup_in_env(int i) const {return ::lookup_in_env(Env,i);}
 
-closure get_trimmed(const Runtime::Exp& code, const closure::Env_t& Env);
-
-closure trim_unnormalize(const closure& C);
+closure get_trimmed(const Runtime::TrimmedExp& code, const closure::Env_t& Env);
 
 #endif

@@ -2,7 +2,6 @@
 #include "computation/closure.H"
 #include "computation/operation.H"
 #include "computation/preprocess.H"
-#include "computation/runtime/trim.H"
 #include "util/string/join.H" // for join( )
 #include <cstdlib>
 #include <utility>
@@ -63,33 +62,18 @@ int closure::reg_for_operation_slot(int i) const
         std::abort();
 }
 
-closure get_trimmed(const Runtime::Exp& code, const closure::Env_t& Env)
+// Closes a dense expression over the lexical registers selected by its projection.
+closure get_trimmed(const Runtime::TrimmedExp& code, const closure::Env_t& Env)
 {
-    assert(not code.empty());
+    closure::Env_t trimmed_env;
+    trimmed_env.resize(code.indices.size());
 
-    if (const auto* trim = code.to<Runtime::Trim>())
+    // Runtime environments use reverse lexical indexing.
+    for(int i = 0; i < code.indices.size(); i++)
     {
-        closure::Env_t trimmed_env;
-        trimmed_env.resize(trim->indices.size());
-
-        // Since environments are indexed backwards.
-        for(int i=0;i<trim->indices.size();i++)
-        {
-            int k = trim->indices[trim->indices.size()-1-i];
-            trimmed_env[i] = lookup_in_env(Env, k);
-        }
-
-        return closure(trim->body, trimmed_env);
+        int k = code.indices[code.indices.size() - 1 - i];
+        trimmed_env[i] = lookup_in_env(Env, k);
     }
-    else
-        return closure(code, Env);
-}
 
-closure trim_unnormalize(const closure& C)
-{
-    assert(C.has_code());
-
-    closure C2 = C;
-    C2.set_code(Runtime::trim_unnormalize(C2.get_code()));
-    return C2;
+    return closure(code.body, trimmed_env);
 }

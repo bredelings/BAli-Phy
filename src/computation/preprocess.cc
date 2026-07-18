@@ -24,6 +24,14 @@ using std::endl;
 
 namespace Runtime
 {
+    Exp untranslate_vars(const Exp&, const map<int, string>&);
+
+    // Rewrites references inside a structural trim while preserving its projection.
+    TrimmedExp untranslate_vars(const TrimmedExp& E, const map<int, string>& ids)
+    {
+        return {E.indices, untranslate_vars(E.body, ids)};
+    }
+
     Exp untranslate_vars(const Exp& E, const map<int, string>& ids)
     {
         return E.visit([&](const auto& e) -> Exp
@@ -51,7 +59,7 @@ namespace Runtime
                         binds.push_back(NonRec{untranslate_vars(nonrec->rhs, ids)});
                     else
                     {
-                        vector<Exp> rhss;
+                        vector<TrimmedExp> rhss;
                         for(const auto& rhs: std::get<Rec>(bind).rhss)
                             rhss.push_back(untranslate_vars(rhs, ids));
                         binds.push_back(Rec(std::move(rhss)));
@@ -97,10 +105,6 @@ namespace Runtime
 
                 return OperationApp(e.head, e.lib_name, e.func_name, e.call_conv, std::move(args));
             }
-            else if constexpr (std::is_same_v<T, Trim>)
-            {
-                return Trim(e.indices, untranslate_vars(e.body, ids));
-            }
             else
                 return E;
         });
@@ -119,7 +123,6 @@ namespace Runtime
 Core::Exp<> unprepare_for_translation(const Runtime::Exp& E, const map<int, string>& ids)
 {
     auto E2 = Runtime::untranslate_vars(E, ids);
-    E2 = Runtime::trim_unnormalize(E2);
     return deindexify(E2);
 }
 
@@ -276,8 +279,6 @@ Runtime::Exp prepare_for_translation(FreshVarSource& source, const Core::Exp<>& 
     auto E2 = graph_normalize(source, E);
     auto R = indexify(E2);
     Runtime::check_invariants(R);
-    R = Runtime::trim_normalize(R);
-    Runtime::check_invariants(R);
     return R;
 }
 
@@ -287,43 +288,23 @@ Runtime::Exp prepare_for_translation(FreshVarState& state, const Core::Exp<>& E)
     return prepare_for_translation(source, E);
 }
 
-closure translate_prepared(reg_heap& heap, Runtime::Exp E, closure&& C)
-{
-    Runtime::check_invariants(E);
-    E = heap.translate_refs(E);
-    Runtime::check_translated(E);
-    C.set_code( std::move(E) );
-    return std::move(C);
-}
-
-closure translate_and_trim(reg_heap& heap, Runtime::Exp E, closure&& C)
-{
-    Runtime::check_invariants(E);
-    E = Runtime::trim_normalize(E);
-    return translate_prepared(heap, E, std::move(C));
-}
-
 closure reg_heap::preprocess(Runtime::Exp E, closure::Env_t Env)
 {
+    Runtime::check_invariants(E);
 #ifndef NDEBUG
     // Direct refs bypass the closure environment and are stable only when pinned.
     check_reg_vars_are_pinned(E);
 #endif
-    closure C;
+    E = translate_refs(E);
+    Runtime::check_translated(E);
+    closure C(std::move(E));
     C.Env = std::move(Env);
-    return translate_and_trim(*this, E, std::move(C));
-}
-
-closure reg_heap::preprocess_prepared(Runtime::Exp E, closure::Env_t Env)
-{
-    closure C;
-    C.Env = std::move(Env);
-    return translate_prepared(*this, E, std::move(C));
+    return C;
 }
 
 closure reg_heap::preprocess(const Core::Exp<>& E)
 {
-    return preprocess_prepared(prepare_for_translation(fresh_var_state, E));
+    return preprocess(prepare_for_translation(fresh_var_state, E));
 }
 
 int reg_heap::reg_for_id(const Runtime::GlobalVar& x)

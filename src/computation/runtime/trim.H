@@ -5,9 +5,7 @@
 
 namespace Runtime
 {
-    Exp trim_normalize(const Exp&);
-
-    Exp trim_unnormalize(const Exp&);
+    TrimmedExp trim(const Exp&);
 }
 
 #endif

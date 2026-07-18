@@ -1,4 +1,5 @@
 #include "ast.H"
+#include "trim.H"
 #include <cassert>
 #include <cstdlib>
 #include <ostream>
@@ -207,7 +208,11 @@ namespace Runtime
 
         // NOTE: This preserves the existing recursive indexing of the argument
         // batch.  Nested NonRec lets require removing and recalculating shifts.
-        return Let({Rec(std::move(args))}, FunctionApp(std::move(head), std::move(app_args)));
+        vector<TrimmedExp> rhss;
+        for(auto& arg: args)
+            rhss.push_back(trim(arg));
+        return Let({Rec(std::move(rhss))},
+                   trim(FunctionApp(std::move(head), std::move(app_args))));
     }
 
     int count_lambdas(const Exp& E)
@@ -350,6 +355,16 @@ namespace Runtime
         return "'" + payload + "'";
     }
 
+    // Prints a structural trim explicitly so diagnostics retain its projection.
+    static std::string print_trimmed(const TrimmedExp& E)
+    {
+        vector<std::string> indices;
+        for(auto i: E.indices)
+            indices.push_back(std::to_string(i));
+        return "Trim {" + join(indices, ",") + "} " +
+               parenthesize_if(not prints_atomically(E.body), print(E.body));
+    }
+
     std::string print(const Exp& E)
     {
         if (not E)
@@ -412,22 +427,22 @@ namespace Runtime
                 for(const auto& bind: e.binds)
                 {
                     if (auto nonrec = std::get_if<NonRec>(&bind))
-                        groups.push_back("let " + print(nonrec->rhs));
+                        groups.push_back("let " + print_trimmed(nonrec->rhs));
                     else
                     {
                         vector<std::string> rhss;
                         for(const auto& rhs: std::get<Rec>(bind).rhss)
-                            rhss.push_back(print(rhs));
+                            rhss.push_back(print_trimmed(rhs));
                         groups.push_back("letrec {" + join(rhss, "; ") + "}");
                     }
                 }
-                return join(groups, "; ") + " in " + print(e.body);
+                return join(groups, "; ") + " in " + print_trimmed(e.body);
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
                 vector<std::string> alts;
                 for(const auto& alt: e.alts)
-                    alts.push_back(print(alt.pattern) + " -> " + print(alt.body));
+                    alts.push_back(print(alt.pattern) + " -> " + print_trimmed(alt.body));
 
                 return "case " + parenthesize_if(not prints_atomically(e.object), print(e.object)) +
                        " of {" + join(alts, "; ") + "}";
@@ -462,14 +477,6 @@ namespace Runtime
                     args.push_back(parenthesize_if(not prints_atomically(arg), print(arg)));
 
                 return print_operation_head(e) + " " + join(args, " ");
-            }
-            else if constexpr (std::is_same_v<T, Trim>)
-            {
-                vector<std::string> indices;
-                for(auto i: e.indices)
-                    indices.push_back(std::to_string(i));
-                return "Trim {" + join(indices, ",") + "} " +
-                       parenthesize_if(not prints_atomically(e.body), print(e.body));
             }
         });
     }
@@ -524,6 +531,17 @@ namespace Runtime
 #endif
     }
 
+    // Checks a structural projection and then checks its dense expression body.
+    static void check_trimmed_invariants(const TrimmedExp& E)
+    {
+#ifndef NDEBUG
+        assert(E.indices.empty() or E.indices.front() >= 0);
+        for(int i = 1; i < E.indices.size(); i++)
+            assert(E.indices[i - 1] < E.indices[i]);
+        check_invariants(E.body);
+#endif
+    }
+
     void check_invariants(const Exp& E)
     {
 #ifndef NDEBUG
@@ -566,14 +584,14 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, Let>)
             {
                 assert(not e.binds.empty());
-                assert(not e.body.template to<Let>());
+                assert(not e.body.body.template to<Let>());
                 for(const auto& bind: e.binds)
                     if (auto nonrec = std::get_if<NonRec>(&bind))
-                        check_invariants(nonrec->rhs);
+                        check_trimmed_invariants(nonrec->rhs);
                     else
                         for(const auto& rhs: std::get<Rec>(bind).rhss)
-                            check_invariants(rhs);
-                check_invariants(e.body);
+                            check_trimmed_invariants(rhs);
+                check_trimmed_invariants(e.body);
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
@@ -581,7 +599,7 @@ namespace Runtime
                 for(const auto& alt: e.alts)
                 {
                     check_pattern_invariants(alt.pattern);
-                    check_invariants(alt.body);
+                    check_trimmed_invariants(alt.body);
                 }
             }
             else if constexpr (std::is_same_v<T, FunctionApp> or
@@ -593,13 +611,6 @@ namespace Runtime
                     check_invariants(e.head);
                 for(const auto& arg: e.args)
                     check_invariants(arg);
-            }
-            else if constexpr (std::is_same_v<T, Trim>)
-            {
-                assert(e.indices.size() == 0 or e.indices.front() >= 0);
-                for(int i = 1; i < e.indices.size(); i++)
-                    assert(e.indices[i-1] < e.indices[i]);
-                check_invariants(e.body);
             }
         });
 #endif
@@ -626,17 +637,17 @@ namespace Runtime
             {
                 for(const auto& bind: e.binds)
                     if (auto nonrec = std::get_if<NonRec>(&bind))
-                        check_no_reg_refs(nonrec->rhs);
+                        check_no_reg_refs(nonrec->rhs.body);
                     else
                         for(const auto& rhs: std::get<Rec>(bind).rhss)
-                            check_no_reg_refs(rhs);
-                check_no_reg_refs(e.body);
+                            check_no_reg_refs(rhs.body);
+                check_no_reg_refs(e.body.body);
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
                 check_no_reg_refs(e.object);
                 for(const auto& alt: e.alts)
-                    check_no_reg_refs(alt.body);
+                    check_no_reg_refs(alt.body.body);
             }
             else if constexpr (std::is_same_v<T, FunctionApp> or
                                std::is_same_v<T, ConstructorApp> or
@@ -646,10 +657,6 @@ namespace Runtime
                     check_no_reg_refs(e.head);
                 for(const auto& arg: e.args)
                     check_no_reg_refs(arg);
-            }
-            else if constexpr (std::is_same_v<T, Trim>)
-            {
-                check_no_reg_refs(e.body);
             }
         });
 #endif
@@ -676,17 +683,17 @@ namespace Runtime
             {
                 for(const auto& bind: e.binds)
                     if (auto nonrec = std::get_if<NonRec>(&bind))
-                        check_translated(nonrec->rhs);
+                        check_translated(nonrec->rhs.body);
                     else
                         for(const auto& rhs: std::get<Rec>(bind).rhss)
-                            check_translated(rhs);
-                check_translated(e.body);
+                            check_translated(rhs.body);
+                check_translated(e.body.body);
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
                 check_translated(e.object);
                 for(const auto& alt: e.alts)
-                    check_translated(alt.body);
+                    check_translated(alt.body.body);
             }
             else if constexpr (std::is_same_v<T, FunctionApp> or
                                std::is_same_v<T, ConstructorApp> or
@@ -696,10 +703,6 @@ namespace Runtime
                     check_translated(e.head);
                 for(const auto& arg: e.args)
                     check_translated(arg);
-            }
-            else if constexpr (std::is_same_v<T, Trim>)
-            {
-                check_translated(e.body);
             }
         });
 #endif

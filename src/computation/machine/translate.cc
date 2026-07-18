@@ -4,6 +4,12 @@
 
 using std::vector;
 
+// Translates references inside a structural trim without changing its projection.
+Runtime::TrimmedExp reg_heap::translate_refs(const Runtime::TrimmedExp& E)
+{
+    return {E.indices, translate_refs(E.body)};
+}
+
 Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E)
 {
     return E.visit([&](const auto& e) -> Runtime::Exp
@@ -50,7 +56,7 @@ Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E)
                     binds.push_back(Runtime::NonRec{translate_refs(nonrec->rhs)});
                 else
                 {
-                    vector<Runtime::Exp> rhss;
+                    vector<Runtime::TrimmedExp> rhss;
                     for(const auto& rhs: std::get<Runtime::Rec>(bind).rhss)
                         rhss.push_back(translate_refs(rhs));
                     binds.push_back(Runtime::Rec(std::move(rhss)));
@@ -91,10 +97,6 @@ Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E)
                 args.push_back(translate_refs(arg));
 
             return Runtime::OperationApp(e.head, e.lib_name, e.func_name, e.call_conv, args);
-        }
-        else if constexpr (std::is_same_v<T, Runtime::Trim>)
-        {
-            return Runtime::Trim(e.indices, translate_refs(e.body));
         }
         else
             std::abort();

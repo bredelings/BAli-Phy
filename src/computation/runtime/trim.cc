@@ -4,6 +4,9 @@ using std::vector;
 
 namespace Runtime
 {
+namespace
+{
+    // Removes locally bound indices and shifts the remaining sorted free indices.
     vector<int> pop_vars(int n, vector<int> vars)
     {
         assert(n >= 0);
@@ -16,58 +19,71 @@ namespace Runtime
         return vars;
     }
 
+    // Merges two sorted sets of free indices without introducing duplicates.
     vector<int> merge_vars(const vector<int>& v1, const vector<int>& v2)
     {
         int i = 0;
         int j = 0;
-        vector<int> v3;
+        vector<int> result;
 
         while(i < v1.size() or j < v2.size())
         {
             if (i >= v1.size())
-                v3.push_back(v2[j++]);
+                result.push_back(v2[j++]);
             else if (j >= v2.size())
-                v3.push_back(v1[i++]);
+                result.push_back(v1[i++]);
             else if (v1[i] < v2[j])
-                v3.push_back(v1[i++]);
+                result.push_back(v1[i++]);
             else if (v1[i] > v2[j])
-                v3.push_back(v2[j++]);
+                result.push_back(v2[j++]);
             else
             {
-                assert(v1[i] == v2[j]);
-                v3.push_back(v1[i]);
+                result.push_back(v1[i]);
                 i++;
                 j++;
             }
         }
 
-        assert(v3.size() >= v1.size());
-        assert(v3.size() >= v2.size());
-        return v3;
+        return result;
     }
 
-    Exp rebuild_app(const FunctionApp& app, vector<Exp> args)
-    {
-        return FunctionApp(app.head, std::move(args));
-    }
-
+    // Rebuilds an application after remapping both its head and arguments.
     Exp rebuild_app(const FunctionApp&, Exp head, vector<Exp> args)
     {
         return FunctionApp(std::move(head), std::move(args));
     }
 
+    // Rebuilds a constructor application after remapping its arguments.
     Exp rebuild_app(const ConstructorApp& app, vector<Exp> args)
     {
         return ConstructorApp(app.head, std::move(args));
     }
 
+    // Rebuilds an operation application after remapping its arguments.
     Exp rebuild_app(const OperationApp& app, vector<Exp> args)
     {
-        return OperationApp(app.head, app.lib_name, app.func_name, app.call_conv, std::move(args));
+        return OperationApp(app.head, app.lib_name, app.func_name,
+                            app.call_conv, std::move(args));
     }
 
+    vector<int> get_free_index_vars(const Exp&);
+
+    // Exposes a trimmed boundary's original free indices and checks its dense body.
+    vector<int> get_free_index_vars(const TrimmedExp& E)
+    {
+#ifndef NDEBUG
+        auto vars = get_free_index_vars(E.body);
+        assert(E.indices.size() == vars.size());
+        for(int i = 0; i < vars.size(); i++)
+            assert(vars[i] == i);
+#endif
+        return E.indices;
+    }
+
+    // Finds the sorted free-index set while respecting each structural trim boundary.
     vector<int> get_free_index_vars(const Exp& E)
     {
+        // This visitor combines free indices according to each Runtime scope.
         return E.visit([](const auto& e) -> vector<int>
         {
             using T = std::decay_t<decltype(e)>;
@@ -78,17 +94,15 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
-                          std::is_same_v<T, ObjectValue>)
+                          std::is_same_v<T, ObjectValue> or
+                          std::is_same_v<T, GlobalVar> or
+                          std::is_same_v<T, RegRef>)
             {
                 return {};
             }
             else if constexpr (std::is_same_v<T, IndexVar>)
             {
                 return {e.index};
-            }
-            else if constexpr (std::is_same_v<T, GlobalVar> or std::is_same_v<T, RegRef>)
-            {
-                return {};
             }
             else if constexpr (std::is_same_v<T, Lambda>)
             {
@@ -115,13 +129,12 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, Case>)
             {
                 auto vars = get_free_index_vars(e.object);
-
                 for(const auto& alt: e.alts)
                 {
                     int n = pattern_arity(alt.pattern);
-                    vars = merge_vars(vars, pop_vars(n, get_free_index_vars(alt.body)));
+                    vars = merge_vars(vars,
+                                      pop_vars(n, get_free_index_vars(alt.body)));
                 }
-
                 return vars;
             }
             else if constexpr (std::is_same_v<T, FunctionApp> or
@@ -135,22 +148,13 @@ namespace Runtime
                     vars = merge_vars(vars, get_free_index_vars(arg));
                 return vars;
             }
-            else if constexpr (std::is_same_v<T, Trim>)
-            {
-#ifndef NDEBUG
-                auto vars = get_free_index_vars(e.body);
-                assert(e.indices.size() == vars.size());
-                for(int i = 0; i < vars.size(); i++)
-                    assert(vars[i] == i);
-#endif
-                return e.indices;
-            }
             else
                 std::abort();
         });
     }
 
-    Exp make_trim(const Exp& E, const vector<int>& indices)
+    // Constructs a trim whose body uses exactly the dense indices it declares.
+    TrimmedExp make_trimmed(Exp E, vector<int> indices)
     {
 #ifndef NDEBUG
         auto vars = get_free_index_vars(E);
@@ -158,11 +162,31 @@ namespace Runtime
         for(int i = 0; i < vars.size(); i++)
             assert(vars[i] == i);
 #endif
-        return Trim(indices, E);
+        return {std::move(indices), std::move(E)};
     }
 
+    // Remaps only a structural boundary's projection; its body remains dense.
+    TrimmedExp remap_free_indices(const TrimmedExp& E,
+                                  const vector<int>& mapping, int depth)
+    {
+        auto indices = E.indices;
+        for(int& index: indices)
+        {
+            int delta = index - depth;
+            if (delta >= 0)
+            {
+                assert(delta < mapping.size());
+                assert(mapping[delta] != -1);
+                index = depth + mapping[delta];
+            }
+        }
+        return {std::move(indices), E.body};
+    }
+
+    // Remaps free indices through an expression while preserving local binders.
     Exp remap_free_indices(const Exp& E, const vector<int>& mapping, int depth)
     {
+        // This visitor advances depth through each Runtime binding construct.
         return E.visit([&](const auto& e) -> Exp
         {
             using T = std::decay_t<decltype(e)>;
@@ -173,25 +197,21 @@ namespace Runtime
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
-                          std::is_same_v<T, ObjectValue>)
+                          std::is_same_v<T, ObjectValue> or
+                          std::is_same_v<T, GlobalVar> or
+                          std::is_same_v<T, RegRef>)
             {
                 return E;
             }
             else if constexpr (std::is_same_v<T, IndexVar>)
             {
                 int delta = e.index - depth;
-                if (delta >= 0)
-                {
-                    assert(delta < mapping.size());
-                    assert(mapping[delta] != -1);
-                    return IndexVar(depth + mapping[delta]);
-                }
+                if (delta < 0)
+                    return E;
 
-                return E;
-            }
-            else if constexpr (std::is_same_v<T, GlobalVar> or std::is_same_v<T, RegRef>)
-            {
-                return E;
+                assert(delta < mapping.size());
+                assert(mapping[delta] != -1);
+                return IndexVar(depth + mapping[delta]);
             }
             else if constexpr (std::is_same_v<T, Lambda>)
             {
@@ -205,36 +225,36 @@ namespace Runtime
                 {
                     if (auto nonrec = std::get_if<NonRec>(&bind))
                     {
-                        binds.push_back(NonRec{
-                            remap_free_indices(nonrec->rhs, mapping, bind_depth)});
+                        binds.push_back(NonRec{remap_free_indices(
+                            nonrec->rhs, mapping, bind_depth)});
                         bind_depth++;
                     }
                     else
                     {
                         const auto& rhss = std::get<Rec>(bind).rhss;
                         int n = rhss.size();
-                        vector<Exp> remapped;
+                        vector<TrimmedExp> remapped;
                         for(const auto& rhs: rhss)
-                            remapped.push_back(
-                                remap_free_indices(rhs, mapping, bind_depth + n));
+                            remapped.push_back(remap_free_indices(
+                                rhs, mapping, bind_depth + n));
                         binds.push_back(Rec(std::move(remapped)));
                         bind_depth += n;
                     }
                 }
-                return Let(std::move(binds),
-                           remap_free_indices(e.body, mapping, bind_depth));
+                return Let(std::move(binds), remap_free_indices(
+                    e.body, mapping, bind_depth));
             }
             else if constexpr (std::is_same_v<T, Case>)
             {
                 vector<Alt> alts;
-
                 for(const auto& alt: e.alts)
                 {
                     int n = pattern_arity(alt.pattern);
-                    alts.push_back(Alt(alt.pattern, remap_free_indices(alt.body, mapping, depth + n)));
+                    alts.push_back(Alt(alt.pattern, remap_free_indices(
+                        alt.body, mapping, depth + n)));
                 }
-
-                return Case(remap_free_indices(e.object, mapping, depth), alts);
+                return Case(remap_free_indices(e.object, mapping, depth),
+                            std::move(alts));
             }
             else if constexpr (std::is_same_v<T, FunctionApp> or
                                std::is_same_v<T, ConstructorApp> or
@@ -245,36 +265,21 @@ namespace Runtime
                     args.push_back(remap_free_indices(arg, mapping, depth));
 
                 if constexpr (std::is_same_v<T, FunctionApp>)
-                    return rebuild_app(e, remap_free_indices(e.head, mapping, depth), std::move(args));
+                    return rebuild_app(e, remap_free_indices(
+                        e.head, mapping, depth), std::move(args));
                 else
                     return rebuild_app(e, std::move(args));
-            }
-            else if constexpr (std::is_same_v<T, Trim>)
-            {
-                auto indices = e.indices;
-
-                for(auto& index: indices)
-                {
-                    int delta = index - depth;
-                    if (delta >= 0)
-                    {
-                        assert(delta < mapping.size());
-                        assert(mapping[delta] != -1);
-                        index = depth + mapping[delta];
-                    }
-                }
-
-                return make_trim(e.body, indices);
             }
             else
                 std::abort();
         });
     }
+}
 
-    Exp trim(const Exp& E)
+    // Projects an expression's free variables into a dense closure environment.
+    TrimmedExp trim(const Exp& E)
     {
         auto indices = get_free_index_vars(E);
-
         vector<int> mapping;
 
         if (indices.size())
@@ -284,160 +289,7 @@ namespace Runtime
                 mapping[indices[i]] = i;
         }
 
-        return make_trim(remap_free_indices(E, mapping, 0), indices);
-    }
-
-    Exp untrim(const Exp& E)
-    {
-        if (auto trim = E.to<Trim>())
-            return remap_free_indices(trim->body, trim->indices, 0);
-        else
-            return E;
-    }
-
-    Exp trim_normalize(const Exp& E)
-    {
-        return E.visit([](const auto& e) -> Exp
-        {
-            using T = std::decay_t<decltype(e)>;
-
-            if constexpr (std::is_same_v<T, Int> or
-                          std::is_same_v<T, Double> or
-                          std::is_same_v<T, LogDouble> or
-                          std::is_same_v<T, Char> or
-                          std::is_same_v<T, String> or
-                          std::is_same_v<T, Integer> or
-                          std::is_same_v<T, ObjectValue>)
-            {
-                return e;
-            }
-            else if constexpr (std::is_same_v<T, IndexVar>)
-            {
-                return e;
-            }
-            else if constexpr (std::is_same_v<T, GlobalVar> or std::is_same_v<T, RegRef>)
-            {
-                return e;
-            }
-            else if constexpr (std::is_same_v<T, Lambda>)
-            {
-                return Lambda(trim_normalize(e.body));
-            }
-            else if constexpr (std::is_same_v<T, Let>)
-            {
-                vector<Bind> binds;
-                for(const auto& bind: e.binds)
-                {
-                    if (auto nonrec = std::get_if<NonRec>(&bind))
-                        binds.push_back(NonRec{trim(trim_normalize(nonrec->rhs))});
-                    else
-                    {
-                        vector<Exp> rhss;
-                        for(const auto& rhs: std::get<Rec>(bind).rhss)
-                            rhss.push_back(trim(trim_normalize(rhs)));
-                        binds.push_back(Rec(std::move(rhss)));
-                    }
-                }
-                return Let(std::move(binds), trim(trim_normalize(e.body)));
-            }
-            else if constexpr (std::is_same_v<T, Case>)
-            {
-                vector<Alt> alts;
-                for(const auto& alt: e.alts)
-                    alts.push_back(Alt(alt.pattern, trim(trim_normalize(alt.body))));
-
-                return Case(e.object, alts);
-            }
-            else if constexpr (std::is_same_v<T, FunctionApp> or
-                               std::is_same_v<T, ConstructorApp> or
-                               std::is_same_v<T, OperationApp>)
-            {
-                vector<Exp> args;
-                for(const auto& arg: e.args)
-                    args.push_back(trim_normalize(arg));
-
-                if constexpr (std::is_same_v<T, FunctionApp>)
-                    return rebuild_app(e, trim_normalize(e.head), std::move(args));
-                else
-                    return rebuild_app(e, std::move(args));
-            }
-            else if constexpr (std::is_same_v<T, Trim>)
-            {
-                return Trim(e.indices, trim_normalize(e.body));
-            }
-            else
-                std::abort();
-        });
-    }
-
-    Exp trim_unnormalize(const Exp& E)
-    {
-        return E.visit([](const auto& e) -> Exp
-        {
-            using T = std::decay_t<decltype(e)>;
-
-            if constexpr (std::is_same_v<T, Int> or
-                          std::is_same_v<T, Double> or
-                          std::is_same_v<T, LogDouble> or
-                          std::is_same_v<T, Char> or
-                          std::is_same_v<T, String> or
-                          std::is_same_v<T, Integer> or
-                          std::is_same_v<T, ObjectValue> or
-                          std::is_same_v<T, IndexVar> or
-                          std::is_same_v<T, GlobalVar> or
-                          std::is_same_v<T, RegRef>)
-            {
-                return e;
-            }
-            else if constexpr (std::is_same_v<T, Lambda>)
-            {
-                return Lambda(trim_unnormalize(untrim(e.body)));
-            }
-            else if constexpr (std::is_same_v<T, Let>)
-            {
-                vector<Bind> binds;
-                for(const auto& bind: e.binds)
-                {
-                    if (auto nonrec = std::get_if<NonRec>(&bind))
-                        binds.push_back(NonRec{
-                            trim_unnormalize(untrim(nonrec->rhs))});
-                    else
-                    {
-                        vector<Exp> rhss;
-                        for(const auto& rhs: std::get<Rec>(bind).rhss)
-                            rhss.push_back(trim_unnormalize(untrim(rhs)));
-                        binds.push_back(Rec(std::move(rhss)));
-                    }
-                }
-                return Let(std::move(binds), trim_unnormalize(untrim(e.body)));
-            }
-            else if constexpr (std::is_same_v<T, Case>)
-            {
-                vector<Alt> alts;
-                for(const auto& alt: e.alts)
-                    alts.push_back(Alt(alt.pattern, trim_unnormalize(untrim(alt.body))));
-
-                return Case(e.object, alts);
-            }
-            else if constexpr (std::is_same_v<T, FunctionApp> or
-                               std::is_same_v<T, ConstructorApp> or
-                               std::is_same_v<T, OperationApp>)
-            {
-                vector<Exp> args;
-                for(const auto& arg: e.args)
-                    args.push_back(trim_unnormalize(untrim(arg)));
-
-                if constexpr (std::is_same_v<T, FunctionApp>)
-                    return rebuild_app(e, trim_unnormalize(untrim(e.head)), std::move(args));
-                else
-                    return rebuild_app(e, std::move(args));
-            }
-            else if constexpr (std::is_same_v<T, Trim>)
-            {
-                return trim_unnormalize(remap_free_indices(e.body, e.indices, 0));
-            }
-            else
-                std::abort();
-        });
+        return make_trimmed(remap_free_indices(E, mapping, 0),
+                            std::move(indices));
     }
 }

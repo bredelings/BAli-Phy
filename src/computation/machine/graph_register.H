@@ -291,13 +291,13 @@ public:
     void clear_call_for_reg(int R);
     void clear_C(int R);
     void set_C(int R, closure&& C);
-    closure preprocess_prepared(Runtime::Exp E, closure::Env_t Env={});
     int allocate();
     int allocate_reg_from_step(int s);
     int allocate_reg_from_step(int s, closure&& C);
     void mark_reg_created_by_step(int r, int s);
     void mark_step_with_effect(int s);
     void check_reg_vars_are_pinned(const Runtime::Exp&) const;
+    Runtime::TrimmedExp translate_refs(const Runtime::TrimmedExp&);
 
     void get_roots(std::vector<int>&, bool keep_identifiers=true) const;
 

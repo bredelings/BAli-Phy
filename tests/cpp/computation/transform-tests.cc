@@ -64,12 +64,6 @@ namespace
                     std::holds_alternative<Runtime::NonRec>(let->binds[2]),
                 "flattened Runtime let should preserve binding-group order");
 
-        auto untrimmed = Runtime::trim_unnormalize(prepared);
-        auto deindexed = deindexify(untrimmed);
-        auto reindexed = indexify(deindexed);
-        require(reindexed == untrimmed,
-                "deindexify should round-trip with indexify after trim_unnormalize");
-
         auto recovered = unprepare_for_translation(prepared);
 
         FreshVarState fresh2;
