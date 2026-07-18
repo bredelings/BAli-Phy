@@ -5,6 +5,7 @@
 #include "util/rng.H"
 #include "util/log-level.H"
 #include <cmath>
+#include <cstdint>
 #include <vector>
 #include "math/logprod.H"
 #include <boost/dynamic_bitset.hpp>
@@ -74,7 +75,7 @@ namespace substitution
         total_root_clv_length += L;
 
         log_prod total;
-        int scale = 0;
+        std::int64_t total_scale = 0;
         for(int c=0,i1=0,i2=0,i3=0;c<L;c++)
         {
             bool non_gap1 = bits1.test(c);
@@ -83,23 +84,24 @@ namespace substitution
 
             if ((not non_gap1) and (not non_gap2) and (not non_gap3)) continue;
 
+            int column_scale = 0;
             const double* m[3];
             int mi=0;
 
             if (non_gap1)
             {
                 m[mi++] = LCB1[i1];
-                scale += LCB1.scale(i1);
+                column_scale += LCB1.scale(i1);
             }
             if (non_gap2)
             {
                 m[mi++] = LCB2[i2];
-                scale += LCB2.scale(i2);
+                column_scale += LCB2.scale(i2);
             }
             if (non_gap3)
             {
                 m[mi++] = LCB3[i3];
-                scale += LCB3.scale(i3);
+                column_scale += LCB3.scale(i3);
             }
 
             double p_col = 1.0;
@@ -143,6 +145,7 @@ namespace substitution
             if (non_gap3) i3++;
 
             total.mult_with_count(p_col, counts[c]);
+            total_scale += static_cast<std::int64_t>(counts[c]) * column_scale;
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
@@ -152,7 +155,7 @@ namespace substitution
             std::cerr<<"calc_root_probability_SEV: probability is NaN!\n";
             return log_double_t(0.0);
         }
-        Pr.log() += log_scale_min * scale;
+        Pr.log() += log_scale_min * total_scale;
         return Pr;
     }
 
@@ -189,7 +192,7 @@ namespace substitution
         total_root_clv_length += L;
 
         log_prod total;
-        int scale = 0;
+        std::int64_t total_scale = 0;
         for(int c=0,i1=0,i2=0;c<L;c++)
         {
             bool non_gap1 = bits1.test(c);
@@ -197,18 +200,19 @@ namespace substitution
 
             if ((not non_gap1) and (not non_gap2)) continue;
 
+            int column_scale = 0;
             const double* m[2];
             int mi=0;
 
             if (non_gap1)
             {
                 m[mi++] = LCB1[i1];
-                scale += LCB1.scale(i1);
+                column_scale += LCB1.scale(i1);
             }
             if (non_gap2)
             {
                 m[mi++] = LCB2[i2];
-                scale += LCB2.scale(i2);
+                column_scale += LCB2.scale(i2);
             }
 
             double p_col = 1.0;
@@ -248,6 +252,7 @@ namespace substitution
             if (non_gap2) i2++;
 
             total.mult_with_count(p_col,counts[c]);
+            total_scale += static_cast<std::int64_t>(counts[c]) * column_scale;
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
@@ -257,7 +262,7 @@ namespace substitution
             std::cerr<<"calc_root_deg2_probability_SEV: probability is NaN!";
             return log_double_t(0.0);
         }
-        Pr.log() += log_scale_min * scale;
+        Pr.log() += log_scale_min * total_scale;
         return Pr;
     }
 
@@ -319,13 +324,14 @@ namespace substitution
         // index into LCs
         vector<int> s(n_clvs, 0);
 
-        int scale = 0;
+        std::int64_t total_scale = 0;
 
         log_prod total;
         for(int c=0;c<L;c++)
         {
             if (not bits_out.test(c)) continue;
 
+	    int column_scale = 0;
 	    constexpr int mi_max = 3;
 	    const double* m[mi_max];
 	    int mi=0;
@@ -338,7 +344,7 @@ namespace substitution
                 if (lcb.bits.test(c))
                 {
 		    m[mi++] = lcb[s[j]];
-                    scale += lcb.scale(s[j]);
+                    column_scale += lcb.scale(s[j]);
                     s[j]++;
                 }
             }
@@ -372,7 +378,7 @@ namespace substitution
 		    if (lcb.bits.test(c))
 		    {
 			element_prod_assign(S, lcb[s[j]], matrix_size);
-			scale += lcb.scale(s[j]);
+			column_scale += lcb.scale(s[j]);
 			s[j]++;
 		    }
 		}
@@ -384,12 +390,13 @@ namespace substitution
             assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 
             total.mult_with_count(p_col, counts[c]);
+            total_scale += static_cast<std::int64_t>(counts[c]) * column_scale;
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
         log_double_t Pr = total;
 
-        Pr.log() += log_scale_min * scale;
+        Pr.log() += log_scale_min * total_scale;
 
         if (std::isnan(Pr.log()) and log_verbose > 0)
         {
@@ -628,13 +635,14 @@ namespace substitution
         // index into LCs
         vector<int> s(n_clvs, 0);
 
-        int scale = 0;
+        std::int64_t total_scale = 0;
 
         log_prod total;
         for(int c=0;c<L;c++)
         {
             if (not bits_out.test(c)) continue;
 
+	    int column_scale = 0;
 	    constexpr int mi_max = 3;
 	    const double* m[mi_max];
 	    int mi=0;
@@ -650,7 +658,7 @@ namespace substitution
                 if (lcb.bits.test(c))
                 {
 		    m[mi++] = lcb[s[j]];
-                    scale += lcb.scale(s[j]);
+                    column_scale += lcb.scale(s[j]);
                     s[j]++;
                 }
             }
@@ -684,7 +692,7 @@ namespace substitution
 		    if (lcb.bits.test(c))
 		    {
 			element_prod_assign(S, lcb[s[j]], matrix_size);
-			scale += lcb.scale(s[j]);
+			column_scale += lcb.scale(s[j]);
 			s[j]++;
 		    }
 		}
@@ -696,12 +704,13 @@ namespace substitution
             assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
 
             total.mult_with_count(p_col, counts[c]);
+            total_scale += static_cast<std::int64_t>(counts[c]) * column_scale;
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
         log_double_t Pr = total;
 
-        Pr.log() += log_scale_min * scale;
+        Pr.log() += log_scale_min * total_scale;
 
         if (std::isnan(Pr.log()) and log_verbose > 0)
         {
