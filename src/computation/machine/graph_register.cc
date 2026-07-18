@@ -2152,8 +2152,13 @@ void reg_heap::check_reg_vars_are_pinned(const Runtime::Exp& E) const
             for(const auto& alt: e.alts)
                 check_reg_vars_are_pinned(alt.body);
         }
-        else if constexpr (std::is_same_v<T, Runtime::FunctionApp> or
-                           std::is_same_v<T, Runtime::ConstructorApp> or
+        else if constexpr (std::is_same_v<T, Runtime::FunctionApp>)
+        {
+            check_reg_vars_are_pinned(e.head);
+            for(const auto& arg: e.args)
+                check_reg_vars_are_pinned(arg);
+        }
+        else if constexpr (std::is_same_v<T, Runtime::ConstructorApp> or
                            std::is_same_v<T, Runtime::OperationApp>)
         {
             for(const auto& arg: e.args)

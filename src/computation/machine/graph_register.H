@@ -462,10 +462,8 @@ public:
     // FIXME: maybe this should really take a FastString = (String, Int)
     /// Get the memory location (reg) for a given identifier (string)
     int reg_for_id(const Runtime::GlobalVar&);
-    /// Capture non-pinned register references before trimming so trims can see them.
-    Runtime::Exp capture_local_reg_refs(const Runtime::Exp& R, closure::Env_t&, int depth = 0);
 
-    /// Translate runtime global references into pinned register references after trimming.
+    /// Resolve runtime globals and verify that direct register references are pinned.
     Runtime::Exp translate_refs(const Runtime::Exp& R, closure::Env_t&, int depth = 0);
 
     closure preprocess(Runtime::Exp E, closure::Env_t Env = {});

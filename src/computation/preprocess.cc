@@ -294,14 +294,16 @@ closure translate_prepared(reg_heap& heap, Runtime::Exp E, closure&& C)
 closure translate_and_trim(reg_heap& heap, Runtime::Exp E, closure&& C)
 {
     Runtime::check_invariants(E);
-    E = heap.capture_local_reg_refs(E, C.Env);
-    Runtime::check_invariants(E);
     E = Runtime::trim_normalize(E);
     return translate_prepared(heap, E, std::move(C));
 }
 
 closure reg_heap::preprocess(Runtime::Exp E, closure::Env_t Env)
 {
+#ifndef NDEBUG
+    // Direct refs bypass the closure environment and are stable only when pinned.
+    check_reg_vars_are_pinned(E);
+#endif
     closure C;
     C.Env = std::move(Env);
     return translate_and_trim(*this, E, std::move(C));
