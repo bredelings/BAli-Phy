@@ -39,11 +39,13 @@ int Codons::translate(int codon) const
     if (codon == alphabet::gap or codon == alphabet::not_gap)
 	return codon;
 
-    assert(codon >= 0 and codon < translation_table.size() );
+    assert(codon >= 0 and codon < n_letter_classes());
 
     int aa = -1;
-    if (is_letter(codon))
+    if (is_letter(codon)) {
+	assert(codon < translation_table.size());
 	aa = translation_table[codon];
+    }
     else if (is_letter_class(codon))
     {
 	for(int i=0;i<size();i++)
