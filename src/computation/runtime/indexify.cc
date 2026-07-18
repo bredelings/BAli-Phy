@@ -256,7 +256,7 @@ Core::Pattern<> deindexify_pattern(const Runtime::Pattern& pattern, vector<Core:
 
 Core::Exp<> deindexify(const Runtime::Exp&, vector<Core::Var<>>&);
 
-// Reconstructs the lexical environment projected into a structurally trimmed body.
+// Converts the body back to Core using only the outer variables selected by E.indices.
 Core::Exp<> deindexify(const Runtime::TrimmedExp& E, vector<Core::Var<>>& variables)
 {
     vector<Core::Var<>> projected;

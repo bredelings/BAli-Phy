@@ -26,7 +26,7 @@ namespace Runtime
 {
     Exp untranslate_vars(const Exp&, const map<int, string>&);
 
-    // Rewrites references inside a structural trim while preserving its projection.
+    // Replaces known register references in the body and leaves the saved indices unchanged.
     TrimmedExp untranslate_vars(const TrimmedExp& E, const map<int, string>& ids)
     {
         return {E.indices, untranslate_vars(E.body, ids)};

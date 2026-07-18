@@ -4,7 +4,7 @@
 
 using std::vector;
 
-// Translates references inside a structural trim without changing its projection.
+// Resolves references in the body and leaves the saved indices unchanged.
 Runtime::TrimmedExp reg_heap::translate_refs(const Runtime::TrimmedExp& E)
 {
     return {E.indices, translate_refs(E.body)};

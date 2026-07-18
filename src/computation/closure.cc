@@ -65,13 +65,13 @@ int closure::reg_for_operation_slot(int i) const
         std::abort();
 }
 
-// Closes a dense expression over the lexical registers selected by its projection.
+// Builds a closure for the body using the selected entries from Env.
 closure get_trimmed(const Runtime::TrimmedExp& code, const closure::Env_t& Env)
 {
     closure::Env_t trimmed_env;
     trimmed_env.reserve(code.indices.size());
 
-    // Runtime environments use reverse lexical indexing.
+    // Runtime environments store the newest variable first.
     for(int index: code.indices | views::reverse)
         trimmed_env.push_back(lookup_in_env(Env, index));
 
