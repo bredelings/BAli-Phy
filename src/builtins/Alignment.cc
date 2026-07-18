@@ -34,15 +34,12 @@ bool is_runtime_bool_true(const R::Exp& value)
     return R::has_constructor(value, bool_true_name);
 }
 
-object_ptr<R::RVector> runtime_vector_from_value(const R::Exp& value)
+// NOTE: Keep this bridge until alignment constructors accept the child vector
+// directly; it retains vectors passed through temporary Exps without copying.
+object_ptr<const R::RVector> runtime_vector_from_value(const R::Exp& value)
 {
-    object_ptr<R::RVector> result(new R::RVector);
-
     if (const auto* runtime_vector = value.to<R::RVector>())
-    {
-        result->assign(runtime_vector->begin(), runtime_vector->end());
-        return result;
-    }
+        return object_ptr<const R::RVector>(runtime_vector);
 
     throw myexception()<<"Expected alignment child list to be an RVector or R::RVector, but got "<<value.print();
 }
