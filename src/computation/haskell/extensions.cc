@@ -25,7 +25,7 @@ map<string,LangExt> ext_to_bit =
     {"ImplicitPrelude",             {LangExt::ImplicitPrelude}},
     {"ImpredicativeTypes",          {LangExt::ImpredicativeTypes}},   // implies RankNTypes
     {"ImportQualifiedPost",         {LangExt::ImportQualifiedPost}},
-    {"Incoherent Instances",        {LangExt::IncoherentInstances}},  // DEPRECATED
+    {"IncoherentInstances",         {LangExt::IncoherentInstances}},  // DEPRECATED
     {"KindSignatures",              {LangExt::KindSignatures}},
     {"LexicalNegation",             {LangExt::LexicalNegation}},
     {"MonoLocalBinds",              {LangExt::MonoLocalBinds}},
@@ -37,7 +37,7 @@ map<string,LangExt> ext_to_bit =
     {"OverloadedRecordUpdate",      {LangExt::OverloadedRecordUpdate}},
     {"OverloadedLists",             {LangExt::OverloadedLists}},
     {"OverloadedStrings",           {LangExt::OverloadedStrings}},
-    {"Overlapping Instances",       {LangExt::OverlappingInstances}},  // DEPRECATED
+    {"OverlappingInstances",        {LangExt::OverlappingInstances}},  // DEPRECATED
     {"PolyKinds",                   {LangExt::PolyKinds}},
     {"RankNTypes",                  {LangExt::RankNTypes}},            // implies ExplicitForall
     {"RecursiveDo",                 {LangExt::RecursiveDo}},
