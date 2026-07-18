@@ -1,7 +1,6 @@
 #include "typecheck.H"
 #include "kindcheck.H"
 
-#include "util/set.H"       // for add( , )
 #include "util/variant.H"   // for to< >()
 #include "haskell/ids.H"
 
@@ -17,6 +16,20 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
 {
     auto Num = find_prelude_tycon("Num");
     auto IsString = TypeCon("Data.String.IsString");
+    bool extended = this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules);
+    bool ovl_string = this_mod().language_extensions.has_extension(LangExt::OverloadedStrings);
+
+    vector<TypeCon> unnamed_default_classes = {Num};
+    if (ovl_string)
+        unnamed_default_classes.push_back(IsString);
+    if (extended)
+    {
+        unnamed_default_classes.push_back(TypeCon("Text.Show.Show"));
+        unnamed_default_classes.push_back(TypeCon("Data.Eq.Eq"));
+        unnamed_default_classes.push_back(TypeCon("Data.Ord.Ord"));
+        unnamed_default_classes.push_back(TypeCon("Data.Foldable.Foldable"));
+        unnamed_default_classes.push_back(TypeCon("Data.Traversable.Traversable"));
+    }
 
     for(auto& [loc,default_decl]: M.default_decls)
     {
@@ -24,31 +37,37 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
         for(auto& type: default_decl.types)
             default_types.push_back(check_type(type));
 
-        auto dclass = Num;
+        vector<TypeCon> default_classes;
 
         if (default_decl.maybe_class)
         {
             bool named_defaults = this_mod().language_extensions.has_extension(LangExt::NamedDefaults);
             if (not named_defaults)
             {
-                record_error(default_decl.maybe_class->loc, Note() <<"Class-specific defaults only allowed with extension NamedDefaults" );
+                record_error(default_decl.maybe_class->loc,
+                             Note() <<"Class-specific defaults only allowed with extension NamedDefaults" );
                 continue;
             }
             else if (auto d = find_tycon(unloc(*default_decl.maybe_class)))
-                dclass = *d;
+                default_classes.push_back(*d);
             else
             {
                 record_error(default_decl.maybe_class->loc, Note()<<"Unknown data type");
                 continue;
             }
         }
-
-        if (default_env().count(dclass))
-            record_error(loc, Note() <<"Duplicate default declaration." );
         else
+            default_classes = unnamed_default_classes;
+
+        for(const auto& dclass: default_classes)
         {
-            // Check that the data types are all data types and instances of the class?
-            default_env().insert({dclass, default_types});
+            if (default_env().count(dclass))
+                record_error(loc, Note() <<"Duplicate default declaration." );
+            else
+            {
+                // Check that the data types are all data types and instances of the class?
+                default_env().insert({dclass, default_types});
+            }
         }
     }
 
@@ -59,28 +78,27 @@ void TypeChecker::get_defaults(const Hs::ModuleDecls& M)
         default_env().insert({Num, {Integer, Double}});
     }
 
-    if (not default_env().count(IsString) and this_mod().language_extensions.has_extension(LangExt::OverloadedStrings))
+    if (not default_env().count(IsString) and ovl_string)
     {
         Type String = list_type( char_type() );
         default_env().insert({IsString, {String}});
     }
-    
-    /*
-    if (this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules))
-    {
-        defaults() = { TypeCon({noloc,"()"}), TypeCon({noloc,"[]"}), TypeCon({noloc,"Integer"}), TypeCon({noloc,"Double"}) };
 
-        if (this_mod().language_extensions.has_extension(LangExt::OverloadedStrings))
-            defaults().push_back( list_type( TypeCon({noloc,"Char"}) ) );
-    }
-    else
+    if (extended)
     {
-        defaults() = { TypeCon({noloc,"Integer"}), TypeCon({noloc,"Double"}) };
+        auto Show = TypeCon("Text.Show.Show");
+        auto Eq = TypeCon("Data.Eq.Eq");
+        auto Foldable = TypeCon("Data.Foldable.Foldable");
+        auto Integer = find_prelude_tycon("Integer");
+        auto Double = find_prelude_tycon("Double");
 
-        if (this_mod().language_extensions.has_extension(LangExt::OverloadedStrings))
-            defaults().push_back( list_type( TypeCon({noloc,"Char"}) ) );
+        if (not default_env().count(Show))
+            default_env().insert({Show, {tuple_type({}), Integer, Double}});
+        if (not default_env().count(Eq))
+            default_env().insert({Eq, {tuple_type({}), Integer, Double}});
+        if (not default_env().count(Foldable))
+            default_env().insert({Foldable, {list_tycon()}});
     }
-    */
 }
 
 // Constraints for defaulting must be of the form K a (e.g. Num a) where a is a MetaTypeVar.
@@ -101,75 +119,90 @@ optional<TypeCon> simple_constraint_class_meta(const Type& constraint)
     return *tc;
 }
 
-// The defaulting criteria for an ambiguous type variable v are:
-// 1. v appears only in constraints of the form C v , where C is a class
-// 2. at least one of these classes is a numeric class, (that is, Num or a subclass of Num)
-// 3. all of these classes are defined in the Prelude or a standard library (Figures 6.2–6.3 show the numeric classes, and Figure 6.1 shows the classes defined in the Prelude.)
+// Default an ambiguous variable from the declarations attached to its classes. Without ExtendedDefaultRules,
+// every constraint must also be unary and belong to a standard or explicitly defaulted class.
 
 bool
 TypeChecker::candidates(const MetaTypeVar& tv, const LIE& tv_wanteds)
 {
-    // Rewrite this now that NamedDefaults has landed and (I think) been amended...
-    bool extended = this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules) or
-        this_mod().language_extensions.has_extension(LangExt::NamedDefaults);
-    bool ovl_string = this_mod().language_extensions.has_extension(LangExt::OverloadedStrings);
+    bool extended = this_mod().language_extensions.has_extension(LangExt::ExtendedDefaultRules);
 
-    set<string> num_classes_ = {"Num", "Integral", "Floating", "Fractional", "Real", "RealFloat", "RealFrac"};
-    set<string> std_classes_ = {"Eq", "Ord", "Show", "Read", "Bounded", "Enum", "Ix", "Functor", "Monad", "MonadPlus"};
-    set<string> interactive_classes_ = {"Eq", "Ord", "Show", "Foldable", "Traversable"};
+    set<string> std_classes = {"Compiler.Num.Num", "Compiler.Integral.Integral", "Compiler.Floating.Floating",
+                               "Compiler.Fractional.Fractional", "Compiler.Real.Real",
+                               "Compiler.RealFloat.RealFloat",
+                               "Compiler.RealFrac.RealFrac", "Data.Eq.Eq", "Data.Ord.Ord", "Text.Show.Show",
+                               "Text.Read.Read", "Compiler.Enum.Bounded", "Compiler.Enum.Enum", "Data.Ix.Ix",
+                               "Data.Functor.Functor", "Control.Applicative.Applicative",
+                               "Control.Applicative.Alternative", "Control.Monad.Monad",
+                               "Control.Monad.MonadFail",
+                               "Data.Semigroup.Semigroup", "Data.Monoid.Monoid", "Data.String.IsString",
+                               "Data.Foldable.Foldable", "Data.Traversable.Traversable"};
 
-    add(std_classes_, num_classes_);
-
-    set<string> num_classes;
-    set<string> std_classes;
-    set<string> interactive_classes;
-    for(auto& cls: num_classes_)
-        num_classes.insert( find_prelude_tycon_name(cls) );
-    if (ovl_string)
-        num_classes.insert("Data.String.IsString");
-
-    for(auto& cls: interactive_classes_)
-        interactive_classes.insert( find_prelude_tycon_name(cls) );
-
-    for(auto& cls: std_classes_)
-        std_classes.insert( find_prelude_tycon_name(cls) );
-    std_classes.insert(num_classes.begin(), num_classes.end());
-    std_classes.insert(interactive_classes.begin(), interactive_classes.end());
-
-    bool any_num = false;
-    bool any_interactive = false;
+    set<TypeCon> proposal_classes;
+    vector<Type> pending_superclasses;
     for(auto& constraint: tv_wanteds)
     {
-        // Fail if any of the predicates is not a simple constraint.
         if (auto tycon = simple_constraint_class_meta(constraint.pred))
         {
-            if (num_classes.count(tycon->name))
-                any_num = true;
-            if (interactive_classes.count(tycon->name))
-                any_interactive = true;
+            proposal_classes.insert(*tycon);
+            pending_superclasses.push_back(constraint.pred);
+            bool has_defaults = default_env().contains(*tycon);
 
-            // Fail if any of the predicates are not in the standard prelude.
-            if (not extended and not std_classes.count(tycon->name)) return false;
+            if (not extended and not has_defaults and not std_classes.count(tycon->name))
+                return false;
         }
         else if (not extended)
             return false;
     }
 
-    // Fail if none of the predicates is a numerical constraint
-    if (not any_num and (not extended or not any_interactive)) return false;
+    // Recover unary superclass constraints that Bali-Phy's solver may already have discharged.
+    while(not pending_superclasses.empty())
+    {
+        auto constraint = pending_superclasses.back();
+        pending_superclasses.pop_back();
+        for(const auto& [_, superclass]: superclass_constraints(constraint))
+        {
+            auto superclass_tycon = simple_constraint_class_meta(superclass);
+            if (superclass_tycon and proposal_classes.insert(*superclass_tycon).second)
+                pending_superclasses.push_back(superclass);
+        }
+    }
 
-    // FIXME: This is not the right algorithm anymore...
-    for(auto& [pred, types]: default_env())
-        for(auto& type: types)
+    optional<Type> proposal;
+    for(const auto& dclass: proposal_classes)
+    {
+        auto defaults = default_env().find(dclass);
+        if (defaults == default_env().end())
+            continue;
+
+        optional<Type> class_proposal;
+        for(const auto& type: defaults->second)
         {
             tv.fill(type);
             auto wanteds = WantedConstraints(tv_wanteds);
             entails({}, wanteds);
-            if (wanteds.empty())
-                return true;
-            else
-                tv.clear();
+            bool accepted = wanteds.empty();
+            tv.clear();
+
+            if (accepted)
+            {
+                class_proposal = type;
+                break;
+            }
         }
+
+        if (not class_proposal)
+            continue;
+        if (proposal and not same_type(*proposal, *class_proposal))
+            return false;
+        proposal = *class_proposal;
+    }
+
+    if (proposal)
+    {
+        tv.fill(*proposal);
+        return true;
+    }
 
     return false;
 }
@@ -271,4 +304,3 @@ Core::Decls<> TypeChecker::simplify_and_default_top_level()
 
     return top_simplify_decls;
 }
-
