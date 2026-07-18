@@ -516,7 +516,6 @@ DataConEnv TypeChecker::infer_type_for_data_type(const Hs::DataOrNewtypeDecl& da
 
     if (auto T = this_mod().lookup_local_type(data_type_con.name))
     {
-        T->roles = infer_roles_for_data_type(data_tvs, types);
         if (auto data_info = T->is_data())
         {
             auto info = std::make_shared<DataInfo>();
@@ -774,6 +773,7 @@ pair<DataConEnv,std::optional<Type>> TypeChecker::infer_type_for_data_family_ins
 void TypeChecker::get_constructor_info(const Hs::Decls& decls)
 {
     vector<Type> data_family_instance_heads;
+    map<string, DataConEnv> constructors_for_data_type;
 
     auto instance_class_name = [](const Hs::InstanceDecl& instance_decl) -> std::optional<std::string>
     {
@@ -817,7 +817,10 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
     {
         DataConEnv con_infos;
         if (auto d = decl.to<Hs::DataOrNewtypeDecl>())
+        {
             con_infos = infer_type_for_data_type(*d);
+            constructors_for_data_type.insert({unloc(d->con).name, con_infos});
+        }
         else if (auto d = decl.to<Hs::DataFamilyInstanceDecl>())
             con_infos = get_data_family_instance_constructor_info(*d, {});
         else if (auto i = decl.to<Hs::InstanceDecl>())
@@ -839,6 +842,35 @@ void TypeChecker::get_constructor_info(const Hs::Decls& decls)
             C->con_info = std::make_shared<DataConInfo>(con_info);
         }
     }
+
+    for(auto& [type_name, constructors]: constructors_for_data_type)
+    {
+        auto type = this_mod().lookup_local_type(type_name);
+        assert(type and type->is_data() and type->is_data()->info);
+        type->roles.assign(type->is_data()->info->type_vars.size(), Role::Phantom);
+    }
+
+    // Raise local datatype roles until recursive references no longer add constraints.
+    bool changed;
+    do
+    {
+        changed = false;
+        for(auto& [type_name, constructors]: constructors_for_data_type)
+        {
+            auto type = this_mod().lookup_local_type(type_name);
+            auto inferred = infer_roles_for_data_type(type->is_data()->info->type_vars, constructors);
+            assert(inferred.size() == type->roles.size());
+
+            for(int i=0; i<inferred.size(); i++)
+            {
+                auto role = max_role(type->roles[i], inferred[i]);
+                if (role == type->roles[i]) continue;
+                type->roles[i] = role;
+                changed = true;
+            }
+        }
+    }
+    while(changed);
 }
 
 void TypeChecker::classify_record_selectors()
