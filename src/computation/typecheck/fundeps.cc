@@ -211,3 +211,55 @@ close_wrt_fun_deps(TypeChecker& tc, const vector<Type>& predicates,
 {
     return close_wrt_fun_deps_impl(tc, predicates, std::move(fixed));
 }
+
+// Finds existing instances whose determined arguments conflict with a candidate.
+vector<InstanceInfo>
+inconsistent_fun_dep_instances(TypeChecker& tc,
+                               const InstanceInfo& candidate_info)
+{
+    vector<InstanceInfo> conflicts;
+    auto class_info = tc.info_for_class(candidate_info.class_con.name);
+    if (not class_info) return conflicts;
+
+    // Compares the candidate with every same-class instance in one environment.
+    auto check_environment = [&](const InstanceEnv& environment)
+    {
+        for(const auto& [_, existing_info]: environment)
+        {
+            if (existing_info.class_con != candidate_info.class_con) continue;
+
+            bool inconsistent = false;
+            for(const auto& dependency: class_info->functional_dependencies)
+            {
+                auto candidate = tc.freshen(candidate_info);
+                auto existing = tc.freshen(existing_info);
+                auto [candidate_lhs, candidate_rhs] = instantiate_fun_dep(
+                    dependency, candidate.args);
+                auto [existing_lhs, existing_rhs] = instantiate_fun_dep(
+                    dependency, existing.args);
+
+                auto determinant_substitution = tc.maybe_unify(candidate_lhs,
+                                                                existing_lhs);
+                if (not determinant_substitution) continue;
+
+                candidate_rhs = apply_subst(*determinant_substitution,
+                                            candidate_rhs);
+                existing_rhs = apply_subst(*determinant_substitution,
+                                           existing_rhs);
+                if (not tc.maybe_unify(candidate_rhs, existing_rhs))
+                {
+                    inconsistent = true;
+                    break;
+                }
+            }
+
+            if (inconsistent)
+                conflicts.push_back(existing_info);
+        }
+    };
+
+    check_environment(tc.this_mod().local_instances);
+    for(const auto& [_, module]: tc.this_mod().transitively_imported_modules)
+        check_environment(module->local_instances());
+    return conflicts;
+}

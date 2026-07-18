@@ -9,6 +9,7 @@
 
 class TypeChecker;
 struct FunctionalDependency;
+struct InstanceInfo;
 
 using InstantiatedFunDep =
     std::pair<std::vector<Type>, std::vector<Type>>;
@@ -26,5 +27,9 @@ std::set<MetaTypeVar>
 close_wrt_fun_deps(TypeChecker&,
                    const std::vector<Type>& predicates,
                    std::set<MetaTypeVar> fixed);
+
+std::vector<InstanceInfo>
+inconsistent_fun_dep_instances(TypeChecker&,
+                               const InstanceInfo& candidate);
 
 #endif

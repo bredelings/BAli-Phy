@@ -112,9 +112,33 @@ namespace
         return valid;
     }
 
+    // Returns the imported module containing an exact stored instance, if any.
+    optional<string> imported_module_for_instance(TypeChecker& tc,
+                                                  const InstanceInfo& target)
+    {
+        for(const auto& [module_name, module]: tc.this_mod().transitively_imported_modules)
+            for(const auto& [_, existing]: module->local_instances())
+                if (existing.type() == target.type())
+                    return module_name;
+        return {};
+    }
+
     // Reject duplicate/forbidden-overlap instances before adding a new dfun to the environment.
     bool check_instance_can_be_added(TypeChecker& tc, const InstanceInfo& candidate_info)
     {
+        bool consistent = true;
+        for(const auto& existing: inconsistent_fun_dep_instances(tc,
+                                                                  candidate_info))
+        {
+            auto note = Note()<<"Instance '"<<show_instance_signature(candidate_info)
+                <<"' conflicts with functional dependencies of existing instance '"
+                <<show_instance_signature(existing)<<"'";
+            if (auto module_name = imported_module_for_instance(tc, existing))
+                note<<" from module "<<*module_name;
+            tc.record_error(note);
+            consistent = false;
+        }
+
         auto candidate = tc.freshen(candidate_info);
         auto candidate_head = instance_head(candidate);
 
@@ -152,14 +176,17 @@ namespace
             return true;
         };
 
-        if (not check_env(tc.this_mod().local_instances, {}))
-            return false;
+        bool overlap_valid = check_env(tc.this_mod().local_instances, {});
 
-        for(auto& [modid, mod]: tc.this_mod().transitively_imported_modules)
-            if (not check_env(mod->local_instances(), modid))
-                return false;
+        if (overlap_valid)
+            for(auto& [modid, mod]: tc.this_mod().transitively_imported_modules)
+                if (not check_env(mod->local_instances(), modid))
+                {
+                    overlap_valid = false;
+                    break;
+                }
 
-        return true;
+        return consistent and overlap_valid;
     }
 }
 

@@ -1,0 +1,3 @@
+   • Instance 'C Int Char' conflicts with functional dependencies of existing
+     instance 'C Int Double' from module Support
+   • In class instance 'C Int Char':

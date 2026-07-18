@@ -1,0 +1,3 @@
+   • Instance 'C Int Char Y' conflicts with functional dependencies of
+     existing instance 'C Int Double X'
+   • In class instance 'C Int Char Y':
