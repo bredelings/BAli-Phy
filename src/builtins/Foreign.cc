@@ -29,31 +29,19 @@ namespace
 
     R::Exp json_pair_first(const R::Exp& pair)
     {
-        auto runtime_pair = pair.to<R::RPair>();
-        assert(runtime_pair);
-        return runtime_pair->first;
+        return pair.as_<R::RPair>().first;
     }
 
     R::Exp json_pair_second(const R::Exp& pair)
     {
-        auto runtime_pair = pair.to<R::RPair>();
-        assert(runtime_pair);
-        return runtime_pair->second;
+        return pair.as_<R::RPair>().second;
     }
 
     template <typename F>
     void for_each_json_element(const R::Exp& value, F f)
     {
-        if (auto runtime_vector = value.to<R::RVector>())
-        {
-            for(const auto& element: *runtime_vector)
-                f(element);
-        }
-        else
-        {
-            for(const auto& element: value.as_<R::RVector>())
-                f(element);
-        }
+        for(const auto& element: value.as_<R::RVector>())
+            f(element);
     }
 
     R::Exp json_node(int type, R::Exp value)

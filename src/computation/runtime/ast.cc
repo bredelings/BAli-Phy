@@ -236,16 +236,12 @@ namespace Runtime
 
     const Exp& rpair_first(const Exp& E)
     {
-        auto pair = E.to<RPair>();
-        assert(pair);
-        return pair->first;
+        return E.as_<RPair>().first;
     }
 
     const Exp& rpair_second(const Exp& E)
     {
-        auto pair = E.to<RPair>();
-        assert(pair);
-        return pair->second;
+        return E.as_<RPair>().second;
     }
 
     object_ptr<const Operation> operation_from_builtin(void* op, const std::string& lib_name, const std::string& func_name, const std::string& call_conv)

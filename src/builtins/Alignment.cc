@@ -38,10 +38,7 @@ bool is_runtime_bool_true(const R::Exp& value)
 // directly; it retains vectors passed through temporary Exps without copying.
 object_ptr<const R::RVector> runtime_vector_from_value(const R::Exp& value)
 {
-    if (const auto* runtime_vector = value.to<R::RVector>())
-        return object_ptr<const R::RVector>(runtime_vector);
-
-    throw myexception()<<"Expected alignment child list to be an RVector or R::RVector, but got "<<value.print();
+    return value.as_ptr_to<R::RVector>();
 }
 
 

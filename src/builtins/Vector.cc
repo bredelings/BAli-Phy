@@ -68,16 +68,12 @@ namespace
 
     R::Exp clist_first(const R::Exp& xs)
     {
-        auto pair = xs.to<R::RPair>();
-        assert(pair);
-        return pair->first;
+        return xs.as_<R::RPair>().first;
     }
 
     R::Exp clist_second(const R::Exp& xs)
     {
-        auto pair = xs.to<R::RPair>();
-        assert(pair);
-        return pair->second;
+        return xs.as_<R::RPair>().second;
     }
 }
 
@@ -543,18 +539,12 @@ extern "C" closure builtin_function_boxedAppend(OperationArgs& Args)
 
 int vector_value_size(const R::Exp& value)
 {
-    if (auto v = value.to<R::RVector>())
-        return v->size();
-    else
-        return value.as_<R::RVector>().size();
+    return value.as_<R::RVector>().size();
 }
 
 R::Exp vector_value_at(const R::Exp& value, int index)
 {
-    if (auto v = value.to<R::RVector>())
-        return (*v)[index];
-    else
-        return value.as_<R::RVector>()[index];
+    return value.as_<R::RVector>()[index];
 }
 
 extern "C" R::Exp simple_function_sizeOfString(vector<R::Exp>& args)
@@ -635,18 +625,8 @@ extern "C" closure builtin_function_set_vector_index(OperationArgs& Args)
     int i = Args.evaluate_slot_to_value(1).as_int();
     auto x = Args.evaluate_slot_to_value(2);
 
-    if (auto v = arg0.to<R::RVector>())
-    {
-        R::RVector* vv = const_cast<R::RVector*>(v);
-        (*vv)[i] = std::move(x);
-    }
-    else
-    {
-        const R::RVector& legacy_vector = arg0.as_<R::RVector>();
-        const R::RVector* vv = &legacy_vector;
-        R::RVector* vvv = const_cast<R::RVector*>(vv);
-        (*vvv)[i] = std::move(x);
-    }
+    auto& v = const_cast<R::RVector&>(arg0.as_<R::RVector>());
+    v[i] = std::move(x);
 
     return closure(R::ConstructorApp("()", 0, {}));
 }
