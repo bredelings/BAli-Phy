@@ -355,6 +355,9 @@ int main(int argc,char* argv[])
 	int subsample = args["subsample"].as<int>();
 
 	vector<string> prune = get_string_list(args, "ignore");
+	vector<string> files;
+	if (args.count("files"))
+	    files = args["files"].as<vector<string>>();
 
 	//----------- Read the topology -----------//
 	SequenceTree Q = load_T(args);
@@ -368,7 +371,11 @@ int main(int argc,char* argv[])
 	//-------- Read in the tree samples --------//
 	if ( args.count("simple") ) {
 	    accum_branch_lengths_ignore_topology A(Q);
-	    scan_trees(std::cin,skip,last,subsample,prune,Q.get_leaf_labels(), A);
+	    for(auto& file: files)
+	    {
+		istream_or_ifstream f(std::cin,"-",file);
+		scan_trees(f,skip,last,subsample,prune,Q.get_leaf_labels(), A);
+	    }
 	    A.finalize();
 	    for(int b=0;b<B;b++)
 		Q.branch(b).set_length(A.m1[b]);
@@ -379,10 +386,6 @@ int main(int argc,char* argv[])
 	accum_branch_lengths_same_topology A(Q);
 
 	try {
-            vector<string> files;
-            if (args.count("files"))
-                files = args["files"].as<vector<string> >();
-
             for(auto& file: files)
             {
                 istream_or_ifstream f(std::cin,"-",file);

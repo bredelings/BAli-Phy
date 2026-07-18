@@ -43,6 +43,23 @@ class TreeMeanLengthsTests(unittest.TestCase):
         self.assertEqual(twice.returncode, 0, twice.stderr)
         self.assertEqual(twice.stdout, once.stdout)
 
+    # Simple mode reads named files rather than unrelated data on standard input.
+    def test_simple_mode_reads_named_file(self):
+        samples = "((A:2,B:3):4,C:5);\n"
+        result = self.run_tree_mean_lengths([samples], "--simple", stdin="not a tree\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("A:2", result.stdout)
+
+    # Simple mode combines every named file into one accumulator.
+    def test_simple_mode_reads_all_named_files(self):
+        first = "((A:1,B:2):3,C:4);\n"
+        second = "((A:3,B:4):5,C:6);\n"
+        split = self.run_tree_mean_lengths([first, second], "--simple")
+        combined = self.run_tree_mean_lengths([first + second], "--simple")
+        self.assertEqual(split.returncode, 0, split.stderr)
+        self.assertEqual(combined.returncode, 0, combined.stderr)
+        self.assertEqual(split.stdout, combined.stdout)
+
 
 if __name__ == "__main__":
     argument_parser = argparse.ArgumentParser()
