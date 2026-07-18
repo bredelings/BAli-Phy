@@ -29,7 +29,8 @@ bali-phy -m Model.hs RSV2-25taxa.fasta --iter=N --name ignore --seed=S
 - Measure `perf stat` instructions at `N=1` and `N=50` for each seed.
   `(I50-I1)/49` estimates recurring work within a revision; cross-revision
   differences are controlled only when traces match.  Use cycles, Work, and
-  repeated interleaved timings as supporting evidence.
+  at least seven interleaved timings as supporting evidence; report medians
+  and retain the individual runs.
 - Keep verbose graph generation and diagnostic instrumentation out of measured
   builds.  Instrument a separate variant to test a mechanism, then benchmark
   the corresponding uninstrumented baseline, rollback, and fix.
@@ -249,6 +250,46 @@ would duplicate copy, move, destruction, visitation, and serialization logic
 for 18 alternatives without evidence that dispatch is the dominant remaining
 cost, so it is not introduced.
 
+### Runtime value plumbing experiments
+
+These seed-0 medians use seven interleaved, warmed runs at each iteration count,
+with one dedicated cache per endpoint, CPU 11 pinned, and ASLR disabled.  Logs
+and trees are byte-identical across all endpoints.  Timing medians are useful
+for scale but are not paired estimates.
+
+| Endpoint | I1 (B) | I50 (B) | Extra/iter (B) | Cycles 50 (B) | Task 50 (s) | Result |
+|---|---:|---:|---:|---:|---:|---|
+| Baseline `191fe271` | 17.500 | 96.282 | 1.608 | 55.250 | 10.345 | reference |
+| Retain alignment vectors `6efecf6a` | 17.501 | 96.286 | 1.608 | 55.231 | 10.347 | retained |
+| Static required-object access `1e0f6125` | 17.499 | 96.185 | 1.606 | 55.427 | 10.379 | retained |
+| Switch on reference tag, uncommitted | 17.500 | 96.307 | 1.608 | 55.644 | 10.421 | rejected |
+| Direct required-reference decoder `21ca9c70` | 17.503 | 96.321 | 1.609 | 55.079 | 10.313 | rejected |
+| Direct e-op argument staging `585554bb` | 17.485 | 95.468 | 1.592 | 54.831 | 10.270 | rejected |
+
+Retaining an alignment child vector removes an unnecessary O(n) copy in two
+alignment builtins, although this benchmark scarcely exercises that path and
+shows no measurable effect.  Static access for required `ObjectValue` types
+removes redundant migration branches and release-build RTTI; recurring
+instructions fall 0.13%, but an elapsed-time improvement is not established.
+
+The tag-switch decoder is worse because GCC already combines the original tag
+tests and reference extraction into a shorter branch sequence.  Its exact
+source revision was not retained, so this rejected result is diagnostic rather
+than a reproducible boundary.  The direct required-reference decoder duplicates
+that logic and, in a separate seven-run paired attribution batch, adds median
+N=50 task time of 1.74% and cycles of 1.68% when applied after direct e-op
+staging.
+
+Direct e-op staging removes a temporary vector and lowers recurring
+instructions by about 0.9%, but the elapsed result does not follow the
+instruction count.  Across 21 controlled paired samples, its median task and
+cycle changes are +0.19% and +0.15%, with 8 wins, 2 ties, and 11 losses in task
+time when changes within 0.1% are treated as ties.  It is therefore rejected.
+These four investigations do not recover a material part of the completed
+Runtime AST regression, so changing the outer `Runtime::Exp` representation
+remains unsupported by this evidence.  All 140 primary and attribution
+invocations are recorded in `benchmarks/coalescent-runs.tsv`.
+
 ## Slowdowns to investigate
 
 - Edge-contingency API-only boundary: a same-trace 1.0% recurring increase;
@@ -258,8 +299,9 @@ cost, so it is not introduced.
 - Apparent dependent-edge machinery boundary: 3.6% seed-0 recurring increase
   with unknown trace status; separate bookkeeping, invalidation, and evaluation
   costs.
-- Runtime AST conversion: 8.3% more recurring work; Variant2 explains 1.9%,
-  while the remaining value-plumbing and traversal costs are not partitioned.
+- Runtime AST conversion: 8.3% more recurring work; Variant2 explains 1.9%.
+  Four value-plumbing experiments found only a 0.13% retained instruction
+  reduction and no demonstrated elapsed-time recovery.
 - Fixed startup at `b0f1cb92`: the five-seed mean `I1` is 15.6% above 4.2
   after removing the Unicode scanner cost; recover the per-seed dispersion.
 - The long-range panel mean has a remaining 3.8% recurring increase from 4.2 to
@@ -277,8 +319,9 @@ cost, so it is not introduced.
   high-priority changed or unknown boundaries: `restrictKeysToVector`,
   arity/eta expansion, lazy vector and matrix dimensions, and direct coalescent
   inputs.
-- Isolate known-type object access, argument staging, and register-reference
-  traversal before reconsidering a custom `Runtime::Exp` representation.
+- Profile expression copy/destruction and operation dispatch before
+  reconsidering a custom `Runtime::Exp` representation; object access,
+  argument staging, and register-reference traversal have now been isolated.
 - Measure `I1` around the IO-newtype series.
 - Compare baseline and `x86-64-v3` builds at both 4.2 and current so source and
   instruction-set effects remain separate.
