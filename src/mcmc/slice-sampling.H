@@ -51,6 +51,9 @@ struct slice_function: public bounds<double>
     /// Return the current value of x
     virtual double current_value() const;
 
+    /// Return whether this function can be slice sampled from its current state.
+    virtual bool can_slice_sample() const {return true;}
+
     virtual void reset() {std::abort();};
 
     slice_function() {}
@@ -176,6 +179,7 @@ struct slide_node_slice_function: public context_slice_function
 
     void set_value(double);
     double current_value() const;
+    bool can_slice_sample() const override {return x0 > 0 and y0 > 0;}
 
     slide_node_slice_function(Parameters&,int);
     slide_node_slice_function(Parameters&,int,int);

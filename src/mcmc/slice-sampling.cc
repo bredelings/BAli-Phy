@@ -588,6 +588,12 @@ double search_interval(double x0,double L, double R, slice_function& g, const Lo
 
 bool pre_slice_sampling_check_OK(double x0, slice_function& g)
 {
+    if (not g.can_slice_sample())
+    {
+        if (log_verbose >= 4) std::cerr<<"slice function cannot be sampled from its current state";
+        return false;
+    }
+
     // If x is not in the range then this could be a range that is reduced to avoid loss of precision.
     if (not g.in_range(x0))
     {
@@ -669,13 +675,12 @@ bool can_propose_same_interval_doubling(double x0, double x1, double w, double L
 
 double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
 {
-    double E = exponential(1);
-
     // 0. Check that the values are OK
     if (not pre_slice_sampling_check_OK(x0, g))
         return x0;
 
     // 1. Determine the slice level, in log terms.
+    double E = exponential(1);
     auto logy = g() - E;
 
     // 2. Find the initial interval to sample from.
@@ -689,14 +694,12 @@ double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
 // Are we assuming that calling g sets the value?
 double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
 {
-    if (log_verbose >= 4)
-    {
-        std::cerr<<"slice_sampling_doubling_: x0 = "<<x0<<" w = "<<w<<" Pr(x0) = "<<g()<<"\n";
-    }
-
     // 0. Check that the values are OK
     if (not pre_slice_sampling_check_OK(x0, g))
         return x0;
+
+    if (log_verbose >= 4)
+        std::cerr<<"slice_sampling_doubling_: x0 = "<<x0<<" w = "<<w<<" Pr(x0) = "<<g()<<"\n";
 
     // 1. Determine the slice level, in log terms.
     LogDensity logy = g() - exponential(1);
@@ -908,6 +911,10 @@ std::pair<int,double> search_multi_intervals(vector<double>& X0,
 std::pair<int,double> slice_sample_multi(vector<double>& X0, vector<slice_function*>& g, double w, int m)
 {
     int N = g.size();
+
+    for(auto* function: g)
+        if (not function->can_slice_sample())
+            return {-1, X0[0]};
 
     auto g1x0 = (*g[0])();
     assert(g[0]->in_range(X0[0]));
