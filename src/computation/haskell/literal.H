@@ -30,7 +30,7 @@ struct Integer
     Integer(integer i, const Hs::Var& op): value(i), fromIntegerOp(op) {}
 };
 
-integer integerFromString(const std::string& s);
+integer integerFromString(const std::string& s, int radix = 10);
 
 struct String
 {

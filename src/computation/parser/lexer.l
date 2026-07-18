@@ -3,12 +3,8 @@
 }
 
 %{ /* -*- C++ -*- */
-# include <cerrno>
 # include <cassert>
-# include <climits>
-# include <cstdlib>
 # include <cstdint>
-# include <limits>
 # include <memory>
 # include <optional>
 # include <string>
@@ -19,11 +15,7 @@
 # include "parser.hh"
 
 // Forward declarations
-yy::parser::symbol_type make_integer(std::string_view text, int radix, bool positive, int shift,
-				     const yy::parser::location_type& loc);
-
-yy::parser::symbol_type make_boxed_integer(std::string_view text, int radix, bool positive, int shift,
-				           const yy::parser::location_type& loc);
+yy::parser::symbol_type make_integer(std::string_view text, int radix, const yy::parser::location_type& loc);
 
 yy::parser::symbol_type make_integer10(std::string_view text, const yy::parser::location_type& loc);
 
@@ -260,8 +252,8 @@ signed       {negative}?
 <INITIAL>{decimal}"#"                           return LexedToken(make_boxed_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
 <INITIAL>{decimal}                              return LexedToken(make_integer10(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
   /* 0[bB]{numspc}{binary}      make_integer(2,true,2,drv.location); */
-<INITIAL>0[oO]{numspc}{octal}                   return LexedToken(make_integer(std::string_view(text(), size()), 8,true,2,drv.location), TokenEffects{.closes_atom = true});
-<INITIAL>0[xX]{numspc}{hexadecimal}             return LexedToken(make_integer(std::string_view(text(), size()),16,true,2,drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>0[oO]{numspc}{octal}                   return LexedToken(make_integer(std::string_view(text(), size()), 8, drv.location), TokenEffects{.closes_atom = true});
+<INITIAL>0[xX]{numspc}{hexadecimal}             return LexedToken(make_integer(std::string_view(text(), size()), 16, drv.location), TokenEffects{.closes_atom = true});
 
   /* negative literals depend on an extension */
 <INITIAL>{floating_point}                       return LexedToken(make_rational(std::string_view(text(), size()), drv.location), TokenEffects{.closes_atom = true});
@@ -475,32 +467,9 @@ yy::parser::symbol_type make_boxed_integer10(std::string_view text, const yy::pa
     return yy::parser::make_PRIMINTEGER(Haskell::integerFromString(s), loc);
 }
 
-yy::parser::symbol_type make_integer(std::string_view text, int radix, bool positive, int shift,
-				     const yy::parser::location_type& loc)
+yy::parser::symbol_type make_integer(std::string_view text, int radix, const yy::parser::location_type& loc)
 {
-    // This doesn't handle underscore separators
-    errno = 0;
-    std::string token(text);
-    auto n = std::stoi(token.c_str()+shift, NULL, radix);
-    if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))
-	throw yy::parser::syntax_error(loc, "integer is out of range: " + token);
-    if (not positive)
-	n = -n;
-    return yy::parser::make_INTEGER(n, loc);
-}
-
-yy::parser::symbol_type make_boxed_integer(std::string_view text, int radix, bool positive, int shift,
-                                           const yy::parser::location_type& loc)
-{
-    // This doesn't handle underscore separators
-    errno = 0;
-    std::string token(text);
-    auto n = std::stoi(token.c_str()+shift, NULL, radix);
-    if ( not (INT_MIN <= n and n <= INT_MAX and errno != ERANGE))
-	throw yy::parser::syntax_error(loc, "integer is out of range: " + token);
-    if (not positive)
-	n = -n;
-    return yy::parser::make_PRIMINTEGER(n, loc);
+    return yy::parser::make_INTEGER(Haskell::integerFromString(std::string(text.substr(2)), radix), loc);
 }
 
 #include "computation/haskell/literal.H"

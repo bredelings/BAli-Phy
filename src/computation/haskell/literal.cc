@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <limits>
 #include <regex>
+#include <stdexcept>
 #include <vector>
 #include <fmt/format.h>
 
@@ -51,9 +52,33 @@ namespace Haskell
     std::string rgx_s1 = fmt::format( R"(_*({0})\.({0})({1})?)",decimal,exponent);
     std::string rgx_s2 = fmt::format( R"(_*({0})({1}))",decimal,exponent);
 
-    integer integerFromString(const string& s)
+    // Remove separators and parse every digit of a signed literal into an arbitrary-precision integer.
+    integer integerFromString(const string& s, int radix)
     {
-	return integer(remove_underscore_and_leading_zeros(s));
+        auto digits = remove_underscore(s);
+        if (radix < 2 or radix > 16 or digits.empty())
+            throw std::invalid_argument("invalid integer literal");
+
+        std::size_t position = 0;
+        bool negative = digits[position] == '-';
+        if (negative or digits[position] == '+') position++;
+        if (position == digits.size())
+            throw std::invalid_argument("invalid integer literal");
+
+        integer value = 0;
+        for(; position < digits.size(); position++)
+        {
+            char c = digits[position];
+            int digit = '0' <= c and c <= '9' ? c - '0'
+                      : 'a' <= c and c <= 'f' ? c - 'a' + 10
+                      : 'A' <= c and c <= 'F' ? c - 'A' + 10
+                      : radix;
+            if (digit >= radix)
+                throw std::invalid_argument("invalid digit in integer literal");
+            value = value * radix + digit;
+        }
+
+        return negative ? -value : value;
     }
 
 rational rationalFromString(const string& s)
