@@ -321,8 +321,11 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
     {
         auto I = *i;
         bool has_bad_operator = false;
-        for(int n=1; n<I.terms.size(); n += 2)
+        for(int n=0; n<I.terms.size(); n++)
         {
+            if (not is_infix_operator_term(I.terms, n))
+                continue;
+
             const auto& op = I.terms[n];
             if (auto v = unloc(op).to<Hs::Var>())
             {

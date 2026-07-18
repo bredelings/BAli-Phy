@@ -17,6 +17,7 @@ std::string bool_false_name = "Data.Bool.False";
 std::string bool_and_name = "Data.Bool.&&";
 std::string bool_type_name = "Data.Bool.Bool";
 std::string error_name = "Compiler.Error.error";
+std::string num_negate_name = "Compiler.Num.negate";
 std::string eq_class_name = "Data.Eq.Eq";
 std::string eq_method_name = "Data.Eq.==";
 std::string ord_class_name = "Data.Ord.Ord";

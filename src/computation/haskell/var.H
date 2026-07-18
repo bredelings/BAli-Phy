@@ -16,6 +16,8 @@ namespace Haskell
 struct Var
 {
     std::string name;
+    // Frontend-only marker; serialized Vars are declaration names that no longer pass through the renamer.
+    bool name_is_resolved = false;
 
     Core::wrapper wrap;
     bool operator==(const Var&) const;
@@ -33,6 +35,14 @@ struct Var
     }
 
     Var(const std::string& s):name(s) {}
+
+    // Construct a compiler-generated reference whose name already identifies its declaration.
+    static Var resolved(const std::string& s)
+    {
+        Var var(s);
+        var.name_is_resolved = true;
+        return var;
+    }
 
     Var() = default;
 };

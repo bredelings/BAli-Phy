@@ -57,12 +57,12 @@ string TypedPattern::print() const
 
 string LiteralPattern::print() const
 {
-    return lit.print();
+    return (negateOp ? "-" : "") + lit.print();
 }
 
 bool LiteralPattern::operator==(const LiteralPattern& LP) const
 {
-    return lit == LP.lit;
+    return lit == LP.lit and negateOp == LP.negateOp;
 }
 
 string ListPattern::print() const

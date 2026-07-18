@@ -159,8 +159,19 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         auto V = E.as_<Hs::Var>();
         auto& name = V.name;
 
+        // Compiler-generated references already carry the canonical identity, not a source-scoped name.
+        if (V.name_is_resolved)
+        {
+            assert(is_qualified_symbol(name));
+            auto symbol = m.lookup_resolved_symbol(name);
+            if (not symbol)
+                error(loc, Note()<<"Resolved variable `"<<name<<"` is not available.");
+            else
+                assert(get_module_name(symbol->name) != m.name);
+            E = V;
+        }
         // Local vars bind id's tighter than global vars.
-        if (includes(bound,name))
+        else if (includes(bound,name))
         {
             free_vars.insert(name);
         }

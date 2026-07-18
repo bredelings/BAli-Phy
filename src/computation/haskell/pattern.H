@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <optional>
 #include <type_traits>
 
 #include "computation/parser/located.H"
@@ -150,6 +151,7 @@ struct LiteralPattern
     bool operator==(const LiteralPattern&) const;
 
     Hs::Var equalsOp = {eq_method_name};
+    std::optional<Hs::Var> negateOp;
     std::string print() const;
 
     LiteralPattern(const Literal& l): lit(l) {}

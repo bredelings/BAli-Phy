@@ -79,7 +79,8 @@ Hs::LExp infix_parse_neg(const OpLookup& get_op, const Located<OpInfo>& op1, deq
 
 	E1 = infix_parse_neg(get_op, neg, T, build_infix, build_neg);
 
-	return infix_parse(get_op, op1, build_neg({neg_loc,Hs::Var("negate")}, E1), T, build_infix, build_neg);
+	return infix_parse(get_op, op1, build_neg({neg_loc,Hs::Var::resolved(num_negate_name)}, E1), T,
+                           build_infix, build_neg);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
@@ -178,6 +179,24 @@ Hs::LExp desugar_infix(const renamer_state& Rn, const vector<Hs::LExp>& T)
 
 Hs::LPat desugar_pattern_infix(const renamer_state& Rn, const vector<Hs::LExp>& T)
 {
+    if (is_prefix_neg(T))
+    {
+        if (T.size() != 2)
+            throw myexception()<<"Invalid negative pattern '"<<make_infix_exp(T)<<"'.";
+
+        auto arg = disambiguate_pattern(T[1]);
+        auto literal = unloc(arg).to<Hs::LiteralPattern>();
+        if (literal and (literal->lit.is_Integer() or literal->lit.is_Floating()))
+        {
+            auto pattern = *literal;
+            pattern.negateOp = Hs::Var::resolved(num_negate_name);
+            return {T[0].loc * arg.loc, pattern};
+        }
+
+        throw myexception()<<"Negative pattern '"<<make_infix_exp(T)
+                           <<"' must contain an integer or floating-point literal.";
+    }
+
     auto get_op = [&](const Hs::LExp& op)
     {
         return get_op_sym(Rn, op);
@@ -191,12 +210,10 @@ Hs::LPat desugar_pattern_infix(const renamer_state& Rn, const vector<Hs::LExp>& 
         return Hs::LExp{loc, Hs::ParsedApp({op, lhs, rhs})};
     };
 
-    // Preserve prefix-negation as expression-shaped syntax; pattern classification
-    // will reject it unless later support for negative patterns is added.
-    auto build_neg = [](const Hs::LExp& neg, const Hs::LExp& arg)
+    // Reject any malformed negative spine not consumed as a literal pattern above.
+    auto build_neg = [](const Hs::LExp&, const Hs::LExp&) -> Hs::LExp
     {
-        auto loc = neg.loc * arg.loc;
-        return Hs::LExp{loc, Hs::ParsedApp({neg, arg})};
+        throw myexception()<<"Negative patterns must contain an integer or floating-point literal.";
     };
 
     return disambiguate_pattern(resolve_infix(T, get_op, build_infix, build_neg));

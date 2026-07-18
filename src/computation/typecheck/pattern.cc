@@ -331,16 +331,22 @@ void TypeChecker::tcPat(local_value_env& penv, Hs::LPat& lpat, const Expected& e
     {
         auto L = *l;
 
-        // 1. (==) :: Eq a => a -> a -> Bool
+        // 1. (==) compares the object type with the possibly different negated-literal type.
         auto [ obj_type, pattern_type, result_type ] = unify_two_arg_function( inferRho(L.equalsOp) );
-        unify( obj_type, pattern_type );
         unify( result_type, bool_type() );
 
         // 2. exp_type ~ a
-        unify(pattern_type, expTypeToType(exp_type));
+        unify(obj_type, expTypeToType(exp_type));
 
-        // 3. a ~ type_of(L.lit)
-        tcRho(L.lit, Check(pattern_type) );
+        // 3. The optional negate operation converts the literal to the comparison type.
+        if (L.negateOp)
+        {
+            auto [literal_type, negated_type] = unify_function(inferRho(*L.negateOp));
+            unify(negated_type, pattern_type);
+            tcRho(L.lit, Check(literal_type));
+        }
+        else
+            tcRho(L.lit, Check(pattern_type));
 
         pat = L;
 

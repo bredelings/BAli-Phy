@@ -381,7 +381,10 @@ failable_expression desugar_state::match_literal(const vector<Core::Var<>>& x, c
             auto& LP = constants[i];
 
             // condition = (x == constants[i])
-            auto condition = safe_apply(desugar(LP.equalsOp), {x0, desugar(LP.lit)});
+            auto pattern_value = desugar(LP.lit);
+            if (LP.negateOp)
+                pattern_value = safe_apply(desugar(*LP.negateOp), {pattern_value});
+            auto condition = safe_apply(desugar(LP.equalsOp), {x0, pattern_value});
 
             // let o = E in case condition of True -> true_branch(o); 
             auto o = get_fresh_core_var("o");

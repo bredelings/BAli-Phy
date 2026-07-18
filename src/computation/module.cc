@@ -2251,6 +2251,7 @@ set<string> special_prelude_symbols =
     "Data.OldList.map",
     "Data.OldList.concatMap",
     "Control.Monad.fail",
+    "Compiler.Num.negate",
     "Compiler.Enum.enumFrom",
     "Compiler.Enum.enumFromTo",
     "Compiler.Enum.enumFromThen",
@@ -2308,6 +2309,13 @@ const_symbol_ptr lookup_magic_symbol(const std::string& name)
         // forall m a.MonadFail m => String -> m a
         TypeVar m("m", kind_type());
         S->type = add_forall_vars({m,a}, ConstrainedType(Context({Type(TypeApp(TypeCon("Monad"),m))}), make_arrow_type(list_type(char_type()), TypeApp(m,a))));
+    }
+    else if (name == "Compiler.Num.negate")
+    {
+        S = std::make_shared<symbol_info>(symbol_info(name, symbol_type_t::variable, {}, 1));
+        // forall a.Num a => a -> a
+        auto num_a = Type(TypeApp(TypeCon("Compiler.Num.Num"), a));
+        S->type = add_forall_vars({a}, ConstrainedType(Context({num_a}), make_arrow_type(a, a)));
     }
     else if (name == "Compiler.Enum.enumFrom")
     {
