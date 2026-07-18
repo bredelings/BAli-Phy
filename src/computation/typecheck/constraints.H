@@ -65,8 +65,11 @@ struct UnifyOrigin
     Type t2;
 };
 
+struct FunDepOrigin
+{
+};
 
-typedef std::variant<std::monostate, OccurrenceOrigin, GivenOrigin, AppOrigin, InstanceOrigin, LeftSectionOrigin, PatOrigin, SuperclassOrigin, TypeConvertOrigin,GNDMethodOrigin,CycleBreakerOrigin,UnifyOrigin> ConstraintOrigin;
+typedef std::variant<std::monostate, OccurrenceOrigin, GivenOrigin, AppOrigin, InstanceOrigin, LeftSectionOrigin, PatOrigin, SuperclassOrigin, TypeConvertOrigin,GNDMethodOrigin,CycleBreakerOrigin,UnifyOrigin,FunDepOrigin> ConstraintOrigin;
 
 enum ConstraintFlavor { Wanted, Given };
 

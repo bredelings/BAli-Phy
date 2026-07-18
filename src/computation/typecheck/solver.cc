@@ -1,4 +1,5 @@
 #include "typecheck.H"
+#include "fundeps.H"
 #include "kindcheck.H"
 #include "solver.H"
 
@@ -505,6 +506,64 @@ void Solver::kickout_rewritten(const Predicate& p, std::vector<Predicate>& ps)
     }
 }
 
+// Solves FunDep equalities for type improvement, retaining outer unifications but no equality evidence.
+FunDepResult Solver::solve_fun_dep_equations(const Constraint& work, const vector<FunDepEquations>& equation_groups)
+{
+    if (equation_groups.empty()) return FunDepResult::NoChange;
+
+    set<MetaTypeVar> outer_variables;
+    for(const auto& group: equation_groups)
+        for(const auto& [lhs, rhs]: group.equalities)
+        {
+            add(outer_variables, free_meta_type_variables(lhs));
+            add(outer_variables, free_meta_type_variables(rhs));
+        }
+    std::erase_if(outer_variables,
+                  [&](const MetaTypeVar& variable) { return variable.filled() or variable.level() > level(); });
+
+    auto saved_unification_level = unification_level();
+    clear_unification_level();
+
+    auto nested_typechecker = copy_clear_wanteds(true);
+    vector<Type> equality_predicates;
+    for(const auto& group: equation_groups)
+    {
+        substitution_t substitution;
+        for(const auto& variable: group.quantified)
+        {
+            auto kind = variable.kind.empty() ? variable.kind : apply_subst(substitution, variable.kind);
+            substitution = substitution.insert({variable, nested_typechecker.fresh_meta_type_var(variable.name, kind)});
+        }
+
+        for(const auto& [lhs, rhs]: group.equalities | views::reverse)
+            equality_predicates.push_back(make_role_equality_pred(Role::Nominal,
+                                                                  apply_subst(substitution, lhs),
+                                                                  apply_subst(substitution, rhs)));
+    }
+
+    auto source_span_scope = nested_typechecker.source_span_scope(work.tc_state->source_span());
+    auto nested_wanteds = nested_typechecker.preds_to_constraints(FunDepOrigin(), Wanted, equality_predicates);
+    Solver nested_solver(nested_typechecker);
+    nested_solver.simplify({}, nested_wanteds);
+
+    auto nested_unification_level = unification_level();
+    clear_unification_level();
+    if (saved_unification_level) set_unification_level(*saved_unification_level);
+    if (nested_unification_level and *nested_unification_level <= level()) set_unification_level(*nested_unification_level);
+
+    bool changed = false;
+    for(const auto& variable: outer_variables)
+        if (variable.filled())
+        {
+            changed = true;
+            kickout_after_unification(variable);
+        }
+
+    if (not nested_solver.inerts.failed.empty()) return FunDepResult::Insoluble;
+    if (changed) return FunDepResult::Changed;
+    return FunDepResult::NoChange;
+}
+
 Core::Decls<> Solver::simplify(const LIE& givens, LIE& wanteds)
 {
     if (wanteds.empty()) return {};
@@ -563,6 +622,47 @@ Core::Decls<> Solver::simplify(const LIE& givens, LIE& wanteds)
         // top-level reactions
         if (top_react(p))
             continue;
+
+        // FunDeps improve unsolved dictionaries after ordinary instance resolution and do not produce evidence.
+        if (auto dict = to<CanonicalDict>(p); dict and p.flavor() == Wanted)
+        {
+            auto class_info = info_for_class(dict->klass.name);
+            if (class_info and not class_info->functional_dependencies.empty())
+            {
+                auto work_args = rewrite(p.flavor(), dict->args);
+                vector<FunDepEquations> local_equations;
+                for(const auto& inert: inerts.dicts)
+                    if (auto inert_dict = to<CanonicalDict>(inert); inert_dict and inert_dict->klass == dict->klass)
+                    {
+                        auto template_args = rewrite(inert.flavor(), inert_dict->args);
+                        local_equations += improve_from_constraint(*class_info, template_args, work_args);
+                    }
+
+                auto result = solve_fun_dep_equations(dict->constraint, local_equations);
+                if (result == FunDepResult::Insoluble)
+                {
+                    inerts.failed.push_back(p);
+                    continue;
+                }
+                if (result == FunDepResult::Changed)
+                {
+                    work_list.push_back(NonCanonical(dict->constraint));
+                    continue;
+                }
+
+                result = solve_fun_dep_equations(dict->constraint, improve_from_instances(*this, *class_info, work_args));
+                if (result == FunDepResult::Insoluble)
+                {
+                    inerts.failed.push_back(p);
+                    continue;
+                }
+                if (result == FunDepResult::Changed)
+                {
+                    work_list.push_back(NonCanonical(dict->constraint));
+                    continue;
+                }
+            }
+        }
 
 
         // perform same-level substitutions

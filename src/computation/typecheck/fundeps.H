@@ -9,10 +9,17 @@
 
 class TypeChecker;
 struct FunctionalDependency;
+struct ClassInfo;
 struct InstanceInfo;
 
 using InstantiatedFunDep =
     std::pair<std::vector<Type>, std::vector<Type>>;
+
+struct FunDepEquations
+{
+    std::vector<TypeVar> quantified;
+    std::vector<std::pair<Type, Type>> equalities;
+};
 
 InstantiatedFunDep
 instantiate_fun_dep(const FunctionalDependency&,
@@ -31,5 +38,15 @@ close_wrt_fun_deps(TypeChecker&,
 std::vector<InstanceInfo>
 inconsistent_fun_dep_instances(TypeChecker&,
                                const InstanceInfo& candidate);
+
+std::vector<FunDepEquations>
+improve_from_constraint(const ClassInfo&,
+                        const std::vector<Type>& template_args,
+                        const std::vector<Type>& work_args);
+
+std::vector<FunDepEquations>
+improve_from_instances(TypeChecker&,
+                       const ClassInfo&,
+                       const std::vector<Type>& work_args);
 
 #endif

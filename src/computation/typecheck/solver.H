@@ -8,6 +8,8 @@
 #include <variant>
 #include <bitset>
 
+struct FunDepEquations;
+
 struct NonCanonical
 {
     Constraint constraint;
@@ -81,6 +83,13 @@ struct NonCanon
 };
 
 typedef std::variant<Changed, Unchanged, Solved, NonCanon> Change;
+
+enum class FunDepResult
+{
+    NoChange,
+    Changed,
+    Insoluble
+};
 
 struct InertSet
 {
@@ -164,6 +173,9 @@ struct Solver: public TypeChecker
     Change interact(const Predicate& P1, const Predicate& P2);
 
     std::optional<Reaction> top_react(const Predicate& P);
+
+    FunDepResult solve_fun_dep_equations(const Constraint& work,
+                                         const std::vector<FunDepEquations>& equation_groups);
 
     Core::Decls<> simplify(const LIE& givens, LIE& wanteds);
     Solver(const TypeChecker& tc);

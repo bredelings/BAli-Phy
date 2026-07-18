@@ -263,3 +263,71 @@ inconsistent_fun_dep_instances(TypeChecker& tc,
         check_environment(module->local_instances());
     return conflicts;
 }
+
+// Derives determined-argument equalities when two same-class constraints agree on a determinant.
+vector<FunDepEquations>
+improve_from_constraint(const ClassInfo& class_info, const vector<Type>& template_args, const vector<Type>& work_args)
+{
+    assert(template_args.size() == class_info.type_vars.size());
+    assert(work_args.size() == class_info.type_vars.size());
+
+    vector<FunDepEquations> equation_groups;
+    for(const auto& dependency: class_info.functional_dependencies)
+    {
+        auto [template_lhs, template_rhs] = instantiate_fun_dep(dependency, template_args);
+        auto [work_lhs, work_rhs] = instantiate_fun_dep(dependency, work_args);
+        if (template_lhs != work_lhs) continue;
+
+        FunDepEquations equations;
+        for(int i = 0; i < template_rhs.size(); i++)
+            if (template_rhs[i] != work_rhs[i])
+                equations.equalities.push_back({template_rhs[i], work_rhs[i]});
+        if (not equations.equalities.empty())
+            equation_groups.push_back(std::move(equations));
+    }
+    return equation_groups;
+}
+
+// Derives determined-argument equalities from instances whose determinant matches the wanted constraint.
+vector<FunDepEquations>
+improve_from_instances(TypeChecker& tc, const ClassInfo& class_info, const vector<Type>& work_args)
+{
+    assert(work_args.size() == class_info.type_vars.size());
+    vector<FunDepEquations> equation_groups;
+
+    // Adds equations contributed by every same-class instance in one environment.
+    auto improve_from_environment = [&](const InstanceEnv& environment)
+    {
+        for(const auto& [_, instance]: environment)
+        {
+            if (instance.class_con.name != class_info.name) continue;
+
+            for(const auto& dependency: class_info.functional_dependencies)
+            {
+                auto [instance_lhs, instance_rhs] = instantiate_fun_dep(dependency, instance.args);
+                auto [work_lhs, work_rhs] = instantiate_fun_dep(dependency, work_args);
+                auto determinant_substitution = tc.maybe_match(instance_lhs, work_lhs);
+                if (not determinant_substitution) continue;
+
+                instance_rhs = apply_subst(*determinant_substitution, instance_rhs);
+                auto remaining = free_variables_with_kinds<TypeVar>(instance_rhs);
+
+                FunDepEquations equations;
+                for(const auto& variable: instance.tvs)
+                    if (remaining.contains(variable))
+                        equations.quantified.push_back(variable);
+
+                for(int i = 0; i < instance_rhs.size(); i++)
+                    if (not tc.same_type(instance_rhs[i], work_rhs[i]))
+                        equations.equalities.push_back({instance_rhs[i], work_rhs[i]});
+                if (not equations.equalities.empty())
+                    equation_groups.push_back(std::move(equations));
+            }
+        }
+    };
+
+    improve_from_environment(tc.this_mod().local_instances);
+    for(const auto& [_, module]: tc.this_mod().transitively_imported_modules)
+        improve_from_environment(module->local_instances());
+    return equation_groups;
+}
