@@ -170,11 +170,16 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
     logp.push_back(&logp1);
     logp.push_back(&logp2);
 
-    double w = p[0].branch_mean();
+    double w = get_setting_or("slide_branch_slice_window",0.3);
 
     vector<double> X0(2);
     X0[0] = logp1.current_value();
-    X0[1] = uniform()*(*logp2.upper_bound);
+
+    // Choose the same uniform branch split as before, expressed as a finite log ratio.
+    double u = uniform();
+    while (u == 0)
+        u = uniform();
+    X0[1] = log(u) - log1p(-u);
 
     std::pair<int,double> choice = slice_sample_multi(X0,logp,w,-1);
 

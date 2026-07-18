@@ -214,25 +214,47 @@ alignment_branch_length_slice_function::alignment_branch_length_slice_function(P
     C0 = P;
 }
 
-void slide_node_slice_function::set_value(double x) 
+// Convert a log branch-length ratio back to two lengths while preserving their fixed sum.
+void slide_node_slice_function::set_value(double z)
 {
-    /* Problem: If y << x, then we may not be able to recover y = (x+y)-x.
-       This occurs, for example, when x = 1 and y = 1.0e-9.
+    const double total = initial_x + initial_y;
+    double x;
+    double y;
 
-       Solution: Store x0 and y0 separately, and compute y = y0 + (x0-x).
-    */
-    double l2 = y0+(x0-x);
+    if (z < 0)
+    {
+        double ratio = exp(z);
+        x = total * ratio / (1 + ratio);
+        y = total - x;
+    }
+    else
+    {
+        double ratio = exp(-z);
+        y = total * ratio / (1 + ratio);
+        x = total - y;
+    }
 
-    assert(0 <= x and x <= (x0+y0));
-    assert(0 <= l2 and l2 <= (x0+y0));
+    assert(0 <= x and x <= total);
+    assert(0 <= y and y <= total);
 
     static_cast<Parameters&>(C).setlength(b1,x);
-    static_cast<Parameters&>(C).setlength(b2,l2);
+    static_cast<Parameters&>(C).setlength(b2,y);
 }
 
+// Return the log ratio of the two current branch lengths.
 double slide_node_slice_function::current_value() const
 {
-    return static_cast<Parameters&>(C).t().branch_length(b1);
+    const auto& tree = static_cast<const Parameters&>(C).t();
+    return log(tree.branch_length(b1)) - log(tree.branch_length(b2));
+}
+
+// Include dx/dz = xy/(x+y) when evaluating the density in log-ratio coordinates.
+LogDensity slide_node_slice_function::operator()()
+{
+    const auto& tree = static_cast<const Parameters&>(C).t();
+    const double x = tree.branch_length(b1);
+    const double y = tree.branch_length(b2);
+    return context_slice_function::operator()() + log(x) + log(y) - log(initial_x + initial_y);
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
@@ -246,21 +268,15 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
     b1 = b[0];
     b2 = b[1];
 
-    x0 = P.t().branch_length(b[0]);
-    y0 = P.t().branch_length(b[1]);
-
-    set_lower_bound(0);
-    set_upper_bound(x0+y0);
+    initial_x = P.t().branch_length(b[0]);
+    initial_y = P.t().branch_length(b[1]);
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P,int i1,int i2)
     :context_slice_function(P), b1(i1), b2(i2)
 {
-    x0 = P.t().branch_length(b1);
-    y0 = P.t().branch_length(b2);
-
-    set_lower_bound(0);
-    set_upper_bound(x0+y0);
+    initial_x = P.t().branch_length(b1);
+    initial_y = P.t().branch_length(b2);
 }
 
 

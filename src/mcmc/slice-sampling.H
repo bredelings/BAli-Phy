@@ -169,17 +169,20 @@ struct alignment_branch_length_slice_function: public context_slice_function
     alignment_branch_length_slice_function(Parameters&,int);
 };
 
-/// A slice_function for slice-sampling two adjacent branch lengths which preserving their sum
+/// A slice function for redistributing a fixed total between two adjacent branch lengths.
+/// It uses the unbounded coordinate z = log(x/y).
 struct slide_node_slice_function: public context_slice_function
 {
     int b1;
     int b2;
-    double x0;
-    double y0;
+    double initial_x;
+    double initial_y;
 
+    std::optional<LogDensity> operator()(double z) override {return context_slice_function::operator()(z);}
+    LogDensity operator()() override;
     void set_value(double);
     double current_value() const;
-    bool can_slice_sample() const override {return x0 > 0 and y0 > 0;}
+    bool can_slice_sample() const override {return initial_x > 0 and initial_y > 0;}
 
     slide_node_slice_function(Parameters&,int);
     slide_node_slice_function(Parameters&,int,int);

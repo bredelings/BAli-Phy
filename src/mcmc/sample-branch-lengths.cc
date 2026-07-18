@@ -391,8 +391,9 @@ void slide_node(owned_ptr<context>& P, MoveStats& Stats,int b)
     if (uniform() < p)
     {
 	slide_node_slice_function logp(*PP,b);
-	double w = scale_between(logp.x0, logp.y0) * get_setting_or("slide_branch_slice_window",0.3);
-	double L1b = slice_sample(logp,w,50);
+	double w = get_setting_or("slide_branch_slice_window",0.3);
+	slice_sample(logp,w,50);
+	double L1b = PP->t().branch_length(branches[0]);
     
 	MCMC::Result result(2);
 	result.totals[0] = 2.0*abs(L1b-L1a);
