@@ -254,7 +254,7 @@ LogDensity slide_node_slice_function::operator()()
     const auto& tree = static_cast<const Parameters&>(C).t();
     const double x = tree.branch_length(b1);
     const double y = tree.branch_length(b2);
-    return context_slice_function::operator()() + log(x) + log(y) - log(initial_x + initial_y);
+    return context_slice_function::operator()() + log(x) + log(y) - log_total;
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
@@ -270,6 +270,7 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
 
     initial_x = P.t().branch_length(b[0]);
     initial_y = P.t().branch_length(b[1]);
+    log_total = log(initial_x + initial_y);
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P,int i1,int i2)
@@ -277,6 +278,7 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P,int i1,int i2
 {
     initial_x = P.t().branch_length(b1);
     initial_y = P.t().branch_length(b2);
+    log_total = log(initial_x + initial_y);
 }
 
 
