@@ -51,7 +51,7 @@ namespace
     }
 
     // Finds rigid variables recoverable from a type without reducing a type family.
-    set<TypeVar> injective_type_vars(TypeChecker& tc, const Type& type)
+    set<TypeVar> injective_type_vars(const TypeChecker& tc, const Type& type)
     {
         if (auto type2 = filled_meta_type_var(type))
             return injective_type_vars(tc, *type2);
@@ -90,19 +90,19 @@ namespace
     }
 
     // Selects the rigid variables recoverable from this type.
-    set<TypeVar> injective_variables(TypeChecker& tc, const Type& type, TypeVar*)
+    set<TypeVar> injective_variables(const TypeChecker& tc, const Type& type, TypeVar*)
     {
         return injective_type_vars(tc, type);
     }
 
     // Selects the metavariables recoverable from this type.
-    set<MetaTypeVar> injective_variables(TypeChecker& tc, const Type& type, MetaTypeVar*)
+    set<MetaTypeVar> injective_variables(const TypeChecker& tc, const Type& type, MetaTypeVar*)
     {
         return tc.injective_vars_for_type(type);
     }
 
     // Adds a predicate and its instantiated superclasses, stopping at repeats.
-    void add_superclass_predicates(TypeChecker& tc, const Type& predicate,
+    void add_superclass_predicates(const TypeChecker& tc, const Type& predicate,
                                    vector<Type>& predicates)
     {
         if (std::find(predicates.begin(), predicates.end(), predicate) != predicates.end())
@@ -128,7 +128,7 @@ namespace
 
     // Repeatedly applies equalities and class dependencies to the fixed variables.
     template <class Var>
-    set<Var> close_wrt_fun_deps_impl(TypeChecker& tc,
+    set<Var> close_wrt_fun_deps_impl(const TypeChecker& tc,
                                      const vector<Type>& source_predicates,
                                      set<Var> fixed)
     {
@@ -198,7 +198,7 @@ instantiate_fun_dep(const FunctionalDependency& dependency,
 
 // Closes rigid variables under kinds, equalities, superclasses, and FunDeps.
 set<TypeVar>
-close_wrt_fun_deps(TypeChecker& tc, const vector<Type>& predicates,
+close_wrt_fun_deps(const TypeChecker& tc, const vector<Type>& predicates,
                    set<TypeVar> fixed)
 {
     return close_wrt_fun_deps_impl(tc, predicates, std::move(fixed));
@@ -206,7 +206,7 @@ close_wrt_fun_deps(TypeChecker& tc, const vector<Type>& predicates,
 
 // Closes metavariables under kinds, equalities, superclasses, and FunDeps.
 set<MetaTypeVar>
-close_wrt_fun_deps(TypeChecker& tc, const vector<Type>& predicates,
+close_wrt_fun_deps(const TypeChecker& tc, const vector<Type>& predicates,
                    set<MetaTypeVar> fixed)
 {
     return close_wrt_fun_deps_impl(tc, predicates, std::move(fixed));

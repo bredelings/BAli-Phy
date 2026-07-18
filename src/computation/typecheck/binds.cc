@@ -1,4 +1,5 @@
 #include "typecheck.H"
+#include "fundeps.H"
 #include "kindcheck.H"
 #include "types.H"
 #include "match.H" // for tcMatchesFun
@@ -591,7 +592,6 @@ set<MetaTypeVar> TypeChecker::injective_vars_for_type(const Type& type) const
                     minus those that are not quantifiable at this level
 
 
-  closeWrtFunDeps = ???                  
 */
 
 
@@ -624,7 +624,7 @@ set<MetaTypeVar> TypeChecker::find_fixed_tvs(bool restricted, int level, const v
         }
     }
 
-    return fixed;
+    return close_wrt_fun_deps(*this, preds, std::move(fixed));
 }
 
 Hs::BindInfo TypeChecker::compute_bind_info(const Hs::Var& poly_id, const Hs::Var& mono_id, const set<TypeVar>& qtvs,
