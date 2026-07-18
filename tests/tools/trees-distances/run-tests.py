@@ -33,6 +33,20 @@ class TreesDistancesTests(unittest.TestCase):
             with self.subTest(trees=trees):
                 self.assertEqual(self.matching_matrix(trees), expected)
 
+    # Split costs are unchanged by orientation and count both sides of a crossing.
+    def test_equal_complementary_and_crossing_splits(self):
+        reference = "((A,B),(C,D));"
+        cases = [
+            ("equal", reference, 0.0),
+            ("complementary", "((C,D),(A,B));", 0.0),
+            ("crossing", "((A,C),(B,D));", 2.0),
+        ]
+
+        for name, other, expected in cases:
+            with self.subTest(name=name):
+                matrix = self.matching_matrix([reference, other])
+                self.assertEqual(matrix, [[0.0, expected], [expected, 0.0]])
+
 
 if __name__ == "__main__":
     argument_parser = argparse.ArgumentParser()

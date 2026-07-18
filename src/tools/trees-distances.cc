@@ -609,7 +609,8 @@ int split_distance_to_dummy(const dynamic_bitset<>& S1)
 
 int split_distance(const dynamic_bitset<>& S1, const dynamic_bitset<>& S2)
 {
-    return std::min((S1^S2).count(), (S1&S2).count());
+    auto difference = (S1^S2).count();
+    return std::min(difference, S1.size() - difference);
 }
 
 double matching_distance(const tree_record& t1, const tree_record& t2)
