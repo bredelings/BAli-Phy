@@ -86,29 +86,33 @@ extern "C" R::Exp simple_function_recip_logdouble(vector<R::Exp>& args)
 
 // Also see function `div_t div(int,int)` in stdlib.h
 
-// mod is always positive
+// Give a nonzero remainder the divisor's sign, as required by Haskell mod.
 template <typename T>
 T mod(T x, T y)
 {
     T z = x % y;
-    if (z < 0)
+    if (z != 0 and ((z < 0) != (y < 0)))
 	z += y;
     return z;
 }
 
-// Since div subtracts the mod, it rounds down
+// Adjust C++'s truncating quotient when mathematical floor is one lower.
 template <typename T>
 T div(T x, T y)
 {
-    return (x - mod(x,y))/y;
+    T q = x / y;
+    T r = x % y;
+    if (r != 0 and ((r < 0) != (y < 0)))
+        q -= 1;
+    return q;
 }
 
 // I think actually Char is a unicode character, not a 1-byte object.
 
 
-// x `quot` y should round towards -infinity
-// Also, supposedly (x `quot` y)*y + (x `mod` y) == x
-// Therefore, (x `quot` y) = (x - (x `mod` y))/y
+// x `div` y should round towards -infinity
+// Also, supposedly (x `div` y)*y + (x `mod` y) == x
+// Therefore, (x `div` y) = (x - (x `mod` y))/y
 extern "C" R::Exp simple_function_div_int(vector<R::Exp>& args)
 {
     auto x = get_arg(args).as_int();
@@ -144,9 +148,9 @@ extern "C" R::Exp simple_function_rem_int(vector<R::Exp>& args)
 }
 
 
-// x `quot` y should round towards -infinity
-// Also, supposedly (x `quot` y)*y + (x `mod` y) == x
-// Therefore, (x `quot` y) = (x - (x `mod` y))/y
+// x `div` y should round towards -infinity
+// Also, supposedly (x `div` y)*y + (x `mod` y) == x
+// Therefore, (x `div` y) = (x - (x `mod` y))/y
 extern "C" R::Exp simple_function_div_integer(vector<R::Exp>& args)
 {
     using boost::dynamic_pointer_cast;
