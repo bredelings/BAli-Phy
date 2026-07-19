@@ -9,6 +9,7 @@ namespace bali_phy_test
 {
     void run_closure_tests();
     void run_equality_tests();
+    void run_lexer_tests();
     void run_serialization_tests(const std::shared_ptr<module_loader>& loader);
     void run_transform_tests();
 }
@@ -25,5 +26,6 @@ int main(int argc, char** argv)
     bali_phy_test::run_serialization_tests(loader);
     bali_phy_test::run_closure_tests();
     bali_phy_test::run_equality_tests();
+    bali_phy_test::run_lexer_tests();
     bali_phy_test::run_transform_tests();
 }
