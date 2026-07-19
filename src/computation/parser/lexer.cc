@@ -1233,6 +1233,11 @@ std::string clean_pragma(std::string prag)
 std::optional<yy::parser::symbol_type> driver::prag(std::string_view text, const yy::parser::location_type& loc)
 {
     auto prag = clean_pragma(std::string(text));
+
+    // Language extensions were applied before parsing; consume the pragma body as a comment.
+    if (prag == "language")
+        return {};
+
     auto it = pragmas.find(prag);
     if (it == pragmas.end())
     {

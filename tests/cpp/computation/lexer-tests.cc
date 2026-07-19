@@ -24,6 +24,7 @@ std::string replace_newlines(std::string_view source, std::string_view newline)
 void check_newline_form(std::string_view newline)
 {
     constexpr std::string_view source =
+        "{-# LANGUAGE NoImplicitPrelude #-}\n"
         "module Main where\n"
         "-- line comment\n"
         "{- outer comment\n"
@@ -35,13 +36,16 @@ void check_newline_form(std::string_view newline)
         "      y = 2\n"
         "    in x + y\n";
 
-    auto module = parse_module_file(replace_newlines(source, newline), "Newlines.hs", LanguageExtensions{});
+    auto parsed = parse_module_file(replace_newlines(source, newline), "Newlines.hs", LanguageExtensions{});
+    require(parsed.source == source, "newline test did not retain normalized source");
+
+    const auto& module = parsed.module;
     require(module.topdecls.has_value(), "newline test module has no declarations");
     require(module.topdecls->size() == 2, "newline test module has the wrong declaration count");
 
     const auto& function = module.topdecls->back();
     require(function.loc.has_value(), "newline test function has no source location");
-    require(function.loc->begin.line == 7, "newline normalization produced the wrong declaration line");
+    require(function.loc->begin.line == 8, "newline normalization produced the wrong declaration line");
 }
 }
 

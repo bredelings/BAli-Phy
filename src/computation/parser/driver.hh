@@ -84,6 +84,13 @@ struct ClassifiedVarSym
     std::optional<yy::parser::token_type> token;
 };
 
+// Keep parsed locations paired with the normalized source that defines them.
+struct ParsedModule
+{
+    Haskell::Module module;
+    std::string source;
+};
+
 // Conducting the whole scanning and parsing of Calc++.
 class driver
 {
@@ -148,6 +155,8 @@ public:
 
     // Store the result
     Haskell::Module result;
+    // The normalized source whose locations are stored in the parse result.
+    std::string source;
     // Run the parser on file F.  Return 0 on success.
     int parse_file (const std::string& filename);
     int parse_string (const std::string& content, const std::string& input_name);
@@ -167,5 +176,6 @@ public:
     bool left_adjacent_closes_atom(const location_type& loc) const;
 };
 
-Haskell::Module parse_module_file(const std::string& content, const std::string& input_name, const LanguageExtensions& lang_exts);
+ParsedModule parse_module_file(const std::string& content, const std::string& input_name,
+                               const LanguageExtensions& lang_exts);
 #endif // ! DRIVER_HH

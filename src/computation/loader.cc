@@ -103,11 +103,11 @@ optional<fs::path> module_loader::find_cached_module(const string& modid) const
 //{-# LANGUAGE NoImplicitPrelude #-}
 static std::regex language_option_re("^\\s*\\{-#\\s+LANGUAGE\\s+(.*[^\\s])\\s+#-\\}");
 
-LanguageExtensions language_extensions(const string& filename, string& mod)
+LanguageExtensions language_extensions(const string& filename, const string& source)
 {
     set<string> options;
 
-    auto s = mod.c_str();
+    auto s = source.c_str();
     int pos = 0;
 
     std::cmatch m;
@@ -136,10 +136,9 @@ LanguageExtensions language_extensions(const string& filename, string& mod)
         if (note)
             messages.push_back({ErrorMsg, loc, {*note}});
     }
-    show_messages({filename, mod}, std::cerr, messages);
+    show_messages({filename, source}, std::cerr, messages);
     exit_on_error(messages);
 
-    mod = mod.substr(pos);
     return lang_exts;
 }
 
@@ -225,14 +224,15 @@ shared_ptr<Module> module_loader::load_module_from_file(const fs::path& filename
 
 	    auto lang_exts = language_extensions(*fname, file_contents);
 
-	    auto m = parse_module_file(file_contents, *fname, lang_exts);
+	    auto parsed = parse_module_file(file_contents, *fname, lang_exts);
 
 	    if (dump_parsed)
-		std::cout<<m.print()<<std::endl;
+		std::cout<<parsed.module.print()<<std::endl;
 
             string short_file_name = filename.filename().string();
 
-            auto M = std::make_shared<Module>(Module(m, lang_exts, {short_file_name, file_contents}));
+            auto M = std::make_shared<Module>(Module(parsed.module, lang_exts,
+                                                     {short_file_name, parsed.source}));
             // Save a reference to the string that we allocated, so we can clean it up later.
             M->filename = fname;
             modules.insert( {filename.string(), M} );

@@ -544,24 +544,25 @@ driver::parse_file (const std::string &filename)
 int
 driver::parse_string (const string& file_contents, const std::string &input_name)
 {
-  auto normalized_contents = normalize_newlines(file_contents);
+  source = normalize_newlines(file_contents);
   file = input_name;
   location.initialize (&input_name);
-  scan_begin (normalized_contents);
+  scan_begin (source);
   yy::parser parser (*this);
   parser.set_debug_level (trace_parsing);
   int res = parser.parse ();
   scan_end ();
 
-  show_messages( {input_name, normalized_contents}, std::cerr, messages);
+  show_messages( {input_name, source}, std::cerr, messages);
   exit_on_error(messages);
 
   return res;
 }
 
-Haskell::Module parse_module_file(const string& content, const std::string& input_name, const LanguageExtensions& lang_exts)
+ParsedModule parse_module_file(const string& content, const std::string& input_name,
+                               const LanguageExtensions& lang_exts)
 {
     driver D(lang_exts);
     D.parse_string(content, input_name);
-    return D.result;
+    return {std::move(D.result), std::move(D.source)};
 }
