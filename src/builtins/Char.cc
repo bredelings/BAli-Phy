@@ -226,7 +226,7 @@ extern "C" R::Exp simple_function_intToDigit(vector<R::Exp>& args)
     if (i >= 0 and i<=9)
         c = U'0' + i;
     else if (i >= 10 and i <= 15)
-        c = U'A' + i;
+        c = U'a' + (i - 10);
     else
         throw myexception()<<"intToDigit: integer "<<i<<" is not a digit!";
 

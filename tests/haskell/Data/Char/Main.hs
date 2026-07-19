@@ -24,3 +24,4 @@ main = do
   print (isSeparator '\8232')
   print (case generalCategory '\65296' of {DecimalNumber -> True; _ -> False})
   print (case generalCategory '\8212' of {DashPunctuation -> True; _ -> False})
+  print ([intToDigit i | i <- [0..15]] == "0123456789abcdef")
