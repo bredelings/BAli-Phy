@@ -39,7 +39,6 @@ extern "C" R::Exp simple_function_log(vector<R::Exp>& args)
     if (x.is_double())
     {
 	double xx = x.as_double();
-	assert(xx > 0.0);
 	return log(xx);
     }
     else if (x.is_log_double())
@@ -61,7 +60,6 @@ extern "C" R::Exp simple_function_log1p(vector<R::Exp>& args)
     // QUESTION: should we implement this for logdouble?
 
     double xx = x.as_double();
-    assert(xx >= -1.0);
     return log1p(xx);
 }
 
