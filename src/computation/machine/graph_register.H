@@ -197,6 +197,29 @@ constexpr int step_edges_decremented_bit = 4;
 constexpr int different_result_bit = 5;
 constexpr int initially_unforced_bit = 6;
 
+// Keep one temporary effect handler installed for exactly this lexical scope.
+template<class Handler>
+class handler_registration
+{
+    std::vector<Handler>& handlers;
+
+public:
+    template<class F>
+    handler_registration(std::vector<Handler>& handlers_, F&& handler): handlers(handlers_)
+    {
+        handlers.emplace_back(std::forward<F>(handler));
+    }
+
+    handler_registration(const handler_registration&) = delete;
+    handler_registration& operator=(const handler_registration&) = delete;
+
+    ~handler_registration() noexcept
+    {
+        assert(not handlers.empty());
+        handlers.pop_back();
+    }
+};
+
 // How do we handle parameters?
 // * well, parameters could be reg's, so that a separate reg must be a separate parameter.
 // * how, then, do we handle reg NAME's, if reg's are not uniquely identified by their names?

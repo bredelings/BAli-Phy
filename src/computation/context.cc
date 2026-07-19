@@ -291,8 +291,8 @@ void context_ref::run_transition_kernels()
         }
     };
 
-    memory()->register_tk_handlers.push_back(register_tk_handler);
-    memory()->unregister_tk_handlers.push_back(unregister_tk_handler);
+    handler_registration register_tk_scope(memory()->register_tk_handlers, register_tk_handler);
+    handler_registration unregister_tk_scope(memory()->unregister_tk_handlers, unregister_tk_handler);
 
     auto& tk_groups_by_step = tk_groups.get<1>();
 
@@ -325,8 +325,6 @@ void context_ref::run_transition_kernels()
         tk_steps_removed.clear();
     }
 
-    memory()->register_tk_handlers.pop_back();
-    memory()->unregister_tk_handlers.pop_back();
 }
 
 void context_ref::perform_transition_kernel(int s)

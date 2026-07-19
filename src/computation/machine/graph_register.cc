@@ -560,15 +560,12 @@ std::set<int> reg_heap::find_affected_sampling_events(int c, const std::function
 
     auto register_sampling_event = [&](const register_prob& r,int) { downstream_sampling_events.insert(r.r_dist);};
 
-    unregister_likelihood_handlers.push_back(register_sampling_event);
-    unregister_prior_handlers.push_back(register_sampling_event);
+    handler_registration likelihood_handler(unregister_likelihood_handlers, register_sampling_event);
+    handler_registration prior_handler(unregister_prior_handlers, register_sampling_event);
 
     do_changes();
     reroot_at_context(c);
     do_pending_effect_unregistrations();
-
-    unregister_prior_handlers.pop_back();
-    unregister_likelihood_handlers.pop_back();
 
     return downstream_sampling_events;
 }
@@ -1014,12 +1011,13 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
             random_vars_removed.insert(r_dist);
     };
 
-    register_likelihood_handlers.push_back(register_likelihood_handler);
-    unregister_likelihood_handlers.push_back(unregister_likelihood_handler);
-    register_prior_handlers.push_back(register_prior_handler);
-    unregister_prior_handlers.push_back(unregister_prior_handler);
-    register_dist_handlers.push_back(register_dist_handler);
-    unregister_dist_handlers.push_back(unregister_dist_handler);
+    handler_registration register_likelihood_scope(register_likelihood_handlers, register_likelihood_handler);
+    handler_registration unregister_likelihood_scope(unregister_likelihood_handlers,
+                                                       unregister_likelihood_handler);
+    handler_registration register_prior_scope(register_prior_handlers, register_prior_handler);
+    handler_registration unregister_prior_scope(unregister_prior_handlers, unregister_prior_handler);
+    handler_registration register_dist_scope(register_dist_handlers, register_dist_handler);
+    handler_registration unregister_dist_scope(unregister_dist_handlers, unregister_dist_handler);
 
     // 3. reroot to c2 and force the program
     evaluate_program(c2);
@@ -1077,14 +1075,6 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     for(auto x : prog_temp)
         assert(x.none());
 #endif
-
-    // 5. remove the handlers
-    register_likelihood_handlers.pop_back();
-    unregister_likelihood_handlers.pop_back();
-    register_prior_handlers.pop_back();
-    unregister_prior_handlers.pop_back();
-    register_dist_handlers.pop_back();
-    unregister_dist_handlers.pop_back();
 
 //  auto L2 = likelihood_for_context(c2);
 //
