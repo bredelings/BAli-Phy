@@ -16,7 +16,7 @@ data LongIndels = LongIndels { deletionRate, insertionRate, meanLength, time :: 
 
 instance Dist LongIndels where
     type Result LongIndels = PairwiseAlignment
-    dist_name _ = "LongIndels"
+    distName _ = "LongIndels"
 
 instance IOSampleable LongIndels where
     sampleIO (LongIndels mu lambda mean_length t startLength) = simulateLongIndelsGeometric mu lambda mean_length t startLength
@@ -27,7 +27,7 @@ data IndelsOnTree t d = IndelsOnTree t (Double -> Int -> d) Int
 
 instance Dist d => Dist (IndelsOnTree t d) where
     type Result (IndelsOnTree t d) = AlignmentOnTree t
-    dist_name _ = "IndelsOnTree"
+    distName _ = "IndelsOnTree"
 
 {- Note: Indentation handling is not working with this rec statement! -}
 
@@ -57,7 +57,7 @@ The problem with this is that we can only sample the alignments for branches goi
 --          it in the MCMC interpreter?
 
 instance Dist d => HasAnnotatedPdf (IndelsOnTree t d) where
-    annotated_densities dist _ = undefined
+    annotatedDensities dist _ = undefined
 
 instance (IOSampleable d, Result d ~ PairwiseAlignment, HasRoot t, HasBranchLengths t) => Sampleable (IndelsOnTree t d) where
-    sample dist = RanDistribution2 dist do_nothing
+    sample dist = RanDistribution2 dist doNothing

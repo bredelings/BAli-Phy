@@ -12,7 +12,7 @@ data Beta = Beta Double Double
 
 instance Dist Beta where
     type Result Beta = Double
-    dist_name _ = "Beta"
+    distName _ = "Beta"
 
 instance IOSampleable Beta where
     sampleIO (Beta a b) = sample_beta a b
@@ -39,7 +39,7 @@ instance MaybeVariance Beta where
 instance Variance Beta
 
 instance HasAnnotatedPdf Beta where
-    annotated_densities dist@(Beta a b) x = do
+    annotatedDensities dist@(Beta a b) x = do
                                         in_edge "a" a
                                         in_edge "b" b
                                         return ([beta_density a b x],())

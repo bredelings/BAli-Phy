@@ -67,12 +67,12 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
 
 instance Dist (PhyloCTMC t Int s) => Dist (VariablePhyloCTMC t s) where
     type Result (VariablePhyloCTMC t s) = Result (PhyloCTMC t Int s)
-    dist_name (Variable dist) = "Variable" ++ dist_name dist
+    distName (Variable dist) = "Variable" ++ distName dist
 
 -- TODO: make this work on forests!
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s) => HasAnnotatedPdf (VariablePhyloCTMC t s) where
     type DistProperties (VariablePhyloCTMC t s) = DistProperties (PhyloCTMC t Int s)
-    annotated_densities (Variable (PhyloCTMC tree length smodel scale)) = annotated_subst_likelihood_fixed_A_variable tree length (scaleTo scale smodel)
+    annotatedDensities (Variable (PhyloCTMC tree length smodel scale)) = annotated_subst_likelihood_fixed_A_variable tree length (scaleTo scale smodel)
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (VariablePhyloCTMC t s) where
     sampleIO (Variable (PhyloCTMC rtree rootLength rawSmodel scale)) = do
@@ -87,4 +87,4 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
       return $ Aligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s, HasProperties t s) => Sampleable (VariablePhyloCTMC t s) where
-    sample (Variable dist) = RanDistribution2 dist do_nothing
+    sample (Variable dist) = RanDistribution2 dist doNothing

@@ -6,7 +6,7 @@ data Shifted d = Shifted d (Result d)
 
 instance (Dist d, Num (Result d)) => Dist (Shifted d) where
     type Result (Shifted d) = Result d
-    dist_name (Shifted dist _) = "shifted " ++ dist_name dist
+    distName (Shifted dist _) = "shifted " ++ distName dist
 
 instance (IOSampleable d, Num (Result d)) => IOSampleable (Shifted d) where
     sampleIO (Shifted dist delta) = (+ delta) <$> sampleIO dist

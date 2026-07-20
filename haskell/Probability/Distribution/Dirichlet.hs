@@ -18,7 +18,7 @@ data Dirichlet = Dirichlet [Double]
 
 instance Dist Dirichlet where
     type Result Dirichlet = [Double]
-    dist_name _ = "dirichlet"
+    distName _ = "dirichlet"
 
 instance IOSampleable Dirichlet where
     sampleIO (Dirichlet as) = sampleIO $ sampleDirichlet as
@@ -27,7 +27,7 @@ instance HasPdf Dirichlet where
     pdf (Dirichlet as) ps = dirichletDensity as ps
 
 instance HasAnnotatedPdf Dirichlet where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable Dirichlet where
     sample dist@(Dirichlet as) = RanSamplingRate (1/sqrt(fromIntegral $ length as)) $ sampleDirichlet as
@@ -48,7 +48,7 @@ data DirichletOn a = DirichletOn [a] [Double]
 
 instance Dist (DirichletOn a) where
     type Result (DirichletOn a) = [(a,Double)]
-    dist_name _ = "dirichlet_on"
+    distName _ = "dirichlet_on"
 
 instance IOSampleable (DirichletOn a) where
     sampleIO (DirichletOn items as) = do ps <- sampleIO $ dirichlet as
@@ -59,7 +59,7 @@ instance HasPdf (DirichletOn a) where
 
 
 instance HasAnnotatedPdf (DirichletOn a) where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable (DirichletOn a) where
     sample (DirichletOn items as) = do ps <- sample $ dirichlet as

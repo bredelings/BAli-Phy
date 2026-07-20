@@ -125,7 +125,7 @@ data CRP = CRP Double Int Int
 
 instance Dist CRP where
     type Result CRP = [Int]
-    dist_name _ = "crp"
+    distName _ = "crp"
 
 instance IOSampleable CRP where
     sampleIO (CRP alpha n d) = sample_crp alpha n d
@@ -134,7 +134,7 @@ instance HasPdf CRP where
     pdf (CRP alpha n d) = crp_density alpha n d
 
 instance HasAnnotatedPdf CRP where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable CRP where
     sample dist@(CRP alpha n d) = RanDistribution3 dist (crp_effect n d) (triggeredModifiableList n) (ran_sample_crp alpha n d)

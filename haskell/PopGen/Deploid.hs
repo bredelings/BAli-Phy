@@ -22,19 +22,19 @@ data Haplotype01FromPLAF = Haplotype01FromPLAF [Double]
 
 instance Dist Haplotype01FromPLAF where
     type Result (Haplotype01FromPLAF) = Haplotype
-    dist_name _ = "haplotype01_from_plaf"
+    distName _ = "haplotype01_from_plaf"
 
 instance IOSampleable Haplotype01FromPLAF where
     sampleIO (Haplotype01FromPLAF plafs) =
         builtin_sample_haplotype01_from_plaf (U.fromList plafs)
 
 instance HasAnnotatedPdf Haplotype01FromPLAF where
-    annotated_densities dist@(Haplotype01FromPLAF plafs) haplotype = do
+    annotatedDensities dist@(Haplotype01FromPLAF plafs) haplotype = do
        in_edge "PLAFs" plafs
        return [haplotype01_from_plaf_probability plafs haplotype]
 
 instance Sampleable Haplotype01FromPLAF where
-    sample dist@(Haplotype01FromPLAF plafs) = RanDistribution2 dist do_nothing
+    sample dist@(Haplotype01FromPLAF plafs) = RanDistribution2 dist doNothing
 
 haplotype01FromPLAFDist plafs = Haplotype01FromPLAF plafs
 
@@ -52,13 +52,13 @@ data Reads01FromHaps = Reads01FromHaps
 
 instance Dist Reads01FromHaps where
     type Result Reads01FromHaps = [(Int,Int)]
-    dist_name _ = "reads01_from_haps"
+    distName _ = "reads01_from_haps"
 
 instance IOSampleable Reads01FromHaps where
     sampleIO (Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) = sample_reads01 counts weights haplotypes error_rate c outlier_frac
 
 instance HasAnnotatedPdf Reads01FromHaps where
-    annotated_densities dist@(Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) reads = do
+    annotatedDensities dist@(Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) reads = do
                           in_edge "counts" counts
                           in_edge "weights" weights
                           in_edge "haplotypes" haplotypes
@@ -71,7 +71,7 @@ instance HasAnnotatedPdf Reads01FromHaps where
                           return [probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads]
 
 instance Sampleable Reads01FromHaps where
-    sample dist@(Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) = RanDistribution2 dist do_nothing
+    sample dist@(Reads01FromHaps counts weights haplotypes error_rate c outlier_frac) = RanDistribution2 dist doNothing
 
 
 -- This version does not use the builtins above, and also produces a list, not a vector.
@@ -153,7 +153,7 @@ data Haplotype01FromPanel = Haplotype01FromPanel Panel (EVector Int) Double Doub
 
 instance Dist Haplotype01FromPanel where
     type Result Haplotype01FromPanel = Haplotype
-    dist_name _ = "haplotype01_from_panel"
+    distName _ = "haplotype01_from_panel"
 
 foreign import bpcall "SMC:sample_haplotype01_from_panel" builtin_sample_haplotype01_from_panel :: EVector Haplotype -> Sites -> Double -> Double -> IO Haplotype
 
@@ -161,7 +161,7 @@ instance IOSampleable Haplotype01FromPanel where
     sampleIO (Haplotype01FromPanel p_haps p_sites switch_rate flip_prob) = builtin_sample_haplotype01_from_panel p_haps p_sites switch_rate flip_prob
 
 instance HasAnnotatedPdf Haplotype01FromPanel where
-    annotated_densities dist@(Haplotype01FromPanel haps sites switch_rate miscopy_prob) haplotype = do
+    annotatedDensities dist@(Haplotype01FromPanel haps sites switch_rate miscopy_prob) haplotype = do
         in_edge "haplotypes" haps
         in_edge "sites" sites
         in_edge "switch_rate" switch_rate
@@ -169,7 +169,7 @@ instance HasAnnotatedPdf Haplotype01FromPanel where
         return [haplotype01_from_panel_probability haps sites switch_rate miscopy_prob haplotype]
 
 instance Sampleable Haplotype01FromPanel where
-    sample dist@(Haplotype01FromPanel p_haps p_sites switch_rate flip_prob) = RanDistribution2 dist do_nothing
+    sample dist@(Haplotype01FromPanel p_haps p_sites switch_rate flip_prob) = RanDistribution2 dist doNothing
 
 foreign import bpcall "SMC:haplotype01_from_panel_probability" builtin_haplotype01_from_panel_probability :: Panel -> Sites -> Double -> Double -> Haplotype -> LogDouble
 haplotype01_from_panel_probability p_haps p_sites switch_rate flip_prob hap = builtin_haplotype01_from_panel_probability p_haps p_sites switch_rate flip_prob hap

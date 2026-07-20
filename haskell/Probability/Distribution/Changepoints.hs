@@ -11,7 +11,7 @@ data Changepoints d = Changepoints Double (Double,Double) d
 
 instance Dist d => Dist (Changepoints d) where
     type Result (Changepoints d) = [(Result d, Double, Double)]
-    dist_name _ = "Changepoints"
+    distName _ = "Changepoints"
 
 instance IOSampleable d => IOSampleable (Changepoints d) where
     sampleIO (Changepoints lambda (start,end) dist) = do
@@ -68,7 +68,7 @@ data Changepoints2 d = Changepoints2 Double (Double,Double) d
 
 instance (Dist d, Result d ~ Double) => Dist (Changepoints2 d) where
     type Result (Changepoints2 d) = [(Result d, Double, Double)]
-    dist_name _ = "Changepoints2"
+    distName _ = "Changepoints2"
 
 instance (Sampleable d, Result d ~ Double) => Sampleable (Changepoints2 d) where
     sample (Changepoints2 lambda (start,end) dist) = do

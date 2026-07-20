@@ -10,7 +10,7 @@ data Laplace = Laplace Double Double
 
 instance Dist Laplace where
     type Result Laplace = Double
-    dist_name _ = "Laplace"
+    distName _ = "Laplace"
 
 instance IOSampleable Laplace where
     sampleIO (Laplace m s) = sample_laplace m s
@@ -35,7 +35,7 @@ instance MaybeVariance Laplace where
 instance Variance Laplace
 
 instance HasAnnotatedPdf Laplace where
-    annotated_densities dist@(Laplace m s) x = do
+    annotatedDensities dist@(Laplace m s) x = do
        in_edge "m" m
        in_edge "s" s
        return ([pdf dist x], ())

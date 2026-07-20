@@ -12,7 +12,7 @@ data Gamma = Gamma Double Double
 
 instance Dist Gamma where
     type Result Gamma = Double
-    dist_name _ = "Gamma"
+    distName _ = "Gamma"
 
 instance IOSampleable Gamma where
     sampleIO (Gamma a b) = sample_gamma a b
@@ -38,7 +38,7 @@ instance MaybeVariance Gamma where
 instance Variance Gamma
 
 instance HasAnnotatedPdf Gamma where
-    annotated_densities dist@(Gamma a b) x = do
+    annotatedDensities dist@(Gamma a b) x = do
                                         in_edge "a" a
                                         in_edge "b" b
                                         return ([gamma_density a b x], ())

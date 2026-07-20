@@ -51,12 +51,12 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
 
 instance Dist (PhyloCTMC t Int s) where
     type Result (PhyloCTMC t Int s) = AlignedCharacterData
-    dist_name _ = "PhyloCTMCFixedA"
+    distName _ = "PhyloCTMCFixedA"
 
 -- TODO: make this work on forests!
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s) => HasAnnotatedPdf (PhyloCTMC t Int s) where
     type DistProperties (PhyloCTMC t Int s) = PhyloCTMCPropertiesFixedA
-    annotated_densities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedA tree length (scaleTo scale smodel)
+    annotatedDensities (PhyloCTMC tree length smodel scale) = annotatedSubstLikelihoodFixedA tree length (scaleTo scale smodel)
 
 instance (HasAlphabet s, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (PhyloCTMC t Int s) where
     sampleIO (PhyloCTMC rtree rootLength rawSmodel scale) = do
@@ -71,4 +71,4 @@ instance (HasAlphabet s, HasRoot t, LabelType t ~ Text, HasBranchLengths t, Rate
       return $ Aligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s, HasProperties t s) => Sampleable (PhyloCTMC t Int s) where
-    sample dist = RanDistribution2 dist do_nothing
+    sample dist = RanDistribution2 dist doNothing

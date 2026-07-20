@@ -10,7 +10,7 @@ data Geometric = Geometric Prob
 
 instance Dist Geometric where
     type Result Geometric = Int
-    dist_name _ = "geometric"
+    distName _ = "geometric"
 
 instance IOSampleable Geometric where
     sampleIO (Geometric p_success) = sample_geometric (toFloating p_success)
@@ -38,7 +38,7 @@ instance MaybeVariance Geometric where
 instance Variance Geometric
 
 instance HasAnnotatedPdf Geometric where
-    annotated_densities dist@(Geometric p_success) n = do
+    annotatedDensities dist@(Geometric p_success) n = do
                                      in_edge "p_success" p_success
                                      return ([pdf dist n],())
 

@@ -73,10 +73,10 @@ data UniformTopology = UniformTopology Int
 
 instance Dist UniformTopology where
     type Result UniformTopology = Tree ()
-    dist_name _ = "uniform_topology"
+    distName _ = "uniform_topology"
 
 instance HasAnnotatedPdf UniformTopology where
-    annotated_densities (UniformTopology n) _ = return ([uniformTopologyPr n], ())
+    annotatedDensities (UniformTopology n) _ = return ([uniformTopologyPr n], ())
 
 instance Sampleable UniformTopology where
     sample dist@(UniformTopology n) = RanDistribution3 dist uniformTopologyEffect triggeredModifiableTree (sampleUniformTopology n)

@@ -7,8 +7,8 @@ import Data.Maybe (fromJust)
 
 class Dist d where
     type Result d
-    dist_name :: d -> String
-    dist_name _ = "unnamed"
+    distName :: d -> String
+    distName _ = "unnamed"
 
 -- We can sample from these directly/atomically.
 class Dist d => IOSampleable d where

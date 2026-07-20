@@ -17,7 +17,7 @@ data Bernoulli = Bernoulli Prob
 
 instance Dist Bernoulli where
     type Result Bernoulli = Int
-    dist_name _ = "bernoulli"
+    distName _ = "bernoulli"
 
 instance IOSampleable Bernoulli where
     sampleIO (Bernoulli p) = sample_bernoulli $ toFloating $ p
@@ -46,7 +46,7 @@ instance MaybeVariance Bernoulli where
 instance Variance Bernoulli
 
 instance HasAnnotatedPdf Bernoulli where
-    annotated_densities dist@(Bernoulli p) n = do
+    annotatedDensities dist@(Bernoulli p) n = do
        in_edge "p" p
        return ([pdf dist n],())
 

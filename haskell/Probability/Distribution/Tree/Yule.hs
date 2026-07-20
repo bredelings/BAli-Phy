@@ -93,10 +93,10 @@ data UnlabelledYule = UnlabelledYule Int Rate
 
 instance Dist UnlabelledYule where
     type Result UnlabelledYule = WithNodeTimes (WithRoots (Tree ()))
-    dist_name _ = "yule"
+    distName _ = "yule"
 
 instance HasAnnotatedPdf UnlabelledYule where
-    annotated_densities (UnlabelledYule n lambda) tree = return (yulePrFactors n lambda tree, ())
+    annotatedDensities (UnlabelledYule n lambda) tree = return (yulePrFactors n lambda tree, ())
 
 instance Sampleable UnlabelledYule where
     sample dist@(UnlabelledYule n lambda) = RanDistribution3 dist yuleEffect triggeredModifiableTimeTree (sampleYule n lambda)
@@ -121,10 +121,10 @@ data Yule l = Yule [l] Rate
 
 instance Dist (Yule l) where
     type Result (Yule l) = WithNodeTimes (WithRoots (Tree l))
-    dist_name _ = "Yule"
+    distName _ = "Yule"
 
 instance HasAnnotatedPdf (Yule l) where
-    annotated_densities (Yule taxa lambda) tree = return (yulePrFactors (length taxa) lambda tree, ())
+    annotatedDensities (Yule taxa lambda) tree = return (yulePrFactors (length taxa) lambda tree, ())
 
 instance Sampleable (Yule l) where
     sample dist@(Yule taxa lambda) = RanDistribution3 dist yuleEffect triggeredModifiableTimeTree (sampleLabeledYule taxa lambda)

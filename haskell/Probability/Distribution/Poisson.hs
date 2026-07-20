@@ -12,7 +12,7 @@ data Poisson = Poisson Double
 
 instance Dist Poisson where
     type Result Poisson = Int
-    dist_name _ = "poisson"
+    distName _ = "poisson"
 
 instance IOSampleable Poisson where
     sampleIO (Poisson mu) = sample_poisson mu
@@ -35,7 +35,7 @@ instance MaybeVariance Poisson where
 instance Variance Poisson
 
 instance HasAnnotatedPdf Poisson where
-    annotated_densities dist@(Poisson mu) n = do
+    annotatedDensities dist@(Poisson mu) n = do
         in_edge "mu" mu
         return ([pdf dist n], ())
 
@@ -55,7 +55,7 @@ data PoissonProcess = PoissonProcess Double Double Double
 
 instance Dist PoissonProcess where
     type Result PoissonProcess = [Double]
-    dist_name _ = "poisson_process"
+    distName _ = "poisson_process"
 
 instance IOSampleable PoissonProcess where
     sampleIO (PoissonProcess rate t1 t2) = do
@@ -73,7 +73,7 @@ instance Sampleable PoissonProcess where
        return $ sort xs
 
 instance HasAnnotatedPdf PoissonProcess where
-    annotated_densities (PoissonProcess rate t1 t2) = make_densities $ poisson_process_density rate t1 t2
+    annotatedDensities (PoissonProcess rate t1 t2) = make_densities $ poisson_process_density rate t1 t2
 
 --- Poisson process, constant rate --
 poisson_process_density' rate t1 t2 n = expTo $ (-rate*(t2-t1)) + (fromIntegral n * log rate)
@@ -92,13 +92,13 @@ data PoissonProcesses = PoissonProcesses [(Double,Double,Double)]
 
 instance Dist PoissonProcesses where
     type Result PoissonProcesses = [Double]
-    dist_name _ = "poisson_processes"
+    distName _ = "poisson_processes"
 
 instance HasPdf PoissonProcesses where
     pdf dist = density dist
 
 instance HasAnnotatedPdf PoissonProcesses where
-    annotated_densities (PoissonProcesses intervals) = make_densities' $ poisson_processes_densities intervals
+    annotatedDensities (PoissonProcesses intervals) = make_densities' $ poisson_processes_densities intervals
 
 instance Sampleable PoissonProcesses where
     sample (PoissonProcesses intervals) = sample_poisson_processes intervals

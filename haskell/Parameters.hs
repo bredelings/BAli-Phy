@@ -9,24 +9,24 @@ import Numeric.LogDouble  -- for LogDouble
 
 foreign import bpcall "Modifiables:" modifiable :: a -> a
 
-foreign import bpcall "Modifiables:" register_prior :: Effect -> LogDouble -> IO Effect
+foreign import bpcall "Modifiables:" registerPrior :: Effect -> LogDouble -> IO Effect
 
-foreign import bpcall "Modifiables:" register_likelihood :: a -> LogDouble -> IO Effect
+foreign import bpcall "Modifiables:" registerLikelihood :: a -> LogDouble -> IO Effect
 
-foreign import bpcall "Modifiables:register_in_edge" builtin_register_in_edge :: a -> Effect -> CPPString -> IO Effect
-register_in_edge var dist role = builtin_register_in_edge var dist (list_to_string role)
+foreign import bpcall "Modifiables:registerInEdge" builtin_registerInEdge :: a -> Effect -> CPPString -> IO Effect
+registerInEdge var dist role = builtin_registerInEdge var dist (list_to_string role)
 
-foreign import bpcall "Modifiables:" register_out_edge :: Effect -> a -> IO Effect
+foreign import bpcall "Modifiables:" registerOutEdge :: Effect -> a -> IO Effect
 
 -- FIXME: Eliminate the CPPString, and allow each dist to only have one property
-foreign import bpcall "Modifiables:register_dist_property" builtin_register_dist_property :: d -> a -> CPPString -> IO Effect
-register_dist_property dist value property = builtin_register_dist_property dist value (list_to_string property)
+foreign import bpcall "Modifiables:registerDistProperty" builtinRegisterDistProperty :: d -> a -> CPPString -> IO Effect
+registerDistProperty dist value property = builtinRegisterDistProperty dist value (list_to_string property)
 
-foreign import bpcall "Modifiables:register_dist" builtin_register_dist :: CPPString -> Int -> IO Effect
+foreign import bpcall "Modifiables:registerDist" builtinRegisterDist :: CPPString -> Int -> IO Effect
 -- The extra parameter to prevent invocations out of functions being floated
 -- out of let statements by referencing a local variable.
-register_dist_sample  name = builtin_register_dist (list_to_string name) 0
-register_dist_observe name = builtin_register_dist (list_to_string name) 1
+registerDistSample  name = builtinRegisterDist (list_to_string name) 0
+registerDistObserve name = builtinRegisterDist (list_to_string name) 1
 
 foreign import bpcall "Modifiables:changeable_apply" ($?) :: (a -> b) -> a -> b
 

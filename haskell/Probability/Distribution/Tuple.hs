@@ -6,7 +6,7 @@ data PairDist d1 d2 = PairDist d1 d2
 
 instance (Dist d1, Dist d2) => Dist (PairDist d1 d2) where
     type Result (PairDist d1 d2) = (Result d1, Result d2)
-    dist_name (PairDist dist1 dist2) = "PairDist("++dist_name dist1 ++","++dist_name dist2++")"
+    distName (PairDist dist1 dist2) = "PairDist("++distName dist1 ++","++distName dist2++")"
 
 instance (IOSampleable d1, IOSampleable d2) => IOSampleable (PairDist d1 d2) where
     sampleIO (PairDist dist1 dist2) = do

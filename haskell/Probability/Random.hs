@@ -62,7 +62,7 @@ makeEdges :: Effect -> AnnotatedDensity a -> IO a
 makeEdges event (ADReturn x) = return x
 makeEdges event (ADBind f g) = do x <- makeEdges event f
                                   makeEdges event (g x)
-makeEdges event (InEdge name node) = do register_in_edge node event name
+makeEdges event (InEdge name node) = do registerInEdge node event name
                                         return ()
 
 -- We can observe from these.
@@ -72,9 +72,9 @@ makeEdges event (InEdge name node) = do register_in_edge node event name
 class Dist d => HasAnnotatedPdf d where
     type DistProperties d :: Type
     type DistProperties d = ()
-    annotated_densities :: d -> Result d -> AnnotatedDensity ([LogDouble], DistProperties d)
+    annotatedDensities :: d -> Result d -> AnnotatedDensity ([LogDouble], DistProperties d)
 
-densities dist x = fst $ get_densities $ annotated_densities dist x
+densities dist x = fst $ get_densities $ annotatedDensities dist x
 density dist x = balancedProduct (densities dist x)
 
 
@@ -121,7 +121,7 @@ We need the non-RanOp constructors because they behave differently in the differ
 - PerformTKEffect: runs the effect at rate 1.0 in the simple interpreters, but at rate `rate` in the MCMC interpreters.
 - RanDistribution2 just runs sampleIO in the simple interpreters, but creates a modifiable that runs sampleIO in the MCMC interpreters.
 - RanDistribution3 just runs the sampling action in the simple interpreters, but creates a random structure and
-   runs the associate tk_effects in the mcmc interpreter.
+   runs the associate tkEffects in the mcmc interpreter.
 - RanSamplingRate: does nothing in the simple interpreters, but affects the rate of TKs in the MCMC interpreters
 - RanInterchangeable: errors out in the strict interpeters, does nothing in the lazy simple interpreter, and
   creates an interchangable random dist in the lazy MCMC interpreter.
@@ -169,15 +169,15 @@ class (Sampleable d, HasAnnotatedPdf d) => SampleableWithProps d where
 
 -------------------------------------------------------------------------
 
-registerDistProperties event props = register_dist_property event props "properties"
+registerDistProperties event props = registerDistProperty event props "properties"
 
 {- Note: sampleEffectProbs is NEARLY the same as observe.
 
 Differences include:
 * observe starts with liftIO .. this allows it to run in the Random monad.
-* observe uses register_likelihood vs register_prior
-* observe user register_dist_observe vs register_dist_sample
-* observe does NOT run tk_effects
+* observe uses registerLikelihood vs registerPrior
+* observe user registerDistObserve vs registerDistSample
+* observe does NOT run tkEffects
 
 We could actually factor out the common parts if we could pass a constant SampleType = Sample | Observe
 
@@ -189,27 +189,27 @@ We could actually factor out the common parts if we could pass a constant Sample
    appears to have a changeable list of density terms.
  -}
 
-sampleEffectProps rate dist tk_effect x = do
-  runTkEffects rate $ tk_effect x
-  s <- register_dist_sample (dist_name dist)
-  register_out_edge s x
-  (densityTerms, props) <- makeEdges s $ annotated_densities dist x
+sampleEffectProps rate dist tkEffect x = do
+  runTkEffects rate $ tkEffect x
+  s <- registerDistSample (distName dist)
+  registerOutEdge s x
+  (densityTerms, props) <- makeEdges s $ annotatedDensities dist x
   registerDistProperties s props
-  sequence_ [register_prior s term | term <- densityTerms]
+  sequence_ [registerPrior s term | term <- densityTerms]
   return props
 
-sampleEffect rate dist tk_effect x = do
-  sampleEffectProps rate dist tk_effect x
+sampleEffect rate dist tkEffect x = do
+  sampleEffectProps rate dist tkEffect x
   return () 
 
 infix 0 `observe`
 
 observe datum dist = liftIO $ do
-  s <- register_dist_observe (dist_name dist)
-  register_out_edge s datum
-  (densityTerms, props) <- makeEdges s $ annotated_densities dist datum
+  s <- registerDistObserve (distName dist)
+  registerOutEdge s datum
+  (densityTerms, props) <- makeEdges s $ annotatedDensities dist datum
   registerDistProperties s props
-  sequence_ [register_likelihood s term | term <- densityTerms]
+  sequence_ [registerLikelihood s term | term <- densityTerms]
   return props
 
 possible = 1
@@ -217,8 +217,8 @@ impossible = 0
 require p = if p then possible else impossible
 
 condition cond = liftIO $ do
-  s <- register_dist_observe "condition"
-  register_likelihood s (require cond)
+  s <- registerDistObserve "condition"
+  registerLikelihood s (require cond)
   return ()
 
 {- NOTE: Problems with lists of probability factors.
@@ -248,7 +248,7 @@ withTKEffect = WithTKEffect
 
 addLogger logger = liftIO $ registerLogger logger
 
-do_nothing _ = return ()
+doNothing _ = return ()
 
 runRandomStrict :: Random a -> IO a
 runRandomStrict (RanBind f g) = do
@@ -340,19 +340,19 @@ runMCMCLazy :: Double -> Random a -> IO a
 runMCMCLazy rate (RanBind f g) = do
   x <- unsafeInterleaveIO $ runMCMCLazy rate f
   runMCMCLazy rate $ g x
-runMCMCLazy rate (RanDistribution2 dist tk_effect) = do
+runMCMCLazy rate (RanDistribution2 dist tkEffect) = do
   x <- modifiableIO $ sampleIO dist
-  effect <- sampleEffect rate dist tk_effect x
+  effect <- sampleEffect rate dist tkEffect x
   return (withEffect effect x)
-runMCMCLazy rate (RanDistribution3 dist tk_effect structure do_sample) = do
+runMCMCLazy rate (RanDistribution3 dist tkEffect structure do_sample) = do
  -- Note: unsafeInterleaveIO means that we will only execute this line if `value` is accessed.
   value <- unsafeInterleaveIO $ runRandomLazy do_sample
-  return $ structure value (sampleEffect rate dist tk_effect)
+  return $ structure value (sampleEffect rate dist tkEffect)
 runMCMCLazy rate (RanSamplingRate rate2 a) = runMCMCLazy (rate*rate2) a
 runMCMCLazy rate (Lazy r) = runMCMCLazy rate r
-runMCMCLazy rate (WithTKEffect action tk_effect) = unsafeInterleaveIO $ do
+runMCMCLazy rate (WithTKEffect action tkEffect) = unsafeInterleaveIO $ do
   result <- unsafeInterleaveIO $ runMCMCLazy rate action
-  effect <- unsafeInterleaveIO $ runTkEffects rate $ tk_effect result
+  effect <- unsafeInterleaveIO $ runTkEffects rate $ tkEffect result
   return (withEffect effect result)
 runMCMCLazy rate (RanInterchangeable r) = do
   id <- unsafeInterleaveIO $ getInterchangeableId

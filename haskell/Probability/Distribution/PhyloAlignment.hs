@@ -135,14 +135,14 @@ data PhyloAlignment t = (IsTree t, Ord (LabelType t)) => PhyloAlignment t IModel
 
 instance Dist (PhyloAlignment t) where
     type Result (PhyloAlignment t) = AlignmentOnTree t
-    dist_name _ = "PhyloAlignment"
+    distName _ = "PhyloAlignment"
 
 instance Sampleable (PhyloAlignment t) where
     sample dist@(PhyloAlignment tree model tip_lengths hmms) = RanDistribution3 dist alignment_effect triggeredModifiableAlignment (sample_alignment tree hmms tip_lengths)
 
 instance HasAnnotatedPdf (PhyloAlignment t) where
     type DistProperties (PhyloAlignment t) = PhyloAlignmentProperties
-    annotated_densities dist@(PhyloAlignment tree model tip_lengths hmms) a = annotated_alignment_prs tree hmms model a
+    annotatedDensities dist@(PhyloAlignment tree model tip_lengths hmms) a = annotated_alignment_prs tree hmms model a
 
 instance SampleableWithProps (PhyloAlignment t) where
     sampleWithProps dist = do

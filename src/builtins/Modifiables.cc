@@ -22,7 +22,7 @@ int force_slot_to_safe_reg(OperationArgs& Args, int slot)
     return Args.memory().follow_reg_ref(r);
 }
 
-extern "C" closure builtin_function_register_prior(OperationArgs& Args)
+extern "C" closure builtin_function_registerPrior(OperationArgs& Args)
 {
     // We are supposed to evaluate the random_variable before we register
     int r_from_dist = Args.evaluate_slot_use(0);
@@ -42,7 +42,7 @@ extern "C" closure builtin_function_register_prior(OperationArgs& Args)
     return {R::IndexVar(0), {r_effect}};
 }
 
-extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
+extern "C" closure builtin_function_registerLikelihood(OperationArgs& Args)
 {
     int r_from_dist = Args.evaluate_slot_use(0);
 
@@ -65,7 +65,7 @@ extern "C" closure builtin_function_register_likelihood(OperationArgs& Args)
 // Q. How do we ensure that each call is unique?
 //    We don't have a state thread...
 
-extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
+extern "C" closure builtin_function_registerInEdge(OperationArgs& Args)
 {
     int r_from_var = Args.reg_for_slot(0);
     int r_to_dist  = Args.evaluate_slot_use(1);
@@ -81,7 +81,7 @@ extern "C" closure builtin_function_register_in_edge(OperationArgs& Args)
     return {R::IndexVar(0), {r_effect}};
 }
 
-extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
+extern "C" closure builtin_function_registerOutEdge(OperationArgs& Args)
 {
     int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_var    = force_slot_to_safe_reg(Args,1);
@@ -96,7 +96,7 @@ extern "C" closure builtin_function_register_out_edge(OperationArgs& Args)
     return {R::IndexVar(0), {r_effect}};
 }
 
-extern "C" closure builtin_function_register_dist(OperationArgs& Args)
+extern "C" closure builtin_function_registerDist(OperationArgs& Args)
 {
     std::string name = Args.evaluate_slot_to_value(0).as_string();
 
@@ -118,7 +118,7 @@ extern "C" closure builtin_function_register_dist(OperationArgs& Args)
     return {R::IndexVar(0),{r_effect}};
 }
 
-extern "C" closure builtin_function_register_dist_property(OperationArgs& Args)
+extern "C" closure builtin_function_registerDistProperty(OperationArgs& Args)
 {
     int r_from_dist = Args.evaluate_slot_use(0);
     int r_to_prop = Args.reg_for_slot(1);

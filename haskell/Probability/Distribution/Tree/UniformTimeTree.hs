@@ -61,10 +61,10 @@ data UniformTimeTree = UniformTimeTree Double Int
 
 instance Dist UniformTimeTree where
     type Result UniformTimeTree = WithNodeTimes (WithRoots (Tree ()))
-    dist_name _ = "uniformTimeTree"
+    distName _ = "uniformTimeTree"
 
 instance HasAnnotatedPdf UniformTimeTree where
-    annotated_densities (UniformTimeTree age n) tree = return (uniformTimeTreePr age n tree, ())
+    annotatedDensities (UniformTimeTree age n) tree = return (uniformTimeTreePr age n tree, ())
 
 instance Sampleable UniformTimeTree where
     sample dist@(UniformTimeTree age n) = RanDistribution3 dist uniformTimeTreeEffect triggeredModifiableTimeTree (sampleUniformTimeTree age n)

@@ -16,7 +16,7 @@ data Cauchy = Cauchy Double Double
 
 instance Dist Cauchy where
     type Result Cauchy = Double
-    dist_name _ = "Cauchy"
+    distName _ = "Cauchy"
 
 instance IOSampleable Cauchy where
     sampleIO (Cauchy m s) = sample_cauchy m s
@@ -31,7 +31,7 @@ instance ContDist1D Cauchy where
     quantile (Cauchy m s) p = cauchy_quantile m s p
 
 instance HasAnnotatedPdf Cauchy where
-    annotated_densities dist@(Cauchy m s) x = do
+    annotatedDensities dist@(Cauchy m s) x = do
        in_edge "m" m
        in_edge "s" s
        return ([pdf dist x],())
@@ -49,7 +49,7 @@ data Half d = (Result d ~ Double) => Half d
 
 instance Dist d => Dist (Half d) where
     type Result (Half d) = Double
-    dist_name dist = "Half" ++ dist_name dist
+    distName dist = "Half" ++ distName dist
 
 instance IOSampleable d => IOSampleable (Half d) where
     sampleIO (Half dist) = abs <$> sampleIO dist
@@ -69,7 +69,7 @@ instance ContDist1D d => ContDist1D (Half d) where
     quantile (Half dist) p = quantile dist ((p+1)/2)
 
 instance HasPdf d => HasAnnotatedPdf (Half d) where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable d => Sampleable (Half d) where
     sample (Half dist) = abs <$> sample dist

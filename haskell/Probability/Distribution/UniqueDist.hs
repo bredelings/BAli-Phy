@@ -8,7 +8,7 @@ data UniqueDist = UniqueDist
 
 instance Dist UniqueDist where
     type Result UniqueDist = Unique
-    dist_name _ = "unique"
+    distName _ = "unique"
 
 instance IOSampleable UniqueDist where
     sampleIO UniqueDist = newUnique
@@ -19,10 +19,10 @@ instance HasPdf UniqueDist where
     pdf UniqueDist u = 1
 
 instance HasAnnotatedPdf UniqueDist where
-    annotated_densities UniqueDist u = return ([],())
+    annotatedDensities UniqueDist u = return ([],())
 
 instance Sampleable UniqueDist where
-    sample UniqueDist = RanDistribution2 UniqueDist do_nothing
+    sample UniqueDist = RanDistribution2 UniqueDist doNothing
 
 
 uniqueDist = UniqueDist

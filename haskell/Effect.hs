@@ -73,7 +73,7 @@ evaluating reg # 7854: case <12254> of {_ -> let {c = case <12307> of {Compiler.
 
 evaluating reg # 12254: case <12130> of {_ -> <20600>}
 
-evaluating reg # 12130: Modifiables:register_prior <12637> <12143> <20600>
+evaluating reg # 12130: Modifiables:registerPrior <12637> <12143> <20600>
 
 evaluating reg # 12143: Num:multiply_logdouble <12589> <12589>
 

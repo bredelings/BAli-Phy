@@ -56,7 +56,7 @@ choose u total []                           = error $ "choose failed!  total = "
 
 instance Dist (Discrete a) where
     type Result (Discrete a) = a
-    dist_name _ = "discrete"
+    distName _ = "discrete"
 
 instance IOSampleable (Discrete a) where
     sampleIO (Discrete pairs) = do
@@ -93,7 +93,7 @@ instance MaybeVariance (Discrete Int) where
 instance Variance (Discrete Int)
 
 instance Eq a => HasAnnotatedPdf (Discrete a) where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable (Discrete a) where
     sample dist@(Discrete pairs) = do

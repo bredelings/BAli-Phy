@@ -10,7 +10,7 @@ data Uniform = Uniform Double Double
 
 instance Dist Uniform where
     type Result Uniform = Double
-    dist_name _ = "uniform"
+    distName _ = "uniform"
 
 instance IOSampleable Uniform where
     sampleIO (Uniform l u) = sample_uniform l u
@@ -40,7 +40,7 @@ instance MaybeVariance Uniform where
 instance Variance Uniform
 
 instance HasAnnotatedPdf Uniform where
-    annotated_densities dist@(Uniform l u) x = do
+    annotatedDensities dist@(Uniform l u) x = do
         in_edge "l" l
         in_edge "u" u
         return ([pdf dist x],())
@@ -62,7 +62,7 @@ data UniformInt = UniformInt Int Int
 
 instance Dist UniformInt where
     type Result UniformInt = Int
-    dist_name _ = "uniform_int"
+    distName _ = "uniform_int"
 
 instance Dist1D UniformInt where
     cdf (UniformInt l u) x | floor x < l   = 0
@@ -79,7 +79,7 @@ instance HasPdf UniformInt where
     pdf (UniformInt l u) = uniform_int_density l u
 
 instance HasAnnotatedPdf UniformInt where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable UniformInt where
     sample dist@(UniformInt l u) = RanDistribution2 dist (uniform_int_effect l u)
@@ -102,7 +102,7 @@ data UniformD a = UniformD [a]
 
 instance Dist (UniformD a) where
     type Result (UniformD a) = a
-    dist_name _ = "uniformD"
+    distName _ = "uniformD"
 
 instance IOSampleable (UniformD a) where
     sampleIO (UniformD values) = do
@@ -113,7 +113,7 @@ instance Eq a => HasPdf (UniformD a) where
     pdf (UniformD values) x = sum [ if x == v then 1 else 0 | v <- values] / fromIntegral (length values)
 
 instance Eq a => HasAnnotatedPdf (UniformD a) where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable (UniformD a) where
     sample (UniformD values) = do

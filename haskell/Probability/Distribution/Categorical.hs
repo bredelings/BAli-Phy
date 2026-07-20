@@ -13,7 +13,7 @@ data Categorical = Categorical (V.Vector Double)
 
 instance Dist Categorical where
     type Result Categorical = Int
-    dist_name _ = "categorical"
+    distName _ = "categorical"
 
 instance IOSampleable Categorical where
     sampleIO (Categorical ps) = sample_categorical ps
@@ -30,7 +30,7 @@ instance Dist1D Categorical where
                            where n = floor x
 
 instance HasAnnotatedPdf Categorical where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable Categorical where
     sample dist@(Categorical ps) = RanDistribution2 dist $ categorical_effect (V.length ps)
@@ -43,7 +43,7 @@ data CategoricalOn a = CategoricalOn (V.Vector a) (V.Vector Double)
 
 instance Dist (CategoricalOn a) where
     type Result (CategoricalOn a) = a
-    dist_name _ = "CategoricalOn"
+    distName _ = "CategoricalOn"
 
 instance IOSampleable (CategoricalOn a) where
     sampleIO (CategoricalOn xs ps) = do
@@ -61,7 +61,7 @@ instance Eq a => HasPdf (CategoricalOn a) where
                                     Just n -> doubleToLogDouble $ ps V.! n
 
 instance Eq a => HasAnnotatedPdf (CategoricalOn a) where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable (CategoricalOn a) where
     sample dist@(CategoricalOn xs ps) = do

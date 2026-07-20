@@ -10,7 +10,7 @@ data Binomial = Binomial Int Prob
 
 instance Dist Binomial where
     type Result Binomial = Int
-    dist_name _ = "binomial"
+    distName _ = "binomial"
 
 instance IOSampleable Binomial where
     sampleIO (Binomial n p) = sample_binomial n (toFloating p)
@@ -34,7 +34,7 @@ instance MaybeVariance Binomial where
 instance Variance Binomial
 
 instance HasAnnotatedPdf Binomial where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable Binomial where
     sample dist@(Binomial n _) = RanDistribution2 dist (binomial_effect n)

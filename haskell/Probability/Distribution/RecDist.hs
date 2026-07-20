@@ -59,7 +59,7 @@ instance (Dist d, HasPdf d) => HasPdf (RecDist d) where
 
 instance (Dist d, HasAnnotatedPdf d) => HasAnnotatedPdf (RecDist d) where
     type DistProperties (RecDist d) = DistProperties d
-    annotated_densities (RecDist f) x = annotated_densities (f x) x
+    annotatedDensities (RecDist f) x = annotatedDensities (f x) x
 
 instance (Dist d, Sampleable d) => Sampleable (RecDist d) where
     sample (RecDist f) = mfix (\value -> sample (f value))

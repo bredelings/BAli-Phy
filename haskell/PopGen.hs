@@ -29,10 +29,10 @@ data AFS = AFS Double
 
 instance Dist AFS where
     type Result AFS = EVector Int
-    dist_name _ = "afs"
+    distName _ = "afs"
 
 instance HasAnnotatedPdf AFS where
-    annotated_densities (AFS args) = make_densities $  ewens_sampling_probability args
+    annotatedDensities (AFS args) = make_densities $  ewens_sampling_probability args
 
 afs args = AFS args
 
@@ -42,10 +42,10 @@ data AFSGroup = AFSGroup Double
 
 instance Dist AFSGroup where
     type Result AFSGroup = VVI
-    dist_name _ = "afsGroup"
+    distName _ = "afsGroup"
 
 instance HasAnnotatedPdf AFSGroup where
-    annotated_densities (AFSGroup args) = make_densities $ ewens_sampling_group_probability args
+    annotatedDensities (AFSGroup args) = make_densities $ ewens_sampling_group_probability args
 
 
 afsGroup args = AFSGroup args
@@ -59,10 +59,10 @@ data AFSMixture = AFSMixture [Double] [Double]
 
 instance Dist AFSMixture where
     type Result AFSMixture = VVI
-    dist_name _ = "afsMixture"
+    distName _ = "afsMixture"
 
 instance HasAnnotatedPdf AFSMixture where
-    annotated_densities (AFSMixture thetas ps) = make_densities $ ewens_sampling_mixture_probability thetas ps
+    annotatedDensities (AFSMixture thetas ps) = make_densities $ ewens_sampling_mixture_probability thetas ps
 
 
 afsMixture thetas ps = AFSMixture thetas ps
@@ -78,10 +78,10 @@ selfing_coalescence_probability n_loci s indicators =
 
 instance Dist SelfingCoalescence where
     type Result SelfingCoalescence = [Int]
-    dist_name _ = "selfing_coalescence"
+    distName _ = "selfing_coalescence"
 
 instance HasAnnotatedPdf SelfingCoalescence where
-    annotated_densities (SelfingCoalescence n_loci s) = make_densities $ selfing_coalescence_probability n_loci s
+    annotatedDensities (SelfingCoalescence n_loci s) = make_densities $ selfing_coalescence_probability n_loci s
 
 selfing_coalescence n_loci s = SelfingCoalescence n_loci s
 
@@ -99,10 +99,10 @@ li_stephens_2003_composite_likelihood sites rhoFunc alignment =
 
 instance Dist LiStephens2003 where
     type Result LiStephens2003 = AlignmentMatrix
-    dist_name _ = "li_stephens_2003"
+    distName _ = "li_stephens_2003"
 
 instance HasAnnotatedPdf LiStephens2003 where
-    annotated_densities (LiStephens2003 locs rho) = make_densities $ li_stephens_2003_composite_likelihood locs rho
+    annotatedDensities (LiStephens2003 locs rho) = make_densities $ li_stephens_2003_composite_likelihood locs rho
 
 li_stephens_2003 locs rho = LiStephens2003 (U.fromList locs) rho
 
@@ -118,9 +118,9 @@ wilson_mcvean_2006_composite_likelihood q rhos theta alignment = wilsonMcVeanNat
 
 instance Dist WilsonMcVean2006 where
     type Result WilsonMcVean2006 = AlignmentMatrix
-    dist_name _ = "wilson_mcvean_2006"
+    distName _ = "wilson_mcvean_2006"
 
 instance HasAnnotatedPdf WilsonMcVean2006 where
-    annotated_densities (WilsonMcVean2006 q rhos theta) = make_densities $ wilson_mcvean_2006_composite_likelihood q rhos theta
+    annotatedDensities (WilsonMcVean2006 q rhos theta) = make_densities $ wilson_mcvean_2006_composite_likelihood q rhos theta
 
 wilson_mcvean_2006 q rhos theta = WilsonMcVean2006 q rhos theta

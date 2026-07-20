@@ -51,7 +51,7 @@ data Mixture d = Mixture d
 
 instance (Dist d, Dist (Result d)) => Dist (Mixture d) where
     type Result (Mixture d) = Result (Result d)
-    dist_name _ = "mixture"
+    distName _ = "mixture"
 
 instance (IOSampleable d, IOSampleable (Result d)) => IOSampleable (Mixture d) where
     sampleIO (Mixture dist1) = do dist2 <- sampleIO dist1
@@ -65,7 +65,7 @@ instance HasPdf d => HasPdf (Mixture (Discrete d)) where
     pdf (Mixture (Discrete pairs)) x = sum [ doubleToLogDouble p * pdf dist x | (dist,p) <- pairs ]
 
 instance HasAnnotatedPdf d => HasAnnotatedPdf (Mixture (Discrete d)) where
-    annotated_densities (Mixture (Discrete pairs)) x = return $ ([sum [doubleToLogDouble p * density dist x | (dist,p) <- pairs]], ())
+    annotatedDensities (Mixture (Discrete pairs)) x = return $ ([sum [doubleToLogDouble p * density dist x | (dist,p) <- pairs]], ())
 
 
 mixture ps dists | length ps /= length dists  = error "mixture distribution has different number of weights and distributions"

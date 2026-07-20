@@ -30,7 +30,7 @@ data ExpTransform d = ExpTransform d
 
 instance (Dist d, Result d ~ Double) => Dist (ExpTransform d) where
     type Result (ExpTransform d) = Double
-    dist_name (ExpTransform dist) = "Log" ++ dist_name dist
+    distName (ExpTransform dist) = "Log" ++ distName dist
 
 instance (IOSampleable d, Result d ~ Double) => IOSampleable (ExpTransform d) where
     sampleIO (ExpTransform dist) = exp <$> sampleIO dist
@@ -63,7 +63,7 @@ data Shifted d = Shifted (Result d) d
 
 instance Dist d => Dist (Shifted d) where
     type Result (Shifted d) = Result d
-    dist_name (Shifted by dist) = "Shifted " ++ dist_name dist
+    distName (Shifted by dist) = "Shifted " ++ distName dist
 
 instance (IOSampleable d, Num (Result d)) => IOSampleable (Shifted d) where
     sampleIO (Shifted by dist) = (by+) <$> sampleIO dist
@@ -101,7 +101,7 @@ data Scaled d = Scaled (Result d) d
 
 instance Dist d => Dist (Scaled d) where
     type Result (Scaled d) = Result d
-    dist_name (Scaled by dist) = "Scaled " ++ dist_name dist
+    distName (Scaled by dist) = "Scaled " ++ distName dist
 
 instance (IOSampleable d, Num (Result d)) => IOSampleable (Scaled d) where
     sampleIO (Scaled by dist) = (by*) <$> sampleIO dist

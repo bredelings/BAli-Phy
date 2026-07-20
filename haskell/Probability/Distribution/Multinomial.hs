@@ -11,7 +11,7 @@ data Multinomial = Multinomial Int [Double]
 
 instance Dist Multinomial where
     type Result Multinomial = [Int]
-    dist_name _ = "multinomial"
+    distName _ = "multinomial"
 
 instance IOSampleable Multinomial where
     sampleIO (Multinomial n ps) = sampleIO $ sample_multinomial n ps
@@ -20,7 +20,7 @@ instance HasPdf Multinomial where
     pdf (Multinomial n ps) ks = multinomial_density n ps ks
 
 instance HasAnnotatedPdf Multinomial where
-    annotated_densities dist = make_densities $ pdf dist
+    annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable Multinomial where
     sample (Multinomial n ps) = sample_multinomial n ps

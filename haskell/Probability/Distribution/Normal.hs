@@ -12,7 +12,7 @@ data Normal = Normal Double Double
 
 instance Dist Normal where
     type Result Normal = Double
-    dist_name _ = "Normal"
+    distName _ = "Normal"
 
 instance IOSampleable Normal where
     sampleIO (Normal mu sigma) = sample_normal mu sigma
@@ -37,7 +37,7 @@ instance MaybeVariance Normal where
 instance Variance Normal
 
 instance HasAnnotatedPdf Normal where
-    annotated_densities dist@(Normal mu sigma) x = do
+    annotatedDensities dist@(Normal mu sigma) x = do
                                                in_edge "mu" mu
                                                in_edge "sigma" sigma
                                                return ([pdf dist x], ())
@@ -48,8 +48,8 @@ instance HasAnnotatedPdf Normal where
   - pure sampling routine.
   + MCMC-specific:
     - effect
-    - (dist_name dist)
-    - annotated_densities dist
+    - (distName dist)
+    - annotatedDensities dist
 OR
   - sampling routine made up of other sampling actions.
  -}

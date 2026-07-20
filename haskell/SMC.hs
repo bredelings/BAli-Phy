@@ -23,10 +23,10 @@ data SMC = SMC Double [Double] [Double] Double
 
 instance Dist SMC where
     type Result SMC = AlignmentMatrix
-    dist_name _ = "SMC"
+    distName _ = "SMC"
 
 instance HasAnnotatedPdf SMC where
-    annotated_densities (SMC rhoOverTheta rates boundaries errorRate) =
+    annotatedDensities (SMC rhoOverTheta rates boundaries errorRate) =
         make_densities $ smc_density rhoOverTheta rates boundaries errorRate
 
 smc = SMC

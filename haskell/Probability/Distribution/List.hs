@@ -70,7 +70,7 @@ data IID d = IID Int d
 
 instance Dist d => Dist (IID d) where
     type Result (IID d) = [Result d]
-    dist_name (IID _ d) = "iid " ++ dist_name d
+    distName (IID _ d) = "iid " ++ distName d
 
 instance IOSampleable d => (IOSampleable (IID d)) where
     sampleIO (IID n dist) = take n <$> (sequence $ repeat $ sampleIO dist)
@@ -80,7 +80,7 @@ instance HasPdf d => HasPdf (IID d) where
                         | otherwise       = product (map (pdf dist) xs)
 
 instance HasAnnotatedPdf d => HasAnnotatedPdf (IID d) where
-    annotated_densities (IID n dist) = make_densities' $ independent_densities (replicate n dist)
+    annotatedDensities (IID n dist) = make_densities' $ independent_densities (replicate n dist)
 
 instance Sampleable d => Sampleable (IID d) where
     sample (IID n dist) = lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
