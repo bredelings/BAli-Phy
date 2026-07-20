@@ -577,7 +577,7 @@ double search_interval(double x0,double L, double R, slice_function& g, const Lo
 
     if (log_verbose >= 4)
 	std::cerr<<"**    L0 = "<<L0<<"   x0 = "<<x0<<"   R0 = "<<R0<<std::endl;
-    for(int i=0;i<200;i++)
+    for(int i=0;i<100;i++)
     {
 	double x1 = L + uniform()*(R-L);
 	auto gx1 = g(x1);
