@@ -975,45 +975,58 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     std::unordered_map<int,log_double_t> likelihoods1;
     std::unordered_map<int,log_double_t> likelihoods2;
 
-    auto register_prior_handler = [&](const register_prob& E, int)
+    // Retain the latest prior effect that remains registered at each step.
+    auto register_prior_handler = [&](const register_prob& E, int effect_step)
     {
-        priors2.insert({E.r_prob, {E.r_dist,E.prob}});
+        priors2.insert_or_assign(effect_step, pair{E.r_dist, E.prob});
     };
 
-    auto unregister_prior_handler = [&](const register_prob& E, int)
+    // Remove transient registrations, or remember the step's initial prior effect.
+    auto unregister_prior_handler = [&](const register_prob& E, int effect_step)
     {
-        priors1.insert({E.r_prob, {E.r_dist, E.prob}});
+        if (not priors2.erase(effect_step))
+            priors1.try_emplace(effect_step, E.r_dist, E.prob);
     };
 
-    auto register_likelihood_handler = [&](const register_prob& E, int)
+    // Retain the latest likelihood effect that remains registered at each step.
+    auto register_likelihood_handler = [&](const register_prob& E, int effect_step)
     {
-        likelihoods2.insert({E.r_prob, E.prob});
+        likelihoods2.insert_or_assign(effect_step, E.prob);
     };
 
-    auto unregister_likelihood_handler = [&](const register_prob& E, int)
+    // Remove transient registrations, or remember the step's initial likelihood effect.
+    auto unregister_likelihood_handler = [&](const register_prob& E, int effect_step)
     {
-        likelihoods1.insert({E.r_prob, E.prob});
+        if (not likelihoods2.erase(effect_step))
+            likelihoods1.try_emplace(effect_step, E.prob);
     };
 
+    // Track the net addition of sampled variables across any intermediate reroots.
     auto register_dist_handler = [&](int r, int)
     {
         int r_dist = closure_at(r).reg_for_constructor_slot(0);
         int observation = closure_at(r).constructor_slot_ref(1).as_int();
         if (not observation)
-            random_vars_added.insert(r_dist);
+        {
+            if (not random_vars_removed.erase(r_dist))
+                random_vars_added.insert(r_dist);
+        }
     };
 
+    // Track the net removal of sampled variables across any intermediate reroots.
     auto unregister_dist_handler = [&](int r, int)
     {
         int r_dist = closure_at(r).reg_for_constructor_slot(0);
         int observation = closure_at(r).constructor_slot_ref(1).as_int();
         if (not observation)
-            random_vars_removed.insert(r_dist);
+        {
+            if (not random_vars_added.erase(r_dist))
+                random_vars_removed.insert(r_dist);
+        }
     };
 
     handler_registration register_likelihood_scope(register_likelihood_handlers, register_likelihood_handler);
-    handler_registration unregister_likelihood_scope(unregister_likelihood_handlers,
-                                                       unregister_likelihood_handler);
+    handler_registration unregister_likelihood_scope(unregister_likelihood_handlers, unregister_likelihood_handler);
     handler_registration register_prior_scope(register_prior_handlers, register_prior_handler);
     handler_registration unregister_prior_scope(unregister_prior_handlers, unregister_prior_handler);
     handler_registration register_dist_scope(register_dist_handlers, register_dist_handler);
@@ -1030,7 +1043,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     NeumaierMultiplier<LogDensity> likelihood_product1;
     NeumaierMultiplier<LogDensity> likelihood_product2;
     
-    for(auto [r_pdf1, r_dist_and_pdf1]: priors1)
+    for(auto [_, r_dist_and_pdf1]: priors1)
     {
         auto& [r_dist1, pdf1] = r_dist_and_pdf1;
 
@@ -1043,7 +1056,7 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
         prior_product1 *= pdf1;
     }
 
-    for(auto [r_pdf2, r_dist_and_pdf2]: priors2)
+    for(auto [_, r_dist_and_pdf2]: priors2)
     {
         auto& [r_dist2, pdf2] = r_dist_and_pdf2;
 
