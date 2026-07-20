@@ -975,15 +975,26 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     std::unordered_map<int,log_double_t> likelihoods1;
     std::unordered_map<int,log_double_t> likelihoods2;
 
+    NeumaierMultiplier<LogDensity> complete_prior_product1;
+    if (log_verbose >= 5)
+        for(const auto& [_, E]: prior_terms)
+            complete_prior_product1 *= E.prob;
+
     // Retain the latest prior effect that remains registered at each step.
     auto register_prior_handler = [&](const register_prob& E, int effect_step)
     {
+        if (log_verbose >= 5)
+            std::cerr<<"probability_ratios: PRIOR+ step="<<effect_step<<" r_dist="<<E.r_dist
+                     <<" r_prob="<<E.r_prob<<" log(prob)="<<E.prob<<"\n";
         priors2.insert_or_assign(effect_step, pair{E.r_dist, E.prob});
     };
 
     // Remove transient registrations, or remember the step's initial prior effect.
     auto unregister_prior_handler = [&](const register_prob& E, int effect_step)
     {
+        if (log_verbose >= 5)
+            std::cerr<<"probability_ratios: PRIOR- step="<<effect_step<<" r_dist="<<E.r_dist
+                     <<" r_prob="<<E.r_prob<<" log(prob)="<<E.prob<<"\n";
         if (not priors2.erase(effect_step))
             priors1.try_emplace(effect_step, E.r_dist, E.prob);
     };
@@ -1035,6 +1046,19 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     // 3. reroot to c2 and force the program
     evaluate_program(c2);
 
+    NeumaierMultiplier<LogDensity> complete_prior_product2;
+    if (log_verbose >= 5)
+    {
+        for(const auto& [_, E]: prior_terms)
+            complete_prior_product2 *= E.prob;
+        for(const auto& [effect_step, term]: priors1)
+            std::cerr<<"probability_ratios: OLD step="<<effect_step<<" r_dist="<<term.first
+                     <<" log(prob)="<<term.second<<"\n";
+        for(const auto& [effect_step, term]: priors2)
+            std::cerr<<"probability_ratios: NEW step="<<effect_step<<" r_dist="<<term.first
+                     <<" log(prob)="<<term.second<<"\n";
+    }
+
     // 4. compute the ratio only for (i) changed pdfs that (ii) exist in both c1 and c2
 
     NeumaierMultiplier<LogDensity> prior_product1;
@@ -1083,6 +1107,14 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     R.variables_changed = (not random_vars_added.empty()) or (not random_vars_removed.empty());
     R.prior_ratio = (prior_product2 / prior_product1).result();
     R.likelihood_ratio = (likelihood_product2 / likelihood_product1).result();
+
+    if (log_verbose >= 5 and not R.variables_changed)
+    {
+        auto complete_prior_ratio = (complete_prior_product2 / complete_prior_product1).result();
+        std::cerr<<"probability_ratios: incremental prior log ratio="<<R.prior_ratio
+                 <<" complete prior log ratio="<<complete_prior_ratio
+                 <<" discrepancy="<<(R.prior_ratio.log() - complete_prior_ratio.log())<<"\n";
+    }
 
 #if DEBUG_MACHINE >= 2
     for(auto x : prog_temp)
