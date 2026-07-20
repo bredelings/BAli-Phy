@@ -391,47 +391,74 @@ static double pointChi2(double prob, double v)
 		  * (s4 - b * (s5 - b * s6))))));
   } while (std::abs(q / ch - 1) > e);
 
-  assert(std::isnan(prob) or std::isnan(v) or (not std::isnan(ch) and std::isfinite(ch)));
-  assert(ch >= 0);
+  if (std::isnan(prob)) throw myexception()<<"prob = "<<prob;
+  if (std::isnan(v))    throw myexception()<<"v = "<<v;
+  if (not (ch >= 0))    throw myexception()<<"ch = "<<ch;
+
   return (ch);
 }
 
 double gamma_quantile_no_approx(double p, double a, double b)
 {
-  assert(a >= 0);
-  assert(b >= 0);
+    assert(a >= 0);
+    assert(b >= 0);
 
-  assert(p >= 0);
-  assert(p <= 1);
+    assert(p >= 0);
+    assert(p <= 1);
 
-  return 0.5 * b * pointChi2(p, 2.0* a);
+    return 0.5 * b * pointChi2(p, 2.0* a);
 }
 
 double gamma_quantile(double p, double a, double b)
 {
-  assert(a >= 0);
-  assert(b >= 0);
-  assert(p >= 0);
-  assert(p <= 1);
+    assert(a >= 0);
+    assert(b >= 0);
+    assert(p >= 0);
+    assert(p <= 1);
 
-  try
-  {
-    if (a < 10000)
-      return gamma_quantile_no_approx(p,a,b);
-    else
+    constexpr double infinity = std::numeric_limits<double>::infinity();
+
+    try
     {
-      double sigma2 =  log1p(1.0/a); // log1p(V/(M*M)) , V = a*b*b
-      double sigma = sqrt(sigma2);
-      double mu = log(a*b) - sigma2/2.0; // log(M) - sigma2/2.0, M = a*b
+        if (std::isnan(p) or std::isnan(a) or std::isnan(b))
+        {
+            throw myexception()<<"bad value";
+        }
+
+        if (a == 0.0 && std::isinf(b) or (std::isinf(a) && b == 0.0))
+        {
+            throw myexception()<<"bad value";
+            return 1;
+        }
+
+        if (a == 0.0 or b == 0.0) return 0.0;
+
+        if (p == 0.0) return 0.0;
+
+        if (p == 1.0) return infinity;
+
+        if (std::isinf(a) or std::isinf(b))
+        {
+            throw myexception()<<"bad value";
+            return infinity;
+        }
+
+        if (a < 10000)
+            return gamma_quantile_no_approx(p,a,b);
+        else
+        {
+            double sigma2 =  log1p(1.0/a); // log1p(V/(M*M)) , V = a*b*b
+            double sigma = sqrt(sigma2);
+            double mu = log(a*b) - sigma2/2.0; // log(M) - sigma2/2.0, M = a*b
       
-      return log_normal_quantile(p, mu ,sigma);
+            return log_normal_quantile(p, mu ,sigma);
+        }
     }
-  }
-  catch(const std::exception& e)
-  {
-    if (log_verbose >= 2) std::cerr<<"Warning: gamma_quantile (p="<<p<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
-    return 1;
-  }
+    catch(const std::exception& e)
+    {
+        if (log_verbose >= 2) std::cerr<<"Warning: gamma_quantile (p="<<p<<", a="<<a<<", b="<<b<<"), "<<e.what()<<std::endl;
+        return 1;
+    }
 }
 
 

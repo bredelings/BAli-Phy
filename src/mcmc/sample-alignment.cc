@@ -154,7 +154,7 @@ pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data
 log_double_t sample_alignment(Parameters& P, int b, bool initial_state_valid)
 {
     if (log_verbose >= 3)
-        std::cerr<<"[sample_alignment]\n";
+        std::cerr<<"[sample_alignment]: start: Pr = "<<P.probability()<<"\n";
 
     //  if (any_branches_constrained(vector<int>(1,b), P.t(), P.PC->TC, P.PC->AC))
     //    return;
@@ -299,6 +299,9 @@ log_double_t sample_alignment(Parameters& P, int b, bool initial_state_valid)
 
     // ensure that the program is executed.
     P.evaluate_program();
+
+    if (log_verbose >= 3)
+        std::cerr<<"[sample_alignment]: end: Pr = "<<P.probability()<<"\n";
 
     return total_ratio;
 }
