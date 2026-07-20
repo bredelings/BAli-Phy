@@ -599,7 +599,7 @@ double search_interval(double x0,double L, double R, slice_function& g, const Lo
     std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   R  = "<<R<<std::endl;
     std::cerr<<"    log(f(x0)*U)  = "<<logy<<"  log(f(x0)) = "<<logy_x0<<"  log(f(x_current)) = "<<g()<<std::endl;
 
-    std::abort();
+    g.reset();
 
     return x0;
 }
