@@ -158,7 +158,7 @@ extern "C" closure builtin_function_gammaQuadratureNative(OperationArgs& Args)
     if (count <= 0)
         throw myexception()<<"gammaQuadrature: the number of nodes must be positive";
     if (!(alpha > 0))
-        throw myexception()<<"gammaQuadrature: alpha must be positive";
+        throw math_error()<<"gammaQuadrature: alpha must be positive, but is "<<alpha;
 
     DenseVector<double> nodes;
     DenseVector<double> weights;
@@ -189,10 +189,15 @@ extern "C" closure builtin_function_gammaQuadratureNative(OperationArgs& Args)
         }
         std::tie(nodes, weights) = quadrature_from_jacobi(jacobi);
     }
-    if (!nodes.allFinite() || !weights.allFinite())
-        throw myexception()<<"gammaQuadrature: rule contains a non-finite value";
-    if (nodes.minCoeff() < 0 || weights.minCoeff() < 0)
-        throw myexception()<<"gammaQuadrature: rule contains a negative value";
+    for (int i = 0; i < count; i++)
+    {
+        if (!std::isfinite(nodes[i]) || nodes[i] < 0)
+            throw math_error()<<"gammaQuadrature: node "<<i
+                              <<" must be finite and nonnegative, but is "<<nodes[i];
+        if (!std::isfinite(weights[i]) || weights[i] < 0)
+            throw math_error()<<"gammaQuadrature: weight "<<i
+                              <<" must be finite and nonnegative, but is "<<weights[i];
+    }
 
     object_ptr<Box<DenseVector<double>>> node_result = new Box<DenseVector<double>>(std::move(nodes));
     object_ptr<Box<DenseVector<double>>> weight_result = new Box<DenseVector<double>>(std::move(weights));
@@ -321,9 +326,9 @@ extern "C" closure builtin_function_logNormalQuadratureNative(OperationArgs& Arg
     if (count <= 0)
         throw myexception()<<"logNormalQuadrature: the number of nodes must be positive";
     if (!std::isfinite(log_mean))
-        throw myexception()<<"logNormalQuadrature: logMean must be finite";
+        throw math_error()<<"logNormalQuadrature: logMean must be finite, but is "<<log_mean;
     if (!(log_sigma >= 0) || !std::isfinite(log_sigma))
-        throw myexception()<<"logNormalQuadrature: logSigma must be finite and nonnegative";
+        throw math_error()<<"logNormalQuadrature: logSigma must be finite and nonnegative, but is "<<log_sigma;
 
     DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(count, count);
     for (int k = 1; k < count; k++)
@@ -333,8 +338,10 @@ extern "C" closure builtin_function_logNormalQuadratureNative(OperationArgs& Arg
     }
     auto [nodes, weights] = quadrature_from_jacobi(jacobi);
     nodes.array() = (log_mean + log_sigma * nodes.array()).exp();
-    if (!nodes.allFinite())
-        throw myexception()<<"logNormalQuadrature: transformed nodes are not finite";
+    for (int i = 0; i < count; i++)
+        if (!std::isfinite(nodes[i]) || !(nodes[i] > 0))
+            throw math_error()<<"logNormalQuadrature: node "<<i
+                              <<" must be finite and positive, but is "<<nodes[i];
 
     object_ptr<Box<DenseVector<double>>> node_result = new Box<DenseVector<double>>(std::move(nodes));
     object_ptr<Box<DenseVector<double>>> weight_result = new Box<DenseVector<double>>(std::move(weights));

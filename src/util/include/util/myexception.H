@@ -40,6 +40,20 @@ public:
   virtual ~myexception() {}
 };
 
+// Reports a mathematical domain or numerical failure for the current input.
+class math_error: public myexception
+{
+public:
+  using myexception::myexception;
+
+  // Preserve the derived type when constructing a streamed math_error.
+  template <typename T>
+  math_error& operator<<(const T& t) {
+    myexception::operator<<(t);
+    return *this;
+  }
+};
+
 template <typename T>
 myexception& myexception::operator<<(const T& t) {
   std::ostringstream oss;
