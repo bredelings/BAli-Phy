@@ -14,12 +14,12 @@
             "name": "n",
             "type": "Int",
             "default_value": "4",
-            "description": "The number of bins for discretizing the logNormal distribution"
+            "description": "The number of quadrature nodes for the log-normal distribution"
         },
         {
             "name": "lsigma",
             "type": "Double",
-            "description": "The standard deviation parameter",
+            "description": "The standard deviation divided by the mean of the rate distribution",
             "default_value": "~logLaplace(-3,1)"
         }
     ],

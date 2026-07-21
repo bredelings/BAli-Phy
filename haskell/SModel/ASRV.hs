@@ -27,9 +27,9 @@ gammaRatesQuadrature alpha n = quadratureDiscrete n $ gammaQuadratureNative alph
 
 gammaRatesQuadratureOn alpha n base = rateMixture base $ gammaRatesQuadrature alpha n
 
-gammaRatesOn = gammaRatesMedianOn
+gammaRatesOn = gammaRatesQuadratureOn
 
-gammaRates = gammaRatesMedian
+gammaRates = gammaRatesQuadrature
                           
 logNormalRatesDist sigmaOverMu = logNormal lmu lsigma where x = log(1+sigmaOverMu^2)
                                                             lmu = -0.5*x
@@ -39,7 +39,7 @@ logNormalRatesQuantile logMean logSigma n = uniformDiscretize (logNormal logMean
 
 logNormalRatesQuadrature logMean logSigma n = quadratureDiscrete n $ logNormalQuadratureNative logMean logSigma n
 
-logNormalRates sigmaOverMu n base = rateMixture base $ logNormalRatesQuantile lmu lsigma n
+logNormalRates sigmaOverMu n base = rateMixture base $ logNormalRatesQuadrature lmu lsigma n
     where x = log(1+sigmaOverMu^2)
           lmu = -0.5*x
           lsigma = sqrt x
