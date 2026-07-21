@@ -912,35 +912,67 @@ void reg_heap::unshare_regs2(int t)
 
     tokens[t2].flags.set(0);    // Before execution: mark t2 a root-child for execution
 
-    // 4b. Evaluate unconditionally-executed regs.
-    //
-    //     OPTIMIZATION: This avoids decrementing and re-incrementing invalid steps that are
-    //       retained after execution.
-    //
-    evaluate_unconditional_regs(unshared_regs);
-
-    // 4c. Decrement counts from bumped and invalid-but-not-bumped step demands
-    //
-    //     We need to know which regs have counts that will not go down to zero
-    //       in order to know which ones we are allowed to re-execute.
-    //
     auto& zero_count_regs = get_scratch_list();
-    decrement_counts_from_invalid_step_demands(unshared_regs, zero_count_regs);
 
-    // 5. Evaluate all forced invalid regs.
-    //
-    //    This depends on recursively visiting all children, but does not
-    //     depend on walking the regs backward.
-    //
-    evaluate_forced_invalid_regs(unshared_regs, tokens[t2].interchanges);
-    tokens[t2].flags.reset(0);    // unmark t2 a root-child for execution
+    try
+    {
+        // 4b. Evaluate unconditionally-executed regs.
+        //
+        //     OPTIMIZATION: This avoids decrementing and re-incrementing invalid steps that are
+        //       retained after execution.
+        //
+        evaluate_unconditional_regs(unshared_regs);
 
-    // 6. Get the program result.
-    //
-    //    Evaluation does not descend into any reg with a positive force count.
-    //    Since the head has a positive force count, why do we need this?
-    //
-    lazy_evaluate2(heads[*program_result_head]);
+        // 4c. Decrement counts from bumped and invalid-but-not-bumped step demands
+        //
+        //     We need to know which regs have counts that will not go down to zero
+        //       in order to know which ones we are allowed to re-execute.
+        //
+        decrement_counts_from_invalid_step_demands(unshared_regs, zero_count_regs);
+
+        // 5. Evaluate all forced invalid regs.
+        //
+        //    This depends on recursively visiting all children, but does not
+        //     depend on walking the regs backward.
+        //
+        evaluate_forced_invalid_regs(unshared_regs, tokens[t2].interchanges);
+        tokens[t2].flags.reset(0);    // unmark t2 a root-child for execution
+
+        // 6. Get the program result.
+        //
+        //    Evaluation does not descend into any reg with a positive force count.
+        //    Since the head has a positive force count, why do we need this?
+        //
+        lazy_evaluate2(heads[*program_result_head]);
+    }
+    catch (...)
+    {
+        tokens[t2].flags.set(0);
+
+        for(int r: unshared_regs)
+            prog_unshare[r].reset();
+        for(const auto& [r1, r2]: tokens[t2].interchanges)
+        {
+            prog_unshare[r1].reset();
+            prog_unshare[r2].reset();
+        }
+        for(const auto& [r, _]: tokens[t2].vm_force_count.delta())
+            prog_unshare[r].reset(unshare_count_bit);
+
+        release_scratch_list(); // zero_count_regs
+        release_scratch_list(); // zero_count_regs_initial
+        release_scratch_list(); // unshared_regs
+
+        reroot_at_token(t2);
+        tokens[t2].flags.reset(0);
+
+        // Keep the failed context at the root expected by its caller, but replace its partial
+        // execution with the previous valid program state.
+        destroy_all_computations_in_token(t);
+        reroot_at_token(t);
+        mark_as_program_execution_token(t);
+        throw;
+    }
 
     // 7. Clear unshare_count_bit and remove no-effect override from delta-force-count
     cleanup_count_deltas_and_bits();

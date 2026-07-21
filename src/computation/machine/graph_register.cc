@@ -2071,8 +2071,8 @@ void reg_heap::set_call(int s1, int r2, bool unsafe)
 
     auto& S1 = steps[s1];
 
-    // Don't override an *existing* call
-    assert(S1.call == 0);
+    // A call recorded before an effect is registered must match the completed reduction.
+    assert(S1.call == 0 or (S1.call == r2 and not S1.call_edge and not unsafe));
     assert(not S1.call_edge);
 
     // Set the call
@@ -2966,6 +2966,17 @@ int reg_heap::get_shared_step(int r)
     assert(s > 0);
     
     return s;
+}
+
+// Discard a reduction step that failed before it was installed on its source register.
+void reg_heap::discard_uninstalled_step(int s)
+{
+    if (steps[s].has_pending_effect_registration())
+        unmark_effect_to_register_at_step(s);
+    else if (steps[s].has_effect())
+        unregister_effect_at_step(s);
+    assert(not steps[s].has_pending_effect_unregistration());
+    destroy_step_and_created_regs(s);
 }
 
 /// Add a shared step at (t,r) -- assuming there isn't one already

@@ -830,6 +830,7 @@ private:
     EvalResult incremental_evaluate2_changeable_(int R);
     EvalResult incremental_evaluate2_unevaluated_(int R);
     int incremental_evaluate_unchangeable_(int R);
+    void discard_uninstalled_step(int s);
 
 public:
   
@@ -1017,7 +1018,12 @@ inline void reg_heap::note_step_not_in_root(int s)
 inline void reg_heap::note_step_in_root(int s)
 {
     if (steps[s].has_effect())
-        mark_effect_to_register_at_step(s);
+    {
+        if (steps[s].has_pending_effect_unregistration())
+            unmark_effect_to_unregister_at_step(s);
+        else
+            mark_effect_to_register_at_step(s);
+    }
 }
 
 #endif

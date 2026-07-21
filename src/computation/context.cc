@@ -110,24 +110,26 @@ const Runtime::Exp& context_ref::perform_head(int index, bool ec) const
 const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) const
 {
     auto& M = *memory();
-    try {
-	int t = M.switch_to_child_token(context_index, token_type::execute2);
-	int r1 = M.push_temp_head( {R::OperationApp(new modifiable, {})} );
-	M.mark_reg_changeable(r1);
-	int r2 = M.set_reg_value(r1, std::move(C), t, true);
-
-	// copy the context in order to protect the token.
-	context c2(*this);
-
-	const closure& result = ec?memory()->lazy_evaluate(r2, context_index) : memory()->lazy_evaluate_unchangeable(r2);
-    
-	M.pop_temp_head();
-	return result;
-    }
-    catch (myexception& e)
+    int t = M.switch_to_child_token(context_index, token_type::execute2);
+    int r1 = M.push_temp_head( {R::OperationApp(new modifiable, {})} );
+    try
     {
-	M.pop_temp_head();
-	throw;
+        M.mark_reg_changeable(r1);
+        int r2 = M.set_reg_value(r1, std::move(C), t, true);
+
+        // Copy the context in order to protect the token.
+        context c2(*this);
+
+        const closure& result = ec ? memory()->lazy_evaluate(r2, context_index)
+                                   : memory()->lazy_evaluate_unchangeable(r2);
+
+        M.pop_temp_head();
+        return result;
+    }
+    catch (...)
+    {
+        M.pop_temp_head();
+        throw;
     }
 }
 

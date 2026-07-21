@@ -134,10 +134,11 @@ public:
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
 
-    void set_effect(int r) override
+    void set_effect(int r_effect) override
         {
             memory().mark_step_with_effect(s);
-            M._register_effect_at_reg(r, s);
+            M.set_call(s, r_effect, true);
+            M._register_effect_at_reg(r_effect, s);
         }
 
     RegOperationArgs1Changeable(int r_, int s_, reg_heap& m)
@@ -235,11 +236,12 @@ public:
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
 
-    void set_effect(int r) override
+    void set_effect(int r_effect) override
         {
             make_changeable();
             M.mark_step_with_effect(s);
-            M._register_effect_at_reg(r, s);
+            M.set_call(s, r_effect, true);
+            M._register_effect_at_reg(r_effect, s);
         }
 
     RegOperationArgs1Unevaluated(int r_, int s_, reg_heap& m)
@@ -396,14 +398,22 @@ R::Exp evaluate_e_op(OperationArgs& Args, const R::Exp& E)
     for(auto arg = args.rbegin(); arg != args.rend(); ++arg)
         e_value_stack.emplace_back(std::move(*arg));
 
-    // Compute the result.
-    R::Exp result = f(e_value_stack);
-    assert(result.is_value());
+    try
+    {
+        // Compute the result.
+        R::Exp result = f(e_value_stack);
+        assert(result.is_value());
 
-    // After evaluating f, the n_args arguments that we added should also be popped.
-    assert(e_value_stack.size() == initial_size);
+        // After evaluating f, the n_args arguments that we added should also be popped.
+        assert(e_value_stack.size() == initial_size);
 
-    return result;
+        return result;
+    }
+    catch (...)
+    {
+        e_value_stack.resize(initial_size);
+        throw;
+    }
 }
 
 closure evaluate_e_op_to_c(OperationArgs& Args)
@@ -529,21 +539,29 @@ EvalResult reg_heap::incremental_evaluate1_changeable_(int r)
     }
     catch (error_exception& e)
     {
+        discard_uninstalled_step(s);
         if (log_verbose)
             annotate_reg_exception(*this, root_token, r, e, true);
         throw;
     }
     catch (myexception& e)
     {
+        discard_uninstalled_step(s);
         annotate_reg_exception(*this, root_token, r, e, true);
         throw;
     }
     catch (const std::exception& ee)
     {
+        discard_uninstalled_step(s);
         myexception e;
         e<<ee.what();
         annotate_reg_exception(*this, root_token, r, e, true);
         throw e;
+    }
+    catch (...)
+    {
+        discard_uninstalled_step(s);
+        throw;
     }
 
     std::cerr<<"incremental_evaluate1_changeable_: unreachable?";
@@ -703,21 +721,29 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
             }
             catch (error_exception& e)
             {
+                discard_uninstalled_step(s);
                 if (log_verbose)
                     annotate_reg_exception(*this, root_token, r, e, true);
                 throw;
             }
             catch (myexception& e)
             {
+                discard_uninstalled_step(s);
                 annotate_reg_exception(*this, root_token, r, e, true);
                 throw;
             }
             catch (const std::exception& ee)
             {
+                discard_uninstalled_step(s);
                 myexception e;
                 e<<ee.what();
                 annotate_reg_exception(*this, root_token, r, e, true);
                 throw e;
+            }
+            catch (...)
+            {
+                discard_uninstalled_step(s);
+                throw;
             }
         }
     }
@@ -854,10 +880,11 @@ public:
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
 
-    void set_effect(int r) override
+    void set_effect(int r_effect) override
         {
             memory().mark_step_with_effect(s);
-            M._register_effect_at_reg(r, s);
+            M.set_call(s, r_effect, true);
+            M._register_effect_at_reg(r_effect, s);
         }
 
     RegOperationArgs2Changeable(int r_, int s_, reg_heap& m)
@@ -1002,11 +1029,12 @@ public:
     // and point references to q instead of p.  But then it would not be true that a variable can
     // only be referenced if the slot that created it is still referenced.
 
-    void set_effect(int r) override
+    void set_effect(int r_effect) override
         {
             make_changeable();
             memory().mark_step_with_effect(s);
-            M._register_effect_at_reg(r, s);
+            M.set_call(s, r_effect, true);
+            M._register_effect_at_reg(r_effect, s);
         }
 
     RegOperationArgs2Unevaluated(int r_, int s_, reg_heap& m)
@@ -1273,21 +1301,29 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
             }
             catch (error_exception& e)
             {
+                discard_uninstalled_step(s);
                 if (log_verbose)
                     annotate_reg_exception(*this, root_token, r, e, true);
                 throw;
             }
             catch (myexception& e)
             {
+                discard_uninstalled_step(s);
                 annotate_reg_exception(*this, root_token, r, e, true);
                 throw;
             }
             catch (const std::exception& ee)
             {
+                discard_uninstalled_step(s);
                 myexception e;
                 e<<ee.what();
                 annotate_reg_exception(*this, root_token, r, e, true);
                 throw e;
+            }
+            catch (...)
+            {
+                discard_uninstalled_step(s);
+                throw;
             }
         }
     }
@@ -1422,9 +1458,9 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
         return {r, result};
     }
 
+    int s = get_shared_step(r);
     try
     {
-        int s = get_shared_step(r);
         RegOperationArgs2Changeable Args(r, s, *this);
         auto O = operation_for_reduction(closure_at(r));
         closure value = (*O)(Args);
@@ -1467,21 +1503,29 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
     }
     catch (error_exception& e)
     {
+        discard_uninstalled_step(s);
         if (log_verbose)
             annotate_reg_exception(*this, root_token, r, e, true);
         throw;
     }
     catch (myexception& e)
     {
+        discard_uninstalled_step(s);
         annotate_reg_exception(*this, root_token, r, e, true);
         throw;
     }
     catch (const std::exception& ee)
     {
+        discard_uninstalled_step(s);
         myexception e;
         e<<ee.what();
         annotate_reg_exception(*this, root_token, r, e, true);
         throw e;
+    }
+    catch (...)
+    {
+        discard_uninstalled_step(s);
+        throw;
     }
 
     std::abort();
