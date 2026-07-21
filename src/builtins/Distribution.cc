@@ -3,6 +3,8 @@
 #include <span>
 #include <valarray>
 #include <string>
+#include <tuple>
+#include <utility>
 #include "builtins/native-vector-input.H"
 #include "Vector.H"
 #include "computation/operation.H"
@@ -17,10 +19,110 @@
 
 #include <boost/math/distributions.hpp>
 #include <boost/math/special_functions/gamma.hpp>
+#include <Eigen/Eigenvalues>
+#include <Eigen/SVD>
+
+#include <cmath>
+#include <limits>
 
 using std::vector;
 using std::string;
 using std::valarray;
+
+namespace
+{
+
+// Derive Gaussian quadrature nodes and weights from a symmetric Jacobi matrix.
+std::pair<DenseVector<double>, DenseVector<double>> quadrature_from_jacobi(const DenseMatrix<double>& jacobi)
+{
+    if (!jacobi.allFinite())
+        throw myexception()<<"quadrature: Jacobi matrix contains a non-finite value";
+
+    Eigen::SelfAdjointEigenSolver<DenseMatrix<double>> solver(jacobi);
+    if (solver.info() != Eigen::Success)
+        throw myexception()<<"quadrature: eigensolver failed";
+
+    DenseVector<double> nodes = solver.eigenvalues();
+    DenseVector<double> weights = solver.eigenvectors().row(0).array().square().transpose();
+    if (!nodes.allFinite() || !weights.allFinite())
+        throw myexception()<<"quadrature: eigensolver returned a non-finite rule";
+
+    return {std::move(nodes), std::move(weights)};
+}
+
+// For Gamma(alpha, scale=1), factor*factor^T is the generalized-Laguerre Jacobi matrix. Its
+// squared singular values and the first row of its left singular vectors therefore give the nodes
+// and weights. Dividing the singular values by sqrt(alpha) changes the scale to 1/alpha, giving a
+// unit-mean rule.
+//
+// As alpha becomes small, the normalized Jacobi matrix has one O(1) node beside count-1 nodes of
+// O(1/alpha). Computing the unscaled factor's singular values avoids recovering that small node as
+// an eigenvalue of a matrix dominated by the escaping nodes.
+std::pair<DenseVector<double>, DenseVector<double>> gamma_quadrature_from_factor(double alpha, int count)
+{
+    DenseMatrix<double> factor = DenseMatrix<double>::Zero(count, count);
+    for (int k = 0; k < count; k++)
+        factor(k, k) = std::sqrt(alpha + k);
+    for (int k = 1; k < count; k++)
+        factor(k, k - 1) = std::sqrt(double(k));
+
+    Eigen::JacobiSVD<DenseMatrix<double>> solver(factor, Eigen::ComputeFullU);
+    if (solver.info() != Eigen::Success)
+        throw myexception()<<"gammaQuadrature: singular value decomposition failed";
+
+    DenseVector<double> nodes(count);
+    DenseVector<double> weights(count);
+    double sqrt_alpha = std::sqrt(alpha);
+    for (int i = 0; i < count; i++)
+    {
+        int j = count - i - 1;
+        double scaled_singular_value = solver.singularValues()[j] / sqrt_alpha;
+        nodes[i] = scaled_singular_value * scaled_singular_value;
+        weights[i] = solver.matrixU()(0, j) * solver.matrixU()(0, j);
+    }
+    return {std::move(nodes), std::move(weights)};
+}
+
+// Use the alpha -> 0 limit after alpha becomes too small to affect terms such as alpha+k in double
+// precision. For X ~ Gamma(alpha, scale=1/alpha) and j >= 1, E[X^j] is asymptotic to
+// (j-1)!/alpha^(j-1). Transforming a Gamma(2,1) rule (y_i,v_i) to nodes y_i/alpha and weights
+// alpha*v_i/y_i^2 makes its j-th moment alpha^(1-j) sum_i v_i*y_i^(j-2). For j >= 2, Gaussian
+// quadrature gives sum_i v_i*y_i^(j-2) = (j-1)! through the supported polynomial degree. The
+// remaining finite node and weight make the zeroth and first moments exactly one.
+std::pair<DenseVector<double>, DenseVector<double>> small_alpha_gamma_quadrature(double alpha, int count)
+{
+    DenseVector<double> nodes(count);
+    DenseVector<double> weights(count);
+    if (count == 1)
+    {
+        nodes[0] = 1.0;
+        weights[0] = 1.0;
+        return {std::move(nodes), std::move(weights)};
+    }
+
+    int escaping_count = count - 1;
+    DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(escaping_count, escaping_count);
+    for (int k = 0; k < escaping_count; k++)
+        jacobi(k, k) = 2.0 + 2.0 * k;
+    for (int k = 1; k < escaping_count; k++)
+        jacobi(k - 1, k) = jacobi(k, k - 1) = std::sqrt(double(k) * (k + 1));
+    auto [gamma_two_nodes, gamma_two_weights] = quadrature_from_jacobi(jacobi);
+
+    double escaping_weight = 0.0;
+    double escaping_mean = 0.0;
+    for (int i = 0; i < escaping_count; i++)
+    {
+        nodes[i + 1] = gamma_two_nodes[i] / alpha;
+        weights[i + 1] = alpha * gamma_two_weights[i] / (gamma_two_nodes[i] * gamma_two_nodes[i]);
+        escaping_weight += weights[i + 1];
+        escaping_mean += gamma_two_weights[i] / gamma_two_nodes[i];
+    }
+    weights[0] = 1.0 - escaping_weight;
+    nodes[0] = (1.0 - escaping_mean) / weights[0];
+    return {std::move(nodes), std::move(weights)};
+}
+
+}
 
 extern "C" closure builtin_function_gamma_density(OperationArgs& Args)
 {
@@ -46,6 +148,55 @@ extern "C" closure builtin_function_gamma_quantile(OperationArgs& Args)
     double p      = Args.evaluate_slot_to_value(2).as_double();
 
     return { gamma_quantile(p, a1, a2) };
+}
+
+// Construct an n-point Gaussian quadrature rule for a unit-mean Gamma distribution.
+extern "C" closure builtin_function_gammaQuadratureNative(OperationArgs& Args)
+{
+    double alpha = Args.evaluate_slot_to_value(0).as_double();
+    int count = Args.evaluate_slot_to_value(1).as_int();
+    if (count <= 0)
+        throw myexception()<<"gammaQuadrature: the number of nodes must be positive";
+    if (!(alpha > 0))
+        throw myexception()<<"gammaQuadrature: alpha must be positive";
+
+    DenseVector<double> nodes;
+    DenseVector<double> weights;
+    if (std::isinf(alpha))
+    {
+        // Gamma(alpha, 1/alpha) converges to a point mass at one. Repeated nodes with equal weights
+        // represent that point mass while preserving the requested number of components.
+        nodes = DenseVector<double>::Ones(count);
+        weights = DenseVector<double>::Constant(count, 1.0 / count);
+    }
+    else if (alpha <= std::numeric_limits<double>::epsilon())
+        // At this scale the finite-alpha corrections used by the factorization round away.
+        std::tie(nodes, weights) = small_alpha_gamma_quadrature(alpha, count);
+    else if (alpha < 1.0)
+        // The factorization resolves the finite node accurately among the escaping nodes.
+        std::tie(nodes, weights) = gamma_quadrature_from_factor(alpha, count);
+    else
+    {
+        // For alpha >= 1 the normalized Jacobi matrix is sufficiently well scaled for a direct
+        // symmetric eigensolve.
+        DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(count, count);
+        for (int k = 0; k < count; k++)
+            jacobi(k, k) = 1.0 + 2.0 * k / alpha;
+        for (int k = 1; k < count; k++)
+        {
+            double off_diagonal = std::sqrt(k / alpha) * std::sqrt(1.0 + (k - 1.0) / alpha);
+            jacobi(k - 1, k) = jacobi(k, k - 1) = off_diagonal;
+        }
+        std::tie(nodes, weights) = quadrature_from_jacobi(jacobi);
+    }
+    if (!nodes.allFinite() || !weights.allFinite())
+        throw myexception()<<"gammaQuadrature: rule contains a non-finite value";
+    if (nodes.minCoeff() < 0 || weights.minCoeff() < 0)
+        throw myexception()<<"gammaQuadrature: rule contains a negative value";
+
+    object_ptr<Box<DenseVector<double>>> node_result = new Box<DenseVector<double>>(std::move(nodes));
+    object_ptr<Box<DenseVector<double>>> weight_result = new Box<DenseVector<double>>(std::move(weights));
+    return R::RPair(node_result, weight_result);
 }
 
 extern "C" closure builtin_function_gamma_cdf(OperationArgs& Args)
@@ -159,6 +310,35 @@ extern "C" closure builtin_function_normal_quantile(OperationArgs& Args)
     double p  = Args.evaluate_slot_to_value(2).as_double();
 
     return { normal_quantile(p, a1 ,a2) };
+}
+
+// Construct an n-point Gaussian quadrature rule for a log-normal distribution.
+extern "C" closure builtin_function_logNormalQuadratureNative(OperationArgs& Args)
+{
+    double log_mean = Args.evaluate_slot_to_value(0).as_double();
+    double log_sigma = Args.evaluate_slot_to_value(1).as_double();
+    int count = Args.evaluate_slot_to_value(2).as_int();
+    if (count <= 0)
+        throw myexception()<<"logNormalQuadrature: the number of nodes must be positive";
+    if (!std::isfinite(log_mean))
+        throw myexception()<<"logNormalQuadrature: logMean must be finite";
+    if (!(log_sigma >= 0) || !std::isfinite(log_sigma))
+        throw myexception()<<"logNormalQuadrature: logSigma must be finite and nonnegative";
+
+    DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(count, count);
+    for (int k = 1; k < count; k++)
+    {
+        double off_diagonal = std::sqrt(double(k));
+        jacobi(k - 1, k) = jacobi(k, k - 1) = off_diagonal;
+    }
+    auto [nodes, weights] = quadrature_from_jacobi(jacobi);
+    nodes.array() = (log_mean + log_sigma * nodes.array()).exp();
+    if (!nodes.allFinite())
+        throw myexception()<<"logNormalQuadrature: transformed nodes are not finite";
+
+    object_ptr<Box<DenseVector<double>>> node_result = new Box<DenseVector<double>>(std::move(nodes));
+    object_ptr<Box<DenseVector<double>>> weight_result = new Box<DenseVector<double>>(std::move(weights));
+    return R::RPair(node_result, weight_result);
 }
 
 extern "C" closure builtin_function_cauchy_density(OperationArgs& Args)

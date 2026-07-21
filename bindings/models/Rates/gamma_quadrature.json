@@ -1,0 +1,29 @@
+{
+    "name": "Rates.gamma_quadrature",
+    "synonyms": ["Rates.GammaQuadrature"],
+    "result_type": "DiscreteDist<CTMC<a>>",
+    "call": "SModel.gammaRatesQuadratureOn(@alpha,@n,@submodel)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "submodel",
+            "type": "DiscreteDist<CTMC<a>>",
+            "description": "The model being scaled"
+        },
+        {
+            "name": "n",
+            "type": "Int",
+            "default_value": "4",
+            "description": "The number of Gamma quadrature nodes"
+        },
+        {
+            "name": "alpha",
+            "type": "Double",
+            "default_value": "~logLaplace(6,2)",
+            "description": "The shape parameter for the Gamma distribution"
+        }
+    ],
+    "examples": ["gtr +> Rates.gamma_quadrature(4) +> inv"],
+    "title": "The quadrature-discretized Gamma rate heterogeneity model",
+    "description": "This model uses Gaussian quadrature to approximate Gamma-distributed rates across sites."
+}
