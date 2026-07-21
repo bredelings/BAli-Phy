@@ -598,11 +598,26 @@ log_double_t geometric_pdf(log_double_t p_fail, log_double_t p_success, int n)
 
 log_double_t poisson_pdf(double mu, int k)
 {
-  if (k < 0)
-    return 0.0;
+    assert(mu >= 0);
 
-  log_double_t Pr;
-  Pr.log()= k * log(mu) - mu - log_factorial(k);
+    log_double_t Pr;
 
-  return Pr;
+    if (k < 0)
+    {
+        Pr = 0;
+    }
+    else if (mu == 0)
+    {
+        // Don't do log(mu) if mu is 0.
+        if (k == 0)
+            Pr = 1;
+        else
+            Pr = 0;
+    }
+    else
+    {
+        Pr.log()= k * log(mu) - mu - log_factorial(k);
+    }
+
+    return Pr;
 }
