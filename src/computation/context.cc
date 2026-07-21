@@ -21,6 +21,8 @@
 #include <boost/multi_index/member.hpp>
 #include "computation/runtime/ast.H"
 
+#include <cmath>
+
 using std::string;
 using std::vector;
 using std::map;
@@ -763,6 +765,25 @@ context::~context()
 
 bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
 {
+    // Every attempted MH acceptance consumes one draw so rejected candidates do not shift the random stream.
+    double U = uniform();
+
+    if (!std::isfinite(rho.log()))
+    {
+        C1.evaluate_program();
+        return false;
+    }
+
+    ProbDensity ratio;
+    try
+    {
+        ratio = ProbDensity(rho)*C2.heated_probability_ratio(C1);
+    }
+    catch (const math_error&)
+    {
+        return false;
+    }
+
     if (log_verbose >= 4)
     {
         std::cerr<<"accept_MH: log(rho) = "<<rho<<endl;
@@ -775,12 +796,6 @@ bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
         std::cerr<<C2.probability()<<" = "<<C2.likelihood()<<" [likelihood] + "<<C2.prior()<<" [prior]"<<endl;
         std::cerr<<endl<<endl;
     }
-
-    ProbDensity ratio = ProbDensity(rho)*C2.heated_probability_ratio(C1);
-
-    // ALWAYS sample a uniform here.
-    // We don't want the accept/reject logic to affect synchronization of the random number stream.
-    double U = uniform();
 
     bool accept = false;
     if (ratio.log().nans() != 0)
@@ -795,7 +810,7 @@ bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
         // since if they go down, ratio should be Inf.
         accept = U < ratio;
     }
-    
+
     if (log_verbose >=3) std::cerr<<"accept_MH: log(ratio) = "<<ratio<<"   accept = "<<accept<<endl;
 
     return accept;

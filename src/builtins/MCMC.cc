@@ -241,8 +241,16 @@ bool perform_MH_(reg_heap& M, int context_index, const Proposal& proposal)
     // 2. Make a duplicate context to modify
     context C2 = C1;
 
-    // 3. Propose a new state
-    auto proposal_ratio = proposal(C2);
+    log_double_t proposal_ratio = 0;
+    try
+    {
+        // 3. Propose a new state
+        proposal_ratio = proposal(C2);
+    }
+    catch (const math_error&)
+    {
+        proposal_ratio = 0;
+    }
 
     // 4. Accept or reject the proposal
     return perform_MH(C1, C2, proposal_ratio);
