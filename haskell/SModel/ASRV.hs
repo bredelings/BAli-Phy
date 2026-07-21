@@ -8,15 +8,23 @@ import Probability.Distribution.Transform (logNormal)
 
 gammaRatesDist alpha = gamma alpha (1/alpha)
 
-gammaRatesOn alpha n base = rateMixture base $ gammaRates alpha n
+gammaRatesMedianOn alpha n base = rateMixture base $ gammaRatesMedian alpha n
 
--- This uses quantiles, so perhaps we should call it gammaRatesQuantile?
-gammaRates alpha n = uniformDiscretize (gammaRatesDist alpha) n
+gammaRatesMedian alpha n = uniformDiscretize (gammaRatesDist alpha) n
+
+gammaRatesOn = gammaRatesMedianOn
+
+gammaRates = gammaRatesMedian
                           
 logNormalRatesDist sigmaOverMu = logNormal lmu lsigma where x = log(1+sigmaOverMu^2)
                                                             lmu = -0.5*x
                                                             lsigma = sqrt x
 
-logNormalRates sigmaOverMu n base = rateMixture base $ uniformDiscretize (logNormalRatesDist sigmaOverMu) n
+logNormalRatesQuantile logMean logSigma n = uniformDiscretize (logNormal logMean logSigma) n
+
+logNormalRates sigmaOverMu n base = rateMixture base $ logNormalRatesQuantile lmu lsigma n
+    where x = log(1+sigmaOverMu^2)
+          lmu = -0.5*x
+          lsigma = sqrt x
 
 freeRates rateDist base = rateMixture base rateDist

@@ -4,13 +4,13 @@ import SModel.Empirical
 import Bio.Alphabet
 import SModel.ReversibleMarkov
 import SModel.Rate
-import SModel.ASRV (gammaRates)
+import SModel.ASRV (gammaRatesMedian)
 import Probability.Distribution.Discrete
 
 normalize xs = map (/sum xs) xs
 
 lg4m alpha = Discrete [(scaleBy r q, p) | ((r, p), q) <- zip rates lg4m_qs]
-    where rates = unpackDiscrete $ gammaRates alpha 4
+    where rates = unpackDiscrete $ gammaRatesMedian alpha 4
 
 lg4m_q1 = scaleTo 1 $ gtr aa eM1 piM1
 lg4m_q2 = scaleTo 1 $ gtr aa eM2 piM2
@@ -107,5 +107,3 @@ eM4 = symmetricMatrixFromLowerTriangle 20 $
       , 0.163720, 0.818102, 0.072322, 0.068275, 3.305436, 0.373790, 0.054323, 0.476587, 1.100360, 0.392946, 1.703323, 0.085720, 1.725516, 5.436253, 0.053108, 0.498594, 0.231832
       , 0.241167, 0.302440, 1.055095, 0.246940, 9.741942, 0.249895, 0.129973, 0.052363, 11.542498, 1.047449, 1.319667, 0.139770, 1.330225, 26.562270, 0.046986, 0.737653, 0.313460, 5.165098
       , 1.824586, 0.435795, 0.179086, 0.091739, 3.609570, 0.649507, 0.656681, 0.225234, 0.473437, 19.897252, 3.001995, 0.452926, 3.929598, 1.692159, 0.370204, 0.373501, 3.329822, 0.326593, 0.860743]
-
-
