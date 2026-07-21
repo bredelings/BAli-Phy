@@ -61,21 +61,27 @@ optional<LogDensity> context_slice_function::operator()(double x)
     // We are intentionally only calling context::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
     if (count == 1) C0.evaluate_program();
-    C = C0;
-    set_value(x);
-
-    // Here is where we return 0 if the number of variables changes.
-    // How can we automate this so that it is called only once?
-    auto ratio = C.heated_probability_ratios(C0);
-    if (ratio.variables_changed)
+    try
     {
-        throw variables_changed_exception("Variable changed during slice sampling!");
-        current_fn_value = 0;
-    }
-    else
-        current_fn_value = ratio.total_ratio();
+        C = C0;
+        set_value(x);
 
-    return operator()();
+        // Here is where we return 0 if the number of variables changes.
+        // How can we automate this so that it is called only once?
+        auto ratio = C.heated_probability_ratios(C0);
+        if (ratio.variables_changed)
+            throw variables_changed_exception("Variable changed during slice sampling!");
+        else
+            current_fn_value = ratio.total_ratio();
+
+        return operator()();
+    }
+    catch (const math_error&)
+    {
+        C = C0;
+        current_fn_value = 0;
+        return operator()();
+    }
 }
 
 LogDensity context_slice_function::operator()()
@@ -183,17 +189,26 @@ optional<LogDensity> alignment_branch_length_slice_function::operator()(double x
     // We are intentionally only calling context::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
     if (count == 1) C0.evaluate_program();
-    C = C0;
-    set_value(x);
+    try
+    {
+        C = C0;
+        set_value(x);
 
-    // Pass 'false' because the initial alignment may have zero probability under the new branch length x.
-    // Without this, check_sampling_probabilities may throw an exception.
-    auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
+        // Pass 'false' because the initial alignment may have zero probability under the new branch length x.
+        // Without this, check_sampling_probabilities may throw an exception.
+        auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
 
-    // Here is where we return 0 if the number of variables changes.
-    // How can we automate this so that it is called only once?
-    current_fn_value = log_double_t(C.heated_probability_ratio(C0)) * (alignment_sum_ratio_1/alignment_sum_ratio_0);
-    return operator()();
+        // Here is where we return 0 if the number of variables changes.
+        // How can we automate this so that it is called only once?
+        current_fn_value = log_double_t(C.heated_probability_ratio(C0)) * (alignment_sum_ratio_1/alignment_sum_ratio_0);
+        return operator()();
+    }
+    catch (const math_error&)
+    {
+        C = C0;
+        current_fn_value = 0;
+        return operator()();
+    }
 }
 
 void alignment_branch_length_slice_function::set_value(double l)
