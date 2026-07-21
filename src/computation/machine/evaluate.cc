@@ -41,7 +41,8 @@ Core::Exp<> untranslate_vars(const Core::Exp<>& E, const map<std::string, int>& 
 Core::Exp<> untranslate_vars(const Core::Exp<>& E, const map<int,string>& ids);
 map<int,string> get_constants(const reg_heap& C, int t);
 
-void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
+// Add the expression being evaluated to an exception without changing its dynamic type.
+void annotate_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
 {
     string SSS = unlet(untranslate_vars(
                            untranslate_vars(deindexify(C), M.get_identifiers()),
@@ -51,10 +52,10 @@ void throw_reg_exception(reg_heap& M, int t, const closure& C, myexception& e)
     std::ostringstream o;
     o<<"evaluating: "<<SSS<<"\n\n";
     e.prepend(o.str());
-    throw e;
 }
 
-void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changeable)
+// Add the register being evaluated to an exception without changing its dynamic type.
+void annotate_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changeable)
 {
     string SSS = unlet(untranslate_vars(
                            untranslate_vars(deindexify(M[R]), M.get_identifiers()),
@@ -67,7 +68,6 @@ void throw_reg_exception(reg_heap& M, int t, int R, myexception& e, bool changea
         o<<" (unchangeable)";
     o<<": "<<SSS<<"\n\n";
     e.prepend(o.str());
-    throw e;
 }
 
 /// Evaluate regs when called from a changeable reg.
@@ -530,19 +530,20 @@ EvalResult reg_heap::incremental_evaluate1_changeable_(int r)
     catch (error_exception& e)
     {
         if (log_verbose)
-            throw_reg_exception(*this, root_token, r, e, true);
-        else
-            throw;
+            annotate_reg_exception(*this, root_token, r, e, true);
+        throw;
     }
     catch (myexception& e)
     {
-        throw_reg_exception(*this, root_token, r, e, true);
+        annotate_reg_exception(*this, root_token, r, e, true);
+        throw;
     }
     catch (const std::exception& ee)
     {
         myexception e;
         e<<ee.what();
-        throw_reg_exception(*this, root_token, r, e, true);
+        annotate_reg_exception(*this, root_token, r, e, true);
+        throw e;
     }
 
     std::cerr<<"incremental_evaluate1_changeable_: unreachable?";
@@ -703,19 +704,20 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
             catch (error_exception& e)
             {
                 if (log_verbose)
-                    throw_reg_exception(*this, root_token, r, e, true);
-                else
-                    throw;
+                    annotate_reg_exception(*this, root_token, r, e, true);
+                throw;
             }
             catch (myexception& e)
             {
-                throw_reg_exception(*this, root_token, r, e, true);
+                annotate_reg_exception(*this, root_token, r, e, true);
+                throw;
             }
             catch (const std::exception& ee)
             {
                 myexception e;
                 e<<ee.what();
-                throw_reg_exception(*this, root_token, r, e, true);
+                annotate_reg_exception(*this, root_token, r, e, true);
+                throw e;
             }
         }
     }
@@ -1272,19 +1274,20 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
             catch (error_exception& e)
             {
                 if (log_verbose)
-                    throw_reg_exception(*this, root_token, r, e, true);
-                else
-                    throw;
+                    annotate_reg_exception(*this, root_token, r, e, true);
+                throw;
             }
             catch (myexception& e)
             {
-                throw_reg_exception(*this, root_token, r, e, true);
+                annotate_reg_exception(*this, root_token, r, e, true);
+                throw;
             }
             catch (const std::exception& ee)
             {
                 myexception e;
                 e<<ee.what();
-                throw_reg_exception(*this, root_token, r, e, true);
+                annotate_reg_exception(*this, root_token, r, e, true);
+                throw e;
             }
         }
     }
@@ -1465,19 +1468,20 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
     catch (error_exception& e)
     {
         if (log_verbose)
-            throw_reg_exception(*this, root_token, r, e, true);
-        else
-            throw;
+            annotate_reg_exception(*this, root_token, r, e, true);
+        throw;
     }
     catch (myexception& e)
     {
-        throw_reg_exception(*this, root_token, r, e, true);
+        annotate_reg_exception(*this, root_token, r, e, true);
+        throw;
     }
     catch (const std::exception& ee)
     {
         myexception e;
         e<<ee.what();
-        throw_reg_exception(*this, root_token, r, e, true);
+        annotate_reg_exception(*this, root_token, r, e, true);
+        throw e;
     }
 
     std::abort();
@@ -1626,13 +1630,15 @@ int reg_heap::incremental_evaluate_unchangeable_(int r)
             }
             catch (myexception& e)
             {
-                throw_reg_exception(*this, root_token, r, e, false);
+                annotate_reg_exception(*this, root_token, r, e, false);
+                throw;
             }
             catch (const std::exception& ee)
             {
                 myexception e;
                 e<<ee.what();
-                throw_reg_exception(*this, root_token, r, e, false);
+                annotate_reg_exception(*this, root_token, r, e, false);
+                throw e;
             }
 
 #if defined(DEBUG_MACHINE) && DEBUG_MACHINE > 2
