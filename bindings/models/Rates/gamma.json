@@ -14,7 +14,7 @@
             "name": "n",
             "type": "Int",
             "default_value": "4",
-            "description": "The number of quadrature nodes for the Gamma distribution"
+            "description": "The number of equal-probability Gamma categories"
         },
         {
             "name": "alpha",
@@ -25,7 +25,7 @@
     ],
     "examples": ["gtr +> Rates.gamma(4) +> inv"],
     "title": "The Gamma rate heterogeneity model",
-    "description": "This model uses Gaussian quadrature to approximate Gamma-distributed rates across sites.",
+    "description": "This model divides a unit-mean Gamma distribution into equal-probability categories and represents each category by its conditional mean.",
     "citation":{"type": "article",
 		"title": "Maximum likelihood phylogenetic estimation from DNA sequences with variable rates over sites: approximate methods",
 		"year": "1994",

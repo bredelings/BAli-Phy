@@ -67,7 +67,7 @@ main = do
         (tinyWeight, tinyMean, tinySecondMoment) = moments tinyAlphaRule
         extremeAlphaPairs = unpackDiscrete $ gammaRatesQuadrature 1.0e-300 20
         extremeMean = sum $ map (\pair -> fst pair * snd pair) extremeAlphaPairs
-        (genericWeights, genericMean, _) = moments $ gammaRates 1.0 2
+        genericPairs = unpackDiscrete $ gammaRates 1.0 2
     print (near meanWeights 1.0
         && near meanRate 1.0
         && near (meanRates !! 0) (1.0 - log 2.0)
@@ -103,5 +103,7 @@ main = do
         && nearRelative tinySecondMoment (1.0 + 1.0 / tinyAlpha)
         && all validQuadraturePair extremeAlphaPairs
         && near extremeMean 1.0
-        && near genericWeights 1.0
-        && near genericMean 1.0)
+        && near (fst (genericPairs !! 0)) (1.0 - log 2.0)
+        && near (fst (genericPairs !! 1)) (1.0 + log 2.0)
+        && near (snd (genericPairs !! 0)) 0.5
+        && near (snd (genericPairs !! 1)) 0.5)

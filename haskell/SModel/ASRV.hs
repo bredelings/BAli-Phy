@@ -36,9 +36,9 @@ gammaRatesQuadrature alpha n = quadratureDiscrete n $ gammaQuadratureNative alph
 
 gammaRatesQuadratureOn alpha n base = rateMixture base $ gammaRatesQuadrature alpha n
 
-gammaRatesOn = gammaRatesQuadratureOn
+gammaRatesOn = gammaRatesMeanOn
 
-gammaRates = gammaRatesQuadrature
+gammaRates = gammaRatesMean
                           
 logNormalRatesDist sigmaOverMu = logNormal lmu lsigma where x = log(1+sigmaOverMu^2)
                                                             lmu = -0.5*x
