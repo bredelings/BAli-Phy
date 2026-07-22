@@ -578,6 +578,8 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
 }
 
 // UNSAFE (infinite loop)!
+// Keep the normalization topology-independent by allowing one-location branches to produce no-ops.
+// Rejecting them would make the eligible count depend on the number of cherries in an unrooted binary tree.
 int choose_subtree_branch_uniform(const TreeInterface& T) 
 {
     assert(T.n_branches() >= 3);
@@ -594,38 +596,6 @@ int choose_subtree_branch_uniform(const TreeInterface& T)
 
         // forbid pruning subtrees that contain the root on a time-tree.
         if (timetree and T.away_from_root(b1)) continue;
-
-	break;
-    }
-
-    return b1;
-}
-
-// UNSAFE (infinite loop)!
-int choose_subtree_branch_uniform2(const TreeInterface& T) 
-{
-    assert(T.n_branches() >= 4);
-
-    bool timetree = T.has_node_times();
-
-    int b1 = -1;
-    while (true)
-    {
-	b1 = uniform_element(T.directed_branches());
-
-        // forbid branches leaf branches - no attachment point!
-	if (T.is_leaf_node(T.target(b1))) continue;
-
-        // forbid pruning subtrees that contain the root on a time-tree.
-        if (timetree and T.away_from_root(b1)) continue;
-
-        // forbid branches with only 1 attachment point - not very useful.
-	bool ok = false;
-	for(int b: T.branches_after(b1))
-	    if (not T.is_leaf_node(T.target(b)))
-		ok = true;
-
-	if (not ok) continue;
 
 	break;
     }
@@ -1629,7 +1599,7 @@ void sample_SPR_all(owned_ptr<context>& P,MoveStats& Stats)
         if (log_verbose >= 4)  std::cerr<<"    sample_SPR_all: "<<i+1<<"/"<<n<<"\n";
 
         // Choose a directed branch to prune and regraft -- pointing away from the pruned subtree.
-        int b1 = choose_subtree_branch_uniform2(PP.t());
+        int b1 = choose_subtree_branch_uniform(PP.t());
 
         sample_SPR_search_one(PP, Stats, PP.t().edge(b1));
     }
