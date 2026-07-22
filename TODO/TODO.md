@@ -16,7 +16,7 @@
  * infer haskell types for bindings
 
  * use a real AST for the command-line language
- 
+
 ## Structural Problems
 
  * stop using the C++ stack, so that we can have unlimited stack growth.
@@ -39,6 +39,8 @@
    - if we [mark each reg with its interpreter](Interpreters.md) then JIT compilation would make more sense.
 
 ## Speed
+
+ * Can we use parentBeforeChildPrs as separate factors in coalescentPr now?
 
  * Investigate using heapcheck
 
@@ -69,15 +71,11 @@
  
  * DataKinds (i.e. using Bool as a Kind and 'True as a type)
  
- * Implement Data.Vector
- 
- * Implement Data.Array correctly
- 
  * Implement Numerical.LinearAlgebra
  
-   - replace some things -- like frequencyMatrix / weightedFrequencyMatrix -- with linear algebra?
+   - Implement Complex operations?
    - allow transpose to not copy?
-   
+
  * Clean up EVector
    - EVector -> RVector?
    - constrain EVector ops so that things that are not runtime values fail?
@@ -90,9 +88,12 @@
    
  * downloading packages from hackage?
  
- * unboxed tuples?
+ * unboxed tuples? [Unboxed Pairs](UnboxedPair.md)
  
-   - I guess unboxed tuples could mainly be a way to return two things without allocating
+   - I guess unboxed pairs could mainly be a way to return two things without allocating.
+   
+     * Case appends both things to the environment?
+     * Function application appends all of the things to the environment?
 
    - how do operations return multiple things?
    
