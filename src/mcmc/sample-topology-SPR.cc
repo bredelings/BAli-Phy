@@ -135,6 +135,7 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<log_double_t>& rho,in
 
 #include "slice-sampling.H"
 
+// Slice-sample the branch connecting the pruned subtree, rather than either attachment edge.
 int topology_sample_SPR_slice_connecting_branch(vector<Parameters>& p,int b) 
 {
     int b_ = p[0].t().undirected(b);
@@ -157,6 +158,8 @@ int topology_sample_SPR_slice_connecting_branch(vector<Parameters>& p,int b)
     return choice.first;
 }
 
+// Slice-sample the attachment split in each of the original and proposed topologies.
+// Their fixed totals are the original and target attachment lengths, respectively.
 int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b) 
 {
     slide_node_slice_function logp1(p[0],b);
@@ -186,14 +189,14 @@ int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b)
     return choice.first;
 }
 
+// Choose an SPR target independently of its physical branch length.
 int choose_SPR_target(const TreeInterface& T1, int b1) 
 {
     //----- Select the branch to move to ------//
     auto subtree_nodes = T1.partition(T1.reverse(b1));
     subtree_nodes.insert(T1.target(b1));
 
-    std::unordered_map<int,double> branch_lengths;
-    vector<double> lengths;
+    std::unordered_map<int,double> target_weights;
 
     for(int b: T1.branches())
     {
@@ -202,18 +205,18 @@ int choose_SPR_target(const TreeInterface& T1, int b1)
 	    subtree_nodes.contains(T1.source(b)))
 	    continue;
 
-	double L = 1.0;
+	double weight = 1.0;
 
-	// down-weight branch if it is one of the subtree's 2 neighbors
+	// The two neighboring branches represent the same no-op attachment, so together they have weight one.
 	if (subtree_nodes.contains(T1.target(b)) or
 	    subtree_nodes.contains(T1.source(b)))
-	    L = 0.5;
+	    weight = 0.5;
 
-	branch_lengths.insert({b,L});
+	target_weights.insert({b,weight});
     }
 
     try {
-	int b2 = choose(branch_lengths);
+	int b2 = choose(target_weights);
 
 	return b2;
     }
@@ -286,6 +289,16 @@ struct attachment_branch
 
 typedef std::map<tree_edge, bool> spr_range;
 
+/*
+ * Pruning joins the two branches at the original attachment into one edge. Regrafting then divides the
+ * target attachment edge into two branches. If the respective lengths are L_original and L_target, a
+ * uniform split has forward density 1/L_target and reverse density 1/L_original. The direct non-slice
+ * move therefore uses L_target/L_original. The slice and SPR_all moves account for these densities as
+ * part of their own proposals and must not apply this ratio again. The direct moves use branch lengths;
+ * SPR_all also handles time trees using the relative proposal factors described below.
+ */
+
+// Return the two branches meeting the pruned subtree at its current attachment node.
 vector<int> attachment_sub_branches(const TreeInterface& T, const tree_edge& b_parent)
 {
     auto child_branches = T.branches_after(T.find_branch(b_parent));
@@ -296,12 +309,14 @@ vector<int> attachment_sub_branches(const TreeInterface& T, const tree_edge& b_p
     return vector<int>({b1,b2});
 }
 
+// Return the conceptual edge produced by joining the two branches at the original attachment.
 tree_edge attachment_edge(const TreeInterface& T, const tree_edge& b_parent)
 {
     auto child_branches = attachment_sub_branches(T, b_parent);
     return tree_edge(T.target(child_branches[0]), T.target(child_branches[1]));
 }
 
+// Return the length of the edge produced by joining the two branches at the original attachment.
 double attachment_edge_length(const TreeInterface& T, const tree_edge& b_parent)
 {
     auto child_branches = attachment_sub_branches(T, b_parent);
@@ -369,13 +384,14 @@ public:
 
     vector<attachment_branch> attachment_branch_pairs;
 
-    // Lengths of branches
+    // Factors proportional to the probability of proposing the shared set from each candidate state.
     vector<double> relative_proposal_probs_;
 
     /// The number of places we could regraft, including the current site
     unsigned n_attachment_branches() const {return attachment_branch_pairs.size();}
 
-    /// The length of each attachment branch, indexed in the same way as attachment_branches
+    /// For branch-length trees these factors equal attachment lengths.
+    /// Time trees use feasible time intervals.
     const vector<double>& relative_proposal_probs() const
 	{
 	    return relative_proposal_probs_;
@@ -414,8 +430,8 @@ public:
 
 void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0);
 
-// Do an SPR (moving the subtree behind b1 to branch b2) and create the pairwise alignment
-// on the (fused) edge that we prune from.
+// Move the subtree behind b1 to branch b2 and create the alignment on the edge fused by pruning.
+// Return the reverse/forward density ratio for the uniform attachment split.
 double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
 {
     auto B1 = P.t().edge(b1);
@@ -513,7 +529,7 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
     //  bool tree_changed = not p[1].t().is_connected(nodes[0],nodes[2]) or not p[1].t().is_connected(nodes[0],nodes[3]);
 
 
-    // SLICE: optionall quit here and do the slide_node slice-sampling move variant instead.
+    // SLICE: optionally stop here and sample the topology and attachment split together.
     if (slice)
     {
 	// The slice sampler accounts for the attachment lengths through its split coordinate and Jacobian.
@@ -650,8 +666,8 @@ std::ostream& operator<<(std::ostream& o, const tree_edge& b)
 }
 
 /// Represent positions along branches.
-//   With BranchLengthTrees, this is a raction in [0,1) from node1 to node2
-//   With TimeTrees, this is a fraction from T1 to T2, there T1 <= T2.
+//   With BranchLengthTrees, this is a fraction in [0,1) from node1 to node2.
+//   With TimeTrees, this is a fraction from T1 to T2, where T1 <= T2.
 struct spr_attachment_points: public map<tree_edge,double>
 {
 };
@@ -700,15 +716,15 @@ void set_lengths_at_location(Parameters& P, const tree_edge& subtree_edge, const
     }
     else
     {
-        double L = P.t().branch_length(b1) + P.t().branch_length(b2);
+        double target_attachment_length = P.t().branch_length(b1) + P.t().branch_length(b2);
 
-        // 4. Get the lengths of the two branches
-        double L1 = L*U;
-        double L2 = L - L1;
+	// 4. Get the lengths of the two branches
+	double first_target_length = target_attachment_length * U;
+	double second_target_length = target_attachment_length - first_target_length;
 
-        // 5. Set the lengths of the two branches
-        P.setlength(b1, L1);
-        P.setlength(b2, L2);
+	// 5. Set the lengths of the two branches
+	P.setlength(b1, first_target_length);
+	P.setlength(b2, second_target_length);
     }
 }
 
@@ -803,7 +819,7 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b, const spr_range&
         else
         {
             if (E == initial_edge)
-                relative_proposal_probs_.push_back(T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]));
+                relative_proposal_probs_.push_back(attachment_edge_length(T, b_parent));
             else if (E == initial_edge.reverse())
                 std::abort();
             else
@@ -838,14 +854,15 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tr
     }
     else
     {
-        double L0a = T.branch_length(I.child_branches[0]);
-        double L0b = T.branch_length(I.child_branches[1]);
+        double first_original_length = T.branch_length(I.child_branches[0]);
+        double second_original_length = T.branch_length(I.child_branches[1]);
+        double original_attachment_length = first_original_length + second_original_length;
 
-        // compute attachment location for current branch
-        locations[initial_edge] = L0a/(L0a+L0b);
+	// The current attachment point is part of the state, so preserve its location instead of drawing it.
+	locations[initial_edge] = first_original_length / original_attachment_length;
     }
 
-    // compute attachment locations for non-current branches
+    // Draw one uniform location for every non-current attachment edge.
     for(int i=1;i<I.n_attachment_branches();i++)
 	locations[I.attachment_branch_pairs[i].edge] = uniform();
 
@@ -1271,7 +1288,7 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 /// This just computes nodes and calls sample_tri_multi
 bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 					const vector<log_double_t>& Pr,
-					const vector<log_double_t>& PrL,
+					const vector<log_double_t>& proposal_weights,
 					const spr_info& I, int C,
 					const spr_attachment_points& locations,
 					const map<tree_edge, vector<int>>& nodes_for_branch,
@@ -1302,9 +1319,9 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 	tri = shared_ptr<sample_A3_multi_calculation>(new sample_tri_multi_calculation(p, nodes, bandwidth));
     tri->run_dp();
 
-    //--------- Compute PrL2: reverse proposal probabilities ---------//
+    //--------- Compute the reverse proposal weights ---------//
 
-    vector<log_double_t> PrL2 = PrL;
+    vector<log_double_t> reverse_proposal_weights = proposal_weights;
 #ifndef DEBUG_SPR_ALL
     if (P.variable_alignment() and not sum_out_A)
 #endif
@@ -1317,15 +1334,16 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 	    for(int i=0;i<Pr.size();i++)
 		assert(std::abs(Pr[i].log() - Pr2[i].log()) < 1.0e-9);
     
-	PrL2 = Pr2;
-	for(int i=0;i<PrL2.size();i++)
-	    PrL2[i] *= relative_proposal_probs[i];
+	reverse_proposal_weights = Pr2;
+	for(int i=0;i<reverse_proposal_weights.size();i++)
+	    reverse_proposal_weights[i] *= relative_proposal_probs[i];
     }
 
     //----------------- Specify proposal probabilities -----------------//
     vector<log_double_t> rho(2,1);
-    rho[0] = relative_proposal_probs[0] * choose_MH_P(0, C, PrL ); // Pr(proposing 0->C)
-    rho[1] = relative_proposal_probs[C] * choose_MH_P(C, 0, PrL2); // Pr(proposing C->0)
+    // Include both the probability of proposing the shared set and the probability of choosing the other state.
+    rho[0] = relative_proposal_probs[0] * choose_MH_P(0, C, proposal_weights);
+    rho[1] = relative_proposal_probs[C] * choose_MH_P(C, 0, reverse_proposal_weights);
   
     tri->set_proposal_probabilities(rho);
 
@@ -1419,36 +1437,42 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
 }
 
 /*
- *  1. Factoring in branch lengths?
+ *  1. Accounting for proposed attachment locations.
  *
  *  pi(x) = the desired equilibrium probability.
  *  rho(x,S) = the probability of x proposing the set S to be sampled from.
  *  alpha(x,S,y) = the probability of accepting/choosing y from S when S is proposed by x.
- *  L[x] = the length of attachment branch x.
+ *  r[x] = relative_proposal_probs[x].
  *
- *  pi(x) * rho(x,S) * alpha(x,S,y) = pi(y) * rho(y,S) * alpha(y,S,x) 
- *  rho(x,S) = prod over branches[b] (1/L[b]) * L[x]
- *           = C * L[x]
- *  pi(x) * C * L[x] * alpha(x,S,y) = pi(y) * C * L[y] * alpha(y,S,x) 
- *  alpha(x,S,y) / alpha(y,S,x) = (pi(y)*L[y])/(pi(x)*L[x])
+ *  For branch-length trees, proposing one uniform point on every non-current edge gives
  *
- *  2. Therefore, the probability of choosing+accepting y should be proportional to Pr[y] * L[y].
+ *      rho(x,S) = product over b != x of 1/L[b] = C * L[x],
+ *
+ *  so r[x] equals attachment length L[x]. For time trees, r[x] instead equals the feasible time interval.
+ *  In either case:
+ *
+ *      pi(x) * C * r[x] * alpha(x,S,y) = pi(y) * C * r[y] * alpha(y,S,x)
+ *      alpha(x,S,y) / alpha(y,S,x) = (pi(y)*r[y])/(pi(x)*r[x]).
+ *
+ *  2. Therefore, the probability of choosing+accepting y should be proportional to Pr[y] * r[y].
  *  In the simplest incarnation, this is Gibbs sampling, and is independent of x.
  * 
- *  3. However, we can also use choose_MH(0,Pr), where Pr[i] = likelihood[i]*prior[i]*L[i]
+ *  3. However, we can also use choose_MH(0,w), where w[i] = likelihood[i]*prior[i]*r[i]
  *  since this proposal/acceptance function also has the property that
  *
- *       choose_MH_P(i,j,Pr)/choose_MH_P(j,i,Pr) = Pr[j]/Pr[i].
+ *       choose_MH_P(i,j,w)/choose_MH_P(j,i,w) = w[j]/w[i].
  *
  *  4. Now, if we make this whole procedure into a proposal, the ratio for this 
  *     proposal density is
  *
- *       rho(x,S) * alpha(x,S,y)   (C * L[x]) * (D * pi(y) * L[y] )    pi(y)   1/pi(x)
+ *       rho(x,S) * alpha(x,S,y)   (C * r[x]) * (D * pi(y) * r[y] )    pi(y)   1/pi(x)
  *       ----------------------- = -------------------------------- = ----- = -------
- *       rho(y,S) * alpha(y,S,x)   (C * L[y]) * (D * pi(x) * L[x] )    pi(x)   1/pi(y)
+ *       rho(y,S) * alpha(y,S,x)   (C * r[y]) * (D * pi(x) * r[x] )    pi(x)   1/pi(y)
  *
- *  While the result is independent of the lengths L (which we want), the procedure for
- *  achieving this result need not be independent of the lengths.
+ *  For branch-length trees the result is independent of the attachment lengths, but the procedure for
+ *  obtaining that result is not.
+ *  In particular, r[y]/r[x] is the same target/original attachment-length correction used explicitly by
+ *  the direct move. It must not be applied to SPR_all a second time.
  *
  *  We must also remember that the variable rho[i] is the proposal density for proposing the set
  *  S2 = {x,y} and so is proportional to rho(x,S) * alpha(x,S,y) = pi(y).  We could also use 1/pi(x)
@@ -1493,7 +1517,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     }
     const auto& nodes0 = nodes[I.initial_edge];
 
-    // 5. Compute total lengths for each of the possible attachment branches
+    // 5. Compute the relative probability of proposing the shared set from each candidate state.
     vector<double> relative_proposal_probs = I.relative_proposal_probs();
 
     if (I.n_attachment_branches() == 1) return false;
@@ -1520,16 +1544,16 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     vector<log_double_t> LLL = I.convert_to_vector(PrB.LLL);
 #endif
 
-    // 7. Scale the attachment probabilities by 1/(1/L), since we don't have to propose an attachment point for the starting branch.
-    vector<log_double_t> PrL = Pr;
-    for(int i=0;i<PrL.size();i++)
-	PrL[i] *= relative_proposal_probs[i];
+    // 7. Include the factor left by not drawing a new location for the current attachment.
+    vector<log_double_t> proposal_weights = Pr;
+    for(int i=0;i<proposal_weights.size();i++)
+	proposal_weights[i] *= relative_proposal_probs[i];
 
 
     // 8. Choose the attachment branch.
     int C = -1;
     try {
-	C = choose_MH(0,PrL);
+	C = choose_MH(0,proposal_weights);
     }
     catch (choose_exception<log_double_t>& c)
     {
@@ -1568,7 +1592,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     try
     {
 	if (C > 0)
-	    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, PrL, I, C, locations, nodes, sum_out_A);
+	    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, proposal_weights, I, C,
+							     locations, nodes, sum_out_A);
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_try_multi (in SPR_search_one)!  Proceeding."<<std::endl;
