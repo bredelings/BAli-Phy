@@ -7,6 +7,9 @@ import Numeric.LinearAlgebra (Vector, overrideVectorSize, toList)
 import Probability.Distribution.Gamma     (gamma)
 import Probability.Distribution.Transform (logNormal)
 
+foreign import trcall "Distribution:gammaMeanNative"
+    gammaMeanNative :: Double -> Int -> Vector Double
+
 foreign import trcall "Distribution:gammaQuadratureNative"
     gammaQuadratureNative :: Double -> Int -> (Vector Double, Vector Double)
 
@@ -22,6 +25,12 @@ gammaRatesDist alpha = gamma alpha (1/alpha)
 gammaRatesMedianOn alpha n base = rateMixture base $ gammaRatesMedian alpha n
 
 gammaRatesMedian alpha n = uniformDiscretize (gammaRatesDist alpha) n
+
+-- Pair the native category means with their equal bin probabilities.
+gammaRatesMean alpha n = Discrete $ zip rates (replicate n $ 1 / fromIntegral n)
+    where rates = toList $ overrideVectorSize n $ gammaMeanNative alpha n
+
+gammaRatesMeanOn alpha n base = rateMixture base $ gammaRatesMean alpha n
 
 gammaRatesQuadrature alpha n = quadratureDiscrete n $ gammaQuadratureNative alpha n
 

@@ -1,0 +1,36 @@
+{
+    "name": "Rates.gamma_mean",
+    "synonyms": ["Rates.GammaMean"],
+    "result_type": "DiscreteDist<CTMC<a>>",
+    "call": "SModel.gammaRatesMeanOn(@alpha,@n,@submodel)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "submodel",
+            "type": "DiscreteDist<CTMC<a>>",
+            "description": "The model being scaled"
+        },
+        {
+            "name": "n",
+            "type": "Int",
+            "default_value": "4",
+            "description": "The number of equal-probability Gamma categories"
+        },
+        {
+            "name": "alpha",
+            "type": "Double",
+            "default_value": "~logLaplace(6,2)",
+            "description": "The shape parameter for the Gamma distribution"
+        }
+    ],
+    "examples": ["gtr +> Rates.gamma_mean(4) +> inv"],
+    "title": "The conditional-mean Gamma rate heterogeneity model",
+    "description": "This model divides a unit-mean Gamma distribution into equal-probability categories and represents each category by its conditional mean.",
+    "citation":{"type": "article",
+                "title": "Maximum likelihood phylogenetic estimation from DNA sequences with variable rates over sites: approximate methods",
+                "year": "1994",
+                "author": [{"name": "Yang, Ziheng"}],
+                "journal": {"name": "Journal of molecular evolution", "volume": "39", "number": "3", "pages": "306--314"},
+                "identifier": [{"type":"doi","id":"10.1007/BF00160154"}]
+               }
+}

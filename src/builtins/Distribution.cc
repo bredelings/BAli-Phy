@@ -150,6 +150,88 @@ extern "C" closure builtin_function_gamma_quantile(OperationArgs& Args)
     return { gamma_quantile(p, a1, a2) };
 }
 
+// Construct equal-probability Gamma categories represented by their conditional means.
+extern "C" closure builtin_function_gammaMeanNative(OperationArgs& Args)
+{
+    double alpha = Args.evaluate_slot_to_value(0).as_double();
+    int count = Args.evaluate_slot_to_value(1).as_int();
+    if (count <= 0)
+        throw myexception()<<"gammaMean: the number of categories must be positive, but is "<<count;
+    if (!(alpha > 0))
+        throw math_error()<<"gammaMean: alpha must be positive, but is "<<alpha;
+
+    DenseVector<double> rates(count);
+    if (count == 1 || std::isinf(alpha))
+        rates.setOnes();
+    else if (alpha + 1.0 == alpha)
+    {
+        // The Gamma distribution is asymptotically normal here, while alpha+1 cannot be represented.
+        boost::math::normal_distribution<> standard_normal;
+        DenseVector<double> boundary_densities = DenseVector<double>::Zero(count + 1);
+        for (int i = 1; i < count; i++)
+        {
+            double probability = double(i) / count;
+            double boundary = quantile(standard_normal, probability);
+            boundary_densities[i] = pdf(standard_normal, boundary);
+        }
+        double scale = count / std::sqrt(alpha);
+        for (int i = 0; i < count; i++)
+            rates[i] = 1.0 + scale * (boundary_densities[i] - boundary_densities[i + 1]);
+    }
+    else
+    {
+        using underflow_policy = boost::math::policies::policy<
+            boost::math::policies::underflow_error<boost::math::policies::ignore_error>>;
+        DenseVector<double> lower_moments(count + 1);
+        DenseVector<double> upper_moments(count + 1);
+        lower_moments[0] = 0.0;
+        upper_moments[0] = 1.0;
+        lower_moments[count] = 1.0;
+        upper_moments[count] = 0.0;
+        try
+        {
+            for (int i = 1; i < count; i++)
+            {
+                double probability = double(i) / count;
+                double boundary = boost::math::gamma_p_inv(alpha, probability, underflow_policy{});
+                if (!std::isfinite(boundary))
+                    throw math_error()<<"gammaMean: boundary "<<i<<" is not finite for alpha="<<alpha
+                                      <<" and count="<<count<<": "<<boundary;
+                lower_moments[i] = boost::math::gamma_p(alpha + 1.0, boundary, underflow_policy{});
+                upper_moments[i] = boost::math::gamma_q(alpha + 1.0, boundary, underflow_policy{});
+            }
+        }
+        catch (const math_error&)
+        {
+            throw;
+        }
+        catch (const std::exception& e)
+        {
+            throw math_error()<<"gammaMean: failed for alpha="<<alpha<<" and count="<<count<<": "<<e.what();
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            if (i < count / 2)
+                rates[i] = count * (lower_moments[i + 1] - lower_moments[i]);
+            else
+                rates[i] = count * (upper_moments[i] - upper_moments[i + 1]);
+        }
+    }
+
+    for (int i = 0; i < count; i++)
+        if (!std::isfinite(rates[i]) || rates[i] < 0)
+            throw math_error()<<"gammaMean: rate "<<i<<" must be finite and nonnegative for alpha="<<alpha
+                              <<" and count="<<count<<", but is "<<rates[i];
+
+    double mean = rates.mean();
+    if (!(mean > 0) || !std::isfinite(mean))
+        throw math_error()<<"gammaMean: category mean must be finite and positive for alpha="<<alpha
+                          <<" and count="<<count<<", but is "<<mean;
+    rates /= mean;
+    return new Box<DenseVector<double>>(std::move(rates));
+}
+
 // Construct an n-point Gaussian quadrature rule for a unit-mean Gamma distribution.
 extern "C" closure builtin_function_gammaQuadratureNative(OperationArgs& Args)
 {
