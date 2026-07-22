@@ -416,7 +416,7 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0);
 
 // Do an SPR (moving the subtree behind b1 to branch b2) and create the pairwise alignment
 // on the (fused) edge that we prune from.
-void do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
+double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
 {
     auto B1 = P.t().edge(b1);
   
@@ -425,31 +425,44 @@ void do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
     if (B1.node2 == B2.node1 or B1.node2 == B2.node2)
     {
 	// B2 is one of the two branches that get fused when we pull out B1.
+	return 1;
     }
-    else
-    {
-	auto I = spr_info(P.t(), B1, spr_full_range(P.t(), B1));
 
-	// 1. Find the index in the attachment branch pairs
-	optional<int> index;
-	for(int i=0; i< I.attachment_branch_pairs.size(); i++)
-	    if (I.attachment_branch_pairs[i].edge == B2)
-		index = i;
+    auto I = spr_info(P.t(), B1, spr_full_range(P.t(), B1));
 
-	// 2. Get the original length of the attachment edge
-	double original_length = P.t().branch_length(b2);
+    // 1. Find the index in the attachment branch pairs
+    optional<int> index;
+    for(int i=0; i< I.attachment_branch_pairs.size(); i++)
+	if (I.attachment_branch_pairs[i].edge == B2)
+	    index = i;
 
-	// 3. Attach to the target edge
-	spr_to_index(P, I, *index, nodes0);
+    // 2. Record the lengths of the original and target attachment edges before changing the tree.
+    const double original_attachment_length = attachment_edge_length(P.t(), B1);
+    const double target_attachment_length = P.t().branch_length(b2);
+#ifndef NDEBUG
+    const auto original_attachment_edge = attachment_edge(P.t(), B1);
+#endif
 
-	// 4. Choose the split uniformly at random
-	int b3 = P.t().find_branch(B1.node2, B2.node1);
-	int b4 = P.t().find_branch(B1.node2, B2.node2);
+    // 3. Attach to the target edge
+    spr_to_index(P, I, *index, nodes0);
 
-	auto U = uniform();
-	P.setlength(b3, original_length * U );
-	P.setlength(b4, original_length * (1-U) );
-    }
+    // 4. Choose the split uniformly at random
+    int b3 = P.t().find_branch(B1.node2, B2.node1);
+    int b4 = P.t().find_branch(B1.node2, B2.node2);
+
+    auto U = uniform();
+    P.setlength(b3, target_attachment_length * U );
+    P.setlength(b4, target_attachment_length * (1-U) );
+
+#ifndef NDEBUG
+    int original_attachment_branch = P.t().find_branch(original_attachment_edge);
+    assert(std::abs(P.t().branch_length(original_attachment_branch) - original_attachment_length)
+           < 1.0e-9);
+    assert(std::abs(P.t().branch_length(b3) + P.t().branch_length(b4) - target_attachment_length)
+           < 1.0e-9);
+#endif
+
+    return target_attachment_length / original_attachment_length;
 }
 
 MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
@@ -479,7 +492,7 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
 
     // 3. ----- Create the new tree T2 and the pairwise alignment on the (fused) edge that we prune from.
 
-    /* double ratio = */ do_SPR(p[1], b1, b2, nodes[0]); // FIXME - do we need to USE the ratio anywhere?
+    double split_proposal_ratio = do_SPR(p[1], b1, b2, nodes[0]);
 
     // 4. ----- Generate the node order for 3-way alignment paths at p[1].t().target(b1) --- //
 
@@ -503,6 +516,7 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
     // SLICE: optionall quit here and do the slide_node slice-sampling move variant instead.
     if (slice)
     {
+	// The slice sampler accounts for the attachment lengths through its split coordinate and Jacobian.
 	int C = topology_sample_SPR_slice_slide_node(p,b1);
 	if (C != -1)
 	    P = p[C];
@@ -515,7 +529,7 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
 	//                 * (C ==  0) the original tree with a new alignment
 	//                 * (C ==  1) the      new tree with a new alignment
 
-	vector<log_double_t> rho = {1, 1};
+	vector<log_double_t> rho = {1, split_proposal_ratio};
 	int C = sample_tri_multi(p, nodes, rho);
 
 #ifndef NDEBUG
