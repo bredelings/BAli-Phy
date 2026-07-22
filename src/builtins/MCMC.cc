@@ -177,32 +177,40 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
 
     //------------- 4. Figure out probability of each value ----------//
 
-    context C2 = C1;
-    optional<int> c2_value;
-    vector<log_double_t> pr_x(n_values, 1.0);
-    for(int i=0; i<n_values; i++)
-        // For i == x1 we already know that the ratio is 1.0
-	if (i != x1)
-	{
-            C2 = C1;
-            c2_value = i;
+    // Let C[i] be these connected candidates and rho[i](C) the density of generating them from C[i].
+    // For W[i] = pi(C[i])*rho[i](C), rerooting at i+1 reverses only that edge, so probability_ratios
+    // gives W[i+1]/W[i]. Choosing i proportional to W[i] is reversible because W[i]*W[j]/sum(W) is
+    // symmetric in i and j. ProbDensity preserves zero factors until adjacent ratios have cancelled them.
+    vector<optional<context>> candidates(n_values);
+    vector<ProbDensity> candidate_weights(n_values, 0.0);
+    candidates[x1].emplace(C1);
+    candidate_weights[x1] = 1.0;
 
-	    C2.set_reg_value(*x_mod_reg, i);
+    for(int i = x1 - 1; i >= 0; i--)
+    {
+        candidates[i].emplace(*candidates[i + 1]);
+        candidates[i]->set_reg_value(*x_mod_reg, i);
+        candidate_weights[i] = candidate_weights[i + 1] *
+                               candidates[i]->probability_ratios(*candidates[i + 1]).total_ratio();
+    }
 
-	    pr_x[i] = C2.probability_ratios(C1).total_ratio();
-	}
+    for(int i = x1 + 1; i < n_values; i++)
+    {
+        candidates[i].emplace(*candidates[i - 1]);
+        candidates[i]->set_reg_value(*x_mod_reg, i);
+        candidate_weights[i] = candidate_weights[i - 1] *
+                               candidates[i]->probability_ratios(*candidates[i - 1]).total_ratio();
+    }
+
+    vector<log_double_t> pr_x(candidate_weights.begin(), candidate_weights.end());
 
     //------------- 5. Get new value x2 for variable -----------------//
     int x2 = choose(pr_x);
 
     if (log_verbose >= 3) std::cerr<<"   gibbs_sample_categorical: <"<<x_reg<<">   "<<x1<<" -> "<<x2<<"\n";
 
-    if (x2 == x1)
-        ;
-    else if (c2_value and x2 == *c2_value)
-        C1 = C2;
-    else
-        C1.set_reg_value(*x_mod_reg, x2);
+    if (x2 != x1)
+        C1 = *candidates[x2];
 
     return closure(R::ConstructorApp("()", 0, {}));
 }
