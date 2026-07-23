@@ -1,6 +1,7 @@
 module MCMC.Loggers where
 
 import           Numeric.LogDouble
+import           Numeric.Prob (fromLogOdds, toFloating)
 import           Compiler.Floating (ln)
 import           MCMC.Types (ContextAction(..), ContextIndex, Modifiable)
 import           Data.JSON
@@ -41,14 +42,20 @@ logLikelihood = ln <$> likelihood
 logPosterior :: ContextAction Double
 logPosterior = ln <$> posterior
 
-foreign import trcall "MCMC:condPrRaw" condPrsRaw
+foreign import trcall "MCMC:condLogOddsRaw" condLogOddsValuesRaw
   :: Modifiable Int -> Int -> ContextIndex -> IO (U.Vector Double)
 
-condPrs :: Modifiable Int -> Int -> ContextAction (U.Vector Double)
-condPrs selector count = ContextAction (condPrsRaw selector count)
+condLogOddsValues :: Modifiable Int -> Int -> ContextAction (U.Vector Double)
+condLogOddsValues selector count = ContextAction (condLogOddsValuesRaw selector count)
 
--- Select one probability from the complete conditional distribution computed by the builtin.
+-- Select one state's log odds from the complete conditional distribution.
+condLogOdds :: Modifiable Int -> Int -> Int -> ContextAction Double
+condLogOdds selector target count = do
+  values <- condLogOddsValues selector count
+  return (values U.! target)
+
+-- Convert the selected state's log odds to an ordinary probability.
 condPr :: Modifiable Int -> Int -> Int -> ContextAction Double
 condPr selector target count = do
-  probabilities <- condPrs selector count
-  return (probabilities U.! target)
+  value <- condLogOdds selector target count
+  return (toFloating (fromLogOdds value) :: Double)

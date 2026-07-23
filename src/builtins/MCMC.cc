@@ -236,8 +236,9 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
 }
 
 // For candidate collection C, W[i] = pi(C[i])*rho[i](C) defines the Gibbs conditional W[i]/sum(W).
-// Its expectation is the selector's posterior distribution because the extended joint has marginal pi.
-extern "C" closure builtin_function_condPrRaw(OperationArgs& Args)
+// Return log(W[i]/sum(j != i, W[j])); the corresponding conditional probabilities have posterior
+// expectation because the extended joint has marginal pi.
+extern "C" closure builtin_function_condLogOddsRaw(OperationArgs& Args)
 {
     assert(not Args.evaluate_changeables());
 
@@ -246,37 +247,44 @@ extern "C" closure builtin_function_condPrRaw(OperationArgs& Args)
     int context_index = Args.evaluate_slot_to_value(2).as_int();
 
     if (count <= 0)
-        throw myexception()<<"condPrRaw: value count "<<count<<" is not positive";
+        throw myexception()<<"condLogOddsRaw: value count "<<count<<" is not positive";
 
     auto& M = Args.memory();
     context_ref C(M, context_index);
     C.evaluate_program();
 
-    object_ptr<Box<DenseVector<double>>> probabilities = new Box<DenseVector<double>>(count);
+    object_ptr<Box<DenseVector<double>>> log_odds = new Box<DenseVector<double>>(count);
     auto modifiable_reg = C.find_modifiable_reg(selector_reg);
     if (not modifiable_reg)
     {
         if (not M.reg_is_constant(selector_reg))
-            throw myexception()<<"condPrRaw: selector reg "<<selector_reg
+            throw myexception()<<"condLogOddsRaw: selector reg "<<selector_reg
                                <<" is neither constant nor modifiable";
 
         int value = C.get_reg_value(selector_reg).as_int();
         if (value < 0 or value >= count)
-            throw myexception()<<"condPrRaw: selector value "<<value<<" is not in range [0, "<<count<<")";
+            throw myexception()<<"condLogOddsRaw: selector value "<<value
+                               <<" is not in range [0, "<<count<<")";
         for(int i = 0; i < count; i++)
-            (*probabilities)(i) = double(value == i);
-        return probabilities;
+            (*log_odds)(i) = value == i ? std::numeric_limits<double>::infinity()
+                                        : -std::numeric_limits<double>::infinity();
+        return log_odds;
     }
 
     auto candidate_set = make_categorical_candidates(C, *modifiable_reg, count);
     vector<log_double_t> weights(candidate_set.weights.begin(), candidate_set.weights.end());
-    log_double_t total = 0.0;
-    for(const auto& weight: weights)
-        total += weight;
+    vector<log_double_t> suffix_weights(count + 1, 0.0);
+    for(int i = count - 1; i >= 0; i--)
+        suffix_weights[i] = weights[i] + suffix_weights[i + 1];
 
+    log_double_t prefix_weight = 0.0;
     for(int i = 0; i < count; i++)
-        (*probabilities)(i) = double(weights[i] / total);
-    return probabilities;
+    {
+        auto alternative_weight = prefix_weight + suffix_weights[i + 1];
+        (*log_odds)(i) = log(weights[i] / alternative_weight);
+        prefix_weight += weights[i];
+    }
+    return log_odds;
 }
 
 Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)
