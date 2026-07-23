@@ -142,6 +142,47 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
     return closure(R::ConstructorApp("()", 0, {}));
 }
 
+struct categorical_candidates
+{
+    vector<optional<context>> contexts;
+    vector<ProbDensity> weights;
+};
+
+// Construct the connected candidates and relative weights used by categorical Gibbs sampling.
+// Rerooting at an adjacent candidate reverses only that edge, so each ratio gives W[i+1]/W[i].
+categorical_candidates make_categorical_candidates(context_ref& C, int selector_reg, int count)
+{
+    if (count <= 0)
+        throw myexception()<<"categorical selector has non-positive value count "<<count;
+
+    int current = C.get_reg_value(selector_reg).as_int();
+    if (current < 0 or current >= count)
+        throw myexception()<<"categorical selector value "<<current<<" is not in range [0, "<<count<<")";
+
+    categorical_candidates result{vector<optional<context>>(count),
+                                  vector<ProbDensity>(count, 0.0)};
+    result.contexts[current].emplace(C);
+    result.weights[current] = 1.0;
+
+    for(int i = current - 1; i >= 0; i--)
+    {
+        result.contexts[i].emplace(*result.contexts[i + 1]);
+        result.contexts[i]->set_reg_value(selector_reg, i);
+        result.weights[i] = result.weights[i + 1] *
+                            result.contexts[i]->probability_ratios(*result.contexts[i + 1]).total_ratio();
+    }
+
+    for(int i = current + 1; i < count; i++)
+    {
+        result.contexts[i].emplace(*result.contexts[i - 1]);
+        result.contexts[i]->set_reg_value(selector_reg, i);
+        result.weights[i] = result.weights[i - 1] *
+                            result.contexts[i]->probability_ratios(*result.contexts[i - 1]).total_ratio();
+    }
+
+    return result;
+}
+
 // gibbs_sample_categorical x n pr
 extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Args)
 {
@@ -178,31 +219,10 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
     //------------- 4. Figure out probability of each value ----------//
 
     // Let C[i] be these connected candidates and rho[i](C) the density of generating them from C[i].
-    // For W[i] = pi(C[i])*rho[i](C), rerooting at i+1 reverses only that edge, so probability_ratios
-    // gives W[i+1]/W[i]. Choosing i proportional to W[i] is reversible because W[i]*W[j]/sum(W) is
-    // symmetric in i and j. ProbDensity preserves zero factors until adjacent ratios have cancelled them.
-    vector<optional<context>> candidates(n_values);
-    vector<ProbDensity> candidate_weights(n_values, 0.0);
-    candidates[x1].emplace(C1);
-    candidate_weights[x1] = 1.0;
-
-    for(int i = x1 - 1; i >= 0; i--)
-    {
-        candidates[i].emplace(*candidates[i + 1]);
-        candidates[i]->set_reg_value(*x_mod_reg, i);
-        candidate_weights[i] = candidate_weights[i + 1] *
-                               candidates[i]->probability_ratios(*candidates[i + 1]).total_ratio();
-    }
-
-    for(int i = x1 + 1; i < n_values; i++)
-    {
-        candidates[i].emplace(*candidates[i - 1]);
-        candidates[i]->set_reg_value(*x_mod_reg, i);
-        candidate_weights[i] = candidate_weights[i - 1] *
-                               candidates[i]->probability_ratios(*candidates[i - 1]).total_ratio();
-    }
-
-    vector<log_double_t> pr_x(candidate_weights.begin(), candidate_weights.end());
+    // For W[i] = pi(C[i])*rho[i](C), choosing i proportional to W[i] is reversible because
+    // W[i]*W[j]/sum(W) is symmetric in i and j. ProbDensity retains zero factors until ratios cancel.
+    auto candidate_set = make_categorical_candidates(C1, *x_mod_reg, n_values);
+    vector<log_double_t> pr_x(candidate_set.weights.begin(), candidate_set.weights.end());
 
     //------------- 5. Get new value x2 for variable -----------------//
     int x2 = choose(pr_x);
@@ -210,9 +230,53 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
     if (log_verbose >= 3) std::cerr<<"   gibbs_sample_categorical: <"<<x_reg<<">   "<<x1<<" -> "<<x2<<"\n";
 
     if (x2 != x1)
-        C1 = *candidates[x2];
+        C1 = *candidate_set.contexts[x2];
 
     return closure(R::ConstructorApp("()", 0, {}));
+}
+
+// For candidate collection C, W[i] = pi(C[i])*rho[i](C) defines the Gibbs conditional W[i]/sum(W).
+// Its expectation is the selector's posterior distribution because the extended joint has marginal pi.
+extern "C" closure builtin_function_condPrRaw(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    int selector_reg = Args.evaluate_slot_unchangeable(0);
+    int count = Args.evaluate_slot_to_value(1).as_int();
+    int context_index = Args.evaluate_slot_to_value(2).as_int();
+
+    if (count <= 0)
+        throw myexception()<<"condPrRaw: value count "<<count<<" is not positive";
+
+    auto& M = Args.memory();
+    context_ref C(M, context_index);
+    C.evaluate_program();
+
+    object_ptr<Box<DenseVector<double>>> probabilities = new Box<DenseVector<double>>(count);
+    auto modifiable_reg = C.find_modifiable_reg(selector_reg);
+    if (not modifiable_reg)
+    {
+        if (not M.reg_is_constant(selector_reg))
+            throw myexception()<<"condPrRaw: selector reg "<<selector_reg
+                               <<" is neither constant nor modifiable";
+
+        int value = C.get_reg_value(selector_reg).as_int();
+        if (value < 0 or value >= count)
+            throw myexception()<<"condPrRaw: selector value "<<value<<" is not in range [0, "<<count<<")";
+        for(int i = 0; i < count; i++)
+            (*probabilities)(i) = double(value == i);
+        return probabilities;
+    }
+
+    auto candidate_set = make_categorical_candidates(C, *modifiable_reg, count);
+    vector<log_double_t> weights(candidate_set.weights.begin(), candidate_set.weights.end());
+    log_double_t total = 0.0;
+    for(const auto& weight: weights)
+        total += weight;
+
+    for(int i = 0; i < count; i++)
+        (*probabilities)(i) = double(weights[i] / total);
+    return probabilities;
 }
 
 Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)

@@ -1,8 +1,9 @@
 module MCMC.Loggers where
 
 import           Numeric.LogDouble
-import           MCMC.Types (ContextIndex)
+import           MCMC.Types (ContextIndex, Modifiable)
 import           Data.JSON
+import qualified Data.Vector.Unboxed as U
 import           Effect (Effect)
 import qualified Data.Text as T
 
@@ -19,3 +20,11 @@ logTableLine context iter = T.fromCppString . jsonToTableLineRaw <$> logJSONRaw 
 foreign import bpcall "MCMC:" prior :: ContextIndex -> IO LogDouble
 foreign import bpcall "MCMC:" likelihood :: ContextIndex -> IO LogDouble
 foreign import bpcall "MCMC:" posterior :: ContextIndex -> IO LogDouble
+
+foreign import trcall "MCMC:condPrRaw" condPrs
+  :: Modifiable Int -> Int -> ContextIndex -> IO (U.Vector Double)
+
+-- Select one probability from the complete conditional distribution computed by the builtin.
+condPr selector target count context = do
+  probabilities <- condPrs selector count context
+  return (probabilities U.! target)
