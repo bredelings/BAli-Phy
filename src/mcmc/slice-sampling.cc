@@ -230,23 +230,29 @@ alignment_branch_length_slice_function::alignment_branch_length_slice_function(P
 }
 
 // Convert a log branch-length ratio back to two lengths while preserving their fixed sum.
+// Computing changes from the initial pair retains precision for nearby proposals.
 void slide_node_slice_function::set_value(double z)
 {
+    const double delta = z - initial_z;
     const double total = initial_x + initial_y;
     double x;
     double y;
 
-    if (z < 0)
+    if (delta < 0)
     {
-        double ratio = exp(z);
-        x = total * ratio / (1 + ratio);
-        y = total - x;
+        const double ratio_change = expm1(delta);
+        const double denominator = initial_y + initial_x * (1 + ratio_change);
+        const double dx = initial_x * (initial_y / denominator) * ratio_change;
+        x = initial_x + dx;
+        y = initial_y - dx;
     }
     else
     {
-        double ratio = exp(-z);
-        y = total * ratio / (1 + ratio);
-        x = total - y;
+        const double ratio_change = expm1(-delta);
+        const double denominator = initial_x + initial_y * (1 + ratio_change);
+        const double dy = initial_y * (initial_x / denominator) * ratio_change;
+        x = initial_x - dy;
+        y = initial_y + dy;
     }
 
     assert(0 <= x and x <= total);
@@ -286,6 +292,7 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
     initial_x = P.t().branch_length(b[0]);
     initial_y = P.t().branch_length(b[1]);
     log_total = log(initial_x + initial_y);
+    initial_z = log(initial_x) - log(initial_y);
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P,int i1,int i2)
@@ -294,6 +301,7 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P,int i1,int i2
     initial_x = P.t().branch_length(b1);
     initial_y = P.t().branch_length(b2);
     log_total = log(initial_x + initial_y);
+    initial_z = log(initial_x) - log(initial_y);
 }
 
 

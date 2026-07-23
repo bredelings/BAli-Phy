@@ -178,6 +178,7 @@ struct slide_node_slice_function: public context_slice_function
     double initial_x;
     double initial_y;
     double log_total;
+    double initial_z;
 
     std::optional<LogDensity> operator()(double z) override {return context_slice_function::operator()(z);}
     LogDensity operator()() override;
