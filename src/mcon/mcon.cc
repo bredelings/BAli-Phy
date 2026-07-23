@@ -32,26 +32,6 @@ void update(json::object& j1, json::object&& j2)
 	j1[key] = std::move(value);
 }
 
-vector<string> mcon_path(const string& name)
-{
-    vector<string> path;
-    boost::split(path, name, [](char c) {return c == '/';});
-
-    for(int i=0;i+1<path.size();i++)
-	path[i].push_back('/');
-    return path;
-}
-
-void drop_path(json::object& j, const vector<string>& path)
-{
-    json::object* jj = &j;
-    for(int i=0;i+1<path.size();i++)
-    {
-	jj = & jj->at(path[i]).as_object();
-    }
-    jj->erase(path.back());
-}
-
 // Return the logical prefix contributed by a nested key, or no value for a field.
 static std::optional<string_view> nested_key_prefix(string_view key)
 {
@@ -392,6 +372,19 @@ vector<Log> Log::split() const
 
 void Log::add_time_field(const string& time_field)
 {
+    for(int i=0;i<samples.size();i++)
+    {
+        bool found = false;
+        auto find_field = [&](const string& name, const json::value&) { found |= name == time_field; };
+        if (is_nested())
+            for_each_logical_field(samples[i], "", find_field);
+        else
+            found = samples[i].contains(time_field);
+        if (found)
+            throw std::runtime_error("field '" + time_field + "' already exists at sample index " +
+                                     std::to_string(i));
+    }
+
     if (not fields)
 	fields = vector<string>(1,time_field);
     else
@@ -401,14 +394,7 @@ void Log::add_time_field(const string& time_field)
     }
 
     for(int i=0;i<samples.size();i++)
-    {
-	auto& sample = samples[i];
-
-	if (sample.count(time_field))
-	    throw std::runtime_error("field '" + time_field + "' already exists at sample index " + std::to_string(i));
-
-	sample[time_field] = i;
-    }
+	samples[i][time_field] = i;
 }
 
 Log::Log(bool n, bool a, const std::optional<std::vector<std::string>>& f, std::vector<json::object>&& s)
@@ -507,19 +493,35 @@ void Log::atomize()
 
 void Log::drop(const string& name)
 {
-    auto path = mcon_path(name);
     if (fields)
-    {
-	std::optional<int> index;
-	for(int i=0;i<fields->size();i++)
-	    if ((*fields)[i] == name)
-		index = i;
-	if (index)
-	    fields->erase(fields->begin()+*index);
-    }
+	std::erase(*fields, name);
 
     for(auto& sample: samples)
-	drop_path(sample, path);
+    {
+        if (not is_nested())
+        {
+            sample.erase(name);
+            continue;
+        }
+
+        // Remove matching logical leaves while retaining their physical grouping objects.
+        auto drop_field = [&](auto&& self, json::object& object, const string& prefix) -> void {
+            for(auto iter=object.begin(); iter != object.end();)
+            {
+                auto nested_prefix = nested_key_prefix(iter->key());
+                if (nested_prefix)
+                {
+                    self(self, iter->value().as_object(), prefix+string(*nested_prefix));
+                    ++iter;
+                }
+                else if (prefix+string(iter->key()) == name)
+                    iter = object.erase(iter);
+                else
+                    ++iter;
+            }
+        };
+        drop_field(drop_field, sample, "");
+    }
 }
 
 std::ostream& write_tsv_line(std::ostream& o, const vector<string>& v)
