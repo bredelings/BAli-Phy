@@ -13,7 +13,7 @@ import MCMC (condPr, runMCMC)
 import Probability.Distribution.Uniform (uniform)
 import Probability.Logger (makeJSONLogger)
 import Probability.Random
-  (LoggerValues(..), (%=%), (%=!), addLogger, condition, contextFields, makeMCMCModel,
+  (LoggerValues(..), (%=%), (%=!), (%>!), addLogger, condition, contextFields, makeMCMCModel,
    modifiable, parameterLogValues, prior)
 import System.IO (IO, stdout)
 
@@ -25,7 +25,10 @@ model = do
   let loggerValues =
         LoggerValues
           [("selector" :: Key) %=% selector]
-          (contextFields ["Pr1" %=! condPr selector 1 2])
+          (contextFields
+            [ "S1" %>! ["m3_test:PrPosSelection" %=! condPr selector 1 2]
+            , "S2" %>! ["m3_test:PrPosSelection" %=! condPr selector 1 2]
+            ])
   addLogger $ makeJSONLogger stdout loggerValues
   return $ parameterLogValues loggerValues
 

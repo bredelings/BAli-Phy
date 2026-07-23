@@ -1,2 +1,2 @@
-{"iter":0,"statistics//":{"Pr1":5E-1},"parameters//":{"selector":0}}
-{"iter":1,"statistics//":{"Pr1":5E-1},"parameters//":{"selector":0}}
+{"iter":0,"statistics//":{"S1/":{"m3_test:PrPosSelection":5E-1},"S2/":{"m3_test:PrPosSelection":5E-1}},"parameters//":{"selector":0}}
+{"iter":1,"statistics//":{"S1/":{"m3_test:PrPosSelection":5E-1},"S2/":{"m3_test:PrPosSelection":5E-1}},"parameters//":{"selector":0}}
