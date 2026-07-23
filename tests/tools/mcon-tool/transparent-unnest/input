@@ -1,0 +1,2 @@
+{"format":"MCON","version":"0.2","nested":true,"fields":["iter"]}
+{"iter":0,"parameters//":{"P1/":{"k":1},"P2/":{"k":2}},"statistics//":{"P1/":{"Pr":4},"P2/":{"Pr":7}}}

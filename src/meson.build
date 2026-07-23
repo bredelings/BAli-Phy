@@ -248,6 +248,15 @@ foreach tool: tools + prefixed_tools
          depends: tool_exe)
   endif
 
+  if tool == 'mcon-tool'
+    tool_test_script = files('../tests/tools/run-tests.py')
+    tool_test_root = meson.project_source_root()/'tests/tools/mcon-tool'
+    test('mcon-tool',
+         python,
+         args: [tool_test_script] + python_tool_wrapper_args + [tool_test_root, tool_exe],
+         depends: tool_exe)
+  endif
+
   if tool == 'statreport'
     statreport_test_script = files('../tests/tools/statreport/run-tests.py')
     test('statreport interval selection',
