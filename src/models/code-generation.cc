@@ -1253,7 +1253,9 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
             auto x_type = type_t("unknown_type");
             HsG::Let(result.code.stmts, x_var, make_rule_template_expr(value, argument_environment));
 
-            result.code.log_value(x_log_name, x_var, x_type);
+            auto kind =
+                x.kind == ComputedKind::context_value ? LogValueKind::context : LogValueKind::parameter;
+            result.code.log_value(x_log_name, x_var, x_type, kind);
 
             argument_environment[x_name] = x_var;
         }

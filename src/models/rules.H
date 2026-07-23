@@ -24,10 +24,17 @@ struct RuleArg
     std::optional<std::string> description;
 };
 
+enum class ComputedKind
+{
+    parameter,
+    context_value
+};
+
 struct ComputedRule
 {
     std::string name;
     RuleModelExpr value;
+    ComputedKind kind = ComputedKind::parameter;
 };
 
 struct RuleCitationAuthor

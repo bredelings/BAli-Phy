@@ -257,7 +257,7 @@ void maybe_log(vector<Hs::Exp>& loggers,
 }
 
 
-void generated_code_t::log_value(const string& name, Hs::Exp value, const type_t& type)
+void generated_code_t::log_value(const string& name, Hs::Exp value, const type_t& type, LogValueKind kind)
 {
     auto [head,args] = get_type_apps(type);
     if (head == "DiscreteDist" and args[0] == "Double")
@@ -265,7 +265,7 @@ void generated_code_t::log_value(const string& name, Hs::Exp value, const type_t
         value = HsG::Apply(Hs::Var("sortDist"), {value});
     }
 
-    loggers.push_back(LogValue(name, value));
+    loggers.push_back(LogValue(name, value, kind));
 }
 
 void generated_code_t::log_sub(const string& name, const Hs::Var& log_var, const Loggers& ls)

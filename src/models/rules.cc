@@ -388,6 +388,12 @@ Rule convert_rule(const Rules& R, const RawRule& raw_rule)
             ComputedRule c;
             c.name = required_string(computed_object, "name", name);
 	    c.value = parse_rule_template_expr(required_string(computed_object, "value", name), name + ": computed value for '"+c.name+"'");
+            if (auto context = optional_string(computed_object, "context", name))
+            {
+                if (*context != "value")
+                    throw myexception()<<"In rule for "<<name<<": unknown computed context kind '"<<*context<<"'";
+                c.kind = ComputedKind::context_value;
+            }
             rule.computed.push_back(std::move(c));
 	}
     }
