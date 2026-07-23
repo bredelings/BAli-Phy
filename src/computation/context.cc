@@ -356,6 +356,7 @@ void context_ref::run_loggers(long iteration)
     }
 }
 
+// Compute context fields unchangeably, restore this context, and then write the sample changeably.
 void context_ref::perform_logger(int s, long iteration)
 {
     auto& e = memory()->get_effect(s);

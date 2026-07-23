@@ -86,6 +86,7 @@ writeJSONe file fields = plainLogger $ \iter -> do
   T.hPutStrLn file $ J.fromEncoding $ pairs ("iter" .= iter <> fields)
   hFlush file
 
+-- Combine the context and parameter phases of a JSON logger.
 makeJSONLogger :: Handle -> LoggerValues -> LoggerAction
 makeJSONLogger file loggerValues =
   ( evaluateContextFields (contextLogValues loggerValues)
@@ -117,6 +118,7 @@ getTsvLine mapping sample = T.fromCppString $ builtinGetTsvLine mapping sample
 foreign import bpcall "Foreign:makeScalarLogRecord" makeScalarLogRecord
   :: Int -> J.CJSON -> J.CJSON -> J.CJSON
 
+-- Combine the context and parameter phases of a TSV logger.
 makeTSVLogger :: Handle -> [String] -> IORef (Maybe ColumnNames) -> LoggerValues -> LoggerAction
 makeTSVLogger file firstFields stateref loggerValues =
   ( evaluateContextFields (contextLogValues loggerValues)
