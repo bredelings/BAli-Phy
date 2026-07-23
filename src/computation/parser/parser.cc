@@ -5843,36 +5843,40 @@ namespace yy {
 
   case 539: // close: error
 #line 1641 "parser.y"
-      { yyerrok; drv.pop_error_message(); drv.pop_context();}
-#line 5848 "parser.cc"
+      {
+          if (not drv.accept_layout_parse_error(yystack_[0].location))
+              YYABORT;
+          yyerrok;
+      }
+#line 5852 "parser.cc"
     break;
 
   case 540: // modid: "CONID"
-#line 1645 "parser.y"
+#line 1649 "parser.y"
               {yylhs.value.as < Located<std::string> > () = {yylhs.location,yystack_[0].value.as < std::string > ()};}
-#line 5854 "parser.cc"
+#line 5858 "parser.cc"
     break;
 
   case 541: // modid: "QCONID"
-#line 1646 "parser.y"
+#line 1650 "parser.y"
               {yylhs.value.as < Located<std::string> > () = {yylhs.location,yystack_[0].value.as < std::string > ()};}
-#line 5860 "parser.cc"
+#line 5864 "parser.cc"
     break;
 
   case 542: // commas: commas ","
-#line 1648 "parser.y"
+#line 1652 "parser.y"
                    {yylhs.value.as < int > () = yystack_[1].value.as < int > () + 1;}
-#line 5866 "parser.cc"
+#line 5870 "parser.cc"
     break;
 
   case 543: // commas: ","
-#line 1649 "parser.y"
+#line 1653 "parser.y"
                    {yylhs.value.as < int > () = 1;}
-#line 5872 "parser.cc"
+#line 5876 "parser.cc"
     break;
 
 
-#line 5876 "parser.cc"
+#line 5880 "parser.cc"
 
             default:
               break;
@@ -7983,7 +7987,7 @@ namespace yy {
     1596,  1597,  1598,  1599,  1600,  1601,  1602,  1603,  1604,  1605,
     1606,  1607,  1608,  1609,  1611,  1612,  1616,  1617,  1619,  1621,
     1622,  1624,  1625,  1629,  1630,  1631,  1632,  1633,  1638,  1641,
-    1645,  1646,  1648,  1649
+    1649,  1650,  1652,  1653
   };
 
   void
@@ -8015,9 +8019,9 @@ namespace yy {
 
 
 } // yy
-#line 8019 "parser.cc"
+#line 8023 "parser.cc"
 
-#line 1658 "parser.y"
+#line 1662 "parser.y"
 
 
 using std::optional;

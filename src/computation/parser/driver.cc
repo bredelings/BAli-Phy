@@ -89,12 +89,26 @@ void driver::push_error_message(const location_type& loc, const Note& e)
     messages.push_back(Message{ErrorMsg, loc, {e}});
 }
 
-void driver::pop_error_message()
+// Accept an implicit close only when Bison's recovery range did not expand past the reported error.
+bool driver::accept_layout_parse_error(const location_type& recovered_location)
 {
-//    std::cerr<<"Popping error message\n";
-    if (messages.empty())
-	throw myexception()<<"No message to pop!";
+    if (messages.empty() or not messages.back().is_error() or not messages.back().loc)
+        return false;
+
+    const auto& error_location = *messages.back().loc;
+    const bool same_location =
+        error_location.begin.filename == recovered_location.begin.filename and
+        error_location.begin.line == recovered_location.begin.line and
+        error_location.begin.column == recovered_location.begin.column and
+        error_location.end.filename == recovered_location.end.filename and
+        error_location.end.line == recovered_location.end.line and
+        error_location.end.column == recovered_location.end.column;
+    if (not same_location)
+        return false;
+
     messages.pop_back();
+    pop_context();
+    return true;
 }
 
 // Drive the raw scanner and virtual-token insertion to produce the parser's

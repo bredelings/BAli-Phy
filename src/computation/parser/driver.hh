@@ -149,7 +149,7 @@ public:
 
     void push_warning_message(const location_type& loc, const Note& w);
     void push_error_message(const location_type& loc, const Note& e);
-    void pop_error_message();
+    bool accept_layout_parse_error(const location_type& recovered_location);
 
     yy::parser::symbol_type next_parser_token();
 

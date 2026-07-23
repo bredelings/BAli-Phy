@@ -1636,9 +1636,13 @@ literal: CHAR        {$$ = Hs::Literal(Hs::Char{$1});}
 /* ------------- Layout ------------------------------------------ */
 
 close: VCCURLY |
-       /* Without the yyerrok, the yyerror seems not to be called at the end of the file, 
-          so that the drv.pop_error_message() causes a SEGFAULT. */
-error { yyerrok; drv.pop_error_message(); drv.pop_context();}
+       /* NOTE: Unlike Happy, Bison may pop source symbols before shifting `error`.
+          Reject that recovery; this check can go when `close: error` is no longer needed. */
+error {
+          if (not drv.accept_layout_parse_error(@1))
+              YYABORT;
+          yyerrok;
+      }
 
 /* ------------- Miscellaneous (mostly renamings) ---------------- */
 
