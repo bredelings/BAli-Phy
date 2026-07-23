@@ -44,9 +44,8 @@
     ],
     "computed": [
         {
-            "name": "PrPosSelection",
-            "value": "condPr(@posSelection,1,2)",
-            "context": "value"
+            "value": "positiveSelectionFields(@posSelection)",
+            "context": "object"
         }
     ],
     "description":"This model performs a Bayesian version of the test of M2a against M1a.  The posterior probability that posSelection=1 is posterior probability for positive selection.",

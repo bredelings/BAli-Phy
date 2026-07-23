@@ -55,9 +55,8 @@
     ],
     "computed": [
         {
-            "name": "PrPosSelection",
-            "value": "condPr(@posSelection,1,2)",
-            "context": "value"
+            "value": "positiveSelectionFields(@posSelection)",
+            "context": "object"
         }
     ],
     "description":"A Bayesian test of positive selection using the BUSTED-S model.  The BUSTED-S model handles synonymous rate variation by adding Gamma-distributed across-site rate variation (ASRV) to the BUSTED model using n=3 bins.",

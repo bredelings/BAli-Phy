@@ -392,6 +392,14 @@ prefixContextFields (Key prefix) action = do
     fields <- action
     return [(Key (prefix <> name), value) | (Key name, value) <- fields]
 
+-- Compute both positive-selection summaries from one conditional candidate distribution.
+positiveSelectionFields :: Modifiable Int -> ContextAction Object
+positiveSelectionFields selector = do
+    logOdds <- condLogOdds selector 1 2
+    return [ "LogOddsPosSelection" %=% logOdds
+           , "PrPosSelection" %=% (toFloating (fromLogOdds logOdds) :: Double)
+           ]
+
 -- NOTE: The type system cannot express this requirement: the fields returned by a ContextAction
 -- must not be changeable, although the action may inspect modifiables in its context.
 infix 1 %=%, %>%, %=!, %>!

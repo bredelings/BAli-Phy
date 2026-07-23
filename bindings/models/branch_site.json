@@ -57,9 +57,8 @@
     ],
     "computed": [
         {
-            "name": "PrPosSelection",
-            "value": "condPr(@posSelection,1,2)",
-            "context": "value"
+            "value": "positiveSelectionFields(@posSelection)",
+            "context": "object"
         }
     ],
     "extract": "all"

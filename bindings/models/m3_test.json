@@ -44,9 +44,8 @@
     ],
     "computed": [
         {
-            "name": "PrPosSelection",
-            "value": "condPr(@posSelection,1,2)",
-            "context": "value"
+            "value": "positiveSelectionFields(@posSelection)",
+            "context": "object"
         }
     ],
     "description":"This model performs a Bayesian test of positive selection using a modified M3 model.  The M3 model is extended with an extra category of sites that is either neutral (posSelection=0) or positively-selected (posSelection=1).  The posterior probability that posSelection=1 is posterior probability for positive selection.",
