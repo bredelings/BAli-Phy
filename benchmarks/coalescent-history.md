@@ -290,6 +290,26 @@ Runtime AST regression, so changing the outer `Runtime::Exp` representation
 remains unsupported by this evidence.  All 140 primary and attribution
 invocations are recorded in `benchmarks/coalescent-runs.tsv`.
 
+### Context-dependent logger overhead
+
+These seed-0 medians compare the context-logger commit `795a9a16` with its
+parent `f7465310` using seven interleaved, warmed runs.  Both installed GCC 16
+release builds used dedicated caches, CPU 11, and disabled ASLR.  Enabled log
+files are byte-identical across the boundary.
+
+| Logging | Endpoint | I1 (B) | I50 (B) | Extra/iter (B) | Cycles 50 (B) | Task 50 (s) |
+|---|---|---:|---:|---:|---:|---:|
+| enabled | parent | 17.678 | 98.501 | 1.64943 | 56.331 | 10.524 |
+| enabled | context logger | 17.677 | 98.503 | 1.64951 | 55.678 | 10.408 |
+| disabled | parent | 17.529 | 97.944 | 1.64113 | 55.088 | 10.298 |
+| disabled | context logger | 17.529 | 97.937 | 1.64099 | 54.463 | 10.184 |
+
+Recurring instructions change by +0.005% with logging and -0.008% without it,
+so the new two-phase interface adds no measurable recurring work.  The roughly
+1% cycle and task-time differences are not supported by instruction counts and
+remain within timing variation.  All 56 invocations are recorded in
+`benchmarks/coalescent-runs.tsv`.
+
 ## Slowdowns to investigate
 
 - Edge-contingency API-only boundary: a same-trace 1.0% recurring increase;
