@@ -12,6 +12,7 @@ import Range
 import Parameters
 import MCMC
 import Data.JSON as J
+import Data.JSON.Types.Internal (Key(..))
 import Effect
 import Control.Monad.IO.Class -- for liftIO
 import Data.IntMap (IntMap)
@@ -20,6 +21,7 @@ import Numeric.Prob
 import Control.Monad.Fix
 
 import           System.IO
+import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
 import Probability.Dist
@@ -374,8 +376,13 @@ foreign import bpcall "MCMC:" writeTraceGraph :: ContextIndex -> IO ()
 
 -- Loggers: we can only log things with the ToJSON property
 infix 1 %=%, %>%
+(%=%) :: (ToJSONKey k, ToJSON a) => k -> a -> (Key,Value)
 name %=% value = (toJSONKey name, toJSON value)
-prefix %>% subvalue = (toJSONKey $ prefix ++ "/", logToJson subvalue)
+
+logPathKey name = case toJSONKey name of Key prefix -> Key (prefix <> T.pack "/")
+
+(%>%) :: (ToJSONKey k1, ToJSONKey k2, ToJSON v) => k1 -> [(k2,v)] -> (Key,Value)
+prefix %>% subvalue = (logPathKey prefix, logToJson subvalue)
 
 toSeries :: (ToJSONKey k, ToJSON v) => [(k,v)] -> Series
 toSeries pairs = foldr (<>) mempty [toJSONKey k .= v | (k,v) <- pairs]
