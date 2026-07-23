@@ -102,14 +102,15 @@ const Runtime::Exp& context_ref::evaluate_head_unchangeable(int index) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-const Runtime::Exp& context_ref::perform_head(int index, bool ec) const
+Runtime::Exp context_ref::perform_head(int index, bool ec) const
 {
     int R = heads()[index];
 
     return perform_expression(Runtime::IndexVar(0), {R}, ec);
 }
 
-const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) const
+// Evaluate a temporary closure and copy its result before releasing its root register.
+Runtime::Exp context_ref::evaluate_expression_(closure&& C, bool ec) const
 {
     auto& M = *memory();
     int t = M.switch_to_child_token(context_index, token_type::execute2);
@@ -122,11 +123,16 @@ const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) cons
         // Copy the context in order to protect the token.
         context c2(*this);
 
-        const closure& result = ec ? memory()->lazy_evaluate(r2, context_index)
-                                   : memory()->lazy_evaluate_unchangeable(r2);
+        const closure& result = ec ? M.lazy_evaluate(r2, context_index)
+                                   : M.lazy_evaluate_unchangeable(r2);
 
+#ifndef NDEBUG
+        if (result.get_code().to<Runtime::Lambda>())
+            throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
+#endif
+        Runtime::Exp value = result.get_code();
         M.pop_temp_head();
-        return result;
+        return value;
     }
     catch (...)
     {
@@ -135,27 +141,12 @@ const closure& context_ref::lazy_evaluate_expression_(closure&& C, bool ec) cons
     }
 }
 
-const Runtime::Exp& context_ref::evaluate_expression_(closure&& C,bool ec) const
-{
-    const closure& result = lazy_evaluate_expression_(std::move(C),ec);
-#ifndef NDEBUG
-    if (result.get_code().to<Runtime::Lambda>())
-	throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
-#endif
-    return result.get_code();
-}
-
-const closure& context_ref::lazy_evaluate_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
-{
-    return lazy_evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
-}
-
-const Runtime::Exp& context_ref::evaluate_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
+Runtime::Exp context_ref::evaluate_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
 {
     return evaluate_expression_( preprocess(std::move(E), std::move(Env)), ec);
 }
 
-const Runtime::Exp& context_ref::perform_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
+Runtime::Exp context_ref::perform_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const
 {
     int perform_io_reg = memory()->perform_io_reg();
 
@@ -349,15 +340,15 @@ int context_ref::n_transition_kernels() const
 
 void context_ref::run_loggers(long iteration)
 {
-    // 1.unmap any transition kernels that are not currently used.
     evaluate_program();
 
-    for(int s: memory()->loggers())
+    // Context queries may temporarily change the registered logger set.  Preserve
+    // this iteration's step IDs so those changes do not invalidate the loop.
+    vector<int> logger_steps(memory()->loggers().begin(), memory()->loggers().end());
+    for(int s: logger_steps)
     {
-        // Run the T.K.
         perform_logger(s, iteration);
 
-        // Handle differences here.
         evaluate_program();
 
         // The logger may not unregister itself.
@@ -372,11 +363,37 @@ void context_ref::perform_logger(int s, long iteration)
     int r = e.reg_for_constructor_slot(0);
     assert(memory()->reg_is_constant(r));
 
-    auto E = Runtime::apply_env_function(0, {Runtime::Int(int(iteration)),
-                                                     Runtime::Double(double(prior().log())),
-                                                     Runtime::Double(double(likelihood().log())),
-                                                     Runtime::Double(double(probability().log()))});
-    perform_expression(E, {r}, true);
+    const auto& logger = memory()->closure_at(r);
+    int r_get_context_fields = logger.reg_for_constructor_slot(0);
+    int r_log_sample = logger.reg_for_constructor_slot(1);
+
+    Runtime::Exp context_fields;
+    try
+    {
+        auto get_context_fields = Runtime::apply_env_function(
+            0, {Runtime::Int(int(iteration)), Runtime::Int(get_context_index())});
+        context_fields = perform_expression(std::move(get_context_fields), {r_get_context_fields}, false);
+    }
+    catch (...)
+    {
+        evaluate_program();
+        throw;
+    }
+
+    // Context queries may leave another candidate installed as the machine root.
+    evaluate_program();
+
+    try
+    {
+        auto log_sample = Runtime::apply_env_function(
+            0, {Runtime::Int(int(iteration)), std::move(context_fields)});
+        perform_expression(std::move(log_sample), {r_log_sample}, true);
+    }
+    catch (...)
+    {
+        evaluate_program();
+        throw;
+    }
 }
 
 int context_ref::n_loggers() const

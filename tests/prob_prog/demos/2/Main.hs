@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 import System.FilePath
 import Probability
 import Probability.Logger
@@ -11,7 +12,17 @@ main = do
 
   model <- Model.main
 
-  mymodel <- makeMCMCModel $ do { j <- model; addLogger $ logParams j ; return j }
+  mymodel <- makeMCMCModel $ do
+    parameters <- model
+    let { loggerValues =
+            LoggerValues
+              parameters
+              (contextFields
+                ["prior" %=! logPrior, "likelihood" %=! logLikelihood,
+                 "posterior" %=! logPosterior])
+        }
+    addLogger $ logParams loggerValues
+    return parameters
 
   jline <- logJSONLine mymodel 0
 

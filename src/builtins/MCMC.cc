@@ -45,7 +45,7 @@ extern "C" closure builtin_function_registerTransitionKernelRaw(OperationArgs& A
 
 extern "C" closure builtin_function_registerLogger(OperationArgs& Args)
 {
-    int r_logger = Args.evaluate_reg_use(Args.reg_for_slot(0));
+    int r_logger = Args.evaluate_reg_force(Args.reg_for_slot(0));
 
     R::Exp E = R::ConstructorApp("Effect.Logger", 2,
                                  {R::IndexVar(0)});

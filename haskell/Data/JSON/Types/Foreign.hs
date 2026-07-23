@@ -6,6 +6,7 @@ import Data.Text (Text)
 import Data.String
 import Data.JSON.Types.Internal    
 import Data.JSON.Types.ToJSON
+import Data.JSON.Encoding (Encoding, unsafeToEncoding)
     
 data CJSON
 
@@ -30,6 +31,9 @@ foreign import bpcall "Foreign:" cjson_to_bytestring :: CJSON -> CPPString
 
 cjsonToText :: CJSON -> Text
 cjsonToText = T.fromCppString . cjson_to_bytestring
+
+cjsonToEncoding :: CJSON -> Encoding
+cjsonToEncoding = unsafeToEncoding . cjsonToText
 
 -- QUESTION: Is this faster than "encode"?
 --jsonToText :: Value -> Text

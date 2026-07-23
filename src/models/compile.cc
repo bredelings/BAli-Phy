@@ -194,7 +194,7 @@ Hs::Exp generated_code_t::generate() const
 
     auto loggers2 = loggers;
     simplify(loggers2);
-    auto L = generate_loggers_list(code,loggers2);
+    auto L = generate_logger_values(code,loggers2);
 
     auto R = simplify_intToDouble(E);
 

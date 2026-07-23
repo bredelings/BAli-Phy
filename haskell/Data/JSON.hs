@@ -20,6 +20,7 @@ module Data.JSON
      -- Foreign JSON things
      CJSON,
      cjsonToText,
+     cjsonToEncoding,
      toCJSON
     )
     where
@@ -38,4 +39,3 @@ import Data.JSON.Encoding
     
 encode :: ToJSON a => a -> Text
 encode = fromEncoding . toEncoding 
-

@@ -39,6 +39,7 @@ Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E)
                            std::is_same_v<T, Runtime::Char> or
                            std::is_same_v<T, Runtime::String> or
                            std::is_same_v<T, Runtime::Integer> or
+                           std::is_same_v<T, Runtime::ObjectValue> or
                            std::is_same_v<T, Runtime::IndexVar>)
         {
             return e;

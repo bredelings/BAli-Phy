@@ -94,22 +94,16 @@ public:
     const Runtime::Exp& evaluate_head_unchangeable(int index) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const Runtime::Exp& perform_head(int index, bool ec = false) const;
+    Runtime::Exp perform_head(int index, bool ec = false) const;
 
     /// Return the value of a particular index, computing it if necessary
-    const closure& lazy_evaluate_expression_(closure&&,bool=true) const;
-
-    /// Return the value of a particular index, computing it if necessary
-    const Runtime::Exp& evaluate_expression_(closure&&,bool=true) const;
+    Runtime::Exp evaluate_expression_(closure&&,bool=true) const;
 
     /// Return the value of a runtime expression, computing it if necessary
-    const closure& lazy_evaluate_expression(Runtime::Exp, closure::Env_t = {}, bool=true) const;
-
-    /// Return the value of a runtime expression, computing it if necessary
-    const Runtime::Exp& evaluate_expression(Runtime::Exp, closure::Env_t = {}, bool=true) const;
+    Runtime::Exp evaluate_expression(Runtime::Exp, closure::Env_t = {}, bool=true) const;
 
     /// Perform a runtime IO expression with an explicit closure environment.
-    const Runtime::Exp& perform_expression(Runtime::Exp, closure::Env_t = {}, bool=false) const;
+    Runtime::Exp perform_expression(Runtime::Exp, closure::Env_t = {}, bool=false) const;
 
     /// Evaluate a particular reg and return the value.
     const Runtime::Exp& evaluate_reg(int r) const;

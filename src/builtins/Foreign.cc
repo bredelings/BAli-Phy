@@ -169,6 +169,22 @@ extern "C" closure builtin_function_cjson_to_bytestring(OperationArgs& Args)
     return json::serialize(j,{.allow_infinity_and_nan=true});
 }
 
+// Assemble the fixed physical MCON record used by scalar TSV loggers.
+extern "C" closure builtin_function_makeScalarLogRecord(OperationArgs& Args)
+{
+    int iteration = Args.evaluate_slot_to_value(0).as_int();
+    auto statistics_arg = Args.evaluate_slot_to_value(1);
+    auto parameters_arg = Args.evaluate_slot_to_value(2);
+
+    json::object record;
+    record["iter"] = iteration;
+    record["statistics//"] = statistics_arg.as_<Box<json::value>>();
+    record["parameters//"] = parameters_arg.as_<Box<json::value>>();
+
+    Box<json::value> result(std::move(record));
+    return (const Object&)result;
+}
+
 extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);

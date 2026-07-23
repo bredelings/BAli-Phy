@@ -40,6 +40,12 @@ namespace po = boost::program_options;
 using po::variables_map;
 namespace HsG = Haskell::Generated;
 
+struct LoggerExpressions
+{
+    vector<Hs::Exp> parameters;
+    vector<Hs::Exp> context;
+};
+
 /* NOTE: Fixing the alignment
  *
  * Currently we compute a fixed alignment on the tree using `alignmentOnTreeFromSequences`.
@@ -153,23 +159,64 @@ static void perform_action_simplified(Hs::Stmts& block, const Hs::Var& x, const 
     }
 }
 
-// Binds a generated result and appends its logger expression when requested.
-Hs::Var bind_and_log(bool do_log, const Hs::Var& x, const Hs::Var& log_x, const string& name, const Hs::Exp& E, bool is_action, bool has_loggers, Hs::Stmts& block, vector<Hs::Exp>& loggers, bool is_referenced=true)
+// Binds a generated result and appends both projections of its logger values.
+Hs::Var bind_and_log(bool do_log,
+                     const Hs::Var& x,
+                     const Hs::Var& log_x,
+                     const string& name,
+                     const Hs::Exp& E,
+                     bool is_action,
+                     bool has_parameter_loggers,
+                     bool has_context_loggers,
+                     Hs::Stmts& block,
+                     LoggerExpressions& loggers,
+                     bool is_referenced = true)
 {
+    bool has_loggers = has_parameter_loggers or has_context_loggers;
     perform_action_simplified(block, x, log_x, is_referenced, E, is_action, has_loggers);
-    maybe_log(loggers, name, do_log ? Hs::Exp(x) : Hs::Exp{}, has_loggers ? Hs::Exp(log_x) : Hs::Exp{});
+
+    if (do_log)
+        maybe_log(loggers.parameters, name, x, {});
+    if (has_parameter_loggers)
+        maybe_log(loggers.parameters,
+                  name,
+                  {},
+                  HsG::Apply(Hs::Var("parameterLogValues"), {log_x}));
+    if (has_context_loggers)
+        loggers.context.push_back(HsG::Apply(Hs::Var("%>!"),
+                                             {Hs::Literal(Hs::String{name}),
+                                              HsG::Apply(Hs::Var("contextLogValues"), {log_x})}));
+
     return x;
 }
 
 // Chooses the generated variable names before binding and logging a result.
-Hs::Var bind_and_log(bool do_log, const string& name, const Hs::Exp& E, bool is_action, bool has_loggers, Hs::Stmts& block, vector<Hs::Exp>& loggers, bool is_referenced=true)
+Hs::Var bind_and_log(bool do_log,
+                     const string& name,
+                     const Hs::Exp& E,
+                     bool is_action,
+                     bool has_parameter_loggers,
+                     bool has_context_loggers,
+                     Hs::Stmts& block,
+                     LoggerExpressions& loggers,
+                     bool is_referenced = true)
 {
     string var_name = name;
     if (var_name.empty() or not std::islower(var_name[0]))
         var_name = "_"+var_name;
     Hs::Var x(var_name);
     Hs::Var log_x("log_"+name);
-    return bind_and_log(do_log, x, log_x, name, E, is_action, has_loggers, block, loggers, is_referenced);
+    return bind_and_log(do_log,
+                        x,
+                        log_x,
+                        name,
+                        E,
+                        is_action,
+                        has_parameter_loggers,
+                        has_context_loggers,
+                        block,
+                        loggers,
+                        is_referenced);
 }
 
 
@@ -206,13 +253,13 @@ vector<Hs::Exp> generate_scale_models(const vector<model_t>& scaleMs,
 					     const vector<string>& scaleM_function_for_index,
 					     const Hs::Exp& tree_var,
 					     Hs::Stmts& model,
-					     vector<Hs::Exp>& model_loggers)
+					     LoggerExpressions& model_loggers)
 {
     // define tree_length
     Hs::Var tree_length_var("tlength");
     HsG::Let(model, tree_length_var, HsG::Apply(Hs::Var("treeLength"), {tree_var}));
     // log |T|
-    maybe_log(model_loggers, "|T|", tree_length_var, {});
+    maybe_log(model_loggers.parameters, "|T|", tree_length_var, {});
 
     vector<Hs::Exp> scales;
 
@@ -227,15 +274,25 @@ vector<Hs::Exp> generate_scale_models(const vector<model_t>& scaleMs,
 	E = code.add_arguments(E, {});
 
 	// This should still log sub-loggers of the scales, I think.
-	auto scale_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
+	auto scale_var = bind_and_log(false,
+                                      var_name,
+                                      E,
+                                      code.is_action(),
+                                      code.has_parameter_loggers(),
+                                      code.has_context_loggers(),
+                                      model,
+                                      model_loggers);
 
 	scales.push_back(scale_var);
 
 	// log scale[i]
-	maybe_log(model_loggers, var_name, scale_var, {});
+	maybe_log(model_loggers.parameters, var_name, scale_var, {});
 
 	// log scale[i]*|T|
-	maybe_log(model_loggers, var_name+"*|T|", HsG::Apply(Hs::Var("*"), {scale_var, tree_length_var}), {});
+	maybe_log(model_loggers.parameters,
+                  var_name+"*|T|",
+                  HsG::Apply(Hs::Var("*"), {scale_var, tree_length_var}),
+                  {});
     }
 
     return scales;
@@ -248,7 +305,7 @@ vector<Hs::Exp> generate_substitution_models(const vector<model_t>& SMs,
 						    const Hs::Exp& branch_categories,
 						    const Hs::Exp& tree,
 						    Hs::Stmts& model,
-						    vector<Hs::Exp>& model_loggers)
+						    LoggerExpressions& model_loggers)
 {
     // M7. Substitution models
     vector<Hs::Exp> smodels;
@@ -274,7 +331,16 @@ vector<Hs::Exp> generate_substitution_models(const vector<model_t>& SMs,
 
         auto smodel_var = Hs::Var("smodel" + suffix);
         auto log_smodel = Hs::Var("log_"+smodel_var.name);
-        bind_and_log(false, smodel_var, log_smodel, prefix, smodel, code.is_action(), code.has_loggers(), model, model_loggers);
+        bind_and_log(false,
+                     smodel_var,
+                     log_smodel,
+                     prefix,
+                     smodel,
+                     code.is_action(),
+                     code.has_parameter_loggers(),
+                     code.has_context_loggers(),
+                     model,
+                     model_loggers);
         smodels.push_back(smodel_var);
     }
     return smodels;
@@ -284,7 +350,7 @@ vector<Hs::Exp> generate_indel_models(const vector<model_t>& IMs,
 					     const vector<string>& IM_function_for_index,
 					     const Hs::Exp& tree_var,
 					     Hs::Stmts& model,
-					     vector<Hs::Exp>& model_loggers)
+					     LoggerExpressions& model_loggers)
 {
     // M8. Indel models
     vector<Hs::Exp> imodels;
@@ -301,7 +367,16 @@ vector<Hs::Exp> generate_indel_models(const vector<model_t>& IMs,
 
         auto imodel_var = Hs::Var("imodel" + suffix);
         auto log_imodel = Hs::Var("log_"+imodel_var.name);
-        bind_and_log(false, imodel_var, log_imodel, prefix, imodel, code.is_action(), code.has_loggers(), model, model_loggers);
+        bind_and_log(false,
+                     imodel_var,
+                     log_imodel,
+                     prefix,
+                     imodel,
+                     code.is_action(),
+                     code.has_parameter_loggers(),
+                     code.has_context_loggers(),
+                     model,
+                     model_loggers);
         imodels.push_back(imodel_var);
     }
     return imodels;
@@ -540,6 +615,7 @@ void write_header(std::ostream& program_file,
     add(imports, tree_model.imports);
 
     program_file<<"{-# LANGUAGE ExtendedDefaultRules #-}\n";
+    program_file<<"{-# LANGUAGE OverloadedStrings #-}\n";
     program_file<<"module Main where";
     for(auto& mod: imports)
         program_file<<"\nimport "<<mod;
@@ -762,9 +838,7 @@ std::string generate_atmodel_program(const variables_map& args,
     // FIXME: Can we load the alignments as SEQUENCES first?
     Hs::Var taxon_names_var("taxa");
 
-    // Loggers = [(string,(Maybe a,Loggers)]
-    vector<Hs::Exp> model_loggers;
-    // Therefore, we are constructing a list with values [(prefix1,(Just value1, loggers1)), (prefix1, (Just value1, loggers2))
+    LoggerExpressions model_loggers;
 
     // M1. Taxa
     // Partitions are classified into n groups.
@@ -816,8 +890,9 @@ std::string generate_atmodel_program(const variables_map& args,
 	model.stmts.push_back(stmt);
     auto decl_loggers = decls.code.loggers;
     simplify(decl_loggers);
-    for(auto& logger: generate_loggers(model, decl_loggers))
-	model_loggers.push_back(logger);
+    Hs::Var declaration_loggers("declarationLoggers");
+    if (not decl_loggers.empty())
+        HsG::Let(model, declaration_loggers, generate_logger_values(model, decl_loggers));
 
     // M4. Branch-length tree
     auto tree_var = Hs::Var("tree");
@@ -830,7 +905,14 @@ std::string generate_atmodel_program(const variables_map& args,
         Hs::Exp E = Hs::Var("sampleTree");
         E = code.add_arguments(E,{{"taxa",taxon_names_var}});
 
-        tree_var = bind_and_log(false, var_name, E, code.is_action(), code.has_loggers(), model, model_loggers);
+        tree_var = bind_and_log(false,
+                                var_name,
+                                E,
+                                code.is_action(),
+                                code.has_parameter_loggers(),
+                                code.has_context_loggers(),
+                                model,
+                                model_loggers);
         branch_lengths = HsG::Apply(Hs::Var("branchLengths"), {tree_var});
     }
 
@@ -841,7 +923,14 @@ std::string generate_atmodel_program(const variables_map& args,
         string var_name = "substRates";
         auto code = subst_rates_model.code;
         code.haskell_lambda_vars.clear(); // This isn't a function, these vars should be in scope.
-        subst_rates_var = bind_and_log(false, var_name, code.generate(), code.is_action(), code.has_loggers(), model, model_loggers);
+        subst_rates_var = bind_and_log(false,
+                                      var_name,
+                                      code.generate(),
+                                      code.is_action(),
+                                      code.has_parameter_loggers(),
+                                      code.has_context_loggers(),
+                                      model,
+                                      model_loggers);
 
         auto subst_tree_var = Hs::Var("substTree");
         HsG::Let(model, subst_tree_var, HsG::Apply(Hs::Var("addBranchRates"), {Hs::Var("substRates"), tree_var}));
@@ -855,7 +944,14 @@ std::string generate_atmodel_program(const variables_map& args,
         string var_name = "indelRates";
         auto code = indel_rates_model.code;
         code.haskell_lambda_vars.clear(); // This isn't a function, these vars should be in scope.
-        indel_rates_var = bind_and_log(false, var_name, code.generate(), code.is_action(), code.has_loggers(), model, model_loggers);
+        indel_rates_var = bind_and_log(false,
+                                      var_name,
+                                      code.generate(),
+                                      code.is_action(),
+                                      code.has_parameter_loggers(),
+                                      code.has_context_loggers(),
+                                      model,
+                                      model_loggers);
 
         auto indel_tree_var = Hs::Var("indelTree");
         HsG::Let(model, indel_tree_var, HsG::Apply(Hs::Var("addBranchRates"), {Hs::Var("indelRates"), tree_var}));
@@ -988,7 +1084,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
         Hs::Var part_loggers("part"+part+"Loggers");
         HsG::Let(model, part_loggers, HsG::List(sub_loggers));
-        maybe_log(model_loggers, "P"+part, {}, part_loggers);
+        maybe_log(model_loggers.parameters, "P"+part, {}, part_loggers);
     }
     bool has_a_variable_alignment = not total_num_indels.empty();
     HsG::Let(model, Hs::Var("alignmentLengths"), HsG::List(alignment_lengths));
@@ -1002,20 +1098,38 @@ std::string generate_atmodel_program(const variables_map& args,
 	}
 	else
 	    HsG::Let(model, Hs::Var("scale"), Hs::Var("scale1"));
-	maybe_log(model_loggers, "scale", Hs::Var("scale"), {});
-	maybe_log(model_loggers, "scale*|T|", HsG::Apply(Hs::Var("*"), {Hs::Var("scale"), Hs::Var("tlength")}), {});
+	maybe_log(model_loggers.parameters, "scale", Hs::Var("scale"), {});
+	maybe_log(model_loggers.parameters,
+                  "scale*|T|",
+                  HsG::Apply(Hs::Var("*"), {Hs::Var("scale"), Hs::Var("tlength")}),
+                  {});
     }
 
     if (not alignment_lengths.empty() and has_a_variable_alignment)
-        maybe_log(model_loggers, "|A|", HsG::Apply(Hs::Var("sum"), {Hs::Var("alignmentLengths")}), {});
+        maybe_log(model_loggers.parameters,
+                  "|A|",
+                  HsG::Apply(Hs::Var("sum"), {Hs::Var("alignmentLengths")}),
+                  {});
     if (not total_num_indels.empty())
-        maybe_log(model_loggers, "#indels", HsG::Apply(Hs::Var("sum"), {HsG::List(total_num_indels)}), {});
+        maybe_log(model_loggers.parameters,
+                  "#indels",
+                  HsG::Apply(Hs::Var("sum"), {HsG::List(total_num_indels)}),
+                  {});
     if (not total_length_indels.empty())
-        maybe_log(model_loggers, "|indels|", HsG::Apply(Hs::Var("sum"), {HsG::List(total_length_indels)}), {});
+        maybe_log(model_loggers.parameters,
+                  "|indels|",
+                  HsG::Apply(Hs::Var("sum"), {HsG::List(total_length_indels)}),
+                  {});
     if (not total_substs.empty())
-        maybe_log(model_loggers, "#substs", HsG::Apply(Hs::Var("sum"), {HsG::List(total_substs)}), {});
+        maybe_log(model_loggers.parameters,
+                  "#substs",
+                  HsG::Apply(Hs::Var("sum"), {HsG::List(total_substs)}),
+                  {});
     if (not total_prior_A.empty())
-        maybe_log(model_loggers, "prior_A", HsG::Apply(Hs::Var("sum"), {HsG::List(total_prior_A)}), {});
+        maybe_log(model_loggers.parameters,
+                  "prior_A",
+                  HsG::Apply(Hs::Var("sum"), {HsG::List(total_prior_A)}),
+                  {});
 
     Hs::Exp model_fn = Hs::Var("model");
 
@@ -1063,20 +1177,50 @@ std::string generate_atmodel_program(const variables_map& args,
         }
     }
 
-    Hs::Var loggers_var("loggers");
-    HsG::Let(model, loggers_var, HsG::List(model_loggers));
+    Hs::Exp parameter_loggers = HsG::List(model_loggers.parameters);
+    Hs::Exp context_loggers = HsG::List(model_loggers.context);
+    if (has_loggers(decl_loggers, LogValueKind::parameter))
+        parameter_loggers = HsG::Apply(Hs::Var("++"),
+                                       {HsG::Apply(Hs::Var("parameterLogValues"), {declaration_loggers}),
+                                        parameter_loggers});
+    if (has_loggers(decl_loggers, LogValueKind::context))
+        context_loggers = HsG::Apply(Hs::Var("++"),
+                                     {HsG::List({HsG::Apply(Hs::Var("contextLogValues"),
+                                                           {declaration_loggers})}),
+                                      context_loggers});
+
+    vector<Hs::Exp> standard_context_loggers = {
+        HsG::Apply(Hs::Var("%=!"), {Hs::Literal(Hs::String{"prior"}), Hs::Var("logPrior")}),
+        HsG::Apply(Hs::Var("%=!"), {Hs::Literal(Hs::String{"likelihood"}), Hs::Var("logLikelihood")}),
+        HsG::Apply(Hs::Var("%=!"), {Hs::Literal(Hs::String{"posterior"}), Hs::Var("logPosterior")})
+    };
+    context_loggers = HsG::Apply(Hs::Var("++"), {HsG::List(standard_context_loggers), context_loggers});
+    context_loggers = HsG::Apply(Hs::Var("contextFields"), {context_loggers});
+
+    Hs::Var logger_values_var("loggerValues");
+    HsG::Let(model,
+             logger_values_var,
+             HsG::Apply(Hs::Var("LoggerValues"), {parameter_loggers, context_loggers}));
 
     // Add the logger for scalar parameters
     if (not args.count("test"))
     {
+        // NOTE: Each format evaluates context fields independently.  Enabling both formats
+        // repeats any candidate sampling performed by a context-dependent statistic.
 	if (log_formats.count("tsv"))
 	{
-	    HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(tsvLogger, {loggers_var})}));
+	    HsG::Expr(model,
+                      HsG::Apply(Hs::Var("$"),
+                                 {Hs::Var("addLogger"),
+                                  HsG::Apply(tsvLogger, {logger_values_var})}));
 	}
 
 	if (log_formats.count("json"))
 	{
-	    HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(jsonLogger, {loggers_var})}));
+	    HsG::Expr(model,
+                      HsG::Apply(Hs::Var("$"),
+                                 {Hs::Var("addLogger"),
+                                  HsG::Apply(jsonLogger, {logger_values_var})}));
 	}
 
         // Add the tree logger
@@ -1097,7 +1241,7 @@ std::string generate_atmodel_program(const variables_map& args,
             HsG::Expr(model, HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), HsG::Apply(HsG::Apply(Hs::Var("$"), {HsG::Apply(Hs::Var("every"), {Hs::Literal(Hs::Integer{integer(10)})})}), {HsG::Apply(l, {cs})})}));
     }
 
-    HsG::Return(model, loggers_var);
+    HsG::Return(model, HsG::Apply(Hs::Var("parameterLogValues"), {logger_values_var}));
     program_file<<"\n";
     program_file<<model_fn<<" = "<<HsG::Do(model).print()<<"\n";
 
@@ -1171,6 +1315,7 @@ string generate_model_program(const boost::program_options::variables_map& args,
                               const fs::path& output_directory)
 {
     std::ostringstream program_file;
+    program_file<<"{-# LANGUAGE OverloadedStrings #-}\n";
     for(auto& mod: {"System.FilePath","Probability","Probability.Logger","MCMC"})
         program_file<<"import "<<mod<<"\n";
     program_file<<"import qualified Data.Text.IO as T\n";
@@ -1187,14 +1332,14 @@ string generate_model_program(const boost::program_options::variables_map& args,
 	{
 	    program_file<<"  logParamsTSV <- tsvLogger "<<output_directory / "C1.log" <<" [\"iter\"]\n";
 	    program_file<<"\n";
-	    addLogCmds += "addLogger $ logParamsTSV j;";
+	    addLogCmds += "    addLogger $ logParamsTSV loggerValues\n";
 	}
 
 	if (log_formats.count("json"))
 	{
 	    program_file<<"  logParamsJSON <- jsonLogger $ "<<output_directory / "C1.log.json" <<"\n";
 	    program_file<<"\n";
-	    addLogCmds += "addLogger $ logParamsJSON j;";
+	    addLogCmds += "    addLogger $ logParamsJSON loggerValues\n";
 	}
     }
     program_file<<"  model <- Model.main "<<output_directory<<"\n";
@@ -1205,7 +1350,17 @@ string generate_model_program(const boost::program_options::variables_map& args,
     }
     else
     {
-	program_file<<"  mymodel <- makeMCMCModel $ do { j <- model; "<<addLogCmds<<" return j }\n";
+	program_file<<"  mymodel <- makeMCMCModel $ do\n"
+                    "    parameters <- model\n"
+                    "    let { loggerValues =\n"
+                    "            LoggerValues\n"
+                    "              parameters\n"
+                    "              (contextFields\n"
+                    "                [\"prior\" %=! logPrior, \"likelihood\" %=! logLikelihood,\n"
+                    "                 \"posterior\" %=! logPosterior])\n"
+                    "        }\n"
+                    <<addLogCmds
+                    <<"    return parameters\n";
     }
     if (args.count("test"))
     {

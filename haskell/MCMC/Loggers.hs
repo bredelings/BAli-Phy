@@ -1,14 +1,16 @@
 module MCMC.Loggers where
 
 import           Numeric.LogDouble
-import           MCMC.Types (ContextIndex, Modifiable)
+import           Compiler.Floating (ln)
+import           MCMC.Types (ContextAction(..), ContextIndex, Modifiable)
 import           Data.JSON
 import qualified Data.Vector.Unboxed as U
 import           Effect (Effect)
 import qualified Data.Text as T
 
---- The first four arguments allow giving the logger the generation number, prior, likelihood, and probability.
-type LoggerAction = Int -> Double -> Double -> Double -> IO ()
+type GetContextFields = Int -> ContextIndex -> IO CJSON
+type LogSample = Int -> CJSON -> IO ()
+type LoggerAction = (GetContextFields, LogSample)
 
 foreign import bpcall "MCMC:" registerLogger :: LoggerAction -> IO Effect
 
@@ -17,14 +19,36 @@ logJSONLine context iter = cjsonToText <$> logJSONRaw context iter
 foreign import bpcall "MCMC:" jsonToTableLineRaw :: CJSON -> CPPString
 logTableLine context iter = T.fromCppString . jsonToTableLineRaw <$> logJSONRaw context iter
 
-foreign import bpcall "MCMC:" prior :: ContextIndex -> IO LogDouble
-foreign import bpcall "MCMC:" likelihood :: ContextIndex -> IO LogDouble
-foreign import bpcall "MCMC:" posterior :: ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:prior" priorRaw :: ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:likelihood" likelihoodRaw :: ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:posterior" posteriorRaw :: ContextIndex -> IO LogDouble
 
-foreign import trcall "MCMC:condPrRaw" condPrs
+prior :: ContextAction LogDouble
+prior = ContextAction priorRaw
+
+likelihood :: ContextAction LogDouble
+likelihood = ContextAction likelihoodRaw
+
+posterior :: ContextAction LogDouble
+posterior = ContextAction posteriorRaw
+
+logPrior :: ContextAction Double
+logPrior = ln <$> prior
+
+logLikelihood :: ContextAction Double
+logLikelihood = ln <$> likelihood
+
+logPosterior :: ContextAction Double
+logPosterior = ln <$> posterior
+
+foreign import trcall "MCMC:condPrRaw" condPrsRaw
   :: Modifiable Int -> Int -> ContextIndex -> IO (U.Vector Double)
 
+condPrs :: Modifiable Int -> Int -> ContextAction (U.Vector Double)
+condPrs selector count = ContextAction (condPrsRaw selector count)
+
 -- Select one probability from the complete conditional distribution computed by the builtin.
-condPr selector target count context = do
-  probabilities <- condPrs selector count context
+condPr :: Modifiable Int -> Int -> Int -> ContextAction Double
+condPr selector target count = do
+  probabilities <- condPrs selector count
   return (probabilities U.! target)

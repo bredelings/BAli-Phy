@@ -375,7 +375,20 @@ makeModel m = createContext prog log where
 foreign import bpcall "MCMC:" writeTraceGraph :: ContextIndex -> IO ()
 
 -- Loggers: we can only log things with the ToJSON property
-infix 1 %=%, %>%
+data LoggerValues = LoggerValues Object (ContextAction Object)
+
+parameterLogValues (LoggerValues parameters _) = parameters
+contextLogValues (LoggerValues _ context) = context
+
+-- Combine context computations in declaration order into one JSON object.
+contextFields :: [ContextAction Object] -> ContextAction Object
+contextFields actions = do
+    fields <- sequence actions
+    return (concat fields)
+
+-- NOTE: The type system cannot express this requirement: the fields returned by a ContextAction
+-- must not be changeable, although the action may inspect modifiables in its context.
+infix 1 %=%, %>%, %=!, %>!
 (%=%) :: (ToJSONKey k, ToJSON a) => k -> a -> (Key,Value)
 name %=% value = (toJSONKey name, toJSON value)
 
@@ -383,6 +396,16 @@ logPathKey name = case toJSONKey name of Key prefix -> Key (prefix <> T.pack "/"
 
 (%>%) :: (ToJSONKey k1, ToJSONKey k2, ToJSON v) => k1 -> [(k2,v)] -> (Key,Value)
 prefix %>% subvalue = (logPathKey prefix, logToJson subvalue)
+
+(%=!) :: ToJSON a => Key -> ContextAction a -> ContextAction Object
+name %=! action = do
+    value <- action
+    return [name %=% value]
+
+(%>!) :: Key -> ContextAction Object -> ContextAction Object
+prefix %>! action = do
+    fields <- action
+    return [logPathKey prefix %=% Object fields]
 
 toSeries :: (ToJSONKey k, ToJSON v) => [(k,v)] -> Series
 toSeries pairs = foldr (<>) mempty [toJSONKey k .= v | (k,v) <- pairs]

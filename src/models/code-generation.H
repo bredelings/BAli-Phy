@@ -33,6 +33,8 @@ struct generated_code_t
     // Under these circumstances, we will return a monadic action
     bool is_action() const {return perform_function or not stmts.stmts.empty();}
     bool has_loggers() const {return not loggers.empty();}
+    bool has_parameter_loggers() const {return ::has_loggers(loggers, LogValueKind::parameter);}
+    bool has_context_loggers() const {return ::has_loggers(loggers, LogValueKind::context);}
 
     Hs::Exp generate() const;
 

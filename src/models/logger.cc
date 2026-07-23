@@ -113,33 +113,57 @@ void simplify(Loggers& loggers)
     std::swap(loggers, loggers2);
 }
 
-// Emits logger expressions while appending nested logger let-bindings to Hs::Stmts.
-vector<Hs::Exp> generate_loggers(Hs::Stmts& code, const Loggers& loggers)
+// Reports whether a logger tree contains a leaf of the requested kind.
+bool has_loggers(const Loggers& loggers, LogValueKind kind)
 {
-    vector<Hs::Exp> simple_loggers;
+    for(auto& l: loggers)
+    {
+        if (auto lsub = l.as<LogSub>())
+        {
+            if (has_loggers(lsub->loggers, kind))
+                return true;
+        }
+        else if (auto lvalue = l.as<LogValue>(); lvalue and lvalue->kind == kind)
+            return true;
+    }
+    return false;
+}
+
+// Emits both logger projections while binding each nested LoggerValues expression once.
+Hs::Exp generate_logger_values(Hs::Stmts& code, const Loggers& loggers)
+{
+    vector<Hs::Exp> parameters;
+    vector<Hs::Exp> context;
+
     for(auto& l: loggers)
     {
         if (auto lsub = l.as<LogSub>())
         {
             auto log_x = lsub->log_var;
-            auto logger_list = generate_loggers_list(code,lsub->loggers);
-            HsG::Let(code, log_x, logger_list);
-            simple_loggers.push_back(HsG::Apply(Hs::Var("%>%"),
-                                                {Hs::Literal(Hs::String{lsub->prefix}),
-                                                 log_x}));
+            HsG::Let(code, log_x, generate_logger_values(code, lsub->loggers));
+
+            auto prefix = Hs::Literal(Hs::String{lsub->prefix});
+            if (has_loggers(lsub->loggers, LogValueKind::parameter))
+                parameters.push_back(HsG::Apply(Hs::Var("%>%"),
+                                                {prefix,
+                                                 HsG::Apply(Hs::Var("parameterLogValues"), {log_x})}));
+            if (has_loggers(lsub->loggers, LogValueKind::context))
+                context.push_back(HsG::Apply(Hs::Var("%>!"),
+                                             {prefix,
+                                              HsG::Apply(Hs::Var("contextLogValues"), {log_x})}));
         }
         else if (auto lvalue = l.as<LogValue>())
-            simple_loggers.push_back(HsG::Apply(Hs::Var("%=%"),
-                                                {Hs::Literal(Hs::String{lvalue->name}),
-                                                 lvalue->value}));
+        {
+            auto name = Hs::Literal(Hs::String{lvalue->name});
+            if (lvalue->kind == LogValueKind::parameter)
+                parameters.push_back(HsG::Apply(Hs::Var("%=%"), {name, lvalue->value}));
+            else
+                context.push_back(HsG::Apply(Hs::Var("%=!"), {name, lvalue->value}));
+        }
         else
             std::abort();
     }
-    return simple_loggers;
-}
 
-// Generates the logger list expression for generated code using Hs::Stmts.
-Hs::Exp generate_loggers_list(Hs::Stmts& code, const Loggers& loggers)
-{
-    return HsG::List(generate_loggers(code,loggers));
+    auto context_fields = HsG::Apply(Hs::Var("contextFields"), {HsG::List(context)});
+    return HsG::Apply(Hs::Var("LoggerValues"), {HsG::List(parameters), context_fields});
 }

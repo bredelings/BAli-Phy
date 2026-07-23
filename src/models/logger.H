@@ -20,17 +20,24 @@ typedef owned_ptr<LoggerObj> Logger;
 
 typedef std::vector<Logger> Loggers;
 
+enum class LogValueKind
+{
+    parameter,
+    context
+};
+
 struct LogValue: public LoggerObj
 {
     std::string name;
     Hs::Exp value;
+    LogValueKind kind;
 
     LogValue* clone() const {return new LogValue(*this);}
 
     std::string get_name() const {return name;}
 
-    LogValue(const std::string& s, const Hs::Exp& e)
-        :name(s),value(e)
+    LogValue(const std::string& s, const Hs::Exp& e, LogValueKind k = LogValueKind::parameter)
+        :name(s),value(e),kind(k)
     {}
 };
 
@@ -49,8 +56,8 @@ struct LogSub: public LoggerObj
     {}
 };
 
-std::vector<Hs::Exp> generate_loggers(Haskell::Stmts& code, const Loggers& Loggers);
-Hs::Exp generate_loggers_list(Haskell::Stmts& code, const Loggers& Loggers);
+bool has_loggers(const Loggers& loggers, LogValueKind kind);
+Hs::Exp generate_logger_values(Haskell::Stmts& code, const Loggers& loggers);
 
 void simplify(Loggers& loggers);
 
