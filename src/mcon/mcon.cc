@@ -2,6 +2,7 @@
 #include <tuple>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
 #include <variant>
 #include <boost/convert.hpp>
 #include <boost/convert/lexical_cast.hpp>
@@ -51,9 +52,32 @@ void drop_path(json::object& j, const vector<string>& path)
     jj->erase(path.back());
 }
 
+// Return the logical prefix contributed by a nested key, or no value for a field.
+static std::optional<string_view> nested_key_prefix(string_view key)
+{
+    if (key.ends_with("//"))
+        return string_view{};
+    if (key.ends_with('/'))
+        return key;
+    return {};
+}
+
 bool is_nested_key(string_view key)
 {
-    return key.ends_with('/');
+    return nested_key_prefix(key).has_value();
+}
+
+// Visit each represented field, omitting transparent keys from its logical name.
+template <typename F>
+static void for_each_logical_field(const json::object& j, const string& prefix, F& visit)
+{
+    for(auto& [key,value]: j)
+    {
+        if (auto nested_prefix = nested_key_prefix(key))
+            for_each_logical_field(value.as_object(), prefix+string(*nested_prefix), visit);
+        else
+            visit(prefix+string(key), value);
+    }
 }
 
 set<string> get_keys_non_nested(const json::object& j)
@@ -67,20 +91,8 @@ set<string> get_keys_non_nested(const json::object& j)
 set<string> get_keys_nested(const json::object& j)
 {
     set<string> keys;
-    for(auto& [key,value]: j)
-    {
-	if (is_nested_key(key))
-	{
-	    // This duplicates work, versus computing a prefix.
-	    // Could be quadratic in length of string.
-	    // Linear in depth of key.
-	    // But simple.
-	    for(auto& key2: get_keys_nested(value.as_object()))
-		keys.insert(string(key)+string(key2));
-	}
-	else
-	    keys.insert(key);
-    }
+    auto collect_key = [&](const string& key, const json::value&) { keys.insert(key); };
+    for_each_logical_field(j, "", collect_key);
     return keys;
 }
 
@@ -125,13 +137,12 @@ json::object atomize(const json::object& j, bool nested)
 json::object unnest(const json::object& j, const string& prefix)
 {
     json::object j2;
-    for(auto& [key,value]: j)
-    {
-	if (is_nested_key(key))
-	    update( j2, unnest(value.as_object(), prefix+string(key)) );
-	else
-	    j2[prefix+string(key)] = value;
-    }
+    // Copy one represented field while preventing an ambiguous overwrite.
+    auto insert_field = [&](const string& key, const json::value& value) {
+        if (not j2.emplace(key, value).second)
+            throw std::runtime_error("Multiple fields project to logical field '"+key+"'");
+    };
+    for_each_logical_field(j, prefix, insert_field);
     return j2;
 }
 
@@ -455,7 +466,7 @@ std::ostream& Log::dump_MCON(std::ostream& o) const
     }
 
     header["format"] = "MCON";
-    header["version"] = "0.1";
+    header["version"] = "0.2";
     header["nested"] = is_nested();
     header["atomic"] = is_atomic();
     o<<header<<"\n";
@@ -837,7 +848,7 @@ MCON::Log read_TSV(const string& firstline, std::istream& input)
     int nfields = tsv_fields.size();
 
     json::object header = { {"format","MCON"},
-			    {"version", "0.1"},
+			    {"version", "0.2"},
 			    {"fields",  convert_to_json(tsv_fields)},
 			    {"nested", false} };
 
