@@ -179,7 +179,4 @@ std::vector<json::value> parameter_values(const json::object& j);
 
 bool has_children(const std::string& s);
 
-json::object unnest_json(const json::object& j);
-json::object unnest_json(const json::object&& j);
-
 #endif

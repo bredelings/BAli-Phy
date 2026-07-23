@@ -4,6 +4,7 @@
 #include <boost/program_options.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include "mcon/mcon.H"
 #include "util/io.H"
 #include "stats-table.H"
 #include "util/myexception.H"
@@ -139,7 +140,7 @@ int main(int argc,char* argv[])
                 auto j = json::parse(line, {}, {.allow_infinity_and_nan=true}).as_object();
                 if (do_unnest)
                 {
-                    auto j2 = unnest_json(std::move(j));
+                    auto j2 = MCON::unnest(j);
                     std::swap(j, j2);
                 }
                 for(auto& field: ignore)
@@ -191,5 +192,4 @@ int main(int argc,char* argv[])
 
     return 0;
 }
-
 

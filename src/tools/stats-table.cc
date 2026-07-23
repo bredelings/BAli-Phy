@@ -407,46 +407,6 @@ bool has_children(const string& s)
     return false;
 }
 
-void unnest_json(const string & path, const json::object& j_in, json::object& j_out)
-{
-    for(auto& [key, value]: j_in)
-        if (has_children(key))
-            unnest_json(path + string(key), value.as_object(), j_out);
-        else
-            j_out[path + string(key)] = value;
-}
-
-json::object unnest_json(const json::object& j_in)
-{
-    json::object j_out;
-    for(auto& [key, value]: j_in)
-        if (has_children(key))
-            unnest_json(key, value.as_object(), j_out);
-        else
-            j_out[key] = value;
-    return j_out;
-}
-
-void unnest_json(const string & path, json::object&& j_in, json::object& j_out)
-{
-    for(auto& [key, value]: j_in)
-        if (has_children(key))
-            unnest_json(path + string(key), std::move(value.as_object()), j_out);
-        else
-            j_out[path + string(key)] = value;
-}
-
-json::object unnest_json(const json::object&& j_in)
-{
-    json::object j_out;
-    for(auto& [key, value]: j_in)
-        if (has_children(key))
-            unnest_json(key, std::move(value.as_object()), j_out);
-        else
-            j_out[key] = value;
-    return j_out;
-}
-
 template <>
 Table<double>::Table(std::istream& file, int skip, int subsample, int last, const std::vector<std::string>& ignore, const std::vector<std::string>& select)
 {
