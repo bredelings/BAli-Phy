@@ -1,5 +1,6 @@
-module Numeric.Prob (Prob (..),
+module Numeric.Prob (Prob,
                      complement,
+                     fromLogOdds,
                      logOdds,
                      toFloating,
                      LogDouble
@@ -24,6 +25,14 @@ import Data.Floating.Types
 -- ... | Zero Int | ...
 -- Then we could penalize multiplying by an additional zero.
 data Prob = Zero | Odds Double | One | IOdds Double | Infinity
+
+-- Construct a probability from its log odds, retaining exact zero and one at
+-- the extended-real endpoints.
+fromLogOdds :: Double -> Prob
+fromLogOdds y | isNaN y   = error "fromLogOdds: NaN"
+              | y == -1/0 = Zero
+              | y == 1/0  = One
+              | otherwise = Odds y
 
 complement Zero     = One
 complement (Odds y) = (Odds (-y))
