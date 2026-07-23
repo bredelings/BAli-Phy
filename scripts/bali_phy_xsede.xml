@@ -70,8 +70,6 @@ Advanced options:
   -m [ -*model ] arg                    File containing hierarchical model.
   -M [ -*Model ] arg                    Module containing hierarchical model.
   -*test-module arg                     Parse and optimize the given module
-  -*Rao-Blackwellize arg                Parameter names to print Rao-Blackwell 
-                                        averages for.
   -*likelihood-calculators arg          comma-separated integers
 
 Haskell optimization options:
@@ -8216,5 +8214,4 @@ MCMC options:
 	
 </parameters>
 </pise>
-
 

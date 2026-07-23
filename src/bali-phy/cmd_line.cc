@@ -215,8 +215,7 @@ po::options_description mcmc_options(int level)
     if (level >= 2)
 	mcmc.add_options()
 	    ("enable",value<string>(),"Comma-separated list of kernels to enable.")
-	    ("disable",value<string>(),"Comma-separated list of kernels to disable.")
-	    ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.");
+	    ("disable",value<string>(),"Comma-separated list of kernels to disable.");
 
     if (level >= 3)
 	mcmc.add_options()
