@@ -2,7 +2,7 @@
     "name": "busted_s",
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.bustedS(@omegaDist,@posP,@posW,@posSelection,@alpha,@nGammaBins,@submodel)",
-    "import": ["SModel"],
+    "import": ["MCMC", "SModel"],
     "args": [
         {
             "name": "submodel",
@@ -51,6 +51,13 @@
             "type": "Int",
             "default_value": "2",
 	    "description": "The number of conserved omega categories, if not specified"
+        }
+    ],
+    "computed": [
+        {
+            "name": "PrPosSelection",
+            "value": "condPr(@posSelection,1,2)",
+            "context": "value"
         }
     ],
     "description":"A Bayesian test of positive selection using the BUSTED-S model.  The BUSTED-S model handles synonymous rate variation by adding Gamma-distributed across-site rate variation (ASRV) to the BUSTED model using n=3 bins.",

@@ -11,7 +11,7 @@
 	"identifier": [{"type":"doi","id":"10.1093/molbev/msi237"}]
     },
     "call": "branchSiteTest(@fs,@omegas,@posP,@posW,@posSelection,@branch_cats,@submodel)",
-    "import": ["SModel"],
+    "import": ["MCMC", "SModel"],
     "args": [
         {
             "name": "submodel",
@@ -53,6 +53,13 @@
             "name": "branch_cats",
             "type": "List<Int>",
             "default_value": "get_state(branch_categories)"
+        }
+    ],
+    "computed": [
+        {
+            "name": "PrPosSelection",
+            "value": "condPr(@posSelection,1,2)",
+            "context": "value"
         }
     ],
     "extract": "all"

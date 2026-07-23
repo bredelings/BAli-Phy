@@ -3,7 +3,7 @@
     "synonyms": ["M3_Test"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m3Test(@omegaDist,@posP,@posW,@posSelection,@submodel)",
-    "import": ["SModel"],
+    "import": ["MCMC", "SModel"],
     "args": [
         {
             "name": "submodel",
@@ -40,6 +40,13 @@
             "type": "Int",
             "default_value": "4",
 	    "description": "The number of omega categories, if not specified"
+        }
+    ],
+    "computed": [
+        {
+            "name": "PrPosSelection",
+            "value": "condPr(@posSelection,1,2)",
+            "context": "value"
         }
     ],
     "description":"This model performs a Bayesian test of positive selection using a modified M3 model.  The M3 model is extended with an extra category of sites that is either neutral (posSelection=0) or positively-selected (posSelection=1).  The posterior probability that posSelection=1 is posterior probability for positive selection.",
