@@ -310,6 +310,30 @@ so the new two-phase interface adds no measurable recurring work.  The roughly
 remain within timing variation.  All 56 invocations are recorded in
 `benchmarks/coalescent-runs.tsv`.
 
+### Haskell newtype conversions
+
+These seed-0 medians use seven interleaved, warmed runs at each iteration count
+from separately installed GCC 16 release builds.  Logs are byte-identical
+across all checkpoints.
+
+| Checkpoint | Revision | I1 (B) | I50 (B) | Extra/iter (B) | Cycles 50 (B) |
+|---|---|---:|---:|---:|---:|
+| baseline | `aec4894e` | 17.303 | 97.648 | 1.63968 | 59.634 |
+| upstream wrappers | `22ab32db` | 17.290 | 97.649 | 1.63998 | 59.603 |
+| contained wrappers | `dc67affc` | 17.273 | 97.555 | 1.63839 | 58.467 |
+| distributions through `PoissonProcesses` | `1bddcb7a` | 17.396 | 97.421 | 1.63316 | 58.257 |
+| `ExpTransform` and `Independent` | `408bfd60` | 17.406 | 97.443 | 1.63342 | 58.358 |
+| remaining distributions | `41577d9e` | 17.263 | 97.296 | 1.63333 | 59.092 |
+
+The complete pre-identifier series lowers recurring instructions by 0.39%.
+The upstream-compatible conversions are neutral, the contained wrappers lower
+recurring instructions by 0.10%, and the first distribution group accounts for
+most of the remaining reduction.  The grouped measurement does not attribute
+that reduction to an individual type and also includes the Bernoulli CDF
+correction.  Cycles vary too much to establish a timing difference, but there
+is no instruction-count evidence of a slowdown.  All 84 invocations are
+recorded in `benchmarks/coalescent-runs.tsv`.
+
 ## Slowdowns to investigate
 
 - Edge-contingency API-only boundary: a same-trace 1.0% recurring increase;
