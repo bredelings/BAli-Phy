@@ -1,3 +1,4 @@
+{-# LANGUAGE FunctionalDependencies #-}
 module Data.JSON.Types.ToJSON where
 
 import Data.JSON.Types.Internal
@@ -107,21 +108,17 @@ instance (ToJSON a, ToJSON b, ToJSON c) => ToJSON (a,b,c) where
     toEncoding (x,y,z) = E.wrapArray $ toEncoding x >*< toEncoding y >*< toEncoding z
 
 
-class KeyValue kv where
-    type KVOut kv
-
+class KeyValue e kv | kv -> e where
     (.=) :: ToJSON v => Key -> v -> kv
     infixr 8 .=
 
-    explicitToField :: (v-> KVOut kv) -> Key -> v -> kv
+    explicitToField :: (v -> e) -> Key -> v -> kv
 
-instance KeyValue Series where
-    type KVOut Series = Encoding
+instance KeyValue Encoding Series where
     (.=) = explicitToField toEncoding
     explicitToField f name value = E.pair name (f value)
 
 
-instance (key ~ Key, value ~ Value) => KeyValue (key, value) where
-    type KVOut (key, value) = Value
+instance (key ~ Key, value ~ Value) => KeyValue Value (key, value) where
     (.=) = explicitToField toJSON
     explicitToField f name value = (name, f value)
