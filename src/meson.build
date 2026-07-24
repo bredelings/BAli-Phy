@@ -145,7 +145,7 @@ test('bali-phy help', baliphy, args:['--help'], is_parallel: false)
 
 module_cache_wrapper_args = []
 if host_machine.system() == 'windows' and meson.is_cross_build()
-  module_cache_wrapper_args = ['--wrapper', 'wine']
+  module_cache_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 test('compiled module cache',
      python,
@@ -209,7 +209,7 @@ joint_indels_exe = disabler()
 
 python_tool_wrapper_args = []
 if host_machine.system() == 'windows' and meson.is_cross_build()
-  python_tool_wrapper_args = ['--wrapper', 'wine']
+  python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
 foreach tool: tools + prefixed_tools
@@ -254,7 +254,8 @@ foreach tool: tools + prefixed_tools
     test('mcon-tool',
          python,
          args: [tool_test_script] + python_tool_wrapper_args + [tool_test_root, tool_exe],
-         depends: tool_exe)
+         depends: tool_exe,
+         timeout: 120)
   endif
 
   if tool == 'statreport'

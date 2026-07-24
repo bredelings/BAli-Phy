@@ -22,7 +22,7 @@ if host_machine.system() == 'windows'
     meson.project_source_root(),
   ]
   if meson.is_cross_build()
-    computation_test_args = ['--wrapper', 'wine'] + computation_test_args
+    computation_test_args = ['--wrapper'] + windows_test_wrapper + computation_test_args
   endif
   test(
     'computation',

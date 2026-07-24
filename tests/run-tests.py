@@ -432,8 +432,8 @@ class Tester:
 
 def get_test_method(cmd):
     prog = prog_name(cmd[0])
-    if prog == 'wine':
-        prog = prog_name(cmd[1]);
+    if prog in ('wine', 'wine64', 'wine32'):
+        prog = prog_name(cmd[1])
 
     if prog.startswith('bali-phy'):
         return BAliPhy(cmd)

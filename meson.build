@@ -6,12 +6,18 @@ project('bali-phy', ['cpp','c'],
           'buildtype=release',
           'b_ndebug=if-release'
         ],
-        meson_version: '>= 1.1',
+        meson_version: '>= 1.6',
         license: 'GPLv2')
 
 cpp = meson.get_compiler('cpp')
 cc = meson.get_compiler('c')
 python = import('python').find_installation()
+
+windows_test_wrapper = []
+if host_machine.system() == 'windows' and meson.is_cross_build()
+  wine64 = find_program('/usr/lib/wine/wine64', 'wine64', 'wine', native: true)
+  windows_test_wrapper = [wine64]
+endif
 
 # 2. Write a 'config.h'
 conf_data = configuration_data()
@@ -180,11 +186,6 @@ subdir('doc')
 run_tests = meson.project_source_root()/'tests/run-tests.py'
 test_dir = meson.project_source_root()/'tests'
 
-wrapper = []
-if host_machine.system() == 'windows' and meson.is_cross_build()
-  wrapper = ['wine']
-endif
-
 randomseed = get_option('test_seed')
 if randomseed == ''
   seed_result = run_command(python, '-c', 'import random; print(random.randint(0, 2**32-1))', check: true)
@@ -198,7 +199,7 @@ foreach test: test_list
        python,
        timeout: 300,
        workdir: test_dir,
-       args:[run_tests, 'run', test, '--', wrapper, baliphy.full_path(), packagepath, '--seed', randomseed])
+       args:[run_tests, 'run', test, '--', windows_test_wrapper, baliphy.full_path(), packagepath, '--seed', randomseed])
 endforeach
 
 # Install non-executable files
