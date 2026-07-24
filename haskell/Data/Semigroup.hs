@@ -34,7 +34,7 @@ instance Semigroup Ordering where
     EQ <> y = y
     x  <> _ = x
 
-data Min a = Min {getMin :: a}
+newtype Min a = Min {getMin :: a}
 
 data Max a = Max {getMax :: a}
 
