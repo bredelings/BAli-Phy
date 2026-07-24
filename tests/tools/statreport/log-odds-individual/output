@@ -1,0 +1,8 @@
+ posterior_probability LogOddsModel [1] = 0.5 [log_odds = 0]
+ posterior_probability LogOddsModel [2] = 0.75 [log_odds = 1.099]
+ posterior_probability LogOddsModel     = 0.625 [log_odds = 0.5108]
+   LogOddsModel = [increasing]
+
+ min burnin <= Not Converged!    (LogOddsModel)
+
+Increasing: LogOddsModel

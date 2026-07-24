@@ -1,0 +1,4 @@
+ posterior_probability LogOddsPresent = 0.5 [log_odds = 0]
+   LogOddsPresent = 0
+
+ min burnin <= Not Converged!    (LogOddsPresent)

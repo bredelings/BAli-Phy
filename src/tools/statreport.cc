@@ -36,7 +36,9 @@
 #include "statistics.H"
 #include "stats-table.H"
 #include "util/math/log-double.H"
+#include "util/math/logsum.H"
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 
@@ -132,6 +134,42 @@ bool monotonic_decreasing(const vector<double>& values)
 	if (values[i] > values[i-1])
 	    return false;
     return true;
+}
+
+// Recognize semantic log-odds fields after generated partition and model prefixes.
+bool is_log_odds_field(const string& name)
+{
+    auto separator = name.find_last_of("/:");
+    auto component = name.substr(separator == string::npos ? 0 : separator + 1);
+    return boost::algorithm::istarts_with(component, "logodds");
+}
+
+// If l = log(p/(1-p)), then log(p) = -log1pexp(-l) and log(1-p) = -log1pexp(l).
+// Summing these probabilities separately gives the log odds of their posterior mean.
+pair<double, double> summarize_log_odds(const string& name, const vector<double>& values)
+{
+    double log_probability_sum = -infinity<double>;
+    double log_complement_sum = -infinity<double>;
+
+    for(double log_odds: values)
+    {
+	if (std::isnan(log_odds))
+	    throw myexception()<<"Field '"<<name<<"' contains NaN log odds.";
+
+	log_probability_sum = logsum(log_probability_sum, -log1pexp(-log_odds));
+	log_complement_sum = logsum(log_complement_sum, -log1pexp(log_odds));
+    }
+
+    double mean_log_odds = log_probability_sum - log_complement_sum;
+    double mean_probability;
+    if (mean_log_odds >= 0)
+	mean_probability = 1 / (1 + exp(-mean_log_odds));
+    else
+    {
+	double odds = exp(mean_log_odds);
+	mean_probability = odds / (1 + odds);
+    }
+    return {mean_probability, mean_log_odds};
 }
 
 bool is_integers(const vector<double>& values)
@@ -296,6 +334,26 @@ void show_mean(const string& name, const vector<stats_table>& tables, int index,
     cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
 }
 
+// Report the probability represented by each chain's log odds and by all chains combined.
+void show_log_odds_summary(const string& name, const vector<stats_table>& tables, int index,
+			   const vector<double>& total, bool show_individual)
+{
+    if (tables.size() > 1 and show_individual)
+	for(int i=0;i<tables.size();i++)
+	{
+	    auto [probability, log_odds] = summarize_log_odds(name, tables[i].column(index));
+	    cout<<" posterior_probability "<<name<<" ["<<i+1<<"] = "<<probability;
+	    cout<<" [log_odds = "<<log_odds<<"]"<<endl;
+	}
+
+    auto [probability, log_odds] = summarize_log_odds(name, total);
+    if (show_individual)
+	cout<<" posterior_probability "<<name<<"     = "<<probability;
+    else
+	cout<<" posterior_probability "<<name<<" = "<<probability;
+    cout<<" [log_odds = "<<log_odds<<"]"<<endl;
+}
+
 void show_mode(const string& name, const vector<stats_table>& /*tables*/, int /*index*/, const vector<double>& total, bool /*show_individual*/)
 {
     using namespace statistics;
@@ -439,6 +497,9 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
     vector<double> total;
     for(int i=0;i<tables.size();i++)
 	total.insert(total.end(),tables[i].column(index).begin(),tables[i].column(index).end());
+
+    if (is_log_odds_field(name))
+	show_log_odds_summary(name, tables, index, total, show_individual);
 
     if (constant(total)) {
 	cout<<"   "<<name<<" = "<<total[0]<<endl;
@@ -710,5 +771,3 @@ int main(int argc,char* argv[])
 
     return 0;
 }
-
-

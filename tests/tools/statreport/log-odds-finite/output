@@ -1,0 +1,11 @@
+ posterior_probability m8a_test:lOgOdDsPosSelection = 0.575 [log_odds = 0.3023]
+ E m8a_test:lOgOdDsPosSelection = 0.3296  [+- 0.5034]
+                              t @ 1   Ne = 20   burnin = 8
+
+
+ E CatalogOdds = 1.5  [+- 0.5]
+             t @ 1   Ne = 20   burnin = 5   [integer] 
+
+
+ Ne  >= 20    (m8a_test:lOgOdDsPosSelection)
+ min burnin <= 8    (m8a_test:lOgOdDsPosSelection)
