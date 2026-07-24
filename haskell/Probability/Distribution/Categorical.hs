@@ -9,7 +9,7 @@ categorical_effect n x = addMove 1 $ gibbsSampleCategorical x n
 foreign import bpcall "Distribution:sample_categorical" sampleCategoricalNative :: V.Vector Double -> IO Int
 sample_categorical = sampleCategoricalNative
 
-data Categorical = Categorical (V.Vector Double)
+newtype Categorical = Categorical (V.Vector Double)
 
 instance Dist Categorical where
     type Result Categorical = Int
