@@ -212,7 +212,7 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
   python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
-declarative_tool_tests = ['alignment-draw', 'mcon-tool']
+declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'mcon-tool']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 
 foreach tool: tools + prefixed_tools
@@ -287,14 +287,6 @@ foreach tool: tools + prefixed_tools
     test('trees-distances matching metric',
          python,
          args: [trees_distances_test_script] + python_tool_wrapper_args + [tool_exe],
-         depends: tool_exe)
-  endif
-
-  if tool == 'alignment-convert'
-    alignment_convert_test_script = files('../tests/tools/alignment-convert/run-tests.py')
-    test('alignment-convert PHYLIP parsing',
-         python,
-         args: [alignment_convert_test_script] + python_tool_wrapper_args + [tool_exe],
          depends: tool_exe)
   endif
 
