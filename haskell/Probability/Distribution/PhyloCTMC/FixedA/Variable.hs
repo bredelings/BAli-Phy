@@ -16,7 +16,7 @@ import qualified Data.Text as Text
 import qualified Data.IntMap as IntMap
 import Reversible
 
-data VariablePhyloCTMC t s = Variable (PhyloCTMC t Int s)
+newtype VariablePhyloCTMC t s = Variable (PhyloCTMC t Int s)
 
 variable = Variable
 
