@@ -37,7 +37,7 @@ class IsGraph f => IsForest f where
     makeRooted :: f -> Rooted f
     isRooted :: f -> MaybeRooted f
 
-data Forest l = Forest (Graph l)
+newtype Forest l = Forest (Graph l)
 
 instance NFData (Graph l) => NFData (Forest l) where
     rnf (Forest g) = rnf g
