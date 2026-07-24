@@ -1,0 +1,32 @@
+{
+    "name": "branch_model",
+    "title": "Multiple-omega branch model",
+    "result_type": "CTMC<Codons<a>>",
+    "call": "omegaBranchModel(@branch_cats,@omegas,@submodel)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "submodel",
+            "type": "Double -> CTMC<Codons<a>>",
+            "default_value": "|w:gy94(omega=w)|",
+            "description": "The codon model constructed for each omega."
+        },
+        {
+            "name": "omegas",
+            "type": "List<Double>",
+            "description": "Omega for branch categories #0, #1, and so on."
+        },
+        {
+            "name": "branch_cats",
+            "type": "List<Int>",
+            "default_value": "get_state(branch_categories)",
+            "description": "The numbered category assigned to each branch."
+        }
+    ],
+    "extract": "all",
+    "description": "Use a separately unit-normalized codon model for each numbered branch category. Branch category #i selects omegas[i]. The models constructed for different omegas must share equilibrium frequencies, and the topology must be fixed when categories are read from tree annotations.",
+    "examples": [
+        "branch_model(omegas=[0.2,1.0])",
+        "branch_model(omegas=[0.2,1.0,2.0])"
+    ]
+}

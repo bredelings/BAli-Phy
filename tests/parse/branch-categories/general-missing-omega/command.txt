@@ -1,0 +1,2 @@
+--test data/codons-dna.fasta --fix topology=../three.tree
+--smodel='branch_model(omegas=[0.25,1])'
