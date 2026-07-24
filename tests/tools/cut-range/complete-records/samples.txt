@@ -1,0 +1,42 @@
+iterations = 0
+
+>A
+AC
+>B
+A-
+
+iterations = 10
+
+>A
+AC
+>B
+A-
+
+iterations = 20
+
+>A
+AC
+>B
+A-
+
+iterations = 30
+
+>A
+AC
+>B
+A-
+
+iterations = 40
+
+>A
+AC
+>B
+A-
+
+iterations = 50
+
+>A
+AC
+>B
+A-
+

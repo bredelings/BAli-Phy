@@ -1,0 +1,1 @@
+samples.txt --skip=0 --until=40 --subsample=2

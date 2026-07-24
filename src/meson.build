@@ -212,7 +212,7 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
   python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
-declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'mcon-tool']
+declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'cut-range', 'mcon-tool']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 
 foreach tool: tools + prefixed_tools
@@ -242,14 +242,6 @@ foreach tool: tools + prefixed_tools
 			install: true)
 
   test(tool + ' --help', tool_exe, args:['--help'])
-
-  if tool == 'cut-range'
-    cut_range_test_script = files('../tests/tools/cut-range/run-tests.py')
-    test('cut-range sample selection',
-         python,
-         args: [cut_range_test_script] + python_tool_wrapper_args + [tool_exe],
-         depends: tool_exe)
-  endif
 
   if tool in declarative_tool_tests
     tool_test_root = meson.project_source_root()/'tests/tools'/tool

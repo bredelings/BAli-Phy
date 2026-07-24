@@ -1,0 +1,14 @@
+iterations = 10
+
+>A
+AC
+>B
+A-
+
+iterations = 30
+
+>A
+AC
+>B
+A-
+
