@@ -22,7 +22,7 @@ type EdgeId = Int
 type NodeIdSet = IntSet
 type EdgeIdSet = IntSet
 
-data Attributes = Attributes [(Text,Maybe Text)]
+newtype Attributes = Attributes [(Text,Maybe Text)]
 
 instance NFData Attributes where
     rnf (Attributes as) = rnf as
