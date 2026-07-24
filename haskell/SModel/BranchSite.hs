@@ -1,4 +1,4 @@
-module SModel.MixtureModels where
+module SModel.BranchSite where
 
 import SModel.Rate
 import SModel.MixtureModel

@@ -8,7 +8,7 @@ module SModel (module SModel,
                module SModel.Simple,
                module SModel.Rate,
                module SModel.MixtureModel,
-               module SModel.MixtureModels,
+               module SModel.BranchSite,
                module SModel.Empirical,
                module SModel.MarkovModulated,
                module SModel.MutSel,
@@ -35,7 +35,7 @@ import SModel.Parsimony
 import SModel.Simple
 import SModel.Rate
 import SModel.MixtureModel
-import SModel.MixtureModels
+import SModel.BranchSite
 import SModel.Empirical
 import SModel.MarkovModulated
 import SModel.MultiFrequency
@@ -54,5 +54,4 @@ import SModel.UL3
 
 infixl 2 +>
 submodel +> model = model submodel
-
 
