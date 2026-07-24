@@ -213,7 +213,7 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
 endif
 
 declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'cut-range', 'mcon-tool', 'statreport']
-declarative_tool_tests += ['tree-mean-lengths']
+declarative_tool_tests += ['tree-mean-lengths', 'trees-distances']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 
 foreach tool: tools + prefixed_tools
@@ -257,14 +257,6 @@ foreach tool: tools + prefixed_tools
            depends: tool_exe,
            suite: 'tools')
     endforeach
-  endif
-
-  if tool == 'trees-distances'
-    trees_distances_test_script = files('../tests/tools/trees-distances/run-tests.py')
-    test('trees-distances matching metric',
-         python,
-         args: [trees_distances_test_script] + python_tool_wrapper_args + [tool_exe],
-         depends: tool_exe)
   endif
 
   if tool == 'alignment-draw'
