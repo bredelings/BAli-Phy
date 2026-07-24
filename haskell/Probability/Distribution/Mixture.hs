@@ -47,7 +47,7 @@ import Probability.Distribution.Discrete
    Random (IO a) should be performable in IO as join (sample IO)
 -}
 
-data Mixture d = Mixture d
+newtype Mixture d = Mixture d
 
 instance (Dist d, Dist (Result d)) => Dist (Mixture d) where
     type Result (Mixture d) = Result (Result d)
@@ -74,4 +74,3 @@ mixture ps dists | length ps /= length dists  = error "mixture distribution has 
 equalMixture dists = mixture ps dists where
     n = length dists
     ps = replicate n (1/fromIntegral n)
-
