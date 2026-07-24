@@ -46,7 +46,7 @@ import Control.Monad.Fix
    the prior density of the xs, and then it seems like this would not work.
 -}
 
-data RecDist d = RecDist (Result d->d)
+newtype RecDist d = RecDist (Result d->d)
 
 instance Dist d => Dist (RecDist d) where
     type Result (RecDist d) = Result d
