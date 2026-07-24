@@ -29,8 +29,8 @@ instance HasPdf Bernoulli where
                         | otherwise = 0
 
 instance Dist1D Bernoulli where
-    cdf (Bernoulli p) n | n < 0     = 0
-                        | n == 1    = toFloating $ 1-p
+    cdf (Bernoulli p) x | x < 0     = 0
+                        | x < 1     = toFloating $ 1-p
                         | otherwise = 1
     lower_bound _ = Just 0
     upper_bound _ = Just 1
@@ -59,5 +59,4 @@ bernoulli :: Double -> Bernoulli
 bernoulli p = Bernoulli (toFloating p)
 
 rbernoulli q = Bernoulli (1-toFloating(q))
-
 
