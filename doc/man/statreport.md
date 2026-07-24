@@ -57,9 +57,6 @@ summaries of the sampled log odds are retained.
 **--mode**
 : Show mode (with precision)
 
-**--log-mean**
-: Show log mean of X given log X.
-
 **--median**
 : Show median and confidence level.
 

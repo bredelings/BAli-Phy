@@ -35,7 +35,6 @@
 
 #include "statistics.H"
 #include "stats-table.H"
-#include "util/math/log-double.H"
 #include "util/math/logsum.H"
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -78,7 +77,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("min",value<int>(),"Required minimum number of lines to read.")
 	("mean", "Show mean and standard deviation.")
 	("mode", "Show mode (with precision)")
-	("log-mean", "Show log mean of X given log X.")
 	("median", "Show median and confidence level.")
 
 	("confidence",value<string>()->default_value("0.95"),"Confidence interval levels (colon-separated).")
@@ -302,18 +300,6 @@ bool monotonic_decreasing(const vector<stats_table>& tables, int index)
 }
 
 
-double log_average_exp(const vector<double>& xs)
-{
-    log_double_t total = 0;
-    for(double x:xs)
-    {
-	total += exp_to_log_space(x);
-	//    std::cerr<<"x = "<<x<<"  total = "<<total<<"\n";
-    }
-    total /= double(xs.size());
-    return log(total);
-}
-
 void show_mean(const string& name, const vector<stats_table>& tables, int index, const vector<double>& total, bool show_individual)
 {
     using namespace statistics;
@@ -363,24 +349,6 @@ void show_mode(const string& name, const vector<stats_table>& /*tables*/, int /*
 	cout<<"   "<<name<<" ^ "<<m.first<<"  [+- "<<m.second<<"]"<<endl;
     else
 	cout<<"   "<<name<<" ^ NA"<<endl;
-}
-
-void show_log_mean(const string& name, const vector<stats_table>& tables, int index, const vector<double>& total, bool show_individual)
-{
-    using namespace statistics;
-
-    if (tables.size() > 1 and show_individual)
-	for(int i=0;i<tables.size();i++)
-	{
-	    const vector<double>& values = tables[i].column(index);
-	    cout<<" log E exp "<<name<<" ["<<i+1<<"] = "<<log_average_exp(values);
-	}
-  
-    const vector<double>& values = total;
-    if (show_individual)
-	cout<<" log E exp "<<name<<"     = "<<log_average_exp(values);
-    else
-	cout<<" log E exp "<<name<<" = "<<log_average_exp(values);
 }
 
 const double compare_level=0.8;
@@ -533,10 +501,6 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
     if (args.count("mean"))
 	show_mean(name, tables, index, total, show_individual);
-
-    // Print out log(E(exp(X)))
-    if (args.count("log-mean"))
-	show_log_mean(name, tables, index, total, show_individual);
 
     // Print out median and confidence interval
     double sum_CI=0;
