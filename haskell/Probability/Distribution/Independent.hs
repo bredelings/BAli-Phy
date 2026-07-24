@@ -37,7 +37,7 @@ independent_pdf _  _          = 0
 
 plate n dist_f = independent $ map dist_f [0..n-1]
 
-data Independent f d = Independent (f d)
+newtype Independent f d = Independent (f d)
 
 instance Dist d => Dist (Independent f d) where
     type Result (Independent f d) = f (Result d)
