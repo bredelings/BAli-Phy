@@ -26,7 +26,7 @@ To make that work, we need to:
 
 
 
-data ExpTransform d = ExpTransform d
+newtype ExpTransform d = ExpTransform d
 
 instance (Dist d, Result d ~ Double) => Dist (ExpTransform d) where
     type Result (ExpTransform d) = Double
