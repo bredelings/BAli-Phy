@@ -5,7 +5,7 @@ import Data.Tuple    -- for fst, snd
 import Data.Function -- for id
 import Control.Monad
 
-data State s a = State { runState :: s->(a,s) }
+newtype State s a = State { runState :: s->(a,s) }
 
 instance Monad State where
     f >>= g = State (\s1 -> let (x,s2) = runState f s1 in runState g s2)
