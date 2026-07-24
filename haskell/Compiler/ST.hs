@@ -11,7 +11,7 @@ import Data.Functor
 import Control.Applicative
 import Control.Monad
 
-data ST s a = ST { runST :: s -> (s, a) }
+newtype ST s a = ST { runST :: s -> (s, a) }
 
 instance Functor (ST s) where
     fmap f t = ST (\state1 -> let (state2,   result) = runST t state1
