@@ -335,7 +335,7 @@ string unparse(const UntypedExpr& expr)
                     if (arg.name == "x")
                         return unparse(require_arg_value(arg));
             }
-            else if ((s == "unit_mixture" or s == "multiMixtureModel"))
+            else if (s == "unit_mixture")
             {
                 for(auto& arg: x.args)
                     if (arg.name == "submodel")
@@ -512,7 +512,7 @@ string unparse_annotated(const TypedExpr& expr)
                     if (arg.name == "x")
                         return unparse_annotated(require_arg_value(arg));
             }
-            else if ((s == "unit_mixture" or s == "multiMixtureModel"))
+            else if (s == "unit_mixture")
             {
                 for(auto& arg: x.args)
                     if (arg.name == "submodel")

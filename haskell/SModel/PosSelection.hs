@@ -75,7 +75,7 @@ bustedS omegaDist posP posW posSelection alpha n modelFunc = gammaRatesOn alpha 
 --   Discrete (BranchModel ReversibleMarkov)       -- site mixture of branch-dependent rate matrices
 --
 -- We can construct mixtures of these things with e.g. gamma rate models.
---   Gamma rate models SHOULD be able to construct unit_mixtures WITHOUT the use of mmm or unitMixture now.
+--   Gamma rate models can scale and flatten these mixtures directly.
 --   We should also be able to constructing mixtures of mixtures of rate matrices -> mixtures of rate matrices.  This sounds like the join operation.
 
     

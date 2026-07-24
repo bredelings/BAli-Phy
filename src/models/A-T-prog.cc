@@ -772,11 +772,6 @@ bool is_reversible(const type_t& t)
         auto [head,args] = get_type_apps(t);
 	return is_reversible(args[0]);
     }
-    else if (get_type_head(t) == "MultiMixtureModel")
-    {
-        auto [head,args] = get_type_apps(t);
-	return is_reversible(args[0]);
-    }
     else
 	throw myexception()<<"is_reversible: unrecognized type "<<unparse_type(t)<<"!";
 }

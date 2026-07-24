@@ -8,10 +8,6 @@ import Tree
 import qualified Data.Map as Map
 import qualified Data.Text as T
 
--- NOTE: This compatibility function preserves generated MultiMixtureModel calls;
--- remove it when that model-language type and its conversion are removed.
-mmm _ model = model
-
 -- No Attribute
 getForeground Nothing = 0
 -- Attribute with no value

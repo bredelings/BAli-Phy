@@ -37,8 +37,7 @@ the typechecker tries to rewrite the AST by inserting a conversion function.
 The implemented conversions include `Int` to `Double`, `ExchangeModel<a>` to
 `CTMC<a>` via `f`, `CTMC<a>` to `DiscreteDist<CTMC<a>>` via `unit_mixture`,
 lists of weighted pairs to `DiscreteDist<a>` via `discrete`,
-`DiscreteDist<a>` to `Distribution<b>` via `convertDiscrete`, and
-`DiscreteDist<CTMC<a>>` to `MultiMixtureModel<a>` via `multiMixtureModel`.
+and `DiscreteDist<a>` to `Distribution<b>` via `convertDiscrete`.
 
 This lets users write short expressions whose inferred type is close to, but
 not exactly, the type required by the surrounding model.

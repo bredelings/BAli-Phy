@@ -125,15 +125,6 @@ equations convertible_to(CM::UntypedExpr& model, const type_t& t1, type_t t2)
                 model = conversion_call("convertDiscrete", "x", std::move(model));
         }
     }
-    else if (head2 == "MultiMixtureModel" and args2.size() == 1)
-    {
-        auto a = args2[0];
-        t2 = CM::type_app("DiscreteDist",CM::type_app("CTMC",a));
-
-        E = convertible_to(model,t1,t2);
-        if (E)
-            model = conversion_call("multiMixtureModel", "submodel", std::move(model));
-    }
     else if (head2 == "CTMC" and args2.size() == 1)
     {
         auto a = args2[0];

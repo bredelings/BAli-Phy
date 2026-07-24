@@ -554,14 +554,7 @@ model_t compile_smodel(const Rules& R, TypecheckingState TC, CodeGenState code_g
     }
     catch (myexception& e) {};
 
-    try {
-        auto TC2 = TC;
-        return compile_model(R, TC2, code_gen_state, parse_type("DiscreteDist<CTMC<a>>"), model, what, {}, smodel_states);
-    }
-    catch (myexception& e) {};
-
-    auto TC2 = TC;
-    return compile_model(R, TC, code_gen_state, parse_type("MultiMixtureModel<a>"), model, what, {}, smodel_states);
+    return compile_model(R, TC, code_gen_state, parse_type("DiscreteDist<CTMC<a>>"), model, what, {}, smodel_states);
 }
 
 
@@ -595,9 +588,7 @@ string get_alphabet_type(type_t type)
 {
     auto [head,args] = get_type_apps(type);
 
-    if (head == "MultiMixtureModel")
-	return unparse_type(get_type_head(args[0]));
-    else if (head == "DiscreteDist")
+    if (head == "DiscreteDist")
 	return get_alphabet_type(args[0]);
     else if (head == "CTMC")
 	return unparse_type(get_type_head(args[0]));

@@ -128,8 +128,7 @@ Keep it intentionally narrow:
 - Lists and tuples.
 - Function arrows.
 - Common model constructors: `Distribution`, `DiscreteDist`, `CTMC`,
-  `ExchangeModel`, `MultiMixtureModel`, `Tree`, `Topology`, alphabet/model
-  types used in bindings.
+  `ExchangeModel`, `Tree`, `Topology`, alphabet/model types used in bindings.
 - Simple class constraints represented as current model constraints.
 
 If an inferred type cannot round-trip through this bridge, require explicit
@@ -258,7 +257,6 @@ The current typechecker mutates the model AST by inserting calls such as:
 - `discrete`
 - `convertDiscrete`
 - `unit_mixture`
-- `multiMixtureModel`
 - `f`
 
 These are command-line language conveniences, not ordinary Haskell unification.
