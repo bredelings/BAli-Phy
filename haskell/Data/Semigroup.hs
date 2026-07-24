@@ -55,7 +55,7 @@ instance Num a => Num (Min a) where
     fromInteger = Min . fromInteger
 
 instance Ord a => Semigroup (Max a ) where
-    Max x <> Max y = Max (min x y)
+    Max x <> Max y = Max (max x y)
 --    stimes = stimesIdempotent
 
 instance Functor Max where
