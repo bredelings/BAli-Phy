@@ -35,6 +35,10 @@ def run_test(directory, command):
     arguments = shlex.split(read_file(directory, "args", ""), comments=True)
     environment = os.environ.copy()
     environment["COLUMNS"] = "110"
+    # NOTE: Wine mixes headless-host diagnostics into wrapped stderr. Suppress only the known noisy
+    # channels so exact error checks work; remove this when Wine can keep wrapper diagnostics separate.
+    if Path(command[0]).name in {"wine", "wine32", "wine64"}:
+        environment.setdefault("WINEDEBUG", "err-winediag,err-systray,fixme-hid")
     results = directory / "results"
     if results.exists():
         shutil.rmtree(results)
