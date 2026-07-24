@@ -9,12 +9,13 @@ import Data.Eq ((==))
 import Data.Function (($))
 import Data.JSON (Key)
 import Data.Ord ((>=))
-import MCMC (runMCMC)
+import MCMC (binaryIndicatorFields, runMCMC)
 import Probability.Distribution.Uniform (uniform)
 import Probability.Logger (makeJSONLogger)
 import Probability.Random
-  (LoggerValues(..), (%=%), (%>!), addLogger, condition, contextFields, makeMCMCModel,
-   modifiable, parameterLogValues, positiveSelectionFields, prefixContextFields, prior)
+  (LoggerValues(..), (%=%), (%>!), addLogger, condition, contextFields, makeMCMCModel, modifiable,
+   parameterLogValues, prefixContextFields, prior)
+import SModel (positiveSelectionFields)
 import System.IO (IO, stdout)
 
 -- Log a conditional probability whose alternate selector state creates a random variable.
@@ -27,7 +28,7 @@ model = do
           [("selector" :: Key) %=% selector]
           (contextFields
             [ "S1" %>! prefixContextFields "m3_test:" (positiveSelectionFields selector)
-            , "S2" %>! prefixContextFields "m3_test:" (positiveSelectionFields selector)
+            , "S2" %>! prefixContextFields "m3_test:" (binaryIndicatorFields "BranchDifference" selector)
             ])
   addLogger $ makeJSONLogger stdout loggerValues
   return $ parameterLogValues loggerValues

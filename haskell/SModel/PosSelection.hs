@@ -5,6 +5,13 @@ import SModel.BranchSiteMixture
 import Probability.Distribution.Beta (beta)
 import Reversible
 import qualified Data.Map as Map
+import MCMC.Loggers (binaryIndicatorFields)
+import MCMC.Types (ContextAction, Modifiable)
+import Data.JSON (Object)
+import qualified Data.Text as T
+
+positiveSelectionFields :: Modifiable Int -> ContextAction Object
+positiveSelectionFields = binaryIndicatorFields (T.pack "PosSelection")
 
 m1aOmegaDist f1 w1 = Discrete [(w1, f1), (1, 1-f1)]
 

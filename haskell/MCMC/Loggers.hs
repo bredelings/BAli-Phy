@@ -59,3 +59,12 @@ condPr :: Modifiable Int -> Int -> Int -> ContextAction Double
 condPr selector target count = do
   value <- condLogOdds selector target count
   return (toFloating (fromLogOdds value) :: Double)
+
+-- Compute matching log-odds and probability fields from one binary-indicator candidate distribution.
+binaryIndicatorFields :: T.Text -> Modifiable Int -> ContextAction Object
+binaryIndicatorFields label selector = do
+  logOdds <- condLogOdds selector 1 2
+  return [ (toJSONKey (T.append (T.pack "LogOdds") label), toJSON logOdds)
+         , (toJSONKey (T.append (T.pack "Pr") label),
+            toJSON (toFloating (fromLogOdds logOdds) :: Double))
+         ]
