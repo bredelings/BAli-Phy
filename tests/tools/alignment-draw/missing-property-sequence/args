@@ -1,0 +1,1 @@
+../dna.fasta --properties properties.json --alphabet DNA

@@ -1,0 +1,1 @@
+../dna.fasta --properties ../dna-properties.json --alphabet Definitely-Not-An-Alphabet

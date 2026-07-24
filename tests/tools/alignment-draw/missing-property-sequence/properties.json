@@ -1,0 +1,25 @@
+{
+  "format": "bali-phy-character-properties",
+  "version": 1,
+  "coordinates": {
+    "kind": "ungapped-sequence-character",
+    "index_base": 0
+  },
+  "selection": {
+    "skip": 0,
+    "until": 30,
+    "subsample": 1
+  },
+  "retained_samples": 4,
+  "retained_samples_by_chain": [2, 2],
+  "properties": {
+    "rate": {
+      "mean": {
+        "alpha": [0.25, 2.0, 8.0]
+      },
+      "count": {
+        "alpha": [4, 4, 4]
+      }
+    }
+  }
+}

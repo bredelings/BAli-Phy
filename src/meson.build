@@ -212,7 +212,7 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
   python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
-declarative_tool_tests = ['mcon-tool']
+declarative_tool_tests = ['alignment-draw', 'mcon-tool']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 
 foreach tool: tools + prefixed_tools
@@ -299,18 +299,13 @@ foreach tool: tools + prefixed_tools
   endif
 
   if tool == 'alignment-draw'
-    alignment_draw_test_script = files('../tests/tools/alignment-draw/run-tests.py')
-    test('alignment-draw character properties',
-         python,
-         args: [alignment_draw_test_script] + python_tool_wrapper_args + [tool_exe],
-         depends: tool_exe)
-
     node = find_program('node', required: false)
     if node.found()
       alignment_draw_scale_test = files('../tests/tools/alignment-draw/test-scales.js')
       test('alignment-draw scale controls',
            node,
-           args: [alignment_draw_scale_test])
+           args: [alignment_draw_scale_test],
+           suite: 'tools')
     endif
   endif
 

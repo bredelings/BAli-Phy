@@ -68,6 +68,26 @@ def run_test(directory, command):
     return failures, results
 
 
+# Run a case-specific structural check against the captured command results.
+def run_checker(directory, results):
+    checker = directory / "check.py"
+    if not checker.exists():
+        return []
+
+    result = subprocess.run(
+        [sys.executable, str(checker), str(results)],
+        cwd=directory,
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    if result.returncode == 0:
+        return []
+
+    diagnostics = result.stdout + result.stderr
+    return [f"check.py exited {result.returncode}\n{diagnostics}"]
+
+
 # Print directory-defined test names relative to the requested root.
 def list_tests(root):
     tests = sorted(path.parent for path in root.rglob("args"))
@@ -86,6 +106,8 @@ def run_named_test(directory, command):
         return 1
 
     failures, results = run_test(directory, command)
+    if not failures:
+        failures.extend(run_checker(directory, results))
     if failures:
         for failure in failures:
             print(failure, end="" if failure.endswith("\n") else "\n")
