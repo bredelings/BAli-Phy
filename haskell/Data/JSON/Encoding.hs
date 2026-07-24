@@ -14,7 +14,7 @@ import Data.JSON.Types.Internal (Key(..), Value(..))
 
 data InArray -- a tag for Encoding'
 
-data Encoding' tag = Encoding {fromEncoding :: Text}
+newtype Encoding' tag = Encoding {fromEncoding :: Text}
 
 type Encoding = Encoding' Value
 
