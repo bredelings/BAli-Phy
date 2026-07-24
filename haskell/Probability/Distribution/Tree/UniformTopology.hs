@@ -69,7 +69,7 @@ uniformTopologyPr 2 = 1
 uniformTopologyPr n = uniformTopologyPr (n - 1) / (fromIntegral $ 2 * n - 5)
 
 -------------------------------------------------------------
-data UniformTopology = UniformTopology Int
+newtype UniformTopology = UniformTopology Int
 
 instance Dist UniformTopology where
     type Result UniformTopology = Tree ()
