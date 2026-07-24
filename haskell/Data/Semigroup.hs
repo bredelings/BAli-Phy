@@ -36,7 +36,7 @@ instance Semigroup Ordering where
 
 newtype Min a = Min {getMin :: a}
 
-data Max a = Max {getMax :: a}
+newtype Max a = Max {getMax :: a}
 
 instance Ord a => Semigroup (Min a ) where
     Min x <> Min y = Min (min x y)
