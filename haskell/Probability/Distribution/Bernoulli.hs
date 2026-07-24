@@ -13,7 +13,7 @@ foreign import bpcall "Distribution:" sample_bernoulli :: Double -> IO Int
 
 -- we could use fromRational... but converting to rationals seems like a terrible idea.
 
-data Bernoulli = Bernoulli Prob
+newtype Bernoulli = Bernoulli Prob
 
 instance Dist Bernoulli where
     type Result Bernoulli = Int
@@ -59,4 +59,3 @@ bernoulli :: Double -> Bernoulli
 bernoulli p = Bernoulli (toFloating p)
 
 rbernoulli q = Bernoulli (1-toFloating(q))
-
