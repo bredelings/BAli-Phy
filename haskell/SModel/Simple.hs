@@ -16,8 +16,8 @@ data SModelOnTree t m = SModelOnTree t m
   SModelOnTree t ReversibleMarkov
   SModelOnTree t (Discrete Markov)
   SModelOnTree t (Discrete ReversibleMarkov)
-  SModelOnTree t (MixtureModels Markov)
-  SModelOnTree t (MixtureModels ReversibleMarkov)
+  SModelOnTree t (Discrete (BranchModel Markov))
+  SModelOnTree t (Discrete (BranchModel ReversibleMarkov))
 -}
 
 -- See LikelihoodMixtureModel

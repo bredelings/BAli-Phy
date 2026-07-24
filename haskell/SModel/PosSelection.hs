@@ -70,9 +70,9 @@ bustedS omegaDist posP posW posSelection alpha n modelFunc = gammaRatesOn alpha 
 --
 -- OK... so a mixture of rate matrices is NOT the same as a mixture of exponentiated matrices, because the rate matrices are scale with respect to each other.
 -- So, we can have
---   ReversibleMarkov                          -- rate matrix
---   MixtureModel ReversibleMarkov             -- mixture of rate matrices
---   MixtureModels branchCats MixtureModel     -- per-branch mixture of rate matrices, where component i always has the same frequencies.
+--   ReversibleMarkov                              -- rate matrix
+--   Discrete ReversibleMarkov                     -- site mixture of rate matrices
+--   Discrete (BranchModel ReversibleMarkov)       -- site mixture of branch-dependent rate matrices
 --
 -- We can construct mixtures of these things with e.g. gamma rate models.
 --   Gamma rate models SHOULD be able to construct unit_mixtures WITHOUT the use of mmm or unitMixture now.

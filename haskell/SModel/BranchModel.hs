@@ -6,10 +6,10 @@ import           Reversible
 import           SModel.Simple
 import           SModel.Property
 import           SModel.Rate
-import           SModel.Frequency
 import           Bio.Alphabet
-import           Numeric.LinearAlgebra
 import           Tree
+import           Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
 
 {-
@@ -17,35 +17,33 @@ import qualified Data.Map as Map
   BUT they must all have the same equilibrium frequencies.
  -}
 
--- Should this also take a tree?
--- Should we just have a bare function?
--- Should we have an IntMap?
-data BranchMap a = BranchMap (Int -> a)
+-- Selects one same-equilibrium rate model for each branch category and tracks
+-- the common scale applied after the category models were normalized.
+data BranchModel m = BranchModel (IntMap Int) [m] Double
 
-data BranchModel a = BranchModel Alphabet (EVector Int) (Vector Double) (BranchMap a)
+instance HasAlphabet m => HasAlphabet (BranchModel m) where
+    getAlphabet (BranchModel _ (model:_) _) = getAlphabet model
 
-instance Functor BranchMap where
-    fmap f (BranchMap g) = BranchMap (f . g)
+instance HasSMap m => HasSMap (BranchModel m) where
+    getSMap (BranchModel _ (model:_) _) = getSMap model
 
-instance Functor BranchModel where
-    fmap f (BranchModel a smap pi map) = BranchModel a smap pi (f <$> map)
+instance CheckReversible m => CheckReversible (BranchModel m) where
+    getReversibility (BranchModel _ models _) = minimum $ fmap getReversibility models
 
-instance HasAlphabet (BranchModel a) where
-    getAlphabet (BranchModel alphabet _ _ _) = alphabet
-
-instance HasSMap (BranchModel a) where
-    getSMap (BranchModel _ smap _ _) = smap
-
-instance CheckReversible (BranchModel m) where
-    getReversibility _ = NonEq
-
-instance (HasSMap m, HasBranchLengths t, CTMC m) => SimpleSModel t (BranchModel m) where
-    stateLetters (SModelOnTree tree model) = getSMap model
-    branchTransitionP (SModelOnTree tree model) b = [qExp $ scaleBy (branchLength tree b) (ratesForBranch b)]
-        where (BranchModel _ _ _ (BranchMap ratesForBranch)) = model
-    componentFrequencies (SModelOnTree _ (BranchModel _ _ pi _)) = [pi]
+instance (HasSMap m, HasBranchLengths t, CTMC m, CheckReversible m) => SimpleSModel t (BranchModel m) where
+    stateLetters (SModelOnTree _ model) = getSMap model
+    branchTransitionP (SModelOnTree tree (BranchModel categories models _)) b =
+        [qExp $ scaleBy (branchLength tree b) (models !! (categories IntMap.! b))]
+    componentFrequencies (SModelOnTree _ (BranchModel _ (model:_) _)) = [getStartFreqs model]
 
 -- Branch-specific rate models need branch-indexed property semantics, so the
 -- homogeneous component/state property map is empty for now.
 instance HasProperties t (BranchModel m) where
     getProperties _ = Map.empty
+
+instance Scalable m => Scalable (BranchModel m) where
+    scaleBy factor (BranchModel categories models modelRate) =
+        BranchModel categories (scaleBy factor <$> models) (factor * modelRate)
+
+instance Scalable m => RateModel (BranchModel m) where
+    rate (BranchModel _ _ modelRate) = modelRate
