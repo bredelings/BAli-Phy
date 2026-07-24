@@ -8,7 +8,7 @@ import Probability.Distribution.Uniform
 foreign import bpcall "Distribution:" poisson_density :: Double -> Int -> LogDouble
 foreign import bpcall "Distribution:" sample_poisson :: Double -> IO Int
 
-data Poisson = Poisson Double
+newtype Poisson = Poisson Double
 
 instance Dist Poisson where
     type Result Poisson = Int
@@ -122,4 +122,3 @@ sample_poisson_processes ((rate,t1,t2):intervals) = do
 
 
 poisson_processes intervals = PoissonProcesses intervals
-
