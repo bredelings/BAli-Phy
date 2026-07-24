@@ -30,7 +30,7 @@ instance (HasRoots t, IsTree t) => HasRoot t where
 -- OK, so should we store attributes inside the tree?
 -- 
 
-data Tree l  = Tree (Forest l)
+newtype Tree l = Tree (Forest l)
 
 instance NFData (Forest l) => NFData (Tree l) where
     rnf (Tree forest) = rnf forest
