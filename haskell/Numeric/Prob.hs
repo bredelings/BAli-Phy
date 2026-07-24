@@ -80,32 +80,44 @@ expToProb z | isNaN z   = error "expToProb: NaN"
             | z > 0     = fromLogExcess $ z + log1mexp (-z)
             | otherwise = error ("expToProb: unknown number: " ++ show z)
 
--- If y12 is only slightly more than zero, we should be able to do better
-plus (Odds y1) (Odds y2) | y12 > 0    = toProb (fromProb (Odds y1) + fromProb (Odds y2))
-                         | y12 == 0   = One
-                         | y12 > (-1) = One - toProb (expm1 (y12) / (1 + exp y1) / (1 + exp y2) )
-                         | otherwise      = toProb $ fromProb (Odds y1) + fromProb (Odds y2)
-                         where y12 = y1 + y2
+-- For p_i=sigmoid(y_i), their sum has numerator exp(y1)+exp(y2)+2*exp(y1+y2).
+-- Its distance from one has numerator 1-exp(y1+y2), with the sign reversed above one.
+plus (Odds y1) (Odds y2) | s < 0     = fromLogOdds $ logNumerator - log1mexp(s)
+                         | s == 0    = One
+                         | otherwise = fromLogExcess $
+                                           logexpm1(s) - log1pexp(y1) - log1pexp(y2)
+                         where s = y1+y2
+                               logNumerator = logsum y1 $ logsum y2 (log 2+s)
 plus p@(Odds _) One = fromLogExcess (logProb p)
+-- Adding Odds y1 to 1+exp(y2) leaves an excess of sigmoid(y1)+exp(y2).
+plus p@(Odds _) (IOdds y2) = fromLogExcess $ logsum (logProb p) y2
 plus (IOdds y1) (Odds y2) = plus (Odds y2) (IOdds y1)
 plus One        (Odds y)  = plus (Odds y) One
-plus Zero      x        = x
-plus x         Zero     = x
-plus Infinity  x        = Infinity
-plus x         Infinity = Infinity
-plus x1         x2        = toProb (fromProb x1 + fromProb x2)
+plus One One = fromLogExcess 0
+plus One (IOdds y) = fromLogExcess $ log1pexp y
+plus (IOdds y) One = plus One (IOdds y)
+-- The excess of (1+exp(y1))+(1+exp(y2)) above one is 1+exp(y1)+exp(y2).
+plus (IOdds y1) (IOdds y2) = fromLogExcess $ logsum 0 (logsum y1 y2)
+plus Zero x = x
+plus x Zero = x
+plus Infinity x = Infinity
+plus x Infinity = Infinity
 
 
-sub x        Zero        = x
-sub Infinity Infinity    = error "Inf - Inf is undefined"
-sub Infinity _           = Infinity
-sub One      One         = Zero
-sub One      (Odds y)   = fromLogOdds (-y)
+sub x Zero = x
+sub Infinity Infinity = error "Inf - Inf is undefined"
+sub Infinity _ = Infinity
+sub One One = Zero
+sub One (Odds y) = fromLogOdds (-y)
+-- For p1>=p2, p1-p2 = p1*(1-p2/p1), keeping both factors in [0,1].
 sub p1@(Odds y1) p2@(Odds y2) | y1 >= y2  = p1 * (One - (p2/p1))
-sub (IOdds y1) (Odds y2)                  = toProb (fromProb (IOdds y1) - fromProb (Odds y2))
-sub (IOdds y1) (IOdds y2)     | y1 == y2  = Zero
-                              | y1 >  y2  = toProb (fromProb (IOdds y1) - fromProb (IOdds y2))
-sub _         _ = error "Negative probability"
+-- (1+exp(y1))-sigmoid(y2) = exp(y1)+sigmoid(-y2), avoiding cancellation near one.
+sub (IOdds y1) (Odds y2) = plus (expToProb y1) (fromLogOdds (-y2))
+sub (IOdds y) One = expToProb y
+-- The ones cancel, leaving exp(y1)-exp(y2) in a stable log-difference form.
+sub (IOdds y1) (IOdds y2) | y1 == y2 = Zero
+                          | y1 > y2  = expToProb $ y1 + log1mexp(y2-y1)
+sub _ _ = error "Negative probability"
 
 
 mul (Odds y1) (Odds y2) | y1 > y2   = fromLogOdds $ y2 - log1p( exp(y2-y1) + exp(-y1) )

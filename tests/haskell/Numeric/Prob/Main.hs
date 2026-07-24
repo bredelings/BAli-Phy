@@ -2,7 +2,7 @@
 module Main where
 
 import Compiler.Fractional (Fractional(recip), (/))
-import Compiler.Floating (Pow(ln), log)
+import Compiler.Floating (Pow(ln), exp, log, log1p)
 import Compiler.Integral ((^))
 import Compiler.Num (Num(..))
 import Data.Bool ((&&))
@@ -48,3 +48,15 @@ main = do
   let largeInteger = (2 :: Integer) ^ (1100 :: Int)
       largeProb = fromInteger largeInteger :: Prob
   print (near (ln largeProb) (1100 * log 2))
+  let p = fromLogOdds (-0.25)
+      tiny = fromLogOdds (-1000)
+      p40 = fromLogOdds 40
+      p41 = fromLogOdds 41
+  print
+    ( ( near (toFloating (p+p) :: Double) 0.8756469982284039
+      , near (ln (tiny+tiny)) (-1000+log 2)
+      , near (ln (recip p40-p40)) (-40+log (2+exp(-40))-log1p(exp(-40)))
+      , near (ln (recip p40-recip p41)) (-40+log1p(-exp(-1)))
+      )
+    , near (toFloating ((3 :: Prob)-(2 :: Prob)) :: Double) 1
+    )
