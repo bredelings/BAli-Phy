@@ -1,0 +1,1 @@
+--tree=../query.tree --no-node-lengths --simple ../mean-samples.trees
