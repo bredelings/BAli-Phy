@@ -7,9 +7,7 @@ module Numeric.Prob (Prob,
                     )
     where
 
-import Numeric.Log
 import Numeric.LogDouble
-import Data.Ratio
 import Data.Floating.Types
 
 {- Odds y = sigmoid(y) is in (0,1), while IOdds y = 1+exp(y) is in
@@ -40,12 +38,13 @@ fromLogExcess y | isNaN y   = error "fromLogExcess: NaN"
                 | y == 1/0  = Infinity
                 | otherwise = IOdds y
 
+complement :: Prob -> Prob
 complement Zero     = One
 complement (Odds y) = fromLogOdds (-y)
 complement One      = Zero
 complement _        = error "complement: not a probability"
 
-fromProb :: (Real a, Pow a) => Prob -> a
+fromProb :: Pow a => Prob -> a
 fromProb Zero                 = 0
 fromProb (Odds y) | y < 0     = let e = expTo y in e / (1 + e)
 fromProb (Odds y) | otherwise = 1 / (1 + expTo(-y))
@@ -82,6 +81,7 @@ expToProb z | isNaN z   = error "expToProb: NaN"
 
 -- For p_i=sigmoid(y_i), their sum has numerator exp(y1)+exp(y2)+2*exp(y1+y2).
 -- Its distance from one has numerator 1-exp(y1+y2), with the sign reversed above one.
+plus :: Prob -> Prob -> Prob
 plus (Odds y1) (Odds y2) | s < 0     = fromLogOdds $ logNumerator - log1mexp(s)
                          | s == 0    = One
                          | otherwise = fromLogExcess $
@@ -104,6 +104,7 @@ plus Infinity x = Infinity
 plus x Infinity = Infinity
 
 
+sub :: Prob -> Prob -> Prob
 sub x Zero = x
 sub Infinity Infinity = error "Inf - Inf is undefined"
 sub Infinity _ = Infinity
@@ -120,6 +121,7 @@ sub (IOdds y1) (IOdds y2) | y1 == y2 = Zero
 sub _ _ = error "Negative probability"
 
 
+mul :: Prob -> Prob -> Prob
 mul (Odds y1) (Odds y2) | y1 > y2   = fromLogOdds $ y2 - log1p( exp(y2-y1) + exp(-y1) )
                         | otherwise = fromLogOdds $ y1 - log1p( exp(y1-y2) + exp(-y2) )
 -- For x=sigmoid(y1)*(1+exp(y2)), x is below or above one according
@@ -140,6 +142,8 @@ mul x         One       = x
 mul Infinity  x         = Infinity
 mul x         Infinity  = Infinity
 
+-- Prob supports nonnegative extended-real arithmetic; operations whose result
+-- would be negative are intentionally partial.
 instance Num Prob where
     (+) = plus
     (-) = sub
@@ -152,13 +156,6 @@ instance Num Prob where
     fromInteger 1 = One
     fromInteger x | x < 0     = error "Negative Probability!"
                   | otherwise = fromLogExcess $ integerToLogExcess x
-
-instance Real Prob where
-    toRational Zero = 0 % 1
-    toRational (Odds y) = toRational $ (fromProb (Odds y) :: Double)
-    toRational One  = 1 % 1
-    toRational (IOdds y) = toRational $ (fromProb (IOdds y) :: Double)
-    toRational Infinity = 1 % 0
 
 instance Fractional Prob where
     recip Zero      = Infinity
@@ -175,6 +172,7 @@ instance Show Prob where
     show Infinity = "Inf"
 
 
+logOdds :: Prob -> Double
 logOdds (Odds y) = y
 logOdds Zero = -1/0
 logOdds One = 1/0
@@ -214,7 +212,7 @@ instance FloatConvert Prob Double where
     toFloating = fromProb
 
 instance FloatConvert Prob LogDouble where
-    toFloating = fromProb
+    toFloating p = expTo (logProb p)
 
 instance FloatConvert LogDouble Prob where
     toFloating = expTo . ln
@@ -222,7 +220,13 @@ instance FloatConvert LogDouble Prob where
 instance FloatConvert Double Prob where
     toFloating = toProb
 
--- Handle Int, Integer, and anything else that we can get a double from.
+instance FloatConvert Integer Prob where
+    toFloating = fromInteger
+
+instance FloatConvert Int Prob where
+    toFloating i = fromInteger (toInteger i)
+
+-- Retain conversions for other floating-like types that have a Double conversion.
 instance {-# OVERLAPPABLE #-} FloatConvert a Double => FloatConvert a Prob where
     toFloating i = toFloating (toFloating i :: Double)
 

@@ -46,8 +46,9 @@ main = do
     , near (toFloating (two * (3 :: Prob)) :: Double) 6.0
     )
   let largeInteger = (2 :: Integer) ^ (1100 :: Int)
-      largeProb = fromInteger largeInteger :: Prob
-  print (near (ln largeProb) (1100 * log 2))
+      largeProb = toFloating largeInteger :: Prob
+      threeFromInt = toFloating (3 :: Int) :: Prob
+  print (near (ln largeProb) (1100 * log 2), threeFromInt == (3 :: Prob))
   let p = fromLogOdds (-0.25)
       tiny = fromLogOdds (-1000)
       p40 = fromLogOdds 40
