@@ -98,7 +98,7 @@ uniform_int_effect l u x = do
 uniform_int l u = UniformInt l u
 
 -------------------------------
-data UniformD a = UniformD [a]
+newtype UniformD a = UniformD [a]
 
 instance Dist (UniformD a) where
     type Result (UniformD a) = a
