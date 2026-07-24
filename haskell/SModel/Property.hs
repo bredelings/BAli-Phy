@@ -10,7 +10,7 @@ import qualified Data.JSON as J
 
 newtype StateProperties a = StateProperties [a]
 
-data ComponentStateProperties a = ComponentStateProperties [StateProperties a]
+newtype ComponentStateProperties a = ComponentStateProperties [StateProperties a]
 
 type Property = ComponentStateProperties Double
 
