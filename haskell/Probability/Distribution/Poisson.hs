@@ -88,7 +88,7 @@ sample_poisson_process rate t1 t2 = do
 poisson_process rate t1 t2 = PoissonProcess rate t1 t2
 
 ------------------------------------------------------------
-data PoissonProcesses = PoissonProcesses [(Double,Double,Double)]
+newtype PoissonProcesses = PoissonProcesses [(Double,Double,Double)]
 
 instance Dist PoissonProcesses where
     type Result PoissonProcesses = [Double]
