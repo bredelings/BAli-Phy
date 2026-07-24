@@ -6,7 +6,7 @@ import MCMC
 --foreign import bpcall "Distribution:geometric_density" geometric_density :: Double -> Double -> Int -> LogDouble
 foreign import bpcall "Distribution:" sample_geometric :: Double -> IO Int
 
-data Geometric = Geometric Prob
+newtype Geometric = Geometric Prob
 
 instance Dist Geometric where
     type Result Geometric = Int
