@@ -89,6 +89,29 @@ extern "C" R::Exp simple_function_log1mexp(vector<R::Exp>& args)
     return log1mexp(xx);
 }
 
+// Add two log-domain values with the established precision cutoff.
+extern "C" R::Exp simple_function_logsum(vector<R::Exp>& args)
+{
+    auto x = get_arg(args);
+    auto y = get_arg(args);
+
+    if (not x.is_double() or not y.is_double())
+        throw myexception()<<"logsum: arguments must be double";
+
+    return logsum(x.as_double(), y.as_double());
+}
+
+// Evaluate log(exp(x) - 1) without cancellation near zero or overflow for large x.
+extern "C" R::Exp simple_function_logexpm1(vector<R::Exp>& args)
+{
+    auto x = get_arg(args);
+
+    if (not x.is_double())
+        throw myexception()<<"logexpm1: argument must be double";
+
+    return logexpm1(x.as_double());
+}
+
 extern "C" R::Exp simple_function_pow(vector<R::Exp>& args)
 {
     auto x = get_arg(args);

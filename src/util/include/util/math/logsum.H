@@ -64,6 +64,17 @@ inline double log1mexp(double x)
         return log1p(-exp(x));
 }
 
+// log(exp(x) - 1) = x + log(1 - exp(-x)); the second form avoids overflow
+// once expm1(x) is large, while expm1 retains accuracy near zero.
+inline double logexpm1(double x)
+{
+    assert(x >= 0);
+    if (x < std::numbers::ln2)
+        return log(expm1(x));
+    else
+        return x + log1mexp(-x);
+}
+
 inline double logsum(double x, double y)
 {
     if (x == -std::numeric_limits<double>::infinity()) return y;

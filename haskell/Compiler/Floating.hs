@@ -40,6 +40,8 @@ foreign import ecall "Real:expm1" expm1_double :: Double -> Double
 foreign import ecall "Real:log1p" log1p_double :: Double -> Double
 foreign import ecall "Real:log1pexp" log1pexp_double :: Double -> Double
 foreign import ecall "Real:log1mexp" log1mexp_double :: Double -> Double
+foreign import ecall "Real:logsum" logsum :: Double -> Double -> Double
+foreign import ecall "Real:logexpm1" logexpm1 :: Double -> Double
 
 instance Floating Double where
     pi = 3.14159265358979323846
@@ -87,4 +89,3 @@ instance Pow Double where
 
     sq_rt  = sqrt_a
     pow   = pow_a
-
