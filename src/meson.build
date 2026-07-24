@@ -205,15 +205,13 @@ extra_deps = {
   'joint-parsimony': [eigen],
 }
 
-joint_indels_exe = disabler()
-
 python_tool_wrapper_args = []
 if host_machine.system() == 'windows' and meson.is_cross_build()
   python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
 declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'cut-range', 'mcon-tool', 'statreport']
-declarative_tool_tests += ['tree-mean-lengths', 'trees-distances']
+declarative_tool_tests += ['joint-indels', 'tree-mean-lengths', 'trees-distances']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 
 foreach tool: tools + prefixed_tools
@@ -270,16 +268,4 @@ foreach tool: tools + prefixed_tools
     endif
   endif
 
-  if tool == 'joint-indels'
-    joint_indels_exe = tool_exe
-  endif
 endforeach
-
-# joint-indels unit tests (only if extra-tools enabled)
-if not is_disabler(joint_indels_exe)
-  joint_indels_test_script = files('../tests/tools/joint-indels/run-tests.sh')
-  test('joint-indels --details',
-       find_program('bash'),
-       args: [joint_indels_test_script, joint_indels_exe],
-       workdir: meson.project_source_root())
-endif
