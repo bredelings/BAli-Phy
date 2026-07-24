@@ -5,7 +5,7 @@ module Data.Map
     , insert, delete, lookup, (!), member, notMember
     , null, size
     , isSubmapOf, isProperSubmapOf
-    , filter, map, mapWithKey
+    , filter, map, mapWithKey, mapKeys
     , foldr, foldl
     , elems, keys, assocs, keySet
     , toList, toAscList, toDescList
@@ -175,6 +175,9 @@ map f (Bin s k x l r) = Bin s k (f x) (map f l) (map f r)
 -- Mapping with keys preserves keys and tree shape.
 mapWithKey _ Tip = Tip
 mapWithKey f (Bin s k x l r) = Bin s k (f k x) (mapWithKey f l) (mapWithKey f r)
+
+-- Rebuild after changing keys; collisions retain the greatest original key's value.
+mapKeys f m = fromList [(f k, x) | (k, x) <- toAscList m]
 
 foldr f z = List.foldr f z . elems
 

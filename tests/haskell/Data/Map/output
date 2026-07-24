@@ -6,6 +6,7 @@ Set ["A","B"]
 False
 [("B",9),("C",4)]
 [("A",3),("B",10)]
+[("X",9)]
 True
 False
 True
