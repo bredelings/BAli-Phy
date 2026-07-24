@@ -182,25 +182,28 @@ logOdds (IOdds _) = error "logOdds(x) where x > 1"
 logOdds Infinity = error "logOdds Infinity"
 
 
--- t regions: (-Inf,-1], (-1, 0), (0,1), [1,Inf)
--- y regions for t > 1: (-Inf,0),[0,30),[30,Inf)
---  maybe for t in (0,1) we need different y regions?
-
--- we need to avoid exp(t*y) when t*y is large and positive.
-
--- It would be nice if we could write y ** t, but t is not a Prob
+-- For p=sigmoid(y), write p=exp(-a), where a=log(1+exp(-y)).  Then
+-- logit(p^t)=-log(exp(t*a)-1); the log-domain branch retains t*a when it underflows.
 powProb :: Prob -> Double -> Prob
-powProb One       t             = One
-powProb y         t | t == 0    = One
-powProb Zero      t | t < 0     = Infinity
-                    | otherwise = Zero      -- t > 0
-powProb Infinity  t | t < 0     = Zero
-                    | otherwise = Infinity  -- t > 0
--- This probably works best for t > 1, when exp(tx) < exp(x).
-powProb (Odds y)  t | y > 30    = fromLogOdds $ y - log t
-                    | y < 0     = fromLogOdds $ t*y - log ( (1+exp(y))**t - exp(t*y) )
-                    | otherwise = fromLogOdds $ negate $ log $ expm1 ( t * log1p ( exp (-y)) )
-powProb (IOdds y) t             = recip $ pow (fromLogOdds (-y)) t
+powProb _ t | isNaN t = error "pow: NaN exponent"
+powProb _ 0 = One
+powProb p t | t < 0 = recip $ powProb p (-t)
+powProb One _ = One
+powProb Zero _ = Zero
+powProb Infinity _ = Infinity
+-- For y>40, log(log(1+exp(-y))) rounds to -y at Double precision, so computing
+-- log(t*a) as log(t)-y also avoids underflow in a.
+powProb (Odds y) t
+    | y > 40 =
+        let logQ = log t-y
+        in if logQ < -40
+           then fromLogOdds (-logQ)
+           else fromLogOdds $ negate $ logexpm1 $ exp logQ
+    | q == 0 = fromLogOdds $ negate (log t+log a)
+    | otherwise = fromLogOdds $ negate $ logexpm1 q
+    where a = log1pexp (-y)
+          q = t*a
+powProb (IOdds y) t = recip $ powProb (fromLogOdds (-y)) t
 
 instance Pow Prob where
     ln = logProb
