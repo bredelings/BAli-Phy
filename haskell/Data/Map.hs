@@ -3,6 +3,7 @@ module Data.Map
     , empty, singleton
     , fromList, fromAscList, fromDescList, fromDistinctAscList, fromDistinctDescList
     , insert, delete, lookup, (!), member, notMember
+    , union
     , null, size
     , isSubmapOf, isProperSubmapOf
     , filter, map, mapWithKey, mapKeys
@@ -110,6 +111,9 @@ member k m = case lookup k m of Just _ -> True
                                 Nothing -> False
 
 notMember k m = not $ member k m
+
+-- Combine maps while retaining values from the left map at duplicate keys.
+union m1 m2 = List.foldl (\m (k,x) -> insert k x m) m2 (toAscList m1)
 
 null Tip = True
 null _   = False

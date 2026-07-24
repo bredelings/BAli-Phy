@@ -22,6 +22,9 @@ main = do
   putStrLn (show $ Map.assocs m3)
   putStrLn (show $ Map.assocs $ Map.map (+1) m)
   putStrLn (show $ Map.assocs $ Map.mapKeys (\_ -> "X") m)
+  putStrLn (show $ Map.assocs $ Map.union
+    (Map.fromList [("A",1),("B",2)])
+    (Map.fromList [("B",3),("C",4)]))
   putStrLn (show $ Map.isSubmapOf subSame m)
   putStrLn (show $ Map.isSubmapOf subDifferent m)
   putStrLn (show $ Map.isProperSubmapOf subSame m)
