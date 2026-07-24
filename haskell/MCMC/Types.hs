@@ -5,9 +5,10 @@ module MCMC.Types (module MCMC.Types,
 
 import Numeric.LogDouble
 import Range
+import Compiler.FFI.Import (CInput)
 
--- data ContextIndex = ContextIndex Int
-type ContextIndex = Int
+newtype ContextIndex = ContextIndex Int
+    deriving newtype CInput
 
 newtype ContextAction a =
     ContextAction { runContextAction :: ContextIndex -> IO a }

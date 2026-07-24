@@ -15,7 +15,7 @@ type LoggerAction = (GetContextFields, LogSample)
 
 foreign import bpcall "MCMC:" registerLogger :: LoggerAction -> IO Effect
 
-foreign import bpcall "MCMC:" logJSONRaw :: Int -> Int -> IO CJSON
+foreign import bpcall "MCMC:" logJSONRaw :: ContextIndex -> Int -> IO CJSON
 logJSONLine context iter = cjsonToText <$> logJSONRaw context iter
 foreign import bpcall "MCMC:" jsonToTableLineRaw :: CJSON -> CPPString
 logTableLine context iter = T.fromCppString . jsonToTableLineRaw <$> logJSONRaw context iter
