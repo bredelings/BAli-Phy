@@ -92,7 +92,7 @@ class Alphabet and then also a class Nucleotides and a class Triplets.
 
 data CharacterData = CharacterData Alphabet [(Text, EVector Int)]
 newtype AlignedCharacterData = Aligned CharacterData
-data UnalignedCharacterData = Unaligned CharacterData
+newtype UnalignedCharacterData = Unaligned CharacterData
 
 instance HasAlphabet CharacterData where
     getAlphabet (CharacterData a _) = a
