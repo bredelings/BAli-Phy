@@ -212,7 +212,7 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
   python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
-declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'cut-range', 'mcon-tool']
+declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'cut-range', 'mcon-tool', 'statreport']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 
 foreach tool: tools + prefixed_tools
@@ -256,14 +256,6 @@ foreach tool: tools + prefixed_tools
            depends: tool_exe,
            suite: 'tools')
     endforeach
-  endif
-
-  if tool == 'statreport'
-    statreport_test_script = files('../tests/tools/statreport/run-tests.py')
-    test('statreport interval selection',
-         python,
-         args: [statreport_test_script] + python_tool_wrapper_args + [tool_exe],
-         depends: tool_exe)
   endif
 
   if tool == 'tree-mean-lengths'

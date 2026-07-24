@@ -1,0 +1,11 @@
+   iteration = [increasing]
+
+   value ^ 100  [+- 0]
+ E value = 34.55  [+- 42.98]
+       t @ 2.604   Ne = 7   burnin = Not Converged!   [integer] 
+
+
+ Ne  >= 7.68    (value)
+ min burnin <= Not Converged!    (value)
+
+Increasing: iteration

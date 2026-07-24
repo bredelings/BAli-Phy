@@ -1,0 +1,10 @@
+   iteration = [increasing]
+
+   value ~ 10  (0,0) @ 50%
+       t @ 3.099   Ne = 6   burnin = Not Converged!   [integer] 
+
+
+ Ne  >= 6.455    (value)
+ min burnin <= Not Converged!    (value)
+
+Increasing: iteration
