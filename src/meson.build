@@ -212,6 +212,9 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
   python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
+declarative_tool_tests = ['mcon-tool']
+tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
+
 foreach tool: tools + prefixed_tools
   sources = ['tools/' + tool + '.cc']
   if tool in extra_sources
@@ -248,14 +251,19 @@ foreach tool: tools + prefixed_tools
          depends: tool_exe)
   endif
 
-  if tool == 'mcon-tool'
-    tool_test_script = files('../tests/tools/run-tests.py')
-    tool_test_root = meson.project_source_root()/'tests/tools/mcon-tool'
-    test('mcon-tool',
-         python,
-         args: [tool_test_script] + python_tool_wrapper_args + [tool_test_root, tool_exe],
-         depends: tool_exe,
-         timeout: 120)
+  if tool in declarative_tool_tests
+    tool_test_root = meson.project_source_root()/'tests/tools'/tool
+    tool_test_names = run_command(
+      python, tool_test_script, 'list', tool_test_root, check: true
+    ).stdout().strip().split('\n')
+    foreach tool_test_name: tool_test_names
+      test(tool + ' ' + tool_test_name,
+           python,
+           args: [tool_test_script, 'run'] + python_tool_wrapper_args
+                 + [tool_test_root/tool_test_name, tool_exe],
+           depends: tool_exe,
+           suite: 'tools')
+    endforeach
   endif
 
   if tool == 'statreport'
