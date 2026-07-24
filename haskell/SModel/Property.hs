@@ -8,7 +8,7 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.JSON as J    
 
-data StateProperties a = StateProperties [a]
+newtype StateProperties a = StateProperties [a]
 
 data ComponentStateProperties a = ComponentStateProperties [StateProperties a]
 
