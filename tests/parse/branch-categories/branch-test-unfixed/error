@@ -1,0 +1,2 @@
+bali-phy: Error! Models using foreground branch categories require a fixed tree topology.
+  Use --fix topology=<treefile> or --fix tree=<treefile>.

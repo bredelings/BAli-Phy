@@ -40,6 +40,15 @@ omegaBranchModel branchCats omegas modelFunc =
           [Map.mapKeys (T.append (prefix i)) (getStatePropertyFunctions model)
           | (i, model) <- zip [0..] models]
 
+-- Selects the shared null omega or the independently scaled foreground omega.
+branchTestForegroundOmega omega omegaRatio branchDifference =
+    if branchDifference == 0 then omega else omega * omegaRatio
+
+-- Constructs the two-category branch model used by the branch-difference test.
+twoOmegaBranchModel branchCats omega omegaRatio branchDifference modelFunc =
+    omegaBranchModel branchCats
+      [omega, branchTestForegroundOmega omega omegaRatio branchDifference] modelFunc
+
 -- This construction assumes that modelFunc returns models with the same
 -- equilibrium frequencies for every omega.
 
