@@ -3,7 +3,9 @@ module SModel.MixtureModels where
 import SModel.Rate
 import SModel.MixtureModel
 import SModel.BranchModel
+import SModel.Property
 import Tree
+import qualified Data.Map as Map
 import qualified Data.Text as T
 
 -- NOTE: This compatibility function preserves generated MultiMixtureModel calls;
@@ -22,12 +24,17 @@ foregroundBranches tree key = edgeAttributes tree (T.pack key) getForeground
 -- This construction assumes that modelFunc returns models with the same
 -- equilibrium frequencies for every omega.
 
--- Transposes the background and foreground mixtures into site components whose
--- branch models retain the existing branch-specific mean-rate normalization.
+-- Transposes the background and foreground mixtures into site components,
+-- preserving each branch regime's properties under a distinguishing prefix.
 branchSite fs ws posP posW branchCats modelFunc =
-    Discrete [(BranchModel branchCats [background, foreground] 1, probability)
-             | ((background, probability), (foreground, _)) <-
-                 zip (unpackDiscrete normalizedBackground) (unpackDiscrete normalizedForeground)]
+    Discrete [(BranchModel branchCats [background, foreground] 1
+                  (Map.union
+                    (Map.mapKeys (T.append (T.pack "background-")) $
+                       getStatePropertyFunctions background)
+                    (Map.mapKeys (T.append (T.pack "foreground-")) $
+                       getStatePropertyFunctions foreground)),
+               probability)
+             | ((background, probability), (foreground, _)) <- normalizedModels]
   where
     backgroundDist = mkDiscrete (ws ++ [1]) fs
     acceleratedDist = mkDiscrete (repeat posW) fs
@@ -35,6 +42,7 @@ branchSite fs ws posP posW branchCats modelFunc =
     foregroundMixture = modelFunc <$> mix [1-posP, posP] [backgroundDist, acceleratedDist]
     normalizedBackground = scaleTo 1 backgroundMixture
     normalizedForeground = scaleTo 1 foregroundMixture
+    normalizedModels = zip (unpackDiscrete normalizedBackground) (unpackDiscrete normalizedForeground)
 
 branchSiteTest fs ws posP posW posSelection branchCats modelFunc =
     branchSite fs ws posP posW' branchCats modelFunc

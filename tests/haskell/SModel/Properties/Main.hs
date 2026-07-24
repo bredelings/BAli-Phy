@@ -50,7 +50,7 @@ singleComponentValues property =
 -- Compute the mixture-weighted rate for one category of a branch model.
 weightedBranchCategoryRate category (Discrete components) =
     sum [probability * rate (models!!category)
-        | (BranchModel _ models _, probability) <- components]
+        | (BranchModel _ models _ _, probability) <- components]
 
 -- Check model properties and native substitution-model numeric arrays through
 -- stable printed results.
@@ -128,11 +128,18 @@ main = do
   putStrLn $ show $ Map.member (pack "x") $ prop_smodel_properties fixedProperties
 
   let branchCategories = IntMap.fromList [(0, 0), (1, 1)]
-      modelForOmega omega = scaleBy omega (jukes_cantor dna)
+      modelForOmega omega =
+        setConstantStateProperty (pack "marker") (omega + 10) $
+        setConstantStateProperty posSelectionPropertyName (if omega > 1 then 1 else 0) $
+        setConstantStateProperty dNdSPropertyName omega $
+        scaleBy omega (jukes_cantor dna)
       branchModel = branchSiteTest [0.6, 0.4] [0.25] 0.2 3.0 1 branchCategories modelForOmega
+      nullBranchModel = branchSiteTest [0.6, 0.4] [0.25] 0.2 3.0 0 branchCategories modelForOmega
       Discrete branchComponents = branchModel
       branchWeights = [probability | (_, probability) <- branchComponents]
       scaledBranchModel = scaleBy 2.0 branchModel
+      branchProperties = getProperties (SModelOnTree () branchModel)
+      nullBranchProperties = getProperties (SModelOnTree () nullBranchModel)
 
   putStrLn $ show $ zipWith near branchWeights [0.48, 0.32, 0.12, 0.08]
   putStrLn $ show [ near (weightedBranchCategoryRate 0 branchModel) 1.0
@@ -141,3 +148,10 @@ main = do
                     , near (weightedBranchCategoryRate 0 scaledBranchModel) 2.0
                     , near (weightedBranchCategoryRate 1 scaledBranchModel) 2.0
                     ]
+  putStrLn $ show $ componentFirstValues $ lookupProperty "background-dNdS" branchProperties
+  putStrLn $ show $ componentFirstValues $ lookupProperty "foreground-dNdS" branchProperties
+  putStrLn $ show $ componentFirstValues $ lookupProperty "foreground-posSelection" branchProperties
+  putStrLn $ show $ componentFirstValues $ lookupProperty "background-marker" branchProperties
+  putStrLn $ show $ componentFirstValues $ lookupProperty "foreground-marker" branchProperties
+  putStrLn $ show $ componentFirstValues $ lookupProperty "foreground-dNdS" nullBranchProperties
+  putStrLn $ show $ componentFirstValues $ lookupProperty "foreground-posSelection" nullBranchProperties
