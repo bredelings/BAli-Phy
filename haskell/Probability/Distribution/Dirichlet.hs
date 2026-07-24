@@ -14,7 +14,7 @@ dirichletDensity as ps = dirichletDensityNative
 sampleDirichlet as = do vs <- mapM (\a-> sample $ gamma a 1) as
                         return $ map (/(sum vs)) vs
 
-data Dirichlet = Dirichlet [Double]
+newtype Dirichlet = Dirichlet [Double]
 
 instance Dist Dirichlet where
     type Result Dirichlet = [Double]
