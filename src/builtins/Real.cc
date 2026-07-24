@@ -320,7 +320,9 @@ extern "C" R::Exp simple_function_encodeDouble(vector<R::Exp>& args)
     return { std::ldexp(sig,exp) };
 }
 
-extern "C" R::Exp simple_function_integerToInvLogOdds(vector<R::Exp>& args)
+// For x>1, the IOdds parameter is log(x-1) = log(x)+log1p(-1/x).
+// After shifting a huge x, the correction and discarded bits are below double precision.
+extern "C" R::Exp simple_function_integerToLogExcess(vector<R::Exp>& args)
 {
     integer x = get_arg(args).as_integer();
 
@@ -329,13 +331,10 @@ extern "C" R::Exp simple_function_integerToInvLogOdds(vector<R::Exp>& args)
     int extra = boost::multiprecision::msb(x) - 1019;
     if (extra > 0)
     {
-	integer d = boost::multiprecision::pow(integer(2),extra);
-	x /= d;
+        x >>= extra;
 
-	std::cerr<<"extra = "<<extra<<"\n";
-
-	double p = (double)x;
-	result = -extra*log(2) -log(p); // - log1p(-1/(p*d))) which is approximately +1/(p*d)
+        double p = (double)x;
+        result = extra*log(2) + log(p);
     }
     else
     {
@@ -343,7 +342,7 @@ extern "C" R::Exp simple_function_integerToInvLogOdds(vector<R::Exp>& args)
         if (p == 1)
             result = std::numeric_limits<double>::infinity();
         else
-            result = (-log(p) - log1p(-1/p));
+            result = log(p) + log1p(-1/p);
     }
 
     return { result };
