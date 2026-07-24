@@ -125,6 +125,8 @@ bool has_loggers(const Loggers& loggers, LogValueKind kind)
         }
         else if (auto lvalue = l.as<LogValue>(); lvalue and lvalue->kind == kind)
             return true;
+        else if (l.as<LogContextFields>() and kind == LogValueKind::context)
+            return true;
     }
     return false;
 }
@@ -159,6 +161,11 @@ Hs::Exp generate_logger_values(Hs::Stmts& code, const Loggers& loggers)
                 parameters.push_back(HsG::Apply(Hs::Var("%=%"), {name, lvalue->value}));
             else
                 context.push_back(HsG::Apply(Hs::Var("%=!"), {name, lvalue->value}));
+        }
+        else if (auto fields = l.as<LogContextFields>())
+        {
+            auto prefix = Hs::Literal(Hs::String{fields->prefix});
+            context.push_back(HsG::Apply(Hs::Var("prefixContextFields"), {prefix, fields->value}));
         }
         else
             std::abort();

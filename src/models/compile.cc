@@ -190,6 +190,7 @@ string default_markov_model(const alphabet& a)
 
 Hs::Exp generated_code_t::generate() const
 {
+    const bool action = is_action();
     auto code = stmts;
 
     auto loggers2 = loggers;
@@ -198,7 +199,22 @@ Hs::Exp generated_code_t::generate() const
 
     auto R = simplify_intToDouble(E);
 
-    if (not perform_function)
+    if (not action)
+    {
+        if (has_loggers())
+        {
+            R = HsG::Tuple({R, L});
+
+            // In a pure helper, logger generation can only append local let statements.
+            for(auto& [_, stmt]: code.stmts | views::reverse)
+            {
+                auto let_qual = stmt.to<Hs::LetQual>();
+                assert(let_qual);
+                R = Hs::Let(let_qual->binds, {noloc, R});
+            }
+        }
+    }
+    else if (not perform_function)
     {
         if (has_loggers())
         {
@@ -237,7 +253,7 @@ Hs::Exp generated_code_t::generate() const
     }
 
     // if is_action() is false, we should not have a do expression.
-    assert(is_action() or not R.is_a<Hs::Do>());
+    assert(action or not R.is_a<Hs::Do>());
 
     for(auto& x : haskell_lambda_vars | views::reverse)
         R = Hs::Lambda({{noloc, Hs::VarPattern({noloc, x})}}, {noloc, R});
@@ -266,6 +282,12 @@ void generated_code_t::log_value(const string& name, Hs::Exp value, const type_t
     }
 
     loggers.push_back(LogValue(name, value, kind));
+}
+
+// Adds one opaque context computation that supplies and names all of its own fields.
+void generated_code_t::log_context_fields(const string& identity, const string& prefix, Hs::Exp value)
+{
+    loggers.push_back(LogContextFields(identity, prefix, value));
 }
 
 void generated_code_t::log_sub(const string& name, const Hs::Var& log_var, const Loggers& ls)

@@ -386,13 +386,30 @@ Rule convert_rule(const Rules& R, const RawRule& raw_rule)
                 throw myexception()<<"In rule for "<<name<<": entry in \"computed\" is not an object";
             const auto& computed_object = x.as_object();
             ComputedRule c;
-            c.name = required_string(computed_object, "name", name);
-	    c.value = parse_rule_template_expr(required_string(computed_object, "value", name), name + ": computed value for '"+c.name+"'");
             if (auto context = optional_string(computed_object, "context", name))
             {
-                if (*context != "value")
-                    throw myexception()<<"In rule for "<<name<<": unknown computed context kind '"<<*context<<"'";
-                c.kind = ComputedKind::context_value;
+                if (*context == "value")
+                    c.kind = ComputedKind::context_value;
+                else if (*context == "object")
+                    c.kind = ComputedKind::context_object;
+                else
+                    throw myexception()
+                        <<"In rule for "<<name<<": unknown computed context kind '"<<*context<<"'";
+            }
+
+            if (c.kind == ComputedKind::context_object)
+            {
+                if (maybe_field(computed_object, "name"))
+                    throw myexception()
+                        <<"In rule for "<<name<<": a computed context object generates its own names";
+                auto value = required_string(computed_object, "value", name);
+                c.value = parse_rule_template_expr(value, name + ": computed context object");
+            }
+            else
+            {
+                c.name = required_string(computed_object, "name", name);
+                auto value = required_string(computed_object, "value", name);
+                c.value = parse_rule_template_expr(value, name + ": computed value for '"+*c.name+"'");
             }
             rule.computed.push_back(std::move(c));
 	}

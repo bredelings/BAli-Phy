@@ -27,12 +27,13 @@ struct RuleArg
 enum class ComputedKind
 {
     parameter,
-    context_value
+    context_value,
+    context_object
 };
 
 struct ComputedRule
 {
-    std::string name;
+    std::optional<std::string> name;
     RuleModelExpr value;
     ComputedKind kind = ComputedKind::parameter;
 };

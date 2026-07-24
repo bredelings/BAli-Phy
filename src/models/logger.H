@@ -41,6 +41,22 @@ struct LogValue: public LoggerObj
     {}
 };
 
+// Represents an opaque context computation whose runtime object supplies its field names.
+struct LogContextFields: public LoggerObj
+{
+    std::string identity; // Stable origin used only by the logger-name simplifier.
+    std::string prefix;
+    Hs::Exp value;
+
+    LogContextFields* clone() const {return new LogContextFields(*this);}
+
+    std::string get_name() const {return identity;}
+
+    LogContextFields(const std::string& i, const std::string& p, const Hs::Exp& e)
+        :identity(i), prefix(p), value(e)
+    {}
+};
+
 struct LogSub: public LoggerObj
 {
     std::string prefix;

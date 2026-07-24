@@ -386,6 +386,12 @@ contextFields actions = do
     fields <- sequence actions
     return (concat fields)
 
+-- Prefix every field returned by one context computation without evaluating it more than once.
+prefixContextFields :: Key -> ContextAction Object -> ContextAction Object
+prefixContextFields (Key prefix) action = do
+    fields <- action
+    return [(Key (prefix <> name), value) | (Key name, value) <- fields]
+
 -- NOTE: The type system cannot express this requirement: the fields returned by a ContextAction
 -- must not be changeable, although the action may inspect modifiables in its context.
 infix 1 %=%, %>%, %=!, %>!

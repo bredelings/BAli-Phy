@@ -39,6 +39,7 @@ struct generated_code_t
     Hs::Exp generate() const;
 
     void log_value(const std::string&, Hs::Exp, const type_t&, LogValueKind = LogValueKind::parameter);
+    void log_context_fields(const std::string&, const std::string&, Hs::Exp);
     void log_sub(const std::string&, const Hs::Var&, const Loggers&);
 
     Hs::Exp add_arguments(const Hs::Exp& E, const std::map<std::string,Hs::Exp>& state_values) const;

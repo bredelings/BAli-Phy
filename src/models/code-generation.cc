@@ -1243,13 +1243,23 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
 
     if (not rule->computed.empty())
     {
-        for(auto& x: rule->computed)
+        for(int i = 0; i < rule->computed.size(); i++)
         {
-            auto x_name = x.name;
+            auto& x = rule->computed[i];
+            auto& value = x.value;
+            if (x.kind == ComputedKind::context_object)
+            {
+                auto action = make_rule_template_expr(value, argument_environment);
+                auto identity = name + ":context-object#" + std::to_string(i);
+                result.code.log_context_fields(identity, name + ":", action);
+                continue;
+            }
+
+            assert(x.name);
+            auto x_name = *x.name;
             auto x_log_name = name + ":" + x_name;
             auto x_var = scope2.get_var(x_name);
 
-            auto& value = x.value;
             auto x_type = type_t("unknown_type");
             HsG::Let(result.code.stmts, x_var, make_rule_template_expr(value, argument_environment));
 
