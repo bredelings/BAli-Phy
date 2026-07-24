@@ -3,7 +3,7 @@ module Data.BitVector where
 import Compiler.FFI.Runtime (RuntimeValue)
 
 data CBitVector = CBitVector
-data BitVector = BitVector CBitVector
+newtype BitVector = BitVector CBitVector
 
 instance RuntimeValue CBitVector
 
