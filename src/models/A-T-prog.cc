@@ -957,6 +957,13 @@ std::string generate_atmodel_program(const variables_map& args,
     for(int i=0;i<SMs.size();i++)
         add(used_states, SMs[i].code.used_states);
 
+    // Foreground categories come from attributes on the supplied topology, so they cannot retain
+    // their intended branch identities while topology changes.
+    if (used_states.contains("branch_categories") and
+        not fixed.contains("tree") and not fixed.contains("topology"))
+        throw myexception()<<"Models using foreground branch categories require a fixed tree topology.\n"
+                           <<"  Use --fix topology=<treefile> or --fix tree=<treefile>.";
+
     // M5. Branch categories
     Hs::Exp branch_categories;
     if (used_states.count("branch_categories"))
