@@ -2,12 +2,29 @@
 
 ## Features
 
-- Compute posterior mean rate, dNdS and probability of positive selection.
+- Display column and character properties like rate, dNdS and positive selection.
+- More precise detection of positive selection via Rao-Blackwellization.
+- Models
+  * Branch test: Bayesian test for different background and foreground dN/dS values
+  * Gamma across-site rate variation via quadrature instead of equal binning.
+
+## MCMC
+- Use log(branch-length-ratio) when sliding an attachment point between two nodes.
 
 ## Fixes
 
-- A variety of bug fixes.
-- Fix substitution into Haskell type headers.
+- Fix multi-nucleotide mutation model for codons.
+- Require fixed topology for foreground/background branch models.
+- Fix Gibbs-sampling categorical variables when number of dimensions changes.
+- Fix Hastings ratio for one of the SPR moves.
+- Fix likelihood rescaling for fixed alignments.
+
+## Runtime/Interpreter
+
+- Use typed AST for runtime code.
+- Record USE/FORCE edges in the same list.
+- Allow recording dependent USE/FORCE edges in addition to fixed edges.
+  * Faster C++ operations on Haskell lists.
 
 ## Haskell
 
@@ -19,8 +36,8 @@
 - Implement `LANGUAGE ImportQualifiedPost`
 - Fix `LANGUAGE RankNTypes`
 - Fix `LANGUAGE RecursiveDo`
-- Print usable error message for pattern-match errors.
-- Improve diagnostics.
+- Print usable runtime error message for pattern-match failure.
+- Improve compile-time diagnostic messages.
 - Correctly handle nested infix declarations.
 - Disentangle disambiguation and renaming
 - Implement `Data.Map`
@@ -31,23 +48,23 @@
 - Implement `Data.Vector.Unboxed`
 - Implement checking for _open_ type families.
 - Implement _closed_ type families.
-- 
 - UTF8:
   * Parse UTF8 variable names in Haskell files.
   * `Char` is now a unicode code point.
   * `Text` is now UTF8.
   * `CPPString` is now UTF8.
+- Fixes:
+  * Fix scope on pattern-guard binders.
+  * Fix negative numbers in patterns.
 
 ## Internal
 
 - Use typed AST for Haskell code.
+- Refactor branch-site model as a mixture of branch models.
+- Allow rejecting a Metropolis-Hastings proposal by using a proposal ratio of 0.
+- Automatically generate wrapped foriegn functions using new "trcall" interface.
 
-## Runtime/Interpreter
 
-- Use typed AST for runtime code
-- Allow recording dependent USE/FORCE edges in addition to fixed edges.
-- Faster operations on lists using dependent edges.
-- Record USE/FORCE edges in the same list.
 
 # 4.2 (May 27, 2026)
 
