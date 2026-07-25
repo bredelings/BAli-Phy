@@ -61,5 +61,6 @@
             "context": "object"
         }
     ],
+    "description": "The posterior probability that posSelection=1 is the posterior probability that some sites undergo positive selection on the foreground branches.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
     "extract": "all"
 }

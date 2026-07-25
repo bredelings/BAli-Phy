@@ -59,7 +59,7 @@
             "context": "object"
         }
     ],
-    "description":"A Bayesian test of positive selection using the BUSTED-S model.  The BUSTED-S model handles synonymous rate variation by adding Gamma-distributed across-site rate variation (ASRV) to the BUSTED model using n=3 bins.",
+    "description":"A Bayesian test of positive selection using the BUSTED-S model.  The BUSTED-S model handles synonymous rate variation by adding Gamma-distributed across-site rate variation (ASRV) to the BUSTED model using n=3 bins.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of the posterior probability of positive selection than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
     "extract": "all",
     "citation": {"type": "article",
 		 "title": "Synonymous Site-to-Site Substitution Rate Variation Dramatically Inflates False Positive Rates of Selection Analyses: Ignore at Your Own Peril",
