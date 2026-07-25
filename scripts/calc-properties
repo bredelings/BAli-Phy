@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 
 import argparse
+import bisect
 import json
 import math
+import random
 import sys
+
+
+# A 100-value sample normally narrows an order statistic substantially in one
+# count pass. Budgeting 16 KiB per cell conservatively covers its Python objects.
+MEDIAN_SAMPLE_SIZE = 100
+MEDIAN_BYTES_PER_CELL = 16 * 1024
 
 
 class PropertyAccumulator:
@@ -198,7 +206,7 @@ class PropertyAccumulator:
         self.retained_samples += 1
 
     # Convert the streaming moments into posterior summaries and count matrices.
-    def result(self, selection, retained_samples_by_chain):
+    def result(self, selection, retained_samples_by_chain, medians):
         summaries = {}
         for property_name in self.property_names:
             means = {}
@@ -221,6 +229,7 @@ class PropertyAccumulator:
             summaries[property_name] = {
                 "mean": means,
                 "sd": standard_deviations,
+                "median": medians[property_name],
                 "count": self.counts[property_name],
             }
 
@@ -236,6 +245,154 @@ class PropertyAccumulator:
             "retained_samples_by_chain": retained_samples_by_chain,
             "properties": summaries,
         }
+
+
+class MedianCell:
+    # Initialize the exact order statistic within an initially unbounded interval.
+    def __init__(self, count):
+        self.lower = None
+        self.upper = None
+        self.active_count = count
+        self.target_rank = (count - 1) // 2 if count else None
+        self.result = None
+        self.done = count == 0
+        self.positions = None
+        self.position_index = None
+        self.samples = None
+        self.pivots = None
+        self.bucket_counts = None
+        self.observed_count = None
+
+    # Select active-stream positions before scanning, avoiding per-value RNG work.
+    def start_sampling(self, generator):
+        sample_size = min(MEDIAN_SAMPLE_SIZE, self.active_count)
+        self.positions = sorted(generator.sample(range(self.active_count), sample_size))
+        self.position_index = 0
+        self.samples = []
+        self.observed_count = 0
+
+    # Retain a value exactly when its active-stream position was selected.
+    def observe_sample(self, value):
+        if (
+            (self.lower is not None and value <= self.lower)
+            or (self.upper is not None and value >= self.upper)
+        ):
+            return
+        if (
+            self.position_index < len(self.positions)
+            and self.observed_count == self.positions[self.position_index]
+        ):
+            self.samples.append(value)
+            self.position_index += 1
+        self.observed_count += 1
+
+    # Resolve a small cell directly or retain unique sampled values as pivots.
+    def finish_sampling(self):
+        if self.observed_count != self.active_count:
+            raise ValueError("property samples changed while computing medians")
+        if len(self.samples) != len(self.positions):
+            raise ValueError("property samples changed while computing medians")
+
+        self.positions = None
+        self.position_index = None
+        if self.active_count <= MEDIAN_SAMPLE_SIZE:
+            self.samples.sort()
+            self.result = self.samples[self.target_rank]
+            self.done = True
+            self.samples = None
+            return
+
+        self.pivots = sorted(set(self.samples))
+        self.samples = None
+
+    # Allocate alternating open-interval and pivot-equality buckets.
+    def start_counting(self):
+        self.bucket_counts = [0] * (2 * len(self.pivots) + 1)
+        self.observed_count = 0
+
+    # Place an active value in its ordered interval or pivot-equality bucket.
+    def observe_count(self, value):
+        if (
+            (self.lower is not None and value <= self.lower)
+            or (self.upper is not None and value >= self.upper)
+        ):
+            return
+
+        pivot_index = bisect.bisect_left(self.pivots, value)
+        if pivot_index < len(self.pivots) and self.pivots[pivot_index] == value:
+            bucket_index = 2 * pivot_index + 1
+        else:
+            bucket_index = 2 * pivot_index
+        self.bucket_counts[bucket_index] += 1
+        self.observed_count += 1
+
+    # Resolve a pivot rank or narrow the search while preserving its relative rank.
+    def finish_counting(self):
+        if self.observed_count != self.active_count:
+            raise ValueError("property samples changed while computing medians")
+
+        # These buckets partition the active values in sorted order. The bucket
+        # containing the target therefore either resolves it or preserves it
+        # inside a smaller open interval after subtracting preceding counts.
+        preceding = 0
+        for bucket_index, count in enumerate(self.bucket_counts):
+            if self.target_rank >= preceding + count:
+                preceding += count
+                continue
+
+            if bucket_index % 2:
+                self.result = self.pivots[bucket_index // 2]
+                self.done = True
+            else:
+                gap_index = bucket_index // 2
+                if gap_index:
+                    self.lower = self.pivots[gap_index - 1]
+                if gap_index < len(self.pivots):
+                    self.upper = self.pivots[gap_index]
+                self.active_count = count
+                self.target_rank -= preceding
+            self.pivots = None
+            self.bucket_counts = None
+            return
+
+        raise ValueError("could not locate the posterior median")
+
+
+class MedianBlockAccumulator:
+    # Visit unresolved cells in one character block during a sampling or counting pass.
+    def __init__(self, characters, sampling):
+        self.characters = [
+            (
+                name,
+                character_index,
+                tuple(
+                    (property_name, cell)
+                    for property_name, cell in property_cells
+                    if not cell.done
+                ),
+            )
+            for name, character_index, property_cells in characters
+            if any(not cell.done for _property_name, cell in property_cells)
+        ]
+        self.sampling = sampling
+
+    # Replay values already validated by the initial streaming-moments pass.
+    def add_sample(self, sample, _context):
+        cat_states = sample["catStates"]
+        properties = sample["properties"]
+        if self.sampling:
+            observe = MedianCell.observe_sample
+        else:
+            observe = MedianCell.observe_count
+
+        for name, character_index, property_cells in self.characters:
+            pair = cat_states[name][character_index]
+            if pair is None:
+                continue
+            component_index, state_index = pair
+            for property_name, cell in property_cells:
+                value = float(properties[property_name][component_index][state_index])
+                observe(cell, value)
 
 
 # Define the small public CLI and reject inconsistent selection arguments early.
@@ -269,6 +426,13 @@ def parse_args(argv=None):
         metavar="N",
         help="retain every Nth eligible sample in each chain",
     )
+    parser.add_argument(
+        "--median-memory",
+        type=int,
+        default=256,
+        metavar="MIB",
+        help="target MIB of working memory for exact median calculation",
+    )
     args = parser.parse_args(argv)
 
     if args.skip is not None and args.skip < 0:
@@ -277,6 +441,8 @@ def parse_args(argv=None):
         parser.error("--until must be non-negative")
     if args.subsample <= 0:
         parser.error("--subsample must be positive")
+    if args.median_memory <= 0:
+        parser.error("--median-memory must be positive")
     if (
         args.skip is not None
         and args.until is not None
@@ -339,6 +505,91 @@ def accumulate_chain(filename, args, accumulator):
     return retained_samples
 
 
+# Replay every selected chain and detect changes between summary passes.
+def run_median_pass(args, accumulator, retained_samples_by_chain):
+    replayed_samples_by_chain = [
+        accumulate_chain(filename, args, accumulator) for filename in args.filenames
+    ]
+    if replayed_samples_by_chain != retained_samples_by_chain:
+        raise ValueError("property sample files changed while computing medians")
+
+
+# Compute exact lower medians in memory-bounded blocks of sequence characters.
+def calculate_medians(args, moments, retained_samples_by_chain):
+    medians = {
+        property_name: {
+            name: [None] * moments.sequence_lengths[name]
+            for name in moments.sequence_names
+        }
+        for property_name in moments.property_names
+    }
+    if not moments.property_names:
+        return medians
+
+    coordinates = [
+        (name, character_index)
+        for name in moments.sequence_names
+        for character_index in range(moments.sequence_lengths[name])
+    ]
+    budget_bytes = args.median_memory * 1024 * 1024
+    cells_per_block = max(1, budget_bytes // MEDIAN_BYTES_PER_CELL)
+    characters_per_block = max(1, cells_per_block // len(moments.property_names))
+
+    # Pivot randomness changes only the number of passes, so fix its seed to make
+    # resource use reproducible without affecting the exact answer.
+    generator = random.Random(0)
+
+    for block_start in range(0, len(coordinates), characters_per_block):
+        characters = []
+        cells = []
+        block_coordinates = coordinates[
+            block_start : block_start + characters_per_block
+        ]
+        for name, character_index in block_coordinates:
+            property_cells = []
+            for property_name in moments.property_names:
+                count = moments.counts[property_name][name][character_index]
+                cell = MedianCell(count)
+                property_cells.append((property_name, cell))
+                cells.append((property_name, name, character_index, cell))
+            characters.append((name, character_index, property_cells))
+
+        while any(not cell.done for _property_name, _name, _character_index, cell in cells):
+            for _property_name, _name, _character_index, cell in cells:
+                if not cell.done:
+                    cell.start_sampling(generator)
+            run_median_pass(
+                args,
+                MedianBlockAccumulator(characters, sampling=True),
+                retained_samples_by_chain,
+            )
+            for _property_name, _name, _character_index, cell in cells:
+                if not cell.done:
+                    cell.finish_sampling()
+
+            unresolved = [
+                cell
+                for _property_name, _name, _character_index, cell in cells
+                if not cell.done
+            ]
+            if not unresolved:
+                break
+            for cell in unresolved:
+                cell.start_counting()
+            run_median_pass(
+                args,
+                MedianBlockAccumulator(characters, sampling=False),
+                retained_samples_by_chain,
+            )
+            for cell in unresolved:
+                cell.finish_counting()
+
+        for property_name, name, character_index, cell in cells:
+            medians[property_name][name][character_index] = cell.result
+
+    return medians
+
+
 # Combine selected records from all chains and construct the summary document.
 def calculate_summary(args):
     accumulator = PropertyAccumulator()
@@ -350,7 +601,8 @@ def calculate_summary(args):
         "until": args.until,
         "subsample": args.subsample,
     }
-    return accumulator.result(selection, retained_samples_by_chain)
+    medians = calculate_medians(args, accumulator, retained_samples_by_chain)
+    return accumulator.result(selection, retained_samples_by_chain, medians)
 
 
 # Report validation and I/O failures without exposing implementation tracebacks.

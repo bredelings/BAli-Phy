@@ -82,6 +82,10 @@ class CalcPropertiesTests(unittest.TestCase):
             {"A": [2.5, 5.0], "B": [0.5]},
         )
         self.assertEqual(
+            output["properties"]["rate"]["median"],
+            {"A": [1.0, 10.0], "B": [2.0]},
+        )
+        self.assertEqual(
             output["properties"]["rate"]["count"],
             {"A": [2, 2], "B": [2]},
         )
@@ -92,6 +96,10 @@ class CalcPropertiesTests(unittest.TestCase):
         self.assertEqual(
             output["properties"]["score"]["sd"],
             {"A": [3.0, 2.0], "B": [0.5]},
+        )
+        self.assertEqual(
+            output["properties"]["score"]["median"],
+            {"A": [-1.0, 4.0], "B": [1.0]},
         )
         self.assertEqual(
             output["properties"]["score"]["count"],
@@ -116,6 +124,29 @@ class CalcPropertiesTests(unittest.TestCase):
         self.assertEqual(rate["mean"], {"A": [1.0e12 + 2.0, 7.0]})
         self.assertAlmostEqual(rate["sd"]["A"][0], math.sqrt(2.0 / 3.0))
         self.assertEqual(rate["sd"]["A"][1], 0.0)
+        self.assertEqual(rate["median"], {"A": [1.0e12 + 2.0, 7.0]})
+
+    # Use the lower empirical median so monotone transformations preserve it.
+    def test_uses_lower_median_for_even_sample_counts(self):
+        samples = [
+            {
+                "iter": 10 * index,
+                "catStates": {"A": [[0, 0]]},
+                "properties": {
+                    "rate": [[value]],
+                    "logRate": [[math.log(value)]],
+                },
+            }
+            for index, value in enumerate((1.0, 100.0))
+        ]
+
+        result = self.run_calculator([samples])
+        output = self.assert_calculator_succeeds(result)
+
+        rate_median = output["properties"]["rate"]["median"]["A"][0]
+        log_rate_median = output["properties"]["logRate"]["median"]["A"][0]
+        self.assertEqual(rate_median, 1.0)
+        self.assertEqual(log_rate_median, math.log(rate_median))
 
     # Check strict skip, inclusive until, and post-filter per-chain stride semantics.
     def test_filters_samples_by_iteration_and_subsample(self):
@@ -138,6 +169,7 @@ class CalcPropertiesTests(unittest.TestCase):
 
         self.assertEqual(output["retained_samples"], 2)
         self.assertEqual(output["properties"]["rate"]["mean"], {"A": [20.0]})
+        self.assertEqual(output["properties"]["rate"]["median"], {"A": [10.0]})
         self.assertEqual(output["properties"]["rate"]["count"], {"A": [2]})
 
     # Check that chains are pooled by retained draw rather than by chain mean.
@@ -165,6 +197,7 @@ class CalcPropertiesTests(unittest.TestCase):
         self.assertEqual(output["retained_samples"], 3)
         self.assertEqual(output["retained_samples_by_chain"], [2, 1])
         self.assertAlmostEqual(output["properties"]["rate"]["mean"]["A"][0], 13.0 / 3.0)
+        self.assertEqual(output["properties"]["rate"]["median"], {"A": [3.0]})
         self.assertEqual(output["properties"]["rate"]["count"], {"A": [3]})
 
     # Check that unavailable draws are omitted and represented by per-cell counts.
@@ -193,7 +226,90 @@ class CalcPropertiesTests(unittest.TestCase):
         self.assertEqual(output["retained_samples"], 3)
         self.assertEqual(output["properties"]["rate"]["mean"], {"A": [3.0, None]})
         self.assertEqual(output["properties"]["rate"]["sd"], {"A": [1.0, None]})
+        self.assertEqual(output["properties"]["rate"]["median"], {"A": [2.0, None]})
         self.assertEqual(output["properties"]["rate"]["count"], {"A": [2, 0]})
+
+    # Exercise pivot refinement and equality buckets beyond the retained sample size.
+    def test_refines_large_unique_and_duplicate_samples(self):
+        samples = []
+        for value in range(301):
+            if value < 140:
+                duplicate = 0.0
+            elif value < 240:
+                duplicate = 7.0
+            else:
+                duplicate = 10.0
+            samples.append(
+                {
+                    "iter": value,
+                    "catStates": {"A": [[0, 0], [0, 1]]},
+                    "properties": {"rate": [[float(value), duplicate]]},
+                }
+            )
+
+        result = self.run_calculator([samples])
+        output = self.assert_calculator_succeeds(result)
+
+        self.assertEqual(output["properties"]["rate"]["median"], {"A": [150.0, 7.0]})
+
+    # Force character partitioning and require the memory budget not to affect results.
+    def test_partitions_characters_under_small_memory_budget(self):
+        character_count = 80
+        samples = []
+        for sample_index in range(5):
+            samples.append(
+                {
+                    "iter": 10 * sample_index,
+                    "catStates": {
+                        "A": [[0, character_index] for character_index in range(character_count)]
+                    },
+                    "properties": {
+                        "rate": [
+                            [
+                                float(character_index + sample_index)
+                                for character_index in range(character_count)
+                            ]
+                        ],
+                        "score": [
+                            [
+                                float(2 * character_index - sample_index)
+                                for character_index in range(character_count)
+                            ]
+                        ],
+                    },
+                }
+            )
+
+        small = self.assert_calculator_succeeds(
+            self.run_calculator([samples], "--median-memory=1")
+        )
+        large = self.assert_calculator_succeeds(
+            self.run_calculator([samples], "--median-memory=256")
+        )
+
+        self.assertEqual(small, large)
+        self.assertEqual(
+            small["properties"]["rate"]["median"]["A"],
+            [float(character_index + 2) for character_index in range(character_count)],
+        )
+        self.assertEqual(
+            small["properties"]["score"]["median"]["A"],
+            [float(2 * character_index - 2) for character_index in range(character_count)],
+        )
+
+    # Reject a budget that cannot represent a positive amount of working memory.
+    def test_rejects_nonpositive_median_memory(self):
+        samples = [
+            {
+                "iter": 0,
+                "catStates": {"A": [[0, 0]]},
+                "properties": {"rate": [[1.0]]},
+            }
+        ]
+
+        result = self.run_calculator([samples], "--median-memory=0")
+
+        self.assert_validation_error(result, "--median-memory", "positive")
 
     # Reject changing character counts instead of silently truncating with zip().
     def test_rejects_changed_sequence_lengths(self):
