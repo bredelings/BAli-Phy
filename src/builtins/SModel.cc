@@ -143,6 +143,15 @@ extern "C" closure builtin_function_checkReversible(OperationArgs& Args)
     return { checkReversible(Q,pi) };
 }
 
+// Count the nucleotide positions at which two triplet states differ.
+static unsigned triplet_hamming_distance(const Triplets& triplets, int state1, int state2)
+{
+    unsigned distance = 0;
+    for (int position = 0; position < 3; position++)
+        distance += triplets.sub_nuc(state1, position) != triplets.sub_nuc(state2, position);
+    return distance;
+}
+
 extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
@@ -162,7 +171,23 @@ extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
     
     double scale=0;
 
-    if (N == a.size()) 
+    // A triplet transition contributes one change for each nucleotide position
+    // that differs, and division by the alphabet width gives a per-site rate.
+    if (auto triplets = dynamic_cast<const Triplets*>(&a))
+    {
+	for(int s1=0;s1<N;s1++)
+	{
+	    double temp = 0;
+	    for(int s2=0;s2<N;s2++)
+	    {
+		int state1 = smap[s1].as_int();
+		int state2 = smap[s2].as_int();
+		temp += triplet_hamming_distance(*triplets, state1, state2) * Q(s1,s2);
+	    }
+	    scale += temp*pi[s1];
+	}
+    }
+    else if (N == a.size())
     {
 	for(int i=0;i<Q.rows();i++)
 	    scale -= pi[i]*Q(i,i);

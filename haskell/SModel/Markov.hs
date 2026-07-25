@@ -104,8 +104,8 @@ instance HasProperties t Markov where
     getProperties (SModelOnTree _ model) = statePropertyMapToComponentPropertyMap $ getStateProperties model
 
 -- A markov model needs a map from state -> letter in order to have a rate!
--- For codon models, we basically use smap = id for nucleotides (then divide by three)
---   and amino acids.
+-- For codon models, nucleotide differences between codons are counted and the
+-- result is divided by three to give the rate per nucleotide site.
 -- If we had a covarion model on codons, then we'd need to first collaps the state to
 -- a codon, and then collapse the codons to either (i) amino acids or (ii) codons, and then divide by three.
 
