@@ -436,16 +436,6 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
     auto arg4 = Args.evaluate_slot_to_value(4);
     const auto& pi1 = arg4.as_<Box<DenseVector<double>>>();
 
-    // Compute the average rate at equilibrium for R1.
-//    double rate = 0;
-//    for(int i=0;i<4;i++)
-//    {
-//        double sum = 0;
-//        for(int j=0;j<4;j++)
-//            if (i!=j) sum += R1(i,j);
-//        rate += pi1[i].as_double() * sum;
-//    }
-
     // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
     assert(v2 >= 0);
     assert(v3 >= 0);
@@ -459,40 +449,52 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
 
     object_ptr<Box<DenseMatrix<double>>> R( new Box<DenseMatrix<double>>(n,n) );
 
-    // Compute sums for unscaled 2-nuc and 3-nuc mutations.
-    double sum2 = 0;
-    double sum3 = 0;
+    valarray<double> nucleotide_frequencies(pi1.data(), pi1.size());
+    auto frequencies = get_codon_frequencies_from_independent_nucleotide_frequencies(T, nucleotide_frequencies);
+
+    // If E[h] is the equilibrium event rate of the unscaled h-hit component,
+    // scaling Q[h] by v[h]*E[1]/E[h] gives event-rate ratios 1:v2:v3.
+    double event_rates[4] = {};
     for(int i=0;i<n;i++)
     {
 	for(int j=0;j<n;j++)
         {
 	    if (i==j) continue;
 
-	    int nmuts=0;
-	    for(int p=0;p<3;p++)
-		if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
-		    nmuts++;
-
-            if (nmuts == 1) continue;
-
-            double prod = 1;
-            for(int p=0;p<3;p++)
+	    unsigned nmuts = triplet_hamming_distance(T, i, j);
+	    double raw_rate = 1;
+	    if (nmuts == 1)
             {
-                if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
+                for(int p=0;p<3;p++)
                 {
-                    int to = T.sub_nuc(j,p);
-                    prod *= pi1[to];
+                    if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
+                    {
+                        int from = T.sub_nuc(i,p);
+                        int to = T.sub_nuc(j,p);
+                        raw_rate = R1(from,to);
+                    }
                 }
             }
+            else
+            {
+                for(int p=0;p<3;p++)
+                    if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
+                        raw_rate *= pi1[T.sub_nuc(j,p)];
+            }
 
-            if (nmuts == 2)
-                sum2 += prod;
-            else if (nmuts == 3)
-                sum3 += prod;
+            (*R)(i,j) = raw_rate;
+            event_rates[nmuts] += frequencies[i] * raw_rate;
         }
     }
 
-    // Compute the pairwise rates.
+    double class_scales[4] = {
+        0,
+        1,
+        v2 * event_rates[1] / event_rates[2],
+        v3 * event_rates[1] / event_rates[3]
+    };
+
+    // Scale each event class and reconstruct the diagonal from the row sum.
     for(int i=0;i<n;i++)
     {
 	double sum = 0;
@@ -500,46 +502,9 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
 	{
 	    if (i==j) continue;
 
-	    int nmuts=0;
-	    for(int p=0;p<3;p++)
-		if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
-		    nmuts++;
-
-            std::optional<double> r;
-	    if (nmuts == 1)
-	    {
-                for(int p=0;p<3;p++)
-                {
-                    if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
-                    {
-                        int from = T.sub_nuc(i,p);
-                        int to = T.sub_nuc(j,p);
-                        r = R1(from,to);
-                    }
-		}
-	    }
-            else
-            {
-                double prod = 1;
-                for(int p=0;p<3;p++)
-                {
-                    if (T.sub_nuc(i,p) != T.sub_nuc(j,p))
-                    {
-                        int to = T.sub_nuc(j,p);
-                        prod *= pi1[to];
-                    }
-                }
-
-                if (nmuts == 2)
-                    r = v2 * prod/sum2;
-                else if (nmuts == 3)
-                    r = v3 * prod/sum3;
-                else
-                    std::abort();
-            }
-
-	    (*R)(i,j) = r.value();
-	    sum += *r;
+	    unsigned nmuts = triplet_hamming_distance(T, i, j);
+	    (*R)(i,j) *= class_scales[nmuts];
+	    sum += (*R)(i,j);
 	}
 	(*R)(i,i) = -sum;
     }
