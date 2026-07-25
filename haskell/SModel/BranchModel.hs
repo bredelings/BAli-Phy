@@ -11,6 +11,7 @@ import           Tree
 import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
+import qualified Data.Text as T
 
 {-
   This model is for PAML's branch-model, where every branch can have a different Q matrix
@@ -20,6 +21,17 @@ import qualified Data.Map as Map
 -- Selects one same-equilibrium model per branch category and tracks its common
 -- scale and reportable component properties.
 data BranchModel m = BranchModel (IntMap Int) [m] Double StatePropertyMap
+
+-- Builds a branch model and preserves each category model's properties under its supplied prefix.
+-- The category models must share equilibrium frequencies.
+makeBranchModel categories prefixedModels =
+    BranchModel categories models 1 properties
+  where
+    models = fmap snd prefixedModels
+    properties =
+        foldr Map.union Map.empty
+          [Map.mapKeys (T.append prefix) (getStatePropertyFunctions model)
+          | (prefix, model) <- prefixedModels]
 
 instance HasAlphabet m => HasAlphabet (BranchModel m) where
     getAlphabet (BranchModel _ (model:_) _ _) = getAlphabet model

@@ -3,10 +3,8 @@ module SModel.BranchSite where
 import SModel.Rate
 import SModel.MixtureModel
 import SModel.BranchModel
-import SModel.Property
 import Tree
 import qualified Data.IntMap as IntMap
-import qualified Data.Map as Map
 import qualified Data.Text as T
 
 -- No Attribute
@@ -28,17 +26,14 @@ omegaBranchModel branchCats omegas modelFunc =
             error ("omegaBranchModel: branch category " ++ show category ++
                    " has no corresponding omega among " ++ show (length omegas) ++ " values")
       [] ->
-            BranchModel branchCats models 1 properties
+            makeBranchModel branchCats prefixedModels
   where
     models = [scaleTo 1 (modelFunc omega) | omega <- omegas]
     invalidCategories =
         [category | category <- IntMap.elems branchCats,
                     category < 0 || category >= length models]
     prefix i = T.pack ("branch" ++ show i ++ "-")
-    properties =
-        foldr Map.union Map.empty
-          [Map.mapKeys (T.append (prefix i)) (getStatePropertyFunctions model)
-          | (i, model) <- zip [0..] models]
+    prefixedModels = [(prefix i, model) | (i, model) <- zip [0..] models]
 
 -- Selects the shared null omega or the independently scaled foreground omega.
 branchTestForegroundOmega omega omegaRatio branchDifference =
@@ -55,12 +50,8 @@ twoOmegaBranchModel branchCats omega omegaRatio branchDifference modelFunc =
 -- Transposes the background and foreground mixtures into site components,
 -- preserving each branch regime's properties under a distinguishing prefix.
 branchSite fs ws posP posW branchCats modelFunc =
-    Discrete [(BranchModel branchCats [background, foreground] 1
-                  (Map.union
-                    (Map.mapKeys (T.append (T.pack "background-")) $
-                       getStatePropertyFunctions background)
-                    (Map.mapKeys (T.append (T.pack "foreground-")) $
-                       getStatePropertyFunctions foreground)),
+    Discrete [(makeBranchModel branchCats
+                  [(T.pack "background-", background), (T.pack "foreground-", foreground)],
                probability)
              | ((background, probability), (foreground, _)) <- normalizedModels]
   where
