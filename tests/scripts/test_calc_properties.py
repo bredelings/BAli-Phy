@@ -78,6 +78,10 @@ class CalcPropertiesTests(unittest.TestCase):
             {"A": [3.5, 15.0], "B": [2.5]},
         )
         self.assertEqual(
+            output["properties"]["rate"]["sd"],
+            {"A": [2.5, 5.0], "B": [0.5]},
+        )
+        self.assertEqual(
             output["properties"]["rate"]["count"],
             {"A": [2, 2], "B": [2]},
         )
@@ -86,9 +90,32 @@ class CalcPropertiesTests(unittest.TestCase):
             {"A": [2.0, 6.0], "B": [1.5]},
         )
         self.assertEqual(
+            output["properties"]["score"]["sd"],
+            {"A": [3.0, 2.0], "B": [0.5]},
+        )
+        self.assertEqual(
             output["properties"]["score"]["count"],
             {"A": [2, 2], "B": [2]},
         )
+
+    # Check stable centered moments for large offsets and zero variation.
+    def test_computes_stable_population_standard_deviation(self):
+        samples = [
+            {
+                "iter": 10 * index,
+                "catStates": {"A": [[0, 0], [0, 1]]},
+                "properties": {"rate": [[1.0e12 + index, 7.0]]},
+            }
+            for index in (1, 2, 3)
+        ]
+
+        result = self.run_calculator([samples])
+        output = self.assert_calculator_succeeds(result)
+        rate = output["properties"]["rate"]
+
+        self.assertEqual(rate["mean"], {"A": [1.0e12 + 2.0, 7.0]})
+        self.assertAlmostEqual(rate["sd"]["A"][0], math.sqrt(2.0 / 3.0))
+        self.assertEqual(rate["sd"]["A"][1], 0.0)
 
     # Check strict skip, inclusive until, and post-filter per-chain stride semantics.
     def test_filters_samples_by_iteration_and_subsample(self):
@@ -165,6 +192,7 @@ class CalcPropertiesTests(unittest.TestCase):
 
         self.assertEqual(output["retained_samples"], 3)
         self.assertEqual(output["properties"]["rate"]["mean"], {"A": [3.0, None]})
+        self.assertEqual(output["properties"]["rate"]["sd"], {"A": [1.0, None]})
         self.assertEqual(output["properties"]["rate"]["count"], {"A": [2, 0]})
 
     # Reject changing character counts instead of silently truncating with zip().

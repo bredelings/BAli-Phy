@@ -7,23 +7,31 @@ import sys
 
 
 class PropertyAccumulator:
-    # Track the common sample shape and streaming sums and counts across chains.
+    # Track the common sample shape and streaming moments across chains.
     def __init__(self):
         self.property_names = None
         self.sequence_names = None
         self.sequence_lengths = None
-        self.sums = None
+        self.means = None
+        self.m2s = None
         self.counts = None
         self.retained_samples = 0
 
-    # Allocate one sum and count for each property and sequence character.
+    # Allocate streaming moment state for each property and sequence character.
     def _initialize(self, cat_states, properties):
         self.property_names = tuple(sorted(properties))
         self.sequence_names = tuple(sorted(cat_states))
         self.sequence_lengths = {
             name: len(cat_states[name]) for name in self.sequence_names
         }
-        self.sums = {
+        self.means = {
+            property_name: {
+                name: [0.0] * self.sequence_lengths[name]
+                for name in self.sequence_names
+            }
+            for property_name in self.property_names
+        }
+        self.m2s = {
             property_name: {
                 name: [0.0] * self.sequence_lengths[name]
                 for name in self.sequence_names
@@ -174,26 +182,45 @@ class PropertyAccumulator:
                         state_index,
                         character_context,
                     )
-                    self.sums[property_name][name][character_index] += value
-                    self.counts[property_name][name][character_index] += 1
+                    counts = self.counts[property_name][name]
+                    means = self.means[property_name][name]
+                    m2s = self.m2s[property_name][name]
+
+                    # Welford's recurrence accumulates the centered second moment
+                    # without subtracting two potentially large squared values.
+                    count = counts[character_index] + 1
+                    delta = value - means[character_index]
+                    means[character_index] += delta / count
+                    delta2 = value - means[character_index]
+                    m2s[character_index] += delta * delta2
+                    counts[character_index] = count
 
         self.retained_samples += 1
 
-    # Convert the streaming sums into posterior means and count matrices.
+    # Convert the streaming moments into posterior summaries and count matrices.
     def result(self, selection, retained_samples_by_chain):
         summaries = {}
         for property_name in self.property_names:
             means = {}
+            standard_deviations = {}
             for name in self.sequence_names:
                 means[name] = [
-                    total / count if count else None
-                    for total, count in zip(
-                        self.sums[property_name][name],
+                    mean if count else None
+                    for mean, count in zip(
+                        self.means[property_name][name],
+                        self.counts[property_name][name],
+                    )
+                ]
+                standard_deviations[name] = [
+                    math.sqrt(max(m2 / count, 0.0)) if count else None
+                    for m2, count in zip(
+                        self.m2s[property_name][name],
                         self.counts[property_name][name],
                     )
                 ]
             summaries[property_name] = {
                 "mean": means,
+                "sd": standard_deviations,
                 "count": self.counts[property_name],
             }
 
@@ -214,7 +241,7 @@ class PropertyAccumulator:
 # Define the small public CLI and reject inconsistent selection arguments early.
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
-        description="Compute posterior mean property values for each sequence character."
+        description="Compute posterior property summaries for each sequence character."
     )
     parser.add_argument(
         "filenames",

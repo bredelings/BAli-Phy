@@ -13,14 +13,16 @@
 # DESCRIPTION
 
 Read one JSON Lines property stream per MCMC chain and compute the posterior
-mean of every named property for each ungapped sequence character. A sampled
-category/state pair selects a value from that sample's property table. Missing
-category/state draws are omitted and recorded through a per-character count.
+mean and standard deviation of every named property for each ungapped sequence
+character. A sampled category/state pair selects a value from that sample's
+property table. Missing category/state draws are omitted and recorded through
+a per-character count.
 
 The command writes one versioned JSON document to standard output. Property
-means and counts are keyed by sequence name and use zero-based
-`ungapped-sequence-character` coordinates. Samples from all input chains are
-pooled by draw; chains are not weighted equally after taking separate means.
+means, population posterior standard deviations, and counts are keyed by
+sequence name and use zero-based `ungapped-sequence-character` coordinates.
+Samples from all input chains are pooled by draw; chains are not weighted
+equally after taking separate means.
 
 # OPTIONS
 
