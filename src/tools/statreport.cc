@@ -328,16 +328,13 @@ void show_log_odds_summary(const string& name, const vector<stats_table>& tables
 	for(int i=0;i<tables.size();i++)
 	{
 	    auto [probability, log_odds] = summarize_log_odds(name, tables[i].column(index));
-	    cout<<" posterior_probability "<<name<<" ["<<i+1<<"] = "<<probability;
-	    cout<<" [log_odds = "<<log_odds<<"]"<<endl;
+	    cout<<"   "<<name<<" ["<<i+1<<"]:  posterior-probability = "<<probability;
+	    cout<<"     [log-odds = "<<log_odds<<"]"<<endl;
 	}
 
     auto [probability, log_odds] = summarize_log_odds(name, total);
-    if (show_individual)
-	cout<<" posterior_probability "<<name<<"     = "<<probability;
-    else
-	cout<<" posterior_probability "<<name<<" = "<<probability;
-    cout<<" [log_odds = "<<log_odds<<"]"<<endl;
+    cout<<"   "<<name<<":  posterior-probability = "<<probability;
+    cout<<"     [log-odds = "<<log_odds<<"]"<<endl;
 }
 
 void show_mode(const string& name, const vector<stats_table>& /*tables*/, int /*index*/, const vector<double>& total, bool /*show_individual*/)

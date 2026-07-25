@@ -1,4 +1,4 @@
- posterior_probability m8a_test:lOgOdDsPosSelection = 0.575 [log_odds = 0.3023]
+   m8a_test:lOgOdDsPosSelection:  posterior-probability = 0.575     [log-odds = 0.3023]
  E m8a_test:lOgOdDsPosSelection = 0.3296  [+- 0.5034]
                               t @ 1   Ne = 20   burnin = 8
 

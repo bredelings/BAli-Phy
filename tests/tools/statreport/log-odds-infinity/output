@@ -1,10 +1,10 @@
- posterior_probability LogOddsPositive = 1 [log_odds = inf]
+   LogOddsPositive:  posterior-probability = 1     [log-odds = inf]
    LogOddsPositive = inf
 
- posterior_probability LogOddsNegative = 0 [log_odds = -inf]
+   LogOddsNegative:  posterior-probability = 0     [log-odds = -inf]
    LogOddsNegative = -inf
 
- posterior_probability LogOddsMixed = 0.5 [log_odds = 0]
+   LogOddsMixed:  posterior-probability = 0.5     [log-odds = 0]
    LogOddsMixed = [decreasing]
 
  min burnin <= Not Converged!    (LogOddsPositive)
