@@ -1075,6 +1075,9 @@ TABLE {\n\
 }\n\
 \n\
 BODY {\n\
+  margin: 0.5rem;\n\
+  width: max-content;\n\
+  min-width: calc(100vw - 1rem);\n\
   font-size: 12pt;\n\
   font-family: helvetica;\n\
 }\n\

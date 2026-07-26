@@ -27,6 +27,11 @@ require("Retained samples:" in html, "shared retained-sample summary is missing"
 require("mean ± SD" in html, "complete posterior tooltip summary is missing")
 require("alignment-viewer-report-scroll" in html, "ranked report panel is missing")
 require("Minimum probability" in html, "positive-selection threshold control is missing")
+require(".alignment-scroll" not in html, "the alignment must retain document-level horizontal scrolling")
+require(
+    "position: sticky" in html and "width: calc(100vw - 1rem)" in html,
+    "viewer panels must remain fixed during horizontal scrolling",
+)
 require_equal(properties["retained_samples"], 4)
 require_equal(properties["properties"]["rate"]["mean"]["alpha"], [0.25, 2.0, 8.0])
 require(DANGEROUS_PROPERTY in properties["properties"], "property name is missing from viewer JSON")
