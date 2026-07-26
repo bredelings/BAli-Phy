@@ -1104,14 +1104,16 @@ BODY {\n\
 \n\
 .sequences TD.alignment-ruler-cell {\n\
    position: relative;\n\
-   height: 1.3em;\n\
+   height: 1.6em;\n\
    overflow: visible;\n\
    text-align: center;\n\
 }\n\
 \n\
 .alignment-ruler-label {\n\
    position: absolute;\n\
+   bottom: 0.35em;\n\
    left: 50%;\n\
+   line-height: 1;\n\
    transform: translateX(-50%);\n\
    white-space: nowrap;\n\
 }\n\
