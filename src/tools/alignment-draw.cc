@@ -1089,6 +1089,7 @@ BODY {\n\
    font-size: 12pt; \n\
    font-weight: bold;\n\
    font-family: monospace;\n\
+   line-height: 1;\n\
 \n\
    white-space: nowrap;\n\
 }\n\
@@ -1115,10 +1116,18 @@ BODY {\n\
    white-space: nowrap;\n\
 }\n\
 \n\
+.sequences TD.alignment-compound-cell {\n\
+   padding: 0;\n\
+}\n\
+\n\
 .alignment-symbol-part {\n\
    display: inline-block;\n\
    width: 1ch;\n\
+   line-height: 1;\n\
+   padding-top: 0.1em;\n\
+   padding-bottom: 0.1em;\n\
    text-align: center;\n\
+   vertical-align: top;\n\
 }\n\
 \n\
 .legend {\n\
@@ -1200,9 +1209,16 @@ BODY {\n\
 			string style = color_parts ? "" : getstyle(colors(column,s), string(c), *color_scheme);
 			cout<<"<td";
 			if (character_property_summary)
-			    cout<<" class=\"alignment-cell\" data-sequence=\""<<s
+			{
+			    cout<<" class=\"alignment-cell";
+			    if (color_parts)
+				cout<<" alignment-compound-cell";
+			    cout<<"\" data-sequence=\""<<s
 				<<"\" data-column=\""<<column
 				<<"\" data-character=\""<<token.character_index<<"\"";
+			}
+			else if (color_parts)
+			    cout<<" class=\"alignment-compound-cell\"";
 			if (not style.empty())
 			    cout<<" style=\""<<style<<"\"";
 			cout<<">";

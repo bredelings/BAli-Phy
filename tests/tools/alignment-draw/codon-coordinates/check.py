@@ -22,4 +22,9 @@ require_equal(
     ],
 )
 require(all(len(cell["parts"]) == 3 for cell in parser.cells), "codon cells must contain three nucleotide spans")
+require(
+    all("alignment-compound-cell" in cell["attributes"]["class"].split() for cell in parser.cells),
+    "codon cells must let their colored spans fill the cell",
+)
+require("line-height: 1" in html, "alignment cells and their colored spans must use the same line height")
 require(len({part["style"] for part in parser.cells[0]["parts"]}) == 2, "ATA must retain distinct A and T colors")
