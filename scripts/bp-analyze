@@ -1657,7 +1657,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             if more_recent_than_all_of(output, filenames):
                 continue
 
-            command = ["calc-properties", *filenames]
+            command = ["character-properties", "summarize", *filenames]
             if self.burnin is not None:
                 command.append(f"--skip={self.burnin}")
             if self.until is not None:

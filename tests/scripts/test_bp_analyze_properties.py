@@ -76,7 +76,17 @@ class BPAnalyzePropertyTests(unittest.TestCase):
             output = directory / "P1.character-properties.json"
             self.assertEqual(
                 commands[0],
-                (["calc-properties", *raw_files, "--skip=10", "--until=80", "--subsample=3"], output),
+                (
+                    [
+                        "character-properties",
+                        "summarize",
+                        *raw_files,
+                        "--skip=10",
+                        "--until=80",
+                        "--subsample=3",
+                    ],
+                    output,
+                ),
             )
             self.assertEqual(analysis.character_property_summaries, [output])
 

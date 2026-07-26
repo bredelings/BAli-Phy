@@ -918,53 +918,33 @@ double finite_json_number(const json::value& value, const string& context)
     return result;
 }
 
-/// Validate paired mean/count arrays, with an exact length for displayed sequences.
+/// Validate one complete numeric summary array against the displayed sequence length.
 void validate_property_sequence(const string& property_context,
+                                const string& statistic,
                                 const string& sequence_name,
-                                const json::value& means_value,
-                                const json::value& counts_value,
-                                std::optional<size_t> displayed_character_count,
-                                uint64_t retained_samples)
+                                const json::value& values_value,
+                                std::optional<size_t> displayed_character_count)
 {
-    if (not means_value.is_array())
-        throw myexception()<<property_context<<": mean values for sequence '"<<sequence_name<<"' must be an array.";
-    if (not counts_value.is_array())
-        throw myexception()<<property_context<<": count values for sequence '"<<sequence_name<<"' must be an array.";
+    if (not values_value.is_array())
+        throw myexception()<<property_context<<": "<<statistic<<" values for sequence '"<<sequence_name
+                           <<"' must be an array.";
 
-    const auto& means = means_value.as_array();
-    const auto& counts = counts_value.as_array();
-    if (means.size() != counts.size())
-        throw myexception()<<property_context<<": sequence '"<<sequence_name
-                           <<"' has different numbers of mean and count values.";
-    if (displayed_character_count and means.size() != *displayed_character_count)
-        throw myexception()<<property_context<<": sequence '"<<sequence_name<<"' has "<<means.size()
+    const auto& values = values_value.as_array();
+    if (displayed_character_count and values.size() != *displayed_character_count)
+        throw myexception()<<property_context<<": sequence '"<<sequence_name<<"' has "<<values.size()
                            <<" values, but the alignment has "<<*displayed_character_count<<" characters.";
 
-    for (size_t character = 0; character < means.size(); character++)
+    for (size_t character = 0; character < values.size(); character++)
     {
         string cell_context = property_context+", sequence '"+sequence_name+"', character "+convertToString(character);
-        uint64_t count = json_count(counts[character], cell_context+" count");
-        if (count > retained_samples)
-            throw myexception()<<cell_context<<" count exceeds retained_samples.";
-        if (means[character].is_null())
-        {
-            if (count != 0)
-                throw myexception()<<cell_context<<" has a null mean but a nonzero count.";
-        }
-        else
-        {
-            finite_json_number(means[character], cell_context+" mean");
-            if (count == 0)
-                throw myexception()<<cell_context<<" has a numeric mean but a zero count.";
-        }
+        finite_json_number(values[character], cell_context+" "+statistic);
     }
 }
 
-/// Check one named property's arrays and require every displayed sequence.
+/// Check one named property's mean, SD, and median arrays and require every displayed sequence.
 void validate_property(const string& property_name,
                        const json::value& property_value,
-                       const std::map<string,size_t>& character_counts,
-                       uint64_t retained_samples)
+                       const std::map<string,size_t>& character_counts)
 {
     string context = "Property '"+property_name+"'";
     if (not property_value.is_object())
@@ -972,28 +952,29 @@ void validate_property(const string& property_name,
     const auto& property = property_value.as_object();
 
     const auto& mean_value = required_json_field(property, "mean", context);
-    const auto& count_value = required_json_field(property, "count", context);
     if (not mean_value.is_object())
         throw myexception()<<context<<": field 'mean' must be an object keyed by sequence name.";
-    if (not count_value.is_object())
-        throw myexception()<<context<<": field 'count' must be an object keyed by sequence name.";
     const auto& means = mean_value.as_object();
-    const auto& counts = count_value.as_object();
-
-    if (means.size() != counts.size())
-        throw myexception()<<context<<": fields 'mean' and 'count' contain different sequence names.";
-
-    for (const auto& item: means)
+    for (const auto& statistic: {"mean", "sd", "median"})
     {
-        string sequence_name(item.key_c_str());
-        const auto* sequence_counts = counts.if_contains(item.key());
-        if (not sequence_counts)
-            throw myexception()<<context<<": count values are missing sequence '"<<sequence_name<<"'.";
-        std::optional<size_t> displayed_character_count;
-        if (auto displayed = character_counts.find(sequence_name); displayed != character_counts.end())
-            displayed_character_count = displayed->second;
-        validate_property_sequence(context, sequence_name, item.value(), *sequence_counts,
-                                   displayed_character_count, retained_samples);
+        const auto& statistic_value = required_json_field(property, statistic, context);
+        if (not statistic_value.is_object())
+            throw myexception()<<context<<": field '"<<statistic<<"' must be an object keyed by sequence name.";
+        const auto& sequences = statistic_value.as_object();
+        bool same_sequence_names = sequences.size() == means.size();
+        for (const auto& item: means)
+            same_sequence_names = same_sequence_names and sequences.if_contains(item.key());
+        if (not same_sequence_names)
+            throw myexception()<<context<<": fields 'mean' and '"<<statistic<<"' contain different sequence names.";
+
+        for (const auto& item: sequences)
+        {
+            string sequence_name(item.key_c_str());
+            std::optional<size_t> displayed_character_count;
+            if (auto displayed = character_counts.find(sequence_name); displayed != character_counts.end())
+                displayed_character_count = displayed->second;
+            validate_property_sequence(context, statistic, sequence_name, item.value(), displayed_character_count);
+        }
     }
 
     for (const auto& entry: character_counts)
@@ -1084,7 +1065,7 @@ json::value read_character_properties(const string& filename,
     if (not properties_value.is_object())
         throw myexception()<<context<<": field 'properties' must be an object.";
     for (const auto& item: properties_value.as_object())
-        validate_property(string(item.key_c_str()), item.value(), character_counts, retained_samples);
+        validate_property(string(item.key_c_str()), item.value(), character_counts);
 
     return document;
 }

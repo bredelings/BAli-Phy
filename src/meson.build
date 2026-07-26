@@ -33,6 +33,8 @@ libcommon_sources = [
   'alignment/load.cc',
   'alignment/alignment.cc',
   'alignment/alignment-random.cc',
+  'alignment/character-properties.cc',
+  'alignment/character-property-summary.cc',
   'alignment/index-matrix.cc',
 
   'tree-align/link.cc',
@@ -170,7 +172,7 @@ tools = ['model_P','statreport','stats-select','alignment-gild','alignment-conse
 	 'alignment-indices','alignment-info','alignment-cat','alignment-translate','alignment-find','trees-consensus',
 	 'tree-mean-lengths','mctree-mean-lengths','trees-to-SRQ','pickout','cut-range','trees-distances', 'alignment-thin',
 	 'alignments-diff','tree-tool','alignment-distances','alignment-draw', 'trees-bootstrap', 'draw-tree', 'extract-ancestors',
-         'summarize-ancestors','mcon-tool']
+         'summarize-ancestors','mcon-tool','character-properties']
 
 extra_tools = ['stats-merge', 'stats-cat', 'alignment-identity', 'alignment-compare', 'joint-indels', 'joint-parsimony', 'alignment-smc',
 		 'alignment-convert', 'alignment-find-conserved', 'partitions-supported', 'draw-graph', 'trees-pair-distances', 'tree-partitions', 'tree-reroot',
@@ -210,7 +212,7 @@ if host_machine.system() == 'windows' and meson.is_cross_build()
   python_tool_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
 
-declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'cut-range', 'mcon-tool', 'statreport']
+declarative_tool_tests = ['alignment-convert', 'alignment-draw', 'character-properties', 'cut-range', 'mcon-tool', 'statreport']
 declarative_tool_tests += ['joint-indels', 'tree-mean-lengths', 'trees-distances']
 tool_test_script = meson.project_source_root()/'tests/tools/run-tests.py'
 

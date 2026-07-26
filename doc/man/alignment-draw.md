@@ -68,7 +68,7 @@ number of model-character columns as the displayed alignment.
 : file with alignment uncertainties
 
 **--properties** _arg_
-: JSON property summary produced by **calc-properties**
+: JSON property summary produced by **character-properties summarize**
 
 **--alphabet** _arg_
 : alphabet used to tokenize model characters; required with **--properties**
@@ -115,7 +115,7 @@ number of model-character columns as the displayed alignment.
 Create a property summary and an interactive DNA alignment:
 
 ```
-calc-properties run-1/C1.properties1.json run-2/C1.properties1.json \
+character-properties summarize run-1/C1.properties1.json run-2/C1.properties1.json \
   --skip=1000 > P1.character-properties.json
 
 alignment-draw P1.initial.fasta --alphabet DNA \
