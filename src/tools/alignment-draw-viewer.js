@@ -112,10 +112,14 @@ class AlignmentPropertyViewer {
 
         this.propertySelect = makeElement(doc, 'select', 'alignment-viewer-select');
         this.propertySelect.setAttribute('aria-label', 'Color alignment by');
-        addOption(doc, this.propertySelect, 'original', 'Original colors');
         this.properties.forEach((property, index) =>
             addOption(doc, this.propertySelect, `property:${index}`, property.name));
         this.controlRow.append(labelledControl(doc, 'Color by', this.propertySelect));
+
+        this.originalColorsCheckbox = makeElement(doc, 'input', 'alignment-viewer-checkbox');
+        this.originalColorsCheckbox.type = 'checkbox';
+        this.originalColorsCheckbox.setAttribute('aria-label', 'Use original alignment colors');
+        this.controlRow.append(labelledControl(doc, 'Original colors', this.originalColorsCheckbox));
 
         this.transformSelect = makeElement(doc, 'select', 'alignment-viewer-select');
         this.transformSelect.setAttribute('aria-label', 'Property scale transform');
@@ -162,6 +166,12 @@ class AlignmentPropertyViewer {
         this.resetButton.type = 'button';
         this.controlRow.append(this.resetButton);
         this.toolbar.append(this.controlRow);
+
+        this.summary = makeElement(
+            doc, 'div', 'alignment-viewer-summary',
+            `Retained samples: ${this.characterProperties.retained_samples}`,
+        );
+        this.toolbar.append(this.summary);
 
         this.status = makeElement(doc, 'div', 'alignment-viewer-status');
         this.status.setAttribute('role', 'status');
@@ -215,6 +225,7 @@ class AlignmentPropertyViewer {
     installEvents()
     {
         this.propertySelect.addEventListener('change', this.handlePropertyChange.bind(this));
+        this.originalColorsCheckbox.addEventListener('change', this.handleOriginalColorsChange.bind(this));
         this.transformSelect.addEventListener('change', this.handleTransformChange.bind(this));
         this.paletteSelect.addEventListener('change', this.handlePaletteChange.bind(this));
         this.rangeSelect.addEventListener('change', this.handleRangeChange.bind(this));
@@ -231,11 +242,9 @@ class AlignmentPropertyViewer {
         this.document.addEventListener('keydown', this.handleKeydown.bind(this));
     }
 
-    // Returns the selected property definition, or null for the original view.
+    // Returns the selected property definition.
     selectedProperty()
     {
-        if (!this.propertySelect.value.startsWith('property:'))
-            return null;
         const index = Number.parseInt(this.propertySelect.value.slice('property:'.length), 10);
         return this.properties[index] || null;
     }
@@ -271,27 +280,22 @@ class AlignmentPropertyViewer {
     // Synchronizes enabled controls with the currently selected property state.
     updateControls(property, state, bounds)
     {
-        const original = !property;
-        const unavailable = !original && property.values.length === 0;
-        this.transformSelect.disabled = original || unavailable;
-        this.paletteSelect.disabled = original || unavailable;
-        this.rangeSelect.disabled = original || unavailable || state.transform === 'rank';
-        this.logOption.disabled = unavailable ||
-            (!original && !canUseLogScale(property.name, property.values));
-        if (!original && state.transform === 'log10' && this.logOption.disabled)
+        const unavailable = property.values.length === 0;
+        this.transformSelect.disabled = unavailable;
+        this.paletteSelect.disabled = unavailable;
+        this.rangeSelect.disabled = unavailable || state.transform === 'rank';
+        this.logOption.disabled = unavailable || !canUseLogScale(property.name, property.values);
+        if (state.transform === 'log10' && this.logOption.disabled)
             state.transform = 'linear';
-        if (!original) {
-            this.transformSelect.value = state.transform;
-            this.paletteSelect.value = state.palette;
-            this.rangeSelect.value = state.range;
-        }
-        const custom = !original && !unavailable &&
-            state.transform !== 'rank' && state.range === 'custom';
+        this.transformSelect.value = state.transform;
+        this.paletteSelect.value = state.palette;
+        this.rangeSelect.value = state.range;
+        const custom = !unavailable && state.transform !== 'rank' && state.range === 'custom';
         this.lowerInput.disabled = !custom;
         this.upperInput.disabled = !custom;
         this.lowerControl.classList.toggle('alignment-viewer-control-disabled', !custom);
         this.upperControl.classList.toggle('alignment-viewer-control-disabled', !custom);
-        if (!original && !unavailable && state.transform !== 'rank') {
+        if (!unavailable && state.transform !== 'rank') {
             this.lowerInput.value = String(bounds.lower);
             this.upperInput.value = String(bounds.upper);
         }
@@ -299,9 +303,8 @@ class AlignmentPropertyViewer {
             this.lowerInput.value = '';
             this.upperInput.value = '';
         }
-        this.auCheckbox.disabled = original || unavailable || !this.uncertainty;
-        this.auCheckbox.checked = !original && !unavailable &&
-            state.fadeByAU && Boolean(this.uncertainty);
+        this.auCheckbox.disabled = unavailable || !this.uncertainty;
+        this.auCheckbox.checked = !unavailable && state.fadeByAU && Boolean(this.uncertainty);
     }
 
     // Restores the exact static C++ style and clears dynamic annotation classes.
@@ -315,27 +318,20 @@ class AlignmentPropertyViewer {
             'alignment-property-colored',
             'alignment-property-missing',
             'alignment-au-missing');
-        cell.value = null;
-        cell.count = null;
+        cell.statistics = null;
         cell.uncertainty = null;
     }
 
-    // Looks up a property mean using displayed sequence and ungapped-character indices.
-    propertyValue(property, cell)
+    // Looks up all summaries using displayed sequence and ungapped-character indices.
+    propertyStatistics(property, cell)
     {
         if (cell.character < 0)
             return null;
-        const values = property.meanBySequence[cell.sequence];
-        return values ? values[cell.character] : null;
-    }
-
-    // Looks up the retained sample count corresponding to a displayed character.
-    propertyCount(property, cell)
-    {
-        if (cell.character < 0)
-            return null;
-        const counts = property.countBySequence[cell.sequence];
-        return counts ? counts[cell.character] : null;
+        return {
+            mean: property.meanBySequence[cell.sequence]?.[cell.character],
+            sd: property.sdBySequence[cell.sequence]?.[cell.character],
+            median: property.medianBySequence[cell.sequence]?.[cell.character],
+        };
     }
 
     // Looks up a grid-cell AU probability from the explicit sequence-major matrix.
@@ -354,9 +350,9 @@ class AlignmentPropertyViewer {
             this.restoreCell(cell);
             if (cell.character < 0)
                 continue;
-            const value = this.propertyValue(property, cell);
-            cell.value = Number.isFinite(value) ? value : null;
-            cell.count = this.propertyCount(property, cell);
+            const statistics = this.propertyStatistics(property, cell);
+            const value = statistics?.mean;
+            cell.statistics = Number.isFinite(value) ? statistics : null;
             if (fadeByAU)
                 cell.uncertainty = this.uncertaintyValue(cell);
             if (!Number.isFinite(value)) {
@@ -445,6 +441,7 @@ class AlignmentPropertyViewer {
         });
         const missingAU = fadeByAU && this.uncertainty.some((row) => row.some((value) => value === null));
         this.missingKey.hidden = !property.hasMissing && !missingAU;
+        this.legend.classList.remove('alignment-viewer-legend-original');
         this.legend.hidden = false;
     }
 
@@ -464,21 +461,23 @@ class AlignmentPropertyViewer {
         this.toolbar.classList.remove('alignment-viewer-has-error');
     }
 
-    // Restores the static document when Original colors is selected.
-    renderOriginal()
+    // Restores original paint while retaining the selected property for inspection.
+    renderOriginalColors(property)
     {
+        const state = this.stateFor(property);
         for (const cell of this.cells) {
             this.restoreCell(cell);
-            cell.element.removeAttribute('tabindex');
-            cell.element.removeAttribute('aria-describedby');
+            cell.statistics = this.propertyStatistics(property, cell);
+            cell.uncertainty = state.fadeByAU ? this.uncertaintyValue(cell) : null;
         }
-        this.currentProperty = null;
+        this.currentProperty = property;
         this.currentScale = null;
-        this.currentRange = null;
-        this.legend.hidden = true;
-        this.hideTooltip(true);
-        this.updateControls(
-            null, {transform: 'linear', palette: 'viridis', range: 'robust'}, {});
+        this.currentRange = state.range;
+        this.legendCaption.textContent = 'Original alignment colors';
+        this.legend.classList.add('alignment-viewer-legend-original');
+        this.legend.hidden = false;
+        this.updateControls(property, state, this.boundsFor(property, state));
+        this.updateRovingTabIndex();
         this.clearStatus();
     }
 
@@ -486,8 +485,10 @@ class AlignmentPropertyViewer {
     render()
     {
         const property = this.selectedProperty();
-        if (!property) {
-            this.renderOriginal();
+        if (!property)
+            return;
+        if (this.originalColorsCheckbox.checked) {
+            this.renderOriginalColors(property);
             return;
         }
         if (property.values.length === 0) {
@@ -497,14 +498,16 @@ class AlignmentPropertyViewer {
                 this.restoreCell(cell);
                 if (cell.character < 0)
                     continue;
-                cell.count = this.propertyCount(property, cell);
+                cell.statistics = this.propertyStatistics(property, cell);
                 cell.uncertainty = state.fadeByAU ? this.uncertaintyValue(cell) : null;
                 cell.element.classList.add('alignment-property-missing');
             }
             this.currentProperty = property;
             this.currentScale = null;
             this.currentRange = state.range;
-            this.legend.hidden = true;
+            this.legendCaption.textContent = `${property.name} has no finite posterior means`;
+            this.legend.classList.add('alignment-viewer-legend-original');
+            this.legend.hidden = false;
             this.updateRovingTabIndex();
             this.showStatus(`${property.name} has no finite posterior means.`);
             return;
@@ -543,6 +546,14 @@ class AlignmentPropertyViewer {
     {
         this.hideTooltip(true);
         this.render();
+    }
+
+    // Switches paint modes without changing the selected property or its inspectable values.
+    handleOriginalColorsChange()
+    {
+        this.render();
+        if (this.pinnedCell)
+            this.showTooltip(this.pinnedCell);
     }
 
     // Changes the numerical transform for the active property.
@@ -638,7 +649,7 @@ class AlignmentPropertyViewer {
         list.append(makeElement(this.document, 'dd', '', value));
     }
 
-    // Populates the tooltip with raw coordinates, posterior mean, count, and AU.
+    // Populates the tooltip with coordinates and the complete posterior summary.
     fillTooltip(cell)
     {
         const list = makeElement(this.document, 'dl', 'alignment-viewer-tooltip-data');
@@ -646,9 +657,12 @@ class AlignmentPropertyViewer {
         this.appendTooltipRow(list, 'Alignment column', String(cell.column + 1));
         this.appendTooltipRow(list, 'Sequence character', String(cell.character + 1));
         this.appendTooltipRow(list, 'Character', cell.element.textContent.trim());
-        this.appendTooltipRow(list, this.currentProperty.name, formatValue(cell.value));
-        if (Number.isFinite(cell.count))
-            this.appendTooltipRow(list, 'Samples', String(cell.count));
+        this.appendTooltipRow(
+            list,
+            `${this.currentProperty.name} mean ± SD`,
+            `${formatValue(cell.statistics?.mean)} ± ${formatValue(cell.statistics?.sd)}`,
+        );
+        this.appendTooltipRow(list, `${this.currentProperty.name} median`, formatValue(cell.statistics?.median));
         const state = this.stateFor(this.currentProperty);
         if (state.fadeByAU && this.uncertainty)
             this.appendTooltipRow(list, 'Alignment certainty', formatValue(cell.uncertainty));

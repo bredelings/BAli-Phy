@@ -12,6 +12,7 @@ const {
     paletteGradient,
     blendWithWhite,
 } = require('../../../src/tools/alignment-draw-scales.js');
+const {collectProperties} = require('../../../src/tools/alignment-draw-properties.js');
 
 // Compares floating-point scale results without coupling the tests to their
 // exact arithmetic evaluation order.
@@ -206,4 +207,22 @@ function assertClose(actual, expected, message)
                      'full AU certainty preserves the property color');
     assert.throws(() => blendWithWhite(color, Number.NaN), /finite/i,
                   'non-finite AU certainty is rejected');
+}
+
+{
+    const properties = collectProperties(
+        {
+            properties: {
+                dNdS: {
+                    mean: {alpha: [2]},
+                    sd: {alpha: [0.5]},
+                    median: {alpha: [1.8]},
+                },
+            },
+        },
+        ['alpha'],
+    );
+    assert.deepEqual(properties[0].meanBySequence, [[2]]);
+    assert.deepEqual(properties[0].sdBySequence, [[0.5]]);
+    assert.deepEqual(properties[0].medianBySequence, [[1.8]]);
 }

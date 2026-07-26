@@ -78,14 +78,16 @@ function collectProperties(characterProperties, sequenceNames)
         const meanBySequence = sequenceNames.map((sequenceName) =>
             Array.isArray(property.mean && property.mean[sequenceName]) ?
                 property.mean[sequenceName] : []);
-        const countBySequence = sequenceNames.map((sequenceName) =>
-            Array.isArray(property.count && property.count[sequenceName]) ?
-                property.count[sequenceName] : []);
+        const sdBySequence = sequenceNames.map((sequenceName) =>
+            Array.isArray(property.sd && property.sd[sequenceName]) ? property.sd[sequenceName] : []);
+        const medianBySequence = sequenceNames.map((sequenceName) =>
+            Array.isArray(property.median && property.median[sequenceName]) ? property.median[sequenceName] : []);
         const allMeans = meanBySequence.flat();
         return {
             name,
             meanBySequence,
-            countBySequence,
+            sdBySequence,
+            medianBySequence,
             values: allMeans.filter((value) => Number.isFinite(value)),
             hasMissing: allMeans.some((value) => !Number.isFinite(value)),
         };

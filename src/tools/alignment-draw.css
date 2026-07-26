@@ -95,11 +95,18 @@ td.alignment-cell:focus-visible {
     font: 0.875rem/1.4 system-ui, sans-serif;
 }
 
+.alignment-viewer-summary {
+    margin-top: 0.5rem;
+    color: var(--alignment-viewer-muted);
+    font-size: 0.75rem;
+}
+
 .alignment-viewer-legend {
     display: grid;
     grid-template-columns: minmax(14rem, 32rem) auto;
     gap: 0.25rem 0.85rem;
     align-items: center;
+    min-height: 4.2rem;
     margin: 0.75rem 0 0;
 }
 
@@ -193,6 +200,12 @@ td.alignment-cell:focus-visible {
         rgba(71, 85, 105, 0.38) 0.22rem,
         rgba(71, 85, 105, 0.38) 0.38rem
     );
+}
+
+.alignment-viewer-legend-original .alignment-viewer-legend-plot,
+.alignment-viewer-legend-original .alignment-viewer-legend-ticks,
+.alignment-viewer-legend-original .alignment-viewer-missing-key {
+    visibility: hidden;
 }
 
 td.alignment-cell.alignment-property-colored {
