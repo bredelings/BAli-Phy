@@ -15,11 +15,15 @@
 Generate an HTML report summarizing bali-phy runs.
 
 When every chain contains a `C1.propertiesN.json` stream for a partition,
-**bp-analyze** computes pooled posterior mean character properties and embeds an
-interactive property viewer in that partition's tip-alignment pages. Partitions
-with property logs missing from one or more chains are skipped rather than
-pooling a biased subset. Property overlays are omitted from ancestral and
-alignment-difference pages.
+**bp-analyze** computes pooled posterior means, standard deviations, and
+medians for observed-character properties. It embeds an interactive property
+viewer and ranked template-column reports in that partition's tip-alignment
+pages. The partition alphabet is used to tokenize logical characters, color
+compound symbols, and translate codons.
+
+Partitions with property logs missing from one or more chains are skipped
+rather than pooling a biased subset. Property overlays are omitted from
+ancestral and alignment-difference pages.
 
 The report is created at **Reports/index.html**.
 

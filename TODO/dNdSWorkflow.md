@@ -32,8 +32,8 @@ Several parts of the previous survey and plan have been implemented or supersede
 * `BranchModel` is active infrastructure used by `branch_site`; the previous proposal to delete it is
   obsolete.
 * The special `MixtureModel` binding category and `mmm` representation have been removed.
-* `calc-properties`, `alignment-draw`, and `bp-analyze` already provide a usable mean-property
-  workflow. `alignment-draw` already has property selection, color scales, ranges, and tooltips.
+* `character-properties`, `alignment-draw`, and `bp-analyze` now provide posterior mean, standard
+  deviation, median, text-report, and interactive ranked-column views.
 * Tool tests are now declarative test directories enumerated separately by Meson. New `statreport` or
   `alignment-draw` cases should use that format instead of adding Python test methods or executables.
 * The documentation already describes the fixed-topology requirement, model-indicator fields, and
@@ -119,19 +119,20 @@ general context-dependent logger. Those limitations no longer describe the curre
 * The outer `Discrete (BranchModel m)` retains the common property map needed by the existing sampled
   property machinery.
 * With `--set write-properties=true`, BAli-Phy writes sampled category/state assignments and property
-  tables. `calc-properties` accumulates posterior means at stable ungapped sequence-character
-  coordinates.
+  tables. `character-properties summarize` accumulates posterior means, standard deviations, and
+  medians at stable ungapped sequence-character coordinates.
 
 #### Reporting
 
-* `alignment-draw` displays property means, allows property and scale selection, supports robust and
-  custom ranges, and includes property values in tooltips.
-* `bp-analyze` discovers property streams, runs `calc-properties`, and incorporates the resulting
-  alignment views into its report.
+* `character-properties report` produces text, TSV, or JSON reports by template-alignment column.
+* `alignment-draw` displays complete posterior summaries, supports property and scale selection, and
+  includes generic and positive-selection ranked-column panels.
+* `bp-analyze` discovers property streams, runs `character-properties summarize`, and incorporates
+  alphabet-aware property views into its report.
 * Ordinary scalar logs and `bp-analyze` already provide parameter summaries, credible intervals,
   ESS-like diagnostics, and between-chain diagnostics.
-* `statreport` can summarize ordinary and log-scale fields, but it cannot yet calculate the posterior
-  probability represented by a trace of conditional log odds.
+* `statreport` recognizes conditional `LogOdds*` fields and calculates their posterior probability
+  and posterior log odds without averaging the log odds themselves.
 
 ### Remaining gaps
 
@@ -139,16 +140,9 @@ general context-dependent logger. Those limitations no longer describe the curre
   one coherent selection workflow.
 * **Site-model tests:** the inference and conditional model probabilities exist, but their evidence
   and site properties need a selection-specific report.
-* **Two-ratio branch analysis:** `BranchModel` supplies the representation, but there is no maintained
-  binding or Bayesian comparison corresponding to PAML's branch test.
-* **Branch-site gene evidence:** `branch_site` and its conditional probability fields exist, but
-  posterior odds and Bayes factors are not summarized correctly.
-* **BEB-like site output:** posterior property means exist, but posterior SD, ranked sites, probability
-  thresholds, and explicit reference-sequence coordinates do not.
-* **Property semantics:** `alignment-draw` recognizes only the exact name `posSelection` as a
-  probability. It therefore does not give `foreground-posSelection` the same default treatment.
-* **Fixed foreground topology:** documentation requires a fixed topology, but generated models do not
-  reject an unfixed topology when `branch_categories` is used.
+* **Combined gene evidence:** maintained branch, site, and branch-site tests provide conditional
+  probabilities and `statreport` summaries, but `bp-analyze` does not yet present them as one
+  selection workflow with explicit prior odds and Bayes factors.
 * **Multiple genes or branch tests:** independent runs are possible, but prevalence-aware summaries
   and multiplicity guidance are absent.
 * **Assumption checks:** models for multinucleotide changes and synonymous-rate variation exist, but
@@ -218,10 +212,10 @@ do. The stored coordinate should therefore remain:
 (sequence name, zero-based ungapped model-character index)
 ```
 
-A beginner-facing report may display that index as one-based and project it onto a selected alignment,
-but the stored identity should not become the column number of a sampled or consensus alignment. A
-selected reference sequence gives the closest analogue to CODEML's site number and reference amino
-acid while retaining a meaningful identity when the alignment changes.
+A beginner-facing report may project these characters onto a selected template alignment, but the
+stored identity should not become the column number of a sampled or consensus alignment. The current
+report treats each template column as a presentation group and identifies it by the character with
+the most relevant property value in that column.
 
 ### Branch and branch-site evidence
 
@@ -286,15 +280,17 @@ parallel infrastructure.
 
 ### 3. Site identity and presentation
 
-**Choice:** Keep ungapped sequence-character coordinates as the stored identity. Let
-`alignment-draw` rank and filter sites for a selected sequence and show their positions in the
-displayed alignment. For a codon alphabet, show both the reference codon and the amino acid obtained
-from the configured genetic code.
+**Choice:** Keep ungapped sequence-character coordinates as the stored identity. Project all observed
+characters onto a template alignment, choose one representative per nonempty column, and rank the
+columns by those representatives. For a codon alphabet, show both the representative codon and the
+amino acid obtained from the configured genetic code.
 
 **Alternatives:**
 
 * Fixed alignment columns are familiar but cease to identify the same object when alignment is
   sampled.
+* Restricting reports to one reference sequence gives familiar coordinates but can miss stronger
+  evidence on other characters in the same template column.
 * Consensus-alignment columns are useful presentation coordinates but depend on the consensus
   construction.
 * A posterior homology-cluster identifier might be more symmetric than a reference sequence, but
@@ -302,8 +298,8 @@ from the configured genetic code.
 
 ### 4. Site summaries
 
-**Choice:** Extend `calc-properties` with a stable streaming second moment and output an optional `sd`
-array alongside `mean` and `count`. Keep raw sampled property logs as the source data.
+**Choice:** Use `character-properties summarize` to calculate a stable streaming second moment and an
+exact, memory-bounded median. Keep raw sampled property logs as the source data.
 
 **Alternatives:**
 
@@ -410,7 +406,7 @@ generated-model construction rather than adding checks to likelihood or transiti
 **Choice:** Extend the existing tools:
 
 * `statreport` owns stable model-probability aggregation;
-* `calc-properties` owns per-character posterior moments;
+* `character-properties` owns per-character posterior summaries and projected reports;
 * `alignment-draw` owns ranked and alignment-projected site presentation; and
 * `bp-analyze` owns the combined run report.
 
@@ -543,30 +539,17 @@ earlier change should be made in an empty child of that change and squashed into
    Bayes-factor statements. Document the `background-*` and `foreground-*` branch-site properties and
    the distinct meaning of the branch-difference indicator.
 
-7. **Add posterior SD to character-property summaries.**
-   Replace each sum-only accumulator in `scripts/calc-properties` with a streaming count, mean, and
-   centered second moment. Emit population posterior SD as an optional `sd` array next to `mean` and
-   `count`, clamping only a negative roundoff remainder to zero. Extend
-   `tests/scripts/test_calc_properties.py` with constant, varying, missing-value, and pooled-chain
-   examples. Retain format version 1 because the field is optional and existing readers ignore
-   unknown fields.
+7. **Character-property summaries (completed).**
+   The implementation described under "Completed character-property work" supersedes the original
+   sum-only extension.
 
-8. **Display posterior variation and recognize prefixed probability properties.**
-   Teach `src/tools/alignment-draw.cc` to accept and validate an optional `sd` matrix and pass it to
-   `src/tools/alignment-draw.js`. Include SD in property tooltips. Treat the exact name
-   `posSelection` and names ending in `-posSelection` as probability properties for scale and
-   threshold choices. Add the brief NOTE described in the design investigation. Add declarative
-   alignment-draw cases for old summaries without SD, summaries with SD, malformed SD shape, and
-   `foreground-posSelection`; extend the existing JavaScript scale test rather than adding a runner.
+8. **Character-property display (completed).**
+   The implementation described below provides complete summaries, prefixed probability handling,
+   and alphabet-aware rendering.
 
-9. **Add a ranked-site view to `alignment-draw`.**
-   Add a sequence selector and ranked table for the selected property. Show the one-based ungapped
-   model-character position, displayed character, posterior mean, SD when present, and retained count.
-   For codon alphabets, use the configured `Codons` translation table to display the corresponding
-   amino acid. Provide probability thresholds including 0.5, 0.95, and 0.99, and make selecting a row
-   locate the matching alignment cell by ungapped character identity. Add declarative cases with
-   `check.py` for structural DOM or payload checks and focused JavaScript tests for ranking, threshold,
-   and cell lookup.
+9. **Ranked property reports (completed).**
+   The implementation described below uses template columns rather than a selected reference
+   sequence and shares report construction between command-line and browser output.
 
 10. **Add selection evidence to `bp-analyze`.**
     Detect `LogOddsPosSelection` and `LogOddsBranchDifference` fields. Invoke `statreport` once and
@@ -619,102 +602,33 @@ The first complete workflow should let a user:
 * test site-level, branch-level, and branch-site hypotheses without confusing their meanings;
 * obtain a Rao-Blackwellized posterior probability and correctly calculated posterior odds or Bayes
   factor;
-* identify and inspect reference-sequence characters with high posterior positive-selection
-  probability;
+* identify and inspect template-alignment regions with high posterior positive-selection probability;
 * see posterior mean and SD of site `dN/dS`;
 * retain alignment uncertainty rather than assigning scientific identity to a sampled alignment
   column;
 * reproduce the foreground definition and major model and prior choices; and
 * recognize when a result needs prior, model, alignment, or multiple-testing sensitivity analysis.
 
-## Current character-property implementation plan
+## Completed character-property work
 
-This plan supersedes items 7--9 of the earlier implementation plan. Conditional property summaries
-and producer-supplied property metadata remain separate future designs.
+* `character-properties summarize` replaced the Python summarizer. It calculates Welford population
+  SD and exact memory-bounded medians, validates complete observed-character samples, and emits one
+  retained-sample count for the whole summary.
+* Shared C++ code reads summaries, tokenizes template alignments, projects stable sequence-character
+  identities onto template columns, and constructs generic or positive-selection reports. The
+  command emits the same report rows as text, TSV, or versioned JSON.
+* Positive-selection reports recognize `posSelection` and prefixed forms, choose the character with
+  the highest probability in each column, and include the corresponding `dNdS` summary when present.
+  The naming convention is marked as non-ideal pending explicit property metadata.
+* `alignment-draw` uses alphabet-aware logical cells, codon nucleotide colors and translations, and
+  complete ruler labels. Tooltips show mean, posterior SD, and median; an independent original-color
+  checkbox preserves property inspection and page geometry.
+* The browser contains generic and positive-selection ranked-column panels generated from the C++
+  report rows. Selecting a row highlights its complete template column and opens the representative
+  character's tooltip.
+* `bp-analyze` runs the C++ summarizer and supplies the partition alphabet and summary to each
+  applicable tip-alignment view. The `character-properties`, `alignment-draw`, and `bp-analyze`
+  manuals describe the resulting workflow.
 
-The implementation uses one C++ `character-properties` command with two subcommands:
-
-```text
-character-properties summarize [OPTIONS] SAMPLE-FILE [...]
-
-character-properties report SUMMARY ALIGNMENT
-    --alphabet ALPHABET
-    --property NAME
-    --kind property|positive-selection
-    [--format text|tsv|json]
-    [--sort column|mean-ascending|mean-descending|sd-descending]
-    [--minimum-probability P]
-```
-
-Summary calculation, alignment projection, and report interpretation remain separate internal
-stages. The intermediate summary is retained because its exact median is expensive to compute and
-the same summary may be projected onto several template alignments.
-
-1. **Move unconditional summarization to C++.**
-   Add shared summary data and aggregation code under `src/alignment/`, and add the
-   `character-properties summarize` subcommand. Preserve sample selection, Welford population SD,
-   the exact memory-bounded lower median, and the 256 MiB default memory target. Require complete
-   observed leaf-character states and stable sample shapes. Emit finite `mean`, `sd`, and `median`
-   matrices with only top-level retained-sample counts. Compare structured output and failures with
-   the Python implementation, then remove `scripts/calc-properties`, its installation rule, and its
-   Python test rather than retaining a compatibility wrapper. Convert its coverage to declarative
-   tool cases and update `bp-analyze`.
-
-2. **Centralize summary consumption.**
-   Move summary validation and alphabet-width alignment tokenization from `alignment-draw.cc` into
-   the shared alignment component. Require every displayed sequence to have exactly one summary
-   value per non-gap character while allowing unused extra summary sequences. Refactor
-   `alignment-draw` to use the shared representation without changing its output.
-
-3. **Add alignment-independent column projection.**
-   Add a shared projection component that records template columns and their sequence-character
-   members. It must not choose representatives, pair properties, rank columns, or apply report
-   thresholds. Attach codon translations using the actual configured `Codons` alphabet.
-
-4. **Implement generic property reports.**
-   Add an explicit report kind and compact report specification. For descending means, ascending
-   means, and descending SDs, select the character with the most extreme requested statistic in each
-   template column; use maximum mean for column-ordered reports. Break ties by displayed sequence
-   order, omit all-gap columns, and emit text, TSV, and versioned JSON containing the same records.
-   Add declarative cases for rates, uncertainty, ties, gaps, coordinates, codons, and all formats.
-
-5. **Implement positive-selection reports.**
-   Recognize `posSelection` and names ending in `-posSelection`, with a NOTE that this name-based
-   policy is non-ideal. Pair them with the corresponding `dNdS` property when it exists. Rank by the
-   largest character probability in each column, default to a 0.5 threshold, and report probability
-   plus paired dN/dS mean, SD, and median. Cover 0.5, 0.95, and 0.99 thresholds, missing companions,
-   prefixed names, and rejected non-probability properties.
-
-6. **Make original alignment rendering alphabet-aware.**
-   Allow `alignment-draw --alphabet` without `--properties`, and make `bp-analyze` always pass the
-   canonical partition alphabet. Keep one table cell per logical character, render codon nucleotide
-   spans with their original colors, use the configured genetic code, and put complete one-based
-   ruler labels in logical character columns.
-
-7. **Organize the viewer JavaScript.**
-   Split numerical scales and palettes, property/report decoding, and DOM interaction into three
-   source files embedded with the existing build helper. Preserve behavior while making this
-   structural change, and use one existing Node test entry rather than adding a runner.
-
-8. **Display complete unconditional summaries.**
-   Show property mean plus or minus SD and median in tooltips, and show the shared retained-sample
-   count once. Replace the `Original colors` menu item with an independent checkbox, keep property
-   inspection active in original-color mode, and preserve legend height so the alignment does not
-   shift vertically.
-
-9. **Add generic and specialized ranked panels.**
-   Build report rows in shared C++ and embed them in the viewer; JavaScript must not independently
-   select representatives or pair properties. Add a fixed-height ranked panel with generic sort
-   controls and positive-selection probability thresholds. Selecting a row highlights its template
-   column, focuses its representative, and opens the tooltip. Require browser rows to agree with
-   `character-properties report --format=json`.
-
-10. **Document and verify the result.**
-    Replace the `calc-properties` manual with a `character-properties` manual and update
-    `alignment-draw` and `bp-analyze` documentation. Explain character versus template-column
-    coordinates and generic versus specialized reports. Build with
-    `nice -n10 ninja -C ../build/gcc-16-debug-O -j11`; run all focused declarative and Node tests,
-    a small codon positive-selection workflow, and the required 5d `+A` test. Compare the C++ and
-    temporary Python summarizers for output, failures, wall time, and peak memory before deleting the
-    Python version. Debug-machine and MCMC hot-path benchmarks are unnecessary unless an
-    interpreter-specific problem appears.
+Conditional property summaries and producer-supplied property metadata remain separate future
+designs.

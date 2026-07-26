@@ -22,8 +22,9 @@ Linear and log10 scales can use the full range, a robust 2--98% range, or custom
 bounds. A property initially uses log10 only when it has enough nonnegative,
 distinct observations and logarithmic normalization uses the color range
 materially more evenly; otherwise it uses linear. **posSelection** remains
-linear because it is a probability. Reset restores this automatically selected
-default.
+linear because it is a probability. Names ending in **-posSelection**, such as
+**foreground-posSelection**, receive the same treatment. Reset restores this
+automatically selected default.
 
 Zero is valid on a log10 property scale. It is clipped to the positive lower
 bound, while its tooltip continues to report zero and the legend identifies
@@ -36,9 +37,27 @@ and upper halves independently. Its colors therefore indicate position within
 the displayed distribution, not biological categories or thresholds. Palette
 and scale choices are retained separately for each property.
 
-The legend and cell colors update together, and pointing at or focusing a
-non-gap cell shows its raw posterior mean, retained-sample count, scale, and
-palette.
+The legend and cell colors update together. Pointing at or focusing a non-gap
+cell shows its posterior mean, posterior standard deviation, median, scale, and
+palette. The page displays the shared number of retained samples once rather
+than repeating it for every character.
+
+The ranked panel selects one representative observed character per nonempty
+template-alignment column. Generic properties can be ordered by column, mean,
+or posterior standard deviation. Positive-selection properties can be filtered
+at probabilities 0.5, 0.95, and 0.99 and include the matching **dNdS** summary
+when available. Selecting a row highlights the complete template column and
+opens the representative character's tooltip.
+
+The stored identity of a property value is the sequence name and zero-based
+ungapped character index. The displayed one-based column is only a way to
+locate related characters in the chosen template alignment; it does not imply
+that the column has a fixed identity across sampled alignments.
+
+The **Original colors** checkbox restores alphabet colors without removing the
+active property or its tooltips. Compound symbols occupy one logical table
+cell. Codons show three nucleotide-colored spans, and their report rows use the
+configured genetic code for amino-acid translation.
 
 When **--AU** and **--properties** are supplied together, the viewer can fade
 the property color toward white according to posterior alignment certainty.
@@ -71,7 +90,8 @@ number of model-character columns as the displayed alignment.
 : JSON property summary produced by **character-properties summarize**
 
 **--alphabet** _arg_
-: alphabet used to tokenize model characters; required with **--properties**
+: alphabet used to tokenize and color model characters; required with
+  **--properties**
 
 **--show-gaps** _arg_ (=yes)
 : Show gaps

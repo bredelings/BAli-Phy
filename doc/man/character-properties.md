@@ -10,6 +10,9 @@
 
 **character-properties summarize** [OPTIONS] _C1.propertiesN.json_ [...]
 
+**character-properties report** _SUMMARY_ _ALIGNMENT_ **--alphabet** _ALPHABET_
+**--property** _NAME_ **--kind** _KIND_ [OPTIONS]
+
 # DESCRIPTION
 
 The **summarize** command reads one JSON Lines property stream per MCMC chain
@@ -29,6 +32,13 @@ transformations: the median log-rate is the logarithm of the median rate.
 Exact medians are computed by rereading the input streams in memory-bounded
 character blocks.
 
+The **report** command projects one summarized property onto a template
+alignment. Each stored value continues to identify an observed character by
+sequence name and ungapped character index; a template column is only a
+presentation group. One representative character is selected per nonempty
+column, so characters that share a column do not appear as separate ranked
+sites.
+
 # SUMMARIZE OPTIONS
 
 **--skip=ITER**
@@ -46,6 +56,34 @@ character blocks.
   (default: 256). This excludes each decoded input record and the final summary
   arrays.
 
+# REPORT OPTIONS
+
+**--alphabet=ALPHABET**
+: Alphabet used to interpret one logical character in the template alignment.
+  Codon reports use its genetic code to include amino-acid translations.
+
+**--property=NAME**
+: Property to report.
+
+**--kind=property|positive-selection**
+: Use a generic property report or the specialized positive-selection report.
+  The latter accepts `posSelection` and names ending in `-posSelection`, ranks
+  columns by their largest probability, and includes the matching `dNdS`
+  property when present.
+
+**--format=text|tsv|json**
+: Output format (default: text). Text and TSV coordinates are one-based for
+  readers; versioned JSON coordinates are zero-based.
+
+**--sort=column|mean-ascending|mean-descending|sd-descending**
+: Order generic report rows. The representative for each column is the
+  character with the corresponding extreme value. The default is column order;
+  positive-selection reports default to descending probability.
+
+**--minimum-probability=P**
+: Omit positive-selection columns whose representative probability is below
+  _P_ (default: 0.5).
+
 # VALIDATION
 
 Iterations must be nonnegative and strictly increasing within each chain.
@@ -60,4 +98,13 @@ finite values, and cross-chain shapes are validated before a result is emitted.
 character-properties summarize \
   run-1/C1.properties1.json run-2/C1.properties1.json \
   --skip=1000 --subsample=2 > P1.character-properties.json
+```
+
+Create a text report of columns with posterior positive-selection probability
+at least 0.95:
+
+```
+character-properties report P1.character-properties.json P1.initial.fasta \
+  --alphabet 'Codons(DNA,standard)' --property posSelection \
+  --kind positive-selection --minimum-probability 0.95
 ```
