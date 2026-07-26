@@ -1,0 +1,2 @@
+report ../report-summary.json ../report-alignment.fasta --alphabet DNA --property posSelection
+--kind positive-selection --minimum-probability 0.95 --sort sd-descending --format json

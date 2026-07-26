@@ -3,6 +3,7 @@
 #include <map>
 #include <optional>
 
+#include "sequence/codons.H"
 #include "sequence/sequence-format.H"
 #include "util/io.H"
 #include "util/myexception.H"
@@ -115,6 +116,39 @@ void validate_for_alignment(const summary& properties, const std::vector<sequenc
                                    <<" characters.";
         }
     }
+}
+
+/// Map template columns to their observed sequence characters and optional codon translations.
+alignment_projection project_alignment(const std::vector<sequence>& sequences, const tokenized_alignment& tokens,
+                                       const alphabet& alph)
+{
+    alignment_projection result(tokens.n_columns());
+    const auto* codons = dynamic_cast<const Codons*>(&alph);
+
+    for (std::size_t column = 0; column < tokens.n_columns(); column++)
+    {
+        auto& projected_column = result[column];
+        projected_column.alignment_column = column;
+        for (std::size_t sequence_index = 0; sequence_index < sequences.size(); sequence_index++)
+        {
+            const auto& token = tokens[sequence_index][column];
+            if (token.character_index < 0)
+                continue;
+
+            std::optional<std::string> translation;
+            if (codons)
+                translation = codons->getAminoAcids().lookup(codons->translate(token.alphabet_code));
+            projected_column.characters.push_back({
+                sequence_index,
+                sequences[sequence_index].name,
+                static_cast<std::size_t>(token.character_index),
+                token.alphabet_code,
+                sequences[sequence_index].substr(column * tokens.token_width, tokens.token_width),
+                std::move(translation)
+            });
+        }
+    }
+    return result;
 }
 
 }
