@@ -201,6 +201,13 @@ td.alignment-cell.alignment-property-colored {
     -webkit-print-color-adjust: exact;
 }
 
+td.alignment-cell.alignment-property-colored .alignment-symbol-part,
+td.alignment-cell.alignment-property-missing .alignment-symbol-part,
+td.alignment-cell.alignment-au-missing .alignment-symbol-part {
+    background: transparent !important;
+    color: inherit !important;
+}
+
 td.alignment-cell.alignment-property-missing,
 td.alignment-cell.alignment-au-missing {
     background-color: #e2e8f0 !important;

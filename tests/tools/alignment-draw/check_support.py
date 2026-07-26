@@ -22,8 +22,10 @@ class AlignmentHTMLParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.viewer_scripts = []
         self.cells = []
+        self.ruler_labels = []
         self._script_chunks = None
         self._cell = None
+        self._ruler_chunks = None
 
     # Start collecting only the viewer-data script and alignment cells.
     def handle_starttag(self, tag, attrs):
@@ -31,7 +33,11 @@ class AlignmentHTMLParser(HTMLParser):
         if tag == "script" and attributes.get("id") == "alignment-viewer-data":
             self._script_chunks = []
         if tag == "td" and "alignment-cell" in attributes.get("class", "").split():
-            self._cell = {"attributes": attributes, "text": []}
+            self._cell = {"attributes": attributes, "text": [], "parts": []}
+        if tag == "span" and "alignment-symbol-part" in attributes.get("class", "").split() and self._cell is not None:
+            self._cell["parts"].append(attributes)
+        if tag == "span" and "alignment-ruler-label" in attributes.get("class", "").split():
+            self._ruler_chunks = []
 
     # Finish the current viewer script or alignment cell.
     def handle_endtag(self, tag):
@@ -42,6 +48,9 @@ class AlignmentHTMLParser(HTMLParser):
             self._cell["text"] = "".join(self._cell["text"]).strip()
             self.cells.append(self._cell)
             self._cell = None
+        if tag == "span" and self._ruler_chunks is not None:
+            self.ruler_labels.append("".join(self._ruler_chunks))
+            self._ruler_chunks = None
 
     # Append text to whichever interesting element is currently open.
     def handle_data(self, data):
@@ -49,6 +58,8 @@ class AlignmentHTMLParser(HTMLParser):
             self._script_chunks.append(data)
         if self._cell is not None:
             self._cell["text"].append(data)
+        if self._ruler_chunks is not None:
+            self._ruler_chunks.append(data)
 
 
 # Parse the generated document and require exactly one centralized data object.

@@ -159,6 +159,26 @@ class BPAnalyzePropertyTests(unittest.TestCase):
             )
             self.assertEqual(commands[0][1]["outfile"], output)
 
+    # Pass the partition alphabet even when an alignment has no property summary.
+    def test_draw_alignment_uses_alphabet_without_properties(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            analysis = self.make_analysis(directory, [])
+            commands = []
+            analysis.exec_show = lambda command, **kwargs: commands.append(command)
+
+            analysis.draw_alignment(directory / "P1.initial.fasta", alphabet="Codons(DNA,mt-vert)")
+
+            self.assertEqual(
+                commands[0],
+                [
+                    "alignment-draw",
+                    directory / "P1.initial.fasta",
+                    "--alphabet",
+                    "Codons(DNA,mt-vert)",
+                ],
+            )
+
     # Keep codon AU generation and the combined viewer on the same alphabet grid.
     def test_au_pipeline_forwards_alphabet_and_properties(self):
         with tempfile.TemporaryDirectory() as directory:

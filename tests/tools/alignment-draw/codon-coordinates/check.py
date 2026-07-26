@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from check_support import cell_coordinates, parse_viewer_html, require_equal
+from check_support import cell_coordinates, parse_viewer_html, require, require_equal
 
 
 html = (Path(sys.argv[1]) / "output").read_text(encoding="utf-8")
@@ -11,13 +11,15 @@ parser, _ = parse_viewer_html(html)
 require_equal(
     cell_coordinates(parser.cells),
     [
-        (0, 0, 0, "AAA"),
-        (0, 1, 1, "CCC"),
+        (0, 0, 0, "ATA"),
+        (0, 1, 1, "CCG"),
         (0, 2, -1, "---"),
-        (0, 3, 2, "GGG"),
-        (1, 0, 0, "AAA"),
+        (0, 3, 2, "GTA"),
+        (1, 0, 0, "ATA"),
         (1, 1, -1, "---"),
-        (1, 2, 1, "TTT"),
-        (1, 3, 2, "GGG"),
+        (1, 2, 1, "TTC"),
+        (1, 3, 2, "GTA"),
     ],
 )
+require(all(len(cell["parts"]) == 3 for cell in parser.cells), "codon cells must contain three nucleotide spans")
+require(len({part["style"] for part in parser.cells[0]["parts"]}) == 2, "ATA must retain distinct A and T colors")

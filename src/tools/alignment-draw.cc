@@ -800,6 +800,24 @@ string escape_html(std::string_view text)
     return escaped;
 }
 
+/// Render a logical alignment symbol, coloring each nucleotide of a compound alphabet independently.
+void write_html_symbol(std::ostream& output, std::string_view symbol, bool show_symbol, bool color_parts,
+                       double probability, const ColorScheme& color_scheme)
+{
+    if (not color_parts)
+    {
+        output<<(show_symbol ? escape_html(symbol) : "&nbsp;");
+        return;
+    }
+
+    for (char part: symbol)
+    {
+        string part_string(1, part);
+        output<<"<span class=\"alignment-symbol-part\" style=\""<<getstyle(probability, part_string, color_scheme)
+              <<"\">"<<(show_symbol ? escape_html(part_string) : "&nbsp;")<<"</span>";
+    }
+}
+
 /// Serialize JSON for a script data block without permitting an HTML end tag.
 string serialize_json_for_html(const json::value& document)
 {
@@ -1045,6 +1063,26 @@ BODY {\n\
    font-family: sans-serif;\n\
 }\n\
 \n\
+.sequences TD.alignment-ruler-cell {\n\
+   position: relative;\n\
+   height: 1.3em;\n\
+   overflow: visible;\n\
+   text-align: center;\n\
+}\n\
+\n\
+.alignment-ruler-label {\n\
+   position: absolute;\n\
+   left: 50%;\n\
+   transform: translateX(-50%);\n\
+   white-space: nowrap;\n\
+}\n\
+\n\
+.alignment-symbol-part {\n\
+   display: inline-block;\n\
+   width: 1ch;\n\
+   text-align: center;\n\
+}\n\
+\n\
 .legend {\n\
 //  width: 100%;\n\
 //  text-align: center;\n\
@@ -1083,18 +1121,6 @@ BODY {\n\
 		cout<<"</tr></table>\n";
 	    }
 
-	    //----------- Compute the position headings -------------------//
-	    string positions(L,'.');
-
-	    positions[0]='1';
-	    for(int pos=10;pos<L;pos+=10) {
-		string position = convertToString(pos);
-		const int start = pos - position.size()+1;
-		for(int j=0;j<position.size();j++) 
-		    positions[start + j]=position[j];
-	    }
-
-
 	    //-------------------- Print the alignment ------------------------//
 	    int pos=start;
 	    while(pos<=end) {
@@ -1109,10 +1135,14 @@ BODY {\n\
 		    for(int column=pos;column<pos+width and column <= end; column++) {
 			double P=colors(column, S.size());
 			string style = getstyle(P,"",*color_scheme);
+			string label = column == 0 or (column + 1) % 10 == 0 ? convertToString(column + 1) : "";
 			if (columncolors)
-			    cout<<"<td style=\""<<style<<"\">"<<positions[column]<<"</td>";
+			    cout<<"<td class=\"alignment-ruler-cell\" style=\""<<style<<"\">";
 			else
-			    cout<<"<td>"<<positions[column]<<"</td>";
+			    cout<<"<td class=\"alignment-ruler-cell\">";
+			if (not label.empty())
+			    cout<<"<span class=\"alignment-ruler-label\">"<<label<<"</span>";
+			cout<<"</td>";
 		    }
 		    cout<<"</tr>\n";
 		}
@@ -1127,26 +1157,19 @@ BODY {\n\
 			const auto& token = tokens[s][column];
 			std::string_view c(static_cast<const string&>(S[s]).data()
 			                   + column*tokens.token_width, tokens.token_width);
-			string c_string = escape_html(c);
-			if (not show_letters or (not show_gaps and token.alphabet_code == alphabet::gap))
-			    c_string = "&nbsp;";
-
-			// NOTE: Legacy palettes accept one-letter keys; preserve compound gap/missing
-			// semantics and use neutral colors until they support compound characters.
-			string color_key(c);
-			if (c.size() > 1)
-			{
-			    if (token.alphabet_code == alphabet::gap) color_key = "-";
-			    else if (token.alphabet_code == alphabet::unknown) color_key = "?";
-			    else color_key = "";
-			}
-			string style = getstyle(colors(column,s),color_key,*color_scheme);
+			bool show_symbol = show_letters and (show_gaps or token.alphabet_code != alphabet::gap);
+			bool color_parts = tokens.token_width > 1;
+			string style = color_parts ? "" : getstyle(colors(column,s), string(c), *color_scheme);
 			cout<<"<td";
 			if (character_property_summary)
 			    cout<<" class=\"alignment-cell\" data-sequence=\""<<s
 				<<"\" data-column=\""<<column
 				<<"\" data-character=\""<<token.character_index<<"\"";
-			cout<<" style=\""<<style<<"\">"<<c_string<<"</td>";
+			if (not style.empty())
+			    cout<<" style=\""<<style<<"\"";
+			cout<<">";
+			write_html_symbol(cout, c, show_symbol, color_parts, colors(column,s), *color_scheme);
+			cout<<"</td>";
 		    }
 		    cout<<"  </tr>\n";
 		}

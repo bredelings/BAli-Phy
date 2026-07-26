@@ -1772,10 +1772,12 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
         properties = kwargs.get("properties")
         alphabet = kwargs.get("alphabet")
-        if (properties is None) != (alphabet is None):
-            raise ValueError("alignment properties and alphabet must be supplied together")
+        if properties is not None and alphabet is None:
+            raise ValueError("an alphabet is required with alignment properties")
         if properties is not None:
-            cmd += ['--properties', properties, '--alphabet', alphabet]
+            cmd += ['--properties', properties]
+        if alphabet is not None:
+            cmd += ['--alphabet', alphabet]
 
         if "outfile" in kwargs:
             outfile = kwargs["outfile"]
@@ -1801,7 +1803,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 color_scheme=color_scheme,
                 ruler=True,
                 properties=properties,
-                alphabet=alphabet if properties is not None else None,
+                alphabet=alphabet,
             )
             print('*',end='',flush=True)
 
@@ -1913,7 +1915,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                         color_scheme=color_scheme,
                         outfile=html_file,
                         properties=properties,
-                        alphabet=alphabet if properties is not None else None,
+                        alphabet=alphabet,
                     )
                 print(' done.')
 
