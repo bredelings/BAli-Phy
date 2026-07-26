@@ -61,6 +61,9 @@ struct report
     std::vector<report_row> rows;
 };
 
+/// Report whether a property name currently denotes a positive-selection probability.
+bool is_positive_selection_property(const std::string& name);
+
 /// Select one representative observed character per template column and order the resulting rows.
 report make_report(const summary& properties, const alignment_projection& projection, const report_options& options);
 

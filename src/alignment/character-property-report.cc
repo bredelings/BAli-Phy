@@ -25,14 +25,6 @@ summary_statistics statistics_for(const property_summary& property, const projec
     };
 }
 
-/// Identify positive-selection fields until property summaries carry explicit semantic metadata.
-bool is_positive_selection_property(const std::string& name)
-{
-    // NOTE: Property names currently stand in for missing producer metadata. Remove this convention once summaries
-    // carry explicit probability and companion-property roles.
-    return name == "posSelection" or name.ends_with("-posSelection");
-}
-
 /// Derive the optional dN/dS companion using the same temporary naming convention.
 std::string positive_selection_companion(const std::string& name)
 {
@@ -120,6 +112,14 @@ const char* sort_name(report_sort sort)
     std::unreachable();
 }
 
+}
+
+/// Report whether a property name currently denotes a positive-selection probability.
+bool is_positive_selection_property(const std::string& name)
+{
+    // NOTE: Property names currently stand in for missing producer metadata. Remove this convention once summaries
+    // carry explicit probability and companion-property roles.
+    return name == "posSelection" or name.ends_with("-posSelection");
 }
 
 /// Select one representative observed character per template column and order the resulting rows.

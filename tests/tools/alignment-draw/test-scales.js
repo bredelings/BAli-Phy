@@ -12,7 +12,10 @@ const {
     paletteGradient,
     blendWithWhite,
 } = require('../../../src/tools/alignment-draw-scales.js');
-const {collectProperties} = require('../../../src/tools/alignment-draw-properties.js');
+const {
+    collectProperties,
+    reportsFromPayload,
+} = require('../../../src/tools/alignment-draw-properties.js');
 
 // Compares floating-point scale results without coupling the tests to their
 // exact arithmetic evaluation order.
@@ -225,4 +228,8 @@ function assertClose(actual, expected, message)
     assert.deepEqual(properties[0].meanBySequence, [[2]]);
     assert.deepEqual(properties[0].sdBySequence, [[0.5]]);
     assert.deepEqual(properties[0].medianBySequence, [[1.8]]);
+    assert.deepEqual(
+        reportsFromPayload({character_property_reports: {dNdS: {generic: []}}}),
+        {dNdS: {generic: []}},
+    );
 }

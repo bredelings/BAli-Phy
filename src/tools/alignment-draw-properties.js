@@ -12,6 +12,13 @@ function characterPropertiesFromPayload(payload)
     return payload.character_properties;
 }
 
+// Extracts C++-generated column reports without reconstructing representatives in JavaScript.
+function reportsFromPayload(payload)
+{
+    const reports = payload.character_property_reports;
+    return reports && typeof reports === 'object' && !Array.isArray(reports) ? reports : {};
+}
+
 // Parses the inert embedded JSON object used by the standalone viewer.
 function parseViewerPayload(documentObject)
 {
@@ -36,8 +43,7 @@ function collectCells(documentObject)
             column,
             character,
             originalStyle: element.getAttribute('style'),
-            value: null,
-            count: null,
+            statistics: null,
             uncertainty: null,
         };
     });
@@ -121,6 +127,7 @@ function validatedAlignmentUncertainty(payload, sequenceCount, cells)
 
 const api = {
     parseViewerPayload,
+    reportsFromPayload,
     collectCells,
     sequenceNamesForViewer,
     collectProperties,

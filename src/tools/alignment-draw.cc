@@ -23,6 +23,7 @@
 #include <optional>
 #include <string_view>
 #include "alignment/character-property-alignment.H"
+#include "alignment/character-property-report.H"
 #include "alignment/character-properties.H"
 #include "tree/tree.H"
 #include "sequence/alphabet.H"
@@ -837,6 +838,7 @@ string serialize_json_for_html(const json::value& document)
 /// Package scientific property data, display order, and optional grid-cell AU values.
 json::value make_viewer_payload(const character_properties::summary& property_summary,
                                 const vector<sequence>& sequences,
+                                const character_properties::alignment_projection& projection,
                                 const matrix<double>& colors,
                                 bool include_uncertainty)
 {
@@ -849,6 +851,42 @@ json::value make_viewer_payload(const character_properties::summary& property_su
         sequence_names.push_back(json::string(seq.name));
     payload["sequences"] = std::move(sequence_names);
     payload["character_properties"] = character_properties::to_json(property_summary);
+
+    json::object reports;
+    for (const auto& property: property_summary.properties)
+    {
+        const auto& property_name = property.first;
+        json::object property_reports;
+        if (character_properties::is_positive_selection_property(property_name))
+        {
+            character_properties::report_options options{
+                property_name,
+                character_properties::report_kind::positive_selection,
+                character_properties::report_sort::mean_descending,
+                0.0
+            };
+            property_reports["positive_selection"] = character_properties::to_json(
+                character_properties::make_report(property_summary, projection, options));
+        }
+        else
+        {
+            json::array generic_reports;
+            for (auto sort: {
+                     character_properties::report_sort::column,
+                     character_properties::report_sort::mean_ascending,
+                     character_properties::report_sort::mean_descending,
+                     character_properties::report_sort::sd_descending})
+            {
+                character_properties::report_options options{
+                    property_name, character_properties::report_kind::property, sort, std::nullopt};
+                generic_reports.push_back(character_properties::to_json(
+                    character_properties::make_report(property_summary, projection, options)));
+            }
+            property_reports["generic"] = std::move(generic_reports);
+        }
+        reports[property_name] = std::move(property_reports);
+    }
+    payload["character_property_reports"] = std::move(reports);
 
     if (include_uncertainty)
     {
@@ -1098,8 +1136,8 @@ BODY {\n\
 
 	    if (character_property_summary)
 	    {
-		auto viewer_payload = make_viewer_payload(
-		    *character_property_summary, S, colors, args.count("AU"));
+		auto projection = character_properties::project_alignment(S, tokens, *alph);
+		auto viewer_payload = make_viewer_payload(*character_property_summary, S, projection, colors, args.count("AU"));
 		cout<<"<script type=\"application/json\" id=\"alignment-viewer-data\">"
 		    <<serialize_json_for_html(viewer_payload)<<"</script>\n";
 	    }

@@ -20,6 +20,7 @@ const {
 
 const {
     parseViewerPayload,
+    reportsFromPayload,
     collectCells,
     sequenceNamesForViewer,
     collectProperties,
@@ -74,6 +75,7 @@ class AlignmentPropertyViewer {
         this.document = documentObject;
         this.payload = parsed.payload;
         this.characterProperties = parsed.characterProperties;
+        this.reports = reportsFromPayload(this.payload);
         this.cells = collectCells(documentObject);
         this.sequenceNames = sequenceNamesForViewer(
             this.payload, this.characterProperties, this.cells);
@@ -179,12 +181,13 @@ class AlignmentPropertyViewer {
         this.toolbar.append(this.status);
         this.buildLegend();
         this.buildTooltip();
+        this.buildReportPanel();
 
         const firstTable = this.document.querySelector('table.sequences');
         if (firstTable)
-            firstTable.before(this.toolbar);
+            firstTable.before(this.toolbar, this.reportPanel);
         else
-            this.document.body.prepend(this.toolbar);
+            this.document.body.prepend(this.toolbar, this.reportPanel);
     }
 
     // Builds reusable legend nodes whose labels and gradients change with the scale.
@@ -221,6 +224,42 @@ class AlignmentPropertyViewer {
         this.document.body.append(this.tooltip);
     }
 
+    // Builds the fixed-height column report and its generic or positive-selection controls.
+    buildReportPanel()
+    {
+        const doc = this.document;
+        this.reportPanel = makeElement(doc, 'section', 'alignment-viewer-report');
+        this.reportPanel.setAttribute('aria-label', 'Ranked character property columns');
+        const header = makeElement(doc, 'div', 'alignment-viewer-report-header');
+        this.reportTitle = makeElement(doc, 'h2', 'alignment-viewer-report-title', 'Ranked columns');
+        header.append(this.reportTitle);
+
+        this.reportSortSelect = makeElement(doc, 'select', 'alignment-viewer-select');
+        addOption(doc, this.reportSortSelect, 'column', 'Column');
+        addOption(doc, this.reportSortSelect, 'mean-descending', 'Mean, high to low');
+        addOption(doc, this.reportSortSelect, 'mean-ascending', 'Mean, low to high');
+        addOption(doc, this.reportSortSelect, 'sd-descending', 'SD, high to low');
+        this.reportSortSelect.value = 'mean-descending';
+        this.reportSortControl = labelledControl(doc, 'Order', this.reportSortSelect);
+        header.append(this.reportSortControl);
+
+        this.probabilityThresholdSelect = makeElement(doc, 'select', 'alignment-viewer-select');
+        addOption(doc, this.probabilityThresholdSelect, '0.5', '≥ 0.5');
+        addOption(doc, this.probabilityThresholdSelect, '0.95', '≥ 0.95');
+        addOption(doc, this.probabilityThresholdSelect, '0.99', '≥ 0.99');
+        this.probabilityThresholdControl = labelledControl(
+            doc, 'Minimum probability', this.probabilityThresholdSelect);
+        header.append(this.probabilityThresholdControl);
+        this.reportPanel.append(header);
+
+        this.reportTableScroller = makeElement(doc, 'div', 'alignment-viewer-report-scroll');
+        this.reportTable = makeElement(doc, 'table', 'alignment-viewer-report-table');
+        this.reportHead = this.reportTable.createTHead();
+        this.reportBody = this.reportTable.createTBody();
+        this.reportTableScroller.append(this.reportTable);
+        this.reportPanel.append(this.reportTableScroller);
+    }
+
     // Registers one handler per interaction type instead of one per alignment cell.
     installEvents()
     {
@@ -233,6 +272,9 @@ class AlignmentPropertyViewer {
         this.upperInput.addEventListener('change', this.handleBoundsChange.bind(this));
         this.auCheckbox.addEventListener('change', this.handleAUChange.bind(this));
         this.resetButton.addEventListener('click', this.handleReset.bind(this));
+        this.reportSortSelect.addEventListener('change', this.handleReportControlChange.bind(this));
+        this.probabilityThresholdSelect.addEventListener('change', this.handleReportControlChange.bind(this));
+        this.reportTable.addEventListener('click', this.handleReportClick.bind(this));
         this.document.addEventListener('pointerover', this.handlePointerOver.bind(this));
         this.document.addEventListener('pointermove', this.handlePointerMove.bind(this));
         this.document.addEventListener('pointerout', this.handlePointerOut.bind(this));
@@ -445,6 +487,95 @@ class AlignmentPropertyViewer {
         this.legend.hidden = false;
     }
 
+    // Selects the C++-generated report for the active property and requested display policy.
+    reportFor(property)
+    {
+        const reports = this.reports[property.name];
+        if (!reports)
+            return null;
+        if (reports.positive_selection)
+            return reports.positive_selection;
+        const generic = Array.isArray(reports.generic) ? reports.generic : [];
+        return generic.find((report) => report.sort === this.reportSortSelect.value) || null;
+    }
+
+    // Rebuilds the ranked table without recomputing representatives or property companions.
+    renderReport(property)
+    {
+        const propertyReports = this.reports[property.name] || {};
+        const positiveSelection = Boolean(propertyReports.positive_selection);
+        this.reportSortControl.hidden = positiveSelection;
+        this.probabilityThresholdControl.hidden = !positiveSelection;
+
+        const report = this.reportFor(property);
+        if (!report) {
+            this.reportPanel.hidden = true;
+            return;
+        }
+        this.reportPanel.hidden = false;
+        this.reportTitle.textContent = positiveSelection ?
+            `${property.name}: positive-selection columns` : `${property.name}: ranked columns`;
+
+        const threshold = Number.parseFloat(this.probabilityThresholdSelect.value);
+        this.currentReportRows = positiveSelection ?
+            report.rows.filter((row) => row.statistics.mean >= threshold) : report.rows;
+        for (const cell of this.cells)
+            cell.element.classList.remove('alignment-report-column');
+
+        const labels = positiveSelection ?
+            ['Rank', 'Column', 'Representative', 'Probability mean ± SD', 'Probability median',
+             'dN/dS mean ± SD', 'dN/dS median'] :
+            ['Rank', 'Column', 'Representative', 'Mean ± SD', 'Median'];
+        const header = this.document.createElement('tr');
+        for (const label of labels)
+            header.append(makeElement(this.document, 'th', '', label));
+        this.reportHead.replaceChildren(header);
+        this.reportBody.replaceChildren();
+
+        for (let index = 0; index < this.currentReportRows.length; index++)
+        {
+            const row = this.currentReportRows[index];
+            const tableRow = this.document.createElement('tr');
+            tableRow.append(makeElement(this.document, 'td', '', String(index + 1)));
+
+            const columnCell = this.document.createElement('td');
+            const columnButton = makeElement(
+                this.document, 'button', 'alignment-viewer-report-column', String(row.column_index + 1));
+            columnButton.type = 'button';
+            columnButton.dataset.reportIndex = String(index);
+            columnCell.append(columnButton);
+            tableRow.append(columnCell);
+
+            const translation = row.translation ? ` (${row.translation})` : '';
+            tableRow.append(makeElement(
+                this.document, 'td', '',
+                `${row.sequence}:${row.character_index + 1} ${row.symbol}${translation}`));
+            tableRow.append(makeElement(
+                this.document, 'td', '',
+                `${formatValue(row.statistics.mean)} ± ${formatValue(row.statistics.sd)}`));
+            tableRow.append(makeElement(this.document, 'td', '', formatValue(row.statistics.median)));
+
+            if (positiveSelection) {
+                const companion = row.companion?.statistics;
+                tableRow.append(makeElement(
+                    this.document, 'td', '',
+                    companion ? `${formatValue(companion.mean)} ± ${formatValue(companion.sd)}` : '—'));
+                tableRow.append(makeElement(
+                    this.document, 'td', '', companion ? formatValue(companion.median) : '—'));
+            }
+            this.reportBody.append(tableRow);
+        }
+
+        if (this.currentReportRows.length === 0) {
+            const emptyRow = this.document.createElement('tr');
+            const emptyCell = makeElement(
+                this.document, 'td', 'alignment-viewer-report-empty', 'No columns meet this threshold.');
+            emptyCell.colSpan = labels.length;
+            emptyRow.append(emptyCell);
+            this.reportBody.append(emptyRow);
+        }
+    }
+
     // Displays a non-blocking configuration error without discarding prior colors.
     showStatus(message)
     {
@@ -478,6 +609,7 @@ class AlignmentPropertyViewer {
         this.legend.hidden = false;
         this.updateControls(property, state, this.boundsFor(property, state));
         this.updateRovingTabIndex();
+        this.renderReport(property);
         this.clearStatus();
     }
 
@@ -509,6 +641,7 @@ class AlignmentPropertyViewer {
             this.legend.classList.add('alignment-viewer-legend-original');
             this.legend.hidden = false;
             this.updateRovingTabIndex();
+            this.renderReport(property);
             this.showStatus(`${property.name} has no finite posterior means.`);
             return;
         }
@@ -532,6 +665,7 @@ class AlignmentPropertyViewer {
             this.currentRange = state.range;
             this.updateLegend(property, state, scale);
             this.updateRovingTabIndex();
+            this.renderReport(property);
             this.clearStatus();
             if (this.pinnedCell)
                 this.showTooltip(this.pinnedCell);
@@ -554,6 +688,45 @@ class AlignmentPropertyViewer {
         this.render();
         if (this.pinnedCell)
             this.showTooltip(this.pinnedCell);
+    }
+
+    // Applies report ordering or threshold controls to the already generated row sets.
+    handleReportControlChange()
+    {
+        const property = this.selectedProperty();
+        if (property)
+            this.renderReport(property);
+    }
+
+    // Focuses a report row's representative and marks its complete template column.
+    selectReportRow(row)
+    {
+        for (const cell of this.cells)
+            cell.element.classList.toggle('alignment-report-column', cell.column === row.column_index);
+        const cell = this.cellByCoordinate.get(`${row.sequence_index}:${row.column_index}`);
+        if (!cell)
+            return;
+
+        this.pinnedCell = cell;
+        for (const candidate of this.cells) {
+            if (candidate.character >= 0)
+                candidate.element.tabIndex = candidate === cell ? 0 : -1;
+        }
+        cell.element.scrollIntoView({block: 'center', inline: 'center'});
+        cell.element.focus({preventScroll: true});
+        this.showTooltip(cell);
+    }
+
+    // Delegates report-button activation through the current visible row list.
+    handleReportClick(event)
+    {
+        const button = event.target.closest('button[data-report-index]');
+        if (!button || !this.reportTable.contains(button))
+            return;
+        const index = Number.parseInt(button.dataset.reportIndex, 10);
+        const row = this.currentReportRows?.[index];
+        if (row)
+            this.selectReportRow(row);
     }
 
     // Changes the numerical transform for the active property.

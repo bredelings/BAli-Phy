@@ -208,6 +208,82 @@ td.alignment-cell:focus-visible {
     visibility: hidden;
 }
 
+.alignment-viewer-report {
+    box-sizing: border-box;
+    margin: 0 0 0.8rem;
+    border-top: 1px solid #cbd5e1;
+    border-bottom: 1px solid #cbd5e1;
+    color: #0f172a;
+    font: 0.8rem/1.35 system-ui, sans-serif;
+}
+
+.alignment-viewer-report-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.55rem 1rem;
+    padding: 0.55rem 0;
+}
+
+.alignment-viewer-report-title {
+    align-self: center;
+    margin: 0 auto 0 0;
+    font-size: 0.95rem;
+}
+
+.alignment-viewer-report-scroll {
+    height: 14rem;
+    overflow: auto;
+}
+
+.alignment-viewer-report-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.alignment-viewer-report-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f8fafc;
+    color: #475569;
+    text-align: left;
+}
+
+.alignment-viewer-report-table th,
+.alignment-viewer-report-table td {
+    padding: 0.28rem 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.alignment-viewer-report-column {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #1d4ed8;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.alignment-viewer-report-column:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.48);
+    outline-offset: 2px;
+}
+
+.alignment-viewer-report-empty {
+    height: 5rem;
+    color: #64748b;
+    text-align: center;
+}
+
+td.alignment-cell.alignment-report-column {
+    box-shadow: inset 0 0 0 2px #2563eb;
+}
+
 td.alignment-cell.alignment-property-colored {
     cursor: help;
     print-color-adjust: exact;
@@ -311,5 +387,10 @@ td.alignment-cell.alignment-au-missing {
     .alignment-viewer-status,
     .alignment-viewer-tooltip {
         display: none !important;
+    }
+
+    .alignment-viewer-report-scroll {
+        height: auto;
+        overflow: visible;
     }
 }

@@ -25,11 +25,38 @@ require("Blue–gray–red" in html, "palette label is missing")
 require("Original colors" in html, "original-color checkbox is missing")
 require("Retained samples:" in html, "shared retained-sample summary is missing")
 require("mean ± SD" in html, "complete posterior tooltip summary is missing")
+require("alignment-viewer-report-scroll" in html, "ranked report panel is missing")
+require("Minimum probability" in html, "positive-selection threshold control is missing")
 require_equal(properties["retained_samples"], 4)
 require_equal(properties["properties"]["rate"]["mean"]["alpha"], [0.25, 2.0, 8.0])
 require(DANGEROUS_PROPERTY in properties["properties"], "property name is missing from viewer JSON")
 require(DANGEROUS_PROPERTY not in html, "property name was embedded as unsafe HTML")
 require_equal(properties["properties"][DANGEROUS_PROPERTY]["mean"]["alpha"][0], 12345.6789)
+
+reports = viewer["character_property_reports"]
+mean_descending = next(report for report in reports["rate"]["generic"] if report["sort"] == "mean-descending")
+require_equal(
+    [(row["column_index"], row["sequence"], row["statistics"]["mean"]) for row in mean_descending["rows"]],
+    [(3, "beta", 16.0), (1, "beta", 4.0), (2, "alpha", 2.0), (0, "beta", 0.5)],
+)
+positive = reports["posSelection"]["positive_selection"]
+require_equal(
+    [
+        (
+            row["column_index"],
+            row["sequence"],
+            row["statistics"]["mean"],
+            row["companion"]["statistics"]["mean"],
+        )
+        for row in positive["rows"]
+    ],
+    [
+        (2, "alpha", 0.96, 3.2),
+        (3, "beta", 0.95, 2.8),
+        (1, "beta", 0.7, 1.4),
+        (0, "beta", 0.2, 0.5),
+    ],
+)
 
 for cell in parser.cells:
     for attribute in cell["attributes"]:
