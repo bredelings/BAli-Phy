@@ -11,7 +11,7 @@ const {
     paletteColor,
     paletteGradient,
     blendWithWhite,
-} = require('../../../src/tools/alignment-draw.js');
+} = require('../../../src/tools/alignment-draw-scales.js');
 
 // Compares floating-point scale results without coupling the tests to their
 // exact arithmetic evaluation order.

@@ -190,11 +190,18 @@ prefixed_tools = ['subsample']
 
 alignment_draw_assets = custom_target(
   'alignment-draw-assets',
-  input: ['tools/alignment-draw.js', 'tools/alignment-draw.css'],
+  input: [
+    'tools/alignment-draw-scales.js',
+    'tools/alignment-draw-properties.js',
+    'tools/alignment-draw-viewer.js',
+    'tools/alignment-draw.css',
+  ],
   output: 'alignment-draw-assets.hh',
   command: [python, files('../scripts/embed-text.py'), '@OUTPUT@',
-            'alignment_draw_javascript', '@INPUT0@',
-            'alignment_draw_stylesheet', '@INPUT1@'])
+            'alignment_draw_scales_javascript', '@INPUT0@',
+            'alignment_draw_properties_javascript', '@INPUT1@',
+            'alignment_draw_viewer_javascript', '@INPUT2@',
+            'alignment_draw_stylesheet', '@INPUT3@'])
 
 extra_sources = {
   'alignment-draw': ['tools/colors.cc', alignment_draw_assets],

@@ -1180,7 +1180,9 @@ BODY {\n\
 		pos += width;
 	    }
 	    if (character_property_summary)
-		cout<<"<script>\n"<<alignment_draw_javascript<<"\n</script>\n";
+		cout<<"<script>\n"<<alignment_draw_scales_javascript<<"\n</script>\n"
+		    <<"<script>\n"<<alignment_draw_properties_javascript<<"\n</script>\n"
+		    <<"<script>\n"<<alignment_draw_viewer_javascript<<"\n</script>\n";
 	    cout<<"</body>\n</html>\n";
 	}
     }
