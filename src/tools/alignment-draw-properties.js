@@ -42,6 +42,7 @@ function collectCells(documentObject)
             sequence,
             column,
             character,
+            aminoAcid: element.dataset.aminoAcid || null,
             originalStyle: element.getAttribute('style'),
             statistics: null,
             uncertainty: null,

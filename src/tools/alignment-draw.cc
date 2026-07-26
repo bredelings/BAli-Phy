@@ -27,6 +27,7 @@
 #include "alignment/character-properties.H"
 #include "tree/tree.H"
 #include "sequence/alphabet.H"
+#include "sequence/codons.H"
 #include "sequence/sequence.H"
 #include "util/matrix.H"
 #include "util/json.hh"
@@ -969,6 +970,7 @@ int main(int argc,char* argv[])
 	std::shared_ptr<const alphabet> alph;
 	if (args.count("alphabet"))
 	    alph = get_alphabet(args["alphabet"].as<string>());
+	const auto* codons = alph ? dynamic_cast<const Codons*>(alph.get()) : nullptr;
 	if (args.count("properties") and not alph)
 	    throw myexception()<<"Option '--alphabet' is required when '--properties' is supplied.";
 	if (args.count("properties") and args["format"].as<string>() != "HTML")
@@ -1221,6 +1223,11 @@ BODY {\n\
 			    cout<<"\" data-sequence=\""<<s
 				<<"\" data-column=\""<<column
 				<<"\" data-character=\""<<token.character_index<<"\"";
+			    if (codons and token.character_index >= 0)
+			    {
+				auto amino_acid = codons->getAminoAcids().lookup(codons->translate(token.alphabet_code));
+				cout<<" data-amino-acid=\""<<escape_html(amino_acid)<<"\"";
+			    }
 			}
 			else if (color_parts)
 			    cout<<" class=\"alignment-compound-cell\"";

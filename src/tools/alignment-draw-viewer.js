@@ -830,6 +830,8 @@ class AlignmentPropertyViewer {
         this.appendTooltipRow(list, 'Alignment column', String(cell.column + 1));
         this.appendTooltipRow(list, 'Sequence character', String(cell.character + 1));
         this.appendTooltipRow(list, 'Character', cell.element.textContent.trim());
+        if (cell.aminoAcid)
+            this.appendTooltipRow(list, 'Amino acid', cell.aminoAcid);
         this.appendTooltipRow(
             list,
             `${this.currentProperty.name} mean ± SD`,
@@ -839,10 +841,6 @@ class AlignmentPropertyViewer {
         const state = this.stateFor(this.currentProperty);
         if (state.fadeByAU && this.uncertainty)
             this.appendTooltipRow(list, 'Alignment certainty', formatValue(cell.uncertainty));
-        const transformLabel = state.transform === 'rank' ? 'percentile rank' : state.transform;
-        const rangeLabel = state.transform === 'rank' ? '' : `, ${state.range}`;
-        this.appendTooltipRow(list, 'Display scale', `${transformLabel}${rangeLabel}`);
-        this.appendTooltipRow(list, 'Palette', propertyPalette(state.palette).label);
         this.tooltip.replaceChildren(list);
     }
 

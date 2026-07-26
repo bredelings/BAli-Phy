@@ -1,2 +1,2 @@
-../codons.fasta --properties ../codon-properties.json --alphabet Codons(DNA)
+../codons.fasta --properties ../codon-properties.json --alphabet Codons(DNA,mt-vert)
 --color-scheme DNA+contrast --AU ../codon-AU.prob

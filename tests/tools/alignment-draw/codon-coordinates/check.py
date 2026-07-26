@@ -26,5 +26,15 @@ require(
     all("alignment-compound-cell" in cell["attributes"]["class"].split() for cell in parser.cells),
     "codon cells must let their colored spans fill the cell",
 )
+require_equal(parser.cells[0]["attributes"].get("data-amino-acid"), "M")
+require("'Amino acid'" in html, "codon tooltips must identify the translated amino acid")
+require(
+    "appendTooltipRow(list, 'Display scale'" not in html,
+    "tooltips must not present display scale as a character property",
+)
+require(
+    "appendTooltipRow(list, 'Palette'" not in html,
+    "tooltips must not present palette as a character property",
+)
 require("line-height: 1" in html, "alignment cells and their colored spans must use the same line height")
 require(len({part["style"] for part in parser.cells[0]["parts"]}) == 2, "ATA must retain distinct A and T colors")
