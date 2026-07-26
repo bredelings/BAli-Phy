@@ -115,8 +115,9 @@ comment = do
 
 newickSpaces = fmap makeAttributes $ fmap catMaybes $ many $ (comment <|> (satisfy isSpace >> return Nothing))
 
--- '' escapes to ' inside a quoted string
-quoted_char = (string "''" >> return '\'')
+-- A single quote ends the label, so a failed doubled-quote match must let the
+-- enclosing repetition stop before the closing delimiter.
+quoted_char = (try (string "''") >> return '\'')
               <|>
               satisfy (\c -> (isPrint c) && (c /= '\'') )
 
