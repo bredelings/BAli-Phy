@@ -522,10 +522,14 @@ class AlignmentPropertyViewer {
         for (const cell of this.cells)
             cell.element.classList.remove('alignment-report-column');
 
-        const labels = positiveSelection ?
-            ['Rank', 'Column', 'Representative', 'Probability mean ± SD', 'Probability median',
-             'dN/dS mean ± SD', 'dN/dS median'] :
-            ['Rank', 'Column', 'Representative', 'Mean ± SD', 'Median'];
+        const hasTranslations = report.rows.some((row) => Boolean(row.translation));
+        const labels = ['Rank', 'Column', 'Representative', hasTranslations ? 'Codon' : 'Character'];
+        if (hasTranslations)
+            labels.push('Amino acid');
+        if (positiveSelection)
+            labels.push('Probability mean ± SD', 'Probability median', 'dN/dS mean ± SD', 'dN/dS median');
+        else
+            labels.push('Mean ± SD', 'Median');
         const header = this.document.createElement('tr');
         for (const label of labels)
             header.append(makeElement(this.document, 'th', '', label));
@@ -546,10 +550,10 @@ class AlignmentPropertyViewer {
             columnCell.append(columnButton);
             tableRow.append(columnCell);
 
-            const translation = row.translation ? ` (${row.translation})` : '';
-            tableRow.append(makeElement(
-                this.document, 'td', '',
-                `${row.sequence}:${row.character_index + 1} ${row.symbol}${translation}`));
+            tableRow.append(makeElement(this.document, 'td', '', `${row.sequence}:${row.character_index + 1}`));
+            tableRow.append(makeElement(this.document, 'td', '', row.symbol));
+            if (hasTranslations)
+                tableRow.append(makeElement(this.document, 'td', '', row.translation || '—'));
             tableRow.append(makeElement(
                 this.document, 'td', '',
                 `${formatValue(row.statistics.mean)} ± ${formatValue(row.statistics.sd)}`));
