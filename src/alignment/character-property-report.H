@@ -22,8 +22,7 @@ enum class report_sort
 {
     column,
     mean_ascending,
-    mean_descending,
-    sd_descending
+    mean_descending
 };
 
 struct report_options

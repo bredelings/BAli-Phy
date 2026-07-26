@@ -875,8 +875,7 @@ json::value make_viewer_payload(const character_properties::summary& property_su
             for (auto sort: {
                      character_properties::report_sort::column,
                      character_properties::report_sort::mean_ascending,
-                     character_properties::report_sort::mean_descending,
-                     character_properties::report_sort::sd_descending})
+                     character_properties::report_sort::mean_descending})
             {
                 character_properties::report_options options{
                     property_name, character_properties::report_kind::property, sort, std::nullopt};

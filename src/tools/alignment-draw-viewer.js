@@ -239,7 +239,6 @@ class AlignmentPropertyViewer {
         addOption(doc, this.reportSortSelect, 'column', 'Column');
         addOption(doc, this.reportSortSelect, 'mean-descending', 'Mean, high to low');
         addOption(doc, this.reportSortSelect, 'mean-ascending', 'Mean, low to high');
-        addOption(doc, this.reportSortSelect, 'sd-descending', 'SD, high to low');
         this.reportSortSelect.value = 'mean-descending';
         this.reportSortControl = labelledControl(doc, 'Order', this.reportSortSelect);
         header.append(this.reportSortControl);

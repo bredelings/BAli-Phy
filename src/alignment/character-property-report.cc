@@ -41,8 +41,6 @@ bool better_representative(const report_options& options, const summary_statisti
         return candidate.mean > current.mean;
     if (options.sort == report_sort::mean_ascending and candidate.mean != current.mean)
         return candidate.mean < current.mean;
-    if (options.sort == report_sort::sd_descending and candidate.sd != current.sd)
-        return candidate.sd > current.sd;
     if (candidate.mean != current.mean)
         return candidate.mean > current.mean;
     return candidate_character.sequence_index < current_character.sequence_index;
@@ -57,8 +55,6 @@ bool row_before(const report_options& options, const report_row& first, const re
         return first.statistics.mean < second.statistics.mean;
     if (options.sort == report_sort::mean_descending and first.statistics.mean != second.statistics.mean)
         return first.statistics.mean > second.statistics.mean;
-    if (options.sort == report_sort::sd_descending and first.statistics.sd != second.statistics.sd)
-        return first.statistics.sd > second.statistics.sd;
     return first.alignment_column < second.alignment_column;
 }
 
@@ -106,8 +102,6 @@ const char* sort_name(report_sort sort)
             return "mean-ascending";
         case report_sort::mean_descending:
             return "mean-descending";
-        case report_sort::sd_descending:
-            return "sd-descending";
     }
     std::unreachable();
 }

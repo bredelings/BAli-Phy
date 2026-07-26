@@ -41,6 +41,11 @@ require(DANGEROUS_PROPERTY not in html, "property name was embedded as unsafe HT
 require_equal(properties["properties"][DANGEROUS_PROPERTY]["mean"]["alpha"][0], 12345.6789)
 
 reports = viewer["character_property_reports"]
+require(
+    all(report["sort"] != "sd-descending" for property_reports in reports.values()
+        for report in property_reports.get("generic", [])),
+    "the viewer must not generate SD-ordered reports",
+)
 mean_descending = next(report for report in reports["rate"]["generic"] if report["sort"] == "mean-descending")
 require_equal(
     [(row["column_index"], row["sequence"], row["statistics"]["mean"]) for row in mean_descending["rows"]],

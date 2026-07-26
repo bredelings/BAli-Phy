@@ -4,7 +4,7 @@ import sys
 
 
 report = json.loads((Path(sys.argv[1]) / "output").read_text(encoding="utf-8"))
-assert report["sort"] == "sd-descending"
+assert report["sort"] == "mean-ascending"
 assert report["minimum_probability"] == 0.95
 assert [
     (

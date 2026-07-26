@@ -108,8 +108,6 @@ static character_properties::report_sort parse_report_sort(const std::string& na
         return character_properties::report_sort::mean_ascending;
     if (name == "mean-descending")
         return character_properties::report_sort::mean_descending;
-    if (name == "sd-descending")
-        return character_properties::report_sort::sd_descending;
     throw myexception()<<"Unknown report sort '"<<name<<"'.";
 }
 
@@ -128,7 +126,7 @@ static report_arguments parse_report_options(int argc, char* argv[])
         ("property", po::value<string>(), "Property to report.")
         ("kind", po::value<string>(), "Report kind: property or positive-selection.")
         ("format", po::value<string>()->default_value("text"), "Output format: text, tsv, or json.")
-        ("sort", po::value<string>(), "Row order: column, mean-ascending, mean-descending, or sd-descending.")
+        ("sort", po::value<string>(), "Row order: column, mean-ascending, or mean-descending.")
         ("minimum-probability", po::value<double>(), "Minimum probability for positive-selection rows.");
 
     po::options_description all;
