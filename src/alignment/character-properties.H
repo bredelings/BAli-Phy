@@ -2,6 +2,7 @@
 #define CHARACTER_PROPERTIES_H
 
 #include <cstdint>
+#include <filesystem>
 #include <map>
 #include <optional>
 #include <string>
@@ -38,6 +39,12 @@ struct summary
 
 /// Encode the versioned character-property summary shared by reporting tools.
 json::value to_json(const summary& value);
+
+/// Decode and validate a versioned character-property summary.
+summary from_json(const json::value& document, const std::string& context);
+
+/// Read and validate a character-property summary from a JSON file.
+summary read_summary(const std::filesystem::path& filename);
 
 }
 

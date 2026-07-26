@@ -105,8 +105,7 @@ std::uint64_t visit_chain(const std::filesystem::path& filename,
         line_number++;
         std::string context = filename.string()+":"+std::to_string(line_number);
         auto sample = decode_sample(line, context);
-        auto iteration =
-            nonnegative_integer(required_field(sample, "iter", context), context+": field 'iter'");
+        auto iteration = nonnegative_integer(required_field(sample, "iter", context), context+": field 'iter'");
         if (previous_iteration and iteration <= *previous_iteration)
             throw myexception()<<context<<": iterations must increase strictly; got "<<iteration
                                <<" after "<<*previous_iteration<<".";
@@ -184,9 +183,7 @@ class moment_accumulator
     }
 
     /// Require every retained sample to describe the same properties and observed characters.
-    void validate_shape(const json::object& cat_states,
-                        const json::object& properties,
-                        const std::string& context) const
+    void validate_shape(const json::object& cat_states, const json::object& properties, const std::string& context) const
     {
         if (object_keys(properties) != property_names_)
             throw myexception()<<context<<": property names changed.";
@@ -222,17 +219,14 @@ class moment_accumulator
                 const auto& states = components[component].as_array();
                 for (std::size_t state = 0; state < states.size(); state++)
                     finite_number(states[state], context+": property '"+property_name+"' component "
-                                                 +std::to_string(component)+" state "+std::to_string(state));
+                                                     +std::to_string(component)+" state "+std::to_string(state));
             }
         }
     }
 
     /// Resolve a validated character state against one sampled property table.
-    double property_value(const json::object& properties,
-                          const std::string& property_name,
-                          std::uint64_t component,
-                          std::uint64_t state,
-                          const std::string& context) const
+    double property_value(const json::object& properties, const std::string& property_name, std::uint64_t component,
+                          std::uint64_t state, const std::string& context) const
     {
         const auto& components = properties.at(property_name).as_array();
         if (component >= components.size())
@@ -283,8 +277,7 @@ public:
 
                 for (const auto& property_name: property_names_)
                 {
-                    double value =
-                        property_value(properties, property_name, component, state, character_context);
+                    double value = property_value(properties, property_name, component, state, character_context);
                     auto& accumulator = moments_[property_name][sequence_name][character];
 
                     // Welford's recurrence accumulates the centered second moment without subtracting
@@ -423,8 +416,7 @@ public:
             return;
         auto pivot = std::ranges::lower_bound(pivots_, value);
         std::size_t pivot_index = static_cast<std::size_t>(pivot - pivots_.begin());
-        std::size_t bucket =
-            pivot != pivots_.end() and *pivot == value ? 2 * pivot_index + 1 : 2 * pivot_index;
+        std::size_t bucket = pivot != pivots_.end() and *pivot == value ? 2 * pivot_index + 1 : 2 * pivot_index;
         bucket_counts_[bucket]++;
         observed_count_++;
     }

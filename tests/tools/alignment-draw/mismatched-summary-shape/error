@@ -1,1 +1,1 @@
-alignment-draw: Error! Property 'rate': sequence 'alpha' has 2 values, but the alignment has 3 characters.
+alignment-draw: Error! Property 'rate': sequence 'alpha' has different numbers of mean and sd values.

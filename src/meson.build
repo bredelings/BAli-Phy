@@ -33,6 +33,7 @@ libcommon_sources = [
   'alignment/load.cc',
   'alignment/alignment.cc',
   'alignment/alignment-random.cc',
+  'alignment/character-property-alignment.cc',
   'alignment/character-properties.cc',
   'alignment/character-property-summary.cc',
   'alignment/index-matrix.cc',
