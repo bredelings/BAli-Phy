@@ -297,7 +297,7 @@ class AlignmentPropertyViewer {
         if (!this.displayStates.has(property.name)) {
             this.displayStates.set(property.name, {
                 transform: preferredTransform(property.name, property.values),
-                palette: 'viridis',
+                palette: 'blue-gray-red',
                 range: 'robust',
                 customLower: null,
                 customUpper: null,
