@@ -120,6 +120,7 @@ class AlignmentPropertyViewer {
 
         this.originalColorsCheckbox = makeElement(doc, 'input', 'alignment-viewer-checkbox');
         this.originalColorsCheckbox.type = 'checkbox';
+        this.originalColorsCheckbox.checked = true;
         this.originalColorsCheckbox.setAttribute('aria-label', 'Use original alignment colors');
         this.controlRow.append(labelledControl(doc, 'Original colors', this.originalColorsCheckbox));
 
