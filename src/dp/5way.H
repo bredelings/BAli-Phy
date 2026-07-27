@@ -50,6 +50,9 @@ namespace A5 {
 
   hmm_order get_nodes_random(const TreeInterface& t, int b);
 
+  /// Randomly order a five-way neighborhood with node0 in boundary slot 0.
+  hmm_order get_nodes_random(const TreeInterface& t, int b, int node0);
+
   hmm_order get_nodes(const TreeInterface& t, int b);
 
   /// Return the log of the acceptance ration for moving from (A1,P1) -> (A2,P2)

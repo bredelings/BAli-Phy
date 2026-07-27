@@ -79,6 +79,27 @@ namespace A5 {
     return order;
   }
 
+  /// Randomly order the remaining boundary nodes after orienting node0 into slot 0.
+  hmm_order get_nodes_random(const TreeInterface& t, int b, int node0)
+  {
+    hmm_order order = get_nodes(t, b);
+    auto& nodes = order.nodes;
+
+    if (nodes[2] == node0 or nodes[3] == node0) {
+      std::swap(nodes[0], nodes[2]);
+      std::swap(nodes[1], nodes[3]);
+      std::swap(nodes[4], nodes[5]);
+    }
+    if (nodes[1] == node0)
+      std::swap(nodes[0], nodes[1]);
+    assert(nodes[0] == node0);
+
+    if (uniform() < 0.5)
+      std::swap(nodes[2], nodes[3]);
+
+    return order;
+  }
+
 
   // If we are just getting the order of the columns in the 3-way alignment
   // the this shouldn't affect anything else, should it??

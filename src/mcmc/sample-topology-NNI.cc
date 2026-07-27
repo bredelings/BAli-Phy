@@ -881,11 +881,11 @@ void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats
 
     // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
     p[1].NNI_discard_alignment(b1, b2);
-    orders[1] = A5::get_nodes_random(p[1].t(), b);
+    orders[1] = A5::get_nodes_random(p[1].t(), b, nodes[0]);
 
     // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
     p[2].NNI_discard_alignment(b1, b3);
-    orders[2] = A5::get_nodes_random(p[2].t(), b);
+    orders[2] = A5::get_nodes_random(p[2].t(), b, nodes[0]);
 
     const vector<log_double_t> rho(3,1);
 
@@ -986,4 +986,3 @@ void three_way_topology_and_alignment_sample(owned_ptr<context>& P, MoveStats& S
     else
         three_way_topology_and_A3_2D_sample(P, Stats, b, bandwidth);
 }
-

@@ -328,6 +328,11 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
     vector<log_double_t> rho = rho_;
     assert(p.size() == order.size());
 
+    // The selector is reversible only when every candidate retains the same
+    // three-boundary alignment, identified by the actual node in slot 0.
+    for (int i = 1; i < order.size(); i++)
+        assert(order[i].nodes[0] == order[0].nodes[0]);
+
     vector<optional<vector<HMM::bitmask_t>>> a123456(p[0].n_data_partitions());
 
     for(int j=0;j<p[0].n_data_partitions();j++)
