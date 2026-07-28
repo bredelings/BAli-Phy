@@ -292,11 +292,14 @@ extern "C" R::Exp simple_function_concatRaw(vector<R::Exp>& args)
 }
 
 // defined in tree/tree.cc
-std::string escape_for_newick(const std::string& s);
+std::string quote_for_newick(const std::string& s);
 
+// NOTE: This Haskell interface preserves unquoted underscores because common
+// tools use them literally; quote spaces so labels still round-trip.
 extern "C" R::Exp simple_function_quoteLabelRaw(vector<R::Exp>& args)
 {
     std::string label = get_arg(args).as_string();
-    label = escape_for_newick(label);
+    if (label.find_first_of(" ()[]':;,") != std::string::npos)
+        label = quote_for_newick(label);
     return label;
 }

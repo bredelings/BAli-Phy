@@ -121,10 +121,9 @@ quoted_char = (try (string "''") >> return '\'')
               <|>
               satisfy (\c -> (isPrint c) && (c /= '\'') )
 
--- unquoted strings can't contain punctuation, and _ changes to space
-unquoted_char = (char '_' >> return ' ')
-                <|>
-                satisfy (\c -> isPrint c && not (c `elem`  " ()[]':;,"))
+-- NOTE: Traditional Newick converts an unquoted '_' to a space. Preserve it
+-- because common tools write sequence identifiers with literal underscores.
+unquoted_char = satisfy (\c -> isPrint c && not (c `elem`  " ()[]':;,"))
 
 -- lex: quoted label
 quoted_label = do string "'"
@@ -178,11 +177,13 @@ replace from to string = case stripPrefix from string of
                            Just rest -> to ++ replace from to rest
                            Nothing   -> head string : replace from to (tail string)
 
+-- NOTE: Leave '_' unquoted because some common tools do not decode quoted
+-- labels correctly; quote actual spaces because this parser preserves '_'.
 quoteName :: String -> String
-quoteName name = if any (\l -> elem l  "_()[]':;,") name then
+quoteName name = if any (\l -> elem l  "()[]':;, ") name then
                      "'"++(replace "'" "''" name)++"'"
                  else
-                     replace " " "_" name
+                     name
 
 
 print_newick_sub (NewickNode children node nodeAttributes branch branchAttributes) =

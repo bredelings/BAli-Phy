@@ -9,6 +9,7 @@
   * Gamma across-site rate variation via quadrature instead of equal binning.
 
 ## MCMC
+
 - Use log(branch-length-ratio) when sliding an attachment point between two nodes.
 
 ## Fixes
@@ -18,6 +19,8 @@
 - Fix Gibbs-sampling categorical variables when number of dimensions changes.
 - Fix Hastings ratio for one of the SPR moves.
 - Fix likelihood rescaling for fixed alignments.
+- Print helpful error messages when failing to read Newick trees.
+- Don't translate '_' to space in Newick files.
 
 ## Runtime/Interpreter
 
