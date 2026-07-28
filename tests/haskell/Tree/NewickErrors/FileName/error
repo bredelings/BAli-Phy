@@ -1,6 +1,6 @@
 bali-phy: Error! Failed to parse Newick tree from "bad.tree" at line 1, column 5:
-  |
-1 | 12  1
-  |     ^
+  [1;34m|[0m
+1 [1;34m| [0m12  1
+  [1;34m|[0m     [1;31m^[0m
   unexpected '1'
   expected ';' after the tree

@@ -182,12 +182,19 @@ expandTabs column (character:characters) = character : expandTabs (column + 1) c
 -- FileContents::print_range.
 formatSourceLine :: Int -> Int -> String -> String
 formatSourceLine line column sourceLine =
-    replicate (lineNumberWidth + 1) ' ' ++ "|\n"
-    ++ lineNumber ++ " | " ++ expandTabs 1 sourceLine ++ "\n"
-    ++ replicate (lineNumberWidth + 1) ' ' ++ "| " ++ replicate (column - 1) ' ' ++ "^\n"
+    replicate (lineNumberWidth + 1) ' ' ++ boldBlue "|" ++ "\n"
+    ++ lineNumber ++ " " ++ boldBlue "| " ++ expandTabs 1 sourceLine ++ "\n"
+    ++ replicate (lineNumberWidth + 1) ' ' ++ boldBlue "|" ++ " " ++ replicate (column - 1) ' ' ++ boldRed "^" ++ "\n"
   where
     lineNumber = show line
     lineNumberWidth = length lineNumber
+
+-- Match the unconditional colors used by the C++ source diagnostic renderer.
+boldBlue :: String -> String
+boldBlue text = "\ESC[1;34m" ++ text ++ "\ESC[0m"
+
+boldRed :: String -> String
+boldRed text = "\ESC[1;31m" ++ text ++ "\ESC[0m"
 
 -- Join alternatives in the conventional "x, y or z" form used in parse
 -- diagnostics.

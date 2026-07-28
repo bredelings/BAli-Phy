@@ -1,6 +1,6 @@
 bali-phy: Error! Failed to parse Newick tree at line 1, column 15:
-  |
-1 | (1:0.1,2:0.1);extra
-  |               ^
+  [1;34m|[0m
+1 [1;34m| [0m(1:0.1,2:0.1);extra
+  [1;34m|[0m               [1;31m^[0m
   unexpected 'e'
   expected end of input
