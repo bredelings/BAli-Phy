@@ -9,6 +9,7 @@
 # include <optional>
 # include <string>
 # include <string_view>
+# include <utility>
 # include <regex>
 # include "util/utf8.H"
 # include "driver.hh"
@@ -70,6 +71,12 @@ graphic      {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"\'
 graphicnonq  {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\"
 graphicnonqq {small}|{large}|{symbol}|{digit}|{special}|{unigraphic}|\'
 charescape   [a b f n r t v \\ \" \' \&]
+/* RE/flex macros cannot continue onto another line, so group the standard names by ASCII range. */
+asciiescape_0_7  "NUL"|"SOH"|"STX"|"ETX"|"EOT"|"ENQ"|"ACK"|"BEL"
+asciiescape_8_15 "BS"|"HT"|"LF"|"VT"|"FF"|"CR"|"SO"|"SI"
+asciiescape_16_23 "DLE"|"DC1"|"DC2"|"DC3"|"DC4"|"NAK"|"SYN"|"ETB"
+asciiescape_24_31 "CAN"|"EM"|"SUB"|"ESC"|"FS"|"GS"|"RS"|"US"
+asciiescape  {asciiescape_0_7}|{asciiescape_8_15}|{asciiescape_16_23}|{asciiescape_24_31}|"SP"|"DEL"
 decimalescape \\{decdigit}+
 
 binit        [0-1]
@@ -99,11 +106,11 @@ exponent     {numspc}[eE][\-\+]?{decimal}
 bin_exponent {numspc}[pP][\-\+]?{decimal}
 
 gap          \\{whitechar}+\\
-escape	     \\{charescape}|{decimalescape}
-escapechar   {decimalescape}|\\({charescape}|" "|{graphic})
+escape	     \\({charescape}|{asciiescape})|{decimalescape}
+escapechar   {decimalescape}|\\({charescape}|{asciiescape}|" "|{graphic})
 stringchar   {graphicnonqq}|" "|{escape}|{gap}
-/* We want to parse incorrect escapes as char/string so that we can give better error messages.
-   If we don't do so, then bad escapes fail to lex and fall through to "invalid character" error message. */
+/* Unlike GHC, admit malformed escapes into char/string tokens so get_char can identify the specific escape.
+   The recorded diagnostic still rejects the module. */
 char         {graphicnonq}|" "|{escapechar}
 
 qual         ({conid}\.)+
@@ -527,6 +534,30 @@ struct ParsedChar
     int next_pos;
 };
 
+// Longer spellings that share a prefix precede the shorter spelling so the
+// decoder agrees with the lexer's longest-match rule.
+static constexpr std::pair<std::string_view, char32_t> named_ascii_escapes[] = {
+    {"NUL", 0}, {"SOH", 1}, {"STX", 2}, {"ETX", 3}, {"EOT", 4}, {"ENQ", 5}, {"ACK", 6}, {"BEL", 7},
+    {"BS", 8}, {"HT", 9}, {"LF", 10}, {"VT", 11}, {"FF", 12}, {"CR", 13}, {"SO", 14}, {"SI", 15},
+    {"DLE", 16}, {"DC1", 17}, {"DC2", 18}, {"DC3", 19}, {"DC4", 20}, {"NAK", 21}, {"SYN", 22}, {"ETB", 23},
+    {"CAN", 24}, {"EM", 25}, {"SUB", 26}, {"ESC", 27}, {"FS", 28}, {"GS", 29}, {"RS", 30}, {"US", 31},
+    {"SP", 32}, {"DEL", 127}
+};
+
+// Decode a standard named ASCII escape and report how much of the source
+// literal it consumed.
+static std::optional<ParsedChar> get_named_ascii_escape(std::string_view text, int length, int i)
+{
+    assert(i < length and text[i] == '\\');
+
+    auto remaining = text.substr(i + 1, length - i - 1);
+    for(const auto& [name, value]: named_ascii_escapes)
+        if (remaining.starts_with(name))
+            return ParsedChar{value, i + 1 + static_cast<int>(name.size())};
+
+    return {};
+}
+
 // Recognize the decimal digits allowed in numeric character escapes.
 static bool is_ascii_digit(char c)
 {
@@ -584,6 +615,8 @@ ParsedChar get_char(const yy::parser::location_type& loc, driver& drv, std::stri
 	c = static_cast<unsigned char>(text[i+1]);
         if (is_ascii_digit(static_cast<char>(c)))
             return get_decimal_escape(loc, drv, text, length, i);
+        else if (auto named = get_named_ascii_escape(text, length, i))
+            return *named;
 	else if (c == 'a')
 	    c = '\a';
 	else if (c == 'b')

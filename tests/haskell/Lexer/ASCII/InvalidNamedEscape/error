@@ -1,0 +1,6 @@
+[1mMain.hs:4.8:[1;31m error:[0m[1m
+   • invalid character: '
+  [1;34m|[0m
+[1;34m4[0m [1;34m| [0mmain = [1;31m'[0m\AAA'
+  [1;34m|[0m        [1;31m^[0m
+
