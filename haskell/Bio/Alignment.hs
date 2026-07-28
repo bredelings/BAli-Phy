@@ -159,14 +159,14 @@ find_sequence label sequences = find (\s -> fst s == label) sequences
 
 -- Get a map from labeled nodes to Just v, and unlabeled nodes to Nothing.
 -- Complain if a labeled node doesn't have a corresponding entry in the Map.
-labelToNodeMap :: (IsGraph t, Eq (LabelType t)) => t -> [(LabelType t, v)] -> IntMap (Maybe v)
+labelToNodeMap :: (IsGraph t, Eq (LabelType t), Show (LabelType t)) => t -> [(LabelType t, v)] -> IntMap (Maybe v)
 labelToNodeMap tree things = getNodesSet tree & IntMap.fromSet objectForNode where
     objectForNode node = case getLabel tree node of
                            Nothing -> Nothing
                            Just label ->
                                case lookup label things of
                                  Just object -> Just object
-                                 Nothing -> error $ "No object for node with a certain label"
+                                 Nothing -> error $ "Can't find sequence data for tree node with label " ++ show label
 
 getSequencesOnTree :: (IsGraph t, LabelType t ~ Text) => [Sequence] -> t -> IntMap (Maybe Sequence)
 getSequencesOnTree sequence_data tree = getNodesSet tree & IntMap.fromSet sequence_for_node where
