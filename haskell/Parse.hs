@@ -2,6 +2,7 @@ module Parse
     ( Parser
     , runParser
     , try
+    , (<?>)
     , item
     , failure
     , satisfy
@@ -27,6 +28,7 @@ module Parse
     ) where
 
 import Data.Char
+import Data.List (intercalate, nub)
 
 data Input = Input Int String
 
@@ -107,22 +109,63 @@ try (Parser parser) = Parser $ \input ->
       Failed (ParseFailure offset expected _) -> Failed (ParseFailure offset expected Uncommitted)
       result -> result
 
+infix 0 <?>
 
--- Run a complete parser while retaining the existing partial error messages;
--- structured rendering will replace these messages in the next change.
+-- Replace an uncommitted failure's low-level expectations with a description
+-- of the construct expected by its caller.
+(<?>) :: Parser a -> String -> Parser a
+Parser parser <?> expected = Parser $ \input ->
+    case parser input of
+      Failed (ParseFailure offset _ Uncommitted) -> Failed (ParseFailure offset [expected] Uncommitted)
+      result -> result
+
+
+-- Run a complete parser and report the farthest failure or trailing input with
+-- its source position, unexpected input, and grammar expectations.
 runParser :: Parser a -> String -> a
 runParser (Parser parser) string =
     case parser (Input 0 string) of
       Parsed result (Input _ []) -> result
-      Parsed _ _ -> error "Parser did not consume entire string."
-      Failed _ -> error "Parse error"
+      Parsed _ (Input offset _) -> error (formatParseFailure string (ParseFailure offset ["end of input"] Uncommitted))
+      Failed parseFailure -> error (formatParseFailure string parseFailure)
+
+-- Render a parser failure after parsing has stopped, keeping source-position
+-- work out of the successful parsing path.
+formatParseFailure :: String -> ParseFailure -> String
+formatParseFailure source (ParseFailure offset expected _) =
+    "Parse error at line " ++ show line ++ ", column " ++ show column ++ ":\n"
+    ++ "  unexpected " ++ unexpected ++ expectedLine
+  where
+    (line, column) = sourcePosition source offset
+    unexpected = case drop offset source of
+                   [] -> "end of input"
+                   c:_ -> show c
+    expectedLine = case nub expected of
+                     [] -> ""
+                     items -> "\n  expected " ++ formatExpected items
+
+-- Derive a one-based line and column from the retained character offset only
+-- when a failure must be displayed.
+sourcePosition :: String -> Int -> (Int, Int)
+sourcePosition source offset =
+    let prefix = take offset source
+        line = 1 + length (filter (== '\n') prefix)
+        column = 1 + length (takeWhile (/= '\n') (reverse prefix))
+    in (line, column)
+
+-- Join alternatives in the conventional "x, y or z" form used in parse
+-- diagnostics.
+formatExpected :: [String] -> String
+formatExpected [] = ""
+formatExpected [item] = item
+formatExpected items = intercalate ", " (init items) ++ " or " ++ last items
 
 
 -- Match any non-empty string, and return the first char
 item :: Parser Char
 item = Parser $ \(Input offset string) ->
     case string of
-      [] -> Failed (ParseFailure offset [] Uncommitted)
+      [] -> Failed (ParseFailure offset ["character"] Uncommitted)
       c:cs -> Parsed c (Input (offset + 1) cs)
 
 failure :: Parser a
@@ -139,7 +182,7 @@ satisfy predicate = Parser $ \(Input offset string) ->
 
 -- end core
 
-oneOf s = satisfy (flip elem s)
+oneOf s = satisfy (flip elem s) <?> "one of " ++ show s
 
 chainl p op a = (p `chainl1` op) <|> return a
 
@@ -149,7 +192,7 @@ p `chainl1` op = do {a <- p; rest a}
                        rest (f a b))
                    <|> return a
 
-char c = satisfy (c ==)
+char c = satisfy (c ==) <?> show c
 
 -- where to define read_int, read_double?
 natural :: Parser Int
@@ -164,7 +207,7 @@ reserved s = token (string s)
 
 spaces = many $ satisfy isSpace
 
-digit = satisfy isDigit
+digit = satisfy isDigit <?> "digit"
 
 number = do
   s <- string "-" <|> return []
