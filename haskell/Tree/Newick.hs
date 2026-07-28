@@ -107,7 +107,7 @@ data NewickTree = NewickTree Attributes NewickNode
 comment = do
   char '['
   result <- many $ satisfy (/= ']')
-  char ']'
+  char ']' <?> "']' to close comment"
   if (head result == '&') then
       return (Just (tail result))
   else
@@ -129,7 +129,7 @@ unquoted_char = (char '_' >> return ' ')
 -- lex: quoted label
 quoted_label = do string "'"
                   label <- many quoted_char
-                  string "'"
+                  char '\'' <?> "closing quote for node label"
                   return label
 
 -- lex: unquoted label
@@ -162,12 +162,12 @@ subtree = do nodeAttributes1 <- newickSpaces
 descendant_list = do
   string "("
   children <- sepBy1 subtree (string ",")
-  string ")"
+  char ')' <?> "')' to close descendant list"
   return children
 
 treeParser = do comments <- newickSpaces
                 node <- subtree
-                string ";"
+                char ';' <?> "';' after the tree"
                 spaces
                 return $ NewickTree comments node
 
