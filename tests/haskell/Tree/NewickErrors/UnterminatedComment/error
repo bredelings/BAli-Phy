@@ -1,3 +1,6 @@
-bali-phy: Error! Parse error at line 3, column 9:
+bali-phy: Error! Failed to parse Newick tree at line 3, column 9:
+  |
+3 | ,3:0.1);
+  |         ^
   unexpected end of input
   expected ']' to close comment

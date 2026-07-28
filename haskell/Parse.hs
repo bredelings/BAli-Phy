@@ -1,6 +1,7 @@
 module Parse
     ( Parser
     , runParser
+    , runParserFor
     , try
     , (<?>)
     , item
@@ -123,20 +124,27 @@ Parser parser <?> expected = Parser $ \input ->
 -- Run a complete parser and report the farthest failure or trailing input with
 -- its source position, unexpected input, and grammar expectations.
 runParser :: Parser a -> String -> a
-runParser (Parser parser) string =
+runParser = runParserFor "input"
+
+-- Run a complete parser while identifying the kind or source of input in any
+-- resulting diagnostic.
+runParserFor :: String -> Parser a -> String -> a
+runParserFor description (Parser parser) string =
     case parser (Input 0 string) of
       Parsed result (Input _ []) -> result
-      Parsed _ (Input offset _) -> error (formatParseFailure string (ParseFailure offset ["end of input"] Uncommitted))
-      Failed parseFailure -> error (formatParseFailure string parseFailure)
+      Parsed _ (Input offset _) ->
+          error (formatParseFailure description string (ParseFailure offset ["end of input"] Uncommitted))
+      Failed parseFailure -> error (formatParseFailure description string parseFailure)
 
 -- Render a parser failure after parsing has stopped, keeping source-position
 -- work out of the successful parsing path.
-formatParseFailure :: String -> ParseFailure -> String
-formatParseFailure source (ParseFailure offset expected _) =
-    "Parse error at line " ++ show line ++ ", column " ++ show column ++ ":\n"
+formatParseFailure :: String -> String -> ParseFailure -> String
+formatParseFailure description source (ParseFailure offset expected _) =
+    "Failed to parse " ++ description ++ " at line " ++ show line ++ ", column " ++ show column ++ ":\n"
+    ++ formatSourceLine line column sourceLine
     ++ "  unexpected " ++ unexpected ++ expectedLine
   where
-    (line, column) = sourcePosition source offset
+    (line, column, sourceLine) = sourceLocation source offset
     unexpected = case drop offset source of
                    [] -> "end of input"
                    c:_ -> show c
@@ -144,14 +152,42 @@ formatParseFailure source (ParseFailure offset expected _) =
                      [] -> ""
                      items -> "\n  expected " ++ formatExpected items
 
--- Derive a one-based line and column from the retained character offset only
--- when a failure must be displayed.
-sourcePosition :: String -> Int -> (Int, Int)
-sourcePosition source offset =
+-- Derive the one-based location and containing line from the retained offset
+-- only when a failure must be displayed.
+sourceLocation :: String -> Int -> (Int, Int, String)
+sourceLocation source offset =
     let prefix = take offset source
+        linePrefix = reverse (takeWhile (/= '\n') (reverse prefix))
         line = 1 + length (filter (== '\n') prefix)
-        column = 1 + length (takeWhile (/= '\n') (reverse prefix))
-    in (line, column)
+        column = foldl sourceColumnAfter 1 linePrefix
+        sourceLine = linePrefix ++ takeWhile (/= '\n') (drop offset source)
+    in (line, column, sourceLine)
+
+-- Advance one source column, using the same eight-column tab stops as the C++
+-- source diagnostic renderer.
+sourceColumnAfter :: Int -> Char -> Int
+sourceColumnAfter column '\t' = column + 8 - ((column - 1) `mod` 8)
+sourceColumnAfter column _ = column + 1
+
+-- Expand tabs before placing the caret so its visual position agrees with the
+-- reported source column independently of the diagnostic's line-number prefix.
+expandTabs :: Int -> String -> String
+expandTabs _ [] = []
+expandTabs column ('\t':characters) =
+    let nextColumn = sourceColumnAfter column '\t'
+    in replicate (nextColumn - column) ' ' ++ expandTabs nextColumn characters
+expandTabs column (character:characters) = character : expandTabs (column + 1) characters
+
+-- Display one source line and a caret using the same basic layout as
+-- FileContents::print_range.
+formatSourceLine :: Int -> Int -> String -> String
+formatSourceLine line column sourceLine =
+    replicate (lineNumberWidth + 1) ' ' ++ "|\n"
+    ++ lineNumber ++ " | " ++ expandTabs 1 sourceLine ++ "\n"
+    ++ replicate (lineNumberWidth + 1) ' ' ++ "| " ++ replicate (column - 1) ' ' ++ "^\n"
+  where
+    lineNumber = show line
+    lineNumberWidth = length lineNumber
 
 -- Join alternatives in the conventional "x, y or z" form used in parse
 -- diagnostics.

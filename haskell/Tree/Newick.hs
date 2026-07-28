@@ -195,7 +195,10 @@ print_newick_sub (NewickNode children node nodeAttributes branch branchAttribute
       branch_string = case branch of Just length -> ":" ++ show length
                                      Nothing -> ""
 
-parse_newick text = runParser treeParser text
+parse_newick text = runParserFor "Newick tree" treeParser text
+
+-- Include the source filename when Newick text came from a file.
+parse_newick_from_file filename text = runParserFor ("Newick tree from " ++ show filename) treeParser text
 
 
 -- edge comments come from the child
@@ -252,18 +255,18 @@ newickToBranchLengthTree newick = do
 
 readTreeTopology filename = do
   text <- readFile filename
-  (topology, lengths) <- newickToTree (parse_newick text)
+  (topology, lengths) <- newickToTree (parse_newick_from_file filename text)
   return topology
 
 readBranchLengthTree filename = do
   text <- readFile filename
-  newickToBranchLengthTree (parse_newick text)
+  newickToBranchLengthTree (parse_newick_from_file filename text)
 
 -- Perhaps we should try and strip off the WithBranchLengths from a general tree...
 -- We would need a type family like Unrooted to walk all the modifiers.
 readTimeTree filename = do
   text <- readFile filename
-  (tree, lengths) <- newickToTree (parse_newick text)
+  (tree, lengths) <- newickToTree (parse_newick_from_file filename text)
   let lengths2 = fmap (fromMaybe 0) lengths
       nodeTimes = getNodesSet tree & IntMap.fromSet nodeTime
       nodeTime node = case branchToParent tree node of
