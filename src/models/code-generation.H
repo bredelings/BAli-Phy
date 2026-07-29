@@ -9,6 +9,7 @@
 #include <utility>                                  // for pair
 #include "models/typecheck.H"
 #include "computation/haskell/haskell.H"            // for Hs::Stmts, Hs::Var
+#include "computation/haskell/ids.H"                // for is_haskell_varid
 
 #include "logger.H"
 
@@ -91,8 +92,13 @@ struct CodeGenState
 
     Hs::Var get_var(std::string name)
     {
-        if (name.empty() or not std::islower(name[0]))
-            name = "_"+name;
+        // Prefix identifier-shaped names where sufficient; symbols need a neutral
+        // base because spellings such as "_+" are not valid Haskell variables.
+        if (not is_haskell_varid(name))
+        {
+            auto prefixed_name = "_" + name;
+            name = not name.empty() and is_haskell_varid(prefixed_name) ? prefixed_name : "_local_operator";
+        }
         Hs::Var x(name);
         for(int i=2; haskell_vars.count(x); i++)
             x = Hs::Var(name+"_"+std::to_string(i));
