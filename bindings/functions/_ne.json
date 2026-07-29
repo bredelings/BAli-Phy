@@ -1,5 +1,9 @@
 {
     "name": "!=",
+    "fixity": {
+        "associativity": "none",
+        "precedence": 4
+    },
     "result_type": "Bool",
     "no_log": true,
     "constraints": ["Eq<a>"],

@@ -1,5 +1,9 @@
 {
     "name": "pow",
+    "fixity": {
+        "associativity": "right",
+        "precedence": 8
+    },
     "result_type": "a",
     "no_log": true,
     "constraints": ["Floating<a>"],

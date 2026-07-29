@@ -1,5 +1,9 @@
 {
     "name": "/",
+    "fixity": {
+        "associativity": "left",
+        "precedence": 7
+    },
     "result_type": "Double",
     "no_log": true,
     "call": "@x / @y",

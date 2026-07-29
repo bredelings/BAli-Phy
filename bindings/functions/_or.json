@@ -1,5 +1,9 @@
 {
     "name": "||",
+    "fixity": {
+        "associativity": "left",
+        "precedence": 2
+    },
     "result_type": "Bool",
     "no_log": true,
     "call": "@x || @y",
