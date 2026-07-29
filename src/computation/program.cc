@@ -47,7 +47,7 @@ Core::Exp<> declare_seq_info(Module& m)
     Type type = ForallType({a,b},function_type({a,b},b));
 
     // 3. infixr 0 seq
-    fixity_info fixity{Hs::Fixity::infixr, 0};
+    Infix::Fixity fixity{Infix::Associativity::right, 0};
 
     // 4. create the symbol
     auto seq = symbol_info{"seq", symbol_type_t::variable, {}, 2, fixity};

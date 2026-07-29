@@ -337,7 +337,7 @@ fixity_env_t renamer_state::add_fixities_from_decls(fixity_env_t env, const Hs::
                 error(name.loc, Note()<<"Trying to declare fixity of qualified symbol '"<<op<<"'.  Use its unqualified name.");
                 continue;
             }
-            env[op] = fixity_info{FD->fixity, precedence};
+            env[op] = Infix::Fixity{FD->associativity, precedence};
         }
     }
 

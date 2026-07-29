@@ -476,29 +476,26 @@ namespace yy {
       // fielddecl
       char dummy8[sizeof (Hs::FieldDecl)];
 
-      // infix
-      char dummy9[sizeof (Hs::Fixity)];
-
       // fd
-      char dummy10[sizeof (Hs::FunDep)];
+      char dummy9[sizeof (Hs::FunDep)];
 
       // gadt_constr
-      char dummy11[sizeof (Hs::GADTConstructorDecl)];
+      char dummy10[sizeof (Hs::GADTConstructorDecl)];
 
       // gadt_constrlist
       // gadt_constrs0
       // gadt_constrs
-      char dummy12[sizeof (Hs::GADTConstructorsDecl)];
+      char dummy11[sizeof (Hs::GADTConstructorsDecl)];
 
       // gdrh
       // gdpat
-      char dummy13[sizeof (Hs::GuardedRHS)];
+      char dummy12[sizeof (Hs::GuardedRHS)];
 
       // impspec
-      char dummy14[sizeof (Hs::ImpSpec)];
+      char dummy13[sizeof (Hs::ImpSpec)];
 
       // kind
-      char dummy15[sizeof (Hs::Kind)];
+      char dummy14[sizeof (Hs::Kind)];
 
       // topdecl
       // cl_decl
@@ -513,7 +510,7 @@ namespace yy {
       // decl_no_th
       // decl
       // sigdecl
-      char dummy16[sizeof (Hs::LDecl)];
+      char dummy15[sizeof (Hs::LDecl)];
 
       // exp
       // exp10
@@ -525,18 +522,18 @@ namespace yy {
       // pat
       // bindpat
       // apat
-      char dummy17[sizeof (Hs::LExp)];
+      char dummy16[sizeof (Hs::LExp)];
 
       // export
       // import
-      char dummy18[sizeof (Hs::LExport)];
+      char dummy17[sizeof (Hs::LExport)];
 
       // importdecl
-      char dummy19[sizeof (Hs::LImpDecl)];
+      char dummy18[sizeof (Hs::LImpDecl)];
 
       // stmt
       // qual
-      char dummy20[sizeof (Hs::LStmt)];
+      char dummy19[sizeof (Hs::LStmt)];
 
       // deriv_strategy_via
       // sigtype
@@ -554,27 +551,30 @@ namespace yy {
       // atype
       // inst_type
       // constr_stuff
-      char dummy21[sizeof (Hs::LType)];
+      char dummy20[sizeof (Hs::LType)];
 
       // tv_bndr
       // tv_bndr_no_braces
-      char dummy22[sizeof (Hs::LTypeVar)];
+      char dummy21[sizeof (Hs::LTypeVar)];
 
       // module
-      char dummy23[sizeof (Hs::Module)];
+      char dummy22[sizeof (Hs::Module)];
 
       // rhs
       // alt_rhs
-      char dummy24[sizeof (Hs::MultiGuardedRHS)];
+      char dummy23[sizeof (Hs::MultiGuardedRHS)];
 
       // altslist
-      char dummy25[sizeof (Hs::ParsedAlts)];
+      char dummy24[sizeof (Hs::ParsedAlts)];
 
       // stmtlist
-      char dummy26[sizeof (Hs::Stmts)];
+      char dummy25[sizeof (Hs::Stmts)];
 
       // ty_fam_inst_eqn
-      char dummy27[sizeof (Hs::TypeFamilyInstanceEqn)];
+      char dummy26[sizeof (Hs::TypeFamilyInstanceEqn)];
+
+      // infix
+      char dummy27[sizeof (Infix::Associativity)];
 
       // binds
       char dummy28[sizeof (Located<Hs::Binds>)];
@@ -1471,10 +1471,6 @@ namespace yy {
         value.move< Hs::FieldDecl > (std::move (that.value));
         break;
 
-      case symbol_kind::S_infix: // infix
-        value.move< Hs::Fixity > (std::move (that.value));
-        break;
-
       case symbol_kind::S_fd: // fd
         value.move< Hs::FunDep > (std::move (that.value));
         break;
@@ -1588,6 +1584,10 @@ namespace yy {
 
       case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
         value.move< Hs::TypeFamilyInstanceEqn > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_infix: // infix
+        value.move< Infix::Associativity > (std::move (that.value));
         break;
 
       case symbol_kind::S_binds: // binds
@@ -2013,20 +2013,6 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
-      basic_symbol (typename Base::kind_type t, Hs::Fixity&& v, location_type&& l)
-        : Base (t)
-        , value (std::move (v))
-        , location (std::move (l))
-      {}
-#else
-      basic_symbol (typename Base::kind_type t, const Hs::Fixity& v, const location_type& l)
-        : Base (t)
-        , value (v)
-        , location (l)
-      {}
-#endif
-
-#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, Hs::FunDep&& v, location_type&& l)
         : Base (t)
         , value (std::move (v))
@@ -2272,6 +2258,20 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const Hs::TypeFamilyInstanceEqn& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Infix::Associativity&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Infix::Associativity& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -3016,10 +3016,6 @@ switch (yykind)
         value.template destroy< Hs::FieldDecl > ();
         break;
 
-      case symbol_kind::S_infix: // infix
-        value.template destroy< Hs::Fixity > ();
-        break;
-
       case symbol_kind::S_fd: // fd
         value.template destroy< Hs::FunDep > ();
         break;
@@ -3133,6 +3129,10 @@ switch (yykind)
 
       case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
         value.template destroy< Hs::TypeFamilyInstanceEqn > ();
+        break;
+
+      case symbol_kind::S_infix: // infix
+        value.template destroy< Infix::Associativity > ();
         break;
 
       case symbol_kind::S_binds: // binds
@@ -6276,10 +6276,6 @@ switch (yykind)
         value.copy< Hs::FieldDecl > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_infix: // infix
-        value.copy< Hs::Fixity > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_fd: // fd
         value.copy< Hs::FunDep > (YY_MOVE (that.value));
         break;
@@ -6393,6 +6389,10 @@ switch (yykind)
 
       case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
         value.copy< Hs::TypeFamilyInstanceEqn > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_infix: // infix
+        value.copy< Infix::Associativity > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_binds: // binds
@@ -6755,10 +6755,6 @@ switch (yykind)
         value.move< Hs::FieldDecl > (YY_MOVE (s.value));
         break;
 
-      case symbol_kind::S_infix: // infix
-        value.move< Hs::Fixity > (YY_MOVE (s.value));
-        break;
-
       case symbol_kind::S_fd: // fd
         value.move< Hs::FunDep > (YY_MOVE (s.value));
         break;
@@ -6872,6 +6868,10 @@ switch (yykind)
 
       case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
         value.move< Hs::TypeFamilyInstanceEqn > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_infix: // infix
+        value.move< Infix::Associativity > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_binds: // binds

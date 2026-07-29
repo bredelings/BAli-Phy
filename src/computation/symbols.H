@@ -6,6 +6,7 @@
 #include <string>
 #include <optional>
 #include <variant>
+#include "computation/fixity.H"
 #include "computation/haskell/haskell.H"
 #include "computation/unfolding.H"
 
@@ -16,31 +17,6 @@
 #include <cereal/types/set.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/vector.hpp>
-
-constexpr auto left_fix = Haskell::Fixity::infixl;
-constexpr auto right_fix = Haskell::Fixity::infixr;
-constexpr auto non_fix = Haskell::Fixity::infix;
-typedef Haskell::Fixity fixity_t;
-
-// "Fixity is a property of a particular entity (constructor or variable), just like its type;
-//  fixity is not a property of that entity’s name."
-struct fixity_info
-{
-    fixity_t fixity;
-    int precedence;
-
-    template <class Archive>
-    void serialize(Archive& ar)
-    {
-	ar(fixity,precedence);
-    }
-};
-
-struct OpInfo
-{
-    std::string name;
-    fixity_info fixity;
-};
 
 enum class FieldSelectorStatus
 {
@@ -115,7 +91,7 @@ struct symbol_info
     std::optional<std::string> parent;
     std::optional<int> arity;
     int id_arity = 0;
-    std::optional<fixity_info> fixity;
+    std::optional<Infix::Fixity> fixity;
     Type type;
     Unfolding unfolding;
     std::shared_ptr<DataConInfo> con_info;
@@ -134,7 +110,8 @@ struct symbol_info
 	ar(name, symbol_type, parent, arity, id_arity, fixity, type, unfolding, con_info, instance_info, eq_instance_info, record_selector, inline_pragma, visible);
     }
 
-    symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>, std::optional<fixity_info> = {});
+    symbol_info(const std::string&, symbol_type_t, const std::optional<std::string>& p, std::optional<int>,
+                std::optional<Infix::Fixity> = {});
 
 private:
     friend cereal::access;
@@ -201,7 +178,7 @@ struct type_info
     std::string name;
     // info/children
     std::variant<std::monostate, class_info, data_info, type_syn_info, type_fam_info, data_fam_info> info;
-    std::optional<fixity_info> fixity; // for the function arrow (->) only
+    std::optional<Infix::Fixity> fixity; // for the function arrow (->) only
     std::optional<int> arity;
 
     // Are we using this?

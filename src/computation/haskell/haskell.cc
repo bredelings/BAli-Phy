@@ -243,11 +243,11 @@ string Wrap::print() const
 string FixityDecl::print() const
 {
     string result;
-    if (fixity == Fixity::infixl)
+    if (associativity == Infix::Associativity::left)
         result = "infixl";
-    else if (fixity == Fixity::infixr)
+    else if (associativity == Infix::Associativity::right)
         result = "infixr";
-    else if (fixity == Fixity::infix)
+    else if (associativity == Infix::Associativity::none)
         result = "infix";
     else
         result = "fixity:unknown";

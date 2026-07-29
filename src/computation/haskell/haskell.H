@@ -10,6 +10,7 @@
 #include <set>
 #include <tuple>
 #include <memory>
+#include "computation/fixity.H"
 #include "computation/parser/located.H"
 
 #include "var.H"
@@ -681,17 +682,16 @@ typedef Located<Binds> LBinds;
 
 Binds operator+(const Binds& b1, const Binds& b2);
 
-enum class Fixity {infixl, infix, infixr, unknown};
-
 struct FixityDecl
 {
-    Fixity fixity;
+    Infix::Associativity associativity;
     std::optional<int> precedence;
     std::vector<Located<std::string>> names;
     std::string print()  const;
 
     FixityDecl() = default;  // so this can be a token value.
-    FixityDecl(Fixity f, std::optional<int> oi, const std::vector<Located<std::string>>& v): fixity(f), precedence(oi), names(v) {}
+    FixityDecl(Infix::Associativity a, std::optional<int> oi, const std::vector<Located<std::string>>& v)
+        : associativity(a), precedence(oi), names(v) {}
 };
 
 struct FieldDecl

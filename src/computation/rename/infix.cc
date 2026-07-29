@@ -18,9 +18,10 @@ using std::function;
 
 using InfixBuilder = function<Hs::LExp(const Hs::LExp&, const Hs::LExp&, const Hs::LExp&)>;
 using NegBuilder = function<Hs::LExp(const Hs::LExp&, const Hs::LExp&)>;
-using OpLookup = function<Located<OpInfo>(const Hs::LExp&)>;
+using OpLookup = function<Located<Infix::Operator>(const Hs::LExp&)>;
 
-Hs::LExp infix_parse(const OpLookup& get_op, const Located<OpInfo>& op1, const Hs::LExp& E1, deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg);
+Hs::LExp infix_parse(const OpLookup& get_op, const Located<Infix::Operator>& op1, const Hs::LExp& E1,
+                     deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg);
 
 namespace
 {
@@ -61,7 +62,8 @@ Hs::LExp make_infix_exp(const vector<Hs::LExp>& terms)
 }
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
-Hs::LExp infix_parse_neg(const OpLookup& get_op, const Located<OpInfo>& op1, deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg)
+Hs::LExp infix_parse_neg(const OpLookup& get_op, const Located<Infix::Operator>& op1, deque<Hs::LExp>& T,
+                         const InfixBuilder& build_infix, const NegBuilder& build_neg)
 {
     assert(not T.empty());
 
@@ -74,8 +76,8 @@ Hs::LExp infix_parse_neg(const OpLookup& get_op, const Located<OpInfo>& op1, deq
 	if (unloc(op1).fixity.precedence >= 6) throw myexception()<<"Cannot parse '"<<unloc(op1).name<<"' -";
 
         auto neg_loc = E1.loc;
-        auto neg_sym = OpInfo{"-",{left_fix,6}};
-        auto neg = Located<OpInfo>{neg_loc, neg_sym};
+        auto neg_sym = Infix::Operator{"-", {Infix::Associativity::left, 6}};
+        auto neg = Located<Infix::Operator>{neg_loc, neg_sym};
 
 	E1 = infix_parse_neg(get_op, neg, T, build_infix, build_neg);
 
@@ -88,7 +90,7 @@ Hs::LExp infix_parse_neg(const OpLookup& get_op, const Located<OpInfo>& op1, deq
 }
 
 // Look up an operator through the current scoped fixity environment.
-OpInfo renamer_state::get_operator(const string& name) const
+Infix::Operator renamer_state::get_operator(const string& name) const
 {
     auto fixity = fixity_env.find(name);
     if (fixity == fixity_env.end())
@@ -99,10 +101,10 @@ OpInfo renamer_state::get_operator(const string& name) const
     else if (m.is_declared(name))
         return m.get_operator(name);
     else
-        return {name, {left_fix, 9}};
+        return {name, {Infix::Associativity::left, 9}};
 }
 
-Located<OpInfo> get_op_sym(const renamer_state& Rn, const Hs::LExp& O)
+Located<Infix::Operator> get_op_sym(const renamer_state& Rn, const Hs::LExp& O)
 {
     string name;
     if (auto v = unloc(O).to<Haskell::Var>())
@@ -116,7 +118,8 @@ Located<OpInfo> get_op_sym(const renamer_state& Rn, const Hs::LExp& O)
 }
 
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
-Hs::LExp infix_parse(const OpLookup& get_op, const Located<OpInfo>& loc_op1, const Hs::LExp& E1, deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg)
+Hs::LExp infix_parse(const OpLookup& get_op, const Located<Infix::Operator>& loc_op1, const Hs::LExp& E1,
+                     deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg)
 {
     if (T.empty())
 	return E1;
@@ -127,12 +130,12 @@ Hs::LExp infix_parse(const OpLookup& get_op, const Located<OpInfo>& loc_op1, con
     auto  loc_op2   = get_op(op2_E);
     auto& op2       = unloc(loc_op2);
 
-    // illegal expressions
-    if (op1.fixity.precedence == op2.fixity.precedence and (op1.fixity.fixity != op2.fixity.fixity or op1.fixity.fixity == non_fix))
+    auto comparison = Infix::compare(op1.fixity, op2.fixity);
+    if (comparison == Infix::Comparison::conflict)
 	throw myexception()<<"Must use parenthesis to order operators '"<<op1.name<<"' and '"<<op2.name<<"'";
 
     // left association: ... op1 E1) op2 ...
-    if (op1.fixity.precedence > op2.fixity.precedence or (op1.fixity.precedence == op2.fixity.precedence and op1.fixity.fixity == left_fix))
+    if (comparison == Infix::Comparison::associate_left)
 	return E1;
 
     // right association: .. op1 (E1 op2 {...E3...}) ...
@@ -153,7 +156,7 @@ Hs::LExp resolve_infix(const vector<Hs::LExp>& T, const OpLookup& get_op, const 
     deque<Hs::LExp> T2;
     T2.insert(T2.begin(), T.begin(), T.end());
 
-    auto no_sym = OpInfo{"",{non_fix,-1}};
+    auto no_sym = Infix::Operator{"", {Infix::Associativity::none, -1}};
     return infix_parse_neg(get_op, {noloc, no_sym}, T2, build_infix, build_neg);
 }
 

@@ -248,10 +248,6 @@ namespace yy {
         value.YY_MOVE_OR_COPY< Hs::FieldDecl > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_infix: // infix
-        value.YY_MOVE_OR_COPY< Hs::Fixity > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_fd: // fd
         value.YY_MOVE_OR_COPY< Hs::FunDep > (YY_MOVE (that.value));
         break;
@@ -365,6 +361,10 @@ namespace yy {
 
       case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
         value.YY_MOVE_OR_COPY< Hs::TypeFamilyInstanceEqn > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_infix: // infix
+        value.YY_MOVE_OR_COPY< Infix::Associativity > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_binds: // binds
@@ -711,10 +711,6 @@ namespace yy {
         value.move< Hs::FieldDecl > (YY_MOVE (that.value));
         break;
 
-      case symbol_kind::S_infix: // infix
-        value.move< Hs::Fixity > (YY_MOVE (that.value));
-        break;
-
       case symbol_kind::S_fd: // fd
         value.move< Hs::FunDep > (YY_MOVE (that.value));
         break;
@@ -828,6 +824,10 @@ namespace yy {
 
       case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
         value.move< Hs::TypeFamilyInstanceEqn > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_infix: // infix
+        value.move< Infix::Associativity > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_binds: // binds
@@ -1174,10 +1174,6 @@ namespace yy {
         value.copy< Hs::FieldDecl > (that.value);
         break;
 
-      case symbol_kind::S_infix: // infix
-        value.copy< Hs::Fixity > (that.value);
-        break;
-
       case symbol_kind::S_fd: // fd
         value.copy< Hs::FunDep > (that.value);
         break;
@@ -1291,6 +1287,10 @@ namespace yy {
 
       case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
         value.copy< Hs::TypeFamilyInstanceEqn > (that.value);
+        break;
+
+      case symbol_kind::S_infix: // infix
+        value.copy< Infix::Associativity > (that.value);
         break;
 
       case symbol_kind::S_binds: // binds
@@ -1636,10 +1636,6 @@ namespace yy {
         value.move< Hs::FieldDecl > (that.value);
         break;
 
-      case symbol_kind::S_infix: // infix
-        value.move< Hs::Fixity > (that.value);
-        break;
-
       case symbol_kind::S_fd: // fd
         value.move< Hs::FunDep > (that.value);
         break;
@@ -1753,6 +1749,10 @@ namespace yy {
 
       case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
         value.move< Hs::TypeFamilyInstanceEqn > (that.value);
+        break;
+
+      case symbol_kind::S_infix: // infix
+        value.move< Infix::Associativity > (that.value);
         break;
 
       case symbol_kind::S_binds: // binds
@@ -2343,10 +2343,6 @@ namespace yy {
         yylhs.value.emplace< Hs::FieldDecl > ();
         break;
 
-      case symbol_kind::S_infix: // infix
-        yylhs.value.emplace< Hs::Fixity > ();
-        break;
-
       case symbol_kind::S_fd: // fd
         yylhs.value.emplace< Hs::FunDep > ();
         break;
@@ -2460,6 +2456,10 @@ namespace yy {
 
       case symbol_kind::S_ty_fam_inst_eqn: // ty_fam_inst_eqn
         yylhs.value.emplace< Hs::TypeFamilyInstanceEqn > ();
+        break;
+
+      case symbol_kind::S_infix: // infix
+        yylhs.value.emplace< Infix::Associativity > ();
         break;
 
       case symbol_kind::S_binds: // binds
@@ -3101,19 +3101,19 @@ namespace yy {
 
   case 63: // infix: "infix"
 #line 653 "parser.y"
-                   { yylhs.value.as < Hs::Fixity > () = Hs::Fixity::infix; }
+                   { yylhs.value.as < Infix::Associativity > () = Infix::Associativity::none; }
 #line 3106 "parser.cc"
     break;
 
   case 64: // infix: "infixl"
 #line 654 "parser.y"
-                   { yylhs.value.as < Hs::Fixity > () = Hs::Fixity::infixl; }
+                   { yylhs.value.as < Infix::Associativity > () = Infix::Associativity::left; }
 #line 3112 "parser.cc"
     break;
 
   case 65: // infix: "infixr"
 #line 655 "parser.y"
-                   { yylhs.value.as < Hs::Fixity > () = Hs::Fixity::infixr; }
+                   { yylhs.value.as < Infix::Associativity > () = Infix::Associativity::right; }
 #line 3118 "parser.cc"
     break;
 
@@ -4493,7 +4493,7 @@ namespace yy {
 
   case 305: // sigdecl: infix prec ops
 #line 1200 "parser.y"
-                         { yylhs.value.as < Hs::LDecl > () = {yylhs.location,Hs::FixityDecl{yystack_[2].value.as < Hs::Fixity > (),yystack_[1].value.as < std::optional<int> > (),yystack_[0].value.as < std::vector<Located<std::string>> > ()}}; }
+                         { yylhs.value.as < Hs::LDecl > () = {yylhs.location,Hs::FixityDecl{yystack_[2].value.as < Infix::Associativity > (),yystack_[1].value.as < std::optional<int> > (),yystack_[0].value.as < std::vector<Located<std::string>> > ()}}; }
 #line 4498 "parser.cc"
     break;
 

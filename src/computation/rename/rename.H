@@ -21,7 +21,7 @@ Hs::LPat disambiguate_pattern(Hs::LExp);
 
 typedef std::set<std::string> bound_var_info;
 typedef std::set<std::string> bound_type_var_info;
-typedef std::map<std::string, fixity_info> fixity_env_t;
+typedef std::map<std::string, Infix::Fixity> fixity_env_t;
 
 struct renamer_global_state
 {
@@ -52,7 +52,7 @@ struct renamer_state
     void warning(const Note& e) const;
     void warning(const std::optional<yy::location>& loc, const Note& e) const;
 
-    OpInfo get_operator(const std::string&) const;
+    Infix::Operator get_operator(const std::string&) const;
     fixity_env_t add_fixities_from_decls(fixity_env_t, const Hs::Decls&) const;
 
     void qualify_name(std::string& name) const;

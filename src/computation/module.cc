@@ -258,7 +258,7 @@ void Module::declare_type(const type_info& T)
 // "Also like a type signature, a fixity declaration can only occur in the same sequence of declarations as the declaration of the operator itself, and at most one fixity declaration may be given for any operator."
 
 // "Fixity is a property of a particular entity (constructor or variable), just like its type; fixity is not a property of that entity’s name."
-void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixity)
+void Module::declare_fixity(const std::string& s, int precedence, Infix::Associativity associativity)
 {
     if (is_qualified_symbol(s))
         throw myexception()<<"Trying to declare fixity of qualified symbol '"<<s<<"'.  Use its unqualified name.";
@@ -271,7 +271,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
     if (not symbols.count(s2))
         declare_symbol({s, symbol_type_t::unknown, {}, {}, {}});
 
-    symbols.at(s2)->fixity = fixity_info{fixity, precedence};
+    symbols.at(s2)->fixity = Infix::Fixity{associativity, precedence};
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
@@ -2214,7 +2214,7 @@ const_symbol_ptr make_builtin_symbol(const std::string& name)
     }
     else if (name == ":")
     {
-        symbol_info cons(":", symbol_type_t::constructor, "[]", 2, {{right_fix,5}});
+        symbol_info cons(":", symbol_type_t::constructor, "[]", 2, {{Infix::Associativity::right, 5}});
         S = std::make_shared<symbol_info>(cons);
         auto args = make_vars<>(2,'l');
         auto args_exp = args | ranges::to<vector<Core::Exp<>>>;
@@ -2401,7 +2401,8 @@ const_type_ptr lookup_builtin_type(const std::string& name)
         return with_roles(type_info{"[]", builtin_data_info("[]", {"[]",":"}, {TypeVar("a", kind_type())}), {}, 1, make_n_args_kind(1)}, {Role::Representational});
     else if (name == "->")
     {
-        return with_roles(type_info{"->", {}, {{right_fix,0}}, 2, make_n_args_kind(2)}, {Role::Representational, Role::Representational});
+        return with_roles(type_info{"->", {}, {{Infix::Associativity::right, 0}}, 2, make_n_args_kind(2)},
+                          {Role::Representational, Role::Representational});
     }
     else if (name == "~" or name == "~#" or name == "~R#" or name == "~P#")
     {
@@ -2540,16 +2541,16 @@ std::optional<DataConInfo> Module::constructor_info(const string& con_name) cons
     return *C->con_info;
 }
 
-OpInfo Module::get_operator(const string& name) const
+Infix::Operator Module::get_operator(const string& name) const
 {
-    OpInfo O;
+    Infix::Operator O;
 
     auto S = lookup_symbol(name);
     O.name = S->name;
 
     // An operator of undefined precedence is treated as if it has the highest precedence
     if (not S->fixity)
-        O.fixity = {left_fix, 9};
+        O.fixity = {Infix::Associativity::left, 9};
     else
         O.fixity = *S->fixity;
 
@@ -2945,7 +2946,8 @@ void Module::def_ADT(const std::string& tname, int arity, const type_info::data_
     declare_type( {tname, info, {}, arity, /*kind*/ {}} );
 }
 
-void Module::def_ADT(const std::string& tname, int arity, const fixity_info& fixity, const type_info::data_info& info)
+void Module::def_ADT(const std::string& tname, int arity, const Infix::Fixity& fixity,
+                     const type_info::data_info& info)
 {
     if (is_qualified_symbol(tname))
         throw myexception()<<"Locally defined symbol '"<<tname<<"' should not be qualified.";
@@ -3003,7 +3005,7 @@ void Module::declare_fixities_(const Haskell::FixityDecl& FD)
 
     // Find op names and declare fixity and precedence.
     for(const auto& name: FD.names)
-        declare_fixity(unloc(name), precedence, FD.fixity);
+        declare_fixity(unloc(name), precedence, FD.associativity);
 }
 
 void Module::declare_fixities_(const Haskell::Decls& decls)

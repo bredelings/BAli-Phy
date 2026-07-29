@@ -164,7 +164,7 @@ public:
 
     /// Add an ADT
     void def_ADT(const std::string& name, int arity, const type_info::data_info& info);
-    void def_ADT(const std::string& name, int arity, const fixity_info&, const type_info::data_info& info);
+    void def_ADT(const std::string& name, int arity, const Infix::Fixity&, const type_info::data_info& info);
 
     void def_type_class(const std::string& class_name, int arity, const type_info::class_info& info);
 
@@ -184,7 +184,7 @@ public:
 
     void add_type_alias(const std::string&, const const_type_ptr&);
 
-    void declare_fixity(const std::string&, int precedence, fixity_t f);
+    void declare_fixity(const std::string&, int precedence, Infix::Associativity);
 
     void declare_symbol(const symbol_info&);
 
@@ -244,7 +244,7 @@ public:
     type_ptr lookup_local_type(const std::string&);
     const_type_ptr lookup_external_type(const std::string&) const;
 
-    OpInfo get_operator(const std::string& name) const;
+    Infix::Operator get_operator(const std::string& name) const;
 
     explicit Module(const std::string&);
 

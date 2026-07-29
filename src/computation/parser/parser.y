@@ -251,7 +251,7 @@
 %type <Hs::LExport> import
 
 %type <std::optional<int>> prec
-%type <Hs::Fixity> infix
+%type <Infix::Associativity> infix
 %type <std::vector<Located<std::string>>> ops
 
 
@@ -650,9 +650,9 @@ import: qcname export_subspec         {$$ = {@$,Hs::Export{{}, $1, $2}}; }
 prec: %empty       { }
 |     INTEGER      { $$ = $1.convert_to<int>(); }
 
-infix: "infix"     { $$ = Hs::Fixity::infix; }
-|      "infixl"    { $$ = Hs::Fixity::infixl; }
-|      "infixr"    { $$ = Hs::Fixity::infixr; }
+infix: "infix"     { $$ = Infix::Associativity::none; }
+|      "infixl"    { $$ = Infix::Associativity::left; }
+|      "infixr"    { $$ = Infix::Associativity::right; }
 
 ops:   ops "," op  { $$ = $1; $$.push_back({@3,$3}); }
 |      op          { $$ = {{@1,$1}}; }
