@@ -630,29 +630,6 @@ Hs::Exp eta_reduce(Hs::Exp E)
     return E;
 }
 
-// Finds variable binders inside a typed lambda pattern.
-set<string> find_vars_in_pattern(const CM::TypedPattern& pattern)
-{
-    if (auto var = pattern.to<CM::VarPattern>())
-        return {var->name};
-    else if (auto tuple = pattern.to<CM::TuplePattern<CM::Ann>>())
-    {
-        set<string> vars;
-        for(auto& sub_pattern: tuple->elements)
-        {
-            auto slot_vars = find_vars_in_pattern(sub_pattern);
-            for(auto& var_name: slot_vars)
-            {
-                assert(not vars.count(var_name));
-                vars.insert(var_name);
-            }
-        }
-        return vars;
-    }
-    else
-        std::abort();
-}
-
 // Converts a typed lambda pattern into Haskell source pattern syntax.
 Hs::LPat get_typed_pattern(const CM::TypedPattern& pattern, const CodeGenState& scope)
 {
@@ -1035,7 +1012,7 @@ translation_result_t CodeGenState::get_typed_model_lambda(const CM::Lambda<CM::A
 {
     auto scope2 = *this;
 
-    auto var_names = find_vars_in_pattern(lambda.pattern);
+    auto var_names = CM::vars_in_pattern(lambda.pattern);
 
     for(auto& var_name: var_names)
     {

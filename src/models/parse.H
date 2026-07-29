@@ -1,6 +1,7 @@
 #ifndef MODELS_PARSE_H
 #define MODELS_PARSE_H
 
+#include <set>
 #include <string>
 #include "models/model-expr.H"
 #include "models/model-type.H"
@@ -17,8 +18,11 @@ std::string show_model_annotated(const CM::TypedExpr&);
 
 CM::Type parse_type(const std::string& s);
 
-void resolve_model_fixities(CM::UntypedExpr&, const Rules&, const std::string& source, const std::string& what);
-CM::UntypedExpr parse_model_expr(const Rules& R, const std::string& s, const std::string& what);
-CM::Decls<CM::NoAnn> parse_model_decls(const Rules& R, const std::string& s);
+void resolve_model_fixities(CM::UntypedExpr&, const Rules&, const std::string& source, const std::string& what,
+                            const std::set<std::string>& bound_names = {});
+CM::UntypedExpr parse_model_expr(const Rules& R, const std::string& s, const std::string& what,
+                                 const std::set<std::string>& bound_names = {});
+CM::Decls<CM::NoAnn> parse_model_decls(const Rules& R, const std::string& s,
+                                       const std::set<std::string>& bound_names = {});
 
 #endif

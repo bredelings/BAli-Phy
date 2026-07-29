@@ -95,7 +95,7 @@ string show_fixity(const ::Infix::Fixity& fixity)
     return name + " " + std::to_string(fixity.precedence);
 }
 
-void resolve_fixities(UntypedExpr&, const Rules&, vector<Message>&);
+void resolve_fixities(UntypedExpr&, const Rules&, const set<string>&, vector<Message>&);
 
 // Adds a stacked argument to a call, replacing one placeholder before falling
 // back to prepending a positional argument.
@@ -168,7 +168,8 @@ void reduce_operator(vector<UntypedExpr>& operands, vector<PendingOperator>& ope
 
 // Resolve one flat operator chain using the shunting-yard invariant: the stack
 // contains exactly the operators whose right operands are not yet complete.
-UntypedExpr resolve_infix(CM::Infix<NoAnn> infix, const Rules& R, vector<Message>& messages)
+UntypedExpr resolve_infix(CM::Infix<NoAnn> infix, const Rules& R, const set<string>& bound_names,
+                          vector<Message>& messages)
 {
     vector<UntypedExpr> operands;
     vector<PendingOperator> operators;
@@ -184,14 +185,17 @@ UntypedExpr resolve_infix(CM::Infix<NoAnn> infix, const Rules& R, vector<Message
             operators.push_back({std::move(minus), {::Infix::Associativity::left, 6}, true});
             operand = std::move(inner_operand);
         }
-        resolve_fixities(operand, R, messages);
+        resolve_fixities(operand, R, bound_names, messages);
         operands.push_back(std::move(operand));
     };
 
     push_operand(std::move(infix.first));
     for(auto& [symbol, operand]: infix.rest)
     {
-        auto fixity = R.get_fixity(symbol.obj);
+        // +> is dedicated stacking syntax, so lexical variables cannot shadow it.
+        auto fixity = bound_names.contains(symbol.obj) and symbol.obj != "+>"
+                    ? ::Infix::Fixity{::Infix::Associativity::left, 9}
+                    : R.get_fixity(symbol.obj);
         PendingOperator incoming{std::move(symbol), fixity, false};
         while (not operators.empty())
         {
@@ -223,18 +227,18 @@ UntypedExpr resolve_infix(CM::Infix<NoAnn> infix, const Rules& R, vector<Message
 }
 
 // Recursively resolve parser-only operator syntax before later model passes see it.
-void resolve_fixities(UntypedExpr& expr, const Rules& R, vector<Message>& messages)
+void resolve_fixities(UntypedExpr& expr, const Rules& R, const set<string>& bound_names, vector<Message>& messages)
 {
     if (auto infix = expr.to<CM::Infix<NoAnn>>())
     {
-        expr = resolve_infix(std::move(*infix), R, messages);
+        expr = resolve_infix(std::move(*infix), R, bound_names, messages);
         return;
     }
 
     if (auto neg = expr.to<CM::PrefixNeg<NoAnn>>())
     {
         auto operand = std::move(neg->operand);
-        resolve_fixities(operand, R, messages);
+        resolve_fixities(operand, R, bound_names, messages);
         vector<CM::Arg<CM::NoAnn>> args;
         args.push_back({"", std::move(operand), false, false, std::nullopt});
         expr = {CM::NoAnn{}, CM::Call<CM::NoAnn>{"negate", std::move(args)}};
@@ -247,62 +251,75 @@ void resolve_fixities(UntypedExpr& expr, const Rules& R, vector<Message>& messag
         {
             for(auto& arg: call.args)
                 if (arg.value)
-                    resolve_fixities(*arg.value, R, messages);
+                    resolve_fixities(*arg.value, R, bound_names, messages);
         },
         // Resolve each element of a list expression.
         [&](List<NoAnn>& list)
         {
             for(auto& element: list.elements)
-                resolve_fixities(element, R, messages);
+                resolve_fixities(element, R, bound_names, messages);
         },
         // Resolve each element of a tuple expression.
         [&](Tuple<NoAnn>& tuple)
         {
             for(auto& element: tuple.elements)
-                resolve_fixities(element, R, messages);
+                resolve_fixities(element, R, bound_names, messages);
         },
         // Resolve declaration values and the body of a let expression.
         [&](Let<NoAnn>& let)
         {
+            auto body_scope = bound_names;
             for(auto& [name, value]: let.decls)
-                resolve_fixities(value, R, messages);
-            resolve_fixities(let.body, R, messages);
+            {
+                body_scope.insert(name);
+                resolve_fixities(value, R, body_scope, messages);
+            }
+            resolve_fixities(let.body, R, body_scope, messages);
         },
         // Resolve operators nested in a lambda body.
         [&](Lambda<NoAnn>& lambda)
         {
-            resolve_fixities(lambda.body, R, messages);
+            auto body_scope = bound_names;
+            auto pattern_names = vars_in_pattern(lambda.pattern);
+            body_scope.insert(pattern_names.begin(), pattern_names.end());
+            resolve_fixities(lambda.body, R, body_scope, messages);
         },
         // Resolve operators nested in a sampled distribution.
         [&](Sample<NoAnn>& sample)
         {
-            resolve_fixities(sample.dist, R, messages);
+            resolve_fixities(sample.dist, R, bound_names, messages);
         },
         [](auto&) {}
     });
 }
 
 // Resolve all declaration values while collecting conflicts across the source.
-void resolve_fixities(Decls<NoAnn>& decls, const Rules& R, vector<Message>& messages)
+void resolve_fixities(Decls<NoAnn>& decls, const Rules& R, const set<string>& initial_bound_names,
+                      vector<Message>& messages)
 {
+    auto bound_names = initial_bound_names;
     for(auto& [name, value]: decls)
-        resolve_fixities(value, R, messages);
+    {
+        bound_names.insert(name);
+        resolve_fixities(value, R, bound_names, messages);
+    }
 }
 
 }
 
 // Resolve one parsed expression and report all fixity conflicts against its source.
-void resolve_model_fixities(UntypedExpr& expr, const Rules& R, const string& source, const string& what)
+void resolve_model_fixities(UntypedExpr& expr, const Rules& R, const string& source, const string& what,
+                            const set<string>& bound_names)
 {
     vector<Message> messages;
-    resolve_fixities(expr, R, messages);
+    resolve_fixities(expr, R, bound_names, messages);
     if (not messages.empty())
         show_messages({what, source}, std::cerr, messages);
 }
 
 // Converts parser-produced positional call arguments to rule keyword arguments
 // directly on the model AST, while preserving calls to local function binders.
-void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>& local_functions = {})
+void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>& bound_names)
 {
     expr.visit(overloaded{
         // Rewrites ordinary call arguments after first normalizing the argument
@@ -311,7 +328,7 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
         {
             for(auto& arg: call.args)
                 if (arg.value)
-                    handle_positional_args(*arg.value, R, local_functions);
+                    handle_positional_args(*arg.value, R, bound_names);
 
             if (call.args.empty())
                 return;
@@ -334,7 +351,7 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
                 return;
             }
 
-            if (local_functions.count(call.function))
+            if (bound_names.contains(call.function))
                 return;
 
             if (not R.get_rule_for_func(call.function))
@@ -383,37 +400,39 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
         [&](List<NoAnn>& list)
         {
             for(auto& element: list.elements)
-                handle_positional_args(element, R, local_functions);
+                handle_positional_args(element, R, bound_names);
         },
         // Recurses into tuple elements without rewriting the tuple node itself.
         [&](Tuple<NoAnn>& tuple)
         {
             for(auto& element: tuple.elements)
-                handle_positional_args(element, R, local_functions);
+                handle_positional_args(element, R, bound_names);
         },
         // Recurses into declarations and the body without rewriting the let node
         // itself.
         [&](Let<NoAnn>& let)
         {
-            auto local_functions2 = local_functions;
+            auto body_scope = bound_names;
             for(auto& [name, value]: let.decls)
             {
-                local_functions2.insert(name);
-                handle_positional_args(value, R, local_functions2);
+                body_scope.insert(name);
+                handle_positional_args(value, R, body_scope);
             }
-            handle_positional_args(let.body, R, local_functions2);
+            handle_positional_args(let.body, R, body_scope);
         },
-        // Recurses into the body without rewriting the lambda node itself.
-        // Patterns contain no call arguments to normalize.
+        // Normalizes the lambda body in the scope introduced by its pattern.
         [&](Lambda<NoAnn>& lambda)
         {
-            handle_positional_args(lambda.body, R, local_functions);
+            auto body_scope = bound_names;
+            auto pattern_names = vars_in_pattern(lambda.pattern);
+            body_scope.insert(pattern_names.begin(), pattern_names.end());
+            handle_positional_args(lambda.body, R, body_scope);
         },
         // Recurses into the sampled distribution without rewriting the sample
         // node itself.
         [&](Sample<NoAnn>& sample)
         {
-            handle_positional_args(sample.dist, R, local_functions);
+            handle_positional_args(sample.dist, R, bound_names);
         },
         [](auto&) {}
     });
@@ -421,37 +440,37 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
 
 // Converts parser-produced positional call arguments in declaration values to
 // rule keyword arguments, while tracking earlier local declaration binders.
-void handle_positional_args(Decls<NoAnn>& decls, const Rules& R)
+void handle_positional_args(Decls<NoAnn>& decls, const Rules& R, const set<string>& initial_bound_names)
 {
-    set<string> local_functions;
+    auto bound_names = initial_bound_names;
     for(auto& [name, value]: decls)
     {
-        local_functions.insert(name);
-        handle_positional_args(value, R, local_functions);
+        bound_names.insert(name);
+        handle_positional_args(value, R, bound_names);
     }
 }
 
 // Parses one command-line model expression through the legacy grammar, then
 // normalizes positional arguments directly on the untyped model AST.
-UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what)
+UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what, const set<string>& bound_names)
 {
     auto model = parse_expression(s, what);
-    resolve_model_fixities(model, R, s, what);
-    handle_positional_args(model, R);
+    resolve_model_fixities(model, R, s, what, bound_names);
+    handle_positional_args(model, R, bound_names);
     return model;
 }
 
 // Parses command-line model declarations through the legacy grammar, then
 // normalizes positional arguments directly on untyped AST declarations.
-Decls<NoAnn> parse_model_decls(const Rules& R, const string& s)
+Decls<NoAnn> parse_model_decls(const Rules& R, const string& s, const set<string>& bound_names)
 {
     const string what = "declarations";
     auto decls = parse_defs(s, what);
     vector<Message> messages;
-    resolve_fixities(decls, R, messages);
+    resolve_fixities(decls, R, bound_names, messages);
     if (not messages.empty())
         show_messages({what, s}, std::cerr, messages);
-    handle_positional_args(decls, R);
+    handle_positional_args(decls, R, bound_names);
     return decls;
 }
 

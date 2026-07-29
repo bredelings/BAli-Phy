@@ -552,6 +552,24 @@ Pattern<A> clone(const Pattern<A>& pattern)
     return pattern;
 }
 
+// Collects every variable bound by a model pattern, including binders nested
+// inside tuple patterns.
+template<class A>
+std::set<std::string> vars_in_pattern(const Pattern<A>& pattern)
+{
+    if (auto var = pattern.template to<VarPattern>())
+        return {var->name};
+
+    std::set<std::string> vars;
+    const auto& tuple = pattern.template as<TuplePattern<A>>();
+    for(const auto& element: tuple.elements)
+    {
+        auto element_vars = vars_in_pattern(element);
+        vars.insert(element_vars.begin(), element_vars.end());
+    }
+    return vars;
+}
+
 // Returns an owning copy of a model expression.
 template<class A>
 Expr<A> clone(const Expr<A>& expr)

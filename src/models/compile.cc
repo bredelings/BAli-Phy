@@ -328,7 +328,12 @@ model_t compile_model(const Rules& R,
 		      const map<string,pair<string,type_t>>& state)
 {
     // 1. Parse
-    auto model_rep = parse_model_expr(R, model_string, what);
+    set<string> bound_names;
+    for(const auto& [name, _]: TC.identifiers)
+        bound_names.insert(name);
+    for(const auto& [name, _]: scope)
+        bound_names.insert(name);
+    auto model_rep = parse_model_expr(R, model_string, what, bound_names);
 //    std::cout<<"model1 = "<<show(model_rep)<<std::endl;
 
     // 2. Typecheck
@@ -405,7 +410,12 @@ model_t compile_decls(const Rules& R,
 		      const map<string,pair<string,type_t>>& state)
 {
     // 1. Parse declarations and substitute any default values.
-    auto decls = parse_model_decls(R, prog);
+    set<string> bound_names;
+    for(const auto& [name, _]: TC.identifiers)
+        bound_names.insert(name);
+    for(const auto& [name, _]: scope)
+        bound_names.insert(name);
+    auto decls = parse_model_decls(R, prog, bound_names);
 
     // 2. Typecheck.
     auto typed_decls = typecheck_model_decls(TC, decls);
