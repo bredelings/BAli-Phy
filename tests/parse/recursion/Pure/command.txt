@@ -1,0 +1,1 @@
+--test data/dna.fasta --indel-rates=constant --scale='0 where {f(x)=y where {y=f(0)}}'

@@ -1,0 +1,1 @@
+--test data/dna.fasta --variables='f(x)=1+f(x);' --indel-rates=constant --scale=0

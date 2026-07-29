@@ -333,8 +333,34 @@ translation_result_t CodeGenState::get_model_decls(const CM::TypedDecls& decls)
         bool x_is_random = is_random(var_exp);
         var_info_t var_info(x, x_is_random);
 
-        // 1. Perform the variable expression
+        // Pure declarations become recursive Haskell lets, so expose the binder while generating its RHS.
+        extend_modify_scope(var_name, var_info);
         auto arg_result = get_model_as(var_exp);
+
+        bool recursive = arg_result.code.free_vars.contains(var_name);
+        if (recursive and not arg_result.code.perform_function and not arg_result.code.stmts.stmts.empty())
+        {
+            bool only_pure_lets = true;
+            for(auto& [_, stmt]: arg_result.code.stmts.stmts)
+                if (not stmt.is_a<Hs::LetQual>())
+                    only_pure_lets = false;
+
+            // Close a pure generated prefix inside the recursive RHS so its bindings can refer to the recursive binder.
+            if (only_pure_lets and not arg_result.code.has_loggers())
+            {
+                for(auto& [_, stmt]: arg_result.code.stmts.stmts | views::reverse)
+                {
+                    auto let_qual = stmt.as_<Hs::LetQual>();
+                    arg_result.code.E = Hs::Let(let_qual.binds, {noloc, arg_result.code.E});
+                }
+                arg_result.code.stmts.stmts.clear();
+            }
+            // NOTE: Pure recursive setup with loggers remains unsupported because closing only the value would
+            // leave logger expressions outside the setup scope. Close values and logger metadata together to remove this.
+        }
+
+        if (recursive and arg_result.code.is_action())
+            throw myexception()<<"Recursive model declaration '"<<var_name<<"' requires sequential evaluation.";
 
         if (arg_result.lambda_vars.size())
             var_info.depends_on_lambda = true;
@@ -349,7 +375,7 @@ translation_result_t CodeGenState::get_model_decls(const CM::TypedDecls& decls)
         if (x_is_random and is_loggable_type(type))
             result.code.log_value(var_name, x, type);
 
-        // 4. Put x into the scope for the next decl.
+        // Preserve dependency metadata for subsequent declarations.
         extend_modify_scope(var_name, var_info);
     }
 
