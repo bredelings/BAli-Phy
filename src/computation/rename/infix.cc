@@ -20,8 +20,9 @@ using InfixBuilder = function<Hs::LExp(const Hs::LExp&, const Hs::LExp&, const H
 using NegBuilder = function<Hs::LExp(const Hs::LExp&, const Hs::LExp&)>;
 using OpLookup = function<Located<Infix::Operator>(const Hs::LExp&)>;
 
-Hs::LExp infix_parse(const OpLookup& get_op, const Located<Infix::Operator>& op1, const Hs::LExp& E1,
-                     deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg);
+Hs::LExp infix_parse(const renamer_state& Rn, const OpLookup& get_op, const Located<Infix::Operator>& op1,
+                     const Hs::LExp& E1, deque<Hs::LExp>& T, const InfixBuilder& build_infix,
+                     const NegBuilder& build_neg);
 
 namespace
 {
@@ -62,8 +63,8 @@ Hs::LExp make_infix_exp(const vector<Hs::LExp>& terms)
 }
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
-Hs::LExp infix_parse_neg(const OpLookup& get_op, const Located<Infix::Operator>& op1, deque<Hs::LExp>& T,
-                         const InfixBuilder& build_infix, const NegBuilder& build_neg)
+Hs::LExp infix_parse_neg(const renamer_state& Rn, const OpLookup& get_op, const Located<Infix::Operator>& op1,
+                         deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg)
 {
     assert(not T.empty());
 
@@ -79,14 +80,14 @@ Hs::LExp infix_parse_neg(const OpLookup& get_op, const Located<Infix::Operator>&
         auto neg_sym = Infix::Operator{"-", {Infix::Associativity::left, 6}};
         auto neg = Located<Infix::Operator>{neg_loc, neg_sym};
 
-	E1 = infix_parse_neg(get_op, neg, T, build_infix, build_neg);
+	E1 = infix_parse_neg(Rn, get_op, neg, T, build_infix, build_neg);
 
-	return infix_parse(get_op, op1, build_neg({neg_loc,Hs::Var::resolved(num_negate_name)}, E1), T,
+	return infix_parse(Rn, get_op, op1, build_neg({neg_loc,Hs::Var::resolved(num_negate_name)}, E1), T,
                            build_infix, build_neg);
     }
     // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
     else
-	return infix_parse(get_op, op1, E1, T, build_infix, build_neg);
+	return infix_parse(Rn, get_op, op1, E1, T, build_infix, build_neg);
 }
 
 // Look up an operator through the current scoped fixity environment.
@@ -118,8 +119,9 @@ Located<Infix::Operator> get_op_sym(const renamer_state& Rn, const Hs::LExp& O)
 }
 
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
-Hs::LExp infix_parse(const OpLookup& get_op, const Located<Infix::Operator>& loc_op1, const Hs::LExp& E1,
-                     deque<Hs::LExp>& T, const InfixBuilder& build_infix, const NegBuilder& build_neg)
+Hs::LExp infix_parse(const renamer_state& Rn, const OpLookup& get_op, const Located<Infix::Operator>& loc_op1,
+                     const Hs::LExp& E1, deque<Hs::LExp>& T, const InfixBuilder& build_infix,
+                     const NegBuilder& build_neg)
 {
     if (T.empty())
 	return E1;
@@ -132,7 +134,10 @@ Hs::LExp infix_parse(const OpLookup& get_op, const Located<Infix::Operator>& loc
 
     auto comparison = Infix::compare(op1.fixity, op2.fixity);
     if (comparison == Infix::Comparison::conflict)
-	throw myexception()<<"Must use parenthesis to order operators '"<<op1.name<<"' and '"<<op2.name<<"'";
+    {
+        Rn.error(loc_op2.loc, Note()<<"Must use parentheses to order operators '"<<op1.name<<"' and '"<<op2.name<<"'.");
+        return E1;
+    }
 
     // left association: ... op1 E1) op2 ...
     if (comparison == Infix::Comparison::associate_left)
@@ -142,22 +147,23 @@ Hs::LExp infix_parse(const OpLookup& get_op, const Located<Infix::Operator>& loc
     else
     {
 	T.pop_front();
-	auto E3 = infix_parse_neg(get_op, loc_op2, T, build_infix, build_neg);
+	auto E3 = infix_parse_neg(Rn, get_op, loc_op2, T, build_infix, build_neg);
 
 	auto E1_op2_E3 = build_infix(op2_E, E1, E3);
 
-	return infix_parse(get_op, loc_op1, E1_op2_E3, T, build_infix, build_neg);
+	return infix_parse(Rn, get_op, loc_op1, E1_op2_E3, T, build_infix, build_neg);
     }
 }
 
 // Resolve an unresolved infix spine using the supplied output builders.
-Hs::LExp resolve_infix(const vector<Hs::LExp>& T, const OpLookup& get_op, const InfixBuilder& build_infix, const NegBuilder& build_neg)
+Hs::LExp resolve_infix(const renamer_state& Rn, const vector<Hs::LExp>& T, const OpLookup& get_op,
+                       const InfixBuilder& build_infix, const NegBuilder& build_neg)
 {
     deque<Hs::LExp> T2;
     T2.insert(T2.begin(), T.begin(), T.end());
 
     auto no_sym = Infix::Operator{"", {Infix::Associativity::none, -1}};
-    return infix_parse_neg(get_op, {noloc, no_sym}, T2, build_infix, build_neg);
+    return infix_parse_neg(Rn, get_op, {noloc, no_sym}, T2, build_infix, build_neg);
 }
 
 Hs::LExp desugar_infix(const renamer_state& Rn, const vector<Hs::LExp>& T)
@@ -177,7 +183,7 @@ Hs::LExp desugar_infix(const renamer_state& Rn, const vector<Hs::LExp>& T)
         return Hs::apply(neg, {arg});
     };
 
-    return resolve_infix(T, get_op, build_infix, build_neg);
+    return resolve_infix(Rn, T, get_op, build_infix, build_neg);
 }
 
 Hs::LPat desugar_pattern_infix(const renamer_state& Rn, const vector<Hs::LExp>& T)
@@ -219,5 +225,5 @@ Hs::LPat desugar_pattern_infix(const renamer_state& Rn, const vector<Hs::LExp>& 
         throw myexception()<<"Negative patterns must contain an integer or floating-point literal.";
     };
 
-    return disambiguate_pattern(resolve_infix(T, get_op, build_infix, build_neg));
+    return disambiguate_pattern(resolve_infix(Rn, T, get_op, build_infix, build_neg));
 }
