@@ -162,6 +162,7 @@ signed       {negative}?
 "+>"     return zz::parser::make_STACK  (loc);
 "->"     return zz::parser::make_ARROW  (loc);
 "@"      return zz::parser::make_AT     (loc);
+<EXPRESSION>"`" return zz::parser::make_BACKQUOTE (loc);
 "~"      return zz::parser::make_TILDE  (loc);
 "-"      return zz::parser::make_MINUS  (loc);
 

@@ -1,0 +1,1 @@
+--test data/dna.fasta --smodel='gtr `Rates.gamma` 4'

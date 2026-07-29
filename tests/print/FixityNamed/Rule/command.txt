@@ -1,0 +1,1 @@
+--print='[2 `pow` 3 `pow` 2, pow(2, pow(3, 2))]'

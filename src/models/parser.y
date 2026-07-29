@@ -70,6 +70,7 @@ CM::UntypedExpr make_model_tuple(const std::vector<CM::UntypedExpr>& elements);
   CCURLY        "}"
   COMMA         ","
   AT            "@"
+  BACKQUOTE     "`"
 
   TILDE         "~"
   /* Minus stays distinct because it can introduce a prefix expression. */
@@ -154,6 +155,8 @@ infix_terms: infix_operator prefix_exp
 
 infix_operator: VARSYM  { $$ = Located<std::string>{@1, $1}; }
 |               QVARSYM { $$ = Located<std::string>{@1, $1}; }
+|               "`" VARID "`"  { $$ = Located<std::string>{@2, $2}; }
+|               "`" QVARID "`" { $$ = Located<std::string>{@2, $2}; }
 |               "-"     { $$ = Located<std::string>{@1, "-"}; }
 |               "+>"    { $$ = Located<std::string>{@1, "+>"}; }
 
