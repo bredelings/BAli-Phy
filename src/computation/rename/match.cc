@@ -30,7 +30,6 @@ Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var
 
     if (R.decls)
     {
-        rn.fixity_env = rn.add_fixities_from_decls(rn.fixity_env, unloc(*R.decls)[0]);
         binders = rn.rename_decls(unloc(*R.decls), bound, binders, free_vars);
     }
 

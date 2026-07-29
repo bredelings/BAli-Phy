@@ -393,9 +393,9 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
 
     auto& decls = binds[0];
 
-    remove_fixity_decls(decls);
-
     auto binders = find_bound_vars_in_decls(decls, top);
+    fixity_env = add_fixities_from_decls(fixity_env, decls, binders, top);
+    remove_fixity_decls(decls);
 
     rename_signatures(binds.signatures, binds.inline_sigs, binders, top);
 

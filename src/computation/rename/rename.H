@@ -53,7 +53,7 @@ struct renamer_state
     void warning(const std::optional<yy::location>& loc, const Note& e) const;
 
     Infix::Operator get_operator(const std::string&) const;
-    fixity_env_t add_fixities_from_decls(fixity_env_t, const Hs::Decls&) const;
+    fixity_env_t add_fixities_from_decls(fixity_env_t, const Hs::Decls&, const bound_var_info&, bool top) const;
 
     void qualify_name(std::string& name) const;
     void qualify_name(Located<std::string>& name) const;

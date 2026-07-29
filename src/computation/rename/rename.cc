@@ -169,7 +169,6 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
 
     // 4. Rename value decls.
     auto value_rn = Rn.child();
-    value_rn.fixity_env = value_rn.add_fixities_from_decls(value_rn.fixity_env, M.value_decls[0]);
     value_rn.rename_decls(M.value_decls, bound_names, free_vars, true);
 
     // 5. Replace ids with dummies
@@ -313,9 +312,12 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& dec
     return bound_names;
 }
 
-// Return a fixity environment extended with local fixity declarations.
-fixity_env_t renamer_state::add_fixities_from_decls(fixity_env_t env, const Hs::Decls& decls) const
+// Extend a fixity environment with declarations for names bound in the same scope.
+fixity_env_t renamer_state::add_fixities_from_decls(fixity_env_t env, const Hs::Decls& decls,
+                                                    const bound_var_info& binders, bool top) const
 {
+    set<string> declared_fixities;
+
     for(const auto& [loc, decl]: decls)
     {
         auto FD = decl.to<Hs::FixityDecl>();
@@ -337,6 +339,31 @@ fixity_env_t renamer_state::add_fixities_from_decls(fixity_env_t env, const Hs::
                 error(name.loc, Note()<<"Trying to declare fixity of qualified symbol '"<<op<<"'.  Use its unqualified name.");
                 continue;
             }
+
+            bool has_binding;
+            if (top)
+            {
+                auto symbol = m.lookup_local_symbol(m.qualify_local_name(op));
+                has_binding = symbol and symbol->symbol_type != symbol_type_t::unknown;
+            }
+            else
+            {
+                has_binding = std::ranges::any_of(binders, [&](const string& binder) {
+                    return get_unqualified_name(binder) == op;
+                });
+            }
+            if (not has_binding)
+            {
+                error(name.loc, Note()<<"Fixity declaration for '"<<op<<"' lacks an accompanying binding.");
+                continue;
+            }
+
+            if (not declared_fixities.insert(op).second)
+            {
+                error(name.loc, Note()<<"Multiple fixity declarations for '"<<op<<"'.");
+                continue;
+            }
+
             env[op] = Infix::Fixity{FD->associativity, precedence};
         }
     }

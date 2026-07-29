@@ -373,7 +373,6 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
         auto L = E.as_<Hs::Let>();
 
         auto rn = child();
-        rn.fixity_env = rn.add_fixities_from_decls(rn.fixity_env, unloc(L.binds)[0]);
         auto binders = rn.rename_decls(unloc(L.binds), bound, free_vars);
         L.body = rn.rename(L.body, bound, binders, free_vars);
 
