@@ -68,6 +68,42 @@ bool optional_bool(const json::object& object, const string& key, bool default_v
     return value->as_bool();
 }
 
+// Parse optional infix metadata identically for rule stubs and completed rules.
+optional<Infix::Fixity> optional_fixity(const json::object& object, const string& rule_name)
+{
+    auto value = maybe_field(object, "fixity");
+    if (not value)
+        return {};
+    if (not value->is_object())
+        throw myexception()<<"In rule for "<<rule_name<<": \"fixity\" must be an object";
+
+    const auto& fixity = value->as_object();
+    auto associativity_value = maybe_field(fixity, "associativity");
+    if (not associativity_value or not associativity_value->is_string())
+        throw myexception()<<"In rule for "<<rule_name<<": \"fixity.associativity\" must be a string";
+
+    auto precedence_value = maybe_field(fixity, "precedence");
+    if (not precedence_value or not precedence_value->is_int64())
+        throw myexception()<<"In rule for "<<rule_name<<": \"fixity.precedence\" must be an integer";
+
+    auto associativity_name = string(associativity_value->as_string());
+    Infix::Associativity associativity;
+    if (associativity_name == "left")
+        associativity = Infix::Associativity::left;
+    else if (associativity_name == "right")
+        associativity = Infix::Associativity::right;
+    else if (associativity_name == "none")
+        associativity = Infix::Associativity::none;
+    else
+        throw myexception()<<"In rule for "<<rule_name<<": unknown fixity associativity '"<<associativity_name<<"'";
+
+    auto precedence = precedence_value->as_int64();
+    if (precedence < 0 or precedence > 9)
+        throw myexception()<<"In rule for "<<rule_name<<": fixity precedence "<<precedence<<" is outside 0-9";
+
+    return Infix::Fixity{associativity, static_cast<int>(precedence)};
+}
+
 // Reads an optional array field and produces rule-qualified error messages.
 const json::array* optional_array(const json::object& object, const string& key, const string& rule_name)
 {
@@ -337,6 +373,7 @@ Rule convert_rule(const Rules& R, const RawRule& raw_rule)
     const auto& fields = raw_rule.fields;
     const auto& name = raw_rule.name;
     rule.name = name;
+    rule.fixity = optional_fixity(fields, name);
 
     {
         rule.result_type = parse_type(required_string(fields, "result_type", name));
@@ -442,6 +479,7 @@ Rule make_rule_stub(const RawRule& raw_rule)
     const auto& name = raw_rule.name;
     const auto& fields = raw_rule.fields;
     rule.name = name;
+    rule.fixity = optional_fixity(fields, name);
     if (auto args = optional_args_array(fields, name))
     {
         for(auto& x: *args)
@@ -474,6 +512,24 @@ optional<Rule> Rules::get_rule_for_func(const string& s) const
 	throw myexception()<<"I don't recognize '"<<s<<"'.  Perhaps you meant '"<<syn->second<<"'?";
 
     return {};
+}
+
+// Return declared fixity without copying a rule, following ordinary synonyms before applying the default.
+Infix::Fixity Rules::get_fixity(const string& name) const
+{
+    if (name == "+>")
+        return {Infix::Associativity::left, 5};
+
+    auto rule = rules.find(name);
+    if (rule == rules.end())
+    {
+        if (auto synonym = synonyms.find(name); synonym != synonyms.end())
+            rule = rules.find(synonym->second);
+    }
+
+    if (rule != rules.end() and rule->second.fixity)
+        return *rule->second.fixity;
+    return {Infix::Associativity::left, 9};
 }
 
 Rule Rules::require_rule_for_func(const string& s) const

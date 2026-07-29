@@ -6,6 +6,7 @@
 #include <optional>
 #include <set>
 #include <vector>
+#include "computation/fixity.H"
 #include "models/model-expr.H"
 #include "models/model-type.H"
 #include <filesystem>
@@ -78,6 +79,7 @@ struct RuleDocs
 struct Rule
 {
     std::string name;
+    std::optional<Infix::Fixity> fixity;
     ParsedType result_type;
     std::vector<RuleConstraint> constraints;
     RuleModelExpr call;
@@ -117,6 +119,8 @@ class Rules
 
 public:
     std::optional<Rule> get_rule_for_func(const std::string& s) const;
+
+    Infix::Fixity get_fixity(const std::string& name) const;
 
     const std::map<std::string, Rule>& get_rules() const;
 
