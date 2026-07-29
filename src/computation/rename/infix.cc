@@ -93,13 +93,14 @@ Hs::LExp infix_parse_neg(const renamer_state& Rn, const OpLookup& get_op, const 
 // Look up an operator through the current scoped fixity environment.
 Infix::Operator renamer_state::get_operator(const string& name) const
 {
-    auto fixity = fixity_env.find(name);
-    if (fixity == fixity_env.end())
-        fixity = fixity_env.find(get_unqualified_name(name));
+    if (not is_qualified_symbol(name))
+    {
+        auto fixity = fixity_env.find(name);
+        if (fixity != fixity_env.end())
+            return {name, fixity->second};
+    }
 
-    if (fixity != fixity_env.end())
-        return {name, fixity->second};
-    else if (m.is_declared(name))
+    if (m.is_declared(name))
         return m.get_operator(name);
     else
         return {name, {Infix::Associativity::left, 9}};
