@@ -43,8 +43,6 @@
 # include "parse.H"
 # include "util/myexception.H"
 
-CM::UntypedExpr add_arg(CM::UntypedExpr p1, CM::UntypedExpr p2);
-CM::UntypedExpr make_binary_call(const std::string& name, const CM::UntypedExpr& lhs, const CM::UntypedExpr& rhs);
 CM::UntypedExpr make_call(const std::string& name, const std::vector<CM::Arg<CM::NoAnn>>& args);
 CM::UntypedExpr make_list(const std::vector<CM::Arg<CM::NoAnn>>& args);
 CM::UntypedExpr make_list(const std::vector<CM::UntypedExpr>& elements);
@@ -254,12 +252,6 @@ zz::parser::error (const location_type& l, const std::string& m)
     drv.push_error_message(l,m);
 }
 
-// Builds one positional argument edge for parser-created calls.
-CM::Arg<CM::NoAnn> positional_arg(const CM::UntypedExpr& expr)
-{
-    return {"", expr, false, false, std::nullopt};
-}
-
 // Builds one ordinary call expression, handling parser-level special forms that
 // used to be recognized by ptree conversion.
 CM::UntypedExpr make_call(const string& name, const vector<CM::Arg<CM::NoAnn>>& args)
@@ -279,12 +271,6 @@ CM::UntypedExpr make_call(const string& name, const vector<CM::Arg<CM::NoAnn>>& 
     }
 
     return {CM::NoAnn{}, CM::Call<CM::NoAnn>{name, args}};
-}
-
-// Builds one binary operator call with positional arguments.
-CM::UntypedExpr make_binary_call(const string& name, const CM::UntypedExpr& lhs, const CM::UntypedExpr& rhs)
-{
-    return make_call(name, {positional_arg(lhs), positional_arg(rhs)});
 }
 
 // Builds a list expression from parser argument syntax, preserving the old
@@ -361,41 +347,4 @@ pair<string,CM::UntypedExpr> make_function_def(zz_driver& drv, const yy::locatio
     }
     
     return {fname, make_function(patterns, body)};
-}
-
-// Replaces immediate placeholders in the callee argument list with one stacked
-// argument, matching the old ptree `+>` behavior.
-int add_arg_placeholder(CM::Call<CM::NoAnn>& call, const CM::UntypedExpr& arg)
-{
-    int n_placeholders = 0;
-    for(auto& call_arg: call.args)
-    {
-        if (call_arg.value and call_arg.value->is<CM::Placeholder>())
-        {
-            n_placeholders++;
-            call_arg.value = arg;
-        }
-    }
-    return n_placeholders;
-}
-
-// Adds a stacked argument to a parser-created call, preserving placeholder
-// replacement before falling back to prepending a positional argument.
-CM::UntypedExpr add_arg(CM::UntypedExpr arg, CM::UntypedExpr callee)
-{
-    if (auto var = callee.to<CM::Var>())
-        callee = make_call(var->name, {});
-
-    auto call = callee.to<CM::Call<CM::NoAnn>>();
-    if (not call)
-        throw myexception()<<"Right side of +> must be a function call or function name.";
-
-    int n_placeholders = add_arg_placeholder(*call, arg);
-    if (n_placeholders > 1)
-	throw myexception()<<"Placeholder '_' may only occur once.";
-
-    if (n_placeholders == 0)
-	call->args.insert(call->args.begin(), positional_arg(arg));
-
-    return callee;
 }

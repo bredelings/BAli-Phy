@@ -50,15 +50,13 @@
 # include "parse.H"
 # include "util/myexception.H"
 
-CM::UntypedExpr add_arg(CM::UntypedExpr p1, CM::UntypedExpr p2);
-CM::UntypedExpr make_binary_call(const std::string& name, const CM::UntypedExpr& lhs, const CM::UntypedExpr& rhs);
 CM::UntypedExpr make_call(const std::string& name, const std::vector<CM::Arg<CM::NoAnn>>& args);
 CM::UntypedExpr make_list(const std::vector<CM::Arg<CM::NoAnn>>& args);
 CM::UntypedExpr make_list(const std::vector<CM::UntypedExpr>& elements);
 CM::UntypedExpr make_sample(const CM::UntypedExpr& dist);
 CM::UntypedExpr make_model_tuple(const std::vector<CM::UntypedExpr>& elements);
 
-#line 62 "parser.cc"
+#line 60 "parser.cc"
 
 
 #ifndef YY_
@@ -151,7 +149,7 @@ CM::UntypedExpr make_model_tuple(const std::vector<CM::UntypedExpr>& elements);
 
 #line 6 "parser.y"
 namespace zz {
-#line 155 "parser.cc"
+#line 153 "parser.cc"
 
   /// Build a parser object.
   parser::parser (zz_driver& drv_yyarg)
@@ -923,433 +921,433 @@ namespace zz {
           switch (yyn)
             {
   case 2: // start: START_EXP exp
-#line 133 "parser.y"
+#line 131 "parser.y"
                      {drv.expression_result = yystack_[0].value.as < CM::UntypedExpr > ();}
-#line 929 "parser.cc"
+#line 927 "parser.cc"
     break;
 
   case 3: // start: START_TYPE type
-#line 134 "parser.y"
+#line 132 "parser.y"
                        {drv.type_result = yystack_[0].value.as < CM::Type > ();}
-#line 935 "parser.cc"
+#line 933 "parser.cc"
     break;
 
   case 4: // start: START_DEFS defs
-#line 135 "parser.y"
+#line 133 "parser.y"
                        {drv.defs_result = yystack_[0].value.as < CM::Decls<CM::NoAnn> > ();}
-#line 941 "parser.cc"
+#line 939 "parser.cc"
     break;
 
   case 5: // def: varid "=" exp
-#line 137 "parser.y"
+#line 135 "parser.y"
                                          { yylhs.value.as < std::pair<std::string,CM::UntypedExpr> > () = {yystack_[2].value.as < std::string > (),yystack_[0].value.as < CM::UntypedExpr > ()}; }
-#line 947 "parser.cc"
+#line 945 "parser.cc"
     break;
 
   case 6: // def: fncall "=" exp
-#line 138 "parser.y"
+#line 136 "parser.y"
                                          { yylhs.value.as < std::pair<std::string,CM::UntypedExpr> > () = make_function_def(drv,yystack_[2].location,yystack_[2].value.as < CM::UntypedExpr > (),yystack_[0].value.as < CM::UntypedExpr > ()); }
-#line 953 "parser.cc"
+#line 951 "parser.cc"
     break;
 
   case 7: // def: varid "~" exp
-#line 139 "parser.y"
+#line 137 "parser.y"
                                          { yylhs.value.as < std::pair<std::string,CM::UntypedExpr> > () = {yystack_[2].value.as < std::string > (),make_sample(yystack_[0].value.as < CM::UntypedExpr > ())}; }
-#line 959 "parser.cc"
+#line 957 "parser.cc"
     break;
 
   case 8: // defs: %empty
-#line 141 "parser.y"
+#line 139 "parser.y"
                    { yylhs.value.as < CM::Decls<CM::NoAnn> > () = {}; }
-#line 965 "parser.cc"
+#line 963 "parser.cc"
     break;
 
   case 9: // defs: def
-#line 142 "parser.y"
+#line 140 "parser.y"
                    { yylhs.value.as < CM::Decls<CM::NoAnn> > () = {yystack_[0].value.as < std::pair<std::string,CM::UntypedExpr> > ()}; }
-#line 971 "parser.cc"
+#line 969 "parser.cc"
     break;
 
   case 10: // defs: defs ";" def
-#line 143 "parser.y"
+#line 141 "parser.y"
                    { yylhs.value.as < CM::Decls<CM::NoAnn> > () = yystack_[2].value.as < CM::Decls<CM::NoAnn> > (); yylhs.value.as < CM::Decls<CM::NoAnn> > ().push_back(yystack_[0].value.as < std::pair<std::string,CM::UntypedExpr> > ()); }
-#line 977 "parser.cc"
+#line 975 "parser.cc"
     break;
 
   case 11: // defs: defs ";"
-#line 144 "parser.y"
+#line 142 "parser.y"
                    { yylhs.value.as < CM::Decls<CM::NoAnn> > () = yystack_[1].value.as < CM::Decls<CM::NoAnn> > (); }
-#line 983 "parser.cc"
+#line 981 "parser.cc"
     break;
 
   case 12: // exp: infix_exp
-#line 146 "parser.y"
+#line 144 "parser.y"
                                    { yylhs.value.as < CM::UntypedExpr > () = yystack_[0].value.as < CM::UntypedExpr > (); }
-#line 989 "parser.cc"
+#line 987 "parser.cc"
     break;
 
   case 13: // exp: exp "where" "{" defs "}"
-#line 147 "parser.y"
+#line 145 "parser.y"
                                    { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::Let<CM::NoAnn>{yystack_[1].value.as < CM::Decls<CM::NoAnn> > (), yystack_[4].value.as < CM::UntypedExpr > ()}}; }
-#line 995 "parser.cc"
+#line 993 "parser.cc"
     break;
 
   case 14: // infix_exp: prefix_exp
-#line 149 "parser.y"
+#line 147 "parser.y"
                                    { yylhs.value.as < CM::UntypedExpr > () = yystack_[0].value.as < CM::UntypedExpr > (); }
-#line 1001 "parser.cc"
+#line 999 "parser.cc"
     break;
 
   case 15: // infix_exp: prefix_exp infix_terms
-#line 150 "parser.y"
+#line 148 "parser.y"
                                    { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::Infix<CM::NoAnn>{yystack_[1].value.as < CM::UntypedExpr > (), yystack_[0].value.as < std::vector<std::pair<Located<std::string>,CM::UntypedExpr>> > ()}}; }
-#line 1007 "parser.cc"
+#line 1005 "parser.cc"
     break;
 
   case 16: // infix_terms: infix_operator prefix_exp
-#line 153 "parser.y"
+#line 151 "parser.y"
              { yylhs.value.as < std::vector<std::pair<Located<std::string>,CM::UntypedExpr>> > () = {{yystack_[1].value.as < Located<std::string> > (), yystack_[0].value.as < CM::UntypedExpr > ()}}; }
-#line 1013 "parser.cc"
+#line 1011 "parser.cc"
     break;
 
   case 17: // infix_terms: infix_terms infix_operator prefix_exp
-#line 155 "parser.y"
+#line 153 "parser.y"
              { yylhs.value.as < std::vector<std::pair<Located<std::string>,CM::UntypedExpr>> > () = yystack_[2].value.as < std::vector<std::pair<Located<std::string>,CM::UntypedExpr>> > (); yylhs.value.as < std::vector<std::pair<Located<std::string>,CM::UntypedExpr>> > ().push_back({yystack_[1].value.as < Located<std::string> > (), yystack_[0].value.as < CM::UntypedExpr > ()}); }
-#line 1019 "parser.cc"
+#line 1017 "parser.cc"
     break;
 
   case 18: // infix_operator: "VARSYM"
-#line 157 "parser.y"
+#line 155 "parser.y"
                         { yylhs.value.as < Located<std::string> > () = Located<std::string>{yystack_[0].location, yystack_[0].value.as < std::string > ()}; }
-#line 1025 "parser.cc"
+#line 1023 "parser.cc"
     break;
 
   case 19: // infix_operator: "QVARSYM"
-#line 158 "parser.y"
+#line 156 "parser.y"
                         { yylhs.value.as < Located<std::string> > () = Located<std::string>{yystack_[0].location, yystack_[0].value.as < std::string > ()}; }
-#line 1031 "parser.cc"
+#line 1029 "parser.cc"
     break;
 
   case 20: // infix_operator: "-"
-#line 159 "parser.y"
+#line 157 "parser.y"
                         { yylhs.value.as < Located<std::string> > () = Located<std::string>{yystack_[0].location, "-"}; }
-#line 1037 "parser.cc"
+#line 1035 "parser.cc"
     break;
 
   case 21: // infix_operator: "+>"
-#line 160 "parser.y"
+#line 158 "parser.y"
                         { yylhs.value.as < Located<std::string> > () = Located<std::string>{yystack_[0].location, "+>"}; }
-#line 1043 "parser.cc"
+#line 1041 "parser.cc"
     break;
 
   case 22: // prefix_exp: atom
-#line 162 "parser.y"
+#line 160 "parser.y"
                                  { yylhs.value.as < CM::UntypedExpr > () = yystack_[0].value.as < CM::UntypedExpr > (); }
-#line 1049 "parser.cc"
+#line 1047 "parser.cc"
     break;
 
   case 23: // prefix_exp: "~" prefix_exp
-#line 163 "parser.y"
+#line 161 "parser.y"
                                  { yylhs.value.as < CM::UntypedExpr > () = make_sample(yystack_[0].value.as < CM::UntypedExpr > ()); }
-#line 1055 "parser.cc"
+#line 1053 "parser.cc"
     break;
 
   case 24: // prefix_exp: "-" prefix_exp
-#line 164 "parser.y"
+#line 162 "parser.y"
                                  { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::PrefixNeg<CM::NoAnn>{{yystack_[1].location, "-"}, yystack_[0].value.as < CM::UntypedExpr > ()}}; }
-#line 1061 "parser.cc"
+#line 1059 "parser.cc"
     break;
 
   case 25: // atom: qvarid
-#line 167 "parser.y"
+#line 165 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::Var{yystack_[0].value.as < std::string > ()}}; }
-#line 1067 "parser.cc"
+#line 1065 "parser.cc"
     break;
 
   case 26: // atom: "@" varid
-#line 168 "parser.y"
+#line 166 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::ArgRef{yystack_[0].value.as < std::string > ()}}; }
-#line 1073 "parser.cc"
+#line 1071 "parser.cc"
     break;
 
   case 27: // atom: fncall
-#line 169 "parser.y"
+#line 167 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = yystack_[0].value.as < CM::UntypedExpr > (); }
-#line 1079 "parser.cc"
+#line 1077 "parser.cc"
     break;
 
   case 28: // atom: "[" args "]"
-#line 170 "parser.y"
+#line 168 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = make_list(yystack_[1].value.as < std::vector<CM::Arg<CM::NoAnn>> > ()); }
-#line 1085 "parser.cc"
+#line 1083 "parser.cc"
     break;
 
   case 29: // atom: "[" "]"
-#line 171 "parser.y"
+#line 169 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::List<CM::NoAnn>{}}; }
-#line 1091 "parser.cc"
+#line 1089 "parser.cc"
     break;
 
   case 30: // atom: "(" tup_args "," exp ")"
-#line 172 "parser.y"
+#line 170 "parser.y"
                                   { yystack_[3].value.as < std::vector<CM::UntypedExpr> > ().push_back(yystack_[1].value.as < CM::UntypedExpr > ()); yylhs.value.as < CM::UntypedExpr > () = make_model_tuple(yystack_[3].value.as < std::vector<CM::UntypedExpr> > ()); }
-#line 1097 "parser.cc"
+#line 1095 "parser.cc"
     break;
 
   case 31: // atom: literal
-#line 173 "parser.y"
+#line 171 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = yystack_[0].value.as < CM::UntypedExpr > (); }
-#line 1103 "parser.cc"
+#line 1101 "parser.cc"
     break;
 
   case 32: // atom: "{" ditems "}"
-#line 174 "parser.y"
+#line 172 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = make_list(yystack_[1].value.as < std::vector<CM::UntypedExpr> > ()); }
-#line 1109 "parser.cc"
+#line 1107 "parser.cc"
     break;
 
   case 33: // atom: "{" "}"
-#line 175 "parser.y"
+#line 173 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::List<CM::NoAnn>{}}; }
-#line 1115 "parser.cc"
+#line 1113 "parser.cc"
     break;
 
   case 34: // atom: "|" patterns ":" exp "|"
-#line 176 "parser.y"
+#line 174 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = make_function(yystack_[3].value.as < std::vector<CM::UntypedPattern> > (), yystack_[1].value.as < CM::UntypedExpr > ());}
-#line 1121 "parser.cc"
+#line 1119 "parser.cc"
     break;
 
   case 35: // atom: "(" exp ")"
-#line 177 "parser.y"
+#line 175 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::Infix<CM::NoAnn>{yystack_[1].value.as < CM::UntypedExpr > (), {}}}; }
-#line 1127 "parser.cc"
+#line 1125 "parser.cc"
     break;
 
   case 36: // atom: "_"
-#line 178 "parser.y"
+#line 176 "parser.y"
                                   { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::Placeholder{}}; }
-#line 1133 "parser.cc"
+#line 1131 "parser.cc"
     break;
 
   case 37: // patterns: pattern
-#line 181 "parser.y"
+#line 179 "parser.y"
                             { yylhs.value.as < std::vector<CM::UntypedPattern> > ().push_back(yystack_[0].value.as < CM::UntypedPattern > ()); }
-#line 1139 "parser.cc"
+#line 1137 "parser.cc"
     break;
 
   case 38: // patterns: patterns pattern
-#line 182 "parser.y"
+#line 180 "parser.y"
                              { yylhs.value.as < std::vector<CM::UntypedPattern> > () = yystack_[1].value.as < std::vector<CM::UntypedPattern> > (); yylhs.value.as < std::vector<CM::UntypedPattern> > ().push_back(yystack_[0].value.as < CM::UntypedPattern > ()); }
-#line 1145 "parser.cc"
+#line 1143 "parser.cc"
     break;
 
   case 39: // pattern: varid
-#line 184 "parser.y"
+#line 182 "parser.y"
                                                     { yylhs.value.as < CM::UntypedPattern > () = CM::UntypedPattern{CM::NoAnn{}, CM::VarPattern{yystack_[0].value.as < std::string > ()}}; }
-#line 1151 "parser.cc"
+#line 1149 "parser.cc"
     break;
 
   case 40: // pattern: "(" pattern_tup_args "," pattern ")"
-#line 185 "parser.y"
+#line 183 "parser.y"
                                                     { yystack_[3].value.as < std::vector<CM::UntypedPattern> > ().push_back(yystack_[1].value.as < CM::UntypedPattern > ()); yylhs.value.as < CM::UntypedPattern > () = CM::UntypedPattern{CM::NoAnn{}, CM::TuplePattern<CM::NoAnn>{yystack_[3].value.as < std::vector<CM::UntypedPattern> > ()}}; }
-#line 1157 "parser.cc"
+#line 1155 "parser.cc"
     break;
 
   case 41: // pattern_tup_args: pattern
-#line 187 "parser.y"
+#line 185 "parser.y"
                                                     { yylhs.value.as < std::vector<CM::UntypedPattern> > ().push_back(yystack_[0].value.as < CM::UntypedPattern > ());}
-#line 1163 "parser.cc"
+#line 1161 "parser.cc"
     break;
 
   case 42: // pattern_tup_args: pattern_tup_args "," pattern
-#line 188 "parser.y"
+#line 186 "parser.y"
                                                     { yylhs.value.as < std::vector<CM::UntypedPattern> > () = yystack_[2].value.as < std::vector<CM::UntypedPattern> > (); yylhs.value.as < std::vector<CM::UntypedPattern> > ().push_back(yystack_[0].value.as < CM::UntypedPattern > ());}
-#line 1169 "parser.cc"
+#line 1167 "parser.cc"
     break;
 
   case 43: // fncall: qvarid "(" args ")"
-#line 190 "parser.y"
+#line 188 "parser.y"
                                     { yylhs.value.as < CM::UntypedExpr > () = make_call(yystack_[3].value.as < std::string > (),yystack_[1].value.as < std::vector<CM::Arg<CM::NoAnn>> > ()); }
-#line 1175 "parser.cc"
+#line 1173 "parser.cc"
     break;
 
   case 44: // ditems: ditem
-#line 192 "parser.y"
+#line 190 "parser.y"
                                   { yylhs.value.as < std::vector<CM::UntypedExpr> > ().push_back(yystack_[0].value.as < CM::UntypedExpr > ()); }
-#line 1181 "parser.cc"
+#line 1179 "parser.cc"
     break;
 
   case 45: // ditems: ditems "," ditem
-#line 193 "parser.y"
+#line 191 "parser.y"
                                   { yylhs.value.as < std::vector<CM::UntypedExpr> > () = yystack_[2].value.as < std::vector<CM::UntypedExpr> > (); yylhs.value.as < std::vector<CM::UntypedExpr> > ().push_back(yystack_[0].value.as < CM::UntypedExpr > ()); }
-#line 1187 "parser.cc"
+#line 1185 "parser.cc"
     break;
 
   case 46: // ditem: exp ":" exp
-#line 195 "parser.y"
+#line 193 "parser.y"
                     { yylhs.value.as < CM::UntypedExpr > () = make_model_tuple({yystack_[2].value.as < CM::UntypedExpr > (),yystack_[0].value.as < CM::UntypedExpr > ()}); }
-#line 1193 "parser.cc"
+#line 1191 "parser.cc"
     break;
 
   case 47: // args: arg
-#line 197 "parser.y"
+#line 195 "parser.y"
                           { yylhs.value.as < std::vector<CM::Arg<CM::NoAnn>> > ().push_back(yystack_[0].value.as < CM::Arg<CM::NoAnn> > ()); }
-#line 1199 "parser.cc"
+#line 1197 "parser.cc"
     break;
 
   case 48: // args: args "," arg
-#line 198 "parser.y"
+#line 196 "parser.y"
                           { yylhs.value.as < std::vector<CM::Arg<CM::NoAnn>> > () = yystack_[2].value.as < std::vector<CM::Arg<CM::NoAnn>> > (); yylhs.value.as < std::vector<CM::Arg<CM::NoAnn>> > ().push_back(yystack_[0].value.as < CM::Arg<CM::NoAnn> > ()); }
-#line 1205 "parser.cc"
+#line 1203 "parser.cc"
     break;
 
   case 49: // arg: varid "=" exp
-#line 200 "parser.y"
+#line 198 "parser.y"
                    { yylhs.value.as < CM::Arg<CM::NoAnn> > () = {yystack_[2].value.as < std::string > (),yystack_[0].value.as < CM::UntypedExpr > (),false,false,std::nullopt}; }
-#line 1211 "parser.cc"
+#line 1209 "parser.cc"
     break;
 
   case 50: // arg: varid "~" exp
-#line 201 "parser.y"
+#line 199 "parser.y"
                    { yylhs.value.as < CM::Arg<CM::NoAnn> > () = {yystack_[2].value.as < std::string > (),make_sample(yystack_[0].value.as < CM::UntypedExpr > ()),false,false,std::nullopt}; }
-#line 1217 "parser.cc"
+#line 1215 "parser.cc"
     break;
 
   case 51: // arg: exp
-#line 202 "parser.y"
+#line 200 "parser.y"
                    { yylhs.value.as < CM::Arg<CM::NoAnn> > () = {"",yystack_[0].value.as < CM::UntypedExpr > (),false,false,std::nullopt}; }
-#line 1223 "parser.cc"
+#line 1221 "parser.cc"
     break;
 
   case 52: // tup_args: exp
-#line 204 "parser.y"
+#line 202 "parser.y"
                             { yylhs.value.as < std::vector<CM::UntypedExpr> > ().push_back(yystack_[0].value.as < CM::UntypedExpr > ());}
-#line 1229 "parser.cc"
+#line 1227 "parser.cc"
     break;
 
   case 53: // tup_args: tup_args "," exp
-#line 205 "parser.y"
+#line 203 "parser.y"
                             { yylhs.value.as < std::vector<CM::UntypedExpr> > () = yystack_[2].value.as < std::vector<CM::UntypedExpr> > (); yylhs.value.as < std::vector<CM::UntypedExpr> > ().push_back(yystack_[0].value.as < CM::UntypedExpr > ());}
-#line 1235 "parser.cc"
+#line 1233 "parser.cc"
     break;
 
   case 54: // qvarid: varid
-#line 210 "parser.y"
+#line 208 "parser.y"
                { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
-#line 1241 "parser.cc"
+#line 1239 "parser.cc"
     break;
 
   case 55: // qvarid: "QVARID"
-#line 211 "parser.y"
+#line 209 "parser.y"
                { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
-#line 1247 "parser.cc"
+#line 1245 "parser.cc"
     break;
 
   case 56: // qvarid: "(" "QVARSYM" ")"
-#line 212 "parser.y"
+#line 210 "parser.y"
                         { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
-#line 1253 "parser.cc"
+#line 1251 "parser.cc"
     break;
 
   case 57: // varid: "VARID"
-#line 214 "parser.y"
+#line 212 "parser.y"
                     { yylhs.value.as < std::string > () = yystack_[0].value.as < std::string > (); }
-#line 1259 "parser.cc"
+#line 1257 "parser.cc"
     break;
 
   case 58: // varid: "(" "VARSYM" ")"
-#line 215 "parser.y"
+#line 213 "parser.y"
                        { yylhs.value.as < std::string > () = yystack_[1].value.as < std::string > (); }
-#line 1265 "parser.cc"
+#line 1263 "parser.cc"
     break;
 
   case 59: // varid: "(" ":" ")"
-#line 216 "parser.y"
+#line 214 "parser.y"
                     { yylhs.value.as < std::string > () = ":"; }
-#line 1271 "parser.cc"
+#line 1269 "parser.cc"
     break;
 
   case 60: // varid: "(" "-" ")"
-#line 217 "parser.y"
+#line 215 "parser.y"
                     { yylhs.value.as < std::string > () = "-"; }
-#line 1277 "parser.cc"
+#line 1275 "parser.cc"
     break;
 
   case 61: // literal: "STRING"
-#line 219 "parser.y"
+#line 217 "parser.y"
                      {yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::StringLiteral{yystack_[0].value.as < std::string > ()}};}
-#line 1283 "parser.cc"
+#line 1281 "parser.cc"
     break;
 
   case 62: // literal: "INTEGER"
-#line 220 "parser.y"
+#line 218 "parser.y"
                      {yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::IntLiteral{yystack_[0].value.as < int > ()}};}
-#line 1289 "parser.cc"
+#line 1287 "parser.cc"
     break;
 
   case 63: // literal: "FLOAT"
-#line 221 "parser.y"
+#line 219 "parser.y"
                      {yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::DoubleLiteral{yystack_[0].value.as < double > ()}};}
-#line 1295 "parser.cc"
+#line 1293 "parser.cc"
     break;
 
   case 64: // type: btype
-#line 225 "parser.y"
+#line 223 "parser.y"
                                         { yylhs.value.as < CM::Type > () = yystack_[0].value.as < CM::Type > (); }
-#line 1301 "parser.cc"
+#line 1299 "parser.cc"
     break;
 
   case 65: // type: btype "->" type
-#line 226 "parser.y"
+#line 224 "parser.y"
                                         { yylhs.value.as < CM::Type > () = CM::type_apps("Function",{yystack_[2].value.as < CM::Type > (),yystack_[0].value.as < CM::Type > ()});  }
-#line 1307 "parser.cc"
+#line 1305 "parser.cc"
     break;
 
   case 66: // btype: atype
-#line 228 "parser.y"
+#line 226 "parser.y"
                                         { yylhs.value.as < CM::Type > () = yystack_[0].value.as < CM::Type > (); }
-#line 1313 "parser.cc"
+#line 1311 "parser.cc"
     break;
 
   case 67: // btype: atype "<" type_tup_args ">"
-#line 229 "parser.y"
+#line 227 "parser.y"
                                         { yylhs.value.as < CM::Type > () = CM::type_apps(yystack_[3].value.as < CM::Type > (), yystack_[1].value.as < std::vector<CM::Type> > ()); }
-#line 1319 "parser.cc"
+#line 1317 "parser.cc"
     break;
 
   case 68: // atype: varid
-#line 231 "parser.y"
+#line 229 "parser.y"
                                         { yylhs.value.as < CM::Type > () = CM::type_atom(yystack_[0].value.as < std::string > ()); }
-#line 1325 "parser.cc"
+#line 1323 "parser.cc"
     break;
 
   case 69: // atype: "(" type ")"
-#line 232 "parser.y"
+#line 230 "parser.y"
                                         { yylhs.value.as < CM::Type > () = yystack_[1].value.as < CM::Type > (); }
-#line 1331 "parser.cc"
+#line 1329 "parser.cc"
     break;
 
   case 70: // atype: "(" type_tup_args "," type ")"
-#line 233 "parser.y"
+#line 231 "parser.y"
                                         { yystack_[3].value.as < std::vector<CM::Type> > ().push_back(yystack_[1].value.as < CM::Type > ()); yylhs.value.as < CM::Type > () = CM::type_apps(CM::type_con("Tuple"),yystack_[3].value.as < std::vector<CM::Type> > ()); }
-#line 1337 "parser.cc"
+#line 1335 "parser.cc"
     break;
 
   case 71: // type_tup_args: type
-#line 235 "parser.y"
+#line 233 "parser.y"
                                         { yylhs.value.as < std::vector<CM::Type> > ().push_back(yystack_[0].value.as < CM::Type > ());}
-#line 1343 "parser.cc"
+#line 1341 "parser.cc"
     break;
 
   case 72: // type_tup_args: type_tup_args "," type
-#line 236 "parser.y"
+#line 234 "parser.y"
                                         { yylhs.value.as < std::vector<CM::Type> > () = yystack_[2].value.as < std::vector<CM::Type> > (); yylhs.value.as < std::vector<CM::Type> > ().push_back(yystack_[0].value.as < CM::Type > ());}
-#line 1349 "parser.cc"
+#line 1347 "parser.cc"
     break;
 
 
-#line 1353 "parser.cc"
+#line 1351 "parser.cc"
 
             default:
               break;
@@ -1878,14 +1876,14 @@ namespace zz {
   const unsigned char
   parser::yyrline_[] =
   {
-       0,   133,   133,   134,   135,   137,   138,   139,   141,   142,
-     143,   144,   146,   147,   149,   150,   152,   154,   157,   158,
-     159,   160,   162,   163,   164,   167,   168,   169,   170,   171,
-     172,   173,   174,   175,   176,   177,   178,   181,   182,   184,
-     185,   187,   188,   190,   192,   193,   195,   197,   198,   200,
-     201,   202,   204,   205,   210,   211,   212,   214,   215,   216,
-     217,   219,   220,   221,   225,   226,   228,   229,   231,   232,
-     233,   235,   236
+       0,   131,   131,   132,   133,   135,   136,   137,   139,   140,
+     141,   142,   144,   145,   147,   148,   150,   152,   155,   156,
+     157,   158,   160,   161,   162,   165,   166,   167,   168,   169,
+     170,   171,   172,   173,   174,   175,   176,   179,   180,   182,
+     183,   185,   186,   188,   190,   191,   193,   195,   196,   198,
+     199,   200,   202,   203,   208,   209,   210,   212,   213,   214,
+     215,   217,   218,   219,   223,   224,   226,   227,   229,   230,
+     231,   233,   234
   };
 
   void
@@ -1918,9 +1916,9 @@ namespace zz {
 
 #line 6 "parser.y"
 } // zz
-#line 1922 "parser.cc"
+#line 1920 "parser.cc"
 
-#line 244 "parser.y"
+#line 242 "parser.y"
 
 
 using std::optional;
@@ -1932,12 +1930,6 @@ void
 zz::parser::error (const location_type& l, const std::string& m)
 {
     drv.push_error_message(l,m);
-}
-
-// Builds one positional argument edge for parser-created calls.
-CM::Arg<CM::NoAnn> positional_arg(const CM::UntypedExpr& expr)
-{
-    return {"", expr, false, false, std::nullopt};
 }
 
 // Builds one ordinary call expression, handling parser-level special forms that
@@ -1959,12 +1951,6 @@ CM::UntypedExpr make_call(const string& name, const vector<CM::Arg<CM::NoAnn>>& 
     }
 
     return {CM::NoAnn{}, CM::Call<CM::NoAnn>{name, args}};
-}
-
-// Builds one binary operator call with positional arguments.
-CM::UntypedExpr make_binary_call(const string& name, const CM::UntypedExpr& lhs, const CM::UntypedExpr& rhs)
-{
-    return make_call(name, {positional_arg(lhs), positional_arg(rhs)});
 }
 
 // Builds a list expression from parser argument syntax, preserving the old
@@ -2041,41 +2027,4 @@ pair<string,CM::UntypedExpr> make_function_def(zz_driver& drv, const yy::locatio
     }
     
     return {fname, make_function(patterns, body)};
-}
-
-// Replaces immediate placeholders in the callee argument list with one stacked
-// argument, matching the old ptree `+>` behavior.
-int add_arg_placeholder(CM::Call<CM::NoAnn>& call, const CM::UntypedExpr& arg)
-{
-    int n_placeholders = 0;
-    for(auto& call_arg: call.args)
-    {
-        if (call_arg.value and call_arg.value->is<CM::Placeholder>())
-        {
-            n_placeholders++;
-            call_arg.value = arg;
-        }
-    }
-    return n_placeholders;
-}
-
-// Adds a stacked argument to a parser-created call, preserving placeholder
-// replacement before falling back to prepending a positional argument.
-CM::UntypedExpr add_arg(CM::UntypedExpr arg, CM::UntypedExpr callee)
-{
-    if (auto var = callee.to<CM::Var>())
-        callee = make_call(var->name, {});
-
-    auto call = callee.to<CM::Call<CM::NoAnn>>();
-    if (not call)
-        throw myexception()<<"Right side of +> must be a function call or function name.";
-
-    int n_placeholders = add_arg_placeholder(*call, arg);
-    if (n_placeholders > 1)
-	throw myexception()<<"Placeholder '_' may only occur once.";
-
-    if (n_placeholders == 0)
-	call->args.insert(call->args.begin(), positional_arg(arg));
-
-    return callee;
 }

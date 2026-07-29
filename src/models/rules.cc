@@ -351,9 +351,11 @@ RuleModelExpr parse_rule_model_expr(const Rules& R, const string& text, const st
 
 // Compatibility boundary: rule templates still share the model parser syntax.
 // Remove when templates get their own parser or spelling.
-RuleModelExpr parse_rule_template_expr(const string& text, const string& what)
+RuleModelExpr parse_rule_template_expr(const Rules& R, const string& text, const string& what)
 {
-    return parse_expression(text, what);
+    auto expr = parse_expression(text, what);
+    resolve_model_fixities(expr, R, text, what);
+    return expr;
 }
 
 /* NOTE: convert_rule parses and processes strings.  It converts:
@@ -384,7 +386,7 @@ Rule convert_rule(const Rules& R, const RawRule& raw_rule)
     }
 
     {
-        rule.call = parse_rule_template_expr(required_string(fields, "call", name), name + ": call");
+        rule.call = parse_rule_template_expr(R, required_string(fields, "call", name), name + ": call");
     }
 
     if (auto args = optional_args_array(fields, name))
@@ -440,13 +442,13 @@ Rule convert_rule(const Rules& R, const RawRule& raw_rule)
                     throw myexception()
                         <<"In rule for "<<name<<": a computed context object generates its own names";
                 auto value = required_string(computed_object, "value", name);
-                c.value = parse_rule_template_expr(value, name + ": computed context object");
+                c.value = parse_rule_template_expr(R, value, name + ": computed context object");
             }
             else
             {
                 c.name = required_string(computed_object, "name", name);
                 auto value = required_string(computed_object, "value", name);
-                c.value = parse_rule_template_expr(value, name + ": computed value for '"+*c.name+"'");
+                c.value = parse_rule_template_expr(R, value, name + ": computed value for '"+*c.name+"'");
             }
             rule.computed.push_back(std::move(c));
 	}

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <set>
 #include <vector>
+#include "computation/message.H"
 #include "models/parse.H"
 #include "util/myexception.H"
 #include "util/string/convert.H"
@@ -15,7 +16,6 @@ using std::pair;
 using std::optional;
 using std::set;
 using namespace CmdModel;
-
 
 // Turn an expression of the form head[arg1, arg2, ..., argn] -> {head, arg1, arg2, ..., argn}.
 vector<string> split_args(string s)
@@ -68,6 +68,236 @@ vector<string> split_args(string s)
 CM::Type parse_type(const string& s)
 {
     return parse_type(s,"type");
+}
+
+namespace
+{
+
+struct PendingOperator
+{
+    Located<string> symbol;
+    ::Infix::Fixity fixity;
+    bool prefix;
+};
+
+// Render a fixity in the syntax used by declarations and diagnostics.
+string show_fixity(const ::Infix::Fixity& fixity)
+{
+    string name;
+    if (fixity.associativity == ::Infix::Associativity::left)
+        name = "infixl";
+    else if (fixity.associativity == ::Infix::Associativity::right)
+        name = "infixr";
+    else if (fixity.associativity == ::Infix::Associativity::none)
+        name = "infix";
+    else
+        name = "unknown fixity";
+    return name + " " + std::to_string(fixity.precedence);
+}
+
+void resolve_fixities(UntypedExpr&, const Rules&, vector<Message>&);
+
+// Adds a stacked argument to a call, replacing one placeholder before falling
+// back to prepending a positional argument.
+UntypedExpr add_stacked_arg(UntypedExpr arg, UntypedExpr callee)
+{
+    if (auto var = callee.to<CM::Var>())
+    {
+        auto name = var->name;
+        callee = {CM::NoAnn{}, CM::Call<CM::NoAnn>{std::move(name), {}}};
+    }
+
+    auto call = callee.to<CM::Call<CM::NoAnn>>();
+    if (not call)
+        throw myexception()<<"Right side of +> must be a function call or function name.";
+
+    optional<int> placeholder;
+    for(int i = 0; i < call->args.size(); i++)
+    {
+        auto& call_arg = call->args[i];
+        if (call_arg.value and call_arg.value->is<CM::Placeholder>())
+        {
+            if (placeholder)
+                throw myexception()<<"Placeholder '_' may only occur once.";
+            placeholder = i;
+        }
+    }
+
+    CM::Arg<CM::NoAnn> new_arg{"", std::move(arg), false, false, std::nullopt};
+    if (placeholder)
+        call->args[*placeholder] = std::move(new_arg);
+    else
+        call->args.insert(call->args.begin(), std::move(new_arg));
+
+    return callee;
+}
+
+// Reduce the latest unary or binary operator after its right operand is complete.
+void reduce_operator(vector<UntypedExpr>& operands, vector<PendingOperator>& operators)
+{
+    assert(not operators.empty());
+    auto op = std::move(operators.back());
+    operators.pop_back();
+
+    assert(not operands.empty());
+    auto rhs = std::move(operands.back());
+    operands.pop_back();
+
+    if (op.prefix)
+    {
+        vector<CM::Arg<CM::NoAnn>> args;
+        args.push_back({"", std::move(rhs), false, false, std::nullopt});
+        operands.push_back({CM::NoAnn{}, CM::Call<CM::NoAnn>{"negate", std::move(args)}});
+        return;
+    }
+
+    assert(not operands.empty());
+    auto lhs = std::move(operands.back());
+    operands.pop_back();
+
+    if (op.symbol.obj == "+>")
+        operands.push_back(add_stacked_arg(std::move(lhs), std::move(rhs)));
+    else
+    {
+        vector<CM::Arg<CM::NoAnn>> args;
+        args.push_back({"", std::move(lhs), false, false, std::nullopt});
+        args.push_back({"", std::move(rhs), false, false, std::nullopt});
+        operands.push_back({CM::NoAnn{}, CM::Call<CM::NoAnn>{std::move(op.symbol.obj), std::move(args)}});
+    }
+}
+
+// Resolve one flat operator chain using the shunting-yard invariant: the stack
+// contains exactly the operators whose right operands are not yet complete.
+UntypedExpr resolve_infix(CM::Infix<NoAnn> infix, const Rules& R, vector<Message>& messages)
+{
+    vector<UntypedExpr> operands;
+    vector<PendingOperator> operators;
+
+    // Push prefix minuses before their operand so higher-precedence binary
+    // operators are reduced before the synthetic infixl-6 negation.
+    auto push_operand = [&](UntypedExpr operand)
+    {
+        while (auto neg = operand.to<CM::PrefixNeg<NoAnn>>())
+        {
+            auto minus = std::move(neg->minus);
+            auto inner_operand = std::move(neg->operand);
+            operators.push_back({std::move(minus), {::Infix::Associativity::left, 6}, true});
+            operand = std::move(inner_operand);
+        }
+        resolve_fixities(operand, R, messages);
+        operands.push_back(std::move(operand));
+    };
+
+    push_operand(std::move(infix.first));
+    for(auto& [symbol, operand]: infix.rest)
+    {
+        auto fixity = R.get_fixity(symbol.obj);
+        PendingOperator incoming{std::move(symbol), fixity, false};
+        while (not operators.empty())
+        {
+            auto comparison = ::Infix::compare(operators.back().fixity, incoming.fixity);
+            if (comparison == ::Infix::Comparison::associate_right)
+                break;
+
+            if (comparison == ::Infix::Comparison::conflict)
+            {
+                auto& previous = operators.back();
+                Note note;
+                note<<"Must use parentheses to order operators '"<<previous.symbol.obj<<"' ("
+                    <<show_fixity(previous.fixity)<<") and '"<<incoming.symbol.obj<<"' ("
+                    <<show_fixity(incoming.fixity)<<").";
+                messages.push_back(error(incoming.symbol.loc, note));
+            }
+            reduce_operator(operands, operators);
+        }
+
+        operators.push_back(std::move(incoming));
+        push_operand(std::move(operand));
+    }
+
+    while (not operators.empty())
+        reduce_operator(operands, operators);
+
+    assert(operands.size() == 1);
+    return std::move(operands.back());
+}
+
+// Recursively resolve parser-only operator syntax before later model passes see it.
+void resolve_fixities(UntypedExpr& expr, const Rules& R, vector<Message>& messages)
+{
+    if (auto infix = expr.to<CM::Infix<NoAnn>>())
+    {
+        expr = resolve_infix(std::move(*infix), R, messages);
+        return;
+    }
+
+    if (auto neg = expr.to<CM::PrefixNeg<NoAnn>>())
+    {
+        auto operand = std::move(neg->operand);
+        resolve_fixities(operand, R, messages);
+        vector<CM::Arg<CM::NoAnn>> args;
+        args.push_back({"", std::move(operand), false, false, std::nullopt});
+        expr = {CM::NoAnn{}, CM::Call<CM::NoAnn>{"negate", std::move(args)}};
+        return;
+    }
+
+    expr.visit(overloaded{
+        // Resolve operators in every supplied call argument.
+        [&](Call<NoAnn>& call)
+        {
+            for(auto& arg: call.args)
+                if (arg.value)
+                    resolve_fixities(*arg.value, R, messages);
+        },
+        // Resolve each element of a list expression.
+        [&](List<NoAnn>& list)
+        {
+            for(auto& element: list.elements)
+                resolve_fixities(element, R, messages);
+        },
+        // Resolve each element of a tuple expression.
+        [&](Tuple<NoAnn>& tuple)
+        {
+            for(auto& element: tuple.elements)
+                resolve_fixities(element, R, messages);
+        },
+        // Resolve declaration values and the body of a let expression.
+        [&](Let<NoAnn>& let)
+        {
+            for(auto& [name, value]: let.decls)
+                resolve_fixities(value, R, messages);
+            resolve_fixities(let.body, R, messages);
+        },
+        // Resolve operators nested in a lambda body.
+        [&](Lambda<NoAnn>& lambda)
+        {
+            resolve_fixities(lambda.body, R, messages);
+        },
+        // Resolve operators nested in a sampled distribution.
+        [&](Sample<NoAnn>& sample)
+        {
+            resolve_fixities(sample.dist, R, messages);
+        },
+        [](auto&) {}
+    });
+}
+
+// Resolve all declaration values while collecting conflicts across the source.
+void resolve_fixities(Decls<NoAnn>& decls, const Rules& R, vector<Message>& messages)
+{
+    for(auto& [name, value]: decls)
+        resolve_fixities(value, R, messages);
+}
+
+}
+
+// Resolve one parsed expression and report all fixity conflicts against its source.
+void resolve_model_fixities(UntypedExpr& expr, const Rules& R, const string& source, const string& what)
+{
+    vector<Message> messages;
+    resolve_fixities(expr, R, messages);
+    if (not messages.empty())
+        show_messages({what, source}, std::cerr, messages);
 }
 
 // Converts parser-produced positional call arguments to rule keyword arguments
@@ -206,6 +436,7 @@ void handle_positional_args(Decls<NoAnn>& decls, const Rules& R)
 UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what)
 {
     auto model = parse_expression(s, what);
+    resolve_model_fixities(model, R, s, what);
     handle_positional_args(model, R);
     return model;
 }
@@ -214,7 +445,12 @@ UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what
 // normalizes positional arguments directly on untyped AST declarations.
 Decls<NoAnn> parse_model_decls(const Rules& R, const string& s)
 {
-    auto decls = parse_defs(s, "declarations");
+    const string what = "declarations";
+    auto decls = parse_defs(s, what);
+    vector<Message> messages;
+    resolve_fixities(decls, R, messages);
+    if (not messages.empty())
+        show_messages({what, s}, std::cerr, messages);
     handle_positional_args(decls, R);
     return decls;
 }

@@ -17,6 +17,7 @@ std::string show_model_annotated(const CM::TypedExpr&);
 
 CM::Type parse_type(const std::string& s);
 
+void resolve_model_fixities(CM::UntypedExpr&, const Rules&, const std::string& source, const std::string& what);
 CM::UntypedExpr parse_model_expr(const Rules& R, const std::string& s, const std::string& what);
 CM::Decls<CM::NoAnn> parse_model_decls(const Rules& R, const std::string& s);
 
