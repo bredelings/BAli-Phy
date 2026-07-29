@@ -291,6 +291,16 @@ string unparse(const UntypedExpr& expr)
         [](const ArgRef& x) {return "@" + x.name;},
         [](const Placeholder&) {return "_"s;},
         [](const GetState& x) {return "get_state(" + x.state_name + ")";},
+        // Displays an unresolved chain in source order so parser and fixity
+        // diagnostics retain the expression that the user wrote.
+        [](const CM::Infix<NoAnn>& x)
+        {
+            auto result = unparse(x.first);
+            for(auto& [op, operand]: x.rest)
+                result += " " + op.obj + " " + unparse(operand);
+            return "(" + result + ")";
+        },
+        [](const CM::PrefixNeg<NoAnn>& x) {return x.minus.obj + unparse(x.operand);},
         // Renders list elements in command-line bracket syntax.
         [](const List<NoAnn>& x)
         {
@@ -443,6 +453,16 @@ string unparse_annotated(const TypedExpr& expr)
         [](const ArgRef& x) {return "@" + x.name;},
         [](const Placeholder&) {return "_"s;},
         [](const GetState& x) {return "get_state(" + x.state_name + ")";},
+        // Displays an unexpected typed chain rather than losing its structure
+        // if an internal-error diagnostic reaches annotated unparsing.
+        [](const CM::Infix<Ann>& x)
+        {
+            auto result = unparse_annotated(x.first);
+            for(auto& [op, operand]: x.rest)
+                result += " " + op.obj + " " + unparse_annotated(operand);
+            return "(" + result + ")";
+        },
+        [](const CM::PrefixNeg<Ann>& x) {return x.minus.obj + unparse_annotated(x.operand);},
         [](const Let<Ann>& x)
         {
             return unparse_annotated(x.body) + " where {" + unparse_typed_decls(x.decls) + "}";

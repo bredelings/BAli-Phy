@@ -803,7 +803,11 @@ optional<CM::TypedExpr> typecheck_model_sample(const TypecheckingState& TC, cons
 // unsupported nodes explicitly.
 CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const type_t& required_type, const CM::UntypedExpr& expr)
 {
-    if (auto invalid = typecheck_model_invalid_placeholder(expr))
+    if (expr.is<CM::Infix<CM::NoAnn>>())
+        throw myexception()<<"Internal error: unresolved model infix expression reached typechecking: "<<unparse(expr);
+    else if (expr.is<CM::PrefixNeg<CM::NoAnn>>())
+        throw myexception()<<"Internal error: unresolved model prefix negation reached typechecking: "<<unparse(expr);
+    else if (auto invalid = typecheck_model_invalid_placeholder(expr))
         return *invalid;
     else if (auto constant = typecheck_model_constant(TC, required_type, expr))
         return *constant;

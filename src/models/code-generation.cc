@@ -229,7 +229,17 @@ bool CodeGenState::is_random(const CM::TypedExpr& model) const
         {
             return is_random(lambda.body);
         },
-        [](const CM::Sample<CM::Ann>&) { return true; }
+        [](const CM::Sample<CM::Ann>&) { return true; },
+        // Reject parser-only syntax before random-expression code-generation analysis.
+        [](const CM::Infix<CM::Ann>&) -> bool
+        {
+            throw myexception()<<"Internal error: unresolved model infix expression reached code generation.";
+        },
+        // Reject parser-only prefix syntax at the same analysis boundary.
+        [](const CM::PrefixNeg<CM::Ann>&) -> bool
+        {
+            throw myexception()<<"Internal error: unresolved model prefix negation reached code generation.";
+        }
     });
 }
 
@@ -274,7 +284,17 @@ bool CodeGenState::is_unlogged_random(const CM::TypedExpr& model) const
             return false;
         },
         [](const CM::Lambda<CM::Ann>&) { return false; },
-        [](const CM::Sample<CM::Ann>&) { return true; }
+        [](const CM::Sample<CM::Ann>&) { return true; },
+        // Reject parser-only syntax before unlogged-random code-generation analysis.
+        [](const CM::Infix<CM::Ann>&) -> bool
+        {
+            throw myexception()<<"Internal error: unresolved model infix expression reached code generation.";
+        },
+        // Reject parser-only prefix syntax at the same analysis boundary.
+        [](const CM::PrefixNeg<CM::Ann>&) -> bool
+        {
+            throw myexception()<<"Internal error: unresolved model prefix negation reached code generation.";
+        }
     });
 }
 
@@ -758,6 +778,16 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
         {
             auto dist = make_rule_template_expr(sample.dist, simple_args);
             return HsG::Apply(Hs::Var("sample"), {dist});
+        },
+        // Reject parser-only syntax if rule-template parsing fails to resolve it.
+        [](const CM::Infix<CM::NoAnn>&) -> Hs::Exp
+        {
+            throw myexception()<<"Internal error: unresolved infix expression reached rule-template code generation.";
+        },
+        // Reject parser-only prefix syntax at the same code-generation boundary.
+        [](const CM::PrefixNeg<CM::NoAnn>&) -> Hs::Exp
+        {
+            throw myexception()<<"Internal error: unresolved prefix negation reached rule-template code generation.";
         }
     });
 }
@@ -1336,6 +1366,16 @@ translation_result_t CodeGenState::get_model_as(const CM::TypedExpr& model_rep) 
         [&](const CM::Tuple<CM::Ann>& tuple) { return get_typed_model_tuple(tuple); },
         [&](const CM::Let<CM::Ann>& let) { return get_typed_model_let(let); },
         [&](const CM::Lambda<CM::Ann>& lambda) { return get_typed_model_lambda(lambda); },
-        [&](const CM::Sample<CM::Ann>& sample) { return get_typed_model_sample(sample); }
+        [&](const CM::Sample<CM::Ann>& sample) { return get_typed_model_sample(sample); },
+        // Reject parser-only syntax if it somehow appears in the typed AST.
+        [](const CM::Infix<CM::Ann>&) -> translation_result_t
+        {
+            throw myexception()<<"Internal error: unresolved model infix expression reached code generation.";
+        },
+        // Reject parser-only prefix syntax at the typed code-generation boundary.
+        [](const CM::PrefixNeg<CM::Ann>&) -> translation_result_t
+        {
+            throw myexception()<<"Internal error: unresolved model prefix negation reached code generation.";
+        }
     });
 }

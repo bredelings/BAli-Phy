@@ -12,6 +12,7 @@
 #include <variant>
 #include <vector>
 
+#include "computation/parser/located.H"
 #include "models/model-box.H"
 #include "models/model-type.H"
 
@@ -49,6 +50,12 @@ struct Lambda;
 
 template<class A>
 struct Sample;
+
+template<class A>
+struct Infix;
+
+template<class A>
+struct PrefixNeg;
 
 template<class A>
 using Decls = std::vector<std::pair<std::string, Expr<A>>>;
@@ -182,6 +189,12 @@ struct is_boxed_expr_node<Lambda<A>>: std::true_type {};
 template<class A>
 struct is_boxed_expr_node<Sample<A>>: std::true_type {};
 
+template<class A>
+struct is_boxed_expr_node<Infix<A>>: std::true_type {};
+
+template<class A>
+struct is_boxed_expr_node<PrefixNeg<A>>: std::true_type {};
+
 template<class T>
 struct is_boxed_expr_storage: std::false_type {};
 
@@ -210,7 +223,9 @@ struct Expr
         Box<Tuple<A>>,
         Box<Let<A>>,
         Box<Lambda<A>>,
-        Box<Sample<A>>
+        Box<Sample<A>>,
+        Box<Infix<A>>,
+        Box<PrefixNeg<A>>
     >;
 
     Node node;
@@ -305,6 +320,24 @@ template<class A>
 struct Sample
 {
     Expr<A> dist;
+};
+
+// Parser-only syntax holding an unresolved operator chain between parsing and
+// model fixity resolution; it must not reach typechecking or code generation.
+template<class A>
+struct Infix
+{
+    Expr<A> first;
+    std::vector<std::pair<Located<std::string>, Expr<A>>> rest;
+};
+
+// Parser-only syntax holding a located prefix minus between parsing and model
+// fixity resolution; it must not reach typechecking or code generation.
+template<class A>
+struct PrefixNeg
+{
+    Located<std::string> minus;
+    Expr<A> operand;
 };
 
 // Constructs a pattern and boxes recursive pattern node variants.
@@ -656,6 +689,19 @@ void for_each_child(Expr<A>& expr, F&& f)
         {
             f(sample.dist);
         },
+        // Visits the first operand and then each right operand in an unresolved
+        // infix chain.
+        [&](Infix<A>& infix)
+        {
+            f(infix.first);
+            for(auto& term: infix.rest)
+                f(term.second);
+        },
+        // Visits the operand under unresolved prefix minus.
+        [&](PrefixNeg<A>& neg)
+        {
+            f(neg.operand);
+        },
         [](auto&) {}
     });
 }
@@ -707,6 +753,19 @@ void for_each_child(const Expr<A>& expr, F&& f)
         [&](const Sample<A>& sample)
         {
             f(sample.dist);
+        },
+        // Visits the first operand and then each const right operand in an
+        // unresolved infix chain.
+        [&](const Infix<A>& infix)
+        {
+            f(infix.first);
+            for(auto& term: infix.rest)
+                f(term.second);
+        },
+        // Visits the const operand under unresolved prefix minus.
+        [&](const PrefixNeg<A>& neg)
+        {
+            f(neg.operand);
         },
         [](const auto&) {}
     });
