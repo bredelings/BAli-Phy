@@ -65,7 +65,7 @@
   std::pair<std::string,CM::UntypedExpr> make_function_def(zz_driver&, const yy::location&, const CM::UntypedExpr& fncall, const CM::UntypedExpr& body);
 
 
-#line 70 "parser.hh"
+#line 69 "parser.hh"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -214,7 +214,7 @@
 
 #line 6 "parser.y"
 namespace zz {
-#line 219 "parser.hh"
+#line 218 "parser.hh"
 
 
 
@@ -445,7 +445,9 @@ namespace zz {
       char dummy3[sizeof (CM::Type)];
 
       // exp
-      // term
+      // infix_exp
+      // prefix_exp
+      // atom
       // fncall
       // ditem
       // literal
@@ -454,14 +456,17 @@ namespace zz {
       // pattern
       char dummy5[sizeof (CM::UntypedPattern)];
 
+      // infix_operator
+      char dummy6[sizeof (Located<std::string>)];
+
       // "FLOAT"
-      char dummy6[sizeof (double)];
+      char dummy7[sizeof (double)];
 
       // "INTEGER"
-      char dummy7[sizeof (int)];
+      char dummy8[sizeof (int)];
 
       // def
-      char dummy8[sizeof (std::pair<std::string,CM::UntypedExpr>)];
+      char dummy9[sizeof (std::pair<std::string,CM::UntypedExpr>)];
 
       // "VARID"
       // "VARSYM"
@@ -470,21 +475,24 @@ namespace zz {
       // "STRING"
       // qvarid
       // varid
-      char dummy9[sizeof (std::string)];
+      char dummy10[sizeof (std::string)];
 
       // args
-      char dummy10[sizeof (std::vector<CM::Arg<CM::NoAnn>>)];
+      char dummy11[sizeof (std::vector<CM::Arg<CM::NoAnn>>)];
 
       // type_tup_args
-      char dummy11[sizeof (std::vector<CM::Type>)];
+      char dummy12[sizeof (std::vector<CM::Type>)];
 
       // ditems
       // tup_args
-      char dummy12[sizeof (std::vector<CM::UntypedExpr>)];
+      char dummy13[sizeof (std::vector<CM::UntypedExpr>)];
 
       // patterns
       // pattern_tup_args
-      char dummy13[sizeof (std::vector<CM::UntypedPattern>)];
+      char dummy14[sizeof (std::vector<CM::UntypedPattern>)];
+
+      // infix_terms
+      char dummy15[sizeof (std::vector<std::pair<Located<std::string>,CM::UntypedExpr>>)];
     };
 
     /// The size of the largest semantic type.
@@ -643,23 +651,27 @@ namespace zz {
         S_def = 45,                              // def
         S_defs = 46,                             // defs
         S_exp = 47,                              // exp
-        S_term = 48,                             // term
-        S_patterns = 49,                         // patterns
-        S_pattern = 50,                          // pattern
-        S_pattern_tup_args = 51,                 // pattern_tup_args
-        S_fncall = 52,                           // fncall
-        S_ditems = 53,                           // ditems
-        S_ditem = 54,                            // ditem
-        S_args = 55,                             // args
-        S_arg = 56,                              // arg
-        S_tup_args = 57,                         // tup_args
-        S_qvarid = 58,                           // qvarid
-        S_varid = 59,                            // varid
-        S_literal = 60,                          // literal
-        S_type = 61,                             // type
-        S_btype = 62,                            // btype
-        S_atype = 63,                            // atype
-        S_type_tup_args = 64                     // type_tup_args
+        S_infix_exp = 48,                        // infix_exp
+        S_infix_terms = 49,                      // infix_terms
+        S_infix_operator = 50,                   // infix_operator
+        S_prefix_exp = 51,                       // prefix_exp
+        S_atom = 52,                             // atom
+        S_patterns = 53,                         // patterns
+        S_pattern = 54,                          // pattern
+        S_pattern_tup_args = 55,                 // pattern_tup_args
+        S_fncall = 56,                           // fncall
+        S_ditems = 57,                           // ditems
+        S_ditem = 58,                            // ditem
+        S_args = 59,                             // args
+        S_arg = 60,                              // arg
+        S_tup_args = 61,                         // tup_args
+        S_qvarid = 62,                           // qvarid
+        S_varid = 63,                            // varid
+        S_literal = 64,                          // literal
+        S_type = 65,                             // type
+        S_btype = 66,                            // btype
+        S_atype = 67,                            // atype
+        S_type_tup_args = 68                     // type_tup_args
       };
     };
 
@@ -711,7 +723,9 @@ namespace zz {
         break;
 
       case symbol_kind::S_exp: // exp
-      case symbol_kind::S_term: // term
+      case symbol_kind::S_infix_exp: // infix_exp
+      case symbol_kind::S_prefix_exp: // prefix_exp
+      case symbol_kind::S_atom: // atom
       case symbol_kind::S_fncall: // fncall
       case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
@@ -720,6 +734,10 @@ namespace zz {
 
       case symbol_kind::S_pattern: // pattern
         value.move< CM::UntypedPattern > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_infix_operator: // infix_operator
+        value.move< Located<std::string> > (std::move (that.value));
         break;
 
       case symbol_kind::S_FLOAT: // "FLOAT"
@@ -760,6 +778,10 @@ namespace zz {
       case symbol_kind::S_patterns: // patterns
       case symbol_kind::S_pattern_tup_args: // pattern_tup_args
         value.move< std::vector<CM::UntypedPattern> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_infix_terms: // infix_terms
+        value.move< std::vector<std::pair<Located<std::string>,CM::UntypedExpr>> > (std::move (that.value));
         break;
 
       default:
@@ -849,6 +871,20 @@ namespace zz {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const CM::UntypedPattern& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, Located<std::string>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const Located<std::string>& v, const location_type& l)
         : Base (t)
         , value (v)
         , location (l)
@@ -967,6 +1003,20 @@ namespace zz {
       {}
 #endif
 
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<std::pair<Located<std::string>,CM::UntypedExpr>>&& v, location_type&& l)
+        : Base (t)
+        , value (std::move (v))
+        , location (std::move (l))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<std::pair<Located<std::string>,CM::UntypedExpr>>& v, const location_type& l)
+        : Base (t)
+        , value (v)
+        , location (l)
+      {}
+#endif
+
       /// Destroy the symbol.
       ~basic_symbol ()
       {
@@ -1006,7 +1056,9 @@ switch (yykind)
         break;
 
       case symbol_kind::S_exp: // exp
-      case symbol_kind::S_term: // term
+      case symbol_kind::S_infix_exp: // infix_exp
+      case symbol_kind::S_prefix_exp: // prefix_exp
+      case symbol_kind::S_atom: // atom
       case symbol_kind::S_fncall: // fncall
       case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
@@ -1015,6 +1067,10 @@ switch (yykind)
 
       case symbol_kind::S_pattern: // pattern
         value.template destroy< CM::UntypedPattern > ();
+        break;
+
+      case symbol_kind::S_infix_operator: // infix_operator
+        value.template destroy< Located<std::string> > ();
         break;
 
       case symbol_kind::S_FLOAT: // "FLOAT"
@@ -1055,6 +1111,10 @@ switch (yykind)
       case symbol_kind::S_patterns: // patterns
       case symbol_kind::S_pattern_tup_args: // pattern_tup_args
         value.template destroy< std::vector<CM::UntypedPattern> > ();
+        break;
+
+      case symbol_kind::S_infix_terms: // infix_terms
+        value.template destroy< std::vector<std::pair<Located<std::string>,CM::UntypedExpr>> > ();
         break;
 
       default:
@@ -1975,7 +2035,7 @@ switch (yykind)
     // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
     // positive, shift that token.  If negative, reduce the rule whose
     // number is the opposite.  If YYTABLE_NINF, syntax error.
-    static const short yytable_[];
+    static const unsigned char yytable_[];
 
     static const short yycheck_[];
 
@@ -1992,7 +2052,7 @@ switch (yykind)
 
 #if ZZDEBUG
     // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-    static const unsigned char yyrline_[];
+    static const short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r) const;
     /// Print the state stack on the debug stream.
@@ -2219,9 +2279,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 309,     ///< Last index in yytable_.
-      yynnts_ = 22,  ///< Number of nonterminal symbols.
-      yyfinal_ = 35 ///< Termination state number.
+      yylast_ = 260,     ///< Last index in yytable_.
+      yynnts_ = 26,  ///< Number of nonterminal symbols.
+      yyfinal_ = 37 ///< Termination state number.
     };
 
 
@@ -2306,7 +2366,9 @@ switch (yykind)
         break;
 
       case symbol_kind::S_exp: // exp
-      case symbol_kind::S_term: // term
+      case symbol_kind::S_infix_exp: // infix_exp
+      case symbol_kind::S_prefix_exp: // prefix_exp
+      case symbol_kind::S_atom: // atom
       case symbol_kind::S_fncall: // fncall
       case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
@@ -2315,6 +2377,10 @@ switch (yykind)
 
       case symbol_kind::S_pattern: // pattern
         value.copy< CM::UntypedPattern > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_infix_operator: // infix_operator
+        value.copy< Located<std::string> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_FLOAT: // "FLOAT"
@@ -2355,6 +2421,10 @@ switch (yykind)
       case symbol_kind::S_patterns: // patterns
       case symbol_kind::S_pattern_tup_args: // pattern_tup_args
         value.copy< std::vector<CM::UntypedPattern> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_infix_terms: // infix_terms
+        value.copy< std::vector<std::pair<Located<std::string>,CM::UntypedExpr>> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -2403,7 +2473,9 @@ switch (yykind)
         break;
 
       case symbol_kind::S_exp: // exp
-      case symbol_kind::S_term: // term
+      case symbol_kind::S_infix_exp: // infix_exp
+      case symbol_kind::S_prefix_exp: // prefix_exp
+      case symbol_kind::S_atom: // atom
       case symbol_kind::S_fncall: // fncall
       case symbol_kind::S_ditem: // ditem
       case symbol_kind::S_literal: // literal
@@ -2412,6 +2484,10 @@ switch (yykind)
 
       case symbol_kind::S_pattern: // pattern
         value.move< CM::UntypedPattern > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_infix_operator: // infix_operator
+        value.move< Located<std::string> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_FLOAT: // "FLOAT"
@@ -2452,6 +2528,10 @@ switch (yykind)
       case symbol_kind::S_patterns: // patterns
       case symbol_kind::S_pattern_tup_args: // pattern_tup_args
         value.move< std::vector<CM::UntypedPattern> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_infix_terms: // infix_terms
+        value.move< std::vector<std::pair<Located<std::string>,CM::UntypedExpr>> > (YY_MOVE (s.value));
         break;
 
       default:
@@ -2521,7 +2601,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 2526 "parser.hh"
+#line 2605 "parser.hh"
 
 
 

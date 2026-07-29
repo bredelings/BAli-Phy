@@ -104,7 +104,11 @@ CM::UntypedExpr make_model_tuple(const std::vector<CM::UntypedExpr>& elements);
 %token <double>        FLOAT    "FLOAT"
 
 %type <CM::UntypedExpr> exp
-%type <CM::UntypedExpr> term
+%type <CM::UntypedExpr> infix_exp
+%type <CM::UntypedExpr> prefix_exp
+%type <CM::UntypedExpr> atom
+%type <std::vector<std::pair<Located<std::string>,CM::UntypedExpr>>> infix_terms
+%type <Located<std::string>> infix_operator
 %type <CM::UntypedExpr> fncall
 %type <std::vector<CM::Arg<CM::NoAnn>>> args
 %type <CM::Arg<CM::NoAnn>> arg
@@ -133,15 +137,6 @@ CM::UntypedExpr make_model_tuple(const std::vector<CM::UntypedExpr>& elements);
  /* Having vector<> as a type seems to be causing trouble with the printer */
  /* %printer { yyoutput << $$; } <*>; */
 
-%left "||"
-%left "&&"
-%nonassoc "==" "!=" "<" ">" "<=" ">="
-%left "+>"
-%left "+" "-"
-%left "*" "/" "%"
-%left "~"
-%right "->"
-
 %%
 %start start;
 start: START_EXP exp {drv.expression_result = $2;}
@@ -157,39 +152,48 @@ defs: %empty       { $$ = {}; }
 |     defs ";" def { $$ = $1; $$.push_back($3); }
 |     defs ";"     { $$ = $1; }
 
-exp: term                          { $$ = $1; }
+exp: infix_exp                     { $$ = $1; }
 |    exp "where" "{" defs "}"      { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Let<CM::NoAnn>{$4, $1}}; }
 
+infix_exp: prefix_exp              { $$ = $1; }
+|          prefix_exp infix_terms  { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Infix<CM::NoAnn>{$1, $2}}; }
+
+infix_terms: infix_operator prefix_exp
+             { $$ = {{$1, $2}}; }
+|            infix_terms infix_operator prefix_exp
+             { $$ = $1; $$.push_back({$2, $3}); }
+
+infix_operator: "+"   { $$ = Located<std::string>{@1, "+"}; }
+|               "-"   { $$ = Located<std::string>{@1, "-"}; }
+|               "*"   { $$ = Located<std::string>{@1, "*"}; }
+|               "/"   { $$ = Located<std::string>{@1, "/"}; }
+|               "%"   { $$ = Located<std::string>{@1, "%"}; }
+|               "=="  { $$ = Located<std::string>{@1, "=="}; }
+|               "!="  { $$ = Located<std::string>{@1, "!="}; }
+|               "<"   { $$ = Located<std::string>{@1, "<"}; }
+|               ">"   { $$ = Located<std::string>{@1, ">"}; }
+|               "<="  { $$ = Located<std::string>{@1, "<="}; }
+|               ">="  { $$ = Located<std::string>{@1, ">="}; }
+|               "&&"  { $$ = Located<std::string>{@1, "&&"}; }
+|               "||"  { $$ = Located<std::string>{@1, "||"}; }
+|               "+>"  { $$ = Located<std::string>{@1, "+>"}; }
+
+prefix_exp: atom                 { $$ = $1; }
+|           "~" prefix_exp       { $$ = make_sample($2); }
+|           "-" prefix_exp       { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::PrefixNeg<CM::NoAnn>{{@1, "-"}, $2}}; }
 
 // See parse_no_submodel( )
-term: qvarid                      { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Var{$1}}; }
+atom: qvarid                      { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Var{$1}}; }
 |     "@" varid                   { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::ArgRef{$2}}; }
 |     fncall                      { $$ = $1; }
 |     "[" args "]"                { $$ = make_list($2); }
 |     "[" "]"                     { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::List<CM::NoAnn>{}}; }
 |     "(" tup_args "," exp ")"    { $2.push_back($4); $$ = make_model_tuple($2); }
-|     "~" term                    { $$ = make_sample($2); }
 |     literal                     { $$ = $1; }
 |     "{" ditems "}"              { $$ = make_list($2); }
 |     "{" "}"                     { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::List<CM::NoAnn>{}}; }
-|    "|" patterns ":" exp "|"     { $$ = make_function($2, $4);}
-|    "(" exp ")"                  { $$ = $2; }
-|     "-" term                    { $$ = make_call("negate", {{ "", $2, false, false, std::nullopt }}); }
-|     term "+" term               { $$ = make_binary_call("+", $1, $3); }
-|     term "-" term               { $$ = make_binary_call("-", $1, $3); }
-|     term "*" term               { $$ = make_binary_call("*", $1, $3); }
-|     term "/" term               { $$ = make_binary_call("/", $1, $3); }
-|     term "%" term               { $$ = make_binary_call("%", $1, $3); }
-|     term "==" term              { $$ = make_binary_call("==", $1, $3); }
-|     term "!=" term              { $$ = make_binary_call("!=", $1, $3); }
-|     term "<" term               { $$ = make_binary_call("<", $1, $3); }
-|     term ">" term               { $$ = make_binary_call(">", $1, $3); }
-|     term "<=" term              { $$ = make_binary_call("<=", $1, $3); }
-|     term ">=" term              { $$ = make_binary_call(">=", $1, $3); }
-|     term "&&" term              { $$ = make_binary_call("&&", $1, $3); }
-|     term "||" term              { $$ = make_binary_call("||", $1, $3); }
-|     term "+>" fncall            { $$ = add_arg($1,$3); }
-|     term "+>" qvarid            { $$ = add_arg($1,CM::UntypedExpr{CM::NoAnn{}, CM::Var{$3}}); }
+|     "|" patterns ":" exp "|"    { $$ = make_function($2, $4);}
+|     "(" exp ")"                 { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Infix<CM::NoAnn>{$2, {}}}; }
 |     "_"                         { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Placeholder{}}; }
 
 
