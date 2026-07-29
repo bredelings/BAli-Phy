@@ -31,14 +31,11 @@ zz::parser::symbol_type zz_make_float(std::string_view text, const zz::parser::l
 
 zz::parser::symbol_type zz_make_string(std::string_view text, const zz::parser::location_type& loc);
 
-zz::parser::symbol_type zz_make_qvarsym(std::string_view text, const zz::parser::location_type& loc);
-
-zz::parser::symbol_type zz_make_varsym(std::string_view text, const zz::parser::location_type& loc);
-
 %}
 
 %option noyywrap nounput batch debug noinput never-interactive nounistd
 %option prefix="zz"
+%s EXPRESSION TYPE
 
 unispace     \x05
 nl           [\n\r\f]
@@ -57,6 +54,10 @@ ascsymbol    {ascsymbol_except_colon}|:
 unisymbol    \x04
 symbol_except_colon {ascsymbol_except_colon}
 symbol       {ascsymbol}
+
+ /* Model operators exclude delimiters that must remain visible without surrounding whitespace. */
+model_symbol_except_colon [!#$%&\*+./<=>?\\^|\-]
+model_symbol {model_symbol_except_colon}|:
 
 unilarge     \x01
 asclarge     [A-Z]
@@ -81,7 +82,7 @@ docsym       [|\^*$]
 varid        {small}{idchar}*
 conid        {large}{idchar}*
 
-varsym       {symbol_except_colon}{symbol}*
+varsym       {model_symbol_except_colon}{model_symbol}*
 consym       :{symbol}*
 
 numspc       _*
@@ -117,11 +118,20 @@ signed       {negative}?
     if (int t = drv.get_start_token())
     {
 	if (t == 1)
+	{
+	    BEGIN(EXPRESSION);
 	    return zz::parser::make_START_EXP (loc);
+	}
 	else if (t == 2)
+	{
+	    BEGIN(TYPE);
 	    return zz::parser::make_START_TYPE (loc);
+	}
 	else if (t == 3)
+	{
+	    BEGIN(EXPRESSION);
 	    return zz::parser::make_START_DEFS (loc);
+	}
 	else
 	    std::abort();
     }
@@ -153,21 +163,11 @@ signed       {negative}?
 "->"     return zz::parser::make_ARROW  (loc);
 "@"      return zz::parser::make_AT     (loc);
 "~"      return zz::parser::make_TILDE  (loc);
-"+"      return zz::parser::make_PLUS   (loc);
 "-"      return zz::parser::make_MINUS  (loc);
-"*"      return zz::parser::make_TIMES  (loc);
-"/"      return zz::parser::make_DIVIDE (loc);
-"%"      return zz::parser::make_MOD    (loc);
 
-"<="     return zz::parser::make_LE (loc);
-">="     return zz::parser::make_GE (loc);
- /* Note that LT and GT are also used in types like List<a> */
-"<"      return zz::parser::make_LT (loc);
-">"      return zz::parser::make_GT (loc);
-"=="     return zz::parser::make_EQ (loc);
-"!="     return zz::parser::make_NE (loc);
-"&&"     return zz::parser::make_AND (loc);
-"||"     return zz::parser::make_OR  (loc);
+ /* Keep angle brackets separate in types so List<List<a>> closes twice. */
+<TYPE>"<"      return zz::parser::make_LT (loc);
+<TYPE>">"      return zz::parser::make_GT (loc);
 
 
 {qvarid}      return zz::parser::make_QVARID (std::string(yytext, yyleng), loc);
@@ -175,19 +175,8 @@ signed       {negative}?
 {varid}       return drv.varid(std::string_view(yytext, yyleng), loc);
 {conid}       return drv.varid(std::string_view(yytext, yyleng), loc);
 
- /* {varsym}      return zz_make_varsym(loc);
-
-    This rule causes problems because it matches ">>" before the ">" rule.
-    Presumably because the longest match wins?
-    And that doesn't work with types like List<List>>.
-
-    So, right now we can't do (\=)(@x,@y) in a call.
-    We need to do (Prelude.\=)(@x,@y).
-    
-    Maybe we should have a different parser for types?
- */
-
-{qvarsym}     return zz_make_varsym(std::string_view(yytext, yyleng), loc);
+<EXPRESSION>{qvarsym} return zz::parser::make_QVARSYM(std::string(yytext, yyleng), loc);
+<EXPRESSION>{varsym}  return zz::parser::make_VARSYM(std::string(yytext, yyleng), loc);
 
 {decimal}                              return zz_make_integer10(std::string_view(yytext, yyleng), loc);
 
@@ -307,24 +296,4 @@ zz::parser::symbol_type zz_make_string(std::string_view text, const zz::parser::
 	s[j++] = zz_get_char(text,i);
     s.resize(j);
     return zz::parser::make_STRING(s,loc);
-}
-
-zz::parser::symbol_type zz_make_qvarsym(std::string_view text, const zz::parser::location_type& loc)
-{
-    return zz::parser::make_QVARSYM(std::string(text),loc);
-}
-
-zz::parser::symbol_type zz_make_varsym(std::string_view text, const zz::parser::location_type& loc)
-{
-    // Right now we are not using this.
-    // We need to parser recognized varsyms as their own tokens to take advantage of
-    //   the associativity and precedence rules in the parser.
-    
-    if (text == "/")
-        return zz::parser::make_DIVIDE (loc);
-
-    // Put other special symbols here
-
-    else
-        return zz::parser::make_VARSYM(std::string(text),loc);
 }

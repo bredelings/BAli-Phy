@@ -1,1 +1,1 @@
---print gtr_sym++f
+--print 'gtr_sym + + f'

@@ -74,20 +74,11 @@ CM::UntypedExpr make_model_tuple(const std::vector<CM::UntypedExpr>& elements);
   AT            "@"
 
   TILDE         "~"
-  PLUS          "+"
+  /* Minus stays distinct because it can introduce a prefix expression. */
   MINUS         "-"
-  TIMES         "*"
-  DIVIDE        "/"
-  MOD           "%"
 
-  AND           "&&"
-  OR            "||"
   GT            ">"
-  GE            ">="
   LT            "<"
-  LE            "<="
-  EQ            "=="
-  NE            "!="
 
   STACK         "+>"
   ARROW         "->"
@@ -163,20 +154,10 @@ infix_terms: infix_operator prefix_exp
 |            infix_terms infix_operator prefix_exp
              { $$ = $1; $$.push_back({$2, $3}); }
 
-infix_operator: "+"   { $$ = Located<std::string>{@1, "+"}; }
-|               "-"   { $$ = Located<std::string>{@1, "-"}; }
-|               "*"   { $$ = Located<std::string>{@1, "*"}; }
-|               "/"   { $$ = Located<std::string>{@1, "/"}; }
-|               "%"   { $$ = Located<std::string>{@1, "%"}; }
-|               "=="  { $$ = Located<std::string>{@1, "=="}; }
-|               "!="  { $$ = Located<std::string>{@1, "!="}; }
-|               "<"   { $$ = Located<std::string>{@1, "<"}; }
-|               ">"   { $$ = Located<std::string>{@1, ">"}; }
-|               "<="  { $$ = Located<std::string>{@1, "<="}; }
-|               ">="  { $$ = Located<std::string>{@1, ">="}; }
-|               "&&"  { $$ = Located<std::string>{@1, "&&"}; }
-|               "||"  { $$ = Located<std::string>{@1, "||"}; }
-|               "+>"  { $$ = Located<std::string>{@1, "+>"}; }
+infix_operator: VARSYM  { $$ = Located<std::string>{@1, $1}; }
+|               QVARSYM { $$ = Located<std::string>{@1, $1}; }
+|               "-"     { $$ = Located<std::string>{@1, "-"}; }
+|               "+>"    { $$ = Located<std::string>{@1, "+>"}; }
 
 prefix_exp: atom                 { $$ = $1; }
 |           "~" prefix_exp       { $$ = make_sample($2); }
@@ -233,10 +214,7 @@ qvarid: varid  { $$ = $1; }
 varid: VARID        { $$ = $1; }
 |       "(" VARSYM ")" { $$ = $2; }
 |       "(" ":" ")" { $$ = ":"; }
-|       "(" "+" ")" { $$ = "+"; }
 |       "(" "-" ")" { $$ = "-"; }
-|       "(" "*" ")" { $$ = "*"; }
-|       "(" "/" ")" { $$ = "/"; }
 
 literal: STRING      {$$ = CM::UntypedExpr{CM::NoAnn{}, CM::StringLiteral{$1}};}
 |        INTEGER     {$$ = CM::UntypedExpr{CM::NoAnn{}, CM::IntLiteral{$1}};}
