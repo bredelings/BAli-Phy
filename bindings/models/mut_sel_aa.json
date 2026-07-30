@@ -15,7 +15,7 @@
         {
             "name": "ss",
             "type": "List<(String,Double)>",
-            "default_value": "~iid_on(letters(getAminoAcids(@a)), laplace(0,0.1))",
+            "default_value": "~iid_on(letters(getAminoAcids(@a)), (1/2).*.delta(0) |+| (1/2).*.laplace(0, 1))",
 	    "description": "Scaled selection coefficients (2Ns)"
         },
 	{
