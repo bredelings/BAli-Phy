@@ -516,6 +516,27 @@ bool is_model_infix_name(const string& name)
     return true;
 }
 
+// Flatten consecutive unary model lambdas back into the parser's multi-pattern lambda syntax.
+template <class A, class RenderPattern, class RenderExpr>
+string unparse_lambda_chain(const Lambda<A>& first, RenderPattern render_pattern, RenderExpr render_expr)
+{
+    vector<string> patterns;
+    auto lambda = &first;
+    const Expr<A>* body = nullptr;
+
+    while(true)
+    {
+        patterns.push_back(render_pattern(lambda->pattern));
+        body = &lambda->body;
+        auto next = body->template to<Lambda<A>>();
+        if (not next)
+            break;
+        lambda = next;
+    }
+
+    return "|" + join(patterns, " ") + ":" + render_expr(*body) + "|";
+}
+
 }
 
 // Removes leading sample sugar from an untyped AST expression, preserving a
@@ -617,7 +638,9 @@ string unparse(const UntypedExpr& expr)
         },
         [](const Lambda<NoAnn>& x)
         {
-            return "|" + unparse(x.pattern) + ":" + unparse(x.body) + "|";
+            return unparse_lambda_chain(x,
+                                        [](const auto& pattern) { return unparse(pattern); },
+                                        [](const auto& body) { return unparse(body); });
         },
         [](const Sample<NoAnn>& x)
         {
@@ -771,7 +794,9 @@ string unparse_annotated(const TypedExpr& expr)
         },
         [](const Lambda<Ann>& x)
         {
-            return "|" + unparse_annotated(x.pattern) + ":" + unparse_annotated(x.body) + "|";
+            return unparse_lambda_chain(x,
+                                        [](const auto& pattern) { return unparse_annotated(pattern); },
+                                        [](const auto& body) { return unparse_annotated(body); });
         },
         // Renders typed lists, preserving the legacy map-like display for lists
         // of string/value pairs.
