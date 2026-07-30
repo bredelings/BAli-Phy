@@ -665,15 +665,17 @@ optional<CM::TypedExpr> typecheck_model_call(const TypecheckingState& TC, const 
 
     map<string,int> arg_count;
     map<string,const CM::Arg<CM::NoAnn>*> supplied_args;
-    for(const auto& arg: call->args)
+    for(int i = 0; i < call->args.size(); i++)
     {
-        if (not maybe_get_arg(rule, arg.name))
-            throw myexception()<<"Function '"<<call->function<<"' has no argument '"<<arg.name<<"' in term:\n"<<show_model(expr);
-        arg_count[arg.name]++;
-        if (arg_count[arg.name] > 1)
-            throw myexception()<<"Supplied argument '"<<arg.name<<"' more than once in term:\n"<<show_model(expr);
+        const auto& arg = call->args[i];
+        auto arg_name = arg.name.empty() ? get_keyword_for_positional_arg(rule, i) : arg.name;
+        if (not maybe_get_arg(rule, arg_name))
+            throw myexception()<<"Function '"<<call->function<<"' has no argument '"<<arg_name<<"' in term:\n"<<show_model(expr);
+        arg_count[arg_name]++;
+        if (arg_count[arg_name] > 1)
+            throw myexception()<<"Supplied argument '"<<arg_name<<"' more than once in term:\n"<<show_model(expr);
         if (arg.value)
-            supplied_args[arg.name] = &arg;
+            supplied_args[arg_name] = &arg;
     }
 
     map<string,type_t> arg_env;

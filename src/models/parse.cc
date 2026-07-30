@@ -318,13 +318,12 @@ void resolve_model_fixities(UntypedExpr& expr, const Rules& R, const string& sou
         show_messages({what, source}, std::cerr, messages);
 }
 
-// Converts parser-produced positional call arguments to rule keyword arguments
-// directly on the model AST, while preserving calls to local function binders.
+// Validates parser-produced positional call arguments against rule order while preserving
+// their source form and calls to local function binders.
 void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>& bound_names)
 {
     expr.visit(overloaded{
-        // Rewrites ordinary call arguments after first normalizing the argument
-        // subexpressions.
+        // Processes ordinary call arguments after first processing their subexpressions.
         [&](Call<NoAnn>& call)
         {
             for(auto& arg: call.args)
@@ -391,11 +390,8 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
                     for(auto& existing: call.args)
                         if (existing.name == keyword)
                             throw myexception()<<"Trying to set value for "<<call.function<<"."<<keyword<<" both by position and by keyword: \n"<<unparse(expr);
-                    arg2.name = keyword;
                 }
 
-                if (arg2.name.empty())
-                    throw myexception()<<"No keyword in argument for "<<call.function<<"?";
                 args.push_back(std::move(arg2));
                 i++;
             }
@@ -444,8 +440,7 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
     });
 }
 
-// Converts parser-produced positional call arguments in declaration values to
-// rule keyword arguments, while tracking earlier local declaration binders.
+// Validates call arguments in declaration values while tracking earlier local declaration binders.
 void handle_positional_args(Decls<NoAnn>& decls, const Rules& R, const set<string>& initial_bound_names)
 {
     auto bound_names = initial_bound_names;
@@ -456,8 +451,7 @@ void handle_positional_args(Decls<NoAnn>& decls, const Rules& R, const set<strin
     }
 }
 
-// Parses one command-line model expression through the legacy grammar, then
-// normalizes positional arguments directly on the untyped model AST.
+// Parses one command-line model expression, resolves fixity, and validates its call arguments.
 UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what, const set<string>& bound_names)
 {
     auto model = parse_expression(s, what);
@@ -466,8 +460,7 @@ UntypedExpr parse_model_expr(const Rules& R, const string& s, const string& what
     return model;
 }
 
-// Parses command-line model declarations through the legacy grammar, then
-// normalizes positional arguments directly on untyped AST declarations.
+// Parses command-line model declarations, resolves fixity, and validates their call arguments.
 Decls<NoAnn> parse_model_decls(const Rules& R, const string& s, const set<string>& bound_names)
 {
     const string what = "declarations";
@@ -869,6 +862,7 @@ string unparse_annotated(const TypedExpr& expr)
 
             vector<string> args;
             optional<string> submodel;
+            // Typed rule arguments have canonical order, so leading supplied values can use positional shorthand.
             bool positional = true;
             for(auto& arg: x.args)
             {
