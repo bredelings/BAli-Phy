@@ -312,6 +312,13 @@ bound_var_info renamer_state::find_bound_vars_in_decls(const Haskell::Decls& dec
     return bound_names;
 }
 
+// Gives newly bound names default fixity, hiding declarations for names shadowed by this scope.
+void renamer_state::shadow_fixities(const bound_var_info& binders)
+{
+    for(const auto& binder: binders)
+        fixity_env[get_unqualified_name(binder)] = {Infix::Associativity::left, 9};
+}
+
 // Extend a fixity environment with declarations for names bound in the same scope.
 fixity_env_t renamer_state::add_fixities_from_decls(fixity_env_t env, const Hs::Decls& decls,
                                                     const bound_var_info& binders, bool top) const

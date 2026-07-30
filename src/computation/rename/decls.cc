@@ -394,6 +394,7 @@ bound_var_info renamer_state::rename_decls(Haskell::Binds& binds, const bound_va
     auto& decls = binds[0];
 
     auto binders = find_bound_vars_in_decls(decls, top);
+    shadow_fixities(binders);
     fixity_env = add_fixities_from_decls(fixity_env, decls, binders, top);
     remove_fixity_decls(decls);
 

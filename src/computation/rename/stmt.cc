@@ -59,6 +59,7 @@ bound_var_info renamer_state::rename_rec_stmt(Hs::LStmt& lrec_stmt, const bound_
 
     rename_rec_stmt_ops(R, bound, free_vars);
 
+    shadow_fixities(rec_bound);
     auto rn = child();
     for(auto& stmt: R.stmts.stmts)
         rn.rename_stmt(stmt, bound, rec_bound, free_vars);
@@ -92,6 +93,7 @@ bound_var_info renamer_state::rename_stmt(Hs::LStmt& lstmt, const bound_var_info
         auto PQ = stmt.as_<Haskell::PatQual>();
 	PQ.exp = rename(PQ.exp, bound, free_vars);
 	auto bound_vars = rename_pattern(PQ.bindpat);
+        shadow_fixities(bound_vars);
         stmt = PQ;
 	return bound_vars;
     }

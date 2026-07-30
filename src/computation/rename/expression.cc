@@ -258,6 +258,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
                 throw myexception()<<"mdo expression '"<<MD.print()<<"' uses a variable twice!";
         }
 
+        rn.shadow_fixities(mdo_binders);
         vector<mdo_stmt_info> stmt_infos;
         for(auto& stmt: MD.stmts.stmts)
         {

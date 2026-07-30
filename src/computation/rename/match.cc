@@ -17,8 +17,10 @@ using std::map;
 
 Hs::MultiGuardedRHS renamer_state::rename(Hs::MultiGuardedRHS R, const bound_var_info& bound, const bound_var_info& binders, set<string>& free_vars)
 {
+    auto rn = child();
+    rn.shadow_fixities(binders);
     set<string> rhs_free_vars;
-    auto R2 = rename(R, plus(bound, binders), rhs_free_vars);
+    auto R2 = rn.rename(R, plus(bound, binders), rhs_free_vars);
     add(free_vars, minus(rhs_free_vars, binders));
     return R2;
 }
