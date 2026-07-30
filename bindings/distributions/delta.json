@@ -1,0 +1,18 @@
+{
+    "name": "delta",
+    "result_type": "Distribution<Double>",
+    "call": "delta(@x)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "name": "x",
+            "type": "Double",
+	    "description": "Location of the point mass"
+        }
+    ],
+    "title": "The Dirac delta distribution",
+    "description": "The Delta distribution returns `x` when sampling.  It does not have a continuous density.",
+    "examples": ["~delta(0)                // Always return 0",
+		 "~iid(10, delta(1))       // Return ten 1s"
+		 ]
+}

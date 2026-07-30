@@ -20,6 +20,9 @@ unitMixture x = Discrete [(x, 1)]
 --   values of the components are equal.
 always = unitMixture
 
+delta :: Double -> Discrete Double
+delta x = always x
+
 applyModifiers fs (Discrete xps) = go fs xps where
     go [] [] = []
     go (f:fs) ((x,p):xps) = (f x,p):go fs xps
