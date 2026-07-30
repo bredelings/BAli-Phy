@@ -1,51 +1,63 @@
 module Probability.Distribution.Mixture where
 
 import Probability.Random
-import Probability.Distribution.Categorical
 import Probability.Distribution.Discrete
+import Probability.Distribution.Uniform
 
-{-
-   PROBLEM:  We CANNOT write e.g. equalMixture [ always 0, always 1, uniform 0 1 ]
-              because currently Mixture requires all the component distributions
-              to be the same type.
+-- `Weighted` terminates a heterogeneous mixture, while `Mixture2` adds a
+-- component without erasing the concrete distribution types in the tail.
+data Weighted d = Weighted Double d
+data Mixture2 d rest = Mixture2 (Weighted d) rest
 
-             We CAN write equalMixture [ sample $ always 0, sample $ uniform 0 1 ]
-              because then all the entries are of type Random Double
+infix 5 .*.
+(.*.) :: Double -> d -> Weighted d
+(.*.) = Weighted
 
-             The problem is that usually we'd like the component distributions
-              to all support some property -- such as Sampleable, or Dist1D or something.
-             But then we'd need some kind of wrapper that packages the distributions and
-              a dictionary for those pieces of functionality.  We can't derive the required
-              functionality from the calling context.
+infixr 4 |+|
+(|+|) :: Weighted d -> rest -> Mixture2 d rest
+(|+|) = Mixture2
 
-             Ideally, therefore, it would be best if equalMixture could support a
-              heterogeneous collection that depended on the types of the arguments.
-             Then equalMixture (always 0, uniform 0 1, always 1) would have type
-              Mixture (Discrete Double) Uniform (Discrete Double).
-             We could derive properties such as Sampleable or Dist1D (for cdf) at the call site.
-             But this wouldn't support mixtures of unknown length.
-             In order to handle collections of generic length, we need some kind of
-              metaprogramming.
--}
+instance Dist d => Dist (Weighted d) where
+    type Result (Weighted d) = Result d
+    distName _ = "weighted"
 
-{-
-   Generalization: Mixture (IO a)?
+instance (Dist d, Dist rest, Result d ~ Result rest) => Dist (Mixture2 d rest) where
+    type Result (Mixture2 d rest) = Result d
+    distName _ = "mixture2"
 
-   Mixture allows us to
-     * sample from the collection
-     * perform the chosen entry.
-   This sounds like it requires one monad for the choosing, and a second monad for the performing.
+-- Weights are relative and must be nonnegative with a positive total; this
+-- interface supplies the two structural operations needed for sampling.
+class Dist mixture => WeightedComponents mixture where
+    totalWeight :: mixture -> Double
+    sampleAt :: Double -> mixture -> Random (Result mixture)
 
-   Mixture allows us to choose a random entry, and then do something with it.
-   If the chosen entry is a distribution, we would sample from it as well.
-   But how about when x is something else?  Like an action?  Then shouldn't Mixture d be an action that can be taken?
-   For example, suppose we have a Mixture (IO a).  Then shouldn't this ALSO be an IO a?
+instance Sampleable d => WeightedComponents (Weighted d) where
+    totalWeight (Weighted weight _) = weight
 
-   Perhaps Mixture should then be a functor. Perhaps Mixture d a should return IO (d a) or Random (d a)
-   Should we also attempt to join then?  Random (Random a) could reduce to Random a.
-   But how about IO (Random a)
-   Random (IO a) should be performable in IO as join (sample IO)
--}
+    -- A terminal component has no alternative, so its own weight cannot
+    -- affect which distribution is sampled after the component is reached.
+    sampleAt _ (Weighted _ distribution) = sample distribution
+
+instance (Sampleable d, WeightedComponents rest, Result d ~ Result rest) => WeightedComponents (Mixture2 d rest) where
+    totalWeight (Mixture2 (Weighted weight _) rest) = weight + totalWeight rest
+
+    -- The head owns [0,weight); subtracting weight maps every other selector
+    -- coordinate into the tail's interval without drawing another selector.
+    sampleAt u (Mixture2 (Weighted weight distribution) rest)
+        | u < weight = sample distribution
+        | otherwise  = sampleAt (u - weight) rest
+
+-- A lone weighted component is selected with probability one, so sampling it
+-- delegates directly to its distribution without drawing a selector.
+instance Sampleable d => Sampleable (Weighted d) where
+    sample (Weighted _ distribution) = sample distribution
+
+-- Draw one selector over the total relative weight, then sample only the
+-- component whose half-open interval contains it.
+instance (Sampleable d, WeightedComponents rest, Result d ~ Result rest) => Sampleable (Mixture2 d rest) where
+    sample mixture = do
+        u <- sample $ Uniform 0 (totalWeight mixture)
+        sampleAt u mixture
 
 newtype Mixture d = Mixture d
 
