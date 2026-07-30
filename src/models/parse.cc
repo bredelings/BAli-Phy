@@ -363,24 +363,29 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
             }
 
             auto rule = R.require_rule_for_func(call.function);
-            int i = 0;
             bool seen_keyword = false;
+            for(const auto& arg: call.args)
+            {
+                if (not arg.name.empty())
+                    seen_keyword = true;
+                else if (seen_keyword)
+                    throw myexception()<<"Positional argument after keyword argument in '"<<unparse(expr)<<"'!";
+            }
+
+            int i = 0;
             vector<Arg<NoAnn>> args;
 
             for(auto& arg: call.args)
             {
                 auto arg2 = std::move(arg);
-                if (not arg2.name.empty())
-                    seen_keyword = true;
-                else if (seen_keyword)
-                    throw myexception()<<"Positional argument after keyword argument in '"<<unparse(expr)<<"'!";
-                else if (not arg2.value)
+                if (arg2.name.empty())
                 {
-                    i++;
-                    continue;
-                }
-                else
-                {
+                    if (not arg2.value)
+                    {
+                        i++;
+                        continue;
+                    }
+
                     auto keyword = get_keyword_for_positional_arg(rule, i);
                     for(auto& existing: call.args)
                         if (existing.name == keyword)
@@ -609,24 +614,30 @@ string unparse(const UntypedExpr& expr)
 
             vector<string> args;
             optional<string> submodel;
-            bool positional = true;
             int pos = 0;
             for(auto& arg: x.args)
             {
                 if (not arg.value)
-                    positional = false;
-                else if (arg.name == "submodel" and pos == 0)
                 {
-                    positional = false;
+                    pos++;
+                    continue;
+                }
+
+                if (arg.name == "submodel" and pos == 0)
+                {
                     assert(not submodel);
                     submodel = unparse(*arg.value);
                 }
-                else if (positional)
+                else if (arg.name.empty())
                     args.push_back(unparse(*arg.value));
-                else if (auto arg2 = peel_sample(*arg.value))
-                    args.push_back(arg.name + "~" + unparse(*arg2));
                 else
-                    args.push_back(arg.name + "=" + unparse(*arg.value));
+                {
+                    auto arg2 = peel_sample(*arg.value);
+                    if (arg2)
+                        args.push_back(arg.name + "~" + unparse(*arg2));
+                    else
+                        args.push_back(arg.name + "=" + unparse(*arg.value));
+                }
 
                 pos++;
             }

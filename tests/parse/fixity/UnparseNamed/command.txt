@@ -1,0 +1,1 @@
+--test data/dna.fasta --indel-rates=constant --scale='normal(sigma=1, 0)'
