@@ -50,18 +50,22 @@ unpackDiscrete (Discrete pairs) = pairs
 -- (iiia) we'd need to allow a single uniform to have infinite precision, or
 -- (iiib) we'd need to sample a new uniform for each item.
 
-choose u total ((item,p):rest) | u < total+p  = item
-                               | otherwise    = choose u (total+p) rest
-choose u total []                           = error $ "choose failed!  total = " ++ show total
+-- This function assumes the weights sum to 1.
+-- If we want to check this, such checks should be implemented separately.
+choose u []                                      = error $ "choose failed! no item chosen"
+choose u [(item,p)]                              = item
+choose u ((item,p):rest) | u < p                 = item
+                         | otherwise             = choose (u-p) rest
 
 instance Dist (Discrete a) where
     type Result (Discrete a) = a
     distName _ = "discrete"
 
 instance IOSampleable (Discrete a) where
+    sampleIO (Discrete [(item,_)]) = return item
     sampleIO (Discrete pairs) = do
       u <- sampleIO $ Uniform 0 1
-      return $ choose u 0 pairs
+      return $ choose u pairs
 
 instance Eq a => HasPdf (Discrete a) where
     pdf (Discrete pairs) x = sum [ doubleToLogDouble p | (item,p) <- pairs, item == x]
@@ -96,9 +100,10 @@ instance Eq a => HasAnnotatedPdf (Discrete a) where
     annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable (Discrete a) where
-    sample dist@(Discrete pairs) = do
-      u <- sample $ Uniform 0 1
-      return $ choose u 0 pairs
+    sample (Discrete [(item,_)]) = return item
+    sample (Discrete pairs     ) = do
+       u <- sample $ Uniform 0 1
+       return $ choose u pairs
 
 discrete pairs = Discrete pairs
 
