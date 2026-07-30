@@ -1,0 +1,1 @@
+--test data/dna.fasta --scale='[(<?>)(3) where {(<?>)(x)=x}]'

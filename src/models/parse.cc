@@ -1,6 +1,7 @@
 #include <iostream>
 #include <set>
 #include <vector>
+#include "computation/haskell/ids.H"
 #include "computation/message.H"
 #include "models/parse.H"
 #include "util/myexception.H"
@@ -479,6 +480,19 @@ Decls<NoAnn> parse_model_decls(const Rules& R, const string& s, const set<string
     return decls;
 }
 
+namespace
+{
+
+// Render a model name in variable or function position, parenthesizing symbolic names.
+string unparse_name(const string& name)
+{
+    if (is_haskell_sym(name))
+        return "(" + name + ")";
+    return name;
+}
+
+}
+
 bool is_operator(const string& s)
 {
     return (s == "+" or s == "-" or s == "*" or s == "/");
@@ -508,7 +522,7 @@ string unparse(const Decls<NoAnn>& decls)
 {
     vector<string> items;
     for(auto& [name, value]: decls)
-        items.push_back(name + " = " + unparse(value));
+        items.push_back(unparse_name(name) + " = " + unparse(value));
     return join(items, "; ");
 }
 
@@ -516,7 +530,7 @@ string unparse(const Decls<NoAnn>& decls)
 string unparse(const UntypedPattern& pattern)
 {
     return pattern.visit(overloaded{
-        [](const VarPattern& x) {return x.name;},
+        [](const VarPattern& x) {return unparse_name(x.name);},
         // Renders tuple patterns in the same parenthesized tuple syntax as
         // tuple expressions.
         [](const TuplePattern<NoAnn>& x)
@@ -547,10 +561,10 @@ string unparse(const UntypedExpr& expr)
         },
         [](const BoolLiteral& x) {return convertToString(x.value);},
         [](const StringLiteral& x) {return "\"" + x.value + "\"";},
-        [](const Var& x) {return x.name;},
-        [](const ArgRef& x) {return "@" + x.name;},
+        [](const Var& x) {return unparse_name(x.name);},
+        [](const ArgRef& x) {return "@" + unparse_name(x.name);},
         [](const Placeholder&) {return "_"s;},
-        [](const GetState& x) {return "get_state(" + x.state_name + ")";},
+        [](const GetState& x) {return "get_state(" + unparse_name(x.state_name) + ")";},
         // Displays an unresolved chain in source order so parser and fixity
         // diagnostics retain the expression that the user wrote.
         [](const CM::Infix<NoAnn>& x)
@@ -634,15 +648,16 @@ string unparse(const UntypedExpr& expr)
                 {
                     auto arg2 = peel_sample(*arg.value);
                     if (arg2)
-                        args.push_back(arg.name + "~" + unparse(*arg2));
+                        args.push_back(unparse_name(arg.name) + "~" + unparse(*arg2));
                     else
-                        args.push_back(arg.name + "=" + unparse(*arg.value));
+                        args.push_back(unparse_name(arg.name) + "=" + unparse(*arg.value));
                 }
 
                 pos++;
             }
             while (args.size() and args.back() == "")
                 args.pop_back();
+            s = unparse_name(s);
             if (not args.empty())
                 s = s + "(" + join(args, ", ") + ")";
             if (submodel)
@@ -676,7 +691,7 @@ string unparse_typed_decls(const TypedDecls& decls)
 {
     vector<string> items;
     for(auto& [name, value]: decls)
-        items.push_back(name + " " + show_model_annotated(value));
+        items.push_back(unparse_name(name) + " " + show_model_annotated(value));
     return join(items, "; ");
 }
 
@@ -684,7 +699,7 @@ string unparse_typed_decls(const TypedDecls& decls)
 string unparse_annotated(const TypedPattern& pattern)
 {
     return pattern.visit(overloaded{
-        [](const VarPattern& x) {return x.name;},
+        [](const VarPattern& x) {return unparse_name(x.name);},
         // Renders tuple patterns in the same parenthesized tuple syntax as
         // tuple expressions.
         [](const TuplePattern<Ann>& x)
@@ -715,10 +730,10 @@ string unparse_annotated(const TypedExpr& expr)
         },
         [](const BoolLiteral& x) {return convertToString(x.value);},
         [](const StringLiteral& x) {return "\"" + x.value + "\"";},
-        [](const Var& x) {return x.name;},
-        [](const ArgRef& x) {return "@" + x.name;},
+        [](const Var& x) {return unparse_name(x.name);},
+        [](const ArgRef& x) {return "@" + unparse_name(x.name);},
         [](const Placeholder&) {return "_"s;},
-        [](const GetState& x) {return "get_state(" + x.state_name + ")";},
+        [](const GetState& x) {return "get_state(" + unparse_name(x.state_name) + ")";},
         // Displays an unexpected typed chain rather than losing its structure
         // if an internal-error diagnostic reaches annotated unparsing.
         [](const CM::Infix<Ann>& x)
@@ -825,12 +840,13 @@ string unparse_annotated(const TypedExpr& expr)
                 else if (positional)
                     args.push_back(unparse_annotated(*arg.value));
                 else if (auto arg2 = peel_sample_annotated(*arg.value))
-                    args.push_back(arg.name + "~" + unparse_annotated(*arg2));
+                    args.push_back(unparse_name(arg.name) + "~" + unparse_annotated(*arg2));
                 else
-                    args.push_back(arg.name + "=" + unparse_annotated(*arg.value));
+                    args.push_back(unparse_name(arg.name) + "=" + unparse_annotated(*arg.value));
             }
             while (args.size() and args.back() == "")
                 args.pop_back();
+            s = unparse_name(s);
             if (not args.empty())
                 s = s + "(" + join(args, ", ") + ")";
             if (submodel)
