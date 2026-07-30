@@ -491,11 +491,31 @@ string unparse_name(const string& name)
     return name;
 }
 
+// Render a model name in operator position, putting ordinary names between backticks.
+string unparse_operator_name(const string& name)
+{
+    if (is_haskell_sym(name))
+        return name;
+    return "`" + name + "`";
 }
 
-bool is_operator(const string& s)
+// Return whether a function name can be written using the model grammar's infix syntax.
+bool is_model_infix_name(const string& name)
 {
-    return (s == "+" or s == "-" or s == "*" or s == "/");
+    if (name == "=" or name == "|" or name == "->" or name == "+>")
+        return false;
+
+    auto symbol = get_unqualified_name(name);
+    if (symbol.empty() or symbol[0] == ':')
+        return false;
+
+    const string operator_chars = "!#$%&*+./<=>?\\^|-:";
+    for(char c: symbol)
+        if (operator_chars.find(c) == string::npos)
+            return false;
+    return true;
+}
+
 }
 
 // Removes leading sample sugar from an untyped AST expression, preserving a
@@ -571,10 +591,10 @@ string unparse(const UntypedExpr& expr)
         {
             auto result = unparse(x.first);
             for(auto& [op, operand]: x.rest)
-                result += " " + op.obj + " " + unparse(operand);
+                result += " " + unparse_operator_name(op.obj) + " " + unparse(operand);
             return "(" + result + ")";
         },
-        [](const CM::PrefixNeg<NoAnn>& x) {return x.minus.obj + unparse(x.operand);},
+        [](const CM::PrefixNeg<NoAnn>& x) {return "(" + x.minus.obj + unparse(x.operand) + ")";},
         // Renders list elements in command-line bracket syntax.
         [](const List<NoAnn>& x)
         {
@@ -609,10 +629,11 @@ string unparse(const UntypedExpr& expr)
         {
             auto s = x.function;
 
-            if (s == "negate" and x.args.size())
-                return "-" + unparse(require_arg_value(x.args.front()));
-            else if (is_operator(s) and x.args.size() == 2)
-                return unparse(require_arg_value(x.args[0])) + s + unparse(require_arg_value(x.args[1]));
+            if (s == "negate" and x.args.size() == 1 and x.args[0].value)
+                return "(-" + unparse(*x.args[0].value) + ")";
+            else if (is_model_infix_name(s) and x.args.size() == 2 and x.args[0].value and x.args[1].value
+                     and x.args[0].name.empty() and x.args[1].name.empty())
+                return "(" + unparse(*x.args[0].value) + " " + s + " " + unparse(*x.args[1].value) + ")";
             else if (s == "intToDouble")
             {
                 for(auto& arg: x.args)
@@ -740,10 +761,10 @@ string unparse_annotated(const TypedExpr& expr)
         {
             auto result = unparse_annotated(x.first);
             for(auto& [op, operand]: x.rest)
-                result += " " + op.obj + " " + unparse_annotated(operand);
+                result += " " + unparse_operator_name(op.obj) + " " + unparse_annotated(operand);
             return "(" + result + ")";
         },
-        [](const CM::PrefixNeg<Ann>& x) {return x.minus.obj + unparse_annotated(x.operand);},
+        [](const CM::PrefixNeg<Ann>& x) {return "(" + x.minus.obj + unparse_annotated(x.operand) + ")";},
         [](const Let<Ann>& x)
         {
             return unparse_annotated(x.body) + " where {" + unparse_typed_decls(x.decls) + "}";
@@ -803,10 +824,11 @@ string unparse_annotated(const TypedExpr& expr)
         {
             auto s = x.function;
 
-            if (s == "negate" and x.args.size())
-                return "-" + unparse_annotated(require_arg_value(x.args.front()));
-            else if (is_operator(s) and x.args.size() == 2)
-                return unparse_annotated(require_arg_value(x.args[0])) + s + unparse_annotated(require_arg_value(x.args[1]));
+            if (s == "negate" and x.args.size() == 1 and x.args[0].value)
+                return "(-" + unparse_annotated(*x.args[0].value) + ")";
+            else if (is_model_infix_name(s) and x.args.size() == 2 and x.args[0].value and x.args[1].value)
+                return "(" + unparse_annotated(*x.args[0].value) + " " + s + " "
+                     + unparse_annotated(*x.args[1].value) + ")";
             else if (s == "intToDouble")
             {
                 for(auto& arg: x.args)

@@ -1,1 +1,1 @@
-bali-phy: Error! No direct typechecker for expression '<?>(1, 2)'.
+bali-phy: Error! No direct typechecker for expression '(1 <?> 2)'.
