@@ -1,0 +1,22 @@
+{
+    "name": "|+|",
+    "fixity": {
+        "associativity": "right",
+        "precedence": 4
+    },
+    "result_type": "Distribution<a>",
+    "no_log": true,
+    "call": "Mixture2(@component,@rest)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "name": "component",
+            "type": "Distribution<a>"
+        },
+        {
+            "name": "rest",
+            "type": "Distribution<a>"
+        }
+    ],
+    "description": "Add a weighted component to a heterogeneous mixture."
+}

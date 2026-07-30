@@ -1,0 +1,22 @@
+{
+    "name": ".*.",
+    "fixity": {
+        "associativity": "none",
+        "precedence": 5
+    },
+    "result_type": "Distribution<a>",
+    "no_log": true,
+    "call": "Weighted(@weight,@distribution)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "name": "weight",
+            "type": "Double"
+        },
+        {
+            "name": "distribution",
+            "type": "Distribution<a>"
+        }
+    ],
+    "description": "Attach a relative weight to a distribution."
+}
