@@ -22,6 +22,6 @@ main = do
     middleValue <- runRandomStrict (sample middle)
     finalValue <- runRandomStrict (sample final)
     singleValue <- runRandomStrict (sample single)
-    boundaryValue <- runRandomStrict (sampleAt 0 boundary)
+    boundaryValue <- runRandomStrict (sample boundary)
     precedenceValue <- runRandomStrict (sample precedence)
     print [firstValue, middleValue, finalValue, singleValue, boundaryValue, precedenceValue]

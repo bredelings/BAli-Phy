@@ -1,8 +1,9 @@
 module Probability.Distribution.Mixture where
 
 import Probability.Random
+import Probability.Distribution.Categorical
 import Probability.Distribution.Discrete
-import Probability.Distribution.Uniform
+import qualified Data.Vector as V
 
 -- `Weighted` terminates a heterogeneous mixture, while `Mixture2` adds a
 -- component without erasing the concrete distribution types in the tail.
@@ -25,39 +26,49 @@ instance (Dist d, Dist rest, Result d ~ Result rest) => Dist (Mixture2 d rest) w
     type Result (Mixture2 d rest) = Result d
     distName _ = "mixture2"
 
--- Weights are relative and must be nonnegative with a positive total; this
--- interface supplies the two structural operations needed for sampling.
+-- Composite-mixture weights are relative and must be nonnegative with a
+-- positive total; collecting them does not require a sampling capability.
 class Dist mixture => WeightedComponents mixture where
-    totalWeight :: mixture -> Double
-    sampleAt :: Double -> mixture -> Random (Result mixture)
+    componentWeights :: mixture -> [Double]
 
-instance Sampleable d => WeightedComponents (Weighted d) where
-    totalWeight (Weighted weight _) = weight
+instance Dist d => WeightedComponents (Weighted d) where
+    componentWeights (Weighted weight _) = [weight]
 
-    -- A terminal component has no alternative, so its own weight cannot
-    -- affect which distribution is sampled after the component is reached.
-    sampleAt _ (Weighted _ distribution) = sample distribution
+instance (Dist d, WeightedComponents rest, Result d ~ Result rest) => WeightedComponents (Mixture2 d rest) where
+    componentWeights (Mixture2 (Weighted weight _) rest) =
+        weight : componentWeights rest
 
-instance (Sampleable d, WeightedComponents rest, Result d ~ Result rest) => WeightedComponents (Mixture2 d rest) where
-    totalWeight (Mixture2 (Weighted weight _) rest) = weight + totalWeight rest
+-- Walk to one indexed component and apply `sample` only to that distribution.
+class WeightedComponents mixture => SampleableComponents mixture where
+    sampleComponent :: Int -> mixture -> Random (Result mixture)
 
-    -- The head owns [0,weight); subtracting weight maps every other selector
-    -- coordinate into the tail's interval without drawing another selector.
-    sampleAt u (Mixture2 (Weighted weight distribution) rest)
-        | u < weight = sample distribution
-        | otherwise  = sampleAt (u - weight) rest
+instance Sampleable d => SampleableComponents (Weighted d) where
+    sampleComponent 0 (Weighted _ distribution) = sample distribution
+    sampleComponent _ _ = error "sampleComponent: component index out of range"
+
+instance (Sampleable d, SampleableComponents rest, Result d ~ Result rest) => SampleableComponents (Mixture2 d rest) where
+    -- Index zero selects the head; positive indices are shifted into the
+    -- zero-based component index of the tail.
+    sampleComponent 0 (Mixture2 (Weighted _ distribution) _) = sample distribution
+    sampleComponent index (Mixture2 _ rest)
+        | index > 0 = sampleComponent (index - 1) rest
+        | otherwise = error "sampleComponent: component index out of range"
 
 -- A lone weighted component is selected with probability one, so sampling it
 -- delegates directly to its distribution without drawing a selector.
 instance Sampleable d => Sampleable (Weighted d) where
     sample (Weighted _ distribution) = sample distribution
 
--- Draw one selector over the total relative weight, then sample only the
--- component whose half-open interval contains it.
-instance (Sampleable d, WeightedComponents rest, Result d ~ Result rest) => Sampleable (Mixture2 d rest) where
+instance (Sampleable d, SampleableComponents rest, Result d ~ Result rest) => Sampleable (Mixture2 d rest) where
+    -- Normalize the relative weights, choose one categorical index, and sample
+    -- only the distribution at that index.
     sample mixture = do
-        u <- sample $ Uniform 0 (totalWeight mixture)
-        sampleAt u mixture
+        let weights = componentWeights mixture
+            total = sum weights
+            probabilities = V.map (/ total) (V.fromList weights)
+        index <- sample $ Categorical probabilities
+        -- Categorical always returns an index covered by `componentWeights`.
+        sampleComponent index mixture
 
 newtype Mixture d = Mixture d
 
