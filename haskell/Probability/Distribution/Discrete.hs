@@ -75,6 +75,10 @@ instance Eq a => HasPdf (Discrete a) where
 
 instance Dist1D (Discrete Double) where
     cdf (Discrete pairs) x = sum [ p | (item, p) <- pairs, item < x ]
+    lower_bound (Discrete []) = Nothing
+    lower_bound (Discrete pairs) = Just $ minimum [item | (item, _) <- pairs]
+    upper_bound (Discrete []) = Nothing
+    upper_bound (Discrete pairs) = Just $ maximum [item | (item, _) <- pairs]
 
 instance MaybeMean (Discrete Double) where
     maybeMean (Discrete pairs) = Just $ sum [ p * item | (item,p) <- pairs]
@@ -88,6 +92,10 @@ instance Variance (Discrete Double)
 
 instance Dist1D (Discrete Int) where
     cdf (Discrete pairs) x = sum [ p | (item, p) <- pairs, fromIntegral item < x]
+    lower_bound (Discrete []) = Nothing
+    lower_bound (Discrete pairs) = Just $ minimum [item | (item, _) <- pairs]
+    upper_bound (Discrete []) = Nothing
+    upper_bound (Discrete pairs) = Just $ maximum [item | (item, _) <- pairs]
 
 instance MaybeMean (Discrete Int) where
     maybeMean (Discrete pairs) = Just $ sum [ p * fromIntegral item | (item,p) <- pairs]
