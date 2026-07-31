@@ -1,5 +1,6 @@
 module Probability.Distribution.DirichletProcess.PolyaUrn
     ( dirichletProcess
+    , dirichletProcessMixture
     ) where
 
 import Probability.Random
@@ -79,4 +80,14 @@ dirichletProcess n alpha dist = lazy $ do
   atoms <- prior $ iid n dist
   let values = resolveParentValues (V.fromList parents) (V.fromList atoms)
   return $ V.toList values
+  where familyRate = 1 / sqrt (fromIntegral n)
+
+-- Draw shared component distributions from a DP, then lazily draw one ordered observation from each.
+-- The observation rate is separate because dirichletProcess already scales parents and components.
+dirichletProcessMixture
+  :: (Sampleable d, Sampleable (Result d))
+  => Int -> Double -> d -> Random [Result (Result d)]
+dirichletProcessMixture n alpha dist = lazy $ do
+  components <- dirichletProcess n alpha dist
+  RanSamplingRate familyRate $ sequence [sample component | component <- components]
   where familyRate = 1 / sqrt (fromIntegral n)
