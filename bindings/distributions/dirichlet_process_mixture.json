@@ -1,0 +1,26 @@
+{
+    "name": "dirichlet_process_mixture",
+    "result_type": "Distribution<List<a>>",
+    "call": "dirichletProcessMixture(@n,@alpha,@dist)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "name": "n",
+            "type": "Int",
+            "description": "The number of observations"
+        },
+        {
+            "name": "alpha",
+            "type": "Double",
+            "description": "The concentration parameter controlling how often new components are drawn"
+        },
+        {
+            "name": "dist",
+            "type": "Distribution<Distribution<a>>",
+            "description": "The base distribution on component distributions"
+        }
+    ],
+    "title": "The Dirichlet process mixture distribution",
+    "description": "Draw `n` exchangeable observations from component distributions shared according to a Dirichlet process with concentration `alpha`. Each new component distribution is drawn from `dist`.",
+    "examples": ["~dirichlet_process_mixture(10, 1, discrete([(normal(0,1),1), (normal(5,1),1)]))"]
+}

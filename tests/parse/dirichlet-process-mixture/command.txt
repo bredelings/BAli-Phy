@@ -1,0 +1,1 @@
+--test data/dna.fasta --scale='sum(~dirichlet_process_mixture(1,1,discrete([(gamma(2,1),1)])))'
