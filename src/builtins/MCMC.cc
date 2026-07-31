@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <numeric>
 
 using boost::dynamic_pointer_cast;
 
@@ -144,38 +145,49 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 
 struct categorical_candidates
 {
+    vector<int> values;
     vector<optional<context>> contexts;
     vector<ProbDensity> weights;
 };
 
-// Construct the connected candidates and relative weights used by categorical Gibbs sampling.
+// Construct connected candidates for the requested category values and their relative weights.
 // Rerooting at an adjacent candidate reverses only that edge, so each ratio gives W[i+1]/W[i].
-categorical_candidates make_categorical_candidates(context_ref& C, int selector_reg, int count)
+categorical_candidates make_categorical_candidates(context_ref& C, int selector_reg, int count,
+                                                   const vector<int>& values)
 {
-    if (count <= 0)
-        throw myexception()<<"categorical selector has non-positive value count "<<count;
+    if (values.empty())
+        throw myexception()<<"categorical selector has no candidate values";
+    if (values.front() < 0 or values.back() >= count)
+        throw myexception()<<"categorical candidate values are not in range [0, "<<count<<")";
+    if (not std::is_sorted(values.begin(), values.end()) or
+        std::adjacent_find(values.begin(), values.end()) != values.end())
+        throw myexception()<<"categorical candidate values are not strictly increasing";
 
     int current = C.get_reg_value(selector_reg).as_int();
     if (current < 0 or current >= count)
         throw myexception()<<"categorical selector value "<<current<<" is not in range [0, "<<count<<")";
+    auto current_iter = std::lower_bound(values.begin(), values.end(), current);
+    if (current_iter == values.end() or *current_iter != current)
+        throw myexception()<<"categorical candidate values do not contain current value "<<current;
+    int current_index = current_iter - values.begin();
 
-    categorical_candidates result{vector<optional<context>>(count),
-                                  vector<ProbDensity>(count, 0.0)};
-    result.contexts[current].emplace(C);
-    result.weights[current] = 1.0;
+    categorical_candidates result{values, vector<optional<context>>(values.size()),
+                                  vector<ProbDensity>(values.size(), 0.0)};
+    result.contexts[current_index].emplace(C);
+    result.weights[current_index] = 1.0;
 
-    for(int i = current - 1; i >= 0; i--)
+    for(int i = current_index - 1; i >= 0; i--)
     {
         result.contexts[i].emplace(*result.contexts[i + 1]);
-        result.contexts[i]->set_reg_value(selector_reg, i);
+        result.contexts[i]->set_reg_value(selector_reg, values[i]);
         result.weights[i] = result.weights[i + 1] *
                             result.contexts[i]->probability_ratios(*result.contexts[i + 1]).total_ratio();
     }
 
-    for(int i = current + 1; i < count; i++)
+    for(unsigned i = current_index + 1; i < values.size(); i++)
     {
         result.contexts[i].emplace(*result.contexts[i - 1]);
-        result.contexts[i]->set_reg_value(selector_reg, i);
+        result.contexts[i]->set_reg_value(selector_reg, values[i]);
         result.weights[i] = result.weights[i - 1] *
                             result.contexts[i]->probability_ratios(*result.contexts[i - 1]).total_ratio();
     }
@@ -214,6 +226,8 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
     int x1 = C1.get_reg_value(*x_mod_reg).as_int();
 
     int n_values = C1.get_reg_value(n_values_reg).as_int();
+    if (n_values <= 0)
+        throw myexception()<<"categorical selector has non-positive value count "<<n_values;
     if (log_verbose >= 3) std::cerr<<"   gibbs_sample_categorical: <"<<x_reg<<">   [0, "<<n_values-1<<"]\n";
 
     //------------- 4. Figure out probability of each value ----------//
@@ -221,16 +235,19 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
     // Let C[i] be these connected candidates and rho[i](C) the density of generating them from C[i].
     // For W[i] = pi(C[i])*rho[i](C), choosing i proportional to W[i] is reversible because
     // W[i]*W[j]/sum(W) is symmetric in i and j. ProbDensity retains zero factors until ratios cancel.
-    auto candidate_set = make_categorical_candidates(C1, *x_mod_reg, n_values);
+    vector<int> candidate_values(n_values);
+    std::iota(candidate_values.begin(), candidate_values.end(), 0);
+    auto candidate_set = make_categorical_candidates(C1, *x_mod_reg, n_values, candidate_values);
     vector<log_double_t> pr_x(candidate_set.weights.begin(), candidate_set.weights.end());
 
     //------------- 5. Get new value x2 for variable -----------------//
-    int x2 = choose(pr_x);
+    int candidate_index = choose(pr_x);
+    int x2 = candidate_set.values[candidate_index];
 
     if (log_verbose >= 3) std::cerr<<"   gibbs_sample_categorical: <"<<x_reg<<">   "<<x1<<" -> "<<x2<<"\n";
 
     if (x2 != x1)
-        C1 = *candidate_set.contexts[x2];
+        C1 = *candidate_set.contexts[candidate_index];
 
     return closure(R::ConstructorApp("()", 0, {}));
 }
@@ -271,7 +288,9 @@ extern "C" closure builtin_function_condLogOddsRaw(OperationArgs& Args)
         return log_odds;
     }
 
-    auto candidate_set = make_categorical_candidates(C, *modifiable_reg, count);
+    vector<int> candidate_values(count);
+    std::iota(candidate_values.begin(), candidate_values.end(), 0);
+    auto candidate_set = make_categorical_candidates(C, *modifiable_reg, count, candidate_values);
     vector<log_double_t> weights(candidate_set.weights.begin(), candidate_set.weights.end());
     vector<log_double_t> suffix_weights(count + 1, 0.0);
     for(int i = count - 1; i >= 0; i--)
