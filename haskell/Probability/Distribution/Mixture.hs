@@ -38,6 +38,49 @@ instance (Dist d, WeightedComponents rest, Result d ~ Result rest) => WeightedCo
     componentWeights (Mixture2 (Weighted weight _) rest) =
         weight : componentWeights rest
 
+-- NOTE: These capability-specific traversals can become one rank-n
+-- `AllComponents capability mixture` fold once the compiler supports
+-- ConstraintKinds and variable-headed predicates in kind checking and the
+-- solver. RankNTypes and ordinary `Result` equality already suffice otherwise.
+class (WeightedComponents mixture, Ord (Result mixture)) => Dist1DComponents mixture where
+    weightedCdfSummary :: mixture -> Double -> (Double, Double)
+    componentsLowerBound :: mixture -> Maybe (Result mixture)
+    componentsUpperBound :: mixture -> Maybe (Result mixture)
+
+instance Dist1D d => Dist1DComponents (Weighted d) where
+    weightedCdfSummary (Weighted weight distribution) x =
+        (weight, weight * cdf distribution x)
+    componentsLowerBound (Weighted _ distribution) = lower_bound distribution
+    componentsUpperBound (Weighted _ distribution) = upper_bound distribution
+
+instance (Dist1D d, Dist1DComponents rest, Result d ~ Result rest) =>
+    Dist1DComponents (Mixture2 d rest) where
+    -- Retain the unnormalized numerator and total weight so a zero-weight
+    -- suffix is neutral instead of requiring an undefined intermediate CDF.
+    weightedCdfSummary (Mixture2 (Weighted weight distribution) rest) x =
+        (weight + restWeight, weight * cdf distribution x + restNumerator)
+      where
+        (restWeight, restNumerator) = weightedCdfSummary rest x
+    componentsLowerBound (Mixture2 (Weighted _ distribution) rest) =
+        min <$> lower_bound distribution <*> componentsLowerBound rest
+    componentsUpperBound (Mixture2 (Weighted _ distribution) rest) =
+        max <$> upper_bound distribution <*> componentsUpperBound rest
+
+instance Dist1D d => Dist1D (Weighted d) where
+    cdf (Weighted _ distribution) = cdf distribution
+    lower_bound (Weighted _ distribution) = lower_bound distribution
+    upper_bound (Weighted _ distribution) = upper_bound distribution
+
+instance (Dist1D d, Dist1DComponents rest, Result d ~ Result rest) =>
+    Dist1D (Mixture2 d rest) where
+    -- A mixture CDF is the weighted numerator divided by the total weight;
+    -- normalizing only here avoids division by zero in an inactive suffix.
+    cdf mixture x = numerator / total
+      where
+        (total, numerator) = weightedCdfSummary mixture x
+    lower_bound = componentsLowerBound
+    upper_bound = componentsUpperBound
+
 -- Walk to one indexed component and apply `sample` only to that distribution.
 class WeightedComponents mixture => SampleableComponents mixture where
     sampleComponent :: Int -> mixture -> Random (Result mixture)
