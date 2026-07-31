@@ -1,5 +1,6 @@
 module Probability.Distribution.DirichletProcess.PolyaUrn
     ( dirichletProcess
+    , dirichletProcessOn
     , dirichletProcessMixture
     ) where
 
@@ -81,6 +82,15 @@ dirichletProcess n alpha dist = lazy $ do
   let values = resolveParentValues (V.fromList parents) (V.fromList atoms)
   return $ V.toList values
   where familyRate = 1 / sqrt (fromIntegral n)
+
+-- Attach caller-supplied keys, in their given order, to exchangeable DP draws.
+-- The ordered parents and interchangeable atom sequence remain owned by dirichletProcess.
+dirichletProcessOn
+  :: Sampleable d
+  => [key] -> Double -> d -> Random [(key, Result d)]
+dirichletProcessOn keys alpha dist = do
+  values <- dirichletProcess (length keys) alpha dist
+  return $ zip keys values
 
 -- Draw shared component distributions from a DP, then lazily draw one ordered observation from each.
 -- The observation rate is separate because dirichletProcess already scales parents and components.
