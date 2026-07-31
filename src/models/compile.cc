@@ -273,6 +273,15 @@ void maybe_log(vector<Hs::Exp>& loggers,
 }
 
 
+// Records a value without applying the canonical reporting transformation
+// associated with an input argument's type.
+void generated_code_t::log_value(const string& name, Hs::Exp value, LogValueKind kind)
+{
+    loggers.push_back(LogValue(name, value, kind));
+}
+
+// Applies the default type-specific reporting transformation before recording
+// an ordinary model argument.
 void generated_code_t::log_value(const string& name, Hs::Exp value, const type_t& type, LogValueKind kind)
 {
     auto [head,args] = get_type_apps(type);
@@ -281,7 +290,7 @@ void generated_code_t::log_value(const string& name, Hs::Exp value, const type_t
         value = HsG::Apply(Hs::Var("sortDist"), {value});
     }
 
-    loggers.push_back(LogValue(name, value, kind));
+    log_value(name, value, kind);
 }
 
 // Adds one opaque context computation that supplies and names all of its own fields.

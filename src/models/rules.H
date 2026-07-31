@@ -22,6 +22,7 @@ struct RuleArg
     ParsedType type;
     std::optional<RuleModelExpr> default_value;
     std::optional<RuleModelExpr> alphabet;
+    std::optional<RuleModelExpr> reported_value;
     std::optional<std::string> description;
 };
 

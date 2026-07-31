@@ -72,6 +72,16 @@ The fields are defined as follows:
     `default_value`
     : A value for the argument if not specified (optional).
 
+    `reported_value`
+    : An optional Haskell-template expression that replaces the argument's
+      value only when it is automatically logged. `@value` denotes the
+      evaluated argument; no other argument references are available. Names
+      refer directly to Haskell values provided by the binding's imports, and
+      infix operators use the binding fixity table. The expression must be pure
+      and produce a value accepted by the logger. It does not use model-language
+      defaults, named arguments, extraction, or sampling; use `computed` for
+      reports involving more than one argument.
+
     `description`
     : A short phrase describing the argument (optional).
 
@@ -80,4 +90,3 @@ The fields are defined as follows:
 
 `description`
 : A longer description of the function (optional).
-

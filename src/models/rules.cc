@@ -349,8 +349,8 @@ RuleModelExpr parse_rule_model_expr(const Rules& R, const string& text, const st
     return parse_model_expr(R, text, what);
 }
 
-// Compatibility boundary: rule templates still share the model parser syntax.
-// Remove when templates get their own parser or spelling.
+// Compatibility boundary: call, computed, and reported-value templates still
+// share model parser syntax. Remove when templates get their own parser.
 RuleModelExpr parse_rule_template_expr(const Rules& R, const string& text, const string& what)
 {
     auto expr = parse_expression(text, what);
@@ -367,6 +367,7 @@ RuleModelExpr parse_rule_template_expr(const Rules& R, const string& text, const
    - "call" -> expression
    - "default_value" -> expression -> fill in default values
    - "alphabet" -> expression -> fill in default values
+   - "reported_value" -> Haskell template expression used only for logging
    - "computed" -> expression
 */
 Rule convert_rule(const Rules& R, const RawRule& raw_rule)
@@ -409,6 +410,10 @@ Rule convert_rule(const Rules& R, const RawRule& raw_rule)
 
             if (auto alphabet = optional_string(arg_object, "alphabet", name))
                 arg.alphabet = parse_rule_model_expr(R, *alphabet, name + ": alphabet for '"+arg_name+"'");
+
+            if (auto reported_value = optional_string(arg_object, "reported_value", name))
+                arg.reported_value = parse_rule_template_expr(
+                    R, *reported_value, name + ": reported value for '"+arg_name+"'");
 
             arg.description = optional_string(arg_object, "description", name);
 

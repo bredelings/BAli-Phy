@@ -687,8 +687,8 @@ bool is_template_submodel_arg(const CM::Arg<CM::NoAnn>& arg)
     return arg_ref and arg_ref->name == "submodel";
 }
 
-// Converts a rule call/computed template from CmdModel to Haskell expression
-// code, preserving the old ptree template codegen behavior.
+// Converts a rule call, computed value, or reported value from CmdModel to
+// Haskell expression code, preserving the old ptree template behavior.
 Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs::Exp>& simple_args)
 {
     return expr.visit(CM::overloaded{
@@ -1269,7 +1269,25 @@ translation_result_t CodeGenState::get_typed_rule_call(const CM::Call<CM::Ann>& 
             argument_environment[arg_names[i]] = arg_models[i].code.E;
 
         if (do_log)
-            result.code.log_value(log_names[i], argument_environment[arg_names[i]], arg_expr.ann.type);
+        {
+            auto value = argument_environment[arg_names[i]];
+            if (args[i].reported_value)
+            {
+                try
+                {
+                    value = make_rule_template_expr(*args[i].reported_value, {{"value", value}});
+                }
+                catch(myexception& error)
+                {
+                    error.prepend("In reported value for argument '" + arg_names[i]
+                                  + "' of command '" + name + "': ");
+                    throw;
+                }
+                result.code.log_value(log_names[i], value);
+            }
+            else
+                result.code.log_value(log_names[i], value, arg_expr.ann.type);
+        }
 
         add(scope2.haskell_vars, arg_scope.haskell_vars);
     }
