@@ -1,0 +1,1 @@
+--test ../../../data/codons-dna.fasta --smodel=gtr+>x3+>dNdS+>mut_sel_aa
