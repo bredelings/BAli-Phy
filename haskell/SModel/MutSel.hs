@@ -14,6 +14,14 @@ import Numeric.LinearAlgebra.Data
 foreign import trcall "SModel:mut_sel_q" mutSelQNative :: Matrix Double -> Vector Double -> Matrix Double
 foreign import trcall "SModel:mut_sel_pi" mutSelPiNative :: Vector Double -> Vector Double -> Vector Double
 
+-- Subtract the unweighted mean to choose a symmetric representative; the
+-- common shift cancels from every pairwise fitness difference.
+centerFitnesses :: [(String, Double)] -> [(String, Double)]
+centerFitnesses [] = []
+centerFitnesses fitnesses = [(label, fitness - meanFitness) | (label, fitness) <- fitnesses]
+    where
+        meanFitness = sum (map snd fitnesses) / fromIntegral (length fitnesses)
+
 -- Apply mutation-selection weights while preserving the rate-matrix shape.
 mut_sel_q rates fitness =
     overrideMatrixDims (rows rates) (cols rates) (mutSelQNative rates fitness)

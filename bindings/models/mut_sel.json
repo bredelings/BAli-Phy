@@ -14,6 +14,7 @@
             "name": "ss",
             "type": "List<(String,Double)>",
             "default_value": "~iid_on(letters(@a), (1/2).*.delta(0) |+| (1/2).*.laplace(0, 1))",
+	    "reported_value": "centerFitnesses(@value)",
 	    "description": "Scaled selection coefficients (2Ns)"
         },
 	{
