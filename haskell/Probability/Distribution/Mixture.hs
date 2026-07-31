@@ -81,6 +81,42 @@ instance (Dist1D d, Dist1DComponents rest, Result d ~ Result rest) =>
     lower_bound = componentsLowerBound
     upper_bound = componentsUpperBound
 
+class Dist1DComponents mixture => MaybeMeanComponents mixture where
+    weightedMeanSummary :: mixture -> Maybe (Double, Double)
+
+instance MaybeMean d => MaybeMeanComponents (Weighted d) where
+    -- Keep the weight beside the unnormalized contribution so enclosing
+    -- mixtures need to normalize only after combining every component.
+    weightedMeanSummary (Weighted weight distribution) = do
+        componentMean <- maybeMean distribution
+        return (weight, weight * componentMean)
+
+instance (MaybeMean d, MaybeMeanComponents rest, Result d ~ Result rest) =>
+    MaybeMeanComponents (Mixture2 d rest) where
+    -- Add unnormalized summaries so a zero-weight suffix remains a neutral
+    -- contribution instead of attempting to compute its standalone mean.
+    weightedMeanSummary (Mixture2 (Weighted weight distribution) rest) = do
+        componentMean <- maybeMean distribution
+        (restWeight, restNumerator) <- weightedMeanSummary rest
+        return (weight + restWeight,
+                weight * componentMean + restNumerator)
+
+instance MaybeMean d => MaybeMean (Weighted d) where
+    maybeMean (Weighted _ distribution) = maybeMean distribution
+
+instance Mean d => Mean (Weighted d)
+
+instance (MaybeMean d, MaybeMeanComponents rest, Result d ~ Result rest) =>
+    MaybeMean (Mixture2 d rest) where
+    -- Normalize the combined weighted numerator once; valid composite
+    -- mixtures have a positive total weight.
+    maybeMean mixture = do
+        (total, numerator) <- weightedMeanSummary mixture
+        return (numerator / total)
+
+instance (Mean d, Mean rest, MaybeMeanComponents rest, Result d ~ Result rest) =>
+    Mean (Mixture2 d rest)
+
 -- Walk to one indexed component and apply `sample` only to that distribution.
 class WeightedComponents mixture => SampleableComponents mixture where
     sampleComponent :: Int -> mixture -> Random (Result mixture)
