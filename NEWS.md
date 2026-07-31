@@ -7,6 +7,8 @@
 - Models
   * Branch test: Bayesian test for different background and foreground dN/dS values
   * Gamma across-site rate variation via quadrature instead of equal binning.
+- Priors
+  * mixture priors with point mass components.
 
 ## MCMC
 
@@ -19,8 +21,11 @@
 - Fix Gibbs-sampling categorical variables when number of dimensions changes.
 - Fix Hastings ratio for one of the SPR moves.
 - Fix likelihood rescaling for fixed alignments.
-- Print helpful error messages when failing to read Newick trees.
-- Don't translate '_' to space in Newick files.
+- Newick
+  * Print helpful error messages when failing to read Newick trees.
+  * Don't translate '_' to space in Newick files, to match more programs.
+- Models
+  * FMutSel: prior now consistent with larger fitness differences.
 
 ## Runtime/Interpreter
 
