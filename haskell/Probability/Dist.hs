@@ -18,7 +18,9 @@ class Dist d => IOSampleable d where
 class Dist d => HasPdf d where
     pdf :: d -> Result d -> LogDouble
 
-class Dist d => Dist1D d where
+-- A one-dimensional distribution has an ordered result so its support bounds
+-- can be compared as well as reported.
+class (Dist d, Ord (Result d)) => Dist1D d where
     cdf :: d -> Double -> Double
     upper_bound :: d -> Maybe (Result d)
     lower_bound :: d -> Maybe (Result d)
