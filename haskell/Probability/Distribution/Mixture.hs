@@ -117,6 +117,45 @@ instance (MaybeMean d, MaybeMeanComponents rest, Result d ~ Result rest) =>
 instance (Mean d, Mean rest, MaybeMeanComponents rest, Result d ~ Result rest) =>
     Mean (Mixture2 d rest)
 
+class MaybeMeanComponents mixture => MaybeVarianceComponents mixture where
+    weightedVarianceAround :: Double -> mixture -> Maybe Double
+
+instance MaybeVariance d => MaybeVarianceComponents (Weighted d) where
+    -- For mixture mean mu, E[(X-mu)^2] equals Var(X) plus
+    -- (E[X]-mu)^2; multiplying by the weight gives this contribution.
+    weightedVarianceAround mixtureMean (Weighted weight distribution) = do
+        componentMean <- maybeMean distribution
+        componentVariance <- maybeVariance distribution
+        return $ weight *
+            (componentVariance + (componentMean - mixtureMean)^2)
+
+instance (MaybeVariance d, MaybeVarianceComponents rest, Result d ~ Result rest) =>
+    MaybeVarianceComponents (Mixture2 d rest) where
+    -- Every component is measured around the same final mixture mean, so the
+    -- two unnormalized contributions can be added directly.
+    weightedVarianceAround mixtureMean (Mixture2 component rest) = do
+        componentNumerator <- weightedVarianceAround mixtureMean component
+        restNumerator <- weightedVarianceAround mixtureMean rest
+        return (componentNumerator + restNumerator)
+
+instance MaybeVariance d => MaybeVariance (Weighted d) where
+    maybeVariance (Weighted _ distribution) = maybeVariance distribution
+
+instance Variance d => Variance (Weighted d)
+
+instance (MaybeVariance d, MaybeVarianceComponents rest, Result d ~ Result rest) =>
+    MaybeVariance (Mixture2 d rest) where
+    -- First find the shared mixture mean, then sum centered component
+    -- contributions and normalize by the total weight.
+    maybeVariance mixture = do
+        (total, meanNumerator) <- weightedMeanSummary mixture
+        let mixtureMean = meanNumerator / total
+        varianceNumerator <- weightedVarianceAround mixtureMean mixture
+        return (varianceNumerator / total)
+
+instance (Variance d, Variance rest, MaybeVarianceComponents rest, Result d ~ Result rest) =>
+    Variance (Mixture2 d rest)
+
 -- Walk to one indexed component and apply `sample` only to that distribution.
 class WeightedComponents mixture => SampleableComponents mixture where
     sampleComponent :: Int -> mixture -> Random (Result mixture)
