@@ -1,5 +1,6 @@
 module Probability.Distribution.DirichletProcess
     ( module Probability.Distribution.DirichletProcess.Stick
+    , module Probability.Distribution.DirichletProcess.PolyaUrn
     , builtin_crp_density
     , crp_density
     , sample_crp_native
@@ -16,6 +17,7 @@ import Control.Monad.IO.Class
 
 import Probability.Distribution.List
 import Probability.Distribution.DirichletProcess.Stick
+import Probability.Distribution.DirichletProcess.PolyaUrn
 
 import qualified Data.Vector.Unboxed as U
 import Data.Vector.Unboxed.Internal (intVectorFromNativeWithLength,
