@@ -7,6 +7,11 @@ import MCMC.Types
 foreign import bpcall "MCMC:" gibbsSampleCategoricalRaw :: Modifiable Int -> Int -> ContextIndex -> IO ()
 gibbsSampleCategorical i n = TransitionKernel (gibbsSampleCategoricalRaw i n)
 
+foreign import bpcall "MCMC:" gibbsSampleCategoricalSubsetRaw :: Modifiable Int -> Int -> Int -> ContextIndex -> IO ()
+
+-- Limit categorical Gibbs updates to seven values so their cost does not grow with the category count.
+gibbsSampleCategoricalBounded i n = TransitionKernel (gibbsSampleCategoricalSubsetRaw i n 7)
+
 foreign import bpcall "MCMC:" discreteUniformAvoidMHRaw :: Modifiable Int -> Int -> Int -> ContextIndex -> IO ()
 discreteUniformAvoidMH i l u = TransitionKernel (discreteUniformAvoidMHRaw i l u)
 
@@ -17,4 +22,3 @@ incDecMH x bnds = TransitionKernel $ incDecMHRaw x (c_range bnds)
 
 foreign import bpcall "MCMC:" sliceSampleIntegerRaw :: Modifiable Int -> BuiltinBounds -> ContextIndex -> IO ()
 sliceSampleInteger x bnds = TransitionKernel $ sliceSampleIntegerRaw x (c_range bnds)
-

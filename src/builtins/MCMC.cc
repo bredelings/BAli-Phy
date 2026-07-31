@@ -195,6 +195,54 @@ categorical_candidates make_categorical_candidates(context_ref& C, int selector_
     return result;
 }
 
+// Choose among connected categorical candidates and commit the selected execution context.
+// The connected weights include each candidate's program-execution density, including lazy choices.
+int choose_categorical_candidate(context_ref& C, int selector_reg, int count,
+                                 const vector<int>& values)
+{
+    auto candidate_set = make_categorical_candidates(C, selector_reg, count, values);
+    vector<log_double_t> weights(candidate_set.weights.begin(), candidate_set.weights.end());
+    int candidate_index = choose(weights);
+    int selected_value = candidate_set.values[candidate_index];
+
+    if (selected_value != C.get_reg_value(selector_reg).as_int())
+        C = *candidate_set.contexts[candidate_index];
+
+    return selected_value;
+}
+
+// Select a uniformly random subset containing the current category, bounded by max_candidates.
+// Rejection makes every ordering of the distinct alternatives equiprobable, so every subset has
+// probability 1 / choose(count - 1, size - 1), which is identical from each state in the subset.
+vector<int> make_categorical_subset(int current, int count, int max_candidates)
+{
+    if (count <= 0)
+        throw myexception()<<"categorical selector has non-positive value count "<<count;
+    if (max_candidates <= 0)
+        throw myexception()<<"categorical selector has non-positive candidate limit "<<max_candidates;
+
+    int subset_size = std::min(count, max_candidates);
+    vector<int> values;
+    values.reserve(subset_size);
+
+    if (subset_size == count)
+    {
+        values.resize(count);
+        std::iota(values.begin(), values.end(), 0);
+        return values;
+    }
+
+    values.push_back(current);
+    while (values.size() < static_cast<unsigned>(subset_size))
+    {
+        int candidate = uniform_int(0, count - 1);
+        if (std::find(values.begin(), values.end(), candidate) == values.end())
+            values.push_back(candidate);
+    }
+    std::sort(values.begin(), values.end());
+    return values;
+}
+
 // gibbs_sample_categorical x n pr
 extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Args)
 {
@@ -237,17 +285,44 @@ extern "C" closure builtin_function_gibbsSampleCategoricalRaw(OperationArgs& Arg
     // W[i]*W[j]/sum(W) is symmetric in i and j. ProbDensity retains zero factors until ratios cancel.
     vector<int> candidate_values(n_values);
     std::iota(candidate_values.begin(), candidate_values.end(), 0);
-    auto candidate_set = make_categorical_candidates(C1, *x_mod_reg, n_values, candidate_values);
-    vector<log_double_t> pr_x(candidate_set.weights.begin(), candidate_set.weights.end());
-
     //------------- 5. Get new value x2 for variable -----------------//
-    int candidate_index = choose(pr_x);
-    int x2 = candidate_set.values[candidate_index];
+    int x2 = choose_categorical_candidate(C1, *x_mod_reg, n_values, candidate_values);
 
     if (log_verbose >= 3) std::cerr<<"   gibbs_sample_categorical: <"<<x_reg<<">   "<<x1<<" -> "<<x2<<"\n";
 
-    if (x2 != x1)
-        C1 = *candidate_set.contexts[candidate_index];
+    return closure(R::ConstructorApp("()", 0, {}));
+}
+
+// Gibbs-sample a categorical selector from a uniformly chosen bounded subset of its values.
+extern "C" closure builtin_function_gibbsSampleCategoricalSubsetRaw(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    int selector_reg = Args.evaluate_slot_unchangeable(0);
+    int count_reg = Args.evaluate_slot_unchangeable(1);
+    int max_candidates_reg = Args.evaluate_slot_unchangeable(2);
+    int context_index = Args.evaluate_slot_to_value(3).as_int();
+
+    auto& M = Args.memory();
+    auto modifiable_reg = M.find_modifiable_reg(selector_reg);
+    if (not modifiable_reg)
+        throw myexception()<<"gibbs_sample_categorical_subset: reg "<<selector_reg<<" not modifiable!";
+
+    context_ref C(M, context_index);
+    // Drop obsolete contexts and share every computation retained by the selected candidate.
+    C.evaluate_program();
+
+    int current = C.get_reg_value(*modifiable_reg).as_int();
+    int count = C.get_reg_value(count_reg).as_int();
+    int max_candidates = C.get_reg_value(max_candidates_reg).as_int();
+    auto candidate_values = make_categorical_subset(current, count, max_candidates);
+
+    // For a subset S containing x and y, q(S|x) = q(S|y). Multiplying the symmetric
+    // subset proposal by the connected Gibbs update therefore preserves detailed balance.
+    int selected = choose_categorical_candidate(C, *modifiable_reg, count, candidate_values);
+    if (log_verbose >= 3)
+        std::cerr<<"   gibbs_sample_categorical_subset: <"<<selector_reg<<">   "
+                 <<current<<" -> "<<selected<<" from "<<candidate_values.size()<<" candidates\n";
 
     return closure(R::ConstructorApp("()", 0, {}));
 }

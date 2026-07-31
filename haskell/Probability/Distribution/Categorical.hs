@@ -5,7 +5,8 @@ import qualified Data.Vector as V
 import Data.Foldable
 import MCMC
 
-categorical_effect n x = addMove 1 $ gibbsSampleCategorical x n
+-- Use a bounded random subset by default so large categorical distributions remain cheap to update.
+categorical_effect n x = addMove 1 $ gibbsSampleCategoricalBounded x n
 foreign import bpcall "Distribution:sample_categorical" sampleCategoricalNative :: V.Vector Double -> IO Int
 sample_categorical = sampleCategoricalNative
 
