@@ -1,8 +1,5 @@
 module Probability.Distribution.DirichletProcess
     ( module Probability.Distribution.DirichletProcess.Stick
-    , normalize
-    , do_crp
-    , do_crp''
     , builtin_crp_density
     , crp_density
     , sample_crp_native
@@ -18,7 +15,6 @@ import Probability.Random
 import Control.Monad.IO.Class
 
 import Probability.Distribution.List
-import Probability.Distribution.Categorical
 import Probability.Distribution.DirichletProcess.Stick
 
 import qualified Data.Vector.Unboxed as U
@@ -27,23 +23,6 @@ import Data.Vector.Unboxed.Internal (intVectorFromNativeWithLength,
 import Foreign.NativeVector (NativeVector)
 
 import MCMC -- for GibbsSampleCategorical
-
----
-
-normalize v = map (/total) v where total=sum v
-
-do_crp alpha n d = do_crp'' alpha n bins (replicate bins 0) where bins=n+d
-do_crp'' alpha 0 bins counts = return []
-do_crp'' alpha n bins counts = let inc (c:cs) 0 = (c+1:cs)
-                                   inc (c:cs) i = c:(inc cs (i-1))
-                                   p alpha counts = normalize (map f counts)
-                                   nzeros = length (filter (==0) counts)
-                                   f 0 = alpha/fromIntegral nzeros
-                                   f i = fromIntegral i
-                               in 
-                               do c <- sample $ categorical (p alpha counts)
-                                  cs <- do_crp'' alpha (n-1) bins (inc counts c) 
-                                  return (c:cs)
 
 foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -> Int -> Int -> Int -> Int -> NativeVector Int -> LogDouble
 
