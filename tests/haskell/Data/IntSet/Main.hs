@@ -20,6 +20,8 @@ main = do
 
       m6 = I.fromList [1,2,3]
       m7 = I.fromList [3,4,5]
+      unordered = I.fromList [5,-2,7,0,-10]
+      sameSetDifferentOrder = I.fromList [0,7,-10,5,-2]
 
   putStrLn $ show m4
   putStrLn $ show $ union m6 m7
@@ -29,3 +31,6 @@ main = do
   putStrLn $ show $ m7 \\ m6
   putStrLn $ show $ U.toList $ toVector m4
   putStrLn $ show $ U.length $ toVector empty
+  putStrLn $ show $ U.toList $ toAscVector unordered
+  putStrLn $ show $ toAscList sameSetDifferentOrder
+  putStrLn $ show $ U.toList $ toAscVector empty

@@ -1,6 +1,7 @@
 module Data.IntSet where
 
 import Prelude hiding (map,empty,elems,filter,toVector)
+import Compiler.FFI.Import (CInput)
 import Data.Functor
 import qualified Data.List as L
 import qualified Data.Vector.Unboxed as U
@@ -10,6 +11,9 @@ import Data.Foldable (foldr)
 import Control.DeepSeq
 
 data IntSet
+
+-- IntSet is already represented by the opaque value expected by native builtins.
+instance CInput IntSet
 
 type Key = Int
 
@@ -57,8 +61,6 @@ foreign import bpcall "IntSet:" intersection :: IntSet -> IntSet -> IntSet
 
 foreign import bpcall "IntSet:" disjoint :: IntSet -> IntSet -> Int
 
--- Note!  These are supposed be to in ascending order of keys, but are not.
-
 foreign import bpcall "IntSet:keys" keysNative :: IntSet -> NativeVector Int
 
 elems m = U.toList (toVector m)
@@ -67,8 +69,12 @@ toList m = elems m
 
 toVector = intVectorFromNative . keysNative
 
-toAscList m = toList m
+foreign import trcall "IntSet:" toAscVector :: IntSet -> U.Vector Int
 
+-- Reuse the native numeric ordering when exposing the ascending keys as a lazy list.
+toAscList = U.toList . toAscVector
+
+-- NOTE: This compatibility implementation does not yet honor the promised descending order.
 toDescList m = toList m
 
 filter :: (Key -> Bool) -> IntSet -> IntSet

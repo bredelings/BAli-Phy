@@ -3,6 +3,7 @@
 #include "util/dense-matrix.H"
 
 #include "immer/set.hpp"
+#include <algorithm>
 #include <limits>
 
 typedef Box<immer::set<int>> IntSet;
@@ -84,6 +85,27 @@ extern "C" closure builtin_function_keys(OperationArgs& Args)
     int index = 0;
     for(auto& k: S)
         (*keys)(index++) = k;
+
+    return keys;
+}
+
+// Copy an IntSet into one native vector and sort the contiguous integers numerically.
+extern "C" closure builtin_function_toAscVector(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& S = arg0.as_<IntSet>();
+
+    if (S.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw myexception()<<"IntSet.toAscVector: key count exceeds supported Int range";
+
+    int count = static_cast<int>(S.size());
+    object_ptr<Box<DenseVector<int>>> keys(new Box<DenseVector<int>>(count));
+    int index = 0;
+    for(auto& key: S)
+        (*keys)(index++) = key;
+
+    if (count > 1)
+        std::sort(keys->data(), keys->data() + count);
 
     return keys;
 }
