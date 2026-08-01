@@ -77,17 +77,26 @@ resolveParentValues parents atoms = values
       | otherwise = values V.! parent
       where parent = parents V.! index
 
--- Generate ordered Pólya-urn parents and resolve them against interchangeable IID atoms.
--- Rebuilding the boxed vectors when n changes is intentional; only the retained prefix can survive.
-dirichletProcess :: Sampleable d => Int -> Double -> d -> Random [Result d]
-dirichletProcess n alpha dist = lazy $ do
+-- Generate ordered Pólya-urn parents and retain their resolved, interchangeable
+-- IID atoms in indexed form without forcing the individual atom values.
+dirichletProcessVector
+  :: Sampleable d
+  => Int -> Double -> d -> Random (V.Vector (Result d))
+dirichletProcessVector n alpha dist = lazy $ do
   -- iid already scales atom moves; scale only the separate O(n) parent family here.
   parents <- RanSamplingRate familyRate $
              sequence [sample $ PolyaUrnParent alpha index | index <- [0..n-1]]
   atoms <- prior $ iid n dist
   let values = resolveParentValues (V.fromList parents) (V.fromList atoms)
-  return $ V.toList values
+  return values
   where familyRate = 1 / sqrt (fromIntegral n)
+
+-- Preserve the list API while rebuilding the boxed vectors when n changes;
+-- only the retained prefix of the ordered computation can survive.
+dirichletProcess :: Sampleable d => Int -> Double -> d -> Random [Result d]
+dirichletProcess n alpha dist = do
+  values <- dirichletProcessVector n alpha dist
+  return $ V.toList values
 
 -- Attach caller-supplied keys, in their given order, to exchangeable DP draws.
 -- The ordered parents and interchangeable atom sequence remain owned by dirichletProcess.
