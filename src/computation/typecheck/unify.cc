@@ -313,7 +313,7 @@ bool TypeChecker::maybe_unify_(bool both_ways, const unification_env& env, const
 
     else if (auto mtv1 = t1.to<MetaTypeVar>())
     {
-        if (auto tv2 = t2.to<TypeVar>(); tv2 and *tv1 == *tv2)
+        if (auto mtv2 = t2.to<MetaTypeVar>(); mtv2 and *mtv1 == *mtv2)
             return true;
 
         return maybe_unify_var_(both_ways, env, *mtv1, t2, s);
