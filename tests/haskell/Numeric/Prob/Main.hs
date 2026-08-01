@@ -2,14 +2,15 @@
 module Main where
 
 import Compiler.Fractional (Fractional(recip), (/))
-import Compiler.Floating (Pow(ln, pow), exp, log, log1p)
+import Compiler.Floating (Pow(ln, pow, expTo), exp, log, log1p)
 import Compiler.Integral ((^))
 import Compiler.Num (Num(..))
+import Compiler.RealFloat (isNaN)
 import Data.Bool ((&&))
 import Data.Eq ((==))
 import Data.Floating.Types (FloatConvert(toFloating))
-import Data.Ord ((<))
-import Numeric.Prob (LogDouble, Prob, fromLogOdds, logOdds)
+import Data.Ord (Ordering(LT), compare, max, min, (<), (<=))
+import Numeric.Prob (LogDouble, Prob, complement, fromLogOdds, isNaNProb, logOdds)
 import System.IO (IO, print)
 
 near x y = abs (x-y) < 1.0e-12
@@ -70,4 +71,48 @@ main = do
     , ( near (logOdds (pow (fromLogOdds 1000) 2)) (1000-log 2)
       , near (toFloating (pow (2 :: Prob) 3) :: Double) 8
       )
+    )
+  let nanDouble = 0/0 :: Double
+      nan = toFloating nanDouble :: Prob
+      nanLog = toFloating nan :: LogDouble
+  print
+    ( isNaNProb nan
+    , nan == nan
+    , nan < zero
+    , compare nan zero == LT
+    )
+  print
+    ( isNaN (toFloating nan :: Double)
+    , isNaN (ln nanLog)
+    , isNaNProb (fromLogOdds nanDouble)
+    , isNaNProb (toFloating nanLog :: Prob)
+    )
+  print
+    ( nan < zero && zero < half && half < one && one < two && two < infinity
+    , nan <= nan
+    , min nan zero == nan
+    , max nan zero == zero
+    )
+  print
+    ( isNaNProb (nan + one)
+    , isNaNProb (one - nan)
+    , isNaNProb (nan * zero)
+    , isNaNProb (recip nan)
+    )
+  print
+    ( isNaNProb (complement nan)
+    , isNaNProb (signum nan)
+    , isNaNProb (infinity - infinity)
+    , isNaNProb (zero * infinity)
+    )
+  print
+    ( isNaNProb (zero / zero)
+    , isNaNProb (infinity / infinity)
+    , isNaNProb (pow nan 2)
+    , isNaNProb (pow half nanDouble)
+    )
+  print
+    ( pow nan 0 == one
+    , isNaNProb (expTo nanDouble :: Prob)
+    , isNaN (logOdds nan)
     )

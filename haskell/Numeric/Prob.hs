@@ -1,4 +1,5 @@
 module Numeric.Prob (Prob,
+                     isNaNProb,
                      complement,
                      fromLogOdds,
                      logOdds,
@@ -10,9 +11,12 @@ module Numeric.Prob (Prob,
 import Numeric.LogDouble
 import Data.Floating.Types
 
-{- Odds y = sigmoid(y) is in (0,1), while IOdds y = 1+exp(y) is in
-   (1,infinity).  Both increase with y, and the separate endpoint constructors
-   keep each value canonical, so constructor ordering is numerical ordering.
+{- NaN is the single canonical indeterminate value and sorts before every
+   non-NaN value, matching OrderedDouble's total-order convention.
+
+   Odds y = sigmoid(y) is in (0,1), while IOdds y = 1+exp(y) is in
+   (1,infinity).  Their payloads are always finite and both increase with y,
+   so the remaining constructor ordering is numerical ordering.
 
    Values above one are needed for intermediate expressions such as 1/2 and
    1-3*p, even though distribution parameters themselves are probabilities.
@@ -21,30 +25,36 @@ import Data.Floating.Types
 -- We could keep track of HOW MANY zeros!
 -- ... | Zero Int | ...
 -- Then we could penalize multiplying by an additional zero.
-data Prob = Zero | Odds Double | One | IOdds Double | Infinity deriving (Eq, Ord)
+data Prob = NaN | Zero | Odds Double | One | IOdds Double | Infinity deriving (Eq, Ord)
+
+isNaNProb :: Prob -> Bool
+isNaNProb NaN = True
+isNaNProb _   = False
 
 -- Construct a probability from its log odds, retaining exact zero and one at
 -- the extended-real endpoints.
 fromLogOdds :: Double -> Prob
-fromLogOdds y | isNaN y   = error "fromLogOdds: NaN"
+fromLogOdds y | isNaN y   = NaN
               | y == -1/0 = Zero
               | y == 1/0  = One
               | otherwise = Odds y
 
 -- Construct 1+exp(y), retaining canonical one and infinity at the endpoints.
 fromLogExcess :: Double -> Prob
-fromLogExcess y | isNaN y   = error "fromLogExcess: NaN"
+fromLogExcess y | isNaN y   = NaN
                 | y == -1/0 = One
                 | y == 1/0  = Infinity
                 | otherwise = IOdds y
 
 complement :: Prob -> Prob
+complement NaN      = NaN
 complement Zero     = One
 complement (Odds y) = fromLogOdds (-y)
 complement One      = Zero
 complement _        = error "complement: not a probability"
 
 fromProb :: Pow a => Prob -> a
+fromProb NaN                  = 0 / 0
 fromProb Zero                 = 0
 fromProb (Odds y) | y < 0     = let e = expTo y in e / (1 + e)
 fromProb (Odds y) | otherwise = 1 / (1 + expTo(-y))
@@ -53,7 +63,7 @@ fromProb (IOdds y)            = 1 + expTo y
 fromProb Infinity             = 1 / 0
 
 toProb :: Double -> Prob
-toProb p | isNaN p       = error "toProb: NaN"
+toProb p | isNaN p       = NaN
          | p < 0         = error "Negative Probability!"
          | p == 0        = Zero
          | p < 1         = fromLogOdds $ log p - log1p (-p)
@@ -63,6 +73,7 @@ toProb p | isNaN p       = error "toProb: NaN"
 
 -- Return the extended-real logarithm, including -infinity for exact zero.
 logProb :: Prob -> Double
+logProb NaN                  = 0/0
 logProb Zero                 = -1/0
 logProb (Odds y) | y < 0     = y - log1p (exp y)
                  | otherwise = -log1p (exp (-y))
@@ -73,7 +84,7 @@ logProb Infinity             = 1/0
 -- For z<0, logit(exp(z)) = z-log(1-exp(z)); for z>0, the logarithm
 -- of the excess above one is log(exp(z)-1) = z+log(1-exp(-z)).
 expToProb :: Double -> Prob
-expToProb z | isNaN z   = error "expToProb: NaN"
+expToProb z | isNaN z   = NaN
             | z < 0     = fromLogOdds $ z - log1mexp z
             | z == 0    = One
             | z > 0     = fromLogExcess $ z + log1mexp (-z)
@@ -82,6 +93,8 @@ expToProb z | isNaN z   = error "expToProb: NaN"
 -- For p_i=sigmoid(y_i), their sum has numerator exp(y1)+exp(y2)+2*exp(y1+y2).
 -- Its distance from one has numerator 1-exp(y1+y2), with the sign reversed above one.
 plus :: Prob -> Prob -> Prob
+plus NaN _ = NaN
+plus _ NaN = NaN
 plus (Odds y1) (Odds y2) | s < 0     = fromLogOdds $ logNumerator - log1mexp(s)
                          | s == 0    = One
                          | otherwise = fromLogExcess $
@@ -105,8 +118,10 @@ plus x Infinity = Infinity
 
 
 sub :: Prob -> Prob -> Prob
+sub NaN _ = NaN
+sub _ NaN = NaN
 sub x Zero = x
-sub Infinity Infinity = error "Inf - Inf is undefined"
+sub Infinity Infinity = NaN
 sub Infinity _ = Infinity
 sub One One = Zero
 sub One (Odds y) = fromLogOdds (-y)
@@ -122,6 +137,8 @@ sub _ _ = error "Negative probability"
 
 
 mul :: Prob -> Prob -> Prob
+mul NaN _ = NaN
+mul _ NaN = NaN
 mul (Odds y1) (Odds y2) | y1 > y2   = fromLogOdds $ y2 - log1p( exp(y2-y1) + exp(-y1) )
                         | otherwise = fromLogOdds $ y1 - log1p( exp(y1-y2) + exp(-y2) )
 -- For x=sigmoid(y1)*(1+exp(y2)), x is below or above one according
@@ -133,8 +150,8 @@ mul (Odds y1) (IOdds y2) | s == 0    = One
 mul (IOdds y1) (Odds y2) = mul (Odds y2) (IOdds y1)
 -- Since recip(IOdds y) = Odds(-y), invert the product of the reciprocals.
 mul (IOdds y1) (IOdds y2) = recip $ mul (Odds (-y1)) (Odds (-y2))
-mul Zero      Infinity  = error "0 * Inf is undefined"
-mul Infinity  Zero      = error "Inf * 0 is undefined"
+mul Zero      Infinity  = NaN
+mul Infinity  Zero      = NaN
 mul Zero      x         = Zero
 mul x         Zero      = Zero
 mul One       x         = x
@@ -150,6 +167,7 @@ instance Num Prob where
     (*) = mul
     abs = id
     negate = error "Can't negate a probability"
+    signum NaN  = NaN
     signum Zero = 0
     signum _    = 1
     fromInteger 0 = Zero
@@ -158,6 +176,7 @@ instance Num Prob where
                   | otherwise = fromLogExcess $ integerToLogExcess x
 
 instance Fractional Prob where
+    recip NaN       = NaN
     recip Zero      = Infinity
     recip (Odds y)  = fromLogExcess (-y)
     recip One       = One
@@ -165,6 +184,7 @@ instance Fractional Prob where
     recip Infinity  = Zero
 
 instance Show Prob where
+    show NaN = "NaN"
     show Zero = "0"
     show (Odds y) = show $ (fromProb (Odds y) :: Double)
     show One = "1"
@@ -173,6 +193,7 @@ instance Show Prob where
 
 
 logOdds :: Prob -> Double
+logOdds NaN = 0/0
 logOdds (Odds y) = y
 logOdds Zero = -1/0
 logOdds One = 1/0
@@ -183,8 +204,9 @@ logOdds Infinity = error "logOdds Infinity"
 -- For p=sigmoid(y), write p=exp(-a), where a=log(1+exp(-y)).  Then
 -- logit(p^t)=-log(exp(t*a)-1); the log-domain branch retains t*a when it underflows.
 powProb :: Prob -> Double -> Prob
-powProb _ t | isNaN t = error "pow: NaN exponent"
+powProb _ t | isNaN t = NaN
 powProb _ 0 = One
+powProb NaN _ = NaN
 powProb p t | t < 0 = recip $ powProb p (-t)
 powProb One _ = One
 powProb Zero _ = Zero
