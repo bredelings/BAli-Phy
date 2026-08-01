@@ -16,6 +16,7 @@ import Probability.Distribution.List
 import Probability.Distribution.Uniform
 import MCMC.Moves.Integer (gibbsSampleCategoricalBounded)
 import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as U
 
 -- Observation i starts a new cluster by parenting itself with mass alpha/(alpha+i); each
 -- earlier observation has mass 1/(alpha+i).  A size-m cluster therefore receives mass
@@ -107,18 +108,18 @@ dirichletProcessOn keys alpha dist = do
   values <- dirichletProcess (length keys) alpha dist
   return $ zip keys values
 
--- Assign sorted integer keys to exchangeable DP draws, then retain the association in an IntMap.
--- Exchangeability makes the chosen internal order semantically neutral.
+-- Assign numerically sorted keys directly to the resolved DP vector.  Retaining
+-- the old order keeps rank assignments and fixed-seed traces stable.
 dirichletProcessMap
   :: Sampleable d
   => IntSet -> Double -> d -> Random (IntMap (Result d))
 dirichletProcessMap keys alpha dist = do
-  values <- dirichletProcessOn orderedKeys alpha dist
-  return $ IM.fromList values
+  values <- dirichletProcessVector (U.length orderedKeys) alpha dist
+  return $ IM.fromDistinctKeysAndValues orderedKeys values
   where
     -- NOTE: Data.IntSet.toAscList is not currently ordered.  Remove this explicit sort
     -- when that standard-interface function honors its ascending-order contract.
-    orderedKeys = sort $ IS.toList keys
+    orderedKeys = U.fromList $ sort $ IS.toList keys
 
 -- Draw shared component distributions from a DP, then lazily draw one ordered observation from each.
 -- The observation rate is separate because dirichletProcess already scales parents and components.
