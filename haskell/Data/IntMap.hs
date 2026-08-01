@@ -1,13 +1,14 @@
 module Data.IntMap where
 
 import Prelude hiding (map,empty,lookup,(!))
+import Compiler.FFI.Import (COutput)
 import Data.Functor
 import qualified Data.Foldable as F
 import qualified Data.Traversable as T    
 import qualified Data.Vector as V
 import Foreign.Vector (EVector)
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (intVectorFromNative, intVectorNativeView)
+import Data.Vector.Unboxed.Internal (intVectorFromNative)
 import Foreign.NativeVector (NativeVector)
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IntSet
@@ -17,6 +18,10 @@ import qualified Data.JSON as J
 
 data IntMap a
 
+-- An IntMap already has the runtime representation returned by native builtins, so translated
+-- results need no conversion.
+instance COutput (IntMap a)
+
 type Key = Int
 
 foreign import ecall "IntMap:" empty :: IntMap a
@@ -25,13 +30,7 @@ foreign import bpcall "IntMap:" singleton :: Key -> a -> IntMap a
 
 foreign import bpcall "IntMap:" fromSet :: (Key -> a) -> IntSet -> IntMap a
 
-foreign import bpcall "IntMap:fromDistinctKeysAndValues" fromDistinctKeysAndValuesRaw :: Int -> Int -> NativeVector Int -> V.Vector a -> IntMap a
-
--- Expose the unboxed key view explicitly so the native constructor respects
--- sliced offsets while pairing it with the boxed value vector.
-fromDistinctKeysAndValues keys values =
-    case intVectorNativeView keys of
-      (offset, count, native) -> fromDistinctKeysAndValuesRaw offset count native values
+foreign import trcall "IntMap:" fromDistinctKeysAndValues :: U.Vector Int -> V.Vector a -> IntMap a
 
 fromList []     = empty
 fromList ((k,v):kvs) = insert k v $ fromList kvs

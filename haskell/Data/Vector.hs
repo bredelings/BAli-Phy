@@ -11,6 +11,7 @@ module Data.Vector
     ) where
 
 import Compiler.Base (seq)
+import Compiler.FFI.Import (CInput)
 import Compiler.Num
 import Data.Bool
 import Data.Eq
@@ -26,6 +27,10 @@ import Text.Show
 
 type role Vector representational
 data Vector a
+
+-- A boxed Vector already has the runtime representation expected by native builtins, so translated
+-- calls pass it unchanged.
+instance CInput (Vector a)
 
 infixl 9 !, !?
 infixr 5 ++
