@@ -1,9 +1,15 @@
 module Probability.Distribution.DirichletProcess.PolyaUrn
     ( dirichletProcess
     , dirichletProcessOn
+    , dirichletProcessMap
     , dirichletProcessMixture
     ) where
 
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IM
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as IS
+import Data.List (sort)
 import Probability.Random
 import Probability.Distribution.Bernoulli
 import Probability.Distribution.List
@@ -91,6 +97,19 @@ dirichletProcessOn
 dirichletProcessOn keys alpha dist = do
   values <- dirichletProcess (length keys) alpha dist
   return $ zip keys values
+
+-- Assign sorted integer keys to exchangeable DP draws, then retain the association in an IntMap.
+-- Exchangeability makes the chosen internal order semantically neutral.
+dirichletProcessMap
+  :: Sampleable d
+  => IntSet -> Double -> d -> Random (IntMap (Result d))
+dirichletProcessMap keys alpha dist = do
+  values <- dirichletProcessOn orderedKeys alpha dist
+  return $ IM.fromList values
+  where
+    -- NOTE: Data.IntSet.toAscList is not currently ordered.  Remove this explicit sort
+    -- when that standard-interface function honors its ascending-order contract.
+    orderedKeys = sort $ IS.toList keys
 
 -- Draw shared component distributions from a DP, then lazily draw one ordered observation from each.
 -- The observation rate is separate because dirichletProcess already scales parents and components.
