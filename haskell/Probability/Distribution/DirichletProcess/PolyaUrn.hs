@@ -9,7 +9,6 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IM
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IS
-import Data.List (sort)
 import Probability.Random
 import Probability.Distribution.Bernoulli
 import Probability.Distribution.List
@@ -108,8 +107,8 @@ dirichletProcessOn keys alpha dist = do
   values <- dirichletProcess (length keys) alpha dist
   return $ zip keys values
 
--- Assign numerically sorted keys directly to the resolved DP vector.  Retaining
--- the old order keeps rank assignments and fixed-seed traces stable.
+-- Assign native-sorted keys directly to the resolved DP vector.  Numeric order preserves rank
+-- assignments and fixed-seed traces.
 dirichletProcessMap
   :: Sampleable d
   => IntSet -> Double -> d -> Random (IntMap (Result d))
@@ -117,9 +116,7 @@ dirichletProcessMap keys alpha dist = do
   values <- dirichletProcessVector (U.length orderedKeys) alpha dist
   return $ IM.fromDistinctKeysAndValues orderedKeys values
   where
-    -- NOTE: Data.IntSet.toAscList is not currently ordered.  Remove this explicit sort
-    -- when that standard-interface function honors its ascending-order contract.
-    orderedKeys = U.fromList $ sort $ IS.toList keys
+    orderedKeys = IS.toAscVector keys
 
 -- Draw shared component distributions from a DP, then lazily draw one ordered observation from each.
 -- The observation rate is separate because dirichletProcess already scales parents and components.
