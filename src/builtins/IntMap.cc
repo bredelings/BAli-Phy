@@ -2,6 +2,7 @@
 #include "computation/machine/args.H"
 #include "computation/operation.H"
 #include "computation/runtime/ast.H"
+#include "Vector.H"
 #include "util/dense-matrix.H"
 
 #include "computation/machine/gcobject.H"
@@ -393,6 +394,31 @@ extern "C" closure builtin_function_fromSet(OperationArgs& Args)
     }
 
     return m;
+}
+
+// Pair an unboxed key view with lazy boxed-vector element registers without
+// evaluating the values or allocating intermediate Haskell associations.
+extern "C" closure builtin_function_fromDistinctKeysAndValues(OperationArgs& Args)
+{
+    int key_offset = Args.evaluate_slot_to_value(0).as_int();
+    int key_count = Args.evaluate_slot_to_value(1).as_int();
+    auto keys_value = Args.evaluate_slot_to_value(2);
+    const auto& keys = keys_value.as_<Box<DenseVector<int>>>();
+
+    int values_reg = Args.evaluate_slot_use(3);
+    const auto& value_regs = boxed_vector_element_regs(Args.memory().closure_at(values_reg));
+    if (static_cast<std::size_t>(key_count) != value_regs.size())
+        throw myexception()<<"IntMap.fromDistinctKeysAndValues: key length "<<key_count
+                           <<" differs from value length "<<value_regs.size();
+
+    IntMap result;
+    for (int index = 0; index < key_count; index++)
+        result.insert(keys(key_offset + index), value_regs[index]);
+
+    if (result.size() != key_count)
+        throw myexception()<<"IntMap.fromDistinctKeysAndValues: duplicate key";
+
+    return result;
 }
 
 extern "C" closure builtin_function_keysSet(OperationArgs& Args)
