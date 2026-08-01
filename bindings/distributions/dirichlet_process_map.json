@@ -1,0 +1,26 @@
+{
+    "name": "dirichlet_process_map",
+    "result_type": "Distribution<IntMap<a>>",
+    "call": "dirichletProcessMap(@keys,@alpha,@dist)",
+    "import": ["Probability"],
+    "args": [
+        {
+            "name": "keys",
+            "type": "IntSet",
+            "description": "The integer keys identifying the samples"
+        },
+        {
+            "name": "alpha",
+            "type": "Double",
+            "description": "The concentration parameter controlling how often new values are drawn"
+        },
+        {
+            "name": "dist",
+            "type": "Distribution<a>",
+            "description": "The base distribution on shared values"
+        }
+    ],
+    "title": "The integer-map Dirichlet process distribution",
+    "description": "Draw one exchangeable Dirichlet process value for each supplied integer key. The result has exactly the supplied key set, and entries assigned to the same cluster share one value drawn from `dist`.",
+    "examples": ["~dirichlet_process_map(branches(tree), 1, logNormal(0,1))"]
+}
