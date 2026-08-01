@@ -545,6 +545,9 @@ extern "C" closure builtin_function_sample_negative_binomial(OperationArgs& Args
     int r = Args.evaluate_slot_to_value_(0).as_int();
     double p = Args.evaluate_slot_to_value_(1).as_double();
 
+    if (not std::isfinite(p) or p <= 0 or p > 1)
+        throw math_error()<<"negative_binomial: success probability must be in (0,1], but is "<<p;
+
     return { negative_binomial(r,p) };
 }
 
@@ -576,12 +579,18 @@ extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
     int n = Args.evaluate_slot_to_value_(0).as_int();
     double p = Args.evaluate_slot_to_value_(1).as_double();
 
+    if (not std::isfinite(p) or p < 0 or p > 1)
+        throw math_error()<<"binomial: success probability must be in [0,1], but is "<<p;
+
     return { (int)binomial(n,p) };
 }
 
 extern "C" closure builtin_function_sample_bernoulli(OperationArgs& Args)
 {
     double p = Args.evaluate_slot_to_value_(0).as_double();
+
+    if (not std::isfinite(p) or p < 0 or p > 1)
+        throw math_error()<<"bernoulli: success probability must be in [0,1], but is "<<p;
 
     return { (int)bernoulli(p) };
 }
@@ -598,6 +607,9 @@ extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
 extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
 {
     double p = Args.evaluate_slot_to_value_(0).as_double();
+
+    if (not std::isfinite(p) or p <= 0 or p > 1)
+        throw math_error()<<"geometric: success probability must be in (0,1], but is "<<p;
 
     return { (int)geometric(p) };
 }
