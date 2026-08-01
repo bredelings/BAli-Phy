@@ -1250,10 +1250,16 @@ std::shared_ptr<CompiledModule> compile(const Program& P, std::shared_ptr<Module
             M.value_decls.signatures.insert({fdecl.function, fdecl.type});
             M.value_decls.push_back(decls);
 
-            // fname$raw :: RawImport <type>
+            // Keep foralls outside RawImport so its arrow equations normalize under rigid variables
+            // rather than receiving a polytype.
+            auto [type_vars, constraints, monotype] = Hs::peel_top_gen(fdecl.type);
+            assert(constraints.empty());
+
+            // fname$raw :: forall a. RawImport (<monotype using a>)
             Hs::TypeCon RawImport("Compiler.FFI.Import.RawImport");
-            Hs::Type raw_type = Hs::TypeApp({loc,RawImport},fdecl.type);
-            M.value_decls.signatures.insert({raw, {loc, raw_type}});
+            Hs::LType raw_application = {loc, Hs::TypeApp({loc,RawImport}, monotype)};
+            auto raw_type = Hs::add_forall_vars(type_vars, raw_application);
+            M.value_decls.signatures.insert({raw, raw_type});
         }
     }
 

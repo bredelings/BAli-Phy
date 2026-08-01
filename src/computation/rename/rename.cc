@@ -164,6 +164,15 @@ Haskell::ModuleDecls rename(const simplifier_options&, const Module& m, Haskell:
 
         foreign_decl.type = Rn.rename_and_quantify_type( foreign_decl.type );
 
+        // Foreign builtins have no dictionary ABI, so a context would make the Haskell signature
+        // and operation arity differ.
+        auto foreign_type_parts = Hs::peel_top_gen(foreign_decl.type);
+        if (not std::get<1>(foreign_type_parts).empty())
+            Rn.error(foreign_decl.type.loc,
+                     Note()<<"Foreign import '"
+                           <<get_unqualified_name(unloc(foreign_decl.function).name)
+                           <<"' cannot have a constrained type");
+
         bound_names.insert( {unloc(foreign_decl.function).name} );
     }
 
