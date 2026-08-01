@@ -2,13 +2,14 @@
 
 ## Features
 
-- Display column and character properties like rate, dNdS and positive selection.
+- **Display column and character properties like rate, dNdS and positive selection.**
 - More precise detection of positive selection via Rao-Blackwellization.
 - Models
-  * Branch test: Bayesian test for different background and foreground dN/dS values
-  * Gamma across-site rate variation via quadrature instead of equal binning.
-- Priors
-  * mixture priors with point mass components.
+  * Add the branch test: Bayesian test for different background and foreground dN/dS values
+  * Add Gamma across-site rate variation via quadrature instead of equal binning.
+- Distributions & Priors
+  * Add the Dirichlet-process.
+  * Add mixture distributions with point mass components.
 
 ## MCMC
 
