@@ -16,7 +16,7 @@ foreign import bpcall "module_name:cpp_func_name" haskell_name :: Type
 For example, the Haskell function `poisson_density` is declared with the following line from [haskell/Distributions.hs](https://github.com/bredelings/BAli-Phy/blob/master/haskell/Distributions.hs):
 
 ``` Haskell
-foreign import bpcall "Distribution:poisson_density" poisson_density :: Double -> Int -> LogDouble
+foreign import bpcall "Distribution:poisson_density" poisson_density :: Double -> Int -> Log Double
 ```
 
 The quoted string specifies the loadable module that contains the function and the C++ function name.
@@ -25,7 +25,8 @@ Since this function is in the module "Distribution", its source code goes in [sr
 The C++ function name is obtained by adding `builtin_function_` in front of `poisson_density`.
 So the C++ function will be called `builtin_function_poisson_density`.
 
-The rest of the declaration specifies the Haskell name (`poisson_density`) and the type (`Double -> Int -> Double`).
+The rest of the declaration specifies the Haskell name (`poisson_density`) and the type
+(`Double -> Int -> Log Double`).
 
 ## Writing a builtin in C++
 
@@ -52,12 +53,17 @@ Input:
 Output:
 
 * The function returns a `closure` object ([src/computation/closure.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/closure.H))
-* A closure can be created from a `double` or `int`.  Here an explicit conversion is invoked by surrouding a `log_double_t` with curly braces.
+* A closure can be created from a `double`, `int`, or `log_double_t`. Here an explicit conversion is
+  invoked by surrounding a `log_double_t` with curly braces.
 
 # Types
 
 ## `log_double_t`
-This is a positive real number represented in terms of its logarithm.  Operators have been defined so that you can multiply, add, subtract, and divide this type.
+This is the C++ representation of a positive real number in terms of its logarithm. Operators have been
+defined so that you can multiply, add, subtract, and divide this type. Haskell exposes the corresponding
+value as `Log Double`, a newtype whose underlying `Double` contains the logarithm. Both forms cross the
+FFI boundary as a `Runtime::Double`; converting a runtime value with `.as_log_double()` reconstructs the
+C++ `log_double_t` view.
 
 ## `Object`
 All C++ objects are accessed from Haskell inherit from this type.
