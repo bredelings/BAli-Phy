@@ -653,7 +653,7 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
     else if (auto lambda = m.to<CM::Lambda<CM::Ann>>())
     {
         auto binders2 = binders;
-        erase_pattern_binders(lambda->pattern, binders2);
+        add(binders2, CM::vars_in_pattern(lambda->pattern));
 
         for(auto& [sub_name, sub_term]: extract_terms(lambda->body, binders2))
             extracted.emplace_back(sub_name, std::move(sub_term));
