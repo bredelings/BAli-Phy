@@ -964,7 +964,7 @@ std::string write(const TreeInterface& T, map<int,string> names, bool print_leng
         root = T.nodes()[0];
 
     for(auto& [b,name]: names)
-	name = escape_for_newick(name);
+	name = escape_for_newick(name, Underscore::literal);
 
     if (print_lengths)
 	return write(T, root, T.branch_lengths(), names);

@@ -32,6 +32,9 @@
 #include <boost/dynamic_bitset.hpp>
 #include "tree-branchnode.H"
 
+/// Specify whether an unquoted underscore represents itself or a blank.
+enum class Underscore {literal, blank};
+
 // TODO.
 // 1. Add node and branch attributes to tree objects.
 //    - Each property will have an integer index, and (optionally) a string name, stored in the tree structure.
@@ -571,13 +574,14 @@ public:
     /// Create an identical tree that does not share memory with the original
     Tree& operator=(const Tree& T); 
 
-    int parse_(const std::string& s, std::function<void(BranchNode*)> assign_names);
+    int parse_(const std::string& s, Underscore underscores, std::function<void(BranchNode*)> assign_names);
     /// Parse and load the Newick format string 's', discovering and reporting leaf names in 'names'
-    virtual int parse_and_discover_names(const std::string& s);
+    virtual int parse_and_discover_names(const std::string& s, Underscore underscores);
     /// Parse and load the Newick format string 's', where node names are given in 'names', or numerical starting at 1
-    virtual int parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names, bool allow_numbers=true);
+    virtual int parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names,
+                                            Underscore underscores, bool allow_numbers=true);
     /// Parse and load the Newick format string 's', where node names are given in 'names'
-    int parse_with_names(const std::string& s, const std::vector<std::string>& names);
+    int parse_with_names(const std::string& s, const std::vector<std::string>& names, Underscore underscores);
 
     bool is_leaf_node(int n) const;
     int source(int b) const;
@@ -644,8 +648,9 @@ public:
     RootedTree& operator=(const RootedTree&);
 
     /// load this tree from the string s
-    virtual int parse_and_discover_names(const std::string& s);
-    virtual int parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names, bool allow_numbers=true);
+    virtual int parse_and_discover_names(const std::string& s, Underscore underscores);
+    virtual int parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names,
+                                            Underscore underscores, bool allow_numbers=true);
 
     /// Create an empty tree with a NULL root
     RootedTree():root_(NULL) {}
@@ -683,7 +688,7 @@ std::string write_no_names(const RootedTree& T, bool print_lengths=true);
 /// Return a Newick string representation of the tree 'T', where node names are integers.
 std::string write_no_names(const Tree& T, bool print_lengths=true);
 
-std::string escape_for_newick(const std::string& s);
+std::string escape_for_newick(const std::string& s, Underscore underscores);
 
 /// Append branches before all of the branches passed in.
 void get_branches_before(std::vector<const_branchview>& branch_list);
@@ -756,6 +761,6 @@ void remove_sub_branches(Tree& T);
 
 bool same_topology_and_node_and_branch_numbers(const Tree& T1, const Tree& T2);
 
-std::string escape_for_newick(const std::string& s);
-std::string unescape_from_newick(const std::string& s);
+std::string escape_for_newick(const std::string& s, Underscore underscores);
+std::string unescape_from_newick(const std::string& s, Underscore underscores);
 #endif

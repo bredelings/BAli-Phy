@@ -471,20 +471,21 @@ string get_attribute_string(const tree_attributes& attributes, const vector<stri
     return output;
 }
 
-int quoting_level_for_newick(const string& s)
+int quoting_level_for_newick(const string& s, Underscore underscores)
 {
     int level = 0;
     for(auto c: s)
     {
         if (not isgraph(c))
         {
-            if (c != ' ') return 2;
+            // Literal underscores require spaces to be quoted; blank mode can encode them as underscores.
+            if (c != ' ' or underscores == Underscore::literal) return 2;
             level = 1;
         }
         // Why no quotes needed for "("?
         else if (strchr("(){}\"-]/\\,;:=*`+<>", c) != nullptr)
             return (s.size() > 1 ? 2 : 1);
-        else if (strchr("\'[_", c) != nullptr)
+        else if (strchr("\'[", c) != nullptr or (c == '_' and underscores == Underscore::blank))
             return 2;
     }
     return level;
@@ -536,9 +537,11 @@ string underscores_to_blanks(const string& s)
     return s2;
 }
 
-string escape_for_newick(const string& s)
+// NOTE: Literal mode deliberately suspends formal Newick underscore translation because common
+// software writes unquoted underscores literally. It quotes actual spaces so labels still round-trip.
+string escape_for_newick(const string& s, Underscore underscores)
 {
-    int level = quoting_level_for_newick(s);
+    int level = quoting_level_for_newick(s, underscores);
     if (level == 0)
         return s;
     else if (level == 1)
@@ -547,14 +550,16 @@ string escape_for_newick(const string& s)
         return quote_for_newick(s);
 }
 
-string unescape_from_newick(const string& s)
+string unescape_from_newick(const string& s, Underscore underscores)
 {
     if (s.empty()) return s;
 
     if (s[0] == '\'')
         return unquote_for_newick(s);
-    else
+    else if (underscores == Underscore::blank)
         return underscores_to_blanks(s);
+    else
+        return s;
 }
 
 string write(const vector<string>& names, 
@@ -584,7 +589,7 @@ string write(const vector<string>& names,
 
     // Print the name (it might be empty)
     if (names[n].size())
-        output += escape_for_newick(names[n]);
+        output += escape_for_newick(names[n], Underscore::literal);
 
     // Print the node attributes, if any
     output += get_attribute_string(n.attributes(), node_attribute_names, "&&NHX:", ":", node_label_index);
@@ -626,7 +631,7 @@ string write(const_nodeview root, const vector<string>& names,
 
     // Print the name (it might be empty)
     if (names[root].size())
-        output += escape_for_newick(names[root]);
+        output += escape_for_newick(names[root], Underscore::literal);
 
     // Print the node attributes, if any
     output += get_attribute_string(root.attributes(), node_attribute_names, "&&NHX:", ":", node_label_index);
@@ -2069,7 +2074,7 @@ bool has_non_empty_label(BranchNode* BN, optional<int> node_label_index)
  * pos == index where we are in the Branch rule, and runs from 0 (before start) to 4 (after end).
  */
 
-int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_names)
+int Tree::parse_(const string& line, Underscore underscores, std::function<void(BranchNode*)> assign_names)
 {
     node_attribute_names.clear();
     if (node_label_index)
@@ -2179,7 +2184,7 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
                 set_attributes(tags, node_attribute_names, *BN->node_attributes);
 
                 if (node_label_index)
-                    (*BN->node_attributes)[*node_label_index] = unescape_from_newick(word);
+                    (*BN->node_attributes)[*node_label_index] = unescape_from_newick(word, underscores);
 
                 pos = 2;
             }
@@ -2220,7 +2225,7 @@ int Tree::parse_(const string& line, std::function<void(BranchNode*)> assign_nam
     return root_->node_attributes->name;
 }
 
-int Tree::parse_and_discover_names(const string& line)
+int Tree::parse_and_discover_names(const string& line, Underscore underscores)
 {
     auto namer = [this](BranchNode* root_)
     {
@@ -2251,7 +2256,7 @@ int Tree::parse_and_discover_names(const string& line)
 
     };
 
-    return parse_(line, namer);
+    return parse_(line, underscores, namer);
 }
 
 int get_leaf_index(const string& word, bool allow_numbers, const map<string,optional<int>>& name_to_index)
@@ -2284,7 +2289,8 @@ int get_leaf_index(const string& word, bool allow_numbers, const map<string,opti
 }
 
 // This approach assumes that all leaf names are unique??
-int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& names,bool allow_numbers)
+int Tree::parse_with_names_or_numbers(const string& line, const vector<string>& names, Underscore underscores,
+                                      bool allow_numbers)
 {
     if (names.size() == 0 and not allow_numbers)
         throw myexception()<<"Tree::parse_with_names_or_numbers( ): must supply leaf names if integers are not allowed.";
@@ -2318,12 +2324,12 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
         }
     };
 
-    return parse_(line, namer);
+    return parse_(line, underscores, namer);
 }
 
-int Tree::parse_with_names(const string& line,const vector<string>& names)
+int Tree::parse_with_names(const string& line, const vector<string>& names, Underscore underscores)
 {
-    return parse_with_names_or_numbers(line,names,false);
+    return parse_with_names_or_numbers(line, names, underscores, false);
 }
 
 bool Tree::is_leaf_node(int n) const
@@ -2563,18 +2569,19 @@ RootedTree& RootedTree::operator=(const RootedTree& RT) {
     return *this;
 }
 
-int RootedTree::parse_and_discover_names(const string& s)
+int RootedTree::parse_and_discover_names(const string& s, Underscore underscores)
 {
-    int r = Tree::parse_and_discover_names(s);
+    int r = Tree::parse_and_discover_names(s, underscores);
 
     root_ = nodes_[r];
 
     return r;
 }
 
-int RootedTree::parse_with_names_or_numbers(const string& s,const vector<string>& names, bool allow_numbers)
+int RootedTree::parse_with_names_or_numbers(const string& s, const vector<string>& names, Underscore underscores,
+                                            bool allow_numbers)
 {
-    int r = Tree::parse_with_names_or_numbers(s, names, allow_numbers);
+    int r = Tree::parse_with_names_or_numbers(s, names, underscores, allow_numbers);
 
     root_ = nodes_[r];
 

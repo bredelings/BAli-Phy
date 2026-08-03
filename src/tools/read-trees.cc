@@ -91,7 +91,7 @@ namespace trees_format
 	    while (portable_getline(fileref,line) and not line.size());
 	if (not line.size()) return false;
 	try {
-	    r = T.parse_with_names(line,leaf_names);
+	    r = T.parse_with_names(line, leaf_names, Underscore::literal);
 	}
 	catch (std::exception& e) {
 	    cerr<<" Error! "<<e.what()<<endl;
@@ -296,7 +296,7 @@ namespace trees_format
 	    string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos)) + ";";
 
 	    // if we have no leaf names, for some reason, numbers will be allowed.
-	    r = T.parse_with_names_or_numbers(t, leaf_names);
+	    r = T.parse_with_names_or_numbers(t, leaf_names, Underscore::blank);
 	}
 	catch (std::exception& e) {
 	    cerr<<" Error! "<<e.what()<<endl;
@@ -321,7 +321,7 @@ namespace trees_format
 	leaf_names.resize(words.size()/3+1);
 	for(int i=0;i<leaf_names.size();i++) 
 	{
-	    leaf_names[i] = unescape_from_newick(words[i*3+1]);
+	    leaf_names[i] = unescape_from_newick(words[i*3+1], Underscore::blank);
 
 	    if (i>0) assert(words[i*3-1] == ",");
 	}
@@ -376,7 +376,7 @@ namespace trees_format
 
 		    SequenceTree T;
 		    string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos)) + ";";
-		    T.parse(t);
+		    T.parse_and_discover_names(t, Underscore::blank);
 		    leaf_names = T.get_leaf_labels();
 		    std::sort(leaf_names.begin(),leaf_names.end());
 		    return;
@@ -549,4 +549,3 @@ namespace trees_format
 	mapping = compute_mapping(tfr->names(), leaf_order);
     }
 }
-

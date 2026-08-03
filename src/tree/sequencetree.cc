@@ -126,7 +126,7 @@ string SequenceTree::write_with_bootstrap_fraction(const vector<double>& bf, boo
 // one object on the stack then we quit
 int SequenceTree::parse(const string& line) 
 {
-    int root = Tree::parse_and_discover_names(line);
+    int root = Tree::parse_and_discover_names(line, Underscore::literal);
 
     for(int i=0;i<n_nodes();i++)
 	if (node(i).attribute(*node_label_index).empty())
@@ -135,9 +135,9 @@ int SequenceTree::parse(const string& line)
     return root;
 }
 
-int SequenceTree::parse_and_discover_names(const std::string& s)
+int SequenceTree::parse_and_discover_names(const std::string& s, Underscore underscores)
 {
-    int root = Tree::parse_and_discover_names(s);
+    int root = Tree::parse_and_discover_names(s, underscores);
 
     for(int i=0;i<n_nodes();i++)
 	if (node(i).attribute(*node_label_index).empty())
@@ -146,9 +146,10 @@ int SequenceTree::parse_and_discover_names(const std::string& s)
     return root;
 }
 
-int SequenceTree::parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names, bool allow_numbers)
+int SequenceTree::parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names,
+                                              Underscore underscores, bool allow_numbers)
 {
-    int root = Tree::parse_with_names_or_numbers(s,names, allow_numbers);
+    int root = Tree::parse_with_names_or_numbers(s, names, underscores, allow_numbers);
 
     for(int i=0;i<names.size();i++)
 	set_label(i, names[i]);
@@ -162,7 +163,7 @@ int SequenceTree::parse_with_names_or_numbers(const std::string& s, const std::v
 
 int SequenceTree::parse_nexus(const string& s,const vector<string>& names) 
 {
-    int root = parse_with_names_or_numbers(s, names);
+    int root = parse_with_names_or_numbers(s, names, Underscore::blank);
 
     for(int i=0;i<names.size();i++)
 	set_label(i, names[i]);
@@ -222,7 +223,7 @@ string write_with_bootstrap_fraction(const vector<string>& names, const_branchvi
     }
 
     // Print the name
-    output += escape_for_newick(names[b.target()]);
+    output += escape_for_newick(names[b.target()], Underscore::literal);
 
     // print the branch length if requested
     double bfb = bf[b.undirected_name()];
@@ -254,7 +255,7 @@ string write_with_bootstrap_fraction(const RootedTree& T, const vector<string>& 
     output += ")";
 
     // Print the name
-    output += escape_for_newick(names[T.root()]);
+    output += escape_for_newick(names[T.root()], Underscore::literal);
 
     // Print the terminator
     output += ";";
@@ -272,18 +273,19 @@ string RootedSequenceTree::write_with_bootstrap_fraction(const vector<double>& b
     return ::write_with_bootstrap_fraction(*this, get_labels(), bf, print_lengths);
 }
 
-int RootedSequenceTree::parse_and_discover_names(const std::string& s)
+int RootedSequenceTree::parse_and_discover_names(const std::string& s, Underscore underscores)
 {
-    int r = SequenceTree::parse_and_discover_names(s);
+    int r = SequenceTree::parse_and_discover_names(s, underscores);
 
     root_ = nodes_[r];
 
     return r;
 }
 
-int RootedSequenceTree::parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names, bool allow_numbers)
+int RootedSequenceTree::parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names,
+                                                    Underscore underscores, bool allow_numbers)
 {
-    int r = SequenceTree::parse_with_names_or_numbers(s,names,allow_numbers);
+    int r = SequenceTree::parse_with_names_or_numbers(s, names, underscores, allow_numbers);
 
     root_ = nodes_[r];
 
@@ -302,7 +304,7 @@ int RootedSequenceTree::parse(const string& s)
 int RootedSequenceTree::parse_nexus(const string& s, const vector<string>& names) 
 {
     // Parse the tree with the specified number of names
-    int r = parse_with_names_or_numbers(s, names);
+    int r = parse_with_names_or_numbers(s, names, Underscore::blank);
 
     // Complain if the number of names is odd.
     if (names.size() != n_leaves())
