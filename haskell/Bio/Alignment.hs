@@ -283,12 +283,11 @@ instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
 leafAlignment tree sequenceData = labelToNodeMap tree $ fmap (fmap bitmaskFromSequence') $ getSequences sequenceData
 
 
--- Encode an unboxed component-state vector without constructing an
--- intermediate pair list.
-foreign import trcall "Foreign:" encodeComponentStateSequence :: U.Vector (Int,Int) -> Text
+-- Encode one pair per actual character, omitting fixed-alignment gap sentinels
+-- without constructing an intermediate pair list.
+foreign import trcall "Foreign:" encodeComponentStateSequence :: ComponentStateSequence -> Text
 
 instance ToJSON ComponentStateSequence where
     toJSON = error "ComponentStateSequence.toJSON: not implemented"
 
-    toEncoding (ComponentStateSequence values) =
-        E.unsafeToEncoding (encodeComponentStateSequence values)
+    toEncoding sequence = E.unsafeToEncoding (encodeComponentStateSequence sequence)

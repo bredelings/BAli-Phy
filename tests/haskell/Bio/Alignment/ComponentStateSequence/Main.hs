@@ -8,8 +8,9 @@ import qualified Data.Text.IO as Text
 import qualified Data.Vector.Unboxed as U
 import System.IO (print)
 
--- Exercise independently offset structure-of-arrays views, O(1) state
--- projection, and ComponentStateSequence's delegated JSON encoding.
+-- Full-program tests do not inspect catStates precisely, so check offset views, O(1) projection,
+-- and that fixed-alignment gaps remain internal but are omitted from ComponentStateSequence JSON.
+-- The JSON check is obsolete if character-property output stops using ungapped coordinates.
 main = do
     let components = U.slice 1 3
             (U.fromList [99,-1,2,3,99] :: U.Vector Int)
@@ -19,5 +20,5 @@ main = do
         sequence = ComponentStateSequence values
     print sequence
     print (U.toList (componentStates sequence))
-    Text.putStrLn (encodeComponentStateSequence values)
+    Text.putStrLn (encodeComponentStateSequence sequence)
     Text.putStrLn (JSON.encode sequence)
