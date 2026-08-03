@@ -1,0 +1,9 @@
+#NEXUS
+BEGIN TREES;
+TRANSLATE
+  1 A_B,
+  2 C_D,
+  3 E_F,
+  4 G_H;
+TREE query = ((A_B:1,C_D:1):1,E_F:1,G_H:1);
+END;
