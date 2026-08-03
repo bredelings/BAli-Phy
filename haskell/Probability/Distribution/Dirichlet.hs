@@ -6,7 +6,7 @@ import Probability.Distribution.List
 import MCMC.Moves.Real
 import Numeric.LinearAlgebra (Vector, fromList)
 
-foreign import trcall "Distribution:dirichlet_density" dirichletDensityNative :: Vector Double -> Vector Double -> LogDouble
+foreign import trcall "Distribution:dirichlet_density" dirichletDensityNative :: Vector Double -> Vector Double -> Log Double
 dirichletDensity as ps = dirichletDensityNative
     (fromList as) (fromList ps)
 

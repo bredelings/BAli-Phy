@@ -22,7 +22,7 @@ instance IOSampleable Categorical where
 instance HasPdf Categorical where
     pdf (Categorical ps) n | n < 0            = 0
                            | n >= V.length ps = 0
-                           | otherwise        = doubleToLogDouble $ ps V.! n
+                           | otherwise        = toFloating $ ps V.! n
 
 instance Dist1D Categorical where
     cdf (Categorical ps) x | n < 0            = 0
@@ -59,7 +59,7 @@ And, why would we think that xs :: Vector Int?  Is there some defaulting going o
 instance Eq a => HasPdf (CategoricalOn a) where
     pdf (CategoricalOn xs ps) x = case V.elemIndex x xs of
                                     Nothing -> 0
-                                    Just n -> doubleToLogDouble $ ps V.! n
+                                    Just n -> toFloating $ ps V.! n
 
 instance Eq a => HasAnnotatedPdf (CategoricalOn a) where
     annotatedDensities dist = make_densities $ pdf dist

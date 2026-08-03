@@ -1,6 +1,6 @@
 module Probability.Random (module Probability.Random,
                            module Range,
-                           module Numeric.LogDouble,
+                           module Numeric.Log,
                            module Numeric.Prob,
                            module Probability.Dist,
                            modifiable,
@@ -16,7 +16,7 @@ import Data.JSON.Types.Internal (Key(..))
 import Effect
 import Control.Monad.IO.Class -- for liftIO
 import Data.IntMap (IntMap)
-import Numeric.LogDouble
+import Numeric.Log
 import Numeric.Prob
 import Control.Monad.Fix
 
@@ -74,7 +74,7 @@ makeEdges event (InEdge name node) = do registerInEdge node event name
 class Dist d => HasAnnotatedPdf d where
     type DistProperties d :: Type
     type DistProperties d = ()
-    annotatedDensities :: d -> Result d -> AnnotatedDensity ([LogDouble], DistProperties d)
+    annotatedDensities :: d -> Result d -> AnnotatedDensity ([Log Double], DistProperties d)
 
 densities dist x = fst $ get_densities $ annotatedDensities dist x
 density dist x = balancedProduct (densities dist x)

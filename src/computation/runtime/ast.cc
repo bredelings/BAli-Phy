@@ -122,7 +122,6 @@ namespace Runtime
             else
                 return std::is_same_v<T, Int> or
                        std::is_same_v<T, Double> or
-                       std::is_same_v<T, LogDouble> or
                        std::is_same_v<T, Char> or
                        std::is_same_v<T, String> or
                        std::is_same_v<T, Integer> or
@@ -138,7 +137,6 @@ namespace Runtime
 
             if constexpr (std::is_same_v<T, Int> or
                           std::is_same_v<T, Double> or
-                          std::is_same_v<T, LogDouble> or
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
@@ -167,7 +165,6 @@ namespace Runtime
 
             if constexpr (std::is_same_v<T, Int> or
                           std::is_same_v<T, Double> or
-                          std::is_same_v<T, LogDouble> or
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
@@ -303,7 +300,6 @@ namespace Runtime
             else
                 return std::is_same_v<T, Int> or
                        std::is_same_v<T, Double> or
-                       std::is_same_v<T, LogDouble> or
                        std::is_same_v<T, Char> or
                        std::is_same_v<T, String> or
                        std::is_same_v<T, Integer> or
@@ -381,10 +377,6 @@ namespace Runtime
             else if constexpr (std::is_same_v<T, Double>)
             {
                 return std::to_string(e.value) + "##";
-            }
-            else if constexpr (std::is_same_v<T, LogDouble>)
-            {
-                return std::to_string(e.value.log()) + "L#";
             }
             else if constexpr (std::is_same_v<T, Char>)
             {
@@ -553,7 +545,6 @@ namespace Runtime
 
             if constexpr (std::is_same_v<T, Int> or
                           std::is_same_v<T, Double> or
-                          std::is_same_v<T, LogDouble> or
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer>)

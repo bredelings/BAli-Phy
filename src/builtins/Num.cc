@@ -285,7 +285,7 @@ extern "C" R::Exp simple_function_intToDouble(vector<R::Exp>& args)
     return {double(i)};
 }
 
-//********** Builtins for Num LogDouble ****************//
+//********** Builtins for Num (Log Double) ****************//
 
 extern "C" R::Exp simple_function_add_logdouble(vector<R::Exp>& args)
 {

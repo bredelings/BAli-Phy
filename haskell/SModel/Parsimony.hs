@@ -9,7 +9,7 @@ import Data.Foldable
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data (NativeMatrix, matrixFromNative, nativeMatrix)
 import Foreign.Vector
-import Numeric.LogDouble
+import Numeric.Log
 import Data.Maybe (maybeToList)
 import Data.Text (Text)
 import qualified Data.Vector.Unboxed as U

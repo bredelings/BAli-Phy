@@ -26,7 +26,7 @@ import Foreign.NativeVector (NativeVector)
 
 import MCMC -- for GibbsSampleCategorical
 
-foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -> Int -> Int -> Int -> Int -> NativeVector Int -> LogDouble
+foreign import bpcall "Distribution:CRP_density" builtin_crp_density :: Double -> Int -> Int -> Int -> Int -> NativeVector Int -> Log Double
 
 -- Marshal assignments into contiguous unboxed storage so the native density
 -- can scan primitive integers without copying or unboxing each element.

@@ -3,7 +3,7 @@ module Probability.Distribution.Uniform where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:" uniform_density :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:" uniform_density :: Double -> Double -> Double -> Log Double
 foreign import bpcall "Distribution:" sample_uniform :: Double -> Double -> IO Double
 
 data Uniform = Uniform Double Double
@@ -55,7 +55,7 @@ uniform_bounds l u = between l u
 uniform_effect l u x = add_move $ sliceSample x (uniform_bounds l u)
 
 ------------------------------------
-foreign import bpcall "Distribution:" uniform_int_density :: Int -> Int -> Int -> LogDouble
+foreign import bpcall "Distribution:" uniform_int_density :: Int -> Int -> Int -> Log Double
 foreign import bpcall "Distribution:" sample_uniform_int :: Int -> Int -> IO Int
 
 data UniformInt = UniformInt Int Int

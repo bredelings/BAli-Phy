@@ -151,6 +151,7 @@ the same time as another node.
    At population merge/split times, we also need to relabel times by deme transitions.
 -}
 
+coalescentTreePrFactorsSort :: (HasRoots g, HasNodeTimes g) => [(Double, Double)] -> g -> [Log Double]
 coalescentTreePrFactorsSort ((t0,popSize0):popSizes) tree = [balancedProduct $ go t0 events 0 (1/popSize0) (parentBeforeChildPrs tree) ]
     where nodes = sortOn fst [ (nodeTime tree node, nodeType tree node) | node <- getNodes tree]
           shifts = [(time, RateShift (1/popSize)) | (time, popSize) <- popSizes]
@@ -161,10 +162,10 @@ coalescentTreePrFactorsSort ((t0,popSize0):popSizes) tree = [balancedProduct $ g
               case event of
                 RateShift newRate -> go t2 events n     newRate (prNothing: factors)
                 Leaf _            -> go t2 events (n+1) rate    (prNothing: factors)
-                Internal _        -> go t2 events (n-1) rate    (prNothing * toLogDouble rate: factors)
+                Internal _        -> go t2 events (n-1) rate    (prNothing * toFloating rate: factors)
                         -- the nChoose2 from the rate cancels with the one from the topology
               where nChoose2  = fromIntegral $ (n*(n-1)) `div` 2
-                    prNothing = expToLogDouble $ (-rate * nChoose2 * (t2-t1))
+                    prNothing = expTo $ (-rate * nChoose2 * (t2-t1))
 
 -------------------------------------------------------------
 
@@ -172,7 +173,7 @@ foreign import bpcall "TreeDist:" rawCoalescentTreePr
     :: EVector (EPair Double Double)
     -> IntMap.IntMap Double
     -> EVector (EPair Int (EVector Int))
-    -> LogDouble
+    -> Log Double
 
 coalescentTreePr popSizes tree = rawCoalescentTreePr popSizes' (nodeTimes tree) topology
     where popSizes' = toVector $ c_pair' <$> popSizes

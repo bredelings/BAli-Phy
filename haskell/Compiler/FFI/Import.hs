@@ -17,7 +17,7 @@ import Data.Function (id)
 import Data.Functor ((<$>))
 import Foreign.Pair (EPair, c_fst, c_snd)
 import Foreign.String (CPPString, pack_cpp_string, unpack_cpp_string)
-import Numeric.LogDouble (LogDouble)
+import Numeric.Log (Log)
 
 -- | Translate one Haskell argument into the raw argument sequence consumed by
 -- an imported builtin.  The continuation makes it possible for one public
@@ -81,8 +81,8 @@ instance COutput Double
 instance CInput Bool
 instance COutput Bool
 
-instance CInput LogDouble
-instance COutput LogDouble
+instance CInput (Log Double)
+instance COutput (Log Double)
 
 instance CInput String where
     type CInputType String result = CPPString -> result

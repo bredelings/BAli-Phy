@@ -621,7 +621,7 @@ bool do_extract(const CM::TypedExpr& func, const CM::TypedExpr& arg, const set<s
     {
         if (annotated_term_is_model(arg)) return false;
 
-        if (arg_type == "Int" or arg_type == "Double" or arg_type == "LogDouble")
+        if (arg_type == "Int" or arg_type == "Double" or arg_type == "Log<Double>")
             return true;
         if (arg_type == "List<Double>" or arg_type == "List<(String,Double)>")
             return true;

@@ -11,10 +11,10 @@ import           Data.Text (Text)
 import           Data.Maybe (isJust, fromJust)
 import           MCMC
 
-yulePrFactors :: (HasRoots t, HasNodeTimes t) => Int -> Rate -> t -> [LogDouble]
+yulePrFactors :: (HasRoots t, HasNodeTimes t) => Int -> Rate -> t -> [Log Double]
 yulePrFactors n lambda tree = require (numLeaves tree == n)
-                              : pow (toLogDouble lambda) (fromIntegral (n-2))
-                              : [ expToLogDouble (-lambda * deltaT ) * require (deltaT >= 0)
+                              : pow (toFloating lambda) (fromIntegral (n-2))
+                              : [ expTo (-lambda * deltaT ) * require (deltaT >= 0)
                                       | node <- getNodes tree,
                                         let parent = parentNode tree node,
                                         isJust parent,

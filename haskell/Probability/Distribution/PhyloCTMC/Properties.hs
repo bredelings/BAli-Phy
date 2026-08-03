@@ -10,9 +10,9 @@ import qualified Data.IntMap as IntMap
 
 import SModel.Likelihood.CLV
 import SModel.Property
-import Numeric.LogDouble
+import Numeric.Log
 
 class PhyloCTMCProperties a where
       prop_anc_cat_states :: a -> IntMap ComponentStateSequence
-      prop_likelihood :: a -> LogDouble
+      prop_likelihood :: a -> Log Double
       prop_smodel_properties :: a -> PropertyMap

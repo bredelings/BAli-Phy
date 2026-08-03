@@ -94,7 +94,6 @@ namespace
 
             if constexpr (std::is_same_v<T, Int> or
                           std::is_same_v<T, Double> or
-                          std::is_same_v<T, LogDouble> or
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or
@@ -197,7 +196,6 @@ namespace
 
             if constexpr (std::is_same_v<T, Int> or
                           std::is_same_v<T, Double> or
-                          std::is_same_v<T, LogDouble> or
                           std::is_same_v<T, Char> or
                           std::is_same_v<T, String> or
                           std::is_same_v<T, Integer> or

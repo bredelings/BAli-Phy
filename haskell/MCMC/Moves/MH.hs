@@ -5,7 +5,7 @@ import Probability.Dist -- for several things in propose
 import MCMC.Types
 import MCMC.Moves.Context
 
-foreign import bpcall "MCMC:" acceptMH :: ContextIndex -> ContextIndex -> LogDouble -> IO Bool
+foreign import bpcall "MCMC:" acceptMH :: ContextIndex -> ContextIndex -> Log Double -> IO Bool
 
 metropolisHastings :: Proposal -> TransitionKernel
 metropolisHastings (Proposal proposal) = TransitionKernel $ \c1 -> do
@@ -18,7 +18,7 @@ metropolisHastings (Proposal proposal) = TransitionKernel $ \c1 -> do
 
 propose :: (Dist d, IOSampleable d, HasPdf d, Result d ~ a) => Modifiable a -> (a -> d) -> Proposal
 propose x dist = Proposal $ \c -> do
-  x1 <- getAtomicModifiableValueInContext x c -- This is guaranteed to be an Int, Double, LogDouble, Char, or Object.
+  x1 <- getAtomicModifiableValueInContext x c -- This is guaranteed to be an Int, Double, Log Double, Char, or Object.
                                               -- x has to be an atomic modifiable.  We can't use it to propose trees...
   x2 <- sampleIO (dist x1)
   setAtomicModifiableValueInContext x x2 c

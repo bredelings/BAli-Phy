@@ -10,7 +10,7 @@ import Data.Bool ((&&))
 import Data.Eq ((==))
 import Data.Floating.Types (FloatConvert(toFloating))
 import Data.Ord (Ordering(LT), compare, max, min, (<), (<=))
-import Numeric.Prob (LogDouble, Prob, complement, fromLogOdds, isNaNProb, logOdds)
+import Numeric.Prob (Log, Prob, complement, fromLogOdds, isNaNProb, logOdds)
 import System.IO (IO, print)
 
 near x y = abs (x-y) < 1.0e-12
@@ -32,9 +32,9 @@ main = do
       half = fromLogOdds 0
       two = recip half
       infinity = recip zero
-      zeroFromLog = toFloating (0 :: LogDouble) :: Prob
-      oneFromLog = toFloating (1 :: LogDouble) :: Prob
-      infinityFromLog = toFloating (1/0 :: LogDouble) :: Prob
+      zeroFromLog = toFloating (0 :: Log Double) :: Prob
+      oneFromLog = toFloating (1 :: Log Double) :: Prob
+      infinityFromLog = toFloating (1/0 :: Log Double) :: Prob
   print
     ( zeroFromLog == zero
     , oneFromLog == one
@@ -74,7 +74,7 @@ main = do
     )
   let nanDouble = 0/0 :: Double
       nan = toFloating nanDouble :: Prob
-      nanLog = toFloating nan :: LogDouble
+      nanLog = toFloating nan :: Log Double
   print
     ( isNaNProb nan
     , nan == nan

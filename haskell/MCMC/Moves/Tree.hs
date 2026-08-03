@@ -15,7 +15,7 @@ walkTreePathVector tree context =
 walk_tree_path tree context = U.toList (walkTreePathVector tree context)
 
 -- This is "unsafe" because it doesn't update alignments
-foreign import bpcall "MCMC:" fnprUnsafeProposalRaw :: Modifiable t -> Int -> ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:" fnprUnsafeProposalRaw :: Modifiable t -> Int -> ContextIndex -> IO (Log Double)
 fnprUnsafeProposal tree branch = Proposal $ fnprUnsafeProposalRaw tree branch
 
 foreign import bpcall "MCMC:" walkTreeSampleNNIRaw :: Modifiable t -> ContextIndex -> IO ()

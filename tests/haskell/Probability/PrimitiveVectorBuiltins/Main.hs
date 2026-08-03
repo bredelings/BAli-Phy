@@ -7,13 +7,13 @@ import qualified Data.Vector.Unboxed as U
 import Data.Vector.Unboxed.Internal (intVectorNativeView)
 import Foreign.NativeVector (NativeVector)
 import Foreign.Vector (EVector, listToVector, vectorToList)
-import Probability (LogDouble)
+import Probability (Log)
 import Probability.Distribution.Multinomial (multinomial_density)
 import System.IO (print)
 
-foreign import trcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: U.Vector Double -> EVector Int -> LogDouble
+foreign import trcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: U.Vector Double -> EVector Int -> Log Double
 foreign import trcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf :: U.Vector Double -> IO (EVector Int)
-foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_coalescence_probability :: Int -> Double -> Int -> Int -> NativeVector Int -> LogDouble
+foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_coalescence_probability :: Int -> Double -> Int -> Int -> NativeVector Int -> Log Double
 
 -- Exercise primitive-vector probability boundaries without exposing their
 -- internal unboxed representation in the public list-facing interface.

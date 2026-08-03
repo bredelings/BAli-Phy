@@ -3,7 +3,7 @@ module Probability.Distribution.Laplace where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:" laplace_density :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:" laplace_density :: Double -> Double -> Double -> Log Double
 foreign import bpcall "Distribution:" sample_laplace  :: Double -> Double -> IO Double
 
 data Laplace = Laplace Double Double

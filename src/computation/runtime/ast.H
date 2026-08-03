@@ -38,7 +38,6 @@ namespace Runtime
 
     struct Int;
     struct Double;
-    struct LogDouble;
     struct Char;
     struct String;
     struct Integer;
@@ -81,34 +80,6 @@ namespace Runtime
 
         template <class Archive>
         void serialize(Archive& ar) { ar(value); }
-    };
-
-    struct LogDouble
-    {
-        log_double_t value;
-
-        LogDouble() = default;
-        LogDouble(log_double_t x):value(x) {}
-
-        bool operator==(const LogDouble& x) const
-        {
-            return OrderedDouble(value.log()) == OrderedDouble(x.value.log());
-        }
-
-        template <class Archive>
-        void save(Archive& ar) const
-        {
-            auto log_value = value.log();
-            ar(log_value);
-        }
-
-        template <class Archive>
-        void load(Archive& ar)
-        {
-            double log_value;
-            ar(log_value);
-            value = exp_to_log_space(log_value);
-        }
     };
 
     struct Char
@@ -205,7 +176,6 @@ namespace Runtime
             std::monostate,
             Int,
             Double,
-            LogDouble,
             Char,
             ObjectValue,
             IndexVar,
@@ -226,7 +196,7 @@ namespace Runtime
         Exp() = default;
         Exp(int x):Exp(Int(x)) {}
         Exp(double x):Exp(Double(x)) {}
-        Exp(log_double_t x):Exp(LogDouble(x)) {}
+        Exp(log_double_t x):Exp(Double(x.log())) {}
         Exp(bool);
         Exp(char32_t x):Exp(Char(x)) {}
         Exp(char) = delete;
@@ -245,7 +215,6 @@ namespace Runtime
         Exp(object_ptr<T> x):Exp(object_ptr<const Object>(std::move(x))) {}
         Exp(Int node):value(std::move(node)) {}
         Exp(Double node):value(std::move(node)) {}
-        Exp(LogDouble node):value(std::move(node)) {}
         Exp(Char node):value(std::move(node)) {}
         Exp(String);
         Exp(Integer);
@@ -291,7 +260,6 @@ namespace Runtime
 
         bool is_int() const { return is<Int>(); }
         bool is_double() const { return is<Double>(); }
-        bool is_log_double() const { return is<LogDouble>(); }
         bool is_char() const { return is<Char>(); }
         bool is_string() const { return is<String>(); }
         bool is_integer() const { return is<Integer>(); }
@@ -402,84 +370,78 @@ namespace Runtime
                 break;
             }
             case 3: {
-                LogDouble node;
-                ar(node);
-                value = std::move(node);
-                break;
-            }
-            case 4: {
                 Char node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 5: {
+            case 4: {
                 ObjectValue node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 6: {
+            case 5: {
                 IndexVar node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 7: {
+            case 6: {
                 RegRef node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 8: {
+            case 7: {
                 ExpPtr<String> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 9: {
+            case 8: {
                 ExpPtr<Integer> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 10: {
+            case 9: {
                 ExpPtr<GlobalVar> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 11: {
+            case 10: {
                 ExpPtr<Lambda> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 12: {
+            case 11: {
                 ExpPtr<Let> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 13: {
+            case 12: {
                 ExpPtr<Case> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 14: {
+            case 13: {
                 ExpPtr<FunctionApp> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 15: {
+            case 14: {
                 ExpPtr<ConstructorApp> node;
                 ar(node);
                 value = std::move(node);
                 break;
             }
-            case 16: {
+            case 15: {
                 ExpPtr<OperationApp> node;
                 ar(node);
                 value = std::move(node);
@@ -922,7 +884,7 @@ namespace Runtime
 
     inline log_double_t Exp::as_log_double() const
     {
-        return as<LogDouble>().value;
+        return exp_to_log_space(as_double());
     }
 
     inline char32_t Exp::as_char() const

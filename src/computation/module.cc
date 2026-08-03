@@ -724,7 +724,7 @@ std::string xxhash64_hex(const std::string& s) {
 // This is independent of the executable-keyed cache directory: it makes the
 // archive self-describing and prevents an older reader from silently treating
 // newly appended compiled-module metadata as a valid artifact.
-static constexpr std::uint32_t compiled_module_cache_format = 4;
+static constexpr std::uint32_t compiled_module_cache_format = 5;
 
 std::string extract_xxhash(std::string& data)
 {

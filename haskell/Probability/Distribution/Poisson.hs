@@ -5,7 +5,7 @@ import MCMC
 import Probability.Distribution.List
 import Probability.Distribution.Uniform
 
-foreign import bpcall "Distribution:" poisson_density :: Double -> Int -> LogDouble
+foreign import bpcall "Distribution:" poisson_density :: Double -> Int -> Log Double
 foreign import bpcall "Distribution:" sample_poisson :: Double -> IO Int
 
 newtype Poisson = Poisson Double

@@ -37,17 +37,9 @@ extern "C" R::Exp simple_function_log(vector<R::Exp>& args)
     auto x = get_arg(args);
 
     if (x.is_double())
-    {
-	double xx = x.as_double();
-	return log(xx);
-    }
-    else if (x.is_log_double())
-    {
-	log_double_t xx = x.as_log_double();
-	return log(xx);
-    }
+        return log(x.as_double());
 
-    throw myexception()<<"log: object '"<<x.print()<<"' is not double or log_double";
+    throw myexception()<<"log: object '"<<x.print()<<"' is not double";
 }
 
 extern "C" R::Exp simple_function_log1p(vector<R::Exp>& args)
@@ -122,10 +114,8 @@ extern "C" R::Exp simple_function_pow(vector<R::Exp>& args)
 	yy = y.as_double();
     else if (y.is_int())
 	yy = y.as_int();
-    else if (y.is_log_double())
-        yy = double(y.as_log_double());
     else
-	throw myexception()<<"pow: exponent '"<<x.print()<<"' is not double, int, or log_double";
+	throw myexception()<<"pow: exponent '"<<y.print()<<"' is not double or int";
     
     if (x.is_double())
     {
@@ -137,25 +127,17 @@ extern "C" R::Exp simple_function_pow(vector<R::Exp>& args)
 	double xx = x.as_int();
 	return pow(xx,yy);
     }
-    else if (x.is_log_double())
-    {
-	log_double_t xx = x.as_log_double();
-	return pow(xx,yy);
-    }
-
-    throw myexception()<<"pow: object '"<<x.print()<<"' is not double, int, or log_double";
+    throw myexception()<<"pow: object '"<<x.print()<<"' is not double or int";
 }
 
 extern "C" R::Exp simple_function_sqrt(vector<R::Exp>& args)
 {
     auto x = get_arg(args);
 
-    if (x.is_double())
-	return sqrt(x.as_double());
-    else if (x.is_log_double())
-	return sqrt(x.as_log_double());
-    else
-	std::abort();
+    if (not x.is_double())
+        throw myexception()<<"sqrt: object '"<<x.print()<<"' is not double";
+
+    return sqrt(x.as_double());
 }
 
 extern "C" R::Exp simple_function_logBase(vector<R::Exp>& args)
@@ -163,12 +145,10 @@ extern "C" R::Exp simple_function_logBase(vector<R::Exp>& args)
     auto x = get_arg(args);
     auto base = get_arg(args);
 
-    if (x.is_double())
-	return log(x.as_double())/log(base.as_double());
-    else if (x.is_log_double())
-	return log(x.as_log_double())/log(base.as_log_double());
-    else
-	std::abort();
+    if (not x.is_double() or not base.is_double())
+        throw myexception()<<"logBase: arguments must be double";
+
+    return log(x.as_double())/log(base.as_double());
 }
 
 extern "C" R::Exp simple_function_sin(vector<R::Exp>& args)

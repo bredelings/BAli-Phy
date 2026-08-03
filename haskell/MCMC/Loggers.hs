@@ -1,6 +1,6 @@
 module MCMC.Loggers where
 
-import           Numeric.LogDouble
+import           Numeric.Log
 import           Numeric.Prob (fromLogOdds, toFloating)
 import           Compiler.Floating (ln)
 import           MCMC.Types (ContextAction(..), ContextIndex, Modifiable)
@@ -20,17 +20,17 @@ logJSONLine context iter = cjsonToText <$> logJSONRaw context iter
 foreign import bpcall "MCMC:" jsonToTableLineRaw :: CJSON -> CPPString
 logTableLine context iter = T.fromCppString . jsonToTableLineRaw <$> logJSONRaw context iter
 
-foreign import bpcall "MCMC:prior" priorRaw :: ContextIndex -> IO LogDouble
-foreign import bpcall "MCMC:likelihood" likelihoodRaw :: ContextIndex -> IO LogDouble
-foreign import bpcall "MCMC:posterior" posteriorRaw :: ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:prior" priorRaw :: ContextIndex -> IO (Log Double)
+foreign import bpcall "MCMC:likelihood" likelihoodRaw :: ContextIndex -> IO (Log Double)
+foreign import bpcall "MCMC:posterior" posteriorRaw :: ContextIndex -> IO (Log Double)
 
-prior :: ContextAction LogDouble
+prior :: ContextAction (Log Double)
 prior = ContextAction priorRaw
 
-likelihood :: ContextAction LogDouble
+likelihood :: ContextAction (Log Double)
 likelihood = ContextAction likelihoodRaw
 
-posterior :: ContextAction LogDouble
+posterior :: ContextAction (Log Double)
 posterior = ContextAction posteriorRaw
 
 logPrior :: ContextAction Double

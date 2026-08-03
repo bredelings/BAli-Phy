@@ -29,7 +29,7 @@ annotatedDensities on the component distributions.
 
 independent_densities (d:ds) (x:xs) = densities d x ++ independent_densities ds xs
 independent_densities [] []         = []
-independent_densities _  _          = [doubleToLogDouble 0.0]
+independent_densities _  _          = [toFloating (0.0 :: Double)]
 
 independent_pdf (d:ds) (x:xs) = pdf d x * independent_pdf ds xs
 independent_pdf [] []         = 1

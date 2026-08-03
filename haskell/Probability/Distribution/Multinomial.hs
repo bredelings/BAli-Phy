@@ -5,7 +5,7 @@ import MCMC
 import Probability.Distribution.Binomial
 import qualified Data.Vector.Unboxed as U
 
-foreign import trcall "Distribution:multinomial_density" builtin_multinomial_density :: Int -> U.Vector Double -> U.Vector Int -> LogDouble
+foreign import trcall "Distribution:multinomial_density" builtin_multinomial_density :: Int -> U.Vector Double -> U.Vector Int -> Log Double
 
 data Multinomial = Multinomial Int [Double]
 

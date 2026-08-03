@@ -153,7 +153,7 @@ public:
 
     template <typename T>
     requires std::same_as<std::remove_cvref_t<T>, log_double_t>
-    closure(T x):closure(Runtime::LogDouble(x)) {}
+    closure(T x):closure(Runtime::Exp(x)) {}
 
     template <typename T>
     requires std::same_as<std::remove_cvref_t<T>, bool>

@@ -5,7 +5,7 @@ import MCMC
 
 ---- cauchy
 
-foreign import bpcall "Distribution:" cauchy_density :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:" cauchy_density :: Double -> Double -> Double -> Log Double
 foreign import bpcall "Distribution:" cauchy_quantile :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" sample_cauchy :: Double -> Double -> IO Double
 

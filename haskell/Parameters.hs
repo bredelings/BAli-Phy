@@ -3,15 +3,15 @@ module Parameters where
 import Range
 import Foreign.String     -- for list_to_string
 import Effect             -- for Effect
-import Numeric.LogDouble  -- for LogDouble
+import Numeric.Log  -- for Log Double
 
 -- An Effect may be a node in a graph??
 
 foreign import bpcall "Modifiables:" modifiable :: a -> a
 
-foreign import bpcall "Modifiables:" registerPrior :: Effect -> LogDouble -> IO Effect
+foreign import bpcall "Modifiables:" registerPrior :: Effect -> Log Double -> IO Effect
 
-foreign import bpcall "Modifiables:" registerLikelihood :: a -> LogDouble -> IO Effect
+foreign import bpcall "Modifiables:" registerLikelihood :: a -> Log Double -> IO Effect
 
 foreign import bpcall "Modifiables:registerInEdge" builtin_registerInEdge :: a -> Effect -> CPPString -> IO Effect
 registerInEdge var dist role = builtin_registerInEdge var dist (list_to_string role)

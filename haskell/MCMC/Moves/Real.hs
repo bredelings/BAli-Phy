@@ -9,7 +9,7 @@ sliceSample x bnds = TransitionKernel $ sliceSampleRaw x (c_range bnds)
 
 foreign import bpcall "MCMC:" scaleGroupsSliceRaw :: [Double] -> [Double] -> ContextIndex -> IO ()
 
-foreign import bpcall "MCMC:" scaleGroupsProposalRaw :: [Double] -> [Double] -> ContextIndex -> IO LogDouble
+foreign import bpcall "MCMC:" scaleGroupsProposalRaw :: [Double] -> [Double] -> ContextIndex -> IO (Log Double)
 
 scaleGroupsSlice xs ys = TransitionKernel $ scaleGroupsSliceRaw (toList xs) (toList ys)
 
@@ -20,4 +20,3 @@ scaleGroupsProposal xs ys = Proposal $ scaleGroupsProposalRaw (toList xs) (toLis
 scaleGroupProposal xs = scaleGroupsProposal xs []
 
 scaleGroupsMH xs ys = metropolisHastings $ scaleGroupsProposal xs ys
-

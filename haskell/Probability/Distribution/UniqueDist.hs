@@ -13,7 +13,7 @@ instance Dist UniqueDist where
 instance IOSampleable UniqueDist where
     sampleIO UniqueDist = newUnique
 
--- Hmm.. Maybe we want the result of discrete distributionts to be Probability instead of LogDouble?
+-- Hmm.. Maybe we want the result of discrete distributionts to be Probability instead of Log Double?
 
 instance HasPdf UniqueDist where
     pdf UniqueDist u = 1

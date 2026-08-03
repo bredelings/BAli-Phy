@@ -3,7 +3,7 @@ module Probability.Distribution.Beta where
 import Probability.Random
 import MCMC (sliceSample)
 
-foreign import bpcall "Distribution:"  beta_density   :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:"  beta_density   :: Double -> Double -> Double -> Log Double
 foreign import bpcall "Distribution:"  beta_cdf       :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:"  beta_quantile  :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:"  sample_beta    :: Double -> Double -> IO Double

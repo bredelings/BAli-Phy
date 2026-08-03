@@ -4,11 +4,11 @@ module Numeric.Prob (Prob,
                      fromLogOdds,
                      logOdds,
                      toFloating,
-                     LogDouble
+                     Log
                     )
     where
 
-import Numeric.LogDouble
+import Numeric.Log
 import Data.Floating.Types
 
 {- NaN is the single canonical indeterminate value and sorts before every
@@ -233,10 +233,10 @@ instance Pow Prob where
 instance FloatConvert Prob Double where
     toFloating = fromProb
 
-instance FloatConvert Prob LogDouble where
+instance FloatConvert Prob (Log Double) where
     toFloating p = expTo (logProb p)
 
-instance FloatConvert LogDouble Prob where
+instance FloatConvert (Log Double) Prob where
     toFloating = expTo . ln
 
 instance FloatConvert Double Prob where

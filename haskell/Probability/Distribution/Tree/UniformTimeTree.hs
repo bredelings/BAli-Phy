@@ -41,8 +41,9 @@ sampleUniformTimeTree age n = do
       allNodeTimes = IntMap.fromList $ zip [0..] allTimes
   return $ time_tree topology allNodeTimes
 
+uniformTimeTreePr :: (HasNodeTimes g, HasRoots g) => Double -> Int -> g -> [Log Double]
 uniformTimeTreePr age nLeaves tree = factor0 : parentBeforeChildPrs tree
-    where factor0 = doubleToLogDouble age `pow` fromIntegral (2-nLeaves)
+    where factor0 = toFloating age `pow` fromIntegral (2-nLeaves)
 
 -- Add moves for non-root internal-node times.
 -- FIXME: check that the leaves times are fixed?

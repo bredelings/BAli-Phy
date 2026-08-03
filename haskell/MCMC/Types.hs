@@ -1,9 +1,9 @@
 module MCMC.Types (module MCMC.Types,
-                   module Numeric.LogDouble,
+                   module Numeric.Log,
                    module Range)
     where
 
-import Numeric.LogDouble
+import Numeric.Log
 import Range
 import Compiler.FFI.Import (CInput)
 
@@ -36,7 +36,7 @@ data TransitionKernel = TransitionKernel (ContextIndex -> IO ())
 
 runTK c (TransitionKernel kernel) = kernel c
 
-data Proposal = Proposal (ContextIndex -> IO LogDouble)
+data Proposal = Proposal (ContextIndex -> IO (Log Double))
 
 -- It is unfortunate that modifiable-ness is not visible at the type level.
 type Modifiable a = a

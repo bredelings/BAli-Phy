@@ -14,7 +14,7 @@ type Sites = EVector Int
 type ContextIndex = Int
 
 foreign import trcall "SMC:sample_haplotype01_from_plaf" builtin_sample_haplotype01_from_plaf :: U.Vector Double -> IO Haplotype
-foreign import trcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: U.Vector Double -> Haplotype -> LogDouble
+foreign import trcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: U.Vector Double -> Haplotype -> Log Double
 haplotype01_from_plaf_probability plaf hap =
     builtin_haplotype01_from_plaf_probability (U.fromList plaf) hap
 
@@ -85,15 +85,15 @@ sample_reads01 counts weights haplotypes error_rate c outlier_frac =
           haplotypes' = toVector haplotypes
           f reads = map pair_from_c $ vectorToList reads
 
-foreign import bpcall "SMC:probability_of_reads01" builtin_probability_of_reads01 :: EVector Int -> EVector Double -> EVector Haplotype -> Double -> Double -> Double -> Reads -> LogDouble
+foreign import bpcall "SMC:probability_of_reads01" builtin_probability_of_reads01 :: EVector Int -> EVector Double -> EVector Haplotype -> Double -> Double -> Double -> Reads -> Log Double
 probability_of_reads01 counts weights haplotypes error_rate c outlier_frac reads = builtin_probability_of_reads01 counts' weights' haplotypes' error_rate c outlier_frac reads'
     where counts'     = toVector counts
           weights'    = toVector weights
           haplotypes' = toVector haplotypes
           reads'      = toVector $ map (\(x,y) -> c_pair x y) reads
 
-data Reads01Properties = Reads01Properties { emission_prs :: EVector Int -> Matrix LogDouble}
-foreign import bpcall "SMC:emission_pr_for_reads01" builtin_emission_pr_for_reads01 :: ContextIndex -> EVector Int -> Reads -> [Haplotype] -> EVector Double -> Double -> Double -> Double -> LogDouble
+data Reads01Properties = Reads01Properties { emission_prs :: EVector Int -> Matrix (Log Double)}
+foreign import bpcall "SMC:emission_pr_for_reads01" builtin_emission_pr_for_reads01 :: ContextIndex -> EVector Int -> Reads -> [Haplotype] -> EVector Double -> Double -> Double -> Double -> Log Double
 emission_pr_for_reads01 ks reads haplotypes weights error_rate concentration outlier_frac context =
     builtin_emission_pr_for_reads01 context (toVector ks) haplotypes weights error_rate concentration outlier_frac
 
@@ -104,7 +104,7 @@ reads01_from_haps counts weights haplotypes error_rate c outlier_frac = sample $
 
 
 ---
-foreign import bpcall "SMC:propose_haplotypes_from_plaf" propose_haplotypes_from_plaf' :: ContextIndex -> [Int] -> [Haplotype] -> EVector Double -> EVector Double -> EVector (EPair Int Int) -> Double -> Double -> Double -> IO LogDouble
+foreign import bpcall "SMC:propose_haplotypes_from_plaf" propose_haplotypes_from_plaf' :: ContextIndex -> [Int] -> [Haplotype] -> EVector Double -> EVector Double -> EVector (EPair Int Int) -> Double -> Double -> Double -> IO (Log Double)
 
 propose_haplotypes_from_plaf indices haps freqs w reads e c outlier_frac context =
     propose_haplotypes_from_plaf' context indices haps freqs' w' reads' e c outlier_frac 
@@ -114,7 +114,7 @@ propose_haplotypes_from_plaf indices haps freqs w reads e c outlier_frac context
              reads' = toVector $ map (\(x,y) -> c_pair x y) reads
 ---
 
-foreign import bpcall "SMC:propose_weights_and_haplotypes_from_plaf" propose_weights_and_haplotypes_from_plaf' :: ContextIndex -> [Int] -> [Double] -> [Haplotype] -> EVector Double -> EVector Double -> Reads -> Double -> Double -> Double -> IO LogDouble
+foreign import bpcall "SMC:propose_weights_and_haplotypes_from_plaf" propose_weights_and_haplotypes_from_plaf' :: ContextIndex -> [Int] -> [Double] -> [Haplotype] -> EVector Double -> EVector Double -> Reads -> Double -> Double -> Double -> IO (Log Double)
 
 propose_weights_and_haplotypes_from_plaf indices titres haps freqs w reads e c outlier_frac context =
     propose_weights_and_haplotypes_from_plaf' context indices titres haps freqs' w' reads' e c outlier_frac
@@ -171,7 +171,7 @@ instance HasAnnotatedPdf Haplotype01FromPanel where
 instance Sampleable Haplotype01FromPanel where
     sample dist@(Haplotype01FromPanel p_haps p_sites switch_rate flip_prob) = RanDistribution2 dist doNothing
 
-foreign import bpcall "SMC:haplotype01_from_panel_probability" builtin_haplotype01_from_panel_probability :: Panel -> Sites -> Double -> Double -> Haplotype -> LogDouble
+foreign import bpcall "SMC:haplotype01_from_panel_probability" builtin_haplotype01_from_panel_probability :: Panel -> Sites -> Double -> Double -> Haplotype -> Log Double
 haplotype01_from_panel_probability p_haps p_sites switch_rate flip_prob hap = builtin_haplotype01_from_panel_probability p_haps p_sites switch_rate flip_prob hap
 
 haplotype01_from_panel_dist (sites, haps) switch_rate flip_prob = Haplotype01FromPanel (toVector haps) (toVector sites) switch_rate flip_prob
@@ -186,7 +186,7 @@ resample_haplotypes_from_panel indices (p_sites, p_haps) switch_rate flip_prob w
           weights' = toVector weights
           reads' = toVector $ map (\(x,y) -> c_pair x y) reads
 
-foreign import bpcall "SMC:resample_weights_and_haplotypes_from_panel" resample_weights_and_haplotypes_from_panel' :: ContextIndex -> [Int] -> [Double] -> [Haplotype] -> Panel -> Sites -> Double -> Double -> EVector Double -> Reads -> Double -> Double -> Double -> IO LogDouble
+foreign import bpcall "SMC:resample_weights_and_haplotypes_from_panel" resample_weights_and_haplotypes_from_panel' :: ContextIndex -> [Int] -> [Double] -> [Haplotype] -> Panel -> Sites -> Double -> Double -> EVector Double -> Reads -> Double -> Double -> Double -> IO (Log Double)
 
 resample_weights_and_haplotypes_from_panel indices titres haps (p_sites, p_haps) switching_rate miscopy_prob w reads e c outlier_frac context =
     resample_weights_and_haplotypes_from_panel' context indices titres haps p_haps p_sites switching_rate miscopy_prob w' reads' e c outlier_frac

@@ -3,7 +3,7 @@ module Probability.Distribution.NegativeBinomial where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:" negative_binomial_density :: Int -> Double -> Int -> LogDouble
+foreign import bpcall "Distribution:" negative_binomial_density :: Int -> Double -> Int -> Log Double
 foreign import bpcall "Distribution:" sample_negative_binomial :: Int -> Double -> IO Int
 
 data NegativeBinomial = NegativeBinomial Int Prob

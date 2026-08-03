@@ -11,7 +11,7 @@ import qualified Data.IntMap as IntMap
 
 import SModel.Likelihood.CLV
 import SModel.Property
-import Numeric.LogDouble
+import Numeric.Log
 
 import Probability.Distribution.PhyloCTMC.Properties
 
@@ -40,7 +40,7 @@ data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
       -- translate lifted Matrix elements.
       prop_variable_a_transition_ps :: IntMap (EVector (NativeMatrix Double)),
       prop_variable_a_cond_likes :: IntMap CondLikes,
-      prop_variable_a_likelihood :: LogDouble,
+      prop_variable_a_likelihood :: Log Double,
       prop_variable_a_alphabet :: Alphabet,
       prop_variable_a_n_states :: Int,
       prop_variable_a_n_base_models :: Int,

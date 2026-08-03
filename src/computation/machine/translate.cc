@@ -35,7 +35,6 @@ Runtime::Exp reg_heap::translate_refs(const Runtime::Exp& E)
         }
         else if constexpr (std::is_same_v<T, Runtime::Int> or
                            std::is_same_v<T, Runtime::Double> or
-                           std::is_same_v<T, Runtime::LogDouble> or
                            std::is_same_v<T, Runtime::Char> or
                            std::is_same_v<T, Runtime::String> or
                            std::is_same_v<T, Runtime::Integer> or

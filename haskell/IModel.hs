@@ -11,7 +11,8 @@ foreign import bpcall "Alignment:" rs07_branch_HMM :: Double -> Double -> Double
 foreign import bpcall "Alignment:" multi_rs07_branch_HMM :: Double -> Double -> Double -> Double -> Double -> Double -> Bool -> PairHMM
 foreign import bpcall "Alignment:rs07_lengthp" builtin_rs07_lengthp :: Double -> Int -> Double
 
-rs05_lengthp m l = doubleToLogDouble (builtin_rs05_lengthp m l)
+rs05_lengthp :: PairHMM -> Int -> Log Double
+rs05_lengthp m l = toFloating (builtin_rs05_lengthp m l)
 
 rs05 logRate meanIndelLength tau tree = (\d b -> m, rs05_lengthp m) where
       heat = 1.0
@@ -22,7 +23,8 @@ rs05 logRate meanIndelLength tau tree = (\d b -> m, rs05_lengthp m) where
       epsilon = (meanIndelLength-1.0)/meanIndelLength
       m = rs05_branch_HMM epsilon delta tau heat training
 
-rs07_lengthp e l = doubleToLogDouble (builtin_rs07_lengthp e l)
+rs07_lengthp :: Double -> Int -> Log Double
+rs07_lengthp e l = toFloating (builtin_rs07_lengthp e l)
 
 rs07 rate mean_length tree = (\ds b ->rs07_branch_HMM epsilon (rate * (ds IntMap.! b)) 1 False, rs07_lengthp epsilon)
     where epsilon = (mean_length-1.0)/mean_length

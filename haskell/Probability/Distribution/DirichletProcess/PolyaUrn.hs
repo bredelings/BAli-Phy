@@ -46,8 +46,8 @@ instance HasPdf PolyaUrnParent where
     -- A fresh parent has mass alpha/(alpha+i); each of the i earlier parents has mass 1/(alpha+i).
     pdf (PolyaUrnParent alpha index) parent
       | index == 0 && parent == 0 = 1
-      | index > 0 && parent == index = doubleToLogDouble $ freshParentProbability alpha index
-      | index > 0 && parent >= 0 && parent < index = doubleToLogDouble $ 1 / denominator
+      | index > 0 && parent == index = toFloating $ freshParentProbability alpha index
+      | index > 0 && parent >= 0 && parent < index = toFloating $ 1 / denominator
       | otherwise = 0
       where denominator = alpha + fromIntegral index
 

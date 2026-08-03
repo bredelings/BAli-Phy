@@ -23,7 +23,7 @@ read_phase_file filename = fmap (map vectorToList . vectorToList) $ builtin_read
 read_phase2_file filename = fmap (map vectorToList . vectorToList) $ builtin_read_phase2_file (list_to_string filename)
 
 ----------------------------------
-foreign import bpcall "PopGen:ewens_sampling_probability" ewens_sampling_probability :: Double -> EVector Int -> LogDouble
+foreign import bpcall "PopGen:ewens_sampling_probability" ewens_sampling_probability :: Double -> EVector Int -> Log Double
 
 data AFS = AFS Double
 
@@ -37,7 +37,7 @@ instance HasAnnotatedPdf AFS where
 afs args = AFS args
 
 ----------------------------------
-foreign import bpcall "PopGen:ewens_sampling_group_probability" ewens_sampling_group_probability :: Double -> VVI -> LogDouble
+foreign import bpcall "PopGen:ewens_sampling_group_probability" ewens_sampling_group_probability :: Double -> VVI -> Log Double
 data AFSGroup = AFSGroup Double
 
 instance Dist AFSGroup where
@@ -51,7 +51,7 @@ instance HasAnnotatedPdf AFSGroup where
 afsGroup args = AFSGroup args
 
 ---------------------------------
-foreign import trcall "PopGen:ewens_sampling_mixture_probability" ewensSamplingMixtureNative :: Vector Double -> Vector Double -> VVI -> LogDouble
+foreign import trcall "PopGen:ewens_sampling_mixture_probability" ewensSamplingMixtureNative :: Vector Double -> Vector Double -> VVI -> Log Double
 ewens_sampling_mixture_probability thetas ps x = ewensSamplingMixtureNative
     (fromList thetas) (fromList ps) x
 
@@ -70,7 +70,7 @@ afsMixture thetas ps = AFSMixture thetas ps
 ----------------------------------------
 data SelfingCoalescence = SelfingCoalescence Int Double
 
-foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_coalescence_probability :: Int -> Double -> Int -> Int -> NativeVector Int -> LogDouble
+foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_coalescence_probability :: Int -> Double -> Int -> Int -> NativeVector Int -> Log Double
 selfing_coalescence_probability n_loci s indicators =
     builtin_selfing_coalescence_probability n_loci s offset count native
   where
@@ -89,7 +89,7 @@ selfing_coalescence n_loci s = SelfingCoalescence n_loci s
 
 data LiStephens2003 = LiStephens2003 (U.Vector Int) [(Double,Double,Double)]
 
-foreign import bpcall "SMC:" li_stephens_2003_composite_likelihood_raw :: Int -> Int -> NativeVector Int -> EVector (EVector Double) -> AlignmentMatrix -> LogDouble
+foreign import bpcall "SMC:" li_stephens_2003_composite_likelihood_raw :: Int -> Int -> NativeVector Int -> EVector (EVector Double) -> AlignmentMatrix -> Log Double
 
 li_stephens_2003_composite_likelihood sites rhoFunc alignment =
     li_stephens_2003_composite_likelihood_raw offset count native rhoFuncRaw alignment
@@ -111,7 +111,7 @@ li_stephens_2003 locs rho = LiStephens2003 (U.fromList locs) rho
 
 data WilsonMcVean2006 = WilsonMcVean2006 (Matrix Double) [(Double,Double,Double)] Double
 
-foreign import trcall "SMC:wilson_mcvean_2006_composite_likelihood_raw" wilsonMcVeanNative :: Matrix Double -> EVector (EVector Double) -> Double -> AlignmentMatrix -> LogDouble
+foreign import trcall "SMC:wilson_mcvean_2006_composite_likelihood_raw" wilsonMcVeanNative :: Matrix Double -> EVector (EVector Double) -> Double -> AlignmentMatrix -> Log Double
 
 wilson_mcvean_2006_composite_likelihood q rhos theta alignment = wilsonMcVeanNative q rhosRaw theta alignment
     where rhosRaw = toVector [toVector [x,start,end] | (x,start,end) <- rhos]

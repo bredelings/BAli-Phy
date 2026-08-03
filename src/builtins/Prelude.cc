@@ -330,12 +330,6 @@ extern "C" R::Exp simple_function_lessthan_log_double(vector<R::Exp>& args)
     return x < y;
 }
 
-extern "C" R::Exp simple_function_expToLogDouble(vector<R::Exp>& args)
-{
-    double d = get_arg(args).as_double();
-    return exp_to_log_space(d);
-}
-
 extern "C" R::Exp simple_function_doubleToLogDouble(vector<R::Exp>& args)
 {
     double d = get_arg(args).as_double();

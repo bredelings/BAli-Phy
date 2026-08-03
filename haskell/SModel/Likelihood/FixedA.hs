@@ -9,7 +9,7 @@ import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
 import Data.Maybe (maybeToList)
 import Foreign.Vector
-import Numeric.LogDouble
+import Numeric.Log
 import Bio.Sequence
 
 import Data.IntMap (IntMap)
@@ -20,9 +20,9 @@ import qualified Data.Vector.Unboxed as U
 import SModel.Likelihood.CLV
 
 -- peeling for SEV
-foreign import trcall "LikelihoodSEV:calcProbAtRoot" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> LogDouble
-foreign import trcall "LikelihoodSEV:calcProbAtRootVariable" calcProbAtRootVariable :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> LogDouble
-foreign import trcall "LikelihoodSEV:calcProb" calcProb :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> LogDouble
+foreign import trcall "LikelihoodSEV:calcProbAtRoot" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> Log Double
+foreign import trcall "LikelihoodSEV:calcProbAtRootVariable" calcProbAtRootVariable :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> Log Double
+foreign import trcall "LikelihoodSEV:calcProb" calcProb :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> Log Double
 foreign import trcall "LikelihoodSEV:peelBranchTowardRoot" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> CondLikes
 foreign import trcall "LikelihoodSEV:peelBranchAwayFromRoot" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> Matrix Double -> CondLikes
 

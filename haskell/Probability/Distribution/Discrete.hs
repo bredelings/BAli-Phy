@@ -71,7 +71,7 @@ instance IOSampleable (Discrete a) where
       return $ choose u pairs
 
 instance Eq a => HasPdf (Discrete a) where
-    pdf (Discrete pairs) x = sum [ doubleToLogDouble p | (item,p) <- pairs, item == x]
+    pdf (Discrete pairs) x = sum [ toFloating p | (item,p) <- pairs, item == x]
 
 instance Dist1D (Discrete Double) where
     cdf (Discrete pairs) x = sum [ p | (item, p) <- pairs, item < x ]

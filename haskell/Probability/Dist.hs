@@ -1,8 +1,8 @@
 module Probability.Dist (module Probability.Dist,
-                         module Numeric.LogDouble
+                         module Numeric.Log
                         ) where
 
-import Numeric.LogDouble
+import Numeric.Log
 import Data.Maybe (fromJust)
 
 class Dist d where
@@ -16,7 +16,7 @@ class Dist d => IOSampleable d where
 
 -- We can compute the density/probability for these.
 class Dist d => HasPdf d where
-    pdf :: d -> Result d -> LogDouble
+    pdf :: d -> Result d -> Log Double
 
 -- A one-dimensional distribution has an ordered result so its support bounds
 -- can be compared as well as reported.

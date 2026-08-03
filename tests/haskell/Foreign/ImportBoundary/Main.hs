@@ -1,9 +1,10 @@
 module Main where
 
 import Compiler.FFI.Import
+import Data.Floating.Types (FloatConvert(toFloating))
 import qualified Data.Vector.Unboxed as U
 import Foreign.Pair
-import Numeric.LogDouble
+import Numeric.Log
 import System.Environment (getEnv)
 import System.FilePath (takeFileName)
 
@@ -32,7 +33,7 @@ replicateInts :: ReplicateInts
 replicateInts = fromCImport replicateIntsRaw
 
 type MultinomialDensity =
-    Int -> U.Vector Double -> U.Vector Int -> LogDouble
+    Int -> U.Vector Double -> U.Vector Int -> Log Double
 
 foreign import bpcall "Distribution:multinomial_density"
     multinomialDensityRaw :: RawImport MultinomialDensity
@@ -51,8 +52,8 @@ main = do
 
     let probabilities = U.slice 1 2 (U.fromList [99.0, 0.25, 0.75, 99.0])
         counts = U.slice 1 2 (U.fromList [99, 1, 2, 99])
-        lower = toLogDouble (0.4218 :: Double)
-        upper = toLogDouble (0.4220 :: Double)
+        lower = toFloating (0.4218 :: Double)
+        upper = toFloating (0.4220 :: Double)
         withinExpected value = lower < value && value < upper
     print (withinExpected (multinomialDensity 3 probabilities counts))
     print (withinExpected (multinomialDensitySugar 3 probabilities counts))

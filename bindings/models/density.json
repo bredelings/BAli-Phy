@@ -1,6 +1,6 @@
 {
     "name": "density",
-    "result_type": "LogDouble",
+    "result_type": "Log<Double>",
     "no_log": true,
     "call": "density(@dist,@x)",
     "import": ["Probability"],

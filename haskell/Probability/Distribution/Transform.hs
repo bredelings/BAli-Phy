@@ -37,7 +37,7 @@ instance (IOSampleable d, Result d ~ Double) => IOSampleable (ExpTransform d) wh
 
 instance (HasPdf d, Result d ~ Double) => HasPdf (ExpTransform d) where
     pdf (ExpTransform dist) x | x <= 0     = 0
-                              | otherwise  = pdf dist (log x) / doubleToLogDouble x
+                              | otherwise  = pdf dist (log x) / toFloating x
 
 instance (Dist1D d, Result d ~ Double) => Dist1D (ExpTransform d) where
     cdf (ExpTransform dist) x | x <= 0    = 0
@@ -106,7 +106,7 @@ instance Dist d => Dist (Scaled d) where
 instance (IOSampleable d, Num (Result d)) => IOSampleable (Scaled d) where
     sampleIO (Scaled by dist) = (by*) <$> sampleIO dist
 
-instance (HasPdf d, Fractional (Result d), FloatConvert (Result d) LogDouble) => HasPdf (Scaled d) where
+instance (HasPdf d, Fractional (Result d), FloatConvert (Result d) (Log Double)) => HasPdf (Scaled d) where
     pdf (Scaled by dist) x = pdf dist (x/by) / (toFloating by)
 
 instance (Dist1D d, Result d ~ Double) => Dist1D (Scaled d) where
@@ -135,5 +135,5 @@ instance (Variance d, Result d ~ Double) => Variance (Scaled d)
 scaled by dist = Scaled by dist
 
 {- Perhaps it does make sense to allow distributions to have an unknown result.
-   This would probably make things like scaling by a LogDouble work more simply.
+   This would probably make things like scaling by a Log Double work more simply.
 -}

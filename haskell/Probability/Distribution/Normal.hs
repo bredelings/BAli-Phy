@@ -3,7 +3,7 @@ module Probability.Distribution.Normal where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:" normal_density :: Double -> Double -> Double -> LogDouble
+foreign import bpcall "Distribution:" normal_density :: Double -> Double -> Double -> Log Double
 foreign import bpcall "Distribution:" normal_cdf :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" normal_quantile :: Double -> Double -> Double -> Double
 foreign import bpcall "Distribution:" sample_normal :: Double -> Double -> IO Double

@@ -14,7 +14,7 @@ import qualified Data.IntMap as IntMap
 import Data.Text (Text)
 import qualified Data.Text as Text
 
-type IModel = (IntMap Double -> Int -> PairHMM, Int -> LogDouble)
+type IModel = (IntMap Double -> Int -> PairHMM, Int -> Log Double)
 
 
 -- If we change the number of tip sequences, then we need to update the modifiable node sequence lengths {ls'}.
@@ -95,7 +95,7 @@ alignment_prs_bot as tree (_, lengthp) = [ pow pr (1-n) | node <- internalNodes 
 alignment_prs_top as tree hmms = map (alignment_branch_pr as hmms) (getUEdges tree)
 alignment_prs hmms model (AlignmentOnTree tree n_seqs ls as) | numNodes tree < 1  = error $ "Tree only has " ++ show (numNodes tree) ++ " nodes."
                                                              | numNodes tree == 1 = [alignment_pr1 (ls IntMap.! 0) model]
-                                                             | otherwise = alignment_prs_top as tree hmms ++ alignment_prs_bot as tree model -- [ doubleToLogDouble 1.0 / alignment_pr_bot as tree model]
+                                                             | otherwise = alignment_prs_top as tree hmms ++ alignment_prs_bot as tree model -- [ (1 :: Log Double) / alignment_pr_bot as tree model]
 
 --FIXME: I should make this only trigger if you start looking at the VALUES of the pairwise alignments!
 --FIXME: Maybe I should also reduce this to just a list of pairwise alignments?
@@ -107,12 +107,12 @@ triggeredModifiableAlignment value effect = triggered_a where
 
 data PhyloAlignmentProperties = PhyloAlignmentProperties 
     {
-      probability :: LogDouble,
+      probability :: Log Double,
       hmms :: IntMap PairHMM,
-      lengthp :: Int -> LogDouble,
+      lengthp :: Int -> Log Double,
       as :: IntMap PairwiseAlignment,
       get_lengths :: IntMap Int,
-      get_length_prs :: IntMap LogDouble
+      get_length_prs :: IntMap (Log Double)
     }
 
 annotated_alignment_prs tree hmms model alignment = do
