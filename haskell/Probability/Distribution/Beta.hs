@@ -29,12 +29,12 @@ instance ContDist1D Beta where
     quantile (Beta a b) p = beta_quantile a b p
 
 instance MaybeMean Beta where
-    maybeMean (Beta a b) = Just (a * b)
+    maybeMean (Beta a b) = Just $ a / (a + b)
 
 instance Mean Beta
 
 instance MaybeVariance Beta where
-    maybeVariance (Beta a b) = Just $ a * b /((a+b)^2)/(a+b+a)
+    maybeVariance (Beta a b) = Just $ a * b / ((a + b)^2 * (a + b + 1))
 
 instance Variance Beta
 
