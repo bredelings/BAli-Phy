@@ -12,6 +12,7 @@
 #include "util/string/strip.H"
 #include "util/log-level.H"
 #include "math/logprod.H"
+#include "util/math/ProbDensity.H"
 #include "util/dense-matrix.H"
 
 using std::string;
@@ -549,6 +550,7 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 
     log_prod_underoverflow Pr;
     int n_theta_pow = 0;
+    int incompatibility_zeros = 0;
     for(int i=0,total=0;i<n;i++)
     {
 	int a1 = alleles[2*i].as_int();
@@ -571,10 +573,11 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
 	    bool coalesced = ( I[i].as_int() == 1);
 	    bool heterozygote = (a1 != a2);
 
-	    // Heterozygotes coalesce before outbreeding with probability 0.
+	    // Each heterozygote forced to coalesce contributes one incompatibility zero.
+	    // Keep those zeros separate so the existing finite Ewens product is unchanged.
 	    if (heterozygote and coalesced)
 	    {
-		Pr *= 0.0;  // This accumulates zeros, in order to penalize them.
+		incompatibility_zeros++;
 		continue;
 	    }
 
@@ -588,8 +591,10 @@ extern "C" closure builtin_function_ewens_diploid_probability(OperationArgs& Arg
     }
 
     Pr *= pow(log_double_t(theta), n_theta_pow);
-  
-    return log_double_t(Pr);
+
+    ProbDensity density = log_double_t(Pr);
+    density *= pow(ProbDensity(0.0), incompatibility_zeros);
+    return new Box<ProbDensity>(density);
 }
 
 // Pr(I|s) = \sum_t=0^\infty s^t (1-s) (1/2^t)^(L-n) (1-(1/2^t))^n
