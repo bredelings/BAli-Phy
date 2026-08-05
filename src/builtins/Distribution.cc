@@ -24,6 +24,7 @@
 
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 using std::vector;
 using std::string;
@@ -120,6 +121,30 @@ std::pair<DenseVector<double>, DenseVector<double>> small_alpha_gamma_quadrature
     weights[0] = 1.0 - escaping_weight;
     nodes[0] = (1.0 - escaping_mean) / weights[0];
     return {std::move(nodes), std::move(weights)};
+}
+
+// Validate the trusted normalized log pair while retaining the endpoint
+// behavior of the former probability-valued sampling interface.
+void validate_log_probability_pair(double log_p, double log_q, const char* name, bool allow_zero)
+{
+    const char* reason = nullptr;
+    if (std::isnan(log_p) or std::isnan(log_q))
+        reason = "log_p and log_q must not be NaN";
+    else if (log_p > 0 or log_q > 0)
+        reason = "log_p and log_q must not be greater than zero";
+    else if (std::isinf(log_p) and std::isinf(log_q))
+        reason = "p and q cannot both be zero";
+    else if (not allow_zero and std::isinf(log_p))
+        reason = "p=0 is outside the permitted range";
+
+    if (reason)
+    {
+        const char* p_range = allow_zero ? "[0,1]" : "(0,1]";
+        throw math_error()<<name<<": expected success probability p in "<<p_range
+                          <<" and failure probability q=1-p in [0,1]; got log_p="<<log_p
+                          <<", log_q="<<log_q<<" (p="<<std::exp(log_p)<<", q="<<std::exp(log_q)
+                          <<"): "<<reason;
+    }
 }
 
 }
@@ -579,22 +604,22 @@ extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value_(0).as_int();
-    double p = Args.evaluate_slot_to_value_(1).as_double();
+    double log_p = Args.evaluate_slot_to_value_(1).as_double();
+    double log_q = Args.evaluate_slot_to_value_(2).as_double();
 
-    if (not std::isfinite(p) or p < 0 or p > 1)
-        throw math_error()<<"binomial: success probability must be in [0,1], but is "<<p;
+    validate_log_probability_pair(log_p, log_q, "binomial", true);
 
-    return { (int)binomial(n,p) };
+    return { binomial_from_logs(n, log_p, log_q) };
 }
 
 extern "C" closure builtin_function_sample_bernoulli(OperationArgs& Args)
 {
-    double p = Args.evaluate_slot_to_value_(0).as_double();
+    double log_p = Args.evaluate_slot_to_value_(0).as_double();
+    double log_q = Args.evaluate_slot_to_value_(1).as_double();
 
-    if (not std::isfinite(p) or p < 0 or p > 1)
-        throw math_error()<<"bernoulli: success probability must be in [0,1], but is "<<p;
+    validate_log_probability_pair(log_p, log_q, "bernoulli", true);
 
-    return { (int)bernoulli(p) };
+    return { (int)bernoulli_from_logs(log_p, log_q) };
 }
 
 extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
@@ -608,12 +633,19 @@ extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
 
 extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
 {
-    double p = Args.evaluate_slot_to_value_(0).as_double();
+    double log_p = Args.evaluate_slot_to_value_(0).as_double();
+    double log_q = Args.evaluate_slot_to_value_(1).as_double();
 
-    if (not std::isfinite(p) or p <= 0 or p > 1)
-        throw math_error()<<"geometric: success probability must be in (0,1], but is "<<p;
+    validate_log_probability_pair(log_p, log_q, "geometric", false);
 
-    return { (int)geometric(p) };
+    try
+    {
+        return { geometric_from_logs(log_p, log_q) };
+    }
+    catch (const std::overflow_error& e)
+    {
+        throw math_error()<<"geometric: "<<e.what();
+    }
 }
 
 extern "C" closure builtin_function_poisson_density(OperationArgs& Args)

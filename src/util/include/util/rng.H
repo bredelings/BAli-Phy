@@ -57,17 +57,23 @@ unsigned poisson(double mu);
 // return a geometric random variate
 unsigned geometric(double p);
 
+int geometric_from_logs(double log_p, double log_q);
+
 // return a binomial random variate
 int negative_binomial(int r, double p);
 
 // return a binomial random variate
 int binomial(int n, double p);
 
+int binomial_from_logs(int n, double log_p, double log_q);
+
 // return a binomial random variate
 int beta_binomial(int n, double a, double b);
 
 // return a binomial random variate
 unsigned bernoulli(double p);
+
+unsigned bernoulli_from_logs(double log_p, double log_q);
 
 // return a dirichlet random vector
 std::valarray<double> dirichlet(const std::valarray<double>& n);

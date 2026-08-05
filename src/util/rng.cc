@@ -23,6 +23,8 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <limits>
+#include <stdexcept>
 #include <boost/random/random_device.hpp>
 
 #include "util/rng.H"
@@ -30,6 +32,15 @@
 using std::valarray;
 using std::int64_t;
 using std::uint64_t;
+
+namespace
+{
+
+// Alternative samplers are only needed near p=1; this cutoff keeps their
+// expected work and variance small.
+constexpr double small_failure_probability = 0.05;
+
+}
 
 uint64_t get_random_seed()
 {
@@ -150,6 +161,30 @@ unsigned geometric(double p) {
     return std::geometric_distribution<>(p)(standard_rng);
 }
 
+// Sample from both log tails so a small failure probability is not lost when
+// the success probability rounds to one.
+int geometric_from_logs(double log_p, double log_q)
+{
+    double q = exp(log_q);
+    if (q >= small_failure_probability)
+    {
+        unsigned n = geometric(exp(log_p));
+        if (n > std::numeric_limits<int>::max())
+            throw std::overflow_error("geometric sample exceeds Int range");
+        return n;
+    }
+
+    // A geometric variate counts consecutive failures before the first success.
+    int n = 0;
+    while (bernoulli(q))
+    {
+        if (n == std::numeric_limits<int>::max())
+            throw std::overflow_error("geometric sample exceeds Int range");
+        n++;
+    }
+    return n;
+}
+
 int negative_binomial(int r, double p)
 {
     assert(r >= 0);
@@ -171,6 +206,16 @@ int binomial(int n, double p) {
     return std::binomial_distribution<>(n,p)(standard_rng);
 }
 
+// Sample the less likely outcome and reflect failures back to successes when
+// p>1/2, avoiding construction of a probability near one.
+int binomial_from_logs(int n, double log_p, double log_q)
+{
+    if (log_p <= log_q)
+        return binomial(n, exp(log_p));
+    else
+        return n - binomial(n, exp(log_q));
+}
+
 int beta_binomial(int n, double a, double b)
 {
     double p = beta(a,b);
@@ -187,6 +232,16 @@ unsigned bernoulli(double p)
 	return 1;
     else
 	return 0;
+}
+
+// Sample the less likely outcome so neither complementary probability is
+// reconstructed by subtraction.
+unsigned bernoulli_from_logs(double log_p, double log_q)
+{
+    if (log_p <= log_q)
+        return bernoulli(exp(log_p));
+    else
+        return 1 - bernoulli(exp(log_q));
 }
 
 valarray<double> dirichlet(const valarray<double>& n) 

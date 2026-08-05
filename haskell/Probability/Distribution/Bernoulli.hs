@@ -3,7 +3,7 @@ module Probability.Distribution.Bernoulli where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:" sample_bernoulli :: Double -> IO Int
+foreign import bpcall "Distribution:" sample_bernoulli :: Double -> Double -> IO Int
 
 -- Could we allow this to return Int, Integer, Bool, etc?
 
@@ -20,7 +20,7 @@ instance Dist Bernoulli where
     distName _ = "bernoulli"
 
 instance IOSampleable Bernoulli where
-    sampleIO (Bernoulli p) = sample_bernoulli $ toFloating $ p
+    sampleIO (Bernoulli p) = sample_bernoulli (ln p) (ln (1-p))
 
 
 instance HasPdf Bernoulli where
