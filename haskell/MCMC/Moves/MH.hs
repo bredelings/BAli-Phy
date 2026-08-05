@@ -1,4 +1,4 @@
-module MCMC.Moves.MH (metropolisHastings, propose) where
+module MCMC.Moves.MH (acceptMH, metropolisHastings, propose) where
 
 import Probability.Dist -- for several things in propose
 
