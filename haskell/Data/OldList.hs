@@ -120,11 +120,11 @@ scanl1 f (x:xs)   = scanl f x xs
 scanl1 f []       = error "Applying scanl1 to empty list!"
 
 scanr  f z []     = [z]
--- scanr  f z (x:xs) = ((f x y):ys) where ys@(y:_) = scanr f z xs
+scanr  f z (x:xs) = (f x y):ys where ys@(y:_) = scanr f z xs
 
 scanr1 f [x]    = [x]
--- scanr1 f (x:xs) = (f x y):ys where ys@(y:_) = scanr1 f xs
--- scanr1 _ []     = error "Data.List.scanr1: empty list"
+scanr1 f (x:xs) = (f x y):ys where ys@(y:_) = scanr1 f xs
+scanr1 _ []     = error "Data.List.scanr1: empty list"
 
 --
 
@@ -345,5 +345,4 @@ groupBy p (x:xs) = case groupBy p xs of
 -- maximumBy
 
 -- generic*
-
 
