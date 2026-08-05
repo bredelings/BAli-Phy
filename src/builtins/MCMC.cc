@@ -1365,6 +1365,22 @@ extern "C" closure builtin_function_switchToContext(OperationArgs& Args)
     return closure(R::ConstructorApp("()", 0, {}));
 }
 
+// Evaluate a generic MH candidate action, selecting its cleanup action only for a mathematical failure.
+extern "C" closure builtin_function_catchMathErrorRaw(OperationArgs& Args)
+{
+    try
+    {
+        Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
+        int r = Args.reg_for_slot(0);
+        return closure(Runtime::IndexVar(0), {r});
+    }
+    catch (const math_error&)
+    {
+        int r = Args.reg_for_slot(1);
+        return closure(Runtime::IndexVar(0), {r});
+    }
+}
+
 
 extern "C" closure builtin_function_acceptMH(OperationArgs& Args)
 {
