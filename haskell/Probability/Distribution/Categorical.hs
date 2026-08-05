@@ -7,10 +7,10 @@ import MCMC
 
 -- Use a bounded random subset by default so large categorical distributions remain cheap to update.
 categorical_effect n x = addMove 1 $ gibbsSampleCategoricalBounded x n
-foreign import bpcall "Distribution:sample_categorical" sampleCategoricalNative :: V.Vector Double -> IO Int
+foreign import bpcall "Distribution:sample_categorical" sampleCategoricalNative :: V.Vector (Log Double) -> IO Int
 sample_categorical = sampleCategoricalNative
 
-newtype Categorical = Categorical (V.Vector Double)
+newtype Categorical = Categorical (V.Vector (Log Double))
 
 instance Dist Categorical where
     type Result Categorical = Int
@@ -22,12 +22,12 @@ instance IOSampleable Categorical where
 instance HasPdf Categorical where
     pdf (Categorical ps) n | n < 0            = 0
                            | n >= V.length ps = 0
-                           | otherwise        = toFloating $ ps V.! n
+                           | otherwise        = ps V.! n
 
 instance Dist1D Categorical where
     cdf (Categorical ps) x | n < 0            = 0
                            | n >= V.length ps = 1
-                           | otherwise        = sum (V.take (n + 1) ps)
+                           | otherwise        = toFloating $ sum (V.take (n + 1) ps)
                            where n = floor x
 
 instance HasAnnotatedPdf Categorical where
@@ -36,11 +36,12 @@ instance HasAnnotatedPdf Categorical where
 instance Sampleable Categorical where
     sample dist@(Categorical ps) = RanDistribution2 dist $ categorical_effect (V.length ps)
 
-categorical ps = Categorical $ V.fromList ps
+categorical :: [Prob] -> Categorical
+categorical ps = Categorical $ V.fromList $ map toFloating ps
 
 ---
 
-data CategoricalOn a = CategoricalOn (V.Vector a) (V.Vector Double)
+data CategoricalOn a = CategoricalOn (V.Vector a) (V.Vector (Log Double))
 
 instance Dist (CategoricalOn a) where
     type Result (CategoricalOn a) = a
@@ -59,7 +60,7 @@ And, why would we think that xs :: Vector Int?  Is there some defaulting going o
 instance Eq a => HasPdf (CategoricalOn a) where
     pdf (CategoricalOn xs ps) x = case V.elemIndex x xs of
                                     Nothing -> 0
-                                    Just n -> toFloating $ ps V.! n
+                                    Just n -> ps V.! n
 
 instance Eq a => HasAnnotatedPdf (CategoricalOn a) where
     annotatedDensities dist = make_densities $ pdf dist
@@ -70,7 +71,8 @@ instance Sampleable (CategoricalOn a) where
         return $ xs V.! i
 
 
-categorical_on pairs = CategoricalOn (V.fromList xs) (V.fromList ps)
+categorical_on :: [(a, Prob)] -> CategoricalOn a
+categorical_on pairs = CategoricalOn (V.fromList xs) (V.fromList $ map toFloating ps)
     where xs = map fst pairs
           ps = map snd pairs
 

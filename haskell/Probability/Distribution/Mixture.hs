@@ -182,8 +182,9 @@ instance (Sampleable d, SampleableComponents rest, Result d ~ Result rest) => Sa
     -- only the distribution at that index.
     sample mixture = do
         let weights = componentWeights mixture
-            total = sum weights
-            probabilities = V.map (/ total) (V.fromList weights)
+            logWeights = V.map toFloating (V.fromList weights) :: V.Vector (Log Double)
+            total = sum logWeights
+            probabilities = V.map (/ total) logWeights
         index <- sample $ Categorical probabilities
         -- Categorical always returns an index covered by `componentWeights`.
         sampleComponent index mixture

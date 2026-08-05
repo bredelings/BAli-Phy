@@ -33,6 +33,31 @@ using std::valarray;
 namespace
 {
 
+// Force a boxed vector's lazy elements through its vector contingency and
+// recover the log-domain values stored by Haskell's Log Double newtype.
+vector<log_double_t> read_boxed_log_probabilities(OperationArgs& Args, int slot)
+{
+    auto probabilities_arg = Args.evaluate_slot_use_with_contingency(slot);
+    int probabilities_reg = probabilities_arg.value_reg;
+    std::size_t count = boxed_vector_element_regs(
+        Args.memory().closure_at(probabilities_reg)).size();
+
+    vector<log_double_t> probabilities;
+    probabilities.reserve(count);
+    for(std::size_t i = 0; i < count; i++)
+    {
+        // Copy the register before evaluation, which may grow the heap and
+        // invalidate the environment reference used to discover it.
+        int element_reg = boxed_vector_element_regs(
+            Args.memory().closure_at(probabilities_reg))[i];
+        int value_reg = Args.evaluate_reg_force(
+            element_reg, probabilities_arg.edge_contingency);
+        probabilities.push_back(
+            Args.memory().closure_at(value_reg).get_code().as_log_double());
+    }
+    return probabilities;
+}
+
 // Derive Gaussian quadrature nodes and weights from a symmetric Jacobi matrix.
 std::pair<DenseVector<double>, DenseVector<double>> quadrature_from_jacobi(const DenseMatrix<double>& jacobi)
 {
@@ -776,33 +801,16 @@ extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
     return S;
 }
 
-// Read boxed probabilities through vector-contingent FORCE edges and sample
-// without constructing intermediate Haskell lists or native Eigen vectors.
+// Sample the stored log probabilities directly, retaining categories whose
+// ordinary Double probabilities would underflow.
 extern "C" closure builtin_function_sample_categorical(OperationArgs& Args)
 {
-    auto probabilities_arg = Args.evaluate_slot_use_with_contingency(0);
-    int probabilities_reg = probabilities_arg.value_reg;
-    std::size_t count = boxed_vector_element_regs(
-        Args.memory().closure_at(probabilities_reg)).size();
-    if (count == 0)
+    auto probabilities = read_boxed_log_probabilities(Args, 0);
+    if (probabilities.empty())
         throw myexception()<<"Probability.Distribution.Categorical: cannot sample "
                            <<"from an empty probability vector";
 
     // NOTE: choose_scratch overwrites its input with cumulative sums; remove
     // this mutable buffer when it accepts separate probabilities and scratch.
-    vector<double> probabilities;
-    probabilities.reserve(count);
-    for(std::size_t i = 0; i < count; i++)
-    {
-        // Copy the register before evaluation, which may grow the machine heap
-        // and invalidate the environment reference used to discover it.
-        int element_reg = boxed_vector_element_regs(
-            Args.memory().closure_at(probabilities_reg))[i];
-        int value_reg = Args.evaluate_reg_force(
-            element_reg, probabilities_arg.edge_contingency);
-        probabilities.push_back(
-            Args.memory().closure_at(value_reg).get_code().as_double());
-    }
-
     return { choose_scratch(probabilities) };
 }
