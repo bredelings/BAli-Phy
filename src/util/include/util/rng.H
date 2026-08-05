@@ -62,6 +62,8 @@ int geometric_from_logs(double log_p, double log_q);
 // return a binomial random variate
 int negative_binomial(int r, double p);
 
+int negative_binomial_from_logs(int r, double log_p, double log_q);
+
 // return a binomial random variate
 int binomial(int n, double p);
 

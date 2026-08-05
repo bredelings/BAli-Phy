@@ -195,6 +195,31 @@ int negative_binomial(int r, double p)
     return std::negative_binomial_distribution<>(r,p)(standard_rng);
 }
 
+// Let theta=q/p, Lambda~Gamma(shape=r,scale=theta), and K|Lambda~Poisson(Lambda).
+// Integrating Lambda gives Gamma(k+r)/(k!*Gamma(r))*theta^k/(1+theta)^(k+r).
+// Since theta/(1+theta)=q and 1/(1+theta)=p, this is
+// choose(k+r-1,k)*p^r*q^k, the required negative-binomial distribution.
+int negative_binomial_from_logs(int r, double log_p, double log_q)
+{
+    assert(r >= 0);
+
+    double q = exp(log_q);
+    if (r == 0 or q == 0) return 0;
+    if (q >= small_failure_probability)
+    {
+        double p = exp(log_p);
+        if (p == 0)
+            throw std::overflow_error("negative-binomial success probability is below Double range");
+        return negative_binomial(r, p);
+    }
+
+    double scale = exp(log_q-log_p);
+    unsigned n = poisson(gamma(r, scale));
+    if (n > std::numeric_limits<int>::max())
+        throw std::overflow_error("negative-binomial sample exceeds Int range");
+    return n;
+}
+
 int binomial(int n, double p) {
     assert(n >= 0);
     assert(0 <= p and p <= 1);

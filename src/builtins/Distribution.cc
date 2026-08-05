@@ -569,12 +569,19 @@ extern "C" closure builtin_function_negative_binomial_density(OperationArgs& Arg
 extern "C" closure builtin_function_sample_negative_binomial(OperationArgs& Args)
 {
     int r = Args.evaluate_slot_to_value_(0).as_int();
-    double p = Args.evaluate_slot_to_value_(1).as_double();
+    double log_p = Args.evaluate_slot_to_value_(1).as_double();
+    double log_q = Args.evaluate_slot_to_value_(2).as_double();
 
-    if (not std::isfinite(p) or p <= 0 or p > 1)
-        throw math_error()<<"negative_binomial: success probability must be in (0,1], but is "<<p;
+    validate_log_probability_pair(log_p, log_q, "negative_binomial", false);
 
-    return { negative_binomial(r,p) };
+    try
+    {
+        return { negative_binomial_from_logs(r, log_p, log_q) };
+    }
+    catch (const std::overflow_error& e)
+    {
+        throw math_error()<<"negative_binomial: "<<e.what();
+    }
 }
 
 extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
