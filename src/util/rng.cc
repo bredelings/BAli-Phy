@@ -168,7 +168,10 @@ int geometric_from_logs(double log_p, double log_q)
     double q = exp(log_q);
     if (q >= small_failure_probability)
     {
-        unsigned n = geometric(exp(log_p));
+        double p = exp(log_p);
+        if (p == 0)
+            throw std::overflow_error("geometric success probability is below Double range");
+        unsigned n = geometric(p);
         if (n > std::numeric_limits<int>::max())
             throw std::overflow_error("geometric sample exceeds Int range");
         return n;
