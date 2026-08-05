@@ -80,7 +80,7 @@ instance HasPdf d => HasPdf (IID d) where
                         | otherwise       = product (map (pdf dist) xs)
 
 instance HasAnnotatedPdf d => HasAnnotatedPdf (IID d) where
-    annotatedDensities (IID n dist) = make_densities' $ independent_densities (replicate n dist)
+    annotatedDensities (IID n dist) = make_prob_densities' $ independent_densities (replicate n dist)
 
 instance Sampleable d => Sampleable (IID d) where
     sample (IID n dist) = lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do

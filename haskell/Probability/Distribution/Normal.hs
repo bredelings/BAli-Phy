@@ -40,7 +40,7 @@ instance HasAnnotatedPdf Normal where
     annotatedDensities dist@(Normal mu sigma) x = do
                                                in_edge "mu" mu
                                                in_edge "sigma" sigma
-                                               return ([pdf dist x], ())
+                                               return ([fromLogDensity $ pdf dist x], ())
 
 
 {-
@@ -60,4 +60,3 @@ normal_bounds = realLine
 normal_effect x = add_move $ sliceSample x normal_bounds
 
 normal mu sigma = Normal mu sigma
-

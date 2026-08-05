@@ -24,6 +24,24 @@ namespace
                                "choice probability differs from its expected value");
     }
 
+    // Protect LogNum's representation-specific zero construction and recognition;
+    // this is redundant if ProbDensity stops using LogNum.
+    void check_prob_density_zero()
+    {
+        ProbDensity default_zero;
+        BALI_PHY_TEST_CHECK(default_zero.is_zero());
+        BALI_PHY_TEST_CHECK(default_zero.log().neginfs() == 1);
+
+        ProbDensity assigned_zero = 1;
+        assigned_zero = 0;
+        BALI_PHY_TEST_CHECK(assigned_zero.is_zero());
+
+        ProbDensity repeated_zero = default_zero * assigned_zero;
+        BALI_PHY_TEST_CHECK(repeated_zero.log().neginfs() == 2);
+        BALI_PHY_TEST_CHECK(repeated_zero.is_zero());
+        BALI_PHY_TEST_CHECK(not ProbDensity(1).is_zero());
+    }
+
     // Finite ChoiceWeights must reduce to ordinary categorical normalization.
     void check_finite_weights()
     {
@@ -111,6 +129,7 @@ namespace
 // Exercise the enduring algebraic invariants independently of an MCMC model.
 int main()
 {
+    check_prob_density_zero();
     check_finite_weights();
     check_zero_order_addition();
     check_defect_priority();

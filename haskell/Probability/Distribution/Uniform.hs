@@ -43,7 +43,7 @@ instance HasAnnotatedPdf Uniform where
     annotatedDensities dist@(Uniform l u) x = do
         in_edge "l" l
         in_edge "u" u
-        return ([pdf dist x],())
+        return ([fromLogDensity $ pdf dist x],())
 
 instance Sampleable Uniform where
     sample dist@(Uniform l u) = RanDistribution2 dist (uniform_effect l u)

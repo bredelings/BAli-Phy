@@ -27,7 +27,8 @@ extern "C" closure builtin_function_registerPrior(OperationArgs& Args)
     // We are supposed to evaluate the random_variable before we register
     int r_from_dist = Args.evaluate_slot_use(0);
 
-    auto prob = Args.evaluate_slot_to_value(1).as_log_double();
+    auto prob_value = Args.evaluate_slot_to_value(1);
+    auto prob = prob_value.as_<Box<ProbDensity>>().value();
 
     int r_prob = Args.reg_for_slot(1);
 
@@ -47,7 +48,8 @@ extern "C" closure builtin_function_registerLikelihood(OperationArgs& Args)
     int r_from_dist = Args.evaluate_slot_use(0);
 
     // We are supposed to evaluate the likelihood before we register
-    auto prob = Args.evaluate_slot_to_value(1).as_log_double();
+    auto prob_value = Args.evaluate_slot_to_value(1);
+    auto prob = prob_value.as_<Box<ProbDensity>>().value();
 
     int r_prob = Args.reg_for_slot(1);
 

@@ -24,11 +24,24 @@
 #include <iostream>
 #include "util/math/logsum.H"
 
+// Supply representation-specific construction and recognition of log(0).
+// The undefined primary template keeps unsupported log-coordinate types from
+// silently acquiring inappropriate infinity semantics.
+template <typename T>
+struct LogNumTraits;
+
+template <>
+struct LogNumTraits<double>
+{
+    static constexpr double zero_log_value() {return -infinity<double>;}
+    static constexpr bool is_zero(double value) {return value == zero_log_value();}
+};
+
 /// A class for handling positive real number in terms of their natural log.
 template <typename T>
 class LogNum {
     /// Natural log of the number.
-    T value = -infinity<T>;
+    T value = LogNumTraits<T>::zero_log_value();
 public:
     typedef T log_value_type;
     
@@ -87,10 +100,10 @@ public:
     {
 	assert(not (y<0));
 
-        // It seems that log(0) may raise FE_DIVBYZERO.
-        // Normally this is silent. But can be made trapping with feenableexcept( ).
+	// It seems that log(0) may raise FE_DIVBYZERO.
+	// Normally this is silent. But can be made trapping with feenableexcept( ).
 	if (y == 0)
-	    value = -infinity<T>;
+	    value = LogNumTraits<T>::zero_log_value();
         // This could help if we inline this function.
 	else if (y == 1)
             value = T(0);
@@ -104,7 +117,7 @@ public:
     template <typename U>
     LogNum& operator=(const LogNum<U>& u) {value = T(u.log()); return *this;}
 
-    constexpr bool is_zero() const  {return value == -infinity<T>;}
+    bool is_zero() const {return LogNumTraits<T>::is_zero(value);}
 
     constexpr LogNum() {}
 

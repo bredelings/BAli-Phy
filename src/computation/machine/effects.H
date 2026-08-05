@@ -2,6 +2,7 @@
 #define EFFECTS_H
 #include "effect.H"
 #include "gcobject.H"
+#include "util/math/ProbDensity.H"
 
 struct register_prob
 {
@@ -9,11 +10,11 @@ struct register_prob
     // We use this to compute ratios when both contexts have the same r_prob.
     // If each r_dist had only one pdf terms, we probably wouldn't need this.
     int r_prob;
-    log_double_t prob;
+    ProbDensity prob;
 
     bool operator==(const register_prob&) const;
 
-    register_prob(int r1, int r2, log_double_t);
+    register_prob(int r1, int r2, ProbDensity);
 };
 
 

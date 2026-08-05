@@ -969,11 +969,11 @@ prob_ratios_t reg_heap::probability_ratios(int c1, int c2)
     std::unordered_set<int> random_vars_removed;
     std::unordered_set<int> random_vars_added;
 
-    std::unordered_map<int,pair<int,log_double_t>> priors1;
-    std::unordered_map<int,pair<int,log_double_t>> priors2;
+    std::unordered_map<int,pair<int,ProbDensity>> priors1;
+    std::unordered_map<int,pair<int,ProbDensity>> priors2;
 
-    std::unordered_map<int,log_double_t> likelihoods1;
-    std::unordered_map<int,log_double_t> likelihoods2;
+    std::unordered_map<int,ProbDensity> likelihoods1;
+    std::unordered_map<int,ProbDensity> likelihoods2;
 
     NeumaierMultiplier<LogDensity> complete_prior_product1;
     if (log_verbose >= 5)

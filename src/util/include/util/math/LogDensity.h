@@ -314,7 +314,7 @@ inline LogDensity logNan()
     return LogDensity(0,0,0,1);
 }
 
-inline LogDensity logZero()
+inline constexpr LogDensity logZero()
 {
     return LogDensity(1,0,0,0);
 }

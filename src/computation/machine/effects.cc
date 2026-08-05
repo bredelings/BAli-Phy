@@ -1,10 +1,11 @@
 #include "effects.H"
 #include "graph_register.H"
 #include "util/log-level.H"
+#include <sstream>
 
 using std::string;
 
-register_prob::register_prob(int r1, int r2, log_double_t p)
+register_prob::register_prob(int r1, int r2, ProbDensity p)
     :r_dist(r1), r_prob(r2), prob(p)
 {
 }
@@ -32,7 +33,9 @@ bool register_prior::operator==(const Object& O) const
 
 string register_prior::print() const
 {
-    return string("register_prior[")+std::to_string(r_dist)+","+std::to_string(r_prob)+","+std::to_string(prob.log())+"]";
+    std::ostringstream out;
+    out<<"register_prior["<<r_dist<<","<<r_prob<<","<<prob<<"]";
+    return out.str();
 }
 
 //--------------------------------------------------------------------
@@ -55,7 +58,9 @@ bool register_likelihood::operator==(const Object& O) const
 
 string register_likelihood::print() const
 {
-    return string("register_likelihood[")+std::to_string(r_dist)+","+std::to_string(r_prob)+","+std::to_string(prob.log())+"]";
+    std::ostringstream out;
+    out<<"register_likelihood["<<r_dist<<","<<r_prob<<","<<prob<<"]";
+    return out.str();
 }
 
 //--------------------------------------------------------------------

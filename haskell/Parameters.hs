@@ -3,15 +3,15 @@ module Parameters where
 import Range
 import Foreign.String     -- for list_to_string
 import Effect             -- for Effect
-import Numeric.Log  -- for Log Double
+import Numeric.ProbDensity (ProbDensity)
 
 -- An Effect may be a node in a graph??
 
 foreign import bpcall "Modifiables:" modifiable :: a -> a
 
-foreign import bpcall "Modifiables:" registerPrior :: Effect -> Log Double -> IO Effect
+foreign import bpcall "Modifiables:" registerPrior :: Effect -> ProbDensity -> IO Effect
 
-foreign import bpcall "Modifiables:" registerLikelihood :: a -> Log Double -> IO Effect
+foreign import bpcall "Modifiables:" registerLikelihood :: a -> ProbDensity -> IO Effect
 
 foreign import bpcall "Modifiables:registerInEdge" builtin_registerInEdge :: a -> Effect -> CPPString -> IO Effect
 registerInEdge var dist role = builtin_registerInEdge var dist (list_to_string role)
@@ -33,4 +33,3 @@ foreign import bpcall "Modifiables:changeable_apply" ($?) :: (a -> b) -> a -> b
 -- Make into an IO operation to prevent  floating.
 foreign import bpcall "Modifiables:" modifiable_apply :: (a -> b) -> a -> IO b
 modifiableIO action = modifiable_apply unsafePerformIO action
-

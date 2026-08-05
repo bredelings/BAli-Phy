@@ -2,6 +2,7 @@ module Probability.Random (module Probability.Random,
                            module Range,
                            module Numeric.Log,
                            module Numeric.Prob,
+                           module Numeric.ProbDensity,
                            module Probability.Dist,
                            modifiable,
                            liftIO,
@@ -18,6 +19,7 @@ import Control.Monad.IO.Class -- for liftIO
 import Data.IntMap (IntMap)
 import Numeric.Log
 import Numeric.Prob
+import Numeric.ProbDensity
 import Control.Monad.Fix
 
 import           System.IO
@@ -74,10 +76,10 @@ makeEdges event (InEdge name node) = do registerInEdge node event name
 class Dist d => HasAnnotatedPdf d where
     type DistProperties d :: Type
     type DistProperties d = ()
-    annotatedDensities :: d -> Result d -> AnnotatedDensity ([Log Double], DistProperties d)
+    annotatedDensities :: d -> Result d -> AnnotatedDensity ([ProbDensity], DistProperties d)
 
 densities dist x = fst $ get_densities $ annotatedDensities dist x
-density dist x = balancedProduct (densities dist x)
+density dist x = balancedProduct $ map collapseDensity $ densities dist x
 
 
 ---------------------------- TKEffects --------------------------
@@ -220,7 +222,7 @@ require p = if p then possible else impossible
 
 condition cond = liftIO $ do
   s <- registerDistObserve "condition"
-  registerLikelihood s (require cond)
+  registerLikelihood s (fromLogDensity $ require cond)
   return ()
 
 {- NOTE: Problems with lists of probability factors.
@@ -423,8 +425,10 @@ logToJson :: (ToJSONKey k, ToJSON v) => [(k,v)] -> Value
 logToJson loggers = J.Object $ [(toJSONKey k, toJSON v) | (k,v) <- loggers]
 
 -- Define some helper functions
-make_densities density x = return ([density x],())
-make_densities' densities x = return (densities x,())
+make_densities density x = return ([fromLogDensity $ density x],())
+make_densities' densities x = return (map fromLogDensity $ densities x,())
+make_prob_densities density x = return ([density x],())
+make_prob_densities' densities x = return (densities x,())
 pair_apply f (x:y:t) = f x y : pair_apply f t
 pair_apply _ t       = t
 

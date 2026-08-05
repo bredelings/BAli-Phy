@@ -76,7 +76,7 @@ instance Dist UniformTopology where
     distName _ = "uniform_topology"
 
 instance HasAnnotatedPdf UniformTopology where
-    annotatedDensities (UniformTopology n) _ = return ([uniformTopologyPr n], ())
+    annotatedDensities (UniformTopology n) _ = return ([fromLogDensity $ uniformTopologyPr n], ())
 
 instance Sampleable UniformTopology where
     sample dist@(UniformTopology n) = RanDistribution3 dist uniformTopologyEffect triggeredModifiableTree (sampleUniformTopology n)

@@ -65,7 +65,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   let nativeFs = fmap nativeMatrix fs
       prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) nativeFs nodeCLVs ancestralComponentStates smodelProperties
 
-  return ([likelihood], prop)
+  return ([fromLogDensity likelihood], prop)
 
 instance Dist (PhyloCTMC t (AlignmentOnTree t2) s) where
     type Result (PhyloCTMC t (AlignmentOnTree t2) s) = UnalignedCharacterData

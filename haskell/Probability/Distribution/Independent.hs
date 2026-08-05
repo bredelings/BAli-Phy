@@ -29,7 +29,7 @@ annotatedDensities on the component distributions.
 
 independent_densities (d:ds) (x:xs) = densities d x ++ independent_densities ds xs
 independent_densities [] []         = []
-independent_densities _  _          = [toFloating (0.0 :: Double)]
+independent_densities _  _          = [fromLogDensity $ toFloating (0.0 :: Double)]
 
 independent_pdf (d:ds) (x:xs) = pdf d x * independent_pdf ds xs
 independent_pdf [] []         = 1
@@ -50,7 +50,7 @@ instance HasPdf d => HasPdf (Independent [] d) where
     pdf (Independent ds) xs = independent_pdf ds xs
 
 instance HasAnnotatedPdf d => HasAnnotatedPdf (Independent [] d) where
-    annotatedDensities (Independent dists) = make_densities' $ independent_densities dists
+    annotatedDensities (Independent dists) = make_prob_densities' $ independent_densities dists
 
 --instance Sampleable d => Sampleable (Independent [] d) where
 --    sample (Independent dists) = lazy $ sequence $ map sample dists

@@ -207,7 +207,8 @@ instance HasPdf d => HasPdf (Mixture (Discrete d)) where
     pdf (Mixture (Discrete pairs)) x = sum [ toFloating p * pdf dist x | (dist,p) <- pairs ]
 
 instance HasAnnotatedPdf d => HasAnnotatedPdf (Mixture (Discrete d)) where
-    annotatedDensities (Mixture (Discrete pairs)) x = return $ ([sum [toFloating p * density dist x | (dist,p) <- pairs]], ())
+    annotatedDensities (Mixture (Discrete pairs)) x =
+        return ([fromLogDensity $ sum [toFloating p * density dist x | (dist,p) <- pairs]], ())
 
 
 mixture ps dists | length ps /= length dists  = error "mixture distribution has different number of weights and distributions"

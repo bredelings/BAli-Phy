@@ -125,7 +125,7 @@ annotated_alignment_prs tree hmms model alignment = do
       lengthp = snd model
       length_prs = fmap lengthp ls
       props = PhyloAlignmentProperties pr hmms lengthp as ls length_prs
-  return $ (prs, props)
+  return $ (map fromLogDensity prs, props)
 
 alignment_effect (AlignmentOnTree tree n ls as) = do
   SamplingRate 1 $ add_move $ walkTreeSampleAlignments tree as

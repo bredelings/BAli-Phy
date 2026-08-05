@@ -1,12 +1,28 @@
 #include "computation/machine/args.H"
 #include "computation/haskell/Integer.H"
 #include "util/utf8.H"
+#include "util/math/ProbDensity.H"
 #include <cstdint>
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 
 using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
+
+// Lift an ordinary log density into the multiplicity-preserving density representation.
+extern "C" closure builtin_function_fromLogDensity(OperationArgs& Args)
+{
+    auto density = Args.evaluate_slot_to_value(0).as_log_double();
+    return new Box<ProbDensity>(ProbDensity(density));
+}
+
+// Return the conventional log density while intentionally forgetting defect multiplicities.
+extern "C" closure builtin_function_collapseDensity(OperationArgs& Args)
+{
+    auto density_value = Args.evaluate_slot_to_value(0);
+    const auto& density = density_value.as_<Box<ProbDensity>>().value();
+    return log_double_t(density);
+}
 
 // Convert integer-valued Char arithmetic back to a Unicode scalar value.
 // This keeps old Num Char hooks from wrapping through byte-sized chars.

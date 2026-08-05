@@ -63,7 +63,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
   -- How about stuff related to alignment compression?
   let prop = (PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree)) ancestralComponentStates smodelProperties
 
-  return ([likelihood,1/likelihood2], prop)
+  return (map fromLogDensity [likelihood,1/likelihood2], prop)
 
 instance Dist (PhyloCTMC t Int s) => Dist (VariablePhyloCTMC t s) where
     type Result (VariablePhyloCTMC t s) = Result (PhyloCTMC t Int s)

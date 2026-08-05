@@ -96,7 +96,8 @@ instance Dist UnlabelledYule where
     distName _ = "yule"
 
 instance HasAnnotatedPdf UnlabelledYule where
-    annotatedDensities (UnlabelledYule n lambda) tree = return (yulePrFactors n lambda tree, ())
+    annotatedDensities (UnlabelledYule n lambda) tree =
+        return (map fromLogDensity $ yulePrFactors n lambda tree, ())
 
 instance Sampleable UnlabelledYule where
     sample dist@(UnlabelledYule n lambda) = RanDistribution3 dist yuleEffect triggeredModifiableTimeTree (sampleYule n lambda)
@@ -124,7 +125,8 @@ instance Dist (Yule l) where
     distName _ = "Yule"
 
 instance HasAnnotatedPdf (Yule l) where
-    annotatedDensities (Yule taxa lambda) tree = return (yulePrFactors (length taxa) lambda tree, ())
+    annotatedDensities (Yule taxa lambda) tree =
+        return (map fromLogDensity $ yulePrFactors (length taxa) lambda tree, ())
 
 instance Sampleable (Yule l) where
     sample dist@(Yule taxa lambda) = RanDistribution3 dist yuleEffect triggeredModifiableTimeTree (sampleLabeledYule taxa lambda)

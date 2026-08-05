@@ -37,7 +37,7 @@ instance Variance Poisson
 instance HasAnnotatedPdf Poisson where
     annotatedDensities dist@(Poisson mu) n = do
         in_edge "mu" mu
-        return ([pdf dist n], ())
+        return ([fromLogDensity $ pdf dist n], ())
 
 instance Sampleable Poisson where
     sample dist = RanDistribution2 dist poisson_effect
