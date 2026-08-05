@@ -201,7 +201,7 @@ int choose_categorical_candidate(context_ref& C, int selector_reg, int count,
                                  const vector<int>& values)
 {
     auto candidate_set = make_categorical_candidates(C, selector_reg, count, values);
-    vector<log_double_t> weights(candidate_set.weights.begin(), candidate_set.weights.end());
+    vector<ChoiceWeight> weights(candidate_set.weights.begin(), candidate_set.weights.end());
     int candidate_index = choose(weights);
     int selected_value = candidate_set.values[candidate_index];
 
@@ -366,7 +366,8 @@ extern "C" closure builtin_function_condLogOddsRaw(OperationArgs& Args)
     vector<int> candidate_values(count);
     std::iota(candidate_values.begin(), candidate_values.end(), 0);
     auto candidate_set = make_categorical_candidates(C, *modifiable_reg, count, candidate_values);
-    vector<log_double_t> weights(candidate_set.weights.begin(), candidate_set.weights.end());
+    vector<ChoiceWeight> choice_weights(candidate_set.weights.begin(), candidate_set.weights.end());
+    auto weights = choice_probabilities(choice_weights);
     vector<log_double_t> suffix_weights(count + 1, 0.0);
     for(int i = count - 1; i >= 0; i--)
         suffix_weights[i] = weights[i] + suffix_weights[i + 1];
