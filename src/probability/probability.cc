@@ -551,15 +551,9 @@ log_double_t L_beta(double x, double y)
     return L_gamma(x) * L_gamma(y) / L_gamma(x+y);
 }
 
-log_double_t multinomial_pdf(int n, std::span<const log_double_t> ps,
-                             std::span<const int> ks)
+ProbDensity multinomial_pdf(int n, std::span<const log_double_t> ps,
+                            std::span<const int> ks)
 {
-    // If we return LogDensity, then we could return ks[i]/n * 0 if p[i] was zero.
-    // We could also return abs(ks[i])/n * 0 if ks[i] was negative.
-    // We could also return abs(n-N)/n * 0 if the sum is incorrect.
-
-    // Should we scale this or not?
-
     // First check that the ks are in bounds
     int sum = 0;
     for(int k : ks)
@@ -570,14 +564,18 @@ log_double_t multinomial_pdf(int n, std::span<const log_double_t> ps,
     if (n != sum) return 0;
 
     // If so, then compute the non-zero probability
-    log_double_t Pr = L_factorial(n);
+    ProbDensity Pr = L_factorial(n);
     for(int i=0;i<ps.size();i++)
     {
         Pr /= L_factorial(ks[i]);
         // A zero count contributes p^0=1 even when log(p)=-infinity; skipping it
         // avoids the indeterminate floating-point product 0*(-infinity).
         if (ks[i] != 0)
-            Pr *= pow(ps[i],ks[i]);
+        {
+            // Treat k observations in one category like k independent categorical factors,
+            // so p^k retains k zero factors when p is exactly zero.
+            Pr *= pow(ProbDensity(ps[i]), ks[i]);
+        }
     }
 
     return Pr;

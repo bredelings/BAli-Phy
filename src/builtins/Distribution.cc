@@ -33,8 +33,8 @@ using std::valarray;
 namespace
 {
 
-// Force a boxed vector's lazy elements through its vector contingency and
-// recover the log-domain values stored by Haskell's Log Double newtype.
+// Resolve a boxed vector's lazy elements with USE dependencies and recover the
+// log-domain values stored by Haskell's Log Double newtype.
 vector<log_double_t> read_boxed_log_probabilities(OperationArgs& Args, int slot)
 {
     auto probabilities_arg = Args.evaluate_slot_use_with_contingency(slot);
@@ -50,7 +50,9 @@ vector<log_double_t> read_boxed_log_probabilities(OperationArgs& Args, int slot)
         // invalidate the environment reference used to discover it.
         int element_reg = boxed_vector_element_regs(
             Args.memory().closure_at(probabilities_reg))[i];
-        int value_reg = Args.evaluate_reg_force(
+        // The element USE is contingent because a changed vector can expose a
+        // different element register when this operation is reevaluated.
+        int value_reg = Args.evaluate_reg_use(
             element_reg, probabilities_arg.edge_contingency);
         probabilities.push_back(
             Args.memory().closure_at(value_reg).get_code().as_log_double());
@@ -628,7 +630,20 @@ extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 
     if (probabilities.size() != counts.view().size())
         throw myexception()<<"multinomial_density: |ps| != |ks|";
-    return { ::multinomial_pdf(n, probabilities, counts.view()) };
+    return log_double_t(::multinomial_pdf(n, probabilities, counts.view()));
+}
+
+// Return the uncollapsed multinomial density for MCMC prior and likelihood registration.
+extern "C" closure builtin_function_multinomial_prob_density(OperationArgs& Args)
+{
+    int n = Args.evaluate_slot_to_value(0).as_int();
+    auto probabilities = read_boxed_log_probabilities(Args, 1);
+    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 2, "multinomial counts");
+
+    if (probabilities.size() != counts.view().size())
+        throw myexception()<<"multinomial_prob_density: |ps| != |ks|";
+    return new Box<ProbDensity>(::multinomial_pdf(n, probabilities, counts.view()));
 }
 
 extern "C" closure builtin_function_sample_binomial_from_logs(OperationArgs& Args)

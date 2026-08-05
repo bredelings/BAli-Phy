@@ -9,6 +9,9 @@ import qualified Data.Vector.Unboxed as U
 foreign import trcall "Distribution:multinomial_density" builtin_multinomial_density
     :: Int -> V.Vector (Log Double) -> U.Vector Int -> Log Double
 
+foreign import trcall "Distribution:multinomial_prob_density" builtin_multinomial_prob_density
+    :: Int -> V.Vector (Log Double) -> U.Vector Int -> ProbDensity
+
 data Multinomial = Multinomial Int (V.Vector (Log Double))
 
 instance Dist Multinomial where
@@ -22,7 +25,8 @@ instance HasPdf Multinomial where
     pdf (Multinomial n ps) ks = builtin_multinomial_density n ps (U.fromList ks)
 
 instance HasAnnotatedPdf Multinomial where
-    annotatedDensities dist = make_densities $ pdf dist
+    annotatedDensities (Multinomial n ps) =
+        make_prob_densities $ builtin_multinomial_prob_density n ps . U.fromList
 
 instance Sampleable Multinomial where
     sample (Multinomial n ps) = sample_multinomial n ps

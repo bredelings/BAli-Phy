@@ -24,6 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <valarray>
 #include "util/math/log-double.H"
+#include "util/math/ProbDensity.H"
 
 log_double_t dirichlet_pdf(const std::vector<double>& p,const std::vector<double>& n);
 
@@ -80,8 +81,8 @@ log_double_t binomial_pdf(int n, double p, int k);
 
 log_double_t binomial_pdf_from_logs(int n, double log_p, double log_q, int k);
 
-log_double_t multinomial_pdf(int n, std::span<const log_double_t> ps,
-                             std::span<const int> ks);
+ProbDensity multinomial_pdf(int n, std::span<const log_double_t> ps,
+                            std::span<const int> ks);
 
 log_double_t geometric_pdf(double p, int n);
 
