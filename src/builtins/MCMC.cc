@@ -58,9 +58,10 @@ extern "C" closure builtin_function_registerLogger(OperationArgs& Args)
     return {R::IndexVar(0), {r_effect}};
 }
 
+// Resample each indicator from its two-state conditional and accumulate the
+// inverse selection probability used to collapse over that indicator.
 log_double_t get_multiplier(context_ref& C1, const vector<int>& I_regs)
 {
-    // So, why is this sum allowed?
     log_double_t multiplier(1);
 
     for(int r : I_regs)
@@ -69,14 +70,13 @@ log_double_t get_multiplier(context_ref& C1, const vector<int>& I_regs)
 
         context C2 = C1;
         C2.set_reg_value(r, 1-i);
-        log_double_t ratio = C2.probability_ratios(C1).total_ratio();
-        if (uniform() < ratio/(1.0+ratio))
-        {
+        ProbDensity ratio = C2.probability_ratios(C1).total_ratio();
+        vector<ChoiceWeight> weights{ChoiceWeight(1.0), ChoiceWeight(ratio)};
+        auto probabilities = choice_probabilities(weights);
+        int choice = choose(probabilities);
+        if (choice == 1)
             C1 = C2;
-            multiplier *= 1.0+(1.0/ratio);
-        }
-        else
-            multiplier *= 1.0+ratio;
+        multiplier /= probabilities[choice];
     }
     return multiplier;
 }
@@ -126,15 +126,25 @@ extern "C" closure builtin_function_sum_out_coals(OperationArgs& Args)
 	    t2 = 0;
     }
 
+    // Indicators have already been resampled, so the reflected proposal can return immediately.
+    if (t2 == t1)
+        return closure(R::ConstructorApp("()", 0, {}));
+
     context C2 = C1;
     C2.set_reg_value(t_reg, t2);
+    // Evaluate the proposed-time context before using it as the base for indicator alternatives.
+    C2.evaluate_program();
 
     auto multiplier2 = get_multiplier(C2, I_regs);
 
     //------------- 5. Choose to accept or not, depending on the relative probabilities.
-    log_double_t ratio = C2.probability_ratios(C1).total_ratio();
+    ProbDensity ratio = C2.probability_ratios(C1).total_ratio();
 
-    int choice = choose2(multiplier1, ratio*multiplier2);
+    vector<ChoiceWeight> time_weights{
+        ChoiceWeight(ProbDensity(multiplier1)),
+        ChoiceWeight(ratio * ProbDensity(multiplier2))
+    };
+    int choice = choose(time_weights);
 
     //------------- 6. Set x depending on the choice
     if (choice == 1)
