@@ -26,6 +26,7 @@
 #include "util/myexception.H"
 #include "util/range.H"
 #include "util/math/log-double.H"
+#include "probability/choice-weight.H"
 
 template <typename F>
 class choose_exception: public myexception {
@@ -116,6 +117,13 @@ inline int choose(const std::vector<F>& P)
     std::vector<F> sum(P.size());
 
     return choose_scratch(P,sum);
+}
+
+// ChoiceWeight addition is a preferred-stratum sum, so compute the complete
+// total and project to ordinary probabilities before using prefix sums.
+inline int choose(const std::vector<ChoiceWeight>& weights)
+{
+    return choose(choice_probabilities(weights));
 }
 
 template <typename F>
@@ -265,4 +273,3 @@ I choose(const std::unordered_map<I,F>& P)
 }
 
 #endif
-
