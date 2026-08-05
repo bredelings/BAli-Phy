@@ -32,6 +32,7 @@ sample_multinomial n (p:ps) = do
   ms <- sample_multinomial (n-m) (normalize ps)
   return (m:ms)
 
-multinomial ps = Multinomial (length ps) ps
+multinomial :: Int -> [Double] -> Multinomial
+multinomial = Multinomial
 
 multinomial_density n ps xs = builtin_multinomial_density n (U.fromList ps) (U.fromList xs)

@@ -8,7 +8,8 @@ import Data.Vector.Unboxed.Internal (intVectorNativeView)
 import Foreign.NativeVector (NativeVector)
 import Foreign.Vector (EVector, listToVector, vectorToList)
 import Probability (Log)
-import Probability.Distribution.Multinomial (multinomial_density)
+import Probability.Dist (HasPdf(pdf))
+import Probability.Distribution.Multinomial (multinomial, multinomial_density)
 import System.IO (print)
 
 foreign import trcall "SMC:haplotype01_from_plaf_probability" builtin_haplotype01_from_plaf_probability :: U.Vector Double -> EVector Int -> Log Double
@@ -18,7 +19,7 @@ foreign import bpcall "PopGen:selfing_coalescence_probability" builtin_selfing_c
 -- Exercise primitive-vector probability boundaries without exposing their
 -- internal unboxed representation in the public list-facing interface.
 main = do
-    print (multinomial_density 2 [0.25,0.75] [1,1])
+    print (pdf (multinomial 2 [0.25,0.75]) [1,1])
     print (multinomial_density 2 [0.25,0.75] [2,1])
     print (builtin_haplotype01_from_plaf_probability (U.fromList [0.25,0.75])
                                                      (listToVector [0,1]))
