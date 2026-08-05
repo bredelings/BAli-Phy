@@ -2,6 +2,7 @@ module Main where
 
 import Compiler.FFI.Import
 import Data.Floating.Types (FloatConvert(toFloating))
+import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import Foreign.Pair
 import Numeric.Log
@@ -33,7 +34,7 @@ replicateInts :: ReplicateInts
 replicateInts = fromCImport replicateIntsRaw
 
 type MultinomialDensity =
-    Int -> U.Vector Double -> U.Vector Int -> Log Double
+    Int -> V.Vector (Log Double) -> U.Vector Int -> Log Double
 
 foreign import bpcall "Distribution:multinomial_density"
     multinomialDensityRaw :: RawImport MultinomialDensity
@@ -50,7 +51,8 @@ main = do
     print (makePair 3 4.5)
     print (U.toList (replicateInts 7 3))
 
-    let probabilities = U.slice 1 2 (U.fromList [99.0, 0.25, 0.75, 99.0])
+    let probabilities = V.slice 1 2 $ V.fromList $ map toFloating
+                            ([99.0, 0.25, 0.75, 99.0] :: [Double])
         counts = U.slice 1 2 (U.fromList [99, 1, 2, 99])
         lower = toFloating (0.4218 :: Double)
         upper = toFloating (0.4220 :: Double)

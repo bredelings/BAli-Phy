@@ -551,7 +551,7 @@ log_double_t L_beta(double x, double y)
     return L_gamma(x) * L_gamma(y) / L_gamma(x+y);
 }
 
-log_double_t multinomial_pdf(int n, std::span<const double> ps,
+log_double_t multinomial_pdf(int n, std::span<const log_double_t> ps,
                              std::span<const int> ks)
 {
     // If we return LogDensity, then we could return ks[i]/n * 0 if p[i] was zero.
@@ -574,7 +574,10 @@ log_double_t multinomial_pdf(int n, std::span<const double> ps,
     for(int i=0;i<ps.size();i++)
     {
         Pr /= L_factorial(ks[i]);
-        Pr *= pow(ps[i],ks[i]);
+        // A zero count contributes p^0=1 even when log(p)=-infinity; skipping it
+        // avoids the indeterminate floating-point product 0*(-infinity).
+        if (ks[i] != 0)
+            Pr *= pow(ps[i],ks[i]);
     }
 
     return Pr;

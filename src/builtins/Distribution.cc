@@ -622,15 +622,13 @@ extern "C" closure builtin_function_binomial_density_from_logs(OperationArgs& Ar
 extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value(0).as_int();
-    auto probabilities =
-        read_native_vector_input<double, ForeignDemand::use>(
-            Args, 1, "multinomial probabilities");
+    auto probabilities = read_boxed_log_probabilities(Args, 1);
     auto counts = read_native_vector_input<int, ForeignDemand::use>(
-        Args, 4, "multinomial counts");
+        Args, 2, "multinomial counts");
 
-    if (probabilities.view().size() != counts.view().size())
+    if (probabilities.size() != counts.view().size())
         throw myexception()<<"multinomial_density: |ps| != |ks|";
-    return { ::multinomial_pdf(n, probabilities.view(), counts.view()) };
+    return { ::multinomial_pdf(n, probabilities, counts.view()) };
 }
 
 extern "C" closure builtin_function_sample_binomial_from_logs(OperationArgs& Args)

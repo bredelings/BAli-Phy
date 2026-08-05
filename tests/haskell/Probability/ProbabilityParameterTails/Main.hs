@@ -11,6 +11,7 @@ import Probability.Distribution.Bernoulli (bernoulli)
 import Probability.Distribution.Binomial (binomial)
 import Probability.Distribution.Categorical (categorical)
 import Probability.Distribution.Geometric (geometric)
+import Probability.Distribution.Multinomial (multinomial)
 import Probability.Distribution.NegativeBinomial (negativeBinomial)
 import System.IO (IO, print)
 
@@ -24,6 +25,7 @@ main =
         binomialActual = ln (pdf (binomial 2 p) 1)
         categoricalActual = ln (pdf (categorical [p, 1-p]) 1)
         geometricActual = ln (pdf (geometric p) 1)
+        multinomialActual = ln (pdf (multinomial 2 [p, 1-p]) [1, 1])
         negativeBinomialActual = ln (pdf (negativeBinomial 2 p) 1)
         tailActual = ln (pdf (geometric 0.6) 2000)
         tailExpected = log 0.6+2000*log 0.4
@@ -32,4 +34,5 @@ main =
               && abs (binomialActual-(log 2+expectedRare)) < 1.0e-10
               && abs (categoricalActual-expectedRare) < 1.0e-10
               && abs (geometricActual-expectedRare) < 1.0e-10
+              && abs (multinomialActual-(log 2+expectedRare)) < 1.0e-10
               && abs (negativeBinomialActual-(log 2+expectedRare)) < 1.0e-10)
