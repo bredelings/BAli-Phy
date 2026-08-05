@@ -60,3 +60,8 @@ geometric_effect x = do
 
 geometric :: Double -> Geometric
 geometric pSuccess = Geometric (toFloating pSuccess)
+
+-- Parameterize by the failure probability, complementing only after its stable
+-- conversion to Prob so a small failure probability is not rounded away.
+rgeometric :: Double -> Geometric
+rgeometric pFailure = Geometric (complement (toFloating pFailure))
