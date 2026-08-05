@@ -479,6 +479,23 @@ log_double_t negative_binomial_pdf(int r, double p, int k)
     return Pr;
 }
 
+// Evaluate the negative-binomial density without reconstructing either
+// complementary probability from the other.
+log_double_t negative_binomial_pdf_from_logs(int r, double log_p, double log_q, int k)
+{
+    assert(r >= 0);
+    assert(log_p > -INFINITY and log_p <= 0);
+    assert(log_q <= 0);
+
+    if (k < 0) return 0;
+    if (r == 0 or log_q == -INFINITY) return (k == 0) ? 1 : 0;
+
+    // P(K=k) = choose(k+r-1,k) p^r (1-p)^k.
+    log_double_t Pr;
+    Pr.log() = log_choose(k + r - 1, k) + r*log_p + k*log_q;
+    return Pr;
+}
+
 log_double_t binomial_pdf(int n, double p, int k)
 {
     assert(n >= 0);
@@ -497,6 +514,24 @@ log_double_t binomial_pdf(int n, double p, int k)
     log_double_t Pr;
     Pr.log() = log_choose (n, k) + k*log (p) + (n - k)*log1p (-p);
 
+    return Pr;
+}
+
+// Evaluate the binomial density without reconstructing either complementary
+// probability from the other.
+log_double_t binomial_pdf_from_logs(int n, double log_p, double log_q, int k)
+{
+    assert(n >= 0);
+    assert(log_p <= 0);
+    assert(log_q <= 0);
+
+    if (k < 0 or k > n) return 0;
+    if (log_p == -INFINITY) return (k == 0) ? 1 : 0;
+    if (log_q == -INFINITY) return (k == n) ? 1 : 0;
+
+    // P(K=k) = choose(n,k) p^k (1-p)^(n-k).
+    log_double_t Pr;
+    Pr.log() = log_choose(n, k) + k*log_p + (n-k)*log_q;
     return Pr;
 }
 

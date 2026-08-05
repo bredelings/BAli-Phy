@@ -3,7 +3,7 @@ module Probability.Distribution.NegativeBinomial where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:" negative_binomial_density :: Int -> Double -> Int -> Log Double
+foreign import bpcall "Distribution:" negative_binomial_density :: Int -> Double -> Double -> Int -> Log Double
 foreign import bpcall "Distribution:" sample_negative_binomial :: Int -> Double -> IO Int
 
 data NegativeBinomial = NegativeBinomial Int Prob
@@ -15,7 +15,7 @@ instance IOSampleable NegativeBinomial where
     sampleIO (NegativeBinomial r p) = sample_negative_binomial r (toFloating p)
 
 instance HasPdf NegativeBinomial where
-    pdf (NegativeBinomial r p) = negative_binomial_density r (toFloating p)
+    pdf (NegativeBinomial r p) = negative_binomial_density r (ln p) (ln (1-p))
 
 instance Dist1D NegativeBinomial where
     cdf (NegativeBinomial r p) = undefined

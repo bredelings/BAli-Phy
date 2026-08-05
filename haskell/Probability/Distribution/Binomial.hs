@@ -3,7 +3,7 @@ module Probability.Distribution.Binomial where
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:" binomial_density :: Int -> Double -> Int -> Log Double
+foreign import bpcall "Distribution:" binomial_density :: Int -> Double -> Double -> Int -> Log Double
 foreign import bpcall "Distribution:" sample_binomial :: Int -> Double -> IO Int
 
 data Binomial = Binomial Int Prob
@@ -16,7 +16,7 @@ instance IOSampleable Binomial where
     sampleIO (Binomial n p) = sample_binomial n (toFloating p)
 
 instance HasPdf Binomial where
-    pdf (Binomial n p) x = binomial_density n (toFloating p) x
+    pdf (Binomial n p) x = binomial_density n (ln p) (ln (1-p)) x
 
 instance Dist1D Binomial where
     cdf (Binomial n p) x  = undefined

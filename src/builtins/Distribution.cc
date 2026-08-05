@@ -534,10 +534,11 @@ extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)
 extern "C" closure builtin_function_negative_binomial_density(OperationArgs& Args)
 {
     int r = Args.evaluate_slot_to_value(0).as_int();
-    double p = Args.evaluate_slot_to_value(1).as_double();
-    int k = Args.evaluate_slot_to_value(2).as_int();
+    double log_p = Args.evaluate_slot_to_value(1).as_double();
+    double log_q = Args.evaluate_slot_to_value(2).as_double();
+    int k = Args.evaluate_slot_to_value(3).as_int();
 
-    return { ::negative_binomial_pdf(r,p,k) };
+    return { ::negative_binomial_pdf_from_logs(r, log_p, log_q, k) };
 }
 
 extern "C" closure builtin_function_sample_negative_binomial(OperationArgs& Args)
@@ -554,10 +555,11 @@ extern "C" closure builtin_function_sample_negative_binomial(OperationArgs& Args
 extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value(0).as_int();
-    double p = Args.evaluate_slot_to_value(1).as_double();
-    int k = Args.evaluate_slot_to_value(2).as_int();
+    double log_p = Args.evaluate_slot_to_value(1).as_double();
+    double log_q = Args.evaluate_slot_to_value(2).as_double();
+    int k = Args.evaluate_slot_to_value(3).as_int();
   
-    return { ::binomial_pdf(n,p,k) };
+    return { ::binomial_pdf_from_logs(n, log_p, log_q, k) };
 }
 
 extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
