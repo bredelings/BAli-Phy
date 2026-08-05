@@ -18,7 +18,7 @@ data Tree = Start1 Tree |
 -- Start birth-death process at time t0 and run until
 bd' lambda mu t1 t0 = do
     t'    <- (t0 +) `liftM` sample $ exponential (1.0 / (lambda + mu))
-    death <- sample $ bernoulli (mu / (lambda + mu))
+    death <- sample $ bernoulli $ toProb (mu / (lambda + mu))
     if t' > t1 then
         return (t1, Finish)
     else if death == 1 then

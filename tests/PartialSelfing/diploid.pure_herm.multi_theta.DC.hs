@@ -44,7 +44,7 @@ note t' ~ iid(n_individuals, exponential (-1.0/log s));
 
   t = map truncate t';
 
-note i ~ iid(n_loci, plate (n_individuals,\k->bernoulli (1.0-0.5**t!!k)) );
+note i ~ iid(n_loci, plate (n_individuals,\k->bernoulli (1 - pow 0.5 (fromIntegral (t!!k)))) );
 
 note data data1 ~ plate (n_loci, \l -> afs2 (theta_effective!!l,i!!l));
 

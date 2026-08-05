@@ -42,7 +42,7 @@ note s ~ uniform(0.0, 1.0);
 
 note t ~ iid(n_individuals, exponential (s/(1.0-s)));
 
-note i ~ iid(n_loci, plate (n_individuals,\k->bernoulli (1.0-0.5**t!!k)) );
+note i ~ iid(n_loci, plate (n_individuals,\k->bernoulli (1 - pow 0.5 (fromIntegral (t!!k)))) );
 
 note data data1 ~ plate (n_loci, \l -> afs2 (theta_ewens!!l,i!!l));
 

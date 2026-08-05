@@ -12,7 +12,7 @@ import           System.Environment  -- for getArgs
 -- Non-zero branches are slightly longer to keep to average length correct.
 -- The division means that we can't set the value though.
 maybe_zero p dist = do
-    is_zero <- prior $ bernoulli p
+    is_zero <- prior $ bernoulli $ toProb p
     length  <- prior $ dist
     if is_zero == 1 then return 0 else return (length / (1 - p))
 

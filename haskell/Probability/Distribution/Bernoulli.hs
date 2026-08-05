@@ -55,7 +55,5 @@ instance Sampleable Bernoulli where
 
 bernoulli_effect x = addMove 1 $ discreteUniformAvoidMH x 0 1
 
-bernoulli :: Double -> Bernoulli
-bernoulli p = Bernoulli (toFloating p)
-
-rbernoulli q = Bernoulli (1-toFloating(q))
+bernoulli :: Prob -> Bernoulli
+bernoulli = Bernoulli

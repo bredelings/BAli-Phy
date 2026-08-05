@@ -37,7 +37,7 @@ instance IOSampleable PolyaUrnParent where
     sampleIO (PolyaUrnParent alpha index)
       | index == 0 = return 0
       | otherwise = do
-          fresh <- sampleIO $ bernoulli (freshParentProbability alpha index)
+          fresh <- sampleIO $ bernoulli $ toProb (freshParentProbability alpha index)
           if fresh == 1
             then return index
             else sampleIO $ uniform_int 0 (index - 1)

@@ -15,7 +15,7 @@ model = do
 
     p <- prior $ beta 10 1
 
-    n <- prior $ geometric p
+    n <- prior $ geometric $ toProb p
 
     q <- prior $ cauchy 0 1
 

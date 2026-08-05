@@ -19,7 +19,7 @@ import Numeric.Log -- for log1p
 -- Select one element from the (possibly infinite) list of values.
 -- This version performs `n` bernoulli choices to select category `n`.
 stick :: [Double] -> [a] -> Random a
-stick (p:ps) (x:xs) = do keep <- sample $ bernoulli p
+stick (p:ps) (x:xs) = do keep <- sample $ bernoulli $ toProb p
                          if keep == 1 then
                              return x
                          else

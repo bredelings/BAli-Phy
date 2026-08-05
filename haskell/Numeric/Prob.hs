@@ -1,6 +1,7 @@
 module Numeric.Prob (Prob,
                      isNaNProb,
                      complement,
+                     toProb,
                      fromLogOdds,
                      logOdds,
                      toFloating,

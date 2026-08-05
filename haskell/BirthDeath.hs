@@ -36,7 +36,7 @@ bd1' lambda mu t1 t2 prev index = do
   t <- (t1 +) <$> (sample (exponential (1/(lambda+mu))))
 
   -- Determine if its a birth or death
-  death <- sample (bernoulli (mu/(lambda+mu)))
+  death <- sample (bernoulli $ toProb (mu/(lambda+mu)))
 
   if t > t2 then
      return $ Next t2 Finish prev index

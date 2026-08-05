@@ -10,7 +10,7 @@ import Data.Function (($))
 import MCMC (runMCMC)
 import MCMC.Moves.Integer (discreteUniformAvoidMH)
 import Probability.Distribution.Bernoulli (bernoulli)
-import Probability.Random (addMove, makeMCMCModel, modifiable, prior)
+import Probability.Random (addMove, makeMCMCModel, modifiable, prior, toProb)
 import System.IO (IO, putStrLn)
 
 -- Exercise NaN as both an existing variable's density and a newly sampled
@@ -19,7 +19,7 @@ model = do
   let densitySelector = modifiable (0 :: Int)
       samplingSelector = modifiable (0 :: Int)
   let probability = if densitySelector == 0 then 0.5 else 0/0
-  _ <- prior $ bernoulli probability
+  _ <- prior $ bernoulli $ toProb probability
   addMove 1 $ discreteUniformAvoidMH densitySelector 0 1
   addMove 1 $ discreteUniformAvoidMH samplingSelector 0 1
   if samplingSelector == 0

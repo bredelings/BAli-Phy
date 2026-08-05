@@ -54,13 +54,13 @@ note theta_effective_example ~ mixture [ (p!!i, logNormal(log(mean!!i),sigmaOver
 
 note s ~ uniform(0.0, 1.0);
 
-note t ~ iid(n_individuals, geometric s);
+note t ~ iid(n_individuals, geometric (toProb s));
 
-note i ~ plate(n_individuals, \k->iid(n_loci, bernoulli (1.0-0.5**t!!k)) );
+note i ~ plate(n_individuals, \k->iid(n_loci, bernoulli (1 - pow 0.5 (fromIntegral (t!!k)))) );
 
 note data data1 ~ plate (n_loci, \l -> afs2 (theta_effective!!l,map (!!l) i));
 
-note data 19 ~ binomial(112, p_m);
+note data 19 ~ binomial(112, toProb p_m);
 
 note MakeLogger p;
 note MakeLogger theta_herm;

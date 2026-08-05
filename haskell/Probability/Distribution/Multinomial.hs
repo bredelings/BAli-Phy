@@ -28,7 +28,7 @@ instance Sampleable Multinomial where
 sample_multinomial n [] = return []
 sample_multinomial n (p:ps) = do
   let normalize xs = map (/sum xs) xs
-  m <- sample $ binomial n p
+  m <- sample $ binomial n (toProb p)
   ms <- sample_multinomial (n-m) (normalize ps)
   return (m:ms)
 
