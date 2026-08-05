@@ -1,10 +1,13 @@
-module Probability.Distribution.NegativeBinomial where
+module Probability.Distribution.NegativeBinomial
+    (NegativeBinomial(..), negativeBinomial, negative_binomial_bounds, negative_binomial_effect)
+where
 
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:" negative_binomial_density :: Int -> Double -> Double -> Int -> Log Double
-foreign import bpcall "Distribution:" sample_negative_binomial :: Int -> Double -> Double -> IO Int
+foreign import bpcall "Distribution:" negative_binomial_density_from_logs
+    :: Int -> Double -> Double -> Int -> Log Double
+foreign import bpcall "Distribution:" sample_negative_binomial_from_logs :: Int -> Double -> Double -> IO Int
 
 data NegativeBinomial = NegativeBinomial Int Prob
 
@@ -12,10 +15,10 @@ instance Dist NegativeBinomial where
     type Result NegativeBinomial = Int
 
 instance IOSampleable NegativeBinomial where
-    sampleIO (NegativeBinomial r p) = sample_negative_binomial r (ln p) (ln (1 - p))
+    sampleIO (NegativeBinomial r p) = sample_negative_binomial_from_logs r (ln p) (ln (1 - p))
 
 instance HasPdf NegativeBinomial where
-    pdf (NegativeBinomial r p) = negative_binomial_density r (ln p) (ln (1-p))
+    pdf (NegativeBinomial r p) = negative_binomial_density_from_logs r (ln p) (ln (1-p))
 
 instance Dist1D NegativeBinomial where
     cdf (NegativeBinomial r p) = undefined

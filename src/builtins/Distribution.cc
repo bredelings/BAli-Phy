@@ -556,7 +556,7 @@ extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)
     return { a1 + int(w*uniform()) };
 }
 
-extern "C" closure builtin_function_negative_binomial_density(OperationArgs& Args)
+extern "C" closure builtin_function_negative_binomial_density_from_logs(OperationArgs& Args)
 {
     int r = Args.evaluate_slot_to_value(0).as_int();
     double log_p = Args.evaluate_slot_to_value(1).as_double();
@@ -566,7 +566,7 @@ extern "C" closure builtin_function_negative_binomial_density(OperationArgs& Arg
     return { ::negative_binomial_pdf_from_logs(r, log_p, log_q, k) };
 }
 
-extern "C" closure builtin_function_sample_negative_binomial(OperationArgs& Args)
+extern "C" closure builtin_function_sample_negative_binomial_from_logs(OperationArgs& Args)
 {
     int r = Args.evaluate_slot_to_value_(0).as_int();
     double log_p = Args.evaluate_slot_to_value_(1).as_double();
@@ -584,7 +584,7 @@ extern "C" closure builtin_function_sample_negative_binomial(OperationArgs& Args
     }
 }
 
-extern "C" closure builtin_function_binomial_density(OperationArgs& Args)
+extern "C" closure builtin_function_binomial_density_from_logs(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value(0).as_int();
     double log_p = Args.evaluate_slot_to_value(1).as_double();
@@ -608,7 +608,7 @@ extern "C" closure builtin_function_multinomial_density(OperationArgs& Args)
     return { ::multinomial_pdf(n, probabilities.view(), counts.view()) };
 }
 
-extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
+extern "C" closure builtin_function_sample_binomial_from_logs(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value_(0).as_int();
     double log_p = Args.evaluate_slot_to_value_(1).as_double();
@@ -619,7 +619,7 @@ extern "C" closure builtin_function_sample_binomial(OperationArgs& Args)
     return { binomial_from_logs(n, log_p, log_q) };
 }
 
-extern "C" closure builtin_function_sample_bernoulli(OperationArgs& Args)
+extern "C" closure builtin_function_sample_bernoulli_from_logs(OperationArgs& Args)
 {
     double log_p = Args.evaluate_slot_to_value_(0).as_double();
     double log_q = Args.evaluate_slot_to_value_(1).as_double();
@@ -638,7 +638,7 @@ extern "C" closure builtin_function_geometric_density(OperationArgs& Args)
     return { ::geometric_pdf(p_fail, p_success, n) };
 }
 
-extern "C" closure builtin_function_sample_geometric(OperationArgs& Args)
+extern "C" closure builtin_function_sample_geometric_from_logs(OperationArgs& Args)
 {
     double log_p = Args.evaluate_slot_to_value_(0).as_double();
     double log_q = Args.evaluate_slot_to_value_(1).as_double();

@@ -1,9 +1,11 @@
-module Probability.Distribution.Bernoulli where
+module Probability.Distribution.Bernoulli
+    (Bernoulli(..), bernoulli, bernoulli_effect)
+where
 
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:" sample_bernoulli :: Double -> Double -> IO Int
+foreign import bpcall "Distribution:" sample_bernoulli_from_logs :: Double -> Double -> IO Int
 
 -- Could we allow this to return Int, Integer, Bool, etc?
 
@@ -20,7 +22,7 @@ instance Dist Bernoulli where
     distName _ = "bernoulli"
 
 instance IOSampleable Bernoulli where
-    sampleIO (Bernoulli p) = sample_bernoulli (ln p) (ln (1-p))
+    sampleIO (Bernoulli p) = sample_bernoulli_from_logs (ln p) (ln (1-p))
 
 
 instance HasPdf Bernoulli where

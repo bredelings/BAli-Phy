@@ -1,10 +1,12 @@
-module Probability.Distribution.Binomial where
+module Probability.Distribution.Binomial
+    (Binomial(..), binomial, binomial_bounds, binomial_effect)
+where
 
 import Probability.Random
 import MCMC
 
-foreign import bpcall "Distribution:" binomial_density :: Int -> Double -> Double -> Int -> Log Double
-foreign import bpcall "Distribution:" sample_binomial :: Int -> Double -> Double -> IO Int
+foreign import bpcall "Distribution:" binomial_density_from_logs :: Int -> Double -> Double -> Int -> Log Double
+foreign import bpcall "Distribution:" sample_binomial_from_logs :: Int -> Double -> Double -> IO Int
 
 data Binomial = Binomial Int Prob
 
@@ -13,10 +15,10 @@ instance Dist Binomial where
     distName _ = "binomial"
 
 instance IOSampleable Binomial where
-    sampleIO (Binomial n p) = sample_binomial n (ln p) (ln (1-p))
+    sampleIO (Binomial n p) = sample_binomial_from_logs n (ln p) (ln (1-p))
 
 instance HasPdf Binomial where
-    pdf (Binomial n p) x = binomial_density n (ln p) (ln (1-p)) x
+    pdf (Binomial n p) x = binomial_density_from_logs n (ln p) (ln (1-p)) x
 
 instance Dist1D Binomial where
     cdf (Binomial n p) x  = undefined

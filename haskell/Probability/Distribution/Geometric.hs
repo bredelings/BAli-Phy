@@ -1,10 +1,12 @@
-module Probability.Distribution.Geometric where
+module Probability.Distribution.Geometric
+    (Geometric(..), geometric, geometric_bounds, geometric_effect)
+where
 
 import Probability.Random
 import MCMC
 
 --foreign import bpcall "Distribution:geometric_density" geometric_density :: Double -> Double -> Int -> Log Double
-foreign import bpcall "Distribution:" sample_geometric :: Double -> Double -> IO Int
+foreign import bpcall "Distribution:" sample_geometric_from_logs :: Double -> Double -> IO Int
 
 newtype Geometric = Geometric Prob
 
@@ -13,7 +15,7 @@ instance Dist Geometric where
     distName _ = "geometric"
 
 instance IOSampleable Geometric where
-    sampleIO (Geometric p_success) = sample_geometric (ln p_success) (ln (1-p_success))
+    sampleIO (Geometric p_success) = sample_geometric_from_logs (ln p_success) (ln (1-p_success))
 
 
 -- Hmm.. Maybe we want the result of discrete distributionts to be Probability instead of Log Double?
