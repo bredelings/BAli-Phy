@@ -851,13 +851,6 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
 	</varlistentry>
 
 	<varlistentry>
-	  <term>Scale[$m$]&nbsp;*&nbsp;|T|</term>
-	  <listitem>
-	    <para>The <emphasis>scaled</emphasis> branch lengths for partition group $m$.</para>
-	  </listitem>
-	</varlistentry>
-
-	<varlistentry>
 	  <term>|T|</term>
 	  <listitem>
 	    <para>The <emphasis>unscaled</emphasis> tree length.  (This will probably be around 1.0).</para>
@@ -865,23 +858,34 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
 	</varlistentry>
 
 	<varlistentry>
-	  <term>Scale[$m$]</term>
+	  <term>scale$n$</term>
 	  <listitem>
-	    <para>The average number of substitutions per site on the entire tree for partitions in the $m$th scale group.</para>
+	    <para>The factor that multiplies every branch length in the shared tree for
+	    partitions in the $n$th scale group.</para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>S$n$/<replaceable>name</replaceable></term>
+	  <term>scale$n$&nbsp;*&nbsp;|T|</term>
 	  <listitem>
-	    <para>Parameter <replaceable>name</replaceable> in the $n$th substitution model.</para>
+	    <para>The scaled tree length for partitions in the $n$th scale group: the
+	    expected number of substitutions per site summed over the entire tree.</para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term>I$n$/<replaceable>name</replaceable></term>
+	  <term>scale</term>
 	  <listitem>
-	    <para>Parameter <replaceable>name</replaceable> in the $n$th insertion/deletion model.</para>
+	    <para>The alignment-length-weighted mean of the scale factors for all
+	    partitions.  For a single partition this equals <userinput>scale1</userinput>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>scale&nbsp;*&nbsp;|T|</term>
+	  <listitem>
+	    <para>The overall scale multiplied by the unscaled tree length: the
+	    alignment-length-weighted mean of the scaled tree lengths for all partitions.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -889,7 +893,15 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
       <para>The "prior" field includes the probability of the alignment, since the alignment is not observed.</para>
       <para>The likelihood is the probabilistic analogue to summed mismatch penalties.</para>
       <para>The prior_A is the probabilistic analogue to summed gap penalties.</para>
-      <para>The prefixes "S$n$/" and "I$n$/" will be dropped if not necessary to disambiguate parameters with the same name in different sub-models.</para>
+      <para>Parameters belonging to a model are generally named after the model and
+      parameter, such as <userinput>tn93:kappaPur</userinput> or
+      <userinput>rs07:rate</userinput>.  Run <userinput>bali-phy help
+      <replaceable>model</replaceable></userinput>, for example <userinput>bali-phy help
+      tn93</userinput>, to see the meaning of that model&apos;s parameters.  The precise
+      field names may be disambiguated when an analysis contains multiple copies of a
+      model, so the header of <filename>C1.log</filename> is authoritative.</para>
+      <para>See <userinput>bali-phy help scale</userinput> for more information about
+      scale groups, linking scales between partitions, and setting their priors.</para>
 
       </section>
     </section>
@@ -1368,6 +1380,32 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 		<para>Empirical exchange rates, all proteins.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msn067">
 		  (Le and Gascuel, 2008)
+		</link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><userinput>lg4m</userinput></entry>
+	      <entry>1</entry>
+	      <entry>4</entry>
+	      <entry>
+		<para>Four empirical rate matrices whose category rates follow a
+		discrete gamma distribution with an estimated shape parameter.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/mss112">
+		  (Le, Dang, and Gascuel, 2012)
+		</link>
+	      </entry>
+	    </row>
+
+	    <row>
+	      <entry><userinput>lg4x</userinput></entry>
+	      <entry>6</entry>
+	      <entry>4</entry>
+	      <entry>
+		<para>Four empirical rate matrices with freely estimated category
+		rates and frequencies.</para>
+		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/mss112">
+		  (Le, Dang, and Gascuel, 2012)
 		</link>
 	      </entry>
 	    </row>
@@ -2046,8 +2084,9 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	      <row>
 		<entry><userinput><replaceable>codon_model</replaceable> +> mut_sel_aa</userinput></entry>
-		<entry>df(<replaceable>nuc_model</replaceable>)+19</entry>
-		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
+		<!-- The 20 amino-acid fitness values are centered, leaving 19 d.f. -->
+		<entry>df(<replaceable>codon_model</replaceable>)+19</entry>
+		<entry><para>Mutation-selection model with neutral mutation following <replaceable>codon_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
 		</entry>
 	      </row>
 
@@ -3080,7 +3119,7 @@ values in the sequence.</para>
 	parameters, it is important to examine convergence diagnostics
 	for the topology as well
 	(<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1080/10635150600812544">Beiko
-	et al., 2006</link>).  In theory, we recommend the web tool <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</link> (Wilgenbush et al., 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  Therefore, if you wish to use AWTY, you must convert the tree samples files to NEXUS before you upload them to AWTY in order to get correct results.</para>
+	et al., 2006</link>).</para>
 
 <para>It is also possible to assess stabilization of tree topologies using tools distributed with <application>bali-phy</application> by using commands like the following.  Here, subsampling and burnin do not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend should contain at least 500 trees; you might do this by subsampling using the <application>BAli-Phy</application> tool <command>bali-subsample</command>.</para>
 
