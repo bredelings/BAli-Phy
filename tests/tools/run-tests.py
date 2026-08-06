@@ -44,6 +44,8 @@ def run_test(directory, command):
         shutil.rmtree(results)
     results.mkdir()
 
+    # BAli-Phy command output is UTF-8. Decode it explicitly so Windows' locale
+    # cannot turn multibyte output into different Unicode characters.
     result = subprocess.run(
         command + arguments,
         cwd=directory,
@@ -51,7 +53,7 @@ def run_test(directory, command):
         capture_output=True,
         check=False,
         env=environment,
-        text=True,
+        encoding="utf-8",
     )
 
     (results / "output").write_text(result.stdout, encoding="utf-8")
