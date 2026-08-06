@@ -142,8 +142,12 @@ If you install with Homebrew, you don't need to do anything extra to put bali-ph
     </section>
 
     <section><info><title>Install BAli-Phy using executables from website (alternative)</title></info>
+    <para>Open a window in the Terminal app to access the UNIX command line.  Then download and extract the executables.</para>
+    <note><para>If you download the archive from the official BAli-Phy release page using a web browser, macOS marks it as quarantined.  In the directory containing the archive, remove the quarantine attribute before extracting it:
+<screen><prompt>%</prompt> <userinput>xattr -d com.apple.quarantine <replaceable>archive-file</replaceable></userinput></screen>
+Only remove this attribute from an archive that you trust.  The <command>curl</command> commands below do not normally add the quarantine attribute.</para></note>
     <para>
-      Open a window in the Terminal app to access the UNIX command line.  Then download and extract the executables.  If you have an Apple Silicon computer, type:
+      If you have an Apple Silicon computer, type:
       <screen><prompt>%</prompt> <userinput>mkdir -p &install.prefix;</userinput>
 <prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
 <prompt>%</prompt> <userinput>curl -LO &macarm64.url;</userinput>
