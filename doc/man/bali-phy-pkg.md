@@ -14,9 +14,10 @@
 
 Install and remove BAli-Phy packages.
 
-Packages are installed in `~/.local/share/bali-phy/packages`.
+On Linux and macOS, packages are installed in `~/.local/share/bali-phy/packages`.
+On Windows, packages are installed in `%LOCALAPPDATA%\bali-phy\packages` unless `HOME` is set.
 
-Package information is kept in `~/.local/share/bali-phy/info/`.
+Package information is kept in the `info` directory beside the `packages` directory.
 
 # ALL OPTIONS:
 
@@ -50,8 +51,10 @@ Package information is kept in `~/.local/share/bali-phy/info/`.
 **untracked**
 : List files in the package directory that aren't from any installed package.
 
+**missing**
+: List installed package files that are absent from the package directory.
+
 # REPORTING BUGS:
 BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
-

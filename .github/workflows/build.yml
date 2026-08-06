@@ -382,6 +382,7 @@ jobs:
         meson test -C build --print-errorlogs \
           'bali-phy:bali-phy version' \
           'bali-phy:computation' \
+          'bali-phy:bali-phy-pkg' \
           'bali-phy:bali-phy 5d +A 50' \
           'bali-phy:bali-phy testsuite prob_prog/examples.3/mixture_model'
 
@@ -404,6 +405,10 @@ jobs:
         if ($LASTEXITCODE -ne 0) { throw "bp-analyze --help failed in PowerShell" }
         cmd /c "bp-analyze --help"
         if ($LASTEXITCODE -ne 0) { throw "bp-analyze --help failed in cmd" }
+        bali-phy-pkg --help
+        if ($LASTEXITCODE -ne 0) { throw "bali-phy-pkg --help failed in PowerShell" }
+        cmd /c "bali-phy-pkg --help"
+        if ($LASTEXITCODE -ne 0) { throw "bali-phy-pkg --help failed in cmd" }
 
         New-Item -ItemType Directory bp-analyze-smoke | Out-Null
         Push-Location bp-analyze-smoke

@@ -210,7 +210,12 @@ if host_machine.system() == 'windows'
 else
   install_data('scripts/bp-analyze', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 endif
-install_data('scripts/bali-phy-pkg', install_mode: 'rwxr-xr-x', install_dir: 'bin')
+if host_machine.system() == 'windows'
+  install_data('scripts/bali-phy-pkg.py', install_dir: 'bin')
+  install_data('scripts/bali-phy-pkg.cmd', install_dir: 'bin')
+else
+  install_data('scripts/bali-phy-pkg.py', rename: 'bali-phy-pkg', install_mode: 'rwxr-xr-x', install_dir: 'bin')
+endif
 install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R',
               'scripts/tree-plot.R', 'scripts/tree-plot-3D.R'],
              install_dir:'lib/bali-phy/libexec')
@@ -223,6 +228,10 @@ install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
 test('bp-analyze character properties',
      python,
      args: [files('tests/scripts/test_bp_analyze_properties.py')])
+
+test('bali-phy-pkg',
+     python,
+     args: [files('tests/scripts/test_bali_phy_pkg.py')])
 
 if host_machine.system() == 'windows'
   windows_runtime_dll_args = [
