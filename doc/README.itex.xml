@@ -1,5 +1,5 @@
 <!DOCTYPE book [
-<!ENTITY  version        "4.2"         >
+<!ENTITY  version        "4.3"         >
 
 <!ENTITY  source.file       "&version;.tar.gz"         >
 <!ENTITY  ubuntu2204.file   "bali-phy-&version;-ubuntu-22.04.tar.gz"         >
@@ -44,7 +44,15 @@
   </info>
 
   <section xml:id="intro"><info><title>Introduction</title></info>
-    <para><application>BAli-Phy</application> is a Unix command line program that is developed primarily on Linux.  <application>BAli-Phy</application> also runs on Windows and macOS, but it is not a GUI program and so you must run it in a terminal.  Therefore, you might want to keep a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://documentation.ubuntu.com/desktop/en/latest/tutorial/the-linux-command-line-for-beginners/">command-line tutorial</link> handy while you work.
+    <para><application>BAli-Phy</application> is a command-line program for Windows, macOS,
+      and Linux.  It is not a GUI program, so you must run it in a terminal such as
+      PowerShell on Windows or a Unix shell on macOS and Linux.  If command-line programs
+      are unfamiliar, see the introductions to
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+            xlink:href="https://learn.microsoft.com/en-us/powershell/scripting/learn/ps101/01-getting-started">PowerShell</link>
+      or the
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+            xlink:href="https://documentation.ubuntu.com/desktop/en/latest/tutorial/the-linux-command-line-for-beginners/">Linux command line</link>.
     </para>
 
     <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
@@ -69,51 +77,78 @@
   <section xml:id="upgrades"><info><title>Upgrades</title></info>
   <para>If you have previously installed bali-phy, you do not have to remove the old version before installing the new version.  Simply follow the installation instructions for the new version.  If you are manually adding the new version of bali-phy to your PATH, just make sure that the new version comes before the old version in the PATH, or remove the old version from the PATH.</para>
 
-  <para>In order to remove an older version, simply delete the directory <filename>bali-phy-<replaceable>oldversion</replaceable></filename>.  This will completely uninstall the old version from the system. BAli-Phy does not create hidden files that will remain after you remove its directory.</para>
+  <para>To remove an older version, delete its
+    <filename>bali-phy-<replaceable>oldversion</replaceable></filename> directory and remove
+    that version from <envar>PATH</envar>.  User-installed packages and the compiled-module
+    cache are stored separately, normally under
+    <filename>%LOCALAPPDATA%\bali-phy</filename> on native Windows or
+    <filename>~/.local/share/bali-phy</filename> on Unix-like systems.  They are shared
+    between installed versions and are not removed when you delete a program directory.</para>
   </section>
 
   <section><info><title>Install on MS Windows</title></info>
-  <section><info><title>Install a Unix command line: WSL2 (recommended)</title></info>
-  <para>We recommend <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://learn.microsoft.com/en-us/windows/wsl/install">installing WSL2</link>.  Then you can install bali-phy inside the WSL2 Linux installation and follow the instructions for Linux users.</para>
-  </section>
-    <section><info><title>Install a Unix command line: Cygwin</title></info>
-    <para>
-       It is also possible to install native Windows executables.  However, you will still need a Unix command-line environment.
-       We recommend installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/install.html">Cygwin</link>:
-<itemizedlist>
-<listitem>Run the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>. </listitem>
-<listitem>In the installer, add the following extra packages: <userinput>R</userinput>, <userinput>gnuplot</userinput>, <userinput>python3</userinput>, <userinput>wget</userinput>, and <userinput>nano</userinput>.</listitem>
-</itemizedlist>
-       It is easiest to find extra packages if you set the View to "Full" and enter each package name in the Search box.
-       After you run the installer, you can access the Unix command line environment by running the Cygwin shell (not the normal Windows command line).
-       You can run the installer again to add more packages.
-    </para>
+    <para>For most Windows users, we recommend the native Windows package.  It runs directly
+      from PowerShell or Command Prompt and uses ordinary Windows filenames.  If you already
+      use Linux tools or want the same environment as a Linux workstation or computing
+      cluster, WSL2 is a good alternative.</para>
 
-    <para>The native Windows version of BAli-Phy uses Windows-style filenames (such as <filename>C:\</filename>).  However, the Cygwin shell uses UNIX-style filenames, so you will need to keep the difference in mind:
-<informaltable>
-<tgroup cols="2">
-<colspec colnum="1" colname="col1" colwidth="1*"/>
-<colspec colnum="2" colname="col2" colwidth="1*"/>
-<thead><row>
-<entry>UNIX-style</entry>
-<entry>Windows-style</entry>
-</row></thead>
-<tbody>
-<row><entry>/home/<emphasis>username</emphasis></entry><entry>C:\cygwin64\home\<emphasis>username</emphasis></entry></row>
-<row><entry>~/file</entry><entry>C:\cygwin64\home\<emphasis>username</emphasis>\file</entry></row>
-<row><entry>/cygdrive/c/file</entry><entry>C:\file</entry></row>
-</tbody>
-</tgroup>
-</informaltable>
-You can use the <userinput>cygpath</userinput> program to convert between UNIX and Windows filenames:
-<screen><prompt>%</prompt> cygpath -w ~/Applications
-C:\cygwin64\home\<emphasis>username</emphasis>\Applications\
-</screen>
-</para>
-    <note>If you supply UNIX-style filenames to BAli-Phy, then it will complain "<emphasis role="strong">file does not exist!</emphasis>".</note>
+    <section><info><title>Install the native Windows package (recommended)</title></info>
+      <para>Download
+        <link xmlns:xlink="http://www.w3.org/1999/xlink"
+              xlink:href="&win64.url;"><filename>&win64.file;</filename></link>
+        from the BAli-Phy release page.  Then open PowerShell and extract it into a versioned
+        directory under your user account:</para>
+<screen><prompt>PS&gt;</prompt> <userinput>New-Item -ItemType Directory -Force "&#36;HOME\Applications"</userinput>
+<prompt>PS&gt;</prompt> <userinput>tar -xf "&#36;HOME\Downloads\&win64.file;" -C "&#36;HOME\Applications"</userinput>
+<prompt>PS&gt;</prompt> <userinput>&amp; "&#36;HOME\Applications\bali-phy-&version;\bin\bali-phy.exe" --version</userinput></screen>
+      <para>If your browser downloaded the archive somewhere other than
+        <filename>Downloads</filename>, replace that path with the location of the downloaded
+        file.  The archive contains all required non-system runtime DLLs for the
+        included executables, including <command>draw-tree</command>.  You do not need to
+        install MSYS2 to run the programs in the binary package.</para>
 
+      <para>Add the BAli-Phy <filename>bin</filename> directory to the current PowerShell session:</para>
+<screen><prompt>PS&gt;</prompt> <userinput>&#36;env:Path = "&#36;HOME\Applications\bali-phy-&version;\bin;&#36;env:Path"</userinput></screen>
+      <para>For Command Prompt, use:</para>
+<screen><prompt>C:\&gt;</prompt> <userinput>set "PATH=%USERPROFILE%\Applications\bali-phy-&version;\bin;%PATH%"</userinput></screen>
+      <para>These commands affect only the current terminal.  To make the setting permanent,
+        search for “environment variables” in Windows Settings, edit your user
+        <envar>Path</envar>, and add
+        <filename>%USERPROFILE%\Applications\bali-phy-&version;\bin</filename>.  Open a new
+        PowerShell or Command Prompt window after changing it.</para>
+
+      <para>The compiled BAli-Phy programs do not require Python.  The
+        <command>bp-analyze</command> and <command>bali-phy-pkg</command> commands are Python
+        scripts, however, and require
+        <link xmlns:xlink="http://www.w3.org/1999/xlink"
+              xlink:href="https://www.python.org/downloads/windows/">Python 3 for Windows</link>.
+        When using the Python installer, select the option that makes Python available from
+        the command line.  The launchers recognize either <command>py -3</command> or
+        <command>python</command>.</para>
+
+      <para><application>R</application> and <application>gnuplot</application> are optional.
+        When they are installed and available on <envar>Path</envar>,
+        <command>bp-analyze</command> uses them to generate additional plots.  Without them,
+        it still produces the main HTML report, summary trees, alignments, and diagnostics,
+        and reports which optional figures were omitted.</para>
+
+      <para>Continue with <xref linkend="tests"/> after installing Python and adding BAli-Phy to <envar>Path</envar>.</para>
+    </section>
+
+    <section><info><title>Install inside WSL2</title></info>
+      <para><link xmlns:xlink="http://www.w3.org/1999/xlink"
+                  xlink:href="https://learn.microsoft.com/en-us/windows/wsl/install">Install WSL2</link>
+        if you prefer a Linux command line or want an environment similar to a Linux
+        computing cluster.  Open the Linux distribution installed by WSL2, download the
+        Linux BAli-Phy package, and follow the Linux installation instructions below entirely
+        inside WSL2.</para>
+      <para>Programs installed inside WSL2 use Linux paths such as
+        <filename>/home/user/data.fasta</filename>.  The native Windows package instead uses
+        Windows paths such as <filename>C:\Users\user\data.fasta</filename>.  Choose one
+        installation route for an analysis rather than mixing commands and paths from the two
+        environments.</para>
+    </section>
   </section>
-</section>
 
     <section><info><title>Install on macOS</title></info>
     <para>Homebrew and Bioconda both provide convenient ways to install BAli-Phy.  Homebrew is a natural choice if you already use it to manage macOS software.  Bioconda is a natural choice if you already use Conda for bioinformatics software or want to keep BAli-Phy and its dependencies in a separate environment.</para>
@@ -232,110 +267,65 @@ You can install <application>R</application> via Homebrew:
 
     <section xml:id="path"><info><title>Add BAli-Phy to your <envar>PATH</envar></title></info>
 
-    <section><title>Is bali-phy in your PATH already?</title>
-<para>First check if the executable is in your PATH.
+      <para>The <envar>PATH</envar> environment variable lists the directories in which your
+        terminal searches for commands.  Once the BAli-Phy <filename>bin</filename> directory
+        is on <envar>PATH</envar>, you can type <command>bali-phy</command>,
+        <command>bp-analyze</command>, and the other command names without specifying their
+        complete locations.</para>
+
+      <section><title>Windows</title>
+        <para>The Windows installation instructions above show how to add BAli-Phy to the
+          current PowerShell or Command Prompt session.  To make the change permanent, search
+          for “environment variables” in Windows Settings, edit your user <envar>Path</envar>,
+          and add:</para>
+<screen>%USERPROFILE%\Applications\bali-phy-&version;\bin</screen>
+        <para>Open a new terminal and check the result:</para>
+<screen><prompt>PS&gt;</prompt> <userinput>bali-phy --version</userinput></screen>
+        <para>If you installed BAli-Phy somewhere else, add the <filename>bin</filename>
+          directory from that location instead.</para>
+      </section>
+
+      <section><title>Linux, macOS, and WSL2</title>
+        <para>If you extracted BAli-Phy under <filename>&install.prefix;</filename>, add its
+          <filename>bin</filename> directory to the current <command>sh</command>,
+          <command>bash</command>, or <command>zsh</command> shell:</para>
+<screen><prompt>%</prompt> <userinput>export PATH=&#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH</userinput></screen>
+        <para>For <command>csh</command> or <command>tcsh</command>, use:</para>
+<screen><prompt>%</prompt> <userinput>setenv PATH &#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH</userinput></screen>
+        <para>To make the setting apply to future terminals, add the appropriate command to
+          the startup file used by your shell.  For <command>zsh</command>, which is the
+          default shell on macOS, add the <command>export</command> command to
+          <filename>~/.zprofile</filename>.  If your terminal is configured to start
+          non-login <command>zsh</command> shells, use <filename>~/.zshrc</filename> instead.
+          For <command>bash</command>, use <filename>~/.bash_profile</filename> or
+          <filename>~/.profile</filename>; for <command>sh</command>, use
+          <filename>~/.profile</filename>.  For <command>csh</command> or
+          <command>tcsh</command>, add the <command>setenv</command> command to
+          <filename>~/.login</filename>.  Then open a new terminal and check the result:</para>
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-If this shows version info, then <command>bali-phy</command> is already in your PATH and you can skip this section.  This should be true if you installed <command>bali-phy</command> using a package manager such as Homebrew or apt, or if you've already added it to your PATH.</para>
-<para>If bali-phy is not in your path, then you should see:
-<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput>
-bali-phy: command not found.</screen>
-If bali-phy is not in your PATH, then continue with this section.
-</para>
-    </section>
-    <section><title>Quick version</title>
-<para>Add <command>bali-phy</command> to your PATH, so that the shell knows where to find it.  This command only affects the terminal in which it is typed, and will not affect new terminals:
-<screen><prompt>%</prompt> <userinput>export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH</userinput></screen>
-To set the PATH automatically for new terminals, type:
-<screen><prompt>%</prompt> <userinput>test -r ~/.bash_profile &#38;&#38; echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.bash_profile</userinput>
-<prompt>%</prompt> <userinput>echo 'export PATH=~/Applications/bali-phy-&version;/bin:&#36;PATH' &#62;&#62; ~/.profile</userinput></screen>
-This will affect new terminals only after you log out and log back in though.</para>
-<para>
-Now check that the executable runs:
-<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-If it does, then your PATH is set up correctly, and you can probably skip the rest of this section. 
-</para>
-    
-    </section>
-      <section><title>I have a path?</title>
-      <para>
-	If you installed <application>BAli-Phy</application> to the directory
-	<filename>&install.prefix;</filename>, then you can run
-	bali-phy by typing <command>&exe.path;</command>.
-	However, it would be much nicer to simply type
-	<command>bali-phy</command> and let the computer find the
-	executable for you.  This can be achieved by putting the directory
-	that contains the <application>BAli-Phy</application> executables into
-	your "path".  	The "path" is a colon-separated list of directories that is
-	searched to find program names that you type.  It is stored in an
-	environment variable called <envar>PATH</envar>.
-	</para>
-      <para>
-	Setting your <envar>PATH</envar> is also a pre-requisite for running
-	the <command>bp-analyze</command> script to summarize your
-	MCMC runs.
-      </para>
-      </section>
-
-      <section><title>Examining your <envar>PATH</envar></title>
-      <para>
-	You can examine the current value of
-	this environment variable by typing:
-	<screen><prompt>%</prompt> <userinput>echo &#36;PATH</userinput></screen>
-	We will assume that you extracted the bali-phy archive in
-	<filename>&install.prefix;</filename> and so you want to add
-	<filename>&#36;HOME/Applications/bali-phy-&version;/bin</filename>
-	to your <envar>PATH</envar>.  (If you installed to another directory,
-	replace <filename>&#36;HOME/Applications/bali-phy-&version;/</filename> with that directory.)
-      </para>
-      </section>
-
-      <section><title>Adding BAli-Phy to your <envar>PATH</envar></title>
-      <para>The commands
-	for doing this depend on what "shell" you are using.  Type
-	<command>echo &#36;SHELL</command> to find out. If your
-	shell is <command>sh</command> or 
-	<command>bash</command> then the command looks like this: 
-	<screen><prompt>%</prompt> <userinput>PATH=&#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH</userinput></screen>
-	If your shell is <command>csh</command> or
-	<command>tcsh</command>, then the command looks like this:
-	<screen><prompt>%</prompt> <userinput>setenv PATH &#36;HOME/Applications/bali-phy-&version;/bin:&#36;PATH</userinput></screen>
-	Note that these commands will only affect the window you are typing
-	in, and will vanish when you reboot.   
-      </para>
-      </section>
-
-      <section><title>Making the change stick</title>
-	<para>
-	  To make this change survive when you log out or reboot, open
-	  your shell configuration file in a text editor, and add the
-	  command on a line by itself.  This will ensure that it is
-	  run every time you log in.
-	</para>
-
-	<para>To find the right configuration file, look in your &#36;HOME directory
-	  for <filename>.profile</filename> (for the Bourne shell <command>sh</command>), 
-	  <filename>.bash_profile</filename> (for BASH), or
-	  <filename>.login</filename> (for tcsh).  You may have to
-	  create the file if it is not present.  On Cygwin, you should
-	  put the change in the file <filename>.bashrc</filename>.
-	</para>
-
-	<para>If you do not know which directory is your home
-	directory, you can find its full name by typing:
-	<screen><prompt>%</prompt> <userinput>echo &#36;HOME</userinput></screen>
-	</para>
+        <para>If you installed BAli-Phy somewhere else, substitute the corresponding
+          <filename>bin</filename> directory.  Package managers such as Homebrew and apt
+          normally configure <envar>PATH</envar> automatically.</para>
       </section>
     </section>
 
     <section xml:id="tests"><info><title>Test the installed software</title></info>
-    <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
-    <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta .</userinput>
-<prompt>%</prompt> <userinput>bali-phy --version </userinput>
-<prompt>%</prompt> <userinput>bali-phy help</userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200 </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200 </userinput>
-<prompt>%</prompt> <userinput>bp-analyze 25-1 25-2</userinput></screen>
-    </para>
+      <para>First copy an example alignment into a new working directory.  In PowerShell, use:</para>
+<screen><prompt>PS&gt;</prompt> <userinput>Copy-Item "&#36;HOME\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
+      <para>In Command Prompt, use:</para>
+<screen><prompt>C:\&gt;</prompt> <userinput>copy "%USERPROFILE%\Applications\bali-phy-&version;\share\doc\bali-phy\examples\5S-rRNA\25.fasta" .</userinput></screen>
+      <para>On Linux, macOS, or WSL2, use:</para>
+<screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
+      <para>If a package manager installed BAli-Phy elsewhere, copy
+        <filename>examples/5S-rRNA/25.fasta</filename> from its documentation directory
+        instead.  Then run these commands in the same terminal:</para>
+<screen><userinput>bali-phy --version</userinput>
+<userinput>draw-tree --help</userinput>
+<userinput>bp-analyze --help</userinput>
+<userinput>bali-phy-pkg --help</userinput>
+<userinput>bali-phy 25.fasta --iter=200</userinput>
+<userinput>bali-phy 25.fasta --iter=200</userinput>
+<userinput>bp-analyze 25-1 25-2</userinput></screen>
 
     <para>
       Then check that the file <filename>Results/index.html</filename> exists and can be opened in a web browser.
@@ -411,18 +401,50 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
       <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-30,90-100</userinput></screen>
     </para>
 
+    <section><info><title>Command examples on Windows</title></info>
+      <para>Most BAli-Phy commands shown below work unchanged in PowerShell and Command
+        Prompt.  Native Windows paths use a drive letter and backslashes, such as
+        <filename>C:\Users\user\data.fasta</filename>.  PowerShell also accepts forward
+        slashes in many paths.</para>
+      <para>Use double quotes around model expressions on Windows.  For example:</para>
+<screen><prompt>PS&gt;</prompt> <userinput>bali-phy sequences.fasta -S "gtr +&gt; Rates.gamma"</userinput></screen>
+      <para>PowerShell uses
+        <command>Copy-Item <replaceable>source</replaceable>
+          <replaceable>destination</replaceable></command> to copy a file, while Command
+        Prompt uses <command>copy <replaceable>source</replaceable>
+          <replaceable>destination</replaceable></command>.  To open the generated report,
+        use <command>Start-Process Results\index.html</command> in PowerShell or
+        <command>start "" Results\index.html</command> in Command Prompt.</para>
+      <para>Pipelines using <userinput>|</userinput> and output redirection using
+        <userinput>&gt;</userinput> also work in both Windows shells.  Examples that use Unix
+        utilities such as <command>cp</command>, <command>top</command>, or
+        <command>wc</command> need the corresponding Windows command.</para>
+    </section>
+
     <section><info><title>Quick Start</title></info>
     <para>Let's run an example analysis using the 5S-rRNA 25-taxon data set.
-    <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/sequences/5S-rRNA/25.fasta .</userinput></screen>
-    We will now start 4 simultaneous runs:
-    <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S 'gtr +> Rates.free +> Covarion.hb02' --iter=1000 &amp; </userinput></screen>
-    These runs will all execute at the same time because of the "<userinput>&amp;</userinput>".  Each run will create a unique directory of the form <filename>25-<replaceable>number</replaceable></filename> to store its results.</para>
+    <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
+    On native Windows, use the PowerShell or Command Prompt copy command from <xref linkend="tests"/> instead.</para>
+    <para>We will now start 4 simultaneous runs.  On Linux, macOS, or WSL2, use:
+    <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S "gtr +&gt; Rates.free +&gt; Covarion.hb02" --iter=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "gtr +&gt; Rates.free +&gt; Covarion.hb02" --iter=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "gtr +&gt; Rates.free +&gt; Covarion.hb02" --iter=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "gtr +&gt; Rates.free +&gt; Covarion.hb02" --iter=1000 &amp; </userinput></screen>
+    These runs will all execute at the same time because of the
+    "<userinput>&amp;</userinput>".  Each run will create a unique directory of the form
+    <filename>25-<replaceable>number</replaceable></filename> to store its results.</para>
 
-    <para>You can use the program <userinput>top</userinput> to verify that four copies of <userinput>bali-phy</userinput> are running:
+    <para>On native Windows, make sure that BAli-Phy is on <envar>Path</envar>, then open four
+      PowerShell or Command Prompt windows or tabs in the directory containing
+      <filename>25.fasta</filename>.  Run the following command once in each terminal.
+      Separate terminals keep each chain's progress and errors visible and allow each chain
+      to be interrupted independently.</para>
+<screen><prompt>PS&gt;</prompt> <userinput>bali-phy 25.fasta -S "gtr +&gt; Rates.free +&gt; Covarion.hb02" --iter=1000</userinput></screen>
+
+    <para>On Linux, macOS, or WSL2, you can use the program <userinput>top</userinput> to
+      verify that four copies of <userinput>bali-phy</userinput> are running:
     <screen><prompt>%</prompt> <userinput>top</userinput>                                   # use <userinput>q</userinput> to exit</screen>
+    On Windows, use Task Manager instead.
     </para>
 
     <para>We can use program Tracer to assess the progress of the runs by loading the files
@@ -3356,30 +3378,35 @@ Otherwise you can install meson through pip3:
 
     </section>
     
-    <section><info><title>Windows (native)</title></info>
-    <para>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.msys2.org/">MSYS2</link> project provides an MINGW64 compiler that can create native Windows executables.  MSYS2 itself is actually non-native (it is derived from Cygwin), and therefore the MSYS2 shell refers to drives as <filename>/c/</filename> instead of <filename>C:/</filename>.</para>
-    <screen><prompt>%</prompt> <userinput>pacman --needed --noconfirm -Sy pacman-mirrors</userinput>
-<prompt>%</prompt> <userinput>pacman -Sy</userinput>
-<prompt>%</prompt> <userinput>pacman -S mingw-w64-x86_64-ninja</userinput>
-<prompt>%</prompt> <userinput>pacman -S mingw-w64-x86_64-toolchain</userinput>
-<prompt>%</prompt> <userinput>pacman -S mingw-w64-python3-pip</userinput>
-<prompt>%</prompt> <userinput>PATH=/c/msys64/mingw64/bin:&#36;PATH</userinput> # Put the mingw64 executables into your path
-<prompt>%</prompt> <userinput>pip3 install meson</userinput></screen>
-    <para>Keep in mind that MSYS2 keeps its (non-native) executables in <filename>C:/msys64/usr/bin</filename>, while it keeps the (native) MINGW executables in <filename>C:/msys64/mingw64/bin</filename>.  If you want to use the native MINGW executables, you need to make sure that <filename>/c/msys64/mingw64/bin/</filename> is in your PATH.  If you forget to put the MINGW executables in the path, some of the installed MINGW programs (such as pip3 above) will show up as missing when you try to run them.</para>
+    <section><info><title>Compile for native Windows using MSYS2</title></info>
+    <para>This section is for developers compiling BAli-Phy from source.  Users of the native
+      binary package do not need MSYS2.  The
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+            xlink:href="https://www.msys2.org/">MSYS2</link> project provides the MINGW64
+      compiler that can create native Windows executables.</para>
+    <para>After installing MSYS2, open the <application>MSYS2 MINGW64</application> shell and
+      perform a full system update:</para>
+<screen><prompt>%</prompt> <userinput>pacman -Syu</userinput></screen>
+    <para>If the update asks you to close the terminal, reopen the
+      <application>MSYS2 MINGW64</application> shell and run <command>pacman -Syu</command>
+      again.  Then install the compiler, build tools, and libraries used by BAli-Phy:</para>
+<screen><prompt>%</prompt> <userinput>pacman -S --needed \
+  git \
+  mingw-w64-x86_64-boost \
+  mingw-w64-x86_64-cairo \
+  mingw-w64-x86_64-cereal \
+  mingw-w64-x86_64-eigen3 \
+  mingw-w64-x86_64-fmt \
+  mingw-w64-x86_64-gcc \
+  mingw-w64-x86_64-meson \
+  mingw-w64-x86_64-range-v3 \
+  mingw-w64-x86_64-zstd</userinput></screen>
+    <para><command>pacman</command> installs the Python, Ninja, and pkg-config dependencies of
+      the packaged MINGW64 version of Meson automatically.  Cairo is included so that the
+      <command>draw-tree</command> program is built.  The MINGW64 shell refers to drives as
+      <filename>/c/</filename> instead of <filename>C:/</filename>.</para>
     </section>
 
-    <!-- section><info><title>Windows (Cygwin)</title></info>
-    The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link> project provides a non-native POSIX environment.
-    </section -->
-    <!-- section><info><title>Windows (non-native)</title></info>
-    <para>BAli-Phy can be compiled as either a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/">Cygwin</link> executable or a native Windows executable.  The Cygwin executable needs the <filename>cygwin1.dll</filename> to run, and can handle cygwin filenames like <filename>/cygdrive/C/Users/</filename>.  To compile bali-phy for Cygwin, install Cygwin and the Cygwin packages for gcc, git, meson, and cairo.  Then you can build bali-phy within Cygwin using the build instructions below.</para>
-
-    <para>You can also compile native windows executables using the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mingw-w64.org/doku.php">Mingw-w64</link> version of GCC.  These native windows executables do not need <filename>cygwin1.dll</filename>, and only understand Windows filenames, like <filename>C:\Users\</filename>.  You can build these executables in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> shell, which is a modified version of Cygwin for compiling native windows executables using the Mingw-w64 compiler.</para>
-
-    <para>You can also build Mingw-w64 executables using either Linux or Cygwin as the host environment, if you install a mingw-w64 "cross-compiler".  You can obtain cross compilers for Mingw-w64 on both Linux and Cygwin.  To inform the <filename>configure.sh</filename> script that you wish to use a cross compiler, add the flag <userinput>- -host=x86_64-w64-mingw32</userinput> to build for 64-bit windows, and <userinput>- -host=i686-w64-mingw32</userinput> to build 32-bit executables.</para>
-    </section -->
-
-	  
     </section>
 
     <section xml:id="quickstart"><info><title>Clone, Configure, Compile</title></info>
