@@ -385,6 +385,48 @@ jobs:
           'bali-phy:bali-phy 5d +A 50' \
           'bali-phy:bali-phy testsuite prob_prog/examples.3/mixture_model'
 
+    - name: Test bp-analyze without R or gnuplot (Windows native)
+      if: matrix.name == 'windows-native-mingw'
+      shell: pwsh
+      run: |
+        $pythonDirectory = Split-Path (Get-Command python).Source
+        $installedBin = (Resolve-Path local/bin).Path
+        $env:PATH = "$installedBin;$pythonDirectory;$env:SystemRoot\System32"
+
+        if (Get-Command R.exe -CommandType Application -ErrorAction SilentlyContinue) {
+          throw "R unexpectedly remains available on the restricted PATH"
+        }
+        if (Get-Command gnuplot.exe -CommandType Application -ErrorAction SilentlyContinue) {
+          throw "gnuplot unexpectedly remains available on the restricted PATH"
+        }
+
+        bp-analyze --help
+        if ($LASTEXITCODE -ne 0) { throw "bp-analyze --help failed in PowerShell" }
+        cmd /c "bp-analyze --help"
+        if ($LASTEXITCODE -ne 0) { throw "bp-analyze --help failed in cmd" }
+
+        New-Item -ItemType Directory bp-analyze-smoke | Out-Null
+        Push-Location bp-analyze-smoke
+        bali-phy "$env:GITHUB_WORKSPACE\examples\5S-rRNA\5d-muscle.fasta" --iter=50 --name=analysis-run
+        if ($LASTEXITCODE -ne 0) { throw "BAli-Phy smoke run failed" }
+
+        $analysisOutput = bp-analyze analysis-run-1 --outdir Results 2>&1 | Out-String
+        $analysisOutput
+        if ($LASTEXITCODE -ne 0) { throw "bp-analyze report generation failed" }
+        if ($analysisOutput -notmatch "Program 'R' not found") {
+          throw "bp-analyze did not report that R was unavailable"
+        }
+        if ($analysisOutput -notmatch "Program 'gnuplot' not found") {
+          throw "bp-analyze did not report that gnuplot was unavailable"
+        }
+        if (-not (Test-Path Results/index.html)) {
+          throw "bp-analyze did not generate Results/index.html"
+        }
+        if (-not (Select-String -Path Results/index.html -Pattern "Not generated: can't find R" -SimpleMatch -Quiet)) {
+          throw "The report did not explain that its R-dependent figure was omitted"
+        }
+        Pop-Location
+
     - name: Get version
       id: get_version
       run: |

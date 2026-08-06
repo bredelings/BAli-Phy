@@ -204,7 +204,12 @@ endforeach
 
 # Install non-executable files
 
-install_data('scripts/bp-analyze', install_mode: 'rwxr-xr-x', install_dir: 'bin')
+if host_machine.system() == 'windows'
+  install_data('scripts/bp-analyze', rename: 'bp-analyze.py', install_dir: 'bin')
+  install_data('scripts/bp-analyze.cmd', install_dir: 'bin')
+else
+  install_data('scripts/bp-analyze', install_mode: 'rwxr-xr-x', install_dir: 'bin')
+endif
 install_data('scripts/bali-phy-pkg', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R',
               'scripts/tree-plot.R', 'scripts/tree-plot-3D.R'],
