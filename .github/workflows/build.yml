@@ -210,9 +210,12 @@ jobs:
         msystem: MINGW64
         update: true
         path-type: inherit
+        # MSYS2 Git materializes the test-data links below. The Perl packages it pulls in are
+        # transitive CI dependencies; installed BAli-Phy does not require Perl.
         install: >-
           git
           mingw-w64-x86_64-boost
+          mingw-w64-x86_64-cairo
           mingw-w64-x86_64-ccache
           mingw-w64-x86_64-cereal
           mingw-w64-x86_64-eigen3
@@ -223,6 +226,22 @@ jobs:
           mingw-w64-x86_64-pkgconf
           mingw-w64-x86_64-range-v3
           mingw-w64-x86_64-zstd
+
+    - name: Materialize test-data links (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      shell: msys2 {0}
+      run: |
+        # GitHub's Windows checkout materializes repository symlinks as ordinary files.
+        # MSYS2 replaces each link with a copy that native Windows programs can read.
+        git config --local core.symlinks true
+        git checkout-index --force --all
+        git ls-files -s tests | awk '$1 == "120000" {print $4}' |
+          while IFS= read -r link; do
+            target=$(git show ":$link")
+            cmp -- "$link" "$(dirname "$link")/$target"
+            # The copies differ from their symlink blobs but do not change the built sources.
+            git update-index --assume-unchanged -- "$link"
+          done
 
     - name: Select XCode version (macOS)
       if: runner.os == 'macOS' && matrix.compiler == 'xcode'
@@ -377,6 +396,9 @@ jobs:
         ccache -s
         ninja -C build -j2
         meson install -C build --skip-subprojects
+        # Catch a missing Cairo dependency even if Meson otherwise completes successfully.
+        test -x build/src/draw-tree.exe
+        test -x local/bin/draw-tree.exe
         ccache -s
 
     - name: Test (Windows native MinGW)
@@ -384,12 +406,7 @@ jobs:
       shell: msys2 {0}
       run: |
         export PATH="$PWD/local/bin:$PATH"
-        meson test -C build --print-errorlogs \
-          'bali-phy:bali-phy version' \
-          'bali-phy:computation' \
-          'bali-phy:bali-phy-pkg' \
-          'bali-phy:bali-phy 5d +A 50' \
-          'bali-phy:bali-phy testsuite prob_prog/examples.3/mixture_model'
+        meson test -C build --print-errorlogs --num-processes 2
 
     - name: Test bp-analyze without R or gnuplot (Windows native)
       if: matrix.name == 'windows-native-mingw'
@@ -414,6 +431,9 @@ jobs:
         if ($LASTEXITCODE -ne 0) { throw "bali-phy-pkg --help failed in PowerShell" }
         cmd /c "bali-phy-pkg --help"
         if ($LASTEXITCODE -ne 0) { throw "bali-phy-pkg --help failed in cmd" }
+        # Verify the installed runtime closure can load draw-tree without /mingw64/bin.
+        draw-tree --help
+        if ($LASTEXITCODE -ne 0) { throw "draw-tree --help failed in PowerShell" }
 
         New-Item -ItemType Directory bp-analyze-smoke | Out-Null
         Push-Location bp-analyze-smoke
@@ -431,6 +451,10 @@ jobs:
         }
         if (-not (Test-Path Results/index.html)) {
           throw "bp-analyze did not generate Results/index.html"
+        }
+        # Verify bp-analyze can render through the packaged Cairo and fontconfig runtime.
+        if (-not (Test-Path Results/greedy-tree.svg)) {
+          throw "bp-analyze did not generate Results/greedy-tree.svg"
         }
         if (-not (Select-String -Path Results/index.html -Pattern "Not generated: can't find R" -SimpleMatch -Quiet)) {
           throw "The report did not explain that its R-dependent figure was omitted"
