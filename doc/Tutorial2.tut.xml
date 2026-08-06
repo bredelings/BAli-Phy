@@ -190,9 +190,9 @@ Now lets see if there is evidence that the two runs have not converged yet.
 <section ><info><title>Generating an HTML Report</title></info>
 <para>
 Now lets use the analysis script to run all the summaries and make a report:
-% bp-analyze.pl 25-muscle-1/ 25-muscle-2/
+% bp-analyze 25-muscle-1/ 25-muscle-2/
 % firefox Results/index.html &#38;
-This PERL script runs <application>statreport</application> and <application>trees-consensus</application> for you.  Take a look at what commands were run:
+This script runs <application>statreport</application> and <application>trees-consensus</application> for you.  Take a look at what commands were run:
 % less Results/bp-analyze.log
 </para>
 </section>
@@ -356,4 +356,3 @@ Remove 10 sequences with the smallest number of conserved residues:
 
 </section>
 </article>
-

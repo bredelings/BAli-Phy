@@ -600,8 +600,7 @@ LAYOUT_FILE            =
 # .bib extension is automatically appended if omitted. Using this command 
 # requires the bibtex tool to be installed. See also 
 # http://en.wikipedia.org/wiki/BibTeX for more info. For LaTeX the style 
-# of the bibliography can be controlled using LATEX_BIB_STYLE. To use this 
-# feature you need bibtex and perl available in the search path.
+# of the bibliography can be controlled using LATEX_BIB_STYLE.
 
 CITE_BIB_FILES         = 
 
@@ -1442,39 +1441,6 @@ XML_PROGRAMLISTING     = YES
 GENERATE_AUTOGEN_DEF   = NO
 
 #---------------------------------------------------------------------------
-# configuration options related to the Perl module output
-#---------------------------------------------------------------------------
-
-# If the GENERATE_PERLMOD tag is set to YES Doxygen will 
-# generate a Perl module file that captures the structure of 
-# the code including all documentation. Note that this 
-# feature is still experimental and incomplete at the 
-# moment.
-
-GENERATE_PERLMOD       = NO
-
-# If the PERLMOD_LATEX tag is set to YES Doxygen will generate 
-# the necessary Makefile rules, Perl scripts and LaTeX code to be able 
-# to generate PDF and DVI output from the Perl module output.
-
-PERLMOD_LATEX          = NO
-
-# If the PERLMOD_PRETTY tag is set to YES the Perl module output will be 
-# nicely formatted so it can be parsed by a human reader.  This is useful 
-# if you want to understand what is going on.  On the other hand, if this 
-# tag is set to NO the size of the Perl module output will be much smaller 
-# and Perl will parse it just the same.
-
-PERLMOD_PRETTY         = YES
-
-# The names of the make variables in the generated doxyrules.make file 
-# are prefixed with the string contained in PERLMOD_MAKEVAR_PREFIX. 
-# This is useful so different doxyrules.make files included by the same 
-# Makefile don't overwrite each other's variables.
-
-PERLMOD_MAKEVAR_PREFIX = 
-
-#---------------------------------------------------------------------------
 # Configuration options related to the preprocessor
 #---------------------------------------------------------------------------
 
@@ -1573,11 +1539,6 @@ ALLEXTERNALS           = NO
 # be listed.
 
 EXTERNAL_GROUPS        = YES
-
-# The PERL_PATH should be the absolute path and name of the perl script 
-# interpreter (i.e. the result of `which perl').
-
-PERL_PATH              = /usr/bin/perl
 
 #---------------------------------------------------------------------------
 # Configuration options related to the dot tool

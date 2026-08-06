@@ -11,9 +11,6 @@ clean:
 %.png: %.dot
 	dot -Tpng < $^ > $@
 
-%.xml: %.tut.xml
-	./add_screen.pl < $^ > $@
-
 %.html: %.xml docbook-html.xsl
 	xsltproc --nonet --xinclude docbook-html.xsl $*.xml > $@
 

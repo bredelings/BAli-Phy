@@ -47,17 +47,17 @@
 % alignment-info examples/ferns/cleaned.fasta
 </section>
 
-<section><info><title>Install fasta-flip.pl to ~/bin</title></info>
+<section><info><title>Install fasta-flip to ~/bin</title></info>
 % cd ~/alignment_files/examples
-% chmod +x fasta-flip.pl			 // make the file executable
-% cp fasta-flip.pl ~/bin			 // copy the file to ~/bin
-% which fasta-flip.pl				 // check to make sure its in your PATH
+% chmod +x fasta-flip				 // make the file executable
+% cp fasta-flip ~/bin				 // copy the file to ~/bin
+% which fasta-flip				 // check to make sure its in your PATH
 </section>
 
 <section><info><title>MAFFT and HoT and Seaview</title></info>
 % cp ferns/cleaned.fasta ferns.fasta                                          // make a copy of a file
 % mafft --auto ferns.fasta &gt; ferns-mafft.fasta                                // try a simple sequence alignment 
-% fasta-flip.pl ferns.fasta | mafft --auto - | fasta-flip.pl &gt; ferns-mafft-flipped.fasta
+% fasta-flip ferns.fasta | mafft --auto - | fasta-flip &gt; ferns-mafft-flipped.fasta
 % aliview ferns-mafft.fasta &#38; aliview ferns-mafft-flipped.fasta &#38;             // take a look at the two good alignments
 % ./compare-alignments ferns-mafft.fasta ferns-mafft-flipped.fasta &gt; ferns-compare.html
 % firefox ferns-compare.html                                                  // load in firefox, then shrink the font

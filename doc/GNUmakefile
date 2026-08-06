@@ -8,7 +8,7 @@ clean:
 	itex2MML < $^ > $@
 
 %.xml: %.tut.xml
-	./add_screen.pl < $^ > $@
+	./add_screen.py < $^ > $@
 
 %.html: %.xml docbook-html.xsl
 	xsltproc --nonet --xinclude docbook-html.xsl $*.xml > $@

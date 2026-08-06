@@ -82,7 +82,7 @@
        We recommend installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/install.html">Cygwin</link>:
 <itemizedlist>
 <listitem>Run the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>. </listitem>
-<listitem>In the installer, add the following extra packages: <userinput>R</userinput>, <userinput>gnuplot</userinput>, <userinput>perl</userinput>, <userinput>python3</userinput>, <userinput>wget</userinput>, and <userinput>nano</userinput>.</listitem>
+<listitem>In the installer, add the following extra packages: <userinput>R</userinput>, <userinput>gnuplot</userinput>, <userinput>python3</userinput>, <userinput>wget</userinput>, and <userinput>nano</userinput>.</listitem>
 </itemizedlist>
        It is easiest to find extra packages if you set the View to "Full" and enter each package name in the Search box.
        After you run the installer, you can access the Unix command line environment by running the Cygwin shell (not the normal Windows command line).

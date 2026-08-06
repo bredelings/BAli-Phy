@@ -46,17 +46,17 @@ Add a line “PATH=~/bin:$PATH”.  Then log out and log back in.
 % alignment-info examples/5S-rRNA/5d.fasta
 </section>
 
-<section><info><title>Install fasta-flip.pl to ~/bin</title></info>
+<section><info><title>Install fasta-flip to ~/bin</title></info>
 % cd ~/alignment_files/examples
-% chmod +x fasta-flip.pl				// make the file executable
-% cp fasta-flip.pl ~/bin				// copy the file to ~/bin
-% which fasta-flip.pl					// check to make sure its in your PATH
+% chmod +x fasta-flip					// make the file executable
+% cp fasta-flip ~/bin					// copy the file to ~/bin
+% which fasta-flip					// check to make sure its in your PATH
 </section>
 </section>
 <section><info><title>Align forward and backwards (HoT) with mafft.</title></info>
 % cp 5S-rRNA/25.fasta .				                                  // make a copy of a file
 % mafft --auto 25.fasta &gt; 25-mafft.fasta                                           // try a simple sequence alignment 
-% fasta-flip.pl 25.fasta | mafft --auto - | fasta-flip.pl &gt; 25-mafft-flipped.fasta // align the sequences when flipped
+% fasta-flip 25.fasta | mafft --auto - | fasta-flip &gt; 25-mafft-flipped.fasta // align the sequences when flipped
 </section>
 <section><info><title>Visualize the alignments with seaview</title></info>
 % seaview 25-mafft.fasta &#38; seaview 25-mafft-flipped.fasta &#38;                       // take a look at the two alignments
@@ -86,8 +86,8 @@ Compare the first and last alignments
 <section><info><title>Probcons</title></info>
 Align sequences and reversed sequences with probcons
 % probcons HIVSIV.fasta &gt; HIVSIV-probcons.fasta
-% fasta-flip.pl HIVSIV.fasta &gt; HIVSIV-flipped.fasta
-% probcons HIVSIV-flipped.fasta | fasta-flip.pl &gt; HIVSIV-probcons-flipped.fasta
+% fasta-flip HIVSIV.fasta &gt; HIVSIV-flipped.fasta
+% probcons HIVSIV-flipped.fasta | fasta-flip &gt; HIVSIV-probcons-flipped.fasta
 </section>
 <section><info><title>SuiteMSA</title></info>
 Compare alignments using SuiteMSA
