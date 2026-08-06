@@ -100,7 +100,8 @@ def main():
         if fake_caches[0].exists():
             raise AssertionError("the oldest executable cache was not removed")
 
-        current_candidates = [path for path in caches if path not in fake_caches]
+        fake_cache_names = {path.name for path in fake_caches}
+        current_candidates = [path for path in caches if path.name not in fake_cache_names]
         if len(current_candidates) != 1:
             raise AssertionError(f"could not identify current cache: {caches}")
         current = current_candidates[0]
