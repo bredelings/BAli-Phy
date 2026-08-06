@@ -2,7 +2,6 @@
 #include "util/file-paths.H"
 #include "util/myexception.H"
 #include "util/string/split.H"
-#include "util/string/join.H"
 #include <vector>
 
 using std::vector;
@@ -55,7 +54,7 @@ vector<fs::path> get_package_paths(variables_map& args)
     // 1. First add the user-specified package paths
     if (args.count("package-path"))
         for(const string& path_string: args["package-path"].as<vector<string>>())
-            for(const string& path: split(path_string, ':'))
+            for(const string& path: split(path_string, native_path_list_separator))
                 paths.push_back(path);
 
     // 2. Then add the user package directories

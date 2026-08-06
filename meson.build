@@ -174,7 +174,10 @@ math_dep = cpp.find_library('m', required:false)
 small_fasta=files('examples/5S-rRNA/5d-muscle.fasta')
 big_fasta=files('examples/5S-rRNA/48-muscle.fasta')
 builtins = meson.project_build_root()/'src/builtins'
-packagepath = '--package-path=@0@:@1@'.format(builtins,meson.project_source_root())
+# Match BAli-Phy's host path-list syntax; a colon would split Windows drive letters.
+package_path_separator = host_machine.system() == 'windows' ? ';' : ':'
+packagepath = '--package-path=@0@@1@@2@'.format(
+  builtins, package_path_separator, meson.project_source_root())
 
 subdir('src')
 

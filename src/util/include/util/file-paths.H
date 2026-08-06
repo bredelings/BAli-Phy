@@ -6,6 +6,13 @@
 #include <vector>
 #include <filesystem>
 
+// Path lists follow the host PATH convention so Windows drive-letter colons remain part of a path.
+#ifdef _WIN32
+inline constexpr char native_path_list_separator = ';';
+#else
+inline constexpr char native_path_list_separator = ':';
+#endif
+
 std::optional<std::filesystem::path> check_file_in_path(const std::vector<std::filesystem::path>& paths, const std::filesystem::path& file_path);
 std::filesystem::path find_file_in_path(const std::vector<std::filesystem::path>& paths, const std::filesystem::path& file_path);
 

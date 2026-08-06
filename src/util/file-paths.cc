@@ -31,7 +31,7 @@ string show_path(const vector<fs::path>& path_list)
     vector<string> path_strings;
     for(auto& p: path_list)
         path_strings.push_back(p.string());
-    return join(path_strings, ":");
+    return join(path_strings, native_path_list_separator);
 }
 
 fs::path find_file_in_path(const vector<fs::path>& path_list, const fs::path& file_path)
@@ -144,4 +144,3 @@ optional<fs::path> base_user_data_path()
     else
 	return {};
 }
-
