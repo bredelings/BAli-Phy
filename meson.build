@@ -247,6 +247,17 @@ if host_machine.system() == 'windows'
     if boost_root != ''
       windows_runtime_dll_args += ['--boost-root', boost_root]
     endif
+
+    mingw_prefix = meson.get_external_property('mingw_prefix', '')
+    if mingw_prefix != ''
+      windows_objdump = find_program(
+        'x86_64-w64-mingw32-objdump', 'objdump', native: true
+      )
+      windows_runtime_dll_args += [
+        '--mingw-prefix', mingw_prefix,
+        '--objdump', windows_objdump.full_path(),
+      ]
+    endif
   endif
 
   meson.add_install_script(python, windows_runtime_dll_args + ['--cxx'] + cpp.cmd_array())
