@@ -3,6 +3,7 @@ computation_tests = executable(
   [
     'computation-test-main.cc',
     'closure-tests.cc',
+    'cpp-tests.cc',
     'equality-tests.cc',
     'lexer-tests.cc',
     'serialization-tests.cc',
