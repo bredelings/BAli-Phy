@@ -55,6 +55,7 @@ cpp_link_args = ['-L${SYSROOT}/mingw64/lib']
 sys_root = '${SYSROOT}'
 pkg_config_libdir = '${SYSROOT}/mingw64/lib/pkgconfig'
 boost_root='${SYSROOT}/mingw64'
+mingw_prefix='${SYSROOT}/mingw64'
 
 [host_machine]
 system = 'windows'
@@ -73,42 +74,41 @@ else
     echo
     echo "3. Installing packages to ${SYSROOT}"
     echo
-cd ${SYSROOT}
+PACMAN_DB="${SYSROOT}/var/lib/pacman"
+if [ -d "${SYSROOT}/mingw64" ] && [ ! -d "${PACMAN_DB}/local" ] ; then
+    echo "The existing sysroot predates Pacman and cannot be upgraded safely."
+    echo "Move or remove ${SYSROOT}, then run this script again."
+    exit 1
+fi
 
-# Note that the use of gcc-posix and g++-posix means that we need
-# *-posix/libgcc_s_seh-1.dll and *-posix2/libstdc++-6.dll instead
-# of the *-win32/ versions.
-PKGS="boost-1.89.0-1
-boost-libs-1.89.0-1
-eigen3-3.4.0-1
-range-v3-0.12.0-1"
-# nlohmann-json-3.11.2-1   This breaks things, maybe because we end up using both versions?
+PACMAN_CONFIG="${SYSROOT}/pacman-cross.conf"
+EMPTY_HOOKS="${SYSROOT}/var/empty-pacman-hooks"
+mkdir -p "${PACMAN_DB}" "${SYSROOT}/var/cache/pacman/pkg" "${SYSROOT}/var/log" "${EMPTY_HOOKS}"
 
+cat > "${PACMAN_CONFIG}" <<EOF
+[options]
+Architecture = x86_64
+SigLevel = Never
 
-# We're going to use the /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll instead of downloading winpthread.
+[mingw64]
+Server = https://repo.msys2.org/mingw/mingw64
+EOF
 
-for PKG in ${PKGS} ; do
-    FILE=mingw-w64-x86_64-${PKG}-any.pkg.tar.zst
-    if [ -e "${FILE}" ] ; then
-        echo "   ${PKG} already downloaded and installed."
-    else
-        URL="http://repo.msys2.org/mingw/x86_64/${FILE}"
-        if ! wget --no-verbose --show-progress "${URL}" ; then
-            echo "Failed to download ${URL}"
-            exit
-        fi
-        if tar -I zstd -xf ${FILE} ; then
-            echo "${PKG} installed"
-        else
-            rm ${FILE}
-            echo "Failed to install ${PKG}"
-            echo
-            echo "Perhaps the decompression program zstd is not installed?"
-            echo "Try 'sudo apt install zstd'."
-            exit
-        fi
-    fi
-done
+# Target-side scriptlets and hooks cannot run in the Linux cross sysroot and are not needed for linking.
+PACMAN=(fakeroot pacman --config "${PACMAN_CONFIG}" --root "${SYSROOT}"
+        --hookdir "${EMPTY_HOOKS}" --noscriptlet --noconfirm)
+if ! "${PACMAN[@]}" -Sy ; then
+    echo "Failed to synchronize the MSYS2 package database."
+    exit 1
+fi
+if ! "${PACMAN[@]}" -S --needed \
+        mingw-w64-x86_64-boost \
+        mingw-w64-x86_64-cairo \
+        mingw-w64-x86_64-eigen3 \
+        mingw-w64-x86_64-range-v3 ; then
+    echo "Failed to install MSYS2 packages into ${SYSROOT}."
+    exit 1
+fi
 fi
 
 echo
