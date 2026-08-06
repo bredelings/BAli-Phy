@@ -246,6 +246,8 @@ jobs:
       # This command also generates the cross file
       run: |
         ${GITHUB_WORKSPACE}/scripts/make_winroot.sh
+        # The cross build produces only 64-bit programs, so do not probe for missing 32-bit Wine support.
+        echo "WINEARCH=win64" >> "$GITHUB_ENV"
 
     - name: Configure
       run: |
@@ -294,7 +296,10 @@ jobs:
               fi
           fi
           if [ "${{ matrix.name }}" = "windows" ] ; then
-            export WINEPATH=$(winepath -w $HOME/local/bin)
+            # Initialize Wine before winepath starts another client, then keep that server alive across tests.
+            WINEDEBUG=-all /usr/lib/wine/wine64 cmd /c exit
+            /usr/lib/wine/wineserver -p60
+            export WINEPATH="$(WINEDEBUG=-all winepath -w "$HOME/local/bin")"
             export MESON_TESTTHREADS=2
           fi
           ninja -C build test -j2
