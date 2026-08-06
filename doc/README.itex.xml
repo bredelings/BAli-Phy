@@ -443,8 +443,9 @@ You can install <application>R</application> via Homebrew:
 
     <para>On Linux, macOS, or WSL2, you can use the program <userinput>top</userinput> to
       verify that four copies of <userinput>bali-phy</userinput> are running:
-    <screen><prompt>%</prompt> <userinput>top</userinput>                                   # use <userinput>q</userinput> to exit</screen>
-    On Windows, use Task Manager instead.
+    <screen><prompt>%</prompt> <userinput>top</userinput></screen>
+    Press <userinput>q</userinput> to exit <command>top</command>.  On Windows, use Task
+    Manager instead.
     </para>
 
     <para>We can use program Tracer to assess the progress of the runs by loading the files
@@ -601,10 +602,12 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 # choose a name for output directories
 :name ITS-analysis1
 </programlisting>
-Options files are specified with the <userinput>-c <replaceable>option_file</replaceable></userinput> option:
-	<screen><prompt>%</prompt> <userinput>bali-phy -c analysis1.txt</userinput>                           # run the analysis
-<prompt>%</prompt> <userinput>bali-phy -c analysis1.txt --name ITS-analysis1b</userinput>     # override the name</screen>
-        Options given on the command line will override values given in the option file.
+Option files are specified with the <userinput>-c <replaceable>option_file</replaceable></userinput>
+option.  For example:
+	<screen><prompt>%</prompt> <userinput>bali-phy -c analysis1.txt</userinput></screen>
+        Options given on the command line override values given in the option file.  For
+        example, this command overrides the analysis name:
+	<screen><prompt>%</prompt> <userinput>bali-phy -c analysis1.txt --name ITS-analysis1b</userinput></screen>
 	</para>
 	<!-- para>
 	  The file <filename>~/.bali-phy</filename> is a special
@@ -2805,21 +2808,27 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
     <section>
       <info><title>Generating a consensus alignment with ancestral sequences</title></info>
 
-    <para>BAli-Phy can reconstruct ancestral sequences for a given tree topology and (leaf sequence) alignment.
-    This is similar to the ancestor-reconstruction that is usually done for fixed-alignment analyses.
-    However, it is not quite the same, because of uncertainty in the tree and the alignment.
-    When computing the probability of an ancestral residue, this summary averages over uncertainty in the topology,
-    the alignment, and the ancestral state itself. 
+    <para>BAli-Phy can reconstruct ancestral sequences for a given tree topology and (leaf
+    sequence) alignment.  This is similar to the ancestor-reconstruction that is usually
+    done for fixed-alignment analyses.  However, it is not quite the same, because of
+    uncertainty in the tree and the alignment.  When computing the probability of an
+    ancestral residue, this summary averages over uncertainty in the topology, the alignment,
+    and the ancestral state itself.</para>
 
-    <screen># Construct the leaf sequence alignment to annotate using posterior decoding
-<prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P1.fastas <replaceable>dir</replaceable>-2/C1.P1.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput>
-# Construct the tree topology to annotate
-<prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
-# Reconstruct ancestral sequences on the given tree and alignment
-<prompt>%</prompt> <userinput>summarize-ancestors P1-max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fasta</userinput></screen>
-    
-BAli-Phy uses an alignment estimate (here, <filename>P1-max.fasta</filename>) as a template to construct a consensus alignment with ancestral sequences.  BAli-Phy doesn&apos;t condition on the alignment columns, because (i) many columns occur only once in a posterior sample and (ii) conditioning on the column gives too much weight to the template alignment.
-</para>
+    <para>First, construct the leaf-sequence alignment to annotate using posterior decoding:</para>
+<screen><prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P1.fastas <replaceable>dir</replaceable>-2/C1.P1.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput></screen>
+
+    <para>Next, construct the tree topology to annotate:</para>
+<screen><prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput></screen>
+
+    <para>Finally, reconstruct the ancestral sequences on the given tree and alignment:</para>
+<screen><prompt>%</prompt> <userinput>summarize-ancestors P1-max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree &gt; P1.ancestors.fasta</userinput></screen>
+
+<para>BAli-Phy uses an alignment estimate (here, <filename>P1-max.fasta</filename>) as a
+template to construct a consensus alignment with ancestral sequences.  BAli-Phy doesn&apos;t
+condition on the alignment columns, because (i) many columns occur only once in a posterior
+sample and (ii) conditioning on the column gives too much weight to the template
+alignment.</para>
 
 <para>Because the alignment is uncertain, residues in the same column of the template alignment may end up in different columns in an MCMC sample.  Therefore, in a given MCMC sample, different leaf residues in the same column may have different ancestors at the same internal node!  However, in our ancestral reconstruction, a given column may only display a single ancestral residue.</para>
 
