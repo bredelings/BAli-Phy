@@ -44,7 +44,7 @@
   </info>
 
   <section xml:id="intro"><info><title>Introduction</title></info>
-    <para><application>BAli-Phy</application> is a Unix command line program that is developed primarily on Linux.  <application>BAli-Phy</application> also runs on Windows and Mac OS X, but it is not a GUI program and so you must run it in a terminal.  Therefore, you might want to keep a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.ee.surrey.ac.uk/Teaching/Unix">Unix tutorial</link> or <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.rain.org/~mkummel/unix.html">Unix cheat sheet</link> handy while you work.
+    <para><application>BAli-Phy</application> is a Unix command line program that is developed primarily on Linux.  <application>BAli-Phy</application> also runs on Windows and macOS, but it is not a GUI program and so you must run it in a terminal.  Therefore, you might want to keep a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://documentation.ubuntu.com/desktop/en/latest/tutorial/the-linux-command-line-for-beginners/">command-line tutorial</link> handy while you work.
     </para>
 
     <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
@@ -59,7 +59,7 @@
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
     <para>
-      We typically run <application>BAli-Phy</application> on workstations with at least 16Gb of RAM and 4 cores.  More cores will allow you to run more MCMC chains at once, and more RAM will allow you to run larger data sets.  However, it is often easier and faster to run BAli-Phy on a (Linux) computing cluster, if you have one available.
+      We typically run <application>BAli-Phy</application> on workstations with at least 16 GB of RAM and 4 cores.  More cores will allow you to run more MCMC chains at once, and more RAM will allow you to run larger data sets.  However, it is often easier and faster to run BAli-Phy on a (Linux) computing cluster, if you have one available.
     </para>
 
     <para>
@@ -78,18 +78,18 @@
   </section>
     <section><info><title>Install a Unix command line: Cygwin</title></info>
     <para>
-       It is also possible to install native windows executables.  However, you will still need a Unix command-line environment.
-       We recommend installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>:
+       It is also possible to install native Windows executables.  However, you will still need a Unix command-line environment.
+       We recommend installing <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/install.html">Cygwin</link>:
 <itemizedlist>
 <listitem>Run the Cygwin installer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cygwin.com/setup-x86_64.exe"><filename>setup-x86_64.exe</filename></link>. </listitem>
 <listitem>In the installer, add the following extra packages: <userinput>R</userinput>, <userinput>gnuplot</userinput>, <userinput>perl</userinput>, <userinput>python3</userinput>, <userinput>wget</userinput>, and <userinput>nano</userinput>.</listitem>
 </itemizedlist>
-       Its easiest to find extra packages if you set the View to "Full" and enter each package name in the Search box.  
-       After you run the installer, you can access the Unix command line environment by running the Cygwin shell (not the normal windows command line).  
+       It is easiest to find extra packages if you set the View to "Full" and enter each package name in the Search box.
+       After you run the installer, you can access the Unix command line environment by running the Cygwin shell (not the normal Windows command line).
        You can run the installer again to add more packages.
     </para>
 
-    <para>The native windows version of BAli-Phy uses Windows-style filenames (such as <filename>C:\</filename>).  However, the Cygwin shell uses UNIX-style filenames, so you will need to keep the difference in mind:
+    <para>The native Windows version of BAli-Phy uses Windows-style filenames (such as <filename>C:\</filename>).  However, the Cygwin shell uses UNIX-style filenames, so you will need to keep the difference in mind:
 <informaltable>
 <tgroup cols="2">
 <colspec colnum="1" colname="col1" colwidth="1*"/>
@@ -115,23 +115,23 @@ C:\cygwin64\home\<emphasis>username</emphasis>\Applications\
   </section>
 </section>
 
-    <section><info><title>Install on Mac OS X</title></info>
-    <section><info><title>Install BAli-Phy using homebrew (recommended) </title></info>
-    <para>First install the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> (version 15 or higher) command line tools:
+    <section><info><title>Install on macOS</title></info>
+    <section><info><title>Install BAli-Phy using Homebrew (recommended) </title></info>
+    <para>First install the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">Xcode</link> (version 15 or higher) command line tools:
     <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>
 
-    Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link> and use homebrew to compile and install <command>bali-phy</command>:
+    Then install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://brew.sh/">Homebrew</link> and use Homebrew to compile and install <command>bali-phy</command>:
 <screen><prompt>%</prompt> <userinput>brew tap brewsci/bio</userinput>
 <prompt>%</prompt> <userinput>brew install bali-phy</userinput></screen>
 Check that the executable runs:
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-If you install with homebrew, you don't need to do anything extra to put bali-phy in your PATH.
+If you install with Homebrew, you don't need to do anything extra to put bali-phy in your PATH.  The Homebrew formula may lag behind the current BAli-Phy release, so check the installed version and use the release executables below if you need a newer version.
     </para>
     </section>
 
     <section><info><title>Install BAli-Phy using executables from website (alternative)</title></info>
     <para>
-      Open a windows in the Terminal app to access the UNIX command line.  Then download and extract the executables.  If you have an Apple Silicon computer, type:
+      Open a window in the Terminal app to access the UNIX command line.  Then download and extract the executables.  If you have an Apple Silicon computer, type:
       <screen><prompt>%</prompt> <userinput>mkdir -p &install.prefix;</userinput>
 <prompt>%</prompt> <userinput>cd &install.prefix;</userinput>
 <prompt>%</prompt> <userinput>curl -LO &macarm64.url;</userinput>
@@ -148,25 +148,20 @@ If you install with homebrew, you don't need to do anything extra to put bali-ph
 
     </section>
 
-    <section><info><title>Install programs used by <command>bp-analyze</command> using homebrew</title></info>
+    <section><info><title>Install programs used by <command>bp-analyze</command> using Homebrew</title></info>
     <para>
-      You can install <application>gnuplot</application> via homebrew:
+      You can install <application>gnuplot</application> via Homebrew:
 <screen><prompt>%</prompt> <userinput> brew install gnuplot</userinput></screen> 
-You can install <application>R</application> via homebrew:
-<screen><prompt>%</prompt> <userinput> brew tap caskroom/cask</userinput>
-<prompt>%</prompt> <userinput> brew cask install xquartz</userinput>
-<prompt>%</prompt> <userinput> brew install r</userinput></screen>
-However, note that this might conflict with R installed from other places, such as <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mran.microsoft.com/open/">MRAN</link>.
+You can install <application>R</application> via Homebrew:
+<screen><prompt>%</prompt> <userinput> brew install r</userinput></screen>
 </para>
     </section>
-    <section><info><title>Install some of the programs used for viewing the results using homebrew</title></info>
+    <section><info><title>Install programs used for viewing the results</title></info>
       <para>
 	<!-- This might be a better formula https://github.com/tseemann/homebrew-bioinformatics-linux/blob/master/figtree.rb
 	     I could copy it to bredelings/bioinformatics ...
 	-->
-	You can install Figtree with homebrew:
-	<screen><prompt>%</prompt> <userinput>brew install --cask figtree</userinput></screen>
-	However, Seaview and Tracer don't have homebrew packages at the moment.
+	The Homebrew cask for FigTree is currently disabled, and SeaView and Tracer do not have Homebrew packages.  Install these programs from their project websites; see <xref linkend="software_req"/>.
       </para>
     </section>
     </section>
@@ -197,7 +192,7 @@ However, note that this might conflict with R installed from other places, such 
     </section>
 
     <section><info><title>Install BAli-Phy using <command>apt-get</command> (alternative)</title></info>
-    <para>BAli-Phy packages exists for Ubuntu <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://launchpad.net/ubuntu/+source/bali-phy/">("Cosmic Cuttlefish" or later)</link>, and Debian (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://packages.debian.org/search?keywords=bali-phy&amp;searchon=names&amp;section=all">testing and unstable</link>).  However, these may not be up-to-date.</para>
+    <para>BAli-Phy packages exist for <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://launchpad.net/ubuntu/+source/bali-phy/">Ubuntu</link> and for Debian (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://packages.debian.org/search?keywords=bali-phy&amp;searchon=names&amp;section=all">testing and unstable</link>).  However, these may not be up-to-date.</para>
     <screen><prompt>%</prompt> <userinput>sudo apt-get install bali-phy</userinput></screen>
     Check that the executable runs:
     <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
@@ -222,9 +217,9 @@ However, note that this might conflict with R installed from other places, such 
     <section xml:id="path"><info><title>Add BAli-Phy to your <envar>PATH</envar></title></info>
 
     <section><title>Is bali-phy in your PATH already?</title>
-<para> First check if the executable is in your PATH.
+<para>First check if the executable is in your PATH.
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-If this shows version info, then <command>bali-phy</command> is already in your PATH and you can skip this section.  This should be true if you installed <command>bali-phy</command> using a package manager such as homebrew or apt, or if you've already added it to your PATH.</para>
+If this shows version info, then <command>bali-phy</command> is already in your PATH and you can skip this section.  This should be true if you installed <command>bali-phy</command> using a package manager such as Homebrew or apt, or if you've already added it to your PATH.</para>
 <para>If bali-phy is not in your path, then you should see:
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput>
 bali-phy: command not found.</screen>
@@ -295,7 +290,7 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 
       <section><title>Making the change stick</title>
 	<para>
-	  To make this change survives when you logout or reboot, open
+	  To make this change survive when you log out or reboot, open
 	  your shell configuration file in a text editor, and add the
 	  command on a line by itself.  This will ensure that it is
 	  run every time you log in.
@@ -339,7 +334,7 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 	<listitem>
 	  <para>
 	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-		  xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">
+		  xlink:href="https://beast.community/tracer.html">
 	      Tracer
 	    </link>
 	    :  MCMC parameter/diagnostic viewer.
@@ -352,7 +347,7 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 	<listitem>
 	  <para>
 	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-		  xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">
+		  xlink:href="https://tree.bio.ed.ac.uk/software/figtree/">
 	      FigTree
 	    </link>
 	    : Phylogeny Viewer
@@ -365,7 +360,7 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 	<listitem>
 	  <para>
 	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-		  xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">
+		  xlink:href="https://doua.prabi.fr/software/seaview">
 	      SeaView
 	    </link> and/or 
 	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -375,7 +370,7 @@ If it does, then your PATH is set up correctly, and you can probably skip the re
 	    : Alignment viewers.
           </para>
           <para>
-            Check by opening: <filename>Results/P1.max.fasta</filename>
+            Check by opening: <filename>Results/P1.consensus.pd-wsum.fasta</filename>
           </para>
 	</listitem>
     </itemizedlist>
@@ -429,6 +424,7 @@ Summarizing distribution of numerical parameters: done.
 Analyzing scalar variables: done.
 
 Summarizing topology distribution:  done.
+Computing mean branch lengths:  done.
 Drawing trees: c50 c66 c80 c90 c95 c99 c100 greedy MAP . done.
 
 Generate mixing diagnostics for topologies ... done.
@@ -438,11 +434,13 @@ Generate SRQ plot for c50 tree: done.
 Generate MDS plots of topology burnin:  done.
 Computing initial alignments:  done.
 
-Computing WPD alignments:  done.
+Computing consensus alignments via posterior decoding:  done.
 Computing ancestral state alignment:  done.
-Drawing alignments: **** done.
+Drawing alignments: ****** done.
 Generating AU values for 'P1.initial'... done.
-Generating AU values for 'P1.max'... done.
+Generating AU values for 'P1.consensus.pd-multiply'... done.
+Generating AU values for 'P1.consensus.pd-wsum'... done.
+Generating AU values for 'P1.consensus.pd-sum'... done.
 
 NOTE: burnin (scalar) &lt;= Not Converged!
 NOTE: min_ESS (scalar)    = 96.73
@@ -467,10 +465,10 @@ The tree estimate, alignment estimate, mixing diagnostics and other information 
 <para>We can also view the tree and alignment estimates directly:
       <itemizedlist>
 	<listitem>
-	  <para>The majority consensus tree is in the file <filename>Results/c50.PP.tree</filename>.  It can be viewed with <application>Figtree</application>.</para>
+	  <para>The majority consensus tree is in the file <filename>Results/c50.PP.tree</filename>.  It can be viewed with <application>FigTree</application>.</para>
         </listitem>
         <listitem>
-          <para>The consensus alignment is in the file <filename>Results/P1.max.fasta</filename>.  It can be viewed with <application>Seaview</application> or <application>Aliview</application>.</para>
+          <para>The medium-length consensus alignment is in the file <filename>Results/P1.consensus.pd-wsum.fasta</filename>.  It can be viewed with <application>SeaView</application> or <application>AliView</application>.</para>
         </listitem>
       </itemizedlist>
 
@@ -713,9 +711,9 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
 	</varlistentry>
 	
 	<varlistentry>
-	  <term>C1.MAP</term>
+	  <term>C1.P$n$.initial.fasta</term>
 	  <listitem>
-	    <para>Successive estimates of the MAP alignment, tree and parameters.</para>
+	    <para>The initial alignment for partition $n$.</para>
 	  </listitem>
 	</varlistentry>
 	
@@ -956,14 +954,17 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
       </para>
 
       <variablelist>
-	<varlistentry><term>P<replaceable>p</replaceable>-max.fasta</term><listitem>
-	    <para>An estimate of the alignment for partition
-	    <replaceable>p</replaceable> using maximum posterior decoding.</para>
+	<varlistentry><term>P<replaceable>p</replaceable>.consensus.pd-<replaceable>score</replaceable>.fasta</term><listitem>
+	    <para>A posterior-decoding consensus alignment for partition
+	    <replaceable>p</replaceable>.  The <replaceable>score</replaceable> is
+	    <userinput>multiply</userinput>, <userinput>wsum</userinput>, or
+	    <userinput>sum</userinput>, producing relatively short, medium, or long
+	    alignments, respectively.</para>
 	</listitem></varlistentry>
 
-	<varlistentry><term>P<replaceable>p</replaceable>-max-AU.html</term><listitem>
-	    <para>An AU plot of the maximum posterior decoding alignment for partition
-	    <replaceable>p</replaceable>  (AA/DNA color-scheme).</para>
+	<varlistentry><term>P<replaceable>p</replaceable>.consensus.pd-<replaceable>score</replaceable>-AU.html</term><listitem>
+	    <para>An AU plot of the corresponding posterior-decoding alignment for
+	    partition <replaceable>p</replaceable> (AA/DNA color scheme).</para>
 	</listitem></varlistentry>
 
 	<!-- varlistentry><term>consensus.fasta</term><listitem>
@@ -1036,7 +1037,7 @@ Options files are specified with the <userinput>-c <replaceable>option_file</rep
 	<para>
 To compute the majority consensus tree, do the following.  (The
 program <link xmlns:xlink="http://www.w3.org/1999/xlink"
-xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link>
+xlink:href="https://tree.bio.ed.ac.uk/software/figtree/">FigTree</link>
 allows you to view the resulting tree file graphically.)
 <screen><prompt>%</prompt> trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees &gt; <filename>c50.PP.tree</filename></screen>
 </para>
@@ -1046,26 +1047,22 @@ allows you to view the resulting tree file graphically.)
 By default, splits are included in the consensus tree if they have a
 PP greater than 0.5.  You can specify a more stringent level
 (e.g. 0.66) by adding the option
-<userinput>--consensus-PP=0.66</userinput> as follows:
-<screen><prompt>%</prompt> trees-consensus -s20% -x10 --consensus-PP=0.66 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees &gt; <filename>c66.PP.tree</filename></screen>
+<userinput>--consensus=0.66</userinput> as follows:
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 --consensus=0.66 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees &gt; <filename>c66.PP.tree</filename></screen>
 You may also make the program write directly to the output file
 (e.g. <filename>c66.PP.tree</filename>) by using the more general form
-<userinput>--consensus-PP=0.66:c66.PP.tree</userinput>.  Leaving off 
+<userinput>--consensus=0.66:c66.PP.tree</userinput>.  Leaving off
 the "<userinput>:c66.PP.tree</userinput>" part (as we did above) or specifying
 "<userinput>:-</userinput>" sends the output to the standard output
 (e.g. the terminal, if not redirected). 
-<screen><prompt>%</prompt> trees-consensus -s20% -x10 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees --consensus-PP=0.66:<filename>c66.PP.tree</filename></screen>
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees --consensus=0.66:<filename>c66.PP.tree</filename></screen>
 You can supply multiple levels and filenames separated by commas.
 This is faster than running the program multiple times with different
 consensus levels.
-<screen><prompt>%</prompt> trees-consensus -s20% -x10 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees --consensus-PP=0.5:<filename>c50.PP.tree</filename>,0.66:<filename>c66.PP.tree</filename></screen>
-Finally, you may use the option <userinput>--consensus=</userinput>
-instead of the option <userinput>--consensus-PP=</userinput> if you do
-not wish the resulting tree to contain embedded posterior
-probabilities on branches, as well as branch lengths.
 <screen><prompt>%</prompt> trees-consensus -s20% -x10 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees --consensus=0.5:<filename>c50.PP.tree</filename>,0.66:<filename>c66.PP.tree</filename></screen>
-Both the <userinput>--consensus=</userinput> and 
-<userinput>--consensus-PP=</userinput> options may be given simultaneously.
+The consensus trees contain posterior probabilities as internal node labels.
+To remove these labels, use <command>tree-tool</command>:
+<screen><prompt>%</prompt> tree-tool <filename>c50.PP.tree</filename> --strip-internal-names &gt; <filename>c50.tree</filename></screen>
 </para>
 
 <para>
@@ -1077,9 +1074,9 @@ Both the <userinput>--consensus=</userinput> and
       <section><info><title>Finding the greedy consensus tree</title></info>
 	
 	<para>
-	  The greedy consensus tree may be used instead of a majority-consensus tree when a fully resolved (e.g. bifurcating) tree is required.  When the topology has many tips and each topology may be sampled only once, the greedy consensus should be higher quality than the estimate of the MAP topology.  To obtained a fully resolved tree, the  greedy consensus strategy starts with the majority consensus and then adds the highest-supported split that does not conflict.</para>
+	  The greedy consensus tree may be used instead of a majority-consensus tree when a fully resolved (e.g. bifurcating) tree is required.  When the topology has many tips and each topology may be sampled only once, the greedy consensus should be higher quality than the estimate of the MAP topology.  To obtain a fully resolved tree, the greedy consensus strategy starts with the majority consensus and then adds the highest-supported split that does not conflict.</para>
 	
-	<para>To compute the <emphasis>greedy consensus</emphasis> tree do:
+	<para>To compute the <emphasis>greedy consensus</emphasis> tree, run:
 <screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees --greedy-consensus=<filename>greedy.tree</filename></screen>	
 </para>
 
@@ -1109,13 +1106,13 @@ This command computes the effective sample size for the posterior probability of
 <para>
 This command gives a median and confidence interval, ESS, and a stabilization time:
 <screen><prompt>%</prompt> statreport <replaceable>dir-1</replaceable>/C1.log <replaceable>dir-2</replaceable>/C1.log &gt; Report </screen>	
-When multiple runs are analyzed, this command gives PSRF and joint ESS values. The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</link> allows you to view the same summaries graphically.</para>
+When multiple runs are analyzed, this command gives PSRF and joint ESS values. The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://beast.community/tracer.html">Tracer</link> allows you to view the same summaries graphically.</para>
 
 <para>See <xref linkend="mixing_and_convergence"/> for more information.
 </para>
       </section>
 
-      <section><info><title>Computing an alignment using Posterior Decoding</title></info>
+      <section><info><title>Computing an alignment using posterior decoding</title></info>
       <para>To construct an alignment estimate via posterior decoding, select any tree file <replaceable>tree</replaceable> that corresponds to your alignment.  It does not need to be fully resolved.
       </para>
       
@@ -1123,16 +1120,9 @@ When multiple runs are analyzed, this command gives PSRF and joint ESS values. T
 
       <para>You can optionally replace <userinput>--tree <replaceable>tree</replaceable></userinput> with <userinput>-N <replaceable>n_sequences</replaceable></userinput>, where <replaceable>n_sequences</replaceable> is the number of non-ancestral sequences in your alignment.</para>
 
-      <para>You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">SeaView</link> to view the alignment graphically.</para>
+      <para>You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doua.prabi.fr/software/seaview">SeaView</link> to view the alignment graphically.</para>
 
       </section>      
-
-      <!-- section><info><title>Find the alignment from the maximum a posterior (MAP) point (<filename>C1.MAP</filename>)</title></info>
-	
-<screen><prompt>%</prompt> alignment-find &lt; C1.MAP &gt; P1-MAP.fasta</screen>
-
-      This only works correctly on single-partition analyses.
-      </section -->      
 
       <section><info><title>Create an Au (Alignment Uncertainty) plot</title></info>
 	
@@ -1579,8 +1569,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <para>The default substitution model for doublets is <userinput>tn93_sym&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;f</userinput>.</para>
       <section xml:id="doublet-data">
 	<info><title>Doublet data</title></info>
-	<para>As of version 3.4, BAli-Phy does not yet allow specifying which nucleotides are paired either with a string like <userinput>((.))</userinput> or with a "pairs" file.  Instead you must manually extract the paired nucleotides and put them in their own partition (for stems), and then manually extract each loop and put it in its own partition.</para>
-	<para>The stems should be arranged so that paired nucleotides are adjacent. For example, suppose the sequence <userinput>AGGCT</userinput> was paired according to <userinput>((.))</userinput>.  Then the input file for the stems should contain a sequence of doublets that looks like <userinput>ATGC</userinput>, where <userinput>AT</userinput> is the first pair, and <userinput>GC</userinput> is the second pair.  Later versions of the software should allow extracting stems and loops from nucleotide sequences using parenthesis notation or a "pairs" file.
+	<para>BAli-Phy does not allow specifying which nucleotides are paired either with a string like <userinput>((.))</userinput> or with a "pairs" file.  Instead you must manually extract the paired nucleotides and put them in their own partition (for stems), and then manually extract each loop and put it in its own partition.</para>
+	<para>The stems should be arranged so that paired nucleotides are adjacent. For example, suppose the sequence <userinput>AGGCT</userinput> was paired according to <userinput>((.))</userinput>.  Then the input file for the stems should contain a sequence of doublets that looks like <userinput>ATGC</userinput>, where <userinput>AT</userinput> is the first pair, and <userinput>GC</userinput> is the second pair.
 	</para>
       </section>
       <section>
@@ -1602,7 +1592,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2</userinput></entry>
 	      <entry>df(nuc_model)</entry>
 	      <entry>
-		<para>The the same as <replaceable>nuc_model</replaceable>, but on dinucleotides instead of nucleotides.</para>
+		<para>The same as <replaceable>nuc_model</replaceable>, but on dinucleotides instead of nucleotides.</para>
 		<para>Simultaneous changes of both letters are <emphasis>not</emphasis> allowed.</para>
 		<para>Dinucleotide frequencies are the product of independent nucleotide frequencies.</para>
 	      </entry>
@@ -2064,7 +2054,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      <row>
 		<entry><userinput><replaceable>codon_mixture_model</replaceable> +> branch_site_mixture</userinput></entry>
 		<entry>df(<replaceable>codon_mixture_model</replaceable>)</entry>
-		<entry><para>Codon model where each the rate matrix for each branch and site is chosen from the mixture distribution.</para>
+		<entry><para>Codon model where the rate matrix for each branch and site is chosen from the mixture distribution.</para>
 		</entry>
 	      </row>
 
@@ -2079,7 +2069,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">gy94(pi={"AAA":0.01, "C":0.02,...})
+      <programlisting language="java">gy94(pi={"AAA":0.01, "AAC":0.02,...})
 mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 </programlisting>
       <para>Frequencies can also be specified using functions:</para>
@@ -2331,7 +2321,7 @@ If the genetic code is not specified, then the standard code is used:
 
     </section>
 
-    <section><info><title>Heterogenous Rates across Sites</title></info>
+    <section><info><title>Heterogeneous Rates across Sites</title></info>
     
     <para>
       Complex substitution models in <application>BAli-Phy</application>
@@ -2478,7 +2468,7 @@ If the genetic code is not specified, then the standard code is used:
 		  </link>
 	      </entry>
 	    </row>
-          </tbody>1
+          </tbody>
 	</tgroup>
       </informaltable>
       <para>
@@ -2560,7 +2550,7 @@ If the genetic code is not specified, then the standard code is used:
   <section xml:id="functions"><info><title>Models and Priors</title></info>
 
   <section><info><title>Models and distributions are functions</title></info>
-  <para>Models, probability distributions, and functions are treated the same in BAli-Phy because all of them have parameters or arguments. Parameters have names in BAli-Phy.  Parameter values are specified using square brackets as follows:
+  <para>Models, probability distributions, and functions are treated the same in BAli-Phy because all of them have parameters or arguments. Parameters have names in BAli-Phy.  Parameter values are specified using parentheses as follows:
   <programlisting>hky85(kappa=2)            // model
 log(x=2)                  // function
 normal(mean=0,sigma=1)    // probability distribution</programlisting>
@@ -2578,7 +2568,7 @@ A value must be given for each parameter, unless the parameter has a default val
   </para>
 	<note>
 	  <para>
-	    You need to put single quotes around terms with parenthesis or square brackets on the command-line:
+	    You need to put single quotes around terms with parentheses or square brackets on the command line:
 <screen><prompt>%</prompt> <userinput>bali-phy file.fasta -S 'hky85(kappa=2)'</userinput>
 <prompt>%</prompt> <userinput>bali-phy file.fasta -S 'mixture([tn93,hky85(2)])'</userinput></screen>
 	  </para>
@@ -2682,7 +2672,7 @@ The <userinput>help</userinput> command can be used to determine the default val
     <section><info><title>Unlinked models</title></info>
     <para>By default, each partition will have its own substitution model, insertion/deletion model, and scaled tree length.  For example, even if all partitions are assigned a <userinput>tn93</userinput> substitution model, their base frequencies will all be estimated independently.  When parameters are estimated separately for two partitions, we say that the parameters for those partitions are "unlinked".</para>
 
-    <para>A substitution model or insertion-deletion model that is specified without qualification will apply to every partition.  However, each partition will recieve its own copy of each model with unlinked parameter values:
+    <para>A substitution model or insertion-deletion model that is specified without qualification will apply to every partition.  However, each partition will receive its own copy of each model with unlinked parameter values:
       <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S tn93 -I rs07</userinput></screen></para>
 
 <para>You can select partition-specific values for 4 options: <userinput>-S</userinput>, <userinput>-I</userinput>, <userinput>-A</userinput>, and <userinput>--scale</userinput>.  For example, to specify different substitution models but the same alphabet:
@@ -2693,7 +2683,7 @@ The <userinput>help</userinput> command can be used to determine the default val
 <para>You can fix the alignment and ignore insertion/deletion information in one partition, while allowing the alignment to vary and using insertion/deletion information in another partition:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -I 2:none</userinput></screen>
 Since alignments are estimated by default, the alignment will be estimated in the first partition, but fixed in the second partition.</para>
-<para>Specifying specify <userinput>-I none</userinput> fixes the alignment in all partitions:
+<para>Specifying <userinput>-I none</userinput> fixes the alignment in all partitions:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -I none</userinput></screen>
 </para>
     </section>
@@ -2749,14 +2739,14 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
 # Construct the tree topology to annotate
 <prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
 # Reconstruct ancestral sequences on the given tree and alignment
-<prompt>%</prompt> <userinput>summarize-ancestors P1.max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fasta</userinput></screen>
+<prompt>%</prompt> <userinput>summarize-ancestors P1-max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fasta</userinput></screen>
     
 BAli-Phy uses an alignment estimate (here, <filename>P1-max.fasta</filename>) as a template to construct a consensus alignment with ancestral sequences.  BAli-Phy doesn&apos;t condition on the alignment columns, because (i) many columns occur only once in a posterior sample and (ii) conditioning on the column gives too much weight to the template alignment.
 </para>
 
 <para>Because the alignment is uncertain, residues in the same column of the template alignment may end up in different columns in an MCMC sample.  Therefore, in a given MCMC sample, different leaf residues in the same column may have different ancestors at the same internal node!  However, in our ancestral reconstruction, a given column may only display a single ancestral residue.</para>
 
-<para>BAli-Phy addresses this problem by averaging across the different ancestral residues in each column of the template alignment.  When identifying the ancestral character to column C from a sampled alignment A, we random select a residue in C and use it to select a column from A.  This procedure has the nice property that it will yield the traditional ancestral residue prediction if the alignment column is fixed.
+<para>BAli-Phy addresses this problem by averaging across the different ancestral residues in each column of the template alignment.  When identifying the ancestral character for column C from a sampled alignment A, we randomly select a residue in C and use it to select a column from A.  This procedure has the nice property that it will yield the traditional ancestral residue prediction if the alignment column is fixed.
     </para>
     </section>
 
@@ -2856,7 +2846,7 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
         <para>For example, you might
         specify how to identify the ancestor node of Eukaryotes, and the name "Eukaryotes" to use for the
         sequence there.  You can then use the program <userinput>extract-ancestors</userinput> to
-        extract ancestral sequences from the sampled trees and alignment, and label them with useable names.
+        extract ancestral sequences from the sampled trees and alignment, and label them with usable names.
 
     <screen><prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
 <prompt>%</prompt> <userinput>extract-ancestors -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fastas</userinput></screen>
@@ -2934,13 +2924,13 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
       diagnose when more samples must be taken.
     </para>
 
-    <para>Some of the better diagnostics for lack of convergence rely on running at least 2 independent copies of the Markov chain (preferably 4-10) from different random starting points to see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be this same, this doesn&apos;t <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</para>
+    <para>Some of the better diagnostics for lack of convergence rely on running at least 2 independent copies of the Markov chain (preferably 4-10) from different random starting points to see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be the same, this doesn&apos;t <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</para>
 
     <section><info><title>Definition of Convergence</title></info>
       
 
-      <para>Convergence refers to the the tendency of a Markov chain to
-	to "forget" its starting value and become typical of its
+      <para>Convergence refers to the tendency of a Markov chain to
+	"forget" its starting value and become typical of its
 	equilibrium distribution. Note that convergence is a property
 	of the Markov chain itself, not of individual runs of the
 	Markov chain.  Ideally a number of individual runs should be
@@ -3007,7 +2997,7 @@ similar posterior distributions.  Only numerical variables may have a
 PSRF. To calculate the PSRF for each
 numerical parameter, you may run: 
 
-<screen><prompt>%</prompt> statreport <replaceable>dir-1</replaceable>/C1.log <replaceable>dir-2</replaceable>/C2.p ... <replaceable>dir-n</replaceable>/C1.log &gt; Report </screen>
+<screen><prompt>%</prompt> statreport <replaceable>dir-1</replaceable>/C1.log <replaceable>dir-2</replaceable>/C1.log ... <replaceable>dir-n</replaceable>/C1.log &gt; Report </screen>
 The PSRF is a ratio of the width of the pooled distribution to the
 average width of each distribution, and should ideally be 1.  The PSRF
 is customarily considered to be small enough if it is less than 1.01.
@@ -3041,7 +3031,7 @@ adequately mix between modes.</para>
       
       <section><info><title>ESS for numerical values</title></info>
 	
-      <para>To calculate the split ESS values, run:
+      <para>To calculate the ESS values for numerical parameters, run:
 <screen><prompt>%</prompt> statreport <replaceable>dir-1</replaceable>/C1.log <replaceable>dir-2</replaceable>/C1.log ... <replaceable>dir-n</replaceable>/C1.log &gt; Report </screen>
       We calculate effective sample sizes based on integrated
       autocorrelation times.  This method has the nice property that
@@ -3049,13 +3039,13 @@ adequately mix between modes.</para>
       </para>
 
       <para>The
-      program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</link>
+      program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://beast.community/tracer.html">Tracer</link>
       also computes ESS values.</para>
       </section>
 
       <section><info><title>ESS for split frequencies</title></info>
 	
-      <para>As desribed in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.3852/10-120">Gaya et al. (2011)</link>, we can also compute ESS values for splits on the tree:
+      <para>As described in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.3852/10-120">Gaya et al. (2011)</link>, we can also compute ESS values for splits on the tree:
 <screen><prompt>%</prompt> trees-bootstrap <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees ... <replaceable>dir-n</replaceable>/C1.trees &gt; partitions.bs</screen>
       To compute the ESS for a split, we consider the presence or absence
       of a split in each iteration as a series of binary values.  We
@@ -3092,7 +3082,7 @@ values in the sequence.</para>
 	(<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1080/10635150600812544">Beiko
 	et al., 2006</link>).  In theory, we recommend the web tool <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</link> (Wilgenbush et al., 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  Therefore, if you wish to use AWTY, you must convert the tree samples files to NEXUS before you upload them to AWTY in order to get correct results.</para>
 
-<para>It is also be possible to assess stabilization of tree topologies using tools distributed with <application>bali-phy</application> by using commands like the following.  Here, sub-sampling and burnin does not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend to contain at least 500 trees; you might do this by sub-sampling using the <application>BAli-Phy</application> tool <command>sub-sample</command>.</para>
+<para>It is also possible to assess stabilization of tree topologies using tools distributed with <application>bali-phy</application> by using commands like the following.  Here, subsampling and burnin do not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend should contain at least 500 trees; you might do this by subsampling using the <application>BAli-Phy</application> tool <command>bali-subsample</command>.</para>
 
 <orderedlist inheritnum="ignore" continuation="restarts">
 <listitem><para>To report the average distances within and between two tree samples:
@@ -3115,25 +3105,6 @@ The stabilization criterion is the same one described above for numerical values
 	
     </section>
 
-    <!-- sect2>
-      <title>Diagnostics: Visual Inspection</title>
-      <sect3>
-	<title>Numerical Parameters</title>
-	<para>
-	  To inspect the Markov chain generated by
-	  <application>BAli-Phy</application>, we recommend the program
-	  <ulink url="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</ulink>. 
-	  You can open the file <filename>C1.log</filename> in Tracer to view
-	  traceplots and to estimate the effective sample size.
-	</para>
-      </sect3>
-      <sect3>
-	<title>Topologies</title>
-      <para>
-	<screen><prompt>%</prompt> trees-view2 C1.trees C2.trees</screen>
-      </para>
-    </sect3>
-  </sect2 -->
   </section>
 
 
@@ -3174,7 +3145,7 @@ The stabilization criterion is the same one described above for numerical values
       <para>Protect some sequences from being removed:</para>
       <screen><prompt>%</prompt> alignment-thin --down-to=30 <replaceable>file</replaceable>.fasta --protect=seq1,seq2 > <replaceable>file</replaceable>-30taxa.fasta</screen>
       <para>Remove sequences that are missing conserved columns:</para> 
-      <screen><prompt>%</prompt> alignment-thin --remove-crazy=10 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>2.fasta</screen>
+      <screen><prompt>%</prompt> alignment-thin --remove-gappy=10 <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>2.fasta</screen>
     </section>
 
     <section><info><title>alignment-draw</title></info>
@@ -3203,9 +3174,9 @@ The stabilization criterion is the same one described above for numerical values
 
     <section><info><title>alignment-chop-internal</title></info>
       
-      <para>Remove internal-node ancestral sequences from an alignment.  (This
+	<para>Remove internal-node ancestral sequences from an alignment.  (This
 	probably only works for alignments output by bali-phy.) </para>
-<screen><prompt>%</prompt> alignment-chop-internal <replaceable>file</replaceable>.fasta > <replaceable>file</replaceable>-chopped.fasta</screen>
+<screen><prompt>%</prompt> alignment-chop-internal &lt; <replaceable>file</replaceable>.fastas > <replaceable>file</replaceable>-chopped.fastas</screen>
     </section>
 
   </section>
@@ -3286,17 +3257,17 @@ The stabilization criterion is the same one described above for numerical values
 
     <para>In order to compile BAli-Phy, you need
     <itemizedlist>
-      <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B14">C++20</link> compiler</listitem>
-      <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://mesonbuild.com">meson</link> (version >= 1.1)</listitem>
+      <listitem>a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://en.wikipedia.org/wiki/C%2B%2B23">C++23</link> compiler</listitem>
+      <listitem><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://mesonbuild.com/">Meson</link> (version >= 1.6)</listitem>
     </itemizedlist>
-    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>) version 12.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">Clang</link> compiler version 17 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>drawtree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
+    We recommend the GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gcc.gnu.org/">GCC</link>) version 12.0 (or higher) or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://clang.llvm.org/">Clang</link> compiler version 17 or higher. The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.cairographics.org/">Cairo</link> graphics library is optional, but if it is missing, the <command>draw-tree</command> tool that is used to draw consensus trees won&apos;t be built. See also <xref linkend="software_req"/>. </para>
 
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
 <screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev pandoc libboost-all-dev</userinput></screen>
 
     </para>
-If your version of Debian or Ubuntu is recent enough to contain meson version 1.1 or higher, you can install meson with apt-get:
+If your version of Debian or Ubuntu is recent enough to contain meson version 1.6 or higher, you can install meson with apt-get:
 <screen><prompt>%</prompt> <userinput>sudo apt-get install meson</userinput>
 <prompt>%</prompt> <userinput>meson --version</userinput>
 1.6.0
@@ -3322,8 +3293,8 @@ Otherwise you can install meson through pip3:
     </section>
 
     <section><info><title>Mac</title></info>
-    <para>On Mac OS X, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">XCode</link> version 15 (or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://clang.llvm.org">clang</link>.
- <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>    To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://brew.sh/">homebrew</link>, and then type:
+    <para>On macOS, the simplest way to get a compiler is to install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://developer.apple.com/xcode/">Xcode</link> version 15 (or newer) command line tools, which come with <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://clang.llvm.org/">Clang</link>.
+ <screen><prompt>%</prompt> <userinput>xcode-select --install</userinput></screen>    To get the other tools, first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://brew.sh/">Homebrew</link>, and then type:
 <screen><prompt>%</prompt> <userinput>brew install git meson cairo pandoc</userinput></screen>
     </para>
     <!-- para>You can also install BAli-Phy with homebrew.  The recipe is in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/Homebrew/homebrew-science/blob/master/README.md">homebrew/science</link>. However, this recipe may not install the latest version.</para -->
@@ -3331,7 +3302,7 @@ Otherwise you can install meson through pip3:
     </section>
     
     <section><info><title>Windows (native)</title></info>
-    <para>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.msys2.org">MSYS2</link> project provides an MINGW64 compiler that can create native windows executables.  MSYS2 itself is actually non-native (it is derived from cygwin), and therefore the MSYS2 shell refers to drives as <filename>/c/</filename> instead of <filename>C:/</filename>.</para>
+    <para>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.msys2.org/">MSYS2</link> project provides an MINGW64 compiler that can create native Windows executables.  MSYS2 itself is actually non-native (it is derived from Cygwin), and therefore the MSYS2 shell refers to drives as <filename>/c/</filename> instead of <filename>C:/</filename>.</para>
     <screen><prompt>%</prompt> <userinput>pacman --needed --noconfirm -Sy pacman-mirrors</userinput>
 <prompt>%</prompt> <userinput>pacman -Sy</userinput>
 <prompt>%</prompt> <userinput>pacman -S mingw-w64-x86_64-ninja</userinput>
@@ -3380,12 +3351,11 @@ The command <command>bali-phy</command> and its associated tools should then be 
       <para>You can select the C++ compiler by setting the CXX variable.  A useful example of this is to use <command>g++-14</command> on systems where <command>g++</command> invokes a compiler that is too old:
  <screen><prompt>%</prompt> <userinput>CXX=g++-14 meson setup build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
  You may also set compiler and linker options using the CPPFLAGS, CXXFLAGS, and LDFLAGS variables.  For example, you can instruct the compiler to use all the features of your chip, instead of producing generic code that will run anywhere:
- <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson setup --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
+ <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mtune=native -march=native" meson setup build --prefix=&#36;HOME/Applications/bali-phy-&version;</userinput></screen>
 
  For example, you can set the CPPFLAGS and LDFLAGS variables to instruct the compiler where to look for libraries, such as cairo:
 	  <screen><prompt>%</prompt> <userinput>CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" meson setup build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>
- Another useful example of this is to produce an OS X executable on that can run on older versions of OS X:
-	  <screen><prompt>%</prompt> <userinput>CXXFLAGS="-mmacosx-version-min=10.9" LDFLAGS="-mmacosx-version-min=10.9" meson setup build --prefix=&#36;HOME/Applications/bali-phy-&version; --buildtype=release</userinput></screen>	</para>
+      </para>
       </section>
 
     </section>
@@ -3526,8 +3496,8 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	  <question><para>Why is <command>bali-phy</command> still
 	      running? How long will it take?</para></question>
 	  <answer>
-	    <para>It runs until you stop it.  Stop it when its done.</para>
-	    <para>The longer answer is that is is hard to predict how long MCMC will take to converge, since it depends on each data set in complex ways.  Automatic rules for determining when to stop an MCMC chain can be difficult to get right.  BAli-Phy does not contain an automatic stopping rule yet, so it relies on the user to run convergence diagnostics and determine when to stop the run.</para>
+	    <para>It runs until you stop it or it reaches its maximum number of iterations.  The default maximum is 200,000 iterations; use <userinput>--iterations</userinput> to set a different limit.</para>
+	    <para>The longer answer is that it is hard to predict how long MCMC will take to converge, since it depends on each data set in complex ways.  Automatic rules for determining when to stop an MCMC chain can be difficult to get right.  BAli-Phy does not contain an automatic stopping rule yet, so it relies on the user to run convergence diagnostics and determine when to stop the run.</para>
 	  </answer>
 	</qandaentry>
 
@@ -3633,7 +3603,7 @@ your <command>bali-phy</command> runs on that computer.
 	<qandaentry>
 	  <question><para>Why does <command>bp-analyze</command> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</para></question>
 	  <answer>
-	    <para>The program <command>draw-tree</command> was not distributed on this platform (Windows, Mac).  This is not a fatal error message, it just means that a pretty picture of the tree will not be generated automatically.  You can still view the tree with <application>FigTree</application>, for example.</para>
+	    <para>The program <command>draw-tree</command> is built only when the Cairo graphics library is available, so some installations omit it.  This is not a fatal error message; it just means that a pretty picture of the tree will not be generated automatically.  You can still view the tree with <application>FigTree</application>, for example.</para>
 	  </answer>
 	</qandaentry>
 
