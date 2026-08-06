@@ -7,10 +7,8 @@
 using std::string;
 using std::set;
 
-namespace
-{
 // Convert every Haskell newline form to the LF representation understood by RE/flex.
-string normalize_newlines(std::string_view content)
+string normalize_haskell_newlines(std::string_view content)
 {
     string normalized;
     normalized.reserve(content.size());
@@ -30,7 +28,6 @@ string normalize_newlines(std::string_view content)
     }
 
     return normalized;
-}
 }
 
 void driver::pop_context()
@@ -558,7 +555,7 @@ driver::parse_file (const std::string &filename)
 int
 driver::parse_string (const string& file_contents, const std::string &input_name)
 {
-  source = normalize_newlines(file_contents);
+  source = normalize_haskell_newlines(file_contents);
   file = input_name;
   location.initialize (&input_name);
   scan_begin (source);

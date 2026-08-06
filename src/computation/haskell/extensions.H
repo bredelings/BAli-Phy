@@ -5,14 +5,12 @@
 #include <set>
 #include <string>
 #include <optional>
-#include <boost/dynamic_bitset.hpp>
-#include "util/assert.hh"   // Avoid dynamic_bitset.hpp overwriting our assert definition.
+#include <vector>
 #include "computation/message.H"
 
 enum class LangExt
 {
-    First=0,
-    ImplicitPrelude,
+    ImplicitPrelude=0,
     StarIsType,
     CUSKs,
     MonomorphismRestriction,
@@ -31,6 +29,7 @@ enum class LangExt
     BinaryLiterals,
     ConstrainedClassMethods,
     ConstraintKinds,
+    CPP,
     DataKinds,
     DefaultSignatures,
     DeriveDataTypeable,

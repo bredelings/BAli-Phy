@@ -3,7 +3,6 @@
 #include <tuple>
 #include <fstream>
 #include <algorithm>
-#include <cstdint>
 #include <cstring>
 #include <limits>
 #include <string_view>
@@ -721,11 +720,6 @@ std::string xxhash64_hex(const std::string& s) {
     return ss.str();
 }
 
-// This is independent of the executable-keyed cache directory: it makes the
-// archive self-describing and prevents an older reader from silently treating
-// newly appended compiled-module metadata as a valid artifact.
-static constexpr std::uint32_t compiled_module_cache_format = 5;
-
 std::string extract_xxhash(std::string& data)
 {
     // 1. Check that we have 16 chars followed by a newline.
@@ -804,13 +798,6 @@ std::shared_ptr<CompiledModule> read_cached_module(const module_loader& loader, 
 
             std::shared_ptr<CompiledModule> M;
 
-            std::uint32_t format = 0;
-            archive(format);
-            if (format != compiled_module_cache_format)
-                throw myexception()<<"compiled module cache format "<<format
-                                   <<" is not supported (expected "
-                                   <<compiled_module_cache_format<<")";
-
             std::string hash;
             archive(hash);
 
@@ -876,7 +863,6 @@ bool write_compile_artifact(const Program& P, std::shared_ptr<CompiledModule>& C
             std::ostringstream buffer;
             {
                 cereal::BinaryOutputArchive archive( buffer );
-                archive(compiled_module_cache_format);
                 archive(CM->all_inputs_hash());
                 archive(CM);
             }

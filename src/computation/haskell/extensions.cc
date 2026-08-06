@@ -8,6 +8,7 @@ using std::optional;
 
 map<string,LangExt> ext_to_bit =
 {
+    {"CPP",                         {LangExt::CPP}},
     {"DataKinds",                   {LangExt::DataKinds}},
     {"DefaultSignatures",           {LangExt::DefaultSignatures}},
     {"DisambiguateRecordFields",    {LangExt::DisambiguateRecordFields}},

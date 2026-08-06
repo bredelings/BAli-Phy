@@ -10,6 +10,7 @@
 #include "util/file-paths.H"
 #include "parser/driver.hh"
 #include "haskell/ids.H"
+#include "haskell/cpp.H"
 #include "haskell/extensions.H"
 #include "core/func.H"
 
@@ -103,7 +104,7 @@ optional<fs::path> module_loader::find_cached_module(const string& modid) const
 //{-# LANGUAGE NoImplicitPrelude #-}
 static std::regex language_option_re("^\\s*\\{-#\\s+LANGUAGE\\s+(.*[^\\s])\\s+#-\\}");
 
-LanguageExtensions language_extensions(const string& filename, const string& source)
+set<string> language_options(const string& source)
 {
     set<string> options;
 
@@ -125,8 +126,12 @@ LanguageExtensions language_extensions(const string& filename, const string& sou
 
 	pos += m.length();
     }
+    return options;
+}
 
-
+LanguageExtensions check_language_options(const string& filename, const string& source,
+                                           const set<string>& options)
+{
     LanguageExtensions lang_exts;
     vector<Message> messages;
     for(auto& option: options)
@@ -137,7 +142,6 @@ LanguageExtensions language_extensions(const string& filename, const string& sou
             messages.push_back({ErrorMsg, loc, {*note}});
     }
     show_messages({filename, source}, std::cerr, messages);
-    exit_on_error(messages);
 
     return lang_exts;
 }
@@ -220,9 +224,18 @@ shared_ptr<Module> module_loader::load_module_from_file(const fs::path& filename
 	{
             auto fname = std::make_shared<string>( pretty_module_path(filename).string() );
 
-	    string file_contents = read_file(filename.string(), "module");
+	    string file_contents = normalize_haskell_newlines(read_file(filename.string(), "module"));
 
-	    auto lang_exts = language_extensions(*fname, file_contents);
+            auto raw_options = language_options(file_contents);
+            if (raw_options.count("CPP"))
+            {
+                auto preprocessed = Haskell::CPP::conditionals(file_contents, *fname, {});
+                show_messages({*fname, file_contents}, std::cerr, preprocessed.messages);
+                file_contents = std::move(preprocessed.source);
+            }
+
+	    auto lang_exts = check_language_options(*fname, file_contents,
+                                                    language_options(file_contents));
 
 	    auto parsed = parse_module_file(file_contents, *fname, lang_exts);
 

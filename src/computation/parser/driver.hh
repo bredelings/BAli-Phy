@@ -178,4 +178,7 @@ public:
 
 ParsedModule parse_module_file(const std::string& content, const std::string& input_name,
                                const LanguageExtensions& lang_exts);
+
+// Normalize the newline forms accepted in Haskell source to LF.
+std::string normalize_haskell_newlines(std::string_view source);
 #endif // ! DRIVER_HH
