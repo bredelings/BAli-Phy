@@ -344,19 +344,17 @@ public:
 
     Type rational_type() const;
 
-    bool add_substitution(const MetaTypeVar& a, const Type& type);
-
     void unify_defer(const ConstraintOrigin& origin, const Type& t1, const Type& t2);
 
     void unify_solve_(const ConstraintOrigin& origin, const Type& t1, const Type& t2);
+
+    bool try_fill_meta_type_var(const MetaTypeVar& tv, const Type& type) const;
 
     // calls unify_solve_ with UnifyOrigin(t1,t2)
     void unify(const Type& t1, const Type& t2);
 
     // calls unify_solve_
     void unify(const Type& t1, const Type& t2, const ConstraintOrigin& orig);
-
-    bool try_insert(const MetaTypeVar& tv, Type type) const;
 
     bool occurs_check(const MetaTypeVar& tv, const Type& t) const;
 

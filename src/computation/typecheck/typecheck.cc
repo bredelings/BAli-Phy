@@ -963,12 +963,6 @@ Type TypeChecker::rational_type() const
     return TypeCon("Compiler.Ratio.Rational", kind_type());
 }
 
-bool TypeChecker::add_substitution(const MetaTypeVar& a, const Type& type)
-{
-    return try_insert(a, type);
-}
-
-
 void TypeChecker::unify(const Type& t1, const Type& t2)
 {
     unify_solve_(UnifyOrigin{t1,t2}, t1, t2);

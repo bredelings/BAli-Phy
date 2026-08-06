@@ -101,30 +101,23 @@ bool TypeChecker::occurs_check(const TypeVar& tv, const Type& t) const
         std::abort();
 }
 
-bool TypeChecker::try_insert(const MetaTypeVar& tv, Type type) const
+// Fill a touchable metavariable when the equality is safe to solve eagerly.
+// Both type and kind inference use this operation to record committed equalities.
+bool TypeChecker::try_fill_meta_type_var(const MetaTypeVar& tv, const Type& type) const
 {
-    // 1. We can't insert tv ~ type if we already have a substitution for tv.
     assert(not tv.filled());
 
-    // 2. We can only bind meta type vars to tau types.
-    assert(is_tau_type(type));
+    if (tv.level() != level() or tv.cycle_breaker)
+        return false;
 
-    // 3. Walk any meta-type-var indirections
-    auto safe_type = type;
-    while(auto t2 = filled_meta_type_var(safe_type))
-        safe_type = *t2;
+    // Current kinds have no synonyms or type families, so their fill check is structural.
+    // Ordinary type metavariables retain the richer type-family-aware equality check.
+    bool can_fill = tv.kind == kind_kind() ? not contains_mtv(type, tv)
+                                           : check_type_equality(tv, type) == ok_result;
+    if (not can_fill)
+        return false;
 
-    // 4. tv ~ tv is already true, so in that case return success without doing anything.
-    if (auto tv2 = safe_type.to<MetaTypeVar>(); tv2 and *tv2 == tv)
-        return true;
-
-    // 5. If safe_type contains tv, then we have a substitution loop for tv.
-    //    Therefore return failure.  (This rules out infinite types.)
-    if (occurs_check(tv, safe_type)) return false;
-
-    // 6. It is safe to add tv -> safe_type
     tv.fill(type);
-
     return true;
 }
 
@@ -151,16 +144,12 @@ void TypeChecker::unify_solve_(const ConstraintOrigin& origin, const Type& t1, c
 
     else if (auto tv1 = t1.to<MetaTypeVar>())
     {
-        if (tv1->level() == level() and not tv1->cycle_breaker and check_type_equality(t1,t2) == ok_result)
-            tv1->fill(t2);
-        else
+        if (not try_fill_meta_type_var(*tv1, t2))
             unify_defer(origin, t1, t2);
     }
     else if (auto tv2 = t2.to<MetaTypeVar>())
     {
-        if (tv2->level() == level() and not tv2->cycle_breaker and check_type_equality(t2,t1) == ok_result)
-            tv2->fill(t1);
-        else
+        if (not try_fill_meta_type_var(*tv2, t1))
             unify_defer(origin, t2, t1);
     }
     else if (t1.is_a<TypeVar>() or t2.is_a<TypeVar>())
