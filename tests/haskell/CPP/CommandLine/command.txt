@@ -1,0 +1,1 @@
+--test-module Main.hs --cpp -D FEATURE --cpp-define VALUE=3 --cpp-define 'AT_LEAST(a,b,c)=((a)*10000+(b)*100+(c)>=40100)' --cpp-define REMOVED=1 --cpp-undefine REMOVED --dump-cpp

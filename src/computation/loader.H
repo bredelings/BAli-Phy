@@ -7,6 +7,7 @@
 #include <map>
 #include <filesystem>
 #include <optional>
+#include "computation/haskell/cpp.H"
 #include "computation/optimization/simplifier_options.H" // for simplifier_options
 
 class Module;
@@ -25,6 +26,10 @@ public:
     std::vector<std::string> args;
 
     bool recompile_all = false;
+
+    bool force_cpp = false;
+    bool dump_cpp = false;
+    Haskell::CPP::Options cpp_options;
 
     std::set<std::string> recompile_modules;
 

@@ -1,0 +1,12 @@
+===== CPP: Main.hs =====
+{-# LANGUAGE NoImplicitPrelude #-}
+
+
+
+
+module Main where
+
+-- This fixture checks the command-line macro environment, forced preprocessing,
+-- exact dumped source, and the absence of macro expansion in Haskell bodies.
+data AT_LEAST = AT_LEAST
+data SELECTED = SELECTED

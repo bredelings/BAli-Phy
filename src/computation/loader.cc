@@ -227,11 +227,13 @@ shared_ptr<Module> module_loader::load_module_from_file(const fs::path& filename
 	    string file_contents = normalize_haskell_newlines(read_file(filename.string(), "module"));
 
             auto raw_options = language_options(file_contents);
-            if (raw_options.count("CPP"))
+            if (force_cpp or raw_options.count("CPP"))
             {
-                auto preprocessed = Haskell::CPP::conditionals(file_contents, *fname, {});
+                auto preprocessed = Haskell::CPP::conditionals(file_contents, *fname, cpp_options);
                 show_messages({*fname, file_contents}, std::cerr, preprocessed.messages);
                 file_contents = std::move(preprocessed.source);
+                if (dump_cpp)
+                    std::cout<<"===== CPP: "<<*fname<<" =====\n"<<file_contents;
             }
 
 	    auto lang_exts = check_language_options(*fname, file_contents,

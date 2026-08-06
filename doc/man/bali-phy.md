@@ -88,6 +88,26 @@ For each option below, more information is available by specifying the long form
 **--variables** _arg_
 : Variable definitions
 
+# HASKELL CPP OPTIONS
+
+**--cpp**
+: Conditionally preprocess every Haskell source module. Without this option,
+  preprocessing is enabled only by a leading `{-# LANGUAGE CPP #-}` pragma.
+  Macros currently expand in conditional expressions, not in Haskell bodies;
+  `#include` is not supported.
+
+**-D** _MACRO_, **--cpp-define** _MACRO[=TEXT]_
+: Define an object-like or function-like macro for CPP conditional expressions.
+  An omitted replacement defaults to `1`. This option does not itself enable CPP.
+
+**--cpp-undefine** _MACRO_
+: Remove an initial macro definition. Undefinitions are applied after all
+  command-line definitions and do not themselves enable CPP.
+
+**--dump-cpp**
+: Print the generated Haskell source immediately before parsing. Only modules
+  for which CPP is enabled are printed.
+
 # EXAMPLES
 
 `bali-phy dna.fasta --smodel gtr`

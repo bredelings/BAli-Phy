@@ -407,6 +407,29 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
 {
     auto L = std::make_shared<module_loader>(get_cache_path(), get_package_paths(args));
 
+    L->force_cpp = args.count("cpp");
+    L->dump_cpp = args.count("dump-cpp");
+
+    if (args.count("cpp-define"))
+        for(const auto& text: args["cpp-define"].as<vector<string>>())
+        {
+            string diagnostic;
+            auto definition = Haskell::CPP::parse_initial_definition(text, diagnostic);
+            if (not definition)
+                throw myexception()<<"Invalid --cpp-define value '"<<text<<"': "<<diagnostic;
+            L->cpp_options.definitions.push_back(std::move(*definition));
+        }
+
+    if (args.count("cpp-undefine"))
+        for(const auto& text: args["cpp-undefine"].as<vector<string>>())
+        {
+            string name;
+            string diagnostic;
+            if (not Haskell::CPP::parse_initial_undefinition(text, name, diagnostic))
+                throw myexception()<<"Invalid --cpp-undefine value '"<<text<<"': "<<diagnostic;
+            L->cpp_options.undefinitions.push_back(std::move(name));
+        }
+
     // 4. Write out paths to C1.err
     if (log_verbose >= 1)
     {
@@ -478,7 +501,6 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
     L->dump_typechecked = args.count("dump-tc");
     L->dump_desugared = args.count("dump-ds");
     L->dump_optimized = args.count("dump-opt");
-
     if (args.count("recompile"))
     {
         auto recompile_string = args.at("recompile").as<string>();
