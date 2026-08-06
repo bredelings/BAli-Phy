@@ -180,8 +180,6 @@ public:
     TypeVar(int l, const std::string& s, const Kind& k);
 };
 
-typedef TypeVar KindVar;
-
 struct TypeCon
 {
     std::string name;

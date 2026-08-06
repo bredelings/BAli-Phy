@@ -32,6 +32,21 @@ namespace views = ranges::views;
  * See Note: Error messages from the kind checker (below).
  */
 
+// Allocate a kind metavariable with local numbering so kind inference does not perturb
+// the global fresh-variable names subsequently recorded in diagnostics and dumps.
+MetaTypeVar kindchecker_state::fresh_named_kind_var(const string& name)
+{
+    MetaTypeVar kv(type_checker.level(), name, kind_kind());
+    kv.index = next_kvar_index++;
+    return kv;
+}
+
+// Allocate an anonymously named kind inference variable.
+MetaTypeVar kindchecker_state::fresh_kind_var()
+{
+    return fresh_named_kind_var("k");
+}
+
 TypeVar kindchecker_state::bind_type_var(const Hs::LTypeVar& ltv, const Kind& kind)
 {
     // We can't modify the initial empty scope.
@@ -66,25 +81,6 @@ void kindchecker_state::add_type_con_of_kind(const string& name, const Kind& kin
     type_con_to_kind.insert({name,{kind,arity}});
 }
 
-Kind kindchecker_state::apply_substitution(const Kind& kind) const
-{
-    return apply_subst(kind_var_to_kind, kind);
-}
-
-void kindchecker_state::add_substitution(const KindVar& kv, const Kind& kind)
-{
-    assert(not kind_var_to_kind.count(kv));
-
-    kind_var_to_kind = kind_var_to_kind.insert({kv,kind});
-}
-
-
-//FIXME -- is this the right order?
-void kindchecker_state::add_substitution(const k_substitution_t& s)
-{
-    kind_var_to_kind = compose(s,kind_var_to_kind);
-}
-
 Kind kindchecker_state::kind_for_type_con(const std::string& name) const
 {
     Kind kind;
@@ -97,7 +93,7 @@ Kind kindchecker_state::kind_for_type_con(const std::string& name) const
         kind = T->kind;
     }
 
-    return apply_substitution(kind);
+    return kind;
 }
 
 Kind kindchecker_state::kind_for_type_var(const Hs::LTypeVar& ltv) const
@@ -112,19 +108,36 @@ Kind kindchecker_state::kind_for_type_var(const Hs::LTypeVar& ltv) const
     }
     else
     {
-        auto kind = it->second;
-        return apply_subst(kind_var_to_kind, kind);
+        return it->second;
     }
 }
 
+// Kind equalities are committed requirements, so successful component fills remain recorded
+// even if another component makes the declaration invalid.
 bool kindchecker_state::unify(const Kind& kind1, const Kind& kind2)
 {
-    auto s = ::kunify(kind1,kind2);
-    if (s)
+    auto k1 = follow_meta_type_var(kind1);
+    auto k2 = follow_meta_type_var(kind2);
+
+    if (auto mtv1 = k1.to<MetaTypeVar>())
     {
-        add_substitution(*s);
-        return true;
+        if (auto mtv2 = k2.to<MetaTypeVar>(); mtv2 and *mtv1 == *mtv2)
+            return true;
+        return type_checker.try_fill_meta_type_var(*mtv1, k2);
     }
+    else if (auto mtv2 = k2.to<MetaTypeVar>())
+        return type_checker.try_fill_meta_type_var(*mtv2, k1);
+    else if (auto app1 = k1.to<TypeApp>(); app1 and k2.is_a<TypeApp>())
+    {
+        auto& app2 = k2.as_<TypeApp>();
+        bool heads_match = unify(app1->head, app2.head);
+        bool arguments_match = unify(app1->arg, app2.arg);
+        return heads_match and arguments_match;
+    }
+    else if (auto tc1 = k1.to<TypeCon>(); tc1 and k2.is_a<TypeCon>())
+        return *tc1 == k2.as_<TypeCon>();
+    else if (auto tv1 = k1.to<TypeVar>(); tv1 and k2.is_a<TypeVar>())
+        return *tv1 == k2.as_<TypeVar>();
     else
         return false;
 }
@@ -132,12 +145,15 @@ bool kindchecker_state::unify(const Kind& kind1, const Kind& kind2)
 Type kindchecker_state::kind_check_type_of_kind(const Hs::LType& t, const Kind& kind)
 {
     auto [t2,kind2] = kind_check_type(t);
-    t2 = zonk_kind_for_type(t2);
-    if (not unify(kind, kind2))
+    bool kinds_match = unify(kind, kind2);
+    t2 = default_kinds_for_type(t2);
+    if (not kinds_match)
     {
         auto span = type_checker.source_span_scope(t.loc);
         TidyState tidy_state;
-        type_checker.record_error(Note()<<"Type "<<show_type_plain(tidy_state, t2)<<" has kind "<<show_type_plain(tidy_state, apply_substitution(kind2))<<", but should have kind "<<show_type_plain(tidy_state, apply_substitution(kind))<<"\n");
+        type_checker.record_error(Note()<<"Type "<<show_type_plain(tidy_state, t2)
+                                  <<" has kind "<<show_type_plain(tidy_state, default_kind(kind2))
+                                  <<", but should have kind "<<show_type_plain(tidy_state, default_kind(kind))<<"\n");
     }
     return t2;
 }
@@ -200,32 +216,30 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
 
         auto t2 = TypeApp(type1,type2);
 
-        if (auto kv1 = kind1.to<KindVar>())
-        {
-            auto a1 = fresh_kind_var();
-            auto a2 = fresh_kind_var();
-            add_substitution(*kv1, kind_arrow(a1,a2));
-            unify(a1, kind2); /// can't fail.
-            return {t2,a2};
-        }
-        else if (auto a = is_function_type(kind1))
-        {
-            auto& [arg_kind, result_kind] = *a;
-            if (not unify(arg_kind, kind2))
-            {
-                auto span = type_checker.source_span_scope(ltype.loc);
-                TidyState tidy_state;
-                type_checker.record_error(Note()<<"In type '"<<t<<"', can't apply type ("<<tapp->head<<" :: "<<show_type_plain(tidy_state, apply_substitution(kind1))<<") to type ("<<tapp->arg<<" :: "<<show_type_plain(tidy_state, apply_substitution(kind2))<<")");
-            }
-            return {t2, result_kind};
-        }
-        else
-        {
-            auto span = type_checker.source_span_scope(loc);
-            type_checker.record_error(Note()<<"Can't apply type "<<tapp->head<<" :: "<<show_type_plain(kind1)<<" to type "<<tapp->arg<<".");
+        auto original_head_kind = follow_meta_type_var(kind1);
+        bool rigid_non_function = not original_head_kind.is_a<MetaTypeVar>() and
+                                  not is_function_type(original_head_kind);
+        auto result_kind = fresh_kind_var();
 
-            return {t2, fresh_kind_var()};
+        // A valid type application f x requires kind(f) = kind(x) -> result_kind.
+        if (not unify(kind1, kind_arrow(kind2, result_kind)))
+        {
+            auto span = type_checker.source_span_scope(ltype.loc);
+            if (rigid_non_function)
+            {
+                type_checker.record_error(Note()<<"Can't apply type "<<tapp->head<<" :: "
+                                          <<show_type_plain(original_head_kind)<<" to type "<<tapp->arg<<".");
+            }
+            else
+            {
+                TidyState tidy_state;
+                type_checker.record_error(Note()<<"In type '"<<t<<"', can't apply type ("<<tapp->head<<" :: "
+                                          <<show_type_plain(tidy_state, follow_meta_type_var(kind1))
+                                          <<") to type ("<<tapp->arg<<" :: "
+                                          <<show_type_plain(tidy_state, follow_meta_type_var(kind2))<<")");
+            }
         }
+        return {t2,result_kind};
     }
     else if (auto c = t.to<Hs::ConstrainedType>())
     {
@@ -236,7 +250,9 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
             if (not unify(kind_constraint(), k2))
             {
                 auto span = type_checker.source_span_scope(ltype.loc);
-                type_checker.record_error(Note()<<"Constraint '"<<hs_constraint.print()<<"' should be a Constraint, but has kind "<<show_type_plain(k2));
+                type_checker.record_error(Note()<<"Constraint '"<<hs_constraint.print()
+                                          <<"' should be a Constraint, but has kind "
+                                          <<show_type_plain(default_kind(k2)));
             }
             context.push_back(c2);
         }
@@ -299,36 +315,37 @@ tuple<Type,Kind> kindchecker_state::kind_check_type(const Hs::LType& ltype)
     throw myexception()<<"kind_check_type: I don't recognize type '"<<t.print()<<"'";
 }
 
-Type kindchecker_state::zonk_kind_for_type(const Type& t)
+// Replace unsolved kind metavariables throughout a checked type with the default kind Type.
+Type kindchecker_state::default_kinds_for_type(const Type& t)
 {
     if (auto tc = t.to<TypeCon>())
     {
         auto& name = tc->name;
 
         auto Tc = *tc;
-        Tc.kind = kind_check_type_con(name);
+        Tc.kind = default_kind(kind_check_type_con(name));
         return Tc;
     }
     else if (auto tv = t.to<TypeVar>())
     {
         auto Tv = *tv;
-        Tv.kind = replace_kvar_with_star(Tv.kind);
+        Tv.kind = default_kind(Tv.kind);
         return Tv;
     }
     else if (auto tapp = t.to<TypeApp>())
     {
         auto Tapp = *tapp;
-        Tapp.head = zonk_kind_for_type(Tapp.head);
-        Tapp.arg  = zonk_kind_for_type(Tapp.arg);
+        Tapp.head = default_kinds_for_type(Tapp.head);
+        Tapp.arg  = default_kinds_for_type(Tapp.arg);
         return Tapp;
     }
     else if (auto c = t.to<ConstrainedType>())
     {
         auto C = *c;
         for(auto& constraint: C.context)
-            constraint = zonk_kind_for_type( constraint );
+            constraint = default_kinds_for_type( constraint );
 
-        C.type = zonk_kind_for_type( C.type );
+        C.type = default_kinds_for_type( C.type );
         return C;
     }
     else if (auto fa = t.to<ForallType>())
@@ -336,14 +353,14 @@ Type kindchecker_state::zonk_kind_for_type(const Type& t)
         auto Fa = *fa;
 
         for(auto& tv: Fa.type_var_binders)
-            tv.kind = replace_kvar_with_star(tv.kind);
+            tv.kind = default_kind(tv.kind);
 
-        Fa.type = zonk_kind_for_type( Fa.type );
+        Fa.type = default_kinds_for_type( Fa.type );
 
         return Fa;
     }
     
-    throw myexception()<<"zonk_kind_for_type: I don't recognize type '"<<t.print()<<"'";
+    throw myexception()<<"default_kinds_for_type: I don't recognize type '"<<t.print()<<"'";
 }
 
 
@@ -603,7 +620,8 @@ TypeConEnv kindchecker_state::infer_kinds(const vector<Hs::Decl>& type_decl_grou
     {
         // Lookup kind and do substitutions
         auto kind = kind_for_type_con(name);
-        kind = replace_kvar_with_star(kind);
+        kind = default_kind(kind);
+        assert(free_meta_type_variables(kind).empty());
 
         auto& [kind_out,arity] = info;
         kind_out = kind;
