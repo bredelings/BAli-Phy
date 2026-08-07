@@ -25,6 +25,10 @@ module Options.Applicative
     , argument
     , strArgument
     , subparser
+    , abortOption
+    , infoOption
+    , helper
+    , simpleVersioner
     , auto
     , str
     , maybeReader
@@ -42,7 +46,6 @@ module Options.Applicative
     , hidden
     , internal
     , command
-    , commandGroup
     , InfoMod
     , info
     , fullDesc
@@ -56,19 +59,24 @@ module Options.Applicative
     , PrefsMod
     , prefs
     , defaultPrefs
-    , multiSuffix
-    , disambiguate
     , showHelpOnError
     , showHelpOnEmpty
     , columns
     , idm
     , mappend
     , execParserPure
+    , execParser
+    , customExecParser
+    , handleParseResult
     , getParseResult
+    , parserFailure
+    , renderFailure
+    , overFailure
     ) where
 
 import Compiler.Base
 import Compiler.Classes
+import Compiler.Integral
 import Compiler.Num
 import Control.Applicative
 import Control.Monad
@@ -83,7 +91,9 @@ import Data.Maybe
 import Data.Monoid
 import Data.Ord
 import Data.Semigroup
+import System.Environment
 import System.Exit
+import System.IO
 import Text.Read
 import Text.Show
 
@@ -175,7 +185,7 @@ data OptProperties a = OptProperties
 data OptionFields a = OptionFields [OptName]
 data FlagFields a = FlagFields [OptName]
 data ArgumentFields a = ArgumentFields
-data CommandFields a = CommandFields [(String, ParserInfo a)] (Maybe String)
+data CommandFields a = CommandFields [(String, ParserInfo a)]
 
 class HasName f where
     addName :: OptName -> f a -> f a
@@ -251,11 +261,7 @@ internal = propertyMod (\properties -> properties { propertyVisibility = Interna
 
 command :: String -> ParserInfo a -> Mod CommandFields a
 command name parser_info = fieldMod add_command where
-    add_command (CommandFields commands group) = CommandFields ((name, parser_info):commands) group
-
-commandGroup :: String -> Mod CommandFields a
-commandGroup name = fieldMod set_group where
-    set_group (CommandFields commands _) = CommandFields commands (Just name)
+    add_command (CommandFields commands) = CommandFields ((name, parser_info):commands)
 
 data HelpEntry
     = HelpOption [OptName] Bool String String (Maybe String) Visibility
@@ -276,21 +282,23 @@ data ParseReply a
 data ArgPolicy = Intersperse | NoIntersperse | ForwardOptions
     deriving (Eq, Show)
 
+data Preflight = Preflight [OptName] ParseError
+
 -- Each parser atom scans the remaining command line, allowing applicative fields to be reordered.
-data Parser a = Parser [HelpEntry] (ArgPolicy -> ParseState -> ParseReply a)
+data Parser a = Parser [HelpEntry] [Preflight] (ArgPolicy -> ParseState -> ParseReply a)
 
 instance Functor Parser where
     -- Transform a successful result without changing consumed arguments or help entries.
-    fmap f (Parser entries parser) = Parser entries (\policy state -> case parser policy state of
+    fmap f (Parser entries preflights parser) = Parser entries preflights (\policy state -> case parser policy state of
         Parsed x state' -> Parsed (f x) state'
         NoMatch err -> NoMatch err
         ParseFailed err -> ParseFailed err)
 
 instance Applicative Parser where
-    pure x = Parser [] (\_ state -> Parsed x state)
+    pure x = Parser [] [] (\_ state -> Parsed x state)
     -- Run applicative components over one shared remainder while collecting both descriptions.
-    Parser entries_f parse_f <*> Parser entries_x parse_x =
-        Parser (entries_f ++ entries_x) (\policy state -> case parse_f policy state of
+    Parser entries_f preflights_f parse_f <*> Parser entries_x preflights_x parse_x =
+        Parser (entries_f ++ entries_x) (preflights_f ++ preflights_x) (\policy state -> case parse_f policy state of
             Parsed f state' -> case parse_x policy state' of
                 Parsed x state'' -> Parsed (f x) state''
                 NoMatch err -> NoMatch err
@@ -299,10 +307,10 @@ instance Applicative Parser where
             ParseFailed err -> ParseFailed err)
 
 instance Alternative Parser where
-    empty = Parser [] (\_ _ -> NoMatch UnknownError)
+    empty = Parser [] [] (\_ _ -> NoMatch UnknownError)
     -- Backtrack only when the first parser did not match; validation failures remain committed.
-    Parser entries1 parse1 <|> Parser entries2 parse2 =
-        Parser (entries1 ++ entries2) (\policy state -> case parse1 policy state of
+    Parser entries1 preflights1 parse1 <|> Parser entries2 preflights2 parse2 =
+        Parser (entries1 ++ entries2) (preflights1 ++ preflights2) (\policy state -> case parse1 policy state of
             NoMatch _ -> parse2 policy state
             result -> result)
     many parser = repeatParser False parser
@@ -310,7 +318,7 @@ instance Alternative Parser where
 
 -- Repeat a parser until it no longer matches, rejecting a successful parser that consumes nothing.
 repeatParser :: Bool -> Parser a -> Parser [a]
-repeatParser require_one (Parser entries parser) = Parser entries repeat_values where
+repeatParser require_one (Parser entries preflights parser) = Parser entries preflights repeat_values where
     repeat_values policy initial = loop [] initial where
         loop values state = case parser policy state of
             Parsed value state' -> if state' == state
@@ -343,7 +351,7 @@ option (ReadM reader) modifiers = withDefault properties parser where
     (OptionFields names, properties) = applyMod modifiers (OptionFields []) (baseProperties "ARG")
     entry = HelpOption names True (propertyMetavar properties) (propertyHelp properties)
         (defaultText properties) (propertyVisibility properties)
-    parser = Parser [entry] (\_ state -> case takeOption names state of
+    parser = Parser [entry] [] (\_ state -> case takeOption names state of
         OptionAbsent -> NoMatch (MissingError (describeOption names (propertyMetavar properties)))
         OptionMissingArgument name -> ParseFailed (ExpectsArgError name)
         OptionFound text state' -> case reader text of
@@ -359,7 +367,7 @@ argument (ReadM reader) modifiers = withDefault properties parser where
     (_, properties) = applyMod modifiers ArgumentFields (baseProperties "ARG")
     entry = HelpArgument (propertyMetavar properties) (propertyHelp properties)
         (defaultText properties) (propertyVisibility properties)
-    parser = Parser [entry] (\policy state -> case takeArgument policy state of
+    parser = Parser [entry] [] (\policy state -> case takeArgument policy state of
         Nothing -> NoMatch (MissingError (propertyMetavar properties))
         Just (text, state') -> case reader text of
             Left err -> ParseFailed err
@@ -370,7 +378,7 @@ strArgument = argument str
 
 flag' :: a -> Mod FlagFields a -> Parser a
 -- Build a flag that succeeds only when one of its names is present.
-flag' active modifiers = Parser [entry] parse_flag where
+flag' active modifiers = Parser [entry] [] parse_flag where
     (FlagFields names, properties) = applyMod modifiers (FlagFields []) (baseProperties "")
     entry = HelpOption names False "" (propertyHelp properties) Nothing (propertyVisibility properties)
     parse_flag _ state = case takeFlag names state of
@@ -385,9 +393,9 @@ switch = flag False True
 
 subparser :: Mod CommandFields a -> Parser a
 -- Select a named command and run its independent ParserInfo over the remaining arguments.
-subparser modifiers = Parser entries parse_command where
-    (CommandFields commands _, properties) =
-        applyMod modifiers (CommandFields [] Nothing) (baseProperties "COMMAND")
+subparser modifiers = Parser entries [] parse_command where
+    (CommandFields commands, properties) =
+        applyMod modifiers (CommandFields []) (baseProperties "COMMAND")
     entries = [HelpCommand name (infoProgDesc parser_info) (propertyVisibility properties)
               | (name, parser_info) <- reverse commands]
     -- A command owns the remaining arguments, while returning any unconsumed arguments to its parent.
@@ -396,6 +404,26 @@ subparser modifiers = Parser entries parse_command where
         Just (name, state') -> case lookup name commands of
             Nothing -> ParseFailed (UnexpectedError name)
             Just parser_info -> runParserPrepared parser_info state'
+
+-- Build a non-valued option that returns identity when absent and aborts with the requested message.
+abortOption :: ParseError -> Mod OptionFields (a -> a) -> Parser (a -> a)
+abortOption err modifiers = abort_parser <|> pure id where
+    (OptionFields names, properties) = applyMod modifiers (OptionFields []) (baseProperties "")
+    entry = HelpOption names False "" (propertyHelp properties) Nothing (propertyVisibility properties)
+    abort_parser = Parser [entry] [Preflight names err] (\_ state -> case takeFlag names state of
+        Nothing -> NoMatch (MissingError (describeOption names ""))
+        Just _ -> ParseFailed err)
+
+infoOption :: String -> Mod OptionFields (a -> a) -> Parser (a -> a)
+infoOption = abortOption . InfoMsg
+
+helper :: Parser (a -> a)
+helper = abortOption (ShowHelpText Nothing)
+    (long "help" <> short 'h' <> help "Show this help text")
+
+simpleVersioner :: String -> Parser (a -> a)
+simpleVersioner version = infoOption version
+    (long "version" <> help "Show version information" <> hidden)
 
 data OptionTake
     = OptionAbsent
@@ -572,6 +600,7 @@ entryTakesArgument name (HelpOption names takes_argument _ _ _ _) = takes_argume
 entryTakesArgument _ _ = False
 
 optionTokenName :: String -> Maybe OptName
+-- Decode only the normalized one-character short form or the name portion of a long option.
 optionTokenName ('-':name:[]) = Just (OptShort name)
 optionTokenName text = case stripPrefix "--" text of
     Nothing -> Nothing
@@ -579,6 +608,7 @@ optionTokenName text = case stripPrefix "--" text of
         (name, _) -> Just (OptLong name)
 
 hasAttachedLongValue :: String -> Bool
+-- Keep `--name=value` from consuming a second token under no-intersperse preprocessing.
 hasAttachedLongValue text = case stripPrefix "--" text of
     Nothing -> False
     Just body -> case break ((==) '=') body of
@@ -645,9 +675,7 @@ forwardOptions :: InfoMod a
 forwardOptions = InfoMod (\parser_info -> parser_info { infoPolicy = ForwardOptions })
 
 data ParserPrefs = ParserPrefs
-    { prefMultiSuffix :: String
-    , prefDisambiguate :: Bool
-    , prefShowHelpOnError :: Bool
+    { prefShowHelpOnError :: Bool
     , prefShowHelpOnEmpty :: Bool
     , prefColumns :: Int
     }
@@ -662,16 +690,10 @@ instance Monoid PrefsMod where
     mempty = PrefsMod id
 
 prefs :: PrefsMod -> ParserPrefs
-prefs (PrefsMod modify) = modify (ParserPrefs "" False False False 80)
+prefs (PrefsMod modify) = modify (ParserPrefs False False 80)
 
 defaultPrefs :: ParserPrefs
 defaultPrefs = prefs idm
-
-multiSuffix :: String -> PrefsMod
-multiSuffix suffix = PrefsMod (\parser_prefs -> parser_prefs { prefMultiSuffix = suffix })
-
-disambiguate :: PrefsMod
-disambiguate = PrefsMod (\parser_prefs -> parser_prefs { prefDisambiguate = True })
 
 showHelpOnError :: PrefsMod
 showHelpOnError = PrefsMod (\parser_prefs -> parser_prefs { prefShowHelpOnError = True })
@@ -698,6 +720,28 @@ instance Functor ParserResult where
     fmap f (Success x) = Success (f x)
     fmap _ (Failure failure) = Failure failure
 
+instance Functor ParserFailure where
+    fmap f (ParserFailure render) = ParserFailure (\program_name -> case render program_name of
+        (parser_help, exit_code, width) -> (f parser_help, exit_code, width))
+
+instance Applicative ParserResult where
+    pure = Success
+    Success f <*> result = fmap f result
+    Failure failure <*> _ = Failure failure
+
+instance Monad ParserResult where
+    Success x >>= k = k x
+    Failure failure >>= _ = Failure failure
+
+instance Show h => Show (ParserFailure h) where
+    show (ParserFailure render) = case render "<program>" of
+        (parser_help, exit_code, width) ->
+            "ParserFailure " ++ show parser_help ++ " " ++ show exit_code ++ " " ++ show width
+
+instance Show a => Show (ParserResult a) where
+    show (Success x) = "Success " ++ show x
+    show (Failure failure) = "Failure (" ++ show failure ++ ")"
+
 getParseResult :: ParserResult a -> Maybe a
 getParseResult (Success x) = Just x
 getParseResult _ = Nothing
@@ -709,25 +753,195 @@ execParserPure parser_prefs parser_info arguments =
         Parsed x state -> case remainingArguments state of
             [] -> Success x
             unexpected:_ -> makeFailure parser_prefs parser_info (UnexpectedError unexpected)
-        NoMatch err -> makeFailure parser_prefs parser_info err
+        NoMatch err -> makeFailure parser_prefs parser_info
+            (if null arguments && prefShowHelpOnEmpty parser_prefs then ShowHelpText Nothing else err)
         ParseFailed err -> makeFailure parser_prefs parser_info err
 
 runParserState :: ParserInfo a -> ParseState -> ParseReply a
+-- Run informational preflights before ordinary fields, then apply the parser's argument policy.
 runParserState parser_info state =
-    let Parser _ parser = infoParser parser_info
-    in parser (infoPolicy parser_info) state
+    let Parser _ preflights parser = infoParser parser_info
+    in case runPreflights preflights state of
+        Just err -> ParseFailed err
+        Nothing -> parser (infoPolicy parser_info) state
+
+-- Give help and informational options priority over missing ordinary fields.
+runPreflights :: [Preflight] -> ParseState -> Maybe ParseError
+runPreflights [] _ = Nothing
+runPreflights (Preflight names err:rest) state = case takeFlag names state of
+    Just _ -> Just err
+    Nothing -> runPreflights rest state
 
 runParserArguments :: ParserInfo a -> [String] -> ParseReply a
 runParserArguments parser_info arguments =
-    let Parser entries _ = infoParser parser_info
+    let Parser entries _ _ = infoParser parser_info
     in runParserState parser_info (prepareArguments entries (infoPolicy parser_info) arguments)
 
 -- Apply a subparser's option vocabulary and policy to the tokens its parent leaves behind.
 runParserPrepared :: ParserInfo a -> ParseState -> ParseReply a
 runParserPrepared parser_info state =
-    let Parser entries _ = infoParser parser_info
+    let Parser entries _ _ = infoParser parser_info
     in runParserState parser_info (prepareExisting entries (infoPolicy parser_info) state)
 
 makeFailure :: ParserPrefs -> ParserInfo a -> ParseError -> ParserResult b
-makeFailure parser_prefs parser_info err = Failure (ParserFailure render) where
-    render _ = (ParserHelp (show err), ExitFailure (infoFailureCode parser_info), prefColumns parser_prefs)
+makeFailure parser_prefs parser_info err = Failure (parserFailure parser_prefs parser_info err)
+
+-- Construct a delayed failure because the executable name is available only when the result is handled.
+parserFailure :: ParserPrefs -> ParserInfo a -> ParseError -> ParserFailure ParserHelp
+parserFailure parser_prefs parser_info err = ParserFailure (\program_name ->
+    ( ParserHelp (renderParserMessage parser_prefs parser_info program_name err)
+    , errorExitCode parser_info err
+    , prefColumns parser_prefs
+    ))
+
+renderFailure :: ParserFailure ParserHelp -> String -> (String, ExitCode)
+renderFailure (ParserFailure render) program_name = case render program_name of
+    (ParserHelp message, exit_code, _) -> (message, exit_code)
+
+-- Transform generated help without changing the exit status or configured width.
+overFailure :: (ParserHelp -> ParserHelp) -> ParserResult a -> ParserResult a
+overFailure transform (Failure (ParserFailure render)) = Failure (ParserFailure (\program_name ->
+    case render program_name of
+        (parser_help, exit_code, width) -> (transform parser_help, exit_code, width)))
+overFailure _ result = result
+
+execParser :: ParserInfo a -> IO a
+execParser = customExecParser defaultPrefs
+
+-- Parse the process arguments and delegate all terminal output and controlled exit behavior.
+customExecParser :: ParserPrefs -> ParserInfo a -> IO a
+customExecParser parser_prefs parser_info = do
+    arguments <- getArgs
+    handleParseResult (execParserPure parser_prefs parser_info arguments)
+
+-- Print informational exits to stdout, errors to stderr, and let the top-level runner perform cleanup.
+handleParseResult :: ParserResult a -> IO a
+handleParseResult (Success x) = return x
+handleParseResult (Failure failure) = do
+    program_name <- getProgName
+    let (message, exit_code) = renderFailure failure program_name
+    case exit_code of
+        ExitSuccess -> putStrLn message
+        ExitFailure _ -> hPutStrLn stderr message
+    exitWith exit_code
+
+errorExitCode :: ParserInfo a -> ParseError -> ExitCode
+errorExitCode _ (ShowHelpText _) = ExitSuccess
+errorExitCode _ (InfoMsg _) = ExitSuccess
+errorExitCode parser_info _ = ExitFailure (infoFailureCode parser_info)
+
+-- Select an informational message, full help, or a concise error with optional help.
+renderParserMessage :: ParserPrefs -> ParserInfo a -> String -> ParseError -> String
+renderParserMessage parser_prefs parser_info program_name err = case err of
+    InfoMsg message -> message
+    ShowHelpText _ -> renderHelp parser_prefs parser_info program_name (infoFullDesc parser_info)
+    _ -> renderError err ++ if prefShowHelpOnError parser_prefs
+        then "\n\n" ++ renderHelp parser_prefs parser_info program_name (infoFullDesc parser_info)
+        else "\n\n" ++ renderUsage parser_info program_name
+
+renderError :: ParseError -> String
+-- Translate the local structured errors into stable, user-facing one-line messages.
+renderError (ErrorMsg message) = "Error: " ++ message
+renderError (MissingError item) = "Missing: " ++ item
+renderError (ExpectsArgError item) = "Option requires an argument: " ++ item
+renderError (UnexpectedError item) = "Invalid option or argument: " ++ item
+renderError UnknownError = "Invalid command line"
+renderError (InfoMsg message) = message
+renderError (ShowHelpText _) = ""
+
+-- Render plain help using only strings, with the configured width controlling description wrapping.
+renderHelp :: ParserPrefs -> ParserInfo a -> String -> Bool -> String
+renderHelp parser_prefs parser_info program_name show_full = intercalate "\n\n" (filter (not . null)
+    [ infoHeader parser_info
+    , renderUsage parser_info program_name
+    , infoProgDesc parser_info
+    , if show_full then renderEntryGroups (prefColumns parser_prefs) entries else ""
+    , infoFooter parser_info
+    ]) where
+        Parser entries _ _ = infoParser parser_info
+
+renderUsage :: ParserInfo a -> String -> String
+-- Form the compact synopsis shown in both brief and full help.
+renderUsage parser_info program_name = "Usage: " ++ program_name ++ usage_suffix where
+    Parser entries _ _ = infoParser parser_info
+    pieces = filter (not . null) (map renderUsageEntry entries)
+    usage_suffix = if null pieces then "" else " " ++ unwords pieces
+
+renderUsageEntry :: HelpEntry -> String
+-- Render a parser atom for the synopsis, omitting internal entries.
+renderUsageEntry (HelpOption _ _ _ _ _ Internal) = ""
+renderUsageEntry (HelpOption names takes_argument metavar_name _ _ _) =
+    "[" ++ describeOption names (if takes_argument then metavar_name else "") ++ "]"
+renderUsageEntry (HelpArgument metavar_name _ _ Internal) = ""
+renderUsageEntry (HelpArgument metavar_name _ default_value _) = case default_value of
+    Nothing -> metavar_name
+    Just _ -> "[" ++ metavar_name ++ "]"
+renderUsageEntry (HelpCommand name _ Internal) = ""
+renderUsageEntry (HelpCommand name _ _) = name
+
+-- Separate ordinary options and commands while retaining the declaration order within each group.
+renderEntryGroups :: Int -> [HelpEntry] -> String
+renderEntryGroups width entries = intercalate "\n\n" (filter (not . null)
+    [ renderGroup "Available options:" width option_entries
+    , renderGroup "Available commands:" width command_entries
+    ]) where
+        option_entries = [entry | entry <- entries, not (isCommandEntry entry)]
+        command_entries = [entry | entry <- entries, isCommandEntry entry]
+
+isCommandEntry :: HelpEntry -> Bool
+isCommandEntry (HelpCommand _ _ _) = True
+isCommandEntry _ = False
+
+renderGroup :: String -> Int -> [HelpEntry] -> String
+renderGroup title width entries = case concatMap (renderEntry width) entries of
+    [] -> ""
+    rows -> title ++ "\n" ++ unlines rows
+
+-- Align descriptions at a fixed column and wrap continuation lines within the requested width.
+renderEntry :: Int -> HelpEntry -> [String]
+renderEntry width entry = if not (entryVisible entry) then [] else
+    case wrapWords description_width (entryDescription entry) of
+        [] -> ["  " ++ entryLabel entry]
+        first_line:rest -> (padRight label_width ("  " ++ entryLabel entry) ++ first_line)
+            : map ((++) (replicate label_width ' ')) rest
+  where
+    label_width = min 28 (max 12 (width `div` 3))
+    description_width = max 12 (width - label_width)
+
+entryVisible :: HelpEntry -> Bool
+-- Internal entries never appear; hidden entries appear only because this renderer is called for full help.
+entryVisible (HelpOption _ _ _ _ _ Internal) = False
+entryVisible (HelpArgument _ _ _ Internal) = False
+entryVisible (HelpCommand _ _ Internal) = False
+entryVisible _ = True
+
+entryLabel :: HelpEntry -> String
+-- Render the left column shared by option, argument, and command descriptions.
+entryLabel (HelpOption names takes_argument metavar_name _ _ _) =
+    describeOption names (if takes_argument then metavar_name else "")
+entryLabel (HelpArgument metavar_name _ _ _) = metavar_name
+entryLabel (HelpCommand name _ _) = name
+
+entryDescription :: HelpEntry -> String
+entryDescription (HelpOption _ _ _ description default_value _) = add_default description default_value
+entryDescription (HelpArgument _ description default_value _) = add_default description default_value
+entryDescription (HelpCommand _ description _) = description
+
+add_default :: String -> Maybe String -> String
+add_default description Nothing = description
+add_default description (Just default_value) = description ++ prefix ++ "default: " ++ default_value ++ ")"
+  where
+    prefix = if null description then "(" else " ("
+
+-- Greedily wrap words without splitting individual words.
+wrapWords :: Int -> String -> [String]
+wrapWords width text = finish (foldl add_word ([], "") (words text)) where
+    add_word (completed, "") word = (completed, word)
+    add_word (completed, current) word
+        | length current + 1 + length word <= width = (completed, current ++ " " ++ word)
+        | otherwise = (completed ++ [current], word)
+    finish (completed, "") = completed
+    finish (completed, current) = completed ++ [current]
+
+padRight :: Int -> String -> String
+padRight width text = text ++ replicate (max 1 (width - length text)) ' '

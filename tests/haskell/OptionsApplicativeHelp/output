@@ -1,0 +1,10 @@
+Example tool
+
+Usage: bali-phy [--count N] FILE [--help/-h]
+
+Process one file
+
+Available options:
+  --count N               Number of passes (default: 1)
+  FILE                    Input file
+  --help/-h               Show this help text
