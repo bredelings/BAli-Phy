@@ -482,6 +482,9 @@ public:
 
     std::vector<std::string> args;
 
+    // Basename used by the Haskell System.Environment.getProgName interface.
+    std::string prog_name;
+
     // FIXME: maybe this should really take a FastString = (String, Int)
     /// Get the memory location (reg) for a given identifier (string)
     int reg_for_id(const Runtime::GlobalVar&);

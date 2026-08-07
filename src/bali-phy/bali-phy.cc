@@ -66,6 +66,7 @@ namespace mpi = boost::mpi;
 #include "computation/module.H"
 #include "computation/optimization/inliner.H" // for simple_size( )
 #include "computation/program.H"
+#include "computation/machine/requested_exit.H"
 #include "computation/machine/graph_register.H"
 #include "models/A-T-prog.H" // for gen_model_program( )
 
@@ -888,11 +889,17 @@ int main(int argc,char* argv[])
         block_signals();
 
         auto R = initialize_machine_from_program( std::move(P) );
+        // Retain argv[0] only at the runner boundary; Haskell code sees its platform basename.
+        R->prog_name = fs::path(argv[0]).filename().string();
 
         start_work_time = chrono::system_clock::now();
         start_work_cpu_time = total_cpu_time();
 
         R->run_main();
+    }
+    catch (const requested_exit& request)
+    {
+        retval = request.status;
     }
     catch (std::bad_alloc&) 
     {
