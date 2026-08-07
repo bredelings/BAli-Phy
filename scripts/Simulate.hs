@@ -11,21 +11,23 @@ import Tree.Newick
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.JSON as J
+import Options.Applicative
 import Probability.Logger
 import qualified Data.Text.IO as T
-import System.Environment
 import System.IO
 
 -- Read the tree from a file
-getTree args = do
-  let (filename:_) = args
-
+getTree filename = do
   rtree <- dropInternalLabels <$> readBranchLengthTree filename
 
   return rtree
 
-getStartLength args = read startLength' :: Int
-    where (_:startLength':_) = args
+-- Require both simulation inputs and provide controlled help and parse errors.
+options = info
+  ((,) <$> strArgument (metavar "TREE" <> help "Newick tree file")
+       <*> argument auto (metavar "START-LENGTH" <> help "Starting sequence length")
+       <**> helper)
+  (fullDesc <> progDesc "Simulate an alignment along a fixed tree")
 
 -- Sample substitution model parameters and define the substitution model
 getSmodel = do
@@ -63,11 +65,9 @@ model rootedTree startLength = do
 
 main = do
   -- 1. Read the tree and get the starting sequence length
-  args <- getArgs
+  (treeFile, startLength) <- execParser options
 
-  rootedTree <- getTree args
-
-  let startLength = getStartLength args
+  rootedTree <- getTree treeFile
 
   alignedSequences <- runRandomLazy $ model rootedTree startLength
 

@@ -2,7 +2,7 @@ module LiStephens2003 where
 
 import           Probability         -- for the model framework
 
-import           System.Environment  -- for getArgs
+import           Options.Applicative
 import           Data.Frame          -- for readTable & friends
 import           Bio.Alignment       -- for load_alignment
 import           Bio.Alphabet        -- for dna
@@ -18,9 +18,16 @@ model locs sequence_data = do
 
   return ["rho" %=% rho ]
 
+-- Require exactly the sequence and location files used by the model.
+options = info
+  ((,) <$> strArgument (metavar "SEQUENCES" <> help "Aligned DNA sequences")
+       <*> strArgument (metavar "LOCATIONS" <> help "Table of sequence locations")
+       <**> helper)
+  (fullDesc <> progDesc "Run the Li-Stephens recombination model")
+
 main logDir = do
 
-  (seq_filename:locs_filename:_) <- getArgs
+  (seq_filename, locs_filename) <- execParser options
 
   sequence_data <- load_alignment dna seq_filename
 
