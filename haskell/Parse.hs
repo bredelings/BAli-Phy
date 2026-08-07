@@ -22,7 +22,6 @@ module Parse
     , sepBy1
     , sepBy
     , option
-    , optional
     , optionMaybe
     , alphaNum
     , parse_double
@@ -274,9 +273,7 @@ sepBy p sep = sepBy1 p sep <|> return []
 
 option x p = p <|> return x
 
-optional p = (p >> return ()) <|> return ()
-
-optionMaybe p = (Just <$> p) <|> (return Nothing)
+optionMaybe = optional
 
 alphaNum c = satisfy isAlphaNum
 

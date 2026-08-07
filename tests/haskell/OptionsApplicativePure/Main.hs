@@ -37,11 +37,20 @@ commandParser = subparser (command "add" (info (strArgument (metavar "FILE")) id
 missingParser :: Parser Int
 missingParser = option auto (long "required")
 
+positionalFirstParser :: Parser (String, Int, Int)
+positionalFirstParser = (,,)
+    <$> strArgument (metavar "FILE")
+    <*> option auto (long "males" <> metavar "M")
+    <*> option auto (long "total" <> metavar "N")
+
+literalOptionParser :: Parser String
+literalOptionParser = strOption (long "value")
+
 run :: Parser a -> [String] -> Maybe a
 run parser = getParseResult . execParserPure defaultPrefs (info parser idm)
 
--- Protect the common pure parsing semantics where the local engine deliberately replaces the
--- upstream engine. This becomes obsolete when the upstream package's own tests can run unchanged.
+-- Protect permutation parsing and structural consumption in the local engine, which broader
+-- program tests cannot isolate. This becomes obsolete when upstream's parser tests can run unchanged.
 main = putStrLn $ show
     ( ( run permutationParser ["left", "-abc7", "right"]
       , run repeatedParser ["-n1", "--number=2", "-n", "3"]
@@ -52,5 +61,9 @@ main = putStrLn $ show
       )
     , ( run (strArgument (metavar "ARG")) ["--", "--literal"]
       , run commandParser ["add", "file"]
+      )
+    , ( run positionalFirstParser ["input", "--males", "20", "--total", "2000"]
+      , run positionalFirstParser ["--males", "20", "--total", "2000", "input"]
+      , run literalOptionParser ["--value", "--"]
       )
     )

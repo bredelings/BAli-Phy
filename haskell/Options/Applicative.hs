@@ -1,4 +1,6 @@
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE RankNTypes #-}
 module Options.Applicative
     ( module Control.Applicative
     , Parser
@@ -174,15 +176,14 @@ data OptName = OptShort Char | OptLong String
 data Visibility = Visible | Hidden | Internal
     deriving (Eq, Ord, Show)
 
-data OptProperties a = OptProperties
+data OptProperties = OptProperties
     { propertyHelp :: String
     , propertyMetavar :: String
-    , propertyDefault :: Maybe a
-    , propertyShowDefault :: Maybe (a -> String)
+    , propertyShowDefault :: Maybe String
     , propertyVisibility :: Visibility
     }
 
-data OptionFields a = OptionFields [OptName]
+data OptionFields a = OptionFields [OptName] (String -> ParseError)
 data FlagFields a = FlagFields [OptName]
 data ArgumentFields a = ArgumentFields
 data CommandFields a = CommandFields [(String, ParserInfo a)]
@@ -191,7 +192,7 @@ class HasName f where
     addName :: OptName -> f a -> f a
 
 instance HasName OptionFields where
-    addName name (OptionFields names) = OptionFields (name:names)
+    addName name (OptionFields names no_arg_error) = OptionFields (name:names) no_arg_error
 
 instance HasName FlagFields where
     addName name (FlagFields names) = FlagFields (name:names)
@@ -217,20 +218,33 @@ instance HasMetavar ArgumentFields where
 instance HasMetavar CommandFields where
     hasMetavarDummy _ = ()
 
--- A modifier keeps type-specific fields separate from properties common to every parser atom.
-data Mod f a = Mod (f a -> f a) (OptProperties a -> OptProperties a)
+data DefaultProp a = DefaultProp (Maybe a) (Maybe (a -> String))
+
+instance Semigroup (DefaultProp a) where
+    DefaultProp value1 show1 <> DefaultProp value2 show2 =
+        DefaultProp (value1 <|> value2) (show1 <|> show2)
+
+instance Monoid (DefaultProp a) where
+    mempty = DefaultProp Nothing Nothing
+
+-- Keep typed defaults outside OptProperties so parser structure determines whether a field is required.
+data Mod f a = Mod (f a -> f a) (DefaultProp a) (OptProperties -> OptProperties)
 
 instance Semigroup (Mod f a) where
-    Mod fields1 props1 <> Mod fields2 props2 = Mod (fields2 . fields1) (props2 . props1)
+    Mod fields1 defaults1 props1 <> Mod fields2 defaults2 props2 =
+        Mod (fields2 . fields1) (defaults2 <> defaults1) (props2 . props1)
 
 instance Monoid (Mod f a) where
-    mempty = Mod id id
+    mempty = Mod id mempty id
 
 fieldMod :: (f a -> f a) -> Mod f a
-fieldMod f = Mod f id
+fieldMod f = Mod f mempty id
 
-propertyMod :: (OptProperties a -> OptProperties a) -> Mod f a
-propertyMod = Mod id
+defaultMod :: DefaultProp a -> Mod f a
+defaultMod defaults = Mod id defaults id
+
+propertyMod :: (OptProperties -> OptProperties) -> Mod f a
+propertyMod f = Mod id mempty f
 
 short :: HasName f => Char -> Mod f a
 short = fieldMod . addName . OptShort
@@ -242,10 +256,10 @@ help :: String -> Mod f a
 help text = propertyMod (\properties -> properties { propertyHelp = text })
 
 value :: HasValue f => a -> Mod f a
-value x = propertyMod (\properties -> properties { propertyDefault = Just x })
+value x = defaultMod (DefaultProp (Just x) Nothing)
 
 showDefaultWith :: (a -> String) -> Mod f a
-showDefaultWith show_value = propertyMod (\properties -> properties { propertyShowDefault = Just show_value })
+showDefaultWith show_value = defaultMod (DefaultProp Nothing (Just show_value))
 
 showDefault :: Show a => Mod f a
 showDefault = showDefaultWith show
@@ -263,127 +277,117 @@ command :: String -> ParserInfo a -> Mod CommandFields a
 command name parser_info = fieldMod add_command where
     add_command (CommandFields commands) = CommandFields ((name, parser_info):commands)
 
-data HelpEntry
-    = HelpOption [OptName] Bool String String (Maybe String) Visibility
-    | HelpArgument String String (Maybe String) Visibility
-    | HelpCommand String String Visibility
+data OptReader a
+    = OptReader [OptName] (ReadM a) (String -> ParseError)
+    | FlagReader [OptName] a
+    | ArgReader (ReadM a)
+    | CmdReader [(String, ParserInfo a)]
 
-data ArgToken = ArgToken String Bool
-    deriving (Eq, Show)
+data Option a = Option (OptReader a) OptProperties
 
-data ParseState = ParseState [ArgToken]
-    deriving (Eq, Show)
+-- Retain the parser's applicative structure so each command-line word can search every parser leaf.
+data Parser a
+    = NilP (Maybe a)
+    | OptP (Option a)
+    | forall x. MultP (Parser (x -> a)) (Parser x)
+    | AltP (Parser a) (Parser a)
+    | forall x. BindP (Parser x) (x -> Parser a)
 
-data ParseReply a
-    = Parsed a ParseState
-    | NoMatch ParseError
-    | ParseFailed ParseError
+instance Functor Option where
+    fmap f (Option reader properties) = Option (fmap f reader) properties
 
-data ArgPolicy = Intersperse | NoIntersperse | ForwardOptions
-    deriving (Eq, Show)
-
-data Preflight = Preflight [OptName] ParseError
-
--- Each parser atom scans the remaining command line, allowing applicative fields to be reordered.
-data Parser a = Parser [HelpEntry] [Preflight] (ArgPolicy -> ParseState -> ParseReply a)
+instance Functor OptReader where
+    fmap f (OptReader names reader no_arg_error) = OptReader names (fmap f reader) no_arg_error
+    fmap f (FlagReader names x) = FlagReader names (f x)
+    fmap f (ArgReader reader) = ArgReader (fmap f reader)
+    fmap f (CmdReader commands) = CmdReader [(name, fmap f parser_info) | (name, parser_info) <- commands]
 
 instance Functor Parser where
-    -- Transform a successful result without changing consumed arguments or help entries.
-    fmap f (Parser entries preflights parser) = Parser entries preflights (\policy state -> case parser policy state of
-        Parsed x state' -> Parsed (f x) state'
-        NoMatch err -> NoMatch err
-        ParseFailed err -> ParseFailed err)
+    fmap f (NilP value') = NilP (fmap f value')
+    fmap f (OptP option') = OptP (fmap f option')
+    fmap f (MultP parser_f parser_x) = MultP (fmap (f .) parser_f) parser_x
+    fmap f (AltP parser1 parser2) = AltP (fmap f parser1) (fmap f parser2)
+    fmap f (BindP parser k) = BindP parser (fmap f . k)
 
 instance Applicative Parser where
-    pure x = Parser [] [] (\_ state -> Parsed x state)
-    -- Run applicative components over one shared remainder while collecting both descriptions.
-    Parser entries_f preflights_f parse_f <*> Parser entries_x preflights_x parse_x =
-        Parser (entries_f ++ entries_x) (preflights_f ++ preflights_x) (\policy state -> case parse_f policy state of
-            Parsed f state' -> case parse_x policy state' of
-                Parsed x state'' -> Parsed (f x) state''
-                NoMatch err -> NoMatch err
-                ParseFailed err -> ParseFailed err
-            NoMatch err -> NoMatch err
-            ParseFailed err -> ParseFailed err)
+    pure = NilP . Just
+    (<*>) = MultP
+
+newtype ParserM r = ParserM { runParserM :: forall x. (r -> Parser x) -> Parser x }
+
+instance Functor ParserM where
+    fmap f parser_m = parser_m >>= pure . f
+
+instance Applicative ParserM where
+    pure x = ParserM (\k -> k x)
+    parser_f <*> parser_x = parser_f >>= (\f -> fmap f parser_x)
+
+instance Monad ParserM where
+    ParserM parser >>= f = ParserM (\k -> parser (\x -> runParserM (f x) k))
+
+fromM :: ParserM a -> Parser a
+fromM (ParserM parser) = parser pure
+
+oneM :: Parser a -> ParserM a
+oneM parser = ParserM (BindP parser)
+
+-- Express repetition through BindP, matching upstream's parser representation and consumption model.
+manyM :: Parser a -> ParserM [a]
+manyM parser = do
+    next <- oneM (optional parser)
+    case next of
+        Nothing -> pure []
+        Just x -> fmap ((:) x) (manyM parser)
+
+someM :: Parser a -> ParserM [a]
+someM parser = liftA2 (:) (oneM parser) (manyM parser)
 
 instance Alternative Parser where
-    empty = Parser [] [] (\_ _ -> NoMatch UnknownError)
-    -- Backtrack only when the first parser did not match; validation failures remain committed.
-    Parser entries1 preflights1 parse1 <|> Parser entries2 preflights2 parse2 =
-        Parser (entries1 ++ entries2) (preflights1 ++ preflights2) (\policy state -> case parse1 policy state of
-            NoMatch _ -> parse2 policy state
-            result -> result)
-    many parser = repeatParser False parser
-    some parser = repeatParser True parser
+    empty = NilP Nothing
+    (<|>) = AltP
+    many = fromM . manyM
+    some = fromM . someM
 
--- Repeat a parser until it no longer matches, rejecting a successful parser that consumes nothing.
-repeatParser :: Bool -> Parser a -> Parser [a]
-repeatParser require_one (Parser entries preflights parser) = Parser entries preflights repeat_values where
-    repeat_values policy initial = loop [] initial where
-        loop values state = case parser policy state of
-            Parsed value state' -> if state' == state
-                then ParseFailed (ErrorMsg "repeated parser accepted input without consuming an argument")
-                else loop (value:values) state'
-            NoMatch err -> if require_one && null values then NoMatch err else Parsed (reverse values) state
-            ParseFailed err -> ParseFailed err
+baseProperties :: String -> OptProperties
+baseProperties metavar_name = OptProperties "" metavar_name Nothing Visible
 
-baseProperties :: String -> OptProperties a
-baseProperties metavar_name = OptProperties "" metavar_name Nothing Nothing Visible
+applyMod :: Mod f a -> f a -> OptProperties -> (f a, DefaultProp a, OptProperties)
+applyMod (Mod modify_fields defaults modify_properties) fields properties =
+    (modify_fields fields, defaults, modify_properties properties)
 
-applyMod :: Mod f a -> f a -> OptProperties a -> (f a, OptProperties a)
-applyMod (Mod modify_fields modify_properties) fields properties =
-    (modify_fields fields, modify_properties properties)
-
-defaultText :: OptProperties a -> Maybe String
-defaultText properties = case (propertyDefault properties, propertyShowDefault properties) of
-    (Just x, Just render) -> Just (render x)
-    _ -> Nothing
-
--- Add a default branch only after the consuming parser has had a chance to match.
-withDefault :: OptProperties a -> Parser a -> Parser a
-withDefault properties parser = case propertyDefault properties of
-    Nothing -> parser
-    Just x -> parser <|> pure x
+-- Store a default in an alternative pure branch and only store its rendered text in the option leaf.
+makeParser :: DefaultProp a -> OptProperties -> OptReader a -> Parser a
+makeParser (DefaultProp default_value show_default) properties reader = case default_value of
+    Nothing -> option_parser
+    Just x -> option_parser <|> pure x
+  where
+    option_parser = OptP (Option reader properties
+        { propertyShowDefault = case (default_value, show_default) of
+            (Just x, Just render) -> Just (render x)
+            _ -> Nothing
+        })
 
 option :: ReadM a -> Mod OptionFields a -> Parser a
--- Build a named option that validates its attached or following argument with ReadM.
-option (ReadM reader) modifiers = withDefault properties parser where
-    (OptionFields names, properties) = applyMod modifiers (OptionFields []) (baseProperties "ARG")
-    entry = HelpOption names True (propertyMetavar properties) (propertyHelp properties)
-        (defaultText properties) (propertyVisibility properties)
-    parser = Parser [entry] [] (\_ state -> case takeOption names state of
-        OptionAbsent -> NoMatch (MissingError (describeOption names (propertyMetavar properties)))
-        OptionMissingArgument name -> ParseFailed (ExpectsArgError name)
-        OptionFound text state' -> case reader text of
-            Left err -> ParseFailed err
-            Right x -> Parsed x state')
+-- Build a named option whose reader consumes an attached or immediately following raw word.
+option reader modifiers = makeParser defaults properties (OptReader names reader no_arg_error) where
+    (OptionFields names no_arg_error, defaults, properties) = applyMod modifiers
+        (OptionFields [] ExpectsArgError) (baseProperties "ARG")
 
 strOption :: Mod OptionFields String -> Parser String
 strOption = option str
 
 argument :: ReadM a -> Mod ArgumentFields a -> Parser a
--- Build a positional argument that skips ordinary options under the default interspersed policy.
-argument (ReadM reader) modifiers = withDefault properties parser where
-    (_, properties) = applyMod modifiers ArgumentFields (baseProperties "ARG")
-    entry = HelpArgument (propertyMetavar properties) (propertyHelp properties)
-        (defaultText properties) (propertyVisibility properties)
-    parser = Parser [entry] [] (\policy state -> case takeArgument policy state of
-        Nothing -> NoMatch (MissingError (propertyMetavar properties))
-        Just (text, state') -> case reader text of
-            Left err -> ParseFailed err
-            Right x -> Parsed x state')
+-- Build a positional leaf; the word-driven runner decides when it is reachable under the active policy.
+argument reader modifiers = makeParser defaults properties (ArgReader reader) where
+    (_, defaults, properties) = applyMod modifiers ArgumentFields (baseProperties "ARG")
 
 strArgument :: Mod ArgumentFields String -> Parser String
 strArgument = argument str
 
 flag' :: a -> Mod FlagFields a -> Parser a
--- Build a flag that succeeds only when one of its names is present.
-flag' active modifiers = Parser [entry] [] parse_flag where
-    (FlagFields names, properties) = applyMod modifiers (FlagFields []) (baseProperties "")
-    entry = HelpOption names False "" (propertyHelp properties) Nothing (propertyVisibility properties)
-    parse_flag _ state = case takeFlag names state of
-        Nothing -> NoMatch (MissingError (describeOption names ""))
-        Just state' -> Parsed active state'
+-- Build a flag leaf that succeeds only when one of its names matches the current option word.
+flag' active modifiers = makeParser defaults properties (FlagReader names active) where
+    (FlagFields names, defaults, properties) = applyMod modifiers (FlagFields []) (baseProperties "")
 
 flag :: a -> a -> Mod FlagFields a -> Parser a
 flag default_value active modifiers = flag' active modifiers <|> pure default_value
@@ -392,27 +396,16 @@ switch :: Mod FlagFields Bool -> Parser Bool
 switch = flag False True
 
 subparser :: Mod CommandFields a -> Parser a
--- Select a named command and run its independent ParserInfo over the remaining arguments.
-subparser modifiers = Parser entries [] parse_command where
-    (CommandFields commands, properties) =
+-- Build one command leaf; selecting a command runs its ParserInfo over the remaining raw arguments.
+subparser modifiers = makeParser defaults properties (CmdReader commands) where
+    (CommandFields commands, defaults, properties) =
         applyMod modifiers (CommandFields []) (baseProperties "COMMAND")
-    entries = [HelpCommand name (infoProgDesc parser_info) (propertyVisibility properties)
-              | (name, parser_info) <- reverse commands]
-    -- A command owns the remaining arguments, while returning any unconsumed arguments to its parent.
-    parse_command _ state = case takeArgument Intersperse state of
-        Nothing -> NoMatch (MissingError (propertyMetavar properties))
-        Just (name, state') -> case lookup name commands of
-            Nothing -> ParseFailed (UnexpectedError name)
-            Just parser_info -> runParserPrepared parser_info state'
 
--- Build a non-valued option that returns identity when absent and aborts with the requested message.
+-- Build an informational option as an ordinary defaulted option whose matched reader aborts parsing.
 abortOption :: ParseError -> Mod OptionFields (a -> a) -> Parser (a -> a)
-abortOption err modifiers = abort_parser <|> pure id where
-    (OptionFields names, properties) = applyMod modifiers (OptionFields []) (baseProperties "")
-    entry = HelpOption names False "" (propertyHelp properties) Nothing (propertyVisibility properties)
-    abort_parser = Parser [entry] [Preflight names err] (\_ state -> case takeFlag names state of
-        Nothing -> NoMatch (MissingError (describeOption names ""))
-        Just _ -> ParseFailed err)
+abortOption err modifiers = makeParser defaults properties (OptReader names (readerAbort err) (const err)) where
+    (OptionFields names _, defaults, properties) = applyMod
+        (value id <> metavar "" <> modifiers) (OptionFields [] ExpectsArgError) (baseProperties "ARG")
 
 infoOption :: String -> Mod OptionFields (a -> a) -> Parser (a -> a)
 infoOption = abortOption . InfoMsg
@@ -425,206 +418,8 @@ simpleVersioner :: String -> Parser (a -> a)
 simpleVersioner version = infoOption version
     (long "version" <> help "Show version information" <> hidden)
 
-data OptionTake
-    = OptionAbsent
-    | OptionMissingArgument String
-    | OptionFound String ParseState
-
--- Remove the first matching flag, including one member of a grouped short-option token.
-takeFlag :: [OptName] -> ParseState -> Maybe ParseState
-takeFlag names (ParseState tokens) = fmap ParseState (scan tokens) where
-    scan [] = Nothing
-    scan (token@(ArgToken text positional):rest)
-        | positional = fmap (token:) (scan rest)
-        | otherwise = case matchLongFlag names text of
-            True -> Just rest
-            False -> case removeShortFlag names text of
-                Just Nothing -> Just rest
-                Just (Just replacement) -> Just (ArgToken replacement False:rest)
-                Nothing -> fmap (token:) (scan rest)
-
-matchLongFlag :: [OptName] -> String -> Bool
-matchLongFlag names text = case stripPrefix "--" text of
-    Just name -> OptLong name `elem` names
-    Nothing -> False
-
--- Remove one matching character from a grouped short option and retain the other flags.
-removeShortFlag :: [OptName] -> String -> Maybe (Maybe String)
-removeShortFlag names ('-':c:characters)
-    | c /= '-' = remove [] (c:characters)
-    | otherwise = Nothing
-  where
-    remove _ [] = Nothing
-    remove prefix (x:xs)
-        | OptShort x `elem` names = case reverse prefix ++ xs of
-            [] -> Just Nothing
-            remaining -> Just (Just ('-':remaining))
-        | otherwise = remove (x:prefix) xs
-removeShortFlag _ _ = Nothing
-
--- Remove the first matching valued option and its attached or following argument.
-takeOption :: [OptName] -> ParseState -> OptionTake
-takeOption names (ParseState tokens) = scan [] tokens where
-    scan _ [] = OptionAbsent
-    scan prefix (token@(ArgToken text positional):rest)
-        | positional = scan (token:prefix) rest
-        | otherwise = case matchLongOption names text of
-            Just (Just value_text) -> OptionFound value_text (ParseState (reverse prefix ++ rest))
-            Just Nothing -> take_following text prefix rest
-            Nothing -> case matchShortOption names text of
-                Just (before, Just value_text) ->
-                    OptionFound value_text (ParseState (reverse prefix ++ keep_before before rest))
-                Just (before, Nothing) -> take_short_following text before prefix rest
-                Nothing -> scan (token:prefix) rest
-    take_following name prefix [] = OptionMissingArgument name
-    take_following _ prefix (ArgToken value_text _:rest) =
-        OptionFound value_text (ParseState (reverse prefix ++ rest))
-    take_short_following name before prefix [] = OptionMissingArgument name
-    take_short_following _ before prefix (ArgToken value_text _:rest) =
-        OptionFound value_text (ParseState (reverse prefix ++ keep_before before rest))
-    keep_before [] rest = rest
-    keep_before before rest = ArgToken ('-':before) False:rest
-
-matchLongOption :: [OptName] -> String -> Maybe (Maybe String)
--- Distinguish an attached long-option value from one that must come from the following token.
-matchLongOption names text = case stripPrefix "--" text of
-    Nothing -> Nothing
-    Just body -> case break ((==) '=') body of
-        (name, '=':value_text) -> if OptLong name `elem` names then Just (Just value_text) else Nothing
-        (name, []) -> if OptLong name `elem` names then Just Nothing else Nothing
-
--- A valued short option consumes the rest of its group as its attached argument.
-matchShortOption :: [OptName] -> String -> Maybe (String, Maybe String)
-matchShortOption names ('-':c:characters)
-    | c /= '-' = find_match [] (c:characters)
-    | otherwise = Nothing
-  where
-    find_match _ [] = Nothing
-    find_match prefix (x:xs)
-        | OptShort x `elem` names = Just (reverse prefix, if null xs then Nothing else Just xs)
-        | otherwise = find_match (x:prefix) xs
-matchShortOption _ _ = Nothing
-
--- Consume the first positional token, respecting the explicit end-of-options marker.
-takeArgument :: ArgPolicy -> ParseState -> Maybe (String, ParseState)
-takeArgument policy (ParseState tokens) = scan [] tokens where
-    scan _ [] = Nothing
-    scan prefix (token@(ArgToken text positional):rest)
-        | positional || not (looksLikeOption text) =
-            let remaining = if policy == NoIntersperse then markPositional rest else rest
-            in Just (text, ParseState (reverse prefix ++ remaining))
-        | otherwise = scan (token:prefix) rest
-
-looksLikeOption :: String -> Bool
-looksLikeOption ('-':_:_) = True
-looksLikeOption _ = False
-
-markPositional :: [ArgToken] -> [ArgToken]
-markPositional = map mark where
-    mark (ArgToken text _) = ArgToken text True
-
--- Normalize grouped short options before applicative branches run, so matching does not depend on
--- whether a flag parser runs before an option parser whose attached value contains that flag letter.
-prepareArguments :: [HelpEntry] -> ArgPolicy -> [String] -> ParseState
-prepareArguments entries policy arguments = ParseState (applyPolicy entries policy (tokenize False arguments)) where
-    tokenize _ [] = []
-    tokenize False ("--":rest) = tokenize True rest
-    tokenize positional (text:rest)
-        | positional = ArgToken text True : tokenize True rest
-        | otherwise = map (\value_text -> ArgToken value_text False) (expandShortGroup entries text)
-            ++ tokenize False rest
-
--- Re-normalize unconsumed parent tokens for a subparser while preserving `--` positional markers.
-prepareExisting :: [HelpEntry] -> ArgPolicy -> ParseState -> ParseState
-prepareExisting entries policy (ParseState tokens) =
-    ParseState (applyPolicy entries policy (concatMap expand tokens)) where
-    expand token@(ArgToken _ True) = [token]
-    expand (ArgToken text False) = map (\value_text -> ArgToken value_text False) (expandShortGroup entries text)
-
--- Split a short group into flags until a valued option consumes the remaining characters.
-expandShortGroup :: [HelpEntry] -> String -> [String]
-expandShortGroup entries text@('-':c:characters)
-    | c /= '-' = expand (c:characters)
-    | otherwise = [text]
-  where
-    expand [] = []
-    expand all_characters@(name:rest) = case shortOptionKind entries name of
-        Just False -> ['-', name] : expand rest
-        Just True -> ['-', name] : if null rest then [] else [rest]
-        Nothing -> ['-':all_characters]
-expandShortGroup _ text = [text]
-
--- Return a short option's unique argument-taking behavior; conflicting descriptions stay unsplit.
-shortOptionKind :: [HelpEntry] -> Char -> Maybe Bool
-shortOptionKind entries name = unique [takes_argument
-    | HelpOption names takes_argument _ _ _ _ <- entries, OptShort name `elem` names] where
-        unique [] = Nothing
-        unique (x:xs) = if all ((==) x) xs then Just x else Nothing
-
--- Mark policy-dependent positional tokens once, independently of applicative parser order.
-applyPolicy :: [HelpEntry] -> ArgPolicy -> [ArgToken] -> [ArgToken]
-applyPolicy _ Intersperse tokens = tokens
-applyPolicy entries ForwardOptions tokens = map mark_unknown tokens where
-    mark_unknown token@(ArgToken text positional)
-        | positional = token
-        | looksLikeOption text && not (isKnownOption entries text) = ArgToken text True
-        | otherwise = token
-applyPolicy entries NoIntersperse tokens = stop_at_argument tokens where
-    stop_at_argument [] = []
-    stop_at_argument all_tokens@(token@(ArgToken text positional):rest)
-        | positional = markPositional all_tokens
-        | not (looksLikeOption text) = markPositional all_tokens
-        | otherwise = token : if optionTakesFollowingArgument entries text
-            then case rest of
-                [] -> []
-                value_token:remaining -> value_token : stop_at_argument remaining
-            else stop_at_argument rest
-
-isKnownOption :: [HelpEntry] -> String -> Bool
-isKnownOption entries text = case optionTokenName text of
-    Nothing -> False
-    Just name -> any (entryHasName name) entries
-
-entryHasName :: OptName -> HelpEntry -> Bool
-entryHasName name (HelpOption names _ _ _ _ _) = name `elem` names
-entryHasName _ _ = False
-
--- Identify exact named options that take their value from the following token.
-optionTakesFollowingArgument :: [HelpEntry] -> String -> Bool
-optionTakesFollowingArgument entries text = case optionTokenName text of
-    Nothing -> False
-    Just name -> not (hasAttachedLongValue text) && any (entryTakesArgument name) entries
-
-entryTakesArgument :: OptName -> HelpEntry -> Bool
-entryTakesArgument name (HelpOption names takes_argument _ _ _ _) = takes_argument && name `elem` names
-entryTakesArgument _ _ = False
-
-optionTokenName :: String -> Maybe OptName
--- Decode only the normalized one-character short form or the name portion of a long option.
-optionTokenName ('-':name:[]) = Just (OptShort name)
-optionTokenName text = case stripPrefix "--" text of
-    Nothing -> Nothing
-    Just body -> case break ((==) '=') body of
-        (name, _) -> Just (OptLong name)
-
-hasAttachedLongValue :: String -> Bool
--- Keep `--name=value` from consuming a second token under no-intersperse preprocessing.
-hasAttachedLongValue text = case stripPrefix "--" text of
-    Nothing -> False
-    Just body -> case break ((==) '=') body of
-        (_, '=':_) -> True
-        _ -> False
-
-remainingArguments :: ParseState -> [String]
-remainingArguments (ParseState tokens) = [text | ArgToken text _ <- tokens]
-
-describeOption :: [OptName] -> String -> String
--- Render a compact name used in missing-option diagnostics and usage text.
-describeOption [] metavar_name = metavar_name
-describeOption names metavar_name = intercalate "/" (map show_name (reverse names)) ++ suffix where
-    suffix = if null metavar_name then "" else " " ++ metavar_name
-    show_name (OptShort name) = ['-', name]
-    show_name (OptLong name) = "--" ++ name
+data ArgPolicy = Intersperse | NoIntersperse | AllPositionals | ForwardOptions
+    deriving (Eq, Show)
 
 data ParserInfo a = ParserInfo
     { infoParser :: Parser a
@@ -707,6 +502,153 @@ columns width = PrefsMod (\parser_prefs -> parser_prefs { prefColumns = width })
 idm :: Monoid m => m
 idm = mempty
 
+data OptWord = OptWord OptName (Maybe String)
+
+data LeafReply a
+    = LeafNoMatch
+    | LeafFailed ParseError
+    | LeafMatched a [String]
+
+data SearchReply a
+    = SearchNoMatch
+    | SearchFailed ParseError
+    | SearchMatched (Parser a) [String]
+
+data ParseReply a
+    = Parsed a [String]
+    | ParseFailed ParseError
+
+parseWord :: String -> Maybe OptWord
+-- Split only the current option word; a following value remains raw until a matching option consumes it.
+parseWord ('-':'-':body) = case break ((==) '=') body of
+    (name, '=':value_text) -> Just (OptWord (OptLong name) (Just value_text))
+    (name, []) -> Just (OptWord (OptLong name) Nothing)
+parseWord ('-':name:characters) = Just (OptWord (OptShort name)
+    (if null characters then Nothing else Just characters))
+parseWord _ = Nothing
+
+-- Search the complete parser tree and rebuild the path to the first matching leaf.
+searchParser :: (forall x. Option x -> LeafReply x) -> Parser a -> SearchReply a
+searchParser _ (NilP _) = SearchNoMatch
+searchParser match (OptP option') = case match option' of
+    LeafNoMatch -> SearchNoMatch
+    LeafFailed err -> SearchFailed err
+    LeafMatched x arguments -> SearchMatched (NilP (Just x)) arguments
+searchParser match (MultP parser_f parser_x) = case searchParser match parser_f of
+    SearchNoMatch -> case searchParser match parser_x of
+        SearchNoMatch -> SearchNoMatch
+        SearchFailed err -> SearchFailed err
+        SearchMatched parser_x' arguments -> SearchMatched (MultP parser_f parser_x') arguments
+    SearchFailed err -> SearchFailed err
+    SearchMatched parser_f' arguments -> SearchMatched (MultP parser_f' parser_x) arguments
+searchParser match (AltP parser1 parser2) = case searchParser match parser1 of
+    SearchNoMatch -> case searchParser match parser2 of
+        SearchNoMatch -> SearchNoMatch
+        SearchFailed err -> SearchFailed err
+        SearchMatched parser2' arguments -> SearchMatched (AltP parser1 parser2') arguments
+    SearchFailed err -> SearchFailed err
+    SearchMatched parser1' arguments -> SearchMatched (AltP parser1' parser2) arguments
+searchParser match (BindP parser k) = case searchParser match parser of
+    SearchNoMatch -> case evalParser parser of
+        Nothing -> SearchNoMatch
+        Just x -> searchParser match (k x)
+    SearchFailed err -> SearchFailed err
+    SearchMatched parser' arguments -> SearchMatched (BindP parser' k) arguments
+
+runReader :: ReadM a -> String -> LeafReply a
+runReader (ReadM reader) text = case reader text of
+    Left err -> LeafFailed err
+    Right x -> LeafMatched x []
+
+showOptionName :: OptName -> String
+showOptionName (OptShort name) = ['-', name]
+showOptionName (OptLong name) = "--" ++ name
+
+-- Match one named option and consume its payload only after its parser leaf has matched.
+matchOption :: OptWord -> [String] -> Option a -> LeafReply a
+matchOption (OptWord word_name attached) arguments (Option reader _) = case reader of
+    OptReader names read_value no_arg_error -> if word_name `elem` names
+        then case attached of
+            Just value_text -> with_arguments arguments (runReader read_value value_text)
+            Nothing -> case arguments of
+                [] -> LeafFailed (no_arg_error (showOptionName word_name))
+                value_text:rest -> with_arguments rest (runReader read_value value_text)
+        else LeafNoMatch
+    FlagReader names x -> if word_name `elem` names && flag_accepts attached word_name
+        then LeafMatched x (flag_remainder attached word_name ++ arguments)
+        else LeafNoMatch
+    _ -> LeafNoMatch
+  where
+    with_arguments rest (LeafMatched x _) = LeafMatched x rest
+    with_arguments _ (LeafFailed err) = LeafFailed err
+    with_arguments _ LeafNoMatch = LeafNoMatch
+    flag_accepts Nothing _ = True
+    flag_accepts (Just _) (OptShort _) = True
+    flag_accepts (Just _) (OptLong _) = False
+    flag_remainder (Just characters) (OptShort _) = ['-':characters]
+    flag_remainder _ _ = []
+
+-- Match the first reachable positional or command leaf; reader failures commit that positional word.
+matchArgument :: ParserPrefs -> String -> [String] -> Option a -> LeafReply a
+matchArgument parser_prefs text arguments (Option reader _) = case reader of
+    ArgReader read_value -> with_arguments arguments (runReader read_value text)
+    CmdReader commands -> case lookup text commands of
+        Nothing -> LeafNoMatch
+        Just parser_info -> case runParser parser_prefs (infoPolicy parser_info) (infoParser parser_info) arguments of
+            Parsed x rest -> LeafMatched x rest
+            ParseFailed err -> LeafFailed err
+    _ -> LeafNoMatch
+  where
+    with_arguments rest (LeafMatched x _) = LeafMatched x rest
+    with_arguments _ (LeafFailed err) = LeafFailed err
+    with_arguments _ LeafNoMatch = LeafNoMatch
+
+stepParser :: ParserPrefs -> ArgPolicy -> String -> [String] -> Parser a -> SearchReply a
+-- Interpret the current word according to policy, falling back to a positional only for ForwardOptions.
+stepParser parser_prefs policy text arguments parser = case policy of
+    AllPositionals -> search_argument
+    ForwardOptions -> case parseWord text of
+        Nothing -> search_argument
+        Just word -> case searchParser (matchOption word arguments) parser of
+            SearchNoMatch -> search_argument
+            result -> result
+    _ -> case parseWord text of
+        Nothing -> search_argument
+        Just word -> searchParser (matchOption word arguments) parser
+  where
+    search_argument = searchParser (matchArgument parser_prefs text arguments) parser
+
+evalParser :: Parser a -> Maybe a
+-- Evaluate only fully satisfied/defaulted branches; unmatched option leaves have no value.
+evalParser (NilP value') = value'
+evalParser (OptP _) = Nothing
+evalParser (MultP parser_f parser_x) = evalParser parser_f <*> evalParser parser_x
+evalParser (AltP parser1 parser2) = evalParser parser1 <|> evalParser parser2
+evalParser (BindP parser k) = case evalParser parser of
+    Nothing -> Nothing
+    Just x -> evalParser (k x)
+
+-- Consume argv from left to right, changing to positional-only mode only when the outer loop sees `--`.
+runParser :: ParserPrefs -> ArgPolicy -> Parser a -> [String] -> ParseReply a
+runParser parser_prefs policy parser ("--":arguments)
+    | policy /= AllPositionals = runParser parser_prefs AllPositionals parser arguments
+runParser parser_prefs policy parser arguments = case arguments of
+    [] -> case evalParser parser of
+        Just x -> Parsed x []
+        Nothing -> ParseFailed (MissingError (missingDescription parser))
+    text:rest -> case stepParser parser_prefs policy text rest parser of
+        SearchFailed err -> ParseFailed err
+        SearchMatched parser' remaining -> runParser parser_prefs (nextPolicy policy text) parser' remaining
+        SearchNoMatch -> case evalParser parser of
+            Just x -> Parsed x arguments
+            Nothing -> ParseFailed (UnexpectedError text)
+
+nextPolicy :: ArgPolicy -> String -> ArgPolicy
+nextPolicy NoIntersperse text = case parseWord text of
+    Nothing -> AllPositionals
+    Just _ -> NoIntersperse
+nextPolicy policy _ = policy
+
 newtype ParserHelp = ParserHelp String
     deriving (Eq, Show)
 
@@ -749,39 +691,11 @@ getParseResult _ = Nothing
 -- Run a parser without terminal IO so callers can inspect success and failure directly.
 execParserPure :: ParserPrefs -> ParserInfo a -> [String] -> ParserResult a
 execParserPure parser_prefs parser_info arguments =
-    case runParserArguments parser_info arguments of
-        Parsed x state -> case remainingArguments state of
-            [] -> Success x
-            unexpected:_ -> makeFailure parser_prefs parser_info (UnexpectedError unexpected)
-        NoMatch err -> makeFailure parser_prefs parser_info
+    case runParser parser_prefs (infoPolicy parser_info) (infoParser parser_info) arguments of
+        Parsed x [] -> Success x
+        Parsed _ (unexpected:_) -> makeFailure parser_prefs parser_info (UnexpectedError unexpected)
+        ParseFailed err -> makeFailure parser_prefs parser_info
             (if null arguments && prefShowHelpOnEmpty parser_prefs then ShowHelpText Nothing else err)
-        ParseFailed err -> makeFailure parser_prefs parser_info err
-
-runParserState :: ParserInfo a -> ParseState -> ParseReply a
--- Run informational preflights before ordinary fields, then apply the parser's argument policy.
-runParserState parser_info state =
-    let Parser _ preflights parser = infoParser parser_info
-    in case runPreflights preflights state of
-        Just err -> ParseFailed err
-        Nothing -> parser (infoPolicy parser_info) state
-
--- Give help and informational options priority over missing ordinary fields.
-runPreflights :: [Preflight] -> ParseState -> Maybe ParseError
-runPreflights [] _ = Nothing
-runPreflights (Preflight names err:rest) state = case takeFlag names state of
-    Just _ -> Just err
-    Nothing -> runPreflights rest state
-
-runParserArguments :: ParserInfo a -> [String] -> ParseReply a
-runParserArguments parser_info arguments =
-    let Parser entries _ _ = infoParser parser_info
-    in runParserState parser_info (prepareArguments entries (infoPolicy parser_info) arguments)
-
--- Apply a subparser's option vocabulary and policy to the tokens its parent leaves behind.
-runParserPrepared :: ParserInfo a -> ParseState -> ParseReply a
-runParserPrepared parser_info state =
-    let Parser entries _ _ = infoParser parser_info
-    in runParserState parser_info (prepareExisting entries (infoPolicy parser_info) state)
 
 makeFailure :: ParserPrefs -> ParserInfo a -> ParseError -> ParserResult b
 makeFailure parser_prefs parser_info err = Failure (parserFailure parser_prefs parser_info err)
@@ -849,83 +763,130 @@ renderError UnknownError = "Invalid command line"
 renderError (InfoMsg message) = message
 renderError (ShowHelpText _) = ""
 
+data OptTree a
+    = Leaf a
+    | MultNode [OptTree a]
+    | AltNode Bool [OptTree a]
+    | BindNode (OptTree a)
+
+-- Traverse the parser structure while retaining alternatives and repetition for usage rendering.
+treeMapParser :: (forall x. Option x -> a) -> Parser b -> OptTree a
+treeMapParser _ (NilP _) = MultNode []
+treeMapParser f (OptP option') = Leaf (f option')
+treeMapParser f (MultP parser1 parser2) = MultNode [treeMapParser f parser1, treeMapParser f parser2]
+treeMapParser f (AltP parser1 parser2) = AltNode
+    (isJust (evalParser parser1) || isJust (evalParser parser2))
+    [treeMapParser f parser1, treeMapParser f parser2]
+treeMapParser f (BindP parser k) = BindNode (case evalParser parser of
+    Nothing -> treeMapParser f parser
+    Just x -> MultNode [treeMapParser f parser, treeMapParser f (k x)])
+
+mapParser :: (forall x. Option x -> a) -> Parser b -> [a]
+mapParser f = flatten . treeMapParser f where
+    flatten (Leaf x) = [x]
+    flatten (MultNode trees) = concatMap flatten trees
+    flatten (AltNode _ trees) = concatMap flatten trees
+    flatten (BindNode tree) = flatten tree
+
+filterOptional :: OptTree a -> OptTree a
+filterOptional (Leaf x) = Leaf x
+filterOptional (MultNode trees) = MultNode (map filterOptional trees)
+filterOptional (AltNode True _) = MultNode []
+filterOptional (AltNode False trees) = AltNode False (map filterOptional trees)
+filterOptional (BindNode tree) = BindNode (filterOptional tree)
+
+optionUsageLabel :: Option a -> String
+optionUsageLabel (Option reader properties)
+    | propertyVisibility properties /= Visible = ""
+    | otherwise = case reader of
+        OptReader names _ _ -> describeOption names (propertyMetavar properties)
+        FlagReader names _ -> describeOption names ""
+        ArgReader _ -> propertyMetavar properties
+        CmdReader _ -> propertyMetavar properties
+
+-- Render required products, alternatives, defaults, and repetitions from parser structure.
+renderUsageTree :: OptTree String -> String
+renderUsageTree (Leaf text) = text
+renderUsageTree (MultNode trees) = unwords (filter (not . null) (map renderUsageTree trees))
+renderUsageTree (AltNode optional_branch trees) = case filter (not . null) (map renderUsageTree trees) of
+    [] -> ""
+    [text] -> if optional_branch then "[" ++ text ++ "]" else text
+    alternatives -> (if optional_branch then "[" else "(")
+        ++ intercalate "|" alternatives ++ if optional_branch then "]" else ")"
+renderUsageTree (BindNode tree) = case renderUsageTree tree of
+    "" -> ""
+    text -> text ++ "..."
+
+missingDescription :: Parser a -> String
+missingDescription parser = case renderUsageTree (filterOptional (treeMapParser optionUsageLabel parser)) of
+    "" -> "required option or argument"
+    text -> text
+
+describeOption :: [OptName] -> String -> String
+-- Render a compact name used in diagnostics and usage text.
+describeOption [] metavar_name = metavar_name
+describeOption names metavar_name = intercalate "/" (map showOptionName (reverse names)) ++ suffix where
+    suffix = if null metavar_name then "" else " " ++ metavar_name
+
 -- Render plain help using only strings, with the configured width controlling description wrapping.
 renderHelp :: ParserPrefs -> ParserInfo a -> String -> Bool -> String
 renderHelp parser_prefs parser_info program_name show_full = intercalate "\n\n" (filter (not . null)
     [ infoHeader parser_info
     , renderUsage parser_info program_name
     , infoProgDesc parser_info
-    , if show_full then renderEntryGroups (prefColumns parser_prefs) entries else ""
+    , if show_full then renderEntryGroups (prefColumns parser_prefs) (infoParser parser_info) else ""
     , infoFooter parser_info
-    ]) where
-        Parser entries _ _ = infoParser parser_info
+    ])
 
 renderUsage :: ParserInfo a -> String -> String
--- Form the compact synopsis shown in both brief and full help.
+-- Form the compact synopsis from the parser tree so brackets reflect structural defaults.
 renderUsage parser_info program_name = "Usage: " ++ program_name ++ usage_suffix where
-    Parser entries _ _ = infoParser parser_info
-    pieces = filter (not . null) (map renderUsageEntry entries)
-    usage_suffix = if null pieces then "" else " " ++ unwords pieces
+    usage_text = renderUsageTree (treeMapParser optionUsageLabel (infoParser parser_info))
+    usage_suffix = if null usage_text then "" else " " ++ usage_text
 
-renderUsageEntry :: HelpEntry -> String
--- Render a parser atom for the synopsis, omitting internal entries.
-renderUsageEntry (HelpOption _ _ _ _ _ Internal) = ""
-renderUsageEntry (HelpOption names takes_argument metavar_name _ _ _) =
-    "[" ++ describeOption names (if takes_argument then metavar_name else "") ++ "]"
-renderUsageEntry (HelpArgument metavar_name _ _ Internal) = ""
-renderUsageEntry (HelpArgument metavar_name _ default_value _) = case default_value of
-    Nothing -> metavar_name
-    Just _ -> "[" ++ metavar_name ++ "]"
-renderUsageEntry (HelpCommand name _ Internal) = ""
-renderUsageEntry (HelpCommand name _ _) = name
+data EntryKind = OptionEntry | CommandEntry
+    deriving (Eq)
 
--- Separate ordinary options and commands while retaining the declaration order within each group.
-renderEntryGroups :: Int -> [HelpEntry] -> String
-renderEntryGroups width entries = intercalate "\n\n" (filter (not . null)
-    [ renderGroup "Available options:" width option_entries
-    , renderGroup "Available commands:" width command_entries
+-- Convert parser leaves to display rows without using those rows to control parsing or requiredness.
+descriptionRows :: Parser a -> [(EntryKind, String, String)]
+descriptionRows parser = concat (mapParser rows parser) where
+    rows (Option reader properties)
+        | propertyVisibility properties == Internal = []
+        | otherwise = case reader of
+            CmdReader commands -> [(CommandEntry, name, infoProgDesc parser_info)
+                                  | (name, parser_info) <- reverse commands]
+            _ -> [(OptionEntry, option_label reader properties, option_description properties)]
+    option_label reader properties = case reader of
+        OptReader names _ _ -> describeOption names (propertyMetavar properties)
+        FlagReader names _ -> describeOption names ""
+        ArgReader _ -> propertyMetavar properties
+        CmdReader _ -> propertyMetavar properties
+    option_description properties = add_default (propertyHelp properties) (propertyShowDefault properties)
+
+-- Separate ordinary options and commands while retaining declaration order within each group.
+renderEntryGroups :: Int -> Parser a -> String
+renderEntryGroups width parser = intercalate "\n\n" (filter (not . null)
+    [ renderGroup "Available options:" width [(label, description)
+        | (OptionEntry, label, description) <- rows]
+    , renderGroup "Available commands:" width [(label, description)
+        | (CommandEntry, label, description) <- rows]
     ]) where
-        option_entries = [entry | entry <- entries, not (isCommandEntry entry)]
-        command_entries = [entry | entry <- entries, isCommandEntry entry]
+        rows = descriptionRows parser
 
-isCommandEntry :: HelpEntry -> Bool
-isCommandEntry (HelpCommand _ _ _) = True
-isCommandEntry _ = False
-
-renderGroup :: String -> Int -> [HelpEntry] -> String
+renderGroup :: String -> Int -> [(String, String)] -> String
 renderGroup title width entries = case concatMap (renderEntry width) entries of
     [] -> ""
     rows -> title ++ "\n" ++ unlines rows
 
 -- Align descriptions at a fixed column and wrap continuation lines within the requested width.
-renderEntry :: Int -> HelpEntry -> [String]
-renderEntry width entry = if not (entryVisible entry) then [] else
-    case wrapWords description_width (entryDescription entry) of
-        [] -> ["  " ++ entryLabel entry]
-        first_line:rest -> (padRight label_width ("  " ++ entryLabel entry) ++ first_line)
-            : map ((++) (replicate label_width ' ')) rest
+renderEntry :: Int -> (String, String) -> [String]
+renderEntry width (label, description) = case wrapWords description_width description of
+    [] -> ["  " ++ label]
+    first_line:rest -> (padRight label_width ("  " ++ label) ++ first_line)
+        : map ((++) (replicate label_width ' ')) rest
   where
     label_width = min 28 (max 12 (width `div` 3))
     description_width = max 12 (width - label_width)
-
-entryVisible :: HelpEntry -> Bool
--- Internal entries never appear; hidden entries appear only because this renderer is called for full help.
-entryVisible (HelpOption _ _ _ _ _ Internal) = False
-entryVisible (HelpArgument _ _ _ Internal) = False
-entryVisible (HelpCommand _ _ Internal) = False
-entryVisible _ = True
-
-entryLabel :: HelpEntry -> String
--- Render the left column shared by option, argument, and command descriptions.
-entryLabel (HelpOption names takes_argument metavar_name _ _ _) =
-    describeOption names (if takes_argument then metavar_name else "")
-entryLabel (HelpArgument metavar_name _ _ _) = metavar_name
-entryLabel (HelpCommand name _ _) = name
-
-entryDescription :: HelpEntry -> String
-entryDescription (HelpOption _ _ _ description default_value _) = add_default description default_value
-entryDescription (HelpArgument _ description default_value _) = add_default description default_value
-entryDescription (HelpCommand _ description _) = description
 
 add_default :: String -> Maybe String -> String
 add_default description Nothing = description

@@ -46,5 +46,13 @@ instance Applicative Maybe where
     (Just f) <*> (Just x) = Just (f x)
     _        <*> _        = Nothing
 
+instance Alternative Maybe where
+    empty = Nothing
+    Just x <|> _ = Just x
+    Nothing <|> value = value
+
+optional :: Alternative f => f a -> f (Maybe a)
+optional value = Just <$> value <|> pure Nothing
+
 (<**>) :: Applicative f => f a -> f (a -> b) -> f b
 value <**> function = liftA2 (flip ($)) value function
