@@ -5,7 +5,7 @@ import Data.Functor
 import Data.Function
 import Data.Maybe
 
-infixl 4 <*>, <*, *>
+infixl 4 <*>, <*, *>, <**>
 
 class Functor f => Applicative f where
     pure :: a -> f a
@@ -45,3 +45,6 @@ instance Applicative Maybe where
 
     (Just f) <*> (Just x) = Just (f x)
     _        <*> _        = Nothing
+
+(<**>) :: Applicative f => f a -> f (a -> b) -> f b
+value <**> function = liftA2 (flip ($)) value function
