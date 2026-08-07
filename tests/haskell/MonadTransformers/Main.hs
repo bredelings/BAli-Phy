@@ -8,6 +8,7 @@ import Control.Monad
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Except
 import Control.Monad.Trans.Reader
+import Control.Monad.Trans.State
 import Data.Either
 import Data.Function
 import Data.Functor.Identity
@@ -32,11 +33,20 @@ stackExample = do
     value <- ask
     lift (return (value + 1))
 
+stateExample :: State Int (Int, Int)
+stateExample = do
+    before <- get
+    modify ((+) 1)
+    doubled <- gets ((*) 2)
+    return (before, doubled)
+
 -- Protect transformer stacking and higher-kinded MonadTrans inference, which ordinary module
 -- typechecking does not exercise. This can be removed when an upstream transformers suite runs.
 main = putStrLn $ show
     ( runReader readerExample 4
     , runExcept exceptExample
     , runExcept alternativeExample
-    , runIdentity (runExceptT (runReaderT stackExample 4))
+    , ( runIdentity (runExceptT (runReaderT stackExample 4))
+      , runState stateExample 4
+      )
     )
