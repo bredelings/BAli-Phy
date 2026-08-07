@@ -326,6 +326,45 @@ extern "C" closure builtin_function_createDirectoryRaw(OperationArgs& Args)
     return closure(R::ConstructorApp("()", 0, {}));
 }
 
+// Create one directory or its full parent chain, while accepting an existing directory.
+// The first argument is the integer flag produced by the Haskell wrapper.
+extern "C" closure builtin_function_createDirectoryIfMissingRaw(OperationArgs& Args)
+{
+    bool create_parents = Args.evaluate_slot_to_value(0).as_int();
+    fs::path dirname = Args.evaluate_slot_to_value(1).as_string();
+
+    std::error_code ec;
+    if (create_parents)
+        fs::create_directories(dirname, ec);
+    else
+        fs::create_directory(dirname, ec);
+
+    if (ec)
+        throw myexception()<<"createDirectoryIfMissing: cannot create directory "<<dirname<<": "<<ec.message();
+
+    if (not fs::is_directory(dirname, ec))
+    {
+        if (ec)
+            throw myexception()<<"createDirectoryIfMissing: cannot inspect path "<<dirname<<": "<<ec.message();
+        throw myexception()<<"createDirectoryIfMissing: path "<<dirname<<" exists but is not a directory";
+    }
+
+    return closure(R::ConstructorApp("()", 0, {}));
+}
+
+// Report whether any filesystem object exists at the path, propagating inspection errors.
+extern "C" closure builtin_function_doesPathExistRaw(OperationArgs& Args)
+{
+    fs::path path = Args.evaluate_slot_to_value(0).as_string();
+
+    std::error_code ec;
+    bool exists = fs::exists(path, ec);
+    if (ec)
+        throw myexception()<<"doesPathExist: cannot inspect path "<<path<<": "<<ec.message();
+
+    return exists;
+}
+
 // FilePath -> IO FilePath
 extern "C" closure builtin_function_createUniqueDirectoryRaw(OperationArgs& Args)
 {
