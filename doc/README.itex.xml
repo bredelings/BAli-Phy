@@ -209,10 +209,8 @@ You can install <application>R</application> via Homebrew:
     </section>
     <section><info><title>Install programs used for viewing the results</title></info>
       <para>
-	<!-- This might be a better formula https://github.com/tseemann/homebrew-bioinformatics-linux/blob/master/figtree.rb
-	     I could copy it to bredelings/bioinformatics ...
-	-->
-	The Homebrew cask for FigTree is currently disabled, and SeaView and Tracer do not have Homebrew packages.  Install these programs from their project websites; see <xref linkend="software_req"/>.
+	Programs for viewing trees, alignments, and MCMC traces are optional.  Install them from
+	their project websites as needed; see <xref linkend="software_req"/>.
       </para>
     </section>
     </section>
@@ -258,9 +256,8 @@ You can install <application>R</application> via Homebrew:
     </section>
     <section><info><title>Install programs used to view the results</title></info>
     <para>
-<screen><prompt>%</prompt> <userinput>sudo apt-get install seaview</userinput>
-<prompt>%</prompt> <userinput>sudo apt-get install figtree</userinput></screen>
-    However, there isn't a Debian or Ubuntu package for Tracer at the moment.
+      Programs for viewing trees, alignments, and MCMC traces are optional.  Install them from
+      their project websites as needed; see <xref linkend="software_req"/>.
 </para>
     </section>
     </section>
@@ -333,55 +330,113 @@ You can install <application>R</application> via Homebrew:
     </section>
 
 
-    <section xml:id="software_req"><info><title>Install programs used for viewing the results</title></info>
+    <section xml:id="software_req"><info><title>Optional programs for inspecting results</title></info>
 
-    <para>
-      <itemizedlist>
-	<listitem>
-	  <para>
-	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-		  xlink:href="https://beast.community/tracer.html">
-	      Tracer
-	    </link>
-	    :  MCMC parameter/diagnostic viewer.
-	  </para>
-          <para>
-            Check by opening: <filename>25-1/C1.log</filename> and <filename>25-2/C1.log</filename>
-          </para>
-	</listitem> 
+    <para>The main output from <command>bp-analyze</command> is the report
+      <filename>Results/index.html</filename>.  Open this report in a web browser first: it
+      contains summary trees and alignments, mixing diagnostics, and links to the underlying
+      result files.  The programs below are optional and are useful when you want to inspect
+      those files more closely.</para>
 
-	<listitem>
-	  <para>
-	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-		  xlink:href="https://tree.bio.ed.ac.uk/software/figtree/">
-	      FigTree
-	    </link>
-	    : Phylogeny Viewer
-	  </para>
-          <para>
-            Check by opening: <filename>Results/c50.PP.tree</filename>
-          </para>
-	</listitem>
-      
-	<listitem>
-	  <para>
-	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-		  xlink:href="https://doua.prabi.fr/software/seaview">
-	      SeaView
-	    </link> and/or 
-	    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-		  xlink:href="https://ormbunkar.se/aliview/">
-	      AliView
-	    </link>
-	    : Alignment viewers.
-          </para>
-          <para>
-            Check by opening: <filename>Results/P1.consensus.pd-wsum.fasta</filename>
-          </para>
-	</listitem>
-    </itemizedlist>
+    <informaltable>
+      <tgroup cols="3">
+	<colspec colnum="1" colname="col1" colwidth="1*"/>
+	<colspec colnum="2" colname="col2" colwidth="1*"/>
+	<colspec colnum="3" colname="col3" colwidth="3*"/>
+	<thead><row>
+	  <entry>Task</entry>
+	  <entry>Recommended program</entry>
+	  <entry>When to use it</entry>
+	</row></thead>
+	<tbody>
+	  <row>
+	    <entry>Inspect scalar MCMC traces</entry>
+	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://beast.community/tracer.html">Tracer</link></entry>
+	    <entry><para>Load all the <filename>C1.log</filename> files from an analysis at once
+	      to compare traces, marginal distributions, and effective sample sizes.  The
+	      <command>statreport</command> command and the HTML report provide non-interactive
+	      summaries of the same numerical parameters.</para></entry>
+	  </row>
+	  <row>
+	    <entry>View a tree locally</entry>
+	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://treeviewer.org/">TreeViewer</link></entry>
+	    <entry><para>A cross-platform viewer for exploring, styling, and exporting trees.  It
+	      reads the current BAli-Phy consensus trees and also recognizes structured attributes
+	      in bare Newick trees.  See <xref linkend="tree_metadata_compatibility"/> before using
+	      it to rewrite an annotated tree.</para></entry>
+	  </row>
+	  <row>
+	    <entry>View and annotate a tree online</entry>
+	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://itol.embl.de/">iTOL</link></entry>
+	    <entry><para>A web application with extensive annotation and figure-export options.  It
+	      accepts Newick and NEXUS trees and understands NHX and MrBayes-style metadata.  Using
+	      it requires uploading the tree to a third-party service.</para></entry>
+	  </row>
+	  <row>
+	    <entry>View a BEAST-style tree</entry>
+	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://tree.bio.ed.ac.uk/software/figtree/">FigTree</link></entry>
+	    <entry><para>A long-established viewer designed for summarized, annotated BEAST trees.
+	      It remains useful for conventional Newick and NEXUS trees, but does not interpret
+	      metadata comments in a bare Newick file.</para></entry>
+	  </row>
+	  <row>
+	    <entry>Quickly view or edit an alignment</entry>
+	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://doua.prabi.fr/software/seaview">SeaView</link></entry>
+	    <entry><para>A lightweight, cross-platform alignment editor that reads FASTA and other
+	      common alignment formats.  <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://ormbunkar.se/aliview/">AliView</link> is another fast,
+	      lightweight choice, particularly for large alignments.</para></entry>
+	  </row>
+	  <row>
+	    <entry>Explore an alignment in more detail</entry>
+	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://www.jalview.org/">Jalview</link></entry>
+	    <entry><para>A cross-platform alignment viewer, editor, and analysis workbench with more
+	      annotation and analysis facilities than a simple alignment viewer.</para></entry>
+	  </row>
+	  <row>
+	    <entry>Create scripted tree figures</entry>
+	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://bioconductor.org/packages/ggtree">ggtree</link> and
+	      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://bioconductor.org/packages/treeio">treeio</link></entry>
+	    <entry><para>R packages for reproducible tree figures and for importing annotated tree
+	      formats.  These are most appropriate when the figure should be generated by a script
+	      rather than edited interactively.</para></entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </informaltable>
 
-    </para>
+    <para>To check the viewers with the tutorial output, open
+      <filename>25-1/C1.log</filename> and <filename>25-2/C1.log</filename> together in
+      Tracer, <filename>Results/c50.PP.tree</filename> in a tree viewer, and
+      <filename>Results/P1.consensus.pd-wsum.fasta</filename> in an alignment viewer.</para>
+
+    <section xml:id="tree_metadata_compatibility"><info><title>Tree metadata compatibility</title></info>
+      <para>Current BAli-Phy consensus trees store posterior probabilities as internal node
+        labels.  TreeViewer, iTOL, and FigTree can display these trees.  Other BAli-Phy inputs
+        may use structured Newick comments such as <userinput>[&amp;foreground=1]</userinput> to
+        attach information to a branch.</para>
+
+      <para>TreeViewer imports such comments from a bare Newick file as attributes.  Internally,
+        however, it stores both node attributes and attributes of the incoming branch on the
+        descendant node.  It therefore does not preserve the distinction indicated by placing
+        a comment before or after the branch-length colon.  Its ordinary Newick export also
+        omits these attributes.  Treat TreeViewer as a viewer and figure generator, rather than
+        as a lossless converter for annotated trees.</para>
+
+      <para>iTOL parses NHX and MrBayes-style metadata from uploaded Newick and NEXUS trees.
+        FigTree interprets metadata comments in NEXUS trees, but not in bare Newick trees.  If
+        preserving the exact location and spelling of comments is important, keep the original
+        tree file and verify any file exported by a viewer before using it in another
+        analysis.</para>
+    </section>
 
     </section>
     </section>
@@ -448,12 +503,14 @@ You can install <application>R</application> via Homebrew:
     Manager instead.
     </para>
 
-    <para>We can use program Tracer to assess the progress of the runs by loading the files
+    <para>Optionally, we can use <application>Tracer</application> to assess the progress of
+    the runs by loading the files
     <filename>25-1/C1.log</filename>, 
     <filename>25-2/C1.log</filename>, 
     <filename>25-3/C1.log</filename>,  and
     <filename>25-4/C1.log</filename>.
     All four log files should be loaded simultaneously in order to compare them.
+    See <xref linkend="software_req"/> for this and other result-viewing programs.
     </para>
 
 <para>When enough iterations have finished, we then run the script <userinput>bp-analyze</userinput> to summarize the results:
@@ -504,10 +561,16 @@ The tree estimate, alignment estimate, mixing diagnostics and other information 
 <para>We can also view the tree and alignment estimates directly:
       <itemizedlist>
 	<listitem>
-	  <para>The majority consensus tree is in the file <filename>Results/c50.PP.tree</filename>.  It can be viewed with <application>FigTree</application>.</para>
+	  <para>The majority consensus tree is in the file
+	    <filename>Results/c50.PP.tree</filename>.  It can be viewed locally with
+	    <application>TreeViewer</application>; see <xref linkend="software_req"/> for online,
+	    legacy, and scripted alternatives.</para>
         </listitem>
         <listitem>
-          <para>The medium-length consensus alignment is in the file <filename>Results/P1.consensus.pd-wsum.fasta</filename>.  It can be viewed with <application>SeaView</application> or <application>AliView</application>.</para>
+          <para>The medium-length consensus alignment is in the file
+            <filename>Results/P1.consensus.pd-wsum.fasta</filename>.  It can be viewed quickly
+            with <application>SeaView</application>, or explored in more detail with
+            <application>Jalview</application>.</para>
         </listitem>
       </itemizedlist>
 
@@ -1088,10 +1151,9 @@ option.  For example:
       <section><info><title>Finding the majority consensus tree</title></info>
 	
 	<para>
-To compute the majority consensus tree, do the following.  (The
-program <link xmlns:xlink="http://www.w3.org/1999/xlink"
-xlink:href="https://tree.bio.ed.ac.uk/software/figtree/">FigTree</link>
-allows you to view the resulting tree file graphically.)
+To compute the majority consensus tree, do the following.  A program such as
+<application>TreeViewer</application> allows you to view the resulting tree graphically; see
+<xref linkend="software_req"/> for alternatives.
 <screen><prompt>%</prompt> trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees &gt; <filename>c50.PP.tree</filename></screen>
 </para>
 
@@ -1159,7 +1221,9 @@ This command computes the effective sample size for the posterior probability of
 <para>
 This command gives a median and confidence interval, ESS, and a stabilization time:
 <screen><prompt>%</prompt> statreport <replaceable>dir-1</replaceable>/C1.log <replaceable>dir-2</replaceable>/C1.log &gt; Report </screen>	
-When multiple runs are analyzed, this command gives PSRF and joint ESS values. The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://beast.community/tracer.html">Tracer</link> allows you to view the same summaries graphically.</para>
+When multiple runs are analyzed, this command gives PSRF and joint ESS values.
+<application>Tracer</application> allows you to inspect the same numerical parameters
+interactively; see <xref linkend="software_req"/>.</para>
 
 <para>See <xref linkend="mixing_and_convergence"/> for more information.
 </para>
@@ -1173,7 +1237,8 @@ When multiple runs are analyzed, this command gives PSRF and joint ESS values. T
 
       <para>You can optionally replace <userinput>--tree <replaceable>tree</replaceable></userinput> with <userinput>-N <replaceable>n_sequences</replaceable></userinput>, where <replaceable>n_sequences</replaceable> is the number of non-ancestral sequences in your alignment.</para>
 
-      <para>You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doua.prabi.fr/software/seaview">SeaView</link> to view the alignment graphically.</para>
+      <para>You can use <application>SeaView</application> to view the alignment graphically;
+        see <xref linkend="software_req"/> for alternatives.</para>
 
       </section>      
 
@@ -3124,9 +3189,8 @@ adequately mix between modes.</para>
       simply duplicating every sample does not increase the ESS.
       </para>
 
-      <para>The
-      program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://beast.community/tracer.html">Tracer</link>
-      also computes ESS values.</para>
+      <para><application>Tracer</application> also computes ESS values and displays the
+        numerical traces interactively; see <xref linkend="software_req"/>.</para>
       </section>
 
       <section><info><title>ESS for split frequencies</title></info>
@@ -3692,16 +3756,24 @@ your <command>bali-phy</command> runs on that computer.
       <qandaset>
 
 	<qandaentry>
-	  <question><para>Why does <command>bp-analyze</command> say "Program 'draw-tree' not found.  Tree pictures will not be generated"?</para></question>
+	  <question><para>Why does <command>bp-analyze</command> say "Program 'draw-tree' not
+	    found.  Tree pictures will not be generated"?</para></question>
 	  <answer>
-	    <para>The program <command>draw-tree</command> is built only when the Cairo graphics library is available, so some installations omit it.  This is not a fatal error message; it just means that a pretty picture of the tree will not be generated automatically.  You can still view the tree with <application>FigTree</application>, for example.</para>
+	    <para>The program <command>draw-tree</command> is built only when the Cairo graphics
+	      library is available, so some installations omit it.  This is not a fatal error
+	      message; it just means that a picture of the tree will not be generated automatically.
+	      You can still open the tree with <application>TreeViewer</application> or another
+	      program listed in <xref linkend="software_req"/>.</para>
 	  </answer>
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>Why does <command>bp-analyze</command> say "Program 'gnuplot' not found.  Trace plots will not be generated"?</para></question>
+	  <question><para>Why does <command>bp-analyze</command> say "Program 'gnuplot' not found.
+	    Some graphs will not be generated"?</para></question>
 	  <answer>
-	    <para>This is because you have not installed <application>gnuplot</application>.  This is not a fatal error message, it just means that pictures of partition support, and SRQ plots will not be generated automatically.</para>
+	    <para>This is because you have not installed <application>gnuplot</application>.  This
+	      is not a fatal error message; it means that pictures of partition support and SRQ plots
+	      will not be generated automatically.</para>
 	  </answer>
 	</qandaentry>
 
