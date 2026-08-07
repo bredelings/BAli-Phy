@@ -160,6 +160,15 @@ test('compiled module cache',
             packagepath],
      timeout: 120)
 
+# Protect the generated-program run interface across C++ generation and Haskell execution;
+# this test becomes obsolete if generated analyses stop being retained as runnable modules.
+test('generated alignment program standalone',
+     python,
+     args: [files('../tests/scripts/test_generated_program.py')] +
+           module_cache_wrapper_args +
+           ['--', baliphy.full_path(), packagepath],
+     timeout: 600)
+
 # When running on very slow autobuilders these tests could take a long time.
 test('bali-phy 5d test', baliphy, args:[small_fasta,'--test', packagepath], timeout: 300)
 test('bali-phy 5d +A 50', baliphy, args:[small_fasta,'--iter=50', '-V', packagepath], timeout: 300)

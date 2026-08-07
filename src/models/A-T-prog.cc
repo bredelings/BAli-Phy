@@ -403,12 +403,42 @@ Hs::Stmts generate_main(const variables_map& args,
     auto log_formats = get_log_formats(args, args.count("align"));
 
     int n_partitions = filename_ranges.size();
+    long int max_iterations = 200000;
+    if (args.count("iterations"))
+        max_iterations = args["iterations"].as<long int>();
 
     Hs::Stmts main;
 
-    Hs::Var directory("directory");
+    Hs::Var output_directory("outputDirectory");
+    Hs::Var overwrite("overwrite");
+    auto output_file = [&](const string& filename) {
+        return HsG::Apply(Hs::Var("</>"), {output_directory, Hs::Literal(Hs::String(filename))});
+    };
     if (not args.count("test"))
-        HsG::Bind(main, HsG::ListPat({HsG::VarPat(directory)}), Hs::Var("getArgs"));
+    {
+        HsG::Bind(main,
+                  HsG::TuplePat({HsG::VarPat(output_directory), HsG::VarPat(overwrite)}),
+                  HsG::Apply(Hs::Var("execParser"), {Hs::Var("runOptions")}));
+        HsG::Expr(main,
+                  HsG::Apply(Hs::Var("createDirectoryIfMissing"),
+                             {Hs::Var("True"), output_directory}));
+
+        vector<Hs::Exp> output_files;
+        if (log_formats.count("tsv"))
+            output_files.push_back(output_file("C1.log"));
+        if (log_formats.count("json"))
+            output_files.push_back(output_file("C1.log.json"));
+        if (not fixed.count("tree"))
+            output_files.push_back(output_file("C1.trees"));
+        for(auto& [i, a, logger]: alignment_loggers)
+            output_files.push_back(output_file("C1.P"+std::to_string(i+1)+".fastas"));
+        for(auto& [i, cs, logger]: category_state_loggers)
+            output_files.push_back(output_file("C1.properties"+std::to_string(i+1)+".json"));
+
+        HsG::Expr(main,
+                  HsG::Apply(Hs::Var("checkOutputFiles"),
+                             {overwrite, HsG::List(output_files)}));
+    }
 
     auto unaligned_partitions = unaligned_sequence_data;
     auto aligned_partitions = aligned_sequence_data;
@@ -510,18 +540,26 @@ Hs::Stmts generate_main(const variables_map& args,
         // Initialize the parameters logger
 	if (log_formats.count("tsv"))
 	{
-	    HsG::Bind(main, HsG::VarPat(tsvLogger), HsG::Apply(Hs::Var("tsvLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.log"))}), HsG::List({Hs::Literal(Hs::String("iter"))})}));
+	    HsG::Bind(main,
+                        HsG::VarPat(tsvLogger),
+                        HsG::Apply(Hs::Var("tsvLogger"),
+                                   {output_file("C1.log"),
+                                    HsG::List({Hs::Literal(Hs::String("iter"))})}));
 	}
 
 	if (log_formats.count("json"))
 	{
-	    HsG::Bind(main, HsG::VarPat(jsonLogger), HsG::Apply(Hs::Var("jsonLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.log.json"))})}));
+	    HsG::Bind(main,
+                        HsG::VarPat(jsonLogger),
+                        HsG::Apply(Hs::Var("jsonLogger"), {output_file("C1.log.json")}));
 	}
 
         // Initialize the tree logger
         if (not fixed.count("tree"))
         {
-            HsG::Bind(main, HsG::VarPat(treeLogger), HsG::Apply(Hs::Var("treeLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String("C1.trees"))})}));
+            HsG::Bind(main,
+                      HsG::VarPat(treeLogger),
+                      HsG::Apply(Hs::Var("treeLogger"), {output_file("C1.trees")}));
         }
 
         // Initialize the alignment loggers
@@ -531,7 +569,9 @@ Hs::Stmts generate_main(const variables_map& args,
             for(auto& [i,a,logger]: alignment_loggers)
             {
                 string filename = "C1.P"+std::to_string(i+1)+".fastas";
-                HsG::Bind(main, HsG::VarPat(logger.as_<Hs::Var>()), HsG::Apply(Hs::Var("alignmentLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String(filename))})}));
+                HsG::Bind(main,
+                          HsG::VarPat(logger.as_<Hs::Var>()),
+                          HsG::Apply(Hs::Var("alignmentLogger"), {output_file(filename)}));
             }
         }
 
@@ -542,9 +582,53 @@ Hs::Stmts generate_main(const variables_map& args,
             for(auto& [i, cs, logger]: category_state_loggers)
             {
                 string filename = "C1.properties"+std::to_string(i+1)+".json";
-                HsG::Bind(main, HsG::VarPat(logger.as_<Hs::Var>()), HsG::Apply(Hs::Var("ejsonLogger"), {HsG::Apply(Hs::Var("</>"), {directory, Hs::Literal(Hs::String(filename))})}));
+                HsG::Bind(main,
+                          HsG::VarPat(logger.as_<Hs::Var>()),
+                          HsG::Apply(Hs::Var("ejsonLogger"), {output_file(filename)}));
             }
         }
+
+        // Emit each message from the same conditions and filename used to construct its logger.
+        auto report_output = [&](const string& description, const string& filename, const string& suffix = "") {
+            HsG::Expr(main,
+                      HsG::Apply(Hs::Var("reportOutput"),
+                                 {Hs::Literal(Hs::String(description)),
+                                  output_file(filename),
+                                  Hs::Literal(Hs::String(suffix))}));
+        };
+        // Keep the sequence of generated startup lines readable in the C++ generator.
+        auto put_line = [&](const string& line) {
+            HsG::Expr(main, HsG::Apply(Hs::Var("putStrLn"), {Hs::Literal(Hs::String(line))}));
+        };
+
+        put_line("");
+        put_line("Beginning MCMC computations.");
+        if (log_formats.count("tsv"))
+            report_output("numerical parameters", "C1.log", " as TSV");
+        if (log_formats.count("json"))
+            report_output("numerical parameters", "C1.log.json", " as JSON");
+        if (not fixed.count("tree"))
+            report_output("trees", "C1.trees");
+        for(auto& [i, a, logger]: alignment_loggers)
+            report_output("alignments", "C1.P"+std::to_string(i+1)+".fastas");
+        for(auto& [i, cs, logger]: category_state_loggers)
+            report_output("character properties", "C1.properties"+std::to_string(i+1)+".json");
+
+        put_line("");
+        put_line("BAli-Phy does NOT detect how many iterations is sufficient:");
+        put_line("   You need to monitor convergence and kill it when done.");
+        string iterations_message;
+        if (args.count("iterations"))
+            iterations_message = "   Maximum number of iterations set to "+std::to_string(max_iterations)+".";
+        else
+            iterations_message = "   Maximum number of iterations not specified: limiting to "+
+                                 std::to_string(max_iterations)+".";
+        put_line(iterations_message);
+        put_line("");
+        if (log_formats.count("tsv"))
+            put_line("You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the "
+                     "BEAST program Tracer (graphical).");
+        put_line("See the manual at http://www.bali-phy.org/README.xhtml for further information.");
     }
 
     // Main.5. Emit mymodel <- makeMCMCModel $ model sequence_data
@@ -573,10 +657,6 @@ Hs::Stmts generate_main(const variables_map& args,
     }
     else
     {
-        // int subsample = args["subsample"].as<int>();
-        int max_iterations = 200000;
-        if (args.count("iterations"))
-            max_iterations = args["iterations"].as<long int>();
         HsG::Expr(main, HsG::Apply(Hs::Var("runMCMC"), {Hs::Literal(Hs::Integer{integer(max_iterations)}), Hs::Var("mymodel")}));
     }
 
@@ -585,6 +665,7 @@ Hs::Stmts generate_main(const variables_map& args,
 
 
 void write_header(std::ostream& program_file,
+		  bool is_test,
 		  const model_t& decls,
 		  const vector<model_t>& SMs,
 		  const vector<model_t>& IMs,
@@ -613,6 +694,14 @@ void write_header(std::ostream& program_file,
     add(imports, subst_rates_model.imports);
     add(imports, indel_rates_model.imports);
     add(imports, tree_model.imports);
+    if (not is_test)
+    {
+        imports.insert("Options.Applicative");
+        imports.insert("System.Directory");
+        imports.insert("System.Exit");
+        imports.insert("System.FilePath");
+        imports.insert("System.IO");
+    }
 
     program_file<<"{-# LANGUAGE ExtendedDefaultRules #-}\n";
     program_file<<"{-# LANGUAGE OverloadedStrings #-}\n";
@@ -624,8 +713,6 @@ void write_header(std::ostream& program_file,
     program_file<<"\nimport Data.JSON ((.=))";
     program_file<<"\nimport qualified Data.Text.IO as T";
     program_file<<"\nimport Probability.Logger";
-    program_file<<"\nimport System.Environment";
-    program_file<<"\nimport System.FilePath";
 }
 
 vector<Hs::Exp>
@@ -813,7 +900,8 @@ std::string generate_atmodel_program(const variables_map& args,
 
     // Write pragmas, module, imports.
     std::ostringstream program_file;
-    write_header(program_file, decls, SMs, IMs, scaleMs, subst_rates_model, indel_rates_model, tree_model);
+    write_header(program_file, args.count("test"), decls, SMs, IMs, scaleMs,
+                 subst_rates_model, indel_rates_model, tree_model);
     program_file<<"\n\n";
 
     auto SM_function_for_index = print_models("sample_smodel", SMs, program_file);
@@ -1247,6 +1335,45 @@ std::string generate_atmodel_program(const variables_map& args,
     program_file<<"\n";
     program_file<<model_fn<<" = "<<HsG::Do(model).print()<<"\n";
 
+    // Keep the generated run interface self-contained and inspectable without adding a runtime support module.
+    if (not args.count("test"))
+    {
+        program_file<<R"(
+
+runOptions = info
+  ((,) <$> strOption
+              (long "output-dir" <> value "." <> showDefaultWith id <> metavar "DIRECTORY" <>
+               help "Write output files to DIRECTORY")
+       <*> switch
+              (long "overwrite" <> help "Overwrite existing logger output files")
+       <**> helper)
+  (fullDesc <> progDesc "Run this generated BAli-Phy analysis")
+
+-- Find every logger destination that would be truncated by this invocation.
+existingOutputFiles [] = return []
+existingOutputFiles (filename:filenames) = do
+  exists <- doesPathExist filename
+  rest <- existingOutputFiles filenames
+  return $ if exists then filename:rest else rest
+
+-- Reject accidental reruns before any logger has opened and truncated an existing file.
+checkOutputFiles True _ = return ()
+checkOutputFiles False filenames = do
+  existing <- existingOutputFiles filenames
+  case existing of
+    [] -> return ()
+    _  -> do
+      hPutStrLn stderr "Refusing to overwrite existing BAli-Phy output files:"
+      mapM_ (\filename -> hPutStrLn stderr $ "  " ++ filename) existing
+      hPutStrLn stderr "Choose another directory with --output-dir, or pass --overwrite."
+      exitFailure
+
+-- Describe a logger only after its destination has been opened successfully.
+reportOutput description filename suffix =
+  putStrLn $ "   - Sampled " ++ description ++ " logged to " ++ show filename ++ suffix
+)";
+    }
+
     auto main = generate_main(args,
 			      filename_ranges,
 			      alphabet_exps,
@@ -1308,7 +1435,10 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
 
     auto m = L->load_module_from_file(program_filename);
     auto P = std::make_unique<Program>(L,vector{m}, "Main.main");
-    L->args = {output_directory.string()};
+    if (args.count("test"))
+        L->args.clear();
+    else
+        L->args = {"--output-dir", output_directory.string()};
     return P;
 }
 
