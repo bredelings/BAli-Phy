@@ -436,7 +436,7 @@ Hs::Stmts generate_main(const variables_map& args,
             output_files.push_back(output_file("C1.properties"+std::to_string(i+1)+".json"));
 
         HsG::Expr(main,
-                  HsG::Apply(Hs::Var("checkOutputFiles"),
+                  HsG::Apply(Hs::Var("prepareOutputFiles"),
                              {overwrite, HsG::List(output_files)}));
     }
 
@@ -696,9 +696,9 @@ void write_header(std::ostream& program_file,
     add(imports, tree_model.imports);
     if (not is_test)
     {
+        imports.insert("BAliPhy.Run");
         imports.insert("Options.Applicative");
         imports.insert("System.Directory");
-        imports.insert("System.Exit");
         imports.insert("System.FilePath");
         imports.insert("System.IO");
     }
@@ -1335,7 +1335,7 @@ std::string generate_atmodel_program(const variables_map& args,
     program_file<<"\n";
     program_file<<model_fn<<" = "<<HsG::Do(model).print()<<"\n";
 
-    // Keep the generated run interface self-contained and inspectable without adding a runtime support module.
+    // Keep the generated option interface next to the analysis-specific program.
     if (not args.count("test"))
     {
         program_file<<R"(
@@ -1348,25 +1348,6 @@ runOptions = info
               (long "overwrite" <> help "Overwrite existing logger output files")
        <**> helper)
   (fullDesc <> progDesc "Run this generated BAli-Phy analysis")
-
--- Find every logger destination that would be truncated by this invocation.
-existingOutputFiles [] = return []
-existingOutputFiles (filename:filenames) = do
-  exists <- doesPathExist filename
-  rest <- existingOutputFiles filenames
-  return $ if exists then filename:rest else rest
-
--- Reject accidental reruns before any logger has opened and truncated an existing file.
-checkOutputFiles True _ = return ()
-checkOutputFiles False filenames = do
-  existing <- existingOutputFiles filenames
-  case existing of
-    [] -> return ()
-    _  -> do
-      hPutStrLn stderr "Refusing to overwrite existing BAli-Phy output files:"
-      mapM_ (\filename -> hPutStrLn stderr $ "  " ++ filename) existing
-      hPutStrLn stderr "Choose another directory with --output-dir, or pass --overwrite."
-      exitFailure
 
 -- Describe a logger only after its destination has been opened successfully.
 reportOutput description filename suffix =

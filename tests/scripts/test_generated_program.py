@@ -94,6 +94,26 @@ def main():
         if overwritten.returncode != 0:
             raise AssertionError(overwritten.stdout + overwritten.stderr)
 
+        concurrent_directory = pathlib.Path("standalone") / "concurrent"
+        concurrent = run_generated + ["--output-dir", str(concurrent_directory)]
+        processes = [
+            subprocess.Popen(
+                concurrent,
+                cwd=work_directory,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            for _ in range(2)
+        ]
+        outcomes = [process.communicate() for process in processes]
+        winners = [process for process in processes if process.returncode == 0]
+        losers = [index for index, process in enumerate(processes) if process.returncode != 0]
+        if len(winners) != 1 or len(losers) != 1:
+            raise AssertionError(f"concurrent output claims did not select one winner: {outcomes}")
+        if "Refusing to overwrite existing BAli-Phy output files" not in outcomes[losers[0]][1]:
+            raise AssertionError(f"concurrent loser did not report its collision: {outcomes}")
+
     return 0
 
 
