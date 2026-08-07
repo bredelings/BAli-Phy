@@ -40,6 +40,11 @@ instance Applicative [] where
     pure x = [x]
     fs <*> xs = [f x | f <- fs, x <- xs]
 
+instance Alternative [] where
+    empty = []
+    [] <|> ys = ys
+    (x:xs) <|> ys = x : (xs <|> ys)
+
 instance Applicative Maybe where
     pure x = Just x
 

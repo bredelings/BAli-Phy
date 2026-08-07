@@ -4,6 +4,7 @@ module Control.Monad where
 import Compiler.Base
 import Compiler.Error  -- for error
 import Data.Function   -- for id
+import Data.Bool
 import Data.Maybe
 import Data.OldList
 import Data.Functor
@@ -27,11 +28,20 @@ class Applicative m => Monad m where
 class Monad m => MonadFail m where
     fail   :: String -> m a
 
+class (Alternative m, Monad m) => MonadPlus m where
+    mzero :: m a
+    mplus :: m a -> m a -> m a
+
+    mzero = empty
+    mplus = (<|>)
+
 instance Monad [] where
     xs >>= f = concatMap f xs
 
 instance MonadFail [] where
     fail _ = []
+
+instance MonadPlus []
 
 instance Monad Maybe where
     (Just x) >>= f = f x
@@ -39,6 +49,22 @@ instance Monad Maybe where
 
 instance MonadFail Maybe where
     fail _ = Nothing
+
+instance MonadPlus Maybe
+
+msum :: MonadPlus m => [m a] -> m a
+msum = foldr mplus mzero
+
+guard :: Alternative f => Bool -> f ()
+guard True = pure ()
+guard False = empty
+
+when :: Applicative f => Bool -> f () -> f ()
+when True action = action
+when False _ = pure ()
+
+unless :: Applicative f => Bool -> f () -> f ()
+unless condition = when (not condition)
 
 mapM f = sequence . map f
 

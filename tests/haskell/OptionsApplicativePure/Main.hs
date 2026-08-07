@@ -31,6 +31,11 @@ attachedParser = (,) <$> switch (short 'a') <*> strOption (short 'o')
 alternativeParser :: Parser String
 alternativeParser = flag' "on" (long "on") <|> flag' "off" (long "off")
 
+exclusiveAlternativeParser :: Parser String
+exclusiveAlternativeParser =
+    (flag' "left" (long "left") <* flag' () (long "left-done"))
+    <|> (flag' "right" (long "right") <* flag' () (long "right-done"))
+
 commandParser :: Parser String
 commandParser = subparser (command "add" (info (strArgument (metavar "FILE")) idm))
 
@@ -64,6 +69,10 @@ main = putStrLn $ show
       )
     , ( run positionalFirstParser ["input", "--males", "20", "--total", "2000"]
       , run positionalFirstParser ["--males", "20", "--total", "2000", "input"]
-      , run literalOptionParser ["--value", "--"]
+      , ( run literalOptionParser ["--value", "--"]
+        , ( run exclusiveAlternativeParser ["--left", "--left-done"]
+          , run exclusiveAlternativeParser ["--left", "--right", "--right-done"]
+          )
+        )
       )
     )

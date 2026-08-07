@@ -3,6 +3,9 @@
 {-# LANGUAGE RankNTypes #-}
 module Options.Applicative.Types
     ( ParseError(..)
+    , IsCmdStart(..)
+    , SomeParser(..)
+    , Context(..)
     , ReadM(..)
     , readerError
     , readerAbort
@@ -38,6 +41,7 @@ import Data.List
 import Data.Maybe
 import Data.Monoid
 import Data.Ord
+import Data.Semigroup
 import System.Exit
 import Text.Show
 
@@ -48,9 +52,18 @@ data ParseError
     | InfoMsg String
     | ShowHelpText (Maybe String)
     | UnknownError
-    | MissingError String
+    | MissingError IsCmdStart SomeParser
     | ExpectsArgError String
-    | UnexpectedError String
+    | UnexpectedError String SomeParser
+
+instance Semigroup ParseError where
+    err <> UnknownError = err
+    _ <> err = err
+
+instance Monoid ParseError where
+    mempty = UnknownError
+
+data IsCmdStart = CmdStart | CmdCont
     deriving (Eq, Show)
 
 newtype ReadM a = ReadM (String -> Either ParseError a)
@@ -120,6 +133,11 @@ data Parser a
     | forall x. MultP (Parser (x -> a)) (Parser x)
     | AltP (Parser a) (Parser a)
     | forall x. BindP (Parser x) (x -> Parser a)
+
+data SomeParser = forall a. SomeParser (Parser a)
+
+-- The most recently entered command is first, matching upstream's failure context stack.
+data Context = forall a. Context String (ParserInfo a)
 
 instance Functor Option where
     fmap f (Option reader properties) = Option (fmap f reader) properties

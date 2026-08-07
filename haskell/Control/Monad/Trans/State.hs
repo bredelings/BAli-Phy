@@ -93,6 +93,8 @@ instance (Monad m, Alternative m) => Alternative (StateT s m) where
     empty = StateT (const empty)
     StateT first <|> StateT second = StateT (\s -> first s <|> second s)
 
+instance MonadPlus m => MonadPlus (StateT s m)
+
 instance Monad m => Monad (StateT s m) where
     m >>= k = StateT (\s -> do
         ~(x, s') <- runStateT m s

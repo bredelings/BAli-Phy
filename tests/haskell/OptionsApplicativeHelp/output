@@ -9,3 +9,8 @@ Available options:
   FILE                    Input file
   --mode MODE             Processing mode
   --help/-h               Show this help text
+
+---
+Missing: --name NAME
+
+Usage: bali-phy outer inner --name NAME

@@ -30,9 +30,9 @@ renderParserMessage parser_prefs parser_info program_name err = case err of
 renderError :: ParseError -> String
 -- Translate the local structured errors into stable, user-facing one-line messages.
 renderError (ErrorMsg message) = "Error: " ++ message
-renderError (MissingError item) = "Missing: " ++ item
+renderError (MissingError _ (SomeParser parser)) = "Missing: " ++ missingDescription parser
 renderError (ExpectsArgError item) = "Option requires an argument: " ++ item
-renderError (UnexpectedError item) = "Invalid option or argument: " ++ item
+renderError (UnexpectedError item _) = "Invalid option or argument: " ++ item
 renderError UnknownError = "Invalid command line"
 renderError (InfoMsg message) = message
 renderError (ShowHelpText _) = ""

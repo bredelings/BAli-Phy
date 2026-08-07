@@ -13,6 +13,7 @@ module Options.Applicative.Extra
 import Compiler.Base
 import Compiler.Classes
 import Control.Monad
+import Data.Either
 import Data.Eq
 import Data.Function
 import Data.Functor
@@ -21,6 +22,7 @@ import Data.Maybe
 import Options.Applicative.Builder
 import Options.Applicative.Common
 import Options.Applicative.Help
+import Options.Applicative.Internal
 import Options.Applicative.Types
 import System.Environment
 import System.Exit
@@ -35,22 +37,26 @@ getParseResult _ = Nothing
 -- Run a parser without terminal IO so callers can inspect success and failure directly.
 execParserPure :: ParserPrefs -> ParserInfo a -> [String] -> ParserResult a
 execParserPure parser_prefs parser_info arguments =
-    case runParser parser_prefs (infoPolicy parser_info) (infoParser parser_info) arguments of
-        Parsed x [] -> Success x
-        Parsed _ (unexpected:_) -> makeFailure parser_prefs parser_info (UnexpectedError unexpected)
-        ParseFailed err -> makeFailure parser_prefs parser_info
+    case runP (runParserInfo parser_info arguments) parser_prefs of
+        (Right x, _) -> Success x
+        (Left err, contexts) -> makeFailure parser_prefs parser_info contexts
             (if null arguments && prefShowHelpOnEmpty parser_prefs then ShowHelpText Nothing else err)
 
-makeFailure :: ParserPrefs -> ParserInfo a -> ParseError -> ParserResult b
-makeFailure parser_prefs parser_info err = Failure (parserFailure parser_prefs parser_info err)
+makeFailure :: ParserPrefs -> ParserInfo a -> [Context] -> ParseError -> ParserResult b
+makeFailure parser_prefs parser_info contexts err =
+    Failure (parserFailure parser_prefs parser_info err contexts)
 
 -- Construct a delayed failure because the executable name is available only when the result is handled.
-parserFailure :: ParserPrefs -> ParserInfo a -> ParseError -> ParserFailure ParserHelp
-parserFailure parser_prefs parser_info err = ParserFailure (\program_name ->
-    ( ParserHelp (renderParserMessage parser_prefs parser_info program_name err)
+parserFailure :: ParserPrefs -> ParserInfo a -> ParseError -> [Context] -> ParserFailure ParserHelp
+parserFailure parser_prefs parser_info err contexts = ParserFailure (\program_name ->
+    ( ParserHelp (render_with_context program_name)
     , errorExitCode parser_info err
     , prefColumns parser_prefs
-    ))
+    )) where
+        render_with_context program_name = case contexts of
+            [] -> renderParserMessage parser_prefs parser_info program_name err
+            Context _ command_info:_ -> renderParserMessage parser_prefs command_info
+                (unwords (program_name:contextNames contexts)) err
 
 renderFailure :: ParserFailure ParserHelp -> String -> (String, ExitCode)
 renderFailure (ParserFailure render) program_name = case render program_name of
