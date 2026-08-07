@@ -168,6 +168,13 @@ namespace
         require(notes(depth).find("nesting exceeds") != std::string::npos,
                 "conditional depth budget was not enforced");
 
+        Options shallow_expression;
+        shallow_expression.maximum_expression_depth = 2;
+        auto expression_depth = Haskell::CPP::conditionals(
+            "#if (((1)))\nx\n#endif\n", "ExpressionDepth.hs", shallow_expression);
+        require(notes(expression_depth).find("expression-depth budget") != std::string::npos,
+                "expression depth budget was not enforced");
+
         Options few_tokens;
         few_tokens.maximum_expanded_tokens = 2;
         auto tokens = Haskell::CPP::conditionals("#if 1 + 1\nx\n#endif\n", "Tokens.hs", few_tokens);

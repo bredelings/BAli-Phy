@@ -23,6 +23,7 @@ namespace Haskell::CPP
         std::vector<std::string> undefinitions;
         unsigned maximum_conditional_depth = 200;
         unsigned maximum_expansion_depth = 200;
+        unsigned maximum_expression_depth = 200;
         std::size_t maximum_expanded_tokens = 1'000'000;
         std::size_t maximum_integer_bits = 1'000'000;
     };

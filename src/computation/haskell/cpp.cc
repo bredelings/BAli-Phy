@@ -484,6 +484,23 @@ namespace
         const vector<Token>& tokens;
         const Options& options;
         std::size_t pos = 0;
+        unsigned expression_depth = 0;
+
+        class DepthGuard
+        {
+            unsigned& depth;
+
+        public:
+            DepthGuard(unsigned& depth_arg, unsigned maximum, std::size_t column)
+                :depth(depth_arg)
+            {
+                if (depth >= maximum)
+                    throw ParseFailure{"CPP expression nesting exceeds the expression-depth budget", column};
+                depth++;
+            }
+
+            ~DepthGuard() { depth--; }
+        };
 
         const Token& peek() const { return tokens[pos]; }
         bool take(TokenKind kind, string_view text = {})
@@ -556,6 +573,9 @@ namespace
             }
             if (take(TokenKind::LParen))
             {
+                // Count recursive syntax only; the fixed precedence pipeline does not consume the nesting budget.
+                DepthGuard guard(expression_depth, options.maximum_expression_depth,
+                                 tokens[pos - 1].column);
                 auto value = conditional(evaluate);
                 if (not take(TokenKind::RParen))
                     throw ParseFailure{"expected ')' in conditional expression", peek().column};
@@ -570,6 +590,7 @@ namespace
                 (peek().text == "+" or peek().text == "-" or peek().text == "!" or peek().text == "~"))
             {
                 auto op = tokens[pos++];
+                DepthGuard guard(expression_depth, options.maximum_expression_depth, op.column);
                 auto value = unary(evaluate);
                 if (not evaluate) return 0;
                 if (op.text == "+") return value;
@@ -702,10 +723,20 @@ namespace
             auto condition_value = logical_or(evaluate);
             if (not take(TokenKind::Question)) return condition_value;
             bool choose_true = evaluate and condition_value != 0;
-            auto true_value = conditional(choose_true);
+            cpp_int true_value;
+            {
+                DepthGuard guard(expression_depth, options.maximum_expression_depth,
+                                 tokens[pos - 1].column);
+                true_value = conditional(choose_true);
+            }
             if (not take(TokenKind::Colon))
                 throw ParseFailure{"expected ':' in conditional expression", peek().column};
-            auto false_value = conditional(evaluate and not choose_true);
+            cpp_int false_value;
+            {
+                DepthGuard guard(expression_depth, options.maximum_expression_depth,
+                                 tokens[pos - 1].column);
+                false_value = conditional(evaluate and not choose_true);
+            }
             return not evaluate ? cpp_int(0) : choose_true ? true_value : false_value;
         }
 
