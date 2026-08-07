@@ -316,13 +316,13 @@ You can install <application>R</application> via Homebrew:
       <para>If a package manager installed BAli-Phy elsewhere, copy
         <filename>examples/5S-rRNA/25.fasta</filename> from its documentation directory
         instead.  Then run these commands in the same terminal:</para>
-<screen><userinput>bali-phy --version</userinput>
-<userinput>draw-tree --help</userinput>
-<userinput>bp-analyze --help</userinput>
-<userinput>bali-phy-pkg --help</userinput>
-<userinput>bali-phy 25.fasta --iter=200</userinput>
-<userinput>bali-phy 25.fasta --iter=200</userinput>
-<userinput>bp-analyze 25-1 25-2</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy --version</userinput>
+<prompt>%</prompt> <userinput>draw-tree --help</userinput>
+<prompt>%</prompt> <userinput>bp-analyze --help</userinput>
+<prompt>%</prompt> <userinput>bali-phy-pkg --help</userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200</userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200</userinput>
+<prompt>%</prompt> <userinput>bp-analyze 25-1 25-2</userinput></screen>
 
     <para>
       Then check that the file <filename>Results/index.html</filename> exists and can be opened in a web browser.
@@ -367,6 +367,14 @@ You can install <application>R</application> via Homebrew:
 	      Newick trees.</para></entry>
 	  </row>
 	  <row>
+	    <entry>View a tree locally</entry>
+	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://tree.bio.ed.ac.uk/software/figtree/">FigTree</link></entry>
+	    <entry><para>A long-established general-purpose viewer for Newick and NEXUS trees, with
+	      controls for formatting and exporting tree figures.  It is widely used with BEAST
+	      output.</para></entry>
+	  </row>
+	  <row>
 	    <entry>View and annotate a tree online</entry>
 	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
 	      xlink:href="https://itol.embl.de/">iTOL</link></entry>
@@ -375,21 +383,18 @@ You can install <application>R</application> via Homebrew:
 	      it requires uploading the tree to a third-party service.</para></entry>
 	  </row>
 	  <row>
-	    <entry>View a tree locally</entry>
-	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
-	      xlink:href="https://tree.bio.ed.ac.uk/software/figtree/">FigTree</link></entry>
-	    <entry><para>A long-established general-purpose viewer for Newick and NEXUS trees, with
-	      controls for formatting and exporting tree figures.  It is widely used with BEAST
-	      output, but is not limited to trees from BEAST.</para></entry>
-	  </row>
-	  <row>
 	    <entry>Quickly view or edit an alignment</entry>
 	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
 	      xlink:href="https://doua.prabi.fr/software/seaview">SeaView</link></entry>
 	    <entry><para>A lightweight, cross-platform alignment editor that reads FASTA and other
-	      common alignment formats.  <link xmlns:xlink="http://www.w3.org/1999/xlink"
-	      xlink:href="https://ormbunkar.se/aliview/">AliView</link> is another fast,
-	      lightweight choice, particularly for large alignments.</para></entry>
+	      common alignment formats.</para></entry>
+	  </row>
+	  <row>
+	    <entry>Quickly view or edit an alignment</entry>
+	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="https://ormbunkar.se/aliview/">AliView</link></entry>
+	    <entry><para>A lightweight, cross-platform alignment editor that reads FASTA and other
+	      common alignment formats.  Handles large alignments particularly well.</para></entry>
 	  </row>
 	  <row>
 	    <entry>Explore an alignment in more detail</entry>
