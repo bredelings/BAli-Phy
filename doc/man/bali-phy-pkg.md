@@ -19,6 +19,9 @@ On Windows, packages are installed in `%LOCALAPPDATA%\bali-phy\packages` unless 
 
 Package information is kept in the `info` directory beside the `packages` directory.
 
+Exact Hackage sources fetched for development are kept separately under the `hackage`
+directory. Fetching a source does not install it or make its modules importable.
+
 # ALL OPTIONS:
 
 **help**, **-h**, **--help**
@@ -32,6 +35,11 @@ Package information is kept in the `info` directory beside the `packages` direct
 
 **install-archive** _ARCHIVE_
 : Install package in local file _ARCHIVE_.
+
+**fetch-hackage** _PACKAGE_ _VERSION_
+: Fetch one exact Hackage release into a versioned source cache. The cache records and
+  verifies the source archive, latest numbered Cabal revision, declared license files,
+  and every extracted source file. An intact cached release can be reused offline.
 
 **uninstall** _PACKAGE_
 : Uninstall package _PACKAGE_

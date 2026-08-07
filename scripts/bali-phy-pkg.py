@@ -5,17 +5,22 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import re
+import shlex
 import shutil
 import sys
 import tarfile
 import tempfile
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse, urlunparse
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 
 PACKAGE_INDEX_URL = "https://www.bali-phy.org/packages/Packages"
-COMMANDS = "install, install-archive, available, uninstall, info, packages, files, untracked, missing, installed, help"
+HACKAGE_URL = "https://hackage.haskell.org"
+COMMANDS = (
+    "install, install-archive, fetch-hackage, available, uninstall, info, packages, "
+    "files, untracked, missing, installed, help"
+)
 
 
 class PackageManagerError(Exception):
@@ -66,16 +71,56 @@ def file_digest(filename, algorithm):
     return digest.hexdigest()
 
 
+# Validate the package and version components used in Hackage URLs and cache paths.
+def validate_hackage_package_id(name, version):
+    if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*", name):
+        raise PackageManagerError(f"Invalid Hackage package name '{name}'.")
+    parse_version(version)
+
+
+# Split a Cabal license-files field without attempting to interpret the rest of the Cabal file.
+def cabal_license_files(cabal_data):
+    try:
+        lines = cabal_data.decode("utf-8").splitlines()
+    except UnicodeDecodeError as error:
+        raise PackageManagerError(f"Hackage Cabal file is not UTF-8: {error}") from error
+
+    field_values = []
+    index = 0
+    while index < len(lines):
+        match = re.match(r"^\s*license-files?\s*:\s*(.*)$", lines[index], re.IGNORECASE)
+        if not match:
+            index += 1
+            continue
+
+        chunks = [re.split(r"\s--(?:\s|$)", match.group(1), maxsplit=1)[0]]
+        index += 1
+        while index < len(lines) and (not lines[index] or lines[index][0].isspace()):
+            if lines[index].strip() and not lines[index].lstrip().startswith("--"):
+                chunks.append(re.split(r"\s--(?:\s|$)", lines[index].strip(), maxsplit=1)[0])
+            index += 1
+        field_values.extend(chunks)
+
+    lexer = shlex.shlex(" ".join(field_values), posix=True)
+    lexer.whitespace += ","
+    lexer.whitespace_split = True
+    lexer.commenters = ""
+    return sorted(set(lexer))
+
+
 class PackageManager:
     # Keep package contents and package-manager state under one explicit user data root.
-    def __init__(self, user_dir, package_index_url=PACKAGE_INDEX_URL):
+    def __init__(self, user_dir, package_index_url=PACKAGE_INDEX_URL, hackage_url=HACKAGE_URL):
         self.user_dir = Path(user_dir)
         self.packages_dir = self.user_dir / "packages"
         self.info_dir = self.user_dir / "info"
+        self.hackage_dir = self.user_dir / "hackage"
         self.package_index_url = secure_url(package_index_url)
+        self.hackage_url = secure_url(hackage_url).rstrip("/")
 
         self.packages_dir.mkdir(parents=True, exist_ok=True)
         self.info_dir.mkdir(parents=True, exist_ok=True)
+        self.hackage_dir.mkdir(parents=True, exist_ok=True)
 
     # Return package names in stable order, ignoring non-directory debris in the state directory.
     def installed_packages(self):
@@ -364,10 +409,231 @@ class PackageManager:
     # Fetch and decode JSON metadata from the package repository.
     def _read_json_url(self, url):
         try:
-            with urlopen(secure_url(url), timeout=30) as response:
+            request = Request(secure_url(url), headers={"Accept": "application/json"})
+            with urlopen(request, timeout=30) as response:
                 return json.load(response)
         except (HTTPError, URLError, OSError, json.JSONDecodeError) as error:
             raise PackageManagerError(f"Could not fetch '{url}': {error}") from error
+
+    # Download one Hackage artifact to an unpublished staging path.
+    def _download_url(self, url, filename):
+        try:
+            request = Request(secure_url(url), headers={"Accept": "application/octet-stream"})
+            with urlopen(request, timeout=60) as response, Path(filename).open("wb") as output_file:
+                shutil.copyfileobj(response, output_file)
+        except (HTTPError, URLError, OSError) as error:
+            raise PackageManagerError(f"Could not fetch '{url}': {error}") from error
+
+    # Return the latest numbered Cabal revision and the SHA-256 advertised by Hackage.
+    def _latest_hackage_revision(self, package_id):
+        revisions_url = f"{self.hackage_url}/package/{package_id}/revisions/"
+        revisions = self._read_json_url(revisions_url)
+        if not isinstance(revisions, list) or not revisions:
+            raise PackageManagerError(f"Hackage returned no Cabal revisions for '{package_id}'.")
+
+        valid_revisions = []
+        for revision in revisions:
+            number = revision.get("number") if isinstance(revision, dict) else None
+            sha256 = revision.get("sha256") if isinstance(revision, dict) else None
+            if (
+                not isinstance(number, int)
+                or number < 0
+                or not isinstance(sha256, str)
+                or not re.fullmatch(r"[0-9a-fA-F]{64}", sha256)
+            ):
+                raise PackageManagerError(f"Hackage returned invalid revision metadata for '{package_id}'.")
+            valid_revisions.append((number, sha256.lower()))
+
+        if len({number for number, _ in valid_revisions}) != len(valid_revisions):
+            raise PackageManagerError(f"Hackage returned duplicate revisions for '{package_id}'.")
+        return max(valid_revisions)
+
+    # Extract a standard Hackage source tarball while rejecting links and non-regular entries.
+    def _extract_hackage_archive(self, archive_filename, source_dir, package_id):
+        source_dir.mkdir()
+        seen = set()
+        extracted_files = 0
+        try:
+            with tarfile.open(archive_filename, "r:gz") as archive:
+                for member in archive.getmembers():
+                    if "\\" in member.name:
+                        raise PackageManagerError(f"Hackage archive contains invalid path '{member.name}'.")
+                    path = PurePosixPath(member.name)
+                    if (
+                        path.is_absolute()
+                        or not path.parts
+                        or path.parts[0] != package_id
+                        or any(part in ("", ".", "..") or ":" in part for part in path.parts)
+                    ):
+                        raise PackageManagerError(f"Hackage archive contains invalid path '{member.name}'.")
+                    if member.name in seen:
+                        raise PackageManagerError(f"Hackage archive contains duplicate entry '{member.name}'.")
+                    seen.add(member.name)
+
+                    relative_parts = path.parts[1:]
+                    if not relative_parts:
+                        if not member.isdir():
+                            raise PackageManagerError(f"Hackage archive root '{member.name}' is not a directory.")
+                        continue
+
+                    target = source_dir.joinpath(*relative_parts)
+                    if member.isdir():
+                        if target.is_file() or target.is_symlink():
+                            raise PackageManagerError(f"Hackage archive entry '{member.name}' conflicts with a file.")
+                        target.mkdir(parents=True, exist_ok=True)
+                    elif member.isfile():
+                        if target.exists() or target.is_symlink():
+                            raise PackageManagerError(f"Hackage archive entry '{member.name}' conflicts with a path.")
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        source = archive.extractfile(member)
+                        if source is None:
+                            raise PackageManagerError(f"Could not read Hackage archive entry '{member.name}'.")
+                        with source, target.open("wb") as output_file:
+                            shutil.copyfileobj(source, output_file)
+                        if os.name != "nt":
+                            target.chmod(member.mode & 0o777)
+                        extracted_files += 1
+                    else:
+                        raise PackageManagerError(
+                            f"Hackage archive entry '{member.name}' is not a regular file or directory."
+                        )
+        except PackageManagerError:
+            raise
+        except (OSError, tarfile.TarError) as error:
+            raise PackageManagerError(f"Can't read Hackage archive '{archive_filename}': {error}") from error
+
+        if not extracted_files:
+            raise PackageManagerError(f"Hackage archive for '{package_id}' contains no source files.")
+
+    # Describe every extracted source file so an offline cache hit can be verified completely.
+    def _source_manifest(self, source_dir):
+        if not Path(source_dir).is_dir() or Path(source_dir).is_symlink():
+            raise PackageManagerError(f"Invalid Hackage source cache directory: '{source_dir}'.")
+        files = []
+        for filename in sorted(Path(source_dir).rglob("*")):
+            if filename.is_symlink() or (not filename.is_file() and not filename.is_dir()):
+                raise PackageManagerError(f"Invalid file in Hackage source cache: '{filename}'.")
+            if filename.is_file():
+                files.append(
+                    {
+                        "path": filename.relative_to(source_dir).as_posix(),
+                        "size": filename.stat().st_size,
+                        "sha256": file_digest(filename, "sha256"),
+                    }
+                )
+        return files
+
+    # Check every cached artifact and source file before treating a fetch as an offline cache hit.
+    def _verify_hackage_cache(self, cache_dir, name, version):
+        manifest_filename = cache_dir / "manifest.json"
+        try:
+            if not cache_dir.is_dir() or cache_dir.is_symlink():
+                raise PackageManagerError("cache path is not a regular directory")
+            with manifest_filename.open(encoding="utf-8") as input_file:
+                manifest = json.load(input_file)
+            if not isinstance(manifest, dict):
+                raise PackageManagerError("manifest is not a JSON object")
+            if manifest.get("format") != 1 or manifest.get("package") != name or manifest.get("version") != version:
+                raise PackageManagerError("manifest identity does not match the cache path")
+
+            source_info = manifest["source-archive"]
+            cabal_info = manifest["cabal-revision"]
+            if source_info.get("file") != f"{name}-{version}.tar.gz" or cabal_info.get("file") != f"{name}.cabal":
+                raise PackageManagerError("manifest contains unexpected artifact paths")
+            archive_filename = cache_dir / source_info["file"]
+            cabal_filename = cache_dir / cabal_info["file"]
+            if file_digest(archive_filename, "sha256") != source_info["sha256"]:
+                raise PackageManagerError("source archive checksum does not match its manifest")
+            if file_digest(cabal_filename, "sha256") != cabal_info["sha256"]:
+                raise PackageManagerError("Cabal revision checksum does not match its manifest")
+
+            actual_files = self._source_manifest(cache_dir / "source")
+            if actual_files != manifest["source-files"]:
+                raise PackageManagerError("extracted source does not match its manifest")
+            actual_paths = {file_info["path"] for file_info in actual_files}
+            if any(filename not in actual_paths for filename in manifest["license-files"]):
+                raise PackageManagerError("a recorded license file is absent from the source")
+        except PackageManagerError:
+            raise
+        except (AttributeError, OSError, KeyError, TypeError, json.JSONDecodeError) as error:
+            raise PackageManagerError(f"invalid cache manifest: {error}") from error
+        return manifest
+
+    # Fetch one exact Hackage release into an atomic, versioned, independently verifiable cache.
+    def fetch_hackage(self, name, version):
+        validate_hackage_package_id(name, version)
+        package_id = f"{name}-{version}"
+        package_cache_dir = self.hackage_dir / name
+        cache_dir = package_cache_dir / version
+        package_cache_dir.mkdir(parents=True, exist_ok=True)
+
+        if cache_dir.exists():
+            try:
+                self._verify_hackage_cache(cache_dir, name, version)
+            except PackageManagerError as error:
+                raise PackageManagerError(f"Cached Hackage source for '{package_id}' is invalid: {error}") from error
+            print(f"Using cached Hackage source for {package_id}: {cache_dir}")
+            return cache_dir
+
+        source_url = f"{self.hackage_url}/package/{package_id}/{package_id}.tar.gz"
+        revision, expected_cabal_sha256 = self._latest_hackage_revision(package_id)
+        cabal_url = f"{self.hackage_url}/package/{package_id}/revision/{revision}.cabal"
+
+        with tempfile.TemporaryDirectory(prefix=f".{version}.", dir=package_cache_dir) as temporary_dir:
+            staging_dir = Path(temporary_dir) / "cache"
+            staging_dir.mkdir()
+            archive_filename = staging_dir / f"{package_id}.tar.gz"
+            cabal_filename = staging_dir / f"{name}.cabal"
+            source_dir = staging_dir / "source"
+
+            self._download_url(source_url, archive_filename)
+            self._extract_hackage_archive(archive_filename, source_dir, package_id)
+            self._download_url(cabal_url, cabal_filename)
+            cabal_sha256 = file_digest(cabal_filename, "sha256")
+            if cabal_sha256 != expected_cabal_sha256:
+                raise PackageManagerError(
+                    f"Cabal revision {revision} for '{package_id}' has SHA-256 {cabal_sha256}, "
+                    f"but Hackage advertised {expected_cabal_sha256}."
+                )
+
+            source_cabal = source_dir / f"{name}.cabal"
+            if not source_cabal.is_file() or source_cabal.is_symlink():
+                raise PackageManagerError(f"Hackage archive for '{package_id}' has no regular '{name}.cabal' file.")
+            shutil.copyfile(cabal_filename, source_cabal)
+
+            license_files = cabal_license_files(cabal_filename.read_bytes())
+            source_paths = {file_info["path"] for file_info in self._source_manifest(source_dir)}
+            invalid_license = next((filename for filename in license_files if filename not in source_paths), None)
+            if invalid_license is not None:
+                raise PackageManagerError(
+                    f"Cabal revision for '{package_id}' names missing license file '{invalid_license}'."
+                )
+
+            manifest = {
+                "format": 1,
+                "package": name,
+                "version": version,
+                "source-archive": {
+                    "file": archive_filename.name,
+                    "url": source_url,
+                    "sha256": file_digest(archive_filename, "sha256"),
+                },
+                "cabal-revision": {
+                    "file": cabal_filename.name,
+                    "url": cabal_url,
+                    "revision": revision,
+                    "sha256": cabal_sha256,
+                },
+                "license-files": license_files,
+                "source-files": self._source_manifest(source_dir),
+            }
+            temporary_manifest = staging_dir / "manifest.json.new"
+            temporary_manifest.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            temporary_manifest.replace(staging_dir / "manifest.json")
+            os.replace(staging_dir, cache_dir)
+
+        print(f"Fetched Hackage source for {package_id}: {cache_dir}")
+        return cache_dir
 
     # Return the package metadata published by the configured repository.
     def remote_packages_info(self):
@@ -439,8 +705,9 @@ class PackageManager:
 
 # Print the stable command summary used by both explicit and implicit help.
 def show_help():
-    print("Usage: bali-phy-pkg <command> [arg]")
+    print("Usage: bali-phy-pkg <command> [arguments]")
     print(f"Commands are: {COMMANDS}")
+    print("  fetch-hackage PACKAGE VERSION   cache one exact Hackage source release")
 
 
 # Dispatch the historical command interface without changing package file formats.
@@ -450,6 +717,10 @@ def run_command(manager, command, arguments):
         manager.install_archive(argument)
     elif command == "install":
         manager.install_package(argument)
+    elif command == "fetch-hackage":
+        if len(arguments) != 2:
+            raise PackageManagerError("fetch-hackage: expected PACKAGE and VERSION.")
+        manager.fetch_hackage(arguments[0], arguments[1])
     elif command == "uninstall":
         manager.uninstall_package(argument)
     elif command == "info":

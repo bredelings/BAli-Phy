@@ -10,6 +10,7 @@ import sys
 import tarfile
 import tempfile
 import unittest
+from unittest import mock
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bali-phy-pkg.py"
@@ -46,6 +47,28 @@ def make_package_archive(directory, name, version, files, archive_name=None):
         for relative_name, contents in files.items():
             add_tar_file(archive, f"files/{relative_name}", contents)
     return filename
+
+
+# Construct a standard package-version-rooted Hackage source archive.
+def make_hackage_archive(directory, name, version, files):
+    package_id = f"{name}-{version}"
+    filename = Path(directory) / f"{package_id}.tar.gz"
+    with tarfile.open(filename, "w:gz") as archive:
+        for relative_name, contents in files.items():
+            add_tar_file(archive, f"{package_id}/{relative_name}", contents)
+    return filename
+
+
+# Return in-memory URL responses while retaining the Request headers and exact URLs under test.
+def urlopen_from(responses):
+    # Resolve the URL exactly as urllib would while returning an isolated byte stream per request.
+    def open_response(request, timeout):
+        url = request.full_url if hasattr(request, "full_url") else request
+        if url not in responses:
+            raise AssertionError(f"unexpected URL: {url}")
+        return io.BytesIO(responses[url])
+
+    return open_response
 
 
 # These tests protect archive compatibility and package-state recovery; they can be removed only
@@ -226,6 +249,90 @@ class PackageManagerTests(unittest.TestCase):
             with self.assertRaisesRegex(MODULE.PackageManagerError, "wrong SHA256"):
                 invalid_manager.install_package("Remote")
             self.assertFalse(invalid_manager.is_package_installed("Remote"))
+
+    # Protect exact-version caching, revised Cabal metadata, source manifests, and offline reuse;
+    # this can be removed if a future Hackage client provides equivalent verified cache semantics.
+    def test_hackage_source_fetch_and_offline_reuse(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            name = "example-package"
+            version = "1.2.3"
+            package_id = f"{name}-{version}"
+            original_cabal = f"name: {name}\nversion: {version}\nlicense-file: LICENSE\n"
+            revised_cabal = (
+                f"name: {name}\nversion: {version}\n"
+                "license-files: LICENSE, NOTICE.txt -- bundled notices\n"
+            ).encode("utf-8")
+            archive = make_hackage_archive(
+                directory,
+                name,
+                version,
+                {
+                    f"{name}.cabal": original_cabal,
+                    "LICENSE": "license\n",
+                    "NOTICE.txt": "notice\n",
+                    "src/Example.hs": "module Example where\n",
+                },
+            )
+            base_url = "https://hackage.test"
+            revisions_url = f"{base_url}/package/{package_id}/revisions/"
+            source_url = f"{base_url}/package/{package_id}/{package_id}.tar.gz"
+            cabal_url = f"{base_url}/package/{package_id}/revision/1.cabal"
+            responses = {
+                revisions_url: json.dumps(
+                    [{"number": 1, "sha256": hashlib.sha256(revised_cabal).hexdigest()}]
+                ).encode("utf-8"),
+                source_url: archive.read_bytes(),
+                cabal_url: revised_cabal,
+            }
+
+            manager = MODULE.PackageManager(directory / "user-data", hackage_url=base_url)
+            with mock.patch.object(MODULE, "urlopen", side_effect=urlopen_from(responses)):
+                cache_dir = manager.fetch_hackage(name, version)
+
+            self.assertEqual((cache_dir / "source" / f"{name}.cabal").read_bytes(), revised_cabal)
+            manifest = json.loads((cache_dir / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["cabal-revision"]["revision"], 1)
+            self.assertEqual(manifest["license-files"], ["LICENSE", "NOTICE.txt"])
+            self.assertIn("src/Example.hs", [file_info["path"] for file_info in manifest["source-files"]])
+
+            with mock.patch.object(MODULE, "urlopen", side_effect=AssertionError("network used for cache hit")):
+                self.assertEqual(manager.fetch_hackage(name, version), cache_dir)
+
+            (cache_dir / "source" / "src" / "Example.hs").write_text("tampered\n", encoding="utf-8")
+            with self.assertRaisesRegex(MODULE.PackageManagerError, "extracted source"):
+                manager.fetch_hackage(name, version)
+
+    # The Hackage extractor must reject traversal and links before publishing any source tree;
+    # this remains necessary while extraction is implemented locally rather than by a trusted client.
+    def test_hackage_archive_rejects_unsafe_entries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            manager = MODULE.PackageManager(directory / "user-data")
+            package_id = "unsafe-1.0"
+
+            for label, member in (
+                ("traversal", tarfile.TarInfo(f"{package_id}/../../escaped")),
+                ("link", tarfile.TarInfo(f"{package_id}/link")),
+            ):
+                archive_filename = directory / f"{label}.tar.gz"
+                member_data = b"bad"
+                if label == "link":
+                    member.type = tarfile.SYMTYPE
+                    member.linkname = "../../escaped"
+                else:
+                    member.size = len(member_data)
+                with tarfile.open(archive_filename, "w:gz") as archive:
+                    archive.addfile(member, None if label == "link" else io.BytesIO(member_data))
+
+                with self.subTest(label=label):
+                    with self.assertRaisesRegex(MODULE.PackageManagerError, "invalid path|not a regular file"):
+                        manager._extract_hackage_archive(
+                            archive_filename,
+                            directory / f"source-{label}",
+                            package_id,
+                        )
+                    self.assertFalse((directory / "escaped").exists())
 
     # Prevent a malformed remote archive from writing outside the package directory.
     def test_archive_path_traversal_is_rejected(self):
