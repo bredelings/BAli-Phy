@@ -363,9 +363,8 @@ You can install <application>R</application> via Homebrew:
 	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
 	      xlink:href="https://treeviewer.org/">TreeViewer</link></entry>
 	    <entry><para>A cross-platform viewer for exploring, styling, and exporting trees.  It
-	      reads the current BAli-Phy consensus trees and also recognizes structured attributes
-	      in bare Newick trees.  See <xref linkend="tree_metadata_compatibility"/> before using
-	      it to rewrite an annotated tree.</para></entry>
+	      reads BAli-Phy consensus trees and also recognizes structured attributes in bare
+	      Newick trees.</para></entry>
 	  </row>
 	  <row>
 	    <entry>View and annotate a tree online</entry>
@@ -376,12 +375,12 @@ You can install <application>R</application> via Homebrew:
 	      it requires uploading the tree to a third-party service.</para></entry>
 	  </row>
 	  <row>
-	    <entry>View a BEAST-style tree</entry>
+	    <entry>View a tree locally</entry>
 	    <entry><link xmlns:xlink="http://www.w3.org/1999/xlink"
 	      xlink:href="https://tree.bio.ed.ac.uk/software/figtree/">FigTree</link></entry>
-	    <entry><para>A long-established viewer designed for summarized, annotated BEAST trees.
-	      It remains useful for conventional Newick and NEXUS trees, but does not interpret
-	      metadata comments in a bare Newick file.</para></entry>
+	    <entry><para>A long-established general-purpose viewer for Newick and NEXUS trees, with
+	      controls for formatting and exporting tree figures.  It is widely used with BEAST
+	      output, but is not limited to trees from BEAST.</para></entry>
 	  </row>
 	  <row>
 	    <entry>Quickly view or edit an alignment</entry>
@@ -418,25 +417,14 @@ You can install <application>R</application> via Homebrew:
       Tracer, <filename>Results/c50.PP.tree</filename> in a tree viewer, and
       <filename>Results/P1.consensus.pd-wsum.fasta</filename> in an alignment viewer.</para>
 
-    <section xml:id="tree_metadata_compatibility"><info><title>Tree metadata compatibility</title></info>
-      <para>Current BAli-Phy consensus trees store posterior probabilities as internal node
-        labels.  TreeViewer, iTOL, and FigTree can display these trees.  Other BAli-Phy inputs
-        may use structured Newick comments such as <userinput>[&amp;foreground=1]</userinput> to
-        attach information to a branch.</para>
-
-      <para>TreeViewer imports such comments from a bare Newick file as attributes.  Internally,
-        however, it stores both node attributes and attributes of the incoming branch on the
-        descendant node.  It therefore does not preserve the distinction indicated by placing
-        a comment before or after the branch-length colon.  Its ordinary Newick export also
-        omits these attributes.  Treat TreeViewer as a viewer and figure generator, rather than
-        as a lossless converter for annotated trees.</para>
-
-      <para>iTOL parses NHX and MrBayes-style metadata from uploaded Newick and NEXUS trees.
-        FigTree interprets metadata comments in NEXUS trees, but not in bare Newick trees.  If
-        preserving the exact location and spelling of comments is important, keep the original
-        tree file and verify any file exported by a viewer before using it in another
-        analysis.</para>
-    </section>
+    <para>Consensus trees produced by <command>bp-analyze</command>, such as
+      <filename>Results/c50.PP.tree</filename>, can be opened directly in TreeViewer, FigTree,
+      or iTOL.  Be more careful with annotated input trees: some BAli-Phy analyses use comments
+      such as <userinput>[&amp;foreground=1]</userinput> to identify particular branches.
+      TreeViewer can read these annotations from a bare Newick tree, but its ordinary Newick
+      export omits them.  FigTree reads metadata comments from NEXUS trees, but not from bare
+      Newick trees.  Keep the original annotated tree, and check any copy saved by a viewer
+      before using it as input to BAli-Phy.</para>
 
     </section>
     </section>
