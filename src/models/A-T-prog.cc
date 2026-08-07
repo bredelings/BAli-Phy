@@ -629,6 +629,8 @@ Hs::Stmts generate_main(const variables_map& args,
             put_line("You can examine 'C1.log' using BAli-Phy tool statreport (command-line) or the "
                      "BEAST program Tracer (graphical).");
         put_line("See the manual at http://www.bali-phy.org/README.xhtml for further information.");
+        // Ensure redirected startup information is visible before model construction or MCMC begins.
+        HsG::Expr(main, HsG::Apply(Hs::Var("hFlush"), {Hs::Var("stdout")}));
     }
 
     // Main.5. Emit mymodel <- makeMCMCModel $ model sequence_data
