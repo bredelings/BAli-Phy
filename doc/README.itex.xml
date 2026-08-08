@@ -1262,7 +1262,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
         <screen>bali-phy: Error! phyloCTMC: the tree is unrooted, but the model is not reversible!</screen>
         In this case you will need to specify a rooted tree distribution.
         The simplest approach is to add the following to the command line:
-        <screen><userinput>--tree '~uniform_rooted_tree(taxa)'</userinput></screen>
+        <screen><userinput>--tree '~UniformRootedTree(taxa)'</userinput></screen>
         This distribution creates rooted trees by sampling an unrooted tree and choosing one of the nodes as the root.
         So the root will <emphasis>not</emphasis> be in the middle of a branch.
         &baliphy; will then estimate the root location.
@@ -2680,7 +2680,7 @@ If the genetic code is not specified, then the standard code is used:
 	</informaltable>
 	    
 	<para>The user can specify priors and parameters for indel models (See section <xref linkend="functions"/>):
-<programlisting>rs07(log_rate~logLaplace(-4,0.707),mean_length=2)</programlisting>
+<programlisting>rs07(log_rate~LogLaplace(-4,0.707),mean_length=2)</programlisting>
 	</para>
 
     </section>
@@ -2691,14 +2691,14 @@ If the genetic code is not specified, then the standard code is used:
   <para>Models, probability distributions, and functions are treated the same in BAli-Phy because all of them have parameters or arguments. Parameters have names in BAli-Phy.  Parameter values are specified using parentheses as follows:
   <programlisting>hky85(kappa=2)            // model
 log(x=2)                  // function
-normal(mean=0,sigma=1)    // probability distribution</programlisting>
+Normal(mean=0,sigma=1)    // probability distribution</programlisting>
 It is possible to specify parameter values by position instead of by name:
   <programlisting>hky85(2)
 log(2)
-normal(0,1)</programlisting>
+Normal(0,1)</programlisting>
 It is even possible to mix positional and named arguments, as long as all the positional arguments come before all the named arguments:
-<programlisting>normal(0,sigma=1)   // OK
-normal(mean=0,1)    // not OK</programlisting>
+<programlisting>Normal(0,sigma=1)   // OK
+Normal(mean=0,1)    // not OK</programlisting>
 
   The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
 <screen><prompt>%</prompt> <userinput>bali-phy help hky85</userinput></screen>
@@ -2734,32 +2734,32 @@ This allows a simple method for combining models, when one model is an argument 
   <section xml:id="priors"><info><title>Priors</title></info>
   <section><info><title>Specifying priors</title></info>
 <para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <userinput>sample</userinput>.  For example, this places a log-normal prior on the parameter <userinput>kappa</userinput> of the <userinput>hky85</userinput> model:
-<programlisting>hky85(kappa=sample(logNormal(1,1)))</programlisting>
+<programlisting>hky85(kappa=sample(LogNormal(1,1)))</programlisting>
 You can write <userinput>~Dist</userinput> as a shorthand for <userinput>sample(Dist)</userinput>:
-<programlisting>hky85(kappa = ~logNormal(1,1))</programlisting>
+<programlisting>hky85(kappa = ~LogNormal(1,1))</programlisting>
 The <userinput>=~</userinput> can be further shortened to just <userinput>~</userinput>:
-<programlisting>hky85(kappa ~ logNormal(1,1))</programlisting>
+<programlisting>hky85(kappa ~ LogNormal(1,1))</programlisting>
 </para>
 </section>
 
   <section><info><title>Random function arguments</title></info>
 <para>It also is possible to use random values as inputs to other functions.  For example:
-<programlisting>1.0 + ~exponential(10)</programlisting>
+<programlisting>1.0 + ~Exponential(10)</programlisting>
 In such cases the parameter value should be specified with <userinput>=</userinput>, as in the following example:
-<programlisting>rs07(mean_length=1.0 + ~exponential(10))</programlisting>
+<programlisting>rs07(mean_length=1.0 + ~Exponential(10))</programlisting>
 </para>
   </section>
 <section><info><title>Distributions are not random values</title></info>
 <para>Random values and distributions have different types.  For example, the
 following is of type <userinput>Distribution&lt;Double&gt;</userinput>:
-<programlisting>uniform(0,1)</programlisting>
+<programlisting>Uniform(0,1)</programlisting>
 In contrast, the following are both of type <userinput>Double</userinput>:
-<programlisting>sample(uniform(0,1))
-~uniform(0,1)</programlisting>
+<programlisting>sample(Uniform(0,1))
+~Uniform(0,1)</programlisting>
 This is important when passing distributions as arguments to other
-distributions and functions.  For example, the distribution <userinput>iid</userinput> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
-<programlisting>~iid(4, normal(0,1))      // OK    : 4 samples from the normal(0,1) distribution
-~iid(4, ~normal(0,1))     // not OK: 4 samples from ... a random number?</programlisting>
+distributions and functions.  For example, the distribution <userinput>IID</userinput> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
+<programlisting>~IID(4, Normal(0,1))      // OK    : 4 samples from the Normal(0,1) distribution
+~IID(4, ~Normal(0,1))     // not OK: 4 samples from ... a random number?</programlisting>
 (See <xref linkend="types"/>.)
 </para>
   </section>
@@ -2771,8 +2771,8 @@ Some function arguments have default values.  For example, the <userinput>Rates.
 <programlisting>hky85 +> Rates.gamma(n=4) +> inv
 hky85 +> Rates.gamma +> inv</programlisting></para>
 
-  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~logNormal(log(2),0.25)</userinput>, so the following are equivalent:
-<programlisting>hky85(kappa~logNormal(log(2),0.25))
+  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~LogNormal(log(2),0.25)</userinput>, so the following are equivalent:
+<programlisting>hky85(kappa~LogNormal(log(2),0.25))
 hky85</programlisting>
 The <userinput>help</userinput> command can be used to determine the default value for a parameter, if there is one.</para>
   </section>
@@ -3613,7 +3613,7 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	<qandaentry>
 	  <question><para>Can I fix the tree topology and <emphasis>relative</emphasis> branch lengths, while allowing the alignment to vary?</para></question>
 	  <answer>
-	    <para>Yes.  Add <userinput>--fix tree=<replaceable>treefile</replaceable> '--scale=~gamma(0.5,2)'</userinput> on the command line.</para>
+	    <para>Yes.  Add <userinput>--fix tree=<replaceable>treefile</replaceable> '--scale=~Gamma(0.5,2)'</userinput> on the command line.</para>
 	  </answer>
 	</qandaentry>
 

@@ -75,10 +75,10 @@ One possible simple-language model:
 codonA = codons(dna(), standard_code())
 nucA = getNucleotides(codonA)
 
-kappa ~ logNormal(log(2), 0.25)
-omega ~ uniform(0, 1)
-er ~ symmetric_dirichlet_on(letter_pairs(nucA), 1)
-pi ~ symmetric_dirichlet_on(letters(nucA), 1)
+kappa ~ LogNormal(log(2), 0.25)
+omega ~ Uniform(0, 1)
+er ~ SymmetricDirichletOn(letter_pairs(nucA), 1)
+pi ~ SymmetricDirichletOn(letters(nucA), 1)
 
 nucModel = gtr(nucA, er, pi)
 model = x3(codonA, nucModel) |> dNdS(omega)
@@ -127,9 +127,9 @@ model = x3(codonA, nucModel)
 Random declarations use `~`:
 
 ```text
-kappa ~ logNormal(log(2), 0.25)
-omega ~ uniform(0, 1)
-pi ~ symmetric_dirichlet_on(letters(nucA), 1)
+kappa ~ LogNormal(log(2), 0.25)
+omega ~ Uniform(0, 1)
+pi ~ SymmetricDirichletOn(letters(nucA), 1)
 ```
 
 The intent is that sampled quantities are named.  This gives natural logger
@@ -138,13 +138,13 @@ names and avoids anonymous random subexpressions hidden inside larger terms.
 Expression-level sampling should not be included initially:
 
 ```text
-model = hky85(nucA, ~logNormal(log(2), 0.25), pi)  # not first-version syntax
+model = hky85(nucA, ~LogNormal(log(2), 0.25), pi)  # not first-version syntax
 ```
 
 Users should instead write:
 
 ```text
-kappa ~ logNormal(log(2), 0.25)
+kappa ~ LogNormal(log(2), 0.25)
 model = hky85(nucA, kappa, pi)
 ```
 
@@ -174,7 +174,7 @@ The simple language should use named random declarations as the natural logging
 unit:
 
 ```text
-omega ~ uniform(0, 1)
+omega ~ Uniform(0, 1)
 ```
 
 The first automatic logging rule is simple: log every loggable non-function
@@ -289,7 +289,7 @@ In the first version, random sampling is introduced only by top-level random
 declarations:
 
 ```text
-omega ~ uniform(0, 1)
+omega ~ Uniform(0, 1)
 ```
 
 Lambda values are supported only as pure functions.  A lambda body should not
@@ -330,8 +330,8 @@ The simple language should initially require alphabets to be explicit:
 codonA = codons(dna(), standard_code())
 nucA = getNucleotides(codonA)
 
-er ~ symmetric_dirichlet_on(letter_pairs(nucA), 1)
-pi ~ symmetric_dirichlet_on(letters(nucA), 1)
+er ~ SymmetricDirichletOn(letter_pairs(nucA), 1)
+pi ~ SymmetricDirichletOn(letters(nucA), 1)
 
 nucModel = gtr(nucA, er, pi)
 model = x3(codonA, nucModel)

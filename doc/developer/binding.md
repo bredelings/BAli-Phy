@@ -25,13 +25,13 @@ The JSON looks like this:
         {
             "arg_name": "kappa",
             "arg_type": "Double",
-            "default_value": "~logNormal(log(2),0.25)",
+            "default_value": "~LogNormal(log(2),0.25)",
             "description": "Transition\/transversion ratio"
         },
         {
             "arg_name": "pi",
             "arg_type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
+            "default_value": "~SymmetricDirichletOn(letters(@a),1)",
 	    "description": "Letter frequencies"
         },
         {

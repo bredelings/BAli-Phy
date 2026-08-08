@@ -359,8 +359,8 @@ omega_foreground =
     omega_background * foreground_ratio                   when H = 1.
 ```
 
-Use `omega_background ~ logLaplace(-1, 1)`, `foreground_ratio ~ logLaplace(0, 1)`, and
-`H ~ bernoulli(0.5)` as documented defaults. Keep `foreground_ratio` in the state under both
+Use `omega_background ~ LogLaplace(-1, 1)`, `foreground_ratio ~ LogLaplace(0, 1)`, and
+`H ~ Bernoulli(0.5)` as documented defaults. Keep `foreground_ratio` in the state under both
 hypotheses. Under `H = 0` it is unused by the likelihood, so its proper prior integrates to one and no
 dimension-changing parameter is needed for this comparison.
 
@@ -515,8 +515,8 @@ earlier change should be made in an empty child of that change and squashed into
 
 5. **Add the two-ratio Bayesian branch comparison.**
    In the next commit, use the shared constructor to add a Haskell branch-comparison function and
-   `bindings/models/branch_test.json`. Give the binding `omega_background ~ logLaplace(-1,1)`,
-   `foreground_ratio ~ logLaplace(0,1)`, `branchDifference ~ bernoulli(0.5)`, `branch_cats`, and a
+   `bindings/models/branch_test.json`. Give the binding `omega_background ~ LogLaplace(-1,1)`,
+   `foreground_ratio ~ LogLaplace(0,1)`, `branchDifference ~ Bernoulli(0.5)`, `branch_cats`, and a
    codon-model function argument. Scale the single background and foreground models to expected rate
    one, use `omega_background` under the null, and use
    `omega_background * foreground_ratio` on foreground branches under the alternative.

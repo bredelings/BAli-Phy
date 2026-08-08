@@ -11,8 +11,8 @@ as well.
 
 # Examples:
 
-   bali-phy dna.fasta '--tree=uniform_tree(taxa, gamma(1/length(taxa)))'
-   bali-phy dna.fasta --fix topology=file '--tree=fixed\_topology_tree(topology, gamma(1/length(taxa)))'
+   bali-phy dna.fasta '--tree=UniformTree(taxa, Gamma(1/length(taxa)))'
+   bali-phy dna.fasta --fix topology=file '--tree=FixedTopologyTree(topology, Gamma(1/length(taxa)))'
 
 # See also:
 

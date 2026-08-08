@@ -469,13 +469,14 @@ model_t compile_decls(const Rules& R,
 
 
 // Some things, like log, exp, add, sub, etc. don't really have named arguments.
-//    For these things exp[~normal[0,1]] remains exp[~normal[0,1]]
-// Some things, like normal, gamma, etc. have named arguments.
-//    For these things, we pull out random arguments, so that normal[~normal[0,1],1] becomes
-//      normal[mu,1]: normal:mu ~ norma[0,1]
+//    For these things exp(~Normal(0,1)) remains exp(~Normal(0,1)).
+// Some things, like Normal and Gamma, have named arguments.
+//    For these things, we pull out random arguments, so that Normal(~Normal(0,1),1) becomes
+//      Normal(mean,1), with Normal:mean ~ Normal(0,1) extracted.
 // Some things like tn, hky, etc. are considered to have named parameters.
 //    For these things, we pull out all arguments that are numbers.
-//    So, tn93[1,~log_normal[0,1]] becomes tn93 ; tn:kappa_pur=1 , tn:kappa_pyr ~ lognormal[0,1]
+//    Thus tn93(1,~LogNormal(0,1)) becomes tn93, with tn93:kappaPur=1 and
+//      tn93:kappaPyr ~ LogNormal(0,1) extracted.
 
 // However, we would like gy94[pi=f1x4] to NOT pull out the pi, because f1x4 is ALSO a model.
 

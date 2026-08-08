@@ -7,7 +7,7 @@ To make a new distribution `mydist`, you should follow these steps, using the no
 1. create a new Haskell module `Probability.Distribution.MyDist` in `haskell/Probability/Distribution/Mydist.hs` using `Normal.hs` as a template.
 2. create a new c++ function `builtin_function_mydist_density` in `src/builtins/Distribution.cc` using `builtin_function_normal_density` as a template.
 3. create a new c++ function `builtin_function_sample_mydist` in `src/builtins/Distribution.cc` using `builtin_function_sample_normal` as a template.
-4. create a new JSON binding in `bindings/distributions/mydist.json` using `bindings/distribution/normal.json` as a template.
+4. create a new JSON binding in `bindings/distributions/mydist.json` using `bindings/distributions/Normal.json` as a template.
 
 ## Making Haskell model that defines the distribution
 
@@ -56,4 +56,3 @@ extern "C" closure builtin_function_sample_normal(OperationArgs& Args)
 ## C++ density
 
 A density function should return type `log_double_t`.
-

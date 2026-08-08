@@ -77,7 +77,7 @@ By default, not all the options are shown.  To see more options, try:
 <para>
 You can also get help on models, distributions, functions, and command-line options:
 % bali-phy help tn93           | less        # Tamura-Nei (1993) <emphasis>model</emphasis>
-% bali-phy help normal         | less        # Normal <emphasis>distribution</emphasis>
+% bali-phy help Normal         | less        # Normal <emphasis>distribution</emphasis>
 % bali-phy help quantile       | less        # quantile <emphasis>function</emphasis>
 
 You can find out which models, distributions, and functions are available?
@@ -485,19 +485,19 @@ This will show the default value or default prior for each parameter, if there i
 
 <section><info><title>Priors</title></info>
 <para>
-By default the fraction of invariant sites follows a uniform(0,1) distribution:
+By default the fraction of invariant sites follows a Uniform(0,1) distribution:
 % bali-phy help inv
 However, we can specify an alternative prior:
-% bali-phy Globins/bglobin.fasta --test -S 'tn93 +> Rates.gamma(n=4) +> inv(p_inv~uniform(0,0.2))'
+% bali-phy Globins/bglobin.fasta --test -S 'tn93 +> Rates.gamma(n=4) +> inv(p_inv~Uniform(0,0.2))'
 We can also specify parameters as positional arguments instead of using variable names:
-% bali-phy Globins/bglobin.fasta --test -S 'tn93 +> Rates.gamma(4) +> inv(~uniform(0,0.2))'
+% bali-phy Globins/bglobin.fasta --test -S 'tn93 +> Rates.gamma(4) +> inv(~Uniform(0,0.2))'
 Here "<userinput>~</userinput>" indicates a sample from the uniform distribution instead of the distribution
 itself.
 </para>
 <para>
 The insertion-deletion model also has parameters.
 % bali-phy help rs07
-Here the default value for rs07:mean_length is exponential(10,1).  This indicates
+Here the default value for rs07:mean_length is ShiftedExponential(10,1).  This indicates
 a random value that is obtained by sampling an Exponential random variable with mean 10
 and then adding 1 to it.
 </para>
@@ -589,4 +589,3 @@ Keep only columns with a minimum number of residues:
 
 </section>
 </article>
-
