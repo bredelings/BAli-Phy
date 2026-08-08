@@ -29,7 +29,6 @@ a branch property and not a node property.
 
    bali-phy dna.fasta --fix tree=newick.tree
    bali-phy dna.fasta --fix topology=newick.tree
-   bali-phy dna.fasta --fix topology=file '--tree=FixedTopologyTree(topology, Gamma(1/length(taxa)))'
 
 # See also:
 

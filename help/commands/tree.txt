@@ -6,13 +6,9 @@
 This selects the prior on the tree.  The implicit parameter `taxa` can
 be used to construct the tree.
 
-If the topology is fixed, the implicit parameter `topology` may be used
-as well.
-
 # Examples:
 
-   bali-phy dna.fasta '--tree=UniformTree(taxa, Gamma(1/length(taxa)))'
-   bali-phy dna.fasta --fix topology=file '--tree=FixedTopologyTree(topology, Gamma(1/length(taxa)))'
+   bali-phy dna.fasta '--tree=~UniformTree(taxa)'
 
 # See also:
 
