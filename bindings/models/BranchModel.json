@@ -3,7 +3,7 @@
     "deprecated-synonyms": ["branch_model"],
     "title": "Multiple-omega branch model",
     "result_type": "CTMC<Codons<a>>",
-    "call": "omegaBranchModel(@branch_cats,@omegas,@submodel)",
+    "call": "omegaBranchModel(@branchCats,@omegas,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -18,7 +18,7 @@
             "description": "Omega for branch categories #0, #1, and so on."
         },
         {
-            "name": "branch_cats",
+            "name": "branchCats",
             "type": "List<Int>",
             "default_value": "get_state(branch_categories)",
             "description": "The numbered category assigned to each branch."

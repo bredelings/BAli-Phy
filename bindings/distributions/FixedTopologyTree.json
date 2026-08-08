@@ -2,7 +2,7 @@
     "name": "FixedTopologyTree",
     "deprecated-synonyms": ["fixed_topology_tree"],
     "result_type": "Distribution<Tree<Lengths>>",
-    "call": "fixedTopologyTree(@topology,@branch_length_dist)",
+    "call": "fixedTopologyTree(@topology,@branchLengthDist)",
     "import": ["Probability"],
     "title": "The uniform_topology distribution on trees",
     "args": [
@@ -12,7 +12,7 @@
 	    "description": "The topology for the tree"
         },
 	{
-	    "name": "branch_length_dist",
+	    "name": "branchLengthDist",
 	    "type": "Distribution<Double>",
 	    "description": "The distribution for branch lengths",
 	    "default_value": "Gamma(0.5,2/num_branches(@topology))"

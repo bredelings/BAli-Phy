@@ -2,7 +2,7 @@
     "name": "UniformRootedTree",
     "deprecated-synonyms": ["uniform_rooted_tree"],
     "result_type": "Distribution<Tree<Lengths>>",
-    "call": "uniformRootedTree(@taxa,@branch_length_dist)",
+    "call": "uniformRootedTree(@taxa,@branchLengthDist)",
     "import": ["Probability"],
     "title": "The uniform_topology distribution on trees",
     "args": [
@@ -12,7 +12,7 @@
 	    "description": "The taxa for the tree"
         },
 	{
-	    "name": "branch_length_dist",
+	    "name": "branchLengthDist",
 	    "type": "Distribution<Double>",
 	    "description": "The distribution for branch lengths",
 	    "default_value": "Gamma(0.5,1/length(@taxa))"

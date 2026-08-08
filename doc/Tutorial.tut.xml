@@ -149,9 +149,9 @@ Now let's look at the tree in figtree:
 
 <section><info><title>Parameter questions:</title></info>
 <itemizedlist>
-  <listitem>What is the meaning of <userinput>Inv:p_inv</userinput> parameter?   (Run <userinput>bali-phy help Inv</userinput>)</listitem>
-  <listitem>What is the prior distribution on <userinput>Inv:p_inv</userinput>?  (See <emphasis>Model and priors / Substitution model</emphasis>)</listitem>
-  <listitem>What is the posterior median for <userinput>Inv:p_inv</userinput>? (See <emphasis>Scalar Variables</emphasis>)</listitem>
+  <listitem>What is the meaning of <userinput>Inv:pInv</userinput> parameter?   (Run <userinput>bali-phy help Inv</userinput>)</listitem>
+  <listitem>What is the prior distribution on <userinput>Inv:pInv</userinput>?  (See <emphasis>Model and priors / Substitution model</emphasis>)</listitem>
+  <listitem>What is the posterior median for <userinput>Inv:pInv</userinput>? (See <emphasis>Scalar Variables</emphasis>)</listitem>
 </itemizedlist>
 </section>
 <section><info><title>Alignment questions:</title></info>
@@ -471,7 +471,7 @@ The M8aTest model allows testing for positive selection in some fraction of the 
 We can use the TN93+Gamma(4)+Inv model without specifying parameters:
 % bali-phy Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma +> Inv'
 However, we can also fix parameter values:
-% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(n=4,alpha=1) +> Inv(p_inv=0.2)'
+% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(n=4,alpha=1) +> Inv(pInv=0.2)'
 Here we have set the shape parameter for the Gamma distribution to 1, and the
 fraction of invariant sites to 20%.  Since these parameters are fixed, they will
 not be estimated and their values will not be shown in the log file.
@@ -488,7 +488,7 @@ This will show the default value or default prior for each parameter, if there i
 By default the fraction of invariant sites follows a Uniform(0,1) distribution:
 % bali-phy help Inv
 However, we can specify an alternative prior:
-% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(n=4) +> Inv(p_inv~Uniform(0,0.2))'
+% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(n=4) +> Inv(pInv~Uniform(0,0.2))'
 We can also specify parameters as positional arguments instead of using variable names:
 % bali-phy Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(4) +> Inv(~Uniform(0,0.2))'
 Here "<userinput>~</userinput>" indicates a sample from the uniform distribution instead of the distribution
@@ -497,7 +497,7 @@ itself.
 <para>
 The insertion-deletion model also has parameters.
 % bali-phy help RS07
-Here the default value for RS07:mean_length is ShiftedExponential(10,1).  This indicates
+Here the default value for RS07:meanLength is ShiftedExponential(10,1).  This indicates
 a random value that is obtained by sampling an Exponential random variable with mean 10
 and then adding 1 to it.
 </para>

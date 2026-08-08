@@ -2017,8 +2017,8 @@ HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "
 	      </row>
 
 	      <row>
-		<entry><userinput>GY94Ext(<replaceable>nuc_model</replaceable>)</userinput></entry>
-		<entry>df(<replaceable>nuc_model</replaceable>)+61</entry>
+		<entry><userinput>GY94Ext(<replaceable>nucModel</replaceable>)</userinput></entry>
+		<entry>df(<replaceable>nucModel</replaceable>)+61</entry>
 		<entry><para>GY94 model extended with a generic nucleotide exchangeability matrix.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
 		  (Goldman and Yang, 1994)
@@ -2049,9 +2049,9 @@ HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "
 	      </row>
 
 	      <row>
-		<entry><userinput>MG94Ext(<replaceable>nuc_model</replaceable>)</userinput></entry>
-		<entry>df(<replaceable>nuc_model</replaceable>)+1</entry>
-		<entry><para>Model of dN/dS with <replaceable>nuc_model</replaceable> as the neutral model.</para>
+		<entry><userinput>MG94Ext(<replaceable>nucModel</replaceable>)</userinput></entry>
+		<entry>df(<replaceable>nucModel</replaceable>)+1</entry>
+		<entry><para>Model of dN/dS with <replaceable>nucModel</replaceable> as the neutral model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
 		  (Muse and Gaut, 1994)
 		</link>
@@ -2515,7 +2515,7 @@ If the genetic code is not specified, then the standard code is used:
 	    <row>
 	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Inv</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
-	      <entry><para>Some fraction Inv:p_inv of sites are invariable.</para>
+	      <entry><para>Some fraction Inv:pInv of sites are invariable.</para>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2680,7 +2680,7 @@ If the genetic code is not specified, then the standard code is used:
 	</informaltable>
 	    
 	<para>The user can specify priors and parameters for indel models (See section <xref linkend="functions"/>):
-<programlisting>RS07(log_rate~LogLaplace(-4,0.707),mean_length=2)</programlisting>
+<programlisting>RS07(rate~LogLaplace(-4,0.707),meanLength=2)</programlisting>
 	</para>
 
     </section>
@@ -2746,7 +2746,7 @@ The <userinput>=~</userinput> can be further shortened to just <userinput>~</use
 <para>It also is possible to use random values as inputs to other functions.  For example:
 <programlisting>1.0 + ~Exponential(10)</programlisting>
 In such cases the parameter value should be specified with <userinput>=</userinput>, as in the following example:
-<programlisting>RS07(mean_length=1.0 + ~Exponential(10))</programlisting>
+<programlisting>RS07(meanLength=1.0 + ~Exponential(10))</programlisting>
 </para>
   </section>
 <section><info><title>Distributions are not random values</title></info>

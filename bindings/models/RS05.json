@@ -2,7 +2,7 @@
     "name": "RS05",
     "deprecated-synonyms": ["rs05"],
     "result_type": "IndelModel",
-    "call": "IModel.rs05(@log_prob,@mean_length,@tau,@topology)",
+    "call": "IModel.rs05(@logProb,@meanLength,@tau,@topology)",
     "import": ["IModel"],
     "title": "Redelings & Suchard (2005) model of insertions and deletions",
     "citation":{"type": "article",
@@ -14,12 +14,12 @@
 	       },
     "args": [
         {
-            "name": "log_prob",
+            "name": "logProb",
             "type": "Double",
             "default_value": "~Laplace(-4, 0.707)"
         },
         {
-            "name": "mean_length",
+            "name": "meanLength",
             "type": "Double",
             "default_value": "~ShiftedExponential(10,1)"
         },

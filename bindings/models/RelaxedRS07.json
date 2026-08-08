@@ -11,7 +11,7 @@
 		"journal": {"name": "BMC Evolutionary Biology", "volume": "7", "number": "1", "pages": "40"},
 		"identifier": [{"type":"doi","id":"10.1186/1471-2148-7-40"}]
 	       },
-    "call": "IModel.relaxed_rs07(@rate,@sigma,@mean_length,@topology)",
+    "call": "IModel.relaxed_rs07(@rate,@sigma,@meanLength,@topology)",
     "import": ["IModel"],
     "args": [
         {
@@ -27,7 +27,7 @@
             "description": "The insertion-deletion rate"
         },
         {
-            "name": "mean_length",
+            "name": "meanLength",
             "type": "Double",
             "default_value": "~ShiftedExponential(10,1)",
 	    "description": "The mean indel length"

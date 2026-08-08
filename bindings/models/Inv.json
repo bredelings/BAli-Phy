@@ -3,7 +3,7 @@
     "synonyms": ["I"],
     "deprecated-synonyms": ["inv", "INV"],
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "plusInv(@p_inv,@submodel)",
+    "call": "plusInv(@pInv,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -11,7 +11,7 @@
             "type": "DiscreteDist<CTMC<a>>"
         },
         {
-            "name": "p_inv",
+            "name": "pInv",
             "type": "Double",
             "default_value": "~Uniform(0,1)",
             "description": "The fraction of invariable sites."

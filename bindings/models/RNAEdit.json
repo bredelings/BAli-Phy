@@ -4,7 +4,7 @@
     "result_type": "CTMC<RNAEdits<a>>",
     "constraints": [ "Nucleotides<a>" ],
     "title": "RNA editting model",
-    "call": "siteEdit(@a,@submodel,@rna_rate,@edits)",
+    "call": "siteEdit(@a,@submodel,@rnaRate,@edits)",
     "import": ["SModel"],
     "args": [
         {
@@ -19,7 +19,7 @@
             "description": "List of [from,to] to describe editting"
         },
 	{
-	    "name": "rna_rate",
+	    "name": "rnaRate",
 	    "type": "Double",
 	    "description": "scaling factor for rates that change the RNA",
 	    "default_value":"1"

@@ -3,7 +3,7 @@
     "deprecated-synonyms": ["branch_test"],
     "title": "Bayesian test for different background and foreground omega values",
     "result_type": "CTMC<Codons<a>>",
-    "call": "twoOmegaBranchModel(@branch_cats,@omega,@omegaRatio,@branchDifference,@submodel)",
+    "call": "twoOmegaBranchModel(@branchCats,@omega,@omegaRatio,@branchDifference,@submodel)",
     "import": ["MCMC", "SModel"],
     "args": [
         {
@@ -31,7 +31,7 @@
             "description": "The model indicator: 0 for one shared omega and 1 for separate background and foreground omegas."
         },
         {
-            "name": "branch_cats",
+            "name": "branchCats",
             "type": "List<Int>",
             "default_value": "get_state(branch_categories)",
             "description": "Branch categories #0 (background) and #1 (foreground)."
