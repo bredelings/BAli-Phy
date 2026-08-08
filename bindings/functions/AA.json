@@ -1,6 +1,6 @@
 {
-    "name": "aa",
-    "synonyms": ["AA"],
+    "name": "AA",
+    "deprecated-synonyms": ["aa"],
     "result_type": "AA",
     "call": "aa",
     "import": ["Bio.Alphabet"],

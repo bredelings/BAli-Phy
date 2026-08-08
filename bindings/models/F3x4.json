@@ -32,7 +32,7 @@
         }
     ],
     "description": "The F3x4 model describes codon frequencies pi' in terms of nucleotide frequencies pi1, pi2, and pi3:\n   pi'[ijk] = pi1[i]*pi2[l]*pi3[k].",
-    "examples": ["GY94(pi=F3x4)","F3x4(a=codonsOf(dna))"],
+    "examples": ["GY94(pi=F3x4)","F3x4(a=Codons(DNA))"],
     "see": ["F1x4","GY94"],
     "extract": "all"
 }

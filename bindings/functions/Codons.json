@@ -1,5 +1,6 @@
 {
-    "name": "codonsOf",
+    "name": "Codons",
+    "deprecated-synonyms": ["codonsOf"],
     "result_type": "Codons<a>",
     "call": "mkCodons(@nucleotides,@code)",
     "import": ["Bio.Alphabet"],

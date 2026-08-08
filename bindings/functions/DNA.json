@@ -1,6 +1,6 @@
 {
-    "name": "dna",
-    "synonyms": ["DNA"],
+    "name": "DNA",
+    "deprecated-synonyms": ["dna"],
     "result_type": "DNA",
     "call": "dna",
     "import": ["Bio.Alphabet"],
