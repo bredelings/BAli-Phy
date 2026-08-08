@@ -65,6 +65,7 @@
 - Fixes:
   * Fix scope on pattern-guard binders.
   * Fix negative numbers in patterns.
+  * Fix kind-checking.
 
 ## Internal
 
