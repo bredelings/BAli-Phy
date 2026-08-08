@@ -120,7 +120,7 @@ jobs:
       run: |
         # If we're running in a docker image, we are already root
         if [ -n "${{ matrix.image }}" ]  ; then
-          apt-get update && apt-get install -y sudo build-essential git cmake
+          apt-get update && apt-get install -y sudo build-essential git cmake curl xz-utils
         fi 
 
         sudo apt-get update

@@ -147,7 +147,7 @@ jobs:
       run: |
         # If we're running in a docker image, we are already root
         if [ -n "${{ matrix.image }}" ]  ; then
-          apt-get update && apt-get install -y sudo build-essential git cmake
+          apt-get update && apt-get install -y sudo build-essential git cmake curl xz-utils
         fi 
 
         sudo apt-get update
@@ -226,6 +226,11 @@ jobs:
           mingw-w64-x86_64-pkgconf
           mingw-w64-x86_64-range-v3
           mingw-w64-x86_64-zstd
+
+    - name: Prefer MSYS2 tools (Windows native MinGW)
+      if: matrix.name == 'windows-native-mingw'
+      shell: msys2 {0}
+      run: echo "$(cygpath -w /mingw64/bin)" >> "$GITHUB_PATH"
 
     - name: Materialize test-data links (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
