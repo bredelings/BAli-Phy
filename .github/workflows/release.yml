@@ -224,7 +224,6 @@ jobs:
          restore-keys: |
            ${{ matrix.name }}-
          verbose: 2
-         append-timestamp: false
 
     - name: Require ccache 4.10 or newer
       run: |
