@@ -1,5 +1,6 @@
 {
-    "name": "ul2",
+    "name": "UL2",
+    "deprecated-synonyms": ["ul2"],
     "result_type": "DiscreteDist<CTMC<AA>>",
     "call": "SModel.ul2(@weights)",
     "import": ["SModel"],
@@ -23,6 +24,6 @@
 			     "pages": "3965--3976"},
 		 "identifier": [{"type":"doi","id":"10.1098/rstb.2008.0180"}]
 		},
-    "examples": ["ul2","ul2 +> Rates.gamma"],
+    "examples": ["UL2","UL2 +> Rates.Gamma"],
     "see": ["ul3","ex2", "ex3", "eho"]
 }

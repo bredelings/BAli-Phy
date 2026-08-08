@@ -1,6 +1,6 @@
 {
-    "name": "pam",
-    "synonyms": ["PAM"],
+    "name": "PAM",
+    "deprecated-synonyms": ["pam"],
     "result_type": "ExchangeModel<AA>",
     "call": "SModel.pam(@a)",
     "import": ["SModel"],

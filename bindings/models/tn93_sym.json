@@ -1,5 +1,6 @@
 {
-    "name": "tn93_sym",
+    "name": "TN93Sym",
+    "deprecated-synonyms": ["tn93_sym"],
     "title": "The Tamura-Nei (1993) nucleotide exchangability matrix",
     "result_type": "ExchangeModel<a>",
     "citation":{"type": "article",

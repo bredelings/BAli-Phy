@@ -1,5 +1,6 @@
 {
-    "name": "get_q",
+    "name": "getQ",
+    "deprecated-synonyms": ["get_q"],
     "result_type": "Matrix<a>",
     "call": "getQ(@q)",
     "import": ["SModel"],

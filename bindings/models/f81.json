@@ -1,6 +1,6 @@
 {
-    "name": "f81",
-    "synonyms": ["F81"],
+    "name": "F81",
+    "deprecated-synonyms": ["f81"],
     "result_type": "CTMC<a>",
     "call": "f81(frequenciesFromDict(@a,@pi),@a)",
     "import": ["SModel"],

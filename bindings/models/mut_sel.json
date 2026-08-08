@@ -1,5 +1,6 @@
 {
-    "name": "mut_sel",
+    "name": "MutSel",
+    "deprecated-synonyms": ["mut_sel"],
     "result_type": "CTMC<a>",
     "call": "mut_sel'(@ss,@submodel)",
     "import": ["SModel","Bio.Alphabet"],
@@ -24,9 +25,9 @@
 	    "description": "The alphabet"
 	}
     ],
-    "examples": ["gtr +> x3 +> mut_sel +> dNdS","gtr +> x2 +> mut_sel"],
+    "examples": ["GTR +> x3 +> MutSel +> dNdS","GTR +> x2 +> MutSel"],
     "extract": "all",
-    "see": ["mut_sel_aa","fMutSel0"],
+    "see": ["MutSelAA","FMutSel0"],
     "citation":{"type": "article",
 		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",
 		"year": "2008",

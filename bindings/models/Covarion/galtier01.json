@@ -1,6 +1,6 @@
 {
-    "name": "Covarion.gt01",
-    "synonyms": ["Covarion.galtier01"],
+    "name": "Covarion.Galtier01",
+    "deprecated-synonyms": ["Covarion.gt01", "Covarion.galtier01"],
     "title":"The Galtier (2001) Covarion Model",
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "galtier01(@nu,@pi,@submodel)",
@@ -32,7 +32,7 @@
         }
     ],
     "description": "The Galtier covarion model implements switching between classes at a rate `nu`.",
-    "examples": ["gtr +> Rates.gamma +> Covarion.gt01","gtr +> Rates.free +> Covarion.gt01"],
-    "see": ["markov_modulate"],
+    "examples": ["GTR +> Rates.Gamma +> Covarion.Galtier01","GTR +> Rates.Free +> Covarion.Galtier01"],
+    "see": ["MarkovModulate"],
     "extract": "all"
 }

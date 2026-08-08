@@ -1,1 +1,1 @@
---test codons-dna.fasta '--smodel=|w:mg94(omega=w)| +> m3'
+--test codons-dna.fasta '--smodel=|w:MG94(omega=w)| +> M3'

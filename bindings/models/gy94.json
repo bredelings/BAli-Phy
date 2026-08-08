@@ -1,7 +1,7 @@
 {
-    "name": "gy94",
+    "name": "GY94",
     "synonyms": ["m0"],
-    "deprecated-synonyms": ["M0","GY94"],
+    "deprecated-synonyms": ["gy94"],
     "result_type": "CTMC<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
     "title": "The Goldman & Yang (1994) model of dN\/dS",
@@ -33,7 +33,7 @@
 	    "description": "The codon alphabet"
         }
     ],
-    "examples": ["gy94(kappa=2,omega=2)","gy94(pi=f1x4)","gy94(pi=f3x4)"],
+    "examples": ["GY94(kappa=2,omega=2)","GY94(pi=F1x4)","GY94(pi=F3x4)"],
     "citation": {"type": "article",
 		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
 		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],
@@ -44,6 +44,6 @@
 		 "year":"1994",
 		 "link":[{"url":"http://www.genetics.org/content/148/3/929.short"}]
 		},
-    "see": ["gy94_ext","mg94"],
+    "see": ["GY94Ext","MG94"],
     "extract": "all"
 }

@@ -28,10 +28,10 @@
     "description": "A markov model with initial letter frequencies different from the equilibrium frequencies.  Requires a rooted tree.\n\nNote that even reversible models are directional if the initial frequencies are the equilibrium frequencues.",
     "examples": [
 	"nonEq",
-	"gtr +> nonEq",
+	"GTR +> nonEq",
 	"nonRev +> nonEq",
-	"nonRev +> nonEq +> Rates.gamma(4) +> inv"
+	"nonRev +> nonEq +> Rates.Gamma(4) +> Inv"
     ],
-    "see": ["gtr","nonRev"],
+    "see": ["GTR","nonRev"],
     "extract": "all"
 }

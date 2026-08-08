@@ -1,2 +1,2 @@
 --test data/codons-dna.fasta --fix topology=../foreground.tree
---smodel='branch_site(fs=[0.5,0.5],omegas=[0.5],posP=0.1,posW=4,posSelection=1)'
+--smodel='BranchSite(fs=[0.5,0.5],omegas=[0.5],posP=0.1,posW=4,posSelection=1)'

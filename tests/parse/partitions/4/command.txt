@@ -1,1 +1,1 @@
---test rna.fasta dna.fasta --smodel=2:tn93_sym --smodel=2:tn93_sym
+--test rna.fasta dna.fasta --smodel=2:TN93Sym --smodel=2:TN93Sym

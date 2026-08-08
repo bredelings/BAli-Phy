@@ -1,6 +1,7 @@
 {
     "title": "The LG amino-acid frequencies",
-    "name": "lg08_freq",
+    "name": "LGFreq",
+    "deprecated-synonyms": ["lg08_freq"],
     "result_type": "List<(String,Double)>",
     "call": "lg_frequencies(@a)",
     "import": ["SModel"],
@@ -20,7 +21,7 @@
 		"journal": {"name": "Molecular Biology and Evolution", "volume": "25", "number": "7", "pages": "1307--1320"},
 		"identifier": [{"type":"doi","id":"10.1093/molbev/msn067"}]
 	       },
-    "examples": ["lg08 +> f(lg08_frequencies)"],
-    "see": ["lg08"],
+    "examples": ["LG +> F(lg08_frequencies)"],
+    "see": ["LG"],
     "extract": "all"
 }

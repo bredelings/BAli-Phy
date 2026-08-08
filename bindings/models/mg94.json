@@ -1,6 +1,6 @@
 {
-    "name": "mg94",
-    "deprecated-synonyms": ["MG94"],
+    "name": "MG94",
+    "deprecated-synonyms": ["mg94"],
     "result_type": "CTMC<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
     "title": "The Muse & Gaut (1994) model of dN/dS.",
@@ -34,7 +34,7 @@
 	"journal": {"name": "Molecular biology and evolution", "volume": "11", "number": "5", "pages": "715--724"},
 	"link": [{"url":"https://academic.oup.com/mbe/article/11/5/715/1008710"}]
     },
-    "description": "The MG94 model describes codon frequencies in terms of 4 nucleotide frequencies.  It is thus similar to the GY94+F1x4 model where codon frequencies are constructed from 4 nucleotide frequencies.  However, in the MG94 model rates from codon i to codon j only depend on the frequency of the affected nucleotide, and not on the frequencies of its neighbors.\n\nThe original MG94 model did not account for different rates in transitions and transversions.  See the `mg94k` model that is extended to account for a ts/tv rate ratio, and the `mg94_ext model that is extended to use an arbitrary nucleotide rate matrix.\n\nThe MG94 model is equivalent to the following models:\n\n  f81 +> x3 +> dNdS\n\n  mg94k[kappa=1]\n\n  mg94_ext(f81)",
-    "see": ["mg94k","mg94_ext"],
+    "description": "The MG94 model describes codon frequencies in terms of 4 nucleotide frequencies.  It is thus similar to the GY94+F1x4 model where codon frequencies are constructed from 4 nucleotide frequencies.  However, in the MG94 model rates from codon i to codon j only depend on the frequency of the affected nucleotide, and not on the frequencies of its neighbors.\n\nThe original MG94 model did not account for different rates in transitions and transversions.  See the `MG94K` model that is extended to account for a ts/tv rate ratio, and the `MG94Ext model that is extended to use an arbitrary nucleotide rate matrix.\n\nThe MG94 model is equivalent to the following models:\n\n  F81 +> x3 +> dNdS\n\n  MG94K[kappa=1]\n\n  MG94Ext(F81)",
+    "see": ["MG94K","MG94Ext"],
     "extract": "all"
 }

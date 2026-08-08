@@ -1,5 +1,7 @@
 {
-    "name": "Rates.free",
+    "name": "Rates.Free",
+    "synonyms": ["R"],
+    "deprecated-synonyms": ["Rates.free"],
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.freeRates(@rateDist,@submodel)",
     "import": ["SModel"],
@@ -24,7 +26,7 @@
     ],
     "title": "Free rates model",
     "description":"Rate heterogeneity model where the rate and frequency of each category can be estimated from the data.",
-    "examples": ["hky85 +> Rates.free(n=3)"],
+    "examples": ["HKY85 +> Rates.Free(n=3)"],
     "citation":{"type": "article",
 		"title": "A space-time process model for the evolution of DNA sequences.",
 		"year": "1995",

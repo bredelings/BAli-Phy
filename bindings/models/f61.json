@@ -1,6 +1,6 @@
 {
-    "name": "f61",
-    "synonyms": [ "F61" ],
+    "name": "F61",
+    "deprecated-synonyms": ["f61"],
     "result_type": "List<(String,Double)>",
     "constraints": ["Triplets<a,b>"],
     "call": "id(@pi)",

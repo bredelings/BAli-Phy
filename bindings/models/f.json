@@ -1,6 +1,6 @@
 {
-    "name": "f",
-    "synonyms": ["F"],
+    "name": "F",
+    "deprecated-synonyms": ["f"],
     "result_type": "CTMC<a>",
     "call": "SModel.plus_f'(@a,@pi,@submodel)",
     "import": ["SModel"],
@@ -25,7 +25,7 @@
     ],
     "title": "The +F frequency model",
     "description": "The +F frequency model species the rate matrix Q as:\n  Q(i,j) = s(i,j) * pi[j].",
-    "examples": ["wag +> f"],
+    "examples": ["WAG +> F"],
     "extract": "all",
-    "see":["fe"]
+    "see":["FE"]
 }

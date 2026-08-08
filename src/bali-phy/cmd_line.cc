@@ -417,7 +417,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    cout<<"See `bali-phy help "<<underline("option")<<"` for help on "<<underline("option")<<".  For example,\n";
 	    cout<<"  * `bali-phy help "<<bold("alphabet")<<"` shows help on the "<<bold("--alphabet")<<" command.\n";
 	    cout<<"  * `bali-phy help "<<bold("Normal")<<"` shows help on the normal distribution.\n";
-	    cout<<"  * `bali-phy help "<<bold("tn93")<<"` shows help on the TN93 model.\n";
+	    cout<<"  * `bali-phy help "<<bold("TN93")<<"` shows help on the TN93 model.\n";
 	    cout<<"  * `bali-phy help "<<bold("log")<<"` shows help on the log function.\n\n";
 
 	    help_topics(cout, package_paths);

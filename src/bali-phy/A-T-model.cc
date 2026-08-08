@@ -782,7 +782,7 @@ void get_default_imodels(shared_items<string>& imodel_names_mapping, const vecto
                 continue;
             }
             else
-                value = "rs07";
+                value = "RS07";
         }
     }
 }

@@ -1,5 +1,6 @@
 {
-    "name": "lg4x",
+    "name": "LG4X",
+    "deprecated-synonyms": ["lg4x"],
     "result_type": "DiscreteDist<CTMC<AA>>",
     "call": "SModel.lg4x(@rateDist)",
     "import": ["SModel"],
@@ -19,5 +20,5 @@
 		"journal": {"name": "Molecular Biology and Evolution", "volume": "29", "number": "10", "pages": "2921--2936"},
 		"identifier": [{"type":"doi","id":"10.1093/molbev/mss112"}]
 	       },
-    "examples": ["lg4x"]
+    "examples": ["LG4X"]
 }

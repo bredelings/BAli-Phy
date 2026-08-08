@@ -1,5 +1,6 @@
 {
-    "name": "parameter_mixture",
+    "name": "ParameterMixture",
+    "deprecated-synonyms": ["parameter_mixture"],
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.parameterMixture(Discrete(zip(@values,@frequencies)),@submodel)",
     "import": ["SModel"],
@@ -25,8 +26,8 @@
     "description": "A scaled and weighted mixture of other mixture models.",
     "examples":
     [
-        "|k:hky85(kappa=k)| +> parameter_mixture([1.0,2.0],[0.5,0.5])",
-        "|k:hky85(k)| +> parameter_mixture(~IID(4,LogNormal(0,1)),~SymmetricDirichlet(4,1))"
+        "|k:HKY85(kappa=k)| +> ParameterMixture([1.0,2.0],[0.5,0.5])",
+        "|k:HKY85(k)| +> ParameterMixture(~IID(4,LogNormal(0,1)),~SymmetricDirichlet(4,1))"
     ],
     "extract": "all"
 }

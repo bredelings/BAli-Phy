@@ -1,5 +1,6 @@
 {
-    "name": "rs05",
+    "name": "RS05",
+    "deprecated-synonyms": ["rs05"],
     "result_type": "IndelModel",
     "call": "IModel.rs05(@log_prob,@mean_length,@tau,@topology)",
     "import": ["IModel"],

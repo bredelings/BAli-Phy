@@ -1,6 +1,7 @@
 {
-    "name": "inv",
-    "synonyms": ["INV"],
+    "name": "Inv",
+    "synonyms": ["I"],
+    "deprecated-synonyms": ["inv", "INV"],
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "plusInv(@p_inv,@submodel)",
     "import": ["SModel"],
@@ -17,7 +18,7 @@
         }
     ],
     "title": "Invariable sites model",
-    "examples": ["hky85 +> inv",
-		 "gtr +> Rates.gamma +> inv"],
+    "examples": ["HKY85 +> Inv",
+		 "GTR +> Rates.Gamma +> Inv"],
     "extract": "all"
 }

@@ -10,6 +10,6 @@
             "default_value": "get_state(alphabet)"
         }
     ],
-    "examples": ["hky85[pi=Frequencies.uniform]"],
+    "examples": ["HKY85[pi=Frequencies.uniform]"],
     "extract": "all"
 }

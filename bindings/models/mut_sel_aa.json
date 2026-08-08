@@ -1,7 +1,8 @@
 {
-    "name": "mut_sel_aa",
-    "result_type": "CTMC<Codons<a>>",
+    "name": "MutSelAA",
     "synonyms": ["mut_sel0"],
+    "deprecated-synonyms": ["mut_sel_aa"],
+    "result_type": "CTMC<Codons<a>>",
     "constraints": ["Nucleotides<a>"],
     "title": "Mutation-selection model with fitness values for amino-acids",
     "call": "mut_sel_aa'(@ss,@submodel)",
@@ -26,9 +27,9 @@
 	    "description": "The alphabet"
 	}
     ],
-    "examples": ["gtr +> x3 +> dNdS +> mut_sel_aa"],
+    "examples": ["GTR +> x3 +> dNdS +> MutSelAA"],
     "extract": "all",
-    "see": ["mut_sel","fMutSel"],
+    "see": ["MutSel","FMutSel"],
     "citation":{"type": "article",
 		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",
 		"year": "2008",

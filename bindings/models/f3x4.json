@@ -1,6 +1,6 @@
 {
-    "name": "f3x4",
-    "synonyms": [ "F3x4" ],
+    "name": "F3x4",
+    "deprecated-synonyms": ["f3x4"],
     "result_type": "List<(String,Double)>",
     "constraints": ["Triplets<a,b>"],
     "call": "f3x4'_frequencies(@a,@pi1,@pi2,@pi3)",
@@ -32,7 +32,7 @@
         }
     ],
     "description": "The F3x4 model describes codon frequencies pi' in terms of nucleotide frequencies pi1, pi2, and pi3:\n   pi'[ijk] = pi1[i]*pi2[l]*pi3[k].",
-    "examples": ["gy94(pi=f3x4)","f3x4(a=codonsOf(dna))"],
-    "see": ["f1x4","gy94"],
+    "examples": ["GY94(pi=F3x4)","F3x4(a=codonsOf(dna))"],
+    "see": ["F1x4","GY94"],
     "extract": "all"
 }

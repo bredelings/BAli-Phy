@@ -1,6 +1,6 @@
 {
-    "name": "m8",
-    "synonyms": ["M8"],
+    "name": "M8",
+    "deprecated-synonyms": ["m8"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m8(@mu,@gamma,@n,@posP,@posW,@submodel)",
     "import": ["SModel"],
@@ -8,7 +8,7 @@
         {
             "name": "submodel",
 	    "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:gy94(omega=w)|",
+            "default_value": "|w:GY94(omega=w)|",
 	    "description": "The model, as a function of dN/dS"
         },
         {
@@ -42,8 +42,8 @@
             "description": "The dN\/dS value for positively selected sites"
         }
     ],
-    "see": ["m7", "m8a","m8a_test"],
-    "description": "The m8 model is an m7 model with an additional category of positively-selected sites.  The additional category of sites has proportion=posP and dN/dS=posW.",
+    "see": ["M7", "M8a","M8aTest"],
+    "description": "The M8 model is an M7 model with an additional category of positively-selected sites.  The additional category of sites has proportion=posP and dN/dS=posW.",
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
 		 "year": "2000",

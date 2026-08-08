@@ -1,6 +1,6 @@
 {
-    "name": "mg94k",
-    "deprecated-synonyms": ["MG94"],
+    "name": "MG94K",
+    "deprecated-synonyms": ["mg94k"],
     "result_type": "CTMC<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
     "call": "mg94k(@a,@kappa,frequenciesFromDict(getNucleotides(@a),@pi),@omega)",
@@ -40,7 +40,7 @@
 	"journal": {"name": "Molecular biology and evolution", "volume": "11", "number": "5", "pages": "715--724"},
 	"link": [{"url":"https://academic.oup.com/mbe/article/11/5/715/1008710"}]
     },
-    "description": "The MG94K model extends the MG94 model to account for different rates of transitions and transversions.\n\nThe MG94K model is equivalent to the following models:\n\n  hky85 +> x3 +> dNdS\n\n  mg94_ext[hky85]",
-    "see": ["mg94","mg94_ext"],
+    "description": "The MG94K model extends the MG94 model to account for different rates of transitions and transversions.\n\nThe MG94K model is equivalent to the following models:\n\n  HKY85 +> x3 +> dNdS\n\n  MG94Ext[HKY85]",
+    "see": ["MG94","MG94Ext"],
     "extract": "all"
 }

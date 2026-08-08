@@ -1,6 +1,6 @@
 {
-    "name": "m7",
-    "synonyms": ["M7"],
+    "name": "M7",
+    "deprecated-synonyms": ["m7"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m7(@mu,@gamma,@n,@submodel)",
     "import": ["SModel"],
@@ -8,7 +8,7 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:gy94(omega=w)|",
+            "default_value": "|w:GY94(omega=w)|",
 	    "description": "The model as a function of dN/dS"
         },
         {

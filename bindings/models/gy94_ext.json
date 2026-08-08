@@ -1,5 +1,6 @@
 {
-    "name": "gy94_ext",
+    "name": "GY94Ext",
+    "deprecated-synonyms": ["gy94_ext"],
     "result_type": "CTMC<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
     "title": "An extended version of the Goldman & Yang (1994) model of dN\/dS",
@@ -31,8 +32,8 @@
 	    "description": "The codon alphabet"
         }
     ],
-    "description": "This is a version of the gy94 model that has been extended to use user-supplied exchangabilty matrix `nuc_model` on nucleotides.  The original gy94 model distinguishes only between transitions and transversions, and is equivalent to `gy94_ext(hky85_sym)`.",
-    "examples": ["gy94_ext(hky85_sym(kappa=2),omega=2)","gy94_ext(gtr_sym,pi=f1x4)"],
+    "description": "This is a version of the GY94 model that has been extended to use user-supplied exchangabilty matrix `nuc_model` on nucleotides.  The original GY94 model distinguishes only between transitions and transversions, and is equivalent to `GY94Ext(HKY85Sym)`.",
+    "examples": ["GY94Ext(HKY85Sym(kappa=2),omega=2)","GY94Ext(GTRSym,pi=F1x4)"],
     "citation": {"type": "article",
 		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
 		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],
@@ -43,6 +44,6 @@
 		 "year":"1994",
 		 "link":[{"url":"http://www.genetics.org/content/148/3/929.short"}]
 		},
-    "see": ["gy94"],
+    "see": ["GY94"],
     "extract": "all"
 }

@@ -677,7 +677,7 @@ Hs::LPat get_typed_pattern(const CM::TypedPattern& pattern, const CodeGenState& 
 }
 
 // Returns true for the legacy rule-template spelling of a trailing submodel
-// argument that should be compiled as `submodel +> f`.
+// argument that should be compiled as `submodel +> F`.
 bool is_template_submodel_arg(const CM::Arg<CM::NoAnn>& arg)
 {
     if (not arg.name.empty() or not arg.value)
@@ -726,7 +726,7 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
                     throw myexception()<<"Missing arguments are not allowed in rule templates.";
 
                 auto arg_expr = make_rule_template_expr(*arg.value, simple_args);
-                // Compatibility behavior: rule templates encode `submodel +> f`
+                // Compatibility behavior: rule templates encode `submodel +> F`
                 // as a final @submodel argument. Remove when bindings spell this directly.
                 if (i == call.args.size()-1 and is_template_submodel_arg(arg))
                     E = HsG::Apply(Hs::Var("+>"), {arg_expr, E});

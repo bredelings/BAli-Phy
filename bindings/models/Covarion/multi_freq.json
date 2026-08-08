@@ -1,5 +1,6 @@
 {
-    "name": "Covarion.multi_freq",
+    "name": "Covarion.MultiFreq",
+    "deprecated-synonyms": ["Covarion.multi_freq"],
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "multiFrequencyCovarion(@tree,@nodeFreqs,@submodel,@rateDist,@s01,@s10)",
     "import": ["SModel"],
@@ -8,7 +9,7 @@
             "name": "submodel",
             "type": "List<(String,Double)> -> CTMC<a>",
             "description": "The model to use on each branch",
-            "default_value": "|pi:gtr(pi=pi)|"
+            "default_value": "|pi:GTR(pi=pi)|"
         },
         {
             "name": "tree",
@@ -24,7 +25,7 @@
         },
         {
             "name": "nodeFreqs",
-            "type": "IntMap<f>",
+            "type": "IntMap<F>",
             "description": "The frequencies for each node",
             "default_value": "~IIDMap(nodes(@tree),@freqs)"
         },
@@ -74,5 +75,5 @@
 	}
     ],
     "description": "A non-equilibrium model where each node selects from a weighted collection of n frequences.",
-    "examples": ["|pi:tn93(pi=pi)| +> Covarion.multi_freq(n=3)"]
+    "examples": ["|pi:TN93(pi=pi)| +> Covarion.MultiFreq(n=3)"]
 }

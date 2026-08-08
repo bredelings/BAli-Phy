@@ -1,5 +1,6 @@
 {
-    "name": "fMutSel",
+    "name": "FMutSel",
+    "deprecated-synonyms": ["fMutSel"],
     "result_type": "CTMC<Codons<a>>",
     "call": "SModel.fMutSel'(@a,@ss,@omega,@submodel)",
     "import": ["SModel"],
@@ -7,7 +8,7 @@
         {
             "name": "submodel",
             "type": "CTMC<a>",
-            "default_value": "gtr",
+            "default_value": "GTR",
 	    "alphabet": "getNucleotides(@a)",
 	    "description": "Model of neutral nucleotide substitution"
         },
@@ -30,9 +31,9 @@
 	    "description": "The alphabet"
 	}
     ],
-    "description": "The fMutSel model is identical to gtr +> x3 +> mut_sel +> dNdS",
+    "description": "The FMutSel model is identical to GTR +> x3 +> MutSel +> dNdS",
     "extract": "all",
-    "see": ["mut_sel","fMutSel0"],
+    "see": ["MutSel","FMutSel0"],
     "citation":{"type": "article",
 		"title": "Mutation-Selection Models of Codon Substitution and Their Use to Estimate Selective Strengths on Codon Usage",
 		"year": "2008",

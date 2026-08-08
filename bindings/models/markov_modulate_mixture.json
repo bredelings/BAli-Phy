@@ -1,5 +1,6 @@
 {
-    "name": "markov_modulate",
+    "name": "MarkovModulate",
+    "deprecated-synonyms": ["markov_modulate"],
     "result_type": "CTMC<a>",
     "call": "markov_modulate_mixture(@nu,@submodel)",
     "import": ["SModel"],
@@ -17,7 +18,7 @@
         }
     ],
     "description": "This constructs a modulated markov model that switches between classes in a mixture at a rate `nu`.",
-    "examples": ["gtr +> Rates.gamma +> markov_modulate","gtr +> Rates.free +> markov_modulate"],
-    "see": ["Covarion.gt01"],
+    "examples": ["GTR +> Rates.Gamma +> MarkovModulate","GTR +> Rates.Free +> MarkovModulate"],
+    "see": ["Covarion.Galtier01"],
     "extract": "all"
 }

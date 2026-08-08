@@ -1,5 +1,6 @@
 {
-    "name": "hky85_sym",
+    "name": "HKY85Sym",
+    "deprecated-synonyms": ["hky85_sym"],
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide exchangabilty matrix",
     "result_type": "ExchangeModel<a>",
     "constraints": ["Nucleotides<a>"],

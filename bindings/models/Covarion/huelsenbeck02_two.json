@@ -1,6 +1,6 @@
 {
-    "name": "Covarion.hb02_two",
-    "synonyms": ["Covarion.huelsenbeck02"],
+    "name": "Covarion.Huelsenbeck02Two",
+    "deprecated-synonyms": ["Covarion.hb02_two"],
     "title":"The Huelsenbeck Covarion Model",
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "huelsenbeck_02_two(@s01a,@s10a,@s01b,@s10b,@fraction1,@submodel)",
@@ -73,7 +73,7 @@
 	}
     ],
     "description": "This model allows estimating the fraction of sites that follow the Huelsenbeck covarion model.",
-    "examples": ["gtr +> Rates.gamma +> Covarion.hb02_test","gtr +> Rates.free(n=5) +> Covarion.hb02_test"],
+    "examples": ["GTR +> Rates.Gamma +> Covarion.Huelsenbeck02Test","GTR +> Rates.Free(n=5) +> Covarion.Huelsenbeck02Test"],
     "see": ["ts98","hb02"],
     "extract": "all"
 }

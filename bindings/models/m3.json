@@ -1,6 +1,6 @@
 {
-    "name": "m3",
-    "synonyms": ["M3"],
+    "name": "M3",
+    "deprecated-synonyms": ["m3"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m3(@omegaDist,@submodel)",
     "import": ["SModel"],
@@ -8,7 +8,7 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:gy94(omega=w)|",
+            "default_value": "|w:GY94(omega=w)|",
 	    "description": "The model as a function of dN/dS"
         },
         {
@@ -33,7 +33,7 @@
 		 "journal": {"name": "Genetics", "volume": "155", "number": "1", "pages": "431--449"},
 		 "link": [{"url":"http://www.genetics.org/content/155/1/431.full"}]
 		},
-    "examples": ["|w:gy94(omega=w,pi=f1x4)| +> m3","|w:mg94(omega=w)| +> m3","|w:fMutSel0(omega=w)| +> m3"],
+    "examples": ["|w:GY94(omega=w,pi=F1x4)| +> M3","|w:MG94(omega=w)| +> M3","|w:FMutSel0(omega=w)| +> M3"],
     "extract": "all",
-    "see": ["m3_test"]
+    "see": ["M3Test"]
 }

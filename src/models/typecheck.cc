@@ -131,7 +131,7 @@ equations convertible_to(CM::UntypedExpr& model, const type_t& t1, type_t t2)
         t2 = CM::type_app("ExchangeModel", a);
         E = convertible_to(model,t1,t2);
         if (E)
-            model = conversion_call("f", "submodel", std::move(model));
+            model = conversion_call("F", "submodel", std::move(model));
     }
 
     return E;

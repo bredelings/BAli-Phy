@@ -18,7 +18,7 @@
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
         }
     ],
-    "examples": ["hky85 +> x3 +> dNdS","gtr +> x3 +> dNdS"],
-    "see": ["mg94"],
+    "examples": ["HKY85 +> x3 +> dNdS","GTR +> x3 +> dNdS"],
+    "see": ["MG94"],
     "extract": "all"
 }

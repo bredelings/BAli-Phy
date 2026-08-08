@@ -1,6 +1,7 @@
 {
-    "name": "Rates.gamma",
-    "synonyms": ["Rates.Gamma"],
+    "name": "Rates.Gamma",
+    "synonyms": ["G"],
+    "deprecated-synonyms": ["Rates.gamma"],
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.gammaRatesOn(@alpha,@n,@submodel)",
     "import": ["SModel"],
@@ -23,7 +24,7 @@
             "description": "The shape parameter for the Gamma distribution"
         }
     ],
-    "examples": ["gtr +> Rates.gamma(4) +> inv"],
+    "examples": ["GTR +> Rates.Gamma(4) +> Inv"],
     "title": "The Gamma rate heterogeneity model",
     "description": "This model divides a unit-mean Gamma distribution into equal-probability categories and represents each category by its conditional mean.",
     "citation":{"type": "article",

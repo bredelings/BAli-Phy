@@ -1,6 +1,7 @@
 {
-    "name": "RNA.m16a",
-    "synonyms": ["shh01_m16a","RNA.shh01_m16a"],
+    "name": "RNA.M16A",
+    "synonyms": ["shh01_m16a", "RNA.shh01_m16a"],
+    "deprecated-synonyms": ["RNA.m16a"],
     "constraints": [ "Doublets<a,b>" ],
     "result_type": "CTMC<a>",
     "title": "Exchangability matrix on doublets constructed from nucleotide exchange rates",
@@ -58,6 +59,6 @@
         }
     ],
     "description": "Exchangability matrix for rna stems that allows 2 simultaneous changes.\n\nNote the exchange rate for double changes involving a mismatch is 0.",
-    "examples": ["RNA.m16a","RNA.m16a +> Rates.free"],
-    "see": ["x2_sym"]
+    "examples": ["RNA.M16A","RNA.M16A +> Rates.Free"],
+    "see": ["x2Sym"]
 }

@@ -26,6 +26,6 @@
         }
     ],
     "description":"A doublet rate matrix constructed from separate nucleotide rate matrices for the first and second doublet positions",
-    "examples": ["q=hky85(a=getNucleotides); x2x2(q,q)"],
+    "examples": ["q=HKY85(a=getNucleotides); x2x2(q,q)"],
     "see": ["x2"]
 }

@@ -1,6 +1,7 @@
 {
     "title": "The WAG amino-acid frequencies",
-    "name": "wag_freq",
+    "name": "WAGFreq",
+    "deprecated-synonyms": ["wag_freq"],
     "result_type": "List<(String,Double)>",
     "call": "wag_frequencies(@a)",
     "import": ["SModel"],
@@ -20,7 +21,7 @@
 		"journal": {"name": "Molecular Biology and Evolution", "volume": "18", "number": "5", "pages": "691--699"},
 		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a003851"}]
 	       },
-    "examples": ["wag +> f(wag_frequencies)"],
-    "see": ["wag"],
+    "examples": ["WAG +> F(wag_frequencies)"],
+    "see": ["WAG"],
     "extract": "all"
 }

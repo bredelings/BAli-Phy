@@ -20,6 +20,6 @@
         }
     ],
     "description":"Rate matrix on doublets, constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",
-    "examples": ["f81 +> x2","gtr +> x2"],
-    "see": ["x2_sym"]
+    "examples": ["F81 +> x2","GTR +> x2"],
+    "see": ["x2Sym"]
 }

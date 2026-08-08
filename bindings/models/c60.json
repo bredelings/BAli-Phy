@@ -1,5 +1,6 @@
 {
-    "name": "c60",
+    "name": "C60",
+    "deprecated-synonyms": ["c60"],
     "result_type": "DiscreteDist<CTMC<AA>>",
     "call": "SModel.c60(@weights)",
     "import": ["SModel"],
@@ -21,7 +22,7 @@
     "description": "Empirically derived mixture model where different components have different equilibrium frequencies to account for site-specific biochemical constraints. It partitions protein alignment sites into 60 distinct profile classes, each with a unique amino acid distribution, to better approximate the varying selective pressures across a sequence.\nThis site-heterogeneous approach effectively mitigates long-branch attraction and systematic biases that often compromise simpler, single-matrix models like LG or WAG.\nThis version estimates the relative frequencies of the 60 components from the data set under study.",
     "examples":
     [
-        "c60 +> Rates.gamma"
+        "C60 +> Rates.Gamma"
     ],
     "citation": {"type": "article",
 		 "title": "Phylogenetic mixture models for proteins",
@@ -33,6 +34,6 @@
 			     "pages": "3965--3976"},
 		 "identifier": [{"type":"doi","id":"10.1098/rstb.6008.0180"}]
 		},
-    "see": ["c60_fixed", "c10", "c20", "c30", "c40", "c50"],
+    "see": ["C60Fixed", "C10", "C20", "C30", "C40", "C50"],
     "extract": "all"
 }

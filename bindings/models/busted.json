@@ -1,5 +1,6 @@
 {
-    "name": "busted",
+    "name": "BUSTED",
+    "deprecated-synonyms": ["busted"],
     "result_type": "CTMC<Codons<a>>",
     "call": "SModel.busted(@omegaDist,@posP,@posW,@posSelection,@submodel)",
     "import": ["MCMC", "SModel"],
@@ -7,7 +8,7 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:gtr+>x3+>dNdS(omega=w)|",
+            "default_value": "|w:GTR+>x3+>dNdS(omega=w)|",
 	    "description": "The model as a function of dN/dS"
         },
         {
@@ -68,9 +69,9 @@
 		 "journal": {"name": "Mol. Biol. Evol.", "volume": "32", "number": "5", "pages": "1365--1371"},
 		 "link": [{"url":"https://doi.org/10.1093/molbev/msv035"}]
 		},
-    "examples": ["busted +> Rates.gamma(n=3)                              // with synonymous rate variation (= BUSTED-S)",
-		 "busted +> Rates.free",
-		 "|w: gtr +> mnm +> dNdS(omega=w)| +> busted              // with multi-nucleotide mutations",
-		 "|w: gtr +> x3 +> dNdS(omega=w) +> mut_sel| +> busted    // with mutation-selection-balance"],
-    "see": ["branch_site_mixture","busted_s"]
+    "examples": ["BUSTED +> Rates.Gamma(n=3)                              // with synonymous rate variation (= BUSTED-S)",
+		 "BUSTED +> Rates.Free",
+		 "|w: GTR +> MNM +> dNdS(omega=w)| +> BUSTED              // with multi-nucleotide mutations",
+		 "|w: GTR +> x3 +> dNdS(omega=w) +> MutSel| +> BUSTED    // with mutation-selection-balance"],
+    "see": ["BranchSiteMixture","BUSTED_S"]
 }

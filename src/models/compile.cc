@@ -171,19 +171,19 @@ string print_generated_function_decl(const string& name, Hs::Exp E)
 string default_markov_model(const alphabet& a) 
 {
     if (dynamic_cast<const Nucleotides*>(&a))
-        return "tn93";
+        return "TN93";
     else if (dynamic_cast<const AminoAcidsWithStop*>(&a))
         return "";
     else if (dynamic_cast<const AminoAcids*>(&a))
-        return "lg08";
+        return "LG";
     else if (dynamic_cast<const Codons*>(&a))
-        return "gy94";
+        return "GY94";
     else if (dynamic_cast<const Doublets*>(&a))
-        return "tn93_sym +> x2_sym +> f";
+        return "TN93Sym +> x2Sym +> F";
     else if (dynamic_cast<const Triplets*>(&a))
-        return "tn93 +> x3";
+        return "TN93 +> x3";
     else
-        return "jc69";
+        return "JC69";
 }
 
 // See simplify(json& j) in models/model.cc and simplify(ptree&) models/in path.cc

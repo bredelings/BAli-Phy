@@ -1,5 +1,6 @@
 {
-    "name": "branch_test",
+    "name": "BranchTest",
+    "deprecated-synonyms": ["branch_test"],
     "title": "Bayesian test for different background and foreground omega values",
     "result_type": "CTMC<Codons<a>>",
     "call": "twoOmegaBranchModel(@branch_cats,@omega,@omegaRatio,@branchDifference,@submodel)",
@@ -8,7 +9,7 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:gy94(omega=w)|",
+            "default_value": "|w:GY94(omega=w)|",
             "description": "The codon model constructed for each omega."
         },
         {
@@ -57,8 +58,8 @@
     "extract": "all",
     "description": "Compare a null model with one omega on all branches against an alternative with separate background and foreground omegas. This tests branch-specific omega heterogeneity, not specifically positive selection. Each logged PrBranchDifference is a conditional probability; its posterior mean estimates the probability of the alternative. The resulting posterior odds equal the Bayes factor because the default prior odds are one.\n\nThe statreport tool uses LogOddsBranchDifference to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsBranchDifference directly.)",
     "examples": [
-        "branch_test",
-        "branch_test(omega=0.25,omegaRatio=3)"
+        "BranchTest",
+        "BranchTest(omega=0.25,omegaRatio=3)"
     ],
-    "see": ["branch_model", "branch_site"]
+    "see": ["BranchModel", "BranchSite"]
 }

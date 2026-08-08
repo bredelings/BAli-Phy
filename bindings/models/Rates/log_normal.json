@@ -1,6 +1,6 @@
 {
-    "name": "Rates.logNormal",
-    "synonyms": ["Rates.logNormal"],
+    "name": "Rates.LogNormal",
+    "deprecated-synonyms": ["Rates.logNormal"],
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.logNormal_rates(@lsigma,@n,@submodel)",
     "import": ["SModel"],
@@ -23,5 +23,5 @@
             "default_value": "~LogLaplace(-3,1)"
         }
     ],
-    "examples": ["gtr +> Rates.logNormal(4) +> inv"]
+    "examples": ["GTR +> Rates.LogNormal(4) +> Inv"]
 }

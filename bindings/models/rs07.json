@@ -1,6 +1,6 @@
 {
-    "name": "rs07",
-    "synonyms": [ "RS07" ],
+    "name": "RS07",
+    "deprecated-synonyms": ["rs07"],
     "result_type": "IndelModel",
     "title": "Redelings & Suchard (2007) model of insertions and deletions.",
     "citation":{"type": "article",

@@ -1,5 +1,6 @@
 {
-    "name": "rna_edit",
+    "name": "RNAEdit",
+    "deprecated-synonyms": ["rna_edit"],
     "result_type": "CTMC<RNAEdits<a>>",
     "constraints": [ "Nucleotides<a>" ],
     "title": "RNA editting model",
@@ -31,6 +32,6 @@
         }
     ],
     "description":"Rate matrix on a doublets, constructed from a rate matrix on nucleotides.\n\nThus model describes RNA editing (or lack thereof) at a single site.",
-    "examples": ["hky85 +> rna_edit({})                  # no editting",
-                 "hky85 +> rna_edit({\"C\":\"U\"})           # C->U editting"]
+    "examples": ["HKY85 +> RNAEdit({})                  # no editting",
+                 "HKY85 +> RNAEdit({\"C\":\"U\"})           # C->U editting"]
 }

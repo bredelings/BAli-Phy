@@ -1,7 +1,7 @@
 {
-    "name": "tn93",
+    "name": "TN93",
+    "deprecated-synonyms": ["tn93"],
     "title": "The Tamura-Nei (1993) nucleotide rate matrix",
-    "deprecated-synonyms": ["TN","TrN","tn","TN93","trn"],
     "result_type": "CTMC<a>",
     "citation":{"type": "article",
 		"title": "Estimation of the number of nucleotide substitutions in the control region of mitochondrial DNA in humans and chimpanzees.",

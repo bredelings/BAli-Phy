@@ -1,5 +1,6 @@
 {
-    "name": "relaxed_rs07",
+    "name": "RelaxedRS07",
+    "deprecated-synonyms": ["relaxed_rs07"],
     "perform": true,
     "result_type": "IndelModel",
     "title": "Redelings & Suchard (2007) model of insertions and deletions.",

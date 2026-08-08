@@ -1,5 +1,6 @@
 {
-    "name": "mg94_ext",
+    "name": "MG94Ext",
+    "deprecated-synonyms": ["mg94_ext"],
     "result_type": "CTMC<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
     "call": "mg94_ext(@a,@omega,@nuc_model)",
@@ -33,8 +34,8 @@
 	"journal": {"name": "Molecular biology and evolution", "volume": "11", "number": "5", "pages": "715--724"},
 	"link": [{"url":"https://academic.oup.com/mbe/article/11/5/715/1008710"}]
     },
-    "description": "This is a version of the mg94 model that has been extended to use a user-supplied rate matrix `nuc_model` on nucleotides.  The original mg94 model is equivalent to `mg94_ext(f81)`.",
-    "examples": ["mg94_ext(hky85(kappa=2),omega=2)","mg94_ext(gtr)"],
-    "see": ["mg94"],
+    "description": "This is a version of the MG94 model that has been extended to use a user-supplied rate matrix `nuc_model` on nucleotides.  The original MG94 model is equivalent to `MG94Ext(F81)`.",
+    "examples": ["MG94Ext(HKY85(kappa=2),omega=2)","MG94Ext(GTR)"],
+    "see": ["MG94"],
     "extract": "all"
 }

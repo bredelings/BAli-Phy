@@ -1,5 +1,6 @@
 {
-    "name": "branch_site_mixture",
+    "name": "BranchSiteMixture",
+    "deprecated-synonyms": ["branch_site_mixture"],
     "result_type": "CTMC<a>",
     "call": "BranchSiteMixture(@submodel)",
     "import": ["SModel"],
@@ -31,7 +32,7 @@
 		 "journal": {"name": "Mol. Biol. Evol.", "volume": "32", "number": "5", "pages": "1365--1371"},
 		 "link": [{"url":"https://doi.org/10.1093/molbev/msv035"}]
 		},
-    "examples": ["|w: gtr +> x3 +> dNdS(w)| +> m3 +> branch_site_mixture                       // = BUSTED",
-		 "|w: gtr +> x3 +> dNdS(w)| +> m3 +> branch_site_mixture +> Rates.gamma(n=3)   // = BUSTED-S"],
-    "see": ["busted","busted_s"]
+    "examples": ["|w: GTR +> x3 +> dNdS(w)| +> M3 +> BranchSiteMixture                       // = BUSTED",
+		 "|w: GTR +> x3 +> dNdS(w)| +> M3 +> BranchSiteMixture +> Rates.Gamma(n=3)   // = BUSTED-S"],
+    "see": ["BUSTED","BUSTED_S"]
 }

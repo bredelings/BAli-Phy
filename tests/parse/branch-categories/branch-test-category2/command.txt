@@ -1,2 +1,2 @@
 --test data/codons-dna.fasta --fix topology=../three.tree
---smodel='branch_test(omega=0.25,omegaRatio=3,branchDifference=1)'
+--smodel='BranchTest(omega=0.25,omegaRatio=3,branchDifference=1)'

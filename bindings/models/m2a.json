@@ -1,6 +1,6 @@
 {
-    "name": "m2a",
-    "synonyms": ["M2a"],
+    "name": "M2a",
+    "deprecated-synonyms": ["m2a"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m2a(@omega0,@p0,@posP,@posW,@submodel)",
     "import": ["SModel"],
@@ -8,7 +8,7 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:gy94(omega=w)|",
+            "default_value": "|w:GY94(omega=w)|",
 	    "description": "The model as a function of dN/dS"
         },
         {
@@ -65,7 +65,7 @@
 		"identifier": [{"type":"doi",
 				"id":"10.1534/genetics.104.031153 "}]
 	       },
-    "examples": ["|w:gy94(omega=w,pi=f1x4)| +> m2a","|w:mg94(omega=w)| +> m2a","|w:fMutSel0(omega=w)| +> m2a"],
+    "examples": ["|w:GY94(omega=w,pi=F1x4)| +> M2a","|w:MG94(omega=w)| +> M2a","|w:FMutSel0(omega=w)| +> M2a"],
     "extract": "all",
-    "see": ["m1a","m2a_test"]
+    "see": ["M1a","M2aTest"]
 }

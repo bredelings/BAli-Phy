@@ -1,6 +1,6 @@
 {
-    "name": "multi_rate",
-    "synonyms": ["MultiRate"],
+    "name": "MultiRate",
+    "deprecated-synonyms": ["multi_rate"],
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "rateMixture(@submodel,uniformDiscretize(@dist,@nBins))",
     "import": ["SModel"],
@@ -23,5 +23,5 @@
         }
     ],
     "description": "An across-site rate variation (ASRV) model where the rate distribution can be specified directly.",
-    "examples": ["gtr +> multi_rate(Gamma(1,1))","gtr +> multi_rate(Beta(2,2),6)"]
+    "examples": ["GTR +> MultiRate(Gamma(1,1))","GTR +> MultiRate(Beta(2,2),6)"]
 }

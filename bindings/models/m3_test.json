@@ -1,6 +1,7 @@
 {
-    "name": "m3_test",
+    "name": "M3Test",
     "synonyms": ["M3_Test"],
+    "deprecated-synonyms": ["m3_test"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.m3Test(@omegaDist,@posP,@posW,@posSelection,@submodel)",
     "import": ["MCMC", "SModel"],
@@ -8,7 +9,7 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:gy94(omega=w)|",
+            "default_value": "|w:GY94(omega=w)|",
 	    "description": "The model as a function of dN/dS"
         },
         {
@@ -50,5 +51,5 @@
     ],
     "description":"This model performs a Bayesian test of positive selection using a modified M3 model. The M3 model is extended with an extra category of sites that is either neutral (posSelection=0) or positively-selected (posSelection=1). The posterior probability that posSelection=1 is the posterior probability of positive selection.\n\nThe posterior mean of PrPosSelection can provide a more accurate estimate of this probability than the posterior mean of posSelection. The statreport tool uses LogOddsPosSelection to report the corresponding posterior log odds accurately, even when the probability is extremely close to 0 or 1. (Do not average LogOddsPosSelection directly.)",
     "extract": "all",
-    "see": ["m3"]
+    "see": ["M3"]
 }

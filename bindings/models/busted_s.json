@@ -1,5 +1,6 @@
 {
-    "name": "busted_s",
+    "name": "BUSTED_S",
+    "deprecated-synonyms": ["busted_s"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
     "call": "SModel.bustedS(@omegaDist,@posP,@posW,@posSelection,@alpha,@nGammaBins,@submodel)",
     "import": ["MCMC", "SModel"],
@@ -7,7 +8,7 @@
         {
             "name": "submodel",
             "type": "Double -> CTMC<Codons<a>>",
-            "default_value": "|w:gtr+>x3+>dNdS(omega=w)|",
+            "default_value": "|w:GTR+>x3+>dNdS(omega=w)|",
 	    "description": "The model as a function of dN/dS"
         },
         {
@@ -71,7 +72,7 @@
 		 "journal": {"name": "Mol. Biol. Evol.", "volume": "37", "number": "8", "pages": "2430--2439"},
 		 "link": [{"url":"https://doi.org/10.1093/molbev/msaa037"}]
 		},
-    "see": ["branch_site_mixture", "busted"],
-    "examples": ["|w: tn93 +> x3 +> dNdS(omega=w)| +> busted_s",
-		 "|w: tn93 +> mnm +> dNdS(omega=w)| +> busted_s"]
+    "see": ["BranchSiteMixture", "BUSTED"],
+    "examples": ["|w: TN93 +> x3 +> dNdS(omega=w)| +> BUSTED_S",
+		 "|w: TN93 +> MNM +> dNdS(omega=w)| +> BUSTED_S"]
 }
