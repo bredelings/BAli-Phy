@@ -2,7 +2,7 @@
 <!ENTITY % sgml.features "IGNORE">
 <!ENTITY % xml.features "INCLUDE">
 
-<!ENTITY  version        "4.0"         >
+<!ENTITY  version        "4.3"         >
 
 <!ENTITY % ent-mmlalias
       PUBLIC "-//W3C//ENTITIES Aiases for MathML 2.0//EN"

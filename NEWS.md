@@ -10,6 +10,9 @@
 - Distributions & Priors
   * Add the Dirichlet-process.
   * Add mixture distributions with point mass components.
+  * Capitalize distribution names and use CamelCase for multiword names, such as `Normal`,
+    `LogNormal`, `DirichletProcess`, and `IIDOn`. Old spellings now produce migration diagnostics;
+    `delta` remains lowercase.
 
 ## MCMC
 
