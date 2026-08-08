@@ -12,9 +12,9 @@
         }
     ],
     "title" : "The Poisson distribution",
-    "description": "mean = mu\nvariance = mu^2",
-    "examples": ["~Poisson(1.0)                    # An exponential",
-		 "~IID(10,Poisson(0.5))             # 10 samples"
+    "description": "mean = mu\nvariance = mu",
+    "examples": ["~Poisson(1.0)                    # A Poisson sample with mean 1",
+		 "~IID(10, Poisson(0.5))            # 10 samples"
 		]
 
 }
