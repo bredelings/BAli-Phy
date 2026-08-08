@@ -41,7 +41,7 @@ bool is_loggable_function(const Rules& R, const string& name)
 
     // A random "let" has NOT necessarily been logged.
     // * let[k=random,k+2]         # OK    : we assume that if k is random, the whole thing is random.
-    // * let[k=random,hky85[k]]    # Not OK: we assume that if k is random, the whole thing is random.
+    // * let[k=random,HKY85[k]]    # Not OK: we assume that if k is random, the whole thing is random.
     // Probably we should track whether the result is an unlogged random in translation_result_t.
     if (name == "!let") return false;
 

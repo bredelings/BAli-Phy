@@ -26,10 +26,10 @@ Several parts of the previous survey and plan have been implemented or supersede
   within each logger invocation.
 * The old `--Rao-Blackwellize` mechanism has been removed. `condLogOdds` and `condPr` use the same
   dimension-changing candidate construction as categorical Gibbs sampling.
-* `branch_site` now represents every mixture component as a `BranchModel`. It preserves all
+* `BranchSite` now represents every mixture component as a `BranchModel`. It preserves all
   properties of the input foreground and background models under `foreground-` and `background-`
   prefixes.
-* `BranchModel` is active infrastructure used by `branch_site`; the previous proposal to delete it is
+* `BranchModel` is active infrastructure used by `BranchSite`; the previous proposal to delete it is
   obsolete.
 * The special `MixtureModel` binding category and `mmm` representation have been removed.
 * `character-properties`, `alignment-draw`, and `bp-analyze` now provide posterior mean, standard
@@ -95,11 +95,11 @@ general context-dependent logger. Those limitations no longer describe the curre
 
 #### Models and evidence
 
-* `m1a`, `m2a`, `m7`, `m8`, and `m8a` implement the corresponding site-model families.
-* `m2a_test`, `m3_test`, and `m8a_test` use a model indicator to perform Bayesian site-model tests.
-* `branch_site` implements the modified branch-site model with foreground branches taken from the
+* `M1a`, `M2a`, `M7`, `M8`, and `M8a` implement the corresponding site-model families.
+* `M2aTest`, `M3Test`, and `M8aTest` use a model indicator to perform Bayesian site-model tests.
+* `BranchSite` implements the modified branch-site model with foreground branches taken from the
   tree's `foreground` edge attribute.
-* `busted` and `busted_s` provide broader episodic-selection models, including a version with
+* `BUSTED` and `BUSTED_S` provide broader episodic-selection models, including a version with
   synonymous-rate variation.
 * The maintained positive-selection tests use `positiveSelectionFields` to log
   `LogOddsPosSelection` and `PrPosSelection`.
@@ -113,7 +113,7 @@ general context-dependent logger. Those limitations no longer describe the curre
 
 * `dNdS` installs the state properties `dNdS` and `posSelection`. Mixture categories therefore carry
   their current `omega` and an indicator for `omega > 1`.
-* `branch_site` prefixes every input background property with `background-` and every input
+* `BranchSite` prefixes every input background property with `background-` and every input
   foreground property with `foreground-`. This reuses the input model's property definitions instead
   of duplicating `dNdS` logic in the branch-site constructor.
 * The outer `Discrete (BranchModel m)` retains the common property map needed by the existing sampled
@@ -136,7 +136,7 @@ general context-dependent logger. Those limitations no longer describe the curre
 
 ### Remaining gaps
 
-* **Gene-wide M0:** `gy94` and related models provide the estimate, but it is not presented as part of
+* **Gene-wide M0:** `GY94` and related models provide the estimate, but it is not presented as part of
   one coherent selection workflow.
 * **Site-model tests:** the inference and conditional model probabilities exist, but their evidence
   and site properties need a selection-specific report.
@@ -415,7 +415,7 @@ where exact output comparison cannot express the required graphical or structura
 
 ### 10. Model choices
 
-**Choice:** Recommend `m2a_test` and `m8a_test`, not a literal Bayesian M7-versus-M8 comparison. The
+**Choice:** Recommend `M2aTest` and `M8aTest`, not a literal Bayesian M7-versus-M8 comparison. The
 M8a point null retains a neutral class and avoids interpreting a poor M7 fit as positive selection.
 Use ten beta categories in the documented PAML-comparison workflow; the ordinary binding should
 retain its current faster default of four.
@@ -450,7 +450,7 @@ report, not conditions that BAli-Phy can currently diagnose away.
 
 Review of the first-stage update found the following problems and changed the final plan accordingly:
 
-* It initially carried forward the old proposal to delete `BranchModel`, but current `branch_site`
+* It initially carried forward the old proposal to delete `BranchModel`, but current `BranchSite`
   uses that type directly. The final plan instead makes it the common branch representation.
 * It initially treated foreground property creation as unfinished. The current code already preserves
   all foreground and background input properties, so the remaining task is to share that construction
@@ -515,7 +515,7 @@ earlier change should be made in an empty child of that change and squashed into
 
 5. **Add the two-ratio Bayesian branch comparison.**
    In the next commit, use the shared constructor to add a Haskell branch-comparison function and
-   `bindings/models/branch_test.json`. Give the binding `omega_background ~ LogLaplace(-1,1)`,
+   `bindings/models/BranchTest.json`. Give the binding `omega_background ~ LogLaplace(-1,1)`,
    `foreground_ratio ~ LogLaplace(0,1)`, `branchDifference ~ Bernoulli(0.5)`, `branch_cats`, and a
    codon-model function argument. Scale the single background and foreground models to expected rate
    one, use `omega_background` under the null, and use
@@ -530,8 +530,8 @@ earlier change should be made in an empty child of that change and squashed into
    the design instead of replacing the expected value.
 
 6. **Document more accurate model-probability summaries.**
-   Preserve the existing model explanations while updating the descriptions for `m2a_test`, `m3_test`,
-   `m8a_test`, `branch_site`, `busted`, `busted_s`, and `branch_test`. Explain that the posterior mean
+   Preserve the existing model explanations while updating the descriptions for `M2aTest`, `M3Test`,
+   `M8aTest`, `BranchSite`, `BUSTED`, `BUSTED_S`, and `BranchTest`. Explain that the posterior mean
    of `PrPosSelection` or `PrBranchDifference` estimates the corresponding posterior probability with
    less Monte Carlo error than averaging the sampled indicator. For probabilities extremely close to
    zero or one, explain that `statreport` uses the matching `LogOdds*` field to report the posterior
@@ -563,8 +563,8 @@ earlier change should be made in an empty child of that change and squashed into
     property streams, branch evidence, and non-equal prior odds.
 
 11. **Document the complete beginner workflow.**
-    Update `doc/README.itex.xml` and `doc/Tutorial.tut.xml` with concrete M0, `m2a_test`,
-    `m8a_test(n=10)`, `branch_test`, and `branch_site` examples. Include
+    Update `doc/README.itex.xml` and `doc/Tutorial.tut.xml` with concrete M0, `M2aTest`,
+    `M8aTest(n=10)`, `BranchTest`, and `BranchSite` examples. Include
     `--set write-properties=true`, multiple chains, `bp-analyze`, a selected reference sequence, and a
     fixed foreground-labeled topology where required. Explain the M8a rather than M7 null, posterior
     probability versus Bayes factor, unconditional site probabilities, one-based display versus

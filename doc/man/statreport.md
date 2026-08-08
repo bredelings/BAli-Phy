@@ -16,7 +16,7 @@ Compute summary statistics for tab-delimited data files.
 
 Fields whose final component begins with `LogOdds`, ignoring case, also receive a
 `posterior-probability` summary. Components are separated by `/` or `:`, so generated names such as
-`P1/m8a_test:LogOddsPosSelection` are recognized. This summary averages the probabilities represented
+`P1/M8aTest:LogOddsPosSelection` are recognized. This summary averages the probabilities represented
 by the sampled log odds and reports both the resulting probability and its log odds; ordinary
 summaries of the sampled log odds are retained.
 

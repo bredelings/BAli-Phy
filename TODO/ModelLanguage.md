@@ -1,6 +1,6 @@
 # Command line language feature assessment.
 
-The command line language evolved from the ability to specify models like `gtr`
+The command line language evolved from the ability to specify models like `GTR`
 for the command line.  However, as it has gained expressive power, it has moved
 towards a fuller language with more familiar syntax than Haskell (i.e. using
 parenthesis instead of space for function application) that also has built-in
@@ -9,12 +9,12 @@ LinguaPhylo, PhyloSpec, and TreePPL.
 
 However, it has some unique features that need to be assessed.  There features
 generally exist to make model-specification ergonomic, and sometimes extremely
-terse.  For example, default arguments that may be random allow writing `gtr`
+terse.  For example, default arguments that may be random allow writing `GTR`
 while relying on default priors.  Likewise, the attempt to thread the alphabet
-through the specification of substitution models allows writing `gtr + x3`
+through the specification of substitution models allows writing `GTR + x3`
 without specifying the alphabet multiple times -- and while making the whole
 thing a function of the alphabet.  Implicit type conversion means that
-it is possibly to write `gtr +> Rates.gamma` without writing `unit_mixture(gtr) +> rates.gamma`.
+it is possibly to write `GTR +> Rates.Gamma` without writing `unit_mixture(GTR) +> Rates.Gamma`.
 
 However, when attempting to provide a syntax for graphical models, some of
 these features can be awkward.  Thus this document is an attempt to explore
@@ -35,7 +35,7 @@ such a language?
 During typechecking, if an expression does not unify with the required type,
 the typechecker tries to rewrite the AST by inserting a conversion function.
 The implemented conversions include `Int` to `Double`, `ExchangeModel<a>` to
-`CTMC<a>` via `f`, `CTMC<a>` to `DiscreteDist<CTMC<a>>` via `unit_mixture`,
+`CTMC<a>` via `F`, `CTMC<a>` to `DiscreteDist<CTMC<a>>` via `unit_mixture`,
 lists of weighted pairs to `DiscreteDist<a>` via `discrete`,
 and `DiscreteDist<a>` to `Distribution<b>` via `convertDiscrete`.
 
@@ -47,7 +47,7 @@ not exactly, the type required by the surrounding model.
 Binding JSON files can give each rule argument a `default_value`.  When a
 call omits that argument, the typechecker inserts the default expression and
 typechecks it as if it had been supplied.  These default values may themselves
-be random expressions, so a compact model name like `gtr` can implicitly stand
+be random expressions, so a compact model name like `GTR` can implicitly stand
 for a model with sampled parameters and priors.
 
 Default expressions can reference other arguments with `@arg`.  Code
@@ -102,7 +102,7 @@ generation.
 
 If an identifier is not a local variable but matches a rule name, the
 typechecker treats it as a zero-argument call to that rule.  This lets users
-write `gtr` instead of `gtr()`, relying on defaults for any omitted arguments.
+write `GTR` instead of `GTR()`, relying on defaults for any omitted arguments.
 
 ### Sample sugar
 
@@ -145,7 +145,7 @@ function calls such as `+`, `-`, `*`, `/`, `&&`, and `==`.  They are then
 resolved through the same rule/scope/typechecking machinery as named
 functions.
 
-I'm thinking of the fact that |w: gtr +> x3 +> dNdS(w)| is an action,
+I'm thinking of the fact that |w: GTR +> x3 +> dNdS(w)| is an action,
 because it really samples w from the (implicit) prior, and then returns a
 pure function.
 

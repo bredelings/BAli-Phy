@@ -58,11 +58,11 @@ config.txt:
  align = intron3.fasta
  align = exon4.fasta
 
- smodel = 1,3,5,7:gtr+Rates.free[n=4]
+ smodel = 1,3,5,7:GTR+Rates.Free[n=4]
  imodel = 1,3,5,7:none
 
- smodel = 2,4,6:gtr+Rates.free[n=4]
- imodel = 2,4,6:rs07
+ smodel = 2,4,6:GTR+Rates.Free[n=4]
+ imodel = 2,4,6:RS07
 
 9. run bali-phy with codon model on exons
 
@@ -80,11 +80,11 @@ align = intron2.fasta
 align = intron3.fasta
 align = coding.fasta
 
-smodel = 1,2,3:gtr+Rates.free[n=4]
-imodel = 1,2,3:rs07
+smodel = 1,2,3:GTR+Rates.Free[n=4]
+imodel = 1,2,3:RS07
 
-smodel = 4:gy94
-#smodel = 4:fMutSel0
-#smodel = 4:m3[gtr_sym,f3x4]
+smodel = 4:GY94
+#smodel = 4:FMutSel0
+#smodel = 4:M3[GTRSym,F3x4]
 imodel = 4:none
 

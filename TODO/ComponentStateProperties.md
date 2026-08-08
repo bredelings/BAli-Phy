@@ -12,7 +12,7 @@ This would prevent us having to implement something separate in the JSON files.
 We could put the map from Text -> Property values on each component.  This
 would handle things like:
 
-    |w: gtr +> x3 +> Rates.dNdS(w)| +> m3(3)
+    |w: GTR +> x3 +> Rates.dNdS(w)| +> M3(3)
     
 The idea is that each individual component would have a mapping from `"dNdS"` to
 `Constant(w[i])`.
@@ -28,7 +28,7 @@ However, if there are multiple components, then we should
 However, if the number of components is variable, the not writing properties for
 "uninteresting" properties might not work.
 
-Another idea would be that the m3 model annotates the components with "dNdS"
+Another idea would be that the M3 model annotates the components with "dNdS"
 and "posSelection", and that dNdS does not.
 
 
@@ -74,10 +74,10 @@ info.
 
 ### Modification of Q matrices
 
-When we do `gtr + x3 + dNdS + fMutSel`, the positive selection info is possible
+When we do `GTR + x3 + dNdS + FMutSel`, the positive selection info is possible
 to retain.
 However, if might be safer to retain the positive selection info only if we do
-  `gtr + x3 + fMutSel + dNdS`.
+  `GTR + x3 + FMutSel + dNdS`.
 This raises the questions of what kind of transformations we want to simply drop
   any properties, and which ones we want to allow to retain properties.
 Its possible that we really only want the properties to be retained under pure
@@ -101,7 +101,7 @@ How do we handle the case of "rates"?
 
  * Add a map from Text -> Properties to each SModel.Markov model.  
 
- * Make Rates.gamma create a "rate" property for each component.
+ * Make Rates.Gamma create a "rate" property for each component.
 
  * Make dNdS create a "dNdS" property for each component
 

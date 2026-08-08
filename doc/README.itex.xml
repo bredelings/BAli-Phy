@@ -455,7 +455,7 @@ You can install <application>R</application> via Homebrew:
         <filename>C:\Users\user\data.fasta</filename>.  PowerShell also accepts forward
         slashes in many paths.</para>
       <para>Use double quotes around model expressions on Windows.  For example:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>bali-phy sequences.fasta -S "gtr +&gt; Rates.gamma"</userinput></screen>
+<screen><prompt>PS&gt;</prompt> <userinput>bali-phy sequences.fasta -S "GTR +&gt; Rates.Gamma"</userinput></screen>
       <para>PowerShell uses
         <command>Copy-Item <replaceable>source</replaceable>
           <replaceable>destination</replaceable></command> to copy a file, while Command
@@ -474,10 +474,10 @@ You can install <application>R</application> via Homebrew:
     <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
     On native Windows, use the PowerShell or Command Prompt copy command from <xref linkend="tests"/> instead.</para>
     <para>We will now start 4 simultaneous runs.  On Linux, macOS, or WSL2, use:
-    <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S "gtr +&gt; Rates.free +&gt; Covarion.hb02" --iter=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "gtr +&gt; Rates.free +&gt; Covarion.hb02" --iter=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "gtr +&gt; Rates.free +&gt; Covarion.hb02" --iter=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "gtr +&gt; Rates.free +&gt; Covarion.hb02" --iter=1000 &amp; </userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iter=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iter=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iter=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iter=1000 &amp; </userinput></screen>
     These runs will all execute at the same time because of the
     "<userinput>&amp;</userinput>".  Each run will create a unique directory of the form
     <filename>25-<replaceable>number</replaceable></filename> to store its results.</para>
@@ -487,7 +487,7 @@ You can install <application>R</application> via Homebrew:
       <filename>25.fasta</filename>.  Run the following command once in each terminal.
       Separate terminals keep each chain's progress and errors visible and allow each chain
       to be interrupted independently.</para>
-<screen><prompt>PS&gt;</prompt> <userinput>bali-phy 25.fasta -S "gtr +&gt; Rates.free +&gt; Covarion.hb02" --iter=1000</userinput></screen>
+<screen><prompt>PS&gt;</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iter=1000</userinput></screen>
 
     <para>On Linux, macOS, or WSL2, you can use the program <userinput>top</userinput> to
       verify that four copies of <userinput>bali-phy</userinput> are running:
@@ -613,10 +613,10 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
     <para>Sensible defaults are supplied for command line options that are not specified.  For example, if <filename>sequences.fasta</filename> contains DNA sequences, then
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
     is equivalent to
-    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S tn93 -I rs07</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S TN93 -I RS07</userinput></screen>
     Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.  You will generally need to write the substitution model inside single quotes unless it is just a single word.
 
-    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'lg08&nbsp;+>&nbsp;Rates.gamma&nbsp;+>&nbsp;inv'</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'LG&nbsp;+>&nbsp;Rates.Gamma&nbsp;+>&nbsp;Inv'</userinput></screen>
     Every short option like <userinput>-S</userinput> has an equivalent long option like <userinput>--smodel</userinput>.
     To see the most frequently-used command-line options, you can run
     <screen><prompt>%</prompt> <userinput>bali-phy help</userinput></screen>
@@ -644,10 +644,10 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 :align ITS2.fasta
 
 # linked substitution model for 1st and 3rd partition
-:smodel 1,3:tn93&nbsp; +> &nbsp;Rates.free(n=3)
+:smodel 1,3:TN93&nbsp; +> &nbsp;Rates.Free(n=3)
 
 # substitution model for 2nd partition
-:smodel 2:tn93
+:smodel 2:TN93
 
 # indel model for second partition
 :imodel 2:none
@@ -991,10 +991,10 @@ option.  For example:
       <para>The likelihood is the probabilistic analogue to summed mismatch penalties.</para>
       <para>The prior_A is the probabilistic analogue to summed gap penalties.</para>
       <para>Parameters belonging to a model are generally named after the model and
-      parameter, such as <userinput>tn93:kappaPur</userinput> or
-      <userinput>rs07:rate</userinput>.  Run <userinput>bali-phy help
+      parameter, such as <userinput>TN93:kappaPur</userinput> or
+      <userinput>RS07:rate</userinput>.  Run <userinput>bali-phy help
       <replaceable>model</replaceable></userinput>, for example <userinput>bali-phy help
-      tn93</userinput>, to see the meaning of that model&apos;s parameters.  The precise
+      TN93</userinput>, to see the meaning of that model&apos;s parameters.  The precise
       field names may be disambiguated when an analysis contains multiple copies of a
       model, so the header of <filename>C1.log</filename> is authoritative.</para>
       <para>See <userinput>bali-phy help scale</userinput> for more information about
@@ -1272,7 +1272,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <section xml:id="dna_models">
       <info><title>DNA and RNA models</title></info>
 	
-      <para>The default substitution model for DNA and RNA is tn93.</para>
+      <para>The default substitution model for DNA and RNA is TN93.</para>
       <section>
 	<info><title>Substitution rates</title></info>
       <para>All the DNA models are special cases of the GTR model.  </para>
@@ -1289,7 +1289,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	  <tbody>
 	    <row>
-	      <entry><userinput>jc69</userinput></entry>
+	      <entry><userinput>JC69</userinput></entry>
 	      <entry>0</entry>
 	      <entry><para>Equal rates and equal base frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1016/B978-1-4832-3211-9.50009-7">(Jukes and Cantor, 1969)</link>
@@ -1297,7 +1297,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>k80</userinput></entry>
+	      <entry><userinput>K80</userinput></entry>
 	      <entry>1</entry>
 	      <entry><para>Unequal transition &amp; transversion rates, equal base frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01731581">(Kimura, 1980)</link>
@@ -1305,7 +1305,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>f81</userinput></entry>
+	      <entry><userinput>F81</userinput></entry>
 	      <entry>3</entry>
 	      <entry><para>Equal exchangeabilities, unequal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
@@ -1315,7 +1315,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>hky85</userinput></entry>
+	      <entry><userinput>HKY85</userinput></entry>
 	      <entry>4</entry>
 	      <entry><para>Unequal Transition &amp; transversion rates, unequal base frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF02101694">
@@ -1325,7 +1325,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>tn93</userinput></entry>
+	      <entry><userinput>TN93</userinput></entry>
 	      <entry>5</entry>
 	      <entry>
 		<para>Unequal rates for transitions (purines), transitions (pyrimidines) and transversions, unequal base frequencies.</para>
@@ -1336,7 +1336,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>gtr</userinput></entry>
+	      <entry><userinput>GTR</userinput></entry>
 	      <entry>8</entry>
 	      <entry><para>Unequal exchangeabilities, unequal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.damtp.cam.ac.uk/user/st321/CV_&amp;_Publications_files/STpapers-pdf/T86.pdf">
@@ -1367,11 +1367,11 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
-      <programlisting language="java">gtr(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})</programlisting>
+      <programlisting language="java">GTR(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})</programlisting>
       <para>Frequencies can also be specified using functions:</para>
 
       <para>
-	<programlisting language="java">gtr(pi=Frequencies.uniform)</programlisting>
+	<programlisting language="java">GTR(pi=Frequencies.uniform)</programlisting>
       </para>
 
       <informaltable>
@@ -1403,7 +1403,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <section xml:id="protein_models">
       <info><title>Protein models</title></info>
 
-      <para>The default substitution model for proteins is lg08.</para>
+      <para>The default substitution model for proteins is LG.</para>
 
       <section>
 	<info><title>Substitution rates</title></info>
@@ -1423,7 +1423,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  
 	  <tbody>
 	    <row>
-	      <entry><userinput>jc69</userinput></entry>
+	      <entry><userinput>JC69</userinput></entry>
 	      <entry>0</entry>
 	      <entry>1</entry>
 	      <entry><para>Equal rates and equal frequencies.</para>
@@ -1431,7 +1431,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>f81</userinput></entry>
+	      <entry><userinput>F81</userinput></entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
 	      <entry><para>Equal exchangeabilities, unequal frequencies.</para>
@@ -1443,7 +1443,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>jtt&nbsp;+>&nbsp;f</userinput></para>
+		<para><userinput>JTT&nbsp;+>&nbsp;F</userinput></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1457,7 +1457,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>wag&nbsp;+>&nbsp;f</userinput></para>
+		<para><userinput>WAG&nbsp;+>&nbsp;F</userinput></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1471,7 +1471,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>lg08&nbsp;+>&nbsp;f</userinput></para>
+		<para><userinput>LG&nbsp;+>&nbsp;F</userinput></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1484,7 +1484,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>lg4m</userinput></entry>
+	      <entry><userinput>LG4M</userinput></entry>
 	      <entry>1</entry>
 	      <entry>4</entry>
 	      <entry>
@@ -1497,7 +1497,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>lg4x</userinput></entry>
+	      <entry><userinput>LG4X</userinput></entry>
 	      <entry>6</entry>
 	      <entry>4</entry>
 	      <entry>
@@ -1511,7 +1511,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>ul2</userinput></para>
+		<para><userinput>UL2</userinput></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>2</entry>
@@ -1525,7 +1525,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>c10</userinput></para>
+		<para><userinput>C10</userinput></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>10</entry>
@@ -1539,7 +1539,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>c20</userinput></para>
+		<para><userinput>C20</userinput></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>20</entry>
@@ -1553,7 +1553,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>c30</userinput></para>
+		<para><userinput>C30</userinput></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>30</entry>
@@ -1567,7 +1567,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>c40</userinput></para>
+		<para><userinput>C40</userinput></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>40</entry>
@@ -1581,7 +1581,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>c50</userinput></para>
+		<para><userinput>C50</userinput></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>50</entry>
@@ -1595,7 +1595,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>c60</userinput></para>
+		<para><userinput>C60</userinput></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>60</entry>
@@ -1609,7 +1609,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>empirical(<replaceable>file</replaceable>)&nbsp;+>&nbsp;f</userinput></para>
+		<para><userinput>empirical(<replaceable>file</replaceable>)&nbsp;+>&nbsp;F</userinput></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1618,7 +1618,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>gtr</userinput></entry>
+	      <entry><userinput>GTR</userinput></entry>
 	      <entry>208</entry>
 	      <entry>1</entry>
 	      <entry><para>Unequal exchangeabilities, unequal frequencies.</para>
@@ -1652,10 +1652,10 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
-      <programlisting language="java">wag +> f({"A":0.047, "R":0.19,...})</programlisting>
+      <programlisting language="java">WAG +> F({"A":0.047, "R":0.19,...})</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="java">wag +> f(pi=Frequencies.uniform)</programlisting>
+	<programlisting language="java">WAG +> F(pi=Frequencies.uniform)</programlisting>
       </para>
 
       <informaltable>
@@ -1677,13 +1677,13 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>wag_freq</userinput></entry>
+	      <entry><userinput>WAGFreq</userinput></entry>
 	      <entry>0</entry>
 	      <entry>The constant amino-acid frequencies from the WAG paper.</entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>lg08_freq</userinput></entry>
+	      <entry><userinput>LGFreq</userinput></entry>
 	      <entry>0</entry>
 	      <entry>The constant amino-acid frequencies from the LG08 paper.</entry>
 	    </row>
@@ -1691,9 +1691,9 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	</tgroup>
       </informaltable>
 	  
-      <para>The <userinput>+> fe</userinput> model is shorthand for <userinput>+> f(pi=Frequencies.uniform)</userinput>:</para>
+      <para>The <userinput>+> FE</userinput> model is shorthand for <userinput>+> F(pi=Frequencies.uniform)</userinput>:</para>
       <para>
-	<programlisting language="java">wag +> fe</programlisting>
+	<programlisting language="java">WAG +> FE</programlisting>
       </para>
     </section>
 
@@ -1703,7 +1703,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <section xml:id="doublet_models">
       <info><title>Doublet models (RNA stems)</title></info>
       <para>The doublets alphabet consists of 16 RNA dinucleotides.  It is used to model RNA stems, where two nucleotides matched in the RNA secondary structure are highly correlated.</para>
-      <para>The default substitution model for doublets is <userinput>tn93_sym&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;f</userinput>.</para>
+      <para>The default substitution model for doublets is <userinput>TN93Sym&nbsp;+>&nbsp;x2Sym&nbsp;+>&nbsp;F</userinput>.</para>
       <section xml:id="doublet-data">
 	<info><title>Doublet data</title></info>
 	<para>BAli-Phy does not allow specifying which nucleotides are paired either with a string like <userinput>((.))</userinput> or with a "pairs" file.  Instead you must manually extract the paired nucleotides and put them in their own partition (for stems), and then manually extract each loop and put it in its own partition.</para>
@@ -1736,7 +1736,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2&nbsp;+>&nbsp;mut_sel</userinput></entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2&nbsp;+>&nbsp;MutSel</userinput></entry>
 	      <entry>df(nuc_model)+15</entry>
 	      <entry>
 		<para>Mutation-selection model: neutral mutation follows <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns on dinucleotides.</para>
@@ -1745,7 +1745,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;f</userinput></entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2Sym&nbsp;+>&nbsp;F</userinput></entry>
 	      <entry>df(nuc_model)+15</entry>
 	      <entry><para>This model has separate frequencies for each dinucleotide.</para>
 	      <para>Simultaneous changes of both letters are <emphasis>not</emphasis> allowed.</para>
@@ -1772,7 +1772,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row -->
 
 	    <row>
-	      <entry><userinput>gtr</userinput></entry>
+	      <entry><userinput>GTR</userinput></entry>
 	      <entry>134</entry>
 	      <entry><para>Unequal exchangeabilities, unequal frequencies.</para>
 	      <para>It is unlikely that you would want to use this model, since it has so many parameters.</para>
@@ -1804,13 +1804,13 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">hky85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x2
+      <programlisting language="java">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x2
 
-hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "CC":0.01, "CG":0.22, "CU":0.01, "GA":0.01, "GC":0.22, "GG":0.01, "GU":0.01, "UA":0.22, "UC":0.01, "UG":0.01, "UU":0.01})</programlisting>
+HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "CC":0.01, "CG":0.22, "CU":0.01, "GA":0.01, "GC":0.22, "GG":0.01, "GU":0.01, "UA":0.22, "UC":0.01, "UG":0.01, "UU":0.01})</programlisting>
 
       <para>Frequencies can also be specified using functions:</para>
       <!-- para>
-	<programlisting language="java">hky85_sym +> x2_sym +> f(pi=f1x4)            // nucleotide frequencies are estimated</programlisting>
+	<programlisting language="java">HKY85Sym +> x2Sym +> F(pi=F1x4)            // nucleotide frequencies are estimated</programlisting>
       </para -->
 
 
@@ -1833,7 +1833,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    </row>
 
 	    <!-- row>  Maybe this should take (i) one set of nuc frequencies, and (ii) one set of fitness parameters?
-	      <entry><userinput>f1x4</userinput></entry>
+	      <entry><userinput>F1x4</userinput></entry>
 	      <entry>3</entry>
 	      <entry>Constructs doublet frequencies from independent nucleotide frequencies.</entry>
 	    </row -->
@@ -1860,7 +1860,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
     <section xml:id="triplet_models">
       <info><title>Triplet models</title></info>
       <para>The triplets alphabet is similar to the codons alphabet, except that stop codons are included. Unlike the codons alphabet, the triplets alphabet has no knowledge of the genetic code.</para>
-      <para>The default substitution model for triplets is tn93 +> x3.</para>
+      <para>The default substitution model for triplets is TN93 +> x3.</para>
       <section>
 	<info><title>Substitution rates</title></info>
       <informaltable>
@@ -1877,7 +1877,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	  
 	  <tbody>
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;f</userinput></entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3Sym&nbsp;+>&nbsp;F</userinput></entry>
 	      <entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
 	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix.</para>
 	      </entry>
@@ -1899,7 +1899,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    </row -->
 
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3&nbsp;+>&nbsp;mut_sel</userinput></entry>
+		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3&nbsp;+>&nbsp;MutSel</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
 		</entry>
@@ -1913,10 +1913,10 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">hky85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x3</programlisting>
+      <programlisting language="java">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x3</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="java">hky85_sym +> x3_sym +> f(pi=f1x4)            // nucleotide frequencies are estimated</programlisting>
+	<programlisting language="java">HKY85Sym +> x3Sym +> F(pi=F1x4)            // nucleotide frequencies are estimated</programlisting>
       </para>
 
 
@@ -1939,13 +1939,13 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    </row>
 
 	    <row>
-	      <entry><userinput>f1x4</userinput></entry>
+	      <entry><userinput>F1x4</userinput></entry>
 	      <entry>3</entry>
 	      <entry>Constructs triplet frequencies from independent nucleotide frequencies.</entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>f3x4</userinput></entry>
+	      <entry><userinput>F3x4</userinput></entry>
 	      <entry>9</entry>
 	      <entry>Constructs triplet frequencies from independent nucleotide frequencies for each codon position.</entry>
 	    </row>
@@ -1953,9 +1953,9 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	  </tbody>
 	</tgroup>
       </informaltable>
-	<para>The <userinput>+> fe</userinput> model is shorthand for <userinput>+> f(pi=Frequencies.uniform)</userinput>:</para>
+	<para>The <userinput>+> FE</userinput> model is shorthand for <userinput>+> F(pi=Frequencies.uniform)</userinput>:</para>
 	<para>
-	  <programlisting language="java">hky85_sym +> x3_sym +> fe</programlisting>
+	  <programlisting language="java">HKY85Sym +> x3Sym +> FE</programlisting>
 	</para>
     </section>
 
@@ -1967,7 +1967,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
     <section xml:id="codon_models">
       <info><title>Codon models</title></info>
 
-      <para>The default substitution model for codons is gy94.</para>
+      <para>The default substitution model for codons is GY94.</para>
 
       <section>
 	<info><title>Standard models</title></info>
@@ -1986,7 +1986,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	    <tbody>
 	      <row>
-		<entry><userinput>gy94</userinput></entry>
+		<entry><userinput>GY94</userinput></entry>
 		<entry>62</entry>
 		<entry><para>Model of dN/dS with a separate frequency for each codon.</para>
 		<para>Rate for changing a nucleotide depends on neighboring nucleotides.</para>
@@ -1997,7 +1997,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>gy94(pi=f1x4)</userinput></entry>
+		<entry><userinput>GY94(pi=F1x4)</userinput></entry>
 		<entry>5</entry>
 		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
@@ -2007,7 +2007,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>gy94(pi=f3x4)</userinput></entry>
+		<entry><userinput>GY94(pi=F3x4)</userinput></entry>
 		<entry>11</entry>
 		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies for each codon position.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
@@ -2017,7 +2017,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>gy94_ext(<replaceable>nuc_model</replaceable>)</userinput></entry>
+		<entry><userinput>GY94Ext(<replaceable>nuc_model</replaceable>)</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+61</entry>
 		<entry><para>GY94 model extended with a generic nucleotide exchangeability matrix.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
@@ -2027,10 +2027,10 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>mg94</userinput></entry>
+		<entry><userinput>MG94</userinput></entry>
 		<entry>4</entry>
 		<entry>
-		  <para>Model of dN/dS with f81 as the neutral model.</para>
+		  <para>Model of dN/dS with F81 as the neutral model.</para>
 		  <para>Rate for changing a nucleotide depends only on that nucleotide.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
 		    (Muse and Gaut, 1994)
@@ -2039,9 +2039,9 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>mg94k</userinput></entry>
+		<entry><userinput>MG94K</userinput></entry>
 		<entry>5</entry>
-		<entry><para>Model of dN/dS with hky85 as the neutral model.</para>
+		<entry><para>Model of dN/dS with HKY85 as the neutral model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
 		  (Muse and Gaut, 1994)
 		</link>
@@ -2049,7 +2049,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>mg94_ext(<replaceable>nuc_model</replaceable>)</userinput></entry>
+		<entry><userinput>MG94Ext(<replaceable>nuc_model</replaceable>)</userinput></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+1</entry>
 		<entry><para>Model of dN/dS with <replaceable>nuc_model</replaceable> as the neutral model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
@@ -2059,7 +2059,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>fMutSel</userinput></entry>
+		<entry><userinput>FMutSel</userinput></entry>
 		<entry>65</entry>
 		<entry><para>MG94-like model with fitnesses for each codon.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msm284">
@@ -2069,7 +2069,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>fMutSel0</userinput></entry>
+		<entry><userinput>FMutSel0</userinput></entry>
 		<entry>24</entry>
 		<entry><para>MG94-like model with fitnesses for each amino-acid.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msm284">
@@ -2079,7 +2079,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>busted</userinput></entry>
+		<entry><userinput>BUSTED</userinput></entry>
 		<entry>24</entry>
 		<entry><para>MG94-like model where each branch and site has a randomly chosen dN/dS category.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msv035">
@@ -2089,7 +2089,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>busted_s</userinput></entry>
+		<entry><userinput>BUSTED_S</userinput></entry>
 		<entry>13</entry>
 		<entry><para>BUSTED model with synonymous rate variation.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msaa037">
@@ -2115,15 +2115,15 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	  <para>Here are some examples for how to construct classic codon models piecewise:
 	  <itemizedlist>
-	    <listitem><userinput>mg94</userinput> is equivalent to <userinput>f81 +> x3 +> dNdS</userinput>.</listitem>
-	    <listitem><userinput>mg94k</userinput> is equivalent to <userinput>hky85 +> x3 +> dNdS</userinput>.</listitem>
-	    <listitem><userinput>gy94</userinput> is equivalent to <userinput>hky85_sym +> x3_sym +> f +> dNdS</userinput>.</listitem>
-	    <listitem><userinput>fMutSel</userinput> is equivalent to <userinput>gtr +> x3 +> dNdS +> mut_sel</userinput>.</listitem>
-	    <listitem><userinput>fMutSel0</userinput> is equivalent to <userinput>gtr +> x3 +> dNdS +> mut_sel_aa</userinput>.</listitem>
-            <listitem><userinput>m3</userinput> is equivalent to <userinput>|w: gy94(w)| +> m3</userinput>.</listitem>
-            <listitem><userinput>m3_test</userinput> is equivalent to <userinput>|w: gy94(w)| +> m3_test</userinput>.</listitem>
-	    <listitem><userinput>busted</userinput> is equivalent to <userinput>|w:gtr +> x3 +> dNdS(omega=w)| +> m3_test(n=2) +> branch_site_mixture</userinput>.</listitem>
-	    <listitem><userinput>busted_s</userinput> is equivalent to <userinput>|w:gtr +> x3 +> dNdS(omega=w)| +> m3_test(n=2) +> branch_site_mixture +> Rates.gamma(n=3)</userinput>.</listitem>
+	    <listitem><userinput>MG94</userinput> is equivalent to <userinput>F81 +> x3 +> dNdS</userinput>.</listitem>
+	    <listitem><userinput>MG94K</userinput> is equivalent to <userinput>HKY85 +> x3 +> dNdS</userinput>.</listitem>
+	    <listitem><userinput>GY94</userinput> is equivalent to <userinput>HKY85Sym +> x3Sym +> F +> dNdS</userinput>.</listitem>
+	    <listitem><userinput>FMutSel</userinput> is equivalent to <userinput>GTR +> x3 +> dNdS +> MutSel</userinput>.</listitem>
+	    <listitem><userinput>FMutSel0</userinput> is equivalent to <userinput>GTR +> x3 +> dNdS +> MutSelAA</userinput>.</listitem>
+            <listitem><userinput>M3</userinput> is equivalent to <userinput>|w: GY94(w)| +> M3</userinput>.</listitem>
+            <listitem><userinput>M3Test</userinput> is equivalent to <userinput>|w: GY94(w)| +> M3Test</userinput>.</listitem>
+	    <listitem><userinput>BUSTED</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3Test(n=2) +> BranchSiteMixture</userinput>.</listitem>
+	    <listitem><userinput>BUSTED_S</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3Test(n=2) +> BranchSiteMixture +> Rates.Gamma(n=3)</userinput>.</listitem>
 	  </itemizedlist>
 	  </para>
 
@@ -2139,7 +2139,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    </row></thead>
             <tbody>
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;f</userinput></entry>
+		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3Sym&nbsp;+>&nbsp;F</userinput></entry>
 		<entry>df(nuc_model)+60</entry>
 		<entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix (dN/dS = 1).</para>
 	               <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on codons only if the frequency of stop codons is zero.</para>
@@ -2154,7 +2154,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;mnm</userinput></entry>
+		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;MNM</userinput></entry>
 		<entry>df(nuc_model)</entry>
 		<entry><para>Like <userinput>x3</userinput>, but with multi-nucleotide mutations.</para>
 		</entry>
@@ -2175,14 +2175,14 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>codon_model</replaceable> +> mut_sel</userinput></entry>
+		<entry><userinput><replaceable>codon_model</replaceable> +> MutSel</userinput></entry>
 		<entry>df(<replaceable>codon_model</replaceable>)+60</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>codon_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
 		</entry>
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>codon_model</replaceable> +> mut_sel_aa</userinput></entry>
+		<entry><userinput><replaceable>codon_model</replaceable> +> MutSelAA</userinput></entry>
 		<!-- The 20 amino-acid fitness values are centered, leaving 19 d.f. -->
 		<entry>df(<replaceable>codon_model</replaceable>)+19</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>codon_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
@@ -2190,7 +2190,7 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>codon_mixture_model</replaceable> +> branch_site_mixture</userinput></entry>
+		<entry><userinput><replaceable>codon_mixture_model</replaceable> +> BranchSiteMixture</userinput></entry>
 		<entry>df(<replaceable>codon_mixture_model</replaceable>)</entry>
 		<entry><para>Codon model where the rate matrix for each branch and site is chosen from the mixture distribution.</para>
 		</entry>
@@ -2207,12 +2207,12 @@ hky85_sym +> x2_sym +> f({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
-      <programlisting language="java">gy94(pi={"AAA":0.01, "AAC":0.02,...})
-mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
+      <programlisting language="java">GY94(pi={"AAA":0.01, "AAC":0.02,...})
+MG94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 </programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="java">gy94(pi=f1x4)              // nucleotide frequencies are estimated</programlisting>
+	<programlisting language="java">GY94(pi=F1x4)              // nucleotide frequencies are estimated</programlisting>
       </para>
 
 
@@ -2235,13 +2235,13 @@ mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 	    </row>
 
 	    <row>
-	      <entry><userinput>f1x4</userinput></entry>
+	      <entry><userinput>F1x4</userinput></entry>
 	      <entry>3</entry>
 	      <entry>Constructs codon frequencies from independent nucleotide frequencies.</entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>f3x4</userinput></entry>
+	      <entry><userinput>F3x4</userinput></entry>
 	      <entry>9</entry>
 	      <entry>Constructs codon frequencies from independent nucleotide frequencies for each codon position.</entry>
 	    </row>
@@ -2254,7 +2254,7 @@ mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
       <section xml:id="genetic-codes">
 	<info><title>Genetic Codes</title></info>
       
-	<para>When using a codon-based substitution model like <userinput>gy94</userinput>, you may select the genetic code by specifying <userinput>-A "Codons(,<replaceable>genetic-code</replaceable>)"</userinput>.
+	<para>When using a codon-based substitution model like <userinput>GY94</userinput>, you may select the genetic code by specifying <userinput>-A "Codons(,<replaceable>genetic-code</replaceable>)"</userinput>.
         Available genetic codes are:</para>
 	<informaltable>
 	  <tgroup cols="3">
@@ -2299,11 +2299,11 @@ mg94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 	<para>Genetic codes may be specified by name or by <userinput>code<replaceable>n</replaceable></userinput> where <replaceable>n</replaceable> is the code number.
         For example <userinput>code1</userinput> is the standard code.
 If the genetic code is not specified, then the standard code is used:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A Codons
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A "Codons(RNA)"</screen>
+<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S GY94 -A Codons
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S GY94 -A "Codons(RNA)"</screen>
 	These examples specify the vertebrate mitochondrial code:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A "Codons(DNA,mt-vert)"
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S gy94 -A "Codons(,mt-vert)"</screen>	
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S GY94 -A "Codons(DNA,mt-vert)"
+<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S GY94 -A "Codons(,mt-vert)"</screen>
 </para>
       </section>
       <section>
@@ -2319,7 +2319,7 @@ If the genetic code is not specified, then the standard code is used:
 	      
 	      <row>
 		<entry>
-		  <para><userinput>m1a</userinput></para>
+		  <para><userinput>M1a</userinput></para>
 		</entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2</entry>
 		<entry>
@@ -2332,7 +2332,7 @@ If the genetic code is not specified, then the standard code is used:
 
 	      <row>
 		<entry>
-		  <para><userinput>m2a</userinput></para>
+		  <para><userinput>M2a</userinput></para>
 		</entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry>
@@ -2344,7 +2344,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>m2a_test</userinput></entry>
+		<entry><userinput>M2aTest</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry>
 		  <para>A Bayesian test for positive selection that compares M2a with M1a.</para>
@@ -2355,7 +2355,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>m3</userinput></entry>
+		<entry><userinput>M3</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2*$n$-1</entry>
 		<entry><para>An free mixture of $n$ categories of conserved dN/dS values.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
@@ -2366,7 +2366,7 @@ If the genetic code is not specified, then the standard code is used:
 
 	      <row>
 		<entry>
-		  <para><userinput>m3_test</userinput></para>
+		  <para><userinput>M3Test</userinput></para>
 		</entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2*$n$+1</entry>
 		<entry>
@@ -2375,7 +2375,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><para><userinput>m7</userinput></para></entry>
+		<entry><para><userinput>M7</userinput></para></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2</entry>
 		<entry><para>The M7 model places a beta distribution on dN/dS.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
@@ -2385,7 +2385,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>m8a</userinput></entry>
+		<entry><userinput>M8a</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+3</entry>
 		<entry><para>The M8a model adds a category of <emphasis>neutral</emphasis> sites to the M7 model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
@@ -2395,7 +2395,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>m8</userinput></entry>
+		<entry><userinput>M8</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>The M8 model adds a category of <emphasis>positively-selected</emphasis> sites to the M7 model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
@@ -2405,7 +2405,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>m8a_test</userinput></entry>
+		<entry><userinput>M8aTest</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection that compares the M8 to the M8a model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
@@ -2415,7 +2415,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>branch_site</userinput></entry>
+		<entry><userinput>BranchSite</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection that on some (unknown) sites and some (known) branches.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msi237">
@@ -2433,7 +2433,7 @@ If the genetic code is not specified, then the standard code is used:
 
       <section><info><title>The branch-site substitution model</title></info>
       <para>In order to use the branch-site substitution model, the user needs to specify an unrooted tree topology and fix the topology:
-    <screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta -S branch_site --fix topology=<replaceable>treefile</replaceable></screen>
+    <screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta -S BranchSite --fix topology=<replaceable>treefile</replaceable></screen>
     The tree file should be in Newick format, with foreground branches labelled using &amp; attributes. The attribute must be applied to the branch, not the node, so it must occur after a colon.
 
 <example><title>An tree with a foreground branch</title>
@@ -2463,7 +2463,7 @@ If the genetic code is not specified, then the standard code is used:
     
     <para>
       Complex substitution models in <application>BAli-Phy</application>
-      are constructed as mixtures of reversible CTMC models that run at different rates (e.g. $\Gamma_4 + INV$)
+      are constructed as mixtures of reversible CTMC models that run at different rates (e.g. $\Gamma_4 + Inv$)
       or have different parameters (e.g. an M2a codon model).
     </para>
 
@@ -2478,7 +2478,7 @@ If the genetic code is not specified, then the standard code is used:
 	  <tbody>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.gamma</userinput></entry>
+	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.Gamma</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the Gamma distribution</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF00160154">
@@ -2489,15 +2489,15 @@ If the genetic code is not specified, then the standard code is used:
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.logNormal</userinput></para>
+		<para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.LogNormal</userinput></para>
 	      </entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
-	      <entry><para>Site rates follow a discrete approximation to the logNormal distribution</para>
+	      <entry><para>Site rates follow a discrete approximation to the log-normal distribution</para>
 	      </entry>
 	    </row>
 
 	    <row>
-	      <entry><para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.free</userinput></para></entry>
+	      <entry><para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.Free</userinput></para></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+2($n$-1)</entry>
 	      <entry><para>Sites fall in one of $n$ categories. Each category has its own rate.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/139.2.993">
@@ -2507,15 +2507,15 @@ If the genetic code is not specified, then the standard code is used:
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;multi_rate(<replaceable>dist</replaceable>)</userinput></entry>
+	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;MultiRate(<replaceable>dist</replaceable>)</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+df(<replaceable>dist</replaceable>)</entry>
 	      <entry><para>Site rates follow a discrete approximation to the distribution <replaceable>dist</replaceable>.</para></entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;inv</userinput></entry>
+	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Inv</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
-	      <entry><para>Some fraction inv:p_inv of sites are invariable.</para>
+	      <entry><para>Some fraction Inv:p_inv of sites are invariable.</para>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2546,7 +2546,7 @@ If the genetic code is not specified, then the standard code is used:
 	  <tbody>
 
 	    <row>
-	      <entry><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Covarion.ts98</userinput></entry>
+	      <entry><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Covarion.TuffleySteel98</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+2</entry>
 	      <entry>
                 <para>Each state in rate matrix Q is split into an ON and OFF variant.  Models burstiness.</para>
@@ -2558,11 +2558,11 @@ If the genetic code is not specified, then the standard code is used:
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Rates.gamma&nbsp;+>&nbsp;Covarion.hb02</userinput></para>
-                <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.hb02</userinput></para>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Rates.Gamma&nbsp;+>&nbsp;Covarion.Huelsenbeck02</userinput></para>
+                <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Huelsenbeck02</userinput></para>
               </entry>
 	      <entry>
-                <para>df(<replaceable>Q+Rates.gamma</replaceable>)+2</para>
+                <para>df(<replaceable>Q+Rates.Gamma</replaceable>)+2</para>
                 <para>df(<replaceable>submodel</replaceable>)+2</para>
               </entry>
 	      <entry>
@@ -2575,11 +2575,11 @@ If the genetic code is not specified, then the standard code is used:
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Rates.gamma&nbsp;+>&nbsp;Covarion.gt01</userinput></para>
-                <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.gt01</userinput></para>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Rates.Gamma&nbsp;+>&nbsp;Covarion.Galtier01</userinput></para>
+                <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Galtier01</userinput></para>
               </entry>
 	      <entry>
-                <para>df(<replaceable>Q+Rates.gamma</replaceable>)+2</para>
+                <para>df(<replaceable>Q+Rates.Gamma</replaceable>)+2</para>
                 <para>df(<replaceable>submodel</replaceable>)+2</para>
               </entry>
 	      <entry>
@@ -2592,11 +2592,11 @@ If the genetic code is not specified, then the standard code is used:
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Rates.gamma&nbsp;+>&nbsp;Covarion.wssr07</userinput></para>
-                <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.wssr07</userinput></para>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Rates.Gamma&nbsp;+>&nbsp;Covarion.Wang07</userinput></para>
+                <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Wang07</userinput></para>
               </entry>
 	      <entry>
-                <para>df(<replaceable>Q+Rates.gamma</replaceable>)+4</para>
+                <para>df(<replaceable>Q+Rates.Gamma</replaceable>)+4</para>
                 <para>df(<replaceable>submodel</replaceable>)+4</para>
               </entry>
 	      <entry>
@@ -2613,8 +2613,8 @@ If the genetic code is not specified, then the standard code is used:
         <note>
           Note that the obvious way to combine the Tuffley-Steel model with rate heterogeneity is wrong:
           <itemizedlist>
-            <listitem><para><userinput>Q +> Covarion.ts98 +> Rates.gamma</userinput>: This is incorrect.  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
-            <listitem><para><userinput>Q +> Rates.gamma +> Covarion.hb02</userinput>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
+            <listitem><para><userinput>Q +> Covarion.TuffleySteel98 +> Rates.Gamma</userinput>: This is incorrect.  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
+            <listitem><para><userinput>Q +> Rates.Gamma +> Covarion.Huelsenbeck02</userinput>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
           </itemizedlist>
         </note>
       </para>
@@ -2626,7 +2626,7 @@ If the genetic code is not specified, then the standard code is used:
       
     <para>Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments $\Pr(A|T,\tau,\Lambda)$ is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</para>
 
-	<para>The default insertion/deletion model is <userinput>rs07</userinput>.</para>
+	<para>The default insertion/deletion model is <userinput>RS07</userinput>.</para>
 	
     <informaltable>
 	  
@@ -2641,7 +2641,7 @@ If the genetic code is not specified, then the standard code is used:
 	    </row></thead>
 	    <tbody>	    
 	      <row>
-		<entry><userinput>rs05</userinput></entry>
+		<entry><userinput>RS05</userinput></entry>
 		<entry>3</entry>
 		<entry>
 		  <para>A symmetric insertion-deletion model with geometrically-distributed indel lengths.</para>
@@ -2653,7 +2653,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>rs07</userinput></entry>
+		<entry><userinput>RS07</userinput></entry>
 		<entry>2</entry>
 		<entry>
 		  <para>A symmetric insertion-deletion model with geometrically-distributed indel lengths.</para>
@@ -2680,7 +2680,7 @@ If the genetic code is not specified, then the standard code is used:
 	</informaltable>
 	    
 	<para>The user can specify priors and parameters for indel models (See section <xref linkend="functions"/>):
-<programlisting>rs07(log_rate~LogLaplace(-4,0.707),mean_length=2)</programlisting>
+<programlisting>RS07(log_rate~LogLaplace(-4,0.707),mean_length=2)</programlisting>
 	</para>
 
     </section>
@@ -2689,11 +2689,11 @@ If the genetic code is not specified, then the standard code is used:
 
   <section><info><title>Models and distributions are functions</title></info>
   <para>Models, probability distributions, and functions are treated the same in BAli-Phy because all of them have parameters or arguments. Parameters have names in BAli-Phy.  Parameter values are specified using parentheses as follows:
-  <programlisting>hky85(kappa=2)            // model
+  <programlisting>HKY85(kappa=2)            // model
 log(x=2)                  // function
 Normal(mean=0,sigma=1)    // probability distribution</programlisting>
 It is possible to specify parameter values by position instead of by name:
-  <programlisting>hky85(2)
+  <programlisting>HKY85(2)
 log(2)
 Normal(0,1)</programlisting>
 It is even possible to mix positional and named arguments, as long as all the positional arguments come before all the named arguments:
@@ -2701,19 +2701,19 @@ It is even possible to mix positional and named arguments, as long as all the po
 Normal(mean=0,1)    // not OK</programlisting>
 
   The order and type of parameters for a function can be found with the <userinput>help</userinput> command.  For example,
-<screen><prompt>%</prompt> <userinput>bali-phy help hky85</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy help HKY85</userinput></screen>
 A value must be given for each parameter, unless the parameter has a default value (See <xref linkend="default_values"/>).
   </para>
 	<note>
 	  <para>
 	    You need to put single quotes around terms with parentheses or square brackets on the command line:
-<screen><prompt>%</prompt> <userinput>bali-phy file.fasta -S 'hky85(kappa=2)'</userinput>
-<prompt>%</prompt> <userinput>bali-phy file.fasta -S 'mixture([tn93,hky85(2)])'</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy file.fasta -S 'HKY85(kappa=2)'</userinput>
+<prompt>%</prompt> <userinput>bali-phy file.fasta -S 'mixture([TN93,HKY85(2)])'</userinput></screen>
 	  </para>
 
 	  <para>If you do not add quotes, the shell will try to interpret the parentheses or square brackets and give an error message
                 without running bali-phy.  For example, "<computeroutput>-bash: syntax error near unexpected token `('</computeroutput>" (for <command>bash</command>) or
-          "<computeroutput>Badly placed ()'s</computeroutput>" (for <command>csh</command>) or "<computeroutput>zsh: no matches found: mixture([tn93,hky85(2)])</computeroutput>" (for <command>zsh</command>).
+          "<computeroutput>Badly placed ()'s</computeroutput>" (for <command>csh</command>) or "<computeroutput>zsh: no matches found: mixture([TN93,HKY85(2)])</computeroutput>" (for <command>zsh</command>).
 	  </para>
 	</note>
 
@@ -2722,10 +2722,10 @@ A value must be given for each parameter, unless the parameter has a default val
   <section><info><title>Model stacking and '<userinput>+></userinput>' notation</title></info>
   <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG + F + G4 + I</userinput> starts with the WAG amino-acid model, and places several modifiers, like " + G4" on the right.</para>
   <para>BAli-Phy follows this convention by treating <userinput>A +> B</userinput> as an abbreviation for <userinput>B(A)</userinput>.  When there are multiple '<userinput>+></userinput>' symbols they associate to the left, so that <userinput>A +> B +> C</userinput> is understood to mean <userinput>(A +> B) +> C</userinput>, which is equivalent to <userinput>C(B(A))</userinput>.  For example:
-<programlisting>hky85 +> Rates.gamma              // rewritten to Rates.gamma(hky85)
-hky85 +> inv                      // rewritten to inv(hky85)
-wag +> f                          // rewritten to f(wag)
-wag +> f +> Rates.gamma +> inv    // rewritten to inv(Rates.gamma(f(wag)))
+<programlisting>HKY85 +> Rates.Gamma              // rewritten to Rates.Gamma(HKY85)
+HKY85 +> Inv                      // rewritten to Inv(HKY85)
+WAG +> F                          // rewritten to F(WAG)
+WAG +> F +> Rates.Gamma +> Inv    // rewritten to Inv(Rates.Gamma(F(WAG)))
 </programlisting>
 This allows a simple method for combining models, when one model is an argument to another model.
 </para>
@@ -2733,12 +2733,12 @@ This allows a simple method for combining models, when one model is an argument 
 
   <section xml:id="priors"><info><title>Priors</title></info>
   <section><info><title>Specifying priors</title></info>
-<para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <userinput>sample</userinput>.  For example, this places a log-normal prior on the parameter <userinput>kappa</userinput> of the <userinput>hky85</userinput> model:
-<programlisting>hky85(kappa=sample(LogNormal(1,1)))</programlisting>
+<para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <userinput>sample</userinput>.  For example, this places a log-normal prior on the parameter <userinput>kappa</userinput> of the <userinput>HKY85</userinput> model:
+<programlisting>HKY85(kappa=sample(LogNormal(1,1)))</programlisting>
 You can write <userinput>~Dist</userinput> as a shorthand for <userinput>sample(Dist)</userinput>:
-<programlisting>hky85(kappa = ~LogNormal(1,1))</programlisting>
+<programlisting>HKY85(kappa = ~LogNormal(1,1))</programlisting>
 The <userinput>=~</userinput> can be further shortened to just <userinput>~</userinput>:
-<programlisting>hky85(kappa ~ LogNormal(1,1))</programlisting>
+<programlisting>HKY85(kappa ~ LogNormal(1,1))</programlisting>
 </para>
 </section>
 
@@ -2746,7 +2746,7 @@ The <userinput>=~</userinput> can be further shortened to just <userinput>~</use
 <para>It also is possible to use random values as inputs to other functions.  For example:
 <programlisting>1.0 + ~Exponential(10)</programlisting>
 In such cases the parameter value should be specified with <userinput>=</userinput>, as in the following example:
-<programlisting>rs07(mean_length=1.0 + ~Exponential(10))</programlisting>
+<programlisting>RS07(mean_length=1.0 + ~Exponential(10))</programlisting>
 </para>
   </section>
 <section><info><title>Distributions are not random values</title></info>
@@ -2767,13 +2767,13 @@ distributions and functions.  For example, the distribution <userinput>IID</user
 
   <section xml:id="default_values"><info><title>Default values and default priors</title></info>
   <para>
-Some function arguments have default values.  For example, the <userinput>Rates.gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
-<programlisting>hky85 +> Rates.gamma(n=4) +> inv
-hky85 +> Rates.gamma +> inv</programlisting></para>
+Some function arguments have default values.  For example, the <userinput>Rates.Gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
+<programlisting>HKY85 +> Rates.Gamma(n=4) +> Inv
+HKY85 +> Rates.Gamma +> Inv</programlisting></para>
 
-  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>hky85</userinput> has a default value of <userinput>~LogNormal(log(2),0.25)</userinput>, so the following are equivalent:
-<programlisting>hky85(kappa~LogNormal(log(2),0.25))
-hky85</programlisting>
+  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>HKY85</userinput> has a default value of <userinput>~LogNormal(log(2),0.25)</userinput>, so the following are equivalent:
+<programlisting>HKY85(kappa~LogNormal(log(2),0.25))
+HKY85</programlisting>
 The <userinput>help</userinput> command can be used to determine the default value for a parameter, if there is one.</para>
   </section>
 
@@ -2786,7 +2786,7 @@ The <userinput>help</userinput> command can be used to determine the default val
 <userinput>(a,b)</userinput> is a parameterized type that can be specialized to (for example) <userinput>(String,Double)</userinput> and <userinput>(Int,Int)</userinput>.
   </para>
 
-  <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, hky85 has a result type of <userinput>RevCTMC&lt;a&gt;</userinput>, where <userinput>a</userinput> could be <userinput>DNA</userinput> or <userinput>RNA</userinput>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
+  <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, HKY85 has a result type of <userinput>RevCTMC&lt;a&gt;</userinput>, where <userinput>a</userinput> could be <userinput>DNA</userinput> or <userinput>RNA</userinput>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
   </para>
 
   </section>
@@ -2808,13 +2808,13 @@ The <userinput>help</userinput> command can be used to determine the default val
     </section>
 
     <section><info><title>Unlinked models</title></info>
-    <para>By default, each partition will have its own substitution model, insertion/deletion model, and scaled tree length.  For example, even if all partitions are assigned a <userinput>tn93</userinput> substitution model, their base frequencies will all be estimated independently.  When parameters are estimated separately for two partitions, we say that the parameters for those partitions are "unlinked".</para>
+    <para>By default, each partition will have its own substitution model, insertion/deletion model, and scaled tree length.  For example, even if all partitions are assigned a <userinput>TN93</userinput> substitution model, their base frequencies will all be estimated independently.  When parameters are estimated separately for two partitions, we say that the parameters for those partitions are "unlinked".</para>
 
     <para>A substitution model or insertion-deletion model that is specified without qualification will apply to every partition.  However, each partition will receive its own copy of each model with unlinked parameter values:
-      <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S tn93 -I rs07</userinput></screen></para>
+      <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S TN93 -I RS07</userinput></screen></para>
 
 <para>You can select partition-specific values for 4 options: <userinput>-S</userinput>, <userinput>-I</userinput>, <userinput>-A</userinput>, and <userinput>--scale</userinput>.  For example, to specify different substitution models but the same alphabet:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:tn93 -S 2:gtr -A DNA</userinput></screen></para>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 -S 2:GTR -A DNA</userinput></screen></para>
     </section>
 
     <section><info><title>Fixing the alignment in some partitions</title></info>
@@ -2826,8 +2826,8 @@ Since alignments are estimated by default, the alignment will be estimated in th
 </para>
     </section>
     <section><info><title>Linked models</title></info>
-<para>You can also specify that two partitions share a single copy of a single substitution model or indel model.  For example, if two partitions both have a <userinput>tn93</userinput> model, linking these models would force the partitions to have the same nucleotide frequencies and substitution rates.  Linking partitions reduces the number of parameters that need to be estimated, and also pools information between the partitions:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1,2:tn93 -I 1,2:rs07</userinput></screen>
+<para>You can also specify that two partitions share a single copy of a single substitution model or indel model.  For example, if two partitions both have a <userinput>TN93</userinput> model, linking these models would force the partitions to have the same nucleotide frequencies and substitution rates.  Linking partitions reduces the number of parameters that need to be estimated, and also pools information between the partitions:
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1,2:TN93 -I 1,2:RS07</userinput></screen>
 By default each partition has a separate scale, but you can force groups of partitions to share a scale as follows:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --scale 1,2:</userinput></screen>
 </para>
@@ -2835,11 +2835,11 @@ By default each partition has a separate scale, but you can force groups of part
     <section><info><title>Linking models via the <userinput>link</userinput> command</title></info>
 
     <para>The <userinput>--link</userinput> command is provided to allow specifying a model for each partition separately, and then afterwards choose which partitions to link.
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:tn93 -S 2:tn93 --link=1,2 -t</userinput>
-<prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S tn93             --link=1,2 -t</userinput>   </screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 -S 2:TN93 --link=1,2 -t</userinput>
+<prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S TN93             --link=1,2 -t</userinput>   </screen>
     If the linked partitions are given different models, BAli-Phy will give an error and refuse to run:
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:tn93 --link=1,2 -t</userinput>
-bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'tn93' and ''</screen></para>
+    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 --link=1,2 -t</userinput>
+bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'TN93' and ''</screen></para>
     <para>You can also specify which of the 3 attributes "smodel", "imodel", and "scale" are being linked:
     <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don&apos;t link the indel model</screen>
     </para>
@@ -3626,10 +3626,10 @@ The command <command>bali-phy</command> and its associated tools should then be 
       
       <qandaset>
 	<qandaentry>
-	  <question><para>I tried to use <userinput>-S lg08+>Rates.gamma(6)</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
+	  <question><para>I tried to use <userinput>-S LG+>Rates.Gamma(6)</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
-	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>lg08+>Rates.gamma(6)</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
-	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S 'lg08 +> Rates.gamma(6)'</userinput>.  This will keep the C-shell from interfering with your command.
+	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+>Rates.Gamma(6)</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
+	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S 'LG +> Rates.Gamma(6)'</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
 	</qandaentry>

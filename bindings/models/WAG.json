@@ -15,7 +15,7 @@
     "description": "Empirically derived exchangability matrix for general proteins.\n\nThis command only refers to the symmetric part of the WAG model, not the frequencies.  Frequencies are added by using the ` +> F` command.  Frequencies are estimated by default but can be fixed to the values estimated in the paper using ` +> F(WAGFreq)`.",
     "citation":{"type": "article",
 		"title": "A General Empirical Model of Protein Evolution Derived from Multiple Protein Families Using a Maximum-Likelihood Approach",
-		"year": "2001",	
+		"year": "2001",
 		"author": [{"name": "Whelan, Simon"}, {"name": "Goldman, Nick"}],
 		"journal": {"name": "Molecular Biology and Evolution", "volume": "18", "number": "5", "pages": "691--699"},
 		"identifier": [{"type":"doi","id":"10.1093/oxfordjournals.molbev.a003851"}]
