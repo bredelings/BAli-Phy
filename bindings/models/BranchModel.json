@@ -19,7 +19,7 @@
         },
         {
             "name": "branchCats",
-            "type": "List<Int>",
+            "type": "IntMap<Int>",
             "default_value": "get_state(branch_categories)",
             "description": "The numbered category assigned to each branch."
         }

@@ -542,7 +542,7 @@ model_t compile_smodel(const Rules& R, TypecheckingState TC, CodeGenState code_g
 {
     map<string,pair<string,type_t>> smodel_states = {
         {"alphabet",{"alpha",parse_type("a")}},
-        {"branch_categories",{"branch_categories",parse_type("List<Int>")}},
+        {"branch_categories",{"branch_categories",parse_type("IntMap<Int>")}},
         {"tree",{"tree",parse_type("Tree<t>")}},
     };
 
