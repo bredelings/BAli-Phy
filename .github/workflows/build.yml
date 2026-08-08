@@ -371,7 +371,7 @@ jobs:
           fi
           if [ "${{ matrix.name }}" = "windows" ] ; then
             # Initialize Wine before winepath starts another client, then keep that server alive across tests.
-            WINEDEBUG=-all /usr/lib/wine/wine64 cmd /c exit
+            WINEDEBUG=-all /usr/lib/wine/wine64 cmd /c exit 0
             /usr/lib/wine/wineserver -p60
             export WINEPATH="$(WINEDEBUG=-all winepath -w "$HOME/local/bin")"
             export MESON_TESTTHREADS=2
