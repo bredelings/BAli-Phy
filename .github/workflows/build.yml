@@ -286,14 +286,15 @@ jobs:
           echo "BOOST_ROOT=${BOOST_ROOT}"
 
     - name: ccache
-      if: matrix.name != 'windows-native-mingw'
       uses: hendrikmuhs/ccache-action@v1.2.23
       with:
-         key: ${{ matrix.name }}-${{ github.ref }}
+         # GitHub caches are immutable.  Timestamped SHA keys make each save unique, while
+         # these prefixes restore the newest same-commit or preceding accessible cache.
+         key: ${{ matrix.name }}-${{ github.sha }}
          restore-keys: |
-           ${{ matrix.name }}-
+           ${{ matrix.name }}-${{ github.sha }}
+           ${{ matrix.name }}
          verbose: 2
-         append-timestamp: false
 
     - name: Install meson
       if: matrix.name != 'windows-native-mingw'
