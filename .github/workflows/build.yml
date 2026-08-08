@@ -296,6 +296,9 @@ jobs:
            ${{ matrix.name }}
          verbose: 2
 
+    - name: Identify cached compilers by content
+      run: ccache --set-config=compiler_check=content
+
     - name: Install meson
       if: matrix.name != 'windows-native-mingw'
       run: |
