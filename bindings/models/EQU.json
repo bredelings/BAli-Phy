@@ -1,6 +1,6 @@
 {
-    "name": "equ",
-    "synonyms": ["EQU"],
+    "name": "EQU",
+    "deprecated-synonyms": ["equ"],
     "result_type": "ExchangeModel<a>",
     "call": "SModel.equ(@a)",
     "import": ["SModel"],

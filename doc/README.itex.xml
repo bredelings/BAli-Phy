@@ -1609,7 +1609,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>empirical(<replaceable>file</replaceable>)&nbsp;+>&nbsp;F</userinput></para>
+		<para><userinput>Empirical(<replaceable>file</replaceable>)&nbsp;+>&nbsp;F</userinput></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
