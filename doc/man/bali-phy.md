@@ -40,7 +40,8 @@ For each option below, more information is available by specifying the long form
 : Analyze the initial values and exit.
 
 **-c** _filename_, **--config** _filename_
-: Read commands from _filename_ before command line.
+: Read configuration options and model-language definitions from _filename_. Command-line options
+  override values from the configuration file.
 
 # MCMC OPTIONS
 

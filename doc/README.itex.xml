@@ -624,20 +624,22 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 
     </section>
 
-   <section><info><title>Option files (Scripts)</title></info>
+   <section><info><title>Configuration files</title></info>
       
       <para>
-	In addition to using the command line, you may also specify
-	options in a file. Option files also use the long form of command line options.
-	Each option is given on its own line using the syntax "<userinput>:option value</userinput>" instead of the syntax "<userinput>--option
-	value</userinput>".  The value can be blank if the option does not take
-	an argument. The <userinput>align</userinput> option indicates sequence files.
-	Lines that begin with # are comments, and blank lines are ignored.
+	In addition to using the command line, you may specify options and model-language
+	definitions in a configuration file. Configuration options use the long form of command-line
+	options. Each option is given on its own line using the syntax
+	"<userinput>:option value</userinput>" instead of
+	"<userinput>--option value</userinput>". The value can be blank if the option does not take
+	an argument. The <userinput>align</userinput> option indicates sequence files. Other
+	non-comment lines are combined into model-language definitions. Lines whose first
+	non-whitespace character is <userinput>#</userinput> are comments, and blank lines are ignored.
       </para>
 
 	<para>
 	  For example, consider the following
-	  option file:
+	  configuration file:
 	  <programlisting># sequence data for 3 genes/partitions
 :align ITS1.fasta
 :align 5.8S.fasta
@@ -658,18 +660,18 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 # choose a name for output directories
 :name ITS-analysis1
 </programlisting>
-Option files are specified with the <userinput>-c <replaceable>option_file</replaceable></userinput>
+Configuration files are specified with the
+<userinput>-c <replaceable>configuration_file</replaceable></userinput>
 option.  For example:
-	<screen><prompt>%</prompt> <userinput>bali-phy -c analysis1.txt</userinput></screen>
-        Options given on the command line override values given in the option file.  For
+	<screen><prompt>%</prompt> <userinput>bali-phy -c config.txt</userinput></screen>
+        Options given on the command line override values given in the configuration file. For
         example, this command overrides the analysis name:
-	<screen><prompt>%</prompt> <userinput>bali-phy -c analysis1.txt --name ITS-analysis1b</userinput></screen>
+	<screen><prompt>%</prompt> <userinput>bali-phy -c config.txt --name ITS-analysis1b</userinput></screen>
 	</para>
 	<!-- para>
 	  The file <filename>~/.bali-phy</filename> is a special
-	  option file called the <emphasis>configuration
-	    file.</emphasis>  If it exists, it is always loaded.
-	  Options given on the command line or an option file 
+	  <emphasis>configuration file.</emphasis> If it exists, it is always loaded.
+	  Options given on the command line or another configuration file
 	  override values given in <filename>~/.bali-phy</filename>. 
 	</para -->
     </section>
