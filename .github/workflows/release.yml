@@ -124,7 +124,7 @@ jobs:
         fi 
 
         sudo apt-get update
-        sudo apt-get install -y pandoc ccache
+        sudo apt-get install -y pandoc
         sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev
         sudo apt-get install -y r-base gnuplot
 
@@ -173,7 +173,7 @@ jobs:
           echo HOME=/root >> "$GITHUB_ENV"
         fi
         sudo apt-get update
-        sudo apt-get install -y pandoc ccache
+        sudo apt-get install -y pandoc
         sudo apt-get install -y dos2unix fakeroot g++-mingw-w64 pacman-package-manager wine64
 
     - name: Select XCode version (macOS)
@@ -219,11 +219,32 @@ jobs:
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2.23
       with:
+         install: ${{ runner.os == 'Linux' && 'binary' || 'detect' }}
          key: ${{ matrix.name }}-${{ github.ref }}
          restore-keys: |
            ${{ matrix.name }}-
          verbose: 2
          append-timestamp: false
+
+    - name: Require ccache 4.10 or newer
+      run: |
+        ccache --version
+        ccache_version=$(ccache --version | sed -n '1s/^ccache version //p' | tr -d '\r')
+        case "$ccache_version" in
+          ''|*[!0-9.]*)
+            echo "Could not parse ccache version: $ccache_version" >&2
+            exit 1
+            ;;
+        esac
+        ccache_major=${ccache_version%%.*}
+        ccache_rest=${ccache_version#*.}
+        ccache_minor=${ccache_rest%%.*}
+        if [ "$ccache_major" -lt 4 ] || {
+          [ "$ccache_major" -eq 4 ] && [ "$ccache_minor" -lt 10 ]
+        }; then
+          echo "ccache $ccache_version is too old; version 4.10 or newer is required." >&2
+          exit 1
+        fi
 
     - name: Install meson
       run: |
