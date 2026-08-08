@@ -475,10 +475,10 @@ model_t compile_decls(const Rules& R,
 //      Normal(mean,1), with Normal:mean ~ Normal(0,1) extracted.
 // Some things like tn, hky, etc. are considered to have named parameters.
 //    For these things, we pull out all arguments that are numbers.
-//    Thus tn93(1,~LogNormal(0,1)) becomes tn93, with tn93:kappaPur=1 and
-//      tn93:kappaPyr ~ LogNormal(0,1) extracted.
+//    Thus TN93(1,~LogNormal(0,1)) becomes TN93, with TN93:kappaPur=1 and
+//      TN93:kappaPyr ~ LogNormal(0,1) extracted.
 
-// However, we would like gy94[pi=f1x4] to NOT pull out the pi, because f1x4 is ALSO a model.
+// However, we would like GY94[pi=F1x4] to NOT pull out the pi, because F1x4 is ALSO a model.
 
 // Returns true when a typed AST term represents a model-valued expression that
 // should protect model subterms from extraction.

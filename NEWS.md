@@ -7,6 +7,10 @@
 - Models
   * Add the branch test: Bayesian test for different background and foreground dN/dS values
   * Add Gamma across-site rate variation via quadrature instead of equal binning.
+  * Capitalize model names according to their conventional spelling and use CamelCase for
+    multiword names, such as `GTR`, `WAG`, `BranchSite`, and `Rates.Gamma`. Old spellings now
+    produce migration diagnostics; `G`, `R`, and `I` abbreviate `Rates.Gamma`, `Rates.Free`,
+    and `Inv`.
 - Distributions & Priors
   * Add the Dirichlet-process.
   * Add mixture distributions with point mass components.

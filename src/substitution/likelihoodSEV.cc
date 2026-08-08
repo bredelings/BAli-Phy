@@ -128,7 +128,7 @@ namespace substitution
                 double p_model=0;
                 for(int s=0;s<n_states;s++)
                     p_model += S(m,s);
-                // A specific model (e.g. the INV model) could be impossible
+                // A specific model (e.g. the Inv model) could be impossible
                 assert(std::isnan(p_model) or (0 <= p_model and p_model <= 1.00000000001));
             }
 
@@ -236,7 +236,7 @@ namespace substitution
                 double p_model=0;
                 for(int s=0;s<n_states;s++)
                     p_model += S(m,s);
-                // A specific model (e.g. the INV model) could be impossible
+                // A specific model (e.g. the Inv model) could be impossible
                 assert(std::isnan(p_model) or (0 <= p_model and p_model <= 1.00000000001));
             }
 

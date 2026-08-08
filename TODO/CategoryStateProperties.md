@@ -22,7 +22,7 @@ The properties map is manually constructed instead of being coming along with
 the model:
 
     let result = gtr' sym pi alpha +> unitMixture +> SModel.gammaRates alpha_2 4 +> plusInv p_inv
-    let loggers = ["gtr:sym" %=% sym, "gtr:pi" %=% pi, "Rates.gamma:alpha" %=% alpha_2, "inv:p_inv" %=% p_inv]
+    let loggers = ["GTR:sym" %=% sym, "GTR:pi" %=% pi, "Rates.Gamma:alpha" %=% alpha_2, "Inv:p_inv" %=% p_inv]
     let properties = M.fromList [("rate", rateProperty $ scaleTo 1 result)]
     return (result, loggers, properties)
 
@@ -79,7 +79,7 @@ This would prevent us having to implement something separate in the JSON files.
 We could put the map from Text -> Property values on each component.  This
 would handle things like:
 
-    |w: gtr +> x3 +> Rates.dNdS(w)| +> m3(3)
+    |w: GTR +> x3 +> Rates.dNdS(w)| +> M3(3)
     
 The idea is that each individual component would have a mapping from `"dNdS"` to
 `Constant(w[i])`.
@@ -95,7 +95,7 @@ However, if there are multiple components, then we should
 However, if the number of components is variable, the not writing properties for
 "uninteresting" properties might not work.
 
-Another idea would be that the m3 model annotates the components with "dNdS"
+Another idea would be that the M3 model annotates the components with "dNdS"
 and "posSelection", and that dNdS does not.
 
 ## Existing infrastructure
@@ -125,7 +125,7 @@ Additionally, we may be interested the synonymous and non-synonymous version
 of all of those rates, leading to a total of 10 rates.
 Basically, that would be a matter of the rates before/after the dNdS operation.
 
-We could also consider the rates before/after a fMutSel operation.
+We could also consider the rates before/after a FMutSel operation.
 
 
 ## TODO

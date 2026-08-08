@@ -2,14 +2,14 @@
 
 To make a Haskell function accessible from the command line, you must add a JSON file to the directory `bindings/` that registers the Haskell function.
 
-For example, the file `bindings/models/hky85.json` allows the user to specify (for example) `-S hky85(kappa=2)` as a substitution model.
+For example, the file `bindings/models/HKY85.json` allows the user to specify (for example) `-S HKY85(kappa=2)` as a substitution model.
 The JSON looks like this:
 
 ``` json
 {
-    "name": "hky85",
+    "name": "HKY85",
     "title": "The Hasegawa-Kishino-Yano (1985) nucleotide rate matrix",
-    "deprecated-synonyms": ["HKY","hky","HKY85"],
+    "deprecated-synonyms": ["hky85"],
     "result_type": "RevCTMC<a>",
     "constraints": ["Nucleotides<a>"],
     "citation":{"type": "article",
