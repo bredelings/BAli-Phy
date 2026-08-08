@@ -14,7 +14,7 @@
     "title" : "The Poisson distribution",
     "description": "mean = mu\nvariance = mu^2",
     "examples": ["~Poisson(1.0)                    # An exponential",
-		 "~IID(10,posson(0.5))             # 10 samples"
+		 "~IID(10,Poisson(0.5))             # 10 samples"
 		]
 
 }
