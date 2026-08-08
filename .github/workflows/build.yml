@@ -350,6 +350,31 @@ jobs:
         name: meson-log-${{ matrix.name }}
         path: ${{ github.workspace }}/build/meson-logs/meson-log.txt
 
+    - name: Record Linux-hosted ccache key
+      id: ccache_key_linux
+      if: runner.os == 'Linux' && matrix.name != 'windows-native-mingw'
+      run: |
+        object_suffix=o
+        if [ "${{ matrix.name }}" = "windows" ]; then
+          object_suffix=obj
+        fi
+        mkdir -p ccache-debug
+        ccache --show-config > ccache-debug/ccache-config.txt
+        meson introspect --compilers build > ccache-debug/compilers.json
+        CCACHE_DEBUG=1 CCACHE_DEBUGLEVEL=2 CCACHE_DEBUGDIR="$PWD/ccache-debug" \
+          ninja -C build \
+            "src/util/libutil.a.p/utf8.cc.${object_suffix}" \
+            "src/computation/libcomputation.a.p/object.cc.${object_suffix}" \
+            "src/computation/libcomputation.a.p/typecheck_match.cc.${object_suffix}"
+
+    - name: Upload Linux-hosted ccache key
+      if: ${{ !cancelled() && steps.ccache_key_linux.outcome != 'skipped' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ccache-key-${{ matrix.name }}-${{ github.run_attempt }}
+        path: ccache-debug
+        if-no-files-found: error
+
     - name: Build
       if: matrix.name != 'windows-native-mingw'
       run: |
@@ -390,6 +415,29 @@ jobs:
         export CXX="ccache g++"
         export BOOST_ROOT=/mingw64
         meson setup build --prefix="$PWD/local" --buildtype=${{ matrix.buildtype }} -Dcpp_args="-g"
+
+    - name: Record native Windows ccache key
+      id: ccache_key_windows_native
+      if: matrix.name == 'windows-native-mingw'
+      shell: msys2 {0}
+      run: |
+        mkdir -p ccache-debug
+        ccache --show-config > ccache-debug/ccache-config.txt
+        meson introspect --compilers build > ccache-debug/compilers.json
+        debug_dir="$(cygpath -w "$PWD/ccache-debug")"
+        CCACHE_DEBUG=1 CCACHE_DEBUGLEVEL=2 CCACHE_DEBUGDIR="$debug_dir" \
+          ninja -C build \
+            src/util/libutil.a.p/utf8.cc.obj \
+            src/computation/libcomputation.a.p/object.cc.obj \
+            src/computation/libcomputation.a.p/typecheck_match.cc.obj
+
+    - name: Upload native Windows ccache key
+      if: ${{ !cancelled() && steps.ccache_key_windows_native.outcome != 'skipped' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ccache-key-${{ matrix.name }}-${{ github.run_attempt }}
+        path: ccache-debug
+        if-no-files-found: error
 
     - name: Build (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
