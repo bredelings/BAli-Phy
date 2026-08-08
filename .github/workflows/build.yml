@@ -294,6 +294,7 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2.23
       with:
          install: ${{ runner.os == 'Linux' && 'binary' || 'detect' }}
+         max-size: ${{ matrix.name == 'ubuntu-gcc-14-sanitize' && '1G' || '500M' }}
          # GitHub caches are immutable.  Timestamped SHA keys make each save unique, while
          # these prefixes restore the newest same-commit or preceding accessible cache.
          key: ${{ matrix.name }}-${{ github.sha }}
