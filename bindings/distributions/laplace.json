@@ -1,6 +1,6 @@
 {
-    "name": "laplace",
-    "synonyms": [ "Laplace" ],
+    "name": "Laplace",
+    "deprecated-synonyms": ["laplace"],
     "result_type": "Distribution<Double>",
     "call": "laplace(@m,@s)",
     "import": ["Probability"],

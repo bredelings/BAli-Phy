@@ -1,5 +1,6 @@
 {
-    "name": "logLaplace",
+    "name": "LogLaplace",
+    "deprecated-synonyms": ["logLaplace"],
     "result_type": "Distribution<Double>",
     "call": "logLaplace(@lm,@ls)",
     "import": ["Probability"],

@@ -1,6 +1,6 @@
 {
-    "name": "bernoulli",
-    "synonyms": [ "Bernoulli" ],
+    "name": "Bernoulli",
+    "deprecated-synonyms": ["bernoulli"],
     "result_type": "Distribution<Int>",
     "call": "bernoulli(@p)",
     "import": ["Probability"],
@@ -13,5 +13,5 @@
         }
     ],
     "description":"The Bernoulli distribution yields 1 with probability p, and 0 with probability (1-p).",
-    "examples": ["~bernoulli(0.5)"]
+    "examples": ["~Bernoulli(0.5)"]
 }

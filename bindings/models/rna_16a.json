@@ -17,37 +17,37 @@
         {
             "name": "aS",
             "type": "Double",
-            "default_value": "~logNormal(log(2),0.25)",
+            "default_value": "~LogNormal(log(2),0.25)",
 	    "description": "Exchange rate: 1 change, match <-> match"
         },
         {
             "name": "aD",
             "type": "Double",
-            "default_value": "~logNormal(log(2),0.25)",
+            "default_value": "~LogNormal(log(2),0.25)",
 	    "description": "Exchange rate: 2 changes, match <-> match, both transitions"
         },
         {
             "name": "b",
             "type": "Double",
-            "default_value": "~logNormal(log(2),0.25)",
+            "default_value": "~LogNormal(log(2),0.25)",
 	    "description": "Exchange rate: 2 changes, match <-> match, both transversions"
         },
         {
             "name": "g",
             "type": "Double",
-            "default_value": "~logNormal(log(2),0.25)",
+            "default_value": "~LogNormal(log(2),0.25)",
 	    "description": "Exchange rate: 1 changes, match <-> mismatch"
         },
         {
             "name": "e",
             "type": "Double",
-            "default_value": "~logNormal(log(2),0.25)",
+            "default_value": "~LogNormal(log(2),0.25)",
 	    "description": "Exchange rate: 1 changes, mismatch <-> mismatch"
         },
         {
             "name": "pi",
             "type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
+            "default_value": "~SymmetricDirichletOn(letters(@a),1)",
 	    "description": "Doublet frequencies"
         },
         {

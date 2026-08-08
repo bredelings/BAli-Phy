@@ -1,6 +1,6 @@
 {
-    "name": "uniform",
-    "synonyms": ["Uniform"],
+    "name": "Uniform",
+    "deprecated-synonyms": ["uniform"],
     "result_type": "Distribution<Double>",
     "call": "uniform(@low,@high)",
     "import": ["Probability"],

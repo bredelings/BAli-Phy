@@ -21,13 +21,13 @@
         {
             "name": "nu",
             "type": "Double",
-	    "default_value":"~exponential(0.1)",
+	    "default_value":"~Exponential(0.1)",
 	    "description":"Rate of class-switching"
         },
         {
             "name": "pi",
             "type": "Double",
-	    "default_value":"~uniform(0,1)",
+	    "default_value":"~Uniform(0,1)",
 	    "description":"Fraction of sites undergoing class-switching"
         }
     ],

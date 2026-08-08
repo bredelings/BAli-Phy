@@ -7,7 +7,7 @@
         {
             "name": "rateDist",
             "type": "DiscreteDist<Double>",
-            "default_value": "~dirichlet_on_dirichlet(4,2,2)",
+            "default_value": "~DirichletOnDirichlet(4,2,2)",
 	    "description" : "Rates for each category"
         }
     ],

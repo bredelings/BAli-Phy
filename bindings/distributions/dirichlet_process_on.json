@@ -1,5 +1,6 @@
 {
-    "name": "dirichlet_process_on",
+    "name": "DirichletProcessOn",
+    "deprecated-synonyms": ["dirichlet_process_on"],
     "result_type": "Distribution<List<(a,b)>>",
     "call": "dirichletProcessOn(@keys,@alpha,@dist)",
     "import": ["Probability"],
@@ -22,5 +23,5 @@
     ],
     "title": "The keyed Dirichlet process distribution",
     "description": "Draw one exchangeable Dirichlet process value for each supplied key. The result retains the keys in their supplied order, and entries assigned to the same cluster share one value drawn from `dist`.",
-    "examples": ["~dirichlet_process_on([3,1,4], 1, normal(0,1))"]
+    "examples": ["~DirichletProcessOn([3,1,4], 1, Normal(0,1))"]
 }

@@ -262,7 +262,7 @@ po::options_description parameters_options(int level)
     options_description parameters("Parameter options");
     parameters.add_options()
 	("align", value<vector<string> >()->composing(),"Sequence file & initial alignment.")
-	("tree,T",value<string>(),"Tree prior: ~uniform_tree(taxa), ~uniform_rooted_tree(taxa), ~yule(taxa), etc.");
+	("tree,T",value<string>(),"Tree prior: ~UniformTree(taxa), ~UniformRootedTree(taxa), ~Yule(taxa), etc.");
 
     if (level >= 1)
 	parameters.add_options()
@@ -416,7 +416,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	    cout<<"\n";
 	    cout<<"See `bali-phy help "<<underline("option")<<"` for help on "<<underline("option")<<".  For example,\n";
 	    cout<<"  * `bali-phy help "<<bold("alphabet")<<"` shows help on the "<<bold("--alphabet")<<" command.\n";
-	    cout<<"  * `bali-phy help "<<bold("normal")<<"` shows help on the normal distribution.\n";
+	    cout<<"  * `bali-phy help "<<bold("Normal")<<"` shows help on the normal distribution.\n";
 	    cout<<"  * `bali-phy help "<<bold("tn93")<<"` shows help on the TN93 model.\n";
 	    cout<<"  * `bali-phy help "<<bold("log")<<"` shows help on the log function.\n\n";
 

@@ -951,7 +951,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
             if (fixed.count("tree"))
                 scale_model = "1";
             else
-                scale_model = "~gamma(0.5, 2)";
+                scale_model = "~Gamma(0.5, 2)";
         }
         full_scale_models[i] = compile_model(R, TC, code_gen_state, parse_type("Double"), scale_model, "scale model " + std::to_string(i+1));
     }
@@ -965,9 +965,9 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         if (args.count("tree"))
             M = args["tree"].as<string>();
         else if (fixed.count("topology"))
-            M = "~fixed_topology_tree(topology)";
+            M = "~FixedTopologyTree(topology)";
         else
-            M = "~uniform_tree(taxa)";
+            M = "~UniformTree(taxa)";
 
         tree_model = compile_model(R, TC, code_gen_state, tree_type, M, "tree model", {});
         tree_type = tree_model.type;
@@ -981,8 +981,8 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         if (M == "relaxed")
         {
             // FIXME -- allow automatically modifying downstream vars when changing sigma
-            // M = "~iidMap(branches(tree), logNormal(0,sigma)) where {sigma~logLaplace(-3,1)}";
-            M = "map(|x:pow(x,sigma)|,~iidMap(branches(tree), logNormal(0,1))) where {sigma~logLaplace(-3,1)}";
+            // M = "~IIDMap(branches(tree), LogNormal(0,sigma)) where {sigma~LogLaplace(-3,1)}";
+            M = "map(|x:pow(x,sigma)|,~IIDMap(branches(tree), LogNormal(0,1))) where {sigma~LogLaplace(-3,1)}";
         }
 
         auto TC2 = TC;
@@ -997,8 +997,8 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         if (M == "relaxed")
         {
             // FIXME -- allow automatically modifying downstream vars when changing sigma
-            // M = "~iidMap(branches(tree), logNormal(0,sigma)) where {sigma~logLaplace(-3,1)}";
-            M = "map(|x:pow(x,sigma)|,~iidMap(branches(tree), logNormal(0,1))) where {sigma~logLaplace(-3,1)}";
+            // M = "~IIDMap(branches(tree), LogNormal(0,sigma)) where {sigma~LogLaplace(-3,1)}";
+            M = "map(|x:pow(x,sigma)|,~IIDMap(branches(tree), LogNormal(0,1))) where {sigma~LogLaplace(-3,1)}";
         }
 
         indel_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "indel rates", {{"tree", tree_type}});

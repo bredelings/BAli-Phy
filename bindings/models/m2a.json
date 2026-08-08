@@ -14,25 +14,25 @@
         {
             "name": "omega0",
             "type": "Double",
-            "default_value": "~uniform(0,1)",
+            "default_value": "~Uniform(0,1)",
 	    "description": "The dN/dS value for conserved sites"
         },
         {
             "name": "p0",
             "type": "Double",
-            "default_value": "~uniform(0,1)",
+            "default_value": "~Uniform(0,1)",
 	    "description": "The fraction of conserved sites among non-positively selected sites"
         },
         {
             "name": "posP",
             "type": "Double",
-            "default_value": "~beta(1,10)",
+            "default_value": "~Beta(1,10)",
             "description": "The fraction of positively selected sites"
         },
         {
             "name": "posW",
             "type": "Double",
-            "default_value": "~logGamma(4,0.25)",
+            "default_value": "~LogGamma(4,0.25)",
             "description": "The dN\/dS value for positively selected sites"
         }
     ],

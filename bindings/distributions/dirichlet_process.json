@@ -1,5 +1,6 @@
 {
-    "name": "dirichlet_process",
+    "name": "DirichletProcess",
+    "deprecated-synonyms": ["dirichlet_process"],
     "result_type": "Distribution<List<a>>",
     "call": "dirichletProcess(@n,@alpha,@dist)",
     "import": ["Probability"],
@@ -22,5 +23,5 @@
     ],
     "title": "The Dirichlet process distribution",
     "description": "Draw `n` exchangeable samples from a Dirichlet process with concentration `alpha` and base distribution `dist`. Samples assigned to the same cluster share one value drawn from `dist`.",
-    "examples": ["~dirichlet_process(10, 1, normal(0,1))    // Ten clustered normal values"]
+    "examples": ["~DirichletProcess(10, 1, Normal(0,1))    // Ten clustered normal values"]
 }

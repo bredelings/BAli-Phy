@@ -1,6 +1,6 @@
 {
-    "name": "exponential",
-    "synonyms": [ "Exponential" ],
+    "name": "Exponential",
+    "deprecated-synonyms": ["exponential"],
     "result_type": "Distribution<Double>",
     "call": "exponential(@mean)",
     "import": ["Probability"],
@@ -12,5 +12,5 @@
 	    "description": "The mean parameter"
         }
     ],
-    "see": ["shifted_exponential"]
+    "see": ["ShiftedExponential"]
 }

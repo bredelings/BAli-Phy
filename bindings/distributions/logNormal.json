@@ -1,5 +1,6 @@
 {
-    "name": "logNormal",
+    "name": "LogNormal",
+    "deprecated-synonyms": ["logNormal"],
     "result_type": "Distribution<Double>",
     "call": "logNormal(@lmu,@lsigma)",
     "import": ["Probability"],
@@ -16,6 +17,6 @@
         }
     ],
     "title": "The log-normal distribution",
-    "examples": ["~logNormal(0,1)","~iid(10, logNormal(0,1))"],
+    "examples": ["~LogNormal(0,1)","~IID(10, LogNormal(0,1))"],
     "description": "A variable X is log-normal if log(X) is normal."
 }

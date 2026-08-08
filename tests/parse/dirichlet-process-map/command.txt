@@ -1,1 +1,1 @@
---test data/dna.fasta --indel-rates='~dirichlet_process_map(branches(tree),1,delta(1))'
+--test data/dna.fasta --indel-rates='~DirichletProcessMap(branches(tree),1,delta(1))'

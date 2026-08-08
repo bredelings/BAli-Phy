@@ -8,7 +8,7 @@
             "name": "weights",
             "type": "List<Double>",
 
-            "default_value": "~symmetric_dirichlet(2,2)",
+            "default_value": "~SymmetricDirichlet(2,2)",
 	    "description" : "Relative frequencies for mixture component"
         }
     ],

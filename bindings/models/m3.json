@@ -14,7 +14,7 @@
         {
             "name": "omegaDist",
             "type": "DiscreteDist<Double>",
-            "default_value": "~dirichlet_mixture(uniform(0,1), 2, @n)",
+            "default_value": "~DirichletMixture(Uniform(0,1), 2, @n)",
 	    "description": "The omega (i.e. dN/dS) values"
         },
         {

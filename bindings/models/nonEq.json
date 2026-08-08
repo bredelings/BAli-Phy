@@ -14,7 +14,7 @@
         {
             "name": "initialFreq",
             "type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(@a),1)",
+            "default_value": "~SymmetricDirichletOn(letters(@a),1)",
 	    "description": "Initial letter frequencies"
 
         },

@@ -7,7 +7,7 @@
         {
             "name": "weights",
             "type": "List<Double>",
-	    "default_value":"~symmetric_dirichlet(10, 10)",
+	    "default_value":"~SymmetricDirichlet(10, 10)",
 	    "description": "The relative frequencies of the components"
         }
     ],

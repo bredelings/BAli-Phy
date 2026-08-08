@@ -15,12 +15,12 @@
         {
             "name": "log_prob",
             "type": "Double",
-            "default_value": "~laplace(-4, 0.707)"
+            "default_value": "~Laplace(-4, 0.707)"
         },
         {
             "name": "mean_length",
             "type": "Double",
-            "default_value": "~shifted_exponential(10,1)"
+            "default_value": "~ShiftedExponential(10,1)"
         },
         {
             "name": "tau",

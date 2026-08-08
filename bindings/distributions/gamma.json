@@ -1,6 +1,6 @@
 {
-    "name": "gamma",
-    "synonyms": ["Gamma"],
+    "name": "Gamma",
+    "deprecated-synonyms": ["gamma"],
     "result_type": "Distribution<Double>",
     "call": "gamma(@a,@b)",
     "import": ["Probability"],
@@ -18,10 +18,10 @@
     ],
     "title" : "The gamma distribution",
     "description": "mean = a * b\nvariance = a*b^2",
-    "examples": ["~gamma(1.0, mu)                   # An exponential",
-		 "~iid(10, gamma(0.5, 2))            # 10 samples",
-		 "quantile(gamma(0.5, 2), 0.95)",
-		 "density(gamma(0.5,2), 0.95)"
+    "examples": ["~Gamma(1.0, mu)                   # An exponential",
+		 "~IID(10, Gamma(0.5, 2))            # 10 samples",
+		 "quantile(Gamma(0.5, 2), 0.95)",
+		 "density(Gamma(0.5,2), 0.95)"
 		],
-    "see": ["shifted_gamma","logGamma"]
+    "see": ["ShiftedGamma","LogGamma"]
 }

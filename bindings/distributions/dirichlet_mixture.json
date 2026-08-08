@@ -1,5 +1,6 @@
 {
-    "name": "dirichlet_mixture",
+    "name": "DirichletMixture",
+    "deprecated-synonyms": ["dirichlet_mixture"],
     "result_type": "Distribution<DiscreteDist<a>>",
     "call": "dirichletMixture(@n,@alpha,@dist)",
     "import": ["Probability"],
@@ -18,7 +19,7 @@
         {
             "name": "n",
             "type": "Int",
-            "default_value": "1 + ~geometric(0.5)",
+            "default_value": "1 + ~Geometric(0.5)",
 	    "description": "The number of components"
         }
     ],

@@ -1,5 +1,6 @@
 {
-    "name": "iid_on",
+    "name": "IIDOn",
+    "deprecated-synonyms": ["iid_on"],
     "result_type": "Distribution<List<(a,b)>>",
     "call": "iidOn(@xs,@dist)",
     "import": ["Probability"],
@@ -16,5 +17,5 @@
         }
     ],
     "title": "The Independent and Identically Distributed (i.i.d.) distribution",
-    "examples": ["~iid_on([1,2,3],normal(0,1))    // A list of 3 normal(0,1) random variables"]
+    "examples": ["~IIDOn([1,2,3],Normal(0,1))    // A list of 3 Normal(0,1) random variables"]
 }

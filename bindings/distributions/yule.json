@@ -1,5 +1,6 @@
 {
-    "name": "yule",
+    "name": "Yule",
+    "deprecated-synonyms": ["yule"],
     "result_type": "Distribution<Tree<Times>>",
     "call": "yule(@taxa,@lambda)",
     "import": ["Probability"],
@@ -14,7 +15,7 @@
 	    "name": "lambda",
 	    "type": "Double",
 	    "description": "The distribution for branch lengths",
-	    "default_value": "~logCauchy(0,1)"
+	    "default_value": "~LogCauchy(0,1)"
 	}
     ]
 }

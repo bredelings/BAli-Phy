@@ -1,5 +1,6 @@
 {
-    "name": "dirichlet_process_map",
+    "name": "DirichletProcessMap",
+    "deprecated-synonyms": ["dirichlet_process_map"],
     "result_type": "Distribution<IntMap<a>>",
     "call": "dirichletProcessMap(@keys,@alpha,@dist)",
     "import": ["Probability"],
@@ -22,5 +23,5 @@
     ],
     "title": "The integer-map Dirichlet process distribution",
     "description": "Draw one exchangeable Dirichlet process value for each supplied integer key. The result has exactly the supplied key set, and entries assigned to the same cluster share one value drawn from `dist`.",
-    "examples": ["~dirichlet_process_map(branches(tree), 1, logNormal(0,1))"]
+    "examples": ["~DirichletProcessMap(branches(tree), 1, LogNormal(0,1))"]
 }

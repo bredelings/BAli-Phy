@@ -21,13 +21,13 @@
         {
             "name": "r",
             "type": "Double",
-	    "default_value":"~gamma(2,1/4)",
+	    "default_value":"~Gamma(2,1/4)",
 	    "description":"s01 + s10"
         },
         {
             "name": "pi1",
             "type": "Double",
-	    "default_value":"~beta(2,2)",
+	    "default_value":"~Beta(2,2)",
 	    "description":"Fraction of time spent in the ON state"
         }
     ],

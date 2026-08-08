@@ -12,7 +12,7 @@
         {
             "name": "nu",
             "type": "Double",
-	    "default_value":"~exponential(0.1)",
+	    "default_value":"~Exponential(0.1)",
 	    "description":"Rate of class-switching"
         }
     ],

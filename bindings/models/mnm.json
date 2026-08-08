@@ -15,13 +15,13 @@
         {
             "name": "v2",
             "type": "Double",
-            "default_value": "~logLaplace(-9,1)",
+            "default_value": "~LogLaplace(-9,1)",
 	    "description": "Relative rate of 2-nucleotide mutations"
         },
         {
             "name": "v3",
             "type": "Double",
-            "default_value": "~logLaplace(-12,1)",
+            "default_value": "~LogLaplace(-12,1)",
 	    "description": "Relative rate of 3-nucleotide mutations"
         },
         {

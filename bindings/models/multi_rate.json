@@ -23,5 +23,5 @@
         }
     ],
     "description": "An across-site rate variation (ASRV) model where the rate distribution can be specified directly.",
-    "examples": ["gtr +> multi_rate(gamma(1,1))","gtr +> multi_rate(beta(2,2),6)"]
+    "examples": ["gtr +> multi_rate(Gamma(1,1))","gtr +> multi_rate(Beta(2,2),6)"]
 }

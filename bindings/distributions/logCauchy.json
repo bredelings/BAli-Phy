@@ -1,5 +1,6 @@
 {
-    "name": "logCauchy",
+    "name": "LogCauchy",
+    "deprecated-synonyms": ["logCauchy"],
     "result_type": "Distribution<Double>",
     "call": "logCauchy(@lmu,@lscale)",
     "import": ["Probability"],
@@ -16,6 +17,6 @@
         }
     ],
     "title": "The log-cauchy distribution",
-    "examples": ["~logCauchy(0,1)","~iid(10, logCauchy(0,1))"],
+    "examples": ["~LogCauchy(0,1)","~IID(10, LogCauchy(0,1))"],
     "description": "A variable X is log-cauchy if log(X) is cauchy."
 }

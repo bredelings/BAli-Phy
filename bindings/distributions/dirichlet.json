@@ -1,6 +1,6 @@
 {
-    "name": "dirichlet",
-    "synonyms": [ "Dirichlet"],
+    "name": "Dirichlet",
+    "deprecated-synonyms": ["dirichlet"],
     "result_type": "Distribution<List<Double>>",
     "call": "dirichlet(@as)",
     "import": ["Probability"],
@@ -11,7 +11,7 @@
         }
     ],
     "title":"The Dirichlet distribution",
-    "examples": ["~dirichlet([1,2,3])"],
+    "examples": ["~Dirichlet([1,2,3])"],
     "description": "The Dirichlet distribution samples from vectors that sum to 1.",
-    "see": ["symmetric_dirichlet"]
+    "see": ["SymmetricDirichlet"]
 }

@@ -1,5 +1,6 @@
 {
-    "name": "uniform_tree",
+    "name": "UniformTree",
+    "deprecated-synonyms": ["uniform_tree"],
     "result_type": "Distribution<Tree<Lengths>>",
     "call": "uniformLabelledTree(@taxa,@branch_length_dist)",
     "import": ["Probability"],
@@ -14,7 +15,7 @@
 	    "name": "branch_length_dist",
 	    "type": "Distribution<Double>",
 	    "description": "The distribution for branch lengths",
-	    "default_value": "gamma(0.5,1/length(@taxa))"
+	    "default_value": "Gamma(0.5,1/length(@taxa))"
 	}
     ]
 }

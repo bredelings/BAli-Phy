@@ -17,6 +17,6 @@
         }
     ],
     "title": "The probability density function",
-    "examples": ["pdf(gamma(1, 2), 1)"],
+    "examples": ["pdf(Gamma(1, 2), 1)"],
     "description": "Find the probability density of x under the distribution dist."
 }

@@ -14,7 +14,7 @@
         {
             "name": "omega",
             "type": "Double",
-            "default_value": "~uniform(0,1)",
+            "default_value": "~Uniform(0,1)",
             "description": "Relative rate of non-synonymous changes relative to synonymous changes"
         }
     ],

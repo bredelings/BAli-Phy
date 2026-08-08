@@ -1,6 +1,7 @@
 {
-    "name": "dirichlet_on_dirichlet",
+    "name": "DirichletOnDirichlet",
     "synonyms": ["DP"],
+    "deprecated-synonyms": ["dirichlet_on_dirichlet"],
     "result_type": "Distribution<DiscreteDist<Double>>",
     "call": "dirichletOnDirichlet(@n,@a2,@a1)",
     "import": ["Probability"],

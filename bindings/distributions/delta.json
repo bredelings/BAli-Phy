@@ -13,6 +13,6 @@
     "title": "The Dirac delta distribution",
     "description": "The Delta distribution returns `x` when sampling.  It does not have a continuous density.",
     "examples": ["~delta(0)                // Always return 0",
-		 "~iid(10, delta(1))       // Return ten 1s"
+		 "~IID(10, delta(1))       // Return ten 1s"
 		 ]
 }

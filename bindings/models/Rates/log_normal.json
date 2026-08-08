@@ -20,7 +20,7 @@
             "name": "lsigma",
             "type": "Double",
             "description": "The standard deviation divided by the mean of the rate distribution",
-            "default_value": "~logLaplace(-3,1)"
+            "default_value": "~LogLaplace(-3,1)"
         }
     ],
     "examples": ["gtr +> Rates.logNormal(4) +> inv"]

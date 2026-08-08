@@ -1,5 +1,6 @@
 {
-    "name": "logGamma",
+    "name": "LogGamma",
+    "deprecated-synonyms": ["logGamma"],
     "result_type": "Distribution<Double>",
     "call": "logGamma(@a,@b)",
     "import": ["Probability"],

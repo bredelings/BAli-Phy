@@ -9,7 +9,7 @@
         {
             "name": "pi",
             "type": "List<(String,Double)>",
-            "default_value": "~symmetric_dirichlet_on(letters(getNucleotides(@a)),1.0)",
+            "default_value": "~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies"
         },
         {

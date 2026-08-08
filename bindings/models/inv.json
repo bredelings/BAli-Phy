@@ -12,7 +12,7 @@
         {
             "name": "p_inv",
             "type": "Double",
-            "default_value": "~uniform(0,1)",
+            "default_value": "~Uniform(0,1)",
             "description": "The fraction of invariable sites."
         }
     ],

@@ -1,5 +1,6 @@
 {
-    "name": "symmetric_dirichlet",
+    "name": "SymmetricDirichlet",
+    "deprecated-synonyms": ["symmetric_dirichlet"],
     "result_type": "Distribution<List<Double>>",
     "call": "symmetricDirichlet(@n,@x)",
     "import": ["Probability"],
@@ -14,6 +15,6 @@
         }
     ],
     "title":"The Dirichlet distribution",
-    "examples": ["~symmetric_dirichlet(2, 4)"],
+    "examples": ["~SymmetricDirichlet(2, 4)"],
     "description": "This is a Dirichlet with identical weight in all categories"
 }

@@ -17,6 +17,6 @@
         }
     ],
     "title": "The cumulative distribution function",
-    "examples": ["cdf(gamma(1, 2), 1)"],
+    "examples": ["cdf(Gamma(1, 2), 1)"],
     "description": "Find the Pr(X < x) under the distribution."
 }

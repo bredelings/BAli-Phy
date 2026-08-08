@@ -1,6 +1,6 @@
 {
-    "name": "dirichlet_on",
-    "synonyms": ["DirichletOn"],
+    "name": "DirichletOn",
+    "deprecated-synonyms": ["dirichlet_on"],
     "result_type": "Distribution<List<(a,Double)>>",
     "call": "dirichletOn(@items,@as)",
     "import": ["Probability"],

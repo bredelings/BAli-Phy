@@ -1,6 +1,6 @@
 {
-    "name": "uniform_int",
-    "synonyms": ["UniformInt"],
+    "name": "UniformInt",
+    "deprecated-synonyms": ["uniform_int"],
     "result_type": "Distribution<Int>",
     "call": "uniform_int(@low,@high)",
     "import": ["Probability"],

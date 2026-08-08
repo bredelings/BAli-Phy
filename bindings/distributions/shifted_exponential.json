@@ -1,5 +1,6 @@
 {
-    "name": "shifted_exponential",
+    "name": "ShiftedExponential",
+    "deprecated-synonyms": ["shifted_exponential"],
     "result_type": "Distribution<Double>",
     "call": "shifted_exponential(@mean,@shift)",
     "import": ["Probability"],
@@ -16,5 +17,5 @@
 	    "description": "The shift parameter"
 	}
     ],
-    "see": ["shifted_exponential"]
+    "see": ["ShiftedExponential"]
 }

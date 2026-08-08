@@ -16,13 +16,13 @@
         {
             "name": "rate",
             "type": "Double",
-            "default_value": "~logLaplace(-4,0.707)",
+            "default_value": "~LogLaplace(-4,0.707)",
             "description": "The insertion-deletion rate"
         },
         {
             "name": "mean_length",
             "type": "Double",
-            "default_value": "~shifted_exponential(10,1)",
+            "default_value": "~ShiftedExponential(10,1)",
 	    "description": "The mean indel length"
         },
         {

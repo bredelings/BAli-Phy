@@ -14,19 +14,19 @@
         {
             "name": "omega",
             "type": "Double",
-            "default_value": "~logLaplace(-1,1)",
+            "default_value": "~LogLaplace(-1,1)",
             "description": "The background omega and the shared omega under the null model."
         },
         {
             "name": "omegaRatio",
             "type": "Double",
-            "default_value": "~logLaplace(0,1)",
+            "default_value": "~LogLaplace(0,1)",
             "description": "The foreground-to-background omega ratio under the alternative model."
         },
         {
             "name": "branchDifference",
             "type": "Int",
-            "default_value": "~bernoulli(0.5)",
+            "default_value": "~Bernoulli(0.5)",
             "description": "The model indicator: 0 for one shared omega and 1 for separate background and foreground omegas."
         },
         {
