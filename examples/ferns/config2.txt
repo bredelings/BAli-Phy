@@ -1,13 +1,11 @@
-align = intron1.fasta
-align = intron2.fasta
-align = intron3.fasta
-align = coding.fasta
+:align intron1.fasta
+:align intron2.fasta
+:align intron3.fasta
+:align coding.fasta
 
-smodel = 1,2,3:GTR+Rates.Free[n=4]
-imodel = 1,2,3:RS07
+:smodel 1,2,3:GTR +> Rates.Free(n=4)
+:imodel 1,2,3:RS07
 
-#smodel = 4:GY94
-#smodel = 4:FMutSel0
-smodel = 4:M3[GTRSym,F3x4]
-imodel = 4:none
+:smodel 4:|w:GTR +> x3 +> MutSel +> dNdS(w)| +> M3
+:imodel 4:none
 

@@ -364,7 +364,7 @@ We can then construct an option file <filename>options2.txt</filename>:</para>
 :imodel 1,2,3:RS07
 
 :smodel 4:GY94
-#:smodel 4:GY94Ext(GTRSym)     # A GTR-based version of GY94 a.k.a. M0.
+#:smodel 4:GY94_ext(GTR_sym)     # A GTR-based version of GY94 a.k.a. M0.
 #:smodel 4:GTR +> FMutSel0
 #:smodel 4:|w:FMutSel0(omega=w)| +> M3
 :imodel 4:none
@@ -451,18 +451,18 @@ You can also use the Huelsenbeck model with the free-rates model:
 <para>
 We can also conduct codon-based analyses using the Nielsen and Yang (1998) model of diversifying positive selection (dN/dS):
 % bali-phy Globins/bglobin.fasta --test -S 'GY94(pi=F1x4)'
-The GY94Ext model extends the GY94 model by taking a nucleotide exchange model as a parameter. The GY94 model is equivalent to GY94Ext(HKY85Sym).  However, if you want a more flexible codon model, you could use GTRSym:
-% bali-phy Globins/bglobin.fasta --test -S 'GY94Ext(GTRSym,pi=F1x4)'
+The GY94_ext model extends the GY94 model by taking a nucleotide exchange model as a parameter. The GY94 model is equivalent to GY94_ext(HKY85_sym).  However, if you want a more flexible codon model, you could use GTR_sym:
+% bali-phy Globins/bglobin.fasta --test -S 'GY94_ext(GTR_sym,pi=F1x4)'
 You can make the codon frequencies to be generated from a single set of nucleotide frequencies:
-% bali-phy Globins/bglobin.fasta --test -S 'MG94Ext(GTR)'
+% bali-phy Globins/bglobin.fasta --test -S 'MG94_ext(GTR)'
 The M7 model allows different sites to have different dN/dS values, where the probability of dN/dS values follows a beta distribution:
 % bali-phy Globins/bglobin.fasta --test -S M7
 The M7 model has parameters as well. Here are the defaults:
 % bali-phy Globins/bglobin.fasta --test -S '|w:GY94(omega=w)| +> M7'
 The M3 model allows different sites to have different dN/dS values, but directly estimates what these values are:
 % bali-phy Globins/bglobin.fasta --test -S 'M3(n=3)'
-The M8aTest model allows testing for positive selection in some fraction of the sites:
-% bali-phy Globins/bglobin.fasta --test -S '|w:GY94(omega=w,pi=F3x4)| +> M8aTest'
+The M8a_test model allows testing for positive selection in some fraction of the sites:
+% bali-phy Globins/bglobin.fasta --test -S '|w:GY94(omega=w,pi=F3x4)| +> M8a_test'
 </para>
 </section>
 

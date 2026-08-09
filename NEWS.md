@@ -10,7 +10,8 @@
 - Distributions & Priors
   * Add the Dirichlet-process.
   * Add mixture distributions with point mass components.
-- Rename and capitalize models and distributions (i.e. normal -> Normal, gtr -> GTR)
+- Rename and capitalize models and distributions (for example, normal -> Normal and gtr -> GTR).
+  Lowercase modifier suffixes remain underscore-separated (for example, gtr_sym -> GTR_sym).
 
 ## MCMC
 

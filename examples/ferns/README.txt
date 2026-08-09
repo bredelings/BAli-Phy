@@ -50,19 +50,21 @@
 8. run bali-phy
 
 config.txt:
- align = exon1.fasta
- align = intron1.fasta
- align = exon2.fasta
- align = intron2.fasta
- align = exon3.fasta
- align = intron3.fasta
- align = exon4.fasta
+:align exon1.fasta
+:align intron1.fasta
+:align exon2.fasta
+:align intron2.fasta
+:align exon3.fasta
+:align intron3.fasta
+:align exon4.fasta
 
- smodel = 1,3,5,7:GTR+Rates.Free[n=4]
- imodel = 1,3,5,7:none
+:smodel 1,3,5,7:GTR+>Rates.Free(n=4)
+:imodel 1,3,5,7:none
+:scale  1,3,5,7:
 
- smodel = 2,4,6:GTR+Rates.Free[n=4]
- imodel = 2,4,6:RS07
+:imodel 2,4,6:RS07
+:smodel 2,4,6:GTR+>Rates.Free(n=4)
+:scale  2,4,6:
 
 9. run bali-phy with codon model on exons
 
@@ -74,17 +76,14 @@ we can concatenate the exons to get a sequence without stop codons.
 
 We can then use a codon model on the combined exons:
 
-config2.txt
-align = intron1.fasta
-align = intron2.fasta
-align = intron3.fasta
-align = coding.fasta
+config2.txt:
+:align intron1.fasta
+:align intron2.fasta
+:align intron3.fasta
+:align coding.fasta
 
-smodel = 1,2,3:GTR+Rates.Free[n=4]
-imodel = 1,2,3:RS07
+:smodel 1,2,3:GTR +> Rates.Free(n=4)
+:imodel 1,2,3:RS07
 
-smodel = 4:GY94
-#smodel = 4:FMutSel0
-#smodel = 4:M3[GTRSym,F3x4]
-imodel = 4:none
-
+:smodel 4:|w:GTR +> x3 +> MutSel +> dNdS(w)| +> M3
+:imodel 4:none

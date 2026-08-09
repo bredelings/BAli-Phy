@@ -1679,13 +1679,13 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>WAGFreq</userinput></entry>
+	      <entry><userinput>WAG_freq</userinput></entry>
 	      <entry>0</entry>
 	      <entry>The constant amino-acid frequencies from the WAG paper.</entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>LGFreq</userinput></entry>
+	      <entry><userinput>LG_freq</userinput></entry>
 	      <entry>0</entry>
 	      <entry>The constant amino-acid frequencies from the LG08 paper.</entry>
 	    </row>
@@ -1705,7 +1705,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <section xml:id="doublet_models">
       <info><title>Doublet models (RNA stems)</title></info>
       <para>The doublets alphabet consists of 16 RNA dinucleotides.  It is used to model RNA stems, where two nucleotides matched in the RNA secondary structure are highly correlated.</para>
-      <para>The default substitution model for doublets is <userinput>TN93Sym&nbsp;+>&nbsp;x2Sym&nbsp;+>&nbsp;F</userinput>.</para>
+      <para>The default substitution model for doublets is <userinput>TN93_sym&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;F</userinput>.</para>
       <section xml:id="doublet-data">
 	<info><title>Doublet data</title></info>
 	<para>BAli-Phy does not allow specifying which nucleotides are paired either with a string like <userinput>((.))</userinput> or with a "pairs" file.  Instead you must manually extract the paired nucleotides and put them in their own partition (for stems), and then manually extract each loop and put it in its own partition.</para>
@@ -1747,7 +1747,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2Sym&nbsp;+>&nbsp;F</userinput></entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;F</userinput></entry>
 	      <entry>df(nuc_model)+15</entry>
 	      <entry><para>This model has separate frequencies for each dinucleotide.</para>
 	      <para>Simultaneous changes of both letters are <emphasis>not</emphasis> allowed.</para>
@@ -1808,11 +1808,11 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
       <programlisting language="java">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x2
 
-HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "CC":0.01, "CG":0.22, "CU":0.01, "GA":0.01, "GC":0.22, "GG":0.01, "GU":0.01, "UA":0.22, "UC":0.01, "UG":0.01, "UU":0.01})</programlisting>
+HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "CC":0.01, "CG":0.22, "CU":0.01, "GA":0.01, "GC":0.22, "GG":0.01, "GU":0.01, "UA":0.22, "UC":0.01, "UG":0.01, "UU":0.01})</programlisting>
 
       <para>Frequencies can also be specified using functions:</para>
       <!-- para>
-	<programlisting language="java">HKY85Sym +> x2Sym +> F(pi=F1x4)            // nucleotide frequencies are estimated</programlisting>
+	<programlisting language="java">HKY85_sym +> x2_sym +> F(pi=F1x4)            // nucleotide frequencies are estimated</programlisting>
       </para -->
 
 
@@ -1879,7 +1879,7 @@ HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "
 	  
 	  <tbody>
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3Sym&nbsp;+>&nbsp;F</userinput></entry>
+	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;F</userinput></entry>
 	      <entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
 	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix.</para>
 	      </entry>
@@ -1918,7 +1918,7 @@ HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "
       <programlisting language="java">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x3</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
-	<programlisting language="java">HKY85Sym +> x3Sym +> F(pi=F1x4)            // nucleotide frequencies are estimated</programlisting>
+	<programlisting language="java">HKY85_sym +> x3_sym +> F(pi=F1x4)            // nucleotide frequencies are estimated</programlisting>
       </para>
 
 
@@ -1957,7 +1957,7 @@ HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "
       </informaltable>
 	<para>The <userinput>+> FE</userinput> model is shorthand for <userinput>+> F(pi=Frequencies.uniform)</userinput>:</para>
 	<para>
-	  <programlisting language="java">HKY85Sym +> x3Sym +> FE</programlisting>
+	  <programlisting language="java">HKY85_sym +> x3_sym +> FE</programlisting>
 	</para>
     </section>
 
@@ -2019,7 +2019,7 @@ HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "
 	      </row>
 
 	      <row>
-		<entry><userinput>GY94Ext(<replaceable>nucModel</replaceable>)</userinput></entry>
+		<entry><userinput>GY94_ext(<replaceable>nucModel</replaceable>)</userinput></entry>
 		<entry>df(<replaceable>nucModel</replaceable>)+61</entry>
 		<entry><para>GY94 model extended with a generic nucleotide exchangeability matrix.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
@@ -2051,7 +2051,7 @@ HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "
 	      </row>
 
 	      <row>
-		<entry><userinput>MG94Ext(<replaceable>nucModel</replaceable>)</userinput></entry>
+		<entry><userinput>MG94_ext(<replaceable>nucModel</replaceable>)</userinput></entry>
 		<entry>df(<replaceable>nucModel</replaceable>)+1</entry>
 		<entry><para>Model of dN/dS with <replaceable>nucModel</replaceable> as the neutral model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
@@ -2119,13 +2119,13 @@ HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "
 	  <itemizedlist>
 	    <listitem><userinput>MG94</userinput> is equivalent to <userinput>F81 +> x3 +> dNdS</userinput>.</listitem>
 	    <listitem><userinput>MG94K</userinput> is equivalent to <userinput>HKY85 +> x3 +> dNdS</userinput>.</listitem>
-	    <listitem><userinput>GY94</userinput> is equivalent to <userinput>HKY85Sym +> x3Sym +> F +> dNdS</userinput>.</listitem>
+	    <listitem><userinput>GY94</userinput> is equivalent to <userinput>HKY85_sym +> x3_sym +> F +> dNdS</userinput>.</listitem>
 	    <listitem><userinput>FMutSel</userinput> is equivalent to <userinput>GTR +> x3 +> dNdS +> MutSel</userinput>.</listitem>
 	    <listitem><userinput>FMutSel0</userinput> is equivalent to <userinput>GTR +> x3 +> dNdS +> MutSelAA</userinput>.</listitem>
             <listitem><userinput>M3</userinput> is equivalent to <userinput>|w: GY94(w)| +> M3</userinput>.</listitem>
-            <listitem><userinput>M3Test</userinput> is equivalent to <userinput>|w: GY94(w)| +> M3Test</userinput>.</listitem>
-	    <listitem><userinput>BUSTED</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3Test(n=2) +> BranchSiteMixture</userinput>.</listitem>
-	    <listitem><userinput>BUSTED_S</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3Test(n=2) +> BranchSiteMixture +> Rates.Gamma(n=3)</userinput>.</listitem>
+            <listitem><userinput>M3_test</userinput> is equivalent to <userinput>|w: GY94(w)| +> M3_test</userinput>.</listitem>
+	    <listitem><userinput>BUSTED</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture</userinput>.</listitem>
+	    <listitem><userinput>BUSTED_S</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture +> Rates.Gamma(n=3)</userinput>.</listitem>
 	  </itemizedlist>
 	  </para>
 
@@ -2141,7 +2141,7 @@ HKY85Sym +> x2Sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "
 	    </row></thead>
             <tbody>
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3Sym&nbsp;+>&nbsp;F</userinput></entry>
+		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;F</userinput></entry>
 		<entry>df(nuc_model)+60</entry>
 		<entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix (dN/dS = 1).</para>
 	               <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on codons only if the frequency of stop codons is zero.</para>
@@ -2346,7 +2346,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>M2aTest</userinput></entry>
+		<entry><userinput>M2a_test</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry>
 		  <para>A Bayesian test for positive selection that compares M2a with M1a.</para>
@@ -2368,7 +2368,7 @@ If the genetic code is not specified, then the standard code is used:
 
 	      <row>
 		<entry>
-		  <para><userinput>M3Test</userinput></para>
+		  <para><userinput>M3_test</userinput></para>
 		</entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2*$n$+1</entry>
 		<entry>
@@ -2407,7 +2407,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>M8aTest</userinput></entry>
+		<entry><userinput>M8a_test</userinput></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection that compares the M8 to the M8a model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">

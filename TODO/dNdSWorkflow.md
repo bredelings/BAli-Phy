@@ -96,7 +96,7 @@ general context-dependent logger. Those limitations no longer describe the curre
 #### Models and evidence
 
 * `M1a`, `M2a`, `M7`, `M8`, and `M8a` implement the corresponding site-model families.
-* `M2aTest`, `M3Test`, and `M8aTest` use a model indicator to perform Bayesian site-model tests.
+* `M2a_test`, `M3_test`, and `M8a_test` use a model indicator to perform Bayesian site-model tests.
 * `BranchSite` implements the modified branch-site model with foreground branches taken from the
   tree's `foreground` edge attribute.
 * `BUSTED` and `BUSTED_S` provide broader episodic-selection models, including a version with
@@ -415,7 +415,7 @@ where exact output comparison cannot express the required graphical or structura
 
 ### 10. Model choices
 
-**Choice:** Recommend `M2aTest` and `M8aTest`, not a literal Bayesian M7-versus-M8 comparison. The
+**Choice:** Recommend `M2a_test` and `M8a_test`, not a literal Bayesian M7-versus-M8 comparison. The
 M8a point null retains a neutral class and avoids interpreting a poor M7 fit as positive selection.
 Use ten beta categories in the documented PAML-comparison workflow; the ordinary binding should
 retain its current faster default of four.
@@ -515,7 +515,7 @@ earlier change should be made in an empty child of that change and squashed into
 
 5. **Add the two-ratio Bayesian branch comparison.**
    In the next commit, use the shared constructor to add a Haskell branch-comparison function and
-   `bindings/models/BranchTest.json`. Give the binding `omega_background ~ LogLaplace(-1,1)`,
+   `bindings/models/Branch_test.json`. Give the binding `omega_background ~ LogLaplace(-1,1)`,
    `foreground_ratio ~ LogLaplace(0,1)`, `branchDifference ~ Bernoulli(0.5)`, `branch_cats`, and a
    codon-model function argument. Scale the single background and foreground models to expected rate
    one, use `omega_background` under the null, and use
@@ -530,8 +530,8 @@ earlier change should be made in an empty child of that change and squashed into
    the design instead of replacing the expected value.
 
 6. **Document more accurate model-probability summaries.**
-   Preserve the existing model explanations while updating the descriptions for `M2aTest`, `M3Test`,
-   `M8aTest`, `BranchSite`, `BUSTED`, `BUSTED_S`, and `BranchTest`. Explain that the posterior mean
+   Preserve the existing model explanations while updating the descriptions for `M2a_test`, `M3_test`,
+   `M8a_test`, `BranchSite`, `BUSTED`, `BUSTED_S`, and `Branch_test`. Explain that the posterior mean
    of `PrPosSelection` or `PrBranchDifference` estimates the corresponding posterior probability with
    less Monte Carlo error than averaging the sampled indicator. For probabilities extremely close to
    zero or one, explain that `statreport` uses the matching `LogOdds*` field to report the posterior
@@ -563,8 +563,8 @@ earlier change should be made in an empty child of that change and squashed into
     property streams, branch evidence, and non-equal prior odds.
 
 11. **Document the complete beginner workflow.**
-    Update `doc/README.itex.xml` and `doc/Tutorial.tut.xml` with concrete M0, `M2aTest`,
-    `M8aTest(n=10)`, `BranchTest`, and `BranchSite` examples. Include
+    Update `doc/README.itex.xml` and `doc/Tutorial.tut.xml` with concrete M0, `M2a_test`,
+    `M8a_test(n=10)`, `Branch_test`, and `BranchSite` examples. Include
     `--set write-properties=true`, multiple chains, `bp-analyze`, a selected reference sequence, and a
     fixed foreground-labeled topology where required. Explain the M8a rather than M7 null, posterior
     probability versus Bayes factor, unconditional site probabilities, one-based display versus
