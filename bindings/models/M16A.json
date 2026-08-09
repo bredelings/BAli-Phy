@@ -60,5 +60,5 @@
     ],
     "description": "Exchangability matrix for rna stems that allows 2 simultaneous changes.\n\nNote the exchange rate for double changes involving a mismatch is 0.",
     "examples": ["RNA.M16A","RNA.M16A +> Rates.Free"],
-    "see": ["x2Sym"]
+    "see": ["x2_sym"]
 }

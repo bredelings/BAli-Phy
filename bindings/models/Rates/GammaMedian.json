@@ -1,6 +1,6 @@
 {
-    "name": "Rates.GammaMedian",
-    "deprecated-synonyms": ["Rates.gamma_median"],
+    "name": "Rates.Gamma_median",
+    "deprecated-synonyms": ["Rates.gamma_median", "Rates.GammaMedian"],
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.gammaRatesMedianOn(@alpha,@n,@submodel)",
     "import": ["SModel"],
@@ -23,7 +23,7 @@
             "description": "The shape parameter for the Gamma distribution"
         }
     ],
-    "examples": ["GTR +> Rates.GammaMedian(4) +> Inv"],
+    "examples": ["GTR +> Rates.Gamma_median(4) +> Inv"],
     "title": "The median-discretized Gamma rate heterogeneity model",
     "description": "This model uses equal-probability categories represented by their medians to approximate Gamma-distributed rates across sites. The rates are normalized to have mean one when applied to the substitution model.",
     "citation":{"type": "article",

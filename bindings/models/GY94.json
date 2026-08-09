@@ -44,6 +44,6 @@
 		 "year":"1994",
 		 "link":[{"url":"http://www.genetics.org/content/148/3/929.short"}]
 		},
-    "see": ["GY94Ext","MG94"],
+    "see": ["GY94_ext","MG94"],
     "extract": "all"
 }

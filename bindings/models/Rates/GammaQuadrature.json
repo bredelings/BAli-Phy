@@ -1,6 +1,6 @@
 {
-    "name": "Rates.GammaQuadrature",
-    "deprecated-synonyms": ["Rates.gamma_quadrature"],
+    "name": "Rates.Gamma_quadrature",
+    "deprecated-synonyms": ["Rates.gamma_quadrature", "Rates.GammaQuadrature"],
     "result_type": "DiscreteDist<CTMC<a>>",
     "call": "SModel.gammaRatesQuadratureOn(@alpha,@n,@submodel)",
     "import": ["SModel"],
@@ -23,7 +23,7 @@
             "description": "The shape parameter for the Gamma distribution"
         }
     ],
-    "examples": ["GTR +> Rates.GammaQuadrature(4) +> Inv"],
+    "examples": ["GTR +> Rates.Gamma_quadrature(4) +> Inv"],
     "title": "The quadrature-discretized Gamma rate heterogeneity model",
     "description": "This model uses Gaussian quadrature to approximate Gamma-distributed rates across sites."
 }

@@ -1,5 +1,5 @@
 {
-    "name": "x3Sym",
+    "name": "x3_sym",
     "deprecated-synonyms": ["x3_sym"],
     "constraints": [ "Triplets<a,b>" ],
     "result_type": "ExchangeModel<a>",
@@ -21,6 +21,6 @@
         }
     ],
     "description": "Exchangability matrix on triplets or codons constructed from an exchangability matrix on nucleotides.\n\nThus function can be used to build up triplet and codon models incrementally.",
-    "examples": ["HKY85Sym +> x3Sym +> F +> dNdS      // equivalent to GY94","GTRSym +> x3Sym +> F","x3Sym(HKY85Sym)"],
-    "see": ["GY94","GY94Ext"]
+    "examples": ["HKY85_sym +> x3_sym +> F +> dNdS      // equivalent to GY94","GTR_sym +> x3_sym +> F","x3_sym(HKY85_sym)"],
+    "see": ["GY94","GY94_ext"]
 }

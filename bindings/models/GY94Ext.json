@@ -1,5 +1,5 @@
 {
-    "name": "GY94Ext",
+    "name": "GY94_ext",
     "deprecated-synonyms": ["gy94_ext"],
     "result_type": "CTMC<Codons<n>>",
     "constraints": ["Nucleotides<n>"],
@@ -32,8 +32,8 @@
 	    "description": "The codon alphabet"
         }
     ],
-    "description": "This is a version of the GY94 model that has been extended to use user-supplied exchangabilty matrix `nucModel` on nucleotides.  The original GY94 model distinguishes only between transitions and transversions, and is equivalent to `GY94Ext(HKY85Sym)`.",
-    "examples": ["GY94Ext(HKY85Sym(kappa=2),omega=2)","GY94Ext(GTRSym,pi=F1x4)"],
+    "description": "This is a version of the GY94 model that has been extended to use user-supplied exchangabilty matrix `nucModel` on nucleotides.  The original GY94 model distinguishes only between transitions and transversions, and is equivalent to `GY94_ext(HKY85_sym)`.",
+    "examples": ["GY94_ext(HKY85_sym(kappa=2),omega=2)","GY94_ext(GTR_sym,pi=F1x4)"],
     "citation": {"type": "article",
 		 "title": "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
 		 "author": [{"name": "Goldman, Nick"},{"name": "Yang, Ziheng"}],

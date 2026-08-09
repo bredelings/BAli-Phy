@@ -1,5 +1,5 @@
 {
-    "name": "x2Sym",
+    "name": "x2_sym",
     "deprecated-synonyms": ["x2_sym"],
     "constraints": [ "Doublets<a,b>" ],
     "result_type": "ExchangeModel<a>",
@@ -21,6 +21,6 @@
         }
     ],
     "description": "Exchangability matrix on doublets constructed from an exchangability matrix on nucleotides.\n\nThus function can be used to build up doublet models incrementally.",
-    "examples": ["HKY85Sym +> x2Sym +> F", "GTRSym +> x2Sym +> F","x2Sym(HKY85Sym)"],
+    "examples": ["HKY85_sym +> x2_sym +> F", "GTR_sym +> x2_sym +> F","x2_sym(HKY85_sym)"],
     "see": ["x2"]
 }

@@ -42,7 +42,7 @@
             "description": "The dN\/dS value for positively selected sites"
         }
     ],
-    "see": ["M7", "M8a","M8aTest"],
+    "see": ["M7", "M8a","M8a_test"],
     "description": "The M8 model is an M7 model with an additional category of positively-selected sites.  The additional category of sites has proportion=posP and dN/dS=posW.",
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",

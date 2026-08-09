@@ -21,5 +21,5 @@
     ],
     "description":"Rate matrix on triplets or codons constructed from a rate matrix on nucleotides.\n\nThus function can be used to build up triplet and codon models incrementally.",
     "examples": ["F81 +> x3 +> dNdS      // equivalent to MG94","GTR +> x3"],
-    "see": ["MG94","MG94Ext"]
+    "see": ["MG94","MG94_ext"]
 }

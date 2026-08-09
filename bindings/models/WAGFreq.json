@@ -1,6 +1,6 @@
 {
     "title": "The WAG amino-acid frequencies",
-    "name": "WAGFreq",
+    "name": "WAG_freq",
     "deprecated-synonyms": ["wag_freq"],
     "result_type": "List<(String,Double)>",
     "call": "wag_frequencies(@a)",

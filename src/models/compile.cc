@@ -179,7 +179,7 @@ string default_markov_model(const alphabet& a)
     else if (dynamic_cast<const Codons*>(&a))
         return "GY94";
     else if (dynamic_cast<const Doublets*>(&a))
-        return "TN93Sym +> x2Sym +> F";
+        return "TN93_sym +> x2_sym +> F";
     else if (dynamic_cast<const Triplets*>(&a))
         return "TN93 +> x3";
     else

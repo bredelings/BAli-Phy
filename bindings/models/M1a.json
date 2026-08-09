@@ -41,5 +41,5 @@
 	       },
     "examples": ["|w:GY94(omega=w,pi=F1x4)| +> M1a","|w:MG94(omega=w)| +> M1a","|w:FMutSel0(omega=w)| +> M1a"],
     "extract": "all",
-    "see": ["M2a","M2aTest"]
+    "see": ["M2a","M2a_test"]
 }

@@ -1,5 +1,5 @@
 {
-    "name": "M8aTest",
+    "name": "M8a_test",
     "synonyms": ["M8a_Test"],
     "deprecated-synonyms": ["m8a_test"],
     "title": "Bayesian version of the M8a test for positive selection",

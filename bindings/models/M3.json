@@ -35,5 +35,5 @@
 		},
     "examples": ["|w:GY94(omega=w,pi=F1x4)| +> M3","|w:MG94(omega=w)| +> M3","|w:FMutSel0(omega=w)| +> M3"],
     "extract": "all",
-    "see": ["M3Test"]
+    "see": ["M3_test"]
 }

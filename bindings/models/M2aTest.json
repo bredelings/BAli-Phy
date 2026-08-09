@@ -1,5 +1,5 @@
 {
-    "name": "M2aTest",
+    "name": "M2a_test",
     "synonyms": ["M2a_Test"],
     "deprecated-synonyms": ["m2a_test"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
@@ -64,7 +64,7 @@
 		"identifier": [{"type":"doi",
 				"id":"10.1534/genetics.104.031153 "}]
 	       },
-    "examples": ["|w:GY94(omega=w,pi=F1x4)| +> M2aTest","|w:MG94(omega=w)| +> M2aTest","|w:FMutSel0(omega=w)| +> M2aTest"],
+    "examples": ["|w:GY94(omega=w,pi=F1x4)| +> M2a_test","|w:MG94(omega=w)| +> M2a_test","|w:FMutSel0(omega=w)| +> M2a_test"],
     "see": ["M1a","M2a"],
     "extract": "all"
 }

@@ -1,1 +1,1 @@
---print 'GTRSym + + F'
+--print 'GTR_sym + + F'

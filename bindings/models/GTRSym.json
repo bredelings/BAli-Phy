@@ -1,5 +1,5 @@
 {
-    "name": "GTRSym",
+    "name": "GTR_sym",
     "deprecated-synonyms": ["gtr_sym"],
     "title":"The GTR exchangability matrix",
     "result_type": "ExchangeModel<a>",

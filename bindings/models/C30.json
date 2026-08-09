@@ -34,6 +34,6 @@
 			     "pages": "3965--3976"},
 		 "identifier": [{"type":"doi","id":"10.1098/rstb.3008.0180"}]
 		},
-    "see": ["C30Fixed", "C10",  "C20", "C40", "C50", "C60"],
+    "see": ["C30_fixed", "C10",  "C20", "C40", "C50", "C60"],
     "extract": "all"
 }

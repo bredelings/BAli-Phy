@@ -1,5 +1,5 @@
 {
-    "name": "M3Test",
+    "name": "M3_test",
     "synonyms": ["M3_Test"],
     "deprecated-synonyms": ["m3_test"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",

@@ -1,6 +1,6 @@
 {
     "title": "The LG amino-acid frequencies",
-    "name": "LGFreq",
+    "name": "LG_freq",
     "deprecated-synonyms": ["lg08_freq"],
     "result_type": "List<(String,Double)>",
     "call": "lg_frequencies(@a)",

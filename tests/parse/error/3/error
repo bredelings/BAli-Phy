@@ -1,5 +1,5 @@
-[1mprint expression:1.10:[1;31m error:[0m[1m
+[1mprint expression:1.11:[1;31m error:[0m[1m
    • syntax error, unexpected VARSYM
   [1;34m|[0m
-[1;34m1[0m [1;34m| [0mGTRSym + [1;31m+[0m F
-  [1;34m|[0m          [1;31m^[0m
+[1;34m1[0m [1;34m| [0mGTR_sym + [1;31m+[0m F
+  [1;34m|[0m           [1;31m^[0m

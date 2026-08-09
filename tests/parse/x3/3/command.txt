@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=MG94Ext(TN93)
+--test codons-dna.fasta --smodel=MG94_ext(TN93)

@@ -28,6 +28,6 @@
 			     "pages": "3965--3976"},
 		 "identifier": [{"type":"doi","id":"10.1098/rstb.2008.0180"}]
 		},
-    "see": ["C10Fixed", "C20", "C30", "C40", "C50", "C60"],
+    "see": ["C10_fixed", "C20", "C30", "C40", "C50", "C60"],
     "extract": "all"
 }
