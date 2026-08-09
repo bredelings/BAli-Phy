@@ -1,5 +1,6 @@
 {
-    "name": "tripletsOf",
+    "name": "triplets",
+    "deprecated-synonyms": ["tripletsOf"],
     "result_type": "Triplets<a>",
     "call": "mkTriplets(@nucleotides)",
     "import": ["Bio.Alphabet"],

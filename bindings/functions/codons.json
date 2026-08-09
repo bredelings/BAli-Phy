@@ -1,5 +1,5 @@
 {
-    "name": "Codons",
+    "name": "codons",
     "deprecated-synonyms": ["codonsOf"],
     "result_type": "Codons<a>",
     "call": "mkCodons(@nucleotides,@code)",

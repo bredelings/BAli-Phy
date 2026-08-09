@@ -1,5 +1,6 @@
 #include "help.hh"
 
+#include <algorithm>
 #include <regex>
 #include <list>
 #include <filesystem>
@@ -354,12 +355,21 @@ const ptree* find(const string& key0, const ptree& p)
 vector<string> get_subtopics(const ptree& p)
 {
     vector<string> subtopics;
-    for(auto [name,value]: p.children())
-    {
-	if (value.children().size()) name += "/";
-	subtopics.push_back(name);
-    }
+    for(const auto& child: p.children())
+	if (child.second.children().empty())
+	    subtopics.push_back(child.first);
+	else
+	    subtopics.push_back(child.first + "/");
     return subtopics;
+}
+
+// Show a topic list and explain the suffix when the list contains nested topics.
+void show_topic_list(std::ostream& o, const vector<string>& topics)
+{
+    o<<show_options(topics);
+    if (std::any_of(topics.begin(), topics.end(),
+		    [](const auto& topic) { return topic.ends_with('/'); }))
+	o<<"\nA trailing / marks a topic with subtopics; it may be included or omitted.\n";
 }
 
 ptree load_help_files(const std::vector<fs::path>& package_paths)
@@ -404,7 +414,7 @@ void help_topics(std::ostream& o, const ptree& help)
     auto subtopics = get_subtopics(help);
     
     o<<"To see help on one of the following topics, run `bali-phy help "<<underline("topic")<<"`\n\n";
-    o<<show_options(subtopics);
+    show_topic_list(o, subtopics);
     o<<"\n";
 }
 
@@ -417,30 +427,49 @@ void show_help(const string& topic, const vector<fs::path>& package_paths)
 {
     // 1. Load help from Markdown files (in help/) and JSON files (in bindings/)
     auto help = load_help_files(package_paths);
-	
+
     // 3. Show a top-level overview of categories
     if (topic == "topics")
-	help_topics(std::cout, help);
-    else if (auto found = find(topic, help))
     {
-	auto subtopics = get_subtopics(*found);
-	if (not found->value_is_empty())
-	{
-	    std::cout<<found->get_value<string>();
-	    if (subtopics.size())
-		std::cout<<"\n";
-	}
-	if (subtopics.size())
-	{
-	    std::cout<<bold("Subtopics")<<":\n\n";
-	    std::cout<<show_options(subtopics);
-	}
+	help_topics(std::cout, help);
 	return;
     }
-    else
+
+    // Prefer an exact topic such as the division operator before treating / as a subtopic marker.
+    auto found = find(topic, help);
+    bool requested_subtopics = false;
+    string lookup_topic = topic;
+    if (not found and topic.ends_with('/'))
+    {
+	requested_subtopics = true;
+	lookup_topic.pop_back();
+	found = find(lookup_topic, help);
+    }
+
+    if (not found)
     {
 	cout<<"Help topic '"<<topic<<"' not found.\n\n";
 	help_topics(cout,help);
 	return;
+    }
+
+    if (requested_subtopics and found->children().empty())
+    {
+	cout<<"Help topic '"<<lookup_topic<<"' has no subtopics.\n"
+	    <<"Run `bali-phy help "<<lookup_topic<<"` instead.\n";
+	return;
+    }
+
+    auto subtopics = get_subtopics(*found);
+    if (not found->value_is_empty())
+    {
+	std::cout<<found->get_value<string>();
+	if (subtopics.size())
+	    std::cout<<"\n";
+    }
+    if (subtopics.size())
+    {
+	std::cout<<bold("Subtopics")<<":\n\n";
+	show_topic_list(std::cout, subtopics);
     }
 }

@@ -147,14 +147,23 @@ subdir('builtins')
 test('bali-phy version', baliphy, args:['--version'], is_parallel: false)
 test('bali-phy help', baliphy, args:['--help'], is_parallel: false)
 
-module_cache_wrapper_args = []
+python_test_wrapper_args = []
 if host_machine.system() == 'windows' and meson.is_cross_build()
-  module_cache_wrapper_args = ['--wrapper'] + windows_test_wrapper
+  python_test_wrapper_args = ['--wrapper'] + windows_test_wrapper
 endif
+
+# Check exact help-topic lookup, including case-distinct names and slash markers.
+test('bali-phy help topics',
+     python,
+     args: [files('../tests/scripts/test_help.py')] +
+           python_test_wrapper_args +
+           ['--', baliphy.full_path(), packagepath],
+     is_parallel: false)
+
 test('compiled module cache',
      python,
      args: [files('../tests/scripts/test_module_cache.py')] +
-           module_cache_wrapper_args +
+           python_test_wrapper_args +
            ['--', baliphy.full_path(),
             meson.project_source_root()/'tests/haskell/ModuleCache',
             packagepath],
@@ -165,7 +174,7 @@ test('compiled module cache',
 test('generated alignment program standalone',
      python,
      args: [files('../tests/scripts/test_generated_program.py')] +
-           module_cache_wrapper_args +
+           python_test_wrapper_args +
            ['--', baliphy.full_path(), packagepath],
      timeout: 600)
 

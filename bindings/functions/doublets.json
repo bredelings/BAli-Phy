@@ -1,5 +1,6 @@
 {
-    "name": "doubletsOf",
+    "name": "doublets",
+    "deprecated-synonyms": ["doubletsOf"],
     "result_type": "Doublets<n>",
     "call": "mkDoublets(@nucleotides)",
     "import": ["Bio.Alphabet"],
