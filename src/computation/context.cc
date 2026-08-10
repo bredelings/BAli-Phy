@@ -10,6 +10,7 @@
 #include "computation/preprocess.H"
 #include "computation/runtime/modifiable.H"
 #include "computation/runtime/trim.H"
+#include "probability/choice-weight.H"
 #include "util/rng.H"
 #include "util/log-level.H"
 #include "util/permute.H"
@@ -815,19 +816,10 @@ bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
         std::cerr<<endl<<endl;
     }
 
-    bool accept = false;
-    if (ratio.log().nans() != 0)
-        accept = ratio.log().nans() < 0;
-    else if (ratio.log().infs() != 0)
-        accept = ratio.log().infs() < 0;
-    else if (ratio.log().neginfs() != 0)
-        accept = ratio.log().neginfs() < 0;
-    else
-    {
-        // In theory handling neginfs should be automatic here,
-        // since if they go down, ratio should be Inf.
-        accept = U < ratio;
-    }
+    // Apply the shared exceptional-density preference before the ordinary
+    // Metropolis-Hastings comparison of finite coefficients.
+    auto acceptance_weight = ChoiceWeight(ratio) / ChoiceWeight(1.0);
+    bool accept = U < acceptance_weight;
 
     if (log_verbose >=3) std::cerr<<"accept_MH: log(ratio) = "<<ratio<<"   accept = "<<accept<<endl;
 

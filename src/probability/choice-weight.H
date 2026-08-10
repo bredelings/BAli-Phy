@@ -3,6 +3,8 @@
 
 #include "util/math/ProbDensity.H"
 
+#include <cassert>
+#include <cmath>
 #include <compare>
 #include <limits>
 #include <ostream>
@@ -11,35 +13,45 @@
 // Rank a density first by MH pathologies and then by its asymptotic order of zero.
 // A smaller rank is preferred: fewer NaNs, then fewer positive infinities, then
 // fewer zero factors.
-struct ChoiceRank
+class DensityRank
 {
-    int nans = 0;
-    double infs = 0;
-    double zero_order = 0;
+    int nans_ = 0;
+    double infs_ = 0;
+    double zero_order_ = 0;
 
-    explicit ChoiceRank(const LogDensity& density)
-        :nans(density.nans()), infs(density.infs()), zero_order(density.neginfs())
-    {}
-
-    constexpr ChoiceRank() = default;
-
-    bool operator==(const ChoiceRank&) const = default;
-
-    // Lexicographic comparison applies the MH preference rules in order: NaNs,
-    // positive infinities, and finally the asymptotic order of zero.
-    std::partial_ordering operator<=>(const ChoiceRank& other) const
+public:
+    explicit DensityRank(const LogDensity& density)
+        :nans_(density.nans()), infs_(density.infs()), zero_order_(density.neginfs())
     {
-        if (nans != other.nans)
-            return nans <=> other.nans;
-        if (infs != other.infs)
-            return infs <=> other.infs;
-        return zero_order <=> other.zero_order;
+        assert(not std::isnan(infs_));
+        assert(not std::isnan(zero_order_));
+    }
+
+    constexpr DensityRank() = default;
+
+    bool operator==(const DensityRank&) const = default;
+
+    // The rank fields exclude NaN, so the MH preference rules form a total
+    // lexicographic order even though two of the fields use floating point.
+    std::strong_ordering operator<=>(const DensityRank& other) const
+    {
+        if (nans_ != other.nans_)
+            return nans_ <=> other.nans_;
+        if (infs_ < other.infs_)
+            return std::strong_ordering::less;
+        if (infs_ > other.infs_)
+            return std::strong_ordering::greater;
+        if (zero_order_ < other.zero_order_)
+            return std::strong_ordering::less;
+        if (zero_order_ > other.zero_order_)
+            return std::strong_ordering::greater;
+        return std::strong_ordering::equal;
     }
 };
 
-// A probability density interpreted as one candidate in a discrete choice.
-// Addition keeps only the preferred rank and adds finite coefficients within
-// that rank.  Division projects the result back to an ordinary log-space weight.
+// A probability density interpreted under DensityRank.  Addition supplies the
+// preferred-stratum sum needed by discrete choices, while division projects two
+// ranked densities to an ordinary relative weight.
 class ChoiceWeight
 {
     ProbDensity weight_;
@@ -48,7 +60,7 @@ public:
     explicit ChoiceWeight(const ProbDensity& weight):weight_(weight) {}
     explicit ChoiceWeight(double weight):weight_(weight) {}
 
-    ChoiceRank rank() const {return ChoiceRank(weight_.log());}
+    DensityRank rank() const {return DensityRank(weight_.log());}
     const ProbDensity& density() const {return weight_;}
 
     friend bool dominated_by(const ChoiceWeight& x, const ChoiceWeight& y)
@@ -65,27 +77,20 @@ public:
         if (dominated_by(y, x))
             return x;
 
-        auto order = x.rank() <=> y.rank();
-        if (order == std::partial_ordering::unordered)
-            return ChoiceWeight(exp_to_log_space(logNan()));
-
         LogDensity total = x.weight_.log();
         total.ones() = logsum(x.weight_.log().ones(), y.weight_.log().ones());
         return ChoiceWeight(exp_to_log_space(total));
     }
 
-    // Project a ratio to an ordinary weight: a dominated numerator is zero,
-    // while equal-rank symbolic factors cancel and leave a coefficient ratio.
+    // Project ranked densities to an ordinary relative weight: a dominated
+    // numerator is zero, a preferred numerator is infinite, and equal-rank
+    // symbolic factors cancel to leave the finite coefficient ratio.
     friend log_double_t operator/(const ChoiceWeight& x, const ChoiceWeight& y)
     {
         if (dominated_by(x, y))
             return 0.0;
         if (dominated_by(y, x))
             return exp_to_log_space(std::numeric_limits<double>::infinity());
-
-        auto order = x.rank() <=> y.rank();
-        if (order == std::partial_ordering::unordered)
-            return log_double_t(x.weight_ / y.weight_);
 
         return exp_to_log_space(x.weight_.log().ones() - y.weight_.log().ones());
     }

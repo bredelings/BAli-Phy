@@ -66,9 +66,18 @@ namespace
         check_close(double(weight(3, 1) / equal_order_total), 0.6);
     }
 
-    // Defect comparison must apply the NaN, infinity, and zero hierarchy in order.
-    void check_defect_priority()
+    // DensityRank is a total lexicographic order: NaNs, then infinities, then zeros.
+    void check_density_rank_order()
     {
+        auto neutral = weight(1);
+        BALI_PHY_TEST_CHECK(weight(1, 0, 0, -1).rank() < neutral.rank());
+        BALI_PHY_TEST_CHECK(weight(1, 0, 0, 1).rank() > neutral.rank());
+        BALI_PHY_TEST_CHECK(weight(1, 0, -1).rank() < neutral.rank());
+        BALI_PHY_TEST_CHECK(weight(1, 0, 1).rank() > neutral.rank());
+        BALI_PHY_TEST_CHECK(weight(1, -1).rank() < neutral.rank());
+        BALI_PHY_TEST_CHECK(weight(1, 1).rank() > neutral.rank());
+        BALI_PHY_TEST_CHECK(neutral.rank() == weight(2).rank());
+
         BALI_PHY_TEST_CHECK(dominated_by(weight(1, 0, 0, 1), weight(1, 4, 3, 0)));
         BALI_PHY_TEST_CHECK(dominated_by(weight(1, 0, 2, 1), weight(1, 5, 1, 1)));
         BALI_PHY_TEST_CHECK(dominated_by(weight(1, 3, 2, 1), weight(1, 2, 2, 1)));
@@ -107,13 +116,20 @@ namespace
         check_close(double(forward[2]), double(reverse[0]));
     }
 
-    // Division must project dominated and dominating ranks to zero and infinity.
-    void check_division_range()
+    // Division projects every defect category around the neutral rank, while
+    // equal ranks retain the ordinary finite coefficient ratio.
+    void check_division_projection()
     {
-        auto preferred = weight(2);
-        auto dominated = weight(3, 1);
-        BALI_PHY_TEST_CHECK(double(dominated / preferred) == 0.0);
-        BALI_PHY_TEST_CHECK(std::isinf((preferred / dominated).log()));
+        auto neutral = weight(1);
+        check_close(double(weight(0.25) / neutral), 0.25);
+
+        BALI_PHY_TEST_CHECK(double(weight(1, 0, 0, 1) / neutral) == 0.0);
+        BALI_PHY_TEST_CHECK(double(weight(1, 0, 1) / neutral) == 0.0);
+        BALI_PHY_TEST_CHECK(double(weight(1, 1) / neutral) == 0.0);
+
+        BALI_PHY_TEST_CHECK(std::isinf((weight(1, 0, 0, -1) / neutral).log()));
+        BALI_PHY_TEST_CHECK(std::isinf((weight(1, 0, -1) / neutral).log()));
+        BALI_PHY_TEST_CHECK(std::isinf((weight(1, -1) / neutral).log()));
     }
 
     // The actual categorical sampler must never select a dominated candidate.
@@ -132,9 +148,9 @@ int main()
     check_prob_density_zero();
     check_finite_weights();
     check_zero_order_addition();
-    check_defect_priority();
+    check_density_rank_order();
     check_common_symbolic_factors();
     check_sum_order_independence();
-    check_division_range();
+    check_division_projection();
     check_choice_ignores_dominated_weights();
 }
