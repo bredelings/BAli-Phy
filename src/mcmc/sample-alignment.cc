@@ -151,7 +151,7 @@ pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data
     return sample_alignment_base(P, P.get_branch_HMM(b), b, bandwidth);
 }
 
-log_double_t sample_alignment(Parameters& P, int b, bool initial_state_valid)
+ProbDensity sample_alignment(Parameters& P, int b, bool initial_state_valid)
 {
     if (log_verbose >= 3)
         std::cerr<<"[sample_alignment]: start: Pr = "<<P.probability()<<"\n";
@@ -177,14 +177,14 @@ log_double_t sample_alignment(Parameters& P, int b, bool initial_state_valid)
     p.push_back(P);
 
     vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
-    log_double_t total_ratio = 1.0;
+    ProbDensity total_ratio = 1.0;
     for(int i=0;i<p.size();i++) 
     {
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment()) 
 	    {
                 auto [M, ratio] = sample_alignment_base(p[i][j], b, bandwidth);
-                total_ratio *= ratio;
+                total_ratio *= ProbDensity(ratio);
 		Matrices[i].push_back(M);
 		// If Pr_sum_all_paths() == 0, then the alignment for this partition will be unchanged.
 #ifndef NDEBUG

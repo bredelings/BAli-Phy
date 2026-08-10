@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree/tree.H"
 #include "models/parameters.H"
 #include "result.H"
-#include "sample-alignment.H"  // log_double_t sample_alignment(Parameters&,int b,bool);
+#include "sample-alignment.H"
 
 void slide_node(owned_ptr<context>& P, MCMC::MoveStats& Stats, int);
 void change_branch_length(owned_ptr<context>&, MCMC::MoveStats&, int);

@@ -24,11 +24,13 @@
 ///
 
 #include <tuple>
+#include <utility>
 #include "util/assert.hh"
 #include "util/log-level.H"
+#include "util/range.H"
 #include "slice-sampling.H"
 #include "util/rng.H"
-#include "probability/choose.H"
+#include "probability/choice-weight.H"
 #include "mcmc/sample-alignment.H"
 
 extern int log_verbose;
@@ -48,8 +50,11 @@ context_slice_function::context_slice_function(context_ref& c)
 
 context_slice_function::context_slice_function(context_ref& c, const bounds<double>& b)
     :slice_function(b), C0(c), C(c)
+{}
+
+void context_slice_function::set_density_ratio(ProbDensity ratio)
 {
-    current_fn_value.log() = 0;
+    current_density_ratio = std::move(ratio);
 }
 
 optional<LogDensity> context_slice_function::operator()(double x)
@@ -72,21 +77,28 @@ optional<LogDensity> context_slice_function::operator()(double x)
         if (ratio.variables_changed)
             throw variables_changed_exception("Variable changed during slice sampling!");
         else
-            current_fn_value = ratio.total_ratio();
+            set_density_ratio(ratio.total_ratio());
 
         return operator()();
     }
     catch (const math_error&)
     {
         C = C0;
-        current_fn_value = 0;
+        set_density_ratio(0);
         return operator()();
     }
 }
 
 LogDensity context_slice_function::operator()()
 {
-    return log(current_fn_value);
+    auto relative_weight = ChoiceWeight(current_density_ratio) / ChoiceWeight(1.0);
+
+    // An ordinary scalar slice is defined only within the starting defect rank.
+    // Both preferred and dominated ranks therefore project outside the slice.
+    if (not std::isfinite(relative_weight.log()))
+        return logZero();
+
+    return LogDensity(relative_weight.log());
 }
 
 void context_slice_function::reset()
@@ -196,17 +208,18 @@ optional<LogDensity> alignment_branch_length_slice_function::operator()(double x
 
         // Pass 'false' because the initial alignment may have zero probability under the new branch length x.
         // Without this, check_sampling_probabilities may throw an exception.
-        auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
+        ProbDensity alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
 
         // Here is where we return 0 if the number of variables changes.
         // How can we automate this so that it is called only once?
-        current_fn_value = log_double_t(C.heated_probability_ratio(C0)) * (alignment_sum_ratio_1/alignment_sum_ratio_0);
+        set_density_ratio(C.heated_probability_ratio(C0) *
+                          (alignment_sum_ratio_1 / alignment_sum_ratio_0));
         return operator()();
     }
     catch (const math_error&)
     {
         C = C0;
-        current_fn_value = 0;
+        set_density_ratio(0);
         return operator()();
     }
 }

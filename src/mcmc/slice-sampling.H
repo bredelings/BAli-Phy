@@ -29,7 +29,7 @@
 #include <vector>                  // for vector
 #include "computation/context.H"   // for context
 #include "util/bounds.H"           // for bounds
-#include "util/math/log-double.H"  // for log_double_t
+#include "util/math/ProbDensity.H" // for ProbDensity
 
 class Parameters;
 
@@ -66,8 +66,11 @@ double slice_sample(slice_function& g, double w, int m);
 
 class context_slice_function: public slice_function
 {
+private:
+    ProbDensity current_density_ratio = 1.0;
+
 protected:
-    log_double_t current_fn_value;
+    void set_density_ratio(ProbDensity ratio);
 
 public:
 
@@ -149,7 +152,7 @@ struct node_time_slice_function: public context_slice_function
 /// A slice_function for slice-sampling a single branch length
 struct alignment_branch_length_slice_function: public context_slice_function
 {
-    log_double_t alignment_sum_ratio_0;
+    ProbDensity alignment_sum_ratio_0;
     int b;
 
     LogDensity operator()() {return context_slice_function::operator()();};
