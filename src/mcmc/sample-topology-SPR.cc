@@ -133,62 +133,6 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<log_double_t>& rho,in
     }
 }
 
-#include "slice-sampling.H"
-
-// Slice-sample the branch connecting the pruned subtree, rather than either attachment edge.
-int topology_sample_SPR_slice_connecting_branch(vector<Parameters>& p,int b) 
-{
-    int b_ = p[0].t().undirected(b);
-
-    branch_length_slice_function logp1(p[0],b_);
-    branch_length_slice_function logp2(p[1],b_);
-
-    //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
-    //  double Pr1 = log(p[0].probability());
-    //  double Pr2 = log(p[1].probability());
-
-    vector<slice_function*> logp;
-    logp.push_back(&logp1);
-    logp.push_back(&logp2);
-
-    double w = p[0].branch_mean();
-
-    std::pair<int,double> choice = slice_sample_multi(logp,w,-1);
-
-    return choice.first;
-}
-
-// Slice-sample the attachment split in each of the original and proposed topologies.
-// Their fixed totals are the original and target attachment lengths, respectively.
-int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b) 
-{
-    slide_node_slice_function logp1(p[0],b);
-    slide_node_slice_function logp2(p[1],b);
-
-    //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
-    //  double Pr1 = log(p[0].probability());
-    //  double Pr2 = log(p[1].probability());
-
-    vector<slice_function*> logp;
-    logp.push_back(&logp1);
-    logp.push_back(&logp2);
-
-    double w = get_setting_or("slide_branch_slice_window",0.3);
-
-    vector<double> X0(2);
-    X0[0] = logp1.current_value();
-
-    // Choose the same uniform branch split as before, expressed as a finite log ratio.
-    double u = uniform();
-    while (u == 0)
-        u = uniform();
-    X0[1] = log(u) - log1p(-u);
-
-    std::pair<int,double> choice = slice_sample_multi(X0,logp,w,-1);
-
-    return choice.first;
-}
-
 // Choose an SPR target independently of its physical branch length.
 int choose_SPR_target(const TreeInterface& T1, int b1) 
 {
@@ -481,7 +425,7 @@ double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
     return target_attachment_length / original_attachment_length;
 }
 
-MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
+MCMC::Result sample_SPR(Parameters& P, int b1, int b2)
 {
     // Defs: ----- Object P stores alignment A0 on tree T1
 
@@ -526,19 +470,6 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2, bool slice = false)
     assert(p.size() == 2);
     assert(p[0].variable_alignment() == p[1].variable_alignment());
 
-    //  bool tree_changed = not p[1].t().is_connected(nodes[0],nodes[2]) or not p[1].t().is_connected(nodes[0],nodes[3]);
-
-
-    // SLICE: optionally stop here and sample the topology and attachment split together.
-    if (slice)
-    {
-	// The slice sampler accounts for the attachment lengths through its split coordinate and Jacobian.
-	int C = topology_sample_SPR_slice_slide_node(p,b1);
-	if (C != -1)
-	    P = p[C];
-	return SPR_stats(p[0].t(), p[1].t(), C>0, bins, b1);
-    }
-    
     try
     {
 	// 6. ----- Choose * (C == -1) the original tree/alignment (C==-1)
@@ -613,20 +544,12 @@ void sample_SPR_flat_one(owned_ptr<context>& P,MoveStats& Stats,int b1)
     // Allow turning off these moves.
     if (not get_setting_or("SPR-jump",true)) return;
 
-    double p = get_setting_or("SPR_slice_fraction",-0.25);
-
     int b2 = choose_SPR_target(PP.t(),b1);
 
     double L = PP.t().branch_length(b1);
 
-    if (not PP.variable_alignment() and uniform() < p) {
-	MCMC::Result result = sample_SPR(PP,b1,b2,true);
-	SPR_inc(Stats,result,"SPR (flat/slice)",L);
-    }
-    else  {
-	MCMC::Result result = sample_SPR(PP,b1,b2);
-	SPR_inc(Stats,result,"SPR (flat)",L);
-    }
+    MCMC::Result result = sample_SPR(PP,b1,b2);
+    SPR_inc(Stats,result,"SPR (flat)",L);
 }
 
 std::ostream& operator<<(std::ostream& o, const tree_edge& b)
@@ -1592,8 +1515,6 @@ void sample_SPR_all(owned_ptr<context>& P,MoveStats& Stats)
     Parameters& PP = *P.as<Parameters>();
     int n = n_SPR_moves(PP);
 
-    // double p = get_setting_or("SPR_slice_fraction",-0.25);
-
     for(int i=0;i<n;i++) 
     {
         if (log_verbose >= 4)  std::cerr<<"    sample_SPR_all: "<<i+1<<"/"<<n<<"\n";
@@ -1734,8 +1655,6 @@ void sample_SPR_flat(owned_ptr<context>& P,MoveStats& Stats)
     Parameters& PP = *P.as<Parameters>();
     int n = n_SPR_moves(PP);
 
-    //  double p = get_setting_or("SPR_slice_fraction",-0.25);
-
     for(int i=0;i<n;i++) 
     {
 	int b1 = choose_subtree_branch_uniform(PP.t());
@@ -1753,8 +1672,6 @@ void sample_SPR_nodes(owned_ptr<context>& P,MoveStats& Stats)
 
     int n = n_SPR_moves(PP);
 
-    double p = get_setting_or("SPR_slice_fraction",-0.25);
-
     for(int i=0;i<n;i++) {
 
 	int b1=-1, b2=-1;
@@ -1762,13 +1679,7 @@ void sample_SPR_nodes(owned_ptr<context>& P,MoveStats& Stats)
 
 	double L = PP.t().branch_length(b1);
 
-	if (not PP.variable_alignment() and uniform()< p) {
-	    MCMC::Result result = sample_SPR(*P.as<Parameters>(),b1,b2,true);
-	    SPR_inc(Stats,result,"SPR (path/slice)", L);
-	}
-	else {
-	    MCMC::Result result = sample_SPR(*P.as<Parameters>(),b1,b2);
-	    SPR_inc(Stats,result,"SPR (path)", L);
-	}
+	MCMC::Result result = sample_SPR(*P.as<Parameters>(),b1,b2);
+	SPR_inc(Stats,result,"SPR (path)", L);
     }
 }

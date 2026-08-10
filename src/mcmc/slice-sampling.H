@@ -26,7 +26,6 @@
 #ifndef SLICE_SAMPLING_H
 #define SLICE_SAMPLING_H
 
-#include <utility>                 // for pair
 #include <vector>                  // for vector
 #include "computation/context.H"   // for context
 #include "util/bounds.H"           // for bounds
@@ -64,12 +63,6 @@ struct slice_function: public bounds<double>
 double slice_sample(double x0, slice_function& g, double w, int m);
 
 double slice_sample(slice_function& g, double w, int m);
-
-std::pair<int,double> slice_sample_multi(double x0, std::vector<slice_function*>& g, double w, int m);
-
-std::pair<int,double> slice_sample_multi(std::vector<double>& X0, std::vector<slice_function*>& g, double w, int m);
-
-std::pair<int,double> slice_sample_multi(std::vector<slice_function*>& g, double w, int m);
 
 class context_slice_function: public slice_function
 {
@@ -187,7 +180,6 @@ struct slide_node_slice_function: public context_slice_function
     bool can_slice_sample() const override {return initial_x > 0 and initial_y > 0;}
 
     slide_node_slice_function(Parameters&,int);
-    slide_node_slice_function(Parameters&,int,int);
 };
 
 /// \brief A slice_function for changing only the branch length mean

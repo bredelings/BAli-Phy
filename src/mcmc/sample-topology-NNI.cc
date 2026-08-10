@@ -110,93 +110,12 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rh
 }
 
 
-#include "slice-sampling.H"
-
-/*
- * BROKEN: Tries to integrate out the alignment length along the internal branch on TWO topologies.
-           But never actually creates an internal node states for p[1].tree.
- */
-
-void two_way_topology_slice_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
-{
-    std::abort();
-
-    Parameters& PP = *P.as<Parameters>();
-    if (PP.t().is_leaf_branch(b)) return;
-
-    if (log_verbose >= 3) std::cerr<<"[two_way_topology_slice_sample]\n";
-
-    A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
-    const auto& nodes = order.nodes;
-
-    PP.select_root(b);
-    PP.cache_likelihood_branches();
-
-    int b1 = PP.t().find_branch(nodes[4],nodes[1]);
-    int b2 = PP.t().find_branch(nodes[5],nodes[2]);
-
-    vector<Parameters> p(2,PP);
-
-    // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-    p[1].NNI_discard_alignment(b1, b2);
-  
-    //  if (not extends(p[1].t(), PP.PC->TC))
-    //    return;
-
-    double L = PP.t().branch_length(b);
-
-    //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
-    //  double Pr1 = log(p[0].probability());
-    //  double Pr2 = log(p[1].probability());
-
-    branch_length_slice_function logp1(p[0],b);
-    branch_length_slice_function logp2(p[1],b);
-
-    vector<slice_function*> logp;
-    logp.push_back(&logp1);
-    logp.push_back(&logp2);
-
-    double w = PP.branch_mean();
-
-    //  std::pair<int,double> choice = two_way_slice_sample(L,logp1,logp2,w,-1,true,0,false,0);
-    std::pair<int,double> choice = slice_sample_multi(L,logp,w,-1);
-
-    int C = choice.first;
-    if (C == -1) return;
-
-    if (choice.first == 0)
-	PP = p[0];
-    else
-	PP = p[1];
-
-    MCMC::Result result(3);
-
-    result.totals[0] = (C>0)?1:0;
-    // This gives us the average length of branches prior to successful swaps
-    if (C>0)
-	result.totals[1] = L;
-    else
-	result.counts[1] = 0;
-    result.totals[2] = std::abs(PP.t().branch_length(b) - L);
-
-    //  if (C == 1) std::cerr<<"slice-diff = "<<Pr2 - Pr1<<"\n";
-
-    NNI_inc(Stats,"NNI (2-way,slice)", result, L);
-}
-
 void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b) 
 {
     Parameters& PP = *P.as<Parameters>();
     if (PP.t().is_leaf_branch(b)) return;
 
     if (log_verbose >= 3) std::cerr<<"[two_way_topology_sample]\n";
-
-    double slice_fraction = get_setting_or("NNI_slice_fraction",-0.25);
-
-    if (not PP.variable_alignment() and uniform() < slice_fraction) {
-	two_way_topology_slice_sample(P,Stats,b);
-	return;
-    }
 
     A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
     const auto& nodes = order.nodes;
@@ -438,86 +357,6 @@ void two_way_NNI_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
 	two_way_NNI_and_branches_sample(P,Stats,b);
 }
 
-void three_way_topology_sample_slice(owned_ptr<context>& P, MoveStats& Stats, int b) 
-{
-    Parameters& PP = *P.as<Parameters>();
-    if (PP.t().is_leaf_branch(b)) return;
-
-    if (PP.variable_alignment()) return;
-
-    if (log_verbose >= 3) std::cerr<<"[three_way_topology_sample_slice]\n";
-
-    A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
-    const auto& nodes = order.nodes;
-
-    //------ Generate Topologies and alter caches ------///
-    PP.select_root(b);
-    PP.cache_likelihood_branches();
-
-    int b1 = PP.t().find_branch(nodes[4],nodes[1]);
-    int b2 = PP.t().find_branch(nodes[5],nodes[2]);
-    int b3 = PP.t().find_branch(nodes[5],nodes[3]);
-
-    vector<Parameters> p(3,PP);
-
-    // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
-    p[1].NNI_discard_alignment(b1, b2);
-
-    // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
-    p[2].NNI_discard_alignment(b1, b3);
-
-    const vector<log_double_t> rho(3,1);
-
-    double L = PP.t().branch_length(b);
-
-#ifndef NDEBUG
-    //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
-    log_double_t Pr1 = p[0].heated_probability();
-    log_double_t Pr2 = p[1].heated_probability();
-    log_double_t Pr3 = p[2].heated_probability();
-#endif
-
-    branch_length_slice_function logp1(p[0],b);
-    branch_length_slice_function logp2(p[1],b);
-    branch_length_slice_function logp3(p[2],b);
-
-#ifndef NDEBUG
-    assert(std::abs(double(Pr1.log() - logp1(L).value())) < 1.0e-9);
-    assert(std::abs(double(Pr2.log() - logp2(L).value())) < 1.0e-9);
-    assert(std::abs(double(Pr3.log() - logp3(L).value())) < 1.0e-9);
-#endif
-
-    vector<slice_function*> logp;
-    logp.push_back(&logp1);
-    logp.push_back(&logp2);
-    logp.push_back(&logp3);
-
-    double w = PP.branch_mean();
-
-    std::pair<int,double> choice = slice_sample_multi(L,logp,w,-1);
-
-    int C = choice.first;
-    if (C != -1)
-	PP = p[C];
-
-    MCMC::Result result(4);
-
-    result.totals[0] = (C>0)?1:0;
-    // This gives us the average length of branches prior to successful swaps
-    if (C>0)
-	result.totals[1] = L;
-    else
-	result.counts[1] = 0;
-    result.totals[2] = std::abs(PP.t().branch_length(b) - L);
-    result.totals[3] = logp1.count + logp2.count + logp3.count;
-
-    //  if (C == 1) std::cerr<<"slice-diff3 = "<<Pr2 - Pr1<<"\n";
-    //  if (C == 2) std::cerr<<"slice-diff3 = "<<Pr3 - Pr1<<"\n";
-
-    // stats are here mis-reported!
-    NNI_inc(Stats,"NNI (3-way,slice)", result, L);
-}
-
 optional<log_double_t>& operator*=(optional<log_double_t>& pr1, const optional<log_double_t>& pr2)
 {
     if (pr1)
@@ -749,23 +588,14 @@ void three_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
 
     if (log_verbose >= 3) std::cerr<<"[three_way_topology_sample]\n";
 
-    double slice_fraction = get_setting_or("NNI_slice_fraction",-0.25);
+    A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
+    const auto& nodes = order.nodes;
 
-    if (not PP.variable_alignment() and uniform() < slice_fraction)
-    {
-	three_way_topology_sample_slice(P, Stats, b);
-    }
-    else
-    {
-	A5::hmm_order order = A5::get_nodes_random(PP.t(), b);
-	const auto& nodes = order.nodes;
+    int b1 = PP.t().find_branch(nodes[4],nodes[1]);
+    int b2 = PP.t().find_branch(nodes[5],nodes[2]);
+    int b3 = PP.t().find_branch(nodes[5],nodes[3]);
 
-	int b1 = PP.t().find_branch(nodes[4],nodes[1]);
-	int b2 = PP.t().find_branch(nodes[5],nodes[2]);
-	int b3 = PP.t().find_branch(nodes[5],nodes[3]);
-
-        three_way_NNI_sample(PP, Stats, b, b1, b2, b3);
-    }
+    three_way_NNI_sample(PP, Stats, b, b1, b2, b3);
 }
 
 /* Like NNI, except
