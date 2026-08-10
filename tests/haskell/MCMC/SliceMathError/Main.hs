@@ -25,7 +25,7 @@ model = do
   condition (firstRate > 0)
   return []
 
--- Invalid numerical candidates should have zero density rather than terminate the run.
+-- Invalid numerical candidates should remain outside the slice rather than terminate the run.
 main :: IO ()
 main = do
   context <- makeMCMCModel model

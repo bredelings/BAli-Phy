@@ -52,12 +52,13 @@ context_slice_function::context_slice_function(context_ref& c, const bounds<doub
     :slice_function(b), C0(c), C(c)
 {}
 
-void context_slice_function::set_density_ratio(ProbDensity ratio)
+// Store the base density ratio of the live context C relative to C0.
+void context_slice_function::set_context_density_ratio(ProbDensity ratio)
 {
-    current_density_ratio = std::move(ratio);
+    context_density_ratio = std::move(ratio);
 }
 
-optional<LogDensity> context_slice_function::operator()(double x)
+optional<ProbDensity> context_slice_function::operator()(double x)
 {
     if(not in_range(x)) return {}; 
 
@@ -71,39 +72,34 @@ optional<LogDensity> context_slice_function::operator()(double x)
         C = C0;
         set_value(x);
 
-        // Here is where we return 0 if the number of variables changes.
-        // How can we automate this so that it is called only once?
         auto ratio = C.heated_probability_ratios(C0);
         if (ratio.variables_changed)
             throw variables_changed_exception("Variable changed during slice sampling!");
         else
-            set_density_ratio(ratio.total_ratio());
+            set_context_density_ratio(ratio.total_ratio());
 
         return operator()();
     }
     catch (const math_error&)
     {
+        // Restore the live context and its ratio; the absent result keeps the failed
+        // candidate outside every slice rank without applying a subclass Jacobian.
         C = C0;
-        set_density_ratio(0);
-        return operator()();
+        set_context_density_ratio(1);
+        return std::nullopt;
     }
 }
 
-LogDensity context_slice_function::operator()()
+ProbDensity context_slice_function::operator()()
 {
-    auto relative_weight = ChoiceWeight(current_density_ratio) / ChoiceWeight(1.0);
-
-    // An ordinary scalar slice is defined only within the starting defect rank.
-    // Both preferred and dominated ranks therefore project outside the slice.
-    if (not std::isfinite(relative_weight.log()))
-        return logZero();
-
-    return LogDensity(relative_weight.log());
+    return context_density_ratio;
 }
 
+// Restore both the live context and its base density ratio relative to C0.
 void context_slice_function::reset()
 {
     C = C0;
+    set_context_density_ratio(1);
 }
 
 void random_variable_slice_function::set_value(double x)
@@ -192,7 +188,7 @@ node_time_slice_function::node_time_slice_function(Parameters& P,int n_)
 
 // ******************************* branch length slice function *************************************** //
 
-optional<LogDensity> alignment_branch_length_slice_function::operator()(double x)
+optional<ProbDensity> alignment_branch_length_slice_function::operator()(double x)
 {
     if (not in_range(x)) return {};
 
@@ -210,17 +206,17 @@ optional<LogDensity> alignment_branch_length_slice_function::operator()(double x
         // Without this, check_sampling_probabilities may throw an exception.
         ProbDensity alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
 
-        // Here is where we return 0 if the number of variables changes.
-        // How can we automate this so that it is called only once?
-        set_density_ratio(C.heated_probability_ratio(C0) *
-                          (alignment_sum_ratio_1 / alignment_sum_ratio_0));
+        set_context_density_ratio(C.heated_probability_ratio(C0) *
+                                  (alignment_sum_ratio_1 / alignment_sum_ratio_0));
         return operator()();
     }
     catch (const math_error&)
     {
+        // Restore the live context and its ratio; the absent result keeps the failed
+        // candidate outside every slice rank without applying a subclass Jacobian.
         C = C0;
-        set_density_ratio(0);
-        return operator()();
+        set_context_density_ratio(1);
+        return std::nullopt;
     }
 }
 
@@ -283,12 +279,12 @@ double slide_node_slice_function::current_value() const
 }
 
 // Include dx/dz = xy/(x+y) when evaluating the density in log-ratio coordinates.
-LogDensity slide_node_slice_function::operator()()
+ProbDensity slide_node_slice_function::operator()()
 {
     const auto& tree = static_cast<const Parameters&>(C).t();
     const double x = tree.branch_length(b1);
     const double y = tree.branch_length(b2);
-    return context_slice_function::operator()() + log(x) + log(y) - log_total;
+    return context_slice_function::operator()() * ProbDensity(x) * ProbDensity(y) / total_density;
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
@@ -304,7 +300,7 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
 
     initial_x = P.t().branch_length(b[0]);
     initial_y = P.t().branch_length(b[1]);
-    log_total = log(initial_x + initial_y);
+    total_density = ProbDensity(initial_x + initial_y);
     initial_z = log(initial_x) - log(initial_y);
 }
 
@@ -326,15 +322,17 @@ void scale_groups_slice_function::set_value(double t)
 	C.set_modifiable_value(r_branch_lengths[b], initial_branch_lengths[b]/scale);
 }
 
-double scale_groups_slice_function::log_average_scale() const
+log_double_t scale_groups_slice_function::current_average_scale() const
 {
-    return log(initial_average_scale) + log_current_factor;
+    return initial_average_scale * exp_to_log_space(log_current_factor);
 }
 
-LogDensity scale_groups_slice_function::operator()()
+ProbDensity scale_groups_slice_function::operator()()
 {
-    // return pi * (\sum_i \mu_i)^(n-B)
-    return context_slice_function::operator()() + log_average_scale()*((int)initial_scales.size() - (int)initial_branch_lengths.size());
+    // Using the average instead of the sum omits only a fixed factor n^(n-B),
+    // so the transformed density is proportional to pi * average(mu)^(n-B).
+    return context_slice_function::operator()()
+         * pow(ProbDensity(current_average_scale()), n_scales() - n_branch_lengths());
 }
 
 double scale_groups_slice_function::current_value() const
@@ -351,14 +349,15 @@ scale_groups_slice_function::scale_groups_slice_function(context_ref& C, const s
     if (n_scales() == 0)
         throw myexception()<<"Can't do scale_means_only_slice function if there are no scales!";
 
-    initial_average_scale = 0;
+    double average_scale = 0;
     initial_scales.resize(n_scales());
     for(int i=0;i<initial_scales.size();i++)
     {
         initial_scales[i] = C.get_modifiable_value(r_scales[i]).as_double();
-        initial_average_scale += std::abs(initial_scales[i]);
+        average_scale += std::abs(initial_scales[i]);
     }
-    initial_average_scale /= initial_scales.size();
+    average_scale /= initial_scales.size();
+    initial_average_scale = average_scale;
 
     // FIXME: We should be able to assert that all of the scales are modifiable.
 
@@ -376,7 +375,7 @@ scale_groups_slice_function::scale_groups_slice_function(context_ref& C, const s
     //     log(average_scale)                              \in [-40,40]
     //     log(initial_average_scale) + log_current_factor \in [-40,40]
     //                                  log_current_factor \in [-40 - log(initial_average_scale), 40 - log(initial_average_scale)]
-    double shift = -log(initial_average_scale);
+    double shift = -initial_average_scale.log();
     assert(std::isfinite(shift));
 
     b = between<double>(-40+shift,40+shift);
@@ -412,19 +411,13 @@ void constant_sum_modifiable_slice_function::set_value(double t)
 }
 
 
-LogDensity constant_sum_modifiable_slice_function::operator()()
+ProbDensity constant_sum_modifiable_slice_function::operator()()
 {
-    auto& P = static_cast<Parameters&>(C);
     const int N = indices.size();
-
-    double total = 0;
-    for(int i=0;i<N;i++)
-	total += P.get_modifiable_value(indices[i]).as_double();
-
-    double t = current_value();
-
-    // return pi * (1-x)^(N-1)
-    return context_slice_function::operator()() + (N-1)*log(total-t);
+    // The transformation preserves C.  Subtract before taking a logarithm: C-t
+    // is exact near the boundary, whereas distinct values can have equal rounded logs.
+    const double remaining_total = fixed_total - current_value();
+    return context_slice_function::operator()() * pow(ProbDensity(remaining_total), N-1);
 }
 
 double constant_sum_modifiable_slice_function::current_value() const
@@ -444,6 +437,7 @@ constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(c
     double total = 0;
     for(const auto& value: values)
         total += value.as_double();
+    fixed_total = total;
 
     set_lower_bound(0);
     set_upper_bound(total);
@@ -454,8 +448,32 @@ constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(c
 //       change the likelihood, but roundoff errors in the last decimal place affect whether
 //       the new state is accepted.
 
+namespace
+{
+// Return the ordinary log ratio only when both values have the same exceptional-density rank.
+// A different rank cannot be compared within one scalar slice.
+optional<double> slice_log_ratio(const ProbDensity& candidate, const ProbDensity& reference)
+{
+    auto ratio = ChoiceWeight(candidate) / ChoiceWeight(reference);
+    if (not std::isfinite(ratio.log()))
+        return {};
+    return ratio.log();
+}
+
+// Test inclusive slice membership within the reference rank.  Out-of-range and
+// rank-changing candidates are both outside the scalar slice.
+bool inside_slice(const optional<ProbDensity>& candidate, const ProbDensity& slice_level)
+{
+    if (not candidate)
+        return false;
+    auto ratio = slice_log_ratio(*candidate, slice_level);
+    return ratio and *ratio >= 0;
+}
+}
+
 std::pair<double,double> 
-find_slice_boundaries_stepping_out(double x0,slice_function& g,const LogDensity& logy, double w,int m)
+find_slice_boundaries_stepping_out(double x0, slice_function& g, const ProbDensity& slice_level,
+                                   double w, int m)
 {
     assert(x0 + w > x0);
     assert(g.in_range(x0));
@@ -474,25 +492,25 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,const LogDensity&
 	int J = uniform_int(0,m);
 	int K = m-J;
 
-	while (J>0 and (not g.below_lower_bound(L)) and g(L)>logy) {
+	while (J>0 and (not g.below_lower_bound(L)) and inside_slice(g(L), slice_level)) {
 	    L -= w;
 	    J--;
-	    //      std::cerr<<" g("<<L<<") = "<<g()<<" > "<<logy<<"\n";
+	    //      std::cerr<<" g("<<L<<") = "<<g()<<" >= "<<slice_level<<"\n";
 	    //      std::cerr<<"<-    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
 	}
 
-	while (K>0 and (not g.above_upper_bound(R)) and g(R)>logy) {
+	while (K>0 and (not g.above_upper_bound(R)) and inside_slice(g(R), slice_level)) {
 	    R += w;
 	    K--;
-	    //      std::cerr<<" g("<<R<<") = "<<g()<<" > "<<logy<<"\n";
+	    //      std::cerr<<" g("<<R<<") = "<<g()<<" >= "<<slice_level<<"\n";
 	    //      std::cerr<<"->    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
 	}
     }
     else {
-	while ((not g.below_lower_bound(L)) and g(L)>logy)
+	while ((not g.below_lower_bound(L)) and inside_slice(g(L), slice_level))
 	    L -= w;
 
-	while ((not g.above_upper_bound(R)) and g(R)>logy)
+	while ((not g.above_upper_bound(R)) and inside_slice(g(R), slice_level))
 	    R += w;
     }
 
@@ -504,17 +522,18 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,const LogDensity&
     return {L,R};
 }
 
-std::ostream& operator<<(std::ostream& o, optional<LogDensity> l)
+std::ostream& operator<<(std::ostream& o, optional<ProbDensity> l)
 {
     if (l)
         o<<l.value();
     else
-        o<<"OOB";
+        o<<"unavailable";
     return o;
 }
 
-std::tuple<double,double,std::optional<optional<LogDensity>>,std::optional<optional<LogDensity>>>
-find_slice_boundaries_doubling(double x0,slice_function& g,const LogDensity& logy, double w, int K)
+std::tuple<double, double, optional<optional<ProbDensity>>, optional<optional<ProbDensity>>>
+find_slice_boundaries_doubling(double x0, slice_function& g, const ProbDensity& slice_level,
+                               double w, int K)
 {
     assert(x0 + w > x0);
     assert(g.in_range(x0));
@@ -525,14 +544,14 @@ find_slice_boundaries_doubling(double x0,slice_function& g,const LogDensity& log
     assert(L < x0);
     assert(x0 < R);
 
-    optional<optional<LogDensity>> gL_cached;
+    optional<optional<ProbDensity>> gL_cached;
     auto gL = [&]() {
         if (not gL_cached)
             gL_cached = g(L);
         return *gL_cached;
     };
 
-    std::optional<optional<LogDensity>> gR_cached;
+    optional<optional<ProbDensity>> gR_cached;
     auto gR = [&]() {
         if (not gR_cached)
             gR_cached = g(R);
@@ -548,7 +567,7 @@ find_slice_boundaries_doubling(double x0,slice_function& g,const LogDensity& log
         return not ok;
     };
 
-    while ( K > 0 and (gL() > logy or gR() > logy))
+    while (K > 0 and (inside_slice(gL(), slice_level) or inside_slice(gR(), slice_level)))
     {
         if (log_verbose >= 4)
             std::cerr<<"!!    L0 = "<<L<<" (g(L) = "<<gL()<<")  x0 = "<<x0<<"   R0 = "<<R<<" (g(R) = "<<gR()<<")\n";
@@ -585,17 +604,15 @@ find_slice_boundaries_doubling(double x0,slice_function& g,const LogDensity& log
 // Does this x0 really need to be the original point?
 // I think it just serves to let you know which way the interval gets shrunk...
 
-double search_interval(double x0,double L, double R, slice_function& g, const LogDensity& logy)
+double search_interval(double x0, double L, double R, slice_function& g,
+                       const ProbDensity& slice_level)
 {
     // Shrink interval to lower and upper bounds.
     if (g.below_lower_bound(L)) L = *g.lower_bound;
     if (g.above_upper_bound(R)) R = *g.upper_bound;
 
     //  assert(g(x0) > g(L) and g(x0) > g(R));
-    assert(not logy.isnan());
-    assert(logy.isfinite());
-    assert(g(x0) >= logy);
-    assert(g().isfinite());
+    assert(inside_slice(g(x0), slice_level));
     assert(L < R);
     assert(L <= x0 and x0 <= R);
 
@@ -610,7 +627,7 @@ double search_interval(double x0,double L, double R, slice_function& g, const Lo
 	if (log_verbose >= 4)
 	    std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   x = "<<x1<<"  R  = "<<R<<"     g(x) = "<<gx1<<std::endl;
 
-	if (gx1 >= logy)
+	if (inside_slice(gx1, slice_level))
 	    return x1;
 
 	if (x1 > x0) 
@@ -620,10 +637,11 @@ double search_interval(double x0,double L, double R, slice_function& g, const Lo
     }
     std::cerr.precision(17);
     std::cerr<<"Warning!  Is size of the interval really ZERO?"<<std::endl;
-    auto logy_x0 = g(x0);  
+    auto density_x0 = g(x0);
     std::cerr<<"    L0 = "<<L0<<"   x0 = "<<x0<<"   R0 = "<<R0<<std::endl;
     std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   R  = "<<R<<std::endl;
-    std::cerr<<"    log(f(x0)*U)  = "<<logy<<"  log(f(x0)) = "<<logy_x0<<"  log(f(x_current)) = "<<g()<<std::endl;
+    std::cerr<<"    log(f(x0)*U)  = "<<slice_level<<"  log(f(x0)) = "<<density_x0
+             <<"  log(f(x_current)) = "<<g()<<std::endl;
 
     g.reset();
 
@@ -648,34 +666,49 @@ bool pre_slice_sampling_check_OK(double x0, slice_function& g)
     assert(g.in_range(x0));
 
     auto gx0 = g();
-    assert(gx0.isfinite());
 
-    LogDensity gx0_v2 = gx0;
-    if (log_verbose >= 4)
-        gx0_v2 = *g(x0);
+    bool check_reevaluation = log_verbose >= 4;
 #ifndef NDEBUG
-    else
-        gx0_v2 = *g(x0);
+    check_reevaluation = true;
 #endif
-    if (std::abs(double(gx0 - gx0_v2)) > 1.0e-9)
-        throw myexception()<<"Error: slice_sampling: g() = "<<gx0<<"   g(x0) = "<<gx0_v2<<"   diff = "<<std::abs(double(gx0 - gx0_v2));
+    if (check_reevaluation)
+    {
+        auto gx0_v2 = g(x0);
+        if (not gx0_v2)
+        {
+            if (log_verbose >= 4)
+                std::cerr<<"slice_sampling: cannot reevaluate the starting density\n";
+            return false;
+        }
+
+        auto difference = slice_log_ratio(gx0, *gx0_v2);
+        if (not difference)
+            throw myexception()<<"Error: slice_sampling: g() = "<<gx0<<" and g(x0) = "<<*gx0_v2
+                               <<" have different exceptional-density ranks";
+        if (std::abs(*difference) > 1.0e-9)
+            throw myexception()<<"Error: slice_sampling: g() = "<<gx0<<"   g(x0) = "<<*gx0_v2
+                               <<"   diff = "<<std::abs(*difference);
+    }
 
     return true;
 }
 
-bool can_propose_same_interval_doubling(double x0, double x1, double w, double L, double R, std::optional<optional<LogDensity>> gL_cached, std::optional<optional<LogDensity>> gR_cached, slice_function& g, optional<LogDensity> log_y)
+bool can_propose_same_interval_doubling(double x0, double x1, double w, double L, double R,
+                                        optional<optional<ProbDensity>> gL_cached,
+                                        optional<optional<ProbDensity>> gR_cached,
+                                        slice_function& g, const ProbDensity& slice_level)
 {
     bool D = false;
 
     auto gL = [&]() {
         if (not gL_cached)
-            gL_cached = (g.in_range(L))?g(L):-std::numeric_limits<double>::infinity();
+            gL_cached = g.in_range(L) ? g(L) : optional<ProbDensity>{};
         return *gL_cached;
     };
 
     auto gR = [&]() {
         if (not gR_cached)
-            gR_cached = (g.in_range(R))?g(R):-std::numeric_limits<double>::infinity();
+            gR_cached = g.in_range(R) ? g(R) : optional<ProbDensity>{};
         return *gR_cached;
     };
 
@@ -700,7 +733,9 @@ bool can_propose_same_interval_doubling(double x0, double x1, double w, double L
             gL_cached = {};
         }
 
-        if (D and log_y >= gL() and log_y >= gR())
+        // Unavailable and rank-changing boundaries are outside the scalar slice;
+        // equality remains inside under the inclusive slice definition.
+        if (D and not inside_slice(gL(), slice_level) and not inside_slice(gR(), slice_level))
             ok = false;
     }
 
@@ -723,15 +758,17 @@ double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
     if (not pre_slice_sampling_check_OK(x0, g))
         return x0;
 
-    // 1. Determine the slice level, in log terms.
-    double E = exponential(1);
-    auto logy = g() - E;
+    // 1. Determine the slice level.
+    // The starting density defines the exceptional rank of this scalar slice.
+    // Multiplication by a finite positive U changes only its coefficient.
+    ProbDensity slice_level = g();
+    slice_level *= exp_to_log_space(-exponential(1));
 
     // 2. Find the initial interval to sample from.
-    auto [L,R] = find_slice_boundaries_stepping_out(x0,g,logy,w,m);
+    auto [L,R] = find_slice_boundaries_stepping_out(x0, g, slice_level, w, m);
 
     // 3. Sample from the interval, shrinking it on each rejection
-    return search_interval(x0,L,R,g,logy);
+    return search_interval(x0, L, R, g, slice_level);
 }
 
 // We need to SET the value INSIDE this routine.
@@ -745,18 +782,23 @@ double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
     if (log_verbose >= 4)
         std::cerr<<"slice_sampling_doubling_: x0 = "<<x0<<" w = "<<w<<" Pr(x0) = "<<g()<<"\n";
 
-    // 1. Determine the slice level, in log terms.
-    LogDensity logy = g() - exponential(1);
+    // 1. Determine the slice level
+    // The starting density defines the exceptional rank of this scalar slice.
+    // Multiplication by a finite positive U changes only its coefficient.
+    ProbDensity slice_level = g();
+    slice_level *= exp_to_log_space(-exponential(1));
 
     // 2. Find the initial interval to sample from.
-    auto [L,R,gL_cached,gR_cached] = find_slice_boundaries_doubling(x0,g,logy,w,m);
+    auto [L,R,gL_cached,gR_cached] =
+        find_slice_boundaries_doubling(x0, g, slice_level, w, m);
 
     // 3. Sample from the interval, shrinking it on each rejection
-    double x1 = search_interval(x0,L,R,g,logy);
+    double x1 = search_interval(x0, L, R, g, slice_level);
 
     // 4. Check that we can propose the same interval from x2
     // We need to SET the value INSIDE this routine if we recompute g().
-    if (can_propose_same_interval_doubling(x0, x1, w, L, R, gL_cached, gR_cached, g, logy))
+    if (can_propose_same_interval_doubling(x0, x1, w, L, R, gL_cached, gR_cached,
+                                           g, slice_level))
         return x1;
     else
         return x0;

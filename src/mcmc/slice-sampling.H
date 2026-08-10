@@ -41,11 +41,12 @@ class variables_changed_exception: public myexception
 /// A function interface object for use in slice sampling
 struct slice_function: public bounds<double>
 {
-    /// Compute the value of the function evaluated at x 
-    virtual std::optional<LogDensity> operator()(double x)=0;
+    /// Compute the value at x.  Return no value when x is out of range or
+    /// when its density cannot be evaluated.
+    virtual std::optional<ProbDensity> operator()(double x)=0;
 
     /// Compute the value of the function evaluated at the current value
-    virtual LogDensity operator()()=0;
+    virtual ProbDensity operator()()=0;
 
     /// Return the current value of x
     virtual double current_value() const;
@@ -67,10 +68,12 @@ double slice_sample(slice_function& g, double w, int m);
 class context_slice_function: public slice_function
 {
 private:
-    ProbDensity current_density_ratio = 1.0;
+    // Base density ratio of live context C relative to C0.  Alignment-aware evaluation
+    // includes its path correction; subclasses add coordinate Jacobians later.
+    ProbDensity context_density_ratio = 1.0;
 
 protected:
-    void set_density_ratio(ProbDensity ratio);
+    void set_context_density_ratio(ProbDensity ratio);
 
 public:
 
@@ -82,9 +85,9 @@ public:
     // The proposed point
     context_ref& C;
 
-    std::optional<LogDensity> operator()(double);
+    std::optional<ProbDensity> operator()(double);
 
-    virtual LogDensity operator()();
+    virtual ProbDensity operator()();
 
     virtual void set_value(double x) = 0;
 
@@ -155,8 +158,8 @@ struct alignment_branch_length_slice_function: public context_slice_function
     ProbDensity alignment_sum_ratio_0;
     int b;
 
-    LogDensity operator()() {return context_slice_function::operator()();};
-    std::optional<LogDensity> operator()(double x);
+    ProbDensity operator()() {return context_slice_function::operator()();};
+    std::optional<ProbDensity> operator()(double x);
 
     void set_value(double);
 
@@ -173,11 +176,14 @@ struct slide_node_slice_function: public context_slice_function
     int b2;
     double initial_x;
     double initial_y;
-    double log_total;
+    ProbDensity total_density;
     double initial_z;
 
-    std::optional<LogDensity> operator()(double z) override {return context_slice_function::operator()(z);}
-    LogDensity operator()() override;
+    std::optional<ProbDensity> operator()(double z) override
+    {
+	return context_slice_function::operator()(z);
+    }
+    ProbDensity operator()() override;
     void set_value(double);
     double current_value() const;
     bool can_slice_sample() const override {return initial_x > 0 and initial_y > 0;}
@@ -191,7 +197,8 @@ struct slide_node_slice_function: public context_slice_function
 ///   mu'[i] = mu[i] * exp(t)     for i=1..n branch means.
 ///   T'[i]  = T[i]  * exp(-t)    for i=1..B tranch lengths.
 ///
-/// The slices are levels of \f$Pr(x)\times(\sum_i \mu_i)^{n-B}\f$ where
+/// The slices are levels of \f$Pr(x)\times\bar{\mu}^{n-B}\f$ where
+///   \f$\bar{\mu}\f$ is the average branch mean,
 ///   n = the number of means,
 ///   B = the number of branch lengths.
 ///
@@ -200,22 +207,21 @@ struct scale_groups_slice_function: public context_slice_function
     std::vector<int> r_scales;
     std::vector<int> r_branch_lengths;
 
-    /// The sum of the branch mean parameters for the initial point.
     double log_current_factor=0;
 
-    double initial_average_scale;
+    log_double_t initial_average_scale;
     std::vector<double> initial_scales;
     std::vector<double> initial_branch_lengths;
 
     int n_scales() const {return r_scales.size();}
     int n_branch_lengths() const {return r_branch_lengths.size();}
 
-    double log_average_scale() const;
+    log_double_t current_average_scale() const;
 
-    std::optional<LogDensity> operator()(double x) {return context_slice_function::operator()(x);}
+    std::optional<ProbDensity> operator()(double x) {return context_slice_function::operator()(x);}
 
     // We need to override the probability_ratio to add a jacobian.
-    LogDensity operator()();
+    ProbDensity operator()();
 
     void set_value(double);
 
@@ -233,6 +239,8 @@ struct scale_groups_slice_function: public context_slice_function
 /// The slices are levels of \f$Pr(x)\times(C-x[n])^{N-1}$ where
 ///  N = the dimension of x.
 ///
+/// \note This helper currently has no callers, but is retained for possible
+/// constant-sum moves.
 struct constant_sum_modifiable_slice_function: public context_slice_function
 {
     /// Which indices form the dirichlet parameter that we are resampling?
@@ -241,10 +249,12 @@ struct constant_sum_modifiable_slice_function: public context_slice_function
     /// Which of the above indices is the one that we are resampling?
     int n;
 
-    std::optional<LogDensity> operator()(double x) {return context_slice_function::operator()(x);}
+    double fixed_total;
 
-    /// return the probability * mu^(B-1)
-    LogDensity operator()();
+    std::optional<ProbDensity> operator()(double x) {return context_slice_function::operator()(x);}
+
+    /// Return the context density times \f$(C-t)^{N-1}\f$.
+    ProbDensity operator()();
 
     void set_value(double);
 
