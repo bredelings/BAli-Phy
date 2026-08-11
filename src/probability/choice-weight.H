@@ -59,6 +59,7 @@ class ChoiceWeight
 
 public:
     explicit ChoiceWeight(const ProbDensity& weight):weight_(weight) {}
+    explicit ChoiceWeight(const log_double_t& weight):weight_(weight) {}
     explicit ChoiceWeight(double weight):weight_(weight) {}
 
     DensityRank rank() const {return DensityRank(weight_.log());}

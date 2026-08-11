@@ -23,13 +23,13 @@
 #include <algorithm>
 #include <vector>
 #include <unordered_map>
-#include <optional>
 #include <type_traits>
 #include <utility>
 #include "util/rng.H"
 #include "util/myexception.H"
 #include "util/range.H"
 #include "util/math/log-double.H"
+#include "probability/availability.H"
 #include "probability/choice-weight.H"
 
 template <typename F>
@@ -87,6 +87,18 @@ int choose2(log_double_t, log_double_t);
 
 log_double_t choose2_P(int, log_double_t, log_double_t);
 
+namespace choose_detail
+{
+template <typename T>
+struct is_choice_weight: std::is_same<T, ChoiceWeight> {};
+
+template <typename T>
+struct is_choice_weight<Availability<T>>: std::is_same<T, ChoiceWeight> {};
+
+template <typename T>
+inline constexpr bool is_choice_weight_v = is_choice_weight<T>::value;
+}
+
 /// Select from choices [0,P.size-1] in proportion to the probabilities given, using pre-allocated scratch space.
 template <typename F>
 int choose_scratch(const std::vector<F>& P, std::vector<F>& sum) 
@@ -97,7 +109,20 @@ int choose_scratch(const std::vector<F>& P, std::vector<F>& sum)
     for(int i=1;i<sum.size();i++)
         sum[i] = sum[i-1] + P[i];
 
-    F r = F(uniform()) * sum[sum.size()-1];
+    double u = uniform();
+    if constexpr (choose_detail::is_choice_weight_v<F>)
+        // A positive scalar has neutral defect rank, whereas ChoiceWeight(0)
+        // represents an actual zero-density factor and is not a valid threshold.
+        while (u == 0)
+            u = uniform();
+
+    auto r = [&]()
+    {
+        if constexpr (is_availability_v<F>)
+            return u * sum.back();
+        else
+            return F(u) * sum.back();
+    }();
 
     for(int i=0;i<sum.size();i++) 
         if (r < sum[i])
@@ -127,57 +152,32 @@ inline int choose(const std::vector<F>& P)
 
 namespace choose_detail
 {
-// Compact present optional choices while retaining enough information to
-// translate between the caller's indices and the ordinary choice interface.
-template <typename F>
-struct present_choices
+// Compute 1-p without defining subtraction on Availability, where absence
+// propagates rather than behaving as either numeric zero or one.
+template <typename Probability>
+Probability probability_complement(const Probability& probability)
 {
-    std::vector<int> original_indices;
-    std::vector<F> weights;
-    int original_size;
-
-    // Build the compact weight vector and its mapping back to caller indices.
-    explicit present_choices(const std::vector<std::optional<F>>& optional_weights)
-        :original_size(optional_weights.size())
-    {
-        original_indices.reserve(optional_weights.size());
-        weights.reserve(optional_weights.size());
-        for(int i = 0; i < optional_weights.size(); i++)
-            if (optional_weights[i])
-            {
-                original_indices.push_back(i);
-                weights.push_back(*optional_weights[i]);
-            }
-    }
-
-    // Return an original entry's compact index, or absence when that entry is unavailable.
-    std::optional<int> compact_index(int original_index) const
-    {
-        assert(original_index >= 0 and original_index < original_size);
-        for(int i = 0; i < original_indices.size(); i++)
-            if (original_indices[i] == original_index)
-                return i;
-        return {};
-    }
-
-    // Translate a compact choice back to the corresponding caller index.
-    int original_index(int compact_index) const
-    {
-        assert(compact_index >= 0 and compact_index < original_indices.size());
-        return original_indices[compact_index];
-    }
-};
+    return Probability(1.0) - probability;
 }
 
-// Choose among present entries and return the corresponding original index.
-// Absence is distinct from a present entry whose mathematical weight is zero.
-template <typename F>
-inline std::optional<int> choose(const std::vector<std::optional<F>>& optional_weights)
+// Apply the Availability-specific complement without adding subtraction to its algebra.
+template <typename T>
+Availability<T> probability_complement(const Availability<T>& probability)
 {
-    choose_detail::present_choices choices(optional_weights);
-    if (choices.weights.empty())
-        return {};
-    return choices.original_index(choose(choices.weights));
+    return complement(probability);
+}
+}
+
+// Choose directly on the original candidate vector.  Unavailable is the
+// additive identity, so no index compaction or translation is needed.
+template <typename F>
+inline Availability<int> choose(const std::vector<Availability<F>>& weights)
+{
+    if (std::none_of(weights.begin(), weights.end(), [](const auto& weight) {return bool(weight);}))
+        return unavailable;
+
+    std::vector<Availability<F>> sum = weights;
+    return available(choose_scratch(weights, sum));
 }
 
 template <typename Weight>
@@ -192,29 +192,17 @@ choice_probability_t<F> choose_P(int s,const std::vector<F>& P) {
     for(int i=1;i<P.size();i++)
         sum = sum + P[i];
 
+    if constexpr (is_availability_v<F>)
+        if (not sum)
+            return unavailable;
+
     // Preserve the ordinary-weight precondition.  A collection of symbolic
     // zero weights is meaningful for ChoiceWeight because their coefficients
     // can still be compared within the common zero stratum.
-    if constexpr (not std::is_same_v<F, ChoiceWeight>)
+    if constexpr (not choose_detail::is_choice_weight_v<F>)
         assert(sum > F(0.0));
 
     return P[s]/sum;
-}
-
-// Compute a categorical probability on the same filtered set used by the
-// optional choose overload.  An absent destination has probability zero.
-template <typename F>
-std::optional<choice_probability_t<F>>
-choose_P(int s, const std::vector<std::optional<F>>& optional_weights)
-{
-    choose_detail::present_choices choices(optional_weights);
-    if (choices.weights.empty())
-        return {};
-
-    auto compact_s = choices.compact_index(s);
-    if (not compact_s)
-        return choice_probability_t<F>(0.0);
-    return choose_P(*compact_s, choices.weights);
 }
 
 namespace choose_detail
@@ -247,7 +235,7 @@ std::vector<Weight> suffix_totals_after(const std::vector<Weight>& weights,
 }
 
 template <typename F>
-inline int choose_MH(int i, const std::vector<F>& P) 
+inline int choose_MH_core(int i, const std::vector<F>& P)
 {
     const int N = P.size();
     assert(N > 0);
@@ -262,23 +250,23 @@ inline int choose_MH(int i, const std::vector<F>& P)
     // Compute sums of elements larger than the k-th smallest as weights.
     auto total_greater_than = choose_detail::suffix_totals_after(P, o);
 
-    probability_type U = uniform();
+    probability_type U{uniform()};
 
-    probability_type prod = 1;
-    probability_type sum = 0;
+    probability_type prod{1.0};
+    probability_type sum{0.0};
     int I = -1;
     for(int k=0; k<N; k++)
     {
         if (o[k] == i) I=k;
 
-        probability_type accept_k = 0;
+        probability_type accept_k{0.0};
 
         if (I == -1) { // k<I
             accept_k = P[o[k]] / total_greater_than[k];   // MH
         }
         else if (k == I)
         {
-            accept_k = (I==N-1)?1:0;                      // MH
+            accept_k = probability_type{double(I == N-1)}; // MH
         }
         else if (k > I)
         {
@@ -287,7 +275,7 @@ inline int choose_MH(int i, const std::vector<F>& P)
         else
             std::abort();
 
-        if constexpr (std::is_same_v<F, ChoiceWeight>)
+        if constexpr (choose_detail::is_choice_weight_v<F>)
         {
             assert(accept_k >= probability_type(0.0));
             assert(accept_k <= probability_type(1.0));
@@ -295,10 +283,13 @@ inline int choose_MH(int i, const std::vector<F>& P)
         probability_type Pr_k = prod * accept_k;
 
         sum += Pr_k;
-        if (U <= sum) return o[k];
+        // uniform() is in [0,1), so half-open cumulative intervals exclude
+        // both unavailable and available-zero transitions at the lower endpoint.
+        if (U < sum)
+            return o[k];
 
         if (I == -1)
-            prod *= (1.0 - accept_k);
+            prod *= choose_detail::probability_complement(accept_k);
     }
 
     choose_exception<F> c(i, P);
@@ -308,7 +299,22 @@ inline int choose_MH(int i, const std::vector<F>& P)
 }
 
 template <typename F>
-inline choice_probability_t<F> choose_MH_P(int i, int j,const std::vector<F>& P)
+inline int choose_MH(int i, const std::vector<F>& P) {return choose_MH_core(i, P);}
+
+// An unavailable current state has no transition kernel.  When the current
+// state is available, unavailable entries form a zero-probability prefix and
+// the remaining MH calculation is identical to the compacted available list.
+template <typename F>
+inline Availability<int> choose_MH(int i, const std::vector<Availability<F>>& P)
+{
+    assert(i >= 0 and i < P.size());
+    if (not P[i])
+        return unavailable;
+    return available(choose_MH_core(i, P));
+}
+
+template <typename F>
+inline choice_probability_t<F> choose_MH_P_core(int i, int j,const std::vector<F>& P)
 {
     const int N = P.size();
     assert(N > 0);
@@ -326,20 +332,20 @@ inline choice_probability_t<F> choose_MH_P(int i, int j,const std::vector<F>& P)
     // Compute sums of elements larger than the k-th smallest as weights.
     auto total_greater_than = choose_detail::suffix_totals_after(P, o);
 
-    probability_type prod = 1;
+    probability_type prod{1.0};
     int I = -1;
     for(int k=0; k<N; k++)
     {
         if (o[k] == i) I=k;
 
-        probability_type accept_k = 0;
+        probability_type accept_k{0.0};
 
         if (I == -1) { // k<I
             accept_k = P[o[k]] / total_greater_than[k];   // MH
         }
         else if (k == I)
         {
-            accept_k = (I==N-1)?1:0;                      // MH
+            accept_k = probability_type{double(I == N-1)}; // MH
         }
         else if (k > I)
         {
@@ -348,7 +354,7 @@ inline choice_probability_t<F> choose_MH_P(int i, int j,const std::vector<F>& P)
         else
             std::abort();
 
-        if constexpr (std::is_same_v<F, ChoiceWeight>)
+        if constexpr (choose_detail::is_choice_weight_v<F>)
         {
             assert(accept_k >= probability_type(0.0));
             assert(accept_k <= probability_type(1.0));
@@ -358,7 +364,7 @@ inline choice_probability_t<F> choose_MH_P(int i, int j,const std::vector<F>& P)
         if (o[k] == j) return Pr_k;
 
         if (I == -1)
-            prod *= (1.0 - accept_k);
+            prod *= choose_detail::probability_complement(accept_k);
     }
 
     choose_exception<F> c(i, P);
@@ -367,33 +373,18 @@ inline choice_probability_t<F> choose_MH_P(int i, int j,const std::vector<F>& P)
     throw c;
 }
 
-// Run choose_MH on present entries while retaining the caller's candidate
-// indices.  An absent current entry makes the operation unavailable.
 template <typename F>
-inline std::optional<int> choose_MH(int i, const std::vector<std::optional<F>>& optional_weights)
-{
-    choose_detail::present_choices choices(optional_weights);
-    auto compact_i = choices.compact_index(i);
-    if (not compact_i)
-        return {};
-    return choices.original_index(choose_MH(*compact_i, choices.weights));
-}
+inline choice_probability_t<F> choose_MH_P(int i, int j, const std::vector<F>& P) {return choose_MH_P_core(i, j, P);}
 
-// Match optional choose_MH exactly: an absent current entry is unavailable,
-// while an absent destination has transition probability zero.
 template <typename F>
-inline std::optional<choice_probability_t<F>>
-choose_MH_P(int i, int j, const std::vector<std::optional<F>>& optional_weights)
+inline choice_probability_t<Availability<F>>
+choose_MH_P(int i, int j, const std::vector<Availability<F>>& weights)
 {
-    choose_detail::present_choices choices(optional_weights);
-    auto compact_i = choices.compact_index(i);
-    if (not compact_i)
-        return {};
-
-    auto compact_j = choices.compact_index(j);
-    if (not compact_j)
-        return choice_probability_t<F>(0.0);
-    return choose_MH_P(*compact_i, *compact_j, choices.weights);
+    assert(i >= 0 and i < weights.size());
+    assert(j >= 0 and j < weights.size());
+    if (not weights[i])
+        return unavailable;
+    return choose_MH_P_core(i, j, weights);
 }
 
 /// Select from choices [0,P.size-1] in proportion to the probabilities given, using pre-allocated scratch space.

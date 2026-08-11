@@ -191,24 +191,59 @@ namespace
         check_close(double(choose_MH_P(0, 1, exceptional)), 1.0);
         check_close(double(choose_MH_P(1, 0, exceptional)), 0.0);
 
-        using optional_weight = std::optional<ChoiceWeight>;
-        std::vector<optional_weight> optional_weights{{}, weight(2, 1), weight(3, 1)};
-        auto optional_probability = choose_MH_P(1, 2, optional_weights);
-        static_assert(std::is_same_v<decltype(optional_probability),
-                                     std::optional<log_double_t>>);
-        BALI_PHY_TEST_CHECK(optional_probability);
-        check_close(double(*optional_probability), 1.0);
-        auto absent_destination = choose_MH_P(1, 0, optional_weights);
+        using available_weight = Availability<ChoiceWeight>;
+        std::vector<available_weight> available_weights{
+            unavailable, available(weight(2, 1)), available(weight(3, 1))
+        };
+        auto transition_probability = choose_MH_P(1, 2, available_weights);
+        static_assert(std::is_same_v<decltype(transition_probability), Availability<log_double_t>>);
+        BALI_PHY_TEST_CHECK(transition_probability);
+        check_close(double(*transition_probability), 1.0);
+        auto absent_destination = choose_MH_P(1, 0, available_weights);
         BALI_PHY_TEST_CHECK(absent_destination and *absent_destination == 0.0);
     }
 
-    // Protect the distinction between unavailable choices and present zero
-    // weights; this becomes redundant if choice availability moves into a view.
-    void check_optional_choices()
+    // Availability arithmetic protects the distinction between an unavailable
+    // term and an available zero; this is obsolete only if choices use another
+    // representation with the same two levels of absence.
+    void check_availability_arithmetic()
     {
-        using optional_weight = std::optional<log_double_t>;
+        auto absent = Availability<log_double_t>(unavailable);
+        auto zero = available(log_double_t(0));
+        auto two = available(log_double_t(2));
 
-        std::vector<optional_weight> weights{{}, log_double_t(2), {}, log_double_t(3)};
+        BALI_PHY_TEST_CHECK(absent + two == two);
+        BALI_PHY_TEST_CHECK(not (absent * two));
+        BALI_PHY_TEST_CHECK(absent < zero);
+
+        auto absent_numerator = absent / two;
+        BALI_PHY_TEST_CHECK(absent_numerator and *absent_numerator == 0.0);
+        BALI_PHY_TEST_CHECK(not (two / absent));
+        BALI_PHY_TEST_CHECK(not (absent / absent));
+
+        auto half = available(log_double_t(0.5));
+        BALI_PHY_TEST_CHECK(complement(half));
+        check_close(double(*complement(half)), 0.5);
+        BALI_PHY_TEST_CHECK(not complement(absent));
+
+        auto choice_weight = available(weight(3));
+        auto left_product = log_double_t(2) * choice_weight;
+        auto right_product = choice_weight * log_double_t(2);
+        BALI_PHY_TEST_CHECK(left_product and right_product);
+        check_close(double(*left_product / weight(1)), 6.0);
+        check_close(double(*right_product / weight(1)), 6.0);
+    }
+
+    // Availability-aware categorical choice must retain caller indices while
+    // excluding unavailable entries; this becomes obsolete only with a shared
+    // indexed choice abstraction that provides the same guarantee.
+    void check_available_choices()
+    {
+        using available_weight = Availability<log_double_t>;
+
+        std::vector<available_weight> weights{
+            unavailable, available(log_double_t(2)), unavailable, available(log_double_t(3))
+        };
         auto p0 = choose_P(0, weights);
         auto p1 = choose_P(1, weights);
         auto p3 = choose_P(3, weights);
@@ -225,20 +260,23 @@ namespace
             BALI_PHY_TEST_CHECK(choice and (*choice == 1 or *choice == 3));
         }
 
-        std::vector<optional_weight> absent(3);
+        std::vector<available_weight> absent(3);
         BALI_PHY_TEST_CHECK(not choose(absent));
         BALI_PHY_TEST_CHECK(not choose_P(1, absent));
         BALI_PHY_TEST_CHECK(not choose_MH(1, absent));
         BALI_PHY_TEST_CHECK(not choose_MH_P(1, 2, absent));
     }
 
-    // Optional MH choices must use the same compact indices for selection and
-    // transition probabilities; this becomes redundant with a shared choice view.
-    void check_optional_MH_choices()
+    // Unavailable MH destinations have zero transition probability without
+    // changing the kernel on available entries; this is obsolete only if the
+    // MH selector adopts another representation of unavailable candidates.
+    void check_available_MH_choices()
     {
-        using optional_weight = std::optional<log_double_t>;
+        using available_weight = Availability<log_double_t>;
 
-        std::vector<optional_weight> one_choice{{}, log_double_t(1), {}};
+        std::vector<available_weight> one_choice{
+            unavailable, available(log_double_t(1)), unavailable
+        };
         auto selected = choose_MH(1, one_choice);
         BALI_PHY_TEST_CHECK(selected and *selected == 1);
         BALI_PHY_TEST_CHECK(not choose_MH(0, one_choice));
@@ -249,17 +287,21 @@ namespace
 
         // Unlike an absent current entry, a present zero-weight current can
         // escape to an option with positive weight under the existing kernel.
-        std::vector<optional_weight> zero_current{log_double_t(0), log_double_t(1)};
+        std::vector<available_weight> zero_current{
+            available(log_double_t(0)), available(log_double_t(1))
+        };
         selected = choose_MH(0, zero_current);
         BALI_PHY_TEST_CHECK(selected and *selected == 1);
         auto escape_probability = choose_MH_P(0, 1, zero_current);
         BALI_PHY_TEST_CHECK(escape_probability and *escape_probability == 1.0);
 
-        std::vector<optional_weight> weights{{}, log_double_t(2), log_double_t(3)};
+        std::vector<available_weight> weights{
+            unavailable, available(log_double_t(2)), available(log_double_t(3))
+        };
         std::vector<log_double_t> compact{log_double_t(2), log_double_t(3)};
-        auto optional_probability = choose_MH_P(1, 2, weights);
-        BALI_PHY_TEST_CHECK(optional_probability);
-        BALI_PHY_TEST_CHECK(*optional_probability == choose_MH_P(0, 1, compact));
+        auto available_probability = choose_MH_P(1, 2, weights);
+        BALI_PHY_TEST_CHECK(available_probability);
+        BALI_PHY_TEST_CHECK(*available_probability == choose_MH_P(0, 1, compact));
     }
 }
 
@@ -276,6 +318,7 @@ int main()
     check_division_projection();
     check_choice_ignores_dominated_weights();
     check_choice_weight_probabilities();
-    check_optional_choices();
-    check_optional_MH_choices();
+    check_availability_arithmetic();
+    check_available_choices();
+    check_available_MH_choices();
 }
