@@ -233,16 +233,22 @@ void two_way_NNI_SPR_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
     //  if (not extends(p[1].t(), PP.PC->TC))
     //    return;
 
-    double LA = p[0].t().branch_length(p[0].t().find_branch(nodes[4],nodes[0]));
-    double LB = p[0].t().branch_length(p[0].t().find_branch(nodes[4],nodes[5]));
-    double LC = p[0].t().branch_length(p[0].t().find_branch(nodes[5],nodes[3]));
+    double LA = p[0].t().branch_length_or_duration(p[0].t().find_branch(nodes[4],nodes[0]));
+    double LB = p[0].t().branch_length_or_duration(p[0].t().find_branch(nodes[4],nodes[5]));
+    double LC = p[0].t().branch_length_or_duration(p[0].t().find_branch(nodes[5],nodes[3]));
 
-    p[1].setlength(p[1].t().find_branch(nodes[0],nodes[4]),LA + LB);
-    p[1].setlength(p[1].t().find_branch(nodes[4],nodes[5]),LC*uniform());
-    p[1].setlength(p[1].t().find_branch(nodes[5],nodes[3]),LC - p[1].t().branch_length(p[0].t().find_branch(nodes[4],nodes[5])));
+    // Join and split the additive stored coordinates.  The forward and reverse uniform-split
+    // densities are 1/LC and 1/(LA+LB), so the reverse/forward ratio is LC/(LA+LB).
+    double LAB = LA + LB;
+    double LC1 = LC * uniform();
+    double LC2 = LC - LC1;
+    auto t1 = p[1].t();
+    t1.set_branch_length_or_duration(t1.find_branch(nodes[0],nodes[4]), LAB);
+    t1.set_branch_length_or_duration(t1.find_branch(nodes[4],nodes[5]), LC1);
+    t1.set_branch_length_or_duration(t1.find_branch(nodes[5],nodes[3]), LC2);
 
     vector<log_double_t> rho(2,1);
-    rho[1] = LC/(LA+LB);
+    rho[1] = LC/LAB;
 
     int C = two_way_topology_sample(p,rho,b);
 
@@ -305,16 +311,20 @@ void two_way_NNI_and_branches_sample(owned_ptr<context>& P, MoveStats& Stats, in
     log_double_t ratio = 1.0;
     vector<int> branches = NNI_branches(p[1].t(), b);
 
+    auto t1 = p[1].t();
+
+    // Apply the five-dimensional log-scale random walk to stored lengths or durations.  Each
+    // transformation L'=factor*L contributes its factor to the reverse/forward proposal ratio.
     for(int i=0;i<branches.size();i++) {
 
-	auto factor = exp_to_log_space(gaussian(0,0.05));
+        auto factor = exp_to_log_space(gaussian(0,0.05));
 
-	double L = p[1].t().branch_length( branches[i] ) * double(factor);
+        double L = t1.branch_length_or_duration(branches[i]) * double(factor);
 
-        if (not p[1].t().can_set_branch_length(branches[i])) return;
-	p[1].setlength(branches[i], L);
+        if (not t1.can_set_branch_length_or_duration(branches[i])) return;
+        t1.set_branch_length_or_duration(branches[i], L);
 
-	ratio *= factor;
+        ratio *= factor;
     }
 
 
