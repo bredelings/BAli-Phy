@@ -235,11 +235,10 @@ typedef std::map<tree_edge, bool> spr_range;
 
 /*
  * Pruning joins the two branches at the original attachment into one edge. Regrafting then divides the
- * target attachment edge into two branches. If the respective lengths are L_original and L_target, a
- * uniform split has forward density 1/L_target and reverse density 1/L_original. The direct non-slice
- * move therefore uses L_target/L_original. The slice and SPR_all moves account for these densities as
- * part of their own proposals and must not apply this ratio again. The direct moves use branch lengths;
- * SPR_all also handles time trees using the relative proposal factors described below.
+ * target attachment edge into two branches. If their stored additive coordinates are L_original and
+ * L_target, a uniform split has forward density 1/L_target and reverse density 1/L_original. The direct
+ * move therefore uses L_target/L_original. SPR_all accounts for these densities in its own proposal and
+ * must not apply the ratio again; its time-tree path instead uses feasible node-time intervals.
  */
 
 // Return the two branches meeting the pruned subtree at its current attachment node.
@@ -260,11 +259,11 @@ tree_edge attachment_edge(const TreeInterface& T, const tree_edge& b_parent)
     return tree_edge(T.target(child_branches[0]), T.target(child_branches[1]));
 }
 
-// Return the length of the edge produced by joining the two branches at the original attachment.
-double attachment_edge_length(const TreeInterface& T, const tree_edge& b_parent)
+// Return the stored length or duration obtained by joining the two original attachment branches.
+double attachment_edge_length_or_duration(const TreeInterface& T, const tree_edge& b_parent)
 {
     auto child_branches = attachment_sub_branches(T, b_parent);
-    return T.branch_length(child_branches[0]) + T.branch_length(child_branches[1]);
+    return T.branch_length_or_duration(child_branches[0]) + T.branch_length_or_duration(child_branches[1]);
 }
 
 spr_range spr_full_range(const TreeInterface& T, const tree_edge& b_parent)
@@ -334,7 +333,7 @@ public:
     /// The number of places we could regraft, including the current site
     unsigned n_attachment_branches() const {return attachment_branch_pairs.size();}
 
-    /// For branch-length trees these factors equal attachment lengths.
+    /// For branch-coordinate trees these factors equal stored attachment lengths or durations.
     /// Time trees use feasible time intervals.
     const vector<double>& relative_proposal_probs() const
 	{
@@ -396,9 +395,9 @@ double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
 	if (I.attachment_branch_pairs[i].edge == B2)
 	    index = i;
 
-    // 2. Record the lengths of the original and target attachment edges before changing the tree.
-    const double original_attachment_length = attachment_edge_length(P.t(), B1);
-    const double target_attachment_length = P.t().branch_length(b2);
+    // 2. Record the stored coordinates of the original and target attachment edges.
+    const double original_attachment_length = attachment_edge_length_or_duration(P.t(), B1);
+    const double target_attachment_length = P.t().branch_length_or_duration(b2);
 #ifndef NDEBUG
     const auto original_attachment_edge = attachment_edge(P.t(), B1);
 #endif
@@ -411,14 +410,17 @@ double do_SPR(Parameters& P, int b1,int b2, const vector<int>& nodes0)
     int b4 = P.t().find_branch(B1.node2, B2.node2);
 
     auto U = uniform();
-    P.setlength(b3, target_attachment_length * U );
-    P.setlength(b4, target_attachment_length * (1-U) );
+    const double first_target_length = target_attachment_length * U;
+    const double second_target_length = target_attachment_length - first_target_length;
+    P.t().set_branch_length_or_duration(b3, first_target_length);
+    P.t().set_branch_length_or_duration(b4, second_target_length);
 
 #ifndef NDEBUG
     int original_attachment_branch = P.t().find_branch(original_attachment_edge);
-    assert(std::abs(P.t().branch_length(original_attachment_branch) - original_attachment_length)
+    assert(std::abs(P.t().branch_length_or_duration(original_attachment_branch) - original_attachment_length)
            < 1.0e-9);
-    assert(std::abs(P.t().branch_length(b3) + P.t().branch_length(b4) - target_attachment_length)
+    assert(std::abs(P.t().branch_length_or_duration(b3) + P.t().branch_length_or_duration(b4)
+                    - target_attachment_length)
            < 1.0e-9);
 #endif
 
@@ -559,7 +561,7 @@ std::ostream& operator<<(std::ostream& o, const tree_edge& b)
 }
 
 /// Represent positions along branches.
-//   With BranchLengthTrees, this is a fraction in [0,1) from node1 to node2.
+//   With BranchLengthTrees, this is a fraction of the stored length or duration from node1 to node2.
 //   With TimeTrees, this is a fraction from T1 to T2, where T1 <= T2.
 struct spr_attachment_points: public map<tree_edge,double>
 {
@@ -609,15 +611,16 @@ void set_lengths_at_location(Parameters& P, const tree_edge& subtree_edge, const
     }
     else
     {
-        double target_attachment_length = P.t().branch_length(b1) + P.t().branch_length(b2);
+        double target_attachment_length = P.t().branch_length_or_duration(b1)
+                                        + P.t().branch_length_or_duration(b2);
 
-	// 4. Get the lengths of the two branches
+	// 4. Split the stored coordinate between the two branches.
 	double first_target_length = target_attachment_length * U;
 	double second_target_length = target_attachment_length - first_target_length;
 
-	// 5. Set the lengths of the two branches
-	P.setlength(b1, first_target_length);
-	P.setlength(b2, second_target_length);
+	// 5. Set the stored lengths or durations of the two branches.
+	P.t().set_branch_length_or_duration(b1, first_target_length);
+	P.t().set_branch_length_or_duration(b2, second_target_length);
     }
 }
 
@@ -712,11 +715,11 @@ spr_info::spr_info(const TreeInterface& T_, const tree_edge& b, const spr_range&
         else
         {
             if (E == initial_edge)
-                relative_proposal_probs_.push_back(attachment_edge_length(T, b_parent));
+                relative_proposal_probs_.push_back(attachment_edge_length_or_duration(T, b_parent));
             else if (E == initial_edge.reverse())
                 std::abort();
             else
-                relative_proposal_probs_.push_back(T.branch_length(T.find_branch(E)));
+                relative_proposal_probs_.push_back(T.branch_length_or_duration(T.find_branch(E)));
         }
     }
 }
@@ -747,8 +750,8 @@ spr_attachment_points get_spr_attachment_points(const TreeInterface& T, const tr
     }
     else
     {
-        double first_original_length = T.branch_length(I.child_branches[0]);
-        double second_original_length = T.branch_length(I.child_branches[1]);
+        double first_original_length = T.branch_length_or_duration(I.child_branches[0]);
+        double second_original_length = T.branch_length_or_duration(I.child_branches[1]);
         double original_attachment_length = first_original_length + second_original_length;
 
 	// The current attachment point is part of the state, so preserve its location instead of drawing it.
@@ -1325,7 +1328,7 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
 //    for(int j=1;j<edges.size();j++)
 //	alignments3way.push_back( move_pruned_subtree(P, alignments3way[j-1], subtree_edge, edges[j-1], edges[j], sibling_edges.at(edges[j]), false) );
 
-    // 6. Finally, regraft the subtree to the target edge and set branch lengths
+    // 6. Finally, regraft the subtree to the target edge and set its stored branch coordinates.
     regraft_subtree_and_set_3way_alignments(P, subtree_edge, target_edge, alignments3way.back(), false);
 }
 
@@ -1337,12 +1340,13 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
  *  alpha(x,S,y) = the probability of accepting/choosing y from S when S is proposed by x.
  *  r[x] = relative_proposal_probs[x].
  *
- *  For branch-length trees, proposing one uniform point on every non-current edge gives
+ *  For trees with stored branch coordinates q[b], proposing one uniform point on every non-current
+ *  edge gives
  *
- *      rho(x,S) = product over b != x of 1/L[b] = C * L[x],
+ *      rho(x,S) = product over b != x of 1/q[b] = C * q[x],
  *
- *  so r[x] equals attachment length L[x]. For time trees, r[x] instead equals the feasible time interval.
- *  In either case:
+ *  so r[x] equals the stored attachment length or duration q[x]. For time trees, r[x] instead equals
+ *  the feasible time interval. In either case:
  *
  *      pi(x) * C * r[x] * alpha(x,S,y) = pi(y) * C * r[y] * alpha(y,S,x)
  *      alpha(x,S,y) / alpha(y,S,x) = (pi(y)*r[y])/(pi(x)*r[x]).
@@ -1362,10 +1366,9 @@ void spr_to_index(Parameters& P, spr_info& I, int C, const vector<int>& nodes0)
  *       ----------------------- = -------------------------------- = ----- = -------
  *       rho(y,S) * alpha(y,S,x)   (C * r[y]) * (D * pi(x) * r[x] )    pi(x)   1/pi(y)
  *
- *  For branch-length trees the result is independent of the attachment lengths, but the procedure for
- *  obtaining that result is not.
- *  In particular, r[y]/r[x] is the same target/original attachment-length correction used explicitly by
- *  the direct move. It must not be applied to SPR_all a second time.
+ *  For branch-coordinate trees the result is independent of q, but the procedure for obtaining that
+ *  result is not. In particular, r[y]/r[x] is the same target/original attachment-coordinate correction
+ *  used explicitly by the direct move. It must not be applied to SPR_all a second time.
  *
  *  We must also remember that the variable rho[i] is the proposal density for proposing the set
  *  S2 = {x,y} and so is proportional to rho(x,S) * alpha(x,S,y) = pi(y).  We could also use 1/pi(x)

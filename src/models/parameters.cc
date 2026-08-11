@@ -382,7 +382,9 @@ void Parameters::prune_subtree(const tree_edge& b_subtree)
     std::optional<double> L;
     if (not t().has_node_times())
     {
-        L = t().branch_length(connected[0]) + t().branch_length(connected[1]);
+        // Pruning joins the additive stored coordinates.  On a rate-scaled tree these are
+        // durations; the effective lengths are allowed to change with the retained rates.
+        L = t().branch_length_or_duration(connected[0]) + t().branch_length_or_duration(connected[1]);
     }
 
     if (connected.empty()) throw myexception()<<"We can't prune subtrees that point to leaves!";
@@ -401,8 +403,8 @@ void Parameters::prune_subtree(const tree_edge& b_subtree)
     // If we have node times, we can just leave the node time for the pruned node unchanged.
     if (not t().has_node_times())
     {
-        t().set_branch_length(t().find_branch(a,b), *L);
-        t().set_branch_length(t().find_branch(y,y), 0.0);
+        t().set_branch_length_or_duration(t().find_branch(a,b), *L);
+        t().set_branch_length_or_duration(t().find_branch(y,y), 0.0);
     }
 }
 
