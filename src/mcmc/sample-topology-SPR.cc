@@ -1531,11 +1531,11 @@ void sample_SPR_search_all(owned_ptr<context>& P,MoveStats& Stats, bool sum_out_
     auto branches = P.as<Parameters>()->t().directed_branches();
     for(int b: branches)
     {
-	slice_sample_branch_length(P,Stats,b);
+	slice_sample_branch_length_or_duration(P,Stats,b);
 	auto& PP = *P.as<Parameters>();
 	bool changed = sample_SPR_search_one(PP, Stats, PP.t().edge(b), sum_out_A);
 	if (not changed) three_way_topology_sample(P,Stats,b);
-	slice_sample_branch_length(P,Stats,b);
+	slice_sample_branch_length_or_duration(P,Stats,b);
     }
 }
 

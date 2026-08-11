@@ -685,7 +685,8 @@ double TreeInterface::branch_length(int b) const
         throw myexception()<<"TreeInterface::branch_length( ): tree has no branch lengths or node ages";
 }
 
-bool TreeInterface::can_set_branch_length(int b) const
+// Return the underlying branch variable without applying any branch-rate layers.
+double TreeInterface::branch_length_or_duration(int b) const
 {
     assert(has_branch_lengths());
 
@@ -695,9 +696,48 @@ bool TreeInterface::can_set_branch_length(int b) const
 
     auto lengths = context_ptr{get_const_context(), array_reg};
 
-    auto length = lengths[b];
+    return lengths[b].value().as_double();
+}
 
-    return (bool)length.move_to_modifiable();
+// Test whether the underlying branch variable can be changed directly.
+bool TreeInterface::can_set_branch_length_or_duration(int b) const
+{
+    assert(has_branch_lengths());
+
+    b = undirected(b);
+
+    int array_reg = *branch_durations_reg();
+
+    auto lengths = context_ptr{get_const_context(), array_reg};
+
+    auto length_or_duration = lengths[b];
+
+    return length_or_duration.move_to_modifiable();
+}
+
+// Set the underlying branch variable without multiplying or dividing by a rate.
+void TreeInterface::set_branch_length_or_duration(int b, double x)
+{
+    auto& C = get_context();
+
+    assert(has_branch_lengths());
+
+    b = undirected(b);
+
+    int array_reg = *branch_durations_reg();
+
+    auto lengths = context_ptr{C, array_reg};
+
+    auto length_or_duration = lengths[b];
+
+    C.set_modifiable_value(length_or_duration.get_reg(), x);
+}
+
+bool TreeInterface::can_set_branch_length(int b) const
+{
+    // This compatibility query still reports the underlying variable as modifiable on rate-scaled
+    // trees.  Narrow it when the effective-length setter has a checked replacement.
+    return can_set_branch_length_or_duration(b);
 }
 
 void TreeInterface::set_branch_length(int b, double l)
@@ -714,6 +754,7 @@ void TreeInterface::set_branch_length(int b, double l)
 
     auto length = lengths[b];
 
+    // Compatibility for unconverted callers: request an effective length by changing the underlying value.
     C.set_modifiable_value(length.get_reg(), l/branch_rate(b));
 }
 

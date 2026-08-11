@@ -826,8 +826,9 @@ Parameters::Parameters(const context_ref& C, int tree_reg, const std::vector<int
 	    if (T.n_branches() > 0)
 	    {
 		int branch = T.branches()[0];
-		if (T.has_branch_lengths() and T.can_set_branch_length(branch))
-		    T.set_branch_length(branch,1.0);
+		// Change the underlying variable so dependency discovery also covers rate-scaled trees.
+		if (T.has_branch_lengths() and T.can_set_branch_length_or_duration(branch))
+		    T.set_branch_length_or_duration(branch,1.0);
 	    }
 
 	    if (T.n_nodes() > 0)

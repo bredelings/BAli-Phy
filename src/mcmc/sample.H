@@ -26,11 +26,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sample-alignment.H"
 
 void slide_node(owned_ptr<context>& P, MCMC::MoveStats& Stats, int);
-void change_branch_length(owned_ptr<context>&, MCMC::MoveStats&, int);
-void slice_sample_branch_length(owned_ptr<context>&, MCMC::MoveStats&, int);
+void change_branch_length_or_duration(owned_ptr<context>&, MCMC::MoveStats&, int);
+void slice_sample_branch_length_or_duration(owned_ptr<context>&, MCMC::MoveStats&, int);
 void slice_sample_node_time(owned_ptr<context>&, MCMC::MoveStats&, int);
-void alignment_slice_sample_branch_length(owned_ptr<context>&, MCMC::MoveStats&, int);
-void change_branch_length_multi(owned_ptr<context>&, MCMC::MoveStats&, int);
+void alignment_slice_sample_branch_length_or_duration(owned_ptr<context>&, MCMC::MoveStats&, int);
+void change_branch_length_or_duration_multi(owned_ptr<context>&, MCMC::MoveStats&, int);
 
 /// Resample the 3-star alignment, holding the n2/n3 order constant.
 void tri_sample_alignment(Parameters& P,int node1,int node2);
@@ -112,8 +112,8 @@ void sample_SPR_A_search_all(owned_ptr<context>&, MCMC::MoveStats&);
 void sample_SPR_flat(owned_ptr<context>&, MCMC::MoveStats&);
 void sample_SPR_nodes(owned_ptr<context>&, MCMC::MoveStats&);
 void slide_node_move(owned_ptr<context>&, MCMC::MoveStats&, int);
-void change_branch_length_move(owned_ptr<context>&, MCMC::MoveStats&, int);
-void change_branch_length_multi_move(owned_ptr<context>&, MCMC::MoveStats&, int);
+void change_branch_length_or_duration_move(owned_ptr<context>&, MCMC::MoveStats&, int);
+void change_branch_length_or_duration_multi_move(owned_ptr<context>&, MCMC::MoveStats&, int);
 void change_branch_length_and_T(owned_ptr<context>&, MCMC::MoveStats&, int);
 void change_3_branch_lengths(owned_ptr<context>& P, MCMC::MoveStats& Stats,int); 
 

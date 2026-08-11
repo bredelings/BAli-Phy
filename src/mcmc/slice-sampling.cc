@@ -153,19 +153,19 @@ integer_random_variable_slice_function::integer_random_variable_slice_function(c
 	throw myexception()<<"No modifiable reg for slice function!";
 }
 
-// ******************************* branch length slice function *************************************** //
+// ******************************* branch length-or-duration slice function *************************** //
 
-void branch_length_slice_function::set_value(double l)
+void branch_length_or_duration_slice_function::set_value(double x)
 {
-    static_cast<Parameters&>(C).setlength(b,l);
+    static_cast<Parameters&>(C).t().set_branch_length_or_duration(b,x);
 }
 
-double branch_length_slice_function::current_value() const
+double branch_length_or_duration_slice_function::current_value() const
 {
-    return static_cast<const Parameters&>(C).t().branch_length(b);
+    return static_cast<const Parameters&>(C).t().branch_length_or_duration(b);
 }
 
-branch_length_slice_function::branch_length_slice_function(Parameters& P,int b_)
+branch_length_or_duration_slice_function::branch_length_or_duration_slice_function(Parameters& P,int b_)
     :context_slice_function(P),b(b_)
 { 
     set_lower_bound(0);
@@ -188,9 +188,9 @@ node_time_slice_function::node_time_slice_function(Parameters& P,int n_)
 {
 }
 
-// ******************************* branch length slice function *************************************** //
+// ******************************* alignment and branch length-or-duration slice function ************* //
 
-optional<ProbDensity> alignment_branch_length_slice_function::operator()(double x)
+optional<ProbDensity> alignment_branch_length_or_duration_slice_function::operator()(double x)
 {
     if (not std::isfinite(x) or not in_range(x)) return {};
 
@@ -204,7 +204,7 @@ optional<ProbDensity> alignment_branch_length_slice_function::operator()(double 
         C = C0;
         set_value(x);
 
-        // Pass 'false' because the initial alignment may have zero probability under the new branch length x.
+        // Pass 'false' because the initial alignment may have zero probability under the new branch value x.
         // Without this, check_sampling_probabilities may throw an exception.
         ProbDensity alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
 
@@ -222,17 +222,18 @@ optional<ProbDensity> alignment_branch_length_slice_function::operator()(double 
     }
 }
 
-void alignment_branch_length_slice_function::set_value(double l)
+void alignment_branch_length_or_duration_slice_function::set_value(double x)
 {
-    static_cast<Parameters&>(C).setlength(b,l);
+    static_cast<Parameters&>(C).t().set_branch_length_or_duration(b,x);
 }
 
-double alignment_branch_length_slice_function::current_value() const
+double alignment_branch_length_or_duration_slice_function::current_value() const
 {
-    return static_cast<Parameters&>(C).t().branch_length(b);
+    return static_cast<Parameters&>(C).t().branch_length_or_duration(b);
 }
 
-alignment_branch_length_slice_function::alignment_branch_length_slice_function(Parameters& P,int b_)
+alignment_branch_length_or_duration_slice_function::alignment_branch_length_or_duration_slice_function(Parameters& P,
+                                                                                                       int b_)
     :context_slice_function(P),b(b_)
 { 
     set_lower_bound(0);

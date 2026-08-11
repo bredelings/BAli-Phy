@@ -41,14 +41,14 @@ void slide_node_move(owned_ptr<context>& P, MoveStats& Stats,int b)
     slide_node(P,Stats,b);
 }
 
-void change_branch_length_move(owned_ptr<context>& P, MoveStats& Stats,int b) 
+void change_branch_length_or_duration_move(owned_ptr<context>& P, MoveStats& Stats,int b)
 {
-    change_branch_length(P,Stats,b);
+    change_branch_length_or_duration(P,Stats,b);
 }
 
-void change_branch_length_multi_move(owned_ptr<context>& P, MoveStats& Stats,int b) 
+void change_branch_length_or_duration_multi_move(owned_ptr<context>& P, MoveStats& Stats,int b)
 {
-    change_branch_length_multi(P,Stats,b);
+    change_branch_length_or_duration_multi(P,Stats,b);
 }
 
 void sample_tri_one(owned_ptr<context>& P, MoveStats&,int b) 
@@ -220,7 +220,7 @@ void sample_alignments_one(owned_ptr<context>& P, MoveStats& Stats, int b)
 //    assert(PP->variable_alignment()); 
 
     if (PP->t().has_branch_lengths() and uniform() < alignment_plus_branch_length_fraction)
-        alignment_slice_sample_branch_length(P, Stats, b);
+        alignment_slice_sample_branch_length_or_duration(P, Stats, b);
     else
         sample_alignment(*PP,b);
 }
@@ -494,9 +494,9 @@ void sample_branch_length_(owned_ptr<context>& P,  MoveStats& Stats, int b)
 
     bool do_slice = (uniform() < slice_fraction);
     if (do_slice)
-        slice_sample_branch_length(P,Stats,b);
+        slice_sample_branch_length_or_duration(P,Stats,b);
     else
-        change_branch_length(P,Stats,b);
+        change_branch_length_or_duration(P,Stats,b);
     
     // Find a random direction of this branch, conditional on pointing to an internal node.
     const auto t = P.as<Parameters>()->t();
@@ -521,8 +521,8 @@ void sample_branch_length_(owned_ptr<context>& P,  MoveStats& Stats, int b)
     }
 
     if (not do_slice) {
-        change_branch_length(P,Stats,b);
-        change_branch_length(P,Stats,b);
+        change_branch_length_or_duration(P,Stats,b);
+        change_branch_length_or_duration(P,Stats,b);
     }
 }
 
@@ -536,7 +536,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<context>& P, MoveStats& S
         double U = uniform();
 
         if (PP.t().has_branch_lengths() and U < 0.1)
-            slice_sample_branch_length(P,Stats,b);
+            slice_sample_branch_length_or_duration(P,Stats,b);
 
         if (PP.t().is_internal_branch(b)) 
         {
@@ -551,7 +551,7 @@ void walk_tree_sample_NNI_and_branch_lengths(owned_ptr<context>& P, MoveStats& S
         }
 
         if (PP.t().has_branch_lengths() and U > 0.9)
-            slice_sample_branch_length(P,Stats,b);
+            slice_sample_branch_length_or_duration(P,Stats,b);
     }
 }
 
@@ -678,7 +678,7 @@ void realign_from_tips(owned_ptr<context>& P, MoveStats& Stats)
     for(int b: branches)
     {
         auto t = P.as<Parameters>()->t();
-        if (t.has_branch_lengths() and t.can_set_branch_length(b)) sample_branch_length_(P,Stats,b);
+        if (t.has_branch_lengths() and t.can_set_branch_length_or_duration(b)) sample_branch_length_(P,Stats,b);
         int node1 = t.source(b);
         int node2 = t.target(b);
         if (log_verbose >=4)
@@ -714,7 +714,7 @@ void realign_from_tips(owned_ptr<context>& P, MoveStats& Stats)
             if (log_verbose >=3) std::cerr<<"     Performing 2-way alignment\n";
             sample_alignment(*P.as<Parameters>(), b);
         }
-        if (t.has_branch_lengths() and t.can_set_branch_length(b)) sample_branch_length_(P,Stats,b);
+        if (t.has_branch_lengths() and t.can_set_branch_length_or_duration(b)) sample_branch_length_(P,Stats,b);
 
         if (log_verbose >= 4)
         {

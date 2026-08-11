@@ -128,8 +128,8 @@ struct integer_random_variable_slice_function:public context_slice_function
 };
 
 
-/// A slice_function for slice-sampling a single branch length
-struct branch_length_slice_function: public context_slice_function
+/// A slice function for sampling a stored branch length or duration.
+struct branch_length_or_duration_slice_function: public context_slice_function
 {
     int b;
 
@@ -137,7 +137,7 @@ struct branch_length_slice_function: public context_slice_function
 
     double current_value() const;
 
-    branch_length_slice_function(Parameters&,int);
+    branch_length_or_duration_slice_function(Parameters&,int);
 };
 
 /// A slice_function for slice-sampling a single branch length
@@ -152,8 +152,8 @@ struct node_time_slice_function: public context_slice_function
     node_time_slice_function(Parameters&,int);
 };
 
-/// A slice_function for slice-sampling a single branch length
-struct alignment_branch_length_slice_function: public context_slice_function
+/// A slice function for jointly sampling an alignment and its branch length or duration.
+struct alignment_branch_length_or_duration_slice_function: public context_slice_function
 {
     ProbDensity alignment_sum_ratio_0;
     int b;
@@ -165,7 +165,7 @@ struct alignment_branch_length_slice_function: public context_slice_function
 
     double current_value() const;
 
-    alignment_branch_length_slice_function(Parameters&,int);
+    alignment_branch_length_or_duration_slice_function(Parameters&,int);
 };
 
 /// A slice function for redistributing a fixed total between two adjacent branch lengths.

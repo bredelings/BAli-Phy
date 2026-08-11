@@ -137,6 +137,18 @@ public:
     std::map<int,double> branch_lengths() const;
     bool has_branch_lengths() const;
     double branch_length(int b) const;
+
+    /// Return the stored branch length, or the duration when branch rates are present.
+    double branch_length_or_duration(int b) const;
+
+    /// Return whether the stored branch length or duration can be modified.
+    bool can_set_branch_length_or_duration(int b) const;
+
+    /// Set the stored branch length or duration without converting through a branch rate.
+    void set_branch_length_or_duration(int b, double x);
+
+    // Transitional effective-length behavior.  Once the remaining callers use a checked
+    // conversion, make these describe only a directly stored evolutionary length.
     bool can_set_branch_length(int b) const;
     void set_branch_length(int b, double l);
 

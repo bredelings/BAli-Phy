@@ -49,71 +49,73 @@ log_double_t branch_twiddle_positive(double& T,double sigma) {
     return ratio;
 }
 
-MCMC::Result change_branch_length_(owned_ptr<context>& P,int b,double sigma,
-				   log_double_t (*twiddle)(double&,double)) 
+MCMC::Result change_branch_length_or_duration_(owned_ptr<context>& P,int b,double sigma,
+					       log_double_t (*twiddle)(double&,double))
 {
     MCMC::Result result(3);
-  
-    //------------ Propose new length -------------//
-    const double length = P.as<const Parameters>()->t().branch_length(b);
-    double newlength = length;
 
-    auto ratio = twiddle(newlength,sigma);
+    // A single-branch move changes the stored length or duration.  Any effective length is
+    // recomputed from this value and the fixed branch rate in the proposed context.
+    const double length_or_duration = P.as<const Parameters>()->t().branch_length_or_duration(b);
+    double new_length_or_duration = length_or_duration;
+
+    auto ratio = twiddle(new_length_or_duration,sigma);
   
     //---------- Construct proposed Tree ----------//
     owned_ptr<context> P2  = P;
 
     P2.as<Parameters>()->select_root(b);
-    P2.as<Parameters>()->setlength(b,newlength);
+    P2.as<Parameters>()->t().set_branch_length_or_duration(b,new_length_or_duration);
 
     //--------- Do the M-H step if OK--------------//
     if (perform_MH(*P, *P2, ratio)) {
 	result.totals[0] = 1;
-	result.totals[1] = abs(length - newlength);
-	result.totals[2] = abs(log(length/newlength));
+	result.totals[1] = abs(length_or_duration - new_length_or_duration);
+	result.totals[2] = abs(log(length_or_duration/new_length_or_duration));
     }
 
     return result;
 }
 
 
-void change_branch_length_flat(owned_ptr<context>& P,
-			       MoveStats& Stats,int b,double sigma)
+void change_branch_length_or_duration_flat(owned_ptr<context>& P,
+					   MoveStats& Stats,int b,double sigma)
 {
     Parameters& PP = *P.as<Parameters>();
 
-    const double L = PP.t().branch_length(b);
+    const double x = PP.t().branch_length_or_duration(b);
     const double mu = PP.branch_mean();
 
-    MCMC::Result result = change_branch_length_(P, b, sigma*PP.branch_mean(), branch_twiddle_positive);
+    MCMC::Result result =
+        change_branch_length_or_duration_(P, b, sigma*PP.branch_mean(), branch_twiddle_positive);
 
     Stats.inc("branch-length *",result);
-    if (L < mu/2.0)
+    if (x < mu/2.0)
 	Stats.inc("branch-length 1",result);
-    else if (L < mu)
+    else if (x < mu)
 	Stats.inc("branch-length 2",result);
-    else if (L < mu*2)
+    else if (x < mu*2)
 	Stats.inc("branch-length 3",result);
     else 
 	Stats.inc("branch-length 4",result);
 }
 
-void change_branch_length_log_scale(owned_ptr<context>& P,
-				    MoveStats& Stats,
-				    int b,
-				    double sigma)
+void change_branch_length_or_duration_log_scale(owned_ptr<context>& P,
+						MoveStats& Stats,
+						int b,
+						double sigma)
 {
-    const double L = P.as<Parameters>()->t().branch_length(b);
+    const double x = P.as<Parameters>()->t().branch_length_or_duration(b);
     const double mu = P.as<Parameters>()->branch_mean();
 
-    MCMC::Result result = change_branch_length_(P, b, sigma, scale_gaussian );
+    MCMC::Result result = change_branch_length_or_duration_(P, b, sigma, scale_gaussian );
 
     Stats.inc("branch-length (log) *",result);
-    if (L < mu/2.0)
+    if (x < mu/2.0)
 	Stats.inc("branch-length (log) 1",result);
-    else if (L < mu)
+    else if (x < mu)
 	Stats.inc("branch-length (log) 2",result);
-    else if (L < mu*2)
+    else if (x < mu*2)
 	Stats.inc("branch-length (log) 3",result);
     else 
 	Stats.inc("branch-length (log) 4",result);
@@ -132,40 +134,41 @@ double scale_between(double x, double y)
         return (x + y)/2.0;
 }
 
-void slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
+void slice_sample_branch_length_or_duration(owned_ptr<context>& P,MoveStats& Stats,int b)
 {
     Parameters& PP = *P.as<Parameters>();
-    if (not PP.t().can_set_branch_length(b))
+    if (not PP.t().can_set_branch_length_or_duration(b))
         return;
 
     PP.select_root(b);
   
-    const double L = PP.t().branch_length(b);
+    const double x = PP.t().branch_length_or_duration(b);
     const double mu = PP.branch_mean();
 
     MCMC::Result result(3);
   
-    //------------- Find new length --------------//
+    // Slice-sample the stored variable.  Its context density needs no rate Jacobian because
+    // branch-rate layers remain fixed and the program already defines a density for this variable.
     double sigma = get_setting_or("slice_branch_sigma",1.5);
-    // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
-    double w = sigma * scale_between(PP.branch_mean(),L);
-    branch_length_slice_function logp(PP,b);
-    double L2 = slice_sample(L,logp,w,50);
+    // NOTE - it is OK to depend on x below -- IF AND ONLY IF the likelihood is unimodal.
+    double w = sigma * scale_between(PP.branch_mean(),x);
+    branch_length_or_duration_slice_function logp(PP,b);
+    double x2 = slice_sample(x,logp,w,50);
 
     //---------- Record Statistics - -------------//
     // A declined slice can return its original nonfinite coordinate, so identify
     // an unchanged move before subtraction or division can produce a NaN.
-    bool unchanged = not std::isfinite(L) or L2 == L;
-    result.totals[0] = unchanged ? 0 : abs(L2 - L);
-    result.totals[1] = unchanged ? 0 : abs(log(L2/L));
+    bool unchanged = not std::isfinite(x) or x2 == x;
+    result.totals[0] = unchanged ? 0 : abs(x2 - x);
+    result.totals[1] = unchanged ? 0 : abs(log(x2/x));
     result.totals[2] = logp.count;
 
     Stats.inc("branch-length (slice) *",result);
-    if (L < mu/2.0)
+    if (x < mu/2.0)
 	Stats.inc("branch-length (slice) 1",result);
-    else if (L < mu)
+    else if (x < mu)
 	Stats.inc("branch-length (slice) 2",result);
-    else if (L < mu*2)
+    else if (x < mu*2)
 	Stats.inc("branch-length (slice) 3",result);
     else 
 	Stats.inc("branch-length (slice) 4",result);
@@ -194,67 +197,67 @@ void slice_sample_node_time(owned_ptr<context>& P,MoveStats& /*Stats*/,int n)
     /* double T2 = */ slice_sample(T, logp, w, 50);
 }
 
-void alignment_slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
+void alignment_slice_sample_branch_length_or_duration(owned_ptr<context>& P,MoveStats& Stats,int b)
 {
     Parameters& PP = *P.as<Parameters>();
-    if (not PP.t().can_set_branch_length(b)) return;
+    if (not PP.t().can_set_branch_length_or_duration(b)) return;
 
-    if (log_verbose >= 3) std::cerr<<"\n\n  [alignment_slice_sample_branch_length]\n";
+    if (log_verbose >= 3) std::cerr<<"\n\n  [alignment_slice_sample_branch_length_or_duration]\n";
 
     PP.select_root(b);
 
-    const double L = PP.t().branch_length(b);
+    const double x = PP.t().branch_length_or_duration(b);
     const double mu = PP.branch_mean();
 
 
     MCMC::Result result(3);
 
-    //------------- Find new length --------------//
-
+    // Alignment sampling observes the effective length recomputed after the underlying value changes;
+    // the context density and proposal correction remain expressed for that underlying variable.
     double sigma = get_setting_or("slice_branch_sigma",1.5);
-    // NOTE - it is OK to depend on L below -- IF AND ONLY IF the likelihood is unimodal.
-    double w = sigma * scale_between(PP.branch_mean(),L);
-    alignment_branch_length_slice_function logp(PP,b);
-    double L2 = slice_sample(L,logp,w,50);
+    // NOTE - it is OK to depend on x below -- IF AND ONLY IF the likelihood is unimodal.
+    double w = sigma * scale_between(PP.branch_mean(),x);
+    alignment_branch_length_or_duration_slice_function logp(PP,b);
+    double x2 = slice_sample(x,logp,w,50);
 
     //---------- Record Statistics - -------------//
     // A declined slice can return its original nonfinite coordinate, so identify
     // an unchanged move before subtraction or division can produce a NaN.
-    bool unchanged = not std::isfinite(L) or L2 == L;
-    result.totals[0] = unchanged ? 0 : abs(L2 - L);
-    result.totals[1] = unchanged ? 0 : abs(log(L2/L));
+    bool unchanged = not std::isfinite(x) or x2 == x;
+    result.totals[0] = unchanged ? 0 : abs(x2 - x);
+    result.totals[1] = unchanged ? 0 : abs(log(x2/x));
     result.totals[2] = logp.count;
 
     Stats.inc("alignment-branch-length (slice) *",result);
-    if (L < mu/2.0)
+    if (x < mu/2.0)
 	Stats.inc("alignment-branch-length (slice) 1",result);
-    else if (L < mu)
+    else if (x < mu)
 	Stats.inc("alignment-branch-length (slice) 2",result);
-    else if (L < mu*2)
+    else if (x < mu*2)
 	Stats.inc("alignment-branch-length (slice) 3",result);
     else
 	Stats.inc("alignment-branch-length (slice) 4",result);
 }
 
-void change_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
+void change_branch_length_or_duration(owned_ptr<context>& P,MoveStats& Stats,int b)
 {
     if (uniform() < 0.5)
     {
 	double sigma = get_setting_or("log_branch_sigma",0.6);
-	change_branch_length_log_scale(P, Stats, b, sigma);
+	change_branch_length_or_duration_log_scale(P, Stats, b, sigma);
     }
     else {
 	double sigma = get_setting_or("branch_sigma",0.6);
-	change_branch_length_flat(P, Stats, b, sigma);
+	change_branch_length_or_duration_flat(P, Stats, b, sigma);
     }
 }
 
-void change_branch_length_multi(owned_ptr<context>& P,MoveStats& Stats,int b) 
+void change_branch_length_or_duration_multi(owned_ptr<context>& P,MoveStats& Stats,int b)
 {
     const int n=3;
 
     for(int i=1;i<n;i++)
-	change_branch_length(P,Stats,b);
+	change_branch_length_or_duration(P,Stats,b);
 }
 
 void change_branch_length_and_T(owned_ptr<context>& P,MoveStats& Stats,int b) 
