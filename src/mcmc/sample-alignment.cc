@@ -130,7 +130,8 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
 }
 
 
-pair<shared_ptr<DPmatrixSimple>,optional<log_double_t>> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b, optional<int> bandwidth)
+pair<shared_ptr<DPmatrixSimple>,Availability<log_double_t>>
+sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b, optional<int> bandwidth)
 {
     auto Matrices = sample_alignment_forward(P, P.t(), hmm, b, bandwidth);
 
@@ -138,7 +139,7 @@ pair<shared_ptr<DPmatrixSimple>,optional<log_double_t>> sample_alignment_base(mu
     if (not path)
     {
 	if (log_verbose > 0) std::cerr<<"sample_alignment_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
-	return {Matrices, {}};
+	return {Matrices, unavailable};
     }
 
     // sample_path chooses with probability path_Q(path) divided by the DP total;
@@ -148,20 +149,21 @@ pair<shared_ptr<DPmatrixSimple>,optional<log_double_t>> sample_alignment_base(mu
     {
         if (log_verbose > 0)
             std::cerr<<"sample_alignment_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
-        return {Matrices, {}};
+        return {Matrices, unavailable};
     }
 
     P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(*path));
 
-    return {Matrices, sampling_pr};
+    return {Matrices, available(sampling_pr)};
 }
 
-pair<shared_ptr<DPmatrixSimple>,optional<log_double_t>> sample_alignment_base(mutable_data_partition P, int b, optional<int> bandwidth)
+pair<shared_ptr<DPmatrixSimple>,Availability<log_double_t>>
+sample_alignment_base(mutable_data_partition P, int b, optional<int> bandwidth)
 {
     return sample_alignment_base(P, P.get_branch_HMM(b), b, bandwidth);
 }
 
-optional<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_state_valid)
+Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_state_valid)
 {
     if (log_verbose >= 3)
         std::cerr<<"[sample_alignment]: start: Pr = "<<P.probability()<<"\n";
@@ -188,17 +190,14 @@ optional<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_state_
 
     vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
     vector<vector<bool>> sampled(1);
-    optional<log_double_t> total_sampling_pr = 1.0;
+    auto total_sampling_pr = available(log_double_t(1.0));
     for(int i=0;i<p.size();i++) 
     {
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment()) 
 	    {
                 auto [M, sampling_pr] = sample_alignment_base(p[i][j], b, bandwidth);
-		if (sampling_pr and total_sampling_pr)
-		    *total_sampling_pr *= *sampling_pr;
-		else
-		    total_sampling_pr = {};
+		total_sampling_pr *= sampling_pr;
 		Matrices[i].push_back(M);
 		sampled[i].push_back(sampling_pr.has_value());
 		// If sampling is unavailable, the alignment for this partition is unchanged.
@@ -212,9 +211,9 @@ optional<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_state_
 	    }
     }
 
-    optional<ProbDensity> total_ratio;
+    Availability<ProbDensity> total_ratio;
     if (total_sampling_pr and std::isfinite(total_sampling_pr->log()))
-        total_ratio = ProbDensity(log_double_t(1.0) / *total_sampling_pr);
+        total_ratio = available(ProbDensity(log_double_t(1.0) / *total_sampling_pr));
 
 #ifndef NDEBUG_DP
     if (log_verbose >=4) std::cerr<<"\n\n----------------------------------------------\n";

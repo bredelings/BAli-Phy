@@ -52,7 +52,7 @@ using std::endl;
 using std::shared_ptr;
 using boost::dynamic_bitset;
 
-pair<shared_ptr<DPcubeSimple>,optional<log_double_t>>
+pair<shared_ptr<DPcubeSimple>,Availability<log_double_t>>
 cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0, 
                            const vector<int>& nodes, const vector<int>& nodes0,
                            optional<int> /*bandwidth*/)
@@ -150,7 +150,7 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 #ifndef NDEBUG_DP
 	Matrices->clear();
 #endif
-	return {Matrices, {}};
+	return {Matrices, unavailable};
     }
 
     vector<int> path = Matrices->ungeneralize(*path_g);
@@ -161,7 +161,7 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
     {
         if (log_verbose > 0)
             std::cerr<<"cube_sample_alignment_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
-        return {Matrices, {}};
+        return {Matrices, unavailable};
     }
 
     for(int i=0;i<3;i++) {
@@ -173,10 +173,10 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
     Matrices->clear();
 #endif
 
-    return {Matrices,sampling_pr};
+    return {Matrices, available(sampling_pr)};
 }
 
-pair<shared_ptr<DPengine>,optional<log_double_t>> sample_cube_multi_calculation::compute_matrix(int i, int j)
+pair<shared_ptr<DPengine>,Availability<log_double_t>> sample_cube_multi_calculation::compute_matrix(int i, int j)
 {
     return cube_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
 }

@@ -28,6 +28,7 @@
 
 #include <vector>                  // for vector
 #include "computation/context.H"   // for context
+#include "probability/availability.H" // for Availability
 #include "util/bounds.H"           // for bounds
 #include "util/math/ProbDensity.H" // for ProbDensity
 
@@ -155,7 +156,7 @@ struct node_time_slice_function: public context_slice_function
 /// A slice function for jointly sampling an alignment and its branch length or duration.
 struct alignment_branch_length_or_duration_slice_function: public context_slice_function
 {
-    std::optional<ProbDensity> alignment_sum_ratio_0;
+    Availability<ProbDensity> alignment_sum_ratio_0;
     int b;
 
     ProbDensity operator()() {return context_slice_function::operator()();};

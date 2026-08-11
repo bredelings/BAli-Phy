@@ -102,7 +102,7 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rh
     try {
 	return sample_A5_multi(p,orders,rho);
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
 	c.prepend(__PRETTY_FUNCTION__);
 	throw c;
@@ -177,7 +177,7 @@ void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
     try {
 	C = sample_A5_multi(p,orders,rho);
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
 	c.prepend(__PRETTY_FUNCTION__);
 	throw c;
@@ -367,48 +367,37 @@ void two_way_NNI_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
 	two_way_NNI_and_branches_sample(P,Stats,b);
 }
 
-optional<log_double_t>& operator*=(optional<log_double_t>& pr1, const optional<log_double_t>& pr2)
+Availability<log_double_t> optimize(Parameters& P, const vector<int>& nodes)
 {
-    if (pr1)
-    {
-	if (pr2)
-	    pr1.value() *= pr2.value();
-	else
-	    pr1 = {};
-    }
-
-    return pr1;
-}
-
-optional<log_double_t> optimize(Parameters& P, const vector<int>& nodes)
-{
-    optional<log_double_t> ratio = 1;
+    auto ratio = available(log_double_t(1));
+    // Each ratio call also resamples an alignment.  Stop after a failure rather
+    // than relying only on Availability multiplication and running later calls.
     if (uniform() < 0.5)
     {
 	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[0]);
-	if (not ratio) return {};
+	if (not ratio) return unavailable;
 	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[1]);
-	if (not ratio) return {};
+	if (not ratio) return unavailable;
 	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[2]);
-	if (not ratio) return {};
+	if (not ratio) return unavailable;
 	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[3]);
-	if (not ratio) return {};
+	if (not ratio) return unavailable;
 	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[4]);
-	if (not ratio) return {};
+	if (not ratio) return unavailable;
 	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[5]);
     }
     else
     {
 	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[5]);
-	if (not ratio) return {};
+	if (not ratio) return unavailable;
 	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[4]);
-	if (not ratio) return {};
+	if (not ratio) return unavailable;
 	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[3]);
-	if (not ratio) return {};
+	if (not ratio) return unavailable;
 	ratio *= tri_sample_alignment_ratio(P, nodes[5], nodes[2]);
-	if (not ratio) return {};
+	if (not ratio) return unavailable;
 	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[1]);
-	if (not ratio) return {};
+	if (not ratio) return unavailable;
 	ratio *= tri_sample_alignment_ratio(P, nodes[4], nodes[0]);
     }
     return ratio;
@@ -439,7 +428,7 @@ void two_way_topology_5A_sample(owned_ptr<context>& P, MoveStats& /*Stats*/, int
     auto PrAl0A = P0.prior_alignment();
 
     orders[0] = A5::get_nodes_random(P0.t(), b);
-    optional<log_double_t> ratio = 1;
+    auto ratio = available(log_double_t(1));
     ratio *= optimize(P0, orders[0].nodes);
     if (not ratio) return;
 
@@ -532,7 +521,7 @@ void three_way_NNI_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b
 
         NNI_inc(Stats,"NNI (3-way)", result, L0);
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
 	c.prepend(__PRETTY_FUNCTION__);
 	throw c;
@@ -584,7 +573,7 @@ void three_way_NNI_A4_sample(Parameters& PP, MoveStats& Stats, int b, int b1, in
 
         NNI_inc(Stats,"NNI (3-way)", result, L0);
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
         c.prepend(__PRETTY_FUNCTION__);
         throw c;
@@ -733,7 +722,7 @@ void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats
     try {
 	C = sample_A5_2D_multi(p, orders, rho, bandwidth);
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
 	c.prepend(__PRETTY_FUNCTION__);
 	throw c;
@@ -796,7 +785,7 @@ void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats
     try {
 	C = sample_tri_multi(p,nodes,rho);
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
 	c.prepend(__PRETTY_FUNCTION__);
 	throw c;

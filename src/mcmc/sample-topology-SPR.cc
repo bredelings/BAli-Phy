@@ -125,7 +125,7 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<log_double_t>& rho,in
     try {
 	return sample_tri_multi(p,nodes,rho);
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
 	c.prepend(string(__PRETTY_FUNCTION__)+"\n");
 
@@ -488,7 +488,7 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2)
 
 	return SPR_stats(p[0].t(), p[1].t(), C>0, bins, b1);
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
 	c.prepend(string(__PRETTY_FUNCTION__)+"\n");
 	throw c;
@@ -553,7 +553,7 @@ struct spr_attachment_points: public map<tree_edge,double>
 };
 
 /// Represent the probability of attaching to a branch
-struct spr_attachment_probabilities: public map<tree_edge,log_double_t>
+struct spr_attachment_probabilities: public map<tree_edge,Availability<ChoiceWeight>>
 {
     map<tree_edge,log_double_t> LLL;
 };
@@ -999,7 +999,9 @@ move_pruned_subtree(Parameters& P,
 }
 
 vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, const vector<int>& nodes, bool original);
-optional<log_double_t> pr_sum_out_A_tri(Parameters& P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes);
+Availability<log_double_t> pr_sum_out_A_tri(Parameters& P,
+                                            const vector<optional<vector<HMM::bitmask_t>>>& a23,
+                                            const vector<int>& nodes);
 
 void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_attachment_points& locations, const tree_edge& subtree_edge, const tree_edge& target_edge, Parameters p2, const map<tree_edge,vector<int>>& nodes, const tuple<int,int,int,vector<optional<vector<HMM::bitmask_t>>>>& alignment3way, bool sum_out_A)
 {
@@ -1023,14 +1025,15 @@ void set_attachment_probability(spr_attachment_probabilities& Pr, const spr_atta
         //Resample the alignment and compute the sampling probability.
         auto A_sampling_pr = pr_sum_out_A_tri(p2, a23_constraint, nodes_);
         if (A_sampling_pr)
-            Pr[target_edge] = log_double_t(p2.heated_probability()) / *A_sampling_pr;
+            Pr[target_edge] = (log_double_t(1.0) / *A_sampling_pr) *
+                              available(ChoiceWeight(p2.heated_probability()));
         else
-            Pr[target_edge] = 0;
+            Pr[target_edge] = unavailable;
     }
     // 3b. Compute substitution likelihood
     else
     {
-        Pr[target_edge] = p2.heated_likelihood();
+        Pr[target_edge] = available(ChoiceWeight(p2.heated_likelihood()));
     }
 
 #ifdef DEBUG_SPR_ALL
@@ -1067,13 +1070,14 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
         P.set_root(root_node);
         auto A_sampling_pr = pr_sum_out_A_tri(P, A23_constraints(P, nodes_, true), nodes_) ;
         if (A_sampling_pr)
-            Pr[I.initial_edge] = log_double_t(P.heated_probability()) / *A_sampling_pr;
+            Pr[I.initial_edge] = (log_double_t(1.0) / *A_sampling_pr) *
+                                 available(ChoiceWeight(P.heated_probability()));
         else
-            Pr[I.initial_edge] = 0;
+            Pr[I.initial_edge] = unavailable;
     }
     else
     {
-	Pr[I.initial_edge] = P.heated_likelihood();
+	Pr[I.initial_edge] = available(ChoiceWeight(P.heated_likelihood()));
         P.set_root(root_node);
     }
     assert(P.n_data_partitions() == 0 or P.subst_root() == root_node);
@@ -1168,8 +1172,8 @@ SPR_search_attachment_points(Parameters P, const tree_edge& subtree_edge, const 
 
 /// This just computes nodes and calls sample_tri_multi
 bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
-					const vector<log_double_t>& Pr,
-					const vector<log_double_t>& proposal_weights,
+					const vector<Availability<ChoiceWeight>>& Pr,
+					const vector<Availability<ChoiceWeight>>& proposal_weights,
 					const spr_info& I, int C,
 					const spr_attachment_points& locations,
 					const map<tree_edge, vector<int>>& nodes_for_branch,
@@ -1202,29 +1206,44 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
 
     //--------- Compute the reverse proposal weights ---------//
 
-    vector<log_double_t> reverse_proposal_weights = proposal_weights;
+    vector<Availability<ChoiceWeight>> reverse_proposal_weights = proposal_weights;
 #ifndef DEBUG_SPR_ALL
     if (P.variable_alignment() and not sum_out_A)
 #endif
     {
         p[1].cache_likelihood_branches();
 	spr_attachment_probabilities PrB2 = SPR_search_attachment_points(p[1], E_parent, I.range, locations, nodes_for_branch, sum_out_A);
-	vector<log_double_t> Pr2 = I.convert_to_vector(PrB2);
+	vector<Availability<ChoiceWeight>> Pr2 = I.convert_to_vector(PrB2);
     
 	if (not P.variable_alignment() or sum_out_A)
 	    for(int i=0;i<Pr.size();i++)
-		assert(std::abs(Pr[i].log() - Pr2[i].log()) < 1.0e-9);
+	    {
+		assert(bool(Pr[i]) == bool(Pr2[i]));
+		if (Pr[i])
+		{
+		    auto ratio = *Pr[i] / *Pr2[i];
+		    assert(std::isfinite(ratio.log()) and std::abs(ratio.log()) < 1.0e-9);
+		}
+	    }
     
 	reverse_proposal_weights = Pr2;
 	for(int i=0;i<reverse_proposal_weights.size();i++)
-	    reverse_proposal_weights[i] *= relative_proposal_probs[i];
+	    reverse_proposal_weights[i] = relative_proposal_probs[i] * reverse_proposal_weights[i];
     }
 
     //----------------- Specify proposal probabilities -----------------//
     vector<log_double_t> rho(2,1);
+    auto forward_choice = choose_MH_P(0, C, proposal_weights);
+    auto reverse_choice = choose_MH_P(C, 0, reverse_proposal_weights);
+    // Both transitions must be available and positive; otherwise this proposed
+    // move either could not have been generated or has zero MH acceptance.
+    if (not forward_choice or not reverse_choice or
+        *forward_choice == 0.0 or *reverse_choice == 0.0)
+        return false;
+
     // Include both the probability of proposing the shared set and the probability of choosing the other state.
-    rho[0] = relative_proposal_probs[0] * choose_MH_P(0, C, proposal_weights);
-    rho[1] = relative_proposal_probs[C] * choose_MH_P(C, 0, reverse_proposal_weights);
+    rho[0] = relative_proposal_probs[0] * *forward_choice;
+    rho[1] = relative_proposal_probs[C] * *reverse_choice;
   
     tri->set_proposal_probabilities(rho);
 
@@ -1420,23 +1439,26 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats, const tree_edge& subt
     }
 
 
-    vector<log_double_t> Pr = I.convert_to_vector(PrB);
+    vector<Availability<ChoiceWeight>> Pr = I.convert_to_vector(PrB);
 #ifdef DEBUG_SPR_ALL
     vector<log_double_t> LLL = I.convert_to_vector(PrB.LLL);
 #endif
 
     // 7. Include the factor left by not drawing a new location for the current attachment.
-    vector<log_double_t> proposal_weights = Pr;
+    vector<Availability<ChoiceWeight>> proposal_weights = Pr;
     for(int i=0;i<proposal_weights.size();i++)
-	proposal_weights[i] *= relative_proposal_probs[i];
+	proposal_weights[i] = relative_proposal_probs[i] * proposal_weights[i];
 
 
     // 8. Choose the attachment branch.
     int C = -1;
     try {
-	C = choose_MH(0,proposal_weights);
+	auto choice = choose_MH(0,proposal_weights);
+	if (not choice)
+	    return false;
+	C = *choice;
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
 	c.prepend(__PRETTY_FUNCTION__);
 	throw c;

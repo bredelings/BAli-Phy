@@ -57,7 +57,7 @@ using std::optional;
 using std::shared_ptr;
 using boost::dynamic_bitset;
 
-pair<shared_ptr<DPmatrixConstrained>,optional<log_double_t>>
+pair<shared_ptr<DPmatrixConstrained>,Availability<log_double_t>>
 tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, const vector<HMM::bitmask_t>& a23,
 			  optional<int> bandwidth)
 {
@@ -183,7 +183,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     if (not path_g)
     {
 	if (log_verbose > 0) std::cerr<<"tri_sample_alignment_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
-	return {Matrices, {}};
+	return {Matrices, unavailable};
     }
 
     vector<int> path = Matrices->ungeneralize(*path_g);
@@ -194,7 +194,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     {
         if (log_verbose > 0)
             std::cerr<<"tri_sample_alignment_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
-        return {Matrices, {}};
+        return {Matrices, unavailable};
     }
 
     for(int i=0;i<3;i++) {
@@ -202,7 +202,7 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
 	P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
     }
 
-    return {Matrices,sampling_pr};
+    return {Matrices, available(sampling_pr)};
 }
 
 // If there is an original 3way alignment, then we need to construct a 3way path and project to 2way
@@ -233,7 +233,7 @@ vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, co
     return a23;
 }
 
-pair<shared_ptr<DPmatrixConstrained>,optional<log_double_t>>
+pair<shared_ptr<DPmatrixConstrained>,Availability<log_double_t>>
 tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 			  const vector<int>& nodes, const vector<int>& nodes0,
 			  optional<int> bandwidth)
@@ -271,7 +271,8 @@ tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
     return tri_sample_alignment_base(P, nodes, a23, bandwidth);
 }
 
-optional<log_double_t> tri_sample_alignment_ratio(mutable_data_partition P, int node1, int node2, optional<int> bandwidth = {})
+Availability<log_double_t> tri_sample_alignment_ratio(mutable_data_partition P, int node1, int node2,
+                                                      optional<int> bandwidth = {})
 {
     auto nodes = A3::get_nodes_branch_random(P.t(),node1,node2);
     auto a23 = A23_constraint(P, nodes, true);
@@ -281,7 +282,7 @@ optional<log_double_t> tri_sample_alignment_ratio(mutable_data_partition P, int 
     auto [M, forward_sample_pr] = tri_sample_alignment_base(P, nodes, a23, bandwidth);
 
     if (not forward_sample_pr)
-        return {};
+        return unavailable;
 
     auto path0 = get_path_unique(bitpath0, *M);
     auto path0_g = M->generalize(path0);
@@ -289,13 +290,13 @@ optional<log_double_t> tri_sample_alignment_ratio(mutable_data_partition P, int 
 
     auto ratio = reverse_sample_pr / *forward_sample_pr;
     if (std::isfinite(ratio.log()))
-        return ratio;
-    return {};
+        return available(ratio);
+    return unavailable;
 }
 
-optional<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int node2, optional<int> bandwidth)
+Availability<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int node2, optional<int> bandwidth)
 {
-    log_double_t ratio = 1;
+    auto ratio = available(log_double_t(1));
     for(int j=0;j<P.n_data_partitions();j++)
     {
 	if (P[j].has_pairwise_alignments())
@@ -305,13 +306,13 @@ optional<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int 
 
 	    auto partition_ratio = tri_sample_alignment_ratio(P[j], node1, node2, bandwidth);
 	    if (not partition_ratio)
-		return {};
-	    ratio *= *partition_ratio;
+		return unavailable;
+	    ratio *= partition_ratio;
 	}
     }
 
-    if (not std::isfinite(ratio.log()))
-        return {};
+    if (not std::isfinite(ratio->log()))
+        return unavailable;
     return ratio;
 }
 
@@ -331,7 +332,9 @@ sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,
 {
 }
 
-optional<log_double_t> pr_sum_out_A_tri(Parameters& P, const vector<optional<vector<HMM::bitmask_t>>>& a23, const vector<int>& nodes)
+Availability<log_double_t> pr_sum_out_A_tri(Parameters& P,
+                                            const vector<optional<vector<HMM::bitmask_t>>>& a23,
+                                            const vector<int>& nodes)
 {
     log_double_t Pr = 1.0;
 
@@ -345,7 +348,7 @@ optional<log_double_t> pr_sum_out_A_tri(Parameters& P, const vector<optional<vec
             if (not sampling_pr)
             {
                 std::cerr<<"pr_sum_out_A_tri: sampling is unavailable for partition "<<j<<"\n";
-                return {};
+                return unavailable;
             }
 
 	    Pr *= *sampling_pr;
@@ -355,8 +358,8 @@ optional<log_double_t> pr_sum_out_A_tri(Parameters& P, const vector<optional<vec
     }
 
     if (not std::isfinite(Pr.log()))
-        return {};
-    return Pr;
+        return unavailable;
+    return available(Pr);
 }
 
 void sample_A3_multi_calculation::run_dp()
@@ -381,7 +384,7 @@ void sample_A3_multi_calculation::run_dp()
 
     for(int i=0;i<p.size();i++) 
     {
-        optional<log_double_t> joint_sampling_pr = 1.0;
+        auto joint_sampling_pr = available(log_double_t(1.0));
         log_double_t correction = 1.0;
 
 #ifndef NDEBUG
@@ -395,10 +398,7 @@ void sample_A3_multi_calculation::run_dp()
 		Matrices[i][j] = M;
 #endif
 		sampled[i][j] = sampling_pr.has_value();
-		if (sampling_pr and joint_sampling_pr)
-		    *joint_sampling_pr *= *sampling_pr;
-		else
-		    joint_sampling_pr = {};
+		joint_sampling_pr *= sampling_pr;
 		if (not sampling_pr)
 		    continue;
 		correction *= A3::correction(p[i][j], nodes[i]);
@@ -407,13 +407,12 @@ void sample_A3_multi_calculation::run_dp()
 
         if (joint_sampling_pr and std::isfinite(joint_sampling_pr->log()))
         {
-            ProbDensity weight = p[i].heated_probability();
-            weight *= correction / *joint_sampling_pr;
-            Pr[i] = ChoiceWeight(weight);
+            auto factor = correction / *joint_sampling_pr;
+            Pr[i] = factor * available(ChoiceWeight(p[i].heated_probability()));
 
 #ifndef NDEBUG
-            // A complete sampling probability means that every affected alignment was replaced;
-            // verify the resulting candidate before its availability is hidden by the choice API.
+            // A complete sampling probability means that every affected alignment was replaced.
+            // Validate the candidate before a later choice changes the active state.
             for(int j=0;j<p[i].n_data_partitions();j++)
                 if (p[i][j].has_pairwise_alignments())
                     for(int b: p[i].t().directed_branches())
@@ -435,8 +434,7 @@ void sample_A3_multi_calculation::set_proposal_probabilities(const vector<log_do
     for(int i=0;i<Pr.size();i++) 
     {
 	rho[i] = r[i];
-	if (Pr[i])
-	    *Pr[i] = *Pr[i] * ChoiceWeight(ProbDensity(rho[i]));
+	Pr[i] = rho[i] * Pr[i];
     }
 }
 
@@ -451,7 +449,7 @@ int sample_A3_multi_calculation::choose(bool correct)
 	    return -1;
 	C = *choice;
     }
-    catch (choose_exception<ChoiceWeight>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
 	c.prepend(std::string(__PRETTY_FUNCTION__)+"\n");
 
@@ -559,7 +557,7 @@ int sample_A3_multi_calculation::choose(bool correct)
     return C;
 }
 
-pair<shared_ptr<DPengine>,optional<log_double_t>> sample_tri_multi_calculation::compute_matrix(int i, int j)
+pair<shared_ptr<DPengine>,Availability<log_double_t>> sample_tri_multi_calculation::compute_matrix(int i, int j)
 {
     return tri_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
 }

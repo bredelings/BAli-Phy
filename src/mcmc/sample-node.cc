@@ -53,7 +53,7 @@ using std::optional;
 using boost::dynamic_bitset;
 using std::shared_ptr;
 
-pair<shared_ptr<DParrayConstrained>, optional<log_double_t>>
+pair<shared_ptr<DParrayConstrained>, Availability<log_double_t>>
 sample_node_base(mutable_data_partition P,const vector<int>& nodes)
 {
     assert(P.variable_alignment());
@@ -121,7 +121,7 @@ sample_node_base(mutable_data_partition P,const vector<int>& nodes)
     if (not path_g)
     {
 	if (log_verbose > 0) std::cerr<<"sample_node_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
-	return {Matrices, {}};
+	return {Matrices, unavailable};
     }
 
     vector<int> path = Matrices->ungeneralize(*path_g);
@@ -132,7 +132,7 @@ sample_node_base(mutable_data_partition P,const vector<int>& nodes)
     {
         if (log_verbose > 0)
             std::cerr<<"sample_node_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
-        return {Matrices, {}};
+        return {Matrices, unavailable};
     }
 
     for(int i=0;i<3;i++) {
@@ -140,7 +140,7 @@ sample_node_base(mutable_data_partition P,const vector<int>& nodes)
 	P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
     }
 
-    return {Matrices,sampling_pr};
+    return {Matrices, available(sampling_pr)};
 }
 
 int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
@@ -172,10 +172,10 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     vector< vector< shared_ptr<DParrayConstrained> > > Matrices(p.size());
     vector<vector<bool>> sampled(p.size(), vector<bool>(p[0].n_data_partitions(), false));
 
-    vector<optional<ChoiceWeight>> Pr(p.size());
+    vector<Availability<ChoiceWeight>> Pr(p.size());
     for(int i=0;i<p.size();i++)
     {
-        optional<log_double_t> joint_sampling_pr = 1.0;
+        auto joint_sampling_pr = available(log_double_t(1.0));
         log_double_t correction = 1.0;
 
 #ifndef NDEBUG_DP
@@ -187,10 +187,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
             {
                 auto [M, sampling_pr] = sample_node_base(p[i][j],nodes[i]);
                 sampled[i][j] = sampling_pr.has_value();
-                if (sampling_pr and joint_sampling_pr)
-                    *joint_sampling_pr *= *sampling_pr;
-                else
-                    joint_sampling_pr = {};
+                joint_sampling_pr *= sampling_pr;
                 if (not sampling_pr)
                     continue;
                 correction *= A3::correction(p[i][j], nodes[i]);
@@ -202,9 +199,8 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
         if (joint_sampling_pr and std::isfinite(joint_sampling_pr->log()))
         {
-            ProbDensity weight = p[i].heated_probability();
-            weight *= rho[i] * correction / *joint_sampling_pr;
-            Pr[i] = ChoiceWeight(weight);
+            auto factor = rho[i] * correction / *joint_sampling_pr;
+            Pr[i] = factor * available(ChoiceWeight(p[i].heated_probability()));
         }
     }
 
@@ -215,7 +211,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 	    return -1;
 	C = *choice;
     }
-    catch (choose_exception<ChoiceWeight>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
 	c.prepend(std::string(__PRETTY_FUNCTION__)+"\n");
 

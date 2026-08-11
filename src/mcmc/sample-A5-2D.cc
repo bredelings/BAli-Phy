@@ -51,7 +51,7 @@ using std::pair;
 
 using boost::dynamic_bitset;
 
-pair<shared_ptr<DPmatrixConstrained>, optional<log_double_t>>
+pair<shared_ptr<DPmatrixConstrained>, Availability<log_double_t>>
 sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a123456, const A5::hmm_order& order, const A5::hmm_order& order0, optional<int> bandwidth)
 {
     assert(P.variable_alignment());
@@ -180,7 +180,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
 	if (log_verbose > 0) std::cerr<<"sample_A5_2D_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
 	P.set_pairwise_alignment(b25, alignment25);
 	P.set_pairwise_alignment(b35, alignment35);
-	return {Matrices, {}};
+	return {Matrices, unavailable};
     }
 
     //------------- Sample a path from the matrix -------------------//
@@ -194,7 +194,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
             std::cerr<<"sample_A5_2D_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
         P.set_pairwise_alignment(b25, alignment25);
         P.set_pairwise_alignment(b35, alignment35);
-        return {Matrices, {}};
+        return {Matrices, unavailable};
     }
 
     P.set_pairwise_alignment(b04, get_pairwise_alignment_from_path(path, *Matrices, 0, 4));
@@ -203,7 +203,7 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     P.set_pairwise_alignment(b35, get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
     P.set_pairwise_alignment(b45, get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
 
-    return {Matrices, sampling_pr};
+    return {Matrices, available(sampling_pr)};
 }
 
 struct IntegrationPrs
@@ -321,8 +321,8 @@ sample_A5_2D_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
     return Pr;
 }
 
-optional<log_double_t> sample_A5_2D_ratio(vector<Parameters>& p, const vector<A5::hmm_order>& order,
-					  const vector<log_double_t>& rho, optional<int> bandwidth)
+Availability<log_double_t> sample_A5_2D_ratio(vector<Parameters>& p, const vector<A5::hmm_order>& order,
+                                              const vector<log_double_t>& rho, optional<int> bandwidth)
 {
     if (p.size() != 2)
         throw myexception()<<"sample_A5_2D_ratio only takes two Parameters objects!";
@@ -336,11 +336,11 @@ optional<log_double_t> sample_A5_2D_ratio(vector<Parameters>& p, const vector<A5
 
         auto ratio = sample_reverse/sample_forward;
         if (std::isfinite(ratio.log()))
-            return ratio;
-        return {};
+            return available(ratio);
+        return unavailable;
     }
     else
-        return {};
+        return unavailable;
 }
 
 
@@ -372,7 +372,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
             a123456[j] = A5::get_bitpath(p[0][j], order[0]);
         }
 
-    vector<optional<ChoiceWeight>> Pr(p.size());
+    vector<Availability<ChoiceWeight>> Pr(p.size());
 
     //----------- Generate the different states and Matrices ---------//
     log_double_t C1 = A5::correction(p[0],order[0]);
@@ -384,7 +384,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
     vector<vector<bool>> sampled(p.size(), vector<bool>(p[0].n_data_partitions(), false));
     for(int i=0;i<p.size();i++)
     {
-        optional<log_double_t> joint_sampling_pr = 1.0;
+        auto joint_sampling_pr = available(log_double_t(1.0));
         log_double_t correction = 1.0;
 
 #ifndef NDEBUG_DP
@@ -401,10 +401,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
                 Matrices[i][j] = M;
 #endif
                 sampled[i][j] = sampling_pr.has_value();
-                if (sampling_pr and joint_sampling_pr)
-                    *joint_sampling_pr *= *sampling_pr;
-                else
-                    joint_sampling_pr = {};
+                joint_sampling_pr *= sampling_pr;
                 if (not sampling_pr)
                     continue;
                 correction *= A5::correction(p[i][j], order[i]);
@@ -419,9 +416,8 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
         // Should we treat i=0 differently, since the old alignment is consistent?
         if (joint_sampling_pr and std::isfinite(joint_sampling_pr->log()))
         {
-            ProbDensity weight = p[i].heated_probability();
-            weight *= rho[i] * correction / *joint_sampling_pr;
-            Pr[i] = ChoiceWeight(weight);
+            auto factor = rho[i] * correction / *joint_sampling_pr;
+            Pr[i] = factor * available(ChoiceWeight(p[i].heated_probability()));
         }
     }
 
@@ -432,7 +428,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
             return -1;
         C = *choice;
     }
-    catch (choose_exception<ChoiceWeight>& c)
+    catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
         c.prepend(std::string(__PRETTY_FUNCTION__)+"\n");
 

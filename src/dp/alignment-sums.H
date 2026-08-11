@@ -34,6 +34,7 @@
 #include <optional>                // for std::optional
 #include "dp-engine.H"             // for DPengine
 #include "probability/choice-weight.H" // for ChoiceWeight
+#include "probability/availability.H"  // for Availability
 #include "util/math/log-double.H"  // for log_double_t
 #ifndef NDEBUG_DP
 #include "models/parameters.H"
@@ -54,13 +55,17 @@ log_double_t other_prior(const data_partition& P, const std::vector<int>& nodes)
 int sample_A4_multi(std::vector<Parameters>& p,const std::vector< A4::hmm_order >& orders,
 			   const std::vector<log_double_t>& rho);
 
-std::optional<log_double_t> sample_A4_ratio(std::vector<Parameters>& p, const std::vector<A4::hmm_order>& order, const std::vector<log_double_t>& rho);
+Availability<log_double_t> sample_A4_ratio(std::vector<Parameters>& p,
+                                           const std::vector<A4::hmm_order>& order,
+                                           const std::vector<log_double_t>& rho);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_A5_multi(std::vector<Parameters>& p,const std::vector< A5::hmm_order >& orders,
 			   const std::vector<log_double_t>& rho);
 
-std::optional<log_double_t> sample_A5_ratio(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order, const std::vector<log_double_t>& rho);
+Availability<log_double_t> sample_A5_ratio(std::vector<Parameters>& p,
+                                           const std::vector<A5::hmm_order>& order,
+                                           const std::vector<log_double_t>& rho);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
@@ -75,13 +80,14 @@ int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<i
 int sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
 		      const std::vector<log_double_t>& rho);
 
-std::optional<log_double_t> sample_A5_2D_ratio(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order,
-					       const std::vector<log_double_t>& rho, std::optional<int> bandwidth);
+Availability<log_double_t> sample_A5_2D_ratio(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order,
+                                              const std::vector<log_double_t>& rho, std::optional<int> bandwidth);
 
 int sample_A5_2D_multi(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order_,
                        const std::vector<log_double_t>& rho_, std::optional<int> bandwidth);
 
-std::optional<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int node2, std::optional<int> bandwidth = {});
+Availability<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int node2,
+                                                      std::optional<int> bandwidth = {});
 
 struct sample_A3_multi_calculation
 {
@@ -93,11 +99,11 @@ struct sample_A3_multi_calculation
     std::vector<log_double_t> rho;
     std::vector<std::vector<std::shared_ptr<DPengine> > > Matrices;
     std::vector<std::vector<bool>> sampled;
-    std::vector<std::optional<ChoiceWeight>> Pr;
+    std::vector<Availability<ChoiceWeight>> Pr;
     log_double_t C1;
     std::optional<int> bandwidth;
 
-    virtual std::pair<std::shared_ptr<DPengine>,std::optional<log_double_t>> compute_matrix(int,int) = 0;
+    virtual std::pair<std::shared_ptr<DPengine>,Availability<log_double_t>> compute_matrix(int,int) = 0;
 
     void run_dp();
 
@@ -112,7 +118,7 @@ struct sample_A3_multi_calculation
 
 struct sample_tri_multi_calculation: public sample_A3_multi_calculation
 {
-    virtual std::pair<std::shared_ptr<DPengine>,std::optional<log_double_t>> compute_matrix(int,int);
+    virtual std::pair<std::shared_ptr<DPengine>,Availability<log_double_t>> compute_matrix(int,int);
 
     sample_tri_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
 				 std::optional<int> b);
@@ -120,7 +126,7 @@ struct sample_tri_multi_calculation: public sample_A3_multi_calculation
 
 struct sample_cube_multi_calculation: public sample_A3_multi_calculation
 {
-    virtual std::pair<std::shared_ptr<DPengine>,std::optional<log_double_t>> compute_matrix(int,int);
+    virtual std::pair<std::shared_ptr<DPengine>,Availability<log_double_t>> compute_matrix(int,int);
 
     sample_cube_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
                                   std::optional<int> b);
