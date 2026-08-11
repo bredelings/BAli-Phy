@@ -90,13 +90,15 @@ void sample_tri_branch_one(owned_ptr<context>& P, MoveStats& Stats,int b)
         std::swap(node1,node2);
     
     const double sigma = 0.3/2;
-    double length1 = t.branch_length(b);
-    double length2 = length1 + gaussian(0,sigma);
-    if (length2 < 0) length2 = -length2;
+    // The joint alignment proposal changes the stored branch coordinate; any
+    // effective length is recomputed using the unchanged rate in each candidate.
+    double length_or_duration1 = t.branch_length_or_duration(b);
+    double length_or_duration2 = length_or_duration1 + gaussian(0,sigma);
+    if (length_or_duration2 < 0) length_or_duration2 = -length_or_duration2;
 
-    if (tri_sample_alignment_branch(*PP,node1,node2,b,1,length2)) {
+    if (tri_sample_alignment_branch(*PP,node1,node2,b,1,length_or_duration2)) {
         result.totals[0] = 1;
-        result.totals[1] = std::abs(length2 - length1);
+        result.totals[1] = std::abs(length_or_duration2 - length_or_duration1);
     }
 
     Stats.inc("sample_tri_branch",result);
@@ -141,13 +143,15 @@ void sample_cube_branch_one(owned_ptr<context>& P, MoveStats& Stats,int b)
         std::swap(node1,node2);
     
     const double sigma = 0.3/2;
-    double length1 = t.branch_length(b);
-    double length2 = length1 + gaussian(0,sigma);
-    if (length2 < 0) length2 = -length2;
+    // The joint alignment proposal changes the stored branch coordinate; any
+    // effective length is recomputed using the unchanged rate in each candidate.
+    double length_or_duration1 = t.branch_length_or_duration(b);
+    double length_or_duration2 = length_or_duration1 + gaussian(0,sigma);
+    if (length_or_duration2 < 0) length_or_duration2 = -length_or_duration2;
 
-    if (cube_sample_alignment_branch(*PP,node1,node2,b,1,length2)) {
+    if (cube_sample_alignment_branch(*PP,node1,node2,b,1,length_or_duration2)) {
         result.totals[0] = 1;
-        result.totals[1] = std::abs(length2 - length1);
+        result.totals[1] = std::abs(length_or_duration2 - length_or_duration1);
     }
 
     Stats.inc("sample_cube_branch",result);

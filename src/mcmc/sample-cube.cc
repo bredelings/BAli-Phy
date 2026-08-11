@@ -292,11 +292,11 @@ void cube_sample_alignment(Parameters& P,int node1,int node2)
 
 bool cube_sample_alignment_branch(Parameters& P,
 				 int node1,int node2,int b,
-				 double rho_,double length2)
+				 double rho_,double length_or_duration2)
 {
     //----------- Generate the Different Matrices ---------//
     vector<Parameters> p(2,P);
-    p[1].setlength(b,length2);
+    p[1].t().set_branch_length_or_duration(b,length_or_duration2);
 
     vector< vector<int> > nodes (2, A3::get_nodes_branch_random(P.t(),node1,node2) );
 

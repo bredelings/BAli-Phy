@@ -267,13 +267,14 @@ void change_branch_length_and_T(owned_ptr<context>& P,MoveStats& Stats,int b)
 
     result.counts[0] = 1;
 
-    //------------- Propose new length --------------//
-    const double length = PP.t().branch_length(b);
-    double newlength = length;
-    auto ratio = branch_twiddle(newlength,PP.branch_mean()*0.6);
+    // Apply the original hybrid proposal to the stored length or duration.  A
+    // negative result remains only a signal to attempt the alternative topology.
+    const double length_or_duration = PP.t().branch_length_or_duration(b);
+    double new_length_or_duration = length_or_duration;
+    auto ratio = branch_twiddle(new_length_or_duration,PP.branch_mean()*0.6);
 
     //----- positive  =>  propose length change -----//
-    if (newlength >= 0) 
+    if (new_length_or_duration >= 0)
     {
 	result.counts[1] = 1;
 	result.counts[3] = 1;
@@ -282,13 +283,13 @@ void change_branch_length_and_T(owned_ptr<context>& P,MoveStats& Stats,int b)
 	owned_ptr<context> P2 = P;
 
 	P2.as<Parameters>()->select_root(b);
-	P2.as<Parameters>()->setlength(b,newlength);
+	P2.as<Parameters>()->t().set_branch_length_or_duration(b,new_length_or_duration);
 
 	//--------- Do the M-H step if OK--------------//
 	if (perform_MH(*P, *P2, ratio)) {
 	    result.totals[0] = 1;
 	    result.totals[1] = 1;
-	    result.totals[3] = abs(newlength - length);
+	    result.totals[3] = abs(new_length_or_duration - length_or_duration);
 	}
     }
 
@@ -321,7 +322,7 @@ void change_branch_length_and_T(owned_ptr<context>& P,MoveStats& Stats,int b)
 	if (C > 0) {
 	    result.totals[0] = 1;
 	    result.totals[2] = 1;
-	    result.totals[4] = abs(length - newlength);
+	    result.totals[4] = abs(length_or_duration - new_length_or_duration);
 	}
     }
 
@@ -361,10 +362,11 @@ bool slide_node(owned_ptr<context>& P,
     // check that we've got three branches
     assert(branches.size() == 2);
 
-    //---------------- Propose new lengths ---------------//
+    // Apply the original branch-length proposal to the stored coordinates.  On a
+    // rate-scaled tree these are durations; rates remain fixed during the move.
     vector<double> lengths(2);
-    lengths[0] = t.branch_length(branches[0]);
-    lengths[1] = t.branch_length(branches[1]);
+    lengths[0] = t.branch_length_or_duration(branches[0]);
+    lengths[1] = t.branch_length_or_duration(branches[1]);
 
     double sigma = get_setting_or("slide_node_sigma",0.3);
     auto ratio = slide(lengths,sigma);
@@ -372,8 +374,9 @@ bool slide_node(owned_ptr<context>& P,
     //---------------- Propose new lengths ---------------//
     owned_ptr<context> P2 = P;
 
-    P2.as<Parameters>()->setlength(branches[0], lengths[0]);
-    P2.as<Parameters>()->setlength(branches[1], lengths[1]);
+    auto t2 = P2.as<Parameters>()->t();
+    t2.set_branch_length_or_duration(branches[0], lengths[0]);
+    t2.set_branch_length_or_duration(branches[1], lengths[1]);
     
     return perform_MH(*P, *P2, ratio);
 }
@@ -392,8 +395,8 @@ void slide_node(owned_ptr<context>& P, MoveStats& Stats,int b)
 	b = t.reverse(b);
     vector<int> branches = t.branches_after(b);
 
-    double L1a = PP->t().branch_length(branches[0]);
-    double L2a = PP->t().branch_length(branches[1]);
+    double L1a = PP->t().branch_length_or_duration(branches[0]);
+    double L2a = PP->t().branch_length_or_duration(branches[1]);
 
     PP->set_root(t.target(b));
 
@@ -403,10 +406,10 @@ void slide_node(owned_ptr<context>& P, MoveStats& Stats,int b)
 	slide_node_slice_function logp(*PP,b);
 	double w = get_setting_or("slide_branch_slice_window",0.3);
 	slice_sample(logp,w,50);
-	double L1b = PP->t().branch_length(branches[0]);
+	double L1b = PP->t().branch_length_or_duration(branches[0]);
     
 	MCMC::Result result(2);
-	// A declined slice can leave the same nonfinite effective length, for which
+	// A declined slice can leave the same nonfinite coordinate, for which
 	// subtracting the before and after values would produce a NaN.
 	bool unchanged = not std::isfinite(L1a) or L1b == L1a;
 	result.totals[0] = unchanged ? 0 : 2.0*abs(L1b-L1a);
@@ -425,8 +428,8 @@ void slide_node(owned_ptr<context>& P, MoveStats& Stats,int b)
 	    name = "slide_node_expand_branch";
 	}
 	PP = P.as<Parameters>();
-	double L1b = PP->t().branch_length(branches[0]);
-	double L2b = PP->t().branch_length(branches[1]);
+	double L1b = PP->t().branch_length_or_duration(branches[0]);
+	double L2b = PP->t().branch_length_or_duration(branches[1]);
 
 	MCMC::Result result(2);
 	result.totals[0] = success?1:0;
@@ -450,9 +453,11 @@ void change_3_branch_lengths(owned_ptr<context>& P,MoveStats& Stats,int n)
     vector<int> branches = randomize(t.branches_out(n));
 
     //------------ Change coordinates ---------------//
-    double T1 = t.branch_length(branches[0]);
-    double T2 = t.branch_length(branches[1]);
-    double T3 = t.branch_length(branches[2]);
+    // The proposal predates branch-specific rates.  Apply its pairwise-sum
+    // transformation to the actual stored lengths or durations, leaving rates fixed.
+    double T1 = t.branch_length_or_duration(branches[0]);
+    double T2 = t.branch_length_or_duration(branches[1]);
+    double T3 = t.branch_length_or_duration(branches[2]);
 
     double S12 = T1 + T2;
     double S23 = T2 + T3;
@@ -490,9 +495,10 @@ void change_3_branch_lengths(owned_ptr<context>& P,MoveStats& Stats,int n)
     //----------- Construct proposed Tree -----------//
     owned_ptr<context> P2 = P;
     P2.as<Parameters>()->set_root(n);
-    P2.as<Parameters>()->setlength(branches[0], T1_);
-    P2.as<Parameters>()->setlength(branches[1], T2_);
-    P2.as<Parameters>()->setlength(branches[2], T3_);
+    auto t2 = P2.as<Parameters>()->t();
+    t2.set_branch_length_or_duration(branches[0], T1_);
+    t2.set_branch_length_or_duration(branches[1], T2_);
+    t2.set_branch_length_or_duration(branches[2], T3_);
   
     //--------- Do the M-H step if OK--------------//
     if (perform_MH(*P, *P2, ratio)) {

@@ -241,7 +241,7 @@ alignment_branch_length_or_duration_slice_function::alignment_branch_length_or_d
     C0 = P;
 }
 
-// Convert a log branch-length ratio back to two lengths while preserving their fixed sum.
+// Convert a log coordinate ratio back to two stored lengths or durations while preserving their sum.
 // Computing changes from the initial pair retains precision for nearby proposals.
 void slide_node_slice_function::set_value(double z)
 {
@@ -270,23 +270,24 @@ void slide_node_slice_function::set_value(double z)
     assert(0 <= x and x <= total);
     assert(0 <= y and y <= total);
 
-    static_cast<Parameters&>(C).setlength(b1,x);
-    static_cast<Parameters&>(C).setlength(b2,y);
+    auto tree = static_cast<Parameters&>(C).t();
+    tree.set_branch_length_or_duration(b1,x);
+    tree.set_branch_length_or_duration(b2,y);
 }
 
-// Return the log ratio of the two current branch lengths.
+// Return the log ratio of the two current stored lengths or durations.
 double slide_node_slice_function::current_value() const
 {
     const auto& tree = static_cast<const Parameters&>(C).t();
-    return log(tree.branch_length(b1)) - log(tree.branch_length(b2));
+    return log(tree.branch_length_or_duration(b1)) - log(tree.branch_length_or_duration(b2));
 }
 
 // Include dx/dz = xy/(x+y) when evaluating the density in log-ratio coordinates.
 ProbDensity slide_node_slice_function::operator()()
 {
     const auto& tree = static_cast<const Parameters&>(C).t();
-    const double x = tree.branch_length(b1);
-    const double y = tree.branch_length(b2);
+    const double x = tree.branch_length_or_duration(b1);
+    const double y = tree.branch_length_or_duration(b2);
     return context_slice_function::operator()() * ProbDensity(x) * ProbDensity(y) / total_density;
 }
 
@@ -301,8 +302,8 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P,int b0)
     b1 = b[0];
     b2 = b[1];
 
-    initial_x = P.t().branch_length(b[0]);
-    initial_y = P.t().branch_length(b[1]);
+    initial_x = P.t().branch_length_or_duration(b[0]);
+    initial_y = P.t().branch_length_or_duration(b[1]);
     total_density = ProbDensity(initial_x + initial_y);
     initial_z = log(initial_x) - log(initial_y);
 }
