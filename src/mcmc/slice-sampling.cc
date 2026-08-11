@@ -206,10 +206,17 @@ optional<ProbDensity> alignment_branch_length_or_duration_slice_function::operat
 
         // Pass 'false' because the initial alignment may have zero probability under the new branch value x.
         // Without this, check_sampling_probabilities may throw an exception.
-        ProbDensity alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
+        auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
+        if (not alignment_sum_ratio_1)
+        {
+            C = C0;
+            set_context_density_ratio(1);
+            return std::nullopt;
+        }
 
+        assert(alignment_sum_ratio_0);
         set_context_density_ratio(C.heated_probability_ratio(C0) *
-                                  (alignment_sum_ratio_1 / alignment_sum_ratio_0));
+                                  (*alignment_sum_ratio_1 / *alignment_sum_ratio_0));
         return operator()();
     }
     catch (const math_error&)

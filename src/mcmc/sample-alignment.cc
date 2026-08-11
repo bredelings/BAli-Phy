@@ -161,7 +161,7 @@ pair<shared_ptr<DPmatrixSimple>,optional<log_double_t>> sample_alignment_base(mu
     return sample_alignment_base(P, P.get_branch_HMM(b), b, bandwidth);
 }
 
-ProbDensity sample_alignment(Parameters& P, int b, bool initial_state_valid)
+optional<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_state_valid)
 {
     if (log_verbose >= 3)
         std::cerr<<"[sample_alignment]: start: Pr = "<<P.probability()<<"\n";
@@ -212,7 +212,7 @@ ProbDensity sample_alignment(Parameters& P, int b, bool initial_state_valid)
 	    }
     }
 
-    ProbDensity total_ratio = 0.0;
+    optional<ProbDensity> total_ratio;
     if (total_sampling_pr and std::isfinite(total_sampling_pr->log()))
         total_ratio = ProbDensity(log_double_t(1.0) / *total_sampling_pr);
 

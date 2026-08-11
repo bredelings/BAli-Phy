@@ -20,9 +20,12 @@
 #ifndef CHOOSE_H
 #define CHOOSE_H
 
+#include <algorithm>
 #include <vector>
 #include <unordered_map>
 #include <optional>
+#include <type_traits>
+#include <utility>
 #include "util/rng.H"
 #include "util/myexception.H"
 #include "util/range.H"
@@ -115,16 +118,11 @@ inline int choose_scratch(std::vector<F>& P)
 template <typename F>
 inline int choose(const std::vector<F>& P) 
 {
-    std::vector<F> sum(P.size());
+    // Copying avoids requiring a default value that acts as an additive
+    // identity.  ChoiceWeight deliberately has no such universal value.
+    std::vector<F> sum = P;
 
     return choose_scratch(P,sum);
-}
-
-// ChoiceWeight addition is a preferred-stratum sum, so compute the complete
-// total and project to ordinary probabilities before using prefix sums.
-inline int choose(const std::vector<ChoiceWeight>& weights)
-{
-    return choose(choice_probabilities(weights));
 }
 
 namespace choose_detail
@@ -182,15 +180,23 @@ inline std::optional<int> choose(const std::vector<std::optional<F>>& optional_w
     return choices.original_index(choose(choices.weights));
 }
 
+template <typename Weight>
+using choice_probability_t = decltype(std::declval<const Weight&>() /
+                                      std::declval<const Weight&>());
+
 template <typename F>
-F choose_P(int s,const std::vector<F>& P) {
+choice_probability_t<F> choose_P(int s,const std::vector<F>& P) {
     assert(s >= 0 and s < P.size());
 
-    F sum = 0.0;
-    for(int i=0;i<P.size();i++)
-        sum  += P[i];
+    F sum = P[0];
+    for(int i=1;i<P.size();i++)
+        sum = sum + P[i];
 
-    assert(sum > 0);
+    // Preserve the ordinary-weight precondition.  A collection of symbolic
+    // zero weights is meaningful for ChoiceWeight because their coefficients
+    // can still be compared within the common zero stratum.
+    if constexpr (not std::is_same_v<F, ChoiceWeight>)
+        assert(sum > F(0.0));
 
     return P[s]/sum;
 }
@@ -198,7 +204,8 @@ F choose_P(int s,const std::vector<F>& P) {
 // Compute a categorical probability on the same filtered set used by the
 // optional choose overload.  An absent destination has probability zero.
 template <typename F>
-std::optional<F> choose_P(int s, const std::vector<std::optional<F>>& optional_weights)
+std::optional<choice_probability_t<F>>
+choose_P(int s, const std::vector<std::optional<F>>& optional_weights)
 {
     choose_detail::present_choices choices(optional_weights);
     if (choices.weights.empty())
@@ -206,36 +213,65 @@ std::optional<F> choose_P(int s, const std::vector<std::optional<F>>& optional_w
 
     auto compact_s = choices.compact_index(s);
     if (not compact_s)
-        return F(0.0);
+        return choice_probability_t<F>(0.0);
     return choose_P(*compact_s, choices.weights);
+}
+
+namespace choose_detail
+{
+// Return S[k] = weights[order[k+1]] + ... + weights[order.back()].
+// Construct every total from real candidates because ChoiceWeight has no
+// universal additive identity below every possible defect rank.
+template <typename Weight>
+std::vector<Weight> suffix_totals_after(const std::vector<Weight>& weights,
+                                        const std::vector<int>& order)
+{
+    assert(not weights.empty());
+    assert(weights.size() == order.size());
+
+    std::vector<Weight> reversed_totals;
+    reversed_totals.reserve(weights.size() - 1);
+    if (weights.size() == 1)
+        return reversed_totals;
+
+    Weight total = weights[order.back()];
+    reversed_totals.push_back(total);
+    for(int k = order.size() - 2; k > 0; k--)
+    {
+        total = total + weights[order[k]];
+        reversed_totals.push_back(total);
+    }
+    std::reverse(reversed_totals.begin(), reversed_totals.end());
+    return reversed_totals;
+}
 }
 
 template <typename F>
 inline int choose_MH(int i, const std::vector<F>& P) 
 {
     const int N = P.size();
+    assert(N > 0);
+    assert(i >= 0 and i < N);
+    using probability_type = choice_probability_t<F>;
 
     // Get the order of the probabilities
     std::vector<int> o = iota<int>(N);
     sequence_order<F> A(P);
     std::sort(o.begin(), o.end(), A);
 
-    // Compute sum of elements larger than the k-th smallest
-    std::vector<F> total_greater_than(N);
-    total_greater_than[N-1] = 0;
-    for(int k = N-2; k >= 0; k--)
-        total_greater_than[k] = total_greater_than[k+1] + P[o[k+1]];
+    // Compute sums of elements larger than the k-th smallest as weights.
+    auto total_greater_than = choose_detail::suffix_totals_after(P, o);
 
-    F U = uniform();
+    probability_type U = uniform();
 
-    F prod = 1;
-    F sum = 0;
+    probability_type prod = 1;
+    probability_type sum = 0;
     int I = -1;
     for(int k=0; k<N; k++)
     {
         if (o[k] == i) I=k;
 
-        F accept_k = 0;
+        probability_type accept_k = 0;
 
         if (I == -1) { // k<I
             accept_k = P[o[k]] / total_greater_than[k];   // MH
@@ -251,7 +287,12 @@ inline int choose_MH(int i, const std::vector<F>& P)
         else
             std::abort();
 
-        F Pr_k = prod * accept_k;
+        if constexpr (std::is_same_v<F, ChoiceWeight>)
+        {
+            assert(accept_k >= probability_type(0.0));
+            assert(accept_k <= probability_type(1.0));
+        }
+        probability_type Pr_k = prod * accept_k;
 
         sum += Pr_k;
         if (U <= sum) return o[k];
@@ -267,9 +308,13 @@ inline int choose_MH(int i, const std::vector<F>& P)
 }
 
 template <typename F>
-inline F choose_MH_P(int i, int j,const std::vector<F>& P) 
+inline choice_probability_t<F> choose_MH_P(int i, int j,const std::vector<F>& P)
 {
     const int N = P.size();
+    assert(N > 0);
+    assert(i >= 0 and i < N);
+    assert(j >= 0 and j < N);
+    using probability_type = choice_probability_t<F>;
 
     // Get the order of the probabilities
     std::vector<int> o = iota<int>(N);
@@ -278,19 +323,16 @@ inline F choose_MH_P(int i, int j,const std::vector<F>& P)
 
     //  if (i==j and o[N-1] != i) return 0;
 
-    // Compute sum of elements larger than the k-th smallest
-    std::vector<F> total_greater_than(N);
-    total_greater_than[N-1] = 0;
-    for(int k = N-2; k >= 0; k--)
-        total_greater_than[k] = total_greater_than[k+1] + P[o[k+1]];
+    // Compute sums of elements larger than the k-th smallest as weights.
+    auto total_greater_than = choose_detail::suffix_totals_after(P, o);
 
-    F prod = 1;
+    probability_type prod = 1;
     int I = -1;
     for(int k=0; k<N; k++)
     {
         if (o[k] == i) I=k;
 
-        F accept_k = 0;
+        probability_type accept_k = 0;
 
         if (I == -1) { // k<I
             accept_k = P[o[k]] / total_greater_than[k];   // MH
@@ -306,7 +348,12 @@ inline F choose_MH_P(int i, int j,const std::vector<F>& P)
         else
             std::abort();
 
-        F Pr_k = prod * accept_k;
+        if constexpr (std::is_same_v<F, ChoiceWeight>)
+        {
+            assert(accept_k >= probability_type(0.0));
+            assert(accept_k <= probability_type(1.0));
+        }
+        probability_type Pr_k = prod * accept_k;
 
         if (o[k] == j) return Pr_k;
 
@@ -335,7 +382,8 @@ inline std::optional<int> choose_MH(int i, const std::vector<std::optional<F>>& 
 // Match optional choose_MH exactly: an absent current entry is unavailable,
 // while an absent destination has transition probability zero.
 template <typename F>
-inline std::optional<F> choose_MH_P(int i, int j, const std::vector<std::optional<F>>& optional_weights)
+inline std::optional<choice_probability_t<F>>
+choose_MH_P(int i, int j, const std::vector<std::optional<F>>& optional_weights)
 {
     choose_detail::present_choices choices(optional_weights);
     auto compact_i = choices.compact_index(i);
@@ -344,7 +392,7 @@ inline std::optional<F> choose_MH_P(int i, int j, const std::vector<std::optiona
 
     auto compact_j = choices.compact_index(j);
     if (not compact_j)
-        return F(0.0);
+        return choice_probability_t<F>(0.0);
     return choose_MH_P(*compact_i, *compact_j, choices.weights);
 }
 

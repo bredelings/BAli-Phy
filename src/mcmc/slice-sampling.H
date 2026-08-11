@@ -155,7 +155,7 @@ struct node_time_slice_function: public context_slice_function
 /// A slice function for jointly sampling an alignment and its branch length or duration.
 struct alignment_branch_length_or_duration_slice_function: public context_slice_function
 {
-    ProbDensity alignment_sum_ratio_0;
+    std::optional<ProbDensity> alignment_sum_ratio_0;
     int b;
 
     ProbDensity operator()() {return context_slice_function::operator()();};
@@ -164,6 +164,8 @@ struct alignment_branch_length_or_duration_slice_function: public context_slice_
     void set_value(double);
 
     double current_value() const;
+
+    bool can_slice_sample() const override {return alignment_sum_ratio_0.has_value();}
 
     alignment_branch_length_or_duration_slice_function(Parameters&,int);
 };

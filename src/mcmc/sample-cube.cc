@@ -254,7 +254,7 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
     auto reverse_choice = choose_MH_P(C1, 0, tri2.Pr);
     if (not tri1.Pr[C1] or not tri2.Pr[0] or not forward_choice or not reverse_choice)
         return -1;
-    log_double_t ratio = *tri1.Pr[C1] * *forward_choice / (*tri2.Pr[0] * *reverse_choice);
+    log_double_t ratio = (*tri1.Pr[C1] / *tri2.Pr[0]) * *forward_choice / *reverse_choice;
 
 	ratio *= tri1.C1 / tri2.C1;
 

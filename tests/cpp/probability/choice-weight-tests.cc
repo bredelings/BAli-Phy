@@ -5,6 +5,7 @@
 #include <cmath>
 #include <limits>
 #include <optional>
+#include <type_traits>
 #include <vector>
 
 // Protect symbolic normalization rules that ordinary finite-weight tests cannot exercise.
@@ -84,6 +85,20 @@ namespace
         BALI_PHY_TEST_CHECK(dominated_by(weight(1, 3, 2, 1), weight(1, 2, 2, 1)));
     }
 
+    // ChoiceWeight multiplication combines independent symbolic factors, and
+    // its ordering reverses defect rank before comparing finite coefficients.
+    void check_weight_multiplication_and_order()
+    {
+        auto product = weight(2, 1, 2, 1) * weight(3, 4, 5, 2);
+        auto expected = weight(6, 5, 7, 3);
+        BALI_PHY_TEST_CHECK(product.rank() == expected.rank());
+        check_close(double(product / expected), 1.0);
+
+        BALI_PHY_TEST_CHECK(weight(1) > weight(100, 1));
+        BALI_PHY_TEST_CHECK(weight(3, 1) > weight(2, 1));
+        BALI_PHY_TEST_CHECK(weight(2, 1) == weight(2, 1));
+    }
+
     // Symbolic factors shared by every candidate must cancel during normalization.
     void check_common_symbolic_factors()
     {
@@ -140,6 +155,51 @@ namespace
         std::vector<ChoiceWeight> weights{weight(1, 2), weight(1), weight(1, 1)};
         for(int i = 0; i < 100; i++)
             BALI_PHY_TEST_CHECK(choose(weights) == 1);
+
+        std::vector<int> ordinary_choices;
+        myrand_init(81723);
+        for(int i = 0; i < 100; i++)
+            ordinary_choices.push_back(choose(std::vector<log_double_t>{2, 3}));
+
+        // Equal exceptional ranks use the same coefficient thresholds as an
+        // ordinary categorical draw, without first normalizing the stratum.
+        myrand_init(81723);
+        std::vector<ChoiceWeight> equal_rank{weight(2, 1), weight(3, 1)};
+        for(int i = 0; i < ordinary_choices.size(); i++)
+            BALI_PHY_TEST_CHECK(choose(equal_rank) == ordinary_choices[i]);
+    }
+
+    // Choice algorithms retain ChoiceWeight for weight arithmetic and project
+    // only their returned categorical or MH probabilities to log_double_t.
+    void check_choice_weight_probabilities()
+    {
+        std::vector<ChoiceWeight> finite{weight(2), weight(3)};
+        auto categorical_probability = choose_P(0, finite);
+        static_assert(std::is_same_v<decltype(categorical_probability), log_double_t>);
+        check_close(double(categorical_probability), 0.4);
+
+        std::vector<ChoiceWeight> exact_zeros{ChoiceWeight(0), ChoiceWeight(0)};
+        check_close(double(choose_P(0, exact_zeros)), 0.5);
+
+        auto forward = choose_MH_P(0, 1, finite);
+        auto reverse = choose_MH_P(1, 0, finite);
+        check_close(double(forward), 1.0);
+        check_close(double(reverse), 2.0 / 3.0);
+
+        std::vector<ChoiceWeight> exceptional{weight(2, 1), weight(3)};
+        BALI_PHY_TEST_CHECK(choose_MH(0, exceptional) == 1);
+        check_close(double(choose_MH_P(0, 1, exceptional)), 1.0);
+        check_close(double(choose_MH_P(1, 0, exceptional)), 0.0);
+
+        using optional_weight = std::optional<ChoiceWeight>;
+        std::vector<optional_weight> optional_weights{{}, weight(2, 1), weight(3, 1)};
+        auto optional_probability = choose_MH_P(1, 2, optional_weights);
+        static_assert(std::is_same_v<decltype(optional_probability),
+                                     std::optional<log_double_t>>);
+        BALI_PHY_TEST_CHECK(optional_probability);
+        check_close(double(*optional_probability), 1.0);
+        auto absent_destination = choose_MH_P(1, 0, optional_weights);
+        BALI_PHY_TEST_CHECK(absent_destination and *absent_destination == 0.0);
     }
 
     // Protect the distinction between unavailable choices and present zero
@@ -210,10 +270,12 @@ int main()
     check_finite_weights();
     check_zero_order_addition();
     check_density_rank_order();
+    check_weight_multiplication_and_order();
     check_common_symbolic_factors();
     check_sum_order_independence();
     check_division_projection();
     check_choice_ignores_dominated_weights();
+    check_choice_weight_probabilities();
     check_optional_choices();
     check_optional_MH_choices();
 }

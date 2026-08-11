@@ -33,6 +33,7 @@
 #include <vector>                  // for std::vector
 #include <optional>                // for std::optional
 #include "dp-engine.H"             // for DPengine
+#include "probability/choice-weight.H" // for ChoiceWeight
 #include "util/math/log-double.H"  // for log_double_t
 #ifndef NDEBUG_DP
 #include "models/parameters.H"
@@ -92,7 +93,7 @@ struct sample_A3_multi_calculation
     std::vector<log_double_t> rho;
     std::vector<std::vector<std::shared_ptr<DPengine> > > Matrices;
     std::vector<std::vector<bool>> sampled;
-    std::vector<std::optional<log_double_t>> Pr;
+    std::vector<std::optional<ChoiceWeight>> Pr;
     log_double_t C1;
     std::optional<int> bandwidth;
 

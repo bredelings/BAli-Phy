@@ -50,8 +50,9 @@ public:
 };
 
 // A probability density interpreted under DensityRank.  Addition supplies the
-// preferred-stratum sum needed by discrete choices, while division projects two
-// ranked densities to an ordinary relative weight.
+// preferred-stratum sum needed by discrete choices, multiplication combines
+// factors, and division projects two ranked densities to an ordinary relative
+// weight.
 class ChoiceWeight
 {
     ProbDensity weight_;
@@ -62,6 +63,33 @@ public:
 
     DensityRank rank() const {return DensityRank(weight_.log());}
     const ProbDensity& density() const {return weight_;}
+
+    // Choice weights are ordered by preference first and by their finite
+    // coefficient second.  DensityRank uses the opposite direction because a
+    // smaller defect rank is preferred and therefore represents more weight.
+    friend std::strong_ordering operator<=>(const ChoiceWeight& x, const ChoiceWeight& y)
+    {
+        assert(x.weight_.log().isvalid());
+        assert(y.weight_.log().isvalid());
+        auto rank_order = y.rank() <=> x.rank();
+        if (rank_order != 0)
+            return rank_order;
+
+        const double x_coefficient = x.weight_.log().ones();
+        const double y_coefficient = y.weight_.log().ones();
+        assert(std::isfinite(x_coefficient));
+        assert(std::isfinite(y_coefficient));
+        if (x_coefficient < y_coefficient)
+            return std::strong_ordering::less;
+        if (x_coefficient > y_coefficient)
+            return std::strong_ordering::greater;
+        return std::strong_ordering::equal;
+    }
+
+    friend bool operator==(const ChoiceWeight& x, const ChoiceWeight& y)
+    {
+        return (x <=> y) == 0;
+    }
 
     friend bool dominated_by(const ChoiceWeight& x, const ChoiceWeight& y)
     {
@@ -80,6 +108,13 @@ public:
         LogDensity total = x.weight_.log();
         total.ones() = logsum(x.weight_.log().ones(), y.weight_.log().ones());
         return ChoiceWeight(exp_to_log_space(total));
+    }
+
+    // Multiplication combines density factors.  In particular,
+    // ChoiceWeight(uniform()) * total supplies the threshold used by choose.
+    friend ChoiceWeight operator*(const ChoiceWeight& x, const ChoiceWeight& y)
+    {
+        return ChoiceWeight(x.weight_ * y.weight_);
     }
 
     // Project ranked densities to an ordinary relative weight: a dominated

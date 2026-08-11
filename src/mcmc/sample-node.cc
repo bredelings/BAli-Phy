@@ -172,7 +172,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     vector< vector< shared_ptr<DParrayConstrained> > > Matrices(p.size());
     vector<vector<bool>> sampled(p.size(), vector<bool>(p[0].n_data_partitions(), false));
 
-    vector<optional<log_double_t>> Pr(p.size());
+    vector<optional<ChoiceWeight>> Pr(p.size());
     for(int i=0;i<p.size();i++)
     {
         optional<log_double_t> joint_sampling_pr = 1.0;
@@ -201,7 +201,11 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
         }
 
         if (joint_sampling_pr and std::isfinite(joint_sampling_pr->log()))
-            Pr[i] = rho[i] * correction * log_double_t(p[i].heated_probability()) / *joint_sampling_pr;
+        {
+            ProbDensity weight = p[i].heated_probability();
+            weight *= rho[i] * correction / *joint_sampling_pr;
+            Pr[i] = ChoiceWeight(weight);
+        }
     }
 
     int C = -1;
@@ -211,7 +215,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 	    return -1;
 	C = *choice;
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<ChoiceWeight>& c)
     {
 	c.prepend(std::string(__PRETTY_FUNCTION__)+"\n");
 

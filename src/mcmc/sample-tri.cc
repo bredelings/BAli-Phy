@@ -303,11 +303,15 @@ optional<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int 
 	    if (not P[j].alignment_is_random())
 		throw myexception()<<"Partition "<<j+1<<": can't change the tree topology because the tree-alignment is fixed!\n  Consider adding --imodel=none or --fix=tree or removing --fix=alignment.";
 
-	    if (auto r = tri_sample_alignment_ratio(P[j], node1, node2, bandwidth))
-		ratio *= r.value();
+	    auto partition_ratio = tri_sample_alignment_ratio(P[j], node1, node2, bandwidth);
+	    if (not partition_ratio)
+		return {};
+	    ratio *= *partition_ratio;
 	}
     }
 
+    if (not std::isfinite(ratio.log()))
+        return {};
     return ratio;
 }
 
@@ -403,7 +407,9 @@ void sample_A3_multi_calculation::run_dp()
 
         if (joint_sampling_pr and std::isfinite(joint_sampling_pr->log()))
         {
-            Pr[i] = log_double_t(p[i].heated_probability()) * correction / *joint_sampling_pr;
+            ProbDensity weight = p[i].heated_probability();
+            weight *= correction / *joint_sampling_pr;
+            Pr[i] = ChoiceWeight(weight);
 
 #ifndef NDEBUG
             // A complete sampling probability means that every affected alignment was replaced;
@@ -430,7 +436,7 @@ void sample_A3_multi_calculation::set_proposal_probabilities(const vector<log_do
     {
 	rho[i] = r[i];
 	if (Pr[i])
-	    *Pr[i] *= rho[i];
+	    *Pr[i] = *Pr[i] * ChoiceWeight(ProbDensity(rho[i]));
     }
 }
 
@@ -445,7 +451,7 @@ int sample_A3_multi_calculation::choose(bool correct)
 	    return -1;
 	C = *choice;
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<ChoiceWeight>& c)
     {
 	c.prepend(std::string(__PRETTY_FUNCTION__)+"\n");
 
@@ -647,7 +653,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
     auto reverse_choice = choose_MH_P(C1, 0, tri2.Pr);
     if (not tri1.Pr[C1] or not tri2.Pr[0] or not forward_choice or not reverse_choice)
         return -1;
-    log_double_t ratio = *tri1.Pr[C1] * *forward_choice / (*tri2.Pr[0] * *reverse_choice);
+    log_double_t ratio = (*tri1.Pr[C1] / *tri2.Pr[0]) * *forward_choice / *reverse_choice;
 
 	ratio *= tri1.C1 / tri2.C1;
 

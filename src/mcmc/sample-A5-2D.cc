@@ -372,7 +372,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
             a123456[j] = A5::get_bitpath(p[0][j], order[0]);
         }
 
-    vector<optional<log_double_t>> Pr(p.size());
+    vector<optional<ChoiceWeight>> Pr(p.size());
 
     //----------- Generate the different states and Matrices ---------//
     log_double_t C1 = A5::correction(p[0],order[0]);
@@ -418,7 +418,11 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
         // Don't compute the probability if the alignment wasn't resampled!
         // Should we treat i=0 differently, since the old alignment is consistent?
         if (joint_sampling_pr and std::isfinite(joint_sampling_pr->log()))
-            Pr[i] = rho[i] * correction * log_double_t(p[i].heated_probability()) / *joint_sampling_pr;
+        {
+            ProbDensity weight = p[i].heated_probability();
+            weight *= rho[i] * correction / *joint_sampling_pr;
+            Pr[i] = ChoiceWeight(weight);
+        }
     }
 
     int C = -1;
@@ -428,7 +432,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
             return -1;
         C = *choice;
     }
-    catch (choose_exception<log_double_t>& c)
+    catch (choose_exception<ChoiceWeight>& c)
     {
         c.prepend(std::string(__PRETTY_FUNCTION__)+"\n");
 

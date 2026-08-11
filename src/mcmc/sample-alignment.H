@@ -9,6 +9,8 @@
 std::shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const TreeInterface&, const indel::PairHMM& hmm, int b, std::optional<int> bandwidth);
 std::pair<std::shared_ptr<DPmatrixSimple>,std::optional<log_double_t>> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b, std::optional<int> bandwidth);
 std::pair<std::shared_ptr<DPmatrixSimple>,std::optional<log_double_t>> sample_alignment_base(mutable_data_partition P, int b, std::optional<int> bandwidth);
-ProbDensity sample_alignment(Parameters& P, int b, bool initial_state_valid=true);
+// Successful partitions remain resampled even if another partition is unavailable;
+// absence means that no complete joint proposal correction can be returned.
+std::optional<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_state_valid=true);
 
 #endif
