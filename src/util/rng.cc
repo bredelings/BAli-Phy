@@ -98,6 +98,8 @@ int64_t myrandom(int64_t min, int64_t max) {
 }
 
 double log_unif() {
+    // This inverse-CDF sampler truncates the far tail at the precision of a
+    // double uniform; a variable-number-of-bits algorithm could represent it.
     return -std::exponential_distribution<>(1.0)(standard_rng);
 }
 

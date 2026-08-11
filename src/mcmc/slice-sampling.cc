@@ -23,6 +23,8 @@
 /// \brief This file implements classes and functions for uniform slice sampling.
 ///
 
+#include <cmath>
+#include <numeric>
 #include <tuple>
 #include <utility>
 #include "util/assert.hh"
@@ -60,7 +62,7 @@ void context_slice_function::set_context_density_ratio(ProbDensity ratio)
 
 optional<ProbDensity> context_slice_function::operator()(double x)
 {
-    if(not in_range(x)) return {}; 
+    if (not std::isfinite(x) or not in_range(x)) return {};
 
     count++;
 
@@ -190,7 +192,7 @@ node_time_slice_function::node_time_slice_function(Parameters& P,int n_)
 
 optional<ProbDensity> alignment_branch_length_slice_function::operator()(double x)
 {
-    if (not in_range(x)) return {};
+    if (not std::isfinite(x) or not in_range(x)) return {};
 
     count++;
 
@@ -469,20 +471,37 @@ bool inside_slice(const optional<ProbDensity>& candidate, const ProbDensity& sli
     auto ratio = slice_log_ratio(*candidate, slice_level);
     return ratio and *ratio >= 0;
 }
+
+// Draw a slice level without changing the starting exceptional rank.  Treat an
+// exceptional floating-point result as the boundary draw U=1.
+ProbDensity draw_slice_level(ProbDensity starting_density)
+{
+    double offset = exponential(1);
+    if (not std::isfinite(offset))
+        return starting_density;
+
+    ProbDensity candidate = starting_density;
+    candidate *= exp_to_log_space(-offset);
+    return candidate.log().isvalid() ? candidate : starting_density;
+}
 }
 
 std::pair<double,double> 
 find_slice_boundaries_stepping_out(double x0, slice_function& g, const ProbDensity& slice_level,
                                    double w, int m)
 {
-    assert(x0 + w > x0);
+    assert(std::isfinite(x0));
+    assert(std::isfinite(w) and w > 0);
+    assert(std::isfinite(x0 - w) and x0 - w < x0);
+    assert(std::isfinite(x0 + w) and x0 + w > x0);
     assert(g.in_range(x0));
 
     double u = uniform()*w;
     double L = x0 - u;
     double R = L + w;
-    assert(L < x0);
-    assert(x0 < R);
+    assert(std::isfinite(L) and std::isfinite(R));
+    assert(L < R);
+    assert(L <= x0 and x0 <= R);
 
     // Expand the interval until its ends are outside the slice, or until
     // the limit on steps is reached.
@@ -493,14 +512,18 @@ find_slice_boundaries_stepping_out(double x0, slice_function& g, const ProbDensi
 	int K = m-J;
 
 	while (J>0 and (not g.below_lower_bound(L)) and inside_slice(g(L), slice_level)) {
-	    L -= w;
+	    double L2 = L - w;
+	    if (not std::isfinite(L2) or not (L2 < L)) break;
+	    L = L2;
 	    J--;
 	    //      std::cerr<<" g("<<L<<") = "<<g()<<" >= "<<slice_level<<"\n";
 	    //      std::cerr<<"<-    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
 	}
 
 	while (K>0 and (not g.above_upper_bound(R)) and inside_slice(g(R), slice_level)) {
-	    R += w;
+	    double R2 = R + w;
+	    if (not std::isfinite(R2) or not (R < R2)) break;
+	    R = R2;
 	    K--;
 	    //      std::cerr<<" g("<<R<<") = "<<g()<<" >= "<<slice_level<<"\n";
 	    //      std::cerr<<"->    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
@@ -508,10 +531,18 @@ find_slice_boundaries_stepping_out(double x0, slice_function& g, const ProbDensi
     }
     else {
 	while ((not g.below_lower_bound(L)) and inside_slice(g(L), slice_level))
-	    L -= w;
+	{
+	    double L2 = L - w;
+	    if (not std::isfinite(L2) or not (L2 < L)) break;
+	    L = L2;
+	}
 
 	while ((not g.above_upper_bound(R)) and inside_slice(g(R), slice_level))
-	    R += w;
+	{
+	    double R2 = R + w;
+	    if (not std::isfinite(R2) or not (R < R2)) break;
+	    R = R2;
+	}
     }
 
 
@@ -535,14 +566,18 @@ std::tuple<double, double, optional<optional<ProbDensity>>, optional<optional<Pr
 find_slice_boundaries_doubling(double x0, slice_function& g, const ProbDensity& slice_level,
                                double w, int K)
 {
-    assert(x0 + w > x0);
+    assert(std::isfinite(x0));
+    assert(std::isfinite(w) and w > 0);
+    assert(std::isfinite(x0 - w) and x0 - w < x0);
+    assert(std::isfinite(x0 + w) and x0 + w > x0);
     assert(g.in_range(x0));
 
     double u = uniform()*w;
     double L = x0 - u;
     double R = L + w;
-    assert(L < x0);
-    assert(x0 < R);
+    assert(std::isfinite(L) and std::isfinite(R));
+    assert(L < R);
+    assert(L <= x0 and x0 <= R);
 
     optional<optional<ProbDensity>> gL_cached;
     auto gL = [&]() {
@@ -558,11 +593,17 @@ find_slice_boundaries_doubling(double x0, slice_function& g, const ProbDensity& 
         return *gR_cached;
     };
 
+    // Stop before doubling would make an endpoint or the interval width nonrepresentable.
     auto too_large = [](double L, double R, double w)
     {
-        double M = (L+R)/2;
+        if (not std::isfinite(L) or not std::isfinite(R) or not (L < R))
+            return true;
+
+        double M = std::midpoint(L, R);
         double W = R-L;
-        assert(W > 0);
+        if (not std::isfinite(W))
+            return true;
+
         bool ok = (L < M) and (M < R) and (W+w > W) and (L-w < L) and (R+w>R);
         return not ok;
     };
@@ -594,7 +635,7 @@ find_slice_boundaries_doubling(double x0, slice_function& g, const ProbDensity& 
     }
 
     assert(L < R);
-    assert( L < (L+R)/2 and (L+R)/2 < R);
+    assert(L < std::midpoint(L, R) and std::midpoint(L, R) < R);
 
     //  std::cerr<<"[]    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
 
@@ -611,6 +652,7 @@ double search_interval(double x0, double L, double R, slice_function& g,
     if (g.below_lower_bound(L)) L = *g.lower_bound;
     if (g.above_upper_bound(R)) R = *g.upper_bound;
 
+    assert(std::isfinite(L) and std::isfinite(R));
     //  assert(g(x0) > g(L) and g(x0) > g(R));
     assert(inside_slice(g(x0), slice_level));
     assert(L < R);
@@ -622,7 +664,14 @@ double search_interval(double x0, double L, double R, slice_function& g,
 	std::cerr<<"**    L0 = "<<L0<<"   x0 = "<<x0<<"   R0 = "<<R0<<std::endl;
     for(int i=0;i<100;i++)
     {
-	double x1 = L + uniform()*(R-L);
+	double x1 = std::lerp(L, R, uniform());
+	if (not std::isfinite(x1))
+	{
+	    if (log_verbose >= 2)
+		std::cerr<<"slice sampling: nonfinite trial coordinate; retaining the current state\n";
+	    g.reset();
+	    return x0;
+	}
 	auto gx1 = g(x1);
 	if (log_verbose >= 4)
 	    std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   x = "<<x1<<"  R  = "<<R<<"     g(x) = "<<gx1<<std::endl;
@@ -648,24 +697,47 @@ double search_interval(double x0, double L, double R, slice_function& g,
     return x0;
 }
 
-bool pre_slice_sampling_check_OK(double x0, slice_function& g)
+// Validate the recoverable state and numeric preconditions required by the
+// interval algorithms, while allowing any internally valid exceptional rank.
+bool pre_slice_sampling_check_OK(double x0, slice_function& g, double w)
 {
-    if (not g.can_slice_sample())
+    // Report one concise reason when a reachable state makes this kernel inapplicable.
+    auto decline = [](const char* reason)
     {
-        if (log_verbose >= 4) std::cerr<<"slice function cannot be sampled from its current state";
+        if (log_verbose >= 2)
+            std::cerr<<"slice sampling: "<<reason<<"; retaining the current state\n";
         return false;
-    }
+    };
+
+    if (not g.can_slice_sample())
+        return decline("slice function cannot be sampled from its current state");
+
+    if (not std::isfinite(x0))
+        return decline("starting coordinate is not finite");
+
+    if (not std::isfinite(w) or not (w > 0))
+        return decline("window is not finite and positive");
+
+    if (not std::isfinite(x0 - w) or not (x0 - w < x0) or
+        not std::isfinite(x0 + w) or not (x0 < x0 + w))
+        return decline("window cannot form a finite interval around the starting coordinate");
+
+    if ((g.lower_bound and std::isnan(*g.lower_bound)) or
+        (g.upper_bound and std::isnan(*g.upper_bound)))
+        return decline("range contains a NaN bound");
+
+    if (g.lower_bound and g.upper_bound and not (*g.lower_bound < *g.upper_bound))
+        return decline("range is empty or reversed");
 
     // If x is not in the range then this could be a range that is reduced to avoid loss of precision.
     if (not g.in_range(x0))
-    {
-        if (log_verbose >= 4) std::cerr<<x0<<" not in range!";
-        return false;
-    }
+        return decline("starting coordinate is outside the range");
 
     assert(g.in_range(x0));
 
     auto gx0 = g();
+    if (not gx0.log().isvalid())
+        return decline("starting density has invalid exceptional-value bookkeeping");
 
     bool check_reevaluation = log_verbose >= 4;
 #ifndef NDEBUG
@@ -675,11 +747,7 @@ bool pre_slice_sampling_check_OK(double x0, slice_function& g)
     {
         auto gx0_v2 = g(x0);
         if (not gx0_v2)
-        {
-            if (log_verbose >= 4)
-                std::cerr<<"slice_sampling: cannot reevaluate the starting density\n";
-            return false;
-        }
+            return decline("starting density cannot be reevaluated");
 
         auto difference = slice_log_ratio(gx0, *gx0_v2);
         if (not difference)
@@ -713,9 +781,9 @@ bool can_propose_same_interval_doubling(double x0, double x1, double w, double L
     };
 
     bool ok = true;
-    while (ok and R-L > 1.1*w)
+    while (ok and (R-L)/w > 1.1)
     {
-        double M = (R+L)/2;
+        double M = std::midpoint(L, R);
         assert( L < M and M < R);
 
         // Check if x0 and x1 are in different halves of the interval.
@@ -755,14 +823,16 @@ bool can_propose_same_interval_doubling(double x0, double x1, double w, double L
 double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
 {
     // 0. Check that the values are OK
-    if (not pre_slice_sampling_check_OK(x0, g))
+    if (not pre_slice_sampling_check_OK(x0, g, w))
+    {
+        g.reset();
         return x0;
+    }
 
     // 1. Determine the slice level.
     // The starting density defines the exceptional rank of this scalar slice.
     // Multiplication by a finite positive U changes only its coefficient.
-    ProbDensity slice_level = g();
-    slice_level *= exp_to_log_space(-exponential(1));
+    auto slice_level = draw_slice_level(g());
 
     // 2. Find the initial interval to sample from.
     auto [L,R] = find_slice_boundaries_stepping_out(x0, g, slice_level, w, m);
@@ -775,18 +845,13 @@ double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
 // Are we assuming that calling g sets the value?
 double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
 {
-    // 0. Check that the values are OK
-    if (not pre_slice_sampling_check_OK(x0, g))
-        return x0;
-
     if (log_verbose >= 4)
         std::cerr<<"slice_sampling_doubling_: x0 = "<<x0<<" w = "<<w<<" Pr(x0) = "<<g()<<"\n";
 
     // 1. Determine the slice level
     // The starting density defines the exceptional rank of this scalar slice.
     // Multiplication by a finite positive U changes only its coefficient.
-    ProbDensity slice_level = g();
-    slice_level *= exp_to_log_space(-exponential(1));
+    auto slice_level = draw_slice_level(g());
 
     // 2. Find the initial interval to sample from.
     auto [L,R,gL_cached,gR_cached] =
@@ -808,6 +873,11 @@ double slice_sample(double x0, slice_function& g,double w, int m)
 {
     try
     {
+        if (not pre_slice_sampling_check_OK(x0, g, w))
+        {
+            g.reset();
+            return x0;
+        }
         return slice_sample_doubling_(x0, g, w, m);
     }
     catch (variables_changed_exception& e)
