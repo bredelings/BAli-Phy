@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <vector>
 
 // Protect symbolic normalization rules that ordinary finite-weight tests cannot exercise.
@@ -140,6 +141,66 @@ namespace
         for(int i = 0; i < 100; i++)
             BALI_PHY_TEST_CHECK(choose(weights) == 1);
     }
+
+    // Protect the distinction between unavailable choices and present zero
+    // weights; this becomes redundant if choice availability moves into a view.
+    void check_optional_choices()
+    {
+        using optional_weight = std::optional<log_double_t>;
+
+        std::vector<optional_weight> weights{{}, log_double_t(2), {}, log_double_t(3)};
+        auto p0 = choose_P(0, weights);
+        auto p1 = choose_P(1, weights);
+        auto p3 = choose_P(3, weights);
+        BALI_PHY_TEST_CHECK(p0 and *p0 == 0.0);
+        BALI_PHY_TEST_CHECK(p1);
+        BALI_PHY_TEST_CHECK(p3);
+        check_close(double(*p1), 0.4);
+        check_close(double(*p3), 0.6);
+
+        myrand_init(930152);
+        for(int i = 0; i < 100; i++)
+        {
+            auto choice = ::choose(weights);
+            BALI_PHY_TEST_CHECK(choice and (*choice == 1 or *choice == 3));
+        }
+
+        std::vector<optional_weight> absent(3);
+        BALI_PHY_TEST_CHECK(not choose(absent));
+        BALI_PHY_TEST_CHECK(not choose_P(1, absent));
+        BALI_PHY_TEST_CHECK(not choose_MH(1, absent));
+        BALI_PHY_TEST_CHECK(not choose_MH_P(1, 2, absent));
+    }
+
+    // Optional MH choices must use the same compact indices for selection and
+    // transition probabilities; this becomes redundant with a shared choice view.
+    void check_optional_MH_choices()
+    {
+        using optional_weight = std::optional<log_double_t>;
+
+        std::vector<optional_weight> one_choice{{}, log_double_t(1), {}};
+        auto selected = choose_MH(1, one_choice);
+        BALI_PHY_TEST_CHECK(selected and *selected == 1);
+        BALI_PHY_TEST_CHECK(not choose_MH(0, one_choice));
+
+        auto absent_destination = choose_MH_P(1, 0, one_choice);
+        BALI_PHY_TEST_CHECK(absent_destination and *absent_destination == 0.0);
+        BALI_PHY_TEST_CHECK(not choose_MH_P(0, 1, one_choice));
+
+        // Unlike an absent current entry, a present zero-weight current can
+        // escape to an option with positive weight under the existing kernel.
+        std::vector<optional_weight> zero_current{log_double_t(0), log_double_t(1)};
+        selected = choose_MH(0, zero_current);
+        BALI_PHY_TEST_CHECK(selected and *selected == 1);
+        auto escape_probability = choose_MH_P(0, 1, zero_current);
+        BALI_PHY_TEST_CHECK(escape_probability and *escape_probability == 1.0);
+
+        std::vector<optional_weight> weights{{}, log_double_t(2), log_double_t(3)};
+        std::vector<log_double_t> compact{log_double_t(2), log_double_t(3)};
+        auto optional_probability = choose_MH_P(1, 2, weights);
+        BALI_PHY_TEST_CHECK(optional_probability);
+        BALI_PHY_TEST_CHECK(*optional_probability == choose_MH_P(0, 1, compact));
+    }
 }
 
 // Exercise the enduring algebraic invariants independently of an MCMC model.
@@ -153,4 +214,6 @@ int main()
     check_sum_order_independence();
     check_division_projection();
     check_choice_ignores_dominated_weights();
+    check_optional_choices();
+    check_optional_MH_choices();
 }

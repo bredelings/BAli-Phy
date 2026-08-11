@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <optional>
 #include "util/rng.H"
 #include "util/myexception.H"
 #include "util/range.H"
@@ -126,6 +127,61 @@ inline int choose(const std::vector<ChoiceWeight>& weights)
     return choose(choice_probabilities(weights));
 }
 
+namespace choose_detail
+{
+// Compact present optional choices while retaining enough information to
+// translate between the caller's indices and the ordinary choice interface.
+template <typename F>
+struct present_choices
+{
+    std::vector<int> original_indices;
+    std::vector<F> weights;
+    int original_size;
+
+    // Build the compact weight vector and its mapping back to caller indices.
+    explicit present_choices(const std::vector<std::optional<F>>& optional_weights)
+        :original_size(optional_weights.size())
+    {
+        original_indices.reserve(optional_weights.size());
+        weights.reserve(optional_weights.size());
+        for(int i = 0; i < optional_weights.size(); i++)
+            if (optional_weights[i])
+            {
+                original_indices.push_back(i);
+                weights.push_back(*optional_weights[i]);
+            }
+    }
+
+    // Return an original entry's compact index, or absence when that entry is unavailable.
+    std::optional<int> compact_index(int original_index) const
+    {
+        assert(original_index >= 0 and original_index < original_size);
+        for(int i = 0; i < original_indices.size(); i++)
+            if (original_indices[i] == original_index)
+                return i;
+        return {};
+    }
+
+    // Translate a compact choice back to the corresponding caller index.
+    int original_index(int compact_index) const
+    {
+        assert(compact_index >= 0 and compact_index < original_indices.size());
+        return original_indices[compact_index];
+    }
+};
+}
+
+// Choose among present entries and return the corresponding original index.
+// Absence is distinct from a present entry whose mathematical weight is zero.
+template <typename F>
+inline std::optional<int> choose(const std::vector<std::optional<F>>& optional_weights)
+{
+    choose_detail::present_choices choices(optional_weights);
+    if (choices.weights.empty())
+        return {};
+    return choices.original_index(choose(choices.weights));
+}
+
 template <typename F>
 F choose_P(int s,const std::vector<F>& P) {
     assert(s >= 0 and s < P.size());
@@ -137,6 +193,21 @@ F choose_P(int s,const std::vector<F>& P) {
     assert(sum > 0);
 
     return P[s]/sum;
+}
+
+// Compute a categorical probability on the same filtered set used by the
+// optional choose overload.  An absent destination has probability zero.
+template <typename F>
+std::optional<F> choose_P(int s, const std::vector<std::optional<F>>& optional_weights)
+{
+    choose_detail::present_choices choices(optional_weights);
+    if (choices.weights.empty())
+        return {};
+
+    auto compact_s = choices.compact_index(s);
+    if (not compact_s)
+        return F(0.0);
+    return choose_P(*compact_s, choices.weights);
 }
 
 template <typename F>
@@ -247,6 +318,34 @@ inline F choose_MH_P(int i, int j,const std::vector<F>& P)
     c.prepend(": \n");
     c.prepend(__PRETTY_FUNCTION__);
     throw c;
+}
+
+// Run choose_MH on present entries while retaining the caller's candidate
+// indices.  An absent current entry makes the operation unavailable.
+template <typename F>
+inline std::optional<int> choose_MH(int i, const std::vector<std::optional<F>>& optional_weights)
+{
+    choose_detail::present_choices choices(optional_weights);
+    auto compact_i = choices.compact_index(i);
+    if (not compact_i)
+        return {};
+    return choices.original_index(choose_MH(*compact_i, choices.weights));
+}
+
+// Match optional choose_MH exactly: an absent current entry is unavailable,
+// while an absent destination has transition probability zero.
+template <typename F>
+inline std::optional<F> choose_MH_P(int i, int j, const std::vector<std::optional<F>>& optional_weights)
+{
+    choose_detail::present_choices choices(optional_weights);
+    auto compact_i = choices.compact_index(i);
+    if (not compact_i)
+        return {};
+
+    auto compact_j = choices.compact_index(j);
+    if (not compact_j)
+        return F(0.0);
+    return choose_MH_P(*compact_i, *compact_j, choices.weights);
 }
 
 /// Select from choices [0,P.size-1] in proportion to the probabilities given, using pre-allocated scratch space.
