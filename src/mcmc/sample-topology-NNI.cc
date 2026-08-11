@@ -93,7 +93,7 @@ void NNI_inc(MoveStats& Stats, const string& name, MCMC::Result result,double L)
 
 ///Sample between 2 topologies, ignoring gap priors on each case
 
-int two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rho, int b) 
+optional<int> two_way_topology_sample(vector<Parameters>& p,const vector<log_double_t>& rho, int b)
 {
     vector< A5::hmm_order > orders(2);
     orders[0] = A5::get_nodes_random(p[0].t(), b);
@@ -173,9 +173,9 @@ void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
 	assert(v1 == v2);
     }
 
-    int C = -1;
+    optional<int> choice;
     try {
-	C = sample_A5_multi(p,orders,rho);
+	choice = sample_A5_multi(p,orders,rho);
     }
     catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
@@ -183,11 +183,12 @@ void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
 	throw c;
     }
 
-    if (C != -1) {
-	PP = p[C];
-    }
+    if (choice)
+	PP = p[*choice];
 
-    //  if (C == 1) std::cerr<<"MH-diff = "<<Pr2 - Pr1<<"\n";
+    bool changed = choice and *choice > 0;
+
+    //  if (choice and *choice == 1) std::cerr<<"MH-diff = "<<Pr2 - Pr1<<"\n";
 
     MCMC::Result result(2);
 
@@ -195,9 +196,9 @@ void two_way_topology_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
     if (PP.t().has_branch_lengths())
         L0 = PP.t().branch_length(b);
 
-    result.totals[0] = (C>0)?1:0;
+    result.totals[0] = changed ? 1 : 0;
     // This gives us the average length of branches prior to successful swaps
-    if (C>0)
+    if (changed)
 	result.totals[1] = L0;
     else
 	result.counts[1] = 0;
@@ -250,18 +251,18 @@ void two_way_NNI_SPR_sample(owned_ptr<context>& P, MoveStats& Stats, int b)
     vector<log_double_t> rho(2,1);
     rho[1] = LC/LAB;
 
-    int C = two_way_topology_sample(p,rho,b);
+    auto choice = two_way_topology_sample(p,rho,b);
 
-    if (C != -1) {
-	PP = p[C];
-    }
+    if (choice)
+	PP = p[*choice];
 
+    bool changed = choice and *choice > 0;
 
     MCMC::Result result(2);
 
-    result.totals[0] = (C>0)?1:0;
+    result.totals[0] = changed ? 1 : 0;
     // This gives us the average length of branches prior to successful swaps
-    if (C>0)
+    if (changed)
 	result.totals[1] = p[0].t().branch_length(b);
     else
 	result.counts[1] = 0;
@@ -332,17 +333,18 @@ void two_way_NNI_and_branches_sample(owned_ptr<context>& P, MoveStats& Stats, in
     rho[0] = 1.0;
     rho[1] = ratio;
 
-    int C = two_way_topology_sample(p,rho,b);
+    auto choice = two_way_topology_sample(p,rho,b);
 
-    if (C != -1) {
-	PP = p[C];
-    }
+    if (choice)
+	PP = p[*choice];
+
+    bool changed = choice and *choice > 0;
 
     MCMC::Result result(2);
 
-    result.totals[0] = (C>0)?1:0;
+    result.totals[0] = changed ? 1 : 0;
     // This gives us the average length of branches prior to successful swaps
-    if (C>0)
+    if (changed)
 	result.totals[1] = p[0].t().branch_length(b);
     else
 	result.counts[1] = 0;
@@ -504,17 +506,18 @@ void three_way_NNI_sample(Parameters& PP, MoveStats& Stats, int b, int b1, int b
     //------ Resample alignments and select topology -----//
 
     try {
-	int C = sample_A5_multi(p,orders,rho);
+	auto choice = sample_A5_multi(p,orders,rho);
 
-        if (C != -1) {
-            PP = p[C];
-        }
+        if (choice)
+            PP = p[*choice];
+
+        bool changed = choice and *choice > 0;
 
         MCMC::Result result(2);
 
-        result.totals[0] = (C>0)?1:0;
+        result.totals[0] = changed ? 1 : 0;
         // This gives us the average length of branches prior to successful swaps
-        if (C>0)
+        if (changed)
             result.totals[1] = L0;
         else
             result.counts[1] = 0;
@@ -556,17 +559,18 @@ void three_way_NNI_A4_sample(Parameters& PP, MoveStats& Stats, int b, int b1, in
     //------ Resample alignments and select topology -----//
 
     try {
-        int C = sample_A4_multi(p,orders,rho);
+        auto choice = sample_A4_multi(p,orders,rho);
 
-        if (C != -1) {
-            PP = p[C];
-        }
+        if (choice)
+            PP = p[*choice];
+
+        bool changed = choice and *choice > 0;
 
         MCMC::Result result(2);
 
-        result.totals[0] = (C>0)?1:0;
+        result.totals[0] = changed ? 1 : 0;
         // This gives us the average length of branches prior to successful swaps
-        if (C>0)
+        if (changed)
             result.totals[1] = L0;
         else
             result.counts[1] = 0;
@@ -718,9 +722,9 @@ void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats
 
     const vector<log_double_t> rho(3,1);
 
-    int C = -1;
+    optional<int> choice;
     try {
-	C = sample_A5_2D_multi(p, orders, rho, bandwidth);
+	choice = sample_A5_2D_multi(p, orders, rho, bandwidth);
     }
     catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
@@ -728,15 +732,16 @@ void three_way_topology_and_A5_2D_sample(owned_ptr<context>& P, MoveStats& Stats
 	throw c;
     }
 
-    if (C != -1) {
-	PP = p[C];
-    }
+    if (choice)
+	PP = p[*choice];
+
+    bool changed = choice and *choice > 0;
 
     MCMC::Result result(2);
 
-    result.totals[0] = (C>0)?1:0;
+    result.totals[0] = changed ? 1 : 0;
     // This gives us the average length of branches prior to successful swaps
-    if (C>0)
+    if (changed)
 	result.totals[1] = L0;
     else
 	result.counts[1] = 0;
@@ -781,9 +786,9 @@ void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats
 
     const vector<log_double_t> rho(3,1);
 
-    int C = -1;
+    optional<int> choice;
     try {
-	C = sample_tri_multi(p,nodes,rho);
+	choice = sample_tri_multi(p,nodes,rho);
     }
     catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
@@ -791,15 +796,16 @@ void three_way_topology_and_A3_2D_sample(owned_ptr<context>& P, MoveStats& Stats
 	throw c;
     }
 
-    if (C != -1) {
-	PP = p[C];
-    }
+    if (choice)
+	PP = p[*choice];
+
+    bool changed = choice and *choice > 0;
     
     MCMC::Result result(2);
     
-    result.totals[0] = (C>0)?1:0;
+    result.totals[0] = changed ? 1 : 0;
     // This gives us the average length of branches prior to successful swaps
-    if (C>0)
+    if (changed)
 	result.totals[1] = L0;
     else
 	result.counts[1] = 0;

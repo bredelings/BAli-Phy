@@ -313,13 +313,12 @@ void change_branch_length_and_T(owned_ptr<context>& P,MoveStats& Stats,int b)
 	rho[1] = ratio;
 
 	//------ Sample the Different Topologies ------//
-	int C = two_way_topology_sample(p,rho,b);
+	auto choice = two_way_topology_sample(p,rho,b);
 
-	if (C != -1) {
-	    PP = p[C];
-	}
+	if (choice)
+	    PP = p[*choice];
 
-	if (C > 0) {
+	if (choice and *choice > 0) {
 	    result.totals[0] = 1;
 	    result.totals[2] = 1;
 	    result.totals[4] = abs(length_or_duration - new_length_or_duration);

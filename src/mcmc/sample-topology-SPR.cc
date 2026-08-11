@@ -112,7 +112,7 @@ void SPR_inc(MoveStats& Stats, MCMC::Result result,const string& name,double L)
 	Stats.inc(name+"-2.0+", result);
 }
 
-int topology_sample_SPR(vector<Parameters>& p,const vector<log_double_t>& rho,int n1, int n2) 
+optional<int> topology_sample_SPR(vector<Parameters>& p,const vector<log_double_t>& rho,int n1, int n2)
 {
     assert(p.size() == 2);
     assert(p[0].variable_alignment() == p[1].variable_alignment());
@@ -474,19 +474,20 @@ MCMC::Result sample_SPR(Parameters& P, int b1, int b2)
 
     try
     {
-	// 6. ----- Choose * (C == -1) the original tree/alignment (C==-1)
-	//                 * (C ==  0) the original tree with a new alignment
-	//                 * (C ==  1) the      new tree with a new alignment
+	// 6. ----- Choose * nullopt if no state was selected
+	//                 * 0 for the original tree with a new alignment
+	//                 * 1 for the new tree with a new alignment
 
 	vector<log_double_t> rho = {1, split_proposal_ratio};
-	int C = sample_tri_multi(p, nodes, rho);
+	auto choice = sample_tri_multi(p, nodes, rho);
 	// 7. Move to the new configuration if chosen.
 
-	if (C != -1)  P = p[C];
+	if (choice)
+	    P = p[*choice];
 
 	// 8. Return statistics about how far we did (or didn't) move via SPR.
 
-	return SPR_stats(p[0].t(), p[1].t(), C>0, bins, b1);
+	return SPR_stats(p[0].t(), p[1].t(), choice and *choice > 0, bins, b1);
     }
     catch (choose_exception<Availability<ChoiceWeight>>& c)
     {
@@ -1248,25 +1249,25 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
     tri->set_proposal_probabilities(rho);
 
     //------------- Accept or reject the proposed topology -------------//
-    int C2 = tri->choose();
+    auto choice2 = tri->choose();
 
     // It used to be that, if the alignment is not variable, then we should always accept the proposal.
     // However, now that we're not including the branch-length priors and other priors, this can fail.
     //
-    // If the alignment is variable, then we might still choose C2==0 because of the
+    // If the alignment is variable, then we might still choose index 0 because of the
     // different node orders in sample_tri( ).
     if (not P.variable_alignment())
     {
-	// assert(C2 == 1);
+	// assert(choice2 == 1);
     }
 
     // If the move violates alignment constraints the we can't accept it.
-    if (C2 == -1) return false;
+    if (not choice2) return false;
 
     //---------------------- Update P based on choice ------------------//
-    P = p[C2];
+    P = p[*choice2];
   
-    return (C2 == 1);
+    return *choice2 == 1;
 }
 
 //

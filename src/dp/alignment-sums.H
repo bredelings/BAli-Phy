@@ -52,39 +52,39 @@ log_double_t other_prior(const data_partition& P, const std::vector<int>& nodes)
 
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_A4_multi(std::vector<Parameters>& p,const std::vector< A4::hmm_order >& orders,
-			   const std::vector<log_double_t>& rho);
+std::optional<int> sample_A4_multi(std::vector<Parameters>& p,const std::vector< A4::hmm_order >& orders,
+                                   const std::vector<log_double_t>& rho);
 
 Availability<log_double_t> sample_A4_ratio(std::vector<Parameters>& p,
                                            const std::vector<A4::hmm_order>& order,
                                            const std::vector<log_double_t>& rho);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_A5_multi(std::vector<Parameters>& p,const std::vector< A5::hmm_order >& orders,
-			   const std::vector<log_double_t>& rho);
+std::optional<int> sample_A5_multi(std::vector<Parameters>& p,const std::vector< A5::hmm_order >& orders,
+                                   const std::vector<log_double_t>& rho);
 
 Availability<log_double_t> sample_A5_ratio(std::vector<Parameters>& p,
                                            const std::vector<A5::hmm_order>& order,
                                            const std::vector<log_double_t>& rho);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		     const std::vector<log_double_t>& rho);
+std::optional<int> sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
+                                    const std::vector<log_double_t>& rho);
 
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		     const std::vector<log_double_t>& rho, std::optional<int> bandwidth);
+std::optional<int> sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
+                                    const std::vector<log_double_t>& rho, int bandwidth);
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
-int sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		      const std::vector<log_double_t>& rho);
+std::optional<int> sample_cube_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
+                                     const std::vector<log_double_t>& rho);
 
 Availability<log_double_t> sample_A5_2D_ratio(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order,
                                               const std::vector<log_double_t>& rho, std::optional<int> bandwidth);
 
-int sample_A5_2D_multi(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order_,
-                       const std::vector<log_double_t>& rho_, std::optional<int> bandwidth);
+std::optional<int> sample_A5_2D_multi(std::vector<Parameters>& p, const std::vector<A5::hmm_order>& order_,
+                                      const std::vector<log_double_t>& rho_, std::optional<int> bandwidth);
 
 Availability<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int node2,
                                                       std::optional<int> bandwidth = {});
@@ -112,7 +112,7 @@ struct sample_A3_multi_calculation
 
     void set_proposal_probabilities(const std::vector<log_double_t>&);
 
-    int choose(bool=true);
+    std::optional<int> choose(bool=true);
     virtual ~sample_A3_multi_calculation() {};
 };
 

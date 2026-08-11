@@ -294,8 +294,8 @@ Availability<log_double_t> sample_A5_ratio(vector<Parameters>& p, const vector<A
 
 
 ///(a[0],p[0]) is the point from which the proposal originates, and must be valid.
-int sample_A5_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
-			   const vector<log_double_t>& rho_)
+optional<int> sample_A5_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
+			      const vector<log_double_t>& rho_)
 {
     for(int i=1;i<p.size();i++)
 	for(int j=0;j<p[0].n_data_partitions();j++)
@@ -365,11 +365,11 @@ int sample_A5_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
         }
     }
 
-    int C = -1;
+    int C;
     try {
 	auto choice = choose_MH(0,Pr);
 	if (not choice)
-	    return -1;
+	    return {};
 	C = *choice;
     }
     catch (choose_exception<Availability<ChoiceWeight>>& c)
@@ -470,7 +470,7 @@ int sample_A5_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
     // if we reject the move, then don't do anything
     log_double_t C2 = A5::correction(p[C],order[C]);
     if (uniform() > double(C1/C2))
-	return -1;
+	return {};
 
     return C;
 }
@@ -485,9 +485,8 @@ void sample_A5(Parameters& P,int b)
 
     vector<log_double_t> rho(1,1);
 
-    int C = sample_A5_multi(p,order,rho);
+    auto choice = sample_A5_multi(p,order,rho);
 
-    if (C != -1) {
-	P = p[C];
-    }
+    if (choice)
+	P = p[*choice];
 }

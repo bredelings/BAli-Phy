@@ -143,8 +143,8 @@ sample_node_base(mutable_data_partition P,const vector<int>& nodes)
     return {Matrices, available(sampling_pr)};
 }
 
-int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
-		      const vector<log_double_t>& rho_)
+optional<int> sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
+		                const vector<log_double_t>& rho_)
 {
     vector<vector<int> > nodes = nodes_;
     vector<log_double_t> rho = rho_; 
@@ -159,7 +159,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     branches.push_back(p[i].t().find_branch(nodes[i][0],nodes[i][3]));
 
     if (any_branches_constrained(branches, p[i].t(), p[i].PC->TC, p[i].PC->AC))
-    return -1;
+    return {};
     }
     */
   
@@ -204,11 +204,11 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
         }
     }
 
-    int C = -1;
+    int C;
     try {
 	auto choice = choose_MH(0,Pr);
 	if (not choice)
-	    return -1;
+	    return {};
 	C = *choice;
     }
     catch (choose_exception<Availability<ChoiceWeight>>& c)
@@ -300,7 +300,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     //                     throw P0 away if we want to.
     log_double_t C2 = A3::correction(p[C],nodes[C]);
     if (uniform() > double(C1/C2))
-	return -1;
+	return {};
 
     return C;
 }
@@ -318,9 +318,8 @@ void sample_node(Parameters& P,int node)
 
     vector<log_double_t> rho(1,1);
 
-    int C = sample_node_multi(p,nodes,rho);
+    auto choice = sample_node_multi(p,nodes,rho);
 
-    if (C != -1) {
-	P = p[C];
-    }
+    if (choice)
+	P = p[*choice];
 }

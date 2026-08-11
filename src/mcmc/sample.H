@@ -71,7 +71,8 @@ void sample_A5(Parameters& P,int b);
 bool three_way_topology_sample(Parameters& P1,const Parameters& P2,const Parameters& P3,int b);
 
 /// Resample between 2 NNI topologies around branch b
-int two_way_topology_sample(std::vector<Parameters>& p,const std::vector<log_double_t>& rho,int b);
+std::optional<int> two_way_topology_sample(std::vector<Parameters>& p,
+                                           const std::vector<log_double_t>& rho, int b);
 
 
 /*-------------- Top Level Sampling Routines -----------*/

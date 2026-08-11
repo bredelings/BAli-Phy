@@ -189,8 +189,8 @@ sample_cube_multi_calculation::sample_cube_multi_calculation(vector<Parameters>&
 // Consider making into object! That would make it easier to mix
 // and match parts of the routine, while saving state.
 
-int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<log_double_t>& rho) 
+optional<int> sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
+		                const vector<log_double_t>& rho)
 {
     optional<int> bandwidth;
     if (setting_exists("simple_bandwidth"))
@@ -200,7 +200,7 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	sample_cube_multi_calculation tri(p, nodes, bandwidth);
 
 	// The DP matrix construction didn't work.
-	if (not tri.Pr[0]) return -1;
+	if (not tri.Pr[0]) return {};
 
 	tri.set_proposal_probabilities(rho);
 
@@ -208,12 +208,12 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_cube_multi!  Proceeding."<<std::endl;
-	return -1;
+	return {};
     }
 }
 
-int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<log_double_t>& rho, optional<int> bandwidth)
+optional<int> sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
+		                const vector<log_double_t>& rho, optional<int> bandwidth)
 {
     try {
 	vector<Parameters> p2 = p;
@@ -222,12 +222,13 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	sample_cube_multi_calculation tri1(p, nodes, bandwidth);
 
 	// The DP matrix construction didn't work.
-    if (not tri1.Pr[0]) return -1;
+	if (not tri1.Pr[0]) return {};
 
 	tri1.set_proposal_probabilities(rho);
 
-	int C1 = tri1.choose(false);
-	assert(C1 != -1);
+	auto choice1 = tri1.choose(false);
+	if (not choice1) return {};
+	int C1 = *choice1;
 
 	//----------------- Part 2: Backward -----------------//
 
@@ -246,14 +247,14 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	sample_cube_multi_calculation tri2(p2, nodes, bandwidth);
 
 	// The DP matrix construction didn't work.
-    if (not tri2.Pr[0]) return -1;
+	if (not tri2.Pr[0]) return {};
 
 	tri2.set_proposal_probabilities(rho);
 
     auto forward_choice = choose_MH_P(0, C1, tri1.Pr);
     auto reverse_choice = choose_MH_P(C1, 0, tri2.Pr);
     if (not tri1.Pr[C1] or not tri2.Pr[0] or not forward_choice or not reverse_choice)
-        return -1;
+        return {};
     log_double_t ratio = (*tri1.Pr[C1] / *tri2.Pr[0]) * *forward_choice / *reverse_choice;
 
 	ratio *= tri1.C1 / tri2.C1;
@@ -261,11 +262,11 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	if (uniform() < double(ratio))
 	    return C1;
 	else
-	    return -1;
+	    return {};
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_cube_multi!  Proceeding."<<std::endl;
-	return -1;
+	return {};
     }
 }
 
@@ -284,15 +285,14 @@ void cube_sample_alignment(Parameters& P,int node1,int node2)
 
     vector<log_double_t> rho(1,1);
 
-    int C = -1;
+    optional<int> choice;
     if (bandwidth >= 0)
-	C = sample_cube_multi(p,nodes,rho, bandwidth);
+	choice = sample_cube_multi(p,nodes,rho, bandwidth);
     else
-	C = sample_cube_multi(p,nodes,rho);
+	choice = sample_cube_multi(p,nodes,rho);
 
-    if (C != -1) {
-	P = p[C];
-    }
+    if (choice)
+	P = p[*choice];
 }
 
 /// Resample branch alignment, internal nodes, and branch length
@@ -314,13 +314,12 @@ bool cube_sample_alignment_branch(Parameters& P,
     rho[0] = 1;
     rho[1] = rho_;
 
-    int C = sample_cube_multi(p,nodes,rho);
+    auto choice = sample_cube_multi(p,nodes,rho);
 
-    if (C != -1) {
-	P = p[C];
-    }
+    if (choice)
+	P = p[*choice];
 
-    return (C > 0);
+    return choice and *choice > 0;
 }
 
 bool cube_sample_alignment_and_parameter(Parameters& P, int node1,int node2, const Proposal& propose)
@@ -332,13 +331,12 @@ bool cube_sample_alignment_and_parameter(Parameters& P, int node1,int node2, con
 
     auto rho = propose(p[1]);
 
-    int C = sample_cube_multi(p, nodes, {1.0, rho});
+    auto choice = sample_cube_multi(p, nodes, {1.0, rho});
 
-    if (C != -1) {
-	P = p[C];
-    }
+    if (choice)
+	P = p[*choice];
 
-    return (C > 0);
+    return choice and *choice > 0;
 }
 
 
@@ -355,11 +353,10 @@ bool cube_sample_alignment_branch_model(Parameters& P,int node1,int node2)
 
     vector<log_double_t> rho(2,1.0);
 
-    int C = sample_cube_multi(p,nodes,rho);
+    auto choice = sample_cube_multi(p,nodes,rho);
 
-    if (C != -1) {
-	P = p[C];
-    }
+    if (choice)
+	P = p[*choice];
 
-    return (C > 0);
+    return choice and *choice > 0;
 }

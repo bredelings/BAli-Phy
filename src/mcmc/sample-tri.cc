@@ -438,15 +438,15 @@ void sample_A3_multi_calculation::set_proposal_probabilities(const vector<log_do
     }
 }
 
-int sample_A3_multi_calculation::choose(bool correct)
+optional<int> sample_A3_multi_calculation::choose(bool correct)
 {
     assert(p.size() == nodes.size());
 
-    int C = -1;
+    int C;
     try {
 	auto choice = choose_MH(0,Pr);
 	if (not choice)
-	    return -1;
+	    return {};
 	C = *choice;
     }
     catch (choose_exception<Availability<ChoiceWeight>>& c)
@@ -460,7 +460,7 @@ int sample_A3_multi_calculation::choose(bool correct)
     }
 
     // \todo What do we do if partition 0 works, but other partitions fail cuz of constraints?
-    assert(C == -1 or Pr[C]);
+    assert(Pr[C]);
 
 #ifndef NDEBUG_DP
     if (log_verbose >= 4) std::cerr<<"choice = "<<C<<endl;
@@ -552,7 +552,7 @@ int sample_A3_multi_calculation::choose(bool correct)
     log_double_t C2 = A3::correction(p[C],nodes[C]);
     // If we reject the proposed move, then don't do anything.
     if (correct and uniform() > double(C1/C2))
-	return -1;
+	return {};
 
     return C;
 }
@@ -570,8 +570,8 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
 // Consider making into object! That would make it easier to mix
 // and match parts of the routine, while saving state.
 
-int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<log_double_t>& rho) 
+optional<int> sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
+		               const vector<log_double_t>& rho)
 {
     optional<int> bandwidth;
     if (setting_exists("simple_bandwidth"))
@@ -586,7 +586,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	tri->run_dp();
 
 	// The DP matrix construction didn't work.
-	if (not tri->Pr[0]) return -1;
+	if (not tri->Pr[0]) return {};
 
 	tri->set_proposal_probabilities(rho);
 
@@ -594,7 +594,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_tri_multi!  Proceeding."<<std::endl;
-	return -1;
+	return {};
     }
 }
 
@@ -606,8 +606,8 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
  *       bandwidth around the old path.
  */
 
-int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<log_double_t>& rho, int bandwidth) 
+optional<int> sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
+		               const vector<log_double_t>& rho, int bandwidth)
 {
     assert(bandwidth >= 0);
     try {
@@ -618,12 +618,13 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	tri1.run_dp();
 
 	// The DP matrix construction didn't work.
-    if (not tri1.Pr[0]) return -1;
+	if (not tri1.Pr[0]) return {};
 
 	tri1.set_proposal_probabilities(rho);
 
-	int C1 = tri1.choose(false);
-	assert(C1 != -1);
+	auto choice1 = tri1.choose(false);
+	if (not choice1) return {};
+	int C1 = *choice1;
 
 	//----------------- Part 2: Backward -----------------//
 
@@ -643,14 +644,14 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	tri2.run_dp();
 
 	// The DP matrix construction didn't work.
-    if (not tri2.Pr[0]) return -1;
+	if (not tri2.Pr[0]) return {};
 
 	tri2.set_proposal_probabilities(rho);
 
     auto forward_choice = choose_MH_P(0, C1, tri1.Pr);
     auto reverse_choice = choose_MH_P(C1, 0, tri2.Pr);
     if (not tri1.Pr[C1] or not tri2.Pr[0] or not forward_choice or not reverse_choice)
-        return -1;
+        return {};
     log_double_t ratio = (*tri1.Pr[C1] / *tri2.Pr[0]) * *forward_choice / *reverse_choice;
 
 	ratio *= tri1.C1 / tri2.C1;
@@ -658,11 +659,11 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	if (uniform() < double(ratio))
 	    return C1;
 	else
-	    return -1;
+	    return {};
     }
     catch (std::bad_alloc&) {
 	std::cerr<<"Allocation failed in sample_tri_multi!  Proceeding."<<std::endl;
-	return -1;
+	return {};
     }
 }
 
@@ -679,12 +680,10 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
 
     vector<log_double_t> rho(1,1);
 
-    int C = -1;
-    C = sample_tri_multi(p,nodes,rho);
+    auto choice = sample_tri_multi(p,nodes,rho);
 
-    if (C != -1) {
-	P = p[C];
-    }
+    if (choice)
+	P = p[*choice];
 
     // Ensure that the program is executed.
     P.evaluate_program();
@@ -709,13 +708,12 @@ bool tri_sample_alignment_branch(Parameters& P,
     rho[0] = 1;
     rho[1] = rho_;
 
-    int C = sample_tri_multi(p,nodes,rho);
+    auto choice = sample_tri_multi(p,nodes,rho);
 
-    if (C != -1) {
-	P = p[C];
-    }
+    if (choice)
+	P = p[*choice];
 
-    return (C > 0);
+    return choice and *choice > 0;
 }
 
 bool tri_sample_alignment_and_parameter(Parameters& P, int node1,int node2, const Proposal& propose)
@@ -727,13 +725,12 @@ bool tri_sample_alignment_and_parameter(Parameters& P, int node1,int node2, cons
 
     auto rho = propose(p[1]);
 
-    int C = sample_tri_multi(p, nodes, {1.0, rho});
+    auto choice = sample_tri_multi(p, nodes, {1.0, rho});
 
-    if (C != -1) {
-	P = p[C];
-    }
+    if (choice)
+	P = p[*choice];
 
-    return (C > 0);
+    return choice and *choice > 0;
 }
 
 
@@ -750,11 +747,10 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
 
     vector<log_double_t> rho(2,1.0);
 
-    int C = sample_tri_multi(p,nodes,rho);
+    auto choice = sample_tri_multi(p,nodes,rho);
 
-    if (C != -1) {
-	P = p[C];
-    }
+    if (choice)
+	P = p[*choice];
 
-    return (C > 0);
+    return choice and *choice > 0;
 }
