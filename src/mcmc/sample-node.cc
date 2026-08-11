@@ -48,11 +48,12 @@ using std::abs;
 using std::vector;
 using std::endl;
 using std::pair;
+using std::optional;
 
 using boost::dynamic_bitset;
 using std::shared_ptr;
 
-pair<shared_ptr<DParrayConstrained>, log_double_t>
+pair<shared_ptr<DParrayConstrained>, optional<log_double_t>>
 sample_node_base(mutable_data_partition P,const vector<int>& nodes)
 {
     assert(P.variable_alignment());
@@ -120,18 +121,24 @@ sample_node_base(mutable_data_partition P,const vector<int>& nodes)
     if (not path_g)
     {
 	if (log_verbose > 0) std::cerr<<"sample_node_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
-	return {Matrices, 0};
+	return {Matrices, {}};
     }
 
     vector<int> path = Matrices->ungeneralize(*path_g);
+
+    // This is the probability of choosing the concrete path after generalization.
+    auto sampling_pr = Matrices->path_P(*path_g) * Matrices->generalize_P(path);
+    if (not std::isfinite(sampling_pr.log()))
+    {
+        if (log_verbose > 0)
+            std::cerr<<"sample_node_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
+        return {Matrices, {}};
+    }
 
     for(int i=0;i<3;i++) {
 	int b = P.t().find_branch(nodes[0],nodes[i+1]);
 	P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
     }
-
-    // What is the probability that we choose the specific alignment that we did?
-    auto sampling_pr = Matrices->path_P(*path_g)* Matrices->generalize_P(path);
 
     return {Matrices,sampling_pr};
 }
@@ -163,11 +170,13 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 #endif
 
     vector< vector< shared_ptr<DParrayConstrained> > > Matrices(p.size());
+    vector<vector<bool>> sampled(p.size(), vector<bool>(p[0].n_data_partitions(), false));
 
-    vector<log_double_t> Pr(p.size());
+    vector<optional<log_double_t>> Pr(p.size());
     for(int i=0;i<p.size();i++)
     {
-        Pr[i] = rho[i];
+        optional<log_double_t> joint_sampling_pr = 1.0;
+        log_double_t correction = 1.0;
 
 #ifndef NDEBUG_DP
         Matrices[i].resize( p[i].n_data_partitions() );
@@ -177,25 +186,30 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 	    if (p[i][j].variable_alignment())
             {
                 auto [M, sampling_pr] = sample_node_base(p[i][j],nodes[i]);
-                Pr[i] /= sampling_pr;
-                Pr[i] *= A3::correction(p[i][j], nodes[i]);
+                sampled[i][j] = sampling_pr.has_value();
+                if (sampling_pr and joint_sampling_pr)
+                    *joint_sampling_pr *= *sampling_pr;
+                else
+                    joint_sampling_pr = {};
+                if (not sampling_pr)
+                    continue;
+                correction *= A3::correction(p[i][j], nodes[i]);
 #ifndef NDEBUG_DP
 		Matrices[i][j] = M;
 #endif
             }
         }
 
-        Pr[i] *= (log_double_t)p[i].heated_probability();
+        if (joint_sampling_pr and std::isfinite(joint_sampling_pr->log()))
+            Pr[i] = rho[i] * correction * log_double_t(p[i].heated_probability()) / *joint_sampling_pr;
     }
-
-    assert(Pr[0] > 0.0);
-
-    // Fail if Pr[0] is 0
-    if (Pr[0] <= 0.0) return -1;
 
     int C = -1;
     try {
-	C = choose_MH(0,Pr);
+	auto choice = choose_MH(0,Pr);
+	if (not choice)
+	    return -1;
+	C = *choice;
     }
     catch (choose_exception<log_double_t>& c)
     {
@@ -207,7 +221,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 	throw c;
     }
 
-    assert(Pr[C] > 0.0);
+    assert(Pr[C]);
 
 #ifndef NDEBUG_DP
     if (log_verbose >= 4) std::cerr<<"choice = "<<C<<endl;
@@ -219,13 +233,14 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     nodes.push_back(nodes[0]);
     rho.push_back( rho[0] );
     Matrices.push_back( Matrices[0] );
+    sampled.push_back(sampled[0]);
 
     vector< vector< vector<int> > > paths(p.size());
 
     //------------------- Check offsets from path_Q -> P -----------------//
     for(int i=0;i<p.size();i++) 
 	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment())
+	    if (p[i][j].variable_alignment() and (i >= Pr.size() or Pr[i]) and sampled[i][j])
 	    {
 		paths[i].push_back( get_path_unique(A3::get_bitpath(p[i][j], nodes[i]), *Matrices[i][j] ) );
 	
@@ -244,7 +259,17 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     {
 	log_double_t choice_ratio = 1;
 	if (i > 0 and i<Pr.size())
-	    choice_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
+	{
+	    auto forward = choose_MH_P(0, i, Pr);
+	    auto reverse = choose_MH_P(i, 0, Pr);
+	    if (not forward or not reverse or *reverse == 0.0)
+	    {
+		PR[i] = vector<log_double_t>(4, 1);
+		PR[i][0] = 0;
+		continue;
+	    }
+	    choice_ratio = *forward / *reverse;
+	}
 	else
 	    choice_ratio = 1;
     
@@ -256,7 +281,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 	PR[i][2] = rho[i];
 	PR[i][3] = choice_ratio;
 	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment())
+	    if (p[i][j].variable_alignment() and (i >= Pr.size() or Pr[i]) and sampled[i][j])
 	    {
 		vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
 		PR[i][0] *= A3::correction(p[i][j],nodes[i]);

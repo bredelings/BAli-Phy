@@ -57,7 +57,7 @@ using std::optional;
 using std::shared_ptr;
 using boost::dynamic_bitset;
 
-pair<shared_ptr<DPmatrixConstrained>,log_double_t>
+pair<shared_ptr<DPmatrixConstrained>,optional<log_double_t>>
 tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, const vector<HMM::bitmask_t>& a23,
 			  optional<int> bandwidth)
 {
@@ -183,18 +183,24 @@ tri_sample_alignment_base(mutable_data_partition P, const vector<int>& nodes, co
     if (not path_g)
     {
 	if (log_verbose > 0) std::cerr<<"tri_sample_alignment_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
-	return {Matrices, 0};
+	return {Matrices, {}};
     }
 
     vector<int> path = Matrices->ungeneralize(*path_g);
+
+    // This is the probability of choosing the concrete path after generalization.
+    auto sampling_pr = Matrices->path_P(*path_g) * Matrices->generalize_P(path);
+    if (not std::isfinite(sampling_pr.log()))
+    {
+        if (log_verbose > 0)
+            std::cerr<<"tri_sample_alignment_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
+        return {Matrices, {}};
+    }
 
     for(int i=0;i<3;i++) {
 	int b = t.find_branch(nodes[0],nodes[i+1]);
 	P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
     }
-
-    // What is the probability that we choose the specific alignment that we did?
-    auto sampling_pr = Matrices->path_P(*path_g)* Matrices->generalize_P(path);
 
     return {Matrices,sampling_pr};
 }
@@ -227,7 +233,7 @@ vector<optional<vector<HMM::bitmask_t>>> A23_constraints(const Parameters& P, co
     return a23;
 }
 
-pair<shared_ptr<DPmatrixConstrained>,log_double_t>
+pair<shared_ptr<DPmatrixConstrained>,optional<log_double_t>>
 tri_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 			  const vector<int>& nodes, const vector<int>& nodes0,
 			  optional<int> bandwidth)
@@ -274,18 +280,17 @@ optional<log_double_t> tri_sample_alignment_ratio(mutable_data_partition P, int 
 
     auto [M, forward_sample_pr] = tri_sample_alignment_base(P, nodes, a23, bandwidth);
 
-    if (M->Pr_sum_all_paths() > 0)
-    {
-	auto path0 = get_path_unique(bitpath0, *M);
+    if (not forward_sample_pr)
+        return {};
 
-	auto path0_g = M->generalize(path0);
+    auto path0 = get_path_unique(bitpath0, *M);
+    auto path0_g = M->generalize(path0);
+    auto reverse_sample_pr = M->path_P(path0_g) * M->generalize_P(path0);
 
-	auto reverse_sample_pr = M->path_P(path0_g) * M->generalize_P(path0);
-
-	return (reverse_sample_pr / forward_sample_pr);
-    }
-    else
-	return {};
+    auto ratio = reverse_sample_pr / *forward_sample_pr;
+    if (std::isfinite(ratio.log()))
+        return ratio;
+    return {};
 }
 
 optional<log_double_t> tri_sample_alignment_ratio(Parameters& P, int node1, int node2, optional<int> bandwidth)
@@ -316,6 +321,7 @@ sample_A3_multi_calculation::sample_A3_multi_calculation(vector<Parameters>& pp,
 #endif
     nodes(nodes_),
     Matrices(p.size()),
+    sampled(p.size(), vector<bool>(p[0].n_data_partitions(), false)),
     Pr(p.size()),
     bandwidth(b)
 {
@@ -329,21 +335,23 @@ optional<log_double_t> pr_sum_out_A_tri(Parameters& P, const vector<optional<vec
     for(int j=0;j<P.n_data_partitions();j++)
     {
 	if (P[j].variable_alignment())
-        {
+	{
             // This computes the sampling probability of the CHOSEN path, not the INPUT path!
 	    auto [M, sampling_pr] = tri_sample_alignment_base(P[j], nodes, *a23[j], {});
-            if (M->Pr_sum_all_paths() <= 0.0)
+            if (not sampling_pr)
             {
-                std::cerr<<"pr_sum_out_A_tri: Pr = 0   j="<<j<<" \n";
+                std::cerr<<"pr_sum_out_A_tri: sampling is unavailable for partition "<<j<<"\n";
                 return {};
             }
 
-	    Pr *= sampling_pr;
+	    Pr *= *sampling_pr;
             Pr /= A3::correction(P[j], nodes);
             // FIXME! These sums still need to be accepted/rejected!
         }
     }
 
+    if (not std::isfinite(Pr.log()))
+        return {};
     return Pr;
 }
 
@@ -369,12 +377,12 @@ void sample_A3_multi_calculation::run_dp()
 
     for(int i=0;i<p.size();i++) 
     {
-        Pr[i] = 1.0;
+        optional<log_double_t> joint_sampling_pr = 1.0;
+        log_double_t correction = 1.0;
 
 #ifndef NDEBUG
 	Matrices[i].resize(p[i].n_data_partitions());
 #endif
-        bool ok = true;
 	for(int j=0;j<p[i].n_data_partitions();j++) {
 	    if (p[i][j].variable_alignment())
             {
@@ -382,29 +390,37 @@ void sample_A3_multi_calculation::run_dp()
 #ifndef NDEBUG
 		Matrices[i][j] = M;
 #endif
-		if (M->Pr_sum_all_paths() <= 0.0)
-                {
-		    std::cerr<<"sample-tri: Pr = 0   i = "<<i<<"   j="<<j<<" \n";
-                    ok = false;
-
-                    // Make sure to set all the Matrices[i][j] to something non-NULL.
-                    continue;
-                }
-
-                Pr[i] /= sampling_pr;
-                Pr[i] *= A3::correction(p[i][j], nodes[i]);
+		sampled[i][j] = sampling_pr.has_value();
+		if (sampling_pr and joint_sampling_pr)
+		    *joint_sampling_pr *= *sampling_pr;
+		else
+		    joint_sampling_pr = {};
+		if (not sampling_pr)
+		    continue;
+		correction *= A3::correction(p[i][j], nodes[i]);
             }
 	}
 
-        // Don't compute the probability if the alignment wasn't resampled!
-        // Should we treat i=0 differently, since the old alignment is consistent?
-        if (ok)
-            Pr[i] *= (log_double_t)p[i].heated_probability();
-        else
-            Pr[i] = 0;
-    }
+        if (joint_sampling_pr and std::isfinite(joint_sampling_pr->log()))
+        {
+            Pr[i] = log_double_t(p[i].heated_probability()) * correction / *joint_sampling_pr;
 
-    assert(Pr[0] > 0.0);
+#ifndef NDEBUG
+            // A complete sampling probability means that every affected alignment was replaced;
+            // verify the resulting candidate before its availability is hidden by the choice API.
+            for(int j=0;j<p[i].n_data_partitions();j++)
+                if (p[i][j].has_pairwise_alignments())
+                    for(int b: p[i].t().directed_branches())
+                    {
+                        auto A = p[i][j].get_pairwise_alignment(b);
+                        int n1 = p[i].t().source(b);
+                        int n2 = p[i].t().target(b);
+                        assert(A.length1() == p[i][j].seqlength(n1));
+                        assert(A.length2() == p[i][j].seqlength(n2));
+                    }
+#endif
+        }
+    }
 }
 
 void sample_A3_multi_calculation::set_proposal_probabilities(const vector<log_double_t>& r)
@@ -413,21 +429,21 @@ void sample_A3_multi_calculation::set_proposal_probabilities(const vector<log_do
     for(int i=0;i<Pr.size();i++) 
     {
 	rho[i] = r[i];
-	Pr[i] *= rho[i];
+	if (Pr[i])
+	    *Pr[i] *= rho[i];
     }
-
-    assert(Pr[0] > 0.0);
 }
 
 int sample_A3_multi_calculation::choose(bool correct)
 {
     assert(p.size() == nodes.size());
 
-    if (Pr[0] <= 0.0) return -1;
-
     int C = -1;
     try {
-	C = choose_MH(0,Pr);
+	auto choice = choose_MH(0,Pr);
+	if (not choice)
+	    return -1;
+	C = *choice;
     }
     catch (choose_exception<log_double_t>& c)
     {
@@ -440,7 +456,7 @@ int sample_A3_multi_calculation::choose(bool correct)
     }
 
     // \todo What do we do if partition 0 works, but other partitions fail cuz of constraints?
-    assert(C == -1 or Pr[C] > 0.0);
+    assert(C == -1 or Pr[C]);
 
 #ifndef NDEBUG_DP
     if (log_verbose >= 4) std::cerr<<"choice = "<<C<<endl;
@@ -452,6 +468,7 @@ int sample_A3_multi_calculation::choose(bool correct)
     nodes.push_back(nodes[0]);
     rho.push_back( rho[0] );
     Matrices.push_back( Matrices[0] );
+    sampled.push_back(sampled[0]);
 
     vector< vector< vector<int> > > paths(p.size());
 
@@ -461,17 +478,13 @@ int sample_A3_multi_calculation::choose(bool correct)
     //------------------- Check offsets from path_Q -> P -----------------//
     for(int i=0;i<p.size();i++) 
     {
-	// check whether this arrangement violates a constraint in any partition
-	bool ok = true;
-	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
-		ok = false;
+	bool ok = i >= Pr.size() or Pr[i].has_value();
 
 	if (not ok)
 	    assert(i != 0 and i != p.size()-1);
 
 	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment() and ok)
+	    if (p[i][j].variable_alignment() and ok and sampled[i][j])
 	    {
 		paths[i].push_back( get_path_unique(A3::get_bitpath(p[i][j],nodes[i]),*Matrices[i][j]) );
 	  
@@ -489,11 +502,7 @@ int sample_A3_multi_calculation::choose(bool correct)
 
     for(int i=0;i<p.size();i++)
     {
-	// check whether this arrangement violates a constraint in any partition
-	bool ok = true;
-	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0) 
-		ok = false;
+	bool ok = i >= Pr.size() or Pr[i].has_value();
 
 	if (not ok) {
 	    PR[i][0] = 0;
@@ -503,7 +512,16 @@ int sample_A3_multi_calculation::choose(bool correct)
 
 	log_double_t choice_ratio = 1;
 	if (i > 0 and i<Pr.size())
-	    choice_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
+	{
+	    auto forward = choose_MH_P(0, i, Pr);
+	    auto reverse = choose_MH_P(i, 0, Pr);
+	    if (not forward or not reverse or *reverse == 0.0)
+	    {
+		PR[i][0] = 0;
+		continue;
+	    }
+	    choice_ratio = *forward / *reverse;
+	}
 	else
 	    choice_ratio = 1;
 
@@ -512,7 +530,7 @@ int sample_A3_multi_calculation::choose(bool correct)
 	PR[i][2] = rho[i];
 	PR[i][3] = choice_ratio;
 	for(int j=0;j<p[i].n_data_partitions();j++)
-	    if (p[i][j].variable_alignment())
+	    if (p[i][j].variable_alignment() and sampled[i][j])
 	    {
 		vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
 		PR[i][0] *= A3::correction(p[i][j],nodes[i]);
@@ -535,7 +553,7 @@ int sample_A3_multi_calculation::choose(bool correct)
     return C;
 }
 
-pair<shared_ptr<DPengine>,log_double_t> sample_tri_multi_calculation::compute_matrix(int i, int j)
+pair<shared_ptr<DPengine>,optional<log_double_t>> sample_tri_multi_calculation::compute_matrix(int i, int j)
 {
     return tri_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
 }
@@ -564,7 +582,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	tri->run_dp();
 
 	// The DP matrix construction didn't work.
-	if (tri->Pr[0] <= 0.0) return -1;
+	if (not tri->Pr[0]) return -1;
 
 	tri->set_proposal_probabilities(rho);
 
@@ -596,7 +614,7 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	tri1.run_dp();
 
 	// The DP matrix construction didn't work.
-	if (tri1.Pr[0] <= 0.0) return -1;
+    if (not tri1.Pr[0]) return -1;
 
 	tri1.set_proposal_probabilities(rho);
 
@@ -621,11 +639,15 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	tri2.run_dp();
 
 	// The DP matrix construction didn't work.
-	if (tri2.Pr[0] <= 0.0) return -1;
+    if (not tri2.Pr[0]) return -1;
 
 	tri2.set_proposal_probabilities(rho);
 
-	log_double_t ratio = tri1.Pr[C1]*choose_MH_P(0,C1,tri1.Pr)/(tri2.Pr[0]*choose_MH_P(C1,0,tri2.Pr));
+    auto forward_choice = choose_MH_P(0, C1, tri1.Pr);
+    auto reverse_choice = choose_MH_P(C1, 0, tri2.Pr);
+    if (not tri1.Pr[C1] or not tri2.Pr[0] or not forward_choice or not reverse_choice)
+        return -1;
+    log_double_t ratio = *tri1.Pr[C1] * *forward_choice / (*tri2.Pr[0] * *reverse_choice);
 
 	ratio *= tri1.C1 / tri2.C1;
 

@@ -177,10 +177,11 @@ void DPcube::compute_Pr_sum_all_paths()
 	total += (*this)(I,J,K,state1)*GQ(state1,endstate());
 
     Pr_total *= pow(log_double_t(2.0),scale(I,J,K)) * total;
-    assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 
-    // This really is a probability, so it should be <= 1
-    assert(Pr_total <= 1.0);
+    // A finite result is a probability.  Exceptional results are retained so
+    // sample_path() can report that no valid sampling distribution exists.
+    if (std::isfinite(Pr_total.log()))
+        assert(Pr_total <= 1.0);
 }
 
 void DPcube::forward_cube() 

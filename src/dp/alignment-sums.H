@@ -91,11 +91,12 @@ struct sample_A3_multi_calculation
     std::vector<std::vector<int> > nodes;
     std::vector<log_double_t> rho;
     std::vector<std::vector<std::shared_ptr<DPengine> > > Matrices;
-    std::vector<log_double_t> Pr;
+    std::vector<std::vector<bool>> sampled;
+    std::vector<std::optional<log_double_t>> Pr;
     log_double_t C1;
     std::optional<int> bandwidth;
 
-    virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int) = 0;
+    virtual std::pair<std::shared_ptr<DPengine>,std::optional<log_double_t>> compute_matrix(int,int) = 0;
 
     void run_dp();
 
@@ -110,7 +111,7 @@ struct sample_A3_multi_calculation
 
 struct sample_tri_multi_calculation: public sample_A3_multi_calculation
 {
-    virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int);
+    virtual std::pair<std::shared_ptr<DPengine>,std::optional<log_double_t>> compute_matrix(int,int);
 
     sample_tri_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
 				 std::optional<int> b);
@@ -118,7 +119,7 @@ struct sample_tri_multi_calculation: public sample_A3_multi_calculation
 
 struct sample_cube_multi_calculation: public sample_A3_multi_calculation
 {
-    virtual std::pair<std::shared_ptr<DPengine>,log_double_t> compute_matrix(int,int);
+    virtual std::pair<std::shared_ptr<DPengine>,std::optional<log_double_t>> compute_matrix(int,int);
 
     sample_cube_multi_calculation(std::vector<Parameters>&,const std::vector< std::vector<int> >& nodes_,
                                   std::optional<int> b);

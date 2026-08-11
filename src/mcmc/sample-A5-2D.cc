@@ -51,7 +51,7 @@ using std::pair;
 
 using boost::dynamic_bitset;
 
-pair<shared_ptr<DPmatrixConstrained>, log_double_t>
+pair<shared_ptr<DPmatrixConstrained>, optional<log_double_t>>
 sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a123456, const A5::hmm_order& order, const A5::hmm_order& order0, optional<int> bandwidth)
 {
     assert(P.variable_alignment());
@@ -100,6 +100,10 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     // But we need to get the emission probabilities at node 4 WITHOUT relying on alignments on the internal branches.
 
     // Combining dists3 + dists4 -> dists34 needs to (a) propagate across branch b54 and (b) include root frequencies if the root is behind b54.
+    // These temporary alignments construct dists34.  Restore them unless a complete path and
+    // finite sampling probability are available to replace all five affected alignments.
+    auto alignment25 = P.get_pairwise_alignment(b25);
+    auto alignment35 = P.get_pairwise_alignment(b35);
     P.set_pairwise_alignment(b25, get_pairwise_alignment_from_bits(a234, 2, 5));
     P.set_pairwise_alignment(b35, get_pairwise_alignment_from_bits(a234, 3, 5));
     auto dists34 = P.cache(b54);
@@ -174,20 +178,30 @@ sample_A5_2D_base(mutable_data_partition P, const vector<HMM::bitmask_t>& a12345
     if (not path_g)
     {
 	if (log_verbose > 0) std::cerr<<"sample_A5_2D_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
-	return {Matrices, 0};
+	P.set_pairwise_alignment(b25, alignment25);
+	P.set_pairwise_alignment(b35, alignment35);
+	return {Matrices, {}};
     }
 
     //------------- Sample a path from the matrix -------------------//
     vector<int> path = Matrices->ungeneralize(*path_g);
+
+    // This is the probability of choosing the concrete path after generalization.
+    auto sampling_pr = Matrices->path_P(*path_g) * Matrices->generalize_P(path);
+    if (not std::isfinite(sampling_pr.log()))
+    {
+        if (log_verbose > 0)
+            std::cerr<<"sample_A5_2D_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
+        P.set_pairwise_alignment(b25, alignment25);
+        P.set_pairwise_alignment(b35, alignment35);
+        return {Matrices, {}};
+    }
 
     P.set_pairwise_alignment(b04, get_pairwise_alignment_from_path(path, *Matrices, 0, 4));
     P.set_pairwise_alignment(b14, get_pairwise_alignment_from_path(path, *Matrices, 1, 4));
     P.set_pairwise_alignment(b25, get_pairwise_alignment_from_path(path, *Matrices, 2, 5));
     P.set_pairwise_alignment(b35, get_pairwise_alignment_from_path(path, *Matrices, 3, 5));
     P.set_pairwise_alignment(b45, get_pairwise_alignment_from_path(path, *Matrices, 4, 5));
-
-    // What is the probability that we choose the specific alignment that we did?
-    auto sampling_pr = Matrices->path_P(*path_g)* Matrices->generalize_P(path);
 
     return {Matrices, sampling_pr};
 }
@@ -225,10 +239,10 @@ sample_A5_2D_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
             a123456[j] = A5::get_bitpath(p[0][j], order[0]);
         }
 
-    IntegrationPrs Pr0;
-    Pr0.heated_prob = p[0].heated_probability();
-    Pr0.correction = A5::correction(p[0],order[0]);
-    Pr0.proposal = rho[0];
+    optional<IntegrationPrs> Pr0 = IntegrationPrs();
+    Pr0->heated_prob = p[0].heated_probability();
+    Pr0->correction = A5::correction(p[0],order[0]);
+    Pr0->proposal = rho[0];
 
     vector<optional<IntegrationPrs>> Pr(p.size(), IntegrationPrs());
 
@@ -250,30 +264,34 @@ sample_A5_2D_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
 #ifndef NDEBUG_DP
                 Matrices[i][j] = M;
 #endif
-                if (M->Pr_sum_all_paths() <= 0.0)
+                if (not sampling_pr)
                 {
-                    if (log_verbose > 0) std::cerr<<"Pr = 0: option "<<i<<", partition "<<j<<" \n";
+                    if (log_verbose > 0)
+                        std::cerr<<"Sampling unavailable: option "<<i<<", partition "<<j<<"\n";
                     Pr[i] = {};
-
-                    // Make sure to set all the Matrices[i][j] to something non-NULL.
                     continue;
                 }
 
                 if (Pr[i])
                 {
-                    Pr[i]->sampling *= sampling_pr;
+                    Pr[i]->sampling *= *sampling_pr;
                     Pr[i]->correction *= A5::correction(p[i][j], order[i]);
                     Pr[i]->sum_all_paths *= M->Pr_sum_all_paths();
                 }
 
-                if (i==0)
+                if (i==0 and Pr0)
                 {
                     auto path = get_path_unique(*a123456[j], *M);
                     auto path_g = M->generalize(path);
                     auto sampling_pr0 = M->path_P(path_g) * M->generalize_P(path);
 
-                    Pr0.sampling *= sampling_pr0;
-                    Pr0.sum_all_paths *= M->Pr_sum_all_paths();
+                    if (std::isfinite(sampling_pr0.log()))
+                    {
+                        Pr0->sampling *= sampling_pr0;
+                        Pr0->sum_all_paths *= M->Pr_sum_all_paths();
+                    }
+                    else
+                        Pr0 = {};
                 }
 
 #ifndef NDEBUG_DP
@@ -286,11 +304,18 @@ sample_A5_2D_multi2(vector<Parameters>& p,const vector<A5::hmm_order>& order_,
         // Should we treat i=0 differently, since the old alignment is consistent?
         if (Pr[i])
         {
-            Pr[i]->heated_prob = p[i].heated_probability();
-            Pr[i]->proposal = rho[i];
+            if (std::isfinite(Pr[i]->sampling.log()))
+            {
+                Pr[i]->heated_prob = p[i].heated_probability();
+                Pr[i]->proposal = rho[i];
+            }
+            else
+                Pr[i] = {};
         }
     }
 
+    if (Pr0 and not std::isfinite(Pr0->sampling.log()))
+        Pr0 = {};
     Pr.push_back(Pr0);
 
     return Pr;
@@ -304,12 +329,15 @@ optional<log_double_t> sample_A5_2D_ratio(vector<Parameters>& p, const vector<A5
 
     auto Prs = sample_A5_2D_multi2(p, order, rho, bandwidth);
 
-    if (Prs[0] and Prs[1])
+    if (Prs[0] and Prs[1] and Prs[2])
     {
         auto sample_reverse = Prs[2]->sampling;
         auto sample_forward = Prs[1]->sampling;
 
-        return (sample_reverse/sample_forward);
+        auto ratio = sample_reverse/sample_forward;
+        if (std::isfinite(ratio.log()))
+            return ratio;
+        return {};
     }
     else
         return {};
@@ -344,7 +372,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
             a123456[j] = A5::get_bitpath(p[0][j], order[0]);
         }
 
-    vector<log_double_t> Pr(p.size());
+    vector<optional<log_double_t>> Pr(p.size());
 
     //----------- Generate the different states and Matrices ---------//
     log_double_t C1 = A5::correction(p[0],order[0]);
@@ -353,15 +381,16 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
 #endif
 
     vector< vector< shared_ptr<DPmatrixConstrained> > > Matrices(p.size());
+    vector<vector<bool>> sampled(p.size(), vector<bool>(p[0].n_data_partitions(), false));
     for(int i=0;i<p.size();i++)
     {
-        Pr[i] = rho[i];
+        optional<log_double_t> joint_sampling_pr = 1.0;
+        log_double_t correction = 1.0;
 
 #ifndef NDEBUG_DP
         Matrices[i].resize(p[i].n_data_partitions());
 #endif
 
-        bool ok = true;
         for(int j=0;j<p[i].n_data_partitions();j++)
         {
             if (p[i][j].variable_alignment())
@@ -371,19 +400,14 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
 #ifndef NDEBUG_DP
                 Matrices[i][j] = M;
 #endif
-                if (M->Pr_sum_all_paths() <= 0.0)
-                {
-                    if (log_verbose > 0) std::cerr<<"Pr = 0: option "<<i<<", partition "<<j<<" \n";
-                    ok = false;
-
-                    // Make sure to set all the Matrices[i][j] to something non-NULL.
+                sampled[i][j] = sampling_pr.has_value();
+                if (sampling_pr and joint_sampling_pr)
+                    *joint_sampling_pr *= *sampling_pr;
+                else
+                    joint_sampling_pr = {};
+                if (not sampling_pr)
                     continue;
-                }
-
-                Pr[i] /= sampling_pr;
-                // Wait, why do we include the correction here?
-                // We shouldn't need it to get the true distribution...
-                Pr[i] *= A5::correction(p[i][j], order[i]);
+                correction *= A5::correction(p[i][j], order[i]);
 
 #ifndef NDEBUG_DP
                 p[i][j].likelihood();  // check the likelihood calculation
@@ -393,18 +417,16 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
 
         // Don't compute the probability if the alignment wasn't resampled!
         // Should we treat i=0 differently, since the old alignment is consistent?
-        if (ok)
-            Pr[i] *= log_double_t(p[i].heated_probability());
-        else
-            Pr[i] = 0;
+        if (joint_sampling_pr and std::isfinite(joint_sampling_pr->log()))
+            Pr[i] = rho[i] * correction * log_double_t(p[i].heated_probability()) / *joint_sampling_pr;
     }
-
-    // Fail if Pr[0] is 0
-    if (Pr[0] <= 0.0) return -1;
 
     int C = -1;
     try {
-        C = choose_MH(0,Pr);
+        auto choice = choose_MH(0,Pr);
+        if (not choice)
+            return -1;
+        C = *choice;
     }
     catch (choose_exception<log_double_t>& c)
     {
@@ -426,6 +448,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
     order.push_back(order[0]);
     rho.push_back( rho[0] );
     Matrices.push_back( Matrices[0] );
+    sampled.push_back(sampled[0]);
 
     vector< vector< vector<int> > >paths(p.size());
 
@@ -433,16 +456,13 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
     for(int i=0;i<p.size();i++)
     {
         // check whether this arrangement has probability 0 for some reason.
-        bool ok = true;
-        for(int j=0;j<p[i].n_data_partitions();j++)
-            if (p[i][j].variable_alignment() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0)
-                ok = false;
+        bool ok = i >= Pr.size() or Pr[i].has_value();
 
         if (not ok)
             assert(i != 0 and i != p.size()-1);
 
         for(int j=0;j<p[i].n_data_partitions();j++)
-            if (p[i][j].variable_alignment() and ok)
+            if (p[i][j].variable_alignment() and ok and sampled[i][j])
             {
                 paths[i].push_back( get_path_unique(A5::get_bitpath(p[i][j], order[i]), *Matrices[i][j]) );
 
@@ -461,10 +481,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
     for(int i=0;i<p.size();i++)
     {
         // check whether this arrangement violates a constraint in any partition
-        bool ok = true;
-        for(int j=0;j<p[i].n_data_partitions();j++)
-            if (p[i][j].variable_alignment() and Matrices[i][j]->Pr_sum_all_paths() <= 0.0)
-                ok = false;
+        bool ok = i >= Pr.size() or Pr[i].has_value();
 
         if (not ok) {
             PR[i][0] = 0;
@@ -474,7 +491,16 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
 
         log_double_t choice_ratio = 1;
         if (i > 0 and i<Pr.size())
-            choice_ratio = choose_MH_P(0,i,Pr)/choose_MH_P(i,0,Pr);
+        {
+            auto forward = choose_MH_P(0, i, Pr);
+            auto reverse = choose_MH_P(i, 0, Pr);
+            if (not forward or not reverse or *reverse == 0.0)
+            {
+                PR[i][0] = 0;
+                continue;
+            }
+            choice_ratio = *forward / *reverse;
+        }
         else
             choice_ratio = 1;
 
@@ -484,7 +510,7 @@ int sample_A5_2D_multi(vector<Parameters>& p,const vector<A5::hmm_order>& order_
         PR[i][2] = rho[i];
         PR[i][3] = choice_ratio;
         for(int j=0;j<p[i].n_data_partitions();j++)
-            if (p[i][j].variable_alignment()) {
+            if (p[i][j].variable_alignment() and sampled[i][j]) {
                 vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
                 PR[i][0] *= A5::correction(p[i][j],order[i]);
                 PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);

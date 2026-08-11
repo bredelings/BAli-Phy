@@ -52,7 +52,7 @@ using std::endl;
 using std::shared_ptr;
 using boost::dynamic_bitset;
 
-pair<shared_ptr<DPcubeSimple>,log_double_t>
+pair<shared_ptr<DPcubeSimple>,optional<log_double_t>>
 cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0, 
                            const vector<int>& nodes, const vector<int>& nodes0,
                            optional<int> /*bandwidth*/)
@@ -150,10 +150,19 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
 #ifndef NDEBUG_DP
 	Matrices->clear();
 #endif
-	return {Matrices, 0};
+	return {Matrices, {}};
     }
 
     vector<int> path = Matrices->ungeneralize(*path_g);
+
+    // This is the probability of choosing the concrete path after generalization.
+    auto sampling_pr = Matrices->path_P(*path_g) * Matrices->generalize_P(path);
+    if (not std::isfinite(sampling_pr.log()))
+    {
+        if (log_verbose > 0)
+            std::cerr<<"cube_sample_alignment_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
+        return {Matrices, {}};
+    }
 
     for(int i=0;i<3;i++) {
 	int b = t.find_branch(nodes[0],nodes[i+1]);
@@ -164,13 +173,10 @@ cube_sample_alignment_base(mutable_data_partition P, const data_partition& P0,
     Matrices->clear();
 #endif
 
-    // What is the probability that we choose the specific alignment that we did?
-    auto sampling_pr = Matrices->path_P(*path_g)* Matrices->generalize_P(path);
-
     return {Matrices,sampling_pr};
 }
 
-pair<shared_ptr<DPengine>,log_double_t> sample_cube_multi_calculation::compute_matrix(int i, int j)
+pair<shared_ptr<DPengine>,optional<log_double_t>> sample_cube_multi_calculation::compute_matrix(int i, int j)
 {
     return cube_sample_alignment_base(p[i][j], p[0][j], nodes[i], nodes[0], bandwidth);
 }
@@ -194,7 +200,7 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	sample_cube_multi_calculation tri(p, nodes, bandwidth);
 
 	// The DP matrix construction didn't work.
-	if (tri.Pr[0] <= 0.0) return -1;
+	if (not tri.Pr[0]) return -1;
 
 	tri.set_proposal_probabilities(rho);
 
@@ -216,7 +222,7 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	sample_cube_multi_calculation tri1(p, nodes, bandwidth);
 
 	// The DP matrix construction didn't work.
-	if (tri1.Pr[0] <= 0.0) return -1;
+    if (not tri1.Pr[0]) return -1;
 
 	tri1.set_proposal_probabilities(rho);
 
@@ -240,11 +246,15 @@ int sample_cube_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 	sample_cube_multi_calculation tri2(p2, nodes, bandwidth);
 
 	// The DP matrix construction didn't work.
-	if (tri2.Pr[0] <= 0.0) return -1;
+    if (not tri2.Pr[0]) return -1;
 
 	tri2.set_proposal_probabilities(rho);
 
-	log_double_t ratio = tri1.Pr[C1]*choose_MH_P(0,C1,tri1.Pr)/(tri2.Pr[0]*choose_MH_P(C1,0,tri2.Pr));
+    auto forward_choice = choose_MH_P(0, C1, tri1.Pr);
+    auto reverse_choice = choose_MH_P(C1, 0, tri2.Pr);
+    if (not tri1.Pr[C1] or not tri2.Pr[0] or not forward_choice or not reverse_choice)
+        return -1;
+    log_double_t ratio = *tri1.Pr[C1] * *forward_choice / (*tri2.Pr[0] * *reverse_choice);
 
 	ratio *= tri1.C1 / tri2.C1;
 

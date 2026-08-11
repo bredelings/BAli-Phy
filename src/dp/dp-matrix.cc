@@ -244,10 +244,11 @@ void DPmatrix::compute_Pr_sum_all_paths()
         total += E.prob_for_state(state1)*GQ(state1,endstate());
 
     Pr_total *= pow(log_double_t(2.0), E.scale()) * total;
-    assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 
-    // This really is a probability, so it should be <= 1
-    assert(Pr_total <= 1.0);
+    // A finite result is a probability.  Exceptional results are retained so
+    // sample_path() can report that no valid sampling distribution exists.
+    if (std::isfinite(Pr_total.log()))
+        assert(Pr_total <= 1.0);
 }
 
 log_double_t DPmatrix::path_P(const vector<int>& path) const 
@@ -692,10 +693,11 @@ void DPmatrixConstrained::compute_Pr_sum_all_paths()
     }
 
     Pr_total *= pow(log_double_t(2.0), E.scale()) * total;
-    assert(not std::isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 
-    // This really is a probability, so it should be <= 1
-    assert(Pr_total <= 1.0);
+    // A finite result is a probability.  Exceptional results are retained so
+    // sample_path() can report that no valid sampling distribution exists.
+    if (std::isfinite(Pr_total.log()))
+        assert(Pr_total <= 1.0);
 }
 
 log_double_t DPmatrixConstrained::path_P(const vector<int>& path) const 

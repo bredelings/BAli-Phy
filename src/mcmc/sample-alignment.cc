@@ -130,7 +130,7 @@ shared_ptr<DPmatrixSimple> sample_alignment_forward(data_partition P, const Tree
 }
 
 
-pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b, optional<int> bandwidth) 
+pair<shared_ptr<DPmatrixSimple>,optional<log_double_t>> sample_alignment_base(mutable_data_partition P, const indel::PairHMM& hmm, int b, optional<int> bandwidth)
 {
     auto Matrices = sample_alignment_forward(P, P.t(), hmm, b, bandwidth);
 
@@ -138,15 +138,25 @@ pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data
     if (not path)
     {
 	if (log_verbose > 0) std::cerr<<"sample_alignment_base( ): path probabilities sum to "<<Matrices->Pr_sum_all_paths()<<"!"<<std::endl;
-	return {Matrices, 0};
+	return {Matrices, {}};
+    }
+
+    // sample_path chooses with probability path_Q(path) divided by the DP total;
+    // callers take its reciprocal when constructing the proposal correction.
+    auto sampling_pr = Matrices->path_Q(*path) / Matrices->Pr_sum_all_paths();
+    if (not std::isfinite(sampling_pr.log()))
+    {
+        if (log_verbose > 0)
+            std::cerr<<"sample_alignment_base( ): sampling probability is "<<sampling_pr<<"!"<<std::endl;
+        return {Matrices, {}};
     }
 
     P.set_pairwise_alignment(b, A2::get_pairwise_alignment_from_path(*path));
 
-    return {Matrices, Matrices->Pr_sum_all_paths() / Matrices->path_Q(*path)};
+    return {Matrices, sampling_pr};
 }
 
-pair<shared_ptr<DPmatrixSimple>,log_double_t> sample_alignment_base(mutable_data_partition P, int b, optional<int> bandwidth)
+pair<shared_ptr<DPmatrixSimple>,optional<log_double_t>> sample_alignment_base(mutable_data_partition P, int b, optional<int> bandwidth)
 {
     return sample_alignment_base(P, P.get_branch_HMM(b), b, bandwidth);
 }
@@ -177,23 +187,34 @@ ProbDensity sample_alignment(Parameters& P, int b, bool initial_state_valid)
     p.push_back(P);
 
     vector< vector< shared_ptr<DPmatrixSimple> > > Matrices(1);
-    ProbDensity total_ratio = 1.0;
+    vector<vector<bool>> sampled(1);
+    optional<log_double_t> total_sampling_pr = 1.0;
     for(int i=0;i<p.size();i++) 
     {
 	for(int j=0;j<p[i].n_data_partitions();j++) 
 	    if (p[i][j].variable_alignment()) 
 	    {
-                auto [M, ratio] = sample_alignment_base(p[i][j], b, bandwidth);
-                total_ratio *= ProbDensity(ratio);
+                auto [M, sampling_pr] = sample_alignment_base(p[i][j], b, bandwidth);
+		if (sampling_pr and total_sampling_pr)
+		    *total_sampling_pr *= *sampling_pr;
+		else
+		    total_sampling_pr = {};
 		Matrices[i].push_back(M);
-		// If Pr_sum_all_paths() == 0, then the alignment for this partition will be unchanged.
+		sampled[i].push_back(sampling_pr.has_value());
+		// If sampling is unavailable, the alignment for this partition is unchanged.
 #ifndef NDEBUG
 		p[i][j].likelihood();  // check the likelihood calculation
 #endif
 	    }
-	    else
+	    else {
 		Matrices[i].push_back(shared_ptr<DPmatrixSimple>());
+		sampled[i].push_back(false);
+	    }
     }
+
+    ProbDensity total_ratio = 0.0;
+    if (total_sampling_pr and std::isfinite(total_sampling_pr->log()))
+        total_ratio = ProbDensity(log_double_t(1.0) / *total_sampling_pr);
 
 #ifndef NDEBUG_DP
     if (log_verbose >=4) std::cerr<<"\n\n----------------------------------------------\n";
@@ -207,6 +228,7 @@ ProbDensity sample_alignment(Parameters& P, int b, bool initial_state_valid)
 
     p.push_back(P0);
     Matrices.push_back(Matrices[0]);
+    sampled.push_back(sampled[0]);
 
     vector< vector< log_double_t > > OS(p.size());
     vector< vector< log_double_t > > OP(p.size());
@@ -215,7 +237,7 @@ ProbDensity sample_alignment(Parameters& P, int b, bool initial_state_valid)
     //------------------- Check offsets from path_Q -> P -----------------//
     for(int i=0;i<p.size();i++) 
 	for(int j=0;j<p[i].n_data_partitions();j++) 
-	    if (p[i][j].variable_alignment())
+	    if (p[i][j].variable_alignment() and sampled[i][j])
 	    {
 		auto a = p[i][j].get_pairwise_alignment(p[i].t().find_branch(node1,node2));
 		paths[i].push_back( get_path_from_pairwise_alignment(a) );
@@ -244,7 +266,7 @@ ProbDensity sample_alignment(Parameters& P, int b, bool initial_state_valid)
             PR[i] = vector<log_double_t>(4,1);
             PR[i][0] = p[i].heated_probability();
             for(int j=0;j<p[i].n_data_partitions();j++) 
-                if (p[i][j].variable_alignment())
+                if (p[i][j].variable_alignment() and sampled[i][j])
                 {
                     vector<int> path_g = Matrices[i][j]->generalize(paths[i][j]);
                     PR[i][1] *= Matrices[i][j]->path_P(path_g)* Matrices[i][j]->generalize_P(paths[i][j]);
