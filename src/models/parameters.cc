@@ -773,18 +773,6 @@ int Parameters::subst_root() const
 	return t().nodes()[0];
 }
 
-void Parameters::setlength_unsafe(int b,double l) 
-{
-    t().set_branch_length(b, l);
-}
-
-void Parameters::setlength(int b,double l) 
-{
-    b = t().undirected(b);
-
-    t().set_branch_length(b, l);
-}
-
 double Parameters::branch_mean() const 
 {
     return 1.0/t().n_branches();

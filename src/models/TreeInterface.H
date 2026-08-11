@@ -147,11 +147,6 @@ public:
     /// Set the stored branch length or duration without converting through a branch rate.
     void set_branch_length_or_duration(int b, double x);
 
-    // Transitional effective-length behavior.  Once the remaining callers use a checked
-    // conversion, make these describe only a directly stored evolutionary length.
-    bool can_set_branch_length(int b) const;
-    void set_branch_length(int b, double l);
-
     bool has_node_times() const;
     double node_time(int n) const;
     bool can_set_node_time(int n) const;

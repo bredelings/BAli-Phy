@@ -202,12 +202,6 @@ public:
 
     void cache_likelihood_branches() const;
 
-    /// Set branch 'b' to have length 'l', and compute the transition matrices
-    void setlength_unsafe(int b, double l);
-
-    // Transitional effective-length wrapper for unconverted multi-variable and topology moves.
-    void setlength(int b,double l); 
-  
     // bool
     bool variable_alignment() const;
 

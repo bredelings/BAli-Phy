@@ -733,31 +733,6 @@ void TreeInterface::set_branch_length_or_duration(int b, double x)
     C.set_modifiable_value(length_or_duration.get_reg(), x);
 }
 
-bool TreeInterface::can_set_branch_length(int b) const
-{
-    // This compatibility query still reports the underlying variable as modifiable on rate-scaled
-    // trees.  Narrow it when the effective-length setter has a checked replacement.
-    return can_set_branch_length_or_duration(b);
-}
-
-void TreeInterface::set_branch_length(int b, double l)
-{
-    auto& C = get_context();
-
-    assert(has_branch_lengths());
-
-    b = undirected(b);
-
-    int array_reg = *branch_durations_reg();
-
-    auto lengths = context_ptr{C, array_reg};
-
-    auto length = lengths[b];
-
-    // Compatibility for unconverted callers: request an effective length by changing the underlying value.
-    C.set_modifiable_value(length.get_reg(), l/branch_rate(b));
-}
-
 bool TreeInterface::has_node_times() const
 {
     if (node_times_reg())
