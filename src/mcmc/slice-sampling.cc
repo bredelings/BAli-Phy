@@ -830,8 +830,6 @@ double slice_sample_stepping_out_(double x0, slice_function& g, double w, int m)
     }
 
     // 1. Determine the slice level.
-    // The starting density defines the exceptional rank of this scalar slice.
-    // Multiplication by a finite positive U changes only its coefficient.
     auto slice_level = draw_slice_level(g());
 
     // 2. Find the initial interval to sample from.
@@ -849,8 +847,6 @@ double slice_sample_doubling_(double x0, slice_function& g, double w, int m)
         std::cerr<<"slice_sampling_doubling_: x0 = "<<x0<<" w = "<<w<<" Pr(x0) = "<<g()<<"\n";
 
     // 1. Determine the slice level
-    // The starting density defines the exceptional rank of this scalar slice.
-    // Multiplication by a finite positive U changes only its coefficient.
     auto slice_level = draw_slice_level(g());
 
     // 2. Find the initial interval to sample from.
