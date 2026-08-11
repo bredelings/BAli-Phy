@@ -17,6 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
+#include <cmath>
 #include "util/log-level.H"
 #include "util/rng.H"
 #include "util/settings.H"              // for get_setting_or( )
@@ -152,8 +153,11 @@ void slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats,int b)
     double L2 = slice_sample(L,logp,w,50);
 
     //---------- Record Statistics - -------------//
-    result.totals[0] = abs(L2 - L);
-    result.totals[1] = abs(log(L2/L));
+    // A declined slice can return its original nonfinite coordinate, so identify
+    // an unchanged move before subtraction or division can produce a NaN.
+    bool unchanged = not std::isfinite(L) or L2 == L;
+    result.totals[0] = unchanged ? 0 : abs(L2 - L);
+    result.totals[1] = unchanged ? 0 : abs(log(L2/L));
     result.totals[2] = logp.count;
 
     Stats.inc("branch-length (slice) *",result);
@@ -214,8 +218,11 @@ void alignment_slice_sample_branch_length(owned_ptr<context>& P,MoveStats& Stats
     double L2 = slice_sample(L,logp,w,50);
 
     //---------- Record Statistics - -------------//
-    result.totals[0] = abs(L2 - L);
-    result.totals[1] = abs(log(L2/L));
+    // A declined slice can return its original nonfinite coordinate, so identify
+    // an unchanged move before subtraction or division can produce a NaN.
+    bool unchanged = not std::isfinite(L) or L2 == L;
+    result.totals[0] = unchanged ? 0 : abs(L2 - L);
+    result.totals[1] = unchanged ? 0 : abs(log(L2/L));
     result.totals[2] = logp.count;
 
     Stats.inc("alignment-branch-length (slice) *",result);
@@ -396,7 +403,10 @@ void slide_node(owned_ptr<context>& P, MoveStats& Stats,int b)
 	double L1b = PP->t().branch_length(branches[0]);
     
 	MCMC::Result result(2);
-	result.totals[0] = 2.0*abs(L1b-L1a);
+	// A declined slice can leave the same nonfinite effective length, for which
+	// subtracting the before and after values would produce a NaN.
+	bool unchanged = not std::isfinite(L1a) or L1b == L1a;
+	result.totals[0] = unchanged ? 0 : 2.0*abs(L1b-L1a);
 	result.totals[1] = logp.count;
 	Stats.inc("slide_node_slice",result);
     }
