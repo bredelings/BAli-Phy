@@ -9,7 +9,7 @@ import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
 import Data.Maybe (maybeToList)
 import Foreign.Vector
-import Numeric.Log
+import Numeric.ProbDensity (ProbDensity)
 import Bio.Sequence
 
 import Data.IntMap (IntMap)
@@ -19,12 +19,12 @@ import SModel.Likelihood.CLV
 
 -- peeling for connected-CLVs
 foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EVector Int -> CondLikes
-foreign import trcall "Likelihood:calcProbAtRoot" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> Log Double
-foreign import trcall "Likelihood:calcProb" calcProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> Log Double
+foreign import trcall "Likelihood:calcProbAtRoot" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> ProbDensity
+foreign import trcall "Likelihood:calcProb" calcProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> ProbDensity
 foreign import trcall "Likelihood:peelBranchTowardRoot" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> CondLikes
 foreign import trcall "Likelihood:peelBranchAwayFromRoot" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> CondLikes
 
-foreign import trcall "Likelihood:calcProbNonEq" calcProbNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> Log Double
+foreign import trcall "Likelihood:calcProbNonEq" calcProbNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> ProbDensity
 foreign import bpcall "Likelihood:peelBranchTowardRootNonEq" peelBranchTowardRootNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> CondLikes
 foreign import trcall "Likelihood:peelBranchAwayFromRootNonEq" peelBranchAwayFromRootNonEq :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> CondLikes
 

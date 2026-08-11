@@ -11,13 +11,14 @@ import Foreign.Pair (c_pair)
 import Foreign.Vector (EVector, listToVector)
 import Numeric.LinearAlgebra (Matrix, ident, (><))
 import Numeric.LinearAlgebra.Data (NativeMatrix, nativeMatrix)
+import Numeric.ProbDensity (collapseDensity, reciprocalDensity)
 import SModel.Likelihood.CLV (CondLikes)
 import SModel.Likelihood.FixedA (calcProbAtRoot, peelBranchTowardRoot,
                                  simpleSequenceLikelihoods)
 import System.IO (print)
 
--- Build a scaled conditional-likelihood cache and compare one compressed
--- pattern of multiplicity two with two copies of multiplicity one.
+-- Protect scaling of compressed likelihood patterns and the opaque density
+-- reciprocal used by conditioned PhyloCTMC distributions.
 main = do
     let epsilon = 1.0e-100
         frequencies = (1 >< 4) [0.25, 0.25, 0.25, 0.25] :: Matrix Double
@@ -46,6 +47,8 @@ main = do
             (U.fromList [1])
         twice = calcProbAtRoot emptyLikes scaledBranchLikes frequencies
             (U.fromList [2])
-        scaleError = abs (ln twice - 2 * ln once)
+        scaleError = abs (ln (collapseDensity twice) - 2 * ln (collapseDensity once))
+        reciprocalError = abs (ln (collapseDensity (reciprocalDensity once))
+                               + ln (collapseDensity once))
 
-    print (scaleError < 1.0e-12 :: Bool)
+    print (max scaleError reciprocalError < 1.0e-12 :: Bool)

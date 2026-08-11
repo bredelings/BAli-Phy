@@ -21,6 +21,7 @@
 #define SUBSTITUTION_CACHE_H
 
 #include "computation/object.H"
+#include "util/math/ProbDensity.H"
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
 #include <functional>
@@ -41,14 +42,14 @@ class Likelihood_Cache_Branch: public Object
     int n_models_ = -1;
     int n_columns_ = -1;
 
-    std::optional<log_double_t> other_subst_;
+    std::optional<ProbDensity> other_subst_;
 public:
     Likelihood_Cache_Branch* clone() const {std::abort();}
 
-    void init_other_subst(log_double_t p=1) {assert(not other_subst_); other_subst_ = p;}
-          log_double_t& other_subst() {return other_subst_.value();}
-    const log_double_t& other_subst() const {return other_subst_.value();}
-    std::function<log_double_t(const DenseMatrix<double>&)> other_subst_f;
+    void init_other_subst(ProbDensity p=1) {assert(not other_subst_); other_subst_ = p;}
+          ProbDensity& other_subst() {return other_subst_.value();}
+    const ProbDensity& other_subst() const {return other_subst_.value();}
+    std::function<ProbDensity(const DenseMatrix<double>&)> other_subst_f;
 
     boost::dynamic_bitset<> bits;
     std::optional<DenseMatrix<double>> away_from_root_WF;

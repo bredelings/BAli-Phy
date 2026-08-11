@@ -113,11 +113,11 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
     auto counts = read_native_vector_input<int, ForeignDemand::use>(
         Args, 3, "LikelihoodSEV.calcProb");
 
-    log_double_t Pr = substitution::calc_prob_SEV(arg0.as_<R::RVector>(),       // sequences
+    ProbDensity Pr = substitution::calc_prob_SEV(arg0.as_<R::RVector>(),       // sequences
 						  arg1.as_<R::RVector>(),       // LCB
 						  arg2.as_<Box<DenseMatrix<double>>>(),   // FF
 						  counts.view());               // counts
-    return {Pr};
+    return new Box<ProbDensity>(Pr);
 }
 
 extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
@@ -131,11 +131,11 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
     Eigen::Map<const DenseVector<int>> counts(
         count_view.data(), static_cast<Eigen::Index>(count_view.size()));
 
-    log_double_t Pr = substitution::calc_prob_at_root_SEV(arg0.as_<R::RVector>(),       // sequences
+    ProbDensity Pr = substitution::calc_prob_at_root_SEV(arg0.as_<R::RVector>(),       // sequences
 							  arg1.as_<R::RVector>(),       // LCB
 							  arg2.as_<Box<DenseMatrix<double>>>(),   // F
 							  counts);                      // counts
-    return {Pr};
+    return new Box<ProbDensity>(Pr);
 }
 
 extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
@@ -146,11 +146,11 @@ extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
     auto counts = read_native_vector_input<int, ForeignDemand::use>(
         Args, 3, "LikelihoodSEV.calcProbAtRootVariable");
 
-    log_double_t Pr = substitution::calc_prob_at_root_variable_SEV(arg0.as_<R::RVector>(),       // sequences
+    ProbDensity Pr = substitution::calc_prob_at_root_variable_SEV(arg0.as_<R::RVector>(),       // sequences
 								   arg1.as_<R::RVector>(),       // LCB
 								   arg2.as_<Box<DenseMatrix<double>>>(),   // F
 								   counts.view());               // counts
-    return {Pr};
+    return new Box<ProbDensity>(Pr);
 }
 
 extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)

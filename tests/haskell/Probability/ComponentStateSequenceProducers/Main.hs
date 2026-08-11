@@ -10,6 +10,7 @@ import Foreign.Pair (c_pair)
 import Foreign.Vector (EVector, listToVector)
 import Numeric.LinearAlgebra (Matrix, (><))
 import Numeric.LinearAlgebra.Data (NativeMatrix, nativeMatrix)
+import Numeric.ProbDensity (collapseDensity)
 import qualified Probability.Distribution.PhyloCTMC.FixedA.Sample as FixedSample
 import qualified Probability.Distribution.PhyloCTMC.VariableA.Sample as VariableSample
 import SModel.Likelihood.CLV (CondLikes)
@@ -46,10 +47,10 @@ main = do
 
     print posteriorRoot
     print posteriorChild
-    print (calcProbAtRoot nodeLikes branchLikes frequencies compressedCounts)
-    print (calcProbAtRootVariable nodeLikes branchLikes frequencies
-                                    compressedCounts)
-    print (calcProb nodeLikes branchLikes frequencies compressedCounts)
+    print (collapseDensity (calcProbAtRoot nodeLikes branchLikes frequencies compressedCounts))
+    print (collapseDensity (calcProbAtRootVariable nodeLikes branchLikes frequencies
+                                                   compressedCounts))
+    print (collapseDensity (calcProb nodeLikes branchLikes frequencies compressedCounts))
 
     simulatedRoot <- FixedSample.simulateRootSequence 1 frequencies
     simulatedFixed <- FixedSample.simulateFixedSequenceFrom slicedParent

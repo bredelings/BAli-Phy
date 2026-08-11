@@ -31,7 +31,7 @@
 #include "substitution/component-state.H"
 #include "util/dense-matrix.H"
 #include "util/matrix.H"
-#include "util/math/log-double.H"
+#include "util/math/ProbDensity.H"
 #include "substitution/cache.H"
 #include "computation/runtime/ast.H"
 
@@ -52,7 +52,7 @@ namespace substitution {
 		   const R::RVector& LCB,
 		   const R::RVector& A_);
 
-    log_double_t other_subst(const data_partition&, const std::vector<int>& nodes);
+    ProbDensity other_subst(const data_partition&, const std::vector<int>& nodes);
   
     extern int total_peel_leaf_branches;
     extern int total_peel_internal_branches;
@@ -97,13 +97,13 @@ namespace substitution {
 			       const R::RVector& transition_P,
 			       const DenseMatrix<double>& F);
 
-    log_double_t calc_prob_at_root(const R::RVector& LCN,
+    ProbDensity calc_prob_at_root(const R::RVector& LCN,
 				   const R::RVector& LCB,
 				   const R::RVector& A_,
 				   const DenseMatrix<double>& F);
 
 
-    log_double_t calc_prob(const R::RVector& LCN,
+    ProbDensity calc_prob(const R::RVector& LCN,
 			   const R::RVector& LCB,
 			   const R::RVector& A_,
 			   const DenseMatrix<double>& F);
@@ -124,7 +124,7 @@ namespace substitution {
 				      const R::RVector& transition_P,
 				      const DenseMatrix<double>& F);
 
-    log_double_t calc_prob_non_eq(const R::RVector& LCN,
+    ProbDensity calc_prob_non_eq(const R::RVector& LCN,
 				  const R::RVector& LCB,
 				  const R::RVector& A_,
 				  const DenseMatrix<double>& F);

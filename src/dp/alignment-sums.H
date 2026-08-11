@@ -35,7 +35,7 @@
 #include "dp-engine.H"             // for DPengine
 #include "probability/choice-weight.H" // for ChoiceWeight
 #include "probability/availability.H"  // for Availability
-#include "util/math/log-double.H"  // for log_double_t
+#include "util/math/ProbDensity.H" // for ProbDensity
 #ifndef NDEBUG_DP
 #include "models/parameters.H"
 #endif
@@ -45,7 +45,7 @@ namespace A4 { struct hmm_order; }
 namespace A5 { struct hmm_order; }
 
 /// Sum of likelihoods for columns which don't contain any characters in sequences mentioned in 'nodes'
-log_double_t other_subst(const data_partition& P, const std::vector<int>& nodes);
+ProbDensity other_subst(const data_partition& P, const std::vector<int>& nodes);
 
 /// Sum of branch priors for branches not connected to no
 log_double_t other_prior(const data_partition& P, const std::vector<int>& nodes);
@@ -134,7 +134,7 @@ struct sample_cube_multi_calculation: public sample_A3_multi_calculation
 
 //------------------- Checking Routines ------------------------//
 
-void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, const std::vector<int>& path, const DPengine& Matrices);
+void check_match_P(const data_partition& P, ProbDensity OS, log_double_t OP, const std::vector<int>& path, const DPengine& Matrices);
 
 
 std::vector<log_double_t> sample_P(const data_partition& P, log_double_t P_choice, log_double_t rho,

@@ -24,6 +24,14 @@ extern "C" closure builtin_function_collapseDensity(OperationArgs& Args)
     return log_double_t(density);
 }
 
+// Invert an opaque density without collapsing its symbolic defect multiplicities.
+extern "C" closure builtin_function_reciprocalDensity(OperationArgs& Args)
+{
+    auto density_value = Args.evaluate_slot_to_value(0);
+    const auto& density = density_value.as_<Box<ProbDensity>>().value();
+    return new Box<ProbDensity>(ProbDensity(1) / density);
+}
+
 // Convert integer-valued Char arithmetic back to a Unicode scalar value.
 // This keeps old Num Char hooks from wrapping through byte-sized chars.
 static char32_t checked_char_code(const integer& x, const char* function_name)

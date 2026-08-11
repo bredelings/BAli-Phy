@@ -229,7 +229,7 @@ Availability<ProbDensity> sample_alignment(Parameters& P, int b, bool initial_st
     Matrices.push_back(Matrices[0]);
     sampled.push_back(sampled[0]);
 
-    vector< vector< log_double_t > > OS(p.size());
+    vector< vector< ProbDensity > > OS(p.size());
     vector< vector< log_double_t > > OP(p.size());
     vector< vector< vector<int> > > paths(p.size());
 

@@ -22,16 +22,17 @@
 
 #include <iostream>
 #include <cmath>
-#include "util/math/log-double.H"
+#include "util/math/ProbDensity.H"
 #include "util/math/neumaier.H"
 #include "util/assert.hh"
 
+template <typename T = double>
 struct log_prod_underflow
 {
-    mutable NeumaierMultiplier<double> accum;
-    mutable double prod = 1.0;
+    NeumaierMultiplier<T> accum;
+    double prod = 1.0;
 
-    log_prod_underflow& operator*=(log_double_t x)
+    log_prod_underflow& operator*=(LogNum<T> x)
     {
 	accum *= x;
 	return *this;
@@ -39,7 +40,15 @@ struct log_prod_underflow
 
     log_prod_underflow& operator*=(double x)
     {
-	bool was_zero = is_zero();
+	assert(not (x < 0));
+
+        // Keep defects out of the finite product so that operations such as 0*Inf
+        // cannot erase their separate multiplicities before they reach LogDensity.
+        if (x == 0 or not std::isfinite(x))
+        {
+            accum *= LogNum<T>(x);
+            return *this;
+        }
 
 	double mult = prod * x;
 	if (mult >= std::numeric_limits<double>::min())
@@ -47,27 +56,34 @@ struct log_prod_underflow
 	// keep the larger of {prod,x} in the "prod" slot.
 	else if (prod < x)
 	{
-	    accum *= prod;
+	    accum *= LogNum<T>(prod);
 	    prod = x;
 	}
 	else
-	    accum *= x;
+	    accum *= LogNum<T>(x);
 
-	assert(not this->is_zero() or x == 0 or was_zero);
+	assert(prod != 0);
 	return *this;
     }
 
     log_prod_underflow& mult_with_count(double x, int c)
     {
 	assert(c >= 0);
-	assert(prod >= 0);
+	assert(not (x < 0));
+
+        if (c == 0)
+            return *this;
+
+        if (x == 0 or not std::isfinite(x))
+        {
+            accum *= repeat_product(LogNum<T>(x), c);
+            return *this;
+        }
 
 	constexpr int count_limit = 4;
 
-	bool was_zero = is_zero();
-
 	if (c >= count_limit)
-	    accum *= pow(log_double_t(x),c);
+	    accum *= repeat_product(LogNum<T>(x), c);
 	else
 	{
 	    double f = x;
@@ -80,29 +96,27 @@ struct log_prod_underflow
 	    // keep the larger of {prod,f} in the "prod" slot, if f > 0
 	    else if (prod < f) // f > 0
 	    {
-		accum *= prod;
+		accum *= LogNum<T>(prod);
 		prod = f;
 	    }
 	    else
-		accum *= pow(log_double_t(x),c);
+		accum *= repeat_product(LogNum<T>(x), c);
 	}
 
-	assert(not this->is_zero() or x == 0 or was_zero);
+	assert(prod != 0);
 	return *this;
     }
 
-    log_double_t value() const
+    LogNum<T> value() const
     {
+        auto result = accum.result();
         if (prod != 1)
-        {
-            accum *= prod;
-            prod = 1;
-        }
-        return accum.result();
+            result *= LogNum<T>(prod);
+        return result;
     }
 
-    operator log_double_t () const {return value();}
-    bool is_zero() const {return value() <= 0.0;}
+    operator LogNum<T>() const {return value();}
+    bool is_zero() const {return value().is_zero();}
     constexpr log_prod_underflow() {}
 };
 
@@ -277,7 +291,7 @@ struct log_prod_logsum
     constexpr log_prod_logsum() {}
 };
 
-typedef log_prod_underflow log_prod;
+using log_prod = log_prod_underflow<double>;
+using prob_density_prod = log_prod_underflow<LogDensity>;
 
 #endif
-

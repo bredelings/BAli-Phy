@@ -36,7 +36,7 @@ using std::optional;
 
 namespace substitution
 {
-   log_double_t calc_probability_at_root_SEV(const Likelihood_Cache_Branch& LCB1,
+   ProbDensity calc_probability_at_root_SEV(const Likelihood_Cache_Branch& LCB1,
 					     const Likelihood_Cache_Branch& LCB2,
 					     const Likelihood_Cache_Branch& LCB3,
 					     const DenseMatrix<double>& F,
@@ -74,7 +74,7 @@ namespace substitution
 
         total_root_clv_length += L;
 
-        log_prod total;
+        prob_density_prod total;
         std::int64_t total_scale = 0;
         for(int c=0,i1=0,i2=0,i3=0;c<L;c++)
         {
@@ -149,17 +149,12 @@ namespace substitution
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
-        log_double_t Pr = total;
-        if (std::isnan(Pr.log()) and log_verbose > 0)
-        {
-            std::cerr<<"calc_root_probability_SEV: probability is NaN!\n";
-            return log_double_t(0.0);
-        }
+        ProbDensity Pr = total;
         Pr.log() += log_scale_min * total_scale;
         return Pr;
     }
 
-    log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
+    ProbDensity calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
 					      const Likelihood_Cache_Branch& LCB2,
 					      const DenseMatrix<double>& F,
 					      std::span<const int> counts)
@@ -191,7 +186,7 @@ namespace substitution
 
         total_root_clv_length += L;
 
-        log_prod total;
+        prob_density_prod total;
         std::int64_t total_scale = 0;
         for(int c=0,i1=0,i2=0;c<L;c++)
         {
@@ -256,18 +251,13 @@ namespace substitution
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
-        log_double_t Pr = total;
-        if (std::isnan(Pr.log()) and log_verbose > 0)
-        {
-            std::cerr<<"calc_root_deg2_probability_SEV: probability is NaN!";
-            return log_double_t(0.0);
-        }
+        ProbDensity Pr = total;
         Pr.log() += log_scale_min * total_scale;
         return Pr;
     }
 
 
-    log_double_t calc_prob_at_root_SEV(const R::RVector& LCN,
+    ProbDensity calc_prob_at_root_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
 				       const DenseMatrix<double>& F,
 				       Eigen::Ref<const DenseVector<int>> counts)
@@ -326,7 +316,7 @@ namespace substitution
 
         std::int64_t total_scale = 0;
 
-        log_prod total;
+        prob_density_prod total;
         for(int c=0;c<L;c++)
         {
             if (not bits_out.test(c)) continue;
@@ -394,21 +384,15 @@ namespace substitution
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
-        log_double_t Pr = total;
+        ProbDensity Pr = total;
 
         Pr.log() += log_scale_min * total_scale;
-
-        if (std::isnan(Pr.log()) and log_verbose > 0)
-        {
-            std::cerr<<"calc_root_probability_SEV: probability is NaN!\n";
-            return log_double_t(0.0);
-        }
 
         return Pr;
     }
 
 
-    log_double_t calc_prob_at_root_variable_SEV(const R::RVector& LCN,
+    ProbDensity calc_prob_at_root_variable_SEV(const R::RVector& LCN,
 						const R::RVector& LCB,
 						const DenseMatrix<double>& F,
 						std::span<const int> counts)
@@ -536,30 +520,24 @@ namespace substitution
         }
 
 	int n = L/counts.size();
-        log_prod total;
+        prob_density_prod total;
 	for(int c=0;c<counts.size();c++)
 	{
 	    double sum = 0;
 	    for(int i=0;i<n;i++)
 		sum += Prs[c*n+i];
 	    double Pr = 1.0 - sum;
-            assert(Pr >= 0 and Pr <= 1);
+            assert(std::isnan(Pr) or (Pr >= 0 and Pr <= 1));
             total.mult_with_count(Pr, counts[c]);
 	}
 
-        log_double_t Pr = total;
-
-        if (std::isnan(Pr.log()) and log_verbose > 0)
-        {
-            std::cerr<<"calc_root_probability_variable_SEV: probability is NaN!\n";
-            return log_double_t(0.0);
-        }
+        ProbDensity Pr = total;
 
         return Pr;
     }
 
 
-    log_double_t calc_prob_SEV(const R::RVector& LCN,
+    ProbDensity calc_prob_SEV(const R::RVector& LCN,
 			       const R::RVector& LCB,
 			       const DenseMatrix<double>& FF,
 			       std::span<const int> counts)
@@ -637,7 +615,7 @@ namespace substitution
 
         std::int64_t total_scale = 0;
 
-        log_prod total;
+        prob_density_prod total;
         for(int c=0;c<L;c++)
         {
             if (not bits_out.test(c)) continue;
@@ -708,15 +686,9 @@ namespace substitution
             //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
         }
 
-        log_double_t Pr = total;
+        ProbDensity Pr = total;
 
         Pr.log() += log_scale_min * total_scale;
-
-        if (std::isnan(Pr.log()) and log_verbose > 0)
-        {
-            std::cerr<<"calc_root_probability_SEV: probability is NaN!\n";
-            return log_double_t(0.0);
-        }
 
         return Pr;
     }

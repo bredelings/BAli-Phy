@@ -4,7 +4,7 @@
 #include <vector>
 #include "substitution/component-state.H"
 #include "util/dense-matrix.H"
-#include "util/math/log-double.H"
+#include "util/math/ProbDensity.H"
 #include "substitution/cache.H"
 #include "computation/runtime/ast.H"
 
@@ -12,29 +12,29 @@ class data_partition;
 
 /// A namespace for functions related to calculating the substitution likelihood.
 namespace substitution {
-    log_double_t calc_probability_SEV(const Likelihood_Cache_Branch& LCB1,
-                                           const Likelihood_Cache_Branch& LCB2,
-                                           const Likelihood_Cache_Branch& LCB3,
-                                           const DenseMatrix<double>& F,
-					   std::span<const int> counts);
+    ProbDensity calc_probability_at_root_SEV(const Likelihood_Cache_Branch& LCB1,
+                                             const Likelihood_Cache_Branch& LCB2,
+                                             const Likelihood_Cache_Branch& LCB3,
+                                             const DenseMatrix<double>& F,
+                                             std::span<const int> counts);
 
-    log_double_t calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
-                                                const Likelihood_Cache_Branch& LCB2,
-                                                const DenseMatrix<double>& F,
-                                                std::span<const int> counts);
+    ProbDensity calc_at_deg2_probability_SEV(const Likelihood_Cache_Branch& LCB1,
+                                             const Likelihood_Cache_Branch& LCB2,
+                                             const DenseMatrix<double>& F,
+                                             std::span<const int> counts);
     // NOTE: Keep Eigen::Ref in this hot path because std::span increased its
     // retired instructions; revisit when compiler code generation changes.
-    log_double_t calc_prob_at_root_SEV(const R::RVector& LCN,
+    ProbDensity calc_prob_at_root_SEV(const R::RVector& LCN,
 				       const R::RVector& LCB,
 				       const DenseMatrix<double>& F,
 				       Eigen::Ref<const DenseVector<int>> counts);
 
-    log_double_t calc_prob_at_root_variable_SEV(const R::RVector& LCN,
+    ProbDensity calc_prob_at_root_variable_SEV(const R::RVector& LCN,
 						const R::RVector& LCB,
 						const DenseMatrix<double>& F,
 						std::span<const int> counts);
 
-    log_double_t calc_prob_SEV(const R::RVector& LCN,
+    ProbDensity calc_prob_SEV(const R::RVector& LCN,
 				     const R::RVector& LCB,
 				     const DenseMatrix<double>& FF,
 				     std::span<const int> counts);

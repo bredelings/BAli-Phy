@@ -45,9 +45,11 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
   in_edge "smodel" smodel
 
   -- How about stuff related to alignment compression?
-  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls likelihood alphabet (SModel.nStates smodelOnTree) (SModel.nBaseModels smodelOnTree) ancestralComponentStates smodelProperties
+  let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls
+          (collapseDensity likelihood) alphabet (SModel.nStates smodelOnTree)
+          (SModel.nBaseModels smodelOnTree) ancestralComponentStates smodelProperties
 
-  return ([fromLogDensity likelihood], prop)
+  return ([likelihood], prop)
 
 instance Dist (PhyloCTMC t Int s) where
     type Result (PhyloCTMC t Int s) = AlignedCharacterData

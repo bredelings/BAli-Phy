@@ -19,4 +19,11 @@ struct LogNumTraits<LogDensity>
 
 typedef LogNum<LogDensity> ProbDensity;
 
+// Multiplying a density by itself count times repeats every defect as well as its finite part.
+inline ProbDensity repeat_product(ProbDensity x, int count)
+{
+    x.log() = repeat_product(x.log(), count);
+    return x;
+}
+
 #endif

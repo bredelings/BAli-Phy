@@ -104,7 +104,7 @@ log_double_t prior_branch(const pairwise_alignment_t& a,const indel::PairHMM& Q)
 
   return prior_branch_from_counts(counts,Q);
 }
-log_double_t other_subst(const data_partition& P, const vector<int>& nodes) 
+ProbDensity other_subst(const data_partition& P, const vector<int>& nodes)
 {
     return substitution::other_subst(P,nodes);
 }
@@ -149,12 +149,17 @@ log_double_t other_prior(const data_partition& P,const vector<int>& nodes)
 }
 
 /// Check offset between (HMM path probabilities) and P (true probabilities) 
-void check_match_P(const data_partition& P, log_double_t OS, log_double_t OP, const vector<int>& path, const DPengine& Matrices) 
+void check_match_P(const data_partition& P, ProbDensity OS, log_double_t OP, const vector<int>& path,
+                   const DPengine& Matrices)
 {
     vector<int> path_g = Matrices.generalize(path);
 
+    // This diagnostic compares conventional finite log probabilities; MCMC factor
+    // registration retains the uncollapsed substitution density separately.
+    log_double_t collapsed_OS = exp_to_log_space(static_cast<double>(OS.log()));
+
     //--- Compare path emission probability VS likelihood
-    log_double_t qs = Matrices.path_Q_subst(path_g) * pow(OS,P.get_beta());
+    log_double_t qs = Matrices.path_Q_subst(path_g) * pow(collapsed_OS,P.get_beta());
     log_double_t ls = pow(P.likelihood(), P.get_beta());
   
     //--- Compare the path probability (Q) and collapsed/generalized path probability (GQ)

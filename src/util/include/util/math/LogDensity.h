@@ -233,6 +233,18 @@ inline LogDensity operator/(LogDensity x, double p)
     return x;
 }
 
+// Return the log representation of multiplying the same density factor count times.
+// Unlike a general real power, repetition scales the NaN multiplicity as well.
+inline LogDensity repeat_product(LogDensity x, int count)
+{
+    assert(count >= 0);
+    x.neginfs() *= count;
+    x.ones() *= count;
+    x.infs() *= count;
+    x.nans() *= count;
+    return x;
+}
+
 inline std::ostream& operator<<(std::ostream& o, const LogDensity& x)
 {
     // nan

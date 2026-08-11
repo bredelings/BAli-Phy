@@ -121,11 +121,11 @@ extern "C" closure builtin_function_calcProbAtRoot(OperationArgs& Args)
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
 
-    log_double_t Pr = substitution::calc_prob_at_root(arg0.as_<R::RVector>(),       // LCN
+    ProbDensity Pr = substitution::calc_prob_at_root(arg0.as_<R::RVector>(),       // LCN
 						      arg1.as_<R::RVector>(),       // LCB
 						      arg2.as_<R::RVector>(),       // A
 						      arg3.as_<Box<DenseMatrix<double>>>());  // F
-    return {Pr};
+    return new Box<ProbDensity>(Pr);
 }
 
 extern "C" closure builtin_function_peelBranchAwayFromRoot(OperationArgs& Args)
@@ -150,11 +150,11 @@ extern "C" closure builtin_function_calcProb(OperationArgs& Args)
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
 
-    log_double_t Pr = substitution::calc_prob(arg0.as_<R::RVector>(),       // LCN
+    ProbDensity Pr = substitution::calc_prob(arg0.as_<R::RVector>(),       // LCN
 					      arg1.as_<R::RVector>(),       // LCB
 					      arg2.as_<R::RVector>(),       // A
 					      arg3.as_<Box<DenseMatrix<double>>>());  // F
-    return {Pr};
+    return new Box<ProbDensity>(Pr);
 }
 
 extern "C" closure builtin_function_peelBranchTowardRootNonEq(OperationArgs& Args)
@@ -192,11 +192,11 @@ extern "C" closure builtin_function_calcProbNonEq(OperationArgs& Args)
     auto arg2 = Args.evaluate_slot_to_value(2);
     auto arg3 = Args.evaluate_slot_to_value(3);
 
-    log_double_t Pr = substitution::calc_prob_non_eq(arg0.as_<R::RVector>(),       // LCN
+    ProbDensity Pr = substitution::calc_prob_non_eq(arg0.as_<R::RVector>(),       // LCN
 						     arg1.as_<R::RVector>(),       // LCB
 						     arg2.as_<R::RVector>(),       // A
 						     arg3.as_<Box<DenseMatrix<double>>>());  // F
-    return {Pr};
+    return new Box<ProbDensity>(Pr);
 }
 
 extern "C" closure builtin_function_propagateFrequencies(OperationArgs& Args)

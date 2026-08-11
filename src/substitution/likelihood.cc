@@ -174,7 +174,7 @@ namespace substitution {
     }
 
 
-    log_double_t calc_probability_at_root(const Likelihood_Cache_Branch& LCB1,
+    ProbDensity calc_probability_at_root(const Likelihood_Cache_Branch& LCB1,
 					  const Likelihood_Cache_Branch& LCB2,
 					  const Likelihood_Cache_Branch& LCB3,
 					  const pairwise_alignment_t& A0,
@@ -205,7 +205,7 @@ namespace substitution {
         DenseMatrix<double> S(n_models,n_states);
 #endif
 
-        log_prod total;
+        prob_density_prod total;
         int scale = 0;
         const int AL0 = A0.size();
         const int AL1 = A1.size();
@@ -333,16 +333,11 @@ namespace substitution {
             total_root_clv_length++;
         }
 
-        log_double_t Pr = total;
+        ProbDensity Pr = total;
         Pr *= LCB1.other_subst();
         Pr *= LCB2.other_subst();
         Pr *= LCB3.other_subst();
         Pr.log() += log_scale_min * scale;
-        if (std::isnan(Pr.log()))
-        {
-            if (log_verbose > 0) std::cerr<<"calc_root_probability: probability is NaN!\n";
-            return log_double_t(0.0);
-        }
         return Pr;
     }
 
@@ -359,7 +354,7 @@ namespace substitution {
         return LCN2;
     }
 
-    log_double_t calc_prob_at_root(const R::RVector& sparse_LCN,
+    ProbDensity calc_prob_at_root(const R::RVector& sparse_LCN,
 				   const R::RVector& LCB,
 				   const R::RVector& A_,
 				   const DenseMatrix<double>& F)
@@ -402,7 +397,7 @@ namespace substitution {
         DenseMatrix<double> SMAT(n_models,n_states);
         double* S = SMAT.data();
 
-        log_prod total;
+        prob_density_prod total;
         int total_scale = 0;
 
 	vector<int> s(n_branches_in, 0);
@@ -466,23 +461,16 @@ namespace substitution {
 	    total_root_clv_length++;
         }
 
-        log_double_t Pr = total;
+        ProbDensity Pr = total;
 	for(int i=0;i<n_branches_in;i++)
 	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst();
 
         Pr.log() += log_scale_min * total_scale;
 
-        if (std::isnan(Pr.log()))
-        {
-            if (log_verbose > 0) std::cerr<<"calc_root_probability: probability is NaN!\n";
-
-            return log_double_t(0.0);
-        }
-
         return Pr;
     }
 
-    log_double_t calc_prob_not_at_root(const R::RVector& sparse_LCN,
+    ProbDensity calc_prob_not_at_root(const R::RVector& sparse_LCN,
 				       const R::RVector& LCB,
 				       const R::RVector& A_,
 				       const DenseMatrix<double>& F)
@@ -525,7 +513,7 @@ namespace substitution {
         DenseMatrix<double> SMAT(n_models,n_states);
         double* S = SMAT.data();
 
-        log_prod total;
+        prob_density_prod total;
         int total_scale = 0;
 
 	vector<int> s(n_branches_in, 0);
@@ -592,22 +580,16 @@ namespace substitution {
 	    total_root_clv_length++;
         }
 
-        log_double_t Pr = total;
+        ProbDensity Pr = total;
 	for(int i=0;i<n_branches_in;i++)
 	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst();
 
         Pr.log() += log_scale_min * total_scale;
 
-        if (std::isnan(Pr.log()))
-        {
-            if (log_verbose > 0) std::cerr<<"calc_root_probability: probability is NaN!\n";
-            return log_double_t(0.0);
-        }
-
         return Pr;
     }
 
-    log_double_t calc_prob(const R::RVector& LCN,
+    ProbDensity calc_prob(const R::RVector& LCN,
 			   const R::RVector& LCB,
 			   const R::RVector& A_,
 			   const DenseMatrix<double>& F)
@@ -636,7 +618,7 @@ namespace substitution {
 	}
     }
 
-    log_double_t calc_prob_at_root_non_eq(const R::RVector& sparse_LCN,
+    ProbDensity calc_prob_at_root_non_eq(const R::RVector& sparse_LCN,
 					  const R::RVector& LCB,
 					  const R::RVector& A_,
 					  const DenseMatrix<double>& F)
@@ -679,7 +661,7 @@ namespace substitution {
         DenseMatrix<double> SMAT(n_models,n_states);
         double* S = SMAT.data();
 
-        log_prod total;
+        prob_density_prod total;
         int total_scale = 0;
 
 	vector<int> s(n_branches_in, 0);
@@ -743,23 +725,16 @@ namespace substitution {
 	    total_root_clv_length++;
         }
 
-        log_double_t Pr = total;
+        ProbDensity Pr = total;
 	for(int i=0;i<n_branches_in;i++)
 	    Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst_f(F);
 
         Pr.log() += log_scale_min * total_scale;
 
-        if (std::isnan(Pr.log()))
-        {
-            if (log_verbose > 0) std::cerr<<"calc_root_probability: probability is NaN!\n";
-
-            return log_double_t(0.0);
-        }
-
         return Pr;
     }
 
-    log_double_t calc_prob_not_at_root_non_eq(const R::RVector& sparse_LCN,
+    ProbDensity calc_prob_not_at_root_non_eq(const R::RVector& sparse_LCN,
 					      const R::RVector& LCB,
 					      const R::RVector& A_)
     {
@@ -803,7 +778,7 @@ namespace substitution {
         DenseMatrix<double> SMAT(n_models,n_states);
         double* S = SMAT.data();
 
-        log_prod total;
+        prob_density_prod total;
         int total_scale = 0;
 
 	vector<int> s(n_branches_in, 0);
@@ -870,7 +845,7 @@ namespace substitution {
 	    total_root_clv_length++;
         }
 
-        log_double_t Pr = total;
+        ProbDensity Pr = total;
 	for(int i=0;i<n_branches_in;i++)
 	    if (i == 0)
 		Pr *= LCB[i].as_<Likelihood_Cache_Branch>().other_subst();
@@ -879,16 +854,10 @@ namespace substitution {
 
         Pr.log() += log_scale_min * total_scale;
 
-        if (std::isnan(Pr.log()))
-        {
-            if (log_verbose > 0) std::cerr<<"calc_root_probability: probability is NaN!\n";
-            return log_double_t(0.0);
-        }
-
         return Pr;
     }
 
-    log_double_t calc_prob_non_eq(const R::RVector& LCN,
+    ProbDensity calc_prob_non_eq(const R::RVector& LCN,
 				  const R::RVector& LCB,
 				  const R::RVector& A_,
 				  const DenseMatrix<double>& F)
@@ -1055,7 +1024,7 @@ namespace substitution {
         DenseMatrix<double> ones(n_models, n_states);
         element_assign(ones, 1);
 
-        log_prod total;
+        prob_density_prod total;
         int total_scale = 0;
         const int AL0 = A0.size();
         const int AL1 = A1.size();
@@ -1163,7 +1132,7 @@ namespace substitution {
         if (equilibrium)
             LCB->init_other_subst(1);
         else
-            LCB->other_subst_f = [](const DenseMatrix<double>&) {return log_double_t(1);};
+            LCB->other_subst_f = [](const DenseMatrix<double>&) {return ProbDensity(1);};
 
         return LCB;
     }
@@ -1236,7 +1205,7 @@ namespace substitution {
         if (equilibrium)
             LCB->init_other_subst(1);
         else
-            LCB->other_subst_f = [](const DenseMatrix<double>&) {return log_double_t(1);};
+            LCB->other_subst_f = [](const DenseMatrix<double>&) {return ProbDensity(1);};
 
         return LCB;
     }
@@ -1305,7 +1274,7 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        log_prod total;
+        prob_density_prod total;
         int total_scale = 0;
 
 	vector<int> s(n_branches_in, 0);
@@ -1421,7 +1390,7 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        log_prod total;
+        prob_density_prod total;
         int total_scale = 0;
 
 	vector<int> s(n_branches_in, 0);
@@ -1538,7 +1507,7 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        log_prod total;
+        prob_density_prod total;
         int total_scale = 0;
 
 	vector<int> s(n_branches_in, 0);
@@ -1664,7 +1633,7 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        log_prod total;
+        prob_density_prod total;
 
 	vector<int> s(n_branches_in, 0);
 	int s_out = 0;
@@ -1741,7 +1710,7 @@ namespace substitution {
 
 	    int n_branches_in = LCB.size();
 
-	    log_prod total;
+	    prob_density_prod total;
 	    int total_scale = 0;
 
 	    for(int j =0;j < n_branches_in; j++)
@@ -1766,7 +1735,7 @@ namespace substitution {
 		}
 	    }
 
-	    log_double_t other_subst = total;
+	    ProbDensity other_subst = total;
 	    other_subst.log() += total_scale*log_scale_min;
 
 	    for(int j=0;j< n_branches_in; j++)
@@ -1833,7 +1802,7 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        log_prod total;
+        prob_density_prod total;
         int total_scale = 0;
 
 	vector<int> s(n_branches_in, 0);
@@ -1966,7 +1935,7 @@ namespace substitution {
         // scratch matrix
         double* S = LCB_OUT->scratch(0);
 
-        log_prod total;
+        prob_density_prod total;
         int total_scale = 0;
 
 	vector<int> s(n_branches_in, 0);
@@ -2402,7 +2371,7 @@ namespace substitution {
     /// Instead we could simply apply equilibrium frequencies to them right
     /// at the leaf branches of the subtree.
     ///
-    log_double_t other_subst(const data_partition& P, const vector<int>& nodes) 
+    ProbDensity other_subst(const data_partition& P, const vector<int>& nodes)
     {
         auto t = P.t();
 
@@ -2411,7 +2380,7 @@ namespace substitution {
 
         vector<int> leaf_branch_list = get_leaf_branches_from_subtree_nodes(t,nodes);
 
-        log_double_t Pr3 = 1;
+        ProbDensity Pr3 = 1;
         for(int b: leaf_branch_list)
 	{
 	    if (P.cache(b)->other_subst_f)

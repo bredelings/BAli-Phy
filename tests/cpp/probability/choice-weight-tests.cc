@@ -1,4 +1,5 @@
 #include "probability/choose.H"
+#include "math/logprod.H"
 #include "test-util.H"
 #include "util/rng.H"
 
@@ -42,6 +43,45 @@ namespace
         BALI_PHY_TEST_CHECK(repeated_zero.log().neginfs() == 2);
         BALI_PHY_TEST_CHECK(repeated_zero.is_zero());
         BALI_PHY_TEST_CHECK(not ProbDensity(1).is_zero());
+    }
+
+    // Protect batched finite products and per-factor defect multiplicities; this is
+    // obsolete if substitution likelihoods stop using the shared product accumulator.
+    void check_prob_density_product_accumulation()
+    {
+        log_prod ordinary;
+        ordinary *= 0.5;
+        auto first_value = ordinary.value();
+        ordinary *= 0.25;
+        check_close(double(first_value), 0.5);
+        check_close(double(ordinary.value()), 0.125);
+
+        auto empty_zero_product = repeat_product(log_double_t(0), 0);
+        check_close(double(empty_zero_product), 1.0);
+
+        prob_density_prod repeated;
+        repeated.mult_with_count(0.5, 2);
+        repeated.mult_with_count(0.0, 3);
+        repeated.mult_with_count(std::numeric_limits<double>::infinity(), 2);
+        repeated.mult_with_count(std::numeric_limits<double>::quiet_NaN(), 4);
+        auto density = repeated.value();
+        BALI_PHY_TEST_CHECK(density.log().neginfs() == 3);
+        BALI_PHY_TEST_CHECK(density.log().infs() == 2);
+        BALI_PHY_TEST_CHECK(density.log().nans() == 4);
+        BALI_PHY_TEST_CHECK(std::abs(density.log().ones() - std::log(0.25)) < 1.0e-12);
+
+        auto cached = exp_to_log_space(LogDensity(1, std::log(2.0), 0, 1));
+        prob_density_prod combined;
+        combined *= cached;
+        combined *= 0.5;
+        density = combined.value();
+        BALI_PHY_TEST_CHECK(density.log().neginfs() == 1);
+        BALI_PHY_TEST_CHECK(density.log().nans() == 1);
+        BALI_PHY_TEST_CHECK(std::abs(density.log().ones()) < 1.0e-12);
+
+        density = repeat_product(cached, 0);
+        BALI_PHY_TEST_CHECK(density.log().isfinite());
+        BALI_PHY_TEST_CHECK(density.log().ones() == 0);
     }
 
     // Finite ChoiceWeights must reduce to ordinary categorical normalization.
@@ -309,6 +349,7 @@ namespace
 int main()
 {
     check_prob_density_zero();
+    check_prob_density_product_accumulation();
     check_finite_weights();
     check_zero_order_addition();
     check_density_rank_order();

@@ -3,6 +3,7 @@ module Numeric.ProbDensity
     ( ProbDensity
     , fromLogDensity
     , collapseDensity
+    , reciprocalDensity
     ) where
 
 import Compiler.FFI.Import (CInput, COutput)
@@ -20,3 +21,6 @@ foreign import bpcall "Num:" fromLogDensity :: Log Double -> ProbDensity
 
 -- Project a density product to its ordinary log value, discarding defect multiplicities.
 foreign import bpcall "Num:" collapseDensity :: ProbDensity -> Log Double
+
+-- Invert a density while retaining signed zero, infinity, and NaN multiplicities.
+foreign import bpcall "Num:" reciprocalDensity :: ProbDensity -> ProbDensity

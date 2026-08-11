@@ -145,6 +145,18 @@ constexpr LogNum<T> pow(LogNum<T> x, double p)
     return x;
 }
 
+// Return the product of count identical factors.  Representations with discrete
+// defect counts may overload this operation rather than use general real powers.
+template <typename T>
+constexpr LogNum<T> repeat_product(LogNum<T> x, int count)
+{
+    assert(count >= 0);
+    if (count == 0)
+        return LogNum<T>(1);
+    x.log() *= count;
+    return x;
+}
+
 template <typename T>
 constexpr LogNum<T> sqrt(const LogNum<T>& x)
 {
