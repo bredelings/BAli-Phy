@@ -229,8 +229,8 @@ extern "C" closure builtin_function_rs07_branch_HMM(OperationArgs& Args)
     if (e > 1)
 	throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<e;
 
-    assert(delta >= 0 and delta <= 1);
-    assert(e >= 0 and e < 1);
+    assert(std::isnan(delta) or (delta >= 0 and delta <= 1));
+    assert(std::isnan(e) or (e >= 0 and e < 1));
 
     // transition probabilities default to *zero*
     indel::PairHMM Q;
@@ -308,8 +308,8 @@ extern "C" closure builtin_function_multi_rs07_branch_HMM(OperationArgs& Args)
     if (e > 1)
 	throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<e;
     
-    assert(delta >= 0 and delta <= 1);
-    assert(e >= 0 and e < 1);
+    assert(std::isnan(delta) or (delta >= 0 and delta <= 1));
+    assert(std::isnan(e) or (e >= 0 and e < 1));
 
     // transition probabilities default to *zero*
     indel::PairHMM Q;
@@ -362,8 +362,8 @@ extern "C" closure builtin_function_rs05_branch_HMM(OperationArgs& Args)
     if (e > 1.0)
 	throw myexception()<<"RS05_branch_HMM: we need (epsilon <= 1), but epsilon = "<<e;
 
-    assert(delta >= 0.0 and delta <= 1.0);
-    assert(e >= 0.0 and e < 1.0);
+    assert(std::isnan(delta) or (delta >= 0.0 and delta <= 1.0));
+    assert(std::isnan(e) or (e >= 0.0 and e < 1.0));
 
     indel::PairHMM Q;
     using namespace A2::states;
