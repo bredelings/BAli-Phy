@@ -68,8 +68,7 @@ namespace mpi = boost::mpi;
 #include "computation/program.H"
 #include "computation/machine/requested_exit.H"
 #include "computation/machine/graph_register.H"
-#include "models/A-T-prog.H" // for gen_model_program( )
-
+#include "models/A-T-prog.H" // for get_alphabet_expression( )
 #include "computation/haskell/generated.H"
 #include "computation/haskell/ids.H"
 #include "computation/typecheck/tidy.H"  // for TidyState.print( )
@@ -643,20 +642,14 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
         update(info, j);
         P = std::move(prog);
     }
-    else if (args.count("model"))
-    {
-        auto [model_filename, args_v] = extract_prog_args(args, argc, argv, "model");
-        L->args = args_v;
-        P = gen_model_program(args, L, output_dir, model_filename);
-    }
     else
     {
-	std::cerr<<"generate_program: no 'run', 'print', 'align', or 'model'";
+	std::cerr<<"generate_program: no 'run', 'print', or 'align'";
         std::abort();
     }
 
     //------ Write run info to C1.run.json ------//
-    if ((args.count("align") or args.count("model")) and not args.count("test"))
+    if (args.count("align") and not args.count("test"))
     {
         ofstream run_info( output_dir / "C1.run.json" );
 	run_info<<json::serialize_options({.allow_infinity_and_nan=true});
@@ -664,41 +657,7 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
         run_info.close();
         cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
 
-        if (args.count("align"))
-            write_initial_alignments(args, proc_id, output_dir);
-
-        // Custom model programs do not yet own their run interface, so retain their C++ reporting.
-        if (args.count("model"))
-        {
-            long int max_iterations = 200000;
-            if (args.count("iterations"))
-                max_iterations = args["iterations"].as<long int>();
-
-            //------ Report log files -------//
-            cout<<"\nBeginning MCMC computations."<<endl;
-            auto log_formats = get_log_formats(args, false);
-            if (log_formats.count("json"))
-                cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "
-                    <<output_dir / "C1.log.json"<<" as JSON\n";
-            if (log_formats.count("tsv"))
-                cout<<"   - Sampled "<<bold_blue("numerical parameters")<<" logged to "
-                    <<output_dir / "C1.log"<<" as TSV\n";
-
-            //------ Clarify lack of auto-stopping -----/
-            cout<<"\nBAli-Phy does NOT detect how many iterations is sufficient:\n"
-                <<"   You need to monitor convergence and kill it when done."<<endl;
-            if (not args.count("iterations"))
-                cout<<"   Maximum number of iterations not specified: limiting to "<<max_iterations<<"."<<endl;
-            else
-                cout<<"   Maximum number of iterations set to "<<max_iterations<<"."<<endl;
-
-            cout<<"\n";
-            if (log_formats.count("tsv"))
-                cout<<"You can examine 'C1.log' using BAli-Phy tool statreport (command-line) "
-                    <<"or the BEAST program Tracer (graphical).\n";
-            cout<<"See the manual at http://www.bali-phy.org/README.xhtml for further information.\n";
-            cout.flush();
-        }
+        write_initial_alignments(args, proc_id, output_dir);
     }
 
     return P;
@@ -853,7 +812,7 @@ int main(int argc,char* argv[])
         //----------- Create output dir --------------//
         fs::path output_dir;
 
-        if ((args.count("align") or args.count("model")) and not args.count("test"))
+        if (args.count("align") and not args.count("test"))
         {
 #ifdef HAVE_MPI
             // FIXME: Can we just use `broadcast(world, output_dir, 0)`?

@@ -36,12 +36,6 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
 		    const model_t& indel_rates_model,
 		    const std::vector<int>& like_calcs);
 
-std::unique_ptr<Program>
-gen_model_program(const boost::program_options::variables_map& args,
-		  const std::shared_ptr<module_loader>& L,
-		  const std::filesystem::path& output_directory,
-		  const std::filesystem::path& model_filename);
-
 #include "sequence/alphabet.H"
 
 Hs::Exp get_alphabet_expression(const alphabet& a);

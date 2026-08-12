@@ -68,11 +68,6 @@ string run_name(const variables_map& args)
 	}
 	name = join(alignment_filenames,'-');
     }
-    else if (args.count("model"))
-    {
-        fs::path filepath = args["model"].as<vector<string>>()[0];
-        name = filepath.filename().stem().string();
-    }
 
     return name;
 }

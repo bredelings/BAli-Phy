@@ -1,0 +1,14 @@
+# The `run` command:
+
+run <file>.hs                              Run a standalone Haskell program.
+
+Load `<file>.hs` and evaluate its `main` function.  Options before `--` are
+handled by BAli-Phy; arguments after `--` are passed to the Haskell program.
+
+Custom probabilistic models are ordinary standalone programs and should parse
+their own model and MCMC options, for example with `Options.Applicative`.
+
+# Examples:
+
+   bali-phy run Model.hs --seed=1 -- --iterations=1000 data.fasta
+

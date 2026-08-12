@@ -290,7 +290,6 @@ po::options_description model_options(int level)
 
     if (level >= 2)
         model.add_options()
-            ("model,m",value<vector<string>>()->multitoken(),"File containing hierarchical model.")
             ("print,p",value<string>(),"Evaluate and print expression.");
     return model;
 }
@@ -374,10 +373,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     {
         cargs[0] = "--type";
     }
-    else if (cargs.size()>=1 and cargs[0] == "model")
-    {
-        cargs[0] = "--model";
-    }
     variables_map args;
     store(command_line_parser(cargs).options(all).positional(p).run(), args);
     notify(args);    
@@ -442,12 +437,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
         throw myexception()<<"--dump-ffi requires --test-module";
 
     std::set<string> commands;
-    for(auto word : {"align", "model", "print", "test-module", "run", "type"})
+    for(auto word : {"align", "print", "test-module", "run", "type"})
 	if (args.count(word))
 	    commands.insert(word);
 
     if (commands.empty())
-	throw myexception()<<"You must specify alignment files or a generic model (with --model).\n\nTry `"<<argv[0]<<" --help' for more information.";
+	throw myexception()<<"You must specify alignment files or a command such as `run'.\n\n"
+                           <<"Try `"<<argv[0]<<" --help' for more information.";
 
     if (commands.size() > 1)
     {

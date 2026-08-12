@@ -39,6 +39,7 @@
 
 ## Haskell
 
+- Run custom Haskell models as standalone programs with `bali-phy run`.
 - Implement `newtype`
 - Implement `deriving`
 - Implement records fully
