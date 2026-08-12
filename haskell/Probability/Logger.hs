@@ -66,6 +66,9 @@ treeLogger filename = do handle <- openFile filename WriteMode
 alignmentLogger filename = do handle <- openFile filename WriteMode
                               return $ writeAlignment handle
 
+-- Supply a polymorphic logger action when a run intentionally has no output destination.
+noLogger _ = plainLogger $ \_ -> return ()
+
 
 -- Record one alignment sample using the existing human-readable layout.
 writeAlignment file alignment = plainLogger $ \iter -> do

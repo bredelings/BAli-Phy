@@ -1,15 +1,17 @@
 module Model where
 
+import           BAliPhy.Run
 import           Probability
 import           Probability.Logger
 import           Bio.Alphabet
 import           Bio.Alignment
 import           Bio.Sequence
-import           MCMC (scaleGroupSlice)
+import           MCMC (runMCMC, scaleGroupSlice)
+import           Options.Applicative
+import           Probability.Random (writeTraceGraph)
 import           Tree
 import           Tree.Newick
 import           SModel
-import           System.Environment (getArgs)
 import           System.FilePath
 
 smodel_prior nucleotides =  do
@@ -64,13 +66,28 @@ model seqData logTree = do
 
     return loggers
 
-main logDir = do
-    [filename] <- getArgs
+main = do
+    options <- execParser $
+      info
+        (modelRunOptions "Model" 200000
+          (strArgument (metavar "ALIGNMENT" <> help "Aligned sequence file")) <**> helper)
+        (fullDesc <> progDesc "Run the Yule-tree example")
 
-    seqData <- mkAlignedCharacterData dna <$> loadSequences filename
+    run <- prepareModelRun (testMode options) (outputName options)
 
-    -- This is placed in the wrong directory.
-    logTree <- treeLogger $ logDir </> "C1.trees"
+    seqData <- mkAlignedCharacterData dna <$> loadSequences (modelInputs options)
 
-    return $ model seqData logTree
+    logTree <- case run of
+      TestRun -> return noLogger
+      MCMCRun directory -> treeLogger $ directory </> "C1.trees"
 
+    context <- makeModelContext run (logFormats options) $ model seqData logTree
+
+    case run of
+      TestRun -> printInitialModel (logFormats options) context
+      MCMCRun directory -> do
+        reportModelRun (iterations options) (logFormats options) directory
+        runMCMC (iterations options) context
+
+    verbosity <- getVerbosity
+    if verbosity > 0 then writeTraceGraph context else return ()

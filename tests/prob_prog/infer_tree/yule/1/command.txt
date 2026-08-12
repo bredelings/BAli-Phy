@@ -1,1 +1,1 @@
--m Model data/RSV2.fasta --iter=5 --name ignore
+run Model.hs -- --iterations=5 --name=ignore data/RSV2.fasta

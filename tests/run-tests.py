@@ -153,6 +153,16 @@ class BAliPhy(Program):
     def prefix(self):
         return ""
 
+    # Keep configured runner options outside the explicit boundary that starts Haskell arguments.
+    def cmdline(self, tester, test_subdir):
+        test_dir = tester.dir_for_test(test_subdir)
+        args_filename = os.path.join(test_dir, self.control_file())
+        args = shlex.split(open(args_filename, 'r').read())
+        if "--" in args:
+            separator = args.index("--")
+            return self.cmd + args[:separator] + self.extra_args + args[separator:]
+        return self.cmd + args + self.extra_args
+
 class IQTREE(Program):
     def __init__(self, cmd):
         Program.__init__(self,cmd)

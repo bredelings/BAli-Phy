@@ -6,6 +6,7 @@
 #include "computation/machine/graph_register.H"
 #include "util/rng.H"
 #include "probability/choose.H"
+#include "util/log-level.H"
 #include <cstdlib> // for getenv
 
 using namespace std;
@@ -44,6 +45,11 @@ extern "C" closure builtin_function_lookupEnvRaw(OperationArgs& Args)
 extern "C" closure builtin_function_getProgNameRaw(OperationArgs& Args)
 {
     return Args.memory().prog_name;
+}
+
+extern "C" closure builtin_function_getVerbosity(OperationArgs&)
+{
+    return log_verbose;
 }
 
 // Decode ExitCode and unwind to the top-level runner; this must not terminate inside evaluation.
