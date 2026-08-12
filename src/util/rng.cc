@@ -24,7 +24,6 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
-#include <stdexcept>
 #include <boost/random/random_device.hpp>
 
 #include "util/rng.H"
@@ -38,8 +37,6 @@ namespace
 
 // Alternative samplers are only needed near p=1; this cutoff keeps their
 // expected work and variance small.
-constexpr double small_failure_probability = 0.05;
-
 }
 
 uint64_t get_random_seed()
@@ -167,27 +164,17 @@ unsigned geometric(double p) {
 // the success probability rounds to one.
 int geometric_from_logs(double log_p, double log_q)
 {
-    double q = exp(log_q);
-    if (q >= small_failure_probability)
-    {
-        double p = exp(log_p);
-        if (p == 0)
-            throw std::overflow_error("geometric success probability is below Double range");
-        unsigned n = geometric(p);
-        if (n > std::numeric_limits<int>::max())
-            throw std::overflow_error("geometric sample exceeds Int range");
-        return n;
-    }
+    // NaN is represented by a finite placeholder whose associated density remains NaN.
+    if (std::isnan(log_p) or std::isnan(log_q)) return 0;
+    if (log_q == -INFINITY) return 0;
+    if (log_p == -INFINITY) return std::numeric_limits<int>::max();
 
-    // A geometric variate counts consecutive failures before the first success.
-    int n = 0;
-    while (bernoulli(q))
-    {
-        if (n == std::numeric_limits<int>::max())
-            throw std::overflow_error("geometric sample exceeds Int range");
-        n++;
-    }
-    return n;
+    // For K failures before success, P(K >= k)=q^k. Sampling from log(U)/log(q) preserves a
+    // tiny failure tail without reconstructing q, and saturates before converting to Int.
+    double n = std::floor(log_unif() / log_q);
+    if (not std::isfinite(n) or n >= std::numeric_limits<int>::max())
+        return std::numeric_limits<int>::max();
+    return int(n);
 }
 
 int negative_binomial(int r, double p)
@@ -208,21 +195,22 @@ int negative_binomial_from_logs(int r, double log_p, double log_q)
 {
     assert(r >= 0);
 
-    double q = exp(log_q);
-    if (r == 0 or q == 0) return 0;
-    if (q >= small_failure_probability)
-    {
-        double p = exp(log_p);
-        if (p == 0)
-            throw std::overflow_error("negative-binomial success probability is below Double range");
-        return negative_binomial(r, p);
-    }
+    // NaN uses a finite placeholder whose density remains NaN; p=0 has all its mass beyond Int.
+    if (std::isnan(log_p) or std::isnan(log_q)) return 0;
+    if (r == 0 or log_q == -INFINITY) return 0;
+    if (log_p == -INFINITY) return std::numeric_limits<int>::max();
 
-    double scale = exp(log_q-log_p);
-    unsigned n = poisson(gamma(r, scale));
-    if (n > std::numeric_limits<int>::max())
-        throw std::overflow_error("negative-binomial sample exceeds Int range");
-    return n;
+    // A NegativeBinomial(r,p) variate is the sum of r independent Geometric(p) variates.
+    // Accumulating in Int space allows saturation without entering a library rejection loop.
+    int total = 0;
+    for (int i = 0; i < r; i++)
+    {
+        int n = geometric_from_logs(log_p, log_q);
+        if (n >= std::numeric_limits<int>::max() - total)
+            return std::numeric_limits<int>::max();
+        total += n;
+    }
+    return total;
 }
 
 int binomial(int n, double p) {

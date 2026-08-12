@@ -35,7 +35,8 @@ moments distribution = (sum weights, sum $ zipWith (*) rates weights,
                          sum $ zipWith (\rate weight -> rate * rate * weight) rates weights)
     where (rates, weights) = unzip $ unpackDiscrete distribution
 
--- Check the Gamma discretizations against analytic rules, published values, and limiting cases.
+-- Check analytic and published rules, genuine point-mass limits, and NaN propagation for unavailable
+-- rules; the last case guards against silently substituting a different rate model.
 main = do
     let meanRule = gammaRatesMean 1.0 2
         meanPairs = unpackDiscrete meanRule
@@ -45,6 +46,8 @@ main = do
         yangPairs = unpackDiscrete yangRule
         yangRates = map fst yangPairs
         infiniteMeanPairs = unpackDiscrete $ gammaRatesMean (1.0 / 0.0) 4
+        zeroMeanPairs = unpackDiscrete $ gammaRatesMean 0.0 4
+        nanMeanPairs = unpackDiscrete $ gammaRatesMean (0.0 / 0.0) 4
         smallMeanPairs = unpackDiscrete $ gammaRatesMean 3.4181825842769832e-16 20
         tinyMeanPairs = unpackDiscrete $ gammaRatesMean 1.0e-100 20
         extremeMeanRule = gammaRatesMean 1.0e-300 20
@@ -55,6 +58,8 @@ main = do
         logNormalRule = logNormalRatesQuadrature 0.0 1.0 2
         logNormalPairs = unpackDiscrete logNormalRule
         infiniteAlphaRule = unpackDiscrete $ gammaRatesQuadrature (1.0 / 0.0) 4
+        zeroAlphaRule = unpackDiscrete $ gammaRatesQuadrature 0.0 4
+        nanAlphaRule = unpackDiscrete $ gammaRatesQuadrature (0.0 / 0.0) 4
         largeAlphaRule = gammaRatesQuadrature 1.0e100 4
         (largeWeights, largeMean, _) = moments largeAlphaRule
         smallAlpha = 3.4181825842769832e-16
@@ -67,6 +72,7 @@ main = do
         (tinyWeight, tinyMean, tinySecondMoment) = moments tinyAlphaRule
         extremeAlphaPairs = unpackDiscrete $ gammaRatesQuadrature 1.0e-300 20
         extremeMean = sum $ map (\pair -> fst pair * snd pair) extremeAlphaPairs
+        unrepresentableLogNormalPairs = unpackDiscrete $ logNormalRatesQuadrature (-1.0 / 0.0) 0.0 2
         genericPairs = unpackDiscrete $ gammaRates 1.0 2
     print (near meanWeights 1.0
         && near meanRate 1.0
@@ -79,6 +85,8 @@ main = do
         && nearPublished (yangRates !! 3) 2.8944
         && ordered yangRates
         && all (\pair -> near (fst pair) 1.0 && near (snd pair) 0.25) infiniteMeanPairs
+        && all (\pair -> isNaN (fst pair) && near (snd pair) 0.25) zeroMeanPairs
+        && all (\pair -> isNaN (fst pair) && near (snd pair) 0.25) nanMeanPairs
         && all validMeanPair smallMeanPairs
         && all validMeanPair tinyMeanPairs
         && all validMeanPair extremeMeanPairs
@@ -91,6 +99,8 @@ main = do
         && near (fst (logNormalPairs !! 1)) (exp 1.0)
         && near (snd (logNormalPairs !! 1)) 0.5
         && all (\pair -> near (fst pair) 1.0 && near (snd pair) 0.25) infiniteAlphaRule
+        && all (\pair -> isNaN (fst pair) && near (snd pair) 0.25) zeroAlphaRule
+        && all (\pair -> isNaN (fst pair) && near (snd pair) 0.25) nanAlphaRule
         && near largeWeights 1.0
         && near largeMean 1.0
         && all validQuadraturePair smallAlphaPairs
@@ -103,6 +113,7 @@ main = do
         && nearRelative tinySecondMoment (1.0 + 1.0 / tinyAlpha)
         && all validQuadraturePair extremeAlphaPairs
         && near extremeMean 1.0
+        && all (\pair -> isNaN (fst pair) && near (snd pair) 0.5) unrepresentableLogNormalPairs
         && near (fst (genericPairs !! 0)) (1.0 - log 2.0)
         && near (fst (genericPairs !! 1)) (1.0 + log 2.0)
         && near (snd (genericPairs !! 0)) 0.5

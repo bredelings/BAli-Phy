@@ -484,11 +484,12 @@ log_double_t negative_binomial_pdf(int r, double p, int k)
 log_double_t negative_binomial_pdf_from_logs(int r, double log_p, double log_q, int k)
 {
     assert(r >= 0);
-    assert(log_p > -INFINITY and log_p <= 0);
-    assert(log_q <= 0);
+    assert(std::isnan(log_p) or log_p <= 0);
+    assert(std::isnan(log_q) or log_q <= 0);
 
     if (k < 0) return 0;
     if (r == 0 or log_q == -INFINITY) return (k == 0) ? 1 : 0;
+    if (log_p == -INFINITY) return 0;
 
     // P(K=k) = choose(k+r-1,k) p^r (1-p)^k.
     log_double_t Pr;
@@ -522,8 +523,8 @@ log_double_t binomial_pdf(int n, double p, int k)
 log_double_t binomial_pdf_from_logs(int n, double log_p, double log_q, int k)
 {
     assert(n >= 0);
-    assert(log_p <= 0);
-    assert(log_q <= 0);
+    assert(std::isnan(log_p) or log_p <= 0);
+    assert(std::isnan(log_q) or log_q <= 0);
 
     if (k < 0 or k > n) return 0;
     if (log_p == -INFINITY) return (k == 0) ? 1 : 0;

@@ -24,6 +24,7 @@
 
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <stdexcept>
 
 using std::vector;
@@ -32,6 +33,24 @@ using std::valarray;
 
 namespace
 {
+
+// Run a rule construction while translating only expected numerical-library failures into a
+// diagnostic; resource failures and unrelated exceptions remain fatal.
+template <typename F>
+std::optional<string> numerical_rule_failure(F&& computation)
+{
+    try
+    {
+        computation();
+        return {};
+    }
+    catch (const myexception& e)                   { return e.what(); }
+    catch (const std::domain_error& e)             { return e.what(); }
+    catch (const std::overflow_error& e)           { return e.what(); }
+    catch (const std::underflow_error& e)          { return e.what(); }
+    catch (const boost::math::evaluation_error& e) { return e.what(); }
+    catch (const boost::math::rounding_error& e)   { return e.what(); }
+}
 
 // Resolve a boxed vector's lazy elements with USE dependencies and recover the
 // log-domain values stored by Haskell's Log Double newtype.
@@ -150,28 +169,39 @@ std::pair<DenseVector<double>, DenseVector<double>> small_alpha_gamma_quadrature
     return {std::move(nodes), std::move(weights)};
 }
 
-// Validate the trusted normalized log pair while retaining the endpoint
-// behavior of the former probability-valued sampling interface.
-void validate_log_probability_pair(double log_p, double log_q, const char* name, bool allow_zero)
+// Represent the point-mass-at-one limit while retaining the requested component count.
+std::pair<DenseVector<double>, DenseVector<double>> unit_rate_quadrature(int count)
+{
+    return {DenseVector<double>::Ones(count), DenseVector<double>::Constant(count, 1.0 / count)};
+}
+
+// Preserve an unavailable rate rule as NaN nodes so its likelihood contributes a density defect.
+std::pair<DenseVector<double>, DenseVector<double>> unavailable_rate_quadrature(int count)
+{
+    double nan = std::numeric_limits<double>::quiet_NaN();
+    return {DenseVector<double>::Constant(count, nan), DenseVector<double>::Constant(count, 1.0 / count)};
+}
+
+// Validate a normalized log-probability pair; NaN is a numerical failure that callers replace
+// with a safe sample, while values outside [0,1] indicate a fatal interface error.
+bool validate_log_probability_pair(double log_p, double log_q, const char* name)
 {
     const char* reason = nullptr;
     if (std::isnan(log_p) or std::isnan(log_q))
-        reason = "log_p and log_q must not be NaN";
+        return false;
     else if (log_p > 0 or log_q > 0)
         reason = "log_p and log_q must not be greater than zero";
     else if (std::isinf(log_p) and std::isinf(log_q))
         reason = "p and q cannot both be zero";
-    else if (not allow_zero and std::isinf(log_p))
-        reason = "p=0 is outside the permitted range";
 
     if (reason)
     {
-        const char* p_range = allow_zero ? "[0,1]" : "(0,1]";
-        throw math_error()<<name<<": expected success probability p in "<<p_range
+        throw myexception()<<name<<": expected success probability p in [0,1]"
                           <<" and failure probability q=1-p in [0,1]; got log_p="<<log_p
                           <<", log_q="<<log_q<<" (p="<<std::exp(log_p)<<", q="<<std::exp(log_q)
                           <<"): "<<reason;
     }
+    return true;
 }
 
 }
@@ -209,78 +239,95 @@ extern "C" closure builtin_function_gammaMeanNative(OperationArgs& Args)
     int count = Args.evaluate_slot_to_value(1).as_int();
     if (count <= 0)
         throw myexception()<<"gammaMean: the number of categories must be positive, but is "<<count;
-    if (!(alpha > 0))
-        throw math_error()<<"gammaMean: alpha must be positive, but is "<<alpha;
+    if (alpha < 0)
+        throw myexception()<<"gammaMean: alpha must be nonnegative, but is "<<alpha;
 
     DenseVector<double> rates(count);
-    if (count == 1 || std::isinf(alpha))
+    bool fallback = false;
+    string fallback_reason;
+    if ((count == 1 and alpha > 0) || std::isinf(alpha))
         rates.setOnes();
-    else if (alpha + 1.0 == alpha)
-    {
-        // The Gamma distribution is asymptotically normal here, while alpha+1 cannot be represented.
-        boost::math::normal_distribution<> standard_normal;
-        DenseVector<double> boundary_densities = DenseVector<double>::Zero(count + 1);
-        for (int i = 1; i < count; i++)
-        {
-            double probability = double(i) / count;
-            double boundary = quantile(standard_normal, probability);
-            boundary_densities[i] = pdf(standard_normal, boundary);
-        }
-        double scale = count / std::sqrt(alpha);
-        for (int i = 0; i < count; i++)
-            rates[i] = 1.0 + scale * (boundary_densities[i] - boundary_densities[i + 1]);
-    }
+    else if (alpha == 0 || std::isnan(alpha))
+        rates.setConstant(std::numeric_limits<double>::quiet_NaN());
     else
     {
-        using underflow_policy = boost::math::policies::policy<
-            boost::math::policies::underflow_error<boost::math::policies::ignore_error>>;
-        DenseVector<double> lower_moments(count + 1);
-        DenseVector<double> upper_moments(count + 1);
-        lower_moments[0] = 0.0;
-        upper_moments[0] = 1.0;
-        lower_moments[count] = 1.0;
-        upper_moments[count] = 0.0;
-        try
+        // Extreme valid parameters may exceed a numerical library's representable rule without invalidating the run.
+        auto failure = numerical_rule_failure([&]
         {
-            for (int i = 1; i < count; i++)
+            if (alpha + 1.0 == alpha)
             {
-                double probability = double(i) / count;
-                double boundary = boost::math::gamma_p_inv(alpha, probability, underflow_policy{});
-                if (!std::isfinite(boundary))
-                    throw math_error()<<"gammaMean: boundary "<<i<<" is not finite for alpha="<<alpha
-                                      <<" and count="<<count<<": "<<boundary;
-                lower_moments[i] = boost::math::gamma_p(alpha + 1.0, boundary, underflow_policy{});
-                upper_moments[i] = boost::math::gamma_q(alpha + 1.0, boundary, underflow_policy{});
+                // The Gamma distribution is asymptotically normal here, while alpha+1 cannot be represented.
+                boost::math::normal_distribution<> standard_normal;
+                DenseVector<double> boundary_densities = DenseVector<double>::Zero(count + 1);
+                for (int i = 1; i < count; i++)
+                {
+                    double probability = double(i) / count;
+                    double boundary = quantile(standard_normal, probability);
+                    boundary_densities[i] = pdf(standard_normal, boundary);
+                }
+                double scale = count / std::sqrt(alpha);
+                for (int i = 0; i < count; i++)
+                    rates[i] = 1.0 + scale * (boundary_densities[i] - boundary_densities[i + 1]);
             }
-        }
-        catch (const math_error&)
-        {
-            throw;
-        }
-        catch (const std::exception& e)
-        {
-            throw math_error()<<"gammaMean: failed for alpha="<<alpha<<" and count="<<count<<": "<<e.what();
-        }
-
-        for (int i = 0; i < count; i++)
-        {
-            if (i < count / 2)
-                rates[i] = count * (lower_moments[i + 1] - lower_moments[i]);
             else
-                rates[i] = count * (upper_moments[i] - upper_moments[i + 1]);
+            {
+                using underflow_policy = boost::math::policies::policy<
+                    boost::math::policies::underflow_error<boost::math::policies::ignore_error>>;
+                DenseVector<double> lower_moments(count + 1);
+                DenseVector<double> upper_moments(count + 1);
+                lower_moments[0] = 0.0;
+                upper_moments[0] = 1.0;
+                lower_moments[count] = 1.0;
+                upper_moments[count] = 0.0;
+                for (int i = 1; i < count; i++)
+                {
+                    double probability = double(i) / count;
+                    double boundary = boost::math::gamma_p_inv(alpha, probability, underflow_policy{});
+                    if (!std::isfinite(boundary))
+                    {
+                        fallback = true;
+                        fallback_reason = "non-finite category boundary";
+                        break;
+                    }
+                    lower_moments[i] = boost::math::gamma_p(alpha + 1.0, boundary, underflow_policy{});
+                    upper_moments[i] = boost::math::gamma_q(alpha + 1.0, boundary, underflow_policy{});
+                }
+
+                if (not fallback)
+                    for (int i = 0; i < count; i++)
+                    {
+                        if (i < count / 2)
+                            rates[i] = count * (lower_moments[i + 1] - lower_moments[i]);
+                        else
+                            rates[i] = count * (upper_moments[i] - upper_moments[i + 1]);
+                    }
+            }
+        });
+        if (failure)
+        {
+            fallback = true;
+            fallback_reason = *failure;
         }
     }
 
-    for (int i = 0; i < count; i++)
-        if (!std::isfinite(rates[i]) || rates[i] < 0)
-            throw math_error()<<"gammaMean: rate "<<i<<" must be finite and nonnegative for alpha="<<alpha
-                              <<" and count="<<count<<", but is "<<rates[i];
+    if (not fallback)
+        for (int i = 0; i < count; i++)
+            if (!std::isfinite(rates[i]) || rates[i] < 0)
+                fallback = true;
 
-    double mean = rates.mean();
-    if (!(mean > 0) || !std::isfinite(mean))
-        throw math_error()<<"gammaMean: category mean must be finite and positive for alpha="<<alpha
-                          <<" and count="<<count<<", but is "<<mean;
-    rates /= mean;
+    double mean = fallback ? 1.0 : rates.mean();
+    if (not fallback and (!(mean > 0) || !std::isfinite(mean)))
+        fallback = true;
+    if (fallback)
+    {
+        if (fallback_reason.empty()) fallback_reason = "the computed rule is not representable";
+        if (log_verbose >= 2)
+            std::cerr<<"Warning: gammaMean: returning unavailable rates for alpha="<<alpha<<" and count="<<count
+                     <<": "<<fallback_reason<<std::endl;
+        rates.setConstant(std::numeric_limits<double>::quiet_NaN());
+    }
+    else
+        rates /= mean;
     return new Box<DenseVector<double>>(std::move(rates));
 }
 
@@ -291,46 +338,64 @@ extern "C" closure builtin_function_gammaQuadratureNative(OperationArgs& Args)
     int count = Args.evaluate_slot_to_value(1).as_int();
     if (count <= 0)
         throw myexception()<<"gammaQuadrature: the number of nodes must be positive";
-    if (!(alpha > 0))
-        throw math_error()<<"gammaQuadrature: alpha must be positive, but is "<<alpha;
+    if (alpha < 0)
+        throw myexception()<<"gammaQuadrature: alpha must be nonnegative, but is "<<alpha;
 
     DenseVector<double> nodes;
     DenseVector<double> weights;
+    bool fallback = false;
+    string fallback_reason;
     if (std::isinf(alpha))
     {
-        // Gamma(alpha, 1/alpha) converges to a point mass at one. Repeated nodes with equal weights
-        // represent that point mass while preserving the requested number of components.
-        nodes = DenseVector<double>::Ones(count);
-        weights = DenseVector<double>::Constant(count, 1.0 / count);
+        std::tie(nodes, weights) = unit_rate_quadrature(count);
     }
-    else if (alpha <= std::numeric_limits<double>::epsilon())
-        // At this scale the finite-alpha corrections used by the factorization round away.
-        std::tie(nodes, weights) = small_alpha_gamma_quadrature(alpha, count);
-    else if (alpha < 1.0)
-        // The factorization resolves the finite node accurately among the escaping nodes.
-        std::tie(nodes, weights) = gamma_quadrature_from_factor(alpha, count);
+    else if (alpha == 0 || std::isnan(alpha))
+    {
+        std::tie(nodes, weights) = unavailable_rate_quadrature(count);
+    }
     else
     {
-        // For alpha >= 1 the normalized Jacobi matrix is sufficiently well scaled for a direct
-        // symmetric eigensolve.
-        DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(count, count);
-        for (int k = 0; k < count; k++)
-            jacobi(k, k) = 1.0 + 2.0 * k / alpha;
-        for (int k = 1; k < count; k++)
+        // Eigensolver or floating-point failures make this rule unavailable, not the parameter structurally invalid.
+        auto failure = numerical_rule_failure([&]
         {
-            double off_diagonal = std::sqrt(k / alpha) * std::sqrt(1.0 + (k - 1.0) / alpha);
-            jacobi(k - 1, k) = jacobi(k, k - 1) = off_diagonal;
+            if (alpha <= std::numeric_limits<double>::epsilon())
+                // At this scale the finite-alpha corrections used by the factorization round away.
+                std::tie(nodes, weights) = small_alpha_gamma_quadrature(alpha, count);
+            else if (alpha < 1.0)
+                // The factorization resolves the finite node accurately among the escaping nodes.
+                std::tie(nodes, weights) = gamma_quadrature_from_factor(alpha, count);
+            else
+            {
+                // For alpha >= 1 the normalized Jacobi matrix is sufficiently well scaled for a direct
+                // symmetric eigensolve.
+                DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(count, count);
+                for (int k = 0; k < count; k++)
+                    jacobi(k, k) = 1.0 + 2.0 * k / alpha;
+                for (int k = 1; k < count; k++)
+                {
+                    double off_diagonal = std::sqrt(k / alpha) * std::sqrt(1.0 + (k - 1.0) / alpha);
+                    jacobi(k - 1, k) = jacobi(k, k - 1) = off_diagonal;
+                }
+                std::tie(nodes, weights) = quadrature_from_jacobi(jacobi);
+            }
+        });
+        if (failure)
+        {
+            fallback = true;
+            fallback_reason = *failure;
         }
-        std::tie(nodes, weights) = quadrature_from_jacobi(jacobi);
     }
-    for (int i = 0; i < count; i++)
+    if (not fallback)
+        for (int i = 0; i < count; i++)
+            if (!std::isfinite(nodes[i]) || nodes[i] < 0 || !std::isfinite(weights[i]) || weights[i] < 0)
+                fallback = true;
+    if (fallback)
     {
-        if (!std::isfinite(nodes[i]) || nodes[i] < 0)
-            throw math_error()<<"gammaQuadrature: node "<<i
-                              <<" must be finite and nonnegative, but is "<<nodes[i];
-        if (!std::isfinite(weights[i]) || weights[i] < 0)
-            throw math_error()<<"gammaQuadrature: weight "<<i
-                              <<" must be finite and nonnegative, but is "<<weights[i];
+        if (fallback_reason.empty()) fallback_reason = "the computed rule is not representable";
+        if (log_verbose >= 2)
+            std::cerr<<"Warning: gammaQuadrature: returning an unavailable rule for alpha="<<alpha
+                     <<" and count="<<count<<": "<<fallback_reason<<std::endl;
+        std::tie(nodes, weights) = unavailable_rate_quadrature(count);
     }
 
     object_ptr<Box<DenseVector<double>>> node_result = new Box<DenseVector<double>>(std::move(nodes));
@@ -459,23 +524,46 @@ extern "C" closure builtin_function_logNormalQuadratureNative(OperationArgs& Arg
     int count = Args.evaluate_slot_to_value(2).as_int();
     if (count <= 0)
         throw myexception()<<"logNormalQuadrature: the number of nodes must be positive";
-    if (!std::isfinite(log_mean))
-        throw math_error()<<"logNormalQuadrature: logMean must be finite, but is "<<log_mean;
-    if (!(log_sigma >= 0) || !std::isfinite(log_sigma))
-        throw math_error()<<"logNormalQuadrature: logSigma must be finite and nonnegative, but is "<<log_sigma;
+    if (log_sigma < 0)
+        throw myexception()<<"logNormalQuadrature: logSigma must be nonnegative, but is "<<log_sigma;
 
-    DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(count, count);
-    for (int k = 1; k < count; k++)
+    DenseVector<double> nodes;
+    DenseVector<double> weights;
+    bool fallback = not std::isfinite(log_mean) or not std::isfinite(log_sigma);
+    string fallback_reason = fallback ? "the parameters are not finite" : "";
+    if (not fallback)
     {
-        double off_diagonal = std::sqrt(double(k));
-        jacobi(k - 1, k) = jacobi(k, k - 1) = off_diagonal;
+        // Keep numerical rule failure distinct from resource failures and unrelated exceptions.
+        auto failure = numerical_rule_failure([&]
+        {
+            DenseMatrix<double> jacobi = DenseMatrix<double>::Zero(count, count);
+            for (int k = 1; k < count; k++)
+            {
+                double off_diagonal = std::sqrt(double(k));
+                jacobi(k - 1, k) = jacobi(k, k - 1) = off_diagonal;
+            }
+            std::tie(nodes, weights) = quadrature_from_jacobi(jacobi);
+            nodes.array() = (log_mean + log_sigma * nodes.array()).exp();
+        });
+        if (failure)
+        {
+            fallback = true;
+            fallback_reason = *failure;
+        }
     }
-    auto [nodes, weights] = quadrature_from_jacobi(jacobi);
-    nodes.array() = (log_mean + log_sigma * nodes.array()).exp();
-    for (int i = 0; i < count; i++)
-        if (!std::isfinite(nodes[i]) || !(nodes[i] > 0))
-            throw math_error()<<"logNormalQuadrature: node "<<i
-                              <<" must be finite and positive, but is "<<nodes[i];
+    if (not fallback)
+        for (int i = 0; i < count; i++)
+            if (!std::isfinite(nodes[i]) || !(nodes[i] > 0) || !std::isfinite(weights[i]) || weights[i] < 0)
+                fallback = true;
+    if (fallback)
+    {
+        if (fallback_reason.empty()) fallback_reason = "the computed rule is not representable";
+        if (log_verbose >= 2)
+            std::cerr<<"Warning: logNormalQuadrature: returning an unavailable rule for logMean="<<log_mean
+                     <<", logSigma="<<log_sigma<<", and count="<<count
+                     <<": "<<fallback_reason<<std::endl;
+        std::tie(nodes, weights) = unavailable_rate_quadrature(count);
+    }
 
     object_ptr<Box<DenseVector<double>>> node_result = new Box<DenseVector<double>>(std::move(nodes));
     object_ptr<Box<DenseVector<double>>> weight_result = new Box<DenseVector<double>>(std::move(weights));
@@ -599,16 +687,11 @@ extern "C" closure builtin_function_sample_negative_binomial_from_logs(Operation
     double log_p = Args.evaluate_slot_to_value_(1).as_double();
     double log_q = Args.evaluate_slot_to_value_(2).as_double();
 
-    validate_log_probability_pair(log_p, log_q, "negative_binomial", false);
-
-    try
-    {
-        return { negative_binomial_from_logs(r, log_p, log_q) };
-    }
-    catch (const std::overflow_error& e)
-    {
-        throw math_error()<<"negative_binomial: "<<e.what();
-    }
+    if (r < 0)
+        throw myexception()<<"negative_binomial: the number of successes must be nonnegative, but is "<<r;
+    if (not validate_log_probability_pair(log_p, log_q, "negative_binomial"))
+        return {0};
+    return { negative_binomial_from_logs(r, log_p, log_q) };
 }
 
 extern "C" closure builtin_function_binomial_density_from_logs(OperationArgs& Args)
@@ -652,7 +735,10 @@ extern "C" closure builtin_function_sample_binomial_from_logs(OperationArgs& Arg
     double log_p = Args.evaluate_slot_to_value_(1).as_double();
     double log_q = Args.evaluate_slot_to_value_(2).as_double();
 
-    validate_log_probability_pair(log_p, log_q, "binomial", true);
+    if (n < 0)
+        throw myexception()<<"binomial: the number of trials must be nonnegative, but is "<<n;
+    if (not validate_log_probability_pair(log_p, log_q, "binomial"))
+        return {0};
 
     return { binomial_from_logs(n, log_p, log_q) };
 }
@@ -662,7 +748,8 @@ extern "C" closure builtin_function_sample_bernoulli_from_logs(OperationArgs& Ar
     double log_p = Args.evaluate_slot_to_value_(0).as_double();
     double log_q = Args.evaluate_slot_to_value_(1).as_double();
 
-    validate_log_probability_pair(log_p, log_q, "bernoulli", true);
+    if (not validate_log_probability_pair(log_p, log_q, "bernoulli"))
+        return {0};
 
     return { (int)bernoulli_from_logs(log_p, log_q) };
 }
@@ -681,16 +768,9 @@ extern "C" closure builtin_function_sample_geometric_from_logs(OperationArgs& Ar
     double log_p = Args.evaluate_slot_to_value_(0).as_double();
     double log_q = Args.evaluate_slot_to_value_(1).as_double();
 
-    validate_log_probability_pair(log_p, log_q, "geometric", false);
-
-    try
-    {
-        return { geometric_from_logs(log_p, log_q) };
-    }
-    catch (const std::overflow_error& e)
-    {
-        throw math_error()<<"geometric: "<<e.what();
-    }
+    if (not validate_log_probability_pair(log_p, log_q, "geometric"))
+        return {0};
+    return { geometric_from_logs(log_p, log_q) };
 }
 
 extern "C" closure builtin_function_poisson_density(OperationArgs& Args)
