@@ -1,6 +1,10 @@
 module Model where
 
+import           BAliPhy.Run
+import           MCMC (runMCMC)
+import           Options.Applicative
 import           Probability
+import           Probability.Random (writeTraceGraph)
 
 model fatalities = do
 
@@ -16,7 +20,21 @@ model fatalities = do
 
     return loggers
 
-main logDir = do
-  let fatalities = [24, 25, 31, 31, 22, 21, 26, 20, 16, 22]
+main = do
+  options <- execParser $
+    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
 
-  return $ model fatalities
+  let fatalities = [24, 25, 31, 31, 22, 21, 26, 20, 16, 22]
+      model' = model fatalities
+
+  context <- makeModelContext run (logFormats options) model'
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()

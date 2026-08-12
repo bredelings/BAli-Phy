@@ -1,6 +1,9 @@
 module LiStephens2003 where
 
+import           BAliPhy.Run
+import           MCMC (runMCMC)
 import           Probability         -- for the model framework
+import           Probability.Random (writeTraceGraph)
 
 import           Options.Applicative
 import           Data.Frame          -- for readTable & friends
@@ -18,20 +21,36 @@ model locs sequence_data = do
 
   return ["rho" %=% rho ]
 
--- Require exactly the sequence and location files used by the model.
-options = info
-  ((,) <$> strArgument (metavar "SEQUENCES" <> help "Aligned DNA sequences")
-       <*> strArgument (metavar "LOCATIONS" <> help "Table of sequence locations")
-       <**> helper)
-  (fullDesc <> progDesc "Run the Li-Stephens recombination model")
+data ModelInputs = ModelInputs
+  { sequenceFile :: FilePath
+  , locationsFile :: FilePath
+  }
 
-main logDir = do
+modelInputOptions =
+  ModelInputs
+    <$> strArgument (metavar "SEQUENCES" <> help "Aligned DNA sequences")
+    <*> strArgument (metavar "LOCATIONS" <> help "Table of sequence locations")
 
-  (seq_filename, locs_filename) <- execParser options
+main = do
+  options <- execParser $
+    info
+      (modelRunOptions "LiStephens2003_1" 200000 modelInputOptions <**> helper)
+      (fullDesc <> progDesc "Run the Li-Stephens recombination model")
+  run <- prepareModelRun (testMode options) (outputName options)
+  let inputs = modelInputs options
 
-  sequence_data <- load_alignment dna seq_filename
+  sequence_data <- load_alignment dna (sequenceFile inputs)
 
-  locs_table <- readTable locs_filename
+  locs_table <- readTable (locationsFile inputs)
   let locs = locs_table $$ "locs" :: [Int]
 
-  return $ model locs sequence_data
+  context <- makeModelContext run (logFormats options) $ model locs sequence_data
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()

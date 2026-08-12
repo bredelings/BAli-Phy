@@ -1,6 +1,10 @@
 module Model where
 
+import           BAliPhy.Run
+import           MCMC (runMCMC)
+import           Options.Applicative
 import           Probability
+import           Probability.Random (writeTraceGraph)
 import           Bio.Alignment
 import           Bio.Alphabet
 import           Bio.Sequence
@@ -8,7 +12,6 @@ import           Tree
 import           Tree.Newick
 import           SModel
 import           IModel
-import           System.Environment  -- for getArgs
 
 branch_length_dist topology branch = gamma (1/2) (2/fromIntegral n) where n = numBranches topology
 
@@ -50,9 +53,22 @@ model seq_data = do
         , "|A|" %=% alignmentLength alignment
         ]
 
-main logDir = do
-    [filename] <- getArgs
+main = do
+    options <- execParser $
+      info
+        (modelRunOptions "Model" 200000
+          (strArgument (metavar "SEQUENCES" <> help "Unaligned DNA sequences")) <**> helper)
+        fullDesc
+    run <- prepareModelRun (testMode options) (outputName options)
 
-    seq_data <- mkUnalignedCharacterData dna <$> loadSequences filename
+    seq_data <- mkUnalignedCharacterData dna <$> loadSequences (modelInputs options)
+    context <- makeModelContext run (logFormats options) $ model seq_data
 
-    return $ model seq_data
+    case run of
+      TestRun -> printInitialModel (logFormats options) context
+      MCMCRun directory -> do
+        reportModelRun (iterations options) (logFormats options) directory
+        runMCMC (iterations options) context
+
+    verbosity <- getVerbosity
+    if verbosity > 0 then writeTraceGraph context else return ()

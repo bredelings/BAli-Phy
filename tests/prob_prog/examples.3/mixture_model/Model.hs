@@ -1,6 +1,10 @@
 module Model where
 
+import BAliPhy.Run
+import MCMC (runMCMC)
+import Options.Applicative
 import Probability
+import Probability.Random (writeTraceGraph)
 import Data.Frame
 
 generate size = do
@@ -29,10 +33,22 @@ model xs = do
 
   return loggers
 
-main logDir = do
+main = do
+  options <- execParser $
+    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
 
   frame <- readTable "x.csv"
 
   let xs = frame $$ "x" :: [Double]
 
-  return $ model xs 
+  context <- makeModelContext run (logFormats options) $ model xs
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()

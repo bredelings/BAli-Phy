@@ -1,1 +1,1 @@
--m Model.hs --test
+run Model.hs -- --test

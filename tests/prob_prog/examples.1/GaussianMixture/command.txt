@@ -1,1 +1,1 @@
--m GaussianMixture.hs --test
+run GaussianMixture.hs -- --test

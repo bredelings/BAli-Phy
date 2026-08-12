@@ -1,1 +1,1 @@
--m Model data/bglobin.fasta --test
+run Model.hs -- --test data/bglobin.fasta

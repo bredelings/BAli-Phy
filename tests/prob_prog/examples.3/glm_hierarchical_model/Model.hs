@@ -1,6 +1,10 @@
 module Model where
 
+import BAliPhy.Run
+import MCMC (runMCMC)
+import Options.Applicative
 import Probability
+import Probability.Random (writeTraceGraph)
 import Data.Frame
 
 -- Shift the value when mu or sigma changes.
@@ -32,13 +36,25 @@ model floor_values county_code_values log_radon_data = do
 
   return loggers
 
-main logDir = do
+main = do
+  options <- execParser $
+    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
 
   radon <- readTable "radon.csv"
 
   let floor_values       = radon $$ "floor"       :: [Double]
       county_code_values = radon $$ "county_code" :: [Int]
       log_radon_data     = radon $$ "log_radon"   :: [Double]
+      model' = model floor_values county_code_values log_radon_data
 
-  return $ model floor_values county_code_values log_radon_data
+  context <- makeModelContext run (logFormats options) model'
 
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()

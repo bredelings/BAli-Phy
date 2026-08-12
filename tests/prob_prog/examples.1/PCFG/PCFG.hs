@@ -1,6 +1,10 @@
 module PCFG where
 
+import BAliPhy.Run
+import MCMC (runMCMC)
+import Options.Applicative
 import Probability
+import Probability.Random (writeTraceGraph)
 
 data Rule = Word String | PreTerminal String | Rule String
 
@@ -41,6 +45,19 @@ model = do
   let sentence = map (\w -> case w of (Word s) -> s) words
   return ["sentence" %=% sentence]
 
-main logDir = return model
+main = do
+  options <- execParser $
+    info (modelRunOptions "PCFG" 200000 (pure ()) <**> helper) fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
+  context <- makeModelContext run (logFormats options) model
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()
 
 -- question: if the sentence starts with "tall John", what's next?
