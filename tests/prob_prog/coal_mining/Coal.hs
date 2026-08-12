@@ -1,6 +1,10 @@
 module Coal where
 
+import BAliPhy.Run
+import MCMC (runMCMC)
+import Options.Applicative
 import Probability
+import Probability.Random (writeTraceGraph)
 import Data.Frame
 import qualified Data.Vector as V
 
@@ -34,10 +38,22 @@ model (t1,t2) times = do
   return [ "n" %=% n, "s" %=% s, "g" %=% g, "intervals" %=% intervals]
 
 
-main dirname = do
+main = do
+  options <- execParser $
+    info (modelRunOptions "Coal" 200000 (pure ()) <**> helper) fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
 
   frame <- readTable "coal-times.csv"
 
   let times = frame $$ "time" :: [Double]
 
-  return $ model (1851, 1963) times
+  context <- makeModelContext run (logFormats options) $ model (1851, 1963) times
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()

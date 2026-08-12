@@ -1,7 +1,11 @@
 module HMM where
 
 -- See https://github.com/probmods/webppl/blob/dev/examples/hmm.wppl
+import BAliPhy.Run
+import MCMC (runMCMC)
+import Options.Applicative
 import Probability
+import Probability.Random (writeTraceGraph)
 
 transition_matrix s = sample $ categorical $ [[0.7, 0.3], [0.3, 0.7]] !! s
 
@@ -28,5 +32,17 @@ model n = do
           "diff-true" %=% n_diffs hidden_states true_hidden_states,
           "diff-obs" %=% n_diffs hidden_states observations]
 
-main logDir = do
-  return $ model 100
+main = do
+  options <- execParser $
+    info (modelRunOptions "HMM" 200000 (pure ()) <**> helper) fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
+  context <- makeModelContext run (logFormats options) $ model 100
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()

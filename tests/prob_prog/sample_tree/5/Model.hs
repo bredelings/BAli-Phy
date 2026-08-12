@@ -1,7 +1,11 @@
 {-# LANGUAGE RecursiveDo #-}
 module Model where
 
+import           BAliPhy.Run
+import           MCMC (runMCMC)
+import           Options.Applicative
 import           Probability
+import           Probability.Random (writeTraceGraph)
 import           Tree
 import           Tree.Newick
 import qualified Data.Text as Text
@@ -27,7 +31,19 @@ model taxa = do
     return ["tree" %=% writeNewick tree,
             "xs" %=% xs]
 
-main logDir = do
+main = do
+  options <- execParser $
+    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
+
   let taxa = take nLeaves allTexts
-             
-  return $ model taxa
+  context <- makeModelContext run (logFormats options) $ model taxa
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()

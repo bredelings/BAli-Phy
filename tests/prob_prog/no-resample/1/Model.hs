@@ -1,6 +1,10 @@
 module Model where
 
+import           BAliPhy.Run
+import           MCMC (runMCMC)
+import           Options.Applicative
 import           Probability
+import           Probability.Random (writeTraceGraph)
 
 my_iid n dist =
     let body = do
@@ -17,5 +21,17 @@ model x = do
     observe x $ normal total 1
     return loggers
 
-main logDir = do
-  return $ model 20
+main = do
+  options <- execParser $
+    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
+  context <- makeModelContext run (logFormats options) $ model 20
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()

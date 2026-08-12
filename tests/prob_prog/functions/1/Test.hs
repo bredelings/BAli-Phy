@@ -1,6 +1,10 @@
 module Test where
 
+import           BAliPhy.Run
+import           MCMC (runMCMC)
+import           Options.Applicative
 import           Probability
+import           Probability.Random (writeTraceGraph)
 
 cumsum xs = go 0 xs  where
     go acc []       = []
@@ -24,5 +28,17 @@ model = do
 
     return ["z1" %=% z1, "z2" %=% z2, "z3" %=% z3, "x" %=% x, "y1" %=% y1, "w1" %=% w1]
 
-main dirname = do
-  return model
+main = do
+  options <- execParser $
+    info (modelRunOptions "Test" 200000 (pure ()) <**> helper) fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
+  context <- makeModelContext run (logFormats options) model
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()
