@@ -471,12 +471,12 @@ final endpoint with:
 
 ```sh
 perf stat -e instructions -- "$PROJECT/build/gcc-16/src/bali-phy/bali-phy" \
-  -m Model.hs RSV2-25taxa.fasta \
-  --iter=1 --name ignore --seed=0
+  run Model.hs --seed=0 -- \
+  --iterations=1 --name=ignore RSV2-25taxa.fasta
 
 perf stat -e instructions -- "$PROJECT/build/gcc-16/src/bali-phy/bali-phy" \
-  -m Model.hs RSV2-25taxa.fasta \
-  --iter=50 --name ignore --seed=0
+  run Model.hs --seed=0 -- \
+  --iterations=50 --name=ignore RSV2-25taxa.fasta
 ```
 
 Record instruction counts and Work time, and require matching log and tree

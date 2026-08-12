@@ -5,7 +5,7 @@ edge [style="setlinewidth(2)"];
 
 bali_phy [label=<<b>BAli-Phy application</b><br/><i>bali-phy sequences.fasta</i>>]
 
-graphical_models  [label=<<b>Graphical models</b><br/><i>bali-phy -m model.hs</i>>]
+graphical_models  [label=<<b>Graphical models</b><br/><i>bali-phy run Model.hs</i>>]
 
 graphical_model_language [label=<<b>Model language:</b><br/>syntax: Haskell>, fillcolor="#99ff99"]
 

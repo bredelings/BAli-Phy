@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Model where
 
+import BAliPhy.Run
 import Compiler.Enum
 import Compiler.Error (error)
 import Compiler.Fractional ((/))
@@ -12,7 +13,10 @@ import Data.Function (($))
 import qualified Data.IntMap as IM
 import qualified Data.IntSet as IS
 import Data.List (sum)
+import MCMC (runMCMC)
+import Options.Applicative
 import Probability
+import Probability.Random (writeTraceGraph)
 import System.Environment (getEnv)
 import Text.Read (read)
 
@@ -68,7 +72,22 @@ benchmarkModel scenario size =
 
 -- Select the benchmark outside Random so command-line configuration does not
 -- add changing probabilistic dependencies to the measured model.
-main _ = do
+main = do
+  options <- execParser $
+    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
+
   scenario <- getEnv "BALIPHY_DP_MAP_SCENARIO"
   sizeText <- getEnv "BALIPHY_DP_MAP_SIZE"
-  return (benchmarkModel scenario (read sizeText :: Int))
+  let model = benchmarkModel scenario (read sizeText :: Int)
+
+  context <- makeModelContext run (logFormats options) model
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity /= 0 then writeTraceGraph context else return ()

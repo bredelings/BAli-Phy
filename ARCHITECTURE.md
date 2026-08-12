@@ -25,9 +25,9 @@ This directory is the BAli-Phy source tree: a C++23 phylogenetics and MCMC appli
 
 ## Runtime Flow
 
-The `bali-phy` executable parses CLI/config options, initializes settings and the random number generator, sets up the module loader, builds a `Program` from one of the requested modes (`--run`, `--print`, `--align`, or `--model`), initializes the graph-machine runtime, and runs `main`.
+The `bali-phy` executable parses CLI/config options, initializes settings and the random number generator, sets up the module loader, builds a `Program` from one of the requested modes (`--run`, `--print`, or `--align`), initializes the graph-machine runtime, and runs `main`.
 
-For alignment/model runs, it also creates the output directory, records run metadata, emits initial alignments when applicable, reports the log files that will be written, and then starts MCMC computation.
+For alignment runs, it also creates the output directory, records run metadata, emits initial alignments, reports the log files that will be written, and then starts MCMC computation. Standalone model programs run with `bali-phy run` perform their own model-specific output and MCMC setup.
 
 ## Language and Model System
 
@@ -50,4 +50,3 @@ Command-line-visible models and functions are registered through JSON files unde
 - `scripts/`: helper scripts, R plotting/reporting scripts, benchmarking, and packaging helpers.
 - `python/`: small Python helper package, mainly for printers.
 - `external/` and `subprojects/`: vendored or fallback dependencies such as range-v3, immer, dlfcn-win32, fmt, and xxhash wraps.
-

@@ -395,7 +395,9 @@ jobs:
         if [ "${{ matrix.name }}" != "windows" ] ; then
             bp-analyze 5d-muscle-1 5d-muscle-2
         fi
-        ${BALIPHY} --seed=$seed -m tests/prob_prog/demos/airline/Model.hs --test -V4
+        rm -f token0.dot
+        ${BALIPHY} run tests/prob_prog/demos/airline/Model.hs --seed=$seed -V4 -- --test
+        test -s token0.dot
 
         # Skip the rest of the tests if this is a DEBUG_MACHINE test.
         skip=none
