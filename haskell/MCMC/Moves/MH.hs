@@ -6,22 +6,15 @@ import MCMC.Types
 import MCMC.Moves.Context
 
 foreign import bpcall "MCMC:" acceptMH :: ContextIndex -> ContextIndex -> Log Double -> IO Bool
-foreign import bpcall "MCMC:" catchMathErrorRaw :: a -> a -> a
 
-catchMathError :: IO a -> IO a -> IO a
-catchMathError action handler = IO (\s -> catchMathErrorRaw (runIO action s) (runIO handler s))
-
--- Reject mathematical failures in a copied candidate through the ordinary zero-ratio MH path.
+-- Evaluate and accept or reject an MH proposal in a copied context.
 metropolisHastings :: Proposal -> TransitionKernel
 metropolisHastings (Proposal proposal) = TransitionKernel $ \c1 -> do
   c2 <- copyContext c1
-  catchMathError
-    (do ratio <- proposal c2
-        accept <- acceptMH c1 c2 ratio
-        if accept then switchToContext c1 c2 else return ()
-        releaseContext c2)
-    (do _ <- acceptMH c1 c2 0
-        releaseContext c2)
+  ratio <- proposal c2
+  accept <- acceptMH c1 c2 ratio
+  if accept then switchToContext c1 c2 else return ()
+  releaseContext c2
 
 propose :: (Dist d, IOSampleable d, HasPdf d, Result d ~ a) => Modifiable a -> (a -> d) -> Proposal
 propose x dist = Proposal $ \c -> do

@@ -793,15 +793,7 @@ bool accept_MH(const context_ref& C1,const context_ref& C2,log_double_t rho)
         return false;
     }
 
-    ProbDensity ratio;
-    try
-    {
-        ratio = ProbDensity(rho)*C2.heated_probability_ratio(C1);
-    }
-    catch (const math_error&)
-    {
-        return false;
-    }
+    ProbDensity ratio = ProbDensity(rho)*C2.heated_probability_ratio(C1);
 
     if (log_verbose >= 4)
     {

@@ -426,16 +426,8 @@ bool perform_MH_(reg_heap& M, int context_index, const Proposal& proposal)
     // 2. Make a duplicate context to modify
     context C2 = C1;
 
-    log_double_t proposal_ratio = 0;
-    try
-    {
-        // 3. Propose a new state
-        proposal_ratio = proposal(C2);
-    }
-    catch (const math_error&)
-    {
-        proposal_ratio = 0;
-    }
+    // 3. Propose a new state. Exceptions are fatal because changeable evaluation cannot be rolled back.
+    log_double_t proposal_ratio = proposal(C2);
 
     // 4. Accept or reject the proposal
     return perform_MH(C1, C2, proposal_ratio);
@@ -1364,23 +1356,6 @@ extern "C" closure builtin_function_switchToContext(OperationArgs& Args)
 
     return closure(R::ConstructorApp("()", 0, {}));
 }
-
-// Evaluate a generic MH candidate action, selecting its cleanup action only for a mathematical failure.
-extern "C" closure builtin_function_catchMathErrorRaw(OperationArgs& Args)
-{
-    try
-    {
-        Args.evaluate_reg_to_closure(Args.reg_for_slot(0));
-        int r = Args.reg_for_slot(0);
-        return closure(Runtime::IndexVar(0), {r});
-    }
-    catch (const math_error&)
-    {
-        int r = Args.reg_for_slot(1);
-        return closure(Runtime::IndexVar(0), {r});
-    }
-}
-
 
 extern "C" closure builtin_function_acceptMH(OperationArgs& Args)
 {

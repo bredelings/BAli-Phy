@@ -69,27 +69,16 @@ optional<ProbDensity> context_slice_function::operator()(double x)
     // We are intentionally only calling context::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
     if (count == 1) C0.evaluate_program();
-    try
-    {
-        C = C0;
-        set_value(x);
+    C = C0;
+    set_value(x);
 
-        auto ratio = C.heated_probability_ratios(C0);
-        if (ratio.variables_changed)
-            throw variables_changed_exception("Variable changed during slice sampling!");
-        else
-            set_context_density_ratio(ratio.total_ratio());
+    auto ratio = C.heated_probability_ratios(C0);
+    if (ratio.variables_changed)
+        throw variables_changed_exception("Variable changed during slice sampling!");
+    else
+        set_context_density_ratio(ratio.total_ratio());
 
-        return operator()();
-    }
-    catch (const math_error&)
-    {
-        // Restore the live context and its ratio; the absent result keeps the failed
-        // candidate outside every slice rank without applying a subclass Jacobian.
-        C = C0;
-        set_context_density_ratio(1);
-        return std::nullopt;
-    }
+    return operator()();
 }
 
 ProbDensity context_slice_function::operator()()
@@ -199,34 +188,23 @@ optional<ProbDensity> alignment_branch_length_or_duration_slice_function::operat
     // We are intentionally only calling context::operator==( ) here.
     // Maybe we should actually call merely context::operator==( ) though?
     if (count == 1) C0.evaluate_program();
-    try
-    {
-        C = C0;
-        set_value(x);
+    C = C0;
+    set_value(x);
 
-        // Pass 'false' because the initial alignment may have zero probability under the new branch value x.
-        // Without this, check_sampling_probabilities may throw an exception.
-        auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
-        if (not alignment_sum_ratio_1)
-        {
-            C = C0;
-            set_context_density_ratio(1);
-            return std::nullopt;
-        }
-
-        assert(alignment_sum_ratio_0);
-        set_context_density_ratio(C.heated_probability_ratio(C0) *
-                                  (*alignment_sum_ratio_1 / *alignment_sum_ratio_0));
-        return operator()();
-    }
-    catch (const math_error&)
+    // Pass 'false' because the initial alignment may have zero probability under the new branch value x.
+    // Without this, check_sampling_probabilities may throw an exception.
+    auto alignment_sum_ratio_1 = sample_alignment(static_cast<Parameters&>(C), b, false);
+    if (not alignment_sum_ratio_1)
     {
-        // Restore the live context and its ratio; the absent result keeps the failed
-        // candidate outside every slice rank without applying a subclass Jacobian.
         C = C0;
         set_context_density_ratio(1);
         return std::nullopt;
     }
+
+    assert(alignment_sum_ratio_0);
+    set_context_density_ratio(C.heated_probability_ratio(C0) *
+                              (*alignment_sum_ratio_1 / *alignment_sum_ratio_0));
+    return operator()();
 }
 
 void alignment_branch_length_or_duration_slice_function::set_value(double x)
