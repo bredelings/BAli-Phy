@@ -1,13 +1,16 @@
 module Model where
 
+import           BAliPhy.Run
+import           MCMC (runMCMC)
+import           Options.Applicative
 import           Probability
+import           Probability.Random (writeTraceGraph)
 import           Bio.Alphabet
 import           Bio.Alignment
 import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
-import           System.Environment  -- for getArgs
 import qualified Data.IntMap as IntMap
 import           Probability.Logger
 import           System.FilePath ( (</>) )
@@ -49,14 +52,28 @@ model seqData nucs logTree = do
             "tn93:kappa2" %=% kappa2,
             "gamma:alpha" %=% alpha]
 
-main logDir = do
-    [filename] <- getArgs
-
+main = do
+    options <- execParser $
+      info
+        (modelRunOptions "Model" 200000
+          (strArgument (metavar "ALIGNMENT" <> help "Aligned DNA sequences")) <**> helper)
+        fullDesc
+    run <- prepareModelRun (testMode options) (outputName options)
     let nucs = dna
 
-    seqData <- mkAlignedCharacterData nucs <$> loadSequences filename
+    seqData <- mkAlignedCharacterData nucs <$> loadSequences (modelInputs options)
 
-    logTree <- treeLogger (logDir </> "C1.trees")
+    logTree <- case run of
+      TestRun -> return noLogger
+      MCMCRun directory -> treeLogger (directory </> "C1.trees")
 
-    return $ model seqData nucs logTree
+    context <- makeModelContext run (logFormats options) $ model seqData nucs logTree
 
+    case run of
+      TestRun -> printInitialModel (logFormats options) context
+      MCMCRun directory -> do
+        reportModelRun (iterations options) (logFormats options) directory
+        runMCMC (iterations options) context
+
+    verbosity <- getVerbosity
+    if verbosity > 0 then writeTraceGraph context else return ()

@@ -1,7 +1,10 @@
 module Model where
 
-import System.Environment
+import BAliPhy.Run
+import MCMC (runMCMC)
+import Options.Applicative
 import Probability
+import Probability.Random (writeTraceGraph)
 import Data.Frame
 
 cluster_dist = do
@@ -24,11 +27,25 @@ model xs = do
 
   return ["n_clusters" %=% n, "weights" %=% ps, "clusters" %=% clusters]
 
-main logDir = do
-  [filename] <- getArgs
+main = do
+  options <- execParser $
+    info
+      (modelRunOptions "Model" 200000
+        (strArgument (metavar "TABLE" <> help "Table containing an x column")) <**> helper)
+      fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
 
-  xtable <- readTable filename
+  xtable <- readTable (modelInputs options)
 
   let xs = xtable $$ "x" :: [Double]
 
-  return $ model xs
+  context <- makeModelContext run (logFormats options) $ model xs
+
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()

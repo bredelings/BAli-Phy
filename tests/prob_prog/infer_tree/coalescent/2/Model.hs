@@ -1,15 +1,17 @@
 module Model where
 
+import           BAliPhy.Run
 import           Probability
+import           Probability.Random (writeTraceGraph)
 import           Probability.Logger
 import           Bio.Alphabet
 import           Bio.Alignment
 import           Bio.Sequence
-import           MCMC (scaleGroupSlice)
+import           MCMC (runMCMC, scaleGroupSlice)
+import           Options.Applicative
 import           Tree
 import           Tree.Newick
 import           SModel
-import           System.Environment (getArgs)
 import           System.FilePath
 
 {- Problems:
@@ -89,15 +91,29 @@ model seqData@[seqData1,seqData2,seqData3] logTree = do
 
     return loggers
 
-main logDir = do
+main = do
+    options <- execParser $
+      info
+        (modelRunOptions "Model" 200000
+          (strArgument (metavar "ALIGNMENT" <> help "Aligned coding sequences")) <**> helper)
+        fullDesc
+    run <- prepareModelRun (testMode options) (outputName options)
 
-    [filename] <- getArgs
-
-    sequences <- loadSequences filename
+    sequences <- loadSequences (modelInputs options)
 
     let seqData = [ mkAlignedCharacterData dna $ selectRange range sequences | range <- ["3-.\\3", "1-.\\3", "2-.\\3"]]
 
-    logTree <- treeLogger $ logDir </> "C1.trees"
+    logTree <- case run of
+      TestRun -> return noLogger
+      MCMCRun directory -> treeLogger $ directory </> "C1.trees"
 
-    return $ model seqData logTree
+    context <- makeModelContext run (logFormats options) $ model seqData logTree
 
+    case run of
+      TestRun -> printInitialModel (logFormats options) context
+      MCMCRun directory -> do
+        reportModelRun (iterations options) (logFormats options) directory
+        runMCMC (iterations options) context
+
+    verbosity <- getVerbosity
+    if verbosity > 0 then writeTraceGraph context else return ()

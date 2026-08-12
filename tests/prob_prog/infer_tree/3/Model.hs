@@ -1,13 +1,16 @@
 module Model where
 
+import           BAliPhy.Run
+import           MCMC (runMCMC)
+import           Options.Applicative
 import           Probability
+import           Probability.Random (writeTraceGraph)
 import           Bio.Alphabet
 import           Bio.Alignment
 import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
-import           System.Environment  -- for getArgs
 
 smodel_prior codons = do
     let nucleotides = getNucleotides codons
@@ -45,9 +48,22 @@ model seqData = do
 
     return loggers
 
-main logDir = do
-    [filename] <- getArgs
+main = do
+    options <- execParser $
+      info
+        (modelRunOptions "Model" 200000
+          (strArgument (metavar "ALIGNMENT" <> help "Aligned coding sequences")) <**> helper)
+        fullDesc
+    run <- prepareModelRun (testMode options) (outputName options)
 
-    seqData <- mkAlignedCharacterData dna <$> loadSequences filename
+    seqData <- mkAlignedCharacterData dna <$> loadSequences (modelInputs options)
+    context <- makeModelContext run (logFormats options) $ model seqData
 
-    return $ model seqData
+    case run of
+      TestRun -> printInitialModel (logFormats options) context
+      MCMCRun directory -> do
+        reportModelRun (iterations options) (logFormats options) directory
+        runMCMC (iterations options) context
+
+    verbosity <- getVerbosity
+    if verbosity > 0 then writeTraceGraph context else return ()

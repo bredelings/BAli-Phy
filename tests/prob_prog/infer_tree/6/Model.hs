@@ -1,13 +1,16 @@
 module Model where
 
+import           BAliPhy.Run
+import           MCMC (runMCMC)
+import           Options.Applicative
 import           Probability
+import           Probability.Random (writeTraceGraph)
 import           Bio.Alphabet
 import           Bio.Alignment
 import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
-import           System.Environment  -- for getArgs
 
 -- Non-zero branches are slightly longer to keep to average length correct.
 -- The division means that we can't set the value though.
@@ -52,9 +55,22 @@ model seqData = do
         , "frequencies" %=% freqs
         ]
 
-main logDir = do
-    [filename] <- getArgs
+main = do
+    options <- execParser $
+      info
+        (modelRunOptions "Model" 200000
+          (strArgument (metavar "ALIGNMENT" <> help "Aligned DNA sequences")) <**> helper)
+        fullDesc
+    run <- prepareModelRun (testMode options) (outputName options)
 
-    seqData <- mkAlignedCharacterData dna <$> loadSequences filename
+    seqData <- mkAlignedCharacterData dna <$> loadSequences (modelInputs options)
+    context <- makeModelContext run (logFormats options) $ model seqData
 
-    return $ model seqData
+    case run of
+      TestRun -> printInitialModel (logFormats options) context
+      MCMCRun directory -> do
+        reportModelRun (iterations options) (logFormats options) directory
+        runMCMC (iterations options) context
+
+    verbosity <- getVerbosity
+    if verbosity > 0 then writeTraceGraph context else return ()

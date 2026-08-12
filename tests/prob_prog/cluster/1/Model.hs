@@ -1,7 +1,10 @@
 module Model where
 
+import BAliPhy.Run
+import MCMC (runMCMC)
+import Options.Applicative
 import Probability
-import System.Environment
+import Probability.Random (writeTraceGraph)
 import Data.Frame
 
 -- Ideally, the categories and their weights would be exchangeable!
@@ -29,12 +32,25 @@ model xs = do
   return loggers
 
 
-main logDir = do
-  [filename] <- getArgs
+main = do
+  options <- execParser $
+    info
+      (modelRunOptions "Model" 200000
+        (strArgument (metavar "TABLE" <> help "Table containing an x column")) <**> helper)
+      fullDesc
+  run <- prepareModelRun (testMode options) (outputName options)
 
-  xtable <- readTable filename
+  xtable <- readTable (modelInputs options)
 
   let xs = xtable $$ "x" :: [Double]
 
-  return $ model xs
+  context <- makeModelContext run (logFormats options) $ model xs
 
+  case run of
+    TestRun -> printInitialModel (logFormats options) context
+    MCMCRun directory -> do
+      reportModelRun (iterations options) (logFormats options) directory
+      runMCMC (iterations options) context
+
+  verbosity <- getVerbosity
+  if verbosity > 0 then writeTraceGraph context else return ()

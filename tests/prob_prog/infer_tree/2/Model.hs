@@ -1,13 +1,16 @@
 module Model where
 
+import           BAliPhy.Run
+import           MCMC (runMCMC)
+import           Options.Applicative
 import           Probability
+import           Probability.Random (writeTraceGraph)
 import           Bio.Alphabet  (dna)
 import           Bio.Alignment (alignmentLength)
 import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
-import           System.Environment  -- for getArgs
 
 branch_length_dist topology b = gamma 0.5 (2 / fromIntegral n) where n = numBranches topology
 
@@ -35,9 +38,22 @@ model seqData = do
             "|T|" %=% treeLength tree,
             "scale*|T|" %=% scale * treeLength tree]
 
-main logDir = do
-    [filename] <- getArgs
+main = do
+    options <- execParser $
+      info
+        (modelRunOptions "Model" 200000
+          (strArgument (metavar "ALIGNMENT" <> help "Aligned DNA sequences")) <**> helper)
+        fullDesc
+    run <- prepareModelRun (testMode options) (outputName options)
 
-    seqData <- mkAlignedCharacterData dna <$> loadSequences filename
+    seqData <- mkAlignedCharacterData dna <$> loadSequences (modelInputs options)
+    context <- makeModelContext run (logFormats options) $ model seqData
 
-    return $ model seqData
+    case run of
+      TestRun -> printInitialModel (logFormats options) context
+      MCMCRun directory -> do
+        reportModelRun (iterations options) (logFormats options) directory
+        runMCMC (iterations options) context
+
+    verbosity <- getVerbosity
+    if verbosity > 0 then writeTraceGraph context else return ()
