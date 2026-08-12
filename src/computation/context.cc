@@ -116,30 +116,22 @@ Runtime::Exp context_ref::evaluate_expression_(closure&& C, bool ec) const
     auto& M = *memory();
     int t = M.switch_to_child_token(context_index, token_type::execute2);
     int r1 = M.push_temp_head( {R::OperationApp(new modifiable, {})} );
-    try
-    {
-        M.mark_reg_changeable(r1);
-        int r2 = M.set_reg_value(r1, std::move(C), t, true);
+    M.mark_reg_changeable(r1);
+    int r2 = M.set_reg_value(r1, std::move(C), t, true);
 
-        // Copy the context in order to protect the token.
-        context c2(*this);
+    // Copy the context in order to protect the token.
+    context c2(*this);
 
-        const closure& result = ec ? M.lazy_evaluate(r2, context_index)
-                                   : M.lazy_evaluate_unchangeable(r2);
+    const closure& result = ec ? M.lazy_evaluate(r2, context_index)
+                               : M.lazy_evaluate_unchangeable(r2);
 
 #ifndef NDEBUG
-        if (result.get_code().to<Runtime::Lambda>())
-            throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
+    if (result.get_code().to<Runtime::Lambda>())
+        throw myexception()<<"Evaluating lambda as object: "<<result.get_code().print();
 #endif
-        Runtime::Exp value = result.get_code();
-        M.pop_temp_head();
-        return value;
-    }
-    catch (...)
-    {
-        M.pop_temp_head();
-        throw;
-    }
+    Runtime::Exp value = result.get_code();
+    M.pop_temp_head();
+    return value;
 }
 
 Runtime::Exp context_ref::evaluate_expression(Runtime::Exp E, closure::Env_t Env, bool ec) const

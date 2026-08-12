@@ -2968,17 +2968,6 @@ int reg_heap::get_shared_step(int r)
     return s;
 }
 
-// Discard a reduction step that failed before it was installed on its source register.
-void reg_heap::discard_uninstalled_step(int s)
-{
-    if (steps[s].has_pending_effect_registration())
-        unmark_effect_to_register_at_step(s);
-    else if (steps[s].has_effect())
-        unregister_effect_at_step(s);
-    assert(not steps[s].has_pending_effect_unregistration());
-    destroy_step_and_created_regs(s);
-}
-
 /// Add a shared step at (t,r) -- assuming there isn't one already
 int reg_heap::add_shared_step(int r)
 {

@@ -539,29 +539,23 @@ EvalResult reg_heap::incremental_evaluate1_changeable_(int r)
     }
     catch (error_exception& e)
     {
-        discard_uninstalled_step(s);
+        // Evaluation exceptions are fatal; annotate the original failure without attempting to
+        // reclaim a partially constructed changeable step from an interpreter that cannot resume.
         if (log_verbose)
             annotate_reg_exception(*this, root_token, r, e, true);
         throw;
     }
     catch (myexception& e)
     {
-        discard_uninstalled_step(s);
         annotate_reg_exception(*this, root_token, r, e, true);
         throw;
     }
     catch (const std::exception& ee)
     {
-        discard_uninstalled_step(s);
         myexception e;
         e<<ee.what();
         annotate_reg_exception(*this, root_token, r, e, true);
         throw e;
-    }
-    catch (...)
-    {
-        discard_uninstalled_step(s);
-        throw;
     }
 
     std::cerr<<"incremental_evaluate1_changeable_: unreachable?";
@@ -721,29 +715,23 @@ EvalResult reg_heap::incremental_evaluate1_unevaluated_(int r)
             }
             catch (error_exception& e)
             {
-                discard_uninstalled_step(s);
+                // Evaluation exceptions are fatal; preserve diagnostics without attempting to
+                // reclaim the partially constructed step or resume this interpreter.
                 if (log_verbose)
                     annotate_reg_exception(*this, root_token, r, e, true);
                 throw;
             }
             catch (myexception& e)
             {
-                discard_uninstalled_step(s);
                 annotate_reg_exception(*this, root_token, r, e, true);
                 throw;
             }
             catch (const std::exception& ee)
             {
-                discard_uninstalled_step(s);
                 myexception e;
                 e<<ee.what();
                 annotate_reg_exception(*this, root_token, r, e, true);
                 throw e;
-            }
-            catch (...)
-            {
-                discard_uninstalled_step(s);
-                throw;
             }
         }
     }
@@ -1301,29 +1289,23 @@ EvalResult reg_heap::incremental_evaluate2_unevaluated_(int r)
             }
             catch (error_exception& e)
             {
-                discard_uninstalled_step(s);
+                // Evaluation exceptions are fatal; preserve diagnostics without attempting to
+                // reclaim the partially constructed step or resume this interpreter.
                 if (log_verbose)
                     annotate_reg_exception(*this, root_token, r, e, true);
                 throw;
             }
             catch (myexception& e)
             {
-                discard_uninstalled_step(s);
                 annotate_reg_exception(*this, root_token, r, e, true);
                 throw;
             }
             catch (const std::exception& ee)
             {
-                discard_uninstalled_step(s);
                 myexception e;
                 e<<ee.what();
                 annotate_reg_exception(*this, root_token, r, e, true);
                 throw e;
-            }
-            catch (...)
-            {
-                discard_uninstalled_step(s);
-                throw;
             }
         }
     }
@@ -1503,29 +1485,23 @@ EvalResult reg_heap::incremental_evaluate2_changeable_(int r)
     }
     catch (error_exception& e)
     {
-        discard_uninstalled_step(s);
+        // Evaluation exceptions are fatal; annotate the original failure without attempting to
+        // reclaim a partially constructed changeable step from an interpreter that cannot resume.
         if (log_verbose)
             annotate_reg_exception(*this, root_token, r, e, true);
         throw;
     }
     catch (myexception& e)
     {
-        discard_uninstalled_step(s);
         annotate_reg_exception(*this, root_token, r, e, true);
         throw;
     }
     catch (const std::exception& ee)
     {
-        discard_uninstalled_step(s);
         myexception e;
         e<<ee.what();
         annotate_reg_exception(*this, root_token, r, e, true);
         throw e;
-    }
-    catch (...)
-    {
-        discard_uninstalled_step(s);
-        throw;
     }
 
     std::abort();

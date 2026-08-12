@@ -833,7 +833,6 @@ private:
     EvalResult incremental_evaluate2_changeable_(int R);
     EvalResult incremental_evaluate2_unevaluated_(int R);
     int incremental_evaluate_unchangeable_(int R);
-    void discard_uninstalled_step(int s);
 
 public:
   
