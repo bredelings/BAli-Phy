@@ -97,19 +97,19 @@ main = do
         (modelRunOptions "Model" 200000
           (strArgument (metavar "ALIGNMENT" <> help "Aligned coding sequences")) <**> helper)
         fullDesc
-    run <- prepareModelRun (testMode options) (outputName options)
+    runInfo <- initializeModelRun (testMode options) (outputName options)
 
     sequences <- loadSequences (modelInputs options)
 
     let seqData = [ mkAlignedCharacterData dna $ selectRange range sequences | range <- ["3-.\\3", "1-.\\3", "2-.\\3"]]
 
-    logTree <- case run of
+    logTree <- case runInfo of
       TestRun -> return noLogger
       MCMCRun directory -> treeLogger $ directory </> "C1.trees"
 
-    context <- makeModelContext run (logFormats options) $ model seqData logTree
+    context <- makeModelContext runInfo (logFormats options) $ model seqData logTree
 
-    case run of
+    case runInfo of
       TestRun -> printInitialModel (logFormats options) context
       MCMCRun directory -> do
         reportModelRun (iterations options) (logFormats options) directory

@@ -5,7 +5,7 @@ module BAliPhy.Run
     , ModelRunOptions(..)
     , ModelRun(..)
     , modelRunOptions
-    , prepareModelRun
+    , initializeModelRun
     , makeModelContext
     , reportModelRun
     , printInitialModel
@@ -85,9 +85,9 @@ modelRunOptions defaultName defaultIterations inputs =
         <*> inputs
 
 -- Represent test mode without filesystem output, or create the unique directory for an MCMC run.
-prepareModelRun :: Bool -> String -> IO ModelRun
-prepareModelRun True _ = return TestRun
-prepareModelRun False name = do
+initializeModelRun :: Bool -> String -> IO ModelRun
+initializeModelRun True _ = return TestRun
+initializeModelRun False name = do
     directory <- createUniqueDirectory name
     hPutStrLn stderr $ "Created directory " ++ show directory ++ " for output files.\n"
     return $ MCMCRun directory

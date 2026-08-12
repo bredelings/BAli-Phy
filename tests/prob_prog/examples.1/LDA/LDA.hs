@@ -46,10 +46,10 @@ docs = map words [
 main = do
   options <- execParser $
     info (modelRunOptions "LDA" 200000 (pure ()) <**> helper) fullDesc
-  run <- prepareModelRun (testMode options) (outputName options)
-  context <- makeModelContext run (logFormats options) $ model docs
+  runInfo <- initializeModelRun (testMode options) (outputName options)
+  context <- makeModelContext runInfo (logFormats options) $ model docs
 
-  case run of
+  case runInfo of
     TestRun -> printInitialModel (logFormats options) context
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory

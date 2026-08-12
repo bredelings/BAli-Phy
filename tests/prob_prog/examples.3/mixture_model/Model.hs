@@ -36,15 +36,15 @@ model xs = do
 main = do
   options <- execParser $
     info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
-  run <- prepareModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (testMode options) (outputName options)
 
   frame <- readTable "x.csv"
 
   let xs = frame $$ "x" :: [Double]
 
-  context <- makeModelContext run (logFormats options) $ model xs
+  context <- makeModelContext runInfo (logFormats options) $ model xs
 
-  case run of
+  case runInfo of
     TestRun -> printInitialModel (logFormats options) context
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory

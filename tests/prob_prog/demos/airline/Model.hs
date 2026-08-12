@@ -23,14 +23,14 @@ model fatalities = do
 main = do
   options <- execParser $
     info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
-  run <- prepareModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (testMode options) (outputName options)
 
   let fatalities = [24, 25, 31, 31, 22, 21, 26, 20, 16, 22]
       model' = model fatalities
 
-  context <- makeModelContext run (logFormats options) model'
+  context <- makeModelContext runInfo (logFormats options) model'
 
-  case run of
+  case runInfo of
     TestRun -> printInitialModel (logFormats options) context
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory

@@ -38,15 +38,15 @@ main = do
       (modelRunOptions "Model" 200000
         (strArgument (metavar "TABLE" <> help "Table containing an x column")) <**> helper)
       fullDesc
-  run <- prepareModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (testMode options) (outputName options)
 
   xtable <- readTable (modelInputs options)
 
   let xs = xtable $$ "x" :: [Double]
 
-  context <- makeModelContext run (logFormats options) $ model xs
+  context <- makeModelContext runInfo (logFormats options) $ model xs
 
-  case run of
+  case runInfo of
     TestRun -> printInitialModel (logFormats options) context
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory

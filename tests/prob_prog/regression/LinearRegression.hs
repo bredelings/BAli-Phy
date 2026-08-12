@@ -24,16 +24,16 @@ model xs ys = do
 main = do
   options <- execParser $
     info (modelRunOptions "LinearRegression" 200000 (pure ()) <**> helper) fullDesc
-  run <- prepareModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (testMode options) (outputName options)
 
   xy_data <- readTable "xy.csv"
 
   let xs = xy_data $$ "x" :: [Double]
       ys = xy_data $$ "y" :: [Double]
 
-  context <- makeModelContext run (logFormats options) $ model xs ys
+  context <- makeModelContext runInfo (logFormats options) $ model xs ys
 
-  case run of
+  case runInfo of
     TestRun -> printInitialModel (logFormats options) context
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory

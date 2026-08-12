@@ -73,17 +73,17 @@ main = do
           (strArgument (metavar "ALIGNMENT" <> help "Aligned sequence file")) <**> helper)
         (fullDesc <> progDesc "Run the Yule-tree example")
 
-    run <- prepareModelRun (testMode options) (outputName options)
+    runInfo <- initializeModelRun (testMode options) (outputName options)
 
     seqData <- mkAlignedCharacterData dna <$> loadSequences (modelInputs options)
 
-    logTree <- case run of
+    logTree <- case runInfo of
       TestRun -> return noLogger
       MCMCRun directory -> treeLogger $ directory </> "C1.trees"
 
-    context <- makeModelContext run (logFormats options) $ model seqData logTree
+    context <- makeModelContext runInfo (logFormats options) $ model seqData logTree
 
-    case run of
+    case runInfo of
       TestRun -> printInitialModel (logFormats options) context
       MCMCRun directory -> do
         reportModelRun (iterations options) (logFormats options) directory

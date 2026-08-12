@@ -36,7 +36,7 @@ main = do
     info
       (modelRunOptions "LiStephens2003_1" 200000 modelInputOptions <**> helper)
       (fullDesc <> progDesc "Run the Li-Stephens recombination model")
-  run <- prepareModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (testMode options) (outputName options)
   let inputs = modelInputs options
 
   sequence_data <- load_alignment dna (sequenceFile inputs)
@@ -44,9 +44,9 @@ main = do
   locs_table <- readTable (locationsFile inputs)
   let locs = locs_table $$ "locs" :: [Int]
 
-  context <- makeModelContext run (logFormats options) $ model locs sequence_data
+  context <- makeModelContext runInfo (logFormats options) $ model locs sequence_data
 
-  case run of
+  case runInfo of
     TestRun -> printInitialModel (logFormats options) context
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
