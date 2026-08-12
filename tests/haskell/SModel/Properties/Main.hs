@@ -4,9 +4,10 @@ import Bio.Alphabet
 import Compiler.Error (error)
 import Compiler.Fractional
 import Compiler.Num
+import Compiler.RealFloat (isNaN)
 import Data.Bool
 import Data.Eq
-import Data.Foldable (sum)
+import Data.Foldable (all, sum)
 import Data.Function (($))
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
@@ -52,8 +53,8 @@ weightedBranchCategoryRate category (Discrete components) =
     sum [probability * rate (models!!category)
         | (BranchModel _ models _ _, probability) <- components]
 
--- Check model properties and native substitution-model numeric arrays through
--- stable printed results.
+-- Check model properties and native substitution-model numeric arrays through stable printed
+-- results, including propagation of a defective rate without entering the matrix eigensolver.
 main = do
   let base = always (jukes_cantor dna)
       rates = Discrete [(0.5, 0.5), (1.5, 0.5)]
@@ -93,6 +94,7 @@ main = do
                   ]
   putStrLn $ show $ toList $ CoreMarkov.equilibriumLimit (fromList [1, 0]) (CoreMarkov.getQ between)
   putStrLn $ show (rows (CoreMarkov.qExp between), cols (CoreMarkov.qExp between))
+  putStrLn $ show $ all isNaN $ toList $ flatten $ CoreMarkov.qExp $ scaleBy (0.0 / 0.0) between
   putStrLn $ show $ take 4 modulatedValues
   putStrLn $ show $ take 4 $ drop 4 modulatedValues
 
