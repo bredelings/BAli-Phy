@@ -4,7 +4,6 @@ import           BAliPhy.Run
 import           MCMC (runMCMC)
 import           Options.Applicative
 import           Probability
-import           Probability.Random (writeTraceGraph)
 
 -- sequence of @n points [from, next,....,to] where the distribution
 -- of the point after x is (f x).
@@ -27,6 +26,7 @@ model = do
 
 main = do
   options <- execParser $ modelRunParser "Model" 200000
+
   runInfo <- initializeModelRun (testMode options) (outputName options)
   context <- makeModelContext runInfo (logFormats options) model
 
@@ -35,6 +35,3 @@ main = do
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
       runMCMC (iterations options) context
-
-  verbosity <- getVerbosity
-  if verbosity > 0 then writeTraceGraph context else return ()

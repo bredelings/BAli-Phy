@@ -14,6 +14,7 @@ observe_data z' = do
 
 main = do
   options <- execParser $ modelRunParser "Model" 200000
+
   runInfo <- initializeModelRun (testMode options) (outputName options)
   let model = observe_data 1
   context <- makeModelContext runInfo (logFormats options) model
@@ -23,6 +24,3 @@ main = do
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
       runMCMC (iterations options) context
-
-  verbosity <- getVerbosity
-  if verbosity > 0 then writeTraceGraph context else return ()

@@ -7,7 +7,6 @@ import IModel
 import MCMC
 import Options.Applicative
 import Probability
-import Probability.Random (writeTraceGraph)
 import SModel
 import SModel.Parsimony
 import Tree
@@ -89,6 +88,7 @@ main = do
     (options, filename) <- execParser $
       modelRunParserWith "Model" 200000 $
         strArgument (metavar "SEQUENCES" <> help "Unaligned coding sequences")
+
     runInfo <- initializeModelRun (testMode options) (outputName options)
 
     sequenceData <- mkUnalignedCharacterData (mkCodons dna standard_code) <$>
@@ -100,6 +100,3 @@ main = do
       MCMCRun directory -> do
         reportModelRun (iterations options) (logFormats options) directory
         runMCMC (iterations options) context
-
-    verbosity <- getVerbosity
-    if verbosity > 0 then writeTraceGraph context else return ()

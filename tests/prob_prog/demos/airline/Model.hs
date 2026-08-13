@@ -4,7 +4,6 @@ import           BAliPhy.Run
 import           MCMC (runMCMC)
 import           Options.Applicative
 import           Probability
-import           Probability.Random (writeTraceGraph)
 
 model fatalities = do
 
@@ -22,6 +21,7 @@ model fatalities = do
 
 main = do
   options <- execParser $ modelRunParser "Model" 200000
+
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
   let fatalities = [24, 25, 31, 31, 22, 21, 26, 20, 16, 22]
@@ -34,6 +34,3 @@ main = do
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
       runMCMC (iterations options) context
-
-  verbosity <- getVerbosity
-  if verbosity > 0 then writeTraceGraph context else return ()

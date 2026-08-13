@@ -8,7 +8,6 @@ import           Bio.Alignment
 import           Bio.Sequence
 import           MCMC (runMCMC, scaleGroupSlice)
 import           Options.Applicative
-import           Probability.Random (writeTraceGraph)
 import           Tree
 import           Tree.Newick
 import           SModel
@@ -87,6 +86,3 @@ main = do
       MCMCRun directory -> do
         reportModelRun (iterations options) (logFormats options) directory
         runMCMC (iterations options) context
-
-    verbosity <- getVerbosity
-    if verbosity > 0 then writeTraceGraph context else return ()

@@ -26,6 +26,3 @@ main = do
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
       runMCMC (iterations options) context
-
-  verbosity <- getVerbosity
-  if verbosity > 0 then writeTraceGraph context else return ()

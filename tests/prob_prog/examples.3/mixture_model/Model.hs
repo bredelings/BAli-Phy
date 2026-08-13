@@ -4,7 +4,6 @@ import BAliPhy.Run
 import MCMC (runMCMC)
 import Options.Applicative
 import Probability
-import Probability.Random (writeTraceGraph)
 import Data.Frame
 
 generate size = do
@@ -35,6 +34,7 @@ model xs = do
 
 main = do
   options <- execParser $ modelRunParser "Model" 200000
+
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
   frame <- readTable "x.csv"
@@ -48,6 +48,3 @@ main = do
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
       runMCMC (iterations options) context
-
-  verbosity <- getVerbosity
-  if verbosity > 0 then writeTraceGraph context else return ()

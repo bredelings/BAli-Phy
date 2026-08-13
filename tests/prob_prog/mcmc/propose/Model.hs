@@ -4,7 +4,6 @@ import BAliPhy.Run
 import Probability
 import MCMC
 import Options.Applicative
-import Probability.Random (writeTraceGraph)
 
 model = do
 
@@ -22,6 +21,7 @@ model = do
 
 main = do
   options <- execParser $ modelRunParser "Model" 200000
+
   runInfo <- initializeModelRun (testMode options) (outputName options)
   context <- makeModelContext runInfo (logFormats options) model
 
@@ -30,6 +30,3 @@ main = do
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
       runMCMC (iterations options) context
-
-  verbosity <- getVerbosity
-  if verbosity > 0 then writeTraceGraph context else return ()

@@ -28,6 +28,7 @@ import Data.Functor
 import Data.List
 import Data.JSON (Object)
 import Data.Maybe
+import Data.Ord
 import Data.Semigroup ((<>))
 import Foreign.Maybe ()
 import Foreign.String
@@ -155,11 +156,13 @@ reportModelRun maxIterations formats directory = do
     putStrLn "See the manual at http://www.bali-phy.org/README.xhtml for further information."
     hFlush stdout
 
--- Print the iteration-zero representation in the same TSV-then-JSON order as the old wrapper.
+-- Print the iteration-zero representation and, when verbose, the model's trace graph.
 printInitialModel :: [LogFormat] -> ContextIndex -> IO ()
 printInitialModel formats context = do
     when (TSV `elem` formats) $ logTableLine context 0 >>= T.putStrLn
     when (JSON `elem` formats) $ logJSONLine context 0 >>= T.putStrLn
+    verbosity <- getVerbosity
+    when (verbosity > 0) $ writeTraceGraph context
 
 foreign import bpcall "Environment:"
     getVerbosity :: IO Int

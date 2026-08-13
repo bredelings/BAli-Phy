@@ -4,7 +4,6 @@ import BAliPhy.Run
 import MCMC (runMCMC)
 import Options.Applicative
 import Probability
-import Probability.Random (writeTraceGraph)
 import Data.Frame
 import qualified Data.Vector as V
 
@@ -40,6 +39,7 @@ model (t1,t2) times = do
 
 main = do
   options <- execParser $ modelRunParser "Coal" 200000
+
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
   frame <- readTable "coal-times.csv"
@@ -53,6 +53,3 @@ main = do
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
       runMCMC (iterations options) context
-
-  verbosity <- getVerbosity
-  if verbosity > 0 then writeTraceGraph context else return ()

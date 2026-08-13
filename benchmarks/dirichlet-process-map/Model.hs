@@ -16,7 +16,6 @@ import Data.List (sum)
 import MCMC (runMCMC)
 import Options.Applicative
 import Probability
-import Probability.Random (writeTraceGraph)
 import System.Environment (getEnv)
 import Text.Read (read)
 
@@ -74,6 +73,7 @@ benchmarkModel scenario size =
 -- add changing probabilistic dependencies to the measured model.
 main = do
   options <- execParser $ modelRunParser "Model" 200000
+
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
   scenario <- getEnv "BALIPHY_DP_MAP_SCENARIO"
@@ -87,6 +87,3 @@ main = do
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
       runMCMC (iterations options) context
-
-  verbosity <- getVerbosity
-  if verbosity /= 0 then writeTraceGraph context else return ()

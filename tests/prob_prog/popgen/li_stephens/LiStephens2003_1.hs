@@ -3,7 +3,6 @@ module LiStephens2003 where
 import           BAliPhy.Run
 import           MCMC (runMCMC)
 import           Probability         -- for the model framework
-import           Probability.Random (writeTraceGraph)
 
 import           Options.Applicative
 import           Data.Frame          -- for readTable & friends
@@ -35,6 +34,7 @@ main = do
   (options, inputs) <- execParser $
     withModelDescription "Run the Li-Stephens recombination model" $
       modelRunParserWith "LiStephens2003_1" 200000 modelInputOptions
+
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
   sequence_data <- load_alignment dna (sequenceFile inputs)
@@ -49,6 +49,3 @@ main = do
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
       runMCMC (iterations options) context
-
-  verbosity <- getVerbosity
-  if verbosity > 0 then writeTraceGraph context else return ()

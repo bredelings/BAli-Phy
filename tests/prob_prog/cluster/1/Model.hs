@@ -4,7 +4,6 @@ import BAliPhy.Run
 import MCMC (runMCMC)
 import Options.Applicative
 import Probability
-import Probability.Random (writeTraceGraph)
 import Data.Frame
 
 -- Ideally, the categories and their weights would be exchangeable!
@@ -36,6 +35,7 @@ main = do
   (options, filename) <- execParser $
     modelRunParserWith "Model" 200000 $
       strArgument (metavar "TABLE" <> help "Table containing an x column")
+
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
   xtable <- readTable filename
@@ -49,6 +49,3 @@ main = do
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
       runMCMC (iterations options) context
-
-  verbosity <- getVerbosity
-  if verbosity > 0 then writeTraceGraph context else return ()
