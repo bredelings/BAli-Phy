@@ -38,7 +38,6 @@ namespace record_rename
     void resolve_constructor_field_identities(
         const renamer_state& rn,
         const std::string& constructor_name,
-        const std::string& pattern_text,
         Hs::PatternFieldBindings& fields);
 
     // Expand a pattern-side record pun after checking NamedFieldPuns.

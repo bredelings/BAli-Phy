@@ -100,9 +100,9 @@ namespace record_rename
     void resolve_constructor_field_identities(
         const renamer_state& rn,
         const std::string& constructor_name,
-        const std::string& pattern_text,
         Hs::PatternFieldBindings& fields)
     {
+        auto pattern_text = get_unqualified_name(constructor_name) + " {" + fields.print() + "}";
         resolve_constructor_fields(rn, constructor_name, "pattern '" + pattern_text + "'", fields);
     }
 
