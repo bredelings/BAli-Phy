@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "computation/haskell/haskell.H"
-#include "computation/haskell/ids.H"
 
 namespace record_utils
 {
@@ -44,7 +43,8 @@ namespace record_utils
             assert(f.resolved_field);
             auto pos = positions.find(*f.resolved_field);
             assert(pos != positions.end());
-            assert(used_fields.insert(pos->second).second);
+            [[maybe_unused]] bool inserted = used_fields.insert(pos->second).second;
+            assert(inserted);
 
             if (auto slot = get_slot(field))
                 ordered_fields[pos->second] = *slot;
