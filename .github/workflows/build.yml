@@ -437,6 +437,9 @@ jobs:
       shell: msys2 {0}
       run: |
         export PATH="$PWD/local/bin:$PATH"
+        # Native Windows retains portable Unix options and additionally accepts slash options.
+        bali-phy --version
+        bali-phy /version
         meson test -C build --print-errorlogs --num-processes 2
 
     - name: Test bp-summarize without R or gnuplot (Windows native)
