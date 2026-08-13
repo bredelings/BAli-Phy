@@ -7,6 +7,7 @@ baliphy_sources = [
   'system.cc',
   'cmd_line.cc',
   'cmd_line_cli11.cc',
+  'command_config.cc',
   'paths.cc']
 
 # maybe we don't need this if we are doing static linking

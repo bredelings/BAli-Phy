@@ -1,9 +1,12 @@
 #include "cmd_line.H"
 
 #include <cstdlib>
+#include <map>
+#include <memory>
 #include <sstream>
 #include <CLI/CLI.hpp>
 
+#include "command_config.H"
 #include "util/myexception.H"
 #include "version.H"
 
@@ -12,6 +15,94 @@ using std::vector;
 
 namespace
 {
+
+/// Adapt BAli-Phy's command files to CLI11 while retaining repeated-value merge order.
+/// CLI11 normally drops config values after a command-line occurrence; the deferred values are
+/// additional machinery needed to preserve BAli-Phy's command-line-then-config combination.
+class BaliPhyConfig : public CLI::Config
+{
+    struct Target
+    {
+        CLI::Option* option;
+        vector<string> parents;
+    };
+
+    CLI::Option* config_option;
+    std::map<string, Target> targets;
+    mutable vector<std::pair<CLI::Option*, vector<string>>> deferred_values;
+
+    /// Register every configurable spelling with the parent path CLI11 expects in a ConfigItem.
+    void add_targets(CLI::App& app, vector<string> parents)
+    {
+        for(auto* option: app.get_options())
+        {
+            if (not option->get_configurable()) continue;
+            for(const auto& name: option->get_lnames())
+                targets.emplace(name, Target{option, parents});
+            for(const auto& name: option->get_snames())
+                targets.emplace(name, Target{option, parents});
+        }
+    }
+
+    /// Recover the active filename because CLI11's Config interface receives only its stream.
+    string filename() const
+    {
+        if (config_option->results().empty()) return "<config>";
+        return config_option->results().front();
+    }
+
+public:
+    /// Record the inference option namespace used to resolve exact command-file names.
+    BaliPhyConfig(CLI::App& infer, CLI::Option* config)
+        :config_option(config)
+    {
+        add_targets(infer, {"infer"});
+    }
+
+    /// BAli-Phy supports reading command files, but does not use CLI11 to generate them.
+    string to_config(const CLI::App*, bool, bool, string) const override
+    {
+        return {};
+    }
+
+    /// Convert one command file and remember composing values that CLI11 would otherwise ignore.
+    vector<CLI::ConfigItem> from_config(std::istream& input) const override
+    {
+        deferred_values.clear();
+        auto config = read_command_config(input, filename());
+        config.options["variables"].push_back(config.model_source);
+
+        vector<CLI::ConfigItem> items;
+        for(auto& [name, values]: config.options)
+        {
+            auto target = targets.find(name);
+            if (target == targets.end())
+            {
+                auto line = config.option_lines.at(name);
+                throw CLI::ConfigError(filename()+":"+std::to_string(line)+
+                                       ": unknown option '"+name+"'");
+            }
+
+            auto* option = target->second.option;
+            if (option->count() and option->get_multi_option_policy() == CLI::MultiOptionPolicy::TakeAll)
+                deferred_values.emplace_back(option, values);
+
+            items.push_back({target->second.parents, name, values});
+        }
+        return items;
+    }
+
+    /// Append config values skipped because the same composing option occurred on the command line.
+    void append_deferred_values() const
+    {
+        for(auto& [option, values]: deferred_values)
+        {
+            option->add_result(values);
+            option->run_callback();
+        }
+        deferred_values.clear();
+    }
+};
 
 /// Hold CLI11's command tree and its command-specific destinations for one parse operation.
 class CLI11CommandParser
@@ -26,6 +117,8 @@ class CLI11CommandParser
     HelpCommand help;
 
     CLI::Option* verbosity_option = nullptr;
+    CLI::Option* config_option = nullptr;
+    std::shared_ptr<BaliPhyConfig> config_reader;
     CLI::App* infer_app = nullptr;
     CLI::App* run_app = nullptr;
     CLI::App* print_app = nullptr;
@@ -81,8 +174,7 @@ class CLI11CommandParser
     {
         infer_app = app.add_subcommand("infer", "Infer a phylogeny and related model parameters");
         infer_app->fallthrough();
-        infer_app->add_option("DATA", infer.alignments, "Sequence data files");
-        infer_app->add_option("-c,--config", infer.config_file, "Command file to read");
+        infer_app->add_option("DATA,--align", infer.alignments, "Sequence data files")->take_all();
         infer_app->add_flag("-t,--test", result.global.test, "Analyze initial values and exit");
         infer_app->add_option("-i,--iterations", infer.iterations, "Number of MCMC iterations");
         infer_app->add_option("-n,--name", infer.name, "Name for the output directory");
@@ -115,6 +207,15 @@ class CLI11CommandParser
                               "Comma-separated likelihood-calculator indices");
     }
 
+    /// Attach BAli-Phy's command-file reader at the root while restricting its contents to inference options.
+    void add_config_file()
+    {
+        infer_app->get_help_ptr()->configurable(false);
+        config_option = app.set_config("-c,--config", "", "Command file to read");
+        config_reader = std::make_shared<BaliPhyConfig>(*infer_app, config_option);
+        app.config_formatter(config_reader);
+    }
+
     /// Register command payloads; the exact run pass-through boundary is refined in the next stage.
     void add_other_commands()
     {
@@ -145,6 +246,10 @@ class CLI11CommandParser
     {
         if (infer_app->parsed())
         {
+            if (config_option->count() > 1)
+                throw myexception()<<"infer accepts only one --config file";
+            if (config_option->count())
+                infer.config_file = config_option->as<string>();
             if (infer.alignments.empty() and not infer.config_file)
                 throw myexception()<<"infer requires sequence data or --config";
             result.command = std::move(infer);
@@ -164,6 +269,8 @@ class CLI11CommandParser
         else
             result.command = std::move(help);
 
+        if (config_option->count() and not infer_app->parsed())
+            throw myexception()<<"--config requires the infer command";
         if (result.global.compiler.dump_ffi and not test_module_app->parsed())
             throw myexception()<<"--dump-ffi requires the test-module command";
     }
@@ -180,11 +287,13 @@ public:
         add_infer_command();
         add_other_commands();
 
+        app.get_help_ptr()->configurable(false);
         app.set_version_flag("-v,--version", [] {
             std::ostringstream out;
             print_version_info(out);
             return out.str();
-        });
+        })->configurable(false);
+        add_config_file();
     }
 
     /// Parse one argv vector and return the parser-independent command value.
@@ -198,6 +307,8 @@ public:
             // implicit verbosity of one while still allowing attached values such as `-V4`.
             if (verbosity_option->count() and verbosity_option->results().front().empty())
                 result.global.verbosity = 1;
+
+            config_reader->append_deferred_values();
         }
         catch (const CLI::ParseError& error)
         {

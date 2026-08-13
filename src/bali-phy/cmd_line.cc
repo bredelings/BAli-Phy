@@ -1,9 +1,7 @@
 #include <filesystem>
-#include <boost/algorithm/string/replace.hpp>
-#include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/option.hpp>
-#include <regex>
+#include "command_config.H"
 #include "cmd_line.H"
 #include "paths.H"
 #include "util/file-paths.H"
@@ -35,77 +33,14 @@ const string trailing_args_separator = "--";
 
 namespace fs = std::filesystem;
 
-const std::regex rgx_simple( R""(:([^ \t]+)[ \t]+([^ \t"].*)[ \t]*)"" );
-const std::regex rgx_quoted( R""(:([^ \t]+)[ \t]+"(([^\\"]|\\.)*)"[ \t]*)"" );
-const std::regex rgx_no_arg( R""(:([^ \t]+)[ \t]*)"" );
-const std::regex rgx_comment( R""([ \t]*#.*)"" );
-
-
-string unescape_value(const string& line)
+po::parsed_options bali_config_file(std::istream& file, const po::options_description& options_desc,
+                                    const string& filename)
 {
-    std::ostringstream output;
-    for(int i=0;i<line.size();i++)
-    {
-	char c = line[i];
-	if (c == '\\')
-	{
-	    i++;
-	    c = line[i];
-	    if (c == 'n')
-		c = '\n';
-	    else if (c == 't')
-		c = '\t';
-	    else if (c == '\\')
-		;
-	    else if (c == '"')
-		;
-	    else
-		throw myexception()<<"Invalid escape sequence '\\"<<c<<"' in option value \""<<line<<"\"";
-	}
-	output<<c;
-    }
-    return output.str();
-}
+    auto config = read_command_config(file, filename);
+    config.options["variables"].push_back(config.model_source);
 
-
-po::parsed_options bali_config_file(std::istream& file, const po::options_description& options_desc)
-{
-    std::map<string,vector<string>> options_map;
     po::parsed_options options(&options_desc);
-    std::ostringstream model_lines;
-
-    string line;
-    while(portable_getline(file, line))
-    {
-	std::smatch m;
-
-	if (std::regex_match(line, m, rgx_comment))
-	    continue;
-	else if (not line.starts_with(':'))
-	    model_lines<<line<<"\n";
-	else if (std::regex_match(line, m, rgx_no_arg))
-	{
-	    string key = m[1];
-	    options_map[key];
-	}
-	else if (std::regex_match(line, m, rgx_quoted))
-	{
-	    string key = m[1];
-	    string value = unescape_value(m[2]);
-	    options_map[key].push_back(value);
-	}
-	else if (std::regex_match(line, m, rgx_simple))
-	{
-	    string key = m[1];
-	    string value = m[2];
-	    options_map[key].push_back(value);
-	}
-	else
-	    throw myexception()<<"Malformed line '"<<line<<"'. It should have the form '<key> <value>' or '<key> \"<value>\"";
-    }
-    options_map["variables"].push_back(model_lines.str());
-
-    for(auto& [key,values]: options_map)
+    for(auto& [key,values]: config.options)
 	options.options.push_back(po::basic_option<char>(key,values));
 
     return options;
@@ -431,7 +366,7 @@ variables_map parse_boost_options(int argc,char* argv[])
 	string filename = args["config"].as<string>();
 	checked_ifstream file(filename,"config file");
 
-	store(bali_config_file(file, all), args);
+	store(bali_config_file(file, all, filename), args);
 	notify(args);
     }
 

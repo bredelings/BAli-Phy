@@ -1,1 +1,1 @@
---config=config '--tree=~UniformTree(taxa)'
+--config=config '--tree=~UniformTree(taxa)' '--alphabet=2:RNA'

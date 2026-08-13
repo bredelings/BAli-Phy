@@ -1,4 +1,5 @@
- # Compute probability and exit.
+ # Protect interleaved source, scalar command-line precedence, and additive repeated values.
+ # This becomes obsolete if command files are replaced with a format that specifies merging itself.
 :test
 
  # Keep model declarations before and after options, and ensure command-line scalars take precedence.
@@ -9,6 +10,7 @@ configBeforeOption = 1;
 :align dna1.fasta
 :align rna.fasta
 :align dna2.fasta
+:alphabet 1,3:DNA
 
  # Link the first and third partitions
 :smodel 1,3:TN93+>Rates.Free(n=3)
