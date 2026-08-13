@@ -651,13 +651,16 @@ class PackageManager:
                 return package
         return None
 
-    # Build the archive URL advertised for a remote package.
+    # Resolve archives beside the package index unless metadata selects another repository.
     def remote_package_url(self, package):
         try:
             filename = f"{package['Package']}_{package['Version']}.tar.gz"
-            return secure_url(urljoin(package["Source"].rstrip("/") + "/", filename))
+            source = package.get("Source")
+            if source is None:
+                return secure_url(urljoin(self.package_index_url, filename))
+            return secure_url(urljoin(self.package_index_url, source.rstrip("/") + "/" + filename))
         except (AttributeError, KeyError, TypeError) as error:
-            raise PackageManagerError("Remote package metadata is missing Package, Version, or Source.") from error
+            raise PackageManagerError("Remote package metadata is missing Package or Version, or has an invalid Source.") from error
 
     # Download a remote package, verify every advertised checksum, and install it.
     def install_package(self, name):

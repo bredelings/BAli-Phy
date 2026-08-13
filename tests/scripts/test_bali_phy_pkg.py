@@ -219,7 +219,8 @@ class PackageManagerTests(unittest.TestCase):
             manager.uninstall_package("Example")
             self.assertFalse(manager.is_package_installed("Example"))
 
-    # Exercise repository download and all checksums without depending on the live package server.
+    # Protect repository-relative archives and checksum validation without a live package server;
+    # this can go when an external package client provides equivalent verified repository handling.
     def test_remote_install_from_local_repository(self):
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
@@ -228,7 +229,6 @@ class PackageManagerTests(unittest.TestCase):
             metadata = {
                 "Package": "Remote",
                 "Version": "2.0",
-                "Source": directory.as_uri(),
                 "SHA1": hashlib.sha1(package_data).hexdigest(),
                 "SHA256": hashlib.sha256(package_data).hexdigest(),
                 "MD5sum": hashlib.md5(package_data).hexdigest(),
