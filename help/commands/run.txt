@@ -2,13 +2,14 @@
 
 run <file>.hs                              Run a standalone Haskell program.
 
-Load `<file>.hs` and evaluate its `main` function.  Options before `--` are
-handled by BAli-Phy; arguments after `--` are passed to the Haskell program.
+Load `<file>.hs` and evaluate its `main` function.  The first non-option after
+`run` is the program.  Every later argument is passed to the Haskell program,
+including arguments beginning with `-` or `/`.  BAli-Phy compiler options must
+therefore occur before `<file>.hs`; no `--` separator is needed.
 
 Custom probabilistic models are ordinary standalone programs and should parse
 their own model and MCMC options, for example with `Options.Applicative`.
 
 # Examples:
 
-   bali-phy run Model.hs --seed=1 -- --iterations=1000 data.fasta
-
+   bali-phy --seed=1 run Model.hs --iterations=1000 data.fasta

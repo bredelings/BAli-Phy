@@ -320,8 +320,8 @@ You can install <application>R</application> via Homebrew:
 <prompt>%</prompt> <userinput>draw-tree --help</userinput>
 <prompt>%</prompt> <userinput>bp-summarize --help</userinput>
 <prompt>%</prompt> <userinput>bali-phy-pkg --help</userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200</userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200</userinput>
+<prompt>%</prompt> <userinput>bali-phy infer 25.fasta --iterations=200</userinput>
+<prompt>%</prompt> <userinput>bali-phy infer 25.fasta --iterations=200</userinput>
 <prompt>%</prompt> <userinput>bp-summarize 25-1 25-2</userinput></screen>
 
     <para>
@@ -440,14 +440,32 @@ You can install <application>R</application> via Homebrew:
     <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-summarize</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
     </para>
 
-    <para> The simplest way to run <command>BAli-Phy</command> is
-      to type all the arguments on the command line:
-      <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
+    <para>The <command>bali-phy</command> program uses a command followed by that command's
+      arguments.  Use <command>infer</command> to analyze sequence data.  The simplest analysis
+      is therefore:</para>
+      <screen><prompt>%</prompt> <userinput>bali-phy infer sequences.fasta</userinput></screen>
+    <para>
       You can run a traditional fixed-alignment Bayesian tree inference by adding <userinput>-I none</userinput>:
-      <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -I none</userinput></screen>
+      <screen><prompt>%</prompt> <userinput>bali-phy infer sequences.fasta -I none</userinput></screen>
       You can also specify a character set for analysis:
-      <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-30,90-100</userinput></screen>
+      <screen><prompt>%</prompt> <userinput>bali-phy infer sequences.fasta:1-30,90-100</userinput></screen>
     </para>
+
+    <para>Other commands perform different operations.  For example,
+      <userinput>bali-phy run Model.hs <replaceable>arguments</replaceable></userinput> runs a
+      standalone Haskell program.  The first non-option after <command>run</command> is the
+      program; every later argument belongs to that program, including <userinput>-h</userinput>
+      and other arguments beginning with a hyphen.  BAli-Phy compiler options for the program
+      must therefore precede <filename>Model.hs</filename>.  No <userinput>--</userinput>
+      separator is needed.</para>
+
+    <para>Run <userinput>bali-phy --help</userinput> or <userinput>bali-phy help</userinput> for
+      basic cumulative help, and <userinput>bali-phy help advanced</userinput>,
+      <userinput>bali-phy help expert</userinput>, or
+      <userinput>bali-phy help developer</userinput> for successively more specialized commands
+      and options.  A command has its own help, for example
+      <userinput>bali-phy infer --help</userinput> or
+      <userinput>bali-phy run --help</userinput>.</para>
 
     <section><info><title>Command examples on Windows</title></info>
       <para>Most BAli-Phy commands shown below work unchanged in PowerShell and Command
@@ -455,7 +473,11 @@ You can install <application>R</application> via Homebrew:
         <filename>C:\Users\user\data.fasta</filename>.  PowerShell also accepts forward
         slashes in many paths.</para>
       <para>Use double quotes around model expressions on Windows.  For example:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>bali-phy sequences.fasta -S "GTR +&gt; Rates.Gamma"</userinput></screen>
+<screen><prompt>PS&gt;</prompt> <userinput>bali-phy infer sequences.fasta -S "GTR +&gt; Rates.Gamma"</userinput></screen>
+      <para>Native Windows also accepts slash forms such as <userinput>/V</userinput>,
+        <userinput>/iterations:1000</userinput>, and <userinput>/test</userinput>.  The Unix forms
+        remain valid on Windows and are used throughout this manual because they also work on
+        Linux, macOS, and WSL2.</para>
       <para>PowerShell uses
         <command>Copy-Item <replaceable>source</replaceable>
           <replaceable>destination</replaceable></command> to copy a file, while Command
@@ -474,10 +496,10 @@ You can install <application>R</application> via Homebrew:
     <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
     On native Windows, use the PowerShell or Command Prompt copy command from <xref linkend="tests"/> instead.</para>
     <para>We will now start 4 simultaneous runs.  On Linux, macOS, or WSL2, use:
-    <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iter=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iter=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iter=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iter=1000 &amp; </userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy infer 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy infer 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy infer 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy infer 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput></screen>
     These runs will all execute at the same time because of the
     "<userinput>&amp;</userinput>".  Each run will create a unique directory of the form
     <filename>25-<replaceable>number</replaceable></filename> to store its results.</para>
@@ -487,7 +509,7 @@ You can install <application>R</application> via Homebrew:
       <filename>25.fasta</filename>.  Run the following command once in each terminal.
       Separate terminals keep each chain's progress and errors visible and allow each chain
       to be interrupted independently.</para>
-<screen><prompt>PS&gt;</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iter=1000</userinput></screen>
+<screen><prompt>PS&gt;</prompt> <userinput>bali-phy infer 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000</userinput></screen>
 
     <para>On Linux, macOS, or WSL2, you can use the program <userinput>top</userinput> to
       verify that four copies of <userinput>bali-phy</userinput> are running:
@@ -611,13 +633,16 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
     <section><info><title>Command line options</title></info>
       
     <para>Sensible defaults are supplied for command line options that are not specified.  For example, if <filename>sequences.fasta</filename> contains DNA sequences, then
-    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy infer sequences.fasta</userinput></screen>
     is equivalent to
-    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S TN93 -I RS07</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy infer sequences.fasta -A DNA -S TN93 -I RS07</userinput></screen>
     Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.  You will generally need to write the substitution model inside single quotes unless it is just a single word.
 
-    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'LG&nbsp;+>&nbsp;Rates.Gamma&nbsp;+>&nbsp;Inv'</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy infer sequences.fasta -S 'LG&nbsp;+>&nbsp;Rates.Gamma&nbsp;+>&nbsp;Inv'</userinput></screen>
     Every short option like <userinput>-S</userinput> has an equivalent long option like <userinput>--smodel</userinput>.
+    Long option names must be written in full.  For example, use
+    <userinput>--iterations</userinput> (or <userinput>-i</userinput>), not the old abbreviation
+    <userinput>--iter</userinput>.
     To see the most frequently-used command-line options, you can run
     <screen><prompt>%</prompt> <userinput>bali-phy help</userinput></screen>
     </para>
@@ -633,7 +658,8 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 	"<userinput>:option value</userinput>" instead of
 	"<userinput>--option value</userinput>". The value can be blank if the option does not take
 	an argument. The <userinput>align</userinput> option indicates sequence files. Other
-	non-comment lines are combined into model-language definitions. Lines whose first
+	non-comment lines are combined into model-language definitions and may occur before,
+	between, or after option lines. Lines whose first
 	non-whitespace character is <userinput>#</userinput> are comments, and blank lines are ignored.
       </para>
 
@@ -663,17 +689,17 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 Configuration files are specified with the
 <userinput>-c <replaceable>configuration_file</replaceable></userinput>
 option.  For example:
-	<screen><prompt>%</prompt> <userinput>bali-phy -c config.txt</userinput></screen>
-        Options given on the command line override values given in the configuration file. For
-        example, this command overrides the analysis name:
-	<screen><prompt>%</prompt> <userinput>bali-phy -c config.txt --name ITS-analysis1b</userinput></screen>
+	<screen><prompt>%</prompt> <userinput>bali-phy infer -c config.txt</userinput></screen>
+        A configuration file belongs to the <command>infer</command> command and cannot select a
+        different command.  Scalar options given on the command line override values given in
+        the configuration file. For example, this command overrides the analysis name:
+	<screen><prompt>%</prompt> <userinput>bali-phy infer -c config.txt --name ITS-analysis1b</userinput></screen>
+	Repeated options supplied in both places are combined, with command-line values first.  This
+	allows a command line to add values for options such as <userinput>--smodel</userinput> or
+	<userinput>--variables</userinput> rather than replacing all values from the file.
 	</para>
-	<!-- para>
-	  The file <filename>~/.bali-phy</filename> is a special
-	  <emphasis>configuration file.</emphasis> If it exists, it is always loaded.
-	  Options given on the command line or another configuration file
-	  override values given in <filename>~/.bali-phy</filename>. 
-	</para -->
+        <para>BAli-Phy does not read an implicit configuration file from your home directory;
+          pass each configuration file explicitly with <userinput>infer --config</userinput>.</para>
     </section>
 
     <section xml:id="cluster"><info><title>Running on computing clusters</title></info>
@@ -2301,11 +2327,11 @@ MG94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 	<para>Genetic codes may be specified by name or by <userinput>code<replaceable>n</replaceable></userinput> where <replaceable>n</replaceable> is the code number.
         For example <userinput>code1</userinput> is the standard code.
 If the genetic code is not specified, then the standard code is used:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S GY94 -A Codons
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S GY94 -A "Codons(RNA)"</screen>
+<screen><prompt>%</prompt> bali-phy infer <replaceable>sequence-file</replaceable> -S GY94 -A Codons
+<prompt>%</prompt> bali-phy infer <replaceable>sequence-file</replaceable> -S GY94 -A "Codons(RNA)"</screen>
 	These examples specify the vertebrate mitochondrial code:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S GY94 -A "Codons(DNA,mt-vert)"
-<prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> -S GY94 -A "Codons(,mt-vert)"</screen>
+	<screen><prompt>%</prompt> bali-phy infer <replaceable>sequence-file</replaceable> -S GY94 -A "Codons(DNA,mt-vert)"
+<prompt>%</prompt> bali-phy infer <replaceable>sequence-file</replaceable> -S GY94 -A "Codons(,mt-vert)"</screen>
 </para>
       </section>
       <section>
@@ -2435,7 +2461,7 @@ If the genetic code is not specified, then the standard code is used:
 
       <section><info><title>The branch-site substitution model</title></info>
       <para>In order to use the branch-site substitution model, the user needs to specify an unrooted tree topology and fix the topology:
-    <screen><prompt>%</prompt> bali-phy <replaceable>alignment</replaceable>.fasta -S BranchSite --fix topology=<replaceable>treefile</replaceable></screen>
+    <screen><prompt>%</prompt> bali-phy infer <replaceable>alignment</replaceable>.fasta -S BranchSite --fix topology=<replaceable>treefile</replaceable></screen>
     The tree file should be in Newick format, with foreground branches labelled using &amp; attributes. The attribute must be applied to the branch, not the node, so it must occur after a colon.
 
 <example><title>An tree with a foreground branch</title>
@@ -2709,8 +2735,8 @@ A value must be given for each parameter, unless the parameter has a default val
 	<note>
 	  <para>
 	    You need to put single quotes around terms with parentheses or square brackets on the command line:
-<screen><prompt>%</prompt> <userinput>bali-phy file.fasta -S 'HKY85(kappa=2)'</userinput>
-<prompt>%</prompt> <userinput>bali-phy file.fasta -S 'mixture([TN93,HKY85(2)])'</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy infer file.fasta -S 'HKY85(kappa=2)'</userinput>
+<prompt>%</prompt> <userinput>bali-phy infer file.fasta -S 'mixture([TN93,HKY85(2)])'</userinput></screen>
 	  </para>
 
 	  <para>If you do not add quotes, the shell will try to interpret the parentheses or square brackets and give an error message
@@ -2803,9 +2829,9 @@ The <userinput>help</userinput> command can be used to determine the default val
     <para>Different partitions share the same tree topology and a common set of unscaled branch lengths.  However, branch lengths are scaled by a different factor in each partition, since some genes may evolve faster than others.</para>
 
     <para>To put different genes in different partitions, you can place the sequences from each partition in a different FASTA or Phylip file.     The sequence names in files for all partitions should be the same. 
-    <screen><prompt>%</prompt> <userinput>bali-phy gene1.fasta gene2.fasta</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy infer gene1.fasta gene2.fasta</userinput></screen>
     You can also select different sites from a single larger file:
-    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:3-350 sequences.fasta:351-570</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy infer sequences.fasta:3-350 sequences.fasta:351-570</userinput></screen>
     </para>
     </section>
 
@@ -2813,37 +2839,37 @@ The <userinput>help</userinput> command can be used to determine the default val
     <para>By default, each partition will have its own substitution model, insertion/deletion model, and scaled tree length.  For example, even if all partitions are assigned a <userinput>TN93</userinput> substitution model, their base frequencies will all be estimated independently.  When parameters are estimated separately for two partitions, we say that the parameters for those partitions are "unlinked".</para>
 
     <para>A substitution model or insertion-deletion model that is specified without qualification will apply to every partition.  However, each partition will receive its own copy of each model with unlinked parameter values:
-      <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S TN93 -I RS07</userinput></screen></para>
+      <screen><prompt>%</prompt> <userinput>bali-phy infer <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S TN93 -I RS07</userinput></screen></para>
 
 <para>You can select partition-specific values for 4 options: <userinput>-S</userinput>, <userinput>-I</userinput>, <userinput>-A</userinput>, and <userinput>--scale</userinput>.  For example, to specify different substitution models but the same alphabet:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 -S 2:GTR -A DNA</userinput></screen></para>
+<screen><prompt>%</prompt> <userinput>bali-phy infer <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 -S 2:GTR -A DNA</userinput></screen></para>
     </section>
 
     <section><info><title>Fixing the alignment in some partitions</title></info>
 <para>You can fix the alignment and ignore insertion/deletion information in one partition, while allowing the alignment to vary and using insertion/deletion information in another partition:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -I 2:none</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy infer <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -I 2:none</userinput></screen>
 Since alignments are estimated by default, the alignment will be estimated in the first partition, but fixed in the second partition.</para>
 <para>Specifying <userinput>-I none</userinput> fixes the alignment in all partitions:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -I none</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy infer <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -I none</userinput></screen>
 </para>
     </section>
     <section><info><title>Linked models</title></info>
 <para>You can also specify that two partitions share a single copy of a single substitution model or indel model.  For example, if two partitions both have a <userinput>TN93</userinput> model, linking these models would force the partitions to have the same nucleotide frequencies and substitution rates.  Linking partitions reduces the number of parameters that need to be estimated, and also pools information between the partitions:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1,2:TN93 -I 1,2:RS07</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy infer <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1,2:TN93 -I 1,2:RS07</userinput></screen>
 By default each partition has a separate scale, but you can force groups of partitions to share a scale as follows:
-<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --scale 1,2:</userinput></screen>
+<screen><prompt>%</prompt> <userinput>bali-phy infer <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --scale 1,2:</userinput></screen>
 </para>
     </section>
     <section><info><title>Linking models via the <userinput>link</userinput> command</title></info>
 
     <para>The <userinput>--link</userinput> command is provided to allow specifying a model for each partition separately, and then afterwards choose which partitions to link.
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 -S 2:TN93 --link=1,2 -t</userinput>
-<prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S TN93             --link=1,2 -t</userinput>   </screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy infer <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 -S 2:TN93 --link=1,2 -t</userinput>
+<prompt>%</prompt> <userinput>bali-phy infer <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S TN93             --link=1,2 -t</userinput>   </screen>
     If the linked partitions are given different models, BAli-Phy will give an error and refuse to run:
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 --link=1,2 -t</userinput>
+    <screen><prompt>%</prompt> <userinput>bali-phy infer <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1:TN93 --link=1,2 -t</userinput>
 bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing values 'TN93' and ''</screen></para>
     <para>You can also specify which of the 3 attributes "smodel", "imodel", and "scale" are being linked:
-    <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don&apos;t link the indel model</screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy infer <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --link=1,2:smodel,scale -t</userinput>    // Don&apos;t link the indel model</screen>
     </para>
     </section>
     </section>
@@ -3827,7 +3853,7 @@ your <command>bali-phy</command> runs on that computer.
 	  <question><para>How do I select columns from an alignment?</para></question>
 	  <answer><para>
 	    You can select columns for analysis by specifying a range:
-	    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta:1-200,401-600 sequences.fasta:201-400</userinput></screen>
+	    <screen><prompt>%</prompt> <userinput>bali-phy infer sequences.fasta:1-200,401-600 sequences.fasta:201-400</userinput></screen>
 	    You can create a new alignment from selected columns using <userinput>alignment-cat</userinput>:
 	    <screen><prompt>%</prompt> <userinput>alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</userinput></screen>
 	    The resulting alignment will contain the selected columns in the order you specified.

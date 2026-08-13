@@ -35,8 +35,8 @@ For a given package directory `<dir>`, bali-phy looks in:
 
 # Examples:
 
-   bali-phy -P ~/Devel/bali-phy/master/:~/my-packages/ dna.fasta --test -V
+   bali-phy -P ~/Devel/bali-phy/master/:~/my-packages/ -V infer dna.fasta --test
 
 On Windows, quote the list so that it works in both PowerShell and cmd:
 
-   bali-phy -P "C:\Users\me\bali-phy;D:\my-packages" dna.fasta --test -V
+   bali-phy -P "C:\Users\me\bali-phy;D:\my-packages" -V infer dna.fasta --test

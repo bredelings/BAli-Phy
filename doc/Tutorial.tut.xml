@@ -104,12 +104,12 @@ Let's get started by going to the examples directory:
 % cd ~/alignment_files/examples/5S-rRNA
 
 Now lets start a run.  
-% bali-phy 5d-clustalw.fasta --smodel 'GTR +> Rates.Gamma(4) +> Inv' --name 5d-freeA &#38;
+% bali-phy infer 5d-clustalw.fasta --smodel 'GTR +> Rates.Gamma(4) +> Inv' --name 5d-freeA &#38;
 
 <para>Yay!  Now you have started your first copy of the analysis.  BAli-Phy will create a directory called <filename>5d-freeA-1</filename> to hold output files from this analysis, as directed by the <userinput>--name 5d-freeA</userinput> option.</para>
 
 <para>Let's run another copy of the same analysis:</para>
-% bali-phy 5d-clustalw.fasta --smodel 'GTR +> Rates.Gamma(4) +> Inv' --name 5d-freeA &#38;
+% bali-phy infer 5d-clustalw.fasta --smodel 'GTR +> Rates.Gamma(4) +> Inv' --name 5d-freeA &#38;
 <para>
   This command which will create another directory called <filename>5d-freeA-2</filename> for its own output files.
   This additional run will take advantage of a second processor.  It will also allow us to determine if the two runs have performed enough iterations to agree.
@@ -170,8 +170,8 @@ Now let's look at the tree in figtree:
 
 <section ><info><title>Fixed alignment</title></info>
 % cd ~/alignment_files/examples
-% bali-phy 5d-clustalw.fasta -S 'GTR +> Rates.Gamma(4) +> Inv' -I none -n 5d-fixedA &#38;
-% bali-phy 5d-clustalw.fasta -S 'GTR +> Rates.Gamma(4) +> Inv' -I none -n 5d-fixedA &#38;
+% bali-phy infer 5d-clustalw.fasta -S 'GTR +> Rates.Gamma(4) +> Inv' -I none -n 5d-fixedA &#38;
+% bali-phy infer 5d-clustalw.fasta -S 'GTR +> Rates.Gamma(4) +> Inv' -I none -n 5d-fixedA &#38;
 The <userinput>-I none</userinput> is a short form of <userinput>--imodel=none</userinput>, where <parameter>imodel</parameter> means the insertion-deletion model.  When there's no model of insertions and deletions, then the alignment must be kept fixed.
 
 <para>Summarize the analysis after about 2000 iterations:</para>
@@ -207,12 +207,12 @@ However, beware: if you are running multiple analyses, this will terminate all o
 </para>
 
 <para>By default, each gene gets a default substitution model based on whether it contains DNA/RNA or amino acids. By running bali-phy with the <userinput>--test</userinput> option, we can reveal what substitution models and priors will be used, without actually starting a run.
-% bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta --test
+% bali-phy infer ITS1.fasta 5.8S.fasta ITS2.fasta --test
 </para>
 
 Let's run two copies of this analysis:
-% bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta &#38;
-% bali-phy ITS1.fasta 5.8S.fasta ITS2.fasta &#38;
+% bali-phy infer ITS1.fasta 5.8S.fasta ITS2.fasta &#38;
+% bali-phy infer ITS1.fasta 5.8S.fasta ITS2.fasta &#38;
 Since we did not specify a name for the analysis, bali-phy creates the name <filename>ITS1-5.8S-ITS2</filename> from the input file names.
 
 Let's analyze the results, even if the analysis has not yet converged:
@@ -255,7 +255,7 @@ It is also possible to refer to character sets without creating a file for each 
 
 <section><info><title>The Rates.Free model</title></info>
 <para>We will add <userinput>-S 'GTR +> Rates.Free(n=4)'</userinput> to use the free-rates model of substitution with 4 categories:
-% bali-phy exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -S 'GTR +> Rates.Free(n=4)' --test
+% bali-phy infer exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -S 'GTR +> Rates.Free(n=4)' --test
 This model is more general than Rates.Gamma, since it estimates 4 free rates and the frequencies
 of the 4 rates.  These 8 parameters have 6 degrees of freedom, which is a lot more than the 1
 degree of freedom for the <userinput>Rates.Gamma</userinput> model.  Furthermore, each partition
@@ -267,22 +267,22 @@ just for the <userinput>Rates.Free</userinput> part of the model!
 <section><info><title>Fixing the alignment of some partitions</title></info>
 <para>
 We will now add <userinput>-I 1,3,5,7:none</userinput> to disable alignment estimation, but only for the exons:
-% bali-phy exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -S 'GTR +> Rates.Free(n=4)' -I 1,3,5,7:none --test
+% bali-phy infer exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -S 'GTR +> Rates.Free(n=4)' -I 1,3,5,7:none --test
 </para>
 </section>
 
 <section><info><title>Linking parameters between partitions</title></info>
 We can reduce the number of parameters by using one set of parameters for the exons, and one set
 for the introns.  This is called <emphasis>linking</emphasis> the models.
-% bali-phy exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -I 1,3,5,7:none -S '1,3,5,7:GTR +> Rates.Free(n=4)' -S '2,4,6:GTR +> Rates.Free(n=4)' --test
+% bali-phy infer exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -I 1,3,5,7:none -S '1,3,5,7:GTR +> Rates.Free(n=4)' -S '2,4,6:GTR +> Rates.Free(n=4)' --test
 We would also like to share the indel model between introns:
-% bali-phy exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -I 1,3,5,7:none -S '1,3,5,7:GTR +> Rates.Free(n=4)' -S '2,4,6:GTR +> Rates.Free(n=4)' -I 2,4,6: --test
+% bali-phy infer exon1.fasta intron1.fasta exon2.fasta intron2.fasta exon3.fasta intron3.fasta exon4.fasta -I 1,3,5,7:none -S '1,3,5,7:GTR +> Rates.Free(n=4)' -S '2,4,6:GTR +> Rates.Free(n=4)' -I 2,4,6: --test
 </section>
 
 <section><info><title>Character sets</title></info>
 <para>Instead of creating separate files for each intron and exon, we can also refer to
 character sets of the combined file:
-% bali-phy cleaned.fasta:5-8 cleaned.fasta:454-596 cleaned.fasta:865-948 cleaned.fasta:1329-1393 cleaned.fasta:9-453 cleaned.fasta:597-864 cleaned.fasta:949-1328 -I 1,2,3,4:none -S '1,2,3,4:GTR +> Rates.Free(n=4)' -S '5,6,7:GTR +> Rates.Free(n=4)' -I 5,6,7: --test
+% bali-phy infer cleaned.fasta:5-8 cleaned.fasta:454-596 cleaned.fasta:865-948 cleaned.fasta:1329-1393 cleaned.fasta:9-453 cleaned.fasta:597-864 cleaned.fasta:949-1328 -I 1,2,3,4:none -S '1,2,3,4:GTR +> Rates.Free(n=4)' -S '5,6,7:GTR +> Rates.Free(n=4)' -I 5,6,7: --test
 However, the command line is getting so long that it is difficult to manage.
 </para>
 </section>
@@ -314,12 +314,12 @@ text file that is easier to manage and edit. Let's make a text file called <file
 </programlisting>
 </para>
 We can then run
-% bali-phy -c options1.txt --test
+% bali-phy infer -c options1.txt --test
 </section>
 
 Let's run two copies of this analysis:
-% bali-phy -c options1.txt &#38;
-% bali-phy -c options1.txt &#38;
+% bali-phy infer -c options1.txt &#38;
+% bali-phy infer -c options1.txt &#38;
 
 <section><info><title>Questions about intron alignments</title></info>
 <itemizedlist>
@@ -370,7 +370,7 @@ We can then construct an option file <filename>options2.txt</filename>:</para>
 :imodel 4:none
 </programlisting>
 We can choose any one of the three codon models for the coding sequences in the 4th partition.
-% bali-phy -c options2.txt --test
+% bali-phy infer -c options2.txt --test
 Try changing the model to <userinput>FMutSel0</userinput>.  Does the number of parameters increase or decrease?
 </section>
 
@@ -391,7 +391,7 @@ Let's first extract the coding data:
 :smodel 4:LG +> Rates.LogNormal(n=4)
 :imodel 4:none
 </programlisting>
-% bali-phy -c options3.txt --test
+% bali-phy infer -c options3.txt --test
 </section>
 </section>
 
@@ -420,58 +420,58 @@ Let's first extract the coding data:
 <section><info><title>Defaults</title></info>
 <para>When you don't specify values for parameters like <parameter>imodel</parameter>, bali-phy uses sensible defaults.  For example, these two commands are equivalent:
 % cd ~/alignment_files/examples/
-% bali-phy 5S-rRNA/25-muscle.fasta --test
-% bali-phy 5S-rRNA/25-muscle.fasta --test --alphabet=RNA --smodel=TN93 --imodel=RS07
+% bali-phy infer 5S-rRNA/25-muscle.fasta --test
+% bali-phy infer 5S-rRNA/25-muscle.fasta --test --alphabet=RNA --smodel=TN93 --imodel=RS07
 You can change the substitution model from the Tamura-Nei model to the General Time-Reversible model:
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S GTR
+% bali-phy infer 5S-rRNA/25-muscle.fasta --test -S GTR
 Here the <userinput>-S GTR</userinput> is a short form of <userinput>--smodel=GTR</userinput>, where <parameter>smodel</parameter> means the substitution model.
 </para>
 </section>
 <section><info><title>Rate variation</title></info>
 <para>
 You can also allow different sites to evolve at 5 different rates using the Rates.Gamma(4) + Inv model of rate heterogeneity:
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Rates.Gamma(4) +> Inv'
+% bali-phy infer 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Rates.Gamma(4) +> Inv'
 You can also use Rates.LogNormal instead of Rates.Gamma.  Rates.LogNormal+Inv is sometimes better behaved than Rates.Gamma+Inv, because the smallest rate bin under Rates.LogNormal is not quite as close to 0.
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Rates.LogNormal(4) +> Inv'
+% bali-phy infer 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Rates.LogNormal(4) +> Inv'
 You can allow 5 different rates that are all independently estimated:
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Rates.Free(n=5)'
+% bali-phy infer 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Rates.Free(n=5)'
 </para>
 </section>
 <section><info><title>Heterotachy</title></info>
 <para>
 Heterotachy occurs when the evolutionary rate changes across the tree.  One version of heterotachy is the Tuffley-Steel (1998) model, where each state alternatives between an ON and OFF state.
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Covarion.TuffleySteel98'
+% bali-phy infer 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Covarion.TuffleySteel98'
 The Huelsenbeck (2002) model allows combining rate variation with Tuffley-Steel heterotachy:
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Rates.Gamma +> Covarion.Huelsenbeck02'
+% bali-phy infer 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Rates.Gamma +> Covarion.Huelsenbeck02'
 You can also use the Huelsenbeck model with the free-rates model:
-% bali-phy 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Rates.Free +> Covarion.Huelsenbeck02'
+% bali-phy infer 5S-rRNA/25-muscle.fasta --test -S 'GTR +> Rates.Free +> Covarion.Huelsenbeck02'
 </para>
 </section>
 <section><info><title>Codon models</title></info>
 <para>
 We can also conduct codon-based analyses using the Nielsen and Yang (1998) model of diversifying positive selection (dN/dS):
-% bali-phy Globins/bglobin.fasta --test -S 'GY94(pi=F1x4)'
+% bali-phy infer Globins/bglobin.fasta --test -S 'GY94(pi=F1x4)'
 The GY94_ext model extends the GY94 model by taking a nucleotide exchange model as a parameter. The GY94 model is equivalent to GY94_ext(HKY85_sym).  However, if you want a more flexible codon model, you could use GTR_sym:
-% bali-phy Globins/bglobin.fasta --test -S 'GY94_ext(GTR_sym,pi=F1x4)'
+% bali-phy infer Globins/bglobin.fasta --test -S 'GY94_ext(GTR_sym,pi=F1x4)'
 You can make the codon frequencies to be generated from a single set of nucleotide frequencies:
-% bali-phy Globins/bglobin.fasta --test -S 'MG94_ext(GTR)'
+% bali-phy infer Globins/bglobin.fasta --test -S 'MG94_ext(GTR)'
 The M7 model allows different sites to have different dN/dS values, where the probability of dN/dS values follows a beta distribution:
-% bali-phy Globins/bglobin.fasta --test -S M7
+% bali-phy infer Globins/bglobin.fasta --test -S M7
 The M7 model has parameters as well. Here are the defaults:
-% bali-phy Globins/bglobin.fasta --test -S '|w:GY94(omega=w)| +> M7'
+% bali-phy infer Globins/bglobin.fasta --test -S '|w:GY94(omega=w)| +> M7'
 The M3 model allows different sites to have different dN/dS values, but directly estimates what these values are:
-% bali-phy Globins/bglobin.fasta --test -S 'M3(n=3)'
+% bali-phy infer Globins/bglobin.fasta --test -S 'M3(n=3)'
 The M8a_test model allows testing for positive selection in some fraction of the sites:
-% bali-phy Globins/bglobin.fasta --test -S '|w:GY94(omega=w,pi=F3x4)| +> M8a_test'
+% bali-phy infer Globins/bglobin.fasta --test -S '|w:GY94(omega=w,pi=F3x4)| +> M8a_test'
 </para>
 </section>
 
 <section><info><title>Fixing parameter values</title></info>
 <para>
 We can use the TN93+Gamma(4)+Inv model without specifying parameters:
-% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma +> Inv'
+% bali-phy infer Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma +> Inv'
 However, we can also fix parameter values:
-% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(n=4,alpha=1) +> Inv(pInv=0.2)'
+% bali-phy infer Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(n=4,alpha=1) +> Inv(pInv=0.2)'
 Here we have set the shape parameter for the Gamma distribution to 1, and the
 fraction of invariant sites to 20%.  Since these parameters are fixed, they will
 not be estimated and their values will not be shown in the log file.
@@ -488,9 +488,9 @@ This will show the default value or default prior for each parameter, if there i
 By default the fraction of invariant sites follows a Uniform(0,1) distribution:
 % bali-phy help Inv
 However, we can specify an alternative prior:
-% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(n=4) +> Inv(pInv~Uniform(0,0.2))'
+% bali-phy infer Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(n=4) +> Inv(pInv~Uniform(0,0.2))'
 We can also specify parameters as positional arguments instead of using variable names:
-% bali-phy Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(4) +> Inv(~Uniform(0,0.2))'
+% bali-phy infer Globins/bglobin.fasta --test -S 'TN93 +> Rates.Gamma(4) +> Inv(~Uniform(0,0.2))'
 Here "<userinput>~</userinput>" indicates a sample from the uniform distribution instead of the distribution
 itself.
 </para>
@@ -515,7 +515,7 @@ parameters.  This is described in more detail in section 4.3 of the <link xmlns:
 Now lets specify different substitution models for different partitions.
 
 % cd ~/alignment_files/examples/ITS
-% bali-phy {ITS1,5.8S,ITS2}.fasta -S 1:GTR -S 2:HKY85 -S 3:TN93 --test
+% bali-phy infer {ITS1,5.8S,ITS2}.fasta -S 1:GTR -S 2:HKY85 -S 3:TN93 --test
 </para>
 <para>
 </para>
@@ -524,7 +524,7 @@ Now lets specify different substitution models for different partitions.
 <section><info><title>Disabling alignment estimation for some partitions</title></info>
 <para>
 We can also disable alignment estimation for some, but not all, partitions:
-% bali-phy {ITS1,5.8S,ITS2}.fasta -I 1:RS07 -I 2:none -I 3:RS07 --test
+% bali-phy infer {ITS1,5.8S,ITS2}.fasta -I 1:RS07 -I 2:none -I 3:RS07 --test
 Specifying <userinput>-I none</userinput> removes the insertion-deletion
 model and parameters for partition 2 and also disables alignment estimation for that partition.</para>
 <para>Note that there is no longer an I3 indel model.  Partition #3 now has the I2 indel model.
@@ -533,7 +533,7 @@ model and parameters for partition 2 and also disables alignment estimation for 
 <section><info><title>Sharing model parameters between partitions</title></info>
 <para>We can also specify that some partitions with the same model also share the
 same parameters for that model:
-% bali-phy {ITS1,5.8S,ITS2}.fasta -S 1,3:GTR -I 1,3:RS07 -S 2:TN93 -I 2:none --test
+% bali-phy infer {ITS1,5.8S,ITS2}.fasta -S 1,3:GTR -I 1,3:RS07 -S 2:TN93 -I 2:none --test
 This means that the information is <emphasis>pooled</emphasis> between the partitions to better estimate the shared parameters.</para>
 
 <para>Take a look at the model parameters, and the parentheticals after the model descriptions.  You should see that there is no longer an S3 substitution model or an I3 indel model.  Instead, partitions #1 and #3 share the S1 substitution model and the I1 indel model.
@@ -542,7 +542,7 @@ This means that the information is <emphasis>pooled</emphasis> between the parti
 </section>
 <section><info><title>Sharing substitution rates between partitions</title></info>
 <para>We can also specify that some partitions share the same scaling factor for branch lengths:
-% bali-phy {ITS1,5.8S,ITS2}.fasta -S 1,3:GTR -I 1,3:RS07 -S 2:TN93 -I 2:none --scale=1,3: --test
+% bali-phy infer {ITS1,5.8S,ITS2}.fasta -S 1,3:GTR -I 1,3:RS07 -S 2:TN93 -I 2:none --scale=1,3: --test
 This means that the branch lengths for partitions 1 and 3 are the same, instead of being independently estimated.</para>
 <para>Take a look at the model parameters.  There is no longer a Scale[3] parameter.  Instead, partitions 1 and 3 share Scale[1].</para>
 </section>

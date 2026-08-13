@@ -21,6 +21,11 @@ pragmas, variadic macros, stringification, token concatenation, character
 constants in conditional expressions, or macro expansion in Haskell bodies.
 These forms produce explicit diagnostics when encountered in active directives.
 
+The CPP switches are global Haskell compiler options. For `run`, place them
+before the program filename, as in `bali-phy --cpp run Model.hs`; arguments
+after the filename belong to the Haskell program. For `test-module`, place them
+before the module filename.
+
 `--cpp` enables preprocessing for every source module. Otherwise, a module must
 have a leading `{-# LANGUAGE CPP #-}` pragma. `--cpp-define` and
 `--cpp-undefine` configure the macro environment but do not enable CPP. All
@@ -30,3 +35,7 @@ command-line undefinitions, before source directives are processed.
 `--dump-cpp` displays the exact generated source passed to the Haskell parser.
 Removed directives and inactive source retain their newlines, so surviving
 Haskell tokens keep their original line and column positions.
+
+`--dump-ffi` is another compiler diagnostic rather than an inference option. It
+reports grouped foreign-import ABI information and is accepted only with
+`test-module`, for example `bali-phy --dump-ffi test-module Foreign.hs`.

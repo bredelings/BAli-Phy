@@ -22,7 +22,7 @@ maximum number of iterations is not specified.
 # Examples:
 
    # Stop after 4000 iterations
-   bali-phy dna.fasta -i 4000
+   bali-phy infer dna.fasta -i 4000
 
    # Don't stop after 200000 iterations:
-   bali-phy dna.fasta --iter=100000000000
+   bali-phy infer dna.fasta --iterations=100000000000

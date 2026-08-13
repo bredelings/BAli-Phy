@@ -1,6 +1,6 @@
 % bali-phy(1)
 % Benjamin Redelings
-% Nov 2024
+% Aug 2026
 
 # NAME
 
@@ -8,117 +8,184 @@
 
 # SYNOPSIS
 
-**bali-phy** _sequence-file1_ [_sequence-file2_ ...] [_OPTIONS_]
+**bali-phy** [_GLOBAL-OPTIONS_] **infer** [_INFER-OPTIONS_] _DATA_ ...
 
-**bali-phy** help _topic_
+**bali-phy** [_GLOBAL-OPTIONS_] **run** [_COMPILER-OPTIONS_] _PROGRAM_ [_PROGRAM-ARGUMENTS_ ...]
+
+**bali-phy** [_GLOBAL-OPTIONS_] **print** [_PRINT-OPTIONS_] _EXPRESSION_
+
+**bali-phy** [_GLOBAL-OPTIONS_] **type** _NAME_
+
+**bali-phy** [_GLOBAL-OPTIONS_] **test-module** [_COMPILER-OPTIONS_] _MODULE_
+
+**bali-phy** **help** [_TOPIC_]
 
 # DESCRIPTION
 
-**bali-phy** estimates multiple sequence alignments and evolutionary trees
- from DNA, amino acid, or codon sequences.  BAli-Phy uses MCMC and Bayesian
- methods to estimate evolutionary trees, positive selection, and branch
- lengths while averaging over alternative alignments.
+**bali-phy infer** estimates multiple sequence alignments and evolutionary trees
+from DNA, amino acid, or codon sequences. BAli-Phy uses MCMC and Bayesian methods
+to estimate evolutionary trees, positive selection, and branch lengths while
+averaging over alternative alignments. It can also estimate phylogenies from a
+fixed alignment using substitution models such as GTR+gamma.
 
- BAli-Phy can also estimate phylogenies from a fixed alignment (like MrBayes
- and BEAST) using substitution models like GTR+gamma.  BAli-Phy automatically
- estimates relative rates for each gene.
+A command is required. Use **infer** for sequence analyses and **run** for a
+standalone Haskell program. In a **run** command, the first non-option is the
+program. Every later argument belongs to that program, including arguments
+beginning with `-` or `/`; no `--` separator is needed.
 
-# GENERAL OPTIONS
+Long option names must be exact. For example, use **--iterations**, not
+**--iter**.
 
-For each option below, more information is available by specifying the long form of the option as a help topic.  For example: `bali-phy help alphabet`
+# COMMANDS
 
-**-h**, **--help**, **--help**=_topic_
-: Display a friendly help message.  Specify **--help=advanced** or **--help=expert** to display more advanced options.
+**infer** _DATA_ ...
+: Analyze one or more sequence data sets. Use **infer --help** for its complete
+  basic option list.
+
+**run** _PROGRAM_ [_ARGUMENT_ ...]
+: Load a standalone Haskell program and evaluate its `main` function. BAli-Phy
+  compiler options must occur before _PROGRAM_. Later arguments are passed to
+  the program unchanged.
+
+**print** _EXPRESSION_
+: Evaluate and print a model-language expression.
+
+**type** _NAME_
+: Print the type of a qualified Haskell name.
+
+**test-module** _MODULE_
+: Parse, typecheck, and optimize a Haskell module without running it.
+
+**help** [_TOPIC_]
+: Show basic cumulative help or help for a command, option, model, distribution,
+  or other semantic topic. **help advanced**, **help expert**, and
+  **help developer** reveal successive cumulative levels. The older
+  **--help=advanced** form is not accepted.
+
+# GLOBAL OPTIONS
+
+**-h**, **--help**
+: Display help for the current command.
 
 **-v**, **--version**
 : Print version information.
 
 **-V**, **--verbose**, **--verbose** _NUM_
-: Print extra output to aid in trouble-shooting.  If _NUM_ is not specified the default is 1.  Values from 2 to 4 increase the amount of information displayed.
+: Print diagnostic output. If _NUM_ is omitted, use level 1. Values from 2 to 4
+  increase the amount of information displayed.
+
+**-s** _NUM_, **--seed** _NUM_
+: Set the random seed.
+
+**-P** _PATHS_, **--package-path** _PATHS_
+: Add directories to the Haskell package search path. Repeated command-line and
+  configuration-file values are combined in that order.
+
+**--set** _KEY_=_VALUE_
+: Set a process configuration value.
+
+# INFER OPTIONS
 
 **-t**, **--test**
 : Analyze the initial values and exit.
 
-**-c** _filename_, **--config** _filename_
-: Read configuration options and model-language definitions from _filename_. Command-line options
-  override values from the configuration file.
-
-# MCMC OPTIONS
+**-c** _FILE_, **--config** _FILE_
+: Read inference options and model-language definitions from _FILE_. A scalar
+  option on the command line overrides its configuration-file value. Repeated
+  options from both sources are combined, with command-line values first.
 
 **-i** _NUM_, **--iterations** _NUM_
-: The number of iterations to run.
+: Set the number of MCMC iterations.
 
 **-n** _STRING_, **--name** _STRING_
-: Name for the output directory to create.
+: Set the base name for the output directory.
 
 **-x** _NUM_, **--subsample** _NUM_
-: Factor by which to subsample.  This option should usually not be used.
+: Set the subsampling factor. This option should usually not be used.
 
-**-s** _NUM_, **--seed** _NUM_
-: Random seed.  Useful for replaying specific runs when trouble-shooting.
+**-l** _FORMAT_, **--log-format** _FORMAT_
+: Select `tsv`, `json`, or `tsv,json` scalar logs.
 
-**-l** _arg_, **--log-format** _arg_
-: Log-format: `tsv` or `json` or `tsv,json`
-
-# PARAMETER OPTIONS
-**-T** _filename_, **--tree** _filename_
-: File with initial tree in Newick format or NEXUS format.
+**-T** _PRIOR_, **--tree** _PRIOR_
+: Set the tree prior or initial tree.
 
 **-U**, **--unalign**
-: Unalign all variable-alignment partitions before starting MCMC instead using the supplied alignment as a starting value.
+: Unalign variable-alignment partitions before starting MCMC.
 
-# MODEL OPTIONS
-**-A** _alphabet_, **--alphabet** _alphabet_
-: The alphabet.
+**-A** _ALPHABET_, **--alphabet** _ALPHABET_
+: Set the alphabet for one or more partitions.
 
-**-S** _model_, **--smodel** _model_
-: The substitution model.
+**-S** _MODEL_, **--smodel** _MODEL_
+: Set the substitution model for one or more partitions.
 
-**-I** _model_, **--imodel** _model_
-: The insertion-deletion model.
+**-I** _MODEL_, **--imodel** _MODEL_
+: Set the insertion-deletion model for one or more partitions.
 
-**-R** _arg_, **--scale** _arg_
-: Prior on the scale.
+**-R** _PRIOR_, **--scale** _PRIOR_
+: Set the prior on the scale for one or more partitions.
 
-**-F** _arg_, **--fix** _arg_
-: Fix topology, tree, or alignment
+**-F** _SPECIFICATION_, **--fix** _SPECIFICATION_
+: Fix a topology, tree, or alignment.
 
-**-L** _NUMS_,  **--link** _NUMS_
-: Link partitions.  Takes a comma-separated list of numbers indicating partitions.  For example `--link 1,2,3`.
+**-L** _PARTITIONS_, **--link** _PARTITIONS_
+: Link attributes across a comma-separated list of partitions.
 
-**--variables** _arg_
-: Variable definitions
+**--variables** _SOURCE_
+: Add model-language definitions.
 
-# HASKELL CPP OPTIONS
+# CONFIGURATION FILES
+
+Configuration files are inputs to **infer**. An option is written on its own
+line as `:option value`. Blank lines and lines whose first non-whitespace
+character is `#` are ignored. Every other line is model-language source; these
+source lines may appear before, between, or after option lines and retain their
+relative order. Sequence data can be supplied with `:align FILE`.
+
+BAli-Phy does not load an implicit `~/.bali-phy` file. Pass a configuration file
+explicitly with **infer --config**.
+
+# HASKELL COMPILER OPTIONS
+
+Compiler options are global. With **run**, place them before _PROGRAM_; with
+**test-module**, place them before _MODULE_.
 
 **--cpp**
 : Conditionally preprocess every Haskell source module. Without this option,
   preprocessing is enabled only by a leading `{-# LANGUAGE CPP #-}` pragma.
-  Macros currently expand in conditional expressions, not in Haskell bodies;
-  `#include` is not supported.
 
 **-D** _MACRO_, **--cpp-define** _MACRO[=TEXT]_
-: Define an object-like or function-like macro for CPP conditional expressions.
-  An omitted replacement defaults to `1`. This option does not itself enable CPP.
+: Define a CPP macro. An omitted replacement defaults to `1`. This option does
+  not itself enable CPP.
 
 **--cpp-undefine** _MACRO_
-: Remove an initial macro definition. Undefinitions are applied after all
-  command-line definitions and do not themselves enable CPP.
+: Remove an initial CPP macro definition.
 
 **--dump-cpp**
-: Print the generated Haskell source immediately before parsing. Only modules
-  for which CPP is enabled are printed.
+: Print Haskell source after conditional preprocessing.
+
+**--dump-ffi**
+: Show grouped foreign-import ABI information. This diagnostic requires the
+  **test-module** command.
+
+# WINDOWS OPTIONS
+
+Native Windows accepts both the portable Unix spellings above and slash forms
+such as `/V`, `/iterations:1000`, and `/test`. Slash forms are not enabled on
+Linux, macOS, or WSL2.
 
 # EXAMPLES
 
-`bali-phy dna.fasta --smodel GTR`
+`bali-phy infer dna.fasta --smodel GTR`
 : Analyze sequences in _dna.fasta_ under the GTR model.
 
-`bali-phy dna.fasta -S GTR -I none`
-: Perform a traditional fixed-alignment analysis with gaps treated as missing data.
+`bali-phy infer dna.fasta -S GTR -I none`
+: Perform a fixed-alignment analysis with gaps treated as missing data.
 
-`bali-phy dna.fasta amino.fasta codons.fasta -S 1:GTR -S 2:LG -S 3:GY94`
-: Perform an analysis of 3 genes where each gene has a different substitution mode. The sequence names in all three files must be the same.
+`bali-phy --seed 1 run Model.hs --iterations=1000 data.fasta`
+: Run a standalone model with a BAli-Phy seed and program-specific arguments.
+
+`bali-phy help advanced`
+: Show basic and advanced commands and options.
 
 # REPORTING BUGS
 

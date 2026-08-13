@@ -21,16 +21,16 @@ This allows one to fix the topology by writing `--disable=topology`.
 # Examples:
 
    # Fix the topology
-   bali-phy dna.fasta --tree=newick.tree --disable=topology
+   bali-phy infer dna.fasta --tree=newick.tree --disable=topology
 
    # Fix the topology and *relative* branch lengths
-   bali-phy dna.fasta --tree=newick.tree --disable=tree
+   bali-phy infer dna.fasta --tree=newick.tree --disable=tree
 
    # Fix the topology and branch lengths
-   bali-phy dna.fasta --tree=newick.tree --disable=tree --scale=1
+   bali-phy infer dna.fasta --tree=newick.tree --disable=tree --scale=1
 
    # Disable SPR
-   bali-phy dna.fasta --disable=SPR
+   bali-phy infer dna.fasta --disable=SPR
 
 # See also:
 

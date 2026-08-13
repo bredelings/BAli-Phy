@@ -18,8 +18,8 @@ directory `hi` will also be created if it does not exist.
 
 # Examples:
 
-   bali-phy dna.fasta aa.fasta --name combined
+   bali-phy infer dna.fasta aa.fasta --name combined
 
-   bali-phy dna.fasta aa.fasta --name project/combined
+   bali-phy infer dna.fasta aa.fasta --name project/combined
   
-   bali-phy dna.fasta aa.fasta --name /home/self/project/combined
+   bali-phy infer dna.fasta aa.fasta --name /home/self/project/combined

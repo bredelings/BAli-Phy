@@ -1,14 +1,13 @@
-# The `--print` command:
+# The `print` command:
 
---print expression                          Evaluate and print an expression.
+print expression                            Evaluate and print an expression.
 
 Evaluate the expression and show the result.  The expression is a model
 
 # Examples:
 
-   # Show the symmetric part of the hky85 matrix
-   bali-phy -p hky85_sym -A DNA
+   # Show the symmetric part of the HKY85 matrix
+   bali-phy print -A DNA HKY85_sym
 
    # Generate 10 i.i.d. random variables from a normal distribution.
-   bali-phy -p '~IID(10,Normal(0,1))'
-
+   bali-phy print '~IID(10,Normal(0,1))'

@@ -8,7 +8,7 @@ be used to construct the tree.
 
 # Examples:
 
-   bali-phy dna.fasta '--tree=~UniformTree(taxa)'
+   bali-phy infer dna.fasta '--tree=~UniformTree(taxa)'
 
 # See also:
 

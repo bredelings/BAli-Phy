@@ -15,6 +15,6 @@ down a bug that occured during a specific run.
 
 # Examples:
 
-   bali-phy dna.fasta --seed=0
+   bali-phy --seed=0 infer dna.fasta
   
-   bali-phy dna.fasta --seed=29606871437703881
+   bali-phy --seed=29606871437703881 infer dna.fasta
