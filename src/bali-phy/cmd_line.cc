@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/program_options.hpp>
 #include <boost/program_options/option.hpp>
 #include <regex>
 #include "cmd_line.H"
@@ -327,7 +328,7 @@ string usage()
     return "Usage: bali-phy <sequence-file1> [<sequence-file2> ...] [OPTIONS]";
 }
 
-variables_map parse_cmd_line(int argc,char* argv[]) 
+variables_map parse_boost_options(int argc,char* argv[])
 { 
     using namespace po;
 
@@ -388,7 +389,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
     {
         string topic = args.count("help")?args["help"].as<string>():"basic";
 
-	auto package_paths = get_package_paths(args);
+	vector<string> path_arguments;
+	if (args.count("package-path"))
+	    path_arguments = args["package-path"].as<vector<string>>();
+	auto package_paths = get_package_paths(path_arguments);
 	if (help_levels.count(topic))
 	{
 	    cout<<short_description()<<"\n";
@@ -461,6 +465,129 @@ variables_map parse_cmd_line(int argc,char* argv[])
     return args;
 }
 
+/// Return an explicitly supplied scalar option without replacing absence by a default value.
+template <typename T>
+optional<T> optional_value(const variables_map& args, const string& name)
+{
+    if (args.count(name))
+        return args.at(name).as<T>();
+    return {};
+}
+
+/// Return a composing option's values in the ordering established by Boost.Program_options.
+template <typename T>
+vector<T> vector_value(const variables_map& args, const string& name)
+{
+    if (args.count(name))
+        return args.at(name).as<vector<T>>();
+    return {};
+}
+
+/// Convert the temporary Boost representation to the parser-independent command records.
+/// This adapter exists only for the staged CLI11 migration and should disappear with Boost.
+CommandLine adapt_boost_options(const variables_map& args, int argc, char* argv[])
+{
+    CommandLine command_line;
+    auto& global = command_line.global;
+    global.verbosity = optional_value<int>(args, "verbose").value_or(0);
+    global.test = args.count("test");
+    global.package_paths = vector_value<string>(args, "package-path");
+    global.settings = vector_value<string>(args, "set");
+    global.seed = optional_value<unsigned long>(args, "seed");
+
+    auto& compiler = global.compiler;
+    compiler.dump_parsed = args.count("dump-parsed");
+    compiler.dump_renamed = args.count("dump-rn");
+    compiler.dump_typechecked = args.count("dump-tc");
+    compiler.dump_desugared = args.count("dump-ds");
+    compiler.dump_optimized = args.count("dump-opt");
+    compiler.recompile = optional_value<string>(args, "recompile");
+    compiler.optimize = args.at("optimize").as<bool>();
+    compiler.fully_lazy = args.at("fully-lazy").as<bool>();
+    compiler.pre_inline = args.at("pre-inline").as<bool>();
+    compiler.post_inline = args.at("post-inline").as<bool>();
+    compiler.let_float_from_case = args.at("let-float-from-case").as<bool>();
+    compiler.let_float_from_apply = args.at("let-float-from-apply").as<bool>();
+    compiler.let_float_from_let = args.at("let-float-from-let").as<bool>();
+    compiler.case_of_constant = args.at("case-of-constant").as<bool>();
+    compiler.case_of_variable = args.at("case-of-variable").as<bool>();
+    compiler.case_of_case = args.at("case-of-case").as<bool>();
+    compiler.inline_threshold = args.at("inline-threshold").as<int>();
+    compiler.beta_reduction = args.at("beta-reduction").as<bool>();
+    compiler.simplifier_max_iterations = args.at("simplifier-max-iterations").as<int>();
+    compiler.dump_ffi = args.count("dump-ffi");
+    compiler.force_cpp = args.count("cpp");
+    compiler.cpp_definitions = vector_value<string>(args, "cpp-define");
+    compiler.cpp_undefinitions = vector_value<string>(args, "cpp-undefine");
+    compiler.dump_cpp = args.count("dump-cpp");
+
+    if (args.count("run"))
+    {
+        auto run_arguments = args.at("run").as<vector<string>>();
+        if (run_arguments.empty())
+            throw myexception()<<"--run requires at least one argument";
+
+        fs::path program = run_arguments.front();
+        if (program.extension() != ".hs")
+            program += ".hs";
+        run_arguments.erase(run_arguments.begin());
+        auto program_arguments = trailing_args(argc, argv, trailing_args_separator);
+        run_arguments.insert(run_arguments.end(), program_arguments.begin(), program_arguments.end());
+        command_line.command = RunCommand{std::move(program), std::move(run_arguments)};
+    }
+    else if (args.count("print"))
+    {
+        command_line.command = PrintCommand{
+            args.at("print").as<string>(),
+            vector_value<string>(args, "alphabet")
+        };
+    }
+    else if (args.count("type"))
+        command_line.command = TypeCommand{args.at("type").as<string>()};
+    else if (args.count("test-module"))
+        command_line.command = TestModuleCommand{args.at("test-module").as<string>()};
+    else
+    {
+        InferOptions infer;
+        infer.alignments = vector_value<string>(args, "align");
+        infer.iterations = optional_value<long int>(args, "iterations");
+        infer.name = optional_value<string>(args, "name");
+        infer.subsample = args.at("subsample").as<int>();
+        infer.log_format = optional_value<string>(args, "log-format");
+        infer.pre_burnin = args.at("pre-burnin").as<int>();
+        infer.enable = optional_value<string>(args, "enable");
+        infer.disable = optional_value<string>(args, "disable");
+        infer.beta = optional_value<string>(args, "beta");
+        infer.dbeta = optional_value<string>(args, "dbeta");
+        infer.tree = optional_value<string>(args, "tree");
+        infer.unalign = args.count("unalign");
+        infer.alphabets = vector_value<string>(args, "alphabet");
+        infer.smodels = vector_value<string>(args, "smodel");
+        infer.imodels = vector_value<string>(args, "imodel");
+        infer.scales = vector_value<string>(args, "scale");
+        infer.fixed = vector_value<string>(args, "fix");
+        infer.variables = vector_value<string>(args, "variables");
+        infer.links = vector_value<string>(args, "link");
+        infer.subst_rates = args.at("subst-rates").as<string>();
+        infer.indel_rates = args.at("indel-rates").as<string>();
+        infer.partition_weights = optional_value<string>(args, "partition-weights");
+        infer.topology_constraint = optional_value<string>(args, "t-constraint");
+        infer.alignment_constraint = optional_value<string>(args, "a-constraint");
+        infer.align_constraint = optional_value<string>(args, "align-constraint");
+        infer.likelihood_calculators = optional_value<string>(args, "likelihood-calculators");
+        command_line.command = std::move(infer);
+    }
+
+    return command_line;
+}
+
+/// Parse with the existing Boost interface, then expose only the parser-independent representation.
+CommandLine parse_cmd_line(int argc, char* argv[])
+{
+    auto args = parse_boost_options(argc, argv);
+    return adapt_boost_options(args, argc, argv);
+}
+
 string get_command_line(int argc, char* argv[])
 {
     vector<string> args;
@@ -470,11 +597,11 @@ string get_command_line(int argc, char* argv[])
     return join(args," ");
 }
 
-set<string> get_log_formats(const boost::program_options::variables_map& args, bool is_A_T_model)
+set<string> get_log_formats(const InferOptions& options, bool is_A_T_model)
 {
     string log_format = is_A_T_model ? "tsv" : "json";
-    if (args.count("log-format"))
-        log_format = args["log-format"].as<string>();
+    if (options.log_format)
+        log_format = *options.log_format;
     auto log_formats_vec = split(log_format,',');
     set<string> log_formats;
     for(auto& format: log_formats_vec)

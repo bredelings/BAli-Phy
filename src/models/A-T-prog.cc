@@ -36,8 +36,6 @@ using std::optional;
 using std::optional;
 namespace fs = std::filesystem;
 
-namespace po = boost::program_options;
-using po::variables_map;
 namespace HsG = Haskell::Generated;
 
 struct LoggerExpressions
@@ -62,11 +60,10 @@ struct LoggerExpressions
  * - How can we do SPR moves without changing the projected alignment?
  */
 
-std::map<std::string, std::string> get_fixed(const boost::program_options::variables_map& args)
+std::map<std::string, std::string> get_fixed(const InferOptions& options, bool test)
 {
     map<string, string> fixed;
-    if (args.count("fix"))
-        for(auto& f: args.at("fix").as<vector<string>>())
+    for(auto& f: options.fixed)
 	{
 	    auto [key,value] = split_on_first('=',f);
 	    fixed.insert({key,value});
@@ -79,11 +76,11 @@ std::map<std::string, std::string> get_fixed(const boost::program_options::varia
     if (fixed.count("tree") and fixed.count("topology"))
         throw myexception()<<"Can't fix both 'tree' and 'topology'";
 
-    if (fixed.count("alignment") and not args.count("test"))
+    if (fixed.count("alignment") and not test)
         throw myexception()<<"Currently --fix=alignment only works with --test.\n  You can fix the alignment for MCMC by disabling the indel model with -Inone, which disables the indel model.\n  Using the indel information from a fixed alignment during MCMC is not implemented.";
 
     for(auto&& word: {"tree","topology"})
-        if (fixed.count(word) and args.count("tree"))
+        if (fixed.count(word) and options.tree)
             throw myexception()<<"Can't specify --tree=<prior> if the "<<word<<" is fixed!";
 
     for(auto&& word: {"tree","topology"})
@@ -382,7 +379,9 @@ vector<Hs::Exp> generate_indel_models(const vector<model_t>& IMs,
     return imodels;
 }
 
-Hs::Stmts generate_main(const variables_map& args,
+Hs::Stmts generate_main(const InferOptions& options,
+		       bool test,
+		       int verbosity,
 		       const vector<pair<fs::path,string>>& filename_ranges,
 		       const vector<Hs::Exp>& alphabet_exps,
 		       const vector<int>& partition_group,
@@ -398,14 +397,14 @@ Hs::Stmts generate_main(const variables_map& args,
 		       vector<tuple<int,Hs::Exp,Hs::Exp>>& alignment_loggers,
 		       vector<tuple<int,Hs::Exp,Hs::Exp>>& category_state_loggers)
 {
-    auto fixed = get_fixed(args);
+    auto fixed = get_fixed(options, test);
 
-    auto log_formats = get_log_formats(args, args.count("align"));
+    auto log_formats = get_log_formats(options, not options.alignments.empty());
 
     int n_partitions = filename_ranges.size();
     long int max_iterations = 200000;
-    if (args.count("iterations"))
-        max_iterations = args["iterations"].as<long int>();
+    if (options.iterations)
+        max_iterations = *options.iterations;
 
     Hs::Stmts main;
 
@@ -414,7 +413,7 @@ Hs::Stmts generate_main(const variables_map& args,
     auto output_file = [&](const string& filename) {
         return HsG::Apply(Hs::Var("</>"), {output_directory, Hs::Literal(Hs::String(filename))});
     };
-    if (not args.count("test"))
+    if (not test)
     {
         HsG::Bind(main,
                   HsG::TuplePat({HsG::VarPat(output_directory), HsG::VarPat(overwrite)}),
@@ -535,7 +534,7 @@ Hs::Stmts generate_main(const variables_map& args,
         HsG::Bind(main, HsG::VarPat(topology), HsG::Apply(Hs::Var("<$>"), {Hs::Var("dropInternalLabels"), HsG::Apply(Hs::Var("readTreeTopology"), {Hs::Literal(Hs::String(tree_filename))})}));
     }
 
-    if (not args.count("test"))
+    if (not test)
     {
         // Initialize the parameters logger
 	if (log_formats.count("tsv"))
@@ -618,7 +617,7 @@ Hs::Stmts generate_main(const variables_map& args,
         put_line("BAli-Phy does NOT detect how many iterations is sufficient:");
         put_line("   You need to monitor convergence and kill it when done.");
         string iterations_message;
-        if (args.count("iterations"))
+        if (options.iterations)
             iterations_message = "   Maximum number of iterations set to "+std::to_string(max_iterations)+".";
         else
             iterations_message = "   Maximum number of iterations not specified: limiting to "+
@@ -637,7 +636,7 @@ Hs::Stmts generate_main(const variables_map& args,
     HsG::Bind(main, HsG::VarPat(Hs::Var("mcmcState")), HsG::Apply(Hs::Var("$"), {Hs::Var("makeMCMCState"), model_fn}));
 
     // Main.6. Emit runMCMC iterations mcmcState
-    if (args.count("test"))
+    if (test)
     {
         if (log_formats.count("tsv"))
         {
@@ -651,7 +650,7 @@ Hs::Stmts generate_main(const variables_map& args,
             HsG::Expr(main, HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("jline")}));
         }
 
-        if (args.count("verbose"))
+        if (verbosity > 0)
         {
             HsG::Expr(main, HsG::Apply(Hs::Var("writeTraceGraph"), {Hs::Var("mcmcState")}));
 //            M->write_factor_graph();
@@ -874,7 +873,9 @@ bool is_reversible(const vector<model_t>& SMs)
     return true;
 }
 
-std::string generate_atmodel_program(const variables_map& args,
+std::string generate_atmodel_program(const InferOptions& options,
+                                     bool test,
+                                     int verbosity,
                                      int n_sequences,
                                      const vector<Hs::Exp>& alphabet_exps,
                                      const vector<pair<fs::path,string>>& filename_ranges,
@@ -891,9 +892,9 @@ std::string generate_atmodel_program(const variables_map& args,
                                      const model_t& indel_rates_model,
                                      const std::vector<int>& like_calcs)
 {
-    auto fixed = get_fixed(args);
+    auto fixed = get_fixed(options, test);
 
-    auto log_formats = get_log_formats(args, args.count("align"));
+    auto log_formats = get_log_formats(options, not options.alignments.empty());
 
     int n_partitions = filename_ranges.size();
 
@@ -902,7 +903,7 @@ std::string generate_atmodel_program(const variables_map& args,
 
     // Write pragmas, module, imports.
     std::ostringstream program_file;
-    write_header(program_file, args.count("test"), decls, SMs, IMs, scaleMs,
+    write_header(program_file, test, decls, SMs, IMs, scaleMs,
                  subst_rates_model, indel_rates_model, tree_model);
     program_file<<"\n\n";
 
@@ -1243,7 +1244,7 @@ std::string generate_atmodel_program(const variables_map& args,
     Hs::Var jsonLogger("logParamsJSON");
     Hs::Var tsvLogger("logParamsTSV");
     auto treeLogger = Hs::Var("logTree");
-    if (not args.count("test"))
+    if (not test)
     {
 	if (log_formats.count("tsv"))
 	    model_fn = HsG::Apply(model_fn, {tsvLogger});
@@ -1295,7 +1296,7 @@ std::string generate_atmodel_program(const variables_map& args,
              HsG::Apply(Hs::Var("LoggerValues"), {parameter_loggers, context_loggers}));
 
     // Add the logger for scalar parameters
-    if (not args.count("test"))
+    if (not test)
     {
         // NOTE: Each format evaluates context fields independently.  Enabling both formats
         // repeats any candidate sampling performed by a context-dependent statistic.
@@ -1338,7 +1339,7 @@ std::string generate_atmodel_program(const variables_map& args,
     program_file<<model_fn<<" = "<<HsG::Do(model).print()<<"\n";
 
     // Keep the generated option interface next to the analysis-specific program.
-    if (not args.count("test"))
+    if (not test)
     {
         program_file<<R"(
 
@@ -1357,7 +1358,9 @@ reportOutput description filename suffix =
 )";
     }
 
-    auto main = generate_main(args,
+    auto main = generate_main(options,
+                              test,
+                              verbosity,
 			      filename_ranges,
 			      alphabet_exps,
 			      partition_group,
@@ -1379,7 +1382,9 @@ reportOutput description filename suffix =
 }
 
 std::unique_ptr<Program>
-gen_atmodel_program(const boost::program_options::variables_map& args,
+gen_atmodel_program(const InferOptions& options,
+		    bool test,
+		    int verbosity,
 		    const std::shared_ptr<module_loader>& L,
 		    const fs::path& output_directory,
 		    const fs::path& program_filename,
@@ -1402,7 +1407,9 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
     // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
     {
         checked_ofstream program_file(program_filename);
-        program_file<<generate_atmodel_program(args,
+        program_file<<generate_atmodel_program(options,
+                                               test,
+                                               verbosity,
                                                n_leaves,
                                                alphabet_exps,
                                                filename_ranges,
@@ -1418,7 +1425,7 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
 
     auto m = L->load_module_from_file(program_filename);
     auto P = std::make_unique<Program>(L,vector{m}, "Main.main");
-    if (args.count("test"))
+    if (test)
         L->args.clear();
     else
         L->args = {"--output-dir", output_directory.string()};

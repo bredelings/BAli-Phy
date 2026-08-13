@@ -7,7 +7,7 @@
 #include <string>                                   // for string
 #include <tuple>                                    // for tuple
 #include <vector>                                   // for vector
-#include <boost/program_options.hpp>                // for program_options
+#include "bali-phy/cmd_line.H"                     // for InferOptions
 #include "computation/program.H"                    // for Program
 
 #include "computation/haskell/haskell.H"            // for Hs::Exp
@@ -16,7 +16,9 @@ class model_t;
 class module_loader;
 
 std::unique_ptr<Program>
-gen_atmodel_program(const boost::program_options::variables_map& args,
+gen_atmodel_program(const InferOptions& options,
+		    bool test,
+		    int verbosity,
 		    const std::shared_ptr<module_loader>& L,
 		    const std::filesystem::path& output_directory,
 		    const std::filesystem::path& program_filename,
@@ -40,6 +42,6 @@ gen_atmodel_program(const boost::program_options::variables_map& args,
 
 Hs::Exp get_alphabet_expression(const alphabet& a);
 
-std::map<std::string, std::string> get_fixed(const boost::program_options::variables_map& args);
+std::map<std::string, std::string> get_fixed(const InferOptions& options, bool test);
 
 #endif

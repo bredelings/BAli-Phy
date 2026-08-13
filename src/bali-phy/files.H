@@ -5,15 +5,15 @@
 #include <string>
 #include <fstream>
 
-#include <boost/program_options.hpp>
 #include <filesystem>
+#include "cmd_line.H"
 #include "util/json.hh"
 
 std::filesystem::path create_unique_dir(const std::filesystem::path& dirbase);
 
-std::filesystem::path init_dir(const boost::program_options::variables_map& args);
+std::filesystem::path init_dir(const InferOptions& options);
 
 void run_info(json::object& j, int proc_id, int argc,char* argv[]);
 
-std::string run_name(const boost::program_options::variables_map& args);
+std::string run_name(const InferOptions& options);
 #endif

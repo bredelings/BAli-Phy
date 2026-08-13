@@ -22,8 +22,6 @@ using std::ostream;
 using std::shared_ptr;
 
 namespace fs = std::filesystem;
-namespace po = boost::program_options;
-using po::variables_map;
 
 fs::path create_unique_dir(const std::filesystem::path& dirbase)
 {
@@ -46,16 +44,16 @@ fs::path create_unique_dir(const std::filesystem::path& dirbase)
     }
 }
 
-string run_name(const variables_map& args)
+string run_name(const InferOptions& options)
 {
     string name;
-    if (args.count("name"))
-	name = args["name"].as<string>();
-    else if (args.count("align"))
+    if (options.name)
+	name = *options.name;
+    else if (not options.alignments.empty())
     {
         std::set<fs::path> seen;
 	vector<string> alignment_filenames;
-	for(auto& filename_range: args["align"].as<vector<string> >())
+	for(auto& filename_range: options.alignments)
 	{
 	    auto [name,range] = split_on_last(':',filename_range);
             auto p = fs::absolute( fs::path( name ) );
@@ -73,9 +71,9 @@ string run_name(const variables_map& args)
 }
 
 /// Create the directory for output files and return the name
-fs::path init_dir(const variables_map& args)
+fs::path init_dir(const InferOptions& options)
 {
-    string name = run_name(args);
+    string name = run_name(options);
     
     fs::path dir = create_unique_dir(name);
     cerr<<"Created directory "<<dir<<" for output files."<<endl<<endl;

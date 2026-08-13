@@ -31,7 +31,6 @@
 #include <optional>
 #include <vector>
 #include <string>
-#include <boost/program_options.hpp>
 
 template <typename T>
 class shared_items
@@ -98,7 +97,10 @@ public:
 	}
 };
 
-shared_items<std::string> get_mapping(const boost::program_options::variables_map& args, const std::string& key, int n);
+shared_items<std::string> get_mapping(const std::vector<std::string>& models,
+                                      const std::vector<std::string>& links,
+                                      const std::string& key,
+                                      int n);
 
 
 #endif 

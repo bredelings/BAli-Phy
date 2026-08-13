@@ -53,9 +53,6 @@ using std::shared_ptr;
 using std::optional;
 
 namespace fs = std::filesystem;
-namespace po = boost::program_options;
-
-using po::variables_map;
 
 /// \brief Parse a string of the form int,int,int:string 
 ///
@@ -109,15 +106,12 @@ string parse_partitions_and_model(string s, vector<int>& partitions, int n, bool
 
 static set<string> valid_attributes {"smodel","imodel","scale","alphabet"};
 
-vector<vector<int>> get_link_groups(const variables_map& args, const string& key, int n)
+vector<vector<int>> get_link_groups(const vector<string>& links, const string& key, int n)
 {
-    if (not args.count("link")) return {};
-
-    auto link_group_names = args["link"].as<vector<string>>();
     vector<string> relevant_link_group_names;
 
     vector<vector<int>> link_groups;
-    for(auto& name: link_group_names)
+    for(auto& name: links)
     {
 	vector<int> partitions;
 	string keys = parse_partitions_and_model(name, partitions, n, false);
@@ -271,12 +265,11 @@ shared_items<string> link_partitions(shared_items<string> M, const vector<vector
 /// 2. We can only link things are are both specified or both unspecified, so --smodel=1: --smodel=2:HKY --link=1,2:smodel would not work.
 /// 3. For any given attribute to link, no partition can be mentioned twice.
 
-shared_items<string> get_mapping(const variables_map& args, const string& key, int n)
+shared_items<string> get_mapping(const vector<string>& models,
+                                 const vector<string>& links,
+                                 const string& key,
+                                 int n)
 {
-    vector<string> models;
-    if (args.count(key))
-	models = args[key].as<vector<string> >();
-
     vector<optional<int>> mapping(n,-2);
     vector<string> model_names;
 
@@ -348,5 +341,5 @@ shared_items<string> get_mapping(const variables_map& args, const string& key, i
 
     auto M = shared_items<string>(model_names,mapping);
 
-    return link_partitions(M, get_link_groups(args, key, n));
+    return link_partitions(M, get_link_groups(links, key, n));
 }

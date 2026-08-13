@@ -26,9 +26,6 @@ using std::vector;
 using std::cout;
 using std::optional;
 
-namespace po = boost::program_options;
-using po::variables_map;
-
 namespace fs = std::filesystem;
 
 string do_quotes(const string& line)

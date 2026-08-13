@@ -8,7 +8,6 @@ using std::vector;
 using std::string;
 namespace fs = std::filesystem;
 
-using boost::program_options::variables_map;
 using std::optional;
 
 optional<fs::path> get_system_lib_path()
@@ -47,15 +46,14 @@ optional<fs::path> get_cache_path()
 	return fs::path();
 }
 
-vector<fs::path> get_package_paths(variables_map& args)
+vector<fs::path> get_package_paths(const vector<string>& path_arguments)
 {
     vector<fs::path> paths;
 
     // 1. First add the user-specified package paths
-    if (args.count("package-path"))
-        for(const string& path_string: args["package-path"].as<vector<string>>())
-            for(const string& path: split(path_string, native_path_list_separator))
-                paths.push_back(path);
+    for(const string& path_string: path_arguments)
+        for(const string& path: split(path_string, native_path_list_separator))
+            paths.push_back(path);
 
     // 2. Then add the user package directories
     if (auto p = get_user_lib_path())

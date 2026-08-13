@@ -2,7 +2,6 @@
 #include <algorithm>                                // for max, find, min
 #include <filesystem>                               // for path, operator/
 #include <boost/dynamic_bitset.hpp>                 // for dynamic_bitset
-#include <boost/program_options.hpp>                // for program_options
 #include <boost/algorithm/string/join.hpp>          // for join
 #include <map>                                      // for map, map<>::mappe...
 #include <optional>                                 // for optional
@@ -49,9 +48,6 @@ namespace views = ranges::views;
 extern int log_verbose;
 
 namespace fs = std::filesystem;
-
-namespace po = boost::program_options;
-using po::variables_map;
 
 using boost::dynamic_bitset;
 
@@ -123,47 +119,6 @@ vector<double> get_geometric_heating_levels(const string& s)
     }
 }
 
-/*
-void setup_heating(int proc_id, const variables_map& args, Parameters& P) 
-{
-    if (args.count("beta")) 
-    {
-        string beta_s = args["beta"].as<string>();
-
-        vector<double> beta = get_geometric_heating_levels(beta_s);
-        if (not beta.size())
-            beta = convertTo<double>(split(beta_s,','));
-
-        P.PC->all_betas = beta;
-
-        if (proc_id >= beta.size())
-            throw myexception()<<"not enough temperatures given: only got "<<beta.size()<<", wanted at least "<<proc_id+1;
-
-        P.set_beta(beta[proc_id]);
-
-        P.PC->beta_series.push_back(beta[proc_id]);
-    }
-
-    if (args.count("dbeta")) {
-        vector<string> deltas = split(args["dbeta"].as<string>(),',');
-        for(auto& delta: deltas) {
-            vector<double> D = convertTo<double>(split(delta,'*'));
-            if (D.size() != 2)
-                throw myexception()<<"Couldn't parse beta increment '"<<delta<<"'";
-            int D1 = (int)D[0];
-            double D2 = D[1];
-            for(int i=0;i<D1;i++) {
-                double next = P.PC->beta_series.back() + D2;
-                next = std::max(0.0,next);
-                P.PC->beta_series.push_back(next);
-            }
-        }
-    }
-    for(double b:P.PC->beta_series)
-        std::cout<<b<<"\n";
-}
-*/
-
 vector<model_t>
 compile_imodels(const Rules& R, TypecheckingState TC, CodeGenState code_gen_state, const shared_items<string>& imodel_names_mapping)
 {
@@ -221,7 +176,7 @@ json::object log_summary(const vector<model_t>& IModels,
                          int n_sequences, int n_data_partitions,
                          const vector<string>& alphabet_names,
                          const vector<string>& smodel_conditions,
-                         const variables_map& args)
+                         const vector<string>& alignment_arguments)
 {
     string tree;
     string m_subst_rates;
@@ -257,10 +212,8 @@ json::object log_summary(const vector<model_t>& IModels,
     }
 
     //-------- Log some stuff -----------//
-    auto filename_ranges = args["align"].as<vector<string> >();
-
     vector<pair<fs::path,string>> alignment_files;
-    for(const auto& [filename,range]: args["align"].as<vector<string>>()
+    for(const auto& [filename,range]: alignment_arguments
                                       | views::transform([&](auto& x) {
                                           return split_on_last_regex(":", "[-\\d.\\/]*", x);
                                       }))
@@ -789,12 +742,17 @@ void get_default_imodels(shared_items<string>& imodel_names_mapping, const vecto
 
 
 std::tuple<std::unique_ptr<Program>, json::object>
-create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<module_loader>& L,
-		     int /* proc_id */, const fs::path& dir)
+create_A_and_T_model(const Rules& R,
+                     const InferOptions& options,
+                     bool test,
+                     int verbosity,
+                     const std::shared_ptr<module_loader>& L,
+		     int /* proc_id */,
+                     const fs::path& dir)
 {
     // 1. --- Determine number of partitions
     vector<pair<fs::path,string>> filename_ranges;
-    for(const auto& [filename,range]: args["align"].as<vector<string>>()
+    for(const auto& [filename,range]: options.alignments
                                       | views::transform([&](auto& x) {
                                           return split_on_last_regex(":","[-\\d.\\/]*",x);
                                       }))
@@ -803,7 +761,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     const int n_partitions = filename_ranges.size();
 
     // 2. --- Find out what is fixed
-    auto fixed = get_fixed(args);
+    auto fixed = get_fixed(options, test);
 
     // 3. --- Compile declarations
     model_t decls;
@@ -814,15 +772,15 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     auto TC = makeTypechecker(R, extra_vars, {});
     CodeGenState code_gen_state(R);
     string var_str;
-    if (args.count("variables"))
-	var_str = boost::algorithm::join( args.at("variables").as<vector<string>>(), "");
+    if (not options.variables.empty())
+	var_str = boost::algorithm::join(options.variables, "");
 
     decls = compile_decls(R, TC, code_gen_state, var_str, extra_vars, {});
 
     // QUESTION: How do we access the list of declared variables, their type, and their haskell name?
 
     // 4. --- Get smodels for all SPECIFIED smodel names 
-    auto smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
+    auto smodel_names_mapping = get_mapping(options.smodels, options.links, "smodel", n_partitions);
 
     vector<string> smodel_conditions;
     for(int i=0;i<smodel_names_mapping.n_unique_items();i++)
@@ -848,7 +806,8 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
             full_smodels[i] = compile_smodel(R, TC, code_gen_state, smodel_names_mapping.unique(i), "substitution model " + std::to_string(i+1));
 
     // 5. --- Get unspecified alphabet names from specified substitution models types.
-    shared_items<string> alphabet_names_mapping = get_mapping(args, "alphabet", filename_ranges.size());
+    shared_items<string> alphabet_names_mapping =
+        get_mapping(options.alphabets, options.links, "alphabet", filename_ranges.size());
 
     vector<string> alphabet_names = get_default_alphabet_names(smodel_names_mapping, full_smodels, alphabet_names_mapping);
 
@@ -917,7 +876,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     }
 
     // 10. --- Default and compile indel models
-    auto imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
+    auto imodel_names_mapping = get_mapping(options.imodels, options.links, "imodel", n_partitions);
     auto& imodel_mapping = imodel_names_mapping.item_for_partition;
 
     get_default_imodels(imodel_names_mapping, A);
@@ -937,7 +896,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     }
 
     // 11. --- Default and compile scale models
-    shared_items<string> scale_names_mapping = get_mapping(args, "scale", A.size());
+    shared_items<string> scale_names_mapping = get_mapping(options.scales, options.links, "scale", A.size());
 
     auto scale_mapping = scale_names_mapping.item_for_partition;
 
@@ -962,8 +921,8 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     if (not fixed.count("tree"))
     {
         string M;
-        if (args.count("tree"))
-            M = args["tree"].as<string>();
+        if (options.tree)
+            M = *options.tree;
         else if (fixed.count("topology"))
             M = "~FixedTopologyTree(topology)";
         else
@@ -975,9 +934,9 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 
     // 13. Default and compile subst rates
     model_t subst_rates_model;
-    if (args.count("subst-rates") and args.at("subst-rates").as<string>() != "constant")
+    if (options.subst_rates != "constant")
     {
-        string M = args.at("subst-rates").as<string>();
+        string M = options.subst_rates;
         if (M == "relaxed")
         {
             // FIXME -- allow automatically modifying downstream vars when changing sigma
@@ -991,9 +950,9 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
 
     // 14. Default and compile indel rates
     model_t indel_rates_model;
-    if (args.count("indel-rates") and args.at("indel-rates").as<string>() != "constant")
+    if (options.indel_rates != "constant")
     {
-        string M = args.at("indel-rates").as<string>();
+        string M = options.indel_rates;
         if (M == "relaxed")
         {
             // FIXME -- allow automatically modifying downstream vars when changing sigma
@@ -1010,9 +969,9 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         if (not imodel_mapping[i])
             likelihood_calculators[i] = 1;
 
-    if (args.count("likelihood-calculators"))
+    if (options.likelihood_calculators)
     {
-        likelihood_calculators = convertTo<int>(split(args["likelihood-calculators"].as<string>(), ","));
+        likelihood_calculators = convertTo<int>(split(*options.likelihood_calculators, ","));
         if (likelihood_calculators.size() == 1)
             likelihood_calculators = vector<int>(A.size(), likelihood_calculators[0]);
         if (likelihood_calculators.size() != A.size())
@@ -1027,7 +986,7 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         }
     }
 
-    bool unalign = args.count("unalign");
+    bool unalign = options.unalign;
     for(int i=0;i<A.size();i++)
         if (unalign and imodel_mapping[i])
             if (likelihood_calculators[i] != 0)
@@ -1057,11 +1016,9 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
                             A[0].n_sequences(), filename_ranges.size(),
                             alphabet_names,
                             smodel_conditions,
-                            args);
+                            options.alignments);
 
     //------------------- Handle heating ---------------------//
-    // setup_heating(proc_id, args, M);
-
     //------------------- create the program -----------------//
     fs::path program_filename = dir / "BAliPhy.Main.hs";
     vector<Hs::Exp> alphabet_exps;
@@ -1069,7 +1026,9 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
         alphabet_exps.push_back(get_alphabet_expression(A[i].get_alphabet()));
 
     // Can we pass the code_gen_state, to avoid stomping on generated haskell var names?
-    auto prog = gen_atmodel_program(args,
+    auto prog = gen_atmodel_program(options,
+                                    test,
+                                    verbosity,
                                     L, dir,
                                     program_filename,
                                     alphabet_exps, filename_ranges, A[0].n_sequences(),
@@ -1084,12 +1043,12 @@ create_A_and_T_model(const Rules& R, variables_map& args, const std::shared_ptr<
     return {std::move(prog), info};
 }
 
-void write_initial_alignments(variables_map& args, int proc_id, const fs::path& dir)
+void write_initial_alignments(const InferOptions& options, int proc_id, const fs::path& dir)
 {
     string base = "C" + convertToString(proc_id+1);
 
     int i=1;
-    for(const auto& [filename, range]: args["align"].as<vector<string> >()
+    for(const auto& [filename, range]: options.alignments
                                        | views::transform([&](auto& x) {
                                            return split_on_last_regex(":","[-\\d.\\/]*",x);
                                        }))

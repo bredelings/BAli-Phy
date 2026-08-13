@@ -23,7 +23,6 @@
 
 #include <vector>
 #include <sstream>
-#include <boost/program_options.hpp>
 
 #include "util/graph.H"
 
@@ -59,7 +58,6 @@ using std::map;
 using std::vector;
 using std::valarray;
 using std::shared_ptr;
-using boost::program_options::variables_map;
 
 // Returns the expression description for display paths, rejecting declaration
 // models because declarations are only used for generated code/imports today.

@@ -46,8 +46,6 @@ namespace mpi = boost::mpi;
 #include <fmt/chrono.h>
 #include <chrono>
 
-#include <boost/program_options.hpp>
-
 #include "substitution/likelihood.H"
 #include "util/myexception.H"
 #include "util/rng.H"
@@ -85,9 +83,6 @@ namespace HsG = Haskell::Generated;
 
 namespace fs = std::filesystem;
 namespace chrono = std::chrono;
-
-namespace po = boost::program_options;
-using po::variables_map;
 
 using std::cout;
 using std::cerr;
@@ -243,11 +238,11 @@ void operator delete(void * p)
 #endif
 
 /// Initialize the default random number generator and return the seed
-unsigned long init_rng_and_get_seed(const variables_map& args)
+unsigned long init_rng_and_get_seed(const GlobalOptions& options)
 {
     unsigned long seed = 0;
-    if (args.count("seed")) {
-        seed = args["seed"].as<unsigned long>();
+    if (options.seed) {
+        seed = *options.seed;
         myrand_init(seed);
     }
     else
@@ -403,32 +398,32 @@ void show_ending_messages()
     }
 }
 
-std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
+std::shared_ptr<module_loader> setup_module_loader(const GlobalOptions& options,
+                                                  const optional<string>& test_module)
 {
-    auto L = std::make_shared<module_loader>(get_cache_path(), get_package_paths(args));
+    auto L = std::make_shared<module_loader>(get_cache_path(), get_package_paths(options.package_paths));
+    const auto& compiler = options.compiler;
 
-    L->force_cpp = args.count("cpp");
-    L->dump_cpp = args.count("dump-cpp");
+    L->force_cpp = compiler.force_cpp;
+    L->dump_cpp = compiler.dump_cpp;
 
-    if (args.count("cpp-define"))
-        for(const auto& text: args["cpp-define"].as<vector<string>>())
-        {
-            string diagnostic;
-            auto definition = Haskell::CPP::parse_initial_definition(text, diagnostic);
-            if (not definition)
-                throw myexception()<<"Invalid --cpp-define value '"<<text<<"': "<<diagnostic;
-            L->cpp_options.definitions.push_back(std::move(*definition));
-        }
+    for(const auto& text: compiler.cpp_definitions)
+    {
+        string diagnostic;
+        auto definition = Haskell::CPP::parse_initial_definition(text, diagnostic);
+        if (not definition)
+            throw myexception()<<"Invalid --cpp-define value '"<<text<<"': "<<diagnostic;
+        L->cpp_options.definitions.push_back(std::move(*definition));
+    }
 
-    if (args.count("cpp-undefine"))
-        for(const auto& text: args["cpp-undefine"].as<vector<string>>())
-        {
-            string name;
-            string diagnostic;
-            if (not Haskell::CPP::parse_initial_undefinition(text, name, diagnostic))
-                throw myexception()<<"Invalid --cpp-undefine value '"<<text<<"': "<<diagnostic;
-            L->cpp_options.undefinitions.push_back(std::move(name));
-        }
+    for(const auto& text: compiler.cpp_undefinitions)
+    {
+        string name;
+        string diagnostic;
+        if (not Haskell::CPP::parse_initial_undefinition(text, name, diagnostic))
+            throw myexception()<<"Invalid --cpp-undefine value '"<<text<<"': "<<diagnostic;
+        L->cpp_options.undefinitions.push_back(std::move(name));
+    }
 
     // 4. Write out paths to C1.err
     if (log_verbose >= 1)
@@ -483,27 +478,27 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
         throw e;
     }
 
-    L->pre_inline_unconditionally = args["pre-inline"].as<bool>();
-    L->post_inline_unconditionally = args["post-inline"].as<bool>();
-    L->let_float_from_case = args["let-float-from-case"].as<bool>();
-    L->let_float_from_apply = args["let-float-from-apply"].as<bool>();
-    L->let_float_from_let = args["let-float-from-let"].as<bool>();
-    L->case_of_constant = args["case-of-constant"].as<bool>();
-    L->case_of_variable = args["case-of-variable"].as<bool>();
-    L->case_of_case = args["case-of-case"].as<bool>();
-    L->inline_threshhold = args["inline-threshold"].as<int>();
-    L->beta_reduction = args["beta-reduction"].as<bool>();
-    L->max_iterations = args["simplifier-max-iterations"].as<int>();
+    L->pre_inline_unconditionally = compiler.pre_inline;
+    L->post_inline_unconditionally = compiler.post_inline;
+    L->let_float_from_case = compiler.let_float_from_case;
+    L->let_float_from_apply = compiler.let_float_from_apply;
+    L->let_float_from_let = compiler.let_float_from_let;
+    L->case_of_constant = compiler.case_of_constant;
+    L->case_of_variable = compiler.case_of_variable;
+    L->case_of_case = compiler.case_of_case;
+    L->inline_threshhold = compiler.inline_threshold;
+    L->beta_reduction = compiler.beta_reduction;
+    L->max_iterations = compiler.simplifier_max_iterations;
 
-    L->fully_lazy = args["fully-lazy"].as<bool>();
-    L->dump_parsed = args.count("dump-parsed");
-    L->dump_renamed = args.count("dump-rn");
-    L->dump_typechecked = args.count("dump-tc");
-    L->dump_desugared = args.count("dump-ds");
-    L->dump_optimized = args.count("dump-opt");
-    if (args.count("recompile"))
+    L->fully_lazy = compiler.fully_lazy;
+    L->dump_parsed = compiler.dump_parsed;
+    L->dump_renamed = compiler.dump_renamed;
+    L->dump_typechecked = compiler.dump_typechecked;
+    L->dump_desugared = compiler.dump_desugared;
+    L->dump_optimized = compiler.dump_optimized;
+    if (compiler.recompile)
     {
-        auto recompile_string = args.at("recompile").as<string>();
+        auto recompile_string = *compiler.recompile;
         if (recompile_string == "none" or recompile_string == "no")
             ;
         else if (recompile_string.empty())
@@ -514,9 +509,9 @@ std::shared_ptr<module_loader> setup_module_loader(variables_map& args)
                 L->recompile_modules.insert(modid);
         }
     }
-    else if (args.count("test-module") and not args.count("dump-ffi"))
+    else if (test_module and not compiler.dump_ffi)
     {
-        L->recompile_modules.insert(args.at("test-module").as<string>());
+        L->recompile_modules.insert(*test_module);
     }
 
     return L;
@@ -571,26 +566,26 @@ std::string generate_print_program(const model_t& print, const Hs::Exp& a)
     return program_file.str();
 }
 
-Hs::Exp get_alphabet_expression_from_args(const variables_map& args)
+Hs::Exp get_alphabet_expression_from_options(const PrintCommand& command)
 {
-    if (not args.count("alphabet") or args.at("alphabet").as<vector<string>>().empty())
+    if (command.alphabets.empty())
 	return HsG::Apply(Hs::Var("error"), {Hs::Literal(Hs::String("No alphabet!"))});
 
-    auto anames = args.at("alphabet").as<vector<string>>();
-    if (anames.size() > 1)
+    if (command.alphabets.size() > 1)
 	throw myexception()<<"Only a single alphabet can be used with --print!";
 
-    return get_alphabet_expression( *get_alphabet(anames[0]) );
+    return get_alphabet_expression(*get_alphabet(command.alphabets[0]));
 }
 
-std::unique_ptr<Program> print_program(variables_map& args, const shared_ptr<module_loader>& L)
+std::unique_ptr<Program> print_program(const PrintCommand& command,
+                                       const GlobalOptions& global,
+                                       const shared_ptr<module_loader>& L)
 {
-    const string mstring = args["print"].as<string>();
-    Rules R(get_package_paths(args));
+    Rules R(get_package_paths(global.package_paths));
     auto TC = makeTypechecker(R, {}, {{"alphabet",{"alphabet","b"}}});
-    model_t print = compile_model(R, TC, CodeGenState(R), "a", mstring, "print expression", {}, {{"alphabet",{"alphabet","b"}}});
+    model_t print = compile_model(R, TC, CodeGenState(R), "a", command.expression, "print expression", {}, {{"alphabet",{"alphabet","b"}}});
 
-    Hs::Exp a = get_alphabet_expression_from_args(args);
+    Hs::Exp a = get_alphabet_expression_from_options(command);
     {
         checked_ofstream program_file("Print.Main.hs");
         program_file<<generate_print_program(print, a);
@@ -598,47 +593,36 @@ std::unique_ptr<Program> print_program(variables_map& args, const shared_ptr<mod
     return load_program_from_file(L, "Print.Main.hs");
 }
 
-std::pair<fs::path, vector<string>> extract_prog_args(variables_map& args, int argc, char* argv[], const string& cmd)
-{
-    auto args_v = args[cmd].as<vector<string>>();
-
-    if (args_v.empty())
-        throw myexception()<<"--"<<cmd<<" requires at least one argument";
-
-    fs::path name = args_v[0];
-    if (name.extension() != ".hs")
-        name += ".hs";
-
-    args_v.erase(args_v.begin());
-
-    for(auto& arg: trailing_args(argc, argv, trailing_args_separator))
-        args_v.push_back(arg);
-
-    return {name, args_v};
-}
-
-std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map& args, const shared_ptr<module_loader>& L,
-                                          int proc_id, const fs::path& output_dir, json::object info)
+std::unique_ptr<Program> generate_program(const CommandLine& command_line,
+                                          const shared_ptr<module_loader>& L,
+                                          int proc_id,
+                                          const fs::path& output_dir,
+                                          json::object info)
 {
     std::unique_ptr<Program> P;
 
-    if (args.count("run"))
+    if (auto run = std::get_if<RunCommand>(&command_line.command))
     {
-        auto [main_filename, args_v] = extract_prog_args(args, argc, argv, "run");
-        L->args = args_v;
-        auto main_module = L->load_module_from_file(main_filename);
-        L->set_user_source_root_for_file(main_filename, main_module->name);
+        L->args = run->arguments;
+        auto main_module = L->load_module_from_file(run->program);
+        L->set_user_source_root_for_file(run->program, main_module->name);
         P = std::make_unique<Program>(L, vector{main_module});
     }
-    else if (args.count("print"))
+    else if (auto print = std::get_if<PrintCommand>(&command_line.command))
     {
-        P = print_program(args, L);
+        P = print_program(*print, command_line.global, L);
     }
-    else if (args.count("align"))
+    else if (auto infer = std::get_if<InferOptions>(&command_line.command))
     {
         // Change this into a pointer.
-        Rules R(get_package_paths(args));
-        auto [prog, j] = create_A_and_T_model(R, args, L, proc_id, output_dir);
+        Rules R(get_package_paths(command_line.global.package_paths));
+        auto [prog, j] = create_A_and_T_model(R,
+                                              *infer,
+                                              command_line.global.test,
+                                              command_line.global.verbosity,
+                                              L,
+                                              proc_id,
+                                              output_dir);
         update(info, j);
         P = std::move(prog);
     }
@@ -649,7 +633,8 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
     }
 
     //------ Write run info to C1.run.json ------//
-    if (args.count("align") and not args.count("test"))
+    if (auto infer = std::get_if<InferOptions>(&command_line.command);
+        infer and not command_line.global.test)
     {
         ofstream run_info( output_dir / "C1.run.json" );
 	run_info<<json::serialize_options({.allow_infinity_and_nan=true});
@@ -657,7 +642,7 @@ std::unique_ptr<Program> generate_program(int argc, char* argv[], variables_map&
         run_info.close();
         cout<<"Run info written to "<< output_dir / "C1.run.json" <<endl;
 
-        write_initial_alignments(args, proc_id, output_dir);
+        write_initial_alignments(*infer, proc_id, output_dir);
     }
 
     return P;
@@ -708,10 +693,11 @@ int main(int argc,char* argv[])
 
     try {
         //---------- Parse command line  ---------//
-        variables_map args = parse_cmd_line(argc,argv);
+        CommandLine command_line = parse_cmd_line(argc, argv);
+        const auto& global = command_line.global;
 
-        if (args.count("set"))
-            load_settings(args["set"].as<vector<string> >());
+        if (not global.settings.empty())
+            load_settings(global.settings);
 
 #if defined(HAVE_CLEAREXCEPT)
         feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
@@ -727,26 +713,28 @@ int main(int argc,char* argv[])
         fp_scale::initialize();
 
         //------ Increase precision for (cout,cerr) if we are testing ------//
-        if (args.count("test"))
+        if (global.test)
         {
             cerr.precision(15);
             cout.precision(15);
         }
 
         //------------- Setup module loader -------------//
-        auto L = setup_module_loader(args);
-        L->args = trailing_args(argc, argv, trailing_args_separator);
-        L->optimize = args["optimize"].as<bool>();
+        optional<string> test_module_name;
+        if (auto test_module = std::get_if<TestModuleCommand>(&command_line.command))
+            test_module_name = test_module->module;
+        auto L = setup_module_loader(global, test_module_name);
+        L->optimize = global.compiler.optimize;
 
         //---------- Initialize random seed -----------//
-        unsigned long seed = init_rng_and_get_seed(args);
+        unsigned long seed = init_rng_and_get_seed(global);
 
         if (log_verbose >= 1) cout<<"random seed = "<<seed<<endl<<endl;
 
         //---------- test optimizer ----------------
-        if (args.count("test-module"))
+        if (auto test_module = std::get_if<TestModuleCommand>(&command_line.command))
         {
-            string module_name = args["test-module"].as<string>();
+            const string& module_name = test_module->module;
 
             std::shared_ptr<Module> M;
             if (is_haskell_module_name(module_name))
@@ -759,7 +747,7 @@ int main(int argc,char* argv[])
 
             Program P(L,{M});
             auto M2 = P.get_module(M->name);
-            if (args.count("dump-ffi"))
+            if (global.compiler.dump_ffi)
             {
                 for(const auto& info: M2->foreign_infos())
                     dump_ffi_info(std::cerr, info);
@@ -785,9 +773,9 @@ int main(int argc,char* argv[])
 
             exit(0);
         }
-        else if (args.count("type"))
+        else if (auto type_command = std::get_if<TypeCommand>(&command_line.command))
         {
-            auto term = args.at("type").as<string>();
+            const auto& term = type_command->name;
 
             auto module_name = get_module_name(term);
             if (module_name.empty()) module_name = "Prelude";
@@ -812,13 +800,14 @@ int main(int argc,char* argv[])
         //----------- Create output dir --------------//
         fs::path output_dir;
 
-        if (args.count("align") and not args.count("test"))
+        auto infer = std::get_if<InferOptions>(&command_line.command);
+        if (infer and not global.test)
         {
 #ifdef HAVE_MPI
             // FIXME: Can we just use `broadcast(world, output_dir, 0)`?
             //        This might require a serializer for fs::path.
             if (not proc_id) {
-                output_dir = init_dir(args);
+                output_dir = init_dir(*infer);
 
                 for(int dest=1;dest<n_procs;dest++) 
                     world.send(dest, 0, output_dir.string());
@@ -832,7 +821,7 @@ int main(int argc,char* argv[])
 
             // cerr<<"Proc "<<proc_id<<": dirname = "<<dir_name<<endl;
 #else
-            output_dir = init_dir(args);
+            output_dir = init_dir(*infer);
 #endif
         }
 
@@ -842,7 +831,7 @@ int main(int argc,char* argv[])
         info["seed"] = seed;
         info["subdirectory"] = fs::weakly_canonical(output_dir).make_preferred().string();
 
-        auto P = generate_program(argc, argv, args, L, proc_id, output_dir, info);
+        auto P = generate_program(command_line, L, proc_id, output_dir, info);
 
         L.reset();
 
