@@ -285,19 +285,11 @@ namespace
     RecordUpdateAnalysis analyze_record_update(TypeChecker& tc, Hs::RecordUpdate& Rec, const Type& object_type)
     {
         RecordUpdateAnalysis analysis;
-        set<string> used_field_names;
 
         for(auto& field: unloc(Rec.fbinds).fields)
         {
             auto& f = unloc(field);
             auto field_name = unloc(f.field).name;
-            auto field_key = get_unqualified_name(field_name);
-            if (used_field_names.count(field_key))
-            {
-                tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record update.");
-                analysis.valid = false;
-            }
-            used_field_names.insert(field_key);
 
             // Successful renaming attaches every in-scope interpretation; the
             // inferred record type below only filters this predetermined set.
