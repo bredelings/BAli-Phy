@@ -216,11 +216,12 @@ class CLI11CommandParser
         app.config_formatter(config_reader);
     }
 
-    /// Register command payloads; the exact run pass-through boundary is refined in the next stage.
+    /// Register non-inference commands, including run's option-before-program boundary.
     void add_other_commands()
     {
         run_app = app.add_subcommand("run", "Run a Haskell program");
         run_app->fallthrough();
+        run_app->positionals_at_end();
         run_app->add_option("PROGRAM", run.program, "Haskell program")->required();
         run_app->add_option("ARGUMENTS", run.arguments, "Program arguments");
 
