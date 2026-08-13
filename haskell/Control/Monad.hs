@@ -1,5 +1,33 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-module Control.Monad where
+module Control.Monad
+    ( Monad(..)
+    , MonadFail(..)
+    , MonadPlus(..)
+    , mapM
+    , mapM_
+    , forM
+    , forM_
+    , sequence
+    , sequence_
+    , (=<<)
+    , (>=>)
+    , (<=<)
+    , forever
+    , void
+    , join
+    , msum
+    , replicateM
+    , replicateM_
+    , guard
+    , when
+    , unless
+    , liftM
+    , liftM2
+    , liftM3
+    , liftM4
+    , liftM5
+    , ap
+    ) where
 
 import Compiler.Base
 import Compiler.Error  -- for error
