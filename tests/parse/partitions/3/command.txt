@@ -1,1 +1,1 @@
---config=config
+--config=config '--tree=~UniformTree(taxa)'

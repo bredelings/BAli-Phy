@@ -1,6 +1,10 @@
  # Compute probability and exit.
 :test
 
+ # Keep model declarations before and after options, and ensure command-line scalars take precedence.
+configBeforeOption = 1;
+:tree ~Yule(taxa,1)
+
  # Sequence data for the three partitions.
 :align dna1.fasta
 :align rna.fasta
@@ -15,3 +19,5 @@
 
  # Link the first and third partitions
 :scale 1,3:
+
+configAfterOption = 2;
