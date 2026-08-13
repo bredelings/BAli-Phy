@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 module BAliPhy.Run
     ( LogFormat(..)
@@ -16,31 +15,14 @@ module BAliPhy.Run
     ) where
 
 import BAliPhy.Util
-import Compiler.Base
-import Compiler.Classes
-import Control.Applicative
-import Control.Monad
-import Data.Bool
-import Data.Either
-import Data.Eq
-import Data.Function
-import Data.Functor
-import Data.List
 import Data.JSON (Object)
-import Data.Maybe
-import Data.Ord
-import Data.Semigroup ((<>))
-import Foreign.Maybe ()
-import Foreign.String
-import Foreign.Vector
 import MCMC
 import Options.Applicative
 import Probability
 import Probability.Logger
-import System.Exit
-import System.FilePath
-import System.IO
-import Text.Show
+import System.Exit (exitFailure)
+import System.FilePath ((</>))
+import System.IO (hFlush, hPutStrLn, stderr, stdout)
 import qualified Data.Text.IO as T
 
 data LogFormat = JSON | TSV
