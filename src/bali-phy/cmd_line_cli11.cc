@@ -30,6 +30,13 @@ std::optional<CommandHelpLevel> help_level(const string& name)
     return {};
 }
 
+/// Preserve BAli-Phy's one-value-per-occurrence composing options despite CLI11 vectors accepting
+/// adjacent values by default. TakeAll accumulates CLI occurrences and marks options for config merging below.
+CLI::Option* composing_option(CLI::Option* option)
+{
+    return option->type_size(1)->expected(1)->allow_extra_args(false)->take_all();
+}
+
 /// Adapt BAli-Phy's command files to CLI11 while retaining repeated-value merge order.
 /// CLI11 normally drops config values after a command-line occurrence; the deferred values are
 /// additional machinery needed to preserve BAli-Phy's command-line-then-config combination.
@@ -166,12 +173,12 @@ class CLI11CommandParser
                                                   "Print additional diagnostic output"),
                                    CommandHelpLevel::advanced)->expected(0, 1);
         show_at(app.add_option("-s,--seed", global.seed, "Random seed"), CommandHelpLevel::advanced);
-        auto* package_paths = show_at(app.add_option("-P,--package-path", global.package_paths,
-                                                     "Directories to search for packages"),
-                                      CommandHelpLevel::expert)->take_all();
+        auto* package_paths = composing_option(show_at(app.add_option("-P,--package-path", global.package_paths,
+                                                                      "Directories to search for packages"),
+                                                       CommandHelpLevel::expert));
         help_formatter->set_package_paths(package_paths);
-        show_at(app.add_option("--set", global.settings, "Set key=<value>"),
-                CommandHelpLevel::expert)->take_all();
+        composing_option(show_at(app.add_option("--set", global.settings, "Set key=<value>"),
+                                 CommandHelpLevel::expert));
 
         show_at(app.add_flag("--dump-parsed", compiler.dump_parsed, "Show parser output"),
                 CommandHelpLevel::developer);
@@ -217,10 +224,12 @@ class CLI11CommandParser
                 CommandHelpLevel::developer);
         show_at(app.add_flag("--cpp", compiler.force_cpp,
                              "Conditionally preprocess every Haskell source module"), CommandHelpLevel::developer);
-        show_at(app.add_option("-D,--cpp-define", compiler.cpp_definitions,
-                               "Define a CPP macro as NAME[=TEXT]"), CommandHelpLevel::developer)->take_all();
-        show_at(app.add_option("--cpp-undefine", compiler.cpp_undefinitions,
-                               "Remove an initial CPP macro definition"), CommandHelpLevel::developer)->take_all();
+        composing_option(show_at(app.add_option("-D,--cpp-define", compiler.cpp_definitions,
+                                                "Define a CPP macro as NAME[=TEXT]"),
+                                 CommandHelpLevel::developer));
+        composing_option(show_at(app.add_option("--cpp-undefine", compiler.cpp_undefinitions,
+                                                "Remove an initial CPP macro definition"),
+                                 CommandHelpLevel::developer));
         show_at(app.add_flag("--dump-cpp", compiler.dump_cpp,
                              "Show Haskell source after conditional preprocessing"), CommandHelpLevel::developer);
     }
@@ -233,8 +242,19 @@ class CLI11CommandParser
         help_formatter->set_inference_command(infer_app);
         infer_app->fallthrough();
         show_at(infer_app->get_help_ptr(), CommandHelpLevel::basic);
-        show_at(infer_app->add_option("DATA,--align", infer.alignments, "Sequence data files"),
-                CommandHelpLevel::basic)->take_all();
+
+        auto append_alignments = [this](const vector<string>& alignments)
+        {
+            infer.alignments.insert(infer.alignments.end(), alignments.begin(), alignments.end());
+        };
+        // Separate callbacks keep --align single-valued while positional DATA remains variadic.
+        // Appending during parsing preserves the established ordering when the two forms are mixed.
+        show_at(infer_app->add_option_function<vector<string>>("DATA", append_alignments,
+                                                               "Sequence data files"),
+                CommandHelpLevel::basic)->take_all()->trigger_on_parse();
+        composing_option(show_at(infer_app->add_option_function<vector<string>>("--align", append_alignments,
+                                                                                "Sequence data files"),
+                                  CommandHelpLevel::basic))->trigger_on_parse();
         show_at(infer_app->add_flag("-t,--test", result.global.test, "Analyze initial values and exit"),
                 CommandHelpLevel::basic);
         show_at(infer_app->add_option("-i,--iterations", infer.iterations, "Number of MCMC iterations"),
@@ -258,20 +278,22 @@ class CLI11CommandParser
         show_at(infer_app->add_option("-T,--tree", infer.tree, "Tree prior"), CommandHelpLevel::basic);
         show_at(infer_app->add_flag("-U,--unalign", infer.unalign,
                                     "Unalign alignments that are not fixed"), CommandHelpLevel::advanced);
-        show_at(infer_app->add_option("-A,--alphabet", infer.alphabets, "Alphabet"),
-                CommandHelpLevel::basic)->take_all();
-        show_at(infer_app->add_option("-S,--smodel", infer.smodels, "Substitution model"),
-                CommandHelpLevel::basic)->take_all();
-        show_at(infer_app->add_option("-I,--imodel", infer.imodels, "Insertion-deletion model"),
-                CommandHelpLevel::basic)->take_all();
-        show_at(infer_app->add_option("-R,--scale", infer.scales, "Prior on the scale"),
-                CommandHelpLevel::basic)->take_all();
-        show_at(infer_app->add_option("-F,--fix", infer.fixed, "Fix topology, tree, or alignment"),
-                CommandHelpLevel::basic)->take_all();
-        show_at(infer_app->add_option("--variables", infer.variables, "Variable definitions"),
-                CommandHelpLevel::basic)->take_all();
-        show_at(infer_app->add_option("-L,--link", infer.links, "Link partitions"),
-                CommandHelpLevel::basic)->take_all();
+        composing_option(show_at(infer_app->add_option("-A,--alphabet", infer.alphabets, "Alphabet"),
+                                 CommandHelpLevel::basic));
+        composing_option(show_at(infer_app->add_option("-S,--smodel", infer.smodels, "Substitution model"),
+                                 CommandHelpLevel::basic));
+        composing_option(show_at(infer_app->add_option("-I,--imodel", infer.imodels, "Insertion-deletion model"),
+                                 CommandHelpLevel::basic));
+        composing_option(show_at(infer_app->add_option("-R,--scale", infer.scales, "Prior on the scale"),
+                                 CommandHelpLevel::basic));
+        composing_option(show_at(infer_app->add_option("-F,--fix", infer.fixed,
+                                                       "Fix topology, tree, or alignment"),
+                                 CommandHelpLevel::basic));
+        composing_option(show_at(infer_app->add_option("--variables", infer.variables,
+                                                       "Variable definitions"),
+                                 CommandHelpLevel::basic));
+        composing_option(show_at(infer_app->add_option("-L,--link", infer.links, "Link partitions"),
+                                 CommandHelpLevel::basic));
         show_at(infer_app->add_option("--subst-rates", infer.subst_rates, "Substitution rates model"),
                 CommandHelpLevel::basic)->capture_default_str();
         show_at(infer_app->add_option("--indel-rates", infer.indel_rates, "Indel rates model"),
@@ -315,7 +337,7 @@ class CLI11CommandParser
                             CommandHelpLevel::advanced);
         print_app->fallthrough();
         print_app->add_option("EXPRESSION", print.expression, "Expression to evaluate")->required();
-        print_app->add_option("-A,--alphabet", print.alphabets, "Alphabet")->take_all();
+        composing_option(print_app->add_option("-A,--alphabet", print.alphabets, "Alphabet"));
 
         type_app = show_at(app.add_subcommand("type", "Show the type of a qualified Haskell name"),
                            CommandHelpLevel::developer);

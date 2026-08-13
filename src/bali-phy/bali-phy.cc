@@ -693,8 +693,9 @@ int main(int argc,char* argv[])
 
     try {
         //---------- Parse command line  ---------//
-        CommandLine command_line = parse_cmd_line(argc, argv);
+        CommandLine command_line = parse_cli11_command_line(argc, argv);
         const auto& global = command_line.global;
+        log_verbose = global.verbosity;
 
         if (not global.settings.empty())
             load_settings(global.settings);

@@ -39,7 +39,7 @@ struct CompilerOptions
 struct GlobalOptions
 {
     int verbosity = 0;
-    // The Boost interface currently treats --test as general; the CLI11 command tree can move it to infer.
+    // Test mode changes process-wide output behavior even though --test belongs to infer.
     bool test = false;
     std::vector<std::string> package_paths;
     std::vector<std::string> settings;
@@ -113,10 +113,6 @@ struct CommandLine
     Command command;
 };
 
-extern const std::string trailing_args_separator;
-
-std::vector<std::string> trailing_args(int argc, char* argv[], const std::string& separator);
-CommandLine parse_cmd_line(int argc,char* argv[]);
 CommandLine parse_cli11_command_line(int argc, char* argv[]);
 std::string get_command_line(int argc, char* argv[]);
 
