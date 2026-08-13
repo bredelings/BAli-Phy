@@ -1178,7 +1178,7 @@ To compute the majority consensus tree, do the following.  A program such as
 <screen><prompt>%</prompt> trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees &gt; <filename>c50.PP.tree</filename></screen>
 </para>
 
-<para>By default, the first 10% of tree samples are skipped as burn-in (<userinput>--skip=10%</userinput> or <userinput>-s 10%</userinput>) and every generation is analyzed (<userinput>--subsample=1</userinput> or <userinput>-x 1</userinput>).  To discard the first 1000 tree samples and analyze every 10th sample:
+<para>By default, the first 10% of tree samples are skipped as burn-in (<userinput>--skip=10%</userinput> or <userinput>-s 10%</userinput>) and every generation is included (<userinput>--subsample=1</userinput> or <userinput>-x 1</userinput>).  To discard the first 1000 tree samples and include every 10th sample:
 <screen><prompt>%</prompt> trees-consensus -s 1000 -x 10 <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees &gt; <filename>c50.PP.tree</filename></screen>
 By default, splits are included in the consensus tree if they have a
 PP greater than 0.5.  You can specify a more stringent level
@@ -1242,7 +1242,7 @@ This command computes the effective sample size for the posterior probability of
 <para>
 This command gives a median and confidence interval, ESS, and a stabilization time:
 <screen><prompt>%</prompt> statreport <replaceable>dir-1</replaceable>/C1.log <replaceable>dir-2</replaceable>/C1.log &gt; Report </screen>	
-When multiple runs are analyzed, this command gives PSRF and joint ESS values.
+When multiple runs are summarized, this command gives PSRF and joint ESS values.
 <application>Tracer</application> allows you to inspect the same numerical parameters
 interactively; see <xref linkend="software_req"/>.</para>
 
@@ -2977,7 +2977,7 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
       <section><info><title>Using the sampled alignments instead of a consensus</title></info>
 
       <para>
-        Instead of constructing consensus ancestral sequences, you can also analyze the sampled alignments and their ancestral sequences directly.
+        Instead of constructing consensus ancestral sequences, you can also summarize the sampled alignments and their ancestral sequences directly.
         This approach involves performing a downstream analysis on <emphasis>each</emphasis> sampled (alignment,tree) pair,
         yielding the posterior distribution of the downstream analysis.
         Averaging these results then yields the posterior mean analysis result.
@@ -2987,7 +2987,7 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
         When this approach is feasible, it is more statistically rigorous than analyzing the consensus ancestral sequence alignment.
         The consensus ancestral sequence alignment does not account for uncertainty in the ancestral sequences, and is not a joint reconstruction.
         In contrast, analyzing the posterior samples accounts for uncertainty in the ancestral sequences, the alignment, and the tree.
-        Furthermore, it also analyzes joint reconstructions instead of a marginal reconstruction.
+        Furthermore, it also summarizes joint reconstructions instead of a marginal reconstruction.
       </para>
       </section>
 
@@ -3090,7 +3090,7 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
       advance how many iterations are required to give a good
       estimate. The number depends on the specific data set that is
       being examined. As a result, <application>BAli-Phy</application>
-      relies on the user to analyze the output of a running chain
+      relies on the user to summarize the output of a running chain
       periodically in order to determine when enough samples have been
       obtained.  This section describes a number of techniques to
       diagnose when more samples must be taken.
@@ -3358,7 +3358,7 @@ The stabilization criterion is the same one described above for numerical values
     
     <section><info><title>trees-consensus</title></info>
       
-      <para>This program analyzes the tree sample contained in
+      <para>This program summarizes the tree sample contained in
 	<replaceable>file</replaceable>.  It reports the MAP topology, the
 	supported taxa partitions (including partial partitions), and the
 	majority consensus topology.
@@ -3370,7 +3370,7 @@ The stabilization criterion is the same one described above for numerical values
       <para>Usage: trees-bootstrap <replaceable>file1</replaceable>
 	[<replaceable>file2</replaceable> ... ] --predicates
 	<replaceable>predicate-file</replaceable> [OPTIONS] </para>
-      <para>This program analyzes the tree samples contained in
+      <para>This program summarizes the tree samples contained in
 	<replaceable>file1</replaceable>, <replaceable>file2</replaceable>,
 	etc.  It gives the support of each tree sample for each predicate in
 	<replaceable>predicate-file</replaceable>, and reports a confidence
@@ -3388,7 +3388,7 @@ The stabilization criterion is the same one described above for numerical values
 
       <para>Usage: trees-to-SRQ <replaceable>predicate-file</replaceable> [OPTIONS] <replaceable>trees-file</replaceable> </para>
 
-      <para>This program analyzes the tree samples contained in
+      <para>This program summarizes the tree samples contained in
 	<replaceable>trees-file</replaceable>.  It uses them to produce an
 	SRQ plot for each predicate in
 	<replaceable>predicate-file</replaceable>.  Plots are produced in
@@ -3829,7 +3829,7 @@ your <command>bali-phy</command> runs on that computer.
 	<qandaentry>
 	  <question><para>How do I compute the split/bi-partition support?</para></question>
 	  <answer>
-	    <para>After you analyze the output (<xref linkend="analysis"/>), the partition support is indicated in
+	    <para>After you summarize the output (<xref linkend="analysis"/>), the partition support is indicated in
 	      <filename>Results/consensus</filename> and in <filename>Results/c50.PP.tree</filename>. </para> 
 	  </answer>
 	</qandaentry>
