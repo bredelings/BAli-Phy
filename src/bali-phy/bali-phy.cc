@@ -618,7 +618,7 @@ std::unique_ptr<Program> generate_program(const CommandLine& command_line,
         Rules R(get_package_paths(command_line.global.package_paths));
         auto [prog, j] = create_A_and_T_model(R,
                                               *infer,
-                                              command_line.global.test,
+                                              infer->test,
                                               command_line.global.verbosity,
                                               L,
                                               proc_id,
@@ -634,7 +634,7 @@ std::unique_ptr<Program> generate_program(const CommandLine& command_line,
 
     //------ Write run info to C1.run.json ------//
     if (auto infer = std::get_if<InferOptions>(&command_line.command);
-        infer and not command_line.global.test)
+        infer and not infer->test)
     {
         ofstream run_info( output_dir / "C1.run.json" );
 	run_info<<json::serialize_options({.allow_infinity_and_nan=true});
@@ -695,6 +695,7 @@ int main(int argc,char* argv[])
         //---------- Parse command line  ---------//
         CommandLine command_line = parse_cli11_command_line(argc, argv);
         const auto& global = command_line.global;
+        const auto* infer = std::get_if<InferOptions>(&command_line.command);
         log_verbose = global.verbosity;
 
         if (not global.settings.empty())
@@ -714,7 +715,7 @@ int main(int argc,char* argv[])
         fp_scale::initialize();
 
         //------ Increase precision for (cout,cerr) if we are testing ------//
-        if (global.test)
+        if (infer and infer->test)
         {
             cerr.precision(15);
             cout.precision(15);
@@ -801,8 +802,7 @@ int main(int argc,char* argv[])
         //----------- Create output dir --------------//
         fs::path output_dir;
 
-        auto infer = std::get_if<InferOptions>(&command_line.command);
-        if (infer and not global.test)
+        if (infer and not infer->test)
         {
 #ifdef HAVE_MPI
             // FIXME: Can we just use `broadcast(world, output_dir, 0)`?

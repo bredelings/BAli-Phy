@@ -1,0 +1,3 @@
+# Global options remain valid in an inference command file, but the file does not
+# replace the requirement to supply sequence data.
+:seed 1

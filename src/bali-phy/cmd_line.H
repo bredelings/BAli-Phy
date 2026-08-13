@@ -39,8 +39,6 @@ struct CompilerOptions
 struct GlobalOptions
 {
     int verbosity = 0;
-    // Test mode changes process-wide output behavior even though --test belongs to infer.
-    bool test = false;
     std::vector<std::string> package_paths;
     std::vector<std::string> settings;
     std::optional<unsigned long> seed;
@@ -49,17 +47,13 @@ struct GlobalOptions
 
 struct InferOptions
 {
-    std::optional<std::filesystem::path> config_file;
+    bool test = false;
     std::vector<std::string> alignments;
     std::optional<long int> iterations;
     std::optional<std::string> name;
     int subsample = 1;
     std::optional<std::string> log_format;
     int pre_burnin = 3;
-    std::optional<std::string> enable;
-    std::optional<std::string> disable;
-    std::optional<std::string> beta;
-    std::optional<std::string> dbeta;
     std::optional<std::string> tree;
     bool unalign = false;
     std::vector<std::string> alphabets;
@@ -71,11 +65,6 @@ struct InferOptions
     std::vector<std::string> links;
     std::string subst_rates = "constant";
     std::string indel_rates = "relaxed";
-    std::optional<std::string> partition_weights;
-    std::optional<std::string> topology_constraint;
-    std::optional<std::string> alignment_constraint;
-    std::optional<std::string> align_constraint;
-    std::optional<std::string> likelihood_calculators;
 };
 
 struct RunCommand

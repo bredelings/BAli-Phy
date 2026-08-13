@@ -35,8 +35,7 @@ gen_atmodel_program(const InferOptions& options,
 		    const std::vector<std::optional<int>>& scale_mapping,
 		    const model_t& tree_model,
 		    const model_t& subst_rates_model,
-		    const model_t& indel_rates_model,
-		    const std::vector<int>& like_calcs);
+		    const model_t& indel_rates_model);
 
 #include "sequence/alphabet.H"
 

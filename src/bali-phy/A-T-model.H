@@ -12,7 +12,6 @@
 #include "models/compile.H"
 #include "util/owned-ptr.H"
 #include "util/json.hh"
-#include "tree/sequencetree.H"                      // for SequenceTree
 class Program;
 class module_loader;
 
@@ -28,7 +27,5 @@ create_A_and_T_model(const Rules& R,
 void write_initial_alignments(const InferOptions& options,
                               int proc_id,
                               const std::filesystem::path& dir_name);
-
-SequenceTree load_constraint_tree(const std::string& filename,const std::vector<std::string>&);
 
 #endif

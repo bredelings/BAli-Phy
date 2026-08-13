@@ -889,8 +889,7 @@ std::string generate_atmodel_program(const InferOptions& options,
                                      const vector<optional<int>>& scale_mapping,
                                      const model_t& tree_model,
                                      const model_t& subst_rates_model,
-                                     const model_t& indel_rates_model,
-                                     const std::vector<int>& like_calcs)
+                                     const model_t& indel_rates_model)
 {
     auto fixed = get_fixed(options, test);
 
@@ -1109,7 +1108,6 @@ std::string generate_atmodel_program(const InferOptions& options,
         Hs::Var alignment_on_tree("alignment" + part_suffix);
         if (imodel_index)
         {
-            assert(like_calcs[i] == 0);
             Hs::Exp imodel = imodels[*imodel_index];
 
             if (fixed.count("alignment"))
@@ -1131,7 +1129,7 @@ std::string generate_atmodel_program(const InferOptions& options,
         // Model.Partition.3. Observe the sequence data from the distribution
         Hs::Exp distribution;
         string s_condition = s_conditions[smodel_index];
-        if (like_calcs[i] == 0)
+        if (imodel_index)
         {
             assert(s_condition.empty());
             distribution = HsG::Apply(Hs::Var("phyloCTMC"), {subst_tree, alignment_on_tree, smodel, scale});
@@ -1401,10 +1399,9 @@ gen_atmodel_program(const InferOptions& options,
 		    const vector<optional<int>>& scale_mapping,
 		    const model_t& tree_model,
 		    const model_t& subst_rates_model,
-		    const model_t& indel_rates_model,
-		    const std::vector<int>& like_calcs)
+		    const model_t& indel_rates_model)
 {
-    // FIXME! Make likelihood_calculators for 1- and 2-sequence alignments handle compressed alignments.
+    // FIXME! Make fixed-alignment likelihoods for 1- and 2-sequence alignments handle compressed alignments.
     {
         checked_ofstream program_file(program_filename);
         program_file<<generate_atmodel_program(options,
@@ -1419,8 +1416,7 @@ gen_atmodel_program(const InferOptions& options,
                                                scaleMs, scale_mapping,
                                                tree_model,
                                                subst_rates_model,
-                                               indel_rates_model,
-                                               like_calcs);
+                                               indel_rates_model);
     }
 
     auto m = L->load_module_from_file(program_filename);

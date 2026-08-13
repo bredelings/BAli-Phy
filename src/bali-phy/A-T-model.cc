@@ -32,7 +32,7 @@
 #include "tree/tree.H"                              // for RandomTree, branc...
 #include "util/io.H"                                // for portable_getline
 #include "util/io/optional.H"                       // for operator<<
-#include "util/mapping.H"                           // for bad_mapping, find...
+#include "util/mapping.H"                           // for find_index
 #include "util/matrix.H"                            // for matrix
 #include "util/myexception.H"                       // for myexception
 #include "util/string/convert.H"                    // for convertTo, conver...
@@ -88,35 +88,6 @@ void sanitize_branch_lengths(SequenceTree& T)
                 T.branch(i).set_length(min_branch);
             }
         }
-}
-
-vector<double> get_geometric_heating_levels(const string& s)
-{
-    vector<double> levels;
-
-    vector<string> parse = split(s,'/');
-
-    if (parse.size() != 2) return levels;
-
-    try
-    {
-        int n_levels = convertTo<int>(parse[1]);
-        levels.resize(n_levels);
-    
-        parse = split(parse[0],'-');
-        levels[0] = convertTo<double>(parse[0]);
-        levels.back() = convertTo<double>(parse[1]);
-        double factor = pow(levels.back()/levels[0], 1.0/(n_levels-1));
-    
-        for(int i=1;i<levels.size()-1;i++)
-            levels[i] = levels[i-1]*factor;
-    
-        return levels;
-    }
-    catch (...)
-    {
-        throw myexception()<<"I don't understand beta level string '"<<s<<"'";
-    }
 }
 
 vector<model_t>
@@ -963,35 +934,6 @@ create_A_and_T_model(const Rules& R,
         indel_rates_model = compile_model(R, TC, code_gen_state, parse_type("IntMap<Double>"), M, "indel rates", {{"tree", tree_type}});
     }
 
-    //-------------- Likelihood calculator types -----------//
-    vector<int> likelihood_calculators(A.size(), 0);
-    for(int i=0;i<imodel_mapping.size();i++)
-        if (not imodel_mapping[i])
-            likelihood_calculators[i] = 1;
-
-    if (options.likelihood_calculators)
-    {
-        likelihood_calculators = convertTo<int>(split(*options.likelihood_calculators, ","));
-        if (likelihood_calculators.size() == 1)
-            likelihood_calculators = vector<int>(A.size(), likelihood_calculators[0]);
-        if (likelihood_calculators.size() != A.size())
-            throw myexception()<<"We have "<<A.size()<<" partitions, but only got "<<likelihood_calculators.size()<<" likelihood calculator types.";
-        for(int i=0; i<A.size();i++)
-        {
-            int c = likelihood_calculators[i];
-            if (c != 0 and c != 1)
-                throw myexception()<<"Calculator "<<c<<" not recognized!";
-            if (c != 0 and imodel_mapping[i])
-                throw myexception()<<"Calculator "<<c<<" does not work with a variable alignment!";
-        }
-    }
-
-    bool unalign = options.unalign;
-    for(int i=0;i<A.size();i++)
-        if (unalign and imodel_mapping[i])
-            if (likelihood_calculators[i] != 0)
-                throw myexception()<<"Can't unalign with calculator "<<likelihood_calculators[i]<<"!";
-
     //--------------- Create the Parameters object---------------//
     // check that smodel mapping has correct size.
     if (smodel_mapping.size() != filename_ranges.size())
@@ -1018,7 +960,6 @@ create_A_and_T_model(const Rules& R,
                             smodel_conditions,
                             options.alignments);
 
-    //------------------- Handle heating ---------------------//
     //------------------- create the program -----------------//
     fs::path program_filename = dir / "BAliPhy.Main.hs";
     vector<Hs::Exp> alphabet_exps;
@@ -1037,8 +978,7 @@ create_A_and_T_model(const Rules& R,
                                     full_imodels, imodel_mapping,
                                     full_scale_models, scale_mapping,
                                     tree_model,
-                                    subst_rates_model, indel_rates_model,
-                                    likelihood_calculators);
+                                    subst_rates_model, indel_rates_model);
 
     return {std::move(prog), info};
 }
@@ -1061,34 +1001,4 @@ void write_initial_alignments(const InferOptions& options, int proc_id, const fs
 
         i++;
     }
-}
-
-/// Construct a multifurcating tree representing topology constraints from file \a filename.
-///
-/// \param filename The name of the file to load the tree from.
-/// \param names The order of the leaf labels.
-/// \return a multifurcating tree.
-///
-SequenceTree load_constraint_tree(const string& filename,const vector<string>& names)
-{
-    RootedSequenceTree RT;
-    RT.read(filename);
-
-    SequenceTree constraint = RT;
-      
-    remove_sub_branches(constraint);
-  
-    try{
-        remap_T_leaf_indices(constraint,names);
-    }
-    catch(const bad_mapping<string>& b) {
-        bad_mapping<string> b2 = b;
-        b2.clear();
-        if (b.from == 0)
-            b2<<"Constraint tree leaf sequence '"<<b2.missing<<"' not found in the alignment.";
-        else
-            b2<<"Alignment sequence '"<<b2.missing<<"' not found in the constraint tree.";
-        throw b2;
-    }
-    return constraint;
 }
