@@ -152,7 +152,7 @@ jobs:
 
         sudo apt-get update
         sudo apt-get install -y pandoc
-        sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev libzstd-dev
+        sudo apt-get install -y librange-v3-dev libeigen3-dev libcairo2-dev libcli11-dev libzstd-dev
         sudo apt-get install -y r-base gnuplot
 
         if [ "${{ matrix.compiler }}" = "gcc" ] ; then
@@ -218,6 +218,7 @@ jobs:
           mingw-w64-x86_64-cairo
           mingw-w64-x86_64-ccache
           mingw-w64-x86_64-cereal
+          mingw-w64-x86_64-cli11
           mingw-w64-x86_64-eigen3
           mingw-w64-x86_64-fmt
           mingw-w64-x86_64-gcc
@@ -272,7 +273,7 @@ jobs:
 
           export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 # Don't try and install python3.12
           brew install pandoc ccache coreutils
-          brew install eigen range-v3 cairo fmt zstd
+          brew install eigen range-v3 cairo cli11 fmt zstd
           brew install gnuplot r
           if [ "${{ matrix.compiler }}" = "llvm" ] ; then
             brew install llvm

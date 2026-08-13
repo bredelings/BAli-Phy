@@ -17,12 +17,12 @@ Install Prerequisites
 ---------------------
 On Ubuntu 24.04 (or higher), or on Debian testing, you can use apt-get:
 ```bash
-sudo apt-get install g++ libcairo2-dev meson libboost-all-dev pandoc
+sudo apt-get install g++ libcairo2-dev meson libboost-all-dev libcli11-dev pandoc
 ```
 
 On Mac (or Linux, actually) you can use homebrew:
 ```bash
-brew install cairo meson boost
+brew install cairo meson boost cli11
 ```
 
 On miniconda, you can use:
@@ -85,4 +85,3 @@ Further Documentation
 * [Tutorial](http://bali-phy.org/Tutorial4.html)
 
 The Manual describes [how to install](http://bali-phy.org/README.xhtml#installation) bali-phy in greater detail.
-

@@ -13,7 +13,7 @@ From: ubuntu:24.04
     python3 -m venv /venv
     /venv/bin/pip install meson ninja
 
-    apt-get install -y libboost-all-dev nlohmann-json3-dev librange-v3-dev libeigen3-dev libcairo2-dev
+    apt-get install -y libboost-all-dev nlohmann-json3-dev librange-v3-dev libeigen3-dev libcairo2-dev libcli11-dev
 
     # For run-time environment.
     apt-get install -y gnuplot r-base

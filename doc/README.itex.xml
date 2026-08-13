@@ -3409,7 +3409,7 @@ The stabilization criterion is the same one described above for numerical values
 
     <section><info><title>Linux</title></info>
     <para>On Debian and Ubuntu, you can type:
-<screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev pandoc libboost-all-dev</userinput></screen>
+<screen><prompt>%</prompt> <userinput>sudo apt-get install g++ git libcairo2-dev pandoc libboost-all-dev libcli11-dev</userinput></screen>
 
     </para>
 If your version of Debian or Ubuntu is recent enough to contain meson version 1.6 or higher, you can install meson with apt-get:
