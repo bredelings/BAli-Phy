@@ -21,8 +21,7 @@ model fatalities = do
     return loggers
 
 main = do
-  options <- execParser $
-    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  options <- execParser $ modelRunParser "Model" 200000
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
   let fatalities = [24, 25, 31, 31, 22, 21, 26, 20, 16, 22]

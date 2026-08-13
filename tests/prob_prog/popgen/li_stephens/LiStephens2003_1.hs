@@ -32,12 +32,10 @@ modelInputOptions =
     <*> strArgument (metavar "LOCATIONS" <> help "Table of sequence locations")
 
 main = do
-  options <- execParser $
-    info
-      (modelRunOptions "LiStephens2003_1" 200000 modelInputOptions <**> helper)
-      (fullDesc <> progDesc "Run the Li-Stephens recombination model")
+  (options, inputs) <- execParser $
+    withModelDescription "Run the Li-Stephens recombination model" $
+      modelRunParserWith "LiStephens2003_1" 200000 modelInputOptions
   runInfo <- initializeModelRun (testMode options) (outputName options)
-  let inputs = modelInputs options
 
   sequence_data <- load_alignment dna (sequenceFile inputs)
 

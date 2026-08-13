@@ -44,8 +44,7 @@ docs = map words [
         "bear wolf bear python bear wolf bear wolf bear wolf"]
 
 main = do
-  options <- execParser $
-    info (modelRunOptions "LDA" 200000 (pure ()) <**> helper) fullDesc
+  options <- execParser $ modelRunParser "LDA" 200000
   runInfo <- initializeModelRun (testMode options) (outputName options)
   context <- makeModelContext runInfo (logFormats options) $ model docs
 

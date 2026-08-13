@@ -22,8 +22,7 @@ model xs ys = do
     return ["b" %=% b, "a" %=% a, "sigma" %=% sigma]
 
 main = do
-  options <- execParser $
-    info (modelRunOptions "LinearRegression" 200000 (pure ()) <**> helper) fullDesc
+  options <- execParser $ modelRunParser "LinearRegression" 200000
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
   xy_data <- readTable "xy.csv"

@@ -50,14 +50,12 @@ model seqData = do
     return loggers
 
 main = do
-    options <- execParser $
-      info
-        (modelRunOptions "Model" 200000
-          (strArgument (metavar "ALIGNMENT" <> help "Aligned DNA sequences")) <**> helper)
-        fullDesc
+    (options, filename) <- execParser $
+      modelRunParserWith "Model" 200000 $
+        strArgument (metavar "ALIGNMENT" <> help "Aligned DNA sequences")
     runInfo <- initializeModelRun (testMode options) (outputName options)
 
-    seqData <- mkAlignedCharacterData dna <$> loadSequences (modelInputs options)
+    seqData <- mkAlignedCharacterData dna <$> loadSequences filename
     context <- makeModelContext runInfo (logFormats options) $ model seqData
 
     case runInfo of

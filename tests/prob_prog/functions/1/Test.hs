@@ -29,8 +29,7 @@ model = do
     return ["z1" %=% z1, "z2" %=% z2, "z3" %=% z3, "x" %=% x, "y1" %=% y1, "w1" %=% w1]
 
 main = do
-  options <- execParser $
-    info (modelRunOptions "Test" 200000 (pure ()) <**> helper) fullDesc
+  options <- execParser $ modelRunParser "Test" 200000
   runInfo <- initializeModelRun (testMode options) (outputName options)
   context <- makeModelContext runInfo (logFormats options) model
 

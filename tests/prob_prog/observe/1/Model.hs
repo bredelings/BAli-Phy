@@ -12,9 +12,8 @@ observe_data x = do
 
 main = do
   options <- execParser $
-    info
-      (modelRunOptions "Model" 200000 (pure ()) <**> helper)
-      (fullDesc <> progDesc "Run the observation example")
+    withModelDescription "Run the observation example" $
+      modelRunParser "Model" 200000
 
   runInfo <- initializeModelRun (testMode options) (outputName options)
 

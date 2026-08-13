@@ -33,8 +33,7 @@ model n = do
           "diff-obs" %=% n_diffs hidden_states observations]
 
 main = do
-  options <- execParser $
-    info (modelRunOptions "HMM" 200000 (pure ()) <**> helper) fullDesc
+  options <- execParser $ modelRunParser "HMM" 200000
   runInfo <- initializeModelRun (testMode options) (outputName options)
   context <- makeModelContext runInfo (logFormats options) $ model 100
 

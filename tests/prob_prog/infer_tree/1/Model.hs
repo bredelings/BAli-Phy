@@ -54,14 +54,12 @@ model seq_data = do
         ]
 
 main = do
-    options <- execParser $
-      info
-        (modelRunOptions "Model" 200000
-          (strArgument (metavar "SEQUENCES" <> help "Unaligned DNA sequences")) <**> helper)
-        fullDesc
+    (options, filename) <- execParser $
+      modelRunParserWith "Model" 200000 $
+        strArgument (metavar "SEQUENCES" <> help "Unaligned DNA sequences")
     runInfo <- initializeModelRun (testMode options) (outputName options)
 
-    seq_data <- mkUnalignedCharacterData dna <$> loadSequences (modelInputs options)
+    seq_data <- mkUnalignedCharacterData dna <$> loadSequences filename
     context <- makeModelContext runInfo (logFormats options) $ model seq_data
 
     case runInfo of

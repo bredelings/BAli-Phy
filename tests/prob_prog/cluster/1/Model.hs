@@ -33,14 +33,12 @@ model xs = do
 
 
 main = do
-  options <- execParser $
-    info
-      (modelRunOptions "Model" 200000
-        (strArgument (metavar "TABLE" <> help "Table containing an x column")) <**> helper)
-      fullDesc
+  (options, filename) <- execParser $
+    modelRunParserWith "Model" 200000 $
+      strArgument (metavar "TABLE" <> help "Table containing an x column")
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
-  xtable <- readTable (modelInputs options)
+  xtable <- readTable filename
 
   let xs = xtable $$ "x" :: [Double]
 

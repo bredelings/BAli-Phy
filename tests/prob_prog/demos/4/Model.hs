@@ -16,8 +16,7 @@ model = do
     return ["ys" %=% ys]
 
 main = do
-  options <- execParser $
-    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  options <- execParser $ modelRunParser "Model" 200000
   runInfo <- initializeModelRun (testMode options) (outputName options)
   context <- makeModelContext runInfo (logFormats options) model
 

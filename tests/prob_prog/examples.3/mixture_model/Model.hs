@@ -34,8 +34,7 @@ model xs = do
   return loggers
 
 main = do
-  options <- execParser $
-    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  options <- execParser $ modelRunParser "Model" 200000
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
   frame <- readTable "x.csv"

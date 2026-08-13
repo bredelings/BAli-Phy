@@ -13,8 +13,7 @@ observe_data z' = do
     return ["x" %=% x, "y" %=% y]
 
 main = do
-  options <- execParser $
-    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  options <- execParser $ modelRunParser "Model" 200000
   runInfo <- initializeModelRun (testMode options) (outputName options)
   let model = observe_data 1
   context <- makeModelContext runInfo (logFormats options) model

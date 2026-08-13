@@ -29,8 +29,7 @@ model = do
   return ["x" %=% x]
 
 main = do
-  options <- execParser $
-    info (modelRunOptions "GaussianMixture" 200000 (pure ()) <**> helper) fullDesc
+  options <- execParser $ modelRunParser "GaussianMixture" 200000
   runInfo <- initializeModelRun (testMode options) (outputName options)
   context <- makeModelContext runInfo (logFormats options) model
 

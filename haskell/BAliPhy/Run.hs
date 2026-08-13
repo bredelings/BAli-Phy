@@ -4,7 +4,9 @@ module BAliPhy.Run
     ( LogFormat(..)
     , ModelRunOptions(..)
     , ModelRun(..)
-    , modelRunOptions
+    , modelRunParser
+    , modelRunParserWith
+    , withModelDescription
     , initializeModelRun
     , makeModelContext
     , reportModelRun
@@ -43,12 +45,11 @@ import qualified Data.Text.IO as T
 data LogFormat = JSON | TSV
     deriving (Eq)
 
-data ModelRunOptions a = ModelRunOptions
+data ModelRunOptions = ModelRunOptions
     { iterations :: Int
     , testMode :: Bool
     , logFormats :: [LogFormat]
     , outputName :: String
-    , modelInputs :: a
     }
 
 data ModelRun
@@ -68,9 +69,9 @@ showLogFormats = intercalate "," . map showLogFormat where
     showLogFormat JSON = "json"
     showLogFormat TSV = "tsv"
 
--- Compose the controls common to standalone model programs with a typed model-input parser.
-modelRunOptions :: String -> Int -> Parser a -> Parser (ModelRunOptions a)
-modelRunOptions defaultName defaultIterations inputs =
+-- Parse the controls common to standalone model programs.
+modelRunOptions :: String -> Int -> Parser ModelRunOptions
+modelRunOptions defaultName defaultIterations =
     ModelRunOptions
         <$> option auto
             (short 'i' <> long "iterations" <> value defaultIterations <> showDefault <>
@@ -82,7 +83,20 @@ modelRunOptions defaultName defaultIterations inputs =
         <*> strOption
             (short 'n' <> long "name" <> value defaultName <> showDefaultWith id <>
              metavar "NAME" <> help "Name for a unique output directory")
-        <*> inputs
+
+-- Supply the standard help behavior for a model with no model-specific inputs.
+modelRunParser :: String -> Int -> ParserInfo ModelRunOptions
+modelRunParser defaultName defaultIterations =
+    info (modelRunOptions defaultName defaultIterations <**> helper) fullDesc
+
+-- Parse model-specific inputs separately from the options shared by all model programs.
+modelRunParserWith :: String -> Int -> Parser a -> ParserInfo (ModelRunOptions, a)
+modelRunParserWith defaultName defaultIterations inputs =
+    info (((,) <$> modelRunOptions defaultName defaultIterations <*> inputs) <**> helper) fullDesc
+
+withModelDescription :: String -> ParserInfo a -> ParserInfo a
+withModelDescription description parserInfo =
+    parserInfo { infoProgDesc = description }
 
 -- Represent test mode without filesystem output, or create the unique directory for an MCMC run.
 initializeModelRun :: Bool -> String -> IO ModelRun

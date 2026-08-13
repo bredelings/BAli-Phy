@@ -53,15 +53,13 @@ model seqData nucs logTree = do
             "gamma:alpha" %=% alpha]
 
 main = do
-    options <- execParser $
-      info
-        (modelRunOptions "Model" 200000
-          (strArgument (metavar "ALIGNMENT" <> help "Aligned DNA sequences")) <**> helper)
-        fullDesc
+    (options, filename) <- execParser $
+      modelRunParserWith "Model" 200000 $
+        strArgument (metavar "ALIGNMENT" <> help "Aligned DNA sequences")
     runInfo <- initializeModelRun (testMode options) (outputName options)
     let nucs = dna
 
-    seqData <- mkAlignedCharacterData nucs <$> loadSequences (modelInputs options)
+    seqData <- mkAlignedCharacterData nucs <$> loadSequences filename
 
     logTree <- case runInfo of
       TestRun -> return noLogger

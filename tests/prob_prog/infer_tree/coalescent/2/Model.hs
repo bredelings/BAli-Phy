@@ -92,14 +92,12 @@ model seqData@[seqData1,seqData2,seqData3] logTree = do
     return loggers
 
 main = do
-    options <- execParser $
-      info
-        (modelRunOptions "Model" 200000
-          (strArgument (metavar "ALIGNMENT" <> help "Aligned coding sequences")) <**> helper)
-        fullDesc
+    (options, filename) <- execParser $
+      modelRunParserWith "Model" 200000 $
+        strArgument (metavar "ALIGNMENT" <> help "Aligned coding sequences")
     runInfo <- initializeModelRun (testMode options) (outputName options)
 
-    sequences <- loadSequences (modelInputs options)
+    sequences <- loadSequences filename
 
     let seqData = [ mkAlignedCharacterData dna $ selectRange range sequences | range <- ["3-.\\3", "1-.\\3", "2-.\\3"]]
 

@@ -73,8 +73,7 @@ benchmarkModel scenario size =
 -- Select the benchmark outside Random so command-line configuration does not
 -- add changing probabilistic dependencies to the measured model.
 main = do
-  options <- execParser $
-    info (modelRunOptions "Model" 200000 (pure ()) <**> helper) fullDesc
+  options <- execParser $ modelRunParser "Model" 200000
   runInfo <- initializeModelRun (testMode options) (outputName options)
 
   scenario <- getEnv "BALIPHY_DP_MAP_SCENARIO"
