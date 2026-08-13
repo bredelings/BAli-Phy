@@ -10,7 +10,7 @@ import time
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bp-analyze"
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bp-summarize"
 MODULE = runpy.run_path(str(SCRIPT))
 Analysis = MODULE["Analysis"]
 BAliPhyRun = MODULE["BAliPhyRun"]

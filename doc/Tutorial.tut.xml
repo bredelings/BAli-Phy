@@ -124,12 +124,12 @@ of the CPU:
 In order to see how many iterations have completed, check the number of lines in the log files:
 % wc -l 5d-*/C1.log
 To summarize the results generated so far, run the summary script and then view the results in a web browser:
-% bp-analyze 5d-freeA-1/ 5d-freeA-2/
+% bp-summarize 5d-freeA-1/ 5d-freeA-2/
 % firefox Results/index.html &#38;
 
 When you have about 2000 samples from each run, summarize the latest results:
 % wc -l 5d-*/C1.log
-% bp-analyze 5d-freeA-1/ 5d-freeA-2/
+% bp-summarize 5d-freeA-1/ 5d-freeA-2/
 % mv Results 5d-freeA.Results
 % firefox 5d-freeA.Results/index.html &#38;
 Now lets kill the bali-phy processes:
@@ -176,7 +176,7 @@ The <userinput>-I none</userinput> is a short form of <userinput>--imodel=none</
 
 <para>Summarize the analysis after about 2000 iterations:</para>
 % wc -l 5d-*/C1.log
-% bp-analyze 5d-fixedA-1/ 5d-fixedA-2
+% bp-summarize 5d-fixedA-1/ 5d-fixedA-2
 
 <para>Examine the majority consensus tree for the fixed alignment analysis:</para>
 % figtree Results/c50.PP.tree &#38;
@@ -216,7 +216,7 @@ Let's run two copies of this analysis:
 Since we did not specify a name for the analysis, bali-phy creates the name <filename>ITS1-5.8S-ITS2</filename> from the input file names.
 
 Let's analyze the results, even if the analysis has not yet converged:
-% bp-analyze ITS1-5.8S-ITS2-1/ ITS1-5.8S-ITS2-2/
+% bp-summarize ITS1-5.8S-ITS2-1/ ITS1-5.8S-ITS2-2/
 % firefox Results/index.html &#38;
 
 The program Tracer graphically displays the posterior probability distribution for each parameter.  

@@ -1,21 +1,21 @@
-% bp-analyze(1)
+% bp-summarize(1)
 % Benjamin Redelings
 % Feb 2018
 
 # NAME
 
-**bp-analyze** - Generate an HTML report summarizing bali-phy runs.
+**bp-summarize** - Generate an HTML report summarizing bali-phy runs.
 
 # SYNOPSIS
 
-**bp-analyze** [OPTIONS] _directory1_ [_directory2_ ... ]
+**bp-summarize** [OPTIONS] _directory1_ [_directory2_ ... ]
 
 # DESCRIPTION
 
 Generate an HTML report summarizing bali-phy runs.
 
 When every chain contains a `C1.propertiesN.json` stream for a partition,
-**bp-analyze** computes pooled posterior means, standard deviations, and
+**bp-summarize** computes pooled posterior means, standard deviations, and
 medians for observed-character properties. It embeds an interactive property
 viewer and ranked template-column reports in that partition's tip-alignment
 pages. The partition alphabet is used to tokenize logical characters, color
@@ -27,7 +27,7 @@ ancestral and alignment-difference pages.
 
 The report is created at **Reports/index.html**.
 
-A log of all sub-commands is created at **Reports/bp-analyze.log**.
+A log of all sub-commands is created at **Reports/bp-summarize.log**.
 
 # OPTIONS:
 **-h**, **--help**
@@ -43,7 +43,7 @@ A log of all sub-commands is created at **Reports/bp-analyze.log**.
 
 
 # REPORTING BUGS:
-See **Reports/bp-analyze.log** to check if any sub-commands failed.
+See **Reports/bp-summarize.log** to check if any sub-commands failed.
 
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 

@@ -55,7 +55,7 @@
             xlink:href="https://documentation.ubuntu.com/desktop/en/latest/tutorial/the-linux-command-line-for-beginners/">Linux command line</link>.
     </para>
 
-    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
+    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-summarize</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
   </para>
 
   <para>In addition to the main <command>bali-phy</command> executable, <application>BAli-Phy</application> comes with a collection of small command-line utilities such as <command>alignment-cat</command>, <command>trees-consensus</command>, etc.  These utilities can be used to process alignments, assemble data sets, and summarize the results of MCMC.
@@ -118,7 +118,7 @@
         PowerShell or Command Prompt window after changing it.</para>
 
       <para>The compiled BAli-Phy programs do not require Python.  The
-        <command>bp-analyze</command> and <command>bali-phy-pkg</command> commands are Python
+        <command>bp-summarize</command> and <command>bali-phy-pkg</command> commands are Python
         scripts, however, and require
         <link xmlns:xlink="http://www.w3.org/1999/xlink"
               xlink:href="https://www.python.org/downloads/windows/">Python 3 for Windows</link>.
@@ -128,7 +128,7 @@
 
       <para><application>R</application> and <application>gnuplot</application> are optional.
         When they are installed and available on <envar>Path</envar>,
-        <command>bp-analyze</command> uses them to generate additional plots.  Without them,
+        <command>bp-summarize</command> uses them to generate additional plots.  Without them,
         it still produces the main HTML report, summary trees, alignments, and diagnostics,
         and reports which optional figures were omitted.</para>
 
@@ -172,7 +172,7 @@ If you install with Homebrew, you don't need to do anything extra to put bali-ph
 <prompt>%</prompt> <userinput>conda activate bali-phy</userinput></screen>
       Check that the executable runs:
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-      Bioconda packages BAli-Phy together with the programs used by <command>bp-analyze</command>, including R and gnuplot.  On Apple Silicon, use BAli-Phy 4.2 or newer; earlier Bioconda builds have a platform-specific model-parsing bug.
+      Bioconda packages BAli-Phy together with the programs used by <command>bp-summarize</command>, including R and gnuplot.  On Apple Silicon, use BAli-Phy 4.2 or newer; earlier Bioconda builds have a platform-specific model-parsing bug.
     </para>
     </section>
 
@@ -199,7 +199,7 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
 
     </section>
 
-    <section><info><title>Install programs used by <command>bp-analyze</command> using Homebrew</title></info>
+    <section><info><title>Install programs used by <command>bp-summarize</command> using Homebrew</title></info>
     <para>
       You can install <application>gnuplot</application> via Homebrew:
 <screen><prompt>%</prompt> <userinput> brew install gnuplot</userinput></screen> 
@@ -248,7 +248,7 @@ You can install <application>R</application> via Homebrew:
     If you install with <command>apt-get</command>, you don't need to do anything extra to put bali-phy in your PATH.
     </section>
 
-    <section><info><title>Install programs used by <command>bp-analyze</command></title></info>
+    <section><info><title>Install programs used by <command>bp-summarize</command></title></info>
     <para>If you have Debian or Ubuntu Linux, you can install other recommended programs by typing:
     <screen><prompt>%</prompt> <userinput>sudo apt-get install gnuplot</userinput>
 <prompt>%</prompt> <userinput>sudo apt-get install r-base</userinput></screen>
@@ -267,7 +267,7 @@ You can install <application>R</application> via Homebrew:
       <para>The <envar>PATH</envar> environment variable lists the directories in which your
         terminal searches for commands.  Once the BAli-Phy <filename>bin</filename> directory
         is on <envar>PATH</envar>, you can type <command>bali-phy</command>,
-        <command>bp-analyze</command>, and the other command names without specifying their
+        <command>bp-summarize</command>, and the other command names without specifying their
         complete locations.</para>
 
       <section><title>Windows</title>
@@ -318,11 +318,11 @@ You can install <application>R</application> via Homebrew:
         instead.  Then run these commands in the same terminal:</para>
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput>
 <prompt>%</prompt> <userinput>draw-tree --help</userinput>
-<prompt>%</prompt> <userinput>bp-analyze --help</userinput>
+<prompt>%</prompt> <userinput>bp-summarize --help</userinput>
 <prompt>%</prompt> <userinput>bali-phy-pkg --help</userinput>
 <prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200</userinput>
 <prompt>%</prompt> <userinput>bali-phy 25.fasta --iter=200</userinput>
-<prompt>%</prompt> <userinput>bp-analyze 25-1 25-2</userinput></screen>
+<prompt>%</prompt> <userinput>bp-summarize 25-1 25-2</userinput></screen>
 
     <para>
       Then check that the file <filename>Results/index.html</filename> exists and can be opened in a web browser.
@@ -332,7 +332,7 @@ You can install <application>R</application> via Homebrew:
 
     <section xml:id="software_req"><info><title>Optional programs for inspecting results</title></info>
 
-    <para>The main output from <command>bp-analyze</command> is the report
+    <para>The main output from <command>bp-summarize</command> is the report
       <filename>Results/index.html</filename>.  Open this report in a web browser first: it
       contains summary trees and alignments, mixing diagnostics, and links to the underlying
       result files.  The programs below are optional and are useful when you want to inspect
@@ -422,7 +422,7 @@ You can install <application>R</application> via Homebrew:
       Tracer, <filename>Results/c50.PP.tree</filename> in a tree viewer, and
       <filename>Results/P1.consensus.pd-wsum.fasta</filename> in an alignment viewer.</para>
 
-    <para>Consensus trees produced by <command>bp-analyze</command>, such as
+    <para>Consensus trees produced by <command>bp-summarize</command>, such as
       <filename>Results/c50.PP.tree</filename>, can be opened directly in TreeViewer, FigTree,
       or iTOL.  Be more careful with annotated input trees: some BAli-Phy analyses use comments
       such as <userinput>[&amp;foreground=1]</userinput> to identify particular branches.
@@ -437,7 +437,7 @@ You can install <application>R</application> via Homebrew:
 
   <section xml:id="running"><info><title>Running the program</title></info>
     
-    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
+    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-summarize</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
     </para>
 
     <para> The simplest way to run <command>BAli-Phy</command> is
@@ -506,8 +506,8 @@ You can install <application>R</application> via Homebrew:
     See <xref linkend="software_req"/> for this and other result-viewing programs.
     </para>
 
-<para>When enough iterations have finished, we then run the script <userinput>bp-analyze</userinput> to summarize the results:
-<screen><prompt>%</prompt> bp-analyze 25-1/ 25-2/ 25-3/ 25-4/
+<para>When enough iterations have finished, we then run the script <userinput>bp-summarize</userinput> to summarize the results:
+<screen><prompt>%</prompt> bp-summarize 25-1/ 25-2/ 25-3/ 25-4/
 Creating new directory 'Results' for summary files.
 Summarizing distribution of numerical parameters: done.
 Analyzing scalar variables: done.
@@ -776,7 +776,7 @@ option.  For example:
 
   <section xml:id="output"><info><title>Output</title></info>
 
-    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-analyze</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
+    <para>BAli-Phy analyses have two phases.  (This structure is common to all Bayesian analyses.) First the <command>bali-phy</command> program generates <emphasis>posterior samples</emphasis> of trees, alignments and parameters.  Second, the <command>bp-summarize</command> script creates <emphasis>posterior summaries</emphasis> that collapse the collection of posterior samples down to single trees, alignments, and parameter estimates.  It also diagnoses <emphasis>lack of convergence</emphasis>.
     </para>
 
 
@@ -1008,22 +1008,22 @@ option.  For example:
   <section xml:id="analysis"><info><title>Posterior summaries</title></info>
 
     <para>
-      The <command>bp-analyze</command> script summarizes the posterior samples to create posterior summaries for the alignment, tree, and parameters.
+      The <command>bp-summarize</command> script summarizes the posterior samples to create posterior summaries for the alignment, tree, and parameters.
       It creates an HTML page <filename>Results/index.html</filename> that summarizes the posterior distribution.
     </para>
 
-  <para>You may run <command>bp-analyze</command> inside the output directory, like this:
-<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable></screen>
+  <para>You may run <command>bp-summarize</command> inside the output directory, like this:
+<screen><prompt>%</prompt> bp-summarize --skip=<replaceable>iterations</replaceable></screen>
       You may also run it with one or more output directories as
       arguments, like this:
-<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable> <replaceable>directory</replaceable>-1/ <replaceable>directory</replaceable>-2/</screen>
+<screen><prompt>%</prompt> bp-summarize --skip=<replaceable>iterations</replaceable> <replaceable>directory</replaceable>-1/ <replaceable>directory</replaceable>-2/</screen>
       In this case, output from multiple runs will be used to assess convergence and mixing, as well as to increase the precision of the estimates.
     </para>
 
-<para> All the commands that are executed by <command>bp-analyze</command> will be logged to
+<para> All the commands that are executed by <command>bp-summarize</command> will be logged to
       <filename>Results/commands.log</filename>. You can also see these
       commands as they are executed by supplying the <command>--verbose</command> option:
-<screen><prompt>%</prompt> bp-analyze --skip=<replaceable>iterations</replaceable> --verbose</screen>
+<screen><prompt>%</prompt> bp-summarize --skip=<replaceable>iterations</replaceable> --verbose</screen>
     </para>
 
     <section><info><title>Meaning of generated files</title></info>
@@ -3747,11 +3747,11 @@ your <command>bali-phy</command> runs on that computer.
     </section>
 
 
-    <section><info><title>Running <command>bp-analyze</command>.</title></info>
+    <section><info><title>Running <command>bp-summarize</command>.</title></info>
       <qandaset>
 
 	<qandaentry>
-	  <question><para>Why does <command>bp-analyze</command> say "Program 'draw-tree' not
+	  <question><para>Why does <command>bp-summarize</command> say "Program 'draw-tree' not
 	    found.  Tree pictures will not be generated"?</para></question>
 	  <answer>
 	    <para>The program <command>draw-tree</command> is built only when the Cairo graphics
@@ -3763,7 +3763,7 @@ your <command>bali-phy</command> runs on that computer.
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>Why does <command>bp-analyze</command> say "Program 'gnuplot' not found.
+	  <question><para>Why does <command>bp-summarize</command> say "Program 'gnuplot' not found.
 	    Some graphs will not be generated"?</para></question>
 	  <answer>
 	    <para>This is because you have not installed <application>gnuplot</application>.  This
@@ -3773,14 +3773,14 @@ your <command>bali-phy</command> runs on that computer.
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>Why does <command>bp-analyze</command> say "Program 'R' not found.  Some mixing graphs will not be generated"?</para></question>
+	  <question><para>Why does <command>bp-summarize</command> say "Program 'R' not found.  Some mixing graphs will not be generated"?</para></question>
 	  <answer>
 	    <para>This is because you have not installed <application>R</application>.  This is not a fatal error message, it just means that a plot showing differences in clade probabilities between runs will not be generated.</para>
 	  </answer>
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>Why is <command>bp-analyze</command> stopping early, or failing to generate some files?</para></question>
+	  <question><para>Why is <command>bp-summarize</command> stopping early, or failing to generate some files?</para></question>
 	  <answer>
 	    <para>Look in the file <filename>Results/commands.log</filename>.  This should contain the specific tool commands that were run, along with error message from these commands.  Identify the first tool command that fails, and read the error message.</para>
 	  </answer>

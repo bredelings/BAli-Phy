@@ -32,7 +32,7 @@ Several parts of the previous survey and plan have been implemented or supersede
 * `BranchModel` is active infrastructure used by `BranchSite`; the previous proposal to delete it is
   obsolete.
 * The special `MixtureModel` binding category and `mmm` representation have been removed.
-* `character-properties`, `alignment-draw`, and `bp-analyze` now provide posterior mean, standard
+* `character-properties`, `alignment-draw`, and `bp-summarize` now provide posterior mean, standard
   deviation, median, text-report, and interactive ranked-column views.
 * Tool tests are now declarative test directories enumerated separately by Meson. New `statreport` or
   `alignment-draw` cases should use that format instead of adding Python test methods or executables.
@@ -127,9 +127,9 @@ general context-dependent logger. Those limitations no longer describe the curre
 * `character-properties report` produces text, TSV, or JSON reports by template-alignment column.
 * `alignment-draw` displays complete posterior summaries, supports property and scale selection, and
   includes generic and positive-selection ranked-column panels.
-* `bp-analyze` discovers property streams, runs `character-properties summarize`, and incorporates
+* `bp-summarize` discovers property streams, runs `character-properties summarize`, and incorporates
   alphabet-aware property views into its report.
-* Ordinary scalar logs and `bp-analyze` already provide parameter summaries, credible intervals,
+* Ordinary scalar logs and `bp-summarize` already provide parameter summaries, credible intervals,
   ESS-like diagnostics, and between-chain diagnostics.
 * `statreport` recognizes conditional `LogOdds*` fields and calculates their posterior probability
   and posterior log odds without averaging the log odds themselves.
@@ -141,7 +141,7 @@ general context-dependent logger. Those limitations no longer describe the curre
 * **Site-model tests:** the inference and conditional model probabilities exist, but their evidence
   and site properties need a selection-specific report.
 * **Combined gene evidence:** maintained branch, site, and branch-site tests provide conditional
-  probabilities and `statreport` summaries, but `bp-analyze` does not yet present them as one
+  probabilities and `statreport` summaries, but `bp-summarize` does not yet present them as one
   selection workflow with explicit prior odds and Bayes factors.
 * **Multiple genes or branch tests:** independent runs are possible, but prevalence-aware summaries
   and multiplicity guidance are absent.
@@ -262,11 +262,11 @@ also keeps generated binding code from independently evaluating the two related 
 
 **Choice:** Retain both the conditional probability and conditional log odds. Add a `statreport`
 summary mode that interprets selected fields as conditional log odds and calculates the mean
-conditional probability and resulting posterior log odds stably. `bp-analyze` should consume its
+conditional probability and resulting posterior log odds stably. `bp-summarize` should consume its
 dedicated record through the existing `statreport` subprocess.
 
 The calculation belongs in `statreport`, which already owns scalar trace reading, burn-in handling,
-and sample selection. Reimplementing TSV, JSON, and MCON trace reading in `bp-analyze` would create
+and sample selection. Reimplementing TSV, JSON, and MCON trace reading in `bp-summarize` would create
 parallel infrastructure.
 
 **Alternatives:**
@@ -408,7 +408,7 @@ generated-model construction rather than adding checks to likelihood or transiti
 * `statreport` owns stable model-probability aggregation;
 * `character-properties` owns per-character posterior summaries and projected reports;
 * `alignment-draw` owns ranked and alignment-projected site presentation; and
-* `bp-analyze` owns the combined run report.
+* `bp-summarize` owns the combined run report.
 
 Do not add a workflow executable. Add tool tests as declarative directories, using `check.py` only
 where exact output comparison cannot express the required graphical or structural assertion.
@@ -551,7 +551,7 @@ earlier change should be made in an empty child of that change and squashed into
    The implementation described below uses template columns rather than a selected reference
    sequence and shares report construction between command-line and browser output.
 
-10. **Add selection evidence to `bp-analyze`.**
+10. **Add selection evidence to `bp-summarize`.**
     Detect `LogOddsPosSelection` and `LogOddsBranchDifference` fields. Invoke `statreport` once and
     parse the `posterior-probability` records it automatically emits for those fields instead of
     reading traces again. Report posterior probability,
@@ -559,13 +559,13 @@ earlier change should be made in an empty child of that change and squashed into
     `--selection-prior`, defaulting to 0.5 to match maintained bindings, and print the chosen value.
     Also summarize the ordinary branch fields and link each partition to available ranked
     `posSelection`, `foreground-posSelection`, `dNdS`, and `foreground-dNdS` views. Extend
-    `tests/scripts/test_bp_analyze_properties.py` for one partition, multiple partitions, missing
+    `tests/scripts/test_bp_summarize_properties.py` for one partition, multiple partitions, missing
     property streams, branch evidence, and non-equal prior odds.
 
 11. **Document the complete beginner workflow.**
     Update `doc/README.itex.xml` and `doc/Tutorial.tut.xml` with concrete M0, `M2a_test`,
     `M8a_test(n=10)`, `Branch_test`, and `BranchSite` examples. Include
-    `--set write-properties=true`, multiple chains, `bp-analyze`, a selected reference sequence, and a
+    `--set write-properties=true`, multiple chains, `bp-summarize`, a selected reference sequence, and a
     fixed foreground-labeled topology where required. Explain the M8a rather than M7 null, posterior
     probability versus Bayes factor, unconditional site probabilities, one-based display versus
     zero-based stored coordinates, and branch heterogeneity versus `omega_foreground > 1`.
@@ -580,7 +580,7 @@ earlier change should be made in an empty child of that change and squashed into
 
 13. **Verify the complete workflow.**
     Build with `nice -n10 ninja -C ../build/gcc-16-debug-O -j11`. Run the focused context-field,
-    `statreport`, property, alignment-draw, `bp-analyze`, generated binding, branch-model, and
+    `statreport`, property, alignment-draw, `bp-summarize`, generated binding, branch-model, and
     testiphy likelihood cases, then the broader Haskell suite and the required 5d `+A` test. Run a
     small fixed-alignment codon example under M0, site, branch, and branch-site models and confirm that
     probability, odds, and Bayes-factor identities agree numerically with the traces. A debug-machine
@@ -626,8 +626,8 @@ The first complete workflow should let a user:
 * The browser contains generic and positive-selection ranked-column panels generated from the C++
   report rows. Selecting a row highlights its complete template column and opens the representative
   character's tooltip.
-* `bp-analyze` runs the C++ summarizer and supplies the partition alphabet and summary to each
-  applicable tip-alignment view. The `character-properties`, `alignment-draw`, and `bp-analyze`
+* `bp-summarize` runs the C++ summarizer and supplies the partition alphabet and summary to each
+  applicable tip-alignment view. The `character-properties`, `alignment-draw`, and `bp-summarize`
   manuals describe the resulting workflow.
 
 Conditional property summaries and producer-supplied property metadata remain separate future

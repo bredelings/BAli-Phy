@@ -208,10 +208,10 @@ endforeach
 # Install non-executable files
 
 if host_machine.system() == 'windows'
-  install_data('scripts/bp-analyze', rename: 'bp-analyze.py', install_dir: 'bin')
-  install_data('scripts/bp-analyze.cmd', install_dir: 'bin')
+  install_data('scripts/bp-summarize', rename: 'bp-summarize.py', install_dir: 'bin')
+  install_data('scripts/bp-summarize.cmd', install_dir: 'bin')
 else
-  install_data('scripts/bp-analyze', install_mode: 'rwxr-xr-x', install_dir: 'bin')
+  install_data('scripts/bp-summarize', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 endif
 if host_machine.system() == 'windows'
   install_data('scripts/bali-phy-pkg.py', install_dir: 'bin')
@@ -228,9 +228,9 @@ install_subdir('bindings', install_dir: 'lib/bali-phy')
 install_subdir('help', install_dir: 'lib/bali-phy')
 install_subdir('examples', install_dir: get_option('datadir')/'doc/bali-phy')
 
-test('bp-analyze character properties',
+test('bp-summarize character properties',
      python,
-     args: [files('tests/scripts/test_bp_analyze_properties.py')])
+     args: [files('tests/scripts/test_bp_summarize_properties.py')])
 
 test('bali-phy-pkg',
      python,

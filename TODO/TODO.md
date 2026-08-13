@@ -4,7 +4,7 @@
 
  * Complete native windows tests.
  
-   - Possibly we need to do something to make bp-analyze work.
+   - Possibly we need to do something to make bp-summarize work.
 
 ## Runtime refactor
 

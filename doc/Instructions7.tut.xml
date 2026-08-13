@@ -188,11 +188,11 @@ For more information on parameter names, see <link xmlns:xlink="http://www.w3.or
 </section>
 
 <section><info><title>Summarizing the results of a run</title></info>
-% bp-analyze ferns-intron-exon-1 ferns-intron-exon-2
+% bp-summarize ferns-intron-exon-1 ferns-intron-exon-2
 % firefox Results/index.html
 Let's concatenate the summmary estimates for each partition to recover an alignment for the whole gene region.
 % alignment-cat Results/P{1..7}-max.fasta > ferns-bali-phy.fasta
-Since bali-phy is still running, we can get information on its progress by rerunning <userinput>bp-analyze</userinput>.
+Since bali-phy is still running, we can get information on its progress by rerunning <userinput>bp-summarize</userinput>.
 </section>
 <section><info><title>Comparing to MAFFT, FSA, and PRANK</title></info>
 We can see how the different aligners affect the total alignment length:
@@ -255,10 +255,10 @@ name = ferns-intron-exon2       # determines name for output directory
 % bali-phy -c ferns-config2.txt &amp;
 %%&lt;wait a few minutes
 % wc -l ferns-intron-exon2-*/C1.log                      // How many iterations have been completed so far?
-% bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   // Generate a summary of completed iterations.
+% bp-summarize ferns-intron-exon2-1 ferns-intron-exon2-2   // Generate a summary of completed iterations.
 %%&lt;wait a few more minutes
 % wc -l ferns-intron-exon2-*/C1.log                      // How many iterations have been completed so far?
-% bp-analyze ferns-intron-exon2-1 ferns-intron-exon2-2   // Generate a summary of completed iterations.
+% bp-summarize ferns-intron-exon2-1 ferns-intron-exon2-2   // Generate a summary of completed iterations.
 % firefox Results/index.html &amp;
 </section>
 
@@ -311,10 +311,10 @@ name = ferns-intron-exon3
 % bali-phy -c ferns-config3.txt &amp;
 % bali-phy -c ferns-config3.txt &amp;
 % wc -l ferns-intron-exon3-*/C1.log                      // How many iterations have been completed so far?
-% bp-analyze ferns-intron-exon3-1 ferns-intron-exon3-2   // Generate a summary of completed iterations.
+% bp-summarize ferns-intron-exon3-1 ferns-intron-exon3-2   // Generate a summary of completed iterations.
 %%&lt;wait a few more minutes
 % wc -l ferns-intron-exon3-*/C1.log                      // How many iterations have been completed so far?
-% bp-analyze ferns-intron-exon3-1 ferns-intron-exon3-2   // Generate a summary of completed iterations.
+% bp-summarize ferns-intron-exon3-1 ferns-intron-exon3-2   // Generate a summary of completed iterations.
 %%&lt;wait a few minutes
 % firefox Results/index.html &amp;
 

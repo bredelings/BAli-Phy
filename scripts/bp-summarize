@@ -2586,7 +2586,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate an HTML report summarizing MCMC runs for BAli-Phy and other software.",
-                                     epilog= "Examples:\n   bp-analyze analysis-dir-1/ analysis-dir-2/\n   bp-analyze trees1.trees trees2.trees\n   bp-analyze log1.log log2.log",
+                                     epilog= "Examples:\n   bp-summarize analysis-dir-1/ analysis-dir-2/\n   bp-summarize trees1.trees trees2.trees\n   bp-summarize log1.log log2.log",
                                      formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument("mcmc_outputs", default=['.'], help="Subdirectories with MCMC runs",nargs='*')
