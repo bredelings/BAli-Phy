@@ -6,6 +6,7 @@ baliphy_sources = [
   'files.cc',
   'system.cc',
   'cmd_line.cc',
+  'cmd_line_cli11.cc',
   'paths.cc']
 
 # maybe we don't need this if we are doing static linking
@@ -35,4 +36,3 @@ baliphy = executable('bali-phy',
 		     install_rpath: extra_rpath,
 		     install: true,
 		     export_dynamic: true)
-

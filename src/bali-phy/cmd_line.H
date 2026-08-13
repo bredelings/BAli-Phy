@@ -49,6 +49,7 @@ struct GlobalOptions
 
 struct InferOptions
 {
+    std::optional<std::filesystem::path> config_file;
     std::vector<std::string> alignments;
     std::optional<long int> iterations;
     std::optional<std::string> name;
@@ -99,7 +100,12 @@ struct TestModuleCommand
     std::string module;
 };
 
-using Command = std::variant<InferOptions, RunCommand, PrintCommand, TypeCommand, TestModuleCommand>;
+struct HelpCommand
+{
+    std::optional<std::string> topic;
+};
+
+using Command = std::variant<InferOptions, RunCommand, PrintCommand, TypeCommand, TestModuleCommand, HelpCommand>;
 
 struct CommandLine
 {
@@ -111,6 +117,7 @@ extern const std::string trailing_args_separator;
 
 std::vector<std::string> trailing_args(int argc, char* argv[], const std::string& separator);
 CommandLine parse_cmd_line(int argc,char* argv[]);
+CommandLine parse_cli11_command_line(int argc, char* argv[]);
 std::string get_command_line(int argc, char* argv[]);
 
 std::set<std::string> get_log_formats(const InferOptions& options, bool is_A_T_model);
