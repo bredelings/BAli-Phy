@@ -28,11 +28,18 @@ namespace record_rename
     // Record every in-scope interpretation of an update label for later type-directed filtering.
     void resolve_record_update_candidates(const renamer_state& rn, Located<Hs::FieldBinding>& field);
 
-    // Resolve constructor-directed fields to their declared names when available.
-    void resolve_constructor_field_identities(const renamer_state& rn, const std::string& constructor_name, Hs::FieldBindings& fields);
+    // Resolve and validate constructor-directed fields when record metadata is available.
+    void resolve_constructor_field_identities(
+        const renamer_state& rn,
+        const std::string& constructor_name,
+        Hs::FieldBindings& fields);
 
-    // Resolve constructor-directed pattern fields to their declared names when available.
-    void resolve_constructor_field_identities(const renamer_state& rn, const std::string& constructor_name, Hs::PatternFieldBindings& fields);
+    // Resolve and validate constructor-directed pattern fields when record metadata is available.
+    void resolve_constructor_field_identities(
+        const renamer_state& rn,
+        const std::string& constructor_name,
+        const std::string& pattern_text,
+        Hs::PatternFieldBindings& fields);
 
     // Expand a pattern-side record pun after checking NamedFieldPuns.
     void check_pattern_pun(const renamer_state& rn, const Located<Hs::PatternFieldBinding>& field);

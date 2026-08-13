@@ -40,14 +40,6 @@ namespace
             *con_info.field_names,
             unloc(Rec.fbinds).fields,
             [](const auto& field) -> optional<Hs::LPat> { return unloc(field).pattern; },
-            [&](const auto& field, const auto& field_name) {
-                tc.record_error(field.loc, Note()<<"Constructor '"<<get_unqualified_name(con.name)<<"' does not have field '"<<field_name<<"'.");
-                invalid_field_patterns.push_back(unloc(field).pattern);
-            },
-            [&](const auto& field, const auto& field_name) {
-                tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in pattern '"<<pattern_text<<"'.");
-                invalid_field_patterns.push_back(unloc(field).pattern);
-            },
             [](const auto&, const auto&) {});
 
         Hs::LPats args;

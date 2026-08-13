@@ -5,6 +5,36 @@
 #include "computation/record_utils.H"
 #include "computation/haskell/ids.H"
 
+namespace
+{
+    // Resolve fields against one constructor and report source errors that do not require inferred types.
+    template<class FieldBindings>
+    void resolve_constructor_fields(
+        const renamer_state& rn,
+        const std::string& constructor_name,
+        const std::string& duplicate_context,
+        FieldBindings& fields)
+    {
+        auto field_names = rn.m.record_field_names_for_constructor(constructor_name);
+        if (not field_names)
+            return;
+
+        std::set<std::string> used_fields;
+        for(auto& field: fields.fields)
+        {
+            auto& binding = unloc(field);
+            auto source_name = unloc(binding.field).name;
+            binding.resolved_field = record_utils::resolve_record_field_name(*field_names, source_name);
+            if (not binding.resolved_field)
+                rn.error(field.loc, Note()<<"Constructor '"<<get_unqualified_name(constructor_name)
+                         <<"' does not have field '"<<source_name<<"'.");
+            else if (not used_fields.insert(*binding.resolved_field).second)
+                rn.error(field.loc, Note()<<"Field '"<<source_name
+                         <<"' appears more than once in "<<duplicate_context<<".");
+        }
+    }
+}
+
 namespace record_rename
 {
     void require_record_extension(const renamer_state& rn, const std::optional<yy::location>& loc, LangExt extension, const std::string& extension_name, const std::string& syntax)
@@ -59,30 +89,21 @@ namespace record_rename
             rn.error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
     }
 
-    void resolve_constructor_field_identities(const renamer_state& rn, const std::string& constructor_name, Hs::FieldBindings& fields)
+    void resolve_constructor_field_identities(
+        const renamer_state& rn,
+        const std::string& constructor_name,
+        Hs::FieldBindings& fields)
     {
-        auto field_names = rn.m.record_field_names_for_constructor(constructor_name);
-        if (not field_names)
-            return;
-
-        for(auto& field: fields.fields)
-        {
-            auto& binding = unloc(field);
-            binding.resolved_field = record_utils::resolve_record_field_name(*field_names, unloc(binding.field).name);
-        }
+        resolve_constructor_fields(rn, constructor_name, "record construction", fields);
     }
 
-    void resolve_constructor_field_identities(const renamer_state& rn, const std::string& constructor_name, Hs::PatternFieldBindings& fields)
+    void resolve_constructor_field_identities(
+        const renamer_state& rn,
+        const std::string& constructor_name,
+        const std::string& pattern_text,
+        Hs::PatternFieldBindings& fields)
     {
-        auto field_names = rn.m.record_field_names_for_constructor(constructor_name);
-        if (not field_names)
-            return;
-
-        for(auto& field: fields.fields)
-        {
-            auto& binding = unloc(field);
-            binding.resolved_field = record_utils::resolve_record_field_name(*field_names, unloc(binding.field).name);
-        }
+        resolve_constructor_fields(rn, constructor_name, "pattern '" + pattern_text + "'", fields);
     }
 
     void check_pattern_pun(const renamer_state& rn, const Located<Hs::PatternFieldBinding>& field)

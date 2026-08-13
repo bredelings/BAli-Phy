@@ -449,12 +449,6 @@ namespace
             unloc(Rec.fbinds).fields,
             [](const auto& field) { return unloc(field).value; },
             [&](const auto& field, const auto& field_name) {
-                tc.record_error(field.loc, Note()<<"Constructor '"<<get_unqualified_name(con.name)<<"' does not have field '"<<field_name<<"'.");
-            },
-            [&](const auto& field, const auto& field_name) {
-                tc.record_error(field.loc, Note()<<"Field '"<<field_name<<"' appears more than once in record construction.");
-            },
-            [&](const auto& field, const auto& field_name) {
                 tc.record_error(field.loc, Note()<<"Field pun '"<<field_name<<"' was not expanded before typechecking.");
             });
 

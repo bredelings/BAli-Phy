@@ -398,7 +398,9 @@ bound_var_info renamer_state::rename_pattern(Hs::LPat& lpat, bool top)
 
                 unloc(R.head).name = S->name;
                 unloc(R.head).arity = *S->arity;
-                record_rename::resolve_constructor_field_identities(*this, S->name, unloc(R.fbinds));
+                auto pattern_text = get_unqualified_name(S->name) + " {" + unloc(R.fbinds).print() + "}";
+                record_rename::resolve_constructor_field_identities(
+                    *this, S->name, pattern_text, unloc(R.fbinds));
                 pat = R;
             }
             catch (myexception& e)
