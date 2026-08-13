@@ -307,6 +307,7 @@ Hs::LExp renamer_state::rename(Hs::LExp LE, const bound_var_info& bound, set<str
             auto& f = unloc(field);
             auto field_name = unloc(f.field).name;
             record_rename::check_duplicate_field(*this, used_field_names, field.loc, field_name, "record update");
+            record_rename::resolve_record_update_candidates(*this, field);
 
             record_rename::expand_expression_pun(*this, field);
             f.value = rename(*f.value, bound, free_vars);

@@ -2668,13 +2668,12 @@ namespace
         }
     }
 
-    // Add local field metadata entries that match an already resolved field name.
-    void add_record_field_candidates(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const std::map<std::string, type_ptr>& types, const std::string& resolved_field_name)
+    // Add metadata from one type that matches an already resolved field identity.
+    void add_record_field_candidates(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const type_info& type, const std::string& resolved_field_name)
     {
-        for(const auto& [_, type]: types)
-            for(const auto& field: record_fields_for_type_info(*type))
-                if (field.name == resolved_field_name)
-                    merge_record_field_candidate(candidates, field);
+        for(const auto& field: record_fields_for_type_info(type))
+            if (field.name == resolved_field_name)
+                merge_record_field_candidate(candidates, field);
     }
 
     // Add local field metadata entries that can be denoted by a source field name.
@@ -2684,13 +2683,6 @@ namespace
             for(const auto& field: record_fields_for_type_info(*type))
                 if (record_field_name_matches(field.name, field_name))
                     merge_record_field_candidate(candidates, field);
-    }
-
-    // Add pre-collected field metadata entries to a candidate map.
-    void add_record_field_candidates(std::map<std::pair<std::string,std::string>, FieldInfo>& candidates, const std::vector<FieldInfo>& fields)
-    {
-        for(const auto& field: fields)
-            merge_record_field_candidate(candidates, field);
     }
 
     // Reconstruct the declared field order for a resolved record constructor from FieldInfo.
@@ -2714,12 +2706,11 @@ namespace
         }
     }
 
-    // Reconstruct constructor field order from local type metadata.
-    std::optional<std::vector<std::string>> record_field_names_for_constructor(const std::map<std::string, type_ptr>& types, const std::string& constructor_name)
+    // Reconstruct constructor field order from its parent type metadata.
+    std::optional<std::vector<std::string>> record_field_names_for_constructor(const type_info& type, const std::string& constructor_name)
     {
         std::vector<std::optional<std::string>> field_names;
-        for(const auto& [_, type]: types)
-            add_record_field_names_for_constructor(field_names, record_fields_for_type_info(*type), constructor_name);
+        add_record_field_names_for_constructor(field_names, record_fields_for_type_info(type), constructor_name);
 
         if (field_names.empty())
             return {};
@@ -2729,48 +2720,6 @@ namespace
             if (name)
                 names.push_back(*name);
         return names;
-    }
-
-    // Collect local and imported field metadata candidates for a resolved field name.
-    template<class ImportedModules>
-    std::vector<FieldInfo> record_field_candidates_for_resolved_name(
-        const std::map<std::string, type_ptr>& types,
-        const ImportedModules& imported_modules,
-        const std::string& field_name)
-    {
-        std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
-        add_record_field_candidates(candidates, types, field_name);
-        for(const auto& [_, mod]: imported_modules)
-        {
-            auto imported_fields = mod->record_field_candidates_for_resolved_name(field_name);
-            add_record_field_candidates(candidates, imported_fields);
-        }
-
-        std::vector<FieldInfo> fields;
-        for(auto& [_, field]: candidates)
-            fields.push_back(field);
-        return fields;
-    }
-
-    // Find constructor field order locally first, then through imported modules.
-    template<class ImportedModules>
-    std::optional<std::vector<std::string>> record_field_names_for_constructor(
-        const std::map<std::string, type_ptr>& types,
-        const ImportedModules& imported_modules,
-        const std::string& constructor_name)
-    {
-        auto fields = record_field_names_for_constructor(types, constructor_name);
-        if (fields)
-            return fields;
-
-        for(const auto& [_, mod]: imported_modules)
-        {
-            fields = mod->record_field_names_for_constructor(constructor_name);
-            if (fields)
-                return fields;
-        }
-
-        return {};
     }
 
 }
@@ -2842,9 +2791,12 @@ std::vector<FieldInfo> Module::lookup_record_field_candidates(const std::string&
     try
     {
         auto S = lookup_symbol(field_name);
-        add_record_field_candidates(candidates, types, S->name);
-        for(const auto& [_, mod]: transitively_imported_modules)
-            add_record_field_candidates(candidates, mod->record_field_candidates_for_resolved_name(S->name));
+        if (S->record_selector)
+        {
+            auto parent_type = lookup_resolved_type(S->record_selector->parent_type);
+            if (parent_type)
+                add_record_field_candidates(candidates, *parent_type, S->record_selector->field_name);
+        }
     }
     catch (myexception&)
     {
@@ -2856,52 +2808,22 @@ std::vector<FieldInfo> Module::lookup_record_field_candidates(const std::string&
     for(auto& [_, field]: candidates)
         fields.push_back(field);
     return fields;
-}
-
-std::vector<FieldInfo> Module::record_field_candidates_for_resolved_name(const std::string& field_name) const
-{
-    return ::record_field_candidates_for_resolved_name(types, transitively_imported_modules, field_name);
 }
 
 std::optional<std::vector<std::string>> Module::record_field_names_for_constructor(const std::string& constructor_name) const
 {
-    return ::record_field_names_for_constructor(types, transitively_imported_modules, constructor_name);
-}
+    auto constructor = lookup_resolved_symbol(constructor_name);
+    if (not constructor or constructor->symbol_type != symbol_type_t::constructor)
+        return {};
+    if (constructor->con_info and constructor->con_info->field_names)
+        return constructor->con_info->field_names;
+    if (not constructor->parent)
+        return {};
 
-std::vector<FieldInfo> CompiledModule::lookup_record_field_candidates(const std::string& field_name) const
-{
-    std::map<std::pair<std::string,std::string>, FieldInfo> candidates;
-    auto range = field_aliases.equal_range(field_name);
-    for(auto i = range.first; i != range.second; ++i)
-        merge_record_field_candidate(candidates, i->second);
-
-    try
-    {
-        auto S = lookup_symbol(field_name);
-        add_record_field_candidates(candidates, types, S->name);
-        for(const auto& [_, mod]: transitively_imported_modules_)
-            add_record_field_candidates(candidates, mod->record_field_candidates_for_resolved_name(S->name));
-    }
-    catch (myexception&)
-    {
-        if (candidates.empty())
-            throw;
-    }
-
-    std::vector<FieldInfo> fields;
-    for(auto& [_, field]: candidates)
-        fields.push_back(field);
-    return fields;
-}
-
-std::vector<FieldInfo> CompiledModule::record_field_candidates_for_resolved_name(const std::string& field_name) const
-{
-    return ::record_field_candidates_for_resolved_name(types, transitively_imported_modules_, field_name);
-}
-
-std::optional<std::vector<std::string>> CompiledModule::record_field_names_for_constructor(const std::string& constructor_name) const
-{
-    return ::record_field_names_for_constructor(types, transitively_imported_modules_, constructor_name);
+    auto parent_type = lookup_resolved_type(*constructor->parent);
+    if (not parent_type)
+        return {};
+    return ::record_field_names_for_constructor(*parent_type, constructor->name);
 }
 
 // Here we do only phase 1 -- we only parse the decls enough to

@@ -145,7 +145,6 @@ public:
     std::vector<symbol_ptr> local_record_selectors();
 
     std::vector<FieldInfo> lookup_record_field_candidates(const std::string& field_name) const;
-    std::vector<FieldInfo> record_field_candidates_for_resolved_name(const std::string& field_name) const;
     std::optional<std::vector<std::string>> record_field_names_for_constructor(const std::string& constructor_name) const;
 
     /// Add a function
@@ -345,11 +344,6 @@ public:
     const_type_ptr lookup_local_type(const std::string& t) const;
 
     const_symbol_ptr lookup_symbol(const std::string&) const;
-
-    std::vector<FieldInfo> lookup_record_field_candidates(const std::string& field_name) const;
-    std::vector<FieldInfo> record_field_candidates_for_resolved_name(const std::string& field_name) const;
-    // Rename-time record wildcard expansion uses this FieldInfo-backed query before full local DataConInfo exists.
-    std::optional<std::vector<std::string>> record_field_names_for_constructor(const std::string& constructor_name) const;
 
     void finish_value_decls( const Core::Decls<>& decls );
 

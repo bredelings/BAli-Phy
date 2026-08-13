@@ -12,6 +12,7 @@
 #include <memory>
 #include "computation/fixity.H"
 #include "computation/parser/located.H"
+#include "computation/record_field_info.H"
 
 #include "var.H"
 #include "literal.H"
@@ -532,6 +533,9 @@ struct FieldBinding
     LVar field;
     std::optional<LExp> value;
     std::optional<std::string> resolved_field;
+    // Renaming records every in-scope interpretation of a record-update label;
+    // typechecking only filters this finite set using the updated value's type.
+    std::vector<FieldInfo> record_update_candidates;
     std::string print() const;
 
     FieldBinding(const LVar& lv):field(lv) {}

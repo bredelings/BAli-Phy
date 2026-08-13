@@ -37,6 +37,28 @@ namespace record_rename
         binding.value = record_utils::record_field_pun_exp(binding.field);
     }
 
+    void resolve_record_update_candidates(const renamer_state& rn, Located<Hs::FieldBinding>& field)
+    {
+        auto& binding = unloc(field);
+        auto field_name = unloc(binding.field).name;
+        try
+        {
+            binding.record_update_candidates = rn.m.lookup_record_field_candidates(field_name);
+        }
+        catch (myexception& e)
+        {
+            auto message = std::string(e.what());
+            if (message.find("ambiguous") != std::string::npos)
+                rn.error(field.loc, Note()<<message);
+            else
+                rn.error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
+            return;
+        }
+
+        if (binding.record_update_candidates.empty())
+            rn.error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
+    }
+
     void resolve_constructor_field_identities(const renamer_state& rn, const std::string& constructor_name, Hs::FieldBindings& fields)
     {
         auto field_names = rn.m.record_field_names_for_constructor(constructor_name);

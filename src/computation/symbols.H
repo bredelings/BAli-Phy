@@ -8,6 +8,7 @@
 #include <variant>
 #include "computation/fixity.H"
 #include "computation/haskell/haskell.H"
+#include "computation/record_field_info.H"
 #include "computation/unfolding.H"
 
 #include <cereal/types/memory.hpp>
@@ -17,33 +18,6 @@
 #include <cereal/types/set.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/vector.hpp>
-
-enum class FieldSelectorStatus
-{
-    SourceVisible,
-    SourceHidden
-};
-
-struct FieldInfo
-{
-    std::string name;
-    std::string parent_type;
-    std::vector<std::string> constructors;
-    std::vector<int> positions;
-    Type field_type;
-    FieldSelectorStatus selector_status = FieldSelectorStatus::SourceVisible;
-
-    template <class Archive>
-    void serialize(Archive& ar)
-    {
-	ar(name, parent_type, constructors, positions, field_type, selector_status);
-    }
-};
-
-inline bool source_visible_selector(const FieldInfo& field)
-{
-    return field.selector_status == FieldSelectorStatus::SourceVisible;
-}
 
 enum class RecordSelectorCallability
 {

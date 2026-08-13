@@ -299,29 +299,12 @@ namespace
             }
             used_field_names.insert(field_key);
 
-            std::vector<FieldInfo> field_candidates;
-            bool lookup_failed = false;
-            try
-            {
-                field_candidates = tc.this_mod().lookup_record_field_candidates(field_name);
-            }
-            catch (myexception& e)
-            {
-                lookup_failed = true;
-                auto lookup_message = std::string(e.what());
-                if (lookup_message.find("ambiguous") != std::string::npos)
-                    tc.record_error(field.loc, Note()<<lookup_message);
-                else
-                    tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
-                analysis.valid = false;
-            }
-
+            // Successful renaming attaches every in-scope interpretation; the
+            // inferred record type below only filters this predetermined set.
+            const auto& field_candidates = f.record_update_candidates;
+            assert(not field_candidates.empty());
             auto field_constructors = constructors_for_record_field_candidates(field_candidates);
-            if (field_constructors.empty() and not lookup_failed)
-            {
-                tc.record_error(field.loc, Note()<<"Record field '"<<field_name<<"' not in scope for update.");
-                analysis.valid = false;
-            }
+            assert(not field_constructors.empty());
             analysis.field_selected_constructors = intersect_constructors(analysis.field_selected_constructors, field_constructors);
 
             if (not f.value)
@@ -329,7 +312,7 @@ namespace
                 tc.record_error(field.loc, Note()<<"Field pun '"<<field_name<<"' was not expanded before typechecking.");
                 analysis.valid = false;
             }
-            else if (not field_candidates.empty())
+            else
                 analysis.updates.push_back({field.loc, field_name, field_candidates, field_constructors, *f.value});
         }
 
