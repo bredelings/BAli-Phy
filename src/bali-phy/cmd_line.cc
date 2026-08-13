@@ -4,7 +4,6 @@
 #include "command_config.H"
 #include "cmd_line.H"
 #include "paths.H"
-#include "util/file-paths.H"
 #include "util/io.H"
 #include "util/log-level.H"
 #include "util/myexception.H"
@@ -21,8 +20,6 @@ using std::string;
 using std::map;
 using std::vector;
 using std::cout;
-using std::cerr;
-using std::endl;
 using std::optional;
 using std::set;
 
@@ -44,40 +41,6 @@ po::parsed_options bali_config_file(std::istream& file, const po::options_descri
 	options.options.push_back(po::basic_option<char>(key,values));
 
     return options;
-}
-
-/// Parse the file $HOME/.bali-phy and add the options it contains to the command line arguments.
-///
-/// \param args The command line arguments.
-/// \param options The allowed options.
-///
-void load_bali_phy_rc(po::variables_map& args,const po::options_description& options)
-{
-    if (auto home_dir = get_home_dir())
-    {
-	if (not fs::exists(*home_dir))
-	    cerr<<"Home directory "<<*home_dir<<" does not exist!"<<endl;
-	else if (not fs::is_directory(*home_dir))
-	    cerr<<"Home directory "<<*home_dir<<" is not a directory!"<<endl;
-	else
-        {
-	    auto filename = *home_dir / ".bali-phy";
-
-	    if (fs::exists(filename))
-            {
-		if (log_verbose >= 1)
-		    cerr<<"Reading ~/.bali-phy ...";
-		checked_ifstream file(filename, "config file");
-
-		store(parse_config_file(file, options), args);
-		notify(args);
-		if (log_verbose >= 1)
-		    cerr<<" done."<<endl;
-	    }
-	}
-    }
-    else
-	cerr<<"Environment variables HOME and USERPROFILE not set!"<<endl;
 }
 
 vector<string> drop_trailing_args(int argc, char* argv[], const string& separator)
@@ -369,8 +332,6 @@ variables_map parse_boost_options(int argc,char* argv[])
 	store(bali_config_file(file, all, filename), args);
 	notify(args);
     }
-
-    load_bali_phy_rc(args,all);
 
     if (args.count("dump-ffi") and not args.count("test-module"))
         throw myexception()<<"--dump-ffi requires --test-module";
