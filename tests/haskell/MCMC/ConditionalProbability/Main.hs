@@ -12,7 +12,7 @@ import MCMC (condLogOdds, condLogOddsValues, condPr, runMCMC)
 import MCMC.Types (TransitionKernel(..), runContextAction)
 import Probability.Distribution.List (iid)
 import Probability.Distribution.Uniform (uniform)
-import Probability.Random (addMove, condition, makeMCMCModel, modifiable, prior)
+import Probability.Random (addMove, condition, makeMCMCState, modifiable, prior)
 import System.IO (IO, putStrLn)
 import Text.Show (show)
 
@@ -38,5 +38,5 @@ model = do
 
 main :: IO ()
 main = do
-  context <- makeMCMCModel model
-  runMCMC 1 context
+  mcmcState <- makeMCMCState model
+  runMCMC 1 mcmcState

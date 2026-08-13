@@ -13,7 +13,7 @@ import MCMC (runMCMC)
 import Probability.Distribution.Categorical (categorical)
 import Probability.Distribution.DirichletProcess (dirichletProcess)
 import Probability.Distribution.Normal (normal)
-import Probability.Random (condition, makeMCMCModel, prior)
+import Probability.Random (condition, makeMCMCState, prior)
 import System.IO (IO, putStrLn)
 
 -- Force every resolved atom while allowing the selector to propose transitions
@@ -28,6 +28,6 @@ model = do
 -- Completion exercises initialization and repeated density evaluation at both concentrations.
 main :: IO ()
 main = do
-  context <- makeMCMCModel model
-  runMCMC 100 context
+  mcmcState <- makeMCMCState model
+  runMCMC 100 mcmcState
   putStrLn "completed"

@@ -8,7 +8,7 @@ import Data.JSON (Key)
 import MCMC (logPosterior, runMCMC)
 import Probability.Logger (makeJSONLogger)
 import Probability.Random
-  (LoggerValues(..), (%=%), (%=!), (%>!), addLogger, contextFields, makeMCMCModel,
+  (LoggerValues(..), (%=%), (%=!), (%>!), addLogger, contextFields, makeMCMCState,
    parameterLogValues)
 import System.IO (IO, stdout)
 
@@ -24,5 +24,5 @@ model = do
 
 main :: IO ()
 main = do
-  context <- makeMCMCModel model
-  runMCMC 1 context
+  mcmcState <- makeMCMCState model
+  runMCMC 1 mcmcState

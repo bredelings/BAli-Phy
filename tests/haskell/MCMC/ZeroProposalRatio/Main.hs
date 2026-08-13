@@ -10,7 +10,7 @@ import MCMC (runMCMC)
 import MCMC.Moves.Context (setAtomicModifiableValueInContext)
 import MCMC.Moves.MH (metropolisHastings)
 import MCMC.Types (Proposal(..))
-import Probability.Random (addMove, condition, makeMCMCModel, modifiable)
+import Probability.Random (addMove, condition, makeMCMCState, modifiable)
 import System.IO (IO, putStrLn)
 
 -- Change the proposed context but signal rejection with a zero proposal ratio.
@@ -29,6 +29,6 @@ model = do
 -- Exercise repeated zero-ratio rejection and context reuse.
 main :: IO ()
 main = do
-  context <- makeMCMCModel model
-  runMCMC 20 context
+  mcmcState <- makeMCMCState model
+  runMCMC 20 mcmcState
   putStrLn "completed"

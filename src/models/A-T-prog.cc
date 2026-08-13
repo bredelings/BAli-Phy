@@ -633,33 +633,33 @@ Hs::Stmts generate_main(const variables_map& args,
         HsG::Expr(main, HsG::Apply(Hs::Var("hFlush"), {Hs::Var("stdout")}));
     }
 
-    // Main.5. Emit mymodel <- makeMCMCModel $ model sequence_data
-    HsG::Bind(main, HsG::VarPat(Hs::Var("mymodel")), HsG::Apply(Hs::Var("$"), {Hs::Var("makeMCMCModel"), model_fn}));
+    // Main.5. Emit mcmcState <- makeMCMCState $ model sequence_data
+    HsG::Bind(main, HsG::VarPat(Hs::Var("mcmcState")), HsG::Apply(Hs::Var("$"), {Hs::Var("makeMCMCState"), model_fn}));
 
-    // Main.6. Emit runMCMC iterations mymodel
+    // Main.6. Emit runMCMC iterations mcmcState
     if (args.count("test"))
     {
         if (log_formats.count("tsv"))
         {
-            HsG::Bind(main, HsG::VarPat(Hs::Var("line")), HsG::Apply(Hs::Var("logTableLine"), {Hs::Var("mymodel"), Hs::Literal(Hs::Integer{integer(0)})}));
+            HsG::Bind(main, HsG::VarPat(Hs::Var("line")), HsG::Apply(Hs::Var("logTableLine"), {Hs::Var("mcmcState"), Hs::Literal(Hs::Integer{integer(0)})}));
             HsG::Expr(main, HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("line")}));
         }
 
         if (log_formats.count("json"))
         {
-            HsG::Bind(main, HsG::VarPat(Hs::Var("jline")), HsG::Apply(Hs::Var("logJSONLine"), {Hs::Var("mymodel"), Hs::Literal(Hs::Integer{integer(0)})}));
+            HsG::Bind(main, HsG::VarPat(Hs::Var("jline")), HsG::Apply(Hs::Var("logJSONLine"), {Hs::Var("mcmcState"), Hs::Literal(Hs::Integer{integer(0)})}));
             HsG::Expr(main, HsG::Apply(Hs::Var("T.putStrLn"), {Hs::Var("jline")}));
         }
 
         if (args.count("verbose"))
         {
-            HsG::Expr(main, HsG::Apply(Hs::Var("writeTraceGraph"), {Hs::Var("mymodel")}));
+            HsG::Expr(main, HsG::Apply(Hs::Var("writeTraceGraph"), {Hs::Var("mcmcState")}));
 //            M->write_factor_graph();
         }
     }
     else
     {
-        HsG::Expr(main, HsG::Apply(Hs::Var("runMCMC"), {Hs::Literal(Hs::Integer{integer(max_iterations)}), Hs::Var("mymodel")}));
+        HsG::Expr(main, HsG::Apply(Hs::Var("runMCMC"), {Hs::Literal(Hs::Integer{integer(max_iterations)}), Hs::Var("mcmcState")}));
     }
 
     return main;
@@ -685,7 +685,7 @@ void write_header(std::ostream& program_file,
     imports.insert("Tree.Newick");                           // for writeNewick
     imports.insert("SModel.Parsimony");                      // for parsimony
     imports.insert("Probability");                           // for prop_likelihood, dropInternalLabels(?)
-    imports.insert("Probability.Random");                    // for makeMCMCModel
+    imports.insert("Probability.Random");                    // for makeMCMCState
     add(imports, decls.imports);
     for(auto& m: SMs)
         add(imports, m.imports);

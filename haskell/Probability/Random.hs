@@ -366,7 +366,7 @@ runMCMCLazy rate (RanOp op) = op (runMCMCLazy rate)
 
 mcmc = runMCMCStrict 1.0
 
-makeMCMCModel m = makeModel $ runMCMCStrict 1.0 m
+makeMCMCState m = makeModel $ runMCMCStrict 1.0 m
 
 foreign import bpcall "MCMC:" createContext :: [(Key,J.Value)] -> CJSON -> IO ContextIndex
 

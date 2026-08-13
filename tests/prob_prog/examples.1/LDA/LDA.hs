@@ -46,10 +46,11 @@ main = do
   options <- execParser $ modelRunParser "LDA" 200000
 
   runInfo <- initializeModelRun (testMode options) (outputName options)
-  context <- makeModelContext runInfo (logFormats options) $ model docs
+
+  mcmcState <- makeLoggedMCMCState runInfo (logFormats options) $ model docs
 
   case runInfo of
-    TestRun -> printInitialModel (logFormats options) context
+    TestRun -> printInitialModel (logFormats options) mcmcState
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
-      runMCMC (iterations options) context
+      runMCMC (iterations options) mcmcState

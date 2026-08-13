@@ -46,10 +46,10 @@ main = do
 
   let times = frame $$ "time" :: [Double]
 
-  context <- makeModelContext runInfo (logFormats options) $ model (1851, 1963) times
+  mcmcState <- makeLoggedMCMCState runInfo (logFormats options) $ model (1851, 1963) times
 
   case runInfo of
-    TestRun -> printInitialModel (logFormats options) context
+    TestRun -> printInitialModel (logFormats options) mcmcState
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
-      runMCMC (iterations options) context
+      runMCMC (iterations options) mcmcState

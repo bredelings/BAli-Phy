@@ -7,7 +7,7 @@ module BAliPhy.Run
     , modelRunParserWith
     , withModelDescription
     , initializeModelRun
-    , makeModelContext
+    , makeLoggedMCMCState
     , reportModelRun
     , printInitialModel
     , getVerbosity
@@ -106,17 +106,17 @@ makeLoggedModel model jsonLog tsvLog = do
         Nothing -> return ()
     return parameters
 
--- Create the MCMC context and attach standard parameter and density loggers for a normal run.
-makeModelContext :: ModelRun -> [LogFormat] -> Random Object -> IO ContextIndex
-makeModelContext TestRun _ model = makeMCMCModel model
-makeModelContext (MCMCRun directory) formats model = do
+-- Create the MCMC state and attach standard parameter and density loggers for a normal run.
+makeLoggedMCMCState :: ModelRun -> [LogFormat] -> Random Object -> IO ContextIndex
+makeLoggedMCMCState TestRun _ model = makeMCMCState model
+makeLoggedMCMCState (MCMCRun directory) formats model = do
     jsonLog <- if JSON `elem` formats
         then Just <$> jsonLogger (directory </> "C1.log.json")
         else return Nothing
     tsvLog <- if TSV `elem` formats
         then Just <$> tsvLogger (directory </> "C1.log") ["iter"]
         else return Nothing
-    makeMCMCModel $ makeLoggedModel model jsonLog tsvLog
+    makeMCMCState $ makeLoggedModel model jsonLog tsvLog
 
 -- Report the scalar destinations and stopping policy after the context and its loggers are ready.
 reportModelRun :: Int -> [LogFormat] -> FilePath -> IO ()

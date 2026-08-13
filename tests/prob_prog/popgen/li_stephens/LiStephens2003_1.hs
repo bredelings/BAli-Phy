@@ -42,10 +42,10 @@ main = do
   locs_table <- readTable (locationsFile inputs)
   let locs = locs_table $$ "locs" :: [Int]
 
-  context <- makeModelContext runInfo (logFormats options) $ model locs sequence_data
+  mcmcState <- makeLoggedMCMCState runInfo (logFormats options) $ model locs sequence_data
 
   case runInfo of
-    TestRun -> printInitialModel (logFormats options) context
+    TestRun -> printInitialModel (logFormats options) mcmcState
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
-      runMCMC (iterations options) context
+      runMCMC (iterations options) mcmcState

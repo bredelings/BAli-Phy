@@ -30,10 +30,10 @@ main = do
   let xs = xy_data $$ "x" :: [Double]
       ys = xy_data $$ "y" :: [Double]
 
-  context <- makeModelContext runInfo (logFormats options) $ model xs ys
+  mcmcState <- makeLoggedMCMCState runInfo (logFormats options) $ model xs ys
 
   case runInfo of
-    TestRun -> printInitialModel (logFormats options) context
+    TestRun -> printInitialModel (logFormats options) mcmcState
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
-      runMCMC (iterations options) context
+      runMCMC (iterations options) mcmcState

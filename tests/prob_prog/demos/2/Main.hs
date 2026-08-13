@@ -12,7 +12,7 @@ main = do
 
   model <- Model.main
 
-  mymodel <- makeMCMCModel $ do
+  mcmcState <- makeMCMCState $ do
     parameters <- model
     let { loggerValues =
             LoggerValues
@@ -24,6 +24,6 @@ main = do
     addLogger $ logParams loggerValues
     return parameters
 
-  jline <- logJSONLine mymodel 0
+  jline <- logJSONLine mcmcState 0
 
   T.putStrLn jline

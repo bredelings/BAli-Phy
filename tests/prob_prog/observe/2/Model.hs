@@ -17,10 +17,11 @@ main = do
 
   runInfo <- initializeModelRun (testMode options) (outputName options)
   let model = observe_data 1
-  context <- makeModelContext runInfo (logFormats options) model
+
+  mcmcState <- makeLoggedMCMCState runInfo (logFormats options) model
 
   case runInfo of
-    TestRun -> printInitialModel (logFormats options) context
+    TestRun -> printInitialModel (logFormats options) mcmcState
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
-      runMCMC (iterations options) context
+      runMCMC (iterations options) mcmcState

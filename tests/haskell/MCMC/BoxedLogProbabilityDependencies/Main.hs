@@ -14,7 +14,7 @@ import MCMC.Moves.Context (setAtomicModifiableValueInContext)
 import MCMC.Types (TransitionKernel(..))
 import Numeric.Prob (toProb)
 import Probability.Distribution.Multinomial (multinomial)
-import Probability.Random (addMove, makeMCMCModel, modifiable, observe)
+import Probability.Random (addMove, makeMCMCState, modifiable, observe)
 import System.IO (IO, putStrLn)
 
 -- Check that changing a boxed vector replaces its dependent element USEs, so a
@@ -43,6 +43,6 @@ model = do
 
 main :: IO ()
 main = do
-  context <- makeMCMCModel model
-  runMCMC 1 context
+  mcmcState <- makeMCMCState model
+  runMCMC 1 mcmcState
   putStrLn "completed"

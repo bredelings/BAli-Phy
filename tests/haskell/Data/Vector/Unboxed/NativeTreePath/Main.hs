@@ -9,7 +9,7 @@ import qualified Data.Vector.Unboxed as U
 import MCMC
 import MCMC.Moves.Tree (walkTreePathVector)
 import Probability.Distribution.Tree.UniformTopology (uniformTopology)
-import Probability.Random (Random(RanSamplingRate), addMove, makeMCMCModel,
+import Probability.Random (Random(RanSamplingRate), addMove, makeMCMCState,
                            sample)
 import System.IO (print)
 
@@ -29,5 +29,5 @@ model = do
 
 -- Construct a real modifiable-tree context and run the sole path kernel once.
 main = do
-    context <- makeMCMCModel model
-    runMCMC 1 context
+    mcmcState <- makeMCMCState model
+    runMCMC 1 mcmcState

@@ -47,10 +47,10 @@ main = do
       log_radon_data     = radon $$ "log_radon"   :: [Double]
       model' = model floor_values county_code_values log_radon_data
 
-  context <- makeModelContext runInfo (logFormats options) model'
+  mcmcState <- makeLoggedMCMCState runInfo (logFormats options) model'
 
   case runInfo of
-    TestRun -> printInitialModel (logFormats options) context
+    TestRun -> printInitialModel (logFormats options) mcmcState
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
-      runMCMC (iterations options) context
+      runMCMC (iterations options) mcmcState

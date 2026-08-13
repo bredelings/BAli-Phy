@@ -10,7 +10,7 @@ import Data.Maybe (Maybe(..))
 import MCMC (logPosterior, runMCMC)
 import Probability.Logger (makeTSVLogger)
 import Probability.Random
-  (LoggerValues(..), (%=%), (%=!), (%>!), addLogger, contextFields, makeMCMCModel,
+  (LoggerValues(..), (%=%), (%=!), (%>!), addLogger, contextFields, makeMCMCState,
    parameterLogValues)
 import System.IO (IO, stdout)
 
@@ -27,5 +27,5 @@ model state = do
 main :: IO ()
 main = do
   state <- newIORef Nothing
-  context <- makeMCMCModel (model state)
-  runMCMC 1 context
+  mcmcState <- makeMCMCState (model state)
+  runMCMC 1 mcmcState

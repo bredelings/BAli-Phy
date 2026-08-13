@@ -27,10 +27,10 @@ main = do
   let fatalities = [24, 25, 31, 31, 22, 21, 26, 20, 16, 22]
       model' = model fatalities
 
-  context <- makeModelContext runInfo (logFormats options) model'
+  mcmcState <- makeLoggedMCMCState runInfo (logFormats options) model'
 
   case runInfo of
-    TestRun -> printInitialModel (logFormats options) context
+    TestRun -> printInitialModel (logFormats options) mcmcState
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
-      runMCMC (iterations options) context
+      runMCMC (iterations options) mcmcState

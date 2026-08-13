@@ -11,7 +11,7 @@ import MCMC (runMCMC)
 import MCMC.Moves.Context (getAtomicModifiableValueInContext)
 import MCMC.Types (ContextIndex, TransitionKernel(..))
 import Probability.Distribution.Multinomial (multinomial)
-import Probability.Random (addMove, makeMCMCModel, modifiable, observe)
+import Probability.Random (addMove, makeMCMCState, modifiable, observe)
 import System.IO (IO, putStrLn)
 
 foreign import bpcall "MCMC:sum_out_coals"
@@ -41,6 +41,6 @@ model = do
 -- Completion proves that the model's only transition kernel ran its checks repeatedly.
 main :: IO ()
 main = do
-  context <- makeMCMCModel model
-  runMCMC 20 context
+  mcmcState <- makeMCMCState model
+  runMCMC 20 mcmcState
   putStrLn "completed"

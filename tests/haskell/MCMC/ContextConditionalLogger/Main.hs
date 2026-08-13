@@ -13,7 +13,7 @@ import MCMC (binaryIndicatorFields, runMCMC)
 import Probability.Distribution.Uniform (uniform)
 import Probability.Logger (makeJSONLogger)
 import Probability.Random
-  (LoggerValues(..), (%=%), (%>!), addLogger, condition, contextFields, makeMCMCModel, modifiable,
+  (LoggerValues(..), (%=%), (%>!), addLogger, condition, contextFields, makeMCMCState, modifiable,
    parameterLogValues, prefixContextFields, prior)
 import SModel (positiveSelectionFields)
 import System.IO (IO, stdout)
@@ -35,5 +35,5 @@ model = do
 
 main :: IO ()
 main = do
-  context <- makeMCMCModel model
-  runMCMC 1 context
+  mcmcState <- makeMCMCState model
+  runMCMC 1 mcmcState

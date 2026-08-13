@@ -17,7 +17,7 @@ import Probability.Distribution.Bernoulli (bernoulli)
 import Probability.Distribution.Categorical (categorical)
 import Probability.Distribution.DirichletProcess (dirichletProcess)
 import Probability.Distribution.Normal (normal)
-import Probability.Random (makeMCMCModel, observe, prior)
+import Probability.Random (makeMCMCState, observe, prior)
 import System.IO (IO)
 
 assert condition message = if condition then return () else error message
@@ -64,7 +64,7 @@ verifyMCMCPosterior samples = do
 -- Burn in the joint chain, then retain thinned samples for both analytic marginal checks.
 main :: IO ()
 main = do
-  context <- makeMCMCModel mcmcPosteriorModel
-  runMCMC 2000 context
-  samples <- collectPosteriorSamples 5000 context []
+  mcmcState <- makeMCMCState mcmcPosteriorModel
+  runMCMC 2000 mcmcState
+  samples <- collectPosteriorSamples 5000 mcmcState []
   verifyMCMCPosterior samples

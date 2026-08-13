@@ -105,10 +105,10 @@ main = do
       TestRun -> return noLogger
       MCMCRun directory -> treeLogger $ directory </> "C1.trees"
 
-    context <- makeModelContext runInfo (logFormats options) $ model seqData logTree
+    mcmcState <- makeLoggedMCMCState runInfo (logFormats options) $ model seqData logTree
 
     case runInfo of
-      TestRun -> printInitialModel (logFormats options) context
+      TestRun -> printInitialModel (logFormats options) mcmcState
       MCMCRun directory -> do
         reportModelRun (iterations options) (logFormats options) directory
-        runMCMC (iterations options) context
+        runMCMC (iterations options) mcmcState

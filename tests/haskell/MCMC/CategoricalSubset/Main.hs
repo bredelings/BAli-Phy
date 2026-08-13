@@ -16,7 +16,7 @@ import MCMC (runMCMC)
 import MCMC.Moves.Context (getAtomicModifiableValueInContext)
 import Probability.Distribution.Categorical (categorical)
 import Probability.Logger (emptyContextObject)
-import Probability.Random (addLogger, makeMCMCModel, prior)
+import Probability.Random (addLogger, makeMCMCState, prior)
 import System.IO (IO)
 
 recordValue ref value = modifyIORef' ref (value :)
@@ -52,7 +52,7 @@ verifySamples samples =
 main :: IO ()
 main = do
   samples <- newIORef []
-  context <- makeMCMCModel (model samples)
-  runMCMC 20000 context
+  mcmcState <- makeMCMCState (model samples)
+  runMCMC 20000 mcmcState
   finalSamples <- readIORef samples
   verifySamples finalSamples

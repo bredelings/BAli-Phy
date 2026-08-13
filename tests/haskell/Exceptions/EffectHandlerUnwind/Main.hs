@@ -8,7 +8,7 @@ import Data.Eq
 import Data.Exception
 import MCMC (runMCMC)
 import MCMC.Moves.Integer (discreteUniformAvoidMH)
-import Probability.Random (addMove, condition, makeMCMCModel, modifiable)
+import Probability.Random (addMove, condition, makeMCMCState, modifiable)
 import System.IO (IO, putStrLn)
 
 -- Create a deterministic proposal whose new likelihood throws during ratio calculation.
@@ -23,6 +23,6 @@ handle _ = putStrLn "caught"
 
 -- Repeat the failed transition so stale effect callbacks would run after their captures died.
 main = do
-  context <- makeMCMCModel model
-  catch (runMCMC 1 context) handle
-  catch (runMCMC 1 context) handle
+  mcmcState <- makeMCMCState model
+  catch (runMCMC 1 mcmcState) handle
+  catch (runMCMC 1 mcmcState) handle

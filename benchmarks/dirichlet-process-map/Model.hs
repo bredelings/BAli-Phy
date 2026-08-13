@@ -80,10 +80,10 @@ main = do
   sizeText <- getEnv "BALIPHY_DP_MAP_SIZE"
   let model = benchmarkModel scenario (read sizeText :: Int)
 
-  context <- makeModelContext runInfo (logFormats options) model
+  mcmcState <- makeLoggedMCMCState runInfo (logFormats options) model
 
   case runInfo of
-    TestRun -> printInitialModel (logFormats options) context
+    TestRun -> printInitialModel (logFormats options) mcmcState
     MCMCRun directory -> do
       reportModelRun (iterations options) (logFormats options) directory
-      runMCMC (iterations options) context
+      runMCMC (iterations options) mcmcState

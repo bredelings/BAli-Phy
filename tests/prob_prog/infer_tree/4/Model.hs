@@ -40,10 +40,11 @@ main = do
     runInfo <- initializeModelRun (testMode options) (outputName options)
 
     seqData <- mkAlignedCharacterData dna <$> loadSequences filename
-    context <- makeModelContext runInfo (logFormats options) $ model seqData
+
+    mcmcState <- makeLoggedMCMCState runInfo (logFormats options) $ model seqData
 
     case runInfo of
-      TestRun -> printInitialModel (logFormats options) context
+      TestRun -> printInitialModel (logFormats options) mcmcState
       MCMCRun directory -> do
         reportModelRun (iterations options) (logFormats options) directory
-        runMCMC (iterations options) context
+        runMCMC (iterations options) mcmcState
