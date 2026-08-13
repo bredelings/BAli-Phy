@@ -15,7 +15,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
 
-PACKAGE_INDEX_URL = "https://www.bali-phy.org/packages/Packages"
+PACKAGE_INDEX_URL = "https://raw.githubusercontent.com/bredelings/bali-phy-packages/master/Packages"
 HACKAGE_URL = "https://hackage.haskell.org"
 COMMANDS = (
     "install, install-archive, fetch-hackage, available, uninstall, info, packages, "
