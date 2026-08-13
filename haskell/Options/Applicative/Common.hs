@@ -252,5 +252,5 @@ missingDescription parser = case renderUsageTree (filterOptional (treeMapParser 
 describeOption :: [OptName] -> String -> String
 -- Render a compact name used in diagnostics and usage text.
 describeOption [] metavar_name = metavar_name
-describeOption names metavar_name = intercalate "/" (map showOptionName (reverse names)) ++ suffix where
+describeOption names metavar_name = intercalate "/" (map showOptionName (sort names)) ++ suffix where
     suffix = if null metavar_name then "" else " " ++ metavar_name

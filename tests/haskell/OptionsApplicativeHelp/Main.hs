@@ -13,7 +13,8 @@ import System.IO
 
 parser :: Parser (Int, String, String)
 parser = (,,)
-    <$> option auto (long "count" <> metavar "N" <> value 1 <> showDefault <> help "Number of passes")
+    <$> option auto (long "count" <> short 'c' <> metavar "N" <> value 1 <> showDefault <>
+                     help "Number of passes")
     <*> strArgument (metavar "FILE" <> help "Input file")
     <*> strOption (long "mode" <> metavar "MODE" <> help "Processing mode")
 
@@ -30,7 +31,8 @@ renderResult :: ParserResult a -> String
 renderResult (Failure failure) = fst (renderFailure failure "bali-phy")
 renderResult (Success _) = "unexpected success"
 
--- Protect structural requiredness and helper rendering, which pure result tests cannot observe.
+-- Protect structural requiredness and canonical option-name ordering, which pure result tests
+-- cannot observe.
 -- This becomes obsolete when the upstream help integration tests can run unchanged.
 main = do
     putStrLn (renderResult (execParserPure defaultPrefs parserInfo ["--help"]))

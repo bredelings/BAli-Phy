@@ -1,14 +1,14 @@
 Example tool
 
-Usage: bali-phy [--count N] FILE --mode MODE [--help/-h]
+Usage: bali-phy [-c/--count N] FILE --mode MODE [-h/--help]
 
 Process one file
 
 Available options:
-  --count N               Number of passes (default: 1)
+  -c/--count N            Number of passes (default: 1)
   FILE                    Input file
   --mode MODE             Processing mode
-  --help/-h               Show this help text
+  -h/--help               Show this help text
 
 ---
 Missing: --name NAME
