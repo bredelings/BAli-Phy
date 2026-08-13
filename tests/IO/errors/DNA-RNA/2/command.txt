@@ -1,1 +1,1 @@
-AUTGC.fasta --test
+infer AUTGC.fasta --test

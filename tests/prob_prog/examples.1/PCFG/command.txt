@@ -1,1 +1,1 @@
-run PCFG.hs -- --test
+run PCFG.hs --test

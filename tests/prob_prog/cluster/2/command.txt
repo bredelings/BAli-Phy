@@ -1,1 +1,1 @@
-run Model.hs -- --iterations=2 --name=ignore x.csv
+run Model.hs --iterations=2 --name=ignore x.csv

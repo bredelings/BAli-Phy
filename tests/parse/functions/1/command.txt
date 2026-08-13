@@ -1,1 +1,1 @@
-dna.fasta -S '|k:HKY85(k)| +> ParameterMixture(~IID(4,LogNormal(0,1)),~SymmetricDirichlet(4,1))' --test
+infer dna.fasta -S '|k:HKY85(k)| +> ParameterMixture(~IID(4,LogNormal(0,1)),~SymmetricDirichlet(4,1))' --test

@@ -1,1 +1,1 @@
-run Model.hs -- --iterations=20 --name=ignore 5seq.fasta
+run Model.hs --iterations=20 --name=ignore 5seq.fasta

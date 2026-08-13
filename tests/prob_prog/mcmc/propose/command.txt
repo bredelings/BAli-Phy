@@ -1,1 +1,1 @@
-run Model.hs -- --iterations=100
+run Model.hs --iterations=100

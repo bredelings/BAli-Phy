@@ -1,1 +1,1 @@
-run src/Local/Main.hs --package-path=.
+run --package-path=. src/Local/Main.hs

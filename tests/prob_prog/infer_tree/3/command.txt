@@ -1,1 +1,1 @@
-run Model.hs -- --iterations=5 --name=ignore bglobin.fasta
+run Model.hs --iterations=5 --name=ignore bglobin.fasta

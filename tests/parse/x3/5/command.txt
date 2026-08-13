@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=GTR+>x3+>dNdS+>MutSel
+infer --test codons-dna.fasta --smodel=GTR+>x3+>dNdS+>MutSel

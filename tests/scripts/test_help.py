@@ -7,7 +7,7 @@ import subprocess
 # Run a help request and return its standard output, failing on execution errors.
 def run_help(args, *topics):
     result = subprocess.run(
-        args.wrapper + [args.executable, "help", *topics, args.package_path],
+        args.wrapper + [args.executable, args.package_path, "help", *topics],
         text=True,
         capture_output=True,
     )

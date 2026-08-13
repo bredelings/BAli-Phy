@@ -1,1 +1,1 @@
---test rna1.fasta rna2.fasta --smodel=1,2:TN93_sym
+infer --test rna1.fasta rna2.fasta --smodel=1,2:TN93_sym

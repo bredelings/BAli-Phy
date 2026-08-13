@@ -1,1 +1,1 @@
-run sample.hs -- --test
+run sample.hs --test

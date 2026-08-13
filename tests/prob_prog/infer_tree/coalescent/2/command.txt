@@ -1,1 +1,1 @@
-run Model.hs -- --iterations=5 --name=ignore RSV2-10taxa.fasta
+run Model.hs --iterations=5 --name=ignore RSV2-10taxa.fasta

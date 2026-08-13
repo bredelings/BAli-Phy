@@ -1,1 +1,1 @@
---test data/dna.fasta --scale='sum(map(|(key,value):value|,~DirichletProcessOn([3,1],1,delta(2))))'
+infer --test data/dna.fasta --scale='sum(map(|(key,value):value|,~DirichletProcessOn([3,1],1,delta(2))))'

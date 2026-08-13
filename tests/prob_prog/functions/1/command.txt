@@ -1,1 +1,1 @@
-run Test.hs -- --iterations=100 --name=ignore
+run Test.hs --iterations=100 --name=ignore

@@ -1,1 +1,1 @@
---test AA.fasta
+infer --test AA.fasta

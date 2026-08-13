@@ -1,1 +1,1 @@
---test-module Main.hs
+test-module Main.hs

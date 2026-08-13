@@ -1,1 +1,1 @@
-run HMM.hs -- --iterations=20 --name=ignore
+run HMM.hs --iterations=20 --name=ignore

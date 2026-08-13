@@ -34,12 +34,13 @@ def main():
 
         generate = args.wrapper + [
             args.executable,
-            "input.fasta",
-            "--imodel=none",
-            "--iter=0",
-            "--name=generated",
             "--seed=1",
             args.package_path,
+            "infer",
+            "input.fasta",
+            "--imodel=none",
+            "--iterations=0",
+            "--name=generated",
         ]
         generated = run_command(generate, work_directory)
         if generated.returncode != 0:
@@ -51,11 +52,10 @@ def main():
 
         run_generated = args.wrapper + [
             args.executable,
-            "run",
-            str(source.relative_to(work_directory)),
             "--seed=1",
             args.package_path,
-            "--",
+            "run",
+            str(source.relative_to(work_directory)),
         ]
         help_result = run_command(run_generated + ["--help"], work_directory)
         if help_result.returncode != 0:

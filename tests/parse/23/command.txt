@@ -1,1 +1,1 @@
---test codons-dna.fasta '--smodel=|w:GY94(omega=w)| +> M8'
+infer --test codons-dna.fasta '--smodel=|w:GY94(omega=w)| +> M8'

@@ -1,1 +1,1 @@
-run LiStephens2003_1.hs -- --test A-sites.fasta A-locs.csv
+run LiStephens2003_1.hs --test A-sites.fasta A-locs.csv

@@ -28,7 +28,7 @@ def test_cache_root(home, wrapper):
 def run_program(wrapper, executable, fixture, package_path, home):
     env = os.environ.copy()
     env["HOME"] = str(home)
-    command = wrapper + [executable, "run", "Main", "-V", package_path]
+    command = wrapper + [executable, "-V", package_path, "run", "Main"]
     result = subprocess.run(command, cwd=fixture, env=env,
                             text=True, capture_output=True)
     if result.returncode != 0:
@@ -36,13 +36,13 @@ def run_program(wrapper, executable, fixture, package_path, home):
     return result.stdout + result.stderr
 
 
-# Load Main through --test-module and require --dump-ffi to read the same
+# Load Main through test-module and require --dump-ffi to read the same
 # durable metadata from the warm compiled-module cache.
 def run_ffi_dump(wrapper, executable, fixture, package_path, home):
     env = os.environ.copy()
     env["HOME"] = str(home)
-    command = wrapper + [executable, "--test-module", "Main.hs", "--dump-ffi",
-                         "-V", package_path]
+    command = wrapper + [executable, "--dump-ffi", "-V", package_path,
+                         "test-module", "Main.hs"]
     result = subprocess.run(command, cwd=fixture, env=env,
                             text=True, capture_output=True)
     if result.returncode != 0:

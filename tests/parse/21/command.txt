@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=M3_Test
+infer --test codons-dna.fasta --smodel=M3_Test

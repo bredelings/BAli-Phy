@@ -1,1 +1,1 @@
---print 'GTR_sym +> (x=2) +> F'
+print 'GTR_sym +> (x=2) +> F'

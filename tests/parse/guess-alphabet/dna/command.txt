@@ -1,1 +1,1 @@
---test dna.fasta
+infer --test dna.fasta

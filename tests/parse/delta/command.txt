@@ -1,1 +1,1 @@
---test data/dna.fasta --scale='~delta(2)'
+infer --test data/dna.fasta --scale='~delta(2)'

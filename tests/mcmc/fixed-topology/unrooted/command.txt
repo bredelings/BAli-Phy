@@ -1,1 +1,1 @@
-bglobin.fasta --fix topology=bglobin.utree --iter=2 --name=ignore
+infer bglobin.fasta --fix topology=bglobin.utree --iterations=2 --name=ignore

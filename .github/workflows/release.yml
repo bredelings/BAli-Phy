@@ -388,15 +388,15 @@ jobs:
         echo ::group::Basic tests
         ${BALIPHY} help
         cp $HOME/local/share/doc/bali-phy/examples/5S-rRNA/5d-muscle.fasta .
-        ${BALIPHY} --seed=$seed 5d-muscle.fasta --test
-        ${BALIPHY} --seed=$seed 5d-muscle.fasta --iter=50
-        ${BALIPHY} --seed=$(($seed+1)) 5d-muscle.fasta --iter=50
+        ${BALIPHY} --seed=$seed infer 5d-muscle.fasta --test
+        ${BALIPHY} --seed=$seed infer 5d-muscle.fasta --iterations=50
+        ${BALIPHY} --seed=$(($seed+1)) infer 5d-muscle.fasta --iterations=50
         ${STATREPORT} 5d-muscle-1/C1.log
         if [ "${{ matrix.name }}" != "windows" ] ; then
-            bp-analyze 5d-muscle-1 5d-muscle-2
+            bp-summarize 5d-muscle-1 5d-muscle-2
         fi
         rm -f token0.dot
-        ${BALIPHY} run tests/prob_prog/demos/airline/Model.hs --seed=$seed -V4 -- --test
+        ${BALIPHY} --seed=$seed -V4 run tests/prob_prog/demos/airline/Model.hs --test
         test -s token0.dot
 
         # Skip the rest of the tests if this is a DEBUG_MACHINE test.

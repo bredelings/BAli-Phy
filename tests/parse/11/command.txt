@@ -1,1 +1,1 @@
---test dna.fasta --smodel=TN93_sym(kappaPur=2,kappaPyr=2)
+infer --test dna.fasta --smodel=TN93_sym(kappaPur=2,kappaPyr=2)

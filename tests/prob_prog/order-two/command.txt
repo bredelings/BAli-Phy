@@ -1,1 +1,1 @@
-run order-two.hs -- --iterations=100 --name=ignore
+run order-two.hs --iterations=100 --name=ignore

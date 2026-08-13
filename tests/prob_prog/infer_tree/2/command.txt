@@ -1,1 +1,1 @@
-run Model.hs -- --iterations=5 --name=ignore 5d-muscle.fasta
+run Model.hs --iterations=5 --name=ignore 5d-muscle.fasta

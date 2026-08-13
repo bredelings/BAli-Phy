@@ -1,1 +1,1 @@
-run Main.hs --package-path=.
+run --package-path=. Main.hs

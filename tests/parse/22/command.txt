@@ -1,1 +1,1 @@
---test codons-dna.fasta --smodel=M8
+infer --test codons-dna.fasta --smodel=M8

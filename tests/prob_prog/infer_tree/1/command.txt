@@ -1,1 +1,1 @@
-run Model.hs -- --test 5d-muscle.fasta
+run Model.hs --test 5d-muscle.fasta

@@ -1,1 +1,1 @@
-AUTGC.fasta --alphabet=DNA --test
+infer AUTGC.fasta --alphabet=DNA --test

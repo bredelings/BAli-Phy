@@ -1,1 +1,1 @@
-run Model.hs -- --iterations=20 --name=ignore
+run Model.hs --iterations=20 --name=ignore

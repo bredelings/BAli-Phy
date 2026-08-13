@@ -1,1 +1,1 @@
---test codons-rna.fasta --alphabet=Codons
+infer --test codons-rna.fasta --alphabet=Codons

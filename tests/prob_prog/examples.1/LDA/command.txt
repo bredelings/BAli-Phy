@@ -1,1 +1,1 @@
-run LDA.hs -- --test
+run LDA.hs --test

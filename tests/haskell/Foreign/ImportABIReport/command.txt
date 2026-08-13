@@ -1,1 +1,1 @@
---test-module Main.hs --dump-ffi
+test-module --dump-ffi Main.hs

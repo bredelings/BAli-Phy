@@ -1,1 +1,1 @@
---test data/dna.fasta --scale='2 + 3 * 4'
+infer --test data/dna.fasta --scale='2 + 3 * 4'

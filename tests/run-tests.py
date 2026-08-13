@@ -153,15 +153,13 @@ class BAliPhy(Program):
     def prefix(self):
         return ""
 
-    # Keep configured runner options outside the explicit boundary that starts Haskell arguments.
+    # Runner-supplied options are global BAli-Phy options, so place them before the subcommand.
+    # A run command then passes every control-file token after PROGRAM to the Haskell program.
     def cmdline(self, tester, test_subdir):
         test_dir = tester.dir_for_test(test_subdir)
         args_filename = os.path.join(test_dir, self.control_file())
         args = shlex.split(open(args_filename, 'r').read())
-        if "--" in args:
-            separator = args.index("--")
-            return self.cmd + args[:separator] + self.extra_args + args[separator:]
-        return self.cmd + args + self.extra_args
+        return self.cmd + self.extra_args + args
 
 class IQTREE(Program):
     def __init__(self, cmd):

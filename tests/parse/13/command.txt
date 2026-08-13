@@ -1,1 +1,1 @@
---test amino.fasta --smodel WAG+>F
+infer --test amino.fasta --smodel WAG+>F

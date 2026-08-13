@@ -1,1 +1,1 @@
-run LinearRegression.hs -- --iterations=100 --name=ignore
+run LinearRegression.hs --iterations=100 --name=ignore

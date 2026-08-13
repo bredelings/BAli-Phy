@@ -1,1 +1,1 @@
---test-module Main.hs --dump-tc
+test-module --dump-tc Main.hs
