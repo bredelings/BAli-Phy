@@ -66,10 +66,11 @@ class BaliPhyConfig : public CLI::Config
     }
 
 public:
-    /// Record the inference option namespace used to resolve exact command-file names.
-    BaliPhyConfig(CLI::App& infer, CLI::Option* config)
+    /// Record the global and inference option namespaces used to resolve exact command-file names.
+    BaliPhyConfig(CLI::App& root, CLI::App& infer, CLI::Option* config)
         :config_option(config)
     {
+        add_targets(root, {});
         add_targets(infer, {"infer"});
     }
 
@@ -297,7 +298,7 @@ class CLI11CommandParser
         infer_app->get_help_ptr()->configurable(false);
         config_option = app.set_config("-c,--config", "", "Command file to read");
         show_at(config_option, CommandHelpLevel::basic);
-        config_reader = std::make_shared<BaliPhyConfig>(*infer_app, config_option);
+        config_reader = std::make_shared<BaliPhyConfig>(app, *infer_app, config_option);
         app.config_formatter(config_reader);
     }
 
