@@ -4,7 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "computation/core/type.H"
+#include <cereal/types/string.hpp>
+#include <cereal/types/vector.hpp>
 
 enum class FieldSelectorStatus
 {
@@ -18,13 +19,12 @@ struct FieldInfo
     std::string parent_type;
     std::vector<std::string> constructors;
     std::vector<int> positions;
-    Type field_type;
     FieldSelectorStatus selector_status = FieldSelectorStatus::SourceVisible;
 
     template <class Archive>
     void serialize(Archive& ar)
     {
-	ar(name, parent_type, constructors, positions, field_type, selector_status);
+	ar(name, parent_type, constructors, positions, selector_status);
     }
 };
 
