@@ -107,7 +107,7 @@ endif
 
 boost = dependency('boost', version: '>=1.81.0', modules : boost_modules).as_system()
 
-cli11 = dependency('CLI11', version: '>=2.4.1').as_system()
+cli11 = dependency('CLI11', version: '>=2.6.1').as_system()
 
 ## Handle auto / system / internal method of finding/building EIGEN
 eigen = dependency('eigen3').as_system()
