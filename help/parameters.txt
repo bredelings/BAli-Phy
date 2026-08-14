@@ -9,17 +9,17 @@ Values are given with `=`, and priors are given with `~`.
 A value or prior for a parameter must be given, unless the
 model or function has a default value specified.
 
-For example, the Tamura-Nei (tn93) model has 3 parameters, `kappaPur`,
+For example, the Tamura-Nei (TN93) model has 3 parameters, `kappaPur`,
 `kappaPyr`, and `pi` with default priors.  Focusing just on the first
 parameter, the following are the same:
 
-     tn93
-     tn93(kappaPur~LogNormal(log(2),0.5))
+     TN93
+     TN93(kappaPur~LogNormal(log(2),0.5))
 
 It is also possible to specify parameter values by position only:
 
-     tn93(2,~LogNormal(log(1),0.5))
+     TN93(2,~LogNormal(log(1),0.5))
 
 The parameter names, order, type and default values for any function
 can be found by giving that function name to the `help` command.
-For example `bali-phy help tn93` gives information on the tn93 model.
+For example `bali-phy help TN93` gives information on the TN93 model.

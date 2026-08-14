@@ -6,17 +6,17 @@
 If no model is specified for a partition, then a default model is chosen
 based on the alphabet for that partition.  The defaults are:
 
-   DNA        -> tn93
-   RNA        -> tn93
-   AminoAcids -> lg08
-   Triplets   -> tn93+>x3
-   Codons     -> gy94
+   DNA        -> TN93
+   RNA        -> TN93
+   AminoAcids -> LG
+   Triplets   -> TN93+>x3
+   Codons     -> GY94
 
 Many substitution models have parameters that can be specified.  For
 example the HKY model has an optional kappa parameter.  Optional
-parameters have default priors.  For example hky85 defaults to:
+parameters have default priors.  For example HKY85 defaults to:
 
-   hky85(kappa~LogNormal(log(2),0.25))
+   HKY85(kappa~LogNormal(log(2),0.25))
 
 See help on "parameters" for information on specifying priors or values.
 
@@ -31,16 +31,16 @@ partition cannot be referenced twice.
 
 # Examples:
 
-   -S hky85
+   -S HKY85
    
-   --smodel=hky85
+   --smodel=HKY85
    
-   -S 'gtr +> Rates.gamma +> inv'
+   -S 'GTR +> Rates.Gamma +> Inv'
    
-   -S '1,3:hky85 +> Rates.gamma(n=4) +> inv' -S '2:lg08 +> Rates.gamma +> inv'
+   -S '1,3:HKY85 +> Rates.Gamma(n=4) +> Inv' -S '2:LG +> Rates.Gamma +> Inv'
    
 In the last example, the substitution models of partitions 1 and 3 are linked.
 
 # See also:
 
-   parameters, priors, hky85, gtr, Rates.gamma, inv
+   parameters, priors, HKY85, GTR, Rates.Gamma, Inv
