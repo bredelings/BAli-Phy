@@ -229,17 +229,6 @@ jobs:
           mingw-w64-x86_64-range-v3
           mingw-w64-x86_64-zstd
 
-    - name: Prefer MSYS2 tools (Windows native MinGW)
-      if: matrix.name == 'windows-native-mingw'
-      shell: pwsh
-      run: |
-        $mingwPrefix = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "mingw64"
-        $mingwBin = Join-Path $mingwPrefix "bin"
-        if (-not (Test-Path (Join-Path $mingwBin "gcc.exe") -PathType Leaf)) {
-          throw "MSYS2 GCC was not found in $mingwBin"
-        }
-        Add-Content -Path $env:GITHUB_PATH -Value $mingwBin
-
     - name: Materialize test-data links (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
       shell: msys2 {0}
@@ -255,6 +244,23 @@ jobs:
             # The copies differ from their symlink blobs but do not change the built sources.
             git update-index --assume-unchanged -- "$link"
           done
+
+    - name: Configure native Windows environment
+      if: matrix.name == 'windows-native-mingw'
+      shell: pwsh
+      run: |
+        $mingwPrefix = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "mingw64"
+        $mingwBin = Join-Path $mingwPrefix "bin"
+        if (-not (Test-Path (Join-Path $mingwBin "gcc.exe") -PathType Leaf)) {
+          throw "MSYS2 GCC was not found in $mingwBin"
+        }
+        Add-Content -Path $env:GITHUB_PATH -Value $mingwBin
+        Add-Content -Path $env:GITHUB_ENV -Value "BOOST_ROOT=$mingwPrefix"
+        Add-Content -Path $env:GITHUB_ENV -Value "MINGW_PREFIX=$mingwPrefix"
+
+        # GitHub sets ErrorActionPreference; extend fail-fast behavior to native commands.
+        New-Item -ItemType Directory -Force (Split-Path $PROFILE.CurrentUserAllHosts) | Out-Null
+        Add-Content $PROFILE.CurrentUserAllHosts '$PSNativeCommandUseErrorActionPreference = $true'
 
     - name: Select XCode version (macOS)
       if: runner.os == 'macOS' && matrix.compiler == 'xcode'
@@ -421,36 +427,24 @@ jobs:
       if: matrix.name == 'windows-native-mingw'
       shell: pwsh
       run: |
-        $mingwPrefix = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "mingw64"
         $installPrefix = Join-Path $PWD "local"
         $env:CC = "ccache gcc"
         $env:CXX = "ccache g++"
-        $env:BOOST_ROOT = $mingwPrefix
-        $env:MINGW_PREFIX = $mingwPrefix
 
         $tools = @("gcc.exe", "g++.exe", "meson.exe", "ninja.exe", "pkgconf.exe", "ccache.exe")
         Get-Command $tools -ErrorAction Stop | Select-Object Name, Source
 
         meson setup build "--prefix=$installPrefix" `
           "--buildtype=${{ matrix.buildtype }}" "-Dcpp_args=-g"
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     - name: Build (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
       shell: pwsh
       run: |
-        $mingwPrefix = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "mingw64"
-        $env:BOOST_ROOT = $mingwPrefix
-        $env:MINGW_PREFIX = $mingwPrefix
-
         ccache -p
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         ccache -s
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         ninja -C build -j2
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         meson install -C build --skip-subprojects
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
         # Catch a missing Cairo dependency even if Meson otherwise completes successfully.
         if (-not (Test-Path "build/src/draw-tree.exe" -PathType Leaf)) {
@@ -461,7 +455,6 @@ jobs:
         }
 
         ccache -s
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     - name: Test (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
@@ -472,14 +465,11 @@ jobs:
         $env:PATH = "$installedBin;$env:PATH"
 
         & $baliPhy --version
-        if ($LASTEXITCODE -ne 0) { throw "bali-phy --version failed" }
 
         # PowerShell passes native slash options without MSYS2 interpreting them as Unix paths.
         & $baliPhy "/version"
-        if ($LASTEXITCODE -ne 0) { throw "bali-phy /version failed" }
 
         meson test -C build --print-errorlogs --num-processes 2
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     - name: Test bp-summarize without R or gnuplot (Windows native)
       if: matrix.name == 'windows-native-mingw'
@@ -497,25 +487,18 @@ jobs:
         }
 
         bp-summarize --help
-        if ($LASTEXITCODE -ne 0) { throw "bp-summarize --help failed in PowerShell" }
         cmd /c "bp-summarize --help"
-        if ($LASTEXITCODE -ne 0) { throw "bp-summarize --help failed in cmd" }
         bali-phy-pkg --help
-        if ($LASTEXITCODE -ne 0) { throw "bali-phy-pkg --help failed in PowerShell" }
         cmd /c "bali-phy-pkg --help"
-        if ($LASTEXITCODE -ne 0) { throw "bali-phy-pkg --help failed in cmd" }
         # Verify the installed runtime closure can load draw-tree without /mingw64/bin.
         draw-tree --help
-        if ($LASTEXITCODE -ne 0) { throw "draw-tree --help failed in PowerShell" }
 
         New-Item -ItemType Directory bp-summarize-smoke | Out-Null
         Push-Location bp-summarize-smoke
         bali-phy infer "$env:GITHUB_WORKSPACE\examples\5S-rRNA\5d-muscle.fasta" --iterations=50 --name=analysis-run
-        if ($LASTEXITCODE -ne 0) { throw "BAli-Phy smoke run failed" }
 
         $analysisOutput = bp-summarize analysis-run-1 --outdir Results 2>&1 | Out-String
         $analysisOutput
-        if ($LASTEXITCODE -ne 0) { throw "bp-summarize report generation failed" }
         if ($analysisOutput -notmatch "Program 'R' not found") {
           throw "bp-summarize did not report that R was unavailable"
         }
