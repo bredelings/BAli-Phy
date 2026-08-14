@@ -593,7 +593,6 @@ struct RecordCon
     std::shared_ptr<CheckedRecordCon> checked_con;
     std::string print() const;
 
-    RecordCon() = default;
     RecordCon(const LCon& c, const Located<FieldBindings>& fb): con(c), fbinds(fb) {}
 };
 
@@ -631,7 +630,6 @@ struct RecordPattern
     std::shared_ptr<CheckedRecordPattern> checked_pattern;
     std::string print() const;
 
-    RecordPattern() = default;
     RecordPattern(const LCon& c, const Located<PatternFieldBindings>& fb): head(c), fbinds(fb) {}
 };
 
