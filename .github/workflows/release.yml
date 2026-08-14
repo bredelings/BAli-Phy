@@ -301,31 +301,6 @@ jobs:
         meson install -C build --skip-subprojects
         ccache -s
 
-        skip=none
-        case "${{ matrix.name }}" in
-          *-DEBUG_MACHINE) skip=some ;;
-          *-sanitize) skip=most ;;
-        esac
-
-        if [ "${skip}" = "none" ] ; then
-          if [ -n "${BOOST_ROOT}" ] ; then
-              if [ "${{ runner.os }}" == "macOS" ] ; then
-                 export DYLD_LIBRARY_PATH="${BOOST_ROOT}/lib"
-              else
-                 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib"
-              fi
-          fi
-          if [ "${{ matrix.name }}" = "windows" ] ; then
-            # Start the server explicitly so the first Wine client inherits the persistence timeout.
-            wine_server=$(dpkg-query -L wine64 | awk '/\/wineserver(64)?$/ { print; exit }')
-            test -x "$wine_server"
-            "$wine_server" -p60
-            export WINEPATH="$(WINEDEBUG=-all winepath -w "$HOME/local/bin")"
-            export MESON_TESTTHREADS=2
-          fi
-          ninja -C build test -j2
-        fi
-
     - name: Get version
       id: get_version
       run: |
@@ -375,8 +350,22 @@ jobs:
       run: |
         export UBSAN_OPTIONS=halt_on_error=1
         export seed=$RANDOM
+        if [ -n "${BOOST_ROOT}" ] ; then
+          if [ "${{ runner.os }}" == "macOS" ] ; then
+            export DYLD_LIBRARY_PATH="${BOOST_ROOT}/lib"
+          else
+            export LD_LIBRARY_PATH="${BOOST_ROOT}/lib"
+          fi
+        fi
         if [ "${{ matrix.name }}" = "windows" ] ; then
-          export WINEPATH=$(winepath -w $HOME/local/bin)
+          # Initialize Wine before winepath starts another client, then keep that server alive across tests.
+          wine_loader=$(dpkg-query -L wine64 | awk '/\/wine\/wine(64)?$/ { print; exit }')
+          test -x "$wine_loader"
+          WINEDEBUG=-all "$wine_loader" cmd /c exit
+          wine_server=$(dpkg-query -L wine64 | awk '/\/wineserver(64)?$/ { print; exit }')
+          test -x "$wine_server"
+          "$wine_server" -p60
+          export WINEPATH="$(WINEDEBUG=-all winepath -w "$HOME/local/bin")"
           BALIPHY="wine bali-phy"
           STATREPORT="wine statreport"
         else
@@ -384,7 +373,7 @@ jobs:
           BALIPHY=bali-phy
           STATREPORT=statreport
         fi
-        echo "Running tests with seed=$seed"
+        echo "Running installed-program tests with seed=$seed"
 
         echo ::group::Basic tests
         ${BALIPHY} help
@@ -400,7 +389,7 @@ jobs:
         ${BALIPHY} --seed=$seed -V4 run tests/prob_prog/demos/airline/Model.hs --test
         test -s token0.dot
 
-        # Skip the rest of the tests if this is a DEBUG_MACHINE test.
+        # Use a reduced suite for DEBUG_MACHINE and sanitizer builds.
         skip=none
         case "${{ matrix.name }}" in
           *-DEBUG_MACHINE) skip=some ;;
@@ -409,17 +398,14 @@ jobs:
 
         if [ "$skip" = "none" ] ; then
             echo ::group::Test suite
-            cd tests
-            ./run-tests.py run . -j2 -- ${BALIPHY} --seed=$seed
-            cd
+            meson test -C build --no-rebuild --print-errorlogs --num-processes 2
             echo ::endgroup::
         else
             echo ::group::Reduced test suite
-            cd tests
-            ./run-tests.py run /prob_prog/demos       -j2 -- ${BALIPHY} --seed=$seed
-            ./run-tests.py run /prob_prog/coal_mining -j2 -- ${BALIPHY} --seed=$seed
-            ./run-tests.py run /prob_prog/cluster     -j2 -- ${BALIPHY} --seed=$seed
-            cd
+            meson test -C build --no-rebuild --print-errorlogs --num-processes 2 \
+              'bali-phy testsuite prob_prog/demos/*' \
+              'bali-phy testsuite prob_prog/coal_mining' \
+              'bali-phy testsuite prob_prog/cluster/*'
             echo ::endgroup::
         fi
 
