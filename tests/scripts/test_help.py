@@ -4,16 +4,20 @@ import argparse
 import subprocess
 
 
-# Run a help request and return its standard output, failing on execution errors.
-def run_help(args, *topics):
+# Run a BAli-Phy command and return its standard output, failing on execution errors.
+def run_command(args, *arguments):
     result = subprocess.run(
-        args.wrapper + [args.executable, args.package_path, "help", *topics],
+        args.wrapper + [args.executable, args.package_path, *arguments],
         text=True,
         capture_output=True,
     )
     if result.returncode != 0:
         raise AssertionError(result.stdout + result.stderr)
     return result.stdout
+
+
+def run_help(args, *topics):
+    return run_command(args, "help", *topics)
 
 
 def between(text, first, second):
@@ -71,6 +75,11 @@ def main():
     advanced = run_help(args, "advanced")
     if "Run options:" in advanced or "Help options:" in advanced:
         raise AssertionError("advanced help retained sections containing only positional arguments")
+    # Cumulative help should present inherited fallthrough options only in the global section.
+    # This guards against CLI11 version changes exposing parent options through subcommands.
+    for option in ("--verbose LEVEL", "--seed SEED", "--version"):
+        if advanced.count(option) != 1:
+            raise AssertionError(f"advanced help did not present {option} exactly once")
     for usage in (
         "bali-phy [OPTIONS] run PROGRAM [ARGUMENT ...]",
         "bali-phy [OPTIONS] print [PRINT-OPTIONS] EXPRESSION",
@@ -102,10 +111,17 @@ def main():
             raise AssertionError(f"direct {command} help separated positional arguments")
         if "Global options:" not in command_help or "--seed SEED" not in command_help:
             raise AssertionError(f"direct {command} help omitted applicable global options")
+        if command_help.count("--seed SEED") != 1:
+            raise AssertionError(f"direct {command} help repeated applicable global options")
         if f"{command.capitalize()} options:" not in command_help:
             raise AssertionError(f"direct {command} help omitted its combined option section")
         if positional not in command_help:
             raise AssertionError(f"direct {command} help omitted positional argument {positional}")
+
+    # Both help entry points should use the same local/global option split for a fallthrough command.
+    run_option_help = run_command(args, "run", "--help")
+    if "Run options:" not in run_option_help or run_option_help.count("--seed SEED") != 1:
+        raise AssertionError("run --help did not separate local and global options")
 
     models = run_help(args, "models")
     if "Covarion/" not in models:

@@ -68,6 +68,17 @@ vector<const CLI::Option*>
 CommandLineHelpFormatter::command_options(const CLI::App* command, bool include_help,
                                           bool include_positionals) const
 {
+    auto local_options = command->get_options();
+    if (auto* parent = command->get_parent())
+    {
+        // CLI11 2.7 includes parent options here for fallthrough commands.  They remain accepted by the
+        // parser, but the formatter presents them once in the separate global-options section.
+        auto parent_options = parent->get_options();
+        std::erase_if(local_options, [&parent_options](const auto* option) {
+            return std::find(parent_options.begin(), parent_options.end(), option) != parent_options.end();
+        });
+    }
+
     vector<const CLI::Option*> options;
     const auto add = [this, &options](const CLI::Option* option)
     {
@@ -75,13 +86,13 @@ CommandLineHelpFormatter::command_options(const CLI::App* command, bool include_
     };
 
     if (include_positionals)
-        for(auto* option: command->get_options())
+        for(auto* option: local_options)
             if (option->get_positional()) add(option);
 
     if (auto extras = extra_command_options.find(command); extras != extra_command_options.end())
         for(auto* option: extras->second) add(option);
 
-    for(auto* option: command->get_options())
+    for(auto* option: local_options)
         if (not option->get_positional() and
             (include_help or option != command->get_help_ptr()) and
             not option_commands.contains(option))
