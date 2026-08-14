@@ -205,6 +205,7 @@ jobs:
 
     - name: Install (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
+      id: msys2
       uses: msys2/setup-msys2@v2
       with:
         msystem: MINGW64
@@ -230,8 +231,14 @@ jobs:
 
     - name: Prefer MSYS2 tools (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
-      shell: msys2 {0}
-      run: echo "$(cygpath -w /mingw64/bin)" >> "$GITHUB_PATH"
+      shell: pwsh
+      run: |
+        $mingwPrefix = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "mingw64"
+        $mingwBin = Join-Path $mingwPrefix "bin"
+        if (-not (Test-Path (Join-Path $mingwBin "gcc.exe") -PathType Leaf)) {
+          throw "MSYS2 GCC was not found in $mingwBin"
+        }
+        Add-Content -Path $env:GITHUB_PATH -Value $mingwBin
 
     - name: Materialize test-data links (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
@@ -412,25 +419,49 @@ jobs:
 
     - name: Configure (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
-      shell: msys2 {0}
+      shell: pwsh
       run: |
-        export CC="ccache gcc"
-        export CXX="ccache g++"
-        export BOOST_ROOT=/mingw64
-        meson setup build --prefix="$PWD/local" --buildtype=${{ matrix.buildtype }} -Dcpp_args="-g"
+        $mingwPrefix = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "mingw64"
+        $installPrefix = Join-Path $PWD "local"
+        $env:CC = "ccache gcc"
+        $env:CXX = "ccache g++"
+        $env:BOOST_ROOT = $mingwPrefix
+        $env:MINGW_PREFIX = $mingwPrefix
+
+        $tools = @("gcc.exe", "g++.exe", "meson.exe", "ninja.exe", "pkgconf.exe", "ccache.exe")
+        Get-Command $tools -ErrorAction Stop | Select-Object Name, Source
+
+        meson setup build "--prefix=$installPrefix" `
+          "--buildtype=${{ matrix.buildtype }}" "-Dcpp_args=-g"
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     - name: Build (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
-      shell: msys2 {0}
+      shell: pwsh
       run: |
+        $mingwPrefix = Join-Path "${{ steps.msys2.outputs.msys2-location }}" "mingw64"
+        $env:BOOST_ROOT = $mingwPrefix
+        $env:MINGW_PREFIX = $mingwPrefix
+
         ccache -p
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         ccache -s
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         ninja -C build -j2
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         meson install -C build --skip-subprojects
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
         # Catch a missing Cairo dependency even if Meson otherwise completes successfully.
-        test -x build/src/draw-tree.exe
-        test -x local/bin/draw-tree.exe
+        if (-not (Test-Path "build/src/draw-tree.exe" -PathType Leaf)) {
+          throw "The build did not produce draw-tree.exe"
+        }
+        if (-not (Test-Path "local/bin/draw-tree.exe" -PathType Leaf)) {
+          throw "The install did not include draw-tree.exe"
+        }
+
         ccache -s
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     - name: Test (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
