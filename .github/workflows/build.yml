@@ -21,11 +21,11 @@ jobs:
                ubuntu-gcc-13-DEBUG_MACHINE,
                ubuntu-gcc-14-sanitize,
                ubuntu-gcc-15-release,
-               ubuntu-gcc-15-debugoptimized,
+               ubuntu-gcc-15-assertions,
                ubuntu-clang-18-arm-release,
                macos-intel-NDEBUG_DP,
                macos-xcode16-arm-sanitize,
-               macos-xcode26-arm-debugoptimized,
+               macos-xcode26-arm-assertions,
                macos-homebrew-llvm-libcxx,
                windows,
                windows-native-mingw
@@ -36,7 +36,7 @@ jobs:
             os: ubuntu-24.04
             compiler: gcc
             version: "13"
-            buildtype: "debugoptimized"
+            assertions: true
             cxxflags: "-DDEBUG_MACHINE=1"
             arch: "linux64"
 
@@ -44,7 +44,6 @@ jobs:
             os: ubuntu-24.04
             compiler: gcc
             version: "14"
-            buildtype: "release"
             sanitize: "address,undefined"
             arch: "linux64"
 
@@ -52,16 +51,15 @@ jobs:
             os: ubuntu-latest
             compiler: gcc
             version: "15"
-            buildtype: "release"
             cxxflags: "-march=x86-64-v3"
             image: ubuntu:25.04
             arch: "linux64"
 
-          - name: ubuntu-gcc-15-debugoptimized  # gcc-15 has new debug checks
+          - name: ubuntu-gcc-15-assertions  # gcc-15 has new assertion checks
             os: ubuntu-latest
             compiler: gcc
             version: "15"
-            buildtype: debugoptimized
+            assertions: true
             image: ubuntu:25.04
             arch: "linux64"
 
@@ -69,51 +67,46 @@ jobs:
             os: ubuntu-24.04-arm
             compiler: clang
             version: "18"
-            buildtype: "release"
             arch: "linux64"
 
           - name: macos-intel-NDEBUG_DP
             os: macos-15-intel
             compiler: xcode
             version: "16"
-            buildtype: "debugoptimized"  # test WITH assertions
-            cxxflags: "-DNDEBUG_DP"      # but WITHOUT realignment checking code
+            assertions: true
+            cxxflags: "-DNDEBUG_DP"  # Test without realignment checking code.
             arch: "mac-intel64"
 
           - name: macos-xcode16-arm-sanitize
             os: macos-15
             compiler: xcode
             version: "16"
-            buildtype: "release"
             sanitize: "undefined,local-bounds"
             arch: "mac-arm64"
 
-          - name: macos-xcode26-arm-debugoptimized
+          - name: macos-xcode26-arm-assertions
             os: macos-latest
             compiler: xcode
             version: "26"
-            buildtype: "debugoptimized"
+            assertions: true
             arch: "mac-arm64"
 
           - name: macos-homebrew-llvm-libcxx
             os: macos-latest
             compiler: llvm
             version: "N/A"
-            buildtype: "release"
             arch: "mac-arm64"
 
           - name: windows
             os: ubuntu-26.04
             compiler: mingw
             version: "N/A"
-            buildtype: "release"
             arch: "win64"
 
           - name: windows-native-mingw
             os: windows-latest
             compiler: mingw
             version: "N/A"
-            buildtype: "release"
             arch: "win64"
 
     runs-on: ${{ matrix.os }}
@@ -369,9 +362,17 @@ jobs:
     - name: Configure
       if: matrix.name != 'windows-native-mingw'
       run: |
-        CPPARGS="-g"
+        CPPARGS=""
+        if [ "${{ matrix.sanitize }}" != "" ] ; then
+           # Keep symbols in instrumented builds so sanitizer reports name their source locations.
+           CPPARGS="-g"
+        fi
         if [ "${{ matrix.cxxflags }}" != "" ] ; then
            CPPARGS="$CPPARGS ${{ matrix.cxxflags }}"
+        fi
+        if [ "${{ matrix.assertions }}" = "true" ] ; then
+           # Exercise optimized code with assertions, without retaining full debug information.
+           ARGS="${ARGS} -Db_ndebug=false"
         fi
         if [ "${{ matrix.name }}" = "windows" ] && [ "${{ matrix.arch }}" = "win64" ]; then
            ARGS="${ARGS} --cross-file=win64-cross.txt"
@@ -381,8 +382,8 @@ jobs:
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
         echo "SDKROOT = $SDKROOT"
-        echo meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
-        meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
+        echo meson setup build --prefix=$HOME/local --buildtype=release -Dcpp_args="$CPPARGS" ${ARGS}
+        meson setup build --prefix=$HOME/local --buildtype=release -Dcpp_args="$CPPARGS" ${ARGS}
 
     - name: Upload meson log if configure failed
       uses: actions/upload-artifact@v4
@@ -412,7 +413,7 @@ jobs:
         Get-Command $tools -ErrorAction Stop | Select-Object Name, Source
 
         meson setup build "--prefix=$installPrefix" `
-          "--buildtype=${{ matrix.buildtype }}" "-Dcpp_args=-g"
+          "--buildtype=release"
 
     - name: Build (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'

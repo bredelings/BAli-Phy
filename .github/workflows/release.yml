@@ -56,7 +56,6 @@ jobs:
             os: ubuntu-24.04
             compiler: gcc
             version: "14"
-            buildtype: "release"
             cxxflags: "-march=x86-64-v3"
             arch: "linux64"
 
@@ -64,14 +63,12 @@ jobs:
             os: ubuntu-24.04-arm
             compiler: gcc
             version: "14"
-            buildtype: "release"
             arch: "linux64"
 
           - name: macos15-xcode16-intel
             os: macos-15-intel
             compiler: xcode
             version: "16"
-            buildtype: "release"
             cxxflags: "-march=x86-64-v3"
             arch: "mac-intel64"
 
@@ -79,14 +76,12 @@ jobs:
             os: macos-latest
             compiler: xcode
             version: "26"
-            buildtype: "release"
             arch: "mac-arm64"
 
           - name: windows
             os: ubuntu-26.04
             compiler: mingw
             version: "N/A"
-            buildtype: "release"
             arch: "win64"
 
     runs-on: ${{ matrix.os }}
@@ -271,7 +266,7 @@ jobs:
 
     - name: Configure
       run: |
-        # CPPARGS="-g"
+        CPPARGS=""
         if [ "${{ matrix.cxxflags }}" != "" ] ; then
            CPPARGS="$CPPARGS ${{ matrix.cxxflags }}"
         fi
@@ -283,8 +278,8 @@ jobs:
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
         echo "SDKROOT = $SDKROOT"
-        echo meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
-        meson setup build --prefix=$HOME/local --buildtype=${{ matrix.buildtype }} -Dcpp_args="$CPPARGS" ${ARGS}
+        echo meson setup build --prefix=$HOME/local --buildtype=release -Dcpp_args="$CPPARGS" ${ARGS}
+        meson setup build --prefix=$HOME/local --buildtype=release -Dcpp_args="$CPPARGS" ${ARGS}
 
     - name: Upload meson log if configure failed
       uses: actions/upload-artifact@v4
