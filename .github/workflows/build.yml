@@ -416,7 +416,9 @@ jobs:
           fi
           if [ "${{ matrix.name }}" = "windows" ] ; then
             # Start the server explicitly so the first Wine client inherits the persistence timeout.
-            /usr/lib/wine/wineserver -p60
+            wine_server=$(dpkg-query -L wine64 | awk '/\/wineserver(64)?$/ { print; exit }')
+            test -x "$wine_server"
+            "$wine_server" -p60
             export WINEPATH="$(WINEDEBUG=-all winepath -w "$HOME/local/bin")"
             export MESON_TESTTHREADS=2
           fi

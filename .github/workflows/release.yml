@@ -316,9 +316,10 @@ jobs:
               fi
           fi
           if [ "${{ matrix.name }}" = "windows" ] ; then
-            # Initialize Wine before winepath starts another client, then keep that server alive across tests.
-            WINEDEBUG=-all /usr/lib/wine/wine64 cmd /c exit
-            /usr/lib/wine/wineserver -p60
+            # Start the server explicitly so the first Wine client inherits the persistence timeout.
+            wine_server=$(dpkg-query -L wine64 | awk '/\/wineserver(64)?$/ { print; exit }')
+            test -x "$wine_server"
+            "$wine_server" -p60
             export WINEPATH="$(WINEDEBUG=-all winepath -w "$HOME/local/bin")"
             export MESON_TESTTHREADS=2
           fi
