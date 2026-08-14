@@ -159,12 +159,12 @@ struct alignment_branch_length_or_duration_slice_function: public context_slice_
     Availability<ProbDensity> alignment_sum_ratio_0;
     int b;
 
-    ProbDensity operator()() {return context_slice_function::operator()();};
-    std::optional<ProbDensity> operator()(double x);
+    ProbDensity operator()() override {return context_slice_function::operator()();};
+    std::optional<ProbDensity> operator()(double x) override;
 
-    void set_value(double);
+    void set_value(double) override;
 
-    double current_value() const;
+    double current_value() const override;
 
     bool can_slice_sample() const override {return alignment_sum_ratio_0.has_value();}
 
@@ -187,8 +187,8 @@ struct slide_node_slice_function: public context_slice_function
 	return context_slice_function::operator()(z);
     }
     ProbDensity operator()() override;
-    void set_value(double);
-    double current_value() const;
+    void set_value(double) override;
+    double current_value() const override;
     bool can_slice_sample() const override {return initial_x > 0 and initial_y > 0;}
 
     slide_node_slice_function(Parameters&,int);
