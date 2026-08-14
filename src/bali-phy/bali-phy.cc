@@ -841,8 +841,11 @@ int main(int argc,char* argv[])
         block_signals();
 
         auto R = initialize_machine_from_program( std::move(P) );
-        // Retain argv[0] only at the runner boundary; Haskell code sees its platform basename.
-        R->prog_name = fs::path(argv[0]).filename().string();
+        // A program run from source should identify like a compiled executable, without its path or .hs suffix.
+        if (auto run = std::get_if<RunCommand>(&command_line.command))
+            R->prog_name = run->program.stem().string();
+        else
+            R->prog_name = fs::path(argv[0]).filename().string();
 
         start_work_time = chrono::system_clock::now();
         start_work_cpu_time = total_cpu_time();

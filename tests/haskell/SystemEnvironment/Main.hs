@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Main where
 
+import Data.Eq
 import Data.Maybe
 import System.Environment
 import System.IO
@@ -12,6 +13,6 @@ main = do
     arguments <- getArgs
     present <- lookupEnv "PATH"
     missing <- lookupEnv "BALIPHY_EXPECTED_MISSING_7DB6307F"
-    case (name, arguments, present, missing) of
-        (_:_, [], Just _, Nothing) -> putStrLn "environment ok"
+    case (name == "Main", arguments, present, missing) of
+        (True, [], Just _, Nothing) -> putStrLn "environment ok"
         _ -> putStrLn "environment bad"

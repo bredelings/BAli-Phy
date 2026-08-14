@@ -60,6 +60,8 @@ def main():
         help_result = run_command(run_generated + ["--help"], work_directory)
         if help_result.returncode != 0:
             raise AssertionError(help_result.stdout + help_result.stderr)
+        if "Usage: BAliPhy.Main " not in help_result.stdout:
+            raise AssertionError("generated help did not identify the source program by filename")
         for expected in ["--output-dir DIRECTORY", "(default: .)", "--overwrite"]:
             if expected not in help_result.stdout:
                 raise AssertionError(f"generated help omitted {expected!r}")
