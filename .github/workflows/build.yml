@@ -434,13 +434,21 @@ jobs:
 
     - name: Test (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
-      shell: msys2 {0}
+      shell: pwsh
       run: |
-        export PATH="$PWD/local/bin:$PATH"
-        # Native Windows retains portable Unix options and additionally accepts slash options.
-        bali-phy --version
-        bali-phy /version
+        $installedBin = (Resolve-Path local/bin).Path
+        $baliPhy = Join-Path $installedBin "bali-phy.exe"
+        $env:PATH = "$installedBin;$env:PATH"
+
+        & $baliPhy --version
+        if ($LASTEXITCODE -ne 0) { throw "bali-phy --version failed" }
+
+        # PowerShell passes native slash options without MSYS2 interpreting them as Unix paths.
+        & $baliPhy "/version"
+        if ($LASTEXITCODE -ne 0) { throw "bali-phy /version failed" }
+
         meson test -C build --print-errorlogs --num-processes 2
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
     - name: Test bp-summarize without R or gnuplot (Windows native)
       if: matrix.name == 'windows-native-mingw'
