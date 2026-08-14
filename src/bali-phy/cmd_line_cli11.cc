@@ -201,6 +201,8 @@ class CLI11CommandParser
                 CommandHelpLevel::developer);
         show_at(app.add_option("--recompile", compiler.recompile, "Rerun compilation of selected or all modules"),
                 CommandHelpLevel::developer)->type_name("MODULE")->expected(0, 1);
+        // CLI11 2.6.2 can suppress these bracketed defaults, allowing the descriptions to render
+        // them more clearly as "(default: VALUE)" once BAli-Phy can require that version.
         show_at(app.add_option("--optimize", compiler.optimize, "Run optimization passes"),
                 CommandHelpLevel::developer)->capture_default_str();
         show_at(app.add_option("--fully-lazy", compiler.fully_lazy,
