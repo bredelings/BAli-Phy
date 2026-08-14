@@ -25,9 +25,9 @@ Partitions with property logs missing from one or more chains are skipped
 rather than pooling a biased subset. Property overlays are omitted from
 ancestral and alignment-difference pages.
 
-The report is created at **Reports/index.html**.
+The report is created at **Results/index.html**.
 
-A log of all sub-commands is created at **Reports/bp-summarize.log**.
+A log of all sub-commands is created at **Results/bp-summarize.log**.
 
 # OPTIONS:
 **-h**, **--help**
@@ -43,7 +43,7 @@ A log of all sub-commands is created at **Reports/bp-summarize.log**.
 
 
 # REPORTING BUGS:
-See **Reports/bp-summarize.log** to check if any sub-commands failed.
+See **Results/bp-summarize.log** to check if any sub-commands failed.
 
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
