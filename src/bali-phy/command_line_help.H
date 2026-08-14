@@ -31,10 +31,12 @@ class CommandLineHelpFormatter : public CLI::Formatter
 
     bool visible(const CLI::Option* option) const;
     bool visible(const CLI::App* command) const;
-    std::vector<const CLI::Option*> command_options(const CLI::App* command, bool include_help) const;
+    std::vector<const CLI::Option*> command_options(const CLI::App* command, bool include_help,
+                                                    bool include_positionals) const;
     std::string make_option_section(const std::string& title,
                                     const std::vector<const CLI::Option*>& options) const;
-    std::string make_command_options(const CLI::App* command, bool include_help) const;
+    std::string make_command_options(const CLI::App* command, bool include_help,
+                                     bool include_positionals) const;
     std::string make_level_guidance() const;
     std::string make_topic_guidance() const;
     std::string make_post_options_help() const;

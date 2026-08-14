@@ -46,9 +46,10 @@ def main():
     for unwanted in ("SUBCOMMAND", "Inference:", "Commands:", "POSITIONALS:"):
         if unwanted in top_level:
             raise AssertionError(f"top-level help retained the {unwanted} presentation")
-    infer_options = between(top_level, "Infer options:", "Help options:")
-    if "SEQUENCE-FILE ..." not in infer_options or "SEQUENCE-FILE TEXT" in infer_options:
-        raise AssertionError("inference help did not use a semantic sequence-file metavariable")
+    infer_options = between(top_level, "Infer options:", "Showing ")
+    # Root usage already names positionals; retain their descriptions only in focused command help.
+    if "SEQUENCE-FILE ..." in infer_options or "Help options:" in top_level:
+        raise AssertionError("top-level help redundantly described positional arguments")
     if "--align SEQUENCE-FILE" not in infer_options:
         raise AssertionError("--align did not use the sequence-file metavariable")
     if "--config FILE" not in infer_options:
@@ -68,6 +69,8 @@ def main():
         raise AssertionError("top-level help lost topic indentation or column alignment")
 
     advanced = run_help(args, "advanced")
+    if "Run options:" in advanced or "Help options:" in advanced:
+        raise AssertionError("advanced help retained sections containing only positional arguments")
     for usage in (
         "bali-phy [OPTIONS] run PROGRAM [ARGUMENT ...]",
         "bali-phy [OPTIONS] print [PRINT-OPTIONS] EXPRESSION",
@@ -87,10 +90,10 @@ def main():
         if usage not in developer:
             raise AssertionError(f"developer help omitted usage: {usage}")
 
-    for command, usage in (
-        ("infer", expected_basic_usage[0]),
-        ("run", "bali-phy [OPTIONS] run PROGRAM [ARGUMENT ...]"),
-        ("print", "bali-phy [OPTIONS] print [PRINT-OPTIONS] EXPRESSION"),
+    for command, usage, positional in (
+        ("infer", expected_basic_usage[0], "SEQUENCE-FILE ..."),
+        ("run", "bali-phy [OPTIONS] run PROGRAM [ARGUMENT ...]", "ARGUMENT ..."),
+        ("print", "bali-phy [OPTIONS] print [PRINT-OPTIONS] EXPRESSION", "EXPRESSION"),
     ):
         command_help = run_help(args, command)
         if usage not in command_help:
@@ -101,6 +104,8 @@ def main():
             raise AssertionError(f"direct {command} help omitted applicable global options")
         if f"{command.capitalize()} options:" not in command_help:
             raise AssertionError(f"direct {command} help omitted its combined option section")
+        if positional not in command_help:
+            raise AssertionError(f"direct {command} help omitted positional argument {positional}")
 
     models = run_help(args, "models")
     if "Covarion/" not in models:

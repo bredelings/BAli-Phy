@@ -65,7 +65,8 @@ void CommandLineHelpFormatter::show_with(const CLI::App* command, const CLI::Opt
 
 /// Return one command's positional and named options in a single display order.
 vector<const CLI::Option*>
-CommandLineHelpFormatter::command_options(const CLI::App* command, bool include_help) const
+CommandLineHelpFormatter::command_options(const CLI::App* command, bool include_help,
+                                          bool include_positionals) const
 {
     vector<const CLI::Option*> options;
     const auto add = [this, &options](const CLI::Option* option)
@@ -73,8 +74,9 @@ CommandLineHelpFormatter::command_options(const CLI::App* command, bool include_
         if (not filtering or visible(option)) options.push_back(option);
     };
 
-    for(auto* option: command->get_options())
-        if (option->get_positional()) add(option);
+    if (include_positionals)
+        for(auto* option: command->get_options())
+            if (option->get_positional()) add(option);
 
     if (auto extras = extra_command_options.find(command); extras != extra_command_options.end())
         for(auto* option: extras->second) add(option);
@@ -101,11 +103,12 @@ string CommandLineHelpFormatter::make_option_section(const string& title,
     return output.str();
 }
 
-string CommandLineHelpFormatter::make_command_options(const CLI::App* command, bool include_help) const
+string CommandLineHelpFormatter::make_command_options(const CLI::App* command, bool include_help,
+                                                      bool include_positionals) const
 {
     string title = command->get_name();
     if (not title.empty()) title[0] = std::toupper(static_cast<unsigned char>(title[0]));
-    return make_option_section(title+" options", command_options(command, include_help));
+    return make_option_section(title+" options", command_options(command, include_help, include_positionals));
 }
 
 /// Apply cumulative filtering to root help; direct command help remains complete.
@@ -130,7 +133,7 @@ string CommandLineHelpFormatter::make_usage(const CLI::App* app, string name) co
     {
         if (auto synopsis = command_synopses.find(app); synopsis != command_synopses.end())
             return "Usage:\n  "+root->get_name()+" [OPTIONS] "+synopsis->second+"\n"+
-                   make_option_section("Global options", command_options(root, false));
+                   make_option_section("Global options", command_options(root, false, true));
         return CLI::Formatter::make_usage(app, std::move(name));
     }
 
@@ -162,7 +165,7 @@ string CommandLineHelpFormatter::make_group(string group, bool positional,
                                             vector<const CLI::Option*> options) const
 {
     if (current_app != root and command_synopses.contains(current_app) and group == "OPTIONS")
-        return make_command_options(current_app, true);
+        return make_command_options(current_app, true, true);
 
     if (filtering)
         std::erase_if(options, [this](const auto* option) {
@@ -182,7 +185,7 @@ string CommandLineHelpFormatter::make_subcommands(const CLI::App* app, CLI::AppF
     std::ostringstream output;
     for(auto* command: app->get_subcommands({}))
         if (not command->get_name().empty() and visible(command))
-            output<<make_command_options(command, false);
+            output<<make_command_options(command, false, false);
     return output.str();
 }
 
