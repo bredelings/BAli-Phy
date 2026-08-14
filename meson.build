@@ -12,6 +12,7 @@ project('bali-phy', ['cpp','c'],
 cpp = meson.get_compiler('cpp')
 cc = meson.get_compiler('c')
 python = import('python').find_installation()
+fs = import('fs')
 
 windows_test_wrapper = []
 if host_machine.system() == 'windows' and meson.is_cross_build()
@@ -173,8 +174,8 @@ endif
 
 math_dep = cpp.find_library('m', required:false)
 
-small_fasta=files('examples/5S-rRNA/5d-muscle.fasta')
-big_fasta=files('examples/5S-rRNA/48-muscle.fasta')
+small_fasta = fs.relative_to(files('examples/5S-rRNA/5d-muscle.fasta')[0], meson.project_build_root())
+big_fasta = fs.relative_to(files('examples/5S-rRNA/48-muscle.fasta')[0], meson.project_build_root())
 builtins = meson.project_build_root()/'src/builtins'
 # Match BAli-Phy's host path-list syntax; a colon would split Windows drive letters.
 package_path_separator = host_machine.system() == 'windows' ? ';' : ':'
