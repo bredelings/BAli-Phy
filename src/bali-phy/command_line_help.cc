@@ -129,17 +129,16 @@ string CommandLineHelpFormatter::make_usage(const CLI::App* app, string name) co
     if (app != root)
     {
         if (auto synopsis = command_synopses.find(app); synopsis != command_synopses.end())
-            return "\nUsage:\n  "+root->get_name()+" [OPTIONS] "+synopsis->second+"\n"+
-                   make_option_section("Global options", command_options(root, false))+"\n";
+            return "Usage:\n  "+root->get_name()+" [OPTIONS] "+synopsis->second+"\n"+
+                   make_option_section("Global options", command_options(root, false));
         return CLI::Formatter::make_usage(app, std::move(name));
     }
 
     std::ostringstream output;
-    output<<"\nUsage:\n";
+    output<<"Usage:\n";
     for(auto* command: app->get_subcommands({}))
         if (not command->get_name().empty() and visible(command))
             output<<"  "<<name<<" [OPTIONS] "<<command_synopses.at(command)<<"\n";
-    output<<"\n";
     return output.str();
 }
 

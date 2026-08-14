@@ -37,6 +37,12 @@ def main():
     for usage in expected_basic_usage:
         if usage not in top_level:
             raise AssertionError(f"top-level help omitted usage: {usage}")
+    # Keep one blank line at each usage boundary; formatter components can otherwise each add one.
+    if "\n\n\nUsage:\n" in top_level or "\n\nUsage:\n" not in top_level:
+        raise AssertionError("top-level help has incorrect spacing before usage")
+    usage_end = "bali-phy [OPTIONS] help [TOPIC]\n\nGlobal options:"
+    if usage_end not in top_level:
+        raise AssertionError("top-level help has incorrect spacing after usage")
     for unwanted in ("SUBCOMMAND", "Inference:", "Commands:", "POSITIONALS:"):
         if unwanted in top_level:
             raise AssertionError(f"top-level help retained the {unwanted} presentation")
