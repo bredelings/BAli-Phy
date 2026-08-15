@@ -1,0 +1,1 @@
+run ../Initialize.hs --output-dir missing-output-directory

@@ -363,6 +363,8 @@ extern "C" closure builtin_function_doesPathExistRaw(OperationArgs& Args)
 
     std::error_code ec;
     bool exists = fs::exists(path, ec);
+    if (ec == std::errc::no_such_file_or_directory or ec == std::errc::not_a_directory)
+        return false;
     if (ec)
         throw myexception()<<"doesPathExist: cannot inspect path "<<path<<": "<<ec.message();
 
@@ -376,6 +378,8 @@ extern "C" closure builtin_function_doesDirectoryExistRaw(OperationArgs& Args)
 
     std::error_code ec;
     bool is_directory = fs::is_directory(path, ec);
+    if (ec == std::errc::no_such_file_or_directory or ec == std::errc::not_a_directory)
+        return false;
     if (ec)
         throw myexception()<<"doesDirectoryExist: cannot inspect path "<<path<<": "<<ec.message();
 
