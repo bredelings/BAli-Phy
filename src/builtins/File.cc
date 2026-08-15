@@ -1,22 +1,11 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.H"
-#include <cerrno>
 #include <filesystem>
 #include <fstream>
-#include <optional>
-#include <set>
 #include <system_error>
 #include <string>
 #include <utility>
 #include <vector>
-#ifdef _WIN32
-#include <fcntl.h>
-#include <io.h>
-#include <sys/stat.h>
-#else
-#include <fcntl.h>
-#include <unistd.h>
-#endif
 #include "util/io.H"   // for portable_getline( ).
 #include "util/utf8.H"
 #include "computation/haskell/Integer.H" // for Integer
@@ -391,90 +380,6 @@ extern "C" closure builtin_function_doesDirectoryExistRaw(OperationArgs& Args)
         throw myexception()<<"doesDirectoryExist: cannot inspect path "<<path<<": "<<ec.message();
 
     return is_directory;
-}
-
-// Atomically claim a collection of output paths with empty placeholder files.
-// The first collision ends claiming so identical callers cannot reserve disjoint subsets and both lose.
-extern "C" closure builtin_function_reserveOutputFilesRaw(OperationArgs& Args)
-{
-    auto filenames_value = Args.evaluate_slot_to_value(0);
-    const auto& filenames = filenames_value.as_<R::RVector>();
-    std::set<fs::path> seen;
-    std::vector<fs::path> reserved;
-    object_ptr<R::RVector> collisions(new R::RVector);
-
-    auto rollback = [&]()
-    {
-        std::optional<std::pair<fs::path, std::string>> first_error;
-        for(auto filename = reserved.rbegin(); filename != reserved.rend(); ++filename)
-        {
-            std::error_code ec;
-            fs::remove(*filename, ec);
-            if (ec and not first_error)
-                first_error = std::pair(*filename, ec.message());
-        }
-        if (first_error)
-            throw myexception()<<"reserveOutputFiles: cannot remove temporary claim "
-                               <<first_error->first<<": "<<first_error->second;
-    };
-
-    bool claim_more = true;
-    for(const auto& value: filenames)
-    {
-        fs::path filename = value.as_string();
-        if (not seen.insert(filename).second) continue;
-
-        if (not claim_more)
-        {
-            std::error_code ec;
-            if (fs::exists(filename, ec)) collisions->push_back(filename.string());
-            else if (ec)
-                throw myexception()<<"reserveOutputFiles: cannot inspect path "<<filename<<": "<<ec.message();
-            continue;
-        }
-
-        // MinGW's wide-path fstream overload rejects noreplace even for absent files.  O_EXCL provides
-        // the same atomic create-if-absent operation and reports collisions separately from I/O errors.
-#ifdef _WIN32
-        int descriptor = _wopen(filename.c_str(), _O_WRONLY | _O_CREAT | _O_EXCL | _O_BINARY,
-                                _S_IREAD | _S_IWRITE);
-#else
-        int descriptor = ::open(filename.c_str(), O_WRONLY | O_CREAT | O_EXCL, 0666);
-#endif
-        if (descriptor >= 0)
-        {
-            reserved.push_back(filename);
-#ifdef _WIN32
-            int close_result = _close(descriptor);
-#else
-            int close_result = ::close(descriptor);
-#endif
-            if (close_result != 0)
-            {
-                std::error_code close_error(errno, std::generic_category());
-                rollback();
-                throw myexception()<<"reserveOutputFiles: cannot close temporary claim "
-                                   <<filename<<": "<<close_error.message();
-            }
-            continue;
-        }
-
-        std::error_code claim_error(errno, std::generic_category());
-        if (claim_error == std::errc::file_exists)
-        {
-            collisions->push_back(filename.string());
-            rollback();
-            reserved.clear();
-            claim_more = false;
-            continue;
-        }
-
-        rollback();
-        throw myexception()<<"reserveOutputFiles: cannot create output file "
-                           <<filename<<": "<<claim_error.message();
-    }
-
-    return collisions;
 }
 
 // FilePath -> IO FilePath
