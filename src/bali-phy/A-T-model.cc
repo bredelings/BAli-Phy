@@ -715,8 +715,6 @@ void get_default_imodels(shared_items<string>& imodel_names_mapping, const vecto
 std::tuple<std::unique_ptr<Program>, json::object>
 create_A_and_T_model(const Rules& R,
                      const InferOptions& options,
-                     bool test,
-                     int verbosity,
                      const std::shared_ptr<module_loader>& L,
 		     int /* proc_id */,
                      const fs::path& dir)
@@ -732,7 +730,7 @@ create_A_and_T_model(const Rules& R,
     const int n_partitions = filename_ranges.size();
 
     // 2. --- Find out what is fixed
-    auto fixed = get_fixed(options, test);
+    auto fixed = get_fixed(options);
 
     // 3. --- Compile declarations
     model_t decls;
@@ -968,8 +966,6 @@ create_A_and_T_model(const Rules& R,
 
     // Can we pass the code_gen_state, to avoid stomping on generated haskell var names?
     auto prog = gen_atmodel_program(options,
-                                    test,
-                                    verbosity,
                                     L, dir,
                                     program_filename,
                                     alphabet_exps, filename_ranges, A[0].n_sequences(),

@@ -17,8 +17,6 @@ class module_loader;
 
 std::unique_ptr<Program>
 gen_atmodel_program(const InferOptions& options,
-		    bool test,
-		    int verbosity,
 		    const std::shared_ptr<module_loader>& L,
 		    const std::filesystem::path& output_directory,
 		    const std::filesystem::path& program_filename,
@@ -41,6 +39,6 @@ gen_atmodel_program(const InferOptions& options,
 
 Hs::Exp get_alphabet_expression(const alphabet& a);
 
-std::map<std::string, std::string> get_fixed(const InferOptions& options, bool test);
+std::map<std::string, std::string> get_fixed(const InferOptions& options);
 
 #endif

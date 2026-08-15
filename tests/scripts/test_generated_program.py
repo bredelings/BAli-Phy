@@ -17,7 +17,8 @@ def run_command(command, work_directory):
     )
 
 
-# Exercise the public interface of a generated alignment program, including overwrite protection.
+# Verify runtime-mode behavior that requires reusing source retained by an earlier infer process.
+# This becomes obsolete if infer no longer retains runnable Haskell source.
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--wrapper", action="append", default=[])
@@ -57,19 +58,29 @@ def main():
             "run",
             str(source.relative_to(work_directory)),
         ]
-        help_result = run_command(run_generated + ["--help"], work_directory)
-        if help_result.returncode != 0:
-            raise AssertionError(help_result.stdout + help_result.stderr)
-        if "Usage: BAliPhy.Main " not in help_result.stdout:
-            raise AssertionError("generated help did not identify the source program by filename")
-        for expected in ["--output-dir DIRECTORY", "(default: .)", "--overwrite"]:
-            if expected not in help_result.stdout:
-                raise AssertionError(f"generated help omitted {expected!r}")
+
+        directories_before_test = {path for path in work_directory.rglob("*") if path.is_dir()}
+        logger_files_before_test = {
+            path for path in work_directory.rglob("C1.*") if path.is_file()
+        }
+        test_result = run_command(run_generated + ["--test"], work_directory)
+        if test_result.returncode != 0:
+            raise AssertionError(test_result.stdout + test_result.stderr)
+        directories_after_test = {path for path in work_directory.rglob("*") if path.is_dir()}
+        logger_files_after_test = {
+            path for path in work_directory.rglob("C1.*") if path.is_file()
+        }
+        if directories_after_test != directories_before_test:
+            raise AssertionError("the retained program created a directory in test mode")
+        if logger_files_after_test != logger_files_before_test:
+            raise AssertionError("the retained program created a logger file in test mode")
 
         output_directory = pathlib.Path("standalone") / "nested"
+        (work_directory / output_directory).mkdir(parents=True)
         standalone = run_generated + [
             "--output-dir",
             str(output_directory),
+            "--log-format=json",
         ]
         first = run_command(standalone, work_directory)
         if first.returncode != 0:
@@ -77,44 +88,45 @@ def main():
         if "Beginning MCMC computations." not in first.stdout:
             raise AssertionError("the standalone program did not report the start of execution")
 
-        output_paths = [work_directory / output_directory / name for name in ["C1.log", "C1.trees"]]
+        output_paths = [
+            work_directory / output_directory / name
+            for name in ["C1.log.json", "C1.trees"]
+        ]
         if not all(path.is_file() for path in output_paths):
             raise AssertionError(f"the standalone program did not create its log files: {output_paths}")
+        if (work_directory / output_directory / "C1.log").exists():
+            raise AssertionError("the standalone program ignored its runtime log format")
         if (work_directory / output_directory / "C1.run.json").exists():
             raise AssertionError("the standalone program unexpectedly created the C++-owned run manifest")
 
-        original_contents = {path: path.read_bytes() for path in output_paths}
-        collision = run_command(standalone, work_directory)
-        if collision.returncode == 0:
-            raise AssertionError("a standalone rerun overwrote output files without --overwrite")
-        if "Refusing to overwrite existing BAli-Phy output files" not in collision.stderr:
-            raise AssertionError(collision.stdout + collision.stderr)
-        if any(path.read_bytes() != contents for path, contents in original_contents.items()):
-            raise AssertionError("collision handling modified an existing output file")
-
-        overwritten = run_command(standalone + ["--overwrite"], work_directory)
-        if overwritten.returncode != 0:
-            raise AssertionError(overwritten.stdout + overwritten.stderr)
-
-        concurrent_directory = pathlib.Path("standalone") / "concurrent"
-        concurrent = run_generated + ["--output-dir", str(concurrent_directory)]
-        processes = [
-            subprocess.Popen(
-                concurrent,
-                cwd=work_directory,
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            for _ in range(2)
+        fixed_generate = args.wrapper + [
+            args.executable,
+            "--seed=1",
+            args.package_path,
+            "infer",
+            "input.fasta",
+            "--fix=alignment",
+            "--test",
         ]
-        outcomes = [process.communicate() for process in processes]
-        winners = [process for process in processes if process.returncode == 0]
-        losers = [index for index, process in enumerate(processes) if process.returncode != 0]
-        if len(winners) != 1 or len(losers) != 1:
-            raise AssertionError(f"concurrent output claims did not select one winner: {outcomes}")
-        if "Refusing to overwrite existing BAli-Phy output files" not in outcomes[losers[0]][1]:
-            raise AssertionError(f"concurrent loser did not report its collision: {outcomes}")
+        fixed_generated = run_command(fixed_generate, work_directory)
+        if fixed_generated.returncode != 0:
+            raise AssertionError(fixed_generated.stdout + fixed_generated.stderr)
+
+        fixed_source = work_directory / "BAliPhy.Main.hs"
+        fixed_run = args.wrapper + [
+            args.executable,
+            "--seed=1",
+            args.package_path,
+            "run",
+            str(fixed_source.relative_to(work_directory)),
+            "--name=fixed-retained",
+        ]
+        fixed_result = run_command(fixed_run, work_directory)
+        fixed_error = "Currently --fix=alignment only works with --test."
+        if fixed_result.returncode == 0 or fixed_error not in fixed_result.stderr:
+            raise AssertionError(fixed_result.stdout + fixed_result.stderr)
+        if (work_directory / "fixed-retained-1").exists():
+            raise AssertionError("the retained fixed-alignment program created an output directory")
 
     return 0
 

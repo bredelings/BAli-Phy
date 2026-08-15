@@ -618,8 +618,6 @@ std::unique_ptr<Program> generate_program(const CommandLine& command_line,
         Rules R(get_package_paths(command_line.global.package_paths));
         auto [prog, j] = create_A_and_T_model(R,
                                               *infer,
-                                              infer->test,
-                                              command_line.global.verbosity,
                                               L,
                                               proc_id,
                                               output_dir);
@@ -797,7 +795,10 @@ int main(int argc,char* argv[])
             std::cout<<"type:  "<<tidy_state.print(type)<<"\n";
             exit(0);
         }
-
+        // Validate fixed-option semantics before a failed infer command can create an output directory.
+        // Model generation parses them again because it needs the resulting map.
+        if (infer)
+            (void)get_fixed(*infer);
 
         //----------- Create output dir --------------//
         fs::path output_dir;

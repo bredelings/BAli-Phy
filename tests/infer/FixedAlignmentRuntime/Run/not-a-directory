@@ -1,0 +1,1 @@
+This regular file makes output-directory creation fail if fixed-alignment validation runs too late.

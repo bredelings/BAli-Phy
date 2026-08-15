@@ -169,8 +169,8 @@ test('compiled module cache',
             packagepath],
      timeout: 120)
 
-# Protect the generated-program run interface across C++ generation and Haskell execution;
-# this test becomes obsolete if generated analyses stop being retained as runnable modules.
+# Protect reusing one C++-generated analysis in both Haskell runtime modes; the ordinary
+# declarative harness cannot pass retained source from one invocation to the next.
 test('generated alignment program standalone',
      python,
      args: [files('../tests/scripts/test_generated_program.py')] +

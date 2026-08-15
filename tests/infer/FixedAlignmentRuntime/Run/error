@@ -1,0 +1,3 @@
+bali-phy: Error! Currently --fix=alignment only works with --test.
+  You can fix the alignment for MCMC by disabling the indel model with -Inone.
+  Using indel information from a fixed alignment during MCMC is not implemented.
