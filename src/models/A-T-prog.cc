@@ -1232,14 +1232,10 @@ std::string generate_atmodel_program(const InferOptions& options,
         model_fn = HsG::Apply(model_fn, {topology});
 
     // Pass in the loggers
-    Hs::Var logging_enabled("loggingEnabled");
-    Hs::Var tsv_enabled("tsvEnabled");
-    Hs::Var json_enabled("jsonEnabled");
     Hs::Var jsonLogger("logParamsJSON");
     Hs::Var tsvLogger("logParamsTSV");
     auto treeLogger = Hs::Var("logTree");
-    model_fn = HsG::Apply(model_fn,
-                          {logging_enabled, tsv_enabled, json_enabled, tsvLogger, jsonLogger});
+    model_fn = HsG::Apply(model_fn, {tsvLogger, jsonLogger});
     if (not fixed.count("tree"))
         model_fn = HsG::Apply(model_fn, {treeLogger});
     if (not alignment_loggers.empty())
@@ -1284,40 +1280,37 @@ std::string generate_atmodel_program(const InferOptions& options,
              logger_values_var,
              HsG::Apply(Hs::Var("LoggerValues"), {parameter_loggers, context_loggers}));
 
-    // Register each output logger only when its runtime mode enables physical logging.
-    auto add_logger_when = [&](const Hs::Exp& enabled, const Hs::Exp& logger) {
-        auto add_logger = HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), logger});
-        auto action = HsG::Apply(Hs::Var("void"), {add_logger});
-        HsG::Expr(model, HsG::Apply(Hs::Var("when"), {enabled, action}));
+    // Register real and null loggers uniformly.
+    // Runtime mode was resolved when each logger was constructed.
+    auto add_logger = [&](const Hs::Exp& logger) {
+        auto add_logger_action = HsG::Apply(Hs::Var("$"), {Hs::Var("addLogger"), logger});
+        HsG::Expr(model, add_logger_action);
     };
 
     // Each scalar format evaluates context fields independently when both formats are enabled.
-    add_logger_when(tsv_enabled, HsG::Apply(tsvLogger, {logger_values_var}));
-    add_logger_when(json_enabled, HsG::Apply(jsonLogger, {logger_values_var}));
+    add_logger(HsG::Apply(tsvLogger, {logger_values_var}));
+    add_logger(HsG::Apply(jsonLogger, {logger_values_var}));
 
     if (not fixed.count("tree"))
     {
 	Hs::Exp scaled_tree = tree_var;
 	if (n_branches > 0)
 	    scaled_tree = HsG::Apply(Hs::Var("scaleBranchLengths"), {Hs::Var("scale"), scaled_tree});
-        add_logger_when(logging_enabled,
-                        HsG::Apply(treeLogger,
-                                   {HsG::Apply(Hs::Var("addInternalLabels"), {scaled_tree})}));
+        add_logger(HsG::Apply(treeLogger,
+                             {HsG::Apply(Hs::Var("addInternalLabels"), {scaled_tree})}));
     }
 
     for(auto& [i,a,l]: alignment_loggers)
-        add_logger_when(logging_enabled,
-                        HsG::Apply(HsG::Apply(Hs::Var("$"),
-                                             {HsG::Apply(Hs::Var("every"),
-                                                         {Hs::Literal(Hs::Integer{integer(10)})})}),
-                                   {HsG::Apply(l, {a})}));
+        add_logger(HsG::Apply(HsG::Apply(Hs::Var("$"),
+                                        {HsG::Apply(Hs::Var("every"),
+                                                    {Hs::Literal(Hs::Integer{integer(10)})})}),
+                              {HsG::Apply(l, {a})}));
 
     for(auto& [i,cs,l]: category_state_loggers)
-        add_logger_when(logging_enabled,
-                        HsG::Apply(HsG::Apply(Hs::Var("$"),
-                                             {HsG::Apply(Hs::Var("every"),
-                                                         {Hs::Literal(Hs::Integer{integer(10)})})}),
-                                   {HsG::Apply(l, {cs})}));
+        add_logger(HsG::Apply(HsG::Apply(Hs::Var("$"),
+                                        {HsG::Apply(Hs::Var("every"),
+                                                    {Hs::Literal(Hs::Integer{integer(10)})})}),
+                              {HsG::Apply(l, {cs})}));
 
     HsG::Return(model, HsG::Apply(Hs::Var("parameterLogValues"), {logger_values_var}));
     program_file<<"\n";
