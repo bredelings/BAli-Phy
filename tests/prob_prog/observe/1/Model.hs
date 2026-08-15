@@ -15,7 +15,7 @@ main = do
     withModelDescription "Run the observation example" $
       modelRunParser "Model" 200000
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   let model = observe_data 1
 

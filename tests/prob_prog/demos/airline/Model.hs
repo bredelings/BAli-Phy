@@ -22,7 +22,7 @@ model fatalities = do
 main = do
   options <- execParser $ modelRunParser "Model" 200000
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   let fatalities = [24, 25, 31, 31, 22, 21, 26, 20, 16, 22]
       model' = model fatalities

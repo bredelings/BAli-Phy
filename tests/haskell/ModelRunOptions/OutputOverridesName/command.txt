@@ -1,0 +1,1 @@
+run ../Main.hs --name ignored --output-dir exact

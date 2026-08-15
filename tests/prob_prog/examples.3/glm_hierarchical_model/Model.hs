@@ -38,7 +38,7 @@ model floor_values county_code_values log_radon_data = do
 main = do
   options <- execParser $ modelRunParser "Model" 200000
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   radon <- readTable "radon.csv"
 

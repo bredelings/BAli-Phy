@@ -23,7 +23,7 @@ model xs ys = do
 main = do
   options <- execParser $ modelRunParser "LinearRegression" 200000
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   xy_data <- readTable "xy.csv"
 

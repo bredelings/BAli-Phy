@@ -2,7 +2,9 @@
 module BAliPhy.Run
     ( LogFormat(..)
     , ModelRunOptions(..)
+    , ModelRunMode(..)
     , ModelRun(..)
+    , modelRunOptions
     , modelRunParser
     , modelRunParserWith
     , withModelDescription
@@ -20,6 +22,7 @@ import MCMC
 import Options.Applicative
 import Probability
 import Probability.Logger
+import System.Directory (doesDirectoryExist)
 import System.Exit (exitFailure)
 import System.FilePath ((</>))
 import System.IO (hFlush, hPutStrLn, stderr, stdout)
@@ -30,10 +33,15 @@ data LogFormat = JSON | TSV
 
 data ModelRunOptions = ModelRunOptions
     { iterations :: Int
-    , testMode :: Bool
     , logFormats :: [LogFormat]
-    , outputName :: String
+    , runMode :: ModelRunMode
     }
+
+data ModelRunMode
+    = TestMode
+    | CreateMCMCDirectory String
+    | UseMCMCDirectory FilePath
+    deriving (Eq, Show)
 
 data ModelRun
     = TestRun
@@ -52,41 +60,57 @@ showLogFormats = intercalate "," . map showLogFormat where
     showLogFormat JSON = "json"
     showLogFormat TSV = "tsv"
 
--- Parse the controls common to standalone model programs.
-modelRunOptions :: String -> Int -> Parser ModelRunOptions
-modelRunOptions defaultName defaultIterations =
+-- Resolve test mode first, then an exact directory, and otherwise create a uniquely named directory.
+resolveRunMode :: Bool -> Maybe FilePath -> String -> ModelRunMode
+resolveRunMode True _ _ = TestMode
+resolveRunMode False (Just directory) _ = UseMCMCDirectory directory
+resolveRunMode False Nothing name = CreateMCMCDirectory name
+
+-- Parse the controls common to standalone model programs with caller-selected scalar log defaults.
+modelRunOptions :: String -> Int -> [LogFormat] -> Parser ModelRunOptions
+modelRunOptions defaultName defaultIterations defaultLogFormats =
     ModelRunOptions
         <$> option auto
             (short 'i' <> long "iterations" <> value defaultIterations <> showDefault <>
              metavar "N" <> help "Number of MCMC iterations")
-        <*> switch (short 't' <> long "test" <> help "Analyze the initial values and exit")
         <*> option (eitherReader readLogFormats)
-            (short 'l' <> long "log-format" <> value [JSON] <> showDefaultWith showLogFormats <>
+            (short 'l' <> long "log-format" <> value defaultLogFormats <> showDefaultWith showLogFormats <>
              metavar "FORMAT" <> help "Scalar log format: json, tsv, or json,tsv")
-        <*> strOption
-            (short 'n' <> long "name" <> value defaultName <> showDefaultWith id <>
-             metavar "NAME" <> help "Name for a unique output directory")
+        <*> (resolveRunMode
+            <$> switch (short 't' <> long "test" <> help "Analyze the initial values and exit")
+            <*> optional (strOption
+                (long "output-dir" <> metavar "DIRECTORY" <>
+                 help "Use this existing directory instead of creating one from --name"))
+            <*> strOption
+                (short 'n' <> long "name" <> value defaultName <> showDefaultWith id <>
+                 metavar "NAME" <> help "Name for a unique output directory"))
 
 -- Supply the standard help behavior for a model with no model-specific inputs.
 modelRunParser :: String -> Int -> ParserInfo ModelRunOptions
 modelRunParser defaultName defaultIterations =
-    info (modelRunOptions defaultName defaultIterations <**> helper) fullDesc
+    info (modelRunOptions defaultName defaultIterations [JSON] <**> helper) fullDesc
 
 -- Parse model-specific inputs separately from the options shared by all model programs.
 modelRunParserWith :: String -> Int -> Parser a -> ParserInfo (ModelRunOptions, a)
 modelRunParserWith defaultName defaultIterations inputs =
-    info (((,) <$> modelRunOptions defaultName defaultIterations <*> inputs) <**> helper) fullDesc
+    info (((,) <$> modelRunOptions defaultName defaultIterations [JSON] <*> inputs) <**> helper) fullDesc
 
 withModelDescription :: String -> ParserInfo a -> ParserInfo a
 withModelDescription description parserInfo =
     parserInfo { infoProgDesc = description }
 
--- Represent test mode without filesystem output, or create the unique directory for an MCMC run.
-initializeModelRun :: Bool -> String -> IO ModelRun
-initializeModelRun True _ = return TestRun
-initializeModelRun False name = do
+-- Resolve a run request to either no output or the exact directory used by every logger.
+initializeModelRun :: ModelRunMode -> IO ModelRun
+initializeModelRun TestMode = return TestRun
+initializeModelRun (CreateMCMCDirectory name) = do
     directory <- createUniqueDirectory name
     hPutStrLn stderr $ "Created directory " ++ show directory ++ " for output files.\n"
+    return $ MCMCRun directory
+initializeModelRun (UseMCMCDirectory directory) = do
+    exists <- doesDirectoryExist directory
+    unless exists $ do
+        hPutStrLn stderr $ "Output directory " ++ show directory ++ " does not exist or is not a directory."
+        exitFailure
     return $ MCMCRun directory
 
 -- Retain the returned model value as the logging head and attach the selected standard scalar logs.

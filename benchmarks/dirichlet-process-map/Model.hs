@@ -74,7 +74,7 @@ benchmarkModel scenario size =
 main = do
   options <- execParser $ modelRunParser "Model" 200000
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   scenario <- getEnv "BALIPHY_DP_MAP_SCENARIO"
   sizeText <- getEnv "BALIPHY_DP_MAP_SIZE"

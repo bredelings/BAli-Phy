@@ -3,6 +3,7 @@ module System.Directory
      createDirectory,
      createDirectoryIfMissing,
      doesPathExist,
+     doesDirectoryExist,
      getCurrentDirectory,
      withCurrentDirectory,
      removeFile,
@@ -27,6 +28,11 @@ foreign import bpcall "File:" doesPathExistRaw :: CPPString -> IO Bool
 
 doesPathExist :: FilePath -> IO Bool
 doesPathExist path = doesPathExistRaw (list_to_string path)
+
+foreign import bpcall "File:" doesDirectoryExistRaw :: CPPString -> IO Bool
+
+doesDirectoryExist :: FilePath -> IO Bool
+doesDirectoryExist path = doesDirectoryExistRaw (list_to_string path)
 
 -- removeDirectory :: FilePath -> ()
 -- removeDirectoryRecursive :: FilePath -> IO ()
@@ -71,7 +77,6 @@ copyFile fromPath toPath = copyFileRaw (list_to_string fromPath) (list_to_string
 -- makeAbsolute :: FilePath -> IO FilePath
 -- makeRelativeToCurrentDirectory :: FilePath -> IO FilePath
 -- doesFileExist :: FilePath -> IO Bool
--- doesDirectoryExist :: FilePath -> IO Bool
 -- findExecutable :: String -> IO (Maybe FilePath)
 -- findExecutables :: String -> IO [FilePath]
 -- findExecutablesInDirectories :: [FilePath] -> String -> IO [FilePath]

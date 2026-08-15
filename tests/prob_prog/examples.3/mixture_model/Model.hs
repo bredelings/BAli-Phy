@@ -35,7 +35,7 @@ model xs = do
 main = do
   options <- execParser $ modelRunParser "Model" 200000
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   frame <- readTable "x.csv"
 

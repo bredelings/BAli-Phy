@@ -33,7 +33,7 @@ model taxa = do
 main = do
   options <- execParser $ modelRunParser "Model" 200000
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   let taxa = take nLeaves allTexts
 

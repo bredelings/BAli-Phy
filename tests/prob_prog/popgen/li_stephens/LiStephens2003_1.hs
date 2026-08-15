@@ -35,7 +35,7 @@ main = do
     withModelDescription "Run the Li-Stephens recombination model" $
       modelRunParserWith "LiStephens2003_1" 200000 modelInputOptions
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   sequence_data <- load_alignment dna (sequenceFile inputs)
 

@@ -31,7 +31,7 @@ main = do
     modelRunParserWith "Model" 200000 $
       strArgument (metavar "TABLE" <> help "Table containing an x column")
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   xtable <- readTable filename
 

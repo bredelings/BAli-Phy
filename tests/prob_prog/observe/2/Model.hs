@@ -15,7 +15,7 @@ observe_data z' = do
 main = do
   options <- execParser $ modelRunParser "Model" 200000
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
   let model = observe_data 1
 
   mcmcState <- makeLoggedMCMCState runInfo (logFormats options) model

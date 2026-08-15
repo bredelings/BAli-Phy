@@ -40,7 +40,7 @@ model (t1,t2) times = do
 main = do
   options <- execParser $ modelRunParser "Coal" 200000
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   frame <- readTable "coal-times.csv"
 

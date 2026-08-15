@@ -89,7 +89,7 @@ main = do
       modelRunParserWith "Model" 200000 $
         strArgument (metavar "SEQUENCES" <> help "Unaligned coding sequences")
 
-    runInfo <- initializeModelRun (testMode options) (outputName options)
+    runInfo <- initializeModelRun (runMode options)
 
     sequenceData <- mkUnalignedCharacterData (mkCodons dna standard_code) <$>
       loadSequences filename

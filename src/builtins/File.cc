@@ -380,6 +380,19 @@ extern "C" closure builtin_function_doesPathExistRaw(OperationArgs& Args)
     return exists;
 }
 
+// Report whether the path names a directory, propagating filesystem inspection errors.
+extern "C" closure builtin_function_doesDirectoryExistRaw(OperationArgs& Args)
+{
+    fs::path path = Args.evaluate_slot_to_value(0).as_string();
+
+    std::error_code ec;
+    bool is_directory = fs::is_directory(path, ec);
+    if (ec)
+        throw myexception()<<"doesDirectoryExist: cannot inspect path "<<path<<": "<<ec.message();
+
+    return is_directory;
+}
+
 // Atomically claim a collection of output paths with empty placeholder files.
 // The first collision ends claiming so identical callers cannot reserve disjoint subsets and both lose.
 extern "C" closure builtin_function_reserveOutputFilesRaw(OperationArgs& Args)

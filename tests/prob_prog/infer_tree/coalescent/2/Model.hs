@@ -95,7 +95,7 @@ main = do
       modelRunParserWith "Model" 200000 $
         strArgument (metavar "ALIGNMENT" <> help "Aligned coding sequences")
 
-    runInfo <- initializeModelRun (testMode options) (outputName options)
+    runInfo <- initializeModelRun (runMode options)
 
     sequences <- loadSequences filename
 

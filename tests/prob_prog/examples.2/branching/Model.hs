@@ -21,7 +21,7 @@ model n = do
 main = do
   options <- execParser $ modelRunParser "Model" 200000
 
-  runInfo <- initializeModelRun (testMode options) (outputName options)
+  runInfo <- initializeModelRun (runMode options)
 
   mcmcState <- makeLoggedMCMCState runInfo (logFormats options) $ model 6
 
