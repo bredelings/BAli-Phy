@@ -1,2 +1,2 @@
-{"iter":0,"catStates":{"A":[[0,0],[1,0]],"B":[[0,1]]},"properties":{"rate":[[1.0,3.0],[10.0]],"score":[[-1.0,2.0],[4.0]]}}
-{"iter":10,"catStates":{"A":[[0,1],[1,0]],"B":[[0,0]]},"properties":{"rate":[[2.0,6.0],[20.0]],"score":[[1.0,5.0],[8.0]]}}
+{"iter":0,"catStates":{"A":[[0,0],[1,0]],"B":[[0,1]]},"properties":{"rate":[[1.0,3.0],[10.0]],"score":[[-1.0,2.0],[4.0]]},"conditions":{"positiveSelectionInModel":false}}
+{"iter":10,"catStates":{"A":[[0,1],[1,0]],"B":[[0,0]]},"properties":{"rate":[[2.0,6.0],[20.0]],"score":[[1.0,5.0],[8.0]]},"conditions":{"positiveSelectionInModel":true}}

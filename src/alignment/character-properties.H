@@ -29,12 +29,20 @@ struct property_summary
     sequence_values median;
 };
 
+struct conditioned_summary
+{
+    std::uint64_t retained_samples = 0;
+    std::vector<std::uint64_t> retained_samples_by_chain;
+    std::map<std::string, property_summary> properties;
+};
+
 struct summary
 {
     sample_selection selection;
     std::uint64_t retained_samples = 0;
     std::vector<std::uint64_t> retained_samples_by_chain;
     std::map<std::string, property_summary> properties;
+    std::map<std::string, conditioned_summary> conditioned;
 };
 
 /// Encode the versioned character-property summary shared by reporting tools.

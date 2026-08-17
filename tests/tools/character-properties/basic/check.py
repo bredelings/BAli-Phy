@@ -6,11 +6,35 @@ from _check_summary import read_summary, require_equal
 
 summary = read_summary(sys.argv[1])
 require_equal(summary["format"], "bali-phy-character-properties")
-require_equal(summary["version"], 1)
+require_equal(summary["version"], 2)
 require_equal(summary["coordinates"], {"kind": "ungapped-sequence-character", "index_base": 0})
 require_equal(summary["selection"], {"skip": None, "until": None, "subsample": 1})
 require_equal(summary["retained_samples"], 2)
 require_equal(summary["retained_samples_by_chain"], [2])
+# This fixture is the smallest existing end-to-end check that can distinguish
+# True-conditioned moments and medians from the unconditional posterior view.
+require_equal(
+    summary["conditioned"],
+    {
+        "positiveSelectionInModel": {
+            "condition_value": True,
+            "retained_samples": 1,
+            "retained_samples_by_chain": [1],
+            "properties": {
+                "rate": {
+                    "mean": {"A": [6.0, 20.0], "B": [2.0]},
+                    "sd": {"A": [0.0, 0.0], "B": [0.0]},
+                    "median": {"A": [6.0, 20.0], "B": [2.0]},
+                },
+                "score": {
+                    "mean": {"A": [5.0, 8.0], "B": [1.0]},
+                    "sd": {"A": [0.0, 0.0], "B": [0.0]},
+                    "median": {"A": [5.0, 8.0], "B": [1.0]},
+                },
+            },
+        }
+    },
+)
 require_equal(
     summary["properties"]["rate"],
     {

@@ -1,4 +1,4 @@
-{"iter":0,"catStates":{"A":[[0,0]]},"properties":{"rate":[[100.0]]}}
-{"iter":10,"catStates":{"A":[[0,0]]},"properties":{"rate":[[110.0]]}}
-{"iter":20,"catStates":{"A":[[0,0]]},"properties":{"rate":[[120.0]]}}
-{"iter":30,"catStates":{"A":[[0,0]]},"properties":{"rate":[[130.0]]}}
+{"iter":0,"catStates":{"A":[[0,0]]},"properties":{"rate":[[100.0]]},"conditions":{"positiveSelectionInModel":false}}
+{"iter":10,"catStates":{"A":[[0,0]]},"properties":{"rate":[[110.0]]},"conditions":{"positiveSelectionInModel":false}}
+{"iter":20,"catStates":{"A":[[0,0]]},"properties":{"rate":[[120.0]]},"conditions":{"positiveSelectionInModel":false}}
+{"iter":30,"catStates":{"A":[[0,0]]},"properties":{"rate":[[130.0]]},"conditions":{"positiveSelectionInModel":true}}

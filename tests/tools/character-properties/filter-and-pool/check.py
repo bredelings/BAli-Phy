@@ -11,3 +11,11 @@ require_equal(summary["retained_samples_by_chain"], [2, 2])
 require_equal(summary["properties"]["rate"]["mean"], {"A": [70.0]})
 require_equal(summary["properties"]["rate"]["sd"], {"A": [50.99019513592785]})
 require_equal(summary["properties"]["rate"]["median"], {"A": [30.0]})
+# Filtering before conditioning and retaining counts by chain are not covered by
+# the single-chain basic fixture; this protects both operations with the existing pool.
+conditioned = summary["conditioned"]["positiveSelectionInModel"]
+require_equal(conditioned["retained_samples"], 2)
+require_equal(conditioned["retained_samples_by_chain"], [1, 1])
+require_equal(conditioned["properties"]["rate"]["mean"], {"A": [70.0]})
+require_equal(conditioned["properties"]["rate"]["sd"], {"A": [60.0]})
+require_equal(conditioned["properties"]["rate"]["median"], {"A": [10.0]})

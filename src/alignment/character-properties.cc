@@ -130,6 +130,41 @@ property_summary parse_property(const std::string& name, const json::value& valu
     return result;
 }
 
+/// Decode a complete property map for either the unconditional or a conditioned view.
+std::map<std::string, property_summary> parse_properties(const json::value& value, const std::string& context)
+{
+    if (not value.is_object())
+        throw myexception()<<context<<" must be an object.";
+
+    std::map<std::string, property_summary> result;
+    for (const auto& item: value.as_object())
+    {
+        std::string name(item.key_c_str());
+        result[name] = parse_property(name, item.value());
+    }
+    return result;
+}
+
+/// Decode per-chain counts and require that they sum to the supplied total.
+std::vector<std::uint64_t> parse_chain_counts(const json::value& value, std::uint64_t total,
+                                              const std::string& context)
+{
+    if (not value.is_array())
+        throw myexception()<<context<<" must be an array.";
+
+    std::vector<std::uint64_t> result;
+    std::uint64_t sum = 0;
+    for (const auto& entry: value.as_array())
+    {
+        auto count = nonnegative_integer(entry, context+" entry");
+        sum += count;
+        result.push_back(count);
+    }
+    if (sum != total)
+        throw myexception()<<context<<" does not sum to retained_samples.";
+    return result;
+}
+
 }
 
 /// Encode an optional iteration bound as either an integer or JSON null.
@@ -155,6 +190,31 @@ static json::object sequence_values_to_json(const sequence_values& values)
     return result;
 }
 
+/// Encode per-chain retained-sample counts for either summary view.
+static json::array chain_counts_to_json(const std::vector<std::uint64_t>& counts)
+{
+    json::array result;
+    result.reserve(counts.size());
+    for (auto count: counts)
+        result.push_back(count);
+    return result;
+}
+
+/// Encode all property summaries in one posterior view.
+static json::object properties_to_json(const std::map<std::string, property_summary>& properties)
+{
+    json::object result;
+    for (const auto& [name, property]: properties)
+    {
+        json::object encoded;
+        encoded["mean"] = sequence_values_to_json(property.mean);
+        encoded["sd"] = sequence_values_to_json(property.sd);
+        encoded["median"] = sequence_values_to_json(property.median);
+        result[name] = std::move(encoded);
+    }
+    return result;
+}
+
 /// Encode the versioned character-property summary shared by reporting tools.
 json::value to_json(const summary& value)
 {
@@ -163,19 +223,15 @@ json::value to_json(const summary& value)
     selection["until"] = encode_optional_iteration(value.selection.until);
     selection["subsample"] = value.selection.subsample;
 
-    json::array retained_samples_by_chain;
-    retained_samples_by_chain.reserve(value.retained_samples_by_chain.size());
-    for (auto count: value.retained_samples_by_chain)
-        retained_samples_by_chain.push_back(count);
-
-    json::object properties;
-    for (const auto& [name, property]: value.properties)
+    json::object conditioned;
+    for (const auto& [name, view]: value.conditioned)
     {
         json::object encoded;
-        encoded["mean"] = sequence_values_to_json(property.mean);
-        encoded["sd"] = sequence_values_to_json(property.sd);
-        encoded["median"] = sequence_values_to_json(property.median);
-        properties[name] = std::move(encoded);
+        encoded["condition_value"] = true;
+        encoded["retained_samples"] = view.retained_samples;
+        encoded["retained_samples_by_chain"] = chain_counts_to_json(view.retained_samples_by_chain);
+        encoded["properties"] = properties_to_json(view.properties);
+        conditioned[name] = std::move(encoded);
     }
 
     json::object coordinates;
@@ -184,12 +240,13 @@ json::value to_json(const summary& value)
 
     json::object result;
     result["format"] = "bali-phy-character-properties";
-    result["version"] = 1;
+    result["version"] = 2;
     result["coordinates"] = std::move(coordinates);
     result["selection"] = std::move(selection);
     result["retained_samples"] = value.retained_samples;
-    result["retained_samples_by_chain"] = std::move(retained_samples_by_chain);
-    result["properties"] = std::move(properties);
+    result["retained_samples_by_chain"] = chain_counts_to_json(value.retained_samples_by_chain);
+    result["properties"] = properties_to_json(value.properties);
+    result["conditioned"] = std::move(conditioned);
     return result;
 }
 
@@ -201,8 +258,9 @@ summary from_json(const json::value& document, const std::string& context)
     const auto& root = document.as_object();
     if (required_string(root, "format", context) != "bali-phy-character-properties")
         throw myexception()<<context<<": unrecognized format.";
-    if (nonnegative_integer(required_field(root, "version", context), context+" version") != 1)
-        throw myexception()<<context<<": only version 1 is supported.";
+    auto version = nonnegative_integer(required_field(root, "version", context), context+" version");
+    if (version != 1 and version != 2)
+        throw myexception()<<context<<": only versions 1 and 2 are supported.";
 
     const auto& coordinates_value = required_field(root, "coordinates", context);
     if (not coordinates_value.is_object())
@@ -238,26 +296,51 @@ summary from_json(const json::value& document, const std::string& context)
     result.retained_samples =
         nonnegative_integer(required_field(root, "retained_samples", context), context+" retained_samples");
 
-    const auto& chain_counts = required_field(root, "retained_samples_by_chain", context);
-    if (not chain_counts.is_array())
-        throw myexception()<<context<<": field 'retained_samples_by_chain' must be an array.";
-    std::uint64_t chain_total = 0;
-    for (const auto& value: chain_counts.as_array())
-    {
-        auto count = nonnegative_integer(value, context+" retained_samples_by_chain entry");
-        chain_total += count;
-        result.retained_samples_by_chain.push_back(count);
-    }
-    if (chain_total != result.retained_samples)
-        throw myexception()<<context<<": retained_samples_by_chain does not sum to retained_samples.";
+    result.retained_samples_by_chain = parse_chain_counts(
+        required_field(root, "retained_samples_by_chain", context), result.retained_samples,
+        context+" retained_samples_by_chain");
+    result.properties = parse_properties(required_field(root, "properties", context), context+" properties");
 
-    const auto& properties = required_field(root, "properties", context);
-    if (not properties.is_object())
-        throw myexception()<<context<<": field 'properties' must be an object.";
-    for (const auto& item: properties.as_object())
+    if (version == 2)
     {
-        std::string name(item.key_c_str());
-        result.properties[name] = parse_property(name, item.value());
+        const auto& conditioned = required_field(root, "conditioned", context);
+        if (not conditioned.is_object())
+            throw myexception()<<context<<": field 'conditioned' must be an object.";
+        for (const auto& item: conditioned.as_object())
+        {
+            std::string name(item.key_c_str());
+            std::string condition_context = context+" conditioned '"+name+"'";
+            if (not item.value().is_object())
+                throw myexception()<<condition_context<<" must be an object.";
+            const auto& object = item.value().as_object();
+            const auto& condition_value = required_field(object, "condition_value", condition_context);
+            if (not condition_value.is_bool() or not condition_value.as_bool())
+                throw myexception()<<condition_context<<": condition_value must be true.";
+
+            auto& view = result.conditioned[name];
+            view.retained_samples = nonnegative_integer(
+                required_field(object, "retained_samples", condition_context), condition_context+" retained_samples");
+            if (view.retained_samples > result.retained_samples)
+                throw myexception()<<condition_context<<": retained_samples exceeds the unconditional count.";
+            view.retained_samples_by_chain = parse_chain_counts(
+                required_field(object, "retained_samples_by_chain", condition_context), view.retained_samples,
+                condition_context+" retained_samples_by_chain");
+            if (view.retained_samples_by_chain.size() != result.retained_samples_by_chain.size())
+                throw myexception()<<condition_context<<": retained_samples_by_chain has the wrong number of chains.";
+            for (std::size_t chain = 0; chain < view.retained_samples_by_chain.size(); chain++)
+                if (view.retained_samples_by_chain[chain] > result.retained_samples_by_chain[chain])
+                    throw myexception()<<condition_context
+                                       <<": conditioned count exceeds the unconditional count for chain "<<chain<<".";
+            view.properties = parse_properties(
+                required_field(object, "properties", condition_context), condition_context+" properties");
+            if (view.retained_samples == 0 and not view.properties.empty())
+                throw myexception()<<condition_context<<": zero retained samples require an empty property map.";
+            if (view.retained_samples > 0 and view.properties.size() != result.properties.size())
+                throw myexception()<<condition_context<<": property names differ from the unconditional view.";
+            for (const auto& [property_name, property]: result.properties)
+                if (view.retained_samples > 0 and not view.properties.contains(property_name))
+                    throw myexception()<<condition_context<<": property '"<<property_name<<"' is missing.";
+        }
     }
     return result;
 }

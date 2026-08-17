@@ -28,7 +28,7 @@ constexpr std::size_t median_sample_size = 100;
 // Four KiB is a conservative C++ allowance for those vectors and the cell itself.
 constexpr std::size_t median_bytes_per_cell = 4 * 1024;
 
-using sample_visitor = std::function<void(const json::object&, const std::string&)>;
+using sample_visitor = std::function<void(const json::object&, const std::string&, std::size_t)>;
 
 /// Return a required sample field with a contextual error if it is absent.
 const json::value& required_field(const json::object& object, const char* field, const std::string& context)
@@ -89,6 +89,7 @@ json::object decode_sample(const std::string& line, const std::string& context)
 /// Stream selected samples from one chain using strict skip, inclusive until, and post-filter stride.
 std::uint64_t visit_chain(const std::filesystem::path& filename,
                           const sample_selection& selection,
+                          std::size_t chain,
                           const sample_visitor& visitor)
 {
     std::ifstream input(filename);
@@ -120,7 +121,7 @@ std::uint64_t visit_chain(const std::filesystem::path& filename,
         if (not retain)
             continue;
 
-        visitor(sample, context);
+        visitor(sample, context, chain);
         retained_samples++;
     }
     if (input.bad())
@@ -135,8 +136,8 @@ std::vector<std::uint64_t> visit_samples(const summarize_options& options, const
 {
     std::vector<std::uint64_t> retained;
     retained.reserve(options.filenames.size());
-    for (const auto& filename: options.filenames)
-        retained.push_back(visit_chain(filename, options.selection, visitor));
+    for (std::size_t chain = 0; chain < options.filenames.size(); chain++)
+        retained.push_back(visit_chain(options.filenames[chain], options.selection, chain, visitor));
     return retained;
 }
 
@@ -323,6 +324,70 @@ public:
     }
 };
 
+class summary_accumulator
+{
+    moment_accumulator unconditional_;
+    std::vector<std::string> condition_names_;
+    std::map<std::string, moment_accumulator> conditioned_;
+    std::map<std::string, std::vector<std::uint64_t>> retained_by_chain_;
+    std::size_t chain_count_;
+    bool conditions_initialized_ = false;
+
+    /// Read and validate the optional Boolean condition object on one raw sample.
+    const json::object* conditions_for(const json::object& sample, const std::string& context) const
+    {
+        const auto* value = sample.if_contains("conditions");
+        if (not value)
+            return nullptr;
+        if (not value->is_object())
+            throw myexception()<<context<<": 'conditions' must be an object.";
+        for (const auto& item: value->as_object())
+            if (not item.value().is_bool())
+                throw myexception()<<context<<": condition '"<<item.key_c_str()<<"' must be Boolean.";
+        return &value->as_object();
+    }
+
+public:
+    explicit summary_accumulator(std::size_t chain_count): chain_count_(chain_count) {}
+
+    /// Accumulate the unconditional view and each named view whose condition is True.
+    void add_sample(const json::object& sample, const std::string& context, std::size_t chain)
+    {
+        const auto* conditions = conditions_for(sample, context);
+        std::vector<std::string> names = conditions ? object_keys(*conditions) : std::vector<std::string>{};
+        if (not conditions_initialized_)
+        {
+            condition_names_ = names;
+            for (const auto& name: names)
+            {
+                conditioned_.try_emplace(name);
+                retained_by_chain_[name].resize(chain_count_);
+            }
+            conditions_initialized_ = true;
+        }
+        else if (names != condition_names_)
+            throw myexception()<<context<<": condition names changed.";
+
+        unconditional_.add_sample(sample, context);
+        for (const auto& name: condition_names_)
+        {
+            if (conditions->at(name).as_bool())
+            {
+                conditioned_.at(name).add_sample(sample, context);
+                retained_by_chain_.at(name).at(chain)++;
+            }
+        }
+    }
+
+    const moment_accumulator& unconditional() const {return unconditional_;}
+    const std::vector<std::string>& condition_names() const {return condition_names_;}
+    const moment_accumulator& conditioned(const std::string& name) const {return conditioned_.at(name);}
+    const std::vector<std::uint64_t>& retained_by_chain(const std::string& name) const
+    {
+        return retained_by_chain_.at(name);
+    }
+};
+
 class median_cell
 {
     std::optional<double> lower_;
@@ -484,16 +549,32 @@ double replay_value(const json::object& sample, const median_entry& entry)
                          "replayed property value");
 }
 
-/// Replay each selected sample through the active median cells and detect changed chain lengths.
+/// Replay samples from the requested posterior view through the active median cells
+/// and require the same matching count in every chain as in the moments pass.
 void replay_medians(const summarize_options& options,
                     const std::vector<std::uint64_t>& expected_counts,
                     std::vector<median_entry*>& entries,
-                    bool sampling)
+                    bool sampling,
+                    const std::optional<std::string>& condition)
 {
-    auto observed_counts = visit_samples(
+    std::vector<std::uint64_t> observed_counts(expected_counts.size());
+    visit_samples(
         options,
-        [&](const json::object& sample, const std::string&)
+        [&](const json::object& sample, const std::string& context, std::size_t chain)
         {
+            if (condition)
+            {
+                const auto* conditions = sample.if_contains("conditions");
+                if (not conditions or not conditions->is_object())
+                    throw myexception()<<context<<": conditioned median sample has no condition object.";
+                const auto* value = conditions->as_object().if_contains(*condition);
+                if (not value or not value->is_bool())
+                    throw myexception()<<context<<": conditioned median sample has no Boolean condition '"
+                                       <<*condition<<"'.";
+                if (not value->as_bool())
+                    return;
+            }
+            observed_counts.at(chain)++;
             for (auto* entry: entries)
             {
                 double value = replay_value(sample, *entry);
@@ -511,7 +592,8 @@ void replay_medians(const summarize_options& options,
 void calculate_medians(const summarize_options& options,
                        const moment_accumulator& moments,
                        const std::vector<std::uint64_t>& retained_samples_by_chain,
-                       std::map<std::string, property_summary>& properties)
+                       std::map<std::string, property_summary>& properties,
+                       const std::optional<std::string>& condition = std::nullopt)
 {
     if (moments.property_names().empty())
         return;
@@ -551,7 +633,7 @@ void calculate_medians(const summarize_options& options,
                 entry.cell.start_sampling(generator);
                 unresolved.push_back(&entry);
             }
-            replay_medians(options, retained_samples_by_chain, unresolved, true);
+            replay_medians(options, retained_samples_by_chain, unresolved, true, condition);
             for (auto* entry: unresolved)
                 entry->cell.finish_sampling();
 
@@ -565,7 +647,7 @@ void calculate_medians(const summarize_options& options,
             }
             if (unresolved.empty())
                 break;
-            replay_medians(options, retained_samples_by_chain, unresolved, false);
+            replay_medians(options, retained_samples_by_chain, unresolved, false, condition);
             for (auto* entry: unresolved)
                 entry->cell.finish_counting();
         }
@@ -599,17 +681,32 @@ summary summarize(const summarize_options& options)
         and *options.selection.until <= *options.selection.skip)
         throw myexception()<<"--until must be greater than --skip.";
 
-    moment_accumulator moments;
+    summary_accumulator moments(options.filenames.size());
     auto retained_samples_by_chain = visit_samples(
         options,
-        [&](const json::object& sample, const std::string& context) {moments.add_sample(sample, context);});
+        [&](const json::object& sample, const std::string& context, std::size_t chain)
+        {
+            moments.add_sample(sample, context, chain);
+        });
 
     summary result;
     result.selection = options.selection;
-    result.retained_samples = moments.retained_samples();
+    result.retained_samples = moments.unconditional().retained_samples();
     result.retained_samples_by_chain = retained_samples_by_chain;
-    result.properties = moments.result();
-    calculate_medians(options, moments, retained_samples_by_chain, result.properties);
+    result.properties = moments.unconditional().result();
+    calculate_medians(options, moments.unconditional(), retained_samples_by_chain, result.properties);
+    // Each condition view contains all properties but only samples where that named Boolean is True.
+    for (const auto& name: moments.condition_names())
+    {
+        const auto& conditioned_moments = moments.conditioned(name);
+        auto& view = result.conditioned[name];
+        view.retained_samples = conditioned_moments.retained_samples();
+        view.retained_samples_by_chain = moments.retained_by_chain(name);
+        if (view.retained_samples == 0)
+            continue;
+        view.properties = conditioned_moments.result();
+        calculate_medians(options, conditioned_moments, view.retained_samples_by_chain, view.properties, name);
+    }
     return result;
 }
 
