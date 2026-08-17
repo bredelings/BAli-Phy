@@ -64,6 +64,8 @@ instance (HasBranchLengths t, HasSMap m, SimpleSModel t m) => SimpleSModel t (Di
 
 instance HasProperties t m => HasProperties t (Discrete m) where
     getProperties (SModelOnTree tree model) = commonPropertyMap [getProperties (SModelOnTree tree component) | (component, _) <- unpackDiscrete model]
+    getConditions (SModelOnTree tree model) =
+        commonOrConditionMap [getConditions (SModelOnTree tree component) | (component, _) <- unpackDiscrete model]
 
 instance Scalable a => Scalable (Discrete a) where
     scaleBy x dist = fmap (scaleBy x) dist

@@ -1,5 +1,6 @@
 [True,True,True]
 [2,1]
+[True,False,True,False,True]
 (3,3,[0,1,2,1,0,3,2,3,0])
 20
 (4,4)
@@ -12,6 +13,7 @@
 True
 [0.5,0.5,0.5,0.5]
 [2,2,2,2]
+True
 [True,True]
 [False,True]
 False
@@ -26,3 +28,5 @@ True
 [10.25,11,13,13]
 [0.25,1,1,1]
 [0,0,0,0]
+[True,False]
+[True,False]

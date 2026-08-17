@@ -42,7 +42,7 @@ modulatedMarkovSmap smaps = builtin_modulated_markov_smap (toVector smaps)
    QUESTION: How would we record this?
  -}
 
-modulatedMarkov models between = setModulatedProperties properties baseModel where
+modulatedMarkov models between = setModulatedConditions conditions $ setModulatedProperties properties baseModel where
     a = getAlphabet $ head models
     qs = map getQ models
     pis = map getStartFreqs models
@@ -53,11 +53,16 @@ modulatedMarkov models between = setModulatedProperties properties baseModel whe
     rev = (minimum $ fmap getReversibility models) `min` (getReversibility between)
     baseModel = setReversibility rev $ markov a smap q pi
     properties = modulateCommonProperties $ fmap getStatePropertyFunctions models
+    conditions = commonOrConditionMap $ fmap getComponentConditions models
 
 -- Install common input properties after flattening each component/state
 -- property vector into the output modulated Markov state order.
 setModulatedProperties propertyMap model = foldl addProperty model (Map.toAscList propertyMap)
     where addProperty m (name, property) = setStateProperty name property m
+
+-- Install the OR-reduced component conditions on the single expanded Markov component.
+setModulatedConditions conditionMap model = foldl addCondition model (Map.toAscList conditionMap)
+    where addCondition m (name, value) = setComponentCondition name value m
 
 -- Retain only properties supplied by every component model and pass later
 -- scaling through to each component property before flattening.

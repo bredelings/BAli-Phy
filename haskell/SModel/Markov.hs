@@ -46,9 +46,9 @@ getEquilibriumRate alphabet states rates frequencies =
 -- Fields are: alphabet, smap, q, and cached rate.
 -- PROBLEM: caching the rate is not quite right, since there are different rates:
 --    DNA rate, AA rate, Codon rate, synonymous rate, etc.
-data Markov = Markov Alphabet (EVector Int) Markov.Markov Double StatePropertyMap
+data Markov = Markov Alphabet (EVector Int) Markov.Markov Double ComponentAnnotations
 
-wrapMarkov a smap m = Markov a smap m (getEquilibriumRate a smap (getQ m) (getEqFreqs m)) Map.empty
+wrapMarkov a smap m = Markov a smap m (getEquilibriumRate a smap (getQ m) (getEqFreqs m)) emptyComponentAnnotations
 
 instance CheckReversible Markov where
     getReversibility (Markov _ _ m _ _) = getReversibility m
@@ -90,18 +90,26 @@ instance HasBranchLengths t => SimpleSModel t Markov where
     componentFrequencies (SModelOnTree _ smodel) = [getStartFreqs smodel]
 
 instance Scalable Markov where
-    scaleBy x (Markov a s rm r properties) = Markov a s (scaleBy x rm) (x*r) (scaleStatePropertyMap x properties)
+    scaleBy x (Markov a s rm r annotations) =
+        Markov a s (scaleBy x rm) (x*r) (scaleComponentAnnotations x annotations)
 
 instance RateModel Markov where
     rate (Markov _ _ _ r _) = r
 
 instance HasStateProperties Markov where
-    getStatePropertyFunctions (Markov _ _ _ _ properties) = properties
-    setStateProperty name property (Markov a s rm r properties) = Markov a s rm r (Map.insert name property properties)
+    getStatePropertyFunctions (Markov _ _ _ _ (ComponentAnnotations properties _)) = properties
+    setStateProperty name property (Markov a s rm r (ComponentAnnotations properties conditions)) =
+        Markov a s rm r (ComponentAnnotations (Map.insert name property properties) conditions)
     nPropertyStates (Markov _ _ m _ _) = Markov.getNStates m
+
+instance HasComponentConditions Markov where
+    getComponentConditions (Markov _ _ _ _ (ComponentAnnotations _ conditions)) = conditions
+    setComponentCondition name value (Markov a s rm r (ComponentAnnotations properties conditions)) =
+        Markov a s rm r (ComponentAnnotations properties (Map.insert name value conditions))
 
 instance HasProperties t Markov where
     getProperties (SModelOnTree _ model) = statePropertyMapToComponentPropertyMap $ getStateProperties model
+    getConditions (SModelOnTree _ model) = getComponentConditions model
 
 -- A markov model needs a map from state -> letter in order to have a rate!
 -- For codon models, nucleotide differences between codons are counted and the

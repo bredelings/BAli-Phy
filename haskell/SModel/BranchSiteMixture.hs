@@ -20,10 +20,11 @@ data BranchSiteMixture m =
     BranchSiteMixture
         (Discrete m)
         IsEqSame
-        StatePropertyMap
+        ComponentAnnotations
 
 instance Scalable m => Scalable (BranchSiteMixture m) where
-    scaleBy x (BranchSiteMixture d e properties) = BranchSiteMixture (scaleBy x d) e (scaleStatePropertyMap x properties)
+    scaleBy x (BranchSiteMixture d e annotations) =
+        BranchSiteMixture (scaleBy x d) e (scaleComponentAnnotations x annotations)
 
 -- The model rate is the average of the Q matrix rates.
 instance RateModel m => RateModel (BranchSiteMixture m) where
@@ -75,11 +76,19 @@ instance (HasSMap m, CTMC m, HasAlphabet m, HasBranchLengths t, SimpleSModel t m
               (model,_):_ = models
 
 instance HasSMap m => HasStateProperties (BranchSiteMixture m) where
-    getStatePropertyFunctions (BranchSiteMixture _ _ properties) = properties
-    setStateProperty name property (BranchSiteMixture d e properties) = BranchSiteMixture d e (Map.insert name property properties)
+    getStatePropertyFunctions (BranchSiteMixture _ _ (ComponentAnnotations properties _)) = properties
+    setStateProperty name property (BranchSiteMixture d e (ComponentAnnotations properties conditions)) =
+        BranchSiteMixture d e (ComponentAnnotations (Map.insert name property properties) conditions)
     nPropertyStates model = vector_size (getSMap model)
+
+instance HasComponentConditions (BranchSiteMixture m) where
+    getComponentConditions (BranchSiteMixture _ _ (ComponentAnnotations _ conditions)) = conditions
+    setComponentCondition name value (BranchSiteMixture d e (ComponentAnnotations properties conditions)) =
+        BranchSiteMixture d e (ComponentAnnotations properties (Map.insert name value conditions))
 
 -- Matrix mixtures do not lift inner component properties yet.  Direct
 -- homogeneous properties, such as ASRV rate tags, are still well-defined.
-instance HasSMap m => HasProperties t (BranchSiteMixture m) where
+instance (HasSMap m, HasProperties t m) => HasProperties t (BranchSiteMixture m) where
     getProperties (SModelOnTree _ model) = statePropertyMapToComponentPropertyMap $ getStateProperties model
+    getConditions (SModelOnTree tree model@(BranchSiteMixture components _ _)) =
+        mergeOrConditionMaps (getComponentConditions model) (getConditions (SModelOnTree tree components))

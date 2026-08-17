@@ -27,7 +27,7 @@ data MultiFrequency t i e =
         t
         (NodeId -> i)
         (i -> e)
-        StatePropertyMap
+        ComponentAnnotations
 
 nodeFreq (MultiFrequency _ f g _) node = getEqFreqs $ g $ f $ node    -- get the node property
 edgeRates (MultiFrequency tree f g _) edge = g $ f $ node             -- get the node rates
@@ -44,7 +44,8 @@ instance (HasRoot t, HasSMap e) => HasSMap (MultiFrequency t i e) where
         where branch = head $ IntSet.elems (getEdgesSet tree)
 
 instance Scalable e => Scalable (MultiFrequency t i e) where
-    scaleBy x (MultiFrequency tree nodeInfo branchQ properties) = MultiFrequency tree nodeInfo (scaleBy x . branchQ) (scaleStatePropertyMap x properties)
+    scaleBy x (MultiFrequency tree nodeInfo branchQ annotations) =
+        MultiFrequency tree nodeInfo (scaleBy x . branchQ) (scaleComponentAnnotations x annotations)
 
 -- All branches need to have the same rate!
 instance (HasRoot t, RateModel e) => RateModel (MultiFrequency t i e) where
@@ -75,16 +76,25 @@ instance (HasRoot t, HasSMap m, RateModel m, CTMC m, HasBranchLengths t, t ~ t2)
     componentFrequencies (SModelOnTree tree model) = [nodeFreq model (root tree)]
 
 instance (HasRoot t2, HasSMap m) => HasStateProperties (MultiFrequency t2 i m) where
-    getStatePropertyFunctions (MultiFrequency _ _ _ properties) = properties
-    setStateProperty name property (MultiFrequency tree nodeInfo branchQ properties) = MultiFrequency tree nodeInfo branchQ (Map.insert name property properties)
+    getStatePropertyFunctions (MultiFrequency _ _ _ (ComponentAnnotations properties _)) = properties
+    setStateProperty name property (MultiFrequency tree nodeInfo branchQ (ComponentAnnotations properties conditions)) =
+        MultiFrequency tree nodeInfo branchQ (ComponentAnnotations (Map.insert name property properties) conditions)
     nPropertyStates model = vector_size (getSMap model)
+
+instance HasComponentConditions (MultiFrequency t2 i m) where
+    getComponentConditions (MultiFrequency _ _ _ (ComponentAnnotations _ conditions)) = conditions
+    setComponentCondition name value
+        (MultiFrequency tree nodeInfo branchQ (ComponentAnnotations properties conditions)) =
+        MultiFrequency tree nodeInfo branchQ (ComponentAnnotations properties (Map.insert name value conditions))
 
 -- Homogeneous properties stored directly on MultiFrequency are exposed here.
 -- Branch-specific inner-model properties still need location-indexed semantics.
 instance (HasRoot t2, HasSMap m) => HasProperties t (MultiFrequency t2 i m) where
     getProperties (SModelOnTree _ model) = statePropertyMapToComponentPropertyMap $ getStateProperties model
+    getConditions (SModelOnTree _ model) = getComponentConditions model
 
-multiFrequencyUnscaled tree nodeInfo branchQ = MultiFrequency tree (nodeInfo IntMap.!) branchQ Map.empty
+multiFrequencyUnscaled tree nodeInfo branchQ =
+    MultiFrequency tree (nodeInfo IntMap.!) branchQ emptyComponentAnnotations
 
 multiFrequency tree nodeInfo branchQ = multiFrequencyUnscaled tree nodeInfo (scaleTo 1 . branchQ)
 

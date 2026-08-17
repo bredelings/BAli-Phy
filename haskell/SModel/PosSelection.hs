@@ -2,9 +2,9 @@ module SModel.PosSelection where
 
 import SModel.ASRV
 import SModel.BranchSiteMixture
+import SModel.Property (emptyComponentAnnotations)
 import Probability.Distribution.Beta (beta)
 import Reversible
-import qualified Data.Map as Map
 import MCMC.Loggers (binaryIndicatorFields)
 import MCMC.Types (ContextAction, Modifiable)
 import Data.JSON (Object)
@@ -60,7 +60,8 @@ m8a mu gamma nBins posP modelFunc = modelFunc <$> m8aOmegaDist mu gamma nBins po
 m8aTest mu gamma nBins posP posW posSelection modelFunc = modelFunc <$> m8aTestOmegaDist mu gamma nBins posP posW posSelection
 
 -- Should we normalize the different entries to have the same rate?
-busted omegaDist posP posW posSelection modelFunc = BranchSiteMixture (m3Test omegaDist posP posW posSelection modelFunc) SameEqs Map.empty
+busted omegaDist posP posW posSelection modelFunc =
+    BranchSiteMixture (m3Test omegaDist posP posW posSelection modelFunc) SameEqs emptyComponentAnnotations
 
 bustedS omegaDist posP posW posSelection alpha n modelFunc = gammaRatesOn alpha n $ always $ busted omegaDist posP posW posSelection modelFunc
 

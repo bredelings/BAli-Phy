@@ -24,13 +24,26 @@ type StatePropertyMap = Map Text StatePropertyFunction
 
 type EvaluatedStatePropertyMap = Map Text (StateProperties Double)
 
+type ConditionMap = Map Text Bool
+
+-- Store state-indexed properties and model-level condition contributions together
+-- while retaining separate transformation interfaces for the two kinds of annotation.
+data ComponentAnnotations = ComponentAnnotations StatePropertyMap ConditionMap
+
+emptyComponentAnnotations = ComponentAnnotations Map.empty Map.empty
+
 class HasProperties t m where
     getProperties :: SModelOnTree t m -> PropertyMap
+    getConditions :: SModelOnTree t m -> ConditionMap
 
 class HasStateProperties m where
     getStatePropertyFunctions :: m -> StatePropertyMap
     setStateProperty :: Text -> StatePropertyFunction -> m -> m
     nPropertyStates :: m -> Int
+
+class HasComponentConditions m where
+    getComponentConditions :: m -> ConditionMap
+    setComponentCondition :: Text -> Bool -> m -> m
 
 getPropertyComponents (ComponentStateProperties sps) = length sps
 getPropertyStatesForComponent (ComponentStateProperties csps) c = length sps
@@ -57,6 +70,8 @@ dNdSPropertyName = Text.pack "dNdS"
 
 posSelectionPropertyName = Text.pack "posSelection"
 
+positiveSelectionInModelConditionName = Text.pack "positiveSelectionInModel"
+
 constantStateProperties n x = StateProperties $ replicate n x
 
 singletonComponentProperty ps = ComponentStateProperties [ps]
@@ -71,6 +86,9 @@ scaleStateProperty scale property = \scale2 -> property (scale * scale2)
 
 scaleStatePropertyMap :: Double -> StatePropertyMap -> StatePropertyMap
 scaleStatePropertyMap scale = Map.map (scaleStateProperty scale)
+
+scaleComponentAnnotations scale (ComponentAnnotations properties conditions) =
+    ComponentAnnotations (scaleStatePropertyMap scale properties) conditions
 
 -- Install a property whose value is the same for every state in the model.
 setConstantStateProperty :: HasStateProperties m => Text -> Double -> m -> m
@@ -95,6 +113,22 @@ commonPropertyMap (properties:rest) = Map.fromList
     | (name, property) <- Map.toAscList properties
     , all (Map.member name) rest
     ]
+
+-- A condition is exposed only when every component declares it; the value then
+-- records whether any of those components satisfies the named condition.
+commonOrConditionMap [] = Map.empty
+commonOrConditionMap (conditions:rest) = Map.fromList
+    [ (name, or (value:[condition Map.! name | condition <- rest]))
+    | (name, value) <- Map.toAscList conditions
+    , all (Map.member name) rest
+    ]
+
+-- Merge condition contributions from nested annotations that describe the same
+-- output component, retaining unique names and OR-ing shared names.
+mergeOrConditionMaps first second = foldl addCondition first (Map.toAscList second)
+  where
+    addCondition result (name, value) =
+        Map.insert name (maybe value (value ||) (Map.lookup name result)) result
 
 markovModulateProperty (ComponentStateProperties csps) = StateProperties $ concat [ ps | StateProperties ps <- csps]
 

@@ -33,6 +33,11 @@ lookupProperty name properties =
       Just property -> property
       Nothing       -> error "missing property"
 
+lookupCondition name conditions =
+    case Map.lookup (pack name) conditions of
+      Just value -> value
+      Nothing    -> error "missing condition"
+
 -- Pull the first state value out of a state vector for compact test output.
 firstValue values =
     case values of
@@ -70,6 +75,19 @@ main = do
       posSelectionValue = firstValue $ singleComponentValues $ lookupProperty "posSelection" codonProperties
 
   putStrLn $ show [dndsValue, posSelectionValue]
+
+  -- Exercise the component-condition contract where existing property tests cannot detect
+  -- loss during mixture reduction, modulation, scaling, or a Q-reconstructing modifier.
+  let neutralCodonModel = dNdS 0.5 (x3 codons (jukes_cantor dna))
+      mixedCodonModel = Discrete [(neutralCodonModel, 0.5), (codonModel, 0.5)]
+      partialConditionModel = Discrete [(codonModel, 0.5), (x3 codons (jukes_cantor dna), 0.5)]
+  putStrLn $ show
+    [ lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () codonModel)
+    , lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () neutralCodonModel)
+    , lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () mixedCodonModel)
+    , Map.member (pack "positiveSelectionInModel") $ getConditions (SModelOnTree () partialConditionModel)
+    , lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () (scaleBy 3 codonModel))
+    ]
   let triangle = symmetricMatrixFromLowerTriangle 3 [1, 2, 3]
       nonReversible = nonRev dna (replicate 12 1)
       weighted = weightedFrequencyMatrixFromVectors (fromList [0.25, 0.75])
@@ -98,6 +116,10 @@ main = do
   putStrLn $ show $ take 4 modulatedValues
   putStrLn $ show $ take 4 $ drop 4 modulatedValues
 
+  let modulatedSelection = modulatedMarkov [neutralCodonModel, codonModel] between
+  putStrLn $ show $ lookupCondition "positiveSelectionInModel" $
+    getConditions (SModelOnTree () modulatedSelection)
+
   let scaled1 = setStateProperty (pack "scaled") (\scale -> constantStateProperties 4 (scale * 3.0)) (jukes_cantor dna)
       scaled2 = setStateProperty (pack "scaled") (\scale -> constantStateProperties 4 (scale * 5.0)) (jukes_cantor dna)
       scaledModulated = scaleBy 2.0 $ modulatedMarkov [scaled1, scaled2] between
@@ -108,7 +130,11 @@ main = do
   let taggedCodonModel = setConstantStateProperty (pack "x") 7.0 (x3 codons (jukes_cantor dna))
       transformedCodonProperties = getProperties (SModelOnTree () (dNdS 2.0 taggedCodonModel))
 
-  putStrLn $ show [Map.member (pack "x") transformedCodonProperties, Map.member (pack "dNdS") transformedCodonProperties]
+  putStrLn $ show
+    [ Map.member (pack "x") transformedCodonProperties
+    , Map.member (pack "dNdS") transformedCodonProperties
+    ]
+  putStrLn $ show $ Map.member (pack "positiveSelectionInModel") $ getConditions (SModelOnTree () selected)
 
   let withProperty = setConstantStateProperty (pack "x") 7.0 (jukes_cantor dna)
       withoutProperty = jukes_cantor dna
@@ -117,7 +143,7 @@ main = do
 
   putStrLn $ show $ Map.member (pack "x") partialProperties
 
-  let branchSite = BranchSiteMixture (always (jukes_cantor dna)) SameEqs Map.empty
+  let branchSite = BranchSiteMixture (always (jukes_cantor dna)) SameEqs emptyComponentAnnotations
       branchSiteRates = componentFirstValues $ lookupProperty "rate" $
         getProperties (SModelOnTree () (rateMixture (always branchSite) rates))
 
@@ -131,6 +157,7 @@ main = do
 
   let branchCategories = IntMap.fromList [(0, 0), (1, 1)]
       modelForOmega omega =
+        setComponentCondition positiveSelectionInModelConditionName (omega > 1) $
         setConstantStateProperty (pack "marker") (omega + 10) $
         setConstantStateProperty posSelectionPropertyName (if omega > 1 then 1 else 0) $
         setConstantStateProperty dNdSPropertyName omega $
@@ -157,3 +184,14 @@ main = do
   putStrLn $ show $ componentFirstValues $ lookupProperty "foreground-marker" branchProperties
   putStrLn $ show $ componentFirstValues $ lookupProperty "foreground-dNdS" nullBranchProperties
   putStrLn $ show $ componentFirstValues $ lookupProperty "foreground-posSelection" nullBranchProperties
+  putStrLn $ show
+    [ lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () branchModel)
+    , lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () nullBranchModel)
+    ]
+
+  let bustedAlternative = busted (always 0.5) 0.2 3.0 1 modelForOmega
+      bustedNull = busted (always 0.5) 0.2 3.0 0 modelForOmega
+  putStrLn $ show
+    [ lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () bustedAlternative)
+    , lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () bustedNull)
+    ]

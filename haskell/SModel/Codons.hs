@@ -81,6 +81,7 @@ mnm a v2 v3 nucModel = setReversibility rv $ markov a smap q pi where
 -- the chosen omega value and whether it represents positive selection.
 -- NOTE: maybe this should be t*(q * dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
 dNdS omega m@(Markov a s _ _ _) =
+    setComponentCondition positiveSelectionInModelConditionName (omega > 1) $
     setConstantStateProperty posSelectionPropertyName posSelection $
     setConstantStateProperty dNdSPropertyName omega $
     setReversibility rv $ markov a s q pi
