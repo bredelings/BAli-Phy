@@ -16,3 +16,4 @@ class PhyloCTMCProperties a where
       prop_anc_cat_states :: a -> IntMap ComponentStateSequence
       prop_likelihood :: a -> Log Double
       prop_smodel_properties :: a -> PropertyMap
+      prop_smodel_conditions :: a -> ConditionMap

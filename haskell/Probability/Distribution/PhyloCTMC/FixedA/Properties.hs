@@ -44,7 +44,8 @@ data PhyloCTMCPropertiesFixedA = PhyloCTMCPropertiesFixedA {
       prop_fixed_a_n_base_models :: Int,
 
       prop_fixed_a_anc_cat_states :: IntMap ComponentStateSequence,
-      prop_fixed_a_smodel_properties :: PropertyMap
+      prop_fixed_a_smodel_properties :: PropertyMap,
+      prop_fixed_a_smodel_conditions :: ConditionMap
     }
 
 
@@ -52,3 +53,4 @@ instance PhyloCTMCProperties PhyloCTMCPropertiesFixedA where
     prop_likelihood = prop_fixed_a_likelihood
     prop_anc_cat_states = prop_fixed_a_anc_cat_states
     prop_smodel_properties = prop_fixed_a_smodel_properties
+    prop_smodel_conditions = prop_fixed_a_smodel_conditions

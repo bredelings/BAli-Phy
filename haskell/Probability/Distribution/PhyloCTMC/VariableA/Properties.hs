@@ -50,7 +50,8 @@ data PhyloCTMCPropertiesVariableA = PhyloCTMCPropertiesVariableA {
       prop_variable_a_nodeCLVs :: IntMap (Maybe CondLikes),                    -- only variable A
 
       prop_variable_a_anc_cat_states :: IntMap ComponentStateSequence,
-      prop_variable_a_smodel_properties :: PropertyMap
+      prop_variable_a_smodel_properties :: PropertyMap,
+      prop_variable_a_smodel_conditions :: ConditionMap
     }
 
 
@@ -58,4 +59,5 @@ instance PhyloCTMCProperties PhyloCTMCPropertiesVariableA where
     prop_likelihood = prop_variable_a_likelihood
     prop_anc_cat_states = prop_variable_a_anc_cat_states
     prop_smodel_properties = prop_variable_a_smodel_properties
+    prop_smodel_conditions = prop_variable_a_smodel_conditions
     

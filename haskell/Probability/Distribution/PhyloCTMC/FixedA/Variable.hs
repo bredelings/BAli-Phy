@@ -38,6 +38,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       smodelProperties = getProperties smodelOnTree
+      smodelConditions = getConditions smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
       cls | isReversible smodel = cachedConditionalLikelihoodsEqRev rtree nodeCLVs transitionPs f
           | otherwise           = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs f
@@ -63,7 +64,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
   -- How about stuff related to alignment compression?
   let prop = PhyloCTMCPropertiesFixedA substRoot transitionPs cls
           (collapseDensity likelihood) alphabet (SModel.nStates smodelOnTree)
-          (SModel.nBaseModels smodelOnTree) ancestralComponentStates smodelProperties
+          (SModel.nBaseModels smodelOnTree) ancestralComponentStates smodelProperties smodelConditions
 
   return ([likelihood, reciprocalDensity likelihood2], prop)
 

@@ -39,6 +39,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
       smodelProperties = getProperties smodelOnTree
+      smodelConditions = getConditions smodelOnTree
       f = weightedFrequencyMatrix smodelOnTree
 
       cls | isReversible smodel = cachedConditionalLikelihoodsEqRev    rtree nodeCLVs as transitionPs f
@@ -66,7 +67,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
       prop = PhyloCTMCPropertiesVariableA substRoot transitionPs cls
           (collapseDensity likelihood) alphabet (SModel.nStates smodelOnTree)
           (SModel.nBaseModels smodelOnTree) nativeFs nodeCLVs ancestralComponentStates
-          smodelProperties
+          smodelProperties smodelConditions
 
   return ([likelihood], prop)
 

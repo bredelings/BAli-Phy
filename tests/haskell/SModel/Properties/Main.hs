@@ -152,8 +152,11 @@ main = do
   let fixedProperties = PhyloCTMCPropertiesFixedA 0 IntMap.empty IntMap.empty 1 dna 4 1
                           IntMap.empty
                           (Map.singleton (pack "x") (singletonComponentProperty (StateProperties [7.0])))
+                          (Map.singleton positiveSelectionInModelConditionName True)
 
   putStrLn $ show $ Map.member (pack "x") $ prop_smodel_properties fixedProperties
+  putStrLn $ show $ prop_smodel_conditions fixedProperties ==
+    Map.singleton positiveSelectionInModelConditionName True
 
   let branchCategories = IntMap.fromList [(0, 0), (1, 1)]
       modelForOmega omega =
