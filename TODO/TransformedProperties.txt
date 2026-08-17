@@ -1,0 +1,156 @@
+Properties of transformed substitution models
+=============================================
+
+Question
+--------
+
+A substitution model can carry annotations such as dNdS, posSelection, or
+positiveSelectionInModel.  What should happen to those annotations when a
+constructor transforms, combines, or wraps the model?
+
+The main distinction is between an annotation that still describes the
+transformed model and one that only described the model at the point where it
+was attached.  Preserving every annotation silently is unsafe, but dropping
+every annotation loses useful structure.  Each transformation should state its
+annotation semantics.
+
+Kinds of transformation
+-----------------------
+
+1. Invariant annotations
+
+   The value remains meaningful and unchanged after the transformation.  A
+   model-family condition can sometimes be invariant: scaling all transition
+   rates does not change whether a component has ω > 1.
+
+2. Covariant annotations
+
+   The annotation transforms in the same direction as the model.  Rate-like
+   properties are the important example: if a transformation rescales rates,
+   an effective-rate annotation may need the same scaling rather than simple
+   preservation.
+
+3. Reindexed or lifted annotations
+
+   A transformation changes the state space but retains a recognizable source
+   state.  The source property can be lifted along the map from transformed
+   states to source states.  Markov modulation fits this case: a state in the
+   modulated product identifies a state in one component model, so component
+   state properties can be copied to the corresponding product states.
+
+4. Combined or reduced annotations
+
+   A constructor combines multiple components.  Some annotations can be
+   reduced with an operation that is part of their definition.  For example,
+
+       positiveSelectionInModel = ∨ᵢ (component i has ωᵢ > 1)
+
+   Boolean conditions therefore need a declared reduction such as OR or AND.
+   Numeric properties generally do not have a safe automatic reduction.
+
+5. Recomputed annotations
+
+   The transformed model supports the same conceptual property, but its value
+   must be calculated from the transformed rates or stationary distribution.
+   Recomputing dN/dS after a mutation-selection transformation would belong
+   here if a scientifically valid definition and implementation are provided.
+
+6. Invalidated annotations
+
+   The transformation changes the interpretation enough that the old value is
+   no longer a property of the result.  In this case the annotation should be
+   removed explicitly.  Mutation-selection currently reconstructs component
+   models and drops dNdS and posSelection; preserving those values by default
+   would misleadingly describe the input model rather than the transformed
+   model.
+
+This taxonomy is more useful than trying to force every transformation into
+the usual variance terminology.  In particular, “contravariant” does not give
+an obvious general rule for these model annotations.
+
+Current design direction
+------------------------
+
+Store primitive annotations on individual substitution-model components.
+Component-local state properties include dNdS and posSelection.  A component
+also carries named Boolean conditions.  For codon dN/dS components,
+positiveSelectionInModel is the Boolean value ω > 1.
+
+Combinators then propagate annotations according to explicit rules:
+
+  • Discrete mixtures lift the state properties shared by their components.
+  • They synthesize positiveSelectionInModel by OR across components.
+  • Markov modulation lifts properties through the product-state mapping and
+    ORs model conditions across its component models.
+  • Branch models prefix branch-specific state properties where necessary,
+    while a model-wide condition keeps its unprefixed name and is ORed.
+  • Scaling preserves dimensionless state properties and conditions.
+  • Mutation-selection currently invalidates these annotations by rebuilding
+    the model without them.
+
+The OR rule is deliberate.  The condition means “at least one component in
+this sampled model permits positive selection”; it is not the site-specific
+posSelection property.  The latter still depends on the sampled mixture state.
+
+Why component placement is useful
+---------------------------------
+
+Attaching the primitive condition to each component keeps it close to ω, the
+quantity that defines it.  Generic mixture constructors can derive the
+model-level statement without knowing the names M2a, M8, or BUSTED.  Nested
+mixtures and Markov-modulated models also retain enough provenance to perform
+the same reduction.
+
+Attaching only a model-level condition would be simpler for one top-level
+model, but it would duplicate positive-selection logic in each model family,
+would be easier to lose under composition, and would not say which components
+made the condition true.  The derived model-level condition remains useful at
+the output boundary; it is synthesized from the component annotations rather
+than authored independently.
+
+Provenance and preservation
+---------------------------
+
+If annotations are preserved through arbitrary transformations, their meaning
+implicitly becomes “a property of an earlier model used to construct this
+one.”  That may be useful, but it is provenance rather than a property of the
+current model.  The two should not share an unqualified name.
+
+A future annotation type could make the policy explicit, for example:
+
+  • semantic target: state, component, branch, or whole model;
+  • transformation policy: preserve, scale, lift, reduce, recompute, invalidate;
+  • reduction operation for combined models;
+  • provenance identifying the model layer at which the value was computed;
+  • units or dimension, so rate-like values are not treated as dimensionless.
+
+Until such metadata exists, constructors should implement conservative,
+documented rules rather than a universal “preserve annotations” default.
+
+Reporting consequence
+---------------------
+
+The raw property stream may expose a model-level Boolean condition synthesized
+from component annotations.  The summarizer can retain the ordinary posterior
+moments and additionally accumulate moments only for samples where
+positiveSelectionInModel is True:
+
+    E[dNdS | positiveSelectionInModel = True]
+
+Only the True subset is currently of interest.  This should remain a named
+condition in the data rather than an M2a-specific field, so the same reporting
+machinery works for M2a_test, M8a_test, and other positive-selection mixtures.
+
+Open questions
+--------------
+
+  • Should transformed-input provenance be represented separately from
+    current-model properties?
+  • Which transformations can validly recompute effective dN/dS?
+  • Should every condition declare its reduction operation, or should the
+    small initial implementation support only the OR-reduced Boolean case?
+  • When components disagree about the set of condition names, should a
+    missing name mean False, unknown, or “do not expose this condition”?
+  • How should branch-specific conditions be named and reduced?
+  • Can state-property lifting for all branch-site constructors be made as
+    systematic as the Markov-modulation product-state lift?
