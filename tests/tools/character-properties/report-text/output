@@ -1,4 +1,5 @@
 Character property: rate
+Posterior view: model-averaged
 Retained samples: 100
 
 Rank  Column  Sequence  Character  Symbol  Translation  Mean +/- SD  Median

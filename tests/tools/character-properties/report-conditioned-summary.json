@@ -1,0 +1,39 @@
+{
+  "format": "bali-phy-character-properties",
+  "version": 2,
+  "coordinates": {"kind": "ungapped-sequence-character", "index_base": 0},
+  "selection": {"skip": null, "until": null, "subsample": 1},
+  "retained_samples": 100,
+  "retained_samples_by_chain": [100],
+  "properties": {
+    "posSelection": {
+      "mean": {"A": [0.01, 0.09, 0.06], "B": [0.02, 0.04, 0.05], "C": [0.07, 0.08, 0.03]},
+      "sd": {"A": [0.01, 0.01, 0.01], "B": [0.01, 0.01, 0.01], "C": [0.01, 0.01, 0.01]},
+      "median": {"A": [0, 0.1, 0.05], "B": [0, 0.05, 0.05], "C": [0.05, 0.1, 0.05]}
+    },
+    "dNdS": {
+      "mean": {"A": [0.1, 0.9, 0.6], "B": [0.2, 0.4, 0.5], "C": [0.7, 0.8, 0.3]},
+      "sd": {"A": [0.1, 0.1, 0.1], "B": [0.1, 0.1, 0.1], "C": [0.1, 0.1, 0.1]},
+      "median": {"A": [0.1, 0.9, 0.6], "B": [0.2, 0.4, 0.5], "C": [0.7, 0.8, 0.3]}
+    }
+  },
+  "conditioned": {
+    "positiveSelectionInModel": {
+      "condition_value": true,
+      "retained_samples": 60,
+      "retained_samples_by_chain": [60],
+      "properties": {
+        "posSelection": {
+          "mean": {"A": [0.1, 0.99, 0.6], "B": [0.2, 0.4, 0.5], "C": [0.97, 0.98, 0.3]},
+          "sd": {"A": [0.1, 0.01, 0.1], "B": [0.1, 0.1, 0.1], "C": [0.02, 0.02, 0.1]},
+          "median": {"A": [0.1, 1, 0.6], "B": [0.2, 0.4, 0.5], "C": [0.98, 0.99, 0.3]}
+        },
+        "dNdS": {
+          "mean": {"A": [1.1, 9.9, 6], "B": [2, 4, 5], "C": [9.7, 9.8, 3]},
+          "sd": {"A": [0.1, 0.2, 0.3], "B": [0.1, 0.2, 0.3], "C": [0.2, 0.2, 0.3]},
+          "median": {"A": [1, 10, 6], "B": [2, 4, 5], "C": [9.8, 9.9, 3]}
+        }
+      }
+    }
+  }
+}

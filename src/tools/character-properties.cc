@@ -127,6 +127,7 @@ static report_arguments parse_report_options(int argc, char* argv[])
         ("kind", po::value<string>(), "Report kind: property or positive-selection.")
         ("format", po::value<string>()->default_value("text"), "Output format: text, tsv, or json.")
         ("sort", po::value<string>(), "Row order: column, mean-ascending, or mean-descending.")
+        ("condition", po::value<string>(), "Use only samples where this Boolean condition is true.")
         ("minimum-probability", po::value<double>(), "Minimum probability for positive-selection rows.");
 
     po::options_description all;
@@ -163,6 +164,8 @@ static report_arguments parse_report_options(int argc, char* argv[])
         result.options.sort = character_properties::report_sort::column;
     if (arguments.count("minimum-probability"))
         result.options.minimum_probability = arguments["minimum-probability"].as<double>();
+    if (arguments.count("condition"))
+        result.options.condition = arguments["condition"].as<string>();
     result.format = arguments["format"].as<string>();
     if (result.format != "text" and result.format != "tsv" and result.format != "json")
         throw myexception()<<"Unknown report format '"<<result.format<<"'.";

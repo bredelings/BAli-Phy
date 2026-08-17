@@ -123,8 +123,22 @@ report make_report(const summary& properties, const alignment_projection& projec
     if (normalized_options.kind == report_kind::positive_selection and not normalized_options.minimum_probability)
         normalized_options.minimum_probability = 0.5;
 
-    auto property = properties.properties.find(normalized_options.property);
-    if (property == properties.properties.end())
+    const auto* selected_properties = &properties.properties;
+    std::uint64_t retained_samples = properties.retained_samples;
+    if (normalized_options.condition)
+    {
+        auto view = properties.conditioned.find(*normalized_options.condition);
+        if (view == properties.conditioned.end())
+            throw myexception()<<"Character property condition '"<<*normalized_options.condition<<"' was not found.";
+        if (view->second.retained_samples == 0)
+            throw myexception()<<"Character property condition '"<<*normalized_options.condition
+                               <<"' has no True samples.";
+        selected_properties = &view->second.properties;
+        retained_samples = view->second.retained_samples;
+    }
+
+    auto property = selected_properties->find(normalized_options.property);
+    if (property == selected_properties->end())
         throw myexception()<<"Character property '"<<normalized_options.property<<"' was not found.";
     if (normalized_options.kind == report_kind::positive_selection
         and not is_positive_selection_property(normalized_options.property))
@@ -140,11 +154,11 @@ report make_report(const summary& properties, const alignment_projection& projec
     if (normalized_options.kind == report_kind::positive_selection)
     {
         companion_name = positive_selection_companion(normalized_options.property);
-        if (auto found = properties.properties.find(*companion_name); found != properties.properties.end())
+        if (auto found = selected_properties->find(*companion_name); found != selected_properties->end())
             companion = &found->second;
     }
 
-    report result{normalized_options, properties.retained_samples, {}};
+    report result{normalized_options, retained_samples, properties.retained_samples, {}};
     for (const auto& column: projection)
     {
         if (column.characters.empty())
@@ -233,13 +247,16 @@ json::value to_json(const report& value)
 
     json::object result{
         {"format", "bali-phy-character-property-report"},
-        {"version", 1},
+        {"version", 2},
         {"kind", kind_name(value.options.kind)},
         {"property", value.options.property},
         {"sort", sort_name(value.options.sort)},
         {"minimum_probability", value.options.minimum_probability ? json::value(*value.options.minimum_probability)
                                                                   : json::value(nullptr)},
+        {"condition", value.options.condition ? json::value(*value.options.condition) : json::value(nullptr)},
+        {"condition_value", value.options.condition ? json::value(true) : json::value(nullptr)},
         {"retained_samples", value.retained_samples},
+        {"total_retained_samples", value.total_retained_samples},
         {"rows", std::move(rows)}
     };
     return result;
@@ -249,8 +266,13 @@ json::value to_json(const report& value)
 void write_text(std::ostream& output, const report& value)
 {
     output<<(value.options.kind == report_kind::positive_selection ? "Positive-selection property: " : "Character property: ")
-          <<value.options.property<<"\n"
-          <<"Retained samples: "<<value.retained_samples<<"\n";
+          <<value.options.property<<"\n";
+    if (value.options.condition)
+        output<<"Posterior view: "<<*value.options.condition<<" = true\n"
+              <<"Matching samples: "<<value.retained_samples<<" of "<<value.total_retained_samples<<"\n";
+    else
+        output<<"Posterior view: model-averaged\n"
+              <<"Retained samples: "<<value.retained_samples<<"\n";
     if (value.options.minimum_probability)
         output<<"Minimum probability: "<<format_number(*value.options.minimum_probability)<<"\n";
     output<<"\nRank  Column  Sequence  Character  Symbol  Translation  Mean +/- SD  Median";

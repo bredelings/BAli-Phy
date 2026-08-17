@@ -5,11 +5,14 @@ import sys
 
 report = json.loads((Path(sys.argv[1]) / "output").read_text(encoding="utf-8"))
 assert report["format"] == "bali-phy-character-property-report"
-assert report["version"] == 1
+assert report["version"] == 2
 assert report["kind"] == "property"
 assert report["property"] == "rate"
 assert report["sort"] == "column"
 assert report["retained_samples"] == 100
+assert report["total_retained_samples"] == 100
+assert report["condition"] is None
+assert report["condition_value"] is None
 assert [
     (row["column_index"], row["sequence"], row["character_index"], row["symbol"], row["statistics"]["mean"])
     for row in report["rows"]

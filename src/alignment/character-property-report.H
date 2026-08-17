@@ -31,6 +31,7 @@ struct report_options
     report_kind kind = report_kind::property;
     report_sort sort = report_sort::column;
     std::optional<double> minimum_probability;
+    std::optional<std::string> condition;
 };
 
 struct summary_statistics
@@ -57,6 +58,7 @@ struct report
 {
     report_options options;
     std::uint64_t retained_samples;
+    std::uint64_t total_retained_samples;
     std::vector<report_row> rows;
 };
 
