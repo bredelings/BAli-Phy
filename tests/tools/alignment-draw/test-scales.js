@@ -15,6 +15,7 @@ const {
 const {
     collectProperties,
     reportsFromPayload,
+    conditionedReportsFromPayload,
 } = require('../../../src/tools/alignment-draw-properties.js');
 
 // Compares floating-point scale results without coupling the tests to their
@@ -231,5 +232,13 @@ function assertClose(actual, expected, message)
     assert.deepEqual(
         reportsFromPayload({character_property_reports: {dNdS: {generic: []}}}),
         {dNdS: {generic: []}},
+    );
+    // Keep condition-keyed reports separate from the legacy unconditional report map
+    // so switching views cannot accidentally reuse model-averaged representatives.
+    assert.deepEqual(
+        conditionedReportsFromPayload({conditioned_character_property_reports: {
+            positiveSelectionInModel: {dNdS: {generic: []}},
+        }}),
+        {positiveSelectionInModel: {dNdS: {generic: []}}},
     );
 }

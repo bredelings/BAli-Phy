@@ -1,0 +1,1 @@
+../../character-properties/report-alignment.fasta --properties ../../character-properties/report-conditioned-summary.json --alphabet DNA

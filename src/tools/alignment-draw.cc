@@ -836,6 +836,50 @@ string serialize_json_for_html(const json::value& document)
     return escaped;
 }
 
+/// Precompute all ranked reports for one unconditional or True-conditioned posterior view.
+json::object make_character_property_reports(
+    const character_properties::summary& property_summary,
+    const character_properties::alignment_projection& projection,
+    const std::map<std::string, character_properties::property_summary>& properties,
+    const std::optional<std::string>& condition)
+{
+    json::object reports;
+    for (const auto& property: properties)
+    {
+        const auto& property_name = property.first;
+        json::object property_reports;
+        if (character_properties::is_positive_selection_property(property_name))
+        {
+            character_properties::report_options options{
+                property_name,
+                character_properties::report_kind::positive_selection,
+                character_properties::report_sort::mean_descending,
+                0.0,
+                condition
+            };
+            property_reports["positive_selection"] = character_properties::to_json(
+                character_properties::make_report(property_summary, projection, options));
+        }
+        else
+        {
+            json::array generic_reports;
+            for (auto sort: {
+                     character_properties::report_sort::column,
+                     character_properties::report_sort::mean_ascending,
+                     character_properties::report_sort::mean_descending})
+            {
+                character_properties::report_options options{
+                    property_name, character_properties::report_kind::property, sort, std::nullopt, condition};
+                generic_reports.push_back(character_properties::to_json(
+                    character_properties::make_report(property_summary, projection, options)));
+            }
+            property_reports["generic"] = std::move(generic_reports);
+        }
+        reports[property_name] = std::move(property_reports);
+    }
+    return reports;
+}
+
 /// Package scientific property data, display order, and optional grid-cell AU values.
 json::value make_viewer_payload(const character_properties::summary& property_summary,
                                 const vector<sequence>& sequences,
@@ -853,40 +897,14 @@ json::value make_viewer_payload(const character_properties::summary& property_su
     payload["sequences"] = std::move(sequence_names);
     payload["character_properties"] = character_properties::to_json(property_summary);
 
-    json::object reports;
-    for (const auto& property: property_summary.properties)
-    {
-        const auto& property_name = property.first;
-        json::object property_reports;
-        if (character_properties::is_positive_selection_property(property_name))
-        {
-            character_properties::report_options options{
-                property_name,
-                character_properties::report_kind::positive_selection,
-                character_properties::report_sort::mean_descending,
-                0.0
-            };
-            property_reports["positive_selection"] = character_properties::to_json(
-                character_properties::make_report(property_summary, projection, options));
-        }
-        else
-        {
-            json::array generic_reports;
-            for (auto sort: {
-                     character_properties::report_sort::column,
-                     character_properties::report_sort::mean_ascending,
-                     character_properties::report_sort::mean_descending})
-            {
-                character_properties::report_options options{
-                    property_name, character_properties::report_kind::property, sort, std::nullopt};
-                generic_reports.push_back(character_properties::to_json(
-                    character_properties::make_report(property_summary, projection, options)));
-            }
-            property_reports["generic"] = std::move(generic_reports);
-        }
-        reports[property_name] = std::move(property_reports);
-    }
-    payload["character_property_reports"] = std::move(reports);
+    payload["character_property_reports"] =
+        make_character_property_reports(property_summary, projection, property_summary.properties, std::nullopt);
+    json::object conditioned_reports;
+    for (const auto& [name, view]: property_summary.conditioned)
+        if (view.retained_samples > 0)
+            conditioned_reports[name] =
+                make_character_property_reports(property_summary, projection, view.properties, name);
+    payload["conditioned_character_property_reports"] = std::move(conditioned_reports);
 
     if (include_uncertainty)
     {

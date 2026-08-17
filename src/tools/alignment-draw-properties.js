@@ -19,6 +19,13 @@ function reportsFromPayload(payload)
     return reports && typeof reports === 'object' && !Array.isArray(reports) ? reports : {};
 }
 
+// Extracts condition-name keyed C++ reports for True-conditioned posterior views.
+function conditionedReportsFromPayload(payload)
+{
+    const reports = payload.conditioned_character_property_reports;
+    return reports && typeof reports === 'object' && !Array.isArray(reports) ? reports : {};
+}
+
 // Parses the inert embedded JSON object used by the standalone viewer.
 function parseViewerPayload(documentObject)
 {
@@ -129,6 +136,7 @@ function validatedAlignmentUncertainty(payload, sequenceCount, cells)
 const api = {
     parseViewerPayload,
     reportsFromPayload,
+    conditionedReportsFromPayload,
     collectCells,
     sequenceNamesForViewer,
     collectProperties,

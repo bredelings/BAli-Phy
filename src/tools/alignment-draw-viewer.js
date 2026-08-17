@@ -21,6 +21,7 @@ const {
 const {
     parseViewerPayload,
     reportsFromPayload,
+    conditionedReportsFromPayload,
     collectCells,
     sequenceNamesForViewer,
     collectProperties,
@@ -75,11 +76,34 @@ class AlignmentPropertyViewer {
         this.document = documentObject;
         this.payload = parsed.payload;
         this.characterProperties = parsed.characterProperties;
-        this.reports = reportsFromPayload(this.payload);
+        this.conditionedReports = conditionedReportsFromPayload(this.payload);
         this.cells = collectCells(documentObject);
         this.sequenceNames = sequenceNamesForViewer(
             this.payload, this.characterProperties, this.cells);
-        this.properties = collectProperties(this.characterProperties, this.sequenceNames);
+        this.posteriorViews = [{
+            key: 'unconditional',
+            label: 'Model-averaged',
+            condition: null,
+            retainedSamples: this.characterProperties.retained_samples,
+            properties: this.characterProperties.properties || {},
+            reports: reportsFromPayload(this.payload),
+            available: true,
+        }];
+        for (const [condition, view] of Object.entries(this.characterProperties.conditioned || {})) {
+            this.posteriorViews.push({
+                key: `condition:${condition}`,
+                label: `Conditional on ${condition}`,
+                condition,
+                retainedSamples: view.retained_samples,
+                properties: view.properties || {},
+                reports: this.conditionedReports[condition] || {},
+                available: view.retained_samples > 0,
+            });
+        }
+        this.activeView = this.posteriorViews[0];
+        this.reports = this.activeView.reports;
+        this.properties = collectProperties(
+            {properties: this.activeView.properties}, this.sequenceNames);
         this.uncertainty = validatedAlignmentUncertainty(
             this.payload, this.sequenceNames.length, this.cells);
         this.displayStates = new Map();
@@ -117,6 +141,17 @@ class AlignmentPropertyViewer {
         this.properties.forEach((property, index) =>
             addOption(doc, this.propertySelect, `property:${index}`, property.name));
         this.controlRow.append(labelledControl(doc, 'Color by', this.propertySelect));
+
+        this.viewSelect = makeElement(doc, 'select', 'alignment-viewer-select');
+        this.viewSelect.setAttribute('aria-label', 'Posterior property view');
+        for (const view of this.posteriorViews) {
+            const count = view.condition ? ` (${view.retainedSamples} samples)` : '';
+            const option = addOption(doc, this.viewSelect, view.key, view.label + count);
+            option.disabled = !view.available;
+        }
+        this.viewControl = labelledControl(doc, 'Posterior view', this.viewSelect);
+        this.viewControl.hidden = this.posteriorViews.length === 1;
+        this.controlRow.append(this.viewControl);
 
         this.originalColorsCheckbox = makeElement(doc, 'input', 'alignment-viewer-checkbox');
         this.originalColorsCheckbox.type = 'checkbox';
@@ -170,10 +205,8 @@ class AlignmentPropertyViewer {
         this.controlRow.append(this.resetButton);
         this.toolbar.append(this.controlRow);
 
-        this.summary = makeElement(
-            doc, 'div', 'alignment-viewer-summary',
-            `Retained samples: ${this.characterProperties.retained_samples}`,
-        );
+        this.summary = makeElement(doc, 'div', 'alignment-viewer-summary');
+        this.updateViewSummary();
         this.toolbar.append(this.summary);
 
         this.status = makeElement(doc, 'div', 'alignment-viewer-status');
@@ -264,6 +297,7 @@ class AlignmentPropertyViewer {
     installEvents()
     {
         this.propertySelect.addEventListener('change', this.handlePropertyChange.bind(this));
+        this.viewSelect.addEventListener('change', this.handleViewChange.bind(this));
         this.originalColorsCheckbox.addEventListener('change', this.handleOriginalColorsChange.bind(this));
         this.transformSelect.addEventListener('change', this.handleTransformChange.bind(this));
         this.paletteSelect.addEventListener('change', this.handlePaletteChange.bind(this));
@@ -291,11 +325,39 @@ class AlignmentPropertyViewer {
         return this.properties[index] || null;
     }
 
+    // Updates the concise sample-count description for the selected posterior view.
+    updateViewSummary()
+    {
+        if (this.activeView.condition) {
+            this.summary.textContent =
+                `${this.activeView.condition} = true: ${this.activeView.retainedSamples} of ` +
+                `${this.characterProperties.retained_samples} retained samples`;
+        }
+        else
+            this.summary.textContent = `Model-averaged: ${this.characterProperties.retained_samples} retained samples`;
+    }
+
+    // Rebuilds property definitions and reports when the posterior view changes.
+    activateView(view)
+    {
+        const previousProperty = this.selectedProperty()?.name;
+        this.activeView = view;
+        this.reports = view.reports;
+        this.properties = collectProperties({properties: view.properties}, this.sequenceNames);
+        this.propertySelect.replaceChildren();
+        this.properties.forEach((property, index) =>
+            addOption(this.document, this.propertySelect, `property:${index}`, property.name));
+        const retainedIndex = this.properties.findIndex((property) => property.name === previousProperty);
+        this.propertySelect.value = `property:${retainedIndex >= 0 ? retainedIndex : 0}`;
+        this.updateViewSummary();
+    }
+
     // Returns stable per-property display settings, creating defaults on first use.
     stateFor(property)
     {
-        if (!this.displayStates.has(property.name)) {
-            this.displayStates.set(property.name, {
+        const key = `${this.activeView.key}:${property.name}`;
+        if (!this.displayStates.has(key)) {
+            this.displayStates.set(key, {
                 transform: preferredTransform(property.name, property.values),
                 palette: 'blue-gray-red',
                 range: 'robust',
@@ -304,7 +366,7 @@ class AlignmentPropertyViewer {
                 fadeByAU: false,
             });
         }
-        return this.displayStates.get(property.name);
+        return this.displayStates.get(key);
     }
 
     // Resolves the active automatic or user-specified property range.
@@ -515,6 +577,8 @@ class AlignmentPropertyViewer {
         this.reportPanel.hidden = false;
         this.reportTitle.textContent = positiveSelection ?
             `${property.name}: positive-selection columns` : `${property.name}: ranked columns`;
+        if (this.activeView.condition)
+            this.reportTitle.textContent += ` · ${this.activeView.condition} = true`;
 
         const threshold = Number.parseFloat(this.probabilityThresholdSelect.value);
         this.currentReportRows = positiveSelection ?
@@ -686,6 +750,17 @@ class AlignmentPropertyViewer {
         this.render();
     }
 
+    // Switches all property values and precomputed reports to one posterior view.
+    handleViewChange()
+    {
+        const view = this.posteriorViews.find((candidate) => candidate.key === this.viewSelect.value);
+        if (!view || !view.available)
+            return;
+        this.hideTooltip(true);
+        this.activateView(view);
+        this.render();
+    }
+
     // Switches paint modes without changing the selected property or its inspectable values.
     handleOriginalColorsChange()
     {
@@ -804,7 +879,7 @@ class AlignmentPropertyViewer {
     {
         const property = this.selectedProperty();
         if (property)
-            this.displayStates.delete(property.name);
+            this.displayStates.delete(`${this.activeView.key}:${property.name}`);
         this.render();
     }
 
