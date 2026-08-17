@@ -113,6 +113,8 @@ general context-dependent logger. Those limitations no longer describe the curre
 
 * `dNdS` installs the state properties `dNdS` and `posSelection`. Mixture categories therefore carry
   their current `omega` and an indicator for `omega > 1`.
+* The same component annotation declares `positiveSelectionInModel` when `omega > 1`. Mixtures derive
+  the model-level condition by OR-ing this Boolean across their components.
 * `BranchSite` prefixes every input background property with `background-` and every input
   foreground property with `foreground-`. This reuses the input model's property definitions instead
   of duplicating `dNdS` logic in the branch-site constructor.
@@ -126,7 +128,8 @@ general context-dependent logger. Those limitations no longer describe the curre
 
 * `character-properties report` produces text, TSV, or JSON reports by template-alignment column.
 * `alignment-draw` displays complete posterior summaries, supports property and scale selection, and
-  includes generic and positive-selection ranked-column panels.
+  includes generic and positive-selection ranked-column panels. Both tools can select moments
+  conditional on a named model condition being True while retaining the model-averaged view.
 * `bp-summarize` discovers property streams, runs `character-properties summarize`, and incorporates
   alphabet-aware property views into its report.
 * Ordinary scalar logs and `bp-summarize` already provide parameter summaries, credible intervals,
@@ -196,8 +199,10 @@ Pr(the site is in an omega > 1 class | data).
 For indicator tests this is an unconditional probability: a draw under `H = 0` contributes zero. This
 includes uncertainty about whether the gene admits positive selection and is the most direct quantity
 for reporting a site's overall evidence. A probability conditional on `H = 1` is a different
-quantity. It may be useful later, but should not replace the unconditional probability or be
-introduced without an explicit name.
+quantity. The property stream now records the generic condition `positiveSelectionInModel`, and the
+summarizer additionally computes the True-only moments. These conditional results do not replace the
+unconditional probability and are labeled with the condition name in reports and the interactive
+viewer.
 
 The posterior mean and standard deviation of site `dN/dS` describe the posterior distribution of the
 site's rate class. The standard deviation is posterior variation, not the Monte Carlo standard error
