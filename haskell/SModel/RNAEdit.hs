@@ -1,6 +1,7 @@
 module SModel.RNAEdit where
 
 import Bio.Alphabet
+import qualified Data.Map as Map
 import SModel.ReversibleMarkov
 import SModel.Nucleotides
 import qualified Markov
@@ -30,11 +31,11 @@ siteEdit alphabet nucModel rnaRate edits = setReversibility rv $ markov alphabet
           piNuc = getEqFreqs nucModel
           q = rna_editting_rates alphabet qNuc edits' rnaRate
           pi = rna_editting_pi alphabet piNuc edits'
-          edits' = toVector [ c_pair (findLetter nucs i) (findLetter nucs j) | (i,j) <- edits]
+          edits' = toVector [ c_pair (findLetter nucs i) (findLetter nucs j) | (i,j) <- Map.toAscList edits]
 
-siteNone a nucModel rnaRate = siteEdit a nucModel rnaRate []
-siteC2U  a nucModel rnaRate = siteEdit a nucModel rnaRate [("C","U")]   -- forward
-siteU2C  a nucModel rnaRate = siteEdit a nucModel rnaRate [("U","C")]   -- reverse
+siteNone a nucModel rnaRate = siteEdit a nucModel rnaRate Map.empty
+siteC2U  a nucModel rnaRate = siteEdit a nucModel rnaRate (Map.singleton "C" "U")   -- forward
+siteU2C  a nucModel rnaRate = siteEdit a nucModel rnaRate (Map.singleton "U" "C")   -- reverse
 
 both a nucModel rnaRate = [ siteNone a nucModel rnaRate,
                             siteC2U  a nucModel rnaRate,

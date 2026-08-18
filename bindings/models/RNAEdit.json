@@ -15,8 +15,8 @@
         },
         {
             "name": "edits",
-            "type": "List<(String,String)>",
-            "description": "List of [from,to] to describe editting"
+            "type": "Map<String,String>",
+            "description": "Map from source nucleotide to edited nucleotide"
         },
 	{
 	    "name": "rnaRate",

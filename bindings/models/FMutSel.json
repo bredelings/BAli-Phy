@@ -20,8 +20,8 @@
         },
         {
             "name": "ss",
-            "type": "List<(String,Double)>",
-            "default_value": "~IIDOn(letters(@a),Laplace(0,0.1))",
+            "type": "Map<String,Double>",
+            "default_value": "Map.fromList(~IIDOn(letters(@a),Laplace(0,0.1)))",
 	    "description": "Scaled selection coefficients (2Ns) of codons"
         },
 	{

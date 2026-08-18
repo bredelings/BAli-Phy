@@ -1,6 +1,7 @@
 module SModel.MutSel where
 
 import qualified Data.Vector as V
+import qualified Data.Map as Map
 import Foreign.Vector
 import SModel.ReversibleMarkov
 import SModel.Codons
@@ -16,11 +17,12 @@ foreign import trcall "SModel:mut_sel_pi" mutSelPiNative :: Vector Double -> Vec
 
 -- Subtract the unweighted mean to choose a symmetric representative; the
 -- common shift cancels from every pairwise fitness difference.
-centerFitnesses :: [(String, Double)] -> [(String, Double)]
-centerFitnesses [] = []
-centerFitnesses fitnesses = [(label, fitness - meanFitness) | (label, fitness) <- fitnesses]
+centerFitnesses :: Map.Map String Double -> Map.Map String Double
+centerFitnesses fitnesses
+    | Map.null fitnesses = Map.empty
+    | otherwise = Map.map (\fitness -> fitness - meanFitness) fitnesses
     where
-        meanFitness = sum (map snd fitnesses) / fromIntegral (length fitnesses)
+        meanFitness = Map.foldl (+) 0 fitnesses / fromIntegral (Map.size fitnesses)
 
 -- Apply mutation-selection weights while preserving the rate-matrix shape.
 mut_sel_q rates fitness =
