@@ -9,6 +9,10 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IM
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IS
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Data.Set (Set)
+import qualified Data.Set as Set
 import Probability.Random
 import Probability.Distribution.Bernoulli
 import Probability.Distribution.List
@@ -98,14 +102,14 @@ dirichletProcess n alpha dist = do
   values <- dirichletProcessVector n alpha dist
   return $ V.toList values
 
--- Attach caller-supplied keys, in their given order, to exchangeable DP draws.
--- The ordered parents and interchangeable atom sequence remain owned by dirichletProcess.
+-- A Pólya-urn DP is exchangeable, so assigning its draws to ascending distinct
+-- keys preserves the target law while giving each Set one deterministic ranking.
 dirichletProcessOn
-  :: Sampleable d
-  => [key] -> Double -> d -> Random [(key, Result d)]
+  :: (Ord key, Sampleable d)
+  => Set key -> Double -> d -> Random (Map key (Result d))
 dirichletProcessOn keys alpha dist = do
-  values <- dirichletProcess (length keys) alpha dist
-  return $ zip keys values
+  values <- dirichletProcess (Set.size keys) alpha dist
+  return $ Map.fromDistinctAscList $ zip (Set.toAscList keys) values
 
 -- Assign native-sorted keys directly to the resolved DP vector.  Numeric order preserves rank
 -- assignments and fixed-seed traces.
