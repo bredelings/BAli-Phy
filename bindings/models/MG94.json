@@ -15,8 +15,8 @@
         },
         {
             "name": "pi",
-            "type": "List<(String,Double)>",
-            "default_value": "~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0)",
+            "type": "Map<String,Double>",
+            "default_value": "Map.fromList(~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0))",
 	    "description": "Nucleotide frequencies"
         },
         {

@@ -131,23 +131,27 @@ orderedLetterPairNames a = pairNames $ allOrderedPairs (getLetters a)
 nonEq' pi' m = nonEq pi m
     where pi = fromList $ frequenciesFromDict (getAlphabet m) pi'
 
-labelledEqFrequencies m = zip (getLetters a) frequencies
+labelledEqFrequencies m = Map.fromList $ zip (getLetters a) frequencies
     where frequencies = toList $ getEqFreqs m
           a = getAlphabet m
 
-labelledStartFrequencies m = zip (getLetters a) frequencies
+labelledStartFrequencies m = Map.fromList $ zip (getLetters a) frequencies
     where frequencies = toList $ getStartFreqs m
           a = getAlphabet m
 
 labelledUpperTriangle alphabet matrix = if n == rows matrix && n == cols matrix
-                                        then [ ((letters V.! i) ++ (letters V.! j), atIndex matrix (i,j)) | (i, j) <- Markov.all_pairs [0..n-1]]
+                                        then Map.fromList
+                                             [ ((letters V.! i) ++ (letters V.! j), atIndex matrix (i,j))
+                                             | (i, j) <- Markov.all_pairs [0..n-1]]
                                         else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
                                              show (cols matrix,rows matrix) ++" matrix!"
     where letters = V.fromList (getLetters alphabet)
           n = V.length letters
 
 labelledOffDiagonal alphabet matrix = if n == rows matrix && n == cols matrix
-                                      then [ ((letters V.! i) ++ (letters V.! j), atIndex matrix (i,j)) | i <- [0..n-1], j <- [0..n-1], i /= j]
+                                      then Map.fromList
+                                           [ ((letters V.! i) ++ (letters V.! j), atIndex matrix (i,j))
+                                           | i <- [0..n-1], j <- [0..n-1], i /= j]
                                       else error $ "Expected an "++ show (n,n) ++ "  matrix by got an " ++
                                              show (cols matrix,rows matrix) ++" matrix!"
     where letters = V.fromList (getLetters alphabet)

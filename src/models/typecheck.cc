@@ -266,6 +266,12 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
             for(auto& element: list.elements)
                 substitute_annotated(eqs, element);
         },
+        // Recurse through dictionary entry annotations.
+        [&](CM::Dictionary<CM::Ann>& dictionary)
+        {
+            for(auto& element: dictionary.elements)
+                substitute_annotated(eqs, element);
+        },
         // Recurse through tuple element annotations.
         [&](CM::Tuple<CM::Ann>& tuple)
         {
@@ -523,6 +529,40 @@ optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const 
     }
 
     return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_list)};
+}
+
+// Typechecks dictionary entries as uniform key/value pairs and gives braces
+// the semantic type Map<key,value> instead of List<(key,value)>.
+optional<CM::TypedExpr> typecheck_model_dictionary(const TypecheckingState& TC, const type_t& required_type,
+                                                   const CM::UntypedExpr& expr)
+{
+    auto dictionary = expr.to<CM::Dictionary<CM::NoAnn>>();
+    if (not dictionary)
+        return {};
+
+    auto key_type = TC.get_fresh_type_var("k");
+    auto value_type = TC.get_fresh_type_var("v");
+    auto entry_type = CM::type_apps("Tuple", {key_type, value_type});
+    auto result_type = CM::type_apps("Map", {key_type, value_type});
+    if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
+        return typecheck_model_expr(TC, required_type, *converted);
+
+    TC.eqs.add_constraint(CM::type_app("Ord", key_type));
+    substitute(TC.eqs, entry_type);
+
+    set<string> used_args;
+    CM::Dictionary<CM::Ann> typed_dictionary;
+    for(auto& element: dictionary->elements)
+    {
+        auto element2 = typecheck_model_expr(TC, entry_type, element);
+        add(used_args, element2.ann.used_args);
+        if (not TC.eqs)
+            throw myexception()<<"Dictionary entry '"<<unparse_annotated(element2)
+                               <<"' is not of required type "<<unparse_type(entry_type)<<"!";
+        typed_dictionary.elements.push_back(std::move(element2));
+    }
+
+    return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_dictionary)};
 }
 
 // Typechecks tuple elements against fresh slot types and returns a typed tuple
@@ -821,6 +861,8 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const type_t& re
         return *var_call;
     else if (auto list = typecheck_model_list(TC, required_type, expr))
         return *list;
+    else if (auto dictionary = typecheck_model_dictionary(TC, required_type, expr))
+        return *dictionary;
     else if (auto tuple = typecheck_model_tuple(TC, required_type, expr))
         return *tuple;
     else if (auto get_state = typecheck_model_get_state(TC, required_type, expr))

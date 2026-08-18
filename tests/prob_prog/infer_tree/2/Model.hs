@@ -10,6 +10,7 @@ import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
+import qualified Data.Map as Map
 
 branch_length_dist topology b = gamma 0.5 (2 / fromIntegral n) where n = numBranches topology
 
@@ -21,7 +22,7 @@ model seqData = do
 
     tree   <- prior $ uniformLabelledTree'' taxa branch_length_dist
 
-    freqs  <- prior $ symmetricDirichletOn ["A", "C", "G", "T"] 1
+    freqs  <- fmap Map.fromList $ prior $ symmetricDirichletOn ["A", "C", "G", "T"] 1
     kappa1 <- prior $ logNormal 0 1
     kappa2 <- prior $ logNormal 0 1
 

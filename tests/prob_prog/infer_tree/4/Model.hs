@@ -10,6 +10,7 @@ import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
+import qualified Data.Map as Map
 
 model seqData = do
 
@@ -18,7 +19,7 @@ model seqData = do
     age    <- sample $ gamma 0.5 2
     tree   <- addLabels taxa <$> sample (uniformTimeTree age (length taxa))
 
-    freqs  <- sample $ symmetricDirichletOn ["A", "C", "G", "T"] 1
+    freqs  <- fmap Map.fromList $ sample $ symmetricDirichletOn ["A", "C", "G", "T"] 1
     kappa1 <- sample $ logNormal 0 1
     kappa2 <- sample $ logNormal 0 1
 

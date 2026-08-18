@@ -1,6 +1,7 @@
 module SModel.Codons (module SModel.Codons) where 
 
 import Bio.Alphabet
+import qualified Data.Map as Map
 import SModel.ReversibleMarkov
 import SModel.Property
 import SModel.Nucleotides
@@ -43,7 +44,7 @@ f3x4_frequencies a pi1 pi2 pi3 = let pi1' = fromList pi1
                                      pi3' = fromList pi3
                                   in toList $ f3x4_frequencies_builtin a pi1' pi2' pi3'
 
-f3x4'_frequencies a pi1 pi2 pi3 = zip (getLetters a) (f3x4_frequencies a pi1' pi2' pi3')
+f3x4'_frequencies a pi1 pi2 pi3 = Map.fromList $ zip (getLetters a) (f3x4_frequencies a pi1' pi2' pi3')
     where pi1' = get_ordered_elements nucLetters pi1 "frequencies"
           pi2' = get_ordered_elements nucLetters pi2 "frequencies"
           pi3' = get_ordered_elements nucLetters pi3 "frequencies"

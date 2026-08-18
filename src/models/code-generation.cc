@@ -115,6 +115,13 @@ bool is_loggable_type(const type_t& type)
         return is_loggable_type(args[0]);
     }
 
+    else if (head == "Map")
+    {
+        if (args.size() != 2 or args[0] != "String") return false;
+
+        return is_loggable_type(args[1]);
+    }
+
     else if (head == "Tuple")
     {
         for(auto& arg: args)
@@ -213,6 +220,13 @@ bool CodeGenState::is_random(const CM::TypedExpr& model) const
                 if (is_random(element)) return true;
             return false;
         },
+        // A dictionary is random when at least one key/value entry is random.
+        [&](const CM::Dictionary<CM::Ann>& dictionary)
+        {
+            for(auto& element: dictionary.elements)
+                if (is_random(element)) return true;
+            return false;
+        },
         [&](const CM::Tuple<CM::Ann>& tuple)
         {
             for(auto& element: tuple.elements)
@@ -267,6 +281,13 @@ bool CodeGenState::is_unlogged_random(const CM::TypedExpr& model) const
         [&](const CM::List<CM::Ann>& list)
         {
             for(auto& element: list.elements)
+                if (is_unlogged_random(element)) return true;
+            return false;
+        },
+        // Propagate unlogged randomness through dictionary entries.
+        [&](const CM::Dictionary<CM::Ann>& dictionary)
+        {
+            for(auto& element: dictionary.elements)
                 if (is_unlogged_random(element)) return true;
             return false;
         },
@@ -744,6 +765,15 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
                 args.push_back(make_rule_template_expr(element, simple_args));
             return HsG::List(args);
         },
+        // Compile binding-template dictionaries through the same Map
+        // representation used for command-line dictionary syntax.
+        [&](const CM::Dictionary<CM::NoAnn>& dictionary) -> Hs::Exp
+        {
+            vector<Hs::Exp> entries;
+            for(auto& element: dictionary.elements)
+                entries.push_back(make_rule_template_expr(element, simple_args));
+            return HsG::Apply(Hs::Var("Map.fromList"), {HsG::List(entries)});
+        },
         // Compiles a rule-template tuple by translating each element into a
         // located Haskell expression.
         [&](const CM::Tuple<CM::NoAnn>& tuple) -> Hs::Exp
@@ -945,6 +975,15 @@ translation_result_t CodeGenState::get_typed_model_list(const CM::List<CM::Ann>&
     result.code.E = HsG::List(elements);
     add(result.haskell_vars, scope2.haskell_vars);
 
+    return result;
+}
+
+// Reuse list entry sequencing and logging, then construct the runtime Map from
+// the resulting key/value pairs.
+translation_result_t CodeGenState::get_typed_model_dictionary(const CM::Dictionary<CM::Ann>& dictionary) const
+{
+    auto result = get_typed_model_list(CM::List<CM::Ann>{dictionary.elements});
+    result.code.E = HsG::Apply(Hs::Var("Map.fromList"), {result.code.E});
     return result;
 }
 
@@ -1384,6 +1423,7 @@ translation_result_t CodeGenState::get_model_as(const CM::TypedExpr& model_rep) 
         [&](const CM::GetState& get_state) { return get_typed_model_state(get_state); },
         [&](const CM::Call<CM::Ann>& call) { return get_typed_model_call(call); },
         [&](const CM::List<CM::Ann>& list) { return get_typed_model_list(list); },
+        [&](const CM::Dictionary<CM::Ann>& dictionary) { return get_typed_model_dictionary(dictionary); },
         [&](const CM::Tuple<CM::Ann>& tuple) { return get_typed_model_tuple(tuple); },
         [&](const CM::Let<CM::Ann>& let) { return get_typed_model_let(let); },
         [&](const CM::Lambda<CM::Ann>& lambda) { return get_typed_model_lambda(lambda); },

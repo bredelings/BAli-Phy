@@ -40,6 +40,9 @@ template<class A>
 struct List;
 
 template<class A>
+struct Dictionary;
+
+template<class A>
 struct Tuple;
 
 template<class A>
@@ -178,6 +181,9 @@ template<class A>
 struct is_boxed_expr_node<List<A>>: std::true_type {};
 
 template<class A>
+struct is_boxed_expr_node<Dictionary<A>>: std::true_type {};
+
+template<class A>
 struct is_boxed_expr_node<Tuple<A>>: std::true_type {};
 
 template<class A>
@@ -220,6 +226,7 @@ struct Expr
         GetState,
         Box<Call<A>>,
         Box<List<A>>,
+        Box<Dictionary<A>>,
         Box<Tuple<A>>,
         Box<Let<A>>,
         Box<Lambda<A>>,
@@ -292,6 +299,14 @@ struct Call
 
 template<class A>
 struct List
+{
+    std::vector<Expr<A>> elements;
+};
+
+// Stores dictionary entries as typed pair expressions while retaining the
+// source-level distinction between an ordered list and a key/value map.
+template<class A>
+struct Dictionary
 {
     std::vector<Expr<A>> elements;
 };
@@ -683,6 +698,12 @@ void for_each_child(Expr<A>& expr, F&& f)
             for(auto& element: list.elements)
                 f(element);
         },
+        // Visits each mutable dictionary entry.
+        [&](Dictionary<A>& dictionary)
+        {
+            for(auto& element: dictionary.elements)
+                f(element);
+        },
         // Visits each mutable tuple element.
         [&](Tuple<A>& tuple)
         {
@@ -746,6 +767,12 @@ void for_each_child(const Expr<A>& expr, F&& f)
         [&](const List<A>& list)
         {
             for(auto& element: list.elements)
+                f(element);
+        },
+        // Visits each const dictionary entry.
+        [&](const Dictionary<A>& dictionary)
+        {
+            for(auto& element: dictionary.elements)
                 f(element);
         },
         // Visits each const tuple element.

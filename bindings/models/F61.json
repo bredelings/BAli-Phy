@@ -1,14 +1,14 @@
 {
     "name": "F61",
     "deprecated-synonyms": ["f61"],
-    "result_type": "List<(String,Double)>",
+    "result_type": "Map<String,Double>",
     "constraints": ["Triplets<a,b>"],
     "call": "id(@pi)",
     "args": [
         {
             "name": "pi",
-            "type": "List<(String,Double)>",
-            "default_value": "~SymmetricDirichletOn(letters(@a),1.0)"
+            "type": "Map<String,Double>",
+            "default_value": "Map.fromList(~SymmetricDirichletOn(letters(@a),1.0))"
         },
         {
             "name": "a",

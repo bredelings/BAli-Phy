@@ -1114,13 +1114,13 @@ namespace zz {
 
   case 34: // atom: "{" ditems "}"
 #line 175 "parser.y"
-                                  { yylhs.value.as < CM::UntypedExpr > () = make_list(yystack_[1].value.as < std::vector<CM::UntypedExpr> > ()); }
+                                  { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::Dictionary<CM::NoAnn>{yystack_[1].value.as < std::vector<CM::UntypedExpr> > ()}}; }
 #line 1119 "parser.cc"
     break;
 
   case 35: // atom: "{" "}"
 #line 176 "parser.y"
-                                  { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::List<CM::NoAnn>{}}; }
+                                  { yylhs.value.as < CM::UntypedExpr > () = CM::UntypedExpr{CM::NoAnn{}, CM::Dictionary<CM::NoAnn>{}}; }
 #line 1125 "parser.cc"
     break;
 

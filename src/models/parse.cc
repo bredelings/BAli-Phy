@@ -617,6 +617,19 @@ string unparse(const UntypedExpr& expr)
                 items.push_back(unparse(item));
             return "[" + join(items, ", ") + "]";
         },
+        // Renders dictionary entries using brace syntax rather than guessing
+        // from the element type of an ordinary list.
+        [](const Dictionary<NoAnn>& x)
+        {
+            vector<string> items;
+            for(auto& item: x.elements)
+            {
+                auto& tuple = item.as<Tuple<NoAnn>>();
+                assert(tuple.elements.size() == 2);
+                items.push_back(unparse(tuple.elements[0]) + ": " + unparse(tuple.elements[1]));
+            }
+            return "{" + join(items, ", ") + "}";
+        },
         // Renders tuple elements in command-line parenthesized syntax.
         [](const Tuple<NoAnn>& x)
         {
@@ -791,38 +804,26 @@ string unparse_annotated(const TypedExpr& expr)
                                         [](const auto& pattern) { return unparse_annotated(pattern); },
                                         [](const auto& body) { return unparse_annotated(body); });
         },
-        // Renders typed lists, preserving the legacy map-like display for lists
-        // of string/value pairs.
+        // Renders typed lists without treating all lists of pairs as maps.
         [](const List<Ann>& x)
         {
-            bool list_of_pairs = true;
-            vector<string> pairs;
-            for(auto& item: x.elements)
-            {
-                auto [head, args] = get_type_apps(item.ann.type);
-                if (head == "Tuple" and args.size() == 2)
-                {
-                    auto tuple = item.to<Tuple<Ann>>();
-                    if (not tuple or tuple->elements.size() != 2)
-                    {
-                        list_of_pairs = false;
-                        break;
-                    }
-                    pairs.push_back(unparse_annotated(tuple->elements[0]) + ": " + unparse_annotated(tuple->elements[1]));
-                }
-                else
-                {
-                    list_of_pairs = false;
-                    break;
-                }
-            }
-            if (list_of_pairs)
-                return "{" + join(pairs, ", ") + "}";
-
             vector<string> items;
             for(auto& item: x.elements)
                 items.push_back(unparse_annotated(item));
             return "[" + join(items, ", ") + "]";
+        },
+        // Renders a typed dictionary with the same source syntax as its
+        // untyped counterpart.
+        [](const Dictionary<Ann>& x)
+        {
+            vector<string> items;
+            for(auto& item: x.elements)
+            {
+                auto& tuple = item.as<Tuple<Ann>>();
+                assert(tuple.elements.size() == 2);
+                items.push_back(unparse_annotated(tuple.elements[0]) + ": " + unparse_annotated(tuple.elements[1]));
+            }
+            return "{" + join(items, ", ") + "}";
         },
         // Renders typed tuple elements in command-line parenthesized syntax.
         [](const Tuple<Ann>& x)

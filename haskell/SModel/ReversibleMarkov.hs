@@ -5,6 +5,7 @@ module SModel.ReversibleMarkov (module SModel.ReversibleMarkov,
 
 import           Reversible
 import           Bio.Alphabet
+import qualified Data.Map as Map
 import           Markov (CTMC(..))
 import qualified Markov
 import           SModel.Markov
@@ -35,10 +36,10 @@ letter_pair_names a = pairNames $ Markov.all_pairs (getLetters a)
 -- clean up f1x4 and f3x4?
 gtr_sym' es' a = gtr_sym es a where lpairs = Markov.all_pairs (getLetters a)
                                     es :: [Double]
-                                    es = if length lpairs == length es' then
+                                    es = if length lpairs == Map.size es' then
                                              [Markov.get_element_exchange es' (l1++l2) (l2++l1)| (l1,l2) <- lpairs]
                                          else
-                                             error $ "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (length es')++"!"
+                                             error $ "Expected "++show (length lpairs)++" exchangeabilities but got "++ show (Map.size es')++"!"
 
 plus_f   a pi s   = gtr a s pi
 plus_fe  a s      = plus_f a (uniform_frequencies a) s

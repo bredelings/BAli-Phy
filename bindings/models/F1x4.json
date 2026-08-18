@@ -1,15 +1,15 @@
 {
     "name": "F1x4",
     "deprecated-synonyms": ["f1x4"],
-    "result_type": "List<(String,Double)>",
+    "result_type": "Map<String,Double>",
     "constraints": ["Triplets<a,b>"],
     "call": "f1x4'_frequencies(@a,@pi)",
     "import": ["SModel"],
     "args": [
         {
             "name": "pi",
-            "type": "List<(String,Double)>",
-            "default_value": "~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0)",
+            "type": "Map<String,Double>",
+            "default_value": "Map.fromList(~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0))",
 	    "description": "Nucleotide frequencies"
         },
         {

@@ -1,6 +1,6 @@
 {
     "name": "Frequencies.uniform",
-    "result_type": "List<(String,Double)>",
+    "result_type": "Map<String,Double>",
     "call": "SModel.uniform_frequencies_dict(@a)",
     "import": ["SModel"],
     "args": [

@@ -7,7 +7,7 @@
     "args": [
         {
             "name": "submodel",
-            "type": "List<(String,Double)> -> CTMC<a>",
+            "type": "Map<String,Double> -> CTMC<a>",
             "description": "The model to use on each branch",
             "default_value": "|pi:GTR(pi=pi)|"
         },
@@ -19,13 +19,13 @@
         },
         {
             "name": "freqs",
-            "type": "DiscreteDist<List<(String,Double)>>",
+            "type": "DiscreteDist<Map<String,Double>>",
             "description": "The rate distribution",
-            "default_value": "~DirichletMixture(SymmetricDirichletOn(letters(@a),2),2,@n)"
+            "default_value": "map(|pi:Map.fromList(pi)|,~DirichletMixture(SymmetricDirichletOn(letters(@a),2),2,@n))"
         },
         {
             "name": "nodeFreqs",
-            "type": "IntMap<F>",
+            "type": "IntMap<Map<String,Double>>",
             "description": "The frequencies for each node",
             "default_value": "~IIDMap(nodes(@tree),@freqs)"
         },

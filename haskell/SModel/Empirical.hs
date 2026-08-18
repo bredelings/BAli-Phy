@@ -1,6 +1,7 @@
 module SModel.Empirical where
 
 import Bio.Alphabet
+import qualified Data.Map as Map
 import SModel.ReversibleMarkov
 import Numeric.LinearAlgebra.Data
 
@@ -32,8 +33,8 @@ symmetricMatrixFromLowerTriangle n xs = overrideMatrixDims n n
 
 empirical a filename = empiricalMatrix (\alphabet -> empiricalNative alphabet filename) a
 
-wag_frequencies a = zip (getLetters a) (toList $ builtin_wag_frequencies a)
-lg_frequencies a = zip (getLetters a) (toList $ builtin_lg_frequencies a)
+wag_frequencies a = Map.fromList $ zip (getLetters a) (toList $ builtin_wag_frequencies a)
+lg_frequencies a = Map.fromList $ zip (getLetters a) (toList $ builtin_lg_frequencies a)
 
 normalizeFrequencies xs = map (/sum xs) xs
                    

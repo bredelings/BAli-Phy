@@ -5,6 +5,7 @@ module SModel.NonReversibleMarkov (module SModel.NonReversibleMarkov,
 
 import           Reversible
 import           Bio.Alphabet
+import qualified Data.Map as Map
 import           Markov (CTMC(..))
 import qualified Markov
 import           SModel.Markov
@@ -19,9 +20,8 @@ nonRev a rates = scaleTo 1 $ eqMarkov a smap q
 
 nonRev' a rates' = nonRev a rs
     where lPairs = allOrderedPairs (getLetters a)
-          rs = if length lPairs == length rates' then
+          rs = if length lPairs == Map.size rates' then
                    [ Markov.getElement rates' (l1++l2) | (l1,l2) <- lPairs]
                else
-                   error $ "Expected "++show (length lPairs)++" rates but got "++ show (length rates')++"!"
-
+                   error $ "Expected "++show (length lPairs)++" rates but got "++ show (Map.size rates')++"!"
 

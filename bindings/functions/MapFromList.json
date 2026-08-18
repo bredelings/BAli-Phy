@@ -1,0 +1,14 @@
+{
+    "name": "Map.fromList",
+    "result_type": "Map<a,b>",
+    "constraints": ["Ord<a>"],
+    "no_log": true,
+    "call": "Map.fromList(@pairs)",
+    "args": [
+        {
+            "name": "pairs",
+            "type": "List<(a,b)>"
+        }
+    ],
+    "description": "Construct a map from key/value pairs. Later values replace earlier values for duplicate keys."
+}

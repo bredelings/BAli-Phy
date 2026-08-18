@@ -2,7 +2,7 @@
     "title": "The WAG amino-acid frequencies",
     "name": "WAG_freq",
     "deprecated-synonyms": ["wag_freq"],
-    "result_type": "List<(String,Double)>",
+    "result_type": "Map<String,Double>",
     "call": "wag_frequencies(@a)",
     "import": ["SModel"],
     "args": [

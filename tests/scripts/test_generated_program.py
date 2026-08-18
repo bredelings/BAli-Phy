@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import pathlib
 import subprocess
 import sys
@@ -40,6 +41,7 @@ def main():
             "infer",
             "input.fasta",
             "--imodel=none",
+            "--smodel=TN93",
             "--iterations=0",
             "--name=generated",
         ]
@@ -94,6 +96,15 @@ def main():
         ]
         if not all(path.is_file() for path in output_paths):
             raise AssertionError(f"the standalone program did not create its log files: {output_paths}")
+
+        # Preserve logging of structured model parameters across representation changes;
+        # successful generated-program execution alone does not establish that the field survived.
+        log_records = output_paths[0].read_text(encoding="utf-8").splitlines()
+        sample = json.loads(log_records[1])
+        frequencies = sample["parameters//"]["S1/"]["TN93:pi"]
+        if not isinstance(frequencies, dict) or set(frequencies) != {"A", "C", "G", "T"}:
+            raise AssertionError(f"TN93 frequencies were not logged as a JSON object: {frequencies}")
+
         if (work_directory / output_directory / "C1.log").exists():
             raise AssertionError("the standalone program ignored its runtime log format")
         if (work_directory / output_directory / "C1.run.json").exists():

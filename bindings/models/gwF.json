@@ -11,8 +11,8 @@
         },
         {
             "name": "pi",
-            "type": "List<(String,Double)>",
-            "default_value": "~SymmetricDirichletOn(letters(@a),1.0)"
+            "type": "Map<String,Double>",
+            "default_value": "Map.fromList(~SymmetricDirichletOn(letters(@a),1.0))"
         },
         {
             "name": "f",

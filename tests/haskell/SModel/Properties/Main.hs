@@ -95,7 +95,7 @@ main = do
       selected = mut_sel (replicate (alphabetSize codons) 0) codonModel
 
   putStrLn $ show (rows triangle, cols triangle, toList (flatten triangle))
-  putStrLn $ show $ length $ wag_frequencies aa
+  putStrLn $ show $ Map.size $ wag_frequencies aa
   putStrLn $ show (rows (CoreMarkov.getQ nonReversible), cols (CoreMarkov.getQ nonReversible))
   putStrLn $ show (rows weighted, cols weighted, toList (flatten weighted))
   putStrLn $ show $ length $ toList $ CoreMarkov.getStartFreqs selected

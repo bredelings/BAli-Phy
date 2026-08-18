@@ -488,6 +488,10 @@ bool annotated_term_is_model(const CM::TypedExpr& term)
         for(auto& element: list->elements)
             if (annotated_term_is_model(element)) return true;
 
+    if (auto dictionary = term.to<CM::Dictionary<CM::Ann>>())
+        for(auto& element: dictionary->elements)
+            if (annotated_term_is_model(element)) return true;
+
     return false;
 }
 
@@ -519,6 +523,7 @@ string extract_node_name(const CM::TypedExpr& expr)
     return expr.visit(CM::overloaded{
         [](const CM::Call<CM::Ann>& call) {return call.function;},
         [](const CM::List<CM::Ann>&) {return string("List");},
+        [](const CM::Dictionary<CM::Ann>&) {return string("Dictionary");},
         [](const CM::Tuple<CM::Ann>&) {return string("Tuple");},
         [](const CM::Sample<CM::Ann>&) {return string("sample");},
         [](const auto&) {return string("");}
@@ -557,6 +562,13 @@ bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
         [&](const CM::List<CM::Ann>& list)
         {
             for(auto& element: list.elements)
+                if (bound(element, binders)) return true;
+            return false;
+        },
+        // Checks whether any dictionary entry references a protected binder.
+        [&](const CM::Dictionary<CM::Ann>& dictionary)
+        {
+            for(auto& element: dictionary.elements)
                 if (bound(element, binders)) return true;
             return false;
         },
@@ -622,7 +634,7 @@ bool do_extract(const CM::TypedExpr& func, const CM::TypedExpr& arg, const set<s
 
         if (arg_type == "Int" or arg_type == "Double" or arg_type == "Log<Double>")
             return true;
-        if (arg_type == "List<Double>" or arg_type == "List<(String,Double)>")
+        if (arg_type == "List<Double>" or arg_type == "Map<String,Double>")
             return true;
     }
 
@@ -690,6 +702,21 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
     {
         int i = 0;
         for(auto& element: list->elements)
+        {
+            auto name = "[" + std::to_string(++i) + "]";
+            for(auto& [sub_name, sub_term]: extract_terms(element, binders))
+            {
+                auto sup_name = name + "/" + sub_name;
+                if (sub_name.size() and sub_name[0] == '[')
+                    sup_name = name + sub_name;
+                extracted.emplace_back(sup_name, std::move(sub_term));
+            }
+        }
+    }
+    else if (auto dictionary = m.to<CM::Dictionary<CM::Ann>>())
+    {
+        int i = 0;
+        for(auto& element: dictionary->elements)
         {
             auto name = "[" + std::to_string(++i) + "]";
             for(auto& [sub_name, sub_term]: extract_terms(element, binders))

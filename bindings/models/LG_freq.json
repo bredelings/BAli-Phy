@@ -2,7 +2,7 @@
     "title": "The LG amino-acid frequencies",
     "name": "LG_freq",
     "deprecated-synonyms": ["lg08_freq"],
-    "result_type": "List<(String,Double)>",
+    "result_type": "Map<String,Double>",
     "call": "lg_frequencies(@a)",
     "import": ["SModel"],
     "args": [

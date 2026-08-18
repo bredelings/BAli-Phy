@@ -1,5 +1,6 @@
 module Markov where
 
+import qualified Data.Map as Map
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
 import SModel.Rate
@@ -157,16 +158,22 @@ all_pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
 
 number_pairs n = [ show x ++ "|" ++ show y | (x,y) <- all_pairs [1..n]]
 
-get_element_exchange []                 x y = error ("No exchangeability specified for '" ++ x ++ "'")
-get_element_exchange ((key,value):rest) x y = if key == x || key == y then value else get_element_exchange rest x y
+-- Accept either orientation of an unordered pair using at most two logarithmic map lookups.
+get_element_exchange exchange x y =
+    case Map.lookup x exchange of
+        Just value -> value
+        Nothing -> case Map.lookup y exchange of
+            Just value -> value
+            Nothing -> error ("No exchangeability specified for '" ++ x ++ "'")
 
-getElement []                 x  = error ("No exchangeability specified for '" ++ x ++ "'")
-getElement ((key,value):rest) x  = if key == x then value else getElement rest x
+getElement exchange x = case Map.lookup x exchange of
+    Just value -> value
+    Nothing -> error ("No exchangeability specified for '" ++ x ++ "'")
 
 gtr_sym_from_numbers n es' = gtr_sym n es where
     npairs = all_pairs [1..n]
     es :: [Double]
-    es = if length es' == length npairs then
+    es = if Map.size es' == length npairs then
              [get_element_exchange es' (show l1 ++ "|" ++ show l2) (show l2 ++ "|" ++ show l1)| (l1,l2) <- npairs]
          else
-             error $ "Expected "++show (length npairs)++" exchangeabilities but got "++ show (length es')++"!"
+             error $ "Expected "++show (length npairs)++" exchangeabilities but got "++ show (Map.size es')++"!"

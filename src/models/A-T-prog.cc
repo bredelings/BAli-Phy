@@ -705,6 +705,7 @@ void write_header(std::ostream& program_file,
     for(auto& mod: imports)
         program_file<<"\nimport "<<mod;
     program_file<<"\nimport qualified Data.IntMap as IntMap";
+    program_file<<"\nimport qualified Data.Map as Map";
     program_file<<"\nimport qualified Data.JSON as J";
     program_file<<"\nimport Data.JSON ((.=))";
     program_file<<"\nimport qualified Data.Text.IO as T";
