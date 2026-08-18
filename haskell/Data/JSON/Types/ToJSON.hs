@@ -85,8 +85,6 @@ instance ToJSON a => ToJSON [a] where
     toJSON x = toJSONList x
     toEncoding x = toEncodingList x
 
--- BUG: In instance for 'ToJSON (Map Compiler.Base.String a)' for type 'Map Compiler.Base.String a': Compiler.Base.String is not a type variable!
--- BUG: If we just replace String with b, it checks... but should it?
 instance (ToJSONKey a, ToJSON b) => ToJSON (M.Map a b) where
     toJSON m = object [(toJSONKey key, toJSON value) | (key, value) <- M.toAscList m]
     toEncoding m = E.pairs (foldr (<>) mempty [toJSONKey k .= v | (k,v) <- M.toAscList m])
@@ -94,14 +92,6 @@ instance (ToJSONKey a, ToJSON b) => ToJSON (M.Map a b) where
 instance (ToJSON a, ToJSON b) => ToJSON (a,b) where
     toJSON (x,y) = Array [toJSON x, toJSON y]
     toEncoding (x,y) = E.wrapArray $ toEncoding x >*< toEncoding y
-
--- Apparently we need this so that we write
---    pi[A]=value  pi[C]=value
--- And not
---    pi[1][1]="A"  pi[1][2] = value  pi[2][1] ="C"  pi[2][2]=value
-instance {-# INCOHERENT #-} ToJSON a => ToJSON ([Char],a) where
-    toJSON (s,x) = Array [toJSON s, toJSON x]
-    toJSONList xs = object [(toJSONKeyList key, toJSON value) | (key, value) <- xs]
 
 instance (ToJSON a, ToJSON b, ToJSON c) => ToJSON (a,b,c) where
     toJSON (x,y,z) = Array [toJSON x, toJSON y, toJSON z]
