@@ -10,12 +10,13 @@ import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
+import qualified Data.Set as Set
 
 smodel_prior codons = do
     let nucleotides = getNucleotides codons
-    sym <- prior $ symmetricDirichletOn (letter_pair_names nucleotides) 1.0
-    pi  <- prior $ symmetricDirichletOn (getLetters nucleotides) 1.0
-    ws  <- prior $ iidOn (getLetters codons) (normal 0 1)
+    sym <- prior $ symmetricDirichletOn (Set.fromList $ letter_pair_names nucleotides) 1.0
+    pi  <- prior $ symmetricDirichletOn (letterSet nucleotides) 1.0
+    ws  <- prior $ iidOn (letterSet codons) (normal 0 1)
     let n  = 4
     omegaDist <- prior $ dirichletMixture n 2 $ uniform 0 1
 

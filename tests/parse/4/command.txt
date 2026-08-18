@@ -1,1 +1,1 @@
-infer --test dna.fasta --smodel=HKY85_sym+>F
+infer --test dna.fasta '--smodel=HKY85_sym+>F(pi=~SymmetricDirichletOn({"A","C","G","T"},1))'

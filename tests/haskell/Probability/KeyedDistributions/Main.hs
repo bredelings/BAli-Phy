@@ -11,6 +11,7 @@ import Data.Function (($))
 import Data.List (sum)
 import Data.Ord
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import Probability.Dist (HasPdf(pdf), IOSampleable(sampleIO))
 import Probability.Distribution.Dirichlet (dirichletOn, symmetricDirichletOn)
 import Probability.Distribution.Discrete (delta)
@@ -26,8 +27,8 @@ main = do
   let concentrations = Map.fromList [("B", 2), ("A", 1)]
       probabilities = Map.fromList [("B", 0.75), ("A", 0.25)]
       density = toFloating (pdf (dirichletOn concentrations) probabilities) :: Double
-  symmetric <- sampleIO $ symmetricDirichletOn ["B", "A"] 1
-  independent <- runRandomLazy $ sample $ iidOn ["B", "A"] (delta 4)
+  symmetric <- sampleIO $ symmetricDirichletOn (Set.fromList ["B", "A"]) 1
+  independent <- runRandomLazy $ sample $ iidOn (Set.fromList ["B", "A"]) (delta 4)
   print (near density 1.5
       && Map.keys symmetric == ["A", "B"]
       && near (sum $ Map.elems symmetric) 1

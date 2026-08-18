@@ -6,8 +6,9 @@ import MCMC (runMCMC)
 import Options.Applicative
 import Probability
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
-vocabulary = ["bear", "wolf", "python", "prolog"];
+vocabulary = Set.fromList ["bear", "wolf", "python", "prolog"];
 
 ntopics = 2
 

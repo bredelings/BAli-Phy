@@ -35,7 +35,7 @@ model seqData = do
 
     tree   <- prior $ uniformLabelledTree'' taxa (branchLengthDist zeroP)
 
-    freqs  <- prior $ symmetricDirichletOn (getLetters dna) 1
+    freqs  <- prior $ symmetricDirichletOn (letterSet dna) 1
 
     kappa1 <- prior $ logNormal 0 1
 

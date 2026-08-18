@@ -1,6 +1,7 @@
 module Markov where
 
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
 import SModel.Rate
@@ -157,6 +158,9 @@ jukes_cantor n = gtr (equ n 1.0) (uniform_frequencies n)
 all_pairs l = [(x,y) | (x:ys) <- tails l, y <- ys]
 
 number_pairs n = [ show x ++ "|" ++ show y | (x,y) <- all_pairs [1..n]]
+
+-- Return unordered numeric-pair names as a key domain.
+numberPairSet n = Set.fromList (number_pairs n)
 
 -- Accept either orientation of an unordered pair using at most two logarithmic map lookups.
 get_element_exchange exchange x y =

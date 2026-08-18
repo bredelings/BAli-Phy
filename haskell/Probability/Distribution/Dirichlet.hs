@@ -6,6 +6,7 @@ import Probability.Distribution.List
 import MCMC.Moves.Real
 import Numeric.LinearAlgebra (Vector, fromList)
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 
 foreign import trcall "Distribution:dirichlet_density" dirichletDensityNative :: Vector Double -> Vector Double -> Log Double
 dirichletDensity as ps = dirichletDensityNative
@@ -71,8 +72,6 @@ instance Sampleable (DirichletOn a) where
 
 dirichletOn = DirichletOn
 
--- Convert a list domain to a concentration map, rejecting repeated category names.
-symmetricDirichletOn items a
-  | Map.size concentrations == length items = dirichletOn concentrations
-  | otherwise = error "symmetricDirichletOn: repeated item"
-  where concentrations = Map.fromList [(item, a) | item <- items]
+-- Build the concentration map in linear time from the Set's distinct ascending keys.
+symmetricDirichletOn items a =
+  dirichletOn $ Map.fromDistinctAscList [(item, a) | item <- Set.toAscList items]

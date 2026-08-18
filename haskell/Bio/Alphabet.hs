@@ -4,6 +4,7 @@ import Compiler.FFI.Import (CInput(..))
 import Foreign.String -- For CPPString
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Set as Set
 
 data Alphabet
 
@@ -21,6 +22,10 @@ foreign import ecall "Alphabet:" alphabetSize :: Alphabet -> Int
 
 foreign import bpcall "Alphabet:alphabet_letters" builtin_letters :: Alphabet -> EVector CPPString
 getLetters a = map listFromString (vectorToList (builtin_letters a) )
+
+-- Return the alphabet symbols as an unordered key domain while getLetters
+-- continues to expose their underlying alphabet order.
+letterSet a = Set.fromList (getLetters a)
 
 foreign import ecall "Alphabet:find_letter" builtin_find_letter :: Alphabet -> CPPString -> Int
 findLetter a letter = builtin_find_letter a (list_to_string letter)

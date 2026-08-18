@@ -1,7 +1,7 @@
 {
     "name": "letter_pairs",
-    "result_type": "List<String>",
-    "call": "letter_pair_names(@a)",
+    "result_type": "Set<String>",
+    "call": "Set.fromList(letter_pair_names(@a))",
     "args": [
         {
             "name": "a",

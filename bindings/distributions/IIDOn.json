@@ -8,8 +8,8 @@
     "args": [
         {
             "name": "xs",
-            "type": "List<a>",
-	    "description": "The number of samples"
+            "type": "Set<a>",
+	    "description": "The keys identifying the samples"
         },
         {
             "name": "dist",
@@ -18,5 +18,5 @@
         }
     ],
     "title": "The Independent and Identically Distributed (i.i.d.) distribution",
-    "examples": ["~IIDOn([1,2,3],Normal(0,1))    // A map of 3 Normal(0,1) random variables"]
+    "examples": ["~IIDOn({1,2,3},Normal(0,1))    // A map of 3 Normal(0,1) random variables"]
 }

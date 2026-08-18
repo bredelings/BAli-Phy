@@ -28,7 +28,7 @@ model seq_data = do
     let imodel = rs07 indel_rate mean_length tree
 
     -- Substitution model
-    freqs  <- prior $ symmetricDirichletOn ["A", "C", "G", "T"] 1
+    freqs  <- prior $ symmetricDirichletOn (letterSet dna) 1
     kappa1 <- prior $ logNormal 0 1
     kappa2 <- prior $ logNormal 0 1
     let tn93_model = tn93' dna kappa1 kappa2 freqs

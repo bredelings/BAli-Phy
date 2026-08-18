@@ -1,0 +1,13 @@
+{
+    "name": "ordered_letters",
+    "result_type": "List<String>",
+    "call": "getLetters(@a)",
+    "import": ["Bio.Alphabet"],
+    "args": [
+        {
+            "name": "a",
+            "type": "a"
+        }
+    ],
+    "description": "Return alphabet symbols in their underlying alphabet order."
+}

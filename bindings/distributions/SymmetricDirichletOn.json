@@ -8,7 +8,7 @@
     "args": [
         {
             "name": "items",
-            "type": "List<a>"
+            "type": "Set<a>"
         },
         {
             "name": "n",

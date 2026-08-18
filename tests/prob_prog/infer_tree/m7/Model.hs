@@ -11,13 +11,14 @@ import SModel
 import SModel.Parsimony
 import Tree
 import Tree.Newick
+import qualified Data.Set as Set
 
 gtr_m7_model codons = do
     let nucs = getNucleotides codons
 
     -- GTR model parameters
-    sym <- sample $ symmetricDirichletOn (letter_pair_names nucs) 1
-    pi <- sample $ symmetricDirichletOn (getLetters nucs) 1
+    sym <- sample $ symmetricDirichletOn (Set.fromList $ letter_pair_names nucs) 1
+    pi <- sample $ symmetricDirichletOn (letterSet nucs) 1
 
     let posSelModel w = gtr' sym pi nucs +> x3 codons +> dNdS w
 

@@ -18,7 +18,7 @@ model seqData = do
     age    <- sample $ gamma 0.5 2
     tree   <- addLabels taxa <$> sample (uniformTimeTree age (length taxa))
 
-    freqs  <- sample $ symmetricDirichletOn ["A", "C", "G", "T"] 1
+    freqs  <- sample $ symmetricDirichletOn (letterSet dna) 1
     kappa1 <- sample $ logNormal 0 1
     kappa2 <- sample $ logNormal 0 1
 

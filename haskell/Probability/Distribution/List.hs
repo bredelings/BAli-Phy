@@ -114,11 +114,7 @@ instance Sampleable d => Sampleable (IIDOn a d) where
                                   xs <- sequence $ repeat $ dist
                                   return $ Map.fromDistinctAscList $ zip (Set.toAscList domain) xs
 
--- Establish a fixed key domain once so samples can build their map in linear time.
-iidOn items dist
-  | Set.size domain == length items = IIDOn domain dist
-  | otherwise = error "iidOn: repeated key"
-  where domain = Set.fromList items
+iidOn = IIDOn
 
 {-
   could we do i.e.

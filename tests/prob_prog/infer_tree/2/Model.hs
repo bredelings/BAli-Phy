@@ -4,7 +4,7 @@ import           BAliPhy.Run
 import           MCMC (runMCMC)
 import           Options.Applicative
 import           Probability
-import           Bio.Alphabet  (dna)
+import           Bio.Alphabet  (dna, letterSet)
 import           Bio.Alignment (alignmentLength)
 import           Bio.Sequence
 import           Tree
@@ -21,7 +21,7 @@ model seqData = do
 
     tree   <- prior $ uniformLabelledTree'' taxa branch_length_dist
 
-    freqs  <- prior $ symmetricDirichletOn ["A", "C", "G", "T"] 1
+    freqs  <- prior $ symmetricDirichletOn (letterSet dna) 1
     kappa1 <- prior $ logNormal 0 1
     kappa2 <- prior $ logNormal 0 1
 

@@ -1,7 +1,7 @@
 {
     "name": "ordered_letter_pairs",
-    "result_type": "List<String>",
-    "call": "orderedLetterPairNames(@a)",
+    "result_type": "Set<String>",
+    "call": "Set.fromList(orderedLetterPairNames(@a))",
     "args": [
         {
             "name": "a",

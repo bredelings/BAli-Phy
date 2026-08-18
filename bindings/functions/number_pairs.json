@@ -1,7 +1,7 @@
 {
     "name": "number_pairs",
-    "result_type": "List<String>",
-    "call": "number_pairs(@n)",
+    "result_type": "Set<String>",
+    "call": "numberPairSet(@n)",
     "import": ["Markov"],
     "args": [
         {

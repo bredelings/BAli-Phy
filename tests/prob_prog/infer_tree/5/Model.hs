@@ -28,7 +28,7 @@ model seqData nucs logTree = do
 
     let tn93Model freqs = tn93' nucs kappa1 kappa2 freqs
 
-    freqs <- sample $ dirichletMixture n 2 $ symmetricDirichletOn (getLetters nucs) 1
+    freqs <- sample $ dirichletMixture n 2 $ symmetricDirichletOn (letterSet nucs) 1
     nodeMap <- sample $ iidMap (getNodesSet tree) freqs
     alpha <- sample $ logLaplace 6 2
 
