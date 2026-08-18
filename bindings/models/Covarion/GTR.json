@@ -14,7 +14,7 @@
         {
             "name": "sym",
             "type": "Map<String,Double>",
-	    "default_value":"Map.fromList(~IIDOn(number_pairs(n_components(@submodel)),Gamma(0.5,1.0)))",
+	    "default_value":"~IIDOn(number_pairs(n_components(@submodel)),Gamma(0.5,1.0))",
 	    "description":"Symmetric class-switching exchangability matrix"
         }
     ],

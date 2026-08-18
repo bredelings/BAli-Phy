@@ -9,7 +9,7 @@
         {
             "name": "rates",
             "type": "Map<String,Double>",
-	    "default_value":"Map.fromList(~SymmetricDirichletOn(ordered_letter_pairs(@a),1))",
+	    "default_value":"~SymmetricDirichletOn(ordered_letter_pairs(@a),1)",
 	    "description":"rate matrix"
         },
         {

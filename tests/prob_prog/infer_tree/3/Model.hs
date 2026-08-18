@@ -10,14 +10,12 @@ import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
-import qualified Data.Map as Map
 
 smodel_prior codons = do
     let nucleotides = getNucleotides codons
-    sym <- fmap Map.fromList $ prior $ symmetricDirichletOn (letter_pair_names nucleotides) 1.0
-    pi  <- fmap Map.fromList $ prior $ symmetricDirichletOn (getLetters nucleotides) 1.0
-    fitnessValues <- prior $ iid (length (getLetters codons)) (normal 0 1)
-    let ws = Map.fromList $ zip (getLetters codons) fitnessValues
+    sym <- prior $ symmetricDirichletOn (letter_pair_names nucleotides) 1.0
+    pi  <- prior $ symmetricDirichletOn (getLetters nucleotides) 1.0
+    ws  <- prior $ iidOn (getLetters codons) (normal 0 1)
     let n  = 4
     omegaDist <- prior $ dirichletMixture n 2 $ uniform 0 1
 

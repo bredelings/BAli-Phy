@@ -1,17 +1,13 @@
 {
     "name": "DirichletOn",
     "deprecated-synonyms": ["dirichlet_on"],
-    "result_type": "Distribution<List<(a,Double)>>",
-    "call": "dirichletOn(@items,@as)",
+    "result_type": "Distribution<Map<a,Double>>",
+    "call": "dirichletOn(@concentrations)",
     "import": ["Probability"],
     "args": [
         {
-            "name": "items",
-            "type": "List<a>"
-        },
-        {
-            "name": "as",
-            "type": "List<Double>"
+            "name": "concentrations",
+            "type": "Map<a,Double>"
         }
     ]
 }

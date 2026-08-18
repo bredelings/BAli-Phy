@@ -21,7 +21,7 @@
             "name": "freqs",
             "type": "DiscreteDist<Map<String,Double>>",
             "description": "The rate distribution",
-            "default_value": "map(|pi:Map.fromList(pi)|,~DirichletMixture(SymmetricDirichletOn(letters(@a),2),2,@n))"
+            "default_value": "~DirichletMixture(SymmetricDirichletOn(letters(@a),2),2,@n)"
         },
         {
             "name": "nodeFreqs",

@@ -12,6 +12,8 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IM
 import Data.IntSet (IntSet)
 import qualified Data.IntSet as IS
+import qualified Data.Map as Map
+import qualified Data.Set as Set
 import MCMC.Moves.Real
 
 {-
@@ -100,19 +102,23 @@ iidMap set dist = independent $ IM.fromSet (const dist) set
 
 -- So we can do this...  but then we only get access to the "dist" part.
 -----
-data IIDOn a d = IIDOn [a] d
+data IIDOn a d = IIDOn (Set.Set a) d
 
 instance Dist d => Dist (IIDOn a d) where
-    type Result (IIDOn a d) = [(a, Result d)]
+    type Result (IIDOn a d) = Map.Map a (Result d)
 
 instance Sampleable d => Sampleable (IIDOn a d) where
-    sample (IIDOn vs dist) = let n = length vs
+    sample (IIDOn domain dist) = let n = Set.size domain
                              in lazy $ RanSamplingRate (1/sqrt (fromIntegral n)) $ do
                                   dist <- interchangeable $ sample dist
                                   xs <- sequence $ repeat $ dist
-                                  return $ zip vs xs
+                                  return $ Map.fromDistinctAscList $ zip (Set.toAscList domain) xs
 
-iidOn items dist = IIDOn items dist
+-- Establish a fixed key domain once so samples can build their map in linear time.
+iidOn items dist
+  | Set.size domain == length items = IIDOn domain dist
+  | otherwise = error "iidOn: repeated key"
+  where domain = Set.fromList items
 
 {-
   could we do i.e.

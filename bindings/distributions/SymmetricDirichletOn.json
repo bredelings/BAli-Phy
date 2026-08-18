@@ -1,7 +1,8 @@
 {
     "name": "SymmetricDirichletOn",
     "deprecated-synonyms": ["symmetric_dirichlet_on"],
-    "result_type": "Distribution<List<(a,Double)>>",
+    "result_type": "Distribution<Map<a,Double>>",
+    "constraints": ["Ord<a>"],
     "call": "symmetricDirichletOn(@items,@n)",
     "import": ["Probability"],
     "args": [

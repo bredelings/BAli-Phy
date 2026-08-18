@@ -11,7 +11,6 @@ import           Tree
 import           Tree.Newick
 import           SModel
 import qualified Data.IntMap as IntMap
-import qualified Data.Map as Map
 import           Probability.Logger
 import           System.FilePath ( (</>) )
 
@@ -29,8 +28,7 @@ model seqData nucs logTree = do
 
     let tn93Model freqs = tn93' nucs kappa1 kappa2 freqs
 
-    frequencyLists <- sample $ dirichletMixture n 2 $ symmetricDirichletOn (getLetters nucs) 1
-    let freqs = fmap Map.fromList frequencyLists
+    freqs <- sample $ dirichletMixture n 2 $ symmetricDirichletOn (getLetters nucs) 1
     nodeMap <- sample $ iidMap (getNodesSet tree) freqs
     alpha <- sample $ logLaplace 6 2
 

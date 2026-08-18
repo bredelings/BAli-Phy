@@ -14,7 +14,7 @@
         {
             "name": "initialFreq",
             "type": "Map<String,Double>",
-            "default_value": "Map.fromList(~SymmetricDirichletOn(letters(@a),1))",
+            "default_value": "~SymmetricDirichletOn(letters(@a),1)",
 	    "description": "Initial letter frequencies"
 
         },

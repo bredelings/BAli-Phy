@@ -11,14 +11,13 @@ import SModel
 import SModel.Parsimony
 import Tree
 import Tree.Newick
-import qualified Data.Map as Map
 
 gtr_m7_model codons = do
     let nucs = getNucleotides codons
 
     -- GTR model parameters
-    sym <- fmap Map.fromList $ sample $ symmetricDirichletOn (letter_pair_names nucs) 1
-    pi <- fmap Map.fromList $ sample $ symmetricDirichletOn (getLetters nucs) 1
+    sym <- sample $ symmetricDirichletOn (letter_pair_names nucs) 1
+    pi <- sample $ symmetricDirichletOn (getLetters nucs) 1
 
     let posSelModel w = gtr' sym pi nucs +> x3 codons +> dNdS w
 

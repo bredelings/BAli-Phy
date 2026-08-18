@@ -9,19 +9,19 @@
         {
             "name": "pi1",
             "type": "Map<String,Double>",
-            "default_value": "Map.fromList(~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0))",
+            "default_value": "~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 1"
         },
         {
             "name": "pi2",
             "type": "Map<String,Double>",
-            "default_value": "Map.fromList(~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0))",
+            "default_value": "~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 2"
         },
         {
             "name": "pi3",
             "type": "Map<String,Double>",
-            "default_value": "Map.fromList(~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0))",
+            "default_value": "~SymmetricDirichletOn(letters(getNucleotides(@a)),1.0)",
 	    "description": "Nucleotide frequencies for position 3"
         },
         {

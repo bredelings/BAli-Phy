@@ -5,6 +5,7 @@ import Probability.Distribution.Gamma
 import Probability.Distribution.List
 import MCMC.Moves.Real
 import Numeric.LinearAlgebra (Vector, fromList)
+import qualified Data.Map as Map
 
 foreign import trcall "Distribution:dirichlet_density" dirichletDensityNative :: Vector Double -> Vector Double -> Log Double
 dirichletDensity as ps = dirichletDensityNative
@@ -44,27 +45,34 @@ symmetricDirichlet n a = do
 
 -----
 
-data DirichletOn a = DirichletOn [a] [Double]
+newtype DirichletOn a = DirichletOn (Map.Map a Double)
 
 instance Dist (DirichletOn a) where
-    type Result (DirichletOn a) = [(a,Double)]
+    type Result (DirichletOn a) = Map.Map a Double
     distName _ = "dirichlet_on"
 
 instance IOSampleable (DirichletOn a) where
-    sampleIO (DirichletOn items as) = do ps <- sampleIO $ dirichlet as
-                                         return $ zip items ps
+    sampleIO (DirichletOn concentrations) = do
+      ps <- sampleIO $ dirichlet $ Map.elems concentrations
+      return $ Map.fromDistinctAscList $ zip (Map.keys concentrations) ps
 
 instance HasPdf (DirichletOn a) where
-    pdf (DirichletOn _ as) itemPrs = pdf (Dirichlet as) ps where ps = map snd itemPrs
+    pdf (DirichletOn concentrations) probabilities =
+      pdf (Dirichlet $ Map.elems concentrations) (Map.elems probabilities)
 
 
 instance HasAnnotatedPdf (DirichletOn a) where
     annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable (DirichletOn a) where
-    sample (DirichletOn items as) = do ps <- sample $ dirichlet as
-                                       return $ zip items ps
+    sample (DirichletOn concentrations) = do
+      ps <- sample $ dirichlet $ Map.elems concentrations
+      return $ Map.fromDistinctAscList $ zip (Map.keys concentrations) ps
 
-dirichletOn items ps = DirichletOn items ps
+dirichletOn = DirichletOn
 
-symmetricDirichletOn items a = dirichletOn items (replicate (length items) a)
+-- Convert a list domain to a concentration map, rejecting repeated category names.
+symmetricDirichletOn items a
+  | Map.size concentrations == length items = dirichletOn concentrations
+  | otherwise = error "symmetricDirichletOn: repeated item"
+  where concentrations = Map.fromList [(item, a) | item <- items]

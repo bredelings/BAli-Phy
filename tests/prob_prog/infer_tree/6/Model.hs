@@ -10,7 +10,6 @@ import           Bio.Sequence
 import           Tree
 import           Tree.Newick
 import           SModel
-import qualified Data.Map as Map
 
 -- Non-zero branches are slightly longer to keep to average length correct.
 -- The division means that we can't set the value though.
@@ -36,7 +35,7 @@ model seqData = do
 
     tree   <- prior $ uniformLabelledTree'' taxa (branchLengthDist zeroP)
 
-    freqs  <- fmap Map.fromList $ prior $ symmetricDirichletOn (getLetters dna) 1
+    freqs  <- prior $ symmetricDirichletOn (getLetters dna) 1
 
     kappa1 <- prior $ logNormal 0 1
 

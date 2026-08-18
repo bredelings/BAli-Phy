@@ -5,6 +5,7 @@ import BAliPhy.Run
 import MCMC (runMCMC)
 import Options.Applicative
 import Probability
+import qualified Data.Map as Map
 
 vocabulary = ["bear", "wolf", "python", "prolog"];
 
@@ -16,7 +17,7 @@ word_dist_for_doc word_frequencies_for_topic nwords = do
   topic_frequencies <- sample $ symmetricDirichlet ntopics 1
   topics  <- sample $ iid nwords $ categorical (map toProb topic_frequencies)
   let word_dist = independent [ categorical_on $ map (\(word, p) -> (word, toProb p))
-                                                   (word_frequencies_for_topic!!topic)
+                                                   (Map.toAscList (word_frequencies_for_topic!!topic))
                               | topic <- topics ]
   return (word_dist, topic_frequencies)
 

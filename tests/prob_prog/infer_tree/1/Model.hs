@@ -11,7 +11,6 @@ import           Tree
 import           Tree.Newick
 import           SModel
 import           IModel
-import qualified Data.Map as Map
 
 branch_length_dist topology branch = gamma (1/2) (2/fromIntegral n) where n = numBranches topology
 
@@ -29,7 +28,7 @@ model seq_data = do
     let imodel = rs07 indel_rate mean_length tree
 
     -- Substitution model
-    freqs  <- fmap Map.fromList $ prior $ symmetricDirichletOn ["A", "C", "G", "T"] 1
+    freqs  <- prior $ symmetricDirichletOn ["A", "C", "G", "T"] 1
     kappa1 <- prior $ logNormal 0 1
     kappa2 <- prior $ logNormal 0 1
     let tn93_model = tn93' dna kappa1 kappa2 freqs
