@@ -220,6 +220,13 @@ bool CodeGenState::is_random(const CM::TypedExpr& model) const
                 if (is_random(element)) return true;
             return false;
         },
+        // A set is random when at least one element is random.
+        [&](const CM::Set<CM::Ann>& set)
+        {
+            for(auto& element: set.elements)
+                if (is_random(element)) return true;
+            return false;
+        },
         // A dictionary is random when at least one key/value entry is random.
         [&](const CM::Dictionary<CM::Ann>& dictionary)
         {
@@ -281,6 +288,13 @@ bool CodeGenState::is_unlogged_random(const CM::TypedExpr& model) const
         [&](const CM::List<CM::Ann>& list)
         {
             for(auto& element: list.elements)
+                if (is_unlogged_random(element)) return true;
+            return false;
+        },
+        // Propagate unlogged randomness through set elements.
+        [&](const CM::Set<CM::Ann>& set)
+        {
+            for(auto& element: set.elements)
                 if (is_unlogged_random(element)) return true;
             return false;
         },
@@ -765,6 +779,15 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
                 args.push_back(make_rule_template_expr(element, simple_args));
             return HsG::List(args);
         },
+        // Compile binding-template sets through the same Data.Set
+        // representation used for command-line set syntax.
+        [&](const CM::Set<CM::NoAnn>& set) -> Hs::Exp
+        {
+            vector<Hs::Exp> elements;
+            for(auto& element: set.elements)
+                elements.push_back(make_rule_template_expr(element, simple_args));
+            return HsG::Apply(Hs::Var("Set.fromList"), {HsG::List(elements)});
+        },
         // Compile binding-template dictionaries through the same Map
         // representation used for command-line dictionary syntax.
         [&](const CM::Dictionary<CM::NoAnn>& dictionary) -> Hs::Exp
@@ -984,6 +1007,15 @@ translation_result_t CodeGenState::get_typed_model_dictionary(const CM::Dictiona
 {
     auto result = get_typed_model_list(CM::List<CM::Ann>{dictionary.elements});
     result.code.E = HsG::Apply(Hs::Var("Map.fromList"), {result.code.E});
+    return result;
+}
+
+// Reuse list element sequencing and logging, then construct the runtime Set
+// once from the resulting values.
+translation_result_t CodeGenState::get_typed_model_set(const CM::Set<CM::Ann>& set) const
+{
+    auto result = get_typed_model_list(CM::List<CM::Ann>{set.elements});
+    result.code.E = HsG::Apply(Hs::Var("Set.fromList"), {result.code.E});
     return result;
 }
 
@@ -1423,6 +1455,7 @@ translation_result_t CodeGenState::get_model_as(const CM::TypedExpr& model_rep) 
         [&](const CM::GetState& get_state) { return get_typed_model_state(get_state); },
         [&](const CM::Call<CM::Ann>& call) { return get_typed_model_call(call); },
         [&](const CM::List<CM::Ann>& list) { return get_typed_model_list(list); },
+        [&](const CM::Set<CM::Ann>& set) { return get_typed_model_set(set); },
         [&](const CM::Dictionary<CM::Ann>& dictionary) { return get_typed_model_dictionary(dictionary); },
         [&](const CM::Tuple<CM::Ann>& tuple) { return get_typed_model_tuple(tuple); },
         [&](const CM::Let<CM::Ann>& let) { return get_typed_model_let(let); },

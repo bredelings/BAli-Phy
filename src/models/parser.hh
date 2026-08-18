@@ -484,6 +484,7 @@ namespace zz {
       char dummy12[sizeof (std::vector<CM::Type>)];
 
       // ditems
+      // sitems
       // tup_args
       char dummy13[sizeof (std::vector<CM::UntypedExpr>)];
 
@@ -644,16 +645,17 @@ namespace zz {
         S_fncall = 47,                           // fncall
         S_ditems = 48,                           // ditems
         S_ditem = 49,                            // ditem
-        S_args = 50,                             // args
-        S_arg = 51,                              // arg
-        S_tup_args = 52,                         // tup_args
-        S_qvarid = 53,                           // qvarid
-        S_varid = 54,                            // varid
-        S_literal = 55,                          // literal
-        S_type = 56,                             // type
-        S_btype = 57,                            // btype
-        S_atype = 58,                            // atype
-        S_type_tup_args = 59                     // type_tup_args
+        S_sitems = 50,                           // sitems
+        S_args = 51,                             // args
+        S_arg = 52,                              // arg
+        S_tup_args = 53,                         // tup_args
+        S_qvarid = 54,                           // qvarid
+        S_varid = 55,                            // varid
+        S_literal = 56,                          // literal
+        S_type = 57,                             // type
+        S_btype = 58,                            // btype
+        S_atype = 59,                            // atype
+        S_type_tup_args = 60                     // type_tup_args
       };
     };
 
@@ -753,6 +755,7 @@ namespace zz {
         break;
 
       case symbol_kind::S_ditems: // ditems
+      case symbol_kind::S_sitems: // sitems
       case symbol_kind::S_tup_args: // tup_args
         value.move< std::vector<CM::UntypedExpr> > (std::move (that.value));
         break;
@@ -1086,6 +1089,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_ditems: // ditems
+      case symbol_kind::S_sitems: // sitems
       case symbol_kind::S_tup_args: // tup_args
         value.template destroy< std::vector<CM::UntypedExpr> > ();
         break;
@@ -1884,7 +1888,7 @@ switch (yykind)
     // number is the opposite.  If YYTABLE_NINF, syntax error.
     static const unsigned char yytable_[];
 
-    static const signed char yycheck_[];
+    static const short yycheck_[];
 
     // YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
     // state STATE-NUM.
@@ -2126,8 +2130,8 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 209,     ///< Last index in yytable_.
-      yynnts_ = 26,  ///< Number of nonterminal symbols.
+      yylast_ = 213,     ///< Last index in yytable_.
+      yynnts_ = 27,  ///< Number of nonterminal symbols.
       yyfinal_ = 37 ///< Termination state number.
     };
 
@@ -2260,6 +2264,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_ditems: // ditems
+      case symbol_kind::S_sitems: // sitems
       case symbol_kind::S_tup_args: // tup_args
         value.copy< std::vector<CM::UntypedExpr> > (YY_MOVE (that.value));
         break;
@@ -2367,6 +2372,7 @@ switch (yykind)
         break;
 
       case symbol_kind::S_ditems: // ditems
+      case symbol_kind::S_sitems: // sitems
       case symbol_kind::S_tup_args: // tup_args
         value.move< std::vector<CM::UntypedExpr> > (YY_MOVE (s.value));
         break;
@@ -2447,7 +2453,7 @@ switch (yykind)
 
 #line 6 "parser.y"
 } // zz
-#line 2451 "parser.hh"
+#line 2457 "parser.hh"
 
 
 

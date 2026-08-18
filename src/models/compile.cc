@@ -488,6 +488,10 @@ bool annotated_term_is_model(const CM::TypedExpr& term)
         for(auto& element: list->elements)
             if (annotated_term_is_model(element)) return true;
 
+    if (auto set = term.to<CM::Set<CM::Ann>>())
+        for(auto& element: set->elements)
+            if (annotated_term_is_model(element)) return true;
+
     if (auto dictionary = term.to<CM::Dictionary<CM::Ann>>())
         for(auto& element: dictionary->elements)
             if (annotated_term_is_model(element)) return true;
@@ -523,6 +527,7 @@ string extract_node_name(const CM::TypedExpr& expr)
     return expr.visit(CM::overloaded{
         [](const CM::Call<CM::Ann>& call) {return call.function;},
         [](const CM::List<CM::Ann>&) {return string("List");},
+        [](const CM::Set<CM::Ann>&) {return string("Set");},
         [](const CM::Dictionary<CM::Ann>&) {return string("Dictionary");},
         [](const CM::Tuple<CM::Ann>&) {return string("Tuple");},
         [](const CM::Sample<CM::Ann>&) {return string("sample");},
@@ -562,6 +567,13 @@ bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
         [&](const CM::List<CM::Ann>& list)
         {
             for(auto& element: list.elements)
+                if (bound(element, binders)) return true;
+            return false;
+        },
+        // Checks whether any set element references a protected binder.
+        [&](const CM::Set<CM::Ann>& set)
+        {
+            for(auto& element: set.elements)
                 if (bound(element, binders)) return true;
             return false;
         },
@@ -702,6 +714,21 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
     {
         int i = 0;
         for(auto& element: list->elements)
+        {
+            auto name = "[" + std::to_string(++i) + "]";
+            for(auto& [sub_name, sub_term]: extract_terms(element, binders))
+            {
+                auto sup_name = name + "/" + sub_name;
+                if (sub_name.size() and sub_name[0] == '[')
+                    sup_name = name + sub_name;
+                extracted.emplace_back(sup_name, std::move(sub_term));
+            }
+        }
+    }
+    else if (auto set = m.to<CM::Set<CM::Ann>>())
+    {
+        int i = 0;
+        for(auto& element: set->elements)
         {
             auto name = "[" + std::to_string(++i) + "]";
             for(auto& [sub_name, sub_term]: extract_terms(element, binders))

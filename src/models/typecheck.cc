@@ -266,6 +266,12 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
             for(auto& element: list.elements)
                 substitute_annotated(eqs, element);
         },
+        // Recurse through set element annotations.
+        [&](CM::Set<CM::Ann>& set)
+        {
+            for(auto& element: set.elements)
+                substitute_annotated(eqs, element);
+        },
         // Recurse through dictionary entry annotations.
         [&](CM::Dictionary<CM::Ann>& dictionary)
         {
@@ -529,6 +535,38 @@ optional<CM::TypedExpr> typecheck_model_list(const TypecheckingState& TC, const 
     }
 
     return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_list)};
+}
+
+// Typechecks a nonempty set literal uniformly and records the ordering
+// constraint required by its runtime representation.
+optional<CM::TypedExpr> typecheck_model_set(const TypecheckingState& TC, const type_t& required_type,
+                                            const CM::UntypedExpr& expr)
+{
+    auto set_expr = expr.to<CM::Set<CM::NoAnn>>();
+    if (not set_expr)
+        return {};
+
+    auto element_required_type = TC.get_fresh_type_var("a");
+    auto result_type = CM::type_app("Set", element_required_type);
+    if (auto converted = TC.unify_or_convert_model_expr(expr, result_type, required_type))
+        return typecheck_model_expr(TC, required_type, *converted);
+
+    TC.eqs.add_constraint(CM::type_app("Ord", element_required_type));
+    substitute(TC.eqs, element_required_type);
+
+    set<string> used_args;
+    CM::Set<CM::Ann> typed_set;
+    for(auto& element: set_expr->elements)
+    {
+        auto element2 = typecheck_model_expr(TC, element_required_type, element);
+        add(used_args, element2.ann.used_args);
+        if (not TC.eqs)
+            throw myexception()<<"Set element '"<<unparse_annotated(element2)
+                               <<"' is not of required type "<<unparse_type(element_required_type)<<"!";
+        typed_set.elements.push_back(std::move(element2));
+    }
+
+    return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_set)};
 }
 
 // Typechecks dictionary entries as uniform key/value pairs and gives braces
@@ -861,6 +899,8 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const type_t& re
         return *var_call;
     else if (auto list = typecheck_model_list(TC, required_type, expr))
         return *list;
+    else if (auto set = typecheck_model_set(TC, required_type, expr))
+        return *set;
     else if (auto dictionary = typecheck_model_dictionary(TC, required_type, expr))
         return *dictionary;
     else if (auto tuple = typecheck_model_tuple(TC, required_type, expr))

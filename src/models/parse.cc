@@ -617,6 +617,14 @@ string unparse(const UntypedExpr& expr)
                 items.push_back(unparse(item));
             return "[" + join(items, ", ") + "]";
         },
+        // Renders nonempty set literals with their distinct brace syntax.
+        [](const Set<NoAnn>& x)
+        {
+            vector<string> items;
+            for(auto& item: x.elements)
+                items.push_back(unparse(item));
+            return "{" + join(items, ", ") + "}";
+        },
         // Renders dictionary entries using brace syntax rather than guessing
         // from the element type of an ordinary list.
         [](const Dictionary<NoAnn>& x)
@@ -811,6 +819,14 @@ string unparse_annotated(const TypedExpr& expr)
             for(auto& item: x.elements)
                 items.push_back(unparse_annotated(item));
             return "[" + join(items, ", ") + "]";
+        },
+        // Renders typed sets using the same syntax as their untyped form.
+        [](const Set<Ann>& x)
+        {
+            vector<string> items;
+            for(auto& item: x.elements)
+                items.push_back(unparse_annotated(item));
+            return "{" + join(items, ", ") + "}";
         },
         // Renders a typed dictionary with the same source syntax as its
         // untyped counterpart.

@@ -104,6 +104,7 @@ CM::UntypedExpr make_model_tuple(const std::vector<CM::UntypedExpr>& elements);
 %type <CM::Arg<CM::NoAnn>> arg
 %type <std::vector<CM::UntypedExpr>> ditems
 %type <CM::UntypedExpr> ditem
+%type <std::vector<CM::UntypedExpr>> sitems
 %type <std::pair<std::string,CM::UntypedExpr>> def
 %type <CM::Decls<CM::NoAnn>> defs
 %type <std::vector<CM::UntypedExpr>> tup_args
@@ -173,6 +174,7 @@ atom: qvarid                      { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Var{$1
 |     "(" tup_args "," exp ")"    { $2.push_back($4); $$ = make_model_tuple($2); }
 |     literal                     { $$ = $1; }
 |     "{" ditems "}"              { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Dictionary<CM::NoAnn>{$2}}; }
+|     "{" sitems "}"              { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Set<CM::NoAnn>{$2}}; }
 |     "{" "}"                     { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Dictionary<CM::NoAnn>{}}; }
 |     "|" patterns ":" exp "|"    { $$ = make_function($2, $4);}
 |     "(" exp ")"                 { $$ = CM::UntypedExpr{CM::NoAnn{}, CM::Infix<CM::NoAnn>{$2, {}}}; }
@@ -194,6 +196,9 @@ ditems: ditem                     { $$.push_back($1); }
 |       ditems "," ditem          { $$ = $1; $$.push_back($3); }
 
 ditem: exp ":" exp  { $$ = make_model_tuple({$1,$3}); }
+
+sitems: exp                    { $$.push_back($1); }
+|       sitems "," exp         { $$ = $1; $$.push_back($3); }
 
 args: arg                 { $$.push_back($1); }
 |     args "," arg        { $$ = $1; $$.push_back($3); }

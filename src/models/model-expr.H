@@ -40,6 +40,9 @@ template<class A>
 struct List;
 
 template<class A>
+struct Set;
+
+template<class A>
 struct Dictionary;
 
 template<class A>
@@ -181,6 +184,9 @@ template<class A>
 struct is_boxed_expr_node<List<A>>: std::true_type {};
 
 template<class A>
+struct is_boxed_expr_node<Set<A>>: std::true_type {};
+
+template<class A>
 struct is_boxed_expr_node<Dictionary<A>>: std::true_type {};
 
 template<class A>
@@ -226,6 +232,7 @@ struct Expr
         GetState,
         Box<Call<A>>,
         Box<List<A>>,
+        Box<Set<A>>,
         Box<Dictionary<A>>,
         Box<Tuple<A>>,
         Box<Let<A>>,
@@ -299,6 +306,14 @@ struct Call
 
 template<class A>
 struct List
+{
+    std::vector<Expr<A>> elements;
+};
+
+// Retains source-level set syntax until code generation constructs the
+// corresponding ordered Haskell Set.
+template<class A>
+struct Set
 {
     std::vector<Expr<A>> elements;
 };
@@ -698,6 +713,12 @@ void for_each_child(Expr<A>& expr, F&& f)
             for(auto& element: list.elements)
                 f(element);
         },
+        // Visits each mutable set element.
+        [&](Set<A>& set)
+        {
+            for(auto& element: set.elements)
+                f(element);
+        },
         // Visits each mutable dictionary entry.
         [&](Dictionary<A>& dictionary)
         {
@@ -767,6 +788,12 @@ void for_each_child(const Expr<A>& expr, F&& f)
         [&](const List<A>& list)
         {
             for(auto& element: list.elements)
+                f(element);
+        },
+        // Visits each const set element.
+        [&](const Set<A>& set)
+        {
+            for(auto& element: set.elements)
                 f(element);
         },
         // Visits each const dictionary entry.

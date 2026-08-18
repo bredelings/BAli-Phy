@@ -1,0 +1,14 @@
+{
+    "name": "Set.fromList",
+    "result_type": "Set<a>",
+    "constraints": ["Ord<a>"],
+    "no_log": true,
+    "call": "Set.fromList(@items)",
+    "args": [
+        {
+            "name": "items",
+            "type": "List<a>"
+        }
+    ],
+    "description": "Construct a set from a list, discarding repeated items. Use Set.fromList([]) for an empty set."
+}
