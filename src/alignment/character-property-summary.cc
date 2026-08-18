@@ -1,8 +1,9 @@
 #include "character-property-summary.H"
 
+#include "character-property-sample-file.H"
+
 #include <algorithm>
 #include <cmath>
-#include <fstream>
 #include <functional>
 #include <limits>
 #include <map>
@@ -86,22 +87,19 @@ json::object decode_sample(const std::string& line, const std::string& context)
     return std::move(sample.as_object());
 }
 
-/// Stream selected samples from one chain using strict skip, inclusive until, and post-filter stride.
-std::uint64_t visit_chain(const std::filesystem::path& filename,
+/// Stream selected samples from one opened chain using strict skip, inclusive until, and post-filter stride.
+std::uint64_t visit_chain(sample_file_reader& input,
+                          const std::filesystem::path& filename,
                           const sample_selection& selection,
                           std::size_t chain,
                           const sample_visitor& visitor)
 {
-    std::ifstream input(filename);
-    if (not input)
-        throw myexception()<<"Could not open property sample file '"<<filename.string()<<"'.";
-
     std::optional<std::uint64_t> previous_iteration;
     std::uint64_t eligible_samples = 0;
     std::uint64_t retained_samples = 0;
     std::string line;
     std::uint64_t line_number = 0;
-    while (std::getline(input, line))
+    while (input.read_line(line))
     {
         line_number++;
         std::string context = filename.string()+":"+std::to_string(line_number);
@@ -124,20 +122,46 @@ std::uint64_t visit_chain(const std::filesystem::path& filename,
         visitor(sample, context, chain);
         retained_samples++;
     }
-    if (input.bad())
-        throw myexception()<<"Error while reading property sample file '"<<filename.string()<<"'.";
     if (retained_samples == 0)
         throw myexception()<<filename.string()<<": no samples remain after selection.";
     return retained_samples;
 }
 
-/// Replay all selected chains and return their retained sample counts.
-std::vector<std::uint64_t> visit_samples(const summarize_options& options, const sample_visitor& visitor)
+struct captured_samples
+{
+    std::vector<sample_file_snapshot> snapshots;
+    std::vector<std::uint64_t> retained_by_chain;
+};
+
+/// Visit the initially visible records while freezing one verified byte prefix per chain.
+captured_samples capture_samples(const summarize_options& options, const sample_visitor& visitor)
+{
+    captured_samples result;
+    result.snapshots.reserve(options.filenames.size());
+    result.retained_by_chain.reserve(options.filenames.size());
+    for (std::size_t chain = 0; chain < options.filenames.size(); chain++)
+    {
+        sample_file_reader input(options.filenames[chain]);
+        result.retained_by_chain.push_back(
+            visit_chain(input, options.filenames[chain], options.selection, chain, visitor));
+        result.snapshots.push_back(input.finish_capture());
+    }
+    return result;
+}
+
+/// Replay the captured prefixes and reject any change to their original bytes.
+std::vector<std::uint64_t> replay_samples(const std::vector<sample_file_snapshot>& snapshots,
+                                          const sample_selection& selection,
+                                          const sample_visitor& visitor)
 {
     std::vector<std::uint64_t> retained;
-    retained.reserve(options.filenames.size());
-    for (std::size_t chain = 0; chain < options.filenames.size(); chain++)
-        retained.push_back(visit_chain(options.filenames[chain], options.selection, chain, visitor));
+    retained.reserve(snapshots.size());
+    for (std::size_t chain = 0; chain < snapshots.size(); chain++)
+    {
+        sample_file_reader input(snapshots[chain]);
+        retained.push_back(visit_chain(input, snapshots[chain].filename, selection, chain, visitor));
+        input.finish_replay();
+    }
     return retained;
 }
 
@@ -552,14 +576,16 @@ double replay_value(const json::object& sample, const median_entry& entry)
 /// Replay samples from the requested posterior view through the active median cells
 /// and require the same matching count in every chain as in the moments pass.
 void replay_medians(const summarize_options& options,
+                    const std::vector<sample_file_snapshot>& snapshots,
                     const std::vector<std::uint64_t>& expected_counts,
                     std::vector<median_entry*>& entries,
                     bool sampling,
                     const std::optional<std::string>& condition)
 {
     std::vector<std::uint64_t> observed_counts(expected_counts.size());
-    visit_samples(
-        options,
+    replay_samples(
+        snapshots,
+        options.selection,
         [&](const json::object& sample, const std::string& context, std::size_t chain)
         {
             if (condition)
@@ -590,6 +616,7 @@ void replay_medians(const summarize_options& options,
 
 /// Compute exact lower medians using random pivots and bounded blocks of property cells.
 void calculate_medians(const summarize_options& options,
+                       const std::vector<sample_file_snapshot>& snapshots,
                        const moment_accumulator& moments,
                        const std::vector<std::uint64_t>& retained_samples_by_chain,
                        std::map<std::string, property_summary>& properties,
@@ -633,7 +660,7 @@ void calculate_medians(const summarize_options& options,
                 entry.cell.start_sampling(generator);
                 unresolved.push_back(&entry);
             }
-            replay_medians(options, retained_samples_by_chain, unresolved, true, condition);
+            replay_medians(options, snapshots, retained_samples_by_chain, unresolved, true, condition);
             for (auto* entry: unresolved)
                 entry->cell.finish_sampling();
 
@@ -647,7 +674,7 @@ void calculate_medians(const summarize_options& options,
             }
             if (unresolved.empty())
                 break;
-            replay_medians(options, retained_samples_by_chain, unresolved, false, condition);
+            replay_medians(options, snapshots, retained_samples_by_chain, unresolved, false, condition);
             for (auto* entry: unresolved)
                 entry->cell.finish_counting();
         }
@@ -682,7 +709,7 @@ summary summarize(const summarize_options& options)
         throw myexception()<<"--until must be greater than --skip.";
 
     summary_accumulator moments(options.filenames.size());
-    auto retained_samples_by_chain = visit_samples(
+    auto samples = capture_samples(
         options,
         [&](const json::object& sample, const std::string& context, std::size_t chain)
         {
@@ -692,9 +719,10 @@ summary summarize(const summarize_options& options)
     summary result;
     result.selection = options.selection;
     result.retained_samples = moments.unconditional().retained_samples();
-    result.retained_samples_by_chain = retained_samples_by_chain;
+    result.retained_samples_by_chain = samples.retained_by_chain;
     result.properties = moments.unconditional().result();
-    calculate_medians(options, moments.unconditional(), retained_samples_by_chain, result.properties);
+    calculate_medians(
+        options, samples.snapshots, moments.unconditional(), samples.retained_by_chain, result.properties);
     // Each condition view contains all properties but only samples where that named Boolean is True.
     for (const auto& name: moments.condition_names())
     {
@@ -705,7 +733,8 @@ summary summarize(const summarize_options& options)
         if (view.retained_samples == 0)
             continue;
         view.properties = conditioned_moments.result();
-        calculate_medians(options, conditioned_moments, view.retained_samples_by_chain, view.properties, name);
+        calculate_medians(
+            options, samples.snapshots, conditioned_moments, view.retained_samples_by_chain, view.properties, name);
     }
     return result;
 }

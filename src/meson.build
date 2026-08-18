@@ -35,6 +35,7 @@ libcommon_sources = [
   'alignment/alignment-random.cc',
   'alignment/character-property-alignment.cc',
   'alignment/character-property-report.cc',
+  'alignment/character-property-sample-file.cc',
   'alignment/character-properties.cc',
   'alignment/character-property-summary.cc',
   'alignment/index-matrix.cc',
@@ -62,7 +63,7 @@ libcommon_sources = [
 libcommon = static_library('common',
                            libcommon_sources,
                            include_directories: [libutil_inc, libmcon_inc],
-                           dependencies: [boost, eigen, librange],
+                           dependencies: [boost, libxxhash, eigen, librange],
                            link_with: libmcon)
 
 subdir('computation')
@@ -228,6 +229,7 @@ extra_sources = {
 
 extra_deps = {
   'draw-tree': [cairo],
+  'character-properties': [libxxhash],
   'alignment-info': [eigen],
   'alignment-find-conserved': [eigen],
   'alignment-smc': [eigen],

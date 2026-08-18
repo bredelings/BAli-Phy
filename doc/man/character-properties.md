@@ -29,8 +29,11 @@ pooled by draw; chains are not weighted equally after taking separate means.
 For an even number of observations, the empirical median is the lower of the
 two central observed values. This definition is preserved by monotone
 transformations: the median log-rate is the logarithm of the median rate.
-Exact medians are computed by rereading the input streams in memory-bounded
-character blocks.
+Exact medians are computed in memory-bounded character blocks by replaying the
+file prefixes observed during the initial moments pass. Records appended after
+that pass are ignored, so summarization can run while MCMC sampling continues.
+The command stops with an error if an observed prefix is subsequently modified,
+replaced with different contents, or truncated.
 
 The **report** command projects one summarized property onto a template
 alignment. Each stored value continues to identify an observed character by
@@ -87,6 +90,8 @@ sites.
 # VALIDATION
 
 Iterations must be nonnegative and strictly increasing within each chain.
+Only newline-terminated JSON Lines records are committed to the initial file
+snapshot; an unterminated record being written at the end of a file is ignored.
 Retained samples must have identical property names, sequence names, and
 ungapped character counts. Every observed character must have a category/state
 pair in every retained sample. Category/state indices, property-table bounds,
