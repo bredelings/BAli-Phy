@@ -4,8 +4,8 @@ import sys
 
 
 report = json.loads((Path(sys.argv[1]) / "output").read_text(encoding="utf-8"))
-assert report["sort"] == "mean-ascending"
-assert report["minimum_probability"] == 0.95
+assert report["sort"] == "increasing"
+assert report["selection"] == {"kind": "above", "threshold": 0.95}
 assert [
     (
         row["column_index"],
@@ -16,6 +16,5 @@ assert [
     )
     for row in report["rows"]
 ] == [
-    (1, "C", 0.95, "dNdS", 2.5),
     (3, "A", 0.97, "dNdS", 3),
 ]

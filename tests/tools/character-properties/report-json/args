@@ -1,1 +1,1 @@
-report ../report-summary.json ../report-alignment.fasta --alphabet DNA --property rate --kind property --format json
+report ../report-summary.json ../report-alignment.fasta rate --format json

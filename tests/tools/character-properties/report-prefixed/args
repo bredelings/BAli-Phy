@@ -1,2 +1,2 @@
-report ../report-summary.json ../report-alignment.fasta --alphabet DNA --property foreground-posSelection
---kind positive-selection --minimum-probability 0.95 --format json
+positive-selection ../report-summary.json ../report-alignment.fasta foreground-posSelection
+--unconditional --above 0.95 --format json

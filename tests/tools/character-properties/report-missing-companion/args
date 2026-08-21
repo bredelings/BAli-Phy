@@ -1,2 +1,2 @@
-report ../report-summary.json ../report-alignment.fasta --alphabet DNA --property background-posSelection
---kind positive-selection --format json
+positive-selection ../report-summary.json ../report-alignment.fasta background-posSelection
+--unconditional --format json

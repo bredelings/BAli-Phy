@@ -6,7 +6,7 @@ from check_support import cell_coordinates, parse_viewer_html, require, require_
 
 
 html = (Path(sys.argv[1]) / "output").read_text(encoding="utf-8")
-parser, _ = parse_viewer_html(html)
+parser, viewer = parse_viewer_html(html)
 
 require_equal(
     cell_coordinates(parser.cells),
@@ -36,10 +36,7 @@ require(
     "appendTooltipRow(list, 'Palette'" not in html,
     "tooltips must not present palette as a character property",
 )
-require(
-    "hasTranslations ? 'Codon' : 'Character'" in html,
-    "translated reports must separate codons from representative identities",
-)
-require("labels.push('Amino acid')" in html, "translated reports must have a separate amino-acid column")
+columns = viewer["character_property_reports"]["dNdS"]["generic"]["table"]["columns"]
+require_equal(columns[0]["label"], "Column")
 require("line-height: 1" in html, "alignment cells and their colored spans must use the same line height")
 require(len({part["style"] for part in parser.cells[0]["parts"]}) == 2, "ATA must retain distinct A and T colors")

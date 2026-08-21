@@ -264,6 +264,21 @@ td.alignment-cell:focus-visible {
     white-space: nowrap;
 }
 
+.alignment-viewer-report-sort {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.alignment-viewer-report-sort:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.48);
+    outline-offset: 2px;
+}
+
 .alignment-viewer-report-column {
     padding: 0;
     border: 0;

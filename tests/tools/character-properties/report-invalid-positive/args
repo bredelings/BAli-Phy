@@ -1,1 +1,1 @@
-report ../report-summary.json ../report-alignment.fasta --alphabet DNA --property rate --kind positive-selection
+positive-selection ../report-summary.json ../report-alignment.fasta rate --unconditional

@@ -21,7 +21,6 @@ const {
 const {
     parseViewerPayload,
     reportsFromPayload,
-    conditionedReportsFromPayload,
     collectCells,
     sequenceNamesForViewer,
     collectProperties,
@@ -76,7 +75,7 @@ class AlignmentPropertyViewer {
         this.document = documentObject;
         this.payload = parsed.payload;
         this.characterProperties = parsed.characterProperties;
-        this.conditionedReports = conditionedReportsFromPayload(this.payload);
+        this.conditionedReports = reportsFromPayload(this.payload, 'conditioned_character_property_reports');
         this.cells = collectCells(documentObject);
         this.sequenceNames = sequenceNamesForViewer(
             this.payload, this.characterProperties, this.cells);
@@ -112,6 +111,7 @@ class AlignmentPropertyViewer {
         this.currentProperty = null;
         this.currentScale = null;
         this.currentRange = null;
+        this.reportSort = {column: 0, direction: 1};
         this.hoveredCell = null;
         this.pinnedCell = null;
     }
@@ -124,7 +124,7 @@ class AlignmentPropertyViewer {
         this.buildToolbar();
         this.installEvents();
         this.propertySelect.value = 'property:0';
-        this.render();
+        this.handlePropertyChange();
         return true;
     }
 
@@ -263,26 +263,10 @@ class AlignmentPropertyViewer {
     {
         const doc = this.document;
         this.reportPanel = makeElement(doc, 'section', 'alignment-viewer-report');
-        this.reportPanel.setAttribute('aria-label', 'Ranked character property columns');
+        this.reportPanel.setAttribute('aria-label', 'Character property columns');
         const header = makeElement(doc, 'div', 'alignment-viewer-report-header');
-        this.reportTitle = makeElement(doc, 'h2', 'alignment-viewer-report-title', 'Ranked columns');
+        this.reportTitle = makeElement(doc, 'h2', 'alignment-viewer-report-title', 'Property columns');
         header.append(this.reportTitle);
-
-        this.reportSortSelect = makeElement(doc, 'select', 'alignment-viewer-select');
-        addOption(doc, this.reportSortSelect, 'column', 'Column');
-        addOption(doc, this.reportSortSelect, 'mean-descending', 'Mean, high to low');
-        addOption(doc, this.reportSortSelect, 'mean-ascending', 'Mean, low to high');
-        this.reportSortSelect.value = 'mean-descending';
-        this.reportSortControl = labelledControl(doc, 'Order', this.reportSortSelect);
-        header.append(this.reportSortControl);
-
-        this.probabilityThresholdSelect = makeElement(doc, 'select', 'alignment-viewer-select');
-        addOption(doc, this.probabilityThresholdSelect, '0.5', '≥ 0.5');
-        addOption(doc, this.probabilityThresholdSelect, '0.95', '≥ 0.95');
-        addOption(doc, this.probabilityThresholdSelect, '0.99', '≥ 0.99');
-        this.probabilityThresholdControl = labelledControl(
-            doc, 'Minimum probability', this.probabilityThresholdSelect);
-        header.append(this.probabilityThresholdControl);
         this.reportPanel.append(header);
 
         this.reportTableScroller = makeElement(doc, 'div', 'alignment-viewer-report-scroll');
@@ -306,9 +290,8 @@ class AlignmentPropertyViewer {
         this.upperInput.addEventListener('change', this.handleBoundsChange.bind(this));
         this.auCheckbox.addEventListener('change', this.handleAUChange.bind(this));
         this.resetButton.addEventListener('click', this.handleReset.bind(this));
-        this.reportSortSelect.addEventListener('change', this.handleReportControlChange.bind(this));
-        this.probabilityThresholdSelect.addEventListener('change', this.handleReportControlChange.bind(this));
         this.reportTable.addEventListener('click', this.handleReportClick.bind(this));
+        this.reportHead.addEventListener('click', this.handleReportSort.bind(this));
         this.document.addEventListener('pointerover', this.handlePointerOver.bind(this));
         this.document.addEventListener('pointermove', this.handlePointerMove.bind(this));
         this.document.addEventListener('pointerout', this.handlePointerOut.bind(this));
@@ -549,99 +532,103 @@ class AlignmentPropertyViewer {
         this.legend.hidden = false;
     }
 
-    // Selects the C++-generated report for the active property and requested display policy.
-    reportFor(property)
+    // Sorts table rows and updates direction indicators.
+    sortReportRows()
     {
-        const reports = this.reports[property.name];
-        if (!reports)
-            return null;
-        if (reports.positive_selection)
-            return reports.positive_selection;
-        const generic = Array.isArray(reports.generic) ? reports.generic : [];
-        return generic.find((report) => report.sort === this.reportSortSelect.value) || null;
+        const buttons = Array.from(this.reportHead.querySelectorAll('button[data-sort-column]'));
+        const active = buttons[this.reportSort.column];
+        if (!active)
+            return;
+        const type = active.dataset.sortType;
+        const rows = Array.from(this.reportBody.querySelectorAll('tr[data-report-row]'));
+        // Compare raw values, using alignment columns to break ties.
+        rows.sort((first, second) => {
+            const firstValue = first.cells[this.reportSort.column].dataset.sortValue;
+            const secondValue = second.cells[this.reportSort.column].dataset.sortValue;
+            let difference = type === 'number' ? Number(firstValue) - Number(secondValue) :
+                firstValue.localeCompare(secondValue);
+            if (!Number.isFinite(difference) || difference === 0)
+                difference = Number(first.cells[0].dataset.sortValue) - Number(second.cells[0].dataset.sortValue);
+            return this.reportSort.direction * difference;
+        });
+        this.reportBody.append(...rows);
+        buttons.forEach((button, index) => {
+            const selected = index === this.reportSort.column;
+            button.parentElement.setAttribute('aria-sort', selected ?
+                (this.reportSort.direction > 0 ? 'ascending' : 'descending') : 'none');
+            button.textContent = button.dataset.label + (selected ?
+                (this.reportSort.direction > 0 ? ' ▲' : ' ▼') : '');
+        });
     }
 
-    // Rebuilds the ranked table without recomputing representatives or property companions.
+    // Rebuilds the canonical generic or positive-selection column table.
     renderReport(property)
     {
         const propertyReports = this.reports[property.name] || {};
         const positiveSelection = Boolean(propertyReports.positive_selection);
-        this.reportSortControl.hidden = positiveSelection;
-        this.probabilityThresholdControl.hidden = !positiveSelection;
-
-        const report = this.reportFor(property);
+        const report = propertyReports.positive_selection || propertyReports.generic;
         if (!report) {
             this.reportPanel.hidden = true;
             return;
         }
         this.reportPanel.hidden = false;
         this.reportTitle.textContent = positiveSelection ?
-            `${property.name}: positive-selection columns` : `${property.name}: ranked columns`;
+            `${property.name}: positive-selection columns with Pr(ω>1) > 0.5` :
+            `${property.name}: alignment-column summaries`;
         if (this.activeView.condition)
             this.reportTitle.textContent += ` · ${this.activeView.condition} = true`;
-
-        const threshold = Number.parseFloat(this.probabilityThresholdSelect.value);
-        this.currentReportRows = positiveSelection ?
-            report.rows.filter((row) => row.statistics.mean >= threshold) : report.rows;
         for (const cell of this.cells)
             cell.element.classList.remove('alignment-report-column');
 
-        const hasTranslations = report.rows.some((row) => Boolean(row.translation));
-        const labels = ['Rank', 'Column', 'Representative', hasTranslations ? 'Codon' : 'Character'];
-        if (hasTranslations)
-            labels.push('Amino acid');
-        if (positiveSelection)
-            labels.push('Probability mean ± SD', 'Probability median', 'dN/dS mean ± SD', 'dN/dS median');
-        else
-            labels.push('Mean ± SD', 'Median');
+        const columns = report.table?.columns || [];
+        const rows = report.table?.rows || [];
         const header = this.document.createElement('tr');
-        for (const label of labels)
-            header.append(makeElement(this.document, 'th', '', label));
+        columns.forEach((column, index) => {
+            const cell = this.document.createElement('th');
+            const button = makeElement(this.document, 'button', 'alignment-viewer-report-sort', column.label);
+            button.type = 'button';
+            button.dataset.sortColumn = String(index);
+            button.dataset.sortType = column.type;
+            button.dataset.defaultDirection = String(column.direction);
+            button.dataset.label = column.label;
+            cell.append(button);
+            header.append(cell);
+        });
         this.reportHead.replaceChildren(header);
         this.reportBody.replaceChildren();
 
-        for (let index = 0; index < this.currentReportRows.length; index++)
-        {
-            const row = this.currentReportRows[index];
+        for (const row of rows) {
             const tableRow = this.document.createElement('tr');
-            tableRow.append(makeElement(this.document, 'td', '', String(index + 1)));
-
-            const columnCell = this.document.createElement('td');
-            const columnButton = makeElement(
-                this.document, 'button', 'alignment-viewer-report-column', String(row.column_index + 1));
-            columnButton.type = 'button';
-            columnButton.dataset.reportIndex = String(index);
-            columnCell.append(columnButton);
-            tableRow.append(columnCell);
-
-            tableRow.append(makeElement(this.document, 'td', '', `${row.sequence}:${row.character_index + 1}`));
-            tableRow.append(makeElement(this.document, 'td', '', row.symbol));
-            if (hasTranslations)
-                tableRow.append(makeElement(this.document, 'td', '', row.translation || '—'));
-            tableRow.append(makeElement(
-                this.document, 'td', '',
-                `${formatValue(row.statistics.mean)} ± ${formatValue(row.statistics.sd)}`));
-            tableRow.append(makeElement(this.document, 'td', '', formatValue(row.statistics.median)));
-
-            if (positiveSelection) {
-                const companion = row.companion?.statistics;
-                tableRow.append(makeElement(
-                    this.document, 'td', '',
-                    companion ? `${formatValue(companion.mean)} ± ${formatValue(companion.sd)}` : '—'));
-                tableRow.append(makeElement(
-                    this.document, 'td', '', companion ? formatValue(companion.median) : '—'));
-            }
+            tableRow.dataset.reportRow = 'true';
+            columns.forEach((column, index) => {
+                const value = row.cells[index];
+                const cell = this.document.createElement('td');
+                cell.dataset.sortValue = value ?? '';
+                if (index === 0) {
+                    const columnButton = makeElement(
+                        this.document, 'button', 'alignment-viewer-report-column', String(value));
+                    columnButton.type = 'button';
+                    columnButton.dataset.reportColumn = String(row.column_index);
+                    if (Number.isInteger(row.sequence_index))
+                        columnButton.dataset.reportSequence = String(row.sequence_index);
+                    cell.append(columnButton);
+                }
+                else
+                    cell.textContent = column.type === 'number' ? formatValue(value) : (value || '—');
+                tableRow.append(cell);
+            });
             this.reportBody.append(tableRow);
         }
 
-        if (this.currentReportRows.length === 0) {
+        if (rows.length === 0) {
             const emptyRow = this.document.createElement('tr');
             const emptyCell = makeElement(
-                this.document, 'td', 'alignment-viewer-report-empty', 'No columns meet this threshold.');
-            emptyCell.colSpan = labels.length;
+                this.document, 'td', 'alignment-viewer-report-empty', 'No columns meet this report selection.');
+            emptyCell.colSpan = columns.length;
             emptyRow.append(emptyCell);
             this.reportBody.append(emptyRow);
         }
+        this.sortReportRows();
     }
 
     // Displays a non-blocking configuration error without discarding prior colors.
@@ -747,6 +734,15 @@ class AlignmentPropertyViewer {
     handlePropertyChange()
     {
         this.hideTooltip(true);
+        this.reportSort = {column: 0, direction: 1};
+        const property = this.selectedProperty();
+        const positiveSelection = Boolean(this.reports[property?.name]?.positive_selection);
+        const conditioned = positiveSelection ? this.posteriorViews.find((view) =>
+            view.condition === 'positiveSelectionInModel' && view.available) : null;
+        if (conditioned && conditioned !== this.activeView) {
+            this.activateView(conditioned);
+            this.viewSelect.value = conditioned.key;
+        }
         this.render();
     }
 
@@ -757,6 +753,7 @@ class AlignmentPropertyViewer {
         if (!view || !view.available)
             return;
         this.hideTooltip(true);
+        this.reportSort = {column: 0, direction: 1};
         this.activateView(view);
         this.render();
     }
@@ -769,20 +766,27 @@ class AlignmentPropertyViewer {
             this.showTooltip(this.pinnedCell);
     }
 
-    // Applies report ordering or threshold controls to the already generated row sets.
-    handleReportControlChange()
+    // Toggles a clicked report header or starts with that column's natural direction.
+    handleReportSort(event)
     {
-        const property = this.selectedProperty();
-        if (property)
-            this.renderReport(property);
+        const button = event.target.closest('button[data-sort-column]');
+        if (!button || !this.reportHead.contains(button))
+            return;
+        const column = Number.parseInt(button.dataset.sortColumn, 10);
+        if (column === this.reportSort.column)
+            this.reportSort.direction *= -1;
+        else
+            this.reportSort = {column, direction: Number.parseInt(button.dataset.defaultDirection, 10)};
+        this.sortReportRows();
     }
 
-    // Focuses a report row's representative and marks its complete template column.
-    selectReportRow(row)
+    // Focuses a representative or the first non-gap cell and marks its complete template column.
+    selectReportColumn(column, sequenceIndex = null)
     {
         for (const cell of this.cells)
-            cell.element.classList.toggle('alignment-report-column', cell.column === row.column_index);
-        const cell = this.cellByCoordinate.get(`${row.sequence_index}:${row.column_index}`);
+            cell.element.classList.toggle('alignment-report-column', cell.column === column);
+        const cell = Number.isInteger(sequenceIndex) ? this.cellByCoordinate.get(`${sequenceIndex}:${column}`) :
+            this.cells.find((candidate) => candidate.column === column && candidate.character >= 0);
         if (!cell)
             return;
 
@@ -796,16 +800,16 @@ class AlignmentPropertyViewer {
         this.showTooltip(cell);
     }
 
-    // Delegates report-button activation through the current visible row list.
+    // Delegates report-button activation using stable alignment coordinates.
     handleReportClick(event)
     {
-        const button = event.target.closest('button[data-report-index]');
+        const button = event.target.closest('button[data-report-column]');
         if (!button || !this.reportTable.contains(button))
             return;
-        const index = Number.parseInt(button.dataset.reportIndex, 10);
-        const row = this.currentReportRows?.[index];
-        if (row)
-            this.selectReportRow(row);
+        const column = Number.parseInt(button.dataset.reportColumn, 10);
+        const sequence = button.dataset.reportSequence === undefined ? null :
+            Number.parseInt(button.dataset.reportSequence, 10);
+        this.selectReportColumn(column, sequence);
     }
 
     // Changes the numerical transform for the active property.

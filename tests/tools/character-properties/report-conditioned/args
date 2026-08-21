@@ -1,1 +1,1 @@
-report ../report-conditioned-summary.json ../report-alignment.fasta --alphabet DNA --property posSelection --kind positive-selection --format json --condition positiveSelectionInModel
+positive-selection ../report-conditioned-summary.json ../report-alignment.fasta --format json

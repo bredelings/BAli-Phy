@@ -5,24 +5,17 @@
 // Extracts the scientific property result from the versioned viewer envelope.
 function characterPropertiesFromPayload(payload)
 {
-    if (!payload || payload.format !== 'bali-phy-alignment-viewer' || payload.version !== 1)
+    if (!payload || payload.format !== 'bali-phy-alignment-viewer' || payload.version !== 2)
         throw new Error('Viewer data has an unsupported format or version.');
     if (!payload.character_properties)
         throw new Error('Viewer data does not contain character properties.');
     return payload.character_properties;
 }
 
-// Extracts C++-generated column reports without reconstructing representatives in JavaScript.
-function reportsFromPayload(payload)
+// Reads one object-valued C++ report field.
+function reportsFromPayload(payload, field = 'character_property_reports')
 {
-    const reports = payload.character_property_reports;
-    return reports && typeof reports === 'object' && !Array.isArray(reports) ? reports : {};
-}
-
-// Extracts condition-name keyed C++ reports for True-conditioned posterior views.
-function conditionedReportsFromPayload(payload)
-{
-    const reports = payload.conditioned_character_property_reports;
+    const reports = payload[field];
     return reports && typeof reports === 'object' && !Array.isArray(reports) ? reports : {};
 }
 
@@ -136,7 +129,6 @@ function validatedAlignmentUncertainty(payload, sequenceCount, cells)
 const api = {
     parseViewerPayload,
     reportsFromPayload,
-    conditionedReportsFromPayload,
     collectCells,
     sequenceNamesForViewer,
     collectProperties,

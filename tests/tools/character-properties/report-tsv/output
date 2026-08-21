@@ -1,5 +1,5 @@
-rank	column	sequence	sequence-character	symbol	translation	mean	sd	median	companion-property	companion-mean	companion-sd	companion-median
-1	1	A	1	A		1	0.1	0.9				
-2	2	C	1	T		6	0.6	5.5				
-3	4	A	2	C		8	0.8	7.5				
-4	5	A	3	G		2	0.2	1.8				
+column	letters	mean-min	mean-middle	mean-max	median-min	median-middle	median-max
+1	2	1	1	1	0.9	0.9	0.9
+2	2	5	5	6	4.5	4.5	5.5
+4	2	7	7	8	6.5	6.5	7.5
+5	3	2	2	2	1.8	1.9	2
