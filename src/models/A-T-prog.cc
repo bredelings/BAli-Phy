@@ -386,9 +386,7 @@ Hs::Stmts generate_main(const InferOptions& options,
 		       const vector<pair<fs::path,string>>& filename_ranges,
 		       const vector<Hs::Exp>& alphabet_exps,
 		       const vector<int>& partition_group,
-		       const vector<int>& partition_group_size,
-		       const Hs::Var& unaligned_sequence_data,
-		       const Hs::Var& aligned_sequence_data,
+		       const vector<Hs::Var>& partition_sequence_data_vars,
 		       const Hs::Var& tree,
 		       const Hs::Var& topology,
 		       const Hs::Var& tsvLogger,
@@ -461,8 +459,6 @@ Hs::Stmts generate_main(const InferOptions& options,
         return HsG::Apply(Hs::Var("</>"), {output_directory, Hs::Literal(Hs::String(filename))});
     };
 
-    auto unaligned_partitions = unaligned_sequence_data;
-    auto aligned_partitions = aligned_sequence_data;
     if (n_partitions == 1)
     {
         auto [filename, range] = filename_ranges[0];
@@ -480,7 +476,7 @@ Hs::Stmts generate_main(const InferOptions& options,
 	else
 	    E = HsG::Apply(Hs::Var("<$>"), {HsG::Apply(Hs::Var("mkAlignedCharacterData"), {alphabet_exps[0]}), E});
 
-        HsG::Bind(main, HsG::VarPat(Hs::Var("sequenceData")), E);
+        HsG::Bind(main, HsG::VarPat(partition_sequence_data_vars[0]), E);
     }
     else
     {
@@ -507,41 +503,21 @@ Hs::Stmts generate_main(const InferOptions& options,
                 HsG::Bind(main, HsG::VarPat(filename_to_seqs), HsG::Apply(Hs::Var("mapM"), {Hs::Var("loadSequences"), filenames_var}));
             }
 
-            // Main.3. Emit let sequence_data<n> = 
-            vector<Hs::Exp> unaligned_sequence_partitions;
-            vector<Hs::Exp> aligned_sequence_partitions;
+            // Main.3. Emit let sequenceData<n> = ...
             for(int i=0;i<n_partitions;i++)
             {
-		int group = partition_group[i];
-                string part = std::to_string(i+1);
-
-                Hs::Var partition_sequence_data_var("sequenceData"+part);
-		if (partition_group_size[group] == 1)
-		    partition_sequence_data_var = (group==0) ? unaligned_sequence_data : aligned_sequence_data;
+                const auto& partition_sequence_data_var = partition_sequence_data_vars[i];
 
                 int index = index_for_filename.at( filename_ranges[i].first );
                 Hs::Exp loaded_sequences = HsG::Apply(Hs::Var("!!"), {filename_to_seqs, Hs::Literal(Hs::Integer{integer(index)})});
                 if (not filename_ranges[i].second.empty())
                     loaded_sequences = HsG::Apply(Hs::Var("selectRange"), {Hs::Literal(Hs::String(filename_ranges[i].second)), loaded_sequences});
 		if (partition_group[i] == 0)
-		{
 		    loaded_sequences = HsG::Apply(Hs::Var("mkUnalignedCharacterData"), {alphabet_exps[i], loaded_sequences});
-		    unaligned_sequence_partitions.push_back(partition_sequence_data_var);
-		}
 		else
-		{
 		    loaded_sequences = HsG::Apply(Hs::Var("mkAlignedCharacterData"), {alphabet_exps[i], loaded_sequences});
-		    aligned_sequence_partitions.push_back(partition_sequence_data_var);
-		}
                 HsG::Let(main, partition_sequence_data_var, loaded_sequences);
             }
-
-            // Main.4. Emit let sequence_data = ...
-	    if (unaligned_sequence_partitions.size() > 1)
-		HsG::Let(main, unaligned_partitions, HsG::List(unaligned_sequence_partitions));
-
-	    if (aligned_sequence_partitions.size() > 1)
-		HsG::Let(main, aligned_partitions, HsG::List(aligned_sequence_partitions));
         }
     }
 
@@ -926,46 +902,22 @@ std::string generate_atmodel_program(const InferOptions& options,
     LoggerExpressions model_loggers;
 
     // M1. Taxa
-    // Partitions are classified into n groups.
-    // Currently n = 2, and groups are {unaligned, aligned}.
-    vector<int> partition_index(n_partitions);
+    // Sequence data remains classified as unaligned or aligned so main can use the correct constructor.
     vector<int> partition_group(n_partitions);
-    vector<int> partition_group_size(2);
+    vector<Hs::Var> partition_sequence_data_vars;
 
     for(int i=0;i<n_partitions;i++)
     {
-	int g = (i_mapping[i] and not fixed.contains("alignment"))?0:1;
-	partition_group[i] = g;
-	partition_index[i] = partition_group_size[g]++;
+	partition_group[i] = (i_mapping[i] and not fixed.contains("alignment")) ? 0 : 1;
+        string var_name = (n_partitions == 1) ? "sequenceData" : "sequenceData" + std::to_string(i+1);
+        partition_sequence_data_vars.emplace_back(var_name);
     }
-
-    Hs::Var unaligned_sequence_data("sequenceData");
-    Hs::Var aligned_sequence_data("sequenceData");
-
-    if (partition_group_size[0] > 0 and partition_group_size[1] > 0)
-    {
-	unaligned_sequence_data = Hs::Var("unalignedSequenceData");
-	aligned_sequence_data = Hs::Var("alignedSequenceData");
-    }
-
-    auto getSequenceData = [&](int p) -> Hs::Exp
-    {
-	assert(n_partitions > 0);
-
-	int group = partition_group[p];
-
-	auto sequenceData = (group == 0) ? unaligned_sequence_data : aligned_sequence_data;
-
-	// Only subscript if the group contains more than one element.
-	if (partition_group_size[group] == 1)
-	    return sequenceData;
-	else
-	    return HsG::Apply(Hs::Var("!!"), {sequenceData, Hs::Literal(Hs::Integer{integer(partition_index[p])})});
-    };
 
     if (n_partitions > 0)
     {
-        HsG::Let(model, taxon_names_var, HsG::Apply(Hs::Var("getTaxa"), {getSequenceData(0)}));
+        HsG::Let(model,
+                 taxon_names_var,
+                 HsG::Apply(Hs::Var("getTaxa"), {partition_sequence_data_vars[0]}));
     }
 
     // We could fix the whole tree or just the topology.
@@ -1096,7 +1048,7 @@ std::string generate_atmodel_program(const InferOptions& options,
         int smodel_index = *s_mapping[i];
         auto imodel_index = i_mapping[i];
         Hs::Exp smodel = smodels[smodel_index];
-        Hs::Exp sequence_data_var = getSequenceData(i);
+        Hs::Exp sequence_data_var = partition_sequence_data_vars[i];
 
         // Model.Partition.1. tree_part<i> = scale_branch_lengths scale tree
 	Hs::Exp scale = Hs::Literal(Hs::Integer{integer(1)});
@@ -1224,11 +1176,9 @@ std::string generate_atmodel_program(const InferOptions& options,
 
     Hs::Exp model_fn = Hs::Var("model");
 
-    // Pass in the sequence data for the two groups.
-    if (partition_group_size[0] > 0)
-	model_fn = HsG::Apply(model_fn, {unaligned_sequence_data});
-    if (partition_group_size[1] > 0)
-	model_fn = HsG::Apply(model_fn, {aligned_sequence_data});
+    // Pass each partition's sequence data as a separate argument in partition order.
+    for(const auto& sequence_data_var: partition_sequence_data_vars)
+	model_fn = HsG::Apply(model_fn, {sequence_data_var});
 
     // Pass in the fixed tree or topology
     auto tree = Hs::Var("tree");
@@ -1350,9 +1300,7 @@ reportOutput description filename suffix =
 			      filename_ranges,
 			      alphabet_exps,
 			      partition_group,
-			      partition_group_size,
-			      unaligned_sequence_data,
-			      aligned_sequence_data,
+			      partition_sequence_data_vars,
 			      tree,
 			      topology,
 			      tsvLogger,
