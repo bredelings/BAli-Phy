@@ -73,12 +73,12 @@ class BaliPhyConfig : public CLI::Config
     }
 
 public:
-    /// Record the global and inference option namespaces used to resolve exact command-file names.
-    BaliPhyConfig(CLI::App& root, CLI::App& infer, CLI::Option* config)
+    /// Record the global and inference options used to resolve exact command-file names.
+    BaliPhyConfig(CLI::App& root, CLI::App& infer_options, CLI::Option* config)
         :config_option(config)
     {
         add_targets(root, {});
-        add_targets(infer, {"infer"});
+        add_targets(infer_options, {});
     }
 
     /// BAli-Phy supports reading command files, but does not use CLI11 to generate them.
@@ -142,7 +142,7 @@ class CLI11CommandParser
     CLI::Option* verbosity_option = nullptr;
     CLI::Option* config_option = nullptr;
     std::shared_ptr<BaliPhyConfig> config_reader;
-    CLI::App* infer_app = nullptr;
+    CLI::App* infer_options = nullptr;
     CLI::App* run_app = nullptr;
     CLI::App* print_app = nullptr;
     CLI::App* type_app = nullptr;
@@ -245,14 +245,12 @@ class CLI11CommandParser
                              "Show Haskell source after conditional preprocessing"), CommandHelpLevel::developer);
     }
 
-    /// Register the inference command without applying configuration-file contents yet.
-    void add_infer_command()
+    /// Register the default inference operation without applying configuration-file contents yet.
+    void add_infer_options()
     {
-        infer_app = show_command(app.add_subcommand("infer", "Infer a phylogeny and related model parameters"),
-                                 CommandHelpLevel::basic,
-                                 "infer [INFER-OPTIONS] SEQUENCE-FILE [SEQUENCE-FILE ...]");
-        infer_app->fallthrough();
-        show_at(infer_app->get_help_ptr(), CommandHelpLevel::basic);
+        infer_options = app.add_option_group("Infer options");
+        help_formatter->set_default_command(infer_options,
+                                            "[INFER-OPTIONS] SEQUENCE-FILE [SEQUENCE-FILE ...]");
 
         auto append_alignments = [this](const vector<string>& alignments)
         {
@@ -260,60 +258,59 @@ class CLI11CommandParser
         };
         // Separate callbacks keep --align single-valued while positional SEQUENCE-FILE remains variadic.
         // Appending during parsing preserves the established ordering when the two forms are mixed.
-        show_at(infer_app->add_option_function<vector<string>>("SEQUENCE-FILE", append_alignments,
-                                                               "Sequence data files"),
+        show_at(infer_options->add_option_function<vector<string>>("SEQUENCE-FILE", append_alignments,
+                                                                   "Sequence data files"),
                 CommandHelpLevel::basic)->type_name("")->take_all()->trigger_on_parse();
-        composing_option(show_at(infer_app->add_option_function<vector<string>>("--align", append_alignments,
-                                                                                "Sequence data files"),
+        composing_option(show_at(infer_options->add_option_function<vector<string>>("--align", append_alignments,
+                                                                                    "Sequence data files"),
                                   CommandHelpLevel::basic)->type_name("SEQUENCE-FILE"))->trigger_on_parse();
-        show_at(infer_app->add_flag("-t,--test", infer.test, "Analyze initial values and exit"),
+        show_at(infer_options->add_flag("-t,--test", infer.test, "Analyze initial values and exit"),
                 CommandHelpLevel::basic);
-        show_at(infer_app->add_option("-i,--iterations", infer.iterations, "Number of MCMC iterations"),
+        show_at(infer_options->add_option("-i,--iterations", infer.iterations, "Number of MCMC iterations"),
                 CommandHelpLevel::basic)->type_name("N");
-        show_at(infer_app->add_option("-n,--name", infer.name, "Name for the output directory"),
+        show_at(infer_options->add_option("-n,--name", infer.name, "Name for the output directory"),
                 CommandHelpLevel::basic)->type_name("NAME");
-        show_at(infer_app->add_option("-x,--subsample", infer.subsample, "Factor by which to subsample"),
+        show_at(infer_options->add_option("-x,--subsample", infer.subsample, "Factor by which to subsample"),
                 CommandHelpLevel::advanced)->type_name("N")->capture_default_str();
-        show_at(infer_app->add_option("-l,--log-format", infer.log_format,
-                                      "Log format: tsv, json, or tsv,json"),
+        show_at(infer_options->add_option("-l,--log-format", infer.log_format,
+                                          "Log format: tsv, json, or tsv,json"),
                 CommandHelpLevel::advanced)->type_name("FORMAT");
-        show_at(infer_app->add_option("--pre-burnin", infer.pre_burnin,
-                                      "Iterations to refine the initial tree"),
+        show_at(infer_options->add_option("--pre-burnin", infer.pre_burnin,
+                                          "Iterations to refine the initial tree"),
                 CommandHelpLevel::advanced)->type_name("N")->capture_default_str();
-        show_at(infer_app->add_option("-T,--tree", infer.tree, "Tree prior"),
+        show_at(infer_options->add_option("-T,--tree", infer.tree, "Tree prior"),
                 CommandHelpLevel::basic)->type_name("MODEL");
-        show_at(infer_app->add_flag("-U,--unalign", infer.unalign,
-                                    "Unalign alignments that are not fixed"), CommandHelpLevel::advanced);
-        composing_option(show_at(infer_app->add_option("-A,--alphabet", infer.alphabets, "Alphabet"),
+        show_at(infer_options->add_flag("-U,--unalign", infer.unalign,
+                                        "Unalign alignments that are not fixed"), CommandHelpLevel::advanced);
+        composing_option(show_at(infer_options->add_option("-A,--alphabet", infer.alphabets, "Alphabet"),
                                  CommandHelpLevel::basic)->type_name("ALPHABET"));
-        composing_option(show_at(infer_app->add_option("-S,--smodel", infer.smodels, "Substitution model"),
+        composing_option(show_at(infer_options->add_option("-S,--smodel", infer.smodels, "Substitution model"),
                                  CommandHelpLevel::basic)->type_name("MODEL"));
-        composing_option(show_at(infer_app->add_option("-I,--imodel", infer.imodels, "Insertion-deletion model"),
+        composing_option(show_at(infer_options->add_option("-I,--imodel", infer.imodels, "Insertion-deletion model"),
                                  CommandHelpLevel::basic)->type_name("MODEL"));
-        composing_option(show_at(infer_app->add_option("-R,--scale", infer.scales, "Prior on the scale"),
+        composing_option(show_at(infer_options->add_option("-R,--scale", infer.scales, "Prior on the scale"),
                                  CommandHelpLevel::basic)->type_name("MODEL"));
-        composing_option(show_at(infer_app->add_option("-F,--fix", infer.fixed,
-                                                       "Fix topology, tree, or alignment"),
+        composing_option(show_at(infer_options->add_option("-F,--fix", infer.fixed,
+                                                           "Fix topology, tree, or alignment"),
                                  CommandHelpLevel::basic)->type_name("TARGET"));
-        composing_option(show_at(infer_app->add_option("--variables", infer.variables,
-                                                       "Variable definitions"),
+        composing_option(show_at(infer_options->add_option("--variables", infer.variables,
+                                                           "Variable definitions"),
                                  CommandHelpLevel::basic)->type_name("DEFINITIONS"));
-        composing_option(show_at(infer_app->add_option("-L,--link", infer.links, "Link partitions"),
+        composing_option(show_at(infer_options->add_option("-L,--link", infer.links, "Link partitions"),
                                  CommandHelpLevel::basic)->type_name("PARTITIONS"));
-        show_at(infer_app->add_option("--subst-rates", infer.subst_rates, "Substitution rates model"),
+        show_at(infer_options->add_option("--subst-rates", infer.subst_rates, "Substitution rates model"),
                 CommandHelpLevel::basic)->type_name("MODEL")->capture_default_str();
-        show_at(infer_app->add_option("--indel-rates", infer.indel_rates, "Indel rates model"),
+        show_at(infer_options->add_option("--indel-rates", infer.indel_rates, "Indel rates model"),
                 CommandHelpLevel::basic)->type_name("MODEL")->capture_default_str();
     }
 
     /// CLI11 processes config files at the root; present this option as part of the inference interface.
     void add_config_file()
     {
-        infer_app->get_help_ptr()->configurable(false);
         config_option = app.set_config("-c,--config", "", "Command file to read");
         config_option->type_name("FILE");
-        help_formatter->show_with(infer_app, config_option, CommandHelpLevel::basic);
-        config_reader = std::make_shared<BaliPhyConfig>(app, *infer_app, config_option);
+        help_formatter->show_with(infer_options, config_option, CommandHelpLevel::basic);
+        config_reader = std::make_shared<BaliPhyConfig>(app, *infer_options, config_option);
         app.config_formatter(config_reader);
     }
 
@@ -382,18 +379,26 @@ class CLI11CommandParser
         std::exit(0);
     }
 
-    /// Select the typed payload after CLI11 has validated that exactly one subcommand was supplied.
+    /// Return the selected named command, leaving default inference represented by a null pointer.
+    CLI::App* selected_named_command() const
+    {
+        for(auto* command: {run_app, print_app, type_app, test_module_app, help_app})
+            if (command->parsed()) return command;
+        return nullptr;
+    }
+
+    /// Reject inference inputs whenever CLI11 selected one of the named operations.
+    void validate_inference_context() const
+    {
+        auto* command = selected_named_command();
+        if (command and (infer_options->count_all() or config_option->count()))
+            throw myexception()<<"Inference inputs cannot be used with the "<<command->get_name()<<" command";
+    }
+
+    /// Select the typed payload after CLI11 has validated the command line.
     void select_command()
     {
-        if (infer_app->parsed())
-        {
-            if (config_option->count() > 1)
-                throw myexception()<<"infer accepts only one --config file";
-            if (infer.alignments.empty())
-                throw myexception()<<"infer requires sequence data";
-            result.command = std::move(infer);
-        }
-        else if (run_app->parsed())
+        if (run_app->parsed())
         {
             if (run.program.extension() != ".hs")
                 run.program += ".hs";
@@ -405,8 +410,16 @@ class CLI11CommandParser
             result.command = std::move(type);
         else if (test_module_app->parsed())
             result.command = std::move(test_module);
-        else
+        else if (help_app->parsed())
             result.command = std::move(help);
+        else
+        {
+            if (config_option->count() > 1)
+                throw myexception()<<"bali-phy accepts only one --config file";
+            if (infer.alignments.empty())
+                throw myexception()<<"bali-phy requires sequence data";
+            result.command = std::move(infer);
+        }
 
         if (result.global.compiler.dump_ffi and not test_module_app->parsed())
             throw myexception()<<"--dump-ffi requires the test-module command";
@@ -418,12 +431,12 @@ public:
     {
         help_formatter = std::make_shared<CommandLineHelpFormatter>(&app);
         app.formatter(help_formatter);
-        app.require_subcommand(1);
+        app.require_subcommand(0, 1);
 #ifdef _WIN32
         app.allow_windows_style_options();
 #endif
         add_global_options();
-        add_infer_command();
+        add_infer_options();
         add_other_commands();
 
         show_at(app.get_help_ptr(), CommandHelpLevel::basic)->configurable(false)->disable_flag_override();
@@ -449,8 +462,7 @@ public:
 
             config_reader->append_deferred_values();
 
-            if (config_option->count() and not infer_app->parsed())
-                throw myexception()<<"--config requires the infer command";
+            validate_inference_context();
             show_requested_cli_help();
         }
         catch (const CLI::ParseError& error)
@@ -464,7 +476,7 @@ public:
 
 }
 
-/// Parse the new subcommand interface without exposing CLI11 to command consumers.
+/// Parse BAli-Phy's implicit inference and named-command interfaces without exposing CLI11 to consumers.
 CommandLine parse_cli11_command_line(int argc, char* argv[])
 {
     return CLI11CommandParser{}.parse(argc, argv);

@@ -49,6 +49,13 @@ void CommandLineHelpFormatter::show_at(const CLI::App* command, CommandHelpLevel
     command_levels[command] = minimum_level;
 }
 
+/// Register the unnamed CLI11 option group that represents BAli-Phy's default operation.
+void CommandLineHelpFormatter::set_default_command(const CLI::App* command, string synopsis)
+{
+    default_command = command;
+    default_synopsis = std::move(synopsis);
+}
+
 void CommandLineHelpFormatter::set_synopsis(const CLI::App* command, string synopsis)
 {
     command_synopses[command] = std::move(synopsis);
@@ -150,6 +157,8 @@ string CommandLineHelpFormatter::make_usage(const CLI::App* app, string name) co
 
     std::ostringstream output;
     output<<"Usage:\n";
+    if (default_command)
+        output<<"  "<<name<<" [OPTIONS] "<<default_synopsis<<"\n";
     for(auto* command: app->get_subcommands({}))
         if (not command->get_name().empty() and visible(command))
             output<<"  "<<name<<" [OPTIONS] "<<command_synopses.at(command)<<"\n";
@@ -194,6 +203,8 @@ string CommandLineHelpFormatter::make_subcommands(const CLI::App* app, CLI::AppF
         return CLI::Formatter::make_subcommands(app, mode);
 
     std::ostringstream output;
+    if (default_command)
+        output<<make_option_section("Infer options", command_options(default_command, false, false));
     for(auto* command: app->get_subcommands({}))
         if (not command->get_name().empty() and visible(command))
             output<<make_command_options(command, false, false);

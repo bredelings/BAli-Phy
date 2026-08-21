@@ -4,13 +4,18 @@ import argparse
 import subprocess
 
 
-# Run a BAli-Phy command and return its standard output, failing on execution errors.
-def run_command(args, *arguments):
-    result = subprocess.run(
+# Run a BAli-Phy command while retaining its status and diagnostics for positive and negative checks.
+def command_result(args, *arguments):
+    return subprocess.run(
         args.wrapper + [args.executable, args.package_path, *arguments],
         text=True,
         capture_output=True,
     )
+
+
+# Return standard output for commands that are required to succeed.
+def run_command(args, *arguments):
+    result = command_result(args, *arguments)
     if result.returncode != 0:
         raise AssertionError(result.stdout + result.stderr)
     return result.stdout
@@ -35,7 +40,7 @@ def main():
 
     top_level = run_help(args)
     expected_basic_usage = (
-        "bali-phy [OPTIONS] infer [INFER-OPTIONS] SEQUENCE-FILE [SEQUENCE-FILE ...]",
+        "bali-phy [OPTIONS] [INFER-OPTIONS] SEQUENCE-FILE [SEQUENCE-FILE ...]",
         "bali-phy [OPTIONS] help [TOPIC]",
     )
     for usage in expected_basic_usage:
@@ -100,7 +105,6 @@ def main():
             raise AssertionError(f"developer help omitted usage: {usage}")
 
     for command, usage, positional in (
-        ("infer", expected_basic_usage[0], "SEQUENCE-FILE ..."),
         ("run", "bali-phy [OPTIONS] run PROGRAM [ARGUMENT ...]", "ARGUMENT ..."),
         ("print", "bali-phy [OPTIONS] print [PRINT-OPTIONS] EXPRESSION", "EXPRESSION"),
     ):
@@ -122,6 +126,17 @@ def main():
     run_option_help = run_command(args, "run", "--help")
     if "Run options:" not in run_option_help or run_option_help.count("--seed SEED") != 1:
         raise AssertionError("run --help did not separate local and global options")
+
+    # Inference is the unnamed default, so it must not remain addressable as a command-help topic;
+    # mixed default/named inputs must fail before help dispatch can hide the conflict.
+    infer_help = run_help(args, "infer")
+    if "Help topic 'infer' not found." not in infer_help or "Infer options:" in infer_help:
+        raise AssertionError("help infer still resolved as command help")
+    for arguments in (("--smodel", "JC69", "help"), ("data.fasta", "help")):
+        result = command_result(args, *arguments)
+        diagnostics = result.stdout + result.stderr
+        if result.returncode == 0 or "Inference inputs cannot be used with the help command" not in diagnostics:
+            raise AssertionError("help accepted inference inputs instead of reporting their conflict")
 
     models = run_help(args, "models")
     if "Covarion/" not in models:

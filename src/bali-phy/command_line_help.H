@@ -19,6 +19,8 @@ enum class CommandHelpLevel
 class CommandLineHelpFormatter : public CLI::Formatter
 {
     const CLI::App* root;
+    const CLI::App* default_command = nullptr;
+    std::string default_synopsis;
     const CLI::Option* package_paths = nullptr;
     std::map<const CLI::Option*, CommandHelpLevel> option_levels;
     std::map<const CLI::App*, CommandHelpLevel> command_levels;
@@ -48,6 +50,7 @@ public:
     void set_level(CommandHelpLevel new_level) {level = new_level;}
     void show_at(const CLI::Option* option, CommandHelpLevel minimum_level);
     void show_at(const CLI::App* command, CommandHelpLevel minimum_level);
+    void set_default_command(const CLI::App* command, std::string synopsis);
     void set_synopsis(const CLI::App* command, std::string synopsis);
     void show_with(const CLI::App* command, const CLI::Option* option,
                    CommandHelpLevel minimum_level);

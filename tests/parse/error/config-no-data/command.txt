@@ -1,1 +1,1 @@
-infer --config=config
+--config=config
