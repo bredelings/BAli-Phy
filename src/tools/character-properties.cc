@@ -1,6 +1,11 @@
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <charconv>
 #include <cmath>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <boost/program_options.hpp>
@@ -96,26 +101,15 @@ struct report_arguments
     std::filesystem::path alignment_filename;
     std::string alphabet_name;
     std::string property;
-    character_properties::posterior_statistic statistic = character_properties::posterior_statistic::mean;
-    character_properties::letter_selection selection;
-    character_properties::report_order order = character_properties::report_order::column;
+    std::string statistic = "mean";
+    std::string selection = "all";
+    double selection_value = 0;
+    std::string order = "column";
     std::optional<std::string> condition;
     bool default_positive_condition = false;
     bool positive_selection = false;
     std::string format;
 };
-
-/// Decode a report ordering while keeping command-line spellings separate from the report implementation.
-static character_properties::report_order parse_report_order(const std::string& name)
-{
-    if (name == "column")
-        return character_properties::report_order::column;
-    if (name == "increasing")
-        return character_properties::report_order::increasing;
-    if (name == "decreasing")
-        return character_properties::report_order::decreasing;
-    throw myexception()<<"Unknown report sort '"<<name<<"'.";
-}
 
 /// Parse a required percent sign and return the fraction represented by the argument.
 static double parse_percentage(const std::string& text, const std::string& option)
@@ -216,29 +210,40 @@ static report_arguments parse_report_options(int argc, char* argv[], bool positi
     result.alphabet_name = arguments.count("alphabet") ? arguments["alphabet"].as<string>() : "";
     result.property = arguments.count("property") ? arguments["property"].as<string>() : "posSelection";
     result.positive_selection = positive_selection;
-    result.order = parse_report_order(arguments["sort"].as<string>());
+    result.order = arguments["sort"].as<string>();
+    if (result.order != "column" and result.order != "increasing" and result.order != "decreasing")
+        throw myexception()<<"Unknown report sort '"<<result.order<<"'.";
     if (arguments.count("above"))
-        result.selection = {character_properties::letter_selection_kind::above, arguments["above"].as<double>()};
+    {
+        result.selection = "above";
+        result.selection_value = arguments["above"].as<double>();
+    }
     else if (arguments.count("highest"))
-        result.selection = {character_properties::letter_selection_kind::highest_fraction,
-                            parse_percentage(arguments["highest"].as<string>(), "--highest")};
+    {
+        result.selection = "highest";
+        result.selection_value = parse_percentage(arguments["highest"].as<string>(), "--highest");
+    }
     else if (arguments.count("below"))
-        result.selection = {character_properties::letter_selection_kind::below, arguments["below"].as<double>()};
+    {
+        result.selection = "below";
+        result.selection_value = arguments["below"].as<double>();
+    }
     else if (arguments.count("lowest"))
-        result.selection = {character_properties::letter_selection_kind::lowest_fraction,
-                            parse_percentage(arguments["lowest"].as<string>(), "--lowest")};
+    {
+        result.selection = "lowest";
+        result.selection_value = parse_percentage(arguments["lowest"].as<string>(), "--lowest");
+    }
     else if (positive_selection)
-        result.selection = {character_properties::letter_selection_kind::above, 0.5};
+    {
+        result.selection = "above";
+        result.selection_value = 0.5;
+    }
 
     if (not positive_selection)
     {
-        auto statistic = arguments["by"].as<string>();
-        if (statistic == "mean")
-            result.statistic = character_properties::posterior_statistic::mean;
-        else if (statistic == "median")
-            result.statistic = character_properties::posterior_statistic::median;
-        else
-            throw myexception()<<"Unknown report statistic '"<<statistic<<"'.";
+        result.statistic = arguments["by"].as<string>();
+        if (result.statistic != "mean" and result.statistic != "median")
+            throw myexception()<<"Unknown report statistic '"<<result.statistic<<"'.";
     }
     if (arguments.count("condition"))
         result.condition = arguments["condition"].as<string>();
@@ -254,7 +259,241 @@ static report_arguments parse_report_options(int argc, char* argv[], bool positi
     return result;
 }
 
-/// Load report inputs, project them onto template columns, and write the requested representation.
+/// Use enough significant digits for report values to round-trip through a double.
+static std::string format_number(double value)
+{
+    std::array<char, 64> buffer;
+    auto [end, error] = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value);
+    assert(error == std::errc());
+    return {buffer.data(), end};
+}
+
+/// Encode one letter's posterior mean, standard deviation, and median.
+static json::object summary_to_json(const character_properties::letter_posterior_summary& summary)
+{
+    return {{"mean", summary.mean}, {"sd", summary.sd}, {"median", summary.median}};
+}
+
+/// Encode the already validated CLI selection without another internal choice representation.
+static json::object selection_to_json(const report_arguments& arguments)
+{
+    json::object result{{"kind", arguments.selection}};
+    if (arguments.selection == "above" or arguments.selection == "below")
+        result["threshold"] = arguments.selection_value;
+    else if (arguments.selection == "highest" or arguments.selection == "lowest")
+        result["fraction"] = arguments.selection_value;
+    return result;
+}
+
+/// Start a standalone version-3 report document with metadata common to both row shapes.
+static json::object report_json(const report_arguments& arguments, const char* kind,
+                                std::uint64_t retained_samples, std::uint64_t total_retained_samples,
+                                std::size_t candidate_letters, std::size_t selected_letters)
+{
+    return {
+        {"format", "bali-phy-character-property-report"},
+        {"version", 3},
+        {"kind", kind},
+        {"property", arguments.property},
+        {"statistic", arguments.statistic},
+        {"selection", selection_to_json(arguments)},
+        {"sort", arguments.order},
+        {"condition", arguments.condition ? json::value(*arguments.condition) : json::value(nullptr)},
+        {"condition_value", arguments.condition ? json::value(true) : json::value(nullptr)},
+        {"retained_samples", retained_samples},
+        {"total_retained_samples", total_retained_samples},
+        {"candidate_letters", candidate_letters},
+        {"selected_letters", selected_letters}
+    };
+}
+
+/// Write the human-readable report metadata shared by the two concrete table shapes.
+static void write_text_header(const report_arguments& arguments, std::uint64_t retained_samples,
+                              std::uint64_t total_retained_samples)
+{
+    std::cout<<(arguments.positive_selection ? "Positive-selection property: " : "Character property: ")
+             <<arguments.property<<"\n";
+    if (arguments.condition)
+        std::cout<<"Posterior view: "<<*arguments.condition<<" = true\n"
+                 <<"Matching samples: "<<retained_samples<<" of "<<total_retained_samples<<"\n";
+    else
+        std::cout<<"Posterior view: model-averaged\nRetained samples: "<<retained_samples<<"\n";
+    std::cout<<"Selection: "<<arguments.selection;
+    if (arguments.selection == "above" or arguments.selection == "below")
+        std::cout<<" "<<format_number(arguments.selection_value);
+    else if (arguments.selection == "highest" or arguments.selection == "lowest")
+        std::cout<<" "<<format_number(arguments.selection_value * 100)<<"%";
+    std::cout<<"\n\n";
+}
+
+/// Order ordinary all-column summaries by their requested middle value.
+static void order_columns(std::vector<character_properties::column_property_summary>& rows,
+                          const report_arguments& arguments)
+{
+    if (arguments.order == "column")
+        return;
+    // Compare the requested across-letter middle, using the displayed column as the stable tie-breaker.
+    std::ranges::sort(rows, [&arguments](const auto& first, const auto& second) {
+        double first_score = arguments.statistic == "mean" ? first.mean_middle : first.median_middle;
+        double second_score = arguments.statistic == "mean" ? second.mean_middle : second.median_middle;
+        if (first_score != second_score)
+            return arguments.order == "increasing" ? first_score < second_score : first_score > second_score;
+        return first.alignment_column < second.alignment_column;
+    });
+}
+
+/// Order selected column representatives without changing which letter represents each column.
+static void order_selected_columns(std::vector<character_properties::selected_column>& rows,
+                                   const report_arguments& arguments)
+{
+    if (arguments.order == "column")
+        return;
+    // Compare the representative letter score without revisiting selection or grouping.
+    std::ranges::sort(rows, [&arguments](const auto& first, const auto& second) {
+        double first_score = arguments.statistic == "mean" ? first.property_summary.mean
+                                                            : first.property_summary.median;
+        double second_score = arguments.statistic == "mean" ? second.property_summary.mean
+                                                             : second.property_summary.median;
+        if (first_score != second_score)
+            return arguments.order == "increasing" ? first_score < second_score : first_score > second_score;
+        return first.alignment_column < second.alignment_column;
+    });
+}
+
+/// Write an ordinary all-column report in the requested public format.
+static void write_column_report(const report_arguments& arguments, std::uint64_t retained_samples,
+                                std::uint64_t total_retained_samples, std::size_t letter_count,
+                                const std::vector<character_properties::column_property_summary>& rows)
+{
+    if (arguments.format == "json")
+    {
+        json::array encoded_rows;
+        for (const auto& row: rows)
+            encoded_rows.push_back(json::object{
+                {"column_index", row.alignment_column},
+                {"letter_count", row.letter_count},
+                {"posterior_means", json::object{{"minimum", row.mean_minimum},
+                                                   {"middle", row.mean_middle},
+                                                   {"maximum", row.mean_maximum}}},
+                {"posterior_medians", json::object{{"minimum", row.median_minimum},
+                                                     {"middle", row.median_middle},
+                                                     {"maximum", row.median_maximum}}}
+            });
+        auto document = report_json(arguments, "property-columns", retained_samples, total_retained_samples,
+                                    letter_count, letter_count);
+        document["rows"] = std::move(encoded_rows);
+        std::cout<<json::serialize(document)<<"\n";
+        return;
+    }
+
+    if (arguments.format == "tsv")
+        std::cout<<"column\tletters\tmean-min\tmean-middle\tmean-max\tmedian-min\tmedian-middle\tmedian-max\n";
+    else
+    {
+        write_text_header(arguments, retained_samples, total_retained_samples);
+        std::cout<<"Column  Letters  Mean min  Mean middle  Mean max  Median min  Median middle  Median max\n";
+    }
+    for (const auto& row: rows)
+    {
+        const char* separator = arguments.format == "tsv" ? "\t" : "  ";
+        std::cout<<row.alignment_column + 1<<separator<<row.letter_count<<separator
+                 <<format_number(row.mean_minimum)<<separator<<format_number(row.mean_middle)<<separator
+                 <<format_number(row.mean_maximum)<<separator<<format_number(row.median_minimum)<<separator
+                 <<format_number(row.median_middle)<<separator<<format_number(row.median_maximum)<<"\n";
+    }
+}
+
+/// Encode one representative-letter row for the standalone JSON report.
+static json::object selected_column_to_json(const character_properties::selected_column& row)
+{
+    json::object encoded{
+        {"column_index", row.alignment_column},
+        {"sequence_index", row.sequence_index},
+        {"sequence", row.sequence_name},
+        {"character_index", row.character_index},
+        {"symbol", row.symbol},
+        {"translation", row.translation ? json::value(*row.translation) : json::value(nullptr)},
+        {"statistics", summary_to_json(row.property_summary)}
+    };
+    if (row.companion_summary)
+        encoded["companion"] = json::object{{"property", *row.companion_property},
+                                             {"statistics", summary_to_json(*row.companion_summary)}};
+    else
+        encoded["companion"] = nullptr;
+    return encoded;
+}
+
+/// Write a selected-letter or positive-selection report in the requested public format.
+static void write_selected_report(const report_arguments& arguments, std::uint64_t retained_samples,
+                                  std::uint64_t total_retained_samples, std::size_t candidate_letters,
+                                  std::size_t selected_letters,
+                                  const std::vector<character_properties::selected_column>& rows)
+{
+    if (arguments.format == "json")
+    {
+        json::array encoded_rows;
+        for (const auto& row: rows)
+            encoded_rows.push_back(selected_column_to_json(row));
+        auto kind = arguments.positive_selection ? "positive-selection" : "property-selection";
+        auto document = report_json(arguments, kind, retained_samples, total_retained_samples,
+                                    candidate_letters, selected_letters);
+        document["rows"] = std::move(encoded_rows);
+        std::cout<<json::serialize(document)<<"\n";
+        return;
+    }
+
+    if (arguments.format == "tsv")
+        std::cout<<"column\tsequence\tsequence-character\tsymbol\ttranslation\tmean\tsd\tmedian"
+                 <<"\tcompanion-property\tcompanion-mean\tcompanion-sd\tcompanion-median\n";
+    else
+    {
+        write_text_header(arguments, retained_samples, total_retained_samples);
+        std::cout<<"Column  Sequence  Character  Symbol  Translation  "
+                 <<(arguments.positive_selection ? "Probability mean +/- SD  Probability median"
+                                                  : "Mean +/- SD  Median");
+        if (not rows.empty() and rows.front().companion_property)
+            std::cout<<"  Companion  Companion mean +/- SD  Companion median";
+        std::cout<<"\n";
+    }
+
+    for (const auto& row: rows)
+    {
+        if (arguments.format == "tsv")
+        {
+            std::cout<<row.alignment_column + 1<<"\t"<<row.sequence_name<<"\t"<<row.character_index + 1<<"\t"
+                     <<row.symbol<<"\t"<<row.translation.value_or("")<<"\t"<<format_number(row.property_summary.mean)
+                     <<"\t"<<format_number(row.property_summary.sd)<<"\t"
+                     <<format_number(row.property_summary.median)<<"\t";
+            if (row.companion_summary)
+                std::cout<<*row.companion_property<<"\t"<<format_number(row.companion_summary->mean)<<"\t"
+                         <<format_number(row.companion_summary->sd)<<"\t"<<format_number(row.companion_summary->median);
+            else
+                std::cout<<"\t\t\t";
+        }
+        else
+        {
+            std::cout<<row.alignment_column + 1<<"  "<<row.sequence_name<<"  "<<row.character_index + 1<<"  "
+                     <<row.symbol<<"  "<<row.translation.value_or("-")<<"  "<<format_number(row.property_summary.mean)
+                     <<" +/- "<<format_number(row.property_summary.sd)<<"  "
+                     <<format_number(row.property_summary.median);
+            if (row.companion_summary)
+                std::cout<<"  "<<*row.companion_property<<"  "<<format_number(row.companion_summary->mean)<<" +/- "
+                         <<format_number(row.companion_summary->sd)<<"  "<<format_number(row.companion_summary->median);
+        }
+        std::cout<<"\n";
+    }
+}
+
+/// Count projected non-gap letters without introducing report metadata into the computation library.
+static std::size_t count_projected_letters(const character_properties::alignment_projection& projection)
+{
+    std::size_t count = 0;
+    for (const auto& column: projection)
+        count += column.characters.size();
+    return count;
+}
+
+/// Load report inputs, resolve conditioning once, compute concrete rows, and write them.
 static void run_report(const report_arguments& arguments)
 {
     auto properties = character_properties::read_summary(arguments.summary_filename);
@@ -267,32 +506,58 @@ static void run_report(const report_arguments& arguments)
     auto tokens = character_properties::tokenize_alignment(sequences, alph.get());
     character_properties::validate_for_alignment(properties, sequences, tokens);
     auto projection = character_properties::project_alignment(sequences, tokens, *alph);
-    auto view = character_properties::select_posterior_view(properties, arguments.condition);
 
-    // Dispatch only after input resolution so both report types share the same validated posterior view.
-    auto report = [&]() {
-        if (arguments.positive_selection)
-        {
-            character_properties::positive_selection_report_options options;
-            options.property = arguments.property;
-            options.selection = arguments.selection;
-            options.order = arguments.order;
-            return character_properties::make_positive_selection_report(view, projection, options);
-        }
-        character_properties::property_report_options options;
-        options.property = arguments.property;
-        options.statistic = arguments.statistic;
-        options.selection = arguments.selection;
-        options.order = arguments.order;
-        return character_properties::make_property_report(view, projection, options);
-    }();
+    const auto* selected_properties = &properties.properties;
+    std::uint64_t retained_samples = properties.retained_samples;
+    if (arguments.condition)
+    {
+        auto found = properties.conditioned.find(*arguments.condition);
+        if (found == properties.conditioned.end())
+            throw myexception()<<"Character property condition '"<<*arguments.condition<<"' was not found.";
+        if (found->second.retained_samples == 0)
+            throw myexception()<<"Character property condition '"<<*arguments.condition<<"' has no True samples.";
+        selected_properties = &found->second.properties;
+        retained_samples = found->second.retained_samples;
+    }
+    auto property = selected_properties->find(arguments.property);
+    if (property == selected_properties->end())
+        throw myexception()<<"Character property '"<<arguments.property<<"' was not found.";
 
-    if (arguments.format == "json")
-        std::cout<<json::serialize(character_properties::to_json(report))<<"\n";
-    else if (arguments.format == "tsv")
-        character_properties::write_tsv(std::cout, report);
+    std::size_t candidate_letters = count_projected_letters(projection);
+    if (not arguments.positive_selection and arguments.selection == "all")
+    {
+        auto rows = character_properties::summarize_property_columns(property->second, projection);
+        order_columns(rows, arguments);
+        write_column_report(arguments, retained_samples, properties.retained_samples, candidate_letters, rows);
+        return;
+    }
+
+    std::optional<double> threshold;
+    std::optional<double> fraction;
+    if (arguments.selection == "above" or arguments.selection == "below")
+        threshold = arguments.selection_value;
     else
-        character_properties::write_text(std::cout, report);
+        fraction = arguments.selection_value;
+    std::size_t selected_letters = 0;
+    std::vector<character_properties::selected_column> rows;
+    if (arguments.positive_selection)
+    {
+        std::string_view suffix = "posSelection";
+        std::string companion_name = arguments.property.substr(0, arguments.property.size() - suffix.size())+"dNdS";
+        const character_properties::property_summary* companion = nullptr;
+        if (auto found = selected_properties->find(companion_name); found != selected_properties->end())
+            companion = &found->second;
+        rows = character_properties::select_positive_selection_columns(
+            arguments.property, property->second, projection, threshold, fraction,
+            companion_name, companion, selected_letters);
+    }
+    else
+        rows = character_properties::select_property_columns(
+            property->second, projection, arguments.statistic == "median", threshold, fraction,
+            arguments.selection == "above" or arguments.selection == "highest", selected_letters);
+    order_selected_columns(rows, arguments);
+    write_selected_report(arguments, retained_samples, properties.retained_samples,
+                          candidate_letters, selected_letters, rows);
 }
 
 /// Dispatch the requested character-property command and report concise errors.

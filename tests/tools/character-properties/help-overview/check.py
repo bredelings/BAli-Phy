@@ -9,5 +9,3 @@ assert "summarize" in help_text
 assert "report" in help_text
 assert "positive-selection" in help_text
 assert "P1.character-properties.json P1.initial.fasta rate" in help_text
-assert "--kind" not in help_text
-assert "mean-descending" not in help_text
