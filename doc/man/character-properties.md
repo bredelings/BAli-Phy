@@ -85,9 +85,9 @@ companion when it exists.
   uses the standard genetic code, while **Codons(,mt-vert)** also guesses DNA
   versus RNA but preserves the specified genetic code.
 
-**--format=text|tsv|json**
-: Output format (default: text). Text and TSV coordinates are one-based for
-  readers; versioned JSON coordinates are zero-based.
+**--format=text|tsv**
+: Output format (default: text). Both formats use one-based coordinates for
+  readers.
 
 **--sort=column|increasing|decreasing**
 : Order completed rows (default: column). Increasing and decreasing use the

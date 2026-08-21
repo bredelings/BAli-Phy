@@ -126,7 +126,7 @@ general context-dependent logger. Those limitations no longer describe the curre
 
 #### Reporting
 
-* `character-properties report` produces text, TSV, or JSON reports by template-alignment column.
+* `character-properties report` produces text or TSV reports by template-alignment column.
 * `alignment-draw` displays complete posterior summaries, supports property and scale selection, and
   includes generic and positive-selection ranked-column panels. Both tools can select moments
   conditional on a named model condition being True while retaining the model-averaged view.
