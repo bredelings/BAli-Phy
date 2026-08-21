@@ -1,1 +1,1 @@
-infer test.fasta --test --alphabet=Codons
+test.fasta --test --alphabet=Codons

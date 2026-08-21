@@ -1,1 +1,1 @@
-infer test.fasta --test
+test.fasta --test

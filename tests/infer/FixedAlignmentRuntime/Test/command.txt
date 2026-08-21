@@ -1,1 +1,1 @@
-infer data/5d-muscle.fasta --fix=alignment --test
+data/5d-muscle.fasta --fix=alignment --test

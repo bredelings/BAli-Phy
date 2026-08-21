@@ -1,1 +1,1 @@
-infer --test data/dna.fasta --indel-rates=constant --scale='x where {x~Normal(x,1)}'
+--test data/dna.fasta --indel-rates=constant --scale='x where {x~Normal(x,1)}'

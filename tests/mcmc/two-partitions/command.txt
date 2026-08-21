@@ -1,1 +1,1 @@
-infer 5d-muscle.fasta:1-20 5d-muscle.fasta:21- --iterations=5 --name ignore
+5d-muscle.fasta:1-20 5d-muscle.fasta:21- --iterations=5 --name ignore

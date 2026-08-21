@@ -1,1 +1,1 @@
-infer --test codons-dna.fasta --alphabet=Triplets
+--test codons-dna.fasta --alphabet=Triplets

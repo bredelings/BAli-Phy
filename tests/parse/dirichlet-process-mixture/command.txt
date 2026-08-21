@@ -1,1 +1,1 @@
-infer --test data/dna.fasta --scale='sum(~DirichletProcessMixture(1,1,discrete([(Gamma(2,1),1)])))'
+--test data/dna.fasta --scale='sum(~DirichletProcessMixture(1,1,discrete([(Gamma(2,1),1)])))'

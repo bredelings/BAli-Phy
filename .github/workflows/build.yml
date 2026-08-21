@@ -473,7 +473,7 @@ jobs:
 
         New-Item -ItemType Directory bp-summarize-smoke | Out-Null
         Push-Location bp-summarize-smoke
-        bali-phy infer "$env:GITHUB_WORKSPACE\examples\5S-rRNA\5d-muscle.fasta" --iterations=50 --name=analysis-run
+        bali-phy "$env:GITHUB_WORKSPACE\examples\5S-rRNA\5d-muscle.fasta" --iterations=50 --name=analysis-run
 
         $analysisOutput = bp-summarize analysis-run-1 --outdir Results 2>&1 | Out-String
         $analysisOutput

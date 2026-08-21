@@ -1,1 +1,1 @@
-infer --test codons-dna.fasta --smodel=TN93+>x3+>dNdS
+--test codons-dna.fasta --smodel=TN93+>x3+>dNdS

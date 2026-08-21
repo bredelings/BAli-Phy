@@ -1,1 +1,1 @@
-infer --test ../../data/codons-dna.fasta ../../data/codons-dna.fasta --smodel=1:M3_Test --smodel=2:M3_Test
+--test ../../data/codons-dna.fasta ../../data/codons-dna.fasta --smodel=1:M3_Test --smodel=2:M3_Test

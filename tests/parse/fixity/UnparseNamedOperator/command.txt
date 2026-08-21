@@ -1,1 +1,1 @@
-infer --test data/dna.fasta --scale='[(+)(x=2, y=3)]'
+--test data/dna.fasta --scale='[(+)(x=2, y=3)]'

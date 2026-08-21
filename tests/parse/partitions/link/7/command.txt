@@ -1,1 +1,1 @@
-infer --test dna.fasta dna.fasta dna.fasta --link=1,2:smodel,scal
+--test dna.fasta dna.fasta dna.fasta --link=1,2:smodel,scal

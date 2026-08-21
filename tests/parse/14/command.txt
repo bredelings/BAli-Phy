@@ -1,1 +1,1 @@
-infer --test amino.fasta --smodel LG+>R(n=4)
+--test amino.fasta --smodel LG+>R(n=4)

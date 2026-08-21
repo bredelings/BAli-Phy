@@ -211,7 +211,7 @@ for commit in commits:
     logging.info(f"Building executable {commit}")
     exe = build(args.repo, build_dir, install_dir)
 
-    cmd = [exe, 'infer', '48-muscle.fasta', '--pre-burnin=0', '--iterations=25']
+    cmd = [exe, '48-muscle.fasta', '--pre-burnin=0', '--iterations=25']
     #cmd = ['ls','/dev/']
     #cmd = ['ls','/usr/share/doc/']
 
@@ -221,4 +221,3 @@ for commit in commits:
     med_time = statistics.median(times)
     sigma_time = statistics.stdev(times)
     print(f"time = {med_time:.2f} +- {sigma_time:.2f}   {commit.message}")
-

@@ -1,1 +1,1 @@
-infer test.fasta --test --alphabet=Triplets
+test.fasta --test --alphabet=Triplets

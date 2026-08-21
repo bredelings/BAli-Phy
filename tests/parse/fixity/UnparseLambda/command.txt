@@ -1,1 +1,1 @@
-infer --test data/dna.fasta --scale='f(1,2) where {f(x,x)=x}'
+--test data/dna.fasta --scale='f(1,2) where {f(x,x)=x}'

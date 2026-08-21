@@ -1,1 +1,1 @@
-infer --test data/dna.fasta --scale='~(p .*. Normal(0,1) |+| q .*. delta(0) |+| 1-p-q .*. delta(1)) where {p=0; q=0}'
+--test data/dna.fasta --scale='~(p .*. Normal(0,1) |+| q .*. delta(0) |+| 1-p-q .*. delta(1)) where {p=0; q=0}'

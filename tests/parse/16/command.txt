@@ -1,1 +1,1 @@
-infer --test codons-dna.fasta
+--test codons-dna.fasta

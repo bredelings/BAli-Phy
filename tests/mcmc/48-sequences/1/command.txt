@@ -1,1 +1,1 @@
-infer 5S-48-fsa.fasta --iterations=2 --name ignore
+5S-48-fsa.fasta --iterations=2 --name ignore

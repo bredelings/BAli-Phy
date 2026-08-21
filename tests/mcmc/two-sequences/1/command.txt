@@ -1,1 +1,1 @@
-infer two.fasta --iterations=10 --name ignore
+two.fasta --iterations=10 --name ignore

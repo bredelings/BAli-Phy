@@ -1,1 +1,1 @@
-infer --test data/dna.fasta '--smodel=HKY85_sym+>F(pi=~DirichletProcessOn({"A","C","G","T"},1,delta(0.25)))'
+--test data/dna.fasta '--smodel=HKY85_sym+>F(pi=~DirichletProcessOn({"A","C","G","T"},1,delta(0.25)))'

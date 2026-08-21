@@ -1,2 +1,2 @@
-infer --test data/codons-dna.fasta --fix topology=../foreground.tree
+--test data/codons-dna.fasta --fix topology=../foreground.tree
 --smodel='BranchModel(omegas=[])'

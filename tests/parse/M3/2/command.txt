@@ -1,1 +1,1 @@
-infer --test codons-dna.fasta '--smodel=|w:MG94(omega=w)| +> M3(n=3)'
+--test codons-dna.fasta '--smodel=|w:MG94(omega=w)| +> M3(n=3)'

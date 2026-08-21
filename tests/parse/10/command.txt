@@ -1,1 +1,1 @@
-infer --test dna.fasta --smodel=HKY85_sym+>gwF+>G(4)+>I
+--test dna.fasta --smodel=HKY85_sym+>gwF+>G(4)+>I

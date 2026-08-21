@@ -153,7 +153,7 @@ class BAliPhy(Program):
     def prefix(self):
         return ""
 
-    # Runner-supplied options are global BAli-Phy options, so place them before the subcommand.
+    # Runner-supplied options are global BAli-Phy options, so place them before the test's arguments.
     # A run command then passes every control-file token after PROGRAM to the Haskell program.
     def cmdline(self, tester, test_subdir):
         test_dir = tester.dir_for_test(test_subdir)

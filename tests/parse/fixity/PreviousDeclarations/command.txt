@@ -1,1 +1,1 @@
-infer --test data/dna.fasta --variables='pow(x,y)=x-y;' --indel-rates=constant --scale='pow(20,3)'
+--test data/dna.fasta --variables='pow(x,y)=x-y;' --indel-rates=constant --scale='pow(20,3)'

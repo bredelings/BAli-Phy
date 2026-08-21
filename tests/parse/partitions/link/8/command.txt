@@ -1,1 +1,1 @@
-infer --test dna.fasta dna.fasta -I 2:none --link=1,2
+--test dna.fasta dna.fasta -I 2:none --link=1,2

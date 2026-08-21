@@ -1,1 +1,1 @@
-infer --test data/dna.fasta --smodel='GTR `Rates.Gamma` 4'
+--test data/dna.fasta --smodel='GTR `Rates.Gamma` 4'

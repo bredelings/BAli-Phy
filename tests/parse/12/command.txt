@@ -1,1 +1,1 @@
-infer --test amino.fasta --smodel WAG
+--test amino.fasta --smodel WAG
