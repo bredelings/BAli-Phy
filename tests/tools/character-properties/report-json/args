@@ -1,1 +1,0 @@
-report ../report-summary.json ../report-alignment.fasta rate --format json

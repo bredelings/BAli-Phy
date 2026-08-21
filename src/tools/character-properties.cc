@@ -144,7 +144,7 @@ static report_arguments parse_report_options(int argc, char* argv[], bool positi
     visible.add_options()
         ("help,h", "Produce help message.")
         ("alphabet", po::value<string>(), "Alignment alphabet or partial alphabet constraint.")
-        ("format", po::value<string>()->default_value("text"), "Output format: text, tsv, or json.")
+        ("format", po::value<string>()->default_value("text"), "Output format: text or tsv.")
         ("sort", po::value<string>()->default_value("column"), "Row order: column, increasing, or decreasing.")
         ("condition", po::value<string>(), "Use only samples where this Boolean condition is true.")
         ("above", po::value<double>(), positive_selection ? "Select probabilities above this value."
@@ -254,7 +254,7 @@ static report_arguments parse_report_options(int argc, char* argv[], bool positi
     }
 
     result.format = arguments["format"].as<string>();
-    if (result.format != "text" and result.format != "tsv" and result.format != "json")
+    if (result.format != "text" and result.format != "tsv")
         throw myexception()<<"Unknown report format '"<<result.format<<"'.";
     return result;
 }
@@ -266,45 +266,6 @@ static std::string format_number(double value)
     auto [end, error] = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value);
     assert(error == std::errc());
     return {buffer.data(), end};
-}
-
-/// Encode one letter's posterior mean, standard deviation, and median.
-static json::object summary_to_json(const character_properties::letter_posterior_summary& summary)
-{
-    return {{"mean", summary.mean}, {"sd", summary.sd}, {"median", summary.median}};
-}
-
-/// Encode the already validated CLI selection without another internal choice representation.
-static json::object selection_to_json(const report_arguments& arguments)
-{
-    json::object result{{"kind", arguments.selection}};
-    if (arguments.selection == "above" or arguments.selection == "below")
-        result["threshold"] = arguments.selection_value;
-    else if (arguments.selection == "highest" or arguments.selection == "lowest")
-        result["fraction"] = arguments.selection_value;
-    return result;
-}
-
-/// Start a standalone version-3 report document with metadata common to both row shapes.
-static json::object report_json(const report_arguments& arguments, const char* kind,
-                                std::uint64_t retained_samples, std::uint64_t total_retained_samples,
-                                std::size_t candidate_letters, std::size_t selected_letters)
-{
-    return {
-        {"format", "bali-phy-character-property-report"},
-        {"version", 3},
-        {"kind", kind},
-        {"property", arguments.property},
-        {"statistic", arguments.statistic},
-        {"selection", selection_to_json(arguments)},
-        {"sort", arguments.order},
-        {"condition", arguments.condition ? json::value(*arguments.condition) : json::value(nullptr)},
-        {"condition_value", arguments.condition ? json::value(true) : json::value(nullptr)},
-        {"retained_samples", retained_samples},
-        {"total_retained_samples", total_retained_samples},
-        {"candidate_letters", candidate_letters},
-        {"selected_letters", selected_letters}
-    };
 }
 
 /// Write the human-readable report metadata shared by the two concrete table shapes.
@@ -362,30 +323,9 @@ static void order_selected_columns(std::vector<character_properties::selected_co
 
 /// Write an ordinary all-column report in the requested public format.
 static void write_column_report(const report_arguments& arguments, std::uint64_t retained_samples,
-                                std::uint64_t total_retained_samples, std::size_t letter_count,
+                                std::uint64_t total_retained_samples,
                                 const std::vector<character_properties::column_property_summary>& rows)
 {
-    if (arguments.format == "json")
-    {
-        json::array encoded_rows;
-        for (const auto& row: rows)
-            encoded_rows.push_back(json::object{
-                {"column_index", row.alignment_column},
-                {"letter_count", row.letter_count},
-                {"posterior_means", json::object{{"minimum", row.mean_minimum},
-                                                   {"middle", row.mean_middle},
-                                                   {"maximum", row.mean_maximum}}},
-                {"posterior_medians", json::object{{"minimum", row.median_minimum},
-                                                     {"middle", row.median_middle},
-                                                     {"maximum", row.median_maximum}}}
-            });
-        auto document = report_json(arguments, "property-columns", retained_samples, total_retained_samples,
-                                    letter_count, letter_count);
-        document["rows"] = std::move(encoded_rows);
-        std::cout<<json::serialize(document)<<"\n";
-        return;
-    }
-
     if (arguments.format == "tsv")
         std::cout<<"column\tletters\tmean-min\tmean-middle\tmean-max\tmedian-min\tmedian-middle\tmedian-max\n";
     else
@@ -403,45 +343,11 @@ static void write_column_report(const report_arguments& arguments, std::uint64_t
     }
 }
 
-/// Encode one representative-letter row for the standalone JSON report.
-static json::object selected_column_to_json(const character_properties::selected_column& row)
-{
-    json::object encoded{
-        {"column_index", row.alignment_column},
-        {"sequence_index", row.sequence_index},
-        {"sequence", row.sequence_name},
-        {"character_index", row.character_index},
-        {"symbol", row.symbol},
-        {"translation", row.translation ? json::value(*row.translation) : json::value(nullptr)},
-        {"statistics", summary_to_json(row.property_summary)}
-    };
-    if (row.companion_summary)
-        encoded["companion"] = json::object{{"property", *row.companion_property},
-                                             {"statistics", summary_to_json(*row.companion_summary)}};
-    else
-        encoded["companion"] = nullptr;
-    return encoded;
-}
-
 /// Write a selected-letter or positive-selection report in the requested public format.
 static void write_selected_report(const report_arguments& arguments, std::uint64_t retained_samples,
-                                  std::uint64_t total_retained_samples, std::size_t candidate_letters,
-                                  std::size_t selected_letters,
+                                  std::uint64_t total_retained_samples,
                                   const std::vector<character_properties::selected_column>& rows)
 {
-    if (arguments.format == "json")
-    {
-        json::array encoded_rows;
-        for (const auto& row: rows)
-            encoded_rows.push_back(selected_column_to_json(row));
-        auto kind = arguments.positive_selection ? "positive-selection" : "property-selection";
-        auto document = report_json(arguments, kind, retained_samples, total_retained_samples,
-                                    candidate_letters, selected_letters);
-        document["rows"] = std::move(encoded_rows);
-        std::cout<<json::serialize(document)<<"\n";
-        return;
-    }
-
     if (arguments.format == "tsv")
         std::cout<<"column\tsequence\tsequence-character\tsymbol\ttranslation\tmean\tsd\tmedian"
                  <<"\tcompanion-property\tcompanion-mean\tcompanion-sd\tcompanion-median\n";
@@ -484,15 +390,6 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
     }
 }
 
-/// Count projected non-gap letters without introducing report metadata into the computation library.
-static std::size_t count_projected_letters(const character_properties::alignment_projection& projection)
-{
-    std::size_t count = 0;
-    for (const auto& column: projection)
-        count += column.characters.size();
-    return count;
-}
-
 /// Load report inputs, resolve conditioning once, compute concrete rows, and write them.
 static void run_report(const report_arguments& arguments)
 {
@@ -523,12 +420,11 @@ static void run_report(const report_arguments& arguments)
     if (property == selected_properties->end())
         throw myexception()<<"Character property '"<<arguments.property<<"' was not found.";
 
-    std::size_t candidate_letters = count_projected_letters(projection);
     if (not arguments.positive_selection and arguments.selection == "all")
     {
         auto rows = character_properties::summarize_property_columns(property->second, projection);
         order_columns(rows, arguments);
-        write_column_report(arguments, retained_samples, properties.retained_samples, candidate_letters, rows);
+        write_column_report(arguments, retained_samples, properties.retained_samples, rows);
         return;
     }
 
@@ -538,7 +434,6 @@ static void run_report(const report_arguments& arguments)
         threshold = arguments.selection_value;
     else
         fraction = arguments.selection_value;
-    std::size_t selected_letters = 0;
     std::vector<character_properties::selected_column> rows;
     if (arguments.positive_selection)
     {
@@ -549,15 +444,14 @@ static void run_report(const report_arguments& arguments)
             companion = &found->second;
         rows = character_properties::select_positive_selection_columns(
             arguments.property, property->second, projection, threshold, fraction,
-            companion_name, companion, selected_letters);
+            companion_name, companion);
     }
     else
         rows = character_properties::select_property_columns(
             property->second, projection, arguments.statistic == "median", threshold, fraction,
-            arguments.selection == "above" or arguments.selection == "highest", selected_letters);
+            arguments.selection == "above" or arguments.selection == "highest");
     order_selected_columns(rows, arguments);
-    write_selected_report(arguments, retained_samples, properties.retained_samples,
-                          candidate_letters, selected_letters, rows);
+    write_selected_report(arguments, retained_samples, properties.retained_samples, rows);
 }
 
 /// Dispatch the requested character-property command and report concise errors.

@@ -1,20 +1,10 @@
-import json
+import csv
 from pathlib import Path
 import sys
 
 
-report = json.loads((Path(sys.argv[1]) / "output").read_text(encoding="utf-8"))
-assert report["sort"] == "increasing"
-assert report["selection"] == {"kind": "above", "threshold": 0.95}
-assert [
-    (
-        row["column_index"],
-        row["sequence"],
-        row["statistics"]["mean"],
-        row["companion"]["property"],
-        row["companion"]["statistics"]["mean"],
-    )
-    for row in report["rows"]
-] == [
-    (3, "A", 0.97, "dNdS", 3),
-]
+# A strict probability threshold must retain the matching letter and its dN/dS summary;
+# the conditioned-report test does not exercise an explicit threshold.
+report = (Path(sys.argv[1]) / "output").read_text(encoding="utf-8")
+rows = list(csv.DictReader(report.splitlines(), delimiter="\t"))
+assert [(row["column"], row["mean"], row["companion-mean"]) for row in rows] == [("4", "0.97", "3")]

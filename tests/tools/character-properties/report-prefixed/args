@@ -1,2 +1,2 @@
 positive-selection ../report-summary.json ../report-alignment.fasta foreground-posSelection
---unconditional --above 0.95 --format json
+--unconditional --above 0.95 --format tsv

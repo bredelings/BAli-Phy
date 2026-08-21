@@ -1,2 +1,2 @@
 report ../codon-summary.json ../codon-rna-alignment.fasta rate --alphabet Codons(,mt-vert)
---highest=100% --format json
+--highest=100% --format tsv

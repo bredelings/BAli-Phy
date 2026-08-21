@@ -935,9 +935,8 @@ json::object make_character_property_reports(
             const character_properties::property_summary* companion = nullptr;
             if (auto found = properties.find(companion_name); found != properties.end())
                 companion = &found->second;
-            std::size_t selected_letter_count = 0;
             auto selected = character_properties::select_positive_selection_columns(
-                property_name, property, projection, 0.5, {}, companion_name, companion, selected_letter_count);
+                property_name, property, projection, 0.5, {}, companion_name, companion);
             property_reports["positive_selection"] = make_positive_selection_table(selected);
         }
         else

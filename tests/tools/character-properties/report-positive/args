@@ -1,2 +1,2 @@
 positive-selection ../report-summary.json ../report-alignment.fasta --unconditional
---above 0.95 --sort increasing --format json
+--above 0.95 --format tsv

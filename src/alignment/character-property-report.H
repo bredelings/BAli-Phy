@@ -57,14 +57,13 @@ std::vector<column_property_summary> summarize_property_columns(
 /// Select ordinary-property letters globally and retain one extreme representative per resulting column.
 std::vector<selected_column> select_property_columns(
     const property_summary& property, const alignment_projection& projection, bool use_median,
-    const std::optional<double>& threshold, const std::optional<double>& fraction, bool select_highest,
-    std::size_t& selected_letter_count);
+    const std::optional<double>& threshold, const std::optional<double>& fraction, bool select_highest);
 
 /// Select positive-selection letters globally and use dN/dS to break equal-probability ties.
 std::vector<selected_column> select_positive_selection_columns(
     const std::string& property_name, const property_summary& property, const alignment_projection& projection,
     const std::optional<double>& threshold, const std::optional<double>& fraction,
-    const std::string& companion_name, const property_summary* companion, std::size_t& selected_letter_count);
+    const std::string& companion_name, const property_summary* companion);
 
 }
 

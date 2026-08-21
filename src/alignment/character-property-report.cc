@@ -58,11 +58,10 @@ std::vector<scored_character> score_letters(const property_summary& property,
     return result;
 }
 
-/// Return selected letters in projection order and report their pre-grouping count.
+/// Return selected letters in projection order.
 std::vector<const scored_character*> select_letters(const std::vector<scored_character>& candidates,
                                                     const std::optional<double>& threshold,
-                                                    const std::optional<double>& fraction, bool select_highest,
-                                                    std::size_t& selected_letter_count)
+                                                    const std::optional<double>& fraction, bool select_highest)
 {
     if (threshold.has_value() == fraction.has_value())
         throw myexception()<<"A letter selection must specify exactly one threshold or percentage.";
@@ -98,7 +97,6 @@ std::vector<const scored_character*> select_letters(const std::vector<scored_cha
         if (selected)
             result.push_back(&candidate);
     }
-    selected_letter_count = result.size();
     return result;
 }
 
@@ -174,11 +172,10 @@ std::vector<column_property_summary> summarize_property_columns(
 /// Select ordinary-property letters globally and retain one extreme representative per resulting column.
 std::vector<selected_column> select_property_columns(
     const property_summary& property, const alignment_projection& projection, bool use_median,
-    const std::optional<double>& threshold, const std::optional<double>& fraction, bool select_highest,
-    std::size_t& selected_letter_count)
+    const std::optional<double>& threshold, const std::optional<double>& fraction, bool select_highest)
 {
     auto candidates = score_letters(property, projection, use_median);
-    auto selected = select_letters(candidates, threshold, fraction, select_highest, selected_letter_count);
+    auto selected = select_letters(candidates, threshold, fraction, select_highest);
     std::vector<const scored_character*> representatives(projection.size(), nullptr);
     for (const auto* candidate: selected)
     {
@@ -198,7 +195,7 @@ std::vector<selected_column> select_property_columns(
 std::vector<selected_column> select_positive_selection_columns(
     const std::string& property_name, const property_summary& property, const alignment_projection& projection,
     const std::optional<double>& threshold, const std::optional<double>& fraction,
-    const std::string& companion_name, const property_summary* companion, std::size_t& selected_letter_count)
+    const std::string& companion_name, const property_summary* companion)
 {
     if (not is_positive_selection_property(property_name))
         throw myexception()<<"Property '"<<property_name<<"' is not a positive-selection probability.";
@@ -211,7 +208,7 @@ std::vector<selected_column> select_positive_selection_columns(
             throw myexception()<<"Property '"<<property_name<<"' has probability "<<candidate.property_summary.mean
                                <<" outside [0,1] at sequence '"<<candidate.character->sequence_name
                                <<"', character "<<candidate.character->character_index<<".";
-    auto selected = select_letters(candidates, threshold, fraction, true, selected_letter_count);
+    auto selected = select_letters(candidates, threshold, fraction, true);
     std::vector<const scored_character*> representatives(projection.size(), nullptr);
     for (const auto* candidate: selected)
     {

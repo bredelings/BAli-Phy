@@ -1,1 +1,1 @@
-positive-selection ../report-conditioned-summary.json ../report-alignment.fasta --format json
+positive-selection ../report-conditioned-summary.json ../report-alignment.fasta --format text
