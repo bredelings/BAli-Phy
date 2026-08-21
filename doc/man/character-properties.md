@@ -1,6 +1,6 @@
 % character-properties(1)
 % Benjamin Redelings
-% Jul 2026
+% Aug 2026
 
 # NAME
 
@@ -10,8 +10,9 @@
 
 **character-properties summarize** [OPTIONS] _C1.propertiesN.json_ [...]
 
-**character-properties report** _SUMMARY_ _ALIGNMENT_ **--alphabet** _ALPHABET_
-**--property** _NAME_ **--kind** _KIND_ [OPTIONS]
+**character-properties report** [OPTIONS] _SUMMARY_ _ALIGNMENT_ _PROPERTY_
+
+**character-properties positive-selection** [OPTIONS] _SUMMARY_ _ALIGNMENT_ [_PROPERTY_]
 
 # DESCRIPTION
 
@@ -35,12 +36,28 @@ that pass are ignored, so summarization can run while MCMC sampling continues.
 The command stops with an error if an observed prefix is subsequently modified,
 replaced with different contents, or truncated.
 
-The **report** command projects one summarized property onto a template
-alignment. Each stored value continues to identify an observed character by
-sequence name and ungapped character index; a template column is only a
-presentation group. One representative character is selected per nonempty
-column, so characters that share a column do not appear as separate ranked
-sites.
+The two report commands project summarized letter properties onto a template
+alignment. Each stored value continues to identify a non-gap observed letter
+by sequence name and ungapped character index; an alignment column is only a
+presentation group.
+
+The ordinary **report** command either describes every nonempty column or
+selects letters globally before grouping the selected letters by column. An
+above or highest selection uses the highest-scoring selected letter as the
+column representative. A below or lowest selection uses the lowest-scoring
+selected letter. Row ordering is applied only after representative selection.
+
+With no selection option, **report** prints the minimum, lower middle, and
+maximum of both the per-letter posterior means and per-letter posterior medians
+in every column. These column-level middle values are distinct from the
+posterior median stored for each individual letter.
+
+The **positive-selection** command selects letters using their posterior mean
+`posSelection` probability, groups them by column, and reports the
+highest-probability letter in each resulting column. The matching dN/dS
+statistics come from that same representative letter. The default property is
+`posSelection`; names ending in `-posSelection` use the corresponding `-dNdS`
+companion when it exists.
 
 # SUMMARIZE OPTIONS
 
@@ -59,33 +76,68 @@ sites.
   (default: 256). This excludes each decoded input record and the final summary
   arrays.
 
-# REPORT OPTIONS
+# COMMON REPORT OPTIONS
 
 **--alphabet=ALPHABET**
-: Alphabet used to interpret one logical character in the template alignment.
-  Codon reports use its genetic code to include amino-acid translations.
-
-**--property=NAME**
-: Property to report.
-
-**--kind=property|positive-selection**
-: Use a generic property report or the specialized positive-selection report.
-  The latter accepts `posSelection` and names ending in `-posSelection`, ranks
-  columns by their largest probability, and includes the matching `dNdS`
-  property when present.
+: Constrain the alphabet used to interpret logical alignment characters. When
+  omitted, the alphabet is guessed from the alignment. Partial names are
+  completed from the data: for example, **Codons** guesses DNA versus RNA and
+  uses the standard genetic code, while **Codons(,mt-vert)** also guesses DNA
+  versus RNA but preserves the specified genetic code.
 
 **--format=text|tsv|json**
 : Output format (default: text). Text and TSV coordinates are one-based for
   readers; versioned JSON coordinates are zero-based.
 
-**--sort=column|mean-ascending|mean-descending|sd-descending**
-: Order generic report rows. The representative for each column is the
-  character with the corresponding extreme value. The default is column order;
-  positive-selection reports default to descending probability.
+**--sort=column|increasing|decreasing**
+: Order completed rows (default: column). Increasing and decreasing use the
+  selected representative score. For an all-column ordinary report, they use
+  the column's middle value for the statistic selected by **--by**.
 
-**--minimum-probability=P**
-: Omit positive-selection columns whose representative probability is below
-  _P_ (default: 0.5).
+**--condition=NAME**
+: Use only samples in which the named Boolean model condition is true.
+
+# ORDINARY REPORT OPTIONS
+
+**--above=VALUE**
+: Select letters whose score is strictly greater than _VALUE_.
+
+**--below=VALUE**
+: Select letters whose score is strictly less than _VALUE_.
+
+**--highest[=PERCENT]**
+: Select the highest-scoring percentage of projected non-gap letters. The
+  implicit percentage is 1%.
+
+**--lowest[=PERCENT]**
+: Select the lowest-scoring percentage of projected non-gap letters. The
+  implicit percentage is 1%.
+
+**--by=mean|median**
+: Use the per-letter posterior mean or posterior median for selection,
+  representative choice, and value ordering (default: mean). Representative
+  rows display all available posterior summaries regardless of this choice.
+
+The four selection options are mutually exclusive. Percentage selection first
+requests `max(1, floor(N*PERCENT/100))` of the _N_ projected non-gap letters,
+then includes every letter tied at the cutoff. Multiple selected letters can
+subsequently collapse into one alignment-column row.
+
+# POSITIVE-SELECTION OPTIONS
+
+**--above=PROBABILITY**
+: Select letters whose posterior mean probability is strictly greater than
+  _PROBABILITY_ (default: 0.5).
+
+**--highest[=PERCENT]**
+: Instead select the highest-probability percentage of letters, with an
+  implicit percentage of 1%.
+
+**--unconditional**
+: Use the model-averaged posterior. By default, positive-selection reports use
+  samples where `positiveSelectionInModel` is true. If that conditioned view
+  is absent, the command reports an error rather than silently changing the
+  scientific quantity.
 
 # VALIDATION
 
@@ -97,7 +149,12 @@ ungapped character counts. Every observed character must have a category/state
 pair in every retained sample. Category/state indices, property-table bounds,
 finite values, and cross-chain shapes are validated before a result is emitted.
 
-# EXAMPLE
+Positive-selection properties and probability thresholds must lie in `[0,1]`.
+A conditioned view with no true samples cannot produce a report.
+
+# EXAMPLES
+
+Summarize two chains:
 
 ```
 character-properties summarize \
@@ -105,11 +162,37 @@ character-properties summarize \
   --skip=1000 --subsample=2 > P1.character-properties.json
 ```
 
-Create a text report of columns with posterior positive-selection probability
-at least 0.95:
+Describe every alignment column for a rate property:
 
 ```
-character-properties report P1.character-properties.json P1.initial.fasta \
-  --alphabet 'Codons(DNA,standard)' --property posSelection \
-  --kind positive-selection --minimum-probability 0.95
+character-properties report \
+  P1.character-properties.json P1.initial.fasta rate
+```
+
+Select letters whose posterior median rate exceeds 2 and order the resulting
+column representatives from high to low:
+
+```
+character-properties report summary.json alignment.fasta rate \
+  --above=2 --by=median --sort=decreasing
+```
+
+Report the highest 1% of letters, always retaining at least one:
+
+```
+character-properties report summary.json alignment.fasta rate --highest
+```
+
+Report positive selection conditional on its presence in the model:
+
+```
+character-properties positive-selection \
+  P1.character-properties.json P1.initial.fasta --above=0.95
+```
+
+Report model-averaged foreground positive selection for an RNA codon alignment:
+
+```
+character-properties positive-selection summary.json alignment.fasta \
+  foreground-posSelection --unconditional --alphabet=Codons
 ```

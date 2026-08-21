@@ -1,0 +1,15 @@
+{
+  "format": "bali-phy-character-properties",
+  "version": 1,
+  "coordinates": {"kind": "ungapped-sequence-character", "index_base": 0},
+  "selection": {"skip": null, "until": null, "subsample": 1},
+  "retained_samples": 10,
+  "retained_samples_by_chain": [10],
+  "properties": {
+    "rate": {
+      "mean": {"A": [10, 2, 1], "B": [10, 3, 0]},
+      "sd": {"A": [1, 0.2, 0.1], "B": [1, 0.3, 0.1]},
+      "median": {"A": [9, 2, 1], "B": [9, 3, 0]}
+    }
+  }
+}

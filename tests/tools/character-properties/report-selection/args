@@ -1,0 +1,1 @@
+report ../report-summary.json ../report-alignment.fasta rate --above 1 --by median --sort increasing --format json
