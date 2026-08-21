@@ -27,8 +27,8 @@ a branch property and not a node property.
 
 # Examples:
 
-   bali-phy infer dna.fasta --fix tree=newick.tree
-   bali-phy infer dna.fasta --fix topology=newick.tree
+   bali-phy dna.fasta --fix tree=newick.tree
+   bali-phy dna.fasta --fix topology=newick.tree
 
 # See also:
 

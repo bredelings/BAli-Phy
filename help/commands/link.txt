@@ -13,18 +13,18 @@ Partitions can be linked if the attribute is unspecified for all
 partitions, as long as the default value or guessed value ends up
 being the same for all of the linked partitions:
 
-   bali-phy infer dna.fasta dna.fasta --link=1,2
+   bali-phy dna.fasta dna.fasta --link=1,2
 
 Partitions cannot be linked if the attribute is specified for some
 partitions, but not for others, or if the specified attributes differ.
 Thus both of these commands will trigger an error:
 
-   bali-phy infer dna.fasta dna.fasta --smodel=1:TN93 --link=1,2
+   bali-phy dna.fasta dna.fasta --smodel=1:TN93 --link=1,2
 
-   bali-phy infer dna.fasta dna.fasta --smodel=1:TN93 --smodel=1:HKY85 --link=1,2
+   bali-phy dna.fasta dna.fasta --smodel=1:TN93 --smodel=1:HKY85 --link=1,2
 
 # Examples:
 
-   bali-phy infer dna.fasta dna.fasta --smodel=1:TN93 --smodel=2:TN93 --link=1,2
+   bali-phy dna.fasta dna.fasta --smodel=1:TN93 --smodel=2:TN93 --link=1,2
 
-   bali-phy infer dna.fasta amino-acids dna.fasta --link=1,3:smodel,scale
+   bali-phy dna.fasta amino-acids dna.fasta --link=1,3:smodel,scale

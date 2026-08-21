@@ -241,7 +241,7 @@ How different are the trees? (use figtree)
 <section><info><title>Planning a run</title></info>
 <para>Lets run bali-phy on the ferns data:
 % cd ~/alignment_files/examples
-% bali-phy infer ferns.fasta -S gtr --test
+% bali-phy ferns.fasta -S gtr --test
 </para>
 
 <para>You can see the options for bali-phy by running:
@@ -254,8 +254,8 @@ You can also get help on particular options or models with the help command:
 
 <section><info><title>Running an analysis</title></info>
 After you get the <userinput>--test</userinput> command to work, remove the <userinput>--test</userinput> option and start two copies of this analysis:
-% bali-phy infer -S gtr ferns.fasta &#38;
-% bali-phy infer -S gtr ferns.fasta &#38;
+% bali-phy -S gtr ferns.fasta &#38;
+% bali-phy -S gtr ferns.fasta &#38;
 These should create directories called <filename>ferns-1</filename> and <filename>ferns-2</filename>.
 Lets look inside one of these directories:
 % ls ferns-1
@@ -359,8 +359,8 @@ Let's put the following into a configuration file called <filename>ferns-config2
 :name ferns-intron-exon2
 </programlisting>
 
-% bali-phy infer -c ferns-config2.txt &amp;
-% bali-phy infer -c ferns-config2.txt &amp;
+% bali-phy -c ferns-config2.txt &amp;
+% bali-phy -c ferns-config2.txt &amp;
 %%&lt;wait a few minutes&gt;
 % wc -l ferns-intron-exon2-*/C1.log                      # How many iterations have been completed so far?
 % bp-summarize ferns-intron-exon2-1 ferns-intron-exon2-2   # Generate a summary of completed iterations.
@@ -421,8 +421,8 @@ Note that spaces in FASTA files are allowed, but not required.
 :name ferns-intron-exon3
 </programlisting>
 
-% bali-phy infer -c ferns-config3.txt &amp;
-% bali-phy infer -c ferns-config3.txt &amp;
+% bali-phy -c ferns-config3.txt &amp;
+% bali-phy -c ferns-config3.txt &amp;
 % wc -l ferns-intron-exon3-*/C1.log                      # How many iterations have been completed so far?
 % bp-summarize ferns-intron-exon3-1 ferns-intron-exon3-2   # Generate a summary of completed iterations.
 %%&lt;wait a few more minutes&gt;

@@ -8,39 +8,35 @@
 
 # SYNOPSIS
 
-**bali-phy** [_GLOBAL-OPTIONS_] **infer** [_INFER-OPTIONS_] _DATA_ ...
+**bali-phy** [_OPTIONS_] [_INFER-OPTIONS_] _DATA_ ...
 
-**bali-phy** [_GLOBAL-OPTIONS_] **run** [_COMPILER-OPTIONS_] _PROGRAM_ [_PROGRAM-ARGUMENTS_ ...]
+**bali-phy** [_OPTIONS_] **run** [_COMPILER-OPTIONS_] _PROGRAM_ [_PROGRAM-ARGUMENTS_ ...]
 
-**bali-phy** [_GLOBAL-OPTIONS_] **print** [_PRINT-OPTIONS_] _EXPRESSION_
+**bali-phy** [_OPTIONS_] **print** [_PRINT-OPTIONS_] _EXPRESSION_
 
-**bali-phy** [_GLOBAL-OPTIONS_] **type** _NAME_
+**bali-phy** [_OPTIONS_] **type** _NAME_
 
-**bali-phy** [_GLOBAL-OPTIONS_] **test-module** [_COMPILER-OPTIONS_] _MODULE_
+**bali-phy** [_OPTIONS_] **test-module** [_COMPILER-OPTIONS_] _MODULE_
 
 **bali-phy** **help** [_TOPIC_]
 
 # DESCRIPTION
 
-**bali-phy infer** estimates multiple sequence alignments and evolutionary trees
+**bali-phy** estimates multiple sequence alignments and evolutionary trees
 from DNA, amino acid, or codon sequences. BAli-Phy uses MCMC and Bayesian methods
 to estimate evolutionary trees, positive selection, and branch lengths while
 averaging over alternative alignments. It can also estimate phylogenies from a
 fixed alignment using substitution models such as GTR+gamma.
 
-A command is required. Use **infer** for sequence analyses and **run** for a
-standalone Haskell program. In a **run** command, the first non-option is the
-program. Every later argument belongs to that program, including arguments
-beginning with `-` or `/`; no `--` separator is needed.
+A named command is optional. Without one, BAli-Phy analyzes the supplied sequence
+data. Use **run** for a standalone Haskell program. In a **run** command, the first
+non-option is the program. Every later argument belongs to that program, including
+arguments beginning with `-` or `/`; no `--` separator is needed.
 
 Long option names must be exact. For example, use **--iterations**, not
 **--iter**.
 
 # COMMANDS
-
-**infer** _DATA_ ...
-: Analyze one or more sequence data sets. Use **infer --help** for its complete
-  basic option list.
 
 **run** _PROGRAM_ [_ARGUMENT_ ...]
 : Load a standalone Haskell program and evaluate its `main` function. BAli-Phy
@@ -135,14 +131,14 @@ Long option names must be exact. For example, use **--iterations**, not
 
 # CONFIGURATION FILES
 
-Configuration files are inputs to **infer**. An option is written on its own
-line as `:option value`. Blank lines and lines whose first non-whitespace
-character is `#` are ignored. Every other line is model-language source; these
-source lines may appear before, between, or after option lines and retain their
-relative order. Sequence data can be supplied with `:align FILE`.
+Configuration files are inputs to the default inference mode. An option is written
+on its own line as `:option value`. Blank lines and lines whose first non-whitespace
+character is `#` are ignored. Every other line is model-language source; these source
+lines may appear before, between, or after option lines and retain their relative
+order. Sequence data can be supplied with `:align FILE`.
 
 BAli-Phy does not load an implicit `~/.bali-phy` file. Pass a configuration file
-explicitly with **infer --config**.
+explicitly with **--config**.
 
 # HASKELL COMPILER OPTIONS
 
@@ -175,10 +171,10 @@ Linux, macOS, or WSL2.
 
 # EXAMPLES
 
-`bali-phy infer dna.fasta --smodel GTR`
+`bali-phy dna.fasta --smodel GTR`
 : Analyze sequences in _dna.fasta_ under the GTR model.
 
-`bali-phy infer dna.fasta -S GTR -I none`
+`bali-phy dna.fasta -S GTR -I none`
 : Perform a fixed-alignment analysis with gaps treated as missing data.
 
 `bali-phy --seed 1 run Model.hs --iterations=1000 data.fasta`

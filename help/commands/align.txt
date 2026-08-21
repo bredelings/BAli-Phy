@@ -10,15 +10,15 @@ different models.
 
 FASTA files are usually specified without the `--align` command:
 
-   bali-phy infer dna.fasta rna.fasta
+   bali-phy dna.fasta rna.fasta
 
 This is equivalent to
 
-   bali-phy infer --align=dna.fasta --align=rna.fasta
+   bali-phy --align=dna.fasta --align=rna.fasta
 
 The initial alignment for each partition is taken from the
 alignment of the sequences in the FASTA file.
 
 # Examples:
 
-   bali-phy infer dna.fasta
+   bali-phy dna.fasta

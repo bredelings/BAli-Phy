@@ -19,7 +19,7 @@ data is specified with `:align`.
 
 # Example command:
 
-   bali-phy infer --config=script --name=ITS
+   bali-phy --config=script --name=ITS
 
 # Example script:
 

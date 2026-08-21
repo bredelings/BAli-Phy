@@ -17,10 +17,10 @@ are written every <number>*10 iterations to save disk space.
 # Examples:
 
    # Keep every 3rd sample in C1.log
-   bali-phy infer dna.fasta -x3
+   bali-phy dna.fasta -x3
 
    # Keep every sample in C1.log (the default)
-   bali-phy infer dna.fasta -x1
+   bali-phy dna.fasta -x1
 
 # See also:
 
