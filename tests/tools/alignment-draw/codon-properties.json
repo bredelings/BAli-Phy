@@ -13,6 +13,20 @@
   "retained_samples": 6,
   "retained_samples_by_chain": [3, 3],
   "properties": {
+    "posSelection": {
+      "mean": {
+        "alpha": [0.7, 0.2, 0.8],
+        "beta": [0.6, 0.1, 0.9]
+      },
+      "sd": {
+        "alpha": [0.1, 0.1, 0.1],
+        "beta": [0.1, 0.1, 0.1]
+      },
+      "median": {
+        "alpha": [0.7, 0.2, 0.8],
+        "beta": [0.6, 0.1, 0.9]
+      }
+    },
     "dNdS": {
       "mean": {
         "alpha": [0.5, 1.0, 2.0],

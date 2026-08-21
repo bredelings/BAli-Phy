@@ -36,7 +36,12 @@ require(
     "appendTooltipRow(list, 'Palette'" not in html,
     "tooltips must not present palette as a character property",
 )
-columns = viewer["character_property_reports"]["dNdS"]["generic"]["table"]["columns"]
+columns = viewer["character_property_reports"]["dNdS"]["generic"]["columns"]
 require_equal(columns[0]["label"], "Column")
+# The existing codon fixture checks that positive-selection tables retain both the
+# logical codon and its translated amino acid rather than falling back to character labels.
+positive_columns = viewer["character_property_reports"]["posSelection"]["positive_selection"]["columns"]
+require_equal([column["label"] for column in positive_columns[:4]],
+              ["Column", "Representative", "Codon", "Amino acid"])
 require("line-height: 1" in html, "alignment cells and their colored spans must use the same line height")
 require(len({part["style"] for part in parser.cells[0]["parts"]}) == 2, "ATA must retain distinct A and T colors")

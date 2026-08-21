@@ -5,7 +5,7 @@
 // Extracts the scientific property result from the versioned viewer envelope.
 function characterPropertiesFromPayload(payload)
 {
-    if (!payload || payload.format !== 'bali-phy-alignment-viewer' || payload.version !== 2)
+    if (!payload || payload.format !== 'bali-phy-alignment-viewer' || payload.version !== 3)
         throw new Error('Viewer data has an unsupported format or version.');
     if (!payload.character_properties)
         throw new Error('Viewer data does not contain character properties.');

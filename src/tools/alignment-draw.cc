@@ -836,116 +836,113 @@ string serialize_json_for_html(const json::value& document)
     return escaped;
 }
 
-/// Add the static table layout that lets the viewer use one generic sortable renderer.
-json::value make_viewer_report(const character_properties::report& report)
+/// Encode ordinary column summaries once in the table shape consumed by the viewer.
+json::value make_column_property_table(const std::vector<character_properties::column_property_summary>& summaries)
 {
-    auto result = character_properties::to_json(report).as_object();
     json::array columns;
     json::array rows;
     auto add_column = [&columns](const char* label, const char* type, int direction) {
         columns.push_back(json::object{{"label", label}, {"type", type}, {"direction", direction}});
     };
-
-    if (report.kind == character_properties::report_kind::property_columns)
+    add_column("Column", "number", 1);
+    add_column("Letters", "number", 1);
+    add_column("Mean minimum", "number", -1);
+    add_column("Mean middle", "number", -1);
+    add_column("Mean maximum", "number", -1);
+    add_column("Median minimum", "number", -1);
+    add_column("Median middle", "number", -1);
+    add_column("Median maximum", "number", -1);
+    for (const auto& summary: summaries)
     {
-        add_column("Column", "number", 1);
-        add_column("Letters", "number", 1);
-        add_column("Mean minimum", "number", -1);
-        add_column("Mean middle", "number", -1);
-        add_column("Mean maximum", "number", -1);
-        add_column("Median minimum", "number", -1);
-        add_column("Median middle", "number", -1);
-        add_column("Median maximum", "number", -1);
-        for (const auto& encoded: report.rows)
-        {
-            const auto& row = std::get<character_properties::column_summary_row>(encoded);
-            rows.push_back(json::object{
-                {"column_index", row.alignment_column},
-                {"sequence_index", nullptr},
-                {"cells", json::array{
-                    row.alignment_column + 1, row.letter_count,
-                    row.posterior_means.minimum, row.posterior_means.middle, row.posterior_means.maximum,
-                    row.posterior_medians.minimum, row.posterior_medians.middle, row.posterior_medians.maximum
-                }}
-            });
-        }
+        rows.push_back(json::object{
+            {"column_index", summary.alignment_column},
+            {"cells", json::array{
+                summary.alignment_column + 1, summary.letter_count,
+                summary.mean_minimum, summary.mean_middle, summary.mean_maximum,
+                summary.median_minimum, summary.median_middle, summary.median_maximum
+            }}
+        });
     }
-    else
+    return json::object{{"kind", "property-columns"},
+                        {"columns", std::move(columns)}, {"rows", std::move(rows)}};
+}
+
+/// Encode selected positive-selection columns once in the table shape consumed by the viewer.
+json::value make_positive_selection_table(const std::vector<character_properties::selected_column>& selected)
+{
+    json::array columns;
+    json::array rows;
+    auto add_column = [&columns](const char* label, const char* type, int direction) {
+        columns.push_back(json::object{{"label", label}, {"type", type}, {"direction", direction}});
+    };
+    bool translations = std::ranges::any_of(selected, [](const auto& column) {
+        return column.translation.has_value();
+    });
+    bool companions = std::ranges::any_of(selected, [](const auto& column) {
+        return column.companion_summary.has_value();
+    });
+    add_column("Column", "number", 1);
+    add_column("Representative", "text", 1);
+    add_column(translations ? "Codon" : "Character", "text", 1);
+    if (translations)
+        add_column("Amino acid", "text", 1);
+    add_column("Pr(ω>1)", "number", -1);
+    if (companions)
     {
-        bool translations = std::ranges::any_of(report.rows, [](const auto& encoded) {
-            return std::get<character_properties::representative_row>(encoded).translation.has_value();
-        });
-        bool companions = std::ranges::any_of(report.rows, [](const auto& encoded) {
-            return std::get<character_properties::representative_row>(encoded).companion_statistics.has_value();
-        });
-        add_column("Column", "number", 1);
-        add_column("Representative", "text", 1);
-        add_column(translations ? "Codon" : "Character", "text", 1);
+        add_column("dN/dS mean", "number", -1);
+        add_column("dN/dS SD", "number", -1);
+        add_column("dN/dS median", "number", -1);
+    }
+    for (const auto& column: selected)
+    {
+        json::array cells{
+            column.alignment_column + 1,
+            column.sequence_name+":"+std::to_string(column.character_index + 1),
+            column.symbol
+        };
         if (translations)
-            add_column("Amino acid", "text", 1);
-        add_column("Pr(ω>1)", "number", -1);
+            cells.push_back(column.translation ? json::value(*column.translation) : json::value(nullptr));
+        cells.push_back(column.property_summary.mean);
         if (companions)
         {
-            add_column("dN/dS mean", "number", -1);
-            add_column("dN/dS SD", "number", -1);
-            add_column("dN/dS median", "number", -1);
+            cells.push_back(column.companion_summary->mean);
+            cells.push_back(column.companion_summary->sd);
+            cells.push_back(column.companion_summary->median);
         }
-        for (const auto& encoded: report.rows)
-        {
-            const auto& row = std::get<character_properties::representative_row>(encoded);
-            json::array cells{
-                row.alignment_column + 1,
-                row.sequence_name+":"+std::to_string(row.character_index + 1),
-                row.symbol
-            };
-            if (translations)
-                cells.push_back(row.translation ? json::value(*row.translation) : json::value(nullptr));
-            cells.push_back(row.statistics.mean);
-            if (companions)
-            {
-                cells.push_back(row.companion_statistics->mean);
-                cells.push_back(row.companion_statistics->sd);
-                cells.push_back(row.companion_statistics->median);
-            }
-            rows.push_back(json::object{
-                {"column_index", row.alignment_column},
-                {"sequence_index", row.sequence_index},
-                {"cells", std::move(cells)}
-            });
-        }
+        rows.push_back(json::object{
+            {"column_index", column.alignment_column},
+            {"sequence_index", column.sequence_index},
+            {"cells", std::move(cells)}
+        });
     }
-    result["table"] = json::object{{"columns", std::move(columns)}, {"rows", std::move(rows)}};
-    return result;
+    return json::object{{"kind", "positive-selection"},
+                        {"columns", std::move(columns)}, {"rows", std::move(rows)}};
 }
 
 /// Precompute one canonical column report for each property in a posterior view.
 json::object make_character_property_reports(
-    const character_properties::summary& property_summary,
     const character_properties::alignment_projection& projection,
-    const std::map<std::string, character_properties::property_summary>& properties,
-    const std::optional<std::string>& condition)
+    const std::map<std::string, character_properties::property_summary>& properties)
 {
     json::object reports;
-    auto view = character_properties::select_posterior_view(property_summary, condition);
-    for (const auto& property: properties)
+    for (const auto& [property_name, property]: properties)
     {
-        const auto& property_name = property.first;
         json::object property_reports;
         if (character_properties::is_positive_selection_property(property_name))
         {
-            character_properties::positive_selection_report_options options;
-            options.property = property_name;
-            options.selection = {character_properties::letter_selection_kind::above, 0.5};
-            property_reports["positive_selection"] = make_viewer_report(
-                character_properties::make_positive_selection_report(view, projection, options));
+            constexpr std::string_view suffix = "posSelection";
+            std::string companion_name = property_name.substr(0, property_name.size() - suffix.size())+"dNdS";
+            const character_properties::property_summary* companion = nullptr;
+            if (auto found = properties.find(companion_name); found != properties.end())
+                companion = &found->second;
+            std::size_t selected_letter_count = 0;
+            auto selected = character_properties::select_positive_selection_columns(
+                property_name, property, projection, 0.5, {}, companion_name, companion, selected_letter_count);
+            property_reports["positive_selection"] = make_positive_selection_table(selected);
         }
         else
-        {
-            character_properties::property_report_options options;
-            options.property = property_name;
-            property_reports["generic"] = make_viewer_report(
-                character_properties::make_property_report(view, projection, options));
-        }
+            property_reports["generic"] = make_column_property_table(
+                character_properties::summarize_property_columns(property, projection));
         reports[property_name] = std::move(property_reports);
     }
     return reports;
@@ -960,7 +957,7 @@ json::value make_viewer_payload(const character_properties::summary& property_su
 {
     json::object payload;
     payload["format"] = "bali-phy-alignment-viewer";
-    payload["version"] = 2;
+    payload["version"] = 3;
 
     json::array sequence_names;
     for (const auto& seq: sequences)
@@ -969,12 +966,11 @@ json::value make_viewer_payload(const character_properties::summary& property_su
     payload["character_properties"] = character_properties::to_json(property_summary);
 
     payload["character_property_reports"] =
-        make_character_property_reports(property_summary, projection, property_summary.properties, std::nullopt);
+        make_character_property_reports(projection, property_summary.properties);
     json::object conditioned_reports;
     for (const auto& [name, view]: property_summary.conditioned)
         if (view.retained_samples > 0)
-            conditioned_reports[name] =
-                make_character_property_reports(property_summary, projection, view.properties, name);
+            conditioned_reports[name] = make_character_property_reports(projection, view.properties);
     payload["conditioned_character_property_reports"] = std::move(conditioned_reports);
 
     if (include_uncertainty)

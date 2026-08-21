@@ -17,7 +17,7 @@ parser, viewer = parse_viewer_html(html)
 properties = character_properties_from_viewer(viewer)
 
 require_equal(viewer["format"], "bali-phy-alignment-viewer")
-require_equal(viewer["version"], 2)
+require_equal(viewer["version"], 3)
 require_equal(viewer["sequences"], ["alpha", "beta"])
 require(".alignment-viewer-toolbar" in html, "viewer toolbar CSS is missing")
 require("BaliPhyAlignmentViewer" in html, "viewer JavaScript is missing")
@@ -29,8 +29,6 @@ require("Model-averaged:" in html, "shared posterior-view sample summary is miss
 require("mean ± SD" in html, "complete posterior tooltip summary is missing")
 require("alignment-viewer-report-scroll" in html, "column report panel is missing")
 require("alignment-viewer-report-sort" in html, "sortable report-header styling is missing")
-require("Minimum probability" not in html, "obsolete positive-selection threshold control remains")
-require("reportSortSelect" not in html, "obsolete report-order control remains")
 require(".alignment-scroll" not in html, "the alignment must retain document-level horizontal scrolling")
 require(
     "position: sticky" in html and "width: calc(100vw - 1rem)" in html,
@@ -47,22 +45,21 @@ generic = reports["rate"]["generic"]
 require_equal(generic["kind"], "property-columns")
 require_equal(
     [
-        (row["column_index"], row["letter_count"], row["posterior_means"]["minimum"],
-         row["posterior_means"]["middle"], row["posterior_means"]["maximum"])
+        (row["column_index"], row["cells"][1], *row["cells"][2:5])
         for row in generic["rows"]
     ],
     [(0, 2, 0.25, 0.25, 0.5), (1, 1, 4.0, 4.0, 4.0),
      (2, 1, 2.0, 2.0, 2.0), (3, 2, 8.0, 8.0, 16.0)],
 )
-require_equal(generic["table"]["columns"][2]["label"], "Mean minimum")
+require_equal(generic["columns"][2]["label"], "Mean minimum")
 positive = reports["posSelection"]["positive_selection"]
 require_equal(
     [
         (
             row["column_index"],
-            row["sequence"],
-            row["statistics"]["mean"],
-            row["companion"]["statistics"]["mean"],
+            row["cells"][1].split(":", 1)[0],
+            row["cells"][3],
+            row["cells"][4],
         )
         for row in positive["rows"]
     ],

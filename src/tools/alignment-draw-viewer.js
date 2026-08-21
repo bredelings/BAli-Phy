@@ -258,7 +258,7 @@ class AlignmentPropertyViewer {
         this.document.body.append(this.tooltip);
     }
 
-    // Builds the fixed-height column report and its generic or positive-selection controls.
+    // Builds the fixed-height column report with no report-specific controls.
     buildReportPanel()
     {
         const doc = this.document;
@@ -580,8 +580,8 @@ class AlignmentPropertyViewer {
         for (const cell of this.cells)
             cell.element.classList.remove('alignment-report-column');
 
-        const columns = report.table?.columns || [];
-        const rows = report.table?.rows || [];
+        const columns = report.columns || [];
+        const rows = report.rows || [];
         const header = this.document.createElement('tr');
         columns.forEach((column, index) => {
             const cell = this.document.createElement('th');
