@@ -122,26 +122,6 @@ extern "C" closure builtin_function_bitwise_and(OperationArgs& Args)
     return { v2 };
 }
 
-extern "C" closure builtin_function_eq(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto arg1 = Args.evaluate_slot_to_value(1);
-
-    bitvector v2 = arg0.as_<bitvector>() | arg1.as_<bitvector>();
-
-    return { arg0.as_<bitvector>() == arg1.as_<bitvector>() };
-}
-
-
-extern "C" closure builtin_function_neq(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto arg1 = Args.evaluate_slot_to_value(1);
-
-    return { arg0.as_<bitvector>() != arg1.as_<bitvector>() };
-}
-
-
 extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
