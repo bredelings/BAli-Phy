@@ -26,23 +26,23 @@
 // This define causes assertion failures about the length of the root sequence in several tests.
 // #define DEBUG_SPR_ALL
 
-#include "dp/2way.H"
+#include "dp/2way.hh"
 #include <cmath>
 #include "util/assert.hh"
 #include <iostream>
-#include "sample.H"
-#include "util/rng.H"
-#include "probability/choose.H"
-#include "probability/probability.H"
-#include "util/log-level.H"                         // for log_verbose
-#include "util/settings.H"                          // for get_setting_or( )
+#include "sample.hh"
+#include "util/rng.hh"
+#include "probability/choose.hh"
+#include "probability/probability.hh"
+#include "util/log-level.hh"                         // for log_verbose
+#include "util/settings.hh"                          // for get_setting_or( )
 
-#include "dp/3way.H"
-#include "tree/tree-util.H"
-#include "util/permute.H"
-#include "dp/alignment-sums.H"
-#include "alignment/alignment-constraint.H"
-#include "substitution/likelihood.H"
+#include "dp/3way.hh"
+#include "tree/tree-util.hh"
+#include "util/permute.hh"
+#include "dp/alignment-sums.hh"
+#include "alignment/alignment-constraint.hh"
+#include "substitution/likelihood.hh"
 
 using MCMC::MoveStats;
 

@@ -1,6 +1,6 @@
-#include "func.H"
+#include "func.hh"
 
-#include "computation/fresh_vars.H"
+#include "computation/fresh_vars.hh"
 
 using std::tuple;
 using std::vector;

@@ -22,9 +22,9 @@
 #include <string>
 #include <vector>
 #include "util/assert.hh"
-#include "util/myexception.H"
-#include "util/string/join.H"
-#include "util/io.H"
+#include "util/myexception.hh"
+#include "util/string/join.hh"
+#include "util/io.hh"
 
 #include <boost/program_options.hpp>
 

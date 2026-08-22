@@ -1,4 +1,4 @@
-#include "mcon/mcon.H"
+#include "mcon/mcon.hh"
 #include <tuple>
 #include <optional>
 #include <sstream>

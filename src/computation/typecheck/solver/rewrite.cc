@@ -1,8 +1,8 @@
-#include "computation/typecheck/typecheck.H"
-#include "computation/typecheck/kindcheck.H"
-#include "computation/typecheck/solver.H"
+#include "computation/typecheck/typecheck.hh"
+#include "computation/typecheck/kindcheck.hh"
+#include "computation/typecheck/solver.hh"
 
-#include "util/variant.H"
+#include "util/variant.hh"
 
 #include <range/v3/all.hpp>
 

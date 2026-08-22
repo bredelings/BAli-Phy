@@ -1,12 +1,12 @@
-#include "character-property-alignment.H"
+#include "character-property-alignment.hh"
 
 #include <map>
 #include <optional>
 
-#include "sequence/codons.H"
-#include "sequence/sequence-format.H"
-#include "util/io.H"
-#include "util/myexception.H"
+#include "sequence/codons.hh"
+#include "sequence/sequence-format.hh"
+#include "util/io.hh"
+#include "util/myexception.hh"
 
 namespace character_properties
 {

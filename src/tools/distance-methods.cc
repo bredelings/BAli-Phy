@@ -17,13 +17,13 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "distance-methods.H"
+#include "distance-methods.hh"
 
 #include <iostream>
 #include <list>
 #include <valarray>
 #include "boost/tuple/tuple.hpp"
-#include "inverse.H"
+#include "inverse.hh"
 
 using std::list;
 using std::vector;

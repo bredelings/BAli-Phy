@@ -1,6 +1,6 @@
-#include "mcmc/slice-sampling.H"
-#include "test-util.H"
-#include "util/rng.H"
+#include "mcmc/slice-sampling.hh"
+#include "test-util.hh"
+#include "util/rng.hh"
 
 #include <cmath>
 #include <limits>

@@ -17,10 +17,10 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "util/settings.H"
+#include "util/settings.hh"
 
-#include "util/string/split.H"
-#include "util/myexception.H"
+#include "util/string/split.hh"
+#include "util/myexception.hh"
 
 using std::vector;
 using std::string;

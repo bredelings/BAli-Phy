@@ -1,4 +1,4 @@
-#include "instance_info.H"
+#include "instance_info.hh"
 
 Type InstanceInfo::type() const
 {

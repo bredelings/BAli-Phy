@@ -9,8 +9,8 @@
 # include <set>
 # include <utility>
 # include "parser.hh"
-# include "computation/haskell/extensions.H"
-# include "computation/message.H"
+# include "computation/haskell/extensions.hh"
+# include "computation/message.hh"
 
 class driver;
 class RawLexerState;

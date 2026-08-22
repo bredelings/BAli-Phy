@@ -17,24 +17,24 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "alignment/index-matrix.H"
+#include "alignment/index-matrix.hh"
 #include <utility>
 #include <fstream>
 #include <string>
 #include <cmath>
 #include <list>
 #include <numeric>
-#include "util/myexception.H"
-#include "optimize.H"
-#include "findroot.H"
-#include "alignment/alignment-util.H"
-#include "alignment/load.H"
-#include "distance-methods.H"
-#include "util/rng.H"
-#include "statistics.H"
-#include "util/log-level.H"
-#include "util/string/split.H"
-#include "util/string/convert.H"
+#include "util/myexception.hh"
+#include "optimize.hh"
+#include "findroot.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/load.hh"
+#include "distance-methods.hh"
+#include "util/rng.hh"
+#include "statistics.hh"
+#include "util/log-level.hh"
+#include "util/string/split.hh"
+#include "util/string/convert.hh"
 
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>

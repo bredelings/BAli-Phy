@@ -20,17 +20,17 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "tree/tree.H"
-#include "alignment/alignment.H"
-#include "alignment/alignment-util.H"
-#include "alignment/load.H"
-#include "tree/tree-util.H"
-#include "util/mapping.H"
-#include "util/range.H"
-#include "util/cmdline.H"
-#include "distance-methods.H"
+#include "tree/tree.hh"
+#include "alignment/alignment.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/load.hh"
+#include "tree/tree-util.hh"
+#include "util/mapping.hh"
+#include "util/range.hh"
+#include "util/cmdline.hh"
+#include "distance-methods.hh"
 #include <utility>
-#include "alignment/index-matrix.H"
+#include "alignment/index-matrix.hh"
 
 #include <boost/dynamic_bitset.hpp>
 

@@ -1,4 +1,4 @@
-#include "util/string/pred.H"
+#include "util/string/pred.hh"
 
 using std::string;
 

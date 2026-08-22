@@ -1,10 +1,10 @@
-#include "typecheck.H"
-#include "kindcheck.H"
-#include "haskell/ids.H"
-#include "core/func.H"
-#include "fundeps.H"
-#include "rename/rename.H"
-#include "util/string/join.H"
+#include "typecheck.hh"
+#include "kindcheck.hh"
+#include "haskell/ids.hh"
+#include "core/func.hh"
+#include "fundeps.hh"
+#include "rename/rename.hh"
+#include "util/string/join.hh"
 
 using std::string;
 using std::vector;

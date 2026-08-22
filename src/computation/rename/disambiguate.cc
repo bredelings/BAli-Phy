@@ -7,8 +7,8 @@
 #include <tuple>
 #include <vector>
 
-#include "rename.H"
-#include "computation/record_utils.H"
+#include "rename.hh"
+#include "computation/record_utils.hh"
 
 using std::map;
 using std::optional;

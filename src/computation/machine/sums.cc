@@ -1,6 +1,6 @@
-#include "graph_register.H"
-#include "effects.H"
-#include "util/math/neumaier.H"
+#include "graph_register.hh"
+#include "effects.hh"
+#include "util/math/neumaier.hh"
 
 long total_context_prior = 0;
 long total_context_like = 0;

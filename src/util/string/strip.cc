@@ -1,4 +1,4 @@
-#include "util/string/strip.H"
+#include "util/string/strip.hh"
 
 using std::string;
 

@@ -17,10 +17,10 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "colors.H"
+#include "colors.hh"
 #include "util/assert.hh"
-#include "util/range.H"
-#include "util/string/convert.H"
+#include "util/range.hh"
+#include "util/string/convert.hh"
 #include <iostream>
 
 namespace colors {

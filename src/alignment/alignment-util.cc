@@ -23,15 +23,15 @@
 /// \brief This file implements alignment utility functions.
 ///
 
-#include "alignment-util.H"
-#include "index-matrix.H"
+#include "alignment-util.hh"
+#include "index-matrix.hh"
 
 #include <boost/program_options.hpp>
-#include "util/set.H"
-#include "util/io.H"
-#include "util/range.H"
-#include "tree/tree.H"
-#include "tree/sequencetree.H"
+#include "util/set.hh"
+#include "util/io.hh"
+#include "util/range.hh"
+#include "tree/tree.hh"
+#include "tree/sequencetree.hh"
 
 using std::string;
 using std::vector;

@@ -22,16 +22,16 @@
 #include <cmath>
 #include <vector>
 #include <list>
-#include "util/myexception.H"
-#include "alignment/alignment.H"
-#include "optimize.H"
-#include "findroot.H"
-#include "util/string/join.H"
-#include "util/range.H"
-#include "alignment/load.H"
-#include "alignment/alignment-util.H"
-#include "alignment/index-matrix.H"
-#include "distance-methods.H"
+#include "util/myexception.hh"
+#include "alignment/alignment.hh"
+#include "optimize.hh"
+#include "findroot.hh"
+#include "util/string/join.hh"
+#include "util/range.hh"
+#include "alignment/load.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/index-matrix.hh"
+#include "distance-methods.hh"
 
 #include <boost/program_options.hpp>
 

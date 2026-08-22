@@ -1,5 +1,5 @@
-#include "gcobject.H"
-#include "util/string/join.H"
+#include "gcobject.hh"
+#include "util/string/join.hh"
 
 
 void GCObject::get_regs(std::vector<int>& regs) const

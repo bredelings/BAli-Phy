@@ -24,10 +24,10 @@
  */
 
 #include <cmath>
-#include "dp-array.H"
-#include "math/pow2.H"
-#include "probability/choose.H"
-#include "util/mapping.H"
+#include "dp-array.hh"
+#include "math/pow2.hh"
+#include "probability/choose.hh"
+#include "util/mapping.hh"
 
 using std::vector;
 using std::optional;

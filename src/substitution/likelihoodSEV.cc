@@ -1,13 +1,13 @@
-#include "likelihood.H"
-#include "likelihoodSEV.H"
-#include "ops.H"
-#include "sequence/alphabet.H"
-#include "util/rng.H"
-#include "util/log-level.H"
+#include "likelihood.hh"
+#include "likelihoodSEV.hh"
+#include "ops.hh"
+#include "sequence/alphabet.hh"
+#include "util/rng.hh"
+#include "util/log-level.hh"
 #include <cmath>
 #include <cstdint>
 #include <vector>
-#include "math/logprod.H"
+#include "math/logprod.hh"
 #include <boost/dynamic_bitset.hpp>
 
 // #define DEBUG_SUBSTITUTION

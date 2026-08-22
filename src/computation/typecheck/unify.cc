@@ -1,5 +1,5 @@
-#include "typecheck.H"
-#include "util/variant.H"
+#include "typecheck.hh"
+#include "util/variant.hh"
 
 using std::vector;
 

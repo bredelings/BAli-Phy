@@ -1,6 +1,6 @@
-#include "character-property-summary.H"
+#include "character-property-summary.hh"
 
-#include "character-property-sample-file.H"
+#include "character-property-sample-file.hh"
 
 #include <algorithm>
 #include <cmath>
@@ -15,7 +15,7 @@
 #include <unordered_set>
 #include <utility>
 
-#include "util/myexception.H"
+#include "util/myexception.hh"
 
 namespace character_properties
 {

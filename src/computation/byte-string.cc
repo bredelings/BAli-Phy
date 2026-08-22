@@ -1,9 +1,9 @@
-#include "computation/byte-string.H"
+#include "computation/byte-string.hh"
 
 #include <iomanip>
 #include <sstream>
 
-#include "util/myexception.H"
+#include "util/myexception.hh"
 
 // Check the shared-storage slice invariants in one place so every constructor
 // and slice operation rejects impossible byte windows consistently.

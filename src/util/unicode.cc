@@ -1,7 +1,7 @@
-#include "util/unicode.H"
+#include "util/unicode.hh"
 
-#include "util/myexception.H"
-#include "util/utf8.H"
+#include "util/myexception.hh"
+#include "util/utf8.hh"
 
 #include <utf8proc.h>
 

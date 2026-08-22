@@ -1,6 +1,6 @@
-#include "computation/closure.H"
-#include "computation/runtime/ast.H"
-#include "test-util.H"
+#include "computation/closure.hh"
+#include "computation/runtime/ast.hh"
+#include "test-util.hh"
 
 namespace bali_phy_test
 {

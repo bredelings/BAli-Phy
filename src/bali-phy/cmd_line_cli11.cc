@@ -1,4 +1,4 @@
-#include "cmd_line.H"
+#include "cmd_line.hh"
 
 #include <cstdlib>
 #include <iostream>
@@ -7,12 +7,12 @@
 #include <sstream>
 #include <CLI/CLI.hpp>
 
-#include "command_config.H"
-#include "command_line_help.H"
+#include "command_config.hh"
+#include "command_line_help.hh"
 #include "help.hh"
-#include "paths.H"
-#include "util/myexception.H"
-#include "version.H"
+#include "paths.hh"
+#include "util/myexception.hh"
+#include "version.hh"
 
 using std::string;
 using std::vector;

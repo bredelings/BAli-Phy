@@ -13,10 +13,10 @@
   # include <vector>
   # include <tuple>
   # include <optional>
-  # include "computation/haskell/haskell.H"
-  # include "computation/typecheck/types.H"
-  # include "computation/typecheck/kind.H"
-  # include "util/string/join.H"
+  # include "computation/haskell/haskell.hh"
+  # include "computation/typecheck/types.hh"
+  # include "computation/typecheck/kind.hh"
+  # include "util/string/join.hh"
 
   class driver;
 

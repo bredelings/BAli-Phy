@@ -1,9 +1,9 @@
-#include "computation/object.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
+#include "computation/object.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
 #include <iomanip> // for std::quoted
 #include <sstream>
-#include "computation/runtime/ast.H"
+#include "computation/runtime/ast.hh"
 
 std::string Object::print() const {
     return std::string("unprintable[")+demangle(typeid(*this).name())+"] "+ convertToString(this);

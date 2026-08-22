@@ -1,6 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/byte-string.H"
-#include "computation/machine/args.H"
+#include "computation/byte-string.hh"
+#include "computation/machine/args.hh"
 
 using std::vector;
 

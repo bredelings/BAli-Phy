@@ -1,5 +1,5 @@
 #include "computation/parser/driver.hh"
-#include "test-util.H"
+#include "test-util.hh"
 
 #include <string>
 #include <string_view>

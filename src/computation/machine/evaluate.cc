@@ -2,12 +2,12 @@
 //#undef NDEBUG
 //#endif
 
-#include "util/log-level.H"
-#include "graph_register.H"
-#include "effect.H"
-#include "error_exception.H"
-#include "computation/preprocess.H"
-#include "computation/operations.H"
+#include "util/log-level.hh"
+#include "graph_register.hh"
+#include "effect.hh"
+#include "error_exception.hh"
+#include "computation/preprocess.hh"
+#include "computation/operations.hh"
 #include <boost/container/small_vector.hpp>
 #include <type_traits>
 
@@ -17,7 +17,7 @@ using std::map;
 using std::set;
 using std::pair;
 
-#include "args.H"
+#include "args.hh"
 
 long total_reductions = 0;
 long total_changeable_reductions = 0;

@@ -1,10 +1,10 @@
 #include <optional>
 #include <algorithm>
-#include "util/text.H"
+#include "util/text.hh"
 #include "util/assert.hh"
-#include "util/utf8.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
+#include "util/utf8.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
 #include <cstdlib>
 
 using std::string;

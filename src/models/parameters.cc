@@ -29,26 +29,26 @@
 #include <sstream>
 #include "util/assert.hh"
 
-#include "sequence/doublets.H"
-#include "sequence/codons.H"
-#include "models/parameters.H"
-#include "models/TreeInterface.H"
-#include "dp/2way.H"
-#include "util/rng.H"
-#include "util/set.H"
-#include "util/io.H"
-#include "util/log-level.H"
-#include "substitution/likelihood.H"
-#include "alignment/alignment-util.H"
-#include "alignment/alignment-util2.H"
-#include "probability/probability.H"
-#include "computation/module.H"
-#include "computation/operations.H" // for VectorFromList<>
-#include "math/exponential.H"
-#include "models/compile.H"
-#include "tree-align/link2.H"
-#include "computation/machine/graph_register.H"
-#include "computation/machine/gcobject.H"
+#include "sequence/doublets.hh"
+#include "sequence/codons.hh"
+#include "models/parameters.hh"
+#include "models/TreeInterface.hh"
+#include "dp/2way.hh"
+#include "util/rng.hh"
+#include "util/set.hh"
+#include "util/io.hh"
+#include "util/log-level.hh"
+#include "substitution/likelihood.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/alignment-util2.hh"
+#include "probability/probability.hh"
+#include "computation/module.hh"
+#include "computation/operations.hh" // for VectorFromList<>
+#include "math/exponential.hh"
+#include "models/compile.hh"
+#include "tree-align/link2.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/machine/gcobject.hh"
 
 using std::vector;
 using std::string;
@@ -438,8 +438,8 @@ void Parameters::exchange_subtrees(int br1, int br2)
 	throw myexception()<<"exchange_subtrees failed: trying to alter a fixed topology?";
 }
 
-#include "dp/hmm.H"
-#include "dp/5way.H"
+#include "dp/hmm.hh"
+#include "dp/5way.hh"
 
 void disconnect(alignment& A, const vector<int>& nodes)
 {

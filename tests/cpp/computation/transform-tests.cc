@@ -1,8 +1,8 @@
-#include "computation/preprocess.H"
-#include "computation/runtime/ast.H"
-#include "computation/runtime/indexify.H"
-#include "computation/runtime/trim.H"
-#include "test-util.H"
+#include "computation/preprocess.hh"
+#include "computation/runtime/ast.hh"
+#include "computation/runtime/indexify.hh"
+#include "computation/runtime/trim.hh"
+#include "test-util.hh"
 
 namespace bali_phy_test
 {

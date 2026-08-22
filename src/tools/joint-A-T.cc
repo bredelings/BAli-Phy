@@ -17,19 +17,19 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "joint-A-T.H"
+#include "joint-A-T.hh"
 
 #include <fstream>
 #include <cmath>
 
-#include "alignment/alignment.H"
-#include "alignment/load.H"
-#include "tree-align/link.H"
-#include "tree/tree-util.H"
+#include "alignment/alignment.hh"
+#include "alignment/load.hh"
+#include "tree-align/link.hh"
+#include "tree/tree-util.hh"
 
-#include "util/myexception.H"
-#include "util/log-level.H"
-#include "util/io.H"
+#include "util/myexception.hh"
+#include "util/log-level.hh"
+#include "util/io.hh"
 
 namespace po = boost::program_options;
 using po::variables_map;

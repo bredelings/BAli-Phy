@@ -1,7 +1,7 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "util/dense-matrix.H"
-#include "util/myexception.H"
+#include "computation/machine/args.hh"
+#include "util/dense-matrix.hh"
+#include "util/myexception.hh"
 
 #include <limits>
 #include <type_traits>

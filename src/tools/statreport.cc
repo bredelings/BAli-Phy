@@ -28,14 +28,14 @@
 
 #include <cmath>
 
-#include "util/string/split.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "util/index_value.H"
+#include "util/string/split.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
+#include "util/index_value.hh"
 
-#include "statistics.H"
-#include "stats-table.H"
-#include "util/math/logsum.H"
+#include "statistics.hh"
+#include "stats-table.hh"
+#include "util/math/logsum.hh"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/program_options.hpp>

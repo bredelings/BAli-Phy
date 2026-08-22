@@ -4,16 +4,16 @@
 #include <map>
 #include <unordered_map>
 #include <optional>
-#include "builtins/native-vector-input.H"
-#include "computation/machine/args.H"
-#include "util/io.H"
-#include "util/string/convert.H"
-#include "util/string/split.H"
-#include "util/string/strip.H"
-#include "util/log-level.H"
-#include "math/logprod.H"
-#include "util/math/ProbDensity.H"
-#include "util/dense-matrix.H"
+#include "builtins/native-vector-input.hh"
+#include "computation/machine/args.hh"
+#include "util/io.hh"
+#include "util/string/convert.hh"
+#include "util/string/split.hh"
+#include "util/string/strip.hh"
+#include "util/log-level.hh"
+#include "math/logprod.hh"
+#include "util/math/ProbDensity.hh"
+#include "util/dense-matrix.hh"
 
 using std::string;
 using std::optional;

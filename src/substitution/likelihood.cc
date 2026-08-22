@@ -17,19 +17,19 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "likelihood.H"
-#include "ops.H"
-#include "models/parameters.H"
-#include "sequence/alphabet.H"
-#include "util/rng.H"
-#include "util/log-level.H"
+#include "likelihood.hh"
+#include "ops.hh"
+#include "models/parameters.hh"
+#include "sequence/alphabet.hh"
+#include "util/rng.hh"
+#include "util/log-level.hh"
 #include <cmath>
 #include <valarray>
 #include <vector>
-#include "util/set.H"
-#include "math/logprod.H"
-#include "dp/hmm.H"
-#include "dp/2way.H"
+#include "util/set.hh"
+#include "math/logprod.hh"
+#include "dp/hmm.hh"
+#include "dp/2way.hh"
 #include <boost/dynamic_bitset.hpp>
 
 // #define DEBUG_SUBSTITUTION

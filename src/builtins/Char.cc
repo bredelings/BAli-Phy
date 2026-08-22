@@ -1,7 +1,7 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "util/unicode.H"
-#include "util/utf8.H"
+#include "computation/machine/args.hh"
+#include "util/unicode.hh"
+#include "util/utf8.hh"
 #include <cstdint>
 #include <cstdlib>
 

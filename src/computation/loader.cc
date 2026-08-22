@@ -3,19 +3,19 @@
 #include <fstream>
 #include <regex>
 #include <iterator>
-#include "computation/loader.H"
-#include "computation/module.H"
-#include "computation/operations.H"
-#include "computation/core/ast.H"
-#include "util/file-paths.H"
+#include "computation/loader.hh"
+#include "computation/module.hh"
+#include "computation/operations.hh"
+#include "computation/core/ast.hh"
+#include "util/file-paths.hh"
 #include "parser/driver.hh"
-#include "haskell/ids.H"
-#include "haskell/cpp.H"
-#include "haskell/extensions.H"
-#include "core/func.H"
+#include "haskell/ids.hh"
+#include "haskell/cpp.hh"
+#include "haskell/extensions.hh"
+#include "core/func.hh"
 
-#include "util/io.H"
-#include "util/log-level.H"
+#include "util/io.hh"
+#include "util/log-level.hh"
 #include <boost/compute/detail/sha1.hpp>
 #include <range/v3/all.hpp>
 

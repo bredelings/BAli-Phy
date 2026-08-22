@@ -67,7 +67,7 @@ measurement table can remain compact.
 | Revision | Change boundary | I1 (B) | I50 (B) | Extra/iter (B) | Work 50 (s) | Cache |
 |---|---|---:|---:|---:|---:|---|
 | `f30c3177` | 4.2 source revision, common build | 15.756 | 99.917 | 1.718 | 8.802 | verified |
-| `bed6443e` | Before `runtime/ast.H` | 16.238 | 103.983 | 1.791 | 9.615 | verified |
+| `bed6443e` | Before `runtime/ast.hh` | 16.238 | 103.983 | 1.791 | 9.615 | verified |
 | `0053b4f0` | `std::variant` Runtime Exp | 15.570 | 108.871 | 1.904 | 11.016 | verified |
 | `8a647583` | Variant2 Runtime Exp | 15.616 | 110.670 | 1.940 | 10.863 | verified |
 | `38bd4274` | Before newtype IO | | 111.230 | | 9.658 | unverified |

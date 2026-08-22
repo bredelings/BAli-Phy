@@ -24,21 +24,21 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <list>
 #include <numeric>
 #include <set>
-#include "util/myexception.H"
-#include "alignment/alignment.H"
-#include "optimize.H"
-#include "findroot.H"
-#include "alignment/load.H"
-#include "alignment/alignment-util.H"
-#include "alignment/index-matrix.H" // for M( )
-#include "distance-methods.H"
+#include "util/myexception.hh"
+#include "alignment/alignment.hh"
+#include "optimize.hh"
+#include "findroot.hh"
+#include "alignment/load.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/index-matrix.hh" // for M( )
+#include "distance-methods.hh"
 
 #include <boost/program_options.hpp>
-#include "util/mapping.H"
-#include "util/string/join.H"
-#include "util/rng.H"
-#include "util/io.H"
-#include "util/range.H"
+#include "util/mapping.hh"
+#include "util/string/join.hh"
+#include "util/rng.hh"
+#include "util/io.hh"
+#include "util/range.hh"
 #include "util/assert.hh"
 
 extern int log_verbose;

@@ -25,8 +25,8 @@ along with BAli-Phy; see the file COPYING.  If not see
  */
 
 #include <iostream>
-#include "dp-engine.H"
-#include "util/myexception.H"
+#include "dp-engine.hh"
+#include "util/myexception.hh"
 
 using std::vector;
 using std::cerr;

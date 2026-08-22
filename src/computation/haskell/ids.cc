@@ -1,12 +1,12 @@
-#include "ids.H"
+#include "ids.hh"
 
 #include <cassert>
 #include <optional>
 #include <string_view>
-#include "util/myexception.H"
-#include "util/string/join.H"
-#include "util/unicode.H"
-#include "util/utf8.H"
+#include "util/myexception.hh"
+#include "util/string/join.hh"
+#include "util/unicode.hh"
+#include "util/utf8.hh"
 
 using std::string;
 using std::string_view;

@@ -100,7 +100,7 @@ the frame must take over that cleanup count.
 
 Do a behavior-preserving refactor in `src/computation/machine/evaluate.cc`.
 
-Add private declarations in `src/computation/machine/graph_register.H`:
+Add private declarations in `src/computation/machine/graph_register.hh`:
 
 ```c++
 std::pair<int,int> incremental_evaluate1_changeable_call_tail_(int r, int s, std::pair<int,int> child);
@@ -123,7 +123,7 @@ Build after this commit.
 
 ## Commit 2: add temp-head transfer
 
-Edit `src/computation/machine/args.H`:
+Edit `src/computation/machine/args.hh`:
 
 ```c++
 int steal_temp_heads();
@@ -164,7 +164,7 @@ at the loop boundary and must prepend contexts from active reduction frames.
 
 ## Commit 4: add eval1 frames and route `incremental_evaluate1` through the loop
 
-Add private frame state to `reg_heap` in `src/computation/machine/graph_register.H`:
+Add private frame state to `reg_heap` in `src/computation/machine/graph_register.hh`:
 
 ```c++
 struct Eval1Result

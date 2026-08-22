@@ -1,5 +1,5 @@
-#include "triplets.H"
-#include "codons.H"
+#include "triplets.hh"
+#include "codons.hh"
 
 using std::vector;
 using std::string;

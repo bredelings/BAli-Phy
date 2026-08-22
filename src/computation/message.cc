@@ -1,10 +1,10 @@
-#include "message.H"
-#include "util/utf8.H"
+#include "message.hh"
+#include "util/utf8.hh"
 #include <algorithm>
 #include <sstream>
 #include <string_view>
-#include "util/text.H"
-#include "util/string/join.H"
+#include "util/text.hh"
+#include "util/string/join.hh"
 #include <range/v3/all.hpp>
 
 using std::string;

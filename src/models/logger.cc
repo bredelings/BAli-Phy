@@ -1,5 +1,5 @@
-#include "logger.H"
-#include "computation/haskell/generated.H"
+#include "logger.hh"
+#include "computation/haskell/generated.hh"
 
 using std::string;
 using std::vector;

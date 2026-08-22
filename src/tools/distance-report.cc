@@ -1,8 +1,8 @@
-#include "statistics.H"
+#include "statistics.hh"
 
 #include <iostream>
 #include <boost/program_options.hpp>
-#include "util/matrix.H"
+#include "util/matrix.hh"
 
 namespace po = boost::program_options;
 using po::variables_map;

@@ -1,4 +1,4 @@
-#include "computation/haskell/generated.H"
+#include "computation/haskell/generated.hh"
 
 namespace Haskell::Generated
 {

@@ -1,5 +1,5 @@
-#include "typecheck.H"
-#include "kindcheck.H"
+#include "typecheck.hh"
+#include "kindcheck.hh"
 
 using std::string;
 using std::vector;

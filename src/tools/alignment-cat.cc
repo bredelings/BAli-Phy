@@ -22,20 +22,20 @@
 #include <string>
 #include <optional>
 #include <regex>
-#include "alignment/alignment.H"
-#include "alignment/alignment-util.H"
-#include "util/set.H"
-#include "util/mapping.H"
-#include "util/string/split.H"
-#include "util/string/convert.H"
-#include "util/io.H"
-#include "util/range.H"
-#include "util/cmdline.H"
-#include "util/log-level.H"
-#include "sequence/sequence.H"
-#include "sequence/sequence-format.H"
+#include "alignment/alignment.hh"
+#include "alignment/alignment-util.hh"
+#include "util/set.hh"
+#include "util/mapping.hh"
+#include "util/string/split.hh"
+#include "util/string/convert.hh"
+#include "util/io.hh"
+#include "util/range.hh"
+#include "util/cmdline.hh"
+#include "util/log-level.hh"
+#include "sequence/sequence.hh"
+#include "sequence/sequence-format.hh"
 #include <boost/program_options.hpp>
-#include "findroot.H"
+#include "findroot.hh"
 
 extern int log_verbose;
 

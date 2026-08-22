@@ -17,24 +17,24 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "alignment/index-matrix.H"
+#include "alignment/index-matrix.hh"
 #include <fstream>
 #include <string>
 #include <cmath>
 #include <list>
 #include <numeric>
-#include "util/myexception.H"
-#include "optimize.H"
-#include "findroot.H"
-#include "util/cmdline.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "util/rng.H"
-#include "util/range.H"
-#include "distance-methods.H"
-#include "alignment/alignment-util.H"
-#include "alignment/load.H"
-#include "statistics.H"
+#include "util/myexception.hh"
+#include "optimize.hh"
+#include "findroot.hh"
+#include "util/cmdline.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
+#include "util/rng.hh"
+#include "util/range.hh"
+#include "distance-methods.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/load.hh"
+#include "statistics.hh"
 
 extern int log_verbose;
 

@@ -1,17 +1,17 @@
 #include <iostream>
 #include <unordered_map>
 #include <list>
-#include "occurrence.H"
+#include "occurrence.hh"
 
-#include "computation/module.H"
-#include "computation/haskell/ids.H"
+#include "computation/module.hh"
+#include "computation/haskell/ids.hh"
 
-#include "util/range.H"
-#include "util/mapping.H"
-#include "util/graph.H"
-#include "util/variant.H" // for to<T>(variant)
+#include "util/range.hh"
+#include "util/mapping.hh"
+#include "util/graph.hh"
+#include "util/variant.hh" // for to<T>(variant)
 
-#include "simplifier.H"
+#include "simplifier.hh"
 
 using std::string;
 using std::vector;

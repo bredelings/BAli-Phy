@@ -1,5 +1,5 @@
-#include "symbols.H"
-#include "util/variant.H"
+#include "symbols.hh"
+#include "util/variant.hh"
 
 using std::string;
 using std::optional;

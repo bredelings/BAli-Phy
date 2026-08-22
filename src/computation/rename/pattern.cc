@@ -1,12 +1,12 @@
 #include <vector>
 #include <set>
 
-#include "rename.H"
-#include "records.H"
-#include "haskell/ids.H"
-#include "computation/module.H"
-#include "computation/record_utils.H"
-#include "util/set.H"
+#include "rename.hh"
+#include "records.hh"
+#include "haskell/ids.hh"
+#include "computation/module.hh"
+#include "computation/record_utils.hh"
+#include "util/set.hh"
 
 using std::vector;
 using std::set;

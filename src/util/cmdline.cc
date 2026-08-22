@@ -1,11 +1,11 @@
 #include <iostream>
-#include "util/cmdline.H"
-#include "util/myexception.H"
-#include "util/range.H"
-#include "util/io.H"
-#include "util/string/split.H"
-#include "util/string/pred.H"
-#include "util/string/convert.H"
+#include "util/cmdline.hh"
+#include "util/myexception.hh"
+#include "util/range.hh"
+#include "util/io.hh"
+#include "util/string/split.hh"
+#include "util/string/pred.hh"
+#include "util/string/convert.hh"
 
 using std::vector;
 using std::string;

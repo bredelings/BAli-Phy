@@ -18,19 +18,19 @@
   <http://www.gnu.org/licenses/>.  */
 
 ///
-/// \file imodel.H
+/// \file imodel.hh
 ///
 /// \brief This file implements classes and functions related to insertions and deletions.
 ///
 
 #include <cmath>
-#include "imodel/imodel.H"
-#include "util/rng.H"
-#include "util/myexception.H"
-#include "probability/probability.H"
-#include "util/mapping.H"
-#include "util/range.H"
-#include "dp/2way.H"
+#include "imodel/imodel.hh"
+#include "util/rng.hh"
+#include "util/myexception.hh"
+#include "probability/probability.hh"
+#include "util/mapping.hh"
+#include "util/range.hh"
+#include "dp/2way.hh"
 
 using std::vector;
 using std::string;

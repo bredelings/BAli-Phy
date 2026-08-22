@@ -1,5 +1,5 @@
-#include "var.H"
-#include "ids.H"
+#include "var.hh"
+#include "ids.hh"
 
 using std::string;
 

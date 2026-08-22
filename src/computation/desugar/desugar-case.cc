@@ -1,16 +1,16 @@
-#include "computation/module.H"
+#include "computation/module.hh"
 #include <deque>
 #include <set>
 #include <tuple>
 #include <utility>
-#include "util/io.H"
-#include "computation/loader.H"
-#include "computation/haskell/haskell.H"
-#include "desugar.H"
-#include "util/range.H"
-#include "computation/typecheck/typecheck.H"
+#include "util/io.hh"
+#include "computation/loader.hh"
+#include "computation/haskell/haskell.hh"
+#include "desugar.hh"
+#include "util/range.hh"
+#include "computation/typecheck/typecheck.hh"
 #include "util/assert.hh"
-#include "computation/core/func.H"
+#include "computation/core/func.hh"
 
 using std::string;
 using std::vector;

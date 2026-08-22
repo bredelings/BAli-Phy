@@ -1,8 +1,8 @@
-#include "fundeps.H"
+#include "fundeps.hh"
 
-#include "typecheck.H"
-#include "types.H"
-#include "util/set.H"
+#include "typecheck.hh"
+#include "types.hh"
+#include "util/set.hh"
 
 #include <algorithm>
 

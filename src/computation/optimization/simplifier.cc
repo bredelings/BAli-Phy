@@ -1,17 +1,17 @@
 #include <iostream>
-#include "util/log-level.H" // for log_verbose
-#include "util/range.H" // for reverse( )
-#include "util/set.H" // for add( )
-#include "util/variant.H" // for to<type>(val)
-#include "computation/operations.H"
-#include "computation/core/convert.H" // for to_core(Occ::Exp)
-#include "occurrence.H"
-#include "computation/module.H"
-#include "core/func.H"
-#include "core/subst.H"
+#include "util/log-level.hh" // for log_verbose
+#include "util/range.hh" // for reverse( )
+#include "util/set.hh" // for add( )
+#include "util/variant.hh" // for to<type>(val)
+#include "computation/operations.hh"
+#include "computation/core/convert.hh" // for to_core(Occ::Exp)
+#include "occurrence.hh"
+#include "computation/module.hh"
+#include "core/func.hh"
+#include "core/subst.hh"
 
-#include "simplifier.H"
-#include "arity.H"
+#include "simplifier.hh"
+#include "arity.hh"
 
 #include "util/assert.hh"
 

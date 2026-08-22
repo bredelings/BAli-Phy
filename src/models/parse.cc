@@ -2,14 +2,14 @@
 #include <iostream>
 #include <set>
 #include <vector>
-#include "computation/haskell/ids.H"
-#include "computation/message.H"
-#include "models/parse.H"
-#include "util/myexception.H"
-#include "util/string/convert.H"
-#include "util/string/join.H"
-#include "rules.H"
-#include "unification.H"
+#include "computation/haskell/ids.hh"
+#include "computation/message.hh"
+#include "models/parse.hh"
+#include "util/myexception.hh"
+#include "util/string/convert.hh"
+#include "util/string/join.hh"
+#include "rules.hh"
+#include "unification.hh"
 #include "models/driver.hh"
 
 using std::vector;

@@ -1,8 +1,8 @@
-#include "typecheck.H"
-#include "kindcheck.H"
+#include "typecheck.hh"
+#include "kindcheck.hh"
 
-#include "util/variant.H"   // for to< >()
-#include "haskell/ids.H"
+#include "util/variant.hh"   // for to< >()
+#include "haskell/ids.hh"
 
 using std::string;
 using std::vector;

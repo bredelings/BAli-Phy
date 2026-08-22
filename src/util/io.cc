@@ -1,7 +1,7 @@
-#include "util/io.H"
+#include "util/io.hh"
 
 #include <filesystem>
-#include "util/myexception.H"
+#include "util/myexception.hh"
 
 using namespace std;
 

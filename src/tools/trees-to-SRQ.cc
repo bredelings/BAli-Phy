@@ -25,13 +25,13 @@
 #include <map>
 #include <cmath>
 
-#include "util/myexception.H"
-#include "tree/sequencetree.H"
-#include "tree-dist.H"
-#include "tree/tree-util.H"
-#include "statistics.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
+#include "util/myexception.hh"
+#include "tree/sequencetree.hh"
+#include "tree-dist.hh"
+#include "tree/tree-util.hh"
+#include "statistics.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
 
 #include <boost/program_options.hpp>
 

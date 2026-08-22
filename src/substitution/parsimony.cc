@@ -1,11 +1,11 @@
-#include "substitution/parsimony.H"
+#include "substitution/parsimony.hh"
 
 #include <limits>
 #include <span>
-#include "dp/hmm.H"
-#include "dp/2way.H"
-#include "util/range.H"
-#include "computation/runtime/ast.H"
+#include "dp/hmm.hh"
+#include "dp/2way.hh"
+#include "util/range.hh"
+#include "computation/runtime/ast.hh"
 
 using std::vector;
 using boost::dynamic_bitset;

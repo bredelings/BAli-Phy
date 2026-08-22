@@ -1,11 +1,11 @@
-#include "character-properties.H"
+#include "character-properties.hh"
 
 #include <cmath>
 #include <fstream>
 #include <limits>
 #include <sstream>
 
-#include "util/myexception.H"
+#include "util/myexception.hh"
 
 namespace character_properties
 {

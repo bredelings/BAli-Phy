@@ -1,4 +1,4 @@
-#include "trim.H"
+#include "trim.hh"
 
 #include <range/v3/all.hpp>
 

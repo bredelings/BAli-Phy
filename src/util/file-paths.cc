@@ -1,8 +1,8 @@
-#include "util/file-paths.H"
-#include "util/myexception.H"
-#include "util/string/split.H"
-#include "util/string/join.H"
-#include "util/log-level.H"
+#include "util/file-paths.hh"
+#include "util/myexception.hh"
+#include "util/string/split.hh"
+#include "util/string/join.hh"
+#include "util/log-level.hh"
 #include <vector>
 #include <iostream>
 

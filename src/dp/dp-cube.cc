@@ -26,12 +26,12 @@
 #include <cmath>
 
 #include <climits>
-#include "dp-cube.H"
-#include "math/pow2.H"
-#include "probability/choose.H"
-#include "util/mapping.H"
-#include "alignment/alignment-constraint.H"
-#include "math/logprod.H"
+#include "dp-cube.hh"
+#include "math/pow2.hh"
+#include "probability/choose.hh"
+#include "util/mapping.hh"
+#include "alignment/alignment-constraint.hh"
+#include "math/logprod.hh"
 
 using std::vector;
 using std::valarray;

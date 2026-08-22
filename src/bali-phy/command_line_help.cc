@@ -1,11 +1,11 @@
-#include "command_line_help.H"
+#include "command_line_help.hh"
 
 #include <algorithm>
 #include <sstream>
 
 #include "help.hh"
-#include "paths.H"
-#include "util/text.H"
+#include "paths.hh"
+#include "util/text.hh"
 
 using std::string;
 using std::vector;

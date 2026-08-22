@@ -21,19 +21,19 @@
 #include <iostream>
 #include <cmath>
 #include "util/assert.hh"
-#include "util/log-level.H"
-#include "util/settings.H"
-#include "sample.H"
-#include "probability/choose.H"
-#include "util/rng.H"
-#include "dp/4way.H"
-#include "dp/5way.H"
-#include "dp/alignment-sums.H"
-#include "alignment/alignment-util.H"
-#include "tree/tree-util.H"
+#include "util/log-level.hh"
+#include "util/settings.hh"
+#include "sample.hh"
+#include "probability/choose.hh"
+#include "util/rng.hh"
+#include "dp/4way.hh"
+#include "dp/5way.hh"
+#include "dp/alignment-sums.hh"
+#include "alignment/alignment-util.hh"
+#include "tree/tree-util.hh"
 
-#include "dp/3way.H"
-#include "sample.H"
+#include "dp/3way.hh"
+#include "sample.hh"
 
 using MCMC::MoveStats;
 using std::string;

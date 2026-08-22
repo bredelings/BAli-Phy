@@ -1,7 +1,7 @@
-#include "constraints.H"
-#include "util/string/join.H"
-#include "types.H"
-#include "context.H"
+#include "constraints.hh"
+#include "util/string/join.hh"
+#include "types.hh"
+#include "context.hh"
 #include "util/assert.hh"
 
 using std::vector;

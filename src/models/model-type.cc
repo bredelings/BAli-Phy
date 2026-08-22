@@ -1,6 +1,6 @@
-#include "models/model-type.H"
+#include "models/model-type.hh"
 
-#include "util/string/join.H"
+#include "util/string/join.hh"
 
 #include <algorithm>
 

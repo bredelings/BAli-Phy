@@ -1,20 +1,20 @@
 #include <iostream>
 #include <range/v3/all.hpp>
 #include <algorithm>
-#include "util/truncate.H"
-#include "util/log-level.H"
-#include "util/math/neumaier.H"
-#include "util/string/join.H"
-#include "util/io/vector.H"
-#include "util/set.H"
-#include "graph_register.H"
-#include "computation/module.H"
-#include "computation/core/func.H"
-#include "computation/runtime/modifiable.H"
-#include "computation/runtime/interchangeable.H"
-#include "computation/operations.H"
-#include "effect.H"
-#include "effects.H"
+#include "util/truncate.hh"
+#include "util/log-level.hh"
+#include "util/math/neumaier.hh"
+#include "util/string/join.hh"
+#include "util/io/vector.hh"
+#include "util/set.hh"
+#include "graph_register.hh"
+#include "computation/module.hh"
+#include "computation/core/func.hh"
+#include "computation/runtime/modifiable.hh"
+#include "computation/runtime/interchangeable.hh"
+#include "computation/operations.hh"
+#include "effect.hh"
+#include "effects.hh"
 
 
 using std::string;

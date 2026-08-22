@@ -1,4 +1,4 @@
-#include "RNAEdits.H"
+#include "RNAEdits.hh"
 
 using std::vector;
 using std::string;

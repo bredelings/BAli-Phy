@@ -1,11 +1,11 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "computation/operations.H"
-#include "util/string/convert.H"
-#include "computation/machine/graph_register.H"
-#include "computation/machine/gcobject.H"
-#include "computation/haskell/Integer.H"
-#include "computation/runtime/ast.H"
+#include "computation/machine/args.hh"
+#include "computation/operations.hh"
+#include "util/string/convert.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/machine/gcobject.hh"
+#include "computation/haskell/Integer.hh"
+#include "computation/runtime/ast.hh"
 
 #include <cerrno>
 #include <cmath>
@@ -381,7 +381,7 @@ extern "C" R::Exp simple_function_show(vector<R::Exp>& args)
     return x.print();
 }
 
-#include "computation/machine/error_exception.H"
+#include "computation/machine/error_exception.hh"
 
 extern "C" closure builtin_function_error(OperationArgs& Args)
 {

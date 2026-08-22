@@ -20,9 +20,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <vector>
 #include <string>
-#include "sequence/alphabet.H"
-#include "alignment/alignment.H"
-#include "alignment/load.H"
+#include "sequence/alphabet.hh"
+#include "alignment/alignment.hh"
+#include "alignment/load.hh"
 
 #include <boost/program_options.hpp>
 

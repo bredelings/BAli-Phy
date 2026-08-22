@@ -1,11 +1,11 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "computation/operation.H"
-#include "computation/runtime/ast.H"
-#include "Vector.H"
-#include "util/dense-matrix.H"
+#include "computation/machine/args.hh"
+#include "computation/operation.hh"
+#include "computation/runtime/ast.hh"
+#include "Vector.hh"
+#include "util/dense-matrix.hh"
 
-#include "computation/machine/gcobject.H"
+#include "computation/machine/gcobject.hh"
 #include "immer/set.hpp"
 #include <map>
 #include <limits>

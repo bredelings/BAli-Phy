@@ -17,9 +17,9 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "newick-tokenizer.H"
-#include "util/string/pred.H"
-#include "util/myexception.H"
+#include "newick-tokenizer.hh"
+#include "util/string/pred.hh"
+#include "util/myexception.hh"
 
 using std::vector;
 using std::string;

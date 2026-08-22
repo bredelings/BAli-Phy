@@ -1,7 +1,7 @@
-#include "typecheck.H"
-#include "kindcheck.H"
-#include "haskell/ids.H"
-#include "computation/record_utils.H"
+#include "typecheck.hh"
+#include "kindcheck.hh"
+#include "haskell/ids.hh"
+#include "computation/record_utils.hh"
 
 using std::tuple;
 using std::string;

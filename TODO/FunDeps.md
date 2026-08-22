@@ -56,7 +56,7 @@ Modify `src/computation/haskell/extensions.cc`:
 
 ### Normalized representation
 
-Modify `src/computation/typecheck/env.H` to add:
+Modify `src/computation/typecheck/env.hh` to add:
 
 ```cpp
 struct FunctionalDependency
@@ -141,7 +141,7 @@ Check functional dependency coverage for instances
 Create:
 
 ```text
-src/computation/typecheck/fundeps.H
+src/computation/typecheck/fundeps.hh
 src/computation/typecheck/fundeps.cc
 ```
 
@@ -254,7 +254,7 @@ Reject inconsistent functional dependency instances
 
 ### Consistency algorithm
 
-Extend `fundeps.H/.cc` with:
+Extend `fundeps.hh/.cc` with:
 
 ```cpp
 std::vector<InstanceInfo>
@@ -330,7 +330,7 @@ nested solver and must obey one ordering policy.
 
 ### Improvement equation representation
 
-Extend `fundeps.H`:
+Extend `fundeps.hh`:
 
 ```cpp
 struct FunDepEquations

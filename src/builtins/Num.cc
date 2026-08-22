@@ -1,7 +1,7 @@
-#include "computation/machine/args.H"
-#include "computation/haskell/Integer.H"
-#include "util/utf8.H"
-#include "util/math/ProbDensity.H"
+#include "computation/machine/args.hh"
+#include "computation/haskell/Integer.hh"
+#include "util/utf8.hh"
+#include "util/math/ProbDensity.hh"
 #include <cstdint>
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 

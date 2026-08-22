@@ -26,7 +26,7 @@
 #include <limits>
 #include <boost/random/random_device.hpp>
 
-#include "util/rng.H"
+#include "util/rng.hh"
 
 using std::valarray;
 using std::int64_t;

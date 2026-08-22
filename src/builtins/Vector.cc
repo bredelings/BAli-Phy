@@ -1,12 +1,12 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include <vector>
 #include <limits>
-#include "Vector.H"
-#include "computation/operation.H"
-#include "util/myexception.H"
-#include "util/utf8.H"
-#include "computation/machine/graph_register.H"
-#include "computation/machine/args.H"
+#include "Vector.hh"
+#include "computation/operation.hh"
+#include "util/myexception.hh"
+#include "util/utf8.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/machine/args.hh"
 
 using std::vector;
 

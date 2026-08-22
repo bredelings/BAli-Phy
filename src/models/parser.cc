@@ -47,8 +47,8 @@
 #line 41 "parser.y"
 
 # include "driver.hh"
-# include "parse.H"
-# include "util/myexception.H"
+# include "parse.hh"
+# include "util/myexception.hh"
 
 CM::UntypedExpr make_call(const std::string& name, const std::vector<CM::Arg<CM::NoAnn>>& args);
 CM::UntypedExpr make_list(const std::vector<CM::Arg<CM::NoAnn>>& args);

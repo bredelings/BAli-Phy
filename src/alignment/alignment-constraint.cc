@@ -22,20 +22,20 @@
 #include <fstream>
 #include <utility>
 #include <set>
-#include "alignment/alignment-constraint.H"
-#include "alignment/alignment-util.H"
-#include "tree/tree-util.H"
-#include "util/string/split.H"
-#include "util/string/convert.H"
-#include "util/mapping.H"
-#include "util/range.H"
-#include "util/set.H"
-#include "util/io.H"
+#include "alignment/alignment-constraint.hh"
+#include "alignment/alignment-util.hh"
+#include "tree/tree-util.hh"
+#include "util/string/split.hh"
+#include "util/string/convert.hh"
+#include "util/mapping.hh"
+#include "util/range.hh"
+#include "util/set.hh"
+#include "util/io.hh"
 #include <optional>                            // for optional
-#include "sequence/alphabet.H"                 // for alphabet, alphabet::gap
-#include "tree/sequencetree.H"                 // for SequenceTree
+#include "sequence/alphabet.hh"                 // for alphabet, alphabet::gap
+#include "tree/sequencetree.hh"                 // for SequenceTree
 #include "util/assert.hh"                      // for assert
-#include "util/myexception.H"                  // for myexception
+#include "util/myexception.hh"                  // for myexception
 
 using std::string;
 using std::set;

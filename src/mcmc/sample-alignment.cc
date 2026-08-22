@@ -17,21 +17,21 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "sample-alignment.H"
+#include "sample-alignment.hh"
 
 #include <valarray>
 #include <iostream>
 #include <cmath>
-#include "sample.H"
-#include "dp/2way.H"
-#include "dp/alignment-sums.H"
-#include "alignment/alignment-constraint.H"
-#include "alignment/alignment-util.H"
-#include "alignment/alignment-util2.H"
-#include "substitution/likelihood.H"
-#include "dp/dp-matrix.H"
-#include "util/log-level.H"                         // for log_verbose
-#include "util/settings.H"                          // for get_setting_or( )
+#include "sample.hh"
+#include "dp/2way.hh"
+#include "dp/alignment-sums.hh"
+#include "alignment/alignment-constraint.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/alignment-util2.hh"
+#include "substitution/likelihood.hh"
+#include "dp/dp-matrix.hh"
+#include "util/log-level.hh"                         // for log_verbose
+#include "util/settings.hh"                          // for get_setting_or( )
 
 // SYMMETRY: Because we are only sampling from alignments with the same fixed length
 // for both sequences, this process is symmetric

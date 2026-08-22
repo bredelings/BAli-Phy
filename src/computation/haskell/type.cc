@@ -1,9 +1,9 @@
-#include "type.H"
-#include "haskell.H"
-#include "typecheck/kind.H"
-#include "util/string/join.H"
-#include "haskell/ids.H"       // for tuple_name
-#include "util/set.H"          // for includes( , )
+#include "type.hh"
+#include "haskell.hh"
+#include "typecheck/kind.hh"
+#include "util/string/join.hh"
+#include "haskell/ids.hh"       // for tuple_name
+#include "util/set.hh"          // for includes( , )
 #include <range/v3/all.hpp>
 
 using std::string;

@@ -1,0 +1,163 @@
+#ifndef SIMPLIFIER_H
+#define SIMPLIFIER_H
+
+#include <set>
+#include <map>
+#include <utility>
+#include <variant>
+
+#include "computation/optimization/simplifier_env.hh"
+#include "computation/optimization/occurrence.hh"
+#include "computation/fresh_vars.hh"
+#include "immer/map.hpp"
+#include "simplifier_options.hh"
+#include "substitution.hh"
+#include "inliner.hh"
+#include "unfolding.hh"
+
+class module_loader;
+
+int get_n_lambdas1(Occ::Exp E);
+
+Occ::Exp peel_n_lambdas1(Occ::Exp E, int n);
+
+class Module;
+
+
+struct FloatLet
+{
+    Occ::Bind bind;
+};
+
+struct FloatCase
+{
+    Occ::Exp object;
+    // No case binder.
+    Occ::Pattern pattern;
+};
+
+typedef std::variant<FloatLet,FloatCase> Float;
+
+/* Here we make a continuation structure similar to the one used by the
+   simplifier but
+   * representing only function application.
+   * representing arguments as expressions, not variables.
+ */
+struct ConContObj;
+typedef std::shared_ptr<const ConContObj> ConCont;
+struct ConContObj
+{
+    Occ::Exp arg;
+    ConCont next;
+    ConContObj(const Occ::Exp& a, const ConCont& n):arg(a), next(n){}
+};
+
+Core::Binds<> simplify_module_gently(const simplifier_options&, FreshVarState&, const Module&, const Core::Binds<>& binds);
+Core::Binds<> simplify_module(const simplifier_options&, FreshVarState&, const Module&, const Core::Binds<>& binds);
+
+struct SimplFloats
+{
+    Occ::Binds binds;
+    in_scope_set bound_vars;
+
+    void append(const Module& m, const inliner_options& opts, const Occ::Bind& bind);
+    void append(const Module& m, const inliner_options& opts, const Occ::Binds& binds);
+    void append(const Module& m, const inliner_options& opts, const SimplFloats& F);
+
+    SimplFloats() {}
+    SimplFloats(const in_scope_set& bv):bound_vars(bv) {}
+    SimplFloats(Occ::Binds bs, const in_scope_set& bv):binds(std::move(bs)),bound_vars(bv) {}
+};
+
+
+
+
+class SimplifierState: FreshVarSource
+{
+    simplifier_options options;
+
+    const Module& this_mod;
+
+public:
+
+    Core::id_info get_id_info(const Occ::Var& x, const in_scope_set& bound_vars) const;
+
+    std::tuple<Unfolding, occurrence_info> get_unfolding(const Occ::Var& x, const in_scope_set& bound_vars) const;
+
+    Occ::Var get_new_name(Occ::Var x, const in_scope_set& bound_vars);
+
+    Occ::Var rename_var(const Occ::Var& x, simplifier::substitution& S, const in_scope_set& bound_vars);
+    Occ::Var rename_and_bind_var(const Occ::Var& Evar, simplifier::substitution& S, in_scope_set& bound_vars);
+
+    std::optional<std::tuple<in_scope_set, std::string, std::vector<Occ::Exp>>>
+    exprIsConApp_worker(const in_scope_set& S, std::vector<Float>& floats, const Occ::Exp& E, const ConCont& cont);
+
+    std::optional<std::tuple<in_scope_set, std::vector<Float>, std::string, std::vector<Occ::Exp>>>
+    exprIsConApp_maybe(const Occ::Exp& E,  const in_scope_set& bound_vars);
+
+    std::tuple<bool, std::vector<arg_info>, inline_context>
+    continuation_args(const inline_context& context_in);
+
+    std::optional<Occ::Exp> call_site_inline(const Unfolding& unfolding, const occurrence_info& occur,
+                                             const in_scope_set& bound_vars, const inline_context& context);
+
+    arg_info interesting_arg(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, int n);
+
+    std::tuple<SimplFloats,Occ::Exp>
+    simplify_out_var(const Occ::Var& x, const in_scope_set& bound_vars, const inline_context& context);
+
+    std::tuple<SimplFloats,Occ::Exp>
+    simplify(const Occ::Exp& E, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
+
+    std::tuple<DupStatus, in_scope_set, Occ::Exp>
+    simplifyArg(const in_scope_set& bound_vars, DupStatus dup_status, const simplifier::substitution& arg_S, const in_scope_set& arg_bound_vars, const Occ::Exp& arg);
+
+    std::tuple<std::set<std::string>,std::vector<Occ::Alt>>
+    prepare_alts(const in_scope_set& bound_vars, const Occ::Exp& object, const std::vector<Occ::Alt>& alts);
+
+    Occ::Alt
+    simplify_alt(const std::optional<Occ::Exp>& object, bool scrutinee_is_variable,
+                 const std::set<std::string>& seen_constructors,
+                 const simplifier::substitution& S, const in_scope_set& bound_vars,
+                 Occ::Alt alt, const inline_context& context);
+
+    std::tuple<SimplFloats,Occ::Exp>
+    rebuildCall(const Occ::Var& f, const in_scope_set& bound_vars, inline_context context);
+
+    std::tuple<SimplFloats,Occ::Exp>
+    rebuild(const Occ::Exp& E, const in_scope_set& bound_vars, const inline_context& context);
+
+    Occ::Exp maybe_eta_reduce(const Occ::Exp& expression, const in_scope_set& bound_vars) const;
+
+    std::tuple<simplifier::substitution,in_scope_set> rename_and_bind_pattern_vars(Occ::Pattern& pattern, const simplifier::substitution& S, const in_scope_set& bound_vars);
+
+    std::tuple<SimplFloats,Occ::Exp>
+    rebuild_case(Occ::Exp object, const std::vector<Occ::Alt>& alts, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
+
+    Occ::Exp
+    rebuild_case_inner(Occ::Exp object, std::vector<Occ::Alt> alts, const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& context);
+
+    std::tuple<SimplFloats, inline_context>
+    make_dupable_cont( const simplifier::substitution& S, const in_scope_set& bound_vars, const inline_context& cont);
+
+    std::tuple<SimplFloats, inline_context>
+    make_dupable_case_cont( const simplifier::substitution& S, const in_scope_set& bound_vars, const std::vector<Occ::Alt>& alts, const inline_context& cont);
+
+    std::tuple<SimplFloats, simplifier::substitution>
+    simplify_rec_decls(const Occ::Decls& orig_decls, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
+
+    std::tuple<SimplFloats, simplifier::substitution>
+    simplify_nonrec(const Occ::NonRec& nonrec, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
+
+    std::tuple<SimplFloats, simplifier::substitution>
+    simplify_bind(const Occ::Bind& bind, const simplifier::substitution& S, in_scope_set bound_vars, bool is_top_level);
+
+    Core::Binds<>
+    simplify_module_one(const Core::Binds<>& binds);
+
+    SimplifierState(const simplifier_options& opts, FreshVarState& s, const Module& m);
+};
+
+bool pre_inline(const Occ::Var& x, const Occ::Exp& e);
+
+#endif

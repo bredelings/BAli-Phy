@@ -1,10 +1,10 @@
-#include "computation/param.H"
-#include "computation/context.H"
-#include "computation/machine/graph_register.H"
-#include "computation/operations.H"
+#include "computation/param.hh"
+#include "computation/context.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/operations.hh"
 
-#include "util/log-level.H"
-#include "computation/machine/gcobject.H"
+#include "util/log-level.hh"
+#include "computation/machine/gcobject.hh"
 
 #include <type_traits>
 

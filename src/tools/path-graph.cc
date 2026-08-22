@@ -21,10 +21,10 @@
 #include <string>
 #include <map>
 #include <list>
-#include "util/myexception.H"
-#include "alignment/alignment.H"
-#include "alignment/load.H"
-#include "util/string/split.H"
+#include "util/myexception.hh"
+#include "alignment/alignment.hh"
+#include "alignment/load.hh"
+#include "util/string/split.hh"
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;

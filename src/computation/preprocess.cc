@@ -1,16 +1,16 @@
 #include <iostream>
 #include <type_traits>
-#include "computation/preprocess.H"
-#include "computation/machine/graph_register.H"
-#include "computation/module.H"
-#include "computation/runtime/ast.H"
-#include "computation/runtime/trim.H"
-#include "computation/fresh_vars.H"
-#include "computation/runtime/indexify.H"
-#include "computation/core/convert.H"
-#include "computation/core/func.H"
-#include "haskell/ids.H"
-#include "util/variant.H"
+#include "computation/preprocess.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/module.hh"
+#include "computation/runtime/ast.hh"
+#include "computation/runtime/trim.hh"
+#include "computation/fresh_vars.hh"
+#include "computation/runtime/indexify.hh"
+#include "computation/core/convert.hh"
+#include "computation/core/func.hh"
+#include "haskell/ids.hh"
+#include "util/variant.hh"
 
 using std::optional;
 using std::string;

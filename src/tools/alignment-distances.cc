@@ -23,22 +23,22 @@
 #include <vector>
 #include <list>
 #include <numeric>
-#include "util/myexception.H"
-#include "alignment/alignment.H"
-#include "optimize.H"
-#include "findroot.H"
-#include "alignment/alignment-util.H"
-#include "alignment/index-matrix.H" // for M( )
-#include "alignment/load.H"
-#include "distance-methods.H"
-#include "distance-report.H"
+#include "util/myexception.hh"
+#include "alignment/alignment.hh"
+#include "optimize.hh"
+#include "findroot.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/index-matrix.hh" // for M( )
+#include "alignment/load.hh"
+#include "distance-methods.hh"
+#include "distance-report.hh"
 
-#include "util/io.H"
-#include "util/string/split.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "util/cmdline.H"
-#include "util/range.H"
+#include "util/io.hh"
+#include "util/string/split.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
+#include "util/cmdline.hh"
+#include "util/range.hh"
 
 #include <boost/program_options.hpp>
 
@@ -635,7 +635,7 @@ int main(int argc,char* argv[])
 
 	    matrix<double> D = distances(As, distance_fns[0]);
 
-	    // from tools/distance-report.H
+	    // from tools/distance-report.hh
 	    // computes distribution of average distance from A[i] to A[j], averaged over j
 	    // computes distribution of distances from A[i] to A[j]
 

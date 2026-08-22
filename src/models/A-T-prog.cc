@@ -1,27 +1,27 @@
-#include "A-T-prog.H"
+#include "A-T-prog.hh"
 
 #include <set>
 #include <map>
 
-#include "util/set.H"
-#include "util/io.H"
-#include "util/string/split.H"
-#include "util/string/convert.H"
-#include "util/settings.H"    // for get_setting_or( )
-#include "models/compile.H"   // for model_t
-#include "models/parse.H"   // for unparse_type
+#include "util/set.hh"
+#include "util/io.hh"
+#include "util/string/split.hh"
+#include "util/string/convert.hh"
+#include "util/settings.hh"    // for get_setting_or( )
+#include "models/compile.hh"   // for model_t
+#include "models/parse.hh"   // for unparse_type
 
-#include "computation/loader.H"
-#include "computation/haskell/generated.H"
-#include "computation/haskell/var.H"
-#include "computation/module.H"
+#include "computation/loader.hh"
+#include "computation/haskell/generated.hh"
+#include "computation/haskell/var.hh"
+#include "computation/module.hh"
 
-#include "sequence/genetic_code.H"
-#include "sequence/codons.H"
-#include "sequence/doublets.H"
-#include "sequence/RNAEdits.H"
-#include "bali-phy/cmd_line.H"                                // for get_log_formats
-#include "bali-phy/files.H"                                   // for run_name
+#include "sequence/genetic_code.hh"
+#include "sequence/codons.hh"
+#include "sequence/doublets.hh"
+#include "sequence/RNAEdits.hh"
+#include "bali-phy/cmd_line.hh"                                // for get_log_formats
+#include "bali-phy/files.hh"                                   // for run_name
 
 using std::vector;
 using std::string;

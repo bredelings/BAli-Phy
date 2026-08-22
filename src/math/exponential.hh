@@ -1,0 +1,51 @@
+/*
+   Copyright (C) 2004-2007, 2010, 2012, 2014 Benjamin Redelings
+
+This file is part of BAli-Phy.
+
+BAli-Phy is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2, or (at your option) any later
+version.
+
+BAli-Phy is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with BAli-Phy; see the file COPYING.  If not see
+<http://www.gnu.org/licenses/>.  */
+
+///
+/// \file exponential.hh
+///
+/// \brief Defines function for computing matrix exponentials.
+///
+
+
+
+#ifndef EXPONENTIAL_H
+#define EXPONENTIAL_H
+#include "util/dense-matrix.hh"
+#include <Eigen/Dense>
+#include <span>
+
+
+typedef Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> EigenValues;
+
+DenseMatrix<double> exp(const EigenValues& eigensystem, std::span<const double> pi, double t);
+DenseMatrix<double> exp(const DenseMatrix<double>& Q, double t);
+
+double rate_away(std::span<const double> pi, const DenseMatrix<double>& Q);
+
+double positivize_and_renormalize_matrix(DenseMatrix<double>& E);
+
+DenseVector<double> compute_stationary_freqs(const DenseMatrix<double>& Q);
+bool checkStationary(const DenseMatrix<double>& Q, Eigen::Ref<const DenseVector<double>> pi, double tol = 1.0e-9);
+
+bool checkReversible(const DenseMatrix<double>& Q, Eigen::Ref<const DenseVector<double>> pi, double tol = 1.0e-9);
+
+DenseVector<double> equilibriumLimit(std::span<const double> pi0, const DenseMatrix<double>& Q);
+
+#endif

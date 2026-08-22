@@ -21,17 +21,17 @@
 #include <string>
 #include <cmath>
 #include <vector>
-#include "util/myexception.H"
-#include "util/log-level.H"
-#include "alignment/alignment.H"
+#include "util/myexception.hh"
+#include "util/log-level.hh"
+#include "alignment/alignment.hh"
 
-#include "util/string/split.H"
-#include "tree/tree-util.H"
-#include "alignment/alignment-util.H"
-#include "distance-methods.H"
-#include "joint-A-T.H"
-#include "partition.H"
-#include "dp/A2_states.H"
+#include "util/string/split.hh"
+#include "tree/tree-util.hh"
+#include "alignment/alignment-util.hh"
+#include "distance-methods.hh"
+#include "joint-A-T.hh"
+#include "partition.hh"
+#include "dp/A2_states.hh"
 #include <optional>
 #include <map>
 

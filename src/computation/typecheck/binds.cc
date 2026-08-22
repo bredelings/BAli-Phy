@@ -1,12 +1,12 @@
-#include "typecheck.H"
-#include "fundeps.H"
-#include "kindcheck.H"
-#include "types.H"
-#include "match.H" // for tcMatchesFun
+#include "typecheck.hh"
+#include "fundeps.hh"
+#include "kindcheck.hh"
+#include "types.hh"
+#include "match.hh" // for tcMatchesFun
 
-#include "rename/rename.H" // for get_indices_for_names( )
+#include "rename/rename.hh" // for get_indices_for_names( )
 
-#include "util/set.H"
+#include "util/set.hh"
 #include <range/v3/all.hpp>
 #include "util/assert.hh"
 

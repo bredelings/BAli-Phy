@@ -1,7 +1,7 @@
-#include "typecheck.H"
-#include "haskell/ids.H"
-#include "rename/rename.H"
-#include "computation/record_utils.H"
+#include "typecheck.hh"
+#include "haskell/ids.hh"
+#include "rename/rename.hh"
+#include "computation/record_utils.hh"
 
 #include <functional>
 

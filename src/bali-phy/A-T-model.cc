@@ -1,4 +1,4 @@
-#include "A-T-model.H"
+#include "A-T-model.hh"
 #include <algorithm>                                // for max, find, min
 #include <filesystem>                               // for path, operator/
 #include <boost/dynamic_bitset.hpp>                 // for dynamic_bitset
@@ -7,38 +7,38 @@
 #include <optional>                                 // for optional
 #include <set>                                      // for set
 #include <utility>                                  // for tuple_element<>::...
-#include "alignment/alignment-constraint.H"         // for load_alignment_co...
-#include "alignment/alignment.H"                    // for alignment, sequen...
-#include "alignment/index-matrix.H"                 // for get_alignment
-#include "alignment/load.H"                         // for load_alignment
-#include "computation/object.H"                     // for intrusive_ptr_rel...
-#include "computation/program.H"                    // for class Program
-#include "link-partitions.H"                        // for shared_items, get...
-#include "models/TreeInterface.H"                   // for TreeInterface
-#include "models/parameters.H"                      // for Parameters, param...
-#include "models/A-T-prog.H"                        // for gen_atmodel_program
-#include "models/rules.H"                           // for Rules
-#include "models/compile.H"                         // for model_t, compile_model
-#include "models/parse.H"                           // for parse_type( )
-#include "sequence/alphabet.H"                      // for alphabet
-#include "sequence/doublets.H"                      // for Doublets
-#include "sequence/RNAEdits.H"                      // for RNAEdits
-#include "sequence/codons.H"                        // for Codons
-#include "sequence/sequence-format.H"               // for load_from_file
-#include "sequence/sequence.H"                      // for sequence, select
-#include "tree-align/link.H"                        // for link
-#include "tree/tree-branchnode.H"                   // for branchview, const...
-#include "tree/tree-util.H"                         // for extends, load_T
-#include "tree/tree.H"                              // for RandomTree, branc...
-#include "util/io.H"                                // for portable_getline
-#include "util/io/optional.H"                       // for operator<<
-#include "util/mapping.H"                           // for find_index
-#include "util/matrix.H"                            // for matrix
-#include "util/myexception.H"                       // for myexception
-#include "util/string/convert.H"                    // for convertTo, conver...
-#include "util/string/join.H"                       // for join
-#include "util/string/split.H"                      // for split, split_on_last
-#include "util/text.H"                              // for bold, bold_blue
+#include "alignment/alignment-constraint.hh"         // for load_alignment_co...
+#include "alignment/alignment.hh"                    // for alignment, sequen...
+#include "alignment/index-matrix.hh"                 // for get_alignment
+#include "alignment/load.hh"                         // for load_alignment
+#include "computation/object.hh"                     // for intrusive_ptr_rel...
+#include "computation/program.hh"                    // for class Program
+#include "link-partitions.hh"                        // for shared_items, get...
+#include "models/TreeInterface.hh"                   // for TreeInterface
+#include "models/parameters.hh"                      // for Parameters, param...
+#include "models/A-T-prog.hh"                        // for gen_atmodel_program
+#include "models/rules.hh"                           // for Rules
+#include "models/compile.hh"                         // for model_t, compile_model
+#include "models/parse.hh"                           // for parse_type( )
+#include "sequence/alphabet.hh"                      // for alphabet
+#include "sequence/doublets.hh"                      // for Doublets
+#include "sequence/RNAEdits.hh"                      // for RNAEdits
+#include "sequence/codons.hh"                        // for Codons
+#include "sequence/sequence-format.hh"               // for load_from_file
+#include "sequence/sequence.hh"                      // for sequence, select
+#include "tree-align/link.hh"                        // for link
+#include "tree/tree-branchnode.hh"                   // for branchview, const...
+#include "tree/tree-util.hh"                         // for extends, load_T
+#include "tree/tree.hh"                              // for RandomTree, branc...
+#include "util/io.hh"                                // for portable_getline
+#include "util/io/optional.hh"                       // for operator<<
+#include "util/mapping.hh"                           // for find_index
+#include "util/matrix.hh"                            // for matrix
+#include "util/myexception.hh"                       // for myexception
+#include "util/string/convert.hh"                    // for convertTo, conver...
+#include "util/string/join.hh"                       // for join
+#include "util/string/split.hh"                      // for split, split_on_last
+#include "util/text.hh"                              // for bold, bold_blue
 #include <range/v3/all.hpp>                         // for ranges::transform
 
 class module_loader;

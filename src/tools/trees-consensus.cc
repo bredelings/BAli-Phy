@@ -31,18 +31,18 @@
 #include <set>
 #include <list>
 
-#include "tree/sequencetree.H"
-#include "util/string/split.H"
-#include "util/cmdline.H"
-#include "util/string/convert.H"
-#include "util/set.H"
-#include "util/range.H"
-#include "statistics.H"
-#include "bootstrap.H"
-#include "tree-dist.H"
-#include "consensus-tree.H"
-#include "mctree.H"
-#include "util/rng.H"
+#include "tree/sequencetree.hh"
+#include "util/string/split.hh"
+#include "util/cmdline.hh"
+#include "util/string/convert.hh"
+#include "util/set.hh"
+#include "util/range.hh"
+#include "statistics.hh"
+#include "bootstrap.hh"
+#include "tree-dist.hh"
+#include "consensus-tree.hh"
+#include "mctree.hh"
+#include "util/rng.hh"
 
 #include <boost/program_options.hpp>
 

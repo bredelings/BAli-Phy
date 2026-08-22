@@ -30,15 +30,15 @@
 #include <filesystem>
 #include <regex>
 
-#include "link-partitions.H"
-#include "util/mapping.H"
-#include "sequence/alphabet.H"
-#include "alignment/alignment-util.H"
-#include "tree/tree-util.H"
-#include "util/io.H"
-#include "util/set.H"
-#include "util/string/split.H"
-#include "util/string/convert.H"
+#include "link-partitions.hh"
+#include "util/mapping.hh"
+#include "sequence/alphabet.hh"
+#include "alignment/alignment-util.hh"
+#include "tree/tree-util.hh"
+#include "util/io.hh"
+#include "util/set.hh"
+#include "util/string/split.hh"
+#include "util/string/convert.hh"
 
 using std::ifstream;
 using std::string;

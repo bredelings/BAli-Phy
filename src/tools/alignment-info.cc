@@ -22,22 +22,22 @@
 #include <map>
 #include <string>
 
-#include "alignment/alignment.H"
-#include "alignment/alignment-util.H"
-#include "alignment/load.H"
-#include "sequence/sequence-format.H"
-#include "tree/tree.H"
-#include "tree/tree-util.H"
-#include "tree-align/link.H"
+#include "alignment/alignment.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/load.hh"
+#include "sequence/sequence-format.hh"
+#include "tree/tree.hh"
+#include "tree/tree-util.hh"
+#include "tree-align/link.hh"
 
-#include "findroot.H"
-#include "parsimony.H"
-#include "statistics.H"
+#include "findroot.hh"
+#include "parsimony.hh"
+#include "statistics.hh"
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 
-#include "util/string/join.H"
-#include "util/cmdline.H"
+#include "util/string/join.hh"
+#include "util/cmdline.hh"
 
 using std::vector;
 using std::valarray;

@@ -1,6 +1,6 @@
-#include "graph_register.H"
-#include "computation/runtime/ast.H"
-#include "util/myexception.H"
+#include "graph_register.hh"
+#include "computation/runtime/ast.hh"
+#include "util/myexception.hh"
 
 using std::vector;
 

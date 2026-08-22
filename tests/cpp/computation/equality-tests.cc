@@ -1,5 +1,5 @@
-#include "computation/runtime/ast.H"
-#include "test-util.H"
+#include "computation/runtime/ast.hh"
+#include "test-util.hh"
 #include <limits>
 
 namespace bali_phy_test

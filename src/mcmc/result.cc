@@ -17,7 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "result.H"
+#include "result.hh"
 #include "util/assert.hh"                           // for assert
 #include <cmath>                                    // for log
 #include <cstdlib>                                  // for abs, abort
@@ -27,16 +27,16 @@
 #include <iterator>                                 // for valarray
 #include <memory>                                   // for allocator_traits<...
 #include <utility>                                  // for pair
-#include "computation/object.H"                     // for intrusive_ptr_rel...
-#include "models/TreeInterface.H"                   // for TreeInterface
-#include "models/parameters.H"                      // for Parameters, accep...
-#include "slice-sampling.H"                         // for integer_random_va...
-#include "util/math/log-double.H"                   // for operator<<, log_d...
-#include "util/myexception.H"                       // for myexception
-#include "util/permute.H"                           // for randomize
-#include "util/range.H"                             // for sum
-#include "util/rng.H"                               // for poisson, uniform
-#include "util/string/split.H"                      // for split
+#include "computation/object.hh"                     // for intrusive_ptr_rel...
+#include "models/TreeInterface.hh"                   // for TreeInterface
+#include "models/parameters.hh"                      // for Parameters, accep...
+#include "slice-sampling.hh"                         // for integer_random_va...
+#include "util/math/log-double.hh"                   // for operator<<, log_d...
+#include "util/myexception.hh"                       // for myexception
+#include "util/permute.hh"                           // for randomize
+#include "util/range.hh"                             // for sum
+#include "util/rng.hh"                               // for poisson, uniform
+#include "util/string/split.hh"                      // for split
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

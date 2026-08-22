@@ -21,11 +21,11 @@
 #include <fstream>
 #include <cmath>
 #include <set>
-#include "tree/sequencetree.H"
-#include "util/myexception.H"
-#include "util/mapping.H"
-#include "util/string/convert.H" // for convertToString( )
-#include "util/io.H"
+#include "tree/sequencetree.hh"
+#include "util/myexception.hh"
+#include "util/mapping.hh"
+#include "util/string/convert.hh" // for convertToString( )
+#include "util/io.hh"
 
 using namespace std;
 

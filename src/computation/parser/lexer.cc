@@ -116,7 +116,7 @@ class HaskellRawLexer : public reflex::AbstractLexer<reflex::Matcher> {
 # include <string_view>
 # include <utility>
 # include <regex>
-# include "util/utf8.H"
+# include "util/utf8.hh"
 # include "driver.hh"
 # include "parser.hh"
 
@@ -1296,7 +1296,7 @@ yy::parser::symbol_type make_integer(std::string_view text, int radix, const yy:
     return yy::parser::make_INTEGER(Haskell::integerFromString(std::string(text.substr(2)), radix), loc);
 }
 
-#include "computation/haskell/literal.H"
+#include "computation/haskell/literal.hh"
 
 yy::parser::symbol_type make_rational(std::string_view text, const yy::parser::location_type& loc)
 {

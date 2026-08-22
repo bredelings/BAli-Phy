@@ -5,17 +5,17 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#include "builtins/native-vector-input.H"
-#include "Vector.H"
-#include "computation/operation.H"
-#include "computation/machine/args.H"
-#include "computation/module.H"
-#include "probability/probability.H"
-#include "util/bounds.H"
-#include "util/rng.H"
-#include "util/log-level.H"
-#include "util/dense-matrix.H"
-#include "util/myexception.H"
+#include "builtins/native-vector-input.hh"
+#include "Vector.hh"
+#include "computation/operation.hh"
+#include "computation/machine/args.hh"
+#include "computation/module.hh"
+#include "probability/probability.hh"
+#include "util/bounds.hh"
+#include "util/rng.hh"
+#include "util/log-level.hh"
+#include "util/dense-matrix.hh"
+#include "util/myexception.hh"
 
 #include <boost/math/distributions.hpp>
 #include <boost/math/special_functions/gamma.hpp>
@@ -840,7 +840,7 @@ extern "C" closure builtin_function_CRP_density(OperationArgs& Args)
     return { ::CRP_pdf(alpha,N,D,z.view()) };
 }
 
-#include "probability/choose.H"
+#include "probability/choose.hh"
 
 extern "C" closure builtin_function_sample_CRP(OperationArgs& Args)
 {

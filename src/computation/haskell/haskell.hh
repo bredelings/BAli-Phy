@@ -1,0 +1,1680 @@
+#ifndef HASKELL_H
+#define HASKELL_H
+
+#include <string>
+#include <optional>
+#include <utility>
+#include <vector>
+#include <variant>
+#include <map>
+#include <set>
+#include <tuple>
+#include <memory>
+#include "computation/fixity.hh"
+#include "computation/parser/located.hh"
+#include "computation/record_field_info.hh"
+
+#include "var.hh"
+#include "literal.hh"
+#include "pattern.hh"
+#include "type.hh"
+#include "computation/core/type.hh"
+
+#include "computation/core/ast.hh"
+#include "computation/core/wrap.hh"
+
+/*
+  - For renaming class decls, can we first run group_decls on them?
+    + We need to know the set of bound names for the whole module in order to rename the RHSs, right?
+
+  - To collect free_vars, maybe we can add a set<string>& free_vars argument to rename.
+    + When we analyze a term, we can automatically add free vars into it.
+    + When we exit (say) a lambda expression, we could remove the binders from the free_vars.
+    + Should this be part of a monad, or should we pass the free_vars around?
+
+  - handle top-level names using bound_var_info, instead of putting them in the symbol table?
+    + top-level value names include: constructors, field names, class methods, builtins
+    + we look up constructor names in a different table than variable names.  Should we split the tables?
+    + are top-level names different than let/lambda/case bound names, because they don't shadow things
+         from other modules?
+    + when computing free variables, we should probably only return local variables (in `bound`)
+         and top-level vars from the same module.
+
+  - handle top-level fixities using a fixity env that we can modify as we go, similar to lower-level fixity info?
+    + Maybe implement lower-level fixity info FIRST, then make it handle the top level, kind of?
+    + Although fixities ultimately correspond to objects, don't locally declared fixities just correspond to names?
+      Thus, for example, a type and a constructor with the same name will get the same fixity?
+      Isn't this what allows us to parse infix expression in fundecls before we know what which term is the
+         function being declared?
+
+  - make a local fixity environment for use in infix handling.
+  - rewrite infix handling (and add an Infix object)
+    + there's a problem handling infix expressions of size 1?
+    + fixities wouldn't be used after rename.
+    + is fixity a property of objects, again?
+  - instead of fetching a symbol for each op, just get its fixity
+    + this should make introducing a fixity environment easier
+    + however, we need the symbol name to complain if we have (.. op -e) and op has precedence >= 6
+
+  - convert patterns expression into pattern AST nodes, like TuplePattern
+    + qual: bindpat "<-" exp
+    + alt:  pat alt_rhs
+    + decl_no_th: infixexp_top rhs <| we'd have to fix this up after we figure out if infixexp_top is a pattern
+    + decl_no_th: ! aexp rhs       <| ditto, I think?
+  - make a ConstructorPattern ast node.
+
+  - divide value declarations into binding groups inside rename.
+    + renaming expressions needs to return free variables, so we can compute the dependence structure
+    + in some cases, we currently return the BOUND variables -- for example when we analyze decls.
+      how does ghc handle this?
+
+  - figure out how to make recursive variant types for e.g. Exp, Type, Pattern
+    + rvariant<TypeVar, TypeCon, TypeApp, TupleType, ListType, StrictType, LazyType, ConstrainedType, ForallType>
+    + we could also do (i) shared_ptr<variant< >>, (ii) variant<shared_ptr<Args>...>, or (ii) shared_ptr<Type>
+
+  - split the symbol table into a symbol (variable) table, a constructor table, and a type table
+    + then maybe split the type table into a class table?
+    + but maybe we need a tycon table see whether a tycon is a type, newtype, data, or class?
+
+  - make sections use Name for the op?
+  - make infix use Name for the op?
+*/
+
+namespace Haskell
+{
+
+struct Apply;
+struct ParsedApp;
+struct Neg;
+struct InfixExp;
+struct InfixPat;
+struct TypedExp;
+struct Wrap;
+struct TypeSigDecl;
+struct KindSigDecl;
+struct ForeignDecl;
+struct FieldBinding;
+struct RecordSyntax;
+struct RecordCon;
+struct RecordUpdate;
+struct RecordPattern;
+struct InlinePragma;
+struct FixityDecl;
+struct DataOrNewtypeDecl;
+struct TypeSynonymDecl;
+struct TypeFamilyInstanceDecl;
+struct DataFamilyInstanceDecl;
+struct FamilyDecl;
+struct ClassDecl;
+struct InstanceDecl;
+struct StandaloneDerivingDecl;
+struct RoleAnnotationDecl;
+struct DefaultDecl;
+struct List;
+struct ListFrom;
+struct ListFromThen;
+struct ListFromTo;
+struct ListFromThenTo;
+struct ListComprehension;
+struct LeftSection;
+struct RightSection;
+struct Tuple;
+struct StrictValueDecl;
+struct ValueDecl;
+struct LetQual;
+struct SimpleQual;
+template<class P> struct PatQualT;
+using PatQual = PatQualT<Pat>;
+using ParsedPatQual = PatQualT<ExpOrPat>;
+struct RecStmt;
+struct Do;
+struct MDo;
+struct Let;
+struct If;
+struct MultiWayIf;
+struct PatDecl;
+template<class P> struct AltT;
+template<class P> struct AltsT;
+template<class P> struct MRuleT;
+template<class P> struct MatchesT;
+template<class P> struct LambdaT;
+template<class P> struct CaseT;
+using Alt = AltT<Pat>;
+using ParsedAlt = AltT<ExpOrPat>;
+using Alts = AltsT<Pat>;
+using ParsedAlts = AltsT<ExpOrPat>;
+using MRule = MRuleT<Pat>;
+using ParsedMRule = MRuleT<ExpOrPat>;
+using Matches = MatchesT<Pat>;
+using ParsedMatches = MatchesT<ExpOrPat>;
+using Lambda = LambdaT<Pat>;
+using ParsedLambda = LambdaT<ExpOrPat>;
+using Case = CaseT<Pat>;
+using ParsedCase = CaseT<ExpOrPat>;
+struct FunDecl;
+struct GenBind;
+
+struct Exp: public VariantNode
+<
+    Var,
+    Con,
+    Literal,
+    Apply,
+    ParsedApp,
+    Neg,
+    InfixExp,
+    TypedExp,
+    Wrap,
+    RecordSyntax,
+    RecordCon,
+    RecordUpdate,
+    List,
+    ListFrom,
+    ListFromThen,
+    ListFromTo,
+    ListFromThenTo,
+    ListComprehension,
+    LeftSection,
+    RightSection,
+    Tuple,
+    Do,
+	    MDo,
+	    Let,
+	    If,
+	    MultiWayIf,
+	    Lambda,
+	    Case,
+    ParsedLambda,
+    ParsedCase,
+    ParsedAsPattern,
+    ParsedLazyPattern,
+    ParsedStrictPattern,
+    ParsedWildcardPattern
+>
+{
+    using VariantNode::VariantNode;
+    using VariantNode::operator=;
+};
+
+typedef Exp Expression;
+typedef Located<Exp> LExp;
+
+struct Decl: public VariantNode
+<
+    TypeSigDecl,
+    KindSigDecl,
+    ForeignDecl,
+    InlinePragma,
+    FixityDecl,
+    DataOrNewtypeDecl,
+    TypeSynonymDecl,
+    TypeFamilyInstanceDecl,
+    DataFamilyInstanceDecl,
+    FamilyDecl,
+    ClassDecl,
+    InstanceDecl,
+    StandaloneDerivingDecl,
+    RoleAnnotationDecl,
+    DefaultDecl,
+    StrictValueDecl,
+    ValueDecl,
+    PatDecl,
+    FunDecl,
+    GenBind
+>
+{
+    using VariantNode::VariantNode;
+    using VariantNode::operator=;
+};
+
+typedef Located<Decl> LDecl;
+
+struct Stmt: public VariantNode
+<
+    LetQual,
+    SimpleQual,
+    PatQual,
+    ParsedPatQual,
+    RecStmt
+>
+{
+    using VariantNode::VariantNode;
+    using VariantNode::operator=;
+};
+
+typedef Located<Stmt> LStmt;
+typedef Stmt Qual;
+typedef Located<Qual> LQual;
+
+struct Apply
+{
+    LExp head;
+    LExp arg;
+
+    Core::wrapper arg_wrapper;
+    Core::wrapper res_wrapper;
+    std::string print() const;
+
+    Apply(const LExp& h, const LExp& a);
+};
+
+struct ParsedApp
+{
+    std::vector<LExp> terms;
+    std::string print() const;
+
+    ParsedApp() = default;
+    ParsedApp(const std::vector<LExp>& ts):terms(ts) {}
+};
+
+std::tuple<LExp,std::vector<LExp>> decompose_apps(const LExp&);
+
+std::tuple<LExp,std::vector<LExp>> decompose_parsed_app(const LExp&);
+
+//std::vector<LExp> flatten(const LExp&);
+
+LExp apply(const std::vector<LExp>& terms);
+
+LExp apply(const LExp& head, const std::vector<LExp>& args);
+
+    
+// HsDecl = type or class declaration
+//          instance declaration
+//          deriving declaration
+//          value declaration
+//          signature declaration
+//          standalone kind signature
+//          default declaration
+//          foreign declaration
+
+// HsBindLR<idLeft,idRight> = FunBind (variable or function bindings)
+//                              fun_extra :: free variables of the definition, after the renamer but before the typechecker
+//                              fun_id :: LIdP<idLeft>
+//                              fun_matches :: MatchGroup<idRight,LHsExpr<IdRight>>
+//                            PatBind
+//                              pat_extra ::
+//                              pat_lhs :: LPat<idLeft>
+//                              pat_rhs :: GRHSs<idRight,LHsExpr<IdRight>>
+//                            VarBind  (apparently introduced by the typechecker)
+//                              var_extra ::
+//                              var_id :: IdP<idLeft>
+//                              var_rhs :: LHsExpr<idRight>  --
+//                            AbsBinds (also output by the typechecker to record *typechecked* and *generalized* bindings)
+//
+/*
+ HsExpr =   HsVar LIdP
+          | HsUnboundVar OccName  -- "hole" or unbound variable
+          | HsConLikeOut ConLike
+          | HsRecFld AmbiguousFieldOcc
+          | -- overloaded label
+          | -- implicit parameter
+          | HsOverLit HsOverLit -- Overloaded literals
+          | HsLit HsLit -- Simple (non-overloaded) literals
+          | HsLam (MatchGroup (LHsExpr))
+          | -- lambda case
+          | HsApp -- Application
+          | -- visible type application
+          | OpApp LHsExpr LHsExpr LHsExpr -- ??
+          | NegApp LHsExpr SyntaxExpr -- negation .. why SyntaxExpr?
+          | HsPar LHsExpr -- parenthesized expression
+          | SectionL LHsExpr LHsExpr -- left operation section
+          | SectionR LHsExpr LHsExpr -- right operator section
+          | ExplicitTuple [LHsTupArg] Boxity -- tuple and sections
+          | -- unboxed sum types
+          | HsCase LHsExpr (MatchGroup LHsExpr) -- case expressions
+          | HsIf LHsExpr LHsExpr LHsExpr -- if expression
+          | -- multi-if
+          | HsLet LHsLocalBinds LHsExpr -- let expression
+          | HsDo (HsStmtContext [ExprLStmt] -- do expression
+          | ExplicitList [LHsExpr]
+          | RecordCon LIdP (constructor name) HsRecordBinds (the fields)
+          | RecordUpd ???
+          | ExprWithTySig LHsExpr LHsSigWcType NoGhcTc
+          | ArithSeq ArithSeqInfo
+
+LPat = WildPat          -- wildcard pattern
+     | VarPat LIdP      -- variable pattern
+     | LazyPat LPat     -- lazy pattern
+     | AsPat LIdP LPat  -- as pattern
+     | ParPat LPat      -- parenthesized pattern (?)
+     | BangPat LPat     -- bang pattern
+     | ListPat [LPat]   -- list pattern
+     | TuplePat [LPat] Boxity -- tuple patterns
+     | SumPat           -- sum pattern ??
+     | ConPat { pat_con :: located<ConLike> HsConPatDetails }
+     | ViewPat          -- view pattern
+     | SplicePat        -- splice pattern
+     | LitPat (HsLit)   -- non-overloaded literal
+     | NPat             -- natural pattern ??
+     | NPlusKPat        -- n+k patterns
+     | SigPat LPat (HsPatSigType NoGhcTc) -- pattern with a type signature?
+*/
+
+std::string parenthesize_exp(const Expression& E);
+
+struct Neg
+{
+    std::optional<Hs::Var> negate_op;
+    std::string print() const;
+
+    Neg() = default;
+};
+
+struct InfixExp
+{
+    std::vector<Located<Exp>> terms;
+    std::string print() const;
+
+    InfixExp() = default;
+    InfixExp(const std::vector<Located<Exp>>& ts): terms(ts) {}
+};
+
+// Transitional: unresolved pattern infix still carries expression-shaped terms
+// until rename resolves fixity; replace this with strict pattern terms later.
+struct InfixPat
+{
+    std::vector<LExp> terms;
+    std::string print() const;
+
+    InfixPat() = default;
+    InfixPat(const std::vector<LExp>& ts): terms(ts) {}
+};
+
+
+struct TypedExp
+{
+    LExp exp;
+    LType type;
+    Core::wrapper wrap;
+    std::string print() const;
+
+    TypedExp() = default;
+    TypedExp(const LExp& e, const LType& t): exp(e), type(t) {}
+};
+
+struct Wrap
+{
+    LExp exp;
+    Core::wrapper wrap;
+    std::string print() const;
+
+    Wrap() = default;
+    Wrap(const LExp& e, const Core::wrapper& w): exp(e), wrap(w) {}
+};
+
+enum class TypeSigKind {ordinary, default_method};
+
+struct TypeSigDecl
+{
+    std::vector<LVar> vars;
+    LType type;
+    TypeSigKind kind = TypeSigKind::ordinary;
+    std::string print() const;
+    bool is_default_method() const { return kind == TypeSigKind::default_method; }
+
+    TypeSigDecl() = default;
+    TypeSigDecl(const std::vector<LVar>& vs, const LType& t, TypeSigKind k = TypeSigKind::ordinary)
+        : vars(vs), type(t), kind(k) {}
+};
+
+struct KindSigDecl
+{
+    std::vector<LTypeCon> tycons;
+    Kind kind;
+    std::string print() const;
+
+    KindSigDecl() = default;
+    KindSigDecl(const std::vector<LTypeCon>& tcs, const Kind& k): tycons(tcs), kind(k) {}
+};
+
+struct ForeignABISlot
+{
+    int index = -1;
+    ::Type type;
+    std::optional<std::string> role;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(index, type, role);
+    }
+};
+
+struct ForeignArgumentGroup
+{
+    int public_argument_index = -1;
+    ::Type haskell_type;
+    std::vector<ForeignABISlot> slots;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(public_argument_index, haskell_type, slots);
+    }
+};
+
+struct ForeignABIResult
+{
+    ::Type haskell_type;
+    ::Type abi_type;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(haskell_type, abi_type);
+    }
+};
+
+struct ForeignABILayout
+{
+    std::vector<ForeignArgumentGroup> arguments;
+    std::optional<ForeignABISlot> world_token;
+    ForeignABIResult result;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(arguments, world_token, result);
+    }
+};
+
+struct ForeignTypeInfo
+{
+    ::Type haskell_type;
+    ::Type foreign_type;
+    ::Type abi_type;
+    std::optional<::Type> public_type;
+    std::optional<ForeignABILayout> layout;
+
+    // Ordinary bpcall/ecall imports returning IO need the existing makeIO
+    // wrapper.  For trcall, the translated raw type already contains its
+    // world argument and this remains false.
+    bool needs_io_wrapper = false;
+};
+
+struct CompiledForeignInfo
+{
+    std::string public_name;
+    std::string raw_name;
+    std::string plugin_name;
+    std::string symbol_name;
+    std::string call_conv;
+
+    ::Type haskell_type;
+    ::Type foreign_type;
+    ::Type abi_type;
+
+    std::optional<ForeignABILayout> layout;
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+        ar(public_name, raw_name, plugin_name, symbol_name, call_conv);
+        ar(haskell_type, foreign_type, abi_type, layout);
+    }
+};
+
+struct ForeignDecl
+{
+    Located<std::string> call_conv;
+
+    std::string plugin_name;
+    std::string symbol_name;
+    Hs::LVar function;
+    LType type;
+    std::optional<ForeignTypeInfo> foreign_info;
+    std::string print() const;
+
+    ForeignDecl(const Located<std::string>& conv, const std::string& n, const Hs::LVar& f, const LType& t);
+};
+
+struct FieldBinding
+{
+    LVar field;
+    std::optional<LExp> value;
+    std::optional<std::string> resolved_field;
+    // Renaming records every in-scope interpretation of a record-update label;
+    // typechecking only filters this finite set using the updated value's type.
+    std::vector<FieldInfo> record_update_candidates;
+    std::string print() const;
+
+    FieldBinding(const LVar& lv):field(lv) {}
+    FieldBinding(const LVar& lv, const LExp& le):field(lv),value(le) {}
+};
+
+template<class Field>
+struct RecordFieldBindings
+{
+    std::vector<Located<Field>> fields;
+    std::optional<yy::location> dotdot;
+    std::string print() const
+    {
+        std::string result;
+        for(const auto& binding: fields)
+        {
+            if (not result.empty())
+                result += ",";
+            result += binding.print();
+        }
+        if (dotdot)
+        {
+            if (not result.empty())
+                result += ",";
+            result += "..";
+        }
+        return result;
+    }
+};
+
+using FieldBindings = RecordFieldBindings<FieldBinding>;
+
+struct CheckedRecordUpdate;
+struct CheckedRecordCon;
+struct CheckedRecordPattern;
+
+// Parsed record braces before context decides construction, update, or pattern.
+
+struct RecordSyntax
+{
+    LExp head;
+    Located<FieldBindings> fbinds;
+    std::string print() const;
+
+    RecordSyntax() = default;
+    RecordSyntax(const LExp& e, const Located<FieldBindings>& fb): head(e), fbinds(fb) {}
+};
+
+// Shared expression-side record field list for classified construction/update syntax.
+
+struct RecordCon
+{
+    LCon con;
+    Located<FieldBindings> fbinds;
+    std::shared_ptr<CheckedRecordCon> checked_con;
+    std::string print() const;
+
+    RecordCon(const LCon& c, const Located<FieldBindings>& fb): con(c), fbinds(fb) {}
+};
+
+struct RecordUpdate
+{
+    LExp object;
+    Located<FieldBindings> fbinds;
+    std::shared_ptr<CheckedRecordUpdate> checked_update;
+    std::string print() const;
+
+    RecordUpdate() = default;
+    RecordUpdate(const LExp& e, const Located<FieldBindings>& fb): object(e), fbinds(fb) {}
+};
+
+struct PatternFieldBinding
+{
+    LVar field;
+    LPat pattern;
+    bool pun = false;
+    std::optional<std::string> resolved_field;
+
+    std::string print() const;
+
+    PatternFieldBinding() = default;
+    PatternFieldBinding(const LVar& lv, const LPat& lp):field(lv),pattern(lp) {}
+    PatternFieldBinding(const LVar& lv, const LPat& lp, bool p):field(lv),pattern(lp),pun(p) {}
+};
+
+using PatternFieldBindings = RecordFieldBindings<PatternFieldBinding>;
+
+struct RecordPattern
+{
+    LCon head;
+    Located<PatternFieldBindings> fbinds;
+    std::shared_ptr<CheckedRecordPattern> checked_pattern;
+    std::string print() const;
+
+    RecordPattern(const LCon& c, const Located<PatternFieldBindings>& fb): head(c), fbinds(fb) {}
+};
+
+// I think that these can originally be only
+// * FixityDecl
+// * TypeSigDecl
+// * ValueDecl
+
+// Eventually we replace ValueDecl with PatDecl and FunDecl,
+// move TypeSigDecls to a map, and remove FixityDecls.
+
+enum class inline_pragma_t {INLINE, INLINABLE, NOINLINE};
+
+std::ostream& operator<<(std::ostream& o, inline_pragma_t );    
+
+struct InlinePragma
+{
+    Located<std::string> command_string;
+    inline_pragma_t command;
+    Located<std::string> var;
+
+    std::string print() const;
+
+    InlinePragma(const Located<std::string>& s1, const Located<std::string>& s2);
+};
+
+    
+struct Decls: public std::vector<LDecl>
+{
+public:
+    std::optional<bool> recursive;
+
+    std::string print() const;
+
+    Decls() = default;
+    Decls(const vector<LDecl>& ds): std::vector<LDecl>(ds) {}
+};
+
+struct Binds: public std::vector<Decls>
+{
+    // FIXME: I should keep the TypeSigDecl around for error messages.
+    std::map<LVar, LType> signatures;
+
+    std::map<LVar, inline_pragma_t> inline_sigs;
+
+    std::string print() const;
+
+    using std::vector<Decls>::vector;
+};
+
+typedef Located<Binds> LBinds;
+
+Binds operator+(const Binds& b1, const Binds& b2);
+
+struct FixityDecl
+{
+    Infix::Associativity associativity;
+    std::optional<int> precedence;
+    std::vector<Located<std::string>> names;
+    std::string print()  const;
+
+    FixityDecl() = default;  // so this can be a token value.
+    FixityDecl(Infix::Associativity a, std::optional<int> oi, const std::vector<Located<std::string>>& v)
+        : associativity(a), precedence(oi), names(v) {}
+};
+
+struct FieldDecl
+{
+    std::vector<LVar> field_names;
+    LType type;
+    std::string print()  const;
+
+    FieldDecl() = default;       // so this can be a token value.
+    FieldDecl(const std::vector<LVar>& vs, const LType& t):field_names(vs),type(t) {}
+};
+
+
+struct FieldDecls
+{
+    std::vector<FieldDecl> field_decls;
+
+    std::string print()  const;
+    FieldDecls() = default;      // so this can be a token value.
+    FieldDecls(const std::vector<FieldDecl>& ds):field_decls(ds) {}
+};
+
+struct GADTConstructorDecl
+{
+    std::vector<Located<std::string>> con_names;
+
+    // FIXME: handle GADT fielddecls Constr :: { name1 :: ArgType1, name2 :: ArgType2 } -> ResultType
+    // Constraint: all constructors with the same field must have the same result type.
+    LType type;
+    std::string print() const;
+
+    GADTConstructorDecl() = default; // so this can be a token value
+    GADTConstructorDecl(const std::vector<Located<std::string>>& cs, const LType& t):con_names(cs), type(t) {}
+};
+
+struct GADTConstructorsDecl: public std::vector<GADTConstructorDecl>
+{
+    std::string print() const;
+    using std::vector<GADTConstructorDecl>::vector;
+};
+
+struct ConstructorDecl
+{
+    std::vector<LTypeVar> forall;           // list of type variables we are forall-ing over.
+    Context context;                        // type constraints
+
+    std::optional<Hs::LCon> con;            // the name of the constructor
+    std::variant< std::vector<LType>, FieldDecls> fields;
+
+    std::vector<LType> get_field_types() const;
+
+    std::string print() const;
+
+    bool is_record_constructor() const;
+
+    int arity() const;
+
+    ConstructorDecl() = default;
+
+    ConstructorDecl(const std::vector<LTypeVar>& tvs, const Context& ct, const Hs::LCon& c, std::vector<LType>& as)
+        :forall(tvs),
+         context(ct),
+         con(c),
+         fields(as)
+   { }
+
+    ConstructorDecl(const std::vector<LTypeVar>& tvs, const Context& ct, const Hs::LCon& c, const FieldDecls& fds)
+        :forall(tvs),
+         context(ct),
+         con(c),
+         fields(fds)
+   { }
+};
+
+struct ConstructorsDecl: public std::vector<ConstructorDecl>
+{
+    std::optional<ConstructorDecl> find_constructor_by_name(const std::string& s) const;
+    std::string print() const;
+    using std::vector<ConstructorDecl>::vector;
+};
+
+// TODO: rename Constructor to ConstructorDecl?
+// How to incorporate GADT declarations?
+
+enum class DataOrNewtype {data,newtype};
+
+std::ostream& operator<<(std::ostream& o, DataOrNewtype);
+
+enum class DerivingStrategy {stock, anyclass, newtype, via};
+
+std::ostream& operator<<(std::ostream& o, DerivingStrategy);
+
+struct Deriving
+{
+    std::optional<DerivingStrategy> strategy;
+    LType type;
+    std::optional<LType> via_type;
+
+    std::string print() const;
+
+    Deriving() = default;
+    Deriving(const std::optional<DerivingStrategy>& s, const LType& t, const std::optional<LType>& v = {})
+        :strategy(s),
+         type(t),
+         via_type(v)
+        {}
+};
+
+struct DataDefn
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    // Should I factor out this group into a DataOrNewtypeHeader?
+    DataOrNewtype data_or_newtype;
+    Context context;
+    std::optional<Kind> kind_sig;
+
+    // Do we need a variant where this is absent?
+    std::variant<std::monostate,ConstructorsDecl, GADTConstructorsDecl> constructors;
+
+    std::vector<Deriving> derivings;
+
+    bool is_empty_decl() const;
+    bool is_regular_decl() const;
+    bool is_gadt_decl() const;
+
+    const ConstructorsDecl& get_constructors() const;
+          ConstructorsDecl& get_constructors();
+
+    const GADTConstructorsDecl& get_gadt_constructors() const;
+          GADTConstructorsDecl& get_gadt_constructors();
+
+    std::string print() const;
+
+    DataDefn(DataOrNewtype dn,
+	    const Context& ct,
+	    const std::optional<Kind>& k,
+            const std::vector<Deriving>& ds = {})
+        :data_or_newtype(dn),
+         context(ct),
+         kind_sig(k),
+         derivings(ds)
+        {}
+
+    DataDefn(DataOrNewtype dn,
+	    const Context& ct,
+	    const std::optional<Kind>& k,
+	    const ConstructorsDecl& cs,
+            const std::vector<Deriving>& ds = {})
+        :data_or_newtype(dn),
+         context(ct),
+         kind_sig(k),
+         constructors(cs),
+         derivings(ds)
+        {}
+
+    DataDefn(DataOrNewtype dn,
+	     const Context& ct,
+	     const std::optional<Kind>& k,
+	     const GADTConstructorsDecl& gadt_cs,
+             const std::vector<Deriving>& ds = {})
+        :data_or_newtype(dn),
+         context(ct),
+         kind_sig(k),
+         constructors(gadt_cs),
+         derivings(ds)
+        {}
+};
+
+
+struct DataOrNewtypeDecl: public DataDefn
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    // Should I factor out this group into a DataOrNewtypeHeader?
+    LTypeCon con;
+    std::vector<LTypeVar> type_vars;
+    std::string print() const;
+
+    DataOrNewtypeDecl(const LTypeCon& c,
+		      const std::vector<LTypeVar>& tvs,
+		      const DataDefn& def)
+        :DataDefn(def),
+         con(c),
+         type_vars(tvs)
+        {}
+};
+
+struct TypeSynonymDecl
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    LTypeCon con;
+    std::vector<LTypeVar> type_vars;
+
+    LType rhs_type;
+
+    int arity() const {return type_vars.size();}
+    std::string print() const;
+
+    TypeSynonymDecl(const LTypeCon& c,
+                    const std::vector<LTypeVar>& tvs,
+                    const Located<Type>& rhs)
+        :con(c),
+         type_vars(tvs),
+         rhs_type(rhs)
+        {}
+};
+
+struct TypeFamilyInstanceEqn
+{
+    Located<TypeCon> con;
+    std::vector<LType> args;
+    LType rhs;
+    std::string print() const;
+
+    TypeFamilyInstanceEqn() = default;
+    TypeFamilyInstanceEqn(const LTypeCon& tc, const std::vector<LType>& as, const LType& t):
+        con(tc), args(as), rhs(t)
+    {}
+};
+
+struct TypeFamilyInstanceDecl: public TypeFamilyInstanceEqn
+{
+
+    std::string print() const;
+
+    using TypeFamilyInstanceEqn::TypeFamilyInstanceEqn;
+    TypeFamilyInstanceDecl(const TypeFamilyInstanceEqn& e):TypeFamilyInstanceEqn(e) {}
+};
+
+
+// HsFamEqn pass (HsDataDefn pass)
+// HsFamEqn pass rhs = {tycon :: Id pass, bndrs :: optional<vector<LTypeVar>>, pats :: vector<LHsTypeArg>, rhs :: rhs }
+// - pats holds patterns on the LHS of a type instance, such as @k or (a::k)
+// - optional<vector<LTypeVar>> determines whether we infer the binders (empty optional) or use the given forall, following
+//   the forall-or-nothing rule.
+//
+// HsDataDefn pass = Maybe (LContext), Maybe (CType), Maybe Kind, constructors, deriving
+// -- constructors<a> = Newtype a | DataType [a]
+//
+// See GHC/Tc/TyCl/Instance.hs
+
+
+struct DataFamilyInstanceDecl
+{
+    std::optional<std::vector<LTypeVar>> forall;
+    Located<TypeCon> con;
+    std::vector<LType> args;
+    DataDefn rhs;
+
+    std::string print() const;
+
+    DataFamilyInstanceDecl(const std::optional<std::vector<LTypeVar>>& tvs, const Located<TypeCon>& c, const std::vector<LType>& as, const DataDefn& d)
+	:forall(tvs), con(c), args(as), rhs(d)
+	{}
+
+    DataFamilyInstanceDecl(const Located<TypeCon>& c, const std::vector<LType>& as, const DataDefn& d)
+	:con(c), args(as), rhs(d)
+	{}
+};
+
+enum FamilyInfo { TypeFamily, DataFamily };
+
+struct FamilyDecl
+{
+    FamilyInfo info;
+    LTypeCon con;
+    std::vector<LTypeVar> args;
+    std::optional<Kind> kind_sig;
+    // optional injectivity clause
+    std::optional<std::vector<TypeFamilyInstanceEqn>> where_instances;
+
+    int arity() const {return args.size();}
+    Kind result_kind() const;
+    std::vector<Kind> arg_kinds() const;
+    Kind kind() const;
+    bool has_kind_notes() const;
+    bool is_type_family() const {return info == TypeFamily;}
+    bool is_data_family() const {return info == DataFamily;}
+    bool is_open_type_family() const {return is_type_family() and not where_instances;}
+    bool is_closed_type_family() const {return is_type_family() and where_instances;}
+
+    std::string print() const;
+
+    FamilyDecl(FamilyInfo i, const LTypeCon& tc, const std::vector<LTypeVar>& as, const std::optional<Kind>& ks,
+                   const std::optional<std::vector<TypeFamilyInstanceEqn>>& es)
+        :info(i),
+	 con(tc),
+         args(as),
+         kind_sig(ks),
+         where_instances(es)
+    { }
+};
+
+
+struct FunDep
+{
+    std::vector<LTypeVar> lhs;
+    std::vector<LTypeVar> rhs;
+    std::string print() const;
+
+    FunDep() = default; // for the parser
+    FunDep(const std::vector<LTypeVar>& ltvs, const std::vector<LTypeVar>& rtvs)
+        :lhs(ltvs),
+         rhs(rtvs)
+        {}
+};
+
+struct ClassDecl
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    Context context;
+    LTypeCon con;
+    std::vector<LTypeVar> type_vars;
+
+    std::vector<FixityDecl> fixity_decls;
+
+    std::vector<FunDep> fun_deps;
+    std::vector<FamilyDecl> fam_decls;
+    std::vector<TypeFamilyInstanceDecl> default_type_inst_decls;
+    std::vector<TypeSigDecl> sig_decls;
+    Decls default_method_decls;
+    std::string print() const;
+
+    ClassDecl(const Context& ct,
+              const LTypeCon& c,
+              const std::vector<LTypeVar>& tvs,
+              const std::vector<FixityDecl>& fxs,
+              const std::vector<FunDep>& fds,
+              const std::vector<FamilyDecl>& tfds,
+              const std::vector<TypeFamilyInstanceDecl>& tids,
+              const std::vector<TypeSigDecl>& sds,
+              const Decls& dms)
+        :context(ct),
+         con(c),
+         type_vars(tvs),
+         fixity_decls(fxs),
+         fun_deps(fds),
+         fam_decls(tfds),
+         default_type_inst_decls(tids),
+         sig_decls(sds),
+         default_method_decls(dms)
+        {}
+};
+
+struct InstanceDecl
+{
+    // See PostProcess.hs: checkTyClHdr for checks and post-processing.
+
+    std::optional<std::string> overlap_pragma;
+
+    // This should be something like Eq a => Eq [a]
+    // Right now it could be either ForallType or ConstrainedType
+    LType polytype;
+
+    std::vector<TypeFamilyInstanceDecl> type_inst_decls;
+    std::vector<DataFamilyInstanceDecl> data_inst_decls;
+    Decls method_decls;
+
+    bool generalized_newtype_deriving = false;
+    bool inferred_stock_context = false;
+    std::string print() const;
+
+    InstanceDecl(const std::optional<std::string>& o,
+                 const LType& t,
+                 const std::vector<TypeFamilyInstanceDecl>& tids,
+                 const std::vector<DataFamilyInstanceDecl>& dids,
+                 const Decls& ds)
+        :overlap_pragma(o),
+         polytype(t),
+         type_inst_decls(tids),
+         data_inst_decls(dids),
+         method_decls(ds)
+        {}
+};
+
+struct StandaloneDerivingDecl
+{
+    std::optional<DerivingStrategy> strategy;
+    LType polytype;
+    std::optional<LType> via_type;
+    std::string print() const;
+
+    StandaloneDerivingDecl(const std::optional<DerivingStrategy>& s, const LType& t, const std::optional<LType>& v = {})
+        :strategy(s),
+         polytype(t),
+         via_type(v)
+        {}
+};
+
+struct RoleAnnotationDecl
+{
+    LTypeCon con;
+    std::vector<Located<std::optional<Role>>> roles;
+    std::string print() const;
+
+    RoleAnnotationDecl(const LTypeCon& c, const std::vector<Located<std::optional<Role>>>& rs)
+        :con(c),
+         roles(rs)
+        {}
+};
+
+struct DefaultDecl
+{
+    std::optional<Located<std::string>> maybe_class;
+    std::vector<LType> types;
+    DefaultDecl() {}
+    std::string print() const;
+    DefaultDecl(const std::optional<Located<std::string>>& c, std::vector<LType>& ts):maybe_class(c), types(ts) {}
+};
+
+
+struct List
+{
+    std::vector<LExp> elements;
+    std::string print() const;
+    List(const std::vector<LExp>& es): elements(es) {}
+};
+
+struct ListFrom
+{
+    LExp from;
+    Hs::Var enumFromOp = {"Compiler.Enum.enumFrom"};
+    std::string print() const;
+    ListFrom(const LExp& e): from(e) {}
+};
+
+struct ListFromThen
+{
+    LExp from;
+    LExp then;
+    Hs::Var enumFromThenOp = {"Compiler.Enum.enumFromThen"};
+    std::string print() const;
+    ListFromThen(const LExp& e1, const LExp& e2): from(e1), then(e2) {}
+};
+
+struct ListFromTo
+{
+    LExp from;
+    LExp to;
+    Hs::Var enumFromToOp = {"Compiler.Enum.enumFromTo"};
+    std::string print() const;
+    ListFromTo(const LExp& e1, const LExp& e2): from(e1), to(e2) {}
+};
+
+struct ListFromThenTo
+{
+    LExp from;
+    LExp then;
+    LExp to;
+    Hs::Var enumFromThenToOp = {"Compiler.Enum.enumFromThenTo"};
+    std::string print() const;
+    ListFromThenTo(const LExp& e1, const LExp& e2, const LExp& e3): from(e1), then(e2), to(e3) {}
+};
+
+struct ListComprehension
+{
+    LExp body;
+    std::vector<LQual> quals;
+    std::string print() const;
+    ListComprehension(const LExp& e, const std::vector<LQual>& es): body(e), quals(es) {}
+};
+
+struct LeftSection
+{
+    LExp l_arg;
+    LExp op;
+    std::string print() const;
+    LeftSection(const LExp& e, const LExp& v):l_arg(e),op(v) {}
+};
+
+struct RightSection
+{
+    LExp op;
+    LExp r_arg;
+    std::string print() const;
+    RightSection(const LExp& v, const LExp& e):op(v), r_arg(e) {}
+};
+
+struct Tuple
+{
+    std::vector<LExp> elements;
+    std::string print() const;
+    Tuple(const std::vector<LExp>& es): elements(es)
+        {
+            assert(es.size() != 1);
+        }
+};
+
+Exp tuple(const std::vector<LExp>& es);
+
+struct GuardedRHS
+{
+    std::vector<LStmt> guards;
+    LExp body;
+
+    std::string print() const;
+    std::string print_no_equals() const;
+
+    GuardedRHS() = default;
+    GuardedRHS(const std::vector<LStmt> v, const LExp& e)
+        :guards(v),
+         body(e)
+    { }
+};
+
+struct MultiGuardedRHS
+{
+    std::vector<GuardedRHS> guarded_rhss;
+    // We might need to make this into a shared_ptr< > to avoid an infinite structure.
+    std::optional<LBinds> decls;
+
+    std::string print() const;
+    std::string print_no_equals() const;
+
+    MultiGuardedRHS() = default;
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v):guarded_rhss(v) {}
+    MultiGuardedRHS(const std::vector<GuardedRHS>& v, const std::optional<LBinds>& ds):guarded_rhss(v), decls(ds) {}
+};
+
+MultiGuardedRHS SimpleRHS(const LExp&, const std::optional<LBinds>& ds = {});
+
+struct StrictValueDecl
+{
+    LExp lhs;
+    MultiGuardedRHS rhs;
+    std::string print() const;
+
+    StrictValueDecl() = default;
+    StrictValueDecl(const LExp& l, const Exp& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
+    StrictValueDecl(const LExp& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
+};
+
+// Where do we make ValueDecl's with an rhs that is a plain expression?
+// Can we just make a SimpleValueDecl from the plain expression using a SimpleRHS?
+
+struct ValueDecl
+{
+    LExp lhs;
+    MultiGuardedRHS rhs;
+    bool operator==(const ValueDecl& V) const;
+    std::string print() const;
+
+    ValueDecl() = default;
+    ValueDecl(const LExp& l, const Exp& r): lhs(l), rhs(SimpleRHS({noloc,r})) {}
+    ValueDecl(const LExp& l, const MultiGuardedRHS& r): lhs(l), rhs(r) {}
+};
+
+struct Stmts
+{
+    std::vector<LStmt> stmts;
+    std::string print() const;
+
+    Stmts() = default;
+    Stmts(const std::vector<LStmt>& v):stmts(v) {}
+};
+
+struct LetQual
+{
+    LBinds binds;
+    std::string print()  const;
+    LetQual(const LBinds& b): binds(b) {}
+};
+
+struct SimpleQual
+{
+    LExp exp;
+    Hs::Var andThenOp = {"Control.Monad.>>"};
+    std::string print() const;
+    SimpleQual(const LExp &e): exp(e) {};
+};
+
+template<class P>
+struct PatQualT
+{
+    Located<P> bindpat;
+    LExp exp;
+
+    Hs::Var bindOp = {"Control.Monad.>>="};
+    std::optional<Hs::Var> failOp = {{"Control.Monad.fail"}};
+    std::optional<bool> bindpat_can_fail;
+    std::string print() const { return bindpat.print() + " <- " + exp.print(); }
+    PatQualT(const Located<P>& bp, const LExp& e): bindpat(bp), exp(e) {};
+};
+
+struct CheckedRecStmt
+{
+    LStmt mfix_bind_stmt;
+
+    explicit CheckedRecStmt(const LStmt& stmt): mfix_bind_stmt(stmt) {}
+};
+
+struct RecStmt
+{
+    Stmts stmts;
+    Hs::Var bindOp = {"Control.Monad.>>="};
+    Hs::Var returnOp = {"Control.Monad.return"};
+    Hs::Var mfixOp = {"Control.Monad.Fix.mfix"};
+    std::shared_ptr<CheckedRecStmt> checked_rec;
+    std::string print() const;
+
+    RecStmt(const Stmts& s):stmts(s) {}
+};
+
+// at some point, we need to distinguish between TuplePattern and TupleExpression...    
+
+struct Do
+{
+    Stmts stmts;
+    std::string print() const;
+
+    Do() = default;
+    Do(const Stmts& s):stmts(s) {}
+};
+
+struct MDo
+{
+    Stmts stmts;
+    std::string print() const;
+
+    MDo() = default;
+    MDo(const Stmts& s):stmts(s) {}
+};
+
+template<class P>
+struct AltT
+{
+    Located<P> pattern;
+    MultiGuardedRHS rhs;
+
+    std::string print() const;
+
+    AltT() = default;
+    AltT(const Located<P>& p, const MultiGuardedRHS& r):pattern(p), rhs(r) {};
+};
+
+template<class P>
+struct AltsT: public std::vector<Located<AltT<P>>>
+{
+    std::string print() const;
+
+    AltsT() = default;
+    AltsT(const std::vector<Located<AltT<P>>>& v): std::vector<Located<AltT<P>>>(v) {};
+};
+
+struct Let
+{
+    LBinds binds;
+    LExp body;
+    std::string print() const;
+
+    Let(const LBinds& bs, const LExp& b): binds(bs), body(b) {};
+};
+
+Let simple_let(const LVar&, const LExp&, const LExp&);
+
+struct If
+{
+    LExp condition;
+    LExp true_branch;
+    LExp false_branch;
+    std::string print() const;
+
+    If(const LExp& c, const LExp& t, const LExp& f)
+        : condition(c),
+          true_branch(t),
+          false_branch(f)
+	        { }
+};
+
+struct MultiWayIf
+{
+    std::vector<GuardedRHS> guarded_rhss;
+    std::string print() const;
+
+    MultiWayIf() = default;
+    MultiWayIf(const std::vector<GuardedRHS>& grhss): guarded_rhss(grhss) {}
+};
+
+struct ExportSubSpec
+{
+    std::optional<std::vector<Located<std::string>>> names;
+    std::string print() const;
+};
+
+// The 'type' seems to be different.
+enum class ImpExpNs {module, type, pattern, default_};
+
+std::string print(ImpExpNs);
+
+struct Export
+{
+    std::optional<Located<ImpExpNs>> ns;
+    Located<std::string> symbol;
+    std::optional<ExportSubSpec> subspec;
+    std::string print() const;
+    bool is_module() const;
+    bool is_value() const;
+    bool is_type() const;
+    bool is_default() const;
+};
+
+typedef Located<Export> LExport;
+
+struct ImpSpec
+{
+    bool hiding;
+    std::vector<LExport> imports;
+    std::string print() const;
+};
+
+struct ImpDecl
+{
+    bool qualified;
+    Located<std::string> modid;
+    std::optional<Located<std::string>> as;
+    std::optional<ImpSpec> impspec;
+
+    std::string print() const;
+
+    ImpDecl() = default;
+    ImpDecl(bool b, const Located<std::string>& s, const std::optional<Located<std::string>>& a, const std::optional<ImpSpec>& is)
+        :qualified(b),
+         modid(s),
+         as(a),
+         impspec(is)
+    {}
+};
+
+typedef Located<ImpDecl> LImpDecl;
+
+struct Module
+{
+    Located<std::string> modid;
+    std::optional<std::vector<LExport>> exports;
+    std::vector<LImpDecl> impdecls;
+    std::optional<Decls> topdecls;
+
+    std::string print() const;
+
+    Module() = default;
+    Module(const Located<std::string>&s,
+           const std::optional<std::vector<LExport>>& e,
+           const std::vector<LImpDecl>& i,
+           const std::optional<Decls>& t)
+        :modid(s),
+         exports(e),
+         impdecls(i),
+         topdecls(t)
+    {}
+};
+
+struct PatDecl
+{
+    std::string print() const;
+
+    LPat lhs;
+    MultiGuardedRHS rhs;
+
+    // This holds vars discovered during renaming
+    std::set<std::string> rhs_free_vars;
+
+    PatDecl(const LPat& p, const MultiGuardedRHS& r):lhs(p), rhs(r) {}
+};
+
+template<class P>
+struct MRuleT
+{
+    std::string print() const;
+
+    std::vector<Located<P>> patterns;
+    MultiGuardedRHS rhs;
+    MRuleT() = default;
+    MRuleT(const std::vector<Located<P>>& ps, const MultiGuardedRHS& r);
+};
+
+template<class P>
+struct MatchesT: public std::vector<MRuleT<P>>
+{
+    using std::vector<MRuleT<P>>::vector;
+};
+
+struct CheckedRecordUpdateRhsApply
+{
+    // One checked constructor-application step in the record update RHS.
+    LExp arg;
+    Core::wrapper arg_wrapper;
+    Core::wrapper res_wrapper;
+
+    CheckedRecordUpdateRhsApply(const LExp& a, Core::wrapper aw = {}, Core::wrapper rw = {})
+        :arg(a), arg_wrapper(aw), res_wrapper(rw)
+    {}
+};
+
+struct CheckedRecordUpdateAlt
+{
+    // Semantic constructor-order update plan plus the checked pattern evidence.
+    LCon constructor;
+    std::vector<LVar> old_binders;
+    std::vector<CheckedRecordUpdateRhsApply> rhs_apps;
+    LPat checked_pattern;
+
+    CheckedRecordUpdateAlt(const LCon& c, const std::vector<LVar>& bs, const std::vector<CheckedRecordUpdateRhsApply>& as, const LPat& p)
+        :constructor(c), old_binders(bs), rhs_apps(as), checked_pattern(p)
+    {}
+};
+
+struct CheckedRecordUpdate
+{
+    // Typechecked update plan used by desugaring without replacing the source RecordUpdate node.
+    LExp object;
+    std::vector<CheckedRecordUpdateAlt> alternatives;
+
+    CheckedRecordUpdate(const LExp& o, const std::vector<CheckedRecordUpdateAlt>& as): object(o), alternatives(as) {}
+};
+
+struct CheckedRecordCon
+{
+    // Typechecked positional application; Apply nodes carry argument/result wrappers.
+    LExp positional_app;
+
+    explicit CheckedRecordCon(const LExp& app): positional_app(app) {}
+};
+
+struct CheckedRecordPattern
+{
+    // Typechecked positional constructor pattern; ConPattern carries GADT evidence.
+    LPat positional_pattern;
+
+    explicit CheckedRecordPattern(const LPat& pat): positional_pattern(pat) {}
+};
+
+template<class P>
+struct LambdaT
+{
+    MRuleT<P> match;
+    std::string print() const;
+
+    LambdaT(const std::vector<Located<P>>& ps, const LExp& b);
+    explicit LambdaT(const MRuleT<P>& m):match(m) {}
+};
+
+
+struct LambdaContext { };
+struct CaseContext { };
+struct FunctionContext
+{
+    std::string name;
+};
+
+struct MatchContext: std::variant<LambdaContext, CaseContext, FunctionContext>
+{
+    using std::variant<LambdaContext, CaseContext, FunctionContext>::variant;
+    std::string print() const;
+};
+
+template<class P>
+struct CaseT
+{
+    LExp object;
+    MatchesT<P> alts;
+    std::string print() const;
+
+    CaseT(const LExp& o, const AltsT<P>& as);
+    CaseT(const LExp& o, const MatchesT<P>& ms);
+};
+
+struct FunDecl
+{
+    std::string print() const;
+
+    LVar v;
+    Matches matches;
+    Core::wrapper wrap;
+
+    // This holds vars discovered during renaming
+    std::set<std::string> rhs_free_vars;
+
+    FunDecl(const LVar& vv, const Matches& ms): v(vv), matches(ms) {}
+};
+
+FunDecl simple_decl(const LVar& v, const LExp&);
+FunDecl simple_decl(const LVar& v, const MultiGuardedRHS&);
+FunDecl simple_fun_decl(const LVar& v, const std::vector<LPat>& pats, const LExp&);
+FunDecl simple_fun_decl(const LVar& v, const std::vector<LPat>& pats, const MultiGuardedRHS&);
+
+struct BindInfo
+{
+    // This is the true name of the id (can be qualified)
+    Var outer_id;
+
+    // This is the name inside the tuple (cannot be qualified)
+    Var inner_id;
+
+    // The pre-generalized type
+    ::Type monotype;
+
+    // The post-generalized type
+    ::Type polytype;
+
+    // Wrapper to apply types and dicts to the tuple entry.
+    Core::wrapper wrap;
+
+    // True for source-exported binders; desugaring copies this onto Core's
+    // stronger top-level preservation flag.
+    bool is_exported = false;
+
+    BindInfo(const Var& o, const Var& i, const ::Type& m, const ::Type& p, const Core::wrapper& w, bool e = false)
+        : outer_id(o), inner_id(i), monotype(m), polytype(p), wrap(w), is_exported(e)
+    { }
+};
+
+struct GenBind
+{
+    std::vector<::TypeVar> tv_args;
+
+    // These variables MUST be type-annotated!
+    std::vector<Core::Var<>> dict_args;
+
+    // Information for calling each of the binders in the group.
+    std::vector<std::shared_ptr<const Core::Decls<>>> dict_decls;
+
+    // These are the actual declarations.
+    Decls body;
+
+    // Defaulting info for each binder
+    std::map<Var, BindInfo> bind_infos;
+    std::string print() const;
+
+    GenBind(const std::vector<::TypeVar>& v1,
+            const std::vector<Core::Var<>>& v2,
+            const std::vector<std::shared_ptr<const Core::Decls<>>>& ev,
+            const Decls& d,
+            const std::map<Var, BindInfo>& bi)
+        :tv_args(v1),
+         dict_args(v2),
+         dict_decls(ev),
+         body(d),
+         bind_infos(bi)
+    {
+        assert(not bind_infos.empty());
+    }
+};
+
+// We can initially put all the type or class decls into a single group.
+// We can initially put all value decls into a single group.
+
+struct ModuleDecls
+{
+    Decls type_decls;
+
+    std::vector<Located<DefaultDecl>> default_decls;
+
+    std::vector<FixityDecl> fixity_decls;
+
+    Binds value_decls;
+
+    std::vector<ForeignDecl> foreign_decls;
+
+    ModuleDecls();
+    ModuleDecls(const Decls& topdecls);
+};
+
+Expression error(const std::string& s);
+
+Con True();
+Con False();
+Con ConsCon();
+Con Nil();
+Con TupleCon(int n);
+
+std::tuple<std::vector<LTypeVar>, std::vector<LType>, LType> peel_top_gen(LType t);
+
+std::set<LVar> vars_bound_in_decl(const Decl& decl);
+std::set<LVar> vars_bound_in_decls(const Decls& decls);
+std::set<LVar> vars_bound_in_binds(const Binds& binds);
+std::set<LVar> vars_bound_in_stmt(const LStmt& stmt);
+std::set<LVar> vars_bound_in_stmts(const Stmts& stmts);
+
+}
+
+#endif

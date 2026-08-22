@@ -1,6 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "computation/haskell/Integer.H"
+#include "computation/machine/args.hh"
+#include "computation/haskell/Integer.hh"
 
 #include <cmath>
 #include <cstdint>

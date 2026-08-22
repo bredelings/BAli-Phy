@@ -1,10 +1,10 @@
-#include "unification.H"
+#include "unification.hh"
 #include <set>
 #include <regex>
 #include <cassert>
-#include "util/set.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
+#include "util/set.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
 
 using std::list;
 using std::vector;

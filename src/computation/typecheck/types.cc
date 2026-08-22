@@ -1,6 +1,6 @@
-#include "types.H"
-#include "util/set.H"   // for add( , )
-#include "haskell/ids.H"
+#include "types.hh"
+#include "util/set.hh"   // for add( , )
+#include "haskell/ids.hh"
 #include "util/assert.hh"
 
 using std::set;

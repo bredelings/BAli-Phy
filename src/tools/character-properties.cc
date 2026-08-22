@@ -11,13 +11,13 @@
 #include <boost/program_options.hpp>
 #include <fmt/format.h>
 
-#include "alignment/character-property-alignment.H"
-#include "alignment/character-property-report.H"
-#include "alignment/character-property-summary.H"
-#include "sequence/alphabet.H"
-#include "sequence/sequence.H"
+#include "alignment/character-property-alignment.hh"
+#include "alignment/character-property-report.hh"
+#include "alignment/character-property-summary.hh"
+#include "sequence/alphabet.hh"
+#include "sequence/sequence.hh"
 #include "util/json.hh"
-#include "util/myexception.H"
+#include "util/myexception.hh"
 
 namespace po = boost::program_options;
 

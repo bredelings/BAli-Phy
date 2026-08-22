@@ -1,18 +1,18 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
-#include "computation/machine/args.H"
-#include "math/exponential.H"
-#include "sequence/alphabet.H"
-#include "sequence/doublets.H"
-#include "sequence/codons.H"
-#include "util/io.H"
+#include "computation/machine/args.hh"
+#include "math/exponential.hh"
+#include "sequence/alphabet.hh"
+#include "sequence/doublets.hh"
+#include "sequence/codons.hh"
+#include "util/io.hh"
 #include <valarray>
-#include "dp/2way.H"
-#include "util/range.H"
+#include "dp/2way.hh"
+#include "util/range.hh"
 #include <Eigen/Dense>
 #include <span>
 #include <unsupported/Eigen/MatrixFunctions>
-#include "substitution/parsimony.H"
+#include "substitution/parsimony.hh"
 
 using std::vector;
 using std::pair;

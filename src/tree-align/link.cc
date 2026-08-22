@@ -1,11 +1,11 @@
-#include "link.H"
+#include "link.hh"
 
 #include <vector>
 #include <string>
 
-#include "alignment/alignment-util.H"
-#include "util/mapping.H"
-#include "util/string/convert.H"
+#include "alignment/alignment-util.hh"
+#include "util/mapping.hh"
+#include "util/string/convert.hh"
 
 using std::vector;
 using std::string;

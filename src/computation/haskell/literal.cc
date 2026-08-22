@@ -1,8 +1,8 @@
-#include "literal.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "util/unicode.H"
-#include "util/utf8.H"
+#include "literal.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
+#include "util/unicode.hh"
+#include "util/utf8.hh"
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <cmath>
 #include <cstdint>

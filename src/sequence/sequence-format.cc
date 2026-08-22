@@ -18,10 +18,10 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <fstream>
-#include "sequence-format.H"
-#include "util/string/strip.H" // for strip
-#include "util/io.H"
-#include "util/myexception.H"
+#include "sequence-format.hh"
+#include "util/string/strip.hh" // for strip
+#include "util/io.hh"
+#include "util/myexception.hh"
 
 using namespace std;
 

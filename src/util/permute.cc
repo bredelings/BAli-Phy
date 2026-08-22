@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "util/range.H"
-#include "util/permute.H"
+#include "util/range.hh"
+#include "util/permute.hh"
 
 using std::vector;
 

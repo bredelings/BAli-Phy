@@ -1,12 +1,12 @@
-#include "typecheck.H"
-#include "kindcheck.H"
+#include "typecheck.hh"
+#include "kindcheck.hh"
 
-#include "util/text.H"        // for ANSI colors
-#include "util/set.H"         // for add( , )
-#include "util/variant.H"     // for to< >()
-#include "util/string/join.H" // for join( )
-#include "haskell/ids.H"
-#include "tidy.H"
+#include "util/text.hh"        // for ANSI colors
+#include "util/set.hh"         // for add( , )
+#include "util/variant.hh"     // for to< >()
+#include "util/string/join.hh" // for join( )
+#include "haskell/ids.hh"
+#include "tidy.hh"
 
 #include <range/v3/all.hpp>
 

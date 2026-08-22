@@ -1,4 +1,4 @@
-#include "cache.H"
+#include "cache.hh"
 
 object_ptr<Likelihood_Cache_Branch> SparseLikelihoods::DenseLikelihoods() const
 {

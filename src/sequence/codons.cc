@@ -1,4 +1,4 @@
-#include "codons.H"
+#include "codons.hh"
 
 using std::string;
 

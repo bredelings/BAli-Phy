@@ -28,14 +28,14 @@
 /// 
 
 
-#include "partition.H"
+#include "partition.hh"
 
 #include <fstream>
 
-#include "util/mapping.H"
-#include "util/set.H"
-#include "util/io.H"
-#include "util/string/split.H"
+#include "util/mapping.hh"
+#include "util/set.hh"
+#include "util/io.hh"
+#include "util/string/split.hh"
 
 using std::string;
 using std::vector;

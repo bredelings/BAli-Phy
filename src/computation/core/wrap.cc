@@ -1,7 +1,7 @@
-#include "core/wrap.H"
+#include "core/wrap.hh"
 
-#include "core/func.H"
-#include "computation/fresh_vars.H"
+#include "core/func.hh"
+#include "computation/fresh_vars.hh"
 
 #include <atomic>
 

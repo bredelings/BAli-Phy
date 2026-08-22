@@ -5,10 +5,10 @@
 #include <optional>
 #include <algorithm>
 
-#include "rename.H"
-#include "haskell/ids.H"
-#include "computation/module.H"
-#include "util/set.H"
+#include "rename.hh"
+#include "haskell/ids.hh"
+#include "computation/module.hh"
+#include "util/set.hh"
 
 using std::string;
 using std::vector;

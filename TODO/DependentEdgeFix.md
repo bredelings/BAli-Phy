@@ -245,7 +245,7 @@ it is marked as migration-only and removed at the end.
 
 Commit: `Add edge contingency to operation arguments`
 
-Modify `src/computation/machine/args.H` and `args.cc` to add the enum, named
+Modify `src/computation/machine/args.hh` and `args.cc` to add the enum, named
 result types, `operator|`, overloads, slot/value methods, and protected tracked
 fixed-USE virtual.  Replace the virtual one-argument USE with the non-virtual
 wrapper shown above.  `operator|` returns contingent if either operand is
@@ -449,7 +449,7 @@ both contingent primitives.  The base overloads only dispatch on explicit
 `EdgeContingency`.
 
 Keep `used_changeable` only for classifying the operation reduction and for
-selecting its creator step.  Update comments in `args.H`, `evaluate.cc`, and
+selecting its creator step.  Update comments in `args.hh`, `evaluate.cc`, and
 affected builtins so none describe execution order as the source of dependent
 edge ownership.  After the removal, require that the same `rg` search over all
 of `src` returns no matches.

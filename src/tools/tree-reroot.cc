@@ -18,14 +18,14 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <iostream>
-#include "tree/tree.H"
-#include "tree-dist.H"
-#include "tree/sequencetree.H"
-#include "util/string/split.H"
-#include "util/cmdline.H"
-#include "util/mapping.H"
-#include "tree/tree-util.H"
-#include "util/myexception.H"
+#include "tree/tree.hh"
+#include "tree-dist.hh"
+#include "tree/sequencetree.hh"
+#include "util/string/split.hh"
+#include "util/cmdline.hh"
+#include "util/mapping.hh"
+#include "tree/tree-util.hh"
+#include "util/myexception.hh"
 
 #include <boost/program_options.hpp>
 

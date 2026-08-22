@@ -1,14 +1,14 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "builtins/native-vector-input.H"
-#include "computation/machine/args.H"
-#include "computation/haskell/ids.H"
-#include "util/myexception.H"
+#include "builtins/native-vector-input.hh"
+#include "computation/machine/args.hh"
+#include "computation/haskell/ids.hh"
+#include "util/myexception.hh"
 #include <algorithm>
 #include "util/json.hh"
 #include <string_view>
-#include "computation/machine/graph_register.H"
-#include "mcon/mcon.H"
-#include "util/dense-matrix.H"
+#include "computation/machine/graph_register.hh"
+#include "mcon/mcon.hh"
+#include "util/dense-matrix.hh"
 
 using std::string;
 using std::string_view;

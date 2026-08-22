@@ -1,9 +1,9 @@
-#include "typecheck.H"
-#include "kindcheck.H"
-#include "haskell/ids.H"
-#include "computation/core/func.H"
-#include "computation/rename/rename.H"
-#include "tidy.H"
+#include "typecheck.hh"
+#include "kindcheck.hh"
+#include "haskell/ids.hh"
+#include "computation/core/func.hh"
+#include "computation/rename/rename.hh"
+#include "tidy.hh"
 
 using std::string;
 using std::vector;

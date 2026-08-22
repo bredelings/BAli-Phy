@@ -19,14 +19,14 @@
 
 #include <fstream>
 
-#include "stats-table.H"
-#include "util/myexception.H"
-#include "util/io.H"
-#include "util/string/split.H"
-#include "util/string/convert.H"
-#include "util/file-readers.H"
-#include "models/path.H"
-#include "mcon/mcon.H"
+#include "stats-table.hh"
+#include "util/myexception.hh"
+#include "util/io.hh"
+#include "util/string/split.hh"
+#include "util/string/convert.hh"
+#include "util/file-readers.hh"
+#include "models/path.hh"
+#include "mcon/mcon.hh"
 
 #include <boost/dynamic_bitset.hpp>
 

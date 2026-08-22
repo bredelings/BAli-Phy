@@ -17,14 +17,14 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "consensus-tree.H"
+#include "consensus-tree.hh"
 
 #include <map>
 #include <list>
 
-#include "util/myexception.H"
-#include "util/log-level.H"
-#include "statistics.H"
+#include "util/myexception.hh"
+#include "util/log-level.hh"
+#include "statistics.hh"
 
 using std::vector;
 using std::string;

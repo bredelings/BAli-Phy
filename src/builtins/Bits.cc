@@ -1,8 +1,8 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "dp/2way.H"
+#include "computation/machine/args.hh"
+#include "dp/2way.hh"
 #include <boost/dynamic_bitset.hpp>
-#include "alignment/alignment.H"
+#include "alignment/alignment.hh"
 
 #include <boost/dynamic_bitset.hpp>
 

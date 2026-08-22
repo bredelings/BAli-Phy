@@ -17,22 +17,22 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "alignment/index-matrix.H"
+#include "alignment/index-matrix.hh"
 #include <utility>
 #include <fstream>
 #include <string>
 #include <cmath>
 #include <list>
 #include <numeric>
-#include "util/myexception.H"
-#include "util/log-level.H"
-#include "util/io.H"
-#include "optimize.H"
-#include "findroot.H"
-#include "alignment/alignment-util.H"
-#include "alignment/load.H"
-#include "distance-methods.H"
-#include "statistics.H"
+#include "util/myexception.hh"
+#include "util/log-level.hh"
+#include "util/io.hh"
+#include "optimize.hh"
+#include "findroot.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/load.hh"
+#include "distance-methods.hh"
+#include "statistics.hh"
 
 
 

@@ -17,15 +17,15 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "sample.H"
-#include "util/range.H"
-#include "util/rng.H"
-#include "util/log-level.H"
-#include "util/settings.H"       // for get_setting_or( )
+#include "sample.hh"
+#include "util/range.hh"
+#include "util/rng.hh"
+#include "util/log-level.hh"
+#include "util/settings.hh"       // for get_setting_or( )
 #include <algorithm>
-#include "dp/3way.H"
-#include "util/permute.H"
-#include "alignment/alignment-util.H"
+#include "dp/3way.hh"
+#include "util/permute.hh"
+#include "alignment/alignment-util.hh"
 
 using MCMC::MoveStats;
 

@@ -22,9 +22,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include <string>
 #include <map>
-#include "util/myexception.H"
-#include "alignment/alignment.H"
-#include "arguments.H"
+#include "util/myexception.hh"
+#include "alignment/alignment.hh"
+#include "arguments.hh"
 
 using std::map;
 using std::cin;

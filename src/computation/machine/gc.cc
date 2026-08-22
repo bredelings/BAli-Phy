@@ -1,6 +1,6 @@
-#include "graph_register.H"
-#include "gcobject.H"
-#include "util/log-level.H"
+#include "graph_register.hh"
+#include "gcobject.hh"
+#include "util/log-level.hh"
 
 using std::vector;
 

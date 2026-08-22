@@ -1,6 +1,6 @@
-#include "free-vars.H"
+#include "free-vars.hh"
 
-#include "util/string/join.H"
+#include "util/string/join.hh"
 
 using std::string;
 using std::vector;

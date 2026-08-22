@@ -1,4 +1,4 @@
-#include "dp_hmm.H"
+#include "dp_hmm.hh"
 
 /*
    Copyright (C) 2004-2007 Benjamin Redelings
@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// \brief This file implements the generic Dynamic Programin specific HMM class.
 ///
 
-#include "probability/choose.H"
+#include "probability/choose.hh"
 
 using std::vector;
 

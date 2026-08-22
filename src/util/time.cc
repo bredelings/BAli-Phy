@@ -21,11 +21,11 @@ along with BAli-Phy; see the file COPYING.  If not see
  * @file time.cc
  */
 
-#include "util/time.H"
+#include "util/time.hh"
 #include <sstream>
 #include <iomanip>
 #include "util/assert.hh"
-#include "util/string/convert.H"
+#include "util/string/convert.hh"
 
 #include <boost/chrono.hpp>
 

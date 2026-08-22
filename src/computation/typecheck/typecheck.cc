@@ -1,24 +1,24 @@
-#include "typecheck.H"
-#include "kindcheck.H"
-#include "rename/rename.H"
+#include "typecheck.hh"
+#include "kindcheck.hh"
+#include "rename/rename.hh"
 
 #include <set>
 
 #include <range/v3/all.hpp>
 
-#include "haskell/haskell.H"
+#include "haskell/haskell.hh"
 
 #include "immer/map.hpp" // for immer::map
 
-#include "util/set.H"
-#include "util/string/join.H"
+#include "util/set.hh"
+#include "util/string/join.hh"
 
-#include "util/graph.H" // for get_ordered_strong_components( )
+#include "util/graph.hh" // for get_ordered_strong_components( )
 
-#include "haskell/ids.H"
+#include "haskell/ids.hh"
 
-#include "alphabetize.H" // for alphabetize_type( ).
-#include "solver.H"
+#include "alphabetize.hh" // for alphabetize_type( ).
+#include "solver.hh"
 
 namespace views = ranges::views;
 

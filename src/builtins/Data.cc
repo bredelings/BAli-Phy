@@ -1,10 +1,10 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include <vector>
 #include <string>
-#include "computation/machine/args.H"
-#include "util/myexception.H"
-#include "util/io.H"
-#include "util/string/split.H"
+#include "computation/machine/args.hh"
+#include "util/myexception.hh"
+#include "util/io.hh"
+#include "util/string/split.hh"
 #include <limits>
 
 using boost::dynamic_pointer_cast;

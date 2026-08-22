@@ -1,19 +1,19 @@
 #include <range/v3/all.hpp>
 #include <cstdint>
 #include <limits>
-#include "computation/module.H"
+#include "computation/module.hh"
 #include <deque>
 #include <optional>
 #include <tuple>
 #include <utility>
-#include "util/io.H"
-#include "computation/loader.H"
-#include "desugar.H"
+#include "util/io.hh"
+#include "computation/loader.hh"
+#include "desugar.hh"
 #include "util/assert.hh"
-#include "util/range.H"
-#include "computation/haskell/haskell.H"
-#include "computation/haskell/ids.H"
-#include "computation/core/func.H"
+#include "util/range.hh"
+#include "computation/haskell/haskell.hh"
+#include "computation/haskell/ids.hh"
+#include "computation/core/func.hh"
 
 #include "range/v3/all.hpp"
 namespace views = ranges::views;

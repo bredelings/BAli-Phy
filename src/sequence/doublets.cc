@@ -1,4 +1,4 @@
-#include "doublets.H"
+#include "doublets.hh"
 
 using std::vector;
 using std::string;

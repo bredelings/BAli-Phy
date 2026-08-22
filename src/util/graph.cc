@@ -1,4 +1,4 @@
-#include "util/graph.H"
+#include "util/graph.hh"
 
 using std::vector;
 using boost::vertex_index;

@@ -1,10 +1,10 @@
-#include "command_config.H"
+#include "command_config.hh"
 
 #include <regex>
 #include <sstream>
 
-#include "util/io.H"
-#include "util/myexception.H"
+#include "util/io.hh"
+#include "util/myexception.hh"
 
 using std::string;
 

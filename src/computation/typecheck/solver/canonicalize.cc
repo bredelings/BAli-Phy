@@ -1,9 +1,9 @@
-#include "computation/typecheck/typecheck.H"
-#include "computation/typecheck/kindcheck.H"
-#include "computation/typecheck/solver.H"
+#include "computation/typecheck/typecheck.hh"
+#include "computation/typecheck/kindcheck.hh"
+#include "computation/typecheck/solver.hh"
 
-#include "util/set.H"
-#include "util/variant.H"
+#include "util/set.hh"
+#include "util/variant.hh"
 
 using std::vector;
 using std::optional;

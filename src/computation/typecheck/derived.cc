@@ -1,6 +1,6 @@
-#include "typecheck.H"
-#include "haskell/ids.H"
-#include "tidy.H"
+#include "typecheck.hh"
+#include "haskell/ids.hh"
+#include "tidy.hh"
 
 #include <algorithm>
 #include <map>

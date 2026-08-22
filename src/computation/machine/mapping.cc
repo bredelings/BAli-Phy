@@ -1,4 +1,4 @@
-#include "mapping.H"
+#include "mapping.hh"
 
 // This is for debugging
 std::vector<int> mapping::find_values(int r0) const

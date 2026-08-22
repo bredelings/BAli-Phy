@@ -20,16 +20,16 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <string>
 #include "util/assert.hh"
-#include "util/myexception.H"
+#include "util/myexception.hh"
 #include <vector>
 #include <valarray>
 #include <cmath>
 #include <fstream>
 
-#include "util/string/split.H"
-#include "util/string/join.H"
-#include "statistics.H"
-#include "util/io.H"
+#include "util/string/split.hh"
+#include "util/string/join.hh"
+#include "statistics.hh"
+#include "util/io.hh"
 
 #include <boost/program_options.hpp>
 

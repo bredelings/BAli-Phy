@@ -1,5 +1,5 @@
-#include "computation/haskell/cpp.H"
-#include "test-util.H"
+#include "computation/haskell/cpp.hh"
+#include "test-util.hh"
 
 #include <string>
 

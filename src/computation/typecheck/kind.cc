@@ -1,4 +1,4 @@
-#include "kind.H"
+#include "kind.hh"
 
 #include <range/v3/all.hpp>
 

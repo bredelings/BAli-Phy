@@ -1,5 +1,5 @@
-#include "extensions.H"
-#include "util/myexception.H"
+#include "extensions.hh"
+#include "util/myexception.hh"
 
 using std::set;
 using std::map;

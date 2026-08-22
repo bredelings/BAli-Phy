@@ -1,8 +1,8 @@
-#include "tidy.H"
+#include "tidy.hh"
 #include <tuple>
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "haskell/ids.H"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
+#include "haskell/ids.hh"
 
 using std::vector;
 using std::string;

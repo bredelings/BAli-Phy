@@ -22,9 +22,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <fstream>
 
-#include "tree/sequencetree.H"
-#include "tree-dist.H"
-#include "tree/tree-util.H"
+#include "tree/sequencetree.hh"
+#include "tree-dist.hh"
+#include "tree/tree-util.hh"
 
 #include <boost/program_options.hpp>
 

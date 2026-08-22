@@ -17,7 +17,7 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "version.H"
+#include "version.hh"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

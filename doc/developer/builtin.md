@@ -52,7 +52,7 @@ Input:
 
 Output:
 
-* The function returns a `closure` object ([src/computation/closure.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/closure.H))
+* The function returns a `closure` object ([src/computation/closure.hh](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/closure.hh))
 * A closure can be created from a `double`, `int`, or `log_double_t`. Here an explicit conversion is
   invoked by surrounding a `log_double_t` with curly braces.
 
@@ -69,9 +69,9 @@ C++ `log_double_t` view.
 All C++ objects are accessed from Haskell inherit from this type.
 
 ## `Runtime::Exp`
-A runtime expression value is represented by the variant AST in [src/computation/runtime/ast.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/runtime/ast.H).
+A runtime expression value is represented by the variant AST in [src/computation/runtime/ast.hh](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/runtime/ast.hh).
 
 ## `closure`
 A closure stores a `Runtime::Exp` with an environment.
 
-See [src/computation/closure.H](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/closure.H)
+See [src/computation/closure.hh](https://github.com/bredelings/BAli-Phy/blob/master/src/computation/closure.hh)

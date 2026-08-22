@@ -1,13 +1,13 @@
 #include <fstream>
 #include <unordered_set>
-#include "graph_register.H"
-#include "computation/operations.H"
-#include "computation/preprocess.H"
-#include "computation/core/subst.H"
-#include "computation/runtime/modifiable.H"
-#include "computation/context.H"
-#include "haskell/ids.H"
-#include "computation/machine/gcobject.H"
+#include "graph_register.hh"
+#include "computation/operations.hh"
+#include "computation/preprocess.hh"
+#include "computation/core/subst.hh"
+#include "computation/runtime/modifiable.hh"
+#include "computation/context.hh"
+#include "haskell/ids.hh"
+#include "computation/machine/gcobject.hh"
 #include "immer/set.hpp"
 
 typedef Box<immer::set<int>> IntSet;

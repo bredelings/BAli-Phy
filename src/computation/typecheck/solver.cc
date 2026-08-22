@@ -1,13 +1,13 @@
-#include "typecheck.H"
-#include "fundeps.H"
-#include "kindcheck.H"
-#include "solver.H"
+#include "typecheck.hh"
+#include "fundeps.hh"
+#include "kindcheck.hh"
+#include "solver.hh"
 
-#include "util/set.H"
-#include "util/variant.H"
-#include "util/string/join.H"
+#include "util/set.hh"
+#include "util/variant.hh"
+#include "util/string/join.hh"
 
-#include "computation/core/func.H"
+#include "computation/core/func.hh"
 
 #include <range/v3/all.hpp>
 

@@ -24,8 +24,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include <cmath>
 
-#include "statistics.H"
-#include "stats-table.H"
+#include "statistics.hh"
+#include "stats-table.hh"
 
 #include <boost/program_options.hpp>
 

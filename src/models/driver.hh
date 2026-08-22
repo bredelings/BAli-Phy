@@ -5,9 +5,9 @@
 # include <map>
 # include <set>
 # include "parser.hh"
-# include "computation/message.H"
-# include "models/model-expr.H"
-# include "models/model-type.H"
+# include "computation/message.hh"
+# include "models/model-expr.hh"
+# include "models/model-type.hh"
 
 // Tell Flex the lexer's prototype ...
 # define YY_DECL \

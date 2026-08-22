@@ -1,10 +1,10 @@
 #include "range/v3/all.hpp"
 #include <iostream>
-#include "graph_register.H"
+#include "graph_register.hh"
 #include <algorithm>
-#include "util/range.H"
-#include "mapping.H"
-#include "computation/runtime/interchangeable.H"
+#include "util/range.hh"
+#include "mapping.hh"
+#include "computation/runtime/interchangeable.hh"
 #include "util/assert.hh"
 
 using std::string;

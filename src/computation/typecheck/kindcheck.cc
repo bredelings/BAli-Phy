@@ -1,9 +1,9 @@
-#include "kindcheck.H"
+#include "kindcheck.hh"
 #include "range/v3/all.hpp"
-#include "haskell/ids.H"
-#include "util/set.H"   // for add( , )
-#include "util/graph.H"
-#include "typecheck.H"
+#include "haskell/ids.hh"
+#include "util/set.hh"   // for add( , )
+#include "util/graph.hh"
+#include "typecheck.hh"
 
 using std::pair;
 using std::map;

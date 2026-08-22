@@ -21,16 +21,16 @@
 #include <list>
 #include <set>
 #include <utility>
-#include "tree/tree.H"
-#include "tree/sequencetree.H"
-#include "tree/tree-util.H"
-#include "tree-dist.H"
-#include "util/myexception.H"
+#include "tree/tree.hh"
+#include "tree/sequencetree.hh"
+#include "tree/tree-util.hh"
+#include "tree-dist.hh"
+#include "util/myexception.hh"
 #include "util/assert.hh"
-#include "util/string/split.H"
-#include "util/cmdline.H"
-#include "findroot.H"
-#include "tools/read-trees.H"
+#include "util/string/split.hh"
+#include "util/cmdline.hh"
+#include "findroot.hh"
+#include "tools/read-trees.hh"
 
 #include <boost/program_options.hpp>
 

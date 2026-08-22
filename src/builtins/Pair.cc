@@ -1,6 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "util/myexception.H"
+#include "computation/machine/args.hh"
+#include "util/myexception.hh"
 #include <algorithm>
 
 using std::vector;

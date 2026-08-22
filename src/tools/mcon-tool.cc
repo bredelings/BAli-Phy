@@ -1,4 +1,4 @@
-#include "mcon/mcon.H"
+#include "mcon/mcon.hh"
 
 #include <boost/program_options.hpp>
 #include <fstream>

@@ -20,17 +20,17 @@
 #include <iostream>
 #include <string>
 #include "util/assert.hh"
-#include "util/string/join.H"
+#include "util/string/join.hh"
 #include <vector>
 #include <valarray>
 #include <cmath>
 
-#include "statistics.H"
-#include "stats-table.H"
-#include "util/string/split.H"
+#include "statistics.hh"
+#include "stats-table.hh"
+#include "util/string/split.hh"
 
 #include <boost/program_options.hpp>
-#include "util/owned-ptr.H"
+#include "util/owned-ptr.hh"
 
 using namespace std;
 

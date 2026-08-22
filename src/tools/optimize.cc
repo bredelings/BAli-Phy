@@ -23,10 +23,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <valarray>
 #include <vector>
-#include "optimize.H"
-#include "util/myexception.H"
-#include "util/io/optional.H"
-#include "util/log-level.H"
+#include "optimize.hh"
+#include "util/myexception.hh"
+#include "util/io/optional.hh"
+#include "util/log-level.hh"
 
 using std::vector;
 using std::cerr;

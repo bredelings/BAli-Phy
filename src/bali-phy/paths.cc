@@ -1,7 +1,7 @@
-#include "paths.H"
-#include "util/file-paths.H"
-#include "util/myexception.H"
-#include "util/string/split.H"
+#include "paths.hh"
+#include "util/file-paths.hh"
+#include "util/myexception.hh"
+#include "util/string/split.hh"
 #include <vector>
 
 using std::vector;

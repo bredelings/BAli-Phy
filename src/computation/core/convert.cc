@@ -1,6 +1,6 @@
-#include "computation/core/convert.H"
-#include "computation/haskell/Integer.H"
-#include "util/variant.H"
+#include "computation/core/convert.hh"
+#include "computation/haskell/Integer.hh"
+#include "util/variant.hh"
 
 #include <range/v3/all.hpp>
 

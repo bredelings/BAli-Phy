@@ -1,6 +1,6 @@
-#include "effects.H"
-#include "graph_register.H"
-#include "util/log-level.H"
+#include "effects.hh"
+#include "graph_register.hh"
+#include "util/log-level.hh"
 #include <sstream>
 
 using std::string;

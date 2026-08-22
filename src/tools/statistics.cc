@@ -20,7 +20,7 @@
 #include <cmath>
 #include <algorithm>
 #include "util/assert.hh"
-#include "statistics.H"
+#include "statistics.hh"
 
 using std::valarray;
 using std::vector;

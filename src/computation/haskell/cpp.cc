@@ -1,4 +1,4 @@
-#include "cpp.H"
+#include "cpp.hh"
 
 #include <algorithm>
 #include <cctype>
@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <utility>
 #include <boost/multiprecision/cpp_int.hpp>
-#include "util/utf8.H"
+#include "util/utf8.hh"
 
 using boost::multiprecision::cpp_int;
 using std::optional;

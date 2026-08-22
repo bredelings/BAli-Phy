@@ -1,9 +1,9 @@
 #include <iostream>
-#include "graph_register.H"
-#include "util/range.H" // for remove_element( )
+#include "graph_register.hh"
+#include "util/range.hh" // for remove_element( )
 #include "range/v3/all.hpp"
 #include "util/assert.hh"
-#include "util/set.H"
+#include "util/set.hh"
 
 namespace views = ranges::views;
 

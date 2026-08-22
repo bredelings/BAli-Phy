@@ -18,9 +18,9 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include "util/assert.hh"
-#include "sequence.H"
-#include "util/myexception.H"
-#include "util/cmdline.H"
+#include "sequence.hh"
+#include "util/myexception.hh"
+#include "util/cmdline.hh"
 #include <range/v3/algorithm/max.hpp>
 
 using std::vector;

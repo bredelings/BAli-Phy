@@ -4,9 +4,9 @@
 #include <deque>
 #include <functional>
 
-#include "rename.H"
-#include "computation/module.H"
-#include "util/set.H"
+#include "rename.hh"
+#include "computation/module.hh"
+#include "util/set.hh"
 
 using std::string;
 using std::vector;

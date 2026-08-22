@@ -24,12 +24,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///
 
 #include <algorithm>
-#include "3way.H"
-#include "2way.H"
-#include "bits.H"
-#include "util/permute.H"
-#include "util/rng.H"
-#include "models/parameters.H"
+#include "3way.hh"
+#include "2way.hh"
+#include "bits.hh"
+#include "util/permute.hh"
+#include "util/rng.hh"
+#include "models/parameters.hh"
 
 using boost::dynamic_bitset;
 using std::vector;

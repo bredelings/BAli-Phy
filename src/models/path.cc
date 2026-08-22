@@ -1,9 +1,9 @@
-#include "models/path.H"
+#include "models/path.hh"
 
-#include "util/string/convert.H"
-#include "util/string/join.H"
-#include "util/string/split.H"
-#include "util/ptree.H"
+#include "util/string/convert.hh"
+#include "util/string/join.hh"
+#include "util/string/split.hh"
+#include "util/ptree.hh"
 
 #include <optional>
 #include <set>

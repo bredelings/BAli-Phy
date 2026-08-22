@@ -17,11 +17,11 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "alignment/alignment.H"
-#include "arguments.H"
-#include "tree/tree.H"
-#include "util/rng.H"
-#include "util/myexception.H"
+#include "alignment/alignment.hh"
+#include "arguments.hh"
+#include "tree/tree.hh"
+#include "util/rng.hh"
+#include "util/myexception.hh"
 
 int main(int argc,char* argv[]) { 
   try {

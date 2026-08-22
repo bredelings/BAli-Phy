@@ -1,7 +1,7 @@
-#include "probability/choose.H"
-#include "math/logprod.H"
-#include "test-util.H"
-#include "util/rng.H"
+#include "probability/choose.hh"
+#include "math/logprod.hh"
+#include "test-util.hh"
+#include "util/rng.hh"
 
 #include <cmath>
 #include <limits>

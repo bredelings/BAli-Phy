@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "n_indels.H"
-#include "dp/A2_states.H"
-#include "util/range.H"
+#include "n_indels.hh"
+#include "dp/A2_states.hh"
+#include "util/range.hh"
 
 using std::vector;
 

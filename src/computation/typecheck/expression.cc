@@ -1,8 +1,8 @@
-#include "typecheck.H"
-#include "kindcheck.H"
-#include "match.H" // for tcMatchesFun
-#include "haskell/ids.H"
-#include "computation/record_utils.H"
+#include "typecheck.hh"
+#include "kindcheck.hh"
+#include "match.hh" // for tcMatchesFun
+#include "haskell/ids.hh"
+#include "computation/record_utils.hh"
 #include <cassert>
 
 using std::string;

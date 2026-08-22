@@ -18,12 +18,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <iostream>
-#include "alignment/alignment.H"
-#include "alignment/alignment-util.H"
-#include "alignment/index-matrix.H"
-#include "alignment/load.H"
-#include "util/range.H"
-#include "util/cmdline.H"
+#include "alignment/alignment.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/index-matrix.hh"
+#include "alignment/load.hh"
+#include "util/range.hh"
+#include "util/cmdline.hh"
 
 #include <boost/program_options.hpp>
 

@@ -1,11 +1,11 @@
-#include "character-property-sample-file.H"
+#include "character-property-sample-file.hh"
 
 #include <fstream>
 #include <limits>
 
 #include <xxhash.h>
 
-#include "util/myexception.H"
+#include "util/myexception.hh"
 
 namespace character_properties
 {

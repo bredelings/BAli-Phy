@@ -1,6 +1,6 @@
-#include "record_utils.H"
+#include "record_utils.hh"
 
-#include "haskell/ids.H"
+#include "haskell/ids.hh"
 
 using std::optional;
 using std::string;

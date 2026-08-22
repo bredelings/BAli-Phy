@@ -1,0 +1,60 @@
+#ifndef LOADER_H
+#define LOADER_H
+
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <filesystem>
+#include <optional>
+#include "computation/haskell/cpp.hh"
+#include "computation/optimization/simplifier_options.hh" // for simplifier_options
+
+class Module;
+
+class module_loader: public simplifier_options
+{
+    mutable std::map<std::string, std::shared_ptr<const Module>> modules;
+
+public:
+    std::vector<std::filesystem::path> plugins_path;
+
+    std::optional<std::filesystem::path> user_source_root;
+
+    std::optional<std::filesystem::path> cache_path;
+
+    std::vector<std::string> args;
+
+    bool recompile_all = false;
+
+    bool force_cpp = false;
+    bool dump_cpp = false;
+    Haskell::CPP::Options cpp_options;
+
+    std::set<std::string> recompile_modules;
+
+    // The second key is the exported C symbol, including its calling-convention prefix.
+    mutable std::map<std::tuple<std::string,std::string>, void*> cached_builtins;
+
+    bool try_add_plugin_path(const std::filesystem::path& path);
+    void set_user_source_root_for_file(const std::filesystem::path& path, const std::string& module_name);
+  
+    std::optional<std::filesystem::path> cache_path_for_module(const std::string& modid) const;
+    std::optional<std::filesystem::path> find_cached_module(const std::string& modid) const;
+    std::filesystem::path find_module(const std::string& modid) const;
+    std::filesystem::path find_plugin(const std::string& plugin_name) const;
+
+    /// Load the module file from disk.
+    /// Add the hard-coded elements to the module.
+    std::shared_ptr<Module> load_module_from_file(const std::filesystem::path&) const;
+    std::shared_ptr<Module> load_module(const std::string&) const;
+
+    void* load_builtin_ptr(const std::string& lib_name, const std::string& func_name, const std::string& call_conv) const;
+
+    static const std::string& executable_hash();
+
+    module_loader(const std::optional<std::filesystem::path>& cp, const std::vector<std::filesystem::path>& paths);
+};
+
+extern const std::string plugin_extension;
+#endif

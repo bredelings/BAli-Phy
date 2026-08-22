@@ -1,5 +1,5 @@
-#include "util/utf8.H"
-#include "util/myexception.H"
+#include "util/utf8.hh"
+#include "util/myexception.hh"
 #include <cstdint>
 
 namespace utf8

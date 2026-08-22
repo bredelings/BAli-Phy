@@ -20,16 +20,16 @@
 #include <iostream>
 #include <list>
 #include <utility>
-#include "tree/tree.H"
-#include "tree/sequencetree.H"
-#include "tree/tree-util.H"
-#include "tree-dist.H"
-#include "mctree.H"
+#include "tree/tree.hh"
+#include "tree/sequencetree.hh"
+#include "tree/tree-util.hh"
+#include "tree-dist.hh"
+#include "mctree.hh"
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include "util/rng.H"
-#include "util/myexception.H"
-#include "util/cmdline.H"
+#include "util/rng.hh"
+#include "util/myexception.hh"
+#include "util/cmdline.hh"
 
 extern int log_verbose;
 

@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "alignment/alignment.H"
-#include "util/rng.H"
-#include "alignment/alignment-util.H"
+#include "alignment/alignment.hh"
+#include "util/rng.hh"
+#include "alignment/alignment-util.hh"
 
 using std::vector;
 

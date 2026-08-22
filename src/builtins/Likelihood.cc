@@ -1,12 +1,12 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
-#include "builtins/native-vector-input.H"
-#include "computation/machine/args.H"
-#include "sequence/alphabet.H"
-#include "dp/2way.H"
-#include "substitution/ops.H"
-#include "substitution/likelihood.H"
-#include "util/myexception.H"
+#include "builtins/native-vector-input.hh"
+#include "computation/machine/args.hh"
+#include "sequence/alphabet.hh"
+#include "dp/2way.hh"
+#include "substitution/ops.hh"
+#include "substitution/likelihood.hh"
+#include "util/myexception.hh"
 
 using std::vector;
 using std::pair;
@@ -19,8 +19,8 @@ using std::abs;
 
 using Alphabet = PtrBox<alphabet>;
 
-#include "substitution/cache.H"
-#include "dp/hmm.H"
+#include "substitution/cache.hh"
+#include "dp/hmm.hh"
 using boost::dynamic_bitset;
 
 namespace

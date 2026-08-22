@@ -1,12 +1,12 @@
 #include <vector>
 #include <set>
-#include "set-levels.H"
-#include "computation/fresh_vars.H"
-#include "computation/module.H"
-#include "util/set.H"
-#include "core/func.H" // for lambda_quantify( )
+#include "set-levels.hh"
+#include "computation/fresh_vars.hh"
+#include "computation/module.hh"
+#include "util/set.hh"
+#include "core/func.hh" // for lambda_quantify( )
 
-#include "free-vars.H"
+#include "free-vars.hh"
 #include "immer/map.hpp" // for immer::map
 
 #include "range/v3/all.hpp"

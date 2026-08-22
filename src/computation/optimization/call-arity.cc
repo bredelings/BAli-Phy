@@ -1,12 +1,12 @@
-#include "call-arity.H"
+#include "call-arity.hh"
 
 #include <algorithm>
 #include <map>
 #include <set>
 #include <utility>
 
-#include "arity.H"
-#include "computation/module.H"
+#include "arity.hh"
+#include "computation/module.hh"
 
 using std::map;
 using std::set;

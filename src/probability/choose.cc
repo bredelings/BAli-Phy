@@ -18,9 +18,9 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include "util/assert.hh"
-#include "probability/choose.H"
-#include "util/rng.H"
-#include "util/myexception.H"
+#include "probability/choose.hh"
+#include "util/rng.hh"
+#include "util/myexception.hh"
 
 using std::vector;
 

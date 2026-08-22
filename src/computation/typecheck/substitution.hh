@@ -1,0 +1,40 @@
+#ifndef UNIFY_H
+#define UNIFY_H
+
+#include <optional>
+#include "computation/haskell/haskell.hh"
+#include "computation/core/type.hh"
+#include "immer/map.hpp" // for immer::map
+
+
+typedef immer::map<TypeVar, Type> substitution_t;
+typedef immer::map<MetaTypeVar, Type> usubstitution_t;
+typedef immer::map<std::variant<TypeVar,MetaTypeVar>, Type> bsubstitution_t;
+
+std::string print(const substitution_t& s);
+// TODO
+// 1. Merge unification / substitution code for types & kinds?
+
+std::optional<Context> check_apply_subst(const substitution_t& s, Context C);
+std::optional<Type> check_apply_subst(const substitution_t& s, const Type& t);
+// Apply a substitution simultaneously: a replacement is inserted as-is and
+// is not rewritten by other entries in the same substitution.
+Type apply_subst(const substitution_t& s, const Type& t);
+std::vector<Type> apply_subst(const substitution_t& s, const std::vector<Type>& t);
+// Follow an accumulated solution substitution to a fixed point.  This is for
+// equality/unifier solutions, not binder instantiation.
+Type apply_subst_transitively(const substitution_t& s, const Type& t);
+//Context apply_subst(const substitution_t& s, const Context& C);
+
+std::optional<Context> check_apply_subst(const usubstitution_t& s, Context C);
+std::optional<Type> check_apply_subst(const usubstitution_t& s, const Type& t);
+Type apply_subst(const usubstitution_t& s, const Type& t);
+Type apply_subst_transitively(const usubstitution_t& s, const Type& t);
+
+std::optional<Context> check_apply_subst(const bsubstitution_t& s, Context C);
+std::optional<Type> check_apply_subst(const bsubstitution_t& s, const Type& t);
+std::vector<Type> apply_subst(const bsubstitution_t& s, const std::vector<Type>& t);
+Type apply_subst(const bsubstitution_t& s, const Type& t);
+Type apply_subst_transitively(const bsubstitution_t& s, const Type& t);
+
+#endif 

@@ -18,13 +18,13 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <cmath>
-#include "util/log-level.H"
-#include "util/rng.H"
-#include "util/settings.H"              // for get_setting_or( )
-#include "sample.H"
-#include "util/permute.H"
-#include "dp/5way.H"
-#include "substitution/likelihood.H"
+#include "util/log-level.hh"
+#include "util/rng.hh"
+#include "util/settings.hh"              // for get_setting_or( )
+#include "sample.hh"
+#include "util/permute.hh"
+#include "dp/5way.hh"
+#include "substitution/likelihood.hh"
 
 using MCMC::MoveStats;
 using std::vector;
@@ -121,7 +121,7 @@ void change_branch_length_or_duration_log_scale(owned_ptr<context>& P,
 	Stats.inc("branch-length (log) 4",result);
 }
 
-#include "slice-sampling.H"
+#include "slice-sampling.hh"
 
 // In one case, we had x~1e-99 and y~1e26
 // In that case, setting the window size to 1e26 meant that

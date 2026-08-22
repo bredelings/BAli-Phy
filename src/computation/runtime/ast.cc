@@ -1,15 +1,15 @@
-#include "ast.H"
-#include "trim.H"
+#include "ast.hh"
+#include "trim.hh"
 #include <cassert>
 #include <cstdlib>
 #include <ostream>
-#include "computation/haskell/Integer.H"
-#include "computation/haskell/ids.H"
-#include "computation/operation.H"
-#include "util/myexception.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "util/utf8.H"
+#include "computation/haskell/Integer.hh"
+#include "computation/haskell/ids.hh"
+#include "computation/operation.hh"
+#include "util/myexception.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
+#include "util/utf8.hh"
 
 using std::vector;
 

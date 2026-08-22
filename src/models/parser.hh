@@ -53,8 +53,8 @@
   # include <iostream>
   # include <vector>
   # include <tuple>
-  # include "models/model-expr.H"
-  # include "models/model-type.H"
+  # include "models/model-expr.hh"
+  # include "models/model-type.hh"
   # include "range/v3/all.hpp"
 
   namespace views = ranges::views;

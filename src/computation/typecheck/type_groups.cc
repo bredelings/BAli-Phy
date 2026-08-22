@@ -1,7 +1,7 @@
-#include "kindcheck.H"
-#include "util/set.H"   // for add( , )
-#include "util/graph.H"
-#include "haskell/ids.H"
+#include "kindcheck.hh"
+#include "util/set.hh"   // for add( , )
+#include "util/graph.hh"
+#include "haskell/ids.hh"
 
 using std::pair;
 using std::map;

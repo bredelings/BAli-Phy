@@ -28,8 +28,8 @@
 #include <iostream>
 #include <cassert>
 #include <unsupported/Eigen/MatrixFunctions>
-#include "exponential.H"
-#include "util/log-level.H"
+#include "exponential.hh"
+#include "util/log-level.hh"
 
 
 // The approach used in this file works because of general properties

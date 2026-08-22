@@ -3,8 +3,8 @@
 #include <string_view>
 
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "util/utf8.H"
+#include "computation/machine/args.hh"
+#include "util/utf8.hh"
 
 using std::vector;
 

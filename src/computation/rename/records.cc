@@ -1,9 +1,9 @@
-#include "records.H"
+#include "records.hh"
 
-#include "rename.H"
-#include "computation/module.H"
-#include "computation/record_utils.H"
-#include "computation/haskell/ids.H"
+#include "rename.hh"
+#include "computation/module.hh"
+#include "computation/record_utils.hh"
+#include "computation/haskell/ids.hh"
 
 namespace
 {

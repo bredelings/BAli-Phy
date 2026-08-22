@@ -1,5 +1,5 @@
-#include "data_con_info.H"
-#include "haskell/ids.H"
+#include "data_con_info.hh"
+#include "haskell/ids.hh"
 
 using std::vector;
 

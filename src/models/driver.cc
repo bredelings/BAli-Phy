@@ -1,7 +1,7 @@
 #include "driver.hh"
 #include "parser.hh"
-#include "util/myexception.H"
-#include "util/io.H"
+#include "util/myexception.hh"
+#include "util/io.hh"
 
 using std::string;
 using std::set;

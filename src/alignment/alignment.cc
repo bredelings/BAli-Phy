@@ -19,13 +19,13 @@
 
 #include <algorithm>
 #include <sstream>
-#include "alignment.H"
-#include "load.H"
-#include "util/myexception.H"
-#include "util/mapping.H"
-#include "util/rng.H"
-#include "util/range.H"
-#include "util/string/convert.H"
+#include "alignment.hh"
+#include "load.hh"
+#include "util/myexception.hh"
+#include "util/mapping.hh"
+#include "util/rng.hh"
+#include "util/range.hh"
+#include "util/string/convert.hh"
 
 using std::string;
 using std::vector;

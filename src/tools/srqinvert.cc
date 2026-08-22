@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <iostream>
 #include <vector>
-#include "util/myexception.H"
+#include "util/myexception.hh"
 using namespace std;
 
 int main(int argc,char* argv[]) { 

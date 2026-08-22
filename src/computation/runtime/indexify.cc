@@ -1,11 +1,11 @@
-#include "computation/runtime/indexify.H"
-#include "computation/closure.H"
-#include "computation/operation.H"
-#include "util/variant.H"
-#include "computation/haskell/Integer.H" // for Integer
-#include "computation/haskell/ids.H"
-#include "computation/runtime/ast.H"
-#include "computation/runtime/trim.H"
+#include "computation/runtime/indexify.hh"
+#include "computation/closure.hh"
+#include "computation/operation.hh"
+#include "util/variant.hh"
+#include "computation/haskell/Integer.hh" // for Integer
+#include "computation/haskell/ids.hh"
+#include "computation/runtime/ast.hh"
+#include "computation/runtime/trim.hh"
 
 #include <range/v3/all.hpp>
 #include <stdexcept>

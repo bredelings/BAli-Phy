@@ -35,11 +35,11 @@
 
 #include <boost/program_options.hpp>
 
-#include "tree/sequencetree.H"
-#include "util/set.H"
-#include "util/myexception.H"
-#include "statistics.H"
-#include "tree-dist.H"
+#include "tree/sequencetree.hh"
+#include "util/set.hh"
+#include "util/myexception.hh"
+#include "statistics.hh"
+#include "tree-dist.hh"
 
 extern int log_verbose;
 

@@ -23,24 +23,24 @@
 /// \brief Contains routines for resampling the sequence at two adjacent internal nodes (5way).
 ///
 
-#include "substitution/likelihood.H"                // for get_column_likeli...
+#include "substitution/likelihood.hh"                // for get_column_likeli...
 #include <iostream>
 #include <cmath>
 #include "util/assert.hh"
-#include "sample.H"
-#include "probability/choose.H"
-#include "util/mapping.H"
-#include "util/rng.H"
-#include "util/log-level.H"
-#include "dp/2way.H"
-#include "dp/5way.H"
-#include "dp/hmm.H"                                 // for HMM::bitmask_t, HMM
-#include "dp/alignment-sums.H"
-#include "dp/dp-engine.H"                           // for DPengine
-#include "dp/dp-matrix.H"                           // for DPmatrixConstrained
-#include "alignment/alignment-util.H"
-#include "alignment/alignment-util2.H"
-#include "alignment/alignment-constraint.H"
+#include "sample.hh"
+#include "probability/choose.hh"
+#include "util/mapping.hh"
+#include "util/rng.hh"
+#include "util/log-level.hh"
+#include "dp/2way.hh"
+#include "dp/5way.hh"
+#include "dp/hmm.hh"                                 // for HMM::bitmask_t, HMM
+#include "dp/alignment-sums.hh"
+#include "dp/dp-engine.hh"                           // for DPengine
+#include "dp/dp-matrix.hh"                           // for DPmatrixConstrained
+#include "alignment/alignment-util.hh"
+#include "alignment/alignment-util2.hh"
+#include "alignment/alignment-constraint.hh"
 
 using std::vector;
 using std::optional;

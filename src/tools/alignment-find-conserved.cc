@@ -19,21 +19,21 @@
 
 #include <string>
 #include <valarray>
-#include "util/myexception.H"
-#include "alignment/alignment.H"
-#include "sequence/sequence-format.H"
-#include "tree/sequencetree.H"
-#include "tree/tree-util.H"
-#include "tree-align/link.H"
-#include "alignment/alignment-util.H"
-#include "alignment/load.H"
-#include "util/string/split.H"
-#include "util/mapping.H"
-#include "util/io.H"
-#include "util/range.H"
-#include "util/string/join.H"
-#include "parsimony.H"
-#include "tree-dist.H"
+#include "util/myexception.hh"
+#include "alignment/alignment.hh"
+#include "sequence/sequence-format.hh"
+#include "tree/sequencetree.hh"
+#include "tree/tree-util.hh"
+#include "tree-align/link.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/load.hh"
+#include "util/string/split.hh"
+#include "util/mapping.hh"
+#include "util/io.hh"
+#include "util/range.hh"
+#include "util/string/join.hh"
+#include "parsimony.hh"
+#include "tree-dist.hh"
 
 #include <boost/program_options.hpp>
 

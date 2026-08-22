@@ -1,5 +1,5 @@
-#include "expected.H"
-#include "util/myexception.H"
+#include "expected.hh"
+#include "util/myexception.hh"
 
 using std::vector;
 using std::string;

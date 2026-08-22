@@ -1,5 +1,5 @@
-#include "context.H"
-#include "util/string/join.H"
+#include "context.hh"
+#include "util/string/join.hh"
 
 using std::vector;
 using std::string;

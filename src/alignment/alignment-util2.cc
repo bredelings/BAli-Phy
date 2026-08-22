@@ -23,9 +23,9 @@
 /// \brief This file implements alignment utility functions.
 ///
 
-#include "alignment-util.H"
-#include "alignment-util2.H"
-#include "util/io.H"
+#include "alignment-util.hh"
+#include "alignment-util2.hh"
+#include "util/io.hh"
 #include "util/assert.hh"
 #include <boost/program_options.hpp>
 

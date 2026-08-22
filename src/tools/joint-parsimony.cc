@@ -23,19 +23,19 @@
 #include <vector>
 #include <boost/program_options.hpp>
 
-#include "util/myexception.H"
-#include "alignment/alignment.H"
+#include "util/myexception.hh"
+#include "alignment/alignment.hh"
 
-#include "optimize.H"
-#include "findroot.H"
+#include "optimize.hh"
+#include "findroot.hh"
 
-#include "alignment/alignment-util.H"
-#include "tree/tree-util.H"
-#include "parsimony.H"
-#include "joint-A-T.H"
-#include "tree-align/n_indels.H"
+#include "alignment/alignment-util.hh"
+#include "tree/tree-util.hh"
+#include "parsimony.hh"
+#include "joint-A-T.hh"
+#include "tree-align/n_indels.hh"
 
-#include "dp/A2_states.H"
+#include "dp/A2_states.hh"
 using namespace A2;
 
 using std::cin;

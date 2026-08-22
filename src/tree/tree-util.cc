@@ -20,10 +20,10 @@
 #include <iostream>
 #include <map>
 #include <list>
-#include "tree/tree-util.H"
-#include "util/myexception.H"
-#include "util/io.H"
-#include "tools/read-trees.H" // split out trees_format::reader_t
+#include "tree/tree-util.hh"
+#include "util/myexception.hh"
+#include "util/io.hh"
+#include "tools/read-trees.hh" // split out trees_format::reader_t
 
 using boost::program_options::variables_map;
 using std::map;

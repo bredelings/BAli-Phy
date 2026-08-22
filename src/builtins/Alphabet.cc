@@ -1,9 +1,9 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "sequence/alphabet.H"
-#include "sequence/doublets.H"
-#include "sequence/RNAEdits.H"
-#include "sequence/codons.H"
+#include "computation/machine/args.hh"
+#include "sequence/alphabet.hh"
+#include "sequence/doublets.hh"
+#include "sequence/RNAEdits.hh"
+#include "sequence/codons.hh"
 
 using Alphabet = PtrBox<alphabet>;
 using std::vector;

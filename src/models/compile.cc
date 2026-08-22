@@ -25,24 +25,24 @@
 #include <sstream>
 #include <cstdlib>
 
-#include "util/graph.H"
+#include "util/graph.hh"
 
-#include "models/compile.H"
-#include "sequence/doublets.H"
-#include "sequence/codons.H"
-#include "util/string/join.H"
-#include "util/string/pred.H"
-#include "util/set.H"
-#include "util/range.H"
-#include "util/myexception.H"
-#include "models/rules.H"
-#include "models/parse.H"
-#include "models/path.H"
-#include "computation/module.H"
-#include "computation/haskell/haskell.H"
-#include "computation/operations.H"
-#include "computation/haskell/generated.H"
-#include "computation/haskell/ids.H"
+#include "models/compile.hh"
+#include "sequence/doublets.hh"
+#include "sequence/codons.hh"
+#include "util/string/join.hh"
+#include "util/string/pred.hh"
+#include "util/set.hh"
+#include "util/range.hh"
+#include "util/myexception.hh"
+#include "models/rules.hh"
+#include "models/parse.hh"
+#include "models/path.hh"
+#include "computation/module.hh"
+#include "computation/haskell/haskell.hh"
+#include "computation/operations.hh"
+#include "computation/haskell/generated.hh"
+#include "computation/haskell/ids.hh"
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;
@@ -788,7 +788,7 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
     return extracted;
 }
 
-#include "util/text.H"
+#include "util/text.hh"
 
 string pretty_model_t::show_extracted() const
 {

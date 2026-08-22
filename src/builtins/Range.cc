@@ -1,6 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "util/bounds.H"
+#include "computation/machine/args.hh"
+#include "util/bounds.hh"
 
 extern "C" closure builtin_function_get_bounds(OperationArgs& Args)
 {

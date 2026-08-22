@@ -1,13 +1,13 @@
 #include <cstdlib>
 
-#include "haskell.H"
-#include "ids.H"
-#include "util/string/join.H"
-#include "util/set.H"           // for includes( , )
-#include "util/variant.H"       // for to<>()
-#include "util/string/split.H"  // for split( , )
-#include "util/string/convert.H"
-#include "typecheck/kind.H"
+#include "haskell.hh"
+#include "ids.hh"
+#include "util/string/join.hh"
+#include "util/set.hh"           // for includes( , )
+#include "util/variant.hh"       // for to<>()
+#include "util/string/split.hh"  // for split( , )
+#include "util/string/convert.hh"
+#include "typecheck/kind.hh"
 
 using std::string;
 using std::pair;

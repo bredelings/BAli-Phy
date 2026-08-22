@@ -1,13 +1,13 @@
-#include "code-generation.H"
+#include "code-generation.hh"
 
-#include "rules.H"                         // for Rules
-#include "util/set.H"                      // for add, plus, minus
-#include "util/log-level.H"                // for log_verbose
-#include "util/graph.H"                    // for make_graph( )
-#include "computation/haskell/haskell.H"   // for Hs::LExp
-#include "computation/haskell/generated.H" // for Haskell::Generated builders
-#include "computation/haskell/ids.H"       // for haskell_qid
-#include "util/string/join.H"              // for join( )
+#include "rules.hh"                         // for Rules
+#include "util/set.hh"                      // for add, plus, minus
+#include "util/log-level.hh"                // for log_verbose
+#include "util/graph.hh"                    // for make_graph( )
+#include "computation/haskell/haskell.hh"   // for Hs::LExp
+#include "computation/haskell/generated.hh" // for Haskell::Generated builders
+#include "computation/haskell/ids.hh"       // for haskell_qid
+#include "util/string/join.hh"              // for join( )
 #include "range/v3/all.hpp"
 
 namespace views = ranges::views;

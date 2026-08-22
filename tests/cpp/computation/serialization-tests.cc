@@ -1,10 +1,10 @@
-#include "computation/loader.H"
-#include "computation/machine/graph_register.H"
-#include "computation/operation.H"
-#include "computation/preprocess.H"
-#include "computation/runtime/ast.H"
-#include "computation/runtime/indexify.H"
-#include "test-util.H"
+#include "computation/loader.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/operation.hh"
+#include "computation/preprocess.hh"
+#include "computation/runtime/ast.hh"
+#include "computation/runtime/indexify.hh"
+#include "test-util.hh"
 #include <cereal/archives/binary.hpp>
 #include <sstream>
 

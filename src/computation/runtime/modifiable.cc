@@ -1,6 +1,6 @@
-#include "computation/runtime/modifiable.H"
-#include "computation/machine/graph_register.H"
-#include "computation/runtime/ast.H"
+#include "computation/runtime/modifiable.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/runtime/ast.hh"
 
 closure modifiable_op(OperationArgs& Args)
 {

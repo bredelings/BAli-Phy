@@ -1,19 +1,19 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "builtins/native-vector-input.H"
-#include "computation/machine/args.H"
-#include "dp/2way.H"
-#include "imodel/imodel.H"
-#include "computation/haskell/ids.H"
-#include "computation/runtime/ast.H"
+#include "builtins/native-vector-input.hh"
+#include "computation/machine/args.hh"
+#include "dp/2way.hh"
+#include "imodel/imodel.hh"
+#include "computation/haskell/ids.hh"
+#include "computation/runtime/ast.hh"
 #include <boost/dynamic_bitset.hpp>
-#include "sequence/doublets.H"
-#include "alignment/alignment.H"
-#include "sequence/sequence-format.H"
-#include "dp/2way.H"
-#include "util/cmdline.H"
-#include "util/range.H"
-#include "util/rng.H"
-#include "util/dense-matrix.H"
+#include "sequence/doublets.hh"
+#include "alignment/alignment.hh"
+#include "sequence/sequence-format.hh"
+#include "dp/2way.hh"
+#include "util/cmdline.hh"
+#include "util/range.hh"
+#include "util/rng.hh"
+#include "util/dense-matrix.hh"
 #include <limits>
 #include <regex>                                  // to use in getTaxonNamesRaw
 
@@ -26,7 +26,7 @@ using std::tuple;
 
 using Alphabet = PtrBox<alphabet>;
 
-// #include "alignment/alignment-util.H"
+// #include "alignment/alignment-util.hh"
 vector<int> alignment_row_counts(const alignment& A, int i, const vector<int>& counts);
 
 bool is_runtime_bool_true(const R::Exp& value)

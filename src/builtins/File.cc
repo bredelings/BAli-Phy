@@ -1,15 +1,15 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
+#include "computation/machine/args.hh"
 #include <filesystem>
 #include <fstream>
 #include <system_error>
 #include <string>
 #include <utility>
 #include <vector>
-#include "util/io.H"   // for portable_getline( ).
-#include "util/utf8.H"
-#include "computation/haskell/Integer.H" // for Integer
-#include "bali-phy/files.H" // for create_unique_dir
+#include "util/io.hh"   // for portable_getline( ).
+#include "util/utf8.hh"
+#include "computation/haskell/Integer.hh" // for Integer
+#include "bali-phy/files.hh" // for create_unique_dir
 
 namespace fs = std::filesystem;
 using std::fstream;

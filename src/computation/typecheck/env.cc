@@ -1,8 +1,8 @@
-#include "env.H"
-#include "util/string/join.H"
-#include "util/set.H"                 // for add( , )
-#include "types.H"
-#include "substitution.H"
+#include "env.hh"
+#include "util/string/join.hh"
+#include "util/set.hh"                 // for add( , )
+#include "types.hh"
+#include "substitution.hh"
 
 using std::string;
 using std::vector;

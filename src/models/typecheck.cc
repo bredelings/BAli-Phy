@@ -1,13 +1,13 @@
-#include "typecheck.H"
-#include "parse.H"
+#include "typecheck.hh"
+#include "parse.hh"
 #include <cstdlib>
 #include <vector>
 #include <set>
-#include "rules.H"
-#include "util/myexception.H"
+#include "rules.hh"
+#include "util/myexception.hh"
 #include <iostream>
-#include "compile.H"
-#include "util/set.H"
+#include "compile.hh"
+#include "util/set.hh"
 
 using std::vector;
 using std::set;

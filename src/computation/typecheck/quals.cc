@@ -1,6 +1,6 @@
-#include "typecheck.H"
-#include "kindcheck.H"
-#include "computation/haskell/ids.H"
+#include "typecheck.hh"
+#include "kindcheck.hh"
+#include "computation/haskell/ids.hh"
 
 #include "range/v3/all.hpp"
 

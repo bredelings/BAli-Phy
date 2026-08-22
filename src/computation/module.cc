@@ -6,36 +6,36 @@
 #include <cstring>
 #include <limits>
 #include <string_view>
-#include "computation/module.H"
-#include "computation/record_utils.H"
-#include "computation/preprocess.H"
-#include "util/myexception.H"
-#include "util/variant.H"
-#include "util/io.H"
-#include "util/log-level.H"
+#include "computation/module.hh"
+#include "computation/record_utils.hh"
+#include "computation/preprocess.hh"
+#include "util/myexception.hh"
+#include "util/variant.hh"
+#include "util/io.hh"
+#include "util/log-level.hh"
 #include "range/v3/all.hpp"
-#include "util/range.H"
-#include "util/set.H"   // for add( , )
-#include "util/string/split.H"
-#include "util/string/join.H"
-#include "util/file-paths.H" // for exe_mtime()
-#include "program.H"
-#include "operations.H"
-#include "computation/machine/graph_register.H" // for graph_normalize( )
-#include "computation/operations.H"
-#include "rename/rename.H"
-#include "desugar/desugar.H"
-#include "typecheck/typecheck.H"
-#include "computation/loader.H"
-#include "core/convert.H" // for load_builtins( )
-#include "computation/optimization/simplifier.H"
-#include "computation/optimization/call-arity.H"
-#include "computation/optimization/occurrence.H"
-#include "computation/optimization/float-out.H"
-#include "computation/optimization/inliner.H"
-#include "computation/haskell/haskell.H"
-#include "computation/haskell/ids.H"
-#include "computation/core/func.H"
+#include "util/range.hh"
+#include "util/set.hh"   // for add( , )
+#include "util/string/split.hh"
+#include "util/string/join.hh"
+#include "util/file-paths.hh" // for exe_mtime()
+#include "program.hh"
+#include "operations.hh"
+#include "computation/machine/graph_register.hh" // for graph_normalize( )
+#include "computation/operations.hh"
+#include "rename/rename.hh"
+#include "desugar/desugar.hh"
+#include "typecheck/typecheck.hh"
+#include "computation/loader.hh"
+#include "core/convert.hh" // for load_builtins( )
+#include "computation/optimization/simplifier.hh"
+#include "computation/optimization/call-arity.hh"
+#include "computation/optimization/occurrence.hh"
+#include "computation/optimization/float-out.hh"
+#include "computation/optimization/inliner.hh"
+#include "computation/haskell/haskell.hh"
+#include "computation/haskell/ids.hh"
+#include "computation/core/func.hh"
 #include "util/assert.hh"
 #include <fmt/chrono.h>
 

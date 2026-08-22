@@ -1,0 +1,1055 @@
+#ifndef CORE_AST_H
+#define CORE_AST_H
+
+#include <iostream>
+#include <optional>
+#include <stdexcept>
+#include <variant>
+#include <vector>
+#include <string>
+#include <cstdint>
+#include <type_traits>
+#include "util/OrderedDouble.hh"
+#include "util/cow-ptr.hh"
+#include "util/string/join.hh"
+#include "util/math/log-double.hh"
+#include "util/utf8.hh"
+#include "util/variant.hh"
+#include "computation/core/id_info.hh"
+#include "computation/haskell/ids.hh"
+#include "computation/haskell/integer_container.hh"
+
+#include <cereal/types/memory.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/tuple.hpp>
+#include <cereal/types/variant.hpp>
+#include <cereal/types/vector.hpp>
+#define CEREAL_FUTURE_EXPERIMENTAL 1
+#include <cereal/archives/adapters.hpp>
+
+#include "computation/loader.hh" // for module_loader
+
+#include "range/v3/all.hpp"
+
+/* TODO:
+ *
+ * 3. Make Apply take exactly one argument.
+ * 4. Don't allow empty Exp -- actually this prevents cereal from serializing it.
+ *    Use optional<Exp> instead?
+ */
+
+namespace Core
+{
+    template <typename NoteV> struct Var;
+    template <typename NoteV, typename NoteE> struct Lambda;
+    template <typename NoteV, typename NoteE> struct Apply;
+    template <typename NoteV, typename NoteE> struct Let;
+    template <typename NoteV, typename NoteE> struct Case;
+    template <typename NoteV, typename NoteE> struct ConApp;
+    template <typename NoteV, typename NoteE> struct BuiltinOp;
+    struct Constant;
+    struct RuntimeOnly;
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct Exp
+    {
+	std::variant
+	<
+	    std::monostate,
+	    cow_ptr<Var<NoteV>>,
+	    cow_ptr<Lambda<NoteV,NoteE>>,
+	    cow_ptr<Apply<NoteV,NoteE>>,
+	    cow_ptr<Let<NoteV,NoteE>>,
+	    cow_ptr<Case<NoteV,NoteE>>,
+	    cow_ptr<ConApp<NoteV,NoteE>>,
+	    cow_ptr<BuiltinOp<NoteV,NoteE>>,
+	    cow_ptr<Constant>,
+	    cow_ptr<RuntimeOnly>
+	>
+	exp_ptr;
+
+	NoteE note_;
+
+        const NoteE& note() const {return note_;}
+              NoteE& note()       {return note_;}
+
+        std::string print() const;
+
+	bool empty() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+            return std::holds_alternative<std::monostate>(exp_ptr);
+	}
+
+	const Var<NoteV>* to_var() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 1)
+		return std::get<cow_ptr<Var<NoteV>>>(exp_ptr).get();
+	    else
+		return nullptr;
+	}
+
+	Var<NoteV>* to_var_modify()
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 1)
+		return std::get<cow_ptr<Var<NoteV>>>(exp_ptr).modify_ptr().get();
+	    else
+		return nullptr;
+	}
+
+	const Lambda<NoteV,NoteE>* to_lambda() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 2)
+		return std::get<cow_ptr<Lambda<NoteV,NoteE>>>(exp_ptr).get();
+	    else
+		return nullptr;
+	}
+
+	Lambda<NoteV,NoteE>* to_lambda_modify()
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 2)
+		return std::get<cow_ptr<Lambda<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
+	    else
+		return nullptr;
+	}
+
+	const Apply<NoteV,NoteE>* to_apply() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 3)
+		return std::get<cow_ptr<Apply<NoteV,NoteE>>>(exp_ptr).get();
+	    else
+		return nullptr;
+	}
+
+	Apply<NoteV,NoteE>* to_apply_modify()
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 3)
+		return std::get<cow_ptr<Apply<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
+	    else
+		return nullptr;
+	}
+
+	const Let<NoteV,NoteE>* to_let() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 4)
+		return std::get<cow_ptr<Let<NoteV,NoteE>>>(exp_ptr).get();
+	    else
+		return nullptr;
+	}
+
+	Let<NoteV,NoteE>* to_let_modify()
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 4)
+		return std::get<cow_ptr<Let<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
+	    else
+		return nullptr;
+	}
+
+	const Case<NoteV,NoteE>* to_case() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 5)
+		return std::get<cow_ptr<Case<NoteV,NoteE>>>(exp_ptr).get();
+	    else
+		return nullptr;
+	}
+
+	Case<NoteV,NoteE>* to_case_modify()
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 5)
+		return std::get<cow_ptr<Case<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
+	    else
+		return nullptr;
+	}
+
+	const ConApp<NoteV,NoteE>* to_conApp() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 6)
+		return std::get<cow_ptr<ConApp<NoteV,NoteE>>>(exp_ptr).get();
+	    else
+		return nullptr;
+	}
+
+	ConApp<NoteV,NoteE>* to_conApp_modify()
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 6)
+		return std::get<cow_ptr<ConApp<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
+	    else
+		return nullptr;
+	}
+
+	const BuiltinOp<NoteV,NoteE>* to_builtinOp() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 7)
+		return std::get<cow_ptr<BuiltinOp<NoteV,NoteE>>>(exp_ptr).get();
+	    else
+		return nullptr;
+	}
+
+	BuiltinOp<NoteV,NoteE>* to_builtinOp_modify()
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 7)
+		return std::get<cow_ptr<BuiltinOp<NoteV,NoteE>>>(exp_ptr).modify_ptr().get();
+	    else
+		return nullptr;
+	}
+
+	const Constant* to_constant() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 8)
+		return std::get<cow_ptr<Constant>>(exp_ptr).get();
+	    else
+		return nullptr;
+	}
+
+	Constant* to_constant_modify()
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 8)
+		return std::get<cow_ptr<Constant>>(exp_ptr).modify_ptr().get();
+	    else
+		return nullptr;
+	}
+
+	const RuntimeOnly* to_runtimeOnly() const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 9)
+		return std::get<cow_ptr<RuntimeOnly>>(exp_ptr).get();
+	    else
+		return nullptr;
+	}
+
+	RuntimeOnly* to_runtimeOnly_modify()
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() == 9)
+		return std::get<cow_ptr<RuntimeOnly>>(exp_ptr).modify_ptr().get();
+	    else
+		return nullptr;
+	}
+
+	bool operator==(const Exp<NoteV,NoteE>& E2) const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    if (exp_ptr.index() != E2.exp_ptr.index()) return false;
+
+	    if (empty())
+		return true;
+	    else if (auto v= to_var())
+		return *v == *E2.to_var();
+	    else if (auto lam = to_lambda())
+		return *lam == *E2.to_lambda();
+	    else if (auto app = to_apply())
+		return *app == *E2.to_apply();
+	    else if (auto let = to_let())
+		return *let == *E2.to_let();
+	    else if (auto c = to_case())
+		return *c == *E2.to_case();
+	    else if (auto con = to_conApp())
+		return *con == *E2.to_conApp();
+	    else if (auto b = to_builtinOp())
+		return *b == *E2.to_builtinOp();
+	    else if (auto constant = to_constant())
+		return *constant == *E2.to_constant();
+	    else if (auto runtime_only = to_runtimeOnly())
+		return *runtime_only == *E2.to_runtimeOnly();
+	    else
+		std::abort();
+	}
+
+	std::strong_ordering operator<=>(const Exp<NoteV,NoteE>& E2) const
+	{
+            assert(not exp_ptr.valueless_by_exception());
+	    auto cmp1 = exp_ptr.index() <=> E2.exp_ptr.index();
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    if (empty())
+		return cmp1;
+	    else if (auto v= to_var())
+		return *v <=> *E2.to_var();
+	    else if (auto lam = to_lambda())
+		return *lam <=> *E2.to_lambda();
+	    else if (auto app = to_apply())
+		return *app <=> *E2.to_apply();
+	    else if (auto let = to_let())
+		return *let <=> *E2.to_let();
+	    else if (auto c = to_case())
+		return *c <=> *E2.to_case();
+	    else if (auto con = to_conApp())
+		return *con <=> *E2.to_conApp();
+	    else if (auto b = to_builtinOp())
+		return *b <=> *E2.to_builtinOp();
+	    else if (auto constant = to_constant())
+		return *constant <=> *E2.to_constant();
+	    else if (auto runtime_only = to_runtimeOnly())
+		return *runtime_only <=> *E2.to_runtimeOnly();
+	    else
+		std::abort();
+	}
+
+        Exp<NoteV,NoteE>& operator=(const Exp<NoteV,NoteE>& E)
+        {
+            assert(not E.exp_ptr.valueless_by_exception());
+            // If *this points to a structure containing E,
+            // then E can get destroyed during the operation, including E.note_.
+
+            // By constructing a temporary here we
+            // * increment the reference of E.exp_ptr.
+            // * copy E.note_, so that we can use it safely.
+
+            auto tmp(E);
+
+            std::swap(*this, tmp);
+
+            return *this;
+        }
+
+        Exp<NoteV,NoteE>& operator=(Exp<NoteV,NoteE>&& E) noexcept = default;
+
+        template <class Archive>
+        void serialize(Archive& ar);
+
+	Exp() = default;
+	Exp(const Exp<NoteV,NoteE>& e) = default;
+	Exp(Exp<NoteV,NoteE>&& e) noexcept = default;
+
+	Exp(const Var<NoteV>& v):exp_ptr( make_cow_ptr<Var<NoteV>>(v) ) {}
+	Exp(const Var<NoteV>& v, const NoteE& n):exp_ptr( make_cow_ptr<Var<NoteV>>(v) ), note_(n) {}
+	Exp(const Lambda<NoteV,NoteE>& l):exp_ptr( make_cow_ptr<Lambda<NoteV,NoteE>>(l) ) {}
+	Exp(const Lambda<NoteV,NoteE>& l, const NoteE& n):exp_ptr( make_cow_ptr<Lambda<NoteV,NoteE>>(l) ), note_(n) {}
+	Exp(const Apply<NoteV,NoteE>& a):exp_ptr( make_cow_ptr<Apply<NoteV,NoteE>>(a) ) {}
+	Exp(const Apply<NoteV,NoteE>& a, const NoteE& n):exp_ptr( make_cow_ptr<Apply<NoteV,NoteE>>(a) ), note_(n) {}
+	Exp(const Let<NoteV,NoteE>& l):exp_ptr( make_cow_ptr<Let<NoteV,NoteE>>(l) ) {}
+	Exp(const Let<NoteV,NoteE>& l, const NoteE& n):exp_ptr( make_cow_ptr<Let<NoteV,NoteE>>(l) ), note_(n) {}
+	Exp(const Case<NoteV,NoteE>& c):exp_ptr( make_cow_ptr<Case<NoteV,NoteE>>(c) ) {}
+	Exp(const Case<NoteV,NoteE>& c, const NoteE& n):exp_ptr( make_cow_ptr<Case<NoteV,NoteE>>(c) ), note_(n) {}
+	Exp(const ConApp<NoteV,NoteE>& c):exp_ptr( make_cow_ptr<ConApp<NoteV,NoteE>>(c) ) {}
+	Exp(const ConApp<NoteV,NoteE>& c, const NoteE& n):exp_ptr( make_cow_ptr<ConApp<NoteV,NoteE>>(c)), note_(n) {}
+	Exp(const BuiltinOp<NoteV,NoteE>& b):exp_ptr( make_cow_ptr<BuiltinOp<NoteV,NoteE>>(b) ) {}
+	Exp(const BuiltinOp<NoteV,NoteE>& b, const NoteE& n):exp_ptr( make_cow_ptr<BuiltinOp<NoteV,NoteE>>(b) ), note_(n) {}
+	Exp(const Constant& c):exp_ptr( make_cow_ptr<Constant>(c) ) {}
+	Exp(const Constant& c, const NoteE& n):exp_ptr( make_cow_ptr<Constant>(c) ), note_(n) {}
+	Exp(const RuntimeOnly& r):exp_ptr( make_cow_ptr<RuntimeOnly>(r) ) {}
+	Exp(const RuntimeOnly& r, const NoteE& n):exp_ptr( make_cow_ptr<RuntimeOnly>(r) ), note_(n) {}
+
+	~Exp() = default;
+    };
+
+    template <typename NoteV, typename NoteE>
+    inline std::ostream& operator<<(std::ostream& o,const Core::Exp<NoteV,NoteE>& E)
+    {
+	return o<<E.print();
+    }
+
+
+    template <typename NoteV = std::monostate>
+    struct Var
+    {
+	std::string name;
+	int index=0;
+
+	NoteV info;
+	Core::id_info id;
+
+	        // This preserves stable top-level bindings.  Most such bindings are
+	        // source exports, but internal runtime/optimizer entry points use it too.
+	        bool is_exported = false;
+
+	bool operator==(const Var<NoteV>& v2) const
+	{
+	    return index == v2.index and name == v2.name;
+	}
+
+	std::strong_ordering operator<=>(const Var<NoteV>& v2) const
+	{
+	    auto cmp1 = index <=> v2.index;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    return (name <=> v2.name);
+	}
+
+	std::string print() const;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(name, index, info, id, is_exported);
+	}
+
+        Var() = default;
+        Var(const std::string& s):name(s) {}
+        Var(const std::string& s, int i):name(s), index(i) {}
+        Var(const std::string& s, int i, const NoteV& n):name(s), index(i), info(n) {}
+        Var(const std::string& s, int i, const NoteV& n, bool b):name(s), index(i), info(n), is_exported(b) {}
+        Var(const std::string& s, int i, const NoteV& n, const Core::id_info& id_info, bool b)
+            :name(s), index(i), info(n), id(id_info), is_exported(b) {}
+    };
+
+    template <typename NoteV>
+    inline std::ostream& operator<<(std::ostream& o,const Core::Var<NoteV>& V)
+    {
+	return o<<V.print();
+    }
+
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct Lambda
+    {
+	Var<NoteV> x;
+	Exp<NoteV, NoteE> body;
+
+	std::string print() const;
+
+	bool operator==(const Lambda<NoteV,NoteE>& v2) const
+	{
+	    return x == v2.x and body == v2.body;
+	}
+
+	std::strong_ordering operator<=>(const Lambda<NoteV,NoteE>& v2) const
+	{
+	    auto cmp1 = x <=> v2.x;
+	    if (cmp1 != std::strong_ordering::equivalent) return  cmp1;
+
+	    return body <=> v2.body;
+	}
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(x, body);
+	}
+    };
+
+    // FIXME: Change this to a single arg.
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct Apply
+    {
+	Exp<NoteV, NoteE> head;
+	Exp<NoteV, NoteE> arg;
+
+	std::string print() const;
+
+	bool operator==(const Apply<NoteV,NoteE>& a2) const
+	{
+	    return head == a2.head and arg == a2.arg;
+	}
+
+	std::strong_ordering operator<=>(const Apply<NoteV,NoteE>& a2) const
+	{
+	    auto cmp = head <=> a2.head;
+
+	    if (cmp != std::strong_ordering::equivalent) return cmp;
+
+	    return arg <=> a2.arg;
+	}
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(head, arg);
+	}
+
+        Apply() = default;
+
+        Apply(const Exp<NoteV,NoteE>& h, const Exp<NoteV,NoteE>& a)
+            :head(h), arg(a)
+        {
+        }
+    };
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct Decl
+    {
+	Var<NoteV> x;
+	Exp<NoteV, NoteE> body;
+
+	std::string print() const;
+
+	bool operator==(const Decl<NoteV,NoteE>& decl) const
+	{
+	    return x == decl.x and body == decl.body;
+	}
+
+	std::strong_ordering operator<=>(const Decl<NoteV,NoteE>& decl) const
+	{
+	    auto cmp = x <=> decl.x;
+
+	    if (cmp != std::strong_ordering::equivalent) return cmp;
+
+	    return body <=> decl.body;
+	}
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(x, body);
+	}
+    };
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct Decls: public std::vector<Decl<NoteV,NoteE>>
+    {
+	std::string print() const;
+
+	using std::vector<Decl<NoteV,NoteE>>::vector;
+    };
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct NonRec
+    {
+        Decl<NoteV,NoteE> decl;
+
+        bool operator==(const NonRec&) const = default;
+        std::strong_ordering operator<=>(const NonRec&) const = default;
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(decl); }
+    };
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct Rec
+    {
+        Decls<NoteV,NoteE> decls;
+
+        Rec() = default;
+        explicit Rec(Decls<NoteV,NoteE> d):decls(std::move(d)) { assert(not decls.empty()); }
+
+        bool operator==(const Rec&) const = default;
+        std::strong_ordering operator<=>(const Rec&) const = default;
+
+        template <class Archive>
+        void serialize(Archive& ar) { ar(decls); }
+    };
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    using Bind = std::variant<NonRec<NoteV,NoteE>, Rec<NoteV,NoteE>>;
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    using Binds = std::vector<Bind<NoteV,NoteE>>;
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct Let
+    {
+	Bind<NoteV,NoteE> bind;
+	Exp<NoteV,NoteE> body;
+
+        const NonRec<NoteV,NoteE>* to_nonrec() const { return std::get_if<NonRec<NoteV,NoteE>>(&bind); }
+        const Rec<NoteV,NoteE>* to_rec() const { return std::get_if<Rec<NoteV,NoteE>>(&bind); }
+
+	bool operator==(const Let<NoteV,NoteE>& let) const
+	{
+	    return bind == let.bind and body == let.body;
+	}
+
+	std::strong_ordering operator<=>(const Let<NoteV,NoteE>& let) const
+	{
+	    auto cmp = bind <=> let.bind;
+
+	    if (cmp != std::strong_ordering::equivalent) return cmp;
+
+	    return body <=> let.body;
+	}
+
+	std::string print() const;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(bind, body);
+	}
+
+        Let() = default;
+        Let(Bind<NoteV,NoteE> b, Exp<NoteV,NoteE> e):bind(std::move(b)), body(std::move(e)) {}
+    };
+
+    // Deduction guide.
+    template <typename NoteV, typename NoteE, typename T>
+    Let(const Bind<NoteV,NoteE>&, const T&) -> Let<NoteV,NoteE>;
+
+    // Deduction guide.
+    template <typename NoteV, typename NoteE, typename T>
+    Let(const T&, const Exp<NoteV,NoteE>&) -> Let<NoteV,NoteE>;
+
+    template <typename NoteV = std::monostate>
+    struct Pattern
+    {
+        std::optional<std::string> head;
+	std::vector<Var<NoteV>> args;
+
+	std::string print() const;
+
+	std::strong_ordering operator<=>(const Pattern<NoteV>&) const = default;
+	bool operator==(const Pattern<NoteV>& v2) const = default;
+
+	bool is_wildcard_pat() const
+	{
+            return not head;
+	}
+
+        bool is_con_pat() const
+        {
+            return head.has_value();
+        }
+
+	bool is_irrefutable() const
+	{
+            return is_wildcard_pat();
+	}
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(head, args);
+	}
+    };
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct Alt
+    {
+	Pattern<NoteV> pat;
+	Exp<NoteV,NoteE> body;
+
+	std::string print() const;
+
+	bool operator==(const Alt<NoteV,NoteE>& v2) const
+	{
+	    return pat == v2.pat and body == v2.body;
+	}
+
+	std::strong_ordering operator<=>(const Alt<NoteV,NoteE>& v2) const
+	{
+	    auto cmp1 = pat <=> v2.pat;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    return body <=> v2.body;
+	}
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(pat, body);
+	}
+    };
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct Case
+    {
+	Exp<NoteV, NoteE> object;
+        std::vector<Alt<NoteV, NoteE>> alts;
+
+	bool operator==(const Case<NoteV,NoteE>& v2) const
+	{
+	    return object == v2.object and alts == v2.alts;
+	}
+
+	std::strong_ordering operator<=>(const Case<NoteV,NoteE>& v2) const
+	{
+	    auto cmp1 = object <=> v2.object;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    return alts <=> v2.alts;
+	}
+
+	std::string print() const;
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(object, alts);
+	}
+    };
+    
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct ConApp
+    {
+	std::string head;
+	std::vector<Exp<NoteV,NoteE>> args;
+
+	std::string print() const;
+
+	bool operator==(const ConApp<NoteV,NoteE>& v2) const
+	{
+	    return head == v2.head and args == v2.args;
+	}
+
+	std::strong_ordering operator<=>(const ConApp<NoteV,NoteE>& v2) const
+	{
+	    auto cmp1 = head <=> v2.head;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    return args <=> v2.args;
+	}
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(head, args);
+	}
+
+        ConApp() = default;
+        ConApp(const std::string& h, const std::vector<Exp<NoteV,NoteE>>& a):head(h),args(a) {}
+    };
+
+    template <typename NoteV = std::monostate, typename NoteE = std::monostate>
+    struct BuiltinOp
+    {
+	std::string lib_name;
+	std::string func_name;
+        std::string call_conv;
+	std::vector<Exp<NoteV,NoteE>> args;
+	void* op = nullptr;
+
+	std::string print() const;
+
+	bool operator==(const BuiltinOp<NoteV,NoteE>& v2) const
+	{
+	    return lib_name == v2.lib_name and func_name == v2.func_name and call_conv == v2.call_conv and args == v2.args;
+	}
+
+	std::strong_ordering operator<=>(const BuiltinOp<NoteV,NoteE>& v2) const
+	{
+	    auto cmp1 = lib_name <=> v2.lib_name;
+
+	    if (cmp1 != std::strong_ordering::equivalent) return cmp1;
+
+	    auto cmp2 = func_name <=> v2.func_name;
+
+	    if (cmp2 != std::strong_ordering::equivalent) return cmp2;
+
+            auto cmp3 = call_conv <=> v2.call_conv;
+
+	    if (cmp3 != std::strong_ordering::equivalent) return cmp3;
+
+            return args <=> v2.args;
+	}
+
+	template <class Archive>
+	void load(Archive& ar)
+	{
+	    ar(lib_name, func_name, call_conv, args);
+            const module_loader& loader = get_user_data<const module_loader>(ar);
+            op = loader.load_builtin_ptr(lib_name, func_name, call_conv);
+            assert(not call_conv.empty());
+            assert(op);
+	}
+
+	template <class Archive>
+	void save(Archive& ar) const
+	{
+            assert(not call_conv.empty());
+            assert(op);
+	    ar(lib_name, func_name, call_conv, args);
+	}
+
+
+        BuiltinOp(const std::string& lib, const std::string& func, const std::string& conv, const std::vector<Exp<NoteV,NoteE>>& a, void* o)
+            :lib_name(lib), func_name(func), call_conv(conv), args(a), op(o)
+        {
+            assert(not call_conv.empty());
+            assert(op);
+        }
+    private:
+        BuiltinOp() = default;
+
+        friend cereal::access;
+    };
+
+    struct Constant
+    {
+	std::variant<char32_t,int,integer_container,double,std::string> value;
+
+	std::string print() const;
+
+	// Preserve Core's strong structural ordering by giving floating-point
+	// constants the same total order used by Runtime.
+	std::strong_ordering operator<=>(const Constant& v2) const
+	{
+            auto type_order = value.index() <=> v2.value.index();
+            if (type_order != 0) return type_order;
+
+            // Compare the selected alternatives after confirming that their types match.
+            return std::visit([&](const auto& x) -> std::strong_ordering
+            {
+                using T = std::decay_t<decltype(x)>;
+                const auto& y = std::get<T>(v2.value);
+                if constexpr (std::is_same_v<T, double>)
+                    return OrderedDouble(x) <=> OrderedDouble(y);
+                else
+                    return x <=> y;
+            }, value);
+	}
+
+	bool operator==(const Constant& v2) const {return (*this <=> v2) == 0;}
+
+	template <class Archive>
+	void serialize(Archive& ar)
+	{
+	    ar(value);
+	}
+    };
+
+    struct RuntimeOnly
+    {
+	std::string text;
+
+	std::string print() const {return text;}
+
+	std::strong_ordering operator<=>(const RuntimeOnly& v2) const = default;
+	bool operator==(const RuntimeOnly& v2) const = default;
+
+	template <class Archive>
+	void serialize(Archive&)
+	{
+	    throw std::runtime_error("Core::RuntimeOnly is not serializable");
+	}
+
+	RuntimeOnly() = default;
+	RuntimeOnly(const std::string& s):text(s) {}
+    };
+
+    template <typename NoteV, typename NoteE>
+    template <class Archive>
+    void Exp<NoteV,NoteE>::serialize(Archive& ar)
+    {
+	ar(exp_ptr, note_);
+    }
+
+    template <typename NoteV, typename NoteE>
+    std::string Exp<NoteV,NoteE>::print() const
+    {
+        if (exp_ptr.valueless_by_exception()) return "INVALID";
+	if (empty()) return "NOEXP";
+
+	if (auto v = to_var()) return v->print();
+	else if (auto lam = to_lambda()) return lam->print();
+	else if (auto a = to_apply()) return a->print();
+	else if (auto let = to_let()) return let->print();
+	else if (auto c = to_case()) return c->print();
+	else if (auto con = to_conApp()) return con->print();
+	else if (auto b = to_builtinOp()) return b->print();
+	else if (auto constant = to_constant()) return constant->print();
+	else if (auto runtime_only = to_runtimeOnly()) return runtime_only->print();
+	else std::abort();
+    }
+
+    template <typename NoteV>
+    std::string Var<NoteV>::print() const
+    {
+	if (is_haskell_qsym(name)) // (:) or QVARSYM or QCONSYM
+	{
+	    assert(index == 0);
+	    return std::string("(") + name + ")";
+	}
+
+	std::string s = name;
+	if (name.empty() or index != 0)
+	    s += std::string("#")+std::to_string(index);
+
+	return s;
+    }
+
+    template <typename NoteV, typename NoteE>
+    std::string Lambda<NoteV,NoteE>::print() const
+    {
+	std::vector<std::string> svars;
+	svars.push_back(x.print());
+	auto body2 = body;
+	while(auto l = body2.to_lambda())
+	{
+	    svars.push_back(l->x.print());
+	    body2 = l->body;
+	}
+	return "\\"+join(svars," ") + " -> " + body2.print();
+    }
+
+    template <typename NoteV, typename NoteE>
+    std::string Apply<NoteV,NoteE>::print() const
+    {
+        std::string s_head = head.print();
+        if (not head.to_var() and not head.to_apply())
+            s_head = "(" + s_head + ")";
+        std::string s_arg = arg.print();
+        if (not arg.to_var() and not arg.to_constant())
+            s_arg = "("+s_arg+")";
+	return s_head + " " + s_arg;
+    }
+
+    template <typename NoteV, typename NoteE>
+    std::string Decl<NoteV,NoteE>::print() const
+    {
+	return x.print() + " = " + body.print();
+    }
+
+    template <typename NoteV, typename NoteE>
+    std::string Decls<NoteV,NoteE>::print() const
+    {
+	std::vector<std::string> decls;
+	for(auto& decl: *this)
+	    decls.push_back(decl.print());
+	return "{"+join(decls,"; ")+"}";
+    }
+
+    template <typename NoteV, typename NoteE>
+    std::string Let<NoteV,NoteE>::print() const
+    {
+        if (auto nonrec = to_nonrec())
+            return "let " + nonrec->decl.print() + " in " + body.print();
+        else
+            return "letrec " + to_rec()->decls.print() + " in " + body.print();
+    }
+
+    template <typename NoteV>
+    std::string Pattern<NoteV>::print() const
+    {
+        if (not head)
+            return "_";
+        else
+        {
+            std::vector<std::string> words;
+            words.push_back(*head);
+            for(auto& v: args)
+                words.push_back(v.print());
+
+            if (words.size() == 3 and words[0].starts_with(":"))
+                return words[1]+words[0]+words[2];
+
+            if (is_tuple_name(words[0]) and tuple_arity(words[0])+1 == words.size())
+            {
+                words.erase(words.begin());
+                return "("+join(words,", ")+")";
+            }
+
+            return join(words," ");
+        }
+    }
+
+    template <typename NoteV, typename NoteE>
+    std::string Alt<NoteV,NoteE>::print() const
+    {
+	return pat.print() + " -> " + body.print();
+    }
+
+    template <typename NoteV, typename NoteE>
+    std::string Case<NoteV,NoteE>::print() const
+    {
+	std::vector<std::string> s_alts;
+	for(auto& alt: alts)
+	    s_alts.push_back(alt.print());
+        std::string obj = object.print();
+        if (not ((bool)object.to_var() or object.to_constant()))
+            obj = "("+obj+")";
+	return "case " + obj + " of {"+join(s_alts,"; ")+"}";
+    }
+
+    template <typename NoteV,typename NoteE>
+    std::string ConApp<NoteV,NoteE>::print() const
+    {
+	std::vector<std::string> words;
+	words.push_back(head);
+	for(auto& v: args)
+	    words.push_back(v.print());
+
+	if (words.size() == 3 and words[0].starts_with(":"))
+	    return words[1]+words[0]+words[2];
+
+	if (is_tuple_name(words[0]) and tuple_arity(words[0])+1 == words.size())
+	{
+	    words.erase(words.begin());
+	    return "("+join(words,", ")+")";
+	}
+
+        // Parenthesize non-var arguments if this conapp isn't an operator or tuple.
+        for(int i=0;i<args.size();i++)
+        {
+            if (not args[i].to_var() and not args[i].to_constant())
+                words[i+1] = "(" + words[i+1] + ")";
+        }
+        return join(words," ");
+    }
+
+    template <typename NoteV, typename NoteE>
+    std::string BuiltinOp<NoteV,NoteE>::print() const
+    {
+	std::vector<std::string> words;
+	words.push_back(lib_name + ":" + func_name);
+	for(auto& arg: args)
+        {
+            std::string s_arg = arg.print();
+            if (not arg.to_var() and not arg.to_constant())
+                s_arg = "(" + s_arg + ")";
+	    words.push_back(s_arg);
+        }
+	return join(words," ");
+    }
+
+    inline std::string Constant::print() const
+    {
+	if (auto c = to<char32_t>(value))
+        {
+            if (not utf8::is_scalar_value(*c))
+                throw std::runtime_error("Invalid Core character constant");
+
+            std::string payload;
+            if (*c == U'\a') payload = "\\a";
+            else if (*c == U'\b') payload = "\\b";
+            else if (*c == U'\f') payload = "\\f";
+            else if (*c == U'\n') payload = "\\n";
+            else if (*c == U'\r') payload = "\\r";
+            else if (*c == U'\t') payload = "\\t";
+            else if (*c == U'\v') payload = "\\v";
+            else if (*c == U'\\') payload = "\\\\";
+            else if (*c == U'\'') payload = "\\'";
+            else if (0x20 <= *c and *c <= 0x7E) payload = std::string(1, static_cast<char>(*c));
+            else payload = "\\" + std::to_string(static_cast<std::uint32_t>(*c));
+
+	    return "'" + payload + "'";
+        }
+	else if (auto i = to<int>(value))
+	    return std::to_string(*i) + "#";
+	else if (auto ic = to<integer_container>(value))
+	    return ic->i.str();
+	else if (auto d = to<double>(value))
+	    return std::to_string(*d) + "##";
+        else if (auto s = to<std::string>(value))
+	    return (std::string("\"") + *s + "\"#");
+	else
+	    std::abort();
+    }
+}
+
+
+namespace std
+{
+    template <typename NoteV>
+    class hash < Core::Var<NoteV> >{
+    public :
+        size_t operator()(const Core::Var<NoteV> &x) const
+        {
+            size_t h =   std::hash<int>()(x.index) ^ std::hash<std::string>()(x.name);
+            return  h ;
+        }
+    };
+
+};
+
+#endif

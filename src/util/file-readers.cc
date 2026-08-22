@@ -1,6 +1,6 @@
 #include "util/assert.hh"
-#include "util/file-readers.H"
-#include "util/io.H"
+#include "util/file-readers.hh"
+#include "util/io.hh"
 
 using std::optional;
 using std::string;

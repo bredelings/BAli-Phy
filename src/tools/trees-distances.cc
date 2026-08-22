@@ -25,20 +25,20 @@
 #include <map>
 #include <cmath>
 #include <fstream>
-#include "util/matrix.H"
-#include "util/io/matrix.H"
-#include "statistics.H"
+#include "util/matrix.hh"
+#include "util/io/matrix.hh"
+#include "statistics.hh"
 
-#include "tree/sequencetree.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "util/cmdline.H"
-#include "tree/tree-util.H"
-#include "tree-dist.H"
-#include "util/rng.H"
+#include "tree/sequencetree.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
+#include "util/cmdline.hh"
+#include "tree/tree-util.hh"
+#include "tree-dist.hh"
+#include "util/rng.hh"
 
 #include <boost/program_options.hpp>
-#include "distance-report.H"
+#include "distance-report.hh"
 
 extern int log_verbose;
 

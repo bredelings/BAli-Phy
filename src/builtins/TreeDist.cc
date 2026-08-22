@@ -1,9 +1,9 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include <map>
 #include <vector>
-#include "computation/machine/args.H"
-#include "computation/machine/gcobject.H"
-#include "computation/runtime/ast.H"
+#include "computation/machine/args.hh"
+#include "computation/machine/gcobject.hh"
+#include "computation/runtime/ast.hh"
 
 using std::map;
 using std::vector;

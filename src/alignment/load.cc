@@ -1,9 +1,9 @@
-#include "alignment/load.H"
+#include "alignment/load.hh"
 
-#include "alignment-util.H"
-#include "util/io.H"
-#include "util/mapping.H"
-#include "util/file-readers.H"
+#include "alignment-util.hh"
+#include "util/io.hh"
+#include "util/mapping.hh"
+#include "util/file-readers.hh"
 
 extern int log_verbose;
 

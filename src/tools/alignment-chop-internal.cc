@@ -22,11 +22,11 @@
 #include <string>
 #include <set>
 #include <vector>
-#include "tree/tree.H"
-#include "tree/tree-util.H"
-#include "alignment/load.H"
-#include "sequence/sequence-format.H"
-#include "findroot.H"
+#include "tree/tree.hh"
+#include "tree/tree-util.hh"
+#include "alignment/load.hh"
+#include "sequence/sequence-format.hh"
+#include "findroot.hh"
 
 #include <boost/program_options.hpp>
 

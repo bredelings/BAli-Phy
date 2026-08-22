@@ -1,9 +1,9 @@
-#include "substitution.H"
+#include "substitution.hh"
 #include <utility>
 #include "immer/set.hpp"
 
-#include "computation/haskell/ids.H"
-#include "kind.H"
+#include "computation/haskell/ids.hh"
+#include "kind.hh"
 
 using std::vector;
 using std::string;

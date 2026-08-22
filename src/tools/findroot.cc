@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "findroot.H"
-#include "optimize.H"
+#include "findroot.hh"
+#include "optimize.hh"
 
 #include <vector>
 

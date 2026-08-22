@@ -1,16 +1,16 @@
 #include <filesystem>
 #include <iostream>
 
-#include "util/io.H"
-#include "util/io/vector.H"
-#include "util/string/convert.H"
-#include "files.H"
-#include "util/string/join.H"
-#include "util/string/split.H"
-#include "util/myexception.H"
-#include "version.H"
-#include "computation/loader.H"
-#include "computation/haskell/ids.H"
+#include "util/io.hh"
+#include "util/io/vector.hh"
+#include "util/string/convert.hh"
+#include "files.hh"
+#include "util/string/join.hh"
+#include "util/string/split.hh"
+#include "util/myexception.hh"
+#include "version.hh"
+#include "computation/loader.hh"
+#include "computation/haskell/ids.hh"
 #include <fmt/chrono.h>
 
 using std::cerr;

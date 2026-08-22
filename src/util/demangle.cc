@@ -1,4 +1,4 @@
-#include "util/demangle.H"
+#include "util/demangle.hh"
 
 #include <cstdlib>
 #include <memory>

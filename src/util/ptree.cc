@@ -1,7 +1,7 @@
-#include "util/ptree.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "util/myexception.H"
+#include "util/ptree.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
+#include "util/myexception.hh"
 
 #include <algorithm>
 #include <variant>

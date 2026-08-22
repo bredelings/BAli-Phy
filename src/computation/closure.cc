@@ -1,8 +1,8 @@
-#include "computation/object.H"
-#include "computation/closure.H"
-#include "computation/operation.H"
-#include "computation/preprocess.H"
-#include "util/string/join.H" // for join( )
+#include "computation/object.hh"
+#include "computation/closure.hh"
+#include "computation/operation.hh"
+#include "computation/preprocess.hh"
+#include "util/string/join.hh" // for join( )
 #include <range/v3/all.hpp>
 #include <cstdlib>
 #include <utility>

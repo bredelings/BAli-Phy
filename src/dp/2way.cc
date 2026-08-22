@@ -21,8 +21,8 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/topological_sort.hpp>
 
-#include "2way.H"
-#include "alignment/alignment-util.H"
+#include "2way.hh"
+#include "alignment/alignment-util.hh"
 #include "util/assert.hh"
 
 using namespace std;

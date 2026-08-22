@@ -1,11 +1,11 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "computation/machine/effects.H"
-#include "computation/operations.H"
-#include "util/myexception.H"
-#include "computation/machine/graph_register.H"
-#include "computation/runtime/modifiable.H"
-#include "computation/runtime/interchangeable.H"
+#include "computation/machine/args.hh"
+#include "computation/machine/effects.hh"
+#include "computation/operations.hh"
+#include "util/myexception.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/runtime/modifiable.hh"
+#include "computation/runtime/interchangeable.hh"
 
 using boost::dynamic_pointer_cast;
 

@@ -1,12 +1,12 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "computation/machine/error_exception.H"
-#include "computation/machine/requested_exit.H"
-#include "util/myexception.H"
-#include "computation/machine/graph_register.H"
-#include "util/rng.H"
-#include "probability/choose.H"
-#include "util/log-level.H"
+#include "computation/machine/args.hh"
+#include "computation/machine/error_exception.hh"
+#include "computation/machine/requested_exit.hh"
+#include "util/myexception.hh"
+#include "computation/machine/graph_register.hh"
+#include "util/rng.hh"
+#include "probability/choose.hh"
+#include "util/log-level.hh"
 #include <cstdlib> // for getenv
 
 using namespace std;

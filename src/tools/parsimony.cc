@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "util/range.H"
-#include "parsimony.H"
+#include "util/range.hh"
+#include "parsimony.hh"
 using namespace std;
 
 DenseMatrix<int> unit_cost_matrix(unsigned size)

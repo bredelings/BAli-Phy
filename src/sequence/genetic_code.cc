@@ -1,7 +1,7 @@
-#include "genetic_code.H"
-#include "util/io.H"
-#include "util/string/convert.H"
-#include "util/string/join.H"
+#include "genetic_code.hh"
+#include "util/io.hh"
+#include "util/string/convert.hh"
+#include "util/string/join.hh"
 
 using std::vector;
 using std::string;

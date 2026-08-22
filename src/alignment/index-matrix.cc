@@ -21,10 +21,10 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/topological_sort.hpp>
 
-#include "index-matrix.H"
-#include "alignment/alignment-util.H"
-#include "util/mapping.H"
-#include "util/range.H"
+#include "index-matrix.hh"
+#include "alignment/alignment-util.hh"
+#include "util/mapping.hh"
+#include "util/range.hh"
 
 using namespace std;
 

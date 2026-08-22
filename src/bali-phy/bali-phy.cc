@@ -29,7 +29,7 @@
     #include <xmmintrin.h>
 #endif
 
-#include "util/time.H"
+#include "util/time.hh"
 
 #ifdef HAVE_MPI
 #include <mpi.h>
@@ -46,40 +46,40 @@ namespace mpi = boost::mpi;
 #include <fmt/chrono.h>
 #include <chrono>
 
-#include "substitution/likelihood.H"
-#include "util/myexception.H"
-#include "util/rng.H"
-#include "util/mapping.H"
-#include "util/io.H"
-#include "util/string/split.H"
-#include "util/log-level.H"
-#include "util/set.H"
-#include "util/text.H"
-#include "util/settings.H"                          // for load_settings
-#include "models/parameters.H"
-#include "models/rules.H"
-#include "models/compile.H"
-#include "math/pow2.H"
-#include "version.H"
-#include "computation/module.H"
-#include "computation/optimization/inliner.H" // for simple_size( )
-#include "computation/program.H"
-#include "computation/machine/requested_exit.H"
-#include "computation/machine/graph_register.H"
-#include "models/A-T-prog.H" // for get_alphabet_expression( )
-#include "computation/haskell/generated.H"
-#include "computation/haskell/ids.H"
-#include "computation/typecheck/tidy.H"  // for TidyState.print( )
+#include "substitution/likelihood.hh"
+#include "util/myexception.hh"
+#include "util/rng.hh"
+#include "util/mapping.hh"
+#include "util/io.hh"
+#include "util/string/split.hh"
+#include "util/log-level.hh"
+#include "util/set.hh"
+#include "util/text.hh"
+#include "util/settings.hh"                          // for load_settings
+#include "models/parameters.hh"
+#include "models/rules.hh"
+#include "models/compile.hh"
+#include "math/pow2.hh"
+#include "version.hh"
+#include "computation/module.hh"
+#include "computation/optimization/inliner.hh" // for simple_size( )
+#include "computation/program.hh"
+#include "computation/machine/requested_exit.hh"
+#include "computation/machine/graph_register.hh"
+#include "models/A-T-prog.hh" // for get_alphabet_expression( )
+#include "computation/haskell/generated.hh"
+#include "computation/haskell/ids.hh"
+#include "computation/typecheck/tidy.hh"  // for TidyState.print( )
 
-#include "A-T-model.H"
-#include "files.H"
-#include "paths.H"
-#include "io.H"
-#include "system.H"
-#include "cmd_line.H"
+#include "A-T-model.hh"
+#include "files.hh"
+#include "paths.hh"
+#include "io.hh"
+#include "system.hh"
+#include "cmd_line.hh"
 
 namespace HsG = Haskell::Generated;
-#include "computation/loader.H"
+#include "computation/loader.hh"
 
 namespace fs = std::filesystem;
 namespace chrono = std::chrono;

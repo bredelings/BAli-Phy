@@ -1,6 +1,6 @@
-#include "system.H"
-#include "util/string/convert.H"
-#include "util/log-level.H"
+#include "system.hh"
+#include "util/string/convert.hh"
+#include "util/log-level.hh"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

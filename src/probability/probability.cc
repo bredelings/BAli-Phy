@@ -17,20 +17,20 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "probability/probability.H"
+#include "probability/probability.hh"
 #include <iostream>
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/math/special_functions/beta.hpp>
 #include <boost/math/distributions.hpp>
-#include "util/myexception.H"
-#include "util/log-level.H"
+#include "util/myexception.hh"
+#include "util/log-level.hh"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-#include "util/wrap.H"
-#include "util/range.H"
+#include "util/wrap.hh"
+#include "util/range.hh"
 
 using std::valarray;
 using std::vector;

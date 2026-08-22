@@ -1,11 +1,11 @@
-#include "arity.H"
+#include "arity.hh"
 
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <map>
 
-#include "computation/core/func.H"
+#include "computation/core/func.hh"
 
 using std::map;
 using std::vector;

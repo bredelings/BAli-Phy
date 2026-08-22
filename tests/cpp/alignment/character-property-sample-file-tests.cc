@@ -1,4 +1,4 @@
-#include "alignment/character-property-sample-file.H"
+#include "alignment/character-property-sample-file.hh"
 
 #include <chrono>
 #include <cstdlib>

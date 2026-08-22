@@ -18,30 +18,30 @@
   <http://www.gnu.org/licenses/>.  */
 
 ///
-/// \file alignment-sums.H
+/// \file alignment-sums.hh
 ///
 /// \brief Contains utility functions for sampling from and summing over parts of the alignment.
 ///
 
-#include "alignment-sums.H"
+#include "alignment-sums.hh"
 #include <cmath>                                    // for pow
 #include <cstdlib>                                  // for abort
 #include <algorithm>                                // for find
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>  // for dynamic_bitset
 #include <iostream>                                 // for operator<<, ostream
 #include <string>                                   // for operator<<
-#include "alignment/alignment.H"                    // for operator<<
-#include "dp/2way.H"                                // for pairwise_alignment_t
-#include "dp/A2_states.H"                           // for E, S
-#include "dp/dp-engine.H"                           // for DPengine
-#include "imodel/imodel.H"                          // for PairHMM
-#include "models/TreeInterface.H"                   // for TreeInterface
-#include "models/parameters.H"                      // for data_partition
-#include "substitution/likelihood.H"                // for other_subst
+#include "alignment/alignment.hh"                    // for operator<<
+#include "dp/2way.hh"                                // for pairwise_alignment_t
+#include "dp/A2_states.hh"                           // for E, S
+#include "dp/dp-engine.hh"                           // for DPengine
+#include "imodel/imodel.hh"                          // for PairHMM
+#include "models/TreeInterface.hh"                   // for TreeInterface
+#include "models/parameters.hh"                      // for data_partition
+#include "substitution/likelihood.hh"                // for other_subst
 #include "util/assert.hh"                           // for assert
-#include "util/matrix.H"                            // for matrix
-#include "util/myexception.H"                       // for show_stack_trace
-#include "util/set.H"                               // for includes
+#include "util/matrix.hh"                            // for matrix
+#include "util/myexception.hh"                       // for show_stack_trace
+#include "util/set.hh"                               // for includes
 
 extern int log_verbose;
 

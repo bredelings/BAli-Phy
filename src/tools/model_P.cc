@@ -22,10 +22,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include <algorithm>
 
-#include "statistics.H"
-#include "bootstrap.H"
-#include "util/math/logsum.H"
-#include "util/log-level.H"
+#include "statistics.hh"
+#include "bootstrap.hh"
+#include "util/math/logsum.hh"
+#include "util/log-level.hh"
 
 #include <boost/program_options.hpp>
 

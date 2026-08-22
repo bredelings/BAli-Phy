@@ -24,11 +24,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include <fstream>
 
-#include "util/myexception.H"
-#include "tree/sequencetree.H"
-#include "bootstrap.H"
-#include "tree-dist.H"
-#include "mctree.H"
+#include "util/myexception.hh"
+#include "tree/sequencetree.hh"
+#include "bootstrap.hh"
+#include "tree-dist.hh"
+#include "mctree.hh"
 
 #include <boost/program_options.hpp>
 

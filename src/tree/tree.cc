@@ -22,13 +22,13 @@
 #include <map>
 #include <sstream>
 
-#include "util/myexception.H"
-#include "tree/tree.H"
-#include "util/mapping.H"
-#include "util/string/split.H"
-#include "util/string/pred.H"
-#include "util/string/convert.H"
-#include "newick-tokenizer.H"
+#include "util/myexception.hh"
+#include "tree/tree.hh"
+#include "util/mapping.hh"
+#include "util/string/split.hh"
+#include "util/string/pred.hh"
+#include "util/string/convert.hh"
+#include "newick-tokenizer.hh"
 
 using std::vector;
 using std::string;

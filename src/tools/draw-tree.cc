@@ -51,19 +51,19 @@ extern "C" {
 }
 #endif
 
-#include "util/myexception.H"
-#include "tree/sequencetree.H"
-#include "mctree.H"
-#include "util/mapping.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "util/string/split.H"
-#include "util/permute.H"
-#include "util/rng.H"
-#include "util/io.H"
-#include "util/set.H"
-#include "util/wrap.H"
-#include "util/range.H"
+#include "util/myexception.hh"
+#include "tree/sequencetree.hh"
+#include "mctree.hh"
+#include "util/mapping.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
+#include "util/string/split.hh"
+#include "util/permute.hh"
+#include "util/rng.hh"
+#include "util/io.hh"
+#include "util/set.hh"
+#include "util/wrap.hh"
+#include "util/range.hh"
 
 extern int log_verbose;
 

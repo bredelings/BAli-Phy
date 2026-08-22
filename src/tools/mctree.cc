@@ -17,11 +17,11 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "mctree.H"
-#include "util/rng.H"
-#include "util/range.H"
-#include "util/string/join.H" 
-#include "util/string/convert.H"
+#include "mctree.hh"
+#include "util/rng.hh"
+#include "util/range.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
 #include <filesystem>
 
 extern int log_verbose;

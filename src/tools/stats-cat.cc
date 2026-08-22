@@ -4,12 +4,12 @@
 #include <boost/program_options.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "mcon/mcon.H"
-#include "util/io.H"
-#include "stats-table.H"
-#include "util/myexception.H"
-#include "util/owned-ptr.H"
-#include "util/string/join.H"
+#include "mcon/mcon.hh"
+#include "util/io.hh"
+#include "stats-table.hh"
+#include "util/myexception.hh"
+#include "util/owned-ptr.hh"
+#include "util/string/join.hh"
 
 using namespace std;
 

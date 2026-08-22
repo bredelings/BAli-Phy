@@ -1,4 +1,4 @@
-#include "ops.H"
+#include "ops.hh"
 
 using std::pair;
 

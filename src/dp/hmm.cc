@@ -18,15 +18,15 @@
   <http://www.gnu.org/licenses/>.  */
 
 ///
-/// \file hmm.H
+/// \file hmm.hh
 ///
 /// \brief This file implements the generic HMM class.
 ///
 
 #include <cmath>
-#include "hmm.H"
-#include "2way.H"
-#include "imodel/imodel.H"
+#include "hmm.hh"
+#include "2way.hh"
+#include "imodel/imodel.hh"
 
 using std::vector;
 using std::pair;

@@ -1,4 +1,4 @@
-#include "alphabetize.H"
+#include "alphabetize.hh"
 
 using std::string;
 using std::map;

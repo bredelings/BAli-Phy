@@ -20,9 +20,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "sequence/genetic_code.H"
-#include "alignment/alignment.H"
-#include "alignment/alignment-util.H"
+#include "sequence/genetic_code.hh"
+#include "alignment/alignment.hh"
+#include "alignment/alignment-util.hh"
 #include <boost/program_options.hpp>
 
 namespace po = boost::program_options;

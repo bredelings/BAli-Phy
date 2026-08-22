@@ -1,0 +1,112 @@
+#ifndef HASKELL_OPTIONS_H
+#define HASKELL_OPTIONS_H
+
+#include <map>
+#include <set>
+#include <string>
+#include <optional>
+#include <vector>
+#include "computation/message.hh"
+
+enum class LangExt
+{
+    ImplicitPrelude=0,
+    StarIsType,
+    CUSKs,
+    MonomorphismRestriction,
+    NPlusKPatterns,
+    DatatypeContexts,
+    TraditionalRecordSyntax,
+    FieldSelectors,
+    // NondecreasingIndentation
+    // DeepSubsumption
+    EmptyDataDecls,
+    ForeignFunctionInterface,
+    PatternGuards,
+    DoAndIfThenElse,
+    RelaxedPolyRec,
+    BangPatterns,
+    BinaryLiterals,
+    ConstrainedClassMethods,
+    ConstraintKinds,
+    CPP,
+    DataKinds,
+    DefaultSignatures,
+    DeriveDataTypeable,
+    DeriveFoldable,
+    DeriveFunctor,
+    DeriveGeneric,
+    DeriveLift,
+    DeriveTraversable,
+    EmptyCase,
+    EmptyDataDeriving,
+    ExistentialQuantification,
+    ExtendedDefaultRules,
+    ExplicitForall,
+    FlexibleContexts,
+    FlexibleInstances,
+    FunctionalDependencies,
+    GADTSyntax,
+    GADTs,
+    GeneralizedNewtypeDeriving,
+    HexFloatLiterals,
+    ImportQualifiedPost,
+    ImpredicativeTypes,
+    IncoherentInstances,
+    InstanceSigs,
+    KindSignatures,
+    LexicalNegation,
+    MonoLocalBinds,
+    MultiParamTypeClasses,
+    MultiWayIf,
+    NamedDefaults,
+    NamedFieldPuns,
+    NamedWildCards,
+    RecordWildCards,
+    NumericUnderscores,
+    OverloadedLists,
+    OverloadedStrings,
+    OverloadedRecordDot,
+    OverloadedRecordUpdate,
+    DisambiguateRecordFields,
+    DuplicateRecordFields,
+    OverlappingInstances,
+    PolyKinds,
+    Postfixoperators,
+    RankNTypes,
+    RecursiveDo,
+    ScopedTypeVariables,
+    StandaloneDeriving,
+    StandaloneKindSignatures,
+    TypeAbstractions,
+    TypeApplications,
+    TypeFamilies,
+    TypeOperators,
+    TypeSections,
+    TypeSynonymInstances,
+    UndecidableInstances,
+    UnicodeSyntax,
+    Last
+};
+
+struct LanguageExtensions
+{
+    std::map<std::string, std::string> already_set;
+
+    std::vector<bool> extension_bits;
+
+    bool has_extension(LangExt) const;
+    void set_extension(LangExt, bool value=true);
+
+    std::optional<Note> set_option(const std::string& opt);
+
+    template <class Archive>
+    void serialize(Archive& ar)
+    {
+	ar(already_set, extension_bits);
+    }
+
+    LanguageExtensions();
+};
+
+#endif

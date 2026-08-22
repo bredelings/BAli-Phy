@@ -18,13 +18,13 @@
   <http://www.gnu.org/licenses/>.  */
 
 
-#include "read-trees.H"
+#include "read-trees.hh"
 #include <fstream>
-#include "tree-dist.H"
-#include "util/string/strip.H"
-#include "util/string/pred.H"
-#include "util/set.H"
-#include "util/mapping.H"
+#include "tree-dist.hh"
+#include "util/string/strip.hh"
+#include "util/string/pred.hh"
+#include "util/set.hh"
+#include "util/mapping.hh"
 
 using std::vector;
 using std::valarray;

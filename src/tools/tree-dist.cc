@@ -18,13 +18,13 @@
   <http://www.gnu.org/licenses/>.  */
 
 #include <fstream>
-#include "tree-dist.H"
-#include "util/io.H"
-#include "read-trees.H"
-#include "util/mapping.H"
-#include "util/string/convert.H"
-#include "util/cmdline.H"
-#include "util/range.H"
+#include "tree-dist.hh"
+#include "util/io.hh"
+#include "read-trees.hh"
+#include "util/mapping.hh"
+#include "util/string/convert.hh"
+#include "util/cmdline.hh"
+#include "util/range.hh"
 
 extern int log_verbose;
 

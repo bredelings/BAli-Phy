@@ -1,26 +1,26 @@
 //#define DEBUG_OPTIMIZE
 
 #include <memory>
-#include "computation/context.H"
-#include "computation/machine/graph_register.H"
-#include "computation/machine/effects.H"
-#include "computation/program.H"
-#include "loader.H"
-#include "module.H"
-#include "computation/preprocess.H"
-#include "computation/runtime/modifiable.H"
-#include "computation/runtime/trim.H"
-#include "probability/choice-weight.H"
-#include "util/rng.H"
-#include "util/log-level.H"
-#include "util/permute.H"
-#include "tools/stats-table.H" /// for has_children( )
+#include "computation/context.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/machine/effects.hh"
+#include "computation/program.hh"
+#include "loader.hh"
+#include "module.hh"
+#include "computation/preprocess.hh"
+#include "computation/runtime/modifiable.hh"
+#include "computation/runtime/trim.hh"
+#include "probability/choice-weight.hh"
+#include "util/rng.hh"
+#include "util/log-level.hh"
+#include "util/permute.hh"
+#include "tools/stats-table.hh" /// for has_children( )
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
-#include "computation/runtime/ast.H"
+#include "computation/runtime/ast.hh"
 
 #include <cmath>
 

@@ -28,12 +28,12 @@
 #include <tuple>
 #include <utility>
 #include "util/assert.hh"
-#include "util/log-level.H"
-#include "util/range.H"
-#include "slice-sampling.H"
-#include "util/rng.H"
-#include "probability/choice-weight.H"
-#include "mcmc/sample-alignment.H"
+#include "util/log-level.hh"
+#include "util/range.hh"
+#include "slice-sampling.hh"
+#include "util/rng.hh"
+#include "probability/choice-weight.hh"
+#include "mcmc/sample-alignment.hh"
 
 extern int log_verbose;
 

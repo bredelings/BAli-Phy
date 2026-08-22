@@ -1,6 +1,6 @@
-#include "cmd_line.H"
-#include "util/string/join.H"
-#include "util/string/split.H"
+#include "cmd_line.hh"
+#include "util/string/join.hh"
+#include "util/string/split.hh"
 
 using std::string;
 using std::vector;

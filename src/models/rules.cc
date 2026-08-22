@@ -1,16 +1,16 @@
 #include <vector>
 #include <set>
-#include "rules.H"
-#include "util/myexception.H"
-#include "util/string/join.H"
-#include "util/io.H"
+#include "rules.hh"
+#include "util/myexception.hh"
+#include "util/string/join.hh"
+#include "util/io.hh"
 #include "util/json.hh"
-#include "models/compile.H"
-#include "models/parse.H"
+#include "models/compile.hh"
+#include "models/parse.hh"
 #include "models/driver.hh" // for parse_expression( )
 
-#include "computation/module.H"
-#include "computation/typecheck/typecheck.H"
+#include "computation/module.hh"
+#include "computation/typecheck/typecheck.hh"
 
 using std::vector;
 using std::set;

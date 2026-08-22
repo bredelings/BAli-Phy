@@ -44,18 +44,18 @@
 #include <map>
 #include <list>
 
-#include "tree/sequencetree.H"
-#include "util/string/join.H"
-#include "util/string/convert.H"
-#include "util/set.H"
-#include "util/range.H"
-#include "util/mapping.H"
-#include "util/log-level.H"
-#include "util/index_value.H"
-#include "statistics.H"
-#include "bootstrap.H"
-#include "tree-dist.H"
-#include "consensus-tree.H"
+#include "tree/sequencetree.hh"
+#include "util/string/join.hh"
+#include "util/string/convert.hh"
+#include "util/set.hh"
+#include "util/range.hh"
+#include "util/mapping.hh"
+#include "util/log-level.hh"
+#include "util/index_value.hh"
+#include "statistics.hh"
+#include "bootstrap.hh"
+#include "tree-dist.hh"
+#include "consensus-tree.hh"
 
 #include <boost/program_options.hpp>
 

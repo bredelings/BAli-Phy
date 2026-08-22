@@ -26,13 +26,13 @@
 #include <cmath>
 
 #include <climits>
-#include "dp-matrix.H"
-#include "math/pow2.H"
-#include "probability/choose.H"
-#include "util/mapping.H"
-#include "util/log-level.H"
-#include "alignment/alignment-constraint.H"
-#include "math/logprod.H"
+#include "dp-matrix.hh"
+#include "math/pow2.hh"
+#include "probability/choose.hh"
+#include "util/mapping.hh"
+#include "util/log-level.hh"
+#include "alignment/alignment-constraint.hh"
+#include "math/logprod.hh"
 
 using std::vector;
 using std::valarray;

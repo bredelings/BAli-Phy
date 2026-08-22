@@ -17,14 +17,14 @@
   along with BAli-Phy; see the file COPYING.  If not see
   <http://www.gnu.org/licenses/>.  */
 
-#include "alphabet.H"
+#include "alphabet.hh"
 #include "util/assert.hh"
 #include <fstream>
-#include "util/set.H"
-#include "util/io.H"
-#include "util/string/convert.H"
-#include "util/cmdline.H"
-#include "util/string/sanitize.H" // for sanitize_string( )
+#include "util/set.hh"
+#include "util/io.hh"
+#include "util/string/convert.hh"
+#include "util/cmdline.hh"
+#include "util/string/sanitize.hh" // for sanitize_string( )
 
 using std::vector;
 using std::string;
@@ -441,10 +441,10 @@ shared_ptr<const Nucleotides> get_nucleotides(const string& name)
     throw myexception()<<"'"<<name<<"' is not a valid nucleotides alphabet.  Please specify DNA or RNA.";
 }
 
-#include "doublets.H"
-#include "RNAEdits.H"
-#include "triplets.H"
-#include "codons.H"
+#include "doublets.hh"
+#include "RNAEdits.hh"
+#include "triplets.hh"
+#include "codons.hh"
 
 shared_ptr<const alphabet> get_alphabet(const string& name_)
 {

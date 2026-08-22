@@ -1,6 +1,6 @@
 #include "util/assert.hh"
 
-#include "util/myexception.H"
+#include "util/myexception.hh"
 
 namespace boost
 {

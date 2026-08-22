@@ -18,10 +18,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <string>
-#include "util/myexception.H"
-#include "alignment/alignment.H"
-#include "sequence/sequence-format.H"
-#include "alignment/load.H"
+#include "util/myexception.hh"
+#include "alignment/alignment.hh"
+#include "sequence/sequence-format.hh"
+#include "alignment/load.hh"
 
 #include <boost/program_options.hpp>
 

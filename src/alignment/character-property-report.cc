@@ -1,11 +1,11 @@
-#include "character-property-report.H"
+#include "character-property-report.hh"
 
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <cmath>
 
-#include "util/myexception.H"
+#include "util/myexception.hh"
 
 namespace character_properties
 {

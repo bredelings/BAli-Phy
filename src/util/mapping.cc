@@ -1,4 +1,4 @@
-#include "util/mapping.H"
+#include "util/mapping.hh"
 
 using std::vector;
 

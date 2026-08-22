@@ -1,7 +1,7 @@
-#include "computation/fresh_vars.H"
-#include "computation/haskell/ids.H"
-#include "util/myexception.H"
-#include "symbols.H"
+#include "computation/fresh_vars.hh"
+#include "computation/haskell/ids.hh"
+#include "util/myexception.hh"
+#include "symbols.hh"
 
 using std::vector;
 using std::string;

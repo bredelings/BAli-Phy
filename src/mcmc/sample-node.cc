@@ -25,16 +25,16 @@
 
 #include <iostream>
 #include <cmath>
-#include "sample.H"
-#include "probability/choose.H"
-#include "util/rng.H"
-#include "util/log-level.H"                         // for log_verbose
-#include "dp/2way.H"
-#include "dp/3way.H"
-#include "dp/alignment-sums.H"
-#include "alignment/alignment-util.H"
-#include "alignment/alignment-constraint.H"
-#include "dp/dp-array.H"
+#include "sample.hh"
+#include "probability/choose.hh"
+#include "util/rng.hh"
+#include "util/log-level.hh"                         // for log_verbose
+#include "dp/2way.hh"
+#include "dp/3way.hh"
+#include "dp/alignment-sums.hh"
+#include "alignment/alignment-util.hh"
+#include "alignment/alignment-constraint.hh"
+#include "dp/dp-array.hh"
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with

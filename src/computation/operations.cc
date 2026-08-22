@@ -1,9 +1,9 @@
-#include "operations.H"
-#include "computation/machine/args.H"
-#include "computation/machine/graph_register.H"
-#include "computation/runtime/ast.H"
-#include "math/exponential.H"
-#include "util/myexception.H"
+#include "operations.hh"
+#include "computation/machine/args.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/runtime/ast.hh"
+#include "math/exponential.hh"
+#include "util/myexception.hh"
 #include <type_traits>
 
 using std::vector;

@@ -1,21 +1,21 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#include "computation/machine/args.H"
-#include "computation/context.H"
-#include "computation/runtime/interchangeable.H"
-#include "util/myexception.H"
-#include "computation/machine/graph_register.H"
-#include "computation/machine/effects.H"
-#include "util/rng.H"
-#include "util/log-level.H"
-#include "probability/choose.H"
-#include "computation/runtime/modifiable.H"
-#include "mcmc/slice-sampling.H"
-#include "computation/operations.H"      // for is_seq( )
-#include "models/TreeInterface.H"
-#include "mcmc/sample.H"
-#include "util/dense-matrix.H"
+#include "computation/machine/args.hh"
+#include "computation/context.hh"
+#include "computation/runtime/interchangeable.hh"
+#include "util/myexception.hh"
+#include "computation/machine/graph_register.hh"
+#include "computation/machine/effects.hh"
+#include "util/rng.hh"
+#include "util/log-level.hh"
+#include "probability/choose.hh"
+#include "computation/runtime/modifiable.hh"
+#include "mcmc/slice-sampling.hh"
+#include "computation/operations.hh"      // for is_seq( )
+#include "models/TreeInterface.hh"
+#include "mcmc/sample.hh"
+#include "util/dense-matrix.hh"
 
-#include "dp/dp-matrix.H"
+#include "dp/dp-matrix.hh"
 
 #include <algorithm>
 #include <limits>

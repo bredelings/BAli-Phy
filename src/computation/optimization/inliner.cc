@@ -1,17 +1,17 @@
 #include <iostream>
 #include <unordered_map>
-#include "computation/operations.H"
-#include "computation/loader.H"
-#include "occurrence.H"
-#include "inliner.H"
-#include "arity.H"
-#include "simplifier.H"
+#include "computation/operations.hh"
+#include "computation/loader.hh"
+#include "occurrence.hh"
+#include "inliner.hh"
+#include "arity.hh"
+#include "simplifier.hh"
 #include "util/assert.hh"
-#include "util/set.H"    // for includes(vector,elem)
-#include "util/variant.H" // for to<type>(val)
-#include "computation/module.H"
+#include "util/set.hh"    // for includes(vector,elem)
+#include "util/variant.hh" // for to<type>(val)
+#include "computation/module.hh"
 
-#include "simplifier.H"
+#include "simplifier.hh"
 
 #include "range/v3/all.hpp"
 

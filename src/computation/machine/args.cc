@@ -1,6 +1,6 @@
-#include "args.H"
-#include "graph_register.H"
-#include "effect.H"
+#include "args.hh"
+#include "graph_register.hh"
+#include "effect.hh"
 
 using std::optional;
 

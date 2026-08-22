@@ -1,10 +1,10 @@
-#include "pattern.H"
+#include "pattern.hh"
 
-#include "util/string/join.H"
-#include "util/set.H"   // for includes( , )
+#include "util/string/join.hh"
+#include "util/set.hh"   // for includes( , )
 
-#include "haskell.H" // for Var, Tuple, List
-#include "ids.H"     // for is_haskell_consym
+#include "haskell.hh" // for Var, Tuple, List
+#include "ids.hh"     // for is_haskell_consym
 
 using std::string;
 using std::pair;

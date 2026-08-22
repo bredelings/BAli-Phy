@@ -1,5 +1,5 @@
-#include "computation/runtime/interchangeable.H"
-#include "computation/runtime/ast.H"
+#include "computation/runtime/interchangeable.hh"
+#include "computation/runtime/ast.hh"
 #include "util/assert.hh"
 
 /*
