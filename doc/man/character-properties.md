@@ -87,8 +87,11 @@ property is `posSelection`; names ending in `-posSelection` use the correspondin
   specified genetic code.
 
 **--format=text|tsv**
-: Output format (default: text). Both formats use one-based coordinates for
-  readers.
+: Output format (default: text). Positive-selection text reports show the
+  representative codon and amino acid, probability, posterior dN/dS mean and
+  standard deviation, and source letter, using three decimal places. TSV keeps
+  the complete posterior summaries and separate provenance fields. Both formats
+  use one-based coordinates for readers.
 
 **--sort=column|increasing|decreasing**
 : Order completed rows (default: column). Increasing and decreasing use the

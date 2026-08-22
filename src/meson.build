@@ -229,7 +229,7 @@ extra_sources = {
 
 extra_deps = {
   'draw-tree': [cairo],
-  'character-properties': [libxxhash],
+  'character-properties': [libxxhash, fmt],
   'alignment-info': [eigen],
   'alignment-find-conserved': [eigen],
   'alignment-smc': [eigen],

@@ -2,11 +2,15 @@ from pathlib import Path
 import sys
 
 
-# The conditioned report must select the primary property and its companion from
-# one posterior view while retaining both matching and unconditional counts.
+# The conditioned report must present its probability, companion dN/dS, and source
+# letter in a concise aligned table while retaining the conditioning sample counts.
 report = (Path(sys.argv[1]) / "output").read_text(encoding="utf-8")
-assert "Posterior view: positiveSelectionInModel = true" in report
-assert "Matching samples: 60 of 100" in report
-assert "2  C  1  TGG  W  0.97 +/- 0.02  0.98  dNdS  9.7 +/- 0.2  9.8" in report
-assert "4  A  2  GCT  A  0.99 +/- 0.01  1  dNdS  9.9 +/- 0.2  10" in report
-assert "5  A  3  TTT  F  0.6 +/- 0.1  0.6  dNdS  6 +/- 0.3  6" in report
+assert "Conditioned on positiveSelectionInModel = true (60 of 100 samples)" in report
+table = report.split("\n\n", 1)[1].splitlines()
+assert table == [
+    "                                Posterior dN/dS",
+    "Column  Codon  AA  Pr(dN/dS>1)        mean ± SD  Source letter",
+    "     2  TGG    W         0.970    9.700 ± 0.200  C:1",
+    "     4  GCT    A         0.990    9.900 ± 0.200  A:2",
+    "     5  TTT    F         0.600    6.000 ± 0.300  A:3",
+]

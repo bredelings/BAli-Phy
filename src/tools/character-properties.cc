@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <boost/program_options.hpp>
+#include <fmt/format.h>
 
 #include "alignment/character-property-alignment.H"
 #include "alignment/character-property-report.H"
@@ -280,8 +281,23 @@ static std::string format_number(double value)
 static void write_text_header(const report_arguments& arguments, std::uint64_t retained_samples,
                               std::uint64_t total_retained_samples)
 {
-    std::cout<<(arguments.positive_selection ? "Positive-selection property: " : "Character property: ")
-             <<arguments.property<<"\n";
+    if (arguments.positive_selection)
+    {
+        std::cout<<"Positive selection: "<<arguments.property<<"\n";
+        if (arguments.condition)
+            std::cout<<"Conditioned on "<<*arguments.condition<<" = true ("<<retained_samples<<" of "
+                     <<total_retained_samples<<" samples)\n";
+        else
+            std::cout<<"Model-averaged posterior ("<<retained_samples<<" samples)\n";
+        if (arguments.selection == "above")
+            std::cout<<"Showing columns with Pr(dN/dS>1) above "<<format_number(arguments.selection_value)<<"\n\n";
+        else
+            std::cout<<"Showing columns containing the highest "<<format_number(arguments.selection_value * 100)
+                     <<"% of letters by Pr(dN/dS>1)\n\n";
+        return;
+    }
+
+    std::cout<<"Character property: "<<arguments.property<<"\n";
     if (arguments.condition)
         std::cout<<"Posterior view: "<<*arguments.condition<<" = true\n"
                  <<"Matching samples: "<<retained_samples<<" of "<<total_retained_samples<<"\n";
@@ -352,24 +368,43 @@ static void write_column_report(const report_arguments& arguments, std::uint64_t
     }
 }
 
-/// Write a selected-letter or positive-selection report in the requested public format.
-/// Both formats include companion-property fields when the selected representatives provide them.
+/// Write a selected-letter report in TSV or its command-specific text layout.
+/// Positive-selection text is concise, while TSV retains every posterior summary field.
 static void write_selected_report(const report_arguments& arguments, std::uint64_t retained_samples,
                                   std::uint64_t total_retained_samples,
                                   const std::vector<character_properties::selected_column>& rows)
 {
+    if (arguments.format == "text" and arguments.positive_selection)
+    {
+        write_text_header(arguments, retained_samples, total_retained_samples);
+        bool has_companion = not rows.empty() and rows.front().companion_summary;
+        if (has_companion)
+            std::cout<<fmt::format("{:>47}\n", "Posterior dN/dS");
+        std::cout<<(has_companion
+                   ? fmt::format("{:>6}  {:<5}  {:<2}  {:>11}  {:>15}  {}\n",
+                                 "Column", "Codon", "AA", "Pr(dN/dS>1)", "mean ± SD", "Source letter")
+                   : fmt::format("{:>6}  {:<5}  {:<2}  {:>11}  {}\n",
+                                 "Column", "Codon", "AA", "Pr(dN/dS>1)", "Source letter"));
+        for (const auto& row: rows)
+        {
+            std::cout<<fmt::format("{:>6}  {:<5}  {:<2}  {:>11.3f}",
+                                   row.alignment_column + 1, row.symbol, row.translation.value_or("-"),
+                                   row.property_summary.mean);
+            if (row.companion_summary)
+                std::cout<<fmt::format("    {:>5.3f} ± {:>5.3f}", row.companion_summary->mean,
+                                       row.companion_summary->sd);
+            std::cout<<fmt::format("  {}:{}\n", row.sequence_name, row.character_index + 1);
+        }
+        return;
+    }
+
     if (arguments.format == "tsv")
         std::cout<<"column\tsequence\tsequence-character\tsymbol\ttranslation\tmean\tsd\tmedian"
                  <<"\tcompanion-property\tcompanion-mean\tcompanion-sd\tcompanion-median\n";
     else
     {
         write_text_header(arguments, retained_samples, total_retained_samples);
-        std::cout<<"Column  Sequence  Character  Symbol  Translation  "
-                 <<(arguments.positive_selection ? "Probability mean +/- SD  Probability median"
-                                                  : "Mean +/- SD  Median");
-        if (not rows.empty() and rows.front().companion_property)
-            std::cout<<"  Companion  Companion mean +/- SD  Companion median";
-        std::cout<<"\n";
+        std::cout<<"Column  Sequence  Character  Symbol  Translation  Mean +/- SD  Median\n";
     }
 
     for (const auto& row: rows)
@@ -392,9 +427,6 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
                      <<row.symbol<<"  "<<row.translation.value_or("-")<<"  "<<format_number(row.property_summary.mean)
                      <<" +/- "<<format_number(row.property_summary.sd)<<"  "
                      <<format_number(row.property_summary.median);
-            if (row.companion_summary)
-                std::cout<<"  "<<*row.companion_property<<"  "<<format_number(row.companion_summary->mean)<<" +/- "
-                         <<format_number(row.companion_summary->sd)<<"  "<<format_number(row.companion_summary->median);
         }
         std::cout<<"\n";
     }
