@@ -23,6 +23,7 @@
 
 #include <vector>
 #include <sstream>
+#include <cstdlib>
 
 #include "util/graph.H"
 
@@ -517,7 +518,7 @@ void erase_pattern_binders(const CM::TypedPattern& pattern, set<string>& binders
             for(auto& element: tuple.elements)
                 erase_pattern_binders(element, binders);
         },
-        [](const auto&) {}
+        [](const auto&) { std::abort(); }
     });
 }
 
@@ -619,10 +620,15 @@ bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
         {
             return bound(sample.dist, binders);
         },
-        [](const auto&)
-        {
-            return false;
-        }
+        // Non-variable leaves cannot reference a protected binder.
+        [](const CM::IntLiteral&) { return false; },
+        [](const CM::DoubleLiteral&) { return false; },
+        [](const CM::BoolLiteral&) { return false; },
+        [](const CM::StringLiteral&) { return false; },
+        [](const CM::ArgRef&) { return false; },
+        [](const CM::Placeholder&) { return false; },
+        [](const CM::GetState&) { return false; },
+        [](const auto&) -> bool { std::abort(); }
     });
 }
 

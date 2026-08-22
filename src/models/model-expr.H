@@ -2,6 +2,7 @@
 #define MODELS_MODEL_EXPR_H
 
 #include <cassert>
+#include <cstdlib>
 #include <optional>
 #include <set>
 #include <stdexcept>
@@ -670,7 +671,8 @@ void for_each_child(Pattern<A>& pattern, F&& f)
             for(auto& element: tuple.elements)
                 f(element);
         },
-        [](auto&) {}
+        [](VarPattern&) {},
+        [](auto&) { std::abort(); }
     });
 }
 
@@ -685,7 +687,8 @@ void for_each_child(const Pattern<A>& pattern, F&& f)
             for(auto& element: tuple.elements)
                 f(element);
         },
-        [](const auto&) {}
+        [](const VarPattern&) {},
+        [](const auto&) { std::abort(); }
     });
 }
 
@@ -762,7 +765,16 @@ void for_each_child(Expr<A>& expr, F&& f)
         {
             f(neg.operand);
         },
-        [](auto&) {}
+        // Leaf nodes have no child expressions to visit.
+        [](IntLiteral&) {},
+        [](DoubleLiteral&) {},
+        [](BoolLiteral&) {},
+        [](StringLiteral&) {},
+        [](Var&) {},
+        [](ArgRef&) {},
+        [](Placeholder&) {},
+        [](GetState&) {},
+        [](auto&) { std::abort(); }
     });
 }
 
@@ -839,7 +851,16 @@ void for_each_child(const Expr<A>& expr, F&& f)
         {
             f(neg.operand);
         },
-        [](const auto&) {}
+        // Leaf nodes have no child expressions to visit.
+        [](const IntLiteral&) {},
+        [](const DoubleLiteral&) {},
+        [](const BoolLiteral&) {},
+        [](const StringLiteral&) {},
+        [](const Var&) {},
+        [](const ArgRef&) {},
+        [](const Placeholder&) {},
+        [](const GetState&) {},
+        [](const auto&) { std::abort(); }
     });
 }
 

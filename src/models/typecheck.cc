@@ -1,5 +1,6 @@
 #include "typecheck.H"
 #include "parse.H"
+#include <cstdlib>
 #include <vector>
 #include <set>
 #include "rules.H"
@@ -237,7 +238,8 @@ void substitute_annotated(const equations& eqs, CM::TypedPattern& pattern)
             for(auto& element: tuple.elements)
                 substitute_annotated(eqs, element);
         },
-        [](auto&) {}
+        [](CM::VarPattern&) {},
+        [](auto&) { std::abort(); }
     });
 }
 
@@ -301,7 +303,16 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
         {
             substitute_annotated(eqs, sample.dist);
         },
-        [](auto&) {}
+        // Leaf nodes have no child annotations to substitute.
+        [](CM::IntLiteral&) {},
+        [](CM::DoubleLiteral&) {},
+        [](CM::BoolLiteral&) {},
+        [](CM::StringLiteral&) {},
+        [](CM::Var&) {},
+        [](CM::ArgRef&) {},
+        [](CM::Placeholder&) {},
+        [](CM::GetState&) {},
+        [](auto&) { std::abort(); }
     });
 }
 

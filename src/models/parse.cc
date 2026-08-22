@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 #include <set>
 #include <vector>
@@ -306,7 +307,16 @@ void resolve_fixities(UntypedExpr& expr, const Rules& R, const set<string>& boun
         {
             resolve_fixities(sample.dist, R, bound_names, messages);
         },
-        [](auto&) {}
+        // Leaf nodes terminate the fixity walk.
+        [](IntLiteral&) {},
+        [](DoubleLiteral&) {},
+        [](BoolLiteral&) {},
+        [](StringLiteral&) {},
+        [](Var&) {},
+        [](ArgRef&) {},
+        [](Placeholder&) {},
+        [](GetState&) {},
+        [](auto&) { std::abort(); }
     });
 }
 
@@ -468,7 +478,16 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
         {
             handle_positional_args(sample.dist, R, bound_names);
         },
-        [](auto&) {}
+        // Leaf nodes terminate the positional-argument walk.
+        [](IntLiteral&) {},
+        [](DoubleLiteral&) {},
+        [](BoolLiteral&) {},
+        [](StringLiteral&) {},
+        [](Var&) {},
+        [](ArgRef&) {},
+        [](Placeholder&) {},
+        [](GetState&) {},
+        [](auto&) { std::abort(); }
     });
 }
 
