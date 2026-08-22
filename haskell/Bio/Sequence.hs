@@ -5,7 +5,7 @@ import Bio.Alphabet
 import Compiler.FFI.Import (CInput)
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.BitVector
+import Data.Bit (Bit)
 import qualified Data.Vector.Unboxed as U
 import Foreign.Vector (EVector, listToVector, vectorToList)
 
@@ -46,12 +46,9 @@ reorderSequences names sequences | length names /= length sequences  = error "Se
 
 getSequenceLengths sequenceData = Map.fromList [(label, U.length sequence) | (label, sequence) <- getSequences sequenceData]
 
-foreign import trcall "Likelihood:" bitmaskFromSequence :: U.Vector Int -> CBitVector
+foreign import trcall "Likelihood:" bitmaskFromSequence :: U.Vector Int -> U.Vector Bit
 foreign import trcall "Likelihood:" stripGaps :: U.Vector Int -> U.Vector Int
-foreign import trcall "Likelihood:" maskSequenceRaw :: CBitVector -> U.Vector Int -> U.Vector Int
-
-bitmaskFromSequence' s = BitVector $ bitmaskFromSequence s
-maskSequence (BitVector bv) sequence = maskSequenceRaw bv sequence
+foreign import trcall "Likelihood:" maskSequence :: U.Vector Bit -> U.Vector Int -> U.Vector Int
 
 fastaSeq (label, seq) = T.concat [T.singleton '>', label, T.singleton '\n', seq, T.singleton '\n']
 

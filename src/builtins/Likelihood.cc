@@ -256,12 +256,12 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
     return component_state_result(std::move(result));
 }
 
-extern "C" closure builtin_function_maskSequenceRaw(OperationArgs& Args)
+extern "C" closure builtin_function_maskSequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& mask = arg0.as_<Box<dynamic_bitset<>>>();
     auto sequence_input = read_native_vector_input<int, ForeignDemand::use>(
-        Args, 1, "Likelihood.maskSequenceRaw");
+        Args, 1, "Likelihood.maskSequence");
     auto sequence = sequence_input.view();
     object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(sequence.size()));
 

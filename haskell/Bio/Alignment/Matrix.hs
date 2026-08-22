@@ -3,7 +3,8 @@ module Bio.Alignment.Matrix where
 import Compiler.FFI.Import (CInput)
 import Bio.Sequence
 import Bio.Alphabet
-import Data.BitVector
+import Data.Bit (Bit)
+import Data.Bits
 import Data.Text (Text)
 import Data.Maybe (fromMaybe)
 import qualified Data.Text as Text
@@ -52,15 +53,14 @@ foreign import bpcall "Alignment:reorder_alignment" builtin_reorder_alignment ::
 reorder_alignment :: [String] -> AlignmentMatrix -> AlignmentMatrix
 reorder_alignment names a = builtin_reorder_alignment names' a where names' = toVector $ map pack_cpp_string names
 
-foreign import bpcall "Bits:alignment_row_to_presence_bitvector" builtin_alignment_row_to_bitvector :: AlignmentMatrix -> Int -> CBitVector
-alignment_row_to_bitvector a row = BitVector $ builtin_alignment_row_to_bitvector a row
+foreign import trcall "Bits:alignment_row_to_presence_bitvector" alignment_row_to_bitvector :: AlignmentMatrix -> Int -> U.Vector Bit
 
 {-
   The idea behind getConnectedStates:
 
   1. First we compute the characters behind each branch with any characters at the source node.
 
-    - We use Maybe BitVector, so that we don't assume that nodes with no data are known
+    - We use Maybe (U.Vector Bit), so that we don't assume that nodes with no data are known
       to be all deleted.  Instead, use represent such nodes with Nothing, indicating that we don't
       know what's behind them.
 
@@ -76,7 +76,7 @@ alignment_row_to_bitvector a row = BitVector $ builtin_alignment_row_to_bitvecto
       children, which is not allowed.  So, we assume this can't happen and just OR the bits.
 -}
 
-charactersBehind :: IsTree t => IntMap (Maybe BitVector) -> t -> IntMap (Maybe BitVector)
+charactersBehind :: IsTree t => IntMap (Maybe (U.Vector Bit)) -> t -> IntMap (Maybe (U.Vector Bit))
 charactersBehind sequence_masks tree = let
     branches = tree & getEdgesSet
 
@@ -121,7 +121,7 @@ charactersBehind sequence_masks tree = let
        pretend that those characters are present because they are present on both sides?
        Shouldn't we instead signal an error?  Instead, we connect the characters present on both sides.
  -}
-minimallyConnectMasks :: IsTree t => IntMap (Maybe BitVector) -> t -> IntMap BitVector
+minimallyConnectMasks :: IsTree t => IntMap (Maybe (U.Vector Bit)) -> t -> IntMap (U.Vector Bit)
 minimallyConnectMasks observedMasks tree = getNodesSet tree & IntMap.fromSet maskForNode
     where charBehind = charactersBehind observedMasks tree
           charBehind' e = charBehind IntMap.! e
@@ -143,7 +143,7 @@ minimallyConnectMasks observedMasks tree = getNodesSet tree & IntMap.fromSet mas
 {- This routine does two things:
      (i)  it constructs masks on internal nodes and then
      (ii) it applies masks for each node to sequences as each node.
-   We could make something that applies an IntMap (Maybe BitVector) to an IntMap (U.Vector Int).
+   We could make something that applies an IntMap (Maybe (U.Vector Bit)) to an IntMap (U.Vector Int).
    That would allow minimallyConnectStates to return Nothing instead of an error if there are no observed masks.
 -}
 minimallyConnectCharacters leafMasks tree allSequences = getNodesSet tree & IntMap.fromSet maskedSequenceForNode

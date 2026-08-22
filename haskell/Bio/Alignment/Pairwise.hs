@@ -1,7 +1,8 @@
 module Bio.Alignment.Pairwise where
 
-import Compiler.FFI.Import (CInput(..))
-import Data.BitVector
+import Compiler.FFI.Import (CInput(..), COutput(..))
+import Data.Bit (Bit)
+import qualified Data.Vector.Unboxed as U
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
 import Control.DeepSeq
@@ -22,6 +23,7 @@ data PairwiseAlignment = PairwiseAlignment
 
 -- Pass the opaque native alignment unchanged at translated FFI boundaries.
 instance CInput PairwiseAlignment
+instance COutput PairwiseAlignment
 
 foreign import bpcall "Alignment:" numInsert :: PairwiseAlignment -> Int
 
@@ -37,10 +39,7 @@ foreign import ecall "Alignment:" pairwise_alignment_length1 :: PairwiseAlignmen
 
 foreign import ecall "Alignment:" pairwise_alignment_length2 :: PairwiseAlignment -> Int
 
-foreign import bpcall "Bits:pairwise_alignment_from_bits" builtin_pairwise_alignment_from_bits :: CBitVector -> CBitVector -> PairwiseAlignment
-
-pairwise_alignment_from_bits :: BitVector -> BitVector -> PairwiseAlignment
-pairwise_alignment_from_bits (BitVector x) (BitVector y) = builtin_pairwise_alignment_from_bits x y
+foreign import trcall "Bits:pairwise_alignment_from_bits" pairwise_alignment_from_bits :: U.Vector Bit -> U.Vector Bit -> PairwiseAlignment
 
 foreign import bpcall "Alignment:unaligned_pairwise_alignment" unaligned_pairwise_alignment :: Int -> Int -> PairwiseAlignment
 

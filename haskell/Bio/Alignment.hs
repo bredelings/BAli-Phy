@@ -8,7 +8,7 @@ module Bio.Alignment (module Bio.Alignment,
 import Tree
 import Compiler.FFI.Import (CInput, COutput)
 import Compiler.FFI.Runtime (RuntimeValue)
-import Data.BitVector
+import Data.Bit (Bit)
 import Data.Foldable
 import Data.Maybe (catMaybes, fromMaybe)
 import Parameters
@@ -150,12 +150,12 @@ select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs
 alignmentOnTreeFromSequences tree (Aligned sequences) = AlignmentOnTree tree numSequences lengths pairwiseAs
     where -- observedSequences :: IntMap (Maybe (U.Vector Int))
           observedSequences = labelToNodeMap tree $ getSequences sequences
-          observedMasks = fmap (fmap bitmaskFromSequence') observedSequences
+          observedMasks = fmap (fmap bitmaskFromSequence) observedSequences
           -- What is going on here with addAllMissingAncestors?
           allSequences = minimallyConnectCharacters observedMasks tree (addAllMissingAncestors observedSequences tree)
           numSequences = length $ getSequences sequences
           lengths = getNodesSet tree & IntMap.fromSet (\node -> U.length $ stripGaps $ allSequences IntMap.! node)
-          bits = fmap bitmaskFromSequence' allSequences
+          bits = fmap bitmaskFromSequence allSequences
           alignmentForBranch b = pairwise_alignment_from_bits (bits IntMap.! source) (bits IntMap.! target)
                                  where source = sourceNode tree b
                                        target = targetNode tree b
@@ -273,7 +273,7 @@ getTaxonAges labels regex direction = zip labels (U.toList ages)
 class AncestralAlignment a where
     ancestralAlignment :: (IsTree t, LabelType t ~ Text) => t -> a -> EVector Int -> Alphabet -> IntMap ComponentStateSequence -> AlignedCharacterData
 
-instance AncestralAlignment (IntMap (Maybe BitVector)) where
+instance AncestralAlignment (IntMap (Maybe (U.Vector Bit))) where
     ancestralAlignment tree observedMasks smap alphabet componentStateSequences =
 --    This also needs the map from columns to compressed columns:
       let ancestralLetterSequences = statesToLetters smap . componentStates <$> componentStateSequences
@@ -287,7 +287,7 @@ instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
         where letterSequences = statesToLetters smap . componentStates <$> componentStateSequences
               alignedLetterSequences = alignedSequences alignment letterSequences
 
-leafAlignment tree sequenceData = labelToNodeMap tree $ fmap (fmap bitmaskFromSequence') $ getSequences sequenceData
+leafAlignment tree sequenceData = labelToNodeMap tree $ fmap (fmap bitmaskFromSequence) $ getSequences sequenceData
 
 
 -- Encode one pair per actual character, omitting fixed-alignment gap sentinels
