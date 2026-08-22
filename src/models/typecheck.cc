@@ -108,11 +108,11 @@ equations convertible_to(CM::UntypedExpr& model, const type_t& t1, type_t t2)
         else
         {
             auto a = args2[0];
-            t2 = CM::type_app("List", CM::type_apps("Tuple",{a,"Double"}));
+            t2 = CM::type_apps("Map", {a, "Double"});
 
             E = convertible_to(model, t1, t2);
             if (E)
-                model = conversion_call("discrete", "pairs", std::move(model));
+                model = conversion_call("discreteFromMap", "weights", std::move(model));
         }
     }
     else if (head2 == "Distribution" and args2.size() == 1)

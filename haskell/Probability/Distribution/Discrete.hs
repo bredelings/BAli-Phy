@@ -3,6 +3,7 @@ module Probability.Distribution.Discrete where
 import Probability.Random
 import Probability.Distribution.Uniform
 import Data.JSON
+import qualified Data.Map as Map
 
 mkDiscrete xs ps = Discrete $ zip xs ps
 
@@ -117,6 +118,11 @@ instance Sampleable (Discrete a) where
        return $ choose u pairs
 
 discrete pairs = Discrete pairs
+
+-- Convert map weights to the list representation used by Discrete.
+-- Map order gives the resulting mixture a stable component order.
+fromMap :: Map.Map a Double -> Discrete a
+fromMap = discrete . Map.toList
 
 instance Functor Discrete where
     fmap f (Discrete pairs) = Discrete [(f x,p) | (x,p) <- pairs]

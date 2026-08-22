@@ -1,0 +1,14 @@
+{
+    "name": "discreteFromMap",
+    "result_type": "DiscreteDist<a>",
+    "no_log": true,
+    "call": "Discrete.fromMap(@weights)",
+    "import": ["qualified Probability.Distribution.Discrete as Discrete"],
+    "args": [
+        {
+            "name": "weights",
+            "type": "Map<a,Double>"
+        }
+    ],
+    "description": "Construct a discrete distribution from a map of values to weights."
+}
