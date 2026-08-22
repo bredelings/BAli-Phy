@@ -1,6 +1,6 @@
 module Bio.Sequence where
 
-import Data.Map as Map hiding (map)
+import qualified Data.Map as Map
 import Bio.Alphabet
 import Compiler.FFI.Import (CInput)
 import Data.Text (Text)
@@ -24,14 +24,7 @@ type Sequences = [Sequence]
 mkSequence :: ESequence -> Sequence
 mkSequence s = (sequenceName s, sequenceDataRaw s)
 
--- FIXME: make these operate on just the text, not the pair?
--- FIXME: remove sequence_to_indices in favor of stripGaps . sequenceToAlignedIndices?
-foreign import bpcall "Alignment:sequence_to_indices" builtin_sequence_to_indices :: Alphabet -> CPPString -> EVector Int
 foreign import trcall "Alignment:sequenceToAlignedIndices" sequenceToAlignedIndices :: Alphabet -> Text -> U.Vector Int
-sequence_to_indices a (_, s) = builtin_sequence_to_indices a (T.toCppString s)
-
--- sequence_to_indices :: Sequence -> [Int]
--- maybe add this later
 
 foreign import trcall "Alignment:statesToLetters" statesToLetters :: EVector Int -> U.Vector Int -> U.Vector Int
 
@@ -63,26 +56,6 @@ maskSequence (BitVector bv) sequence = maskSequenceRaw bv sequence
 fastaSeq (label, seq) = T.concat [T.singleton '>', label, T.singleton '\n', seq, T.singleton '\n']
 
 fastaSeqs sequences = T.concat [fastaSeq s | s <- sequences]
-
-{- NOTE: If we switch to multiple alphabet types.
-
-data CharacterData = forall a.Alphabet a => CharacterData a [(Text, EVector Int)]
-   OR
-data CharacterData a = CharacterData a [(Text, EVector Int)]
-
-If we switch to multiple Alphabet types, we would probably need to have a main
-class Alphabet and then also a class Nucleotides and a class Triplets.
-
-* If we used `forall a.Alphabet a =>` then that only packages the methods for the
-  main class.
-
-* If we used `CharacterData a`, then we know what the underlying type is, but we
-  can't put them in a list.
-
-* If we use Data.Dynamic for the alphabet, then we could check if its a Codons DNA,
-  but I don't know if can check if its a `Codons a` while finding out the a.
-
--}
 
 data CharacterData = CharacterData Alphabet [(Text, U.Vector Int)]
 newtype AlignedCharacterData = Aligned CharacterData

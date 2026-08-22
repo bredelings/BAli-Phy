@@ -1,6 +1,5 @@
 module Probability.Distribution.PhyloCTMC.FixedA.Properties where
 
-import Bio.Sequence -- for sequence_to_indices
 import Bio.Alignment
 import Bio.Alphabet  -- for type Alphabet
 import Numeric.LinearAlgebra

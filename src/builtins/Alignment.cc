@@ -762,24 +762,6 @@ extern "C" closure builtin_function_sequenceDataRaw(OperationArgs& Args)
     return std::string(s);
 }
 
-// This is the no-gaps version...
-extern "C" closure builtin_function_sequence_to_indices(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& a = *arg0.as_checked<Alphabet>();
-
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    const auto& s = arg1.as_string();
-
-    auto letters = a(s);
-    vector<int> letters2;
-    for(auto letter: letters)
-        if (a.is_feature(letter))
-            letters2.push_back(letter);
-
-    return new R::RVector(letters2);
-}
-
 // This is the with-gaps version...
 extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args)
 {
