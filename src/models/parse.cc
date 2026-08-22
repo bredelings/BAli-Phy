@@ -266,6 +266,18 @@ void resolve_fixities(UntypedExpr& expr, const Rules& R, const set<string>& boun
             for(auto& element: tuple.elements)
                 resolve_fixities(element, R, bound_names, messages);
         },
+        // Resolve each element of a set expression.
+        [&](Set<NoAnn>& set)
+        {
+            for(auto& element: set.elements)
+                resolve_fixities(element, R, bound_names, messages);
+        },
+        // Resolve both sides of every dictionary entry through its tuple expression.
+        [&](Dictionary<NoAnn>& dictionary)
+        {
+            for(auto& element: dictionary.elements)
+                resolve_fixities(element, R, bound_names, messages);
+        },
         // Resolve declaration values and the body of a let expression.
         [&](Let<NoAnn>& let)
         {
