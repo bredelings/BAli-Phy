@@ -55,9 +55,9 @@ posterior median stored for each individual letter.
 The **positive-selection** command selects letters using their posterior mean
 `posSelection` probability, groups them by column, and reports the
 highest-probability letter in each resulting column. The matching dN/dS
-statistics come from that same representative letter. The default property is
-`posSelection`; names ending in `-posSelection` use the corresponding `-dNdS`
-companion when it exists.
+statistics describe that representative but do not help choose it. The default
+property is `posSelection`; names ending in `-posSelection` use the corresponding
+`-dNdS` companion when it exists.
 
 # SUMMARIZE OPTIONS
 
@@ -92,7 +92,8 @@ companion when it exists.
 **--sort=column|increasing|decreasing**
 : Order completed rows (default: column). Increasing and decreasing use the
   selected representative score. For an all-column ordinary report, they use
-  the column's middle value for the statistic selected by **--by**.
+  the column's middle value for the statistic selected by **--by**. Equal
+  values have no defined secondary order.
 
 **--condition=NAME**
 : Use only samples in which the named Boolean model condition is true.
@@ -119,9 +120,10 @@ companion when it exists.
   rows display all available posterior summaries regardless of this choice.
 
 The four selection options are mutually exclusive. Percentage selection first
-requests `max(1, floor(N*PERCENT/100))` of the _N_ projected non-gap letters,
-then includes every letter tied at the cutoff. Multiple selected letters can
-subsequently collapse into one alignment-column row.
+sorts the _N_ projected non-gap letters and takes exactly
+`max(1, floor(N*PERCENT/100))`. Equal scores do not enlarge the selection and
+have no defined secondary order. Multiple selected letters can subsequently
+collapse into one alignment-column row.
 
 # POSITIVE-SELECTION OPTIONS
 

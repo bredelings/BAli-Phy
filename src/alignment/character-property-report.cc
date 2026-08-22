@@ -15,11 +15,10 @@ namespace
 
 /*
  * Character properties belong to non-gap sequence letters, not alignment columns. Threshold and
- * percentage selection therefore operate globally over projected letters. Once the global cutoff is
- * known, each displayed alignment column can independently retain its requested extreme as the
- * representative. Positive selection always scores letters by mean probability and uses mean dN/dS
- * only to break equal-probability ties. Output ordering is deliberately left to callers, so it cannot
- * change which letters were selected or which representative was chosen.
+ * percentage selection therefore operate globally over projected letters. A percentage sorts letters
+ * by score and takes the requested prefix; a threshold scans each column directly. In either case the
+ * first selected score extreme represents its column, with no secondary tie-breaking property.
+ * Output ordering is deliberately left to callers, so it cannot change selection or representatives.
  *
  * An unselected ordinary report is a different calculation: it directly summarizes every nonempty
  * column and never constructs candidate or representative letters.
@@ -44,56 +43,73 @@ double score_letter(const property_summary& property, const projected_character&
     return values.at(character.sequence_name).at(character.character_index);
 }
 
-/// Validate the selection and return its threshold or globally calculated percentage cutoff.
-/// Explicit thresholds need no alignment scan; percentages sort one score from every projected letter.
-/// The percentage cutoff is later applied inclusively so that every exact boundary tie survives.
-double selection_boundary(const property_summary& property, const alignment_projection& projection, bool use_median,
-                          const std::optional<double>& threshold, const std::optional<double>& fraction,
-                          bool select_highest)
+/// One lightweight letter reference used only while sorting a percentage selection.
+struct scored_character
+{
+    std::size_t alignment_column;
+    const projected_character* character;
+    double score;
+};
+
+/// Select one representative per column using a direct threshold scan or a sorted percentage prefix.
+/// Stable sorting makes the first projected letter a pragmatic equal-score choice without another policy.
+std::vector<const projected_character*> select_representatives(
+    const property_summary& property, const alignment_projection& projection, bool use_median,
+    const std::optional<double>& threshold, const std::optional<double>& fraction, bool select_highest)
 {
     if (threshold.has_value() == fraction.has_value())
         throw myexception()<<"A letter selection must specify exactly one threshold or percentage.";
 
-    if (threshold)
+    std::vector<const projected_character*> representatives(projection.size(), nullptr);
+    if (fraction)
     {
-        if (not std::isfinite(*threshold))
-            throw myexception()<<"Character-property selection value must be finite.";
-        return *threshold;
+        if (not std::isfinite(*fraction) or *fraction <= 0 or *fraction > 1)
+            throw myexception()<<"Character-property selection percentage must be greater than 0% and at most 100%.";
+
+        std::vector<scored_character> candidates;
+        for (const auto& column: projection)
+            for (const auto& character: column.characters)
+                candidates.push_back({column.alignment_column, &character,
+                                      score_letter(property, character, use_median)});
+        if (candidates.empty())
+            throw myexception()<<"Cannot select a percentage from an alignment with no non-gap letters.";
+        std::stable_sort(candidates.begin(), candidates.end(), [select_highest](const auto& first, const auto& second) {
+            return select_highest ? first.score > second.score : first.score < second.score;
+        });
+
+        auto requested = std::max<std::size_t>(
+            1, static_cast<std::size_t>(std::floor(static_cast<double>(candidates.size()) * *fraction)));
+        for (std::size_t index = 0; index < requested; index++)
+        {
+            const auto& candidate = candidates[index];
+            auto& representative = representatives[candidate.alignment_column];
+            if (not representative)
+                representative = candidate.character;
+        }
+        return representatives;
     }
 
-    if (not std::isfinite(*fraction) or *fraction <= 0 or *fraction > 1)
-        throw myexception()<<"Character-property selection percentage must be greater than 0% and at most 100%.";
-
-    std::vector<double> scores;
+    if (not std::isfinite(*threshold))
+        throw myexception()<<"Character-property selection value must be finite.";
     for (const auto& column: projection)
+    {
+        const projected_character* representative = nullptr;
+        double representative_score = 0;
         for (const auto& character: column.characters)
-            scores.push_back(score_letter(property, character, use_median));
-    if (scores.empty())
-        throw myexception()<<"Cannot select a percentage from an alignment with no non-gap letters.";
-    std::ranges::sort(scores);
-
-    // floor(Np) is the requested tail size, except that a nonzero percentage must retain one
-    // letter. Comparing with the boundary retains every exact tie at that requested tail.
-    auto requested = std::max<std::size_t>(
-        1, static_cast<std::size_t>(std::floor(static_cast<double>(scores.size()) * *fraction)));
-    return select_highest ? scores[scores.size() - requested] : scores[requested - 1];
-}
-
-/// Apply strict threshold selection or tie-inclusive percentage selection.
-/// Including the percentage boundary retains every letter tied at the requested tail cutoff.
-bool score_is_selected(double score, double boundary, bool percentage, bool select_highest)
-{
-    return percentage ? (select_highest ? score >= boundary : score <= boundary)
-                      : (select_highest ? score > boundary : score < boundary);
-}
-
-/// Break equal property values by choosing the earliest displayed sequence letter.
-/// Sequence order is compared first, followed by the letter's ungapped sequence coordinate.
-bool character_is_earlier(const projected_character& candidate, const projected_character& current)
-{
-    if (candidate.sequence_index != current.sequence_index)
-        return candidate.sequence_index < current.sequence_index;
-    return candidate.character_index < current.character_index;
+        {
+            auto score = score_letter(property, character, use_median);
+            bool selected = select_highest ? score > *threshold : score < *threshold;
+            bool better = not representative or (select_highest ? score > representative_score
+                                                                : score < representative_score);
+            if (selected and better)
+            {
+                representative = &character;
+                representative_score = score;
+            }
+        }
+        representatives[column.alignment_column] = representative;
+    }
+    return representatives;
 }
 
 /// Summarize a selected letter as the public representative of its alignment column.
@@ -159,42 +175,26 @@ std::vector<column_property_summary> summarize_property_columns(
 }
 
 /// Select ordinary-property letters globally and retain one extreme representative per resulting column.
-/// After finding the global cutoff, process columns independently and summarize only their winners.
-/// Equal representative scores are resolved by displayed sequence and ungapped character coordinates.
+/// Percentage selection sorts globally; threshold selection scans columns and summarizes only their winners.
+/// Equal scores retain the first projected letter rather than invoking a secondary comparison policy.
 std::vector<selected_column> select_property_columns(
     const property_summary& property, const alignment_projection& projection, bool use_median,
     const std::optional<double>& threshold, const std::optional<double>& fraction, bool select_highest)
 {
-    auto boundary = selection_boundary(property, projection, use_median, threshold, fraction, select_highest);
+    auto representatives = select_representatives(
+        property, projection, use_median, threshold, fraction, select_highest);
     std::vector<selected_column> result;
-    for (const auto& column: projection)
+    for (std::size_t column = 0; column < representatives.size(); column++)
     {
-        const projected_character* representative = nullptr;
-        double representative_score = 0;
-        for (const auto& character: column.characters)
-        {
-            auto score = score_letter(property, character, use_median);
-            if (not score_is_selected(score, boundary, fraction.has_value(), select_highest))
-                continue;
-
-            bool better = not representative or (select_highest ? score > representative_score
-                                                                : score < representative_score);
-            if (representative and score == representative_score)
-                better = character_is_earlier(character, *representative);
-            if (better)
-            {
-                representative = &character;
-                representative_score = score;
-            }
-        }
+        const auto* representative = representatives[column];
         if (representative)
-            result.push_back(make_selected_column(column.alignment_column, *representative, property));
+            result.push_back(make_selected_column(column, *representative, property));
     }
     return result;
 }
 
-/// Select positive-selection letters globally and use dN/dS to break equal-probability ties.
-/// Selection precedes column grouping; sequence coordinates resolve ties that dN/dS does not.
+/// Select positive-selection letters globally and retain one probability representative per column.
+/// Equal probabilities retain the first projected letter rather than invoking a secondary comparison policy.
 /// Complete probability and companion summaries are loaded only for the retained representatives.
 std::vector<selected_column> select_positive_selection_columns(
     const std::string& property_name, const property_summary& property, const alignment_projection& projection,
@@ -206,12 +206,7 @@ std::vector<selected_column> select_positive_selection_columns(
     if (threshold and (*threshold < 0 or *threshold > 1))
         throw myexception()<<"Positive-selection probability thresholds must be between 0 and 1.";
 
-    auto boundary = selection_boundary(property, projection, false, threshold, fraction, true);
-    std::vector<selected_column> result;
     for (const auto& projected_column: projection)
-    {
-        const projected_character* representative = nullptr;
-        double representative_probability = 0;
         for (const auto& character: projected_column.characters)
         {
             auto probability = score_letter(property, character, false);
@@ -219,32 +214,16 @@ std::vector<selected_column> select_positive_selection_columns(
                 throw myexception()<<"Property '"<<property_name<<"' has probability "<<probability
                                    <<" outside [0,1] at sequence '"<<character.sequence_name
                                    <<"', character "<<character.character_index<<".";
-            if (not score_is_selected(probability, boundary, fraction.has_value(), true))
-                continue;
-
-            // Probability is the scientific selection criterion. Only an exact probability tie reaches
-            // dN/dS, and coordinate order makes the remaining tie deterministic without changing the score.
-            bool better = not representative or probability > representative_probability;
-            if (representative and probability == representative_probability and companion)
-            {
-                auto candidate_dnds = score_letter(*companion, character, false);
-                auto representative_dnds = score_letter(*companion, *representative, false);
-                better = candidate_dnds > representative_dnds;
-                if (candidate_dnds == representative_dnds)
-                    better = character_is_earlier(character, *representative);
-            }
-            else if (representative and probability == representative_probability)
-                better = character_is_earlier(character, *representative);
-            if (better)
-            {
-                representative = &character;
-                representative_probability = probability;
-            }
         }
 
+    auto representatives = select_representatives(property, projection, false, threshold, fraction, true);
+    std::vector<selected_column> result;
+    for (std::size_t column_index = 0; column_index < representatives.size(); column_index++)
+    {
+        const auto* representative = representatives[column_index];
         if (representative)
         {
-            auto column = make_selected_column(projected_column.alignment_column, *representative, property);
+            auto column = make_selected_column(column_index, *representative, property);
             if (companion)
             {
                 column.companion_property = companion_name;

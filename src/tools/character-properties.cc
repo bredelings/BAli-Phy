@@ -291,40 +291,36 @@ static void write_text_header(const report_arguments& arguments, std::uint64_t r
 }
 
 /// Order ordinary all-column summaries by their requested middle value.
-/// Column order is retained on request and otherwise supplies deterministic tie-breaking.
+/// Column order is retained on request; equal values have no secondary ordering.
 static void order_columns(std::vector<character_properties::column_property_summary>& rows,
                           const report_arguments& arguments)
 {
     if (arguments.order == "column")
         return;
     // Compare the requested across-letter middle rather than either range endpoint.
-    // The displayed alignment column is the stable tie-breaker in both directions.
+    // Equal values do not need a secondary ordering policy.
     std::ranges::sort(rows, [&arguments](const auto& first, const auto& second) {
         double first_score = arguments.statistic == "mean" ? first.mean_middle : first.median_middle;
         double second_score = arguments.statistic == "mean" ? second.mean_middle : second.median_middle;
-        if (first_score != second_score)
-            return arguments.order == "increasing" ? first_score < second_score : first_score > second_score;
-        return first.alignment_column < second.alignment_column;
+        return arguments.order == "increasing" ? first_score < second_score : first_score > second_score;
     });
 }
 
 /// Order selected column representatives without changing which letter represents each column.
-/// Sorting uses the requested posterior statistic and the displayed column as a stable tie-breaker.
+/// Sorting uses the requested posterior statistic and leaves equal values unordered.
 static void order_selected_columns(std::vector<character_properties::selected_column>& rows,
                                    const report_arguments& arguments)
 {
     if (arguments.order == "column")
         return;
     // Compare the representative letter score without revisiting selection or grouping.
-    // Equal scores remain deterministic through their displayed alignment columns.
+    // Equal values do not need a secondary ordering policy.
     std::ranges::sort(rows, [&arguments](const auto& first, const auto& second) {
         double first_score = arguments.statistic == "mean" ? first.property_summary.mean
                                                             : first.property_summary.median;
         double second_score = arguments.statistic == "mean" ? second.property_summary.mean
                                                              : second.property_summary.median;
-        if (first_score != second_score)
-            return arguments.order == "increasing" ? first_score < second_score : first_score > second_score;
-        return first.alignment_column < second.alignment_column;
+        return arguments.order == "increasing" ? first_score < second_score : first_score > second_score;
     });
 }
 

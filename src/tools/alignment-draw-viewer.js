@@ -533,7 +533,7 @@ class AlignmentPropertyViewer {
     }
 
     // Sorts table rows by their raw values and updates direction indicators.
-    // Equal or non-numeric comparisons fall back to the displayed alignment column.
+    // Equal values retain the browser's stable input order without another comparison.
     sortReportRows()
     {
         const buttons = Array.from(this.reportHead.querySelectorAll('button[data-sort-column]'));
@@ -543,14 +543,14 @@ class AlignmentPropertyViewer {
         const type = active.dataset.sortType;
         const rows = Array.from(this.reportBody.querySelectorAll('tr[data-report-row]'));
         // Compare unformatted values so display rounding cannot change their ordering.
-        // Alignment columns break equal or non-numeric comparisons deterministically.
+        // Treat unavailable numeric values as equal instead of inventing a secondary key.
         rows.sort((first, second) => {
             const firstValue = first.cells[this.reportSort.column].dataset.sortValue;
             const secondValue = second.cells[this.reportSort.column].dataset.sortValue;
             let difference = type === 'number' ? Number(firstValue) - Number(secondValue) :
                 firstValue.localeCompare(secondValue);
-            if (!Number.isFinite(difference) || difference === 0)
-                difference = Number(first.cells[0].dataset.sortValue) - Number(second.cells[0].dataset.sortValue);
+            if (!Number.isFinite(difference))
+                difference = 0;
             return this.reportSort.direction * difference;
         });
         this.reportBody.append(...rows);

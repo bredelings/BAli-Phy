@@ -57,13 +57,13 @@ std::vector<column_property_summary> summarize_property_columns(
 
 /// Select ordinary-property letters globally and retain one extreme representative per resulting column.
 /// Apply the cutoff to letters first, then summarize only the winning letter in each selected column.
-/// Percentage selection includes all letters tied at its cutoff before representatives are chosen.
+/// Percentage selection sorts letters and takes exactly the requested number before grouping them.
 std::vector<selected_column> select_property_columns(
     const property_summary& property, const alignment_projection& projection, bool use_median,
     const std::optional<double>& threshold, const std::optional<double>& fraction, bool select_highest);
 
-/// Select positive-selection letters globally and use dN/dS to break equal-probability ties.
-/// Probability controls selection; displayed sequence coordinates settle any remaining tie.
+/// Select positive-selection letters globally and retain one probability representative per column.
+/// Probability alone controls selection; dN/dS describes the same representative after it is chosen.
 /// Complete posterior summaries are returned only for the retained representative letters.
 std::vector<selected_column> select_positive_selection_columns(
     const std::string& property_name, const property_summary& property, const alignment_projection& projection,
