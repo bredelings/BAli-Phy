@@ -837,6 +837,7 @@ string serialize_json_for_html(const json::value& document)
 }
 
 /// Encode ordinary column summaries once in the table shape consumed by the viewer.
+/// Column metadata gives the generic renderer labels, value types, and natural sort directions.
 json::value make_column_property_table(const std::vector<character_properties::column_property_summary>& summaries)
 {
     json::array columns;
@@ -868,6 +869,7 @@ json::value make_column_property_table(const std::vector<character_properties::c
 }
 
 /// Encode selected positive-selection columns once in the table shape consumed by the viewer.
+/// Translation and companion columns are included only when the selected rows contain those values.
 json::value make_positive_selection_table(const std::vector<character_properties::selected_column>& selected)
 {
     json::array columns;

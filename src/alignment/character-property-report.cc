@@ -26,6 +26,7 @@ namespace
  */
 
 /// Return all posterior summaries for one property of one projected letter.
+/// The sequence name and ungapped character index address the three property matrices.
 letter_posterior_summary summarize_letter(const property_summary& property, const projected_character& character)
 {
     return {
@@ -36,6 +37,7 @@ letter_posterior_summary summarize_letter(const property_summary& property, cons
 }
 
 /// Return the mean or median by which one projected letter is selected.
+/// Reading only that matrix avoids loading unused summaries for candidates that will be discarded.
 double score_letter(const property_summary& property, const projected_character& character, bool use_median)
 {
     const auto& values = use_median ? property.median : property.mean;
@@ -43,6 +45,8 @@ double score_letter(const property_summary& property, const projected_character&
 }
 
 /// Validate the selection and return its threshold or globally calculated percentage cutoff.
+/// Explicit thresholds need no alignment scan; percentages sort one score from every projected letter.
+/// The percentage cutoff is later applied inclusively so that every exact boundary tie survives.
 double selection_boundary(const property_summary& property, const alignment_projection& projection, bool use_median,
                           const std::optional<double>& threshold, const std::optional<double>& fraction,
                           bool select_highest)
@@ -76,6 +80,7 @@ double selection_boundary(const property_summary& property, const alignment_proj
 }
 
 /// Apply strict threshold selection or tie-inclusive percentage selection.
+/// Including the percentage boundary retains every letter tied at the requested tail cutoff.
 bool score_is_selected(double score, double boundary, bool percentage, bool select_highest)
 {
     return percentage ? (select_highest ? score >= boundary : score <= boundary)
@@ -83,6 +88,7 @@ bool score_is_selected(double score, double boundary, bool percentage, bool sele
 }
 
 /// Break equal property values by choosing the earliest displayed sequence letter.
+/// Sequence order is compared first, followed by the letter's ungapped sequence coordinate.
 bool character_is_earlier(const projected_character& candidate, const projected_character& current)
 {
     if (candidate.sequence_index != current.sequence_index)
@@ -91,6 +97,7 @@ bool character_is_earlier(const projected_character& candidate, const projected_
 }
 
 /// Summarize a selected letter as the public representative of its alignment column.
+/// Complete posterior summaries are loaded here only after representative selection has finished.
 selected_column make_selected_column(std::size_t alignment_column, const projected_character& character,
                                      const property_summary& property)
 {
@@ -102,6 +109,7 @@ selected_column make_selected_column(std::size_t alignment_column, const project
 }
 
 /// Return the minimum, lower middle, and maximum observed values.
+/// The lower middle is an observed order statistic, including when the number of letters is even.
 std::array<double, 3> summarize_across_letters(std::vector<double> values)
 {
     assert(not values.empty());
@@ -122,6 +130,7 @@ bool is_positive_selection_property(const std::string& name)
 }
 
 /// Describe each nonempty alignment column without selecting a representative letter.
+/// Mean and median ranges are computed independently across the letters occupying that column.
 std::vector<column_property_summary> summarize_property_columns(
     const property_summary& property, const alignment_projection& projection)
 {
@@ -150,6 +159,8 @@ std::vector<column_property_summary> summarize_property_columns(
 }
 
 /// Select ordinary-property letters globally and retain one extreme representative per resulting column.
+/// After finding the global cutoff, process columns independently and summarize only their winners.
+/// Equal representative scores are resolved by displayed sequence and ungapped character coordinates.
 std::vector<selected_column> select_property_columns(
     const property_summary& property, const alignment_projection& projection, bool use_median,
     const std::optional<double>& threshold, const std::optional<double>& fraction, bool select_highest)
@@ -183,6 +194,8 @@ std::vector<selected_column> select_property_columns(
 }
 
 /// Select positive-selection letters globally and use dN/dS to break equal-probability ties.
+/// Selection precedes column grouping; sequence coordinates resolve ties that dN/dS does not.
+/// Complete probability and companion summaries are loaded only for the retained representatives.
 std::vector<selected_column> select_positive_selection_columns(
     const std::string& property_name, const property_summary& property, const alignment_projection& projection,
     const std::optional<double>& threshold, const std::optional<double>& fraction,

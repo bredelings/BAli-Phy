@@ -532,7 +532,8 @@ class AlignmentPropertyViewer {
         this.legend.hidden = false;
     }
 
-    // Sorts table rows and updates direction indicators.
+    // Sorts table rows by their raw values and updates direction indicators.
+    // Equal or non-numeric comparisons fall back to the displayed alignment column.
     sortReportRows()
     {
         const buttons = Array.from(this.reportHead.querySelectorAll('button[data-sort-column]'));
@@ -541,7 +542,8 @@ class AlignmentPropertyViewer {
             return;
         const type = active.dataset.sortType;
         const rows = Array.from(this.reportBody.querySelectorAll('tr[data-report-row]'));
-        // Compare raw values, using alignment columns to break ties.
+        // Compare unformatted values so display rounding cannot change their ordering.
+        // Alignment columns break equal or non-numeric comparisons deterministically.
         rows.sort((first, second) => {
             const firstValue = first.cells[this.reportSort.column].dataset.sortValue;
             const secondValue = second.cells[this.reportSort.column].dataset.sortValue;
@@ -552,6 +554,8 @@ class AlignmentPropertyViewer {
             return this.reportSort.direction * difference;
         });
         this.reportBody.append(...rows);
+        // Mark only the active header with its direction and restore every button's base label.
+        // Rewriting all headers also clears the indicator left by the previously sorted column.
         buttons.forEach((button, index) => {
             const selected = index === this.reportSort.column;
             button.parentElement.setAttribute('aria-sort', selected ?
@@ -583,6 +587,8 @@ class AlignmentPropertyViewer {
         const columns = report.columns || [];
         const rows = report.rows || [];
         const header = this.document.createElement('tr');
+        // Build each header from its schema entry so every report shape uses the same controls.
+        // Sort metadata remains on the button for the delegated click handler.
         columns.forEach((column, index) => {
             const cell = this.document.createElement('th');
             const button = makeElement(this.document, 'button', 'alignment-viewer-report-sort', column.label);
@@ -600,6 +606,8 @@ class AlignmentPropertyViewer {
         for (const row of rows) {
             const tableRow = this.document.createElement('tr');
             tableRow.dataset.reportRow = 'true';
+            // Interpret compact row cells through the matching schema entry instead of report-specific code.
+            // The first cell remains a coordinate button that can focus its alignment column.
             columns.forEach((column, index) => {
                 const value = row.cells[index];
                 const cell = this.document.createElement('td');
@@ -767,6 +775,7 @@ class AlignmentPropertyViewer {
     }
 
     // Toggles a clicked report header or starts with that column's natural direction.
+    // The existing table rows are reordered without rebuilding report data or alignment cells.
     handleReportSort(event)
     {
         const button = event.target.closest('button[data-sort-column]');
@@ -781,6 +790,7 @@ class AlignmentPropertyViewer {
     }
 
     // Focuses a representative or the first non-gap cell and marks its complete template column.
+    // Generic column summaries omit a representative sequence, so they use the first observed letter.
     selectReportColumn(column, sequenceIndex = null)
     {
         for (const cell of this.cells)

@@ -112,6 +112,7 @@ struct report_arguments
 };
 
 /// Parse a required percent sign and return the fraction represented by the argument.
+/// Reject non-finite percentages and values outside the command's (0%, 100%] domain.
 static double parse_percentage(const std::string& text, const std::string& option)
 {
     if (not text.ends_with('%'))
@@ -260,6 +261,7 @@ static report_arguments parse_report_options(int argc, char* argv[], bool positi
 }
 
 /// Use enough significant digits for report values to round-trip through a double.
+/// The general to_chars representation supplies the shortest such decimal without locale dependence.
 static std::string format_number(double value)
 {
     std::array<char, 64> buffer;
@@ -269,6 +271,7 @@ static std::string format_number(double value)
 }
 
 /// Write the human-readable report metadata shared by the two concrete table shapes.
+/// TSV output omits this prose so that every emitted line remains a tabular record.
 static void write_text_header(const report_arguments& arguments, std::uint64_t retained_samples,
                               std::uint64_t total_retained_samples)
 {
@@ -288,12 +291,14 @@ static void write_text_header(const report_arguments& arguments, std::uint64_t r
 }
 
 /// Order ordinary all-column summaries by their requested middle value.
+/// Column order is retained on request and otherwise supplies deterministic tie-breaking.
 static void order_columns(std::vector<character_properties::column_property_summary>& rows,
                           const report_arguments& arguments)
 {
     if (arguments.order == "column")
         return;
-    // Compare the requested across-letter middle, using the displayed column as the stable tie-breaker.
+    // Compare the requested across-letter middle rather than either range endpoint.
+    // The displayed alignment column is the stable tie-breaker in both directions.
     std::ranges::sort(rows, [&arguments](const auto& first, const auto& second) {
         double first_score = arguments.statistic == "mean" ? first.mean_middle : first.median_middle;
         double second_score = arguments.statistic == "mean" ? second.mean_middle : second.median_middle;
@@ -304,12 +309,14 @@ static void order_columns(std::vector<character_properties::column_property_summ
 }
 
 /// Order selected column representatives without changing which letter represents each column.
+/// Sorting uses the requested posterior statistic and the displayed column as a stable tie-breaker.
 static void order_selected_columns(std::vector<character_properties::selected_column>& rows,
                                    const report_arguments& arguments)
 {
     if (arguments.order == "column")
         return;
     // Compare the representative letter score without revisiting selection or grouping.
+    // Equal scores remain deterministic through their displayed alignment columns.
     std::ranges::sort(rows, [&arguments](const auto& first, const auto& second) {
         double first_score = arguments.statistic == "mean" ? first.property_summary.mean
                                                             : first.property_summary.median;
@@ -322,6 +329,7 @@ static void order_selected_columns(std::vector<character_properties::selected_co
 }
 
 /// Write an ordinary all-column report in the requested public format.
+/// Text includes report metadata, while TSV emits the same column statistics without prose.
 static void write_column_report(const report_arguments& arguments, std::uint64_t retained_samples,
                                 std::uint64_t total_retained_samples,
                                 const std::vector<character_properties::column_property_summary>& rows)
@@ -344,6 +352,7 @@ static void write_column_report(const report_arguments& arguments, std::uint64_t
 }
 
 /// Write a selected-letter or positive-selection report in the requested public format.
+/// Both formats include companion-property fields when the selected representatives provide them.
 static void write_selected_report(const report_arguments& arguments, std::uint64_t retained_samples,
                                   std::uint64_t total_retained_samples,
                                   const std::vector<character_properties::selected_column>& rows)
