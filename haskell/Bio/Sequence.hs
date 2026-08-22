@@ -2,19 +2,19 @@ module Bio.Sequence where
 
 import Data.Map as Map hiding (map)
 import Bio.Alphabet
+import Compiler.FFI.Import (CInput)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.BitVector
 import Data.Maybe (isJust)
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (intVectorNativeView)
-import Foreign.NativeVector (NativeVector)
 
--- Dummy type that stands for the c++ `sequence` type
--- Can we eliminate this?
-data ESequence = ESequence
-foreign import bpcall "Alignment:sequence_name" builtin_sequence_name :: ESequence -> CPPString
-foreign import bpcall "Alignment:" sequenceDataRaw :: ESequence -> CPPString
+-- Opaque handle to the C++ `sequence` used while loading sequence files.
+data ESequence
+instance CInput ESequence
+
+foreign import trcall "Alignment:sequence_name" sequenceName :: ESequence -> Text
+foreign import trcall "Alignment:" sequenceDataRaw :: ESequence -> Text
 
 type Sequence = (Text,Text)
 
@@ -22,35 +22,29 @@ type Sequence = (Text,Text)
 type Sequences = [Sequence]
 
 mkSequence :: ESequence -> Sequence
-mkSequence s = (T.fromCppString $ builtin_sequence_name s, T.fromCppString $ sequenceDataRaw s)
+mkSequence s = (sequenceName s, sequenceDataRaw s)
 
 -- FIXME: make these operate on just the text, not the pair?
 -- FIXME: remove sequence_to_indices in favor of stripGaps . sequenceToAlignedIndices?
 foreign import bpcall "Alignment:sequence_to_indices" builtin_sequence_to_indices :: Alphabet -> CPPString -> EVector Int
-foreign import bpcall "Alignment:sequenceToAlignedIndices" builtin_sequenceToAlignedIndices :: Alphabet -> CPPString -> EVector Int
+foreign import trcall "Alignment:sequenceToAlignedIndices" sequenceToAlignedIndices :: Alphabet -> Text -> EVector Int
 sequence_to_indices a (_, s) = builtin_sequence_to_indices a (T.toCppString s)
-sequenceToAlignedIndices a (_, s) = builtin_sequenceToAlignedIndices a (T.toCppString s)
 
 -- sequence_to_indices :: Sequence -> [Int]
 -- maybe add this later
 
-foreign import bpcall "Alignment:statesToLetters" statesToLettersRaw :: EVector Int -> Int -> Int -> NativeVector Int -> EVector Int
+foreign import trcall "Alignment:statesToLetters" statesToLetters :: EVector Int -> U.Vector Int -> EVector Int
 
--- Translate an unboxed state view without first copying it into an EVector.
-statesToLetters :: EVector Int -> U.Vector Int -> EVector Int
-statesToLetters smap states = statesToLettersRaw smap offset count native
-    where (offset, count, native) = intVectorNativeView states
-
-foreign import bpcall "Alignment:loadSequences" builtin_loadSequences :: CPPString -> IO (EVector ESequence)
+foreign import trcall "Alignment:loadSequences" loadSequencesRaw :: String -> IO (EVector ESequence)
 loadSequences :: String -> IO [Sequence]
-loadSequences filename = fmap (fmap mkSequence . vectorToList) $ builtin_loadSequences (list_to_string filename)
+loadSequences filename = fmap (fmap mkSequence . vectorToList) $ loadSequencesRaw filename
 
-foreign import bpcall "Alignment:getRange" builtin_getRange :: CPPString -> Int -> EVector Int
-foreign import bpcall "Alignment:" selectRangeRaw :: EVector Int -> CPPString -> CPPString
+foreign import trcall "Alignment:getRange" getRange :: String -> Int -> EVector Int
+foreign import trcall "Alignment:" selectRangeRaw :: EVector Int -> Text -> Text
 selectRange :: String -> [Sequence] -> [Sequence]
 selectRange range sequences = let maxLength = maximum [ T.length $ snd s | s <- sequences ]
-                                  range' = builtin_getRange (list_to_string range) maxLength
-                                  select (name, chars) = (name, (T.fromCppString $ selectRangeRaw range' (T.toCppString chars)))
+                                  range' = getRange range maxLength
+                                  select (name, chars) = (name, selectRangeRaw range' chars)
                                in fmap select sequences
 
 reorderSequences names sequences | length names /= length sequences  = error "Sequences.reorderSequences: different number of names and sequences!"
@@ -59,9 +53,9 @@ reorderSequences names sequences | length names /= length sequences  = error "Se
 
 getSequenceLengths sequenceData = Map.fromList [ (label, vector_size isequence) | (label, isequence) <- getSequences $ sequenceData]
 
-foreign import bpcall "Likelihood:" bitmaskFromSequence :: EVector Int -> CBitVector
-foreign import bpcall "Likelihood:" stripGaps :: EVector Int -> EVector Int
-foreign import bpcall "Likelihood:" maskSequenceRaw :: CBitVector -> EVector Int -> EVector Int
+foreign import trcall "Likelihood:" bitmaskFromSequence :: EVector Int -> CBitVector
+foreign import trcall "Likelihood:" stripGaps :: EVector Int -> EVector Int
+foreign import trcall "Likelihood:" maskSequenceRaw :: CBitVector -> EVector Int -> EVector Int
 
 bitmaskFromSequence' s = BitVector $ bitmaskFromSequence s
 maskSequence (BitVector bv) sequence = maskSequenceRaw bv sequence
@@ -121,7 +115,7 @@ getTaxa d = map fst $ getSequences d
 
 mkCharacterData :: Alphabet -> Sequences -> CharacterData
 mkCharacterData alphabet sequences = CharacterData alphabet [(label, go sequence) | (label, sequence) <- sequences]
-    where go s = builtin_sequenceToAlignedIndices alphabet (T.toCppString s)
+    where go = sequenceToAlignedIndices alphabet
 
 mkUnalignedCharacterData alphabet sequences = Unaligned (CharacterData alphabet indices')
     where CharacterData _ indices = mkCharacterData alphabet sequences

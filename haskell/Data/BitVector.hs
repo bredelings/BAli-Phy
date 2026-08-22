@@ -1,11 +1,14 @@
 module Data.BitVector where
 
+import Compiler.FFI.Import (CInput, COutput)
 import Compiler.FFI.Runtime (RuntimeValue)
 
 data CBitVector = CBitVector
 newtype BitVector = BitVector CBitVector
 
 instance RuntimeValue CBitVector
+instance CInput CBitVector
+instance COutput CBitVector
 
 foreign import bpcall "Bits:empty_bitvector" builtin_zeros :: Int -> CBitVector
 foreign import bpcall "Bits:complement" builtin_complement :: CBitVector -> CBitVector
