@@ -3,7 +3,6 @@ module SModel.Likelihood.VariableA  where
 import Tree
 import Bio.Alphabet
 import Bio.Alignment
-import Data.BitVector
 import Data.Foldable
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data

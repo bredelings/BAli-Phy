@@ -6,7 +6,7 @@ import Bio.Alphabet
 import Bio.Alignment
 import Compiler.FFI.Import (COutput)
 import Compiler.FFI.Runtime (RuntimeValue)
-import Data.BitVector
+import Data.Bit.Internal (CBitVector, bitVectorNativeOwner)
 import Data.Foldable
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data (NativeMatrix, matrixFromNative)
@@ -92,12 +92,12 @@ foreign import trcall "Parsimony:mutsRootFixedA" mutsRootFixedARaw :: EVector (E
 peelMutsFixedA sequences alphabet partials costs =
     peelMutsFixedARaw (toVector $ map legacyPair sequences) alphabet partials costs
   where
-    legacyPair (sequence, mask) = c_pair (toLegacySequenceVector sequence) mask
+    legacyPair (sequence, mask) = c_pair (toLegacySequenceVector sequence) (bitVectorNativeOwner mask)
 
 mutsRootFixedA sequences alphabet partials costs counts =
     mutsRootFixedARaw (toVector $ map legacyPair sequences) alphabet partials costs counts
   where
-    legacyPair (sequence, mask) = c_pair (toLegacySequenceVector sequence) mask
+    legacyPair (sequence, mask) = c_pair (toLegacySequenceVector sequence) (bitVectorNativeOwner mask)
 
 cached_conditional_muts_fixed_A t seqs alpha cost =
     let pc    = IntMap.fromSet pcf $ getEdgesSet t

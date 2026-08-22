@@ -3,7 +3,8 @@ module SModel.Likelihood.FixedA  where
 import Tree
 import Bio.Alphabet
 import Bio.Alignment
-import Data.BitVector
+import Data.Bit (Bit)
+import Data.Bit.Internal (CBitVector, bitVectorNativeOwner)
 import Data.Foldable
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
@@ -40,10 +41,10 @@ foreign import trcall "LikelihoodSEV:simpleSequenceLikelihoods" simpleSequenceLi
 
 simpleSequenceLikelihoods alpha smap nModels (sequence, mask) =
     simpleSequenceLikelihoodsRaw alpha smap nModels
-        (c_pair' (toLegacySequenceVector sequence, mask))
+        (c_pair' (toLegacySequenceVector sequence, bitVectorNativeOwner mask))
 
 -- Could we move the conversion from sequence-with-gaps to (sequence,bitvector) into here?
-simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (U.Vector Int, CBitVector)) -> IntMap (Maybe CondLikes)
+simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (U.Vector Int, U.Vector Bit)) -> IntMap (Maybe CondLikes)
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
     where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels
 
