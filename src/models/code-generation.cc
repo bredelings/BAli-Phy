@@ -227,10 +227,10 @@ bool CodeGenState::is_random(const CM::TypedExpr& model) const
                 if (is_random(element)) return true;
             return false;
         },
-        // A dictionary is random when at least one key/value entry is random.
-        [&](const CM::Dictionary<CM::Ann>& dictionary)
+        // A map is random when at least one key/value entry is random.
+        [&](const CM::Map<CM::Ann>& map_expr)
         {
-            for(auto& element: dictionary.elements)
+            for(auto& element: map_expr.elements)
                 if (is_random(element)) return true;
             return false;
         },
@@ -298,10 +298,10 @@ bool CodeGenState::is_unlogged_random(const CM::TypedExpr& model) const
                 if (is_unlogged_random(element)) return true;
             return false;
         },
-        // Propagate unlogged randomness through dictionary entries.
-        [&](const CM::Dictionary<CM::Ann>& dictionary)
+        // Propagate unlogged randomness through map entries.
+        [&](const CM::Map<CM::Ann>& map_expr)
         {
-            for(auto& element: dictionary.elements)
+            for(auto& element: map_expr.elements)
                 if (is_unlogged_random(element)) return true;
             return false;
         },
@@ -788,12 +788,12 @@ Hs::Exp make_rule_template_expr(const CM::UntypedExpr& expr, const map<string,Hs
                 elements.push_back(make_rule_template_expr(element, simple_args));
             return HsG::Apply(Hs::Var("Set.fromList"), {HsG::List(elements)});
         },
-        // Compile binding-template dictionaries through the same Map
-        // representation used for command-line dictionary syntax.
-        [&](const CM::Dictionary<CM::NoAnn>& dictionary) -> Hs::Exp
+        // Compile binding-template maps through the same Map representation
+        // used for command-line map syntax.
+        [&](const CM::Map<CM::NoAnn>& map_expr) -> Hs::Exp
         {
             vector<Hs::Exp> entries;
-            for(auto& element: dictionary.elements)
+            for(auto& element: map_expr.elements)
                 entries.push_back(make_rule_template_expr(element, simple_args));
             return HsG::Apply(Hs::Var("Map.fromList"), {HsG::List(entries)});
         },
@@ -1003,9 +1003,9 @@ translation_result_t CodeGenState::get_typed_model_list(const CM::List<CM::Ann>&
 
 // Reuse list entry sequencing and logging, then construct the runtime Map from
 // the resulting key/value pairs.
-translation_result_t CodeGenState::get_typed_model_dictionary(const CM::Dictionary<CM::Ann>& dictionary) const
+translation_result_t CodeGenState::get_typed_model_map(const CM::Map<CM::Ann>& map_expr) const
 {
-    auto result = get_typed_model_list(CM::List<CM::Ann>{dictionary.elements});
+    auto result = get_typed_model_list(CM::List<CM::Ann>{map_expr.elements});
     result.code.E = HsG::Apply(Hs::Var("Map.fromList"), {result.code.E});
     return result;
 }
@@ -1456,7 +1456,7 @@ translation_result_t CodeGenState::get_model_as(const CM::TypedExpr& model_rep) 
         [&](const CM::Call<CM::Ann>& call) { return get_typed_model_call(call); },
         [&](const CM::List<CM::Ann>& list) { return get_typed_model_list(list); },
         [&](const CM::Set<CM::Ann>& set) { return get_typed_model_set(set); },
-        [&](const CM::Dictionary<CM::Ann>& dictionary) { return get_typed_model_dictionary(dictionary); },
+        [&](const CM::Map<CM::Ann>& map_expr) { return get_typed_model_map(map_expr); },
         [&](const CM::Tuple<CM::Ann>& tuple) { return get_typed_model_tuple(tuple); },
         [&](const CM::Let<CM::Ann>& let) { return get_typed_model_let(let); },
         [&](const CM::Lambda<CM::Ann>& lambda) { return get_typed_model_lambda(lambda); },

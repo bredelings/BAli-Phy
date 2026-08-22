@@ -43,7 +43,7 @@ template<class A>
 struct Set;
 
 template<class A>
-struct Dictionary;
+struct Map;
 
 template<class A>
 struct Tuple;
@@ -187,7 +187,7 @@ template<class A>
 struct is_boxed_expr_node<Set<A>>: std::true_type {};
 
 template<class A>
-struct is_boxed_expr_node<Dictionary<A>>: std::true_type {};
+struct is_boxed_expr_node<Map<A>>: std::true_type {};
 
 template<class A>
 struct is_boxed_expr_node<Tuple<A>>: std::true_type {};
@@ -233,7 +233,7 @@ struct Expr
         Box<Call<A>>,
         Box<List<A>>,
         Box<Set<A>>,
-        Box<Dictionary<A>>,
+        Box<Map<A>>,
         Box<Tuple<A>>,
         Box<Let<A>>,
         Box<Lambda<A>>,
@@ -318,10 +318,10 @@ struct Set
     std::vector<Expr<A>> elements;
 };
 
-// Stores dictionary entries as typed pair expressions while retaining the
+// Stores map entries as typed pair expressions while retaining the
 // source-level distinction between an ordered list and a key/value map.
 template<class A>
-struct Dictionary
+struct Map
 {
     std::vector<Expr<A>> elements;
 };
@@ -719,10 +719,10 @@ void for_each_child(Expr<A>& expr, F&& f)
             for(auto& element: set.elements)
                 f(element);
         },
-        // Visits each mutable dictionary entry.
-        [&](Dictionary<A>& dictionary)
+        // Visits each mutable map entry.
+        [&](Map<A>& map_expr)
         {
-            for(auto& element: dictionary.elements)
+            for(auto& element: map_expr.elements)
                 f(element);
         },
         // Visits each mutable tuple element.
@@ -796,10 +796,10 @@ void for_each_child(const Expr<A>& expr, F&& f)
             for(auto& element: set.elements)
                 f(element);
         },
-        // Visits each const dictionary entry.
-        [&](const Dictionary<A>& dictionary)
+        // Visits each const map entry.
+        [&](const Map<A>& map_expr)
         {
-            for(auto& element: dictionary.elements)
+            for(auto& element: map_expr.elements)
                 f(element);
         },
         // Visits each const tuple element.

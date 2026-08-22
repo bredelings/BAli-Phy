@@ -492,8 +492,8 @@ bool annotated_term_is_model(const CM::TypedExpr& term)
         for(auto& element: set->elements)
             if (annotated_term_is_model(element)) return true;
 
-    if (auto dictionary = term.to<CM::Dictionary<CM::Ann>>())
-        for(auto& element: dictionary->elements)
+    if (auto map_expr = term.to<CM::Map<CM::Ann>>())
+        for(auto& element: map_expr->elements)
             if (annotated_term_is_model(element)) return true;
 
     return false;
@@ -528,7 +528,7 @@ string extract_node_name(const CM::TypedExpr& expr)
         [](const CM::Call<CM::Ann>& call) {return call.function;},
         [](const CM::List<CM::Ann>&) {return string("List");},
         [](const CM::Set<CM::Ann>&) {return string("Set");},
-        [](const CM::Dictionary<CM::Ann>&) {return string("Dictionary");},
+        [](const CM::Map<CM::Ann>&) {return string("Map");},
         [](const CM::Tuple<CM::Ann>&) {return string("Tuple");},
         [](const CM::Sample<CM::Ann>&) {return string("sample");},
         [](const auto&) {return string("");}
@@ -577,10 +577,10 @@ bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
                 if (bound(element, binders)) return true;
             return false;
         },
-        // Checks whether any dictionary entry references a protected binder.
-        [&](const CM::Dictionary<CM::Ann>& dictionary)
+        // Checks whether any map entry references a protected binder.
+        [&](const CM::Map<CM::Ann>& map_expr)
         {
-            for(auto& element: dictionary.elements)
+            for(auto& element: map_expr.elements)
                 if (bound(element, binders)) return true;
             return false;
         },
@@ -740,10 +740,10 @@ vector<pair<string, CM::TypedExpr>> extract_terms(CM::TypedExpr& m, const set<st
             }
         }
     }
-    else if (auto dictionary = m.to<CM::Dictionary<CM::Ann>>())
+    else if (auto map_expr = m.to<CM::Map<CM::Ann>>())
     {
         int i = 0;
-        for(auto& element: dictionary->elements)
+        for(auto& element: map_expr->elements)
         {
             auto name = "[" + std::to_string(++i) + "]";
             for(auto& [sub_name, sub_term]: extract_terms(element, binders))

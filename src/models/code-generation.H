@@ -123,7 +123,7 @@ struct CodeGenState
     translation_result_t get_typed_model_state(const CM::GetState& get_state) const;
     translation_result_t get_typed_model_list(const CM::List<CM::Ann>& list) const;
     translation_result_t get_typed_model_set(const CM::Set<CM::Ann>& set) const;
-    translation_result_t get_typed_model_dictionary(const CM::Dictionary<CM::Ann>& dictionary) const;
+    translation_result_t get_typed_model_map(const CM::Map<CM::Ann>& map_expr) const;
     translation_result_t get_typed_model_tuple(const CM::Tuple<CM::Ann>& tuple) const;
     translation_result_t get_typed_model_let(const CM::Let<CM::Ann>& let) const;
     translation_result_t get_typed_model_lambda(const CM::Lambda<CM::Ann>& lambda) const;

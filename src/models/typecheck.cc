@@ -272,10 +272,10 @@ void substitute_annotated(const equations& eqs, CM::TypedExpr& expr)
             for(auto& element: set.elements)
                 substitute_annotated(eqs, element);
         },
-        // Recurse through dictionary entry annotations.
-        [&](CM::Dictionary<CM::Ann>& dictionary)
+        // Recurse through map entry annotations.
+        [&](CM::Map<CM::Ann>& map_expr)
         {
-            for(auto& element: dictionary.elements)
+            for(auto& element: map_expr.elements)
                 substitute_annotated(eqs, element);
         },
         // Recurse through tuple element annotations.
@@ -569,13 +569,13 @@ optional<CM::TypedExpr> typecheck_model_set(const TypecheckingState& TC, const t
     return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_set)};
 }
 
-// Typechecks dictionary entries as uniform key/value pairs and gives braces
+// Typechecks map entries as uniform key/value pairs and gives braces
 // the semantic type Map<key,value> instead of List<(key,value)>.
-optional<CM::TypedExpr> typecheck_model_dictionary(const TypecheckingState& TC, const type_t& required_type,
-                                                   const CM::UntypedExpr& expr)
+optional<CM::TypedExpr> typecheck_model_map(const TypecheckingState& TC, const type_t& required_type,
+                                           const CM::UntypedExpr& expr)
 {
-    auto dictionary = expr.to<CM::Dictionary<CM::NoAnn>>();
-    if (not dictionary)
+    auto map_expr = expr.to<CM::Map<CM::NoAnn>>();
+    if (not map_expr)
         return {};
 
     auto key_type = TC.get_fresh_type_var("k");
@@ -589,18 +589,18 @@ optional<CM::TypedExpr> typecheck_model_dictionary(const TypecheckingState& TC, 
     substitute(TC.eqs, entry_type);
 
     set<string> used_args;
-    CM::Dictionary<CM::Ann> typed_dictionary;
-    for(auto& element: dictionary->elements)
+    CM::Map<CM::Ann> typed_map;
+    for(auto& element: map_expr->elements)
     {
         auto element2 = typecheck_model_expr(TC, entry_type, element);
         add(used_args, element2.ann.used_args);
         if (not TC.eqs)
-            throw myexception()<<"Dictionary entry '"<<unparse_annotated(element2)
+            throw myexception()<<"Map entry '"<<unparse_annotated(element2)
                                <<"' is not of required type "<<unparse_type(entry_type)<<"!";
-        typed_dictionary.elements.push_back(std::move(element2));
+        typed_map.elements.push_back(std::move(element2));
     }
 
-    return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_dictionary)};
+    return CM::TypedExpr{model_ann(required_type, std::move(used_args)), std::move(typed_map)};
 }
 
 // Typechecks tuple elements against fresh slot types and returns a typed tuple
@@ -901,8 +901,8 @@ CM::TypedExpr typecheck_model_expr(const TypecheckingState& TC, const type_t& re
         return *list;
     else if (auto set = typecheck_model_set(TC, required_type, expr))
         return *set;
-    else if (auto dictionary = typecheck_model_dictionary(TC, required_type, expr))
-        return *dictionary;
+    else if (auto map_expr = typecheck_model_map(TC, required_type, expr))
+        return *map_expr;
     else if (auto tuple = typecheck_model_tuple(TC, required_type, expr))
         return *tuple;
     else if (auto get_state = typecheck_model_get_state(TC, required_type, expr))

@@ -272,10 +272,10 @@ void resolve_fixities(UntypedExpr& expr, const Rules& R, const set<string>& boun
             for(auto& element: set.elements)
                 resolve_fixities(element, R, bound_names, messages);
         },
-        // Resolve both sides of every dictionary entry through its tuple expression.
-        [&](Dictionary<NoAnn>& dictionary)
+        // Resolve both sides of every map entry through its tuple expression.
+        [&](Map<NoAnn>& map_expr)
         {
-            for(auto& element: dictionary.elements)
+            for(auto& element: map_expr.elements)
                 resolve_fixities(element, R, bound_names, messages);
         },
         // Resolve declaration values and the body of a let expression.
@@ -637,9 +637,9 @@ string unparse(const UntypedExpr& expr)
                 items.push_back(unparse(item));
             return "{" + join(items, ", ") + "}";
         },
-        // Renders dictionary entries using brace syntax rather than guessing
+        // Renders map entries using brace syntax rather than guessing
         // from the element type of an ordinary list.
-        [](const Dictionary<NoAnn>& x)
+        [](const Map<NoAnn>& x)
         {
             vector<string> items;
             for(auto& item: x.elements)
@@ -840,9 +840,9 @@ string unparse_annotated(const TypedExpr& expr)
                 items.push_back(unparse_annotated(item));
             return "{" + join(items, ", ") + "}";
         },
-        // Renders a typed dictionary with the same source syntax as its
+        // Renders a typed map with the same source syntax as its
         // untyped counterpart.
-        [](const Dictionary<Ann>& x)
+        [](const Map<Ann>& x)
         {
             vector<string> items;
             for(auto& item: x.elements)
