@@ -1,5 +1,9 @@
 # 4.3 (UNRELEASED)
 
+## Breaking changes
+
+- Capitalize models and distributions. (for example, normal -> Normal, gtr -> GTR)
+
 ## Features
 
 - **Display column and character properties like rate, dNdS and positive selection.**
@@ -10,8 +14,6 @@
 - Distributions & Priors
   * Add the Dirichlet-process.
   * Add mixture distributions with point mass components.
-- Rename and capitalize models and distributions (for example, normal -> Normal and gtr -> GTR).
-  Lowercase modifier suffixes remain underscore-separated (for example, gtr_sym -> GTR_sym).
 
 ## MCMC
 
@@ -19,16 +21,18 @@
 
 ## Fixes
 
-- Fix multi-nucleotide mutation model for codons.
-- Require fixed topology for foreground/background branch models.
-- Fix Gibbs-sampling categorical variables when number of dimensions changes.
-- Fix Hastings ratio for one of the SPR moves.
-- Fix likelihood rescaling for fixed alignments.
+- MCMC
+  * Don't crash when proposal create Inf or NaN.
+  * Fix Gibbs-sampling categorical variables when number of dimensions changes.
+  * Fix Hastings ratio for one of the SPR moves.
 - Newick
   * Print helpful error messages when failing to read Newick trees.
   * Don't translate '_' to space in Newick files, to match more programs.
 - Models
-  * FMutSel: prior now consistent with larger fitness differences.
+  * FMutSel: fix prior to allow larger fitness differences.
+  * Fix likelihood rescaling for fixed alignments.
+  * Fix multi-nucleotide mutation model for codons.
+  * Require fixed topology for foreground/background branch models.
 
 ## Runtime/Interpreter
 
