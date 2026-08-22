@@ -247,12 +247,16 @@ void resolve_fixities(UntypedExpr& expr, const Rules& R, const set<string>& boun
     }
 
     expr.visit(overloaded{
-        // Resolve operators in every supplied call argument.
+        // Resolve operators in call values and their optional alphabets.
         [&](Call<NoAnn>& call)
         {
             for(auto& arg: call.args)
+            {
                 if (arg.value)
                     resolve_fixities(*arg.value, R, bound_names, messages);
+                if (arg.alphabet)
+                    resolve_fixities(*arg.alphabet, R, bound_names, messages);
+            }
         },
         // Resolve each element of a list expression.
         [&](List<NoAnn>& list)
@@ -335,12 +339,16 @@ void resolve_model_fixities(UntypedExpr& expr, const Rules& R, const string& sou
 void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>& bound_names)
 {
     expr.visit(overloaded{
-        // Processes ordinary call arguments after first processing their subexpressions.
+        // Processes ordinary call arguments after processing values and alphabets.
         [&](Call<NoAnn>& call)
         {
             for(auto& arg: call.args)
+            {
                 if (arg.value)
                     handle_positional_args(*arg.value, R, bound_names);
+                if (arg.alphabet)
+                    handle_positional_args(*arg.alphabet, R, bound_names);
+            }
 
             if (call.args.empty())
                 return;

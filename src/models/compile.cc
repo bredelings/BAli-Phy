@@ -556,11 +556,14 @@ bool bound(const CM::TypedExpr& annotated_term, const set<string>& binders)
         {
             return binders.count(var.name) != 0;
         },
-        // Checks whether any call argument references a protected binder.
+        // Checks whether any call value or alphabet references a protected binder.
         [&](const CM::Call<CM::Ann>& call)
         {
             for(auto& arg: call.args)
+            {
                 if (arg.value and bound(*arg.value, binders)) return true;
+                if (arg.alphabet and bound(*arg.alphabet, binders)) return true;
+            }
             return false;
         },
         // Checks whether any list element references a protected binder.
