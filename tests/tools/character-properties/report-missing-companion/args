@@ -1,2 +1,2 @@
-positive-selection ../report-summary.json ../report-alignment.fasta background-posSelection
+positive-selection ../report-summary.json ../positive-selection-alignment.fasta background-posSelection
 --unconditional --format tsv

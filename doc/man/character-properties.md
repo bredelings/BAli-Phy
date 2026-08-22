@@ -80,10 +80,11 @@ property is `posSelection`; names ending in `-posSelection` use the correspondin
 
 **--alphabet=ALPHABET**
 : Constrain the alphabet used to interpret logical alignment characters. When
-  omitted, the alphabet is guessed from the alignment. Partial names are
-  completed from the data: for example, **Codons** guesses DNA versus RNA and
-  uses the standard genetic code, while **Codons(,mt-vert)** also guesses DNA
-  versus RNA but preserves the specified genetic code.
+  omitted, **report** guesses the alphabet from the alignment, while
+  **positive-selection** defaults to **Codons**. Partial names are completed
+  from the data: **Codons** guesses DNA versus RNA and uses the standard genetic
+  code, while **Codons(,mt-vert)** also guesses DNA versus RNA but preserves the
+  specified genetic code.
 
 **--format=text|tsv**
 : Output format (default: text). Both formats use one-based coordinates for
@@ -192,9 +193,10 @@ character-properties positive-selection \
   P1.character-properties.json P1.initial.fasta --above=0.95
 ```
 
-Report model-averaged foreground positive selection for an RNA codon alignment:
+Report model-averaged foreground positive selection using the vertebrate
+mitochondrial genetic code:
 
 ```
 character-properties positive-selection summary.json alignment.fasta \
-  foreground-posSelection --unconditional --alphabet=Codons
+  foreground-posSelection --unconditional --alphabet='Codons(,mt-vert)'
 ```

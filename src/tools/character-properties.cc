@@ -144,7 +144,11 @@ static report_arguments parse_report_options(int argc, char* argv[], bool positi
     po::options_description visible("Allowed options");
     visible.add_options()
         ("help,h", "Produce help message.")
-        ("alphabet", po::value<string>(), "Alignment alphabet or partial alphabet constraint.")
+        ("alphabet", po::value<string>(), positive_selection
+                                           ? "Alignment alphabet or partial constraint "
+                                             "(default: Codons; DNA/RNA guessed from alignment)."
+                                           : "Alignment alphabet or partial constraint "
+                                             "(default: guessed from alignment).")
         ("format", po::value<string>()->default_value("text"), "Output format: text or tsv.")
         ("sort", po::value<string>()->default_value("column"), "Row order: column, increasing, or decreasing.")
         ("condition", po::value<string>(), "Use only samples where this Boolean condition is true.")
@@ -208,7 +212,8 @@ static report_arguments parse_report_options(int argc, char* argv[], bool positi
     report_arguments result;
     result.summary_filename = arguments["summary"].as<string>();
     result.alignment_filename = arguments["alignment"].as<string>();
-    result.alphabet_name = arguments.count("alphabet") ? arguments["alphabet"].as<string>() : "";
+    result.alphabet_name = arguments.count("alphabet") ? arguments["alphabet"].as<string>()
+                                                       : (positive_selection ? "Codons" : "");
     result.property = arguments.count("property") ? arguments["property"].as<string>() : "posSelection";
     result.positive_selection = positive_selection;
     result.order = arguments["sort"].as<string>();
