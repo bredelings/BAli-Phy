@@ -13,6 +13,27 @@ using std::vector;
 
 typedef Box<boost::dynamic_bitset<>> bitvector;
 
+namespace
+{
+
+// Resize both operands to their common prefix before applying a packed binary
+// operation, so every public operator has the same upstream truncation rule.
+template <typename Apply>
+closure truncated_bitwise(OperationArgs& Args, Apply apply)
+{
+    auto left_arg = Args.evaluate_slot_to_value(0);
+    auto right_arg = Args.evaluate_slot_to_value(1);
+    auto left = left_arg.as_<bitvector>();
+    auto right = right_arg.as_<bitvector>();
+    auto size = std::min(left.size(), right.size());
+    left.resize(size);
+    right.resize(size);
+    apply(left, right);
+    return left;
+}
+
+}
+
 extern "C" closure builtin_function_empty_bitvector(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value(0).as_int();
@@ -93,45 +114,18 @@ extern "C" closure builtin_function_complement(OperationArgs& Args)
 
 extern "C" closure builtin_function_bitwise_or(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto arg1 = Args.evaluate_slot_to_value(1);
-
-    auto left = arg0.as_<bitvector>();
-    auto right = arg1.as_<bitvector>();
-    auto size = std::min(left.size(), right.size());
-    left.resize(size);
-    right.resize(size);
-    left |= right;
-    return left;
+    return truncated_bitwise(Args, [](auto& left, const auto& right) { left |= right; });
 }
 
 
 extern "C" closure builtin_function_bitwise_and(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto arg1 = Args.evaluate_slot_to_value(1);
-
-    auto left = arg0.as_<bitvector>();
-    auto right = arg1.as_<bitvector>();
-    auto size = std::min(left.size(), right.size());
-    left.resize(size);
-    right.resize(size);
-    left &= right;
-    return left;
+    return truncated_bitwise(Args, [](auto& left, const auto& right) { left &= right; });
 }
 
 extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto arg1 = Args.evaluate_slot_to_value(1);
-
-    auto left = arg0.as_<bitvector>();
-    auto right = arg1.as_<bitvector>();
-    auto size = std::min(left.size(), right.size());
-    left.resize(size);
-    right.resize(size);
-    left ^= right;
-    return left;
+    return truncated_bitwise(Args, [](auto& left, const auto& right) { left ^= right; });
 }
 
 extern "C" R::Exp simple_function_size(vector<R::Exp>& args)
