@@ -305,7 +305,7 @@ function canUseLogScale(propertyName, observations)
         throw new TypeError('Scale values must be an array.');
     const values = observations.filter((value) => Number.isFinite(value));
     // NOTE: Remove this built-in-name policy once property results carry scale metadata.
-    if (propertyName === 'posSelection' || values.length === 0)
+    if (propertyName === 'posSelection' || propertyName.endsWith('-posSelection') || values.length === 0)
         return false;
     return values.some((value) => value > 0) &&
            values.every((value) => value >= 0);

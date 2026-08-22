@@ -23,19 +23,20 @@ bounds. A property initially uses log10 only when it has enough nonnegative,
 distinct observations and logarithmic normalization uses the color range
 materially more evenly; otherwise it uses linear. **posSelection** remains
 linear because it is a probability. Names ending in **-posSelection**, such as
-**foreground-posSelection**, receive the same treatment. Reset restores this
-automatically selected default.
+**foreground-posSelection**, receive the same treatment. Positive-selection
+probabilities initially use the full probability domain from 0 to 1; choosing
+Robust or Custom overrides those bounds. Reset restores the initial defaults.
 
 Zero is valid on a log10 property scale. It is clipped to the positive lower
 bound, while its tooltip continues to report zero and the legend identifies
 that the lower color includes zero. Negative values cannot use log10.
 
-Viridis is the default palette. The palette selector also provides a
-blue-to-red sequential palette and a blue-to-light-gray-to-red diverging
-palette. The diverging palette maps the median to gray and normalizes the lower
-and upper halves independently. Its colors therefore indicate position within
-the displayed distribution, not biological categories or thresholds. Palette
-and scale choices are retained separately for each property.
+The default blue-to-light-gray-to-red diverging palette maps 0 to blue, 0.5 to
+gray, and 1 to red for positive-selection probabilities. For other properties
+it maps the median to gray and normalizes the lower and upper halves
+independently. The palette selector also provides Viridis and a blue-to-red
+sequential palette. Palette and scale choices are retained separately for each
+property.
 
 The legend and cell colors update together. Pointing at or focusing a non-gap
 cell shows its posterior mean, posterior standard deviation, median, scale, and

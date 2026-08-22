@@ -144,6 +144,8 @@ function assertClose(actual, expected, message)
                  'negative properties do not permit logarithmic display');
     assert.equal(canUseLogScale('posSelection', [0.01, 0.5, 0.99]), false,
                  'the built-in probability property remains linear-only');
+    assert.equal(canUseLogScale('foreground-posSelection', [0.01, 0.5, 0.99]), false,
+                 'prefixed positive-selection probabilities remain linear-only');
     assert.equal(preferredTransform('rate', []), 'linear',
                  'properties without finite values retain a usable default state');
 }

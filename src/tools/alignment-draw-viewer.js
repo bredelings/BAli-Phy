@@ -340,10 +340,11 @@ class AlignmentPropertyViewer {
     {
         const key = `${this.activeView.key}:${property.name}`;
         if (!this.displayStates.has(key)) {
+            const positiveSelection = Boolean(this.reports[property.name]?.positive_selection);
             this.displayStates.set(key, {
-                transform: preferredTransform(property.name, property.values),
+                transform: positiveSelection ? 'linear' : preferredTransform(property.name, property.values),
                 palette: 'blue-gray-red',
-                range: 'robust',
+                range: positiveSelection ? 'full' : 'robust',
                 customLower: null,
                 customUpper: null,
                 fadeByAU: false,
@@ -357,6 +358,8 @@ class AlignmentPropertyViewer {
     {
         if (state.transform === 'rank')
             return {};
+        if (state.range === 'full' && this.reports[property.name]?.positive_selection)
+            return {lower: 0, upper: 1};
         if (state.range !== 'custom')
             return automaticScaleBounds(property.values, state.transform, state.range);
         if (!Number.isFinite(state.customLower) || !Number.isFinite(state.customUpper))
@@ -485,7 +488,7 @@ class AlignmentPropertyViewer {
             state.range === 'robust' ? ' · robust 2–98%' :
             state.range === 'full' ? ' · full range' : ' · custom range';
         const palette = propertyPalette(state.palette);
-        const centerLabel = scale.diverging ? ` · median ${formatValue(scale.center)}` : '';
+        const centerLabel = scale.diverging ? ` · center ${formatValue(scale.center)}` : '';
         this.legendCaption.textContent =
             `${property.name} · ${transformLabels[state.transform]}${rangeLabel} · ${palette.label}${centerLabel}`;
         const fadeByAU = state.fadeByAU && Boolean(this.uncertainty);
@@ -495,7 +498,8 @@ class AlignmentPropertyViewer {
             paletteGradient(state.palette);
         this.legendRamp.setAttribute('aria-label', fadeByAU ?
             `${property.name} ${palette.label} color by horizontal position and alignment certainty vertically` :
-            `${property.name} ${palette.label} color scale${scale.diverging ? ' centered on the median' : ''}`);
+            `${property.name} ${palette.label} color scale${scale.diverging ?
+                ` centered at ${formatValue(scale.center)}` : ''}`);
         this.auCertain.hidden = !fadeByAU;
         this.auUncertain.hidden = !fadeByAU;
 
@@ -716,9 +720,10 @@ class AlignmentPropertyViewer {
             const baseScale = createScale(
                 property.values, {transform: state.transform, ...bounds});
             const palette = propertyPalette(state.palette);
-            const sorted = [...property.values].sort((left, right) => left - right);
+            const center = this.reports[property.name]?.positive_selection ? 0.5 :
+                quantile([...property.values].sort((left, right) => left - right), 0.5);
             const scale = palette.kind === 'diverging' ?
-                createDivergingScale(baseScale, quantile(sorted, 0.5)) : baseScale;
+                createDivergingScale(baseScale, center) : baseScale;
             this.updateControls(property, state, bounds);
             this.colorCells(
                 property, scale, state.palette,
