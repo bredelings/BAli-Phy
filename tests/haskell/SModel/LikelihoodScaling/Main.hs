@@ -7,7 +7,6 @@ import Compiler.Num
 import Data.Bool (Bool)
 import Data.Ord
 import qualified Data.Vector.Unboxed as U
-import Foreign.Pair (c_pair)
 import Foreign.Vector (EVector, listToVector)
 import Numeric.LinearAlgebra (Matrix, ident, (><))
 import Numeric.LinearAlgebra.Data (NativeMatrix, nativeMatrix)
@@ -32,10 +31,10 @@ main = do
             :: EVector (NativeMatrix Double)
         identityTransitions = listToVector [nativeMatrix (ident 4)]
             :: EVector (NativeMatrix Double)
-        letters = listToVector [0] :: EVector Int
+        letters = U.fromList [0] :: U.Vector Int
         smap = listToVector [0,1,2,3] :: EVector Int
         leaf = simpleSequenceLikelihoods dna smap 1
-            (c_pair letters (bitmaskFromSequence letters))
+            (letters, bitmaskFromSequence letters)
         emptyLikes = listToVector [] :: EVector CondLikes
         leafLikes = listToVector [leaf] :: EVector CondLikes
         tinyBranch = peelBranchTowardRoot leafLikes emptyLikes tinyTransitions

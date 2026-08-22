@@ -11,10 +11,9 @@ import Data.Functor (fmap)
 import qualified Data.Text as Text
 import Data.Tuple (snd)
 import qualified Data.Vector.Unboxed as U
-import Foreign.Vector (listToVector, vector_size, vectorToList)
 import System.IO (print)
 
-row name values = (Text.pack name, listToVector values)
+row name values = (Text.pack name, U.fromList values)
 
 -- Exercise both compression result layouts and derive zero and nonzero
 -- logical lengths from their complete native Int owners.
@@ -33,11 +32,11 @@ main = do
 
     print (U.toList counts)
     print (U.toList mapping)
-    print (fmap (vector_size . snd) compressed)
+    print (fmap (U.length . snd) compressed)
     print (U.toList varCounts)
-    print (fmap (vector_size . snd) compressedVar)
+    print (fmap (U.length . snd) compressedVar)
     print (U.length emptyCounts, U.length emptyMapping,
            U.length emptyVarCounts)
     print (alignment_length selected,
-           fmap vectorToList (indices_from_alignment selected))
+           fmap U.toList (indices_from_alignment selected))
     print (alignment_length selectedEmpty)

@@ -6,8 +6,8 @@ import Compiler.FFI.Import (CInput)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.BitVector
-import Data.Maybe (isJust)
 import qualified Data.Vector.Unboxed as U
+import Foreign.Vector (EVector, listToVector, vectorToList)
 
 -- Opaque handle to the C++ `sequence` used while loading sequence files.
 data ESequence
@@ -27,20 +27,20 @@ mkSequence s = (sequenceName s, sequenceDataRaw s)
 -- FIXME: make these operate on just the text, not the pair?
 -- FIXME: remove sequence_to_indices in favor of stripGaps . sequenceToAlignedIndices?
 foreign import bpcall "Alignment:sequence_to_indices" builtin_sequence_to_indices :: Alphabet -> CPPString -> EVector Int
-foreign import trcall "Alignment:sequenceToAlignedIndices" sequenceToAlignedIndices :: Alphabet -> Text -> EVector Int
+foreign import trcall "Alignment:sequenceToAlignedIndices" sequenceToAlignedIndices :: Alphabet -> Text -> U.Vector Int
 sequence_to_indices a (_, s) = builtin_sequence_to_indices a (T.toCppString s)
 
 -- sequence_to_indices :: Sequence -> [Int]
 -- maybe add this later
 
-foreign import trcall "Alignment:statesToLetters" statesToLetters :: EVector Int -> U.Vector Int -> EVector Int
+foreign import trcall "Alignment:statesToLetters" statesToLetters :: EVector Int -> U.Vector Int -> U.Vector Int
 
 foreign import trcall "Alignment:loadSequences" loadSequencesRaw :: String -> IO (EVector ESequence)
 loadSequences :: String -> IO [Sequence]
 loadSequences filename = fmap (fmap mkSequence . vectorToList) $ loadSequencesRaw filename
 
-foreign import trcall "Alignment:getRange" getRange :: String -> Int -> EVector Int
-foreign import trcall "Alignment:" selectRangeRaw :: EVector Int -> Text -> Text
+foreign import trcall "Alignment:getRange" getRange :: String -> Int -> U.Vector Int
+foreign import trcall "Alignment:" selectRangeRaw :: U.Vector Int -> Text -> Text
 selectRange :: String -> [Sequence] -> [Sequence]
 selectRange range sequences = let maxLength = maximum [ T.length $ snd s | s <- sequences ]
                                   range' = getRange range maxLength
@@ -51,11 +51,11 @@ reorderSequences names sequences | length names /= length sequences  = error "Se
                                   | otherwise = [ sequences_map Map.! name | name <- names ]
     where sequences_map = Map.fromList [ (fst sequence, sequence) | sequence <- sequences ]
 
-getSequenceLengths sequenceData = Map.fromList [ (label, vector_size isequence) | (label, isequence) <- getSequences $ sequenceData]
+getSequenceLengths sequenceData = Map.fromList [(label, U.length sequence) | (label, sequence) <- getSequences sequenceData]
 
-foreign import trcall "Likelihood:" bitmaskFromSequence :: EVector Int -> CBitVector
-foreign import trcall "Likelihood:" stripGaps :: EVector Int -> EVector Int
-foreign import trcall "Likelihood:" maskSequenceRaw :: CBitVector -> EVector Int -> EVector Int
+foreign import trcall "Likelihood:" bitmaskFromSequence :: U.Vector Int -> CBitVector
+foreign import trcall "Likelihood:" stripGaps :: U.Vector Int -> U.Vector Int
+foreign import trcall "Likelihood:" maskSequenceRaw :: CBitVector -> U.Vector Int -> U.Vector Int
 
 bitmaskFromSequence' s = BitVector $ bitmaskFromSequence s
 maskSequence (BitVector bv) sequence = maskSequenceRaw bv sequence
@@ -84,7 +84,7 @@ class Alphabet and then also a class Nucleotides and a class Triplets.
 
 -}
 
-data CharacterData = CharacterData Alphabet [(Text, EVector Int)]
+data CharacterData = CharacterData Alphabet [(Text, U.Vector Int)]
 newtype AlignedCharacterData = Aligned CharacterData
 newtype UnalignedCharacterData = Unaligned CharacterData
 
@@ -99,7 +99,7 @@ instance HasAlphabet UnalignedCharacterData where
 
 class HasSequences d where
     -- If we change the sequences to observations, then does this generalization still work?
-    getSequences :: d -> [(Text, EVector Int)]
+    getSequences :: d -> [(Text, U.Vector Int)]
 
 instance HasSequences CharacterData where
     getSequences (CharacterData _ d) = d
@@ -121,16 +121,19 @@ mkUnalignedCharacterData alphabet sequences = Unaligned (CharacterData alphabet 
     where CharacterData _ indices = mkCharacterData alphabet sequences
           indices' = map (\(label,is) -> (label, stripGaps is)) indices
 
-allSameAs x xs = and ((x==) <$> xs)
-
-allSame []                       = error "allSame: nothing to compare!"
-allSame (x:xs) | allSameAs x xs  = Just x
-               | otherwise       = Nothing
-
-checkSameLengths d@(CharacterData _ sequences) | isJust $ allSame lengths = d
-                                               | otherwise                = error "Sequences have different lengths!"
-    where lengths = [vector_size x | (_,x) <- sequences]
+checkSameLengths (CharacterData _ []) = error "Cannot align an empty sequence collection!"
+checkSameLengths d@(CharacterData _ ((_, first):rest))
+    | all ((U.length first ==) . U.length . snd) rest = d
+    | otherwise = error "Sequences have different lengths!"
 
 mkAlignedCharacterData alphabet sequences = Aligned $ checkSameLengths $ mkCharacterData alphabet sequences
 
 unalign (Aligned (CharacterData a sequences)) = Unaligned (CharacterData a [(l, stripGaps s) | (l,s) <- sequences])
+
+-- TEMPORARY EVECTOR ADAPTER: nested foreign interfaces still use boxed sequence rows.
+-- Delete these conversions when those raw interfaces accept U.Vector Int.
+toLegacySequenceVector :: U.Vector Int -> EVector Int
+toLegacySequenceVector = listToVector . U.toList
+
+fromLegacySequenceVector :: EVector Int -> U.Vector Int
+fromLegacySequenceVector = U.fromList . vectorToList

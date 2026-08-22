@@ -6,7 +6,7 @@ import Compiler.Num
 import Data.Eq ((==))
 import Data.Function (($))
 import qualified Data.Text as Text
-import Foreign.Vector (listToVector)
+import qualified Data.Vector.Unboxed as U
 import System.IO (print)
 
 -- Select generated codon classes after the ordinary codons, verifying their names before testing
@@ -18,7 +18,7 @@ main = do
         aaa = findLetter codons "AAA"
         aar = firstClass + 1
         aan = firstClass + 10
-        className index = sequenceToText codons (listToVector [index])
+        className index = sequenceToText codons (U.fromList [index])
     print [className aar == Text.pack "AAR", className aan == Text.pack "AAN",
            translate codons aaa == lysine, translate codons aar == lysine,
            translate codons aan == missingCharIndex]

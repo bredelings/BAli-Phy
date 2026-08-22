@@ -3,8 +3,8 @@ module Bio.Alphabet where
 import Compiler.FFI.Import (CInput(..))
 import Foreign.String -- For CPPString
 import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Data.Set as Set
+import qualified Data.Vector.Unboxed as U
 
 data Alphabet
 
@@ -59,8 +59,7 @@ geneticCode name = geneticCodeRaw (pack_cpp_string name)
 
 standard_code = geneticCodeByNumber 1
 
-foreign import bpcall "Alphabet:" sequenceToTextRaw :: Alphabet -> EVector Int -> CPPString
-sequenceToText a s = T.fromCppString $ sequenceToTextRaw a s
+foreign import trcall "Alphabet:sequenceToTextRaw" sequenceToText :: Alphabet -> U.Vector Int -> Text
 
 class HasAlphabet x where
     getAlphabet :: x -> Alphabet

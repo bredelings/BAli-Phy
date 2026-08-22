@@ -1,4 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+#include "builtins/native-vector-input.hh"
 #include "computation/machine/args.hh"
 #include "sequence/alphabet.hh"
 #include "sequence/doublets.hh"
@@ -176,16 +177,14 @@ extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& a = *arg0.as_checked<Alphabet>();
 
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& letter_sequence = arg1.as_<R::RVector>();
+    auto letter_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 1, "Alphabet.sequenceToTextRaw");
+    auto letter_sequence = letter_input.view();
 
     std::string text;
 
-    for(auto& letter: letter_sequence)
-    {
-        int l = letter.as_int();
-        text += a.lookup(l);
-    }
+    for(int letter: letter_sequence)
+        text += a.lookup(letter);
 
     return text;
 }

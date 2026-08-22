@@ -6,7 +6,6 @@ import Bio.Alphabet (dna)
 import Bio.Sequence (bitmaskFromSequence)
 import Compiler.Num
 import qualified Data.Vector.Unboxed as U
-import Foreign.Pair (c_pair)
 import Foreign.Vector (EVector, listToVector)
 import Numeric.LinearAlgebra (Matrix, (><))
 import Numeric.LinearAlgebra.Data (NativeMatrix, nativeMatrix)
@@ -26,10 +25,10 @@ main = do
         transition = (1 >< 1) [1] :: Matrix Double
         transitions = listToVector [nativeMatrix transition]
             :: EVector (NativeMatrix Double)
-        letters = listToVector [0] :: EVector Int
+        letters = U.fromList [0] :: U.Vector Int
         smap = listToVector [0] :: EVector Int
         leaf = simpleSequenceLikelihoods dna smap 1
-            (c_pair letters (bitmaskFromSequence letters))
+            (letters, bitmaskFromSequence letters)
         nodeLikes = listToVector [leaf] :: EVector CondLikes
         branchLikes = listToVector [] :: EVector CondLikes
         compressedColumns = U.slice 1 1 (U.fromList [99,0,99])

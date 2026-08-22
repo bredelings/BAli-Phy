@@ -15,10 +15,11 @@ import Bio.Sequence
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
+import qualified Data.Vector.Unboxed as U
 import SModel.Likelihood.CLV
 
 -- peeling for connected-CLVs
-foreign import bpcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EVector Int -> CondLikes
+foreign import trcall "Likelihood:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> U.Vector Int -> CondLikes
 foreign import trcall "Likelihood:calcProbAtRoot" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> ProbDensity
 foreign import trcall "Likelihood:calcProb" calcProb :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> ProbDensity
 foreign import trcall "Likelihood:peelBranchTowardRoot" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> CondLikes
@@ -44,7 +45,7 @@ foreign import trcall "Likelihood:sampleRootSequence" sampleRootSequence :: EVec
 
 foreign import trcall "Likelihood:sampleBranchSequence" sampleBranchSequence :: ComponentStateSequence -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> ComponentStateSequence
 
-simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int)) -> IntMap (Maybe CondLikes)
+simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (U.Vector Int)) -> IntMap (Maybe CondLikes)
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
     where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels
 

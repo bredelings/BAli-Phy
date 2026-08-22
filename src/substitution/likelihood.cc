@@ -2188,7 +2188,7 @@ namespace substitution {
     }
 
     object_ptr<const SparseLikelihoods>
-    simple_sequence_likelihoods2(const R::RVector& sequence,
+    simple_sequence_likelihoods2(std::span<const int> sequence,
                                  const alphabet& a,
                                  const R::RVector& smap,
                                  int n_models)
@@ -2205,7 +2205,7 @@ namespace substitution {
 	    // Add NNZ offset fo values/states for this column.
 	    LCB->column_offsets.push_back(LCB->num_non_zeros());
 
-	    int letter = sequence[i].as_int();
+	    int letter = sequence[i];
 
 	    if (letter >= 0)
 	    {

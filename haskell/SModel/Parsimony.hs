@@ -4,22 +4,25 @@ import Tree
 import Bio.Sequence
 import Bio.Alphabet
 import Bio.Alignment
+import Compiler.FFI.Import (COutput)
+import Compiler.FFI.Runtime (RuntimeValue)
 import Data.BitVector
 import Data.Foldable
 import Numeric.LinearAlgebra
-import Numeric.LinearAlgebra.Data (NativeMatrix, matrixFromNative, nativeMatrix)
+import Numeric.LinearAlgebra.Data (NativeMatrix, matrixFromNative)
 import Foreign.Vector
 import Numeric.Log
 import Data.Maybe (maybeToList)
 import Data.Text (Text)
 import qualified Data.Vector.Unboxed as U
-import Data.Vector.Unboxed.Internal (intVectorNativeView)
-import Foreign.NativeVector (NativeVector)
 
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 
 data CondPars
+
+instance RuntimeValue CondPars
+instance COutput CondPars
 
 type MutCosts = Matrix Int
 
@@ -29,8 +32,10 @@ foreign import bpcall "Parsimony:aminoAcidCostMatrix" aminoAcidCostMatrixNative 
 foreign import bpcall "Parsimony:pos1CostMatrix" pos1CostMatrixNative :: Alphabet -> NativeMatrix Int
 foreign import bpcall "Parsimony:pos2CostMatrix" pos2CostMatrixNative :: Alphabet -> NativeMatrix Int
 
-foreign import bpcall "Parsimony:peelMuts" peelMutsNative :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> NativeMatrix Int -> CondPars
-foreign import bpcall "Parsimony:mutsRoot" mutsRootNative :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> NativeMatrix Int -> Int
+-- TEMPORARY EVECTOR ADAPTER: parsimony still consumes collections of boxed sequence rows.
+-- Remove these conversions when the raw interfaces accept unboxed rows.
+foreign import trcall "Parsimony:peelMuts" peelMutsRaw :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> Matrix Int -> CondPars
+foreign import trcall "Parsimony:mutsRoot" mutsRootRaw :: EVector (EVector Int) -> Alphabet -> EVector PairwiseAlignment -> EVector CondPars -> Matrix Int -> Int
 
 unitCostMatrix alphabet = costMatrix alphabet (unitCostMatrixNative alphabet)
 aminoAcidCostMatrix alphabet = costMatrix alphabet (aminoAcidCostMatrixNative alphabet)
@@ -41,10 +46,10 @@ costMatrix alphabet = matrixFromNative dimension dimension
   where dimension = alphabetSize alphabet
 
 peelMuts sequences alphabet alignments partials costs =
-    peelMutsNative sequences alphabet alignments partials (nativeMatrix costs)
+    peelMutsRaw (toVector $ map toLegacySequenceVector sequences) alphabet alignments partials costs
 
 mutsRoot sequences alphabet alignments partials costs =
-    mutsRootNative sequences alphabet alignments partials (nativeMatrix costs)
+    mutsRootRaw (toVector $ map toLegacySequenceVector sequences) alphabet alignments partials costs
 
 
 class Parsimony a where
@@ -57,14 +62,14 @@ cached_conditional_muts t seqs as alpha cost = let pc    = IntMap.fromSet pcf $ 
                                                                asIn  = IntMap.restrictKeysToVector as inEdges
                                                                node = sourceNode t b
                                                                sequences = maybeToList $ seqs IntMap.! node
-                                                           in peelMuts (toVector sequences) alpha asIn cpsIn cost
+                                                           in peelMuts sequences alpha asIn cpsIn cost
                                                in pc
 
 peel_muts t cp as root seqs alpha cost = let inEdges = edgesTowardNodeSet t root
                                              cpsIn = IntMap.restrictKeysToVector cp inEdges
                                              asIn  = IntMap.restrictKeysToVector as inEdges
                                              sequences = maybeToList $ seqs IntMap.! root
-                                         in mutsRoot (toVector sequences) alpha asIn cpsIn cost
+                                         in mutsRoot sequences alpha asIn cpsIn cost
 
 parsimony_root t seqs as alpha cost = let pc = cached_conditional_muts t seqs as alpha cost
                                           root = head $ getNodes t
@@ -79,30 +84,34 @@ instance Parsimony (UnalignedCharacterData, AlignmentOnTree t) where
 ----
 type ColumnCounts = U.Vector Int
 
-foreign import bpcall "Parsimony:peelMutsFixedA" peelMutsFixedANative :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> NativeMatrix Int -> CondPars
-foreign import bpcall "Parsimony:mutsRootFixedA" mutsRootFixedARaw :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> NativeMatrix Int -> Int -> Int -> NativeVector Int -> Int
+-- TEMPORARY EVECTOR ADAPTER: fixed parsimony still embeds boxed rows in EPairs.
+-- Remove these conversions when the raw interfaces accept unboxed rows and masks separately.
+foreign import trcall "Parsimony:peelMutsFixedA" peelMutsFixedARaw :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> Matrix Int -> CondPars
+foreign import trcall "Parsimony:mutsRootFixedA" mutsRootFixedARaw :: EVector (EPair (EVector Int) CBitVector) -> Alphabet -> EVector CondPars -> Matrix Int -> U.Vector Int -> Int
 
 peelMutsFixedA sequences alphabet partials costs =
-    peelMutsFixedANative sequences alphabet partials (nativeMatrix costs)
+    peelMutsFixedARaw (toVector $ map legacyPair sequences) alphabet partials costs
+  where
+    legacyPair (sequence, mask) = c_pair (toLegacySequenceVector sequence) mask
 
 mutsRootFixedA sequences alphabet partials costs counts =
-    mutsRootFixedARaw sequences alphabet partials (nativeMatrix costs) offset count native
+    mutsRootFixedARaw (toVector $ map legacyPair sequences) alphabet partials costs counts
   where
-    (offset, count, native) = intVectorNativeView counts
+    legacyPair (sequence, mask) = c_pair (toLegacySequenceVector sequence) mask
 
 cached_conditional_muts_fixed_A t seqs alpha cost =
     let pc    = IntMap.fromSet pcf $ getEdgesSet t
         pcf b = let inEdges = edgesBeforeEdgeSet t b
                     clsIn = IntMap.restrictKeysToVector pc inEdges
                     node = sourceNode t b
-                    sequences = maybeToList $ c_pair' <$> seqs IntMap.! node
-                in peelMutsFixedA (toVector sequences) alpha clsIn cost
+                    sequences = maybeToList $ seqs IntMap.! node
+                in peelMutsFixedA sequences alpha clsIn cost
     in pc
 
 peel_muts_fixed_A t cp root seqs alpha cost counts = let inEdges = edgesTowardNodeSet t root
                                                          clsIn = IntMap.restrictKeysToVector cp inEdges
-                                                         sequences = maybeToList $ c_pair' <$> seqs IntMap.! root
-                                                     in mutsRootFixedA (toVector sequences) alpha clsIn cost counts
+                                                         sequences = maybeToList $ seqs IntMap.! root
+                                                     in mutsRootFixedA sequences alpha clsIn cost counts
 
 parsimony_root_fixed_A t seqs alpha cost counts = let pc = cached_conditional_muts_fixed_A t seqs alpha cost
                                                       root = head $ getNodes t

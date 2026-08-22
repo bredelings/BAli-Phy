@@ -77,8 +77,15 @@ instance IsGraph t => Alignment (AlignmentOnTree t) where
 mkSequenceLengthsMap a@(AlignmentOnTree tree _ _ _) = getNodesSet tree & IntMap.fromSet (\node -> sequenceLength a node)
 
 type EAlignment = EVector (EPair CPPString (EVector Int))
-toEAlignment a = toVector [ c_pair (Text.toCppString label) indices | (label, indices) <- a ]
-fromEAlignment ea = map ( (\(x,y) -> (Text.fromCppString x,y)) . pair_from_c) $ vectorToList ea
+
+-- TEMPORARY EVECTOR ADAPTER: compression still uses nested boxed sequence rows.
+-- Remove both conversions when the compression builtins accept unboxed rows.
+toEAlignment a = toVector [ c_pair (Text.toCppString label) (toLegacySequenceVector indices)
+                          | (label, indices) <- a ]
+fromEAlignment ea = map convert $ vectorToList ea
+  where
+    convert value = let (label, indices) = pair_from_c value
+                    in (Text.fromCppString label, fromLegacySequenceVector indices)
 
 -- Current a' is an alignment, while counts and mapping use contiguous native
 -- Int storage wrapped with their Haskell dimensions below.
@@ -141,13 +148,13 @@ select_alignment_pairs alignment sites doublets = builtin_select_alignment_pairs
     where sites' = toVector $ map (\(x,y) -> c_pair x y) sites
 
 alignmentOnTreeFromSequences tree (Aligned sequences) = AlignmentOnTree tree numSequences lengths pairwiseAs
-    where -- observedSequences :: IntMap (Maybe (EVector Int))
+    where -- observedSequences :: IntMap (Maybe (U.Vector Int))
           observedSequences = labelToNodeMap tree $ getSequences sequences
           observedMasks = fmap (fmap bitmaskFromSequence') observedSequences
           -- What is going on here with addAllMissingAncestors?
           allSequences = minimallyConnectCharacters observedMasks tree (addAllMissingAncestors observedSequences tree)
           numSequences = length $ getSequences sequences
-          lengths = getNodesSet tree & IntMap.fromSet (\node -> vector_size $ stripGaps $ allSequences IntMap.! node)
+          lengths = getNodesSet tree & IntMap.fromSet (\node -> U.length $ stripGaps $ allSequences IntMap.! node)
           bits = fmap bitmaskFromSequence' allSequences
           alignmentForBranch b = pairwise_alignment_from_bits (bits IntMap.! source) (bits IntMap.! target)
                                  where source = sourceNode tree b
@@ -215,7 +222,7 @@ exportAlignmentOnTree a@(AlignmentOnTree tree _ _ as) = mkNodeAlignment root (se
     where root = head $ getNodes tree
           branchAlignments edges = toVector [ mkBranchAlignment (targetNode tree e) (as IntMap.! e) (branchAlignments $ edgesAfterEdgeVector tree e) | e <- U.toList edges]
 
-foreign import bpcall "Alignment:" substituteLetters :: EVector Int -> EVector Int -> EVector Int
+foreign import trcall "Alignment:" substituteLetters :: U.Vector Int -> EVector Int -> U.Vector Int
 
 foreign import bpcall "Alignment:" constructPositionSequencesRaw :: NodeAlignment -> EIntMap (EVector Int)
 constructPositionSequences a = FIM.importIntMap $ constructPositionSequencesRaw $ exportAlignmentOnTree a
@@ -243,9 +250,9 @@ align alignment (Unaligned (CharacterData alphabet seqs)) = Aligned (CharacterDa
           alignedSeqs = getLabelled tree (,) alignedSeqsOnTree
 
 instance Alignment AlignedCharacterData where
-    alignmentLength (Aligned (CharacterData _ seqs)) = vector_size $ snd $ head seqs
+    alignmentLength (Aligned (CharacterData _ seqs)) = U.length $ snd $ head seqs
     numSequences (Aligned (CharacterData _ seqs)) = length seqs
-    sequenceLength (Aligned (CharacterData _ seqs)) index = vector_size $ stripGaps $ snd $ (seqs !! index)
+    sequenceLength (Aligned (CharacterData _ seqs)) index = U.length $ stripGaps $ snd $ (seqs !! index)
 
 
 -- In both cases we normalize the oldest taxon to have time 0.

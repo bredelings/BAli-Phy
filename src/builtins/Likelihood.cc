@@ -44,17 +44,17 @@ extern "C" closure builtin_function_bitmaskFromSequence(OperationArgs& Args)
 {
     using boost::dynamic_bitset;
 
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& seq = arg0. as_<R::RVector>();
-
-    int L = seq.size();
+    auto sequence_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0, "Likelihood.bitmaskFromSequence");
+    auto sequence = sequence_input.view();
+    int L = static_cast<int>(sequence.size());
 
     object_ptr<Box<dynamic_bitset<>>> mask_(new Box<dynamic_bitset<>>(L));
     auto& mask = *mask_;
 
     for(int i=0;i<L;i++)
     {
-        int c = seq[i].as_int();
+        int c = sequence[i];
 	if (c != alphabet::gap and c != alphabet::unknown)
 	    mask.flip(i);
     }
@@ -65,24 +65,24 @@ extern "C" closure builtin_function_bitmaskFromSequence(OperationArgs& Args)
 
 extern "C" closure builtin_function_stripGaps(OperationArgs& Args)
 {
-    using boost::dynamic_bitset;
-
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    const auto& seq1 = arg0. as_<R::RVector>();
-
-    int L = seq1.size();
-
-    object_ptr<R::RVector> Seq2(new R::RVector);
-    auto& seq2 = *Seq2;
-
-    for(int i=0;i<L;i++)
+    auto sequence_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0, "Likelihood.stripGaps");
+    auto sequence = sequence_input.view();
+    int count = 0;
+    for(int character : sequence)
     {
-        int c = seq1[i].as_int();
-        if (c != alphabet::gap and c != alphabet::unknown)
-            seq2.push_back(c);
+        if (character != alphabet::gap and character != alphabet::unknown)
+            count++;
     }
 
-    return Seq2;
+    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(count));
+    int index = 0;
+    for(int character : sequence)
+    {
+        if (character != alphabet::gap and character != alphabet::unknown)
+            (*result)[index++] = character;
+    }
+    return result;
 }
 
 extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
@@ -90,9 +90,10 @@ extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Arg
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
     auto arg2 = Args.evaluate_slot_to_value(2);
-    auto arg3 = Args.evaluate_slot_to_value(3);
+    auto sequence_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "Likelihood.simpleSequenceLikelihoods");
 
-    return substitution::simple_sequence_likelihoods2(arg3.as_<R::RVector>(),   // sequence
+    return substitution::simple_sequence_likelihoods2(sequence_input.view(), // sequence
                                                       *arg0.as_<Alphabet>(), // alphabet
                                                       arg1.as_<R::RVector>(),   // smap
                                                       arg2.as_int());        // n_models
@@ -255,31 +256,31 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
     return component_state_result(std::move(result));
 }
 
-// maskSequenceRaw :: CBitVector -> R::RVector Int -> R::RVector Int
 extern "C" closure builtin_function_maskSequenceRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& mask = arg0.as_<Box<dynamic_bitset<>>>();
-
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto sequence = arg1.as_<R::RVector>();
+    auto sequence_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 1, "Likelihood.maskSequenceRaw");
+    auto sequence = sequence_input.view();
+    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(sequence.size()));
 
     assert(mask.size() == sequence.size());
     for(int i=0;i<sequence.size();i++)
     {
-        auto& C = sequence[i];
-        int c = C.as_int();
-        assert(i >= alphabet::unknown);
+        int c = sequence[i];
+        assert(c >= alphabet::unknown);
         if (mask.test(i))
         {
             if (c == alphabet::gap or c == alphabet::unknown)
-                C = alphabet::not_gap;
+                c = alphabet::not_gap;
         }
         else
-            C = alphabet::gap;
+            c = alphabet::gap;
+        (*result)[i] = c;
     }
 
-    return sequence;
+    return result;
 }
 
 extern "C" closure builtin_function_simulateRootSequence(OperationArgs& Args)

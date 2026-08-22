@@ -700,23 +700,22 @@ extern "C" closure builtin_function_getRange(OperationArgs& Args)
     // 2. Find columns
     vector<int> columns = parse_multi_range(range, L);
 
-    return R::RVector(columns);
+    return copy_to_native_int_vector(columns);
 }
 
 extern "C" closure builtin_function_selectRangeRaw(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& columns = arg0.as_<R::RVector>();
-
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    const auto& sequence = arg1.as_string();
+    auto column_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0, "Alignment.selectRangeRaw");
+    auto columns = column_input.view();
+    auto sequence_value = Args.evaluate_slot_to_value(3);
+    const auto& sequence = sequence_value.as_string();
 
     std::string sequence2;
-    for(auto& c : columns)
+    for(int column : columns)
     {
-        int col = c.as_int();
-        if (col < sequence.size())
-            sequence2 += sequence[col];
+        if (column < sequence.size())
+            sequence2 += sequence[column];
     }
 
     return sequence2;
@@ -791,11 +790,7 @@ extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args
     const auto& s = arg1.as_string();
 
     auto letters = a(s);
-    vector<int> letters2;
-    for(auto letter: letters)
-        letters2.push_back(letter);
-
-    return new R::RVector(letters2);
+    return copy_to_native_int_vector(letters);
 }
 
 extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
@@ -807,7 +802,7 @@ extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
     auto states = state_input.view();
     int count = static_cast<int>(states.size());
 
-    auto result = object_ptr<R::RVector>(new R::RVector(count));
+    auto result = object_ptr<Box<DenseVector<int>>>(new Box<DenseVector<int>>(count));
     auto& letter_sequence = *result;
 
     for(int i=0; i<count; i++)
@@ -961,18 +956,19 @@ extern "C" closure builtin_function_constructPositionSequencesRaw(OperationArgs&
 
 extern "C" closure builtin_function_substituteLetters(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& letters = arg0.as_<R::RVector>();
-
-    auto arg1 = Args.evaluate_slot_to_value(1);
-
-    object_ptr<R::RVector> result(new R::RVector(arg1.as_<R::RVector>()));
+    auto letter_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0, "Alignment.substituteLetters");
+    auto letters = letter_input.view();
+    auto position_value = Args.evaluate_slot_to_value(3);
+    const auto& positions = position_value.as_<R::RVector>();
+    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(positions.size()));
     auto& row = *result;
 
     int j=0;
     for(int i=0;i<row.size();i++)
     {
-        int pos = row[i].as_int();
+        int pos = positions[i].as_int();
+        row[i] = pos;
         if (pos >=0 or pos == alphabet::not_gap)
         {
             assert(j < letters.size());

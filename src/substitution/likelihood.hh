@@ -69,7 +69,7 @@ namespace substitution {
 
     // This one is sparse.
     object_ptr<const SparseLikelihoods>
-    simple_sequence_likelihoods2(const R::RVector& sequence,
+    simple_sequence_likelihoods2(std::span<const int> sequence,
                                  const alphabet& a,
                                  const R::RVector& smap,
                                  int n_models);

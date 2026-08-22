@@ -15,6 +15,7 @@ import Data.IntMap (IntMap)
 import Control.Monad (liftM2)
 import Data.Maybe (catMaybes)
 import Data.Foldable (toList)
+import qualified Data.Vector.Unboxed as U
 
 data AlignmentMatrix
 
@@ -37,9 +38,11 @@ foreign import bpcall "Alignment:sequence_names" builtin_sequence_names :: Align
 sequence_names :: AlignmentMatrix -> [Text]
 sequence_names a = map Text.fromCppString $ vectorToList $ builtin_sequence_names a
 
+-- TEMPORARY EVECTOR ADAPTER: alignment extraction still returns nested boxed rows.
+-- Remove the conversion when the builtin returns unboxed sequence owners.
 foreign import bpcall "Alignment:sequences_from_alignment" builtin_indices_from_alignment :: AlignmentMatrix -> EVector (EVector Int)
-indices_from_alignment :: AlignmentMatrix -> [ EVector Int ]
-indices_from_alignment a = vectorToList $ builtin_indices_from_alignment a
+indices_from_alignment :: AlignmentMatrix -> [U.Vector Int]
+indices_from_alignment a = map fromLegacySequenceVector $ vectorToList $ builtin_indices_from_alignment a
 
 -- use isequences instead of "sequences" since we aren't using C++ Box<sequence> here.
 isequences_from_alignment a = zip (sequence_names a) (indices_from_alignment a)
@@ -140,7 +143,7 @@ minimallyConnectMasks observedMasks tree = getNodesSet tree & IntMap.fromSet mas
 {- This routine does two things:
      (i)  it constructs masks on internal nodes and then
      (ii) it applies masks for each node to sequences as each node.
-   We could make something that applies an IntMap (Maybe BitVector) to an IntMap EVector Int.
+   We could make something that applies an IntMap (Maybe BitVector) to an IntMap (U.Vector Int).
    That would allow minimallyConnectStates to return Nothing instead of an error if there are no observed masks.
 -}
 minimallyConnectCharacters leafMasks tree allSequences = getNodesSet tree & IntMap.fromSet maskedSequenceForNode
@@ -149,7 +152,10 @@ minimallyConnectCharacters leafMasks tree allSequences = getNodesSet tree & IntM
 
 {- Here we create fake sequences at internal nodes that are entirely composed of Ns, with no gaps. -}
 addAllMissingAncestors observedSequences tree = fromMaybe missingSequence <$> observedSequences
-    where missingSequence = toVector $ replicate alignmentLength missingCharIndex
-          alignmentLength = fromMaybe (error msg) $ allSame $ observedSequenceLengths
+    where missingSequence = U.replicate alignmentLength missingCharIndex
+          alignmentLength = case observedSequenceLengths of
+                                [] -> error "addAllMissingAncestors: no observed sequences!"
+                                first:rest | all (== first) rest -> first
+                                           | otherwise -> error msg
           msg = "addAllMissingAncestors: not all observed sequences are the same length!"
-          observedSequenceLengths = vector_size <$> (catMaybes $ IntMap.elems observedSequences)
+          observedSequenceLengths = U.length <$> (catMaybes $ IntMap.elems observedSequences)

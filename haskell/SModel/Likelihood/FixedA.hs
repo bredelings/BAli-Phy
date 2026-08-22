@@ -33,12 +33,19 @@ peelBranch toward nodeCLs branchCLs ps f | toward    = peelBranchTowardRoot   no
 foreign import trcall "LikelihoodSEV:sampleRootSequence" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> ComponentStateSequence
 foreign import trcall "LikelihoodSEV:sampleSequence" sampleSequence :: ComponentStateSequence -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> U.Vector Int -> ComponentStateSequence
 
-foreign import trcall "LikelihoodSEV:" simpleSequenceLikelihoods :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
+-- TEMPORARY EVECTOR ADAPTER: the fixed-alignment builtin still embeds a boxed
+-- row in an EPair.
+-- Remove this wrapper when the raw interface accepts an unboxed row and mask separately.
+foreign import trcall "LikelihoodSEV:simpleSequenceLikelihoods" simpleSequenceLikelihoodsRaw :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
+
+simpleSequenceLikelihoods alpha smap nModels (sequence, mask) =
+    simpleSequenceLikelihoodsRaw alpha smap nModels
+        (c_pair' (toLegacySequenceVector sequence, mask))
 
 -- Could we move the conversion from sequence-with-gaps to (sequence,bitvector) into here?
-simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (EVector Int, CBitVector)) -> IntMap (Maybe CondLikes)
+simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (U.Vector Int, CBitVector)) -> IntMap (Maybe CondLikes)
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
-    where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels . c_pair'
+    where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels
 
 {- Note:
    An alternative implementation would be to pass in a frequency matrix full of 1.0s.
