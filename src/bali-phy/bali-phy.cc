@@ -528,6 +528,7 @@ std::string generate_print_program(const model_t& print, const Hs::Exp& a)
     add(imports, print.imports);
     for(auto& mod: imports)
         program_file<<"import "<<mod<<"\n";
+    program_file<<"import qualified Data.Map as Map\n";
     program_file<<"import qualified Data.Set as Set\n";
 
     program_file<<"\n";
