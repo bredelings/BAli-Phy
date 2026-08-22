@@ -1,10 +1,13 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #include "computation/machine/args.hh"
+#include "computation/haskell/ids.hh"
 #include "dp/2way.hh"
-#include <boost/dynamic_bitset.hpp>
 #include "alignment/alignment.hh"
+#include "util/myexception.hh"
 
+#include <algorithm>
 #include <boost/dynamic_bitset.hpp>
+#include <limits>
 
 using std::vector;
 
@@ -13,8 +16,69 @@ typedef Box<boost::dynamic_bitset<>> bitvector;
 extern "C" closure builtin_function_empty_bitvector(OperationArgs& Args)
 {
     int n = Args.evaluate_slot_to_value(0).as_int();
+    if (n < 0)
+        throw myexception()<<"bit vector: negative length "<<n;
 
     return { bitvector(n) };
+}
+
+// Pack exactly the requested number of Boolean list elements, leaving an
+// excess tail unevaluated and rejecting a list that is too short.
+extern "C" closure builtin_function_sized_bitvector_from_list(OperationArgs& Args)
+{
+    auto size_arg = Args.evaluate_slot_to_value_with_contingency(0);
+    int expected_size = size_arg.value.as_int();
+    if (expected_size < 0)
+        throw myexception()<<"bit vector: negative length "<<expected_size;
+
+    bitvector result(expected_size);
+    if (expected_size == 0)
+        return result;
+
+    auto xs = Args.evaluate_reg_use_with_contingency(Args.reg_for_slot(1), size_arg.edge_contingency);
+    for(int index = 0; index < expected_size; index++)
+    {
+        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
+        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
+        if (not list_cell)
+            throw myexception()<<"bit vector: expected a list constructor, but got "<<xs_closure.get_code().print();
+
+        const auto& tag = list_cell->head;
+        if (tag.name() == "[]" and tag.n_args() == 0)
+            throw myexception()<<"bit vector: expected "<<expected_size<<" elements, but got "<<index;
+        if (tag.name() != ":" or tag.n_args() != 2)
+            throw myexception()<<"bit vector: expected ':' or '[]', but got "<<tag.print();
+
+        int element = xs_closure.reg_for_constructor_slot(0);
+        auto value_reg = Args.evaluate_reg_use(element, xs.edge_contingency);
+        const auto& value = Args.memory().closure_at(value_reg).get_code();
+        if (R::has_constructor(value, bool_true_name))
+            result.set(index);
+        else if (not R::has_constructor(value, bool_false_name))
+            throw myexception()<<"bit vector: expected a Boolean, but got "<<value.print();
+
+        if (index + 1 < expected_size)
+        {
+            int tail = xs_closure.reg_for_constructor_slot(1);
+            xs = Args.evaluate_reg_use_with_contingency(tail, xs.edge_contingency);
+        }
+    }
+    return result;
+}
+
+// Native index zero is the vector's first element.  Shifting the requested
+// prefix away and then resizing therefore leaves exactly the logical slice in
+// a new offset-zero owner; Haskell has already validated the source range.
+extern "C" closure builtin_function_slice(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    int start = Args.evaluate_slot_to_value(1).as_int();
+    int count = Args.evaluate_slot_to_value(2).as_int();
+
+    auto result = value.as_<bitvector>();
+    result >>= start;
+    result.resize(count);
+    return result;
 }
 
 extern "C" closure builtin_function_complement(OperationArgs& Args)
@@ -32,7 +96,12 @@ extern "C" closure builtin_function_bitwise_or(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
 
-    bitvector v2 = arg0.as_<bitvector>() | arg1.as_<bitvector>();
+    auto left = arg0.as_<bitvector>();
+    auto right = arg1.as_<bitvector>();
+    auto size = std::min(left.size(), right.size());
+    left.resize(size);
+    right.resize(size);
+    bitvector v2 = left | right;
 
     return { v2 };
 }
@@ -43,7 +112,12 @@ extern "C" closure builtin_function_bitwise_and(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
 
-    bitvector v2 = arg0.as_<bitvector>() & arg1.as_<bitvector>();
+    auto left = arg0.as_<bitvector>();
+    auto right = arg1.as_<bitvector>();
+    auto size = std::min(left.size(), right.size());
+    left.resize(size);
+    right.resize(size);
+    bitvector v2 = left & right;
 
     return { v2 };
 }
@@ -73,7 +147,12 @@ extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto arg1 = Args.evaluate_slot_to_value(1);
 
-    bitvector v2 = arg0.as_<bitvector>() ^ arg1.as_<bitvector>();
+    auto left = arg0.as_<bitvector>();
+    auto right = arg1.as_<bitvector>();
+    auto size = std::min(left.size(), right.size());
+    left.resize(size);
+    right.resize(size);
+    bitvector v2 = left ^ right;
 
     return { v2 };
 }
@@ -120,6 +199,68 @@ extern "C" closure builtin_function_clear_bit(OperationArgs& Args)
     x.set(n, false);
 
     return { x };
+}
+
+// Construct the variable-width value of bit n: indices below n are zero and
+// the result ends at its single set bit.
+extern "C" closure builtin_function_single_bit(OperationArgs& Args)
+{
+    int index = Args.evaluate_slot_to_value(0).as_int();
+    if (index < 0 or index == std::numeric_limits<int>::max())
+        throw myexception()<<"bit vector: invalid bit index "<<index;
+
+    bitvector result(index + 1);
+    result.set(index);
+    return result;
+}
+
+// Native index zero is the start of the bit sequence.  Growing before a left
+// shift makes room for a zero prefix without losing high bits; shifting right
+// before shrinking discards the requested prefix and retains the exact suffix.
+extern "C" closure builtin_function_shift(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    int amount = Args.evaluate_slot_to_value(1).as_int();
+    auto result = value.as_<bitvector>();
+
+    if (amount > 0)
+    {
+        auto max_size = static_cast<std::size_t>(std::numeric_limits<int>::max());
+        if (result.size() > max_size or static_cast<std::size_t>(amount) > max_size - result.size())
+            throw myexception()<<"bit-vector shift result exceeds the Haskell Int range";
+        result.resize(result.size() + amount);
+        result <<= amount;
+    }
+    else if (amount < 0)
+    {
+        auto removed = static_cast<std::size_t>(-static_cast<long long>(amount));
+        if (removed >= result.size())
+            return bitvector(0);
+        result >>= removed;
+        result.resize(result.size() - removed);
+    }
+    return result;
+}
+
+// Normalize the signed rotation within the fixed owner length.  The left and
+// right Boost shifts contain disjoint wrapped pieces, so their union preserves
+// every input bit while retaining the exact original length.
+extern "C" closure builtin_function_rotate(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    int amount = Args.evaluate_slot_to_value(1).as_int();
+    const auto& input = value.as_<bitvector>();
+    if (input.empty())
+        return input;
+
+    auto size = input.size();
+    auto signed_size = static_cast<long long>(size);
+    auto rotation = static_cast<std::size_t>((static_cast<long long>(amount) % signed_size + signed_size) % signed_size);
+    if (rotation == 0)
+        return input;
+
+    bitvector result = (input << rotation) | (input >> (size - rotation));
+    return result;
 }
 
 extern "C" closure builtin_function_alignment_row_to_presence_bitvector(OperationArgs& Args)
