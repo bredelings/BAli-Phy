@@ -1,1 +1,1 @@
---test data/dna.fasta --indel-rates=constant --scale='Normal(sigma=1, 0)'
+--test data/dna.fasta --indel-rates=constant --scale='{{"a": Normal(sigma=1, 0)}}'

@@ -416,6 +416,18 @@ void handle_positional_args(UntypedExpr& expr, const Rules& R, const set<string>
             for(auto& element: list.elements)
                 handle_positional_args(element, R, bound_names);
         },
+        // Recurses into set elements without rewriting the set node itself.
+        [&](Set<NoAnn>& set)
+        {
+            for(auto& element: set.elements)
+                handle_positional_args(element, R, bound_names);
+        },
+        // Recurses into map entries without rewriting the map node itself.
+        [&](Map<NoAnn>& map_expr)
+        {
+            for(auto& element: map_expr.elements)
+                handle_positional_args(element, R, bound_names);
+        },
         // Recurses into tuple elements without rewriting the tuple node itself.
         [&](Tuple<NoAnn>& tuple)
         {
