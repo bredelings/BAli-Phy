@@ -1,5 +1,5 @@
 {
-    "name": "Set.fromList",
+    "name": "setFromList",
     "result_type": "Set<a>",
     "constraints": ["Ord<a>"],
     "no_log": true,

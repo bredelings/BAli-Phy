@@ -1,5 +1,5 @@
 {
-    "name": "Map.fromList",
+    "name": "mapFromList",
     "result_type": "Map<a,b>",
     "constraints": ["Ord<a>"],
     "no_log": true,
