@@ -101,9 +101,8 @@ extern "C" closure builtin_function_bitwise_or(OperationArgs& Args)
     auto size = std::min(left.size(), right.size());
     left.resize(size);
     right.resize(size);
-    bitvector v2 = left | right;
-
-    return { v2 };
+    left |= right;
+    return left;
 }
 
 
@@ -117,9 +116,8 @@ extern "C" closure builtin_function_bitwise_and(OperationArgs& Args)
     auto size = std::min(left.size(), right.size());
     left.resize(size);
     right.resize(size);
-    bitvector v2 = left & right;
-
-    return { v2 };
+    left &= right;
+    return left;
 }
 
 extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
@@ -132,9 +130,8 @@ extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
     auto size = std::min(left.size(), right.size());
     left.resize(size);
     right.resize(size);
-    bitvector v2 = left ^ right;
-
-    return { v2 };
+    left ^= right;
+    return left;
 }
 
 extern "C" R::Exp simple_function_size(vector<R::Exp>& args)

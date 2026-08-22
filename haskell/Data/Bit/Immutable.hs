@@ -2,8 +2,6 @@
 module Data.Bit.Immutable where
 
 import Compiler.Error (error)
-import Compiler.Integral (mod)
-import Compiler.Num
 import Data.Bit.Internal
 import Data.Bits
 import Data.Bool
@@ -44,10 +42,8 @@ instance Bits (U.Vector Bit) where
     -- right shifts discard the corresponding low-index elements.
     shift vector amount = bitVectorFromNative (shiftNative (bitVectorNativeOwner vector) amount)
 
-    rotate vector amount
-        | U.null vector = vector
-        | otherwise = bitVectorFromNativeWithLength (U.length vector)
-            (rotateNative (bitVectorNativeOwner vector) (amount `mod` U.length vector))
+    rotate vector amount = bitVectorFromNativeWithLength (U.length vector)
+        (rotateNative (bitVectorNativeOwner vector) amount)
 
     zeroBits = U.empty
     bit index
