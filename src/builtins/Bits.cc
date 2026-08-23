@@ -61,7 +61,7 @@ object_ptr<const bitvector> read_unboxed_bit_vector(OperationArgs& Args, int vec
     auto object_value = owner_value.to<Runtime::ObjectValue>();
     object_ptr<const bitvector> owner;
     if (object_value)
-        owner = boost::static_pointer_cast<const bitvector>(object_value->value);
+        owner = boost::dynamic_pointer_cast<const bitvector>(object_value->value);
     if (not owner)
         throw myexception()<<"Data.Vector.Unboxed.concat: V_Bit owner has the wrong native representation";
     if (length_value.as_int() < 0 or static_cast<std::size_t>(length_value.as_int()) != owner->size())

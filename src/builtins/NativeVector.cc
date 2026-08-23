@@ -115,7 +115,7 @@ NativeVectorInput<T> read_unboxed_numeric_vector(OperationArgs& Args, int vector
     auto object_value = owner_value.template to<Runtime::ObjectValue>();
     object_ptr<const Box<DenseVector<T>>> owner;
     if (object_value)
-        owner = boost::static_pointer_cast<const Box<DenseVector<T>>>(object_value->value);
+        owner = boost::dynamic_pointer_cast<const Box<DenseVector<T>>>(object_value->value);
     if (not owner)
         throw myexception()<<"Data.Vector.Unboxed.concat: "<<constructor_name
                            <<" owner has the wrong native representation";
