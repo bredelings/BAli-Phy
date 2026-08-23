@@ -1,5 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
+#include "builtins/haskell-list-input.hh"
 #include "computation/machine/args.hh"
 #include "math/exponential.hh"
 #include "sequence/alphabet.hh"
@@ -526,8 +527,25 @@ closure gather_matrix(const Box<NativeMatrix>& matrix,
     return result;
 }
 
-// Continue a contingency-aware list traversal and copy every
-// same-representation vector into one pre-sized native allocation.
+// USE and append one numeric vector while preserving the list cell's controlling contingency.
+// The enclosing traversal has already selected T from the first vector.
+template <typename T>
+void append_join_vector(OperationArgs& Args, int element_reg, EdgeContingency contingency,
+                        Box<DenseVector<T>>& result, int total, int& offset)
+{
+    int value_reg = Args.evaluate_reg_use(element_reg, contingency);
+    const auto& expression = Args.memory().closure_at(value_reg).get_code();
+    if (not expression.is_a<Box<DenseVector<T>>>() )
+        throw myexception()<<"vjoin: vectors have different native representations";
+    const auto& vector = expression.as_<Box<DenseVector<T>>>();
+    if (offset + vector.size() > total)
+        throw myexception()<<"vjoin: vector lengths exceed declared total";
+    result.segment(offset, vector.size()) = vector;
+    offset += vector.size();
+}
+
+// Copy a same-representation native-vector list into one pre-sized allocation.
+// The first vector was evaluated separately to select the numeric representation.
 template <typename T>
 closure join_vectors(OperationArgs& Args, int total, UseWithContingency xs,
                      const Box<DenseVector<T>>& first)
@@ -538,31 +556,13 @@ closure join_vectors(OperationArgs& Args, int total, UseWithContingency xs,
         throw myexception()<<"vjoin: vector lengths exceed declared total";
     result->head(offset) = first;
 
-    while(true)
-    {
-        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
-        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
-        if (not list_cell)
-            throw myexception()<<"vjoin: expected a vector list";
-        if (list_cell->head.name() == "[]" and list_cell->head.n_args() == 0)
-            break;
-        if (list_cell->head.name() != ":" or list_cell->head.n_args() != 2)
-            throw myexception()<<"vjoin: expected ':' or '[]'";
+    // Append each remaining vector after the shared walker has propagated its list contingency.
+    for_each_haskell_list_element(Args, xs, "vjoin",
+        [&](int element_reg, EdgeContingency contingency)
+        {
+            append_join_vector(Args, element_reg, contingency, *result, total, offset);
+        });
 
-        int element = xs_closure.reg_for_constructor_slot(0);
-        int next_tail = xs_closure.reg_for_constructor_slot(1);
-        int value = Args.evaluate_reg_use(element, xs.edge_contingency);
-        const auto& expression = Args.memory().closure_at(value).get_code();
-        if (not expression.is_a<Box<DenseVector<T>>>() )
-            throw myexception()<<"vjoin: vectors have different native representations";
-        const auto& vector = expression.as_<Box<DenseVector<T>>>();
-        if (offset + vector.size() > total)
-            throw myexception()<<"vjoin: vector lengths exceed declared total";
-        result->segment(offset, vector.size()) = vector;
-        offset += vector.size();
-        xs = Args.evaluate_reg_use_with_contingency(
-            next_tail, xs.edge_contingency);
-    }
     if (offset != total)
         throw myexception()<<"vjoin: vector lengths do not match declared total";
     return result;

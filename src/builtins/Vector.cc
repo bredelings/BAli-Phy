@@ -2,6 +2,7 @@
 #include <vector>
 #include <limits>
 #include "Vector.hh"
+#include "builtins/haskell-list-input.hh"
 #include "computation/operation.hh"
 #include "util/myexception.hh"
 #include "util/utf8.hh"
@@ -121,37 +122,17 @@ extern "C" closure builtin_function_boxedFromList(OperationArgs& Args)
     closure::Env_t elements;
     stacked_register_roots roots(Args);
 
-    while(true)
-    {
-        const closure& xs_closure = Args.memory().closure_at(xs.value_reg);
-        auto list_cell = xs_closure.get_code().to<Runtime::ConstructorApp>();
-        if (not list_cell)
-            throw myexception()<<"Data.Vector.fromList: expected a list constructor, but got "
-                               <<xs_closure.get_code().print();
+    // Retain each lazy head while the shared walker evaluates only the list spine.
+    for_each_haskell_list_element(Args, xs, "Data.Vector.fromList",
+        [&](int head_reg, EdgeContingency)
+        {
+            if (elements.size() == static_cast<std::size_t>(std::numeric_limits<int>::max()))
+                throw myexception()<<"Data.Vector.fromList: length exceeds the Int range";
+            roots.add(head_reg);
+            elements.push_back(head_reg);
+        });
 
-        const auto& tag = list_cell->head;
-        if (tag.name() == "[]" and tag.n_args() == 0 and
-            list_cell->args.empty())
-            return make_boxed_vector(std::move(elements));
-        if (tag.name() != ":" or tag.n_args() != 2 or
-            list_cell->args.size() != 2)
-            throw myexception()<<"Data.Vector.fromList: expected ':' or '[]', but got "
-                               <<tag.print();
-        if (elements.size() == static_cast<std::size_t>(std::numeric_limits<int>::max()))
-            throw myexception()<<"Data.Vector.fromList: length exceeds the Int range";
-
-        auto head_reg = xs_closure.reg_for_code(list_cell->args[0]);
-        auto tail_reg = xs_closure.reg_for_code(list_cell->args[1]);
-        if (not head_reg or not tail_reg)
-            throw myexception()<<"Data.Vector.fromList: malformed ':' constructor";
-
-        // Capture both registers before evaluating the tail: evaluation may
-        // grow the machine heap and invalidate the xs_closure reference.
-        roots.add(*head_reg);
-        elements.push_back(*head_reg);
-        xs = Args.evaluate_reg_use_with_contingency(
-            *tail_reg, xs.edge_contingency);
-    }
+    return make_boxed_vector(std::move(elements));
 }
 
 // Fill exactly the requested number of boxed Vector slots from a Haskell
