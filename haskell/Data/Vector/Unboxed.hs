@@ -97,7 +97,9 @@ fromList values = basicFromListN (List.length values) values
 -- Keeping the allocation opaque prevents the simplifier from duplicating a shared result owner.
 concat :: Unbox a => [Vector a] -> Vector a
 {-# NOINLINE concat #-}
-concat = basicConcat
+concat values = basicConcatN count values
+  where
+    count = List.sum (List.map basicLength values)
 
 -- Expose logical elements as a lazy list without allocating a boxed-vector
 -- intermediate or copying a primitive slice.

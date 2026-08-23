@@ -75,7 +75,7 @@ foreign import bpcall "Bits:empty_bitvector" emptyBitVectorNative :: Int -> CBit
 -- Bit is a newtype, so raw list elements reach C++ as their underlying Bool
 -- constructors without allocating a second mapped list spine.
 foreign import bpcall "Bits:sized_bitvector_from_list" bitVectorFromListNative :: Int -> [Bit] -> CBitVector
-foreign import bpcall "Bits:concat_bitvectors" concatBitVectorsNative :: [Vector Bit] -> CBitVector
+foreign import bpcall "Bits:concat_bitvectors" concatBitVectorsNative :: Int -> [Vector Bit] -> CBitVector
 foreign import bpcall "Bits:slice" sliceBitVectorNative :: CBitVector -> Int -> Int -> CBitVector
 foreign import ecall "Bits:test_bit" testBitVectorNative :: CBitVector -> Int -> Bool
 foreign import ecall "Bits:size" bitVectorSizeNative :: CBitVector -> Int
@@ -99,7 +99,7 @@ instance Unbox Bit where
     basicFromListN count values = V_Bit count (bitVectorFromListNative count values)
     basicReplicate count (Bit False) = V_Bit count (emptyBitVectorNative count)
     basicReplicate count (Bit True) = V_Bit count (complementBitVectorNative (emptyBitVectorNative count))
-    basicConcat values = bitVectorFromNative (concatBitVectorsNative values)
+    basicConcatN count values = V_Bit count (concatBitVectorsNative count values)
 
 -- Wrap a complete native owner and cache its physical size as the authoritative
 -- logical length of the new unboxed vector.

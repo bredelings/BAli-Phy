@@ -138,12 +138,17 @@ unboxedBasic = do
     let moderate = U.fromList [0..999] :: U.Vector Int
     print (U.length moderate, moderate U.! 0, moderate U.! 999)
 
--- Verify that stable shape metadata and unboxed-vector view construction do
--- not evaluate numeric heads or force the lazy native owner.
+-- Verify that construction, views, and concat retain stable shape metadata without evaluating
+-- payloads or native owners.  This becomes obsolete if unboxed owners intentionally become strict.
 unboxedShapeLaziness = do
     putStrLn "unboxed shape laziness"
     let values = U.fromList [error "unboxed vector head forced", 2] :: U.Vector Int
+        concatenated = U.concat [values, U.slice 1 1 values]
+        bitValues = U.fromList [Bit (error "bit-vector payload forced"), Bit True]
+        bitConcatenated = U.concat [bitValues]
     print (U.length values, boolInt (U.null values))
+    print ("concat numeric shape", U.length concatenated, boolInt (U.null concatenated))
+    print ("concat bit shape", U.length bitConcatenated, boolInt (U.null bitConcatenated))
     print (U.length (U.slice 0 1 values))
     print (U.length (U.take 1 values), U.length (U.drop 1 values))
     print (boolInt (U.null (U.slice 1 0 values)))
@@ -153,6 +158,9 @@ unboxedShapeLaziness = do
                     :: U.Vector (Int,Int)))
     print (U.length (U.replicate 1 (error "nested pair value forced")
                     :: U.Vector ((Int,Double),(Int,Int))))
+    print ("concat pair shape", U.length (U.concat
+            [U.replicate 2 (error "concatenated pair payload forced")]
+            :: U.Vector ((Int,Double),Int)))
 
 -- Exercise metadata-only primitive views and normalized structure-of-arrays
 -- pair views, including truncating zip and nested pairs.

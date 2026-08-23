@@ -124,39 +124,38 @@ NativeVectorInput<T> read_unboxed_numeric_vector(OperationArgs& Args, int vector
                                 "Data.Vector.Unboxed.concat");
 }
 
-// Gather validated numeric views in one dependency-aware list traversal, then copy them
-// consecutively into a single native allocation.
+// Copy validated numeric views into the pre-sized result while walking the input list once.
+// The supplied cached length is checked against the amount of data actually encountered.
 template<typename T>
 closure concat_unboxed_numeric_vectors(OperationArgs& Args, std::string_view constructor_name)
 {
-    std::vector<NativeVectorInput<T>> inputs;
-    auto xs = Args.evaluate_slot_use_with_contingency(0);
+    auto count_arg = Args.evaluate_slot_to_value_with_contingency(0);
+    if (not count_arg.value.is_int())
+        throw myexception()<<"Data.Vector.Unboxed.concat: result length is not an Int";
+    int expected_count = count_arg.value.as_int();
+    if (expected_count < 0)
+        throw myexception()<<"Data.Vector.Unboxed.concat: negative result length "<<expected_count;
 
-    // Decode one record per list element; native elements remain untouched
-    // until the final copy into their single result allocation.
+    object_ptr<Box<DenseVector<T>>> result = new Box<DenseVector<T>>(expected_count);
+    std::size_t total = static_cast<std::size_t>(expected_count);
+    std::size_t offset = 0;
+    auto xs = Args.evaluate_reg_use_with_contingency(Args.reg_for_slot(1), count_arg.edge_contingency);
+
+    // Decode and copy one view at a time so only the current input owner must be retained.
+    // Every constructor and owner USE still receives the list cell's controlling contingency.
     for_each_haskell_list_element(Args, xs, "Data.Vector.Unboxed.concat",
         [&](int vector_reg, EdgeContingency contingency)
         {
-            inputs.push_back(read_unboxed_numeric_vector<T>(Args, vector_reg, contingency, constructor_name));
+            auto input = read_unboxed_numeric_vector<T>(Args, vector_reg, contingency, constructor_name);
+            auto values = input.view();
+            if (values.size() > total - offset)
+                throw myexception()<<"Data.Vector.Unboxed.concat: input lengths exceed cached result length";
+            std::copy(values.begin(), values.end(), result->data() + offset);
+            offset += values.size();
         });
 
-    std::size_t total = 0;
-    for(const auto& input: inputs)
-    {
-        auto count = input.view().size();
-        if (count > static_cast<std::size_t>(std::numeric_limits<int>::max()) - total)
-            throw myexception()<<"Data.Vector.Unboxed.concat: result length exceeds the Int range";
-        total += count;
-    }
-
-    auto result = new Box<DenseVector<T>>(static_cast<int>(total));
-    std::size_t offset = 0;
-    for(const auto& input: inputs)
-    {
-        auto values = input.view();
-        std::copy(values.begin(), values.end(), result->data() + offset);
-        offset += values.size();
-    }
+    if (offset != total)
+        throw myexception()<<"Data.Vector.Unboxed.concat: input lengths do not match cached result length";
     return result;
 }
 

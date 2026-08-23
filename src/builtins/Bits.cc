@@ -69,39 +69,40 @@ object_ptr<const bitvector> read_unboxed_bit_vector(OperationArgs& Args, int vec
     return owner;
 }
 
-// Append packed inputs at their logical high end; after each append, remove padding from
-// the source's final block so the next vector begins at the exact logical boundary.
+// Append packed inputs at their logical high end, removing each final block's padding.
+// The supplied cached length is checked against the exact packed owners encountered.
 closure concat_unboxed_bit_vectors(OperationArgs& Args)
 {
-    std::vector<object_ptr<const bitvector>> inputs;
-    auto xs = Args.evaluate_slot_use_with_contingency(0);
+    auto count_arg = Args.evaluate_slot_to_value_with_contingency(0);
+    if (not count_arg.value.is_int())
+        throw myexception()<<"Data.Vector.Unboxed.concat: result length is not an Int";
+    int expected_count = count_arg.value.as_int();
+    if (expected_count < 0)
+        throw myexception()<<"Data.Vector.Unboxed.concat: negative result length "<<expected_count;
 
-    // Retain one exact packed owner per input while the shared walker records list dependencies.
-    for_each_haskell_list_element(Args, xs, "Data.Vector.Unboxed.concat",
-        [&](int vector_reg, EdgeContingency contingency)
-        {
-            inputs.push_back(read_unboxed_bit_vector(Args, vector_reg, contingency));
-        });
-
-    std::size_t total = 0;
-    for(const auto& input: inputs)
-    {
-        if (input->size() > static_cast<std::size_t>(std::numeric_limits<int>::max()) - total)
-            throw myexception()<<"Data.Vector.Unboxed.concat: result length exceeds the Int range";
-        total += input->size();
-    }
-
+    std::size_t total = static_cast<std::size_t>(expected_count);
     bitvector result;
     result.reserve(total);
     std::vector<bitvector::block_type> blocks;
-    for(const auto& input: inputs)
-    {
-        auto old_size = result.size();
-        blocks.resize(input->num_blocks());
-        boost::to_block_range(input->value(), blocks.begin());
-        result.append(blocks.begin(), blocks.end());
-        result.resize(old_size + input->size());
-    }
+    auto xs = Args.evaluate_reg_use_with_contingency(Args.reg_for_slot(1), count_arg.edge_contingency);
+
+    // Copy each owner immediately while retaining the shared walker's list and field dependencies.
+    // Resizing after append removes unused high bits before the next owner is added.
+    for_each_haskell_list_element(Args, xs, "Data.Vector.Unboxed.concat",
+        [&](int vector_reg, EdgeContingency contingency)
+        {
+            auto input = read_unboxed_bit_vector(Args, vector_reg, contingency);
+            if (input->size() > total - result.size())
+                throw myexception()<<"Data.Vector.Unboxed.concat: input lengths exceed cached result length";
+            auto old_size = result.size();
+            blocks.resize(input->num_blocks());
+            boost::to_block_range(input->value(), blocks.begin());
+            result.append(blocks.begin(), blocks.end());
+            result.resize(old_size + input->size());
+        });
+
+    if (result.size() != total)
+        throw myexception()<<"Data.Vector.Unboxed.concat: input lengths do not match cached result length";
     return result;
 }
 

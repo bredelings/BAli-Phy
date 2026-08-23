@@ -39,14 +39,14 @@ class Unbox a where
     basicUnsafeSlice :: Int -> Int -> Vector a -> Vector a
     basicFromListN :: Int -> [a] -> Vector a
     basicReplicate :: Int -> a -> Vector a
-    basicConcat :: [Vector a] -> Vector a
+    basicConcatN :: Int -> [Vector a] -> Vector a
 
 foreign import bpcall "NativeVector:sizedIntVectorFromList" sizedIntVectorFromListNative :: Int -> [Int] -> NativeVector Int
 foreign import bpcall "NativeVector:sizedDoubleVectorFromList" sizedDoubleVectorFromListNative :: Int -> [Double] -> NativeVector Double
 foreign import bpcall "NativeVector:vectorKonstNative" intVectorReplicateNative :: Int -> Int -> NativeVector Int
 foreign import bpcall "NativeVector:vectorKonstNative" doubleVectorReplicateNative :: Double -> Int -> NativeVector Double
-foreign import bpcall "NativeVector:concatIntVectors" concatIntVectorsNative :: [Vector Int] -> NativeVector Int
-foreign import bpcall "NativeVector:concatDoubleVectors" concatDoubleVectorsNative :: [Vector Double] -> NativeVector Double
+foreign import bpcall "NativeVector:concatIntVectors" concatIntVectorsNative :: Int -> [Vector Int] -> NativeVector Int
+foreign import bpcall "NativeVector:concatDoubleVectors" concatDoubleVectorsNative :: Int -> [Vector Double] -> NativeVector Double
 foreign import ecall "NativeVector:unsafeIntIndex" unsafeIntIndexNative :: NativeVector Int -> Int -> Int
 foreign import ecall "NativeVector:unsafeDoubleIndex" unsafeDoubleIndexNative :: NativeVector Double -> Int -> Double
 foreign import ecall "NativeVector:intVectorSize" intVectorSizeNative :: NativeVector Int -> Int
@@ -62,7 +62,7 @@ instance Unbox Int where
         V_Int 0 count (sizedIntVectorFromListNative count values)
     basicReplicate count value =
         V_Int 0 count (intVectorReplicateNative value count)
-    basicConcat values = intVectorFromNative (concatIntVectorsNative values)
+    basicConcatN count values = V_Int 0 count (concatIntVectorsNative count values)
 
 instance Unbox Double where
     basicLength (V_Double _ count _) = count
@@ -74,7 +74,7 @@ instance Unbox Double where
         V_Double 0 count (sizedDoubleVectorFromListNative count values)
     basicReplicate count value =
         V_Double 0 count (doubleVectorReplicateNative value count)
-    basicConcat values = doubleVectorFromNative (concatDoubleVectorsNative values)
+    basicConcatN count values = V_Double 0 count (concatDoubleVectorsNative count values)
 
 instance (Unbox a, Unbox b) => Unbox (a,b) where
     basicLength (V_2 count _ _) = count
@@ -97,12 +97,12 @@ instance (Unbox a, Unbox b) => Unbox (a,b) where
         V_2 count (basicReplicate count (fst value))
                   (basicReplicate count (snd value))
 
-    -- Concatenate pair vectors by joining both structure-of-arrays components
-    -- in the same input order and taking their shared length from one result.
-    basicConcat values = V_2 (basicLength leftValues) leftValues rightValues
+    -- Concatenate both structure-of-arrays components in the same input order.
+    -- Reuse the public calculation of their shared length without forcing either owner.
+    basicConcatN count values = V_2 count leftValues rightValues
       where
-        leftValues = basicConcat (List.map left values)
-        rightValues = basicConcat (List.map right values)
+        leftValues = basicConcatN count (List.map left values)
+        rightValues = basicConcatN count (List.map right values)
         left (V_2 _ child _) = child
         right (V_2 _ _ child) = child
 
