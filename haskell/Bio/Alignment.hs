@@ -271,7 +271,7 @@ getTaxonAges labels regex direction = zip labels (U.toList ages)
                                                    (getTaxonAgesRaw cppLabels cppRegex cppDirection)
 
 class AncestralAlignment a where
-    ancestralAlignment :: (IsTree t, LabelType t ~ Text) => t -> a -> EVector Int -> Alphabet -> IntMap ComponentStateSequence -> AlignedCharacterData
+    ancestralAlignment :: (IsTree t, LabelType t ~ Text) => t -> a -> U.Vector Int -> Alphabet -> IntMap ComponentStateSequence -> AlignedCharacterData
 
 instance AncestralAlignment (IntMap (Maybe (U.Vector Bit))) where
     ancestralAlignment tree observedMasks smap alphabet componentStateSequences =

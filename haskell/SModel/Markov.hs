@@ -11,9 +11,10 @@ import           Bio.Alphabet
 import           Numeric.LinearAlgebra hiding ((<>))
 import           Tree
 import qualified Data.Vector as V
+import qualified Data.Vector.Unboxed as U
 import qualified Data.Map as Map
 
-foreign import trcall "SModel:getEquilibriumRate" getEquilibriumRateNative :: Alphabet -> EVector Int -> Matrix Double -> Vector Double -> Double
+foreign import trcall "SModel:getEquilibriumRate" getEquilibriumRateNative :: Alphabet -> U.Vector Int -> Matrix Double -> Vector Double -> Double
 
 getEquilibriumRate alphabet states rates frequencies =
     getEquilibriumRateNative alphabet states rates frequencies
@@ -46,7 +47,7 @@ getEquilibriumRate alphabet states rates frequencies =
 -- Fields are: alphabet, smap, q, and cached rate.
 -- PROBLEM: caching the rate is not quite right, since there are different rates:
 --    DNA rate, AA rate, Codon rate, synonymous rate, etc.
-data Markov = Markov Alphabet (EVector Int) Markov.Markov Double ComponentAnnotations
+data Markov = Markov Alphabet (U.Vector Int) Markov.Markov Double ComponentAnnotations
 
 wrapMarkov a smap m = Markov a smap m (getEquilibriumRate a smap (getQ m) (getEqFreqs m)) emptyComponentAnnotations
 
@@ -66,7 +67,7 @@ instance CTMC Markov where
     getEqFreqs (Markov _ _ m _ _) = getEqFreqs m
     getQ (Markov _ _ m _ _) = getQ m
 
-simpleSMap a = toVector [0..(alphabetSize a)-1]
+simpleSMap a = U.fromList [0..(alphabetSize a)-1]
 
 -- In theory we could take just (a,q) since we could compute smap from a (if states are simple) and pi from q.
 

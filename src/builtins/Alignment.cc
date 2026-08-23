@@ -775,12 +775,15 @@ extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args
     return copy_to_native_int_vector(letters);
 }
 
+// Decode two consecutive unboxed-vector groups and retain both native owners while projecting states.
+// The smap occupies raw slots 0..2 and the state sequence occupies raw slots 3..5.
 extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
 {
-    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto smap_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0, "Alignment.statesToLetters smap");
     auto state_input = read_native_vector_input<int, ForeignDemand::use>(
-        Args, 1, "Alignment.statesToLetters");
-    const auto& smap = arg0.as_<R::RVector>();
+        Args, 3, "Alignment.statesToLetters states");
+    auto smap = smap_input.view();
     auto states = state_input.view();
     int count = static_cast<int>(states.size());
 
@@ -791,7 +794,7 @@ extern "C" closure builtin_function_statesToLetters(OperationArgs& Args)
     {
         int s = states[i];
         if (s >= 0)
-            letter_sequence[i] = smap[s].as_int();
+            letter_sequence[i] = smap[s];
         else
             letter_sequence[i] = s;
     }

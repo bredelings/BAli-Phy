@@ -85,18 +85,21 @@ extern "C" closure builtin_function_stripGaps(OperationArgs& Args)
     return result;
 }
 
+// Decode the smap from raw slots 1..3 and the sequence from slots 5..7.
+// The alphabet remains in slot 0 and the intervening model count moves to slot 4.
 extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto smap_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 1, "Likelihood.simpleSequenceLikelihoods smap");
+    auto arg4 = Args.evaluate_slot_to_value(4);
     auto sequence_input = read_native_vector_input<int, ForeignDemand::use>(
-        Args, 3, "Likelihood.simpleSequenceLikelihoods");
+        Args, 5, "Likelihood.simpleSequenceLikelihoods sequence");
 
     return substitution::simple_sequence_likelihoods2(sequence_input.view(), // sequence
                                                       *arg0.as_<Alphabet>(), // alphabet
-                                                      arg1.as_<R::RVector>(),   // smap
-                                                      arg2.as_int());        // n_models
+                                                      smap_input.view(),     // smap
+                                                      arg4.as_int());        // n_models
 }
 
 

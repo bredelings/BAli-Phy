@@ -37,14 +37,14 @@ foreign import trcall "LikelihoodSEV:sampleSequence" sampleSequence :: Component
 -- TEMPORARY EVECTOR ADAPTER: the fixed-alignment builtin still embeds a boxed
 -- row in an EPair.
 -- Remove this wrapper when the raw interface accepts an unboxed row and mask separately.
-foreign import trcall "LikelihoodSEV:simpleSequenceLikelihoods" simpleSequenceLikelihoodsRaw :: Alphabet -> EVector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
+foreign import trcall "LikelihoodSEV:simpleSequenceLikelihoods" simpleSequenceLikelihoodsRaw :: Alphabet -> U.Vector Int -> Int -> EPair (EVector Int) CBitVector -> CondLikes
 
 simpleSequenceLikelihoods alpha smap nModels (sequence, mask) =
     simpleSequenceLikelihoodsRaw alpha smap nModels
         (c_pair' (toLegacySequenceVector sequence, bitVectorNativeOwner mask))
 
 -- Could we move the conversion from sequence-with-gaps to (sequence,bitvector) into here?
-simpleNodeCLVs :: Alphabet -> EVector Int -> Int -> IntMap (Maybe (U.Vector Int, U.Vector Bit)) -> IntMap (Maybe CondLikes)
+simpleNodeCLVs :: Alphabet -> U.Vector Int -> Int -> IntMap (Maybe (U.Vector Int, U.Vector Bit)) -> IntMap (Maybe CondLikes)
 simpleNodeCLVs alpha smap nModels seqs = (sequenceToCL <$>) <$> seqs
     where sequenceToCL = simpleSequenceLikelihoods alpha smap nModels
 

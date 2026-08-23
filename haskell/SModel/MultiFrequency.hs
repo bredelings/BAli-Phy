@@ -10,6 +10,7 @@ import Markov (CTMC, qExp, getEqFreqs)
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import qualified Data.Map as Map
+import qualified Data.Vector.Unboxed as U
 import SModel.Frequency (frequenciesFromDict)
 import SModel.MarkovModulated
 import Reversible
@@ -79,7 +80,7 @@ instance (HasRoot t2, HasSMap m) => HasStateProperties (MultiFrequency t2 i m) w
     getStatePropertyFunctions (MultiFrequency _ _ _ (ComponentAnnotations properties _)) = properties
     setStateProperty name property (MultiFrequency tree nodeInfo branchQ (ComponentAnnotations properties conditions)) =
         MultiFrequency tree nodeInfo branchQ (ComponentAnnotations (Map.insert name property properties) conditions)
-    nPropertyStates model = vector_size (getSMap model)
+    nPropertyStates model = U.length (getSMap model)
 
 instance HasComponentConditions (MultiFrequency t2 i m) where
     getComponentConditions (MultiFrequency _ _ _ (ComponentAnnotations _ conditions)) = conditions

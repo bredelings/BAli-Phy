@@ -13,6 +13,7 @@ import           Markov (CTMC(..), qExp)
 import           SModel.MixtureModel ( ) -- just for the instances
 import           Reversible
 import qualified Data.Map as Map
+import qualified Data.Vector.Unboxed as U
 
 {- NOTE: As branch lengths approach 0, this approaches a CTMC model with Q = meanMatrix Qs -}
 
@@ -79,7 +80,7 @@ instance HasSMap m => HasStateProperties (BranchSiteMixture m) where
     getStatePropertyFunctions (BranchSiteMixture _ _ (ComponentAnnotations properties _)) = properties
     setStateProperty name property (BranchSiteMixture d e (ComponentAnnotations properties conditions)) =
         BranchSiteMixture d e (ComponentAnnotations (Map.insert name property properties) conditions)
-    nPropertyStates model = vector_size (getSMap model)
+    nPropertyStates model = U.length (getSMap model)
 
 instance HasComponentConditions (BranchSiteMixture m) where
     getComponentConditions (BranchSiteMixture _ _ (ComponentAnnotations _ conditions)) = conditions

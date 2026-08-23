@@ -1,5 +1,6 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 //#define DEBUG_RATE_MATRIX
+#include "builtins/native-vector-input.hh"
 #include "computation/machine/args.hh"
 #include "math/exponential.hh"
 #include "sequence/alphabet.hh"
@@ -152,18 +153,21 @@ static unsigned triplet_hamming_distance(const Triplets& triplets, int state1, i
     return distance;
 }
 
+// Decode the unboxed smap from raw slots 1..3 before reading the matrix and frequencies.
+// The alphabet remains in slot 0, while the trailing arguments move to slots 4 and 5.
 extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     const alphabet& a = *arg0.as_<Alphabet>();
 
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto& smap = arg1.as_< R::RVector >();
+    auto smap_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 1, "SModel.getEquilibriumRate smap");
+    auto smap = smap_input.view();
 
-    auto arg2 = Args.evaluate_slot_to_value(2);
-    const DenseMatrix<double>& Q = arg2.as_< Box<DenseMatrix<double>> >();
+    auto arg4 = Args.evaluate_slot_to_value(4);
+    const DenseMatrix<double>& Q = arg4.as_<Box<DenseMatrix<double>>>();
 
-    auto pi_value = Args.evaluate_slot_to_value(3);
+    auto pi_value = Args.evaluate_slot_to_value(5);
     const auto& pi = pi_value.as_<Box<DenseVector<double>>>();
 
     assert(Q.cols() == Q.rows());
@@ -180,8 +184,8 @@ extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
 	    double temp = 0;
 	    for(int s2=0;s2<N;s2++)
 	    {
-		int state1 = smap[s1].as_int();
-		int state2 = smap[s2].as_int();
+		int state1 = smap[s1];
+		int state2 = smap[s2];
 		temp += triplet_hamming_distance(*triplets, state1, state2) * Q(s1,s2);
 	    }
 	    scale += temp*pi[s1];
@@ -198,7 +202,7 @@ extern "C" closure builtin_function_getEquilibriumRate(OperationArgs& Args)
 	{
 	    double temp = 0;
 	    for(int s2=0;s2<N;s2++)
-		if (smap[s1].as_int() != smap[s2].as_int())
+		if (smap[s1] != smap[s2])
 		    temp += Q(s1,s2);
 
 	    scale += temp*pi[s1];

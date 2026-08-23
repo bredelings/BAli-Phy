@@ -64,14 +64,14 @@ namespace substitution {
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods(const R::RVector& sequence,
 				const alphabet& a,
-				const R::RVector& smap,
+				std::span<const int> smap,
 				int n_models);
 
     // This one is sparse.
     object_ptr<const SparseLikelihoods>
     simple_sequence_likelihoods2(std::span<const int> sequence,
                                  const alphabet& a,
-                                 const R::RVector& smap,
+                                 std::span<const int> smap,
                                  int n_models);
 
     object_ptr<const Likelihood_Cache_Branch>

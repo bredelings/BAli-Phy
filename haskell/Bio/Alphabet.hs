@@ -68,7 +68,7 @@ gapCharIndex = -1 :: Int
 
 missingCharIndex = -2 :: Int
 
-type SMap = EVector Int
+type SMap = U.Vector Int
 
 class HasAlphabet x => HasSMap x where
     getSMap :: x -> SMap

@@ -39,17 +39,20 @@ closure component_state_result(ComponentStateVectors values)
 
 }
 
+// Decode the smap from raw slots 1..3 while retaining the legacy sequence/mask pair in slot 5.
+// The alphabet remains in slot 0 and the intervening model count moves to slot 4.
 extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    auto arg2 = Args.evaluate_slot_to_value(2);
-    auto arg3 = Args.evaluate_slot_to_value(3);
+    auto smap_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 1, "LikelihoodSEV.simpleSequenceLikelihoods smap");
+    auto arg4 = Args.evaluate_slot_to_value(4);
+    auto arg5 = Args.evaluate_slot_to_value(5);
 
-    return substitution::simple_sequence_likelihoods2_SEV(arg3,                 // sequence/bits
+    return substitution::simple_sequence_likelihoods2_SEV(arg5,                 // sequence/bits
 							  *arg0.as_<Alphabet>(), // alphabet
-							  arg1.as_<R::RVector>(),   // smap
-							  arg2.as_int());        // n_models
+							  smap_input.view(),     // smap
+							  arg4.as_int());        // n_models
 }
 
 extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)

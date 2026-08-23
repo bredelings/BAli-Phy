@@ -12,6 +12,7 @@ import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
 import qualified Data.Text as T
+import qualified Data.Vector.Unboxed as U
 
 {-
   This model is for PAML's branch-model, where every branch can have a different Q matrix
@@ -54,7 +55,7 @@ instance HasSMap m => HasStateProperties (BranchModel m) where
     setStateProperty name property
         (BranchModel categories models modelRate (ComponentAnnotations properties conditions)) =
         BranchModel categories models modelRate (ComponentAnnotations (Map.insert name property properties) conditions)
-    nPropertyStates model = vector_size (getSMap model)
+    nPropertyStates model = U.length (getSMap model)
 
 instance HasComponentConditions (BranchModel m) where
     getComponentConditions (BranchModel _ _ _ (ComponentAnnotations _ conditions)) = conditions

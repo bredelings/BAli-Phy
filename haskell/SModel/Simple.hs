@@ -6,6 +6,7 @@ import Tree
 import Numeric.LinearAlgebra
 import Numeric.LinearAlgebra.Data
 import qualified Data.IntMap as IntMap (fromSet)
+import qualified Data.Vector.Unboxed as U
 import Reversible
 
 data SingleBranchLengthModel a = SingleBranchLengthModel a Double
@@ -42,7 +43,7 @@ TODO: Rename to e.g. PhyloLikelihood?
 
 class CheckReversible m => SimpleSModel t m where
     getTree :: (SModelOnTree t m) -> t
-    stateLetters :: (SModelOnTree t m) -> EVector Int
+    stateLetters :: (SModelOnTree t m) -> U.Vector Int
     branchTransitionP :: (SModelOnTree t m) -> EdgeId -> [Matrix Double]
     distribution :: (SModelOnTree t m) -> [Double]
     nBaseModels :: (SModelOnTree t m) -> Int
@@ -71,7 +72,7 @@ weightedFrequencyMatrix model =
 
 frequencyMatrix model = fromRows (componentFrequencies model)
 
-nStates m = vector_size (stateLetters m)
+nStates m = U.length (stateLetters m)
 
 -- NOTE: Transition matrices stay raw because runtime vectors cannot contain
 -- lifted Matrix records; remove this when the cache translates its elements.

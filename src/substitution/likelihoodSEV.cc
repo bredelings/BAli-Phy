@@ -1119,7 +1119,7 @@ namespace substitution
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods_SEV(const R::Exp& sequence_mask,
 				    const alphabet& a,
-				    const R::RVector& smap,
+				    std::span<const int> smap,
 				    int n_models)
     {
 	auto& sequence = R::rpair_first(sequence_mask).as_<R::RVector>();
@@ -1153,7 +1153,7 @@ namespace substitution
 		{
 		    for(int s1=0;s1<n_states;s1++)
 		    {
-			int l = smap[s1].as_int();
+			int l = smap[s1];
 			if (not ok[l])
 			{
 			    // Pr *= Pr(observation | state )
@@ -1174,7 +1174,7 @@ namespace substitution
     object_ptr<const SparseLikelihoods>
     simple_sequence_likelihoods2_SEV(const R::Exp& sequence_mask,
 				     const alphabet& a,
-				     const R::RVector& smap,
+				     std::span<const int> smap,
 				     int n_models)
     {
 	auto& sequence = R::rpair_first(sequence_mask).as_<R::RVector>();
@@ -1201,7 +1201,7 @@ namespace substitution
 		auto& ok = a.letter_mask(letter);
 		for(int s1=0;s1<n_states;s1++)
 		{
-		    int l = smap[s1].as_int();
+		    int l = smap[s1];
 		    if (ok[l])
 		    {
 			LCB->states.push_back(s1);

@@ -147,26 +147,26 @@ namespace substitution {
     }
 
 
-    inline double sum(const DenseMatrix<double>& Q, const R::RVector& smap, int s1, int l)
+    inline double sum(const DenseMatrix<double>& Q, std::span<const int> smap, int s1, int l)
     {
         double total = 0;
         int n_states = smap.size();
 
         for(int s2=0; s2<n_states; s2++)
-            if (smap[s2].as_int() == l)
+            if (smap[s2] == l)
                 total += Q(s1,s2);
 
         assert(total - 1.0 < 1.0e-9*Q.rows());
         return total;
     }
 
-    inline double sum(const DenseMatrix<double>& Q,const R::RVector& smap,
+    inline double sum(const DenseMatrix<double>& Q, std::span<const int> smap,
                       int s1, int l2, const alphabet& a)
     {
         double total=0;
 
         for(int s=0;s<smap.size();s++)
-            if (a.matches(smap[s].as_int(),l2))
+            if (a.matches(smap[s],l2))
                 total += Q(s1,s);
 
         assert(total - 1.0 < 1.0e-9*Q.rows());
@@ -939,10 +939,10 @@ namespace substitution {
         return LCB;
     }
 
-    bool is_iota(const R::RVector& v)
+    bool is_iota(std::span<const int> v)
     {
         for(int i=0;i<v.size();i++)
-            if (i != v[i].as_int())
+            if (i != v[i])
                 return false;
         return true;
     }
@@ -951,7 +951,8 @@ namespace substitution {
     // This version differs from the 'simple' version because it has to use sum(Q,smap,s1,l2)
     // instead of just Q(s1,l2).
     object_ptr<const Likelihood_Cache_Branch>
-    peel_leaf_branch(const R::RVector& sequence, const alphabet& a, const R::RVector& transition_P, const R::RVector& smap)
+    peel_leaf_branch(const R::RVector& sequence, const alphabet& a, const R::RVector& transition_P,
+                     std::span<const int> smap)
     {
         // Do this before accessing matrices or other_subst
         int L0 = sequence.size();
@@ -2143,7 +2144,7 @@ namespace substitution {
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods(const R::RVector& sequence,
 				const alphabet& a,
-				const R::RVector& smap,
+				std::span<const int> smap,
 				int n_models)
     {
 	int n_states = smap.size();
@@ -2171,7 +2172,7 @@ namespace substitution {
 		{
 		    for(int s1=0;s1<n_states;s1++)
 		    {
-			int l = smap[s1].as_int();
+			int l = smap[s1];
 			if (not ok[l])
 			{
 			    // Pr *= Pr(observation | state )
@@ -2190,7 +2191,7 @@ namespace substitution {
     object_ptr<const SparseLikelihoods>
     simple_sequence_likelihoods2(std::span<const int> sequence,
                                  const alphabet& a,
-                                 const R::RVector& smap,
+                                 std::span<const int> smap,
                                  int n_models)
     {
 	int n_states = smap.size();
@@ -2212,7 +2213,7 @@ namespace substitution {
 		auto& ok = a.letter_mask(letter);
 		for(int s1=0;s1<n_states;s1++)
 		{
-		    int l = smap[s1].as_int();
+		    int l = smap[s1];
 		    if (ok[l])
 		    {
 			LCB->states.push_back(s1);

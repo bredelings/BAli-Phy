@@ -66,14 +66,14 @@ namespace substitution {
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods_SEV(const Runtime::Exp& sequence_mask,
 				    const alphabet& a,
-				    const R::RVector& smap,
+				    std::span<const int> smap,
 				    int n_models);
 
     // This one is sparse
     object_ptr<const SparseLikelihoods>
     simple_sequence_likelihoods2_SEV(const Runtime::Exp& sequence_mask,
 				     const alphabet& a,
-				     const R::RVector& smap,
+				     std::span<const int> smap,
 				     int n_models);
 
     ComponentStateVectors sample_root_sequence_SEV(const R::RVector& LCN,

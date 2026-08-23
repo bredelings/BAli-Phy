@@ -26,7 +26,7 @@ mkSequence s = (sequenceName s, sequenceDataRaw s)
 
 foreign import trcall "Alignment:sequenceToAlignedIndices" sequenceToAlignedIndices :: Alphabet -> Text -> U.Vector Int
 
-foreign import trcall "Alignment:statesToLetters" statesToLetters :: EVector Int -> U.Vector Int -> U.Vector Int
+foreign import trcall "Alignment:statesToLetters" statesToLetters :: U.Vector Int -> U.Vector Int -> U.Vector Int
 
 foreign import trcall "Alignment:loadSequences" loadSequencesRaw :: String -> IO (EVector ESequence)
 loadSequences :: String -> IO [Sequence]

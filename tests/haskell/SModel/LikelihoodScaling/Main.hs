@@ -32,7 +32,7 @@ main = do
         identityTransitions = listToVector [nativeMatrix (ident 4)]
             :: EVector (NativeMatrix Double)
         letters = U.fromList [0] :: U.Vector Int
-        smap = listToVector [0,1,2,3] :: EVector Int
+        smap = U.fromList [0,1,2,3] :: U.Vector Int
         leaf = simpleSequenceLikelihoods dna smap 1
             (letters, bitmaskFromSequence letters)
         emptyLikes = listToVector [] :: EVector CondLikes

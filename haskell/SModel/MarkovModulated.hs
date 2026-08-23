@@ -11,6 +11,7 @@ import qualified Markov
 import Markov (getQ, getStartFreqs, getEqFreqs)
 import Numeric.LinearAlgebra -- for fromLists and scale
 import qualified Data.Map as Map
+import qualified Data.Vector.Unboxed as U
 import Numeric.LinearAlgebra.Data
 
 -- NOTE: Component matrices stay raw because trcall does not translate EVector
@@ -19,7 +20,6 @@ foreign import trcall "SModel:modulated_markov_rates" modulatedRatesNative :: EV
 -- NOTE: Component frequencies stay raw because trcall does not translate
 -- EVector elements; remove this once collection-level translation exists.
 foreign import trcall "SModel:modulated_markov_pi" modulatedPiNative :: EVector (NativeVector Double) -> Vector Double -> Vector Double
-foreign import bpcall "SModel:modulated_markov_smap" builtin_modulated_markov_smap :: EVector (EVector Int) -> EVector Int
 
 modulatedMarkovRates qs rates_between = overrideMatrixDims stateCount stateCount
     (modulatedRatesNative (toVector (map nativeMatrix qs)) rates_between)
@@ -28,8 +28,6 @@ modulatedMarkovRates qs rates_between = overrideMatrixDims stateCount stateCount
 modulatedMarkovPi pis levelProbs = overrideVectorSize stateCount
     (modulatedPiNative (toVector (map nativeVector pis)) levelProbs)
   where stateCount = sum (map vectorSize pis)
-
-modulatedMarkovSmap smaps = builtin_modulated_markov_smap (toVector smaps)
 
 {- NOTE: Does ratesBetween + levelProbs = GTR ?
 
@@ -49,7 +47,7 @@ modulatedMarkov models between = setModulatedConditions conditions $ setModulate
     smaps = map getSMap models
     q = modulatedMarkovRates qs (getQ between)
     pi = modulatedMarkovPi pis (getStartFreqs between)
-    smap = modulatedMarkovSmap smaps
+    smap = U.concat smaps
     rev = (minimum $ fmap getReversibility models) `min` (getReversibility between)
     baseModel = setReversibility rev $ markov a smap q pi
     properties = modulateCommonProperties $ fmap getStatePropertyFunctions models
