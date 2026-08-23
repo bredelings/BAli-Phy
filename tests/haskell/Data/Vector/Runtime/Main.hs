@@ -180,21 +180,22 @@ unboxedConcat = do
     putStrLn "unboxed concat"
     let ints = U.fromList [0,1,2,3,4] :: U.Vector Int
         doubles = U.fromList [0.5,1.5,2.5,3.5] :: U.Vector Double
-    print (U.toList (U.concat [U.slice 1 2 ints, U.empty, U.drop 3 ints]))
-    print (U.toList (U.concat [U.take 2 doubles, U.slice 3 1 doubles]))
-    print (U.toList (U.concat [] :: U.Vector Int))
+        emptyInts = U.concat [] :: U.Vector Int
+    print ("int", U.toList (U.concat [U.slice 1 2 ints, U.empty, U.drop 3 ints]))
+    print ("double", U.toList (U.concat [U.take 2 doubles, U.slice 3 1 doubles]))
+    print ("empty", U.length emptyInts, U.toList emptyInts)
     let pairs = U.concat
             [ U.fromList [((1,1.5),10)]
             , U.empty
             , U.fromList [((2,2.5),20)]
             ] :: U.Vector ((Int,Double),Int)
-    print (U.toList pairs)
+    print ("pair", U.toList pairs)
     let bits = U.concat
             [ U.replicate 63 (Bit True)
             , U.fromList [Bit False,Bit True]
             , U.replicate 65 (Bit False)
             ]
-    print (U.length bits, popCount bits, U.toList (U.slice 61 6 bits), bits U.! 129)
+    print ("bit", (U.length bits, popCount bits), U.toList (U.slice 61 6 bits), bits U.! 129)
 
 -- Run the related boxed and unboxed vector checks in one compiler process.
 main = do
