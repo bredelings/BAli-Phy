@@ -29,7 +29,8 @@ main = do
     print (show (Bit False), show (Bit True))
     print (finiteBitSize (Bit True), countLeadingZeros (Bit False), countTrailingZeros (Bit True))
     print (U.length sliced, plain sliced, plain chained, popCount sliced)
-    print (plain (source .&. short), plain (source .|. short), plain (source `xor` short))
+    print (plain (source .&. short), plain (source .|. short), plain (source `xor` short),
+           plain (short .|. source))
     print (testBit source (-1), testBit source 5)
     print (plain (setBit source 1), plain (clearBit source 2), plain (complementBit source 3))
     print (plain (bit (-1) :: U.Vector Bit), plain (bit 3 :: U.Vector Bit))

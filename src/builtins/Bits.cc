@@ -5,7 +5,6 @@
 #include "alignment/alignment.hh"
 #include "util/myexception.hh"
 
-#include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 #include <limits>
 
@@ -16,20 +15,23 @@ typedef Box<boost::dynamic_bitset<>> bitvector;
 namespace
 {
 
-// Resize both operands to their common prefix before applying a packed binary
-// operation, so every public operator has the same upstream truncation rule.
+// These operations are commutative, so copy the longer owner, truncate it to
+// the common prefix, and combine it with the shorter owner.  This preserves the
+// upstream truncation rule while copying only the returned bit vector.
 template <typename Apply>
-closure truncated_bitwise(OperationArgs& Args, Apply apply)
+closure truncated_commutative_bitwise(OperationArgs& Args, Apply apply)
 {
     auto left_arg = Args.evaluate_slot_to_value(0);
     auto right_arg = Args.evaluate_slot_to_value(1);
-    auto left = left_arg.as_<bitvector>();
-    auto right = right_arg.as_<bitvector>();
-    auto size = std::min(left.size(), right.size());
-    left.resize(size);
-    right.resize(size);
-    apply(left, right);
-    return left;
+    const auto& left = left_arg.as_<bitvector>();
+    const auto& right = right_arg.as_<bitvector>();
+    bool copy_left = left.size() >= right.size();
+    const auto& result_source = copy_left ? left : right;
+    const auto& shorter = copy_left ? right : left;
+    auto result = result_source;
+    result.resize(shorter.size());
+    apply(result, shorter);
+    return result;
 }
 
 }
@@ -114,18 +116,18 @@ extern "C" closure builtin_function_complement(OperationArgs& Args)
 
 extern "C" closure builtin_function_bitwise_or(OperationArgs& Args)
 {
-    return truncated_bitwise(Args, [](auto& left, const auto& right) { left |= right; });
+    return truncated_commutative_bitwise(Args, [](auto& left, const auto& right) { left |= right; });
 }
 
 
 extern "C" closure builtin_function_bitwise_and(OperationArgs& Args)
 {
-    return truncated_bitwise(Args, [](auto& left, const auto& right) { left &= right; });
+    return truncated_commutative_bitwise(Args, [](auto& left, const auto& right) { left &= right; });
 }
 
 extern "C" closure builtin_function_bitwise_xor(OperationArgs& Args)
 {
-    return truncated_bitwise(Args, [](auto& left, const auto& right) { left ^= right; });
+    return truncated_commutative_bitwise(Args, [](auto& left, const auto& right) { left ^= right; });
 }
 
 extern "C" R::Exp simple_function_size(vector<R::Exp>& args)
