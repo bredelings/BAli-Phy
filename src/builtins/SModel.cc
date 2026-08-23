@@ -809,19 +809,6 @@ extern "C" closure builtin_function_modulated_markov_pi(OperationArgs& Args)
     return pi;
 }
 
-extern "C" closure builtin_function_modulated_markov_smap(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& smaps = arg0.as_<R::RVector>();
-
-    R::RVector new_smap;
-    for(auto& smap: smaps)
-        for(auto& x: smap.as_<R::RVector>())
-            new_smap.push_back(x);
-
-    return new_smap;
-}
-
 object_ptr<const Object> Empirical_Exchange_Function(const alphabet& a, istream& ifile)
 {
     int n = a.size();
