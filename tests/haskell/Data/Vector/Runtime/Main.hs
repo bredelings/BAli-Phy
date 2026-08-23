@@ -5,6 +5,8 @@ import Compiler.Enum
 import Compiler.Error (error)
 import Compiler.Fractional
 import Compiler.Num
+import Data.Bit (Bit(Bit))
+import Data.Bits (popCount)
 import Data.Bool (Bool(False, True))
 import Data.Eq
 import qualified Data.Foldable as F
@@ -171,6 +173,29 @@ unboxedSlicesAndPairs = do
     let nested = U.zip pairs (U.fromList [10,20,30] :: U.Vector Int)
     print (U.toList nested)
 
+-- Protect representation-specific concat for primitive slices, nested pairs, and packed block joins;
+-- ordinary vector operations do not cross its foreign list boundary.  This becomes redundant if concat
+-- is replaced by a representation-independent builder.
+unboxedConcat = do
+    putStrLn "unboxed concat"
+    let ints = U.fromList [0,1,2,3,4] :: U.Vector Int
+        doubles = U.fromList [0.5,1.5,2.5,3.5] :: U.Vector Double
+    print (U.toList (U.concat [U.slice 1 2 ints, U.empty, U.drop 3 ints]))
+    print (U.toList (U.concat [U.take 2 doubles, U.slice 3 1 doubles]))
+    print (U.toList (U.concat [] :: U.Vector Int))
+    let pairs = U.concat
+            [ U.fromList [((1,1.5),10)]
+            , U.empty
+            , U.fromList [((2,2.5),20)]
+            ] :: U.Vector ((Int,Double),Int)
+    print (U.toList pairs)
+    let bits = U.concat
+            [ U.replicate 63 (Bit True)
+            , U.fromList [Bit False,Bit True]
+            , U.replicate 65 (Bit False)
+            ]
+    print (U.length bits, popCount bits, U.toList (U.slice 61 6 bits), bits U.! 129)
+
 -- Run the related boxed and unboxed vector checks in one compiler process.
 main = do
     boxedConstruction
@@ -182,3 +207,4 @@ main = do
     unboxedBasic
     unboxedShapeLaziness
     unboxedSlicesAndPairs
+    unboxedConcat

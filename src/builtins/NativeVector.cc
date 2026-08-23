@@ -1,9 +1,14 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+#include "builtins/haskell-list-input.hh"
+#include "builtins/native-vector-input.hh"
+#include "computation/haskell/ids.hh"
 #include "computation/machine/args.hh"
 #include "util/dense-matrix.hh"
 #include "util/myexception.hh"
 
+#include <algorithm>
 #include <limits>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -76,6 +81,85 @@ closure sized_vector_from_list(OperationArgs& Args)
     return result;
 }
 
+// Decode one U.Vector numeric constructor through dependent USEs of its view fields.
+// The returned input retains the native owner while exposing only the validated logical span.
+template<typename T>
+NativeVectorInput<T> read_unboxed_numeric_vector(OperationArgs& Args, int vector_reg,
+                                                  EdgeContingency contingency,
+                                                  std::string_view constructor_name)
+{
+    auto vector = Args.evaluate_reg_use_with_contingency(vector_reg, contingency);
+    const closure& vector_closure = Args.memory().closure_at(vector.value_reg);
+    auto constructor = vector_closure.get_code().to<Runtime::ConstructorApp>();
+    if (not constructor or get_unqualified_name(constructor->head.name()) != constructor_name or
+        constructor->head.n_args() != 3 or constructor->args.size() != 3)
+        throw myexception()<<"Data.Vector.Unboxed.concat: expected "<<constructor_name
+                           <<", but got "<<vector_closure.get_code().print();
+
+    int offset_reg = vector_closure.reg_for_constructor_slot(0);
+    int length_reg = vector_closure.reg_for_constructor_slot(1);
+    int owner_reg = vector_closure.reg_for_constructor_slot(2);
+
+    int offset_value_reg = Args.evaluate_reg_use(offset_reg, vector.edge_contingency);
+    auto offset_value = Args.memory().closure_at(offset_value_reg).get_code();
+    if (not offset_value.is_int())
+        throw myexception()<<"Data.Vector.Unboxed.concat: "<<constructor_name<<" offset is not an Int";
+
+    int length_value_reg = Args.evaluate_reg_use(length_reg, vector.edge_contingency);
+    auto length_value = Args.memory().closure_at(length_value_reg).get_code();
+    if (not length_value.is_int())
+        throw myexception()<<"Data.Vector.Unboxed.concat: "<<constructor_name<<" length is not an Int";
+
+    int owner_value_reg = Args.evaluate_reg_use(owner_reg, vector.edge_contingency);
+    const auto& owner_value = Args.memory().closure_at(owner_value_reg).get_code();
+    auto object_value = owner_value.template to<Runtime::ObjectValue>();
+    object_ptr<const Box<DenseVector<T>>> owner;
+    if (object_value)
+        owner = boost::static_pointer_cast<const Box<DenseVector<T>>>(object_value->value);
+    if (not owner)
+        throw myexception()<<"Data.Vector.Unboxed.concat: "<<constructor_name
+                           <<" owner has the wrong native representation";
+
+    return NativeVectorInput<T>(std::move(owner), offset_value.as_int(), length_value.as_int(),
+                                "Data.Vector.Unboxed.concat");
+}
+
+// Gather validated numeric views in one dependency-aware list traversal, then copy them
+// consecutively into a single native allocation.
+template<typename T>
+closure concat_unboxed_numeric_vectors(OperationArgs& Args, std::string_view constructor_name)
+{
+    std::vector<NativeVectorInput<T>> inputs;
+    auto xs = Args.evaluate_slot_use_with_contingency(0);
+
+    // Decode one record per list element; native elements remain untouched
+    // until the final copy into their single result allocation.
+    for_each_haskell_list_element(Args, xs, "Data.Vector.Unboxed.concat",
+        [&](int vector_reg, EdgeContingency contingency)
+        {
+            inputs.push_back(read_unboxed_numeric_vector<T>(Args, vector_reg, contingency, constructor_name));
+        });
+
+    std::size_t total = 0;
+    for(const auto& input: inputs)
+    {
+        auto count = input.view().size();
+        if (count > static_cast<std::size_t>(std::numeric_limits<int>::max()) - total)
+            throw myexception()<<"Data.Vector.Unboxed.concat: result length exceeds the Int range";
+        total += count;
+    }
+
+    auto result = new Box<DenseVector<T>>(static_cast<int>(total));
+    std::size_t offset = 0;
+    for(const auto& input: inputs)
+    {
+        auto values = input.view();
+        std::copy(values.begin(), values.end(), result->data() + offset);
+        offset += values.size();
+    }
+    return result;
+}
+
 }
 
 // Construct a fixed-length Int vector without evaluating an excess list tail.
@@ -88,6 +172,18 @@ extern "C" closure builtin_function_sizedIntVectorFromList(OperationArgs& Args)
 extern "C" closure builtin_function_sizedDoubleVectorFromList(OperationArgs& Args)
 {
     return sized_vector_from_list<double>(Args);
+}
+
+// Concatenate sliced Int views without materializing either elements or descriptors in Haskell.
+extern "C" closure builtin_function_concatIntVectors(OperationArgs& Args)
+{
+    return concat_unboxed_numeric_vectors<int>(Args, "V_Int");
+}
+
+// Concatenate sliced Double views through the same native numeric implementation.
+extern "C" closure builtin_function_concatDoubleVectors(OperationArgs& Args)
+{
+    return concat_unboxed_numeric_vectors<double>(Args, "V_Double");
 }
 
 // Construct a constant vector without allocating a Haskell element list.

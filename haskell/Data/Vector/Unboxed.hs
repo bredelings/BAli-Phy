@@ -5,7 +5,7 @@ module Data.Vector.Unboxed
     , (!), (!?), unsafeIndex
     , length, null
     , slice, unsafeSlice, take, drop
-    , empty, singleton, replicate, fromList, toList
+    , empty, singleton, replicate, fromList, toList, concat
     , zip, unzip
     ) where
 
@@ -92,6 +92,12 @@ replicate count value
 fromList :: Unbox a => [a] -> Vector a
 {-# NOINLINE fromList #-}
 fromList values = basicFromListN (List.length values) values
+
+-- Concatenate complete logical views through their representation-specific native implementation.
+-- Keeping the allocation opaque prevents the simplifier from duplicating a shared result owner.
+concat :: Unbox a => [Vector a] -> Vector a
+{-# NOINLINE concat #-}
+concat = basicConcat
 
 -- Expose logical elements as a lazy list without allocating a boxed-vector
 -- intermediate or copying a primitive slice.

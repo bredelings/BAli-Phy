@@ -1,4 +1,5 @@
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+#include "builtins/haskell-list-input.hh"
 #include "computation/machine/args.hh"
 #include "computation/haskell/ids.hh"
 #include "dp/2way.hh"
@@ -7,6 +8,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <limits>
+#include <vector>
 
 using std::vector;
 
@@ -31,6 +33,75 @@ closure truncated_commutative_bitwise(OperationArgs& Args, Apply apply)
     auto result = result_source;
     result.resize(shorter.size());
     apply(result, shorter);
+    return result;
+}
+
+// Decode one U.Vector Bit constructor and retain its exact packed owner.
+// Bit slices already normalize to offset zero, so the cached length must equal the owner size.
+object_ptr<const bitvector> read_unboxed_bit_vector(OperationArgs& Args, int vector_reg,
+                                                    EdgeContingency contingency)
+{
+    auto vector = Args.evaluate_reg_use_with_contingency(vector_reg, contingency);
+    const closure& vector_closure = Args.memory().closure_at(vector.value_reg);
+    auto constructor = vector_closure.get_code().to<Runtime::ConstructorApp>();
+    if (not constructor or get_unqualified_name(constructor->head.name()) != "V_Bit" or
+        constructor->head.n_args() != 2 or constructor->args.size() != 2)
+        throw myexception()<<"Data.Vector.Unboxed.concat: expected V_Bit, but got "
+                           <<vector_closure.get_code().print();
+
+    int length_reg = vector_closure.reg_for_constructor_slot(0);
+    int owner_reg = vector_closure.reg_for_constructor_slot(1);
+    int length_value_reg = Args.evaluate_reg_use(length_reg, vector.edge_contingency);
+    auto length_value = Args.memory().closure_at(length_value_reg).get_code();
+    if (not length_value.is_int())
+        throw myexception()<<"Data.Vector.Unboxed.concat: V_Bit length is not an Int";
+
+    int owner_value_reg = Args.evaluate_reg_use(owner_reg, vector.edge_contingency);
+    const auto& owner_value = Args.memory().closure_at(owner_value_reg).get_code();
+    auto object_value = owner_value.to<Runtime::ObjectValue>();
+    object_ptr<const bitvector> owner;
+    if (object_value)
+        owner = boost::static_pointer_cast<const bitvector>(object_value->value);
+    if (not owner)
+        throw myexception()<<"Data.Vector.Unboxed.concat: V_Bit owner has the wrong native representation";
+    if (length_value.as_int() < 0 or static_cast<std::size_t>(length_value.as_int()) != owner->size())
+        throw myexception()<<"Data.Vector.Unboxed.concat: V_Bit length does not match its native owner";
+    return owner;
+}
+
+// Append packed inputs at their logical high end; after each append, remove padding from
+// the source's final block so the next vector begins at the exact logical boundary.
+closure concat_unboxed_bit_vectors(OperationArgs& Args)
+{
+    std::vector<object_ptr<const bitvector>> inputs;
+    auto xs = Args.evaluate_slot_use_with_contingency(0);
+
+    // Retain one exact packed owner per input while the shared walker records list dependencies.
+    for_each_haskell_list_element(Args, xs, "Data.Vector.Unboxed.concat",
+        [&](int vector_reg, EdgeContingency contingency)
+        {
+            inputs.push_back(read_unboxed_bit_vector(Args, vector_reg, contingency));
+        });
+
+    std::size_t total = 0;
+    for(const auto& input: inputs)
+    {
+        if (input->size() > static_cast<std::size_t>(std::numeric_limits<int>::max()) - total)
+            throw myexception()<<"Data.Vector.Unboxed.concat: result length exceeds the Int range";
+        total += input->size();
+    }
+
+    bitvector result;
+    result.reserve(total);
+    std::vector<bitvector::block_type> blocks;
+    for(const auto& input: inputs)
+    {
+        auto old_size = result.size();
+        blocks.resize(input->num_blocks());
+        boost::to_block_range(input->value(), blocks.begin());
+        result.append(blocks.begin(), blocks.end());
+        result.resize(old_size + input->size());
+    }
     return result;
 }
 
@@ -87,6 +158,12 @@ extern "C" closure builtin_function_sized_bitvector_from_list(OperationArgs& Arg
         }
     }
     return result;
+}
+
+// Concatenate exact packed bit-vector owners without unpacking individual bits.
+extern "C" closure builtin_function_concat_bitvectors(OperationArgs& Args)
+{
+    return concat_unboxed_bit_vectors(Args);
 }
 
 // Native index zero is the vector's first element.  Shifting the requested
