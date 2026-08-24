@@ -198,12 +198,12 @@ instance IsForest t => IsForest (WithNodeTimes t) where
     isRooted (WithNodeTimes tree _) = case isRooted tree of Rooted -> Rooted
                                                             Unrooted -> Unrooted
 
-class IsGraph g => HasNodeTimes g where
+class HasRoots g => HasNodeTimes g where
     nodeTime :: g -> Int -> Double
     nodeTimes :: g -> IntMap Double
     modifyNodeTimes :: g -> (Double -> Double) -> g
 
-instance IsGraph g => HasNodeTimes (WithNodeTimes g) where
+instance HasRoots g => HasNodeTimes (WithNodeTimes g) where
     nodeTime (WithNodeTimes _ hs) node = hs IntMap.! node
     nodeTimes (WithNodeTimes _ hs) = hs
     modifyNodeTimes (WithNodeTimes tree hs) f = WithNodeTimes tree (fmap f hs)
