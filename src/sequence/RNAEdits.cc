@@ -27,9 +27,7 @@ void RNAEdits::setup_table()
 
 void RNAEdits::setup_sub_nuc_table()
 {
-    auto n_singlet_letters = N->size();
-    RNAEdit_table = vector<vector<int> >(n_singlet_letters,vector<int>(n_singlet_letters,-1));
-
+    rna_edit_for_components = vector<vector<int>>(N->n_letters(), vector<int>(N->n_letters(), -1));
     sub_nuc_table.clear();
     sub_nuc_table.resize(size());
 
@@ -44,9 +42,19 @@ void RNAEdits::setup_sub_nuc_table()
 
 	int n0 = sub_nuc_table[i][0] = (*N)[ RNAEdit.substr(0,1) ];
 	int n1 = sub_nuc_table[i][1] = (*N)[ RNAEdit.substr(1,1) ];
-
-	RNAEdit_table[n0][n1] = i;
+	rna_edit_for_components[n0][n1] = i;
     }
+}
+
+// Map two exact nucleotide states directly to their exact RNA-edit state.
+int RNAEdits::get_doublet(int n1, int n2) const
+{
+    if (not N->is_letter(n1) or not N->is_letter(n2))
+        throw myexception()<<"get_doublet requires two exact nucleotide states.";
+    int state = rna_edit_for_components[n1][n2];
+    if (state == -1)
+        throw myexception()<<"The nucleotide pair is not in this RNA-edit alphabet.";
+    return state;
 }
 
 int RNAEdits::sub_nuc(int letter_index, int pos) const
@@ -165,25 +173,6 @@ valarray<double> get_RNAEdit_frequencies_from_independent_nucleotide_frequencies
     return fD;
 }
 
-int RNAEdits::get_doublet(int n1, int n2) const
-{
-    if (N->is_feature(n1) and N->is_feature(n2)) 
-    {
-	if (N->is_letter(n1) and N->is_letter(n2))
-	{
-	    int index = RNAEdit_table[n1][n2];
-	    assert(index != -1);
-	    return index;
-	}
-	else 
-	    return alphabet::not_gap;
-    }
-    else if (n1 == alphabet::gap or n2 == alphabet::gap)
-	return alphabet::gap;
-    else
-	return alphabet::unknown;
-}
-
 bool RNAEdits::is_watson_crick(int d) const
 {
     int d1 = sub_nuc(d,0);
@@ -228,62 +217,76 @@ valarray<double> RNAEdits::get_frequencies_from_counts(const valarray<double>& c
     return f;
 }
 
-vector<int> RNAEdits::operator()(const string& letters) const
+// Render the positional projections, then compare the states represented by
+// their product with the original set to detect lossy Cartesian widening.
+std::pair<string, bool> RNAEdits::lookup(const bitmask_t& mask) const
+{
+    auto [spelling, exact] = alphabet::lookup(mask);
+    if (exact)
+        return {spelling, true};
+
+    vector<bitmask_t> projections(2, bitmask_t(N->n_letters()));
+    for (auto state = mask.find_first(); state != bitmask_t::npos; state = mask.find_next(state))
+        for (int pos = 0; pos < 2; pos++)
+            projections[pos].set(sub_nuc(state, pos));
+
+    spelling.clear();
+    for (auto& projection: projections)
+    {
+        auto [component_spelling, component_exact] = N->lookup(projection);
+        spelling += component_spelling;
+        if (not component_exact)
+            projection.set();
+    }
+
+    bitmask_t hull(n_letters());
+    for (int state = 0; state < n_letters(); state++)
+        if (projections[0][sub_nuc(state, 0)] and projections[1][sub_nuc(state, 1)])
+            hull.set(state);
+    return {spelling, hull == mask};
+}
+
+// Reproduce the product-alphabet diagnostics only after normal encoding fails.
+void RNAEdits::validate_sequence(const string& letters) const
 {
     const int letter_size = width();
+    vector<int> singlets(letters.size());
+    for (int i = 0; i < singlets.size(); i++)
+        singlets[i] = (*N)[letters.substr(i, 1)];
+
+    int n_letters = 0;
+    for (auto singlet: singlets)
+        if (is_feature(singlet))
+            n_letters++;
 
     myexception e;
-
-    // 1. First translate singlets.
-    vector<int> singlets = (*N)(letters);
-
-    // FIXME -- if ? gets here from a user who means N/X then things will get confusing fast.
-
-    // 2. Second count the number of non-gap letters.
-    int n_letters = 0;
-    for(auto s: singlets)
-	if (is_feature(s)) n_letters++;
-
-    // 3. Try to load alignment row with gaps
     bool ok = true;
-    vector<int> RNAEdits(singlets.size()/letter_size);
-
-    for(int i=0;i<RNAEdits.size() and ok;i++)
+    for (int i = 0; i < singlets.size() / letter_size and ok; i++)
     {
-	int l1 = singlets[letter_size * i + 0];
-	int l2 = singlets[letter_size * i + 1];
-
-	if (is_feature(l1) and is_feature(l2))
-	    RNAEdits[i] = get_doublet(l1, l2);
-	else if (l1 == alphabet::gap and l2 == alphabet::gap)
-	    RNAEdits[i] = alphabet::gap;
-	else
-	{
-	    e<<" Sequence not aligned as "<<letters_name()<<"!  Column "<<i+1<<" has mixed gap/non-gap letter '"<<letters.substr(i*letter_size,letter_size)<<"'";
-	    ok = false;
-	}
+        int l1 = singlets[letter_size * i];
+        int l2 = singlets[letter_size * i + 1];
+        if ((is_feature(l1) and is_feature(l2)) or (l1 == gap and l2 == gap))
+            continue;
+        e<<" Sequence not aligned as "<<letters_name()<<"!  Column "<<i+1
+         <<" has mixed gap/non-gap letter '"<<letters.substr(i * letter_size, letter_size)<<"'";
+        ok = false;
     }
-
-    // 4. Check if we have the right number of letters.
-    if (n_letters%letter_size != 0)
+    if (n_letters % letter_size != 0)
     {
-	if (not ok) e<<"\n";
-	e<<" Sequence of "<<n_letters<<" "<<N->letters_name()<<" cannot be divided into "<<letters_name() <<": not a multiple of 2 "<<N->letters_name()<<"!";
-	ok = false;
+        if (not ok) e<<"\n";
+        e<<" Sequence of "<<n_letters<<" "<<N->letters_name()<<" cannot be divided into "
+         <<letters_name()<<": not a multiple of 2 "<<N->letters_name()<<"!";
+        ok = false;
     }
-
-    // 5. Check for extra columns we haven't been using
     if (singlets.size() % letter_size != 0)
     {
-	if (not ok) e<<"\n";
-	e<<" Alignment row of "<<letters.size()<<" columns cannot be divided into "<<letters_name() <<": not a multiple of 2 columns!";
-	ok = false;
+        if (not ok) e<<"\n";
+        e<<" Alignment row of "<<letters.size()<<" columns cannot be divided into "
+         <<letters_name()<<": not a multiple of 2 columns!";
+        ok = false;
     }
-
     if (not ok)
-	throw e;
-
-    return RNAEdits;
+        throw e;
 }
 
 RNAEdits::RNAEdits(const string& s,const Nucleotides& a)

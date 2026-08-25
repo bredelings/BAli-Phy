@@ -30,6 +30,7 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
+#include <utility>
 
 #include "util/assert.hh"
 #include <boost/dynamic_bitset.hpp>
@@ -132,6 +133,9 @@ public:
     /// Index of unknown ('?'): an ambiguous 'gap or not_gap' symbol.
     static constexpr int unknown = -3;
 
+    /// First integer used for an ambiguity in a character-data-local database.
+    static constexpr int first_ambiguity = -4;
+
     /// The number of letters in the alphabet
     int n_letters() const {return letters_.size();}
     /// The letters of the alphabet
@@ -197,17 +201,27 @@ public:
     /// Get the index for letter 'c'
     int operator[](const std::string&) const;
 
-    /// Translate a sequence of letters into indexes
-    virtual std::vector<int> operator()(const std::string&) const;
-
     /// Get the letter that corresponds to index 'i'
     std::string lookup(int i) const;
+
+    /// Spell a state set and report whether the spelling represents exactly that set.
+    virtual std::pair<std::string, bool> lookup(const bitmask_t& mask) const;
+
+    /// Compatibility error-path hook for diagnostics formerly emitted by product parsers.
+    /// Remove once the shared encoder reports equivalent product-structure errors directly.
+    virtual void validate_sequence(const std::string& sequence) const;
 
     /// How many letters in the alphabet?
     int size() const { return n_letters(); }
 
     /// Is index 'l' a letter?
     bool is_letter(int l) const {return l>=0 and l<n_letters();}
+
+    /// Is index 'l' an ambiguity owned by the character data?
+    static constexpr bool is_ambiguity(int l) {return l<=first_ambiguity;}
+
+    /// Does 'l' represent a present character, including unconstrained non-gap?
+    static constexpr bool is_character(int l) {return l>=0 or l==not_gap or is_ambiguity(l);}
 
     /// Is index 'l' a letter or class?
     static constexpr bool is_letter_class(int l) {return l>=0;}

@@ -181,6 +181,7 @@ struct sparse_alignment
     std::vector<std::string> names;
     std::vector<std::vector<int>> sequences;
     std::shared_ptr<const alphabet> a;
+    ambiguity_database ambiguities;
 
     sparse_index_matrix homology;
 };
@@ -199,4 +200,3 @@ std::vector<int> get_ordered_columns(const sparse_index_matrix& M);
 alignment get_alignment(const matrix<int>& M, const alignment& A);
 
 alignment get_ordered_alignment(const alignment& A);
-

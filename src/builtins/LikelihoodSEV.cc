@@ -17,6 +17,7 @@ using std::endl;
 using std::abs;
 
 using Alphabet = PtrBox<alphabet>;
+using Ambiguities = Box<ambiguity_database>;
 
 #include "substitution/cache.hh"
 #include "dp/hmm.hh"
@@ -39,20 +40,21 @@ closure component_state_result(ComponentStateVectors values)
 
 }
 
-// Decode the smap from raw slots 1..3 while retaining the legacy sequence/mask pair in slot 5.
-// The alphabet remains in slot 0 and the intervening model count moves to slot 4.
+// Decode the smap after the alphabet/database and retain the legacy pair in slot 6.
 extern "C" closure builtin_function_simpleSequenceLikelihoods(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
     auto smap_input = read_native_vector_input<int, ForeignDemand::use>(
-        Args, 1, "LikelihoodSEV.simpleSequenceLikelihoods smap");
-    auto arg4 = Args.evaluate_slot_to_value(4);
+        Args, 2, "LikelihoodSEV.simpleSequenceLikelihoods smap");
     auto arg5 = Args.evaluate_slot_to_value(5);
+    auto arg6 = Args.evaluate_slot_to_value(6);
 
-    return substitution::simple_sequence_likelihoods2_SEV(arg5,                 // sequence/bits
+    return substitution::simple_sequence_likelihoods2_SEV(arg6,                 // sequence/bits
 							  *arg0.as_<Alphabet>(), // alphabet
+							  arg1.as_<Ambiguities>(), // ambiguities
 							  smap_input.view(),     // smap
-							  arg4.as_int());        // n_models
+							  arg5.as_int());        // n_models
 }
 
 extern "C" closure builtin_function_peelBranchTowardRoot(OperationArgs& Args)

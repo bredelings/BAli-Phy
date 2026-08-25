@@ -235,7 +235,8 @@ class ToFasta a where
     toFasta :: a -> Text
 
 instance ToFasta CharacterData where
-    toFasta (CharacterData a sequences) = fastaSeqs [(label,sequenceToText a sequence) | (label,sequence) <- sequences]
+    toFasta (CharacterData a ambiguities sequences) =
+        fastaSeqs [(label,sequenceToText a ambiguities sequence) | (label,sequence) <- sequences]
 
 instance ToFasta UnalignedCharacterData where
     toFasta (Unaligned d) = toFasta d
@@ -243,16 +244,17 @@ instance ToFasta UnalignedCharacterData where
 instance ToFasta AlignedCharacterData where
     toFasta (Aligned d) = toFasta d
 
-align alignment (Unaligned (CharacterData alphabet seqs)) = Aligned (CharacterData alphabet alignedSeqs)
+align alignment (Unaligned (CharacterData alphabet ambiguities seqs)) =
+    Aligned (CharacterData alphabet ambiguities alignedSeqs)
     where AlignmentOnTree tree _ _ _ = alignment
           seqsOnTree = fromMaybe (error "No label") <$> labelToNodeMap tree seqs
           alignedSeqsOnTree = alignedSequences alignment seqsOnTree
           alignedSeqs = getLabelled tree (,) alignedSeqsOnTree
 
 instance Alignment AlignedCharacterData where
-    alignmentLength (Aligned (CharacterData _ seqs)) = U.length $ snd $ head seqs
-    numSequences (Aligned (CharacterData _ seqs)) = length seqs
-    sequenceLength (Aligned (CharacterData _ seqs)) index = U.length $ stripGaps $ snd $ (seqs !! index)
+    alignmentLength (Aligned (CharacterData _ _ seqs)) = U.length $ snd $ head seqs
+    numSequences (Aligned (CharacterData _ _ seqs)) = length seqs
+    sequenceLength (Aligned (CharacterData _ _ seqs)) index = U.length $ stripGaps $ snd $ (seqs !! index)
 
 
 -- In both cases we normalize the oldest taxon to have time 0.
@@ -278,12 +280,12 @@ instance AncestralAlignment (IntMap (Maybe (U.Vector Bit))) where
 --    This also needs the map from columns to compressed columns:
       let ancestralLetterSequences = statesToLetters smap . componentStates <$> componentStateSequences
           connectedLetterSequences = minimallyConnectCharacters observedMasks tree ancestralLetterSequences
-      in Aligned (CharacterData alphabet $ sequencesFromTree tree connectedLetterSequences)
+      in Aligned (mkExactCharacterData alphabet $ sequencesFromTree tree connectedLetterSequences)
 
 
 instance IsTree t => AncestralAlignment (AlignmentOnTree t) where
     ancestralAlignment rtree alignment smap alphabet componentStateSequences =
-        Aligned $ CharacterData alphabet (sequencesFromTree rtree alignedLetterSequences)
+        Aligned $ mkExactCharacterData alphabet (sequencesFromTree rtree alignedLetterSequences)
         where letterSequences = statesToLetters smap . componentStates <$> componentStateSequences
               alignedLetterSequences = alignedSequences alignment letterSequences
 

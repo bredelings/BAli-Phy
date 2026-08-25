@@ -13,8 +13,9 @@ protected:
 
     /// (codon,position) -> nucleotide
     std::vector<std::vector<int> > sub_nuc_table;
-    /// (n1,n2,n3) -> codon
-    std::vector<std::vector<std::vector<int> > > codon_table;
+
+    /// (first, second, third nucleotide) -> exact triplet state.
+    std::vector<std::vector<std::vector<int>>> triplet_for_components;
 
     void setup_sub_nuc_table();
     void setup_letter_classes();
@@ -29,12 +30,14 @@ public:
     /// The alphabet of nucleotides that we construct triplets from
     int sub_nuc(int codon,int pos) const;
 
-    /// Find the triplet made of nucleotides n1, n2, and n3
+    /// Return the exact triplet state made from three exact nucleotide states.
     int get_triplet(int n1, int n2, int n3) const;
 
     std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
 
-    std::vector<int> operator()(const std::string&) const;
+    std::pair<std::string, bool> lookup(const bitmask_t& mask) const override;
+
+    void validate_sequence(const std::string& sequence) const override;
 
     Triplets(const Nucleotides& N);
     Triplets(const std::string& s,const Nucleotides& N);

@@ -1118,7 +1118,8 @@ namespace substitution
 
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods_SEV(const R::Exp& sequence_mask,
-				    const alphabet& a,
+				    const alphabet&,
+				    const ambiguity_database& ambiguities,
 				    std::span<const int> smap,
 				    int n_models)
     {
@@ -1148,13 +1149,11 @@ namespace substitution
 	    // Observing the complete state doesn't decouple subtrees unless there is only 1 mixture component.
 	    if (letter >= 0)
 	    {
-		auto& ok = a.letter_mask(letter);
 		for(int m=0;m<n_models;m++)
 		{
 		    for(int s1=0;s1<n_states;s1++)
 		    {
-			int l = smap[s1];
-			if (not ok[l])
+			if (smap[s1] != letter)
 			{
 			    // Pr *= Pr(observation | state )
 			    // Currently we are doing Pr *= Pr(observation | letter(state))
@@ -1163,6 +1162,14 @@ namespace substitution
 			}
 		    }
 		}
+	    }
+	    else if (alphabet::is_ambiguity(letter))
+	    {
+		const auto& ok = ambiguities.mask(letter);
+		for(int m=0;m<n_models;m++)
+		    for(int s1=0;s1<n_states;s1++)
+			if (not ok[smap[s1]])
+			    S[m*n_states + s1] = 0;
 	    }
 
 	    i++;
@@ -1173,7 +1180,8 @@ namespace substitution
 
     object_ptr<const SparseLikelihoods>
     simple_sequence_likelihoods2_SEV(const R::Exp& sequence_mask,
-				     const alphabet& a,
+				     const alphabet&,
+				     const ambiguity_database& ambiguities,
 				     std::span<const int> smap,
 				     int n_models)
     {
@@ -1198,15 +1206,16 @@ namespace substitution
 
 	    if (letter >= 0)
 	    {
-		auto& ok = a.letter_mask(letter);
 		for(int s1=0;s1<n_states;s1++)
-		{
-		    int l = smap[s1];
-		    if (ok[l])
-		    {
+		    if (smap[s1] == letter)
 			LCB->states.push_back(s1);
-		    }
-		}
+	    }
+	    else if (alphabet::is_ambiguity(letter))
+	    {
+		const auto& ok = ambiguities.mask(letter);
+		for(int s1=0;s1<n_states;s1++)
+		    if (ok[smap[s1]])
+			LCB->states.push_back(s1);
 	    }
 	    else if (letter == alphabet::not_gap)
 	    {

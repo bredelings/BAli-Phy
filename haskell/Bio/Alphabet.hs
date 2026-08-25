@@ -1,6 +1,6 @@
 module Bio.Alphabet where
 
-import Compiler.FFI.Import (CInput(..))
+import Compiler.FFI.Import (CInput(..), COutput)
 import Foreign.String -- For CPPString
 import Data.Text (Text)
 import qualified Data.Set as Set
@@ -9,6 +9,11 @@ import qualified Data.Vector.Unboxed as U
 data Alphabet
 
 instance CInput Alphabet
+
+-- Opaque owner for ambiguity codes stored in character data.
+data AmbiguityDatabase
+instance CInput AmbiguityDatabase
+instance COutput AmbiguityDatabase
 
 data GeneticCode
 
@@ -59,7 +64,7 @@ geneticCode name = geneticCodeRaw (pack_cpp_string name)
 
 standard_code = geneticCodeByNumber 1
 
-foreign import trcall "Alphabet:sequenceToTextRaw" sequenceToText :: Alphabet -> U.Vector Int -> Text
+foreign import trcall "Alphabet:sequenceToTextRaw" sequenceToText :: Alphabet -> AmbiguityDatabase -> U.Vector Int -> Text
 
 class HasAlphabet x where
     getAlphabet :: x -> Alphabet

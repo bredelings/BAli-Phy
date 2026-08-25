@@ -292,7 +292,8 @@ int main(int argc,char* argv[])
 	    vector<int> leaf_letters( T.n_leaves() );
 	    for(int j=0;j<leaf_letters.size();j++)
 		leaf_letters[j] = A(c,j);
-	    vector<vector<int> > node_letters = get_all_parsimony_letters(a,leaf_letters,T,unit_cost_matrix(a));
+	    vector<vector<int> > node_letters = get_all_parsimony_letters(
+	        a, A.get_ambiguities(), leaf_letters, T, unit_cost_matrix(a));
 
 	    vector<vector<int> > initial_value(groups.size());
 	    for(int g=0;g<groups.size();g++) 
@@ -453,7 +454,7 @@ int main(int argc,char* argv[])
 		    cerr<<a.lookup(initial_value[i][j]);
 		cerr<<" "; 
 	    }     
-	    cerr<<"    "<<n_mutations(a,leaf_letters,T,unit_cost_matrix(a))<<endl;
+	    cerr<<"    "<<n_mutations(a,A.get_ambiguities(),leaf_letters,T,unit_cost_matrix(a))<<endl;
 	    cerr<<endl;
 
 

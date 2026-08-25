@@ -141,7 +141,8 @@ B row_min(const matrix<B>& M,int row)
 // just instantiate the <int> and <double> versions, with the code in the *.C file?
 
 template <class B>
-void peel_n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,
+void peel_n_mutations(const alphabet& a, const ambiguity_database& ambiguities, const vector<int>& letters,
+                      const SequenceTree& T,
 		      const DenseMatrix<B>& cost,matrix<B>& n_muts,
 		      const vector<const_branchview>& branches)
 {
@@ -172,14 +173,23 @@ void peel_n_mutations(const alphabet& a, const vector<int>& letters, const Seque
   {
     int L = letters[s];
 
-    if (a.is_letter_class(L))
+    // Exact states take the common comparison-only path. Database masks are
+    // fetched once per leaf, outside the dynamic-programming traversal.
+    if (a.is_letter(L))
     {
       for(int l=0;l<A;l++)
-	if (a.matches(l,L))
-	  n_muts(s,l) = 0;
-	else
+	if (l != L)
 	  n_muts(s,l) = max_cost;
     }
+    else if (alphabet::is_ambiguity(L))
+    {
+      const auto& mask = ambiguities.mask(L);
+      for(int l=0;l<A;l++)
+	if (not mask[l])
+	  n_muts(s,l) = max_cost;
+    }
+    else
+      assert(L == alphabet::gap or L == alphabet::not_gap or L == alphabet::unknown);
   }
 
 
@@ -204,18 +214,20 @@ void peel_n_mutations(const alphabet& a, const vector<int>& letters, const Seque
 }
 
 template <class B>
-B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const DenseMatrix<B>& cost,
+B n_mutations(const alphabet& a, const ambiguity_database& ambiguities, const vector<int>& letters,
+              const SequenceTree& T, const DenseMatrix<B>& cost,
 	      matrix<B>& n_muts, const vector<const_branchview>& branches)
 {
   int root = T.directed_branch(0).target();
 
-  peel_n_mutations(a,letters,T,cost,n_muts,branches);
+  peel_n_mutations(a,ambiguities,letters,T,cost,n_muts,branches);
 
   return row_min(n_muts,root);
 }
 
 template <class B>
-B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const DenseMatrix<B>& cost)
+B n_mutations(const alphabet& a, const ambiguity_database& ambiguities, const vector<int>& letters,
+              const SequenceTree& T, const DenseMatrix<B>& cost)
 {
   int root = T.directed_branch(0).target();
 
@@ -223,23 +235,26 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree&
 
   matrix<B> n_muts(T.n_nodes(), a.size());
 
-  return n_mutations(a,letters,T,cost,n_muts,branches);
+  return n_mutations(a,ambiguities,letters,T,cost,n_muts,branches);
 }
 
-template int n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const DenseMatrix<int>& cost);
+template int n_mutations(const alphabet& a, const ambiguity_database& ambiguities, const vector<int>& letters,
+                         const SequenceTree& T, const DenseMatrix<int>& cost);
 
 template int n_mutations(const alignment& A, const SequenceTree& T,const DenseMatrix<int>& cost);
 
-template double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const DenseMatrix<double>& cost);
+template double n_mutations(const alphabet& a, const ambiguity_database& ambiguities, const vector<int>& letters,
+                            const SequenceTree& T, const DenseMatrix<double>& cost);
 
 
-vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters, const SequenceTree& T,
+vector<int> get_parsimony_letters(const alphabet& a, const ambiguity_database& ambiguities,
+                                  const vector<int>& letters, const SequenceTree& T,
 				  const DenseMatrix<int>& cost)
 {
   int root = T.directed_branch(0).target();
   matrix<int> n_muts(T.n_nodes(),a.size());
 
-  peel_n_mutations(a,letters,T,cost,n_muts, branches_toward_node(T,root) );
+  peel_n_mutations(a,ambiguities,letters,T,cost,n_muts, branches_toward_node(T,root) );
 
   // get an order list of branches point away from the root;
   vector<const_branchview> branches = branches_from_node(T,root);
@@ -272,13 +287,14 @@ vector<int> get_parsimony_letters(const alphabet& a, const vector<int>& letters,
 
 
 
-vector<vector<int> > get_all_parsimony_letters(const alphabet& a, const vector<int>& letters, const SequenceTree& T,
+vector<vector<int> > get_all_parsimony_letters(const alphabet& a, const ambiguity_database& ambiguities,
+                                               const vector<int>& letters, const SequenceTree& T,
 					       const DenseMatrix<int>& cost)
 {
   int root = T.directed_branch(0).target();
 
   matrix<int> n_muts(T.n_nodes(), a.size());
-  peel_n_mutations(a,letters,T,cost,n_muts, branches_toward_node(T,root) );
+  peel_n_mutations(a,ambiguities,letters,T,cost,n_muts, branches_toward_node(T,root) );
 
   // get an order list of branches point away from the root;
   vector<const_branchview> branches = branches_from_node(T,root);
@@ -328,9 +344,10 @@ vector<vector<int> > get_all_parsimony_letters(const alphabet& a, const vector<i
 }
 
 template <class B>
-B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T) 
+B n_mutations(const alphabet& a, const ambiguity_database& ambiguities, const vector<int>& letters,
+              const SequenceTree& T)
 {
-  return n_mutations<B>(a,letters,T,unit_cost_matrix(a));
+  return n_mutations<B>(a,ambiguities,letters,T,unit_cost_matrix(a));
 }
 
 
@@ -351,7 +368,8 @@ B n_mutations(const alignment& A, const SequenceTree& T,const DenseMatrix<B>& co
   for(int c=0;c<A.length();c++) {
     for(int i=0;i<T.n_leaves();i++)
       letters[i] = A(c,i);
-    double length = n_mutations<B>(a,letters,T,cost,n_muts,branches);
+    peel_n_mutations(a, A.get_ambiguities(), letters, T, cost, n_muts, branches);
+    double length = row_min(n_muts, root);
     tree_length += length;
   }
 

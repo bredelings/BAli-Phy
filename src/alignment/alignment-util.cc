@@ -67,7 +67,7 @@ alignment chop_internal(alignment A, bool keep_empty_columns)
 	    break;
 	}
 	for(int column=0;column<A.length();column++) {
-	    if (alphabet::is_letter_class( A(column,i) )) {
+	    if (alphabet::is_character(A(column,i)) and A(column,i) != alphabet::not_gap) {
 		internal_nodes = false; 
 		break;
 	    }
@@ -332,7 +332,7 @@ vector<dynamic_bitset<>> get_connected_states(const vector<dynamic_bitset<>>& st
     return between_characters;
 }    
 
-/// Check that internal nodes don't have letters (or anything wierder!)
+/// Check that internal nodes contain only gaps or unconstrained non-gap characters.
 void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 
     for(int column=0;column<A.length();column++)
@@ -341,13 +341,9 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 		;
 	    else if (A(column,i) == alphabet::not_gap)
 		;
-	    else if (A(column,i) >= 0)
+	    else if (alphabet::is_character(A(column,i)))
 	    {
-		const alphabet& a = A.get_alphabet();
-		if (a.is_letter(A(column,i)))
-		    throw myexception()<<"Only '-' and 'N'/'X' are allowed in internal node sequences, but found illegal letter '"<<a.lookup(A(column,i))<<"' in column "<<column<<" of internal sequence '"<<A.seq(i).name<<"'.";
-		else
-		    throw myexception()<<"Only '-' and 'N'/'X' are allowed in internal node sequences, but found illegal index '"<<A(column,i)<<"' in column "<<column<<" of internal sequence '"<<A.seq(i).name<<"'.";
+		throw myexception()<<"Only '-' and 'N'/'X' are allowed in internal node sequences, but found illegal letter '"<<A.lookup(A(column,i))<<"' in column "<<column<<" of internal sequence '"<<A.seq(i).name<<"'.";
 	    }
 }
 
@@ -452,8 +448,8 @@ void check_letters_OK(const alignment& A) {
 	for(int j=0;j<A.n_sequences();j++)
 	    if (A(i,j) >=0 and A(i,j) < a.size())
 		; // this is a letter
-	    else if (A(i,j) >= a.n_letters() and A(i,j) < a.n_letter_classes())
-		; // this is a letter class
+	    else if (alphabet::is_ambiguity(A(i,j)))
+		(void)A.get_ambiguities().mask(A(i,j)); // assert that the local ambiguity code is valid
 	    else if (A(i,j) == alphabet::gap)
 		; // this is a '-'
 	    else if (A(i,j) == alphabet::not_gap)
@@ -476,6 +472,7 @@ void check_leaf_sequences(const alignment& A,int n_leaves) {
     vector<sequence> sequences = A.convert_to_sequences();
 
     const alphabet& a = A.get_alphabet();
+    ambiguity_database ambiguities(a.n_letters());
 
     for(int i=0;i<n_leaves;i++) {
 
@@ -483,7 +480,7 @@ void check_leaf_sequences(const alignment& A,int n_leaves) {
         if (A.seq(i).size() == 0) continue;
 
         sequences[i].strip_gaps();
-	if (not (a(sequences[i]) == a(A.seq(i)))) {
+	if (not (ambiguities.encode_sequence(a, sequences[i]) == ambiguities.encode_sequence(a, A.seq(i)))) {
 	    cerr<<"leaf sequence "<<i<<" corrupted!\n";
 
 	    cerr<<"orig: "<<A.seq(i)<<endl;
@@ -876,14 +873,13 @@ unsigned n_homologous(const alignment& A,int s1,int s2)
 
 void count_gaps(const alignment& A, int c, valarray<int>& counts)
 {
-    const alphabet& a = A.get_alphabet();
     assert(counts.size() == 2);
 
     counts = 0;
     for(int i=0;i<A.n_sequences();i++) 
     {
 	int l = A(c,i);
-	if (a.is_feature(l))
+	if (alphabet::is_character(l))
 	    counts[0]++;
 	else if (l == alphabet::gap)
 	    counts[1]++;
@@ -1134,6 +1130,23 @@ alignment reverse(const alignment& A)
     return A2;
 }
 
+// Complement exact states directly and encode a complemented mask for a
+// database-local ambiguity, leaving the three special codes unchanged.
+int complement_character(int code, const Nucleotides& nucleotides, const ambiguity_database& source,
+                         ambiguity_database& destination)
+{
+    if (code >= 0)
+        return nucleotides.complement(code);
+    if (not alphabet::is_ambiguity(code))
+        return code;
+
+    alphabet::bitmask_t result(nucleotides.n_letters());
+    const auto& mask = source.mask(code);
+    for (auto state = mask.find_first(); state != alphabet::bitmask_t::npos; state = mask.find_next(state))
+        result.set(nucleotides.complement(state));
+    return destination.encode_mask(result);
+}
+
 alignment complement(const alignment& A)
 {
     const alphabet& a = A.get_alphabet();
@@ -1144,11 +1157,12 @@ alignment complement(const alignment& A)
 	throw myexception()<<"Sequences have alphabet "<<a.name<<" -- reverse complement not allowed";
 
     alignment A2 = A;
+    A2.get_ambiguities() = ambiguity_database(a.n_letters());
 
     // Reverse
     for(int i=0;i<A2.n_sequences();i++) 
 	for(int j=0;j<A2.length();j++)
-	    A2.set_value(j,i, N->complement(A(j,i)) );
+	    A2.set_value(j,i, complement_character(A(j,i), *N, A.get_ambiguities(), A2.get_ambiguities()));
 
     return A2;
 }
@@ -1165,11 +1179,12 @@ alignment reverse_complement(const alignment& A)
     int L = A.length();
 
     alignment A2 = A;
+    A2.get_ambiguities() = ambiguity_database(a.n_letters());
 
     // Reverse
     for(int i=0;i<A2.n_sequences();i++) 
 	for(int j=0;j<A2.length();j++)
-	    A2.set_value(j,i, N->complement(A(L-j-1,i)) );
+	    A2.set_value(j,i, complement_character(A(L-j-1,i), *N, A.get_ambiguities(), A2.get_ambiguities()));
 
     return A2;
 }
@@ -1269,13 +1284,21 @@ bool is_masked_column(const alignment& A, int c)
 bool is_variant_column(const alignment& A, int c)
 {
     assert(0 <= c and c < A.length());
-    int i=0;
-    int l0 = -1;
-    for(;i<A.n_sequences() and l0 < 0;i++)
-	l0 = A(c,i);
-
-    for(;i<A.n_sequences();i++)
-	if (A(c,i) >= 0 and A(c,i) != l0) return true;
+    bool found = false;
+    int first = 0;
+    for(int i=0;i<A.n_sequences();i++)
+    {
+        int code = A(c,i);
+        if (not alphabet::is_character(code) or code == alphabet::not_gap)
+            continue;
+        if (not found)
+        {
+            first = code;
+            found = true;
+        }
+        else if (code != first)
+            return true;
+    }
 
     return false;
 }
@@ -1296,7 +1319,7 @@ bool is_column_with_gap_fraction(const alignment& A, int c, double fraction)
     {
 	if (A.gap(c,i))
             n_gaps++;
-        else if(A(c,i) >= 0)
+        else if(alphabet::is_character(A(c,i)) and A(c,i) != alphabet::not_gap)
             n_letters++;
     }
 
@@ -1333,7 +1356,7 @@ void mask_column(alignment& A, int column)
     for(int k=0;k<A.n_sequences();k++)
     {
 	int value = A(column,k);
-	if (alphabet::is_feature(value))
+	if (alphabet::is_character(value))
 	    A.set_value(column,k, alphabet::not_gap);
     }
 }
@@ -1418,4 +1441,3 @@ dynamic_bitset<> variant_column_at_distance(const alignment& A,int d)
     }
     return variants2;
 }
-

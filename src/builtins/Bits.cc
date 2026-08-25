@@ -318,13 +318,11 @@ extern "C" closure builtin_function_alignment_row_to_presence_bitvector(Operatio
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& A = arg0.as_<Box<alignment>>().value();
-    auto &a = A.get_alphabet();
-
     int row = Args.evaluate_slot_to_value(1).as_int();
 
     bitvector v(A.length());
     for(int col=0; col<A.length(); col++)
-	v.set(col, a.is_feature(A(col,row)));
+	v.set(col, alphabet::is_character(A(col,row)));
 
     return { v };
 }

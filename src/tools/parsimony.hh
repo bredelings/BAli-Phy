@@ -42,13 +42,18 @@ DenseMatrix<int> pos2_cost_matrix(const RNAEdits& E);
 DenseMatrix<int> amino_acid_cost_matrix(const Codons& C);
 
 template <class B>
-B n_mutations(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const DenseMatrix<B>& cost);
+B n_mutations(const alphabet& a, const ambiguity_database& ambiguities, const std::vector<int>& letters,
+              const SequenceTree& T, const DenseMatrix<B>& cost);
 
 template <typename B>
 B n_mutations(const alignment& A, const SequenceTree& T,const DenseMatrix<B>& cost);
 
 int n_mutations(const alignment& A, const SequenceTree& T);
 
-std::vector<int> get_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const DenseMatrix<int>& cost);
+std::vector<int> get_parsimony_letters(const alphabet& a, const ambiguity_database& ambiguities,
+                                       const std::vector<int>& letters, const SequenceTree& T,
+                                       const DenseMatrix<int>& cost);
 
-std::vector<std::vector<int> > get_all_parsimony_letters(const alphabet& a, const std::vector<int>& letters, const SequenceTree& T,const DenseMatrix<int>& cost);
+std::vector<std::vector<int>> get_all_parsimony_letters(const alphabet& a, const ambiguity_database& ambiguities,
+                                                        const std::vector<int>& letters, const SequenceTree& T,
+                                                        const DenseMatrix<int>& cost);

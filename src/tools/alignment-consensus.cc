@@ -314,7 +314,7 @@ int main(int argc,char* argv[])
             auto sequences = A.convert_to_letters();
             auto names = sequence_names(A);
             auto a = A.get_alphabet_ptr();
-            sparse_alignment SA{names, sequences, a, consensus};
+            sparse_alignment SA{names, sequences, a, A.get_ambiguities(), consensus};
 
             std::cout<<SA<<"\n";
         }

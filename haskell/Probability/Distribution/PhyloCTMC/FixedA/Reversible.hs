@@ -26,9 +26,10 @@ annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
       maybeNodeISequences = labelToNodeMap rtree isequences
       maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
       nModels = rows f
-      nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
+      nodeCLVs = simpleNodeCLVs alphabet ambiguities smap nModels maybeNodeSeqsBits
 
       alphabet = getAlphabet smodel
+      ambiguities = getAmbiguities sequenceData
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
@@ -71,7 +72,7 @@ instance (HasAlphabet s, HasRoot t, LabelType t ~ Text, HasBranchLengths t, Rate
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ componentStates stateSequence)
 
-      return $ Aligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
+      return $ Aligned $ mkExactCharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s, HasProperties t s) => Sampleable (PhyloCTMC t Int s) where
     sample dist = RanDistribution2 dist doNothing

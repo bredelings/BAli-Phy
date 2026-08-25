@@ -168,13 +168,11 @@ double min_identity(const alignment& A,bool gaps_count)
 
 unsigned letter_classes(const alignment& A) 
 {
-    const alphabet& a = A.get_alphabet();
-
     // Count the occurrence of the different letters
     unsigned count=0;
     for(int i=0;i<A.length();i++) {
 	for(int j=0;j<A.n_sequences();j++) {
-	    if (alphabet::is_letter_class(A(i,j)) and not a.is_letter(A(i,j)))
+	    if (alphabet::is_ambiguity(A(i,j)))
 		count++;
 	}
     }
@@ -359,7 +357,7 @@ int main(int argc,char* argv[])
 		if (a.is_letter(l))
 		    count[l]++;
 
-		if (a.is_feature(l))
+		if (alphabet::is_character(l))
 		    count2[0]++;
 		else if (l == alphabet::gap)
 		    count2[1]++;
@@ -489,4 +487,3 @@ int main(int argc,char* argv[])
     }
     return 0;
 }
-

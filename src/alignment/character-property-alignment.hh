@@ -9,6 +9,7 @@
 
 #include "character-properties.hh"
 #include "sequence/alphabet.hh"
+#include "sequence/ambiguity.hh"
 #include "sequence/sequence.hh"
 
 namespace character_properties
@@ -23,6 +24,7 @@ struct alignment_token
 struct tokenized_alignment
 {
     int token_width;
+    ambiguity_database ambiguities;
     std::vector<std::vector<alignment_token>> rows;
 
     const std::vector<alignment_token>& operator[](std::size_t index) const {return rows[index];}

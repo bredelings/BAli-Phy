@@ -40,6 +40,7 @@ std::vector<sequence> load_template_alignment(const std::filesystem::path& filen
 tokenized_alignment tokenize_alignment(const std::vector<sequence>& sequences, const alphabet* alph)
 {
     int token_width = alph ? alph->width() : 1;
+    ambiguity_database ambiguities = alph ? ambiguity_database(alph->n_letters()) : ambiguity_database();
     std::vector<std::vector<alignment_token>> rows;
     std::optional<std::size_t> n_columns;
 
@@ -47,7 +48,7 @@ tokenized_alignment tokenize_alignment(const std::vector<sequence>& sequences, c
     {
         std::vector<int> codes;
         if (alph)
-            codes = (*alph)(static_cast<const std::string&>(sequence));
+            codes = ambiguities.encode_sequence(*alph, static_cast<const std::string&>(sequence));
         else
         {
             codes.reserve(sequence.size());
@@ -74,7 +75,7 @@ tokenized_alignment tokenize_alignment(const std::vector<sequence>& sequences, c
         for (int code: codes)
         {
             int index = -1;
-            if (alphabet::is_feature(code))
+            if (alphabet::is_character(code))
                 index = character_index++;
             tokens.push_back({code, index});
         }
@@ -83,7 +84,7 @@ tokenized_alignment tokenize_alignment(const std::vector<sequence>& sequences, c
 
     if (not n_columns or *n_columns == 0)
         throw myexception()<<"Alignment did not contain any character columns.";
-    return {token_width, std::move(rows)};
+    return {token_width, std::move(ambiguities), std::move(rows)};
 }
 
 /// Require each displayed sequence to have one complete summary value per non-gap character.
@@ -136,8 +137,30 @@ alignment_projection project_alignment(const std::vector<sequence>& sequences, c
                 continue;
 
             std::optional<std::string> translation;
+            // An ambiguous codon has a definite translation only when every
+            // represented codon maps to the same amino acid.
             if (codons)
-                translation = codons->getAminoAcids().lookup(codons->translate(token.alphabet_code));
+            {
+                int amino_acid = alphabet::not_gap;
+                if (token.alphabet_code >= 0)
+                    amino_acid = codons->translate(token.alphabet_code);
+                else if (alphabet::is_ambiguity(token.alphabet_code))
+                {
+                    amino_acid = -1;
+                    const auto& mask = tokens.ambiguities.mask(token.alphabet_code);
+                    for (auto state = mask.find_first(); state != alphabet::bitmask_t::npos; state = mask.find_next(state))
+                    {
+                        int translated = codons->translate(state);
+                        if (amino_acid != -1 and amino_acid != translated)
+                        {
+                            amino_acid = alphabet::not_gap;
+                            break;
+                        }
+                        amino_acid = translated;
+                    }
+                }
+                translation = codons->getAminoAcids().lookup(amino_acid);
+            }
             projected_column.characters.push_back({
                 sequence_index,
                 sequences[sequence_index].name,

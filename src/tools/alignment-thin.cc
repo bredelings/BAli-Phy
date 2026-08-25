@@ -201,7 +201,7 @@ unsigned asymmetric_distance(const alignment& A,int i,int j)
     if (i==j) return 0;
 
     for(int c=0;c<L;c++)
-	if (A(c,i) >= 0 and A(c,i) != A(c,j))
+	if (alphabet::is_character(A(c,i)) and A(c,i) != alphabet::not_gap and A(c,i) != A(c,j))
 	    D++;
 
     return D;
@@ -215,7 +215,8 @@ unsigned symmetric_distance(const alignment& A,int i,int j)
     if (i==j) return 0;
 
     for(int c=0;c<L;c++)
-	if (A(c,i) >= 0 and A(c,j)>=0 and A(c,i) != A(c,j))
+	if (alphabet::is_character(A(c,i)) and A(c,i) != alphabet::not_gap and
+	    alphabet::is_character(A(c,j)) and A(c,j) != alphabet::not_gap and A(c,i) != A(c,j))
 	    D++;
 
     return D;
@@ -227,7 +228,8 @@ double symmetric_overlap(const alignment& A,int i,int j)
     unsigned D=0;
 
     for(int c=0;c<L;c++)
-	if (A(c,i) >= 0 and A(c,j)>=0)
+	if (alphabet::is_character(A(c,i)) and A(c,i) != alphabet::not_gap and
+	    alphabet::is_character(A(c,j)) and A(c,j) != alphabet::not_gap)
 	    D++;
 
     return D;

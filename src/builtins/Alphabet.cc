@@ -2,11 +2,13 @@
 #include "builtins/native-vector-input.hh"
 #include "computation/machine/args.hh"
 #include "sequence/alphabet.hh"
+#include "sequence/ambiguity.hh"
 #include "sequence/doublets.hh"
 #include "sequence/RNAEdits.hh"
 #include "sequence/codons.hh"
 
 using Alphabet = PtrBox<alphabet>;
+using Ambiguities = Box<ambiguity_database>;
 using std::vector;
 
 extern "C" R::Exp simple_function_alphabetSize(vector<R::Exp>& args)
@@ -176,15 +178,25 @@ extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
     auto& a = *arg0.as_checked<Alphabet>();
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto& ambiguities = arg1.as_<Ambiguities>();
 
     auto letter_input = read_native_vector_input<int, ForeignDemand::use>(
-        Args, 1, "Alphabet.sequenceToTextRaw");
+        Args, 2, "Alphabet.sequenceToTextRaw");
     auto letter_sequence = letter_input.view();
 
     std::string text;
 
+    int widened = 0;
     for(int letter: letter_sequence)
-        text += a.lookup(letter);
+    {
+        auto [spelling, exact] = ambiguities.decode(a, letter);
+        text += spelling;
+        widened += not exact;
+    }
+
+    if (widened)
+        std::cerr<<"Warning: widened "<<widened<<" non-Cartesian or unspellable ambiguities while writing sequences.\n";
 
     return text;
 }

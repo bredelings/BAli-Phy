@@ -19,6 +19,7 @@ libcommon_sources = [
   'tree-align/n_indels.cc',
 
   'sequence/alphabet.cc',
+  'sequence/ambiguity.cc',
   'sequence/doublets.cc',
   'sequence/RNAEdits.cc',
   'sequence/triplets.cc',

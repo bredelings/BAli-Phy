@@ -180,9 +180,6 @@ int main(int argc,char* argv[])
 	cout<<" ";
     }
       
-    const alphabet& a = A.get_alphabet();
-
-
     //------- Determine invariant sites -----//
     int allowed_differences = (A.n_sequences()+3)/10;
     if (args.count("differences"))
@@ -273,9 +270,9 @@ int main(int argc,char* argv[])
       // write the letters
       for(int i=0;i<MA.size2();i++) {
 	if (MA(c,i) == MA2(c,i))
-	  cout<<a.lookup(A(c,i))<<" ";
+	  cout<<A.lookup(A(c,i))<<" ";
 	else
-	  cout<<"["<<a.lookup(A(c,i))<<"] ";
+	  cout<<"["<<A.lookup(A(c,i))<<"] ";
       }
       cout<<std::endl;
     }

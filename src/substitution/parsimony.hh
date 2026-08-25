@@ -22,6 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "util/matrix.hh"
 #include "sequence/alphabet.hh"
+#include "sequence/ambiguity.hh"
 #include "models/parameters.hh"
 #include "tools/parsimony.hh"
 

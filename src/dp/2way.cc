@@ -144,8 +144,8 @@ namespace A2
 	pi.reserve(M.size1());
 	for(int c=0;c<M.size1();c++)
 	{
-	    bool d1 = (M(c,n1) >=0 or M(c,n1) == -2);
-	    bool d2 = (M(c,n2) >=0 or M(c,n2) == -2);
+	    bool d1 = alphabet::is_character(M(c,n1));
+	    bool d2 = alphabet::is_character(M(c,n2));
 	    pi.push_back(d1,d2);
 	}
 
@@ -653,7 +653,9 @@ alignment get_alignment(const alignment& A1, const vector< vector<int>>& sequenc
 {
     assert(A1.n_sequences() == M.size2());
 
-    return get_alignment(A1.get_alphabet(), A1.seqs(), sequences, M);
+    alignment A2 = get_alignment(A1.get_alphabet(), A1.seqs(), sequences, M);
+    A2.get_ambiguities() = A1.get_ambiguities();
+    return A2;
 }
 
 alignment get_alignment(const alphabet& a, const vector<sequence>& seqs, const vector< vector<int>>& sequences, const matrix<int>& M)

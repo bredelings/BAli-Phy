@@ -323,10 +323,17 @@ optional<vector<pair<string,dynamic_bitset<>>>> get_branch_queries(const variabl
 std::ostream& write_alignment_row(std::ostream& o, const string& name, const alignment& A, int row)
 {
     o<<">"<<name<<"\n";
-    auto& a = A.get_alphabet();
+    int widened = 0;
     for(int i=0;i<A.length();i++)
-        o<<a.lookup(A(i,row));
+    {
+        auto [spelling, exact] = A.decode(A(i,row));
+        o<<spelling;
+        widened += not exact;
+    }
     o<<"\n";
+    if (widened)
+        std::cerr<<"Warning: widened "<<widened
+                 <<" non-Cartesian or unspellable ambiguities while writing sequences.\n";
     return o;
 }
 

@@ -205,13 +205,11 @@ double min_identity(const alignment& A,bool gaps_count)
 
 unsigned letter_classes(const alignment& A) 
 {
-    const alphabet& a = A.get_alphabet();
-
     // Count the occurrence of the different letters
     unsigned count=0;
     for(int i=0;i<A.length();i++) {
         for(int j=0;j<A.n_sequences();j++) {
-            if (alphabet::is_letter_class(A(i,j)) and not a.is_letter(A(i,j)))
+            if (alphabet::is_ambiguity(A(i,j)))
                 count++;
         }
     }
@@ -425,8 +423,8 @@ void write_dical2(std::ostream& o, const alignment& A)
 
 void write_msmc(std::ostream& o, const alignment& A)
 {
-    auto& a = A.get_alphabet();
     int last_snp = -1;
+    int widened = 0;
     for(int i=0;i<A.length();i++)
     {
         if (is_masked_column(A,i))
@@ -439,11 +437,19 @@ void write_msmc(std::ostream& o, const alignment& A)
         
         o<<"1\t"<<i<<"\t"<<(i-last_snp)<<"\t";
         for(int j=0;j<A.n_sequences();j++)
-            o<<a.lookup(A(i,j));
+        {
+            auto [spelling, exact] = A.decode(A(i,j));
+            o<<spelling;
+            widened += not exact;
+        }
         o<<"\n";
 
         last_snp = i;
     }
+
+    if (widened)
+        std::cerr<<"Warning: widened "<<widened
+                 <<" non-Cartesian or unspellable ambiguities while writing sequences.\n";
 }
 
 void write_psmc(std::ostream& o, const alignment& A, int x1, int x2)
@@ -1296,13 +1302,11 @@ vector<pair<int,int>> get_snps_versus_consensus(const alignment& A, const vector
 
 vector<int> get_diff_columns(const alignment& A, const vector<int> consensus, int i)
 {
-    auto& a = A.get_alphabet();
-
     vector<int> columns;
 
     for(int c=0;c<A.length();c++)
     {
-        if (not a.consistent( A(c,i), consensus[c] ) )
+        if (not A.consistent(A(c,i), consensus[c]))
             columns.push_back(c);
     }
 
@@ -1849,7 +1853,7 @@ int main(int argc,char* argv[])
                 if (a.is_letter(l))
                     count[l]++;
 
-                if (a.is_feature(l))
+                if (alphabet::is_character(l))
                     count2[0]++;
                 else if (l == alphabet::gap)
                     count2[1]++;
@@ -1928,4 +1932,3 @@ int main(int argc,char* argv[])
     }
     return 0;
 }
-

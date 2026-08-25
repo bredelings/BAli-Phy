@@ -7,6 +7,7 @@
 #include "util/math/ProbDensity.hh"
 #include "substitution/cache.hh"
 #include "computation/runtime/ast.hh"
+#include "sequence/ambiguity.hh"
 
 class data_partition;
 
@@ -65,14 +66,16 @@ namespace substitution {
 
     object_ptr<const Likelihood_Cache_Branch>
     simple_sequence_likelihoods_SEV(const Runtime::Exp& sequence_mask,
-				    const alphabet& a,
+                                    const alphabet& a,
+                                    const ambiguity_database& ambiguities,
 				    std::span<const int> smap,
 				    int n_models);
 
     // This one is sparse
     object_ptr<const SparseLikelihoods>
     simple_sequence_likelihoods2_SEV(const Runtime::Exp& sequence_mask,
-				     const alphabet& a,
+                                     const alphabet& a,
+                                     const ambiguity_database& ambiguities,
 				     std::span<const int> smap,
 				     int n_models);
 

@@ -31,9 +31,10 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       maybeNodeISequences = labelToNodeMap rtree isequences
       maybeNodeSeqsBits = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences
       nModels = rows f
-      nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits
+      nodeCLVs = simpleNodeCLVs alphabet ambiguities smap nModels maybeNodeSeqsBits
 
       alphabet = getAlphabet smodel
+      ambiguities = getAmbiguities sequenceData
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
@@ -49,7 +50,7 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       (isequences2, columnCounts2) = compressAlignmentVarNonvar (getSequences sequenceData) alphabet
       maybeNodeISequences2 = labelToNodeMap rtree isequences2
       maybeNodeSeqsBits2 = ((\seq -> (stripGaps seq, bitmaskFromSequence seq)) <$>) <$> maybeNodeISequences2
-      nodeCLVs2 = simpleNodeCLVs alphabet smap nModels maybeNodeSeqsBits2
+      nodeCLVs2 = simpleNodeCLVs alphabet ambiguities smap nModels maybeNodeSeqsBits2
       cls2 | isReversible smodel = cachedConditionalLikelihoodsEqRev rtree nodeCLVs2 transitionPs f
            | otherwise           = cachedConditionalLikelihoodsNonRev rtree nodeCLVs2 transitionPs f
       likelihood2 | isReversible smodel = peelLikelihoodVariable nodeCLVs2 rtree cls2 f alphabet smap substRoot columnCounts2
@@ -87,7 +88,7 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ componentStates stateSequence)
 
-      return $ Aligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
+      return $ Aligned $ mkExactCharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, HasBranchLengths t, RateModel s, SimpleSModel t s, HasProperties t s) => Sampleable (VariablePhyloCTMC t s) where
     sample (Variable dist) = RanDistribution2 dist doNothing

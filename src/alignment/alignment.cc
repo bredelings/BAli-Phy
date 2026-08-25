@@ -91,6 +91,31 @@ int alignment::index(const string& s) const {
     return -1;
 }
 
+// Handle special codes first, then compare exact integers or database masks
+// directly so consistency checks never construct a temporary state set.
+bool alignment::consistent(int code1, int code2) const
+{
+    if (code1 == code2 or code1 == alphabet::unknown or code2 == alphabet::unknown)
+        return true;
+    if (code1 == alphabet::gap or code2 == alphabet::gap)
+        return false;
+    if (code1 == alphabet::not_gap or code2 == alphabet::not_gap)
+        return true;
+
+    bool ambiguity1 = alphabet::is_ambiguity(code1);
+    bool ambiguity2 = alphabet::is_ambiguity(code2);
+    if (not ambiguity1 and not ambiguity2)
+    {
+        assert(a->is_letter(code1) and a->is_letter(code2));
+        return false;
+    }
+    if (ambiguity1 and ambiguity2)
+        return ambiguities.mask(code1).intersects(ambiguities.mask(code2));
+    if (ambiguity1)
+        return ambiguities.mask(code1)[code2];
+    return ambiguities.mask(code2)[code1];
+}
+
 vector<int> alignment::get_columns_for_characters(int row) const
 {
     vector<int> columns;
@@ -111,7 +136,7 @@ std::string alignment::get_sequence_for_row(int row) const
     seq.reserve(length());
     for(int c=0;c<length();c++)
 	if (character(c,row))
-	    seq += a->lookup(array(c,row));
+	    seq += ambiguities.decode(*a, array(c,row)).first;
     return seq;
 }
 
@@ -186,7 +211,7 @@ void alignment::del_sequences(const vector<int>& ds)
 
 void alignment::add_sequence(const sequence& s) 
 {
-    add_row((*a)(s));
+    add_row(ambiguities.encode_sequence(*a, s));
 
     sequences.push_back(s);
     sequences.back().strip_gaps();
@@ -197,7 +222,7 @@ void alignment::add_sequences(const vector<sequence>& S)
     // determine new length
     int new_length = length();
     for(int i=0;i<S.size();i++)
-	new_length = std::max(new_length, (int)S[i].size());
+	new_length = std::max(new_length, (int)S[i].size() / a->width());
 
     // resize the array
     int N = n_sequences();
@@ -208,13 +233,18 @@ void alignment::add_sequences(const vector<sequence>& S)
 	sequences.push_back(S[i]);
 	sequences.back().strip_gaps();
 
-	for(int j=0; j<S[i].size(); j++)
-	    array(j, N+i) = (*a)[S[i][j]];
+	auto encoded = ambiguities.encode_sequence(*a, S[i]);
+	for(int j=0; j<encoded.size(); j++)
+	    array(j, N+i) = encoded[j];
     }
 }
 
 void alignment::load(const vector<sequence>& seqs) 
 {
+    // Replacing an alignment also replaces its observed ambiguity set. Incremental
+    // add_sequence(s) operations instead retain and extend the existing database.
+    ambiguities = ambiguity_database(a->n_letters());
+
     // determine length
     unsigned new_length = 0;
     for(int i=0;i<seqs.size();i++) {
@@ -230,7 +260,7 @@ void alignment::load(const vector<sequence>& seqs)
     for(int i=0;i<seqs.size();i++)
     {
 	try {
-	    vector<int> v = (*a)(seqs[i]);
+	    vector<int> v = ambiguities.encode_sequence(*a, seqs[i]);
 	    assert(v.size() <= array.size1());
 	    int k=0;
 	    for(;k<v.size();k++)
@@ -306,6 +336,7 @@ void alignment::load(const string& alph_name, const fs::path& filename)
 
 void alignment::print_to_stream(std::ostream& file) const{
     const alphabet& a = get_alphabet();
+    int widened = 0;
     file<<length()<<endl;
     for(int start = 0;start<length();) {
 
@@ -314,7 +345,9 @@ void alignment::print_to_stream(std::ostream& file) const{
 
 	for(int i=0;i<array.size2();i++) {
 	    for(int column=start;column<end;column++) {
-		file<<a.lookup(array(column,i));
+		auto [spelling, exact] = ambiguities.decode(a, array(column,i));
+		file<<spelling;
+		widened += not exact;
 	    }
 	    file<<endl;
 	}
@@ -322,12 +355,17 @@ void alignment::print_to_stream(std::ostream& file) const{
 	start = end;
 	file<<endl<<endl;
     }
+
+    if (widened)
+        std::cerr<<"Warning: widened "<<widened
+                 <<" non-Cartesian or unspellable ambiguities while writing sequences.\n";
 }
 
 vector<sequence> alignment::convert_to_sequences() const 
 {
 
     vector<sequence> seqs(n_sequences());
+    int widened = 0;
 
     for(int i=0;i<seqs.size();i++) {
 	seqs[i].name = sequences[i].name;
@@ -336,8 +374,15 @@ vector<sequence> alignment::convert_to_sequences() const
 	string& letters = seqs[i];
 	letters = "";
 	for(int c=0;c<length();c++)
-	    letters += a->lookup( (*this)(c,i) );
+	{
+	    auto [spelling, exact] = ambiguities.decode(*a, (*this)(c,i));
+	    letters += spelling;
+	    widened += not exact;
+	}
     }
+
+    if (widened)
+        std::cerr<<"Warning: widened "<<widened<<" non-Cartesian or unspellable ambiguities while writing sequences.\n";
 
     return seqs;
 }
@@ -370,11 +415,11 @@ void alignment::print_phylip_to_stream(std::ostream& file) const {
 }
 
 alignment::alignment(const alphabet& a1) 
-    :a(a1.clone())
+    :a(a1.clone()),ambiguities(a1.n_letters())
 {}
 
 alignment::alignment(const alphabet& a1, const vector<sequence>& S, int L) 
-    :array(L,S.size()),sequences(S),a(a1.clone())
+    :array(L,S.size()),sequences(S),a(a1.clone()),ambiguities(a1.n_letters())
 {
     // Do NOT load the sequences here -- this is used for setting the
     // sequences and matrix size and then filling in the matrix later.
@@ -383,7 +428,7 @@ alignment::alignment(const alphabet& a1, const vector<sequence>& S, int L)
 }
 
 alignment::alignment(const alphabet& a1, int n, int L) 
-    :array(L,n),sequences(n),a(a1.clone())
+    :array(L,n),sequences(n),a(a1.clone()),ambiguities(a1.n_letters())
 {
     // Do NOT load the sequences here -- this is used for setting the
     // sequences and matrix size and then filling in the matrix later.
@@ -392,7 +437,7 @@ alignment::alignment(const alphabet& a1, int n, int L)
 }
 
 alignment::alignment(const alphabet& a1,const fs::path& filename) 
-    :a(a1.clone())
+    :a(a1.clone()),ambiguities(a1.n_letters())
 { 
     load(filename); 
 
@@ -474,6 +519,7 @@ alignment blank_copy(const alignment& A1,int length)
 
     // make an array w/ the same alphabet & sequences
     A2.a = A1.a;
+    A2.ambiguities = A1.ambiguities;
     A2.sequences = A1.sequences;
 
     // make a blank array
@@ -491,6 +537,7 @@ alignment reorder_sequences(const alignment& A, const vector<int>& order)
 	seqs.push_back(A.seqs()[j]);
 
     alignment A2(A.get_alphabet(), seqs, L);
+    A2.get_ambiguities() = A.get_ambiguities();
 
     for(int i=0;i<order.size();i++)
     {

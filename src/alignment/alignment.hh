@@ -30,6 +30,7 @@
 #include <filesystem>
 
 #include "sequence/alphabet.hh"
+#include "sequence/ambiguity.hh"
 #include "sequence/sequence.hh"
 #include "sequence/sequence-format.hh"
 #include "util/matrix.hh"
@@ -58,6 +59,9 @@ class alignment
 
     /// The alphabet that translates integers back to letters.
     std::shared_ptr<const alphabet> a;
+
+    /// The proper ambiguity state sets referenced by negative matrix values.
+    ambiguity_database ambiguities;
   
 public:
 
@@ -133,9 +137,9 @@ public:
     /// Does sequence i have an unknown at position j ?
     bool unknown(int i,int j) const {return array(i,j)==alphabet::unknown;}
     /// Does sequence i have an character at position j ?
-    bool character(int i,int j) const {return not gap(i,j) and not unknown(i,j);}
+    bool character(int i,int j) const {return alphabet::is_character(array(i,j));}
     /// Does sequence i have missing data at position j?
-    bool missing(int i,int j) const {return array(i,j) < 0;}
+    bool missing(int i,int j) const {return array(i,j) < 0 and not alphabet::is_ambiguity(array(i,j));}
 
     /// Number of columns
     int length() const {return array.size1();}
@@ -154,6 +158,21 @@ public:
 
     /// Access the alignment's alphabet.
     bool has_alphabet() const {return bool(a);}
+
+    /// Spell one matrix value and report whether spelling widened its state set.
+    std::pair<std::string, bool> decode(int code) const {return ambiguities.decode(*a, code);}
+
+    /// Spell one matrix value without retaining widening diagnostics.
+    std::string lookup(int code) const {return decode(code).first;}
+
+    /// Do the state sets represented by two matrix values intersect?
+    bool consistent(int code1, int code2) const;
+
+    /// Access the alignment-local observed ambiguity sets.
+    const ambiguity_database& get_ambiguities() const {return ambiguities;}
+
+    /// Access the alignment-local observed ambiguity sets while constructing data.
+    ambiguity_database& get_ambiguities() {return ambiguities;}
 
     /// Construct an empty alignment
     alignment() {}
@@ -246,4 +265,3 @@ public:
 };
 
 #endif
-

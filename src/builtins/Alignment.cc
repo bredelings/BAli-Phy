@@ -25,6 +25,7 @@ using std::map;
 using std::tuple;
 
 using Alphabet = PtrBox<alphabet>;
+using Ambiguities = Box<ambiguity_database>;
 
 // #include "alignment/alignment-util.hh"
 vector<int> alignment_row_counts(const alignment& A, int i, const vector<int>& counts);
@@ -478,10 +479,10 @@ vector<int> site_pattern_var_nonvar(const R::RVector& A, int c)
     for(int j=0;j<n;j++)
     {
         int x = A[j].as_<R::RPair>().second.as_<R::RVector>()[c].as_int();
-        if (x < 0)
-            x = alphabet::gap;
-        else
+        if (alphabet::is_character(x))
             x = alphabet::not_gap;
+        else
+            x = alphabet::gap;
         pattern[j] = x;
     }
     return pattern;
@@ -746,6 +747,38 @@ extern "C" closure builtin_function_alignment_from_sequences(OperationArgs& Args
     return A;
 }
 
+// Construct the empty database used by model-generated exact character data.
+extern "C" closure builtin_function_emptyAmbiguityDatabase(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& a = *arg0.as_checked<Alphabet>();
+    return Ambiguities(a.n_letters());
+}
+
+// Encode the entire collection against one database so its negative codes are
+// globally meaningful without merging separately evaluated Haskell sequences.
+extern "C" closure builtin_function_encodeCharacterData(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto& a = *arg0.as_checked<Alphabet>();
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto& sequences = arg1.as_<R::RVector>();
+
+    object_ptr<Ambiguities> ambiguities(new Ambiguities(a.n_letters()));
+    R::RVector encoded_sequences;
+    encoded_sequences.reserve(sequences.size());
+
+    for (const auto& item: sequences)
+    {
+        const auto& pair = item.as_<R::RPair>();
+        const auto& label = pair.first.as_string();
+        const auto& text = pair.second.as_string();
+        encoded_sequences.push_back(R::RPair(label, R::RVector(ambiguities->encode_sequence(a, text))));
+    }
+
+    return R::RPair(ambiguities, std::move(encoded_sequences));
+}
+
 extern "C" closure builtin_function_sequence_name(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);
@@ -760,19 +793,6 @@ extern "C" closure builtin_function_sequenceDataRaw(OperationArgs& Args)
     auto& s = arg0.as_checked<Box<sequence>>();
 
     return std::string(s);
-}
-
-// This is the with-gaps version...
-extern "C" closure builtin_function_sequenceToAlignedIndices(OperationArgs& Args)
-{
-    auto arg0 = Args.evaluate_slot_to_value(0);
-    auto& a = *arg0.as_checked<Alphabet>();
-
-    auto arg1 = Args.evaluate_slot_to_value(1);
-    const auto& s = arg1.as_string();
-
-    auto letters = a(s);
-    return copy_to_native_int_vector(letters);
 }
 
 // Decode two consecutive unboxed-vector groups and retain both native owners while projecting states.
@@ -860,6 +880,7 @@ extern "C" closure builtin_function_select_alignment_columns(OperationArgs& Args
     int N = A0.n_sequences();
     int L = static_cast<int>(sites.size());
     object_ptr<Box<alignment>> A1(new Box<alignment>(A0.get_alphabet(), N, L));
+    A1->get_ambiguities() = A0.get_ambiguities();
 
     for(int i=0;i<sites.size();i++)
     {
@@ -890,7 +911,7 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
 
     int N = A0.n_sequences();
     int L = sites.size();
-    object_ptr<Box<alignment>> A1(new Box<alignment>(A0.get_alphabet(), N, L));
+    object_ptr<Box<alignment>> A1(new Box<alignment>(doublets, N, L));
 
     for(int i=0;i<sites.size();i++)
     {
@@ -900,7 +921,46 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
         {
             int nuc1 = A0(site1,j);
             int nuc2 = A0(site2,j);
-            int doublet = doublets.get_doublet(nuc1,nuc2);
+            int doublet;
+            if (nuc1 == alphabet::gap or nuc2 == alphabet::gap)
+                doublet = alphabet::gap;
+            else if (nuc1 == alphabet::unknown or nuc2 == alphabet::unknown)
+                doublet = alphabet::unknown;
+            else if (A0.get_alphabet().is_letter(nuc1) and A0.get_alphabet().is_letter(nuc2))
+                doublet = doublets.get_doublet(nuc1, nuc2);
+            else
+            {
+                // The two positional masks define exactly the doublet product set;
+                // encoding canonicalizes singleton and complete products as well.
+                alphabet::bitmask_t mask1(doublets.getNucleotides().n_letters());
+                alphabet::bitmask_t mask2(doublets.getNucleotides().n_letters());
+
+                if (nuc1 >= 0)
+                {
+                    assert(A0.get_alphabet().is_letter(nuc1));
+                    mask1.set(nuc1);
+                }
+                else if (alphabet::is_ambiguity(nuc1))
+                    mask1 = A0.get_ambiguities().mask(nuc1);
+                else
+                    mask1.set();
+
+                if (nuc2 >= 0)
+                {
+                    assert(A0.get_alphabet().is_letter(nuc2));
+                    mask2.set(nuc2);
+                }
+                else if (alphabet::is_ambiguity(nuc2))
+                    mask2 = A0.get_ambiguities().mask(nuc2);
+                else
+                    mask2.set();
+
+                alphabet::bitmask_t doublet_mask(doublets.n_letters());
+                for (int state = 0; state < doublets.n_letters(); state++)
+                    if (mask1[doublets.sub_nuc(state, 0)] and mask2[doublets.sub_nuc(state, 1)])
+                        doublet_mask.set(state);
+                doublet = A1->get_ambiguities().encode_mask(doublet_mask);
+            }
             A1->set_value(i, j, doublet);
         }
     }

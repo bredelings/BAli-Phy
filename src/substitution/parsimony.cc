@@ -21,40 +21,6 @@ int max_element(const matrix<int>& M)
 }
 
 
-// cost for l1 -> l2, where l1 is a letter class
-int letter_class1_cost(const alphabet& a, int l1, int l2, const DenseMatrix<int>& cost, int max_cost)
-{
-    assert(a.is_letter(l2));
-    assert(a.is_letter_class(l1));
-
-    int n_letters = a.size();
-
-    int c = max_cost;
-
-    for(int l=0;l<n_letters;l++)
-        if (a.matches(l,l2))
-            c = std::min(c, cost(l,l1));
-
-    return c;
-}
-
-// cost for l1 -> l2, where l2 is a letter class
-int letter_class2_cost(const alphabet& a, int l1, int l2, const DenseMatrix<int>& cost, int max_cost)
-{
-    assert(a.is_letter(l1));
-    assert(a.is_letter_class(l2));
-
-    int n_letters = a.size();
-
-    int c = max_cost;
-
-    for(int l=0;l<n_letters;l++)
-        if (a.matches(l,l2))
-            c = std::min(c, cost(l1,l));
-
-    return c;
-}
-
 void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const DenseMatrix<int>& cost)
 {
     for(int l2=0;l2<n_letters;l2++)
@@ -68,7 +34,8 @@ void peel_muts(const int* n_muts1, int* n_muts2, int n_letters, const DenseMatri
 
 object_ptr<ParsimonyCacheBranch>
 peel_muts(const R::RVector& sequences,
-	  const alphabet& a,
+	  const alphabet&,
+	  const ambiguity_database& ambiguities,
 	  const R::RVector& A_,
 	  const R::RVector& n_muts_,
 	  const DenseMatrix<int>& cost)
@@ -159,7 +126,13 @@ peel_muts(const R::RVector& sequences,
 	    int letter = sequence[s_node].as_int();
 	    if (letter >= 0)
 	    {
-		auto& ok = a.letter_mask(letter);
+		for(int l=0;l<n_letters;l++)
+		    if (l != letter)
+			S[l] = std::numeric_limits<int>::max()/2;
+	    }
+	    else if (alphabet::is_ambiguity(letter))
+	    {
+		const auto& ok = ambiguities.mask(letter);
 		for(int l=0;l<n_letters;l++)
 		    if (not ok[l])
 			S[l] = std::numeric_limits<int>::max()/2;
@@ -172,7 +145,8 @@ peel_muts(const R::RVector& sequences,
 }
 
 int muts_root(const R::RVector& sequences,
-	      const alphabet& a,
+	      const alphabet&,
+	      const ambiguity_database& ambiguities,
 	      const R::RVector& A_,
 	      const R::RVector& n_muts_,
               const DenseMatrix<int>& cost)
@@ -263,7 +237,13 @@ int muts_root(const R::RVector& sequences,
 	    int letter = sequence[s_node].as_int();
 	    if (letter >= 0)
 	    {
-		auto& ok = a.letter_mask(letter);
+		for(int l=0;l<n_letters;l++)
+		    if (l != letter)
+			S[l] = std::numeric_limits<int>::max()/2;
+	    }
+	    else if (alphabet::is_ambiguity(letter))
+	    {
+		const auto& ok = ambiguities.mask(letter);
 		for(int l=0;l<n_letters;l++)
 		    if (not ok[l])
 			S[l] = std::numeric_limits<int>::max()/2;
@@ -278,7 +258,8 @@ int muts_root(const R::RVector& sequences,
 
 object_ptr<const ParsimonyCacheBranch>
 peel_muts_fixed_A(const R::RVector& sequences,
-		  const alphabet& a,
+		  const alphabet&,
+		  const ambiguity_database& ambiguities,
 		  const R::RVector& n_muts_,
 		  const DenseMatrix<int>& cost)
 {
@@ -348,7 +329,13 @@ peel_muts_fixed_A(const R::RVector& sequences,
 
 	    if (letter >= 0)
 	    {
-		auto& ok = a.letter_mask(letter);
+		for(int l=0;l<n_letters;l++)
+		    if (l != letter)
+			S[l] = std::numeric_limits<int>::max()/2;
+	    }
+	    else if (alphabet::is_ambiguity(letter))
+	    {
+		const auto& ok = ambiguities.mask(letter);
 		for(int l=0;l<n_letters;l++)
 		    if (not ok[l])
 			S[l] = std::numeric_limits<int>::max()/2;
@@ -362,7 +349,8 @@ peel_muts_fixed_A(const R::RVector& sequences,
 }
 
 int muts_root_fixed_A(const R::RVector& sequences,
-		      const alphabet& a,
+		      const alphabet&,
+		      const ambiguity_database& ambiguities,
 		      const R::RVector& n_muts_,
 		      const DenseMatrix<int>& costs,
 		      std::span<const int> counts)
@@ -434,7 +422,13 @@ int muts_root_fixed_A(const R::RVector& sequences,
 
 	    if (letter >= 0)
 	    {
-		auto& ok = a.letter_mask(letter);
+		for(int l=0;l<n_letters;l++)
+		    if (l != letter)
+			S[l] = std::numeric_limits<int>::max()/2;
+	    }
+	    else if (alphabet::is_ambiguity(letter))
+	    {
+		const auto& ok = ambiguities.mask(letter);
 		for(int l=0;l<n_letters;l++)
 		    if (not ok[l])
 			S[l] = std::numeric_limits<int>::max()/2;

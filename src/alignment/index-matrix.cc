@@ -1325,6 +1325,7 @@ std::ostream& operator<<(std::ostream& o, const sparse_alignment& A)
     }
 
     auto& a = *A.a;
+    int widened = 0;
     for(int seq=0;seq<A.homology.n_sequences();seq++)
     {
         o<<">"<<A.names[seq]<<"\n";
@@ -1338,13 +1339,19 @@ std::ostream& operator<<(std::ostream& o, const sparse_alignment& A)
             for(;col<next_col;col++)
                 o<<a.gap_letter;
             int letter = A.sequences[seq][i];
-            o<<a.lookup(letter);
+            auto [spelling, exact] = A.ambiguities.decode(a, letter);
+            o<<spelling;
+            widened += not exact;
             col++;
         }
         for(;col<A.homology.n_columns();col++)
             o<<a.gap_letter;
         o<<"\n";
     }
+
+    if (widened)
+        std::cerr<<"Warning: widened "<<widened
+                 <<" non-Cartesian or unspellable ambiguities while writing sequences.\n";
 
     return o;
 }

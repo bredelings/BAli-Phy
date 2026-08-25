@@ -1,7 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 import Bio.Alphabet (dna)
-import Bio.Sequence (bitmaskFromSequence)
+import Bio.Sequence (bitmaskFromSequence, emptyAmbiguityDatabase)
 import Compiler.Floating (Pow(ln))
 import Compiler.Num
 import Data.Bool (Bool)
@@ -33,7 +33,7 @@ main = do
             :: EVector (NativeMatrix Double)
         letters = U.fromList [0] :: U.Vector Int
         smap = U.fromList [0,1,2,3] :: U.Vector Int
-        leaf = simpleSequenceLikelihoods dna smap 1
+        leaf = simpleSequenceLikelihoods dna (emptyAmbiguityDatabase dna) smap 1
             (letters, bitmaskFromSequence letters)
         emptyLikes = listToVector [] :: EVector CondLikes
         leafLikes = listToVector [leaf] :: EVector CondLikes

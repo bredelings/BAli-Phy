@@ -990,10 +990,13 @@ double li_stephens_2003_theta(int n)
     return theta;
 }
 
-double emission_probability(int copied_letter, int emitted_letter, double emission_diff_state, double emission_same_state, bool all_previous_missing)
+// Preserve the previous canonical-code equality model while recognizing negative
+// database ambiguity codes as constrained observations rather than missing data.
+double emission_probability(int copied_letter, int emitted_letter, double emission_diff_state,
+                            double emission_same_state, bool all_previous_missing)
 {
     // Emission is 1.0 if missing data at i2
-    if (emitted_letter < 0)
+    if (not alphabet::is_character(emitted_letter) or emitted_letter == alphabet::not_gap)
     {
         // Emitting an N or -
         return 1.0;
@@ -1001,7 +1004,7 @@ double emission_probability(int copied_letter, int emitted_letter, double emissi
     else
     {
         // Emitting an A, T, G, or C
-        if (copied_letter >= 0)
+        if (alphabet::is_character(copied_letter) and copied_letter != alphabet::not_gap)
         {
             // Copying from an A, T, G, or C
             return (copied_letter == emitted_letter) ? emission_same_state : emission_diff_state;
@@ -1108,7 +1111,8 @@ log_double_t li_stephens_2003_conditional_sampling_distribution(const alignment&
             // Emission is 1.0 if missing data at i2
             int copied_letter  = A(column1,i2);
             double emission_i2 = emission_probability( copied_letter, emitted_letter, emission_diff_state, emission_same_state, all_previous_missing );
-            if (copied_letter >= 0) all_previous_missing = false;
+            if (alphabet::is_character(copied_letter) and copied_letter != alphabet::not_gap)
+                all_previous_missing = false;
 
             double total = 0;
             for(int i1=0;i1<k;i1++)

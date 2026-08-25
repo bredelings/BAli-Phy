@@ -3,7 +3,7 @@
 import Bio.Alignment (ComponentStateSequence(ComponentStateSequence))
 import Bio.Alignment.Pairwise (left_aligned_pairwise_alignment)
 import Bio.Alphabet (dna)
-import Bio.Sequence (bitmaskFromSequence)
+import Bio.Sequence (bitmaskFromSequence, emptyAmbiguityDatabase)
 import Compiler.Num
 import qualified Data.Vector.Unboxed as U
 import Foreign.Vector (EVector, listToVector)
@@ -27,7 +27,7 @@ main = do
             :: EVector (NativeMatrix Double)
         letters = U.fromList [0] :: U.Vector Int
         smap = U.fromList [0] :: U.Vector Int
-        leaf = simpleSequenceLikelihoods dna smap 1
+        leaf = simpleSequenceLikelihoods dna (emptyAmbiguityDatabase dna) smap 1
             (letters, bitmaskFromSequence letters)
         nodeLikes = listToVector [leaf] :: EVector CondLikes
         branchLikes = listToVector [] :: EVector CondLikes

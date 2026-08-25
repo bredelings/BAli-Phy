@@ -13,8 +13,9 @@ protected:
 
     /// (codon,position) -> nucleotide
     std::vector<std::vector<int> > sub_nuc_table;
-    /// (n1,n2) -> double
-    std::vector<std::vector<int> > RNAEdit_table;
+
+    /// (first nucleotide, second nucleotide) -> exact RNA-edit state.
+    std::vector<std::vector<int>> rna_edit_for_components;
 
     void setup_table();
     void setup_sub_nuc_table();
@@ -30,7 +31,7 @@ public:
     /// The alphabet of nucleotides that we construct triplets from
     int sub_nuc(int codon,int pos) const;
 
-    /// Find the triplet made of nucleotides n1, n2
+    /// Return the exact RNA-edit state made from two exact nucleotide states.
     int get_doublet(int n1, int n2) const;
 
     bool is_watson_crick(int i) const;
@@ -41,7 +42,9 @@ public:
 
     std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
 
-    std::vector<int> operator()(const std::string&) const;
+    std::pair<std::string, bool> lookup(const bitmask_t& mask) const override;
+
+    void validate_sequence(const std::string& sequence) const override;
 
     RNAEdits(const Nucleotides& N);
     RNAEdits(const std::string& s,const Nucleotides& N);

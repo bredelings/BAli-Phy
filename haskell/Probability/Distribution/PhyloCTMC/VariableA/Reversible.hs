@@ -33,8 +33,9 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   let as = pairwiseAlignments alignment
       maybeNodeSequences = labelToNodeMap rtree (getSequences sequenceData)
       nModels = rows f
-      nodeCLVs = simpleNodeCLVs alphabet smap nModels maybeNodeSequences
+      nodeCLVs = simpleNodeCLVs alphabet ambiguities smap nModels maybeNodeSequences
       alphabet = getAlphabet smodel
+      ambiguities = getAmbiguities sequenceData
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
@@ -101,7 +102,7 @@ instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengt
 
       let sequenceForNode label stateSequence = (label, statesToLetters smap $ componentStates stateSequence)
 
-      return $ Unaligned $ CharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
+      return $ Unaligned $ mkExactCharacterData alphabet $ getLabelled rtree sequenceForNode stateSequences
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s, HasProperties t s, IsTree t2) => Sampleable (PhyloCTMC t (AlignmentOnTree t2) s) where
     sample dist = RanDistribution2 dist doNothing

@@ -183,7 +183,7 @@ long int pairwise_shared_homologies(int i, int j, const matrix<int>& M1 ,const v
 	int col1 = CI1[i][k];
 
 	// Not a homology in A1
-	if (not alphabet::is_feature(M1(col1,j))) continue;
+	if (not alphabet::is_character(M1(col1,j))) continue;
 
 	// Not a shared homology with A2
 	int col2 = CI2[i][k];
@@ -202,7 +202,7 @@ long int total_homologies(const matrix<int>& M1)
     {
 	int n = 0;
 	for(int j=0;j<M1.size2();j++)
-	    if (alphabet::is_feature(M1(c,j)))
+	    if (alphabet::is_character(M1(c,j)))
 		n++;
 	total += n*(n-1)/2;
     }

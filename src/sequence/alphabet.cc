@@ -148,24 +148,6 @@ int alphabet::operator[](const string& l) const
     throw bad_letter(l,name);
 }
 
-// FIXME - this is somewhat wasteful...
-vector<int> alphabet::operator() (const string& s) const
-{
-    const int lsize = width();
-
-    if (s.size()%lsize != 0)
-	throw myexception()<<"Number of letters should be a multiple of "<<lsize<<"!";
-
-    vector<int> v(s.size()/lsize);
-
-    for(int i=0;i<v.size();i++) {
-	string temp = s.substr(i*lsize,lsize);
-	v[i] = operator[](temp);
-    }
-    return v;
-}
-
-
 string alphabet::lookup(int i) const {
     if (i == gap)
 	return gap_letter;
@@ -175,6 +157,30 @@ string alphabet::lookup(int i) const {
 	return unknown_letter();
 
     return letter_class(i);
+}
+
+// Alphabet spellings remain notation metadata: their positions in letter_classes_
+// are not observation codes once data has been encoded into an ambiguity database.
+std::pair<string, bool> alphabet::lookup(const bitmask_t& mask) const
+{
+    assert(mask.size() == n_letters());
+    for (int i = 0; i < letter_masks_.size(); i++)
+        if (letter_masks_[i] == mask)
+            return {letter_classes_[i], true};
+
+    return {wildcard, false};
+}
+
+// This is used on encoding error paths, so validation does not add a second
+// alphabet lookup to successfully parsed observations.
+void alphabet::validate_sequence(const string& sequence) const
+{
+    int symbol_width = width();
+    if (sequence.size() % symbol_width != 0)
+        throw myexception()<<"Number of letters should be a multiple of "<<symbol_width<<"!";
+
+    for (int i = 0; i < sequence.size(); i += symbol_width)
+        (*this)[sequence.substr(i, symbol_width)];
 }
 
 

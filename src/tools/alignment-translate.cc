@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <array>
 #include "sequence/genetic_code.hh"
 #include "alignment/alignment.hh"
 #include "alignment/alignment-util.hh"
@@ -34,6 +35,46 @@ using std::endl;
 using std::vector;
 using std::string;
 using std::shared_ptr;
+
+// Exact codons retain the direct table lookup. An ambiguous codon is the
+// Cartesian product of its three nucleotide sets; translating all matching
+// exact codons gives precisely the amino-acid set represented by the output code.
+int translate_codon(int n0, int n1, int n2, const Genetic_Code& code, const AminoAcidsWithStop& amino_acids,
+                    const ambiguity_database& input_ambiguities, ambiguity_database& output_ambiguities)
+{
+    if (n0 >= 0 and n1 >= 0 and n2 >= 0)
+        return code.translate(n0, n1, n2);
+    if (n0 == alphabet::gap or n1 == alphabet::gap or n2 == alphabet::gap)
+        return alphabet::gap;
+    if (n0 == alphabet::unknown or n1 == alphabet::unknown or n2 == alphabet::unknown)
+        return alphabet::unknown;
+
+    std::array<int, 3> observations{n0, n1, n2};
+    std::array<alphabet::bitmask_t, 3> nucleotide_masks{
+        alphabet::bitmask_t(4), alphabet::bitmask_t(4), alphabet::bitmask_t(4)};
+    for (int position = 0; position < 3; position++)
+    {
+        int observation = observations[position];
+        if (observation >= 0)
+            nucleotide_masks[position].set(observation);
+        else if (alphabet::is_ambiguity(observation))
+            nucleotide_masks[position] = input_ambiguities.mask(observation);
+        else
+        {
+            assert(observation == alphabet::not_gap);
+            nucleotide_masks[position].set();
+        }
+    }
+
+    alphabet::bitmask_t amino_acid_mask(amino_acids.n_letters());
+    for (int first = 0; first < 4; first++)
+        for (int second = 0; second < 4; second++)
+            for (int third = 0; third < 4; third++)
+                if (nucleotide_masks[0][first] and nucleotide_masks[1][second] and nucleotide_masks[2][third])
+                    amino_acid_mask.set(code.translate(first, second, third));
+
+    return output_ambiguities.encode_mask(amino_acid_mask);
+}
 
 //FIXME - make this handle un-aligned gaps...
 // diagnose sequences which are not a multiple of 3
@@ -145,25 +186,31 @@ int main(int argc,char* argv[])
     AminoAcidsWithStop AA;
 
     //------- Convert sequence codons to amino acids  --------//
-    alignment A2(AA);
+    int translated_length = 0;
+    for(int column=frame;column<A1.length()-2;column+=3)
+      translated_length++;
 
-    for(int i=0;i<A1.n_sequences();i++) 
+    vector<sequence> translated_sequences(A1.n_sequences());
+    for(int i=0;i<A1.n_sequences();i++)
     {
-      sequence S;
-      S.name = A1.seq(i).name;
-      S.comment = A1.seq(i).comment;
+      translated_sequences[i].name = A1.seq(i).name;
+      translated_sequences[i].comment = A1.seq(i).comment;
+    }
+    alignment A2(AA, translated_sequences, translated_length);
 
+    for(int i=0;i<A1.n_sequences();i++)
+    {
+      int output_column = 0;
       for(int column=frame;column<A1.length()-2;column+=3) 
       {
 	int n0 = A1(column,i);
 	int n1 = A1(column+1,i);
 	int n2 = A1(column+2,i);
 
-	int aa = G.translate(n0,n1,n2);
-
-	S += AA.lookup(aa);
+	int aa = translate_codon(n0, n1, n2, G, AA, A1.get_ambiguities(), A2.get_ambiguities());
+	A2.set_value(output_column++, i, aa);
+	A2.seq(i) += A2.lookup(aa);
       }
-      A2.add_sequence(S);
     }
 
     cout<<A2;

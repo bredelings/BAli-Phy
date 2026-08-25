@@ -183,10 +183,17 @@ void extract_sequence(const variables_map& args, const joint_A_T& J)
             if (log_verbose > 0)
                 std::cerr<<"Mapped "<<q_node_name<<" -> "<<t_node_name<<"\n";
             std::cout<<">"<<q_node_name<<"\n";
-            auto& a = A.get_alphabet();
+            int widened = 0;
             for(int i=0;i<A.length();i++)
-                std::cout<<a.lookup(A(i,*t_node));
+            {
+                auto [spelling, exact] = A.decode(A(i,*t_node));
+                std::cout<<spelling;
+                widened += not exact;
+            }
             std::cout<<"\n";
+            if (widened)
+                std::cerr<<"Warning: widened "<<widened
+                         <<" non-Cartesian or unspellable ambiguities while writing sequences.\n";
         }
         std::cout<<"\n\n";
     }
