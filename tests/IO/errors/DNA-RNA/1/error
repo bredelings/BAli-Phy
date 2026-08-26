@@ -1,2 +1,2 @@
 bali-phy: Error! In file 'AUTGC.fasta': sequence #1 '1':
-Letter 'U' not in alphabet 'DNA'.
+Unrecognized symbol 'U' for alphabet 'DNA' at character 2.

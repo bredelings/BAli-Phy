@@ -104,22 +104,9 @@ std::pair<string, bool> alphabet::lookup(const bitmask_t& mask) const
     return {wildcard, false};
 }
 
-// This is used on encoding error paths, so validation does not add a second
-// alphabet lookup to successfully parsed observations.
-void alphabet::validate_sequence(const string& sequence) const
-{
-    int symbol_width = width();
-    if (sequence.size() % symbol_width != 0)
-        throw myexception()<<"Number of letters should be a multiple of "<<symbol_width<<"!";
-
-    for (int i = 0; i < sequence.size(); i += symbol_width)
-    {
-        string symbol = sequence.substr(i, symbol_width);
-        bool special = symbol == gap_letter or symbol == wildcard or includes(unknown_letters, symbol);
-        if (not special and not mask_for_symbol(symbol))
-            throw myexception()<<"Letter '"<<sanitize_string(symbol)<<"' not in alphabet '"<<name<<"'.";
-    }
-}
+// Ordinary alphabets need no second diagnostic pass after the shared encoder reports failure.
+void alphabet::diagnose_sequence_encoding_failure(const string&) const
+{}
 
 
 bool operator==(const alphabet& a1,const alphabet& a2) {

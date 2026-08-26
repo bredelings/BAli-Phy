@@ -99,8 +99,9 @@ std::vector<int> ambiguity_database::encode_sequence(const alphabet& a, const st
     int symbol_width = a.width();
     if (sequence.size() % symbol_width != 0)
     {
-        a.validate_sequence(sequence);
-        throw myexception()<<"Number of letters should be a multiple of "<<symbol_width<<"!";
+        a.diagnose_sequence_encoding_failure(sequence);
+        throw myexception()<<"Alignment row has "<<sequence.size()<<" columns, but alphabet '"<<a.name
+                           <<"' requires a multiple of "<<symbol_width<<" columns.";
     }
 
     std::vector<int> result(sequence.size() / symbol_width);
@@ -110,7 +111,7 @@ std::vector<int> ambiguity_database::encode_sequence(const alphabet& a, const st
         auto code = encode_symbol(a, symbol);
         if (not code)
         {
-            a.validate_sequence(sequence);
+            a.diagnose_sequence_encoding_failure(sequence);
             throw myexception()<<"Unrecognized symbol '"<<sanitize_string(symbol)<<"' for alphabet '"<<a.name
                                <<"' at character "<<i + 1<<".";
         }

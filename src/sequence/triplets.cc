@@ -1,5 +1,6 @@
 #include "triplets.hh"
 #include "codons.hh"
+#include "util/set.hh"
 #include "util/string/sanitize.hh"
 
 using std::vector;
@@ -167,49 +168,40 @@ std::pair<string, bool> Triplets::lookup(const bitmask_t& mask) const
     return {spelling, hull == mask};
 }
 
-// Reproduce mixed-gap, length, and stop-codon diagnostics only on parse errors.
-void Triplets::validate_sequence(const string& letters) const
+// Diagnose product structure and excluded exact states only after encoding fails.
+void Triplets::diagnose_sequence_encoding_failure(const string& letters) const
 {
     const int letter_size = width();
-    vector<int> singlets(letters.size());
+    vector<int> components(letters.size());
     vector<int> exact_states(letters.size(), -1);
-    for (int i = 0; i < singlets.size(); i++)
+    for (int i = 0; i < components.size(); i++)
     {
         string symbol = letters.substr(i, 1);
         if (symbol == N->gap_letter)
-            singlets[i] = gap;
-        else
+            components[i] = gap;
+        else if (includes(N->unknown_letters, symbol))
+            components[i] = unknown;
+        else if (auto state = N->find_letter(symbol))
         {
-            bool is_unknown = false;
-            for (const auto& unknown_letter: N->unknown_letters)
-                is_unknown = is_unknown or symbol == unknown_letter;
-            if (is_unknown)
-                singlets[i] = unknown;
-            else if (auto state = N->find_letter(symbol))
-            {
-                singlets[i] = not_gap;
-                exact_states[i] = *state;
-            }
-            else if (N->mask_for_symbol(symbol))
-                singlets[i] = not_gap;
-            else
-                throw myexception()<<"Letter '"<<sanitize_string(symbol)<<"' not in alphabet '"<<N->name<<"'.";
+            components[i] = not_gap;
+            exact_states[i] = *state;
         }
+        else if (N->mask_for_symbol(symbol))
+            components[i] = not_gap;
+        else
+            throw myexception()<<"Nucleotide symbol '"<<sanitize_string(symbol)<<"' at alignment column "
+                               <<i + 1<<" is not recognized by alphabet '"<<N->name<<"'.";
     }
 
-    int n_letters = 0;
-    for (auto singlet: singlets)
-        if (singlet == not_gap)
-            n_letters++;
-
-    myexception e;
-    bool ok = true;
+    int first_mixed = -1;
     vector<int> stop_codons;
-    for (int i = 0; i < singlets.size() / letter_size and ok; i++)
+    for (int i = 0; i < components.size() / letter_size; i++)
     {
-        int l1 = singlets[letter_size * i];
-        int l2 = singlets[letter_size * i + 1];
-        int l3 = singlets[letter_size * i + 2];
+        if (includes(unknown_letters, letters.substr(letter_size * i, letter_size)))
+            continue;
+        int l1 = components[letter_size * i];
+        int l2 = components[letter_size * i + 1];
+        int l3 = components[letter_size * i + 2];
         if (l1 == not_gap and l2 == not_gap and l3 == not_gap)
         {
             int n1 = exact_states[letter_size * i];
@@ -222,38 +214,41 @@ void Triplets::validate_sequence(const string& letters) const
             continue;
         else
         {
-            e<<" Sequence not aligned as "<<letters_name()<<"!  Column "<<i+1
-             <<" has mixed gap/non-gap letter '"<<letters.substr(i * letter_size, letter_size)<<"'";
-            ok = false;
+            if (first_mixed == -1)
+                first_mixed = i;
         }
     }
-    if (n_letters % letter_size != 0)
+
+    myexception e;
+    bool diagnosed = false;
+    if (first_mixed != -1)
     {
-        if (not ok) e<<"\n";
-        e<<" Sequence of "<<n_letters<<" "<<N->letters_name()<<" cannot be divided into "
-         <<letters_name()<<": not a multiple of 3 "<<N->letters_name()<<"!";
-        ok = false;
+        diagnosed = true;
+        e<<" Malformed "<<letter_name()<<" at column "<<first_mixed + 1<<" ('"
+         <<letters.substr(first_mixed * letter_size, letter_size)
+         <<"'): its components mix gap, nongap, or missing symbols.\n"
+         <<"   Each "<<letter_name()<<" must be entirely nongap, entirely gaps, or the complete missing symbol.";
     }
-    if (singlets.size() % letter_size != 0)
+    if (components.size() % letter_size != 0)
     {
-        if (not ok) e<<"\n";
-        e<<" Alignment row of "<<letters.size()<<" columns cannot be divided into "
-         <<letters_name()<<": not a multiple of 3 columns!";
-        ok = false;
+        if (diagnosed) e<<"\n";
+        diagnosed = true;
+        e<<" Alignment row has "<<letters.size()<<" columns, but "<<letters_name()
+         <<" require a multiple of "<<letter_size<<" columns.";
     }
     if (not stop_codons.empty())
     {
-        if (not ok) e<<"\n";
-        ok = false;
+        if (diagnosed) e<<"\n";
+        diagnosed = true;
         auto codons = dynamic_cast<const Codons*>(this);
         assert(codons);
-        e<<" Sequence contains "<<stop_codons.size()<<" stop codons: not allowed!\n";
+        e<<" Sequence contains "<<stop_codons.size()<<" stop codons under genetic code '"
+         <<codons->getGenetic_Code().name()<<"'.\n";
         int column = stop_codons.front();
-        e<<"   First stop codon is '"<<letters.substr(column * letter_size, letter_size)
-         <<"' at nucleotide column "<<3 * column + 1
-         <<"   (genetic code = "<<codons->getGenetic_Code().name()<<")";
+        e<<"   First is '"<<letters.substr(column * letter_size, letter_size)<<"' at "
+         <<letter_name()<<" column "<<column + 1<<" (nucleotide column "<<3 * column + 1<<").";
     }
-    if (not ok)
+    if (diagnosed)
         throw e;
 }
 

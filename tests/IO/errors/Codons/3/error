@@ -1,3 +1,4 @@
 bali-phy: Error! In file 'test.fasta': sequence #1 '1':
- Sequence not aligned as codons!  Column 2 has mixed gap/non-gap letter '-GG'
- Alignment row of 7 columns cannot be divided into codons: not a multiple of 3 columns!
+ Malformed codon at column 2 ('-GG'): its components mix gap, nongap, or missing symbols.
+   Each codon must be entirely nongap, entirely gaps, or the complete missing symbol.
+ Alignment row has 7 columns, but codons require a multiple of 3 columns.

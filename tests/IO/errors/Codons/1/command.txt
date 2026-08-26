@@ -1,1 +1,0 @@
-test.fasta --test --alphabet=Codons

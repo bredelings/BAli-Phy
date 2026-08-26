@@ -124,9 +124,9 @@ public:
     /// Spell a state set and report whether the spelling represents exactly that set.
     virtual std::pair<std::string, bool> lookup(const bitmask_t& mask) const;
 
-    /// Compatibility error-path hook for diagnostics formerly emitted by product parsers.
-    /// Remove once the shared encoder reports equivalent product-structure errors directly.
-    virtual void validate_sequence(const std::string& sequence) const;
+    /// After encoding fails, examine the complete sequence and throw a more specific diagnostic.
+    /// Product alphabets may report several independent causes. Returns when no cause is recognized.
+    virtual void diagnose_sequence_encoding_failure(const std::string& sequence) const;
 
     /// How many letters in the alphabet?
     int size() const { return n_letters(); }

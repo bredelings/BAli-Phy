@@ -1,3 +1,2 @@
 bali-phy: Error! In file 'test.fasta': sequence #1 '1':
- Sequence of 4 nucleotides cannot be divided into triplets: not a multiple of 3 nucleotides!
- Alignment row of 4 columns cannot be divided into triplets: not a multiple of 3 columns!
+ Alignment row has 4 columns, but triplets require a multiple of 3 columns.

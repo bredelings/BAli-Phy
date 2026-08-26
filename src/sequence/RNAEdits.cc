@@ -1,4 +1,5 @@
 #include "RNAEdits.hh"
+#include "util/set.hh"
 #include "util/string/sanitize.hh"
 
 using std::vector;
@@ -214,62 +215,56 @@ std::pair<string, bool> RNAEdits::lookup(const bitmask_t& mask) const
     return {spelling, hull == mask};
 }
 
-// Reproduce the product-alphabet diagnostics only after normal encoding fails.
-void RNAEdits::validate_sequence(const string& letters) const
+// Diagnose product structure only after encoding fails, so successful input incurs no second scan.
+void RNAEdits::diagnose_sequence_encoding_failure(const string& letters) const
 {
     const int letter_size = width();
-    vector<int> singlets(letters.size());
-    for (int i = 0; i < singlets.size(); i++)
+    vector<int> components(letters.size());
+    for (int i = 0; i < components.size(); i++)
     {
         string symbol = letters.substr(i, 1);
         if (symbol == N->gap_letter)
-            singlets[i] = gap;
+            components[i] = gap;
+        else if (includes(N->unknown_letters, symbol))
+            components[i] = unknown;
+        else if (N->mask_for_symbol(symbol))
+            components[i] = not_gap;
         else
-        {
-            bool is_unknown = false;
-            for (const auto& unknown_letter: N->unknown_letters)
-                is_unknown = is_unknown or symbol == unknown_letter;
-            if (is_unknown)
-                singlets[i] = unknown;
-            else if (N->mask_for_symbol(symbol))
-                singlets[i] = not_gap;
-            else
-                throw myexception()<<"Letter '"<<sanitize_string(symbol)<<"' not in alphabet '"<<N->name<<"'.";
-        }
+            throw myexception()<<"Nucleotide symbol '"<<sanitize_string(symbol)<<"' at alignment column "
+                               <<i + 1<<" is not recognized by alphabet '"<<N->name<<"'.";
     }
 
-    int n_letters = 0;
-    for (auto singlet: singlets)
-        if (singlet == not_gap)
-            n_letters++;
-
-    myexception e;
-    bool ok = true;
-    for (int i = 0; i < singlets.size() / letter_size and ok; i++)
+    int first_mixed = -1;
+    for (int i = 0; i < components.size() / letter_size; i++)
     {
-        int l1 = singlets[letter_size * i];
-        int l2 = singlets[letter_size * i + 1];
+        if (includes(unknown_letters, letters.substr(letter_size * i, letter_size)))
+            continue;
+        int l1 = components[letter_size * i];
+        int l2 = components[letter_size * i + 1];
         if ((l1 == not_gap and l2 == not_gap) or (l1 == gap and l2 == gap))
             continue;
-        e<<" Sequence not aligned as "<<letters_name()<<"!  Column "<<i+1
-         <<" has mixed gap/non-gap letter '"<<letters.substr(i * letter_size, letter_size)<<"'";
-        ok = false;
+        first_mixed = i;
+        break;
     }
-    if (n_letters % letter_size != 0)
+
+    myexception e;
+    bool diagnosed = false;
+    if (first_mixed != -1)
     {
-        if (not ok) e<<"\n";
-        e<<" Sequence of "<<n_letters<<" "<<N->letters_name()<<" cannot be divided into "
-         <<letters_name()<<": not a multiple of 2 "<<N->letters_name()<<"!";
-        ok = false;
+        diagnosed = true;
+        e<<" Malformed "<<letter_name()<<" at column "<<first_mixed + 1<<" ('"
+         <<letters.substr(first_mixed * letter_size, letter_size)
+         <<"'): its components mix gap, nongap, or missing symbols.\n"
+         <<"   Each "<<letter_name()<<" must be entirely nongap, entirely gaps, or the complete missing symbol.";
     }
-    if (singlets.size() % letter_size != 0)
+    if (components.size() % letter_size != 0)
     {
-        if (not ok) e<<"\n";
-        e<<" Alignment row of "<<letters.size()<<" columns cannot be divided into "
-         <<letters_name()<<": not a multiple of 2 columns!";
-        ok = false;
+        if (diagnosed) e<<"\n";
+        diagnosed = true;
+        e<<" Alignment row has "<<letters.size()<<" columns, but "<<letters_name()
+         <<" require a multiple of "<<letter_size<<" columns.";
     }
-    if (not ok)
+    if (diagnosed)
         throw e;
 }
 

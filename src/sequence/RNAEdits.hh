@@ -47,7 +47,7 @@ public:
 
     std::pair<std::string, bool> lookup(const bitmask_t& mask) const override;
 
-    void validate_sequence(const std::string& sequence) const override;
+    void diagnose_sequence_encoding_failure(const std::string& sequence) const override;
 
     RNAEdits(const Nucleotides& N);
     RNAEdits(const std::string& s,const Nucleotides& N);
