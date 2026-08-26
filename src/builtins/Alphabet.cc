@@ -6,6 +6,7 @@
 #include "sequence/doublets.hh"
 #include "sequence/RNAEdits.hh"
 #include "sequence/codons.hh"
+#include "util/string/sanitize.hh"
 
 using Alphabet = PtrBox<alphabet>;
 using Ambiguities = Box<ambiguity_database>;
@@ -48,7 +49,10 @@ extern "C" R::Exp simple_function_find_letter(vector<R::Exp>& args)
     auto arg1 = get_arg(args);
     auto& letter = arg1.as_string();
 
-    return a.find_letter(letter);
+    auto state = a.find_letter(letter);
+    if (not state)
+        throw myexception()<<"Alphabet '"<<a.name<<"' doesn't contain letter '"<<sanitize_string(letter)<<"'.";
+    return *state;
 }
 
 extern "C" closure builtin_function_getNucleotides(OperationArgs& Args)

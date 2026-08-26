@@ -1,5 +1,6 @@
 #include "triplets.hh"
 #include "codons.hh"
+#include "util/string/sanitize.hh"
 
 using std::vector;
 using std::string;
@@ -7,8 +8,9 @@ using std::valarray;
 
 void Triplets::setup_sub_nuc_table()
 {
-    triplet_for_components = vector<vector<vector<int>>>(
-        N->n_letters(), vector<vector<int>>(N->n_letters(), vector<int>(N->n_letters(), -1)));
+    triplet_for_components = vector<vector<vector<std::optional<int>>>>(
+        N->n_letters(), vector<vector<std::optional<int>>>(
+                            N->n_letters(), vector<std::optional<int>>(N->n_letters())));
     sub_nuc_table.clear();
     sub_nuc_table.resize(size());
 
@@ -20,22 +22,24 @@ void Triplets::setup_sub_nuc_table()
 	assert(codon.length() == 3);
 	sub_nuc_table[i].resize(3);
 
-	int n0 = sub_nuc_table[i][0] = N->find_letter(codon.substr(0,1));
-	int n1 = sub_nuc_table[i][1] = N->find_letter(codon.substr(1,1));
-	int n2 = sub_nuc_table[i][2] = N->find_letter(codon.substr(2,1));
-	triplet_for_components[n0][n1][n2] = i;
+	auto n0 = N->find_letter(codon.substr(0,1));
+	auto n1 = N->find_letter(codon.substr(1,1));
+	auto n2 = N->find_letter(codon.substr(2,1));
+        assert(n0 and n1 and n2);
+	sub_nuc_table[i][0] = *n0;
+	sub_nuc_table[i][1] = *n1;
+	sub_nuc_table[i][2] = *n2;
+	triplet_for_components[*n0][*n1][*n2] = i;
     }
 }
 
-// Map three exact nucleotide states directly to their exact triplet state.
-int Triplets::get_triplet(int n1, int n2, int n3) const
+// Map three exact nucleotide states directly to their exact triplet state, if present.
+std::optional<int> Triplets::get_triplet(int n1, int n2, int n3) const
 {
-    if (not N->is_letter(n1) or not N->is_letter(n2) or not N->is_letter(n3))
-        throw myexception()<<"get_triplet requires three exact nucleotide states.";
-    int state = triplet_for_components[n1][n2][n3];
-    if (state == -1)
-        throw myexception()<<"The nucleotide triple is not in this triplet alphabet.";
-    return state;
+    assert(N->is_letter(n1));
+    assert(N->is_letter(n2));
+    assert(N->is_letter(n3));
+    return triplet_for_components[n1][n2][n3];
 }
 
 int Triplets::sub_nuc(int codon,int pos) const {
@@ -181,7 +185,7 @@ void Triplets::validate_sequence(const string& letters) const
                 is_unknown = is_unknown or symbol == unknown_letter;
             if (is_unknown)
                 singlets[i] = unknown;
-            else if (auto state = N->find_letter_if_present(symbol))
+            else if (auto state = N->find_letter(symbol))
             {
                 singlets[i] = not_gap;
                 exact_states[i] = *state;
@@ -189,7 +193,7 @@ void Triplets::validate_sequence(const string& letters) const
             else if (N->mask_for_symbol(symbol))
                 singlets[i] = not_gap;
             else
-                throw bad_letter(symbol, N->name);
+                throw myexception()<<"Letter '"<<sanitize_string(symbol)<<"' not in alphabet '"<<N->name<<"'.";
         }
     }
 
@@ -211,7 +215,7 @@ void Triplets::validate_sequence(const string& letters) const
             int n1 = exact_states[letter_size * i];
             int n2 = exact_states[letter_size * i + 1];
             int n3 = exact_states[letter_size * i + 2];
-            if (n1 >= 0 and n2 >= 0 and n3 >= 0 and triplet_for_components[n1][n2][n3] == -1)
+            if (n1 >= 0 and n2 >= 0 and n3 >= 0 and not triplet_for_components[n1][n2][n3])
                 stop_codons.push_back(i);
         }
         else if (l1 == gap and l2 == gap and l3 == gap)

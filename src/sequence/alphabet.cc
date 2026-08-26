@@ -32,14 +32,6 @@ using std::valarray;
 using std::istream;
 using std::shared_ptr;
 
-bad_letter::bad_letter(const string& l)
-    :myexception(string("Letter '") + sanitize_string(l) + string("' not in alphabet.")),letter(l)
-{}
-
-bad_letter::bad_letter(const string& l,const string& name)
-    :myexception(string("Letter '") + sanitize_string(l) + string("' not in alphabet '") + name + "'."),letter(l)
-{}
-
 // Legally, we have to define this to give them a location.
 // This only triggers an error in g++ if they aren't inlined.
 const int alphabet::gap;
@@ -55,19 +47,13 @@ bool alphabet::contains(const std::string& l) const {
     return includes(letters_,l);
 }
 
-int alphabet::find_letter(char l) const {
+std::optional<int> alphabet::find_letter(char l) const {
     string s(1U,l);  
     return find_letter(s);
 }
 
-int alphabet::find_letter(const string& l) const {
-    if (auto index = find_letter_if_present(l))
-        return *index;
-    throw myexception()<<"Alphabet '"<<name<<"' doesn't contain letter '"<<sanitize_string(l)<<"'";
-}
-
-// Search exact states without using exceptions for an ordinary absent result.
-std::optional<int> alphabet::find_letter_if_present(const string& l) const
+// Search the exact alphabet states without using exceptions for an absent result.
+std::optional<int> alphabet::find_letter(const string& l) const
 {
     for (int i = 0; i < size(); i++)
         if (letter(i) == l)
@@ -90,7 +76,7 @@ string alphabet::lookup(int i) const {
 // add their own readable ambiguity notation without assigning integer codes.
 std::optional<alphabet::bitmask_t> alphabet::mask_for_symbol(const string& symbol) const
 {
-    if (auto state = find_letter_if_present(symbol))
+    if (auto state = find_letter(symbol))
     {
         bitmask_t mask(n_letters());
         mask.set(*state);
@@ -131,7 +117,7 @@ void alphabet::validate_sequence(const string& sequence) const
         string symbol = sequence.substr(i, symbol_width);
         bool special = symbol == gap_letter or symbol == wildcard or includes(unknown_letters, symbol);
         if (not special and not mask_for_symbol(symbol))
-            throw bad_letter(symbol, name);
+            throw myexception()<<"Letter '"<<sanitize_string(symbol)<<"' not in alphabet '"<<name<<"'.";
     }
 }
 
@@ -143,12 +129,6 @@ bool operator==(const alphabet& a1,const alphabet& a2) {
 void alphabet::insert(const string& l) 
 {
     letters_.push_back(l);
-}
-
-void alphabet::remove(const string& l)
-{
-    int index = find_letter(l);
-    remove(index);
 }
 
 void alphabet::remove(int index)
@@ -338,8 +318,8 @@ std::optional<alphabet::bitmask_t> AminoAcids::mask_for_symbol(const string& sym
     if (auto mask = alphabet::mask_for_symbol(symbol))
         return mask;
 
-    int first;
-    int second;
+    std::optional<int> first;
+    std::optional<int> second;
     if (symbol == "B")
     {
         first = find_letter("D");
@@ -358,9 +338,10 @@ std::optional<alphabet::bitmask_t> AminoAcids::mask_for_symbol(const string& sym
     else
         return {};
 
+    assert(first and second);
     bitmask_t mask(n_letters());
-    mask.set(first);
-    mask.set(second);
+    mask.set(*first);
+    mask.set(*second);
     return mask;
 }
 
@@ -370,11 +351,18 @@ std::pair<string, bool> AminoAcids::lookup(const bitmask_t& mask) const
     auto result = alphabet::lookup(mask);
     if (result.second or mask.count() != 2)
         return result;
-    if (mask[find_letter("D")] and mask[find_letter("N")])
+    auto D = find_letter("D");
+    auto N = find_letter("N");
+    auto E = find_letter("E");
+    auto Q = find_letter("Q");
+    auto I = find_letter("I");
+    auto L = find_letter("L");
+    assert(D and N and E and Q and I and L);
+    if (mask[*D] and mask[*N])
         return {"B", true};
-    if (mask[find_letter("E")] and mask[find_letter("Q")])
+    if (mask[*E] and mask[*Q])
         return {"Z", true};
-    if (mask[find_letter("I")] and mask[find_letter("L")])
+    if (mask[*I] and mask[*L])
         return {"J", true};
     return result;
 }

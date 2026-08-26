@@ -1,4 +1,5 @@
 #include "doublets.hh"
+#include "util/string/sanitize.hh"
 
 using std::vector;
 using std::string;
@@ -6,7 +7,8 @@ using std::valarray;
 
 void Doublets::setup_sub_nuc_table()
 {
-    doublet_for_components = vector<vector<int>>(N->n_letters(), vector<int>(N->n_letters(), -1));
+    doublet_for_components = vector<vector<std::optional<int>>>(
+        N->n_letters(), vector<std::optional<int>>(N->n_letters()));
     sub_nuc_table.clear();
     sub_nuc_table.resize(size());
 
@@ -19,21 +21,21 @@ void Doublets::setup_sub_nuc_table()
 	assert(doublet.length() == 2);
 	sub_nuc_table[i].resize(2);
 
-	int n0 = sub_nuc_table[i][0] = N->find_letter(doublet.substr(0,1));
-	int n1 = sub_nuc_table[i][1] = N->find_letter(doublet.substr(1,1));
-	doublet_for_components[n0][n1] = i;
+	auto n0 = N->find_letter(doublet.substr(0,1));
+	auto n1 = N->find_letter(doublet.substr(1,1));
+        assert(n0 and n1);
+	sub_nuc_table[i][0] = *n0;
+	sub_nuc_table[i][1] = *n1;
+	doublet_for_components[*n0][*n1] = i;
     }
 }
 
-// Map two exact nucleotide states directly to their exact doublet state.
-int Doublets::get_doublet(int n1, int n2) const
+// Map two exact nucleotide states directly to their exact doublet state, if present.
+std::optional<int> Doublets::get_doublet(int n1, int n2) const
 {
-    if (not N->is_letter(n1) or not N->is_letter(n2))
-        throw myexception()<<"get_doublet requires two exact nucleotide states.";
-    int state = doublet_for_components[n1][n2];
-    if (state == -1)
-        throw myexception()<<"The nucleotide pair is not in this doublet alphabet.";
-    return state;
+    assert(N->is_letter(n1));
+    assert(N->is_letter(n2));
+    return doublet_for_components[n1][n2];
 }
 
 int Doublets::sub_nuc(int letter_index, int pos) const
@@ -211,7 +213,7 @@ void Doublets::validate_sequence(const string& letters) const
             else if (N->mask_for_symbol(symbol))
                 singlets[i] = not_gap;
             else
-                throw bad_letter(symbol, N->name);
+                throw myexception()<<"Letter '"<<sanitize_string(symbol)<<"' not in alphabet '"<<N->name<<"'.";
         }
     }
 

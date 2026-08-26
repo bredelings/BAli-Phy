@@ -29,7 +29,9 @@ void Codons::setup_table()
 	int n2 = sub_nuc(i,1);
 	int n3 = sub_nuc(i,2);
 
-	translation_table[i] = A->find_letter(GAA.letter(G->translate(n1,n2,n3)));
+	auto amino_acid = A->find_letter(GAA.letter(G->translate(n1,n2,n3)));
+        assert(amino_acid);
+	translation_table[i] = *amino_acid;
     }
 }
 

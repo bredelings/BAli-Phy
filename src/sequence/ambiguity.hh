@@ -47,8 +47,8 @@ public:
     /// Return the stored 0/1 floating-point mask without allocating.
     const std::vector<double>& fmask(int code) const;
 
-    /// Encode one alphabet symbol, storing a proper ambiguity when necessary.
-    int encode_symbol(const alphabet& a, const std::string& symbol);
+    /// Encode one alphabet symbol, storing a proper ambiguity, or return nothing when unrecognized.
+    std::optional<int> encode_symbol(const alphabet& a, const std::string& symbol);
 
     /// Encode a string into exact, special, and database-local ambiguity codes.
     std::vector<int> encode_sequence(const alphabet& a, const std::string& sequence);

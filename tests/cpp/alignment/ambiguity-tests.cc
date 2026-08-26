@@ -1,5 +1,8 @@
 #include "alignment/alignment.hh"
 #include "sequence/ambiguity.hh"
+#include "sequence/codons.hh"
+#include "sequence/doublets.hh"
+#include "sequence/genetic_code.hh"
 #include "sequence/triplets.hh"
 
 #include <cstdlib>
@@ -54,17 +57,17 @@ int main()
     require(not dna.mask_for_symbol("!") and not dna.mask_for_symbol("-") and not dna.mask_for_symbol("?"),
             "Uninterpretable or special nucleotide symbols were reported as state masks.");
 
+    // Protect optional low-level lookup failure; input error fixtures already exercise
+    // the contextual throwing boundary, while likelihood tests do not reject symbols.
+    auto exact_a = dna.find_letter("A");
+    require(exact_a and *exact_a == dna.A(), "Exact alphabet lookup did not return its state.");
+    require(not dna.find_letter("!"), "Absent exact alphabet lookup did not return nothing.");
+
     ambiguity_database nucleotide_ambiguities(dna.n_letters());
-    bool rejected = false;
-    try
-    {
-        nucleotide_ambiguities.encode_symbol(dna, "!");
-    }
-    catch (const bad_letter&)
-    {
-        rejected = true;
-    }
-    require(rejected, "Public ambiguity encoding did not reject an uninterpretable symbol.");
+    require(nucleotide_ambiguities.encode_symbol(dna, "A") == exact_a,
+            "Public ambiguity encoding did not return an exact state.");
+    require(not nucleotide_ambiguities.encode_symbol(dna, "!"),
+            "Public ambiguity encoding did not return nothing for an uninterpretable symbol.");
 
     AminoAcids amino_acids;
     for (const std::string symbol: {"B", "Z", "J"})
@@ -74,7 +77,26 @@ int main()
                 "Amino-acid ambiguity " + symbol + " did not round-trip exactly.");
     }
 
+    // Protect engaged and absent reverse-component entries; assertions check invalid
+    // component indices, but cannot verify the ordinary absent-result semantics.
     Triplets triplets(dna);
+    auto aaa = triplets.find_letter("AAA");
+    auto ccc = triplets.find_letter("CCC");
+    auto ggg = triplets.find_letter("GGG");
+    require(aaa and ccc and ggg, "Exact triplet setup did not retain its component states.");
+    require(triplets.get_triplet(dna.A(), dna.A(), dna.A()) == aaa,
+            "Present triplet component lookup did not return its state.");
+
+    Doublets doublets(dna);
+    auto ac = doublets.find_letter("AC");
+    require(ac and doublets.get_doublet(dna.A(), dna.C()) == ac,
+            "Present doublet component lookup did not return its state.");
+
+    Genetic_Code genetic_code = standard_code();
+    Codons codons(dna, amino_acids, genetic_code);
+    require(not codons.get_triplet(dna.T(), dna.A(), dna.A()),
+            "Excluded stop codon component lookup did not return nothing.");
+
     alignment data(triplets);
     data.load({make_sequence("first", "RAY"), make_sequence("second", "RAY")});
 
@@ -88,14 +110,14 @@ int main()
             "A Cartesian-product ambiguity did not round-trip exactly.");
 
     alphabet::bitmask_t non_product(triplets.n_letters());
-    non_product.set(triplets.find_letter("AAA"));
-    non_product.set(triplets.find_letter("CCC"));
+    non_product.set(*aaa);
+    non_product.set(*ccc);
     int non_product_code = data.get_ambiguities().encode_mask(non_product);
     auto widened = data.decode(non_product_code);
     require(widened.first == "MMM" and not widened.second,
             "A non-product ambiguity did not widen to its Cartesian hull.");
-    require(data.consistent(non_product_code, triplets.find_letter("AAA")),
+    require(data.consistent(non_product_code, *aaa),
             "An arbitrary ambiguity was not consistent with one of its states.");
-    require(not data.consistent(non_product_code, triplets.find_letter("GGG")),
+    require(not data.consistent(non_product_code, *ggg),
             "An arbitrary ambiguity was consistent with a state outside its mask.");
 }

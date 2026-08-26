@@ -14,6 +14,7 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include "util/myexception.hh"
+#include "util/string/sanitize.hh"
 
 // Bind an initially empty database to one fixed state domain.
 ambiguity_database::ambiguity_database(int n_states)
@@ -72,7 +73,7 @@ const std::vector<double>& ambiguity_database::fmask(int code) const
 
 // Handle global and exact codes without allocating a mask, then store any
 // recognized ambiguity in this data-local database.
-int ambiguity_database::encode_symbol(const alphabet& a, const std::string& symbol)
+std::optional<int> ambiguity_database::encode_symbol(const alphabet& a, const std::string& symbol)
 {
     if (a.n_letters() != n_states_)
         throw myexception()<<"Cannot encode alphabet '"<<a.name<<"' with an ambiguity database for "<<n_states_<<" states.";
@@ -84,11 +85,11 @@ int ambiguity_database::encode_symbol(const alphabet& a, const std::string& symb
     for (const auto& unknown_letter: a.unknown_letters)
         if (symbol == unknown_letter)
             return alphabet::unknown;
-    if (auto state = a.find_letter_if_present(symbol))
+    if (auto state = a.find_letter(symbol))
         return *state;
     if (auto mask = a.mask_for_symbol(symbol))
         return encode_mask(*mask);
-    throw bad_letter(symbol, a.name);
+    return {};
 }
 
 // Split according to the alphabet width so product-alphabet symbols such as RAY
@@ -103,15 +104,17 @@ std::vector<int> ambiguity_database::encode_sequence(const alphabet& a, const st
     }
 
     std::vector<int> result(sequence.size() / symbol_width);
-    try
+    for (int i = 0; i < result.size(); i++)
     {
-        for (int i = 0; i < result.size(); i++)
-            result[i] = encode_symbol(a, sequence.substr(i * symbol_width, symbol_width));
-    }
-    catch (const myexception&)
-    {
-        a.validate_sequence(sequence);
-        throw;
+        std::string symbol = sequence.substr(i * symbol_width, symbol_width);
+        auto code = encode_symbol(a, symbol);
+        if (not code)
+        {
+            a.validate_sequence(sequence);
+            throw myexception()<<"Unrecognized symbol '"<<sanitize_string(symbol)<<"' for alphabet '"<<a.name
+                               <<"' at character "<<i + 1<<".";
+        }
+        result[i] = *code;
     }
     return result;
 }

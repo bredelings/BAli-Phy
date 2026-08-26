@@ -14,8 +14,8 @@ protected:
     /// (codon,position) -> nucleotide
     std::vector<std::vector<int> > sub_nuc_table;
 
-    /// (first nucleotide, second nucleotide) -> exact doublet state.
-    std::vector<std::vector<int>> doublet_for_components;
+    /// (first nucleotide, second nucleotide) -> exact doublet state, or empty when absent.
+    std::vector<std::vector<std::optional<int>>> doublet_for_components;
 
     void setup_sub_nuc_table();
 public:
@@ -31,8 +31,8 @@ public:
     /// The alphabet of nucleotides that we construct triplets from
     int sub_nuc(int codon,int pos) const;
 
-    /// Return the exact doublet state made from two exact nucleotide states.
-    int get_doublet(int n1, int n2) const;
+    /// Return the exact doublet state made from two exact nucleotide states, if present.
+    std::optional<int> get_doublet(int n1, int n2) const;
 
     bool is_watson_crick(int i) const;
     bool is_mismatch(int i) const;

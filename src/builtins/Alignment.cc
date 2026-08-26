@@ -927,7 +927,11 @@ extern "C" closure builtin_function_select_alignment_pairs(OperationArgs& Args)
             else if (nuc1 == alphabet::unknown or nuc2 == alphabet::unknown)
                 doublet = alphabet::unknown;
             else if (A0.get_alphabet().is_letter(nuc1) and A0.get_alphabet().is_letter(nuc2))
-                doublet = doublets.get_doublet(nuc1, nuc2);
+            {
+                auto exact_doublet = doublets.get_doublet(nuc1, nuc2);
+                assert(exact_doublet);
+                doublet = *exact_doublet;
+            }
             else
             {
                 // The two positional masks define exactly the doublet product set;

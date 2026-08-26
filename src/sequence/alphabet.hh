@@ -38,20 +38,6 @@
 #include "util/myexception.hh"
 #include "util/owned-ptr.hh"
 
-/// An exception that is thrown upon reading a letter that is not in the current alphabet.
-struct bad_letter:public myexception 
-{
-    /// The letter that was read
-    std::string letter;
-
-    /// Event: the letter "l" was not in the alphabet
-    bad_letter(const std::string& l);
-    /// Event: the letter "l" was not in alphabet "name"
-    bad_letter(const std::string& l,const std::string& name);
-
-    virtual ~bad_letter() {}
-};
-
 /***************** struct alphabet ********************/
 
 /// Converts between a list of letters, and their integer indices
@@ -70,9 +56,6 @@ protected:
     /// Add a letter to the alphabet
     void insert(const std::string& l);
 
-    /// Remove a letter from the alphabet
-    void remove(const std::string& l);
-  
     /// Remove a letter from the alphabet
     void remove(int);
   
@@ -127,13 +110,10 @@ public:
     /// Do we contain the letter 'c'?
     bool contains(const std::string&) const;
 
-    /// Get the index for letter 'c'
-    int find_letter(char l) const;
-    /// Get the index for letter 'c'
-    int find_letter(const std::string& l) const;
-
-    /// Return an exact letter index without using an exception for absence.
-    std::optional<int> find_letter_if_present(const std::string& l) const;
+    /// Return the exact index for letter 'c', or nothing when it is absent.
+    std::optional<int> find_letter(char l) const;
+    /// Return the exact index for letter 'c', or nothing when it is absent.
+    std::optional<int> find_letter(const std::string& l) const;
 
     /// Get the letter that corresponds to index 'i'
     std::string lookup(int i) const;

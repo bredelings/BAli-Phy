@@ -2,6 +2,7 @@
 #include "util/io.hh"
 #include "util/string/convert.hh"
 #include "util/string/join.hh"
+#include "util/string/sanitize.hh"
 
 using std::vector;
 using std::string;
@@ -10,14 +11,29 @@ using std::shared_ptr;
 
 namespace fs = std::filesystem;
 
+// Add one externally supplied codon mapping after validating its nucleotide and amino-acid symbols.
 void Genetic_Code::add_entry(char c1, char c2, char c3, char aa)
 {
-    int n1 = dna.find_letter(c1);
-    int n2 = dna.find_letter(c2);
-    int n3 = dna.find_letter(c3);
-    int aa_index = A.find_letter(aa);
+    string codon = {c1, c2, c3};
+    auto n1 = dna.find_letter(c1);
+    auto n2 = dna.find_letter(c2);
+    auto n3 = dna.find_letter(c3);
+    auto aa_index = A.find_letter(aa);
 
-    translation_table[n1][n2][n3] = aa_index;
+    if (not n1)
+        throw myexception()<<"Codon '"<<sanitize_string(codon)<<"' contains nucleotide symbol '"
+                           <<sanitize_string(string(1, c1))<<"' that is not in alphabet '"<<dna.name<<"'.";
+    if (not n2)
+        throw myexception()<<"Codon '"<<sanitize_string(codon)<<"' contains nucleotide symbol '"
+                           <<sanitize_string(string(1, c2))<<"' that is not in alphabet '"<<dna.name<<"'.";
+    if (not n3)
+        throw myexception()<<"Codon '"<<sanitize_string(codon)<<"' contains nucleotide symbol '"
+                           <<sanitize_string(string(1, c3))<<"' that is not in alphabet '"<<dna.name<<"'.";
+    if (not aa_index)
+        throw myexception()<<"Codon '"<<sanitize_string(codon)<<"' has amino-acid symbol '"
+                           <<sanitize_string(string(1, aa))<<"' that is not in alphabet '"<<A.name<<"'.";
+
+    translation_table[*n1][*n2][*n3] = *aa_index;
 }
 
 void Genetic_Code::setup_table(const string& n1, const string& n2, const string& n3, const string& aa)

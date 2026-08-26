@@ -271,7 +271,6 @@ void alignment::load(const vector<sequence>& seqs)
 	    sequences.push_back(seqs[i]);
 	    sequences.back().strip_gaps();
 	}
-	// Previously this was (catch bad_letter& e) - why so specific?
 	catch (myexception& e)
 	{
 	    e.prepend("sequence #"+convertToString(i+1)+" '"+seqs[i].name+"':\n");

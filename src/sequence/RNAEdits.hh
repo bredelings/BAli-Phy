@@ -14,8 +14,8 @@ protected:
     /// (codon,position) -> nucleotide
     std::vector<std::vector<int> > sub_nuc_table;
 
-    /// (first nucleotide, second nucleotide) -> exact RNA-edit state.
-    std::vector<std::vector<int>> rna_edit_for_components;
+    /// (first nucleotide, second nucleotide) -> exact RNA-edit state, or empty when absent.
+    std::vector<std::vector<std::optional<int>>> rna_edit_for_components;
 
     void setup_table();
     void setup_sub_nuc_table();
@@ -32,8 +32,8 @@ public:
     /// The alphabet of nucleotides that we construct triplets from
     int sub_nuc(int codon,int pos) const;
 
-    /// Return the exact RNA-edit state made from two exact nucleotide states.
-    int get_doublet(int n1, int n2) const;
+    /// Return the exact RNA-edit state made from two exact nucleotide states, if present.
+    std::optional<int> get_doublet(int n1, int n2) const;
 
     bool is_watson_crick(int i) const;
     bool is_mismatch(int i) const;
