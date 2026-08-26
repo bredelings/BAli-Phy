@@ -37,6 +37,8 @@ findLetter a letter = builtin_find_letter a (list_to_string letter)
 
 foreign import ecall "Alphabet:" translate :: Alphabet -> Int -> Int
 
+foreign import ecall "Alphabet:" translateObservation :: Alphabet -> AmbiguityDatabase -> Int -> Int
+
 foreign import bpcall "Alphabet:" mkDoublets :: Alphabet -> Alphabet
 
 foreign import bpcall "Alphabet:" mkRNAEdits :: Alphabet -> Alphabet

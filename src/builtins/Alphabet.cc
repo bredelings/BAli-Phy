@@ -174,6 +174,21 @@ extern "C" R::Exp simple_function_translate(vector<R::Exp>& args)
 	throw myexception()<<"translate: object "<<a.print()<<" is not a Codons alphabet.";
 }
 
+// Translate an encoded observation using the ambiguity database that owns its negative codes.
+extern "C" R::Exp simple_function_translateObservation(vector<R::Exp>& args)
+{
+    auto arg0 = get_arg(args);
+    const alphabet& a = *arg0.as_<Alphabet>();
+    auto arg1 = get_arg(args);
+    auto& ambiguities = arg1.as_<Ambiguities>();
+    int codon = get_arg(args).as_int();
+
+    if (auto c = dynamic_cast<const Codons*>(&a))
+        return c->translate_observation(codon, ambiguities);
+    else
+        throw myexception()<<"translateObservation: object "<<a.print()<<" is not a Codons alphabet.";
+}
+
 extern "C" closure builtin_function_sequenceToTextRaw(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);

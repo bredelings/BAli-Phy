@@ -5,6 +5,8 @@
 #include "triplets.hh"
 #include "genetic_code.hh"
 
+class ambiguity_database;
+
 /// A Triplets alphabet with a mapping to an AminoAcids alphabet
 class Codons: public Triplets {
 protected:
@@ -28,6 +30,9 @@ public:
 
     /// What amino acid does codon map to?
     int translate(int codon) const; 
+
+    /// Translate an exact, special, or data-local ambiguous codon observation.
+    int translate_observation(int codon, const ambiguity_database& ambiguities) const;
 
     /// What AminoAcids alphabet are we using?
     const AminoAcids& getAminoAcids() const {return *A;}

@@ -20,9 +20,9 @@ void Triplets::setup_sub_nuc_table()
 	assert(codon.length() == 3);
 	sub_nuc_table[i].resize(3);
 
-	int n0 = sub_nuc_table[i][0] = (*N)[ codon.substr(0,1) ];
-	int n1 = sub_nuc_table[i][1] = (*N)[ codon.substr(1,1) ];
-	int n2 = sub_nuc_table[i][2] = (*N)[ codon.substr(2,1) ];
+	int n0 = sub_nuc_table[i][0] = N->find_letter(codon.substr(0,1));
+	int n1 = sub_nuc_table[i][1] = N->find_letter(codon.substr(1,1));
+	int n2 = sub_nuc_table[i][2] = N->find_letter(codon.substr(2,1));
 	triplet_for_components[n0][n1][n2] = i;
     }
 }
@@ -68,60 +68,6 @@ vector<string> getTriplets(const Nucleotides& a) {
 }
 
 
-bool matches(const string& c1,const string& c2,const Nucleotides& N)
-{
-    assert(c1.size() == 3);
-    assert(c1.size() == c2.size());
-
-    for(int n=0;n<3;n++) {
-	string l1 = c1.substr(n,1);
-	string l2 = c2.substr(n,1);
-
-	int i1 = N.find_letter(l1);
-	int i2 = N[l2];
-
-	if (not N.matches(i1,i2))
-	    return false;
-    }
-    return true;
-}
-
-// alphabet: already set
-// unknown_letters: already set
-void Triplets::setup_letter_classes() 
-{
-    // clear masks and classes to just the letters
-    alphabet::setup_letter_classes();
-
-    // get nucleotide letters
-    vector<string> v = N->letter_classes();
-    v.push_back(N->wildcard);
-
-    // construct letter classes names
-    vector<string> w = getTriplets(v);
-  
-    // construct letter class masks
-    bitmask_t empty_mask(size());
-    bitmask_t mask(size());
-
-    for(int i=0;i<w.size();i++) {
-	if (contains(w[i])) continue;
-	if (w[i] == wildcard) continue;
-
-	mask = empty_mask;
-
-	bool found = false;
-	for(int j=0;j<mask.size();j++) {
-	    if (::matches(letter(j),w[i],*N)) {
-		mask[j] = true;
-		found = true;
-	    }
-	}
-	if (found)
-	    insert_class(w[i],mask);
-    }
-}
-
 valarray<double> get_nucleotide_counts_from_codon_counts(const Triplets& C,const valarray<double>& C_counts) {
     const Nucleotides& N = C.getNucleotides();
 
@@ -163,6 +109,30 @@ valarray<double> Triplets::get_frequencies_from_counts(const valarray<double>& c
     return f;
 }
 
+// Form a state set by filtering the exact triplets through all positional masks.
+std::optional<alphabet::bitmask_t> Triplets::mask_for_symbol(const string& symbol) const
+{
+    if (auto mask = alphabet::mask_for_symbol(symbol))
+        return mask;
+    if (symbol.size() != width())
+        return {};
+
+    auto first = N->mask_for_symbol(symbol.substr(0, 1));
+    auto second = N->mask_for_symbol(symbol.substr(1, 1));
+    auto third = N->mask_for_symbol(symbol.substr(2, 1));
+    if (not first or not second or not third)
+        return {};
+
+    bitmask_t mask(n_letters());
+    for (int state = 0; state < n_letters(); state++)
+        if ((*first)[sub_nuc(state, 0)] and (*second)[sub_nuc(state, 1)] and
+            (*third)[sub_nuc(state, 2)])
+            mask.set(state);
+    if (mask.none())
+        return {};
+    return mask;
+}
+
 // Render the positional projections, then compare the states represented by
 // their product with the original set to detect lossy Cartesian widening.
 std::pair<string, bool> Triplets::lookup(const bitmask_t& mask) const
@@ -198,12 +168,34 @@ void Triplets::validate_sequence(const string& letters) const
 {
     const int letter_size = width();
     vector<int> singlets(letters.size());
+    vector<int> exact_states(letters.size(), -1);
     for (int i = 0; i < singlets.size(); i++)
-        singlets[i] = (*N)[letters.substr(i, 1)];
+    {
+        string symbol = letters.substr(i, 1);
+        if (symbol == N->gap_letter)
+            singlets[i] = gap;
+        else
+        {
+            bool is_unknown = false;
+            for (const auto& unknown_letter: N->unknown_letters)
+                is_unknown = is_unknown or symbol == unknown_letter;
+            if (is_unknown)
+                singlets[i] = unknown;
+            else if (auto state = N->find_letter_if_present(symbol))
+            {
+                singlets[i] = not_gap;
+                exact_states[i] = *state;
+            }
+            else if (N->mask_for_symbol(symbol))
+                singlets[i] = not_gap;
+            else
+                throw bad_letter(symbol, N->name);
+        }
+    }
 
     int n_letters = 0;
     for (auto singlet: singlets)
-        if (is_feature(singlet))
+        if (singlet == not_gap)
             n_letters++;
 
     myexception e;
@@ -214,10 +206,12 @@ void Triplets::validate_sequence(const string& letters) const
         int l1 = singlets[letter_size * i];
         int l2 = singlets[letter_size * i + 1];
         int l3 = singlets[letter_size * i + 2];
-        if (is_feature(l1) and is_feature(l2) and is_feature(l3))
+        if (l1 == not_gap and l2 == not_gap and l3 == not_gap)
         {
-            if (N->is_letter(l1) and N->is_letter(l2) and N->is_letter(l3) and
-                triplet_for_components[l1][l2][l3] == -1)
+            int n1 = exact_states[letter_size * i];
+            int n2 = exact_states[letter_size * i + 1];
+            int n3 = exact_states[letter_size * i + 2];
+            if (n1 >= 0 and n2 >= 0 and n3 >= 0 and triplet_for_components[n1][n2][n3] == -1)
                 stop_codons.push_back(i);
         }
         else if (l1 == gap and l2 == gap and l3 == gap)
@@ -274,8 +268,6 @@ Triplets::Triplets(const string& s,const Nucleotides& a)
         unknown_letters.push_back( unknown_letter + unknown_letter + unknown_letter);
 
     setup_sub_nuc_table();
-
-    setup_letter_classes();
 }
 
 Triplets::Triplets(const Nucleotides& a)

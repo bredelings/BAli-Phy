@@ -25,6 +25,7 @@
 #define ALPHABET_H
 
 #include <memory>
+#include <optional>
 #include <vector>
 #include <valarray>
 #include <iostream>
@@ -58,21 +59,11 @@ class alphabet
 {
 public:
     typedef boost::dynamic_bitset<> bitmask_t;
-    typedef std::vector<double> fmask_t;
 
 private:
 
     /// The letters of the alphabet
     std::vector<std::string> letters_;
-
-    /// The letters of the alphabet + letter classes
-    std::vector<std::string> letter_classes_;
-
-    /// The masks for the letter_classes
-    std::vector<bitmask_t> letter_masks_;
-
-    /// The 0.0 / 1.0 masks for the letter_classes
-    std::vector<fmask_t> letter_fmasks_;
 
 protected:
 
@@ -85,21 +76,6 @@ protected:
     /// Remove a letter from the alphabet
     void remove(int);
   
-    /// Add letters to letter classes and set masks
-    virtual void setup_letter_classes();
-
-    /// Add a letter class to the alphabet
-    void insert_class(const std::string& l,const std::string&);
-
-    /// Add a letter class to the alphabet
-    void insert_class(const std::string& l,const std::vector<std::string>&);
-
-    /// Add a letter class to the alphabet
-    void insert_class(const std::string& l, const bitmask_t&);
-
-    /// Add a letter class to the alphabet
-    void remove_class(const std::string& l);
-
 public:
 
     virtual alphabet* clone() const=0;// {return new alphabet(*this);}
@@ -146,41 +122,6 @@ public:
 	return letters_[i];
     }
 
-
-    /// The number of letter classes in the alphabet
-    int n_letter_classes() const {return letter_classes_.size();}
-    /// The letter classes of the alphabet
-    const std::vector<std::string>& letter_classes() const {return letter_classes_;}
-    /// The i-th letter class of the alphabet
-    const std::string& letter_class(int i) const {
-	assert(i>=0 and i < letter_classes_.size()); 
-	return letter_classes_[i];
-    }
-    /// The i-th letter mask
-    const bitmask_t& letter_mask(int i) const {
-	assert(i>=0 and i < letter_masks_.size()); 
-	assert(letter_masks_.size() == letter_classes_.size());
-	return letter_masks_[i];
-    }
-
-    /// The i-th letter mask
-    const fmask_t& letter_fmask(int i) const {
-	assert(i>=0 and i < letter_fmasks_.size()); 
-	assert(letter_fmasks_.size() == letter_classes_.size());
-	return letter_fmasks_[i];
-    }
-
-    /// Returns true if the letter i1 is part of the letter class i2
-    bool matches(int i1,int i2) const {
-	if (i2 == not_gap)
-	    return true;
-	assert(0 <= i2 and i2 < letter_masks_.size());
-	assert(0 <= i1 and i1 < letter_masks_[i2].size());
-	return letter_masks_[i2][i1];
-    }
-
-    bool consistent(int i1, int i2) const;
-
     /// Do we contain the letter 'c'?
     bool contains(char c) const;
     /// Do we contain the letter 'c'?
@@ -191,18 +132,14 @@ public:
     /// Get the index for letter 'c'
     int find_letter(const std::string& l) const;
 
-    /// Get the index for letter 'c'
-    int find_letter_class(char l) const;
-    /// Get the index for letter 'c'
-    int find_letter_class(const std::string& l) const;
-
-    /// Get the index for letter 'c'
-    int operator[](char l) const;
-    /// Get the index for letter 'c'
-    int operator[](const std::string&) const;
+    /// Return an exact letter index without using an exception for absence.
+    std::optional<int> find_letter_if_present(const std::string& l) const;
 
     /// Get the letter that corresponds to index 'i'
     std::string lookup(int i) const;
+
+    /// Return the non-gap state set denoted by a symbol, or nothing if it is not recognized.
+    virtual std::optional<bitmask_t> mask_for_symbol(const std::string& symbol) const;
 
     /// Spell a state set and report whether the spelling represents exactly that set.
     virtual std::pair<std::string, bool> lookup(const bitmask_t& mask) const;
@@ -222,12 +159,6 @@ public:
 
     /// Does 'l' represent a present character, including unconstrained non-gap?
     static constexpr bool is_character(int l) {return l>=0 or l==not_gap or is_ambiguity(l);}
-
-    /// Is index 'l' a letter or class?
-    static constexpr bool is_letter_class(int l) {return l>=0;}
-
-    /// Is index 'l' a letter, class, or wildcard?
-    static constexpr bool is_feature(int l) {return l==not_gap or is_letter_class(l);}
 
     /// Compare two alphabets
     friend bool operator==(const alphabet&,const alphabet&);
@@ -263,6 +194,8 @@ public:
 /// An alphabet of nucleotides
 class Nucleotides: public alphabet {
 public:
+    using alphabet::lookup;
+
     virtual Nucleotides* clone() const=0;
 
     virtual std::string letter_name() const {return "nucleotide";};
@@ -294,6 +227,10 @@ public:
     bool is_wobble_pair(int i, int j) const;
 
     int complement(int l) const;
+
+    std::optional<bitmask_t> mask_for_symbol(const std::string& symbol) const override;
+
+    std::pair<std::string, bool> lookup(const bitmask_t& mask) const override;
   
     Nucleotides(const std::string& s,char c);
 
@@ -324,11 +261,17 @@ class AminoAcids: public alphabet {
 protected:
     AminoAcids(const std::string& s,const std::string& letters);
 public:
+    using alphabet::lookup;
+
     virtual std::string letter_name() const {return "amino acid";};
 
     virtual AminoAcids* clone() const {return new AminoAcids(*this);}
 
     bool is_stop(int i) const;
+
+    std::optional<bitmask_t> mask_for_symbol(const std::string& symbol) const override;
+
+    std::pair<std::string, bool> lookup(const bitmask_t& mask) const override;
 
     AminoAcids();
 };

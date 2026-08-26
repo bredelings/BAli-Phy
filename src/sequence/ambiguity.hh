@@ -24,7 +24,7 @@ class ambiguity_database
     struct entry
     {
         alphabet::bitmask_t mask;
-        alphabet::fmask_t fmask;
+        std::vector<double> fmask;
     };
 
     int n_states_ = 0;
@@ -45,7 +45,7 @@ public:
     const alphabet::bitmask_t& mask(int code) const;
 
     /// Return the stored 0/1 floating-point mask without allocating.
-    const alphabet::fmask_t& fmask(int code) const;
+    const std::vector<double>& fmask(int code) const;
 
     /// Encode one alphabet symbol, storing a proper ambiguity when necessary.
     int encode_symbol(const alphabet& a, const std::string& symbol);

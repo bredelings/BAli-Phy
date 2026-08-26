@@ -12,17 +12,10 @@ namespace fs = std::filesystem;
 
 void Genetic_Code::add_entry(char c1, char c2, char c3, char aa)
 {
-    int n1 = dna[ c1 ];
-    int n2 = dna[ c2 ];
-    int n3 = dna[ c3 ];
-
-    if (not dna.is_letter(n1)) throw myexception()<<"add_entry( ): in codon '"<<c1<<c2<<c3<<"' -> '"<<aa<<"', '"<<c1<<" is not a nucleotide.";
-    if (not dna.is_letter(n2)) throw myexception()<<"add_entry( ): in codon '"<<c1<<c2<<c3<<"' -> '"<<aa<<"', '"<<c2<<" is not a nucleotide.";
-    if (not dna.is_letter(n3)) throw myexception()<<"add_entry( ): in codon '"<<c1<<c2<<c3<<"' -> '"<<aa<<"', '"<<c3<<" is not a nucleotide.";
-
-    int aa_index = A[aa];
-
-    if (not A.is_letter(aa_index)) throw myexception()<<"add_entry( ): in codon '"<<c1<<c2<<c3<<"' -> '"<<aa<<"', '"<<aa<<"' is not a valid amino acid.";
+    int n1 = dna.find_letter(c1);
+    int n2 = dna.find_letter(c2);
+    int n3 = dna.find_letter(c3);
+    int aa_index = A.find_letter(aa);
 
     translation_table[n1][n2][n3] = aa_index;
 }
@@ -86,20 +79,17 @@ Genetic_Code genetic_code_from_file(const std::string& name, const std::filesyst
 
 int Genetic_Code::translate(int n1, int n2, int n3) const
 {
-    if (rna.is_feature(n1) and rna.is_feature(n2) and rna.is_feature(n3)) 
+    if (rna.is_letter(n1) and rna.is_letter(n2) and rna.is_letter(n3))
     {
-	if (rna.is_letter(n1) and rna.is_letter(n2) and rna.is_letter(n3))
-	{
-	    int index = translation_table[n1][n2][n3];
-	    if (index == -1) 
-		throw myexception()<<"Genetic Code: "<<name()<<" has no entry for "<<n1<<","<<n2<<","<<n3;
-	    return index;
-	}
-	else 
-	    return alphabet::not_gap;
+        int index = translation_table[n1][n2][n3];
+        if (index == -1)
+            throw myexception()<<"Genetic Code: "<<name()<<" has no entry for "<<n1<<","<<n2<<","<<n3;
+        return index;
     }
     else if (n1 == alphabet::gap or n2 == alphabet::gap or n3 == alphabet::gap)
 	return alphabet::gap;
+    else if (alphabet::is_character(n1) and alphabet::is_character(n2) and alphabet::is_character(n3))
+        return alphabet::not_gap;
     else
 	return alphabet::unknown;
 }

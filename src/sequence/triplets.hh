@@ -18,8 +18,9 @@ protected:
     std::vector<std::vector<std::vector<int>>> triplet_for_components;
 
     void setup_sub_nuc_table();
-    void setup_letter_classes();
 public:
+    using alphabet::lookup;
+
     virtual Triplets* clone() const {return new Triplets(*this);}
 
     virtual std::string letter_name() const {return "triplet";};
@@ -34,6 +35,8 @@ public:
     int get_triplet(int n1, int n2, int n3) const;
 
     std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
+
+    std::optional<bitmask_t> mask_for_symbol(const std::string& symbol) const override;
 
     std::pair<std::string, bool> lookup(const bitmask_t& mask) const override;
 

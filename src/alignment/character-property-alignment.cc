@@ -141,24 +141,7 @@ alignment_projection project_alignment(const std::vector<sequence>& sequences, c
             // represented codon maps to the same amino acid.
             if (codons)
             {
-                int amino_acid = alphabet::not_gap;
-                if (token.alphabet_code >= 0)
-                    amino_acid = codons->translate(token.alphabet_code);
-                else if (alphabet::is_ambiguity(token.alphabet_code))
-                {
-                    amino_acid = -1;
-                    const auto& mask = tokens.ambiguities.mask(token.alphabet_code);
-                    for (auto state = mask.find_first(); state != alphabet::bitmask_t::npos; state = mask.find_next(state))
-                    {
-                        int translated = codons->translate(state);
-                        if (amino_acid != -1 and amino_acid != translated)
-                        {
-                            amino_acid = alphabet::not_gap;
-                            break;
-                        }
-                        amino_acid = translated;
-                    }
-                }
+                int amino_acid = codons->translate_observation(token.alphabet_code, tokens.ambiguities);
                 translation = codons->getAminoAcids().lookup(amino_acid);
             }
             projected_column.characters.push_back({

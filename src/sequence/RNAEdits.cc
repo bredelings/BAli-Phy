@@ -40,8 +40,8 @@ void RNAEdits::setup_sub_nuc_table()
 	assert(RNAEdit.length() == 2);
 	sub_nuc_table[i].resize(2);
 
-	int n0 = sub_nuc_table[i][0] = (*N)[ RNAEdit.substr(0,1) ];
-	int n1 = sub_nuc_table[i][1] = (*N)[ RNAEdit.substr(1,1) ];
+	int n0 = sub_nuc_table[i][0] = N->find_letter(RNAEdit.substr(0,1));
+	int n1 = sub_nuc_table[i][1] = N->find_letter(RNAEdit.substr(1,1));
 	rna_edit_for_components[n0][n1] = i;
     }
 }
@@ -87,62 +87,6 @@ vector<string> getRNAEdits(const Nucleotides& a)
     return getRNAEdits(v);
 }
 
-
-bool matches_RNAEdit(const string& c1,const string& c2,const Nucleotides& N)
-{
-    assert(c1.size() == 2);
-    assert(c1.size() == c2.size());
-
-    for(int n=0;n<2;n++)
-    {
-	string l1 = c1.substr(n,1);
-	string l2 = c2.substr(n,1);
-
-	int i1 = N.find_letter(l1);
-	int i2 = N[l2];
-
-	if (not N.matches(i1,i2))
-	    return false;
-    }
-    return true;
-}
-
-// alphabet: already set
-// unknown_letters: already set
-void RNAEdits::setup_letter_classes() 
-{
-    // clear masks and classes to just the letters
-    alphabet::setup_letter_classes();
-
-    // get nucleotide letters
-    vector<string> v = N->letter_classes();
-    v.push_back(N->wildcard);
-
-    // construct letter classes names
-    vector<string> w = getRNAEdits(v);
-  
-    // construct letter class masks
-    bitmask_t empty_mask(size());
-    bitmask_t mask(size());
-
-    for(int i=0;i<w.size();i++)
-    {
-	if (contains(w[i])) continue;
-	if (w[i] == wildcard) continue;
-
-	mask = empty_mask;
-
-	bool found = false;
-	for(int j=0;j<mask.size();j++) {
-	    if (::matches_RNAEdit(letter(j),w[i],*N)) {
-		mask[j] = true;
-		found = true;
-	    }
-	}
-	if (found)
-	    insert_class(w[i],mask);
-    }
-}
 
 valarray<double> get_nucleotide_counts_from_RNAEdit_counts(const RNAEdits& D,const valarray<double>& D_counts)
 {
@@ -217,6 +161,28 @@ valarray<double> RNAEdits::get_frequencies_from_counts(const valarray<double>& c
     return f;
 }
 
+// Form a state set by filtering valid RNA-edit states through both positional masks.
+std::optional<alphabet::bitmask_t> RNAEdits::mask_for_symbol(const string& symbol) const
+{
+    if (auto mask = alphabet::mask_for_symbol(symbol))
+        return mask;
+    if (symbol.size() != width())
+        return {};
+
+    auto first = N->mask_for_symbol(symbol.substr(0, 1));
+    auto second = N->mask_for_symbol(symbol.substr(1, 1));
+    if (not first or not second)
+        return {};
+
+    bitmask_t mask(n_letters());
+    for (int state = 0; state < n_letters(); state++)
+        if ((*first)[sub_nuc(state, 0)] and (*second)[sub_nuc(state, 1)])
+            mask.set(state);
+    if (mask.none())
+        return {};
+    return mask;
+}
+
 // Render the positional projections, then compare the states represented by
 // their product with the original set to detect lossy Cartesian widening.
 std::pair<string, bool> RNAEdits::lookup(const bitmask_t& mask) const
@@ -252,11 +218,27 @@ void RNAEdits::validate_sequence(const string& letters) const
     const int letter_size = width();
     vector<int> singlets(letters.size());
     for (int i = 0; i < singlets.size(); i++)
-        singlets[i] = (*N)[letters.substr(i, 1)];
+    {
+        string symbol = letters.substr(i, 1);
+        if (symbol == N->gap_letter)
+            singlets[i] = gap;
+        else
+        {
+            bool is_unknown = false;
+            for (const auto& unknown_letter: N->unknown_letters)
+                is_unknown = is_unknown or symbol == unknown_letter;
+            if (is_unknown)
+                singlets[i] = unknown;
+            else if (N->mask_for_symbol(symbol))
+                singlets[i] = not_gap;
+            else
+                throw bad_letter(symbol, N->name);
+        }
+    }
 
     int n_letters = 0;
     for (auto singlet: singlets)
-        if (is_feature(singlet))
+        if (singlet == not_gap)
             n_letters++;
 
     myexception e;
@@ -265,7 +247,7 @@ void RNAEdits::validate_sequence(const string& letters) const
     {
         int l1 = singlets[letter_size * i];
         int l2 = singlets[letter_size * i + 1];
-        if ((is_feature(l1) and is_feature(l2)) or (l1 == gap and l2 == gap))
+        if ((l1 == not_gap and l2 == not_gap) or (l1 == gap and l2 == gap))
             continue;
         e<<" Sequence not aligned as "<<letters_name()<<"!  Column "<<i+1
          <<" has mixed gap/non-gap letter '"<<letters.substr(i * letter_size, letter_size)<<"'";
@@ -308,8 +290,6 @@ RNAEdits::RNAEdits(const string& s,const Nucleotides& a)
     setup_table();
 
     setup_sub_nuc_table();
-
-    setup_letter_classes();
 }
 
 RNAEdits::RNAEdits(const Nucleotides& a)

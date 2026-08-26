@@ -1310,7 +1310,8 @@ BODY {\n\
 				<<"\" data-character=\""<<token.character_index<<"\"";
 			    if (codons and token.character_index >= 0)
 			    {
-				auto amino_acid = codons->getAminoAcids().lookup(codons->translate(token.alphabet_code));
+				auto amino_acid = codons->getAminoAcids().lookup(
+				    codons->translate_observation(token.alphabet_code, tokens.ambiguities));
 				cout<<" data-amino-acid=\""<<escape_html(amino_acid)<<"\"";
 			    }
 			}

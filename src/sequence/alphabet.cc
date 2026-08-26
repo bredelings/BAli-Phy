@@ -46,33 +46,6 @@ const int alphabet::gap;
 const int alphabet::not_gap;
 const int alphabet::unknown;
 
-bool alphabet::consistent(int i1, int i2) const
-{
-    if (i1 == i2) return true;
-
-    if (i1 == alphabet::unknown or i2 == alphabet::unknown) return true;
-
-    if (i1 == alphabet::gap or i2 == alphabet::gap) return false;
-
-    if (i1 == alphabet::not_gap or i2 == alphabet::not_gap) return true;
-
-    if (i1 == alphabet::not_gap and is_feature(i2)) return true;
-    if (i2 == alphabet::not_gap and is_feature(i1)) return true;
-
-    assert(is_letter_class(i1) and is_letter_class(i2));
-
-    if (is_letter(i1) and is_letter(i2)) return false;
-
-    if (is_letter(i1))
-	return letter_masks_[i2][i1];
-
-    if (is_letter(i2))
-	return letter_masks_[i1][i2];
-
-    return (letter_masks_[i1] & letter_masks_[i2]).any();
-}
-
-
 bool alphabet::contains(char l) const {
     string s(1U,l);
     return contains(s);
@@ -88,64 +61,18 @@ int alphabet::find_letter(char l) const {
 }
 
 int alphabet::find_letter(const string& l) const {
-    // Check the letters
-    for(int i=0;i<size();i++) {
-	if (letter(i)==l)
-	    return i;
-    }
+    if (auto index = find_letter_if_present(l))
+        return *index;
     throw myexception()<<"Alphabet '"<<name<<"' doesn't contain letter '"<<sanitize_string(l)<<"'";
 }
 
-
-int alphabet::find_letter_class(char l) const {
-    string s(1U,l);  
-    return find_letter_class(s);
-}
-
-int alphabet::find_letter_class(const string& l) const {
-    // Check the letters
-    for(int i=0;i<n_letter_classes();i++) {
-	if (letter_class(i)==l)
-	    return i;
-    }
-    throw myexception()<<"Alphabet '"<<name<<"' doesn't contain letter class '"<<sanitize_string(l)<<"'";
-}
-
-int alphabet::operator[](char l) const {
-    string s(1U,l);  
-    return (*this)[s];
-}
-
-/// FIXME - use a hash table
-int alphabet::operator[](const string& l) const 
+// Search exact states without using exceptions for an ordinary absent result.
+std::optional<int> alphabet::find_letter_if_present(const string& l) const
 {
-    // Check for a gap
-    if (l == gap_letter) 
-	return alphabet::gap;
-
-    // Check the letters
-    for(int i=0;i<size();i++) {
-	if (letter(i)==l)
-	    return i;
-    }
-
-    // Check the letter_classes
-    for(int i=size();i<n_letter_classes();i++) {
-	if (letter_class(i) == l)
-	    return i;
-    }
-
-    // Check for a wildcard
-    if (l == wildcard) 
-	return alphabet::not_gap;
-
-    // Check for unknown
-    for(auto& unknown_letter: unknown_letters)
-        if (l == unknown_letter)
-            return alphabet::unknown;
-
-    // We don't have this letter!
-    throw bad_letter(l,name);
+    for (int i = 0; i < size(); i++)
+        if (letter(i) == l)
+            return i;
+    return {};
 }
 
 string alphabet::lookup(int i) const {
@@ -156,17 +83,37 @@ string alphabet::lookup(int i) const {
     else if (i == unknown)
 	return unknown_letter();
 
-    return letter_class(i);
+    return letter(i);
 }
 
-// Alphabet spellings remain notation metadata: their positions in letter_classes_
-// are not observation codes once data has been encoded into an ambiguity database.
+// Exact letters and the wildcard are common to every alphabet; derived classes
+// add their own readable ambiguity notation without assigning integer codes.
+std::optional<alphabet::bitmask_t> alphabet::mask_for_symbol(const string& symbol) const
+{
+    if (auto state = find_letter_if_present(symbol))
+    {
+        bitmask_t mask(n_letters());
+        mask.set(*state);
+        return mask;
+    }
+    else if (symbol == wildcard)
+    {
+        bitmask_t mask(n_letters());
+        mask.set();
+        return mask;
+    }
+    return {};
+}
+
+// Spell masks common to every alphabet without retaining a mask-to-string table.
 std::pair<string, bool> alphabet::lookup(const bitmask_t& mask) const
 {
     assert(mask.size() == n_letters());
-    for (int i = 0; i < letter_masks_.size(); i++)
-        if (letter_masks_[i] == mask)
-            return {letter_classes_[i], true};
+    assert(mask.any());
+    if (mask.count() == 1)
+        return {letter(mask.find_first()), true};
+    if (mask.count() == n_letters())
+        return {wildcard, true};
 
     return {wildcard, false};
 }
@@ -180,7 +127,12 @@ void alphabet::validate_sequence(const string& sequence) const
         throw myexception()<<"Number of letters should be a multiple of "<<symbol_width<<"!";
 
     for (int i = 0; i < sequence.size(); i += symbol_width)
-        (*this)[sequence.substr(i, symbol_width)];
+    {
+        string symbol = sequence.substr(i, symbol_width);
+        bool special = symbol == gap_letter or symbol == wildcard or includes(unknown_letters, symbol);
+        if (not special and not mask_for_symbol(symbol))
+            throw bad_letter(symbol, name);
+    }
 }
 
 
@@ -190,11 +142,7 @@ bool operator==(const alphabet& a1,const alphabet& a2) {
 
 void alphabet::insert(const string& l) 
 {
-    if (n_letter_classes() > n_letters()) 
-	throw myexception()<<"Error: adding letters to alphabet after letter classes.";
-
     letters_.push_back(l);
-    setup_letter_classes();
 }
 
 void alphabet::remove(const string& l)
@@ -206,69 +154,6 @@ void alphabet::remove(const string& l)
 void alphabet::remove(int index)
 {
     letters_.erase(letters_.begin()+index);
-    setup_letter_classes();
-}
-
-void alphabet::setup_letter_classes()
-{
-    letter_classes_ = letters_;
-  
-    letter_masks_ = vector< bitmask_t >(n_letters(), bitmask_t(n_letters()) );
-    for(int i=0;i<n_letters();i++)
-	letter_masks_[i].set(i);
-
-    letter_fmasks_ = vector< fmask_t >(n_letters(), fmask_t(n_letters(),0.0) );
-    for(int i=0;i<n_letters();i++)
-	letter_fmasks_[i][i] = 1.0;
-}
-
-void alphabet::insert_class(const string& l, const bitmask_t& mask) 
-{
-    if (includes(letters_,l))
-	throw myexception()<<"Can't use letter name '"<<sanitize_string(l)<<"' as letter class name.";
-
-    letter_classes_.push_back(l);
-    letter_masks_.push_back(mask);
-
-    fmask_t fmask(n_letters(), 0.0);
-    for(int i=0;i<n_letters();i++)
-	if (mask.test(i))
-	    fmask[i] = 1.0;
-
-    letter_fmasks_.push_back(fmask);
-}
-
-/// Add a letter class to the alphabet
-void alphabet::insert_class(const std::string& l,const vector<string>& letters) 
-{
-    bitmask_t mask(size());
-
-    for(const auto& letter: letters)
-	mask.set(find_letter(letter));
-
-    insert_class(l,mask);
-}
-
-/// Add a letter class to the alphabet
-void alphabet::insert_class(const std::string& l,const string& letters) 
-{
-    vector<string> letters2;
-    for(int i=0;i<letters.size();i++)
-	letters2.push_back(letters.substr(i,1));
-
-    insert_class(l,letters2);
-}
-
-/// Add a letter class to the alphabet
-void alphabet::remove_class(const std::string& l)
-{
-    // Check the letters
-    for(int i=size();i<n_letter_classes();i++) 
-	if (letter_class(i) == l) {
-	    letter_classes_.erase(letter_classes_.begin()+i);
-	    return;
-	}
-    throw myexception()<<"Can't find letter class '"<<sanitize_string(l)<<"'";
 }
 
 valarray<double> alphabet::get_frequencies_from_counts(const valarray<double>& counts,double pseudocount) const {
@@ -347,7 +232,7 @@ bool Nucleotides::is_wobble_pair(int l1, int l2) const
 int Nucleotides::complement(int l) const
 {
     assert(l >= -3);
-    assert(l < n_letter_classes());
+    assert(l < n_letters());
 
     switch (l) {
     case 0: // A
@@ -361,8 +246,56 @@ int Nucleotides::complement(int l) const
     }
     if (l < 0)
 	return l;
-    else 
-	return alphabet::not_gap;
+    return l;
+}
+
+// Decode IUPAC nucleotide notation to the fixed A,C,G,T/U state ordering.
+std::optional<alphabet::bitmask_t> Nucleotides::mask_for_symbol(const string& symbol) const
+{
+    if (auto mask = alphabet::mask_for_symbol(symbol))
+        return mask;
+    if (symbol.size() != 1)
+        return {};
+
+    unsigned long bits = 0;
+    switch (symbol[0])
+    {
+    case 'Y': bits = 0b1010; break;
+    case 'R': bits = 0b0101; break;
+    case 'W': bits = 0b1001; break;
+    case 'S': bits = 0b0110; break;
+    case 'K': bits = 0b1100; break;
+    case 'M': bits = 0b0011; break;
+    case 'B': bits = 0b1110; break;
+    case 'D': bits = 0b1101; break;
+    case 'H': bits = 0b1011; break;
+    case 'V': bits = 0b0111; break;
+    default: return {};
+    }
+    return bitmask_t(n_letters(), bits);
+}
+
+// Use IUPAC notation for every proper nucleotide state set.
+std::pair<string, bool> Nucleotides::lookup(const bitmask_t& mask) const
+{
+    auto result = alphabet::lookup(mask);
+    if (result.second)
+        return result;
+
+    switch (mask.to_ulong())
+    {
+    case 0b1010: return {"Y", true};
+    case 0b0101: return {"R", true};
+    case 0b1001: return {"W", true};
+    case 0b0110: return {"S", true};
+    case 0b1100: return {"K", true};
+    case 0b0011: return {"M", true};
+    case 0b1110: return {"B", true};
+    case 0b1101: return {"D", true};
+    case 0b1011: return {"H", true};
+    case 0b0111: return {"V", true};
+    default: return result;
+    }
 }
 
 Nucleotides::Nucleotides(const string& s, char c)
@@ -374,18 +307,6 @@ Nucleotides::Nucleotides(const string& s, char c)
     insert("C");
     insert("G");
     insert(t);
-
-    insert_class("Y",t+"C");    // pYrimidine
-    insert_class("R","AG");     // puRine
-    insert_class("W",t+"A");    // Weak
-    insert_class("S","GC");     // Strong
-    insert_class("K",t+"G"); // Ketone
-    insert_class("M","AC");  // aMino
-
-    insert_class("B",t+"GC"); // not-A (B is after A)
-    insert_class("D",t+"AG"); // not-C (D is after C)
-    insert_class("H",t+"AC"); // not-G (H is after G)
-    insert_class("V","GAC");  // not-T (V is after U)
 }
 
 DNA::DNA()
@@ -405,18 +326,57 @@ bool AminoAcids::is_stop(int i) const
 
 AminoAcids::AminoAcids() 
     :alphabet("Amino-Acids","ARNDCQEGHILKMFPSTWYV","X")
-{
-    insert_class("B","DN");
-    insert_class("Z","EQ");
-    insert_class("J","IL");
-}
+{}
 
 AminoAcids::AminoAcids(const string& s, const string& letters) 
     :alphabet(s,string("ARNDCQEGHILKMFPSTWYV")+letters,"X")
+{}
+
+// Decode the three standard two-state amino-acid ambiguity symbols.
+std::optional<alphabet::bitmask_t> AminoAcids::mask_for_symbol(const string& symbol) const
 {
-    insert_class("B","DN");
-    insert_class("Z","EQ");
-    insert_class("J","IL");
+    if (auto mask = alphabet::mask_for_symbol(symbol))
+        return mask;
+
+    int first;
+    int second;
+    if (symbol == "B")
+    {
+        first = find_letter("D");
+        second = find_letter("N");
+    }
+    else if (symbol == "Z")
+    {
+        first = find_letter("E");
+        second = find_letter("Q");
+    }
+    else if (symbol == "J")
+    {
+        first = find_letter("I");
+        second = find_letter("L");
+    }
+    else
+        return {};
+
+    bitmask_t mask(n_letters());
+    mask.set(first);
+    mask.set(second);
+    return mask;
+}
+
+// Prefer the standard amino-acid ambiguity symbol when one denotes the mask.
+std::pair<string, bool> AminoAcids::lookup(const bitmask_t& mask) const
+{
+    auto result = alphabet::lookup(mask);
+    if (result.second or mask.count() != 2)
+        return result;
+    if (mask[find_letter("D")] and mask[find_letter("N")])
+        return {"B", true};
+    if (mask[find_letter("E")] and mask[find_letter("Q")])
+        return {"Z", true};
+    if (mask[find_letter("I")] and mask[find_letter("L")])
+        return {"J", true};
+    return result;
 }
 
 AminoAcidsWithStop::AminoAcidsWithStop() 

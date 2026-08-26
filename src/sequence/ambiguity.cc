@@ -43,7 +43,7 @@ int ambiguity_database::encode_mask(const alphabet::bitmask_t& mask)
         return found->second;
 
     int code = alphabet::first_ambiguity - static_cast<int>(entries_.size());
-    alphabet::fmask_t fmask(n_states_, 0.0);
+    std::vector<double> fmask(n_states_, 0.0);
     for (auto state = mask.find_first(); state != alphabet::bitmask_t::npos; state = mask.find_next(state))
         fmask[state] = 1.0;
 
@@ -62,7 +62,7 @@ const alphabet::bitmask_t& ambiguity_database::mask(int code) const
 }
 
 // Return the floating mask cached beside the bit mask for legacy consumers.
-const alphabet::fmask_t& ambiguity_database::fmask(int code) const
+const std::vector<double>& ambiguity_database::fmask(int code) const
 {
     assert(alphabet::is_ambiguity(code));
     int index = alphabet::first_ambiguity - code;
@@ -70,16 +70,25 @@ const alphabet::fmask_t& ambiguity_database::fmask(int code) const
     return entries_[index].fmask;
 }
 
-// Parse notation through the alphabet, then canonicalize the represented set locally.
+// Handle global and exact codes without allocating a mask, then store any
+// recognized ambiguity in this data-local database.
 int ambiguity_database::encode_symbol(const alphabet& a, const std::string& symbol)
 {
     if (a.n_letters() != n_states_)
         throw myexception()<<"Cannot encode alphabet '"<<a.name<<"' with an ambiguity database for "<<n_states_<<" states.";
 
-    int symbol_code = a[symbol];
-    if (symbol_code < a.n_letters())
-        return symbol_code;
-    return encode_mask(a.letter_mask(symbol_code));
+    if (symbol == a.gap_letter)
+        return alphabet::gap;
+    if (symbol == a.wildcard)
+        return alphabet::not_gap;
+    for (const auto& unknown_letter: a.unknown_letters)
+        if (symbol == unknown_letter)
+            return alphabet::unknown;
+    if (auto state = a.find_letter_if_present(symbol))
+        return *state;
+    if (auto mask = a.mask_for_symbol(symbol))
+        return encode_mask(*mask);
+    throw bad_letter(symbol, a.name);
 }
 
 // Split according to the alphabet width so product-alphabet symbols such as RAY

@@ -18,8 +18,9 @@ protected:
     std::vector<std::vector<int>> doublet_for_components;
 
     void setup_sub_nuc_table();
-    void setup_letter_classes();
 public:
+    using alphabet::lookup;
+
     virtual Doublets* clone() const {return new Doublets(*this);}
 
     virtual std::string letter_name() const {return "doublet";};
@@ -40,6 +41,8 @@ public:
     int n_changes(int i, int j) const;
 
     std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
+
+    std::optional<bitmask_t> mask_for_symbol(const std::string& symbol) const override;
 
     std::pair<std::string, bool> lookup(const bitmask_t& mask) const override;
 
