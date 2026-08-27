@@ -98,7 +98,7 @@ int main()
             "Excluded stop codon component lookup did not return nothing.");
 
     alignment data(triplets);
-    data.load({make_sequence("first", "RAY"), make_sequence("second", "RAY")});
+    data.load(std::vector{make_sequence("first", "RAY"), make_sequence("second", "RAY")});
 
     int observed_code = data(0, 0);
     require(observed_code <= alphabet::first_ambiguity, "RAY was not encoded as a data-local ambiguity.");
