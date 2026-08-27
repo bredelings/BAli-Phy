@@ -3,13 +3,14 @@
 ## Breaking changes
 
 - Capitalize models and distributions. (for example, normal -> Normal, gtr -> GTR)
+- Rename bp-analyze -> bp-summarize.
 
 ## Features
 
 - **Display column and character properties like rate, dNdS and positive selection.**
 - More precise detection of positive selection via Rao-Blackwellization.
 - Models
-  * Add the branch test: Bayesian test for different background and foreground dN/dS values
+  * Add the dN/dS branch test: Bayesian test for different background and foreground dN/dS values
   * Add Gamma across-site rate variation via quadrature instead of equal binning.
 - Distributions & Priors
   * Add the Dirichlet-process.
