@@ -1209,18 +1209,30 @@ class Analysis(object):
             return
 
         print("Summarizing distribution of numerical parameters: ",end='')
-        if not more_recent_than_all_of(self.outdir / "Report",log_files):
-            cmd = ["statreport"] + log_files
+        report_file = self.outdir / "Report"
+        report_is_current = more_recent_than_all_of(report_file, log_files)
+        if report_is_current:
+            report_text = report_file.read_text(encoding='utf-8')
+            # Timestamp-current reports made by older versions still need mean and SD records.
+            if re.search(r'^\s*[^\s]+ ~ ', report_text, re.MULTILINE) and not re.search(
+                r'^\s*E [^\s]+ = ', report_text, re.MULTILINE
+            ):
+                report_is_current = False
+
+        if not report_is_current:
+            cmd = ["statreport", "--mean", "--median"] + log_files
             if self.subsample is not None and self.subsample != 1:
                 cmd.append(f"--subsample={self.subsample}")
             if self.burnin is not None:
                 cmd.append(f"--skip={self.burnin}")
             if self.until is not None:
                 cmd.append(f"--until={self.until}")
-            self.exec_show(cmd,outfile=self.outdir / "Report")
+            self.exec_show(cmd, outfile=report_file)
         print("done.")
 
         print("Analyzing scalar variables: ",end='',flush=True)
+        self.mean = dict()
+        self.stddev = dict()
         self.median = dict()
         self.CI_low = dict()
         self.CI_high = dict()
@@ -1231,13 +1243,20 @@ class Analysis(object):
         self.PSRF_CI80 = dict()
         self.PSRF_RCF = dict()
 
-        with open(self.outdir / "Report",encoding='utf-8') as report:
+        with open(report_file, encoding='utf-8') as report:
             lines = report.readlines()
             i = 0
             while i < len(lines):
                 line = lines[i].strip()
 
                 if not line:
+                    i += 1
+                    continue
+                m = re.fullmatch(r'E ([^\s]+) = ([^\s]+)\s+\[\+- ([^\s]+)\]', line)
+                if m:
+                    var = m.group(1)
+                    self.mean[var] = m.group(2)
+                    self.stddev[var] = m.group(3)
                     i += 1
                     continue
                 m = re.search(r'([^\s]+) ~ ([^\s]+)\s+\((.+),(.+)\)',line)
@@ -2015,6 +2034,13 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       .r_floating_picture {float:right;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}
       table.backlit2 {border-collapse: collapse; }
       table.backlit2 tr:nth-child(odd) td { background-color: #F0F0F0; margin:0}
+      table.scalar-variables td:not(:first-child) {text-align:right;}
+      .scalar-mean, .scalar-sd, .scalar-median, .scalar-bci {font-variant-numeric:tabular-nums;}
+      .backlit2 td.scalar-mean {padding-right:0.25em;}
+      table.scalar-variables td.scalar-pm {padding-left:0; padding-right:0; text-align:center;}
+      .backlit2 td.scalar-sd {padding-left:0.25em;}
+      .backlit2 td.scalar-median {padding-right:0.5em;}
+      .backlit2 td.scalar-bci {padding-left:0;}
       .clear {clear:both;}
 
       .modelname {font-weight: bold; color: blue}
@@ -2168,8 +2194,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
         section = """\
 <h2 class="clear"><a class="anchor" name="parameters"></a>Scalar variables</h2>
-    <table class="backlit2">
-        <tr><th>Statistic</th><th>Median</th><th title="95% Bayesian Credible Interval">95% BCI</th><th title="Auto-Correlation Time">ACT</th><th title="Effective Sample Size">ESS</th><th>burnin</th><th title="Potential Scale Reduction Factor based on width of 80% credible interval">PSRF-CI80%</th><th>PSRF-RCF</th></tr>
+    <table class="backlit2 scalar-variables">
+        <tr><th>Statistic</th><th colspan="3">Mean &plusmn; SD</th><th colspan="2">Median (95% BCI)</th><th title="Auto-Correlation Time">ACT</th><th title="Effective Sample Size">ESS</th><th>burnin</th><th title="Potential Scale Reduction Factor based on width of 80% credible interval">PSRF-CI80%</th><th>PSRF-RCF</th></tr>
 """
         for var in self.median:
             if var == "iter":
@@ -2182,9 +2208,18 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             row_style = "" if var in self.CI_low else 'style="font-style:italic"'
             section += f'<tr {row_style}>\n'
             section += f'  <td>{var}</td>\n'
-            section += f'  <td>{self.median[var]}</td>\n'
+            if var in self.mean:
+                section += f'  <td class="scalar-mean">{self.mean[var]}</td>\n'
+                section += '  <td class="scalar-pm">&plusmn;</td>\n'
+                section += f'  <td class="scalar-sd">{self.stddev[var]}</td>\n'
+            else:
+                section += '  <td class="scalar-mean"></td>\n'
+                section += '  <td class="scalar-pm"></td>\n'
+                section += '  <td class="scalar-sd"></td>\n'
+
             if var in self.CI_low:
-                section += f'  <td>({self.CI_low[var]}, {self.CI_high[var]})</td>\n'
+                section += f'  <td class="scalar-median">{self.median[var]}</td>\n'
+                section += f'  <td class="scalar-bci">({self.CI_low[var]}, {self.CI_high[var]})</td>\n'
 
                 ACT_style = ' style="color:red"' if self.ESS[var] <= self.min_ESS else ""
                 section += f'  <td {ACT_style}>{self.ACT[var]}</td>\n'
@@ -2223,7 +2258,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                     section += '  <td>NA</td>\n'
 
             else:
-                section += '  <td></td>\n'
+                section += f'  <td class="scalar-median">{self.median[var]}</td>\n'
+                section += '  <td class="scalar-bci"></td>\n'
                 section += '  <td></td>\n'
                 section += '  <td></td>\n'
                 section += '  <td></td>\n'
