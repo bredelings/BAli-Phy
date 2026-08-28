@@ -1,10 +1,12 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 import Bio.Alignment (ComponentStateSequence(ComponentStateSequence))
-import Bio.Alignment.Pairwise (left_aligned_pairwise_alignment)
+import Bio.Alignment.Pairwise (PairwiseAlignment, left_aligned_pairwise_alignment)
 import Bio.Alphabet (dna, gapCharIndex, missingCharIndex, mkNumeric)
 import Bio.Sequence (bitmaskFromSequence, emptyAmbiguityDatabase)
 import Compiler.Num
+import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 import qualified Data.Vector.Unboxed as U
 import Foreign.Vector (EVector, listToVector)
 import Numeric.LinearAlgebra (Matrix, (><))
@@ -17,6 +19,7 @@ import SModel.Likelihood.FixedA
     (calcProb, calcProbAtRoot, calcProbAtRootVariable, peelBranchAwayFromRoot,
      sampleRootSequence, sampleSequence, sampleSequenceTowardRoot,
      simpleSequenceLikelihoods)
+import qualified SModel.Likelihood.VariableA as VariableLikelihood
 import System.IO (print)
 
 -- Exercise every component/state producer not reached by the MCMC cat-states
@@ -84,6 +87,37 @@ main = do
     print sampledChild
     print sampledChildWithMissingRoot
     print sampledRoot
+
+    -- Protect the corresponding connected-CLV walk, including matched, child-only, and parent-only
+    -- characters. Deterministic support avoids making this producer test seed-sensitive.
+    let variableUnknown = VariableLikelihood.simpleSequenceLikelihoods nonRevAlphabet
+            (emptyAmbiguityDatabase nonRevAlphabet) nonRevSMap 1 unknown
+        variableUnknown2 = VariableLikelihood.simpleSequenceLikelihoods nonRevAlphabet
+            (emptyAmbiguityDatabase nonRevAlphabet) nonRevSMap 1 (U.fromList [missingCharIndex,
+                                                                            missingCharIndex])
+        variableUnknownLikes = listToVector [variableUnknown] :: EVector CondLikes
+        variableUnknownLikes2 = listToVector [variableUnknown2] :: EVector CondLikes
+        emptyAlignments = IntMap.restrictKeysToVector
+            (IntMap.empty :: IntMap.IntMap PairwiseAlignment) IntSet.empty
+        rootwardVariable = VariableLikelihood.peelBranchAwayFromRootNonEq variableUnknownLikes
+            branchLikes emptyAlignments nonRevTransitions nonRevFrequencies
+        rootToChild2 = left_aligned_pairwise_alignment 1 2
+        child2ToRoot = left_aligned_pairwise_alignment 2 1
+        rootToChild2Vector = IntMap.restrictKeysToVector
+            (IntMap.singleton 0 rootToChild2) (IntSet.singleton 0)
+        sampledVariableChild = VariableLikelihood.sampleRootSequence variableUnknownLikes2
+            (listToVector [rootwardVariable]) rootToChild2Vector nonRevFrequencies
+        sampledVariableRoot = VariableLikelihood.sampleBranchSequenceTowardRoot
+            sampledVariableChild child2ToRoot variableUnknownLikes branchLikes emptyAlignments
+            nonRevTransitions nonRevFrequencies
+        sampledB = ComponentStateSequence (U.singleton (0,1))
+        sampledVariableParentOnly = VariableLikelihood.sampleBranchSequenceTowardRoot
+            sampledB rootToChild2 variableUnknownLikes2 branchLikes emptyAlignments
+            nonRevTransitions nonRevFrequencies
+
+    print sampledVariableChild
+    print sampledVariableRoot
+    print sampledVariableParentOnly
 
     simulatedRoot <- FixedSample.simulateRootSequence 1 frequencies
     simulatedFixed <- FixedSample.simulateFixedSequenceFrom slicedParent

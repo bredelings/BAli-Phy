@@ -2245,6 +2245,13 @@ namespace substitution {
 					       const R::RVector& A_,
                                                const DenseMatrix<double>& F)
     {
+	optional<int> away_from_root_index;
+	for(int j=0;j<LCB.size();j++)
+	    if (LCB[j].as_<Likelihood_Cache_Branch>().away_from_root())
+	    {
+		assert(not away_from_root_index);
+		away_from_root_index = j;
+	    }
 
         const int n_models = F.rows();
         const int n_states = F.cols();
@@ -2312,7 +2319,14 @@ namespace substitution {
 		}
 	    }
 
-	    element_assign(S.data(), F.data(), matrix_size);
+	    // A homologous rootward CLV already contains the process-root distribution. When the
+	    // rootward character is absent, use the marginal frequencies propagated to this node.
+	    if (away_from_root_index and A(*away_from_root_index).has_character1(i[*away_from_root_index]))
+		element_assign(S.data(), 1.0, matrix_size);
+	    else if (away_from_root_index)
+		element_assign(S.data(), cache(*away_from_root_index).away_from_root_WF->data(), matrix_size);
+	    else
+		element_assign(S.data(), F.data(), matrix_size);
 
 	    for(int j=0;j<n_branches_in;j++)
 	    {
@@ -2329,6 +2343,151 @@ namespace substitution {
 		element_prod_assign(S.data(), node_cache(j)[s_out], matrix_size);
 
             auto [component, state] = sample(S);
+            ancestral_characters.components[s_out] = component;
+            ancestral_characters.states[s_out] = state;
+        }
+
+        return ancestral_characters;
+    }
+
+    // Walk the child-to-parent alignment while crossing the process edge backward. Matches use P(i,j),
+    // child-only characters are skipped, and parent-only characters have no transition-state factor.
+    // Incoming CLVs exclude the sampled child and supply all remaining evidence, including the rootward side.
+    ComponentStateVectors sample_branch_sequence_toward_root(std::span<const int> child_components,
+                                                              std::span<const int> child_states,
+                                                              const pairwise_alignment_t& child_A,
+                                                              const R::RVector& sparse_LCN,
+                                                              const R::RVector& LCB,
+                                                              const R::RVector& A_,
+                                                              const R::RVector& transition_P,
+                                                              const DenseMatrix<double>& root_F)
+    {
+        assert(child_components.size() == child_states.size());
+        assert(child_components.size() == child_A.length1());
+
+        optional<int> away_from_root_index;
+        for(int j=0;j<LCB.size();j++)
+            if (LCB[j].as_<Likelihood_Cache_Branch>().away_from_root())
+            {
+                assert(not away_from_root_index);
+                away_from_root_index = j;
+            }
+
+        const DenseMatrix<double>& node_F = away_from_root_index
+            ? LCB[*away_from_root_index].as_<Likelihood_Cache_Branch>().away_from_root_WF.value()
+            : root_F;
+        const int n_models = transition_P.size();
+        const int n_states = transition_P[0].as_<Box<DenseMatrix<double>>>().rows();
+        const int matrix_size = n_models * n_states;
+
+        auto LCN = sparse_to_dense(sparse_LCN);
+        auto node_cache = [&](int i) -> auto& { return LCN[i].as_<Likelihood_Cache_Branch>(); };
+        auto cache = [&](int i) -> auto& { return LCB[i].as_<Likelihood_Cache_Branch>(); };
+        auto A = [&](int i) -> auto& { return A_[i].as_<Box<pairwise_alignment_t>>(); };
+
+        const int n_sequences = LCN.size();
+        const int n_branches_in = LCB.size();
+        const int L = not LCN.empty() ? node_cache(0).n_columns()
+                    : not A_.empty() ? A(0).length2()
+                    : child_A.length2();
+
+#ifndef NDEBUG
+        for(int i=0;i<n_sequences;i++)
+            assert(node_cache(i).n_columns() == L);
+
+        assert(A_.size() == n_branches_in);
+        for(int i=0;i<n_branches_in;i++)
+        {
+            assert(A(i).length2() == L);
+            assert(A(i).length1() == cache(i).n_columns());
+            assert(n_models == cache(i).n_models());
+            assert(n_states == cache(i).n_states());
+        }
+#endif
+
+        DenseMatrix<double> SMAT(n_models, n_states);
+        double* S = SMAT.data();
+
+        vector<int> s(n_branches_in, 0);
+        vector<int> i(n_branches_in, 0);
+        int s_child = 0;
+        int i_child = 0;
+
+        ComponentStateVectors ancestral_characters(L);
+        for(int s_out=0;;s_out++)
+        {
+            for(int j=0;j<n_branches_in;j++)
+            {
+                auto& a = A(j);
+                while (i[j] < a.size() and not a.has_character2(i[j]))
+                {
+                    assert(a.has_character1(i[j]));
+                    i[j]++;
+                    s[j]++;
+                }
+            }
+            while (i_child < child_A.size() and not child_A.has_character2(i_child))
+            {
+                assert(child_A.has_character1(i_child));
+                i_child++;
+                s_child++;
+            }
+
+            if (s_out == L)
+            {
+                for(int j=0;j<n_branches_in;j++)
+                {
+                    assert(i[j] == A(j).size());
+                    assert(s[j] == A(j).length1());
+                }
+                assert(i_child == child_A.size());
+                assert(s_child == child_A.length1());
+                break;
+            }
+
+            for(int j=0;j<n_branches_in;j++)
+            {
+                assert(i[j] < A(j).size());
+                assert(A(j).has_character2(i[j]));
+            }
+            assert(i_child < child_A.size());
+            assert(child_A.has_character2(i_child));
+
+            if (child_A.has_character1(i_child))
+            {
+                // For homologous characters, candidate parent state i has transition weight P(i,j).
+                calc_transition_prob_to_child(
+                    SMAT, {child_components[s_child], child_states[s_child]}, transition_P);
+                s_child++;
+            }
+            else
+            {
+                // A parent-only character has no child state and therefore no transition-state factor.
+                element_assign(S, 1.0, matrix_size);
+            }
+            i_child++;
+
+            if (away_from_root_index and A(*away_from_root_index).has_character1(i[*away_from_root_index]))
+            {
+                // The rootward CLV multiplied below already contains the process-root distribution.
+            }
+            else
+                element_prod_assign(S, node_F.data(), matrix_size);
+
+            for(int j=0;j<n_branches_in;j++)
+            {
+                if (A(j).has_character1(i[j]))
+                {
+                    element_prod_assign(S, cache(j)[s[j]], matrix_size);
+                    s[j]++;
+                }
+                i[j]++;
+            }
+
+            for(int j=0;j<n_sequences;j++)
+                element_prod_assign(S, node_cache(j)[s_out], matrix_size);
+
+            auto [component, state] = sample(SMAT);
             ancestral_characters.components[s_out] = component;
             ancestral_characters.states[s_out] = state;
         }

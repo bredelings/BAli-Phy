@@ -53,7 +53,7 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
                  | isStationary smodel = peelLikelihoodEqNonRev rtree nodeCLVs cls as f substRoot
                  | otherwise           = peelLikelihoodNonEq    rtree nodeCLVs cls as f substRoot
 
-      ancestralComponentStates = sampleAncestralSequences rtree substRoot
+      ancestralComponentStates = sampleAncestralSequences (isReversible smodel) rtree substRoot
           nodeCLVs as transitionPs f cls
 
       -- Can we eliminate fs, since it is only used as a property?

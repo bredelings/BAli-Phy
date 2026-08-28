@@ -148,5 +148,14 @@ namespace substitution {
 						 const R::RVector& transition_P,
 						 const DenseMatrix<double>& F);
 
+    ComponentStateVectors sample_branch_sequence_toward_root(std::span<const int> child_components,
+                                                              std::span<const int> child_states,
+                                                              const pairwise_alignment_t& child_A,
+                                                              const R::RVector& LCN,
+                                                              const R::RVector& LCB,
+                                                              const R::RVector& A,
+                                                              const R::RVector& transition_P,
+                                                              const DenseMatrix<double>& F);
+
 }
 #endif

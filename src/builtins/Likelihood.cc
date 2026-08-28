@@ -261,6 +261,38 @@ extern "C" closure builtin_function_sampleBranchSequence(OperationArgs& Args)
     return component_state_result(std::move(result));
 }
 
+// Sample process-parent states conditional on a child sequence while walking toward the process root.
+extern "C" closure builtin_function_sampleBranchSequenceTowardRoot(OperationArgs& Args)
+{
+    auto component_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0, "Likelihood.sampleBranchSequenceTowardRoot components");
+    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "Likelihood.sampleBranchSequenceTowardRoot states");
+    auto arg6 = Args.evaluate_slot_to_value(6);
+    auto arg7 = Args.evaluate_slot_to_value(7);
+    auto arg8 = Args.evaluate_slot_to_value(8);
+    auto arg9 = Args.evaluate_slot_to_value(9);
+    auto arg10 = Args.evaluate_slot_to_value(10);
+    auto arg11 = Args.evaluate_slot_to_value(11);
+    auto child_components = component_input.view();
+    auto child_states = state_input.view();
+    if (child_components.size() != child_states.size())
+        throw myexception()<<"Likelihood.sampleBranchSequenceTowardRoot: component and state lengths differ";
+    const auto& child_alignment = arg6.as_<Box<pairwise_alignment_t>>();
+    if (child_components.size() != static_cast<std::size_t>(child_alignment.length1()))
+        throw myexception()<<"Likelihood.sampleBranchSequenceTowardRoot: child length does not match alignment";
+
+    auto result = substitution::sample_branch_sequence_toward_root(
+        child_components, child_states,
+        child_alignment,                     // child_A
+        arg7.as_<R::RVector>(),               // LCN
+        arg8.as_<R::RVector>(),               // LCB
+        arg9.as_<R::RVector>(),               // A
+        arg10.as_<R::RVector>(),              // transition_P
+        arg11.as_<Box<DenseMatrix<double>>>());// F
+    return component_state_result(std::move(result));
+}
+
 extern "C" closure builtin_function_maskSequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);

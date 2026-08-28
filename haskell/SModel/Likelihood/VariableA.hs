@@ -43,6 +43,9 @@ peelBranchNonEq toward nodeCLs branchCLs asIn ps rootF | toward    = peelBranchT
 foreign import trcall "Likelihood:sampleRootSequence" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> Matrix Double -> ComponentStateSequence
 
 foreign import trcall "Likelihood:sampleBranchSequence" sampleBranchSequence :: ComponentStateSequence -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes -> EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> ComponentStateSequence
+foreign import trcall "Likelihood:sampleBranchSequenceTowardRoot" sampleBranchSequenceTowardRoot ::
+    ComponentStateSequence -> PairwiseAlignment -> EVector CondLikes -> EVector CondLikes ->
+    EVector PairwiseAlignment -> EVector (NativeMatrix Double) -> Matrix Double -> ComponentStateSequence
 
 simpleNodeCLVs :: Alphabet -> AmbiguityDatabase -> U.Vector Int -> Int -> IntMap (Maybe (U.Vector Int)) -> IntMap (Maybe CondLikes)
 simpleNodeCLVs alpha ambiguities smap nModels seqs = (sequenceToCL <$>) <$> seqs
@@ -87,7 +90,7 @@ frequenciesOnTree t f ps = let fs = getNodesSet t & IntMap.fromSet getF
                                          | otherwise      = f
                            in fs
 
-sampleAncestralSequences t root nodeCLVs as ps f cl =
+sampleAncestralSequences reversible t root nodeCLVs as ps f cl =
     let rt = addRoot root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node $ getNodesSet t
 
@@ -107,5 +110,8 @@ sampleAncestralSequences t root nodeCLVs as ps f cl =
                                                 clsIn = IntMap.restrictKeysToVector cl inEdges
                                                 asIn  = IntMap.restrictKeysToVector as inEdges
                                                 nodeCLV = toVector $ maybeToList $ nodeCLVs IntMap.! (sourceNode t to_p)
-                                            in sampleBranchSequence parent_seq a0 nodeCLV clsIn asIn ps_for_b0 f
+                                            in if reversible || not (towardRoot t b0)
+                                               then sampleBranchSequence parent_seq a0 nodeCLV clsIn asIn ps_for_b0 f
+                                               else sampleBranchSequenceTowardRoot parent_seq a0 nodeCLV clsIn asIn
+                                                                                   ps_for_b0 f
     in ancestor_seqs
