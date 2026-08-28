@@ -35,6 +35,11 @@ namespace substitution {
 						const DenseMatrix<double>& F,
 						std::span<const int> counts);
 
+    ProbDensity calc_prob_variable_SEV(const R::RVector& LCN,
+				       const R::RVector& LCB,
+				       const DenseMatrix<double>& FF,
+				       std::span<const int> counts);
+
     ProbDensity calc_prob_SEV(const R::RVector& LCN,
 				     const R::RVector& LCB,
 				     const DenseMatrix<double>& FF,

@@ -23,6 +23,7 @@ import SModel.Likelihood.CLV
 -- peeling for SEV
 foreign import trcall "LikelihoodSEV:calcProbAtRoot" calcProbAtRoot :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> ProbDensity
 foreign import trcall "LikelihoodSEV:calcProbAtRootVariable" calcProbAtRootVariable :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> ProbDensity
+foreign import trcall "LikelihoodSEV:calcProbVariable" calcProbVariable :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> ProbDensity
 foreign import trcall "LikelihoodSEV:calcProb" calcProb :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> ProbDensity
 foreign import trcall "LikelihoodSEV:peelBranchTowardRoot" peelBranchTowardRoot :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> CondLikes
 foreign import trcall "LikelihoodSEV:peelBranchAwayFromRoot" peelBranchAwayFromRoot :: EVector CondLikes -> EVector CondLikes -> EVector (NativeMatrix Double) -> Matrix Double -> CondLikes
@@ -86,9 +87,9 @@ peelLikelihoodNonRev = peelLikelihoodWith calcProb
                        
 peelLikelihoodVariable = peelLikelihoodWith calcProbAtRootVariable
 
--- EqNonRev + noNEq | variable
+-- EqNonRev + NonEq | variable
 
--- FIXME!!
+peelLikelihoodVariableNonRev = peelLikelihoodWith calcProbVariable
 
 sampleAncestralSequences t root nodeCLVs alpha ps f cl smap col_to_compressed =
     let rt = addRoot root t

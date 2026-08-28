@@ -158,6 +158,22 @@ extern "C" closure builtin_function_calcProbAtRootVariable(OperationArgs& Args)
     return new Box<ProbDensity>(Pr);
 }
 
+// Collect the variable-site condition at any node while preserving the non-reversible process root.
+extern "C" closure builtin_function_calcProbVariable(OperationArgs& Args)
+{
+    auto arg0 = Args.evaluate_slot_to_value(0);
+    auto arg1 = Args.evaluate_slot_to_value(1);
+    auto arg2 = Args.evaluate_slot_to_value(2);
+    auto counts = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "LikelihoodSEV.calcProbVariable");
+
+    ProbDensity Pr = substitution::calc_prob_variable_SEV(arg0.as_<R::RVector>(),       // sequences
+						   arg1.as_<R::RVector>(),       // LCB
+						   arg2.as_<Box<DenseMatrix<double>>>(),   // FF
+						   counts.view());               // counts
+    return new Box<ProbDensity>(Pr);
+}
+
 extern "C" closure builtin_function_sampleRootSequence(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);

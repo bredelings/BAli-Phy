@@ -537,6 +537,167 @@ namespace substitution
     }
 
 
+    // Compute the variable-site condition at an arbitrary collection node while retaining the process root.
+    ProbDensity calc_prob_variable_SEV(const R::RVector& LCN,
+				       const R::RVector& LCB,
+				       const DenseMatrix<double>& FF,
+				       std::span<const int> counts)
+    {
+	const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
+	for(auto& lcb: LCB)
+	    if (lcb.as_<Likelihood_Cache_Branch>().away_from_root())
+	    {
+		assert(not away_from_root_branch);
+		away_from_root_branch = &lcb.as_<Likelihood_Cache_Branch>();
+	    }
+
+	if (not away_from_root_branch)
+	    return calc_prob_at_root_variable_SEV(LCN, LCB, FF, counts);
+
+	total_calc_root_prob++;
+
+	// If LCN or LCB is empty, maybe we could use it directly and avoid copying.
+	// But then we'd be using a pointer, which is indirect.
+	R::RVector LC;
+	LC.reserve(LCN.size() + LCB.size());
+	for(auto& lc: LCB)
+	    LC.push_back(lc);
+	for(auto& lc: LCN)
+	{
+	    if (auto SL = lc.to<SparseLikelihoods>())
+		LC.push_back(SL->DenseLikelihoods());
+	    else
+		LC.push_back(lc);
+	}
+
+	auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
+
+	int n_clvs = LC.size();
+
+	assert(not LC.empty());
+
+        int L = cache(0).bits.size();
+        const int n_models = cache(0).n_models();
+        const int n_states = cache(0).n_states();
+        const int matrix_size = n_models * n_states;
+
+#ifndef NDEBUG
+	assert(L > 0);
+
+        for(int i=0;i<n_clvs;i++)
+        {
+            assert(cache(i).bits.size() == L);
+	    assert(n_models == cache(i).n_models());
+	    assert(n_states == cache(i).n_states());
+        }
+#endif
+	const DenseMatrix<double>& f = away_from_root_branch->away_from_root_WF.value();
+	const boost::dynamic_bitset<>& prev_rootward_bits = away_from_root_branch->bits;
+
+        // scratch matrix
+        DenseMatrix<double> SMAT(n_models,n_states);
+        double* S = SMAT.data();
+        total_root_clv_length += L;
+
+	boost::dynamic_bitset<> bits_out;
+	bits_out.resize(L);
+        for(int i=0;i<n_clvs;i++)
+            bits_out |= cache(i).bits;
+
+        // index into LCs
+        vector<int> s(n_clvs, 0);
+
+	vector<double> Prs;
+        for(int c=0;c<L;c++)
+        {
+            if (not bits_out.test(c)) continue;
+
+	    int column_scale = 0;
+	    constexpr int mi_max = 3;
+	    const double* m[mi_max];
+	    int mi=0;
+
+	    // An existing rootward column already contains the propagated root frequencies. If it is absent,
+	    // multiply them here because none of the incoming CLVs contains the process-root distribution.
+	    if (not prev_rootward_bits.test(c))
+		m[mi++] = f.data();
+
+            // Handle branches in
+	    int j=0;
+            for(;j<n_clvs and mi < mi_max;j++)
+            {
+		auto& lcb = cache(j);
+                if (lcb.bits.test(c))
+                {
+		    m[mi++] = lcb[s[j]];
+                    column_scale += lcb.scale(s[j]);
+                    s[j]++;
+                }
+            }
+
+	    double p_col = 1;
+	    if (j == n_clvs)
+	    {
+		if (mi==3)
+		    p_col = element_prod_sum(m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    p_col = element_prod_sum(m[0], m[1], matrix_size);
+		else if (mi==1)
+		    p_col = element_sum(m[0], matrix_size);
+		else
+		    p_col = 1;
+	    }
+	    else
+	    {
+		if (mi==3)
+		    element_prod_assign(S, m[0], m[1], m[2], matrix_size);
+		else if (mi==2)
+		    element_prod_assign(S, m[0], m[1], matrix_size);
+		else if (mi==1)
+		    element_prod_assign(S, m[0], matrix_size);
+		else
+		    element_assign(S, 1.0, matrix_size);
+
+		for(;j<n_clvs;j++)
+		{
+		    auto& lcb = cache(j);
+		    if (lcb.bits.test(c))
+		    {
+			element_prod_assign(S, lcb[s[j]], matrix_size);
+			column_scale += lcb.scale(s[j]);
+			s[j]++;
+		    }
+		}
+
+		p_col = element_sum(S, matrix_size);
+	    }
+
+            // SOME model must be possible
+            assert(std::isnan(p_col) or (0 <= p_col and p_col <= 1.00000000001));
+
+	    Prs.push_back(p_col * std::ldexp(1.0, column_scale*-256));
+        }
+
+	// Each observed pattern expands to one constant pattern per alphabet state. Restore each column's
+	// scale before summing those alternatives, then complement the sum and apply the observed count.
+	int n = L/counts.size();
+        prob_density_prod total;
+	for(int c=0;c<counts.size();c++)
+	{
+	    double sum = 0;
+	    for(int i=0;i<n;i++)
+		sum += Prs[c*n+i];
+	    double Pr = 1.0 - sum;
+            assert(std::isnan(Pr) or (Pr >= 0 and Pr <= 1));
+            total.mult_with_count(Pr, counts[c]);
+	}
+
+        ProbDensity Pr = total;
+
+	return Pr;
+    }
+
+
     ProbDensity calc_prob_SEV(const R::RVector& LCN,
 			       const R::RVector& LCB,
 			       const DenseMatrix<double>& FF,
