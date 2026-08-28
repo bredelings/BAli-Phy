@@ -88,6 +88,29 @@ main = do
     , Map.member (pack "positiveSelectionInModel") $ getConditions (SModelOnTree () partialConditionModel)
     , lookupCondition "positiveSelectionInModel" $ getConditions (SModelOnTree () (scaleBy 3 codonModel))
     ]
+
+  -- Ensure an identity-state modifier preserves arbitrary construction annotations,
+  -- and later omega and rate mixtures transport them to every final component.
+  let zeroFitness = replicate (alphabetSize codons) 0
+      taggedOmegaModel omega =
+        mut_sel zeroFitness $
+        setComponentCondition (pack "markerCondition") True $
+        setConstantStateProperty (pack "marker") 7 $
+        dNdS omega (x3 codons (jukes_cantor dna))
+      omegaMixture = Discrete [(taggedOmegaModel 0.5, 0.5), (taggedOmegaModel 2.0, 0.5)]
+      omegaRateMixture = rateMixture omegaMixture rates
+      propagatedProperties = getProperties (SModelOnTree () omegaRateMixture)
+      propagatedConditions = getConditions (SModelOnTree () omegaRateMixture)
+  putStrLn $ show
+    ( ( componentFirstValues $ lookupProperty "dNdS" propagatedProperties
+      , componentFirstValues $ lookupProperty "posSelection" propagatedProperties
+      , componentFirstValues $ lookupProperty "marker" propagatedProperties
+      )
+    , ( lookupCondition "positiveSelectionInModel" propagatedConditions
+      , lookupCondition "markerCondition" propagatedConditions
+      )
+    )
+
   let triangle = symmetricMatrixFromLowerTriangle 3 [1, 2, 3]
       nonReversible = nonRev dna (replicate 12 1)
       weighted = weightedFrequencyMatrixFromVectors (fromList [0.25, 0.75])

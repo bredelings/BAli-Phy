@@ -33,7 +33,12 @@ mut_sel_pi frequencies fitness =
     overrideVectorSize (vectorSize frequencies)
         (mutSelPiNative frequencies fitness)
 
-mut_sel ws' m0@(Markov a smap _ _ _) = setReversibility rv $ markov a smap q pi where
+-- MutSel changes Q and pi without changing components or state identities, so
+-- carry construction annotations onto the reconstructed numerical model.
+mut_sel ws' m0@(Markov a smap _ _ annotations) =
+    case setReversibility rv $ markov a smap q pi of
+      Markov a' smap' process modelRate _ -> Markov a' smap' process modelRate annotations
+  where
     rv = getReversibility m0
     q0 = getQ m0
     pi0 = getEqFreqs m0
