@@ -17,7 +17,9 @@ import Reversible
 
 annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
   let processRoot = root tree
-      substRoot = modifiable (head $ neighbors tree processRoot ++ [processRoot])
+      -- Deriving the initial substitution root from the node set avoids a topology dependency.
+      -- A dependency-free way to initialize modifiables remains to be implemented.
+      substRoot = modifiable (head $ filter (/= processRoot) (getNodes tree) ++ [processRoot])
       rtree = if isReversible smodel
               then setRoot substRoot tree
               else tree

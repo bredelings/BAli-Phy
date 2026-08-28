@@ -26,7 +26,9 @@ import Reversible
 
 annotated_subst_like_on_tree tree alignment smodel sequenceData = do
   let processRoot = root tree
-      substRoot = modifiable (head $ neighbors tree processRoot ++ [processRoot])
+      -- Deriving the initial substitution root from the node set avoids a topology dependency.
+      -- A dependency-free way to initialize modifiables remains to be implemented.
+      substRoot = modifiable (head $ filter (/= processRoot) (getNodes tree) ++ [processRoot])
       rtree = if isReversible smodel
               then setRoot substRoot tree
               else tree
