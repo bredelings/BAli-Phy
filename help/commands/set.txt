@@ -19,7 +19,7 @@ Pass a key-value pair into BAli-Phy.  The <value> is a json value.
    bali-phy --set write-fixed-alignments=true dna.fasta -I none
 
    # Write property values for each (category, state) pair and also the
-   # (category,state) pair for each leaf character. Format is JSON. (default: false)
+   # (category,state) pair for each leaf character. Format is JSON. (default: true)
    bali-phy --set write-properties=true dna.fasta
 
    # Stop enforcing low gap probabilities after 10 iterations (default: 10)
