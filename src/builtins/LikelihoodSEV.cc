@@ -110,6 +110,37 @@ extern "C" closure builtin_function_sampleSequence(OperationArgs& Args)
     return component_state_result(std::move(result));
 }
 
+// Sample the process-parent states conditional on an already sampled process-child sequence.
+extern "C" closure builtin_function_sampleSequenceTowardRoot(OperationArgs& Args)
+{
+    auto component_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0, "LikelihoodSEV.sampleSequenceTowardRoot components");
+    auto state_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 3, "LikelihoodSEV.sampleSequenceTowardRoot states");
+    auto arg6 = Args.evaluate_slot_to_value(6);
+    auto arg7 = Args.evaluate_slot_to_value(7);
+    auto arg8 = Args.evaluate_slot_to_value(8);
+    auto arg9 = Args.evaluate_slot_to_value(9);
+    auto column_input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 10, "LikelihoodSEV.sampleSequenceTowardRoot columns");
+    auto child_components = component_input.view();
+    auto child_states = state_input.view();
+    auto columns = column_input.view();
+    if (child_components.size() != child_states.size())
+        throw myexception()<<"LikelihoodSEV.sampleSequenceTowardRoot: component and state lengths differ";
+    if (child_components.size() != columns.size())
+        throw myexception()<<"LikelihoodSEV.sampleSequenceTowardRoot: child and column-map lengths differ";
+
+    auto result = substitution::sample_sequence_toward_root_SEV(
+        child_components, child_states,
+        arg6.as_<R::RVector>(),                    // LCN
+        arg7.as_<R::RVector>(),                    // transition_ps
+        arg8.as_<R::RVector>(),                    // LCB
+        arg9.as_<Box<DenseMatrix<double>>>(),       // F
+        columns);
+    return component_state_result(std::move(result));
+}
+
 extern "C" closure builtin_function_calcProb(OperationArgs& Args)
 {
     auto arg0 = Args.evaluate_slot_to_value(0);

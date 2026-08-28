@@ -1416,6 +1416,14 @@ namespace substitution
                                                    const DenseMatrix<double>& F,
                                                    std::span<const int> compressed_col_for_col)
     {
+        const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
+        for(auto& lcb: LCB)
+            if (lcb.as_<Likelihood_Cache_Branch>().away_from_root())
+            {
+                assert(not away_from_root_branch);
+                away_from_root_branch = &lcb.as_<Likelihood_Cache_Branch>();
+            }
+
         // 1. Construct a scratch CL matrix, and check that dimensions match inputs
         const int n_models = F.rows();
         const int n_states = F.cols();
@@ -1479,11 +1487,107 @@ namespace substitution
 
             if (not allbits.test(c2)) continue;
 
-            S = F;
+            // A present rootward CLV already includes the process-root distribution. When it is absent,
+            // use the marginal frequencies propagated to this node; at the process root, use F itself.
+            if (away_from_root_branch and away_from_root_branch->bits.test(c2))
+                element_assign(S.data(), 1.0, matrix_size);
+            else if (away_from_root_branch)
+                S = away_from_root_branch->away_from_root_WF.value();
+            else
+                S = F;
 
 	    for(int b=0;b<n_clvs;b++)
 		if (auto i = cache_index_for_compressed_column[b][c2])
 		    element_prod_modify(S.data(), cache(b)[*i], matrix_size);
+
+            auto [component, state] = sample(S);
+            ancestral_characters.components[c] = component;
+            ancestral_characters.states[c] = state;
+        }
+
+        return ancestral_characters;
+    }
+
+    // The sampling traversal crosses this process edge backward: child state j is already fixed, so
+    // parent state i has transition weight P(i,j). Incoming CLVs exclude the sampled child edge, and
+    // the unique rootward CLV (or F at the process root) supplies the remaining process-root evidence.
+    ComponentStateVectors sample_sequence_toward_root_SEV(std::span<const int> child_components,
+                                                           std::span<const int> child_states,
+                                                           const R::RVector& LCN,
+                                                           const R::RVector& transition_Ps,
+                                                           const R::RVector& LCB,
+                                                           const DenseMatrix<double>& F,
+                                                           std::span<const int> compressed_col_for_col)
+    {
+        assert(child_components.size() == child_states.size());
+        assert(child_components.size() == compressed_col_for_col.size());
+
+        const int n_models = transition_Ps.size();
+        const int n_states = transition_Ps[0].as_<Box<DenseMatrix<double>>>().rows();
+        const int matrix_size = n_models * n_states;
+
+        const Likelihood_Cache_Branch* away_from_root_branch = nullptr;
+        for(auto& lcb: LCB)
+            if (lcb.as_<Likelihood_Cache_Branch>().away_from_root())
+            {
+                assert(not away_from_root_branch);
+                away_from_root_branch = &lcb.as_<Likelihood_Cache_Branch>();
+            }
+
+        R::RVector LC;
+        LC.reserve(LCN.size() + LCB.size());
+        for(auto& lc: LCB)
+            LC.push_back(lc);
+        for(auto& lc: LCN)
+        {
+            if (auto SL = lc.to<SparseLikelihoods>())
+                LC.push_back(SL->DenseLikelihoods());
+            else
+                LC.push_back(lc);
+        }
+
+        auto cache = [&](int i) -> auto& { return LC[i].as_<Likelihood_Cache_Branch>(); };
+
+#ifndef NDEBUG
+        for(int i=0;i<LC.size();i++)
+        {
+            assert(n_models == cache(i).n_models());
+            assert(n_states == cache(i).n_states());
+        }
+#endif
+
+        vector<vector<optional<int>>> cache_index_for_compressed_column(LC.size());
+        for(int i=0;i<LC.size();i++)
+            cache_index_for_compressed_column[i] = get_index_for_column(cache(i).bits);
+
+        ComponentStateVectors ancestral_characters(child_states.size());
+        ancestral_characters.components.setConstant(-1);
+        ancestral_characters.states.setConstant(-1);
+
+        DenseMatrix<double> S(n_models, n_states);
+        for(int c=0;c<child_states.size();c++)
+        {
+            if (child_components[c] < 0 or child_states[c] < 0)
+                continue;
+
+            const int c2 = compressed_col_for_col[c];
+
+            // Given child state j, the candidate parent state i has weight P(i,j), multiplied by all
+            // evidence on the parent side. Only the sampled child's mixture component can be retained.
+            calc_transition_prob_to_child(S, {child_components[c], child_states[c]}, transition_Ps);
+
+            if (away_from_root_branch and away_from_root_branch->bits.test(c2))
+            {
+                // The rootward CLV multiplied below already contains the process-root distribution.
+            }
+            else if (away_from_root_branch)
+                element_prod_modify(S.data(), away_from_root_branch->away_from_root_WF->data(), matrix_size);
+            else
+                element_prod_modify(S.data(), F.data(), matrix_size);
+
+            for(int b=0;b<LC.size();b++)
+                if (auto i = cache_index_for_compressed_column[b][c2])
+                    element_prod_modify(S.data(), cache(b)[*i], matrix_size);
 
             auto [component, state] = sample(S);
             ancestral_characters.components[c] = component;

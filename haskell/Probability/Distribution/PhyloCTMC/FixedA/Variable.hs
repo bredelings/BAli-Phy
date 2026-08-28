@@ -56,7 +56,8 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       likelihood2 | isReversible smodel = peelLikelihoodVariable nodeCLVs2 rtree cls2 f alphabet smap substRoot columnCounts2
                   | otherwise           = peelLikelihoodVariableNonRev nodeCLVs2 rtree cls2 f alphabet smap substRoot columnCounts2
 
-      ancestralComponentStates = sampleAncestralSequences tree substRoot nodeCLVs alphabet transitionPs f cls smap mapping
+      ancestralComponentStates = sampleAncestralSequences (isReversible smodel) tree substRoot
+          nodeCLVs alphabet transitionPs f cls smap mapping
 
   in_edge "tree" tree
   in_edge "smodel" smodel

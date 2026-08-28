@@ -414,6 +414,9 @@ DenseMatrix<double> propagate_frequencies(const DenseMatrix<double>& F, const R:
 
 void calc_transition_prob_from_parent(DenseMatrix<double>& S, const std::pair<int,int>& state_model_parent, const R::RVector& Ps);
 void calc_transition_prob_from_parent(DenseMatrix<double>& S, const std::pair<int,int>& state_model_parent, const R::RVector& Ps, const DenseMatrix<double>& WF);
+void calc_transition_prob_to_child(DenseMatrix<double>& S,
+                                   const std::pair<int,int>& state_model_child,
+                                   const R::RVector& Ps);
 
 std::pair<int,int> sample(const DenseMatrix<double>& M);
 

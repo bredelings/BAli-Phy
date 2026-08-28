@@ -29,6 +29,19 @@ void calc_transition_prob_from_parent(DenseMatrix<double>& S, const pair<int,int
 	calc_transition_prob_from_parent(S, state_model_parent, Ps);
 }
 
+// Fill S with P(parent=i, child=j | component=m) as a function of the candidate parent state i.
+void calc_transition_prob_to_child(DenseMatrix<double>& S, const pair<int,int>& state_model_child, const R::RVector& Ps)
+{
+    auto [m,j] = state_model_child;
+
+    assert(m >= 0);
+    assert(j >= 0);
+    const auto& P = Ps[m].as_<Box<DenseMatrix<double>>>();
+    element_assign(S, 0);
+    for(int i=0;i<S.cols();i++)
+        S(m,i) = P(i,j);
+}
+
 DenseMatrix<double> propagate_frequencies(const DenseMatrix<double>& F, const R::RVector& transition_P)
 {
     int n_models = F.rows();

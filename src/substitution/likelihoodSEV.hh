@@ -95,5 +95,13 @@ namespace substitution {
 						   const R::RVector& transition_Ps,
 						   const R::RVector& LCB,
 						   std::span<const int> compressed_col_for_col);
+
+    ComponentStateVectors sample_sequence_toward_root_SEV(std::span<const int> child_components,
+                                                           std::span<const int> child_states,
+                                                           const R::RVector& LCN,
+                                                           const R::RVector& transition_Ps,
+                                                           const R::RVector& LCB,
+                                                           const DenseMatrix<double>& F,
+                                                           std::span<const int> compressed_col_for_col);
 }
 #endif

@@ -34,6 +34,9 @@ peelBranch toward nodeCLs branchCLs ps f | toward    = peelBranchTowardRoot   no
 -- ancestral sequence sampling for SEV
 foreign import trcall "LikelihoodSEV:sampleRootSequence" sampleRootSequence :: EVector CondLikes -> EVector CondLikes -> Matrix Double -> U.Vector Int -> ComponentStateSequence
 foreign import trcall "LikelihoodSEV:sampleSequence" sampleSequence :: ComponentStateSequence -> EVector CondLikes -> EVector (NativeMatrix Double) -> EVector CondLikes -> U.Vector Int -> ComponentStateSequence
+foreign import trcall "LikelihoodSEV:sampleSequenceTowardRoot" sampleSequenceTowardRoot ::
+    ComponentStateSequence -> EVector CondLikes -> EVector (NativeMatrix Double) ->
+    EVector CondLikes -> Matrix Double -> U.Vector Int -> ComponentStateSequence
 
 -- TEMPORARY EVECTOR ADAPTER: the fixed-alignment builtin still embeds a boxed
 -- row in an EPair.
@@ -91,7 +94,7 @@ peelLikelihoodVariable = peelLikelihoodWith calcProbAtRootVariable
 
 peelLikelihoodVariableNonRev = peelLikelihoodWith calcProbVariable
 
-sampleAncestralSequences t root nodeCLVs alpha ps f cl smap col_to_compressed =
+sampleAncestralSequences reversible t root nodeCLVs alpha ps f cl smap col_to_compressed =
     let rt = addRoot root t
         ancestor_seqs = IntMap.fromSet ancestor_for_node (getNodesSet t)
         ancestor_for_node n = ancestor_for_branch n (branchToParent rt n)
@@ -108,10 +111,9 @@ sampleAncestralSequences t root nodeCLVs alpha ps f cl smap col_to_compressed =
                                                 inEdges = edgesBeforeEdgeSet t to_p
                                                 clsIn = IntMap.restrictKeysToVector cl inEdges
                                                 nodeCLs = toVector $ maybeToList $ nodeCLVs IntMap.! n
-                                            in sampleSequence parent_seq
-                                                              nodeCLs
-                                                              ps_for_b0
-                                                              clsIn
-                                                              col_to_compressed
+                                            in if reversible || not (towardRoot t b0)
+                                               then sampleSequence parent_seq nodeCLs ps_for_b0 clsIn col_to_compressed
+                                               else sampleSequenceTowardRoot parent_seq nodeCLs ps_for_b0 clsIn f
+                                                                                   col_to_compressed
     in ancestor_seqs
                                                                        
