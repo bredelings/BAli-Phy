@@ -16,7 +16,8 @@ import qualified Data.IntMap as IntMap
 import Reversible
 
 annotatedSubstLikelihoodFixedA tree length smodel sequenceData = do
-  let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
+  let processRoot = root tree
+      substRoot = modifiable (head $ neighbors tree processRoot ++ [processRoot])
       rtree = if isReversible smodel
               then setRoot substRoot tree
               else tree

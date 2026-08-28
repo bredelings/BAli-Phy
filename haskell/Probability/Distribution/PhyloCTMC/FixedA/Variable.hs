@@ -21,7 +21,8 @@ newtype VariablePhyloCTMC t s = Variable (PhyloCTMC t Int s)
 variable = Variable
 
 annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
-  let substRoot = modifiable (head $ internalNodes tree ++ leafNodes tree)
+  let processRoot = root tree
+      substRoot = modifiable (head $ neighbors tree processRoot ++ [processRoot])
       rtree = if isReversible smodel
               then setRoot substRoot tree
               else tree
