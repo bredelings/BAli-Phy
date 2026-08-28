@@ -235,6 +235,10 @@ test('bp-summarize character properties',
      python,
      args: [files('tests/scripts/test_bp_summarize_properties.py')])
 
+test('bp-summarize scalar report',
+     python,
+     args: [files('tests/scripts/test_bp_summarize_scalars.py')])
+
 test('bali-phy-pkg',
      python,
      args: [files('tests/scripts/test_bali_phy_pkg.py')])

@@ -1264,7 +1264,7 @@ class Analysis(object):
                     i += 1
                     continue
 
-                m = re.search(r'\s+(.+) = (.+)', line)
+                m = re.fullmatch(r'([^=]+?) = ([^=]+)', line)
                 if m:
                     var = m.group(1)
                     self.median[var] = m.group(2)
