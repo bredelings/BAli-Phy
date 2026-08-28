@@ -1,7 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 import Bio.Alignment (compressAlignment, compressAlignmentVarNonvar,
-                      select_alignment_columns)
+                      fromLegacySequenceVector, select_alignment_columns,
+                      toLegacySequenceVector)
 import Bio.Alignment.Matrix (alignment_from_sequences, alignment_length,
                              indices_from_alignment)
 import Bio.Alphabet (dna)
@@ -15,8 +16,8 @@ import System.IO (print)
 
 row name values = (Text.pack name, U.fromList values)
 
--- Exercise both compression result layouts and derive zero and nonzero
--- logical lengths from their complete native Int owners.
+-- Protect direct legacy/native conversion, including sliced logical views, while exercising both
+-- compression layouts; remove these checks when the nested legacy vector interfaces disappear.
 main = do
     let alignment = [row "a" [0,1,0], row "b" [1,1,1]]
         (compressed, counts, mapping) = compressAlignment alignment
@@ -29,7 +30,12 @@ main = do
                       (Text.pack "b", Text.pack "TGA")]
         selected = select_alignment_columns source [2,0,2]
         selectedEmpty = select_alignment_columns source []
+        sliced = U.slice 1 3 (U.fromList [99,4,5,6,100] :: U.Vector Int)
+        converted = fromLegacySequenceVector (toLegacySequenceVector sliced)
+        convertedEmpty =
+            fromLegacySequenceVector (toLegacySequenceVector (U.empty :: U.Vector Int))
 
+    print (U.toList converted, U.length convertedEmpty)
     print (U.toList counts)
     print (U.toList mapping)
     print (fmap (U.length . snd) compressed)

@@ -185,6 +185,35 @@ extern "C" closure builtin_function_concatDoubleVectors(OperationArgs& Args)
     return concat_unboxed_numeric_vectors<double>(Args, "V_Double");
 }
 
+// Copy one logical unboxed Int view directly into the legacy boxed runtime representation.
+extern "C" closure builtin_function_intVectorToEVector(OperationArgs& Args)
+{
+    auto input = read_native_vector_input<int, ForeignDemand::use>(
+        Args, 0, "NativeVector.intVectorToEVector");
+    auto values = input.view();
+
+    object_ptr<R::RVector> result(new R::RVector);
+    result->reserve(values.size());
+    for(int value: values)
+        result->push_back(value);
+    return result;
+}
+
+// Copy a legacy boxed Int vector directly into contiguous native storage.
+extern "C" closure builtin_function_eVectorIntToNativeVector(OperationArgs& Args)
+{
+    auto value = Args.evaluate_slot_to_value(0);
+    const auto& values = value.as_checked<R::RVector>();
+    if (values.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw myexception()<<"NativeVector.eVectorIntToNativeVector: vector length exceeds the Haskell Int range";
+
+    int count = static_cast<int>(values.size());
+    object_ptr<Box<DenseVector<int>>> result(new Box<DenseVector<int>>(count));
+    for(int index = 0; index < count; index++)
+        (*result)(index) = values[index].as_int();
+    return result;
+}
+
 // Construct a constant vector without allocating a Haskell element list.
 extern "C" closure builtin_function_vectorKonstNative(OperationArgs& Args)
 {

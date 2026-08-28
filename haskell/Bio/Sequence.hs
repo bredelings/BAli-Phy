@@ -7,7 +7,9 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Bit (Bit)
 import qualified Data.Vector.Unboxed as U
-import Foreign.Vector (EVector, listToVector, vectorToList)
+import Data.Vector.Unboxed.Internal (intVectorFromNativeWithLength)
+import Foreign.NativeVector (NativeVector)
+import Foreign.Vector (EVector, vector_size, vectorToList)
 import Foreign.Pair (EPair, c_fst, c_snd, c_pair)
 import Foreign.String (CPPString)
 
@@ -132,10 +134,15 @@ mkAlignedCharacterData alphabet sequences = Aligned $ checkSameLengths $ mkChara
 unalign (Aligned (CharacterData a ambiguities sequences)) =
     Unaligned (CharacterData a ambiguities [(l, stripGaps s) | (l,s) <- sequences])
 
--- TEMPORARY EVECTOR ADAPTER: nested foreign interfaces still use boxed sequence rows.
--- Delete these conversions when those raw interfaces accept U.Vector Int.
-toLegacySequenceVector :: U.Vector Int -> EVector Int
-toLegacySequenceVector = listToVector . U.toList
+-- TEMPORARY EVECTOR ADAPTER: copy directly between native Int storage and the boxed rows still
+-- used by nested foreign interfaces. Delete these conversions when those interfaces accept
+-- U.Vector Int.
+foreign import trcall "NativeVector:intVectorToEVector"
+    toLegacySequenceVector :: U.Vector Int -> EVector Int
+
+foreign import bpcall "NativeVector:eVectorIntToNativeVector"
+    eVectorIntToNativeVector :: EVector Int -> NativeVector Int
 
 fromLegacySequenceVector :: EVector Int -> U.Vector Int
-fromLegacySequenceVector = U.fromList . vectorToList
+fromLegacySequenceVector vector =
+    intVectorFromNativeWithLength (vector_size vector) (eVectorIntToNativeVector vector)
