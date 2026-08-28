@@ -136,18 +136,18 @@ number of model-character columns as the displayed alignment.
 Create a property summary and an interactive DNA alignment:
 
 ```
-character-properties summarize run-1/C1.properties1.json run-2/C1.properties1.json \
-  --skip=1000 > P1.character-properties.json
+character-properties summarize run-1/C1.P1.site-property-samples.jsonl run-2/C1.P1.site-property-samples.jsonl \
+  --skip=1000 > P1.site-property-summary.json
 
 alignment-draw P1.initial.fasta --alphabet DNA \
-  --properties P1.character-properties.json > P1.initial.html
+  --properties P1.site-property-summary.json > P1.initial.html
 ```
 
 Add posterior alignment uncertainty to the same interactive page:
 
 ```
 alignment-draw P1.initial.fasta --alphabet DNA \
-  --properties P1.character-properties.json --AU P1.initial-AU.prob \
+  --properties P1.site-property-summary.json --AU P1.initial-AU.prob \
   > P1.initial-AU.html
 ```
 

@@ -8,7 +8,7 @@
 
 # SYNOPSIS
 
-**character-properties summarize** [OPTIONS] _C1.propertiesN.json_ [...]
+**character-properties summarize** [OPTIONS] _C1.PN.site-property-samples.jsonl_ [...]
 
 **character-properties report** [OPTIONS] _SUMMARY_ _ALIGNMENT_ _PROPERTY_
 
@@ -164,15 +164,15 @@ Summarize two chains:
 
 ```
 character-properties summarize \
-  run-1/C1.properties1.json run-2/C1.properties1.json \
-  --skip=1000 --subsample=2 > P1.character-properties.json
+  run-1/C1.P1.site-property-samples.jsonl run-2/C1.P1.site-property-samples.jsonl \
+  --skip=1000 --subsample=2 > P1.site-property-summary.json
 ```
 
 Describe every alignment column for a rate property:
 
 ```
 character-properties report \
-  P1.character-properties.json P1.initial.fasta rate
+  P1.site-property-summary.json P1.initial.fasta rate
 ```
 
 Select letters whose posterior median rate exceeds 2 and order the resulting
@@ -193,7 +193,7 @@ Report positive selection conditional on its presence in the model:
 
 ```
 character-properties positive-selection \
-  P1.character-properties.json P1.initial.fasta --above=0.95
+  P1.site-property-summary.json P1.initial.fasta --above=0.95
 ```
 
 Report model-averaged foreground positive selection using the vertebrate

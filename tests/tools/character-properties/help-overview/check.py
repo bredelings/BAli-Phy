@@ -8,4 +8,4 @@ help_text = (Path(sys.argv[1]) / "output").read_text(encoding="utf-8")
 assert "summarize" in help_text
 assert "report" in help_text
 assert "positive-selection" in help_text
-assert "P1.character-properties.json P1.initial.fasta rate" in help_text
+assert "P1.site-property-summary.json P1.initial.fasta rate" in help_text

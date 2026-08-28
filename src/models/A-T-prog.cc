@@ -566,7 +566,7 @@ Hs::Stmts generate_main(const InferOptions& options,
 
     for(auto& [i, cs, logger]: category_state_loggers)
     {
-        string filename = "C1.properties"+std::to_string(i+1)+".json";
+        string filename = "C1.P"+std::to_string(i+1)+".site-property-samples.jsonl";
         HsG::Bind(main,
                   HsG::VarPat(logger.as_<Hs::Var>()),
                   choose_logger(logging_enabled,
@@ -601,7 +601,7 @@ Hs::Stmts generate_main(const InferOptions& options,
     for(auto& [i, cs, logger]: category_state_loggers)
         report_output(logging_enabled,
                       "character properties",
-                      "C1.properties"+std::to_string(i+1)+".json");
+                      "C1.P"+std::to_string(i+1)+".site-property-samples.jsonl");
 
     put_line("");
     put_line("BAli-Phy does NOT detect how many iterations is sufficient:");

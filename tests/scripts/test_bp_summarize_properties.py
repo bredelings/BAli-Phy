@@ -44,7 +44,8 @@ class BPAnalyzePropertyTests(unittest.TestCase):
     def test_discovers_partition_property_logs(self):
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
-            (directory / "C1.properties1.json").write_text("", encoding="utf-8")
+            samples = directory / "C1.P1.site-property-samples.jsonl"
+            samples.write_text("", encoding="utf-8")
             run = BAliPhyRun.__new__(BAliPhyRun)
             run.dir = directory
             run.input_files = ["one.fasta", "two.fasta"]
@@ -52,7 +53,7 @@ class BPAnalyzePropertyTests(unittest.TestCase):
 
             self.assertEqual(
                 run.get_character_property_files(),
-                [directory / "C1.properties1.json", None],
+                [samples, None],
             )
 
     # Generate one pooled summary, forward selection options, and honor timestamps.
@@ -73,7 +74,7 @@ class BPAnalyzePropertyTests(unittest.TestCase):
             analysis.exec_show = execute
             analysis.summarize_character_properties()
 
-            output = directory / "P1.character-properties.json"
+            output = directory / "P1.site-property-summary.json"
             self.assertEqual(
                 commands[0],
                 (
@@ -121,7 +122,7 @@ class BPAnalyzePropertyTests(unittest.TestCase):
     def test_maps_tip_alignments_and_forms_combined_draw_command(self):
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
-            summary = directory / "P1.character-properties.json"
+            summary = directory / "P1.site-property-summary.json"
             analysis = self.make_analysis(directory, [])
             analysis.character_property_summaries = [summary]
 
@@ -185,7 +186,7 @@ class BPAnalyzePropertyTests(unittest.TestCase):
             directory = Path(directory)
             alignment = directory / "P1.initial.fasta"
             raw_alignment = directory / "C1.P1.fastas"
-            summary = directory / "P1.character-properties.json"
+            summary = directory / "P1.site-property-summary.json"
             map_tree = directory / "MAP.tree"
             for filename in (alignment, raw_alignment, summary, map_tree):
                 filename.write_text("fixture\n", encoding="utf-8")

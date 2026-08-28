@@ -35,9 +35,9 @@ static void show_help()
              <<"  report              Report an ordinary property by alignment column.\n"
              <<"  positive-selection  Report columns containing positively selected letters.\n\n"
              <<"Examples:\n"
-             <<"  character-properties summarize C1.properties1.json C1.properties2.json\n"
-             <<"  character-properties report P1.character-properties.json P1.initial.fasta rate\n"
-             <<"  character-properties positive-selection P1.character-properties.json P1.initial.fasta\n";
+             <<"  character-properties summarize run-1/C1.P1.site-property-samples.jsonl run-2/C1.P1.site-property-samples.jsonl\n"
+             <<"  character-properties report P1.site-property-summary.json P1.initial.fasta rate\n"
+             <<"  character-properties positive-selection P1.site-property-summary.json P1.initial.fasta\n";
 }
 
 /// Parse and validate options for the summarize subcommand.
@@ -72,8 +72,8 @@ static summarize_options parse_summarize_options(int argc, char* argv[])
                  <<"Usage: character-properties summarize [OPTIONS] SAMPLE-FILE [SAMPLE-FILE ...]\n\n"
                  <<visible<<"\n"
                  <<"Examples:\n"
-                 <<"  character-properties summarize C1.properties1.json C1.properties2.json\n"
-                 <<"  character-properties summarize C1.properties1.json --skip 1000 --subsample 2\n";
+                 <<"  character-properties summarize run-1/C1.P1.site-property-samples.jsonl run-2/C1.P1.site-property-samples.jsonl\n"
+                 <<"  character-properties summarize C1.P1.site-property-samples.jsonl --skip 1000 --subsample 2\n";
         std::exit(0);
     }
 
@@ -184,12 +184,12 @@ static report_arguments parse_report_options(int argc, char* argv[], bool positi
                      <<"Usage: character-properties report [OPTIONS] SUMMARY ALIGNMENT PROPERTY\n\n";
         std::cout<<visible<<"\nExamples:\n";
         if (positive_selection)
-            std::cout<<"  character-properties positive-selection P1.character-properties.json P1.initial.fasta\n"
-                     <<"  character-properties positive-selection P1.character-properties.json P1.initial.fasta --above 0.95\n"
-                     <<"  character-properties positive-selection P1.character-properties.json P1.initial.fasta --highest\n"
+            std::cout<<"  character-properties positive-selection P1.site-property-summary.json P1.initial.fasta\n"
+                     <<"  character-properties positive-selection P1.site-property-summary.json P1.initial.fasta --above 0.95\n"
+                     <<"  character-properties positive-selection P1.site-property-summary.json P1.initial.fasta --highest\n"
                      <<"  character-properties positive-selection summary.json alignment.fasta --unconditional\n";
         else
-            std::cout<<"  character-properties report P1.character-properties.json P1.initial.fasta rate\n"
+            std::cout<<"  character-properties report P1.site-property-summary.json P1.initial.fasta rate\n"
                      <<"  character-properties report summary.json alignment.fasta rate --above 2 --by median\n"
                      <<"  character-properties report summary.json alignment.fasta rate --highest=5% --sort decreasing\n"
                      <<"  character-properties report summary.json codons.fasta rate --alphabet Codons\n";

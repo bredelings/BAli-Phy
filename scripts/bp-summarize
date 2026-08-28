@@ -668,7 +668,7 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
     def find_character_property_files(self):
         filenames = []
         for partition in range(1, self.n_partitions() + 1):
-            filename = self.get_dir() / f"C1.properties{partition}.json"
+            filename = self.get_dir() / f"C1.P{partition}.site-property-samples.jsonl"
             filenames.append(filename if filename.exists() else None)
         return filenames
 
@@ -1652,7 +1652,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 )
                 continue
 
-            output = self.outdir / f"P{partition + 1}.character-properties.json"
+            output = self.outdir / f"P{partition + 1}.site-property-summary.json"
             self.character_property_summaries[partition] = output
             if more_recent_than_all_of(output, filenames):
                 continue
