@@ -10,7 +10,7 @@ import time
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bp-summarize"
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bpy-summarize"
 MODULE = runpy.run_path(str(SCRIPT))
 Analysis = MODULE["Analysis"]
 BAliPhyRun = MODULE["BAliPhyRun"]
@@ -28,7 +28,7 @@ class FakeRun:
         return len(self.files)
 
 
-class BPAnalyzePropertyTests(unittest.TestCase):
+class BPYSummarizePropertyTests(unittest.TestCase):
     # Construct only the analysis state needed by the independently testable seams.
     def make_analysis(self, directory, partition_files):
         analysis = Analysis.__new__(Analysis)

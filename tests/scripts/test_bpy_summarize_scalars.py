@@ -9,14 +9,14 @@ import tempfile
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bp-summarize"
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bpy-summarize"
 MODULE = runpy.run_path(str(SCRIPT))
 Analysis = MODULE["Analysis"]
 
 
-class BPSummarizeScalarTests(unittest.TestCase):
+class BPYSummarizeScalarTests(unittest.TestCase):
     # Keep statreport's sampled and constant formats distinct and preserve aligned paired summaries.
-    # This can be removed if bp-summarize stops parsing and presenting statreport's text output.
+    # This can be removed if bpy-summarize stops parsing and presenting statreport's text output.
     def test_parses_and_formats_scalar_summaries(self):
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)

@@ -1,21 +1,21 @@
-% bp-summarize(1)
+% bpy-summarize(1)
 % Benjamin Redelings
 % Feb 2018
 
 # NAME
 
-**bp-summarize** - Generate an HTML report summarizing bali-phy runs.
+**bpy-summarize** - Generate an HTML report summarizing bali-phy runs.
 
 # SYNOPSIS
 
-**bp-summarize** [OPTIONS] _directory1_ [_directory2_ ... ]
+**bpy-summarize** [OPTIONS] _directory1_ [_directory2_ ... ]
 
 # DESCRIPTION
 
 Generate an HTML report summarizing bali-phy runs.
 
 When every chain contains a `C1.PN.site-property-samples.jsonl` stream for a partition,
-**bp-summarize** computes pooled posterior means, standard deviations, and
+**bpy-summarize** computes pooled posterior means, standard deviations, and
 medians for observed-character properties. It embeds an interactive property
 viewer and ranked template-column reports in that partition's tip-alignment
 pages. The partition alphabet is used to tokenize logical characters, color

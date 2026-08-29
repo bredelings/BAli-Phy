@@ -189,11 +189,11 @@ For more information on parameter names, see <link xmlns:xlink="http://www.w3.or
 </section>
 
 <section><info><title>Summarizing the results of a run</title></info>
-% bp-summarize ferns-intron-exon-1 ferns-intron-exon-2
+% bpy-summarize ferns-intron-exon-1 ferns-intron-exon-2
 % firefox Results/index.html
 Let's concatenate the summmary estimates for each partition to recover an alignment for the whole gene region.
 % alignment-cat Results/P{1..7}-max.fasta > ferns-bali-phy.fasta
-Since bali-phy is still running, we can get information on its progress by rerunning <userinput>bp-summarize</userinput>.
+Since bali-phy is still running, we can get information on its progress by rerunning <userinput>bpy-summarize</userinput>.
 </section>
 <section><info><title>Comparing to MAFFT, FSA, and PRANK</title></info>
 We can see how the different aligners affect the total alignment length:

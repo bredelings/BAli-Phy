@@ -4,7 +4,7 @@
 
  * Complete native windows tests.
  
-   - Possibly we need to do something to make bp-summarize work.
+   - Possibly we need to do something to make bpy-summarize work.
 
 ## Runtime refactor
 

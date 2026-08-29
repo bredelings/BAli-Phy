@@ -3,7 +3,7 @@
 ## Goal
 
 Make `windows-native-mingw` exercise the supported native Windows build,
-Meson test suite, installed programs, `bp-summarize`, and testiphy.  The stale
+Meson test suite, installed programs, `bpy-summarize`, and testiphy.  The stale
 runtime-serialization test selector has already been repaired and is omitted
 from this plan.
 
@@ -106,9 +106,9 @@ checkpoint get one additional commit per independent cause.
    resulting log.  Use fixed seeds and paths under the clean directory; do
    not use build-tree executables or source-tree example data.
 
-5. **Exercise an installed `bp-summarize`.**  Extend the installed-program
+5. **Exercise an installed `bpy-summarize`.**  Extend the installed-program
    step to run two 50-iteration chains with distinct fixed seeds, then run
-   `bp-summarize --outdir=Results` on both output directories.  Assert that
+   `bpy-summarize --outdir=Results` on both output directories.  Assert that
    `Results/index.html`, `Results/Report`, and
    `Results/greedy-tree.svg` exist so a zero exit status cannot hide a failed
    subprocess.  Add a native package only when this checkpoint identifies a
@@ -116,7 +116,7 @@ checkpoint get one additional commit per independent cause.
    reason to weaken the core report and `draw-tree` checks.
 
    Push the cumulative head through the disposable native-only child after
-   the installed CLI and `bp-summarize` checks both pass locally where possible.
+   the installed CLI and `bpy-summarize` checks both pass locally where possible.
 
 6. **Run testiphy natively.**  Remove the native-Windows exclusion from the
    existing retrying `Download testiphy test suite` step and run the checkout
@@ -133,7 +133,7 @@ checkpoint get one additional commit per independent cause.
 7. **Finish and clean up.**  Remove the disposable matrix restriction and
    diagnostic changes, run `actionlint`, and push the clean cumulative head
    for a complete workflow run across every matrix entry.  Require the full
-   native Meson suite, installed-program checks, `bp-summarize`, and both
+   native Meson suite, installed-program checks, `bpy-summarize`, and both
    testiphy modes to pass.  Then remove the completed native-Windows item from
    `TODO/TODO.md` and remove this plan when it no longer records unfinished
    work.
@@ -143,7 +143,7 @@ checkpoint get one additional commit per independent cause.
 - `windows-native-mingw` configures with Cairo and installs the complete tool
   set.
 - Every configured Meson test passes on the native Windows runner.
-- The installed `bali-phy`, `statreport`, and `bp-summarize` work from a clean
+- The installed `bali-phy`, `statreport`, and `bpy-summarize` work from a clean
   directory using the installed prefix.
 - Variable- and fixed-alignment testiphy runs pass natively.
 - No temporary CI-only matrix restriction, diagnostic code, or additional

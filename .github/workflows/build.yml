@@ -449,7 +449,7 @@ jobs:
 
         meson test -C build --print-errorlogs --num-processes 2
 
-    - name: Test bp-summarize without R or gnuplot (Windows native)
+    - name: Test bpy-summarize without R or gnuplot (Windows native)
       if: matrix.name == 'windows-native-mingw'
       shell: pwsh
       run: |
@@ -464,31 +464,31 @@ jobs:
           throw "gnuplot unexpectedly remains available on the restricted PATH"
         }
 
-        bp-summarize --help
-        cmd /c "bp-summarize --help"
+        bpy-summarize --help
+        cmd /c "bpy-summarize --help"
         bali-phy-pkg --help
         cmd /c "bali-phy-pkg --help"
         # Verify the installed runtime closure can load draw-tree without /mingw64/bin.
         draw-tree --help
 
-        New-Item -ItemType Directory bp-summarize-smoke | Out-Null
-        Push-Location bp-summarize-smoke
+        New-Item -ItemType Directory bpy-summarize-smoke | Out-Null
+        Push-Location bpy-summarize-smoke
         bali-phy "$env:GITHUB_WORKSPACE\examples\5S-rRNA\5d-muscle.fasta" --iterations=50 --name=analysis-run
 
-        $analysisOutput = bp-summarize analysis-run-1 --outdir Results 2>&1 | Out-String
+        $analysisOutput = bpy-summarize analysis-run-1 --outdir Results 2>&1 | Out-String
         $analysisOutput
         if ($analysisOutput -notmatch "Program 'R' not found") {
-          throw "bp-summarize did not report that R was unavailable"
+          throw "bpy-summarize did not report that R was unavailable"
         }
         if ($analysisOutput -notmatch "Program 'gnuplot' not found") {
-          throw "bp-summarize did not report that gnuplot was unavailable"
+          throw "bpy-summarize did not report that gnuplot was unavailable"
         }
         if (-not (Test-Path Results/index.html)) {
-          throw "bp-summarize did not generate Results/index.html"
+          throw "bpy-summarize did not generate Results/index.html"
         }
-        # Verify bp-summarize can render through the packaged Cairo and fontconfig runtime.
+        # Verify bpy-summarize can render through the packaged Cairo and fontconfig runtime.
         if (-not (Test-Path Results/greedy-tree.svg)) {
-          throw "bp-summarize did not generate Results/greedy-tree.svg"
+          throw "bpy-summarize did not generate Results/greedy-tree.svg"
         }
         if (-not (Select-String -Path Results/index.html -Pattern "Not generated: can't find R" -SimpleMatch -Quiet)) {
           throw "The report did not explain that its R-dependent figure was omitted"
@@ -575,7 +575,7 @@ jobs:
         ${BALIPHY} --seed=$(($seed+1)) 5d-muscle.fasta --iterations=50
         ${STATREPORT} 5d-muscle-1/C1.log
         if [ "${{ matrix.name }}" != "windows" ] ; then
-            bp-summarize 5d-muscle-1 5d-muscle-2
+            bpy-summarize 5d-muscle-1 5d-muscle-2
         fi
         rm -f token0.dot
         ${BALIPHY} --seed=$seed -V4 run tests/prob_prog/demos/airline/Model.hs --test

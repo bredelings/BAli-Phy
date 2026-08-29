@@ -191,4 +191,4 @@ Please send bug reports to <bali-phy-users@googlegroups.com>.
 
 # SEE ALSO
 
-bp-summarize
+bpy-summarize

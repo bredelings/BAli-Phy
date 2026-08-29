@@ -114,7 +114,7 @@ of the CPU:
 In order to see how many iterations have completed, check the number of lines in the log files:
 % wc -l 5d-*/C1.log
 To summarize the results generated so far, run the summary script and then view the results in a web browser:
-% bp-summarize 5d-free-1/ 5d-free-2/
+% bpy-summarize 5d-free-1/ 5d-free-2/
 % firefox Results/index.html &#38;
 
   <section><info><title>Alignment questions:</title></info>
@@ -132,7 +132,7 @@ To summarize the results generated so far, run the summary script and then view 
   </section>
 When you have about 2000 samples from each run, summarize the latest results:
 % wc -l 5d-*/C1.log
-% bp-summarize 5d-free-1/ 5d-free-2/
+% bpy-summarize 5d-free-1/ 5d-free-2/
 % mv Results 5d-free.Results
 % firefox 5d-free.Results/index.html &#38;
 Now lets kill the bali-phy processes:
@@ -166,7 +166,7 @@ The <userinput>-I none</userinput> is a short form of <userinput>--imodel=none</
 
 <para>Summarize the analysis after about 2000 iterations:</para>
 % wc -l 5d-*/C1.log
-% bp-summarize 5d-fixed-1/ 5d-fixed-2
+% bpy-summarize 5d-fixed-1/ 5d-fixed-2
 
 <para>Examine the majority consensus tree for the fixed alignment analysis:</para>
 % figtree Results/c50.PP.tree &#38;
@@ -210,7 +210,7 @@ The mean or the median of these values can be used as an estimate of the paramet
 % statreport ITS1-5.8S-ITS2-1/C1.log ITS1-5.8S-ITS2-2/C1.log --mean | less
 
 The parameter estimates are also summarized in a table in the summary report:
-% bp-summarize ITS1-5.8S-ITS2-1/ ITS1-5.8S-ITS2-2/
+% bpy-summarize ITS1-5.8S-ITS2-1/ ITS1-5.8S-ITS2-2/
 % firefox Results/index.html &#38;
 
 The program Tracer graphically displays the posterior probability distribution for each parameter.  

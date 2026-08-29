@@ -1,6 +1,6 @@
-# Improving `bp-summarize`
+# Improving `bpy-summarize`
 
-The most useful way to think about `bp-summarize` is as three things currently fused together:
+The most useful way to think about `bpy-summarize` is as three things currently fused together:
 
 1. An importer for several MCMC output formats.
 2. A scientific-analysis pipeline.
@@ -38,7 +38,7 @@ Each of those suggests a separate family of improvements. A fourth family—exec
 
 - For Python-native tree processing, **phylotreelib** is worth evaluating. It reads Newick/NEXUS, computes tree distances, and builds consensus, MCC, and related posterior summary trees. It is newer and should be assessed for maturity before becoming a core dependency. [phylotreelib](https://github.com/agormp/phylotreelib)
 
-The important observation is that none of these completely subsumes `bp-summarize`. Its joint handling of scalar parameters, trees, alignments, ancestral sequences, BAli-Phy models, and source code is unusually broad.
+The important observation is that none of these completely subsumes `bpy-summarize`. Its joint handling of scalar parameters, trees, alignments, ancestral sequences, BAli-Phy models, and source code is unusually broad.
 
 ## Improvement tracks worth considering separately
 
@@ -50,7 +50,7 @@ The important observation is that none of these completely subsumes `bp-summariz
 | 4. Format interoperability | Which external programs can be analyzed correctly? | BAli-Phy, BEAST/BEAST2, MrBayes, RevBayes, PhyloBayes adapters |
 | 5. Scalar diagnostics | Are numerical chains assessed using current methods? | Rank-normalized R-hat, bulk/tail ESS, MCSE, rank plots, autocorrelation |
 | 6. Tree-space diagnostics | Are topology convergence and uncertainty adequately characterized? | Sliding split frequencies, topology traces, tree ESS, ASDSF through time |
-| 7. Alignment-specific analysis | What can `bp-summarize` uniquely offer for BAli-Phy? | Alignment uncertainty, posterior homology, indel summaries, ancestral-state uncertainty |
+| 7. Alignment-specific analysis | What can `bpy-summarize` uniquely offer for BAli-Phy? | Alignment uncertainty, posterior homology, indel summaries, ancestral-state uncertainty |
 | 8. Interactive report | How should users explore results? | Filtering, linked plots, expandable trees, parameter search, warnings dashboard |
 | 9. Workflow and caching | How should expensive results be computed and reused? | Dependency graph, fingerprints, parallel jobs, resumable and partial reports |
 | 10. Reproducibility | Can a report be audited or regenerated? | Versions, commands, checksums, environment, options, structured provenance |
@@ -146,7 +146,7 @@ Existing BAli-Phy diagnostics need not be discarded. They could be reported alon
 
 This is probably the highest-value scientific expansion.
 
-`bp-summarize` already has consensus trees, split diagnostics, SRQ plots, and MDS. RWTY suggests several complementary views:
+`bpy-summarize` already has consensus trees, split diagnostics, SRQ plots, and MDS. RWTY suggests several complementary views:
 
 - Split frequencies in sliding windows.
 - Cumulative split-frequency stabilization.
@@ -228,7 +228,7 @@ A proper task model could fingerprint:
 
 - Input file size, timestamp, and optionally content hash.
 - Analysis options.
-- `bp-summarize` version.
+- `bpy-summarize` version.
 - External program versions.
 - Analysis-task version.
 
@@ -244,7 +244,7 @@ Each task would declare inputs, outputs, and dependencies. That enables:
 
 ### 10. Preserve and deepen BAli-Phy-specific strengths
 
-The general packages mostly stop at scalar traces and tree samples. `bp-summarize` also understands sampled alignments, indel models, ancestral states, and BAli-Phy model code. That is its comparative advantage.
+The general packages mostly stop at scalar traces and tree samples. `bpy-summarize` also understands sampled alignments, indel models, ancestral states, and BAli-Phy model code. That is its comparative advantage.
 
 Separate improvement programs could explore:
 
@@ -269,4 +269,4 @@ The work can be organized into four relatively independent programs:
 3. **Interactive reporting:** JSON result format followed by a static interactive application.
 4. **Domain expansion:** deeper alignment/indel analyses, posterior predictive checks, and robust support for other phylogenetic programs.
 
-The architectural work should enable the others, but the scientific and interface tracks can then proceed independently. The goal should not be framed as “replace the script with ArviZ” or “turn it into ShinyStan.” A better goal is to reuse their mature ideas and implementations for scalar posterior analysis while retaining `bp-summarize` as an integrated, phylogenetics-aware report system.
+The architectural work should enable the others, but the scientific and interface tracks can then proceed independently. The goal should not be framed as “replace the script with ArviZ” or “turn it into ShinyStan.” A better goal is to reuse their mature ideas and implementations for scalar posterior analysis while retaining `bpy-summarize` as an integrated, phylogenetics-aware report system.

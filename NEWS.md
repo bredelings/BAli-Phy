@@ -3,7 +3,7 @@
 ## Breaking changes
 
 - Capitalize models and distributions. (for example, normal -> Normal, gtr -> GTR)
-- Rename bp-analyze -> bp-summarize.
+- Rename bp-analyze -> bpy-summarize.
 
 ## Features
 

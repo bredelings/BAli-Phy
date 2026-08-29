@@ -378,7 +378,7 @@ jobs:
         ${BALIPHY} --seed=$(($seed+1)) 5d-muscle.fasta --iterations=50
         ${STATREPORT} 5d-muscle-1/C1.log
         if [ "${{ matrix.name }}" != "windows" ] ; then
-            bp-summarize 5d-muscle-1 5d-muscle-2
+            bpy-summarize 5d-muscle-1 5d-muscle-2
         fi
         rm -f token0.dot
         ${BALIPHY} --seed=$seed -V4 run tests/prob_prog/demos/airline/Model.hs --test
