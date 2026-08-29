@@ -2,7 +2,7 @@
     "name": "ASRV.LogNormal",
     "deprecated-synonyms": ["Rates.LogNormal", "Rates.logNormal"],
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "SModel.logNormal_rates(@lsigma,@n,@submodel)",
+    "call": "SModel.logNormalRates(@lsigma,@n,@submodel)",
     "import": ["SModel"],
     "args": [
         {
