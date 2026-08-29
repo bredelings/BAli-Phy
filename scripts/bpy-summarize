@@ -6,6 +6,7 @@
 
 import shutil
 import argparse
+import csv
 import re
 import os
 from os import path
@@ -913,6 +914,7 @@ class Analysis(object):
         if self.has_alignments():
             self.summarize_character_properties()
             self.compute_initial_alignments()
+            self.summarize_positive_selection()
             self.compute_wpd_alignments()
             self.compute_ancestral_states()
             self.draw_alignments()
@@ -1741,6 +1743,51 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 command.append(f"--subsample={self.subsample}")
             self.exec_show(command, outfile=output)
         print("done.")
+
+    # Generate ranked positive-selection TSV tables and retain their report metadata and rows.
+    # character-properties remains responsible for selecting, projecting, and sorting sites.
+    def summarize_positive_selection(self):
+        self.positive_selection_reports = []
+        for partition, summary in enumerate(self.character_property_summaries):
+            if summary is None:
+                continue
+            summary_data = get_json_from_file(summary)
+            properties = sorted(
+                name for name in summary_data["properties"]
+                if name.endswith("posSelection")
+            )
+            conditioned = summary_data.get("conditioned", {}).get("positiveSelectionInModel")
+            for property_name in properties:
+                use_condition = conditioned is not None and property_name in conditioned["properties"]
+                report_name = property_name[:-len("posSelection")] + "positive-selection"
+                report_name = re.sub(r"[^A-Za-z0-9_.-]", "-", report_name)
+                output = self.outdir / f"P{partition + 1}.{report_name}.tsv"
+                alignment = self.outdir / f"P{partition + 1}.initial.fasta"
+                if not more_recent_than_all_of(output, [summary, alignment]):
+                    command = [
+                        "character-properties", "positive-selection", summary, alignment, property_name,
+                        "--above=0.5", "--sort=decreasing", "--format=tsv",
+                    ]
+                    if not use_condition:
+                        command.append("--unconditional")
+                    self.exec_show(command, outfile=output)
+
+                with output.open(newline="", encoding="utf-8") as report_file:
+                    rows = list(csv.DictReader(report_file, delimiter="\t"))
+                selected_properties = conditioned["properties"] if use_condition else summary_data["properties"]
+                companion_name = property_name[:-len("posSelection")] + "dNdS"
+                self.positive_selection_reports.append({
+                    "partition": partition + 1,
+                    "property": property_name,
+                    "filename": output,
+                    "rows": rows,
+                    "conditioned": use_condition,
+                    "retained_samples": (
+                        conditioned["retained_samples"] if use_condition else summary_data["retained_samples"]
+                    ),
+                    "total_samples": summary_data["retained_samples"],
+                    "companion_property": companion_name if companion_name in selected_properties else None,
+                })
 
 
     def compute_wpd_alignments(self):

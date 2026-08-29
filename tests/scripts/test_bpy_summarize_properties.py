@@ -2,6 +2,7 @@
 
 from contextlib import redirect_stdout
 import io
+import json
 import os
 from pathlib import Path
 import runpy
@@ -99,6 +100,62 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             os.utime(raw_files[0], (newest_input + 20, newest_input + 20))
             analysis.summarize_character_properties()
             self.assertEqual(len(commands), 2)
+
+    # Keep site ranking in character-properties while preserving conditioned and unconditional report metadata.
+    # This guards the report orchestration that is not exercised by character-properties' own formatting tests.
+    def test_generates_positive_selection_reports(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            summary = directory / "P1.site-property-summary.json"
+            alignment = directory / "P1.initial.fasta"
+            summary.write_text(json.dumps({
+                "retained_samples": 100,
+                "properties": {
+                    "background-posSelection": {},
+                    "background-dNdS": {},
+                    "posSelection": {},
+                    "dNdS": {},
+                },
+                "conditioned": {
+                    "positiveSelectionInModel": {
+                        "retained_samples": 60,
+                        "properties": {"posSelection": {}, "dNdS": {}},
+                    },
+                },
+            }), encoding="utf-8")
+            alignment.write_text(">A\nAAA\n", encoding="utf-8")
+
+            analysis = self.make_analysis(directory, [])
+            analysis.character_property_summaries = [summary]
+            commands = []
+
+            # Materialize a small valid table for each requested property report.
+            def execute(command, **kwargs):
+                commands.append(command)
+                kwargs["outfile"].write_text(
+                    "column\tsequence\tsequence-character\tsymbol\ttranslation\tmean\tsd\tmedian\t"
+                    "companion-property\tcompanion-mean\tcompanion-sd\tcompanion-median\n"
+                    "1\tA\t1\tAAA\tK\t0.75\t0.1\t0.8\tdNdS\t2.5\t0.4\t2.4\n",
+                    encoding="utf-8",
+                )
+
+            analysis.exec_show = execute
+            analysis.summarize_positive_selection()
+
+            self.assertEqual(len(commands), 2)
+            background_command, conditioned_command = commands
+            self.assertEqual(background_command[4], "background-posSelection")
+            self.assertIn("--unconditional", background_command)
+            self.assertEqual(conditioned_command[4], "posSelection")
+            self.assertNotIn("--unconditional", conditioned_command)
+            self.assertEqual(
+                [report["filename"].name for report in analysis.positive_selection_reports],
+                ["P1.background-positive-selection.tsv", "P1.positive-selection.tsv"],
+            )
+            self.assertEqual(analysis.positive_selection_reports[0]["retained_samples"], 100)
+            self.assertEqual(analysis.positive_selection_reports[1]["retained_samples"], 60)
+            self.assertEqual(analysis.positive_selection_reports[1]["total_samples"], 100)
+            self.assertEqual(analysis.positive_selection_reports[1]["rows"][0]["symbol"], "AAA")
 
     # Refuse to pool a partition when only some chains logged properties.
     def test_skips_partial_chain_property_logs(self):
