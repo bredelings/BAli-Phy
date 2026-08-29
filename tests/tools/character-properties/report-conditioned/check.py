@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 
 
-# The conditioned report must present its probability, companion dN/dS, and source
+# The conditioned report must present its probability, associated dN/dS, and source
 # letter in a concise aligned table while retaining the conditioning sample counts.
 report = (Path(sys.argv[1]) / "output").read_text(encoding="utf-8")
 assert "Conditioned on positiveSelectionInModel = true (60 of 100 samples)" in report

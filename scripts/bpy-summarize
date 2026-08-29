@@ -1778,8 +1778,6 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
                 with output.open(newline="", encoding="utf-8") as report_file:
                     rows = list(csv.DictReader(report_file, delimiter="\t"))
-                selected_properties = conditioned["properties"] if use_condition else summary_data["properties"]
-                companion_name = property_name[:-len("posSelection")] + "dNdS"
                 self.positive_selection_reports.append({
                     "partition": partition + 1,
                     "property": property_name,
@@ -1790,7 +1788,6 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                         conditioned["retained_samples"] if use_condition else summary_data["retained_samples"]
                     ),
                     "total_samples": summary_data["retained_samples"],
-                    "companion_property": companion_name if companion_name in selected_properties else None,
                 })
 
 
@@ -2474,26 +2471,26 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 else:
                     section += f"<p>{len(rows)} columns have Pr(dN/dS&gt;1) above 0.5.</p>\n"
 
-                has_companion = report["companion_property"] is not None
+                has_dnds = bool(rows[0]["dNdS-mean"])
                 section += '<table class="backlit2 positive-selection-sites">\n  <tr>\n'
                 section += "    <th>Column</th><th>Codon</th><th>AA</th><th>Pr(dN/dS&gt;1)</th>"
-                if has_companion:
+                if has_dnds:
                     section += "<th colspan=\"3\">Posterior dN/dS<br>mean &plusmn; SD</th>"
                 section += "<th>Source letter</th>\n  </tr>\n"
                 for row in shown_rows:
-                    probability = f'{float(row["mean"]):.3f}'
+                    probability = f'{float(row["probability"]):.3f}'
                     source = f'{row["sequence"]}:{row["sequence-character"]}'
                     section += "  <tr>\n"
                     section += f'    <td class="site-column">{html.escape(row["column"])}</td>\n'
                     section += f'    <td>{html.escape(row["symbol"])}</td>\n'
                     section += f'    <td>{html.escape(row["translation"] or "-")}</td>\n'
                     section += f'    <td class="site-probability">{probability}</td>\n'
-                    if has_companion:
-                        companion_mean = f'{float(row["companion-mean"]):.3f}'
-                        companion_sd = f'{float(row["companion-sd"]):.3f}'
-                        section += f'    <td class="site-dnds-mean">{companion_mean}</td>\n'
+                    if has_dnds:
+                        dnds_mean = f'{float(row["dNdS-mean"]):.3f}'
+                        dnds_sd = f'{float(row["dNdS-sd"]):.3f}'
+                        section += f'    <td class="site-dnds-mean">{dnds_mean}</td>\n'
                         section += '    <td class="site-dnds-pm">&plusmn;</td>\n'
-                        section += f'    <td class="site-dnds-sd">{companion_sd}</td>\n'
+                        section += f'    <td class="site-dnds-sd">{dnds_sd}</td>\n'
                     section += f'    <td>{html.escape(source)}</td>\n'
                     section += "  </tr>\n"
                 section += "</table>\n"

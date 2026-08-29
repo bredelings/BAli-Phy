@@ -869,7 +869,7 @@ json::value make_column_property_table(const std::vector<character_properties::c
 }
 
 /// Encode selected positive-selection columns once in the table shape consumed by the viewer.
-/// Translation and companion columns are included only when the selected rows contain those values.
+/// Translation and dN/dS columns are included only when the selected rows contain those values.
 json::value make_positive_selection_table(const std::vector<character_properties::selected_column>& selected)
 {
     json::array columns;
@@ -880,8 +880,8 @@ json::value make_positive_selection_table(const std::vector<character_properties
     bool translations = std::ranges::any_of(selected, [](const auto& column) {
         return column.translation.has_value();
     });
-    bool companions = std::ranges::any_of(selected, [](const auto& column) {
-        return column.companion_summary.has_value();
+    bool has_dnds = std::ranges::any_of(selected, [](const auto& column) {
+        return column.dnds_summary.has_value();
     });
     add_column("Column", "number", 1);
     add_column("Representative", "text", 1);
@@ -889,7 +889,7 @@ json::value make_positive_selection_table(const std::vector<character_properties
     if (translations)
         add_column("Amino acid", "text", 1);
     add_column("Pr(ω>1)", "number", -1);
-    if (companions)
+    if (has_dnds)
     {
         add_column("dN/dS mean", "number", -1);
         add_column("dN/dS SD", "number", -1);
@@ -905,11 +905,11 @@ json::value make_positive_selection_table(const std::vector<character_properties
         if (translations)
             cells.push_back(column.translation ? json::value(*column.translation) : json::value(nullptr));
         cells.push_back(column.property_summary.mean);
-        if (companions)
+        if (has_dnds)
         {
-            cells.push_back(column.companion_summary->mean);
-            cells.push_back(column.companion_summary->sd);
-            cells.push_back(column.companion_summary->median);
+            cells.push_back(column.dnds_summary->mean);
+            cells.push_back(column.dnds_summary->sd);
+            cells.push_back(column.dnds_summary->median);
         }
         rows.push_back(json::object{
             {"column_index", column.alignment_column},
@@ -933,12 +933,12 @@ json::object make_character_property_reports(
         if (character_properties::is_positive_selection_property(property_name))
         {
             constexpr std::string_view suffix = "posSelection";
-            std::string companion_name = property_name.substr(0, property_name.size() - suffix.size())+"dNdS";
-            const character_properties::property_summary* companion = nullptr;
-            if (auto found = properties.find(companion_name); found != properties.end())
-                companion = &found->second;
+            std::string dnds_name = property_name.substr(0, property_name.size() - suffix.size())+"dNdS";
+            const character_properties::property_summary* dnds = nullptr;
+            if (auto found = properties.find(dnds_name); found != properties.end())
+                dnds = &found->second;
             auto selected = character_properties::select_positive_selection_columns(
-                property_name, property, projection, 0.5, {}, companion_name, companion);
+                property_name, property, projection, 0.5, {}, dnds);
             property_reports["positive_selection"] = make_positive_selection_table(selected);
         }
         else

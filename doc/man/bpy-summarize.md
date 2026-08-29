@@ -41,7 +41,10 @@ The report is created at **Results/index.html**.
 
 Complete positive-selection tables are written as
 `Results/P1.positive-selection.tsv`. Prefixed properties use corresponding
-names such as `Results/P1.foreground-positive-selection.tsv`.
+names such as `Results/P1.foreground-positive-selection.tsv`. Each table gives
+the posterior positive-selection `probability` and, when available, the
+`dNdS-mean`, `dNdS-sd`, and `dNdS-median`. The dN/dS fields are empty when the
+corresponding dN/dS property was not recorded.
 
 A log of all sub-commands is created at **Results/commands.log**.
 

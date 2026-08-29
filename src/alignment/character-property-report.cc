@@ -119,8 +119,7 @@ selected_column make_selected_column(std::size_t alignment_column, const project
 {
     return {
         alignment_column, character.sequence_index, character.sequence_name, character.character_index,
-        character.symbol, character.translation, summarize_letter(property, character),
-        {}, {}
+        character.symbol, character.translation, summarize_letter(property, character), {}
     };
 }
 
@@ -141,7 +140,7 @@ std::array<double, 3> summarize_across_letters(std::vector<double> values)
 bool is_positive_selection_property(const std::string& name)
 {
     // NOTE: Property names currently stand in for missing producer metadata. Remove this convention once summaries
-    // carry explicit probability and companion-property roles.
+    // carry explicit positive-selection probability and dN/dS roles.
     return name == "posSelection" or name.ends_with("-posSelection");
 }
 
@@ -195,11 +194,11 @@ std::vector<selected_column> select_property_columns(
 
 /// Select positive-selection letters globally and retain one probability representative per column.
 /// Equal probabilities retain the first projected letter rather than invoking a secondary comparison policy.
-/// Complete probability and companion summaries are loaded only for the retained representatives.
+/// Complete probability and dN/dS summaries are loaded only for the retained representatives.
 std::vector<selected_column> select_positive_selection_columns(
     const std::string& property_name, const property_summary& property, const alignment_projection& projection,
     const std::optional<double>& threshold, const std::optional<double>& fraction,
-    const std::string& companion_name, const property_summary* companion)
+    const property_summary* dnds)
 {
     if (not is_positive_selection_property(property_name))
         throw myexception()<<"Property '"<<property_name<<"' is not a positive-selection probability.";
@@ -224,11 +223,8 @@ std::vector<selected_column> select_positive_selection_columns(
         if (representative)
         {
             auto column = make_selected_column(column_index, *representative, property);
-            if (companion)
-            {
-                column.companion_property = companion_name;
-                column.companion_summary = summarize_letter(*companion, *representative);
-            }
+            if (dnds)
+                column.dnds_summary = summarize_letter(*dnds, *representative);
             result.push_back(std::move(column));
         }
     }

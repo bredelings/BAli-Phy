@@ -133,9 +133,9 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             def execute(command, **kwargs):
                 commands.append(command)
                 kwargs["outfile"].write_text(
-                    "column\tsequence\tsequence-character\tsymbol\ttranslation\tmean\tsd\tmedian\t"
-                    "companion-property\tcompanion-mean\tcompanion-sd\tcompanion-median\n"
-                    "1\tA\t1\tAAA\tK\t0.75\t0.1\t0.8\tdNdS\t2.5\t0.4\t2.4\n",
+                    "column\tsequence\tsequence-character\tsymbol\ttranslation\tprobability\t"
+                    "dNdS-mean\tdNdS-sd\tdNdS-median\n"
+                    "1\tA\t1\tAAA\tK\t0.75\t2.5\t0.4\t2.4\n",
                     encoding="utf-8",
                 )
 

@@ -369,7 +369,7 @@ static void write_column_report(const report_arguments& arguments, std::uint64_t
 }
 
 /// Write a selected-letter report in TSV or its command-specific text layout.
-/// Positive-selection text is concise, while TSV retains every posterior summary field.
+/// Positive-selection output labels its indicator mean as a probability and its associated values as dN/dS.
 static void write_selected_report(const report_arguments& arguments, std::uint64_t retained_samples,
                                   std::uint64_t total_retained_samples,
                                   const std::vector<character_properties::selected_column>& rows)
@@ -377,10 +377,10 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
     if (arguments.format == "text" and arguments.positive_selection)
     {
         write_text_header(arguments, retained_samples, total_retained_samples);
-        bool has_companion = not rows.empty() and rows.front().companion_summary;
-        if (has_companion)
+        bool has_dnds = not rows.empty() and rows.front().dnds_summary;
+        if (has_dnds)
             std::cout<<fmt::format("{:>47}\n", "Posterior dN/dS");
-        std::cout<<(has_companion
+        std::cout<<(has_dnds
                    ? fmt::format("{:>6}  {:<5}  {:<2}  {:>11}  {:>15}  {}\n",
                                  "Column", "Codon", "AA", "Pr(dN/dS>1)", "mean ± SD", "Source letter")
                    : fmt::format("{:>6}  {:<5}  {:<2}  {:>11}  {}\n",
@@ -390,15 +390,20 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
             std::cout<<fmt::format("{:>6}  {:<5}  {:<2}  {:>11.3f}",
                                    row.alignment_column + 1, row.symbol, row.translation.value_or("-"),
                                    row.property_summary.mean);
-            if (row.companion_summary)
-                std::cout<<fmt::format("    {:>5.3f} ± {:>5.3f}", row.companion_summary->mean,
-                                       row.companion_summary->sd);
+            if (row.dnds_summary)
+                std::cout<<fmt::format("    {:>5.3f} ± {:>5.3f}", row.dnds_summary->mean,
+                                       row.dnds_summary->sd);
             std::cout<<fmt::format("  {}:{}\n", row.sequence_name, row.character_index + 1);
         }
         return;
     }
 
-    if (arguments.format == "tsv")
+    if (arguments.format == "tsv" and arguments.positive_selection)
+        std::cout<<"column\tsequence\tsequence-character\tsymbol\ttranslation\tprobability"
+                 <<"\tdNdS-mean\tdNdS-sd\tdNdS-median\n";
+    else if (arguments.format == "tsv")
+        // Ordinary selected-property reports retain their existing empty trailing columns;
+        // this change only simplifies the positive-selection format.
         std::cout<<"column\tsequence\tsequence-character\tsymbol\ttranslation\tmean\tsd\tmedian"
                  <<"\tcompanion-property\tcompanion-mean\tcompanion-sd\tcompanion-median\n";
     else
@@ -412,14 +417,19 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
         if (arguments.format == "tsv")
         {
             std::cout<<row.alignment_column + 1<<"\t"<<row.sequence_name<<"\t"<<row.character_index + 1<<"\t"
-                     <<row.symbol<<"\t"<<row.translation.value_or("")<<"\t"<<format_number(row.property_summary.mean)
-                     <<"\t"<<format_number(row.property_summary.sd)<<"\t"
-                     <<format_number(row.property_summary.median)<<"\t";
-            if (row.companion_summary)
-                std::cout<<*row.companion_property<<"\t"<<format_number(row.companion_summary->mean)<<"\t"
-                         <<format_number(row.companion_summary->sd)<<"\t"<<format_number(row.companion_summary->median);
+                     <<row.symbol<<"\t"<<row.translation.value_or("")<<"\t"<<format_number(row.property_summary.mean);
+            if (arguments.positive_selection)
+            {
+                std::cout<<"\t";
+                if (row.dnds_summary)
+                    std::cout<<format_number(row.dnds_summary->mean)<<"\t"<<format_number(row.dnds_summary->sd)
+                             <<"\t"<<format_number(row.dnds_summary->median);
+                else
+                    std::cout<<"\t\t";
+            }
             else
-                std::cout<<"\t\t\t";
+                std::cout<<"\t"<<format_number(row.property_summary.sd)<<"\t"
+                         <<format_number(row.property_summary.median)<<"\t\t\t\t";
         }
         else
         {
@@ -480,13 +490,12 @@ static void run_report(const report_arguments& arguments)
     if (arguments.positive_selection)
     {
         std::string_view suffix = "posSelection";
-        std::string companion_name = arguments.property.substr(0, arguments.property.size() - suffix.size())+"dNdS";
-        const character_properties::property_summary* companion = nullptr;
-        if (auto found = selected_properties->find(companion_name); found != selected_properties->end())
-            companion = &found->second;
+        std::string dnds_name = arguments.property.substr(0, arguments.property.size() - suffix.size())+"dNdS";
+        const character_properties::property_summary* dnds = nullptr;
+        if (auto found = selected_properties->find(dnds_name); found != selected_properties->end())
+            dnds = &found->second;
         rows = character_properties::select_positive_selection_columns(
-            arguments.property, property->second, projection, threshold, fraction,
-            companion_name, companion);
+            arguments.property, property->second, projection, threshold, fraction, dnds);
     }
     else
         rows = character_properties::select_property_columns(

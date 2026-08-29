@@ -43,8 +43,7 @@ struct selected_column
     std::string symbol;
     std::optional<std::string> translation;
     letter_posterior_summary property_summary;
-    std::optional<std::string> companion_property;
-    std::optional<letter_posterior_summary> companion_summary;
+    std::optional<letter_posterior_summary> dnds_summary;
 };
 
 /// Report whether a property name currently denotes a positive-selection probability.
@@ -68,7 +67,7 @@ std::vector<selected_column> select_property_columns(
 std::vector<selected_column> select_positive_selection_columns(
     const std::string& property_name, const property_summary& property, const alignment_projection& projection,
     const std::optional<double>& threshold, const std::optional<double>& fraction,
-    const std::string& companion_name, const property_summary* companion);
+    const property_summary* dnds);
 
 }
 

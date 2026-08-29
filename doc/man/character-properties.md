@@ -57,7 +57,7 @@ The **positive-selection** command selects letters using their posterior mean
 highest-probability letter in each resulting column. The matching dN/dS
 statistics describe that representative but do not help choose it. The default
 property is `posSelection`; names ending in `-posSelection` use the corresponding
-`-dNdS` companion when it exists.
+`-dNdS` property when it exists.
 
 # SUMMARIZE OPTIONS
 
@@ -89,9 +89,10 @@ property is `posSelection`; names ending in `-posSelection` use the correspondin
 **--format=text|tsv**
 : Output format (default: text). Positive-selection text reports show the
   representative codon and amino acid, probability, posterior dN/dS mean and
-  standard deviation, and source letter, using three decimal places. TSV keeps
-  the complete posterior summaries and separate provenance fields. Both formats
-  use one-based coordinates for readers.
+  standard deviation, and source letter, using three decimal places. Its TSV
+  output contains `probability`, `dNdS-mean`, `dNdS-sd`, and `dNdS-median`; the
+  dN/dS fields are empty if the corresponding property is unavailable. Both
+  formats use one-based coordinates for readers.
 
 **--sort=column|increasing|decreasing**
 : Order completed rows (default: column). Increasing and decreasing use the
