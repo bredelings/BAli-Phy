@@ -847,6 +847,21 @@ option.  For example:
 	    <para>(<emphasis>One sample per line.</emphasis>)</para>
 	  </listitem>
 	</varlistentry>
+
+	<varlistentry>
+	  <term>C1.log.column-map.json</term>
+	  <listitem>
+	    <para>A JSON object mapping every complete scalar field name to the shorter column name used in
+	    <filename>C1.log</filename>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>C1.P$n$.site-property-samples.jsonl</term>
+	  <listitem>
+	    <para>Sampled character properties for partition $n$, when property logging is enabled.</para>
+	  </listitem>
+	</varlistentry>
 	
 	<varlistentry>
 	  <term>C1.trees</term>
