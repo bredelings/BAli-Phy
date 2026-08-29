@@ -1,14 +1,14 @@
-% subsample(1)
+% bpy-subsample(1)
 % Benjamin Redelings
 % Feb 2018
 
 # NAME
 
-**subsample** - Subsample lines in a file.
+**bpy-subsample** - Subsample lines in a file.
 
 # SYNOPSIS
 
-**subsample** [OPTIONS] < in-file
+**bpy-subsample** [OPTIONS] < in-file
 
 # DESCRIPTION
 
@@ -35,4 +35,3 @@ Subsample lines in a file.
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
 Please send bug reports to <bali-phy-users@googlegroups.com>.
-

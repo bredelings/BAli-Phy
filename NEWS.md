@@ -4,6 +4,7 @@
 
 - Capitalize models and distributions. (for example, normal -> Normal, gtr -> GTR)
 - Rename bp-analyze -> bpy-summarize.
+- Rename bali-subsample -> bpy-subsample.
 
 ## Features
 

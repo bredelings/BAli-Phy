@@ -54,7 +54,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
     if (args.count("help")) {
 	cout<<"Subsample lines in a file.\n\n";
-	cout<<"Usage: subsample [OPTIONS] < in-file\n\n";
+	cout<<"Usage: bpy-subsample [OPTIONS] < in-file\n\n";
 	cout<<all<<"\n";
 	exit(0);
     }
@@ -102,7 +102,7 @@ int main(int argc,char* argv[])
 	}
     }
     catch (exception& e) {
-	cerr<<"subsample: Error! "<<e.what()<<std::endl;
+	cerr<<"bpy-subsample: Error! "<<e.what()<<std::endl;
 	exit(1);
     }
 }

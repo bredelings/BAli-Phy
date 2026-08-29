@@ -2967,8 +2967,8 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
           While the tree is written every iteration, the alignment is only written every 10 iterations
           (by default) in order to save disk space.  One method for extracting the trees that correspond
           to saved alignments is to extract every 10th tree with the program
-          <userinput>bali-subsample</userinput>: 
-            <screen><prompt>%</prompt> <userinput>bali-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
+          <userinput>bpy-subsample</userinput>:
+            <screen><prompt>%</prompt> <userinput>bpy-subsample 10 &lt; C1.trees &gt; C1.10.trees</userinput></screen>
         </para>
       </section>
 
@@ -3251,7 +3251,7 @@ values in the sequence.</para>
 	(<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1080/10635150600812544">Beiko
 	et al., 2006</link>).</para>
 
-<para>It is also possible to assess stabilization of tree topologies using tools distributed with <application>bali-phy</application> by using commands like the following.  Here, subsampling and burnin do not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend should contain at least 500 trees; you might do this by subsampling using the <application>BAli-Phy</application> tool <command>bali-subsample</command>.</para>
+<para>It is also possible to assess stabilization of tree topologies using tools distributed with <application>bali-phy</application> by using commands like the following.  Here, subsampling and burnin do not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend should contain at least 500 trees; you might do this by subsampling using the <application>BAli-Phy</application> tool <command>bpy-subsample</command>.</para>
 
 <orderedlist inheritnum="ignore" continuation="restarts">
 <listitem><para>To report the average distances within and between two tree samples:

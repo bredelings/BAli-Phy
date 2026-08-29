@@ -204,7 +204,7 @@ if get_option('extra-tools')
   tools += extra_tools
 endif
 
-prefix = 'bali-'
+prefix = 'bpy-'
 
 prefixed_tools = ['subsample']
 
@@ -272,7 +272,7 @@ foreach tool: tools + prefixed_tools
 			install_rpath: extra_rpath,
 			install: true)
 
-  test(tool + ' --help', tool_exe, args:['--help'])
+  test(name + ' --help', tool_exe, args:['--help'])
 
   if tool in declarative_tool_tests
     tool_test_root = meson.project_source_root()/'tests/tools'/tool
