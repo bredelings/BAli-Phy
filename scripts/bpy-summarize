@@ -1758,10 +1758,11 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             self.exec_show(command, outfile=output)
         print("done.")
 
-    # Generate ranked positive-selection TSV tables and retain their report metadata and rows.
+    # Regenerate ranked positive-selection TSV tables and retain their report metadata and rows.
     # character-properties remains responsible for selecting, projecting, and sorting sites.
     def summarize_positive_selection(self):
         self.positive_selection_reports = []
+        threshold = 0.5
         for partition, summary in enumerate(self.character_property_summaries):
             if summary is None:
                 continue
@@ -1772,28 +1773,40 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             )
             conditioned = summary_data.get("conditioned", {}).get("positiveSelectionInModel")
             for property_name in properties:
-                use_condition = conditioned is not None and property_name in conditioned["properties"]
+                use_condition = conditioned is not None and (
+                    conditioned["retained_samples"] == 0 or property_name in conditioned["properties"]
+                )
                 report_name = property_name[:-len("posSelection")] + "positive-selection"
                 report_name = re.sub(r"[^A-Za-z0-9_.-]", "-", report_name)
                 output = self.outdir / f"P{partition + 1}.{report_name}.tsv"
                 alignment = self.outdir / f"P{partition + 1}.initial.fasta"
-                if not more_recent_than_all_of(output, [summary, alignment]):
-                    command = [
-                        "character-properties", "positive-selection", summary, alignment, property_name,
-                        "--above=0.5", "--sort=decreasing", "--format=tsv",
-                    ]
-                    if not use_condition:
-                        command.append("--unconditional")
-                    self.exec_show(command, outfile=output)
+                command = [
+                    "character-properties", "positive-selection", summary, alignment, property_name,
+                    f"--above={threshold}", "--sort=decreasing", "--format=tsv",
+                ]
+                if not use_condition:
+                    command.append("--unconditional")
+                self.exec_show(command, outfile=output)
 
                 with output.open(newline="", encoding="utf-8") as report_file:
                     rows = list(csv.DictReader(report_file, delimiter="\t"))
+                model_averaged_count = sum(
+                    float(row["model-averaged-probability"]) > threshold for row in rows
+                )
+                conditioned_count = sum(
+                    bool(row["conditioned-probability"])
+                    and float(row["conditioned-probability"]) > threshold
+                    for row in rows
+                )
                 self.positive_selection_reports.append({
                     "partition": partition + 1,
                     "property": property_name,
                     "filename": output,
                     "rows": rows,
                     "conditioned": use_condition,
+                    "threshold": threshold,
+                    "model_averaged_count": model_averaged_count,
+                    "conditioned_count": conditioned_count if use_condition else None,
                     "retained_samples": (
                         conditioned["retained_samples"] if use_condition else summary_data["retained_samples"]
                     ),
@@ -2185,6 +2198,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       table.positive-selection-sites td.site-probability,
       table.positive-selection-sites td.site-dnds-mean,
       table.positive-selection-sites td.site-dnds-sd {text-align:right; font-variant-numeric:tabular-nums;}
+      table.positive-selection-sites th.posterior-group {text-align:center;}
       table.positive-selection-sites td.site-dnds-mean {padding-right:0.25em;}
       table.positive-selection-sites td.site-dnds-pm {padding-left:0; padding-right:0; text-align:center;}
       table.positive-selection-sites td.site-dnds-sd {padding-left:0.25em;}
@@ -2443,6 +2457,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
     def section_positive_selection(self):
         section = """\
 <h2 class="clear"><a class="anchor" name="positive-selection"></a>Positive selection</h2>
+<p>The overall posterior allows positive selection to be absent; the posterior with selection
+assumes it is included in the model.</p>
 """
         model_support = self.positive_selection_model_support()
         if model_support:
@@ -2482,50 +2498,94 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 smodel = f' — <a href="#S{smodel_index + 1}">S{smodel_index + 1}</a>'
             section += f"<h3>Partition {partition}{smodel} — {property_name}</h3>\n"
 
-            if report["conditioned"]:
-                section += (
-                    "<p>Conditioned on <code>positiveSelectionInModel = true</code> "
-                    f'({report["retained_samples"]} of {report["total_samples"]} samples).</p>\n'
-                )
-            else:
-                section += f'<p>Model-averaged posterior ({report["retained_samples"]} samples).</p>\n'
-
             rows = report["rows"]
-            shown_rows = rows[:10]
+            threshold = report["threshold"]
+            threshold_text = f"{threshold:g}"
+            model_averaged_count = report["model_averaged_count"]
+            conditioned_count = report["conditioned_count"]
+            retained_samples = report["retained_samples"]
+            total_samples = report["total_samples"]
+            has_distinct_selection_posterior = (
+                report["conditioned"] and 0 < retained_samples < total_samples
+            )
+
+            section += "<p>"
+            if report["conditioned"] and total_samples > 0:
+                inclusion_probability = retained_samples / total_samples
+                section += (
+                    "Pr(positive selection is in the model): "
+                    f"{inclusion_probability:.3f}<br>\n"
+                )
+
+            if report["conditioned"] and total_samples > 0 and retained_samples == total_samples:
+                count_text = str(model_averaged_count)
+            else:
+                count_text = f"{model_averaged_count} overall"
+                if has_distinct_selection_posterior:
+                    count_text += f", {conditioned_count} with selection"
+            section += (
+                f"Columns with Pr(dN/dS &gt; 1) &gt; {threshold_text}: {count_text}</p>\n"
+            )
+
+            shown_rows = rows[:20]
             if rows:
                 if len(rows) > len(shown_rows):
                     section += (
-                        f"<p>Showing the 10 highest-ranked of {len(rows)} columns with "
-                        "Pr(dN/dS&gt;1) above 0.5.</p>\n"
+                        f"<p>Showing 20 of {len(rows)} selected columns, ordered by overall "
+                        "posterior probability.</p>\n"
                     )
-                else:
-                    section += f"<p>{len(rows)} columns have Pr(dN/dS&gt;1) above 0.5.</p>\n"
 
-                has_dnds = bool(rows[0]["dNdS-mean"])
+                has_model_averaged_dnds = any(row["model-averaged-dNdS-mean"] for row in rows)
+                has_conditioned = has_distinct_selection_posterior
+                has_conditioned_dnds = has_conditioned and any(row["conditioned-dNdS-mean"] for row in rows)
+                model_averaged_span = 1 + 3 * has_model_averaged_dnds
+                conditioned_span = 1 + 3 * has_conditioned_dnds
                 section += '<table class="backlit2 positive-selection-sites">\n  <tr>\n'
-                section += "    <th>Column</th><th>Codon</th><th>AA</th><th>Pr(dN/dS&gt;1)</th>"
-                if has_dnds:
+                section += '    <th rowspan="2">Column</th><th rowspan="2">Codon</th><th rowspan="2">AA</th>'
+                section += (
+                    f'<th class="posterior-group" colspan="{model_averaged_span}">'
+                    "Overall posterior</th>"
+                )
+                if has_conditioned:
+                    section += (
+                        f'<th class="posterior-group" colspan="{conditioned_span}">'
+                        "Posterior with selection</th>"
+                    )
+                section += '<th rowspan="2">Source letter</th>\n  </tr>\n  <tr>\n'
+                section += "    <th>Pr(dN/dS&gt;1)</th>"
+                if has_model_averaged_dnds:
                     section += "<th colspan=\"3\">Posterior dN/dS<br>mean &plusmn; SD</th>"
-                section += "<th>Source letter</th>\n  </tr>\n"
+                if has_conditioned:
+                    section += "<th>Pr(dN/dS&gt;1)</th>"
+                    if has_conditioned_dnds:
+                        section += "<th colspan=\"3\">Posterior dN/dS<br>mean &plusmn; SD</th>"
+                section += "\n  </tr>\n"
                 for row in shown_rows:
-                    probability = f'{float(row["probability"]):.3f}'
+                    model_averaged_probability = f'{float(row["model-averaged-probability"]):.3f}'
                     source = f'{row["sequence"]}:{row["sequence-character"]}'
                     section += "  <tr>\n"
                     section += f'    <td class="site-column">{html.escape(row["column"])}</td>\n'
                     section += f'    <td>{html.escape(row["symbol"])}</td>\n'
                     section += f'    <td>{html.escape(row["translation"] or "-")}</td>\n'
-                    section += f'    <td class="site-probability">{probability}</td>\n'
-                    if has_dnds:
-                        dnds_mean = f'{float(row["dNdS-mean"]):.3f}'
-                        dnds_sd = f'{float(row["dNdS-sd"]):.3f}'
-                        section += f'    <td class="site-dnds-mean">{dnds_mean}</td>\n'
+                    section += f'    <td class="site-probability">{model_averaged_probability}</td>\n'
+                    if has_model_averaged_dnds:
+                        model_averaged_dnds_mean = f'{float(row["model-averaged-dNdS-mean"]):.3f}'
+                        model_averaged_dnds_sd = f'{float(row["model-averaged-dNdS-sd"]):.3f}'
+                        section += f'    <td class="site-dnds-mean">{model_averaged_dnds_mean}</td>\n'
                         section += '    <td class="site-dnds-pm">&plusmn;</td>\n'
-                        section += f'    <td class="site-dnds-sd">{dnds_sd}</td>\n'
+                        section += f'    <td class="site-dnds-sd">{model_averaged_dnds_sd}</td>\n'
+                    if has_conditioned:
+                        conditioned_probability = f'{float(row["conditioned-probability"]):.3f}'
+                        section += f'    <td class="site-probability">{conditioned_probability}</td>\n'
+                        if has_conditioned_dnds:
+                            conditioned_dnds_mean = f'{float(row["conditioned-dNdS-mean"]):.3f}'
+                            conditioned_dnds_sd = f'{float(row["conditioned-dNdS-sd"]):.3f}'
+                            section += f'    <td class="site-dnds-mean">{conditioned_dnds_mean}</td>\n'
+                            section += '    <td class="site-dnds-pm">&plusmn;</td>\n'
+                            section += f'    <td class="site-dnds-sd">{conditioned_dnds_sd}</td>\n'
                     section += f'    <td>{html.escape(source)}</td>\n'
                     section += "  </tr>\n"
                 section += "</table>\n"
-            else:
-                section += "<p>No columns have Pr(dN/dS&gt;1) above 0.5.</p>\n"
 
             links = [f'<a href="{html.escape(report["filename"].name)}">Complete TSV table</a>']
             alignment_viewer = self.outdir / f"P{partition}.initial.html"

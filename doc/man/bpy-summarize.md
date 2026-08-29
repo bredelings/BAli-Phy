@@ -24,10 +24,10 @@ compound symbols, and translate codons.
 When a partition contains a property ending in `posSelection`, the main report
 also contains a positive-selection section. It reports posterior support for
 positive selection, links each support statistic to every partition using the
-corresponding substitution model, and shows the ten highest-ranked selected
-columns for each partition and property. The displayed columns match the
-positive-selection text report from **character-properties**. A complete TSV
-table and the alignment viewer are linked from each subsection.
+corresponding substitution model, and shows up to 20 selected columns ordered by
+overall posterior probability. The posterior with selection assumes positive
+selection is included in the model. A complete TSV table and the alignment
+viewer are linked from each subsection.
 
 The complete scalar-name mapping in `C1.log.column-map.json` allows the report
 to associate the short names in `C1.log` with substitution models and
@@ -42,9 +42,10 @@ The report is created at **Results/index.html**.
 Complete positive-selection tables are written as
 `Results/P1.positive-selection.tsv`. Prefixed properties use corresponding
 names such as `Results/P1.foreground-positive-selection.tsv`. Each table gives
-the posterior positive-selection `probability` and, when available, the
-`dNdS-mean`, `dNdS-sd`, and `dNdS-median`. The dN/dS fields are empty when the
-corresponding dN/dS property was not recorded.
+the model-averaged probability and dN/dS summaries first, followed by the
+corresponding values conditioned on `positiveSelectionInModel`. Conditioned
+fields are empty when no conditioned posterior is available, and dN/dS fields
+are empty when the corresponding property was not recorded.
 
 A log of all sub-commands is created at **Results/commands.log**.
 

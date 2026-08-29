@@ -101,8 +101,9 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             analysis.summarize_character_properties()
             self.assertEqual(len(commands), 2)
 
-    # Keep site ranking in character-properties while preserving conditioned and unconditional report metadata.
-    # This guards the report orchestration that is not exercised by character-properties' own formatting tests.
+    # Keep paired site ranking in character-properties while preserving both posterior counts and
+    # condition states. Regenerate derived TSV tables so their columns always match the current
+    # parser; character-properties formatting tests do not cover this orchestration.
     def test_generates_positive_selection_reports(self):
         with tempfile.TemporaryDirectory() as directory:
             directory = Path(directory)
@@ -132,10 +133,15 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             # Materialize a small valid table for each requested property report.
             def execute(command, **kwargs):
                 commands.append(command)
+                conditioned_probability = "" if "--unconditional" in command else "0.75"
+                conditioned_dnds = "\t\t" if "--unconditional" in command else "2.5\t0.4\t2.4"
                 kwargs["outfile"].write_text(
-                    "column\tsequence\tsequence-character\tsymbol\ttranslation\tprobability\t"
-                    "dNdS-mean\tdNdS-sd\tdNdS-median\n"
-                    "1\tA\t1\tAAA\tK\t0.75\t2.5\t0.4\t2.4\n",
+                    "column\tsequence\tsequence-character\tsymbol\ttranslation\t"
+                    "model-averaged-probability\tmodel-averaged-dNdS-mean\tmodel-averaged-dNdS-sd\t"
+                    "model-averaged-dNdS-median\tconditioned-probability\tconditioned-dNdS-mean\t"
+                    "conditioned-dNdS-sd\tconditioned-dNdS-median\n"
+                    f"1\tA\t1\tAAA\tK\t0.25\t1.5\t0.2\t1.4\t{conditioned_probability}\t"
+                    f"{conditioned_dnds}\n",
                     encoding="utf-8",
                 )
 
@@ -155,7 +161,18 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             self.assertEqual(analysis.positive_selection_reports[0]["retained_samples"], 100)
             self.assertEqual(analysis.positive_selection_reports[1]["retained_samples"], 60)
             self.assertEqual(analysis.positive_selection_reports[1]["total_samples"], 100)
+            self.assertEqual(analysis.positive_selection_reports[1]["model_averaged_count"], 0)
+            self.assertEqual(analysis.positive_selection_reports[1]["conditioned_count"], 1)
             self.assertEqual(analysis.positive_selection_reports[1]["rows"][0]["symbol"], "AAA")
+
+            stale_output = directory / "P1.positive-selection.tsv"
+            stale_output.write_text("stale\n", encoding="utf-8")
+            newest_input = max(summary.stat().st_mtime, alignment.stat().st_mtime)
+            os.utime(stale_output, (newest_input + 10, newest_input + 10))
+            analysis.summarize_positive_selection()
+            self.assertEqual(commands[2:], commands[:2])
+            self.assertTrue(stale_output.read_text(encoding="utf-8").startswith("column\t"))
+            self.assertEqual(analysis.positive_selection_reports[1]["conditioned_count"], 1)
 
             analysis.get_column_name_map = lambda: {
                 "S1/M3_test:LogOddsPosSelection": "M3_test:LogOddsPosSelection",
@@ -171,11 +188,74 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             section = analysis.section_positive_selection()
             self.assertIn('href="#positive-selection-P1">P1</a>', section)
             self.assertIn('href="#S1">S1</a>', section)
-            self.assertIn("Conditioned on <code>positiveSelectionInModel = true</code>", section)
+            self.assertIn("The overall posterior allows positive selection to be absent", section)
+            self.assertIn("Pr(positive selection is in the model): 0.600", section)
+            self.assertIn(
+                "Columns with Pr(dN/dS &gt; 1) &gt; 0.5: 0 overall, 1 with selection",
+                section,
+            )
+            overall_heading = section.index("Overall posterior</th>")
+            selection_heading = section.index("Posterior with selection</th>")
+            self.assertLess(overall_heading, selection_heading)
+            self.assertIn('<td class="site-probability">0.250</td>', section)
             self.assertIn('<td class="site-probability">0.750</td>', section)
             self.assertIn('<td class="site-dnds-pm">&plusmn;</td>', section)
             self.assertIn('href="P1.positive-selection.tsv">Complete TSV table</a>', section)
             self.assertIn('href="P1.initial.html">Alignment viewer</a>', section)
+
+            unconditional_report = analysis.positive_selection_reports[0]
+            paired_report = analysis.positive_selection_reports[1]
+            many_rows_report = {
+                **paired_report,
+                "rows": [
+                    {**paired_report["rows"][0], "column": str(column)}
+                    for column in range(1, 26)
+                ],
+            }
+            analysis.positive_selection_reports = [many_rows_report]
+            many_rows_section = analysis.section_positive_selection()
+            self.assertIn(
+                "Showing 20 of 25 selected columns, ordered by overall posterior probability",
+                many_rows_section,
+            )
+            self.assertEqual(many_rows_section.count('class="site-column"'), 20)
+
+            analysis.positive_selection_reports = [paired_report]
+            paired_report["retained_samples"] = 100
+            paired_report["model_averaged_count"] = 1
+            all_true_section = analysis.section_positive_selection()
+            self.assertIn("Pr(positive selection is in the model): 1.000", all_true_section)
+            self.assertIn("Columns with Pr(dN/dS &gt; 1) &gt; 0.5: 1</p>", all_true_section)
+            self.assertIn("Overall posterior</th>", all_true_section)
+            self.assertNotIn("Posterior with selection</th>", all_true_section)
+
+            paired_report["retained_samples"] = 0
+            paired_report["model_averaged_count"] = 0
+            paired_report["conditioned_count"] = 0
+            paired_report["rows"] = []
+            zero_true_section = analysis.section_positive_selection()
+            self.assertIn("Pr(positive selection is in the model): 0.000", zero_true_section)
+            self.assertIn("Columns with Pr(dN/dS &gt; 1) &gt; 0.5: 0 overall", zero_true_section)
+
+            analysis.positive_selection_reports = [unconditional_report]
+            unconditional_section = analysis.section_positive_selection()
+            self.assertNotIn("Pr(positive selection is in the model):", unconditional_section)
+            self.assertIn("Columns with Pr(dN/dS &gt; 1) &gt; 0.5: 0 overall", unconditional_section)
+            self.assertIn("Overall posterior</th>", unconditional_section)
+            self.assertNotIn("Posterior with selection</th>", unconditional_section)
+
+            summary_data = json.loads(summary.read_text(encoding="utf-8"))
+            summary_data["conditioned"]["positiveSelectionInModel"] = {
+                "retained_samples": 0,
+                "properties": {},
+            }
+            summary.write_text(json.dumps(summary_data), encoding="utf-8")
+            for output in directory.glob("P1.*positive-selection.tsv"):
+                output.unlink()
+            commands.clear()
+            analysis.summarize_positive_selection()
+            self.assertTrue(all("--unconditional" not in command for command in commands))
+            self.assertTrue(all(report["retained_samples"] == 0 for report in analysis.positive_selection_reports))
 
     # Refuse to pool a partition when only some chains logged properties.
     def test_skips_partial_chain_property_logs(self):
