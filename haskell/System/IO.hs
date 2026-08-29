@@ -68,12 +68,12 @@ readFile' path = do handle <- openFile path ReadMode
 
 writeFile :: FilePath -> String -> IO ()
 writeFile path text = do handle <- openFile path WriteMode
-                         putStr text
+                         hPutStr handle text
                          hClose handle
 
 appendFile :: FilePath -> String -> IO ()
 appendFile path text = do handle <- openFile path AppendMode
-                          putStr text
+                          hPutStr handle text
                           hClose handle
 
 -- These are apparently for when we know the file that the handle is attached to.

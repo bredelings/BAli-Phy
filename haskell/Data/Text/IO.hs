@@ -19,12 +19,12 @@ readFile path = do handle <- openFile path ReadMode
 
 writeFile :: FilePath -> Text -> IO ()
 writeFile path text = do handle <- openFile path WriteMode
-                         putStr text
+                         hPutStr handle text
                          hClose handle
 
 appendFile :: FilePath -> Text -> IO ()
 appendFile path text = do handle <- openFile path AppendMode
-                          putStr text
+                          hPutStr handle text
                           hClose handle
 
 foreign import bpcall "File:" hGetContentsRaw :: Handle -> IO CPPString
