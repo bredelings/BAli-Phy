@@ -323,6 +323,7 @@ class MCMCRun(object):
         self.log_file = None
         self.alignments_files = None
         self.character_property_files = None
+        self.column_name_map = None
         self.input_files = None
         self.command = None
         self.version = None
@@ -379,6 +380,9 @@ class MCMCRun(object):
 
     def get_character_property_files(self):
         return self.character_property_files
+
+    def get_column_name_map(self):
+        return self.column_name_map
 
     def get_log_file(self):
         return self.log_file
@@ -545,6 +549,9 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
         self.trees_file = check_file_exists( self.get_dir() / 'C1.trees')
         self.alignments_files = self.get_alignment_files()
         self.character_property_files = self.find_character_property_files()
+        column_name_map_file = self.get_dir() / "C1.log.column-map.json"
+        if column_name_map_file.exists():
+            self.column_name_map = get_json_from_file(column_name_map_file)
 
         self.smodel_indices = [p["smodel"] for p in self.run_info["partitions"]]
         self.imodel_indices = [p["imodel"] for p in self.run_info["partitions"]]
@@ -1018,6 +1025,13 @@ class Analysis(object):
     def get_character_property_files(self):
         return [run.get_character_property_files() for run in self.mcmc_runs]
 
+    # Use the shared complete TSV name mapping only when every chain provides the same mapping.
+    def get_column_name_map(self):
+        mappings = [run.get_column_name_map() for run in self.mcmc_runs]
+        if None in mappings:
+            return None
+        return first_all_same(mappings)
+
     def get_log_files(self):
         return [run.get_log_file() for run in self.mcmc_runs]
 
@@ -1242,6 +1256,7 @@ class Analysis(object):
         self.Burnin = dict()
         self.PSRF_CI80 = dict()
         self.PSRF_RCF = dict()
+        self.positive_selection_statistics = dict()
 
         with open(report_file, encoding='utf-8') as report:
             lines = report.readlines()
@@ -1250,6 +1265,17 @@ class Analysis(object):
                 line = lines[i].strip()
 
                 if not line:
+                    i += 1
+                    continue
+                m = re.fullmatch(
+                    r'(.+):\s+posterior-probability = ([^\s]+)\s+\[log-odds = ([^\]]+)\]',
+                    line,
+                )
+                if m:
+                    self.positive_selection_statistics[m.group(1)] = {
+                        "posterior_probability": m.group(2),
+                        "log_odds": m.group(3),
+                    }
                     i += 1
                     continue
                 m = re.fullmatch(r'E ([^\s]+) = ([^\s]+)\s+\[\+- ([^\s]+)\]', line)
@@ -1291,6 +1317,36 @@ class Analysis(object):
 
         self.min_ESS = min(self.ESS.values())
         print("done.")
+
+    # Recover positive-selection statistics' full model paths and the partitions using each model.
+    # The column-name mapping is required because statreport intentionally shows Tracer-friendly names.
+    def positive_selection_model_support(self):
+        column_name_map = self.get_column_name_map()
+        if column_name_map is None:
+            return []
+        short_to_long = {short_name: long_name for long_name, short_name in column_name_map.items()}
+        if len(short_to_long) != len(column_name_map):
+            raise Exception("TSV column names are not unique.")
+
+        support = []
+        for short_name, statistics in self.positive_selection_statistics.items():
+            long_name = short_to_long.get(short_name, short_name)
+            match = re.fullmatch(r'S([1-9][0-9]*)/(.+:LogOddsPosSelection)', long_name)
+            if match is None:
+                continue
+            smodel = int(match.group(1))
+            partitions = [
+                partition + 1
+                for partition, model_index in enumerate(self.get_smodel_indices())
+                if model_index == smodel - 1
+            ]
+            support.append({
+                "statistic": match.group(2),
+                "smodel": smodel,
+                "partitions": partitions,
+                **statistics,
+            })
+        return support
 
 
     def summarize_topology_distribution(self):

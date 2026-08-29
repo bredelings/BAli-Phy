@@ -58,6 +58,11 @@ constant = 3
             analysis.burnin = None
             analysis.until = None
             analysis.exec_show = execute
+            analysis.get_column_name_map = lambda: {
+                "iter": "iter",
+                "S2/M3_test:LogOddsPosSelection": "M3_test:LogOddsPosSelection",
+            }
+            analysis.get_smodel_indices = lambda: [1, 0, 1]
 
             with redirect_stdout(io.StringIO()):
                 analysis.summarize_numerical_parameters()
@@ -68,6 +73,16 @@ constant = 3
             self.assertEqual(analysis.median["M3_test:LogOddsPosSelection"], "0.1548")
             self.assertEqual(analysis.median["constant"], "3")
             self.assertNotIn("posterior-probability = 0.5702  [log-odds", analysis.median)
+            self.assertEqual(
+                analysis.positive_selection_model_support(),
+                [{
+                    "statistic": "M3_test:LogOddsPosSelection",
+                    "smodel": 2,
+                    "partitions": [1, 3],
+                    "posterior_probability": "0.5702",
+                    "log_odds": "0.2825",
+                }],
+            )
 
             section = analysis.section_scalar_variables()
             self.assertIn('<table class="backlit2 scalar-variables">', section)
