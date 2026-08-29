@@ -55,7 +55,11 @@ tsvLogger :: FilePath -> [String] -> IO (LoggerValues -> LoggerAction)
 tsvLogger filename firstFields = do
   handle <- openFile filename WriteMode
   stateref <- newIORef Nothing
-  return $ makeTSVLogger handle firstFields stateref
+  return $ \loggerValues ->
+    ( evaluateContextFields (contextLogValues loggerValues)
+    , logTSVSample handle (Just $ filename ++ ".column-map.json") firstFields stateref
+                   (parameterLogValues loggerValues)
+    )
 
 
 -- We might need QuickLook to handle types like IO (forall t. *).
@@ -110,10 +114,13 @@ writeTree file tree = plainLogger $ \_ -> do
   T.hPutStrLn file $ writeNewick tree
   hFlush file
 
-foreign import bpcall "Foreign:tsvHeaderAndMapping" builtinTsvHeaderAndMapping :: EVector CPPString -> J.CJSON -> EPair CPPString ColumnNames
-tsvHeaderAndMapping firstFields csample = let (cstring,mapping) = pair_from_c $ builtinTsvHeaderAndMapping cFirstFields csample
-                                              cFirstFields = FV.toVector [ FS.pack_cpp_string field | field <- firstFields ] 
-               in (T.fromCppString cstring, mapping)
+foreign import bpcall "Foreign:tsvHeaderAndMapping" builtinTsvHeaderAndMapping
+  :: EVector CPPString -> J.CJSON -> EPair CPPString (EPair CPPString ColumnNames)
+tsvHeaderAndMapping firstFields csample =
+  let (cstring, namesAndMapping) = pair_from_c $ builtinTsvHeaderAndMapping cFirstFields csample
+      (cnames, mapping) = pair_from_c namesAndMapping
+      cFirstFields = FV.toVector [ FS.pack_cpp_string field | field <- firstFields ]
+  in (T.fromCppString cstring, T.fromCppString cnames, mapping)
 
 foreign import bpcall "Foreign:getTsvLine" builtinGetTsvLine :: ColumnNames -> J.CJSON -> CPPString
 getTsvLine mapping sample = T.fromCppString $ builtinGetTsvLine mapping sample
@@ -125,19 +132,22 @@ foreign import bpcall "Foreign:makeScalarLogRecord" makeScalarLogRecord
 makeTSVLogger :: Handle -> [String] -> IORef (Maybe ColumnNames) -> LoggerValues -> LoggerAction
 makeTSVLogger file firstFields stateref loggerValues =
   ( evaluateContextFields (contextLogValues loggerValues)
-  , logTSVSample file firstFields stateref (parameterLogValues loggerValues)
+  , logTSVSample file Nothing firstFields stateref (parameterLogValues loggerValues)
   )
 
 -- Evaluate parameter fields and emit one row using the cached TSV column mapping.
-logTSVSample file firstFields stateref parameters iter contextFields = do
+logTSVSample file columnNamesFile firstFields stateref parameters iter contextFields = do
   let parameterFields = J.toCJSON $ J.Object parameters
       sample = makeScalarLogRecord iter contextFields parameterFields
 
   state <- readIORef stateref
 
   case state of
-    Nothing -> do let (header, mapping) = tsvHeaderAndMapping firstFields sample
+    Nothing -> do let (header, columnNames, mapping) = tsvHeaderAndMapping firstFields sample
                   T.hPutStrLn file $ header
+                  case columnNamesFile of
+                    Just filename -> T.writeFile filename columnNames
+                    Nothing -> return ()
                   writeIORef stateref (Just mapping)
                   T.hPutStrLn file $ getTsvLine mapping sample
 

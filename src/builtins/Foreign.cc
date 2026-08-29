@@ -199,12 +199,17 @@ extern "C" closure builtin_function_tsvHeaderAndMapping(OperationArgs& Args)
 
     auto printed_fields = MCON::short_fields(out_fields);
 
+    json::object column_name_map;
+    for(int i=0;i<out_fields.size();i++)
+        column_name_map[out_fields[i]] = printed_fields[i];
+
     object_ptr<Box<map<string,int>>> mapping = new Box<map<string,int>>();
     for(int i=0;i<out_fields.size();i++)
 	mapping->insert({out_fields[i],i});
 
     return runtime_pair(R::String(MCON::tsv_line(printed_fields)),
-                        R::ObjectValue(mapping));
+                        runtime_pair(R::String(json::serialize(column_name_map)),
+                                     R::ObjectValue(mapping)));
 }
 
 extern "C" closure builtin_function_getTsvLine(OperationArgs& Args)
