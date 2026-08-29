@@ -2155,8 +2155,13 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
       .floating_picture {float:left;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}
       .r_floating_picture {float:right;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}
-      table.backlit2 {border-collapse: collapse; }
-      table.backlit2 tr:nth-child(odd) td { background-color: #F0F0F0; margin:0}
+      table.backlit2 {border-collapse: collapse;}
+      table.backlit2 th {
+        border-bottom: 1px solid #C0C0C0;
+        padding-bottom: 0.35em;
+        padding-top: 0.35em;
+      }
+      table.backlit2 tr:nth-child(odd of :has(> td)) > td {background-color: #F0F0F0; margin:0}
       table.scalar-variables td:not(:first-child) {text-align:right;}
       .scalar-mean, .scalar-sd, .scalar-median, .scalar-bci {font-variant-numeric:tabular-nums;}
       .backlit2 td.scalar-mean {padding-right:0.25em;}
