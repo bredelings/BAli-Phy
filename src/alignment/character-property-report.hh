@@ -34,6 +34,8 @@ struct column_property_summary
 };
 
 /// One selected letter presented as the representative of its alignment column.
+/// Primary summaries describe the caller's selected view. Paired positive-selection reports use
+/// the model-averaged view as primary and optionally describe the same letter after conditioning.
 struct selected_column
 {
     std::size_t alignment_column;
@@ -44,6 +46,8 @@ struct selected_column
     std::optional<std::string> translation;
     letter_posterior_summary property_summary;
     std::optional<letter_posterior_summary> dnds_summary;
+    std::optional<letter_posterior_summary> conditioned_property_summary;
+    std::optional<letter_posterior_summary> conditioned_dnds_summary;
 };
 
 /// Report whether a property name currently denotes a positive-selection probability.
@@ -61,13 +65,14 @@ std::vector<selected_column> select_property_columns(
     const property_summary& property, const alignment_projection& projection, bool use_median,
     const std::optional<double>& threshold, const std::optional<double>& fraction, bool select_highest);
 
-/// Select positive-selection letters globally and retain one probability representative per column.
-/// Probability alone controls selection; dN/dS describes the same representative after it is chosen.
-/// Complete posterior summaries are returned only for the retained representative letters.
+/// Select positive-selection columns using model-averaged and optional conditioned probabilities.
+/// A threshold retains the union of both views at one conditioned representative per column;
+/// percentage selection retains its existing single-view meaning. All summaries describe that letter.
 std::vector<selected_column> select_positive_selection_columns(
-    const std::string& property_name, const property_summary& property, const alignment_projection& projection,
-    const std::optional<double>& threshold, const std::optional<double>& fraction,
-    const property_summary* dnds);
+    const std::string& property_name, const property_summary& primary_property,
+    const alignment_projection& projection, const std::optional<double>& threshold,
+    const std::optional<double>& fraction, const property_summary* primary_dnds,
+    const property_summary* conditioned_property, const property_summary* conditioned_dnds);
 
 }
 

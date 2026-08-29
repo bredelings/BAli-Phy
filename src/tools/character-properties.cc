@@ -158,7 +158,7 @@ static report_arguments parse_report_options(int argc, char* argv[], bool positi
         ("highest", po::value<string>()->implicit_value("1%"), "Select the highest-scoring percentage of letters.");
     if (positive_selection)
         visible.add_options()
-            ("unconditional", "Use the model-averaged posterior instead of conditioning.");
+            ("unconditional", "Report only the model-averaged posterior instead of pairing both views.");
     else
         visible.add_options()
             ("below", po::value<double>(), "Select letters whose score is below this value.")
@@ -281,22 +281,6 @@ static std::string format_number(double value)
 static void write_text_header(const report_arguments& arguments, std::uint64_t retained_samples,
                               std::uint64_t total_retained_samples)
 {
-    if (arguments.positive_selection)
-    {
-        std::cout<<"Positive selection: "<<arguments.property<<"\n";
-        if (arguments.condition)
-            std::cout<<"Conditioned on "<<*arguments.condition<<" = true ("<<retained_samples<<" of "
-                     <<total_retained_samples<<" samples)\n";
-        else
-            std::cout<<"Model-averaged posterior ("<<retained_samples<<" samples)\n";
-        if (arguments.selection == "above")
-            std::cout<<"Showing columns with Pr(dN/dS>1) above "<<format_number(arguments.selection_value)<<"\n\n";
-        else
-            std::cout<<"Showing columns containing the highest "<<format_number(arguments.selection_value * 100)
-                     <<"% of letters by Pr(dN/dS>1)\n\n";
-        return;
-    }
-
     std::cout<<"Character property: "<<arguments.property<<"\n";
     if (arguments.condition)
         std::cout<<"Posterior view: "<<*arguments.condition<<" = true\n"
@@ -376,15 +360,77 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
 {
     if (arguments.format == "text" and arguments.positive_selection)
     {
-        write_text_header(arguments, retained_samples, total_retained_samples);
-        bool has_dnds = not rows.empty() and rows.front().dnds_summary;
-        if (has_dnds)
-            std::cout<<fmt::format("{:>47}\n", "Posterior dN/dS");
-        std::cout<<(has_dnds
-                   ? fmt::format("{:>6}  {:<5}  {:<2}  {:>11}  {:>15}  {}\n",
-                                 "Column", "Codon", "AA", "Pr(dN/dS>1)", "mean ± SD", "Source letter")
-                   : fmt::format("{:>6}  {:<5}  {:<2}  {:>11}  {}\n",
-                                 "Column", "Codon", "AA", "Pr(dN/dS>1)", "Source letter"));
+        auto model_averaged_count = std::ranges::count_if(rows, [&arguments](const auto& row) {
+            return arguments.selection == "above" and row.property_summary.mean > arguments.selection_value;
+        });
+        auto conditioned_count = std::ranges::count_if(rows, [&arguments](const auto& row) {
+            return arguments.selection == "above" and row.conditioned_property_summary
+                   and row.conditioned_property_summary->mean > arguments.selection_value;
+        });
+        bool has_conditioned = arguments.condition and retained_samples > 0;
+        bool has_model_averaged_dnds = std::ranges::any_of(
+            rows, [](const auto& row) { return row.dnds_summary.has_value(); });
+        bool has_conditioned_dnds = std::ranges::any_of(
+            rows, [](const auto& row) { return row.conditioned_dnds_summary.has_value(); });
+        auto column_subject = [](auto count) {
+            return fmt::format("{} column{}", count, count == 1 ? "" : "s");
+        };
+
+        std::cout<<"Positive selection: "<<arguments.property<<"\n";
+        if (arguments.selection == "above")
+        {
+            if (arguments.condition and retained_samples == total_retained_samples)
+            {
+                std::cout<<*arguments.condition<<" was true in all "<<total_retained_samples
+                         <<" retained samples, so the conditioned and model-averaged estimates use the same samples.\n";
+                std::cout<<column_subject(model_averaged_count)
+                         <<(model_averaged_count == 1 ? " has" : " have")<<" Pr(dN/dS>1) above "
+                         <<format_number(arguments.selection_value)<<".\n\n";
+            }
+            else
+            {
+                std::cout<<column_subject(model_averaged_count)
+                         <<(model_averaged_count == 1 ? " has" : " have")
+                         <<" model-averaged Pr(dN/dS>1) above "
+                         <<format_number(arguments.selection_value)<<".\n";
+                if (arguments.condition and retained_samples == 0)
+                    std::cout<<*arguments.condition<<" was not true in any of the "<<total_retained_samples
+                             <<" retained samples; conditioned site estimates are unavailable.\n\n";
+                else if (arguments.condition)
+                    std::cout<<"When conditioned on "<<*arguments.condition<<" = true ("<<retained_samples<<" of "
+                             <<total_retained_samples<<" retained samples), "<<column_subject(conditioned_count)
+                             <<(conditioned_count == 1 ? " exceeds " : " exceed ")
+                             <<format_number(arguments.selection_value)<<".\n\n";
+                else
+                    std::cout<<"\n";
+            }
+        }
+        else
+        {
+            if (arguments.condition and retained_samples == 0)
+                std::cout<<*arguments.condition<<" was not true in any of the "<<total_retained_samples
+                         <<" retained samples; selecting from the model-averaged posterior instead.\n";
+            else if (arguments.condition)
+                std::cout<<"Conditioned on "<<*arguments.condition<<" = true ("<<retained_samples<<" of "
+                         <<total_retained_samples<<" retained samples).\n";
+            else
+                std::cout<<"Model-averaged posterior ("<<retained_samples<<" retained samples).\n";
+            std::cout<<"Showing columns containing the highest "<<format_number(arguments.selection_value * 100)
+                     <<"% of letters by Pr(dN/dS>1).\n\n";
+        }
+
+        if (has_conditioned)
+            std::cout<<fmt::format("{:>49}  {:>38}\n", "Model-averaged posterior", "Conditioned posterior");
+        std::cout<<fmt::format("{:>6}  {:<5}  {:<2}  {:>11}", "Column", "Codon", "AA", "Pr(dN/dS>1)");
+        if (has_model_averaged_dnds)
+            std::cout<<fmt::format("  {:>15}", "dN/dS mean ± SD");
+        if (has_conditioned)
+        {
+            std::cout<<fmt::format("  {:>11}", "Pr(dN/dS>1)");
+            if (has_conditioned_dnds)
+                std::cout<<fmt::format("  {:>15}", "dN/dS mean ± SD");
+        }
+        std::cout<<"  Source letter\n";
         for (const auto& row: rows)
         {
             std::cout<<fmt::format("{:>6}  {:<5}  {:<2}  {:>11.3f}",
@@ -393,14 +439,26 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
             if (row.dnds_summary)
                 std::cout<<fmt::format("    {:>5.3f} ± {:>5.3f}", row.dnds_summary->mean,
                                        row.dnds_summary->sd);
+            if (has_conditioned)
+            {
+                if (row.conditioned_property_summary)
+                    std::cout<<fmt::format("  {:>11.3f}", row.conditioned_property_summary->mean);
+                else
+                    std::cout<<fmt::format("  {:>11}", "-");
+                if (row.conditioned_dnds_summary)
+                    std::cout<<fmt::format("    {:>5.3f} ± {:>5.3f}", row.conditioned_dnds_summary->mean,
+                                           row.conditioned_dnds_summary->sd);
+            }
             std::cout<<fmt::format("  {}:{}\n", row.sequence_name, row.character_index + 1);
         }
         return;
     }
 
     if (arguments.format == "tsv" and arguments.positive_selection)
-        std::cout<<"column\tsequence\tsequence-character\tsymbol\ttranslation\tprobability"
-                 <<"\tdNdS-mean\tdNdS-sd\tdNdS-median\n";
+        std::cout<<"column\tsequence\tsequence-character\tsymbol\ttranslation\tmodel-averaged-probability"
+                 <<"\tmodel-averaged-dNdS-mean\tmodel-averaged-dNdS-sd\tmodel-averaged-dNdS-median"
+                 <<"\tconditioned-probability\tconditioned-dNdS-mean\tconditioned-dNdS-sd"
+                 <<"\tconditioned-dNdS-median\n";
     else if (arguments.format == "tsv")
         // Ordinary selected-property reports retain their existing empty trailing columns;
         // this change only simplifies the positive-selection format.
@@ -424,6 +482,16 @@ static void write_selected_report(const report_arguments& arguments, std::uint64
                 if (row.dnds_summary)
                     std::cout<<format_number(row.dnds_summary->mean)<<"\t"<<format_number(row.dnds_summary->sd)
                              <<"\t"<<format_number(row.dnds_summary->median);
+                else
+                    std::cout<<"\t\t";
+                std::cout<<"\t";
+                if (row.conditioned_property_summary)
+                    std::cout<<format_number(row.conditioned_property_summary->mean);
+                std::cout<<"\t";
+                if (row.conditioned_dnds_summary)
+                    std::cout<<format_number(row.conditioned_dnds_summary->mean)<<"\t"
+                             <<format_number(row.conditioned_dnds_summary->sd)<<"\t"
+                             <<format_number(row.conditioned_dnds_summary->median);
                 else
                     std::cout<<"\t\t";
             }
@@ -464,16 +532,21 @@ static void run_report(const report_arguments& arguments)
         if (found == properties.conditioned.end())
             throw myexception()<<"Character property condition '"<<*arguments.condition<<"' was not found.";
         if (found->second.retained_samples == 0)
-            throw myexception()<<"Character property condition '"<<*arguments.condition<<"' has no True samples.";
-        selected_properties = &found->second.properties;
+        {
+            if (not arguments.positive_selection)
+                throw myexception()<<"Character property condition '"<<*arguments.condition<<"' has no True samples.";
+            selected_properties = nullptr;
+        }
+        else
+            selected_properties = &found->second.properties;
         retained_samples = found->second.retained_samples;
     }
-    auto property = selected_properties->find(arguments.property);
-    if (property == selected_properties->end())
-        throw myexception()<<"Character property '"<<arguments.property<<"' was not found.";
 
     if (not arguments.positive_selection and arguments.selection == "all")
     {
+        auto property = selected_properties->find(arguments.property);
+        if (property == selected_properties->end())
+            throw myexception()<<"Character property '"<<arguments.property<<"' was not found.";
         auto rows = character_properties::summarize_property_columns(property->second, projection);
         order_columns(rows, arguments);
         write_column_report(arguments, retained_samples, properties.retained_samples, rows);
@@ -489,18 +562,41 @@ static void run_report(const report_arguments& arguments)
     std::vector<character_properties::selected_column> rows;
     if (arguments.positive_selection)
     {
+        auto model_averaged_property = properties.properties.find(arguments.property);
+        if (model_averaged_property == properties.properties.end())
+            throw myexception()<<"Character property '"<<arguments.property<<"' was not found.";
+        const character_properties::property_summary* conditioned_property = nullptr;
+        if (selected_properties and selected_properties != &properties.properties)
+        {
+            auto found = selected_properties->find(arguments.property);
+            if (found == selected_properties->end())
+                throw myexception()<<"Character property '"<<arguments.property
+                                   <<"' was not found in conditioned posterior '"<<*arguments.condition<<"'.";
+            conditioned_property = &found->second;
+        }
+
         std::string_view suffix = "posSelection";
         std::string dnds_name = arguments.property.substr(0, arguments.property.size() - suffix.size())+"dNdS";
-        const character_properties::property_summary* dnds = nullptr;
-        if (auto found = selected_properties->find(dnds_name); found != selected_properties->end())
-            dnds = &found->second;
+        const character_properties::property_summary* model_averaged_dnds = nullptr;
+        if (auto found = properties.properties.find(dnds_name); found != properties.properties.end())
+            model_averaged_dnds = &found->second;
+        const character_properties::property_summary* conditioned_dnds = nullptr;
+        if (selected_properties and selected_properties != &properties.properties)
+            if (auto found = selected_properties->find(dnds_name); found != selected_properties->end())
+                conditioned_dnds = &found->second;
         rows = character_properties::select_positive_selection_columns(
-            arguments.property, property->second, projection, threshold, fraction, dnds);
+            arguments.property, model_averaged_property->second, projection, threshold, fraction,
+            model_averaged_dnds, conditioned_property, conditioned_dnds);
     }
     else
+    {
+        auto property = selected_properties->find(arguments.property);
+        if (property == selected_properties->end())
+            throw myexception()<<"Character property '"<<arguments.property<<"' was not found.";
         rows = character_properties::select_property_columns(
             property->second, projection, arguments.statistic == "median", threshold, fraction,
             arguments.selection == "above" or arguments.selection == "highest");
+    }
     order_selected_columns(rows, arguments);
     write_selected_report(arguments, retained_samples, properties.retained_samples, rows);
 }

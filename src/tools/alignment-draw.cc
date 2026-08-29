@@ -938,7 +938,7 @@ json::object make_character_property_reports(
             if (auto found = properties.find(dnds_name); found != properties.end())
                 dnds = &found->second;
             auto selected = character_properties::select_positive_selection_columns(
-                property_name, property, projection, 0.5, {}, dnds);
+                property_name, property, projection, 0.5, {}, dnds, nullptr, nullptr);
             property_reports["positive_selection"] = make_positive_selection_table(selected);
         }
         else

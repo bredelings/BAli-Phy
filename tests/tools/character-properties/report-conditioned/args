@@ -1,1 +1,1 @@
-positive-selection ../report-conditioned-summary.json ../positive-selection-alignment.fasta --format text
+positive-selection ../report-conditioned-summary.json ../positive-selection-alignment.fasta --format text --sort decreasing

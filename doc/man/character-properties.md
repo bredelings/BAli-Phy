@@ -52,12 +52,14 @@ maximum of both the per-letter posterior means and per-letter posterior medians
 in every column. These column-level middle values are distinct from the
 posterior median stored for each individual letter.
 
-The **positive-selection** command selects letters using their posterior mean
-`posSelection` probability, groups them by column, and reports the
-highest-probability letter in each resulting column. The matching dN/dS
-statistics describe that representative but do not help choose it. The default
-property is `posSelection`; names ending in `-posSelection` use the corresponding
-`-dNdS` property when it exists.
+The **positive-selection** command reports both model-averaged site support and,
+when available, support conditioned on `positiveSelectionInModel` being true.
+For an above selection, it chooses one representative letter per column using
+the conditioned probability, then retains the column if either probability for
+that letter passes the threshold. Both sets of statistics therefore describe
+the same representative. The matching dN/dS statistics do not help choose it.
+The default property is `posSelection`; names ending in `-posSelection` use the
+corresponding `-dNdS` property when it exists.
 
 # SUMMARIZE OPTIONS
 
@@ -87,18 +89,17 @@ property is `posSelection`; names ending in `-posSelection` use the correspondin
   specified genetic code.
 
 **--format=text|tsv**
-: Output format (default: text). Positive-selection text reports show the
-  representative codon and amino acid, probability, posterior dN/dS mean and
-  standard deviation, and source letter, using three decimal places. Its TSV
-  output contains `probability`, `dNdS-mean`, `dNdS-sd`, and `dNdS-median`; the
-  dN/dS fields are empty if the corresponding property is unavailable. Both
-  formats use one-based coordinates for readers.
+: Output format (default: text). Positive-selection TSV reports contain
+  `model-averaged-probability`, three `model-averaged-dNdS-*` fields, and the
+  corresponding `conditioned-*` fields. Conditioned fields are empty when
+  unavailable. Both formats use one-based coordinates.
 
 **--sort=column|increasing|decreasing**
 : Order completed rows (default: column). Increasing and decreasing use the
   selected representative score. For an all-column ordinary report, they use
   the column's middle value for the statistic selected by **--by**. Equal
-  values have no defined secondary order.
+  values have no defined secondary order. Positive-selection reports sort by
+  model-averaged probability.
 
 **--condition=NAME**
 : Use only samples in which the named Boolean model condition is true.
@@ -133,18 +134,19 @@ collapse into one alignment-column row.
 # POSITIVE-SELECTION OPTIONS
 
 **--above=PROBABILITY**
-: Select letters whose posterior mean probability is strictly greater than
-  _PROBABILITY_ (default: 0.5).
+: Select columns whose conditioned or model-averaged posterior mean probability
+  is strictly greater than _PROBABILITY_ (default: 0.5). A shared representative
+  is chosen using the conditioned view before either threshold is applied.
 
 **--highest[=PERCENT]**
 : Instead select the highest-probability percentage of letters, with an
   implicit percentage of 1%.
 
 **--unconditional**
-: Use the model-averaged posterior. By default, positive-selection reports use
-  samples where `positiveSelectionInModel` is true. If that conditioned view
-  is absent, the command reports an error rather than silently changing the
-  scientific quantity.
+: Report and select only from the model-averaged posterior. By default,
+  positive-selection reports pair it with samples where
+  `positiveSelectionInModel` is true. If that condition is absent, the command
+  reports an error rather than silently changing the requested report.
 
 # VALIDATION
 
@@ -157,7 +159,8 @@ pair in every retained sample. Category/state indices, property-table bounds,
 finite values, and cross-chain shapes are validated before a result is emitted.
 
 Positive-selection properties and probability thresholds must lie in `[0,1]`.
-A conditioned view with no true samples cannot produce a report.
+A conditioned view with no true samples produces a model-averaged report and
+leaves conditioned fields empty.
 
 # EXAMPLES
 
@@ -190,7 +193,8 @@ Report the highest 1% of letters, always retaining at least one:
 character-properties report summary.json alignment.fasta rate --highest
 ```
 
-Report positive selection conditional on its presence in the model:
+Report model-averaged positive selection together with estimates conditional
+on its presence in the model:
 
 ```
 character-properties positive-selection \

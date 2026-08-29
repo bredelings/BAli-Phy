@@ -1,0 +1,28 @@
+{
+  "format": "bali-phy-character-properties",
+  "version": 2,
+  "coordinates": {"kind": "ungapped-sequence-character", "index_base": 0},
+  "selection": {"skip": null, "until": null, "subsample": 1},
+  "retained_samples": 100,
+  "retained_samples_by_chain": [100],
+  "properties": {
+    "posSelection": {
+      "mean": {"A": [0, 0, 0], "B": [0, 0, 0], "C": [0, 0, 0]},
+      "sd": {"A": [0, 0, 0], "B": [0, 0, 0], "C": [0, 0, 0]},
+      "median": {"A": [0, 0, 0], "B": [0, 0, 0], "C": [0, 0, 0]}
+    },
+    "dNdS": {
+      "mean": {"A": [0.2, 0.4, 0.5], "B": [0.2, 0.4, 0.5], "C": [0.2, 0.4, 0.5]},
+      "sd": {"A": [0.1, 0.1, 0.1], "B": [0.1, 0.1, 0.1], "C": [0.1, 0.1, 0.1]},
+      "median": {"A": [0.2, 0.4, 0.5], "B": [0.2, 0.4, 0.5], "C": [0.2, 0.4, 0.5]}
+    }
+  },
+  "conditioned": {
+    "positiveSelectionInModel": {
+      "condition_value": true,
+      "retained_samples": 0,
+      "retained_samples_by_chain": [0],
+      "properties": {}
+    }
+  }
+}

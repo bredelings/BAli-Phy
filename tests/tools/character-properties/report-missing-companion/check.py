@@ -8,4 +8,8 @@ import sys
 report = (Path(sys.argv[1]) / "output").read_text(encoding="utf-8")
 rows = list(csv.DictReader(report.splitlines(), delimiter="\t"))
 assert len(rows) == 3
-assert all(row["dNdS-mean"] == row["dNdS-sd"] == row["dNdS-median"] == "" for row in rows)
+assert all(
+    row["model-averaged-dNdS-mean"] == row["model-averaged-dNdS-sd"]
+    == row["model-averaged-dNdS-median"] == ""
+    for row in rows
+)

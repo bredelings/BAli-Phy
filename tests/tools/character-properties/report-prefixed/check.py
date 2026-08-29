@@ -7,4 +7,4 @@ import sys
 # this becomes obsolete when summaries carry explicit positive-selection and dN/dS roles.
 report = (Path(sys.argv[1]) / "output").read_text(encoding="utf-8")
 rows = list(csv.DictReader(report.splitlines(), delimiter="\t"))
-assert rows[0]["dNdS-mean"] == "3"
+assert rows[0]["model-averaged-dNdS-mean"] == "3"

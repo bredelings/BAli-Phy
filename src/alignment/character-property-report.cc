@@ -119,7 +119,7 @@ selected_column make_selected_column(std::size_t alignment_column, const project
 {
     return {
         alignment_column, character.sequence_index, character.sequence_name, character.character_index,
-        character.symbol, character.translation, summarize_letter(property, character), {}
+        character.symbol, character.translation, summarize_letter(property, character), {}, {}, {}
     };
 }
 
@@ -192,39 +192,88 @@ std::vector<selected_column> select_property_columns(
     return result;
 }
 
-/// Select positive-selection letters globally and retain one probability representative per column.
-/// Equal probabilities retain the first projected letter rather than invoking a secondary comparison policy.
-/// Complete probability and dN/dS summaries are loaded only for the retained representatives.
+/*
+ * Threshold reports first choose the greatest conditioned probability in every alignment column,
+ * or the greatest model-averaged probability when no conditioned posterior exists. The threshold
+ * is then applied to both probabilities at that one representative, and their union is retained.
+ * This makes every paired value describe the same observed letter while allowing either posterior
+ * view to place the column in the report. Equal probabilities retain the first projected letter.
+ *
+ * Percentage reports preserve their established global-letter selection: the conditioned view is
+ * used when present, otherwise the model-averaged view. The other posterior is attached only after
+ * representative selection, so it cannot alter which percentage of letters was requested.
+ */
 std::vector<selected_column> select_positive_selection_columns(
-    const std::string& property_name, const property_summary& property, const alignment_projection& projection,
-    const std::optional<double>& threshold, const std::optional<double>& fraction,
-    const property_summary* dnds)
+    const std::string& property_name, const property_summary& primary_property,
+    const alignment_projection& projection, const std::optional<double>& threshold,
+    const std::optional<double>& fraction, const property_summary* primary_dnds,
+    const property_summary* conditioned_property, const property_summary* conditioned_dnds)
 {
     if (not is_positive_selection_property(property_name))
         throw myexception()<<"Property '"<<property_name<<"' is not a positive-selection probability.";
     if (threshold and (*threshold < 0 or *threshold > 1))
         throw myexception()<<"Positive-selection probability thresholds must be between 0 and 1.";
 
-    for (const auto& projected_column: projection)
-        for (const auto& character: projected_column.characters)
-        {
-            auto probability = score_letter(property, character, false);
-            if (probability < 0 or probability > 1)
-                throw myexception()<<"Property '"<<property_name<<"' has probability "<<probability
-                                   <<" outside [0,1] at sequence '"<<character.sequence_name
-                                   <<"', character "<<character.character_index<<".";
-        }
+    for (const auto* property: {&primary_property, conditioned_property})
+    {
+        if (not property)
+            continue;
+        for (const auto& projected_column: projection)
+            for (const auto& character: projected_column.characters)
+            {
+                auto probability = score_letter(*property, character, false);
+                if (probability < 0 or probability > 1)
+                    throw myexception()<<"Property '"<<property_name<<"' has probability "<<probability
+                                       <<" outside [0,1] at sequence '"<<character.sequence_name
+                                       <<"', character "<<character.character_index<<".";
+            }
+    }
 
-    auto representatives = select_representatives(property, projection, false, threshold, fraction, true);
+    const auto& representative_property = conditioned_property ? *conditioned_property : primary_property;
+    std::vector<const projected_character*> representatives(projection.size(), nullptr);
+    if (fraction)
+        representatives = select_representatives(
+            representative_property, projection, false, {}, fraction, true);
+    else
+    {
+        // Threshold each posterior only after selecting a single conditioned representative for the column.
+        for (const auto& projected_column: projection)
+        {
+            const projected_character* representative = nullptr;
+            double representative_probability = 0;
+            for (const auto& character: projected_column.characters)
+            {
+                auto probability = score_letter(representative_property, character, false);
+                if (not representative or probability > representative_probability)
+                {
+                    representative = &character;
+                    representative_probability = probability;
+                }
+            }
+            if (representative)
+            {
+                bool selected = score_letter(primary_property, *representative, false) > *threshold;
+                if (conditioned_property)
+                    selected = selected or score_letter(*conditioned_property, *representative, false) > *threshold;
+                if (selected)
+                    representatives[projected_column.alignment_column] = representative;
+            }
+        }
+    }
+
     std::vector<selected_column> result;
     for (std::size_t column_index = 0; column_index < representatives.size(); column_index++)
     {
         const auto* representative = representatives[column_index];
         if (representative)
         {
-            auto column = make_selected_column(column_index, *representative, property);
-            if (dnds)
-                column.dnds_summary = summarize_letter(*dnds, *representative);
+            auto column = make_selected_column(column_index, *representative, primary_property);
+            if (primary_dnds)
+                column.dnds_summary = summarize_letter(*primary_dnds, *representative);
+            if (conditioned_property)
+                column.conditioned_property_summary = summarize_letter(*conditioned_property, *representative);
+            if (conditioned_dnds)
+                column.conditioned_dnds_summary = summarize_letter(*conditioned_dnds, *representative);
             result.push_back(std::move(column));
         }
     }
