@@ -1971,8 +1971,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
     def html_header(self,title):
         section = """\
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
   <head>
 """
         section += f"<title>BAli-Phy: {title}</title>\n"
@@ -2055,24 +2055,29 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         return section
 
     def topbar(self):
-        return """\
-  <p id="topbar">
+        sections = [
+            ("data", "Overview", self.has_model()),
+            ("parameters", "Parameters", self.has_parameters()),
+            ("topology", "Trees", self.has_trees()),
+            ("alignment", "Alignments", self.has_alignments()),
+            ("mixing", "Convergence &amp; mixing", True),
+            ("analysis", "Run details", True),
+            ("models", "Model &amp; priors", self.has_model()),
+            ("code", "Code", self.has_code()),
+        ]
+        links = "\n".join(f'      <a href="#{name}">{label}</a>' for name, label, include in sections if include)
+        return f"""\
+  <nav id="topbar" aria-label="Report sections">
     <span id="path">Sections:</span>
-    <span id="menu">
-      [<a href="#data">Data+Model</a>]
-      [<a href="#parameters">Parameters</a>]
-      [<a href="#topology">Phylogeny</a>]
-      [<a href="#alignment">Alignment</a>]
-      [<a href="#mixing">Mixing</a>]
-      [<a href="#analysis">Analysis</a>]
-      [<a href="#models">Models+Priors</a>]
-      [<a href="#code">Code</a>]&nbsp;
-    </span>
+    <div id="menu">
+{links}
+    </div>
+  </nav>
 """
 
     def section_data_and_model(self):
         section = """\
-<h2 style="clear:both"><a class="anchor" name="data"></a>Data &amp; Model</h2>
+<h2 style="clear:both"><a class="anchor" name="data"></a>Data and model</h2>
 <table class="backlit2">
   <tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Alphabet</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th><th>Scale&nbsp;Model</th></tr>
 """
@@ -2443,7 +2448,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
     def section_mixing(self):
         section = """\
-<h2><a class="anchor" name="mixing"></a>Mixing</h2>
+<h2><a class="anchor" name="mixing"></a>Convergence and mixing</h2>
   <table style="width:100%;clear:both">
     <tr>
       <td style="vertical-align:top">
@@ -2530,7 +2535,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         something_common = all_same(commands) or all_same(versions) or all_same(parent_dirs)
 
         section += '<br/><hr/><br/>\n'
-        section += '<h2><a class="anchor" name="analysis"></a>Analysis</h2>\n'
+        section += '<h2><a class="anchor" name="analysis"></a>Run details</h2>\n'
         if something_common:
             section += "<p>"
         if all_same(commands):

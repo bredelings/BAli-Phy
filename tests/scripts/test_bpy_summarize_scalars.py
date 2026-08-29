@@ -102,5 +102,43 @@ constant = 3
             self.assertNotIn("display:grid", header)
 
 
+class BPYSummarizeNavigationTests(unittest.TestCase):
+    # Keep report navigation semantic and prevent links to sections omitted from reduced reports.
+    # This can be removed if a different report renderer owns navigation and section selection.
+    def test_builds_semantic_conditional_navigation(self):
+        analysis = Analysis.__new__(Analysis)
+        analysis.has_model = lambda: True
+        analysis.has_parameters = lambda: True
+        analysis.has_trees = lambda: True
+        analysis.has_alignments = lambda: True
+        analysis.has_code = lambda: True
+
+        navigation = analysis.topbar()
+        self.assertIn('<nav id="topbar" aria-label="Report sections">', navigation)
+        self.assertIn('<a href="#data">Overview</a>', navigation)
+        self.assertIn('<a href="#topology">Trees</a>', navigation)
+        self.assertIn('<a href="#mixing">Convergence &amp; mixing</a>', navigation)
+        self.assertIn('<a href="#analysis">Run details</a>', navigation)
+        self.assertIn('<a href="#models">Model &amp; priors</a>', navigation)
+        self.assertIn("</nav>", navigation)
+        self.assertNotIn("[<a", navigation)
+
+        analysis.has_model = lambda: False
+        analysis.has_parameters = lambda: False
+        analysis.has_trees = lambda: False
+        analysis.has_alignments = lambda: False
+        analysis.has_code = lambda: False
+
+        navigation = analysis.topbar()
+        self.assertNotIn('href="#data"', navigation)
+        self.assertNotIn('href="#parameters"', navigation)
+        self.assertNotIn('href="#topology"', navigation)
+        self.assertNotIn('href="#alignment"', navigation)
+        self.assertNotIn('href="#models"', navigation)
+        self.assertNotIn('href="#code"', navigation)
+        self.assertIn('href="#mixing"', navigation)
+        self.assertIn('href="#analysis"', navigation)
+
+
 if __name__ == "__main__":
     unittest.main()
