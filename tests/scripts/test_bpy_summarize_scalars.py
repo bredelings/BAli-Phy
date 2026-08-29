@@ -47,6 +47,7 @@ M3_test:LogOddsPosSelection ~ 0.1548  (NA,NA) @ 95%
                               t @ 21.24   Ne = 4   burnin = Not Converged!
 
 constant = 3
+trend = [increasing]
 """,
                     encoding="utf-8",
                 )
@@ -72,6 +73,8 @@ constant = 3
             self.assertEqual(analysis.stddev["M3_test:LogOddsPosSelection"], "0.5034")
             self.assertEqual(analysis.median["M3_test:LogOddsPosSelection"], "0.1548")
             self.assertEqual(analysis.median["constant"], "3")
+            self.assertEqual(analysis.constants, {"constant"})
+            self.assertEqual(analysis.median["trend"], "[increasing]")
             self.assertNotIn("posterior-probability = 0.5702  [log-odds", analysis.median)
             self.assertEqual(
                 analysis.positive_selection_model_support(),
@@ -98,11 +101,16 @@ constant = 3
             self.assertIn(
                 """\
   <td>constant</td>
-  <td class="scalar-mean"></td>
+  <td class="scalar-mean">3</td>
   <td class="scalar-pm"></td>
-  <td class="scalar-sd"></td>
+  <td class="scalar-sd scalar-na">&mdash;</td>
   <td class="scalar-median">3</td>
-  <td class="scalar-bci"></td>
+  <td class="scalar-bci scalar-na">&mdash;</td>
+  <td class="scalar-na">&mdash;</td>
+  <td class="scalar-na">&mdash;</td>
+  <td class="scalar-na">&mdash;</td>
+  <td class="scalar-na">&mdash;</td>
+  <td class="scalar-na">&mdash;</td>
 """,
                 section,
             )
@@ -113,6 +121,7 @@ constant = 3
 
             header = analysis.html_header("scalar report")
             self.assertIn("table.scalar-variables td:not(:first-child) {text-align:right;}", header)
+            self.assertIn("table.scalar-variables td.scalar-na {text-align:center;}", header)
             self.assertIn("td.scalar-pm {padding-left:0; padding-right:0; text-align:center;}", header)
             self.assertNotIn("display:grid", header)
 

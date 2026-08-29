@@ -1253,6 +1253,7 @@ class Analysis(object):
         self.median = dict()
         self.CI_low = dict()
         self.CI_high = dict()
+        self.constants = set()
 
         self.ACT = dict()
         self.ESS = dict()
@@ -1315,7 +1316,16 @@ class Analysis(object):
                 m = re.fullmatch(r'([^=]+?) = ([^=]+)', line)
                 if m:
                     var = m.group(1)
-                    self.median[var] = m.group(2)
+                    value = m.group(2).strip()
+                    self.median[var] = value
+                    # Validate without replacing the original text: numeric right-hand sides are constants,
+                    # while statreport also writes markers such as [increasing] in this form.
+                    try:
+                        float(value)
+                    except ValueError:
+                        pass
+                    else:
+                        self.constants.add(var)
                 i += 1
 
         self.min_ESS = min(self.ESS.values())
@@ -2163,6 +2173,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       }
       table.backlit2 tr:nth-child(odd of :has(> td)) > td {background-color: #F0F0F0; margin:0}
       table.scalar-variables td:not(:first-child) {text-align:right;}
+      table.scalar-variables td.scalar-na {text-align:center;}
       .scalar-mean, .scalar-sd, .scalar-median, .scalar-bci {font-variant-numeric:tabular-nums;}
       .backlit2 td.scalar-mean {padding-right:0.25em;}
       table.scalar-variables td.scalar-pm {padding-left:0; padding-right:0; text-align:center;}
@@ -2350,6 +2361,20 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             row_style = "" if var in self.CI_low else 'style="font-style:italic"'
             section += f'<tr {row_style}>\n'
             section += f'  <td>{var}</td>\n'
+            if var in self.constants:
+                section += f'  <td class="scalar-mean">{self.median[var]}</td>\n'
+                section += '  <td class="scalar-pm"></td>\n'
+                section += '  <td class="scalar-sd scalar-na">&mdash;</td>\n'
+                section += f'  <td class="scalar-median">{self.median[var]}</td>\n'
+                section += '  <td class="scalar-bci scalar-na">&mdash;</td>\n'
+                section += '  <td class="scalar-na">&mdash;</td>\n'
+                section += '  <td class="scalar-na">&mdash;</td>\n'
+                section += '  <td class="scalar-na">&mdash;</td>\n'
+                section += '  <td class="scalar-na">&mdash;</td>\n'
+                section += '  <td class="scalar-na">&mdash;</td>\n'
+                section += '</tr>\n'
+                continue
+
             if var in self.mean:
                 section += f'  <td class="scalar-mean">{self.mean[var]}</td>\n'
                 section += '  <td class="scalar-pm">&plusmn;</td>\n'
