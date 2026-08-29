@@ -14,7 +14,7 @@ while relying on default priors.  Likewise, the attempt to thread the alphabet
 through the specification of substitution models allows writing `GTR + x3`
 without specifying the alphabet multiple times -- and while making the whole
 thing a function of the alphabet.  Implicit type conversion means that
-it is possibly to write `GTR +> Rates.Gamma` without writing `unit_mixture(GTR) +> Rates.Gamma`.
+it is possibly to write `GTR +> ASRV.Gamma` without writing `unit_mixture(GTR) +> ASRV.Gamma`.
 
 However, when attempting to provide a syntax for graphical models, some of
 these features can be awkward.  Thus this document is an attempt to explore

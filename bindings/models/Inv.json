@@ -19,6 +19,6 @@
     ],
     "title": "Invariable sites model",
     "examples": ["HKY85 +> Inv",
-		 "GTR +> Rates.Gamma +> Inv"],
+		 "GTR +> ASRV.Gamma +> Inv"],
     "extract": "all"
 }

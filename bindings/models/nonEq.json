@@ -30,7 +30,7 @@
 	"nonEq",
 	"GTR +> nonEq",
 	"nonRev +> nonEq",
-	"nonRev +> nonEq +> Rates.Gamma(4) +> Inv"
+	"nonRev +> nonEq +> ASRV.Gamma(4) +> Inv"
     ],
     "see": ["GTR","nonRev"],
     "extract": "all"

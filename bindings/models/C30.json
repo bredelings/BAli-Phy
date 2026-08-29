@@ -22,7 +22,7 @@
     "description": "Empirically derived mixture model where different components have different equilibrium frequencies to account for site-specific biochemical constraints. It partitions protein alignment sites into 30 distinct profile classes, each with a unique amino acid distribution, to better approximate the varying selective pressures across a sequence.\nThis site-heterogeneous approach effectively mitigates long-branch attraction and systematic biases that often compromise simpler, single-matrix models like LG or WAG.\nThis version estimates the relative frequencies of the 30 components from the data set under study.",
     "examples":
     [
-        "C30 +> Rates.Gamma"
+        "C30 +> ASRV.Gamma"
     ],
     "citation": {"type": "article",
 		 "title": "Phylogenetic mixture models for proteins",

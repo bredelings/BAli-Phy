@@ -1,1 +1,1 @@
---test dna.fasta --smodel=HKY85_sym+>gwF+>Rates.Gamma+>Inv
+--test dna.fasta --smodel=HKY85_sym+>gwF+>ASRV.Gamma+>Inv

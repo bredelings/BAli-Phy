@@ -24,6 +24,6 @@
 			     "pages": "3965--3976"},
 		 "identifier": [{"type":"doi","id":"10.1098/rstb.2008.0180"}]
 		},
-    "examples": ["UL2","UL2 +> Rates.Gamma"],
+    "examples": ["UL2","UL2 +> ASRV.Gamma"],
     "see": ["ul3","ex2", "ex3", "eho"]
 }

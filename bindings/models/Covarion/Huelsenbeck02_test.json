@@ -45,7 +45,7 @@
 	}
     ],
     "description": "This model allows estimating the fraction of sites that follow the Huelsenbeck covarion model.",
-    "examples": ["GTR +> Rates.Gamma +> Covarion.Huelsenbeck02_test","GTR +> Rates.Free(n=5) +> Covarion.Huelsenbeck02_test"],
+    "examples": ["GTR +> ASRV.Gamma +> Covarion.Huelsenbeck02_test","GTR +> ASRV.Free(n=5) +> Covarion.Huelsenbeck02_test"],
     "see": ["ts98","hb02"],
     "extract": "all"
 }

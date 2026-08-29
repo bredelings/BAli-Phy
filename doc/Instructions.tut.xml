@@ -346,9 +346,9 @@ Let's put the following into a configuration file called <filename>ferns-config2
 :align ferns.fasta:1329-1393
 
 # substitution model
-:smodel 1,3,5,7:gtr +> Rates.free
+:smodel 1,3,5,7:gtr +> ASRV.Free
 # substitution model
-:smodel 2,4,6:gtr +> Rates.free
+:smodel 2,4,6:gtr +> ASRV.Free
 
 # insertion-deletion model
 :imodel 1,3,5,7:none
@@ -413,7 +413,7 @@ Note that spaces in FASTA files are allowed, but not required.
 #:smodel 1:m3
 #:smodel 1:gtr + > x3 +> dNdS +> mut_sel_aa
 #:smodel 1:|w:gtr +> x3 +> dNdS(omega=w) +> mut_sel_aa| +> m3
-:smodel 2,3,4:gtr +> Rates.free
+:smodel 2,3,4:gtr +> ASRV.Free
 
 :imodel 1:none
 :imodel 2,3,4:rs07

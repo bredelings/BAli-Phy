@@ -18,7 +18,7 @@
         }
     ],
     "description": "This constructs a modulated markov model that switches between classes in a mixture at a rate `nu`.",
-    "examples": ["GTR +> Rates.Gamma +> MarkovModulate","GTR +> Rates.Free +> MarkovModulate"],
+    "examples": ["GTR +> ASRV.Gamma +> MarkovModulate","GTR +> ASRV.Free +> MarkovModulate"],
     "see": ["Covarion.Galtier01"],
     "extract": "all"
 }

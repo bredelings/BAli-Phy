@@ -3,7 +3,7 @@
 :align intron3.fasta
 :align coding.fasta
 
-:smodel 1,2,3:GTR +> Rates.Free(n=4)
+:smodel 1,2,3:GTR +> ASRV.Free(n=4)
 :imodel 1,2,3:RS07
 
 :smodel 4:|w:GTR +> x3 +> MutSel +> dNdS(w)| +> M3

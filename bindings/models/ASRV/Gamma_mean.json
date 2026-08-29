@@ -1,8 +1,8 @@
 {
-    "name": "Rates.Gamma_median",
-    "deprecated-synonyms": ["Rates.gamma_median", "Rates.GammaMedian"],
+    "name": "ASRV.Gamma_mean",
+    "deprecated-synonyms": ["Rates.Gamma_mean", "Rates.gamma_mean", "Rates.GammaMean"],
     "result_type": "DiscreteDist<CTMC<a>>",
-    "call": "SModel.gammaRatesMedianOn(@alpha,@n,@submodel)",
+    "call": "SModel.gammaRatesMeanOn(@alpha,@n,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -23,9 +23,9 @@
             "description": "The shape parameter for the Gamma distribution"
         }
     ],
-    "examples": ["GTR +> Rates.Gamma_median(4) +> Inv"],
-    "title": "The median-discretized Gamma rate heterogeneity model",
-    "description": "This model uses equal-probability categories represented by their medians to approximate Gamma-distributed rates across sites. The rates are normalized to have mean one when applied to the substitution model.",
+    "examples": ["GTR +> ASRV.Gamma_mean(4) +> Inv"],
+    "title": "The conditional-mean Gamma rate heterogeneity model",
+    "description": "This model divides a unit-mean Gamma distribution into equal-probability categories and represents each category by its conditional mean.",
     "citation":{"type": "article",
                 "title": "Maximum likelihood phylogenetic estimation from DNA sequences with variable rates over sites: approximate methods",
                 "year": "1994",

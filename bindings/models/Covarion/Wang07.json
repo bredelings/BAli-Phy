@@ -48,6 +48,6 @@
         }
     ],
     "description": "The WSSR covarion model implements both switching between ON/OFF states, and switching between classes.",
-    "examples": ["GTR +> Rates.Gamma +> Covarion.Wang07","GTR +> Rates.Free +> Covarion.Wang07"],
+    "examples": ["GTR +> ASRV.Gamma +> Covarion.Wang07","GTR +> ASRV.Free +> Covarion.Wang07"],
     "extract": "all"
 }

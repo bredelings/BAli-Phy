@@ -3,6 +3,7 @@
 ## Breaking changes
 
 - Capitalize models and distributions. (for example, normal -> Normal, gtr -> GTR)
+- Rename the Rates.* models to ASRV.*. The old names remain as deprecated synonyms.
 - Rename bp-analyze -> bpy-summarize.
 - Rename bali-subsample -> bpy-subsample.
 

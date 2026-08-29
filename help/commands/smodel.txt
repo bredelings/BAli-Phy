@@ -35,12 +35,12 @@ partition cannot be referenced twice.
    
    --smodel=HKY85
    
-   -S 'GTR +> Rates.Gamma +> Inv'
+   -S 'GTR +> ASRV.Gamma +> Inv'
    
-   -S '1,3:HKY85 +> Rates.Gamma(n=4) +> Inv' -S '2:LG +> Rates.Gamma +> Inv'
+   -S '1,3:HKY85 +> ASRV.Gamma(n=4) +> Inv' -S '2:LG +> ASRV.Gamma +> Inv'
    
 In the last example, the substitution models of partitions 1 and 3 are linked.
 
 # See also:
 
-   parameters, priors, HKY85, GTR, Rates.Gamma, Inv
+   parameters, priors, HKY85, GTR, ASRV.Gamma, Inv

@@ -22,7 +22,7 @@ The properties map is manually constructed instead of being coming along with
 the model:
 
     let result = gtr' sym pi alpha +> unitMixture +> SModel.gammaRates alpha_2 4 +> plusInv p_inv
-    let loggers = ["GTR:sym" %=% sym, "GTR:pi" %=% pi, "Rates.Gamma:alpha" %=% alpha_2, "Inv:p_inv" %=% p_inv]
+    let loggers = ["GTR:sym" %=% sym, "GTR:pi" %=% pi, "ASRV.Gamma:alpha" %=% alpha_2, "Inv:p_inv" %=% p_inv]
     let properties = M.fromList [("rate", rateProperty $ scaleTo 1 result)]
     return (result, loggers, properties)
 

@@ -69,8 +69,8 @@
 		 "journal": {"name": "Mol. Biol. Evol.", "volume": "32", "number": "5", "pages": "1365--1371"},
 		 "link": [{"url":"https://doi.org/10.1093/molbev/msv035"}]
 		},
-    "examples": ["BUSTED +> Rates.Gamma(n=3)                              // with synonymous rate variation (= BUSTED-S)",
-		 "BUSTED +> Rates.Free",
+    "examples": ["BUSTED +> ASRV.Gamma(n=3)                              // with synonymous rate variation (= BUSTED-S)",
+		 "BUSTED +> ASRV.Free",
 		 "|w: GTR +> MNM +> dNdS(omega=w)| +> BUSTED              // with multi-nucleotide mutations",
 		 "|w: GTR +> x3 +> dNdS(omega=w) +> MutSel| +> BUSTED    // with mutation-selection-balance"],
     "see": ["BranchSiteMixture","BUSTED_S"]

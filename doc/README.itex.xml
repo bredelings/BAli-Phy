@@ -471,7 +471,7 @@ You can install <application>R</application> via Homebrew:
         <filename>C:\Users\user\data.fasta</filename>.  PowerShell also accepts forward
         slashes in many paths.</para>
       <para>Use double quotes around model expressions on Windows.  For example:</para>
-<screen><prompt>PS&gt;</prompt> <userinput>bali-phy sequences.fasta -S "GTR +&gt; Rates.Gamma"</userinput></screen>
+<screen><prompt>PS&gt;</prompt> <userinput>bali-phy sequences.fasta -S "GTR +&gt; ASRV.Gamma"</userinput></screen>
       <para>Native Windows also accepts slash forms such as <userinput>/V</userinput>,
         <userinput>/iterations:1000</userinput>, and <userinput>/test</userinput>.  The Unix forms
         remain valid on Windows and are used throughout this manual because they also work on
@@ -494,10 +494,10 @@ You can install <application>R</application> via Homebrew:
     <screen><prompt>%</prompt> <userinput>cp &install.path;/share/doc/bali-phy/examples/5S-rRNA/25.fasta .</userinput></screen>
     On native Windows, use the PowerShell or Command Prompt copy command from <xref linkend="tests"/> instead.</para>
     <para>We will now start 4 simultaneous runs.  On Linux, macOS, or WSL2, use:
-    <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
-<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput>
+<prompt>%</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000 &amp; </userinput></screen>
     These runs will all execute at the same time because of the
     "<userinput>&amp;</userinput>".  Each run will create a unique directory of the form
     <filename>25-<replaceable>number</replaceable></filename> to store its results.</para>
@@ -507,7 +507,7 @@ You can install <application>R</application> via Homebrew:
       <filename>25.fasta</filename>.  Run the following command once in each terminal.
       Separate terminals keep each chain's progress and errors visible and allow each chain
       to be interrupted independently.</para>
-<screen><prompt>PS&gt;</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; Rates.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000</userinput></screen>
+<screen><prompt>PS&gt;</prompt> <userinput>bali-phy 25.fasta -S "GTR +&gt; ASRV.Free +&gt; Covarion.Huelsenbeck02" --iterations=1000</userinput></screen>
 
     <para>On Linux, macOS, or WSL2, you can use the program <userinput>top</userinput> to
       verify that four copies of <userinput>bali-phy</userinput> are running:
@@ -636,7 +636,7 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S TN93 -I RS07</userinput></screen>
     Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.  You will generally need to write the substitution model inside single quotes unless it is just a single word.
 
-    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'LG&nbsp;+>&nbsp;Rates.Gamma&nbsp;+>&nbsp;Inv'</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'LG&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Inv'</userinput></screen>
     Every short option like <userinput>-S</userinput> has an equivalent long option like <userinput>--smodel</userinput>.
     Long option names must be written in full.  For example, use
     <userinput>--iterations</userinput> (or <userinput>-i</userinput>), not the old abbreviation
@@ -670,7 +670,7 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 :align ITS2.fasta
 
 # linked substitution model for 1st and 3rd partition
-:smodel 1,3:TN93&nbsp; +> &nbsp;Rates.Free(n=3)
+:smodel 1,3:TN93&nbsp; +> &nbsp;ASRV.Free(n=3)
 
 # substitution model for 2nd partition
 :smodel 2:TN93
@@ -2149,7 +2149,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
             <listitem><userinput>M3</userinput> is equivalent to <userinput>|w: GY94(w)| +> M3</userinput>.</listitem>
             <listitem><userinput>M3_test</userinput> is equivalent to <userinput>|w: GY94(w)| +> M3_test</userinput>.</listitem>
 	    <listitem><userinput>BUSTED</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture</userinput>.</listitem>
-	    <listitem><userinput>BUSTED_S</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture +> Rates.Gamma(n=3)</userinput>.</listitem>
+	    <listitem><userinput>BUSTED_S</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture +> ASRV.Gamma(n=3)</userinput>.</listitem>
 	  </itemizedlist>
 	  </para>
 
@@ -2504,7 +2504,7 @@ If the genetic code is not specified, then the standard code is used:
 	  <tbody>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.Gamma</userinput></entry>
+	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.Gamma</userinput></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the Gamma distribution</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF00160154">
@@ -2515,7 +2515,7 @@ If the genetic code is not specified, then the standard code is used:
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.LogNormal</userinput></para>
+		<para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.LogNormal</userinput></para>
 	      </entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the log-normal distribution</para>
@@ -2523,7 +2523,7 @@ If the genetic code is not specified, then the standard code is used:
 	    </row>
 
 	    <row>
-	      <entry><para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Rates.Free</userinput></para></entry>
+	      <entry><para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.Free</userinput></para></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+2($n$-1)</entry>
 	      <entry><para>Sites fall in one of $n$ categories. Each category has its own rate.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/139.2.993">
@@ -2584,11 +2584,11 @@ If the genetic code is not specified, then the standard code is used:
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Rates.Gamma&nbsp;+>&nbsp;Covarion.Huelsenbeck02</userinput></para>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Huelsenbeck02</userinput></para>
                 <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Huelsenbeck02</userinput></para>
               </entry>
 	      <entry>
-                <para>df(<replaceable>Q+Rates.Gamma</replaceable>)+2</para>
+                <para>df(<replaceable>Q+ASRV.Gamma</replaceable>)+2</para>
                 <para>df(<replaceable>submodel</replaceable>)+2</para>
               </entry>
 	      <entry>
@@ -2601,11 +2601,11 @@ If the genetic code is not specified, then the standard code is used:
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Rates.Gamma&nbsp;+>&nbsp;Covarion.Galtier01</userinput></para>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Galtier01</userinput></para>
                 <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Galtier01</userinput></para>
               </entry>
 	      <entry>
-                <para>df(<replaceable>Q+Rates.Gamma</replaceable>)+2</para>
+                <para>df(<replaceable>Q+ASRV.Gamma</replaceable>)+2</para>
                 <para>df(<replaceable>submodel</replaceable>)+2</para>
               </entry>
 	      <entry>
@@ -2618,11 +2618,11 @@ If the genetic code is not specified, then the standard code is used:
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Rates.Gamma&nbsp;+>&nbsp;Covarion.Wang07</userinput></para>
+                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Wang07</userinput></para>
                 <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Wang07</userinput></para>
               </entry>
 	      <entry>
-                <para>df(<replaceable>Q+Rates.Gamma</replaceable>)+4</para>
+                <para>df(<replaceable>Q+ASRV.Gamma</replaceable>)+4</para>
                 <para>df(<replaceable>submodel</replaceable>)+4</para>
               </entry>
 	      <entry>
@@ -2639,8 +2639,8 @@ If the genetic code is not specified, then the standard code is used:
         <note>
           Note that the obvious way to combine the Tuffley-Steel model with rate heterogeneity is wrong:
           <itemizedlist>
-            <listitem><para><userinput>Q +> Covarion.TuffleySteel98 +> Rates.Gamma</userinput>: This is incorrect.  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
-            <listitem><para><userinput>Q +> Rates.Gamma +> Covarion.Huelsenbeck02</userinput>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
+            <listitem><para><userinput>Q +> Covarion.TuffleySteel98 +> ASRV.Gamma</userinput>: This is incorrect.  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
+            <listitem><para><userinput>Q +> ASRV.Gamma +> Covarion.Huelsenbeck02</userinput>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
           </itemizedlist>
         </note>
       </para>
@@ -2748,10 +2748,10 @@ A value must be given for each parameter, unless the parameter has a default val
   <section><info><title>Model stacking and '<userinput>+></userinput>' notation</title></info>
   <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG + F + G4 + I</userinput> starts with the WAG amino-acid model, and places several modifiers, like " + G4" on the right.</para>
   <para>BAli-Phy follows this convention by treating <userinput>A +> B</userinput> as an abbreviation for <userinput>B(A)</userinput>.  When there are multiple '<userinput>+></userinput>' symbols they associate to the left, so that <userinput>A +> B +> C</userinput> is understood to mean <userinput>(A +> B) +> C</userinput>, which is equivalent to <userinput>C(B(A))</userinput>.  For example:
-<programlisting>HKY85 +> Rates.Gamma              // rewritten to Rates.Gamma(HKY85)
+<programlisting>HKY85 +> ASRV.Gamma              // rewritten to ASRV.Gamma(HKY85)
 HKY85 +> Inv                      // rewritten to Inv(HKY85)
 WAG +> F                          // rewritten to F(WAG)
-WAG +> F +> Rates.Gamma +> Inv    // rewritten to Inv(Rates.Gamma(F(WAG)))
+WAG +> F +> ASRV.Gamma +> Inv    // rewritten to Inv(ASRV.Gamma(F(WAG)))
 </programlisting>
 This allows a simple method for combining models, when one model is an argument to another model.
 </para>
@@ -2793,9 +2793,9 @@ distributions and functions.  For example, the distribution <userinput>IID</user
 
   <section xml:id="default_values"><info><title>Default values and default priors</title></info>
   <para>
-Some function arguments have default values.  For example, the <userinput>Rates.Gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
-<programlisting>HKY85 +> Rates.Gamma(n=4) +> Inv
-HKY85 +> Rates.Gamma +> Inv</programlisting></para>
+Some function arguments have default values.  For example, the <userinput>ASRV.Gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
+<programlisting>HKY85 +> ASRV.Gamma(n=4) +> Inv
+HKY85 +> ASRV.Gamma +> Inv</programlisting></para>
 
   <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>HKY85</userinput> has a default value of <userinput>~LogNormal(log(2),0.25)</userinput>, so the following are equivalent:
 <programlisting>HKY85(kappa~LogNormal(log(2),0.25))
@@ -3652,10 +3652,10 @@ The command <command>bali-phy</command> and its associated tools should then be 
       
       <qandaset>
 	<qandaentry>
-	  <question><para>I tried to use <userinput>-S LG+>Rates.Gamma(6)</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
+	  <question><para>I tried to use <userinput>-S LG+>ASRV.Gamma(6)</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
-	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+>Rates.Gamma(6)</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
-	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S 'LG +> Rates.Gamma(6)'</userinput>.  This will keep the C-shell from interfering with your command.
+	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+>ASRV.Gamma(6)</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
+	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S 'LG +> ASRV.Gamma(6)'</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>
 	</qandaentry>

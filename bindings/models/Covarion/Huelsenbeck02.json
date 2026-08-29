@@ -46,7 +46,7 @@
 	}
     ],
     "description": "The Huelsenbeck covarion model adds among-site rate heterogeneity to the Tuffley-Steel covarion model.  However, instead of scaling the Tuffley-Steel covarion rate matrix by factor F[i] for bin i, the Huelsenbeck approach involves scaling the Q matrix for bin i by F[i] before constructing the Tuffley-Steel rate matrix.  This has the benefit that sites with faster evolution do not switch between ON and OFF at a faster rate.",
-    "examples": ["GTR +> Rates.Gamma +> Covarion.Huelsenbeck02","GTR +> Rates.Free +> Covarion.Huelsenbeck02"],
+    "examples": ["GTR +> ASRV.Gamma +> Covarion.Huelsenbeck02","GTR +> ASRV.Free +> Covarion.Huelsenbeck02"],
     "see": ["ts98"],
     "extract": "all"
 }

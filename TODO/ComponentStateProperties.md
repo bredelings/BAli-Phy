@@ -101,7 +101,7 @@ How do we handle the case of "rates"?
 
  * Add a map from Text -> Properties to each SModel.Markov model.  
 
- * Make Rates.Gamma create a "rate" property for each component.
+ * Make ASRV.Gamma create a "rate" property for each component.
 
  * Make dNdS create a "dNdS" property for each component
 

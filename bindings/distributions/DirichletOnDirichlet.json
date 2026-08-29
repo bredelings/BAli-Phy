@@ -24,5 +24,5 @@
     ],
     "title": "Free rates model",
     "description":"Rate heterogeneity model where the rate and frequency of each category can be estimated from the data.",
-    "examples": ["HKY85 +> Rates.Free(n=3)"]
+    "examples": ["HKY85 +> ASRV.Free(n=3)"]
 }

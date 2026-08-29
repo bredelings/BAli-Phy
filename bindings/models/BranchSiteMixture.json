@@ -33,6 +33,6 @@
 		 "link": [{"url":"https://doi.org/10.1093/molbev/msv035"}]
 		},
     "examples": ["|w: GTR +> x3 +> dNdS(w)| +> M3 +> BranchSiteMixture                       // = BUSTED",
-		 "|w: GTR +> x3 +> dNdS(w)| +> M3 +> BranchSiteMixture +> Rates.Gamma(n=3)   // = BUSTED-S"],
+		 "|w: GTR +> x3 +> dNdS(w)| +> M3 +> BranchSiteMixture +> ASRV.Gamma(n=3)   // = BUSTED-S"],
     "see": ["BUSTED","BUSTED_S"]
 }

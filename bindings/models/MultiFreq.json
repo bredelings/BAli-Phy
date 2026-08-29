@@ -43,5 +43,5 @@
         }
     ],
     "description": "A non-equilibrium model where each node selects from a weighted collection of n frequences.",
-    "examples": ["|pi:TN93(pi=pi)| +> MultiFreq(n=3) +> Rates.Gamma"]
+    "examples": ["|pi:TN93(pi=pi)| +> MultiFreq(n=3) +> ASRV.Gamma"]
 }

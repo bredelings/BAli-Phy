@@ -58,12 +58,12 @@ config.txt:
 :align intron3.fasta
 :align exon4.fasta
 
-:smodel 1,3,5,7:GTR+>Rates.Free(n=4)
+:smodel 1,3,5,7:GTR+>ASRV.Free(n=4)
 :imodel 1,3,5,7:none
 :scale  1,3,5,7:
 
 :imodel 2,4,6:RS07
-:smodel 2,4,6:GTR+>Rates.Free(n=4)
+:smodel 2,4,6:GTR+>ASRV.Free(n=4)
 :scale  2,4,6:
 
 9. run bali-phy with codon model on exons
@@ -82,7 +82,7 @@ config2.txt:
 :align intron3.fasta
 :align coding.fasta
 
-:smodel 1,2,3:GTR +> Rates.Free(n=4)
+:smodel 1,2,3:GTR +> ASRV.Free(n=4)
 :imodel 1,2,3:RS07
 
 :smodel 4:|w:GTR +> x3 +> MutSel +> dNdS(w)| +> M3
