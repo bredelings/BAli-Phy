@@ -193,7 +193,7 @@ Now lets use the analysis script to run all the summaries and make a report:
 % bpy-summarize 25-muscle-1/ 25-muscle-2/
 % firefox Results/index.html &#38;
 This script runs <application>statreport</application> and <application>trees-consensus</application> for you.  Take a look at what commands were run:
-% less Results/bp-summarize.log
+% less Results/commands.log
 </para>
 </section>
 </section>

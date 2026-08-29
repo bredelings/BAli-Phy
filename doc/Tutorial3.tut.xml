@@ -252,7 +252,7 @@ Now lets use the analysis script to run all the summaries and make an HTML repor
 % bpy-summarize ITS1-5.8S-ITS2-{1,2}/
 % firefox Results/index.html &#38;
 This script runs <application>statreport</application> and <application>trees-consensus</application> for you.  Take a look at what commands were run:
-% less Results/bp-summarize.log
+% less Results/commands.log
 The report should give us an indication of
 <orderedlist>
   <listitem>What is the majority consensus tree?</listitem>

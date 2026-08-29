@@ -27,7 +27,7 @@ ancestral and alignment-difference pages.
 
 The report is created at **Results/index.html**.
 
-A log of all sub-commands is created at **Results/bp-summarize.log**.
+A log of all sub-commands is created at **Results/commands.log**.
 
 # OPTIONS:
 **-h**, **--help**
@@ -43,7 +43,7 @@ A log of all sub-commands is created at **Results/bp-summarize.log**.
 
 
 # REPORTING BUGS:
-See **Results/bp-summarize.log** to check if any sub-commands failed.
+See **Results/commands.log** to check if any sub-commands failed.
 
  BAli-Phy online help: <http://www.bali-phy.org/docs.php>.
 
