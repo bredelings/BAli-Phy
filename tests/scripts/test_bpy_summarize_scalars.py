@@ -139,6 +139,14 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
         self.assertIn('href="#mixing"', navigation)
         self.assertIn('href="#analysis"', navigation)
 
+        header = analysis.html_header("report")
+        self.assertIn("position: sticky;", header)
+        self.assertIn("overflow-x: auto;", header)
+        self.assertIn("#topbar #menu a:focus-visible", header)
+        self.assertNotIn("position: fixed;", header)
+        self.assertNotIn(":target:before", header)
+        self.assertNotIn("//", header)
+
 
 if __name__ == "__main__":
     unittest.main()

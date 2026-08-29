@@ -1987,46 +1987,63 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       .backlit2 td {padding-right: 1.0em;}
 
 #topbar {
-	background-color: rgb(201,217,233);
-	margin: 0;
-	padding: 0.5em;
-	display: table;
-        width: 100%;
-        position: fixed;
+        align-items: center;
+        background-color: rgb(201,217,233);
+        border-bottom: 1px solid rgb(155,177,199);
+        box-shadow: 0 1px 4px rgb(0 0 0 / 18%);
+        box-sizing: border-box;
+        display: flex;
+        gap: 0.75em;
+        margin: 0;
+        padding: 0.45em 0.75em;
+        position: sticky;
         top: 0;
+        width: 100%;
+        z-index: 100;
 }
 
 #topbar #menu {
-//	font-size: 90%;
-	display: table-cell;
-	text-align: right;
-        // Leave space for the menubar
-        padding-right: 0.75em;
+        display: flex;
+        flex: 1 1 auto;
+        gap: 0.35em;
+        min-width: 0;
+        overflow-x: auto;
+        padding: 0.1em 0;
+        scrollbar-width: thin;
 }
+
+#topbar #menu a {
+        background-color: rgb(235,242,248);
+        border: 1px solid rgb(139,166,192);
+        border-radius: 0.35em;
+        color: rgb(25,63,97);
+        flex: 0 0 auto;
+        padding: 0.3em 0.6em;
+        text-decoration: none;
+        white-space: nowrap;
+}
+
+#topbar #menu a:first-child {margin-left: auto;}
+#topbar #menu a:hover {background-color: white; border-color: rgb(73,113,150);}
+#topbar #menu a:focus-visible {outline: 2px solid rgb(25,79,128); outline-offset: 2px;}
+
 #topbar #path {
-	font-weight: bold;
-	display: table-cell;
-	text-align: left;
-	white-space: nowrap;
+        font-weight: bold;
+        flex: 0 0 auto;
+        white-space: nowrap;
 }
 
-      .content {margin:1em; margin-top: 3em}
+      html {scroll-padding-top: 4em;}
+      .content {margin:1em;}
       .backlit td {background: rgb(220,220,220);}
-
-      :target:before {
-        content:"";
-        display:block;
-        height:2em; /* fixed header height*/
-        margin:-2em 0 0; /* negative fixed header height */
-      }
 
       h1 {font-size: 150%;}
       h2 {font-size: 130%; margin-top:2.5em; margin-bottom: 1em}
-      h3 {font-size: 110%; margin-bottom: 0.2em}// margin-top: 0.3em}
+      h3 {font-size: 110%; margin-bottom: 0.2em;}
 
       ul {margin-top: 0.4em;}
 
-      .center td {text-align: center};
+      .center td {text-align: center;}
 
       *[title] {cursor:help;}
       a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
