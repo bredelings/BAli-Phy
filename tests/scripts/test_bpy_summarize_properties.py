@@ -157,6 +157,26 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             self.assertEqual(analysis.positive_selection_reports[1]["total_samples"], 100)
             self.assertEqual(analysis.positive_selection_reports[1]["rows"][0]["symbol"], "AAA")
 
+            analysis.get_column_name_map = lambda: {
+                "S1/M3_test:LogOddsPosSelection": "M3_test:LogOddsPosSelection",
+            }
+            analysis.get_smodel_indices = lambda: [0]
+            analysis.positive_selection_statistics = {
+                "M3_test:LogOddsPosSelection": {
+                    "posterior_probability": "0.5702",
+                    "log_odds": "0.2825",
+                },
+            }
+            (directory / "P1.initial.html").write_text("", encoding="utf-8")
+            section = analysis.section_positive_selection()
+            self.assertIn('href="#positive-selection-P1">P1</a>', section)
+            self.assertIn('href="#S1">S1</a>', section)
+            self.assertIn("Conditioned on <code>positiveSelectionInModel = true</code>", section)
+            self.assertIn('<td class="site-probability">0.750</td>', section)
+            self.assertIn('<td class="site-dnds-pm">&plusmn;</td>', section)
+            self.assertIn('href="P1.positive-selection.tsv">Complete TSV table</a>', section)
+            self.assertIn('href="P1.initial.html">Alignment viewer</a>', section)
+
     # Refuse to pool a partition when only some chains logged properties.
     def test_skips_partial_chain_property_logs(self):
         with tempfile.TemporaryDirectory() as directory:

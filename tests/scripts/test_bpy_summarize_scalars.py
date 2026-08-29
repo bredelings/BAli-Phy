@@ -124,6 +124,7 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
         analysis = Analysis.__new__(Analysis)
         analysis.has_model = lambda: True
         analysis.has_parameters = lambda: True
+        analysis.has_positive_selection = lambda: True
         analysis.has_trees = lambda: True
         analysis.has_alignments = lambda: True
         analysis.has_code = lambda: True
@@ -132,6 +133,7 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
         self.assertIn('<nav id="topbar" aria-label="Report sections">', navigation)
         self.assertIn('<a href="#data">Overview</a>', navigation)
         self.assertIn('<a href="#topology">Trees</a>', navigation)
+        self.assertIn('<a href="#positive-selection">Positive selection</a>', navigation)
         self.assertIn('<a href="#mixing">Convergence &amp; mixing</a>', navigation)
         self.assertIn('<a href="#analysis">Run details</a>', navigation)
         self.assertIn('<a href="#models">Model &amp; priors</a>', navigation)
@@ -140,6 +142,7 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
 
         analysis.has_model = lambda: False
         analysis.has_parameters = lambda: False
+        analysis.has_positive_selection = lambda: False
         analysis.has_trees = lambda: False
         analysis.has_alignments = lambda: False
         analysis.has_code = lambda: False
@@ -147,6 +150,7 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
         navigation = analysis.topbar()
         self.assertNotIn('href="#data"', navigation)
         self.assertNotIn('href="#parameters"', navigation)
+        self.assertNotIn('href="#positive-selection"', navigation)
         self.assertNotIn('href="#topology"', navigation)
         self.assertNotIn('href="#alignment"', navigation)
         self.assertNotIn('href="#models"', navigation)
