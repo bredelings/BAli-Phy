@@ -298,7 +298,7 @@ DenseVector<double> compute_stationary_freqs(const DenseMatrix<double>& Q)
 
     double err2 = (QQ * epi - b).cwiseAbs().sum();
 
-    if (log_verbose and (err > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol))
+    if ((log_verbose >= 2) and (err > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol))
     {
         std::cerr<<"compute_stationary_freqs: err1 = "<<err<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
     }
@@ -552,7 +552,7 @@ DenseVector<double> equilibriumLimit(std::span<const double> pi0,
     // Check that all the rates are 0.
     double err2 = (epi.transpose() * eQ).cwiseAbs().maxCoeff();
 
-    if (log_verbose and (err1 > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol))
+    if ((log_verbose >= 2) and (err1 > tol or std::abs(err_neg) > tol or std::abs(1 - sum) > tol or err2 > tol))
     {
         std::cerr<<"compute_stationary_freqs: maxcoeff = "<<eQ.cwiseAbs().maxCoeff()<<"   err1 = "<<err1<<"   err2 = "<<err2<<"   err_neg = "<<err_neg<<"   1-sum = "<<1-sum<<"\n";
     }
