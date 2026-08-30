@@ -1,0 +1,15 @@
+{
+    "name": "numberBranchCategories",
+    "result_type": "Int",
+    "no_log": true,
+    "call": "numberBranchCategories(@branchCats)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "branchCats",
+            "type": "IntMap<Int>",
+            "description": "The numbered category assigned to each branch."
+        }
+    ],
+    "description": "Return the number of consecutively numbered branch categories."
+}

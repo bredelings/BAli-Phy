@@ -15,7 +15,8 @@
         {
             "name": "omegas",
             "type": "List<Double>",
-            "description": "Omega for branch categories #0, #1, and so on."
+            "default_value": "~IID(numberBranchCategories(@branchCats),LogLaplace(-1,1))",
+            "description": "Independent omega values for branch categories #0, #1, and so on."
         },
         {
             "name": "branchCats",
@@ -25,9 +26,9 @@
         }
     ],
     "extract": "all",
-    "description": "Use a separately unit-normalized codon model for each numbered branch category. Branch category #i selects omegas[i]. The models constructed for different omegas must share equilibrium frequencies, and the topology must be fixed when categories are read from tree annotations.",
+    "description": "Use a separately unit-normalized codon model for each numbered branch category. The first omega applies to category #0, the second to category #1, and so on. A branch without a foreground annotation belongs to category #0, while [&foreground=i] selects category #i. When omegas is omitted, categories must be numbered consecutively from zero and each receives an independent omega. The models constructed for different omegas must share equilibrium frequencies, and the topology must be fixed when categories are read from tree annotations.",
     "examples": [
-        "BranchModel(omegas=[0.2,1.0])",
+        "BranchModel",
         "BranchModel(omegas=[0.2,1.0,2.0])"
     ]
 }

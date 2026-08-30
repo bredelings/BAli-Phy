@@ -38,7 +38,7 @@ sameMatrix model1 model2 =
     and $ zipWith near (toList $ flatten $ CoreMarkov.getQ model1)
                        (toList $ flatten $ CoreMarkov.getQ model2)
 
--- Check category selection, independent normalization, and prefixed input properties.
+-- Check category counting, category selection, independent normalization, and prefixed properties.
 main = do
   let categories = IntMap.fromList [(0, 0), (1, 2), (2, 1)]
       omegas = [0.25, 1.0, 3.0]
@@ -51,7 +51,9 @@ main = do
       expectedModels = [scaleTo 1 (modelForOmega omega) | omega <- omegas]
       properties = getProperties (SModelOnTree () model)
 
-  putStrLn $ show [IntMap.toList actualCategories == IntMap.toList categories, near modelRate 1.0]
+  putStrLn $ show [numberBranchCategories categories == 3,
+                   IntMap.toList actualCategories == IntMap.toList categories,
+                   near modelRate 1.0]
   putStrLn $ show $ zipWith sameMatrix models expectedModels
   putStrLn $ show [propertyValue "branch0-dNdS" properties,
                    propertyValue "branch1-dNdS" properties,

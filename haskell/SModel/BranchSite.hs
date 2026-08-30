@@ -5,6 +5,7 @@ import SModel.MixtureModel
 import SModel.BranchModel
 import Tree
 import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
 import qualified Data.Text as T
 
 -- No Attribute
@@ -15,6 +16,20 @@ getForeground (Just Nothing) = 1
 getForeground (Just (Just text)) = read (T.unpack text) :: Int
 
 foregroundBranches tree key = edgeAttributes tree (T.pack key) getForeground
+
+-- Validate and count branch categories so a default omega list has one entry per category.
+numberBranchCategories :: IntMap.IntMap Int -> Int
+numberBranchCategories branchCats =
+    case categories of
+      [] -> error "numberBranchCategories: expected at least one branch category"
+      category:_ | category < 0 ->
+          error ("numberBranchCategories: branch category " ++ show category ++ " is negative")
+      _ | categories /= [0..last categories] ->
+          error ("numberBranchCategories: branch categories must be numbered consecutively from 0; found " ++
+                 show categories)
+      _ -> length categories
+  where
+    categories = IntSet.toAscList $ IntSet.fromList $ IntMap.elems branchCats
 
 -- Builds one separately normalized model per numbered branch category and prefixes its properties.
 -- The models must share equilibrium frequencies because BranchModel uses those of its first model.
