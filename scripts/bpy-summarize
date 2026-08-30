@@ -1361,6 +1361,19 @@ class Analysis(object):
             })
         return support
 
+    # Identify substitution models with an explicit positive-selection selector from their
+    # complete logged-field names, independently of which state the selector happened to visit.
+    def positive_selection_selector_models(self):
+        column_name_map = self.get_column_name_map()
+        if column_name_map is None:
+            return None
+        selector_models = set()
+        for long_name in column_name_map:
+            match = re.fullmatch(r'S([1-9][0-9]*)/.+:LogOddsPosSelection', long_name)
+            if match is not None:
+                selector_models.add(int(match.group(1)))
+        return selector_models
+
     def has_positive_selection(self):
         return bool(getattr(self, "positive_selection_reports", [])) or bool(self.positive_selection_model_support())
 
@@ -2457,10 +2470,16 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
     def section_positive_selection(self):
         section = """\
 <h2 class="clear"><a class="anchor" name="positive-selection"></a>Positive selection</h2>
+"""
+        reports = getattr(self, "positive_selection_reports", [])
+        if any(report["conditioned"] and 0 < report["retained_samples"] < report["total_samples"]
+               for report in reports):
+            section += """\
 <p>The overall posterior allows positive selection to be absent; the posterior with selection
 assumes it is included in the model.</p>
 """
         model_support = self.positive_selection_model_support()
+        selector_models = self.positive_selection_selector_models()
         if model_support:
             section += """\
 <h3>Support for positive selection in the model</h3>
@@ -2486,7 +2505,7 @@ assumes it is included in the model.</p>
             section += "</table>\n"
 
         anchored_partitions = set()
-        for report in getattr(self, "positive_selection_reports", []):
+        for report in reports:
             partition = report["partition"]
             property_name = html.escape(report["property"])
             if partition not in anchored_partitions:
@@ -2508,14 +2527,20 @@ assumes it is included in the model.</p>
             has_distinct_selection_posterior = (
                 report["conditioned"] and 0 < retained_samples < total_samples
             )
+            fixed_selection = None
+            if (selector_models is not None and smodel_index is not None
+                    and smodel_index + 1 not in selector_models and report["conditioned"]
+                    and total_samples > 0):
+                if retained_samples == total_samples:
+                    fixed_selection = True
+                elif retained_samples == 0:
+                    fixed_selection = False
 
             section += "<p>"
-            if report["conditioned"] and total_samples > 0:
-                inclusion_probability = retained_samples / total_samples
-                section += (
-                    "Pr(positive selection is in the model): "
-                    f"{inclusion_probability:.3f}<br>\n"
-                )
+            if fixed_selection is True:
+                section += "Positive selection is included in this model.<br>\n"
+            elif fixed_selection is False:
+                section += "Positive selection is not included in this model.<br>\n"
 
             if report["conditioned"] and total_samples > 0 and retained_samples == total_samples:
                 count_text = str(model_averaged_count)

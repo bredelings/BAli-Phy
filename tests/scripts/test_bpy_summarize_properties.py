@@ -189,7 +189,8 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             self.assertIn('href="#positive-selection-P1">P1</a>', section)
             self.assertIn('href="#S1">S1</a>', section)
             self.assertIn("The overall posterior allows positive selection to be absent", section)
-            self.assertIn("Pr(positive selection is in the model): 0.600", section)
+            self.assertNotIn("Pr(positive selection is in the model):", section)
+            self.assertNotIn("Positive selection is included in this model.", section)
             self.assertIn(
                 "Columns with Pr(dN/dS &gt; 1) &gt; 0.5: 0 overall, 1 with selection",
                 section,
@@ -224,7 +225,9 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             paired_report["retained_samples"] = 100
             paired_report["model_averaged_count"] = 1
             all_true_section = analysis.section_positive_selection()
-            self.assertIn("Pr(positive selection is in the model): 1.000", all_true_section)
+            self.assertNotIn("Pr(positive selection is in the model):", all_true_section)
+            self.assertNotIn("Positive selection is included in this model.", all_true_section)
+            self.assertNotIn("The overall posterior allows positive selection to be absent", all_true_section)
             self.assertIn("Columns with Pr(dN/dS &gt; 1) &gt; 0.5: 1</p>", all_true_section)
             self.assertIn("Overall posterior</th>", all_true_section)
             self.assertNotIn("Posterior with selection</th>", all_true_section)
@@ -234,7 +237,8 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             paired_report["conditioned_count"] = 0
             paired_report["rows"] = []
             zero_true_section = analysis.section_positive_selection()
-            self.assertIn("Pr(positive selection is in the model): 0.000", zero_true_section)
+            self.assertNotIn("Pr(positive selection is in the model):", zero_true_section)
+            self.assertNotIn("Positive selection is not included in this model.", zero_true_section)
             self.assertIn("Columns with Pr(dN/dS &gt; 1) &gt; 0.5: 0 overall", zero_true_section)
 
             analysis.positive_selection_reports = [unconditional_report]
@@ -243,6 +247,25 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             self.assertIn("Columns with Pr(dN/dS &gt; 1) &gt; 0.5: 0 overall", unconditional_section)
             self.assertIn("Overall posterior</th>", unconditional_section)
             self.assertNotIn("Posterior with selection</th>", unconditional_section)
+
+            analysis.get_column_name_map = lambda: {"S1/M2a:posW": "M2a:posW"}
+            analysis.positive_selection_reports = [paired_report]
+            paired_report["retained_samples"] = 100
+            paired_report["total_samples"] = 100
+            paired_report["model_averaged_count"] = 1
+            paired_report["rows"] = unconditional_report["rows"]
+            fixed_on_section = analysis.section_positive_selection()
+            self.assertIn("Positive selection is included in this model.", fixed_on_section)
+
+            paired_report["retained_samples"] = 0
+            paired_report["model_averaged_count"] = 0
+            paired_report["rows"] = []
+            fixed_off_section = analysis.section_positive_selection()
+            self.assertIn("Positive selection is not included in this model.", fixed_off_section)
+
+            analysis.get_column_name_map = lambda: None
+            unknown_section = analysis.section_positive_selection()
+            self.assertNotIn("Positive selection is not included in this model.", unknown_section)
 
             summary_data = json.loads(summary.read_text(encoding="utf-8"))
             summary_data["conditioned"]["positiveSelectionInModel"] = {

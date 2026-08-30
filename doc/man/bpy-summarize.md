@@ -27,7 +27,8 @@ positive selection, links each support statistic to every partition using the
 corresponding substitution model, and shows up to 20 selected columns ordered by
 overall posterior probability. The posterior with selection assumes positive
 selection is included in the model. A complete TSV table and the alignment
-viewer are linked from each subsection.
+viewer are linked from each subsection. When a model has no variable selector
+and its selection status is fixed, the report states whether selection is included.
 
 The complete scalar-name mapping in `C1.log.column-map.json` allows the report
 to associate the short names in `C1.log` with substitution models and
