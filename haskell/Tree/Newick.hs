@@ -104,14 +104,22 @@ data NewickNode = NewickNode [NewickNode] (Maybe Text) Attributes (Maybe Double)
 
 data NewickTree = NewickTree Attributes NewickNode
 
+-- Parse balanced comments while preserving nested brackets in attribute values.
 comment = do
   char '['
-  result <- many $ satisfy (/= ']')
+  result <- fmap concat $ many commentPart
   char ']' <?> "']' to close comment"
-  if (head result == '&') then
-      return (Just (tail result))
-  else
-      return Nothing
+  case result of
+    '&':attributes -> return (Just attributes)
+    _              -> return Nothing
+  where
+    commentPart = nestedComment <|> fmap (:[]) (satisfy (/= ']'))
+    -- Preserve the brackets around nested content so grouped attribute values can inspect them.
+    nestedComment = do
+      char '['
+      contents <- fmap concat $ many commentPart
+      char ']' <?> "']' to close nested comment"
+      return ('[':contents ++ "]")
 
 newickSpaces = fmap makeAttributes $ fmap catMaybes $ many $ (comment <|> (satisfy isSpace >> return Nothing))
 
