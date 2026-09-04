@@ -387,21 +387,13 @@ class BPYSummarizePropertyTests(unittest.TestCase):
 
             analysis.exec_show = execute
 
-            # Provide the two streaming pipeline objects without starting processes.
-            class FakeProcess:
-                def __init__(self, command, **kwargs):
-                    self.command = command
-                    self.stdout = object()
+            # Capture the externally visible final pipeline command without starting its producers.
+            def execute_pipeline(pipeline, outfile):
+                commands.append(pipeline[-1])
+                outfile.write_text("fixture\n", encoding="utf-8")
 
-                def wait(self):
-                    return 0
-
-            original_popen = MODULE["subprocess"].Popen
-            MODULE["subprocess"].Popen = FakeProcess
-            try:
-                analysis.compute_and_draw_AU_plots()
-            finally:
-                MODULE["subprocess"].Popen = original_popen
+            analysis.exec_pipeline = execute_pipeline
+            analysis.compute_and_draw_AU_plots()
 
             gild_command = commands[0]
             draw_command = commands[1]
@@ -421,11 +413,7 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             os.utime(alignment, (base_time + 20, base_time + 20))
             os.utime(html_file, (base_time + 30, base_time + 30))
 
-            MODULE["subprocess"].Popen = FakeProcess
-            try:
-                analysis.compute_and_draw_AU_plots()
-            finally:
-                MODULE["subprocess"].Popen = original_popen
+            analysis.compute_and_draw_AU_plots()
             self.assertEqual(commands[0][0], "alignment-gild")
 
 

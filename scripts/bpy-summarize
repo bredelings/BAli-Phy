@@ -19,6 +19,7 @@ import html
 import sys
 import logging
 import shlex
+import tempfile
 from contextlib import ExitStack
 
 scores = {'multiply': 'very short/log',
@@ -1083,6 +1084,51 @@ class Analysis(object):
             exit(code)
         return out_message
 
+    # Run a streaming command pipeline, checking every stage and removing incomplete output.
+    def exec_pipeline(self, commands, outfile):
+        showcmd = " | ".join(shlex.join([str(word) for word in command]) for command in commands)
+        showcmd += f" > {shlex.quote(str(outfile))}"
+        print(showcmd, file=self.log_shell_cmds)
+
+        processes = []
+        errors = []
+        with ExitStack() as resources:
+            output = resources.enter_context(open(outfile, "wb"))
+            previous_stdout = None
+            for index, command in enumerate(commands):
+                error_output = resources.enter_context(tempfile.TemporaryFile(mode="w+", encoding="utf-8"))
+                stdout = output if index == len(commands) - 1 else subprocess.PIPE
+                process = subprocess.Popen(command, stdin=previous_stdout, stdout=stdout, stderr=error_output)
+                if previous_stdout is not None:
+                    previous_stdout.close()
+                previous_stdout = process.stdout
+                processes.append(process)
+                errors.append(error_output)
+
+            for process in reversed(processes):
+                process.wait()
+
+            error_messages = []
+            for error_output in errors:
+                error_output.seek(0)
+                error_messages.append(error_output.read())
+
+        for index, error_message in enumerate(error_messages):
+            if error_message:
+                print(f"  stage {index + 1} err: {error_message}", file=self.log_shell_cmds)
+
+        failed_stage = next((index for index, process in enumerate(processes) if process.returncode != 0), None)
+        if failed_stage is not None:
+            if path.exists(outfile):
+                os.remove(outfile)
+            code = processes[failed_stage].returncode
+            print(f"command pipeline stage {failed_stage + 1} failed: {showcmd}", file=sys.stderr)
+            print(f" exit: {code}", file=self.log_shell_cmds)
+            raise SystemExit(code)
+
+        if self.verbose:
+            print(f"\n\t{showcmd}\n")
+
     def load_analysis_properties(self):
         filename = self.outdir / "properties.json"
         if not filename.exists():
@@ -1817,17 +1863,9 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                     if self.subsample is not None and self.subsample != 1:
                         cut_cmd.append(f"--subsample={self.subsample}")
 
-                    p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
-
                     chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
-                    p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
-
                     max_cmd=['alignment-max',f'--score={score}']
-
-                    self.exec_show(max_cmd,stdin=p2.stdout, outfile=unordered)
-
-                    p1.wait()
-                    p2.wait()
+                    self.exec_pipeline([cut_cmd, chop_cmd, max_cmd], unordered)
                 self.make_ordered_alignment(name)
         print(" done.")
 
@@ -2003,11 +2041,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                         cut_cmd.append(f"--until={self.until}")
                     if self.subsample is not None and self.subsample != 1:
                         cut_cmd.append(f"--subsample={self.subsample}")
-                    p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
-
                     chop_cmd=['alignment-chop-internal','--tree',map_tree]
-                    p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
-
                     gild_cmd = [
                         'alignment-gild',
                         afile,
@@ -2016,10 +2050,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                         '--alphabet',
                         alphabet,
                     ]
-                    self.exec_show(gild_cmd, stdin=p2.stdout, outfile=AUfile)
-
-                    p1.wait()
-                    p2.wait()
+                    self.exec_pipeline([cut_cmd, chop_cmd, gild_cmd], AUfile)
 
                 html_file = self.outdir / f"{alignment}-AU.html"
                 properties = self.character_properties_for_alignment(alignment)

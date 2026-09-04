@@ -21,6 +21,24 @@ print_model_string = MODULE["print_model_string"]
 
 
 class BPYSummarizeRunTests(unittest.TestCase):
+    # A failure in any streaming stage must fail the operation even if its consumer exits normally;
+    # mocks do not exercise OS pipe behavior. Remove this if pipelines move to a shared process API.
+    def test_detects_an_upstream_pipeline_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            outfile = Path(directory) / "partial.out"
+            analysis = Analysis.__new__(Analysis)
+            analysis.log_shell_cmds = io.StringIO()
+            analysis.verbose = False
+            commands = [
+                [sys.executable, "-c", "import sys; print('partial'); sys.exit(7)"],
+                [sys.executable, "-c", "import sys; sys.stdout.write(sys.stdin.read())"],
+            ]
+
+            with self.assertRaisesRegex(SystemExit, "7"):
+                analysis.exec_pipeline(commands, outfile)
+
+            self.assertFalse(outfile.exists())
+
     # Failed redirected commands must release their output files before cleanup, which POSIX permits
     # accidentally but Windows does not. Remove this if process execution moves to a shared library.
     def test_removes_closed_outputs_after_a_command_failure(self):
