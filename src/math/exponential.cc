@@ -77,6 +77,10 @@ DenseMatrix<double> expm1(const EigenValues& solution,double t)
     Eigen::VectorXd D = solution.eigenvalues();
     int n = D.size();
 
+    // A CTMC generator has no positive eigenvalues.  getEigensystemRaw rejects a largest
+    // eigenvalue far from zero, so any accepted positive value is numerical error.
+    D = D.cwiseMin(0.0);
+
     DenseMatrix<double> E(n,n);
     Eigen::Map<MatrixE> EE(E.data(), n, n);
 
@@ -103,6 +107,10 @@ DenseMatrix<double> exp(const EigenValues& solution,double t)
     auto& O = solution.eigenvectors();
     Eigen::VectorXd D = solution.eigenvalues();
     int n = D.size();
+
+    // A CTMC generator has no positive eigenvalues.  getEigensystemRaw rejects a largest
+    // eigenvalue far from zero, so any accepted positive value is numerical error.
+    D = D.cwiseMin(0.0);
 
     // Exponentiate Eigenvalues
     D = (D.array() * t).exp();

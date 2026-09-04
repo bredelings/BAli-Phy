@@ -15,7 +15,8 @@ import Data.Maybe
 import Data.OldList ((!!), drop, length, replicate, take, zipWith)
 import Data.Ord
 import Data.Text (pack)
-import Numeric.LinearAlgebra (cols, flatten, fromList, rows, toList)
+import qualified EigenExp
+import Numeric.LinearAlgebra (cols, flatten, fromList, fromLists, rows, toList)
 import qualified Markov as CoreMarkov
 import Probability.Distribution.PhyloCTMC.FixedA.Properties
 import Probability.Distribution.PhyloCTMC.Properties
@@ -136,6 +137,20 @@ main = do
   putStrLn $ show $ toList $ CoreMarkov.equilibriumLimit (fromList [1, 0]) (CoreMarkov.getQ between)
   putStrLn $ show (rows (CoreMarkov.qExp between), cols (CoreMarkov.qExp between))
   putStrLn $ show $ all isNaN $ toList $ flatten $ CoreMarkov.qExp $ scaleBy (0.0 / 0.0) between
+
+  -- Protect large-time reversible exponentiation from a slightly positive stationary eigenvalue;
+  -- ordinary substitution-model tests do not reliably control the eigensolver's rounding direction.
+  let almostRate = fromLists [[-1 + 1.0e-12, 1], [1, -1 + 1.0e-12]]
+      equalFrequencies = fromList [0.5, 0.5]
+      stableLargeExponential =
+        case EigenExp.getEigensystem almostRate equalFrequencies of
+          Nothing -> False
+          Just eigensystem ->
+            case EigenExp.lExp eigensystem equalFrequencies 1.0e20 of
+              Nothing -> False
+              Just transition -> all (\x -> near x 0.5) $ toList $ flatten transition
+  putStrLn $ show stableLargeExponential
+
   putStrLn $ show $ take 4 modulatedValues
   putStrLn $ show $ take 4 $ drop 4 modulatedValues
 
