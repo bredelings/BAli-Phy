@@ -239,7 +239,7 @@ else
   install_data('scripts/bali-phy-pkg.py', rename: 'bali-phy-pkg', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 endif
 install_data(['scripts/compare-runs.R', 'scripts/compare-runs2.R',
-              'scripts/tree-plot.R', 'scripts/tree-plot-3D.R'],
+              'scripts/plot-SRQ.R', 'scripts/tree-plot.R', 'scripts/tree-plot-3D.R'],
              install_dir:'lib/bali-phy/libexec')
 
 install_subdir('haskell', install_dir: 'lib/bali-phy')

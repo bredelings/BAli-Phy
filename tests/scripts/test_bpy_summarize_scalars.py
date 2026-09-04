@@ -581,7 +581,7 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
                 output_time = trees.stat().st_mtime + 10
                 os.utime(output, (output_time, output_time))
 
-            scripts = []
+            calls = []
             analysis = Analysis.__new__(Analysis)
             analysis.outdir = directory
             analysis.sampled_topology_count = 2
@@ -590,16 +590,19 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
             analysis.burnin = 0
             analysis.until = None
             analysis.get_trees_files = lambda: [trees]
-            analysis.run_gnuplot = scripts.append
+            analysis.get_libexec_script = lambda filename: filename
+            analysis.Rexec = lambda script, args: calls.append((script, args))
+            analysis.run_gnuplot = lambda script: None
             analysis.exec_show = lambda *args, **kwargs: self.fail("unexpected SRQ command")
 
             with redirect_stdout(io.StringIO()):
                 analysis.compute_srq_plots()
 
-        plot_script = "\n".join(scripts)
-        self.assertIn("plot: partitions", plot_script)
-        self.assertIn("plot: c50", plot_script)
-        self.assertNotIn("$srq", plot_script)
+        self.assertEqual([call[0] for call in calls], ["plot-SRQ.R", "plot-SRQ.R"])
+        self.assertEqual([call[1][3] for call in calls], ["partitions", "c50"])
+        self.assertIn("plot: partitions", calls[0][1][2])
+        self.assertIn("plot: c50", calls[1][1][2])
+        self.assertNotIn("$srq", calls[0][1][2] + calls[1][1][2])
 
 
 class BPYSummarizeNavigationTests(unittest.TestCase):
