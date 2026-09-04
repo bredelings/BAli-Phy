@@ -598,11 +598,11 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
             with redirect_stdout(io.StringIO()):
                 analysis.compute_srq_plots()
 
-        self.assertEqual([call[0] for call in calls], ["plot-SRQ.R", "plot-SRQ.R"])
-        self.assertEqual([call[1][3] for call in calls], ["partitions", "c50"])
-        self.assertIn("plot: partitions", calls[0][1][2])
-        self.assertIn("plot: c50", calls[1][1][2])
-        self.assertNotIn("$srq", calls[0][1][2] + calls[1][1][2])
+        srq_calls = [call for call in calls if call[0] == "plot-SRQ.R"]
+        self.assertEqual([call[1][3] for call in srq_calls], ["partitions", "c50"])
+        self.assertIn("plot: partitions", srq_calls[0][1][2])
+        self.assertIn("plot: c50", srq_calls[1][1][2])
+        self.assertNotIn("$srq", srq_calls[0][1][2] + srq_calls[1][1][2])
 
 
 class BPYSummarizeNavigationTests(unittest.TestCase):

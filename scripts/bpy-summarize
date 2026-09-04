@@ -1660,22 +1660,11 @@ class Analysis(object):
                 f"Scaled Regeneration Quantile (SRQ) plot: {srq}",
                 srq,
             ])
+        script = self.get_libexec_script("plot-support-levels.R")
+        args = [self.outdir / "c-levels.plot", self.outdir / "c-levels.svg"]
         if self.subpartitions:
-            self.run_gnuplot(f"""\
-set terminal svg
-set output "{self.outdir / 'c-levels.svg'}"
-set xlabel "Log10 posterior Odds (LOD)"
-set ylabel "Supported Splits"
-set style data lines
-plot [0:][0:] '{self.outdir / "c-levels.plot"}' title 'Full Splits','{self.outdir / "extended-c-levels.plot"}' title 'Partial Splits'""")
-        else:
-            self.run_gnuplot(f"""\
-set terminal svg
-set output "{self.outdir / 'c-levels.svg'}"
-set xlabel "Log10 posterior Odds (LOD)"
-set ylabel "Supported Splits"
-plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
-""")
+            args.append(self.outdir / "extended-c-levels.plot")
+        self.Rexec(script, args)
     def compute_tree_MDS(self):
         if not self.has_topology_variation() or not self.R_exe:
             return
