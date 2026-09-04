@@ -19,6 +19,7 @@ import html
 import sys
 import logging
 import shlex
+from contextlib import ExitStack
 
 scores = {'multiply': 'very short/log',
           'wsum2':    'short/EA',
@@ -1005,37 +1006,39 @@ class Analysis(object):
     def exec_show_result(self,cmd,**kwargs):
         showcmd = ' '.join([f"'{word}'" for word in cmd])
 
-        subargs = dict()
-        if "infile" in kwargs:
-            infile = kwargs["infile"]
-            subargs["stdin"] = open(infile,encoding='utf-8')
-            showcmd += f" < '{infile}'"
-        elif "stdin" in kwargs:
-            subargs["stdin"] = kwargs["stdin"]
+        with ExitStack() as opened_files:
+            subargs = dict()
+            if "infile" in kwargs:
+                infile = kwargs["infile"]
+                subargs["stdin"] = opened_files.enter_context(open(infile, encoding='utf-8'))
+                showcmd += f" < '{infile}'"
+            elif "stdin" in kwargs:
+                subargs["stdin"] = kwargs["stdin"]
 
-        if "outfile" in kwargs:
-            outfile = kwargs["outfile"]
-            subargs["stdout"] = open(outfile,'w+',encoding='utf-8')
-            showcmd += f" > '{outfile}'"
-        elif "stdout" in kwargs:
-            subargs["stdout"] = kwargs["stdout"]
-        else:
-            subargs["stdout"] = subprocess.PIPE
+            if "outfile" in kwargs:
+                outfile = kwargs["outfile"]
+                subargs["stdout"] = opened_files.enter_context(open(outfile, 'w+', encoding='utf-8'))
+                showcmd += f" > '{outfile}'"
+            elif "stdout" in kwargs:
+                subargs["stdout"] = kwargs["stdout"]
+            else:
+                subargs["stdout"] = subprocess.PIPE
 
-        if "errfile" in kwargs:
-            errfile = kwargs["errfile"]
-            subargs["stderr"] = open(errfile,'w+',encoding='utf-8')
-            showcmd += f" 2> '{errfile}'"
-        elif "stderr" in kwargs:
-            subargs["stderr"] = kwargs["stderr"]
-        else:
-            subargs["stderr"] = subprocess.PIPE
+            if "errfile" in kwargs:
+                errfile = kwargs["errfile"]
+                subargs["stderr"] = opened_files.enter_context(open(errfile, 'w+', encoding='utf-8'))
+                showcmd += f" 2> '{errfile}'"
+            elif "stderr" in kwargs:
+                subargs["stderr"] = kwargs["stderr"]
+            else:
+                subargs["stderr"] = subprocess.PIPE
 
-        if "cwd" in kwargs:
-            subargs["cwd"] = kwargs["cwd"]
+            if "cwd" in kwargs:
+                subargs["cwd"] = kwargs["cwd"]
 
-        print(showcmd,file=self.log_shell_cmds)
-        result = subprocess.run(cmd,**subargs)
+            print(showcmd,file=self.log_shell_cmds)
+            result = subprocess.run(cmd,**subargs)
+
         if result.returncode != 0:
             print(f"command: {showcmd}",file=sys.stderr)
             if "outfile" in kwargs and path.exists(kwargs["outfile"]):

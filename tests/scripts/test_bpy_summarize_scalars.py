@@ -5,6 +5,7 @@ import io
 import os
 from pathlib import Path
 import runpy
+import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -20,6 +21,26 @@ print_model_string = MODULE["print_model_string"]
 
 
 class BPYSummarizeRunTests(unittest.TestCase):
+    # Failed redirected commands must release their output files before cleanup, which POSIX permits
+    # accidentally but Windows does not. Remove this if process execution moves to a shared library.
+    def test_removes_closed_outputs_after_a_command_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            outfile = Path(directory) / "partial.out"
+            errfile = Path(directory) / "partial.err"
+            analysis = Analysis.__new__(Analysis)
+            analysis.log_shell_cmds = io.StringIO()
+            analysis.verbose = False
+
+            result = analysis.exec_show_result(
+                [sys.executable, "-c", "import sys; print('out'); print('err', file=sys.stderr); sys.exit(3)"],
+                outfile=outfile,
+                errfile=errfile,
+            )
+
+            self.assertEqual(result.returncode, 3)
+            self.assertFalse(outfile.exists())
+            self.assertFalse(errfile.exists())
+
     # Analysis-level format decisions must reflect the common run personality; direct scalar HTML
     # tests otherwise avoid format-specific columns. Remove this if formats get separate renderers.
     def test_uses_the_common_run_personality(self):
