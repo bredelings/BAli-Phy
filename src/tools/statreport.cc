@@ -370,7 +370,7 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
 	    {
 		pair<double,double> interval_80 = central_confidence_interval(values,compare_level);
 		double x = fraction_in_interval(values,interval_80.first,interval_80.second)/
-		    fraction_in_interval(tables.back().column(index),interval_80.first,interval_80.second);
+		    fraction_in_interval(total,interval_80.first,interval_80.second);
 
 		sum_fraction_contained += x;
 		sum_CI += std::abs(interval_80.second - interval_80.first);

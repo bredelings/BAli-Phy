@@ -1,0 +1,3 @@
+# Protect PSRF-RCF from depending on which chain is last; the companion interval test uses
+# the opposite order. Remove this check if statreport stops reporting PSRF-RCF.
+--skip=0 ../interval-unavailable-individual/second.tsv ../interval-unavailable-individual/first.tsv

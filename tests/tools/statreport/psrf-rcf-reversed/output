@@ -1,8 +1,4 @@
-   x [1] ~ 1.5  (NA,NA) @ 95%
-   x [2] ~ 5.5  (NA,NA) @ 95%
-   x     ~ 3.5  (NA,NA) @ 95%
-   t @ 1   Ne = 4   burnin = Not Converged!
-   t @ 1   Ne = 4   burnin = Not Converged!
+   x ~ 3.5  (NA,NA) @ 95%
    t @ 4.111   Ne = 1   burnin = Not Converged!   [integer] 
        PSRF-80%CI = 1.742       PSRF-RCF = 2
 
