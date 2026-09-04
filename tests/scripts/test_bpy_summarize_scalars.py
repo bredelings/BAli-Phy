@@ -6,12 +6,14 @@ import os
 from pathlib import Path
 import runpy
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bpy-summarize"
 MODULE = runpy.run_path(str(SCRIPT))
 Analysis = MODULE["Analysis"]
+print_model_string = MODULE["print_model_string"]
 
 
 class BPYSummarizeScalarTests(unittest.TestCase):
@@ -124,6 +126,33 @@ trend = [increasing]
             self.assertIn("table.scalar-variables td.scalar-na {text-align:center;}", header)
             self.assertIn("td.scalar-pm {padding-left:0; padding-right:0; text-align:center;}", header)
             self.assertNotIn("display:grid", header)
+
+
+class BPYSummarizeHtmlTests(unittest.TestCase):
+    # Protect externally derived labels and run metadata from becoming report markup.
+    # This can be removed if an escaping template engine takes ownership of HTML rendering.
+    def test_escapes_dynamic_report_text(self):
+        unsafe = 'value<&"quoted"'
+        run = SimpleNamespace(
+            get_command=lambda: unsafe,
+            get_version=lambda: unsafe,
+            get_parent_dir=lambda: Path(unsafe),
+            get_dir=lambda: Path(unsafe),
+            n_iterations=lambda: 10,
+        )
+        analysis = Analysis.__new__(Analysis)
+        analysis.mcmc_runs = [run]
+        analysis.burnin = 0
+        analysis.subsample = 1
+
+        with redirect_stdout(io.StringIO()):
+            section = analysis.section_analysis()
+
+        escaped = "value&lt;&amp;&quot;quoted&quot;"
+        self.assertIn(escaped, analysis.html_header(unsafe))
+        self.assertIn(escaped, section)
+        self.assertNotIn(unsafe, section)
+        self.assertEqual(print_model_string(unsafe), f"= {escaped}")
 
 
 class BPYSummarizeNavigationTests(unittest.TestCase):

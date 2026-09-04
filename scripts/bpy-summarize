@@ -38,7 +38,7 @@ def print_model_string(model):
     if m[0] == '~':
         assign = '~'
         m = m[1:]
-    return f"{assign} {m}"
+    return f"{assign} {html.escape(m)}"
 
 def print_model(model):
     main = model['main']
@@ -48,7 +48,7 @@ def print_model(model):
         main = main[1:]
         assign = '~'
 
-    section = main + '\n'
+    section = html.escape(main) + '\n'
     extracted = model['extracted']
 
     if extracted:
@@ -57,7 +57,7 @@ def print_model(model):
             name = arg[0]
             submodel = arg[1]
             (subassign, submodel) = print_model(submodel)
-            section += f'<tr><td>{name}</td><td>{subassign}</td><td>{submodel}</td></tr>\n'
+            section += f'<tr><td>{html.escape(name)}</td><td>{subassign}</td><td>{submodel}</td></tr>\n'
         section += '</table>'
     return (assign, section)
 
@@ -2122,7 +2122,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 """
         section += f"<meta charset=\"utf-8\">\n"
         section += '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        section += f"<title>BAli-Phy: {title}</title>\n"
+        section += f"<title>BAli-Phy: {html.escape(title)}</title>\n"
         section += """\
       <style type="text/css">
       body {margin:0; padding:0}
@@ -2291,7 +2291,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         for i in range(self.n_partitions()):
             section +=  '<tr>\n'
             section += f'  <td>{i+1}</td>\n'
-            section += f'  <td>{self.get_input_files()[i]}</td>\n'
+            section += f'  <td>{html.escape(str(self.get_input_files()[i]))}</td>\n'
 
             features = self.get_alignment_info(self.outdir / f"P{i+1}.initial.fasta")
             minlength = features['min_length']
@@ -2299,7 +2299,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             section += f'<td>{minlength} - {maxlength}</td>\n'
 
             alphabet = self.get_alphabets()[i]
-            section += f'<td>{alphabet}</td>\n'
+            section += f'<td>{html.escape(alphabet)}</td>\n'
 
             smodel = self.get_smodel_for_partition(i)
             if smodel:
@@ -2307,7 +2307,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 index = self.get_smodel_indices()[i]+1
                 target = f"S{index}"
                 link = f'<a href="#{target}">{target}</a>'
-                section += f'<td>{link} = {smodel}</td>\n'
+                section += f'<td>{link} = {html.escape(smodel)}</td>\n'
             elif self.get_smodels() is not None:
                 section += '<td>none</td>\n'
             else:
@@ -2319,7 +2319,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 index = self.get_imodel_indices()[i]+1
                 target = f"I{index}"
                 link = f'<a href="#{target}">{target}</a>'
-                section += f'<td>{link} = {imodel}</td>\n'
+                section += f'<td>{link} = {html.escape(imodel)}</td>\n'
             elif self.get_imodels() is not None:
                 section += '<td>none</td>\n'
             else:
@@ -2394,7 +2394,9 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 """
         for file_path in self.get_code():
             url = file_path.with_suffix(".html").name
-            section += f"        <li><a href=\"{url}\">{file_path.name}</a></li>\n"
+            href = html.escape(url, quote=True)
+            label = html.escape(file_path.name)
+            section += f'        <li><a href="{href}">{label}</a></li>\n'
         section += "    </ul>\n"
         section += '</section>\n'
 
@@ -2422,12 +2424,12 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
             row_style = "" if var in self.CI_low else 'style="font-style:italic"'
             section += f'<tr {row_style}>\n'
-            section += f'  <td>{var}</td>\n'
+            section += f'  <td>{html.escape(var)}</td>\n'
             if var in self.constants:
-                section += f'  <td class="scalar-mean">{self.median[var]}</td>\n'
+                section += f'  <td class="scalar-mean">{html.escape(self.median[var])}</td>\n'
                 section += '  <td class="scalar-pm"></td>\n'
                 section += '  <td class="scalar-sd scalar-na">&mdash;</td>\n'
-                section += f'  <td class="scalar-median">{self.median[var]}</td>\n'
+                section += f'  <td class="scalar-median">{html.escape(self.median[var])}</td>\n'
                 section += '  <td class="scalar-bci scalar-na">&mdash;</td>\n'
                 section += '  <td class="scalar-na">&mdash;</td>\n'
                 section += '  <td class="scalar-na">&mdash;</td>\n'
@@ -2438,17 +2440,20 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 continue
 
             if var in self.mean:
-                section += f'  <td class="scalar-mean">{self.mean[var]}</td>\n'
+                section += f'  <td class="scalar-mean">{html.escape(self.mean[var])}</td>\n'
                 section += '  <td class="scalar-pm">&plusmn;</td>\n'
-                section += f'  <td class="scalar-sd">{self.stddev[var]}</td>\n'
+                section += f'  <td class="scalar-sd">{html.escape(self.stddev[var])}</td>\n'
             else:
                 section += '  <td class="scalar-mean"></td>\n'
                 section += '  <td class="scalar-pm"></td>\n'
                 section += '  <td class="scalar-sd"></td>\n'
 
             if var in self.CI_low:
-                section += f'  <td class="scalar-median">{self.median[var]}</td>\n'
-                section += f'  <td class="scalar-bci">({self.CI_low[var]}, {self.CI_high[var]})</td>\n'
+                section += f'  <td class="scalar-median">{html.escape(self.median[var])}</td>\n'
+                section += (
+                    f'  <td class="scalar-bci">({html.escape(self.CI_low[var])}, '
+                    f'{html.escape(self.CI_high[var])})</td>\n'
+                )
 
                 ACT_style = ' style="color:red"' if self.ESS[var] <= self.min_ESS else ""
                 section += f'  <td {ACT_style}>{self.ACT[var]}</td>\n'
@@ -2462,7 +2467,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 section += f'  <td {ESS_style}>{self.ESS[var]}</td>\n'
 
                 burnin_style = ' style="color:red"' if self.Burnin[var] == "Not Converged!" else ""
-                section += f'  <td {burnin_style}>{self.Burnin[var]}</td>\n'
+                section += f'  <td {burnin_style}>{html.escape(str(self.Burnin[var]))}</td>\n'
 
                 if var in self.PSRF_CI80:
                     if self.PSRF_CI80[var] >= 1.2:
@@ -2487,7 +2492,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                     section += '  <td>NA</td>\n'
 
             else:
-                section += f'  <td class="scalar-median">{self.median[var]}</td>\n'
+                section += f'  <td class="scalar-median">{html.escape(self.median[var])}</td>\n'
                 section += '  <td class="scalar-bci"></td>\n'
                 section += '  <td></td>\n'
                 section += '  <td></td>\n'
@@ -2735,7 +2740,7 @@ assumes it is included in the model.</p>
                 if not alignment.startswith(f'P{i+1}.'):
                     continue
                 section +=  '    <tr>\n'
-                section += f'      <td style="padding-right:3em">{name}</td>\n'
+                section += f'      <td style="padding-right:3em">{html.escape(name)}</td>\n'
                 section += f'      <td><a href="{alignment}.fasta">FASTA</a></td>\n'
 
                 if path.exists(self.outdir / f"{alignment}.html" ):
@@ -2850,27 +2855,38 @@ assumes it is included in the model.</p>
                 if burnin_before == "Not":
                     burnin_before = "Not Converged!"
                 min_NE = self.get_value_from_file(self.outdir / "Report", 'Ne  >=')
-            section += f"<tr><td><b>scalar burnin</b></td><td>{burnin_before}</td></tr>\n"
-            section += f"<tr><td><b>scalar ESS</b></td><td>{min_NE}</td></tr>\n"
+            section += (
+                f"<tr><td><b>scalar burnin</b></td><td>{html.escape(str(burnin_before))}</td></tr>\n"
+            )
+            section += f"<tr><td><b>scalar ESS</b></td><td>{html.escape(str(min_NE))}</td></tr>\n"
 
 
         if self.has_trees():
             min_NE_partition = self.get_value_from_file(self.outdir / 'partitions.bs','min Ne =')
-            section += f'<tr><td><b title=\"Effective Sample Size for bit-vectors of partition support (smallest)\">topological ESS</b></td><td>{min_NE_partition}</td></tr>\n'
+            section += (
+                '<tr><td><b title="Effective Sample Size for bit-vectors of partition support '
+                f'(smallest)">topological ESS</b></td><td>{html.escape(str(min_NE_partition))}</td></tr>\n'
+            )
 
             asdsf = self.get_value_from_file(self.outdir / 'partitions.bs',r'ASDSF\[min=0.100\] =')
             if asdsf is None:
                 asdsf = "NA"
             else:
                 asdsf = asdsf.rstrip()
-            section += f'<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{asdsf}</td></tr>'
+            section += (
+                '<tr><td><b title="Average Standard Deviation of Split Frequencies">ASDSF</b></td>'
+                f'<td>{html.escape(str(asdsf))}</td></tr>'
+            )
 
             msdsf = self.get_value_from_file(self.outdir / 'partitions.bs','MSDSF =')
             if msdsf is None:
                 msdsf = "NA"
             else:
                 msdsf = msdsf.rstrip()
-            section += f'<tr><td><b title=\"Maximum Standard Deviation of Split Frequencies\">MSDSF</b></td><td>{msdsf}</td></tr>'
+            section += (
+                '<tr><td><b title="Maximum Standard Deviation of Split Frequencies">MSDSF</b></td>'
+                f'<td>{html.escape(str(msdsf))}</td></tr>'
+            )
 
         psrf_80 = 'NA'
         psrf_rcf = 'NA'
@@ -2878,8 +2894,8 @@ assumes it is included in the model.</p>
             if self.get_log_files() and len(self.get_log_files()) >= 2:
                 psrf_80 = self.get_value_from_file(self.outdir / 'Report','PSRF-80%CI <=')
                 psrf_rcf = self.get_value_from_file(self.outdir / 'Report','PSRF-RCF <=')
-            section += f'<tr><td><b>PSRF CI80%</b></td><td>{psrf_80}</td></tr>\n'
-            section += f'<tr><td><b>PSRF RCF</b></td><td>{psrf_rcf}</td></tr>\n'
+            section += f'<tr><td><b>PSRF CI80%</b></td><td>{html.escape(str(psrf_80))}</td></tr>\n'
+            section += f'<tr><td><b>PSRF RCF</b></td><td>{html.escape(str(psrf_rcf))}</td></tr>\n'
 
         section += '</table>\n'
         section += '</td>\n'
@@ -2926,11 +2942,11 @@ assumes it is included in the model.</p>
         if something_common:
             section += "<p>"
         if all_same(commands):
-            section += f"<b>command line</b>: {commands[0]}<br>\n"
+            section += f"<b>command line</b>: {html.escape(str(commands[0]))}<br>\n"
         if all_same(parent_dirs):
-            section += f"<b>directory</b>: {parent_dirs[0]}<br>\n"
+            section += f"<b>directory</b>: {html.escape(str(parent_dirs[0]))}<br>\n"
         if all_same(versions):
-            section += f"<b>version</b>: {versions[0]}\n"
+            section += f"<b>version</b>: {html.escape(str(versions[0]))}\n"
         if something_common:
             section += "</p>"
         #section += '<table style="width:100%">'."\n"
@@ -2954,7 +2970,7 @@ assumes it is included in the model.</p>
 
             section += f"  <td>{i+1}</td>\n"
             if not all_same(versions):
-                section += f"  <td>{versions[i]}</td>\n"
+                section += f"  <td>{html.escape(str(versions[i]))}</td>\n"
 
             section += f"  <td>{self.burnin}</td>\n"
             section += f"  <td>{self.subsample}</td>\n"
@@ -2964,10 +2980,10 @@ assumes it is included in the model.</p>
             section += f"  <td>{remaining}</td>\n"
 
             if not all_same(commands):
-                section += f"  <td>{commands[i]}</td>\n"
-            section += f"  <td>{self.run(i).get_dir()}</td>\n"
+                section += f"  <td>{html.escape(str(commands[i]))}</td>\n"
+            section += f"  <td>{html.escape(str(self.run(i).get_dir()))}</td>\n"
             if not all_same(parent_dirs):
-                section += f"  <td>{parent_dirs[i]}/td>\n"
+                section += f"  <td>{html.escape(str(parent_dirs[i]))}</td>\n"
 
             section += "</tr>\n"
 
@@ -2983,11 +2999,20 @@ assumes it is included in the model.</p>
 #    $section .= "<table class=\"backlit2\">\n";
         section += "<table>\n"
         if self.get_topology_prior():
-            section += f'<tr><td class="modelname">topology</td><td>{self.get_topology_prior()}</td></tr>'
+            section += (
+                '<tr><td class="modelname">topology</td>'
+                f'<td>{html.escape(self.get_topology_prior())}</td></tr>'
+            )
         if self.get_branch_length_prior():
-            section += f'<tr><td class="modelname">branch lengths</td><td>{self.get_branch_length_prior()}</td></tr>'
+            section += (
+                '<tr><td class="modelname">branch lengths</td>'
+                f'<td>{html.escape(self.get_branch_length_prior())}</td></tr>'
+            )
         if self.get_tree_prior():
-            section += f'<tr><td class="modelname">tree</td><td>{self.get_tree_prior()}</td></tr>'
+            section += (
+                '<tr><td class="modelname">tree</td>'
+                f'<td>{html.escape(self.get_tree_prior())}</td></tr>'
+            )
         if self.get_subst_rates():
             section += f'<tr><td class="modelname">subst rates</td><td>{print_model_string(self.get_subst_rates())}</td></tr>'
         if self.get_indel_rates():
