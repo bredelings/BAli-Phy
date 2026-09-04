@@ -31,7 +31,7 @@ summaries of the sampled log odds are retained.
 : Number of initial lines to skip.
 
 **-x** _arg_ (=1), **--subsample** _arg_ (=1)
-: Factor by which to sub-sample.
+: Factor by which to sub-sample. Reported burn-in values remain in original input-line units.
 
 **-u** _arg_, **--until** _arg_
 : Read up to this iteration.

@@ -1,0 +1,3 @@
+# Numeric burn-in is reported in original input-line units rather than subsampled indices.
+# Remove this check if statreport begins reporting an explicitly different unit.
+--skip=0 --subsample=2 --mean ../psrf-integer-width/first.tsv

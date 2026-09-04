@@ -1,0 +1,6 @@
+ E x = 0  [+- 0.4472]
+   t @ 1   Ne = 10   burnin = 10   [integer] 
+
+
+ Ne  >= 10    (x)
+ min burnin <= 10    (x)

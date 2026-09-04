@@ -273,10 +273,10 @@ int get_burn_in(const vector<double>& data, double alpha,int n)
     return t;
 }
 
-string burnin_value(int b,unsigned total)
+string burnin_value(int b, unsigned total, int subsample)
 {
     if (b < total*2/3)
-	return convertToString(b);
+	return convertToString(b*subsample);
     else 
 	return "Not Converged!";
 }
@@ -512,7 +512,7 @@ double multi_chain_autocorrelation_time(const vector<stats_table>& tables, int i
 }
 
 var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int index,
-		     const vector<vector<int> >& burnin, const vector<unsigned>& sample_counts)
+		     const vector<vector<int> >& burnin, const vector<unsigned>& sample_counts, int subsample)
 {
     const string& name = tables[0].names()[index];
 
@@ -592,7 +592,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
 		string spacer;spacer.append(name.size()-1,' ');
 		cout<<"   "<<spacer<<"t @ "<<tau;
 		cout<<"   Ne = "<<int(values.size()/tau);
-		cout<<"   burnin = "<<burnin_value(b,sample_counts[i])<<endl;
+		cout<<"   burnin = "<<burnin_value(b,sample_counts[i],subsample)<<endl;
 	    }
 	}
     }
@@ -610,7 +610,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
     cout<<"   Ne = "<<int(Ne);
     cout<<"   burnin = ";
     if (burnin_converged)
-	cout<<maximum_burnin;
+	cout<<maximum_burnin*subsample;
     else
 	cout<<"Not Converged!";
     if (integers) cout<<"   [integer] ";
@@ -769,7 +769,7 @@ int main(int argc,char* argv[])
 	vector<string> decreasing_names;
 	for(int i=0;i<n_columns;i++) 
 	{
-	    var_stats S = show_stats(args, tables, i, burnin, sample_counts);
+	    var_stats S = show_stats(args, tables, i, burnin, sample_counts, subsample);
 	    cout<<endl;
 
 	    if (not S.ignored) {
@@ -789,7 +789,7 @@ int main(int argc,char* argv[])
 	if (worst_failed_burnin)
 	    cout<<" min burnin <= Not Converged!    ("<<field_names[*worst_failed_burnin.index()]<<")"<<endl;
 	else if (worst_burnin)
-	    cout<<" min burnin <= "<<*worst_burnin.amount()<<"    ("<<field_names[*worst_burnin.index()]<<")"<<endl;
+	    cout<<" min burnin <= "<<*worst_burnin.amount()*subsample<<"    ("<<field_names[*worst_burnin.index()]<<")"<<endl;
 	if (tables.size() > 1) {
 	    if (worst_RCI)
 		cout<<" PSRF-80%CI <= "<<*worst_RCI.amount()<<"    ("<<field_names[*worst_RCI.index()]<<")"<<endl;
