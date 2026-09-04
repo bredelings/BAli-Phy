@@ -1,0 +1,3 @@
+# Ensure skipping display samples cannot change whether a pre-skip stabilization estimate passes.
+# Remove this check if burn-in is instead estimated after skipping.
+--skip=4 --mean samples.tsv

@@ -1,0 +1,6 @@
+ E x = 0.5625  [+- 0.4961]
+   t @ 1.946   Ne = 8   burnin = 12   [integer] 
+
+
+ Ne  >= 8.222    (x)
+ min burnin <= 12    (x)

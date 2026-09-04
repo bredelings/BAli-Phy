@@ -511,7 +511,8 @@ double multi_chain_autocorrelation_time(const vector<stats_table>& tables, int i
     return 1.0 + 2.0*covariance_sum/variance;
 }
 
-var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index,const vector<vector<int> >& burnin)
+var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int index,
+		     const vector<vector<int> >& burnin, const vector<unsigned>& sample_counts)
 {
     const string& name = tables[0].names()[index];
 
@@ -587,7 +588,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 	    if (show_individual) {
 		cout<<"   "<<spacer<<"t @ "<<tau;
 		cout<<"   Ne = "<<int(values.size()/tau);
-		cout<<"   burnin = "<<burnin_value(b,values.size())<<endl;
+		cout<<"   burnin = "<<burnin_value(b,sample_counts[i])<<endl;
 	    }
 	    worst_burnin.check_max(i,b);
 	}
@@ -603,11 +604,11 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
     cout<<"   "<<spacer<<"t @ "<<tau;
     double Ne = values.size()/tau;
     cout<<"   Ne = "<<int(Ne);
-    int individual_size_worst = values.size();
+    int individual_size_worst = sample_counts[0];
     if (tables.size() == 1)
 	worst_burnin = {index, burnin[0][index]};
     else
-	individual_size_worst = tables[*worst_burnin.index()].column(index).size();
+	individual_size_worst = sample_counts[*worst_burnin.index()];
     assert(worst_burnin);
     cout<<"   burnin = "<<burnin_value(*worst_burnin.amount(), individual_size_worst);
     if (integers) cout<<"   [integer] ";
@@ -732,10 +733,12 @@ int main(int argc,char* argv[])
 
 	//------------ Handle Burnin ------------//
 	vector< vector<int> > burnin(tables.size(), vector<int>(n_columns,1));
+	vector<unsigned> sample_counts(tables.size());
 
 	index_value<int>    worst_burnin;
 
 	for(int i=0;i<tables.size();i++) {
+	    sample_counts[i] = tables[i].n_rows();
 	    for(int j=0;j<n_columns;j++) 
 	    {
 		int b = get_burn_in(tables[i].column(j), 0.05, 2);
@@ -760,7 +763,7 @@ int main(int argc,char* argv[])
 	vector<string> decreasing_names;
 	for(int i=0;i<n_columns;i++) 
 	{
-	    var_stats S = show_stats(args, tables, i, burnin);
+	    var_stats S = show_stats(args, tables, i, burnin, sample_counts);
 	    cout<<endl;
 
 	    if (not S.ignored) {
@@ -778,7 +781,7 @@ int main(int argc,char* argv[])
 	if (worst_Ne)
 	    cout<<" Ne  >= "<<*worst_Ne.amount()<<"    ("<<field_names[*worst_Ne.index()]<<")"<<endl;
 	if (worst_burnin)
-	    cout<<" min burnin <= "<<burnin_value(*worst_burnin.amount(), tables.back().n_rows())<<"    ("<<field_names[*worst_burnin.index()]<<")"<<endl;
+	    cout<<" min burnin <= "<<burnin_value(*worst_burnin.amount(), sample_counts.back())<<"    ("<<field_names[*worst_burnin.index()]<<")"<<endl;
 	if (tables.size() > 1) {
 	    if (worst_RCI)
 		cout<<" PSRF-80%CI <= "<<*worst_RCI.amount()<<"    ("<<field_names[*worst_RCI.index()]<<")"<<endl;
