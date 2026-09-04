@@ -188,6 +188,28 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         analysis.has_trees = lambda: False
         self.assertEqual(analysis.section_glossary(), "")
 
+    # Keep plot captions programmatically associated with plots after layout changes.
+    # This can be removed if a separate renderer takes ownership of report figures.
+    def test_wraps_report_plots_in_figures(self):
+        with tempfile.TemporaryDirectory() as directory:
+            analysis = Analysis.__new__(Analysis)
+            analysis.outdir = Path(directory)
+            analysis.trees = []
+            analysis.subpartitions = False
+            analysis.n_chains = lambda: 1
+            analysis.has_trees = lambda: True
+            analysis.R_exe = True
+
+            topology = analysis.section_phylogeny_distribution()
+            mixing = analysis.section_tree_mixing2()
+
+        self.assertEqual(topology.count('<figure class="plot-panel">'), 2)
+        self.assertIn("<figcaption>50% consensus tree</figcaption>", topology)
+        self.assertIn("<figcaption>Consensus-tree support levels</figcaption>", topology)
+        self.assertIn("<figcaption>Projection of RF distances", mixing)
+        self.assertIn("<figcaption>Split posterior probabilities across chains", mixing)
+        self.assertNotIn("<h4", topology + mixing)
+
 
 class BPYSummarizeNavigationTests(unittest.TestCase):
     # Keep report navigation semantic and prevent links to sections omitted from reduced reports.

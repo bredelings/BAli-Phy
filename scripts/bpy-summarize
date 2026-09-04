@@ -2244,7 +2244,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       .plot-stack {display:grid; gap:2em;}
       .plot-panel {min-width:0;}
       .plot-panel .svg-image, .srq-plots img {display:block; height:auto; max-width:100%; width:100%;}
-      .plot-title {text-align:center;}
+      figure.plot-panel {margin:0;}
+      figure.plot-panel figcaption {font-weight:bold; margin-bottom:0.5em; text-align:center;}
       .table-scroll {max-width:100%; overflow-x:auto;}
       .table-scroll:focus-visible {outline:2px solid rgb(25,79,128); outline-offset:2px;}
       .table-scroll > table {min-width:max-content;}
@@ -2738,9 +2739,10 @@ assumes it is included in the model.</p>
         section = '<section id="topology" class="report-section">\n'
         section += '<h2>Phylogeny Distribution</h2>\n'
         section += '<div class="phylogeny-grid">\n'
-        section += '<div class="plot-panel">\n'
+        section += '<figure class="plot-panel">\n'
+        section += '<figcaption>50% consensus tree</figcaption>\n'
         section += self.html_svg('c50-tree.svg', '50% consensus tree')
-        section += '</div>\n'
+        section += '</figure>\n'
         section += '<div class="phylogeny-files">\n'
         section += """\
 <table>
@@ -2785,9 +2787,10 @@ assumes it is included in the model.</p>
             section += '  </tr>\n'
         section += '</table>\n'
         section += '</div>\n'
-        section += '<div class="plot-panel">\n'
+        section += '<figure class="plot-panel">\n'
+        section += '<figcaption>Consensus-tree support levels</figcaption>\n'
         section += self.html_svg('c-levels.svg', 'Consensus-tree support levels')
-        section += '</div>\n'
+        section += '</figure>\n'
         section += '</div>\n'
         section += '</section>\n'
         return section
@@ -2906,8 +2909,8 @@ assumes it is included in the model.</p>
 
         section += f"""\
 <div class="tree-mixing-grid">
-  <div class="plot-panel">
-    <h4 class="plot-title">Projection of RF distances for {MDS_title} (<a href="https://doi.org/10.1080/10635150590946961">Hillis et al 2005</a>)</h4>
+  <figure class="plot-panel">
+    <figcaption>Projection of RF distances for {MDS_title} (<a href="https://doi.org/10.1080/10635150590946961">Hillis et al 2005</a>)</figcaption>
 """
         if path.exists( self.outdir / MDS_figure ):
             section += self.html_svg(MDS_figure, 'Projection of Robinson-Foulds tree distances')
@@ -2915,10 +2918,14 @@ assumes it is included in the model.</p>
         else:
             if not self.R_exe:
                 section += "<p>Not generated: can't find R</p>"
-        section += '</div>\n'
-        section += '<div class="plot-panel">'
-        section += '<h4 class="plot-title">Variation of split PPs across chains (<a href="https://doi.org/10.1080/10635150600812544">Beiko et al 2006</a>)</h4>'
+        section += '</figure>\n'
         section += '<div class="plot-stack">\n'
+        section += '<figure class="plot-panel">\n'
+        section += (
+            '<figcaption>Split posterior probabilities across chains '
+            '(<a href="https://doi.org/10.1080/10635150600812544">Beiko et al 2006</a>)'
+            '</figcaption>\n'
+        )
         if path.exists(self.outdir / "convergence1-PP.svg"):
             section += self.html_svg(
                 "convergence1-PP.svg", "Split posterior probabilities across chains"
@@ -2930,13 +2937,16 @@ assumes it is included in the model.</p>
                 section += "<p>Not generated: multiple chains needed.</p>"
             else:
                 section += "<p>Not generated.</p>"
+        section += '</figure>\n'
 
         if path.exists(self.outdir / "convergence2-PP.svg"):
+            section += '<figure class="plot-panel">\n'
+            section += '<figcaption>Split posterior log odds across chains</figcaption>\n'
             section += self.html_svg(
                 "convergence2-PP.svg",
-                "Differences in split posterior probabilities across chains",
+                "Split posterior log odds across chains",
             )
-        section += "</div>\n"
+            section += '</figure>\n'
         section += "</div>\n"
         section += "</div>\n"
         return section
@@ -3027,8 +3037,16 @@ assumes it is included in the model.</p>
 
         section += '    <div class="srq-plots">\n'
         if self.has_trees():
-            section += '      <img src="c50.SRQ.png" alt="SRQ plot for support of 50% consensus tree."/>'
-            section += '      <img src="partitions.SRQ.png" alt="SRQ plot for support of each partition."/>'
+            section += """\
+      <figure class="plot-panel">
+        <figcaption>50% consensus-tree split support</figcaption>
+        <img src="c50.SRQ.png" alt="SRQ plot for support of the 50% consensus tree.">
+      </figure>
+      <figure class="plot-panel">
+        <figcaption>All sampled splits</figcaption>
+        <img src="partitions.SRQ.png" alt="SRQ plot for support of each sampled split.">
+      </figure>
+"""
         section += '    </div>\n'
         section += '  </div>\n'
 
