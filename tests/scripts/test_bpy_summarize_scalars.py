@@ -190,6 +190,33 @@ trend = [increasing]
 
 
 class BPYSummarizeHtmlTests(unittest.TestCase):
+    # Run details must show the integer number selected after until, burn-in, and stride; external
+    # tools do not feed that count back to the renderer. Remove this if selection reports its count.
+    def test_reports_the_selected_sample_count(self):
+        # Supply only the run metadata used by the details table.
+        def make_run(directory, iterations):
+            return SimpleNamespace(
+                get_command=lambda: None,
+                get_version=lambda: None,
+                get_parent_dir=lambda: directory.parent,
+                get_dir=lambda: directory,
+                n_iterations=lambda: iterations,
+            )
+
+        analysis = Analysis.__new__(Analysis)
+        analysis.mcmc_runs = [make_run(Path("chain1"), 11), make_run(Path("chain2"), 6)]
+        analysis.burnin = 2
+        analysis.subsample = 3
+        analysis.until = 10
+
+        with redirect_stdout(io.StringIO()):
+            section = analysis.section_analysis()
+
+        rows = section.split("<tbody>", 1)[1].split("</tbody>", 1)[0].split("<tr>")[1:]
+        self.assertIn("  <td>3</td>\n", rows[0])
+        self.assertIn("  <td>2</td>\n", rows[1])
+        self.assertNotIn(".0</td>", section)
+
     # Protect externally derived labels and run metadata from becoming report markup.
     # This can be removed if an escaping template engine takes ownership of HTML rendering.
     def test_escapes_dynamic_report_text(self):
@@ -205,6 +232,7 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         analysis.mcmc_runs = [run]
         analysis.burnin = 0
         analysis.subsample = 1
+        analysis.until = None
 
         with redirect_stdout(io.StringIO()):
             section = analysis.section_analysis()

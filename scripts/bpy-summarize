@@ -3204,9 +3204,16 @@ assumes it is included in the model.</p>
             section += f"  <td>{self.burnin}</td>\n"
             section += f"  <td>{self.subsample}</td>\n"
 
-            remaining = (self.run(i).n_iterations() - self.burnin)/self.subsample
-            print(f"RUN {i+1}: directory = {self.run(i).get_dir()}     iterations = {self.run(i).n_iterations()}     burnin = {self.burnin}")
-            section += f"  <td>{remaining}</td>\n"
+            n_iterations = self.run(i).n_iterations()
+            last_iteration = min(n_iterations, self.until) if self.until is not None else n_iterations
+            eligible_samples = max(0, last_iteration - self.burnin)
+            # Selection first caps the input, then skips burn-in, and finally keeps every nth sample.
+            retained_samples = (eligible_samples + self.subsample - 1) // self.subsample
+            print(
+                f"RUN {i+1}: directory = {self.run(i).get_dir()}     iterations = {n_iterations}     "
+                f"burnin = {self.burnin}"
+            )
+            section += f"  <td>{retained_samples}</td>\n"
 
             if not all_same(commands):
                 section += f"  <td>{html.escape(str(commands[i]))}</td>\n"
