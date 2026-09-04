@@ -345,12 +345,10 @@ jobs:
       run: |
         export UBSAN_OPTIONS=halt_on_error=1
         export seed=$RANDOM
-        if [ -n "${BOOST_ROOT}" ] ; then
-          if [ "${{ runner.os }}" == "macOS" ] ; then
-            export DYLD_LIBRARY_PATH="${BOOST_ROOT}/lib"
-          else
-            export LD_LIBRARY_PATH="${BOOST_ROOT}/lib"
-          fi
+        # Installed macOS binaries locate packaged libraries through their rpath. A prefix-wide
+        # DYLD_LIBRARY_PATH also changes libraries loaded by unrelated Homebrew programs such as R.
+        if [ -n "${BOOST_ROOT}" ] && [ "${{ runner.os }}" != "macOS" ] ; then
+          export LD_LIBRARY_PATH="${BOOST_ROOT}/lib"
         fi
         if [ "${{ matrix.name }}" = "windows" ] ; then
           # Initialize Wine before winepath starts another client, then keep that server alive across tests.
