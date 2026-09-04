@@ -13,12 +13,21 @@ import unittest
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bpy-summarize"
 MODULE = runpy.run_path(str(SCRIPT))
 Analysis = MODULE["Analysis"]
+TreeFileRun = MODULE["TreeFileRun"]
 TreeLogFileRun = MODULE["TreeLogFileRun"]
 print_model = MODULE["print_model"]
 print_model_string = MODULE["print_model_string"]
 
 
 class BPYSummarizeRunTests(unittest.TestCase):
+    # Plain tree samples have no header and every line is an iteration; broader report tests do not
+    # cover a one-tree run. Remove this if tree counts come from parsed sample metadata instead.
+    def test_counts_every_plain_tree_line(self):
+        with tempfile.TemporaryDirectory() as directory:
+            trees = Path(directory) / "chain.trees"
+            trees.write_text("(a,b);\n", encoding="utf-8")
+            self.assertEqual(TreeFileRun(trees).n_iterations(), 1)
+
     # Paired prefix inputs must resolve to distinct tree and scalar files; broader report tests use
     # BAli-Phy directories instead. Remove this if run discovery is replaced by explicit file arguments.
     def test_resolves_paired_tree_and_log_prefix(self):
