@@ -524,9 +524,6 @@ class TreeFileRun(MCMCRun):
             exit(1)
         return n
 
-def translate_none(indices):
-    return [None if index == '--' or index == '-1' else int(index) for index in indices]
-
 def add_range(filename,r):
     name = filename
     if r:
@@ -538,17 +535,8 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
     def __init__(self,mcmc_output,**kwargs):
         super().__init__(mcmc_output,**kwargs)
         self.prefix = 'C1'
-        # What I should actually do is to create the run_info from C1.out if C1.run.json does not exist.
-        self.run_file = check_file_exists( self.get_dir() / 'C1.run.json', required=False)
-        if self.run_file:
-            self.run_info = get_json_from_file(self.run_file)
-            self.out_file = None
-        else:
-            self.out_file = check_file_exists( self.get_dir() / 'C1.out', required=False)
-            if not self.out_file:
-                print("Error: cannot find either 'C1.out' or 'C1.run.json")
-                exit(1)
-            self.run_info = translate_to_dict()
+        self.run_file = check_file_exists(self.get_dir() / 'C1.run.json')
+        self.run_info = get_json_from_file(self.run_file)
 
         self.log_file = check_one_file_exists( [self.get_dir() / 'C1.log.json',
                                                 self.get_dir() / 'C1.log'] )
@@ -590,39 +578,6 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
                 self.code.append( self.get_dir() / file_path )
 
         logging.debug(f"BAliPhyRun: {mcmc_output}")
-
-    def translate_to_dict():
-        run_info = dict()
-        run_info["command"] = self.find_header_attribute("command")
-        run_info["program"]["version"] = self.find_header_attribute("VERSION").split(r'\s+')[0]
-        run_info["tree"]["topology"] = self.find_in_header('T:topology ')
-        run_info["tree"]["lengths"] = self.find_in_header('T:lengths ')
-
-        smodel_indices = translate_none(self.find_partition_values('smodel-index'))
-        imodel_indices = translate_none(self.find_partition_values('imodel-index'))
-        scale_indices = translate_none(self.find_partition_values('scale-index'))
-        alphabets = self.find_partition_values('alphabet')
-
-        input_filenames = []
-        with open(outfile,'r',encoding='utf-8') as outf:
-            for line in outf:
-                m = re.match(r'data(.+) = (.+)', line)
-                if m:
-                    input_filenames.append(m.group(2))
-
-        for i in range(0,n_partitions()-1):
-            p["smodel"] = smodel_indices[i]
-            p["imodel"] = imodel_indices[i]
-            p["scale"] = scale_indices[i]
-            p["alphabet"] = alphabets[i]
-            p["filename"] = input_filenames[i]
-            p["range"] = ""
-            if ':' in input_filenames[i]:
-                p["filename"] = input_filenames.split(':',1)[0]
-                p["range"] = input_filenames.split(':',1)[1]
-            run_info["partitions"] = p
-
-        return run_info
 
     def find_models(self, name1, name2):
         return [make_extracted(model) for model in self.run_info[name2]]
@@ -687,34 +642,8 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
             filenames.append(filename if filename.exists() else None)
         return filenames
 
-    def find_header_attribute(self, attribute):
-        return self.find_in_header(attribute + ': ')
-
-    def find_in_header(self, key):
-        with open(self.out_file,'r',encoding='utf-8') as file:
-            reg = key + '(.*)$'
-            for line in file:
-                m = re.match(reg,line)
-                if m:
-                    return m.group(1)
-                if line.startswith("iterations"):
-                    break
-        return None
-
     def n_partitions(self):
         return len(self.get_input_files())
-
-    def find_partition_values(self,prefix):
-        indices = []
-        with open(self.out_file,encoding='utf-8') as file:
-            regexp = prefix+"(.+) = (.+)"
-            for line in file:
-                m = re.match(regexp, line)
-                if m:
-                    indices.append(m.group(2))
-                if line.startswith("iterations"):
-                    break
-        return indices
 
     def get_code(self):
         return self.code
@@ -757,8 +686,8 @@ def get_bali_phy_runs(mcmc_args):
     bad = []
     for mcmc_dir in mcmc_args:
         if mcmc_dir.exists() and \
-           (Path( mcmc_dir , 'C1.out').exists() or Path( mcmc_dir , 'C1.run.json').exists()) and \
-           (Path( mcmc_dir , 'C1.log' ).exists() or Path (mcmc_dir, 'C1.log.json')):
+           Path(mcmc_dir, 'C1.run.json').exists() and \
+           (Path(mcmc_dir, 'C1.log').exists() or Path(mcmc_dir, 'C1.log.json').exists()):
             runs.append(BAliPhyRun(mcmc_dir))
             good.append(mcmc_dir)
         else:
