@@ -2572,14 +2572,14 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
                 if self.Burnin[var] == "Not Converged!":
                     burnin_class = ' class="diagnostic-bad"'
-                    burnin_marker = bad_marker
+                    burnin_value = (
+                        '<span class="diagnostic-marker" aria-hidden="true">!</span>'
+                        '<span class="visually-hidden">Not converged</span>'
+                    )
                 else:
                     burnin_class = ''
-                    burnin_marker = ''
-                section += (
-                    f'  <td{burnin_class}>{burnin_marker}'
-                    f'{html.escape(str(self.Burnin[var]))}</td>\n'
-                )
+                    burnin_value = html.escape(str(self.Burnin[var]))
+                section += f'  <td{burnin_class}>{burnin_value}</td>\n'
 
                 if var in self.PSRF_CI80:
                     if self.PSRF_CI80[var] >= 1.2:

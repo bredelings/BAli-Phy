@@ -113,6 +113,12 @@ trend = [increasing]
             self.assertIn('<span class="visually-hidden">Caution: </span>150</td>', section)
             self.assertIn('<span class="visually-hidden">Caution: </span>1.1</td>', section)
             self.assertIn('<span class="visually-hidden">Concerning: </span>1.2</td>', section)
+            self.assertIn(
+                '<td class="diagnostic-bad"><span class="diagnostic-marker" aria-hidden="true">!</span>'
+                '<span class="visually-hidden">Not converged</span></td>',
+                section,
+            )
+            self.assertNotIn('Not Converged!</td>', section)
             self.assertNotIn('style="color:', section)
             self.assertIn('href="#glossary-act"', section)
             self.assertIn('href="#glossary-ess"', section)
