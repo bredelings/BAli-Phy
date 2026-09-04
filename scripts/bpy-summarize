@@ -57,7 +57,10 @@ def print_model(model):
             name = arg[0]
             submodel = arg[1]
             (subassign, submodel) = print_model(submodel)
-            section += f'<tr><th scope="row">{html.escape(name)}</th><td>{subassign}</td><td>{submodel}</td></tr>\n'
+            section += (
+                f'<tr><td class="model-variable">{html.escape(name)}</td>'
+                f'<td>{subassign}</td><td>{submodel}</td></tr>\n'
+            )
         section += '</tbody>\n</table>'
     return (assign, section)
 
@@ -2273,6 +2276,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       .scalar-mean, .scalar-sd, .scalar-median, .scalar-bci {font-variant-numeric:tabular-nums;}
       .backlit2 td.scalar-mean {padding-right:0.25em;}
       table.scalar-variables td.scalar-pm {padding-left:0; padding-right:0; text-align:center;}
+      table.model td.model-variable {padding-left:0.5em; padding-right:0.5em; text-align:left;}
       .backlit2 td.scalar-sd {padding-left:0.25em;}
       .backlit2 td.scalar-median {padding-right:0.5em;}
       .backlit2 td.scalar-bci {padding-left:0;}

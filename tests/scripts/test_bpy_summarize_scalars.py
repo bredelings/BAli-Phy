@@ -151,6 +151,7 @@ trend = [increasing]
             self.assertIn("table.scalar-variables td {text-align:right;}", header)
             self.assertIn("table.scalar-variables td.scalar-na {text-align:center;}", header)
             self.assertIn("td.scalar-pm {padding-left:0; padding-right:0; text-align:center;}", header)
+            self.assertIn("table.model td.model-variable", header)
             self.assertIn(".phylogeny-grid", header)
             self.assertIn("display:grid", header)
 
@@ -181,7 +182,8 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertNotIn(unsafe, section)
         self.assertEqual(print_model_string(unsafe), f"= {escaped}")
         _, model = print_model({"main": "base", "extracted": [(unsafe, {"main": "nested", "extracted": []})]})
-        self.assertIn(f'<th scope="row">{escaped}</th>', model)
+        self.assertIn(f'<td class="model-variable">{escaped}</td>', model)
+        self.assertNotIn(f'<th scope="row">{escaped}</th>', model)
 
         svg = analysis.html_svg('plot<&".svg', unsafe, "90%")
         self.assertIn(f'role="img" aria-label="{escaped}"', svg)
