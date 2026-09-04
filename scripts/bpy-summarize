@@ -2262,6 +2262,13 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       table.model td {vertical-align: top}
       table.models td {vertical-align: top}
 
+      @page {margin:1.5cm;}
+      @media print {
+        #topbar, .skip-link {display:none;}
+        .content {margin:0;}
+        table:not(.layout-table) tr, img, object {break-inside:avoid;}
+      }
+
     </style>
 </head>
 <body>
@@ -2852,7 +2859,7 @@ assumes it is included in the model.</p>
             MDS_title = f"{C} chains"
 
         section += f"""\
-<table style="width:100%;clear:both">
+<table class="layout-table" style="width:100%;clear:both">
   <tr>
     <td style="width:40%;vertical-align:top">
       <h4 style=\"text-align:center\">Projection of RF distances for {MDS_title} (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>
@@ -2896,7 +2903,7 @@ assumes it is included in the model.</p>
         section = """\
 <section id="mixing" class="report-section">
 <h2>Convergence and mixing</h2>
-  <table style="width:100%;clear:both">
+  <table class="layout-table" style="width:100%;clear:both">
     <tr>
       <td style="vertical-align:top">
         <table class="backlit2 convergence-statistics">

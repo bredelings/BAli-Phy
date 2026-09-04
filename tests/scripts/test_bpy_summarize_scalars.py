@@ -238,6 +238,9 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
         self.assertNotIn("position: fixed;", header)
         self.assertNotIn(":target:before", header)
         self.assertNotIn("//", header)
+        self.assertIn("@media print", header)
+        self.assertIn("#topbar, .skip-link {display:none;}", header)
+        self.assertIn("table:not(.layout-table) tr, img, object {break-inside:avoid;}", header)
         self.assertIn("</main>", analysis.section_end())
 
 
