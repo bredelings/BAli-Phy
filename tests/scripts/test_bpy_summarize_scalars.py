@@ -16,11 +16,19 @@ MODULE = runpy.run_path(str(SCRIPT))
 Analysis = MODULE["Analysis"]
 TreeFileRun = MODULE["TreeFileRun"]
 TreeLogFileRun = MODULE["TreeLogFileRun"]
+get_x3d_of_mds = MODULE["get_x3d_of_mds"]
 print_model = MODULE["print_model"]
 print_model_string = MODULE["print_model_string"]
 
 
 class BPYSummarizeRunTests(unittest.TestCase):
+    # Degenerate MDS output is valid for a fixed coordinate or a singleton chain and must still
+    # produce a centered scene. Remove this if a plotting library owns 3D scene generation.
+    def test_centers_degenerate_mds_coordinates(self):
+        scene = get_x3d_of_mds("1\t2\t3\t1\n")
+        self.assertIn("translation='0 0 0'", scene)
+        self.assertIn("<sphere>", scene)
+
     # A failure in any streaming stage must fail the operation even if its consumer exits normally;
     # mocks do not exercise OS pipe behavior. Remove this if pipelines move to a shared process API.
     def test_detects_an_upstream_pipeline_failure(self):

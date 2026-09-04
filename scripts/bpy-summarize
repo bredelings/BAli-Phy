@@ -118,6 +118,9 @@ def rgb_to_color(rgb):
     return f"{r} {g} {b}"
 
 def interpolate(i,total,start,end):
+    # A singleton has no position along a gradient, so use the midpoint rather than an endpoint.
+    if total <= 1:
+        return (start + end) / 2
     return start + (end-start)*(i/(total-1))
 
 def get_x3d_of_mds(point_string):
@@ -163,9 +166,10 @@ def get_x3d_of_mds(point_string):
     lastpoint=None
     lastgroup=None
     for (x,y,z,group) in points:
-        xx = (x - xmin)/xw*5.0 - 2.5
-        yy = (y - ymin)/yw*5.0 - 2.5
-        zz = (z - zmin)/zw*5.0 - 2.5
+        # A flat MDS dimension carries no displacement; center it while scaling varying axes.
+        xx = 0 if xw == 0 else (x - xmin)/xw*5.0 - 2.5
+        yy = 0 if yw == 0 else (y - ymin)/yw*5.0 - 2.5
+        zz = 0 if zw == 0 else (z - zmin)/zw*5.0 - 2.5
 
         size = 0.04
         scale = f"{size} {size} {size}"
