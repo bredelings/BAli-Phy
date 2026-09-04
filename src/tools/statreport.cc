@@ -609,18 +609,20 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 
     // Print out Potential Scale Reduction Factors (PSRFs)
     double RNe = 1;
-    double RCI = 1;
-    double RCF = 1;
-    if (tables.size() > 1) {
+	double RCI = 1;
+	double RCF = 1;
+	if (tables.size() > 1) {
 	RNe = tau/sum_tau*tables.size();
 	//cout<<"   PSRF-Ne = "<<RNe;
-	if (sum_CI > 0)
-	{
-	    if (integers)
-		RCI = std::max(0.0,total_CI-1)/sum_CI;
-	    else
-		RCI = total_CI/sum_CI;
-	}
+	// An integer interval [a,b] contains b-a+1 possible values, so its width cannot vanish.
+	// For continuous values, a positive pooled width over zero within-chain width is infinite;
+	// two zero widths conventionally produce the neutral value 1 for this diagnostic.
+	if (integers)
+	    RCI = (total_CI + 1)/(sum_CI + 1);
+	else if (sum_CI > 0)
+	    RCI = total_CI/sum_CI;
+	else if (total_CI > 0)
+	    RCI = infinity<double>;
 	cout<<"       PSRF-80%CI = "<<RCI;
 	RCF = sum_fraction_contained; //compare_level;
 	cout<<"       PSRF-RCF = "<<RCF<<endl;

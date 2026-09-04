@@ -4,10 +4,10 @@
    t @ 1   Ne = 4   burnin = Not Converged!
    t @ 1   Ne = 4   burnin = Not Converged!
    t @ 4.111   Ne = 1   burnin = Not Converged!   [integer] 
-       PSRF-80%CI = 1.742       PSRF-RCF = 2
+       PSRF-80%CI = 1.805       PSRF-RCF = 2
 
 
  Ne  >= 1.946    (x)
  min burnin <= Not Converged!    (x)
- PSRF-80%CI <= 1.742    (x)
+ PSRF-80%CI <= 1.805    (x)
  PSRF-RCF <= 2    (x)

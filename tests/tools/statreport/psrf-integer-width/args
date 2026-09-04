@@ -1,0 +1,3 @@
+# Preserve inclusive integer interval widths when every within-chain interval is a singleton.
+# Remove this check if PSRF-80%CI is replaced by a different convergence diagnostic.
+--skip=0 first.tsv second.tsv

@@ -1,0 +1,9 @@
+   x ~ 5  (NA,NA) @ 95%
+   t @ 36.85   Ne = 1   burnin = 5   [integer] 
+       PSRF-80%CI = 11       PSRF-RCF = 2
+
+
+ Ne  >= 1.086    (x)
+ min burnin <= 5    (x)
+ PSRF-80%CI <= 11    (x)
+ PSRF-RCF <= 2    (x)
