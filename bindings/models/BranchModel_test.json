@@ -1,0 +1,37 @@
+{
+    "name": "BranchModel_test",
+    "title": "Bayesian test of branch-category assignment hypotheses",
+    "result_type": "CTMC<Codons<a>>",
+    "call": "omegaBranchModel(selectBranchHypothesis(@hypothesis,@branchCats),@omegas,@submodel)",
+    "import": ["SModel"],
+    "args": [
+        {
+            "name": "submodel",
+            "type": "Double -> CTMC<Codons<a>>",
+            "default_value": "|w:GY94(omega=w)|",
+            "description": "The codon model constructed for each omega."
+        },
+        {
+            "name": "omegas",
+            "type": "List<Double>",
+            "default_value": "~IID(numberHypothesisBranchCategories(@branchCats),LogLaplace(-1,1))",
+            "description": "The omega value shared by every occurrence of each numbered branch category."
+        },
+        {
+            "name": "hypothesis",
+            "type": "Int",
+            "default_value": "~UniformInt(0,numberBranchHypotheses(@branchCats)-1)",
+            "description": "The zero-based position selected from every branch category vector."
+        },
+        {
+            "name": "branchCats",
+            "type": "IntMap<List<Int>>",
+            "default_value": "get_state(branch_category_vectors)",
+            "description": "The positional category assignments supplied by foreground={...} annotations."
+        }
+    ],
+    "extract": "all",
+    "description": "Compare branch-model hypotheses encoded positionally in tree annotations. In [&foreground={1,2}], the branch has category 1 under hypothesis 0 and category 2 under hypothesis 1. All specified vectors must have the same length; an unannotated branch has category 0 under every hypothesis. Hypotheses have equal prior probability by default.",
+    "examples": ["BranchModel_test", "BranchModel_test(omegas=[0.2,1.0,2.0])"],
+    "see": ["BranchModel", "Branch_test"]
+}
