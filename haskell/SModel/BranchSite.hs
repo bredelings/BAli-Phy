@@ -7,6 +7,7 @@ import Tree
 import qualified Data.IntMap as IntMap
 import qualified Data.IntSet as IntSet
 import qualified Data.Text as T
+import Data.Char (isSpace)
 
 -- No Attribute
 getForeground Nothing = 0
@@ -16,6 +17,48 @@ getForeground (Just Nothing) = 1
 getForeground (Just (Just text)) = read (T.unpack text) :: Int
 
 foregroundBranches tree key = edgeAttributes tree (T.pack key) getForeground
+
+-- Read positional category vectors while retaining the scalar foreground syntax.
+getForegroundVector Nothing = []
+getForegroundVector (Just Nothing) = [1]
+getForegroundVector (Just (Just text)) =
+    case filter (not . isSpace) (T.unpack text) of
+      '{':contents | not (null contents) && last contents == '}' ->
+          map read $ commaFields $ init contents
+      value -> [read value]
+  where
+    -- Reject an empty or trailing list element instead of silently changing vector positions.
+    commaFields "" = error "foreground category vector must not be empty"
+    commaFields value = case break (== ',') value of
+                          (field, "") -> [field]
+                          (field, _:rest) -> field : commaFields rest
+
+foregroundBranchCategoryVectors tree key =
+    edgeAttributes tree (T.pack key) getForegroundVector
+
+-- Infer the common vector length, ignoring branches whose missing attribute means all zeros.
+numberBranchHypotheses branchCategories =
+    case filter (not . null) (IntMap.elems branchCategories) of
+      [] -> error "numberBranchHypotheses: no foreground category vectors were specified"
+      categories:rest
+        | any ((/= length categories) . length) rest ->
+            error "numberBranchHypotheses: foreground category vectors have different lengths"
+        | otherwise -> length categories
+
+-- Select one positional assignment, using category zero for every unspecified branch.
+selectBranchHypothesis hypothesis branchCategories
+  | hypothesis < 0 || hypothesis >= count =
+      error ("selectBranchHypothesis: hypothesis " ++ show hypothesis ++ " is outside [0," ++
+             show (count - 1) ++ "]")
+  | otherwise = fmap select branchCategories
+  where
+    count = numberBranchHypotheses branchCategories
+    select [] = 0
+    select categories = categories !! hypothesis
+
+-- Count all categories needed by any hypothesis so their model parameters can be shared.
+numberHypothesisBranchCategories branchCategories =
+    numberBranchCategories $ IntMap.fromList $ zip [0..] (0 : concat (IntMap.elems branchCategories))
 
 -- Validate and count branch categories so a default omega list has one entry per category.
 numberBranchCategories :: IntMap.IntMap Int -> Int

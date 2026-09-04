@@ -82,3 +82,10 @@ main = do
                    propertyValue "branch1-dNdS" alternativeProperties]
   putStrLn $ show [sameMatrix (nullModels!!0) (nullModels!!1),
                    sameMatrix (alternativeModels!!0) (alternativeModels!!1)]
+
+  -- Category vectors select positions globally and default unannotated branches to category zero.
+  let hypotheses = IntMap.fromList [(0, [1,2]), (1, []), (2, [2,1])]
+  putStrLn $ show [numberBranchHypotheses hypotheses,
+                   numberHypothesisBranchCategories hypotheses]
+  putStrLn $ show $ IntMap.toList $ selectBranchHypothesis 0 hypotheses
+  putStrLn $ show $ IntMap.toList $ selectBranchHypothesis 1 hypotheses
