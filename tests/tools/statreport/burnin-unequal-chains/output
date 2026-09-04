@@ -1,0 +1,13 @@
+ E x [1] = 0.5  [+- 0.5]
+ E x [2] = 0.3667  [+- 0.4819]
+ E x     = 0.4048  [+- 0.4908]
+   t @ 1.182   Ne = 10   burnin = Not Converged!
+   t @ 2.687   Ne = 11   burnin = 12
+   t @ 1.955   Ne = 21   burnin = Not Converged!   [integer] 
+       PSRF-80%CI = 1       PSRF-RCF = 1
+
+
+ Ne  >= 21.49    (x)
+ min burnin <= Not Converged!    (x)
+ PSRF-80%CI <= 1    (x)
+ PSRF-RCF <= 1    (x)

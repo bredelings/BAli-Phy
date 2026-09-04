@@ -573,25 +573,29 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
 
     // Print out autocorrelation times, Ne, and minimum burn-in
     double sum_tau=0;
-    index_value<int> worst_burnin;
-    if (tables.size() > 1)
-	for(int i=0;i<tables.size();i++) {
-	    const vector<double>& values = tables[i].column(index);
+    int maximum_burnin = 0;
+    bool burnin_converged = true;
+    for(int i=0;i<tables.size();i++) {
+	const vector<double>& values = tables[i].column(index);
+	int b = burnin[i][index];
+	maximum_burnin = max(maximum_burnin, b);
+	if (b >= sample_counts[i]*2/3)
+	    burnin_converged = false;
 
+	if (tables.size() > 1)
+	{
 	    double tau = autocorrelation_time(values);
 	    sum_tau += tau;
 
-	    int b = burnin[i][index];
-
-	    string spacer;spacer.append(name.size()-1,' ');
-
-	    if (show_individual) {
+	    if (show_individual)
+	    {
+		string spacer;spacer.append(name.size()-1,' ');
 		cout<<"   "<<spacer<<"t @ "<<tau;
 		cout<<"   Ne = "<<int(values.size()/tau);
 		cout<<"   burnin = "<<burnin_value(b,sample_counts[i])<<endl;
 	    }
-	    worst_burnin.check_max(i,b);
 	}
+    }
     const vector<double>& values = total;
     double tau;
     if (tables.size() == 1)
@@ -604,13 +608,11 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
     cout<<"   "<<spacer<<"t @ "<<tau;
     double Ne = values.size()/tau;
     cout<<"   Ne = "<<int(Ne);
-    int individual_size_worst = sample_counts[0];
-    if (tables.size() == 1)
-	worst_burnin = {index, burnin[0][index]};
+    cout<<"   burnin = ";
+    if (burnin_converged)
+	cout<<maximum_burnin;
     else
-	individual_size_worst = sample_counts[*worst_burnin.index()];
-    assert(worst_burnin);
-    cout<<"   burnin = "<<burnin_value(*worst_burnin.amount(), individual_size_worst);
+	cout<<"Not Converged!";
     if (integers) cout<<"   [integer] ";
     cout<<endl;
 
@@ -735,7 +737,8 @@ int main(int argc,char* argv[])
 	vector< vector<int> > burnin(tables.size(), vector<int>(n_columns,1));
 	vector<unsigned> sample_counts(tables.size());
 
-	index_value<int>    worst_burnin;
+	index_value<int> worst_burnin;
+	index_value<int> worst_failed_burnin;
 
 	for(int i=0;i<tables.size();i++) {
 	    sample_counts[i] = tables[i].n_rows();
@@ -743,7 +746,10 @@ int main(int argc,char* argv[])
 	    {
 		int b = get_burn_in(tables[i].column(j), 0.05, 2);
 		burnin[i][j] = b;
-		worst_burnin.check_max(j,b);
+		if (b < sample_counts[i]*2/3)
+		    worst_burnin.check_max(j,b);
+		else
+		    worst_failed_burnin.check_max(j,b);
 	    }
 	    if (tables[i].n_rows() < min_rows)
 		throw myexception()<<"File '"<<filenames[i]<<"' has only "<<tables[i].n_rows()<<" rows, but "<<min_rows<<" are required!";
@@ -780,8 +786,10 @@ int main(int argc,char* argv[])
 
 	if (worst_Ne)
 	    cout<<" Ne  >= "<<*worst_Ne.amount()<<"    ("<<field_names[*worst_Ne.index()]<<")"<<endl;
-	if (worst_burnin)
-	    cout<<" min burnin <= "<<burnin_value(*worst_burnin.amount(), sample_counts.back())<<"    ("<<field_names[*worst_burnin.index()]<<")"<<endl;
+	if (worst_failed_burnin)
+	    cout<<" min burnin <= Not Converged!    ("<<field_names[*worst_failed_burnin.index()]<<")"<<endl;
+	else if (worst_burnin)
+	    cout<<" min burnin <= "<<*worst_burnin.amount()<<"    ("<<field_names[*worst_burnin.index()]<<")"<<endl;
 	if (tables.size() > 1) {
 	    if (worst_RCI)
 		cout<<" PSRF-80%CI <= "<<*worst_RCI.amount()<<"    ("<<field_names[*worst_RCI.index()]<<")"<<endl;

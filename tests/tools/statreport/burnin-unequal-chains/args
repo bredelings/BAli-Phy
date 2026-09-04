@@ -1,0 +1,3 @@
+# A failing short chain must make both variable and global burn-in summaries fail even when a
+# longer chain has a larger passing estimate. Remove this check if burn-in aggregation is removed.
+--skip=0 --mean --individual short.tsv long.tsv
