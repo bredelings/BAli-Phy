@@ -68,7 +68,10 @@ def print_models(name,models):
     for model in models:
         model_name =  f"{name}{i}"
         (assign, model_html) = print_model(model)
-        section += f'<tr><td><a name="{model_name}" class="anchor"></a><span class="modelname">{model_name}</span></td><td>{assign}</td><td>\n'
+        section += (
+            f'<tr><td><span id="{model_name}" class="modelname">{model_name}</span></td>'
+            f'<td>{assign}</td><td>\n'
+        )
         section += model_html
         section += '</td></tr>\n'
         i += 1
@@ -2542,14 +2545,15 @@ assumes it is included in the model.</p>
         for report in reports:
             partition = report["partition"]
             property_name = html.escape(report["property"])
+            heading_id = ""
             if partition not in anchored_partitions:
-                section += f'<a class="anchor" name="positive-selection-P{partition}"></a>\n'
+                heading_id = f' id="positive-selection-P{partition}"'
                 anchored_partitions.add(partition)
             smodel_index = self.get_smodel_indices()[partition - 1]
             smodel = ""
             if smodel_index is not None:
                 smodel = f' — <a href="#S{smodel_index + 1}">S{smodel_index + 1}</a>'
-            section += f"<h3>Partition {partition}{smodel} — {property_name}</h3>\n"
+            section += f"<h3{heading_id}>Partition {partition}{smodel} — {property_name}</h3>\n"
 
             rows = report["rows"]
             threshold = report["threshold"]
@@ -2975,7 +2979,7 @@ assumes it is included in the model.</p>
         section = '<section id="models" class="report-section">\n'
         section += '<h2 style="clear:both">Model and priors</h2>\n'
 
-        section += '<h3 style="clear:both"><a class="anchor" name="tree"></a>Tree (+priors)</h3>\n'
+        section += '<h3 id="tree" style="clear:both">Tree (+priors)</h3>\n'
 #    $section .= "<table class=\"backlit2\">\n";
         section += "<table>\n"
         if self.get_topology_prior():
@@ -2990,14 +2994,14 @@ assumes it is included in the model.</p>
             section += f'<tr><td class="modelname">indel rates</td><td>{print_model_string(self.get_indel_rates())}</td></tr>'
         section += '</table>\n'
 
-        section += '<h3 style="clear:both"><a class="anchor" name="smodel"></a>Substitution model (+priors)</h3>\n'
+        section += '<h3 id="smodel" style="clear:both">Substitution model (+priors)</h3>\n'
         section += print_models("S",self.get_smodels())
 
-        section += '<h3 style="clear:both"><a class="anchor" name="imodel"></a>Indel model (+priors)</h3>\n'
+        section += '<h3 id="imodel" style="clear:both">Indel model (+priors)</h3>\n'
         section += print_models("I",self.get_imodels())
 
         if (self.get_scale_models()):
-            section += '<h3 style="clear:both"><a class="anchor" name="scales"></a>Scales (+priors)</h3>\n'
+            section += '<h3 id="scales" style="clear:both">Scales (+priors)</h3>\n'
             section += print_models("scale",self.get_scale_models());
 
         section += '</section>\n'

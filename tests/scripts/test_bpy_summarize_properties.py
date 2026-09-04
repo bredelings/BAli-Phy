@@ -186,6 +186,8 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             }
             (directory / "P1.initial.html").write_text("", encoding="utf-8")
             section = analysis.section_positive_selection()
+            self.assertIn('<h3 id="positive-selection-P1">', section)
+            self.assertNotIn('class="anchor"', section)
             self.assertIn('href="#positive-selection-P1">P1</a>', section)
             self.assertIn('href="#S1">S1</a>', section)
             self.assertIn("The overall posterior allows positive selection to be absent", section)
