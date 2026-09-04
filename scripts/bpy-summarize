@@ -2179,8 +2179,15 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       .content {margin:1em;}
       .backlit td {background: rgb(220,220,220);}
 
+      .report-section {
+        clear: both;
+        display: flow-root;
+        margin-top: 2.5em;
+      }
+
       h1 {font-size: 150%;}
       h2 {font-size: 130%; margin-top:2.5em; margin-bottom: 1em}
+      .report-section > h2 {margin-top: 0;}
       h3 {font-size: 110%; margin-bottom: 0.2em;}
 
       ul {margin-top: 0.4em;}
