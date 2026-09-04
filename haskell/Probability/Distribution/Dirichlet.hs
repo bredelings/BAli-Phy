@@ -12,9 +12,13 @@ foreign import trcall "Distribution:dirichlet_density" dirichletDensityNative ::
 dirichletDensity as ps = dirichletDensityNative
     (fromList as) (fromList ps)
 
--- The `dirichlet` does not handle cases where the number of as changes in a graceful way: all entries are resampled!
-sampleDirichlet as = do vs <- mapM (\a-> sample $ gamma a 1) as
-                        return $ map (/(sum vs)) vs
+-- Sample gamma variables at the family rate, but update their redundant common scale at rate 1.
+-- Common scaling preserves normalized values; the group move supplies the Jacobian.
+sampleDirichlet as = do
+  let gammaRate = 1 / sqrt (fromIntegral $ length as)
+  vs <- (RanSamplingRate gammaRate $ mapM (\a -> sample $ gamma a 1) as)
+          `withTKEffect` (\vs -> addMove 1 $ scaleGroupSlice vs)
+  return $ map (/sum vs) vs
 
 newtype Dirichlet = Dirichlet [Double]
 
@@ -32,13 +36,13 @@ instance HasAnnotatedPdf Dirichlet where
     annotatedDensities dist = make_densities $ pdf dist
 
 instance Sampleable Dirichlet where
-    sample dist@(Dirichlet as) = RanSamplingRate (1/sqrt(fromIntegral $ length as)) $ sampleDirichlet as
+    sample (Dirichlet as) = sampleDirichlet as
 
 
 dirichlet as = Dirichlet as
 
 
--- Is there a more graceful way to add a move here?
+-- Keep IID so changes in n can reuse gamma variables instead of resampling every entry.
 symmetricDirichlet n a = do
   ws <- (sample $ iid n (gamma a 1)) `withTKEffect` (\ws -> addMove 1 $ scaleGroupSlice ws)
   return $ map (/sum ws) ws
