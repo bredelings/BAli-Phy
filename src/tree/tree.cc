@@ -2049,20 +2049,20 @@ void add_ampersand_comments(vector< pair<string,any> >& tags, const vector<strin
         if (starts_with(comment, "&&")) continue;
         if (starts_with(comment, "&!")) continue;
 
-        // split the comment on ','
-        vector<string> fragments = split_grouped_comment(comment, ',');
+        // The initial ampersand marks the entire comment as metadata.  Accept an additional
+        // ampersand on later fields for compatibility with the syntax historically read here.
+        vector<string> fragments = split_grouped_comment(comment.substr(1), ',');
 
         for(auto& fragment: fragments)
         {
-            // SKIP fragment that don't start with &
-            if (fragment.empty() or fragment[0] != '&') continue;
+            if (starts_with(fragment, "&")) fragment.erase(0, 1);
 
-            int sep = fragment.find('=',1);
-            if (sep == string::npos) continue;
+            int sep = fragment.find('=');
+            if (sep == string::npos or sep == 0) continue;
 
             int L = fragment.size();
 
-            auto attribute = fragment.substr(1,sep-1);
+            auto attribute = fragment.substr(0,sep);
             auto value     = fragment.substr(sep+1,L-sep-1);
 
             tags.push_back( {attribute, value} );
@@ -2135,7 +2135,7 @@ int Tree::parse_(const string& line, Underscore underscores, std::function<void(
         vector< pair<string, any> > tags;
         add_comments(tags, comments, "&&NHX:", ":");
         add_comments(tags, comments, "&!", ",!");
-        add_ampersand_comments(tags, comments); // [&key1=value1,&key2=value2]
+        add_ampersand_comments(tags, comments); // [&key1=value1,key2=value2]
 
         //std::cerr<<"word = '"<<word<<"'    depth = "<<tree_stack.size()<<"   stack size = "<<tree_stack.back().size()<<std::endl;
 
