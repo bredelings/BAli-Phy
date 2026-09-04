@@ -1,0 +1,3 @@
+# Protect multi-chain ESS from treating file boundaries as lag pairs; the companion case
+# permutes the same chains.  Remove this pair if statreport stops reporting multi-chain ESS.
+--skip=0 --mean ../ess-chain-order-data/a.tsv ../ess-chain-order-data/b.tsv ../ess-chain-order-data/c.tsv

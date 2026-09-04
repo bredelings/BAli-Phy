@@ -451,6 +451,61 @@ void show_error(variables_map& args, const string& /*name*/, const vector<stats_
     cout<<endl;
 }
 
+// Treat each table as an independent time-ordered chain with a shared stationary mean.  The
+// lag-zero variance uses every retained sample, while positive-lag covariances use only pairs
+// within the same chain and weight every valid pair equally.  Repeated values need no special
+// handling, and iterating over the tables only through sums makes the result independent of
+// chain ordering.  The lag horizon and early stopping rule match the single-chain estimator.
+double multi_chain_autocorrelation_time(const vector<stats_table>& tables, int index)
+{
+    int sample_count = 0;
+    int longest_chain = 0;
+    double mean = 0;
+    for(const auto& table: tables)
+    {
+	const auto& values = table.column(index);
+	int chain_size = values.size();
+	sample_count += chain_size;
+	longest_chain = max(longest_chain, chain_size);
+	for(double value: values)
+	    mean += value;
+    }
+    mean /= sample_count;
+
+    double variance = 0;
+    for(const auto& table: tables)
+	for(double value: table.column(index))
+	    variance += (value - mean)*(value - mean);
+    variance /= sample_count;
+
+    int covariance_count = max(1 + sample_count/4, sample_count - 15);
+    covariance_count = min(covariance_count, longest_chain - 1);
+    double limit = variance*(0.01/sample_count);
+    double covariance_sum = 0;
+    for(int lag = 1; lag < covariance_count; lag++)
+    {
+	double covariance = 0;
+	int pair_count = 0;
+	for(const auto& table: tables)
+	{
+	    const auto& values = table.column(index);
+	    int chain_size = values.size();
+	    if (lag >= chain_size)
+		continue;
+	    for(int i = 0; i + lag < chain_size; i++)
+		covariance += (values[i] - mean)*(values[i + lag] - mean);
+	    pair_count += chain_size - lag;
+	}
+	covariance /= pair_count;
+
+	if (covariance < 0 or (lag > 3 and covariance < limit))
+	    break;
+	covariance_sum += covariance;
+    }
+
+    return 1.0 + 2.0*covariance_sum/variance;
+}
+
 var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int index,const vector<vector<int> >& burnin)
 {
     const string& name = tables[0].names()[index];
@@ -531,7 +586,11 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
 	    worst_burnin.check_max(i,b);
 	}
     const vector<double>& values = total;
-    double tau = autocorrelation_time(values);
+    double tau;
+    if (tables.size() == 1)
+	tau = autocorrelation_time(values);
+    else
+	tau = multi_chain_autocorrelation_time(tables, index);
 
     string spacer;spacer.append(name.size()-1,' ');
 
