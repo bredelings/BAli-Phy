@@ -620,9 +620,9 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
     cout<<endl;
 
     // Print out Potential Scale Reduction Factors (PSRFs)
-	double RCI = 1;
-	double RCF = 1;
-	if (tables.size() > 1) {
+    double RCI = 1;
+    double RCF = 1;
+    if (tables.size() > 1) {
 	// An integer interval [a,b] contains b-a+1 possible values, so its width cannot vanish.
 	// For continuous values, a positive pooled width over zero within-chain width is infinite;
 	// two zero widths conventionally produce the neutral value 1 for this diagnostic.
