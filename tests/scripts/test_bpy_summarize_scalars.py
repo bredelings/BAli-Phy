@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 import io
 import os
 from pathlib import Path
@@ -22,6 +22,48 @@ print_model_string = MODULE["print_model_string"]
 
 
 class BPYSummarizeRunTests(unittest.TestCase):
+    # Output initialization must never rename input or unrelated directories; generated-report
+    # tests only use fresh paths. Remove this if an external output manager assumes ownership.
+    def test_leaves_unowned_and_input_directories_unchanged(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            unrelated = directory / "unrelated"
+            unrelated.mkdir()
+            marker = unrelated / "important.txt"
+            marker.write_text("keep\n", encoding="utf-8")
+
+            # Supply the stable analysis properties written after directory validation.
+            def make_analysis(outdir, input_directory):
+                analysis = Analysis.__new__(Analysis)
+                analysis.outdir = outdir
+                analysis.mcmc_runs = [SimpleNamespace(get_dir=lambda: input_directory)]
+                analysis.burnin = 0
+                analysis.subsample = 1
+                analysis.until = None
+                analysis.prune = None
+                analysis.get_alphabets = lambda: None
+                analysis.get_alignments_files = lambda: []
+                analysis.get_character_property_files = lambda: []
+                analysis.get_input_files = lambda: None
+                return analysis
+
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                make_analysis(unrelated, directory / "chain").initialize_results_directory()
+            self.assertTrue(marker.exists())
+            self.assertFalse((directory / "unrelated.1").exists())
+
+            input_directory = directory / "input"
+            input_directory.mkdir()
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                make_analysis(input_directory, input_directory).initialize_results_directory()
+            self.assertTrue(input_directory.exists())
+
+            fresh = directory / "fresh"
+            with redirect_stdout(io.StringIO()):
+                make_analysis(fresh, directory / "chain").initialize_results_directory()
+            self.assertTrue((fresh / "Work").is_dir())
+            self.assertTrue((fresh / "properties.json").is_file())
+
     # Degenerate MDS output is valid for a fixed coordinate or a singleton chain and must still
     # produce a centered scene. Remove this if a plotting library owns 3D scene generation.
     def test_centers_degenerate_mds_coordinates(self):

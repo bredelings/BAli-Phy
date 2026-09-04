@@ -1163,11 +1163,41 @@ class Analysis(object):
             print(input_file_names.join('\n'),file=out)
 
     def initialize_results_directory(self):
+        resolved_outdir = self.outdir.resolve()
+        for run in self.mcmc_runs:
+            input_directory = run.get_dir().resolve()
+            try:
+                input_directory.relative_to(resolved_outdir)
+            except ValueError:
+                pass
+            else:
+                print(
+                    f"Error: output directory '{self.outdir}' is an input directory or contains one.",
+                    file=sys.stderr,
+                )
+                exit(1)
+
         character_property_file_names = [
             [str(filename) if filename is not None else None for filename in files]
             if files is not None else None
             for files in self.get_character_property_files()
         ]
+        if self.outdir.exists() and not self.outdir.is_dir():
+            print(f"Error: output path '{self.outdir}' is not a directory.", file=sys.stderr)
+            exit(1)
+        existing_entries = list(self.outdir.iterdir()) if self.outdir.exists() else []
+        if existing_entries:
+            properties = self.load_analysis_properties()
+            identifying_properties = {"burnin", "subsample", "input_files"}
+            recognized_report = (self.outdir / "Work").is_dir() and identifying_properties <= properties.keys()
+            if not recognized_report:
+                print(
+                    f"Error: existing directory '{self.outdir}' is not a recognized bpy-summarize report; "
+                    "leaving it unchanged.",
+                    file=sys.stderr,
+                )
+                exit(1)
+
         reuse = self.check_analysis_property("burnin", self.burnin)
         reuse = reuse and self.check_analysis_property("subsample", self.subsample)
         reuse = reuse and self.check_analysis_property("until", self.until)
@@ -1177,16 +1207,15 @@ class Analysis(object):
         reuse = reuse and self.check_analysis_property("character_property_file_names", character_property_file_names)
         reuse = reuse and self.check_analysis_property("input_files", self.get_input_files())
 
-        if not reuse and self.outdir.exists():
+        if not reuse and existing_entries:
             new_dir_name = get_unused_dir_name(self.outdir)
-            if self.outdir.exists():
-                print(f"Renaming '{self.outdir}' to '{new_dir_name}'\n")
-                os.rename(self.outdir,new_dir_name)
+            print(f"Renaming '{self.outdir}' to '{new_dir_name}'\n")
+            os.rename(self.outdir,new_dir_name)
 
         if not self.outdir.exists():
             os.mkdir(self.outdir)
-            os.mkdir(self.outdir / "Work")
             print(f"Creating new directory '{self.outdir}' for summary files.")
+        (self.outdir / "Work").mkdir(exist_ok=True)
 
         self.write_analysis_property("burnin", self.burnin)
         self.write_analysis_property("subsample", self.subsample)
