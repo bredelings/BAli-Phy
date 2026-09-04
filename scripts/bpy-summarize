@@ -799,9 +799,7 @@ class Analysis(object):
             exit(1)
 
         self.draw_tree_exe = find_exe('draw-tree', message="Tree pictures will not be generated.\n")
-        # FIXME - maybe switch from gnuplot to R?
-        self.gnuplot_exe = find_exe('gnuplot', message='Some graphs will not be generated.\n')
-        self.R_exe = find_exe('R', message='Some mixing graphs will not be generated.\n')
+        self.R_exe = find_exe('R', message='Some report plots will not be generated.\n')
         self.fourmolu_exe = shutil.which("fourmolu")
         self.ormolu_exe = shutil.which("ormolu")
         self.hindent_exe = shutil.which("hindent")
@@ -907,11 +905,6 @@ class Analysis(object):
         if not self.R_exe:
             return
         return self.exec_show([self.R_exe,'--slave','--vanilla','--args']+args,infile=script)
-
-    def run_gnuplot(self,script):
-        if not self.gnuplot_exe:
-            return
-        subprocess.Popen(self.gnuplot_exe,stdin=subprocess.PIPE).communicate(script.encode('utf-8'))
 
     def get_input_files(self):
         return first_all_same([run.get_input_files() for run in self.mcmc_runs])

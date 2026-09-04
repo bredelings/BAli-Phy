@@ -449,7 +449,7 @@ jobs:
 
         meson test -C build --print-errorlogs --num-processes 2
 
-    - name: Test bpy-summarize without R or gnuplot (Windows native)
+    - name: Test bpy-summarize without R (Windows native)
       if: matrix.name == 'windows-native-mingw'
       shell: pwsh
       run: |
@@ -460,10 +460,6 @@ jobs:
         if (Get-Command R.exe -CommandType Application -ErrorAction SilentlyContinue) {
           throw "R unexpectedly remains available on the restricted PATH"
         }
-        if (Get-Command gnuplot.exe -CommandType Application -ErrorAction SilentlyContinue) {
-          throw "gnuplot unexpectedly remains available on the restricted PATH"
-        }
-
         bpy-summarize --help
         cmd /c "bpy-summarize --help"
         bali-phy-pkg --help
@@ -479,9 +475,6 @@ jobs:
         $analysisOutput
         if ($analysisOutput -notmatch "Program 'R' not found") {
           throw "bpy-summarize did not report that R was unavailable"
-        }
-        if ($analysisOutput -notmatch "Program 'gnuplot' not found") {
-          throw "bpy-summarize did not report that gnuplot was unavailable"
         }
         if (-not (Test-Path Results/index.html)) {
           throw "bpy-summarize did not generate Results/index.html"

@@ -560,7 +560,6 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         analysis.sampled_topology_count = 1
         analysis.R_exe = True
         analysis.exec_show = lambda *args, **kwargs: self.fail("unexpected topology command")
-        analysis.run_gnuplot = lambda *args, **kwargs: self.fail("unexpected topology plot")
         analysis.Rexec = lambda *args, **kwargs: self.fail("unexpected topology R command")
 
         analysis.compute_tree_mixing_diagnostics()
@@ -592,7 +591,6 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
             analysis.get_trees_files = lambda: [trees]
             analysis.get_libexec_script = lambda filename: filename
             analysis.Rexec = lambda script, args: calls.append((script, args))
-            analysis.run_gnuplot = lambda script: None
             analysis.exec_show = lambda *args, **kwargs: self.fail("unexpected SRQ command")
 
             with redirect_stdout(io.StringIO()):
