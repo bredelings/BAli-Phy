@@ -2691,8 +2691,10 @@ assumes it is included in the model.</p>
     def section_phylogeny_distribution(self):
         section = '<section id="topology" class="report-section">\n'
         section += '<h2>Phylogeny Distribution</h2>\n'
-        section += self.html_svg('c-levels.svg','35%','',['r_floating_picture'])
-        section += self.html_svg('c50-tree.svg','25%','',['floating_picture'])
+        section += self.html_svg(
+            'c-levels.svg', 'Consensus-tree support levels', '35%', '', ['r_floating_picture']
+        )
+        section += self.html_svg('c50-tree.svg', '50% consensus tree', '25%', '', ['floating_picture'])
 
         section += """\
 <table>
@@ -2808,17 +2810,25 @@ assumes it is included in the model.</p>
                     return m.group(1)
         return None
 
-    def html_svg(self,url,width=None,height=None,classes=[],extra=None):
+    # Embed an SVG with an accessible name and useful fallback link.
+    # Callers may add layout classes without sharing mutable state between plots.
+    def html_svg(self,url,description,width=None,height=None,classes=None,extra=None):
+        classes = list(classes) if classes else []
         classes.append('svg-image')
-        class_=' '.join(classes)
-        svg = f'<object data="{url}" type="image/svg+xml" class="{class_}"'
+        class_ = ' '.join(classes)
+        escaped_url = html.escape(url, quote=True)
+        escaped_description = html.escape(description, quote=True)
+        svg = (
+            f'<object data="{escaped_url}" type="image/svg+xml" class="{class_}" role="img" '
+            f'aria-label="{escaped_description}"'
+        )
         if width:
-            svg += f" width={width}"
+            svg += f' width="{html.escape(str(width), quote=True)}"'
         if height:
-            svg += f" height={height}"
+            svg += f' height="{html.escape(str(height), quote=True)}"'
         if extra:
-            svg += " "+extra
-        svg += ' ></object>'
+            svg += " " + extra
+        svg += f'><a href="{escaped_url}">View {escaped_description}</a></object>'
         return svg
 
     def section_ancestral_sequences(self):   #REMOVE!
@@ -2843,7 +2853,9 @@ assumes it is included in the model.</p>
       <h4 style=\"text-align:center\">Projection of RF distances for {MDS_title} (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>
 """
         if path.exists( self.outdir / MDS_figure ):
-            section += self.html_svg(MDS_figure,"90%","",[])
+            section += self.html_svg(
+                MDS_figure, 'Projection of Robinson-Foulds tree distances', '90%', ''
+            )
             section += f'<a href="{MDS_figure_3d}.html">3D</a>'
         else:
             if not self.R_exe:
@@ -2852,7 +2864,9 @@ assumes it is included in the model.</p>
         section += '<td style="width:40%;vertical-align:top">'
         section += '<h4 style="text-align:center">Variation of split PPs across chains (<a href="https://doi.org/10.1080/10635150600812544">Beiko et al 2006</a>)</h4>'
         if path.exists(self.outdir / "convergence1-PP.svg"):
-            section += self.html_svg("convergence1-PP.svg","90%","",[])
+            section += self.html_svg(
+                "convergence1-PP.svg", "Split posterior probabilities across chains", "90%", ""
+            )
         else:
             if not self.R_exe:
                 section += "<p>Not generated: can't find R.</p>"
@@ -2863,7 +2877,12 @@ assumes it is included in the model.</p>
 
         if path.exists(self.outdir / "convergence2-PP.svg"):
             section += "<br/><br/><br/><br/>"
-            section += self.html_svg("convergence2-PP.svg","90%","",[])
+            section += self.html_svg(
+                "convergence2-PP.svg",
+                "Differences in split posterior probabilities across chains",
+                "90%",
+                "",
+            )
         section += "</td>"
         section += "</tr></table>"
         return section

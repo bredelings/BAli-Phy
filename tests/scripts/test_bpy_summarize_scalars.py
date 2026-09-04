@@ -155,6 +155,11 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertNotIn(unsafe, section)
         self.assertEqual(print_model_string(unsafe), f"= {escaped}")
 
+        svg = analysis.html_svg('plot<&".svg', unsafe, "90%")
+        self.assertIn(f'role="img" aria-label="{escaped}"', svg)
+        self.assertIn('href="plot&lt;&amp;&quot;.svg"', svg)
+        self.assertIn(f">View {escaped}</a>", svg)
+
 
 class BPYSummarizeNavigationTests(unittest.TestCase):
     # Keep report navigation semantic and prevent links to sections omitted from reduced reports.
