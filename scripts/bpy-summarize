@@ -2243,7 +2243,11 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       }
       .plot-stack {display:grid; gap:2em;}
       .plot-panel {min-width:0;}
-      .plot-panel .svg-image, .srq-plots img {display:block; max-width:100%;}
+      .plot-panel .svg-image, .srq-plots img {display:block; height:auto; max-width:100%; width:100%;}
+      .plot-title {text-align:center;}
+      .table-scroll {max-width:100%; overflow-x:auto;}
+      .table-scroll:focus-visible {outline:2px solid rgb(25,79,128); outline-offset:2px;}
+      .table-scroll > table {min-width:max-content;}
       table.backlit2 {border-collapse: collapse;}
       table.backlit2 thead th {
         border-bottom: 1px solid #C0C0C0;
@@ -2270,7 +2274,9 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       table.positive-selection-sites td.site-dnds-mean {padding-right:0.25em;}
       table.positive-selection-sites td.site-dnds-pm {padding-left:0; padding-right:0; text-align:center;}
       table.positive-selection-sites td.site-dnds-sd {padding-left:0.25em;}
-      .clear {clear:both;}
+      table.alignment-summary th.alignment-name {padding-right:3em;}
+      table.alignment-summary .alignment-stat {padding-left:0.5em; padding-right:0.5em; text-align:center;}
+      tr.scalar-unestimated {font-style:italic;}
       .glossary-link {color:inherit; text-decoration:underline dotted; text-underline-offset:0.15em;}
       dl.glossary {max-width:70em;}
       dl.glossary dt {font-weight:bold;}
@@ -2320,7 +2326,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
     def section_data_and_model(self):
         section = """\
 <section id="data" class="report-section">
-<h2 style="clear:both">Data and model</h2>
+<h2>Data and model</h2>
+<div class="table-scroll" role="region" aria-label="Data and model table" tabindex="0">
 <table class="backlit2">
   <thead>
     <tr><th scope="col">Partition</th><th scope="col">Sequences</th><th scope="col">Lengths</th><th scope="col">Alphabet</th><th scope="col">Substitution&nbsp;Model</th><th scope="col">Indel&nbsp;Model</th><th scope="col">Scale&nbsp;Model</th></tr>
@@ -2379,6 +2386,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             section += '</tr>\n'
         section += '</tbody>\n'
         section += '</table>\n'
+        section += '</div>\n'
         section += '</section>\n'
         return section
 
@@ -2429,7 +2437,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
         section = """\
 <section id="code" class="report-section">
-<h2 class="clear">Model Code</h2>
+<h2>Model Code</h2>
     <ul>
 """
         for file_path in self.get_code():
@@ -2450,7 +2458,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
         section = """\
 <section id="parameters" class="report-section">
-<h2 class="clear">Scalar variables</h2>
+<h2>Scalar variables</h2>
+  <div class="table-scroll" role="region" aria-label="Scalar variables table" tabindex="0">
     <table class="backlit2 scalar-variables">
       <thead>
         <tr><th scope="col">Statistic</th><th scope="colgroup" colspan="3">Mean &plusmn; SD</th><th scope="colgroup" colspan="2">Median (95% BCI)</th><th scope="col"><a class="glossary-link" href="#glossary-act"><abbr title="Autocorrelation time">ACT</abbr></a></th><th scope="col"><a class="glossary-link" href="#glossary-ess"><abbr title="Effective sample size">ESS</abbr></a></th><th scope="col">burnin</th><th scope="col"><a class="glossary-link" href="#glossary-psrf-ci80"><abbr title="Potential scale reduction factor based on the 80% credible interval">PSRF-80%CI</abbr></a></th><th scope="col"><a class="glossary-link" href="#glossary-psrf-rcf"><abbr title="Potential scale reduction factor for discrete distributions">PSRF-RCF</abbr></a></th></tr>
@@ -2465,8 +2474,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             if var == "#treegen" and self.personality() == "phylobayes":
                 continue
 
-            row_style = "" if var in self.CI_low else 'style="font-style:italic"'
-            section += f'<tr {row_style}>\n'
+            row_class = "" if var in self.CI_low else ' class="scalar-unestimated"'
+            section += f'<tr{row_class}>\n'
             section += f'  <th scope="row">{html.escape(var)}</th>\n'
             if var in self.constants:
                 section += f'  <td class="scalar-mean">{html.escape(self.median[var])}</td>\n'
@@ -2546,6 +2555,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             section += '</tr>\n'
         section += '      </tbody>\n'
         section += '</table>\n'
+        section += '</div>\n'
         section += '</section>\n'
 
         return section
@@ -2555,7 +2565,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
     def section_positive_selection(self):
         section = """\
 <section id="positive-selection" class="report-section">
-<h2 class="clear">Positive selection</h2>
+<h2>Positive selection</h2>
 """
         reports = getattr(self, "positive_selection_reports", [])
         if any(report["conditioned"] and 0 < report["retained_samples"] < report["total_samples"]
@@ -2569,6 +2579,7 @@ assumes it is included in the model.</p>
         if model_support:
             section += """\
 <h3>Support for positive selection in the model</h3>
+<div class="table-scroll" role="region" aria-label="Positive-selection model support table" tabindex="0">
 <table class="backlit2 positive-selection-support">
   <thead>
     <tr><th scope="col">Statistic</th><th scope="col">Substitution model</th><th scope="col">Partitions</th><th scope="col">Posterior probability</th><th scope="col">Log odds</th></tr>
@@ -2591,7 +2602,7 @@ assumes it is included in the model.</p>
     <td>{html.escape(support["log_odds"])}</td>
   </tr>
 """
-            section += "  </tbody>\n</table>\n"
+            section += "  </tbody>\n</table>\n</div>\n"
 
         anchored_partitions = set()
         for report in reports:
@@ -2655,6 +2666,10 @@ assumes it is included in the model.</p>
                 has_conditioned_dnds = has_conditioned and any(row["conditioned-dNdS-mean"] for row in rows)
                 model_averaged_span = 1 + 3 * has_model_averaged_dnds
                 conditioned_span = 1 + 3 * has_conditioned_dnds
+                section += (
+                    f'<div class="table-scroll" role="region" '
+                    f'aria-label="Partition {partition} positive-selection sites table" tabindex="0">\n'
+                )
                 section += '<table class="backlit2 positive-selection-sites">\n  <thead>\n  <tr>\n'
                 section += (
                     '    <th scope="col" rowspan="2">Column</th>'
@@ -2709,7 +2724,7 @@ assumes it is included in the model.</p>
                             section += f'    <td class="site-dnds-sd">{conditioned_dnds_sd}</td>\n'
                     section += f'    <td>{html.escape(source)}</td>\n'
                     section += "  </tr>\n"
-                section += "  </tbody>\n</table>\n"
+                section += "  </tbody>\n</table>\n</div>\n"
 
             links = [f'<a href="{html.escape(report["filename"].name)}">Complete TSV table</a>']
             alignment_viewer = self.outdir / f"P{partition}.initial.html"
@@ -2782,22 +2797,23 @@ assumes it is included in the model.</p>
             return
 
         section = '<section id="alignment" class="report-section">\n'
-        section += '<h2 class="clear">Alignment Distribution</h2>\n'
+        section += '<h2>Alignment Distribution</h2>\n'
         for i in range(self.n_partitions()):
             section += f'<h3>Partition {i+1}</h3>\n'
-            section += """\
-  <table>
+            section += f"""\
+  <div class="table-scroll" role="region" aria-label="Partition {i+1} alignment table" tabindex="0">
+  <table class="alignment-summary">
     <thead>
     <tr>
-       <th scope="col" style="padding-right:3em">Alignment</th>
+       <th scope="col" class="alignment-name">Alignment</th>
        <th scope="col">FASTA</th>
        <th scope="col">HTML</th>
        <th scope="col" title ="Comparison of this alignment (top) to the WPD alignment (bottom)">Diff</th>
        <th scope="col">AU</th>
-       <th scope="col" style="padding-right:0.5em;padding-left:0.5em" title="Percent identity of the most dissimilar sequences">Min. %identity</th>
-       <th scope="col" style="padding-right:0.5em;padding-left:0.5em" title="Number of columns in the alignment"># Sites</th>
-       <th scope="col" style="padding-right:0.5em;padding-left:0.5em" title="Number of invariant columns">Constant</th>
-       <th scope="col" title="Number of parsimony-informative columns.">Informative</th>
+       <th scope="col" class="alignment-stat" title="Percent identity of the most dissimilar sequences">Min. %identity</th>
+       <th scope="col" class="alignment-stat" title="Number of columns in the alignment"># Sites</th>
+       <th scope="col" class="alignment-stat" title="Number of invariant columns">Constant</th>
+       <th scope="col" class="alignment-stat" title="Number of parsimony-informative columns.">Informative</th>
     </tr>
     </thead>
     <tbody>
@@ -2807,7 +2823,7 @@ assumes it is included in the model.</p>
                     continue
                 section +=  '    <tr>\n'
                 section += (
-                    f'      <th scope="row" style="padding-right:3em">{html.escape(name)}</th>\n'
+                    f'      <th scope="row" class="alignment-name">{html.escape(name)}</th>\n'
                 )
                 section += f'      <td><a href="{alignment}.fasta">FASTA</a></td>\n'
 
@@ -2827,14 +2843,20 @@ assumes it is included in the model.</p>
                     section +=  '      <td></td>\n'
 
                 features = self.get_alignment_info(self.outdir / f"{alignment}.fasta")
-                section += f'<td style="text-align: center">{features["min_p_identity"]}%</td>\n'
-                section += f'<td style="text-align: center">{features["length"]}</td>\n'
-                section += f'<td style="text-align: center">{features["n_const"]} ({features["p_const"]}%)</td>\n'
-                section += f'<td style="text-align: center">{features["n_inform"]} ({features["p_inform"]}%)</td>\n'
+                section += f'<td class="alignment-stat">{features["min_p_identity"]}%</td>\n'
+                section += f'<td class="alignment-stat">{features["length"]}</td>\n'
+                section += (
+                    f'<td class="alignment-stat">{features["n_const"]} ({features["p_const"]}%)</td>\n'
+                )
+                section += (
+                    f'<td class="alignment-stat">{features["n_inform"]} '
+                    f'({features["p_inform"]}%)</td>\n'
+                )
 
                 section += '    </tr>\n'
             section += '    </tbody>\n'
             section += '  </table>\n'
+            section += '  </div>\n'
         section += '</section>\n'
         return section
 
@@ -2885,7 +2907,7 @@ assumes it is included in the model.</p>
         section += f"""\
 <div class="tree-mixing-grid">
   <div class="plot-panel">
-    <h4 style="text-align:center">Projection of RF distances for {MDS_title} (<a href="https://doi.org/10.1080/10635150590946961">Hillis et al 2005</a>)</h4>
+    <h4 class="plot-title">Projection of RF distances for {MDS_title} (<a href="https://doi.org/10.1080/10635150590946961">Hillis et al 2005</a>)</h4>
 """
         if path.exists( self.outdir / MDS_figure ):
             section += self.html_svg(MDS_figure, 'Projection of Robinson-Foulds tree distances')
@@ -2895,7 +2917,7 @@ assumes it is included in the model.</p>
                 section += "<p>Not generated: can't find R</p>"
         section += '</div>\n'
         section += '<div class="plot-panel">'
-        section += '<h4 style="text-align:center">Variation of split PPs across chains (<a href="https://doi.org/10.1080/10635150600812544">Beiko et al 2006</a>)</h4>'
+        section += '<h4 class="plot-title">Variation of split PPs across chains (<a href="https://doi.org/10.1080/10635150600812544">Beiko et al 2006</a>)</h4>'
         section += '<div class="plot-stack">\n'
         if path.exists(self.outdir / "convergence1-PP.svg"):
             section += self.html_svg(
@@ -3093,6 +3115,7 @@ assumes it is included in the model.</p>
         #section += '<table style="width:100%">'."\n"
 
         #section += '<table class="backlit2 center" style="width:100%">'."\n"
+        section += '<div class="table-scroll" role="region" aria-label="Run details table" tabindex="0">\n'
         section += '<table class="backlit2 center">\n'
         section += '<thead>\n<tr><th scope="col">chain #</th>'
         if not all_same(versions):
@@ -3128,15 +3151,15 @@ assumes it is included in the model.</p>
 
             section += "</tr>\n"
 
-        section += "</tbody>\n</table>\n"
+        section += "</tbody>\n</table>\n</div>\n"
         section += '</section>\n'
         return section
 
     def section_model_and_priors(self):
         section = '<section id="models" class="report-section">\n'
-        section += '<h2 style="clear:both">Model and priors</h2>\n'
+        section += '<h2>Model and priors</h2>\n'
 
-        section += '<h3 id="tree" style="clear:both">Tree (+priors)</h3>\n'
+        section += '<h3 id="tree">Tree (+priors)</h3>\n'
 #    $section .= "<table class=\"backlit2\">\n";
         section += "<table>\n"
         if self.get_topology_prior():
@@ -3160,14 +3183,14 @@ assumes it is included in the model.</p>
             section += f'<tr><td class="modelname">indel rates</td><td>{print_model_string(self.get_indel_rates())}</td></tr>'
         section += '</table>\n'
 
-        section += '<h3 id="smodel" style="clear:both">Substitution model (+priors)</h3>\n'
+        section += '<h3 id="smodel">Substitution model (+priors)</h3>\n'
         section += print_models("S",self.get_smodels())
 
-        section += '<h3 id="imodel" style="clear:both">Indel model (+priors)</h3>\n'
+        section += '<h3 id="imodel">Indel model (+priors)</h3>\n'
         section += print_models("I",self.get_imodels())
 
         if (self.get_scale_models()):
-            section += '<h3 id="scales" style="clear:both">Scales (+priors)</h3>\n'
+            section += '<h3 id="scales">Scales (+priors)</h3>\n'
             section += print_models("scale",self.get_scale_models());
 
         section += '</section>\n'

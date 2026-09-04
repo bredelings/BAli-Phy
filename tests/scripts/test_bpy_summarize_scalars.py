@@ -90,6 +90,7 @@ trend = [increasing]
             )
 
             section = analysis.section_scalar_variables()
+            self.assertIn('aria-label="Scalar variables table"', section)
             self.assertIn('<table class="backlit2 scalar-variables">', section)
             self.assertIn("Mean &plusmn; SD", section)
             self.assertIn("Median (95% BCI)", section)
@@ -122,7 +123,8 @@ trend = [increasing]
             )
             self.assertNotIn("mean-sd", section)
             self.assertNotIn("median-bci", section)
-            for row in section.split("<tr ")[1:]:
+            table_body = section.split("<tbody>", 1)[1]
+            for row in table_body.replace("<tr>", "<tr >").split("<tr ")[1:]:
                 cells = row.split("</tr>", 1)[0]
                 self.assertEqual(cells.count("<th") + cells.count("<td"), 11)
 
