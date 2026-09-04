@@ -1971,6 +1971,35 @@ void set_attributes(const vector<pair<string,any> >& tags, vector<string>& attri
     }
 }
 
+// Track expected closing characters as a stack, so delimiters split fields only at the
+// outer level and mismatched or crossed grouping characters are rejected.
+static vector<string> split_grouped_comment(const string& text, char delimiter)
+{
+    vector<string> fields(1);
+    vector<char> expected;
+    for(char character: text)
+    {
+        if (character == delimiter and expected.empty())
+            fields.emplace_back();
+        else
+        {
+            fields.back() += character;
+            if (character == '(') expected.push_back(')');
+            else if (character == '{') expected.push_back('}');
+            else if (character == '[') expected.push_back(']');
+            else if (contains_char(")}]", character))
+            {
+                if (expected.empty() or expected.back() != character)
+                    throw myexception()<<"Mismatched grouping character in Newick attribute comment";
+                expected.pop_back();
+            }
+        }
+    }
+    if (not expected.empty())
+        throw myexception()<<"Unclosed grouping character in Newick attribute comment";
+    return fields;
+}
+
 void add_comments(vector< pair<string,any> >& tags, const vector<string>& comments, const string& prefix, const string& delim)
 {
     for(auto comment: comments)
@@ -1982,7 +2011,7 @@ void add_comments(vector< pair<string,any> >& tags, const vector<string>& commen
         comment = comment.substr(prefix.size(), comment.size() - prefix.size());
     
         // split the comment on ','
-        vector<string> pieces = split(comment, delim);
+        vector<string> pieces = delim.size() == 1 ? split_grouped_comment(comment, delim[0]) : split(comment, delim);
     
         for(int k=0;k<pieces.size();k++)
         {
@@ -2021,7 +2050,7 @@ void add_ampersand_comments(vector< pair<string,any> >& tags, const vector<strin
         if (starts_with(comment, "&!")) continue;
 
         // split the comment on ','
-        vector<string> fragments = split(comment, ',');
+        vector<string> fragments = split_grouped_comment(comment, ',');
 
         for(auto& fragment: fragments)
         {

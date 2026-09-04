@@ -40,7 +40,7 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
     int start_comment = -1;
     bool in_word = false;
     bool in_quote = false;
-    bool in_comment = false;
+    int comment_depth = 0;
     word.clear();
     comments.clear();
 
@@ -50,11 +50,12 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 
 	if (not in_word)
 	{
-	    if (in_comment)
+	    if (comment_depth)
 	    {
-		if (c == ']') {
+		if (c == '[')
+		    comment_depth++;
+		else if (c == ']' and --comment_depth == 0) {
 		    comments.back() = s.substr(start_comment, i-start_comment);
-		    in_comment = false;
 		}
 		continue;
 	    }
@@ -79,9 +80,9 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 		continue;
 	    }
 
-	    if (not in_comment and c == '[')
+	    if (c == '[')
 	    {
-		in_comment = true;
+		comment_depth = 1;
 		start_comment = i+1;
 		comments.push_back(string());
 		continue;
@@ -92,11 +93,12 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 	}
 	else
 	{
-	    if (in_comment)
+	    if (comment_depth)
 	    {
-		if (c == ']') {
+		if (c == '[')
+		    comment_depth++;
+		else if (c == ']' and --comment_depth == 0) {
 		    comments.back() = s.substr(start_comment, i-start_comment);
-		    in_comment = false;
 		    start = i+1;
 		}
 		continue;
@@ -132,10 +134,10 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 	    // Keep the position here, but don't add this char to the current word.
 	    if (contains_char(delimiters, c)) break;
 
-	    if (not in_comment and c == '[')
+	    if (c == '[')
 	    {
 		word += s.substr(start, i-start);
-		in_comment = true;
+		comment_depth = 1;
 		start_comment = i+1;
 		comments.push_back(string());
 		continue;
@@ -147,7 +149,7 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
     if (in_quote)
 	throw myexception()<<"Unterminated quote parsing tree";
 
-    if (in_comment)
+    if (comment_depth)
 	throw myexception()<<"Unterminated comment parsing tree";
 
     if (not in_word) return false;
@@ -157,4 +159,3 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 
     return true;
 }
-
