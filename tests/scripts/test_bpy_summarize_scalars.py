@@ -318,7 +318,11 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
         self.assertNotIn("//", header)
         self.assertIn("@media print", header)
         self.assertIn("#topbar, .skip-link {display:none;}", header)
-        self.assertIn("tr, img, object {break-inside:avoid;}", header)
+        self.assertIn(".phylogeny-grid {grid-template-columns:repeat(3, minmax(0, 1fr));}", header)
+        self.assertIn(".mixing-overview, .tree-mixing-grid", header)
+        self.assertIn(".table-scroll {overflow:visible;}", header)
+        self.assertIn("figure, tr, img, object {break-inside:avoid;}", header)
+        self.assertIn("thead {display:table-header-group;}", header)
         self.assertIn("</main>", analysis.section_end())
 
 

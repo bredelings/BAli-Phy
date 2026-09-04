@@ -2307,7 +2307,13 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       @media print {
         #topbar, .skip-link {display:none;}
         .content {margin:0;}
-        tr, img, object {break-inside:avoid;}
+        .phylogeny-grid {grid-template-columns:repeat(3, minmax(0, 1fr));}
+        .mixing-overview, .tree-mixing-grid {grid-template-columns:minmax(0, 1fr) minmax(0, 2fr);}
+        .srq-plots {grid-template-columns:repeat(3, minmax(0, 1fr));}
+        .table-scroll {overflow:visible;}
+        .table-scroll > table {min-width:0;}
+        figure, tr, img, object {break-inside:avoid;}
+        thead {display:table-header-group;}
       }
 
     </style>
