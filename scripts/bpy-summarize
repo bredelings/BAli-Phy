@@ -1448,7 +1448,7 @@ class Analysis(object):
             m = re.search(r'inform.: ([^ ]+) \(([^ ]+)\%\)', line)
             if m:
                 features["n_inform"] = m.group(1)
-                features["p_inform"] = m.group(1)
+                features["p_inform"] = m.group(2)
 
             m = re.search(r' ([^ ]+)% minimum sequence identity', line)
             if m:

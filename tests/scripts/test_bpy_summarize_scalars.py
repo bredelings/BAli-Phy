@@ -190,6 +190,15 @@ trend = [increasing]
 
 
 class BPYSummarizeHtmlTests(unittest.TestCase):
+    # Alignment summaries must keep informative-site counts distinct from percentages; generated
+    # integration data can accidentally make them equal. Remove this if alignment-info becomes typed.
+    def test_parses_informative_site_percentage(self):
+        analysis = Analysis.__new__(Analysis)
+        analysis.exec_show = lambda command: "sites: inform.: 7 (35%)\n"
+        features = analysis.get_alignment_info(Path("alignment.fasta"))
+        self.assertEqual(features["n_inform"], "7")
+        self.assertEqual(features["p_inform"], "35")
+
     # Run details must show the integer number selected after until, burn-in, and stride; external
     # tools do not feed that count back to the renderer. Remove this if selection reports its count.
     def test_reports_the_selected_sample_count(self):
