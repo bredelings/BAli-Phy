@@ -307,6 +307,8 @@ void show_mean(const string& name, const vector<stats_table>& tables, int index,
 	for(int i=0;i<tables.size();i++) 
 	{
 	    const vector<double>& values = tables[i].column(index);
+	    if (constant(values))
+		continue;
 	    cout<<" E "<<name<<" ["<<i+1<<"] = "<<average(values);
 	    cout<<"  [+- "<<sqrt(Var(values))<<"]"<<endl;
 	}
@@ -376,7 +378,7 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
 		sum_CI += std::abs(interval_80.second - interval_80.first);
 	    }
 
-	    if (show_summary)
+	    if (show_summary and not constant(values))
 		for(int j=0;j<Ps.size();j++)
 		{
 		    double P = Ps[j];
@@ -552,6 +554,14 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
 
     bool integers = is_integers(total);
 
+    if (show_individual)
+	for(int i=0;i<tables.size();i++)
+	{
+	    const auto& values = tables[i].column(index);
+	    if (constant(values))
+		cout<<"   "<<name<<" ["<<i+1<<"] = "<<values[0]<<endl;
+	}
+
     // Print out mean and standard deviation
     if (args.count("mode"))
 	show_mode(name, tables, index, total, show_individual);
@@ -580,7 +590,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
 	if (b >= sample_counts[i]*2/3)
 	    burnin_converged = false;
 
-	if (show_individual)
+	if (show_individual and not constant(values))
 	{
 	    double tau = autocorrelation_time(values);
 	    string spacer;spacer.append(name.size()-1,' ');

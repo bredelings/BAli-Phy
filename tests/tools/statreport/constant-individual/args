@@ -1,0 +1,3 @@
+# A constant individual chain is fully described by its value; ACT and ESS are undefined for it.
+# Remove this check if statreport stops presenting individual-chain summaries.
+--skip=0 --mean --median --individual constant.tsv varying.tsv
