@@ -52,30 +52,30 @@ def print_model(model):
     extracted = model['extracted']
 
     if extracted:
-        section += '<table class="model">\n'
+        section += '<table class="model">\n<tbody>\n'
         for arg in extracted:
             name = arg[0]
             submodel = arg[1]
             (subassign, submodel) = print_model(submodel)
-            section += f'<tr><td>{html.escape(name)}</td><td>{subassign}</td><td>{submodel}</td></tr>\n'
-        section += '</table>'
+            section += f'<tr><th scope="row">{html.escape(name)}</th><td>{subassign}</td><td>{submodel}</td></tr>\n'
+        section += '</tbody>\n</table>'
     return (assign, section)
 
 
 def print_models(name,models):
-    section = '<table class="models">\n'
+    section = '<table class="models">\n<tbody>\n'
     i = 1
     for model in models:
         model_name =  f"{name}{i}"
         (assign, model_html) = print_model(model)
         section += (
-            f'<tr><td><span id="{model_name}" class="modelname">{model_name}</span></td>'
+            f'<tr><th scope="row"><span id="{model_name}" class="modelname">{model_name}</span></th>'
             f'<td>{assign}</td><td>\n'
         )
         section += model_html
         section += '</td></tr>\n'
         i += 1
-    section += '</table>\n'
+    section += '</tbody>\n</table>\n'
     return section
 
 def flatten(l):
@@ -2194,6 +2194,17 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         z-index: 200;
       }
       .skip-link:focus {transform: translateY(0);}
+      .visually-hidden {
+        border:0;
+        clip:rect(0 0 0 0);
+        height:1px;
+        margin:-1px;
+        overflow:hidden;
+        padding:0;
+        position:absolute;
+        white-space:nowrap;
+        width:1px;
+      }
 
       html {scroll-padding-top: 4em;}
       .content {margin:1em;}
@@ -2275,6 +2286,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       table.positive-selection-sites td.site-dnds-mean {padding-right:0.25em;}
       table.positive-selection-sites td.site-dnds-pm {padding-left:0; padding-right:0; text-align:center;}
       table.positive-selection-sites td.site-dnds-sd {padding-left:0.25em;}
+      table.tree-files {border-collapse:collapse;}
       table.alignment-summary th.alignment-name {padding-right:3em;}
       table.alignment-summary .alignment-stat {padding-left:0.5em; padding-right:0.5em; text-align:center;}
       tr.scalar-unestimated {font-style:italic;}
@@ -2285,8 +2297,8 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
       .modelname {font-weight: bold; color: blue}
       table.model {margin-left: 2em}
-      table.model td {vertical-align: top}
-      table.models td {vertical-align: top}
+      table.model :is(th, td) {vertical-align: top}
+      table.models :is(th, td) {vertical-align: top}
 
       @page {margin:1.5cm;}
       @media print {
@@ -2744,48 +2756,64 @@ assumes it is included in the model.</p>
         section += self.html_svg('c50-tree.svg', '50% consensus tree')
         section += '</figure>\n'
         section += '<div class="phylogeny-files">\n'
-        section += """\
-<table>
-  <tr>
-    <td>Partition support: <a href="consensus">Summary</a></td>
-    <td><a href="partitions.bs">Across chains</a></td>
-  </tr>
-</table>
-"""
-        section += '<table>\n'
+        section += (
+            '<p><strong>Partition support:</strong> <a href="consensus">Summary</a> · '
+            '<a href="partitions.bs">Across chains</a></p>\n'
+        )
+        section += (
+            '<div class="table-scroll" role="region" aria-label="Tree files table" tabindex="0">\n'
+            '<table class="backlit2 tree-files">\n'
+            '<caption>Tree files</caption>\n'
+            '<thead>\n'
+            '  <tr><th scope="col" rowspan="2">Tree</th>'
+            '<th scope="colgroup" colspan="4">Consensus tree</th>'
+        )
+        if self.subpartitions:
+            section += '<th scope="colgroup" colspan="3">Markov-chain tree</th>'
+        section += '</tr>\n  <tr><th scope="col">Newick</th><th scope="col">+PP</th>'
+        section += '<th scope="col">PDF</th><th scope="col">SVG</th>'
+        if self.subpartitions:
+            section += '<th scope="col">Newick</th><th scope="col">PDF</th><th scope="col">SVG</th>'
+        section += '</tr>\n</thead>\n<tbody>\n'
         for (tree,name) in self.trees:
+            tree_url = html.escape(str(tree), quote=True)
+            tree_label = html.escape(str(name))
+            download_label = html.escape(str(name), quote=True)
             section += f"""\
   <tr>
-    <td>{name}</td>
-    <td><a href="{tree}.tree">Newick</a></td>
-    <td>(<a href="{tree}.PP.tree">+PP</a>)</td>
-    <td><a href="{tree}-tree.pdf">PDF</a></td>
-    <td><a href="{tree}-tree.svg">SVG</a></td>
+    <th scope="row">{tree_label}</th>
+    <td><a href="{tree_url}.tree" aria-label="Download {download_label} tree in Newick format">Newick</a></td>
+    <td><a href="{tree_url}.PP.tree" aria-label="Download {download_label} Newick tree with posterior probabilities">+PP</a></td>
+    <td><a href="{tree_url}-tree.pdf" aria-label="Download {download_label} tree as PDF">PDF</a></td>
+    <td><a href="{tree_url}-tree.svg" aria-label="Download {download_label} tree as SVG">SVG</a></td>
 """
-            if self.subpartitions and (path.exists(self.outdir / f"{tree}.mtree") or
-                                       path.exists(self.outdir / f"{tree}-mctree.svg") or
-                                       path.exists(self.outdir / f"{tree}-mctree.pdf")):
-                section += '<td>MC Tree:</td>\n'
-            else:
-                section +='<td></td>'
+            if self.subpartitions:
+                if path.exists(self.outdir / f"{tree}.mtree"):
+                    section += (
+                        f'<td><a href="{tree_url}.mtree" aria-label="Download {download_label} '
+                        'Markov-chain tree in Newick format">Newick</a></td>\n'
+                    )
+                else:
+                    section += '<td></td>\n'
 
-            if self.subpartitions and path.exists(self.outdir / f"{tree}.mtree"):
-                section += f'<td><a href="{tree}.mtree">-L</a></td>\n'
-            else:
-                section +='<td></td>'
+                if path.exists(self.outdir / f"{tree}-mctree.pdf"):
+                    section += (
+                        f'<td><a href="{tree_url}-mctree.pdf" aria-label="Download {download_label} '
+                        'Markov-chain tree as PDF">PDF</a></td>\n'
+                    )
+                else:
+                    section += '<td></td>\n'
 
-            if self.subpartitions and path.exists(self.outdir / f"{tree}-mctree.pdf"):
-                section += f'<td><a href="{tree}-mctree.pdf">PDF</a></td>\n'
-            else:
-                section +='<td></td>'
-
-            if self.subpartitions and path.exists(self.outdir / f"{tree}-mctree.svg"):
-                section += f'<td><a href="{tree}-mctree.svg">SVG</a></td>\n'
-            else:
-                section +='<td></td>'
+                if path.exists(self.outdir / f"{tree}-mctree.svg"):
+                    section += (
+                        f'<td><a href="{tree_url}-mctree.svg" aria-label="Download {download_label} '
+                        'Markov-chain tree as SVG">SVG</a></td>\n'
+                    )
+                else:
+                    section += '<td></td>\n'
 
             section += '  </tr>\n'
-        section += '</table>\n'
+        section += '</tbody>\n</table>\n</div>\n'
         section += '</div>\n'
         section += '<figure class="plot-panel">\n'
         section += '<figcaption>Consensus-tree support levels</figcaption>\n'
@@ -2811,12 +2839,12 @@ assumes it is included in the model.</p>
        <th scope="col" class="alignment-name">Alignment</th>
        <th scope="col">FASTA</th>
        <th scope="col">HTML</th>
-       <th scope="col" title ="Comparison of this alignment (top) to the WPD alignment (bottom)">Diff</th>
+       <th scope="col"><span aria-hidden="true">Diff</span><span class="visually-hidden">Difference from the WPD alignment</span></th>
        <th scope="col">AU</th>
-       <th scope="col" class="alignment-stat" title="Percent identity of the most dissimilar sequences">Min. %identity</th>
-       <th scope="col" class="alignment-stat" title="Number of columns in the alignment"># Sites</th>
-       <th scope="col" class="alignment-stat" title="Number of invariant columns">Constant</th>
-       <th scope="col" class="alignment-stat" title="Number of parsimony-informative columns.">Informative</th>
+       <th scope="col" class="alignment-stat"><span aria-hidden="true">Min. %identity</span><span class="visually-hidden">Minimum pairwise sequence identity</span></th>
+       <th scope="col" class="alignment-stat"><span aria-hidden="true"># Sites</span><span class="visually-hidden">Number of alignment columns</span></th>
+       <th scope="col" class="alignment-stat"><span aria-hidden="true">Constant</span><span class="visually-hidden">Number of invariant columns</span></th>
+       <th scope="col" class="alignment-stat"><span aria-hidden="true">Informative</span><span class="visually-hidden">Number of parsimony-informative columns</span></th>
     </tr>
     </thead>
     <tbody>
@@ -2983,8 +3011,8 @@ assumes it is included in the model.</p>
         if self.has_trees():
             min_NE_partition = self.get_value_from_file(self.outdir / 'partitions.bs','min Ne =')
             section += (
-                '<tr><th scope="row" title="Effective Sample Size for bit-vectors of partition '
-                'support (smallest)">topological <a class="glossary-link" href="#glossary-ess">'
+                '<tr><th scope="row">minimum topological '
+                '<a class="glossary-link" href="#glossary-ess">'
                 '<abbr title="Effective sample size">ESS</abbr></a></th>'
                 f'<td>{html.escape(str(min_NE_partition))}'
                 '</td></tr>\n'
@@ -3179,27 +3207,33 @@ assumes it is included in the model.</p>
 
         section += '<h3 id="tree">Tree (+priors)</h3>\n'
 #    $section .= "<table class=\"backlit2\">\n";
-        section += "<table>\n"
+        section += "<table class=\"tree-priors\">\n<tbody>\n"
         if self.get_topology_prior():
             section += (
-                '<tr><td class="modelname">topology</td>'
+                '<tr><th scope="row" class="modelname">topology</th>'
                 f'<td>{html.escape(self.get_topology_prior())}</td></tr>'
             )
         if self.get_branch_length_prior():
             section += (
-                '<tr><td class="modelname">branch lengths</td>'
+                '<tr><th scope="row" class="modelname">branch lengths</th>'
                 f'<td>{html.escape(self.get_branch_length_prior())}</td></tr>'
             )
         if self.get_tree_prior():
             section += (
-                '<tr><td class="modelname">tree</td>'
+                '<tr><th scope="row" class="modelname">tree</th>'
                 f'<td>{html.escape(self.get_tree_prior())}</td></tr>'
             )
         if self.get_subst_rates():
-            section += f'<tr><td class="modelname">subst rates</td><td>{print_model_string(self.get_subst_rates())}</td></tr>'
+            section += (
+                '<tr><th scope="row" class="modelname">subst rates</th>'
+                f'<td>{print_model_string(self.get_subst_rates())}</td></tr>'
+            )
         if self.get_indel_rates():
-            section += f'<tr><td class="modelname">indel rates</td><td>{print_model_string(self.get_indel_rates())}</td></tr>'
-        section += '</table>\n'
+            section += (
+                '<tr><th scope="row" class="modelname">indel rates</th>'
+                f'<td>{print_model_string(self.get_indel_rates())}</td></tr>'
+            )
+        section += '</tbody>\n</table>\n'
 
         section += '<h3 id="smodel">Substitution model (+priors)</h3>\n'
         section += print_models("S",self.get_smodels())

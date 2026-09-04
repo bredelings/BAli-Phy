@@ -13,6 +13,7 @@ import unittest
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bpy-summarize"
 MODULE = runpy.run_path(str(SCRIPT))
 Analysis = MODULE["Analysis"]
+print_model = MODULE["print_model"]
 print_model_string = MODULE["print_model_string"]
 
 
@@ -161,6 +162,8 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertIn(escaped, section)
         self.assertNotIn(unsafe, section)
         self.assertEqual(print_model_string(unsafe), f"= {escaped}")
+        _, model = print_model({"main": "base", "extracted": [(unsafe, {"main": "nested", "extracted": []})]})
+        self.assertIn(f'<th scope="row">{escaped}</th>', model)
 
         svg = analysis.html_svg('plot<&".svg', unsafe, "90%")
         self.assertIn(f'role="img" aria-label="{escaped}"', svg)
@@ -194,7 +197,7 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             analysis = Analysis.__new__(Analysis)
             analysis.outdir = Path(directory)
-            analysis.trees = []
+            analysis.trees = [("c50", "50% consensus")]
             analysis.subpartitions = False
             analysis.n_chains = lambda: 1
             analysis.has_trees = lambda: True
@@ -206,6 +209,9 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertEqual(topology.count('<figure class="plot-panel">'), 2)
         self.assertIn("<figcaption>50% consensus tree</figcaption>", topology)
         self.assertIn("<figcaption>Consensus-tree support levels</figcaption>", topology)
+        self.assertIn("<caption>Tree files</caption>", topology)
+        self.assertIn('<th scope="row">50% consensus</th>', topology)
+        self.assertIn('aria-label="Download 50% consensus tree as PDF"', topology)
         self.assertIn("<figcaption>Projection of RF distances", mixing)
         self.assertIn("<figcaption>Split posterior probabilities across chains", mixing)
         self.assertNotIn("<h4", topology + mixing)
