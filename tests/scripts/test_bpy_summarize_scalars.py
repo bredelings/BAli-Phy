@@ -130,7 +130,8 @@ trend = [increasing]
             self.assertIn("table.scalar-variables td {text-align:right;}", header)
             self.assertIn("table.scalar-variables td.scalar-na {text-align:center;}", header)
             self.assertIn("td.scalar-pm {padding-left:0; padding-right:0; text-align:center;}", header)
-            self.assertNotIn("display:grid", header)
+            self.assertIn(".phylogeny-grid", header)
+            self.assertIn("display:grid", header)
 
 
 class BPYSummarizeHtmlTests(unittest.TestCase):
@@ -240,7 +241,7 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
         self.assertNotIn("//", header)
         self.assertIn("@media print", header)
         self.assertIn("#topbar, .skip-link {display:none;}", header)
-        self.assertIn("table:not(.layout-table) tr, img, object {break-inside:avoid;}", header)
+        self.assertIn("tr, img, object {break-inside:avoid;}", header)
         self.assertIn("</main>", analysis.section_end())
 
 

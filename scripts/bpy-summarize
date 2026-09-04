@@ -2223,8 +2223,27 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
       *[title] {cursor:help;}
       a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
-      .floating_picture {float:left;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}
-      .r_floating_picture {float:right;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}
+      .phylogeny-grid {
+        align-items:start;
+        display:grid;
+        gap:1.5em;
+        grid-template-columns:repeat(auto-fit, minmax(min(100%, 20em), 1fr));
+      }
+      .mixing-overview, .tree-mixing-grid {
+        align-items:start;
+        display:grid;
+        gap:1.5em;
+        grid-template-columns:repeat(auto-fit, minmax(min(100%, 26em), 1fr));
+      }
+      .srq-plots {
+        align-items:start;
+        display:grid;
+        gap:1em;
+        grid-template-columns:repeat(auto-fit, minmax(min(100%, 15em), 1fr));
+      }
+      .plot-stack {display:grid; gap:2em;}
+      .plot-panel {min-width:0;}
+      .plot-panel .svg-image, .srq-plots img {display:block; max-width:100%;}
       table.backlit2 {border-collapse: collapse;}
       table.backlit2 thead th {
         border-bottom: 1px solid #C0C0C0;
@@ -2266,7 +2285,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       @media print {
         #topbar, .skip-link {display:none;}
         .content {margin:0;}
-        table:not(.layout-table) tr, img, object {break-inside:avoid;}
+        tr, img, object {break-inside:avoid;}
       }
 
     </style>
@@ -2703,11 +2722,11 @@ assumes it is included in the model.</p>
     def section_phylogeny_distribution(self):
         section = '<section id="topology" class="report-section">\n'
         section += '<h2>Phylogeny Distribution</h2>\n'
-        section += self.html_svg(
-            'c-levels.svg', 'Consensus-tree support levels', '35%', '', ['r_floating_picture']
-        )
-        section += self.html_svg('c50-tree.svg', '50% consensus tree', '25%', '', ['floating_picture'])
-
+        section += '<div class="phylogeny-grid">\n'
+        section += '<div class="plot-panel">\n'
+        section += self.html_svg('c50-tree.svg', '50% consensus tree')
+        section += '</div>\n'
+        section += '<div class="phylogeny-files">\n'
         section += """\
 <table>
   <tr>
@@ -2750,6 +2769,11 @@ assumes it is included in the model.</p>
 
             section += '  </tr>\n'
         section += '</table>\n'
+        section += '</div>\n'
+        section += '<div class="plot-panel">\n'
+        section += self.html_svg('c-levels.svg', 'Consensus-tree support levels')
+        section += '</div>\n'
+        section += '</div>\n'
         section += '</section>\n'
         return section
 
@@ -2859,25 +2883,23 @@ assumes it is included in the model.</p>
             MDS_title = f"{C} chains"
 
         section += f"""\
-<table class="layout-table" style="width:100%;clear:both">
-  <tr>
-    <td style="width:40%;vertical-align:top">
-      <h4 style=\"text-align:center\">Projection of RF distances for {MDS_title} (<a href=\"https://doi.org/10.1080/10635150590946961\">Hillis et al 2005</a>)</h4>
+<div class="tree-mixing-grid">
+  <div class="plot-panel">
+    <h4 style="text-align:center">Projection of RF distances for {MDS_title} (<a href="https://doi.org/10.1080/10635150590946961">Hillis et al 2005</a>)</h4>
 """
         if path.exists( self.outdir / MDS_figure ):
-            section += self.html_svg(
-                MDS_figure, 'Projection of Robinson-Foulds tree distances', '90%', ''
-            )
+            section += self.html_svg(MDS_figure, 'Projection of Robinson-Foulds tree distances')
             section += f'<a href="{MDS_figure_3d}.html">3D</a>'
         else:
             if not self.R_exe:
                 section += "<p>Not generated: can't find R</p>"
-        section += '</td>'
-        section += '<td style="width:40%;vertical-align:top">'
+        section += '</div>\n'
+        section += '<div class="plot-panel">'
         section += '<h4 style="text-align:center">Variation of split PPs across chains (<a href="https://doi.org/10.1080/10635150600812544">Beiko et al 2006</a>)</h4>'
+        section += '<div class="plot-stack">\n'
         if path.exists(self.outdir / "convergence1-PP.svg"):
             section += self.html_svg(
-                "convergence1-PP.svg", "Split posterior probabilities across chains", "90%", ""
+                "convergence1-PP.svg", "Split posterior probabilities across chains"
             )
         else:
             if not self.R_exe:
@@ -2888,24 +2910,21 @@ assumes it is included in the model.</p>
                 section += "<p>Not generated.</p>"
 
         if path.exists(self.outdir / "convergence2-PP.svg"):
-            section += "<br/><br/><br/><br/>"
             section += self.html_svg(
                 "convergence2-PP.svg",
                 "Differences in split posterior probabilities across chains",
-                "90%",
-                "",
             )
-        section += "</td>"
-        section += "</tr></table>"
+        section += "</div>\n"
+        section += "</div>\n"
+        section += "</div>\n"
         return section
 
     def section_mixing(self):
         section = """\
 <section id="mixing" class="report-section">
 <h2>Convergence and mixing</h2>
-  <table class="layout-table" style="width:100%;clear:both">
-    <tr>
-      <td style="vertical-align:top">
+  <div class="mixing-overview">
+    <div>
         <table class="backlit2 convergence-statistics">
           <caption>Statistics</caption>
           <tbody>
@@ -2982,14 +3001,14 @@ assumes it is included in the model.</p>
 
         section += '          </tbody>\n'
         section += '</table>\n'
-        section += '</td>\n'
+        section += '</div>\n'
 
-        section += '    <td>\n'
+        section += '    <div class="srq-plots">\n'
         if self.has_trees():
             section += '      <img src="c50.SRQ.png" alt="SRQ plot for support of 50% consensus tree."/>'
             section += '      <img src="partitions.SRQ.png" alt="SRQ plot for support of each partition."/>'
-        section += '    </td>\n'
-        section += '  </tr></table>\n'
+        section += '    </div>\n'
+        section += '  </div>\n'
 
         if self.has_trees():
             section += self.section_tree_mixing2()
