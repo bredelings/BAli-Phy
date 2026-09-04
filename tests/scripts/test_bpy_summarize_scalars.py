@@ -376,6 +376,39 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         analysis.compute_tree_MDS()
         self.assertEqual(analysis.srq, [])
 
+    # Each SRQ image must identify the sampled object rather than expose a stale template token;
+    # command-generation coverage does not inspect plot titles. Remove this if SRQ plotting moves.
+    def test_names_each_srq_plot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            trees = directory / "chain.trees"
+            trees.write_text("(a,b);\n", encoding="utf-8")
+            for name in ("partitions.SRQ", "c50.SRQ"):
+                output = directory / name
+                output.write_text("0 0\n", encoding="utf-8")
+                output_time = trees.stat().st_mtime + 10
+                os.utime(output, (output_time, output_time))
+
+            scripts = []
+            analysis = Analysis.__new__(Analysis)
+            analysis.outdir = directory
+            analysis.sampled_topology_count = 2
+            analysis.subpartitions = False
+            analysis.subsample = 1
+            analysis.burnin = 0
+            analysis.until = None
+            analysis.get_trees_files = lambda: [trees]
+            analysis.run_gnuplot = scripts.append
+            analysis.exec_show = lambda *args, **kwargs: self.fail("unexpected SRQ command")
+
+            with redirect_stdout(io.StringIO()):
+                analysis.compute_srq_plots()
+
+        plot_script = "\n".join(scripts)
+        self.assertIn("plot: partitions", plot_script)
+        self.assertIn("plot: c50", plot_script)
+        self.assertNotIn("$srq", plot_script)
+
 
 class BPYSummarizeNavigationTests(unittest.TestCase):
     # Keep report navigation semantic and prevent links to sections omitted from reduced reports.
