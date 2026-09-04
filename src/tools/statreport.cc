@@ -390,7 +390,7 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
 		    if ((1.0-P)*values.size() >= 10.0)
 			cout<<"  ("<<interval.first<<","<<interval.second<<")";
 		    else
-			cout<<"  (NA,NA)"<<endl;
+			cout<<"  (NA,NA)";
 
 		    cout<<" @ "<<P*100<<"%"<<endl;
 		}

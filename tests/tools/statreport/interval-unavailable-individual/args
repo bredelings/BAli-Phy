@@ -1,0 +1,3 @@
+# Keep an unavailable individual interval and its confidence level on one line. Remove this
+# check if statreport stops presenting individual credible intervals.
+--skip=0 --individual first.tsv second.tsv
