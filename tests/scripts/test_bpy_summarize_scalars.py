@@ -100,6 +100,10 @@ trend = [increasing]
             self.assertIn('<td class="scalar-sd">0.5034</td>', section)
             self.assertIn('<td class="scalar-median">0.1548</td>', section)
             self.assertIn('<td class="scalar-bci">(NA, NA)</td>', section)
+            self.assertIn('href="#glossary-act"', section)
+            self.assertIn('href="#glossary-ess"', section)
+            self.assertIn('href="#glossary-psrf-ci80"', section)
+            self.assertIn('href="#glossary-psrf-rcf"', section)
             self.assertIn(
                 """\
   <th scope="row">constant</th>
@@ -159,6 +163,27 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertIn(f'role="img" aria-label="{escaped}"', svg)
         self.assertIn('href="plot&lt;&amp;&quot;.svg"', svg)
         self.assertIn(f">View {escaped}</a>", svg)
+
+    # Keep definitions out of reports that cannot contain the corresponding diagnostics.
+    # This can be removed if glossary terms are generated directly from rendered columns.
+    def test_builds_a_compact_conditional_glossary(self):
+        analysis = Analysis.__new__(Analysis)
+        analysis.has_parameters = lambda: True
+        analysis.has_trees = lambda: True
+
+        glossary = analysis.section_glossary()
+        for term in ("act", "ess", "psrf-ci80", "psrf-rcf", "asdsf", "msdsf"):
+            self.assertIn(f'id="glossary-{term}"', glossary)
+
+        analysis.has_parameters = lambda: False
+        glossary = analysis.section_glossary()
+        self.assertNotIn('id="glossary-act"', glossary)
+        self.assertNotIn('id="glossary-psrf-ci80"', glossary)
+        self.assertIn('id="glossary-ess"', glossary)
+        self.assertIn('id="glossary-asdsf"', glossary)
+
+        analysis.has_trees = lambda: False
+        self.assertEqual(analysis.section_glossary(), "")
 
 
 class BPYSummarizeNavigationTests(unittest.TestCase):

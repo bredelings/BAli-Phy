@@ -2109,6 +2109,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 output += self.section_model_and_priors()
             if self.has_code():
                 output += self.section_code()
+            output += self.section_glossary()
             output += self.section_end()
             print(output, file=index)
 
@@ -2251,6 +2252,10 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       table.positive-selection-sites td.site-dnds-pm {padding-left:0; padding-right:0; text-align:center;}
       table.positive-selection-sites td.site-dnds-sd {padding-left:0.25em;}
       .clear {clear:both;}
+      .glossary-link {color:inherit; text-decoration:underline dotted; text-underline-offset:0.15em;}
+      dl.glossary {max-width:70em;}
+      dl.glossary dt {font-weight:bold;}
+      dl.glossary dd {margin-bottom:0.75em;}
 
       .modelname {font-weight: bold; color: blue}
       table.model {margin-left: 2em}
@@ -2422,7 +2427,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 <h2 class="clear">Scalar variables</h2>
     <table class="backlit2 scalar-variables">
       <thead>
-        <tr><th scope="col">Statistic</th><th scope="colgroup" colspan="3">Mean &plusmn; SD</th><th scope="colgroup" colspan="2">Median (95% BCI)</th><th scope="col" title="Auto-Correlation Time">ACT</th><th scope="col" title="Effective Sample Size">ESS</th><th scope="col">burnin</th><th scope="col" title="Potential Scale Reduction Factor based on width of 80% credible interval">PSRF-CI80%</th><th scope="col">PSRF-RCF</th></tr>
+        <tr><th scope="col">Statistic</th><th scope="colgroup" colspan="3">Mean &plusmn; SD</th><th scope="colgroup" colspan="2">Median (95% BCI)</th><th scope="col"><a class="glossary-link" href="#glossary-act"><abbr title="Autocorrelation time">ACT</abbr></a></th><th scope="col"><a class="glossary-link" href="#glossary-ess"><abbr title="Effective sample size">ESS</abbr></a></th><th scope="col">burnin</th><th scope="col"><a class="glossary-link" href="#glossary-psrf-ci80"><abbr title="Potential scale reduction factor based on the 80% credible interval">PSRF-80%CI</abbr></a></th><th scope="col"><a class="glossary-link" href="#glossary-psrf-rcf"><abbr title="Potential scale reduction factor for discrete distributions">PSRF-RCF</abbr></a></th></tr>
       </thead>
       <tbody>
 """
@@ -2911,7 +2916,8 @@ assumes it is included in the model.</p>
                 f'<td>{html.escape(str(burnin_before))}</td></tr>\n'
             )
             section += (
-                f'<tr><th scope="row">scalar ESS</th>'
+                '<tr><th scope="row">scalar <a class="glossary-link" href="#glossary-ess">'
+                '<abbr title="Effective sample size">ESS</abbr></a></th>'
                 f'<td>{html.escape(str(min_NE))}</td></tr>\n'
             )
 
@@ -2920,7 +2926,9 @@ assumes it is included in the model.</p>
             min_NE_partition = self.get_value_from_file(self.outdir / 'partitions.bs','min Ne =')
             section += (
                 '<tr><th scope="row" title="Effective Sample Size for bit-vectors of partition '
-                f'support (smallest)">topological ESS</th><td>{html.escape(str(min_NE_partition))}'
+                'support (smallest)">topological <a class="glossary-link" href="#glossary-ess">'
+                '<abbr title="Effective sample size">ESS</abbr></a></th>'
+                f'<td>{html.escape(str(min_NE_partition))}'
                 '</td></tr>\n'
             )
 
@@ -2930,8 +2938,9 @@ assumes it is included in the model.</p>
             else:
                 asdsf = asdsf.rstrip()
             section += (
-                '<tr><th scope="row" title="Average Standard Deviation of Split Frequencies">'
-                'ASDSF</th>'
+                '<tr><th scope="row"><a class="glossary-link" href="#glossary-asdsf">'
+                '<abbr title="Average standard deviation of split frequencies">ASDSF</abbr>'
+                '</a></th>'
                 f'<td>{html.escape(str(asdsf))}</td></tr>'
             )
 
@@ -2941,8 +2950,9 @@ assumes it is included in the model.</p>
             else:
                 msdsf = msdsf.rstrip()
             section += (
-                '<tr><th scope="row" title="Maximum Standard Deviation of Split Frequencies">'
-                'MSDSF</th>'
+                '<tr><th scope="row"><a class="glossary-link" href="#glossary-msdsf">'
+                '<abbr title="Maximum standard deviation of split frequencies">MSDSF</abbr>'
+                '</a></th>'
                 f'<td>{html.escape(str(msdsf))}</td></tr>'
             )
 
@@ -2953,10 +2963,14 @@ assumes it is included in the model.</p>
                 psrf_80 = self.get_value_from_file(self.outdir / 'Report','PSRF-80%CI <=')
                 psrf_rcf = self.get_value_from_file(self.outdir / 'Report','PSRF-RCF <=')
             section += (
-                f'<tr><th scope="row">PSRF CI80%</th><td>{html.escape(str(psrf_80))}</td></tr>\n'
+                '<tr><th scope="row"><a class="glossary-link" href="#glossary-psrf-ci80">'
+                '<abbr title="Potential scale reduction factor based on the 80% credible interval">'
+                f'PSRF-80%CI</abbr></a></th><td>{html.escape(str(psrf_80))}</td></tr>\n'
             )
             section += (
-                f'<tr><th scope="row">PSRF RCF</th><td>{html.escape(str(psrf_rcf))}</td></tr>\n'
+                '<tr><th scope="row"><a class="glossary-link" href="#glossary-psrf-rcf">'
+                '<abbr title="Potential scale reduction factor for discrete distributions">'
+                f'PSRF-RCF</abbr></a></th><td>{html.escape(str(psrf_rcf))}</td></tr>\n'
             )
 
         section += '          </tbody>\n'
@@ -2990,6 +3004,44 @@ assumes it is included in the model.</p>
         if psrf_rcf:
             print(f"NOTE: PSRF-RCF = {psrf_rcf}")
         section += '</section>\n'
+        return section
+
+    # Define only the diagnostic abbreviations that can occur in this report.
+    # Inline diagnostic links keep the main report terse while making details easy to find.
+    def section_glossary(self):
+        if not (self.has_parameters() or self.has_trees()):
+            return ""
+
+        section = """\
+<section id="glossary" class="report-section">
+<h2>Glossary</h2>
+<dl class="glossary">
+"""
+        if self.has_parameters():
+            section += """\
+  <dt id="glossary-act"><abbr title="Autocorrelation time">ACT</abbr></dt>
+  <dd>Autocorrelation time measures serial dependence. The effective sample size is the retained sample count divided by ACT.</dd>
+"""
+        if self.has_parameters() or self.has_trees():
+            section += """\
+  <dt id="glossary-ess"><abbr title="Effective sample size">ESS</abbr></dt>
+  <dd>Effective sample size approximates the number of independent samples that would give the same precision as the correlated MCMC samples.</dd>
+"""
+        if self.has_parameters():
+            section += """\
+  <dt id="glossary-psrf-ci80"><abbr title="Potential scale reduction factor based on the 80% credible interval">PSRF-80%CI</abbr></dt>
+  <dd>The width of the pooled 80% credible interval divided by the average within-chain width. Values near 1 indicate similar widths across chains.</dd>
+  <dt id="glossary-psrf-rcf"><abbr title="Potential scale reduction factor for discrete distributions">PSRF-RCF</abbr></dt>
+  <dd>For each chain's 80% credible interval, this compares its probability in that chain with its probability in the pooled samples, then averages the ratios across chains.</dd>
+"""
+        if self.has_trees():
+            section += """\
+  <dt id="glossary-asdsf"><abbr title="Average standard deviation of split frequencies">ASDSF</abbr></dt>
+  <dd>The average across splits of the standard deviation, across chains, of each split's posterior probability.</dd>
+  <dt id="glossary-msdsf"><abbr title="Maximum standard deviation of split frequencies">MSDSF</abbr></dt>
+  <dd>The largest standard deviation across chains of any split's posterior probability.</dd>
+"""
+        section += "</dl>\n</section>\n"
         return section
 
     def section_analysis(self):
