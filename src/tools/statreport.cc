@@ -352,7 +352,8 @@ const double compare_level=0.8;
 
 
 void show_median(variables_map& args, const string& name, const vector<stats_table>& tables, int index, const vector<double>& total,
-		 bool show_individual, double& sum_CI, double& total_CI, double& sum_fraction_contained)
+		 bool show_individual, bool show_summary, double& sum_CI, double& total_CI,
+		 double& sum_fraction_contained)
 {
     using namespace statistics;
 
@@ -376,25 +377,26 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
 		sum_CI += std::abs(interval_80.second - interval_80.first);
 	    }
 
-	    for(int j=0;j<Ps.size();j++)
-	    {
-		double P = Ps[j];
-		pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
-		if (show_individual)
+	    if (show_summary)
+		for(int j=0;j<Ps.size();j++)
 		{
-		    if (j==0)
-			cout<<"   "<<name<<" ["<<i+1<<"] ~ "<<median(values);
-		    else
-			cout<<"    ";
+		    double P = Ps[j];
+		    pair<double,double> interval = HPD?HPD_confidence_interval(values,P):central_confidence_interval(values,P);
+		    if (show_individual)
+		    {
+			if (j==0)
+			    cout<<"   "<<name<<" ["<<i+1<<"] ~ "<<median(values);
+			else
+			    cout<<"    ";
 	  
-		    if ((1.0-P)*values.size() >= 10.0)
-			cout<<"  ("<<interval.first<<","<<interval.second<<")";
-		    else
-			cout<<"  (NA,NA)";
+			if ((1.0-P)*values.size() >= 10.0)
+			    cout<<"  ("<<interval.first<<","<<interval.second<<")";
+			else
+			    cout<<"  (NA,NA)";
 
-		    cout<<" @ "<<P*100<<"%"<<endl;
+			cout<<" @ "<<P*100<<"%"<<endl;
+		    }
 		}
-	    }
 	}
     const vector<double>& values = total;
     
@@ -405,6 +407,9 @@ void show_median(variables_map& args, const string& name, const vector<stats_tab
 	sum_CI /= tables.size();
 	sum_fraction_contained /= tables.size();
     }
+
+    if (not show_summary)
+	return;
 
     for(int i=0,padding=0;i<Ps.size();i++)
     {
@@ -558,8 +563,9 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
     double sum_CI=0;
     double total_CI=0;
     double sum_fraction_contained=0;
-    if (args.count("median") or not args.count("mean"))
-	show_median(args, name, tables, index, total, show_individual, sum_CI, total_CI, sum_fraction_contained);
+    bool show_median_summary = args.count("median") or not args.count("mean");
+    show_median(args, name, tables, index, total, show_individual, show_median_summary, sum_CI, total_CI,
+		sum_fraction_contained);
 
     if (args.count("truth"))
 	show_error(args, name, tables, index, total);

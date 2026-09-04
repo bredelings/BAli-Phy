@@ -1,0 +1,3 @@
+# Ensure --mean changes presentation without disabling the PSRF calculations needed below it.
+# Remove this check if PSRF diagnostics are no longer part of multi-chain output.
+--skip=0 --mean ../interval-unavailable-individual/first.tsv ../interval-unavailable-individual/second.tsv
