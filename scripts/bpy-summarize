@@ -1331,7 +1331,6 @@ class Analysis(object):
                         self.constants.add(var)
                 i += 1
 
-        self.min_ESS = min(self.ESS.values())
         print("done.")
 
     # Recover positive-selection statistics' full model paths and the partitions using each model.
@@ -2290,6 +2289,10 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       table.alignment-summary th.alignment-name {padding-right:3em;}
       table.alignment-summary .alignment-stat {padding-left:0.5em; padding-right:0.5em; text-align:center;}
       tr.scalar-unestimated {font-style:italic;}
+      .diagnostic-legend {font-size:90%; margin-bottom:0.5em;}
+      .diagnostic-marker {display:inline-block; font-weight:bold; margin-right:0.25em; min-width:0.75em; text-align:center;}
+      .diagnostic-bad {color:rgb(176,0,32); font-weight:600;}
+      .diagnostic-caution {color:rgb(128,81,0); font-weight:600;}
       .glossary-link {color:inherit; text-decoration:underline dotted; text-underline-offset:0.15em;}
       dl.glossary {max-width:70em;}
       dl.glossary dt {font-weight:bold;}
@@ -2472,6 +2475,10 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         section = """\
 <section id="parameters" class="report-section">
 <h2>Scalar variables</h2>
+  <p class="diagnostic-legend"><strong>Diagnostic flags:</strong>
+    <span class="diagnostic-bad"><span class="diagnostic-marker" aria-hidden="true">!</span>concerning</span>;
+    <span class="diagnostic-caution"><span class="diagnostic-marker" aria-hidden="true">&#9651;</span>caution</span>.
+  </p>
   <div class="table-scroll" role="region" aria-label="Scalar variables table" tabindex="0">
     <table class="backlit2 scalar-variables">
       <thead>
@@ -2479,6 +2486,14 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       </thead>
       <tbody>
 """
+        bad_marker = (
+            '<span class="diagnostic-marker" aria-hidden="true">!</span>'
+            '<span class="visually-hidden">Concerning: </span>'
+        )
+        caution_marker = (
+            '<span class="diagnostic-marker" aria-hidden="true">&#9651;</span>'
+            '<span class="visually-hidden">Caution: </span>'
+        )
         for var in self.median:
             if var == "iter":
                 continue
@@ -2520,39 +2535,55 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                     f'{html.escape(self.CI_high[var])})</td>\n'
                 )
 
-                ACT_style = ' style="color:red"' if self.ESS[var] <= self.min_ESS else ""
-                section += f'  <td {ACT_style}>{self.ACT[var]}</td>\n'
+                section += f'  <td>{self.ACT[var]}</td>\n'
 
                 if self.ESS[var] < 100:
-                    ESS_style = ' style="color:red"'
+                    ESS_class = ' class="diagnostic-bad"'
+                    ESS_marker = bad_marker
                 elif self.ESS[var] < 300:
-                    ESS_style = ' style="color:orange"'
+                    ESS_class = ' class="diagnostic-caution"'
+                    ESS_marker = caution_marker
                 else:
-                    ESS_style = ''
-                section += f'  <td {ESS_style}>{self.ESS[var]}</td>\n'
+                    ESS_class = ''
+                    ESS_marker = ''
+                section += f'  <td{ESS_class}>{ESS_marker}{self.ESS[var]}</td>\n'
 
-                burnin_style = ' style="color:red"' if self.Burnin[var] == "Not Converged!" else ""
-                section += f'  <td {burnin_style}>{html.escape(str(self.Burnin[var]))}</td>\n'
+                if self.Burnin[var] == "Not Converged!":
+                    burnin_class = ' class="diagnostic-bad"'
+                    burnin_marker = bad_marker
+                else:
+                    burnin_class = ''
+                    burnin_marker = ''
+                section += (
+                    f'  <td{burnin_class}>{burnin_marker}'
+                    f'{html.escape(str(self.Burnin[var]))}</td>\n'
+                )
 
                 if var in self.PSRF_CI80:
                     if self.PSRF_CI80[var] >= 1.2:
-                        CI80_style = ' style="color:red"'
+                        CI80_class = ' class="diagnostic-bad"'
+                        CI80_marker = bad_marker
                     elif self.PSRF_CI80[var] >= 1.05:
-                        CI80_style = ' style="color:orange"'
+                        CI80_class = ' class="diagnostic-caution"'
+                        CI80_marker = caution_marker
                     else:
-                        CI80_style = ''
-                    section += f'  <td {CI80_style}>{self.PSRF_CI80[var]}</td>\n'
+                        CI80_class = ''
+                        CI80_marker = ''
+                    section += f'  <td{CI80_class}>{CI80_marker}{self.PSRF_CI80[var]}</td>\n'
                 else:
                     section += '  <td>NA</td>\n'
 
                 if var in self.PSRF_RCF:
                     if self.PSRF_RCF[var] >= 1.2:
-                        RCF_style = ' style="color:red"'
+                        RCF_class = ' class="diagnostic-bad"'
+                        RCF_marker = bad_marker
                     elif self.PSRF_RCF[var] >= 1.05:
-                        RCF_style = ' style="color:orange"'
+                        RCF_class = ' class="diagnostic-caution"'
+                        RCF_marker = caution_marker
                     else:
-                        RCF_style = ''
-                    section += f'  <td {RCF_style}>{self.PSRF_RCF[var]}</td>\n'
+                        RCF_class = ''
+                        RCF_marker = ''
+                    section += f'  <td{RCF_class}>{RCF_marker}{self.PSRF_RCF[var]}</td>\n'
                 else:
                     section += '  <td>NA</td>\n'
 
@@ -3119,21 +3150,21 @@ assumes it is included in the model.</p>
         if self.has_parameters() or self.has_trees():
             section += """\
   <dt id="glossary-ess"><abbr title="Effective sample size">ESS</abbr></dt>
-  <dd>Effective sample size approximates the number of independent samples that would give the same precision as the correlated MCMC samples.</dd>
+  <dd>Effective sample size approximates the number of independent samples that would give the same precision as the correlated MCMC samples. Values below 100 are flagged as concerning, and values from 100 through 299 warrant caution; obtaining more samples should increase ESS.</dd>
 """
         if self.has_parameters():
             section += """\
   <dt id="glossary-psrf-ci80"><abbr title="Potential scale reduction factor based on the 80% credible interval">PSRF-80%CI</abbr></dt>
-  <dd>The width of the pooled 80% credible interval divided by the average within-chain width. Values near 1 indicate similar widths across chains.</dd>
+  <dd>The width of the pooled 80% credible interval divided by the average within-chain width. Values from 1.05 through 1.19 warrant caution, and values of 1.2 or greater are concerning. Values near 1 indicate similar widths across chains.</dd>
   <dt id="glossary-psrf-rcf"><abbr title="Potential scale reduction factor for discrete distributions">PSRF-RCF</abbr></dt>
-  <dd>For each chain's 80% credible interval, this compares its probability in that chain with its probability in the pooled samples, then averages the ratios across chains.</dd>
+  <dd>For each chain's 80% credible interval, this compares its probability in that chain with its probability in the pooled samples, then averages the ratios across chains. It uses the same warning thresholds as PSRF-80%CI.</dd>
 """
         if self.has_trees():
             section += """\
   <dt id="glossary-asdsf"><abbr title="Average standard deviation of split frequencies">ASDSF</abbr></dt>
-  <dd>The average across splits of the standard deviation, across chains, of each split's posterior probability.</dd>
+  <dd>The average across splits of the standard deviation, across chains, of each split's posterior probability. Values below 0.01 are commonly considered acceptable; larger values suggest obtaining more samples or comparing additional chains.</dd>
   <dt id="glossary-msdsf"><abbr title="Maximum standard deviation of split frequencies">MSDSF</abbr></dt>
-  <dd>The largest standard deviation across chains of any split's posterior probability.</dd>
+  <dd>The largest standard deviation across chains of any split's posterior probability. A large value identifies at least one split whose estimated support still differs substantially among chains.</dd>
 """
         section += "</dl>\n</section>\n"
         return section

@@ -90,8 +90,13 @@ trend = [increasing]
                 }],
             )
 
+            variable = "M3_test:LogOddsPosSelection"
+            analysis.ESS[variable] = 150
+            analysis.PSRF_CI80[variable] = 1.1
+            analysis.PSRF_RCF[variable] = 1.2
             section = analysis.section_scalar_variables()
             self.assertIn('aria-label="Scalar variables table"', section)
+            self.assertIn('<p class="diagnostic-legend">', section)
             self.assertIn('<table class="backlit2 scalar-variables">', section)
             self.assertIn("Mean &plusmn; SD", section)
             self.assertIn("Median (95% BCI)", section)
@@ -102,6 +107,13 @@ trend = [increasing]
             self.assertIn('<td class="scalar-sd">0.5034</td>', section)
             self.assertIn('<td class="scalar-median">0.1548</td>', section)
             self.assertIn('<td class="scalar-bci">(NA, NA)</td>', section)
+            self.assertIn('<td>21.24</td>', section)
+            self.assertIn('class="diagnostic-caution"', section)
+            self.assertIn('class="diagnostic-bad"', section)
+            self.assertIn('<span class="visually-hidden">Caution: </span>150</td>', section)
+            self.assertIn('<span class="visually-hidden">Caution: </span>1.1</td>', section)
+            self.assertIn('<span class="visually-hidden">Concerning: </span>1.2</td>', section)
+            self.assertNotIn('style="color:', section)
             self.assertIn('href="#glossary-act"', section)
             self.assertIn('href="#glossary-ess"', section)
             self.assertIn('href="#glossary-psrf-ci80"', section)
