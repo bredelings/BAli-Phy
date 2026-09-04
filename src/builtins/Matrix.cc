@@ -1419,6 +1419,8 @@ extern "C" closure builtin_function_MatrixExp(OperationArgs& Args)
         return new Box<DenseMatrix<double>>(DenseMatrix<double>::Constant(n, n, nan));
     }
 
+    // FIXME: We should probably provide CTMC-specific scaling and squaring that renormalizes after
+    // each squaring step; final-only normalization cannot recover once Eigen produces Inf or NaN.
     auto P = new Box<DenseMatrix<double>>((t*Q).exp());
 
     for(Eigen::Index i=0; i<n; i++)
