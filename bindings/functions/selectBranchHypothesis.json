@@ -1,0 +1,10 @@
+{
+    "name": "selectBranchHypothesis",
+    "result_type": "IntMap<Int>",
+    "call": "selectBranchHypothesis(@hypothesis,@branchCats)",
+    "import": ["SModel"],
+    "args": [
+        {"name": "hypothesis", "type": "Int"},
+        {"name": "branchCats", "type": "IntMap<List<Int>>"}
+    ]
+}
