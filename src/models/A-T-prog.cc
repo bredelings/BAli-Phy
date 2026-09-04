@@ -303,6 +303,7 @@ vector<Hs::Exp> generate_substitution_models(const vector<model_t>& SMs,
 						    const vector<string>& SM_function_for_index,
 						    const vector<Hs::Exp>& alphabet_exps,
 						    const Hs::Exp& branch_categories,
+						    const Hs::Exp& branch_category_vectors,
 						    const Hs::Exp& tree,
 						    Hs::Stmts& model,
 						    LoggerExpressions& model_loggers)
@@ -326,6 +327,7 @@ vector<Hs::Exp> generate_substitution_models(const vector<model_t>& SMs,
         smodel = code.add_arguments(smodel, {
                 {"alphabet",alphabet_exps[*first_partition]},
                 {"branch_categories",branch_categories},
+                {"branch_category_vectors",branch_category_vectors},
                 {"tree",tree}
             });
 
@@ -1001,7 +1003,7 @@ std::string generate_atmodel_program(const InferOptions& options,
 
     // Foreground categories come from attributes on the supplied topology, so they cannot retain
     // their intended branch identities while topology changes.
-    if (used_states.contains("branch_categories") and
+    if ((used_states.contains("branch_categories") or used_states.contains("branch_category_vectors")) and
         not fixed.contains("tree") and not fixed.contains("topology"))
         throw myexception()<<"Models using foreground branch categories require a fixed tree topology.\n"
                            <<"  Use --fix topology=<treefile> or --fix tree=<treefile>.";
@@ -1013,6 +1015,15 @@ std::string generate_atmodel_program(const InferOptions& options,
         Hs::Var branch_categories_var("branch_categories");
         HsG::Let(model, branch_categories_var, HsG::Apply(Hs::Var("foregroundBranches"), {tree_var, Hs::Literal(Hs::String("foreground"))}));
         branch_categories = branch_categories_var;
+    }
+
+    Hs::Exp branch_category_vectors;
+    if (used_states.count("branch_category_vectors"))
+    {
+        Hs::Var vectors_var("branch_category_vectors");
+        HsG::Let(model, vectors_var, HsG::Apply(Hs::Var("foregroundBranchCategoryVectors"),
+                                                {tree_var, Hs::Literal(Hs::String("foreground"))}));
+        branch_category_vectors = vectors_var;
     }
 
     // M6. Scales
@@ -1028,7 +1039,9 @@ std::string generate_atmodel_program(const InferOptions& options,
         }
     }
 
-    auto smodels = generate_substitution_models(SMs, s_mapping, SM_function_for_index, alphabet_exps, branch_categories, tree_var, model, model_loggers);
+    auto smodels = generate_substitution_models(SMs, s_mapping, SM_function_for_index, alphabet_exps,
+                                                branch_categories, branch_category_vectors, tree_var,
+                                                model, model_loggers);
     auto imodels = generate_indel_models(IMs, IM_function_for_index, tree_var, model, model_loggers);
 
     vector<tuple<int,Hs::Exp,Hs::Exp>> alignment_loggers; // partition, alignment var, alignment logger

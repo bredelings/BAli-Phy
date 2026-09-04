@@ -467,6 +467,7 @@ model_t compile_smodel(const Rules& R, TypecheckingState TC, CodeGenState code_g
     map<string,pair<string,type_t>> smodel_states = {
         {"alphabet",{"alpha",parse_type("a")}},
         {"branch_categories",{"branch_categories",parse_type("IntMap<Int>")}},
+        {"branch_category_vectors",{"branch_category_vectors",parse_type("IntMap<List<Int>>")}},
         {"tree",{"tree",parse_type("Tree<t>")}},
     };
 
