@@ -1705,15 +1705,26 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
         if dir:
             filename = dir / (filename+".html")
+        x3dom_dir = Path("x3dom-1.8.3")
+        self.copy_report_assets([
+            x3dom_dir / "x3dom.js",
+            x3dom_dir / "x3dom.css",
+            x3dom_dir / "LICENSE.md",
+            x3dom_dir / "README.md",
+        ])
         with open(filename,"w+",encoding='utf-8') as x3d_file:
             print("""\
-<html>
+<!DOCTYPE html>
+<html lang="en">
  <head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
    <title>MDS 3D Plot</title>
-   <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'> </script>
-   <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
+   <script src="bpy-summarize-assets/x3dom-1.8.3/x3dom.js"></script>
+   <link rel="stylesheet" href="bpy-summarize-assets/x3dom-1.8.3/x3dom.css">
     <style>
-      x3d { border:2px solid darkorange; }
+      html, body { height:100%; margin:0; }
+      x3d { border:2px solid darkorange; box-sizing:border-box; height:100%; width:100%; }
     </style>
   </head>
   <body>
@@ -2454,12 +2465,22 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 </html>
 """, file=outfile)
 
-    def copy_code(self):
+    # Copy selected installed web assets while retaining their versioned directory structure.
+    def copy_report_assets(self, relative_paths):
         source_assets = self.libexecdir / "bpy-summarize-assets"
         report_assets = self.outdir / "bpy-summarize-assets"
-        report_assets.mkdir(exist_ok=True)
-        for filename in ("highlight.min.js", "haskell.min.js", "atom-one-light.min.css", "LICENSE"):
-            shutil.copyfile(source_assets / filename, report_assets / filename)
+        for relative_path in relative_paths:
+            destination = report_assets / relative_path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source_assets / relative_path, destination)
+
+    def copy_code(self):
+        self.copy_report_assets([
+            Path("highlight.min.js"),
+            Path("haskell.min.js"),
+            Path("atom-one-light.min.css"),
+            Path("LICENSE"),
+        ])
 
         for file_path in self.get_code():
             out_file_path = self.outdir / file_path.name

@@ -404,6 +404,33 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
             for filename in asset_names:
                 self.assertEqual((analysis.outdir / "bpy-summarize-assets" / filename).read_text(), filename)
 
+    # A 3D report must carry its browser runtime and avoid remote requests; unit HTML tests cannot
+    # exercise installation or an offline browser. Remove this if the 3D renderer becomes native.
+    def test_creates_a_self_contained_3d_page(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            report = directory / "report"
+            report.mkdir()
+            installed_assets = directory / "libexec" / "bpy-summarize-assets" / "x3dom-1.8.3"
+            installed_assets.mkdir(parents=True)
+            asset_names = ("x3dom.js", "x3dom.css", "LICENSE.md", "README.md")
+            for filename in asset_names:
+                (installed_assets / filename).write_text(filename, encoding="utf-8")
+
+            analysis = Analysis.__new__(Analysis)
+            analysis.outdir = report
+            analysis.libexecdir = directory / "libexec"
+            analysis.write_x3d_file(report, "tree-MDS.points", "1\t2\t3\t1\n")
+
+            page = (report / "tree-MDS.points.html").read_text(encoding="utf-8")
+            self.assertIn('src="bpy-summarize-assets/x3dom-1.8.3/x3dom.js"', page)
+            self.assertIn('href="bpy-summarize-assets/x3dom-1.8.3/x3dom.css"', page)
+            self.assertNotIn("http://", page)
+            self.assertNotIn("https://", page)
+            for filename in asset_names:
+                copied = report / "bpy-summarize-assets" / "x3dom-1.8.3" / filename
+                self.assertEqual(copied.read_text(encoding="utf-8"), filename)
+
     # Keep definitions out of reports that cannot contain the corresponding diagnostics.
     # This can be removed if glossary terms are generated directly from rendered columns.
     def test_builds_a_compact_conditional_glossary(self):

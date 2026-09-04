@@ -224,6 +224,14 @@ install_data([
   ],
   install_dir: 'lib/bali-phy/libexec/bpy-summarize-assets',
 )
+install_data([
+    'scripts/bpy-summarize-assets/x3dom-1.8.3/x3dom.js',
+    'scripts/bpy-summarize-assets/x3dom-1.8.3/x3dom.css',
+    'scripts/bpy-summarize-assets/x3dom-1.8.3/LICENSE.md',
+    'scripts/bpy-summarize-assets/x3dom-1.8.3/README.md',
+  ],
+  install_dir: 'lib/bali-phy/libexec/bpy-summarize-assets/x3dom-1.8.3',
+)
 if host_machine.system() == 'windows'
   install_data('scripts/bali-phy-pkg.py', install_dir: 'bin')
   install_data('scripts/bali-phy-pkg.cmd', install_dir: 'bin')
