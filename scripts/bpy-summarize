@@ -54,7 +54,7 @@ def print_model(model):
     extracted = model['extracted']
 
     if extracted:
-        section += '<table class="model">\n<tbody>\n'
+        section += '<table class="model" role="presentation">\n<tbody>\n'
         for arg in extracted:
             name = arg[0]
             submodel = arg[1]
@@ -68,13 +68,13 @@ def print_model(model):
 
 
 def print_models(name,models):
-    section = '<table class="models">\n<tbody>\n'
+    section = '<table class="models" role="presentation">\n<tbody>\n'
     i = 1
     for model in models:
         model_name =  f"{name}{i}"
         (assign, model_html) = print_model(model)
         section += (
-            f'<tr><th scope="row"><span id="{model_name}" class="modelname">{model_name}</span></th>'
+            f'<tr><td><span id="{model_name}" class="modelname">{model_name}</span></td>'
             f'<td>{assign}</td><td>\n'
         )
         section += model_html
