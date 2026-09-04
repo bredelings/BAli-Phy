@@ -13,8 +13,25 @@ import unittest
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "bpy-summarize"
 MODULE = runpy.run_path(str(SCRIPT))
 Analysis = MODULE["Analysis"]
+TreeLogFileRun = MODULE["TreeLogFileRun"]
 print_model = MODULE["print_model"]
 print_model_string = MODULE["print_model_string"]
+
+
+class BPYSummarizeRunTests(unittest.TestCase):
+    # Paired prefix inputs must resolve to distinct tree and scalar files; broader report tests use
+    # BAli-Phy directories instead. Remove this if run discovery is replaced by explicit file arguments.
+    def test_resolves_paired_tree_and_log_prefix(self):
+        with tempfile.TemporaryDirectory() as directory:
+            prefix = Path(directory) / "chain"
+            prefix.with_suffix(".trees").write_text("(a,b);\n", encoding="utf-8")
+            prefix.with_suffix(".log").write_text("iter\tvalue\n0\t1\n", encoding="utf-8")
+
+            run = TreeLogFileRun(prefix)
+
+            self.assertEqual(run.get_trees_file(), prefix.with_suffix(".trees"))
+            self.assertEqual(run.get_log_file(), prefix.with_suffix(".log"))
+            self.assertEqual(run.n_iterations(), 1)
 
 
 class BPYSummarizeScalarTests(unittest.TestCase):

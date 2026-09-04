@@ -651,8 +651,14 @@ class BAliPhyRun(TreeFileRun,LogFileRun):
 
 class TreeLogFileRun(TreeFileRun,LogFileRun):
     def __init__(self,mcmc_output, **kwargs):
-        super().__init__(mcmc_output, **kwargs)
+        MCMCRun.__init__(self, mcmc_output, **kwargs)
+        self.trees_file = add_suffix(mcmc_output, ".trees")
+        self.log_file = add_suffix(mcmc_output, ".log")
         logging.debug(f"TreeLogFile Run: {mcmc_output}")
+
+    def n_iterations(self):
+        # A paired tree file may be Nexus; the tabular log has exactly one header and one row per sample.
+        return LogFileRun.n_iterations(self)
 
 # Since PhyloBayes doesn't make new run files for each dir, maybe we need to file the different prefixes, and pass them to PhyloBayes?
 # A prefix could be like dir/prefix (e.g. dir/prefix.trace) or prefix (e.g. prefix.trace)
