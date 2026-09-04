@@ -3,7 +3,7 @@
     "title": "Bayesian test of branch-category assignment hypotheses",
     "result_type": "CTMC<Codons<a>>",
     "call": "omegaBranchModel(selectBranchHypothesis(@hypothesis,@branchCats),@omegas,@submodel)",
-    "import": ["SModel"],
+    "import": ["MCMC", "SModel"],
     "args": [
         {
             "name": "submodel",
@@ -28,6 +28,12 @@
             "type": "IntMap<List<Int>>",
             "default_value": "get_state(branch_category_vectors)",
             "description": "The positional category assignments supplied by foreground={...} annotations."
+        }
+    ],
+    "computed": [
+        {
+            "value": "categoricalIndicatorFields(\"BranchHypothesis\",@hypothesis,numberBranchHypotheses(@branchCats))",
+            "context": "object"
         }
     ],
     "extract": "all",

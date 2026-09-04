@@ -68,3 +68,18 @@ binaryIndicatorFields label selector = do
          , (toJSONKey (T.append (T.pack "Pr") label),
             toJSON (toFloating (fromLogOdds logOdds) :: Double))
          ]
+
+-- Report each categorical state's conditional probability and its odds against all other states.
+categoricalIndicatorFields :: T.Text -> Modifiable Int -> Int -> ContextAction Object
+categoricalIndicatorFields label selector count = do
+  logOdds <- condLogOddsValues selector count
+  return $ concat
+    [ [ (toJSONKey (fieldName "LogOdds" index), toJSON value)
+      , (toJSONKey (fieldName "Pr" index),
+         toJSON (toFloating (fromLogOdds value) :: Double))
+      ]
+    | (index, value) <- zip [0..] (U.toList logOdds)
+    ]
+  where
+    fieldName prefix index =
+      T.concat [T.pack prefix, label, T.pack "[", T.pack (show index), T.pack "]"]
