@@ -17,11 +17,18 @@ Analysis = MODULE["Analysis"]
 TreeFileRun = MODULE["TreeFileRun"]
 TreeLogFileRun = MODULE["TreeLogFileRun"]
 get_x3d_of_mds = MODULE["get_x3d_of_mds"]
+print_or = MODULE["print_or"]
 print_model = MODULE["print_model"]
 print_model_string = MODULE["print_model_string"]
 
 
 class BPYSummarizeRunTests(unittest.TestCase):
+    # Missing-input diagnostics must name every accepted alternative; report tests normally find
+    # their first candidate. Remove this if path selection reports structured diagnostics.
+    def test_lists_every_alternative_input_file(self):
+        self.assertEqual(print_or(["one", "two"]), '"one" or "two"')
+        self.assertEqual(print_or(["one", "two", "three"]), '"one", "two", or "three"')
+
     # Output initialization must never rename input or unrelated directories; generated-report
     # tests only use fresh paths. Remove this if an external output manager assumes ownership.
     def test_leaves_unowned_and_input_directories_unchanged(self):

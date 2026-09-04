@@ -288,13 +288,11 @@ def get_value_from_file(filename,attribute):
 
 def print_or(filenames):
     qfilenames = [f'"{filename}"' for filename in filenames]
-    result = qfilenames[0]
-    for i in range(1,len(filenames)-1):
-        if i == len(filenames)-1:
-            result += " or " + qfilenames[i]
-        else:
-            result += ", " + qfilenames[i]
-    return result
+    if len(qfilenames) == 1:
+        return qfilenames[0]
+    if len(qfilenames) == 2:
+        return " or ".join(qfilenames)
+    return ", ".join(qfilenames[:-1]) + ", or " + qfilenames[-1]
 
 def check_one_file_exists(filenames, required=True):
     for filename in filenames:
@@ -832,7 +830,7 @@ class Analysis(object):
         prefix=path.dirname(path.dirname(self.trees_consensus_exe))
         self.libexecdir = Path(prefix,"lib","bali-phy","libexec")
         if not path.exists(self.libexecdir):
-            print("Can't find bali-phy libexec path '{self.libexecdir}'")
+            print(f"Can't find bali-phy libexec path '{self.libexecdir}'")
 
         for i in range(len(self.mcmc_runs)):
             if self.mcmc_runs[i].get_command() != self.mcmc_runs[0].get_command():
@@ -1245,8 +1243,8 @@ class Analysis(object):
 
         if max_iterations > 3*min_iterations:
             print( "The variation in run length between MCMC chains is too great.\n")
-            print(f"  Chain #{max_i} has {max_iterations} iterations.")
-            print(f"  Chain #{min_i} has {min_iterations} iterations.")
+            print(f"  Chain #{max_i + 1} has {max_iterations} iterations.")
+            print(f"  Chain #{min_i + 1} has {min_iterations} iterations.")
             print( "Not going to guess a burnin: please specify one.")
             exit(1)
 
@@ -2148,7 +2146,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             output += self.section_end()
             print(output, file=index)
 
-        print(f"\nReport written to '{filename}")
+        print(f"\nReport written to '{filename}'")
 
     def html_header(self,title):
         section = """\
