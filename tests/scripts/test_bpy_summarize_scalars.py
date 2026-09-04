@@ -93,8 +93,8 @@ trend = [increasing]
             self.assertIn('<table class="backlit2 scalar-variables">', section)
             self.assertIn("Mean &plusmn; SD", section)
             self.assertIn("Median (95% BCI)", section)
-            self.assertIn('<th colspan="3">Mean &plusmn; SD</th>', section)
-            self.assertIn('<th colspan="2">Median (95% BCI)</th>', section)
+            self.assertIn('<th scope="colgroup" colspan="3">Mean &plusmn; SD</th>', section)
+            self.assertIn('<th scope="colgroup" colspan="2">Median (95% BCI)</th>', section)
             self.assertIn('<td class="scalar-mean">0.1782</td>', section)
             self.assertIn('<td class="scalar-pm">&plusmn;</td>', section)
             self.assertIn('<td class="scalar-sd">0.5034</td>', section)
@@ -102,7 +102,7 @@ trend = [increasing]
             self.assertIn('<td class="scalar-bci">(NA, NA)</td>', section)
             self.assertIn(
                 """\
-  <td>constant</td>
+  <th scope="row">constant</th>
   <td class="scalar-mean">3</td>
   <td class="scalar-pm"></td>
   <td class="scalar-sd scalar-na">&mdash;</td>
@@ -119,10 +119,11 @@ trend = [increasing]
             self.assertNotIn("mean-sd", section)
             self.assertNotIn("median-bci", section)
             for row in section.split("<tr ")[1:]:
-                self.assertEqual(row.split("</tr>", 1)[0].count("<td"), 11)
+                cells = row.split("</tr>", 1)[0]
+                self.assertEqual(cells.count("<th") + cells.count("<td"), 11)
 
             header = analysis.html_header("scalar report")
-            self.assertIn("table.scalar-variables td:not(:first-child) {text-align:right;}", header)
+            self.assertIn("table.scalar-variables td {text-align:right;}", header)
             self.assertIn("table.scalar-variables td.scalar-na {text-align:center;}", header)
             self.assertIn("td.scalar-pm {padding-left:0; padding-right:0; text-align:center;}", header)
             self.assertNotIn("display:grid", header)

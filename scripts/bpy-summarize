@@ -2132,6 +2132,9 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       td {padding: 0.1em;}
       .backlit2 td {padding-left: 0.5em;}
       .backlit2 td {padding-right: 1.0em;}
+      tbody th[scope="row"] {font-weight: normal;}
+      #parameters tbody th[scope="row"], #alignment tbody th[scope="row"] {text-align:left;}
+      .backlit2 tbody th {padding-left: 0.5em; padding-right: 1em;}
 
 #topbar {
         align-items: center;
@@ -2215,20 +2218,22 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
       ul {margin-top: 0.4em;}
 
-      .center td {text-align: center;}
+      .center :is(th, td) {text-align: center;}
 
       *[title] {cursor:help;}
       a[title] {vertical-align:top;color:#00f;font-size:70%; border-bottom:1px dotted;}
       .floating_picture {float:left;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}
       .r_floating_picture {float:right;padding-left:0.5em;padding-right:0.5em;margin:0.5em;}
       table.backlit2 {border-collapse: collapse;}
-      table.backlit2 th {
+      table.backlit2 thead th {
         border-bottom: 1px solid #C0C0C0;
         padding-bottom: 0.35em;
         padding-top: 0.35em;
       }
-      table.backlit2 tr:nth-child(odd of :has(> td)) > td {background-color: #F0F0F0; margin:0}
-      table.scalar-variables td:not(:first-child) {text-align:right;}
+      table caption {font-weight:bold; margin-bottom:0.5em; text-align:left;}
+      table.backlit2 tr:nth-child(odd of :has(> td)) > :is(th, td) {background-color: #F0F0F0; margin:0}
+      table.convergence-statistics tbody th {font-weight:bold; text-align:left;}
+      table.scalar-variables td {text-align:right;}
       table.scalar-variables td.scalar-na {text-align:center;}
       .scalar-mean, .scalar-sd, .scalar-median, .scalar-bci {font-variant-numeric:tabular-nums;}
       .backlit2 td.scalar-mean {padding-right:0.25em;}
@@ -2237,7 +2242,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       .backlit2 td.scalar-median {padding-right:0.5em;}
       .backlit2 td.scalar-bci {padding-left:0;}
       table.positive-selection-support td:nth-child(n+4) {text-align:right; font-variant-numeric:tabular-nums;}
-      table.positive-selection-sites td.site-column,
+      table.positive-selection-sites :is(th, td).site-column,
       table.positive-selection-sites td.site-probability,
       table.positive-selection-sites td.site-dnds-mean,
       table.positive-selection-sites td.site-dnds-sd {text-align:right; font-variant-numeric:tabular-nums;}
@@ -2286,11 +2291,14 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 <section id="data" class="report-section">
 <h2 style="clear:both">Data and model</h2>
 <table class="backlit2">
-  <tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Alphabet</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th><th>Scale&nbsp;Model</th></tr>
+  <thead>
+    <tr><th scope="col">Partition</th><th scope="col">Sequences</th><th scope="col">Lengths</th><th scope="col">Alphabet</th><th scope="col">Substitution&nbsp;Model</th><th scope="col">Indel&nbsp;Model</th><th scope="col">Scale&nbsp;Model</th></tr>
+  </thead>
+  <tbody>
 """
         for i in range(self.n_partitions()):
             section +=  '<tr>\n'
-            section += f'  <td>{i+1}</td>\n'
+            section += f'  <th scope="row">{i+1}</th>\n'
             section += f'  <td>{html.escape(str(self.get_input_files()[i]))}</td>\n'
 
             features = self.get_alignment_info(self.outdir / f"P{i+1}.initial.fasta")
@@ -2338,6 +2346,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 section += '<td></td>\n'
 
             section += '</tr>\n'
+        section += '</tbody>\n'
         section += '</table>\n'
         section += '</section>\n'
         return section
@@ -2412,7 +2421,10 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 <section id="parameters" class="report-section">
 <h2 class="clear">Scalar variables</h2>
     <table class="backlit2 scalar-variables">
-        <tr><th>Statistic</th><th colspan="3">Mean &plusmn; SD</th><th colspan="2">Median (95% BCI)</th><th title="Auto-Correlation Time">ACT</th><th title="Effective Sample Size">ESS</th><th>burnin</th><th title="Potential Scale Reduction Factor based on width of 80% credible interval">PSRF-CI80%</th><th>PSRF-RCF</th></tr>
+      <thead>
+        <tr><th scope="col">Statistic</th><th scope="colgroup" colspan="3">Mean &plusmn; SD</th><th scope="colgroup" colspan="2">Median (95% BCI)</th><th scope="col" title="Auto-Correlation Time">ACT</th><th scope="col" title="Effective Sample Size">ESS</th><th scope="col">burnin</th><th scope="col" title="Potential Scale Reduction Factor based on width of 80% credible interval">PSRF-CI80%</th><th scope="col">PSRF-RCF</th></tr>
+      </thead>
+      <tbody>
 """
         for var in self.median:
             if var == "iter":
@@ -2424,7 +2436,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
             row_style = "" if var in self.CI_low else 'style="font-style:italic"'
             section += f'<tr {row_style}>\n'
-            section += f'  <td>{html.escape(var)}</td>\n'
+            section += f'  <th scope="row">{html.escape(var)}</th>\n'
             if var in self.constants:
                 section += f'  <td class="scalar-mean">{html.escape(self.median[var])}</td>\n'
                 section += '  <td class="scalar-pm"></td>\n'
@@ -2501,6 +2513,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 section += '  <td></td>\n'
 
             section += '</tr>\n'
+        section += '      </tbody>\n'
         section += '</table>\n'
         section += '</section>\n'
 
@@ -2526,7 +2539,10 @@ assumes it is included in the model.</p>
             section += """\
 <h3>Support for positive selection in the model</h3>
 <table class="backlit2 positive-selection-support">
-  <tr><th>Statistic</th><th>Substitution model</th><th>Partitions</th><th>Posterior probability</th><th>Log odds</th></tr>
+  <thead>
+    <tr><th scope="col">Statistic</th><th scope="col">Substitution model</th><th scope="col">Partitions</th><th scope="col">Posterior probability</th><th scope="col">Log odds</th></tr>
+  </thead>
+  <tbody>
 """
             for support in model_support:
                 statistic = html.escape(support["statistic"])
@@ -2537,14 +2553,14 @@ assumes it is included in the model.</p>
                 )
                 section += f"""\
   <tr>
-    <td>{statistic}</td>
+    <th scope="row">{statistic}</th>
     <td><a href="#S{smodel}">S{smodel}</a></td>
     <td>{partition_links}</td>
     <td>{html.escape(support["posterior_probability"])}</td>
     <td>{html.escape(support["log_odds"])}</td>
   </tr>
 """
-            section += "</table>\n"
+            section += "  </tbody>\n</table>\n"
 
         anchored_partitions = set()
         for report in reports:
@@ -2608,31 +2624,40 @@ assumes it is included in the model.</p>
                 has_conditioned_dnds = has_conditioned and any(row["conditioned-dNdS-mean"] for row in rows)
                 model_averaged_span = 1 + 3 * has_model_averaged_dnds
                 conditioned_span = 1 + 3 * has_conditioned_dnds
-                section += '<table class="backlit2 positive-selection-sites">\n  <tr>\n'
-                section += '    <th rowspan="2">Column</th><th rowspan="2">Codon</th><th rowspan="2">AA</th>'
+                section += '<table class="backlit2 positive-selection-sites">\n  <thead>\n  <tr>\n'
                 section += (
-                    f'<th class="posterior-group" colspan="{model_averaged_span}">'
+                    '    <th scope="col" rowspan="2">Column</th>'
+                    '<th scope="col" rowspan="2">Codon</th><th scope="col" rowspan="2">AA</th>'
+                )
+                section += (
+                    f'<th scope="colgroup" class="posterior-group" colspan="{model_averaged_span}">'
                     "Overall posterior</th>"
                 )
                 if has_conditioned:
                     section += (
-                        f'<th class="posterior-group" colspan="{conditioned_span}">'
+                        f'<th scope="colgroup" class="posterior-group" colspan="{conditioned_span}">'
                         "Posterior with selection</th>"
                     )
-                section += '<th rowspan="2">Source letter</th>\n  </tr>\n  <tr>\n'
-                section += "    <th>Pr(dN/dS&gt;1)</th>"
+                section += '<th scope="col" rowspan="2">Source letter</th>\n  </tr>\n  <tr>\n'
+                section += '    <th scope="col">Pr(dN/dS&gt;1)</th>'
                 if has_model_averaged_dnds:
-                    section += "<th colspan=\"3\">Posterior dN/dS<br>mean &plusmn; SD</th>"
+                    section += '<th scope="colgroup" colspan="3">Posterior dN/dS<br>mean &plusmn; SD</th>'
                 if has_conditioned:
-                    section += "<th>Pr(dN/dS&gt;1)</th>"
+                    section += '<th scope="col">Pr(dN/dS&gt;1)</th>'
                     if has_conditioned_dnds:
-                        section += "<th colspan=\"3\">Posterior dN/dS<br>mean &plusmn; SD</th>"
-                section += "\n  </tr>\n"
+                        section += (
+                            '<th scope="colgroup" colspan="3">Posterior dN/dS<br>'
+                            'mean &plusmn; SD</th>'
+                        )
+                section += "\n  </tr>\n  </thead>\n  <tbody>\n"
                 for row in shown_rows:
                     model_averaged_probability = f'{float(row["model-averaged-probability"]):.3f}'
                     source = f'{row["sequence"]}:{row["sequence-character"]}'
                     section += "  <tr>\n"
-                    section += f'    <td class="site-column">{html.escape(row["column"])}</td>\n'
+                    section += (
+                        f'    <th scope="row" class="site-column">'
+                        f'{html.escape(row["column"])}</th>\n'
+                    )
                     section += f'    <td>{html.escape(row["symbol"])}</td>\n'
                     section += f'    <td>{html.escape(row["translation"] or "-")}</td>\n'
                     section += f'    <td class="site-probability">{model_averaged_probability}</td>\n'
@@ -2653,7 +2678,7 @@ assumes it is included in the model.</p>
                             section += f'    <td class="site-dnds-sd">{conditioned_dnds_sd}</td>\n'
                     section += f'    <td>{html.escape(source)}</td>\n'
                     section += "  </tr>\n"
-                section += "</table>\n"
+                section += "  </tbody>\n</table>\n"
 
             links = [f'<a href="{html.escape(report["filename"].name)}">Complete TSV table</a>']
             alignment_viewer = self.outdir / f"P{partition}.initial.html"
@@ -2724,23 +2749,28 @@ assumes it is included in the model.</p>
             section += f'<h3>Partition {i+1}</h3>\n'
             section += """\
   <table>
+    <thead>
     <tr>
-       <th style="padding-right:3em"></th>
-       <th></th>
-       <th></th>
-       <th title ="Comparison of this alignment (top) to the WPD alignment (bottom)">Diff</th>
-       <th></th>
-       <th style="padding-right:0.5em;padding-left:0.5em" title="Percent identity of the most dissimilar sequences">Min. %identity</th>
-       <th style="padding-right:0.5em;padding-left:0.5em" title="Number of columns in the alignment"># Sites</th>
-       <th style="padding-right:0.5em;padding-left:0.5em" title="Number of invariant columns">Constant</th>
-       <th title="Number of parsimony-informative columns.">Informative</th>
+       <th scope="col" style="padding-right:3em">Alignment</th>
+       <th scope="col">FASTA</th>
+       <th scope="col">HTML</th>
+       <th scope="col" title ="Comparison of this alignment (top) to the WPD alignment (bottom)">Diff</th>
+       <th scope="col">AU</th>
+       <th scope="col" style="padding-right:0.5em;padding-left:0.5em" title="Percent identity of the most dissimilar sequences">Min. %identity</th>
+       <th scope="col" style="padding-right:0.5em;padding-left:0.5em" title="Number of columns in the alignment"># Sites</th>
+       <th scope="col" style="padding-right:0.5em;padding-left:0.5em" title="Number of invariant columns">Constant</th>
+       <th scope="col" title="Number of parsimony-informative columns.">Informative</th>
     </tr>
+    </thead>
+    <tbody>
 """
             for (alignment,alphabet,name) in self.alignments:
                 if not alignment.startswith(f'P{i+1}.'):
                     continue
                 section +=  '    <tr>\n'
-                section += f'      <td style="padding-right:3em">{html.escape(name)}</td>\n'
+                section += (
+                    f'      <th scope="row" style="padding-right:3em">{html.escape(name)}</th>\n'
+                )
                 section += f'      <td><a href="{alignment}.fasta">FASTA</a></td>\n'
 
                 if path.exists(self.outdir / f"{alignment}.html" ):
@@ -2765,6 +2795,7 @@ assumes it is included in the model.</p>
                 section += f'<td style="text-align: center">{features["n_inform"]} ({features["p_inform"]}%)</td>\n'
 
                 section += '    </tr>\n'
+            section += '    </tbody>\n'
             section += '  </table>\n'
         section += '</section>\n'
         return section
@@ -2844,8 +2875,9 @@ assumes it is included in the model.</p>
   <table style="width:100%;clear:both">
     <tr>
       <td style="vertical-align:top">
-        <p><b>Statistics:</b></p>
-        <table class="backlit2">
+        <table class="backlit2 convergence-statistics">
+          <caption>Statistics</caption>
+          <tbody>
 """
         burnin_before = "NA"
         min_NE = "NA"
@@ -2856,16 +2888,21 @@ assumes it is included in the model.</p>
                     burnin_before = "Not Converged!"
                 min_NE = self.get_value_from_file(self.outdir / "Report", 'Ne  >=')
             section += (
-                f"<tr><td><b>scalar burnin</b></td><td>{html.escape(str(burnin_before))}</td></tr>\n"
+                f'<tr><th scope="row">scalar burnin</th>'
+                f'<td>{html.escape(str(burnin_before))}</td></tr>\n'
             )
-            section += f"<tr><td><b>scalar ESS</b></td><td>{html.escape(str(min_NE))}</td></tr>\n"
+            section += (
+                f'<tr><th scope="row">scalar ESS</th>'
+                f'<td>{html.escape(str(min_NE))}</td></tr>\n'
+            )
 
 
         if self.has_trees():
             min_NE_partition = self.get_value_from_file(self.outdir / 'partitions.bs','min Ne =')
             section += (
-                '<tr><td><b title="Effective Sample Size for bit-vectors of partition support '
-                f'(smallest)">topological ESS</b></td><td>{html.escape(str(min_NE_partition))}</td></tr>\n'
+                '<tr><th scope="row" title="Effective Sample Size for bit-vectors of partition '
+                f'support (smallest)">topological ESS</th><td>{html.escape(str(min_NE_partition))}'
+                '</td></tr>\n'
             )
 
             asdsf = self.get_value_from_file(self.outdir / 'partitions.bs',r'ASDSF\[min=0.100\] =')
@@ -2874,7 +2911,8 @@ assumes it is included in the model.</p>
             else:
                 asdsf = asdsf.rstrip()
             section += (
-                '<tr><td><b title="Average Standard Deviation of Split Frequencies">ASDSF</b></td>'
+                '<tr><th scope="row" title="Average Standard Deviation of Split Frequencies">'
+                'ASDSF</th>'
                 f'<td>{html.escape(str(asdsf))}</td></tr>'
             )
 
@@ -2884,7 +2922,8 @@ assumes it is included in the model.</p>
             else:
                 msdsf = msdsf.rstrip()
             section += (
-                '<tr><td><b title="Maximum Standard Deviation of Split Frequencies">MSDSF</b></td>'
+                '<tr><th scope="row" title="Maximum Standard Deviation of Split Frequencies">'
+                'MSDSF</th>'
                 f'<td>{html.escape(str(msdsf))}</td></tr>'
             )
 
@@ -2894,9 +2933,14 @@ assumes it is included in the model.</p>
             if self.get_log_files() and len(self.get_log_files()) >= 2:
                 psrf_80 = self.get_value_from_file(self.outdir / 'Report','PSRF-80%CI <=')
                 psrf_rcf = self.get_value_from_file(self.outdir / 'Report','PSRF-RCF <=')
-            section += f'<tr><td><b>PSRF CI80%</b></td><td>{html.escape(str(psrf_80))}</td></tr>\n'
-            section += f'<tr><td><b>PSRF RCF</b></td><td>{html.escape(str(psrf_rcf))}</td></tr>\n'
+            section += (
+                f'<tr><th scope="row">PSRF CI80%</th><td>{html.escape(str(psrf_80))}</td></tr>\n'
+            )
+            section += (
+                f'<tr><th scope="row">PSRF RCF</th><td>{html.escape(str(psrf_rcf))}</td></tr>\n'
+            )
 
+        section += '          </tbody>\n'
         section += '</table>\n'
         section += '</td>\n'
 
@@ -2953,22 +2997,22 @@ assumes it is included in the model.</p>
 
         #section += '<table class="backlit2 center" style="width:100%">'."\n"
         section += '<table class="backlit2 center">\n'
-        section += "<tr><th>chain #</th>"
+        section += '<thead>\n<tr><th scope="col">chain #</th>'
         if not all_same(versions):
-            section += "<th>version</th>" 
-        section += "<th>burnin</th><th>subsample</th><th>samples</th>"
+            section += '<th scope="col">version</th>'
+        section += '<th scope="col">burnin</th><th scope="col">subsample</th><th scope="col">samples</th>'
         if not all_same(commands):
-            section += "<th>command line</th>"
-        section += "<th>subdirectory</th>"
+            section += '<th scope="col">command line</th>'
+        section += '<th scope="col">subdirectory</th>'
         if not all_same(parent_dirs):
-            section += "<th>directory</th>"
-        section += "</tr>\n"
+            section += '<th scope="col">directory</th>'
+        section += '</tr>\n</thead>\n<tbody>\n'
 
         print()
         for i in range(self.n_chains()):
             section += "<tr>\n"
 
-            section += f"  <td>{i+1}</td>\n"
+            section += f'  <th scope="row">{i+1}</th>\n'
             if not all_same(versions):
                 section += f"  <td>{html.escape(str(versions[i]))}</td>\n"
 
@@ -2987,7 +3031,7 @@ assumes it is included in the model.</p>
 
             section += "</tr>\n"
 
-        section += "</table>\n"
+        section += "</tbody>\n</table>\n"
         section += '</section>\n'
         return section
 
