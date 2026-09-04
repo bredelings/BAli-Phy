@@ -12,3 +12,5 @@ main = do
   Text.putStrLn (writeNewick tree)
   -- Nested brackets in an attribute must belong to the outer comment rather than ending it.
   putStrLn (print_newick (parse_newick "(A:[&note=[inner[deep]]]0.1,B);"))
+  -- Attribute commas inside grouping characters must not split the surrounding field.
+  putStrLn (print_newick (parse_newick "(A:[&a=(x,y),foreground={1,2},note=[x,y],z=3]0.1,B);"))

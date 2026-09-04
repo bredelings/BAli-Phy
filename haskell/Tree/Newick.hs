@@ -87,15 +87,29 @@ writeNewick_node tree node = write_branches_and_node tree (edgesOutOfNode tree n
 
     write_branch tree branch = write_branches_and_node tree (edgesAfterEdge tree branch) (targetNode tree branch) (Just branch)
 
-split c "" = []
-split c s  = case break (== c) s of
-               (l, s') -> [l] ++ case s' of []    -> []
-                                            _:s'' -> lines s''
+-- Track expected closing characters as a stack, so delimiters split fields only at the
+-- outer level and mismatched or crossed grouping characters are rejected.
+splitGrouped _ "" = []
+splitGrouped delimiter input = go [] [] input where
+    go [] field [] = [reverse field]
+    go _ _ [] = error "Unclosed grouping character in Newick attribute comment"
+    go expected field (character:rest)
+      | character == delimiter && null expected = reverse field : go [] [] rest
+      | character `elem` "({[" = go (closing character : expected) (character:field) rest
+      | character `elem` ")}]" =
+          case expected of
+            closingCharacter:remaining | character == closingCharacter ->
+                go remaining (character:field) rest
+            _ -> error "Mismatched grouping character in Newick attribute comment"
+      | otherwise = go expected (character:field) rest
+    closing '(' = ')'
+    closing '{' = '}'
+    closing '[' = ']'
 
 makeAttributes comments = Attributes $ concatMap go comments where
     go comment = if take 5 comment == "&NHX:"
-                 then fmap go' (split ':' (drop 5 comment))
-                 else fmap go' (split ',' comment)
+                 then fmap go' (splitGrouped ':' (drop 5 comment))
+                 else fmap go' (splitGrouped ',' comment)
     go' comment = case break (== '=') comment of
                     (key,[]) -> (T.pack key,Nothing)
                     (key,_:value) -> (T.pack key, Just $ T.pack value)
