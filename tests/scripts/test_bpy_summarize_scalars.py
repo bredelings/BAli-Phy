@@ -79,6 +79,38 @@ class BPYSummarizeRunTests(unittest.TestCase):
         self.assertIn(directory / "c66.tree", calls[0][0])
         self.assertEqual(calls[0][1]["outfile"], directory / "c66.ltree")
 
+    # A reusable decoding intermediate must not suppress reconstruction of its ordered report file;
+    # end-to-end tests normally create both together. Remove this if the intermediate is eliminated.
+    def test_orders_cached_posterior_decoding_alignments(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            work = directory / "Work"
+            work.mkdir()
+            samples = directory / "samples.fastas"
+            samples.write_text("sample\n", encoding="utf-8")
+
+            ordered = []
+            analysis = Analysis.__new__(Analysis)
+            analysis.outdir = directory
+            analysis.alignments = []
+            analysis.n_partitions = lambda: 1
+            analysis.get_imodel_for_partition = lambda partition: "model"
+            analysis.get_alignments_for_partition = lambda partition: [samples]
+            analysis.get_alphabets = lambda: ["DNA"]
+            analysis.make_ordered_alignment = ordered.append
+            analysis.exec_show = lambda *args, **kwargs: self.fail("unexpected posterior decoding")
+
+            for score in MODULE["scores"]:
+                unordered = work / f"P1.consensus.pd-{score}-unordered.fasta"
+                unordered.write_text("decoded\n", encoding="utf-8")
+                output_time = samples.stat().st_mtime + 10
+                os.utime(unordered, (output_time, output_time))
+
+            with redirect_stdout(io.StringIO()):
+                analysis.compute_wpd_alignments()
+
+        self.assertEqual(ordered, [f"P1.consensus.pd-{score}" for score in MODULE["scores"]])
+
 
 class BPYSummarizeScalarTests(unittest.TestCase):
     # Keep statreport's sampled and constant formats distinct and preserve aligned paired summaries.

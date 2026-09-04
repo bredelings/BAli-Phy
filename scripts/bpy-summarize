@@ -1801,31 +1801,30 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
                 self.alignments.append((name, self.get_alphabets()[i], f'Consensus (posterior-decoding: {scorename})'))
 
-                if more_recent_than_all_of(self.outdir / f"Work/{name}-unordered.fasta",afiles):
-                    continue;
+                unordered = self.outdir / f"Work/{name}-unordered.fasta"
+                if not more_recent_than_all_of(unordered, afiles):
+                    cut_cmd=['cut-range']+afiles
 
-                cut_cmd=['cut-range']+afiles
+                    if self.burnin is not None:
+                        cut_cmd.append(f"--skip={self.burnin}")
 
-                if self.burnin is not None:
-                    cut_cmd.append(f"--skip={self.burnin}")
+                    if self.until is not None:
+                        cut_cmd.append(f"--until={self.until}")
 
-                if self.until is not None:
-                    cut_cmd.append(f"--until={self.until}")
+                    if self.subsample is not None and self.subsample != 1:
+                        cut_cmd.append(f"--subsample={self.subsample}")
 
-                if self.subsample is not None and self.subsample != 1:
-                    cut_cmd.append(f"--subsample={self.subsample}")
+                    p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
 
-                p1 = subprocess.Popen(cut_cmd,  stdout=subprocess.PIPE)
+                    chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
+                    p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
 
-                chop_cmd=['alignment-chop-internal','--tree',self.outdir / 'MAP.tree']
-                p2 = subprocess.Popen(chop_cmd, stdout=subprocess.PIPE, stdin=p1.stdout)
+                    max_cmd=['alignment-max',f'--score={score}']
 
-                max_cmd=['alignment-max',f'--score={score}']
+                    self.exec_show(max_cmd,stdin=p2.stdout, outfile=unordered)
 
-                self.exec_show(max_cmd,stdin=p2.stdout, outfile=self.outdir / f"Work/{name}-unordered.fasta")
-
-                p1.wait()
-                p2.wait()
+                    p1.wait()
+                    p2.wait()
                 self.make_ordered_alignment(name)
         print(" done.")
 
