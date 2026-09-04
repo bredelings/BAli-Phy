@@ -3396,7 +3396,6 @@ if __name__ == '__main__':
                                      formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument("mcmc_outputs", default=['.'], help="Subdirectories with MCMC runs",nargs='*')
-    parser.add_argument("--clean", default=False,help="Delete generated files",action='store_true')
     parser.add_argument("--verbose",default=0, help="Be verbose",action='store_true')
     parser.add_argument("--skip", metavar='NUM',type=int,default=None,help="Skip NUM iterations as burnin")
     parser.add_argument("--subsample",metavar='NUM',type=int,default=1,help="Keep only every NUMth stored sample")
