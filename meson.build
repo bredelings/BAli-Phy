@@ -216,6 +216,14 @@ if host_machine.system() == 'windows'
 else
   install_data('scripts/bpy-summarize', install_mode: 'rwxr-xr-x', install_dir: 'bin')
 endif
+install_data([
+    'scripts/bpy-summarize-assets/highlight.min.js',
+    'scripts/bpy-summarize-assets/haskell.min.js',
+    'scripts/bpy-summarize-assets/atom-one-light.min.css',
+    'scripts/bpy-summarize-assets/LICENSE',
+  ],
+  install_dir: 'lib/bali-phy/libexec/bpy-summarize-assets',
+)
 if host_machine.system() == 'windows'
   install_data('scripts/bali-phy-pkg.py', install_dir: 'bin')
   install_data('scripts/bali-phy-pkg.cmd', install_dir: 'bin')

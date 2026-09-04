@@ -182,24 +182,40 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertIn('href="plot&lt;&amp;&quot;.svg"', svg)
         self.assertIn(f">View {escaped}</a>", svg)
 
-    # Protect source pages from malformed markup while preserving readable offline code.
-    # This can be removed if source-page generation moves to a shared HTML renderer.
+    # Protect source pages from malformed markup and network dependencies while preserving syntax
+    # highlighting. This can be removed if a shared HTML renderer owns source-page generation.
     def test_creates_an_escaped_html5_source_page(self):
         with tempfile.TemporaryDirectory() as directory:
-            source = Path(directory) / "model&.hs"
-            output = Path(directory) / "model.html"
+            directory = Path(directory)
+            source = directory / "model&.hs"
+            output = directory / "model.html"
             source.write_text('value = "<&>"\n', encoding="utf-8")
 
             analysis = Analysis.__new__(Analysis)
+            analysis.outdir = directory / "report"
+            analysis.outdir.mkdir()
+            analysis.libexecdir = directory / "libexec"
+            installed_assets = analysis.libexecdir / "bpy-summarize-assets"
+            installed_assets.mkdir(parents=True)
+            asset_names = ("highlight.min.js", "haskell.min.js", "atom-one-light.min.css", "LICENSE")
+            for filename in asset_names:
+                (installed_assets / filename).write_text(filename, encoding="utf-8")
+            analysis.get_code = lambda: []
             analysis.create_viewable_source(source, output)
+            analysis.copy_code()
             page = output.read_text(encoding="utf-8")
-
-        self.assertIn("<!DOCTYPE html>", page)
-        self.assertIn('<html lang="en">', page)
-        self.assertIn('<main>', page)
-        self.assertIn("model&amp;.hs", page)
-        self.assertIn('value = &quot;&lt;&amp;&gt;&quot;', page)
-        self.assertIn('class="language-haskell"', page)
+            self.assertIn("<!DOCTYPE html>", page)
+            self.assertIn('<html lang="en">', page)
+            self.assertIn('<main>', page)
+            self.assertIn("model&amp;.hs", page)
+            self.assertIn('value = &quot;&lt;&amp;&gt;&quot;', page)
+            self.assertIn('class="language-haskell"', page)
+            self.assertIn('href="bpy-summarize-assets/atom-one-light.min.css"', page)
+            self.assertIn('src="bpy-summarize-assets/highlight.min.js"', page)
+            self.assertIn('src="bpy-summarize-assets/haskell.min.js"', page)
+            self.assertNotIn("https://", page)
+            for filename in asset_names:
+                self.assertEqual((analysis.outdir / "bpy-summarize-assets" / filename).read_text(), filename)
 
     # Keep definitions out of reports that cannot contain the corresponding diagnostics.
     # This can be removed if glossary terms are generated directly from rendered columns.

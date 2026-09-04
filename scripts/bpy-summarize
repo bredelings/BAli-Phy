@@ -2437,9 +2437,9 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       pre {{background:#fafafa; border:1px solid #ddd; overflow:auto; padding:1em; tab-size:4;}}
       code {{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;}}
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-light.min.css">
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/haskell.min.js"></script>
+    <link rel="stylesheet" href="bpy-summarize-assets/atom-one-light.min.css">
+    <script defer src="bpy-summarize-assets/highlight.min.js"></script>
+    <script defer src="bpy-summarize-assets/haskell.min.js"></script>
     <script>document.addEventListener("DOMContentLoaded", () => hljs.highlightAll());</script>
   </head>
   <body>
@@ -2452,6 +2452,12 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 """, file=outfile)
 
     def copy_code(self):
+        source_assets = self.libexecdir / "bpy-summarize-assets"
+        report_assets = self.outdir / "bpy-summarize-assets"
+        report_assets.mkdir(exist_ok=True)
+        for filename in ("highlight.min.js", "haskell.min.js", "atom-one-light.min.css", "LICENSE"):
+            shutil.copyfile(source_assets / filename, report_assets / filename)
+
         for file_path in self.get_code():
             out_file_path = self.outdir / file_path.name
             self.format_hs(file_path, out_file_path)
