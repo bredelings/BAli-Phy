@@ -49,6 +49,36 @@ class BPYSummarizeRunTests(unittest.TestCase):
             self.assertEqual(run.get_log_file(), prefix.with_suffix(".log"))
             self.assertEqual(run.n_iterations(), 1)
 
+    # Mean-length outputs belong to the selected report directory, and one cached level must not
+    # hide a later missing level. Remove this if one command generates all consensus levels.
+    def test_updates_each_stale_mean_branch_length_in_the_output_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            trees = directory / "chain.trees"
+            trees.write_text("(a,b);\n", encoding="utf-8")
+            current = directory / "c50.ltree"
+            current.write_text("(a,b);\n", encoding="utf-8")
+            current_time = trees.stat().st_mtime + 10
+            os.utime(current, (current_time, current_time))
+
+            calls = []
+            analysis = Analysis.__new__(Analysis)
+            analysis.outdir = directory
+            analysis.tree_consensus_levels = [0.5, 0.66]
+            analysis.prune = None
+            analysis.subsample = 1
+            analysis.burnin = 0
+            analysis.until = None
+            analysis.get_trees_files = lambda: [trees]
+            analysis.exec_show = lambda command, **kwargs: calls.append((command, kwargs))
+
+            with redirect_stdout(io.StringIO()):
+                analysis.compute_mean_branch_lengths()
+
+        self.assertEqual(len(calls), 1)
+        self.assertIn(directory / "c66.tree", calls[0][0])
+        self.assertEqual(calls[0][1]["outfile"], directory / "c66.ltree")
+
 
 class BPYSummarizeScalarTests(unittest.TestCase):
     # Keep statreport's sampled and constant formats distinct and preserve aligned paired summaries.

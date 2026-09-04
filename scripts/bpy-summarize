@@ -1398,11 +1398,11 @@ class Analysis(object):
         print("\nComputing mean branch lengths: ",end='')
         for level in self.tree_consensus_levels:
             value = int(level*100)
-            prefix = "Results/c{}".format(value)
-            tree = prefix+".tree"
-            outfile=prefix+".ltree"
+            prefix = self.outdir / f"c{value}"
+            tree = prefix.with_suffix(".tree")
+            outfile = prefix.with_suffix(".ltree")
             if more_recent_than_all_of(outfile, self.get_trees_files()):
-                break
+                continue
 
             cmd = ['tree-mean-lengths','--tree',tree,'--safe','--show-node-lengths']
             cmd += self.get_trees_files()
