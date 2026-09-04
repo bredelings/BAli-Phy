@@ -186,7 +186,6 @@ struct var_stats
 {
     double Ne;
     double RCI;
-    double RNe;
     double RCF;
     bool ignored;
     bool increasing;
@@ -196,8 +195,8 @@ struct var_stats
 	:ignored(true), increasing(false),decreasing(false),constant(false)
 	{}
 
-    var_stats(double a, double b, double c, double d)
-	:Ne(a), RCI(b), RNe(c), RCF(d), ignored(false), increasing(false),decreasing(false),constant(false)
+    var_stats(double a, double b, double c)
+	:Ne(a), RCI(b), RCF(c), ignored(false), increasing(false),decreasing(false),constant(false)
 	{}
 };
 
@@ -572,7 +571,6 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
 	show_error(args, name, tables, index, total);
 
     // Print out autocorrelation times, Ne, and minimum burn-in
-    double sum_tau=0;
     int maximum_burnin = 0;
     bool burnin_converged = true;
     for(int i=0;i<tables.size();i++) {
@@ -582,18 +580,13 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
 	if (b >= sample_counts[i]*2/3)
 	    burnin_converged = false;
 
-	if (tables.size() > 1)
+	if (show_individual)
 	{
 	    double tau = autocorrelation_time(values);
-	    sum_tau += tau;
-
-	    if (show_individual)
-	    {
-		string spacer;spacer.append(name.size()-1,' ');
-		cout<<"   "<<spacer<<"t @ "<<tau;
-		cout<<"   Ne = "<<int(values.size()/tau);
-		cout<<"   burnin = "<<burnin_value(b,sample_counts[i],subsample)<<endl;
-	    }
+	    string spacer;spacer.append(name.size()-1,' ');
+	    cout<<"   "<<spacer<<"t @ "<<tau;
+	    cout<<"   Ne = "<<int(values.size()/tau);
+	    cout<<"   burnin = "<<burnin_value(b,sample_counts[i],subsample)<<endl;
 	}
     }
     const vector<double>& values = total;
@@ -617,12 +610,9 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
     cout<<endl;
 
     // Print out Potential Scale Reduction Factors (PSRFs)
-    double RNe = 1;
 	double RCI = 1;
 	double RCF = 1;
 	if (tables.size() > 1) {
-	RNe = tau/sum_tau*tables.size();
-	//cout<<"   PSRF-Ne = "<<RNe;
 	// An integer interval [a,b] contains b-a+1 possible values, so its width cannot vanish.
 	// For continuous values, a positive pooled width over zero within-chain width is infinite;
 	// two zero widths conventionally produce the neutral value 1 for this diagnostic.
@@ -638,7 +628,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
     }
 
     cout<<endl;
-    return var_stats(Ne,RCI,RNe,RCF);
+    return var_stats(Ne,RCI,RCF);
 }
 
 // stats-table can't distinguish double && int
@@ -762,7 +752,6 @@ int main(int argc,char* argv[])
 	//------------ Generate Report ----------//
 	index_value<double> worst_Ne;
 	index_value<double> worst_RCI;
-	index_value<double> worst_RNe;
 	index_value<double> worst_RCF;
 
 	vector<string> increasing_names;
@@ -775,7 +764,6 @@ int main(int argc,char* argv[])
 	    if (not S.ignored) {
 		worst_Ne.check_min(i,S.Ne);
 		worst_RCI.check_max(i,S.RCI);
-		worst_RNe.check_max(i,S.RNe);
 		worst_RCF.check_max(i,S.RCF);
 	    }
 	    else if (S.increasing)
@@ -793,8 +781,6 @@ int main(int argc,char* argv[])
 	if (tables.size() > 1) {
 	    if (worst_RCI)
 		cout<<" PSRF-80%CI <= "<<*worst_RCI.amount()<<"    ("<<field_names[*worst_RCI.index()]<<")"<<endl;
-	    //if (worst_RNe.index != -1)
-	    //cout<<" PSRF-Ne <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
 	    if (worst_RCF)
 		cout<<" PSRF-RCF <= "<<*worst_RCF.amount()<<"    ("<<field_names[*worst_RCF.index()]<<")"<<endl;
 	}
