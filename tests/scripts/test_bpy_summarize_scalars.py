@@ -231,6 +231,7 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         analysis = Analysis.__new__(Analysis)
         analysis.has_parameters = lambda: True
         analysis.has_trees = lambda: True
+        analysis.sampled_topology_count = 2
 
         glossary = analysis.section_glossary()
         for term in ("act", "ess", "psrf-ci80", "psrf-rcf", "asdsf", "msdsf"):
@@ -243,11 +244,14 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertIn('id="glossary-ess"', glossary)
         self.assertIn('id="glossary-asdsf"', glossary)
 
+        analysis.sampled_topology_count = 1
+        self.assertEqual(analysis.section_glossary(), "")
+
         analysis.has_trees = lambda: False
         self.assertEqual(analysis.section_glossary(), "")
 
-    # Keep plot captions programmatically associated with plots after layout changes.
-    # This can be removed if a separate renderer takes ownership of report figures.
+    # Keep plot captions associated with variable-topology plots and suppress those plots for a
+    # fixed topology. Remove this if a separate renderer takes ownership of report figures.
     def test_wraps_report_plots_in_figures(self):
         with tempfile.TemporaryDirectory() as directory:
             analysis = Analysis.__new__(Analysis)
@@ -282,7 +286,25 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertNotIn("50% consensus-tree split support", fixed_mixing)
         self.assertNotIn("Projection of RF distances", fixed_mixing)
         self.assertNotIn("Split posterior probabilities across chains", fixed_mixing)
+        self.assertNotIn("minimum topological", fixed_mixing)
+        self.assertNotIn("ASDSF", fixed_mixing)
+        self.assertNotIn("partitions.bs", fixed_topology)
         self.assertNotIn("<h4", topology + mixing)
+
+    # A fixed topology has no topology-mixing work to perform; command-generation tests do not
+    # otherwise exercise this early exit. Remove this if those diagnostics gain fixed-tree meaning.
+    def test_skips_fixed_topology_diagnostic_work(self):
+        analysis = Analysis.__new__(Analysis)
+        analysis.sampled_topology_count = 1
+        analysis.R_exe = True
+        analysis.exec_show = lambda *args, **kwargs: self.fail("unexpected topology command")
+        analysis.run_gnuplot = lambda *args, **kwargs: self.fail("unexpected topology plot")
+        analysis.Rexec = lambda *args, **kwargs: self.fail("unexpected topology R command")
+
+        analysis.compute_tree_mixing_diagnostics()
+        analysis.compute_srq_plots()
+        analysis.compute_tree_MDS()
+        self.assertEqual(analysis.srq, [])
 
 
 class BPYSummarizeNavigationTests(unittest.TestCase):
@@ -296,6 +318,7 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
         analysis.has_trees = lambda: True
         analysis.has_alignments = lambda: True
         analysis.has_code = lambda: True
+        analysis.sampled_topology_count = 2
 
         navigation = analysis.topbar()
         self.assertIn('<nav id="topbar" aria-label="Report sections">', navigation)
@@ -323,8 +346,14 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
         self.assertNotIn('href="#alignment"', navigation)
         self.assertNotIn('href="#models"', navigation)
         self.assertNotIn('href="#code"', navigation)
-        self.assertIn('href="#mixing"', navigation)
+        self.assertNotIn('href="#mixing"', navigation)
         self.assertIn('href="#analysis"', navigation)
+
+        analysis.has_trees = lambda: True
+        analysis.sampled_topology_count = 1
+        navigation = analysis.topbar()
+        self.assertIn('href="#topology"', navigation)
+        self.assertNotIn('href="#mixing"', navigation)
 
         header = analysis.html_header("report")
         self.assertIn('<html lang="en">', header)
