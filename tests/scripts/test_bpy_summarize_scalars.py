@@ -168,12 +168,17 @@ class BPYSummarizeNavigationTests(unittest.TestCase):
         self.assertIn('href="#analysis"', navigation)
 
         header = analysis.html_header("report")
+        self.assertIn('<html lang="en">', header)
+        self.assertIn('<meta charset="utf-8">', header)
+        self.assertIn('<meta name="viewport" content="width=device-width, initial-scale=1">', header)
+        self.assertIn('<a class="skip-link" href="#report">Skip to report content</a>', header)
         self.assertIn("position: sticky;", header)
         self.assertIn("overflow-x: auto;", header)
         self.assertIn("#topbar #menu a:focus-visible", header)
         self.assertNotIn("position: fixed;", header)
         self.assertNotIn(":target:before", header)
         self.assertNotIn("//", header)
+        self.assertIn("</main>", analysis.section_end())
 
 
 if __name__ == "__main__":

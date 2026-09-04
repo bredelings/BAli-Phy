@@ -2087,7 +2087,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
             #FIXME: We should only write sections that are not empty for this analysis!
             output += self.topbar()
-            output += '<div class="content">\n'
+            output += '<main id="report" class="content">\n'
             output += f"<h1>{title}</h1>\n"
             if self.has_model():
                 output += self.section_data_and_model()
@@ -2114,9 +2114,11 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
     def html_header(self,title):
         section = """\
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
 """
+        section += f"<meta charset=\"utf-8\">\n"
+        section += '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         section += f"<title>BAli-Phy: {title}</title>\n"
         section += """\
       <style type="text/css">
@@ -2174,6 +2176,17 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
         flex: 0 0 auto;
         white-space: nowrap;
 }
+
+      .skip-link {
+        background: white;
+        left: 0.75em;
+        padding: 0.5em;
+        position: absolute;
+        top: 0;
+        transform: translateY(-120%);
+        z-index: 200;
+      }
+      .skip-link:focus {transform: translateY(0);}
 
       html {scroll-padding-top: 4em;}
       .content {margin:1em;}
@@ -2239,6 +2252,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
     </style>
 </head>
 <body>
+  <a class="skip-link" href="#report">Skip to report content</a>
 """
         return section
 
@@ -2991,7 +3005,7 @@ assumes it is included in the model.</p>
 
     def section_end(self):
         return """\
-     </div>
+     </main>
    </body>
 </html>
 """
