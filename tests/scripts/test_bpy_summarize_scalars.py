@@ -408,9 +408,12 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertIn(escaped, analysis.html_header(unsafe))
         self.assertIn(escaped, section)
         self.assertNotIn(unsafe, section)
-        self.assertEqual(print_model_string(unsafe), f"= {escaped}")
-        _, model = print_model({"main": "base", "extracted": [(unsafe, {"main": "nested", "extracted": []})]})
-        self.assertIn(f'<td class="model-variable">{escaped}</td>', model)
+        self.assertEqual(
+            print_model_string(unsafe),
+            f'<code class="model-expression">= {escaped}</code>',
+        )
+        model = print_model({"main": "base", "extracted": [(unsafe, {"main": "nested", "extracted": []})]})
+        self.assertIn(f'<code class="model-identifier">{escaped}</code>', model)
         self.assertNotIn(f'<th scope="row">{escaped}</th>', model)
 
         svg = analysis.html_svg('plot<&".svg', unsafe, "90%")

@@ -40,17 +40,11 @@ def print_model_string(model):
     if m[0] == '~':
         assign = '~'
         m = m[1:]
-    return f"{assign} {html.escape(m)}"
+    return f'<code class="model-expression">{assign} {html.escape(m)}</code>'
 
 def print_model(model):
     main = model['main']
-
-    assign = '='
-    if main[0:1] == '~':
-        main = main[1:]
-        assign = '~'
-
-    section = html.escape(main) + '\n'
+    section = print_model_string(main) + '\n'
     extracted = model['extracted']
 
     if extracted:
@@ -58,13 +52,13 @@ def print_model(model):
         for arg in extracted:
             name = arg[0]
             submodel = arg[1]
-            (subassign, submodel) = print_model(submodel)
+            submodel = print_model(submodel)
             section += (
-                f'<tr><td class="model-variable">{html.escape(name)}</td>'
-                f'<td>{subassign}</td><td>{submodel}</td></tr>\n'
+                f'<tr><td class="model-variable"><code class="model-identifier">{html.escape(name)}</code></td>'
+                f'<td>{submodel}</td></tr>\n'
             )
         section += '</tbody>\n</table>'
-    return (assign, section)
+    return section
 
 
 def print_models(name,models):
@@ -72,10 +66,10 @@ def print_models(name,models):
     i = 1
     for model in models:
         model_name =  f"{name}{i}"
-        (assign, model_html) = print_model(model)
+        model_html = print_model(model)
         section += (
             f'<tr><td><span id="{model_name}" class="modelname">{model_name}</span></td>'
-            f'<td>{assign}</td><td>\n'
+            f'<td>\n'
         )
         section += model_html
         section += '</td></tr>\n'
@@ -2334,6 +2328,9 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       dl.glossary dd {margin-bottom:0.75em;}
 
       .modelname {font-weight: bold; color: blue}
+      code.model-expression, code.model-identifier {
+        font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+      }
       table.model {margin-left: 2em}
       table.model :is(th, td) {vertical-align: top}
       table.models :is(th, td) {vertical-align: top}
@@ -2410,7 +2407,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 index = self.get_smodel_indices()[i]+1
                 target = f"S{index}"
                 link = f'<a href="#{target}">{target}</a>'
-                section += f'<td>{link} = {html.escape(smodel)}</td>\n'
+                section += f'<td>{link} {print_model_string(smodel)}</td>\n'
             elif self.get_smodels() is not None:
                 section += '<td>none</td>\n'
             else:
@@ -2422,7 +2419,7 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
                 index = self.get_imodel_indices()[i]+1
                 target = f"I{index}"
                 link = f'<a href="#{target}">{target}</a>'
-                section += f'<td>{link} = {html.escape(imodel)}</td>\n'
+                section += f'<td>{link} {print_model_string(imodel)}</td>\n'
             elif self.get_imodels() is not None:
                 section += '<td>none</td>\n'
             else:
@@ -3343,17 +3340,17 @@ assumes it is included in the model.</p>
         if self.get_topology_prior():
             section += (
                 '<tr><td class="modelname">topology</td>'
-                f'<td>{html.escape(self.get_topology_prior())}</td></tr>'
+                f'<td>{print_model_string(self.get_topology_prior())}</td></tr>'
             )
         if self.get_branch_length_prior():
             section += (
                 '<tr><td class="modelname">branch lengths</td>'
-                f'<td>{html.escape(self.get_branch_length_prior())}</td></tr>'
+                f'<td>{print_model_string(self.get_branch_length_prior())}</td></tr>'
             )
         if self.get_tree_prior():
             section += (
                 '<tr><td class="modelname">tree</td>'
-                f'<td>{html.escape(self.get_tree_prior())}</td></tr>'
+                f'<td>{print_model_string(self.get_tree_prior())}</td></tr>'
             )
         if self.get_subst_rates():
             section += (
