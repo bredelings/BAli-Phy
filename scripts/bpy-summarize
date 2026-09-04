@@ -2418,26 +2418,36 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
 
 
     def create_viewable_source(self,inpath,outpath):
-        infile = open(inpath)
-        code = infile.read()
-        infile.close()
-        code = re.sub('<','&lt;',code)
+        with inpath.open(encoding='utf-8') as infile:
+            code = html.escape(infile.read())
+        title = html.escape(inpath.name)
 
-        with open(outpath, 'w') as outfile:
-            print(f"""
-<html>
-<head>
-<title>{inpath.name}</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-light.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/haskell.min.js"></script>
-<script>hljs.highlightAll();</script>
-</head>
-<body>
-<pre><code>{code}
-</code>
-</pre>
-</body>
+        with outpath.open('w',encoding='utf-8') as outfile:
+            print(f"""\
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{title}</title>
+    <style>
+      body {{font-family:system-ui,sans-serif; margin:0;}}
+      main {{margin:1em;}}
+      h1 {{font-size:1.35em;}}
+      pre {{background:#fafafa; border:1px solid #ddd; overflow:auto; padding:1em; tab-size:4;}}
+      code {{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;}}
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-light.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/haskell.min.js"></script>
+    <script>document.addEventListener("DOMContentLoaded", () => hljs.highlightAll());</script>
+  </head>
+  <body>
+    <main>
+      <h1>{title}</h1>
+      <pre><code class="language-haskell">{code}</code></pre>
+    </main>
+  </body>
 </html>
 """, file=outfile)
 

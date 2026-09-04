@@ -182,6 +182,25 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertIn('href="plot&lt;&amp;&quot;.svg"', svg)
         self.assertIn(f">View {escaped}</a>", svg)
 
+    # Protect source pages from malformed markup while preserving readable offline code.
+    # This can be removed if source-page generation moves to a shared HTML renderer.
+    def test_creates_an_escaped_html5_source_page(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "model&.hs"
+            output = Path(directory) / "model.html"
+            source.write_text('value = "<&>"\n', encoding="utf-8")
+
+            analysis = Analysis.__new__(Analysis)
+            analysis.create_viewable_source(source, output)
+            page = output.read_text(encoding="utf-8")
+
+        self.assertIn("<!DOCTYPE html>", page)
+        self.assertIn('<html lang="en">', page)
+        self.assertIn('<main>', page)
+        self.assertIn("model&amp;.hs", page)
+        self.assertIn('value = &quot;&lt;&amp;&gt;&quot;', page)
+        self.assertIn('class="language-haskell"', page)
+
     # Keep definitions out of reports that cannot contain the corresponding diagnostics.
     # This can be removed if glossary terms are generated directly from rendered columns.
     def test_builds_a_compact_conditional_glossary(self):
