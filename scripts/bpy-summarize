@@ -2180,9 +2180,11 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
       .backlit td {background: rgb(220,220,220);}
 
       .report-section {
+        border-top: 1px solid rgb(155,177,199);
         clear: both;
         display: flow-root;
         margin-top: 2.5em;
+        padding-top: 1.25em;
       }
 
       h1 {font-size: 150%;}
@@ -2372,7 +2374,6 @@ plot [0:][0:] '{self.outdir / "c-levels.plot"}' with lines notitle
             url = file_path.with_suffix(".html").name
             section += f"        <li><a href=\"{url}\">{file_path.name}</a></li>\n"
         section += "    </ul>\n"
-        section += '<br/><hr/>\n'
         section += '</section>\n'
 
         return section
@@ -2898,7 +2899,6 @@ assumes it is included in the model.</p>
 
         something_common = all_same(commands) or all_same(versions) or all_same(parent_dirs)
 
-        section += '<br/><hr/><br/>\n'
         section += '<h2>Run details</h2>\n'
         if something_common:
             section += "<p>"
