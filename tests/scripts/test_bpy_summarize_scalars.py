@@ -421,8 +421,8 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         analysis.has_trees = lambda: False
         self.assertEqual(analysis.section_glossary(), "")
 
-    # Keep plot captions associated with variable-topology plots and suppress those plots for a
-    # fixed topology. Remove this if a separate renderer takes ownership of report figures.
+    # Keep plot captions associated with variable-topology plots, omit broken optional-artifact
+    # links, and suppress irrelevant fixed-topology plots. Remove this if a renderer owns figures.
     def test_wraps_report_plots_in_figures(self):
         with tempfile.TemporaryDirectory() as directory:
             analysis = Analysis.__new__(Analysis)
@@ -447,10 +447,14 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertEqual(topology.count('<figure class="plot-panel">'), 2)
         self.assertIn("<figcaption>50% consensus tree</figcaption>", topology)
         self.assertIn("<figcaption>Consensus-tree support levels</figcaption>", topology)
+        self.assertNotIn('data="c50-tree.svg"', topology)
+        self.assertNotIn('data="c-levels.svg"', topology)
+        self.assertNotIn('-tree.pdf"', topology)
+        self.assertNotIn('-tree.svg"', topology)
         self.assertIn("<caption>Tree files</caption>", topology)
         self.assertIn('<th scope="row">50% consensus</th>', topology)
-        self.assertIn('aria-label="Download 50% consensus tree as PDF"', topology)
         self.assertIn("<figcaption>Projection of RF distances", mixing)
+        self.assertNotIn('tree-MDS.points.html', mixing)
         self.assertIn("<figcaption>Split posterior probabilities across chains", mixing)
         self.assertEqual(fixed_topology.count('<figure class="plot-panel">'), 1)
         self.assertNotIn("Consensus-tree support levels", fixed_topology)

@@ -2799,7 +2799,10 @@ assumes it is included in the model.</p>
         section += '<div class="phylogeny-grid">\n'
         section += '<figure class="plot-panel">\n'
         section += '<figcaption>50% consensus tree</figcaption>\n'
-        section += self.html_svg('c50-tree.svg', '50% consensus tree')
+        if path.exists(self.outdir / 'c50-tree.svg'):
+            section += self.html_svg('c50-tree.svg', '50% consensus tree')
+        else:
+            section += '<p>Tree image not generated.</p>\n'
         section += '</figure>\n'
         section += '<div class="phylogeny-files">\n'
         if self.has_topology_variation():
@@ -2831,9 +2834,21 @@ assumes it is included in the model.</p>
     <th scope="row">{tree_label}</th>
     <td><a href="{tree_url}.tree" aria-label="Download {download_label} tree in Newick format">Newick</a></td>
     <td><a href="{tree_url}.PP.tree" aria-label="Download {download_label} Newick tree with posterior probabilities">+PP</a></td>
-    <td><a href="{tree_url}-tree.pdf" aria-label="Download {download_label} tree as PDF">PDF</a></td>
-    <td><a href="{tree_url}-tree.svg" aria-label="Download {download_label} tree as SVG">SVG</a></td>
 """
+            if path.exists(self.outdir / f"{tree}-tree.pdf"):
+                section += (
+                    f'    <td><a href="{tree_url}-tree.pdf" aria-label="Download {download_label} '
+                    'tree as PDF">PDF</a></td>\n'
+                )
+            else:
+                section += '    <td>&mdash;</td>\n'
+            if path.exists(self.outdir / f"{tree}-tree.svg"):
+                section += (
+                    f'    <td><a href="{tree_url}-tree.svg" aria-label="Download {download_label} '
+                    'tree as SVG">SVG</a></td>\n'
+                )
+            else:
+                section += '    <td>&mdash;</td>\n'
             if self.subpartitions:
                 if path.exists(self.outdir / f"{tree}.mtree"):
                     section += (
@@ -2865,7 +2880,10 @@ assumes it is included in the model.</p>
         if self.has_topology_variation():
             section += '<figure class="plot-panel">\n'
             section += '<figcaption>Consensus-tree support levels</figcaption>\n'
-            section += self.html_svg('c-levels.svg', 'Consensus-tree support levels')
+            if path.exists(self.outdir / 'c-levels.svg'):
+                section += self.html_svg('c-levels.svg', 'Consensus-tree support levels')
+            else:
+                section += '<p>Support-level plot not generated.</p>\n'
             section += '</figure>\n'
         section += '</div>\n'
         section += '</section>\n'
@@ -2990,7 +3008,8 @@ assumes it is included in the model.</p>
 """
         if path.exists( self.outdir / MDS_figure ):
             section += self.html_svg(MDS_figure, 'Projection of Robinson-Foulds tree distances')
-            section += f'<a href="{MDS_figure_3d}.html">3D</a>'
+            if path.exists(self.outdir / f"{MDS_figure_3d}.html"):
+                section += f'<a href="{MDS_figure_3d}.html">3D</a>'
         else:
             if not self.R_exe:
                 section += "<p>Not generated: can't find R</p>"
@@ -3116,16 +3135,18 @@ assumes it is included in the model.</p>
 
         if self.has_trees() and self.has_topology_variation():
             section += '    <div class="srq-plots">\n'
-            section += """\
-      <figure class="plot-panel">
-        <figcaption>50% consensus-tree split support</figcaption>
-        <img src="c50.SRQ.png" alt="SRQ plot for support of the 50% consensus tree.">
-      </figure>
-      <figure class="plot-panel">
-        <figcaption>All sampled splits</figcaption>
-        <img src="partitions.SRQ.png" alt="SRQ plot for support of each sampled split.">
-      </figure>
-"""
+            srq_plots = [
+                ("c50.SRQ.png", "50% consensus-tree split support", "support of the 50% consensus tree"),
+                ("partitions.SRQ.png", "All sampled splits", "support of each sampled split"),
+            ]
+            for filename, caption, description in srq_plots:
+                section += '      <figure class="plot-panel">\n'
+                section += f'        <figcaption>{caption}</figcaption>\n'
+                if path.exists(self.outdir / filename):
+                    section += f'        <img src="{filename}" alt="SRQ plot for {description}.">\n'
+                else:
+                    section += '        <p>SRQ plot not generated.</p>\n'
+                section += '      </figure>\n'
             section += '    </div>\n'
         section += '  </div>\n'
 
