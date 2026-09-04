@@ -2844,7 +2844,7 @@ assumes it is included in the model.</p>
             if asdsf is None:
                 asdsf = "NA"
             else:
-                asdf = asdsf.rstrip()
+                asdsf = asdsf.rstrip()
             section += f'<tr><td><b title=\"Average Standard Deviation of Split Frequencies\">ASDSF</b></td><td>{asdsf}</td></tr>'
 
             msdsf = self.get_value_from_file(self.outdir / 'partitions.bs','MSDSF =')
@@ -2860,16 +2860,16 @@ assumes it is included in the model.</p>
             if self.get_log_files() and len(self.get_log_files()) >= 2:
                 psrf_80 = self.get_value_from_file(self.outdir / 'Report','PSRF-80%CI <=')
                 psrf_rcf = self.get_value_from_file(self.outdir / 'Report','PSRF-RCF <=')
-            section += f'<tr><td><b>PSRF CI80%</b></td><td>{psrf_80}</td><tr>\n'
-            section += f'<tr><td><b>PSRF RCF</b></td><td>{psrf_rcf}</td><tr>\n'
+            section += f'<tr><td><b>PSRF CI80%</b></td><td>{psrf_80}</td></tr>\n'
+            section += f'<tr><td><b>PSRF RCF</b></td><td>{psrf_rcf}</td></tr>\n'
 
         section += '</table>\n'
         section += '</td>\n'
 
         section += '    <td>\n'
         if self.has_trees():
-            section += '      <img src="c50.SRQ.png" alt="SRQ plot for supprt of 50% consensus tree."/>'
-            section += '      <img src="partitions.SRQ.png" alt="SRQ plot for supprt of each partition."/>'
+            section += '      <img src="c50.SRQ.png" alt="SRQ plot for support of 50% consensus tree."/>'
+            section += '      <img src="partitions.SRQ.png" alt="SRQ plot for support of each partition."/>'
         section += '    </td>\n'
         section += '  </tr></table>\n'
 
@@ -2908,9 +2908,9 @@ assumes it is included in the model.</p>
         if something_common:
             section += "<p>"
         if all_same(commands):
-            section += f"<b>command line</b>: {commands[0]}</br>\n"
+            section += f"<b>command line</b>: {commands[0]}<br>\n"
         if all_same(parent_dirs):
-            section += f"<b>directory</b>: {parent_dirs[0]}</br>\n"
+            section += f"<b>directory</b>: {parent_dirs[0]}<br>\n"
         if all_same(versions):
             section += f"<b>version</b>: {versions[0]}\n"
         if something_common:
