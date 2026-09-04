@@ -257,9 +257,17 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
             analysis.n_chains = lambda: 1
             analysis.has_trees = lambda: True
             analysis.R_exe = True
+            analysis.sampled_topology_count = 2
 
             topology = analysis.section_phylogeny_distribution()
             mixing = analysis.section_tree_mixing2()
+
+            analysis.sampled_topology_count = 1
+            fixed_topology = analysis.section_phylogeny_distribution()
+            analysis.has_parameters = lambda: False
+            analysis.get_value_from_file = lambda *args: "NA"
+            with redirect_stdout(io.StringIO()):
+                fixed_mixing = analysis.section_mixing()
 
         self.assertEqual(topology.count('<figure class="plot-panel">'), 2)
         self.assertIn("<figcaption>50% consensus tree</figcaption>", topology)
@@ -269,6 +277,11 @@ class BPYSummarizeHtmlTests(unittest.TestCase):
         self.assertIn('aria-label="Download 50% consensus tree as PDF"', topology)
         self.assertIn("<figcaption>Projection of RF distances", mixing)
         self.assertIn("<figcaption>Split posterior probabilities across chains", mixing)
+        self.assertEqual(fixed_topology.count('<figure class="plot-panel">'), 1)
+        self.assertNotIn("Consensus-tree support levels", fixed_topology)
+        self.assertNotIn("50% consensus-tree split support", fixed_mixing)
+        self.assertNotIn("Projection of RF distances", fixed_mixing)
+        self.assertNotIn("Split posterior probabilities across chains", fixed_mixing)
         self.assertNotIn("<h4", topology + mixing)
 
 

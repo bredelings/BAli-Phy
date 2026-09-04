@@ -911,7 +911,7 @@ class Analysis(object):
         if self.has_parameters():
             self.summarize_numerical_parameters()
         if self.has_trees():
-            self.summarize_topology_distribution()
+            self.sampled_topology_count = self.summarize_topology_distribution()
             if self.node_bubbles:
                 self.compute_mean_branch_lengths()
             self.draw_trees()
@@ -935,6 +935,9 @@ class Analysis(object):
 
     def has_trees(self):
         return self.mcmc_runs[0].has_trees()
+
+    def has_topology_variation(self):
+        return self.sampled_topology_count > 1
 
     def has_parameters(self):
         return self.mcmc_runs[0].has_parameters()
@@ -1443,6 +1446,11 @@ class Analysis(object):
             if not more_recent_than(tree2,tree):
                 self.exec_show(['tree-tool',tree,'--strip-internal-names','--name-all-nodes'],outfile=tree2)
         print(" done.")
+
+        topology_count = self.get_value_from_file(self.outdir / "consensus", "n_topologies =")
+        if topology_count is None:
+            raise Exception("The topology count is missing from the trees-consensus report.")
+        return int(topology_count)
 
         # This routine computes mean branch lengths WITH NODE CIRCLES (*.ltree)
     def compute_mean_branch_lengths(self):
@@ -2872,10 +2880,11 @@ assumes it is included in the model.</p>
             section += '  </tr>\n'
         section += '</tbody>\n</table>\n</div>\n'
         section += '</div>\n'
-        section += '<figure class="plot-panel">\n'
-        section += '<figcaption>Consensus-tree support levels</figcaption>\n'
-        section += self.html_svg('c-levels.svg', 'Consensus-tree support levels')
-        section += '</figure>\n'
+        if self.has_topology_variation():
+            section += '<figure class="plot-panel">\n'
+            section += '<figcaption>Consensus-tree support levels</figcaption>\n'
+            section += self.html_svg('c-levels.svg', 'Consensus-tree support levels')
+            section += '</figure>\n'
         section += '</div>\n'
         section += '</section>\n'
         return section
@@ -3120,8 +3129,8 @@ assumes it is included in the model.</p>
         section += '</table>\n'
         section += '</div>\n'
 
-        section += '    <div class="srq-plots">\n'
-        if self.has_trees():
+        if self.has_trees() and self.has_topology_variation():
+            section += '    <div class="srq-plots">\n'
             section += """\
       <figure class="plot-panel">
         <figcaption>50% consensus-tree split support</figcaption>
@@ -3132,10 +3141,10 @@ assumes it is included in the model.</p>
         <img src="partitions.SRQ.png" alt="SRQ plot for support of each sampled split.">
       </figure>
 """
-        section += '    </div>\n'
+            section += '    </div>\n'
         section += '  </div>\n'
 
-        if self.has_trees():
+        if self.has_trees() and self.has_topology_variation():
             section += self.section_tree_mixing2()
 
         print("")
