@@ -883,6 +883,9 @@ class Analysis(object):
     def has_alignments(self):
         return self.mcmc_runs[0].has_alignments()
 
+    def personality(self):
+        return first_all_same([run.personality() for run in self.mcmc_runs])
+
     def has_model(self):
         return self.mcmc_runs[0].has_model()
 

@@ -20,6 +20,13 @@ print_model_string = MODULE["print_model_string"]
 
 
 class BPYSummarizeRunTests(unittest.TestCase):
+    # Analysis-level format decisions must reflect the common run personality; direct scalar HTML
+    # tests otherwise avoid format-specific columns. Remove this if formats get separate renderers.
+    def test_uses_the_common_run_personality(self):
+        analysis = Analysis.__new__(Analysis)
+        analysis.mcmc_runs = [SimpleNamespace(personality=lambda: "phylobayes") for _ in range(2)]
+        self.assertEqual(analysis.personality(), "phylobayes")
+
     # Plain tree samples have no header and every line is an iteration; broader report tests do not
     # cover a one-tree run. Remove this if tree counts come from parsed sample metadata instead.
     def test_counts_every_plain_tree_line(self):
