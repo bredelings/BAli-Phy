@@ -645,9 +645,16 @@ extern "C" closure builtin_function_sample_uniform(OperationArgs& Args)
     double a1 = Args.evaluate_slot_to_value_(0).as_double();
     double a2 = Args.evaluate_slot_to_value_(1).as_double();
 
-    assert(a1 < a2);
+    if (std::isfinite(a1) and std::isfinite(a2) and a1 < a2)
+        return {std::lerp(a1, a2, uniform())};
 
-    return { a1 + (a2-a1)*uniform() };
+    // An invalid conditional distribution still needs a finite initial value.  Its NaN density
+    // makes this placeholder worse than every zero- or positive-density alternative.
+    if (std::isfinite(a1))
+        return {a1};
+    if (std::isfinite(a2))
+        return {a2};
+    return {0.0};
 }
 
 extern "C" closure builtin_function_uniform_int_density(OperationArgs& Args)

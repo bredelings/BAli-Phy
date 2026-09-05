@@ -2,6 +2,7 @@ module Probability.Distribution.Uniform where
 
 import Probability.Random
 import MCMC
+import Compiler.RealFloat (isInfinite, isNaN)
 
 foreign import bpcall "Distribution:" uniform_density :: Double -> Double -> Double -> Log Double
 foreign import bpcall "Distribution:" sample_uniform :: Double -> Double -> IO Double
@@ -18,24 +19,27 @@ instance IOSampleable Uniform where
 instance HasPdf Uniform where
     pdf (Uniform l u) = uniform_density l u
 
+valid_uniform_bounds l u = not (isNaN l || isInfinite l || isNaN u || isInfinite u) && l < u
+
 instance Dist1D Uniform where
-    cdf (Uniform l u) x | x < l     = 0
+    cdf (Uniform l u) x | not (valid_uniform_bounds l u) || isNaN x = 0/0
+                        | x < l     = 0
                         | x < u     = (x-l)/(u-l)
                         | otherwise = 1
-    lower_bound (Uniform l r) = Just l
-    upper_bound (Uniform l r) = Just r
+    lower_bound (Uniform l u) = if valid_uniform_bounds l u then Just l else Nothing
+    upper_bound (Uniform l u) = if valid_uniform_bounds l u then Just u else Nothing
 
 
 instance ContDist1D Uniform where
-    quantile (Uniform l u) p = l + p*(u-l)
+    quantile (Uniform l u) p = if valid_uniform_bounds l u then l + p*(u-l) else 0/0
 
 instance MaybeMean Uniform where
-    maybeMean (Uniform l u) = Just $ (l + u)/2
+    maybeMean (Uniform l u) = Just $ if valid_uniform_bounds l u then (l + u)/2 else 0/0
 
 instance Mean Uniform
 
 instance MaybeVariance Uniform where
-    maybeVariance (Uniform l u) = Just $ (l-u)^2/12
+    maybeVariance (Uniform l u) = Just $ if valid_uniform_bounds l u then (l-u)^2/12 else 0/0
 
 instance Variance Uniform
 

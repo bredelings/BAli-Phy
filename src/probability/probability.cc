@@ -140,7 +140,10 @@ log_double_t dirichlet_safe_pdf(const valarray<double>& p,double N, const valarr
 
 log_double_t uniform_pdf(double x, double a, double b)
 {
-  assert(b > a);
+  // A uniform distribution requires finite, strictly ordered bounds.  NaN distinguishes an
+  // invalid conditional distribution from an ordinary value outside a valid support interval.
+  if (not std::isfinite(a) or not std::isfinite(b) or not (a < b) or std::isnan(x))
+    return std::numeric_limits<double>::quiet_NaN();
 
   if (x < a or x > b) return 0;
 
