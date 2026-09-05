@@ -7,6 +7,10 @@ import Data.Foldable (toList)
 foreign import bpcall "MCMC:" sliceSampleRaw :: Modifiable Double -> BuiltinBounds -> ContextIndex -> IO ()
 sliceSample x bnds = TransitionKernel $ sliceSampleRaw x (c_range bnds)
 
+foreign import bpcall "MCMC:" uniformIndependenceProposalRaw
+    :: Modifiable Double -> Double -> Double -> ContextIndex -> IO (Log Double)
+uniformIndependenceProposal x l u = Proposal $ uniformIndependenceProposalRaw x l u
+
 foreign import bpcall "MCMC:" scaleGroupsSliceRaw :: [Double] -> [Double] -> ContextIndex -> IO ()
 
 foreign import bpcall "MCMC:" scaleGroupsProposalRaw :: [Double] -> [Double] -> ContextIndex -> IO (Log Double)

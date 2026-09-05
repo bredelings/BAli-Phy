@@ -56,7 +56,11 @@ instance Sampleable Uniform where
 uniform l u = Uniform l u
 
 uniform_bounds l u = between l u
-uniform_effect l u x = add_move $ sliceSample x (uniform_bounds l u)
+-- Register both moves regardless of initial bounds. The MH proposal can improve exceptional
+-- density ranks and change downstream dimension, whereas slice sampling cannot.
+uniform_effect l u x = do
+  addMove (1/2) $ sliceSample x (uniform_bounds l u)
+  addMove (1/2) $ metropolisHastings $ uniformIndependenceProposal x l u
 
 ------------------------------------
 foreign import bpcall "Distribution:" uniform_int_density :: Int -> Int -> Int -> Log Double

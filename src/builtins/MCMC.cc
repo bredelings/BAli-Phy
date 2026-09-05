@@ -18,6 +18,7 @@
 #include "dp/dp-matrix.hh"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <numeric>
 
@@ -451,6 +452,38 @@ bool perform_MH_(reg_heap& M, int context_index, const Proposal& proposal)
 
     // 4. Accept or reject the proposal
     return perform_MH(C1, C2, proposal_ratio);
+}
+
+// Update the supplied proposal context using the uniform's current bounds. The existing MH
+// wrapper owns context copying and acceptance, including downstream changes in dimension.
+extern "C" closure builtin_function_uniformIndependenceProposalRaw(OperationArgs& Args)
+{
+    assert(not Args.evaluate_changeables());
+
+    int x_reg = Args.evaluate_slot_unchangeable(0);
+    int lower_reg = Args.evaluate_slot_unchangeable(1);
+    int upper_reg = Args.evaluate_slot_unchangeable(2);
+    int context_index = Args.evaluate_slot_to_value(3).as_int();
+
+    auto& M = Args.memory();
+    context_ref C1(M, context_index);
+    // Keep bound evaluation, sampling, and mutation in one builtin to avoid several interpreted
+    // IO calls per proposal. The context evaluator already supports derived bound expressions.
+    double lower = C1.evaluate_reg(lower_reg).as_double();
+    double upper = C1.evaluate_reg(upper_reg).as_double();
+    if (not std::isfinite(lower) or not std::isfinite(upper) or not (lower < upper))
+        return {log_double_t(1.0)};
+
+    auto x_mod_reg = C1.find_modifiable_reg(x_reg);
+    if (not x_mod_reg)
+        throw myexception()<<"uniformIndependenceProposal: reg "<<x_reg<<" not modifiable!";
+
+    C1.set_reg_value(*x_mod_reg, std::lerp(lower, upper, uniform()));
+
+    // Bounds are parents of the sampled variable and do not change when it changes, so the
+    // proposal density is constant over valid support. Ratio 1 also deliberately lets an
+    // exceptional zero/NaN state enter support; ordinary detailed balance applies thereafter.
+    return {log_double_t(1.0)};
 }
 
 
