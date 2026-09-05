@@ -664,11 +664,12 @@ extern "C" closure builtin_function_sample_uniform_int(OperationArgs& Args)
     int a1 = Args.evaluate_slot_to_value_(0).as_int();
     int a2 = Args.evaluate_slot_to_value_(1).as_int();
 
-    assert(a1 <= a2);
+    // An empty conditional distribution still needs a representable initial value.  Its NaN
+    // density makes this placeholder worse than every zero- or positive-density alternative.
+    if (a1 > a2)
+        return {a1};
 
-    int w = a2-a1+1;
-
-    return { a1 + int(w*uniform()) };
+    return {int(::uniform_int(a1, a2))};
 }
 
 extern "C" closure builtin_function_negative_binomial_density_from_logs(OperationArgs& Args)

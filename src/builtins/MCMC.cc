@@ -392,7 +392,11 @@ extern "C" closure builtin_function_condLogOddsRaw(OperationArgs& Args)
     return log_odds;
 }
 
-Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)
+template <typename T>
+using Bounds = Box<bounds<T>>;
+
+// Propose globally within the current integer range, including recovery from an out-of-range value.
+Proposal uniform_avoid_mh_proposal(int a_reg, int b_reg, int x_reg)
 {
     return [=](context_ref& C)
            {
@@ -401,14 +405,30 @@ Proposal uniform_avoid_mh_proposal(int a, int b, int x_reg)
                if (not x_mod_reg)
                    throw myexception()<<"discreteUniformAvoidMH: reg "<<x_reg<<" not modifiable!";
 
-               // 2. Get the current value
+               // 2. Get the current bounds and value
+               int a = C.evaluate_reg(a_reg).as_int();
+               int b = C.evaluate_reg(b_reg).as_int();
                int x1 = C.get_reg_value(*x_mod_reg).as_int();
-               if (x1 < a or x1 > b)
-                   throw myexception()<<"discreteUniformAvoidMH: value "<<x1<<" not in range ["<<a<<", "<<b<<"]";
+
+               // Empty ranges have no proposal.  Other variables may still repair their bounds.
+               if (a > b)
+                   return 1.0;
 
                // 3. Propose a new value
-               int x2 = uniform_int(a,b-1);
-               if (x2 >= x1) x2++;
+               int x2;
+               if (x1 < a or x1 > b)
+               {
+                   // This asymmetric step is used only from a zero- or NaN-density state.  Once
+                   // inside the target support, the ordinary reversible proposal below applies.
+                   x2 = int(uniform_int(a, b));
+               }
+               else
+               {
+                   if (a == b)
+                       return 1.0;
+                   x2 = int(uniform_int(a,b-1));
+                   if (x2 >= x1) x2++;
+               }
 
                // 4. Set the new value
                C.set_reg_value(*x_mod_reg, x2);
@@ -442,10 +462,10 @@ extern "C" closure builtin_function_discreteUniformAvoidMHRaw(OperationArgs& Arg
     //------------- 1a. Get the proposal ---------------
     int x_reg = Args.evaluate_slot_unchangeable(0);
 
-    int a = Args.evaluate_slot_to_value(1).as_int();
-    int b = Args.evaluate_slot_to_value(2).as_int();
+    int a_reg = Args.evaluate_slot_unchangeable(1);
+    int b_reg = Args.evaluate_slot_unchangeable(2);
 
-    if (log_verbose >= 3) std::cerr<<"\n\n[discrete_uniform_avoid_mh] <"<<x_reg<<"> in ["<<a<<", "<<b<<"]\n";
+    if (log_verbose >= 3) std::cerr<<"\n\n[discrete_uniform_avoid_mh] <"<<x_reg<<">\n";
 
     //------------- 1d. Get context index --------------
     int c1 = Args.evaluate_slot_to_value(3).as_int();
@@ -453,7 +473,7 @@ extern "C" closure builtin_function_discreteUniformAvoidMHRaw(OperationArgs& Arg
     //------------- 2. Perform the proposal ------------
     auto& M = Args.memory();
 
-    auto proposal = uniform_avoid_mh_proposal(a, b, x_reg);
+    auto proposal = uniform_avoid_mh_proposal(a_reg, b_reg, x_reg);
 
     perform_MH_(M, c1, proposal);
 
@@ -463,17 +483,27 @@ extern "C" closure builtin_function_discreteUniformAvoidMHRaw(OperationArgs& Arg
 
 
 
-Proposal inc_dec_mh_proposal(int x_reg, int n, const bounds<int>& range)
+// Propose a local integer change using bounds evaluated from the current execution context.
+Proposal inc_dec_mh_proposal(int x_reg, int n, int range_reg)
 {
     return [=](context_ref& C)
            {
                // 1. Find the modifiable
                auto x_mod_reg = C.find_modifiable_reg(x_reg);
                if (not x_mod_reg)
-                   throw myexception()<<"discreteUniformAvoidMH: reg "<<x_reg<<" not modifiable!";
+                   throw myexception()<<"incDecMH: reg "<<x_reg<<" not modifiable!";
 
-               // 2. Get the current value
+               auto range_arg = C.evaluate_reg(range_reg);
+               if (not range_arg.is_a<Bounds<int>>())
+                   throw myexception()<<"incDecMH: random variable range is not integer bounds";
+               const auto& range = range_arg.as_<Bounds<int>>();
+
+               // 2. Get the current value.  The global uniform move repairs values outside a
+               // newly valid interval; a local step cannot do so reversibly.
                int x1 = C.get_reg_value(*x_mod_reg).as_int();
+               if ((range.lower_bound and range.upper_bound and
+                    *range.lower_bound > *range.upper_bound) or not range.in_range(x1))
+                   return 1.0;
 
                // 3. Propose a new value
                int x2 = x1;
@@ -497,9 +527,6 @@ Proposal inc_dec_mh_proposal(int x_reg, int n, const bounds<int>& range)
            };
 }
 
-template <typename T>
-using Bounds = Box<bounds<T>>;
-
 // inc_dec_mh x bounds context state
 extern "C" closure builtin_function_incDecMHRaw(OperationArgs& Args)
 {
@@ -511,16 +538,15 @@ extern "C" closure builtin_function_incDecMHRaw(OperationArgs& Args)
 
     if (log_verbose >= 3) std::cerr<<"\n\n[incDecMH] <"<<x_reg<<">\n";
 
-    //------------- 1b. Get context index --------------
-    auto range_arg = Args.evaluate_slot_to_value(1);
-    const auto& range = range_arg.as_<Bounds<int>>();
+    //------------- 1b. Keep the range expression so changing bounds are read by each proposal. --------------
+    int range_reg = Args.evaluate_slot_unchangeable(1);
 
     //------------- 1c. Get context index --------------
     int c1 = Args.evaluate_slot_to_value(2).as_int();
     context_ref C1(M, c1);
 
     //------------- 2. Perform the proposal ------------
-    auto proposal = inc_dec_mh_proposal(x_reg, 2, range);
+    auto proposal = inc_dec_mh_proposal(x_reg, 2, range_reg);
 
     if (log_verbose >= 3) std::cerr<<C1.get_logged_parameters()<<"\n";
 

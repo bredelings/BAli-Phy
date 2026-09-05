@@ -65,12 +65,13 @@ instance Dist UniformInt where
     distName _ = "uniform_int"
 
 instance Dist1D UniformInt where
-    cdf (UniformInt l u) x | floor x < l   = 0
+    cdf (UniformInt l u) x | l > u         = 0/0
+                           | floor x < l   = 0
                            | floor x < u   = fromIntegral (floor x-l+1)/ fromIntegral (u-l+1)
                            | otherwise     = 1
 
-    lower_bound (UniformInt l u) = Just l
-    upper_bound (UniformInt l u) = Just u
+    lower_bound (UniformInt l u) = if l <= u then Just l else Nothing
+    upper_bound (UniformInt l u) = if l <= u then Just u else Nothing
 
 instance IOSampleable UniformInt where
     sampleIO (UniformInt l u) = sample_uniform_int l u
@@ -84,13 +85,15 @@ instance HasAnnotatedPdf UniformInt where
 instance Sampleable UniformInt where
     sample dist@(UniformInt l u) = RanDistribution2 dist (uniform_int_effect l u)
 
-uniform_int_quantile l u x | x <= l     = 0
+uniform_int_quantile l u x | l > u      = 0/0
+                           | x <= l     = 0
                            | x > u      = 1
                            | otherwise  = fromIntegral (x-l) / fromIntegral (u-l+1)
 
 uniform_int_bounds l u = integer_between l u
 uniform_int_effect l u x = do
-  -- the slice sampling move refuses to add or remove variables.
+  -- Register unconditionally: each move reads changing bounds when it runs.  Slice sampling
+  -- refuses to add or remove variables, while the global proposal can repair exceptional states.
   addMove (1/3) $ sliceSampleInteger x (uniform_int_bounds l u)
   addMove (1/3) $ discreteUniformAvoidMH x l u
   addMove (1/3) $ incDecMH x (uniform_int_bounds l u)

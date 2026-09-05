@@ -149,11 +149,15 @@ log_double_t uniform_pdf(double x, double a, double b)
 
 log_double_t uniform_int_pdf(int x, int a, int b)
 {
-  assert(b >= a);
+  // Reversed bounds do not define a normalized distribution.  Keep that distinct from an
+  // ordinary out-of-support value so exceptional-density MCMC can repair the bounds first.
+  if (b < a)
+    return std::numeric_limits<double>::quiet_NaN();
 
   if (x < a or x > b) return 0;
 
-  return 1.0/log_double_t(b-a+1);
+  auto width = std::int64_t(b) - std::int64_t(a) + 1;
+  return 1.0/log_double_t(double(width));
 }
 
 /// log density for y if y=ln (x+delta), and x ~ Exp(mu)
