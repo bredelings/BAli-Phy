@@ -15,7 +15,7 @@
             "name": "n",
             "type": "Int",
             "default_value": "4",
-	    "description": "The number of bins for discretizing the Beta distribution"
+	    "description": "The number of Gauss-Jacobi quadrature categories for the Beta component"
         },
         {
             "name": "mu",
@@ -30,7 +30,7 @@
 	    "description": "The fraction of possible Beta variance given mu"
         }
     ],
-    "description": "A site-heterogeneous model with a discrete Beta distribution on dN/dS values.\n\n  cap = min( mu/(1+mu), (1-mu)/(2-mu) )\n  gamma' = gamma*cap\n  n = (1/gamma')-1\n  a = n*mu\n  b = n*(1-mu)",
+    "description": "A site-heterogeneous model with a discrete Beta distribution on dN/dS values.\n\n  cap = min( mu/(1+mu), (1-mu)/(2-mu) )\n  gamma' = gamma*cap\n  n = (1/gamma')-1\n  a = n*mu\n  b = n*(1-mu)\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. The parameter n counts Beta categories, excluding any additional M8-family category.",
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
 		 "year": "2000",

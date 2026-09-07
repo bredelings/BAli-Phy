@@ -15,7 +15,7 @@
             "name": "n",
             "type": "Int",
             "default_value": "4",
-	    "description": "The number of bins for discretizing the Beta distribution"
+	    "description": "The number of Gauss-Jacobi quadrature categories for the Beta component"
         },
         {
             "name": "mu",
@@ -43,7 +43,7 @@
         }
     ],
     "see": ["M7", "M8a","M8a_test"],
-    "description": "The M8 model is an M7 model with an additional category of positively-selected sites.  The additional category of sites has proportion=posP and dN/dS=posW.",
+    "description": "The M8 model is an M7 model with an additional category of positively-selected sites.  The additional category of sites has proportion=posP and dN/dS=posW.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. The parameter n counts Beta categories, excluding any additional M8-family category.",
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
 		 "year": "2000",

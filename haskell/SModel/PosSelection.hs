@@ -3,12 +3,16 @@ module SModel.PosSelection where
 import SModel.ASRV
 import SModel.BranchSiteMixture
 import SModel.Property (emptyComponentAnnotations)
-import Probability.Distribution.Beta (beta)
+import Numeric.LinearAlgebra (Vector)
+import Compiler.RealFloat (isInfinite)
 import Reversible
 import MCMC.Loggers (binaryIndicatorFields)
 import MCMC.Types (ContextAction, Modifiable)
 import Data.JSON (Object)
 import qualified Data.Text as T
+
+foreign import trcall "Distribution:betaQuadratureNative"
+    betaQuadratureNative :: Double -> Double -> Int -> (Vector Double, Vector Double)
 
 positiveSelectionFields :: Modifiable Int -> ContextAction Object
 positiveSelectionFields = binaryIndicatorFields (T.pack "PosSelection")
@@ -22,13 +26,23 @@ m2aTestOmegaDist f1 w1 posP posW _ = m2aOmegaDist f1 w1 posP posW
 
 m3OmegaDist ps omegas = mkDiscrete omegas ps
 
--- The M7 is just a beta distribution
--- gamma' = var(x)/(mu*(1-mu)) = 1/(a+b+1) = 1/(n+1)
-m7OmegaDist mu gamma nBins = uniformDiscretize (beta a b) nBins where cap = min (mu/(1+mu)) ((1-mu)/(2-mu))
-                                                                      gamma' = gamma*cap
-                                                                      n = (1/gamma')-1
-                                                                      a = n*mu
-                                                                      b = n*(1 - mu)
+-- M7 uses weighted beta quadrature, keeping the original capped variance parameterization:
+-- normalizedVariance = var(x)/(mu*(1-mu)) = 1/(a+b+1).
+m7OmegaDist mu gamma nBins
+    | nBins <= 0 = error "m7OmegaDist: the number of nodes must be positive"
+    | concentratedLimit = Discrete (replicate nBins (mu, 1 / fromIntegral nBins))
+    | otherwise = quadratureDiscrete nBins (betaQuadratureNative a b nBins)
+  where
+    cap = min (mu/(1+mu)) ((1-mu)/(2-mu))
+    normalizedVariance = gamma*cap
+    concentration = 1/normalizedVariance - 1
+    a = concentration*mu
+    b = concentration*(1-mu)
+    -- Retain the known mean before reciprocal overflow loses the shape ratio. Vanishing
+    -- variance gives a point at mu, unlike the two-endpoint limit of small concentration.
+    concentratedLimit = mu > 0 && mu < 1 && gamma >= 0 && not (isInfinite gamma)
+        && (normalizedVariance == 0
+            || (normalizedVariance > 0 && isInfinite (1/normalizedVariance)))
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
 m8OmegaDist mu gamma nBins posP posW = mix [1 - posP, posP] [m7OmegaDist mu gamma nBins, always posW]

@@ -23,6 +23,7 @@
 #include <Eigen/SVD>
 
 #include <cmath>
+#include <algorithm>
 #include <limits>
 #include <optional>
 #include <stdexcept>
@@ -175,11 +176,120 @@ std::pair<DenseVector<double>, DenseVector<double>> unit_rate_quadrature(int cou
     return {DenseVector<double>::Ones(count), DenseVector<double>::Constant(count, 1.0 / count)};
 }
 
-// Preserve an unavailable rate rule as NaN nodes so its likelihood contributes a density defect.
-std::pair<DenseVector<double>, DenseVector<double>> unavailable_rate_quadrature(int count)
+// Preserve an unavailable rule as NaN nodes so its likelihood contributes a density defect.
+std::pair<DenseVector<double>, DenseVector<double>> unavailable_quadrature(int count)
 {
     double nan = std::numeric_limits<double>::quiet_NaN();
     return {DenseVector<double>::Constant(count, nan), DenseVector<double>::Constant(count, 1.0 / count)};
+}
+
+// Construct beta Gaussian nodes in centered coordinates, retaining tiny endpoint distances for
+// the direct weight formula rather than relying on potentially deflated eigenvectors.
+std::pair<DenseVector<double>, DenseVector<double>> beta_quadrature(double a, double b, int count)
+{
+    double m = std::max(a, b), u = a / m, v = b / m;
+    double mu = u / (u + v), q = v / (u + v);
+    if (count == 1)
+        return {DenseVector<double>::Constant(1, mu), DenseVector<double>::Ones(1)};
+
+    double scale = std::max(m, 1.0), A = a / scale, B = b / scale, h = 1.0 / scale;
+    double n = count;
+    // K is the shifted beta Jacobi matrix minus mu*I. Subtracting the mean algebraically
+    // preserves its small spread for large shapes. Ratios avoid overflowing a+b or products;
+    // the separate first entries cancel removable singularities in the general recurrence.
+    DenseMatrix<double> K = DenseMatrix<double>::Zero(count, count);
+    K(1, 0) = K(0, 1) = std::sqrt(mu) * std::sqrt(q) * std::sqrt(h / (A + B + h));
+    K(1, 1) = 2 * (q - mu) * h / (A + B + 2 * h);
+    for (int i = 2; i < count; ++i)
+    {
+        double k = i, t = A + B + (2 * k - 2) * h;
+        K(i, i) = (q - mu) * (2 * k * h / t) * ((A + B + (k - 1) * h) / (t + 2 * h));
+        K(i, i - 1) = K(i - 1, i) = std::sqrt(k * h / t) * std::sqrt((A + (k - 1) * h) / t)
+            * std::sqrt((B + (k - 1) * h) / (t + h)) * std::sqrt((A + B + (k - 2) * h) / (t - h));
+    }
+    if (!K.allFinite())
+        throw myexception()<<"betaQuadrature: non-finite centered recurrence";
+    double r = K.cwiseAbs().maxCoeff();
+    if (!(r > 0) || !std::isfinite(r))
+        throw myexception()<<"betaQuadrature: unavailable centered scale";
+    Eigen::SelfAdjointEigenSolver<DenseMatrix<double>> solver(K / r, Eigen::EigenvaluesOnly);
+    if (solver.info() != Eigen::Success || !solver.eigenvalues().allFinite())
+        throw myexception()<<"betaQuadrature: eigensolver failed";
+    DenseVector<double> z = solver.eigenvalues();
+
+    // For fixed n>=2 and b>0, x_min=a/D+(D-b-2n)*a^2/(2D^2)+O(a^3), D=n(n+b-1).
+    // This follows by expanding the shifted Jacobi differential equation at zero; swapping
+    // shapes gives the right distance. The 1e-4 switch was checked numerically, not derived as
+    // a uniform error bound. Keep the log distance even if the distance itself underflows.
+    constexpr double endpoint_threshold = 1.0e-4;
+    double left = 0, right = 0, log_left = 0, log_right = 0;
+    for (int side = 0; side < 2; ++side)
+    {
+        double shape = side == 0 ? a : b, other = side == 0 ? b : a;
+        if (shape >= endpoint_threshold) continue;
+        double invD = (1.0 / n) / (n + other - 1);
+        double correction = 0.5 * shape * (1 - (other + 2 * n) * invD);
+        double distance = (shape * invD) * (1 + correction);
+        double log_distance = std::log(shape) - std::log(n) - std::log(n + other - 1)
+                            + std::log1p(correction);
+        if (!std::isfinite(correction) || !(1 + correction > 0) || !std::isfinite(log_distance))
+            throw myexception()<<"betaQuadrature: invalid endpoint correction";
+        if (side == 0)
+        {
+            left = distance;
+            log_left = log_distance;
+            z[0] = (left - mu) / r;
+        }
+        else
+        {
+            right = distance;
+            log_right = log_distance;
+            z[count - 1] = (q - right) / r;
+        }
+    }
+    for (int i = 0; i < count; ++i)
+        if (!std::isfinite(z[i]) || (i && !(z[i] > z[i - 1])))
+            throw myexception()<<"betaQuadrature: centered nodes are not finite and distinct";
+
+    // Jacobi weights are proportional to 1/[x(1-x)*P'_n(x)^2], and the monic derivative at
+    // root i is product(j!=i, x_i-x_j). In x=mu+r*z the common r^(n-1) cancels on normalization.
+    // See Hale & Townsend (2013), eq. (1.2), https://doi.org/10.1137/120889873.
+    // Keep distinct z even when final x values round to ties, and independent endpoint logs
+    // when x rounds to 0 or 1. Log normalization retains small interior weights without using
+    // the eigenvectors that a numerically deflated matrix coupling would incorrectly zero.
+    DenseVector<double> nodes(count), weights(count);
+    double tolerance = 64 * n * std::numeric_limits<double>::epsilon();
+    for (int i = 0; i < count; ++i)
+    {
+        bool corrected_left = i == 0 && a < endpoint_threshold;
+        bool corrected_right = i == count - 1 && b < endpoint_threshold;
+        double x = mu + r * z[i], xc = q - r * z[i];
+        if (corrected_left) { x = left; xc = 1 - left; }
+        if (corrected_right) { xc = right; x = 1 - right; }
+        if (!std::isfinite(x) || !std::isfinite(xc) || x < -tolerance || x > 1 + tolerance
+            || xc < -tolerance || xc > 1 + tolerance || (!corrected_left && !(x > 0))
+            || (!corrected_right && !(xc > 0)))
+            throw myexception()<<"betaQuadrature: invalid endpoint distance";
+        weights[i] = -(corrected_left ? log_left : std::log(x))
+                     -(corrected_right ? log_right : std::log(xc));
+        for (int j = 0; j < count; ++j)
+            if (i != j) weights[i] -= 2 * std::log(std::abs(z[i] - z[j]));
+        nodes[i] = x;
+    }
+    if (!weights.allFinite())
+        throw myexception()<<"betaQuadrature: non-finite log weights";
+    weights = (weights.array() - weights.maxCoeff()).exp().matrix().eval();
+    double total = weights.sum();
+    if (!(total > 0) || !std::isfinite(total))
+        throw myexception()<<"betaQuadrature: invalid weight sum";
+    weights /= total;
+    for (int i = 0; i < count; ++i)
+    {
+        nodes[i] = std::clamp(nodes[i], 0.0, 1.0);
+        if (!std::isfinite(weights[i]) || weights[i] < 0 || (i && nodes[i] < nodes[i - 1]))
+            throw myexception()<<"betaQuadrature: invalid final rule";
+    }
+    return {std::move(nodes), std::move(weights)};
 }
 
 // Validate a normalized log-probability pair; NaN is a numerical failure that callers replace
@@ -351,7 +461,7 @@ extern "C" closure builtin_function_gammaQuadratureNative(OperationArgs& Args)
     }
     else if (alpha == 0 || std::isnan(alpha))
     {
-        std::tie(nodes, weights) = unavailable_rate_quadrature(count);
+        std::tie(nodes, weights) = unavailable_quadrature(count);
     }
     else
     {
@@ -395,9 +505,39 @@ extern "C" closure builtin_function_gammaQuadratureNative(OperationArgs& Args)
         if (log_verbose >= 2)
             std::cerr<<"Warning: gammaQuadrature: returning an unavailable rule for alpha="<<alpha
                      <<" and count="<<count<<": "<<fallback_reason<<std::endl;
-        std::tie(nodes, weights) = unavailable_rate_quadrature(count);
+        std::tie(nodes, weights) = unavailable_quadrature(count);
     }
 
+    object_ptr<Box<DenseVector<double>>> node_result = new Box<DenseVector<double>>(std::move(nodes));
+    object_ptr<Box<DenseVector<double>>> weight_result = new Box<DenseVector<double>>(std::move(weights));
+    return R::RPair(node_result, weight_result);
+}
+
+// Decode a beta quadrature request, preserving numerical unavailability as a density defect.
+extern "C" closure builtin_function_betaQuadratureNative(OperationArgs& Args)
+{
+    double a = Args.evaluate_slot_to_value(0).as_double();
+    double b = Args.evaluate_slot_to_value(1).as_double();
+    int count = Args.evaluate_slot_to_value(2).as_int();
+    if (count <= 0)
+        throw myexception()<<"betaQuadrature: the number of nodes must be positive";
+    if (a < 0 || b < 0)
+        throw myexception()<<"betaQuadrature: shapes must be nonnegative, but are "<<a<<" and "<<b;
+
+    DenseVector<double> nodes, weights;
+    if (a == 0 || b == 0 || !std::isfinite(a) || !std::isfinite(b))
+        std::tie(nodes, weights) = unavailable_quadrature(count);
+    else
+    {
+        auto failure = numerical_rule_failure([&] { std::tie(nodes, weights) = beta_quadrature(a, b, count); });
+        if (failure)
+        {
+            if (log_verbose >= 2)
+                std::cerr<<"Warning: betaQuadrature: returning an unavailable rule for alpha="<<a
+                         <<", beta="<<b<<" and count="<<count<<": "<<*failure<<std::endl;
+            std::tie(nodes, weights) = unavailable_quadrature(count);
+        }
+    }
     object_ptr<Box<DenseVector<double>>> node_result = new Box<DenseVector<double>>(std::move(nodes));
     object_ptr<Box<DenseVector<double>>> weight_result = new Box<DenseVector<double>>(std::move(weights));
     return R::RPair(node_result, weight_result);
@@ -562,7 +702,7 @@ extern "C" closure builtin_function_logNormalQuadratureNative(OperationArgs& Arg
             std::cerr<<"Warning: logNormalQuadrature: returning an unavailable rule for logMean="<<log_mean
                      <<", logSigma="<<log_sigma<<", and count="<<count
                      <<": "<<fallback_reason<<std::endl;
-        std::tie(nodes, weights) = unavailable_rate_quadrature(count);
+        std::tie(nodes, weights) = unavailable_quadrature(count);
     }
 
     object_ptr<Box<DenseVector<double>>> node_result = new Box<DenseVector<double>>(std::move(nodes));

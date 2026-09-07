@@ -2419,6 +2419,12 @@ If the genetic code is not specified, then the standard code is used:
 		<entry><para><userinput>M7</userinput></para></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2</entry>
 		<entry><para>The M7 model places a beta distribution on dN/dS.</para>
+		<para>The beta component is approximated by Gauss-Jacobi quadrature, with four
+		categories by default and generally unequal category weights. M8, M8a, and
+		M8a_test use the same beta component; their additional category is not counted
+		in <userinput>n</userinput>. This changes finite-category likelihoods relative
+		to the earlier equal-weight quantile approximation, but leaves the priors and
+		variance cap unchanged.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
 		  (Yang et al., 2000)
 		</link>

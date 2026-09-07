@@ -2,19 +2,21 @@
 module Main where
 
 import Compiler.Classes
+import Compiler.Enum
 import Compiler.Floating
 import Compiler.Fractional
 import Compiler.Num
 import Compiler.RealFloat (isInfinite, isNaN)
 import Data.Bool
 import Data.Eq
-import Data.Foldable (all, sum)
+import Data.Foldable (all, sum, product)
 import Data.Function (($))
-import Data.OldList ((!!), map, tail, unzip, zip, zipWith)
+import Data.OldList ((!!), (++), map, tail, unzip, zip, zipWith, length, reverse)
 import Data.Ord
 import Data.Tuple (fst, snd)
 import Probability.Distribution.Discrete (unpackDiscrete)
 import SModel.ASRV
+import SModel.PosSelection (betaQuadratureNative, m7OmegaDist, m8OmegaDist, m8aOmegaDist, m8aTestOmegaDist)
 import System.IO (print)
 
 near x y = abs (x - y) < 1.0e-11
@@ -34,6 +36,62 @@ ordered xs = all (\pair -> fst pair <= snd pair) $ zip xs (tail xs)
 moments distribution = (sum weights, sum $ zipWith (*) rates weights,
                          sum $ zipWith (\rate weight -> rate * rate * weight) rates weights)
     where (rates, weights) = unzip $ unpackDiscrete distribution
+
+betaPairs a b n = unpackDiscrete $ quadratureDiscrete n $ betaQuadratureNative a b n
+
+close tolerance x y = finite x && finite y && abs (x-y) < tolerance
+
+relative tolerance x y = finite x && finite y && abs (x/y-1) < tolerance
+
+weighted f pairs = sum $ map (\pair -> snd pair * f (fst pair)) pairs
+
+betaMoment a b k = product $ map (\j -> (a+j)/(a+b+j)) [0..k-1]
+
+rawMoment k = weighted (\x -> product $ map (\_ -> x) [1..k])
+
+-- Compare whole rules, including their lengths, so missing or reordered mixture categories fail.
+samePairs tolerance xs ys = length xs == length ys
+    && all (\pair -> close tolerance (fst (fst pair)) (fst (snd pair))
+                 && close tolerance (snd (fst pair)) (snd (snd pair))) (zip xs ys)
+
+-- Protect weighted beta moments and tail mass that full-program tests cannot resolve. This group
+-- becomes obsolete if M7 stops using finite beta quadrature; absolute-only checks miss lost tails.
+betaChecks =
+    samePairs 1e-12 (betaPairs 1 1 1) [(0.5,1)]
+    && samePairs 1e-12 (betaPairs 1 1 2) [((1-1/sqrt 3)/2,0.5),((1+1/sqrt 3)/2,0.5)]
+    && all (\ab -> checkMoments (close 1e-10) (fst ab) (snd ab))
+           [(0.352,0.548),(0.404,0.750),(6.6,9.9)]
+    && checkMoments (relative 1e-8) 1e-100 1
+    && valid bothSmall && close 1e-10 (snd (bothSmall !! 0)) 0.5
+    && close 1e-10 (snd (bothSmall !! 3)) 0.5
+    && relative 1e-8 (weighted (\x -> x*x*(1-x)*(1-x)) bothSmall) (1e-100/12)
+    && all (\a -> valid (betaPairs a a 4) && close 1e-12 (rawMoment 1 (betaPairs a a 4)) 0.5)
+           [1e100,1e308]
+    && all checkSwitch [0.999e-4,1.001e-4]
+    && all (\a -> unavailable (betaPairs a 1 4) && unavailable (betaPairs 1 a 4)) [0,0/0,1/0]
+    && samePairs 1e-12 m7Pairs (betaPairs 6.6 9.9 4)
+    && all (\g -> samePairs 1e-12 (unpackDiscrete $ m7OmegaDist 0.4 g 4)
+                           [(0.4,0.25),(0.4,0.25),(0.4,0.25),(0.4,0.25)]) [0,1e-320]
+    && samePairs 1e-12 m8Pairs (scaledBeta ++ [(2,0.1)])
+    && samePairs 1e-12 m8aPairs (scaledBeta ++ [(1,0.1)])
+    && samePairs 1e-12 (unpackDiscrete $ m8aTestOmegaDist 0.4 0.2 4 0.1 2 0) m8aPairs
+    && samePairs 1e-12 (unpackDiscrete $ m8aTestOmegaDist 0.4 0.2 4 0.1 2 1) m8Pairs
+  where
+    bothSmall = betaPairs 1e-100 1e-100 4
+    m7Pairs = unpackDiscrete $ m7OmegaDist 0.4 0.2 4
+    m8Pairs = unpackDiscrete $ m8OmegaDist 0.4 0.2 4 0.1 2
+    m8aPairs = unpackDiscrete $ m8aOmegaDist 0.4 0.2 4 0.1
+    scaledBeta = map (\pair -> (fst pair, 0.9*snd pair)) m7Pairs
+    valid pairs = length pairs == 4 && all validMeanPair pairs
+        && all (\pair -> fst pair <= 1) pairs && ordered (map fst pairs)
+        && close 1e-12 (sum $ map snd pairs) 1
+    unavailable pairs = length pairs == 4 && all (\pair -> isNaN (fst pair) && near (snd pair) 0.25) pairs
+    checkMoments compare a b = valid (betaPairs a b 4)
+        && all (\k -> compare (rawMoment k (betaPairs a b 4)) (betaMoment a b k)) [0..7]
+    -- Exercise both sides of the endpoint switch and the reflected rule's pairing.
+    checkSwitch a = checkMoments (relative 1e-7) a 1
+        && samePairs 1e-7 (reverse $ betaPairs 1 a 4)
+               (map (\pair -> (1-fst pair,snd pair)) (betaPairs a 1 4))
 
 -- Check analytic and published rules, genuine point-mass limits, and NaN propagation for unavailable
 -- rules; the last case guards against silently substituting a different rate model.
@@ -74,7 +132,7 @@ main = do
         extremeMean = sum $ map (\pair -> fst pair * snd pair) extremeAlphaPairs
         unrepresentableLogNormalPairs = unpackDiscrete $ logNormalRatesQuadrature (-1.0 / 0.0) 0.0 2
         genericPairs = unpackDiscrete $ gammaRates 1.0 2
-    print (near meanWeights 1.0
+    print (betaChecks && near meanWeights 1.0
         && near meanRate 1.0
         && near (meanRates !! 0) (1.0 - log 2.0)
         && near (meanRates !! 1) (1.0 + log 2.0)
