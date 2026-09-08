@@ -2422,9 +2422,23 @@ If the genetic code is not specified, then the standard code is used:
 		<para>The beta component is approximated by Gauss-Jacobi quadrature, with four
 		categories by default and generally unequal category weights. M8, M8a, and
 		M8a_test use the same beta component; their additional category is not counted
-		in <userinput>n</userinput>. This changes finite-category likelihoods relative
-		to the earlier equal-weight quantile approximation, but leaves the priors and
-		variance cap unchanged.</para>
+		in <userinput>n</userinput>.</para>
+		<para>The beta mean <userinput>mu</userinput> and normalized variance
+		<userinput>v</userinput> have independent <userinput>Uniform(0,1)</userinput>
+		default priors. The normalized variance is the fraction of the maximum
+		possible variance at that mean:</para>
+		<programlisting>v = Var(omega)/(mu*(1-mu))
+concentration = 1/v - 1
+alpha = concentration*mu
+beta = concentration*(1-mu)</programlisting>
+		<para>The shape parameters are logged as computed values <userinput>a</userinput>
+		and <userinput>b</userinput>.</para>
+		<para>For a proper beta distribution, both <userinput>mu</userinput> and
+		<userinput>v</userinput> lie strictly between zero and one. With an interior
+		mean, <userinput>v=0</userinput> uses the concentrated limit at that mean;
+		<userinput>v=1</userinput> does not define a proper beta distribution and
+		produces an unavailable likelihood. The same priors and parameterization
+		apply to the beta component of M8, M8a, and M8a_test.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
 		  (Yang et al., 2000)
 		</link>

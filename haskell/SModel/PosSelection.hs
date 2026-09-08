@@ -26,31 +26,28 @@ m2aTestOmegaDist f1 w1 posP posW _ = m2aOmegaDist f1 w1 posP posW
 
 m3OmegaDist ps omegas = mkDiscrete omegas ps
 
--- M7 uses weighted beta quadrature, keeping the original capped variance parameterization:
--- normalizedVariance = var(x)/(mu*(1-mu)) = 1/(a+b+1).
-m7OmegaDist mu gamma nBins
+-- M7 uses weighted beta quadrature. The beta variance identity
+-- v = var(x)/(mu*(1-mu)) = 1/(a+b+1) gives concentration = a+b = 1/v-1.
+m7OmegaDist mu v nBins
     | nBins <= 0 = error "m7OmegaDist: the number of nodes must be positive"
     | concentratedLimit = Discrete (replicate nBins (mu, 1 / fromIntegral nBins))
     | otherwise = quadratureDiscrete nBins (betaQuadratureNative a b nBins)
   where
-    cap = min (mu/(1+mu)) ((1-mu)/(2-mu))
-    normalizedVariance = gamma*cap
-    concentration = 1/normalizedVariance - 1
+    concentration = 1/v - 1
     a = concentration*mu
     b = concentration*(1-mu)
     -- Retain the known mean before reciprocal overflow loses the shape ratio. Vanishing
     -- variance gives a point at mu, unlike the two-endpoint limit of small concentration.
-    concentratedLimit = mu > 0 && mu < 1 && gamma >= 0 && not (isInfinite gamma)
-        && (normalizedVariance == 0
-            || (normalizedVariance > 0 && isInfinite (1/normalizedVariance)))
+    concentratedLimit = mu > 0 && mu < 1 && v >= 0 && not (isInfinite v)
+        && (v == 0 || (v > 0 && isInfinite (1/v)))
 
 -- The M8 is a beta distribution, where a fraction posP of sites have omega posW
-m8OmegaDist mu gamma nBins posP posW = mix [1 - posP, posP] [m7OmegaDist mu gamma nBins, always posW]
+m8OmegaDist mu v nBins posP posW = mix [1 - posP, posP] [m7OmegaDist mu v nBins, always posW]
 
-m8aOmegaDist mu gamma nBins posP = m8OmegaDist mu gamma nBins posP 1
+m8aOmegaDist mu v nBins posP = m8OmegaDist mu v nBins posP 1
 
-m8aTestOmegaDist mu gamma nBins posP posW 0 = m8OmegaDist mu gamma nBins posP 1
-m8aTestOmegaDist mu gamma nBins posP posW _ = m8OmegaDist mu gamma nBins posP posW
+m8aTestOmegaDist mu v nBins posP posW 0 = m8OmegaDist mu v nBins posP 1
+m8aTestOmegaDist mu v nBins posP posW _ = m8OmegaDist mu v nBins posP posW
 
 --  w1 <- uniform 0 1
 --  [f1, f2] <- symmetricDirichlet 2 1
@@ -65,13 +62,13 @@ m3 omegaDist modelFunc = modelFunc <$> omegaDist
 m3Test omegaDist posP posW posSelection modelFunc = modelFunc <$> mix [posP, 1-posP] [always posW', omegaDist]
     where posW' = case posSelection of 0 -> 1; 1 -> posW
 
-m7 mu gamma nBins modelFunc = modelFunc <$> m7OmegaDist mu gamma nBins
+m7 mu v nBins modelFunc = modelFunc <$> m7OmegaDist mu v nBins
 
-m8 mu gamma nBins posP posW modelFunc = modelFunc <$> m8OmegaDist mu gamma nBins posP posW
+m8 mu v nBins posP posW modelFunc = modelFunc <$> m8OmegaDist mu v nBins posP posW
 
-m8a mu gamma nBins posP modelFunc = modelFunc <$> m8aOmegaDist mu gamma nBins posP
+m8a mu v nBins posP modelFunc = modelFunc <$> m8aOmegaDist mu v nBins posP
 
-m8aTest mu gamma nBins posP posW posSelection modelFunc = modelFunc <$> m8aTestOmegaDist mu gamma nBins posP posW posSelection
+m8aTest mu v nBins posP posW posSelection modelFunc = modelFunc <$> m8aTestOmegaDist mu v nBins posP posW posSelection
 
 -- Should we normalize the different entries to have the same rate?
 busted omegaDist posP posW posSelection modelFunc =

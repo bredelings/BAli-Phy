@@ -69,8 +69,15 @@ betaChecks =
            [1e100,1e308]
     && all checkSwitch [0.999e-4,1.001e-4]
     && all (\a -> unavailable (betaPairs a 1 4) && unavailable (betaPairs 1 a 4)) [0,0/0,1/0]
-    && samePairs 1e-12 m7Pairs (betaPairs 6.6 9.9 4)
-    && all (\g -> samePairs 1e-12 (unpackDiscrete $ m7OmegaDist 0.4 g 4)
+    -- Protect uncapped normalized variance and its boundaries, beyond native quadrature tests;
+    -- these checks become obsolete if the models stop taking normalized variance.
+    && samePairs 1e-12 m7Pairs (betaPairs 1.6 2.4 4)
+    && samePairs 1e-12 (unpackDiscrete $ m7OmegaDist 0.4 0.8 4) (betaPairs 0.1 0.15 4)
+    && all (\v -> let pairs = unpackDiscrete $ m7OmegaDist 0.4 v 4
+                  in valid pairs && close 1e-10 (rawMoment 1 pairs) 0.4
+                     && close 1e-10 (weighted (\x -> (x-0.4)*(x-0.4)) pairs) (v*0.4*0.6)) [0.8,1-1e-8]
+    && unavailable (unpackDiscrete $ m7OmegaDist 0.4 1 4)
+    && all (\v -> samePairs 1e-12 (unpackDiscrete $ m7OmegaDist 0.4 v 4)
                            [(0.4,0.25),(0.4,0.25),(0.4,0.25),(0.4,0.25)]) [0,1e-320]
     && samePairs 1e-12 m8Pairs (scaledBeta ++ [(2,0.1)])
     && samePairs 1e-12 m8aPairs (scaledBeta ++ [(1,0.1)])

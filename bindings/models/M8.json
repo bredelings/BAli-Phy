@@ -2,7 +2,7 @@
     "name": "M8",
     "deprecated-synonyms": ["m8"],
     "result_type": "DiscreteDist<CTMC<Codons<a>>>",
-    "call": "SModel.m8(@mu,@gamma,@n,@posP,@posW,@submodel)",
+    "call": "SModel.m8(@mu,@v,@n,@posP,@posW,@submodel)",
     "import": ["SModel"],
     "args": [
         {
@@ -24,10 +24,10 @@
 	    "description": "The mean of the Beta distribution"
         },
         {
-            "name": "gamma",
+            "name": "v",
             "type": "Double",
-            "default_value": "~Beta(1,10)",
-	    "description": "The fraction of possible Beta variance given mu"
+            "default_value": "~Uniform(0,1)",
+	    "description": "The normalized Beta variance Var(omega)/(mu*(1-mu)); 0 < v < 1"
         },
         {
             "name": "posP",
@@ -43,7 +43,17 @@
         }
     ],
     "see": ["M7", "M8a","M8a_test"],
-    "description": "The M8 model is an M7 model with an additional category of positively-selected sites.  The additional category of sites has proportion=posP and dN/dS=posW.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. The parameter n counts Beta categories, excluding any additional M8-family category.",
+    "computed": [
+        {
+            "name": "a",
+            "value": "(1/@v - 1)*@mu"
+        },
+        {
+            "name": "b",
+            "value": "(1/@v - 1)*(1-@mu)"
+        }
+    ],
+    "description": "The M8 model is an M7 model with an additional category of positively-selected sites.  The additional category of sites has proportion=posP and dN/dS=posW.\n\nThe Beta component uses Gauss-Jacobi quadrature with generally unequal category weights. The parameter n counts Beta categories, excluding any additional M8-family category.\n\nThe Beta-component mean mu and normalized variance v have independent Uniform(0,1) default priors.",
     "citation": {"type": "article",
 		 "title": "Codon-Substitution Models for Heterogeneous Selection Pressure at Amino Acid Sites",
 		 "year": "2000",

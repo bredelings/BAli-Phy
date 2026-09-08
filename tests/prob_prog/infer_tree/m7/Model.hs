@@ -22,16 +22,16 @@ gtr_m7_model codons = do
 
     let posSelModel w = gtr' sym pi nucs +> x3 codons +> dNdS w
 
-    -- M7 model parameters
+    -- Independent uniform priors on the beta mean and normalized variance.
     mu <- sample $ uniform 0 1
-    gamma <- sample $ beta 1 10
-    let m7Model = posSelModel +> m7 mu gamma 4
+    v <- sample $ uniform 0 1
+    let m7Model = posSelModel +> m7 mu v 4
 
     let loggers =
             [ "gtr:sym" %=% sym
             , "gtr:pi" %=% pi
             , "m7:mu" %=% mu
-            , "m7:gamma" %=% gamma
+            , "m7:v" %=% v
             ]
 
     return (m7Model, loggers)
