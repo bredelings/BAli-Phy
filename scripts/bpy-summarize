@@ -852,8 +852,9 @@ class Analysis(object):
         if self.has_alignments():
             self.summarize_character_properties()
             self.compute_initial_alignments()
-            self.summarize_positive_selection()
+            # Selection-table coordinates require the posterior display alignments first.
             self.compute_wpd_alignments()
+            self.summarize_positive_selection()
             self.compute_ancestral_states()
             self.draw_alignments()
             self.compute_and_draw_AU_plots()
@@ -1817,6 +1818,8 @@ class Analysis(object):
                 report_name = re.sub(r"[^A-Za-z0-9_.-]", "-", report_name)
                 output = self.outdir / f"P{partition + 1}.{report_name}.tsv"
                 alignment = self.outdir / f"P{partition + 1}.initial.fasta"
+                if self.get_imodel_for_partition(partition) is not None:
+                    alignment = self.outdir / f"P{partition + 1}.consensus.pd-wsum.fasta"
                 command = [
                     "character-properties", "positive-selection", summary, alignment, property_name,
                     f"--above={threshold}", "--sort=decreasing", "--format=tsv",
@@ -1839,6 +1842,7 @@ class Analysis(object):
                     "partition": partition + 1,
                     "property": property_name,
                     "filename": output,
+                    "alignment": alignment,
                     "rows": rows,
                     "conditioned": use_condition,
                     "threshold": threshold,
@@ -2706,6 +2710,11 @@ assumes it is included in the model.</p>
             if smodel_index is not None:
                 smodel = f' — <a href="#S{smodel_index + 1}">S{smodel_index + 1}</a>'
             section += f"<h3{heading_id}>Partition {partition}{smodel} — {property_name}</h3>\n"
+            alignment_name = html.escape(report["alignment"].name)
+            section += (
+                f'<p>Display alignment: <a href="{alignment_name}">{alignment_name}</a>. '
+                'Column numbers refer to this alignment.</p>\n'
+            )
 
             rows = report["rows"]
             threshold = report["threshold"]

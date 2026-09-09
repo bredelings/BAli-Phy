@@ -128,6 +128,7 @@ class BPYSummarizePropertyTests(unittest.TestCase):
 
             analysis = self.make_analysis(directory, [])
             analysis.character_property_summaries = [summary]
+            analysis.get_imodel_for_partition = lambda p: None
             commands = []
 
             # Materialize a small valid table for each requested property report.
