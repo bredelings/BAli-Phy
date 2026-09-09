@@ -10,7 +10,7 @@ import Data.Function (($))
 import qualified Data.IntMap as IntMap
 import qualified Data.Map as Map
 import Data.Maybe
-import Data.OldList ((!!), and, zipWith)
+import Data.OldList (and, zipWith)
 import Data.Ord
 import Data.Text (pack)
 import Numeric.LinearAlgebra (flatten, toList)
@@ -61,27 +61,6 @@ main = do
   putStrLn $ show [propertyValue "branch0-marker" properties,
                    propertyValue "branch1-marker" properties,
                    propertyValue "branch2-marker" properties]
-
-  let codons = mkCodons dna standard_code
-      omegaDependentModel omega =
-        setConstantStateProperty dNdSPropertyName omega $
-        dNdS omega (x3 codons (jukes_cantor dna))
-      twoCategories = IntMap.fromList [(0, 0), (1, 1)]
-      nullModel@(BranchModel _ nullModels _ _) =
-        twoOmegaBranchModel twoCategories 0.25 3.0 0 omegaDependentModel
-      alternativeModel@(BranchModel _ alternativeModels _ _) =
-        twoOmegaBranchModel twoCategories 0.25 3.0 1 omegaDependentModel
-      nullProperties = getProperties (SModelOnTree () nullModel)
-      alternativeProperties = getProperties (SModelOnTree () alternativeModel)
-
-  putStrLn $ show [branchTestForegroundOmega 0.25 3.0 0,
-                   branchTestForegroundOmega 0.25 3.0 1]
-  putStrLn $ show [propertyValue "branch0-dNdS" nullProperties,
-                   propertyValue "branch1-dNdS" nullProperties]
-  putStrLn $ show [propertyValue "branch0-dNdS" alternativeProperties,
-                   propertyValue "branch1-dNdS" alternativeProperties]
-  putStrLn $ show [sameMatrix (nullModels!!0) (nullModels!!1),
-                   sameMatrix (alternativeModels!!0) (alternativeModels!!1)]
 
   -- Category vectors select positions globally and default unannotated branches to category zero.
   let hypotheses = IntMap.fromList [(0, [1,2]), (1, []), (2, [2,1])]

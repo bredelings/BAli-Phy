@@ -37,7 +37,7 @@
         }
     ],
     "extract": "all",
-    "description": "Compare branch-model hypotheses encoded positionally in tree annotations. In [&foreground={1,2}], the branch has category 1 under hypothesis 0 and category 2 under hypothesis 1. All specified vectors must have the same length; an unannotated branch has category 0 under every hypothesis. Hypotheses have equal prior probability by default.",
+    "description": "Compare branch-model hypotheses encoded positionally in tree annotations. In [&foreground={1,2}], the branch has category 1 under hypothesis 0 and category 2 under hypothesis 1. All specified vectors must have the same length; an unannotated branch has category 0 under every hypothesis. Hypotheses have equal prior probability by default.\n\nTo compare one shared omega against separate background and foreground omegas, annotate foreground branches with [&foreground={0,1}] and leave background branches unannotated. Hypothesis 0 uses omega 0 on every branch; hypothesis 1 uses omega 0 on background branches and omega 1 on foreground branches. The default omegas have independent LogLaplace(-1,1) priors, and these two hypotheses each have prior probability 0.5. This tests branch-specific omega heterogeneity, not specifically positive selection.\n\nThe PrBranchHypothesis[i] fields contain conditional probabilities whose posterior means estimate support for hypothesis i. The corresponding LogOddsBranchHypothesis[i] fields give conditional log odds against all other hypotheses; use statreport to summarize posterior log odds rather than averaging these fields directly.",
     "examples": ["BranchModel_test", "BranchModel_test(omegas=[0.2,1.0,2.0])"],
-    "see": ["BranchModel", "Branch_test"]
+    "see": ["BranchModel", "BranchSite"]
 }
