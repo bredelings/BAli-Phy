@@ -20,7 +20,7 @@ newtype VariablePhyloCTMC t s = Variable (PhyloCTMC t Int s)
 
 variable = Variable
 
-annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
+annotated_subst_likelihood_fixed_A_variable tree length smodel propertyModel sequenceData = do
   let processRoot = root tree
       -- Deriving the initial substitution root from the node set avoids a topology dependency.
       -- A dependency-free way to initialize modifiables remains to be implemented.
@@ -41,8 +41,10 @@ annotated_subst_likelihood_fixed_A_variable tree length smodel sequenceData = do
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
-      smodelProperties = getProperties smodelOnTree
-      smodelConditions = getConditions smodelOnTree
+      -- Properties retain the input model's scale, excluding scaling inside PhyloCTMC.
+      propertyModelOnTree = SModelOnTree rtree propertyModel
+      smodelProperties = getProperties propertyModelOnTree
+      smodelConditions = getConditions propertyModelOnTree
       f = weightedFrequencyMatrix smodelOnTree
       cls | isReversible smodel = cachedConditionalLikelihoodsEqRev rtree nodeCLVs transitionPs f
           | otherwise           = cachedConditionalLikelihoodsNonRev rtree nodeCLVs transitionPs f
@@ -79,7 +81,8 @@ instance Dist (PhyloCTMC t Int s) => Dist (VariablePhyloCTMC t s) where
 -- TODO: make this work on forests!
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s) => HasAnnotatedPdf (VariablePhyloCTMC t s) where
     type DistProperties (VariablePhyloCTMC t s) = DistProperties (PhyloCTMC t Int s)
-    annotatedDensities (Variable (PhyloCTMC tree length smodel scale)) = annotated_subst_likelihood_fixed_A_variable tree length (scaleTo scale smodel)
+    annotatedDensities (Variable (PhyloCTMC tree length smodel scale)) =
+        annotated_subst_likelihood_fixed_A_variable tree length (scaleTo scale smodel) smodel
 
 instance (HasAlphabet s, IsTree t, HasRoot t, LabelType t ~ Text, HasBranchLengths t, RateModel s, SimpleSModel t s) => IOSampleable (VariablePhyloCTMC t s) where
     sampleIO (Variable (PhyloCTMC rtree rootLength rawSmodel scale)) = do

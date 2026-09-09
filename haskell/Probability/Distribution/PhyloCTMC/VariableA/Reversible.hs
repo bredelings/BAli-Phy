@@ -24,7 +24,7 @@ import Reversible
  - alphabet: describes the letters
  -}
 
-annotated_subst_like_on_tree tree alignment smodel sequenceData = do
+annotated_subst_like_on_tree tree alignment smodel propertyModel sequenceData = do
   let processRoot = root tree
       -- Deriving the initial substitution root from the node set avoids a topology dependency.
       -- A dependency-free way to initialize modifiables remains to be implemented.
@@ -42,8 +42,10 @@ annotated_subst_like_on_tree tree alignment smodel sequenceData = do
       smap   = stateLetters smodelOnTree
       smodelOnTree = SModelOnTree rtree smodel
       transitionPs = transitionPsMap smodelOnTree
-      smodelProperties = getProperties smodelOnTree
-      smodelConditions = getConditions smodelOnTree
+      -- Properties retain the input model's scale, excluding scaling inside PhyloCTMC.
+      propertyModelOnTree = SModelOnTree rtree propertyModel
+      smodelProperties = getProperties propertyModelOnTree
+      smodelConditions = getConditions propertyModelOnTree
       f = weightedFrequencyMatrix smodelOnTree
 
       cls | isReversible smodel = cachedConditionalLikelihoodsEqRev    rtree nodeCLVs as transitionPs f
@@ -82,7 +84,8 @@ instance Dist (PhyloCTMC t (AlignmentOnTree t2) s) where
 -- TODO: make this work on forests!                  -
 instance (HasAlphabet s, LabelType t ~ Text, HasRoot t, HasBranchLengths t, RateModel s, IsTree t, SimpleSModel t s, HasProperties t s, IsTree t2) => HasAnnotatedPdf (PhyloCTMC t (AlignmentOnTree t2) s) where
     type DistProperties (PhyloCTMC t (AlignmentOnTree t2) s) = PhyloCTMCPropertiesVariableA
-    annotatedDensities (PhyloCTMC tree alignment smodel scale) = annotated_subst_like_on_tree tree alignment (scaleTo scale smodel)
+    annotatedDensities (PhyloCTMC tree alignment smodel scale) =
+        annotated_subst_like_on_tree tree alignment (scaleTo scale smodel) smodel
 
 -- getSequencesFromTree :: IsGraph t, LabelType t ~ Text => t -> IntMap Sequence ->
 

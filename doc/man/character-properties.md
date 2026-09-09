@@ -21,6 +21,9 @@ and computes the posterior mean, standard deviation, and median of every named
 property for each ungapped observed sequence character. A sampled
 category/state pair selects a value from that sample's property table.
 
+Rate properties use the substitution model's own scale, before scaling inside
+`PhyloCTMC`. They do not necessarily average to one.
+
 The command writes one versioned JSON document to standard output. Property
 means, population posterior standard deviations, and exact empirical medians
 are keyed by sequence name and use zero-based
