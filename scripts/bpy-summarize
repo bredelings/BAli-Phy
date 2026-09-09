@@ -1822,7 +1822,7 @@ class Analysis(object):
                     alignment = self.outdir / f"P{partition + 1}.consensus.pd-wsum.fasta"
                 command = [
                     "character-properties", "positive-selection", summary, alignment, property_name,
-                    f"--above={threshold}", "--sort=decreasing", "--format=tsv",
+                    "--highest=100%", "--sort=decreasing", "--format=tsv",
                 ]
                 if not use_condition:
                     command.append("--unconditional")
@@ -2718,6 +2718,13 @@ assumes it is included in the model.</p>
 
             rows = report["rows"]
             threshold = report["threshold"]
+            # Keep every row in the download; filter only the HTML table, using either posterior.
+            rows = [
+                row for row in rows
+                if float(row["model-averaged-probability"]) > threshold
+                or (row["conditioned-probability"]
+                    and float(row["conditioned-probability"]) > threshold)
+            ]
             threshold_text = f"{threshold:g}"
             model_averaged_count = report["model_averaged_count"]
             conditioned_count = report["conditioned_count"]
@@ -2824,7 +2831,7 @@ assumes it is included in the model.</p>
                     section += "  </tr>\n"
                 section += "  </tbody>\n</table>\n</div>\n"
 
-            links = [f'<a href="{html.escape(report["filename"].name)}">Complete TSV table</a>']
+            links = [f'<a href="{html.escape(report["filename"].name)}">All rows (TSV)</a>']
             alignment_viewer = self.outdir / f"P{partition}.initial.html"
             if alignment_viewer.exists():
                 links.append(f'<a href="{alignment_viewer.name}">Alignment viewer</a>')

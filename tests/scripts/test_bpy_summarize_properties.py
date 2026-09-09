@@ -204,7 +204,7 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             self.assertIn('<td class="site-probability">0.250</td>', section)
             self.assertIn('<td class="site-probability">0.750</td>', section)
             self.assertIn('<td class="site-dnds-pm">&plusmn;</td>', section)
-            self.assertIn('href="P1.positive-selection.tsv">Complete TSV table</a>', section)
+            self.assertIn('href="P1.positive-selection.tsv">All rows (TSV)</a>', section)
             self.assertIn('href="P1.initial.html">Alignment viewer</a>', section)
 
             unconditional_report = analysis.positive_selection_reports[0]
@@ -248,7 +248,7 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             unconditional_section = analysis.section_positive_selection()
             self.assertNotIn("Pr(positive selection is in the model):", unconditional_section)
             self.assertIn("Columns with Pr(dN/dS &gt; 1) &gt; 0.5: 0 overall", unconditional_section)
-            self.assertIn("Overall posterior</th>", unconditional_section)
+            self.assertNotIn("Overall posterior</th>", unconditional_section)
             self.assertNotIn("Posterior with selection</th>", unconditional_section)
 
             analysis.get_column_name_map = lambda: {"S1/M2a:posW": "M2a:posW"}
