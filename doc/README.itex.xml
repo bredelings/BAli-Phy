@@ -3255,14 +3255,13 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       not equivalent thresholds.</para>
 
       <para>For some models, CODEML uses Bayes empirical Bayes (BEB) to account for uncertainty
-      in category proportions and ω values when calculating site probabilities
+      in the parameters describing variation in ω among sites when calculating site probabilities
       (<link xmlns:xlink="http://www.w3.org/1999/xlink"
       xlink:href="https://doi.org/10.1093/molbev/msi097">Yang, Wong, and Nielsen 2005</link>).
-      This corrects site probabilities based on treating maximum-likelihood parameter estimates
-      as certain, while leaving other parameters, such as branch lengths, at their estimates.
-      Fully Bayesian inference instead averages over the joint uncertainty in all quantities
-      being inferred, for site probabilities and other estimates alike. No separate BEB correction
-      is needed. Quantities explicitly fixed by the user, such as the topology, remain fixed.</para>
+      Other parameters, such as branch lengths, remain fixed at their maximum-likelihood estimates.
+      BAli-Phy averages over uncertainty in all parameters being inferred, for site probabilities
+      and other estimates alike, so no separate BEB correction is needed. Quantities fixed by the
+      user, such as the topology, remain fixed.</para>
     </section>
   </section>
 
