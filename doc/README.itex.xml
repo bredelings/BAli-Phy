@@ -2763,7 +2763,7 @@ A value must be given for each parameter, unless the parameter has a default val
 
   </section>
 
-  <section><info><title>Model stacking and '<code language="bali-phy-model">+></code>' notation</title></info>
+  <section><info><title>Model stacking and <code language="bali-phy-model">+></code> notation</title></info>
   <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG + F + G4 + I</userinput> starts with the WAG amino-acid model, and places several modifiers, like " + G4" on the right.</para>
   <para>BAli-Phy follows this convention by treating <code language="bali-phy-model">A +> B</code> as an abbreviation for <code language="bali-phy-model">B(A)</code>.  When there are multiple '<code language="bali-phy-model">+></code>' symbols they associate to the left, so that <code language="bali-phy-model">A +> B +> C</code> is understood to mean <code language="bali-phy-model">(A +> B) +> C</code>, which is equivalent to <code language="bali-phy-model">C(B(A))</code>.  For example:
 <programlisting language="bali-phy-model">HKY85 +> ASRV.Gamma              // rewritten to ASRV.Gamma(HKY85)
