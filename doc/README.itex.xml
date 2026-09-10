@@ -3279,7 +3279,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
         </para>
       </section>
 
-    <section>
+    <section xml:id="consensus-ancestors">
       <info><title>Generating a consensus alignment with ancestral sequences</title></info>
 
     <para>BAli-Phy can reconstruct ancestral sequences for a given tree topology and (leaf
@@ -3289,14 +3289,29 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
     ancestral residue, this summary averages over uncertainty in the topology, the alignment,
     and the ancestral state itself.</para>
 
-    <para>First, construct the leaf-sequence alignment to annotate using posterior decoding:</para>
-<screen><prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P1.fastas <replaceable>dir</replaceable>-2/C1.P1.fastas --skip=<replaceable>burn-in</replaceable> | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput></screen>
+    <para>First, discard burn-in and match the tree samples to the saved alignments.
+    This example discards iterations 0–999 from each run and assumes the default logging
+    interval: one tree per iteration and one alignment every 10 iterations.
+    Choose a burn-in appropriate for your runs, rounded up to a multiple of 10.
+    Replace 1000 below with that number, and 999 with one less.
+    The commands retain iteration 1000 onward: <command>cut-range</command> keeps iterations
+    greater than 999, while <command>bpy-subsample</command> skips the first 1000 tree lines
+    before taking every tenth tree:</para>
+<screen><prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P1.fastas --skip=999 &gt; post-1.fastas</userinput>
+<prompt>%</prompt> <userinput>bpy-subsample --skip=1000 10 &lt; <replaceable>dir</replaceable>-1/C1.trees &gt; post-1.trees</userinput>
+<prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-2/C1.P1.fastas --skip=999 &gt; post-2.fastas</userinput>
+<prompt>%</prompt> <userinput>bpy-subsample --skip=1000 10 &lt; <replaceable>dir</replaceable>-2/C1.trees &gt; post-2.trees</userinput></screen>
 
     <para>Next, construct the tree topology to annotate:</para>
-<screen><prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput></screen>
+<screen><prompt>%</prompt> <userinput>trees-consensus --skip=0 post-1.trees post-2.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput></screen>
+
+    <para>Construct the leaf-sequence alignment to annotate using posterior decoding:</para>
+<screen><prompt>%</prompt> <userinput>cut-range post-1.fastas post-2.fastas | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput></screen>
 
     <para>Finally, reconstruct the ancestral sequences on the given tree and alignment:</para>
-<screen><prompt>%</prompt> <userinput>summarize-ancestors P1-max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree &gt; P1.ancestors.fasta</userinput></screen>
+<screen><prompt>%</prompt> <userinput>summarize-ancestors P1-max.fasta -A post-1.fastas -T post-1.trees -A post-2.fastas -T post-2.trees --subsample=1 -n c50.tree -g c50.tree &gt; P1.ancestors.fasta</userinput></screen>
+    <para><userinput>--subsample=1</userinput> prevents further thinning of the already-matched
+    tree files. Do not remove the internal sequence names or tree labels from these sample files.</para>
 
 <para>BAli-Phy uses an alignment estimate (here, <filename>P1-max.fasta</filename>) as a
 template to construct a consensus alignment with ancestral sequences.  BAli-Phy doesn&apos;t
@@ -3353,7 +3368,7 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
           ancestral sequence by labelling the internal nodes of the tree.  For example, the tree below
           shows where the internal nodes <userinput>A5</userinput>, <userinput>A6</userinput>, and <userinput>A7</userinput> are
           located on the tree:
-          <programlisting>(Halobacterium:0.213240,((Escherichia:0.435762,Pyrococcus:0.122678)<emphasis role="strong">A5</emphasis>:0.114725,Sulfolobus:0.427210))<emphasis role="strong">A6</emphasis>:0.042527,Homo:0.427026))<emphasis role="strong">A7</emphasis>;</programlisting>
+          <programlisting>(Halobacterium:0.213240,((Escherichia:0.435762,Pyrococcus:0.122678)<emphasis role="strong">A5</emphasis>:0.114725,Sulfolobus:0.427210)<emphasis role="strong">A6</emphasis>:0.042527,Homo:0.427026)<emphasis role="strong">A7</emphasis>;</programlisting>
           While the tree is written every iteration, the alignment is only written every 10 iterations
           (by default) in order to save disk space.  One method for extracting the trees that correspond
           to saved alignments is to extract every 10th tree with the program
@@ -3408,8 +3423,9 @@ GT-CAAGGCGGCCATAGCGGGGGGGCTACACCCGGTC</programlisting>
         sequence there.  You can then use the program <userinput>extract-ancestors</userinput> to
         extract ancestral sequences from the sampled trees and alignment, and label them with usable names.
 
-    <screen><prompt>%</prompt> <userinput>trees-consensus <replaceable>dir-1</replaceable>/C1.trees <replaceable>dir-2</replaceable>/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput>
-<prompt>%</prompt> <userinput>extract-ancestors -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees -n c50.tree -g c50.tree > P1.ancestors.fastas</userinput></screen>
+    Prepare <filename>post-1.fastas</filename>, <filename>post-1.trees</filename>, the corresponding
+    files for run 2, and <filename>c50.tree</filename> as in <xref linkend="consensus-ancestors"/>:
+    <screen><prompt>%</prompt> <userinput>extract-ancestors -A post-1.fastas -T post-1.trees -A post-2.fastas -T post-2.trees --subsample=1 -n c50.tree -g c50.tree > P1.ancestors.fastas</userinput></screen>
        Here the options <userinput>-n c50.tree</userinput> and <userinput>-g c50.tree</userinput> specify
        node-based queries and branch-based queries.
     </para>
