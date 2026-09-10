@@ -32,6 +32,23 @@ pre.programlisting {
     border: 0.15em solid #4040CC;
 }
 
+/* Token colors only: leave code-panel layout and unhighlighted text unchanged. */
+pre.programlisting :is(.c, .c1, .cm) {
+    color: #386b6b;
+}
+
+pre.programlisting :is(.s, .s1, .s2, .se) {
+    color: #982525;
+}
+
+pre.programlisting :is(.m, .mi, .mf, .mh, .mo, .mb, .il) {
+    color: #7040a0;
+}
+
+pre.programlisting .o {
+    color: #505050;
+}
+
 .table table, .informaltable table {
     border-collapse: collapse;
 }

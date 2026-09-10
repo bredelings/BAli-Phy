@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:m="http://docbook.org/ns/docbook/modes"
+                xmlns:db="http://docbook.org/ns/docbook"
+                xmlns:f="http://docbook.org/ns/docbook/functions"
                 xmlns="http://www.w3.org/1999/xhtml"
-                exclude-result-prefixes="m"
+                exclude-result-prefixes="m db f"
                 version="3.0">
 
   <!-- The release's XML catalog resolves this import to the local installation. -->
@@ -19,10 +21,34 @@
              select="'address literallayout funcsynopsisinfo classsynopsisinfo
                       programlisting programlistingco screen screenco synopsis'"/>
   <xsl:param name="verbatim-numbered-elements" select="''"/>
-  <xsl:param name="verbatim-syntax-highlighter" select="'none'"/>
-  <xsl:param name="verbatim-syntax-highlight-languages" select="''"/>
+  <xsl:param name="verbatim-syntax-highlighter" select="'pygments'"/>
+  <xsl:param name="verbatim-syntax-highlight-languages" select="'bali-phy-model'"/>
+  <xsl:param name="verbatim-syntax-highlight-css" select="''"/>
   <xsl:param name="verbatim-embellishments" select="'false'"/>
+  <xsl:param name="copy-verbatim-js" select="''"/>
+  <xsl:param name="verbatim-trim-leading-blank-lines" select="'false'"/>
   <xsl:param name="verbatim-trim-trailing-blank-lines" select="'false'"/>
+
+  <!-- Highlight text without xslTNG's line embellishments, which insert spaces on blank lines.
+       Supply a final newline so the lexer recognizes a final // comment, then remove it
+       from the formatted result only if absent in the source.
+       Java approximates the model language's strings, numbers, operators, and comments;
+       replace it if a dedicated BAli-Phy model-language lexer becomes available. -->
+  <xsl:template match="db:programlisting[@language='bali-phy-model']/text()" mode="m:docbook">
+    <xsl:variable name="highlighted" select="f:syntax-highlight(string(.),
+                   map { 'language': 'java' }, map { 'stripnl': 'false', 'ensurenl': 'true' })"/>
+    <xsl:variable name="trim" select="not(ends-with(., '&#10;'))
+                   and $highlighted[last()] instance of text()
+                   and ends-with(string($highlighted[last()]), '&#10;')"/>
+    <xsl:sequence select="$highlighted[position() lt last()]"/>
+    <xsl:choose>
+      <xsl:when test="$trim">
+        <xsl:value-of select="substring(string($highlighted[last()]), 1,
+                                        string-length(string($highlighted[last()])) - 1)"/>
+      </xsl:when>
+      <xsl:otherwise><xsl:sequence select="$highlighted[last()]"/></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
 
   <!-- Both browser viewing and PDF generation use the same HTML. Keep the upstream
        CSS intact, including its web fonts, and leave MathJax at its default. -->
