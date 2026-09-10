@@ -464,6 +464,9 @@ The M3 model allows different sites to have different dN/dS values, but directly
 The M8a_test model allows testing for positive selection in some fraction of the sites:
 % bali-phy Globins/bglobin.fasta --test -S '|w:GY94(omega=w,pi=F3x4)| +> M8a_test'
 </para>
+<para>See the <link xmlns:xlink="http://www.w3.org/1999/xlink"
+xlink:href="README.xhtml#positive-selection">User Guide's positive-selection section</link>
+for model choices, running analyses, and interpreting posterior support.</para>
 </section>
 
 <section><info><title>Fixing parameter values</title></info>

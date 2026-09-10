@@ -1102,6 +1102,145 @@ option.  For example:
       <command>character-properties report --help</command> for filtering and reporting options.</para>
     </section>
 
+    <section xml:id="positive-selection"><info><title>Positive selection</title></info>
+
+      <para>Codon models distinguish synonymous changes, which preserve the amino acid, from
+      nonsynonymous changes, which alter it. The parameter $\omega$ (often called dN/dS)
+      multiplies the nonsynonymous rates in a codon model. Values below one reduce these rates;
+      values above one increase them and represent diversifying positive selection.
+      These models look for an excess of amino-acid changes, not evidence that a particular
+      mutation is advantageous.</para>
+
+      <para>Use homologous protein-coding sequences in the correct reading frame. Remove terminal
+      stop codons and check for internal stops or frameshifts. The commands below assume the
+      standard genetic code. BAli-Phy can estimate the alignment along with selection;
+      add <userinput>-I none</userinput> to hold the input alignment
+      fixed. Alignment uncertainty is included in the character summaries
+      (<xref linkend="character-properties"/>). An alignment model does not correct sequencing
+      errors, incorrect gene boundaries, or recombination.</para>
+
+      <section><info><title>One ω for the whole sequence</title></info>
+
+        <para>Start with a model that uses one ω for all sites and branches:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -S 'GTR +> x3 +> MutSelAA +> dNdS'</screen>
+        <para><userinput>GTR</userinput> describes nucleotide mutation.
+        <userinput>x3</userinput> builds codon changes from single-nucleotide changes.
+        <userinput>MutSelAA</userinput> estimates amino-acid preferences shared across sites, and
+        <userinput>dNdS</userinput> adds the ω multiplier. Here ω describes nonsynonymous change
+        beyond the effect of those preferences; it is not a raw ratio of observed changes.
+        Setting ω to one leaves those preferences intact, rather than removing all selection.</para>
+
+        <para>Replace <userinput>x3</userinput> with <userinput>MNM</userinput> to allow mutations
+        changing several nucleotides in a codon at once. This is also suitable for the analyses
+        below, but is not directly comparable to standard PAML codon models. Replace
+        <userinput>MutSelAA</userinput> with <userinput>MutSel</userinput> to estimate separate codon
+        preferences, including differences between synonymous codons; this mixes much more slowly.</para>
+
+        <para>The default <userinput>LogNormal(0,1)</userinput> prior gives equal probability to
+        ω below and above one. To restrict ω to values below one, use
+        <userinput>dNdS(omega=~Uniform(0,1))</userinput>. Run independent chains, check convergence,
+        and summarize them as in <xref linkend="analysis"/>. Read the ω estimate and credible
+        interval in the parameter report. A single ω cannot identify selected sites, and averaging
+        across the sequence can hide selection affecting only a few sites.</para>
+      </section>
+
+      <section><info><title>Different ω values among sites</title></info>
+
+        <para>A site model mixes categories with different ω values. Each site belongs to an
+        unknown category that applies on every branch. The analysis estimates the category
+        proportions, the free ω values, and each site's probability of belonging to each category.
+        M1a has two categories: ω below one and ω equal to one. M2a adds a category with ω above one.
+        M7 uses a beta distribution for ω between zero and one, approximated by a finite set of
+        categories. M8a adds a category with ω equal to one; M8 instead adds one with ω above one.</para>
+
+        <para>Use <userinput>M2a_test</userinput> to compare M1a with M2a, or
+        <userinput>M8a_test</userinput> to compare M8a with M8. Each command samples both hypotheses
+        in one analysis:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
+    -S '|w:GTR +> x3 +> MutSelAA +> dNdS(omega=w)| +> M2a_test'
+<prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
+    -S '|w:GTR +> x3 +> MutSelAA +> dNdS(omega=w)| +> M8a_test'</screen>
+        <para>The expression <userinput>|w:...|</userinput> builds the codon model for a supplied
+        ω value. The site model supplies these values and their priors, rather than using the
+        single-ω default prior. The nucleotide and amino-acid preference parameters are shared
+        across categories. To fit a selection model without testing its presence, replace the test with
+        <userinput>M2a</userinput> or <userinput>M8</userinput>.</para>
+
+        <para>After summarizing independent runs with <command>bpy-summarize</command>, open the
+        positive-selection section of <filename>Results/index.html</filename>. First read the
+        posterior probability of the selection hypothesis. These tests give the two hypotheses
+        equal prior probability by default, so posterior odds equal the Bayes factor. For example,
+        probability 0.9 gives odds of 9:1. These are Bayesian comparisons, not PAML likelihood-ratio
+        tests or p-values; results depend on the parameter priors as well as the data.</para>
+
+        <para>Then examine the site table. <literal>Overall posterior</literal> includes uncertainty
+        about whether positive selection is present. <literal>Posterior with selection</literal> uses only
+        samples under the selection hypothesis. For example, if a codon has probability 0.95
+        of being selected under that hypothesis, but the hypothesis has probability 0.20,
+        its overall probability is 0.19. Mean <literal>dNdS</literal> is
+        an estimated ω value, not a selection probability.</para>
+
+        <para>In the alignment viewer, choose <literal>posSelection</literal>. The same two
+        summaries are called <literal>Model-averaged</literal> and
+        <literal>Conditional on positiveSelectionInModel</literal>.</para>
+
+        <para>With an uncertain alignment, a displayed column can contain letters with different
+        probabilities. For each column, the main table reports the letter most likely to be
+        positively selected, assuming the selection hypothesis. If that estimate is unavailable,
+        it uses the highest overall probability instead. The sequence name and position identify
+        the chosen letter. The table shows at most 20 columns passing the display threshold;
+        <literal>All rows (TSV)</literal> exports a row for every column, regardless of the threshold.
+        These thresholds are not significance tests. Estimates based on few samples under the
+        selection hypothesis may be imprecise; with no such samples, they are unavailable.</para>
+      </section>
+
+      <section><info><title>Different ω values among branches</title></info>
+
+        <para>A branch model gives designated branch groups separate ω values, each shared across
+        all sites. Fix the topology and label branches in a Newick tree containing all your
+        sequences. Save it as <filename>branches.tree</filename>. This four-sequence example labels
+        the branch separating A and B from C and D:</para>
+<programlisting>((A,B):[&amp;foreground=1],C,D);</programlisting>
+        <para>The label follows a colon because it belongs to the branch, not the node. This
+        assigns that branch to category 1; unlabelled branches use category 0.
+        Branch lengths are still estimated:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons --fix topology=branches.tree \
+    -S '|w:GTR +> x3 +> MutSelAA +> dNdS(omega=w)| +> BranchModel'</screen>
+        <para>The <literal>Branch models</literal> report summarizes the category ω values.
+        A category number identifies a shared parameter, not a particular branch. Different
+        branch groups can have different ω values while all remain below one.</para>
+
+        <para>To test whether the labelled branch needs a separate ω, change its label to
+        <literal>[&amp;foreground={0,1}]</literal> and replace <userinput>BranchModel</userinput>
+        with <userinput>BranchModel_test</userinput> in the command. Hypothesis 0 uses category 0
+        everywhere; hypothesis 1 uses category 1 on that branch. The report gives hypothesis support
+        and ω estimates conditional on each hypothesis. Unused categories are omitted from those
+        conditional tables. The unconditional estimates include draws from the prior whenever
+        a category is unused. This tests whether ω differs among branches, not specifically
+        whether it exceeds one.</para>
+      </section>
+
+      <section><info><title>Selection at some sites on designated branches</title></info>
+
+        <para>A branch-site model allows some sites to have ω at or below one on background
+        branches, but ω above one on designated foreground branches. <userinput>BranchSite</userinput>
+        compares this with a null hypothesis in which those sites have ω equal to one on the
+        foreground branches. The analysis estimates which sites are affected and their ω values.</para>
+
+        <para>Use a fixed topology with <literal>[&amp;foreground=1]</literal> on foreground branches,
+        as in the first tree above, not the <literal>{0,1}</literal> label used for
+        <userinput>BranchModel_test</userinput>. Leave background branches unlabelled:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons --fix topology=branches.tree \
+    -S '|w:GTR +> x3 +> MutSelAA +> dNdS(omega=w)| +> BranchSite'</screen>
+        <para>Read model support and the two posterior views as for site models. In the alignment
+        viewer, select <literal>foreground-posSelection</literal> or
+        <literal>foreground-dNdS</literal>; the corresponding <literal>background-</literal>
+        properties describe the same sites on background branches. Fixing the topology does not
+        fix the alignment. Choose foreground branches from the biological question; searching
+        many branch sets and reporting only the strongest result is a different analysis.</para>
+      </section>
+    </section>
+
     <section><info><title>Meaning of generated files</title></info>
       
     <para>The <filename>Results/</filename> directory will contain
@@ -2392,6 +2531,8 @@ If the genetic code is not specified, then the standard code is used:
       </section>
       <section>
 	<info><title>Heterogeneous dN/dS and tests for positive selection</title></info>
+	<para>For concepts, commands, and interpretation of the reports, see
+	<xref linkend="positive-selection"/>.</para>
 	<informaltable>
 	  <tgroup cols="3">
 	    <thead><row>
