@@ -2986,7 +2986,8 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -S 'GTR +> MNM +> MutSel +> dNdS'</screen>
       <para>Both models estimate preferences shared across sites. The examples below use
       <userinput>MutSelAA</userinput> because <userinput>MutSel</userinput> currently mixes
-      substantially more slowly.</para>
+      substantially more slowly. See <xref linkend="selection-background"/> and
+      <xref linkend="selection-mnm"/> for the reasons behind these background-model choices.</para>
 
       <para>The default <userinput>LogNormal(0,1)</userinput> prior gives equal probability to
       ω below and above one. To restrict ω to values below one, use
@@ -3090,6 +3091,102 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       properties describe the same sites on background branches. Fixing the topology does not
       fix the alignment. Choose foreground branches from the biological question; searching
       many branch sets and reporting only the strongest result is a different analysis.</para>
+    </section>
+
+    <section xml:id="selection-false-positives">
+      <info><title>Model assumptions and false positives</title></info>
+
+      <para>A false positive is an inference of positive selection when it is absent. Evidence
+      for selection depends on which changes the model expects without it. If the background
+      model underestimates those changes, increasing ω can partly compensate for the error.
+      This can improve the fit without correctly explaining the process: ω increases only
+      nonsynonymous rates, rather than correcting the background model.</para>
+
+      <para>A better background can strengthen or weaken evidence for selection. The following
+      subsections explain the background choices in the examples, how alignment uncertainty is
+      handled, and how to add synonymous rate variation. These choices improve robustness to
+      particular sources of systematic error; they do not prevent all false positives.</para>
+    </section>
+
+    <section xml:id="selection-background">
+      <info><title>Codon frequencies and the background model</title></info>
+
+      <para>Goldman–Yang (GY) models weight a change by the frequency of the destination codon.
+      Muse–Gaut (MG) models instead use the frequency of the nucleotide being introduced.
+      Thus, even for a single-nucleotide change, GY rates depend on the frequencies of the
+      unchanged positions as well. These different backgrounds can lead to different conclusions
+      about selection, including false positives or missed selection
+      (<link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://doi.org/10.1093/molbev/msp232">Yap et al. 2010</link>).</para>
+
+      <para>The mutation–selection models used here separate nucleotide mutation biases from
+      amino-acid or codon preferences. Rates depend on mutation rates and fitness differences,
+      rather than a direct multiplier equal to the destination-codon frequency. This is the
+      reason for using <userinput>MutSelAA</userinput> or <userinput>MutSel</userinput> in the
+      examples, although these models also make assumptions that may not fit every data set.</para>
+    </section>
+
+    <section xml:id="selection-alignment">
+      <info><title>Alignment error and uncertainty</title></info>
+
+      <para>Aligning unrelated codons can create apparent amino-acid substitutions and spurious
+      evidence of selection. BAli-Phy jointly estimates alignment and selection, allowing each
+      hypothesis to be evaluated over plausible alignments instead of treating one alignment as
+      certain. In simulations, this removed the excess false positives caused by alignment error
+      while retaining nearly the power obtained with the true alignment
+      (<link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://doi.org/10.1093/molbev/msu174">Redelings 2014</link>).</para>
+
+      <para>The examples above already sample alignments. Omit <userinput>-I none</userinput>
+      to retain this behavior. Fixing the topology for a branch or branch-site analysis does not
+      fix the alignment. See <xref linkend="character-properties"/> for interpreting site results
+      across sampled alignments.</para>
+    </section>
+
+    <section xml:id="selection-mnm">
+      <info><title>Multinucleotide mutations</title></info>
+
+      <para>Two or three differences within a codon can arise from one mutation. A model allowing
+      only single-nucleotide mutations must explain them through several events, potentially
+      exaggerating the evidence for positive selection. This effect has been demonstrated for
+      branch-site tests (<link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://doi.org/10.1038/s41559-018-0584-5">Venkat et al. 2018</link>).</para>
+
+      <para><userinput>MNM</userinput>, already included in the examples, estimates rates of
+      double and triple mutations as part of the background model, with little added computational
+      cost. It allows these events within codons, not across codon boundaries. Replace it with
+      <userinput>x3</userinput> to restrict mutations to single-nucleotide events.</para>
+    </section>
+
+    <section xml:id="selection-synonymous-rates">
+      <info><title>Synonymous rate variation</title></info>
+
+      <para>Codons can differ in their baseline substitution rates, not just in ω. Ignoring this
+      variation can distort evidence for selection (<link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://doi.org/10.1093/molbev/msr162">Rubinstein et al. 2011</link>).
+      For comparable nonsynonymous change, a lower inferred baseline rate can strengthen evidence
+      for selection; a higher baseline can weaken it.</para>
+
+      <para>Append <userinput>ASRV.Gamma</userinput> to add a gamma distribution of rates among
+      codons:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a_test +> ASRV.Gamma'</screen>
+      <para>This scales synonymous and nonsynonymous rates together, leaving each component's
+      ω unchanged. A codon's rate category applies on every branch. Place ASRV after the completed
+      selection model, outside <userinput>|w:...|</userinput>, so both hypotheses include rate
+      variation. The same construction works with the other models above.</para>
+
+      <para><userinput>ASRV.Gamma</userinput> approximates the gamma distribution with four
+      categories by default. Alternatively, <userinput>ASRV.Free</userinput> estimates category
+      rates and proportions without requiring a gamma shape. Start with two categories:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a_test +> ASRV.Free(n=2)'</screen>
+      <para>The number of categories is fixed by <userinput>n</userinput>, not inferred.
+      If the two rates are clearly distinguishable, try <userinput>n=3</userinput> and check
+      whether the extra category is distinguishable and mixing remains adequate. The default
+      of four free-rate categories introduces more parameters. Both ASRV extensions increase
+      computation by combining rate categories with selection categories, so they are optional
+      rather than part of the baseline examples.</para>
     </section>
   </section>
 
