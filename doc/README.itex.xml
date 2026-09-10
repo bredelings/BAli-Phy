@@ -3155,7 +3155,8 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       <para><userinput>MNM</userinput>, already included in the examples, estimates rates of
       double and triple mutations as part of the background model, with little added computational
       cost. It allows these events within codons, not across codon boundaries. Replace it with
-      <userinput>x3</userinput> to restrict mutations to single-nucleotide events.</para>
+      <userinput>x3</userinput> to restrict mutations to single-nucleotide events, as in
+      <xref linkend="selection-codeml"/>.</para>
     </section>
 
     <section xml:id="selection-synonymous-rates">
@@ -3187,6 +3188,37 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       of four free-rate categories introduces more parameters. Both ASRV extensions increase
       computation by combining rate categories with selection categories, so they are optional
       rather than part of the baseline examples.</para>
+    </section>
+
+    <section xml:id="selection-codeml">
+      <info><title>Comparing with CODEML</title></info>
+
+      <para>The model families above correspond to CODEML-style analyses, but the background
+      choices differ. Many earlier analyses used GY94-type models. To compare with these, use
+      <userinput>GY94</userinput> and match their codon-frequency specification. For example,
+      <userinput>GY94(pi=F3x4)</userinput> uses separate nucleotide frequencies at each codon
+      position. In a site model, supply ω explicitly:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -I none --fix topology=<replaceable>tree</replaceable>.tree \
+  -S '|w:GY94(omega=w,pi=F3x4)| +> M8a_test'</screen>
+
+      <para>The <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://doi.org/10.1093/molbev/msad041">Álvarez-Carretero et al. (2023)</link>
+      tutorial instead uses FMutSel (<literal>CodonFreq=7</literal>). The corresponding base
+      model replaces GTR with HKY85, MNM with x3, and MutSelAA with MutSel:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -I none --fix topology=<replaceable>tree</replaceable>.tree \
+  -S 'HKY85 +> x3 +> MutSel +> dNdS'</screen>
+      <para>Using <userinput>MutSelAA</userinput> instead corresponds to the FMutSel0 preference
+      model (<literal>CodonFreq=6</literal>). CODEML also supports GTR mutation rates through
+      <literal>hkyREV=1</literal>, but its codon models restrict instantaneous changes to a single
+      nucleotide; they do not include the MNM extension.</para>
+
+      <para>Use the same alignment, topology, genetic code, foreground branches, and retained
+      sites in both programs. Omit ASRV if the CODEML analysis did not include it. Matching the
+      model family does not make the analyses identical: the tutorial uses observed codon
+      frequencies (<literal>estFreq=0</literal>), whereas the examples here infer preferences.
+      BAli-Phy also uses priors, and the programs approximate beta mixtures differently.
+      BAli-Phy reports posterior estimates and Bayesian model support, not CODEML's
+      maximum-likelihood estimates, likelihood-ratio tests, or empirical-Bayes site probabilities.</para>
     </section>
   </section>
 
