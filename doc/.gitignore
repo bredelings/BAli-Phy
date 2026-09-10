@@ -2,3 +2,4 @@
 *.html
 *.xhtml
 *.css
+!guide.css

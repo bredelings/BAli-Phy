@@ -1,5 +1,7 @@
 all: README.html README.pdf Tutorial.html Tutorial.pdf Instructions.html Instructions.pdf
 
+README.pdf Tutorial.pdf Instructions.pdf: guide.css
+
 clean:
 	-@rm -f *.html *.xhtml REAMDE.xml *.fo *.pdf *~
 

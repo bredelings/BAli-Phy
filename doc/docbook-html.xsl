@@ -56,7 +56,7 @@
 </xsl:template>
 <!-- end of MathML support. -->
 
-<xsl:param name="html.stylesheet">docbook.css</xsl:param>
+<xsl:param name="html.stylesheet">guide.css</xsl:param>
 <!-- Use our existing CSS; do not generate an upstream docbook.css over it. -->
 <xsl:param name="docbook.css.source" select="''"/>
 <xsl:param name="html.ext">.html</xsl:param>
