@@ -70,6 +70,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
 	("until,u",value<int>(),"Read up to this iteration.")
 	("ignore,I", value<vector<string> >()->composing(),"Do not analyze these fields.")
 	("select,S", value<vector<string> >()->composing(),"Analyze only these fields.")
+        ("condition", value<string>(), "Summarize samples matching key=value, without time-series diagnostics.")
 
 	("individual,i","Show results for individual files separately also.")
 	("truth",value<double>(),"True value")
@@ -643,6 +644,30 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables, int
 
 // stats-table can't distinguish double && int
 
+// Conditional draws retain their descriptive distribution, but not a regularly sampled timeline.
+// Reuse the ordinary summary functions with no chain diagnostics; never pass them an empty sample.
+void show_conditioned_stats(variables_map& args, const string& name, const vector<double>& values)
+{
+    if (values.empty())
+    {
+        cout<<"   "<<name<<" = [no matching samples]\n";
+        return;
+    }
+    if (is_log_odds_field(name))
+        show_log_odds_summary(name, {}, 0, values, false);
+    if (constant(values))
+    {
+        cout<<"   "<<name<<" = "<<values[0]<<"\n";
+        return;
+    }
+    if (args.count("mode")) show_mode(name, {}, 0, values, false);
+    if (args.count("mean")) show_mean(name, {}, 0, values, false);
+    double sum_CI = 0, total_CI = 0, fraction = 0;
+    show_median(args, name, {}, 0, values, false, args.count("median") or not args.count("mean"),
+                sum_CI, total_CI, fraction);
+    if (args.count("truth")) show_error(args, name, {}, 0, values);
+}
+
 /// FIXME - reduce the numbers of quantile/median/confidence_interval calls?
 ///       - 543 calls to median for 42*6: 
 ///       - (Remember that SOME of the calls are only sorting the last THIRD of the data.)
@@ -679,9 +704,23 @@ int main(int argc,char* argv[])
 	if (args.count("select"))
 	    select = args["select"].as<vector<string> >();
 
+        optional<pair<string, double>> condition;
+        if (args.count("condition"))
+        {
+            const auto& expression = args["condition"].as<string>();
+            auto equals = expression.rfind('=');
+            if (equals == string::npos or equals == 0)
+                throw myexception()<<"Expected --condition key=value.";
+            auto value = can_be_converted_to<double>(expression.substr(equals + 1));
+            if (not value or not std::isfinite(*value))
+                throw myexception()<<"Condition value must be a finite number.";
+            condition = {expression.substr(0, equals), *value};
+        }
+
 	//------------ Read Data ---------------//
 	vector<stats_table> tables;
 	vector<string> filenames;
+        int condition_output_count = -1;
 
 	if (not args.count("filenames"))
 	    throw myexception()<<"No filenames specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
@@ -691,7 +730,36 @@ int main(int argc,char* argv[])
         {
             istream_or_ifstream f(std::cin, "-", filename, "statistics_file");
 
-            tables.push_back(stats_table(f,0,subsample,last,ignore,select));
+            if (condition)
+            {
+                // Resolve selection against the original header, but convert only output fields and
+                // the condition to numbers. Unselected fields may legitimately contain text.
+                TableReader reader(f,0,subsample,last,{},{});
+                auto indices = get_indices_for_names(reader.names(), ignore, select);
+                if (condition_output_count != -1 and condition_output_count != indices.size())
+                    throw myexception()<<filename<<": Selected column counts differ.";
+                condition_output_count = indices.size();
+                auto index = reader.maybe_find_column_index(condition->first);
+                if (not index)
+                    throw myexception()<<filename<<": Missing condition field '"<<condition->first<<"'.";
+                if (std::find(indices.begin(), indices.end(), *index) == indices.end())
+                    indices.push_back(*index);
+                tables.emplace_back(apply_indices(reader.names(), indices));
+                while (auto row = reader.get_row())
+                {
+                    vector<double> values;
+                    for (int col: indices)
+                    {
+                        auto value = can_be_converted_to<double>((*row)[col]);
+                        if (not value)
+                            throw myexception()<<filename<<": Non-numeric value in '"<<reader.names()[col]<<"'.";
+                        values.push_back(*value);
+                    }
+                    tables.back().add_row(values);
+                }
+            }
+            else
+                tables.emplace_back(f,0,subsample,last,ignore,select);
 
 	    if (not tables.back().n_rows())
 		throw myexception()<<"File '"<<filename<<"' has no samples left after removal of burn-in!";
@@ -742,7 +810,7 @@ int main(int argc,char* argv[])
 
 	for(int i=0;i<tables.size();i++) {
 	    sample_counts[i] = tables[i].n_rows();
-	    for(int j=0;j<n_columns;j++) 
+	    for(int j=0;not condition and j<n_columns;j++)
 	    {
 		int b = get_burn_in(tables[i].column(j), 0.05, 2);
 		burnin[i][j] = b;
@@ -757,6 +825,44 @@ int main(int argc,char* argv[])
 		throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
 	    tables[i].chop_first_rows(skip);
 	}
+
+        if (condition)
+        {
+            int condition_index = tables[0].find_column_index(condition->first);
+            cout<<"Condition: "<<args["condition"].as<string>()<<"\n";
+            int total_count = 0;
+            for(int chain=0; chain<tables.size(); chain++)
+            {
+                auto& table = tables[chain];
+                vector<int> matching;
+                for(int row=0; row<table.n_rows(); row++)
+                    if (table.column(condition_index)[row] == condition->second)
+                        matching.push_back(row);
+                for(int col=0; col<table.n_columns(); col++)
+                {
+                    auto& values = table.column(col);
+                    for(int row=0; row<matching.size(); row++) values[row] = values[matching[row]];
+                    values.resize(matching.size());
+                }
+                cout<<"Matching samples ["<<chain+1<<"] = "<<matching.size()<<"\n";
+                total_count += matching.size();
+            }
+            cout<<"Matching samples = "<<total_count<<"\n\n";
+            for(int col=0; col<condition_output_count; col++)
+            {
+                vector<double> pooled;
+                for(int chain=0; chain<tables.size(); chain++)
+                {
+                    const auto& values = tables[chain].column(col);
+                    pooled.insert(pooled.end(), values.begin(), values.end());
+                    if (args.count("individual"))
+                        show_conditioned_stats(args, field_names[col]+" ["+to_string(chain+1)+"]", values);
+                }
+                show_conditioned_stats(args, field_names[col], pooled);
+                cout<<"\n";
+            }
+            return 0;
+        }
 
     
 	//------------ Generate Report ----------//

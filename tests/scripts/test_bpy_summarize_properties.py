@@ -179,7 +179,7 @@ class BPYSummarizePropertyTests(unittest.TestCase):
                 "S1/M3_test:LogOddsPosSelection": "M3_test:LogOddsPosSelection",
             }
             analysis.get_smodel_indices = lambda: [0]
-            analysis.positive_selection_statistics = {
+            analysis.model_support_statistics = {
                 "M3_test:LogOddsPosSelection": {
                     "posterior_probability": "0.5702",
                     "log_odds": "0.2825",

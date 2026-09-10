@@ -27,6 +27,58 @@ scores = {'multiply': 'very short/log',
           'wsum':     'medium/AMA',
           'sum':      'long/TC'}
 
+# Read ordinary and conditioned statreport output without assuming diagnostics follow each summary.
+# Each call owns its dictionaries, so conditional estimates cannot overwrite the main scalar report.
+def parse_scalar_report(filename):
+    results = {name: {} for name in (
+        "mean", "stddev", "median", "CI_low", "CI_high", "ACT", "ESS", "Burnin",
+        "PSRF_CI80", "PSRF_RCF", "model_support_statistics", "matching_samples")}
+    results["constants"] = set()
+    var = None
+    for raw in Path(filename).read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("Condition:"):
+            continue
+        m = re.fullmatch(r'Matching samples(?: \[([0-9]+)\])? = ([0-9]+)', line)
+        if m:
+            results["matching_samples"][m[1] or "pooled"] = int(m[2])
+            continue
+        m = re.fullmatch(r'(.+):\s+posterior-probability = ([^\s]+)\s+\[log-odds = ([^\]]+)\]', line)
+        if m:
+            results["model_support_statistics"][m[1]] = {
+                "posterior_probability": m[2], "log_odds": m[3]}
+            continue
+        m = re.fullmatch(r'E ([^\s]+) = ([^\s]+)\s+\[\+- ([^\s]+)\]', line)
+        if m:
+            results["mean"][m[1]], results["stddev"][m[1]] = m[2], m[3]
+            continue
+        m = re.search(r'([^\s]+) ~ ([^\s]+)\s+\((.+),(.+)\)', line)
+        if m:
+            var = m[1]
+            results["median"][var] = m[2]
+            results["CI_low"][var], results["CI_high"][var] = m[3], m[4]
+            continue
+        m = re.search(r't @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)', line)
+        if m and var is not None:
+            results["ACT"][var], results["ESS"][var] = float(m[1]), float(m[2])
+            results["Burnin"][var] = m[3] if m[3] == "Not Converged!" else float(m[3])
+            continue
+        m = re.search(r'PSRF-80%CI = ([^ ]+)\s+PSRF-RCF = ([^ ]+)', line)
+        if m and var is not None:
+            results["PSRF_CI80"][var], results["PSRF_RCF"][var] = float(m[1]), float(m[2])
+            continue
+        m = re.fullmatch(r'([^=]+?) = ([^=]+)', line)
+        if m:
+            var, value = m[1], m[2].strip()
+            results["median"][var] = value
+            try:
+                float(value)
+            except ValueError:
+                pass
+            else:
+                results["constants"].add(var)
+    return results
+
 def add_suffix(p,s):
     p = Path(p)
     if not p.name:
@@ -1266,85 +1318,9 @@ class Analysis(object):
         print("done.")
 
         print("Analyzing scalar variables: ",end='',flush=True)
-        self.mean = dict()
-        self.stddev = dict()
-        self.median = dict()
-        self.CI_low = dict()
-        self.CI_high = dict()
-        self.constants = set()
-
-        self.ACT = dict()
-        self.ESS = dict()
-        self.Burnin = dict()
-        self.PSRF_CI80 = dict()
-        self.PSRF_RCF = dict()
-        self.positive_selection_statistics = dict()
-
-        with open(report_file, encoding='utf-8') as report:
-            lines = report.readlines()
-            i = 0
-            while i < len(lines):
-                line = lines[i].strip()
-
-                if not line:
-                    i += 1
-                    continue
-                m = re.fullmatch(
-                    r'(.+):\s+posterior-probability = ([^\s]+)\s+\[log-odds = ([^\]]+)\]',
-                    line,
-                )
-                if m:
-                    self.positive_selection_statistics[m.group(1)] = {
-                        "posterior_probability": m.group(2),
-                        "log_odds": m.group(3),
-                    }
-                    i += 1
-                    continue
-                m = re.fullmatch(r'E ([^\s]+) = ([^\s]+)\s+\[\+- ([^\s]+)\]', line)
-                if m:
-                    var = m.group(1)
-                    self.mean[var] = m.group(2)
-                    self.stddev[var] = m.group(3)
-                    i += 1
-                    continue
-                m = re.search(r'([^\s]+) ~ ([^\s]+)\s+\((.+),(.+)\)',line)
-                if m:
-                    var = m.group(1)
-                    self.median[var] = m.group(2)
-                    self.CI_low[var] = m.group(3)
-                    self.CI_high[var] = m.group(4)
-
-                    i += 1
-                    m = re.search(r't @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)', lines[i])
-                    if m:
-                        self.ACT[var] = float(m.group(1))
-                        self.ESS[var] = float(m.group(2))
-                        self.Burnin[var] = m.group(3)
-                        if self.Burnin[var] != "Not Converged!":
-                            self.Burnin[var] = float(self.Burnin[var])
-
-                    i += 1
-                    m = re.search(r'PSRF-80%CI = ([^ ]+)\s+PSRF-RCF = ([^ ]+)',lines[i])
-                    if m:
-                        self.PSRF_CI80[var] = float(m.group(1))
-                        self.PSRF_RCF[var] = float(m.group(2))
-                    i += 1
-                    continue
-
-                m = re.fullmatch(r'([^=]+?) = ([^=]+)', line)
-                if m:
-                    var = m.group(1)
-                    value = m.group(2).strip()
-                    self.median[var] = value
-                    # Validate without replacing the original text: numeric right-hand sides are constants,
-                    # while statreport also writes markers such as [increasing] in this form.
-                    try:
-                        float(value)
-                    except ValueError:
-                        pass
-                    else:
-                        self.constants.add(var)
-                i += 1
+        results = parse_scalar_report(report_file)
+        for name, values in results.items():
+            setattr(self, name, values)
 
         print("done.")
 
@@ -1359,7 +1335,7 @@ class Analysis(object):
             raise Exception("TSV column names are not unique.")
 
         support = []
-        for short_name, statistics in getattr(self, "positive_selection_statistics", {}).items():
+        for short_name, statistics in getattr(self, "model_support_statistics", {}).items():
             long_name = short_to_long.get(short_name, short_name)
             match = re.fullmatch(r'S([1-9][0-9]*)/(.+:LogOddsPosSelection)', long_name)
             if match is None:

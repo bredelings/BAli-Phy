@@ -209,6 +209,21 @@ class BPYSummarizeRunTests(unittest.TestCase):
 
 
 class BPYSummarizeScalarTests(unittest.TestCase):
+    # Conditional summaries have no diagnostic lines; ordinary reports cannot catch skipped records.
+    # This becomes obsolete if statreport's text parser is replaced by a structured interface.
+    def test_conditional_summaries_without_diagnostics(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report = Path(directory) / "Report"
+            report.write_text("Condition: h=1\nMatching samples [1] = 2\nMatching samples [2] = 0\n"
+                              "Matching samples = 2\n E w = 3  [+- 1]\n"
+                              "w ~ 3  (NA,NA) @ 95%\nx = 4\ny = [no matching samples]\n")
+            result = MODULE["parse_scalar_report"](report)
+            self.assertEqual(result["matching_samples"], {"1": 2, "2": 0, "pooled": 2})
+            self.assertEqual(result["median"]["x"], "4")
+            self.assertEqual(result["median"]["y"], "[no matching samples]")
+            self.assertEqual(result["mean"]["w"], "3")
+            self.assertEqual(result["ACT"], {})
+
     # Keep statreport's sampled and constant formats distinct and preserve aligned paired summaries.
     # This can be removed if bpy-summarize stops parsing and presenting statreport's text output.
     def test_parses_and_formats_scalar_summaries(self):

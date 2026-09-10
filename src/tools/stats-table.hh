@@ -109,6 +109,9 @@ public:
 
     /// Load the Table from a file
     Table(std::istream&,int,int,int,const std::vector<std::string>&,const std::vector<std::string>&);
+
+    /// Construct a named table for incrementally appended rows.
+    explicit Table(const std::vector<std::string>& names): names_(names), data_(names.size()) {}
 };
 
 template <typename T>
@@ -168,6 +171,9 @@ Table<double>::Table(std::istream& file, int skip, int subsample, int last, cons
 typedef Table<double> stats_table;
 
 std::vector<std::string> parse_header(const std::string&);
+std::vector<int> get_indices_for_names(const std::vector<std::string>& names,
+                                       const std::vector<std::string>& ignore,
+                                       const std::vector<std::string>& select);
 
 std::vector<std::string> read_header(std::istream&);
 

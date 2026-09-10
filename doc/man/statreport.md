@@ -21,6 +21,13 @@ by the sampled log odds and reports both the resulting probability and its log o
 summaries of the sampled log odds are retained.
 
 # ALL OPTIONS:
+**--condition** _key=value_
+: Summarize retained samples whose numeric field _key_ equals _value_. The condition is applied
+  after the usual burn-in, endpoint, and subsampling choices. The condition field is read even
+  when it is not selected for output. Matching counts are reported for each chain and pooled.
+  ACT, ESS, burn-in estimation, and PSRF are disabled for conditioned summaries. Empty matching
+  samples are reported explicitly; they are not errors. Only one condition is supported.
+
 **-h**, **--help**
 : Produce help message.
 
