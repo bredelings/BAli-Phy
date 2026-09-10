@@ -1404,7 +1404,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <section xml:id="nucleotide-frequencies">
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
-      <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
+      <para>Constant frequencies are specified as a map associating each letter with its frequency:</para>
       <programlisting language="bali-phy-model">GTR(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})</programlisting>
       <para>Frequencies can also be specified using functions:</para>
 
@@ -1689,7 +1689,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <section xml:id="amino-acid-frequencies">
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
-      <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
+      <para>Constant frequencies are specified as a map associating each letter with its frequency:</para>
       <programlisting language="bali-phy-model">WAG +> F({"A":0.047, "R":0.19,...})</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
@@ -1841,7 +1841,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <section xml:id="doublet-frequencies">
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
-      <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
+      <para>Constant frequencies are specified as a map associating each letter with its frequency.</para>
       <programlisting language="bali-phy-model">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x2
 
 HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01, "CC":0.01, "CG":0.22, "CU":0.01, "GA":0.01, "GC":0.22, "GG":0.01, "GU":0.01, "UA":0.22, "UC":0.01, "UG":0.01, "UU":0.01})</programlisting>
@@ -1950,7 +1950,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
     <section xml:id="triplet-frequencies">
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
-      <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
+      <para>Constant frequencies are specified as a map associating each letter with its frequency.</para>
       <programlisting language="bali-phy-model">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x3</programlisting>
       <para>Frequencies can also be specified using functions:</para>
       <para>
@@ -1997,7 +1997,9 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	</para>
     </section>
 
-      <para>BAli-Phy interprets branch lengths for codon models as 1/3 the number of substitutions per triplet.  Thus, they should be comparable to branch lengths under DNA/RNA nucleotide models.</para>
+      <para>Branch lengths for triplet models measure expected nucleotide substitutions per
+      nucleotide site, as for DNA/RNA models. A mutation changing two or three nucleotides
+      counts as two or three substitutions, respectively.</para>
       
 
     </section>
@@ -2098,7 +2100,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	      <row>
 		<entry><code language="bali-phy-model">FMutSel</code></entry>
-		<entry>65</entry>
+		<entry>69</entry>
 		<entry><para>MG94-like model with fitnesses for each codon.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msm284">
 		  (Yang and Nielsen, 2008)
@@ -2108,7 +2110,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	      <row>
 		<entry><code language="bali-phy-model">FMutSel0</code></entry>
-		<entry>24</entry>
+		<entry>28</entry>
 		<entry><para>MG94-like model with fitnesses for each amino-acid.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msm284">
 		  (Yang and Nielsen, 2008)
@@ -2118,7 +2120,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	      <row>
 		<entry><code language="bali-phy-model">BUSTED</code></entry>
-		<entry>24</entry>
+		<entry>13</entry>
 		<entry><para>MG94-like model where each branch and site has a randomly chosen dN/dS category.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msv035">
 		  (Murrell et al,  2015)
@@ -2128,7 +2130,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	      <row>
 		<entry><code language="bali-phy-model">BUSTED_S</code></entry>
-		<entry>13</entry>
+		<entry>14</entry>
 		<entry><para>BUSTED model with synonymous rate variation.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msaa037">
 		  (Wisotsky et al, 2020)
@@ -2139,7 +2141,12 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	  </tgroup>
 	</informaltable>
 
-	<para>BAli-Phy interprets branch lengths for codon models as 1/3 of the number of substitutions per codon.  Thus, they should be comparable to branch lengths under DNA/RNA models.</para>
+        <para>Parameter counts use the default settings and the standard genetic code.
+        For tests, counts describe the selection hypothesis and exclude the hypothesis indicator.
+        Some parameters are unused under the null hypothesis.</para>
+        <para>Branch lengths for codon models measure expected nucleotide substitutions per
+        nucleotide site, as for DNA/RNA models. A mutation changing two or three nucleotides
+        counts as two or three substitutions, respectively.</para>
       </section>
 
       <section>
@@ -2162,14 +2169,23 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    <listitem><code language="bali-phy-model">MG94</code> is equivalent to <code language="bali-phy-model">F81 +> x3 +> dNdS</code>.</listitem>
 	    <listitem><code language="bali-phy-model">MG94K</code> is equivalent to <code language="bali-phy-model">HKY85 +> x3 +> dNdS</code>.</listitem>
 	    <listitem><code language="bali-phy-model">GY94</code> is equivalent to <code language="bali-phy-model">HKY85_sym +> x3_sym +> F +> dNdS</code>.</listitem>
-	    <listitem><code language="bali-phy-model">FMutSel</code> is equivalent to <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSel</code>.</listitem>
-	    <listitem><code language="bali-phy-model">FMutSel0</code> is equivalent to <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSelAA</code>.</listitem>
+	    <listitem><code language="bali-phy-model">FMutSel</code> has the same substitution-model form as <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSel</code>, but different default fitness priors.</listitem>
+	    <listitem><code language="bali-phy-model">FMutSel0</code> has the same substitution-model form as <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSelAA</code>, but different default fitness priors.</listitem>
             <listitem><code language="bali-phy-model">M3</code> is equivalent to <code language="bali-phy-model">|w: GY94(w)| +> M3</code>.</listitem>
             <listitem><code language="bali-phy-model">M3_test</code> is equivalent to <code language="bali-phy-model">|w: GY94(w)| +> M3_test</code>.</listitem>
 	    <listitem><code language="bali-phy-model">BUSTED</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture</code>.</listitem>
 	    <listitem><code language="bali-phy-model">BUSTED_S</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture +> ASRV.Gamma(n=3)</code>.</listitem>
 	  </itemizedlist>
 	  </para>
+
+
+          <para><code language="bali-phy-model">FMutSel</code> and
+          <code language="bali-phy-model">FMutSel0</code> use independent
+          <code language="bali-phy-model">Laplace(0,0.1)</code> fitness priors by default;
+          <code language="bali-phy-model">MutSel</code> and
+          <code language="bali-phy-model">MutSelAA</code> use
+          <code language="bali-phy-model">Laplace(0,1)</code>. The latter allow larger fitness
+          differences, so the default Bayesian analyses are not equivalent.</para>
 
 	  <informaltable>
 	  <tgroup cols="3">
@@ -2199,7 +2215,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	      <row>
 		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;MNM</code></entry>
-		<entry>df(nuc_model)</entry>
+		<entry>df(nuc_model)+2</entry>
 		<entry><para>Like <code language="bali-phy-model">x3</code>, but with multi-nucleotide mutations.</para>
 		</entry>
 	      </row>
@@ -2250,7 +2266,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
       <section xml:id="codon-frequencies">
       <info><title>Frequencies</title></info>
       <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
-      <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
+      <para>Constant frequencies are specified as a map associating each letter with its frequency.</para>
       <programlisting language="bali-phy-model">GY94(pi={"AAA":0.01, "AAC":0.02,...})
 MG94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 </programlisting>
@@ -2827,7 +2843,7 @@ The <userinput>help</userinput> command can be used to determine the default val
 <code language="bali-phy-model">(a,b)</code> is a parameterized type that can be specialized to (for example) <code language="bali-phy-model">(String,Double)</code> and <code language="bali-phy-model">(Int,Int)</code>.
   </para>
 
-  <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, HKY85 has a result type of <code language="bali-phy-model">RevCTMC&lt;a&gt;</code>, where <code language="bali-phy-model">a</code> could be <code language="bali-phy-model">DNA</code> or <code language="bali-phy-model">RNA</code>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
+  <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, HKY85 has a result type of <code language="bali-phy-model">CTMC&lt;a&gt;</code>, where <code language="bali-phy-model">a</code> could be <code language="bali-phy-model">DNA</code> or <code language="bali-phy-model">RNA</code>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
   </para>
 
   </section>
