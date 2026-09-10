@@ -27,11 +27,6 @@ pre.programlisting {
     border-radius: 0.5em;
 }
 
-.note {
-    --note-color: #FFEAEA;
-    --note-border-color: #EE4040;
-}
-
 .example {
     border: 0.15em solid #4040CC;
     border-radius: 0.75em;
