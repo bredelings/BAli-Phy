@@ -298,6 +298,7 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             }
             analysis.positive_selection_reports = [many_rows_report]
             many_rows_section = analysis.section_positive_selection()
+            self.assertIn('Both summaries refer to that same letter', many_rows_section)
             self.assertIn(
                 "Showing 20 of 25 selected columns, ordered by overall posterior probability",
                 many_rows_section,
@@ -308,6 +309,7 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             paired_report["retained_samples"] = 100
             paired_report["model_averaged_count"] = 1
             all_true_section = analysis.section_positive_selection()
+            self.assertIn('conditional on selection being present in the model', all_true_section)
             self.assertNotIn("Pr(positive selection is in the model):", all_true_section)
             self.assertNotIn("Positive selection is included in this model.", all_true_section)
             self.assertNotIn("The overall posterior allows positive selection to be absent", all_true_section)
@@ -326,6 +328,10 @@ class BPYSummarizePropertyTests(unittest.TestCase):
 
             analysis.positive_selection_reports = [unconditional_report]
             unconditional_section = analysis.section_positive_selection()
+            populated_overall = {**many_rows_report, "conditioned": False}
+            analysis.positive_selection_reports = [populated_overall]
+            self.assertIn('highest overall probability of positive selection', analysis.section_positive_selection())
+            analysis.positive_selection_reports = [unconditional_report]
             self.assertNotIn("Pr(positive selection is in the model):", unconditional_section)
             self.assertIn("Columns with Pr(dN/dS &gt; 1) &gt; 0.5: 0 overall", unconditional_section)
             self.assertNotIn("Overall posterior</th>", unconditional_section)

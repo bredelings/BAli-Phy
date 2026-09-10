@@ -57,10 +57,11 @@ posterior median stored for each individual letter.
 
 The **positive-selection** command reports both model-averaged site support and,
 when available, support conditioned on `positiveSelectionInModel` being true.
-For an above selection, it chooses one representative letter per column using
-the conditioned probability, then retains the column if either probability for
-that letter passes the threshold. Both sets of statistics therefore describe
-the same representative. The matching dN/dS statistics do not help choose it.
+For an above selection, each column uses the letter with the highest probability
+of positive selection, conditional on selection being present in the model.
+If that conditional summary is unavailable, it uses the highest overall probability.
+The column is retained if either probability for that letter passes the threshold.
+Both summaries refer to that same letter. The matching dN/dS statistics do not help choose it.
 The default property is `posSelection`; names ending in `-posSelection` use the
 corresponding `-dNdS` property when it exists.
 
@@ -138,8 +139,9 @@ collapse into one alignment-column row.
 
 **--above=PROBABILITY**
 : Select columns whose conditioned or model-averaged posterior mean probability
-  is strictly greater than _PROBABILITY_ (default: 0.5). A shared representative
-  is chosen using the conditioned view before either threshold is applied.
+  is strictly greater than _PROBABILITY_ (default: 0.5). The letter with the highest
+  conditional probability is chosen before either threshold is applied; if the
+  conditional summary is unavailable, the highest overall probability is used.
 
 **--highest[=PERCENT]**
 : Instead select the highest-probability percentage of letters, with an

@@ -2907,6 +2907,19 @@ assumes it is included in the model.</p>
 
             shown_rows = rows[:20]
             if rows:
+                if report["conditioned"] and retained_samples > 0:
+                    section += (
+                        '<p>Each column uses the letter with the highest probability of positive selection, '
+                        'conditional on selection being present in the model.'
+                    )
+                    if has_distinct_selection_posterior:
+                        section += ' Both summaries refer to that same letter.'
+                    section += '</p>\n'
+                else:
+                    section += (
+                        '<p>Each column uses the letter with the highest overall probability '
+                        'of positive selection.</p>\n'
+                    )
                 if len(rows) > len(shown_rows):
                     section += (
                         f"<p>Showing 20 of {len(rows)} selected columns, ordered by overall "

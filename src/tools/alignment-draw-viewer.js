@@ -268,6 +268,8 @@ class AlignmentPropertyViewer {
         this.reportTitle = makeElement(doc, 'h2', 'alignment-viewer-report-title', 'Property columns');
         header.append(this.reportTitle);
         this.reportPanel.append(header);
+        this.reportExplanation = makeElement(doc, 'p', 'alignment-viewer-report-explanation');
+        this.reportPanel.append(this.reportExplanation);
 
         this.reportTableScroller = makeElement(doc, 'div', 'alignment-viewer-report-scroll');
         this.reportTable = makeElement(doc, 'table', 'alignment-viewer-report-table');
@@ -585,6 +587,11 @@ class AlignmentPropertyViewer {
             `${property.name}: alignment-column summaries`;
         if (this.activeView.condition)
             this.reportTitle.textContent += ` · ${this.activeView.condition} = true`;
+        this.reportExplanation.hidden = !positiveSelection;
+        this.reportExplanation.textContent = this.activeView.condition ?
+            'Each column uses the letter with the highest probability of positive selection, ' +
+            'conditional on selection being present in the model.' :
+            'Each column uses the letter with the highest overall probability of positive selection.';
         for (const cell of this.cells)
             cell.element.classList.remove('alignment-report-column');
 
