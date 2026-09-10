@@ -22,17 +22,14 @@ pre.screen, p .userinput, .computeroutput {
 }
 
 pre.programlisting {
-    background-color: #D0E3FF;
-    border: 0.1em solid #BBB;
-    border-radius: 0.5em;
+    background-color: #f3f4f5;
+    border: 1px solid #c8cdd2;
+    border-radius: 0.2rem;
+    padding: 0.75em 1em;
 }
 
 .example {
     border: 0.15em solid #4040CC;
-    border-radius: 0.75em;
-    background-color: #E0F0FF;
-    padding: 0.75em 1em;
-    margin-block: 1em;
 }
 
 .table table, .informaltable table {
