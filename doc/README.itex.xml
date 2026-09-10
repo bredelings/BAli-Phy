@@ -2972,19 +2972,21 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
     <section><info><title>One ω for the whole sequence</title></info>
 
       <para>Start with a model that uses one ω for all sites and branches:</para>
-<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -S 'GTR +> x3 +> MutSelAA +> dNdS'</screen>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -S 'GTR +> MNM +> MutSelAA +> dNdS'</screen>
       <para><userinput>GTR</userinput> describes nucleotide mutation.
-      <userinput>x3</userinput> builds codon changes from single-nucleotide changes.
+      <userinput>MNM</userinput> builds codon changes, including mutations changing two or three
+      nucleotides at once.
       <userinput>MutSelAA</userinput> estimates amino-acid preferences shared across sites, and
       <userinput>dNdS</userinput> adds the ω multiplier. Here ω describes nonsynonymous change
       beyond the effect of those preferences; it is not a raw ratio of observed changes.
       Setting ω to one leaves those preferences intact, rather than removing all selection.</para>
 
-      <para>Replace <userinput>x3</userinput> with <userinput>MNM</userinput> to allow mutations
-      changing several nucleotides in a codon at once. This is also suitable for the analyses
-      below, but is not directly comparable to standard PAML codon models. Replace
-      <userinput>MutSelAA</userinput> with <userinput>MutSel</userinput> to estimate separate codon
-      preferences, including differences between synonymous codons; this mixes much more slowly.</para>
+      <para><userinput>MutSelAA</userinput> assigns equal fitness to synonymous codons.
+      To allow separate codon preferences, use <userinput>MutSel</userinput> instead:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -S 'GTR +> MNM +> MutSel +> dNdS'</screen>
+      <para>Both models estimate preferences shared across sites. The examples below use
+      <userinput>MutSelAA</userinput> because <userinput>MutSel</userinput> currently mixes
+      substantially more slowly.</para>
 
       <para>The default <userinput>LogNormal(0,1)</userinput> prior gives equal probability to
       ω below and above one. To restrict ω to values below one, use
@@ -3007,9 +3009,9 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       <userinput>M8a_test</userinput> to compare M8a with M8. Each command samples both hypotheses
       in one analysis:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
-  -S '|w:GTR +> x3 +> MutSelAA +> dNdS(omega=w)| +> M2a_test'
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M2a_test'
 <prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
-  -S '|w:GTR +> x3 +> MutSelAA +> dNdS(omega=w)| +> M8a_test'</screen>
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a_test'</screen>
       <para>The expression <userinput>|w:...|</userinput> builds the codon model for a supplied
       ω value. The site model supplies these values and their priors, rather than using the
       single-ω default prior. The nucleotide and amino-acid preference parameters are shared
@@ -3055,7 +3057,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       assigns that branch to category 1; unlabelled branches use category 0.
       Branch lengths are still estimated:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons --fix topology=branches.tree \
-  -S '|w:GTR +> x3 +> MutSelAA +> dNdS(omega=w)| +> BranchModel'</screen>
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> BranchModel'</screen>
       <para>The <literal>Branch models</literal> report summarizes the category ω values.
       A category number identifies a shared parameter, not a particular branch. Different
       branch groups can have different ω values while all remain below one.</para>
@@ -3081,7 +3083,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       as in the first tree above, not the <literal>{0,1}</literal> label used for
       <userinput>BranchModel_test</userinput>. Leave background branches unlabelled:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons --fix topology=branches.tree \
-  -S '|w:GTR +> x3 +> MutSelAA +> dNdS(omega=w)| +> BranchSite'</screen>
+  -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> BranchSite'</screen>
       <para>Read model support and the two posterior views as for site models. In the alignment
       viewer, select <literal>foreground-posSelection</literal> or
       <literal>foreground-dNdS</literal>; the corresponding <literal>background-</literal>
