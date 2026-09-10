@@ -2992,7 +2992,7 @@ assumes it is included in the model.</p>
                 section += "  </tbody>\n</table>\n</div>\n"
 
             links = [f'<a href="{html.escape(report["filename"].name)}">All rows (TSV)</a>']
-            alignment_viewer = self.outdir / f"P{partition}.initial.html"
+            alignment_viewer = report["alignment"].with_suffix(".html")
             if alignment_viewer.exists():
                 links.append(f'<a href="{alignment_viewer.name}">Alignment viewer</a>')
             section += "<p>" + " · ".join(links) + "</p>\n"
