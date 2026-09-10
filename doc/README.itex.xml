@@ -1065,6 +1065,43 @@ option.  For example:
 <screen><prompt>%</prompt> bpy-summarize --skip=<replaceable>iterations</replaceable> --verbose</screen>
     </para>
 
+    <section xml:id="character-properties"><info><title>Character properties</title></info>
+
+      <para>Character properties describe quantities such as the substitution rate of each observed letter.
+      For codon models, a letter is a whole codon; properties can include its $\omega$ value and
+      probability of positive selection. Which properties are available depends on the model.</para>
+
+      <para>Properties belong to letters, not alignment columns. A letter keeps its identity as
+      the alignment changes: its sequence name and position in the ungapped sequence identify it.
+      Property estimates account for the sampled alignments. Letters displayed in the same column
+      can therefore have different estimates. The alignment used to display the results need not
+      have been held fixed during the analysis.</para>
+
+      <para>For example, run a model with variation in rate among sites:</para>
+<screen><prompt>%</prompt> bali-phy <replaceable>sequences</replaceable>.fasta -S 'GTR +> ASRV.Gamma'</screen>
+      <para>Run independent chains and check their mixing and convergence
+      (<xref linkend="mixing_and_convergence"/>). Summarize their output directories after
+      discarding the first <replaceable>burnin</replaceable> iterations of each run:</para>
+<screen><prompt>%</prompt> bpy-summarize --skip=<replaceable>burnin</replaceable> <replaceable>run-1</replaceable>/ <replaceable>run-2</replaceable>/</screen>
+      <para>Open <filename>Results/index.html</filename> and follow a partition's alignment link.
+      Choose <literal>rate</literal> in the property viewer and point to a letter to see its
+      estimates. The standard deviation measures uncertainty about the property's value, not
+      the sampling error of its estimated mean. The alignment uncertainty overlay shows
+      uncertainty about which letters align.</para>
+
+      <para>Supported properties are logged automatically in
+      <filename>C1.P1.site-property-samples.jsonl</filename> for partition 1, and similarly for
+      other partitions. To export a table using an alignment of your choice, use
+      <command>character-properties</command>:</para>
+<screen><prompt>%</prompt> character-properties summarize <replaceable>run-1</replaceable>/C1.P1.site-property-samples.jsonl \
+    <replaceable>run-2</replaceable>/C1.P1.site-property-samples.jsonl --skip=<replaceable>burnin</replaceable> > properties.json
+<prompt>%</prompt> character-properties report properties.json <replaceable>alignment</replaceable>.fasta rate --format=tsv > rates.tsv</screen>
+      <para>This table summarizes the per-letter rate estimates within each alignment column.
+      Sequence names and ungapped sequences must match the analyzed data. Sequence positions
+      identify letters; column numbers refer only to the alignment used for display. See
+      <command>character-properties report --help</command> for filtering and reporting options.</para>
+    </section>
+
     <section><info><title>Meaning of generated files</title></info>
       
     <para>The <filename>Results/</filename> directory will contain
