@@ -30,6 +30,86 @@ class FakeRun:
 
 
 class BPYSummarizePropertyTests(unittest.TestCase):
+    # Branch category usage controls global conditional tables, not character-level selection.
+    # Check ordinary and missing logged fields here; native tests cover filtering calculations.
+    # Remove this group with branch-model reporting.
+    def test_branch_model_summaries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            analysis = self.make_analysis(directory, [])
+            run = BAliPhyRun.__new__(BAliPhyRun)
+            run.dir = directory
+            analysis.mcmc_runs = [run]
+            analysis.get_smodels = lambda: [{"main": "|w:GY94(omega=w)| +> BranchModel_test"}]
+            analysis.get_smodel_indices = lambda: [0]
+            analysis.get_log_files = lambda: [directory / "C1.log"]
+            mapping = {f"S1/BranchModel_test:omegas[{i+1}]": f"w{i}" for i in range(3)}
+            mapping["S1/BranchModel_test:hypothesis"] = "h"
+            mapping.update({f"S1/BranchModel_test:LogOddsBranchHypothesis[{i}]": f"support{i}"
+                            for i in range(3)})
+            analysis.get_column_name_map = lambda: mapping
+            analysis.model_support_statistics = {f"support{i}": {"posterior_probability": "0.333",
+                                                                 "log_odds": "-0.693"} for i in range(3)}
+            metadata = directory / "C1.branch-category-usage.json"
+            metadata.write_text(json.dumps({"version": 1, "substitution_models": [1],
+                                             "used_categories": [[0], [0, 1], [0, 2]]}))
+            commands = []
+
+            # Supply just the descriptive output; the native statreport tests check its calculations.
+            def execute(command, **kwargs):
+                commands.append(command)
+                h = int(next(c for c in command if c.startswith("--condition=")).rsplit("=", 1)[1])
+                n = 0 if h == 2 else 4
+                fields = [str(c)[len("--select="):] for c in command if str(c).startswith("--select=")]
+                text = f"Matching samples [1] = {n}\nMatching samples = {n}\n"
+                text += ''.join(f'{f} = ' + ('0.25' if n else '[no matching samples]') + '\n' for f in fields)
+                kwargs["outfile"].write_text(text)
+
+            analysis.exec_show = execute
+            analysis.summarize_branch_models()
+            self.assertIn("--select=w0", commands[0])
+            self.assertNotIn("--select=w1", commands[0])
+            self.assertNotIn("--select=w1", commands[2])
+            section = analysis.section_branch_models()
+            self.assertIn("No retained samples", section)
+            self.assertIn("0.333", section)
+            self.assertNotIn("Category usage is unavailable", section)
+            del mapping["S1/BranchModel_test:omegas[2]"]
+            analysis.summarize_branch_models()
+            self.assertIn("used categories 1; their estimates are unavailable", analysis.section_branch_models())
+            self.assertNotIn("--select=w1", commands[4])
+            mapping["S1/BranchModel_test:omegas[2]"] = "w1"
+            del mapping["S1/BranchModel_test:hypothesis"]
+            analysis.summarize_branch_models()
+            self.assertIn("hypothesis field was not logged", analysis.section_branch_models())
+            self.assertIn("0.333", analysis.section_branch_models())
+            self.assertEqual(len(commands), 6)
+            mapping["S1/BranchModel_test:hypothesis"] = "h"
+            saved_mapping = mapping.copy()
+            mapping = {k: v for k, v in mapping.items() if ':omegas[' not in k}
+            analysis.summarize_branch_models()
+            self.assertIn("Category ω values were not logged", analysis.section_branch_models())
+            self.assertEqual(len(commands), 6)
+            mapping = saved_mapping
+            metadata.unlink()
+            analysis.summarize_branch_models()
+            self.assertIn("--select=w2", commands[6])
+            self.assertIn("Category usage is unavailable", analysis.section_branch_models())
+
+            analysis.get_smodels = lambda: [{"main": "|w:GY94(omega=w)| +> BranchModel"}]
+            mapping = {"S1/BranchModel:omegas[1]": "w0"}
+            analysis.mean, analysis.stddev = {}, {}
+            analysis.median, analysis.constants = {"w0": "0.25"}, {"w0"}
+            analysis.CI_low, analysis.CI_high = {}, {}
+            analysis.summarize_branch_models()
+            self.assertEqual(len(commands), 9)
+            self.assertNotIn("Category usage is unavailable", analysis.section_branch_models())
+            mapping = {}
+            analysis.summarize_branch_models()
+            self.assertIn("Category ω values were not logged", analysis.section_branch_models())
+            analysis.get_smodels = lambda: [{"main": "BranchSite"}, {"main": "BranchModel +> gamma"}]
+            self.assertEqual(analysis.branch_model_kinds(), {})
+
     # Construct only the analysis state needed by the independently testable seams.
     def make_analysis(self, directory, partition_files):
         analysis = Analysis.__new__(Analysis)

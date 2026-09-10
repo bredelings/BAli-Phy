@@ -12,6 +12,26 @@
 
 # DESCRIPTION
 
+For `BranchModel`, the Branch models section summarizes category ω values. For `BranchModel_test`,
+it also reports Rao–Blackwellized hypothesis support and ω summaries conditional on each hypothesis.
+Conditional tables include matching-sample counts, but no autocorrelation or convergence diagnostics;
+the ordinary scalar table retains diagnostics on unfiltered parameter values.
+
+The tables use the ordinary logged `omegas` and `hypothesis` fields. When a model uses
+`get_state(branch_category_vectors)`, the generated analysis also writes
+`C1.branch-category-usage.json` once. Matching metadata across chains lets the report omit unused
+categories from each conditional table. Explicit `branchCats` may lack that metadata; in that case
+all logged categories are shown with a warning. Ordinary `BranchModel` does not need usage metadata.
+
+Under the default independent priors, an unused ω retains its prior distribution conditional on
+that hypothesis. Unconditional category summaries therefore include prior draws from hypotheses
+where the category is unused. Category properties describe model categories, not variation among
+sites; branch-model category properties are not presented as site-selection tables.
+
+Fixed or externally defined arguments may not have these model-local fields in the log. The report
+explains which estimates are unavailable and retains available hypothesis support and ordinary
+scalar summaries. Branch-specific summaries and tree coloring are not provided by this section.
+
 Generate an HTML report summarizing bali-phy runs.
 
 When every chain contains a `C1.PN.site-property-samples.jsonl` stream for a partition,

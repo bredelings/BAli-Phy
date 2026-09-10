@@ -893,6 +893,7 @@ class Analysis(object):
 
         if self.has_parameters():
             self.summarize_numerical_parameters()
+            self.summarize_branch_models()
         if self.has_trees():
             self.sampled_topology_count = self.summarize_topology_distribution()
             if self.node_bubbles:
@@ -1323,6 +1324,168 @@ class Analysis(object):
             setattr(self, name, values)
 
         print("done.")
+
+    # Match the outer displayed constructor, not arbitrary occurrences inside a composite model.
+    def branch_model_kinds(self):
+        models = self.get_smodels() or []
+        kinds = {}
+        for index, model in enumerate(models, 1):
+            match = re.search(r'(?:^|\+>\s*)(BranchModel(?:_test)?)\s*$', model["main"])
+            if match:
+                kinds[index] = match[1]
+        return kinds
+
+    # Only matching per-chain metadata permits automatic omission; absent metadata is not an error.
+    def branch_category_usage(self, smodel, hypotheses):
+        usages = []
+        for run in self.mcmc_runs:
+            filename = run.get_dir() / "C1.branch-category-usage.json"
+            if not filename.exists():
+                usages.append(None)
+                continue
+            data = get_json_from_file(filename)
+            if not isinstance(data, dict):
+                raise ValueError(f"Invalid branch-category metadata in {filename}")
+            models = data.get("substitution_models")
+            usage = data.get("used_categories")
+            if (type(data.get("version")) is not int or data["version"] != 1 or not isinstance(models, list)
+                    or any(type(n) is not int or n < 1 or n > len(self.get_smodels()) for n in models)
+                    or len(set(models)) != len(models)
+                    or not isinstance(usage, list) or not usage):
+                raise ValueError(f"Invalid branch-category metadata in {filename}")
+            if smodel not in models:
+                usages.append(None)
+                continue
+            if len(usage) != len(hypotheses):
+                raise ValueError(f"Hypothesis count differs for S{smodel} in {filename}")
+            for categories in usage:
+                if (not isinstance(categories, list)
+                        or any(type(c) is not int or c < 0 for c in categories)
+                        or categories != sorted(set(categories))):
+                    raise ValueError(f"Invalid categories for S{smodel} in {filename}")
+            usages.append(usage)
+        if not usages or any(u is None for u in usages) or not all_same(usages):
+            return None
+        return usages[0]
+
+    # Reuse unconditional summaries and regenerate only the hypothesis-filtered reports.
+    # Full logged paths keep shared parameters and model instances distinct.
+    def summarize_branch_models(self):
+        self.branch_model_reports = []
+        mapping = self.get_column_name_map() or {}
+        for smodel, kind in self.branch_model_kinds().items():
+            prefix = f"S{smodel}/{kind}:"
+            omegas = {}
+            support = {}
+            for full, short in mapping.items():
+                if not full.startswith(prefix):
+                    continue
+                field = full[len(prefix):]
+                match = re.fullmatch(r'omegas\[([1-9][0-9]*)\]', field)
+                if match:
+                    omegas[int(match[1]) - 1] = short
+                match = re.fullmatch(r'LogOddsBranchHypothesis\[([0-9]+)\]', field)
+                if match:
+                    support[int(match[1])] = self.model_support_statistics.get(short, {})
+            selector = mapping.get(prefix + "hypothesis")
+            hypotheses = sorted(support)
+            if hypotheses and hypotheses != list(range(len(hypotheses))):
+                raise ValueError(f"Nonconsecutive hypotheses for S{smodel}")
+            usage = (self.branch_category_usage(smodel, hypotheses)
+                     if kind == "BranchModel_test" and hypotheses else None)
+            report = {"smodel": smodel, "kind": kind, "omegas": omegas,
+                      "support": support, "usage": usage, "selector": selector, "conditional": {}}
+            self.branch_model_reports.append(report)
+            if kind != "BranchModel_test" or not omegas or selector is None:
+                continue
+            for hypothesis in hypotheses:
+                used = usage[hypothesis] if usage is not None else sorted(omegas)
+                selected = [c for c in used if c in omegas]
+                filename = self.outdir / f"S{smodel}.hypothesis-{hypothesis}.Report"
+                command = ["statreport", "--mean", "--median", f"--condition={selector}={hypothesis}"]
+                command += [f"--select={omegas[c]}" for c in selected]
+                # Even without logged used categories, request the selector for matching counts
+                # instead of letting an empty --select list request every log column.
+                if not selected:
+                    command.append(f"--select={selector}")
+                if self.burnin is not None:
+                    command.append(f"--skip={self.burnin}")
+                if self.subsample is not None and self.subsample != 1:
+                    command.append(f"--subsample={self.subsample}")
+                if self.until is not None:
+                    command.append(f"--until={self.until}")
+                command += self.get_log_files()
+                self.exec_show(command, outfile=filename)
+                report["conditional"][hypothesis] = {
+                    "filename": filename, "categories": {c: omegas[c] for c in selected},
+                    "missing": [c for c in used if c not in omegas],
+                    "statistics": parse_scalar_report(filename)}
+
+    # Format global category estimates, never interpreting categories as branches or alignment sites.
+    def branch_omega_table(self, omegas, statistics):
+        section = '<table class="backlit2"><thead><tr><th>Category</th><th>Mean</th><th>SD</th>'
+        section += '<th>Median</th><th>95% credible interval</th></tr></thead><tbody>\n'
+        for category, field in sorted(omegas.items()):
+            median = statistics["median"].get(field, "NA")
+            constant = field in statistics["constants"]
+            mean = median if constant else statistics["mean"].get(field, "NA")
+            sd = "—" if constant else statistics["stddev"].get(field, "NA")
+            interval = "—" if constant else (
+                f'({statistics["CI_low"].get(field, "NA")}, {statistics["CI_high"].get(field, "NA")})')
+            section += '<tr>' + ''.join(f'<td>{html.escape(str(v))}</td>'
+                                       for v in (category, mean, sd, median, interval)) + '</tr>\n'
+        return section + '</tbody></table>\n'
+
+    # Present model support separately from category estimates conditional on the sampled hypothesis.
+    def section_branch_models(self):
+        section = '<section id="branch-models" class="report-section"><h2>Branch models</h2>\n'
+        section += ('<p>Category ω values describe model categories, not individual branches or '
+                    'variation among sites. Category properties in the alignment viewer have the same meaning.</p>\n')
+        for report in self.branch_model_reports:
+            smodel = report["smodel"]
+            partitions = [str(i + 1) for i, s in enumerate(self.get_smodel_indices()) if s == smodel - 1]
+            section += f'<h3><a href="#S{smodel}">S{smodel}</a> — {report["kind"]}</h3>\n'
+            section += '<p>Partitions: ' + ', '.join(f'<a href="#P{p}">P{p}</a>' for p in partitions) + '</p>\n'
+            if report["kind"] == "BranchModel":
+                if report["omegas"]:
+                    section += self.branch_omega_table(report["omegas"], vars(self))
+                else:
+                    section += '<p>Category ω values were not logged; see the ordinary scalar summaries.</p>\n'
+                continue
+            section += '<h4>Hypothesis support</h4>\n'
+            section += ('<p>Probabilities are Rao–Blackwellized estimates. Log odds compare each hypothesis '
+                        'with all other hypotheses combined; they are not Bayes factors.</p>\n')
+            section += ('<table class="backlit2"><thead><tr><th>Hypothesis</th><th>Posterior probability</th>'
+                        '<th>Posterior log odds</th><th>Used categories</th></tr></thead><tbody>\n')
+            for h, support in sorted(report["support"].items()):
+                categories = ', '.join(map(str, report["usage"][h])) if report["usage"] is not None else 'Unknown'
+                cells = (h, support.get("posterior_probability", "NA"), support.get("log_odds", "NA"), categories)
+                section += '<tr>' + ''.join(f'<td>{html.escape(str(c))}</td>' for c in cells) + '</tr>\n'
+            section += '</tbody></table>\n'
+            section += '<p>Unconditional category summaries include samples where that category is unused.</p>\n'
+            if report["usage"] is None:
+                section += '<p>Category usage is unavailable; some entries may be unused.</p>\n'
+            if not report["conditional"]:
+                if not report["omegas"]:
+                    section += '<p>Category ω values were not logged; conditional estimates are unavailable.</p>\n'
+                if report["selector"] is None:
+                    section += '<p>The hypothesis field was not logged; conditional estimates are unavailable.</p>\n'
+            for h, conditional in sorted(report["conditional"].items()):
+                statistics = conditional["statistics"]
+                counts = statistics["matching_samples"]
+                section += f'<h4>ω conditional on hypothesis {h}</h4>\n'
+                if conditional["missing"]:
+                    missing = ', '.join(map(str, conditional["missing"]))
+                    section += f'<p>ω values were not logged for used categories {missing}; their estimates are unavailable.</p>\n'
+                chain_counts = ', '.join(f'chain {c}: {n}' for c, n in counts.items() if c != "pooled")
+                section += f'<p>Matching samples: {counts.get("pooled", 0)} ({chain_counts}).</p>\n'
+                if counts.get("pooled", 0):
+                    section += self.branch_omega_table(conditional["categories"], statistics)
+                else:
+                    section += '<p>No retained samples.</p>\n'
+                name = html.escape(conditional["filename"].name)
+                section += f'<p><a href="{name}">Complete conditional report</a></p>\n'
+        return section + '</section>\n'
 
     # Recover positive-selection statistics' full model paths and the partitions using each model.
     # The column-name mapping is required because statreport intentionally shows Tracer-friendly names.
@@ -1787,6 +1950,11 @@ class Analysis(object):
             )
             conditioned = summary_data.get("conditioned", {}).get("positiveSelectionInModel")
             for property_name in properties:
+                branch_models = {r["smodel"] for r in getattr(self, "branch_model_reports", [])}
+                if (branch_models and re.fullmatch(r'branch[0-9]+-posSelection', property_name)
+                        and self.get_smodel_indices()[partition] is not None
+                        and self.get_smodel_indices()[partition] + 1 in branch_models):
+                    continue
                 use_condition = conditioned is not None and (
                     conditioned["retained_samples"] == 0 or property_name in conditioned["properties"]
                 )
@@ -2081,6 +2249,8 @@ class Analysis(object):
                 output += self.section_data_and_model()
             if self.has_parameters():
                 output += self.section_scalar_variables()
+                if getattr(self, "branch_model_reports", []):
+                    output += self.section_branch_models()
             if self.has_positive_selection():
                 output += self.section_positive_selection()
             if self.has_trees():
@@ -2321,6 +2491,7 @@ class Analysis(object):
             ("data", "Overview", self.has_model()),
             ("parameters", "Parameters", self.has_parameters()),
             ("positive-selection", "Positive selection", self.has_positive_selection()),
+            ("branch-models", "Branch models", bool(getattr(self, "branch_model_reports", []))),
             ("topology", "Trees", self.has_trees()),
             ("alignment", "Alignments", self.has_alignments()),
             ("mixing", "Convergence &amp; mixing", self.has_mixing_results()),
@@ -2350,7 +2521,7 @@ class Analysis(object):
   <tbody>
 """
         for i in range(self.n_partitions()):
-            section +=  '<tr>\n'
+            section += f'<tr id="P{i+1}">\n'
             section += f'  <th scope="row">{i+1}</th>\n'
             section += f'  <td>{html.escape(str(self.get_input_files()[i]))}</td>\n'
 
