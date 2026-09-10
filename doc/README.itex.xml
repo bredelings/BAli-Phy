@@ -126,9 +126,9 @@
         the command line.  The launchers recognize either <command>py -3</command> or
         <command>python</command>.</para>
 
-      <para><application>R</application> and <application>gnuplot</application> are optional.
-        When they are installed and available on <envar>Path</envar>,
-        <command>bpy-summarize</command> uses them to generate additional plots.  Without them,
+      <para><application>R</application> is optional.
+        When it is installed and available on <envar>Path</envar>,
+        <command>bpy-summarize</command> uses it to generate additional plots.  Without it,
         it still produces the main HTML report, summary trees, alignments, and diagnostics,
         and reports which optional figures were omitted.</para>
 
@@ -172,7 +172,7 @@ If you install with Homebrew, you don't need to do anything extra to put bali-ph
 <prompt>%</prompt> <userinput>conda activate bali-phy</userinput></screen>
       Check that the executable runs:
 <screen><prompt>%</prompt> <userinput>bali-phy --version</userinput></screen>
-      Bioconda packages BAli-Phy together with the programs used by <command>bpy-summarize</command>, including R and gnuplot.  On Apple Silicon, use BAli-Phy 4.2 or newer; earlier Bioconda builds have a platform-specific model-parsing bug.
+      Bioconda packages BAli-Phy together with programs used by <command>bpy-summarize</command>, including R.  On Apple Silicon, use BAli-Phy 4.2 or newer; earlier Bioconda builds have a platform-specific model-parsing bug.
     </para>
     </section>
 
@@ -201,9 +201,7 @@ Only remove this attribute from an archive that you trust.  The <command>curl</c
 
     <section><info><title>Install programs used by <command>bpy-summarize</command> using Homebrew</title></info>
     <para>
-      You can install <application>gnuplot</application> via Homebrew:
-<screen><prompt>%</prompt> <userinput> brew install gnuplot</userinput></screen> 
-You can install <application>R</application> via Homebrew:
+      You can install <application>R</application> via Homebrew:
 <screen><prompt>%</prompt> <userinput> brew install r</userinput></screen>
 </para>
     </section>
@@ -249,9 +247,8 @@ You can install <application>R</application> via Homebrew:
     </section>
 
     <section><info><title>Install programs used by <command>bpy-summarize</command></title></info>
-    <para>If you have Debian or Ubuntu Linux, you can install other recommended programs by typing:
-    <screen><prompt>%</prompt> <userinput>sudo apt-get install gnuplot</userinput>
-<prompt>%</prompt> <userinput>sudo apt-get install r-base</userinput></screen>
+    <para>On Debian or Ubuntu Linux, install <application>R</application> with:
+    <screen><prompt>%</prompt> <userinput>sudo apt-get install r-base</userinput></screen>
     </para>
     </section>
     <section><info><title>Install programs used to view the results</title></info>
@@ -3830,7 +3827,7 @@ If your version of Debian or Ubuntu is recent enough to contain meson version 1.
 
 <para>
 Otherwise you can install meson through pip3:
-<screen><prompt>%</prompt> <userinput>sudo apt-get install python3 python3-pip ninja</userinput>
+<screen><prompt>%</prompt> <userinput>sudo apt-get install python3 python3-pip python3-venv ninja-build</userinput>
 <prompt>%</prompt> <userinput>python3 -m venv meson</userinput>
 <prompt>%</prompt> <userinput>source meson/bin/activate</userinput>
 <prompt>%</prompt> <userinput>pip3 install meson</userinput>
@@ -4164,19 +4161,11 @@ your <command>bali-phy</command> runs on that computer.
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>Why does <command>bpy-summarize</command> say "Program 'gnuplot' not found.
-	    Some graphs will not be generated"?</para></question>
+	  <question><para>Why does <command>bpy-summarize</command> say "Program 'R' not found.  Some report plots will not be generated"?</para></question>
 	  <answer>
-	    <para>This is because you have not installed <application>gnuplot</application>.  This
-	      is not a fatal error message; it means that pictures of partition support and SRQ plots
-	      will not be generated automatically.</para>
-	  </answer>
-	</qandaentry>
-
-	<qandaentry>
-	  <question><para>Why does <command>bpy-summarize</command> say "Program 'R' not found.  Some mixing graphs will not be generated"?</para></question>
-	  <answer>
-	    <para>This is because you have not installed <application>R</application>.  This is not a fatal error message, it just means that a plot showing differences in clade probabilities between runs will not be generated.</para>
+	    <para><application>R</application> is not installed or is not on your command search path.
+            The report will omit split-support plots, SRQ plots, between-run comparisons,
+            and tree-distance plots. Numerical summaries are still produced.</para>
 	  </answer>
 	</qandaentry>
 
