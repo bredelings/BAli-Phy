@@ -4,8 +4,9 @@
                 xmlns:db="http://docbook.org/ns/docbook"
                 xmlns:f="http://docbook.org/ns/docbook/functions"
                 xmlns:h="http://www.w3.org/1999/xhtml"
+                xmlns:t="http://docbook.org/ns/docbook/templates"
                 xmlns="http://www.w3.org/1999/xhtml"
-                exclude-result-prefixes="m db f h"
+                exclude-result-prefixes="m db f h t"
                 version="3.0">
 
   <!-- The release's XML catalog resolves this import to the local installation. -->
@@ -30,12 +31,32 @@
   <xsl:param name="verbatim-trim-leading-blank-lines" select="'false'"/>
   <xsl:param name="verbatim-trim-trailing-blank-lines" select="'false'"/>
 
-  <!-- Highlight text without xslTNG's line embellishments, which insert spaces on blank lines.
+  <!-- Use the standard inline renderer to retain links, IDs, and replaceable markup,
+       adding a language class so inline expressions share the listing's token colors. -->
+  <xsl:template match="db:code[@language='bali-phy-model']" mode="m:docbook">
+    <xsl:call-template name="t:inline">
+      <xsl:with-param name="namemap" select="'code'"/>
+      <xsl:with-param name="local-name-as-class" select="false()"/>
+      <xsl:with-param name="class" select="'language-bali-phy-model'"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <!-- Bare inline identifiers have no token colors; avoid a Pygments process for each one.
+       Higher priority keeps these and whitespace-only text out of the highlighting template. -->
+  <xsl:template match="db:code[@language='bali-phy-model']/text()
+                       [matches(., '^\s*([A-Za-z_][A-Za-z_0-9.]*)?\s*$')]"
+                mode="m:docbook" priority="2">
+    <xsl:value-of select="."/>
+  </xsl:template>
+
+  <!-- Highlight direct text only, leaving nested replaceable elements in their original style.
+       Avoid xslTNG's line embellishments, which insert spaces on blank lines.
        Supply a final newline so the lexer recognizes a final // comment, then remove it
        from the formatted result only if absent in the source.
        Java approximates the model language's strings, numbers, operators, and comments;
        replace it if a dedicated BAli-Phy model-language lexer becomes available. -->
-  <xsl:template match="db:programlisting[@language='bali-phy-model']/text()" mode="m:docbook">
+  <xsl:template match="db:programlisting[@language='bali-phy-model']/text()
+                       |db:code[@language='bali-phy-model']/text()" mode="m:docbook">
     <xsl:variable name="tokens" select="f:syntax-highlight(string(.),
                    map { 'language': 'java' }, map { 'stripnl': 'false', 'ensurenl': 'true' })"/>
     <!-- Java treats square brackets as operators. Split only operator spans so brackets

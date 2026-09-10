@@ -1330,7 +1330,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	  <tbody>
 	    <row>
-	      <entry><userinput>JC69</userinput></entry>
+	      <entry><code language="bali-phy-model">JC69</code></entry>
 	      <entry>0</entry>
 	      <entry><para>Equal rates and equal base frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1016/B978-1-4832-3211-9.50009-7">(Jukes and Cantor, 1969)</link>
@@ -1338,7 +1338,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>K80</userinput></entry>
+	      <entry><code language="bali-phy-model">K80</code></entry>
 	      <entry>1</entry>
 	      <entry><para>Unequal transition &amp; transversion rates, equal base frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01731581">(Kimura, 1980)</link>
@@ -1346,7 +1346,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>F81</userinput></entry>
+	      <entry><code language="bali-phy-model">F81</code></entry>
 	      <entry>3</entry>
 	      <entry><para>Equal exchangeabilities, unequal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007%2FBF01734359">
@@ -1356,7 +1356,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>HKY85</userinput></entry>
+	      <entry><code language="bali-phy-model">HKY85</code></entry>
 	      <entry>4</entry>
 	      <entry><para>Unequal Transition &amp; transversion rates, unequal base frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF02101694">
@@ -1366,7 +1366,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>TN93</userinput></entry>
+	      <entry><code language="bali-phy-model">TN93</code></entry>
 	      <entry>5</entry>
 	      <entry>
 		<para>Unequal rates for transitions (purines), transitions (pyrimidines) and transversions, unequal base frequencies.</para>
@@ -1377,7 +1377,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>GTR</userinput></entry>
+	      <entry><code language="bali-phy-model">GTR</code></entry>
 	      <entry>8</entry>
 	      <entry><para>Unequal exchangeabilities, unequal frequencies.</para>
 	      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.damtp.cam.ac.uk/user/st321/CV_&amp;_Publications_files/STpapers-pdf/T86.pdf">
@@ -1387,14 +1387,14 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>nonRev</userinput></entry>
+	      <entry><code language="bali-phy-model">nonRev</code></entry>
 	      <entry>11</entry>
 	      <entry><para>Unequal rates.  Requires a rooted tree.</para>
 	      </entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>nonEq</userinput></entry>
+	      <entry><code language="bali-phy-model">nonEq</code></entry>
 	      <entry>14</entry>
 	      <entry><para>Unequal rates, unequal initial frequencies. Requires a rooted tree.</para>
 	      </entry>
@@ -1406,7 +1406,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       </section>
     <section xml:id="nucleotide-frequencies">
       <info><title>Frequencies</title></info>
-      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
       <programlisting language="bali-phy-model">GTR(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})</programlisting>
       <para>Frequencies can also be specified using functions:</para>
@@ -1428,7 +1428,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	  <tbody>
 	    <row>
-	      <entry><userinput>Frequencies.uniform</userinput></entry>
+	      <entry><code language="bali-phy-model">Frequencies.uniform</code></entry>
 	      <entry>0</entry>
 	      <entry>Equal frequencies</entry>
 	    </row>
@@ -1464,7 +1464,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  
 	  <tbody>
 	    <row>
-	      <entry><userinput>JC69</userinput></entry>
+	      <entry><code language="bali-phy-model">JC69</code></entry>
 	      <entry>0</entry>
 	      <entry>1</entry>
 	      <entry><para>Equal rates and equal frequencies.</para>
@@ -1472,7 +1472,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>F81</userinput></entry>
+	      <entry><code language="bali-phy-model">F81</code></entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
 	      <entry><para>Equal exchangeabilities, unequal frequencies.</para>
@@ -1484,7 +1484,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>JTT&nbsp;+>&nbsp;F</userinput></para>
+		<para><code language="bali-phy-model">JTT&nbsp;+>&nbsp;F</code></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1498,7 +1498,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>WAG&nbsp;+>&nbsp;F</userinput></para>
+		<para><code language="bali-phy-model">WAG&nbsp;+>&nbsp;F</code></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1512,7 +1512,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>LG&nbsp;+>&nbsp;F</userinput></para>
+		<para><code language="bali-phy-model">LG&nbsp;+>&nbsp;F</code></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1525,7 +1525,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>LG4M</userinput></entry>
+	      <entry><code language="bali-phy-model">LG4M</code></entry>
 	      <entry>1</entry>
 	      <entry>4</entry>
 	      <entry>
@@ -1538,7 +1538,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>LG4X</userinput></entry>
+	      <entry><code language="bali-phy-model">LG4X</code></entry>
 	      <entry>6</entry>
 	      <entry>4</entry>
 	      <entry>
@@ -1552,7 +1552,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>UL2</userinput></para>
+		<para><code language="bali-phy-model">UL2</code></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>2</entry>
@@ -1566,7 +1566,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>C10</userinput></para>
+		<para><code language="bali-phy-model">C10</code></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>10</entry>
@@ -1580,7 +1580,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>C20</userinput></para>
+		<para><code language="bali-phy-model">C20</code></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>20</entry>
@@ -1594,7 +1594,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>C30</userinput></para>
+		<para><code language="bali-phy-model">C30</code></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>30</entry>
@@ -1608,7 +1608,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>C40</userinput></para>
+		<para><code language="bali-phy-model">C40</code></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>40</entry>
@@ -1622,7 +1622,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>C50</userinput></para>
+		<para><code language="bali-phy-model">C50</code></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>50</entry>
@@ -1636,7 +1636,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>C60</userinput></para>
+		<para><code language="bali-phy-model">C60</code></para>
 	      </entry>
 	      <entry>0</entry>
 	      <entry>60</entry>
@@ -1650,7 +1650,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><userinput>Empirical(<replaceable>file</replaceable>)&nbsp;+>&nbsp;F</userinput></para>
+		<para><code language="bali-phy-model">Empirical(<replaceable>file</replaceable>)&nbsp;+>&nbsp;F</code></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1659,7 +1659,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>GTR</userinput></entry>
+	      <entry><code language="bali-phy-model">GTR</code></entry>
 	      <entry>208</entry>
 	      <entry>1</entry>
 	      <entry><para>Unequal exchangeabilities, unequal frequencies.</para>
@@ -1670,7 +1670,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>nonRev</userinput></entry>
+	      <entry><code language="bali-phy-model">nonRev</code></entry>
 	      <entry>379</entry>
 	      <entry>1</entry>
 	      <entry><para>Unequal rates.  Requires a rooted tree.</para>
@@ -1678,7 +1678,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>nonEq</userinput></entry>
+	      <entry><code language="bali-phy-model">nonEq</code></entry>
 	      <entry>398</entry>
 	      <entry>1</entry>
 	      <entry><para>Unequal rates, unequal initial frequencies. Requires a rooted tree.</para>
@@ -1691,7 +1691,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       </section>
     <section xml:id="amino-acid-frequencies">
       <info><title>Frequencies</title></info>
-      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency:</para>
       <programlisting language="bali-phy-model">WAG +> F({"A":0.047, "R":0.19,...})</programlisting>
       <para>Frequencies can also be specified using functions:</para>
@@ -1712,19 +1712,19 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	  <tbody>
 	    <row>
-	      <entry><userinput>Frequencies.uniform</userinput></entry>
+	      <entry><code language="bali-phy-model">Frequencies.uniform</code></entry>
 	      <entry>0</entry>
 	      <entry>Equal frequencies</entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>WAG_freq</userinput></entry>
+	      <entry><code language="bali-phy-model">WAG_freq</code></entry>
 	      <entry>0</entry>
 	      <entry>The constant amino-acid frequencies from the WAG paper.</entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>LG_freq</userinput></entry>
+	      <entry><code language="bali-phy-model">LG_freq</code></entry>
 	      <entry>0</entry>
 	      <entry>The constant amino-acid frequencies from the LG08 paper.</entry>
 	    </row>
@@ -1732,7 +1732,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	</tgroup>
       </informaltable>
 	  
-      <para>The <userinput>+> FE</userinput> model is shorthand for <userinput>+> F(pi=Frequencies.uniform)</userinput>:</para>
+      <para>The <code language="bali-phy-model">+> FE</code> model is shorthand for <code language="bali-phy-model">+> F(pi=Frequencies.uniform)</code>:</para>
       <para>
 	<programlisting language="bali-phy-model">WAG +> FE</programlisting>
       </para>
@@ -1744,7 +1744,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <section xml:id="doublet_models">
       <info><title>Doublet models (RNA stems)</title></info>
       <para>The doublets alphabet consists of 16 RNA dinucleotides.  It is used to model RNA stems, where two nucleotides matched in the RNA secondary structure are highly correlated.</para>
-      <para>The default substitution model for doublets is <userinput>TN93_sym&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;F</userinput>.</para>
+      <para>The default substitution model for doublets is <code language="bali-phy-model">TN93_sym&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;F</code>.</para>
       <section xml:id="doublet-data">
 	<info><title>Doublet data</title></info>
 	<para>BAli-Phy does not allow specifying which nucleotides are paired either with a string like <userinput>((.))</userinput> or with a "pairs" file.  Instead you must manually extract the paired nucleotides and put them in their own partition (for stems), and then manually extract each loop and put it in its own partition.</para>
@@ -1767,7 +1767,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  
 	  <tbody>
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2</userinput></entry>
+	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2</code></entry>
 	      <entry>df(nuc_model)</entry>
 	      <entry>
 		<para>The same as <replaceable>nuc_model</replaceable>, but on dinucleotides instead of nucleotides.</para>
@@ -1777,7 +1777,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2&nbsp;+>&nbsp;MutSel</userinput></entry>
+	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2&nbsp;+>&nbsp;MutSel</code></entry>
 	      <entry>df(nuc_model)+15</entry>
 	      <entry>
 		<para>Mutation-selection model: neutral mutation follows <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns on dinucleotides.</para>
@@ -1786,7 +1786,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;F</userinput></entry>
+	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;F</code></entry>
 	      <entry>df(nuc_model)+15</entry>
 	      <entry><para>This model has separate frequencies for each dinucleotide.</para>
 	      <para>Simultaneous changes of both letters are <emphasis>not</emphasis> allowed.</para>
@@ -1794,7 +1794,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>RNA.m16a</replaceable></userinput></entry>
+	      <entry><code language="bali-phy-model"><replaceable>RNA.m16a</replaceable></code></entry>
 	      <entry>19</entry>
 	      <entry>
 		<para>This model has separate frequencies for each dinucleotide, and distinguishes between transitions and transversion between match states (including GU/UG).</para>
@@ -1813,7 +1813,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row -->
 
 	    <row>
-	      <entry><userinput>GTR</userinput></entry>
+	      <entry><code language="bali-phy-model">GTR</code></entry>
 	      <entry>134</entry>
 	      <entry><para>Unequal exchangeabilities, unequal frequencies.</para>
 	      <para>It is unlikely that you would want to use this model, since it has so many parameters.</para>
@@ -1824,14 +1824,14 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><userinput>nonRev</userinput></entry>
+	      <entry><code language="bali-phy-model">nonRev</code></entry>
 	      <entry>239</entry>
 	      <entry><para>Unequal rates.  Requires a rooted tree.</para>
 	      </entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>nonEq</userinput></entry>
+	      <entry><code language="bali-phy-model">nonEq</code></entry>
 	      <entry>254</entry>
 	      <entry><para>Unequal rates, unequal initial frequencies. Requires a rooted tree.</para>
 	      </entry>
@@ -1843,7 +1843,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       </section>
     <section xml:id="doublet-frequencies">
       <info><title>Frequencies</title></info>
-      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
       <programlisting language="bali-phy-model">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x2
 
@@ -1868,7 +1868,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	  <tbody>
 	    <row>
-	      <entry><userinput>Frequencies.uniform</userinput></entry>
+	      <entry><code language="bali-phy-model">Frequencies.uniform</code></entry>
 	      <entry>0</entry>
 	      <entry>Equal frequencies on dinucleotides</entry>
 	    </row>
@@ -1918,14 +1918,14 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	  
 	  <tbody>
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;F</userinput></entry>
+	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;F</code></entry>
 	      <entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
 	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix.</para>
 	      </entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3</userinput></entry>
+	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3</code></entry>
 	      <entry>df(<replaceable>nuc_model</replaceable>)</entry>
 	      <entry><para>MG94-style rate matrix constructed from nucleotide rate matrix.</para>
 	             <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on triplets, but not on codons.</para>
@@ -1940,7 +1940,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    </row -->
 
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3&nbsp;+>&nbsp;MutSel</userinput></entry>
+		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3&nbsp;+>&nbsp;MutSel</code></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
 		</entry>
@@ -1952,7 +1952,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
       </section>
     <section xml:id="triplet-frequencies">
       <info><title>Frequencies</title></info>
-      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
       <programlisting language="bali-phy-model">HKY85(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4}) +> x3</programlisting>
       <para>Frequencies can also be specified using functions:</para>
@@ -1974,19 +1974,19 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	  <tbody>
 	    <row>
-	      <entry><userinput>Frequencies.uniform</userinput></entry>
+	      <entry><code language="bali-phy-model">Frequencies.uniform</code></entry>
 	      <entry>0</entry>
 	      <entry>Equal frequencies</entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>F1x4</userinput></entry>
+	      <entry><code language="bali-phy-model">F1x4</code></entry>
 	      <entry>3</entry>
 	      <entry>Constructs triplet frequencies from independent nucleotide frequencies.</entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>F3x4</userinput></entry>
+	      <entry><code language="bali-phy-model">F3x4</code></entry>
 	      <entry>9</entry>
 	      <entry>Constructs triplet frequencies from independent nucleotide frequencies for each codon position.</entry>
 	    </row>
@@ -1994,7 +1994,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	  </tbody>
 	</tgroup>
       </informaltable>
-	<para>The <userinput>+> FE</userinput> model is shorthand for <userinput>+> F(pi=Frequencies.uniform)</userinput>:</para>
+	<para>The <code language="bali-phy-model">+> FE</code> model is shorthand for <code language="bali-phy-model">+> F(pi=Frequencies.uniform)</code>:</para>
 	<para>
 	  <programlisting language="bali-phy-model">HKY85_sym +> x3_sym +> FE</programlisting>
 	</para>
@@ -2027,7 +2027,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
 	    <tbody>
 	      <row>
-		<entry><userinput>GY94</userinput></entry>
+		<entry><code language="bali-phy-model">GY94</code></entry>
 		<entry>62</entry>
 		<entry><para>Model of dN/dS with a separate frequency for each codon.</para>
 		<para>Rate for changing a nucleotide depends on neighboring nucleotides.</para>
@@ -2038,7 +2038,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>GY94(pi=F1x4)</userinput></entry>
+		<entry><code language="bali-phy-model">GY94(pi=F1x4)</code></entry>
 		<entry>5</entry>
 		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
@@ -2048,7 +2048,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>GY94(pi=F3x4)</userinput></entry>
+		<entry><code language="bali-phy-model">GY94(pi=F3x4)</code></entry>
 		<entry>11</entry>
 		<entry><para>The GY94 model with codon frequencies constructed from nucleotide frequencies for each codon position.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
@@ -2058,7 +2058,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>GY94_ext(<replaceable>nucModel</replaceable>)</userinput></entry>
+		<entry><code language="bali-phy-model">GY94_ext(<replaceable>nucModel</replaceable>)</code></entry>
 		<entry>df(<replaceable>nucModel</replaceable>)+61</entry>
 		<entry><para>GY94 model extended with a generic nucleotide exchangeability matrix.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040153">
@@ -2068,7 +2068,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>MG94</userinput></entry>
+		<entry><code language="bali-phy-model">MG94</code></entry>
 		<entry>4</entry>
 		<entry>
 		  <para>Model of dN/dS with F81 as the neutral model.</para>
@@ -2080,7 +2080,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>MG94K</userinput></entry>
+		<entry><code language="bali-phy-model">MG94K</code></entry>
 		<entry>5</entry>
 		<entry><para>Model of dN/dS with HKY85 as the neutral model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
@@ -2090,7 +2090,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>MG94_ext(<replaceable>nucModel</replaceable>)</userinput></entry>
+		<entry><code language="bali-phy-model">MG94_ext(<replaceable>nucModel</replaceable>)</code></entry>
 		<entry>df(<replaceable>nucModel</replaceable>)+1</entry>
 		<entry><para>Model of dN/dS with <replaceable>nucModel</replaceable> as the neutral model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a040152">
@@ -2100,7 +2100,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>FMutSel</userinput></entry>
+		<entry><code language="bali-phy-model">FMutSel</code></entry>
 		<entry>65</entry>
 		<entry><para>MG94-like model with fitnesses for each codon.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msm284">
@@ -2110,7 +2110,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>FMutSel0</userinput></entry>
+		<entry><code language="bali-phy-model">FMutSel0</code></entry>
 		<entry>24</entry>
 		<entry><para>MG94-like model with fitnesses for each amino-acid.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msm284">
@@ -2120,7 +2120,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>BUSTED</userinput></entry>
+		<entry><code language="bali-phy-model">BUSTED</code></entry>
 		<entry>24</entry>
 		<entry><para>MG94-like model where each branch and site has a randomly chosen dN/dS category.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msv035">
@@ -2130,7 +2130,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput>BUSTED_S</userinput></entry>
+		<entry><code language="bali-phy-model">BUSTED_S</code></entry>
 		<entry>13</entry>
 		<entry><para>BUSTED model with synonymous rate variation.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/molbev/msaa037">
@@ -2154,23 +2154,23 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
           This allows you to change the underlying nucleotide model or add other modifications.
           </para>
 
-          <para>Unconstrained $\omega$ parameters default to <userinput>LogNormal(0,1)</userinput>,
+          <para>Unconstrained $\omega$ parameters default to <code language="bali-phy-model">LogNormal(0,1)</code>,
           giving equal prior probability below and above one. To restrict $\omega$ below one,
-          specify <userinput>omega~Uniform(0,1)</userinput>, for example
-          <userinput>GY94(omega~Uniform(0,1))</userinput>. Conserved categories in mixture models
+          specify <code language="bali-phy-model">omega~Uniform(0,1)</code>, for example
+          <code language="bali-phy-model">GY94(omega~Uniform(0,1))</code>. Conserved categories in mixture models
           retain their constrained priors.</para>
 
 	  <para>Here are some examples for how to construct classic codon models piecewise:
 	  <itemizedlist>
-	    <listitem><userinput>MG94</userinput> is equivalent to <userinput>F81 +> x3 +> dNdS</userinput>.</listitem>
-	    <listitem><userinput>MG94K</userinput> is equivalent to <userinput>HKY85 +> x3 +> dNdS</userinput>.</listitem>
-	    <listitem><userinput>GY94</userinput> is equivalent to <userinput>HKY85_sym +> x3_sym +> F +> dNdS</userinput>.</listitem>
-	    <listitem><userinput>FMutSel</userinput> is equivalent to <userinput>GTR +> x3 +> dNdS +> MutSel</userinput>.</listitem>
-	    <listitem><userinput>FMutSel0</userinput> is equivalent to <userinput>GTR +> x3 +> dNdS +> MutSelAA</userinput>.</listitem>
-            <listitem><userinput>M3</userinput> is equivalent to <userinput>|w: GY94(w)| +> M3</userinput>.</listitem>
-            <listitem><userinput>M3_test</userinput> is equivalent to <userinput>|w: GY94(w)| +> M3_test</userinput>.</listitem>
-	    <listitem><userinput>BUSTED</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture</userinput>.</listitem>
-	    <listitem><userinput>BUSTED_S</userinput> is equivalent to <userinput>|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture +> ASRV.Gamma(n=3)</userinput>.</listitem>
+	    <listitem><code language="bali-phy-model">MG94</code> is equivalent to <code language="bali-phy-model">F81 +> x3 +> dNdS</code>.</listitem>
+	    <listitem><code language="bali-phy-model">MG94K</code> is equivalent to <code language="bali-phy-model">HKY85 +> x3 +> dNdS</code>.</listitem>
+	    <listitem><code language="bali-phy-model">GY94</code> is equivalent to <code language="bali-phy-model">HKY85_sym +> x3_sym +> F +> dNdS</code>.</listitem>
+	    <listitem><code language="bali-phy-model">FMutSel</code> is equivalent to <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSel</code>.</listitem>
+	    <listitem><code language="bali-phy-model">FMutSel0</code> is equivalent to <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSelAA</code>.</listitem>
+            <listitem><code language="bali-phy-model">M3</code> is equivalent to <code language="bali-phy-model">|w: GY94(w)| +> M3</code>.</listitem>
+            <listitem><code language="bali-phy-model">M3_test</code> is equivalent to <code language="bali-phy-model">|w: GY94(w)| +> M3_test</code>.</listitem>
+	    <listitem><code language="bali-phy-model">BUSTED</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture</code>.</listitem>
+	    <listitem><code language="bali-phy-model">BUSTED_S</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture +> ASRV.Gamma(n=3)</code>.</listitem>
 	  </itemizedlist>
 	  </para>
 
@@ -2186,7 +2186,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    </row></thead>
             <tbody>
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;F</userinput></entry>
+		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;F</code></entry>
 		<entry>df(nuc_model)+60</entry>
 		<entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix (dN/dS = 1).</para>
 	               <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on codons only if the frequency of stop codons is zero.</para>
@@ -2194,16 +2194,16 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3</userinput></entry>
+		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3</code></entry>
 		<entry>df(nuc_model)</entry>
 		<entry><para>MG94-style rate matrix constructed from nucleotide rate matrix (dN/dS = 1).</para><para>Constructs either a codon model or a triplet model, depending on the alphabet.</para>
 		</entry>
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;MNM</userinput></entry>
+		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;MNM</code></entry>
 		<entry>df(nuc_model)</entry>
-		<entry><para>Like <userinput>x3</userinput>, but with multi-nucleotide mutations.</para>
+		<entry><para>Like <code language="bali-phy-model">x3</code>, but with multi-nucleotide mutations.</para>
 		</entry>
 	      </row>
 
@@ -2215,21 +2215,21 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row -->
 
 	      <row>
-		<entry><userinput><replaceable>codon_model</replaceable> +> dNdS(omega)</userinput></entry>
+		<entry><code language="bali-phy-model"><replaceable>codon_model</replaceable> +> dNdS(omega)</code></entry>
 		<entry>df(<replaceable>codon_model</replaceable>)+1</entry>
 		<entry><para>Scales non-synonymous rates by <replaceable>omega</replaceable>.</para>
 		</entry>
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>codon_model</replaceable> +> MutSel</userinput></entry>
+		<entry><code language="bali-phy-model"><replaceable>codon_model</replaceable> +> MutSel</code></entry>
 		<entry>df(<replaceable>codon_model</replaceable>)+60</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>codon_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
 		</entry>
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>codon_model</replaceable> +> MutSelAA</userinput></entry>
+		<entry><code language="bali-phy-model"><replaceable>codon_model</replaceable> +> MutSelAA</code></entry>
 		<!-- The 20 amino-acid fitness values are centered, leaving 19 d.f. -->
 		<entry>df(<replaceable>codon_model</replaceable>)+19</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>codon_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each amino acid</emphasis>.</para>
@@ -2237,7 +2237,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><userinput><replaceable>codon_mixture_model</replaceable> +> BranchSiteMixture</userinput></entry>
+		<entry><code language="bali-phy-model"><replaceable>codon_mixture_model</replaceable> +> BranchSiteMixture</code></entry>
 		<entry>df(<replaceable>codon_mixture_model</replaceable>)</entry>
 		<entry><para>Codon model where the rate matrix for each branch and site is chosen from the mixture distribution.</para>
 		</entry>
@@ -2252,7 +2252,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 
       <section xml:id="codon-frequencies">
       <info><title>Frequencies</title></info>
-      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <userinput>pi</userinput> parameter to a constant value, if the model allows unequal frequencies.</para>
+      <para>Frequencies are estimated by default.  Frequencies can be fixed by setting the <code language="bali-phy-model">pi</code> parameter to a constant value, if the model allows unequal frequencies.</para>
       <para>Constant frequencies are specified as a list of pairs that associates each letter with its frequency.</para>
       <programlisting language="bali-phy-model">GY94(pi={"AAA":0.01, "AAC":0.02,...})
 MG94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
@@ -2276,19 +2276,19 @@ MG94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 
 	  <tbody>
 	    <row>
-	      <entry><userinput>Frequencies.uniform</userinput></entry>
+	      <entry><code language="bali-phy-model">Frequencies.uniform</code></entry>
 	      <entry>0</entry>
 	      <entry>Equal frequencies</entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>F1x4</userinput></entry>
+	      <entry><code language="bali-phy-model">F1x4</code></entry>
 	      <entry>3</entry>
 	      <entry>Constructs codon frequencies from independent nucleotide frequencies.</entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput>F3x4</userinput></entry>
+	      <entry><code language="bali-phy-model">F3x4</code></entry>
 	      <entry>9</entry>
 	      <entry>Constructs codon frequencies from independent nucleotide frequencies for each codon position.</entry>
 	    </row>
@@ -2301,7 +2301,7 @@ MG94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
       <section xml:id="genetic-codes">
 	<info><title>Genetic Codes</title></info>
       
-	<para>When using a codon-based substitution model like <userinput>GY94</userinput>, you may select the genetic code by specifying <userinput>-A "Codons(,<replaceable>genetic-code</replaceable>)"</userinput>.
+	<para>When using a codon-based substitution model like <code language="bali-phy-model">GY94</code>, you may select the genetic code by specifying <userinput>-A "Codons(,<replaceable>genetic-code</replaceable>)"</userinput>.
         Available genetic codes are:</para>
 	<informaltable>
 	  <tgroup cols="3">
@@ -2368,7 +2368,7 @@ If the genetic code is not specified, then the standard code is used:
 	      
 	      <row>
 		<entry>
-		  <para><userinput>M1a</userinput></para>
+		  <para><code language="bali-phy-model">M1a</code></para>
 		</entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2</entry>
 		<entry>
@@ -2381,7 +2381,7 @@ If the genetic code is not specified, then the standard code is used:
 
 	      <row>
 		<entry>
-		  <para><userinput>M2a</userinput></para>
+		  <para><code language="bali-phy-model">M2a</code></para>
 		</entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry>
@@ -2393,7 +2393,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>M2a_test</userinput></entry>
+		<entry><code language="bali-phy-model">M2a_test</code></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry>
 		  <para>A Bayesian test for positive selection that compares M2a with M1a.</para>
@@ -2404,7 +2404,7 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><userinput>M3</userinput></entry>
+		<entry><code language="bali-phy-model">M3</code></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2*$n$-1</entry>
 		<entry><para>An free mixture of $n$ categories of conserved dN/dS values.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
@@ -2415,7 +2415,7 @@ If the genetic code is not specified, then the standard code is used:
 
 	      <row>
 		<entry>
-		  <para><userinput>M3_test</userinput></para>
+		  <para><code language="bali-phy-model">M3_test</code></para>
 		</entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2*$n$+1</entry>
 		<entry>
@@ -2424,27 +2424,27 @@ If the genetic code is not specified, then the standard code is used:
 	      </row>
 
 	      <row>
-		<entry><para><userinput>M7</userinput></para></entry>
+		<entry><para><code language="bali-phy-model">M7</code></para></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+2</entry>
 		<entry><para>The M7 model places a beta distribution on dN/dS.</para>
 		<para>The beta component is approximated by Gauss-Jacobi quadrature, with four
 		categories by default and generally unequal category weights. M8, M8a, and
 		M8a_test use the same beta component; their additional category is not counted
-		in <userinput>n</userinput>.</para>
-		<para>The beta mean <userinput>mu</userinput> and normalized variance
-		<userinput>v</userinput> have independent <userinput>Uniform(0,1)</userinput>
+		in <code language="bali-phy-model">n</code>.</para>
+		<para>The beta mean <code language="bali-phy-model">mu</code> and normalized variance
+		<code language="bali-phy-model">v</code> have independent <code language="bali-phy-model">Uniform(0,1)</code>
 		default priors. The normalized variance is the fraction of the maximum
 		possible variance at that mean:</para>
 		<programlisting>v = Var(omega)/(mu*(1-mu))
 concentration = 1/v - 1
 alpha = concentration*mu
 beta = concentration*(1-mu)</programlisting>
-		<para>The shape parameters are logged as computed values <userinput>a</userinput>
-		and <userinput>b</userinput>.</para>
-		<para>For a proper beta distribution, both <userinput>mu</userinput> and
-		<userinput>v</userinput> lie strictly between zero and one. With an interior
-		mean, <userinput>v=0</userinput> uses the concentrated limit at that mean;
-		<userinput>v=1</userinput> does not define a proper beta distribution and
+		<para>The shape parameters are logged as computed values <code language="bali-phy-model">a</code>
+		and <code language="bali-phy-model">b</code>.</para>
+		<para>For a proper beta distribution, both <code language="bali-phy-model">mu</code> and
+		<code language="bali-phy-model">v</code> lie strictly between zero and one. With an interior
+		mean, <code language="bali-phy-model">v=0</code> uses the concentrated limit at that mean;
+		<code language="bali-phy-model">v=1</code> does not define a proper beta distribution and
 		produces an unavailable likelihood. The same priors and parameterization
 		apply to the beta component of M8, M8a, and M8a_test.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
@@ -2454,7 +2454,7 @@ beta = concentration*(1-mu)</programlisting>
 	      </row>
 
 	      <row>
-		<entry><userinput>M8a</userinput></entry>
+		<entry><code language="bali-phy-model">M8a</code></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+3</entry>
 		<entry><para>The M8a model adds a category of <emphasis>neutral</emphasis> sites to the M7 model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
@@ -2464,7 +2464,7 @@ beta = concentration*(1-mu)</programlisting>
 	      </row>
 
 	      <row>
-		<entry><userinput>M8</userinput></entry>
+		<entry><code language="bali-phy-model">M8</code></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>The M8 model adds a category of <emphasis>positively-selected</emphasis> sites to the M7 model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/155.1.431">
@@ -2474,7 +2474,7 @@ beta = concentration*(1-mu)</programlisting>
 	      </row>
 
 	      <row>
-		<entry><userinput>M8a_test</userinput></entry>
+		<entry><code language="bali-phy-model">M8a_test</code></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection that compares the M8 to the M8a model.</para>
 		<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/oxfordjournals.molbev.a004233">
@@ -2484,7 +2484,7 @@ beta = concentration*(1-mu)</programlisting>
 	      </row>
 
 	      <row>
-		<entry><userinput>BranchSite</userinput></entry>
+		<entry><code language="bali-phy-model">BranchSite</code></entry>
 		<entry>df(<replaceable>submodel</replaceable>)+4</entry>
 		<entry><para>A Bayesian test for positive selection at unknown sites on designated
 		foreground branches. See <xref linkend="selection-branch-site"/> for instructions.</para>
@@ -2522,7 +2522,7 @@ beta = concentration*(1-mu)</programlisting>
 	  <tbody>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.Gamma</userinput></entry>
+	      <entry><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.Gamma</code></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the Gamma distribution</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF00160154">
@@ -2533,7 +2533,7 @@ beta = concentration*(1-mu)</programlisting>
 
 	    <row>
 	      <entry>
-		<para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.LogNormal</userinput></para>
+		<para><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.LogNormal</code></para>
 	      </entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the log-normal distribution</para>
@@ -2541,7 +2541,7 @@ beta = concentration*(1-mu)</programlisting>
 	    </row>
 
 	    <row>
-	      <entry><para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.Free</userinput></para></entry>
+	      <entry><para><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.Free</code></para></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+2($n$-1)</entry>
 	      <entry><para>Sites fall in one of $n$ categories. Each category has its own rate.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/139.2.993">
@@ -2551,13 +2551,13 @@ beta = concentration*(1-mu)</programlisting>
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;MultiRate(<replaceable>dist</replaceable>)</userinput></entry>
+	      <entry><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;MultiRate(<replaceable>dist</replaceable>)</code></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+df(<replaceable>dist</replaceable>)</entry>
 	      <entry><para>Site rates follow a discrete approximation to the distribution <replaceable>dist</replaceable>.</para></entry>
 	    </row>
 
 	    <row>
-	      <entry><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Inv</userinput></entry>
+	      <entry><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Inv</code></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Some fraction Inv:pInv of sites are invariable.</para>
 	      </entry>
@@ -2590,7 +2590,7 @@ beta = concentration*(1-mu)</programlisting>
 	  <tbody>
 
 	    <row>
-	      <entry><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;Covarion.TuffleySteel98</userinput></entry>
+	      <entry><code language="bali-phy-model"><replaceable>Q</replaceable>&nbsp;+>&nbsp;Covarion.TuffleySteel98</code></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+2</entry>
 	      <entry>
                 <para>Each state in rate matrix Q is split into an ON and OFF variant.  Models burstiness.</para>
@@ -2602,8 +2602,8 @@ beta = concentration*(1-mu)</programlisting>
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Huelsenbeck02</userinput></para>
-                <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Huelsenbeck02</userinput></para>
+                <para><code language="bali-phy-model"><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Huelsenbeck02</code></para>
+                <para><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Huelsenbeck02</code></para>
               </entry>
 	      <entry>
                 <para>df(<replaceable>Q+ASRV.Gamma</replaceable>)+2</para>
@@ -2619,8 +2619,8 @@ beta = concentration*(1-mu)</programlisting>
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Galtier01</userinput></para>
-                <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Galtier01</userinput></para>
+                <para><code language="bali-phy-model"><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Galtier01</code></para>
+                <para><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Galtier01</code></para>
               </entry>
 	      <entry>
                 <para>df(<replaceable>Q+ASRV.Gamma</replaceable>)+2</para>
@@ -2636,8 +2636,8 @@ beta = concentration*(1-mu)</programlisting>
 
 	    <row>
 	      <entry>
-                <para><userinput><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Wang07</userinput></para>
-                <para><userinput><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Wang07</userinput></para>
+                <para><code language="bali-phy-model"><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Wang07</code></para>
+                <para><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Wang07</code></para>
               </entry>
 	      <entry>
                 <para>df(<replaceable>Q+ASRV.Gamma</replaceable>)+4</para>
@@ -2657,8 +2657,8 @@ beta = concentration*(1-mu)</programlisting>
         <important>
           Note that the obvious way to combine the Tuffley-Steel model with rate heterogeneity is wrong:
           <itemizedlist>
-            <listitem><para><userinput>Q +> Covarion.TuffleySteel98 +> ASRV.Gamma</userinput>: This is incorrect.  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
-            <listitem><para><userinput>Q +> ASRV.Gamma +> Covarion.Huelsenbeck02</userinput>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
+            <listitem><para><code language="bali-phy-model">Q +> Covarion.TuffleySteel98 +> ASRV.Gamma</code>: This is incorrect.  Under this model, sites with faster substitution rates will switch between the ON/OFF states faster.</para></listitem>
+            <listitem><para><code language="bali-phy-model">Q +> ASRV.Gamma +> Covarion.Huelsenbeck02</code>: This is correct.  Sites switch between ON/OFF states independent of the speed of substitution.</para></listitem>
           </itemizedlist>
         </important>
       </para>
@@ -2670,7 +2670,7 @@ beta = concentration*(1-mu)</programlisting>
       
     <para>Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments $\Pr(A|T,\tau,\Lambda)$ is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</para>
 
-	<para>The default insertion/deletion model is <userinput>RS07</userinput>.</para>
+	<para>The default insertion/deletion model is <code language="bali-phy-model">RS07</code>.</para>
 	
     <informaltable>
 	  
@@ -2685,7 +2685,7 @@ beta = concentration*(1-mu)</programlisting>
 	    </row></thead>
 	    <tbody>	    
 	      <row>
-		<entry><userinput>RS05</userinput></entry>
+		<entry><code language="bali-phy-model">RS05</code></entry>
 		<entry>3</entry>
 		<entry>
 		  <para>A symmetric insertion-deletion model with geometrically-distributed indel lengths.</para>
@@ -2697,7 +2697,7 @@ beta = concentration*(1-mu)</programlisting>
 	      </row>
 
 	      <row>
-		<entry><userinput>RS07</userinput></entry>
+		<entry><code language="bali-phy-model">RS07</code></entry>
 		<entry>2</entry>
 		<entry>
 		  <para>A symmetric insertion-deletion model with geometrically-distributed indel lengths.</para>
@@ -2710,7 +2710,7 @@ beta = concentration*(1-mu)</programlisting>
 	      
 	      <row>
 		<entry>
-		  <para><userinput>none</userinput></para>
+		  <para><code language="bali-phy-model">none</code></para>
 		</entry>
 		<entry/>
 		<entry>
@@ -2763,9 +2763,9 @@ A value must be given for each parameter, unless the parameter has a default val
 
   </section>
 
-  <section><info><title>Model stacking and '<userinput>+></userinput>' notation</title></info>
+  <section><info><title>Model stacking and '<code language="bali-phy-model">+></code>' notation</title></info>
   <para>Models in phylogenetics literature are often combined using <userinput>+</userinput>. For example, the model <userinput>WAG + F + G4 + I</userinput> starts with the WAG amino-acid model, and places several modifiers, like " + G4" on the right.</para>
-  <para>BAli-Phy follows this convention by treating <userinput>A +> B</userinput> as an abbreviation for <userinput>B(A)</userinput>.  When there are multiple '<userinput>+></userinput>' symbols they associate to the left, so that <userinput>A +> B +> C</userinput> is understood to mean <userinput>(A +> B) +> C</userinput>, which is equivalent to <userinput>C(B(A))</userinput>.  For example:
+  <para>BAli-Phy follows this convention by treating <code language="bali-phy-model">A +> B</code> as an abbreviation for <code language="bali-phy-model">B(A)</code>.  When there are multiple '<code language="bali-phy-model">+></code>' symbols they associate to the left, so that <code language="bali-phy-model">A +> B +> C</code> is understood to mean <code language="bali-phy-model">(A +> B) +> C</code>, which is equivalent to <code language="bali-phy-model">C(B(A))</code>.  For example:
 <programlisting language="bali-phy-model">HKY85 +> ASRV.Gamma              // rewritten to ASRV.Gamma(HKY85)
 HKY85 +> Inv                      // rewritten to Inv(HKY85)
 WAG +> F                          // rewritten to F(WAG)
@@ -2777,11 +2777,11 @@ This allows a simple method for combining models, when one model is an argument 
 
   <section xml:id="priors"><info><title>Priors</title></info>
   <section><info><title>Specifying priors</title></info>
-<para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <userinput>sample</userinput>.  For example, this places a log-normal prior on the parameter <userinput>kappa</userinput> of the <userinput>HKY85</userinput> model:
+<para>Priors on model parameters are specified by giving a random value. Random values can be obtained from distributions using the function <code language="bali-phy-model">sample</code>.  For example, this places a log-normal prior on the parameter <code language="bali-phy-model">kappa</code> of the <code language="bali-phy-model">HKY85</code> model:
 <programlisting language="bali-phy-model">HKY85(kappa=sample(LogNormal(1,1)))</programlisting>
-You can write <userinput>~Dist</userinput> as a shorthand for <userinput>sample(Dist)</userinput>:
+You can write <code language="bali-phy-model">~Dist</code> as a shorthand for <code language="bali-phy-model">sample(Dist)</code>:
 <programlisting language="bali-phy-model">HKY85(kappa = ~LogNormal(1,1))</programlisting>
-The <userinput>=~</userinput> can be further shortened to just <userinput>~</userinput>:
+The <code language="bali-phy-model">=~</code> can be further shortened to just <code language="bali-phy-model">~</code>:
 <programlisting language="bali-phy-model">HKY85(kappa ~ LogNormal(1,1))</programlisting>
 </para>
 </section>
@@ -2789,19 +2789,19 @@ The <userinput>=~</userinput> can be further shortened to just <userinput>~</use
   <section><info><title>Random function arguments</title></info>
 <para>It also is possible to use random values as inputs to other functions.  For example:
 <programlisting language="bali-phy-model">1.0 + ~Exponential(10)</programlisting>
-In such cases the parameter value should be specified with <userinput>=</userinput>, as in the following example:
+In such cases the parameter value should be specified with <code language="bali-phy-model">=</code>, as in the following example:
 <programlisting language="bali-phy-model">RS07(meanLength=1.0 + ~Exponential(10))</programlisting>
 </para>
   </section>
 <section><info><title>Distributions are not random values</title></info>
 <para>Random values and distributions have different types.  For example, the
-following is of type <userinput>Distribution&lt;Double&gt;</userinput>:
+following is of type <code language="bali-phy-model">Distribution&lt;Double&gt;</code>:
 <programlisting language="bali-phy-model">Uniform(0,1)</programlisting>
-In contrast, the following are both of type <userinput>Double</userinput>:
+In contrast, the following are both of type <code language="bali-phy-model">Double</code>:
 <programlisting language="bali-phy-model">sample(Uniform(0,1))
 ~Uniform(0,1)</programlisting>
 This is important when passing distributions as arguments to other
-distributions and functions.  For example, the distribution <userinput>IID</userinput> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
+distributions and functions.  For example, the distribution <code language="bali-phy-model">IID</code> is used to generate a specific number of samples from another distribution.  Thus, it needs to receive a distribution as an argument:
 <programlisting language="bali-phy-model">~IID(4, Normal(0,1))      // OK    : 4 samples from the Normal(0,1) distribution
 ~IID(4, ~Normal(0,1))     // not OK: 4 samples from ... a random number?</programlisting>
 (See <xref linkend="types"/>.)
@@ -2811,26 +2811,26 @@ distributions and functions.  For example, the distribution <userinput>IID</user
 
   <section xml:id="default_values"><info><title>Default values and default priors</title></info>
   <para>
-Some function arguments have default values.  For example, the <userinput>ASRV.Gamma</userinput> parameter <userinput>n</userinput> has a default value of 4.  Thus the following are equivalent:
+Some function arguments have default values.  For example, the <code language="bali-phy-model">ASRV.Gamma</code> parameter <code language="bali-phy-model">n</code> has a default value of 4.  Thus the following are equivalent:
 <programlisting language="bali-phy-model">HKY85 +> ASRV.Gamma(n=4) +> Inv
 HKY85 +> ASRV.Gamma +> Inv</programlisting></para>
 
-  <para>When the default value is random, then the argument has a default prior. For example, the <userinput>kappa</userinput> parameter of <userinput>HKY85</userinput> has a default value of <userinput>~LogNormal(log(2),0.25)</userinput>, so the following are equivalent:
+  <para>When the default value is random, then the argument has a default prior. For example, the <code language="bali-phy-model">kappa</code> parameter of <code language="bali-phy-model">HKY85</code> has a default value of <code language="bali-phy-model">~LogNormal(log(2),0.25)</code>, so the following are equivalent:
 <programlisting language="bali-phy-model">HKY85(kappa~LogNormal(log(2),0.25))
 HKY85</programlisting>
 The <userinput>help</userinput> command can be used to determine the default value for a parameter, if there is one.</para>
   </section>
 
   <section xml:id="types"><info><title>Argument and result types</title></info>
-  <para>  Every function has a <emphasis>result type</emphasis>, as well as an <emphasis>argument type</emphasis> for each argument.  The argument type specifies what kind of arguments are acceptable, and the result type specifies what kind of result the function produces.  Types include <userinput>Int</userinput> for integers, <userinput>Double</userinput> for double-precision floating point numbers, and <userinput>String</userinput> for text strings.  Integer arguments are implicitly converted to <userinput>Double</userinput> when the argument type is <userinput>Double</userinput>.</para>
+  <para>  Every function has a <emphasis>result type</emphasis>, as well as an <emphasis>argument type</emphasis> for each argument.  The argument type specifies what kind of arguments are acceptable, and the result type specifies what kind of result the function produces.  Types include <code language="bali-phy-model">Int</code> for integers, <code language="bali-phy-model">Double</code> for double-precision floating point numbers, and <code language="bali-phy-model">String</code> for text strings.  Integer arguments are implicitly converted to <code language="bali-phy-model">Double</code> when the argument type is <code language="bali-phy-model">Double</code>.</para>
 
-  <para>Some types contain parameters.  For example <userinput>List&lt;Int&gt;</userinput> indicates a list of integers and <userinput>List&lt;Double&gt;</userinput> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <userinput>a</userinput> and write <userinput>List&lt;a&gt;</userinput>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <userinput>x+y</userinput> takes two arguments of type <userinput>a</userinput> and has a result of type <userinput>a</userinput>.  Thus:
+  <para>Some types contain parameters.  For example <code language="bali-phy-model">List&lt;Int&gt;</code> indicates a list of integers and <code language="bali-phy-model">List&lt;Double&gt;</code> indicates a list of real numbers.  In order to indicate a list of unknown type, we use a <emphasis>type variable</emphasis> <code language="bali-phy-model">a</code> and write <code language="bali-phy-model">List&lt;a&gt;</code>.  Type variables always begin with a lower-case letter.  They are able to match any specific type, and their value is found by pattern-matching.  For example, the function <code language="bali-phy-model">x+y</code> takes two arguments of type <code language="bali-phy-model">a</code> and has a result of type <code language="bali-phy-model">a</code>.  Thus:
 <programlisting language="bali-phy-model">1 + 2        // arguments are a=Int, so result is of type Int
 1.0 + 2.0    // arguments are a=Double, so result is of type Double</programlisting>
-<userinput>(a,b)</userinput> is a parameterized type that can be specialized to (for example) <userinput>(String,Double)</userinput> and <userinput>(Int,Int)</userinput>.
+<code language="bali-phy-model">(a,b)</code> is a parameterized type that can be specialized to (for example) <code language="bali-phy-model">(String,Double)</code> and <code language="bali-phy-model">(Int,Int)</code>.
   </para>
 
-  <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, HKY85 has a result type of <userinput>RevCTMC&lt;a&gt;</userinput>, where <userinput>a</userinput> could be <userinput>DNA</userinput> or <userinput>RNA</userinput>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
+  <para>Types for components of substitution models are often parameterized by type of the alphabet.  For example, HKY85 has a result type of <code language="bali-phy-model">RevCTMC&lt;a&gt;</code>, where <code language="bali-phy-model">a</code> could be <code language="bali-phy-model">DNA</code> or <code language="bali-phy-model">RNA</code>.  The use of alphabet types in substitution models prevents combining substitution models with mismatched alphabets.
   </para>
 
   </section>
@@ -2852,7 +2852,7 @@ The <userinput>help</userinput> command can be used to determine the default val
     </section>
 
     <section><info><title>Unlinked models</title></info>
-    <para>By default, each partition will have its own substitution model, insertion/deletion model, and scaled tree length.  For example, even if all partitions are assigned a <userinput>TN93</userinput> substitution model, their base frequencies will all be estimated independently.  When parameters are estimated separately for two partitions, we say that the parameters for those partitions are "unlinked".</para>
+    <para>By default, each partition will have its own substitution model, insertion/deletion model, and scaled tree length.  For example, even if all partitions are assigned a <code language="bali-phy-model">TN93</code> substitution model, their base frequencies will all be estimated independently.  When parameters are estimated separately for two partitions, we say that the parameters for those partitions are "unlinked".</para>
 
     <para>A substitution model or insertion-deletion model that is specified without qualification will apply to every partition.  However, each partition will receive its own copy of each model with unlinked parameter values:
       <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S TN93 -I RS07</userinput></screen></para>
@@ -2870,7 +2870,7 @@ Since alignments are estimated by default, the alignment will be estimated in th
 </para>
     </section>
     <section><info><title>Linked models</title></info>
-<para>You can also specify that two partitions share a single copy of a single substitution model or indel model.  For example, if two partitions both have a <userinput>TN93</userinput> model, linking these models would force the partitions to have the same nucleotide frequencies and substitution rates.  Linking partitions reduces the number of parameters that need to be estimated, and also pools information between the partitions:
+<para>You can also specify that two partitions share a single copy of a single substitution model or indel model.  For example, if two partitions both have a <code language="bali-phy-model">TN93</code> model, linking these models would force the partitions to have the same nucleotide frequencies and substitution rates.  Linking partitions reduces the number of parameters that need to be estimated, and also pools information between the partitions:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> -S 1,2:TN93 -I 1,2:RS07</userinput></screen>
 By default each partition has a separate scale, but you can force groups of partitions to share a scale as follows:
 <screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --scale 1,2:</userinput></screen>
@@ -2948,26 +2948,26 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
 
       <para>Start with a model that uses one ω for all sites and branches:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -S 'GTR +> MNM +> MutSelAA +> dNdS'</screen>
-      <para><userinput>GTR</userinput> describes nucleotide mutation.
-      <userinput>MNM</userinput> allows mutations to change one, two, or three nucleotides
+      <para><code language="bali-phy-model">GTR</code> describes nucleotide mutation.
+      <code language="bali-phy-model">MNM</code> allows mutations to change one, two, or three nucleotides
       within a codon.
-      <userinput>MutSelAA</userinput> estimates amino-acid preferences shared across sites, and
-      <userinput>dNdS</userinput> adds the ω multiplier. Here ω describes nonsynonymous change
+      <code language="bali-phy-model">MutSelAA</code> estimates amino-acid preferences shared across sites, and
+      <code language="bali-phy-model">dNdS</code> adds the ω multiplier. Here ω describes nonsynonymous change
       beyond the effect of those preferences; it is not a raw ratio of observed changes.
       Setting ω to one leaves those preferences intact, rather than removing all selection.</para>
 
-      <para><userinput>MutSelAA</userinput> assigns equal fitness to synonymous codons.
-      To allow separate codon preferences, use <userinput>MutSel</userinput> instead:</para>
+      <para><code language="bali-phy-model">MutSelAA</code> assigns equal fitness to synonymous codons.
+      To allow separate codon preferences, use <code language="bali-phy-model">MutSel</code> instead:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -S 'GTR +> MNM +> MutSel +> dNdS'</screen>
       <para>Both models estimate preferences shared across sites. The examples below use
-      <userinput>MutSelAA</userinput> because <userinput>MutSel</userinput> currently mixes
+      <code language="bali-phy-model">MutSelAA</code> because <code language="bali-phy-model">MutSel</code> currently mixes
       substantially more slowly and thus needs longer runs for reliable estimates.
       See <xref linkend="selection-background"/> and
       <xref linkend="selection-mnm"/> for the reasons behind these background-model choices.</para>
 
-      <para>The default <userinput>LogNormal(0,1)</userinput> prior gives equal probability to
+      <para>The default <code language="bali-phy-model">LogNormal(0,1)</code> prior gives equal probability to
       ω below and above one. To restrict ω to values below one, use
-      <userinput>dNdS(omega=~Uniform(0,1))</userinput>. Run independent chains, check convergence,
+      <code language="bali-phy-model">dNdS(omega=~Uniform(0,1))</code>. Run independent chains, check convergence,
       and summarize them as in <xref linkend="analysis"/>. Read the ω estimate and credible
       interval in the parameter report. A single ω cannot identify selected sites, and averaging
       across the sequence can hide selection affecting only a few sites.</para>
@@ -2983,20 +2983,20 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       M7 uses a beta distribution for ω between zero and one, approximated by a finite set of
       categories. M8a adds a category with ω equal to one; M8 instead adds one with ω above one.</para>
 
-      <para>Use <userinput>M2a_test</userinput> to compare M1a with M2a, or
-      <userinput>M8a_test</userinput> to compare M8a with M8. In each comparison, the selection
+      <para>Use <code language="bali-phy-model">M2a_test</code> to compare M1a with M2a, or
+      <code language="bali-phy-model">M8a_test</code> to compare M8a with M8. In each comparison, the selection
       hypothesis includes a category with ω above one; the null hypothesis does not.
       Each command allows the chain to move between the two hypotheses:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
   -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M2a_test'
 <prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
   -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a_test'</screen>
-      <para>The expression <userinput>|w:...|</userinput> builds the codon model for a supplied
+      <para>The expression <code language="bali-phy-model">|w:...|</code> builds the codon model for a supplied
       ω value. The site model supplies these values and their priors, rather than using the
       single-ω default prior. The nucleotide and amino-acid preference parameters are shared
       across categories. To include positive selection throughout the analysis without comparing
-      hypotheses, replace <userinput>M2a_test</userinput> with <userinput>M2a</userinput>, or
-      <userinput>M8a_test</userinput> with <userinput>M8</userinput>.</para>
+      hypotheses, replace <code language="bali-phy-model">M2a_test</code> with <code language="bali-phy-model">M2a</code>, or
+      <code language="bali-phy-model">M8a_test</code> with <code language="bali-phy-model">M8</code>.</para>
 
       <para>After summarizing independent runs with <command>bpy-summarize</command>, open the
       positive-selection section of <filename>Results/index.html</filename>. First read the
@@ -3055,8 +3055,8 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       branch groups can have different ω values while all remain below one.</para>
 
       <para>To test whether the labelled branch needs a separate ω, change its label to
-      <literal>[&amp;foreground={0,1}]</literal> and replace <userinput>BranchModel</userinput>
-      with <userinput>BranchModel_test</userinput> in the command. In this example, hypothesis 0
+      <literal>[&amp;foreground={0,1}]</literal> and replace <code language="bali-phy-model">BranchModel</code>
+      with <code language="bali-phy-model">BranchModel_test</code> in the command. In this example, hypothesis 0
       uses category 0 everywhere; hypothesis 1 uses category 1 on that branch.</para>
 
       <para>Each entry in the label gives that branch's category under a hypothesis: the first
@@ -3076,14 +3076,14 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
 
       <para>A branch-site model distinguishes branches of interest, called foreground branches,
       from the remaining background branches. Some sites can have ω at or below one on background
-      branches but ω above one on foreground branches. <userinput>BranchSite</userinput>
+      branches but ω above one on foreground branches. <code language="bali-phy-model">BranchSite</code>
       compares this with a null hypothesis in which those sites have ω equal to one on the
       foreground branches. The analysis estimates which sites are affected and the ω shared by
       these sites on foreground branches.</para>
 
       <para>Use a fixed topology with <literal>[&amp;foreground=1]</literal> on foreground branches,
       as in the first tree above, not the <literal>{0,1}</literal> label used for
-      <userinput>BranchModel_test</userinput>. Leave background branches unlabelled:</para>
+      <code language="bali-phy-model">BranchModel_test</code>. Leave background branches unlabelled:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons --fix topology=branches.tree \
   -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> BranchSite'</screen>
       <para>Read model support and the two posterior views as for site models. In the alignment
@@ -3127,8 +3127,8 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       <para>The mutation–selection models used here separate nucleotide mutation biases from
       amino-acid or codon preferences. Rates depend on mutation rates and fitness differences,
       rather than directly multiplying by the destination-codon frequency. This separates two
-      causes of unequal codon usage and motivates using <userinput>MutSelAA</userinput> or
-      <userinput>MutSel</userinput> in the examples. It does not remove all assumptions about
+      causes of unequal codon usage and motivates using <code language="bali-phy-model">MutSelAA</code> or
+      <code language="bali-phy-model">MutSel</code> in the examples. It does not remove all assumptions about
       the background process.</para>
     </section>
 
@@ -3158,10 +3158,10 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       branch-site tests (<link xmlns:xlink="http://www.w3.org/1999/xlink"
       xlink:href="https://doi.org/10.1038/s41559-018-0584-5">Venkat et al. 2018</link>).</para>
 
-      <para><userinput>MNM</userinput>, already included in the examples, estimates rates of
+      <para><code language="bali-phy-model">MNM</code>, already included in the examples, estimates rates of
       double and triple mutations as part of the background model, with little added computational
       cost. It allows these events within codons, not across codon boundaries. Replace it with
-      <userinput>x3</userinput> to restrict mutations to single-nucleotide events, as in
+      <code language="bali-phy-model">x3</code> to restrict mutations to single-nucleotide events, as in
       <xref linkend="selection-codeml"/>.</para>
     </section>
 
@@ -3175,23 +3175,23 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       For comparable nonsynonymous change, a lower inferred baseline rate can strengthen evidence
       for selection; a higher baseline can weaken it.</para>
 
-      <para>Append <userinput>ASRV.Gamma</userinput> to add a gamma distribution of rates among
+      <para>Append <code language="bali-phy-model">ASRV.Gamma</code> to add a gamma distribution of rates among
       codons:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
   -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a_test +> ASRV.Gamma'</screen>
       <para>Each codon now has a rate category as well as an ω category. Its rate multiplier
       scales synonymous and nonsynonymous rates together without changing ω, and applies on
       every branch. Append ASRV after the completed selection model, outside
-      <userinput>|w:...|</userinput>, as shown. The same distribution of rate multipliers applies
+      <code language="bali-phy-model">|w:...|</code>, as shown. The same distribution of rate multipliers applies
       to all ω categories and both hypotheses. This construction works with the other models above.</para>
 
-      <para><userinput>ASRV.Gamma</userinput> approximates the gamma distribution with four
-      categories by default. Alternatively, <userinput>ASRV.Free</userinput> estimates category
+      <para><code language="bali-phy-model">ASRV.Gamma</code> approximates the gamma distribution with four
+      categories by default. Alternatively, <code language="bali-phy-model">ASRV.Free</code> estimates category
       rates and proportions without requiring a gamma shape. Start with two categories:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons \
   -S '|w:GTR +> MNM +> MutSelAA +> dNdS(omega=w)| +> M8a_test +> ASRV.Free(n=2)'</screen>
-      <para>The number of categories is fixed by <userinput>n</userinput>, not inferred.
-      If the two estimated rates are clearly separated, try <userinput>n=3</userinput> and check
+      <para>The number of categories is fixed by <code language="bali-phy-model">n</code>, not inferred.
+      If the two estimated rates are clearly separated, try <code language="bali-phy-model">n=3</code> and check
       whether the data distinguish a third rate and mixing remains adequate. The default
       of four free-rate categories introduces more parameters. Both ASRV extensions increase
       computation by combining rate categories with selection categories, so they are optional
@@ -3203,8 +3203,8 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
 
       <para>The model families above correspond to analyses available in PAML's CODEML program,
       but the background choices differ. Many earlier analyses used GY94-type models. To compare
-      with these, use <userinput>GY94</userinput> and match their codon-frequency specification. For example,
-      <userinput>GY94(pi=F3x4)</userinput> uses separate nucleotide frequencies at each codon
+      with these, use <code language="bali-phy-model">GY94</code> and match their codon-frequency specification. For example,
+      <code language="bali-phy-model">GY94(pi=F3x4)</code> uses separate nucleotide frequencies at each codon
       position. In a site model, supply ω explicitly:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -I none --fix topology=<replaceable>tree</replaceable>.tree \
   -S '|w:GY94(omega=w,pi=F3x4)| +> M8a_test'</screen>
@@ -3215,7 +3215,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       model replaces GTR with HKY85, MNM with x3, and MutSelAA with MutSel:</para>
 <screen><prompt>%</prompt> bali-phy <replaceable>coding</replaceable>.fasta -A Codons -I none --fix topology=<replaceable>tree</replaceable>.tree \
   -S 'HKY85 +> x3 +> MutSel +> dNdS'</screen>
-      <para>Using <userinput>MutSelAA</userinput> instead corresponds to the FMutSel0 preference
+      <para>Using <code language="bali-phy-model">MutSelAA</code> instead corresponds to the FMutSel0 preference
       model (<literal>CodonFreq=6</literal>). CODEML also supports GTR mutation rates through
       <literal>hkyREV=1</literal>, but its codon models restrict instantaneous changes to a single
       nucleotide; they do not include the MNM extension.</para>
@@ -4031,7 +4031,7 @@ The command <command>bali-phy</command> and its associated tools should then be 
 	<qandaentry>
 	  <question><para>I tried to use <userinput>-S LG+>ASRV.Gamma(6)</userinput> and I got an error message "bali-phy: No match."  What gives?</para></question>
 	  <answer>
-	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <userinput>LG+>ASRV.Gamma(6)</userinput> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
+	    <para>You are probably using the C-shell as your command line shell.  It is trying to interpret <code language="bali-phy-model">LG+>ASRV.Gamma(6)</code> as an array before running the command, and it is not succeeding.  Therefore, it doesn&apos;t even run <command>bali-phy</command>.</para>
 	    <para>To avoid this, put quotes around the substitution model, like this: <userinput>-S 'LG +> ASRV.Gamma(6)'</userinput>.  This will keep the C-shell from interfering with your command.
 	    </para>
 	  </answer>

@@ -33,24 +33,24 @@ pre.programlisting {
 }
 
 /* Token colors only: leave code-panel layout and unhighlighted text unchanged. */
-pre.programlisting :is(.c, .c1, .cm) {
+:is(pre.programlisting, code.language-bali-phy-model) :is(.c, .c1, .cm) {
     color: #387c7c;
 }
 
-pre.programlisting :is(.s, .s1, .s2, .se) {
+:is(pre.programlisting, code.language-bali-phy-model) :is(.s, .s1, .s2, .se) {
     color: #b52b2b;
 }
 
-pre.programlisting :is(.m, .mi, .mf, .mh, .mo, .mb, .il) {
+:is(pre.programlisting, code.language-bali-phy-model) :is(.m, .mi, .mf, .mh, .mo, .mb, .il) {
     color: #8444b8;
 }
 
-pre.programlisting .p {
+:is(pre.programlisting, code.language-bali-phy-model) .p {
     color: #2468c0;
     font-weight: bold;
 }
 
-pre.programlisting .o {
+:is(pre.programlisting, code.language-bali-phy-model) .o {
     color: #287c42;
     font-weight: bold;
 }
