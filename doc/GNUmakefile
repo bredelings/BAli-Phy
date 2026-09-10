@@ -1,4 +1,4 @@
-all: README.html README.xhtml README.pdf Tutorial.xhtml Tutorial.html Tutorial.pdf Instructions.xhtml Instructions.pdf
+all: README.html README.pdf Tutorial.html Tutorial.pdf Instructions.html Instructions.pdf
 
 clean:
 	-@rm -f *.html *.xhtml REAMDE.xml *.fo *.pdf *~
@@ -16,10 +16,5 @@ clean:
 %.html: %.md
 	pandoc -s $*.md --css pandoc.css --toc > $@
 
-%.xhtml: %.xml docbook-xhtml.xsl
-	xsltproc --nonet --xinclude docbook-xhtml.xsl $*.xml > $@
-
-%.pdf: %.xhtml
-	weasyprint $*.xhtml $*.pdf
-
-#xalan -XSLT /usr/share/xml/docbook/stylesheet/nwalsh/xhtml/docbook.xsl -IN %.xml
+%.pdf: %.html
+	weasyprint $*.html $*.pdf
