@@ -19,7 +19,7 @@
   <section xml:id="intro"><info><title>Introduction</title></info>
   <para>This tutorial offers a quick overview of bali-phy with an emphasis on concrete analysis of real datasets.  Other documentation includes:
   <itemizedlist>
-    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml">Users Guide</link> is much more complete.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">Users Guide</link> is much more complete.</listitem>
     <listitem>Run <userinput><replaceable>tool</replaceable> --help</userinput> to see command line options for <replaceable>tool</replaceable>.</listitem>
     <listitem>Run <userinput>man <replaceable>tool</replaceable></userinput> to see the manual page for <replaceable>tool</replaceable>.</listitem>
     <listitem>Manual pages for bali-phy and tools are also available <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/docs.php#manpages">online</link>.</listitem>
@@ -465,7 +465,7 @@ The M8a_test model allows testing for positive selection in some fraction of the
 % bali-phy Globins/bglobin.fasta --test -S '|w:GY94(omega=w,pi=F3x4)| +> M8a_test'
 </para>
 <para>See the <link xmlns:xlink="http://www.w3.org/1999/xlink"
-xlink:href="README.xhtml#positive-selection">User Guide's positive-selection section</link>
+xlink:href="README.html#positive-selection">User Guide's positive-selection section</link>
 for model choices, running analyses, and interpreting posterior support.</para>
 </section>
 

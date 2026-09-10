@@ -158,7 +158,7 @@ reportModelRun maxIterations formats directory = do
     when (TSV `elem` formats) $
         putStrLn $ "You can examine 'C1.log' using BAli-Phy tool statreport (command-line) " ++
                    "or the BEAST program Tracer (graphical)."
-    putStrLn "See the manual at http://www.bali-phy.org/README.xhtml for further information."
+    putStrLn "See the manual at http://www.bali-phy.org/README.html for further information."
     hFlush stdout
 
 -- Print the iteration-zero representation and, when verbose, the model's trace graph.

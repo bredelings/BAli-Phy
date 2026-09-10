@@ -230,7 +230,7 @@ How different are the trees? (use figtree)
 
   <para>This exercise offers a quick overview of bali-phy with an emphasis on concrete analysis of real datasets.  Other documentation includes:
   <itemizedlist>
-    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml">Users Guide</link> is much more complete.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">Users Guide</link> is much more complete.</listitem>
     <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/Tutorial6.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
     <listitem>You can run <userinput><replaceable>tool</replaceable> --help</userinput> to see command line options for <replaceable>tool</replaceable>.</listitem>
     <listitem>You can run <userinput>man <replaceable>tool</replaceable></userinput> to see the manual page for <replaceable>tool</replaceable>.</listitem>
@@ -282,7 +282,7 @@ The parameter estimates have names that look like context1/value or context1/mod
 </variablelist>
 We can get information on what a parameter means by running <command>bali-phy help <replaceable>model</replaceable></command>:
 % bali-phy help gtr
-For more information on parameter names, see <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.xhtml#output">the section on Output / Field names</link> in the Users Guide.
+For more information on parameter names, see <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html#output">the section on Output / Field names</link> in the Users Guide.
 </section>
 
 <section><info><title>Summarizing the results of a run</title></info>
@@ -435,8 +435,8 @@ Note that spaces in FASTA files are allowed, but not required.
 <section><info><title>Further exploration...</title></info>
   <para>For more information see:
   <itemizedlist>
-    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.bali-phy.org/Tutorial.xhtml">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
-    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.bali-phy.org/README.xhtml">Users Guide</link> additionally covers ancestral sequence reconstruction, setting priors, etc.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.bali-phy.org/Tutorial.html">Tutorial</link> is similar to this exercise, but covers more functionality.</listitem>
+    <listitem>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.bali-phy.org/README.html">Users Guide</link> additionally covers ancestral sequence reconstruction, setting priors, etc.</listitem>
   </itemizedlist>
 </para>
 </section>
