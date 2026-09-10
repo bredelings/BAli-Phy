@@ -1157,7 +1157,7 @@ option.  For example:
 
 
     </section>
-      <section><info><title><filename>Mixing/partitions.bs</filename>: partition mixing</title></info>
+      <section><info><title><filename>Results/partitions.bs</filename>: partition mixing</title></info>
 	
 	<para>
 	  This file reports the quality of estimates of support for each
@@ -3545,8 +3545,7 @@ acceptable if it is &lt; 0.01.
 </para>
 
 <para>However, it is also useful to consider the maximum of the SDSF
-  values (MSDSF).  This represents the range of variation in PP across
-  the runs for the split with the most variation.
+  values (MSDSF). This is the largest standard deviation of split frequencies across runs.
 </para>
       </section>
       <section><info><title>Split-frequency comparison plot</title></info>
@@ -3582,8 +3581,8 @@ is customarily considered to be small enough if it is less than 1.01.
 <para>
 We compare the PSRF based on the length of 80% credible intervals
 (Brooks and Gelman 1998) and report the result as PSRF-80%CI.  For
-integer-valued parameters, we avoid excessively large PSRF values by
-subtracting 1 from the width of the pooled CI.
+integer-valued parameters, we add 1 to both the pooled and within-run interval widths
+before taking their ratio, since an integer interval from $a$ to $b$ contains $b-a+1$ values.
 </para>
 
 <para>
@@ -4218,7 +4217,10 @@ your <command>bali-phy</command> runs on that computer.
 	<qandaentry>
 	  <question><para>How do I compute the clade support?</para></question>
 	  <answer>
-	    <para>Actually, BAli-Phy uses unrooted trees, so it only estimates bi-partition support.  A bi-partition is a division of taxa into two groups, but it does not specify which group contains the root. </para>
+	    <para>By default, BAli-Phy uses unrooted trees and reports bi-partition support.
+            A bi-partition divides the taxa into two groups without specifying which contains
+            the root. BAli-Phy also supports rooted tree models; see
+            <xref linkend="nonreversible_models"/>.</para>
 	  </answer>
 	</qandaentry>
 
