@@ -57,8 +57,9 @@
 <!-- end of MathML support. -->
 
 <xsl:param name="html.stylesheet">guide.css</xsl:param>
-<!-- Use our existing CSS; do not generate an upstream docbook.css over it. -->
-<xsl:param name="docbook.css.source" select="''"/>
+<!-- Embed DocBook defaults before guide.css, without generating a separate CSS file. -->
+<xsl:param name="docbook.css.source">docbook.css.xml</xsl:param>
+<xsl:param name="generate.css.header" select="1"/>
 <xsl:param name="html.ext">.html</xsl:param>
 <xsl:param name="toc.list.type">dl</xsl:param>
 <xsl:param name="variablelist.as.table" select="1"/>

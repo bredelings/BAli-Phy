@@ -127,6 +127,8 @@ table.informaltable > tbody > tr:nth-child(odd) > td { background-color: #E0E0E0
 	padding: 6px;
 }
 
+.toc-title { font-weight: bold; }
+
 .term { font-weight: bold;
 	padding-right: 2em;
         }
