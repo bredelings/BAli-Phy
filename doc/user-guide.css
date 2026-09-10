@@ -1,0 +1,75 @@
+/* User Guide additions to DocBook xslTNG's screen and print styles. */
+.command, .prompt {
+    font-weight: bold;
+}
+
+.prompt {
+    color: green;
+    text-decoration: underline;
+    /* Allow copying commands without selecting the prompt. */
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+pre.verbatim {
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    padding: 0.75em;
+}
+
+pre.screen, p .userinput, .computeroutput {
+    background-color: #F0F0F0;
+}
+
+pre.programlisting {
+    background-color: #D0E3FF;
+    border: 0.1em solid #BBB;
+    border-radius: 0.5em;
+}
+
+.note {
+    --note-color: #FFEAEA;
+    --note-border-color: #EE4040;
+}
+
+.example {
+    border: 0.15em solid #4040CC;
+    border-radius: 0.75em;
+    background-color: #E0F0FF;
+    padding: 0.75em 1em;
+    margin-block: 1em;
+}
+
+.table table, .informaltable table {
+    border-collapse: collapse;
+}
+
+.table tbody > tr:nth-child(odd), .informaltable tbody > tr:nth-child(odd) {
+    background-color: #E0E0E0;
+}
+
+td, th {
+    vertical-align: top;
+    overflow-wrap: break-word;
+}
+
+.term {
+    font-weight: bold;
+}
+
+@media screen {
+    /* Wide model tables can scroll without widening the surrounding document. */
+    .table, .informaltable {
+        overflow-x: auto;
+    }
+}
+
+@media print {
+    /* Work around fontconfig preferring the upstream Symbol fallback to generic families.
+       Remove if the upstream print font lists no longer cause Latin text to use Symbol. */
+    :root {
+        --body-family: serif;
+        --title-family: sans-serif;
+        --mono-family: monospace;
+    }
+}
