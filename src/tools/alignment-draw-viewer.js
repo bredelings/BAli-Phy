@@ -750,7 +750,10 @@ class AlignmentPropertyViewer {
         this.reportSort = {column: 0, direction: 1};
         const property = this.selectedProperty();
         const positiveSelection = Boolean(this.reports[property?.name]?.positive_selection);
-        const conditioned = positiveSelection ? this.posteriorViews.find((view) =>
+        const previousSelection = Boolean(this.reports[this.currentProperty?.name]?.positive_selection);
+        // Entering selection defaults to the conditional view; moving between selection
+        // properties preserves the posterior the user is already examining.
+        const conditioned = positiveSelection && !previousSelection ? this.posteriorViews.find((view) =>
             view.condition === 'positiveSelectionInModel' && view.available) : null;
         if (conditioned && conditioned !== this.activeView) {
             this.activateView(conditioned);
