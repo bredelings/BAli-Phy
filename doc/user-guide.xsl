@@ -3,8 +3,9 @@
                 xmlns:m="http://docbook.org/ns/docbook/modes"
                 xmlns:db="http://docbook.org/ns/docbook"
                 xmlns:f="http://docbook.org/ns/docbook/functions"
+                xmlns:h="http://www.w3.org/1999/xhtml"
                 xmlns="http://www.w3.org/1999/xhtml"
-                exclude-result-prefixes="m db f"
+                exclude-result-prefixes="m db f h"
                 version="3.0">
 
   <!-- The release's XML catalog resolves this import to the local installation. -->
@@ -35,8 +36,23 @@
        Java approximates the model language's strings, numbers, operators, and comments;
        replace it if a dedicated BAli-Phy model-language lexer becomes available. -->
   <xsl:template match="db:programlisting[@language='bali-phy-model']/text()" mode="m:docbook">
-    <xsl:variable name="highlighted" select="f:syntax-highlight(string(.),
+    <xsl:variable name="tokens" select="f:syntax-highlight(string(.),
                    map { 'language': 'java' }, map { 'stripnl': 'false', 'ensurenl': 'true' })"/>
+    <!-- Java treats square brackets as operators. Split only operator spans so brackets
+         become grouping punctuation without recoloring symbols inside strings or comments. -->
+    <xsl:variable name="highlighted" as="node()*">
+      <xsl:for-each select="$tokens">
+        <xsl:choose>
+          <xsl:when test="self::h:span[@class='o']">
+            <xsl:analyze-string select="string(.)" regex="\[|\]">
+              <xsl:matching-substring><span class="p"><xsl:value-of select="."/></span></xsl:matching-substring>
+              <xsl:non-matching-substring><span class="o"><xsl:value-of select="."/></span></xsl:non-matching-substring>
+            </xsl:analyze-string>
+          </xsl:when>
+          <xsl:otherwise><xsl:sequence select="."/></xsl:otherwise>
+        </xsl:choose>
+      </xsl:for-each>
+    </xsl:variable>
     <xsl:variable name="trim" select="not(ends-with(., '&#10;'))
                    and $highlighted[last()] instance of text()
                    and ends-with(string($highlighted[last()]), '&#10;')"/>

@@ -45,8 +45,12 @@ pre.programlisting :is(.m, .mi, .mf, .mh, .mo, .mb, .il) {
     color: #7040a0;
 }
 
+pre.programlisting .p {
+    color: #245ca6;
+}
+
 pre.programlisting .o {
-    color: #505050;
+    color: #9a4700;
 }
 
 .table table, .informaltable table {
