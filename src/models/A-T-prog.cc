@@ -395,6 +395,8 @@ Hs::Stmts generate_main(const InferOptions& options,
 		       const Hs::Var& jsonLogger,
 		       const Hs::Var& treeLogger,
 		       const Hs::Exp& model_fn,
+
+                       const vector<int>& category_vector_models,
 		       vector<tuple<int,Hs::Exp,Hs::Exp>>& alignment_loggers,
 		       vector<tuple<int,Hs::Exp,Hs::Exp>>& category_state_loggers)
 {
@@ -532,6 +534,30 @@ Hs::Stmts generate_main(const InferOptions& options,
     {
         auto tree_filename = fixed.at("topology");
         HsG::Bind(main, HsG::VarPat(topology), HsG::Apply(Hs::Var("<$>"), {Hs::Var("dropInternalLabels"), HsG::Apply(Hs::Var("readTreeTopology"), {Hs::Literal(Hs::String(tree_filename))})}));
+    }
+
+    // Category usage is fixed by the input topology, not by sampled branch lengths or hypotheses.
+    // Save it once, and only for substitution models that actually request the annotation state.
+    if (not category_vector_models.empty())
+    {
+        vector<Hs::Exp> indices;
+        for(int index: category_vector_models)
+            indices.push_back(Hs::Literal(Hs::Integer{integer(index)}));
+        auto input_tree = fixed.count("tree") ? tree : topology;
+        auto vectors = HsG::Apply(Hs::Var("foregroundBranchCategoryVectors"),
+                                  {input_tree, Hs::Literal(Hs::String("foreground"))});
+        auto used = HsG::Apply(Hs::Var("usedBranchCategoriesByHypothesis"), {vectors});
+        // Construct JSON fields using the same key conversion as the generated property logger.
+        auto field = [](const string& key, const Hs::Exp& value) {
+            return HsG::Apply(Hs::Var(".="),
+                {HsG::Apply(Hs::Var("J.toJSONKey"), {Hs::Literal(Hs::String(key))}), value});
+        };
+        auto metadata = HsG::Apply(Hs::Var("J.object"), {HsG::List({
+            field("version", Hs::Literal(Hs::Integer{integer(1)})),
+            field("substitution_models", HsG::List(indices)), field("used_categories", used)})});
+        auto write = HsG::Apply(Hs::Var("T.writeFile"),
+            {output_file("C1.branch-category-usage.json"), HsG::Apply(Hs::Var("J.encode"), {metadata})});
+        HsG::Expr(main, HsG::Apply(Hs::Var("when"), {logging_enabled, write}));
     }
 
     auto no_logger = HsG::Apply(Hs::Var("return"), {Hs::Var("noLogger")});
@@ -998,8 +1024,13 @@ std::string generate_atmodel_program(const InferOptions& options,
     }
 
     set<string> used_states;
+    vector<int> category_vector_models;
     for(int i=0;i<SMs.size();i++)
+    {
         add(used_states, SMs[i].code.used_states);
+        if (SMs[i].code.used_states.contains("branch_category_vectors"))
+            category_vector_models.push_back(i+1);
+    }
 
     // Foreground categories come from attributes on the supplied topology, so they cannot retain
     // their intended branch identities while topology changes.
@@ -1320,6 +1351,7 @@ reportOutput description filename suffix =
 			      jsonLogger,
 			      treeLogger,
 			      model_fn,
+                              category_vector_models,
 			      alignment_loggers,
 			      category_state_loggers);
 

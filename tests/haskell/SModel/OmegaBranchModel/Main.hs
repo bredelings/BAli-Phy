@@ -68,3 +68,7 @@ main = do
                    numberHypothesisBranchCategories hypotheses]
   putStrLn $ show $ IntMap.toList $ selectBranchHypothesis 0 hypotheses
   putStrLn $ show $ IntMap.toList $ selectBranchHypothesis 1 hypotheses
+  -- Usage must not add category zero when every branch is explicitly assigned elsewhere.
+  -- Existing category-count checks include unused categories; this checks report omission instead.
+  putStrLn $ show $ usedBranchCategoriesByHypothesis hypotheses
+  putStrLn $ show $ usedBranchCategoriesByHypothesis $ IntMap.fromList [(0,[1,2]), (1,[2,1])]

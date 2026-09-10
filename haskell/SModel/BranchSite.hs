@@ -56,6 +56,12 @@ selectBranchHypothesis hypothesis branchCategories
     select [] = 0
     select categories = categories !! hypothesis
 
+-- Record the categories actually used in each hypothesis, including zero only when selected.
+usedBranchCategoriesByHypothesis :: IntMap.IntMap [Int] -> [[Int]]
+usedBranchCategoriesByHypothesis branchCategories =
+    [IntSet.toAscList $ IntSet.fromList $ IntMap.elems $ selectBranchHypothesis h branchCategories
+    | h <- [0..numberBranchHypotheses branchCategories - 1]]
+
 -- Count all categories needed by any hypothesis so their model parameters can be shared.
 numberHypothesisBranchCategories branchCategories =
     numberBranchCategories $ IntMap.fromList $ zip [0..] (0 : concat (IntMap.elems branchCategories))
