@@ -2154,6 +2154,12 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
           This allows you to change the underlying nucleotide model or add other modifications.
           </para>
 
+          <para>Unconstrained $\omega$ parameters default to <userinput>LogNormal(0,1)</userinput>,
+          giving equal prior probability below and above one. To restrict $\omega$ below one,
+          specify <userinput>omega~Uniform(0,1)</userinput>, for example
+          <userinput>GY94(omega~Uniform(0,1))</userinput>. Conserved categories in mixture models
+          retain their constrained priors.</para>
+
 	  <para>Here are some examples for how to construct classic codon models piecewise:
 	  <itemizedlist>
 	    <listitem><userinput>MG94</userinput> is equivalent to <userinput>F81 +> x3 +> dNdS</userinput>.</listitem>

@@ -15,7 +15,7 @@
         {
             "name": "omega",
             "type": "Double",
-            "default_value": "~Uniform(0,1)",
+            "default_value": "~LogNormal(0,1)",
 	    "description": "Excess dN/dS"
         },
         {

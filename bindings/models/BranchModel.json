@@ -15,7 +15,7 @@
         {
             "name": "omegas",
             "type": "List<Double>",
-            "default_value": "~IID(numberBranchCategories(@branchCats),LogLaplace(-1,1))",
+            "default_value": "~IID(numberBranchCategories(@branchCats),LogNormal(0,1))",
             "description": "Independent omega values for branch categories #0, #1, and so on."
         },
         {

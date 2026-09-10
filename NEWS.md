@@ -2,6 +2,8 @@
 
 ## Breaking changes
 
+- Unconstrained single-omega codon models and BranchModel/BranchModel_test now default to
+  LogNormal(0,1) omega priors. Explicitly supplied priors and constrained categories are unchanged.
 - Capitalize models and distributions. (for example, normal -> Normal, gtr -> GTR)
 - Rename the Rates.* models to ASRV.*. The old names remain as deprecated synonyms.
 - Rename bp-analyze -> bpy-summarize.
