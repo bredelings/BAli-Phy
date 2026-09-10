@@ -3115,9 +3115,21 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
     <section xml:id="selection-false-positives">
       <info><title>Model assumptions and false positives</title></info>
 
-      <para>A false positive is an inference of positive selection when it is absent. Evidence
-      for selection depends on which changes the model expects without it. If the background
-      model assigns those changes too little probability, increasing ω can partly compensate
+      <para>A false positive is an inference of positive selection when it is absent.
+      A false-positive rate (FPR) of 5% means that a test calls 5% of truly unselected cases
+      positive. It does not mean that only 5% of positive results are wrong. The false-discovery
+      rate (FDR) measures the expected fraction of false positives among reported positives;
+      it depends on how common selection is and how often the test detects it. A 5% FPR can
+      therefore accompany an FDR of 30% or more
+      (<link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="https://doi.org/10.1093/molbev/msu174">Redelings 2014</link>).
+      Neither rate is the posterior probability for an individual result. If the posterior
+      probability of selection is 0.95, the probability of no selection is 0.05, under the model
+      and priors. Averaging these probabilities of no selection over reported positives gives
+      their posterior expected false-discovery fraction.</para>
+
+      <para>Evidence for selection depends on which changes the model expects without it. If the
+      background model assigns those changes too little probability, increasing ω can partly compensate
       for the error. This can improve the fit without correctly explaining the process: ω increases only
       nonsynonymous rates, rather than correcting the background model.</para>
 
@@ -3245,6 +3257,7 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
       BAli-Phy also uses priors, and the programs approximate beta mixtures differently.
       BAli-Phy reports posterior estimates and Bayesian model support, not CODEML's
       maximum-likelihood estimates, likelihood-ratio tests, or empirical-Bayes site probabilities.</para>
+
     </section>
   </section>
 
