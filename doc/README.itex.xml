@@ -3074,8 +3074,15 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
 
       <para>To test whether the labelled branch needs a separate ω, change its label to
       <literal>[&amp;foreground={0,1}]</literal> and replace <userinput>BranchModel</userinput>
-      with <userinput>BranchModel_test</userinput> in the command. Hypothesis 0 uses category 0
-      everywhere; hypothesis 1 uses category 1 on that branch. The report gives the probability
+      with <userinput>BranchModel_test</userinput> in the command. In this example, hypothesis 0
+      uses category 0 everywhere; hypothesis 1 uses category 1 on that branch.</para>
+
+      <para>Each entry in the label gives that branch's category under a hypothesis: the first
+      entry is for hypothesis 0, the second for hypothesis 1, and so on. Thus,
+      <literal>[&amp;foreground={1,0}]</literal> reverses the assignments on that branch.
+      Unlabelled branches use category 0 under every hypothesis.</para>
+
+      <para>The report gives the probability
       of each hypothesis and separate ω summaries using only samples from that hypothesis.
       These tables omit unused categories. Summaries across all hypotheses include prior draws
       whenever a category is unused. This tests whether ω differs among branches, not specifically
