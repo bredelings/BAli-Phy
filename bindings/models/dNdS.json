@@ -19,6 +19,7 @@
         }
     ],
     "examples": ["HKY85 +> x3 +> dNdS","GTR +> x3 +> dNdS"],
+    "description": "Multiply nonsynonymous substitution rates by omega.\n\nFor stationary reversible inputs, equilibrium frequencies are unchanged. For stationary non-reversible inputs, they are recalculated from the modified rates.\n\nNon-equilibrium inputs retain their root frequencies.",
     "see": ["MG94"],
     "extract": "all"
 }

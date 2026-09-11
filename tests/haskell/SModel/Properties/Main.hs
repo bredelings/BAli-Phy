@@ -255,3 +255,16 @@ main = do
     , getReversibility rootCodon == NonEq
     , and $ zipWith near (toList productRoot) (toList $ CoreMarkov.getStartFreqs rootCodon)
     ])
+
+  -- Check equilibrium and root-frequency behavior when omega changes the rates.
+  -- Existing omega-property tests check annotations, not frequencies.
+  -- Retain while dNdS supports stationary non-reversible and non-equilibrium inputs.
+  let selectedCyclic = dNdS 2 cyclicCodon
+      selectedRoot = dNdS 2 rootCodon
+  putStrLn $ show ("dNdS frequencies",
+    [ getReversibility selectedCyclic == EqNonRev
+    , CoreMarkov.checkStationary (CoreMarkov.getQ selectedCyclic) (CoreMarkov.getStartFreqs selectedCyclic)
+    , not $ CoreMarkov.checkReversible (CoreMarkov.getQ selectedCyclic) (CoreMarkov.getStartFreqs selectedCyclic)
+    , getReversibility selectedRoot == NonEq
+    , and $ zipWith near (toList productRoot) (toList $ CoreMarkov.getStartFreqs selectedRoot)
+    ])

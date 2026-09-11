@@ -89,12 +89,19 @@ mnm a v2 v3 nucModel = setReversibility rv $ markov a smap q pi where
 
 -- Add codon dN/dS effects to the rate matrix and tag every codon state with
 -- the chosen omega value and whether it represents positive selection.
+-- Multiplying forward and reverse rates by the same factor preserves detailed balance,
+-- but need not preserve a non-reversible equilibrium distribution. For EqNonRev, use the
+-- equilibrium limit starting from the input frequencies, including for reducible matrices.
+-- For NonEq, leave root frequencies unchanged.
 -- NOTE: maybe this should be t*(q * dNdS_matrix) in order to avoid losing scaling factors?  Probably this doesn't matter at the moment.
 dNdS omega m@(Markov a s _ _ _) =
     setComponentCondition positiveSelectionInModelConditionName (omega > 1) $
     setConstantStateProperty posSelectionPropertyName posSelection $
     setConstantStateProperty dNdSPropertyName omega $
-    setReversibility rv $ markov a s q pi
+    case rv of
+        EqNonRev -> wrapMarkov a s $ setReversibility EqNonRev $
+                    Markov.markov q (Markov.equilibriumLimit pi q)
+        _        -> setReversibility rv $ markov a s q pi
   where
     rv = getReversibility m
     pi = getStartFreqs m

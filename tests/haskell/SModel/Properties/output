@@ -34,3 +34,4 @@ True
 [True,False]
 [True,False]
 ("x3 frequencies",[True,True,True,True,True])
+("dNdS frequencies",[True,True,True,True,True])
