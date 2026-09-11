@@ -20,16 +20,16 @@
 <!ENTITY  install.prefix    "~/Applications"         >
 <!ENTITY  install.path      "&install.prefix;/bali-phy-&version;"         >
 <!ENTITY  exe.path          "&install.path;/bin/bali-phy"         >
-<!ENTITY % sgml.features "IGNORE">
-<!ENTITY % xml.features "INCLUDE">
 
 <!ENTITY  baliphy    "BAli-Phy" >
 
-<!ENTITY % dbcent 
-	 PUBLIC "-//OASIS//ENTITIES DocBook Character Entities V4.5//EN"
-	 "/usr/share/xml/docbook/schema/dtd/4.5/dbcentx.mod">
+<!-- itex2MML emits named entities; remove these imports with that preprocessing step. -->
+<!ENTITY % sgml.features "IGNORE">
+<!ENTITY % xml.features "INCLUDE">
+<!ENTITY % dbcent
+      PUBLIC "-//OASIS//ENTITIES DocBook Character Entities V4.5//EN"
+             "/usr/share/xml/docbook/schema/dtd/4.5/dbcentx.mod">
 %dbcent;
-
 <!ENTITY % ent-mmlalias
       PUBLIC "-//W3C//ENTITIES Aiases for MathML 2.0//EN"
              "/usr/share/xml/schema/w3c/mathml/dtd/mmlalias.ent" >
@@ -633,7 +633,7 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
     <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -A DNA -S TN93 -I RS07</userinput></screen>
     Default values that are used will always be displayed on the screen and in the output files so that you do not have to guess.  You can specify a more complex substitution model using the <userinput>-S</userinput> option.  You will generally need to write the substitution model inside single quotes unless it is just a single word.
 
-    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'LG&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Inv'</userinput></screen>
+    <screen><prompt>%</prompt> <userinput>bali-phy sequences.fasta -S 'LG&#160;+>&#160;ASRV.Gamma&#160;+>&#160;Inv'</userinput></screen>
     Every short option like <userinput>-S</userinput> has an equivalent long option like <userinput>--smodel</userinput>.
     Long option names must be written in full.  For example, use
     <userinput>--iterations</userinput> (or <userinput>-i</userinput>), not the old abbreviation
@@ -667,7 +667,7 @@ GTTGGTGGTGAGACCCTGGGCAGGCTGCTGGTTGTCTACCCATGGACCCAGAGGTTCTTC
 :align ITS2.fasta
 
 # linked substitution model for 1st and 3rd partition
-:smodel 1,3:TN93&nbsp; +> &nbsp;ASRV.Free(n=3)
+:smodel 1,3:TN93&#160; +> &#160;ASRV.Free(n=3)
 
 # substitution model for 2nd partition
 :smodel 2:TN93
@@ -1001,7 +1001,7 @@ option.  For example:
 	</varlistentry>
 
 	<varlistentry>
-	  <term>scale$n$&nbsp;*&nbsp;|T|</term>
+	  <term>scale$n$&#160;*&#160;|T|</term>
 	  <listitem>
 	    <para>The scaled tree length for partitions in the $n$th scale group: the
 	    expected number of substitutions per site summed over the entire tree.</para>
@@ -1017,7 +1017,7 @@ option.  For example:
 	</varlistentry>
 
 	<varlistentry>
-	  <term>scale&nbsp;*&nbsp;|T|</term>
+	  <term>scale&#160;*&#160;|T|</term>
 	  <listitem>
 	    <para>The overall scale multiplied by the unscaled tree length: the
 	    alignment-length-weighted mean of the scaled tree lengths for all partitions.</para>
@@ -1321,7 +1321,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
 	  <thead><row>
 	    <entry>Model</entry>
-	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	    <entry>Summary</entry>
 	  </row></thead>
 
@@ -1419,7 +1419,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
 	  <thead><row>
 	    <entry>Model</entry>
-	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	    <entry>Summary</entry>
 	  </row></thead>
 
@@ -1454,8 +1454,8 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  <colspec colnum="4" colname="col4" colwidth="1*"/>
 	  <thead><row>
 	    <entry>Model</entry>
-	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
-	    <entry>&nbsp;&nbsp;mixture components&nbsp;&nbsp;</entry>
+	    <entry>&#160;&#160;d.f.&#160;&#160;</entry>
+	    <entry>&#160;&#160;mixture components&#160;&#160;</entry>
 	    <entry>Summary</entry>
 	  </row></thead>
 	  
@@ -1481,7 +1481,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><code language="bali-phy-model">JTT&nbsp;+>&nbsp;F</code></para>
+		<para><code language="bali-phy-model">JTT&#160;+>&#160;F</code></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1495,7 +1495,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><code language="bali-phy-model">WAG&nbsp;+>&nbsp;F</code></para>
+		<para><code language="bali-phy-model">WAG&#160;+>&#160;F</code></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1509,7 +1509,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><code language="bali-phy-model">LG&nbsp;+>&nbsp;F</code></para>
+		<para><code language="bali-phy-model">LG&#160;+>&#160;F</code></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1647,7 +1647,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 
 	    <row>
 	      <entry>
-		<para><code language="bali-phy-model">Empirical(<replaceable>file</replaceable>)&nbsp;+>&nbsp;F</code></para>
+		<para><code language="bali-phy-model">Empirical(<replaceable>file</replaceable>)&#160;+>&#160;F</code></para>
 	      </entry>
 	      <entry>19</entry>
 	      <entry>1</entry>
@@ -1703,7 +1703,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
 	  <thead><row>
 	    <entry>Model</entry>
-	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	    <entry>Summary</entry>
 	  </row></thead>
 
@@ -1741,7 +1741,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
     <section xml:id="doublet_models">
       <info><title>Doublet models (RNA stems)</title></info>
       <para>The doublets alphabet consists of 16 RNA dinucleotides.  It is used to model RNA stems, where two nucleotides matched in the RNA secondary structure are highly correlated.</para>
-      <para>The default substitution model for doublets is <code language="bali-phy-model">TN93_sym&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;F</code>.</para>
+      <para>The default substitution model for doublets is <code language="bali-phy-model">TN93_sym&#160;+>&#160;x2_sym&#160;+>&#160;F</code>.</para>
       <section xml:id="doublet-data">
 	<info><title>Doublet data</title></info>
 	<para>BAli-Phy does not allow specifying which nucleotides are paired either with a string like <userinput>((.))</userinput> or with a "pairs" file.  Instead you must manually extract the paired nucleotides and put them in their own partition (for stems), and then manually extract each loop and put it in its own partition.</para>
@@ -1758,13 +1758,13 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
 	  <thead><row>
 	    <entry>Model</entry>
-	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	    <entry>Summary</entry>
 	  </row></thead>
 	  
 	  <tbody>
 	    <row>
-	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2</code></entry>
+	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&#160;+>&#160;x2</code></entry>
 	      <entry>df(nuc_model)</entry>
 	      <entry>
 		<para>The same as <replaceable>nuc_model</replaceable>, but on dinucleotides instead of nucleotides.</para>
@@ -1774,7 +1774,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2&nbsp;+>&nbsp;MutSel</code></entry>
+	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&#160;+>&#160;x2&#160;+>&#160;MutSel</code></entry>
 	      <entry>df(nuc_model)+15</entry>
 	      <entry>
 		<para>Mutation-selection model: neutral mutation follows <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns on dinucleotides.</para>
@@ -1783,7 +1783,7 @@ The majority consensus tree is usually not fully resolved, so we recommend using
 	    </row>
 
 	    <row>
-	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x2_sym&nbsp;+>&nbsp;F</code></entry>
+	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&#160;+>&#160;x2_sym&#160;+>&#160;F</code></entry>
 	      <entry>df(nuc_model)+15</entry>
 	      <entry><para>This model has separate frequencies for each dinucleotide.</para>
 	      <para>Simultaneous changes of both letters are <emphasis>not</emphasis> allowed.</para>
@@ -1859,7 +1859,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
 	  <thead><row>
 	    <entry>Model</entry>
-	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	    <entry>Summary</entry>
 	  </row></thead>
 
@@ -1909,20 +1909,20 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
 	  <thead><row>
 	    <entry>Model</entry>
-	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	    <entry>Summary</entry>
 	  </row></thead>
 	  
 	  <tbody>
 	    <row>
-	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;F</code></entry>
+	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&#160;+>&#160;x3_sym&#160;+>&#160;F</code></entry>
 	      <entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
 	      <entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix.</para>
 	      </entry>
 	    </row>
 
 	    <row>
-	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3</code></entry>
+	      <entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&#160;+>&#160;x3</code></entry>
 	      <entry>df(<replaceable>nuc_model</replaceable>)</entry>
 	      <entry><para>MG94-style rate matrix constructed from nucleotide rate matrix.</para>
 	             <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on triplets, but not on codons.</para>
@@ -1937,7 +1937,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    </row -->
 
 	      <row>
-		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3&nbsp;+>&nbsp;MutSel</code></entry>
+		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&#160;+>&#160;x3&#160;+>&#160;MutSel</code></entry>
 		<entry>df(<replaceable>nuc_model</replaceable>)+63</entry>
 		<entry><para>Mutation-selection model with neutral mutation following <replaceable>nuc_model</replaceable> and scaled selection coefficients 2Ns <emphasis>for each codon</emphasis>.</para>
 		</entry>
@@ -1965,7 +1965,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
 	  <thead><row>
 	    <entry>Model</entry>
-	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	    <entry>Summary</entry>
 	  </row></thead>
 
@@ -2020,7 +2020,7 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    <colspec colnum="3" colname="col3" colwidth="1*"/>
 	    <thead><row>
 	      <entry>Model</entry>
-	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	      <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	      <entry>Summary</entry>
 	    </row></thead>
 
@@ -2185,12 +2185,12 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    <colspec colnum="3" colname="col3" colwidth="1*"/>
 	    <thead><row>
 	      <entry>Model</entry>
-	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	      <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	      <entry>Summary</entry>
 	    </row></thead>
             <tbody>
 	      <row>
-		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3_sym&nbsp;+>&nbsp;F</code></entry>
+		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&#160;+>&#160;x3_sym&#160;+>&#160;F</code></entry>
 		<entry>df(nuc_model)+60</entry>
 		<entry><para>GY94-style rate matrix constructed from nucleotide exchangeability matrix (dN/dS = 1).</para>
 	               <para>This model should give the same likelihood as <replaceable>nuc_model</replaceable> on codons only if the frequency of stop codons is zero.</para>
@@ -2198,14 +2198,14 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	      </row>
 
 	      <row>
-		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;x3</code></entry>
+		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&#160;+>&#160;x3</code></entry>
 		<entry>df(nuc_model)</entry>
 		<entry><para>MG94-style rate matrix constructed from nucleotide rate matrix (dN/dS = 1).</para><para>Constructs either a codon model or a triplet model, depending on the alphabet.</para>
 		</entry>
 	      </row>
 
 	      <row>
-		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&nbsp;+>&nbsp;MNM</code></entry>
+		<entry><code language="bali-phy-model"><replaceable>nuc_model</replaceable>&#160;+>&#160;MNM</code></entry>
 		<entry>df(nuc_model)+2</entry>
 		<entry><para>Like <code language="bali-phy-model">x3</code>, but with multi-nucleotide mutations.</para>
 		</entry>
@@ -2274,7 +2274,7 @@ MG94(pi={"A":0.1, "C":0.2, "T":0.3, "G":0.4})
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
 	  <thead><row>
 	    <entry>Model</entry>
-	    <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	    <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	    <entry>Summary</entry>
 	  </row></thead>
 
@@ -2365,7 +2365,7 @@ If the genetic code is not specified, then the standard code is used:
 	  <tgroup cols="3">
 	    <thead><row>
 	      <entry>Model</entry>
-	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	      <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	      <entry>Summary</entry>
 	    </row></thead>
 	    <tbody>
@@ -2520,13 +2520,13 @@ beta = concentration*(1-mu)</programlisting>
       <tgroup cols="3">
 	  <thead><row>
 	      <entry>Model</entry>
-	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	      <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	      <entry>Summary</entry>
 	  </row></thead>
 	  <tbody>
 
 	    <row>
-	      <entry><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.Gamma</code></entry>
+	      <entry><code language="bali-phy-model"><replaceable>submodel</replaceable>&#160;+>&#160;ASRV.Gamma</code></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the Gamma distribution</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1007/BF00160154">
@@ -2537,7 +2537,7 @@ beta = concentration*(1-mu)</programlisting>
 
 	    <row>
 	      <entry>
-		<para><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.LogNormal</code></para>
+		<para><code language="bali-phy-model"><replaceable>submodel</replaceable>&#160;+>&#160;ASRV.LogNormal</code></para>
 	      </entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Site rates follow a discrete approximation to the log-normal distribution</para>
@@ -2545,7 +2545,7 @@ beta = concentration*(1-mu)</programlisting>
 	    </row>
 
 	    <row>
-	      <entry><para><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;ASRV.Free</code></para></entry>
+	      <entry><para><code language="bali-phy-model"><replaceable>submodel</replaceable>&#160;+>&#160;ASRV.Free</code></para></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+2($n$-1)</entry>
 	      <entry><para>Sites fall in one of $n$ categories. Each category has its own rate.</para>
 		  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://doi.org/10.1093/genetics/139.2.993">
@@ -2555,13 +2555,13 @@ beta = concentration*(1-mu)</programlisting>
 	    </row>
 
 	    <row>
-	      <entry><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;MultiRate(<replaceable>dist</replaceable>)</code></entry>
+	      <entry><code language="bali-phy-model"><replaceable>submodel</replaceable>&#160;+>&#160;MultiRate(<replaceable>dist</replaceable>)</code></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+df(<replaceable>dist</replaceable>)</entry>
 	      <entry><para>Site rates follow a discrete approximation to the distribution <replaceable>dist</replaceable>.</para></entry>
 	    </row>
 
 	    <row>
-	      <entry><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Inv</code></entry>
+	      <entry><code language="bali-phy-model"><replaceable>submodel</replaceable>&#160;+>&#160;Inv</code></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+1</entry>
 	      <entry><para>Some fraction Inv:pInv of sites are invariable.</para>
 	      </entry>
@@ -2588,13 +2588,13 @@ beta = concentration*(1-mu)</programlisting>
       <tgroup cols="3">
 	  <thead><row>
 	      <entry>Model</entry>
-	      <entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+	      <entry>&#160;&#160;d.f.&#160;&#160;</entry>
 	      <entry>Summary</entry>
 	  </row></thead>
 	  <tbody>
 
 	    <row>
-	      <entry><code language="bali-phy-model"><replaceable>Q</replaceable>&nbsp;+>&nbsp;Covarion.TuffleySteel98</code></entry>
+	      <entry><code language="bali-phy-model"><replaceable>Q</replaceable>&#160;+>&#160;Covarion.TuffleySteel98</code></entry>
 	      <entry>df(<replaceable>submodel</replaceable>)+2</entry>
 	      <entry>
                 <para>Each state in rate matrix Q is split into an ON and OFF variant.  Models burstiness.</para>
@@ -2606,8 +2606,8 @@ beta = concentration*(1-mu)</programlisting>
 
 	    <row>
 	      <entry>
-                <para><code language="bali-phy-model"><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Huelsenbeck02</code></para>
-                <para><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Huelsenbeck02</code></para>
+                <para><code language="bali-phy-model"><replaceable>Q</replaceable>&#160;+>&#160;ASRV.Gamma&#160;+>&#160;Covarion.Huelsenbeck02</code></para>
+                <para><code language="bali-phy-model"><replaceable>submodel</replaceable>&#160;+>&#160;Covarion.Huelsenbeck02</code></para>
               </entry>
 	      <entry>
                 <para>df(<replaceable>Q+ASRV.Gamma</replaceable>)+2</para>
@@ -2623,8 +2623,8 @@ beta = concentration*(1-mu)</programlisting>
 
 	    <row>
 	      <entry>
-                <para><code language="bali-phy-model"><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Galtier01</code></para>
-                <para><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Galtier01</code></para>
+                <para><code language="bali-phy-model"><replaceable>Q</replaceable>&#160;+>&#160;ASRV.Gamma&#160;+>&#160;Covarion.Galtier01</code></para>
+                <para><code language="bali-phy-model"><replaceable>submodel</replaceable>&#160;+>&#160;Covarion.Galtier01</code></para>
               </entry>
 	      <entry>
                 <para>df(<replaceable>Q+ASRV.Gamma</replaceable>)+2</para>
@@ -2640,8 +2640,8 @@ beta = concentration*(1-mu)</programlisting>
 
 	    <row>
 	      <entry>
-                <para><code language="bali-phy-model"><replaceable>Q</replaceable>&nbsp;+>&nbsp;ASRV.Gamma&nbsp;+>&nbsp;Covarion.Wang07</code></para>
-                <para><code language="bali-phy-model"><replaceable>submodel</replaceable>&nbsp;+>&nbsp;Covarion.Wang07</code></para>
+                <para><code language="bali-phy-model"><replaceable>Q</replaceable>&#160;+>&#160;ASRV.Gamma&#160;+>&#160;Covarion.Wang07</code></para>
+                <para><code language="bali-phy-model"><replaceable>submodel</replaceable>&#160;+>&#160;Covarion.Wang07</code></para>
               </entry>
 	      <entry>
                 <para>df(<replaceable>Q+ASRV.Gamma</replaceable>)+4</para>
@@ -2684,7 +2684,7 @@ beta = concentration*(1-mu)</programlisting>
 	    <colspec colnum="3" colname="col3" colwidth="1*"/>
 	    <thead><row>
 		<entry>Model</entry>
-		<entry>&nbsp;&nbsp;d.f.&nbsp;&nbsp;</entry>
+		<entry>&#160;&#160;d.f.&#160;&#160;</entry>
 		<entry>Summary</entry>
 	    </row></thead>
 	    <tbody>	    
