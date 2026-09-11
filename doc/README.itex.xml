@@ -2169,23 +2169,14 @@ HKY85_sym +> x2_sym +> F({"AA":0.01, "AC":0.01, "AG":0.01, "AU":0.22, "CA":0.01,
 	    <listitem><code language="bali-phy-model">MG94</code> is equivalent to <code language="bali-phy-model">F81 +> x3 +> dNdS</code>.</listitem>
 	    <listitem><code language="bali-phy-model">MG94K</code> is equivalent to <code language="bali-phy-model">HKY85 +> x3 +> dNdS</code>.</listitem>
 	    <listitem><code language="bali-phy-model">GY94</code> is equivalent to <code language="bali-phy-model">HKY85_sym +> x3_sym +> F +> dNdS</code>.</listitem>
-	    <listitem><code language="bali-phy-model">FMutSel</code> has the same substitution-model form as <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSel</code>, but different default fitness priors.</listitem>
-	    <listitem><code language="bali-phy-model">FMutSel0</code> has the same substitution-model form as <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSelAA</code>, but different default fitness priors.</listitem>
+	    <listitem><code language="bali-phy-model">FMutSel</code> is equivalent to <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSel</code>.</listitem>
+	    <listitem><code language="bali-phy-model">FMutSel0</code> is equivalent to <code language="bali-phy-model">GTR +> x3 +> dNdS +> MutSelAA</code>.</listitem>
             <listitem><code language="bali-phy-model">M3</code> is equivalent to <code language="bali-phy-model">|w: GY94(w)| +> M3</code>.</listitem>
             <listitem><code language="bali-phy-model">M3_test</code> is equivalent to <code language="bali-phy-model">|w: GY94(w)| +> M3_test</code>.</listitem>
 	    <listitem><code language="bali-phy-model">BUSTED</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture</code>.</listitem>
 	    <listitem><code language="bali-phy-model">BUSTED_S</code> is equivalent to <code language="bali-phy-model">|w:GTR +> x3 +> dNdS(omega=w)| +> M3_test(n=2) +> BranchSiteMixture +> ASRV.Gamma(n=3)</code>.</listitem>
 	  </itemizedlist>
 	  </para>
-
-
-          <para><code language="bali-phy-model">FMutSel</code> and
-          <code language="bali-phy-model">FMutSel0</code> use independent
-          <code language="bali-phy-model">Laplace(0,0.1)</code> fitness priors by default;
-          <code language="bali-phy-model">MutSel</code> and
-          <code language="bali-phy-model">MutSelAA</code> use
-          <code language="bali-phy-model">Laplace(0,1)</code>. The latter allow larger fitness
-          differences, so the default Bayesian analyses are not equivalent.</para>
 
 	  <informaltable>
 	  <tgroup cols="3">
