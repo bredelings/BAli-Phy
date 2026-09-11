@@ -3280,29 +3280,23 @@ bali-phy: Error! Partitions 1 and 2 cannot be linked because they have differing
     ancestral residue, this summary averages over uncertainty in the topology, the alignment,
     and the ancestral state itself.</para>
 
-    <para>First, discard burn-in and match the tree samples to the saved alignments.
-    This example discards iterations 0–999 from each run and assumes the default logging
-    interval: one tree per iteration and one alignment every 10 iterations.
-    Choose a burn-in appropriate for your runs, rounded up to a multiple of 10.
-    Replace 1000 below with that number, and 999 with one less.
-    The commands retain iteration 1000 onward: <command>cut-range</command> keeps iterations
-    greater than 999, while <command>bpy-subsample</command> skips the first 1000 tree lines
-    before taking every tenth tree:</para>
-<screen><prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P1.fastas --skip=999 &gt; post-1.fastas</userinput>
-<prompt>%</prompt> <userinput>bpy-subsample --skip=1000 10 &lt; <replaceable>dir</replaceable>-1/C1.trees &gt; post-1.trees</userinput>
-<prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-2/C1.P1.fastas --skip=999 &gt; post-2.fastas</userinput>
-<prompt>%</prompt> <userinput>bpy-subsample --skip=1000 10 &lt; <replaceable>dir</replaceable>-2/C1.trees &gt; post-2.trees</userinput></screen>
-
-    <para>Next, construct the tree topology to annotate:</para>
-<screen><prompt>%</prompt> <userinput>trees-consensus --skip=0 post-1.trees post-2.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput></screen>
+    <para>This example uses the original run files and discards iterations 0–999 from each run.
+    Replace 1000 with a burn-in appropriate for your runs. First, construct the tree topology
+    to annotate:</para>
+<screen><prompt>%</prompt> <userinput>trees-consensus --skip=1000 <replaceable>dir</replaceable>-1/C1.trees <replaceable>dir</replaceable>-2/C1.trees | tree-tool - --strip-internal-names --name-all-nodes &gt; c50.tree</userinput></screen>
 
     <para>Construct the leaf-sequence alignment to annotate using posterior decoding:</para>
-<screen><prompt>%</prompt> <userinput>cut-range post-1.fastas post-2.fastas | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput></screen>
+<screen><prompt>%</prompt> <userinput>cut-range <replaceable>dir</replaceable>-1/C1.P1.fastas <replaceable>dir</replaceable>-2/C1.P1.fastas --skip=1000 | alignment-chop-internal --tree c50.tree | alignment-max &gt; P1-max.fasta</userinput></screen>
 
     <para>Finally, reconstruct the ancestral sequences on the given tree and alignment:</para>
-<screen><prompt>%</prompt> <userinput>summarize-ancestors P1-max.fasta -A post-1.fastas -T post-1.trees -A post-2.fastas -T post-2.trees --subsample=1 -n c50.tree -g c50.tree &gt; P1.ancestors.fasta</userinput></screen>
-    <para><userinput>--subsample=1</userinput> prevents further thinning of the already-matched
-    tree files. Do not remove the internal sequence names or tree labels from these sample files.</para>
+<screen><prompt>%</prompt> <userinput>summarize-ancestors P1-max.fasta -A <replaceable>dir</replaceable>-1/C1.P1.fastas -T <replaceable>dir</replaceable>-1/C1.trees -A <replaceable>dir</replaceable>-2/C1.P1.fastas -T <replaceable>dir</replaceable>-2/C1.trees --skip=1000 -n c50.tree &gt; P1.ancestors.fasta</userinput></screen>
+    <para>The default <userinput>--subsample=10</userinput> matches one saved alignment to every
+    tenth tree before applying burn-in. Use <userinput>--until</userinput> to set the last retained
+    iteration and <userinput>--thin</userinput> to thin the eligible pairs. Do not remove internal
+    sequence names or tree labels from the original sample files.</para>
+    <para>For codon data, pass the same <userinput>--alphabet</userinput> option to
+    <command>alignment-max</command> and <command>summarize-ancestors</command>, for example
+    <userinput>--alphabet='Codons(DNA,standard)'</userinput>. Use the genetic code from your analysis.</para>
 
 <para>BAli-Phy uses an alignment estimate (here, <filename>P1-max.fasta</filename>) as a
 template to construct a consensus alignment with ancestral sequences.  BAli-Phy doesn&apos;t
