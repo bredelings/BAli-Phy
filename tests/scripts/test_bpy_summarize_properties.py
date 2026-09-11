@@ -343,18 +343,22 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             overall_heading = section.index("Overall posterior</th>")
             selection_heading = section.index("Posterior with selection</th>")
             self.assertLess(overall_heading, selection_heading)
-            self.assertIn('<td class="site-probability">0.250</td>', section)
-            self.assertIn('<td class="site-probability">0.750</td>', section)
+            self.assertIn('<td class="site-probability" data-sort-value="0.25">0.250</td>', section)
+            self.assertIn('<td class="site-probability" data-sort-value="0.75">0.750</td>', section)
             self.assertIn('<td class="site-dnds-pm">&plusmn;</td>', section)
             self.assertIn('href="P1.positive-selection.tsv">All rows (TSV)</a>', section)
             self.assertIn('href="P1.initial.html">Alignment viewer</a>', section)
 
             unconditional_report = analysis.positive_selection_reports[0]
             paired_report = analysis.positive_selection_reports[1]
+            # Static HTML must retain the expandable rows and unrounded sorting values.
+            # This extends report coverage; browser checks cover the interactive controls.
+            # Remove the truncation checks if the report no longer limits the initial display.
             many_rows_report = {
                 **paired_report,
                 "rows": [
-                    {**paired_report["rows"][0], "column": str(column)}
+                    {**paired_report["rows"][0], "column": str(column),
+                     "model-averaged-probability": "0.250123"}
                     for column in range(1, 26)
                 ],
             }
@@ -362,10 +366,17 @@ class BPYSummarizePropertyTests(unittest.TestCase):
             many_rows_section = analysis.section_positive_selection()
             self.assertIn('Both summaries refer to that same letter', many_rows_section)
             self.assertIn(
-                "Showing 20 of 25 selected columns, ordered by overall posterior probability",
+                "Showing 15 of 25 selected columns.",
                 many_rows_section,
             )
-            self.assertEqual(many_rows_section.count('class="site-column"'), 20)
+            self.assertEqual(many_rows_section.count('class="site-column"'), 25)
+            self.assertEqual(many_rows_section.count(' hidden>'), 11)
+            self.assertIn('<tr data-report-row="14">', many_rows_section)
+            self.assertIn('<tr data-report-row="15" hidden>', many_rows_section)
+            self.assertIn('data-sort-value="0.250123">0.250</td>', many_rows_section)
+            self.assertIn('data-sort-column="7"', many_rows_section)
+            self.assertIn('Show all selected columns', many_rows_section)
+            self.assertNotIn('Show all selected columns', section)
 
             analysis.positive_selection_reports = [paired_report]
             paired_report["retained_samples"] = 100
