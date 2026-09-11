@@ -282,3 +282,15 @@ main = do
     , and $ zipWith near (toList $ CoreMarkov.getStartFreqs rootNuc)
                         (toList $ CoreMarkov.getStartFreqs fitRoot)
     ])
+
+  -- Check equilibrium and root-frequency behavior with multinucleotide mutations.
+  -- Reversible event-rate tests miss incorrect stationarity labels and NonEq root frequencies.
+  -- Retain while MNM supports stationary non-reversible and non-equilibrium inputs.
+  let mnmCyclic = mnm codons 0.2 0.03 cyclicNuc
+      mnmRoot = mnm codons 0.2 0.03 rootNuc
+  putStrLn $ show ("MNM frequencies",
+    [ getReversibility mnmCyclic == EqNonRev
+    , CoreMarkov.checkStationary (CoreMarkov.getQ mnmCyclic) (CoreMarkov.getStartFreqs mnmCyclic)
+    , getReversibility mnmRoot == NonEq
+    , and $ zipWith near (toList productRoot) (toList $ CoreMarkov.getStartFreqs mnmRoot)
+    ])

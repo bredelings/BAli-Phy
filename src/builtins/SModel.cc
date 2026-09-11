@@ -456,8 +456,9 @@ extern "C" closure builtin_function_multiNucleotideMutationRates(OperationArgs& 
     valarray<double> nucleotide_frequencies(pi1.data(), pi1.size());
     auto frequencies = get_codon_frequencies_from_independent_nucleotide_frequencies(T, nucleotide_frequencies);
 
-    // If E[h] is the equilibrium event rate of the unscaled h-hit component,
-    // scaling Q[h] by v[h]*E[1]/E[h] gives event-rate ratios 1:v2:v3.
+    // E[h] is the expected event rate of the unscaled h-hit component under the
+    // reference codon distribution. Scaling Q[h] by v[h]*E[1]/E[h] gives event-rate
+    // ratios 1:v2:v3 under that distribution, which is stationary for reversible inputs.
     double event_rates[4] = {};
     for(int i=0;i<n;i++)
     {

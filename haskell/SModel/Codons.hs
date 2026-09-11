@@ -78,7 +78,14 @@ x3x3 a m1 m2 m3 =
 x3_sym a s = singlet_to_triplet_rates a s s s
 x3 a q = x3x3 a q q q
 
-mnm a v2 v3 nucModel = setReversibility rv $ markov a smap q pi where
+-- Construct and scale rates using nucleotide equilibrium frequencies. For EqNonRev, use
+-- the codon equilibrium limit starting from their normalized products, including for reducible
+-- matrices. For NonEq, retain root frequencies calculated from the nucleotide root distribution.
+mnm a v2 v3 nucModel =
+    case rv of
+        EqNonRev -> eqMarkovFrom a smap q pi
+        _        -> setReversibility rv $ markov a smap q pi
+  where
     rv = getReversibility nucModel
     smap = simpleSMap a
     q = multiNucleotideMutationRates a v2 v3 (getQ nucModel) (getEqFreqs nucModel)
