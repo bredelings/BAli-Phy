@@ -359,6 +359,13 @@ jobs:
         # The cross build produces only 64-bit programs, so do not probe for missing 32-bit Wine support.
         echo "WINEARCH=win64" >> "$GITHUB_ENV"
 
+    - name: Choose test seed
+      shell: bash
+      run: |
+        seed=$RANDOM
+        echo "Test seed: $seed"
+        echo "seed=$seed" >> "$GITHUB_ENV"
+
     - name: Configure
       if: matrix.name != 'windows-native-mingw'
       run: |
@@ -382,8 +389,8 @@ jobs:
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
         echo "SDKROOT = $SDKROOT"
-        echo meson setup build --prefix=$HOME/local --buildtype=release -Dcpp_args="$CPPARGS" ${ARGS}
-        meson setup build --prefix=$HOME/local --buildtype=release -Dcpp_args="$CPPARGS" ${ARGS}
+        echo meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" -Dcpp_args="$CPPARGS" ${ARGS}
+        meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" -Dcpp_args="$CPPARGS" ${ARGS}
 
     - name: Upload meson log if configure failed
       uses: actions/upload-artifact@v4
@@ -413,7 +420,7 @@ jobs:
         Get-Command $tools -ErrorAction Stop | Select-Object Name, Source
 
         meson setup build "--prefix=$installPrefix" `
-          "--buildtype=release"
+          "--buildtype=release" "-Dtest_seed=$env:seed"
 
     - name: Build (Windows native MinGW)
       if: matrix.name == 'windows-native-mingw'
@@ -469,7 +476,8 @@ jobs:
 
         New-Item -ItemType Directory bpy-summarize-smoke | Out-Null
         Push-Location bpy-summarize-smoke
-        bali-phy "$env:GITHUB_WORKSPACE\examples\5S-rRNA\5d-muscle.fasta" --iterations=50 --name=analysis-run
+        bali-phy "$env:GITHUB_WORKSPACE\examples\5S-rRNA\5d-muscle.fasta" `
+          "--seed=$env:seed" --iterations=50 --name=analysis-run
 
         $analysisOutput = bpy-summarize analysis-run-1 --outdir Results 2>&1 | Out-String
         $analysisOutput
@@ -537,7 +545,6 @@ jobs:
       if: matrix.name != 'windows-native-mingw'
       run: |
         export UBSAN_OPTIONS=halt_on_error=1
-        export seed=$RANDOM
         # Installed macOS binaries locate packaged libraries through their rpath. A prefix-wide
         # DYLD_LIBRARY_PATH also changes libraries loaded by unrelated Homebrew programs such as R.
         if [ -n "${BOOST_ROOT}" ] && [ "${{ runner.os }}" != "macOS" ] ; then

@@ -264,6 +264,13 @@ jobs:
         # The cross build produces only 64-bit programs, so do not probe for missing 32-bit Wine support.
         echo "WINEARCH=win64" >> "$GITHUB_ENV"
 
+    - name: Choose test seed
+      shell: bash
+      run: |
+        seed=$RANDOM
+        echo "Test seed: $seed"
+        echo "seed=$seed" >> "$GITHUB_ENV"
+
     - name: Configure
       run: |
         CPPARGS=""
@@ -278,8 +285,8 @@ jobs:
            ARGS="${ARGS} -Db_sanitize=${{ matrix.sanitize }}"
         fi
         echo "SDKROOT = $SDKROOT"
-        echo meson setup build --prefix=$HOME/local --buildtype=release -Dcpp_args="$CPPARGS" ${ARGS}
-        meson setup build --prefix=$HOME/local --buildtype=release -Dcpp_args="$CPPARGS" ${ARGS}
+        echo meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" -Dcpp_args="$CPPARGS" ${ARGS}
+        meson setup build --prefix=$HOME/local --buildtype=release -Dtest_seed="$seed" -Dcpp_args="$CPPARGS" ${ARGS}
 
     - name: Upload meson log if configure failed
       uses: actions/upload-artifact@v4
@@ -344,7 +351,6 @@ jobs:
     - name: Test
       run: |
         export UBSAN_OPTIONS=halt_on_error=1
-        export seed=$RANDOM
         # Installed macOS binaries locate packaged libraries through their rpath. A prefix-wide
         # DYLD_LIBRARY_PATH also changes libraries loaded by unrelated Homebrew programs such as R.
         if [ -n "${BOOST_ROOT}" ] && [ "${{ runner.os }}" != "macOS" ] ; then
